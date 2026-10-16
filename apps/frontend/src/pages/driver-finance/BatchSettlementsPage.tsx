@@ -24,6 +24,7 @@ import {
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 type BatchRow = {
   key: string;
@@ -220,11 +221,15 @@ export function BatchSettlementsPage() {
       <div className="mx-auto w-full max-w-[1400px] space-y-4 p-4">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h1 className="text-page-title font-semibold text-[#0F1219]">Batch Settlements</h1>
-            <p className="text-xs text-[#6B7280]">
-              §23 grid — driver + period auto-pulls SET-01 loads; Save all posts each row through the Settlement Creator
-              engine (driver_finance.* only). One JE per settlement.
-            </p>
+            <h1 className="flex items-center gap-1 text-page-title font-semibold text-[#0F1219]">
+              Batch Settlements
+              <InfoPopover label="About batch settlements">
+                <span className="block">
+                  §23 grid — driver + period auto-pulls SET-01 loads; Save all posts each row through the Settlement Creator
+                  engine (driver_finance.* only). One JE per settlement.
+                </span>
+              </InfoPopover>
+            </h1>
           </div>
           <Link
             className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44]"
@@ -300,6 +305,7 @@ export function BatchSettlementsPage() {
           {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). Rows are edited in place, so each cell
               resolves its row's position by key (sorting the view never re-targets an edit to another row). */}
           <ParityTable<BatchRow>
+            title="Settlements — batch entry"
             embedded
             rows={rows}
             rowKey={(row) => row.key}

@@ -2,6 +2,7 @@ import type { PlaidBankAccount } from "../../../api/banking";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { formatDateTimeUS } from "../../../utils/qboFormat";
 
 export type ConnectionErrorRow = {
   accountId: string;
@@ -100,7 +101,7 @@ export function BankingHomeConnectionErrorStrip({
             <p className="mt-0.5 leading-snug text-[#6B7280]">{copy.message}</p>
             {a.last_synced_at ? (
               <p className="mt-0.5 text-[#6B7280]">
-                Last synced {new Date(a.last_synced_at).toLocaleString()}
+                Last synced {formatDateTimeUS(a.last_synced_at)}
               </p>
             ) : (
               <p className="mt-0.5 text-[#6B7280]">Never synced</p>

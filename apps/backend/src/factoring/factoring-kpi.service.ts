@@ -104,11 +104,22 @@ export async function factoringReserveAccountIds(client: DbClient, oci: string):
  */
 export async function factoringBookReserveCents(client: DbClient, oci: string, asOf: string) {
   const acc = await factoringAccounts(client, oci);
-  const bal = async (id: string | null) =>
-    id ? num((await client.query<{ v: string }>(`SELECT COALESCE(sum(${SIGNED}),0)::bigint v ${postingsSql("balance")}`, [oci, asOf, asOf, id])).rows[0]?.v) : 0;
-  const escrow = await bal(acc.escrow.id);
-  const cash = await bal(acc.cash.id);
+  const escrow = (await reserveAccountBalance(client, oci, asOf, acc.escrow.id)).cents;
+  const cash = (await reserveAccountBalance(client, oci, asOf, acc.cash.id)).cents;
   return { escrow, cash, total: escrow + cash };
+}
+
+/**
+ * LEAD 443.168 L (Engine Registry E-46) — THE one reserve query: one reserve account's posted GL balance as of a date
+ * (debit +), as presented (the period-end Due-to-Faro reclass included — a negative reserve presents as a payable).
+ * factoringBookReserveCents, the escrow / cash reserve KPIs, the per-customer reserve table's tie-out, the factor list
+ * and the reserve dashboard all read it; scripts/verify-steps/18465 fails the build on a second reserve sum.
+ */
+export async function reserveAccountBalance(client: DbClient, oci: string, asOf: string, accountId: string | null) {
+  if (!accountId) return { cents: 0, rows: 0 };
+  const r = (await client.query<{ n: number; v: string }>(
+    `SELECT count(*)::int n, COALESCE(sum(${SIGNED}),0)::bigint v ${postingsSql("balance")}`, [oci, asOf, asOf, accountId])).rows[0];
+  return { cents: num(r?.v), rows: Number(r?.n ?? 0) };
 }
 
 /** The factor whose agreement is active for this company (factoring.factor.id), or null. */
@@ -162,7 +173,8 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
     ["escrow_reserve_balance", acc.cash.merged ? "Faro reserve balance" : "Escrow reserve balance", acc.escrow],
     ["cash_reserve_balance", "Cash reserve balance", acc.cash],
   ] as const) {
-    const r = a.id ? (await client.query<{ n: number; v: string }>(`SELECT count(*)::int n, COALESCE(sum(${SIGNED}),0)::bigint v ${postingsSql("balance")}`, [...base, a.id])).rows[0]! : { n: 0, v: "0" };
+    const bal = await reserveAccountBalance(client, oci, range.to, a.id);
+    const r = { n: bal.rows, v: String(bal.cents) };
     const merged = "merged" in a && a.merged;
     out.push({ key, label, unit: "cents", value: a.id ? num(r.v) : null, source: "Posted general-ledger balance as of the end date", gl_account: a.label,
       row_count: r.n,

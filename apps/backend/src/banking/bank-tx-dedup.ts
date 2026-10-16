@@ -45,38 +45,9 @@ export async function repointReconciliationMatchesOnPlaidMerge(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },
   args: { pendingId: string; survivorId: string; operatingCompanyId: string }
 ): Promise<{ repointed: number; voided_duplicates: number }> {
-  const voidedDup = await client.query(
-    `
-      UPDATE banking.reconciliation_matches AS pending_rm
-         SET voided_at = COALESCE(pending_rm.voided_at, now()),
-             void_reason = COALESCE(pending_rm.void_reason, 'plaid_pending_merge_duplicate_on_survivor'),
-             updated_at = now()
-        FROM banking.reconciliation_matches AS survivor_rm
-       WHERE pending_rm.bank_transaction_id = $1::uuid
-         AND pending_rm.operating_company_id = $3::uuid
-         AND pending_rm.voided_at IS NULL
-         AND survivor_rm.bank_transaction_id = $2::uuid
-         AND survivor_rm.operating_company_id = $3::uuid
-         AND survivor_rm.voided_at IS NULL
-         AND survivor_rm.ledger_entry_kind = pending_rm.ledger_entry_kind
-         AND survivor_rm.ledger_entry_id IS NOT DISTINCT FROM pending_rm.ledger_entry_id
-      RETURNING pending_rm.id
-    `,
-    [args.pendingId, args.survivorId, args.operatingCompanyId]
-  );
-
-  const repointed = await client.query(
-    `
-      UPDATE banking.reconciliation_matches
-         SET bank_transaction_id = $2::uuid,
-             updated_at = now()
-       WHERE bank_transaction_id = $1::uuid
-         AND operating_company_id = $3::uuid
-         AND voided_at IS NULL
-      RETURNING id
-    `,
-    [args.pendingId, args.survivorId, args.operatingCompanyId]
-  );
+  // LEAD 443.168 M (E-50) — match rows move through the one unmatch/release writer module.
+  const { moveMatchRowsOnPlaidMerge } = await import("../accounting/bank-recon/unmatch-bank-transaction.service.js");
+  const moved = await moveMatchRowsOnPlaidMerge(client as never, args);
 
   // Carry matched_* + categorized_by_user_id from the pending onto the survivor so control-totals
   // does not see a system-written matched_* with no user (verify-control-totals).
@@ -110,10 +81,7 @@ export async function repointReconciliationMatchesOnPlaidMerge(
     [args.pendingId, args.survivorId, args.operatingCompanyId]
   );
 
-  return {
-    repointed: repointed.rowCount ?? (repointed.rows?.length ?? 0),
-    voided_duplicates: voidedDup.rowCount ?? (voidedDup.rows?.length ?? 0),
-  };
+  return moved;
 }
 
 /** Operator remediation for historical rows ingested before pending_transaction_id was honored. */

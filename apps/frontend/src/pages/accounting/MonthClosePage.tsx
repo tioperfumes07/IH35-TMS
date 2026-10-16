@@ -244,7 +244,7 @@ export function MonthClosePage() {
       {statusQuery.isError ? (
         <p className="rounded-sm border border-gray-200 bg-white px-3 py-4 text-xs text-red-600">Failed to load month-close checklist.</p>
       ) : (
-        <ParityTable
+        <ParityTable title="Month-close checklist"
           columns={columns}
           rows={checklistRows}
           rowKey={(row) => row.id}

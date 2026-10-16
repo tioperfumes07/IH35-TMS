@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { itemsCatalogClient } from "./catalogs-accounting";
 
 export type QboAutocompleteRow = {
   id: string;
@@ -27,14 +28,14 @@ function withCompany(path: string, operatingCompanyId: string) {
 }
 
 export function searchQboMasterData(
-  entityType: "vendor" | "customer" | "item" | "account",
+  entityType: "vendor" | "customer" | "item",
   operatingCompanyId: string,
   params: { q: string; active_only?: boolean }
 ) {
   // Customer + vendor pickers read the CANONICAL master tables (mdata.customers / mdata.vendors) via
   // their autocomplete mode, so records created through the canonical writer are immediately selectable
   // (fixes the "create → disappears" split where writers wrote the real table but the picker read the
-  // mdata.qbo_* mirror). Only accounts still read the mirror (catalogs.accounts = CoA = financial, HELD).
+  // mdata.qbo_* mirror). Accounts never read the mirror (443.160: ./catalog-accounts getCoaAccounts).
   if (entityType === "customer" || entityType === "vendor") {
     const search = new URLSearchParams();
     search.set("autocomplete", "true");
@@ -44,42 +45,23 @@ export function searchQboMasterData(
     return apiRequest<QboAutocompleteResponse>(withCompany(`${path}?${search.toString()}`, operatingCompanyId));
   }
 
-  // Item (product/service) picker reads the CANONICAL catalogs.items via its existing list endpoint,
-  // mapped to the autocomplete shape — so a service created through the canonical writer (#2273) is
-  // selectable. Frontend-mapped (catalogs scoping differs from mdata's) to avoid touching that endpoint.
-  if (entityType === "item") {
-    const itemSearch = new URLSearchParams();
-    if (params.q) itemSearch.set("search", params.q);
-    if (params.active_only !== false) itemSearch.set("status", "active");
-    return apiRequest<{
-      items: Array<{
-        id: string;
-        item_name: string;
-        item_code: string | null;
-        item_type: string | null;
-        unit_price_cents: number | null;
-        qbo_item_id: string | null;
-        deactivated_at: string | null;
-      }>;
-    }>(withCompany(`/api/v1/catalogs/items?${itemSearch.toString()}`, operatingCompanyId)).then((resp) => ({
-      results: resp.items.map((i) => ({
-        id: i.id,
-        qbo_id: i.qbo_item_id ?? "",
-        display_name: i.item_name,
-        active: i.deactivated_at == null,
-        sku: i.item_code ?? null,
-        item_type: i.item_type ?? null,
-        unit_price_cents: i.unit_price_cents ?? null,
+  // LEAD 443.160 — items come from the ONE item source every item picker reads (itemsCatalogClient,
+  // /catalogs/accounting/items over catalogs.items), mapped to the autocomplete shape. The second item endpoint
+  // (/catalogs/items) and the dead "account" branch (it read the mdata.qbo_accounts mirror — a second chart of
+  // accounts no caller used) are gone; accounts come from ./catalog-accounts getCoaAccounts.
+  return itemsCatalogClient
+    .list({ operating_company_id: operatingCompanyId, search: params.q || undefined, is_active: params.active_only === false ? "all" : "true", limit: 50 }) // typeahead page, as before
+    .then((resp) => ({
+      results: resp.rows.map((r) => ({
+        id: r.id,
+        qbo_id: String(r.metadata?.qbo_item_id ?? ""),
+        display_name: r.display_name,
+        active: r.is_active,
+        sku: r.code ?? null,
+        item_type: (r.metadata?.item_type as string | null | undefined) ?? null,
+        unit_price_cents: r.metadata?.unit_price_cents == null ? null : Number(r.metadata.unit_price_cents),
       })),
     }));
-  }
-
-  // Accounts still read the qbo mirror pending catalogs.accounts canonical autocomplete (financial / HELD).
-  const search = new URLSearchParams();
-  search.set("q", params.q);
-  if (params.active_only === false) search.set("active_only", "false");
-  const qs = search.toString();
-  return apiRequest<QboAutocompleteResponse>(withCompany(`/api/v1/mdata/qbo/accounts?${qs}`, operatingCompanyId));
 }
 
 export function createQboVendor(

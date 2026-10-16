@@ -267,7 +267,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
             </div>
           ) : null}
           {/* ACCT-F3592: embedded ParityTable owns Search+Range+gear + selectable invoice pick. */}
-          <ParityTable
+          <ParityTable title="Invoices eligible to factor"
             embedded
             rows={invoicesQuery.data ?? []}
             rowKey={(row) => row.id}

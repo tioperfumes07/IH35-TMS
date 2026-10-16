@@ -116,6 +116,42 @@ describe("Faro reserve posters — post what the line says", () => {
     expect(je.postings.map((p: { account_id: string }) => p.account_id)).toEqual(["acct:factoring_advance_liability", "acct:factor_cash_reserve_held"]);
   });
 
+  // LEAD 443.171 C — partial purchase: Faro bought 3,000 of a 4,000 invoice; the customer paid Faro the full 4,000. 2150 only
+  // carries the purchased 3,000 — the old leg debited 2150 the whole 4,000 (over-relieving it by 1,000). Fails on the old code.
+  const partial = (gross: number, relieved: number) => (sql: string) => {
+    if (sql.includes("l.gross_cents::text AS gross, l.faro_invoice_number AS faro")) return [{ gross: String(gross), faro: "007" }];
+    if (sql.includes("AS relieved")) return [{ relieved: String(relieved) }];
+    if (sql.includes("SELECT total_cents::text AS total")) return [{ total: "400000", paid: "0" }];
+    return null;
+  };
+  const legs = () => mockCreateJe.mock.calls.at(-1)![1].postings.map((p: { account_id: string; debit_or_credit: string; amount_cents: number }) => `${p.debit_or_credit}:${p.account_id}:${p.amount_cents}`);
+  it("443.171 C: customer pays Faro 4,000 on a 3,000 purchase → DR 2150 3,000 + DR cash clearing 1,000 / CR A/R 4,000", async () => {
+    await postFaroReserveEntryOnClient(
+      client(entry({ entry_kind: "short_pay", amount_cents: "0", short_pay_paid_cents: "400000", faro_invoice_number: "007" }), partial(300000, 0)),
+      { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" }
+    );
+    const l = legs().filter((x: string) => !x.endsWith(":0"));
+    expect(l).toEqual(["debit:acct:factoring_advance_liability:300000", "debit:acct:cash_clearing:100000", "credit:acct:ar_control:400000"]);
+  });
+  it("443.171 C: a short-pay leg already in the entry counts against the purchased gross (never over-relieve 2150)", async () => {
+    await postFaroReserveEntryOnClient(
+      client(entry({ entry_kind: "short_pay", amount_cents: "-25000", short_pay_paid_cents: "375000", faro_invoice_number: "007" }), partial(300000, 0)),
+      { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" }
+    );
+    const l = legs();
+    const net2150 = l.reduce((t: number, x: string) => { const [dc, a, , n] = x.split(":"); void a; return x.includes("factoring_advance_liability") ? t + (dc === "debit" ? 1 : -1) * Number(x.split(":").at(-1)) : t; }, 0);
+    expect(net2150).toBe(300000);
+    expect(l).toContain("debit:acct:cash_clearing:100000");
+    expect(l).toContain("credit:acct:ar_control:375000");
+  });
+  it("443.171 C: a FULL purchase is unchanged — DR 2150 = payment, no cash-clearing leg", async () => {
+    await postFaroReserveEntryOnClient(
+      client(entry({ entry_kind: "short_pay", amount_cents: "-25000", short_pay_paid_cents: "375000", faro_invoice_number: "007" }), partial(400000, 0)),
+      { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" }
+    );
+    expect(legs()).toEqual(["debit:acct:factoring_advance_liability:25000", "credit:acct:factor_cash_reserve_held:25000", "debit:acct:factoring_advance_liability:375000", "credit:acct:ar_control:375000"]);
+  });
+
   it("client payable to IH 35: DR 8000 intercompany / CR 1235; to us it is the reserve release DR cash clearing / CR 1235 (LEAD 443.84)", async () => {
     await postFaroReserveEntryOnClient(client(entry({ entry_kind: "client_payable", faro_entry_id: null, faro_invoice_number: null, amount_cents: "-500000", counterparty: "ih35_transportation" })), { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" });
     expect(mockCreateJe.mock.calls[0]![1].postings[0].account_id).toBe("acct:intercompany_receivable_ih35_transportation");

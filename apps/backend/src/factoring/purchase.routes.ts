@@ -26,12 +26,15 @@ import {
   undoInvoiceDirectPay,
 } from "./purchase-candidates.service.js";
 import { sendPurchaseToFactor } from "./purchase-send.service.js";
+import { PostingEngineError } from "../accounting/posting-engine.service.js";
 import { requireFactoringPurchaseOwner, type FactoringPurchaseAction } from "./owner-only-purchase.js";
 import {
   createPurchaseDraft,
+  editPurchase,
   FactoringPurchaseError,
   getPurchaseDetail,
   listPurchases,
+  listPurchaseLines,
   postPurchase,
   voidPurchase,
   setPurchaseLineFaroInvoiceNumber,
@@ -51,6 +54,7 @@ const listQuery = companyQuery.extend({
   settlement_id: z.string().uuid().optional(),
   bank_transaction_id: z.string().uuid().optional(),
 });
+const purchaseLinesQuery = companyQuery.extend({ from: isoDate.optional(), to: isoDate.optional() });
 const createBody = z.object({
   factoring_company_vendor_id: z.string().uuid(),
   purchase_date: isoDate,
@@ -73,6 +77,10 @@ const createBody = z.object({
     )
     .min(1)
     .max(200),
+});
+// LEAD 443.171 E — edit a posted purchase in place: the same fields as create, plus the Owner's reason.
+const editBody = createBody.omit({ factoring_company_vendor_id: true, docs_override_reason: true }).extend({
+  reason: z.string().trim().min(10).max(500),
 });
 const voidBody = z.object({ reason: z.string().trim().min(3).max(500) });
 const candidatesQuery = companyQuery.extend({
@@ -124,6 +132,17 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
     const { operating_company_id, ...filters } = q.data;
     const rows = await withCompanyScope(user.uuid, operating_company_id, (client) => listPurchases(client, operating_company_id, filters));
     return { purchases: rows };
+  });
+
+  // LEAD 443.172 — Purchase Report: one row per purchased invoice (posted, non-voided), real per-line split.
+  app.get("/api/v1/factoring/purchase-lines", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const q = purchaseLinesQuery.safeParse(req.query ?? {});
+    if (!q.success) return validationError(reply, q.error);
+    const { operating_company_id, ...filters } = q.data;
+    const rows = await withCompanyScope(user.uuid, operating_company_id, (client) => listPurchaseLines(client, operating_company_id, filters));
+    return { lines: rows };
   });
 
   app.get("/api/v1/factoring/purchases/candidates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -290,6 +309,47 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
         })
       );
     } catch (error) {
+      if (sendPurchaseError(reply, error)) return;
+      throw error;
+    }
+  });
+
+  // LEAD 443.171 E — QuickBooks click-to-edit on a posted purchase: one transaction reverses + re-posts the SAME purchase.
+  app.patch("/api/v1/factoring/purchases/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const p = idParams.safeParse(req.params ?? {});
+    if (!p.success) return validationError(reply, p.error);
+    const q = companyQuery.safeParse(req.query ?? {});
+    if (!q.success) return validationError(reply, q.error);
+    const b = editBody.safeParse(req.body ?? {});
+    if (!b.success) return validationError(reply, b.error);
+    if (!(await ownerGate(reply, user, q.data.operating_company_id, "advance", p.data.id))) return;
+    try {
+      const result = await withCompanyScope(user.uuid, q.data.operating_company_id, (client) =>
+        editPurchase(client, {
+          operatingCompanyId: q.data.operating_company_id,
+          actorUserId: user.uuid,
+          purchaseId: p.data.id,
+          reason: b.data.reason,
+          purchaseDate: b.data.purchase_date,
+          wireDate: b.data.wire_date ?? null,
+          faroReportRef: b.data.faro_report_ref ?? null,
+          wireFeeCents: b.data.wire_fee_cents,
+          notes: b.data.notes ?? null,
+          lines: b.data.lines,
+        })
+      );
+      await syncLoadsForFactoringAdvance({
+        operatingCompanyId: q.data.operating_company_id,
+        factoringAdvanceId: result.factoringAdvanceId,
+        actorUserId: user.uuid,
+      });
+      return result.detail;
+    } catch (error) {
+      if (error instanceof PostingEngineError && error.code === "PERIOD_LOCKED") {
+        return reply.code(409).send({ error: "period_closed", message: `The accounting period is closed (${error.message}). Reopen it in Accounting > Close before changing this purchase.` });
+      }
       if (sendPurchaseError(reply, error)) return;
       throw error;
     }

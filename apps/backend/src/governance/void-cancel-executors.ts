@@ -930,15 +930,9 @@ const executeBankTransaction: EntityExecutor = async (ctx) => {
   );
   if (!flipped.rows[0]) return { kind: "already_done" };
   // Live matches on this row must not stay readable as active after the bank line is voided.
-  await client.query(
-    `UPDATE banking.reconciliation_matches
-        SET voided_at = COALESCE(voided_at, now()),
-            void_reason = COALESCE(void_reason, $3),
-            voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
-            updated_at = now()
-      WHERE bank_transaction_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL`,
-    [entityId, operatingCompanyId, reason, userId]
-  );
+  // LEAD 443.168 M (E-50) — through the one unmatch writer.
+  const { voidMatchRowsOfBankLine } = await import("../accounting/bank-recon/unmatch-bank-transaction.service.js");
+  await voidMatchRowsOfBankLine(client as never, { operating_company_id: operatingCompanyId, bank_transaction_id: entityId, reason, actor_user_id: userId });
   await appendCrudAudit(client, userId, "banking.bank_transaction.voided", {
     resource_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests",
   }, "warning", "VOID-CANCEL-GOV");
@@ -955,14 +949,10 @@ const executeReconciliationMatch: EntityExecutor = async (ctx) => {
   );
   if (!pre.rows[0]) return { kind: "not_found" };
   if (pre.rows[0].voided_at) return { kind: "already_done" };
-  const flipped = await client.query(
-    `UPDATE banking.reconciliation_matches
-        SET voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid, updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
-      RETURNING id::text`,
-    [entityId, operatingCompanyId, reason, userId]
-  );
-  if (!flipped.rows[0]) return { kind: "already_done" };
+  // LEAD 443.168 M (E-50) — through the one unmatch writer.
+  const { voidMatchRowById } = await import("../accounting/bank-recon/unmatch-bank-transaction.service.js");
+  const flipped = await voidMatchRowById(client as never, { operating_company_id: operatingCompanyId, match_id: entityId, reason, actor_user_id: userId });
+  if (!flipped) return { kind: "already_done" };
   await appendCrudAudit(client, userId, "banking.reconciliation_match.voided", {
     resource_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests",
   }, "warning", "VOID-CANCEL-GOV");

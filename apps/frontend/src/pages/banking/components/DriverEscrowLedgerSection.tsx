@@ -27,6 +27,7 @@ import {
   bankingControlBoxClass,
 } from "./BankingControlBox";
 
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 type Props = {
   operatingCompanyId: string;
   driverEscrowBalance: number;
@@ -288,7 +289,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
         key: "amount",
         label: "Amount",
         cellClass: "text-[#1F2A44]",
-        render: (row) => `$${Number(row.amount ?? 0).toFixed(2)}`,
+        render: (row) => formatUsd(row.amount),
       },
       {
         key: "cleared",
@@ -350,8 +351,11 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
           driver(s) with a balance.
         </p>
         <p className="mt-1 text-[#6B7280]">
-          Never book escrow to an expense account. Liability overstates cost when treated as spend. Drill a driver
-          row for the posting register; settlement and journal links stay two-way.
+          Never book escrow to an expense account.{" "}
+          <InfoPopover label="About escrow accounting">
+            Liability overstates cost when treated as spend. Drill a driver row for the posting register;
+            settlement and journal links stay two-way.
+          </InfoPopover>
         </p>
         <div className="mt-2 flex flex-wrap gap-3">
           <Link to="/driver-finance/settlements" className="font-medium text-[#1F2A44] underline">
@@ -369,9 +373,11 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
         >
           <p className="font-semibold">Driver Escrow shows $0 with no ledger rows and no per-driver balances.</p>
           <p className="mt-1">
-            Escrow is a liability virtual bank — empty is not "healthy zero" until settlements / deductions / holdbacks
-            post into escrow and appear here. Cross-check Settlements and for-review bank rows that may be escrow-related
-            but still unmatched.
+            Escrow is a liability virtual bank — empty is not "healthy zero" until settlements / deductions /
+            holdbacks post into escrow and appear here.{" "}
+            <InfoPopover label="About an empty escrow">
+              Cross-check Settlements and for-review bank rows that may be escrow-related but still unmatched.
+            </InfoPopover>
           </p>
           <div className="mt-2 flex flex-wrap gap-3">
             <Link to="/driver-finance/settlements" className="font-medium text-[#1F2A44] underline">
@@ -565,6 +571,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
 
         <div className="mt-2">
           <ParityTable
+            title="Driver escrow ledger"
             columns={columns}
             rows={tableRows}
             rowKey={(row) => String(row.id ?? "")}

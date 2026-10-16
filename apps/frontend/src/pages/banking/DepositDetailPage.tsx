@@ -133,8 +133,8 @@ export function DepositDetailPage() {
             </div>
 
             <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
-              <h2 className="mb-2 font-bold uppercase text-[#4B5563]">Lines</h2>
               <ParityTable<DepositLine>
+                title="Deposit lines"
                 storageKey="deposit-detail-lines"
                 tableTestId="deposit-detail-lines"
                 rows={deposit.lines ?? []}

@@ -41,3 +41,29 @@ export const RELAY_DEPOSIT_MATCHABLE_SQL = `(
        AND p.reversal_of_line_id IS NULL
   )
 )`;
+
+/**
+ * LEAD 443.170 — on alias `rd`, with $8 = the register's ledger account: the deposit's posted JE credits THIS ledger
+ * (the funding leg). Posting-based so another account's money is never offered here.
+ */
+export const RELAY_DEPOSIT_CREDITS_LEDGER_SQL = `EXISTS (
+    SELECT 1 FROM accounting.journal_entry_postings fjp
+     WHERE fjp.operating_company_id = rd.operating_company_id
+       AND fjp.journal_entry_uuid = rd.posted_journal_entry_id
+       AND fjp.account_id = $8::uuid
+       AND fjp.debit_or_credit = 'credit'
+       AND fjp.reversed_by_line_id IS NULL
+       AND fjp.reversal_of_line_id IS NULL
+  )`;
+
+/**
+ * LEAD 443.170 — on alias `rd`, with $7 = this bank account: no live bank line ON THIS ACCOUNT already links the deposit
+ * (the other side's link never blocks this one).
+ */
+export const RELAY_DEPOSIT_FREE_ON_THIS_ACCOUNT_SQL = `(
+    NOT EXISTS (SELECT 1 FROM banking.bank_transactions cbt
+                 WHERE cbt.matched_relay_deposit_id = rd.id AND cbt.voided_at IS NULL AND cbt.bank_account_id = $7::uuid)
+    AND (rd.matched_bank_transaction_id IS NULL
+         OR NOT EXISTS (SELECT 1 FROM banking.bank_transactions pbt
+                         WHERE pbt.id = rd.matched_bank_transaction_id AND pbt.bank_account_id = $7::uuid))
+  )`;

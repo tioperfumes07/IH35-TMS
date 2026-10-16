@@ -12,11 +12,7 @@ import {
   postFactoringReleaseEvent,
   reverseFactoringAdvanceEvent,
 } from "./factoring-posting/poster.service.js";
-import {
-  getFactoringAdvancePacket,
-  getFactoringReserveRollup,
-  listFactoringReserveBalances as listFactoringReserveBalancesByAdvance,
-} from "./factoring-posting/reserve-tracker.service.js";
+import { getFactoringAdvancePacket } from "./factoring-posting/reserve-tracker.service.js";
 import { nextFactoringDisplayId } from "./display-id.js";
 import { syncLoadsForFactoringAdvance } from "../dispatch/load-billing-lifecycle.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, INVOICE_PLEDGE_CENTS_SQL } from "./shared.js";
@@ -225,16 +221,13 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/factoring-advances/reserve-tracker", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (LEGACY_FACTORING_WRITERS_RETIRED) return sendRetiredFactoringWriter(reply, "GET /api/v1/accounting/factoring-advances/reserve-tracker (second reserve reader)", FACTORING_RESERVE_ENGINE);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     // ACCT-F5594: no backstop -- same class as GET /factoring-reserve-balances above.
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
-    const [balances, rollup] = await Promise.all([
-      listFactoringReserveBalancesByAdvance(query.data.operating_company_id),
-      getFactoringReserveRollup(query.data.operating_company_id),
-    ]);
-    return { rollup, advances: balances };
+    // LEAD 443.168 L (E-46) — the per-advance tracker read accounting.factoring_reserve_movements (no live writer), a second
+    // reserve figure that disagreed with the GL. Its readers are deleted; the one reserve figure is the factoring engine.
+    return sendRetiredFactoringWriter(reply, "GET /api/v1/accounting/factoring-advances/reserve-tracker (second reserve reader)", FACTORING_RESERVE_ENGINE);
   });
 
   // CONN-2 — Advance Packet: advance header + linked invoices/loads + reserve ledger + interest ledger in

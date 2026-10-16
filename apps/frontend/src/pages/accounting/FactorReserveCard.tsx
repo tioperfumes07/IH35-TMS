@@ -105,6 +105,7 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
             <ListErrorState title="Couldn't load the invoices" status={0} onRetry={() => void invoices.refetch()} />
           ) : (
             <ParityTable<ReserveByInvoiceRow>
+              title="Reserve held — by invoice"
               columns={invoiceColumns}
               rows={invoices.data?.rows ?? []}
               rowKey={(row) => row.invoice_id ?? "unstamped"}

@@ -178,7 +178,7 @@ export function AccountingLeaseDetailPage() {
             {msg ? <span className="text-gray-700">{msg}</span> : null}
           </section>
 
-          <ParityTable embedded rows={query.data?.assets ?? []} columns={assetColumns} rowKey={(r) => r.id} storageKey="lease-assets" exportFilename="lease-assets" tableTestId="lease-assets-table" emptyText="No units or trailers on this lease." />
+          <ParityTable title="Leased assets" embedded rows={query.data?.assets ?? []} columns={assetColumns} rowKey={(r) => r.id} storageKey="lease-assets" exportFilename="lease-assets" tableTestId="lease-assets-table" emptyText="No units or trailers on this lease." />
           {l.lessee_commencement_je_id || l.buyout_bill_id || l.buyout_je_id ? (
             <section className="flex flex-wrap gap-4 rounded-sm border border-gray-200 bg-white p-3">
               {l.lessee_commencement_je_id ? <span>Commencement: <EntityLink kind="journal_entry" id={String(l.lessee_commencement_je_id)} label="ROU / lease liability JE" className="font-semibold underline" /></span> : null}
@@ -190,9 +190,9 @@ export function AccountingLeaseDetailPage() {
             <div className="rounded border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" role="status" data-testid="lease-lessee-schedule-unavailable">{query.data.schedule_unavailable_reason}</div>
           ) : null}
           {(query.data?.schedule ?? []).length ? (
-            <ParityTable embedded rows={query.data?.schedule ?? []} columns={scheduleColumns(assetLabels)} rowKey={(r) => r.id} storageKey="lease-lessee-schedule" exportFilename="lease-asc842-schedule" tableTestId="lease-lessee-schedule-table" emptyText="No ASC 842 schedule." />
+            <ParityTable title="Lessee payment schedule" embedded rows={query.data?.schedule ?? []} columns={scheduleColumns(assetLabels)} rowKey={(r) => r.id} storageKey="lease-lessee-schedule" exportFilename="lease-asc842-schedule" tableTestId="lease-lessee-schedule-table" emptyText="No ASC 842 schedule." />
           ) : null}
-          <ParityTable embedded rows={query.data?.bills ?? []} columns={billColumns} rowKey={(r) => r.id} storageKey="lease-bills" exportFilename="lease-bills" tableTestId="lease-bills-table" emptyText="No lease bills yet — they are created when the lease is signed and every month after." />
+          <ParityTable title="Lease bills" embedded rows={query.data?.bills ?? []} columns={billColumns} rowKey={(r) => r.id} storageKey="lease-bills" exportFilename="lease-bills" tableTestId="lease-bills-table" emptyText="No lease bills yet — they are created when the lease is signed and every month after." />
         </div>
       ) : null}
     </AccountingSubNavWrapper>

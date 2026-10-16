@@ -121,6 +121,13 @@
       "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
       "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
       "text": "-- CANONICAL-CHECK: money concept = NONE. accounting.document_work_order_copies keeps the work order AS IT WAS when a bill or expense was linked to it (header, the print fields of unit / driver / vendor / company, line totals and lines), so the document opens and prints the work order it was entered against. Its totals are a frozen copy for printing, never read as money: accounting.bills / accounting.expenses remain the documents, maintenance.work_orders the live work order, and accounting.journal_entries the ledger. One writer (triggers on bills / bill_lines / expenses / expense_lines); WORM, never deleted."
+    },
+    "accounting.factoring_misdirected_payment_alerts": {
+      "migration": "202615980910_factoring_misdirected_payment_alerts.sql",
+      "applied_at_utc": "2026-10-16T19:16:33.179Z",
+      "applied_ledger": "_system._schema_migrations on prod; read-only measurement 2026-10-16",
+      "why_not_in_migration": "Already applied before the omitted declaration was caught; preserve immutable migration checksum.",
+      "text": "-- CANONICAL-CHECK: money concept = CONTRACT OBLIGATION ALERT (Engine Registry E-47, Faro misdirected payment), not a financial ledger. One row per (bank line, Faro-purchased invoice) says a customer payment landed with us and must be forwarded to Faro by forward_by. It posts nothing: the money lives only in accounting.journal_entries / accounting.journal_entry_postings, the purchase in accounting.factoring_purchases / accounting.factoring_purchase_lines, and the repurchase deadline in accounting.factoring_repurchase_due_events (a different obligation: Faro selling an invoice back). amount_cents is informational (the payment received), never a balance."
     }
   },
   "_added_2026_10_06": "CC-2 (ACCT-F2026100618): 14 financial tables created 2026-10-01..10-03 (13 applied, 1 held) without a line-start '-- CANONICAL-CHECK:' block; with CI down the guard never ran and main went red. Declarations relocated here, one per table, each read against its migration and its readers; none is a second ledger (stored balances in faro_reserve_entries were already dropped by 202615420600)."

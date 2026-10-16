@@ -247,6 +247,14 @@ export const TOOLBAR_ICON_SIZE_CLASS = "h-4 w-4";
  * hit target, the child stays its native/small visual size. */
 export const MIN_HIT_TARGET_CLASS = "flex min-h-6 min-w-6 items-center justify-center";
 
+/** LEAD 443.156 item 2 (owner screenshot 10:48 CT: row + header select boxes too small) — the shared table's row and
+ * select-all checkboxes: a 20px box inside a 32px hit area. Used with MIN_HIT_TARGET_CLASS (the 24px floor) on the
+ * wrapper; scripts/verify-steps/18485 pins both sizes. */
+export const TABLE_SELECT_CHECKBOX_CLASS = "h-5 w-5 cursor-pointer accent-[#1F2A44]";
+export const TABLE_SELECT_HIT_CLASS = "min-h-8 min-w-8 cursor-pointer";
+/** 443.156 item 3 — the selector column is as wide as its content (32px hit area + 8px padding each side), no wider. */
+export const TABLE_SELECT_COLUMN_PX = 48;
+
 export const z = {
   dropdown: 30,
   modal: 50,

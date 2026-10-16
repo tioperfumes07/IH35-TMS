@@ -1,3 +1,4 @@
+import { AccountRegisterPage } from "../../accounting/AccountRegisterPage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -41,7 +42,7 @@ import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { Combobox, SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";
-import { formatUsdCents } from "../../../utils/qboFormat";
+import { formatUsdCents, formatDateTimeUS } from "../../../utils/qboFormat";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { EntityPicker } from "../../../components/EntityPicker";
@@ -79,6 +80,7 @@ import {
 } from "./bankTxnSortGroup";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 // BLOCK-6b — recoverable-expense bucket types a bank-categorized driver expense can charge (a fine/toll
 // the company paid on the driver's behalf → recovered from settlement). Mirrors the backend allow-list.
 const RECOVER_DEDUCTION_TYPES = ["fine", "toll", "citation", "damage", "equipment", "fuel", "other"] as const;
@@ -162,6 +164,20 @@ export function qboActionLabel(
   if (mode === "cc_payment") return QBO_BANKING_ACTIONS.recordCcPayment;
   if (mode === "loan") return QBO_BANKING_ACTIONS.loan;
   return QBO_BANKING_ACTIONS.add;
+}
+
+/**
+ * LEAD 443.156 item 4 (owner 11:40 CT: "IT SHOULD ONLY BE ONE COLUMN, IT IS REDUNDANT") — ONE action per row. The
+ * operator's chosen mode wins; with none chosen, a suggested match makes the action "Match" (it opens the matcher —
+ * the human accepts there, owner Law B); otherwise "Add". The button's label AND its click both read this, so the
+ * button can never say "Match" and categorize.
+ */
+export function effectiveActionMode(
+  chosen: RowDetailDraft["mode"] | undefined,
+  hasSuggestedMatch: boolean,
+): RowDetailDraft["mode"] {
+  if (chosen) return chosen;
+  return hasSuggestedMatch ? "match" : "categorize";
 }
 
 /**
@@ -841,6 +857,13 @@ export function BankingTransactionsDesignView({
     enabled: Boolean(companyId && selectedAccount?.id),
     staleTime: 30_000,
   });
+
+  // LEAD 443.170 — an account whose COMPLETE bank-line history is empty (fullHistoryQuery has no date/type predicate) has
+  // no feed: Faro reserves, factoring, petty cash. Its activity is ledger postings, rendered by the register below.
+  const feedlessAccountId =
+    selectedAccount?.id && fullHistoryQuery.isSuccess && (fullHistoryQuery.data?.transactions ?? []).length === 0
+      ? selectedAccount.id
+      : null;
 
   // LEAD 443.163 (register M3) — the match side of Categorize / Match is MatchDrawer (embedded): its own filters reset per
   // bank line because it mounts per line; no second candidate query lives in this view.
@@ -2165,6 +2188,7 @@ export function BankingTransactionsDesignView({
         render: (tx) => {
           const menuOpen = actionMenuTxId === tx.id;
           const undoEligible = isUndoEligible(tx);
+          const actionMode = effectiveActionMode(drafts[tx.id]?.mode, Boolean(txnSuggestions[tx.id]) && !hasPersistedMatch(tx));
           const closeActionMenu = () => {
             setActionMenuTxId(null);
             setActionMenuAnchor(null);
@@ -2180,14 +2204,11 @@ export function BankingTransactionsDesignView({
                   data-testid={`banking-suggested-match-block-${tx.id}`}
                   data-b3-match-badge-inline="1"
                 >
+                  {/* 443.156 item 4 — "N matches found" is information (QBO prints it as text), not a second action box. */}
                   <button
                     type="button"
                     title={`${txnSuggestions[tx.id]!.suggested_ledger_entry_kind} match, ${txnSuggestions[tx.id]!.date_gap_days}d gap`}
-                    className={`h-7 rounded-sm border px-1.5 text-xs font-semibold ${
-                      txnSuggestions[tx.id]!.suggested_confidence === "high"
-                        ? "border-[#1F2A44] bg-[#1F2A44] text-white"
-                        : "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]"
-                    }`}
+                    className="text-xs font-semibold text-[#1F2A44] underline-offset-2 hover:underline"
                     onClick={() => setMatchDrawerTxId(tx.id)}
                     data-testid={`banking-suggested-match-${tx.id}`}
                     data-b3-match-count={String(
@@ -2223,14 +2244,15 @@ export function BankingTransactionsDesignView({
                   type="button"
                   variant="primary"
                   size="md"
-                  onClick={() => void postTransaction(tx)}
+                  onClick={() => (actionMode === "match" ? setMatchDrawerTxId(tx.id) : void postTransaction(tx))}
                   disabled={postingTxId === tx.id}
                   data-testid={`banking-action-primary-${tx.id}`}
+                  data-action-mode={actionMode}
                 >
                   {postingTxId === tx.id
                     ? "Posting..."
                     : suggestionIsAction()
-                      ? qboActionLabel(getDraft(tx).mode)
+                      ? qboActionLabel(actionMode)
                       : "Add"}
                 </Button>
               )}
@@ -2435,8 +2457,10 @@ export function BankingTransactionsDesignView({
             expandedTxId === tx.id &&
             !hasPersistedLinks ? (
               <p className="mt-1 text-xs text-[#1F2A44]">
-                No persisted Driver / Unit / Load / Vendor / Customer / deduction tags on this row yet. Draft fields
-                below are not Law §9 links until Post / Categorize commits them.
+                No persisted Driver / Unit / Load / Vendor / Customer / deduction tags on this row yet.{" "}
+                <InfoPopover label="About links on this row">
+                  Draft fields below are not Law §9 links until Post / Categorize commits them.
+                </InfoPopover>
               </p>
             ) : null}
             {hasPersistedLinks && expandedTxId === tx.id ? (
@@ -2507,9 +2531,12 @@ export function BankingTransactionsDesignView({
             hasPersistedLinks &&
             !matchedJournalEntryId ? (
               <p className="mt-1 text-xs text-[#4B5563]">
-                No <code className="text-xs">matched_journal_entry_id</code> on this row yet. That column is set by
-                recon Match to an existing JE, or by the flag-gated bank-feed poster (BANK_FEED_GL_POSTING_ENABLED,
-                default OFF) — absence is not by itself proof the flag blocked a post.
+                No journal entry is matched to this bank line yet.{" "}
+                <InfoPopover label="About the matched journal entry">
+                  A bank line gets its journal entry when you Match it to an existing entry in Reconciliation, or when
+                  automatic posting from the bank feed is turned on for this company (it is off unless turned on). A
+                  missing entry alone does not mean a posting was blocked.
+                </InfoPopover>
               </p>
             ) : null}
           </div>
@@ -3041,9 +3068,11 @@ export function BankingTransactionsDesignView({
             >
               <p className="text-xs font-semibold text-[#0F1219]">Driver expense treatment</p>
               <p className="mt-0.5 text-xs text-[#4B5563]">
-                Paid a fine or cost for a driver without creating an expense first? Choose recoverable (deduct on
-                settlement) or payable (company owes the driver — posts to Driver Advance / Employee Loan when
-                enabled).
+                Paid a fine or cost for a driver without creating an expense first?{" "}
+                <InfoPopover label="About driver expense treatment">
+                  Choose recoverable (deduct on settlement) or payable (company owes the driver — posts to
+                  Driver Advance / Employee Loan when enabled).
+                </InfoPopover>
               </p>
               <div
                 className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5"
@@ -3272,7 +3301,7 @@ export function BankingTransactionsDesignView({
             data-testid="banking-bank-feed-gl-posting-honesty-banner"
           >
             {/*
-              ACCT-F176 — this banner used to be a hardcoded <p> asserting the flag "stays OFF by
+              ACCT-F176 — this banner used to be a hardcoded paragraph asserting the flag "stays OFF by
               default" and that categorizing "does not post a balanced TMS JE". Both sentences were
               literals; the banner never read the flag. Measured on prod 2026-08-07,
               BANK_FEED_GL_POSTING_ENABLED has default_enabled=false but a per-entity override of TRUE
@@ -3288,44 +3317,44 @@ export function BankingTransactionsDesignView({
             {bankFeedGlFlag.loading || bankFeedGlFlag.error ? (
               <>
                 <p className="font-semibold">
-                  Checking whether categorizing posts a journal entry for this company…
-                </p>
-                <p className="mt-1">
-                  <code className="text-xs">BANK_FEED_GL_POSTING_ENABLED</code> is resolved per entity and has not
-                  been read yet
-                  {bankFeedGlFlag.error ? " (the lookup failed)" : ""}. Until it is,{" "}
-                  <strong>treat categorizing as if it DOES post</strong> — that is the assumption that cannot cost you
-                  an unintended entry.
+                  Checking whether categorizing posts a journal entry for this company…{" "}
+                  <InfoPopover label="About bank-feed GL posting">
+                    <code className="text-xs">BANK_FEED_GL_POSTING_ENABLED</code> is resolved per entity and has not
+                    been read yet
+                    {bankFeedGlFlag.error ? " (the lookup failed)" : ""}. Until it is,{" "}
+                    <strong>treat categorizing as if it DOES post</strong> — that is the assumption that cannot cost
+                    you an unintended entry.
+                  </InfoPopover>
                 </p>
               </>
             ) : bankFeedGlFlag.enabled ? (
               <>
                 <p className="font-semibold">
                   Categorizing DOES post a journal entry — <code className="text-xs">BANK_FEED_GL_POSTING_ENABLED</code>{" "}
-                  is ON for this company
-                </p>
-                <p className="mt-1">
-                  Each row you categorize and post writes a balanced TMS journal entry to the live ledger, stamps{" "}
-                  <code className="text-xs">matched_journal_entry_id</code> and sets{" "}
-                  <code className="text-xs">review_state = &apos;matched&apos;</code>. Work the queue deliberately:
-                  categorizing every remaining row posts one entry per row. Reverse drill: JE detail Source maps{" "}
-                  <code className="text-xs">bank_categorization</code> → Banking Transactions.
+                  is ON for this company{" "}
+                  <InfoPopover label="About bank-feed GL posting">
+                    Each row you categorize and post writes a balanced TMS journal entry to the live ledger, stamps{" "}
+                    <code className="text-xs">matched_journal_entry_id</code> and sets{" "}
+                    <code className="text-xs">review_state = &apos;matched&apos;</code>. Work the queue deliberately:
+                    categorizing every remaining row posts one entry per row. Reverse drill: JE detail Source maps{" "}
+                    <code className="text-xs">bank_categorization</code> → Banking Transactions.
+                  </InfoPopover>
                 </p>
               </>
             ) : (
               <>
                 <p className="font-semibold">
                   Categorize tags are not ledger posts —{" "}
-                  <code className="text-xs">BANK_FEED_GL_POSTING_ENABLED</code> is OFF for this company
-                </p>
-                <p className="mt-1">
-                  Categorize persists driver/unit/load/vendor fields immediately; with the flag off that alone does not
-                  post a balanced TMS JE. <code className="text-xs">matched_journal_entry_id</code> is{" "}
-                  <strong>not</strong> proof that bank-feed GL posting is live — recon Match can also stamp it when{" "}
-                  <code className="text-xs">ledger_entry_kind = &apos;je&apos;</code> (see{" "}
-                  <code className="text-xs">match.service.ts</code>), and the flag-gated bank-feed poster is a
-                  separate path. A JE link with the flag OFF is a match/link, not “posting is on.” Reverse drill: JE
-                  detail Source maps <code className="text-xs">bank_categorization</code> → Banking Transactions.
+                  <code className="text-xs">BANK_FEED_GL_POSTING_ENABLED</code> is OFF for this company{" "}
+                  <InfoPopover label="About bank-feed GL posting">
+                    Categorize persists driver/unit/load/vendor fields immediately; with the flag off that alone does
+                    not post a balanced TMS JE. <code className="text-xs">matched_journal_entry_id</code> is{" "}
+                    <strong>not</strong> proof that bank-feed GL posting is live — recon Match can also stamp it when{" "}
+                    <code className="text-xs">ledger_entry_kind = &apos;je&apos;</code> (see{" "}
+                    <code className="text-xs">match.service.ts</code>), and the flag-gated bank-feed poster is a
+                    separate path. A JE link with the flag OFF is a match/link, not “posting is on.” Reverse drill: JE
+                    detail Source maps <code className="text-xs">bank_categorization</code> → Banking Transactions.
+                  </InfoPopover>
                 </p>
               </>
             )}
@@ -3441,6 +3470,15 @@ export function BankingTransactionsDesignView({
         </div>
       </div>
 
+      {/* LEAD 443.170 (owner 2026-10-16: the Faro Cash Reserve / Escrow Reserve / Factoring screens "are not rendering any
+          of the data"). An account with NO bank-feed lines (Faro reserves, factoring, petty cash) has nothing for the feed
+          table to show — its activity lives in the ledger. QBO parity: such an account opens on its register. Same
+          AccountRegisterPage component as Accounting → Account register (one function, one component). */}
+      {feedlessAccountId ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="banking-feedless-account-register">
+          <AccountRegisterPage embeddedBankAccountId={feedlessAccountId} />
+        </div>
+      ) : (
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-[#E5E7EB] pb-2">
           <BankingControlGroup>
@@ -3723,6 +3761,7 @@ export function BankingTransactionsDesignView({
           </div>
         </div>
       </div>
+      )}
 
       <RelayDepositCategorizedMatchHintsPanel companyId={companyId} />
       <RelatedPartyPairSuggestionsPanel companyId={companyId} />
@@ -3771,6 +3810,7 @@ export function BankingTransactionsDesignView({
       ) : null}
 
       <ParityTable
+        title="Bank transactions"
         tableTestId="banking-transactions-parity-table"
         columns={parityColumns}
         rows={pagedRows}
@@ -3998,7 +4038,7 @@ export function BankingTransactionsDesignView({
               <h1>Bank transactions</h1>
               <div class="meta">${esc(selectedAccount?.account_name ?? "All accounts")} · tab ${esc(
                 activeReviewTab,
-              )} · ${esc(orientation)} · printed ${esc(new Date().toLocaleString())}</div>
+              )} · ${esc(orientation)} · printed ${esc(formatDateTimeUS(new Date()))}</div>
               <table className="tabular-nums">
                 <thead>
                   <tr>

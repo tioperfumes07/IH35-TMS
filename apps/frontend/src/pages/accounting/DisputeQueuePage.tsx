@@ -343,7 +343,7 @@ export function DisputeQueuePage() {
 
       {actionError ? <p className="text-xs text-red-600">{actionError}</p> : null}
 
-      <ParityTable
+      <ParityTable title="Settlement disputes — queue"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

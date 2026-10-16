@@ -189,7 +189,7 @@ export function CheckDetailPage() {
         </div>
 
         <div className="rounded border border-gray-200">
-          <ParityTable<CheckDetailLine>
+          <ParityTable<CheckDetailLine> title="Check lines"
             columns={lineColumns}
             rows={lines}
             rowKey={(line) => line.id}

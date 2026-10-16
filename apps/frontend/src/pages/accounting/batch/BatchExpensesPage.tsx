@@ -186,7 +186,7 @@ export function BatchExpensesPage() {
       />
       {lastBatch ? <div className="mb-2 rounded border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs" data-testid="batch-expenses-result">Batch saved: {lastBatch.saved} expense(s) posted ({formatCurrencyFromCents(lastBatch.cents)}), {lastBatch.failed} kept unsaved with their reason.</div> : null}
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <ParityTable<IndexedRow>
+        <ParityTable<IndexedRow> title="New expenses — batch entry"
           storageKey="batch-expenses-grid"
           tableTestId="batch-expenses-grid"
           rows={rows.map((r, i) => ({ ...r, rowIndex: i }))}

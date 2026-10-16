@@ -20,6 +20,7 @@ import {
 } from "../../api/revenue-recognition";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -48,7 +49,7 @@ function ObligationBlock({ ob }: { ob: RevenueObligation }) {
       {ob.schedule.length > 0 && (
         <div className="px-1 pb-2">
           {/* ACCT-F3570: ParityTable owns Search+Range+gear on obligation schedule leaf. */}
-          <ParityTable<(typeof ob.schedule)[number]>
+          <ParityTable<(typeof ob.schedule)[number]> title={`Recognition schedule — obligation ${ob.obligation_number}`}
             rows={ob.schedule}
             rowKey={(r) => `${ob.obligation_number}-${r.period_number}`}
             storageKey={`revenue-obligation-schedule-${ob.obligation_number}`}
@@ -258,7 +259,7 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
               </div>
             </div>
           ) : null}
-          <ParityTable
+          <ParityTable title="Revenue leakage — loads earned, billed or open"
             columns={columns}
             rows={s?.rows ?? []}
             rowKey={(row) => `${row.gap}-${row.load_id}`}
@@ -402,8 +403,10 @@ export function RevenueRecognitionPage() {
       <AccountingSubNavWrapper title="Revenue Recognition" subtitle="Deferred revenue schedules and recognition rules">
         {operatingCompanyId ? <LeakagePanel operatingCompanyId={operatingCompanyId} /> : null}
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">
-          Revenue recognition contract schedules are not yet enabled for this account.
-          <p className="mt-1 text-xs text-gray-400">Contract schedules are turned on per operating company and aren’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable them. Leakage / unbilled tracking above stays available.</p>
+          Revenue recognition contract schedules are not yet enabled for this account.{" "}
+          <InfoPopover label="About revenue recognition schedules" align="right">
+            <p>Contract schedules are turned on per operating company and aren’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable them. Leakage / unbilled tracking above stays available.</p>
+          </InfoPopover>
         </div>
       </AccountingSubNavWrapper>
     );
@@ -424,7 +427,7 @@ export function RevenueRecognitionPage() {
           onRetry={() => void listQuery.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable title="Revenue contracts"
           columns={columns}
           rows={items}
           rowKey={(row) => row.id}

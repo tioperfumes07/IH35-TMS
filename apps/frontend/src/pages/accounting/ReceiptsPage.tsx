@@ -264,7 +264,7 @@ export function ReceiptsPage() {
       ) : null}
 
       {!isError ? (
-        <ParityTable
+        <ParityTable title="Receipts"
           columns={columns}
           rows={items}
           rowKey={(row) => row.id}

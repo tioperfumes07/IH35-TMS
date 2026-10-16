@@ -247,7 +247,7 @@ export function AllocationsPage() {
 
       {isError ? <p className="py-2 text-center text-xs text-red-600">Failed to load allocations.</p> : null}
 
-      <ParityTable
+      <ParityTable title="Cost allocations — by bill"
         columns={columns}
         rows={items}
         rowKey={(row) => row.id}

@@ -427,6 +427,7 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
       </div>
       {txQuery.isError ? <p className="text-xs text-red-600">Unable to load transactions.</p> : null}
       <ParityTable<PlaidBankTransaction>
+        title="Plaid bank transactions"
         columns={txColumns}
         rows={rows}
         rowKey={(t) => t.id}

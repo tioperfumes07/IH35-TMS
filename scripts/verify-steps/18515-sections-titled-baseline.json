@@ -1,0 +1,1355 @@
+{
+  "note": "LEAD 443.174 — shrink-only. Fix the screen; never raise a count.",
+  "files": {
+    "apps/frontend/src/pages/CustomerDetail.tsx": {
+      "untitled": 3,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/Customers.tsx": {
+      "untitled": 4,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/Documents.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/DriverAppLandingPage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/DriverDetail.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/Drivers.tsx": {
+      "untitled": 3,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/Users.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/VendorDetail.tsx": {
+      "untitled": 4,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/admin/ActivityLogPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/admin/DataImportPage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 2
+    },
+    "apps/frontend/src/pages/admin/ErrorMonitor.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/admin/LaunchToggles.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/audit/AuditEventsList.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/audit/AuditTrailPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx": {
+      "untitled": 3,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/chat/DispatchChatPage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/compliance/Form2290Filings.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/compliance/HosHistorySection.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/compliance/HosTrackerSection.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/compliance/HosViewerSection.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/compliance/RequiredDocumentsSection.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/customers/CoiTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/customers/CustomersListView.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/AwaitingBolInvoicePage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/DispatchAlertsPage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx": {
+      "untitled": 3,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/DispatchOverview.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 2
+    },
+    "apps/frontend/src/pages/dispatch/DriverBillRemintScreen.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/dispatch/LoadsWithoutDriverBillPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/LoadsWithoutTourPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/MapView.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 2
+    },
+    "apps/frontend/src/pages/dispatch/NeedsDeliveryAuthorizationPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/OcrQueuePage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/dispatch/OwnerOverrideLogPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/PodReviewPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/TripProfitability.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 2
+    },
+    "apps/frontend/src/pages/dispatch/planners/LoadsPlanner.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/docs/DocsHomePage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/driver-finance/components/FloorOverrideDecisionModal.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/driver-finance/components/LoanRecoveryDecisionModal.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/driver-finance/components/PayRunClosePanel.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/drivers/DriverDuplicatesPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/drivers/DriverImportModal.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/drivers/DriversTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/drivers/SettlementDisputeList.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/eld/tabs/LiveDutyTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/eld/tabs/UnidentifiedTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/eld/tabs/ViolationsTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/BatchDetail.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/BatchWizard.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/ChargebacksTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/FactorAdmin.tsx": {
+      "untitled": 3,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx": {
+      "untitled": 17,
+      "same_rows_toggle": 4,
+      "inline_notice": 5
+    },
+    "apps/frontend/src/pages/factoring/PaymentsToYouPanel.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/ReserveTracker.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/SubmissionQueue.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 2
+    },
+    "apps/frontend/src/pages/feed-gate/FeedGatePage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/finance/AmortizationPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/finance/ArApAgingPage.tsx": {
+      "untitled": 4,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/finance/BreakEvenPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/finance/BreakEvenWorkbookCreator.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/finance/FinanceHubPage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/finance/FinanceScenariosPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/finance/LoanWizardPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/finance/components/ScenarioLinesTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/fleet/RosterIntegrityPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/fuel/cards/FuelCardsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/fuel/components/RelayDepositReview.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 2
+    },
+    "apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/home/DriverHubReportingPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/insurance/ClaimsTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/insurance/LawsuitsTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/insurance/PoliciesList.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/integrations/edi/EdiTransactionLog.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/legal/LegalAttorneyReviewPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/legal/LegalPoliciesPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/legal/alerts/LegalDeadlineAlertsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/legal/contracts/LeaseToOwnCreatorModal.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/legal/templates/LegalTemplatesListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/liabilities/components/LiabilitiesTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/LocationsListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/MaintenanceServicesCatalog.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/accounting/CoaBatchActions.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 2
+    },
+    "apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/accounting/PostingTemplatesListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/components/QboSyncHealthCard.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/driver/DriverTeamsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/drivers/DriversReferenceCatalogPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/fleet/FleetCatalogListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/maintenance/OemPartsCatalog.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/names/BrokersListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/names/NamesMasterHub.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/reference/StatesCatalogPage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/lists/safety/CargoClaimReasonsListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/safety/CivilFineTypesListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/safety/CompanyViolationTypesListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/safety/ComplaintTypesListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/safety/DotViolationTypesListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/safety/InternalFineReasonsListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/FaultCodeAlertsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/FaultRulesPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/IntegrityReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/maintenance/PredictiveAlertsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/RoadServiceList.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/ServiceLocationPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx": {
+      "untitled": 7,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/compliance/Compliance425CPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/components/CreateWOSectionReconcile.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/components/MaintenanceDamageRegisterTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/components/PartsInventoryTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/components/RecentActivityRow.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/onboarding/Step6SampleData.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/program/ModuleCompletionPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/program/ProgramBoardPage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/program/U14ExclusiveStatusBanner.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/BookingGapReport.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/CancellationsReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/DeadheadReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/DispatchMarginPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/DriverQualificationReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/DuplicateMastersReport.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/GeofenceDwellReport.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/InvoiceSearchReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/LaneProfitabilityPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/LateArrivalReport.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/LoadsReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/reports/PerTruckCpmReport.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/PostedWhileTourOpenReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/ReeferFuelCreditReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/reports/ScheduledReportsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/SubscriptionManager.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/reports/audit/AuditReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/ifta/IFTAPreparer.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/reports/runners/RunnerTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/AccidentsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/CSAMitigationQueue.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/CompanyViolationsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/ComplaintsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/DashcamViewerPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/DotInspectionsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/FinesPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/HoursOfServicePage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/IdvrPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/IntegrityAlertsPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/InternalFinesPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/PermitsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/PositionHistoryPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/TrainingProgramsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/audit-425c/Audit425cPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/components/DrugAlcoholTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/components/TrainingTable.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/driver-scheduler/DriverLeaveBalancesPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/driver-scoring/DriverScoreDetail.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/expiry-tracking/ExpiryDashboard.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/integrity-reports/DriverVendorMappingTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/photo-comparison/PhotoComparisonPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/tabs/AnomaliesTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/tabs/CSAScoreTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx": {
+      "untitled": 0,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/tabs/HOSViolationsTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/safety/tabs/IntegrityReportsTab.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/samsara-vendor-mapping/HosDriverMapPreviewPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx": {
+      "untitled": 3,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/system/EngineStatusBoardPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/system/SystemModulePage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 3
+    },
+    "apps/frontend/src/pages/tasks/ReconcilerExceptionsPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/tasks/TasksMinePage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/tasks/TasksReportPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/vendors/VendorsListView.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    }
+  }
+}

@@ -157,7 +157,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
         </div>
 
         <div className="overflow-y-auto flex-1">
-          <ParityTable<PrepaidAmortRow>
+          <ParityTable<PrepaidAmortRow> title="Amortization schedule"
             columns={SCHEDULE_COLUMNS}
             rows={detail.schedule}
             rowKey={(row) => row.id}
@@ -478,7 +478,7 @@ export function PrepaidExpensesPage() {
 
       {isError ? <p className="text-xs text-red-600 py-2 text-center">Failed to load prepaid expenses.</p> : null}
 
-      <ParityTable
+      <ParityTable title="Prepaid expenses"
         columns={columns}
         rows={items}
         rowKey={(row) => row.id}

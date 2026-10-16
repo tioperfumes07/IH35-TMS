@@ -146,6 +146,7 @@ export function CompanySettlementsRegisterTab({
     <div className="space-y-2" data-testid="company-settlements-register">
       {q.isError ? <ListErrorBanner message="Failed to load company settlements." onRetry={() => void q.refetch()} /> : null}
       <ParityTable
+        title="Company settlements"
         columns={columns}
         rows={rows}
         rowKey={(r) => r.id}
@@ -193,6 +194,7 @@ function CompanyDriverPicker({
         <ListErrorBanner message="Failed to load tours." onRetry={() => void q.refetch()} />
       ) : null}
       <ParityTable
+        title="Closed tours — driver vs company"
         columns={columns}
         rows={rows}
         rowKey={(r) => r.settlement_id}
@@ -315,8 +317,8 @@ function DriverSettlementCard({ readout }: { readout: TourReadout }) {
         </div>
       </div>
 
-      <div className="ldt-ch" style={{ marginTop: 8 }}><span>Loads</span></div>
       <ParityTable
+        title="Loads on this tour"
         columns={columns}
         rows={legs}
         rowKey={(l) => l.load_id}

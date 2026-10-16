@@ -48,7 +48,7 @@ import {
   BANKING_SUBNAV_TAB_IDS,
   type BankingModuleTabId,
 } from "./BANKING_NAV_CONFIG";
-import { formatUsd } from "../../utils/qboFormat";
+import { formatUsd, formatNumber } from "../../utils/qboFormat";
 import { entityLabel } from "../../lib/entity-label";
 import { BankingNewMenu } from "./components/BankingNewMenu";
 import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
@@ -66,6 +66,7 @@ import { FactoringReservesSharedPanel } from "../../components/factoring/Factori
 import { SelectCombobox } from "../../components/Combobox";
 
 
+import { InfoPopover } from "../../components/shared/InfoPopover";
 type BankingTabId = BankingModuleTabId;
 
 type Props = {
@@ -898,8 +899,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <p className="font-semibold">Banking account tiles are empty — not a silent healthy $0.</p>
               <p className="mt-1">
                 DIP, Factoring reserve, and Driver Escrow KPIs normally come from the banking account summary
-                feed. When that feed returns no rows, zeros here are unproven. Connect Plaid / map Cash GL
-                accounts, or open Factoring and Driver Escrow for canonical virtual-bank truth.
+                feed.{" "}
+                <InfoPopover label="About these KPIs">
+                  When that feed returns no rows, zeros here are unproven. Connect Plaid / map Cash GL
+                  accounts, or open Factoring and Driver Escrow for canonical virtual-bank truth.
+                </InfoPopover>
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <ActionButton onClick={() => navigate("/factoring")}>Factoring entry</ActionButton>
@@ -1079,12 +1083,14 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               data-testid="banking-forreview-backlog-banner"
             >
               <p className="font-semibold">
-                For-review backlog: {uncategorizedCount.toLocaleString()} transaction(s) still need Match/Categorize
+                For-review backlog: {formatNumber(uncategorizedCount)} transaction(s) still need Match/Categorize
               </p>
               <p className="mt-1">
-                Live bank feed is not “caught up” until these are matched or categorized. Use the For review tab below —
-                Match opens candidates; Categorize posts to a GL account. Do not treat a large for-review queue as
-                reconciled books.
+                Live bank feed is not “caught up” until these are matched or categorized.{" "}
+                <InfoPopover label="About the for-review queue">
+                  Use the For review tab below — Match opens candidates; Categorize posts to a GL account. Do
+                  not treat a large for-review queue as reconciled books.
+                </InfoPopover>
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <ActionButton
@@ -1159,10 +1165,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             >
               <p className="font-semibold">No Relay fuel wallet is bound for this operating company.</p>
               <p className="mt-1">
-                Identity is set by flagging a Chart of Accounts entry as the Relay fuel wallet, linked
-                through the bank account tile that entry is bound to. An empty
-                Relay tab here means no bank account tile carries that CoA bind for the selected company — not missing
-                Plaid tags. Fuel lines may still appear on the Transactions register once ingest has rows.
+                Identity is set by flagging a Chart of Accounts entry as the Relay fuel wallet, linked through
+                the bank account tile that entry is bound to.{" "}
+                <InfoPopover label="About the Relay fuel wallet tab">
+                  An empty Relay tab here means no bank account tile carries that CoA bind for the selected
+                  company — not missing Plaid tags. Fuel lines may still appear on the Transactions register
+                  once ingest has rows.
+                </InfoPopover>
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
@@ -1222,8 +1231,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           >
             <p className="font-semibold">Statement Import is an input path — not reconciliation proof.</p>
             <p className="mt-1">
-              Uploading CSV does not close a period or clear for-review. After import, Match/Categorize on Transactions
-              and run Reconciliation sessions. PDF parser remains Phase 6 (honest deferral).
+              Uploading CSV does not close a period or clear for-review.{" "}
+              <InfoPopover label="About CSV upload">
+                After import, Match/Categorize on Transactions and run Reconciliation sessions. PDF parser
+                remains Phase 6 (honest deferral).
+              </InfoPopover>
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
@@ -1235,8 +1247,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Bank Statement Import</p>
             <p className="mb-3 text-xs text-gray-700">
-              CSV import for non-feed banks (PDF parser remains Phase 6). Select a bank account, then upload. The same
-              uploader remains available inside Reconciliation (additive — not removed).
+              CSV import for non-feed banks (PDF parser remains Phase 6).{" "}
+              <InfoPopover label="About CSV import">
+                Select a bank account, then upload. The same uploader remains available inside Reconciliation
+                (additive — not removed).
+              </InfoPopover>
             </p>
             <label className="mb-2 block text-xs font-semibold text-gray-600">
               Bank account

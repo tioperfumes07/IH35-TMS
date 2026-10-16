@@ -176,7 +176,7 @@ export function PaymentMethodsCatalogPage() {
       </label>
 
       {/* ACCT-F3530: ParityTable mounts Search+Range+gear (raw HTML table had no surface bar). */}
-      <ParityTable<PaymentMethod>
+      <ParityTable<PaymentMethod> title="Payment methods"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

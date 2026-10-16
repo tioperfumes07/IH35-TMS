@@ -42,6 +42,7 @@ import {
 import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
 import { companyToday } from "../../lib/businessDate";
 import { colors } from "../../design/tokens";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const PAGE = 100;
 
@@ -178,7 +179,7 @@ export function ReclassifyTransactionsPage() {
   const accountsQ = useQuery({ queryKey: ["reclassify-accounts", companyId, fromDate, toDate], queryFn: () => getReclassifyAccountTree(companyId, fromDate, toDate), enabled: !!companyId });
   const facetsQ = useQuery({ queryKey: ["reclassify-facets", companyId, fromDate, toDate], queryFn: () => getReclassifyFacets(companyId, fromDate, toDate), enabled: !!companyId });
   const coaQ = useQuery({ queryKey: ["reclassify-coa", companyId], queryFn: () => listCoaAccountsForJe(companyId), enabled: !!companyId });
-  const classesQ = useQuery({ queryKey: ["reclassify-classes"], queryFn: () => listClassesForJe() });
+  const classesQ = useQuery({ queryKey: ["reclassify-classes", companyId], queryFn: () => listClassesForJe(companyId), enabled: !!companyId });
   const vendorsQ = useQuery({ queryKey: ["reclassify-vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId && toEntityKind === "vendor" });
   const customersQ = useQuery({ queryKey: ["reclassify-customers", companyId], queryFn: () => listCustomers({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId && toEntityKind === "customer" });
   const batchesQ = useQuery({ queryKey: ["reclassify-batches", companyId], queryFn: () => listReclassifyBatches(companyId), enabled: !!companyId });
@@ -440,7 +441,7 @@ export function ReclassifyTransactionsPage() {
                 {!linesQ.isLoading && !linesQ.error && lines.length === 0 ? <div className="p-3 text-xs text-[#4B5563]" data-testid="reclassify-genuinely-empty">No transactions in this period{oneAccountId ? " for this account" : ""} (from {formatDateQboList(applied!.from)} to {formatDateQboList(applied!.to)}).</div> : null}
                 {!linesQ.error && (linesQ.isLoading || lines.length > 0) ? (
                   <div data-b5-account-no-col="1">
-                    <ParityTable<ReclassifyLine>
+                    <ParityTable<ReclassifyLine> title="Transactions to reclassify"
                       storageKey="reclassify-grid"
                       tableTestId="reclassify-grid"
                       rows={lines}
@@ -531,8 +532,7 @@ export function ReclassifyTransactionsPage() {
           ) : null}
 
           <div className="mt-3 rounded border border-gray-200 bg-white" data-testid="reclassify-batches">
-            <div className="border-b border-gray-200 px-2 py-1 text-xs font-bold uppercase tracking-wide text-gray-600">Reclassify batches</div>
-            <ParityTable<BatchRow>
+            <ParityTable<BatchRow> title="Reclassify batches"
               storageKey="reclassify-batches"
               tableTestId="reclassify-batches"
               rows={batchesQ.data?.batches ?? []}
@@ -577,8 +577,12 @@ export function ReclassifyTransactionsPage() {
       {modalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" role="dialog" aria-modal="true" data-testid="reclassify-modal" data-b5-reclassify-modal="1">
           <div className="w-[32rem] rounded border border-gray-300 bg-white p-4 shadow-lg">
-            <h2 className="text-xs font-bold uppercase tracking-wide">Reclassify {selected.size} transaction line{selected.size === 1 ? "" : "s"} · {formatCurrencyFromCents(selectedSum)}</h2>
-            <p className="mt-1 text-xs text-[#4B5563]">You can now reclassify the vendor/customer name from this page. Leave a field blank to keep it unchanged. Each document gets its own linked RECLASSIFICATION journal entry; a bill's vendor is the A/P subledger and is not changed here.</p>
+            <div className="flex items-center gap-1">
+              <h2 className="text-xs font-bold uppercase tracking-wide">Reclassify {selected.size} transaction line{selected.size === 1 ? "" : "s"} · {formatCurrencyFromCents(selectedSum)}</h2>
+              <InfoPopover label="About reclassifying" align="right">
+                <p>You can now reclassify the vendor/customer name from this page. Leave a field blank to keep it unchanged. Each document gets its own linked RECLASSIFICATION journal entry; a bill's vendor is the A/P subledger and is not changed here.</p>
+              </InfoPopover>
+            </div>
             <div className="mt-3 flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">Change account to
               {/* ReferenceSelect createKind="account" — canonical picker, showAccountNumbers gate via coaAccountReferenceOption */}
               <ReferenceSelect value={toAccount || null} onChange={(next) => setToAccount(next ?? "")} options={accountRefOptions} createKind="account" operatingCompanyId={companyId} placeholder="Select…" loading={coaQ.isLoading} onOptionCreated={() => void coaQ.refetch()} />

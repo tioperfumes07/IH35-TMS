@@ -322,6 +322,7 @@ export function PaymentDetailPage() {
           ) : null}
         </div>
         <ParityTable<PaymentApplication>
+          title="Applied to invoices"
           storageKey="payment-detail-applications"
           tableTestId="payment-detail-applications-table"
           columns={applicationColumns}

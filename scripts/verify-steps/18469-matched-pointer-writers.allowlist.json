@@ -1,0 +1,20 @@
+{
+  "_doc": "LEAD 443.168 M (E-50) — files that write a banking.bank_transactions matched_*_id pointer, with the number of write sites. SHRINK-ONLY: route a site through the one match writer (match.service storeMatch / the accept paths) or the one unmatch writer (unmatch-bank-transaction.service) and lower its count; never add a file or raise a count.",
+  "sites": {
+    "apps/backend/src/accounting/bank-line-expense.service.ts": 3,
+    "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts": 1,
+    "apps/backend/src/accounting/bank-recon/match.service.ts": 5,
+    "apps/backend/src/accounting/bank-recon/related-party-pair-confirm.service.ts": 1,
+    "apps/backend/src/accounting/bank-recon/relay-bank-match.service.ts": 1,
+    "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts": 1,
+    "apps/backend/src/accounting/payments/bank-bill-backlink.service.ts": 1,
+    "apps/backend/src/accounting/payments/bank-invoice-backlink.service.ts": 1,
+    "apps/backend/src/accounting/related-party-loan-posting/create-entry.service.ts": 1,
+    "apps/backend/src/accounting/void.service.ts": 1,
+    "apps/backend/src/banking/bank-feed-gl-posting.service.ts": 2,
+    "apps/backend/src/banking/bank-tx-dedup.ts": 1,
+    "apps/backend/src/banking/transfers.service.ts": 3,
+    "apps/backend/src/cash-advances/cash-advances.routes.ts": 1,
+    "apps/backend/src/factoring/faro-reserve-entries.service.ts": 1
+  }
+}

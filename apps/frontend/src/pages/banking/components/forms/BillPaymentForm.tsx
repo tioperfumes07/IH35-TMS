@@ -9,6 +9,7 @@ import { ParityTable } from "../../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../../components/Combobox";
 import { entityLabel, visibleDocumentLabel } from "../../../../lib/entity-label";
 import { EntityLink } from "../../../../components/shared/EntityLink";
+import { formatUsdCents } from "../../../../utils/qboFormat";
 
 type Props = {
   value: Record<string, unknown>;
@@ -159,13 +160,13 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
             {
               key: "total",
               label: "Total",
-              render: (bill) => `$${(Number(bill.amount_cents ?? 0) / 100).toFixed(2)}`,
+              render: (bill) => formatUsdCents(bill.amount_cents),
             },
             {
               key: "open",
               label: "Open",
               cellClass: "text-red-700",
-              render: () => `$${(openBalanceCents / 100).toFixed(2)}`,
+              render: () => formatUsdCents(openBalanceCents),
             },
             {
               key: "apply",

@@ -15,6 +15,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatDateTimeUS } from "../../utils/qboFormat";
 
 export function QboSyncQueuePage() {
   const auth = useAuth();
@@ -83,7 +84,7 @@ export function QboSyncQueuePage() {
           <p>Blocked: {Number(statsQuery.data?.blocked ?? 0)}</p>
           <p>
             Last success:{" "}
-            {statsQuery.data?.last_successful_sync_at ? new Date(statsQuery.data.last_successful_sync_at).toLocaleString() : "Never"}
+            {statsQuery.data?.last_successful_sync_at ? formatDateTimeUS(statsQuery.data.last_successful_sync_at) : "Never"}
           </p>
         </div>
       </div>
@@ -104,7 +105,7 @@ export function QboSyncQueuePage() {
                   <p className="text-gray-600">
                     status={item.sync_status} attempts={item.attempt_count}/{item.max_attempts}
                   </p>
-                  <p className="text-gray-500">next attempt: {new Date(item.next_attempt_at).toLocaleString()}</p>
+                  <p className="text-gray-500">next attempt: {formatDateTimeUS(item.next_attempt_at)}</p>
                   {item.error_message ? <p className="text-red-600">{item.error_message}</p> : null}
                 </div>
                 <div className="flex items-center gap-2">

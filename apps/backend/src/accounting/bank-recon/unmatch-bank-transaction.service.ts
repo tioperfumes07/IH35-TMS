@@ -210,3 +210,82 @@ export async function unmatchBankTransactionOnClient(
   };
 }
 
+
+type RowQueryable = { query: (sql: string, values?: unknown[]) => Promise<{ rows: any[]; rowCount?: number | null }> };
+
+/**
+ * LEAD 443.168 M (Engine Registry E-50) — the one unmatch writer also owns every void of a match row: a voided bank line's
+ * live matches, and one match row voided through governance. scripts/verify-steps/18469 refuses a match-row UPDATE anywhere
+ * else (the one match writer, match.service storeMatch / repointMatchRows, is the other side).
+ */
+export async function voidMatchRowsOfBankLine(
+  client: RowQueryable,
+  input: { operating_company_id: string; bank_transaction_id: string; reason: string; actor_user_id: string | null }
+): Promise<number> {
+  const r = await client.query(
+    `UPDATE banking.reconciliation_matches
+        SET voided_at = COALESCE(voided_at, now()),
+            void_reason = COALESCE(void_reason, $3),
+            voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
+            updated_at = now()
+      WHERE bank_transaction_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL`,
+    [input.bank_transaction_id, input.operating_company_id, input.reason, input.actor_user_id]
+  );
+  return r.rowCount ?? 0;
+}
+
+export async function voidMatchRowById(
+  client: RowQueryable,
+  input: { operating_company_id: string; match_id: string; reason: string; actor_user_id: string | null }
+): Promise<string | null> {
+  const r = await client.query(
+    `UPDATE banking.reconciliation_matches
+        SET voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [input.match_id, input.operating_company_id, input.reason, input.actor_user_id]
+  );
+  return (r.rows[0] as { id?: string } | undefined)?.id ?? null;
+}
+
+/**
+ * ROUND 274 item 53 (moved here by 443.168 M) — a Plaid pending row retired into its posted survivor: void the pending's
+ * matches the survivor already carries, then move the rest onto the survivor.
+ */
+export async function moveMatchRowsOnPlaidMerge(
+  client: RowQueryable,
+  args: { pendingId: string; survivorId: string; operatingCompanyId: string }
+): Promise<{ repointed: number; voided_duplicates: number }> {
+  const voidedDup = await client.query(
+    `
+      UPDATE banking.reconciliation_matches AS pending_rm
+         SET voided_at = COALESCE(pending_rm.voided_at, now()),
+             void_reason = COALESCE(pending_rm.void_reason, 'plaid_pending_merge_duplicate_on_survivor'),
+             updated_at = now()
+        FROM banking.reconciliation_matches AS survivor_rm
+       WHERE pending_rm.bank_transaction_id = $1::uuid
+         AND pending_rm.operating_company_id = $3::uuid
+         AND pending_rm.voided_at IS NULL
+         AND survivor_rm.bank_transaction_id = $2::uuid
+         AND survivor_rm.operating_company_id = $3::uuid
+         AND survivor_rm.voided_at IS NULL
+         AND survivor_rm.ledger_entry_kind = pending_rm.ledger_entry_kind
+         AND survivor_rm.ledger_entry_id IS NOT DISTINCT FROM pending_rm.ledger_entry_id
+      RETURNING pending_rm.id
+    `,
+    [args.pendingId, args.survivorId, args.operatingCompanyId]
+  );
+  const repointed = await client.query(
+    `
+      UPDATE banking.reconciliation_matches
+         SET bank_transaction_id = $2::uuid,
+             updated_at = now()
+       WHERE bank_transaction_id = $1::uuid
+         AND operating_company_id = $3::uuid
+         AND voided_at IS NULL
+      RETURNING id
+    `,
+    [args.pendingId, args.survivorId, args.operatingCompanyId]
+  );
+  return { repointed: repointed.rowCount ?? repointed.rows.length, voided_duplicates: voidedDup.rowCount ?? voidedDup.rows.length };
+}

@@ -29,7 +29,7 @@ import {
   type TouchEvent as ReactTouchEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { colors, spacing, typography, MIN_HIT_TARGET_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
+import { colors, spacing, typography, MIN_HIT_TARGET_CLASS, TABLE_SELECT_CHECKBOX_CLASS, TABLE_SELECT_HIT_CLASS, TABLE_SELECT_COLUMN_PX, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
 import { QBO_SURFACE, QBO_SURFACE_CLASS, QBO_TOOLBAR_ICON_SLOT } from "../../design/qbo-parity";
 import { Button } from "../Button";
 import { Printer as PrintIcon, Settings as GearIcon } from "lucide-react";
@@ -142,6 +142,11 @@ export type ParityTableProps<T> = {
 
   /** Left-of-gear toolbar slot (Print / Export / More actions). */
   toolbar?: ReactNode;
+  /** LEAD 443.174 — the section's real title (what the rows ARE: "Bills — open"), rendered first on the toolbar row in the
+   *  app's section-header style, so a titled table costs no extra height. */
+  title?: ReactNode;
+  /** Optional info "i" beside the title (an InfoPopover): explanatory text lives here, never as a paragraph above the table. */
+  titleInfo?: ReactNode;
   /** Header select-all + per-row checkboxes. */
   selectable?: boolean;
   /** Batch-actions bar content, shown when ≥1 row selected. */
@@ -623,6 +628,8 @@ export function ParityTable<T>({
   initialPageSize,
   storageKey,
   toolbar,
+  title,
+  titleInfo,
   selectable = false,
   batchActions,
   rowActions,
@@ -998,7 +1005,7 @@ export function ParityTable<T>({
   const stickyLeftPx = useMemo(() => {
     const offsets: Record<string, number> = {};
     if (!stickyLeftCount || stickyLeftCount <= 0) return offsets;
-    let cum = (renderExpanded ? 32 : 0) + (selectable ? 32 : 0);
+    let cum = (renderExpanded ? 32 : 0) + (selectable ? TABLE_SELECT_COLUMN_PX : 0);
     for (let i = 0; i < Math.min(stickyLeftCount, visibleColumns.length); i += 1) {
       const key = String(visibleColumns[i].key);
       offsets[key] = cum;
@@ -1071,10 +1078,28 @@ export function ParityTable<T>({
     return colWidths[key] ?? autoFitOrFloor;
   };
   const proportional = columnLayout !== "auto" && !(stickyLeftCount > 0);
-  const proportionalTotal = proportional ? visibleColumns.reduce((sum, c) => sum + (widthFor(c) ?? 120), 0) : 0;
-  const proportionalMinTable = proportional ? visibleColumns.length * MIN_COL_WIDTH_PX + (selectable ? 32 : 0) + (renderExpanded ? 32 : 0) : 0;
-  const cssWidthFor = (w: number | undefined): string | number | undefined =>
-    !w ? undefined : proportional && proportionalTotal > 0 ? `${((w / proportionalTotal) * 100).toFixed(4)}%` : w;
+  // LEAD 443.156 item 3 — "no truncated money": a money / number column keeps its measured (or dragged) PIXEL width and
+  // never takes a shrinking share; only the text columns divide what is left, by content. The table's floor is the
+  // money columns' pixels + a legible floor per text column, so below that the container scrolls instead of cutting
+  // a figure. scripts/verify-steps/18485 pins it.
+  const isFigureColumn = (c: ParityColumn<T>) => c.kind === "money" || c.kind === "number";
+  const figurePx = proportional ? visibleColumns.filter(isFigureColumn).reduce((sum, c) => sum + (widthFor(c) ?? 120), 0) : 0;
+  const proportionalTotal = proportional
+    ? visibleColumns.filter((c) => !isFigureColumn(c)).reduce((sum, c) => sum + (widthFor(c) ?? 120), 0)
+    : 0;
+  const proportionalMinTable = proportional
+    ? figurePx + visibleColumns.filter((c) => !isFigureColumn(c)).length * MIN_COL_WIDTH_PX + (selectable ? TABLE_SELECT_COLUMN_PX : 0) + (renderExpanded ? 32 : 0)
+    : 0;
+  const cssWidthFor = (w: number | undefined, column?: ParityColumn<T>): string | number | undefined =>
+    !w
+      ? undefined
+      : proportional && column && isFigureColumn(column)
+        ? w
+        : proportional && proportionalTotal > 0
+          ? // a text column's share of the WHOLE content width, so the text shares sum below 100% by exactly the room the
+            // pixel figure columns keep.
+            `${((w / (proportionalTotal + figurePx)) * 100).toFixed(4)}%`
+          : w;
 
   // persist on mouseup. Widths drive the table-fixed column widths and survive reloads (storageKey).
   function startResize(key: string, e: ReactMouseEvent) {
@@ -1374,12 +1399,12 @@ export function ParityTable<T>({
           </td>
         ) : null}
         {selectable ? (
-          <td className="px-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-            {/* UI CONTROL LAW — the native checkbox stays its own small visual size; the wrapper
-             * is the >=24x24 WCAG 2.2 SC 2.5.8 clickable area (was a bare, unwrapped <input>). */}
-            <span className={MIN_HIT_TARGET_CLASS}>
+          <td className="px-2" style={{ width: TABLE_SELECT_COLUMN_PX }} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+            {/* UI CONTROL LAW — the wrapper is the clickable area (>=24px floor; 443.156: 32px), the box is 20px. */}
+            <span className={`${MIN_HIT_TARGET_CLASS} ${TABLE_SELECT_HIT_CLASS}`}>
               <input
                 type="checkbox"
+                className={TABLE_SELECT_CHECKBOX_CLASS}
                 aria-label="Select row"
                 checked={selected.has(id)}
                 onChange={() => toggleRow(id)}
@@ -1483,6 +1508,14 @@ export function ParityTable<T>({
     <div className={shellClass} style={frameColor ? { borderColor: frameColor } : undefined} data-testid={tableTestId}>
       {/* Canonical list toolbar: search + applied range filter + optional slot + gear. */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
+        {title ? (
+          <div className="flex shrink-0 items-center gap-1">
+            <h2 className="whitespace-nowrap text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
+              {title}
+            </h2>
+            {titleInfo}
+          </div>
+        ) : null}
         <UniversalListToolbar
           search={toolbarSearch}
           onSearchChange={(value) => { setToolbarSearch(value); changePage(1); }}
@@ -1731,11 +1764,12 @@ export function ParityTable<T>({
           <tr style={{ height: DENSITY[density].rowH }}>
             {renderExpanded ? <th className="w-8 px-2" style={{ backgroundColor: resolvedHeaderBg }} /> : null}
             {selectable ? (
-              <th className="w-8 px-2" style={{ backgroundColor: resolvedHeaderBg }}>
-                {/* UI CONTROL LAW — same >=24x24 hit-target wrap as the row checkbox. */}
-                <span className={MIN_HIT_TARGET_CLASS}>
+              <th className="px-2" style={{ backgroundColor: resolvedHeaderBg, width: TABLE_SELECT_COLUMN_PX }}>
+                {/* UI CONTROL LAW — same hit-target wrap as the row checkbox (443.156: 20px box, 32px hit area). */}
+                <span className={`${MIN_HIT_TARGET_CLASS} ${TABLE_SELECT_HIT_CLASS}`}>
                   <input
                     type="checkbox"
+                    className={TABLE_SELECT_CHECKBOX_CLASS}
                     aria-label="Select all on page"
                     checked={pageAllSelected}
                     onChange={togglePageAll}
@@ -1807,7 +1841,7 @@ export function ParityTable<T>({
                     borderBottom: `1px solid ${colors.tableColumnRule}`,
                     // board: the boards' column label (.hd) and rules -- overrides the defaults above.
                     ...(board ? { ...BOARD_LABEL, fontWeight: headerWeight ?? BOARD_LABEL.fontWeight, borderTop: `1px solid ${BOARD_RULE}`, borderBottom: `1px solid ${BOARD_RULE}` } : {}),
-                    ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: cssWidthFor(w) }) : {}),
+                    ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: cssWidthFor(w, column) }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                     ...(key in stickyLeftPx
                       ? {
@@ -1935,7 +1969,7 @@ export function ParityTable<T>({
               style={{ backgroundColor: colors.tableGroupBandBg, ...(board ? { backgroundColor: "var(--ih-thead)", borderTop: "2px solid var(--ih-border)" } : {}) }}
             >
               {renderExpanded ? <td className="w-8 px-2" /> : null}
-              {selectable ? <td className="w-8 px-2" /> : null}
+              {selectable ? <td className="px-2" style={{ width: TABLE_SELECT_COLUMN_PX }} /> : null}
               {visibleColumns.map((column) => {
                 const key = String(column.key);
                 const entry = footerCells[key];

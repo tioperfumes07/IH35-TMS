@@ -328,7 +328,7 @@ export function CreditMemosPage() {
               {(creditMemosQuery.data?.credit_memos ?? []).length} live, {creditMemosQuery.data.voided_count} voided (hidden)
             </p>
           ) : null}
-        <ParityTable
+        <ParityTable title="Credit memos"
           rows={creditMemosQuery.data?.credit_memos ?? []}
           columns={columns}
           rowKey={(row) => row.id}

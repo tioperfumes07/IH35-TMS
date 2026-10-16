@@ -17,7 +17,9 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { formatUsdCents } from "../../../lib/money";
 import { BANKING_TAB_PATH } from "../../../router/route-manifest";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatDateUS, formatNumber } from "../../../utils/qboFormat";
 
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 export type ReconShellAccount = {
   id: string;
   label: string;
@@ -41,7 +43,7 @@ function formatReconciledAt(iso: string | null | undefined) {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  return formatDateUS(d);
 }
 
 /**
@@ -202,12 +204,14 @@ export function ReconciliationTabContent({
             className="mb-3 border-l-4 border-[#6B7280] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
             data-testid="banking-recon-never-completed-banner"
           >
-            <p className="font-semibold">No reconciliation sessions exist for this company yet.</p>
-            <p className="mt-1">
-              Statement reconcile is not proven live until a session is started and completed to a $0.00
-              difference. Uncategorized / for-review bank transactions still need Match or Categorize (
-              {uncategorizedCount.toLocaleString()} currently flagged). Do not treat this screen as
-              reconciled.
+            <p className="font-semibold">
+              No reconciliation sessions exist for this company yet.{" "}
+              <InfoPopover label="About reconciliation sessions">
+                Statement reconcile is not proven live until a session is started and completed to a $0.00
+                difference. Uncategorized / for-review bank transactions still need Match or Categorize (
+                {formatNumber(uncategorizedCount)} currently flagged). Do not treat this screen as
+                reconciled.
+              </InfoPopover>
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <ActionButton onClick={() => setStartOpen(true)}>+ Start first reconciliation</ActionButton>
@@ -320,8 +324,11 @@ export function ReconciliationTabContent({
           ))}
         </div>
         <p className="mb-2 text-center text-xs text-[#6B7280]">
-          Difference must reach $0.00 before Finish is enabled. POSTING DATE and TRANSACTION DATE stay
-          separate columns in the workspace — never collapsed to one &quot;Date&quot;.
+          Difference must reach $0.00 before Finish is enabled.{" "}
+          <InfoPopover label="About finishing a reconciliation">
+            POSTING DATE and TRANSACTION DATE stay separate columns in the workspace — never collapsed to one
+            &quot;Date&quot;.
+          </InfoPopover>
         </p>
 
         <div className="mb-3 grid grid-cols-1 gap-3 lg:grid-cols-2">

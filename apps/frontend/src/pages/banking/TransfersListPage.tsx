@@ -12,7 +12,6 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { SelectCombobox } from "../../components/Combobox";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -26,6 +25,7 @@ import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBank
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
 
+import { InfoPopover } from "../../components/shared/InfoPopover";
 const PAGE_SIZE = 50;
 
 function formatMoney(cents: number) {
@@ -116,17 +116,18 @@ export function TransfersListPage() {
 
   const [fromDate, setFromDate] = useState(new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString().slice(0, 10));
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
-  const [type, setType] = useState<TransferType | "">("");
+  // LEAD 443.156 item 1 — type is a set filter: multi-select (none picked = every type).
+  const [types, setTypes] = useState<TransferType[]>([]);
   // U12 (owner UI register 2026-10-03) — status is a multi-select; default Active; none picked = every transfer.
   const [status, setStatus] = useState<Array<"active" | "revoked">>(["active"]);
   const [accountIds, setAccountIds] = useState<string[]>([]);
   const staged = useStagedListFilters({
-    applied: { fromDate, toDate, type, status, accountIds },
-    empty: { fromDate: "", toDate: "", type: "" as const, status: [] as Array<"active" | "revoked">, accountIds: [] as string[] },
+    applied: { fromDate, toDate, types, status, accountIds },
+    empty: { fromDate: "", toDate: "", types: [] as TransferType[], status: [] as Array<"active" | "revoked">, accountIds: [] as string[] },
     onApply: (next) => {
       setFromDate(next.fromDate);
       setToDate(next.toDate);
-      setType(next.type);
+      setTypes(next.types);
       setStatus(next.status);
       setAccountIds(next.accountIds);
       setOffset(0);
@@ -185,12 +186,12 @@ export function TransfersListPage() {
     enabled: Boolean(companyId),
   });
   const transfersQuery = useQuery({
-    queryKey: ["banking", "transfers", companyId, fromDate, toDate, type, status, accountIds, offset],
+    queryKey: ["banking", "transfers", companyId, fromDate, toDate, types, status, accountIds, offset],
     queryFn: () =>
       listTransfers(companyId, {
         from: fromDate || undefined,
         to: toDate || undefined,
-        type: (type || undefined) as TransferType | undefined,
+        type: types.length === 1 ? types[0] : undefined,
         status,
         accountId: accountIds.length === 1 ? accountIds[0] : undefined,
         limit: PAGE_SIZE,
@@ -215,18 +216,20 @@ export function TransfersListPage() {
 
   const rows = useMemo(() => {
     const listed = transfersQuery.data?.transfers ?? [];
-    const filtered =
+    const byAccount =
       accountIds.length <= 1
         ? listed
         : listed.filter((row) => {
             const allow = new Set(accountIds);
             return allow.has(row.from_account_id) || allow.has(row.to_account_id);
           });
+    // Two or more types: the server takes one, so the union is applied here (same shape as the account filter).
+    const filtered = types.length <= 1 ? byAccount : byAccount.filter((row) => types.includes(row.transfer_type));
     const deep = deepLinkTransferQuery.data;
     if (!deepLinkTransferId || !deep) return filtered;
     if (filtered.some((t) => t.id === deep.id)) return filtered;
     return [deep, ...filtered];
-  }, [transfersQuery.data?.transfers, deepLinkTransferQuery.data, deepLinkTransferId, accountIds]);
+  }, [transfersQuery.data?.transfers, deepLinkTransferQuery.data, deepLinkTransferId, accountIds, types]);
   const hasNext = (transfersQuery.data?.transfers ?? []).length === PAGE_SIZE;
   // Empty message renders only once the transfers query settles, never mid-fetch.
   const listState = useListState(transfersQuery, (transfersQuery.data?.transfers ?? []).length === 0 && !deepLinkTransferId);
@@ -397,40 +400,40 @@ export function TransfersListPage() {
           {transferGlFlag.loading || transferGlFlag.error ? (
             <>
               <p className="font-semibold">
-                Checking whether recording a transfer posts a journal entry for this company…
-              </p>
-              <p className="mt-1">
-                <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is resolved per entity and has not
-                been read yet{transferGlFlag.error ? " (the lookup failed)" : ""}. Until it is,{" "}
-                <strong>assume recording a transfer DOES post</strong> — that is the assumption that cannot cost you
-                an unintended entry.
+                Checking whether recording a transfer posts a journal entry for this company…{" "}
+                <InfoPopover label="About transfer GL posting">
+                  <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is resolved per entity and has not
+                  been read yet{transferGlFlag.error ? " (the lookup failed)" : ""}. Until it is,{" "}
+                  <strong>assume recording a transfer DOES post</strong> — that is the assumption that cannot cost
+                  you an unintended entry.
+                </InfoPopover>
               </p>
             </>
           ) : transferGlFlag.enabled ? (
             <>
               <p className="font-semibold">
                 Recording a transfer DOES post a TMS journal entry —{" "}
-                <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is ON for this company
-              </p>
-              <p className="mt-1">
-                The transfer poster runs for this entity, so a TMS JE is written to the live ledger and linked in the
-                TMS JE column. An EMPTY TMS JE column here therefore means those transfers were recorded before the
-                flag was turned on — it does not mean posting is off. Transfer rows still store QBO journal ids
-                separately from TMS GL. Reverse drill: JE detail Source links map{" "}
-                <code className="text-xs">transfer</code> → Banking Transfers.
+                <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is ON for this company{" "}
+                <InfoPopover label="About transfer GL posting">
+                  The transfer poster runs for this entity, so a TMS JE is written to the live ledger and linked in
+                  the TMS JE column. An EMPTY TMS JE column here therefore means those transfers were recorded before
+                  the flag was turned on — it does not mean posting is off. Transfer rows still store QBO journal ids
+                  separately from TMS GL. Reverse drill: JE detail Source links map{" "}
+                  <code className="text-xs">transfer</code> → Banking Transfers.
+                </InfoPopover>
               </p>
             </>
           ) : (
             <>
               <p className="font-semibold">
                 TMS journal entry link requires <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code>, which
-                is OFF for this company
-              </p>
-              <p className="mt-1">
-                Transfer rows store QBO journal ids separately from TMS GL. A TMS JE appears in the TMS JE column only
-                when the existing transfer poster ran with the flag ON for this entity. Zero linked JEs with the flag
-                OFF is expected — not proof that transfers post to the ledger. Reverse drill: JE detail Source links
-                map <code className="text-xs">transfer</code> → Banking Transfers.
+                is OFF for this company{" "}
+                <InfoPopover label="About transfer GL posting">
+                  Transfer rows store QBO journal ids separately from TMS GL. A TMS JE appears in the TMS JE column
+                  only when the existing transfer poster ran with the flag ON for this entity. Zero linked JEs with
+                  the flag OFF is expected — not proof that transfers post to the ledger. Reverse drill: JE detail
+                  Source links map <code className="text-xs">transfer</code> → Banking Transfers.
+                </InfoPopover>
               </p>
             </>
           )}
@@ -441,12 +444,14 @@ export function TransfersListPage() {
           className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="banking-transfers-never-recorded-banner"
         >
-          <p className="font-semibold">No bank transfers recorded for this company in the selected filters.</p>
-          <p className="mt-1">
-            Transfer workflow is not proven live until at least one transfer is recorded via + Record Transfer (this
-            page or Banking Home) or + Pay Credit Card. An empty list is not “all clear” — it is unproven use.
-            Inter-account moves that only exist as unmatched for-review bank feed rows still need Match/Categorize on
-            Transactions.
+          <p className="font-semibold">
+            No bank transfers recorded for this company in the selected filters.{" "}
+            <InfoPopover label="About an empty transfer list">
+              Transfer workflow is not proven live until at least one transfer is recorded via + Record Transfer (this
+              page or Banking Home) or + Pay Credit Card. An empty list is not “all clear” — it is unproven use.
+              Inter-account moves that only exist as unmatched for-review bank feed rows still need Match/Categorize
+              on Transactions.
+            </InfoPopover>
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <button
@@ -466,7 +471,7 @@ export function TransfersListPage() {
 
       <CollapsedListFilters
         activeFilterCount={
-          (fromDate || toDate ? 1 : 0) + (type ? 1 : 0) + (accountIds.length ? 1 : 0) + (status.length ? 1 : 0)
+          (fromDate || toDate ? 1 : 0) + (types.length ? 1 : 0) + (accountIds.length ? 1 : 0) + (status.length ? 1 : 0)
         }
         onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="transfers"
@@ -483,14 +488,20 @@ export function TransfersListPage() {
           </label>
           <label className="text-xs text-gray-600">
             Type
-            <SelectCombobox value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value as TransferType | "" })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs">
-              <option value="">All</option>
-              <option value="bank_to_bank">Bank-to-Bank</option>
-              <option value="cc_payment">CC Payment</option>
-              <option value="cash_deposit">Cash Deposit</option>
-              <option value="owner_contribution">Owner Contribution</option>
-              <option value="owner_distribution">Owner Distribution</option>
-            </SelectCombobox>
+            <MultiSelectDropdown
+              label="Type"
+              allLabel="All types"
+              options={[
+                { value: "bank_to_bank", label: "Bank-to-Bank" },
+                { value: "cc_payment", label: "CC Payment" },
+                { value: "cash_deposit", label: "Cash Deposit" },
+                { value: "owner_contribution", label: "Owner Contribution" },
+                { value: "owner_distribution", label: "Owner Distribution" },
+              ]}
+              selected={staged.draft.types}
+              onChange={(next) => staged.setDraft({ ...staged.draft, types: next as TransferType[] })}
+              data-testid="transfers-filter-type"
+            />
           </label>
           <label className="text-xs text-gray-600">
             Account
@@ -516,6 +527,7 @@ export function TransfersListPage() {
       </CollapsedListFilters>
 
       <ParityTable
+        title="Transfers between accounts"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

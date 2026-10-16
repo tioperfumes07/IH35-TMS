@@ -3,7 +3,7 @@
  * Posted purchases (= Faro wires) rolled TOTAL PER DAY + open-invoice candidates as projected
  * expected escrow/cash/fee. Reads CC-2 purchase list + candidates — never a second engine.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listFactoringPurchases, listPurchaseCandidates } from "../../api/factoring-purchases";
@@ -197,15 +197,40 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
     },
   ];
 
+  // LEAD 443.173 (owner 2026-10-16: not packed by default) — collapsed to its title + one totals line; remembered per browser.
+  const [open, setOpenState] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem("factoring-cash-flow-open") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    try {
+      window.localStorage.setItem("factoring-cash-flow-open", next ? "1" : "0");
+    } catch {
+      /* storage unavailable */
+    }
+  };
   const loading = purchasesQuery.isLoading || candidatesQuery.isLoading;
   const error = purchasesQuery.isError || candidatesQuery.isError;
 
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-cash-flow">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+    <div className={`rounded-sm border border-gray-200 bg-white ${open ? "p-3" : "px-3 py-2"}`} data-testid="factoring-home-cash-flow">
+      <div className={`${open ? "mb-2 " : ""}flex flex-wrap items-center justify-between gap-2`}>
         <div>
-          <div className="text-xs font-medium text-gray-900">Cash flow · TOTAL PER DAY</div>
-          <div className="text-xs text-gray-500">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563] hover:text-[#1F2A44]"
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+            data-testid="factoring-home-cash-flow-toggle"
+          >
+            <span aria-hidden="true">{open ? "▾" : "▸"}</span>
+            Cash flow — total per day
+          </button>
+          <div className={`${open ? "" : "hidden "}text-xs text-gray-500`}>
             Posted Faro wires from factoring purchases + projected open invoices (expected escrow /
             cash / fee from the purchase candidates engine). Same ledger as Payments to You / Escrow /
             Cash Reserve tabs.
@@ -221,6 +246,7 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
           </Link>
         </div>
       </div>
+      <div className={open ? "" : "hidden"} data-testid="factoring-home-cash-flow-body">
       <div
         className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"
         data-testid="factoring-home-cash-flow-kpis"
@@ -290,6 +316,7 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
           tableTestId="factoring-home-cash-flow-table"
         />
       )}
+      </div>
     </div>
   );
 }

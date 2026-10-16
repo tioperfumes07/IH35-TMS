@@ -3,6 +3,7 @@ import { closeSettlementTrip } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 const CLOSE_TRIP_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant", "Payroll"]);
 
@@ -75,12 +76,16 @@ export function CloseTripPanel({
         className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs"
         data-testid="close-trip-panel-recheck"
       >
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Trip closed</p>
-        <p className="mt-1 text-xs text-[#4B5563]">
-          Closed {new Date(tripClosedAt).toLocaleString()}. If a driver bill became payable after this
-          settlement closed (a common gap this control exists to heal), re-check to re-apply it — safe to
-          run any time, a no-op if there is nothing to attach.
+        <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">
+          Trip closed
+          <InfoPopover label="About re-check settlement">
+            <span className="block">
+              If a driver bill became payable after this settlement closed (a common gap this control exists to heal),
+              re-check to re-apply it — safe to run any time, a no-op if there is nothing to attach.
+            </span>
+          </InfoPopover>
         </p>
+        <p className="mt-1 text-xs text-[#4B5563]">Closed {new Date(tripClosedAt).toLocaleString()}.</p>
         <div className="mt-2">
           <Button
             size="sm"
@@ -102,11 +107,15 @@ export function CloseTripPanel({
       className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs"
       data-testid="close-trip-panel"
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Trip not closed</p>
-      <p className="mt-1 text-xs text-[#4B5563]">
-        This load-bookended settlement has no trip close timestamp. Loads bookended by it stay locked for
-        edit until the trip is closed. Use this when pay-run close succeeded but the load is already past
-        delivered pending docs.
+      <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">
+        Trip not closed
+        <InfoPopover label="About closing the trip">
+          <span className="block">
+            This load-bookended settlement has no trip close timestamp. Loads bookended by it stay locked for
+            edit until the trip is closed. Use this when pay-run close succeeded but the load is already past
+            delivered pending docs.
+          </span>
+        </InfoPopover>
       </p>
       <div className="mt-2">
         <Button
