@@ -21,11 +21,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const SVC = "apps/backend/src/factoring/purchase.service.ts";
 const ROUTES = "apps/backend/src/factoring/purchase.routes.ts";
 const PAGE = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
+const KPI = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
+const NOTE = "apps/frontend/src/components/accounting/UnclearedDocumentsNote.tsx";
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
 function reportBlock(page) {
   const a = page.indexOf('data-testid="factoring-purchase-report"');
-  const b = page.indexOf('data-testid="factoring-purchase-report-footnote"', a);
+  // The section ends where the next tab section starts (443.173 removed the footnote marker).
+  const b = page.indexOf("{show(", a);
   return a >= 0 && b > a ? page.slice(a, b) : "";
 }
 
@@ -49,6 +52,13 @@ function check(src = {}) {
     if (/alwaysVisible/.test(block)) findings.push(`${PAGE}: a Purchase Report column is alwaysVisible — the gear cannot list or hide it`);
   }
   if (!/listFactoringPurchaseLines\(companyId/.test(page)) findings.push(`${PAGE}: Purchase Report does not query listFactoringPurchaseLines`);
+  // 443.173 — Summary is one row per purchase (different rows from Detail), never the same table twice.
+  if (!/purchaseReportView === "summary" \? \(/.test(block) || !/rows=\{purchaseReportSummary\}/.test(block)) findings.push(`${PAGE}: Purchase Report Summary must render purchaseReportSummary (one row per purchase), not the Detail rows`);
+  // 443.173 — nothing packed by default: KPI panel opens collapsed; the not-cleared list opens on demand, never inline.
+  const kpi = src.kpi ?? read(KPI);
+  if (!/useState<boolean>\(\(\) => readOpen\(domain\)\)/.test(kpi) || !/\$\{open \? "" : "hidden "\}grid/.test(kpi)) findings.push(`${KPI}: KPI panel must open collapsed (title row only) until the viewer opens it`);
+  const note = src.note ?? read(NOTE);
+  if (!/const \[open, setOpen\] = useState\(false\)/.test(note) || !/\{open \? \(/.test(note)) findings.push(`${NOTE}: the not-cleared list must open on demand (one line by default), never render inline`);
   return findings;
 }
 
