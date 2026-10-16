@@ -1,4 +1,6 @@
 import { withLuciaBypass } from "../../auth/db.js";
+import { reserveByCustomer } from "../../factoring/reserve-by-customer.service.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 type Actor = {
   user_id: string;
@@ -51,50 +53,18 @@ export async function listFactorReserveBalances(input: { operating_company_id: s
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
-    const balances = await client.query<ReserveBalanceRow>(
-      `
-        WITH invoice_split AS (
-          SELECT
-            i.customer_id,
-            c.customer_name,
-            i.total_cents::numeric AS invoice_total_cents,
-            fa.invoice_total_cents::numeric AS batch_total_cents,
-            fa.reserve_amount_cents::numeric AS reserve_amount_cents,
-            fa.release_amount_cents::numeric AS release_amount_cents
-          FROM accounting.factoring_advances fa
-          JOIN accounting.invoices i ON i.factoring_advance_id = fa.id
-                                     AND i.operating_company_id = fa.operating_company_id
-          JOIN mdata.customers c ON c.id = i.customer_id
-                                 AND c.operating_company_id = fa.operating_company_id
-          WHERE fa.operating_company_id = $1::uuid
-            AND fa.status <> 'voided'
-        )
-        SELECT
-          customer_id::text AS customer_id,
-          MIN(customer_name)::text AS customer_name,
-          ROUND(
-            COALESCE(
-              SUM(CASE WHEN batch_total_cents > 0 THEN reserve_amount_cents * (invoice_total_cents / batch_total_cents) ELSE 0 END),0
-            ) - COALESCE(
-              SUM(CASE WHEN batch_total_cents > 0 THEN release_amount_cents * (invoice_total_cents / batch_total_cents) ELSE 0 END),0
-            )
-          )::int AS reserve_balance_cents,
-          ROUND(
-            COALESCE(
-              SUM(CASE WHEN batch_total_cents > 0 THEN reserve_amount_cents * (invoice_total_cents / batch_total_cents) ELSE 0 END),0
-            )
-          )::int AS reserve_accrued_cents,
-          ROUND(
-            COALESCE(
-              SUM(CASE WHEN batch_total_cents > 0 THEN release_amount_cents * (invoice_total_cents / batch_total_cents) ELSE 0 END),0
-            )
-          )::int AS reserve_released_cents
-        FROM invoice_split
-        GROUP BY customer_id
-        ORDER BY reserve_balance_cents DESC, customer_name ASC
-      `,
-      [input.operating_company_id]
-    );
+    // LEAD 443.168 L (Engine Registry E-46) — per-customer reserve from the ONE reserve engine (reserveByCustomer, which
+    // ties to factoringBookReserveCents), never the old proportional split of advance-header reserve amounts.
+    const engine = await reserveByCustomer(client as never, input.operating_company_id, companyBusinessDate());
+    const balances = {
+      rows: engine.rows.map<ReserveBalanceRow>((r) => ({
+        customer_id: r.customer_id ?? "",
+        customer_name: r.customer_name,
+        reserve_balance_cents: r.reserve_now_cents,
+        reserve_accrued_cents: r.held_cents,
+        reserve_released_cents: r.held_cents - r.reserve_now_cents,
+      })),
+    };
 
     const recentEvents = await client.query<ReserveEventRow>(
       `

@@ -11,6 +11,10 @@ vi.mock("../../../auth/db.js", () => ({
   withLuciaBypass: mockWithLuciaBypass,
 }));
 
+// LEAD 443.168 L (E-46) — the per-customer reserve comes from the ONE reserve engine.
+const { mockReserveByCustomer } = vi.hoisted(() => ({ mockReserveByCustomer: vi.fn() }));
+vi.mock("../../../factoring/reserve-by-customer.service.js", () => ({ reserveByCustomer: mockReserveByCustomer }));
+
 describe("factoring fees poster tenant isolation", () => {
   it("applies operating_company scope and company filter in reserve balance reads", async () => {
     mockQuery.mockReset();
@@ -21,6 +25,7 @@ describe("factoring fees poster tenant isolation", () => {
       return { rows: [] };
     });
 
+    mockReserveByCustomer.mockResolvedValue({ rows: [], total_reserve_now_cents: 0, gl_balance_cents: 0, ties_to_gl: true });
     await listFactorReserveBalances({
       operating_company_id: "11111111-1111-4111-8111-111111111111",
     });
@@ -28,7 +33,7 @@ describe("factoring fees poster tenant isolation", () => {
     const setConfigCall = mockQuery.mock.calls.find(([sql]) => String(sql).includes("set_config('app.operating_company_id'"));
     expect(setConfigCall?.[1]).toEqual(["11111111-1111-4111-8111-111111111111"]);
 
-    const reserveSql = mockQuery.mock.calls.find(([sql]) => String(sql).includes("WITH invoice_split AS"))?.[0];
-    expect(String(reserveSql)).toContain("fa.operating_company_id = $1::uuid");
+    // 443.168 L — the reserve rows are read for THIS company through the one reserve engine.
+    expect(mockReserveByCustomer).toHaveBeenCalledWith(expect.anything(), "11111111-1111-4111-8111-111111111111", expect.any(String));
   });
 });

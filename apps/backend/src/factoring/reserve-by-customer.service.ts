@@ -14,7 +14,7 @@
 // the GL balance. THE SPINE IS THE LINK (owner ruling 2026-10-02): every reserve leg's invoice is its
 // accounting.transaction_source_links row (linked_object_type 'invoice'), written by the poster in the same transaction;
 // the leg's kind comes from the Faro report line it posts (source 'faro_reserve_entry').
-import { factoringReserveAccountIds } from "./factoring-kpi.service.js";
+import { factoringBookReserveCents, factoringReserveAccountIds } from "./factoring-kpi.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -78,7 +78,8 @@ function reserveSql(level: "customer" | "invoice") {
             AND fe.operating_company_id = je.operating_company_id
      WHERE je.operating_company_id = $1::uuid AND jp.account_id = ANY($3::uuid[]) AND je.entry_date <= $2::date
        AND jp.source_transaction_type IS DISTINCT FROM 'factoring_advance'
-       AND jp.source_transaction_type IS DISTINCT FROM 'faro_cash_reserve_reclass'
+       -- 443.168 L: the period-end Due-to-Faro reclass is part of the presented reserve (one figure); it is never stamped to
+       -- an invoice, so it lands in "Not stamped to an invoice" and nets out with its next-day reversal.
   ),
   inv AS (
     SELECT COALESCE(li.invoice_id, mv.invoice_id) AS invoice_id,
@@ -113,19 +114,6 @@ function reserveSql(level: "customer" | "invoice") {
    ORDER BY reserve_now_cents DESC NULLS LAST`;
 }
 
-/** GL balance of the Faro reserve accounts (escrow + cash report registers), as of a date — what the table must tie to. */
-async function reserveGlBalanceCents(client: DbClient, oci: string, asOf: string, ids: string[]) {
-  if (!ids.length) return 0;
-  return n((await client.query<{ v: string }>(
-    `SELECT COALESCE(sum(CASE WHEN jp.debit_or_credit = 'debit' THEN jp.amount_cents ELSE -jp.amount_cents END), 0)::bigint AS v
-       FROM accounting.journal_entry_postings jp
-       JOIN accounting.journal_entries je ON je.id = jp.journal_entry_uuid AND je.status = 'posted'
-      WHERE je.operating_company_id = $1::uuid AND jp.account_id = ANY($3::uuid[]) AND je.entry_date <= $2::date
-        -- The period-end Due-to-Faro reclass is presentation, not reserve money: excluded on both sides of the tie.
-        AND jp.source_transaction_type IS DISTINCT FROM 'faro_cash_reserve_reclass'`,
-    [oci, asOf, ids])).rows[0]?.v);
-}
-
 export async function reserveByCustomer(client: DbClient, oci: string, asOf: string) {
   const ids = await factoringReserveAccountIds(client, oci);
   const rows = ids.length ? (await client.query<Record<string, unknown>>(reserveSql("customer"), [oci, asOf, ids])).rows : [];
@@ -142,7 +130,8 @@ export async function reserveByCustomer(client: DbClient, oci: string, asOf: str
     reserve_now_cents: n(r.reserve_now_cents),
   }));
   const total = out.reduce((s, r) => s + r.reserve_now_cents, 0);
-  const gl = await reserveGlBalanceCents(client, oci, asOf, ids);
+  // LEAD 443.168 L (E-46) — the table ties to THE one reserve figure, never a second sum of the same accounts.
+  const gl = (await factoringBookReserveCents(client, oci, asOf)).total;
   return {
     as_of: asOf,
     rows: out,

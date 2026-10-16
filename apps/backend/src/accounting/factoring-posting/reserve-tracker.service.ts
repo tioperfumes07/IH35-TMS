@@ -1,6 +1,6 @@
 // CONN-2 — Faro Reserve Tracker (read-only reporting layer).
 //
-// Reads accounting.factoring_reserve_movements + views.factoring_reserve_balances (migration
+// Reads accounting.factoring_reserve_movements for the Advance Packet listing only (443.168 L: no reserve balance here; migration
 // 202607130000, HELD — see db/migrations/.held-migrations.json). The WRITE path (recording a movement)
 // lives in poster.service.ts as a side effect of the SAME funding/release JE that already posts
 // (postFactoringAdvanceEvent / postFactoringReleaseEvent) — nothing here writes GL or posts a JE.
@@ -19,67 +19,9 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
-export type FactoringReserveBalanceRow = {
-  factoring_advance_id: string;
-  display_id: string;
-  status: string;
-  reserve_held_cents: number;
-  reserve_released_cents: number;
-  reserve_outstanding_cents: number;
-};
-
-// Per-entity reserve tracker — every advance's reserve held/released/outstanding.
-export async function listFactoringReserveBalances(operatingCompanyId: string): Promise<FactoringReserveBalanceRow[]> {
-  return withLuciaBypass(async (client: DbClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const res = await client.query<{
-      factoring_advance_id: string;
-      display_id: string;
-      status: string;
-      reserve_held_cents: string;
-      reserve_released_cents: string;
-      reserve_outstanding_cents: string;
-    }>(
-      `
-        SELECT factoring_advance_id::text, display_id, status,
-               reserve_held_cents::text, reserve_released_cents::text, reserve_outstanding_cents::text
-        FROM views.factoring_reserve_balances
-        WHERE operating_company_id = $1::uuid
-        ORDER BY reserve_outstanding_cents DESC, display_id ASC
-      `,
-      [operatingCompanyId]
-    );
-    return res.rows.map((r) => ({
-      factoring_advance_id: r.factoring_advance_id,
-      display_id: r.display_id,
-      status: r.status,
-      reserve_held_cents: Number(r.reserve_held_cents ?? 0),
-      reserve_released_cents: Number(r.reserve_released_cents ?? 0),
-      reserve_outstanding_cents: Number(r.reserve_outstanding_cents ?? 0),
-    }));
-  });
-}
-
-export type FactoringReserveRollup = {
-  total_reserve_held_cents: number;
-  total_reserve_released_cents: number;
-  total_reserve_outstanding_cents: number;
-  advance_count: number;
-};
-
-// Company-level rollup — total reserve currently held back by Faro across every advance.
-export async function getFactoringReserveRollup(operatingCompanyId: string): Promise<FactoringReserveRollup> {
-  const rows = await listFactoringReserveBalances(operatingCompanyId);
-  return rows.reduce<FactoringReserveRollup>(
-    (acc, r) => ({
-      total_reserve_held_cents: acc.total_reserve_held_cents + r.reserve_held_cents,
-      total_reserve_released_cents: acc.total_reserve_released_cents + r.reserve_released_cents,
-      total_reserve_outstanding_cents: acc.total_reserve_outstanding_cents + r.reserve_outstanding_cents,
-      advance_count: acc.advance_count + 1,
-    }),
-    { total_reserve_held_cents: 0, total_reserve_released_cents: 0, total_reserve_outstanding_cents: 0, advance_count: 0 }
-  );
-}
+// LEAD 443.168 L (Engine Registry E-46) — listFactoringReserveBalances / getFactoringReserveRollup (per-advance reserve off
+// the legacy reserve-balances view over the movements ledger, no live writer) are DELETED: they were a second
+// reserve figure that disagreed with the GL. The one reserve figure is factoringBookReserveCents (factoring-kpi.service).
 
 export type FactoringAdvancePacket = {
   advance: Record<string, unknown>;
