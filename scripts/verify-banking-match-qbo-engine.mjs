@@ -178,7 +178,7 @@ export function problemsFor({ service, predicate, route, api, view, drawer, feed
   for (const id of ["match-drawer-qbo-filters", "match-filter-payee", "match-date-from", "match-date-to", "match-filter-amount-min", "match-filter-amount-max", "match-drawer-record-type-dropdown"]) {
     if (!drawer.includes(`data-testid="${id}"`)) p.push(`drawer: filter control ${id} missing (register M5)`);
   }
-  if (!/payee: payeeQ\.trim\(\) \|\| undefined/.test(drawer) || !/amountMin: amountMin === "" \? undefined : Number\(amountMin\)/.test(drawer) || !/amountMax: amountMax === "" \? undefined : Number\(amountMax\)/.test(drawer))
+  if (!/payee: payeeQ\.trim\(\) \|\| undefined/.test(drawer) || !/amountMin: amountMin \?\? undefined/.test(drawer) || !/amountMax: amountMax \?\? undefined/.test(drawer))
     p.push("drawer: Payee / Amount from / Amount to are not sent to getMatchCandidates (register M5)");
   for (const id of ["match-candidate-payee", "match-candidate-difference", "match-candidate-days-off"]) {
     if (!drawer.includes(`data-testid="${id}"`)) p.push(`drawer: candidate rows do not show ${id}`);
@@ -218,7 +218,7 @@ function selftest() {
     // ROUND 369.2 retired the "no expenses / no AR payments" rule; the mutant that guards a live rule takes its place.
     ["transfers back", { ...base, service: base.service.replace("async function fetchLedgerCandidates", "async function fetchLedgerCandidates() {\n FROM banking.transfers t\n}\nasync function fetchLedgerCandidates_OLD") }],
     ["second matcher in the view", { ...base, view: base.view + "\nvoid getMatchCandidates(a, b, {});\n" }],
-    ["amount filter not sent", { ...base, drawer: base.drawer.replace('amountMin: amountMin === "" ? undefined : Number(amountMin),', "") }],
+    ["amount filter not sent", { ...base, drawer: base.drawer.replace("amountMin: amountMin ?? undefined,", "") }],
     ["payee filter control gone", { ...base, drawer: base.drawer.replace('data-testid="match-filter-payee"', 'data-testid="x"') }],
     ["expense company-wide", { ...base, service: base.service.replace("AND e.payment_account_uuid = $6::uuid", "") }],
     ["payment company-wide", { ...base, service: base.service.replace("p.deposited_to_account_id::text = $6::text", "TRUE") }],

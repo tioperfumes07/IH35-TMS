@@ -72,8 +72,11 @@ describe("MatchDrawer — the one matcher (443.163 M3 + M5)", () => {
     ));
     await screen.findByTestId("match-filter-payee");
     await user.type(screen.getByTestId("match-filter-payee"), "Faro");
-    await user.type(screen.getByTestId("match-filter-amount-min"), "5000");
-    await user.type(screen.getByTestId("match-filter-amount-max"), "6000");
+    // Amount from / to are the shared MoneyInput (main-red fix after #26795); typed dollars, committed on blur.
+    await user.type(screen.getByLabelText("Amount from"), "5000");
+    await user.tab();
+    await user.type(screen.getByLabelText("Amount to"), "6000");
+    await user.tab();
     await waitFor(() => {
       const calls = vi.mocked(bankingApi.getMatchCandidates).mock.calls;
       const last = calls[calls.length - 1]?.[2] as { payee?: string; amountMin?: number; amountMax?: number } | undefined;
