@@ -12,6 +12,7 @@
  *    loads is legal (59-13577, 59-13578); <typed>-<load> already on another load's invoice refuses before any write,
  *    and a re-post of the same load keeps its own invoice (buildInvoiceFromLoad is idempotent per load).
  */
+import { isAlwaysTrackSettlementNumber } from "./settlement-display-id.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
 import { lineLoadRefusal } from "./settlement-creator-line-load.js";
@@ -29,10 +30,15 @@ export function typedInvoiceDisplayId(load: { load_number: string; invoice_numbe
 
 /** Pure checks (no database). Returns the first refusal or null. */
 export function draftAdmissionRefusal(
-  draft: Pick<SettlementCreatorDraft, "loads"> & Partial<Pick<SettlementCreatorDraft, "deductions" | "admin_fee_cents" | "fuel_purchases" | "expenses">>,
+  draft: Pick<SettlementCreatorDraft, "loads"> & Partial<Pick<SettlementCreatorDraft, "settlement_no" | "deductions" | "admin_fee_cents" | "fuel_purchases" | "expenses">>,
 ): SettlementCreatorError | null {
   const loads = draft.loads ?? [];
-  if (loads.length > 0 && loads.every((l) => l.factoring === "faro_transportation")) {
+  // OWNER STANDING RULING (443.167-R2, 2026-10-16 17:36 CT): "Transportation loads were settled here in usmca as 0 if they
+  // are tied to usmca settlements." A USMCA settlement DOCUMENT (the owner's AlwaysTrack series, e.g. 5796) admits an
+  // all-Transportation draft — its loads post in faro_transportation $0 mode (isAuthorizedZeroRevenueLoad: $0 invoice,
+  // no USMCA revenue; pay, expenses and miles unchanged). Only a draft with no USMCA settlement number is refused.
+  const usmcaSettlementDocument = isAlwaysTrackSettlementNumber(String(draft.settlement_no ?? ""));
+  if (loads.length > 0 && !usmcaSettlementDocument && loads.every((l) => l.factoring === "faro_transportation")) {
     return new SettlementCreatorError("full_transportation_settlement", FULL_TRANSPORTATION_MESSAGE);
   }
   for (const l of loads) {

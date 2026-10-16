@@ -12,7 +12,8 @@
  *   2. the mint passes requestedDisplayId from load.invoice_number and maps DuplicateDocumentNumberError to
  *      invoice_number_taken
  *   3. the route runs assertCreatorDraftAdmissible BEFORE ensureDispatchedLoadsForCreator (zero rows on refusal)
- *   4. admission refuses full_transportation_settlement with the owner's message and <typed>-<load> already on
+ *   4. admission refuses full_transportation_settlement with the owner's message (443.167-R2: only when the draft carries
+ *      no USMCA settlement document number — an AlwaysTrack settlement admits its Transportation loads at $0) and <typed>-<load> already on
  *      another load's invoice (company-scoped); the same typed number on two loads is legal (amended 443.3 a,
  *      CC-1 443.8 builds <invoice>-<load>); preview reports the same refusals as blockers
  *   5. the drawer has the "Invoice no." box and sends invoice_number
