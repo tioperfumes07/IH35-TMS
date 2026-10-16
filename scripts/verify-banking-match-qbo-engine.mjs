@@ -38,6 +38,10 @@ export const SCOPED_SOURCES = {
   relay_deposit: /if \(onRelayWallet && wants\("relay_deposit"\)\)/,
   factoring_advance: /if \(onOperatingBank && wants\("factoring_advance"\)\)/,
   invoice: /if \(onOperatingBank && wants\("invoice"\)\)/,
+  // LEAD 443.168 N
+  transfer: /THEN t\.to_account_id::text IN \(\$7::text, \$8::text\)\s*ELSE t\.from_account_id::text IN \(\$7::text, \$8::text\)/,
+  je: /AND p\.account_id = \$6::uuid\s*AND p\.debit_or_credit = \(CASE WHEN \$7::boolean THEN 'debit' ELSE 'credit' END\)/,
+  relay_fuel: /if \(onRelayWallet && wants\("relay_fuel"\)\)/,
 };
 
 export function candidateScopeProblems(service) {
@@ -144,16 +148,11 @@ export function problemsFor({ service, predicate, route, api, view, drawer, feed
     const after = service.slice(fetchStart);
     const fetchEnd = after.indexOf("\nasync function loadLedgerAmountCents");
     const body = fetchEnd > 0 ? after.slice(0, fetchEnd) : after.slice(0, 4500);
-    // ROUND 369.2 (Lead ruling, 2026-10-03): "QBO parity wins. ROUND 157-C is superseded" — any open document of a
-    // matchable type is a candidate, so customer payments and expenses are no longer forbidden here (that contract is
-    // asserted by verify-bank-match-candidate-sources). Transfers and journal entries stay out: #22960 removed them as
-    // candidates on purpose and verify-bank-match-no-double-match-all-six-kinds names why.
-    for (const [re, name] of [
-      [/FROM accounting\.journal_entries\b/i, "journal_entries"],
-      [/FROM banking\.transfers\b/i, "transfers"],
-    ]) {
-      if (re.test(body)) p.push(`service: fetchLedgerCandidates must NOT select ${name}`);
-    }
+    // LEAD 443.168 N (register 1.4: the universe is every document — superseding ROUND 157-C / #22960, which removed transfers
+    // and journal entries with the settlement-born-only scope): transfers and manual journal entries ARE sources now, each
+    // scoped to the line's account (SCOPED_SOURCES) and excluded once matched (verify-bank-match-no-double-match-all-six-kinds).
+    if (!/FROM banking\.transfers\b/i.test(body) || !/FROM accounting\.journal_entries\b/i.test(body))
+      p.push("service: transfers and manual journal entries must be candidate sources (443.168 N)");
   }
 
   if (!/window_step: z\.coerce\.number\(\)\.int\(\)\.min\(1\)\.max\(2\)/.test(route)) {
@@ -216,7 +215,9 @@ function selftest() {
     ["resurrect QBO 90", { ...base, service: base.service.replace("export const MATCH_WINDOW_STEPS", "export const QBO_DAYS_BEFORE = 90;\nexport const MATCH_WINDOW_STEPS") }],
     ["step1 wrong bounds", { ...base, service: base.service.replace("step1: { before: 3, after: 1 }", "step1: { before: 90, after: 20 }") }],
     // ROUND 369.2 retired the "no expenses / no AR payments" rule; the mutant that guards a live rule takes its place.
-    ["transfers back", { ...base, service: base.service.replace("async function fetchLedgerCandidates", "async function fetchLedgerCandidates() {\n FROM banking.transfers t\n}\nasync function fetchLedgerCandidates_OLD") }],
+    ["transfers dropped", { ...base, service: base.service.replace("FROM banking.transfers t", "FROM banking.transfer_x t") }],
+    ["relay fill on every register", { ...base, service: base.service.replace('if (onRelayWallet && wants("relay_fuel"))', 'if (wants("relay_fuel"))') }],
+    ["je not scoped to the ledger", { ...base, service: base.service.replace("AND p.account_id = $6::uuid", "AND true") }],
     ["second matcher in the view", { ...base, view: base.view + "\nvoid getMatchCandidates(a, b, {});\n" }],
     ["amount filter not sent", { ...base, drawer: base.drawer.replace("amountMin: amountMin ?? undefined,", "") }],
     ["payee filter control gone", { ...base, drawer: base.drawer.replace('data-testid="match-filter-payee"', 'data-testid="x"') }],
@@ -235,7 +236,7 @@ function selftest() {
     ["consumed payment offered", { ...base, service: base.service.replace("WHERE cbt.matched_payment_id = p.id AND cbt.voided_at IS NULL", "WHERE false") }],
     ["no relevance floor", { ...base, service: base.service.replace(".filter((c) => explicitSearch || passesRelevanceFloor(c))", "") }],
     ["floor ignores similarity", { ...base, service: base.service.replace("input.amountGapCents <= input.toleranceCents || input.similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN", "input.amountGapCents <= input.toleranceCents") }],
-    ["new unscoped source", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', 'if (wants("je")) {}\n    if (onOperatingBank && wants("invoice"))') }],
+    ["new unscoped source", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', 'if (wants("settlement")) {}\n    if (onOperatingBank && wants("invoice"))') }],
   ];
   for (const [name, mutant] of mutants) {
     const hits = problemsFor(mutant);
