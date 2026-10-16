@@ -13,6 +13,25 @@ import { todayIso } from "./void.service.js";
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number | null }> };
 
+/**
+ * ROUND 390.3 — the reversal memo a person reads names the expense by its human number (expense_number, e.g.
+ * "13545-5"), never its internal id. The reversal is linked to the expense on the spine by the reversal engine;
+ * the memo is words only. One helper for every expense-void door (single void, document void, bulk void).
+ */
+export async function expenseVoidReversalMemo(
+  client: Queryable,
+  operatingCompanyId: string,
+  expenseId: string,
+  reason: string
+): Promise<string> {
+  const res = await client.query(
+    `SELECT expense_number FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [expenseId, operatingCompanyId]
+  );
+  const number = String(res.rows[0]?.expense_number ?? "").trim();
+  return `Void reversal of expense ${number || "(no number)"}: ${reason.trim()}`;
+}
+
 export async function voidExpenseDocumentInClientTx(
   client: Queryable,
   input: { operatingCompanyId: string; expenseId: string; actorUserId: string; reason: string }
@@ -23,7 +42,7 @@ export async function voidExpenseDocumentInClientTx(
     expenseId: input.expenseId,
     actorUserId: input.actorUserId,
     currentBusinessDate: todayIso(),
-    memo: `Void reversal of expense ${input.expenseId}: ${input.reason}`,
+    memo: await expenseVoidReversalMemo(client, input.operatingCompanyId, input.expenseId, input.reason),
     expenseReverser: "source",
   });
   const reversingJeId = rev.reversal_journal_entry_id;
