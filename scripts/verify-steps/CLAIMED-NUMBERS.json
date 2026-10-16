@@ -16607,5 +16607,10 @@
     "claimed_at": "2026-10-16",
     "claimed_by": "claude",
     "purpose": "CC-2 LEAD 443.174: verify-sections-titled-not-packed (every page table section titled; no Summary/Detail toggle rendering the same rows; no >2-line static notice inline — ratchet baseline only goes down)"
+  },
+  "18517": {
+    "claimed_at": "2026-10-16",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.167-R: verify-creator-adopts-seeded-load (adopt existing driver load on no live settlement; restate proforma driver bill; never re-deliver)"
   }
 }
