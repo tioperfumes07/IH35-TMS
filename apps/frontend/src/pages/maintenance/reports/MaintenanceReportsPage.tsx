@@ -93,6 +93,7 @@ export function MaintenanceReportsPage() {
           />
         ) : (
         <ParityTable
+          title={REPORTS.find((r) => r.id === report)?.label ?? "Maintenance report"}
           rows={rows}
           columns={columns}
           rowKey={(row) => String(row.__row_key)}

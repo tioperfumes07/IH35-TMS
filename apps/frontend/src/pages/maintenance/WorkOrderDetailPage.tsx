@@ -1203,6 +1203,7 @@ export function WorkOrderDetailPage() {
                   ]}
                 />
                 <ParityTable
+                  title="Journal entry preview — not posted"
                   storageKey="wo-detail-posting-preview"
                   tableTestId="wo-detail-posting-preview-parity"
                   columns={POSTING_PREVIEW_COLUMNS}
@@ -1289,6 +1290,7 @@ export function WorkOrderDetailPage() {
           </Button>
         </div>
         <ParityTable
+          title="Parts invoices linked to this work order"
           storageKey="wo-detail-parts-links"
           tableTestId="wo-detail-parts-links-parity"
           columns={WO_PARTS_LINK_COLUMNS}
@@ -1322,6 +1324,7 @@ export function WorkOrderDetailPage() {
         {!linkedFinancialsQ.isError ? (
           <>
             <ParityTable
+              title="Bills linked to this work order"
               storageKey="wo-detail-linked-bills"
               tableTestId="wo-detail-linked-bills-parity"
               columns={LINKED_BILL_COLUMNS}
@@ -1333,6 +1336,7 @@ export function WorkOrderDetailPage() {
               pageSizeOptions={[10, 25, 50]}
             />
             <ParityTable
+              title="Expenses linked to this work order"
               storageKey="wo-detail-linked-expenses"
               tableTestId="wo-detail-linked-expenses-parity"
               columns={LINKED_EXPENSE_COLUMNS}
@@ -1344,6 +1348,7 @@ export function WorkOrderDetailPage() {
               pageSizeOptions={[10, 25, 50]}
             />
             <ParityTable
+              title="Bill payments — on linked bills"
               storageKey="wo-detail-linked-bill-payments"
               tableTestId="wo-detail-linked-bill-payments-parity"
               columns={LINKED_BILL_PAYMENT_COLUMNS}
@@ -1355,6 +1360,7 @@ export function WorkOrderDetailPage() {
               pageSizeOptions={[10, 25, 50]}
             />
             <ParityTable
+              title="Invoices — on the linked load"
               storageKey="wo-detail-linked-invoices"
               tableTestId="wo-detail-linked-invoices-parity"
               columns={LINKED_INVOICE_COLUMNS}
@@ -1366,6 +1372,7 @@ export function WorkOrderDetailPage() {
               pageSizeOptions={[10, 25, 50]}
             />
             <ParityTable
+              title="Customer payments — on linked invoices"
               storageKey="wo-detail-linked-customer-payments"
               tableTestId="wo-detail-linked-customer-payments-parity"
               columns={LINKED_CUSTOMER_PAYMENT_COLUMNS}

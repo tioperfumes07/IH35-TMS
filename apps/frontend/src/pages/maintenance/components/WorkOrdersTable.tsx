@@ -338,6 +338,7 @@ export function WorkOrdersTable({
       </div>
 
       <ParityTable<WorkOrder>
+        title="Work orders"
         columns={columns}
         rows={sortedRows}
         rowKey={(row) => row.id}

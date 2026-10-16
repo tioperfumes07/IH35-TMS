@@ -141,6 +141,7 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
       />
   ) : (
     <ParityTable<DamageIncidentRow>
+      title="Damage incidents"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.id}

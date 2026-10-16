@@ -64,6 +64,7 @@ import { partNeedsReorder } from "./parts-low-stock";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { SegmentedControl } from "../../components/SegmentedControl";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import {
   MAINTENANCE_MASTER_DATA_LINKS,
   MAINTENANCE_OPERATION_LINKS,
@@ -723,9 +724,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs text-[#1F2A44]"
             data-testid="maintenance-parts-capitalize-rule"
           >
-            Parts inventory tracks on-hand stock. Repair capitalization stays the locked{" "}
-            <span className="font-semibold">$7,000</span> threshold (at/above → Fixed Asset; under → expense). R313&apos;s
-            &quot;$50&quot; wording is not a second GL threshold — OUTBOX for owner if a separate parts-sku rule is intended.
+            Parts inventory tracks on-hand stock.{" "}
+            <InfoPopover label="About parts inventory and capitalization">
+              Repair capitalization stays the locked <span className="font-semibold">$7,000</span> threshold (at/above →
+              Fixed Asset; under → expense). R313&apos;s &quot;$50&quot; wording is not a second GL threshold — OUTBOX for
+              owner if a separate parts-sku rule is intended.
+            </InfoPopover>
           </p>
           {partsInventoryKpisQuery.isError ? (
             <ListErrorState

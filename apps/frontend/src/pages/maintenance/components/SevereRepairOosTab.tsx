@@ -303,6 +303,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         />
       ) : (
       <ParityTable<SevereRepairEstimate>
+        title="Severe-repair estimates — out of service"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

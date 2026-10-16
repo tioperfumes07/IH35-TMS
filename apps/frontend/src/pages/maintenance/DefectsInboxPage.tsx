@@ -168,6 +168,7 @@ export function DefectsInboxPage() {
         />
       ) : (
         <ParityTable
+          title="DVIR defects — inbox"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}

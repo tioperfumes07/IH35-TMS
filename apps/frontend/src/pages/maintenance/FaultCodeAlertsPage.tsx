@@ -283,6 +283,7 @@ export function FaultCodeAlertsPage() {
 
       {!alertsQuery.isError ? (
         <ParityTable
+          title="Fault code alerts"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}
