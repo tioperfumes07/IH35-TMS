@@ -344,6 +344,28 @@
       "reverse": "accounting/void.service.ts",
       "reverse_waived_reason": null,
       "note": null
+    },
+    {
+      "file": "fuel/dreamline-statement-import.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "load_id",
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "vendor_id",
+        "journal_entry_id",
+        "account_id",
+        "item_id"
+      ],
+      "missing_stamps": [
+        "customer_id",
+        "settlement_id",
+        "invoice_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": "LEAD 443.142 Dreamline statement import: the card-discount pair (Dr 2510 / Cr Fuel Card Discount) is a JE sourced to the adopted receipt's expense (load / driver / unit resolved from it by the one posting-line writer); new fills post through postFuelFillOnReceipt and scale tickets through the expense writer (both registered engines). Reverse: the void engine (JE / expense void)."
     }
   ],
   "open_reverse_debt": [
