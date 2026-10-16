@@ -180,6 +180,39 @@ export type ListFactoringPurchasesFilters = {
   bank_transaction_id?: string;
 };
 
+/** LEAD 443.172 — Purchase Report: one row per purchased invoice (posted, non-voided purchase lines). */
+export type FactoringPurchaseReportLine = {
+  purchase_line_id: string;
+  line_no: number;
+  purchase_id: string;
+  purchase_display_id: string;
+  purchase_date: string;
+  wire_date: string | null;
+  faro_report_ref: string | null;
+  invoice_id: string;
+  invoice_display_id: string | null;
+  invoice_total_cents: number | string | null;
+  customer_id: string;
+  customer_name: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  settlement_id: string | null;
+  settlement_display_id: string | null;
+  gross_cents: number | string;
+  escrow_reserve_cents: number | string;
+  cash_reserve_cents: number | string;
+  fee_cents: number | string;
+  net_advance_cents: number | string;
+  faro_invoice_number: string | null;
+};
+
+export function listFactoringPurchaseLines(companyId: string, range: { from?: string | null; to?: string | null } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (range.from) qs.set("from", range.from);
+  if (range.to) qs.set("to", range.to);
+  return apiRequest<{ lines: FactoringPurchaseReportLine[] }>(`/api/v1/factoring/purchase-lines?${qs.toString()}`);
+}
+
 /** ROUND 315 step 5 / Lead B4 — one row per Faro wire (= purchase). */
 export function listFactoringPurchases(companyId: string, filters: ListFactoringPurchasesFilters = {}) {
   const qs = new URLSearchParams({ operating_company_id: companyId });

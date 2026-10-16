@@ -435,6 +435,40 @@ export async function listPurchases(
   return rows;
 }
 
+/**
+ * LEAD 443.172 (owner 2026-10-16: Purchase Report showed "Unknown Customer" rows from 10/05 and one row per wire) — the
+ * Purchase Report is ONE ROW PER PURCHASED INVOICE, read from the purchase engine itself: posted, non-voided purchases and
+ * their non-voided lines, with Faro's real per-line split (escrow / cash reserve / fee). A voided purchase never appears.
+ */
+export async function listPurchaseLines(client: DbClient, oci: string, f: { from?: string; to?: string }) {
+  const where = ["p.operating_company_id = $1::uuid", "p.status = 'posted'", "p.voided_at IS NULL", "pl.voided_at IS NULL"];
+  const values: unknown[] = [oci];
+  if (f.from) { values.push(f.from); where.push(`p.purchase_date >= $${values.length}::date`); }
+  if (f.to) { values.push(f.to); where.push(`p.purchase_date <= $${values.length}::date`); }
+  return (await client.query(
+    `
+      SELECT pl.id AS purchase_line_id, pl.line_no, p.id AS purchase_id, p.display_id AS purchase_display_id,
+             p.purchase_date, p.wire_date, p.faro_report_ref,
+             pl.invoice_id, i.display_id AS invoice_display_id, i.total_cents AS invoice_total_cents,
+             pl.customer_id, c.customer_name, pl.load_id, l.load_number, pl.settlement_id,
+             COALESCE(ds.source_document_ref, ds.display_id) AS settlement_display_id,
+             pl.gross_cents, pl.escrow_reserve_cents, pl.cash_reserve_cents, pl.fee_cents,
+             (pl.gross_cents - pl.escrow_reserve_cents - pl.cash_reserve_cents - pl.fee_cents) AS net_advance_cents,
+             pl.faro_invoice_number
+        FROM accounting.factoring_purchase_lines pl
+        JOIN accounting.factoring_purchases p ON p.id = pl.purchase_id
+        JOIN accounting.invoices i ON i.id = pl.invoice_id
+        JOIN mdata.customers c ON c.id = pl.customer_id
+        LEFT JOIN mdata.loads l ON l.id = pl.load_id
+        LEFT JOIN driver_finance.driver_settlements ds ON ds.id = pl.settlement_id
+       WHERE ${where.join(" AND ")}
+       ORDER BY p.purchase_date DESC, p.display_id DESC, pl.line_no
+       LIMIT 2000
+    `,
+    values
+  )).rows;
+}
+
 /** A voided purchase releases its invoices back to not_factored (they reappear on the Submit tab). */
 async function unlinkInvoicesFromAdvance(client: DbClient, advanceId: string, actorUserId: string) {
   await client.query(

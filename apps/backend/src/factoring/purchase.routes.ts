@@ -32,6 +32,7 @@ import {
   FactoringPurchaseError,
   getPurchaseDetail,
   listPurchases,
+  listPurchaseLines,
   postPurchase,
   voidPurchase,
   setPurchaseLineFaroInvoiceNumber,
@@ -51,6 +52,7 @@ const listQuery = companyQuery.extend({
   settlement_id: z.string().uuid().optional(),
   bank_transaction_id: z.string().uuid().optional(),
 });
+const purchaseLinesQuery = companyQuery.extend({ from: isoDate.optional(), to: isoDate.optional() });
 const createBody = z.object({
   factoring_company_vendor_id: z.string().uuid(),
   purchase_date: isoDate,
@@ -124,6 +126,17 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
     const { operating_company_id, ...filters } = q.data;
     const rows = await withCompanyScope(user.uuid, operating_company_id, (client) => listPurchases(client, operating_company_id, filters));
     return { purchases: rows };
+  });
+
+  // LEAD 443.172 — Purchase Report: one row per purchased invoice (posted, non-voided), real per-line split.
+  app.get("/api/v1/factoring/purchase-lines", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const q = purchaseLinesQuery.safeParse(req.query ?? {});
+    if (!q.success) return validationError(reply, q.error);
+    const { operating_company_id, ...filters } = q.data;
+    const rows = await withCompanyScope(user.uuid, operating_company_id, (client) => listPurchaseLines(client, operating_company_id, filters));
+    return { lines: rows };
   });
 
   app.get("/api/v1/factoring/purchases/candidates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
