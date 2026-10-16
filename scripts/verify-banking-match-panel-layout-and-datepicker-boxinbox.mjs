@@ -23,18 +23,22 @@ const bankingFile = path.join(
 );
 const tokensCssFile = path.join(repoRoot, "apps/frontend/src/styles/tokens-load-detail.css");
 const datePickerFile = path.join(repoRoot, "apps/frontend/src/components/forms/DatePicker.tsx");
+// LEAD 443.163 (register M3): the Match side of Categorize / Match IS MatchDrawer (embedded) — one matcher on screen. Fix 1's
+// action + eligibility gate now live there; fix 3 governed the deleted inline ParityTable and is replaced by "the view embeds
+// the one matcher and never queries candidates itself".
+const drawerFile = path.join(repoRoot, "apps/frontend/src/pages/banking/components/MatchDrawer.tsx");
 
-function problemsForSources({ banking, tokensCss, datePicker }) {
+function problemsForSources({ banking, tokensCss, datePicker, drawer = "" }) {
   const problems = [];
 
   // 1. Inline Match action, reusing acceptBankReconMatch + the drawer's eligibility gate.
-  if (!/acceptBankReconMatch/.test(banking)) {
-    problems.push("Match Candidates must call the existing acceptBankReconMatch API (no new GL-posting path)");
+  if (!/acceptBankReconMatch/.test(drawer)) {
+    problems.push("the one matcher (MatchDrawer) must call the existing acceptBankReconMatch API (no new GL-posting path)");
   }
-  if (!/canConfirm\s*=\s*!isBill\s*&&\s*isExactMatch/.test(banking)) {
-    problems.push("inline Match button must use the SAME eligibility gate as MatchDrawer.tsx (!isBill && isExactMatch)");
+  if (!/canConfirm\s*=\s*!isBill\s*&&\s*\(isExactMatch\b/.test(drawer)) {
+    problems.push("the Match action must keep the eligibility gate (!isBill && exact / resolved variance)");
   }
-  if (!/data-testid="banking-match-candidate-confirm"/.test(banking)) {
+  if (!/data-testid="match-candidate-confirm"/.test(drawer)) {
     problems.push("Match Candidates row must render a real, testable Match action button");
   }
 
@@ -47,11 +51,8 @@ function problemsForSources({ banking, tokensCss, datePicker }) {
   }
 
   // 3. Redundant Search rows / Range removed; toolbar carries Open match drawer into the gear's row.
-  if (!/suppressToolbarSearch/.test(banking) || !/suppressToolbarRange/.test(banking)) {
-    problems.push("Match Candidates ParityTable must suppress the generic Search-rows/Range controls (suppressToolbarSearch/suppressToolbarRange)");
-  }
-  if (!/[\s\n]toolbar=\{/.test(banking)) {
-    problems.push("Open match drawer must move into ParityTable's toolbar slot (same row as the gear icon)");
+  if (!/<MatchDrawer\s+embedded\b/.test(banking) || /getMatchCandidates\(/.test(banking)) {
+    problems.push("the Match side must be the one matcher (<MatchDrawer embedded …>), with no second candidate query in the view (register M3)");
   }
 
   // 4. DatePicker box-in-box fix: dp-input/dp-select markers + CSS exclusion.
@@ -73,6 +74,7 @@ function readAll() {
     banking: fs.readFileSync(bankingFile, "utf8"),
     tokensCss: fs.readFileSync(tokensCssFile, "utf8"),
     datePicker: fs.readFileSync(datePickerFile, "utf8"),
+    drawer: fs.readFileSync(drawerFile, "utf8"),
   };
 }
 
@@ -81,12 +83,11 @@ function main() {
   if (args.includes("--selftest")) {
     const clean = readAll();
     const mutants = [
-      { name: "drops acceptBankReconMatch call", src: { ...clean, banking: clean.banking.replace(/acceptBankReconMatch/g, "xxxRemoved") } },
-      { name: "drops eligibility gate", src: { ...clean, banking: clean.banking.replace(/canConfirm = !isBill && isExactMatch/, "canConfirm = true") } },
-      { name: "drops match action testid", src: { ...clean, banking: clean.banking.replace('data-testid="banking-match-candidate-confirm"', "data-testid=\"x\"") } },
+      { name: "drops acceptBankReconMatch call", src: { ...clean, drawer: clean.drawer.replace(/acceptBankReconMatch/g, "xxxRemoved") } },
+      { name: "drops eligibility gate", src: { ...clean, drawer: clean.drawer.replace(/canConfirm = !isBill && \(isExactMatch/, "canConfirm = (true") } },
+      { name: "drops match action testid", src: { ...clean, drawer: clean.drawer.replace('data-testid="match-candidate-confirm"', "data-testid=\"x\"") } },
       { name: "reverts to 50/50 split", src: { ...clean, banking: clean.banking.replace("lg:grid-cols-[2fr_3fr]", "lg:grid-cols-2") } },
-      { name: "drops suppressToolbarSearch/Range", src: { ...clean, banking: clean.banking.replace(/suppressToolbarSearch/g, "x").replace(/suppressToolbarRange/g, "x") } },
-      { name: "drops toolbar slot usage", src: { ...clean, banking: clean.banking.replace(/([\s\n])toolbar=\{/g, "$1xtoolbar={") } },
+      { name: "second matcher back in the view", src: { ...clean, banking: clean.banking + "\nvoid getMatchCandidates(a, b);\n" } },
       { name: "drops dp-input marker", src: { ...clean, datePicker: clean.datePicker.replace('className="dp-input ', 'className="') } },
       { name: "drops dp-select markers", src: { ...clean, datePicker: clean.datePicker.replace(/className="dp-select /g, 'className="') } },
       { name: "drops CSS exclusion", src: { ...clean, tokensCss: clean.tokensCss.replace(".ldt-fld input:not(.dp-input)", ".ldt-fld input").replace(".ldt-fld select:not(.dp-select)", ".ldt-fld select") } },

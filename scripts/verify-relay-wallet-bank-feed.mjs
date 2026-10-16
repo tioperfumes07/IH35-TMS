@@ -154,8 +154,10 @@ if (designView) {
     failures.push("BankingTransactionsDesignView must ask portrait/landscape before print");
   }
   // Owner ruling 2026-09-23 (#22829): "Search all" retired for the 3 -> 7 day -> From/To cascade.
-  if (!/banking-match-search-7-days/.test(designView) || !/widened to 7 days/.test(designView)) {
-    failures.push("BankingTransactionsDesignView match pane must expose the 3→7 day cascade (Search 7 days + widened banner)");
+  // LEAD 443.163 (register M3): the match pane IS MatchDrawer (embedded); the cascade controls live there.
+  const matchDrawerSrc = read("apps/frontend/src/pages/banking/components/MatchDrawer.tsx");
+  if (!/<MatchDrawer\s+embedded\b/.test(designView) || !/match-search-7-days/.test(matchDrawerSrc) || !/widened to 7 days/.test(matchDrawerSrc)) {
+    failures.push("the match pane (MatchDrawer embedded in BankingTransactionsDesignView) must expose the 3→7 day cascade (Search 7 days + widened banner)");
   }
   if (!/This month|Last month|bank-date-filter-button/.test(designView)) {
     failures.push("BankingTransactionsDesignView must expose QBO date presets + dynamic date label");

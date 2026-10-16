@@ -15,6 +15,9 @@ const SELFTEST = process.argv.includes("--selftest");
 const LABEL = "verify-bank-feed-action-buttons";
 
 const VIEW = "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx";
+// LEAD 443.163 (register M3): the match candidates' Confirm lives on the ONE matcher (MatchDrawer, embedded in Categorize /
+// Match); the view's inline candidate table is gone. Same rule — a shared <Button>, never a hand-rolled <button> — there.
+const DRAWER = "apps/frontend/src/pages/banking/components/MatchDrawer.tsx";
 const BUTTON = "apps/frontend/src/components/Button.tsx";
 
 function read(rel) {
@@ -27,7 +30,7 @@ function stripComments(src) {
     .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-export function collectProblems(sources = { view: read(VIEW), button: read(BUTTON) }) {
+export function collectProblems(sources = { view: read(VIEW), button: read(BUTTON), drawer: read(DRAWER) }) {
   const problems = [];
   const view = stripComments(sources.view);
   const button = sources.button;
@@ -65,21 +68,22 @@ export function collectProblems(sources = { view: read(VIEW), button: read(BUTTO
     problems.push(`${VIEW}: banking-undo must be <Button variant="secondary">`);
   }
 
-  const confirmWin = view.slice(
-    Math.max(0, view.indexOf('data-testid="banking-match-candidate-confirm"') - 200),
-    view.indexOf('data-testid="banking-match-candidate-confirm"') + 80,
+  const drawer = sources.drawer ?? "";
+  const confirmWin = drawer.slice(
+    Math.max(0, drawer.indexOf('data-testid="match-candidate-confirm"') - 120),
+    drawer.indexOf('data-testid="match-candidate-confirm"') + 80,
   );
-  if (!view.includes('data-testid="banking-match-candidate-confirm"')) {
-    problems.push(`${VIEW}: missing banking-match-candidate-confirm`);
+  if (!drawer.includes('data-testid="match-candidate-confirm"')) {
+    problems.push(`${DRAWER}: missing match-candidate-confirm`);
   } else if (!/<Button\b/.test(confirmWin)) {
-    problems.push(`${VIEW}: banking-match-candidate-confirm must be shared <Button>, not a hand-rolled <button>`);
+    problems.push(`${DRAWER}: match-candidate-confirm must be shared <Button>, not a hand-rolled <button>`);
   }
 
   return problems;
 }
 
 if (SELFTEST) {
-  const real = { view: read(VIEW), button: read(BUTTON) };
+  const real = { view: read(VIEW), button: read(BUTTON), drawer: read(DRAWER) };
   const broken = {
     view: real.view
       .replace(/import \{ Button \} from "\.\.\/\.\.\/\.\.\/components\/Button";/, 'import { Button } from "../../../components/Button";\nimport { ActionButton } from "../../../components/shared/ActionButton";')
@@ -88,8 +92,15 @@ if (SELFTEST) {
         '<ActionButton data-testid={`banking-action-primary-${tx.id}`}>Add</ActionButton>',
       ),
     button: real.button.replace(/cursor-pointer/, ""),
+    drawer: real.drawer,
   };
   const caught = collectProblems(broken);
+  // 443.163: the one matcher's Confirm reverting to a hand-rolled <button> must be caught.
+  const handRolled = collectProblems({ ...real, drawer: real.drawer.replace(/<Button(\s+type="button"\s+data-testid="match-candidate-confirm")/, "<button$1") });
+  if (!handRolled.some((p) => /match-candidate-confirm must be shared <Button>/.test(p))) {
+    console.error(`${LABEL} SELFTEST FAIL — hand-rolled match confirm not caught`, handRolled);
+    process.exit(1);
+  }
   if (!caught.some((p) => /ActionButton|cursor-pointer|actionNavy|Button/.test(p))) {
     console.error(`${LABEL} SELFTEST FAIL — regression not caught`, caught);
     process.exit(1);
