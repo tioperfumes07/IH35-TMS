@@ -60,6 +60,15 @@ export function partyTokenShare(printedName: string, partyName: string): number 
   return party.filter((t) => printed.has(t)).length / party.length;
 }
 
+/**
+ * 443.170 (J+1) — symmetric name score: the mean of (party tokens found in the printed name) and (printed tokens found
+ * in the party name). A short printed merchant ("Love's") still names a longer vendor ("Love's Travel Stops", 0.67), and
+ * a bare first name shared by two people stays a tie (no suggestion).
+ */
+export function payeeNameScore(printedName: string, partyName: string): number {
+  return (partyTokenShare(printedName, partyName) + partyTokenShare(partyName, printedName)) / 2;
+}
+
 type Queryable = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
 export type ResolvedPayee = {
@@ -108,7 +117,7 @@ export function resolveDescribedPayee(
   if (!parsed.name) return null;
   const pool = isCredit ? parties.customers : parties.vendors;
   const scored = pool
-    .map((p) => ({ p, score: partyTokenShare(parsed.name, p.name) }))
+    .map((p) => ({ p, score: payeeNameScore(parsed.name, p.name) }))
     .filter((x) => x.score >= PAYEE_TOKEN_MATCH_MIN)
     .sort((a, b) => b.score - a.score || a.p.name.length - b.p.name.length);
   if (!scored.length) return null;
