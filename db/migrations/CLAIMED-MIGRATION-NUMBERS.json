@@ -173,6 +173,11 @@
       "claimed_at": "2026-10-12",
       "purpose": "443.136 follow-up: accounting.posting_source_load_id fuel_event resolves a Relay fill with no fuel row to its adopted expense document's load"
     },
+    "202615990100": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-16",
+      "purpose": "LEAD 443.161 G6 (Codex finding, Lead-authored per lane band): accounting.expenses_trailer_from_load() reads the load's CURRENT trailer choice (trailer_source none/customer → no company trailer; company → latest assignment row, even when it cleared the trailer) instead of the newest history row that named a trailer"
+    },
     "202615980910": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-16",
