@@ -1692,6 +1692,12 @@ export function BankingTransactionsDesignView({
                   {tx.suggested_reason ? <span className="text-[#6B7280]" data-testid="bank-txn-suggested-reason"> — {tx.suggested_reason}</span> : null}
                 </p>
               ) : null}
+              {/* 443.168 K (E-47) — Faro contract: a payment received on a purchased invoice goes to Faro within 1 business day. */}
+              {tx.misdirected_forward_by ? (
+                <p className="mt-0.5 truncate text-xs font-semibold text-[#B91C1C]" data-testid="bank-txn-misdirected-alert">
+                  Faro-purchased invoice — forward this payment to Faro by {formatBankTransactionDate(tx.misdirected_forward_by)}
+                </p>
+              ) : null}
               {/* B-3 §19 — Categorized tab ADDED OR MATCHED provenance + RULE (QBO). */}
               {(() => {
                 const provenance = categorizedProvenanceText(tx);

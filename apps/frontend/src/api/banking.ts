@@ -172,6 +172,8 @@ export type PlaidBankTransaction = {
   suggested_reason?: string | null;
   suggested_customer_id?: string | null;
   suggested_customer_name?: string | null;
+  /** 443.168 K (E-47) — a payment on a Faro-purchased invoice landed on this line: forward it to Faro by this date. */
+  misdirected_forward_by?: string | null;
   /**
    * ROUND 197 (owner-raised, 2026-09-28) — the row's already-PERSISTED categorization, distinct
    * from the SUGGESTED fields above. Written by categorization.routes.ts on every Post; read back

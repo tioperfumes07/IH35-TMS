@@ -837,6 +837,28 @@
       "reversal_of",
       "source_transaction_type"
     ],
+    "accounting.factoring_misdirected_payment_alerts": [
+      "amount_cents",
+      "bank_transaction_id",
+      "created_at",
+      "customer_id",
+      "factor_vendor_id",
+      "forward_by",
+      "id",
+      "invoice_id",
+      "ledger_entry_id",
+      "ledger_entry_kind",
+      "operating_company_id",
+      "purchase_id",
+      "purchase_line_id",
+      "raised_by_user_id",
+      "received_on",
+      "resolution_note",
+      "resolved_at",
+      "resolved_by_user_id",
+      "state",
+      "updated_at"
+    ],
     "accounting.factoring_purchase_lines": [
       "cash_reserve_cents",
       "created_at",
