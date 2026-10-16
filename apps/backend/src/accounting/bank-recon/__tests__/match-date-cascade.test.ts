@@ -46,7 +46,8 @@ function installMocks(opts: { step1Hit?: boolean; step2Hit?: boolean }) {
   let expenseFetches = 0;
   const windows: Array<{ from: string; to: string }> = [];
   mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
-    if (sql.includes("FROM banking.bank_transactions")) {
+    if (sql.includes("FROM banking.bank_accounts ba")) return { rows: [{ ledger_id: "ledger-1", operating: true, relay_wallet: false, undeposited_id: null, card: false }] }; // 443.155/443.158: the line's own account
+    if (sql.includes("FROM banking.bank_transactions bt") && sql.includes("WHERE bt.id = $1::uuid")) {
       return { rows: [TXN] };
     }
     if (sql.includes("FROM accounting.expenses e")) {

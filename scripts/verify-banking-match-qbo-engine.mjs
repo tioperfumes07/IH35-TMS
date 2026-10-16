@@ -63,6 +63,11 @@ export function candidateScopeProblems(service) {
   }
   if (kinds.includes("expense") && !/AND e\.source_bank_transaction_id IS NULL/.test(body))
     p.push('service: candidate source "expense" offers an expense born from another bank line (443.158 M1b)');
+  // LEAD 443.158 M1c — the default search applies the relevance floor (amount within tolerance OR similarity >= 0.5).
+  if (!/export function passesMatchRelevanceFloor\(/.test(service) || !/\.filter\(\(c\) => explicitSearch \|\| passesRelevanceFloor\(c\)\)/.test(service))
+    p.push("service: the default match search has no relevance floor — a document with neither amount nor resemblance is offered (443.158 M1c)");
+  if (!/input\.amountGapCents <= input\.toleranceCents \|\| input\.similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN/.test(service))
+    p.push("service: passesMatchRelevanceFloor must be amount-within-tolerance OR similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN (443.158 M1c)");
   if (!/FROM accounting\.factoring_purchases/.test(body) || !kinds.includes("factoring_advance"))
     p.push("service: factoring purchases are not in the candidate union (443.155 DEFECT 2)");
   if (!/FROM accounting\.invoices/.test(body) || !kinds.includes("invoice"))
@@ -238,6 +243,8 @@ function selftest() {
     ["consumed expense offered", { ...base, service: base.service.replace("WHERE cbt.matched_expense_id = e.id AND cbt.voided_at IS NULL", "WHERE false") }],
     ["bank-born expense offered", { ...base, service: base.service.replace("AND e.source_bank_transaction_id IS NULL", "") }],
     ["consumed payment offered", { ...base, service: base.service.replace("WHERE cbt.matched_payment_id = p.id AND cbt.voided_at IS NULL", "WHERE false") }],
+    ["no relevance floor", { ...base, service: base.service.replace(".filter((c) => explicitSearch || passesRelevanceFloor(c))", "") }],
+    ["floor ignores similarity", { ...base, service: base.service.replace("input.amountGapCents <= input.toleranceCents || input.similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN", "input.amountGapCents <= input.toleranceCents") }],
     ["new unscoped source", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', 'if (wants("je")) {}\n    if (onOperatingBank && wants("invoice"))') }],
   ];
   for (const [name, mutant] of mutants) {

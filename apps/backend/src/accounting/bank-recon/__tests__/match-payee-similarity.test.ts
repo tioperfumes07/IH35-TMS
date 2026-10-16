@@ -26,7 +26,8 @@ describe("findCandidates payee signal", () => {
   it("ranks the Holiday Inn expense first on a HOLIDAY INN bank line even though its memo is a number", async () => {
     mockQuery.mockReset();
     mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("FROM banking.bank_transactions")) {
+      if (sql.includes("FROM banking.bank_accounts ba")) return { rows: [{ ledger_id: "ledger-1", operating: true, relay_wallet: false, undeposited_id: null, card: false }] }; // 443.155/443.158: the line's own account
+      if (sql.includes("FROM banking.bank_transactions bt") && sql.includes("WHERE bt.id = $1::uuid")) {
         return {
           rows: [{ id: "tx-1", bank_account_id: "acct-1", operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80", transaction_date: "2026-09-05", amount_cents: 560, is_credit: false, description: "HOLIDAY INN LAREDO TX", merchant_name: "Holiday Inn", notes: null, review_state: "pending" }],
         };
@@ -55,8 +56,9 @@ describe("findCandidates payee signal", () => {
     mockQuery.mockReset();
     const calls: string[] = [];
     mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM banking.bank_accounts ba")) return { rows: [{ ledger_id: "ledger-1", operating: true, relay_wallet: false, undeposited_id: null, card: false }] }; // 443.155/443.158: the line's own account
       calls.push(sql);
-      if (sql.includes("FROM banking.bank_transactions")) {
+      if (sql.includes("FROM banking.bank_transactions bt") && sql.includes("WHERE bt.id = $1::uuid")) {
         return { rows: [{ id: "tx-1", bank_account_id: "acct-1", operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80", transaction_date: "2026-09-05", amount_cents: 18839, is_credit: false, description: "PROCESSING CHECK", merchant_name: null, notes: null, review_state: "pending" }] };
       }
       if (sql.includes("FROM accounting.expenses e")) {
