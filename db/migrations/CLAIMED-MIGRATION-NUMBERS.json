@@ -173,6 +173,11 @@
       "claimed_at": "2026-10-12",
       "purpose": "443.136 follow-up: accounting.posting_source_load_id fuel_event resolves a Relay fill with no fuel row to its adopted expense document's load"
     },
+    "202615950910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-16",
+      "purpose": "LEAD 443.152: Faro accounts one per thing — role factor_clearing -> 1296 (purchase net), factor_reserve_held/default -> 1236 Faro Escrow Reserve (reactivated), Faro Escrow Reserve bank account ledger -> 1236"
+    },
     "202615930910": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-12",
