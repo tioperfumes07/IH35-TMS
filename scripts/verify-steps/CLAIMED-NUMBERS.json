@@ -16542,5 +16542,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1063
+  "total_claimed": 1063,
+  "18457": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-16",
+    "purpose": "verify-bill-section-a-uses-chart-of-accounts"
+  }
 }
