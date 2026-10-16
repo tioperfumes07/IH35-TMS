@@ -1,3 +1,4 @@
+import { AccountRegisterPage } from "../../accounting/AccountRegisterPage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -841,6 +842,13 @@ export function BankingTransactionsDesignView({
     enabled: Boolean(companyId && selectedAccount?.id),
     staleTime: 30_000,
   });
+
+  // LEAD 443.170 — an account whose COMPLETE bank-line history is empty (fullHistoryQuery has no date/type predicate) has
+  // no feed: Faro reserves, factoring, petty cash. Its activity is ledger postings, rendered by the register below.
+  const feedlessAccountId =
+    selectedAccount?.id && fullHistoryQuery.isSuccess && (fullHistoryQuery.data?.transactions ?? []).length === 0
+      ? selectedAccount.id
+      : null;
 
   // LEAD 443.163 (register M3) — the match side of Categorize / Match is MatchDrawer (embedded): its own filters reset per
   // bank line because it mounts per line; no second candidate query lives in this view.
@@ -3441,6 +3449,15 @@ export function BankingTransactionsDesignView({
         </div>
       </div>
 
+      {/* LEAD 443.170 (owner 2026-10-16: the Faro Cash Reserve / Escrow Reserve / Factoring screens "are not rendering any
+          of the data"). An account with NO bank-feed lines (Faro reserves, factoring, petty cash) has nothing for the feed
+          table to show — its activity lives in the ledger. QBO parity: such an account opens on its register. Same
+          AccountRegisterPage component as Accounting → Account register (one function, one component). */}
+      {feedlessAccountId ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="banking-feedless-account-register">
+          <AccountRegisterPage embeddedBankAccountId={feedlessAccountId} />
+        </div>
+      ) : (
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-[#E5E7EB] pb-2">
           <BankingControlGroup>
@@ -3723,6 +3740,7 @@ export function BankingTransactionsDesignView({
           </div>
         </div>
       </div>
+      )}
 
       <RelayDepositCategorizedMatchHintsPanel companyId={companyId} />
       <RelatedPartyPairSuggestionsPanel companyId={companyId} />
