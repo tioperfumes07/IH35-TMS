@@ -813,8 +813,8 @@ export function FinancialStatementsPage() {
             </div>
           ) : null}
           <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
-            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold text-[#1F2A44]">Trial balance</div>
             <ParityTable
+              title="Trial balance"
               embedded
               columns={trialBalanceColumns(applied.start, applied.end, basis, showCodes)}
               rows={tbRows}
@@ -887,7 +887,9 @@ function StatementSection({
   );
   return (
     <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
-      <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold text-[#1F2A44]">{title}</div>
+      <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+        <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{title}</h2>
+      </div>
       <ParityTable
         embedded
         columns={columns}

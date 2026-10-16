@@ -379,6 +379,7 @@ export function FraudAlertsListPage() {
         <ListErrorBanner onRetry={() => void alertsQuery.refetch()} />
       ) : (
         <ParityTable
+          title="Fuel fraud alerts"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.uuid}

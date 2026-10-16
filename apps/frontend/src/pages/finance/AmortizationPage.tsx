@@ -229,10 +229,10 @@ export function AmortizationPage() {
           </div>
 
           <div className="min-w-0 border-t border-[#E5E7EB] lg:border-t-0">
-            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3 text-xs font-semibold text-[#1F2A44]">Schedule</div>
             <div className="px-4 py-3">
               {schedule.length === 0 ? <p className="text-xs text-[#6B7280]">Select a loan to view its schedule.</p> : (
                 <ParityTable<AmortRow>
+                  title="Amortization schedule"
                   columns={SCHEDULE_COLUMNS}
                   rows={schedule}
                   rowKey={(r) => String(r.payment_number)}

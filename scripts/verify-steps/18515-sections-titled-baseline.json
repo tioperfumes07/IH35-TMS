@@ -306,51 +306,6 @@
       "same_rows_toggle": 0,
       "inline_notice": 1
     },
-    "apps/frontend/src/pages/finance/AmortizationPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/ArApAgingPage.tsx": {
-      "untitled": 4,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/finance/BreakEvenPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/BreakEvenWorkbookCreator.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/finance/FinanceHubPage.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/finance/FinanceScenariosPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/LoanWizardPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/components/ScenarioLinesTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
     "apps/frontend/src/pages/fleet/RosterIntegrityPage.tsx": {
       "untitled": 1,
       "same_rows_toggle": 0,
@@ -375,41 +330,6 @@
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
-    },
-    "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/fuel/cards/FuelCardsPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/fuel/components/RelayDepositReview.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 2
-    },
-    "apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
     },
     "apps/frontend/src/pages/home/DriverHubReportingPage.tsx": {
       "untitled": 2,
