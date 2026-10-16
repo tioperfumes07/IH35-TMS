@@ -203,6 +203,71 @@ function isDeliveredCreatorLoad(load: SettlementCreatorLoadBlock): boolean {
  * (quantity, rate, unit, item) when the amounts agree, and the post refuses pay_mismatch when they do not — a second
  * line for the same pay is never written.
  */
+/**
+ * LEAD 443.167-R — the signed settlement restates an adopted load's open proforma driver bill. Only a live bill that is
+ * status 'open', settled in no settlement, and priced differently from the signed pay is touched: it is voided
+ * (void-not-delete) and ONE replacement bill "<load>-R" is minted at the signed miles x rate (same INSERT shape as
+ * correctOpenDriverBillMileage / book-load). A bill already equal to the signed pay is left alone (a load booked by
+ * this post).
+ */
+export async function restateOpenDriverBillToSignedPay(
+  client: DbClient,
+  input: {
+    companyId: string; loadId: string; loadNumber: string; actorUserId: string; settlementNo: string;
+    milesBasis: number; rateCents: number; loadedCents: number;
+    emptyMiles: number | null; emptyRateCents: number | null; emptyCents: number;
+  },
+): Promise<void> {
+  const bill = (await client.query<{ id: string; gross: string; driver_id: string; team_driver_id: string | null }>(
+    `SELECT id::text, gross_amount_cents::text AS gross, driver_id::text, team_driver_id::text
+       FROM driver_finance.driver_bills
+      WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND voided_at IS NULL AND status <> 'void'
+      ORDER BY created_at DESC`,
+    [input.companyId, input.loadId],
+  )).rows;
+  if (bill.length !== 1) return;
+  const b = bill[0]!;
+  const signed = input.loadedCents + input.emptyCents;
+  if (Number(b.gross) === signed) return;
+  const state = (await client.query<{ status: string; settled: string | null; accrued: string | null }>(
+    // A bill "settled" in a voided / cancelled settlement (a seed shell regrouped away) is settled in nothing.
+    `SELECT b.status::text,
+            (SELECT s.id::text FROM driver_finance.driver_settlements s
+              WHERE s.id = b.settled_in_settlement_id AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settled,
+            b.accrued_bill_id::text AS accrued
+       FROM driver_finance.driver_bills b WHERE b.id = $1::uuid`,
+    [b.id],
+  )).rows[0]!;
+  if (state.status !== "open" || state.settled || state.accrued) {
+    throw new SettlementCreatorError(
+      "driver_bill_not_restatable",
+      `Load ${input.loadNumber}: its driver bill (${dollarsFromCents(Number(b.gross))}) differs from the signed pay ${dollarsFromCents(signed)} and is ${state.settled ? "already settled" : state.accrued ? "accrued at delivery" : state.status} — restate it first.`,
+    );
+  }
+  const reason = `443.167-R: restated to signed settlement ${input.settlementNo} pay ${dollarsFromCents(signed)} (was ${dollarsFromCents(Number(b.gross))})`;
+  await client.query(
+    `UPDATE driver_finance.driver_bills SET status = 'void', voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid, updated_at = now()
+      WHERE id = $1::uuid AND status = 'open'`,
+    [b.id, reason, input.actorUserId],
+  );
+  await client.query(
+    `UPDATE driver_finance.settlement_lines SET is_active = false, voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid
+      WHERE source_driver_bill_id = $1::uuid AND is_active = true`,
+    [b.id, reason, input.actorUserId],
+  );
+  await client.query(
+    `INSERT INTO driver_finance.driver_bills (
+       operating_company_id, load_id, load_number, bill_number, driver_id, team_driver_id,
+       gross_amount_cents, miles_basis, miles_basis_type, rate_per_mile_cents, status, notes,
+       created_by_user_id, miles_deadhead, rate_empty_per_mile_cents, loaded_pay_cents, deadhead_pay_cents
+     ) VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, $6::uuid, $7, $8, 'short', $9, 'open', $10, $11::uuid, $12, $13, $14, $15)`,
+    [input.companyId, input.loadId, input.loadNumber, `${input.loadNumber}-R`, b.driver_id, b.team_driver_id, signed, input.milesBasis,
+      input.rateCents, reason, input.actorUserId, input.emptyMiles, input.emptyRateCents, input.loadedCents, input.emptyCents],
+  );
+  const { restampDriverBillUnitAndTrailer } = await import("./driver-bill-unit-trailer.js");
+  await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.companyId, loadId: input.loadId });
+}
+
 async function writeDriverPayLine(
   client: DbClient,
   input: {
@@ -1975,6 +2040,16 @@ export async function postSettlementCreatorInClientTx(
       );
     }
     if (!draft.salaried && payMiles != null && loadedCents != null) {
+    // LEAD 443.167-R — an adopted seeded load carries the seed's proforma driver bill (priced from the seed's miles).
+    // The signed settlement is the pay: an open, unsettled bill that differs is restated (void + one "-R" replacement).
+    await restateOpenDriverBillToSignedPay(client, {
+      companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, actorUserId,
+      milesBasis: payMiles, rateCents: Number(load.line_haul_rate_cents), loadedCents,
+      emptyMiles: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? Number(load.empty_miles) : null,
+      emptyRateCents: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? creatorEmptyRateCents(load) : null,
+      emptyCents: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? creatorEmptyPayCents(load) : 0,
+      settlementNo: draft.settlement_no,
+    });
     const loadedDesc = `Load ${load.load_number} — Loaded Miles ${payMiles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`;
     await writeDriverPayLine(client, {
       settlementId, companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, lineType: "earnings",
@@ -2004,7 +2079,8 @@ export async function postSettlementCreatorInClientTx(
       `SELECT status::text FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
       [loadId, draft.operating_company_id],
     )).rows[0]?.status ?? "";
-    if (!(draft.edit_void_repost && ["delivered", "delivered_pending_docs", "invoiced", "paid", "completed", "closed"].includes(loadStatus))) {
+    // LEAD 443.167-R — the same holds for an adopted seeded load: a load already past delivery is never re-delivered.
+    if (!["delivered", "delivered_pending_docs", "invoiced", "paid", "completed", "closed"].includes(loadStatus)) {
       await deliverLoadThroughDispatch(client, actorUserId, draft.operating_company_id, loadId, load.delivery_date);
     }
     let built;
