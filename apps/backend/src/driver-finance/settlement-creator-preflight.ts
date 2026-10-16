@@ -16,7 +16,7 @@ import { findReceivedCardFillToAdopt } from "./creator-received-fill-adoption.js
 import { findCreatorCustomer } from "./settlement-creator-seed-loads.js";
 import { creatorLineLoadNumber } from "./settlement-creator-line-load.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
-import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorTrailerChoice } from "./creator-trailer-choice.js";
+import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerEquipmentId, creatorTrailerChoice } from "./creator-trailer-choice.js";
 
 type Q = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -32,7 +32,18 @@ export async function creatorPreflightRefusals(client: Q, draft: SettlementCreat
       [co, typedNumbers],
     );
     const born = typedNumbers.filter((n) => !existing.rows.some((r) => r.load_number === n));
-    if (born.length && !(await creatorTrailerChoice(client, draft))) out.push(`Loads ${born.join(", ")}: ${CREATOR_TRAILER_REQUIRED_MESSAGE}`);
+    if (born.length) {
+      const choice = await creatorTrailerChoice(client, draft);
+      if (!choice) out.push(`Loads ${born.join(", ")}: ${CREATOR_TRAILER_REQUIRED_MESSAGE}`);
+      else {
+        try {
+          await creatorLoadTrailerEquipmentId(client, co, choice);
+        } catch (err) {
+          if (!(err instanceof SettlementCreatorError)) throw err;
+          out.push(`Loads ${born.join(", ")}: ${err.message}`);
+        }
+      }
+    }
   }
   for (const l of draft.loads ?? []) {
     const n = l.load_number?.trim() || "(no number)";

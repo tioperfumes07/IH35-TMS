@@ -79,6 +79,7 @@ const STEPS = [
   ["verify-qbo-origin-bill-payment-writers-post-native-gl", "scripts/verify-qbo-origin-bill-payment-writers-post-native-gl.mjs"],
   ["verify-load-costs-live-documents", "scripts/verify-load-costs-live-documents.mjs"],
   ["verify-g1-trailer-choice-required", "scripts/verify-g1-trailer-choice-required.mjs"],
+  ["verify-g2-creator-trailer-equipment-required", "scripts/verify-g2-creator-trailer-equipment-required.mjs"],
   ["verify-expense-item-lines", "scripts/verify-expense-item-lines.mjs"],
   ["verify-account-number-hidden-by-default", "scripts/verify-account-number-hidden-by-default.mjs"],
   ["verify-definition-of-done-evidence", "scripts/verify-definition-of-done-evidence.mjs"],

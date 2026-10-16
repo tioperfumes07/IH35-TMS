@@ -327,7 +327,7 @@ export async function ensureDispatchedLoadsForCreator(
   // Resolved BEFORE any load is booked (443.110 G2): the printed number becomes the fleet trailer id, a customer trailer
   // or an explicit none, and the trailer TYPE follows it (Reefer / Dry Van / power-only) instead of book-load's DRY_VAN.
   const trailerChoice = seed && draft.loads.length ? await creatorTrailerChoice(client, draft) : null;
-  const trailerTypeId = await creatorLoadTrailerEquipmentId(client, draft.operating_company_id, trailerChoice);
+  let trailerTypeId: string | null = null;
   for (const load of draft.loads) {
     const existing = await client.query<{ id: string }>(
       `SELECT id::text FROM mdata.loads
@@ -359,6 +359,9 @@ export async function ensureDispatchedLoadsForCreator(
     }
     // LEAD 443.109 — this load is about to be born: it is never born without its trailer.
     if (!trailerChoice) throw new SettlementCreatorSeedError("trailer_required", `Load ${load.load_number}: ${CREATOR_TRAILER_REQUIRED_MESSAGE}`);
+    // Resolve only for a genuinely NEW load. An Edit adopting its existing loads must not revalidate historical
+    // equipment against today's catalog. Cache the shared document choice before the first booking.
+    trailerTypeId ??= await creatorLoadTrailerEquipmentId(client, draft.operating_company_id, trailerChoice);
 
     // SETL-F438 — bookLoad() refuses a non-draft load with neither PO nor W/O
     // (customer_po_or_wo_number_required, ROUND 285.3.6). The Creator books with
