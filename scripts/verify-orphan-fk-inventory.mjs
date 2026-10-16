@@ -40,7 +40,9 @@ const NON_FK_KINDS = {
   display_label: /(^|_)display_id$/,
   authorization_code: /^auth_id$/,
   tombstone_id: /^merged_[a-z_]+_id$/,
-  polymorphic: /^(source_id|subject_id|source_transaction_id|source_transaction_line_id|(from|to)_entity_uuid)$/,
+  // 443.168 K — ledger_entry_id is the repo's polymorphic match target (banking.reconciliation_matches pairs it with
+  // ledger_entry_kind the same way); a type column is still required in the migration.
+  polymorphic: /^(source_id|subject_id|source_transaction_id|source_transaction_line_id|(from|to)_entity_uuid|ledger_entry_id)$/,
 };
 
 /** Validate the non-FK register against the raw inventory; returns { exempt:Set, problems:[] }. */

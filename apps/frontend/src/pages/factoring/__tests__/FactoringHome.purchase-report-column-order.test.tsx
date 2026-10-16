@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as factoringApi from "../../../api/factoring";
@@ -119,6 +119,13 @@ describe("FactoringHomePage Purchase Report rows (LEAD 443.172)", () => {
 
     wrap(<FactoringHomePage initialTab="purchase_report" />);
     const report = await screen.findByTestId("factoring-purchase-report");
+    // LEAD 443.173 — Summary (default) = one row per purchase: FP-2026-00009 with 2 invoices, $5,500.00 purchased.
+    const summary = await screen.findByTestId("factoring-purchase-report-summary");
+    await screen.findAllByText("FP-2026-00009");
+    expect(summary.textContent ?? "").toContain("$5,500.00");
+    expect(summary.textContent ?? "").not.toContain("2-13510");
+    // Detail = one row per invoice.
+    fireEvent.click(screen.getByTestId("factoring-purchase-report-view-detail"));
     await screen.findAllByText("2-13510");
     const text = report.textContent ?? "";
     expect(text).toContain("3-13508");

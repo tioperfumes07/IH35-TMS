@@ -4,6 +4,24 @@
 // behind it (GET .../kpis/:key/drill), each id an EntityLink back to its record. A KPI with no data says why.
 import { MoneyCell } from "./MoneyCell";
 import { useState } from "react";
+
+// LEAD 443.173 (owner 2026-10-16: "by default it should not be so packed in any screen … not be packed always") — a KPI panel
+// opens COLLAPSED to its title row; the viewer opens it with one click and that choice is remembered per panel (this browser).
+const OPEN_KEY = (domain: string) => `ledger-kpi-open:${domain}`;
+function readOpen(domain: string): boolean {
+  try {
+    return window.localStorage.getItem(OPEN_KEY(domain)) === "1";
+  } catch {
+    return false;
+  }
+}
+function writeOpen(domain: string, open: boolean) {
+  try {
+    window.localStorage.setItem(OPEN_KEY(domain), open ? "1" : "0");
+  } catch {
+    /* storage unavailable — the toggle still works for this view */
+  }
+}
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { ParityTable } from "../parity/ParityTable";
@@ -146,6 +164,11 @@ type Props<K extends string> = {
 
 export function LedgerKpiPanel<K extends string>({ domain, title, companyId, from, to, fetchKpis, fetchDrill }: Props<K>) {
   const [drillKey, setDrillKey] = useState<K | null>(null);
+  const [open, setOpenState] = useState<boolean>(() => readOpen(domain));
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    writeOpen(domain, next);
+  };
   const kpis = useQuery({ queryKey: [domain, "kpis", companyId, from ?? null, to ?? null], queryFn: () => fetchKpis(companyId, from, to), enabled: Boolean(companyId) });
   const drill = useQuery({
     queryKey: [domain, "kpi-drill", companyId, drillKey, from ?? null, to ?? null],
@@ -166,13 +189,22 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
     );
   }
   return (
-    <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid={`${domain}-kpi-engine`}>
-      <div className="mb-2 flex items-baseline justify-between text-xs">
-        <span className="font-semibold uppercase tracking-wide text-[#4B5563]">{title}</span>
+    <section className={`rounded-sm border border-[#E5E7EB] bg-white ${open ? "p-3" : "px-3 py-2"}`} data-testid={`${domain}-kpi-engine`}>
+      <div className={`${open ? "mb-2 " : ""}flex items-baseline justify-between text-xs`}>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 font-semibold uppercase tracking-wide text-[#4B5563] hover:text-[#1F2A44]"
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+          data-testid={`${domain}-kpi-engine-toggle`}
+        >
+          <span aria-hidden="true">{open ? "▾" : "▸"}</span>
+          {title}
+        </button>
         {kpis.data ? <span className="text-[#4B5563]">{formatDateUS(kpis.data.range.from)} – {formatDateUS(kpis.data.range.to)}</span> : null}
       </div>
-      {kpis.isLoading ? <p className="text-xs text-[#4B5563]">Loading…</p> : null}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      {open && kpis.isLoading ? <p className="text-xs text-[#4B5563]">Loading…</p> : null}
+      <div className={`${open ? "" : "hidden "}grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6`} data-testid={`${domain}-kpi-engine-tiles`}>
         {(kpis.data?.kpis ?? []).map((k) => (
           <button
             key={k.key}

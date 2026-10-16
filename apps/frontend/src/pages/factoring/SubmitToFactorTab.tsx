@@ -762,7 +762,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
             {editQuery.isError ? <span className="text-red-700">Could not load the purchase to edit.</span> : null}
             {editDetail ? (
               <>
-                Editing purchase <strong>{editDetail.display_id}</strong>
+                Editing purchase <strong><EntityLink kind="factoring_purchase" id={editDetail.id} label={editDetail.display_id} /></strong>
                 {editDetail.factoring_company_name ? ` · ${editDetail.factoring_company_name}` : ""} — change dates, amounts or invoices, then Save changes.
               </>
             ) : null}
@@ -774,7 +774,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
       ) : null}
       {editing && editDetail && editDetail.status !== "posted" ? (
         <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
-          {editDetail.display_id} is {editDetail.status} — only a posted purchase can be edited.
+          <EntityLink kind="factoring_purchase" id={editDetail.id} label={editDetail.display_id} /> is {editDetail.status} — only a posted purchase can be edited.
         </div>
       ) : null}
       {!isOwner ? (
