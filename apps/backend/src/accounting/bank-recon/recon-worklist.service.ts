@@ -230,34 +230,17 @@ export async function rejectReconMatch(input: {
 }) {
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    await client.query(
-      `
-        INSERT INTO banking.reconciliation_matches (
-          operating_company_id,
-          bank_transaction_id,
-          ledger_entry_kind,
-          ledger_entry_id,
-          match_score,
-          match_state,
-          matched_at,
-          matched_by_user_uuid
-        )
-        VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid)
-        ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id) WHERE match_state <> 'released'
-        DO UPDATE SET
-          match_score = 0,
-          match_state = 'rejected',
-          matched_at = now(),
-          matched_by_user_uuid = EXCLUDED.matched_by_user_uuid
-      `,
-      [
-        input.operating_company_id,
-        input.bank_transaction_id,
-        input.ledger_entry_kind,
-        input.ledger_entry_id,
-        input.actor_user_uuid,
-      ]
-    );
+    // LEAD 443.168 M (E-50) — reject memory through the one match-row writer.
+    const { storeMatch } = await import("./match.service.js");
+    await storeMatch(client as never, {
+      operating_company_id: input.operating_company_id,
+      bank_transaction_id: input.bank_transaction_id,
+      ledger_entry_kind: input.ledger_entry_kind,
+      ledger_entry_id: input.ledger_entry_id,
+      match_score: 0,
+      match_state: "rejected",
+      actor_user_uuid: input.actor_user_uuid,
+    });
     return { ok: true };
   });
 }
