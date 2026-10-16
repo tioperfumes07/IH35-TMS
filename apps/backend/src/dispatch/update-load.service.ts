@@ -10,7 +10,7 @@
 // No migration: every column already exists. This file writes only mdata.loads + mdata.load_stops.
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { applyTrailerChoice, resolveTrailerChoice, type ResolvedTrailerChoice, type TrailerChoice, type TrailerChoiceRefusal } from "./load-trailer-choice.js";
+import { applyTrailerChoice, requireRecordedTrailerChoice, resolveTrailerChoice, type ResolvedTrailerChoice, type TrailerChoice, type TrailerChoiceRefusal } from "./load-trailer-choice.js";
 import { geocodeStopsWithClient } from "../telematics/stops-geocode-backfill.service.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import {
@@ -656,6 +656,9 @@ export async function updateDispatchLoad(
     const resolved = await resolveTrailerChoice(client, operatingCompanyId, input.trailer_choice);
     if (!resolved.ok) throw new TrailerChoiceRefusedError(resolved.refusal.error);
     resolvedTrailerChoice = resolved.choice;
+  } else if (!isLiveLoadNumberOnlyPatch(input)) {
+    const refusal = await requireRecordedTrailerChoice(client, operatingCompanyId, loadId, old);
+    if (refusal) throw new TrailerChoiceRefusedError(refusal.error);
   }
 
   if (!isLiveLoadNumberOnlyPatch(input) && !isTrailerChoiceOnlyPatch(input)) {

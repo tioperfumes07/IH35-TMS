@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { trailerChoiceSchema } from "../dispatch/load-trailer-choice.js";
 import { MDATA_STATUS_TRANSITIONS, fromMdataStatus, isReverseTransition } from "../dispatch/load-state-machine.js";
 import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
 // ACCT-F166 — the settlement half of a delivery, wired here so the mdata fallback path is
@@ -245,6 +246,7 @@ const createLoadBodySchema = z.object({
   assigned_secondary_driver_id: z.string().uuid().optional(),
   team_id: z.string().uuid().optional(),
   load_trailer_equipment_id: z.string().uuid().optional(),
+  trailer_choice: trailerChoiceSchema.optional(),
   notes: z.string().trim().max(5000).optional(),
   // FAIL-T1 — this is the SECOND load-create path and it never tagged sample data. The Book wizard
   // (dispatch/book-load.service.ts, numbers from load-id-reservation.service.ts:74 => "L-<ymd>-<seq>")
@@ -532,6 +534,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           assigned_secondary_driver_id: b.assigned_secondary_driver_id,
           team_id: b.team_id,
           load_trailer_equipment_id: b.load_trailer_equipment_id,
+          trailer_choice: b.trailer_choice,
           notes: b.notes,
           is_sample_data: b.is_sample_data,
           load_number: b.load_number,

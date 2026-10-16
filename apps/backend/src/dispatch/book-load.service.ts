@@ -289,7 +289,7 @@ export type BookLoadInput = {
   /**
    * LEAD 443.107 item 3: the REQUIRED trailer choice (company trailer / customer trailer number / no trailer).
    * Book Load refuses a non-draft live booking without it (422 trailer_choice_required); load-trailer-choice.ts
-   * validates and records it. A historical_backfill caller (the Settlement Creator) passes it when its source names one.
+   * validates and records it. Historical callers must resolve the document's choice too (G1, R443.161).
    */
   trailer_choice?: TrailerChoice;
   // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600).
@@ -1856,6 +1856,12 @@ export async function createLoadWithFullSideEffects(
   opts: { source: LoadCreateSource }
 ): Promise<BookLoadResult> {
   const source = opts.source;
+  // G1: every caller enters this writer, including Creator and historical imports.
+  // Drafts remain incomplete; a real booking must make an explicit trailer choice.
+  if (input.save_mode !== "draft") {
+    const requiredTrailerChoice = trailerChoiceShapeRefusal(input.trailer_choice);
+    if (requiredTrailerChoice) return { kind: "error", status: 422, payload: requiredTrailerChoice };
+  }
   // ROUND 443.10: the zero-revenue flag is only ever honest on a $0 load. On a rated load it is a
   // contradiction -- refuse before anything is written, never silently ignore it.
   if (input.authorizedZeroRevenue === true && input.charges.reduce((sum, c) => sum + c.amount_cents, 0) !== 0) {
