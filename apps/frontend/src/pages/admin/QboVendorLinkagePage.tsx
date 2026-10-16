@@ -70,7 +70,7 @@ export function QboVendorLinkagePage() {
 
   const classesQuery = useQuery({
     queryKey: ["qbo-vendor-linkage", "classes", companyId],
-    queryFn: listClassesForJe,
+    queryFn: () => listClassesForJe(companyId),
     enabled: Boolean(companyId),
   });
 

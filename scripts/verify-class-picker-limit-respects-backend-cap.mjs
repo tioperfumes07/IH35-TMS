@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 const SRC = "apps/frontend/src/api/accounting.ts";
 const source = readFileSync(SRC, "utf8");
 
-const match = source.match(/listClassesForJe\(\)[\s\S]{0,400}?\/api\/v1\/catalogs\/classes[^\n]*limit=(\d+)/);
+// LEAD 443.160: listClassesForJe reads the one class source (classesCatalogClient); the cap is its `limit:`.
+const match = source.match(/listClassesForJe\(operatingCompanyId: string\)[\s\S]{0,500}?classesCatalogClient\.list\([^\n]*limit:\s*(\d+)/);
 if (!match) {
   console.error(`FAIL: ${SRC}: could not locate listClassesForJe() limit`);
   process.exit(1);
