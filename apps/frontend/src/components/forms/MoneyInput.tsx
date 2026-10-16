@@ -22,6 +22,8 @@ type Props = {
   id?: string;
   name?: string;
   ariaLabel?: string;
+  /** Owner uniform-box law: "standard" = the 34px control height of every filter/select/search. Default keeps 28px. */
+  controlHeight?: "compact" | "standard";
 };
 
 function formatTwoDecimals(value: number | null): string {
@@ -64,6 +66,7 @@ export function MoneyInput({
   id,
   name,
   ariaLabel,
+  controlHeight = "compact",
 }: Props) {
   // DOLLARS mode is selected when a dollars prop is supplied; otherwise CENTS mode (the default).
   const isDollars = valueDollars !== undefined || onChangeDollars !== undefined;
@@ -96,7 +99,7 @@ export function MoneyInput({
         aria-label={ariaLabel}
         inputMode="decimal"
         disabled={disabled}
-        className="h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs tabular-nums"
+        className={`${controlHeight === "standard" ? "h-[34px]" : "h-7"} w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs tabular-nums`}
         placeholder={placeholder ?? "0.00"}
         value={text}
         onFocus={() => {

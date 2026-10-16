@@ -222,8 +222,8 @@ export function MatchDrawer({
   // LEAD 443.163 (register M5) — QuickBooks Find-match filters on the one matcher: Payee, Amount from / to (dollars; the
   // route converts to cents), already wired end to end (api getMatchCandidates → p7-wave2 match-candidates).
   const [payeeQ, setPayeeQ] = useState("");
-  const [amountMin, setAmountMin] = useState("");
-  const [amountMax, setAmountMax] = useState("");
+  const [amountMin, setAmountMin] = useState<number | null>(null);
+  const [amountMax, setAmountMax] = useState<number | null>(null);
   const [draftQ, setDraftQ] = useState("");
   const [categorizeVendorId, setCategorizeVendorId] = useState("");
   const [categorizeGlAccountId, setCategorizeGlAccountId] = useState("");
@@ -272,7 +272,7 @@ export function MatchDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seed only on open / bank row change
   }, [open, bankTransactionId, bankTransactionDate]);
 
-  const hasCustomFilters = Boolean(dateFrom || dateTo || searchQ.trim() || payeeQ.trim() || amountMin !== "" || amountMax !== "");
+  const hasCustomFilters = Boolean(dateFrom || dateTo || searchQ.trim() || payeeQ.trim() || amountMin != null || amountMax != null);
   const expectedNinety = bankTransactionDate ? matchWindowPlusMinus90(bankTransactionDate) : null;
   const usingNinetyDayDefault = Boolean(
     expectedNinety && dateFrom === expectedNinety.from && dateTo === expectedNinety.to && !searchQ.trim()
@@ -301,8 +301,8 @@ export function MatchDrawer({
         dateTo: dateTo || undefined,
         kinds: recordKinds.length ? recordKinds : undefined,
         payee: payeeQ.trim() || undefined,
-        amountMin: amountMin === "" ? undefined : Number(amountMin),
-        amountMax: amountMax === "" ? undefined : Number(amountMax),
+        amountMin: amountMin ?? undefined,
+        amountMax: amountMax ?? undefined,
       }),
     enabled: open && Boolean(operatingCompanyId && bankTransactionId),
   });
@@ -875,29 +875,15 @@ export function MatchDrawer({
           </label>
           <label className="text-xs text-[#4B5563]">
             Amount from
-            <input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step="0.01"
-              value={amountMin}
-              onChange={(e) => setAmountMin(e.target.value)}
-              className="mt-0.5 block h-[34px] w-[120px] rounded-sm border border-[#E5E7EB] px-2 text-right text-xs tabular-nums"
-              data-testid="match-filter-amount-min"
-            />
+            <div className="mt-0.5 w-[120px]" data-testid="match-filter-amount-min">
+              <MoneyInput valueDollars={amountMin} onChangeDollars={setAmountMin} ariaLabel="Amount from" controlHeight="standard" />
+            </div>
           </label>
           <label className="text-xs text-[#4B5563]">
             Amount to
-            <input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step="0.01"
-              value={amountMax}
-              onChange={(e) => setAmountMax(e.target.value)}
-              className="mt-0.5 block h-[34px] w-[120px] rounded-sm border border-[#E5E7EB] px-2 text-right text-xs tabular-nums"
-              data-testid="match-filter-amount-max"
-            />
+            <div className="mt-0.5 w-[120px]" data-testid="match-filter-amount-max">
+              <MoneyInput valueDollars={amountMax} onChangeDollars={setAmountMax} ariaLabel="Amount to" controlHeight="standard" />
+            </div>
           </label>
         </div>
 
