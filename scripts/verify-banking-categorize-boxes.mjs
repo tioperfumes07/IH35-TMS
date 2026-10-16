@@ -36,9 +36,13 @@ import path from "node:path";
 const ROOT = process.cwd();
 const VIEW = path.join(ROOT, "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx");
 const CSS = path.join(ROOT, "apps/frontend/src/styles/tokens-load-detail.css");
+// LEAD 443.163 (register M3): the match side of the Categorize / Match popup IS MatchDrawer (embedded) — one matcher on
+// screen. The candidate-register requirements this guard always held (Date · Type · Ref no. · Payee · Description · Open
+// balance · Amount · Difference · Days off, the type multi-select sent as kinds) are now held on that ONE matcher.
+const DRAWER = path.join(ROOT, "apps/frontend/src/pages/banking/components/MatchDrawer.tsx");
 const LABEL = "verify-banking-categorize-boxes";
 
-export function problemsFor(view, css) {
+export function problemsFor(view, css, drawer = "") {
   const problems = [];
   const panelStart = view.indexOf('data-testid="banking-categorize-expanded-panel"');
   if (panelStart === -1) problems.push("expanded panel (banking-categorize-expanded-panel) missing");
@@ -50,30 +54,17 @@ export function problemsFor(view, css) {
   }
   if ((panel.match(/className="ldt-ch"/g) ?? []).length < 2) problems.push("both boxes must open with an .ldt-ch header band");
 
-  // BANK-MATCH-QBO-c: the register itself is a <ParityTable> now, fed by buildMatchCandidateColumns()
-  // (a module-level factory, not inline JSX inside the panel) — read ITS column array for the head order.
-  const factoryMatch = view.match(/function buildMatchCandidateColumns\([\s\S]*?\n\}\n/);
-  const factory = factoryMatch?.[0] ?? "";
-  if (!factory) problems.push("buildMatchCandidateColumns() factory missing — the candidate register must be built from one column-array factory, not inline JSX");
-  // storageKey is unique to THIS register — the main transactions table (elsewhere in the same
-  // file) is also a <ParityTable>, so a bare "<ParityTable" substring check would pass even if
-  // this specific register reverted to a div-grid.
-  if (!/storageKey="banking-match-candidates"/.test(panel)) problems.push("candidate register must be a real <ParityTable> (storageKey=\"banking-match-candidates\"), not a hand-built div-grid");
-  else {
-    const labels = [...factory.matchAll(/label:\s*"([^"]*)"/g)].map((m) => m[1]);
-    const order = ["Date", "Type", "Ref no.", "Payee", "Description", "Open balance", "Amount", "Difference", "Days off"];
-    let cursor = -1;
-    for (const want of order) {
-      const i = labels.indexOf(want, cursor + 1);
-      if (i === -1 || i <= cursor) {
-        problems.push(`candidate columns must read Date · Type · Ref no. · Payee · Description · Open balance · Amount · Difference · Days off (broke at ${want})`);
-        break;
-      }
-      cursor = i;
-    }
-    if (!/rowTestId=\{\(\) => "banking-match-candidate-row"\}/.test(panel)) problems.push("candidate rows lack the banking-match-candidate-row testid (rowTestId)");
-    if (!/rowClassName=\{\(c\) => \(c\.auto_match \? "best" : ""\)\}/.test(panel)) problems.push("auto_match row must carry the `best` class (rowClassName)");
-    if (!/gearButtonTestId="banking-match-gear"/.test(panel)) problems.push("candidate register must expose its own gear (column show/hide + drag-resize + drag-reorder)");
+  // LEAD 443.163 (register M3) — ONE matcher: the match box renders MatchDrawer embedded for this bank line; the view never
+  // queries candidates itself (no second candidate table on this surface).
+  if (!/<MatchDrawer\s+embedded\b[\s\S]{0,200}bankTransactionId=\{tx\.id\}/.test(panel))
+    problems.push("match box must render the ONE matcher — <MatchDrawer embedded bankTransactionId={tx.id} …> (register M3)");
+  if (/getMatchCandidates\(/.test(view)) problems.push("the banking view queries match candidates itself — a second matcher on the surface (register M3)");
+  for (const [id, field] of [
+    ["match-candidate-date", "Date"], ["match-candidate-kind", "Type"], ["match-candidate-drillthrough", "Ref no."],
+    ["match-candidate-payee", "Payee"], ["match-candidate-description", "Description"], ["match-candidate-open-balance", "Open balance"],
+    ["match-candidate-amount", "Amount"], ["match-candidate-difference", "Difference"], ["match-candidate-days-off", "Days off"],
+  ]) {
+    if (!drawer.includes(`data-testid="${id}"`)) problems.push(`MatchDrawer candidate rows must show ${field} (${id})`);
   }
   if (/border-gray-100/.test(panel)) problems.push("border-gray-100 (invisible divider) still inside the expanded panel");
 
@@ -90,12 +81,12 @@ export function problemsFor(view, css) {
   if (!/title="Categorize \/ Match"/.test(view) || !/\bwide\b/.test(view)) {
     problems.push("ROUND 433-CUR: Modal must be titled Categorize / Match and wide");
   }
-  // B3 — match candidates filterable by transaction type (multi-select).
-  if (!/data-testid="banking-match-filter-kinds"/.test(view) || !/MultiSelectDropdown/.test(view)) {
-    problems.push("ROUND 433-CUR B3: match filters must include banking-match-filter-kinds MultiSelectDropdown");
+  // B3 — match candidates filterable by transaction type (multi-select) — on the ONE matcher (register M3/M5).
+  if (!/data-testid="match-drawer-record-type-dropdown"/.test(drawer) || !/MultiSelectDropdown/.test(drawer)) {
+    problems.push("ROUND 433-CUR B3: MatchDrawer filters must include the record-type MultiSelectDropdown");
   }
-  if (!/kinds:\s*matchKinds\.length\s*>\s*0\s*\?\s*matchKinds/.test(view)) {
-    problems.push("ROUND 433-CUR B3: getMatchCandidates must receive kinds from matchKinds multi-select");
+  if (!/kinds:\s*recordKinds\.length\s*\?\s*recordKinds\s*:\s*undefined/.test(drawer)) {
+    problems.push("ROUND 433-CUR B3: MatchDrawer must send the selected types as kinds to getMatchCandidates");
   }
   // B6 — every categorize picker box is EntityLink-linked when selected.
   for (const id of [
@@ -114,28 +105,28 @@ export function problemsFor(view, css) {
 function selftest() {
   const view = fs.readFileSync(VIEW, "utf8");
   const css = fs.readFileSync(CSS, "utf8");
-  if (problemsFor(view, css).length) { console.error(`${LABEL} SELFTEST: baseline is not clean:`, problemsFor(view, css)); process.exit(1); }
+  const drawer = fs.readFileSync(DRAWER, "utf8");
+  if (problemsFor(view, css, drawer).length) { console.error(`${LABEL} SELFTEST: baseline is not clean:`, problemsFor(view, css, drawer)); process.exit(1); }
   const mutants = [
-    ["left box loses the dark outline", view.replace('className="ldt-card strong" data-testid="banking-categorize-box"', 'className="p-1" data-testid="banking-categorize-box"'), css],
-    ["right box loses the dark outline", view.replace('className="ldt-card strong" data-testid="banking-match-candidates-box"', 'className="border-l" data-testid="banking-match-candidates-box"'), css],
-    ["a header band is dropped", view.replace('<div className="ldt-ch">\n            <span>Match candidates</span>', '<div>\n            <span>Match candidates</span>'), css],
-    ["Type before Date", view.replace('key: "event_date",\n      label: "Date",', 'key: "event_date",\n      label: "___MOVED___",').replace('key: "ledger_entry_kind",\n      label: "Type",', 'key: "ledger_entry_kind",\n      label: "Date",'), css],
-    ["Payee column dropped", view.replace('key: "counterparty_name",\n      label: "Payee",', 'key: "counterparty_name",\n      label: "Payee_REMOVED",'), css],
-    ["register removed (ParityTable reverted to a div-grid)", view.replace('storageKey="banking-match-candidates"', ""), css],
-    ["row testid removed", view.replace('rowTestId={() => "banking-match-candidate-row"}', ""), css],
-    ["best class removed", view.replace('rowClassName={(c) => (c.auto_match ? "best" : "")}', ""), css],
-    ["gear removed", view.replace('gearButtonTestId="banking-match-gear"', ""), css],
-    ["tokens: strong outline dropped", view, css.replace(".ldt-card.strong { border-color: var(--ldt-ink2); }", "")],
-    ["tokens: best tint dropped", view, css.replace(".ldt-rows-match-table tr.best { background: var(--ldt-accent-soft); }", "")],
-    ["433 modal testid dropped", view.replace('data-testid="banking-categorize-match-modal"', 'data-testid="banking-categorize-match-GONE"'), css],
-    ["433 B3 kinds filter dropped", view.replace('data-testid="banking-match-filter-kinds"', 'data-testid="banking-match-filter-kinds-GONE"'), css],
-    ["433 B3 kinds not sent to API", view.replace("kinds: matchKinds.length > 0 ? matchKinds : undefined,", "/* kinds removed */"), css],
-    ["433 B6 vendor link dropped", view.replace('data-testid="banking-categorize-vendor-link"', 'data-testid="banking-categorize-vendor-GONE"'), css],
+    ["left box loses the dark outline", view.replace('className="ldt-card strong" data-testid="banking-categorize-box"', 'className="p-1" data-testid="banking-categorize-box"'), css, drawer],
+    ["right box loses the dark outline", view.replace('className="ldt-card strong" data-testid="banking-match-candidates-box"', 'className="border-l" data-testid="banking-match-candidates-box"'), css, drawer],
+    ["a header band is dropped", view.replace('<div className="ldt-ch">\n            <span>Match</span>', '<div>\n            <span>Match</span>'), css, drawer],
+    ["M3: match box no longer the one matcher", view.replace("<MatchDrawer\n              embedded", "<div\n              data-x"), css, drawer],
+    ["M3: second candidate query in the view", view + "\nvoid getMatchCandidates(id, co, {});\n", css, drawer],
+    ["Payee dropped from the matcher rows", view, css, drawer.replace('data-testid="match-candidate-payee"', 'data-testid="match-candidate-payee-GONE"')],
+    ["Days off dropped from the matcher rows", view, css, drawer.replace('data-testid="match-candidate-days-off"', 'data-testid="x"')],
+    ["Open balance dropped from the matcher rows", view, css, drawer.replace('data-testid="match-candidate-open-balance"', 'data-testid="x"')],
+    ["tokens: strong outline dropped", view, css.replace(".ldt-card.strong { border-color: var(--ldt-ink2); }", ""), drawer],
+    ["tokens: best tint dropped", view, css.replace(".ldt-rows-match-table tr.best { background: var(--ldt-accent-soft); }", ""), drawer],
+    ["433 modal testid dropped", view.replace('data-testid="banking-categorize-match-modal"', 'data-testid="banking-categorize-match-GONE"'), css, drawer],
+    ["433 B3 kinds filter dropped", view, css, drawer.replace('data-testid="match-drawer-record-type-dropdown"', 'data-testid="x"')],
+    ["433 B3 kinds not sent to API", view, css, drawer.replace("kinds: recordKinds.length ? recordKinds : undefined,", "/* kinds removed */")],
+    ["433 B6 vendor link dropped", view.replace('data-testid="banking-categorize-vendor-link"', 'data-testid="banking-categorize-vendor-GONE"'), css, drawer],
   ];
   let caught = 0;
-  for (const [name, v, c] of mutants) {
-    if (v === view && c === css) { console.error(`  ✗ ${name}: mutant did not change the source`); continue; }
-    if (problemsFor(v, c).length) caught += 1; else console.error(`  ✗ ${name}: NOT caught`);
+  for (const [name, v, c, d] of mutants) {
+    if (v === view && c === css && d === drawer) { console.error(`  ✗ ${name}: mutant did not change the source`); continue; }
+    if (problemsFor(v, c, d).length) caught += 1; else console.error(`  ✗ ${name}: NOT caught`);
   }
   if (caught !== mutants.length) { console.error(`FAIL ${LABEL} SELFTEST — ${caught}/${mutants.length}`); process.exit(1); }
   console.log(`PASS ${LABEL} SELFTEST — ${caught}/${mutants.length} defects caught`);
@@ -143,7 +134,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) selftest();
 else {
-  const problems = problemsFor(fs.readFileSync(VIEW, "utf8"), fs.readFileSync(CSS, "utf8"));
+  const problems = problemsFor(fs.readFileSync(VIEW, "utf8"), fs.readFileSync(CSS, "utf8"), fs.readFileSync(DRAWER, "utf8"));
   if (problems.length) { console.error(`FAIL ${LABEL}:`); for (const p of problems) console.error(`  - ${p}`); process.exit(1); }
-  console.log(`PASS ${LABEL} — two .ldt-card.strong boxes, .ldt-ch bands, candidate ParityTable Date · Type · Ref no. · Payee · Description · Open balance · Amount · Difference · Days off`);
+  console.log(`PASS ${LABEL} — two .ldt-card.strong boxes, .ldt-ch bands, one matcher (MatchDrawer embedded) rows Date · Type · Ref no. · Payee · Description · Open balance · Amount · Difference · Days off`);
 }

@@ -39,7 +39,8 @@ const REGISTERED_PAGES = [
 // MultiSelectDropdown; dropping one is a regression. Shrink-only: this list only grows
 // when a new named surface is converted; it never loses a row.
 const CLAUDE_432_NAMED_SURFACES = [
-  { rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", testid: "banking-match-filter-kinds-dropdown", why: "banking transactions / match candidates" },
+  // LEAD 443.163 (register M3): match candidates live on the ONE matcher (MatchDrawer, embedded in Categorize / Match).
+  { rel: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx", testid: "match-drawer-record-type-dropdown", why: "banking match candidates (the one matcher)" },
   { rel: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx", testid: "match-drawer-record-type-dropdown", why: "match candidates drawer" },
   { rel: "apps/frontend/src/pages/accounting/BillsPage.tsx", testid: "bills-status-filter", why: "bills" },
   { rel: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", testid: "expenses-status-filter", why: "expenses" },

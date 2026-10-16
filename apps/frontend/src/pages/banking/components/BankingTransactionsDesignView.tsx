@@ -4,13 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Download, MessageSquare, Paperclip, Printer } from "lucide-react";
 import {
-  acceptBankReconMatch,
   categorizeBankTransaction,
   categorizeTransactionsBulk,
   getAllAccounts,
   getBankingSuggestions,
   getCoaAccounts,
-  getMatchCandidates,
   getBankTransactionCategorizationLinks,
   getPlaidCompanyTransactions,
   isManualBankTransaction,
@@ -21,8 +19,6 @@ import {
   uploadBankStatementCsv,
   SERVER_FILTERABLE_TRANSACTION_TYPES,
   suggestBankTransactionMatches,
-  type BankMatchCandidate,
-  type BankMatchCandidateKind,
   type BankTransactionSuggestion,
   type PlaidBankAccount,
   type PlaidBankTransaction,
@@ -35,7 +31,7 @@ import {
 import { PrintOrientationDialog } from "./PrintOrientationDialog";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
-import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { humanMemo } from "../../accounting/ManualJEListPage";
 import { Button } from "../../../components/Button";
@@ -186,248 +182,10 @@ const COMPANY_TRANSACTIONS_PAGE_SIZE = 500;
 // though 5 more columns now exist.
 const REGISTER_COLUMN_HEADER_CLASS = "text-section-header font-semibold normal-case uppercase tracking-wide";
 
-// Match candidates panel — real ranked-match engine (GET .../match-candidates), same rendering idiom as
-// the orphaned MatchDrawer.tsx (kind badge, amount, date gap, score). DISPLAY ONLY here: the accept/
-// confirm-match action is financial (reconcile-commit) and ships in a separate HELD PR.
-const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
-  payment: "Payment",
-  bill_payment: "Bill Payment",
-  transfer: "Transfer",
-  je: "Journal Entry",
-  bill: "Bill",
-  expense: "Expense",
-  deposit: "Deposit",
-  relay_fuel: "Relay fuel",
-  relay_deposit: "Relay deposit",
-  factoring_advance: "Faro purchase",
-  invoice: "Invoice",
-};
 
-// Match candidates — EntityLink for every kind with a real detail route (Law §9).
-const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = {
-  payment: "payment",
-  bill_payment: "bill_payment",
-  transfer: "transfer",
-  je: "journal_entry",
-  bill: "bill",
-  expense: "expense",
-  deposit: "deposit",
-  relay_fuel: "expense",
-  relay_deposit: "deposit",
-  factoring_advance: "factoring_advance",
-  invoice: "invoice",
-};
 
-// ROUND 433-CUR B3 (owner 2026-10-06): match candidates ARE filterable by transaction type
-// (MultiSelectDropdown). Settlement-born remains the default universe; kinds narrow it further.
-const MATCH_KIND_FILTER_OPTIONS: ReadonlyArray<{ value: BankMatchCandidateKind; label: string }> = [
-  { value: "payment", label: "Payment" },
-  { value: "bill_payment", label: "Bill Payment" },
-  { value: "expense", label: "Expense" },
-  { value: "bill", label: "Bill" },
-  { value: "transfer", label: "Transfer" },
-  { value: "je", label: "Journal Entry" },
-  { value: "deposit", label: "Deposit" },
-  { value: "relay_deposit", label: "Relay deposit" },
-  { value: "relay_fuel", label: "Relay fuel" },
-];
-const SETTLEMENT_BORN_MATCH_NOTE =
-  "Settlement-born documents by default — narrow by transaction type with the multi-selector.";
 
-// BANK-MATCH-QBO-c: "Gap" (dollars off · days off, both unsigned) told you HOW FAR a candidate was
-// but not which direction — the owner's own "I don't know what the gap is" measured live. Split
-// into two signed columns: Difference (bank amount − candidate amount; $0.00 green = exact) and
-// Days off (candidate date − bank date; "+3 d" = candidate is later, "−12 d" = candidate is
-// earlier). Computed client-side from the same real fields the old Gap used — never invented.
-function matchDifferenceCents(txAmountCents: number, candidateAmountCents: number | null | undefined) {
-  return Math.abs(Number(txAmountCents ?? 0)) - Math.abs(Number(candidateAmountCents ?? 0));
-}
-function matchDaysOff(candidateDate: string | null | undefined, bankDate: string) {
-  if (!candidateDate) return null;
-  const c = new Date(String(candidateDate).slice(0, 10));
-  const b = new Date(String(bankDate).slice(0, 10));
-  if (Number.isNaN(c.getTime()) || Number.isNaN(b.getTime())) return null;
-  return Math.round((c.getTime() - b.getTime()) / (24 * 60 * 60 * 1000));
-}
-function formatDaysOff(days: number | null) {
-  if (days == null) return "—";
-  if (days === 0) return "0 d";
-  return `${days > 0 ? "+" : "−"}${Math.abs(days)} d`;
-}
 
-// BANK-MATCH-QBO-c: the match-candidates register moves onto <ParityTable> (gear = column
-// show/hide + density, drag-resize, drag-reorder) — same column-parity conversion Trip Pairing's
-// buildTripPairingColumns already did for its own hand-built register. A factory (not a bare
-// array) because Difference/Days off need the CURRENT bank transaction's own amount/date.
-function buildMatchCandidateColumns(
-  tx: PlaidBankTransaction,
-  matchAction: {
-    confirmingKey: string | null;
-    onConfirm: (candidate: BankMatchCandidate) => void;
-  }
-): ParityColumn<BankMatchCandidate>[] {
-  return [
-    {
-      key: "event_date",
-      label: "Date",
-      sortable: true,
-      testId: "banking-match-candidate-date",
-      sortValue: (c) => String(c.event_date ?? ""),
-      cellClass: "ldt-k",
-      render: (c) => String(c.event_date ?? "").slice(0, 10) || "—",
-    },
-    {
-      key: "ledger_entry_kind",
-      label: "Type",
-      sortable: true,
-      sortValue: (c) => MATCH_CANDIDATE_KIND_LABELS[c.ledger_entry_kind] ?? "",
-      render: (c) => (
-        <EntityLink
-          kind={MATCH_CANDIDATE_ENTITY_KIND[c.ledger_entry_kind]}
-          id={c.ledger_entry_id}
-          label={MATCH_CANDIDATE_KIND_LABELS[c.ledger_entry_kind]}
-          className="ldt-pill ok hover:underline"
-        />
-      ),
-    },
-    {
-      key: "reference",
-      label: "Ref no.",
-      sortable: true,
-      sortValue: (c) => c.reference ?? "",
-      cellClass: "ldt-k",
-      render: (c) => <span title={c.reference ?? undefined}>{c.reference?.trim() ? c.reference : "—"}</span>,
-    },
-    {
-      key: "counterparty_name",
-      label: "Payee",
-      sortable: true,
-      testId: "banking-match-candidate-payee-header",
-      sortValue: (c) => c.counterparty_name ?? "",
-      render: (c) => (
-        <span title={c.counterparty_name ?? undefined} data-testid="banking-match-candidate-payee">
-          {c.counterparty_name?.trim() ? c.counterparty_name : "—"}
-        </span>
-      ),
-    },
-    {
-      key: "description",
-      label: "Description",
-      sortable: true,
-      sortValue: (c) => c.description ?? c.memo ?? "",
-      render: (c) => {
-        // B7 — never paint a session uuid / bare id that slipped into a memo (humanMemo strips UUIDs).
-        const raw = c.description?.trim() || c.memo?.trim() || "";
-        const visible = raw ? humanMemo(raw) : "—";
-        return <span title={visible === "—" ? undefined : visible}>{visible}</span>;
-      },
-    },
-    {
-      key: "open_balance_cents",
-      label: "Open balance",
-      sortable: true,
-      cellClass: "ldt-m",
-      sortValue: (c) => Number(c.open_balance_cents ?? 0),
-      render: (c) => (c.open_balance_cents == null ? "—" : formatUsdCents(Math.abs(Number(c.open_balance_cents)))),
-    },
-    {
-      key: "amount_cents",
-      label: "Amount",
-      sortable: true,
-      cellClass: "ldt-m",
-      sortValue: (c) => Math.abs(Number(c.amount_cents ?? 0)),
-      render: (c) => formatUsdCents(Math.abs(Number(c.amount_cents ?? 0))),
-    },
-    {
-      key: "difference",
-      label: "Difference",
-      sortable: true,
-      testId: "banking-match-candidate-difference-header",
-      cellClass: "ldt-m",
-      sortValue: (c) => Math.abs(matchDifferenceCents(tx.amount_cents, c.amount_cents)),
-      render: (c) => {
-        const diff = matchDifferenceCents(tx.amount_cents, c.amount_cents);
-        // §7 FINANCIAL PALETTE RATCHET (verify-section7-palette-financial.mjs): a raw Tailwind
-        // emerald/green utility class here would push the financial-UI off-palette count above its
-        // frozen baseline — Tier-1, never autonomously recolored. The owner's own consolidated
-        // 2026-09-06 17:30Z spec explicitly asks for "$0.00 green" here, so the color itself is
-        // owner-authorized — delivered via the existing --ldt-accent CSS custom property (already
-        // used elsewhere in this exact file, e.g. .ldt-pill.ok) via inline style, never a new
-        // Tailwind utility class, so the ratchet count itself never moves.
-        return (
-          <span
-            title="Bank amount minus candidate amount. $0.00 = exact amount match."
-            style={diff === 0 ? { color: "var(--ldt-accent)" } : undefined}
-          >
-            {diff === 0 ? "$0.00" : `${diff > 0 ? "+" : "−"}${formatUsdCents(Math.abs(diff))}`}
-          </span>
-        );
-      },
-    },
-    {
-      key: "days_off",
-      label: "Days off",
-      sortable: true,
-      testId: "banking-match-candidate-days-off-header",
-      cellClass: "ldt-k",
-      sortValue: (c) => matchDaysOff(c.event_date, tx.transaction_date) ?? 0,
-      render: (c) => {
-        const days = matchDaysOff(c.event_date, tx.transaction_date);
-        return (
-          <span title="Candidate date minus bank date. +N d = candidate is later; −N d = candidate is earlier.">
-            {formatDaysOff(days)}
-          </span>
-        );
-      },
-    },
-    {
-      key: "best_match",
-      label: "",
-      sortable: false,
-      alwaysVisible: true,
-      render: (c) => (c.auto_match ? <span className="ldt-pill ok">Best match</span> : null),
-    },
-    {
-      key: "match_action",
-      label: "",
-      sortable: false,
-      alwaysVisible: true,
-      testId: "banking-match-candidate-action-header",
-      render: (c) => {
-        // Same eligibility as MatchDrawer's confirmMutation: a bill goes through CHAIN-04 (bill
-        // payment recording), not a plain accept; a non-exact amount is held for variance review,
-        // never silently confirmed. Never guessed — mirrors MatchDrawer.tsx canConfirm exactly.
-        const isBill = c.ledger_entry_kind === "bill";
-        const isExactMatch = c.amount_gap_cents === 0;
-        const canConfirm = !isBill && isExactMatch;
-        const key = `${c.ledger_entry_kind}-${c.ledger_entry_id}`;
-        const isConfirming = matchAction.confirmingKey === key;
-        return (
-          <Button
-            type="button"
-            variant="primary"
-            size="md"
-            data-testid="banking-match-candidate-confirm"
-            disabled={!canConfirm || isConfirming}
-            title={
-              isBill
-                ? "Recording the bill payment is CHAIN-04 (Part 2b)"
-                : !isExactMatch
-                ? "Amount does not match exactly — open the match drawer to review the variance"
-                : "Confirm this match — links and clears the transaction, no journal entry posted"
-            }
-            onClick={(e) => {
-              e.stopPropagation();
-              matchAction.onConfirm(c);
-            }}
-          >
-            {isConfirming ? "Matching…" : "Match"}
-          </Button>
-        );
-      },
-    },
-  ];
-}
 
 /** Owner 2026-10-08: "All" tab removed — showing every transaction confuses operators. Buckets only. */
 type ReviewTabId = "for_review" | "categorized" | "excluded";
@@ -868,18 +626,6 @@ export function BankingTransactionsDesignView({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [collapsedAllGroupings, setCollapsedAllGroupings] = useState(false);
-  const [matchWindowStep, setMatchWindowStep] = useState<1 | 2 | undefined>(undefined);
-  const [matchSearchQ, setMatchSearchQ] = useState("");
-  const [matchDraftQ, setMatchDraftQ] = useState("");
-  // ROUND 157-C: BUILD NO TYPE FILTER — settlement-born only is fixed in the engine.
-  // Filters that remain: Payee, date From/To, amount From/To, text search.
-  const [matchPayee, setMatchPayee] = useState("");
-  const [matchDateFrom, setMatchDateFrom] = useState("");
-  const [matchDateTo, setMatchDateTo] = useState("");
-  const [matchAmountMin, setMatchAmountMin] = useState("");
-  const [matchAmountMax, setMatchAmountMax] = useState("");
-  /** ROUND 433-CUR B3 — match candidates filterable by transaction type (multi-select). Empty = all kinds. */
-  const [matchKinds, setMatchKinds] = useState<BankMatchCandidateKind[]>([]);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>({});
   const [printExportMenuOpen, setPrintExportMenuOpen] = useState(false);
@@ -912,7 +658,6 @@ export function BankingTransactionsDesignView({
   // action column; confirming a match required opening the separate MatchDrawer. This wires the
   // SAME acceptBankReconMatch call the drawer already uses (no new GL math, no second match flow)
   // directly onto the inline row so the owner never has to leave the row to confirm an exact match.
-  const [confirmingMatchKey, setConfirmingMatchKey] = useState<string | null>(null);
   const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
   const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
   // ROUND 443.22-2a — Loan radio opens the EXISTING LoanApplicationWizard (4% default); never silent-mint.
@@ -1076,40 +821,8 @@ export function BankingTransactionsDesignView({
     staleTime: 30_000,
   });
 
-  // PRIMARY match panel — the real ranked-match engine (match.service.ts findCandidates), NOT the
-  // "similar past categorizations" suggestions endpoint below (that one was wrongly bound here before —
-  // it answers a different question and always came back empty for a first-time transaction).
-  const matchCandidatesQuery = useQuery({
-    queryKey: [
-      "banking", "tx-match-candidates", companyId, expandedTxId ?? "", matchWindowStep ?? "cascade", matchSearchQ,
-      matchPayee, matchDateFrom, matchDateTo, matchAmountMin, matchAmountMax, matchKinds.join(","),
-    ],
-    queryFn: () =>
-      getMatchCandidates(String(expandedTxId), companyId, {
-        windowStep: matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax || matchKinds.length > 0 ? undefined : matchWindowStep,
-        q: matchSearchQ || undefined,
-        // ROUND 433-CUR B3 — kinds multi-select (overrides ROUND 157-C "BUILD NO TYPE FILTER").
-        kinds: matchKinds.length > 0 ? matchKinds : undefined,
-        payee: matchPayee || undefined,
-        dateFrom: matchDateFrom || undefined,
-        dateTo: matchDateTo || undefined,
-        amountMin: matchAmountMin === "" ? undefined : Number(matchAmountMin),
-        amountMax: matchAmountMax === "" ? undefined : Number(matchAmountMax),
-      }),
-    enabled: Boolean(companyId && expandedTxId),
-  });
-
-  useEffect(() => {
-    setMatchWindowStep(undefined);
-    setMatchSearchQ("");
-    setMatchDraftQ("");
-    setMatchPayee("");
-    setMatchDateFrom("");
-    setMatchDateTo("");
-    setMatchAmountMin("");
-    setMatchAmountMax("");
-    setMatchKinds([]);
-  }, [expandedTxId]);
+  // LEAD 443.163 (register M3) — the match side of Categorize / Match is MatchDrawer (embedded): its own filters reset per
+  // bank line because it mounts per line; no second candidate query lives in this view.
 
   // BLOCK-6b — FORWARD drill-through panel. API + client existed; this wire is the Law §9 surface.
   const categorizationLinksQuery = useQuery({
@@ -3430,188 +3143,25 @@ export function BankingTransactionsDesignView({
 
         <div ref={matchPaneRef} className="ldt-card strong" data-testid="banking-match-candidates-box">
           <div className="ldt-ch">
-            <span>Match candidates</span>
-            <span className="ldt-open" data-testid="banking-match-candidates-count">
-              {matchCandidatesQuery.isSuccess ? `${(matchCandidatesQuery.data?.candidates ?? []).length} found` : ""}
-            </span>
+            <span>Match</span>
           </div>
           <div className="p-2">
-          <p className="ldt-muted" data-testid="banking-match-window-header">
-            {matchCandidatesQuery.data?.window?.auto_widened
-              ? "No candidates within 3 days — widened to 7 days."
-              : matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax
-                ? "Custom search"
-                : matchCandidatesQuery.data?.window?.step === 2
-                  ? `Within 7 days (${matchCandidatesQuery.data.window.from} – ${matchCandidatesQuery.data.window.to})`
-                  : matchCandidatesQuery.data?.window
-                    ? `Within 3 days (${matchCandidatesQuery.data.window.from} – ${matchCandidatesQuery.data.window.to})`
-                    : "Within 3 days (default)"}
-            {" "}Settlement-born only · ranked by exact amount, then payee, then date.
-          </p>
-          <p className="mt-1 text-xs text-[#4B5563]" data-testid="banking-match-settlement-born-note">
-            {SETTLEMENT_BORN_MATCH_NOTE}
-          </p>
-          {matchCandidatesQuery.data?.window?.auto_widened ? (
-            <p className="mt-1 text-xs text-[#1F2A44]" data-testid="banking-match-widened-banner">
-              No candidates within 3 days — widened to 7 days.
-            </p>
-          ) : null}
-          {!matchDateFrom && !matchDateTo && matchCandidatesQuery.data?.window?.step === 1 && (matchCandidatesQuery.data?.candidates?.length ?? 0) > 0 ? (
-            <button
-              type="button"
-              data-testid="banking-match-search-7-days"
-              className="mt-1 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700"
-              onClick={() => setMatchWindowStep(2)}
-            >
-              Search 7 days
-            </button>
-          ) : null}
-          {/* ROUND 433-CUR B3: match candidates filterable BY TRANSACTION TYPE (multi-select).
-              Payee · Date · Amount · Type. Overrides ROUND 157-C "BUILD NO TYPE FILTER". */}
-          <div className="mt-2 flex flex-wrap items-end gap-2" data-testid="banking-match-filters">
-            <label className="ldt-fld">
-              <span className="ldt-muted block">Payee (vendor / customer)</span>
-              <input data-testid="banking-match-filter-payee" value={matchPayee} onChange={(e) => setMatchPayee(e.target.value)} placeholder="e.g. Holiday Inn" className="h-7 min-w-[150px] rounded-sm border border-gray-300 px-2 text-xs" />
-            </label>
-            <label className="ldt-fld">
-              <span className="ldt-muted block">Date from</span>
-              <DatePicker data-testid="banking-match-filter-date-from" value={matchDateFrom} onChange={setMatchDateFrom} className="h-7" />
-            </label>
-            <label className="ldt-fld">
-              <span className="ldt-muted block">Date to</span>
-              <DatePicker data-testid="banking-match-filter-date-to" value={matchDateTo} onChange={setMatchDateTo} className="h-7" />
-            </label>
-            <label className="ldt-fld">
-              <span className="ldt-muted block">Amount from</span>
-              <input type="number" inputMode="decimal" min={0} step="0.01" data-testid="banking-match-filter-amount-min" value={matchAmountMin} onChange={(e) => setMatchAmountMin(e.target.value)} className="h-7 w-24 rounded-sm border border-gray-300 px-1 text-xs" />
-            </label>
-            <label className="ldt-fld">
-              <span className="ldt-muted block">Amount to</span>
-              <input type="number" inputMode="decimal" min={0} step="0.01" data-testid="banking-match-filter-amount-max" value={matchAmountMax} onChange={(e) => setMatchAmountMax(e.target.value)} className="h-7 w-24 rounded-sm border border-gray-300 px-1 text-xs" />
-            </label>
-            <div data-testid="banking-match-filter-kinds" className="ldt-fld min-w-[180px]">
-              <MultiSelectDropdown
-                label="Transaction type"
-                options={MATCH_KIND_FILTER_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-                selected={matchKinds}
-                onChange={(next) => setMatchKinds(next as BankMatchCandidateKind[])}
-                allLabel="All transaction types"
-                data-testid="banking-match-filter-kinds-dropdown"
-                className="mt-0"
-                triggerClassName={bankingControlBoxClass({ active: matchKinds.length > 0 })}
-              />
-            </div>
-            {matchPayee || matchDateFrom || matchDateTo || matchAmountMin || matchAmountMax || matchKinds.length > 0 ? (
-              <button type="button" className="ldt-link" data-testid="banking-match-filter-clear" onClick={() => { setMatchPayee(""); setMatchDateFrom(""); setMatchDateTo(""); setMatchAmountMin(""); setMatchAmountMax(""); setMatchKinds([]); }}>
-                clear filters
-              </button>
-            ) : null}
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <input
-              type="search"
-              value={matchDraftQ}
-              onChange={(e) => setMatchDraftQ(e.target.value)}
-              placeholder="Search payee, memo, ref…"
-              className="h-7 min-w-[140px] flex-1 rounded-sm border border-gray-300 px-2 text-xs"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setMatchSearchQ(matchDraftQ.trim());
-                }
+            {/* LEAD 443.163 (register M3): ONE matcher on screen — the match side of Categorize / Match IS MatchDrawer
+                (many-to-one, Resolve difference, type / payee / amount / date filters), embedded; the second inline
+                candidate table that lived here is gone. */}
+            <MatchDrawer
+              embedded
+              open
+              bankTransactionId={tx.id}
+              bankTransactionLabel={transactionLabel(tx)}
+              bankTransactionDate={tx.transaction_date?.slice(0, 10) ?? null}
+              operatingCompanyId={companyId}
+              onClose={() => setExpandedTxId(null)}
+              onAccepted={() => {
+                setExpandedTxId(null);
+                onDataChanged();
               }}
             />
-            <button
-              type="button"
-              data-testid="inline-match-search-apply"
-              className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700"
-              onClick={() => setMatchSearchQ(matchDraftQ.trim())}
-            >
-              Search
-            </button>
-            {matchWindowStep === 2 || matchSearchQ ? (
-              <button
-                type="button"
-                data-testid="inline-match-window-reset"
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600"
-                onClick={() => { setMatchWindowStep(undefined); setMatchSearchQ(""); setMatchDraftQ(""); }}
-              >
-                Reset to 3 days
-              </button>
-            ) : null}
-          </div>
-          {matchCandidatesQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading match candidates...</p> : null}
-          {matchCandidatesQuery.isError ? (
-            <p className="mt-2 text-xs text-red-700">Could not load match candidates.</p>
-          ) : null}
-          {!matchCandidatesQuery.isLoading &&
-          !matchCandidatesQuery.isError &&
-          (matchCandidatesQuery.data?.candidates ?? []).length === 0 ? (
-            <p className="mt-2 text-xs text-gray-500">No match candidates found for this transaction.</p>
-          ) : null}
-          {/* BANK-DESIGN-1 + BANK-MATCH-QBO + BANK-MATCH-QBO-c: the suggestions are ONE register in QuickBooks
-              "Find match" order — DATE · TYPE (drill-through) · REF NO. · PAYEE · DESCRIPTION · OPEN BALANCE ·
-              AMOUNT · DIFFERENCE · DAYS OFF · Best match — now a real <ParityTable> (gear = column show/hide +
-              density, drag-resize, drag-reorder), keeping the ldt palette (.ldt-card, .ldt-k/.ldt-m utility
-              classes per cell, .best row tint) rather than the old hand-built div-grid. */}
-          {(matchCandidatesQuery.data?.candidates ?? []).length > 0 ? (
-            <div className="ldt-card mt-2 ldt-rows-match-table">
-              <ParityTable
-                columns={buildMatchCandidateColumns(tx, {
-                  confirmingKey: confirmingMatchKey,
-                  onConfirm: (candidate) => {
-                    const key = `${candidate.ledger_entry_kind}-${candidate.ledger_entry_id}`;
-                    setConfirmingMatchKey(key);
-                    acceptBankReconMatch({
-                      operating_company_id: companyId,
-                      bank_transaction_id: tx.id,
-                      ledger_entry_kind: candidate.ledger_entry_kind as
-                        | "payment"
-                        | "bill_payment"
-                        | "transfer"
-                        | "je"
-                        | "expense",
-                      ledger_entry_id: candidate.ledger_entry_id,
-                    })
-                      .then(() => {
-                        pushToast("Match confirmed — transaction cleared.", "success");
-                        onDataChanged();
-                      })
-                      .catch((error) => pushToast(userFacingApiError(error, "Match failed"), "error"))
-                      .finally(() => setConfirmingMatchKey(null));
-                  },
-                })}
-                rows={[...(matchCandidatesQuery.data?.candidates ?? [])].sort((a, b) => b.match_score - a.match_score)}
-                rowKey={(c) => `${c.ledger_entry_kind}-${c.ledger_entry_id}`}
-                rowTestId={() => "banking-match-candidate-row"}
-                rowClassName={(c) => (c.auto_match ? "best" : "")}
-                storageKey="banking-match-candidates"
-                gearButtonTestId="banking-match-gear"
-                tableTestId="banking-match-candidates-register"
-                stickyHeader={false}
-                // ROUND 16.18 (owner): "we also have a search rows box and a range filter ... but you
-                // already have that in date from date to. and search payee memo ref should render the
-                // same as search rows box. so remove search rows box and range." The panel above this
-                // table already owns Date from/to (matchDateFrom/matchDateTo) and a payee/memo/ref
-                // search box — ParityTable's own generic Search rows + Range popover are the duplicate.
-                suppressToolbarSearch
-                suppressToolbarRange
-                // ROUND 16.18 (owner): "the gear icon, move it in the same row as open match drawer."
-                // ParityTable's own gear always renders in this toolbar row (line ~1330 below) — moving
-                // "Open match drawer" into the toolbar slot puts both in that same row, rather than
-                // touching the shared gear used by every other ParityTable consumer.
-                toolbar={
-                  <button
-                    type="button"
-                    className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700"
-                    onClick={() => setMatchDrawerTxId(tx.id)}
-                  >
-                    Open match drawer
-                  </button>
-                }
-              />
-            </div>
-          ) : null}
-
           {suggestionsQuery.data?.rule_match ? (
             <p
               className="mt-3 border-t border-[#E5E7EB] bg-[#F7F8FA] pt-2 text-xs text-[#1F2A44]"
