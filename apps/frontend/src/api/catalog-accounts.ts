@@ -72,14 +72,55 @@ export function getCatalogAccount(id: string) {
   return apiRequest<CatalogAccount>(`/api/v1/catalogs/accounts/${encodeURIComponent(id)}`);
 }
 
-// Active chart of accounts (entity-scoped server-side). Used e.g. for the Record-Expense payment-account
-// picker, where the caller filters to postable Asset (bank/cash) accounts.
-//
-// G9-H6: /catalogs/accounts hard-caps `limit` at 200 (accounts.routes.ts) and returns no total, while the
-// chart has 371 accounts — so a single call silently drops the OLDEST accounts (ORDER BY created_at DESC).
-// When the caller does not force a specific `limit`, page by offset until a short page so the FULL chart is
-// returned; a caller passing an explicit `limit` still gets exactly that page (backend clamps it to <=200).
-export async function listCatalogAccounts(params?: {
+/** Named QuickBooks form-type filters of the ONE chart-of-accounts source — parameters, never a second query. */
+export type ChartOfAccountsQuery = {
+  /** QBO posting-target pickers (JE lines, CoA roles, expense/bill category, item income/expense account): header
+   *  (non-postable) accounts are not offered. */
+  postableOnly?: boolean;
+  /** Default "active"; the inactive view lists deactivated rows only. */
+  status?: "active" | "inactive";
+  /** An explicit single page (backend clamps to <=200); omitted = the FULL chart, paged by offset. */
+  limit?: number;
+};
+
+/**
+ * LEAD 443.160 (owner 2026-10-16: "one function, one component, one catalog source") — THE chart-of-accounts source
+ * every account picker reads (it was the Banking categorize source). listCatalogAccounts and listCoaAccountsForJe were
+ * two more copies of this same paged /catalogs/accounts query; they now delegate here. Guard: verify-step 18477.
+ *
+ * catalogs.accounts is per-entity (af1 RLS): pass the active entity so the correct chart loads (omitting it falls back
+ * to the user's default company). G9-H6: /catalogs/accounts hard-caps `limit` at 200 and returns no total, so without an
+ * explicit limit the full chart is paged by offset until a short page.
+ */
+export async function getCoaAccounts<T = CatalogAccount>(
+  operatingCompanyId?: string,
+  query: ChartOfAccountsQuery = {}
+): Promise<{ accounts: T[] }> {
+  const params = { operating_company_id: operatingCompanyId, status: query.status ?? "active", limit: query.limit, postable_only: query.postableOnly };
+  // Name locked for verify-acct-catalog-accounts-opco-scope (appendOpco). Also sends postable_only.
+  const appendOpco = (qs: URLSearchParams) => {
+    if (params?.operating_company_id) qs.set("operating_company_id", params.operating_company_id);
+    if (params?.postable_only) qs.set("postable_only", "true");
+  };
+  if (params?.limit !== undefined) {
+    const qs = new URLSearchParams({ status: params.status, limit: String(params.limit) });
+    appendOpco(qs);
+    return apiRequest<{ accounts: T[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
+  }
+  const PAGE = 200;
+  const accounts: T[] = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const qs = new URLSearchParams({ status: params.status, limit: String(PAGE), offset: String(offset) });
+    appendOpco(qs);
+    const res = await apiRequest<{ accounts: T[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
+    accounts.push(...res.accounts);
+    if (res.accounts.length < PAGE) break;
+  }
+  return { accounts };
+}
+
+/** Delegates to the one source (443.160). Kept so its callers' shapes are unchanged. */
+export function listCatalogAccounts(params?: {
   status?: string;
   limit?: number;
   /** Required for USMCA/TRANSP entity charts — omitting falls back to the user's default company. */
@@ -87,25 +128,9 @@ export async function listCatalogAccounts(params?: {
   /** When true, only rows with is_postable=true (posting-target pickers). */
   postable_only?: boolean;
 }) {
-  const status = params?.status ?? "active";
-  // Name locked for verify-acct-catalog-accounts-opco-scope (appendOpco). Also sends postable_only.
-  const appendOpco = (qs: URLSearchParams) => {
-    if (params?.operating_company_id) qs.set("operating_company_id", params.operating_company_id);
-    if (params?.postable_only) qs.set("postable_only", "true");
-  };
-  if (params?.limit !== undefined) {
-    const qs = new URLSearchParams({ status, limit: String(params.limit) });
-    appendOpco(qs);
-    return apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
-  }
-  const PAGE = 200;
-  const accounts: CatalogAccount[] = [];
-  for (let offset = 0; ; offset += PAGE) {
-    const qs = new URLSearchParams({ status, limit: String(PAGE), offset: String(offset) });
-    appendOpco(qs);
-    const res = await apiRequest<{ accounts: CatalogAccount[] }>(`/api/v1/catalogs/accounts?${qs.toString()}`);
-    accounts.push(...res.accounts);
-    if (res.accounts.length < PAGE) break;
-  }
-  return { accounts };
+  return getCoaAccounts<CatalogAccount>(params?.operating_company_id, {
+    status: params?.status === "inactive" ? "inactive" : "active",
+    postableOnly: params?.postable_only,
+    limit: params?.limit,
+  });
 }

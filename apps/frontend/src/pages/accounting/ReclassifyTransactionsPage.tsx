@@ -179,7 +179,7 @@ export function ReclassifyTransactionsPage() {
   const accountsQ = useQuery({ queryKey: ["reclassify-accounts", companyId, fromDate, toDate], queryFn: () => getReclassifyAccountTree(companyId, fromDate, toDate), enabled: !!companyId });
   const facetsQ = useQuery({ queryKey: ["reclassify-facets", companyId, fromDate, toDate], queryFn: () => getReclassifyFacets(companyId, fromDate, toDate), enabled: !!companyId });
   const coaQ = useQuery({ queryKey: ["reclassify-coa", companyId], queryFn: () => listCoaAccountsForJe(companyId), enabled: !!companyId });
-  const classesQ = useQuery({ queryKey: ["reclassify-classes"], queryFn: () => listClassesForJe() });
+  const classesQ = useQuery({ queryKey: ["reclassify-classes", companyId], queryFn: () => listClassesForJe(companyId), enabled: !!companyId });
   const vendorsQ = useQuery({ queryKey: ["reclassify-vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId && toEntityKind === "vendor" });
   const customersQ = useQuery({ queryKey: ["reclassify-customers", companyId], queryFn: () => listCustomers({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId && toEntityKind === "customer" });
   const batchesQ = useQuery({ queryKey: ["reclassify-batches", companyId], queryFn: () => listReclassifyBatches(companyId), enabled: !!companyId });

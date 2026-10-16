@@ -335,8 +335,8 @@ export function DriverDetailPage() {
   const driver = driverQuery.data;
 
   const classesJeQuery = useQuery({
-    queryKey: ["list-classes-je"],
-    queryFn: listClassesForJe,
+    queryKey: ["list-classes-je", driver?.operating_company_id],
+    queryFn: () => listClassesForJe(String(driver?.operating_company_id ?? "")),
     enabled: activeTab === "Profile" && Boolean(driver?.operating_company_id),
   });
 
