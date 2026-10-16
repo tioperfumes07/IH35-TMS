@@ -90,6 +90,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.151 (b) (owner 2026-10-16 ruling option 3; owner 2026-10-01 no-handoff): void-and-reissue keeps the SAME
+  // invoice number — the voided row is renamed "<number>-V<n>". Claimed #(202615960910) in #26785.
+  [
+    "cc-2/443-151-void-frees-invoice-number",
+    new Set(["db/migrations/202615960910_invoice_void_frees_number.sql"]),
+  ],
   // Lead 443.134 AJK-13 (moved from Codex; owner 2026-10-01 no-handoff): IFTA filing versions — a filed / approved return is
   // never modified, a re-prepare is a new draft version. Claimed #(202615910700).
   [
