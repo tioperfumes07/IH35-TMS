@@ -16597,5 +16597,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-16",
     "purpose": "verify-purchase-report-reads-purchase-lines"
+  },
+  "18513": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-16",
+    "purpose": "verify-expense-trailer-reads-current-load-choice"
   }
 }
