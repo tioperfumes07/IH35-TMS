@@ -35,6 +35,7 @@ export function check(svc, sql) {
   for (const call of ["await voidDocument(", "await releaseVoidedInvoiceNumber(", "await buildInvoiceFromLoad(", "await sendDraftInvoice("]) {
     if (!re.includes(call)) p.push(`${SERVICE}: voidAndReissueLoadInvoice must go through ${call.replace("await ", "").replace("(", "")}.`);
   }
+  if (!/latch_earned_\$\{earned\.amount\}_not_\$\{newTotal\}/.test(re) || !/STANDING_LATCH_JE_PREDICATE/.test(re)) p.push(`${SERVICE}: an amount change on a latch-recognized load must be refused (A/R would stay at the earned amount).`);
   if (/INSERT INTO accounting\.journal_entr/i.test(svc)) p.push(`${SERVICE}: no hand-written GL — the engines post.`);
   if (!/status = 'void'\s+AND display_id ~ '\^\(INV-/.test(sql)) p.push(`${MIGRATION}: the "-V<n>" shape must be accepted only on status = 'void' rows.`);
   return p;
@@ -50,6 +51,7 @@ if (process.argv.includes("--selftest")) {
     ["non-Owner reissue", svc.replace('if (input.actorRole !== "Owner") throw', "if (false) throw"), sql],
     ["skips voidDocument", svc.replace("await voidDocument(", "await (async (..._a: unknown[]) => ({ reversalJournalEntryId: null }))("), sql],
     ["-V on live rows", svc, sql.replace("status = 'void'\n    AND display_id", "TRUE\n    AND display_id")],
+    ["latch amount change not refused", svc.replace("latch_earned_${earned.amount}_not_${newTotal}", "latch_ok"), sql],
   ];
   let caught = 0;
   for (const [name, s, q] of planted) {

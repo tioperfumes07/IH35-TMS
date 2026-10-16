@@ -21,6 +21,7 @@ import { buildInvoiceFromLoad } from "./from-load.js";
 import { convertProformaToOfficial } from "./proforma-convert.service.js";
 import { sendDraftInvoice, type InvoiceSendMode } from "./invoice-send.service.js";
 import { updateDispatchLoad } from "../dispatch/update-load.service.js";
+import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";
 
 type Db = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }> };
 
@@ -124,6 +125,24 @@ export async function voidAndReissueLoadInvoice(
   if (!load) throw new InvoiceReissueRefused("load_not_found");
   if (newTotal !== load.rate && !(charges.length === 1 && charges[0].code.toLowerCase() === "linehaul")) {
     throw new InvoiceReissueRefused(`load_charges_not_single_linehaul: ${charges.map((c) => `${c.code}=${c.amount}`).join(",") || "none"} — name the corrected charges on the load`);
+  }
+
+  // LEAD 443.157 (prod 13658): on a load whose delivery latch already recognized revenue (Event 1 "earn"), Event 2 bills
+  // the EARNED amount — a reissue at a different total would leave A/R and revenue at the old amount (4,300 vs 4,450). The
+  // latch re-earn posts on its own connection after commit, so it cannot run inside this transaction: refuse by name and
+  // point at the re-earn path instead of leaving a silent A/R gap.
+  if (newTotal !== inv.total) {
+    const earned = (await client.query<{ amount: number }>(
+      `SELECT p.amount_cents::int AS amount FROM accounting.load_revenue_recognition_postings p
+        WHERE p.operating_company_id = $1::uuid AND p.load_id = $2::uuid AND p.event = 'earn' AND p.is_active
+          AND ${STANDING_LATCH_JE_PREDICATE} LIMIT 1`,
+      [co, inv.load_id]
+    )).rows[0];
+    if (earned && earned.amount !== newTotal) {
+      throw new InvoiceReissueRefused(
+        `latch_earned_${earned.amount}_not_${newTotal}: the delivery latch recognized this load at ${earned.amount}; reverse its standing earn + bill JEs and re-earn at the new rate first (scripts/ops/2026-10-16-cc2-443-157-fix-13658-latch-reearn.mts)`
+      );
+    }
   }
 
   // 1. Void through the one dispatcher (postVoidReversal + the void stamp), then free the number.

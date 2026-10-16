@@ -1,0 +1,213 @@
+[
+{
+"load": "13647",
+"customer": "Armstrong Transport GR",
+"status": "Completed",
+"charges_cents": 425000
+},
+{
+"load": "13648",
+"customer": "Del-Can Logistics LLC",
+"status": "Completed",
+"charges_cents": 400000
+},
+{
+"load": "13649",
+"customer": "Trident Transport, LLC",
+"status": "Completed",
+"charges_cents": 410000
+},
+{
+"load": "13650",
+"customer": "AB Global Logistics , Inc",
+"status": "Completed",
+"charges_cents": 500000
+},
+{
+"load": "13651",
+"customer": "Armstrong Transport GR",
+"status": "Completed",
+"charges_cents": 500000
+},
+{
+"load": "13652",
+"customer": "Semares Forwarding Services",
+"status": "Completed",
+"charges_cents": 490000
+},
+{
+"load": "13653",
+"customer": "Refrigerx Transportation LLC",
+"status": "Completed",
+"charges_cents": 320000
+},
+{
+"load": "13654",
+"customer": "Refrigerx Transportation LLC",
+"status": "Completed",
+"charges_cents": 320000
+},
+{
+"load": "13655",
+"customer": "Nolan Transportation Group LLC",
+"status": "Completed",
+"charges_cents": 400000
+},
+{
+"load": "13656",
+"customer": "Refrigerx Transportation LLC",
+"status": "Completed",
+"charges_cents": 570000
+},
+{
+"load": "13658",
+"customer": "ACE DORAN",
+"status": "Completed",
+"charges_cents": 430000
+},
+{
+"load": "13659",
+"customer": "Trinity Logistics Inc",
+"status": "Completed",
+"charges_cents": 400000
+},
+{
+"load": "13660",
+"customer": "Refrigerx Transportation LLC",
+"status": "Completed",
+"charges_cents": 320000
+},
+{
+"load": "13661",
+"customer": "Refrigerx Transportation LLC",
+"status": "Delivered",
+"charges_cents": 620000
+},
+{
+"load": "13662",
+"customer": "Refrigerx Transportation LLC",
+"status": "Completed",
+"charges_cents": 570000
+},
+{
+"load": "13663",
+"customer": "Jear Logistics",
+"status": "Completed",
+"charges_cents": 330000
+},
+{
+"load": "13664",
+"customer": "New Era Logistics",
+"status": "Completed",
+"charges_cents": 530000
+},
+{
+"load": "13665",
+"customer": "GAMPAC LOGISTICS",
+"status": "Completed",
+"charges_cents": 500000
+},
+{
+"load": "13666",
+"customer": "Jear Logistics",
+"status": "Dispatched",
+"charges_cents": 400000
+},
+{
+"load": "13667",
+"customer": "New Era Logistics",
+"status": "Completed",
+"charges_cents": 530000
+},
+{
+"load": "13668",
+"customer": "ACE DORAN",
+"status": "Completed",
+"charges_cents": 520000
+},
+{
+"load": "13669",
+"customer": "Tropic Brokers, Inc.",
+"status": "Completed",
+"charges_cents": 490000
+},
+{
+"load": "13670",
+"customer": "RLS Logistics",
+"status": "Completed",
+"charges_cents": 560000
+},
+{
+"load": "13671",
+"customer": "RITE WAY LOGISTICS, INC",
+"status": "Completed",
+"charges_cents": 440000
+},
+{
+"load": "13672",
+"customer": "New Era Logistics",
+"status": "Completed",
+"charges_cents": 530000
+},
+{
+"load": "13673",
+"customer": "STEPBYSTEPLOGISTICSLLC",
+"status": "Dispatched",
+"charges_cents": 480000
+},
+{
+"load": "13674",
+"customer": "ACE DORAN",
+"status": "Dispatched",
+"charges_cents": 520000
+},
+{
+"load": "13675",
+"customer": "Refrigerx Transportation LLC",
+"status": "Dispatched",
+"charges_cents": 465000
+},
+{
+"load": "13676",
+"customer": "ES Logistics International LLC",
+"status": "Dispatched",
+"charges_cents": 440000
+},
+{
+"load": "13677",
+"customer": "Jear Logistics",
+"status": "Dispatched",
+"charges_cents": 400000
+},
+{
+"load": "13678",
+"customer": "New Era Logistics",
+"status": "Dispatched",
+"charges_cents": 530000
+},
+{
+"load": "13679",
+"customer": "OTTO Express LLC",
+"status": "Completed",
+"charges_cents": 123000
+},
+{
+"load": "13680",
+"customer": "GAMPAC LOGISTICS",
+"status": "Dispatched",
+"charges_cents": 230000
+},
+{
+"load": "13681",
+"customer": "Semares Forwarding Services",
+"status": "Dispatched",
+"charges_cents": 490000
+},
+{
+"load": "13541",
+"customer": "EGRO",
+"status": "Completed",
+"charges_cents": 250000,
+"source": "settlements workbook"
+}
+]
