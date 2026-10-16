@@ -124,8 +124,15 @@ describe("Faro reserve posters — post what the line says", () => {
     expect(release.map((p: { account_id: string; debit_or_credit: string }) => `${p.debit_or_credit}:${p.account_id}`)).toEqual(["debit:acct:cash_clearing", "credit:acct:factor_cash_reserve_held"]);
   });
 
-  it("rsv deposit refuses (it posts with its payment match); escrow held matches the funding JE without a new entry", async () => {
-    await expect(postFaroReserveEntryOnClient(client(entry({ entry_kind: "rsv_deposit", faro_entry_id: null, faro_invoice_number: null, amount_cents: "500000" })), { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" })).rejects.toThrow("faro_rsv_deposit_posts_with_its_payment_match");
+  it("rsv deposit posts on ITS OWN accepted line, DR 1235 / CR due-from-affiliate (443.168 H, Law B); escrow held matches the funding JE", async () => {
+    await postFaroReserveEntryOnClient(client(entry({ entry_kind: "rsv_deposit", faro_entry_id: null, faro_invoice_number: null, amount_cents: "500000" })), { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" });
+    const dep = mockCreateJe.mock.calls[0]![1].postings;
+    expect(dep.map((p: { account_id: string; debit_or_credit: string; amount_cents: number }) => `${p.debit_or_credit}:${p.account_id}:${p.amount_cents}`)).toEqual([
+      "debit:acct:factor_cash_reserve_held:500000",
+      "credit:acct:intercompany_receivable_ih35_transportation:500000",
+    ]);
+    expect(dep[0]).toMatchObject({ source_transaction_type: "faro_reserve_entry", source_transaction_id: "e-1" });
+    mockCreateJe.mockClear();
     const r = await postFaroReserveEntryOnClient(client(entry({ register: "escrow", entry_kind: "escrow_held", amount_cents: "4500" })), { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" });
     // postFaroReserveEntryOnClient returns a union: the posted-entry branch, or the
     // interest_accrual_awaiting_approval branch (which carries no journal_entry_id). Narrow on the

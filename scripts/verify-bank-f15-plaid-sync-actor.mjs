@@ -62,11 +62,9 @@ export function run(root = ROOT) {
     failures.push("sync added-path autoCategorize must pass { actorUserUuid: opts?.actorUserUuid }");
   }
 
-  if (!/maybePostBankCategorizationToGl/.test(plaid.text)) {
-    failures.push("plaid.service.ts must retain maybePostBankCategorizationToGl in autoCategorize when actor present");
-  }
-  if (!/if\s*\(\s*opts\?\.\s*actorUserUuid\s*\)/.test(plaid.text)) {
-    failures.push("autoCategorize must gate maybePostBankCategorizationToGl on opts?.actorUserUuid");
+  // LEAD 443.168 H (owner Law B): a Plaid rule only SUGGESTS — no GL post from sync, admin sync or apply-historical.
+  if (/maybePostBankCategorizationToGl/.test(plaid.text)) {
+    failures.push("plaid.service.ts posts a bank categorization to the GL — Law B: a Plaid rule only suggests");
   }
 
   if (!/syncTransactions\s*\(\s*account\.plaid_item_id\s*,\s*\{\s*actorUserUuid:\s*user\.uuid\s*\}\s*\)/.test(admin.text)) {
@@ -124,15 +122,11 @@ if (process.argv.includes("--selftest")) {
     throw new Error(`sync actor opts mutation not detected: ${syncFails.join("; ")}`);
   }
 
-  // Mutation: remove maybePostBankCategorizationToGl gate — structural poster path must FAIL.
-  fs.writeFileSync(plaidPath, plaidOrig);
-  fs.writeFileSync(
-    plaidPath,
-    plaidOrig.replace(/if\s*\(\s*opts\?\.\s*actorUserUuid\s*\)/, "if (false /* selftest */)")
-  );
+  // Mutation (443.168 H, Law B): a GL post comes back into the Plaid suggestion path — guard must FAIL.
+  fs.writeFileSync(plaidPath, plaidOrig + "\n// regression\nvoid maybePostBankCategorizationToGl;\n");
   const posterFails = run(tmp);
-  if (!posterFails.some((f) => f.includes("maybePostBankCategorizationToGl"))) {
-    throw new Error(`poster gate mutation not detected: ${posterFails.join("; ")}`);
+  if (!posterFails.some((f) => f.includes("maybePostBankCategorizationToGl") || f.includes("posts a bank categorization"))) {
+    throw new Error(`Law B poster mutation not detected: ${posterFails.join("; ")}`);
   }
 
   fs.rmSync(tmp, { recursive: true, force: true });

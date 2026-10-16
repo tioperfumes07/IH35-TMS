@@ -42,7 +42,9 @@ export function check(src) {
     [/if \(payment\.cents > Number\(inv\.total\) - Number\(inv\.paid\)\) throw new FaroReserveError\("faro_payment_exceeds_invoice_open_balance"\)/, "the customer payment must be capped at the invoice's open balance"],
     [/\{ account: await role\("intercompany_receivable_ih35_transportation"\), dc: "debit"/, "client payable to IH 35 must debit the intercompany receivable (8000)"],
     [/\{ account: cash, dc: "debit", amount, entry: cashSide \},\s*\{ account: await role\("factor_reserve_held"\), dc: "credit"/, "escrow -> cash must be DR 1235 / CR 1230"],
-    [/throw new FaroReserveError\("faro_rsv_deposit_posts_with_its_payment_match"\)/, "a Rsv Deposit must refuse here"],
+    // LEAD 443.168 H (owner Law B): a Rsv Deposit posts on ITS OWN accepted register line (E-41) — DR Faro Cash Reserve /
+    // CR due-from-affiliate — never as a side effect of a customer-payment accept. (Supersedes "a Rsv Deposit must refuse here".)
+    [/entry_kind === "rsv_deposit"\) \{[\s\S]{0,800}?legs = \[\s*\{ account: cash, dc: "debit", amount, entry \},\s*\{ account: await role\("intercompany_receivable_ih35_transportation"\), dc: "credit", amount, entry \}/, "a Rsv Deposit must post on its own line: DR 1235 / CR due-from-affiliate (E-41)"],
     [/else if \(entry\.counterparty !== "ih35_transportation"\) \{\s*legs = \[\s*\{ account: await role\("cash_clearing"\), dc: "debit", amount, entry \},\s*\{ account: cash, dc: "credit", amount, entry \}/, "a client payable to us (the release) must be DR cash_clearing / CR 1235"],
     [/"inv_po_swapped"/, "the Inv/PO swap must be rejected"],
     [/source_transaction_type: "faro_reserve_entry"/, "every leg must be stamped source faro_reserve_entry"],
@@ -88,7 +90,7 @@ if (process.argv.includes("--selftest")) {
     ["short-pay to A/R", { svc: g.svc.replace('{ account: await role("factoring_advance_liability"), dc: "debit", amount, entry }', '{ account: await role("ar_control"), dc: "debit", amount, entry }') }],
     ["fee expensed to 6405", { svc: g.svc.replace('account: await role("factor_default_interest_payable"), dc: "debit" as const, amount: accruedAll', 'account: await role("factor_transaction_fee"), dc: "debit" as const, amount: accruedAll') }],
     ["fee posts without accrual", { svc: g.svc.replace("if (pos.due_cents > 0) {", "if (false) {") }],
-    ["deposit posts", { svc: g.svc.replace('throw new FaroReserveError("faro_rsv_deposit_posts_with_its_payment_match")', "void 0") }],
+    ["deposit refused on its own line again", { svc: g.svc.replace('} else if (entry.entry_kind === "rsv_deposit") {', '} else if (entry.entry_kind === "rsv_deposit_never") {') }],
     ["customer payment uncapped", { svc: g.svc.replace('if (payment.cents > Number(inv.total) - Number(inv.paid)) throw new FaroReserveError("faro_payment_exceeds_invoice_open_balance");', "") }],
     ["release credits escrow", { svc: g.svc.replace('{ account: await role("cash_clearing"), dc: "debit", amount, entry },\n      { account: cash, dc: "credit", amount, entry },', '{ account: await role("cash_clearing"), dc: "debit", amount, entry },\n      { account: await role("factor_reserve_held"), dc: "credit", amount, entry },') }],
     ["swap accepted", { svc: g.svc.replace('"inv_po_swapped"', '"ok"') }],

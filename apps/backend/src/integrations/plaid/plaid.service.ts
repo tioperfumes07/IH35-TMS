@@ -9,7 +9,6 @@ import {
   retirePlaidPendingPredecessor,
 } from "../../banking/bank-tx-dedup.js";
 import { applyBankingRulesForTransaction } from "../../banking/banking-rules.engine.js";
-import { maybePostBankCategorizationToGl } from "../../banking/bank-feed-gl-posting.service.js";
 import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import {
@@ -475,10 +474,9 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
 }
 
 /**
- * ACCT-LINK-06 / ACCT-F05 — Plaid category rules must land on the SAME CHAIN-05 terminal state as the
- * For Review categorize routes: status=categorized + categorization_gl_account_id (+ legacy coa_account_id)
- * then maybePostBankCategorizationToGl when an actor is known. Writing only coa_account_id left rows
- * invisible to the poster and starved matched_journal_entry_id density.
+ * LEAD 443.168 H — SUPERSEDES ACCT-LINK-06 / ACCT-F05 (which applied the rule as a categorization + GL post): owner Law B
+ * (2026-09-12) — a Plaid category rule only SUGGESTS (suggested_account_id + source plaid_rule:<id> + confidence); the
+ * owner's accept on the line (categorize route) is the one writer of the categorization and its posting.
  */
 export async function autoCategorize(
   transaction: Pick<BankTransaction, "operating_company_id" | "id" | "plaid_category"> & {
@@ -535,23 +533,19 @@ export async function autoCategorize(
     // converting the note to a real SQL line comment; also added voided_at IS NULL to the WHERE
     // clause (BANK-F30012 through F30021's class) since a voided row reaching this far should
     // never be (re)categorized either.
+    // LEAD 443.168 H — OWNER LAW B (2026-09-12, permanent): "it should never automatch, it suggests and we accept it or
+    // change the transactions". A Plaid category rule is a SUGGESTION: it writes the suggested_* fields only — never
+    // status 'categorized', never categorization_gl_account_id / coa_account_id, never a GL posting. The human's accept
+    // (categorize route) is the only writer of categorization and the posting. Runs on sync (webhook / cron) and on
+    // "Apply to historical" alike. A line already categorized or matched, or carrying a human/bank-rule suggestion, is left.
     const updated = await client.query(
       `
         UPDATE banking.bank_transactions
         SET
-          status = 'categorized',
-          category = COALESCE(NULLIF(BTRIM(category), ''), 'rule_match'),
-          category_kind = COALESCE(NULLIF(BTRIM(category_kind), ''), 'expense'),
-          categorization_gl_account_id = $2::uuid,
-          coa_account_id = $2::uuid,
-          categorized_at = COALESCE(categorized_at, now()),
-          -- GO-23 (owner FINISH LAW 2026-09-03, "record who and when"): opts.actorUserUuid is
-          -- the human who clicked "Apply to Historical Transactions" (apply-historical route,
-          -- dry_run=false); NULL here is honest, not a bug, for any future fully-automatic caller
-          -- with no human in the loop -- COALESCE never overwrites an already-attributed row.
-          categorized_by_user_id = COALESCE(categorized_by_user_id, $4::uuid),
-          skip_reason = NULL,
-          investigate_note = NULL,
+          suggested_account_id = $2::uuid,
+          suggested_confidence = 'high',
+          suggested_source = $4,
+          suggested_at = now(),
           updated_at = now()
         WHERE id = $1::uuid
           AND operating_company_id = $3::uuid
@@ -559,8 +553,9 @@ export async function autoCategorize(
           AND categorization_gl_account_id IS NULL
           AND voided_at IS NULL
           AND COALESCE(status, 'pending_categorization') IN ('pending_categorization', 'uncategorized')
+          AND (suggested_account_id IS NULL OR suggested_source LIKE 'plaid_rule:%')
       `,
-      [transaction.id, matched.coa_account_id, transaction.operating_company_id, opts?.actorUserUuid ?? null]
+      [transaction.id, matched.coa_account_id, transaction.operating_company_id, `plaid_rule:${matched.id}`]
     );
     applied = (updated.rowCount ?? 0) > 0;
     if (!applied) return;
@@ -570,30 +565,13 @@ export async function autoCategorize(
       ruleId: matched.id,
       matchedPattern: matched.plaid_category_pattern,
       coaAccountId: matched.coa_account_id,
-      chain05: true,
+      suggestion_only: true,
     });
   });
 
   if (!applied) return null;
 
-  // Poster is flag-gated (BANK_FEED_GL_POSTING_ENABLED). Skip when no actor (Plaid sync path) —
-  // tags are still CHAIN-05 complete so apply-historical / categorize can post later.
-  if (opts?.actorUserUuid) {
-    try {
-      await maybePostBankCategorizationToGl({
-        companyId: transaction.operating_company_id,
-        actorUserUuid: opts.actorUserUuid,
-        bankTransactionId: transaction.id,
-      });
-    } catch (err) {
-      console.warn("[PLAID_CATEGORIZE_RULE_MATCH_GL_FAILED]", {
-        operatingCompanyId: transaction.operating_company_id,
-        transactionId: transaction.id,
-        message: String((err as Error)?.message ?? err),
-      });
-    }
-  }
-
+  // LEAD 443.168 H (Law B): no GL posting from a suggestion — the categorize accept posts.
   return matched;
 }
 
