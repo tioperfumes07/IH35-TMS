@@ -35,6 +35,7 @@ const INCOME_TYPES = ["Income", "OtherIncome"];
 import { formatUsdCents } from "../../lib/money";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { VoidActionMenu } from "../../components/shared/VoidActionMenu";
+import { formatDateTimeUS } from "../../utils/qboFormat";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -731,7 +732,7 @@ export function InvoiceDetailPage() {
               <DataPanelRow key={application.id}>
                 <span className="text-xs text-gray-600"><EntityLink kind="payment" id={application.payment_id ?? undefined} label={entityLabel(application.payment_display_id, application.payment_id, "Payment")} /></span>
                 <span className="text-xs text-gray-900">
-                  {money(application.amount_cents)} · Paid {new Date(application.applied_at).toLocaleString()}
+                  {money(application.amount_cents)} · Paid {formatDateTimeUS(application.applied_at)}
                   {" · "}
                   {/* A5 item 3 — split Paid from Deposited: applied_at/payment_date above is when the
                       company recorded the payment; cleared_date is the separate, later date the bank
