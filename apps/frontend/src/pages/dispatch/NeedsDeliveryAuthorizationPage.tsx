@@ -160,7 +160,7 @@ export function NeedsDeliveryAuthorizationPage() {
           onRetry={() => void queueQ.refetch()}
         />
       ) : (
-        <ParityTable<NeedsDeliveryAuthorizationRow> appearance="board"
+        <ParityTable<NeedsDeliveryAuthorizationRow> appearance="board" title="Invoiced loads — awaiting delivery authorization"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.load_id}

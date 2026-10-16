@@ -107,7 +107,7 @@ function LogTable({
     );
   }
   return (
-    <ParityTable<CustomerNotifyLogEntry> appearance="board"
+    <ParityTable<CustomerNotifyLogEntry> appearance="board" title="Customer ETA notifications sent"
       columns={LOG_COLUMNS}
       rows={entries}
       rowKey={(entry) => entry.id}

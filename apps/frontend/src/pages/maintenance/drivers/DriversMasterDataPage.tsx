@@ -267,6 +267,7 @@ export function DriversMasterDataPage() {
           />
         ) : (
           <ParityTable<MaintenanceDriverRow>
+            title="Drivers"
             columns={columns}
             rows={rows}
             rowKey={(row) => row.id}

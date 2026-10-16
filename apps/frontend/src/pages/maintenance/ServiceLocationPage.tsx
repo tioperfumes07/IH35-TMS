@@ -137,6 +137,7 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
         />
       ) : (
         <ParityTable<ServiceLocationRow>
+          title="Work orders — by service location"
           columns={columns}
           rows={rows}
           rowKey={(row) => `${row.service_location}-${row.bucket}`}

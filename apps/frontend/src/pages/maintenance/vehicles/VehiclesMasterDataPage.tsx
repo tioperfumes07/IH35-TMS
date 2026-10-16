@@ -284,6 +284,7 @@ export function VehiclesMasterDataPage() {
           />
         ) : (
           <ParityTable<MaintenanceVehicleRow>
+            title="Vehicles"
             columns={columns}
             rows={rows}
             rowKey={(row) => row.id}

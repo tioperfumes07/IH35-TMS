@@ -422,7 +422,7 @@ export function DetentionBoardPage() {
           onRetry={() => void boardQ.refetch()}
         />
       ) : (
-        <ParityTable<DetentionRow> appearance="board"
+        <ParityTable<DetentionRow> appearance="board" title="Detention events"
         columns={columns}
         rows={events}
         rowKey={(event) => String(event.id)}

@@ -408,6 +408,7 @@ export function FuelCardsPage() {
           <ListErrorBanner onRetry={() => void query.refetch()} message="Fuel card assignments could not be loaded." />
         ) : (
           <ParityTable
+            title="Fuel card assignments"
             rows={query.data?.rows ?? []}
             columns={columns}
             loading={query.isPending}

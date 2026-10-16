@@ -158,6 +158,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       </div>
 
       <ParityTable<RoadServiceTicket>
+        title="Roadside service tickets"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

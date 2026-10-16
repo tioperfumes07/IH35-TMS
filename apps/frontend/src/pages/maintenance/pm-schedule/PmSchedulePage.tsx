@@ -219,6 +219,7 @@ export function PmSchedulePage() {
           />
         ) : (
           <ParityTable
+            title="PM schedules"
             rows={rows}
             columns={columns}
             rowKey={(row) => row.id}

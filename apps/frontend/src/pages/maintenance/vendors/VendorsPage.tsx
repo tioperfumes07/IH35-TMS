@@ -336,6 +336,7 @@ export function VendorsPage() {
           />
         ) : (
         <ParityTable<MaintenanceVendorRow>
+          title="Maintenance vendors"
           columns={columns}
           rows={rows}
           rowKey={(row) => String(row.id)}
