@@ -13,6 +13,7 @@
  */
 import type { TrailerChoice } from "../dispatch/load-trailer-choice.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
+import { SettlementCreatorError } from "./settlement-creator-error.js";
 
 type Q = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -48,10 +49,11 @@ export async function creatorTrailerChoice(client: Q, draft: SettlementCreatorDr
  * LEAD 443.110 G2 — the load's trailer TYPE comes from the same document decision (before this every Creator load was
  * booked DRY_VAN, book-load's default): a fleet trailer's own equipment type (Reefer -> REFRIGERATED_VAN, DryVan ->
  * DRY_VAN, Flatbed -> FLATBED); a customer / shipper trailer -> POWER_ONLY_CUSTOMER_TRAILER; none -> POWER_ONLY_NO_TRAILER.
- * Returns this company's active catalogs.load_trailer_equipment id, or null (book-load keeps its default) when the
- * company's catalog has no such code.
+ * Returns this company's active catalogs.load_trailer_equipment id. An unresolved fleet type or missing catalog
+ * mapping refuses booking; silently taking book-load's DRY_VAN default would misrepresent the document.
+ * Null is reserved for no choice (the caller's no-seeding / no-loads path; new loads separately require a choice).
  */
-const EQUIPMENT_TYPE_TO_TRAILER_CODE: Record<string, string> = { reefer: "REFRIGERATED_VAN", dryvan: "DRY_VAN", flatbed: "FLATBED" };
+const EQUIPMENT_TYPE_TO_TRAILER_CODE: Record<string, string> = { reefer: "REFRIGERATED_VAN", dryvan: "DRY_VAN", flatbed: "FLATBED", lowboy: "LOWBOY" };
 
 export async function creatorLoadTrailerEquipmentId(client: Q, companyId: string, choice: TrailerChoice | null): Promise<string | null> {
   if (!choice) return null;
@@ -66,10 +68,18 @@ export async function creatorLoadTrailerEquipmentId(client: Q, companyId: string
     )).rows[0]?.equipment_type;
     code = EQUIPMENT_TYPE_TO_TRAILER_CODE[String(t ?? "").toLowerCase().replace(/[^a-z]/g, "")] ?? null;
   }
-  if (!code) return null;
+  if (!code) throw new SettlementCreatorError(
+    "trailer_equipment_type_required",
+    "Trailer: the selected fleet trailer has no supported equipment type. Set its actual equipment type before booking; no Dry Van default is allowed.",
+  );
   const r = await client.query<{ id: string }>(
     `SELECT id::text FROM catalogs.load_trailer_equipment WHERE operating_company_id = $1::uuid AND code = $2 AND is_active = true LIMIT 1`,
     [companyId, code],
   );
-  return r.rows[0]?.id ?? null;
+  const id = r.rows[0]?.id;
+  if (!id) throw new SettlementCreatorError(
+    "trailer_equipment_catalog_missing",
+    `Trailer: this company's active equipment catalog has no ${code} mapping. Configure the correct equipment type before booking; no Dry Van default is allowed.`,
+  );
+  return id;
 }
