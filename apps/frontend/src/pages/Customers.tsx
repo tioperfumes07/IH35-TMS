@@ -58,6 +58,7 @@ import { userFacingApiError } from "../lib/api-error-message";
 import { listSpineEvents, type SpineEvent } from "../api/audit";
 import { getArAgingReport, getCustomerProfitability } from "../api/reports";
 import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../components/accounting/UnclearedDocumentsNote";
+import { InfoPopover } from "../components/shared/InfoPopover";
 
 type CustomerTabId =
   | "transaction_list"
@@ -335,6 +336,7 @@ export function CustomerActivityFeed({
   return (
     <div className="space-y-2">
       <ParityTable
+        title="Customer activity"
         rows={activityQuery.data?.events ?? []}
         columns={columns}
         rowKey={(event) => event.event_id}
@@ -450,6 +452,7 @@ function CustomerFinancialActivityTab({
   return (
     <div className="space-y-2">
       <ParityTable
+        title="Customer financial activity"
         rows={query.data?.rows ?? []}
         columns={columns}
         rowKey={(r) => `${r.type}-${r.id}`}
@@ -1675,6 +1678,7 @@ export function CustomersPage() {
                     />
                   ) : (
                     <ParityTable
+                      title="Recurring invoice templates"
                       rows={recurringQuery.data?.rows ?? []}
                       columns={recurringColumns}
                       rowKey={(r) => r.id}
@@ -1686,10 +1690,6 @@ export function CustomersPage() {
                 </div>
               ) : activeTab === "late_fees" ? (
                 <div className="space-y-3">
-                  <p className="text-xs text-gray-600">
-                    There is no customer late-fee rule table. This tab lists overdue open invoices (due date
-                    before today, remaining open, not void). It does not invent a late-fee dollar amount.
-                  </p>
                   {statementInvoicesQuery.isError ? (
                     <ListErrorState
                       title="Couldn't load overdue invoices"
@@ -1699,6 +1699,13 @@ export function CustomersPage() {
                     />
                   ) : (
                     <ParityTable
+                      title="Overdue open invoices"
+                      titleInfo={
+                        <InfoPopover label="About overdue invoices">
+                          There is no customer late-fee rule table. This tab lists overdue open invoices (due date
+                          before today, remaining open, not void). It does not invent a late-fee dollar amount.
+                        </InfoPopover>
+                      }
                       rows={(statementInvoicesQuery.data?.invoices ?? []).filter((inv) => {
                         if (isVoidInvoice(inv)) return false;
                         if (invoiceOpenCentsForDisplay(inv) <= 0) return false;

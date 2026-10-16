@@ -403,6 +403,7 @@ export function DailyTasksPage() {
         </div>
       ) : (
         <ParityTable
+          title={VIEW_LABEL[view]}
           rows={activeRows}
           columns={columns}
           rowKey={(task) => task.id}

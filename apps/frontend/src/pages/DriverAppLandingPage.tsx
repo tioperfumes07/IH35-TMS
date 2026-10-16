@@ -1,5 +1,6 @@
 import { Button } from "../components/Button";
 import { PageHeader } from "../components/layout/PageHeader";
+import { InfoPopover } from "../components/shared/InfoPopover";
 
 const DRIVER_PWA_URL =
   (import.meta.env.VITE_DRIVER_PWA_URL as string | undefined)?.trim() || "https://driver.ih35dispatch.com";
@@ -15,9 +16,11 @@ export function DriverAppLandingPage() {
       <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
         <p className="mb-3">
           The driver-facing app runs at{" "}
-          <span className="font-mono text-xs text-gray-900">{DRIVER_PWA_URL}</span>. Drivers sign in there with
-          phone-based authentication. Office staff generally don&apos;t need to log in to the driver PWA except for
-          impersonation testing during onboarding.
+          <span className="font-mono text-xs text-gray-900">{DRIVER_PWA_URL}</span>.{" "}
+          <InfoPopover label="About signing in to the driver app">
+            Drivers sign in there with phone-based authentication. Office staff generally don&apos;t need to log in
+            to the driver PWA except for impersonation testing during onboarding.
+          </InfoPopover>
         </p>
         <Button type="button" onClick={openDriverPwa}>
           Open Driver PWA →

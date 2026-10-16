@@ -164,8 +164,8 @@ export function TasksReportPage() {
       </div>
 
       <div className="space-y-2">
-        <div className="text-xs font-semibold text-[#0F1219]">By assignee</div>
         <ParityTable
+          title="Tasks — by assignee"
           rows={byAssignee}
           columns={assigneeColumns}
           rowKey={(row) => row.name}

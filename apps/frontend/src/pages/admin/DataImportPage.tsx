@@ -10,6 +10,7 @@ import { ApiError } from "../../api/client";
 import { helpUrlFromRel } from "../../config/help-links";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SelectCombobox } from "../../components/Combobox";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 type EntitySlug = "drivers" | "units" | "customers" | "vendors" | "bank-accounts" | "loads" | "bank-transactions";
 
@@ -176,11 +177,14 @@ export function DataImportPage() {
       </div>
 
       <p className="text-xs text-[#4B5563]">
-        Import curated production CSVs without shell access. Read the{" "}
-        <a className="text-[#4B5563] underline" href={helpUrlFromRel("docs/seed-real-data-guide.md")} target="_blank" rel="noreferrer">
-          seed real data guide
-        </a>{" "}
-        for formatting rules. Uploads use the same validation as <span className="font-mono text-xs">npm run seed:from-csv</span>.
+        Import curated production CSVs without shell access.{" "}
+        <InfoPopover label="About importing data">
+          Read the{" "}
+          <a className="text-[#4B5563] underline" href={helpUrlFromRel("docs/seed-real-data-guide.md")} target="_blank" rel="noreferrer">
+            seed real data guide
+          </a>{" "}
+          for formatting rules. Uploads use the same validation as <span className="font-mono text-xs">npm run seed:from-csv</span>.
+        </InfoPopover>
       </p>
 
       {pageError ? (

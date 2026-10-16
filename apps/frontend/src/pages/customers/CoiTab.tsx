@@ -340,6 +340,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
 
       {!query.isError ? (
       <ParityTable<InsuranceCoiRequest>
+        title="Certificate of insurance requests"
         rows={requests}
         rowKey={(request) => request.id}
         loading={query.isLoading}

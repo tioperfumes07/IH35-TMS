@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 export type SampleSeedSummary = {
   customer_id: string;
@@ -28,8 +29,8 @@ export function Step6SampleData({ value, disabled, seeding, onSeed }: Props) {
     <div className="space-y-3" data-testid="onboarding-step-samples">
       <h2 className="text-xs font-semibold text-gray-900">Seed sample data (optional)</h2>
       <p className="text-xs text-gray-600">
-        Add one sample customer, vendor, driver, truck, and load so you can explore every module with realistic data.
-        Sample rows are flagged and can be removed later from admin tools.
+        Add one sample customer, vendor, driver, truck, and load so you can explore every module with realistic data.{" "}
+        <InfoPopover label="About sample data">Sample rows are flagged and can be removed later from admin tools.</InfoPopover>
       </p>
 
       <label className="flex items-center gap-2 text-xs">

@@ -122,6 +122,7 @@ export function EngineStatusBoardPage() {
 
       {!q.isError ? (
         <ParityTable
+          title="Engines — status"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}
