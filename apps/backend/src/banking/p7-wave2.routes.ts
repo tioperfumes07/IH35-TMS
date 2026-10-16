@@ -413,8 +413,38 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         // auto_match flag (which also requires memo_similarity >= 0.8): amount_gap_cents === 0 and
         // date_gap_days <= AUTO_MATCH_DATE_WINDOW_DAYS (5), kind in {expense, bill} only.
         // ROUND 443.66-C — also relay_deposit (wallet funding credits) when exact (incl. wallet leg).
+        // LEAD 443.155 F — a Faro wire's suggestion is its PURCHASE (exact net), never categorize-to-2150 (the purchase already
+        // credited 2150). One wire can fund several purchases of one date: their sum equal to the line is the suggestion.
+        const faro = result.candidates.filter((c) => c.ledger_entry_kind === "factoring_advance");
+        const bankAbs = Math.abs(Number(result.bank_amount_cents));
+        if (!faro.some((c) => c.exact_amount)) {
+          const byDate = new Map<string, typeof faro>();
+          for (const c of faro) byDate.set(c.event_date, [...(byDate.get(c.event_date) ?? []), c]);
+          const hit = [...byDate.entries()].filter(([, g]) => g.length > 1 && g.reduce((t, c) => t + Math.abs(Number(c.amount_cents)), 0) === bankAbs);
+          if (hit.length === 1) {
+            const [date, g] = hit[0]!;
+            return {
+              bank_transaction_id: bankTransactionId,
+              suggestion: {
+                suggested_ledger_entry_kind: "factoring_advance" as const,
+                suggested_ledger_entry_id: g[0]!.ledger_entry_id,
+                suggested_confidence: "high" as const,
+                date_gap_days: g[0]!.date_gap_days,
+                memo_similarity: g[0]!.memo_similarity,
+                suggested_event_date: date,
+                suggested_amount_cents: bankAbs,
+                suggested_payee_name: g[0]!.counterparty_name,
+                suggested_reference: g.map((c) => c.reference).join(" + "),
+                suggested_match_count: g.length,
+                suggested_reason: `exact net of ${g.length} Faro purchases dated ${date} (one wire) — select all ${g.length} in the Match drawer`,
+              },
+              gap_reason: null,
+            };
+          }
+        }
         const qualifying = result.candidates.filter((c) => {
           if (c.date_gap_days > 5) return false;
+          if (c.ledger_entry_kind === "factoring_advance") return c.exact_amount;
           if (c.ledger_entry_kind === "expense" || c.ledger_entry_kind === "bill") return c.exact_amount;
           if (c.ledger_entry_kind === "relay_deposit") {
             return (
@@ -444,6 +474,11 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
             suggested_reference: best.reference,
             // BANK-F91062 — ORDERS §18: "N match found" (not hardcoded 1). Count of exact±5d expense/bill.
             suggested_match_count: qualifying.length,
+            // LEAD 443.155 F — owner Law B: every suggestion carries its reason.
+            suggested_reason:
+              best.ledger_entry_kind === "factoring_advance"
+                ? `exact net, Faro purchase ${best.reference ?? ""} ${best.event_date}`.replace(/\s+/g, " ").trim()
+                : `exact amount, ${best.ledger_entry_kind.replace(/_/g, " ")} ${best.reference ?? ""} ${best.event_date}${best.date_gap_days ? `, ${best.date_gap_days} day(s) apart` : ""}`.replace(/\s+/g, " ").trim(),
           },
           gap_reason: null,
         };

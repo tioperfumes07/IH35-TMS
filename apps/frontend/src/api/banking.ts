@@ -1704,7 +1704,9 @@ export function getBankReconWorklist(
 
 export type BankTransactionSuggestion = {
   /** ROUND 443.66-C — relay_deposit for Relay Fuel Wallet funding credits. */
-  suggested_ledger_entry_kind: "expense" | "bill" | "relay_deposit";
+  suggested_ledger_entry_kind: "expense" | "bill" | "relay_deposit" | "factoring_advance";
+  /** LEAD 443.155 F — why this is the suggestion (owner Law B: suggestions carry their reason). */
+  suggested_reason?: string | null;
   suggested_ledger_entry_id: string;
   suggested_confidence: "high" | "medium";
   date_gap_days: number;

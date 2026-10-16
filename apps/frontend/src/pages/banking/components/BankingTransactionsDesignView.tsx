@@ -686,14 +686,17 @@ export function formatSuggestedMatchInline(
         ? "Expense"
         : kind === "relay_deposit"
           ? "Relay deposit"
-          : kind || "Match";
+          : kind === "factoring_advance"
+            ? "Faro purchase"
+            : kind || "Match";
   const ref = String(suggestion.suggested_reference ?? "").trim();
   const date = formatBankTransactionDate(suggestion.suggested_event_date ?? null);
   const cents = Number(suggestion.suggested_amount_cents ?? 0);
   const amount = Number.isFinite(cents) && cents !== 0 ? formatCents(cents) : "";
   const payee = String(suggestion.suggested_payee_name ?? "").trim();
   const head = [kindLabel, ref].filter(Boolean).join(" ");
-  return [head, date !== "—" ? date : "", amount, payee].filter(Boolean).join(" · ");
+  const reason = String(suggestion.suggested_reason ?? "").trim();
+  return [head, date !== "—" ? date : "", amount, payee, reason ? `— ${reason}` : ""].filter(Boolean).join(" · ");
 }
 
 /**

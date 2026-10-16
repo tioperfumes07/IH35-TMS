@@ -23,6 +23,7 @@ const FILES = {
   api: "apps/frontend/src/api/banking.ts",
   view: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
   drawer: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
+  feed: "apps/backend/src/integrations/plaid/link.routes.ts",
 };
 const LABEL = "verify-banking-match-qbo-engine";
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -59,8 +60,21 @@ export function candidateScopeProblems(service) {
   return p;
 }
 
-export function problemsFor({ service, predicate, route, api, view, drawer }) {
-  const p = [...candidateScopeProblems(service)];
+/** 443.155 F — a Faro wire's suggestion is its purchase (exact net or the same-date group), with a reason; the stored
+ *  2150 category is not served when a purchase covers the wire. */
+export function faroSuggestionProblems({ route, feed }) {
+  const p = [];
+  if (!route || !/if \(c\.ledger_entry_kind === "factoring_advance"\) return c\.exact_amount;/.test(route))
+    p.push("route: /banking/transactions/suggest never qualifies a Faro purchase (443.155 F)");
+  if (!route || !/suggested_reason:/.test(route)) p.push("route: suggestions carry no reason (443.155 F, Law B)");
+  if (!route || !/g\.length > 1 && g\.reduce\(/.test(route)) p.push("route: a Faro wire funding several purchases of one date is never suggested (443.155 F)");
+  if (!feed || !/far\.role = 'factoring_advance_liability'[\s\S]{0,600}FROM accounting\.factoring_purchases fp/.test(feed))
+    p.push("feed: the stored 2150 suggestion is served on a Faro wire whose purchase is on the books (443.155 F)");
+  return p;
+}
+
+export function problemsFor({ service, predicate, route, api, view, drawer, feed }) {
+  const p = [...candidateScopeProblems(service), ...faroSuggestionProblems({ route, feed })];
   for (const f of ["counterparty_kind", "counterparty_name", "counterparty_id", "reference", "description", "open_balance_cents", "payee_similarity"]) {
     if (!new RegExp(`^\\s*${f}\\??:`, "m").test(service)) p.push(`service: MatchCandidate lacks ${f}`);
   }
@@ -186,6 +200,7 @@ function selftest() {
     api: read(FILES.api),
     view: read(FILES.view),
     drawer: read(FILES.drawer),
+    feed: read(FILES.feed),
   };
   const baseline = problemsFor(base);
   if (baseline.length) {
@@ -205,6 +220,9 @@ function selftest() {
     ["bills on card registers", { ...base, service: base.service.replace('if (onOperatingBank && wants("bill"))', 'if (wants("bill"))') }],
     ["factoring purchases dropped", { ...base, service: base.service.replace("FROM accounting.factoring_purchases fp", "FROM accounting.factoring_advances fp") }],
     ["invoices dropped", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', "if (false)") }],
+    ["faro never suggested", { ...base, route: base.route.replace('if (c.ledger_entry_kind === "factoring_advance") return c.exact_amount;', "") }],
+    ["no reason", { ...base, route: base.route.replaceAll("suggested_reason:", "suggested_note:") }],
+    ["2150 served on a purchased wire", { ...base, feed: base.feed.replace("FROM accounting.factoring_purchases fp", "FROM accounting.factoring_advances fp") }],
     ["new unscoped source", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', 'if (wants("je")) {}\n    if (onOperatingBank && wants("invoice"))') }],
   ];
   for (const [name, mutant] of mutants) {
@@ -227,6 +245,7 @@ const problems = problemsFor({
   api: read(FILES.api),
   view: read(FILES.view),
   drawer: read(FILES.drawer),
+  feed: read(FILES.feed),
 });
 if (problems.length) {
   console.error(`${LABEL} FAIL:`);
