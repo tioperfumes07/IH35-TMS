@@ -52,3 +52,42 @@ describe("restateOpenDriverBillToSignedPay", () => {
     await expect(restateOpenDriverBillToSignedPay(client({ gross: "60917", accrued: "ab" }) as never, base)).rejects.toThrow(/accrued at delivery/);
   });
 });
+
+// LEAD 443.167-R2 — owner standing ruling: a Transportation load tied to a USMCA settlement settles here at $0.
+vi.mock("../../accounting/journal-entries.service.js", async (orig) => ({ ...(await orig()), reverseJournalEntryNoFlip: vi.fn(async () => ({})) }));
+vi.mock("../../audit/crud-audit.js", async (orig) => ({ ...(await orig()), appendCrudAudit: vi.fn(async () => undefined) }));
+import { restateAdoptedLoadToZeroRevenue } from "../settlement-creator.service.js";
+import { reverseJournalEntryNoFlip } from "../../accounting/journal-entries.service.js";
+
+function zclient(rate: string, invoices: number, earn: string[]) {
+  const calls: Array<[string, unknown[]]> = [];
+  const query = vi.fn(async (sql: string, values: unknown[] = []) => {
+    calls.push([sql, values]);
+    if (/rate_total_cents::text AS r/.test(sql)) return { rows: [{ r: rate }] };
+    if (/FROM accounting\.invoices/.test(sql)) return { rows: [{ n: invoices }] };
+    if (/source_transaction_type = 'load'/.test(sql)) return { rows: earn.map((je) => ({ je })) };
+    return { rows: [] };
+  });
+  return { query, calls };
+}
+const z = { companyId: "co", loadId: "l-13541", loadNumber: "13541", actorUserId: "u", settlementNo: "5796" };
+
+describe("restateAdoptedLoadToZeroRevenue (13541 / 5796 shape)", () => {
+  it("reverses the seed's Event 1 earn, zeroes the charge lines and the rate", async () => {
+    const c = zclient("250000", 0, ["je-earn"]);
+    await restateAdoptedLoadToZeroRevenue(c as never, z);
+    expect(reverseJournalEntryNoFlip).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ journalEntryId: "je-earn" }));
+    const sqls = c.calls.map(([s]) => s).join("\n");
+    expect(sqls).toMatch(/UPDATE dispatch\.load_charge_lines SET amount_cents = 0/);
+    expect(sqls).toMatch(/UPDATE mdata\.loads SET rate_total_cents = 0/);
+    expect(sqls).not.toMatch(/DELETE/);
+  });
+  it("is a no-op for a load already at $0", async () => {
+    const c = zclient("0", 0, []);
+    await restateAdoptedLoadToZeroRevenue(c as never, z);
+    expect(c.calls.length).toBe(1);
+  });
+  it("refuses a load that already has a live invoice", async () => {
+    await expect(restateAdoptedLoadToZeroRevenue(zclient("250000", 1, []) as never, z)).rejects.toThrow(/already has a live invoice/);
+  });
+});

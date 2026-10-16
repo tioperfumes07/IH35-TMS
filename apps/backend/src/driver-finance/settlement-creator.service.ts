@@ -268,6 +268,57 @@ export async function restateOpenDriverBillToSignedPay(
   await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.companyId, loadId: input.loadId });
 }
 
+/**
+ * OWNER STANDING RULING 443.167-R2 (2026-10-16 17:36 CT): "Transportation loads were settled here in usmca as 0 if they
+ * are tied to usmca settlements." A seeded load adopted in faro_transportation $0 mode still carries the seed's USMCA
+ * revenue: its rate, its line-haul charge and its Event 1 earn JE (Dr 1150 / Cr 4000). Before the $0 invoice it is
+ * restated to $0: the earn JE is reversed through the JE reversal engine (reversed_by_je_id — the latch is then no longer
+ * standing, standingLatchJePredicate), the charge lines go to $0, the rate to $0. Refused when the load already has a live
+ * invoice (an issued document is never rewritten). No-op when the load is already $0.
+ */
+export async function restateAdoptedLoadToZeroRevenue(
+  client: DbClient,
+  input: { companyId: string; loadId: string; loadNumber: string; actorUserId: string; settlementNo: string },
+): Promise<void> {
+  const rate = Number((await client.query<{ r: string | null }>(
+    `SELECT rate_total_cents::text AS r FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.loadId, input.companyId],
+  )).rows[0]?.r ?? 0);
+  if (!(rate > 0)) return;
+  const inv = (await client.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM accounting.invoices WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL`,
+    [input.loadId, input.companyId],
+  )).rows[0]?.n ?? 0;
+  if (inv > 0) {
+    throw new SettlementCreatorError("zero_revenue_load_already_invoiced", `Load ${input.loadNumber}: a Transportation load settled at $0 in USMCA already has a live invoice — void it first.`);
+  }
+  const reason = `443.167-R2: Transportation load settled in USMCA at $0 on settlement ${input.settlementNo} (owner standing ruling)`;
+  const earn = (await client.query<{ je: string }>(
+    `SELECT DISTINCT p.journal_entry_uuid::text AS je
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+      WHERE p.operating_company_id = $1::uuid AND p.load_id = $2::uuid AND p.source_transaction_type = 'load'
+        AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL`,
+    [input.companyId, input.loadId],
+  )).rows;
+  const { reverseJournalEntryNoFlip } = await import("../accounting/journal-entries.service.js");
+  for (const e of earn) {
+    await reverseJournalEntryNoFlip(client as never, { operatingCompanyId: input.companyId, journalEntryId: e.je, reason, actorUserId: input.actorUserId });
+  }
+  await client.query(
+    `UPDATE dispatch.load_charge_lines SET amount_cents = 0, updated_at = now()
+      WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND COALESCE(is_active, true) AND amount_cents <> 0`,
+    [input.loadId, input.companyId],
+  );
+  await client.query(
+    `UPDATE mdata.loads SET rate_total_cents = 0, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.loadId, input.companyId],
+  );
+  await appendCrudAudit(client as never, input.actorUserId, "driver_finance.settlement_creator.load_restated_to_zero_revenue",
+    { resource_type: "mdata.loads", resource_id: input.loadId, operating_company_id: input.companyId, prior_rate_cents: rate, reversed_journal_entries: earn.map((e) => e.je), reason },
+    "warning", AUDIT_TAG);
+}
+
 async function writeDriverPayLine(
   client: DbClient,
   input: {
@@ -2082,6 +2133,11 @@ export async function postSettlementCreatorInClientTx(
     // LEAD 443.167-R — the same holds for an adopted seeded load: a load already past delivery is never re-delivered.
     if (!["delivered", "delivered_pending_docs", "invoiced", "paid", "completed", "closed"].includes(loadStatus)) {
       await deliverLoadThroughDispatch(client, actorUserId, draft.operating_company_id, loadId, load.delivery_date);
+    }
+    // OWNER STANDING RULING 443.167-R2 — an adopted Transportation load settled in USMCA at $0 drops the revenue the seed
+    // booked for it (rate, line haul, Event 1 earn) before its $0 invoice; no-op for a load booked at $0 by this post.
+    if (isAuthorizedZeroRevenueLoad(load)) {
+      await restateAdoptedLoadToZeroRevenue(client, { companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, actorUserId, settlementNo: draft.settlement_no });
     }
     let built;
     try {
