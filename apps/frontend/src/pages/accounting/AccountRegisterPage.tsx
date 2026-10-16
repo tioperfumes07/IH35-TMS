@@ -240,7 +240,19 @@ function kpiCard(label: string, value: string, sublabel: string) {
 
 const inputCls = "h-9 rounded-sm border border-gray-300 px-2 text-xs";
 
-export function AccountRegisterPage() {
+/** LEAD 443.170 — Banking renders this same register for a feed-less account (no shell, no route params). */
+function EmbeddedRegisterShell({ kpiStrip, children }: { kpiStrip?: ReactNode; children: ReactNode; title?: string; subtitle?: string }) {
+  return (
+    <div data-testid="account-register-embedded">
+      {kpiStrip}
+      {children}
+    </div>
+  );
+}
+
+export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAccountId?: string } = {}) {
+  const embedded = Boolean(embeddedBankAccountId);
+  const Shell = embedded ? EmbeddedRegisterShell : AccountingSubNavWrapper;
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
@@ -255,9 +267,13 @@ export function AccountRegisterPage() {
   // Report drilldowns also pass ?from_date=&to_date=&basis= as query params — all three are read.
   const { accountId: routeAccountId } = useParams<{ accountId?: string }>();
   const queryAccountId = searchParams.get("accountId");
-  const deepLinkAccountId = (routeAccountId ?? queryAccountId ?? "").trim();
+  const deepLinkAccountId = (embeddedBankAccountId ?? routeAccountId ?? queryAccountId ?? "").trim();
 
-  const initial = monthBoundsIso(companyToday());
+  // LEAD 443.170 — embedded in Banking the register opens on the whole year (a reserve account moves a few times a
+  // month; "this month" would read empty). Standalone keeps this month.
+  const initial = embedded ? (applyPreset("this_year") ?? monthBoundsIso(companyToday())) : monthBoundsIso(companyToday());
+  const initialFrom = "from" in initial ? initial.from : initial.start;
+  const initialTo = "to" in initial ? initial.to : initial.end;
   const paramFrom = searchParams.get("from_date");
   const paramTo = searchParams.get("to_date");
   // ACCT-F410 — the register now ANSWERS in the basis it is asked for. Before this, the comment
@@ -266,9 +282,9 @@ export function AccountRegisterPage() {
   // Anything other than "cash" is accrual (@decision Q7: basis defaults to accrual).
   const paramBasis = searchParams.get("basis") === "cash" ? "cash" : "accrual";
   const [accountId, setAccountId] = useState(deepLinkAccountId);
-  const [fromDate, setFromDate] = useState(paramFrom ?? initial.start);
-  const [toDate, setToDate] = useState(paramTo ?? initial.end);
-  const [preset, setPreset] = useState(paramFrom ? "custom" : "this_month");
+  const [fromDate, setFromDate] = useState(paramFrom ?? initialFrom);
+  const [toDate, setToDate] = useState(paramTo ?? initialTo);
+  const [preset, setPreset] = useState(paramFrom ? "custom" : embedded ? "this_year" : "this_month");
   const [view, setView] = useState<"register" | "audit">("register");
 
   const [filterOpen, setFilterOpen] = useState(false);
@@ -751,7 +767,7 @@ export function AccountRegisterPage() {
   ) : undefined;
 
   return (
-    <AccountingSubNavWrapper
+    <Shell
       title="Account Register"
       subtitle={
         paramBasis === "cash"
@@ -1080,6 +1096,6 @@ export function AccountRegisterPage() {
           suppressToolbarSearch
         />
       )}
-    </AccountingSubNavWrapper>
+    </Shell>
   );
 }
