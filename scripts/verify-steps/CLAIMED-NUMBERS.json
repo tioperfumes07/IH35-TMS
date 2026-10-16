@@ -16567,5 +16567,25 @@
     "claimed_at": "2026-10-16",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.168 M (E-50): verify-one-match-writer-one-unmatch-writer (match rows written only by storeMatch / the unmatch module; matched_* writers shrink-only allowlist)"
+  },
+  "18477": {
+    "claimed_at": "2026-10-16",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.160: verify-one-picker-per-catalog (one shared component + one backend source per catalog; allowlist 0)"
+  },
+  "18481": {
+    "claimed_at": "2026-10-16",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.160: verify-one-writer-per-document (bills, expenses, payments, bill payments; shrink-only allowlist)"
+  },
+  "18485": {
+    "claimed_at": "2026-10-16",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.156: verify-set-filters-use-multiselect + shared table checkbox/column sizing + one Action column"
+  },
+  "18489": {
+    "claimed_at": "2026-10-16",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.156 item 5: verify-qbo-formats-one-formatter (no ad-hoc date/money formatting in pages; shrink-only)"
   }
 }
