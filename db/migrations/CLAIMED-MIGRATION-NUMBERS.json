@@ -173,6 +173,11 @@
       "claimed_at": "2026-10-12",
       "purpose": "443.136 follow-up: accounting.posting_source_load_id fuel_event resolves a Relay fill with no fuel row to its adopted expense document's load"
     },
+    "202616000100": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-16",
+      "purpose": "LEAD 443.178: views.factoring_recourse_at_risk + views.factoring_chargebacks_fees exclude voided advances (owner 10-16: 8 'Unknown Customer' rows on Aging / Submit invoice = voided FAC-2026-00001..00008)"
+    },
     "202615990100": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-16",

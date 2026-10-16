@@ -16612,5 +16612,10 @@
     "claimed_at": "2026-10-16",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.167-R: verify-creator-adopts-seeded-load (adopt existing driver load on no live settlement; restate proforma driver bill; never re-deliver)"
+  },
+  "18529": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-16",
+    "purpose": "verify-undone-pairs-and-voided-advances-hidden"
   }
 }
