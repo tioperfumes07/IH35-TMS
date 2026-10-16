@@ -82,8 +82,10 @@ export function check(files) {
   if (!/postFaroReserveRowOnBankMatch|postFaroReserveEntryOnClient/.test(match)) {
     problems.push(`${MATCH}: Faro reserve row match must call postFaroReserveRowOnBankMatch / postFaroReserveEntryOnClient`);
   }
-  if (!/postFaroRsvDepositsOnPaymentMatch|faroReserveDepositsOn/.test(match)) {
-    problems.push(`${MATCH}: payment match must call postFaroRsvDepositsOnPaymentMatch / faroReserveDepositsOn`);
+  // LEAD 443.168 H (owner Law B): a payment accept writes ITS line only — it never posts Faro Rsv Deposits nor marks their
+  // reserve-register lines matched. (Supersedes the old "payment match must call postFaroRsvDepositsOnPaymentMatch".)
+  if (/postFaroRsvDepositsOnPaymentMatch\(|faroReserveDepositsOn\(/.test(match)) {
+    problems.push(`${MATCH}: a payment accept posts / matches OTHER bank lines (Faro Rsv Deposits) — Law B: only the human's accept on a line writes that line`);
   }
   const faroHelper = "apps/backend/src/accounting/bank-recon/bank-match-faro-reserve-post.service.ts";
   const faroSrc = files[faroHelper] ?? (fs.existsSync(path.join(ROOT, faroHelper)) ? fs.readFileSync(path.join(ROOT, faroHelper), "utf8") : "");
@@ -96,8 +98,8 @@ export function check(files) {
     if (!/postFaroReserveEntryOnClient/.test(faroSrc)) {
       problems.push(`${faroHelper}: must call postFaroReserveEntryOnClient`);
     }
-    if (!/faroReserveDepositsOn/.test(faroSrc)) {
-      problems.push(`${faroHelper}: must call faroReserveDepositsOn for payment Rsv Deposit legs`);
+    if (/export async function postFaroRsvDepositsOnPaymentMatch/.test(faroSrc)) {
+      problems.push(`${faroHelper}: the payment-match Rsv Deposit side-post is back — a Rsv Deposit posts on its own line (E-41)`);
     }
   }
   if (!fs.existsSync(path.join(ROOT, FUEL_POST)) && !files[FUEL_POST]) {

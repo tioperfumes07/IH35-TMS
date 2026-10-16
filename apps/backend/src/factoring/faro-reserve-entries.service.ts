@@ -459,7 +459,6 @@ export async function postFaroReserveEntryOnClient(
     await stampPosted(client, oci, entry, link!.purchase_je, input.actor_user_id, "matched");
     return { entry_id: entry.id, journal_entry_id: link!.purchase_je };
   }
-  if (entry.entry_kind === "rsv_deposit") throw new FaroReserveError("faro_rsv_deposit_posts_with_its_payment_match");
 
   // 443.110 G8 — a reserve entry tied to a Faro invoice posts on that invoice's load (same company).
   const reserveLoadId = link
@@ -533,6 +532,16 @@ export async function postFaroReserveEntryOnClient(
       { account: cash, dc: "credit", amount, entry },
     ];
     memo = `Faro default interest charged to cash reserve (Faro "Schedule Fee") — Inv ${entry.faro_invoice_number}`;
+  } else if (entry.entry_kind === "rsv_deposit") {
+    // LEAD 443.168 H (owner Law B, 2026-09-12: only the human's accept on a line writes that line) — a Rsv Deposit posts on
+    // ITS OWN register line, when the owner accepts that line (E-41), with the accounting the payment-match side effect used
+    // (Faro held it back from the payment wire): DR Faro Cash Reserve / CR due-from-affiliate. The customer-payment accept
+    // no longer posts it nor marks this line matched.
+    legs = [
+      { account: cash, dc: "debit", amount, entry },
+      { account: await role("intercompany_receivable_ih35_transportation"), dc: "credit", amount, entry },
+    ];
+    memo = `Faro Rsv Deposit (held back from the payment wire) — ${entry.entry_date}`;
   } else if (entry.entry_kind === "short_pay") {
     if (await faroInvoiceClosed(client, oci, entry.faro_invoice_number!)) throw new FaroReserveError("faro_short_pay_after_escrow_released");
     legs = [

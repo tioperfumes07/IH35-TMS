@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * ACCT-LINK-06 / ACCT-F05 — Plaid/rules autoCategorize must reach CHAIN-05 (same terminal state as
- * For Review categorize): status=categorized + categorization_gl_account_id + maybePostBankCategorizationToGl
- * when an actor is present. apply-historical must default dry_run=true and pass actorUserUuid on apply.
+ * LEAD 443.168 H — SUPERSEDES ACCT-LINK-06 / ACCT-F05's "rules reach CHAIN-05". OWNER LAW B (2026-09-12, permanent):
+ * "it should never automatch, it suggests and we accept it or change the transactions". Plaid/rules autoCategorize is a
+ * SUGGESTION: it writes suggested_* only — never status 'categorized', never categorization_gl_account_id /
+ * coa_account_id, never maybePostBankCategorizationToGl. apply-historical still defaults dry_run=true.
  *
  * Cursor even claim: verify-step 1762.
  */
@@ -30,14 +31,18 @@ const rules = read(RULES);
 if (!/export async function autoCategorize/.test(plaid)) {
   failures.push("plaid.service.ts missing export async function autoCategorize");
 }
-if (!/categorization_gl_account_id\s*=\s*\$2/.test(plaid) && !/categorization_gl_account_id = \$2::uuid/.test(plaid)) {
-  failures.push("autoCategorize must SET categorization_gl_account_id (CHAIN-05 tag), not only coa_account_id");
+const autoFn = (() => {
+  const i = plaid.indexOf("export async function autoCategorize");
+  return i < 0 ? "" : plaid.slice(i, plaid.indexOf("\nexport async function", i + 10));
+})();
+if (/status = 'categorized'|categorization_gl_account_id = \$|coa_account_id = \$/.test(autoFn)) {
+  failures.push("autoCategorize writes a categorization (status / categorization_gl_account_id / coa_account_id) — Law B: suggest only");
 }
-if (!/status = 'categorized'/.test(plaid)) {
-  failures.push("autoCategorize must SET status = 'categorized'");
+if (/maybePostBankCategorizationToGl/.test(autoFn)) {
+  failures.push("autoCategorize posts to the GL — Law B: only the human's categorize accept posts");
 }
-if (!/maybePostBankCategorizationToGl/.test(plaid)) {
-  failures.push("autoCategorize must call maybePostBankCategorizationToGl when actorUserUuid is present");
+if (!/suggested_account_id = \$2::uuid/.test(autoFn) || !/plaid_rule:/.test(autoFn)) {
+  failures.push("autoCategorize must write the suggestion (suggested_account_id + source plaid_rule:<id>)");
 }
 if (!/actorUserUuid/.test(plaid)) {
   failures.push("autoCategorize opts must accept actorUserUuid");
@@ -66,5 +71,5 @@ if (failures.length) {
 }
 
 console.log(
-  "verify-acct-link06-rules-call-poster: OK — autoCategorize writes CHAIN-05 tags + calls poster with actor; apply-historical defaults dry_run"
+  "verify-acct-link06-rules-call-poster: OK — autoCategorize only SUGGESTS (Law B: no categorization, no GL post); apply-historical defaults dry_run"
 );

@@ -34,7 +34,6 @@ import {
   isFaroReserveBankAccount,
   loadFaroReserveEntryForBankTxn,
   postFaroReserveRowOnBankMatch,
-  postFaroRsvDepositsOnPaymentMatch,
 } from "./bank-match-faro-reserve-post.service.js";
 import {
   bankLineHasLiveDocumentPointer,
@@ -1787,12 +1786,9 @@ async function runPaymentAcceptFollowUps(
     args.paymentId,
     args.actorUserUuid
   );
-  await postFaroRsvDepositsOnPaymentMatch(client, {
-    operating_company_id: args.operatingCompanyId,
-    payment_date: args.paymentDate,
-    actor_user_id: args.actorUserUuid,
-    matched_payment_id: args.paymentId,
-  });
+  // LEAD 443.168 H (Law B): a customer-payment accept writes ITS line only. The Faro Rsv Deposits of that date used to be
+  // posted and their reserve-register lines marked matched here, with nobody accepting those lines — removed. A Rsv
+  // Deposit posts on its own line's accept (postFaroReserveEntryOnClient, E-41).
 }
 
 /**
@@ -1990,7 +1986,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     // OWNER-ORDER §3.1 / CC-2 handoff — Faro reserve ROW on this bank line posts through
     // postPendingFaroReserveRowOnAccept BEFORE storeMatch so the match row points at the JE the
     // poster stamped (purchase funding JE for escrow_held; new JE for other kinds).
-    // rsv_deposit refuses here and posts with the payment match via faroReserveDepositsOn.
+    // LEAD 443.168 H: a Rsv Deposit row posts here too, on its own accepted line (E-41) — never as a side effect of another accept.
     let matchKind: LedgerEntryKind = input.ledger_entry_kind;
     let matchLedgerEntryId = input.ledger_entry_id;
     const faroPosted = await postPendingFaroReserveRowOnAccept(client, {
