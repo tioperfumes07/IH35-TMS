@@ -6,10 +6,12 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "../../api/client";
 import {
   getFactoringPurchase,
   listFactoringPurchases,
+  voidFactoringPurchase,
   type FactoringPurchaseDetail,
   type FactoringPurchaseListRow,
 } from "../../api/factoring-purchases";
@@ -20,6 +22,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { Button } from "../../components/Button";
+import { Modal } from "../../components/Modal";
 import { entityLabel } from "../../lib/entity-label";
 
 function cents(v: number | string | null | undefined): number {
@@ -33,9 +36,21 @@ type Props = {
   dateTo?: string;
   filterBar?: React.ReactNode;
   summaryDetailToggle?: React.ReactNode;
+  /** 443.171 — Undo purchase is the Owner's (the server refuses everyone else). */
+  isOwner?: boolean;
+  /** 443.171 E — clicking a purchase opens it in the Submit to Factor form in Edit mode (Owner). */
+  onEditPurchase?: (purchaseId: string) => void;
 };
 
-export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, summaryDetailToggle }: Props) {
+export const UNDO_PURCHASE_MATCHED_MESSAGE = "Unmatch the Faro wire in Banking first";
+
+type UndoTarget = { id: string; display_id: string; bank_transaction_id: string | null; bank_account_id: string | null };
+
+export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, summaryDetailToggle, isOwner = false, onEditPurchase }: Props) {
+  const canEdit = isOwner && Boolean(onEditPurchase);
+  const queryClient = useQueryClient();
+  const [undo, setUndo] = useState<UndoTarget | null>(null);
+  const [voided, setVoided] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const purchaseIdFromUrl = searchParams.get("purchase_id")?.trim() ?? "";
   // A load's Factoring tab deep-links here with ?load_id= (the reverse of the load link on every purchase line) — the
@@ -125,6 +140,29 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
           >
             Open
           </button>
+          {canEdit && row.status === "posted" ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-[#14314F] underline"
+              data-testid={`payments-to-you-edit-${row.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditPurchase!(row.id);
+              }}
+            >
+              Edit
+            </button>
+          ) : null}
+          {isOwner && row.status === "posted" ? (
+            <button
+              type="button"
+              className="text-xs font-medium text-red-700 underline"
+              data-testid={`payments-to-you-undo-${row.id}`}
+              onClick={() => setUndo({ id: row.id, display_id: row.display_id, bank_transaction_id: row.bank_transaction_id, bank_account_id: null })}
+            >
+              Undo purchase
+            </button>
+          ) : null}
         </span>
       ),
     },
@@ -218,6 +256,11 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
           reserves, and bank match state.
         </div>
       </div>
+      {voided ? (
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" role="status" data-testid="payments-to-you-voided">
+          Purchase {voided} — Voided. Its invoices are back on Submit to Factor.
+        </div>
+      ) : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           {filterBar}
@@ -235,6 +278,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
               columns={columns}
               rows={rows}
               rowKey={(row) => row.id}
+              onRowClick={(row) => (canEdit && row.status === "posted" ? onEditPurchase!(row.id) : setSelectedId(row.id))}
               loading={listQuery.isLoading}
               emptyText="No posted factoring purchases (wires) yet."
               storageKey="factoring-payments-to-you-purchases"
@@ -256,9 +300,114 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
           error={detailQuery.isError}
           onClose={() => setSelectedId(null)}
           onRetry={() => void detailQuery.refetch()}
+          onEdit={canEdit && detailQuery.data?.status === "posted" ? () => onEditPurchase!(detailQuery.data!.id) : undefined}
+          onUndo={
+            isOwner && detailQuery.data?.status === "posted"
+              ? () => {
+                  const d = detailQuery.data!;
+                  setUndo({ id: d.id, display_id: d.display_id, bank_transaction_id: d.bank_transaction_id ?? null, bank_account_id: d.bank_account_id ?? null });
+                }
+              : undefined
+          }
+        />
+      ) : null}
+
+      {undo ? (
+        <UndoPurchaseDialog
+          companyId={companyId}
+          target={undo}
+          onClose={() => setUndo(null)}
+          onVoided={async () => {
+            setVoided(undo.display_id);
+            setUndo(null);
+            await queryClient.invalidateQueries({ queryKey: ["factoring"] });
+          }}
         />
       ) : null}
     </div>
+  );
+}
+
+/** 443.171 — Undo purchase: voids the posted purchase through the one void route (reverses its funding JE, frees its
+ *  invoices). A purchase whose Faro wire is matched to a bank line is refused until that match is undone in Banking. */
+function UndoPurchaseDialog(props: { companyId: string; target: UndoTarget; onClose: () => void; onVoided: () => Promise<void> }) {
+  const { companyId, target, onClose, onVoided } = props;
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<{ text: string; matched: boolean; bankTransactionId: string | null } | null>(null);
+  const reasonOk = reason.trim().length >= 10;
+
+  async function confirm() {
+    if (!reasonOk) {
+      setError({ text: "Enter a reason (at least 10 characters).", matched: false, bankTransactionId: null });
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await voidFactoringPurchase(companyId, target.id, reason.trim());
+      await onVoided();
+    } catch (err) {
+      const data = (err instanceof ApiError ? err.data ?? {} : {}) as { error?: string; message?: string; details?: { bank_transaction_id?: string } };
+      if (data.error === "factoring_purchase_matched_to_bank_unmatch_first") {
+        setError({ text: UNDO_PURCHASE_MATCHED_MESSAGE, matched: true, bankTransactionId: data.details?.bank_transaction_id ?? target.bank_transaction_id });
+      } else {
+        setError({ text: data.message ?? data.error ?? (err instanceof Error ? err.message : "Undo failed"), matched: false, bankTransactionId: null });
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title={`Undo purchase — ${target.display_id}`}>
+      <div className="space-y-2 text-xs" data-testid="payments-to-you-undo-dialog">
+        <p>
+          Voids this purchase: its funding journal entry is reversed and its invoices return to Submit to Factor. The purchase keeps
+          its number, marked Voided.
+        </p>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-bold uppercase text-[#4B5563]">Reason</span>
+          <textarea
+            className="min-h-[60px] rounded-sm border border-gray-300 p-2 text-xs"
+            value={reason}
+            maxLength={500}
+            placeholder="At least 10 characters — why this purchase is undone"
+            onChange={(e) => setReason(e.target.value)}
+            data-testid="payments-to-you-undo-reason"
+          />
+        </label>
+        {error ? (
+          <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-red-800" role="alert" data-testid="payments-to-you-undo-error">
+            {error.text}
+            {error.matched ? (
+              <>
+                {" — "}
+                {error.bankTransactionId ? (
+                  <EntityLink kind="bank_transaction" id={error.bankTransactionId} label="open the bank line" />
+                ) : null}
+                {error.bankTransactionId ? " · " : null}
+                <Link
+                  to={target.bank_account_id ? `/banking/accounts/${encodeURIComponent(target.bank_account_id)}` : "/banking"}
+                  className="underline"
+                  data-testid="payments-to-you-undo-banking-link"
+                >
+                  Banking
+                </Link>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={() => void confirm()} loading={busy} disabled={!reasonOk || busy} data-testid="payments-to-you-undo-confirm">
+            Undo purchase
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -268,17 +417,36 @@ function PurchaseDetailCard(props: {
   error: boolean;
   onClose: () => void;
   onRetry: () => void;
+  onUndo?: () => void;
+  onEdit?: () => void;
 }) {
-  const { detail, loading, error, onClose, onRetry } = props;
+  const { detail, loading, error, onClose, onRetry, onUndo, onEdit } = props;
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-payments-to-you-detail">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-xs font-medium text-gray-900">
           Purchase {detail?.display_id ?? "…"}
         </div>
-        <Button type="button" variant="secondary" onClick={onClose} data-testid="payments-to-you-detail-close">
-          Close
-        </Button>
+        <span className="flex items-center gap-2">
+          {detail?.status === "voided" ? (
+            <span className="text-xs font-semibold text-red-700" data-testid="payments-to-you-detail-voided">
+              Voided
+            </span>
+          ) : null}
+          {onEdit ? (
+            <Button type="button" onClick={onEdit} data-testid="payments-to-you-detail-edit">
+              Edit purchase
+            </Button>
+          ) : null}
+          {onUndo ? (
+            <Button type="button" variant="secondary" onClick={onUndo} data-testid="payments-to-you-detail-undo">
+              Undo purchase
+            </Button>
+          ) : null}
+          <Button type="button" variant="secondary" onClick={onClose} data-testid="payments-to-you-detail-close">
+            Close
+          </Button>
+        </span>
       </div>
       {error ? (
         <ListErrorState title="Couldn't load purchase" status={0} message="Retry to reload this wire." onRetry={onRetry} />

@@ -158,9 +158,13 @@ export type FactoringPurchaseLine = {
   cash_reserve_cents: number | string;
   fee_cents: number | string;
   faro_invoice_number?: string | null;
+  /** 443.171 E — the most this line may be edited UP to (the invoice's open balance before this purchase), when the
+   *  server reports it. Absent → the edit form caps the line at its current gross. */
+  invoice_open_cents?: number | string | null;
 };
 
 export type FactoringPurchaseDetail = FactoringPurchaseListRow & {
+  notes?: string | null;
   factoring_advance_display_id?: string | null;
   journal_entry_memo?: string | null;
   bank_account_id?: string | null;
@@ -241,6 +245,32 @@ export function voidFactoringPurchase(companyId: string, purchaseId: string, rea
   return apiRequest<FactoringPurchaseDetail>(`/api/v1/factoring/purchases/${encodeURIComponent(purchaseId)}/void?${q(companyId)}`, {
     method: "POST",
     body: { reason },
+  });
+}
+
+/** 443.171 E — edit a POSTED purchase in place (dates, amounts, lines) with the Owner's reason. */
+export type EditFactoringPurchaseBody = {
+  purchase_date: string;
+  wire_date?: string | null;
+  faro_report_ref?: string | null;
+  wire_fee_cents?: number;
+  notes?: string | null;
+  /** The Owner's reason for the change (10..500 characters). */
+  reason: string;
+  lines: Array<{
+    invoice_id: string;
+    gross_cents: number;
+    escrow_reserve_cents: number;
+    cash_reserve_cents: number;
+    fee_cents: number;
+    faro_invoice_number?: string;
+  }>;
+};
+
+export function editFactoringPurchase(companyId: string, purchaseId: string, body: EditFactoringPurchaseBody) {
+  return apiRequest<FactoringPurchaseDetail>(`/api/v1/factoring/purchases/${encodeURIComponent(purchaseId)}?${q(companyId)}`, {
+    method: "PATCH",
+    body,
   });
 }
 

@@ -39,6 +39,7 @@ import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js"
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { writeFactoringSpineLinks } from "./factoring-spine-links.js";
 import { interestPositionThrough, proposeEventInterestAccrual } from "./interest-accrual.service.js";
+import { unrelievedPurchasedGrossCents } from "./purchased-gross.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -572,11 +573,21 @@ export async function postFaroReserveEntryOnClient(
     )).rows[0];
     if (!inv) throw new FaroReserveError("faro_invoice_not_found");
     if (payment.cents > Number(inv.total) - Number(inv.paid)) throw new FaroReserveError("faro_payment_exceeds_invoice_open_balance");
+    // LEAD 443.171 C (partial purchase — Faro bought 3,000 of a 4,000 invoice): 2150 carries only the PURCHASED gross, so the
+    // customer's payment relieves 2150 up to what this line still owes Faro (net of 2150 legs already in this entry, e.g. a
+    // short-pay charge); the excess is money Faro collected for us — Dr cash_clearing, matched to Faro's remittance wire in
+    // Banking. A/R is credited the whole payment (the invoice is ONE A/R document at its full total).
+    const liability = await role("factoring_advance_liability");
+    const inThisEntry = legs.reduce((t, l) => t + (l.account === liability ? (l.dc === "debit" ? l.amount : -l.amount) : 0), 0);
+    const room = Math.max(0, (await unrelievedPurchasedGrossCents(client, oci, link!.purchase_line_id)) - inThisEntry);
+    const to2150 = Math.min(payment.cents, room);
+    const excess = payment.cents - to2150;
     legs.push(
-      { account: await role("factoring_advance_liability"), dc: "debit", amount: payment.cents, entry: payment.entry },
+      ...(to2150 > 0 ? [{ account: liability, dc: "debit" as const, amount: to2150, entry: payment.entry }] : []),
+      ...(excess > 0 ? [{ account: await role("cash_clearing"), dc: "debit" as const, amount: excess, entry: payment.entry }] : []),
       { account: await role("ar_control"), dc: "credit", amount: payment.cents, entry: payment.entry },
     );
-    memo = `${memo} · customer paid Faro ${(payment.cents / 100).toFixed(2)}`;
+    memo = `${memo} · customer paid Faro ${(payment.cents / 100).toFixed(2)}${excess > 0 ? ` (purchased ${(to2150 / 100).toFixed(2)}; ${(excess / 100).toFixed(2)} not purchased — due from Faro)` : ""}`;
     await client.query(
       `UPDATE accounting.invoices
           SET amount_paid_cents = COALESCE(amount_paid_cents, 0) + $2::bigint,
