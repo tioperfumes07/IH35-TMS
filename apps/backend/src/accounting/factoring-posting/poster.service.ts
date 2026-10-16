@@ -1639,6 +1639,9 @@ export type ReverseFactoringAdvanceInput = {
   factoring_advance_id: string;
   actor_user_id: string;
   reason: string;
+  /** LEAD 443.171 E — editPurchase on a bank-matched purchase (date / ref only, net unchanged): the deposit sweep is the
+   *  bank side of the match and stays; only the lifecycle legs are reversed and re-posted. */
+  keep_deposit_sweep?: boolean;
 };
 
 export type ReverseFactoringAdvanceResult =
@@ -1760,7 +1763,7 @@ export async function reverseFactoringAdvanceEventInClientTx(
         AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL`,
     [input.operating_company_id, input.factoring_advance_id]
   );
-  for (const sw of sweeps.rows) {
+  for (const sw of input.keep_deposit_sweep ? [] : sweeps.rows) {
     const { reversal } = await reverseJournalEntryNoFlip(client, {
       operatingCompanyId: input.operating_company_id,
       journalEntryId: sw.je,
