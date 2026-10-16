@@ -2531,10 +2531,11 @@ export function BankingTransactionsDesignView({
             hasPersistedLinks &&
             !matchedJournalEntryId ? (
               <p className="mt-1 text-xs text-[#4B5563]">
-                No <code className="text-xs">matched_journal_entry_id</code> on this row yet.{" "}
+                No journal entry is matched to this bank line yet.{" "}
                 <InfoPopover label="About the matched journal entry">
-                  That column is set by recon Match to an existing JE, or by the flag-gated bank-feed poster
-                  (BANK_FEED_GL_POSTING_ENABLED, default OFF) — absence is not by itself proof the flag blocked a post.
+                  A bank line gets its journal entry when you Match it to an existing entry in Reconciliation, or when
+                  automatic posting from the bank feed is turned on for this company (it is off unless turned on). A
+                  missing entry alone does not mean a posting was blocked.
                 </InfoPopover>
               </p>
             ) : null}
