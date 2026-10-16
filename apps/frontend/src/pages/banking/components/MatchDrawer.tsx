@@ -93,6 +93,11 @@ type Props = {
   // menu) refresh its own transaction list once a match is confirmed. Optional — existing callers that
   // don't pass it keep prior behavior (drawer-local refetch only).
   onAccepted?: () => void;
+  /**
+   * LEAD 443.163 (register M3) — the Categorize / Match popup renders THIS component as its match side (no drawer chrome):
+   * one matcher on screen, with many-to-one and Resolve difference, instead of a second inline candidate table.
+   */
+  embedded?: boolean;
 };
 
 const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
@@ -204,6 +209,7 @@ export function MatchDrawer({
   operatingCompanyId,
   onClose,
   onAccepted,
+  embedded = false,
 }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -213,6 +219,11 @@ export function MatchDrawer({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [searchQ, setSearchQ] = useState("");
+  // LEAD 443.163 (register M5) — QuickBooks Find-match filters on the one matcher: Payee, Amount from / to (dollars; the
+  // route converts to cents), already wired end to end (api getMatchCandidates → p7-wave2 match-candidates).
+  const [payeeQ, setPayeeQ] = useState("");
+  const [amountMin, setAmountMin] = useState("");
+  const [amountMax, setAmountMax] = useState("");
   const [draftQ, setDraftQ] = useState("");
   const [categorizeVendorId, setCategorizeVendorId] = useState("");
   const [categorizeGlAccountId, setCategorizeGlAccountId] = useState("");
@@ -261,7 +272,7 @@ export function MatchDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seed only on open / bank row change
   }, [open, bankTransactionId, bankTransactionDate]);
 
-  const hasCustomFilters = Boolean(dateFrom || dateTo || searchQ.trim());
+  const hasCustomFilters = Boolean(dateFrom || dateTo || searchQ.trim() || payeeQ.trim() || amountMin !== "" || amountMax !== "");
   const expectedNinety = bankTransactionDate ? matchWindowPlusMinus90(bankTransactionDate) : null;
   const usingNinetyDayDefault = Boolean(
     expectedNinety && dateFrom === expectedNinety.from && dateTo === expectedNinety.to && !searchQ.trim()
@@ -278,6 +289,9 @@ export function MatchDrawer({
       dateTo,
       searchQ,
       recordKinds,
+      payeeQ,
+      amountMin,
+      amountMax,
     ],
     queryFn: () =>
       getMatchCandidates(String(bankTransactionId), operatingCompanyId, {
@@ -286,6 +300,9 @@ export function MatchDrawer({
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
         kinds: recordKinds.length ? recordKinds : undefined,
+        payee: payeeQ.trim() || undefined,
+        amountMin: amountMin === "" ? undefined : Number(amountMin),
+        amountMax: amountMax === "" ? undefined : Number(amountMax),
       }),
     enabled: open && Boolean(operatingCompanyId && bankTransactionId),
   });
@@ -435,9 +452,8 @@ export function MatchDrawer({
     setSelectedId(id);
   };
 
-  return (
-    <ParityDrawer open={open} title="Find other matches" onClose={onClose}>
-      <div data-testid="match-drawer" data-b3-find-other-matches="1">
+  const body = (
+      <div data-testid="match-drawer" data-b3-find-other-matches="1" data-embedded={embedded ? "1" : undefined}>
         {bankTransactionId ? (
           <p className="mb-1 text-xs text-[#4B5563]">
             Bank transaction:{" "}
@@ -845,6 +861,46 @@ export function MatchDrawer({
           </div>
         </div>
 
+        <div className="mb-2 flex flex-wrap items-end gap-2" data-testid="match-drawer-qbo-filters">
+          <label className="text-xs text-[#4B5563]">
+            Payee
+            <input
+              type="search"
+              value={payeeQ}
+              onChange={(e) => setPayeeQ(e.target.value)}
+              placeholder="Vendor or customer"
+              className="mt-0.5 block h-[34px] w-[160px] rounded-sm border border-[#E5E7EB] px-2 text-xs"
+              data-testid="match-filter-payee"
+            />
+          </label>
+          <label className="text-xs text-[#4B5563]">
+            Amount from
+            <input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="0.01"
+              value={amountMin}
+              onChange={(e) => setAmountMin(e.target.value)}
+              className="mt-0.5 block h-[34px] w-[120px] rounded-sm border border-[#E5E7EB] px-2 text-right text-xs tabular-nums"
+              data-testid="match-filter-amount-min"
+            />
+          </label>
+          <label className="text-xs text-[#4B5563]">
+            Amount to
+            <input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="0.01"
+              value={amountMax}
+              onChange={(e) => setAmountMax(e.target.value)}
+              className="mt-0.5 block h-[34px] w-[120px] rounded-sm border border-[#E5E7EB] px-2 text-right text-xs tabular-nums"
+              data-testid="match-filter-amount-max"
+            />
+          </label>
+        </div>
+
         <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="match-window-controls">
           <input
             type="search"
@@ -994,7 +1050,7 @@ export function MatchDrawer({
                   </span>
                 </div>
 
-                <div className="mt-1 truncate text-xs text-[#1F2A44]" title={c.memo}>
+                <div className="mt-1 truncate text-xs text-[#1F2A44]" title={c.memo} data-testid="match-candidate-description">
                   {c.memo?.trim() ? c.memo : "—"}
                 </div>
 
@@ -1012,8 +1068,12 @@ export function MatchDrawer({
 
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[#6B7280]">
                   <span data-testid="match-candidate-date">Date: {String(c.event_date ?? "").slice(0, 10) || "—"}</span>
-                  <span>Amount gap: {formatMoneyCents(c.amount_gap_cents)}</span>
-                  <span>Date gap: {c.date_gap_days}d</span>
+                  <span data-testid="match-candidate-payee">Payee: {c.counterparty_name?.trim() ? c.counterparty_name : "—"}</span>
+                  <span data-testid="match-candidate-difference">Difference: {formatMoneyCents(c.amount_gap_cents)}</span>
+                  <span data-testid="match-candidate-days-off">Days off: {c.date_gap_days}</span>
+                  <span data-testid="match-candidate-open-balance">
+                    Open balance: {c.open_balance_cents == null ? "—" : formatMoneyCents(c.open_balance_cents)}
+                  </span>
                   <span>Score: {c.match_score.toFixed(3)}</span>
                 </div>
 
@@ -1113,6 +1173,11 @@ export function MatchDrawer({
           </button>
         </div>
       </div>
+  );
+  if (embedded) return open ? body : null;
+  return (
+    <ParityDrawer open={open} title="Find other matches" onClose={onClose}>
+      {body}
     </ParityDrawer>
   );
 }

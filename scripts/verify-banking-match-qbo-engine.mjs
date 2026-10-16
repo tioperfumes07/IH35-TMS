@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * verify-banking-match-qbo-engine — ROUND 157-C / 156 MASTER SPEC
- * Settlement-born only + date cascade 3→7→From/To. BUILD NO TYPE FILTER.
- * (Formerly asserted a Show multi-select of six kinds — that was WITHDRAWN by owner 2026-09-28.)
+ * Date cascade 3→7→From/To. Type filter restored (ROUND 433-CUR B3) and, with Payee / Amount from-to, lives on the ONE
+ * matcher (MatchDrawer) since LEAD 443.163 (register M3/M5).
  *
  * LEAD 443.155 (owner design 2026-10-16, handoff "Engine register" addendum):
  *   DEFECT 1 — every candidate source in fetchLedgerCandidates() is scoped to the bank line's own account (its
@@ -168,35 +168,23 @@ export function problemsFor({ service, predicate, route, api, view, drawer, feed
     if (!api.includes(q)) p.push(`api: getMatchCandidates does not forward ${q}`);
   }
 
-  // View — NO type filter (BUILD NO TYPE FILTER)
-  if (/banking-match-filter-kind-dropdown|banking-match-filter-kind"/.test(view) && /MultiSelectDropdown/.test(view)) {
-    p.push("view: type Show filter must be removed (BUILD NO TYPE FILTER)");
-  }
-  if (/kinds:\s*matchKinds/.test(view) || /kinds: \[/.test(view.slice(view.indexOf("getMatchCandidates")))) {
-    const chunk = view.slice(view.indexOf("getMatchCandidates"), view.indexOf("getMatchCandidates") + 800);
-    if (/kinds:/.test(chunk)) p.push("view: must not send kinds to getMatchCandidates");
-  }
-  for (const id of ["banking-match-filters", "banking-match-filter-payee", "banking-match-filter-date-from", "banking-match-filter-date-to", "banking-match-filter-amount-min", "banking-match-filter-amount-max"]) {
-    if (!view.includes(`data-testid="${id}"`)) p.push(`view: filter control ${id} missing`);
-  }
-  if (!view.includes('data-testid="banking-match-candidate-payee"')) p.push("view: candidate rows do not show the Payee");
-  if (!/banking-match-search-7-days|Within 3 days/.test(view)) {
-    p.push("view: must surface Within 3 days / Search 7 days cascade UI");
-  }
-  if (!/banking-match-settlement-born-note|Settlement-born/.test(view)) {
-    p.push("view: must declare settlement-born-only scope to the operator");
-  }
+  // LEAD 443.163 (register M3/M5): ONE matcher on the banking surface — the Categorize / Match popup embeds MatchDrawer.
+  // The QuickBooks Find-match requirements this guard held on the old inline table now live on that one matcher.
+  if (/getMatchCandidates\(/.test(view)) p.push("view: the banking view queries match candidates itself — a second matcher (register M3)");
+  if (!/<MatchDrawer\s+embedded\b/.test(view)) p.push("view: Categorize / Match must embed the one matcher (<MatchDrawer embedded …>) (register M3)");
   if (/Search all|inline-match-search-all|±7 days|days_before \?\? 90/.test(view)) {
     p.push('view: must remove "Search all" / ±7 / 90-day copy');
   }
-  if (!/<ParityTable\b/.test(view) || !/gearButtonTestId="banking-match-gear"/.test(view)) {
-    p.push("view: the match-candidates register must be a real ParityTable with its own gear");
+  for (const id of ["match-drawer-qbo-filters", "match-filter-payee", "match-date-from", "match-date-to", "match-filter-amount-min", "match-filter-amount-max", "match-drawer-record-type-dropdown"]) {
+    if (!drawer.includes(`data-testid="${id}"`)) p.push(`drawer: filter control ${id} missing (register M5)`);
   }
-  if (/Gap \(\$/.test(view) || />Gap</.test(view)) {
-    p.push('view: "Gap" column text is back — it must be split into Difference and Days off');
+  if (!/payee: payeeQ\.trim\(\) \|\| undefined/.test(drawer) || !/amountMin: amountMin === "" \? undefined : Number\(amountMin\)/.test(drawer) || !/amountMax: amountMax === "" \? undefined : Number\(amountMax\)/.test(drawer))
+    p.push("drawer: Payee / Amount from / Amount to are not sent to getMatchCandidates (register M5)");
+  for (const id of ["match-candidate-payee", "match-candidate-difference", "match-candidate-days-off"]) {
+    if (!drawer.includes(`data-testid="${id}"`)) p.push(`drawer: candidate rows do not show ${id}`);
   }
-  if (!view.includes('label: "Difference"') || !view.includes('label: "Days off"')) {
-    p.push("view: candidate columns must carry Difference and Days off");
+  if (/Gap \(\$/.test(drawer) || />Gap</.test(drawer) || /Amount gap:/.test(drawer)) {
+    p.push('drawer: "Gap" text is back — it must read Difference and Days off');
   }
 
   if (/match-search-all|Search all|±7 days/.test(drawer)) {
@@ -229,7 +217,9 @@ function selftest() {
     ["step1 wrong bounds", { ...base, service: base.service.replace("step1: { before: 3, after: 1 }", "step1: { before: 90, after: 20 }") }],
     // ROUND 369.2 retired the "no expenses / no AR payments" rule; the mutant that guards a live rule takes its place.
     ["transfers back", { ...base, service: base.service.replace("async function fetchLedgerCandidates", "async function fetchLedgerCandidates() {\n FROM banking.transfers t\n}\nasync function fetchLedgerCandidates_OLD") }],
-    ["type filter back", { ...base, view: base.view + `\n<div data-testid="banking-match-filter-kind"><MultiSelectDropdown data-testid="banking-match-filter-kind-dropdown"/></div>\n` }],
+    ["second matcher in the view", { ...base, view: base.view + "\nvoid getMatchCandidates(a, b, {});\n" }],
+    ["amount filter not sent", { ...base, drawer: base.drawer.replace('amountMin: amountMin === "" ? undefined : Number(amountMin),', "") }],
+    ["payee filter control gone", { ...base, drawer: base.drawer.replace('data-testid="match-filter-payee"', 'data-testid="x"') }],
     ["expense company-wide", { ...base, service: base.service.replace("AND e.payment_account_uuid = $6::uuid", "") }],
     ["payment company-wide", { ...base, service: base.service.replace("p.deposited_to_account_id::text = $6::text", "TRUE") }],
     ["bill payment company-wide", { ...base, service: base.service.replace("bp.from_bank_account_id = $6::uuid", "TRUE") }],
