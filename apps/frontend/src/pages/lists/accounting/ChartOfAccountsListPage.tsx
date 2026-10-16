@@ -337,6 +337,7 @@ export function ChartOfAccountsListPage() {
   // wrapper). Rows whose catalog metadata carries the reconciler's `drift_detected` sync status
   // (set by qbo-sync/chart-of-accounts-reconciler.ts) are shown; all other rows are hidden.
   const [driftOnly, setDriftOnly] = useState(false);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [showAccountNumbers, setShowAccountNumbers] = useShowAccountNumbers();
 
   // Deep-link from Lists Accounting flyout "+ Create new catalog" (?create=1).
@@ -545,12 +546,6 @@ export function ChartOfAccountsListPage() {
         }
       />
 
-      {companyId ? (
-        <ChartOfAccountsSyncPanel operatingCompanyId={companyId} onDriftFilterToggle={setDriftOnly} />
-      ) : null}
-
-      <CoaAsymmetryReportPanel enabled={showCoaAsymmetry} />
-
       {driftOnly ? (
         <p className="text-xs text-[#1F2A44]">
           Showing drift filter active — reconcile or sync to heal unmatched CoA rows.
@@ -631,6 +626,31 @@ export function ChartOfAccountsListPage() {
           />
         )}
       </div>
+
+      {(companyId || showCoaAsymmetry) ? (
+        <div className="mt-2">
+          <button
+            type="button"
+            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563] hover:text-[#1F2A44]"
+            onClick={() => setDiagnosticsOpen((v) => { if (v) setDriftOnly(false); return !v; })}
+            aria-expanded={diagnosticsOpen}
+          >
+            <span>{diagnosticsOpen ? "▾" : "▸"}</span>
+            Diagnostics
+          </button>
+          {diagnosticsOpen ? (
+            <div className="mt-2 flex flex-col gap-3">
+              {companyId ? (
+                <ChartOfAccountsSyncPanel
+                  operatingCompanyId={companyId}
+                  onDriftFilterToggle={setDriftOnly}
+                />
+              ) : null}
+              <CoaAsymmetryReportPanel enabled={showCoaAsymmetry} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <AccountDrawer
         open={drawerOpen}

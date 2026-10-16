@@ -14,6 +14,7 @@ scripts/.guard-exempt.json
 scripts/money-pr-local-gate.mjs
 scripts/lib/**
 apps/backend/src/identity/**
+apps/backend/src/users/table-preferences.routes.ts
 apps/backend/src/accounting/**
 apps/backend/src/dispatch/**
 apps/backend/src/feed/**
