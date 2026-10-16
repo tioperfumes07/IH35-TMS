@@ -16602,5 +16602,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-16",
     "purpose": "verify-expense-trailer-reads-current-load-choice"
+  },
+  "18515": {
+    "claimed_at": "2026-10-16",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.174: verify-sections-titled-not-packed (every page table section titled; no Summary/Detail toggle rendering the same rows; no >2-line static notice inline — ratchet baseline only goes down)"
   }
 }

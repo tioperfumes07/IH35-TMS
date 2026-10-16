@@ -82,7 +82,7 @@ import { NotApplicable } from "../../components/money/NotApplicable";
 import type { NaReason } from "../../design/money-design-system";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
 import { formatUsd, formatUsdCents } from "../../lib/money";
-import { listFactoringPurchases } from "../../api/factoring-purchases";
+import { listFactoringPurchaseLines, listFactoringPurchases, type FactoringPurchaseReportLine } from "../../api/factoring-purchases";
 
 // ROUND 315 / Lead B5 (2026-10-01): remove Account Summary + Request Debtor Credit Check from the
 // primary Faro-parity tab strip (parked under Internal Tools — Rule 07, never delete surfaces).
@@ -445,6 +445,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   // same URL-deep-link/staged-filter convention as customer_id/load_id above.
   const dateFromFromUrl = searchParams.get("date_from")?.trim() ?? "";
   const dateToFromUrl = searchParams.get("date_to")?.trim() ?? "";
+  // 443.171 E — a purchase clicked in Payments to You opens HERE, in the Submit to Factor form, in Edit mode.
+  const editPurchaseIdFromUrl = searchParams.get("edit_purchase_id")?.trim() ?? "";
 
   // BANNER-MERGE-DEEPLINK-DROPS-CONTEXT — the Duplicate factoring vendors banner
   // (DuplicateVendorsBanner.tsx) resolves real from/to vendor ids+names via its own scan and used
@@ -642,6 +644,15 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   // draft-only without needing to trace through a named wrapper function. All four wrapper
   // functions removed as dead code once their last call site moved to the inline form.
 
+  // LEAD 443.172 — the Purchase Report reads the purchase engine: one row per purchased invoice on a posted, non-voided
+  // purchase (Faro's real escrow / cash reserve / fee per line). Voided purchases never appear ("Unknown Customer" 10/05).
+  const purchaseLinesQuery = useQuery({
+    queryKey: ["factoring", "purchase-lines", companyId, deepLinkDateFrom, deepLinkDateTo],
+    queryFn: () => listFactoringPurchaseLines(companyId, { from: deepLinkDateFrom, to: deepLinkDateTo }),
+    enabled: Boolean(companyId),
+  });
+  const purchaseReportLines: FactoringPurchaseReportLine[] = purchaseLinesQuery.data?.lines ?? [];
+
   const recourseQuery = useQuery({
     queryKey: ["factoring", "recourse", companyId, deepLinkCustomerId, deepLinkLoadId, deepLinkDateFrom, deepLinkDateTo],
     queryFn: () =>
@@ -760,32 +771,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   // FAC-09a Purchase Report — same per-advance fee-history join as Fees Paid's Open Invoices view,
   // plus chargeback_amount and statement_reference (both real, from the same already-fetched
   // feesQuery.data.history rows). No new backend query.
-  const chargebacksByAdvance = useMemo(() => {
-    const totals = new Map<string, number>();
-    for (const row of feesQuery.data?.history ?? []) {
-      totals.set(row.factoring_advance_id, (totals.get(row.factoring_advance_id) ?? 0) + Number(row.chargeback_amount ?? 0));
-    }
-    return totals;
-  }, [feesQuery.data?.history]);
-  const statementReferenceByAdvance = useMemo(() => {
-    const refs = new Map<string, string>();
-    for (const row of feesQuery.data?.history ?? []) {
-      if (row.statement_reference && !refs.has(row.factoring_advance_id)) {
-        refs.set(row.factoring_advance_id, row.statement_reference);
-      }
-    }
-    return refs;
-  }, [feesQuery.data?.history]);
-  const purchaseReportRows = useMemo(
-    () =>
-      agingRows.map((row) => ({
-        ...row,
-        fees: accruedFeesByAdvance.get(row.factoring_advance_id) ?? 0,
-        chargeback: chargebacksByAdvance.get(row.factoring_advance_id) ?? 0,
-        other_ref: statementReferenceByAdvance.get(row.factoring_advance_id) ?? null,
-      })),
-    [agingRows, accruedFeesByAdvance, chargebacksByAdvance, statementReferenceByAdvance],
-  );
   const settingsQuery = useQuery({
     queryKey: ["factoring", "statements-settings", companyId],
     queryFn: () => getFactoringStatementsSettings(companyId),
@@ -1290,7 +1275,17 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {/* Lead ROUND 296 / 297 — day 95 asks the owner (EXTEND / CONFIRM REPURCHASE / MARK COLLECTED); renders only
           when a repurchase deadline is waiting, on every tab, so it is never missed. */}
       {companyId ? <RepurchaseDuePanel companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
-      {show("submit_invoice") ? <SubmitToFactorTab companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
+      {show("submit_invoice") ? (
+        <SubmitToFactorTab
+          companyId={companyId}
+          isOwner={user?.role === "Owner"}
+          editPurchaseId={editPurchaseIdFromUrl || null}
+          onEditDone={(id) => navigateToTab(`${FACTORING_TAB_PATH.payments_to_you}?purchase_id=${encodeURIComponent(id)}`)}
+          onEditCancel={() =>
+            navigateToTab(`${FACTORING_TAB_PATH.payments_to_you}?purchase_id=${encodeURIComponent(editPurchaseIdFromUrl)}`)
+          }
+        />
+      ) : null}
       {/* ACCT-F2026100619 (Rule 07): the batch-submission pipeline — submission queue, workqueue and batch wizard, each with
           its own queries and mutations — was mounted only by the factoring index #25601 retired. It lives under Submit invoice. */}
       {show("submit_invoice") ? (
@@ -1956,6 +1951,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           dateTo={dateToFromUrl || undefined}
           filterBar={dateRangeOnlyFilterBar("factoring-home-payments-to-you")}
           summaryDetailToggle={summaryDetailToggle(paymentsToYouView, setPaymentsToYouView, "factoring-payments-to-you")}
+          isOwner={user?.role === "Owner"}
+          onEditPurchase={(id) => navigateToTab(`${FACTORING_TAB_PATH.submit_invoice}?edit_purchase_id=${encodeURIComponent(id)}`)}
         />
       ) : null}
 
@@ -2202,103 +2199,86 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             {dateRangeOnlyFilterBar("factoring-home-purchase-report")}
             {summaryDetailToggle(purchaseReportView, setPurchaseReportView, "factoring-purchase-report")}
           </div>
-          {recourseQuery.isError ? (
+          {purchaseLinesQuery.isError ? (
             <ListErrorState
               title="Couldn't load purchase report"
-              {...formatQueryErrorDetail(recourseQuery.error)}
-              onRetry={() => void recourseQuery.refetch()}
+              {...formatQueryErrorDetail(purchaseLinesQuery.error)}
+              onRetry={() => void purchaseLinesQuery.refetch()}
             />
           ) : (
             <div className="overflow-x-auto">
-              <ParityTable
+              <ParityTable<FactoringPurchaseReportLine>
                 columns={[
                   {
                     key: "customer_name",
                     label: "Debtor",
-                    render: (row: (typeof purchaseReportRows)[number]) =>
-                      row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
-                  },
-                  { key: "factored_at", label: "Date", render: (row: (typeof purchaseReportRows)[number]) => fmtDate(row.factored_at) },
-                  {
-                    key: "invoice_reference",
-                    label: "Inv #",
-                    render: (row: (typeof purchaseReportRows)[number]) =>
-                      row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
-                  },
-                  { key: "po", label: "PO", render: () => "—" },
-                  { key: "other_ref", label: "Other Ref", render: (row: (typeof purchaseReportRows)[number]) => row.other_ref ?? "—" },
-                  // OWNER MEGA-REPORT 2026-09-09 ("settlement numbers are missing from Factoring
-                  // entirely"): real field, already fetched (FactoringRecourseInvoice carries the
-                  // same shared Load-Costs rollup lc_settlement_number RecoursePipelineTable
-                  // already renders) — no new backend query, just never surfaced on this tab.
-                  { key: "load_number", label: "Load Number", sortable: true, alwaysVisible: true,
-                      sortValue: (row: (typeof purchaseReportRows)[number]) => row.lc_load_number ?? "",
-                      render: (row: (typeof purchaseReportRows)[number]) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.lc_load_number ?? "—"} /> : row.lc_load_number ?? "—" },
-                  {
-                    key: "settlement_number",
-                    label: "Settlement/Tour",
-                    alwaysVisible: true,
                     sortable: true,
-                    render: (row: (typeof purchaseReportRows)[number]) => row.settlement_id ? <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.lc_settlement_number ?? "—"} /> : row.lc_settlement_number || "—",
+                    render: (row) => <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />,
                   },
-                  // OWNER MEGA-REPORT 2026-09-09: "amount of the ORIGINAL invoice, then advance,
-                  // then reserve, then fees — in that order, every tab." The 4 real dollar columns
-                  // are grouped in that exact sequence here; every placeholder "—" column (no
-                  // backing field, per the footnote below) keeps its original real-Faro-portal
-                  // position around them, unchanged.
-                  { key: "purchase", label: "Purchase", cellClass: "text-right", render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.invoice_amount) },
+                  { key: "purchase_date", label: "Date", sortable: true, render: (row) => fmtDate(row.purchase_date) },
                   {
-                    key: "advance_amount",
-                    label: "Net Adv",
-                    cellClass: "text-right",
-                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.advance_amount),
+                    key: "purchase_display_id",
+                    label: "Purchase",
+                    sortable: true,
+                    render: (row) => <EntityLink kind="factoring_purchase" id={row.purchase_id} label={row.purchase_display_id} />,
                   },
-                  { key: "escrow_rsv", label: "Escrow Rsv", render: () => "—" },
                   {
-                    key: "cash_rsv",
-                    label: "Cash Rsv",
-                    cellClass: "text-right",
-                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.reserve_amount),
+                    key: "invoice_display_id",
+                    label: "Inv #",
+                    sortable: true,
+                    render: (row) => <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_display_id ?? "—"} />,
                   },
-                  { key: "discount", label: "Discount", render: () => "—" },
-                  { key: "fees", label: "Fees", cellClass: "text-right", render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.fees) },
-                  { key: "wire_fee", label: "Wire Fee", render: () => "—" },
-                  { key: "rebate_income", label: "Rebate Income", render: () => "—" },
-                  { key: "returned_item_fee", label: "Returned Item Fee", render: () => "—" },
-                  { key: "schedule_fee", label: "Schedule Fee", render: () => "—" },
-                  { key: "shipping_fee", label: "Shipping Fee", render: () => "—" },
-                  { key: "cash_advance_fee", label: "Cash Advance Fee", render: () => "—" },
-                  { key: "processing_fee", label: "Processing Fee", render: () => "—" },
-                  { key: "dispatch", label: "Dispatch", render: () => "—" },
-                  { key: "receipts", label: "Receipts", render: () => "—" },
-                  { key: "sch_fee", label: "Sch Fee", render: () => "—" },
+                  { key: "faro_invoice_number", label: "Faro Inv #", sortable: true, render: (row) => row.faro_invoice_number ?? "—" },
+                  // LEAD 443.172 — Load and Settlement are ordinary columns again (they were pinned, so the gear
+                  // could not list or hide them).
                   {
-                    key: "chargeback",
-                    label: "ChgBack (Refund)",
-                    cellClass: "text-right",
-                    render: (row: (typeof purchaseReportRows)[number]) => fmtCurrency(row.chargeback),
+                    key: "load_number",
+                    label: "Load Number",
+                    sortable: true,
+                    render: (row) => (row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.load_number ?? "—"} /> : "—"),
                   },
+                  {
+                    key: "settlement_display_id",
+                    label: "Settlement/Tour",
+                    sortable: true,
+                    render: (row) => (row.settlement_id ? <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? "—"} /> : "—"),
+                  },
+                  // OWNER MEGA-REPORT 2026-09-09: original invoice amount, then advance, then reserve, then fees.
+                  { key: "purchase", label: "Purchased", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.gross_cents), render: (row) => fmtCurrency(Number(row.gross_cents) / 100) },
+                  { key: "advance_amount", label: "Net Adv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.net_advance_cents), render: (row) => fmtCurrency(Number(row.net_advance_cents) / 100) },
+                  { key: "escrow_rsv", label: "Escrow Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.escrow_reserve_cents), render: (row) => fmtCurrency(Number(row.escrow_reserve_cents) / 100) },
+                  { key: "cash_rsv", label: "Cash Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.cash_reserve_cents), render: (row) => fmtCurrency(Number(row.cash_reserve_cents) / 100) },
+                  { key: "fees", label: "Fees", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.fee_cents), render: (row) => fmtCurrency(Number(row.fee_cents) / 100) },
+                  { key: "invoice_total", label: "Invoice total", cellClass: "text-right", defaultHidden: true, render: (row) => fmtCurrency(Number(row.invoice_total_cents ?? 0) / 100) },
+                  { key: "faro_report_ref", label: "Faro report", defaultHidden: true, render: (row) => row.faro_report_ref ?? "—" },
+                  { key: "wire_date", label: "Wire date", defaultHidden: true, render: (row) => fmtDate(row.wire_date) },
+                  // Faro-portal columns with no backing field yet — kept (owner: nothing removed unless he says), hidden by
+                  // default so the table is not tight; each one is in the gear.
+                  ...(["PO", "Discount", "Wire Fee", "Rebate Income", "Returned Item Fee", "Schedule Fee", "Shipping Fee", "Cash Advance Fee", "Processing Fee", "Dispatch", "Receipts", "ChgBack (Refund)"] as const).map((label) => ({
+                    key: `faro_${label.toLowerCase().replace(/[^a-z]+/g, "_")}`,
+                    label,
+                    defaultHidden: true,
+                    render: () => "—",
+                  })),
                 ]}
-                rows={purchaseReportRows}
-                rowKey={(row) => row.factoring_advance_id}
-                loading={recourseQuery.isLoading}
-                emptyText="No purchased invoices."
-                storageKey="factoring-purchase-report"
+                rows={purchaseReportLines}
+                rowKey={(row) => row.purchase_line_id}
+                loading={purchaseLinesQuery.isLoading}
+                emptyText="No purchased invoices in this range."
+                storageKey="factoring-purchase-report-lines"
                 footerCells={{
-                  customer_name: `${purchaseReportRows.length} invoices`,
-                  purchase: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.invoice_amount ?? 0), 0)),
-                  cash_rsv: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.reserve_amount ?? 0), 0)),
-                  fees: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.fees ?? 0), 0)),
-                  advance_amount: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.advance_amount ?? 0), 0)),
-                  chargeback: fmtCurrency(purchaseReportRows.reduce((sum, row) => sum + Number(row.chargeback ?? 0), 0)),
+                  customer_name: `${purchaseReportLines.length} invoices · ${new Set(purchaseReportLines.map((r) => r.purchase_id)).size} purchases`,
+                  purchase: fmtCurrency(purchaseReportLines.reduce((sum, r) => sum + Number(r.gross_cents), 0) / 100),
+                  advance_amount: fmtCurrency(purchaseReportLines.reduce((sum, r) => sum + Number(r.net_advance_cents), 0) / 100),
+                  escrow_rsv: fmtCurrency(purchaseReportLines.reduce((sum, r) => sum + Number(r.escrow_reserve_cents), 0) / 100),
+                  cash_rsv: fmtCurrency(purchaseReportLines.reduce((sum, r) => sum + Number(r.cash_reserve_cents), 0) / 100),
+                  fees: fmtCurrency(purchaseReportLines.reduce((sum, r) => sum + Number(r.fee_cents), 0) / 100),
                 }}
               />
               <p className="mt-2 text-xs text-gray-500" data-testid="factoring-purchase-report-footnote">
-                "Cash Rsv" shows this schema's one combined per-invoice reserve_amount (no Escrow /
-                Cash split field exists, so "Escrow Rsv" is honestly "—"). PO, Discount, Wire Fee,
-                Rebate Income, Returned Item Fee, Schedule Fee, Shipping Fee, Cash Advance Fee,
-                Processing Fee, Dispatch, Receipts, and Sch Fee have no backing field in this
-                schema — never fabricated.
+                One row per invoice on a posted purchase (voided purchases excluded). Net Adv = Purchased − Escrow − Cash
+                reserve − Fees; the wire fee is per purchase (Purchase detail). Faro-portal columns with no data yet (PO,
+                Discount, Rebate …) are hidden by default — turn them on from the gear.
               </p>
             </div>
           )}
