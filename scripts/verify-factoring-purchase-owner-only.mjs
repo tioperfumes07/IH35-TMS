@@ -66,7 +66,10 @@ function selftest() {
   if (!/docs_override_at = now\(\), docs_override_by_user_id = \$3::uuid, docs_override_reason = \$4/.test(send) || !/factoring\.purchase_docs_override/.test(send)) problems.push("override must be stamped on the purchase and audited");
   // ROUND 321 item 3: the Feed Gate records missing docs as red, or -- with the Owner's reason -- as 'na' WITH the reason.
   const cand = read("apps/backend/src/factoring/purchase-candidates.service.ts");
-  if (!/check_key: "purchase\.invoice_billing_docs"/.test(cand) || !/'purchase\.invoice_billing_docs', 'na'/.test(cand) || !/Owner override: \$\{reason\}/.test(cand)) problems.push("Feed Gate must record the docs override as na-with-reason (and red without it)");
+  // LEAD 443.154: the docs check is one of the reds the Owner's reason releases; each released red is a WORM 'na' row with
+  // the reason (recordOwnerOverrideCheck), and without the reason it stays red. scripts/verify-purchase-feed-gate-owner-override.mjs
+  // holds the full release contract (Owner-only, every red recorded, audit row, not-found hard).
+  if (!/check_key: "purchase\.invoice_billing_docs"/.test(cand) || !/async function recordOwnerOverrideCheck\([\s\S]*?'na'/.test(cand) || !/Owner override: \$\{reason\}/.test(cand) || !/if \(reds\.length && ownerOverride\)/.test(cand)) problems.push("Feed Gate must record the docs override as na-with-reason (and red without it)");
 
   const match = read("apps/backend/src/accounting/bank-recon/match.service.ts");
   const gateCalls = match.match(/await assertOwnerMayMatchFactoringPurchase\(/g) ?? [];

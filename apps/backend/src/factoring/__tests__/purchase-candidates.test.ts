@@ -210,7 +210,7 @@ describe("Submit to Factor routes", () => {
     });
     expect(res.statusCode).toBe(409);
     expect(res.json().details[0].reds.map((r: { check_key: string }) => r.check_key)).toEqual(["purchase.invoice_billing_docs"]);
-    expect(calls.some((c) => c.sql.includes("'purchase.invoice_billing_docs', 'na'"))).toBe(false);
+    expect(calls.some((c) => c.sql.includes("INSERT INTO driver_finance.feed_intake_checks"))).toBe(false);
     expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.factoring_purchases"))).toBe(false);
     missingDocsByInvoice = {};
   });
@@ -228,10 +228,68 @@ describe("Submit to Factor routes", () => {
       },
     });
     expect(res.json().error).not.toBe("feed_gate_blocked");
-    const na = calls.find((c) => c.sql.includes("'purchase.invoice_billing_docs', 'na'"));
+    const na = calls.find((c) => c.sql.includes("INSERT INTO driver_finance.feed_intake_checks") && c.values?.[3] === "purchase.invoice_billing_docs");
     expect(na).toBeTruthy();
-    expect(String(na!.values?.[4])).toContain("Owner override: Faro accepted these on the dispatch packet");
+    expect(na!.sql).toContain("'na'");
+    expect(String(na!.values?.[6])).toContain("Owner override: Faro accepted these on the dispatch packet");
     missingDocsByInvoice = {};
+  });
+
+  // LEAD 443.154 (owner 2026-10-16 11:03 CT): "I already put an override and if I already provided a reason, then it should
+  // let me." On the old code the override released DOCUMENTS only — "invoice has no load" and every generic invoice red stayed
+  // a 409 even with the Owner's reason (prod: ITS invoice 7, a local movement with no load). Fails there.
+  it("443.154: the Owner's override reason releases EVERY red (no load + a generic gate red), each recorded 'na' + one audit row", async () => {
+    gateMock.mockImplementation(async (_c: unknown, _o: string, _k: string, id: string) => {
+      throw new FeedGateError("feed_gate_blocked", "1 red", {
+        intake_id: `intake-${id}`,
+        reds: [{ check_key: "invoice.core_links", check_group: "links", subject_label: "Invoice 7", missing: "invoice has no load", fix_link: null }],
+      });
+    });
+    const app = await buildApp("Owner");
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/factoring/purchases?operating_company_id=${OCI}`,
+      payload: {
+        factoring_company_vendor_id: VENDOR, purchase_date: "2026-10-01", lines: [{ invoice_id: INV_B }],
+        docs_override_reason: "Local movement for ITS, no truck — owner approved",
+      },
+    });
+    expect(res.json().error).not.toBe("feed_gate_blocked");
+    const rows = calls.filter((c) => c.sql.includes("INSERT INTO driver_finance.feed_intake_checks"));
+    expect(rows.map((r) => r.values?.[3])).toEqual(["purchase.invoice_has_load", "invoice.core_links"]);
+    for (const r of rows) {
+      expect(r.sql).toContain("'na'");
+      expect(r.values?.[1]).toBe(`intake-${INV_B}`);
+      expect(String(r.values?.[6])).toContain("Owner override: Local movement for ITS, no truck — owner approved");
+      expect(JSON.parse(String(r.values?.[8]))).toMatchObject({ override: true, overridden_by_user_id: USER });
+    }
+    const audit = calls.find((c) => c.sql.includes("append_event") && c.values?.[0] === "factoring.purchase_feed_gate_owner_override");
+    expect(audit).toBeTruthy();
+    expect(String(audit!.values?.[2])).toContain("invoice has no load");
+    expect(String(audit!.values?.[2])).toContain("Local movement for ITS");
+  });
+
+  it("443.154: the same reds WITHOUT the reason still block (no 'na' row, no audit, no draft)", async () => {
+    gateMock.mockImplementation(async (_c: unknown, _o: string, _k: string, id: string) => ({ intake: { id: `intake-${id}` }, checks: [] }));
+    const app = await buildApp("Owner");
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/factoring/purchases?operating_company_id=${OCI}`,
+      payload: { factoring_company_vendor_id: VENDOR, purchase_date: "2026-10-01", lines: [{ invoice_id: INV_B }] },
+    });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().details[0].reds.map((r: { check_key: string }) => r.check_key)).toEqual(["purchase.invoice_has_load"]);
+    expect(calls.some((c) => c.sql.includes("INSERT INTO driver_finance.feed_intake_checks"))).toBe(false);
+    expect(calls.some((c) => c.sql.includes("append_event") && c.values?.[0] === "factoring.purchase_feed_gate_owner_override")).toBe(false);
+    expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.factoring_purchases"))).toBe(false);
+  });
+
+  it("443.154: the service never releases without an Owner actor, even with a reason", async () => {
+    const { runPurchaseFeedGate } = await import("../purchase-candidates.service.js");
+    gateMock.mockImplementation(async (_c: unknown, _o: string, _k: string, id: string) => ({ intake: { id: `intake-${id}` }, checks: [] }));
+    const out = await runPurchaseFeedGate({ query: queryMock } as never, OCI, [INV_B], USER, "a long enough owner reason", {});
+    expect(out[0]).toMatchObject({ passed: false });
+    expect(out[0].reds.map((r) => r.check_key)).toEqual(["purchase.invoice_has_load"]);
   });
 
   it("POST /factoring/purchases from a non-Owner is refused before the Feed Gate runs", async () => {
