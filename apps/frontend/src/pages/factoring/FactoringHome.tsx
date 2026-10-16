@@ -365,7 +365,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   const [agingView, setAgingView] = useState<"summary" | "detail">("detail");
   const [chargebacksOverpaymentsView, setChargebacksOverpaymentsView] = useState<"summary" | "detail">("detail");
   const [paymentsToYouView, setPaymentsToYouView] = useState<"summary" | "detail">("detail");
-  const [purchaseReportView, setPurchaseReportView] = useState<"summary" | "detail">("detail");
+  const [purchaseReportView, setPurchaseReportView] = useState<"summary" | "detail">("summary");
   const [faroImportView, setFaroImportView] = useState<"summary" | "detail">("detail");
   const [faroCsvText, setFaroCsvText] = useState("");
   const [faroFileName, setFaroFileName] = useState("");
@@ -652,6 +652,22 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     enabled: Boolean(companyId),
   });
   const purchaseReportLines: FactoringPurchaseReportLine[] = purchaseLinesQuery.data?.lines ?? [];
+  // Summary = the SAME lines grouped by purchase (one row per Faro purchase); Detail = one row per invoice.
+  const purchaseReportSummary = useMemo(() => {
+    const by = new Map<string, { purchase_id: string; purchase_display_id: string; purchase_date: string; invoice_count: number; debtorSet: Set<string>; debtors: string; gross_cents: number; escrow_cents: number; cash_cents: number; fee_cents: number; net_advance_cents: number }>();
+    for (const l of purchaseReportLines) {
+      const r = by.get(l.purchase_id) ?? { purchase_id: l.purchase_id, purchase_display_id: l.purchase_display_id, purchase_date: l.purchase_date, invoice_count: 0, debtorSet: new Set<string>(), debtors: "", gross_cents: 0, escrow_cents: 0, cash_cents: 0, fee_cents: 0, net_advance_cents: 0 };
+      r.invoice_count += 1;
+      if (l.customer_name) r.debtorSet.add(l.customer_name);
+      r.gross_cents += Number(l.gross_cents);
+      r.escrow_cents += Number(l.escrow_reserve_cents);
+      r.cash_cents += Number(l.cash_reserve_cents);
+      r.fee_cents += Number(l.fee_cents);
+      r.net_advance_cents += Number(l.net_advance_cents);
+      by.set(l.purchase_id, r);
+    }
+    return [...by.values()].map((r) => ({ ...r, debtors: r.debtorSet.size === 1 ? [...r.debtorSet][0]! : `${r.debtorSet.size} debtors` }));
+  }, [purchaseReportLines]);
 
   const recourseQuery = useQuery({
     queryKey: ["factoring", "recourse", companyId, deepLinkCustomerId, deepLinkLoadId, deepLinkDateFrom, deepLinkDateTo],
@@ -2186,17 +2202,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           pass (noted in-page, not silently dropped). */}
       {show("purchase_report") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-purchase-report">
+          {/* LEAD 443.173 — one title row: section title, filters, Summary (one row per purchase) / Detail (one row per invoice). */}
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-medium text-gray-900">Purchase Report</div>
-            <div className="text-xs text-gray-500">
-              "Display Fee Detail" / "Include Non-Purchased Invoices" / "Filter by Debtor" are not
-              wired this pass — every invoice in the register is shown. (A Debtor/Load filter can
-              still be set from the Recourse Pipeline tab's own filterBar — it narrows this report
-              too, since both share the same underlying query.)
+            <div className="flex items-center gap-3">
+              <h2 className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]" data-testid="factoring-purchase-report-title">
+                Purchase report — {purchaseReportView === "summary" ? "by purchase" : "by invoice"}
+              </h2>
+              {dateRangeOnlyFilterBar("factoring-home-purchase-report")}
             </div>
-          </div>
-          <div className="mb-2 flex items-center justify-between gap-2">
-            {dateRangeOnlyFilterBar("factoring-home-purchase-report")}
             {summaryDetailToggle(purchaseReportView, setPurchaseReportView, "factoring-purchase-report")}
           </div>
           {purchaseLinesQuery.isError ? (
@@ -2205,6 +2218,41 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               {...formatQueryErrorDetail(purchaseLinesQuery.error)}
               onRetry={() => void purchaseLinesQuery.refetch()}
             />
+          ) : purchaseReportView === "summary" ? (
+            <div className="overflow-x-auto" data-testid="factoring-purchase-report-summary">
+              <ParityTable<(typeof purchaseReportSummary)[number]>
+                columns={[
+                  { key: "purchase_date", label: "Date", sortable: true, render: (row) => fmtDate(row.purchase_date) },
+                  {
+                    key: "purchase_display_id",
+                    label: "Purchase",
+                    sortable: true,
+                    render: (row) => <EntityLink kind="factoring_purchase" id={row.purchase_id} label={row.purchase_display_id} />,
+                  },
+                  { key: "invoice_count", label: "Invoices", cellClass: "text-right", sortable: true },
+                  { key: "debtors", label: "Debtors", render: (row) => row.debtors },
+                  { key: "purchase", label: "Purchased", cellClass: "text-right", sortable: true, sortValue: (row) => row.gross_cents, render: (row) => fmtCurrency(row.gross_cents / 100) },
+                  { key: "advance_amount", label: "Net Adv", cellClass: "text-right", sortable: true, sortValue: (row) => row.net_advance_cents, render: (row) => fmtCurrency(row.net_advance_cents / 100) },
+                  { key: "escrow_rsv", label: "Escrow Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => row.escrow_cents, render: (row) => fmtCurrency(row.escrow_cents / 100) },
+                  { key: "cash_rsv", label: "Cash Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => row.cash_cents, render: (row) => fmtCurrency(row.cash_cents / 100) },
+                  { key: "fees", label: "Fees", cellClass: "text-right", sortable: true, sortValue: (row) => row.fee_cents, render: (row) => fmtCurrency(row.fee_cents / 100) },
+                ]}
+                rows={purchaseReportSummary}
+                rowKey={(row) => row.purchase_id}
+                loading={purchaseLinesQuery.isLoading}
+                emptyText="No purchases in this range."
+                storageKey="factoring-purchase-report-summary"
+                footerCells={{
+                  purchase_date: `${purchaseReportSummary.length} purchases`,
+                  invoice_count: String(purchaseReportSummary.reduce((a, r) => a + r.invoice_count, 0)),
+                  purchase: fmtCurrency(purchaseReportSummary.reduce((a, r) => a + r.gross_cents, 0) / 100),
+                  advance_amount: fmtCurrency(purchaseReportSummary.reduce((a, r) => a + r.net_advance_cents, 0) / 100),
+                  escrow_rsv: fmtCurrency(purchaseReportSummary.reduce((a, r) => a + r.escrow_cents, 0) / 100),
+                  cash_rsv: fmtCurrency(purchaseReportSummary.reduce((a, r) => a + r.cash_cents, 0) / 100),
+                  fees: fmtCurrency(purchaseReportSummary.reduce((a, r) => a + r.fee_cents, 0) / 100),
+                }}
+              />
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <ParityTable<FactoringPurchaseReportLine>
@@ -2275,11 +2323,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   fees: fmtCurrency(purchaseReportLines.reduce((sum, r) => sum + Number(r.fee_cents), 0) / 100),
                 }}
               />
-              <p className="mt-2 text-xs text-gray-500" data-testid="factoring-purchase-report-footnote">
-                One row per invoice on a posted purchase (voided purchases excluded). Net Adv = Purchased − Escrow − Cash
-                reserve − Fees; the wire fee is per purchase (Purchase detail). Faro-portal columns with no data yet (PO,
-                Discount, Rebate …) are hidden by default — turn them on from the gear.
-              </p>
             </div>
           )}
         </div>
