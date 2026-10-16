@@ -331,8 +331,13 @@ async function itemAccount(client: DbClient, companyId: string, itemName: string
  */
 async function postStatementDifference(
   client: DbClient,
-  input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string }
+  input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string }
 ): Promise<string | null> {
+  // LEAD (verify-costs-are-expenses-not-handwritten-jes): the card charged MORE than the receipt — a COST (Dr Fuel Card
+  // Discount / Cr 2510). A cost is an expense document, never a handwritten journal entry: it goes through THE expense
+  // writer (createExpenseInClientTx, same as the statement scale ticket), carrying the receipt's vendor, load, driver,
+  // unit and trailer, numbered off the statement line so a re-run is the same document.
+  if (input.differenceCents < 0) return postStatementCostDifferenceAsExpense(client, input);
   const prior = await client.query<{ je: string }>(
     `SELECT journal_entry_uuid::text AS je FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid AND idempotency_key = ANY($2::text[]) LIMIT 1`,
@@ -377,6 +382,43 @@ async function postStatementDifference(
     });
   }
   return jeId;
+}
+
+/** The card charged more than the receipt: an expense document (Dr Fuel Card Discount / Cr 2510) through the writer. */
+export async function postStatementCostDifferenceAsExpense(
+  client: DbClient,
+  input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string }
+): Promise<string | null> {
+  const r = (await client.query<{ vendor: string | null; load_id: string | null; driver: string | null; unit_id: string | null; trailer_id: string | null }>(
+    `SELECT vendor_uuid::text AS vendor, load_id::text, driver_uuid::text AS driver, unit_id::text, trailer_id::text
+       FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.expenseId, input.companyId]
+  )).rows[0];
+  if (!r) throw new Error(`dreamline_receipt_expense_missing:${input.expenseId}`);
+  const cents = Math.abs(input.differenceCents);
+  const created = await createExpenseInClientTx(client, {
+    operating_company_id: input.companyId,
+    expense_date: input.date,
+    amount_cents: cents,
+    vendor_uuid: r.vendor,
+    payment_account_uuid: input.payableId,
+    category_account_id: input.discountAccountId,
+    item_id: input.discountItemId,
+    quantity: 1,
+    rate_cents: cents,
+    ...(r.unit_id ? { unit_id: r.unit_id } : {}),
+    ...(r.driver ? { driver_id: r.driver } : {}),
+    ...(r.load_id ? { load_id: r.load_id } : {}),
+    // the trailer is the LOAD's (the writer's load attribution) — never the receipt's older stamp
+    vendor_document_number: `${input.marker}-CARD-DIFF`.slice(0, 120),
+    memo: `Dreamline statement ${input.marker} — card charged ${cents} cents more than receipt (${FUEL_CARD_DISCOUNT_ITEM})`,
+    is_company_expense: true,
+  } as never, input.actor);
+  const dup = created as { duplicateVendorDocumentNumber?: boolean; duplicateSubmission?: boolean };
+  if (dup.duplicateVendorDocumentNumber || dup.duplicateSubmission) return null;
+  const je = (created as { posted_journal_entry_id?: string | null }).posted_journal_entry_id ?? null;
+  if (!je) throw new Error(`dreamline_card_difference_not_posted:${input.marker}:${JSON.stringify(created).slice(0, 400)}`);
+  return je;
 }
 
 /**
@@ -549,7 +591,7 @@ export async function importDreamlineStatement(
           if (diff !== 0) {
             const je = await postStatementDifference(client, {
               companyId, actor: input.actor_user_uuid, expenseId: hit.expense_id, differenceCents: diff, date: hit.d, marker,
-              payableId, discountAccountId: discount.account_id,
+              payableId, discountAccountId: discount.account_id, discountItemId: discount.item_id,
             });
             if (!je) { record(line, "already_imported", { expense_id: hit.expense_id }); continue; }
             summary.difference_posted_cents += diff;
