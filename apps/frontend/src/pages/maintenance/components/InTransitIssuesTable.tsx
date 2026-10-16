@@ -94,6 +94,7 @@ export function InTransitIssuesTable({ issues, totalCount, loading = false, onTr
       </p>
     ) : null}
     <ParityTable<InTransitIssue>
+      title="In-transit issues"
       columns={columns}
       rows={issues}
       rowKey={(issue) => issue.id}

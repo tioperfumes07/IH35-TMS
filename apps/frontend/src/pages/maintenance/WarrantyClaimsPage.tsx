@@ -231,6 +231,7 @@ export function WarrantyClaimsPage() {
           />
         ) : (
           <ParityTable
+            title="Warranty claims"
             rows={claims}
             columns={columns}
             rowKey={(row) => row.id}

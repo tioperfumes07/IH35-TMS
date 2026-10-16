@@ -200,6 +200,7 @@ export function PredictiveAlertsPage() {
         />
       ) : (
         <ParityTable
+          title="Predictive maintenance alerts"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}
