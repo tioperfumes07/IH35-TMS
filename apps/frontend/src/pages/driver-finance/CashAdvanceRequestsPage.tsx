@@ -394,6 +394,7 @@ export function CashAdvanceRequestsPage() {
       ) : (
         // ACCT-F3532: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
         <ParityTable<CashAdvanceRequestRow>
+          title="Cash advance requests — pending"
           columns={columns}
           rows={sorted}
           rowKey={(row) => String(row.id ?? "")}

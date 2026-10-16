@@ -142,6 +142,7 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
         </p>
       ) : (
         <ParityTable<PresettlementSuggestionRow>
+          title="Pre-settlement suggestions"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
