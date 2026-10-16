@@ -16547,5 +16547,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-16",
     "purpose": "verify-bill-section-a-uses-chart-of-accounts"
+  },
+  "18461": {
+    "claimed_at": "2026-10-16",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.170: verify-relay-funding-offered-on-funding-bank (relay_deposit offered on the funding bank's money-out line by its JE credit leg; one candidate per Relay fill)"
   }
 }
