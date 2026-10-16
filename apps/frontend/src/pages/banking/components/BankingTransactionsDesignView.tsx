@@ -325,6 +325,27 @@ export function categorizedProvenanceText(tx: PlaidBankTransaction): string | nu
   return `Added to: ${primary.kind} ${dateLabel}`;
 }
 
+/**
+ * 443.168 J — an UNCATEGORIZED line opens pre-filled with the engine's suggestion (payee + category the bank text
+ * named). Nothing is written until the operator Posts (owner Law B); a categorized line keeps what was saved.
+ */
+export function suggestionPrefill(
+  tx: PlaidBankTransaction,
+): Partial<Pick<RowDetailDraft, "accountId" | "vendorId" | "payee" | "customerId" | "customerProject">> {
+  if (tx.categorized_at || tx.categorization_gl_account_id || tx.categorization_vendor_id || tx.categorization_customer_id) return {};
+  const out: Partial<Pick<RowDetailDraft, "accountId" | "vendorId" | "payee" | "customerId" | "customerProject">> = {};
+  if (tx.suggested_account_id) out.accountId = tx.suggested_account_id;
+  if (tx.suggested_vendor_id) {
+    out.vendorId = tx.suggested_vendor_id;
+    if (tx.suggested_vendor_name) out.payee = tx.suggested_vendor_name;
+  }
+  if (tx.suggested_customer_id) {
+    out.customerId = tx.suggested_customer_id;
+    if (tx.suggested_customer_name) out.customerProject = tx.suggested_customer_name;
+  }
+  return out;
+}
+
 /** RULE chip for Categorized tab when a banking rule / suggestion source drove the row. */
 export function categorizedRuleLabel(tx: PlaidBankTransaction): string | null {
   const src = String(tx.suggested_source ?? "").trim();
@@ -521,7 +542,7 @@ function transactionLabel(tx: PlaidBankTransaction) {
 export function hasAutoSuggestion(tx: PlaidBankTransaction): boolean {
   if (tx.is_credit) return false;
   if (tx.categorized_at) return false;
-  return Boolean(tx.suggested_vendor_id || tx.suggested_account_id);
+  return Boolean(tx.suggested_vendor_id || tx.suggested_customer_id || tx.suggested_account_id);
 }
 
 /** B.2 — one predicate per TRANSACTION_TYPE_FILTER_OPTIONS id, extracted from the old single-select
@@ -1218,6 +1239,7 @@ export function BankingTransactionsDesignView({
       recoverFromDriver: Boolean(tx.categorization_recover_from_driver),
       recoverDeductionType: tx.categorization_recover_deduction_type?.trim() || "fine",
       driverMoneyTreatment: tx.categorization_recover_from_driver ? "recover" : "none",
+      ...suggestionPrefill(tx),
     };
   }
 
@@ -1658,10 +1680,16 @@ export function BankingTransactionsDesignView({
                   operator reviews + Saves there — this chip exists so a row worth expanding is
                   visible without opening every row to find out. */}
               {hasAutoSuggestion(tx) ? (
-                <p className="mt-0.5 truncate text-xs text-[#4B5563]" title="Computed by the categorization rules engine — expand this row to review and accept">
+                <p
+                  className="mt-0.5 truncate text-xs text-[#4B5563]"
+                  title={tx.suggested_reason || "Computed by the categorization rules engine — expand this row to review and accept"}
+                  data-testid="bank-txn-suggested-payee"
+                >
                   <span className="font-semibold uppercase tracking-wide text-[#6B7280]">Suggested: </span>
-                  {tx.suggested_vendor_name || tx.suggested_account_name || "a category"}
+                  {tx.suggested_vendor_name || tx.suggested_customer_name || tx.suggested_account_name || "a category"}
                   {tx.suggested_account_number ? ` (${tx.suggested_account_number})` : ""}
+                  {/* 443.168 J — the reason travels with the suggestion (owner Law B: suggest WITH the reason). */}
+                  {tx.suggested_reason ? <span className="text-[#6B7280]" data-testid="bank-txn-suggested-reason"> — {tx.suggested_reason}</span> : null}
                 </p>
               ) : null}
               {/* B-3 §19 — Categorized tab ADDED OR MATCHED provenance + RULE (QBO). */}

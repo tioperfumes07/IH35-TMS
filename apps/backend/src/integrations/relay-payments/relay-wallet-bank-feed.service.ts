@@ -20,6 +20,8 @@ import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import type { DbClient } from "./db-client.type.js";
 import { relayFuelPaidCents } from "./relay-sender-fee-cents.js";
 import { normalizeBankTransactionDescription } from "../../banking/transaction-ingestion.js";
+import { suggestForBankTransaction } from "../../banking/banking-rules.engine.js";
+import type { PoolClient } from "pg";
 
 export const RELAY_WALLET_SOURCE_REF_PREFIX = "relay_fuel:";
 export const RELAY_DEPOSIT_SOURCE_REF_PREFIX = "relay_deposit:";
@@ -431,6 +433,8 @@ export async function upsertRelayWalletBankFeedRow(
 
   const id = inserted.rows[0]?.id;
   if (!id) throw new Error(`relay_wallet_bank_feed: insert returned no id for ${input.transaction_id}`);
+  // 443.168 J — the same per-line suggestion every other register gets (rule → payee the merchant names), suggest-only.
+  await suggestForBankTransaction(client as unknown as PoolClient, id, input.operating_company_id);
   await emitRelayWalletFeedAudit(client, "inserted", {
     bank_transaction_id: id,
     operating_company_id: input.operating_company_id,

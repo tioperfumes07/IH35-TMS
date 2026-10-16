@@ -24,9 +24,16 @@ const FILES = {
   view: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
   drawer: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
   feed: "apps/backend/src/integrations/plaid/link.routes.ts",
+  // LEAD 443.168 J — description → payee + category suggestion, both directions, with the reason.
+  engine: "apps/backend/src/banking/banking-rules.engine.ts",
+  payee: "apps/backend/src/banking/bank-description-payee.ts",
+  plaid: "apps/backend/src/integrations/plaid/plaid.service.ts",
+  recon: "apps/backend/src/banking/reconciliation.routes.ts",
+  relay: "apps/backend/src/integrations/relay-payments/relay-wallet-bank-feed.service.ts",
 };
 const LABEL = "verify-banking-match-qbo-engine";
-const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+const read = (rel) => (fs.existsSync(path.join(ROOT, rel)) ? fs.readFileSync(path.join(ROOT, rel), "utf8") : "");
+const readAll = () => Object.fromEntries(Object.entries(FILES).map(([k, rel]) => [k, read(rel)]));
 
 /** 443.155 — each candidate source and the predicate that ties it to the bank line's account. */
 export const SCOPED_SOURCES = {
@@ -94,8 +101,46 @@ export function faroSuggestionProblems({ route, feed }) {
   return p;
 }
 
-export function problemsFor({ service, predicate, route, api, view, drawer, feed }) {
-  const p = [...candidateScopeProblems(service), ...faroSuggestionProblems({ route, feed })];
+/**
+ * 443.168 J — the payee the bank text names (Zelle to/from, wire ORIG/BNF, card merchant, PMNT SENT, ACH company, Relay
+ * merchant) becomes ONE vendor (out) / customer (in) suggestion with its default account and the reason; suggest-only
+ * (Law B); every ingest path gets it; the feed serves the reason and the register shows it.
+ */
+export function describedPayeeProblems({ engine, payee, plaid, recon, relay, feed, view, api }) {
+  const p = [];
+  for (const pat of ["zelle_to", "zelle_from", "wire_in", "wire_out", "card", "pmnt_sent", "ach", "relay_fuel"]) {
+    if (!new RegExp(`return \\{ pattern: "${pat}"`).test(payee)) p.push(`payee: parseBankDescription does not read the ${pat} shape (443.168 J)`);
+  }
+  if (!/scored\[1\]!\.score === scored\[0\]!\.score\) return null/.test(payee)) p.push("payee: an ambiguous name (tie) is suggested — it must say nothing (443.168 J)");
+  if (!/const pool = isCredit \? parties\.customers : parties\.vendors/.test(payee)) p.push("payee: money-in must resolve a CUSTOMER, money-out a VENDOR (443.168 J)");
+  const apply = engine.match(/export async function applyDescribedPayeeForTransaction\([\s\S]*?\n}\n/)?.[0] ?? "";
+  if (!apply) p.push("engine: applyDescribedPayeeForTransaction is missing (443.168 J)");
+  else {
+    if (!/suggested_reason = \$6/.test(apply)) p.push("engine: the described-payee suggestion carries no reason (Law B)");
+    if (/\b(categorized_at|categorization_[a-z_]+|matched_[a-z_]+_id)\s*=/.test(apply)) p.push("engine: the described-payee path writes a categorization / match (Law B: suggest only)");
+    if (!/suggested_source IS NULL OR suggested_source LIKE 'description_payee:%'/.test(apply)) p.push("engine: the described-payee path overwrites an authored-rule / Plaid / Faro suggestion");
+  }
+  if (!/suggested_reason = \$5/.test(engine)) p.push("engine: an authored-rule suggestion carries no reason (Law B)");
+  const bulk = engine.match(/export async function applyBankingRulesForCompany\([\s\S]*?\n}\n/)?.[0] ?? "";
+  if (!/is_credit = true[\s\S]{0,300}applyDescribedPayeeForTransaction\(client/.test(bulk)) p.push("engine: the company pass never suggests a payee on money-in lines (443.168 J)");
+  const one = engine.match(/export async function suggestForBankTransaction\([\s\S]*?\n}\n/)?.[0] ?? "";
+  if (!/applyBankingRulesForTransaction[\s\S]*applyDescribedPayeeForTransaction[\s\S]*applyFuzzyVendorMatchForTransaction/.test(one))
+    p.push("engine: suggestForBankTransaction must run rule → described payee → fuzzy (443.168 J)");
+  for (const [k, src] of [["plaid", plaid], ["recon", recon], ["relay", relay]]) {
+    if (!/await suggestForBankTransaction\(/.test(src)) p.push(`${k}: a newly-ingested line skips the one suggestion entry (443.168 J)`);
+  }
+  if (!/bt\.suggested_reason,/.test(feed) || !/sc\.customer_name AS suggested_customer_name/.test(feed)) p.push("feed: suggested_reason / suggested customer not served (443.168 J)");
+  if (!/suggested_reason\?: string \| null/.test(api)) p.push("api: PlaidBankTransaction lacks suggested_reason");
+  if (!/data-testid="bank-txn-suggested-reason"/.test(view)) p.push("view: the register does not show why it suggested the payee (Law B)");
+  return p;
+}
+
+export function problemsFor({ service, predicate, route, api, view, drawer, feed, engine, payee, plaid, recon, relay }) {
+  const p = [
+    ...candidateScopeProblems(service),
+    ...faroSuggestionProblems({ route, feed }),
+    ...describedPayeeProblems({ engine, payee, plaid, recon, relay, feed, view, api }),
+  ];
   for (const f of ["counterparty_kind", "counterparty_name", "counterparty_id", "reference", "description", "open_balance_cents", "payee_similarity"]) {
     if (!new RegExp(`^\\s*${f}\\??:`, "m").test(service)) p.push(`service: MatchCandidate lacks ${f}`);
   }
@@ -197,15 +242,7 @@ export function problemsFor({ service, predicate, route, api, view, drawer, feed
 }
 
 function selftest() {
-  const base = {
-    service: read(FILES.service),
-    predicate: read(FILES.predicate),
-    route: read(FILES.route),
-    api: read(FILES.api),
-    view: read(FILES.view),
-    drawer: read(FILES.drawer),
-    feed: read(FILES.feed),
-  };
+  const base = readAll();
   const baseline = problemsFor(base);
   if (baseline.length) {
     console.error(`${LABEL} SELFTEST: baseline not clean:`, baseline);
@@ -236,6 +273,16 @@ function selftest() {
     ["consumed payment offered", { ...base, service: base.service.replace("WHERE cbt.matched_payment_id = p.id AND cbt.voided_at IS NULL", "WHERE false") }],
     ["no relevance floor", { ...base, service: base.service.replace(".filter((c) => explicitSearch || passesRelevanceFloor(c))", "") }],
     ["floor ignores similarity", { ...base, service: base.service.replace("input.amountGapCents <= input.toleranceCents || input.similarity >= AUTO_MATCH_MEMO_SIMILARITY_MIN", "input.amountGapCents <= input.toleranceCents") }],
+    // 443.168 J
+    ["described payee writes a categorization", { ...base, engine: base.engine.replace("suggested_reason = $6,", "suggested_reason = $6, categorized_at = now(),") }],
+    ["described payee without reason", { ...base, engine: base.engine.replace("suggested_reason = $6,", "") }],
+    ["described payee overwrites a rule", { ...base, engine: base.engine.replace("AND (suggested_source IS NULL OR suggested_source LIKE 'description_payee:%' OR suggested_source LIKE 'fuzzy_vendor_match:%')", "") }],
+    ["money-in pass dropped", { ...base, engine: base.engine.replace("AND categorized_at IS NULL AND is_credit = true", "AND false") }],
+    ["plaid ingest skips suggestion", { ...base, plaid: base.plaid.replace("await suggestForBankTransaction(", "await applyBankingRulesForTransaction(") }],
+    ["relay ingest skips suggestion", { ...base, relay: base.relay.replace("await suggestForBankTransaction(", "void (") }],
+    ["tie suggested", { ...base, payee: base.payee.replace("if (scored.length > 1 && scored[1]!.score === scored[0]!.score) return null;", "") }],
+    ["zelle unread", { ...base, payee: base.payee.replace('return { pattern: "zelle_to"', 'return { pattern: "zelle_x"') }],
+    ["reason hidden", { ...base, view: base.view.replace('data-testid="bank-txn-suggested-reason"', 'data-testid="x"') }],
     ["new unscoped source", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', 'if (wants("settlement")) {}\n    if (onOperatingBank && wants("invoice"))') }],
   ];
   for (const [name, mutant] of mutants) {
@@ -251,15 +298,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) selftest();
 
-const problems = problemsFor({
-  service: read(FILES.service),
-  predicate: read(FILES.predicate),
-  route: read(FILES.route),
-  api: read(FILES.api),
-  view: read(FILES.view),
-  drawer: read(FILES.drawer),
-  feed: read(FILES.feed),
-});
+const problems = problemsFor(readAll());
 if (problems.length) {
   console.error(`${LABEL} FAIL:`);
   for (const x of problems) console.error(`  - ${x}`);

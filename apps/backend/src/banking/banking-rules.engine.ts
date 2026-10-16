@@ -1,7 +1,9 @@
 import type { PoolClient } from "pg";
+import { loadPayeeParties, parseBankDescription, resolveDescribedPayee } from "./bank-description-payee.js";
 
 export type BankingRuleRow = {
   id: string;
+  name?: string | null;
   priority: number;
   description_contains: string | null;
   description_regex: string | null;
@@ -136,11 +138,12 @@ export async function applyFuzzyVendorMatchForTransaction(
         suggested_vendor_id = $2::uuid,
         suggested_confidence = 'low',
         suggested_source = $3,
+        suggested_reason = $4,
         suggested_at = now(),
         updated_at = now()
       WHERE id = $1::uuid
     `,
-    [txnId, match.vendorId, `fuzzy_vendor_match:sim=${match.similarity.toFixed(2)}`]
+    [txnId, match.vendorId, `fuzzy_vendor_match:sim=${match.similarity.toFixed(2)}`, `bank description resembles vendor ${match.vendorName} (similarity ${match.similarity.toFixed(2)})`]
   );
 
   await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,NULL,$4)`, [
@@ -198,11 +201,12 @@ export async function applyBankingRulesForTransaction(client: PoolClient, txnId:
           suggested_account_id = $3::uuid,
           suggested_confidence = 'high',
           suggested_source = $4,
+          suggested_reason = $5,
           suggested_at = now(),
           updated_at = now()
         WHERE id = $1::uuid
       `,
-      [txnId, rule.then_vendor_id, rule.then_account_id, `rule_id:${rule.id}`]
+      [txnId, rule.then_vendor_id, rule.then_account_id, `rule_id:${rule.id}`, `banking rule${rule.name ? ` "${rule.name}"` : ""} matched the bank description`]
     );
 
     await client.query(
@@ -243,7 +247,7 @@ export async function applyBankingRulesForTransaction(client: PoolClient, txnId:
 export async function applyBankingRulesForCompany(
   client: PoolClient,
   operatingCompanyId: string
-): Promise<{ scanned: number; matched: number; fuzzyMatched: number }> {
+): Promise<{ scanned: number; matched: number; fuzzyMatched: number; describedMatched: number }> {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   // LINK4-PR3 — is_credit = false at the SQL level (not just relying on the per-row guards below):
@@ -261,17 +265,97 @@ export async function applyBankingRulesForCompany(
     [operatingCompanyId]
   );
 
+  const parties = await loadPayeeParties(client, operatingCompanyId);
   let matched = 0;
   let fuzzyMatched = 0;
+  let describedMatched = 0;
   for (const row of txnsRes.rows) {
     const did = await applyBankingRulesForTransaction(client, row.id, operatingCompanyId);
     if (did) {
       matched += 1;
       continue;
     }
+    // 443.168 J — the payee the bank text NAMES (Zelle to / card merchant / wire BNF …) before the trigram guess.
+    if (await applyDescribedPayeeForTransaction(client, row.id, operatingCompanyId, parties)) {
+      describedMatched += 1;
+      continue;
+    }
     // BNK-01 fallback — only reached when no authored rule fired for this row.
     const fuzzy = await applyFuzzyVendorMatchForTransaction(client, row.id, operatingCompanyId);
     if (fuzzy) fuzzyMatched += 1;
   }
-  return { scanned: txnsRes.rows.length, matched, fuzzyMatched };
+
+  // 443.168 J — money-in: no rule, no expense guess (LINK4-PR3 stands); only the CUSTOMER the bank text names
+  // (Zelle from / WIRE IN ORIG: / ACH company) with that customer's own income account, suggest-only.
+  const creditsRes = await client.query<{ id: string }>(
+    `SELECT id::text FROM banking.bank_transactions
+      WHERE operating_company_id = $1::uuid AND categorized_at IS NULL AND is_credit = true
+      ORDER BY transaction_date DESC, id ASC`,
+    [operatingCompanyId]
+  );
+  for (const row of creditsRes.rows) {
+    if (await applyDescribedPayeeForTransaction(client, row.id, operatingCompanyId, parties)) describedMatched += 1;
+  }
+  return { scanned: txnsRes.rows.length + creditsRes.rows.length, matched, fuzzyMatched, describedMatched };
+}
+
+/**
+ * 443.168 J — the ONE per-line suggestion entry for a newly-ingested line (Plaid sync, CSV import): authored rule →
+ * the payee the description names → trigram fallback. Every step writes suggested_* only (owner Law B).
+ */
+export async function suggestForBankTransaction(client: PoolClient, txnId: string, operatingCompanyId: string): Promise<boolean> {
+  if (await applyBankingRulesForTransaction(client, txnId, operatingCompanyId)) return true;
+  if (await applyDescribedPayeeForTransaction(client, txnId, operatingCompanyId)) return true;
+  return (await applyFuzzyVendorMatchForTransaction(client, txnId, operatingCompanyId)) != null;
+}
+
+/**
+ * 443.168 J — read the payee out of the raw bank description (bank-description-payee.ts) and suggest it with the
+ * reason: vendor + its default expense account on money out, customer + its default income account on money in.
+ * Suggest-only: never categorized_*, never matched_*, never a JE. Never overwrites an authored-rule / Plaid-rule /
+ * Faro suggestion — only an empty one or an earlier description / trigram guess.
+ */
+export async function applyDescribedPayeeForTransaction(
+  client: PoolClient,
+  txnId: string,
+  operatingCompanyId: string,
+  parties?: Awaited<ReturnType<typeof loadPayeeParties>>
+): Promise<boolean> {
+  const txnRes = await client.query<{ description: string | null; merchant_name: string | null; is_credit: boolean }>(
+    `SELECT description, merchant_name, is_credit FROM banking.bank_transactions
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND categorized_at IS NULL LIMIT 1`,
+    [txnId, operatingCompanyId]
+  );
+  const txn = txnRes.rows[0];
+  if (!txn) return false;
+  const parsed = parseBankDescription(txn.description, txn.merchant_name);
+  if (!parsed) return false;
+  const payee = resolveDescribedPayee(parsed, txn.is_credit, parties ?? (await loadPayeeParties(client, operatingCompanyId)));
+  if (!payee) return false;
+  const res = await client.query(
+    `
+      UPDATE banking.bank_transactions
+      SET
+        suggested_vendor_id = $2::uuid,
+        suggested_customer_id = $3::uuid,
+        suggested_account_id = $4::uuid,
+        suggested_confidence = 'medium',
+        suggested_source = $5,
+        suggested_reason = $6,
+        suggested_at = now(),
+        updated_at = now()
+      WHERE id = $1::uuid
+        AND categorized_at IS NULL
+        AND (suggested_source IS NULL OR suggested_source LIKE 'description_payee:%' OR suggested_source LIKE 'fuzzy_vendor_match:%')
+    `,
+    [txnId, payee.vendor_id, payee.customer_id, payee.account_id, `description_payee:${parsed.pattern}`, payee.reason]
+  );
+  if (!res.rowCount) return false;
+  await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,NULL,$4)`, [
+    "banking.rule_engine.described_payee",
+    "info",
+    JSON.stringify({ transaction_id: txnId, vendor_id: payee.vendor_id, customer_id: payee.customer_id, pattern: parsed.pattern }),
+    "443.168-J",
+  ]);
+  return true;
 }

@@ -21,7 +21,7 @@ import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { computePayloadHashFromTxn, enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { insertCsvStatementBankTransaction, statementRowIdentityText } from "./transaction-ingestion.js";
-import { applyBankingRulesForTransaction } from "./banking-rules.engine.js";
+import { suggestForBankTransaction } from "./banking-rules.engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import { assertBankAccountUsable, bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
@@ -1666,7 +1666,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         });
         const insRow = inserted.rows?.[0] as { id?: string } | undefined;
         if (insRow?.id) {
-          await applyBankingRulesForTransaction(client as PoolClient, insRow.id, accountContext.operating_company_id);
+          await suggestForBankTransaction(client as PoolClient, insRow.id, accountContext.operating_company_id);
           added += 1;
         } else {
           alreadyImported += 1;

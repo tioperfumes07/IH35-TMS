@@ -763,6 +763,10 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           sa.account_name AS suggested_account_name,
           bt.suggested_confidence,
           bt.suggested_source,
+          -- 443.168 J — the reason the engine suggested this payee/category, and the CUSTOMER on a money-in line.
+          bt.suggested_reason,
+          bt.suggested_customer_id::text,
+          sc.customer_name AS suggested_customer_name,
           -- ROUND 197 (owner-raised) — the SUGGESTED gl_account/vendor/customer/item were selected
           -- above, but the row's already-PERSISTED categorization (written by categorization.routes.ts
           -- SET categorization_gl_account_id/_vendor_id/_customer_id/_item_id on every Post) was never
@@ -889,6 +893,9 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN mdata.vendors sv
           ON sv.id = bt.suggested_vendor_id
          AND sv.operating_company_id = bt.operating_company_id
+        LEFT JOIN mdata.customers sc
+          ON sc.id = bt.suggested_customer_id
+         AND sc.operating_company_id = bt.operating_company_id
         LEFT JOIN catalogs.accounts sa
           ON sa.id = bt.suggested_account_id
          AND sa.operating_company_id = bt.operating_company_id

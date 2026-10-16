@@ -8,7 +8,7 @@ import {
   normalizeBankTransactionDescription,
   retirePlaidPendingPredecessor,
 } from "../../banking/bank-tx-dedup.js";
-import { applyBankingRulesForTransaction } from "../../banking/banking-rules.engine.js";
+import { suggestForBankTransaction } from "../../banking/banking-rules.engine.js";
 import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import {
@@ -737,7 +737,7 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
             if (!pendingRetirement.retired && pendingRetirement.reason === "financially_linked") {
               throw new Error("plaid_pending_predecessor_financially_linked");
             }
-            await applyBankingRulesForTransaction(client, row.id, row.operating_company_id);
+            await suggestForBankTransaction(client, row.id, row.operating_company_id);
             await mergeManualBankTransactionStub(client, {
               plaidRowId: row.id,
               operatingCompanyId: row.operating_company_id,
