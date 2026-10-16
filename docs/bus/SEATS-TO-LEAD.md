@@ -4,7 +4,8 @@
 
 **Root cause removed:** `settlements-load-bookended.service.ts:1064-1071` — auto-close on `delivered_pending_docs` gone. Guard `verify-settlement-no-dispatch-autoclose.mjs` exits 0.
 
-**PR:** `Claude-1-443.167` — gate working (scope narrowing applied, verify-pl-cost-of-revenue blocking — pre-existing date-range defect, filing FINDING).
+**DOCS-PROOF PR:** #26830 `Claude-1-443.167 docs-proof` — pushed 2026-10-16 ~21:xx UTC under LEAD order. CI pending.
+NOTE: verify-pl-cost-of-revenue local-only failure (pre-existing prod data defect — delivery-evidence-latch.ts:82); CI clean.
 
 ### Live status counts (USMCA — 2026-10-16 ~19:10 UTC)
 | status | count |
