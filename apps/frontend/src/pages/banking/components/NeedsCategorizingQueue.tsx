@@ -128,11 +128,9 @@ export function NeedsCategorizingQueue({ companyId, rows, onChange, onAccepted }
       data-testid="needs-categorizing-queue"
       data-c64-needs-categorizing="1"
     >
-      <div className="border-b border-[#E5E7EB] px-3 py-2">
-        <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Needs categorizing</p>
-      </div>
       {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table): sortable headers, gear, export. */}
       <ParityTable<NeedsCategorizingRow>
+        title="Needs categorizing"
         embedded
         rows={rows}
         rowKey={(row) => row.id}

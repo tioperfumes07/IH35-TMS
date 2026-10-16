@@ -25,6 +25,7 @@ import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBank
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
 
+import { InfoPopover } from "../../components/shared/InfoPopover";
 const PAGE_SIZE = 50;
 
 function formatMoney(cents: number) {
@@ -399,40 +400,40 @@ export function TransfersListPage() {
           {transferGlFlag.loading || transferGlFlag.error ? (
             <>
               <p className="font-semibold">
-                Checking whether recording a transfer posts a journal entry for this company…
-              </p>
-              <p className="mt-1">
-                <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is resolved per entity and has not
-                been read yet{transferGlFlag.error ? " (the lookup failed)" : ""}. Until it is,{" "}
-                <strong>assume recording a transfer DOES post</strong> — that is the assumption that cannot cost you
-                an unintended entry.
+                Checking whether recording a transfer posts a journal entry for this company…{" "}
+                <InfoPopover label="About transfer GL posting">
+                  <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is resolved per entity and has not
+                  been read yet{transferGlFlag.error ? " (the lookup failed)" : ""}. Until it is,{" "}
+                  <strong>assume recording a transfer DOES post</strong> — that is the assumption that cannot cost
+                  you an unintended entry.
+                </InfoPopover>
               </p>
             </>
           ) : transferGlFlag.enabled ? (
             <>
               <p className="font-semibold">
                 Recording a transfer DOES post a TMS journal entry —{" "}
-                <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is ON for this company
-              </p>
-              <p className="mt-1">
-                The transfer poster runs for this entity, so a TMS JE is written to the live ledger and linked in the
-                TMS JE column. An EMPTY TMS JE column here therefore means those transfers were recorded before the
-                flag was turned on — it does not mean posting is off. Transfer rows still store QBO journal ids
-                separately from TMS GL. Reverse drill: JE detail Source links map{" "}
-                <code className="text-xs">transfer</code> → Banking Transfers.
+                <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is ON for this company{" "}
+                <InfoPopover label="About transfer GL posting">
+                  The transfer poster runs for this entity, so a TMS JE is written to the live ledger and linked in
+                  the TMS JE column. An EMPTY TMS JE column here therefore means those transfers were recorded before
+                  the flag was turned on — it does not mean posting is off. Transfer rows still store QBO journal ids
+                  separately from TMS GL. Reverse drill: JE detail Source links map{" "}
+                  <code className="text-xs">transfer</code> → Banking Transfers.
+                </InfoPopover>
               </p>
             </>
           ) : (
             <>
               <p className="font-semibold">
                 TMS journal entry link requires <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code>, which
-                is OFF for this company
-              </p>
-              <p className="mt-1">
-                Transfer rows store QBO journal ids separately from TMS GL. A TMS JE appears in the TMS JE column only
-                when the existing transfer poster ran with the flag ON for this entity. Zero linked JEs with the flag
-                OFF is expected — not proof that transfers post to the ledger. Reverse drill: JE detail Source links
-                map <code className="text-xs">transfer</code> → Banking Transfers.
+                is OFF for this company{" "}
+                <InfoPopover label="About transfer GL posting">
+                  Transfer rows store QBO journal ids separately from TMS GL. A TMS JE appears in the TMS JE column
+                  only when the existing transfer poster ran with the flag ON for this entity. Zero linked JEs with
+                  the flag OFF is expected — not proof that transfers post to the ledger. Reverse drill: JE detail
+                  Source links map <code className="text-xs">transfer</code> → Banking Transfers.
+                </InfoPopover>
               </p>
             </>
           )}
@@ -443,12 +444,14 @@ export function TransfersListPage() {
           className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
           data-testid="banking-transfers-never-recorded-banner"
         >
-          <p className="font-semibold">No bank transfers recorded for this company in the selected filters.</p>
-          <p className="mt-1">
-            Transfer workflow is not proven live until at least one transfer is recorded via + Record Transfer (this
-            page or Banking Home) or + Pay Credit Card. An empty list is not “all clear” — it is unproven use.
-            Inter-account moves that only exist as unmatched for-review bank feed rows still need Match/Categorize on
-            Transactions.
+          <p className="font-semibold">
+            No bank transfers recorded for this company in the selected filters.{" "}
+            <InfoPopover label="About an empty transfer list">
+              Transfer workflow is not proven live until at least one transfer is recorded via + Record Transfer (this
+              page or Banking Home) or + Pay Credit Card. An empty list is not “all clear” — it is unproven use.
+              Inter-account moves that only exist as unmatched for-review bank feed rows still need Match/Categorize
+              on Transactions.
+            </InfoPopover>
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <button
@@ -524,6 +527,7 @@ export function TransfersListPage() {
       </CollapsedListFilters>
 
       <ParityTable
+        title="Transfers between accounts"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

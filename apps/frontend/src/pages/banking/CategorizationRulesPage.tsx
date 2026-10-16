@@ -24,6 +24,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { formatNumber } from "../../utils/qboFormat";
 
+import { InfoPopover } from "../../components/shared/InfoPopover";
 function canAccess(role?: string) {
   return role === "Owner" || role === "Administrator" || role === "Accountant";
 }
@@ -308,9 +309,11 @@ export function CategorizationRulesPage() {
                 className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               />
               <p className="mt-0.5 text-xs text-gray-500">
-                Matches the bank's own description text. Takes priority over the pattern above — set
-                this to "remember" how you categorized a merchant so future transactions from the same
-                merchant match automatically.
+                Matches the bank's own description text.{" "}
+                <InfoPopover label="About description matching">
+                  Takes priority over the pattern above — set this to "remember" how you categorized a
+                  merchant so future transactions from the same merchant match automatically.
+                </InfoPopover>
               </p>
             </div>
             <input

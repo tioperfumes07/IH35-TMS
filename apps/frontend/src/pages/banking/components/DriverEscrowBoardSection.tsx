@@ -241,10 +241,8 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
         ) : null}
 
         <div className="rounded-sm border border-[#E5E7EB] bg-white">
-          <div className="border-b border-[#E5E7EB] px-3 py-2">
-            <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Driver escrow</p>
-          </div>
           <ParityTable<EscrowBoardRow>
+            title="Driver escrow — balance by driver"
             embedded
             rows={enrichedRows}
             rowKey={(row) => row.driver_id}

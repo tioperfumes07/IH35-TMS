@@ -23,6 +23,7 @@ import { formatDateUS } from "../../lib/formatDate";
 
 import { formatUsdCents } from "../../lib/money";
 
+import { InfoPopover } from "../../components/shared/InfoPopover";
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
@@ -153,8 +154,11 @@ export function BankingObligationReconcilePage() {
         >
           <p className="font-semibold">Reconcile queue has no unmatched rows and no open obligations in this view.</p>
           <p className="mt-1">
-            That is not proof the company is caught up. Most feed activity still lands on Transactions → For review
-            (Match/Categorize). Use that path when this queue is empty but uncategorized KPIs are non-zero.
+            That is not proof the company is caught up.{" "}
+            <InfoPopover label="About this queue">
+              Most feed activity still lands on Transactions → For review (Match/Categorize). Use that path
+              when this queue is empty but uncategorized KPIs are non-zero.
+            </InfoPopover>
           </p>
           <Link to="/banking/transactions?type=uncategorized" className="mt-2 inline-block font-medium text-[#1F2A44] underline">
             Open for-review Match/Categorize

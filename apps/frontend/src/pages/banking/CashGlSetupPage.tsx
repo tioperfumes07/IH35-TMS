@@ -12,6 +12,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 
+import { InfoPopover } from "../../components/shared/InfoPopover";
 // B-1 Cash-GL setup (fork-A): map each bank account → its COA cash GL account, per entity.
 // Owner/Administrator only. NO posting, NO flag — setup only. Reads/writes banking.bank_accounts.ledger_account_id.
 export function CashGlSetupPage() {
@@ -115,9 +116,12 @@ export function CashGlSetupPage() {
             unbound
           </p>
           <p className="mt-1">
-            Unmapped banks cannot open Bank Register / bank-feed GL posting until each row has a Cash GL account.
-            Neon live (TRANSP) was 8/16 mapped — do not treat Banking as cash-posting ready while unbound remain.
-            Map each &quot;— Not mapped —&quot; row below.
+            Unmapped banks cannot open Bank Register / bank-feed GL posting until each row has a Cash GL
+            account.{" "}
+            <InfoPopover label="About cash GL mapping">
+              Neon live (TRANSP) was 8/16 mapped — do not treat Banking as cash-posting ready while unbound
+              remain. Map each &quot;— Not mapped —&quot; row below.
+            </InfoPopover>
           </p>
         </div>
       ) : null}
@@ -128,6 +132,7 @@ export function CashGlSetupPage() {
       ) : null}
 
       <ParityTable
+        title="Bank accounts — cash GL mapping"
         columns={columns}
         rows={banks}
         rowKey={(bank) => bank.id}

@@ -423,6 +423,7 @@ export function BankTxCategorizationPage() {
           ) : null}
           {/* BANK-F3578: ParityTable owns Search+Range+gear + selectable bulk on archived Workflow-B leaf. */}
           <ParityTable<Record<string, unknown>>
+            title="Bank transactions — uncategorized"
             rows={txs}
             rowKey={(tx) => String(tx.id ?? "")}
             storageKey="bank-tx-categorization-uncategorized"

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 const BANKING_RELEVANT_REPORTS = [
   {
     id: "cash-flow-overview",
@@ -42,8 +43,11 @@ export function BankingReportsTabContent() {
       >
         <p className="font-semibold">Reports are drill-through surfaces — not bank reconciliation proof.</p>
         <p className="mt-1">
-          Opening Cash Flow / Aging / Settlements does not clear the for-review bank feed or create reconciliation
-          matches. Until Match/Categorize and period reconcile are proven live, treat this tab as navigation only.
+          Opening Cash Flow / Aging / Settlements does not clear the for-review bank feed or create
+          reconciliation matches.{" "}
+          <InfoPopover label="About this reports tab">
+            Until Match/Categorize and period reconcile are proven live, treat this tab as navigation only.
+          </InfoPopover>
         </p>
         <div className="mt-2 flex flex-wrap gap-3">
           <Link to="/banking/transactions?type=uncategorized" className="font-medium text-[#1F2A44] underline">

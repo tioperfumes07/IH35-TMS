@@ -21,6 +21,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatUsdCents } from "../../utils/qboFormat";
 
+import { InfoPopover } from "../../components/shared/InfoPopover";
 // [HOLD-FOR-JORGE — TIER 1] Per-entity bank-account HIDE/EXCLUDE (build-and-hold, flag OFF by default).
 //
 // WHY: TRANSP and TRK share ONE Wells Fargo/Plaid login, so Plaid pulls ALL 4 WF accounts (3 TRANSP + 1
@@ -190,9 +191,11 @@ export function BankAccountVisibilityPage() {
         title="Bank Account Visibility"
       />
       <p className="text-xs text-gray-500">
-        Hide an account that belongs to another company (shared bank login) so it is fully excluded from
-        this company&apos;s ledger, balance sheet, categorization, reconciliation, and cash flow. Hiding is
-        reversible and audited — the account is never deleted.
+        Hide an account that belongs to another company (shared bank login).{" "}
+        <InfoPopover label="About hiding a bank account">
+          Hiding it fully excludes it from this company&apos;s ledger, balance sheet, categorization, reconciliation,
+          and cash flow. Hiding is reversible and audited — the account is never deleted.
+        </InfoPopover>
       </p>
       {!canManage ? (
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
@@ -204,6 +207,7 @@ export function BankAccountVisibilityPage() {
       ) : (
         // BANK-F3546: ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar.
         <ParityTable<BankAccountVisibilityRow>
+          title="Bank accounts — visibility"
           columns={columns}
           rows={accounts}
           rowKey={(account) => account.id}

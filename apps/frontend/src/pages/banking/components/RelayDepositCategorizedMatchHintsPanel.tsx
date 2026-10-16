@@ -5,6 +5,7 @@ import { CappedListNotice } from "../../../components/CappedListNotice";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatDateUS } from "../../../lib/formatDate";
 
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 type Props = {
   companyId: string;
 };
@@ -44,9 +45,11 @@ export function RelayDepositCategorizedMatchHintsPanel({ companyId }: Props) {
       {open ? (
         <div className="mt-2">
           <p className="mb-2 text-xs text-[#6B7280]">
-            Lines already categorized to the Relay fuel wallet account. Each row shows the settled company
-            deposit that would match (charged = wallet + 3.25% fee). Use Match on the transaction to link;
-            this list does not change categorization.
+            Lines already categorized to the Relay fuel wallet account.{" "}
+            <InfoPopover label="About these match hints">
+              Each row shows the settled company deposit that would match (charged = wallet + 3.25% fee). Use
+              Match on the transaction to link; this list does not change categorization.
+            </InfoPopover>
           </p>
           {isLoading ? (
             <p className="text-xs text-[#6B7280]">Loading…</p>
