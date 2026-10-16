@@ -30,6 +30,7 @@
  * posting it would break the 2510 invoice tie. Counted, never posted (443.142 report).
  * Caller owns the transaction (all-or-nothing). dry_run computes the same plan and the caller rolls back.
  */
+import { findLiveFuelByProviderTransactionId } from "./fuel-provider-reference.js";
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { insertPostingLineWithSpine } from "../accounting/posting-line-writer.js";
@@ -657,6 +658,12 @@ export async function importDreamlineStatement(
 
     const notes = [`card=…${line.card_number.replace(/\D+/g, "").slice(-4)}`, `efs_invoice=${line.efs_invoice}`, `file_unit=${line.unit_label ?? ""}`,
       line.driver_name ? `file_driver=${line.driver_name}` : null, "443.142 Dreamline statement"].filter(Boolean).join("; ");
+    // Never a silent second copy: the same provider transaction (EFS invoice + product) already recorded live — by an
+    // earlier statement, the fuel-card import or a Settlement Creator line — is that purchase (fuel-provider-reference.ts).
+    const already = await findLiveFuelByProviderTransactionId(client as never, {
+      operatingCompanyId: companyId, vendorId: vendor.id, reference: line.efs_invoice, fuelType: line.product,
+    });
+    if (already) { record(line, "already_imported", { fuel_transaction_id: already.id }); continue; }
     const ins = await client.query<{ id: string }>(
       `INSERT INTO fuel.fuel_transactions (
          operating_company_id, transaction_at, purchased_at, load_id, driver_id, unit_id, vendor_id, fuel_card_id, fuel_type,

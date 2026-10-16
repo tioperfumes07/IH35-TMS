@@ -304,6 +304,33 @@ export async function isPriorCreatorSettlementLoad(client: DbClient, draft: Sett
   return r.rows[0]?.ok === true;
 }
 
+/**
+ * LEAD 443.167-R (owner-authorized 2026-10-16) — a load that already exists because the seed booked it (CC-1 443.145:
+ * loads first, settlements after) is ADOPTED by the signed settlement that pays it, exactly like an Edit adopts its own
+ * load: same load, never re-booked, its invoice kept. Only when ALL hold: the load is this settlement's driver's
+ * (assigned_primary_driver_id), it is not voided / deleted, and no LIVE settlement other than the one this post replaces
+ * (same AlwaysTrack number) carries a pay line on it — so a load already paid by another settlement is still refused.
+ */
+export async function isSeededLoadFreeForThisSettlement(client: DbClient, draft: SettlementCreatorDraft, loadId: string): Promise<boolean> {
+  const no = String(draft.settlement_no ?? "").trim();
+  const r = await client.query<{ ok: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM mdata.loads l
+        WHERE l.id = $2::uuid AND l.operating_company_id = $1::uuid
+          AND l.assigned_primary_driver_id = $3::uuid
+          AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM driver_finance.settlement_lines sl
+              JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
+             WHERE sl.load_id = l.id AND sl.voided_at IS NULL
+               AND s.voided_at IS NULL AND s.status <> 'cancelled'
+               AND COALESCE(s.source_document_ref, '') <> $4)
+     ) AS ok`,
+    [draft.operating_company_id, loadId, draft.driver_id, no],
+  );
+  return r.rows[0]?.ok === true;
+}
+
 export async function ensureDispatchedLoadsForCreator(
   client: DbClient,
   actor: { uuid: string; role: string },
@@ -341,6 +368,10 @@ export async function ensureDispatchedLoadsForCreator(
       // LEAD RULING 2026-10-11 (5769 repair, Option 1): Edit = void and repost ADOPTS the replaced settlement's own load —
       // same load number, same driver, on the Creator settlement with this AlwaysTrack number — never re-booked; its
       // sent invoice is kept. Any other existing load still refuses below.
+      continue;
+    }
+    if (existing.rows[0] && (await isSeededLoadFreeForThisSettlement(client, draft, existing.rows[0].id))) {
+      // LEAD 443.167-R — a seeded load this settlement pays: adopted, never re-booked (see isSeededLoadFreeForThisSettlement).
       continue;
     }
     if (existing.rows[0]) {
