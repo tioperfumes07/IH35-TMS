@@ -525,7 +525,7 @@ function TourRegister({ state, companyId, onCount }: { state: "open" | "closed";
   const rows = useMemo(() => flattenTourRows(q.data?.rows ?? []), [q.data]);
   useEffect(() => { onCount(q.data ? q.data.count : null); }, [q.data, onCount]);
   if (q.isError) return <ListErrorState status={0} message={q.error instanceof Error ? q.error.message : String(q.error)} onRetry={() => void q.refetch()} />;
-  return <div data-testid={`load-costs-tours-${state}`} data-surface="load-detail"><ParityTable
+  return <div data-testid={`load-costs-tours-${state}`} data-surface="load-detail"><ParityTable title={state === "open" ? "Open tours — one row per load" : "Closed tours — one row per load"}
     columns={TOUR_LOAD_COLUMNS(state)}
     rows={rows}
     rowKey={r => r.row_key}

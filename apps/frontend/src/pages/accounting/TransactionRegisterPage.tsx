@@ -328,7 +328,7 @@ export function TransactionRegisterPage() {
       {query.isError ? (
         <ListErrorState {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
       ) : (
-        <ParityTable
+        <ParityTable title="All transactions"
           columns={columns}
           rows={rows}
           rowKey={(r) => `${r.source}:${r.id}`}

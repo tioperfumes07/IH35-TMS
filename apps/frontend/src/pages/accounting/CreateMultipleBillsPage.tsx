@@ -344,7 +344,7 @@ export function CreateMultipleBillsPage() {
       </div>
 
       {/* ACCT-F3580: ParityTable owns Search+Range+gear on multi-bill draft grid. */}
-      <ParityTable<BillDraftRow>
+      <ParityTable<BillDraftRow> title="Bill drafts"
         rows={rows}
         rowKey={(row) => row.id}
         storageKey="create-multiple-bills-draft"

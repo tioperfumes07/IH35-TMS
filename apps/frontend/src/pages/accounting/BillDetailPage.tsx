@@ -464,7 +464,7 @@ export function BillDetailPage() {
         </DataPanelRow>
       </DataPanel>
 
-      <DataPanel title="Lines">
+      <DataPanel title="Bill lines">
         <div data-testid="bill-detail-lines">
         <ParityTable<BillDetailLine>
           columns={lineColumns}
@@ -478,7 +478,7 @@ export function BillDetailPage() {
         </div>
       </DataPanel>
 
-      <DataPanel title="Payments">
+      <DataPanel title="Payments on this bill">
         <ParityTable<BillPayment>
           columns={paymentColumns}
           rows={payments}

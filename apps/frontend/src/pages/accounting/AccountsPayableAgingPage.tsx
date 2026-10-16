@@ -466,7 +466,7 @@ export function AccountsPayableAgingPage() {
         />
       ) : view === "by_vendor" ? (
         <div className="space-y-2">
-          <ParityTable<ApAgingVendor>
+          <ParityTable<ApAgingVendor> title="A/P aging — by vendor"
             columns={VENDOR_COLUMNS}
             rows={vendorTableRows}
             rowKey={(v) => v.vendor_id ?? v.vendor_name}
@@ -500,7 +500,7 @@ export function AccountsPayableAgingPage() {
       ) : (
         <div className="space-y-2">
           {/* ACCT-F3568: By Vendor Type uses the same ParityTable surface bar as By Vendor (type column + typeFilter). */}
-          <ParityTable<ApAgingVendor>
+          <ParityTable<ApAgingVendor> title="A/P aging — by vendor type"
             columns={VENDOR_COLUMNS}
             rows={vendorTableRows}
             rowKey={(v) => `type-${v.vendor_id ?? v.vendor_name}`}

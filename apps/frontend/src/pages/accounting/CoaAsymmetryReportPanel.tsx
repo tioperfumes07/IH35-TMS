@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCoaAsymmetryReport } from "../../api/coaAsymmetryReport";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
@@ -25,13 +26,15 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
       data-testid="coa-asymmetry-report-panel"
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xs font-semibold text-[#0F1219]">Entity CoA asymmetry (read-only)</h2>
+        <h2 className="flex items-center gap-1 text-xs font-semibold text-[#0F1219]">
+          Entity CoA asymmetry (read-only)
+          <InfoPopover label="About the CoA asymmetry report">
+            Grouped diff across TRK / TRANSP / USMCA postable charts. Reserve / holdback / retainage accounts are
+            owner-manual only (Rule 19) — this panel does not create, merge, or deactivate any account.
+          </InfoPopover>
+        </h2>
         <span className="text-xs font-medium uppercase tracking-wide text-[#1F2A44]">Owner-eyes · change nothing</span>
       </div>
-      <p className="mb-3 text-xs text-[#1F2A44]">
-        Grouped diff across TRK / TRANSP / USMCA postable charts. Reserve / holdback / retainage accounts are
-        owner-manual only (Rule 19) — this panel does not create, merge, or deactivate any account.
-      </p>
 
       {isError ? <ListErrorBanner onRetry={() => refetch()} /> : null}
       {isLoading ? <p className="text-xs text-[#4B5563]">Loading grouped diff…</p> : null}

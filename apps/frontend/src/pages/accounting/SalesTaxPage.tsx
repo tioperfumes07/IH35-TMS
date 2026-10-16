@@ -309,7 +309,7 @@ export function SalesTaxPage() {
           onRetry={() => void returnsQuery.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable title="Sales tax returns"
           rows={returnsQuery.data?.returns ?? []}
           columns={returnColumns}
           rowKey={(row) => row.id}

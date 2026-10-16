@@ -279,9 +279,9 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
               </label>
             </div>
 
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Apply to bill</div>
             {/* ACCT-F3588: embedded ParityTable owns Search+Range+gear inside the pay-bill drawer. */}
             <ParityTable<VendorBill>
+              title="Apply to bill"
               embedded
               rows={[bill]}
               rowKey={(row) => row.id}

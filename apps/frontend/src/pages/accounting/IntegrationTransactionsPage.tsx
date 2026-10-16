@@ -274,7 +274,7 @@ export function IntegrationTransactionsPage() {
         />
       ) : null}
       {!txnQuery.isError ? (
-        <ParityTable
+        <ParityTable title="QBO sync queue"
           columns={columns}
           rows={items}
           rowKey={(row) => row.id}

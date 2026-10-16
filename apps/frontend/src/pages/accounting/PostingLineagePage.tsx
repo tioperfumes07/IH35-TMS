@@ -354,7 +354,7 @@ export function PostingLineagePage() {
       ) : null}
 
       {submitted ? (
-        <ParityTable
+        <ParityTable title="Posting lines — with their source documents"
           columns={columns}
           rows={rows}
           rowKey={(row) => `${row.posting_id}:${row.linked_object_id ?? "none"}`}

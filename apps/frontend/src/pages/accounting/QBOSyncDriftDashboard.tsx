@@ -215,7 +215,7 @@ export function QBOSyncDriftDashboard() {
             ))}
           </div>
 
-          <ParityTable
+          <ParityTable title="QuickBooks sync drift log"
             columns={driftColumns}
             rows={data.drift_log}
             rowKey={(row) => row.id}

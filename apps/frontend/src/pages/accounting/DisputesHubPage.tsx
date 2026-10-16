@@ -2,6 +2,7 @@
 // C-25 (owner 2026-09-30): split presentation THREE ways (Driver / Customer / Vendor).
 // Do NOT unify into one mixed table — different counterparty, money direction, and remedy.
 // Vendor register does not exist yet (CC-1 A-25); panel is honest-empty, no invented table.
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -486,7 +487,7 @@ function InvoiceDisputesSection({ companyId }: { companyId: string }) {
           Open dispute
         </button>
       </div>
-      <ParityTable
+      <ParityTable title="Invoice disputes"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
@@ -576,7 +577,7 @@ function SettlementDisputesSection({ companyId }: { companyId: string }) {
   }
 
   return (
-    <ParityTable
+    <ParityTable title="Settlement disputes"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.id}
@@ -619,11 +620,13 @@ function VendorDisputesSection() {
       data-testid="vendor-disputes-unavailable"
       data-c25-party="vendor"
     >
-      <p className="font-semibold uppercase tracking-wide text-[#4B5563]">Vendor disputes — not in TMS yet</p>
-      <p className="mt-2 text-[#6B7280]">
-        We owe the vendor on this side of money. There is no vendor/bill dispute register in the app today —
-        CC-1 A-25 names the table (or confirms none). This panel stays empty on purpose; it does not reuse
-        invoice or settlement dispute queries.
+      <p className="flex items-center gap-1 font-semibold uppercase tracking-wide text-[#4B5563]">
+        Vendor disputes — not in TMS yet
+        <InfoPopover label="About vendor disputes">
+          We owe the vendor on this side of money. There is no vendor/bill dispute register in the app today —
+          CC-1 A-25 names the table (or confirms none). This panel stays empty on purpose; it does not reuse
+          invoice or settlement dispute queries.
+        </InfoPopover>
       </p>
     </div>
   );

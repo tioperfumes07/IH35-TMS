@@ -24,6 +24,7 @@ import { type AttachmentEntityType } from "../../api/attachments";
 import { UploadZone } from "../../components/UploadZone";
 import { formatUsdCents } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const inputCls = "h-7 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]";
 
@@ -172,11 +173,15 @@ export function RegisterInlineEditPanel({
 
   return (
     <div className="space-y-2 px-2 py-2 text-xs text-[#0F1219]" data-b1-inline-edit="1" data-testid="b1-inline-edit-panel">
-      <p className="text-xs text-[#6B7280]">
-        Inline Save updates memo and location. Date, payee, payment, deposit, and account open the original
-        document (Edit). Delete voids with a reversing entry — never deletes the row. Attachments upload
-        onto the source document here.
-      </p>
+      <div className="flex justify-end">
+        <InfoPopover label="About inline edit" align="right">
+          <p>
+            Inline Save updates memo and location. Date, payee, payment, deposit, and account open the original
+            document (Edit). Delete voids with a reversing entry — never deletes the row. Attachments upload
+            onto the source document here.
+          </p>
+        </InfoPopover>
+      </div>
       <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
         <label className="block">
           <span className="mb-0.5 block text-xs font-bold uppercase text-[#4B5563]">Date</span>

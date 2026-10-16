@@ -216,6 +216,7 @@ function BillPaymentsSubTable({ billId, companyId }: { billId: string; companyId
   if (payments.length === 0) return null;
   return (
     <ParityTable
+      title="Payments on this bill"
       columns={BILL_PAYMENT_COLUMNS}
       rows={payments}
       rowKey={(p) => p.id}
@@ -1012,6 +1013,7 @@ export function BillsPage() {
 
       {showVendorBills ? (
       <ParityTable
+        title="Vendor bills"
         key={tableResetKey}
         columns={columns}
         rows={rows}
@@ -1087,6 +1089,7 @@ export function BillsPage() {
       {showDriverBills ? (
         <div className="space-y-2" data-testid="bills-driver-register">
           <ParityTable
+            title="Driver bills"
             columns={driverBillColumns}
             rows={driverBillRows}
             rowKey={(b) => b.id}

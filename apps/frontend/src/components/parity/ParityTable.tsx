@@ -142,6 +142,11 @@ export type ParityTableProps<T> = {
 
   /** Left-of-gear toolbar slot (Print / Export / More actions). */
   toolbar?: ReactNode;
+  /** LEAD 443.174 — the section's real title (what the rows ARE: "Bills — open"), rendered first on the toolbar row in the
+   *  app's section-header style, so a titled table costs no extra height. */
+  title?: ReactNode;
+  /** Optional info "i" beside the title (an InfoPopover): explanatory text lives here, never as a paragraph above the table. */
+  titleInfo?: ReactNode;
   /** Header select-all + per-row checkboxes. */
   selectable?: boolean;
   /** Batch-actions bar content, shown when ≥1 row selected. */
@@ -623,6 +628,8 @@ export function ParityTable<T>({
   initialPageSize,
   storageKey,
   toolbar,
+  title,
+  titleInfo,
   selectable = false,
   batchActions,
   rowActions,
@@ -1501,6 +1508,14 @@ export function ParityTable<T>({
     <div className={shellClass} style={frameColor ? { borderColor: frameColor } : undefined} data-testid={tableTestId}>
       {/* Canonical list toolbar: search + applied range filter + optional slot + gear. */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
+        {title ? (
+          <div className="flex shrink-0 items-center gap-1">
+            <h2 className="whitespace-nowrap text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
+              {title}
+            </h2>
+            {titleInfo}
+          </div>
+        ) : null}
         <UniversalListToolbar
           search={toolbarSearch}
           onSearchChange={(value) => { setToolbarSearch(value); changePage(1); }}

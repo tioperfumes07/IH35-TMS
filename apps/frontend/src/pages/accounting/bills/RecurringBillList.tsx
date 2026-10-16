@@ -253,7 +253,7 @@ export function RecurringBillList() {
       )}
 
       {templates.length > 0 && (
-        <ParityTable
+        <ParityTable title="Recurring bill templates"
           columns={columns}
           rows={templates}
           rowKey={(tmpl) => tmpl.uuid}

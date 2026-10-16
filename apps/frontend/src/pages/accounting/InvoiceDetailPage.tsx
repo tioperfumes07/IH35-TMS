@@ -708,7 +708,7 @@ export function InvoiceDetailPage() {
             ) : null}
           </div>
         ) : (
-          <ParityTable<InvoiceLine>
+          <ParityTable<InvoiceLine> title="Invoice lines"
             columns={lineColumns}
             rows={invoice.lines ?? []}
             rowKey={(line) => line.id}

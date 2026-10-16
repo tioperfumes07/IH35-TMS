@@ -128,7 +128,7 @@ export function AbandonmentQueuePage() {
         />
       ) : null}
 
-      <ParityTable
+      <ParityTable title="Chargeback queue — abandoned loads"
         columns={columns}
         rows={rows}
         rowKey={(row) => String(row.id ?? "")}

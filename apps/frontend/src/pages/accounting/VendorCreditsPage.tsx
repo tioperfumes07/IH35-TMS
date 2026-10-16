@@ -323,7 +323,7 @@ export function VendorCreditsPage() {
               {(creditsQuery.data?.credits ?? []).length} live, {creditsQuery.data.voided_count} voided (hidden)
             </p>
           ) : null}
-        <ParityTable
+        <ParityTable title="Vendor credits"
           rows={creditsQuery.data?.credits ?? []}
           columns={columns}
           rowKey={(row) => row.id}
