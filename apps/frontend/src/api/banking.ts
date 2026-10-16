@@ -168,6 +168,10 @@ export type PlaidBankTransaction = {
   suggested_account_name?: string | null;
   suggested_confidence?: "high" | "medium" | "low" | null;
   suggested_source?: string | null;
+  /** 443.168 J — why the engine suggested this payee/category (e.g. the bank description named the vendor). */
+  suggested_reason?: string | null;
+  suggested_customer_id?: string | null;
+  suggested_customer_name?: string | null;
   /**
    * ROUND 197 (owner-raised, 2026-09-28) — the row's already-PERSISTED categorization, distinct
    * from the SUGGESTED fields above. Written by categorization.routes.ts on every Post; read back
