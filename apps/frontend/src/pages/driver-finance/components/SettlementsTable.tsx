@@ -236,6 +236,7 @@ export function SettlementsTable({
 
   return (
     <ParityTable<SettlementListRow>
+      title="Driver settlements"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.id}

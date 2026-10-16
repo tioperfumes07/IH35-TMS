@@ -293,6 +293,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       ) : (
         // ACCT-F3536: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
         <ParityTable<SettlementDisputeRow>
+          title="Settlement disputes"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}

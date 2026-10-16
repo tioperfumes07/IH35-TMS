@@ -81,6 +81,7 @@ export function SettlementLoadsSection({
         </span>
       </div>
       <ParityTable
+        title="Loads on this settlement"
         rows={legs}
         columns={columns}
         rowKey={(l) => l.load_id}

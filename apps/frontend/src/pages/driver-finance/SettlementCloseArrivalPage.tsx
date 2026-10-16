@@ -25,6 +25,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 type DraftJeRow = { id: string; account: string; debit: string; credit: string };
 
@@ -309,7 +310,15 @@ export function SettlementCloseArrivalPage() {
       ) : (
         <>
           <label className="block max-w-xl">
-            <span className="text-xs font-medium text-gray-600">Driver with an open pre-settlement (on arrival)</span>
+            <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
+              Driver with an open pre-settlement (on arrival)
+              <InfoPopover label="About the driver picker">
+                <span className="block">
+                  Open pre-settlements only (names from open-by-driver join). Nested +Create driver stays
+                  wired for picker law; a new driver appears here after their first pre-settlement exists.
+                </span>
+              </InfoPopover>
+            </span>
             <div className="mt-1">
               <Combobox
                 options={openOptions}
@@ -324,10 +333,6 @@ export function SettlementCloseArrivalPage() {
                 }}
               />
             </div>
-            <p className="mt-1 text-xs text-[#4B5563]">
-              Open pre-settlements only (names from open-by-driver join). Nested +Create driver stays
-              wired for picker law; a new driver appears here after their first pre-settlement exists.
-            </p>
           </label>
 
           {selectedDriverId && detailQuery.isLoading ? <p className="text-xs text-gray-600">Loading settlement…</p> : null}
@@ -514,8 +519,16 @@ export function SettlementCloseArrivalPage() {
 
               {/* Draft JE preview — SETL-F3552: ParityTable owns Search+Range+gear (raw HTML table skipped surface bar). */}
               <div className="border-t border-gray-100 pt-2">
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Draft JE preview (not posted)</div>
                 <ParityTable<DraftJeRow>
+                  title="Draft JE preview — not posted"
+                  titleInfo={
+                    <InfoPopover label="About the draft JE preview">
+                      <span className="block">
+                        Preview only — computed client-side from this settlement&apos;s lines for review before Close. Actual GL
+                        posting reuses the existing settlement posting path (behind SETTLEMENT_GL_POSTING_ENABLED).
+                      </span>
+                    </InfoPopover>
+                  }
                   columns={draftJeColumns}
                   rows={draftJeRows}
                   rowKey={(row) => row.id}
@@ -525,10 +538,6 @@ export function SettlementCloseArrivalPage() {
                   exportFilename="settlement-close-draft-je"
                   tableTestId="settlement-close-draft-je-table"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Preview only — computed client-side from this settlement&apos;s lines for review before Close. Actual GL
-                  posting reuses the existing settlement posting path (behind SETTLEMENT_GL_POSTING_ENABLED).
-                </p>
               </div>
 
               {/* Close action */}

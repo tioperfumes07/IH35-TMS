@@ -190,6 +190,7 @@ export function EscrowDeductionsPendingTab() {
       {!pendingQuery.isError ? (
         // ACCT-F3534: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
         <ParityTable<EscrowPendingDeduction>
+          title="Escrow deductions — pending"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
