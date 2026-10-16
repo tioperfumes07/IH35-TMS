@@ -651,6 +651,10 @@ async function fetchLedgerCandidates(
                  JOIN accounting.deposits d ON d.id = dl.deposit_id AND d.voided_at IS NULL
                 WHERE dl.source_payment_id = p.id
              )
+             -- LEAD 443.158 M1b: a document already consumed by a bank line is never a candidate for another line.
+             AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions cbt
+                              WHERE cbt.matched_payment_id = p.id AND cbt.voided_at IS NULL)
+             AND p.source_bank_transaction_id IS NULL
            LIMIT $5
         `,
         [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, ledgerId, onOperatingBank, undepositedId]
@@ -680,6 +684,9 @@ async function fetchLedgerCandidates(
                   AND m.voided_at IS NULL
                   AND m.match_state IN ('auto_matched', 'user_matched')
              )
+             -- LEAD 443.158 M1b: already consumed by a bank line.
+             AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions cbt
+                              WHERE cbt.matched_deposit_id = d.id AND cbt.voided_at IS NULL)
            LIMIT $5
         `,
         [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, _bankAccountId]
@@ -825,6 +832,9 @@ async function fetchLedgerCandidates(
                   AND m.match_state IN ('auto_matched', 'user_matched')
              )
              AND bp.source_bank_transaction_id IS NULL
+             -- LEAD 443.158 M1b: already consumed by a bank line.
+             AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions cbt
+                              WHERE cbt.matched_bill_payment_id = bp.id AND cbt.voided_at IS NULL)
              -- 443.155: paid from THIS bank account (its own column, or its posting credits this account's ledger).
              AND (bp.from_bank_account_id = $6::uuid
                   OR EXISTS (SELECT 1 FROM accounting.journal_entry_postings jp
@@ -902,6 +912,11 @@ async function fetchLedgerCandidates(
                 AND m.ledger_entry_id = e.id
                 AND m.match_state IN ('auto_matched', 'user_matched')
             )
+            -- LEAD 443.158 M1b: an expense already consumed by a bank line (it is that line's matched expense, or it was
+            -- born from a bank line) is never a candidate for another line (owner: EXP-2026-00067 offered on a second line).
+            AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions cbt
+                             WHERE cbt.matched_expense_id = e.id AND cbt.voided_at IS NULL)
+            AND e.source_bank_transaction_id IS NULL
           LIMIT $5
         `,
         [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, ledgerId]

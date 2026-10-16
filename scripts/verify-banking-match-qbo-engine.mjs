@@ -51,6 +51,18 @@ export function candidateScopeProblems(service) {
     if (!SCOPED_SOURCES[k]) p.push(`service: candidate source "${k}" has no declared bank-account scope (443.155 DEFECT 1) — declare it in SCOPED_SOURCES`);
     else if (!SCOPED_SOURCES[k].test(body)) p.push(`service: candidate source "${k}" is not scoped to the bank line's account (443.155 DEFECT 1)`);
   }
+  // LEAD 443.158 M1b — a document already consumed by a bank line is never a candidate for another line (owner case:
+  // EXP-2026-00067, matched to its own line, offered on two other $500 lines).
+  for (const [kind, re] of [
+    ["payment", /cbt\.matched_payment_id = p\.id/],
+    ["deposit", /cbt\.matched_deposit_id = d\.id/],
+    ["bill_payment", /cbt\.matched_bill_payment_id = bp\.id/],
+    ["expense", /cbt\.matched_expense_id = e\.id/],
+  ]) {
+    if (kinds.includes(kind) && !re.test(body)) p.push(`service: candidate source "${kind}" offers a document already matched to another bank line (443.158 M1b)`);
+  }
+  if (kinds.includes("expense") && !/AND e\.source_bank_transaction_id IS NULL/.test(body))
+    p.push('service: candidate source "expense" offers an expense born from another bank line (443.158 M1b)');
   if (!/FROM accounting\.factoring_purchases/.test(body) || !kinds.includes("factoring_advance"))
     p.push("service: factoring purchases are not in the candidate union (443.155 DEFECT 2)");
   if (!/FROM accounting\.invoices/.test(body) || !kinds.includes("invoice"))
@@ -223,6 +235,9 @@ function selftest() {
     ["faro never suggested", { ...base, route: base.route.replace('if (c.ledger_entry_kind === "factoring_advance") return c.exact_amount;', "") }],
     ["no reason", { ...base, route: base.route.replaceAll("suggested_reason:", "suggested_note:") }],
     ["2150 served on a purchased wire", { ...base, feed: base.feed.replace("FROM accounting.factoring_purchases fp", "FROM accounting.factoring_advances fp") }],
+    ["consumed expense offered", { ...base, service: base.service.replace("WHERE cbt.matched_expense_id = e.id AND cbt.voided_at IS NULL", "WHERE false") }],
+    ["bank-born expense offered", { ...base, service: base.service.replace("AND e.source_bank_transaction_id IS NULL", "") }],
+    ["consumed payment offered", { ...base, service: base.service.replace("WHERE cbt.matched_payment_id = p.id AND cbt.voided_at IS NULL", "WHERE false") }],
     ["new unscoped source", { ...base, service: base.service.replace('if (onOperatingBank && wants("invoice"))', 'if (wants("je")) {}\n    if (onOperatingBank && wants("invoice"))') }],
   ];
   for (const [name, mutant] of mutants) {
