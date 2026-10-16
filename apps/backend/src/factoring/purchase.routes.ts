@@ -216,7 +216,10 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
     if (!(await ownerGate(reply, user, q.data.operating_company_id, "create", null))) return;
     // FEED GATE first, in its own committed scope (the intake/check rows are WORM evidence even when red).
     const gate = await withCompanyScope(user.uuid, q.data.operating_company_id, (client) =>
-      runPurchaseFeedGate(client, q.data.operating_company_id, b.data.lines.map((l) => l.invoice_id), user.uuid, b.data.docs_override_reason ?? null)
+      runPurchaseFeedGate(client, q.data.operating_company_id, b.data.lines.map((l) => l.invoice_id), user.uuid, b.data.docs_override_reason ?? null, {
+        // ownerGate above refused every non-Owner; only the Owner's reason releases reds (LEAD 443.154).
+        actorIsOwner: true,
+      })
     );
     const red = gate.filter((g) => !g.passed);
     if (red.length) return reply.code(409).send({ error: "feed_gate_blocked", details: red });

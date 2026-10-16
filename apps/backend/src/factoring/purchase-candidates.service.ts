@@ -333,11 +333,16 @@ export async function runPurchaseFeedGate(
   oci: string,
   invoiceIds: string[],
   userId: string,
-  // ROUND 321 item 3: the Owner's override reason for missing BOL / POD / rate confirmation (>= 10 chars). With it the
-  // documents check is recorded on the intake as 'na' WITH the reason (never a silent pass); without it, missing docs are red.
-  docsOverrideReason: string | null = null
+  // ROUND 321 item 3: the Owner's override reason (>= 10 chars). LEAD 443.154 (owner 2026-10-16 11:03 CT: "I already put an
+  // override and if I already provided a reason, then it should let me"): with the reason AND an Owner actor, EVERY red
+  // this gate would block on (no load, no posted A/R, missing docs, the generic invoice checks) is released — recorded per
+  // red on the intake as a WORM 'na' check row carrying the reason, user and time, plus one audit row per invoice. Never a
+  // silent pass. Only "invoice not found in this company" stays hard. Without the reason (or without an Owner) every red blocks.
+  docsOverrideReason: string | null = null,
+  opts: { actorIsOwner?: boolean } = {}
 ): Promise<FeedGateInvoiceResult[]> {
   const override = (docsOverrideReason ?? "").trim();
+  const ownerOverride = override.length >= 10 && opts.actorIsOwner === true;
   // Purchase-entry pre-checks the generic invoice check set does not carry: the invoice is tied to a load (the
   // receivable Faro buys is a load's freight bill) and its A/R journal entry is posted (the invoice feed set filters
   // the load set's invoice.* keys, so invoice.ar_je_posted does not run on kind 'invoice'). Same SQL as that check.
@@ -362,66 +367,67 @@ export async function runPurchaseFeedGate(
     const extra: FeedGateInvoiceResult["reds"] = [];
     const label = `Invoice ${p?.display_id ?? invoiceId}`;
     const fix = `/accounting/invoices/${invoiceId}`;
-    if (!p) extra.push({ check_key: "purchase.invoice_in_company", check_group: "purchase", subject_label: label, missing: "invoice not found in this company", fix_link: null });
-    else {
-      if (!p.has_load) extra.push({ check_key: "purchase.invoice_has_load", check_group: "purchase", subject_label: label, missing: "invoice has no load", fix_link: fix });
-      if (!p.ar_je_posted) extra.push({ check_key: "purchase.invoice_ar_je_posted", check_group: "purchase", subject_label: label, missing: "no posted A/R journal entry for this invoice", fix_link: fix });
-      // Documents: an override covers DOCUMENTS only -- the load and the posted A/R JE above stay hard requirements.
-      if (p.missing_docs.length && override.length < 10) {
-        extra.push({ check_key: "purchase.invoice_billing_docs", check_group: "purchase", subject_label: label, missing: `load missing ${p.missing_docs.join(", ")} (an Owner override reason releases it)`, fix_link: fix });
-      }
-    }
     if (!p) {
+      // Hard: an invoice outside this company is never released by an override.
+      extra.push({ check_key: "purchase.invoice_in_company", check_group: "purchase", subject_label: label, missing: "invoice not found in this company", fix_link: null });
       out.push({ invoice_id: invoiceId, passed: false, intake_id: null, error: "feed_gate_subject_not_found", reds: extra });
       continue;
     }
+    if (!p.has_load) extra.push({ check_key: "purchase.invoice_has_load", check_group: "purchase", subject_label: label, missing: "invoice has no load", fix_link: fix });
+    if (!p.ar_je_posted) extra.push({ check_key: "purchase.invoice_ar_je_posted", check_group: "purchase", subject_label: label, missing: "no posted A/R journal entry for this invoice", fix_link: fix });
+    if (p.missing_docs.length) {
+      extra.push({ check_key: "purchase.invoice_billing_docs", check_group: "purchase", subject_label: label, missing: `load missing ${p.missing_docs.join(", ")} (an Owner override reason releases it)`, fix_link: fix });
+    }
+    let intakeId: string | null = null;
+    let gateReds: FeedGateInvoiceResult["reds"] = [];
+    let gateError: string | null = null;
     try {
       const run = await assertSubjectMayCloseOnClient(client as never, oci, "invoice", invoiceId, userId);
-      if (p.missing_docs.length && override.length >= 10) {
-        await recordDocsOverrideCheck(client, oci, run.intake.id, invoiceId, label, p.missing_docs, override);
-      }
-      out.push({ invoice_id: invoiceId, passed: extra.length === 0, intake_id: run.intake.id, error: extra.length ? "feed_gate_blocked" : null, reds: extra });
+      intakeId = run.intake.id;
     } catch (err) {
       if (!(err instanceof FeedGateError)) throw err;
       const details = (err.details ?? {}) as { intake_id?: string; reds?: FeedCheckRow[] };
-      if (details.intake_id && p.missing_docs.length && override.length >= 10) {
-        await recordDocsOverrideCheck(client, oci, details.intake_id, invoiceId, label, p.missing_docs, override);
-      }
-      out.push({
-        invoice_id: invoiceId,
-        passed: false,
-        intake_id: details.intake_id ?? null,
-        error: err.code,
-        reds: [
-          ...extra,
-          ...(details.reds ?? []).map((r) => ({
-            check_key: r.check_key, check_group: r.check_group, subject_label: r.subject_label, missing: r.missing, fix_link: r.fix_link,
-          })),
-        ],
-      });
+      intakeId = details.intake_id ?? null;
+      gateError = err.code;
+      gateReds = (details.reds ?? []).map((r) => ({
+        check_key: r.check_key, check_group: r.check_group, subject_label: r.subject_label, missing: r.missing, fix_link: r.fix_link,
+      }));
     }
+    const reds = [...extra, ...gateReds];
+    if (reds.length && ownerOverride) {
+      // Released, never silently: one WORM 'na' row per released red on the intake, and one audit row for the invoice.
+      if (intakeId) for (const r of reds) await recordOwnerOverrideCheck(client, oci, intakeId, invoiceId, r, override, userId);
+      await appendCrudAudit(client as never, userId, "factoring.purchase_feed_gate_owner_override", {
+        resource_type: "accounting.invoices", resource_id: invoiceId, operating_company_id: oci, intake_id: intakeId, reason: override,
+        overridden_by_user_id: userId, overridden_at: new Date().toISOString(),
+        released: reds.map((r) => ({ check_key: r.check_key, missing: r.missing })),
+      }, "warning", "LEAD-443.154-FEED-GATE-OWNER-OVERRIDE");
+      out.push({ invoice_id: invoiceId, passed: true, intake_id: intakeId, error: null, reds: [] });
+      continue;
+    }
+    out.push({ invoice_id: invoiceId, passed: reds.length === 0, intake_id: intakeId, error: reds.length ? gateError ?? "feed_gate_blocked" : null, reds });
   }
   return out;
 }
 
-/** Owner docs override on the invoice's Feed Gate intake: one WORM check row, status 'na', carrying the reason. */
-async function recordDocsOverrideCheck(
+/** Owner override on the invoice's Feed Gate intake: one WORM check row per released red, status 'na', carrying the reason. */
+async function recordOwnerOverrideCheck(
   client: DbClient,
   oci: string,
   intakeId: string,
   invoiceId: string,
-  label: string,
-  missingDocs: string[],
-  reason: string
+  red: FeedGateInvoiceResult["reds"][number],
+  reason: string,
+  userId: string
 ) {
   await client.query(
     `INSERT INTO driver_finance.feed_intake_checks
        (operating_company_id, intake_id, run_no, check_group, check_key, status, subject_table, subject_id, subject_label, missing, fix_link, measured)
-     SELECT $1::uuid, $2::uuid, fi.last_run_no, 'purchase', 'purchase.invoice_billing_docs', 'na', 'accounting.invoices', $3::uuid, $4,
-            $5, $6, $7::jsonb
+     SELECT $1::uuid, $2::uuid, fi.last_run_no, $3, $4, 'na', 'accounting.invoices', $5::uuid, $6,
+            $7, $8, $9::jsonb
        FROM driver_finance.feed_intakes fi WHERE fi.id = $2::uuid AND fi.operating_company_id = $1::uuid`,
-    [oci, intakeId, invoiceId, label, `Owner override: ${reason} (missing ${missingDocs.join(", ")})`, `/accounting/invoices/${invoiceId}`,
-      JSON.stringify({ override: true, missing_docs: missingDocs, reason })]
+    [oci, intakeId, red.check_group, red.check_key, invoiceId, red.subject_label, `Owner override: ${reason} (was: ${red.missing})`, red.fix_link ?? `/accounting/invoices/${invoiceId}`,
+      JSON.stringify({ override: true, reason, released: red.missing, overridden_by_user_id: userId, overridden_at: new Date().toISOString() })]
   );
 }
 
