@@ -3,13 +3,13 @@
  * suggestion at all, and no suggestion carries a reason. Synthetic names only.
  */
 import { describe, expect, it, vi } from "vitest";
-import { parseBankDescription, partyTokenShare, resolveDescribedPayee } from "../bank-description-payee.js";
+import { parseBankDescription, partyTokenShare, payeeNameScore, resolveDescribedPayee } from "../bank-description-payee.js";
 import { applyDescribedPayeeForTransaction } from "../banking-rules.engine.js";
 
 const parties = {
   vendors: [
     { id: "v-acme", name: "Acme Tire Shop LLC", account_id: "acct-repairs" },
-    { id: "v-loves", name: "Love's", account_id: "acct-fuel" },
+    { id: "v-loves", name: "Love's Travel Stops", account_id: "acct-fuel" },
     { id: "v-ana1", name: "Ana Perez", account_id: "acct-driver" },
     { id: "v-ana2", name: "Ana Lopez", account_id: "acct-driver" },
     { id: "v-gerardo", name: "Gerardo Ruiz", account_id: "acct-driver" },
@@ -54,6 +54,12 @@ describe("resolveDescribedPayee", () => {
   it("an ambiguous name says nothing rather than guess", () => {
     expect(resolveDescribedPayee({ pattern: "zelle_to", name: "Ana", reference: null }, false, parties)).toBeNull();
     expect(partyTokenShare("Ana", "Ana Perez")).toBe(0.5);
+  });
+
+  it("443.170 J+1 — a short printed merchant names the longer vendor (Relay fill at Love's)", () => {
+    const r = resolveDescribedPayee(parseBankDescription("Relay fuel · T170 · Love's · Natalia, TX · txn_abc")!, false, parties);
+    expect(r).toMatchObject({ vendor_id: "v-loves", account_id: "acct-fuel" });
+    expect(payeeNameScore("Love's", "Love's Travel Stops")).toBeCloseTo(2 / 3);
   });
 
   it("no party with that name → no suggestion", () => {

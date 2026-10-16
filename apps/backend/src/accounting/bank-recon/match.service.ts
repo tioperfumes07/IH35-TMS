@@ -43,6 +43,8 @@ import {
 import { RELAY_FUEL_WALLET_AMOUNT_SQL } from "./relay-bank-match.service.js";
 import {
   RELAY_DEPOSIT_CHARGED_AMOUNT_SQL,
+  RELAY_DEPOSIT_CREDITS_LEDGER_SQL,
+  RELAY_DEPOSIT_FREE_ON_THIS_ACCOUNT_SQL,
   RELAY_DEPOSIT_FEE_AMOUNT_SQL,
   RELAY_DEPOSIT_MATCHABLE_SQL,
   RELAY_DEPOSIT_WALLET_AMOUNT_SQL,
@@ -872,14 +874,11 @@ async function fetchLedgerCandidates(
              AND COALESCE(rd.relay_created_at, rd.created_at)::date
                    BETWEEN GREATEST($2::date, $6::date) AND $3::date
              AND ($4::text IS NULL OR lower(COALESCE(rd.note_raw, '') || ' ' || COALESCE(rd.deposit_id, '') || ' relay deposit') LIKE $4)
-             AND rd.matched_bank_transaction_id IS NULL
-             AND NOT EXISTS (
-               SELECT 1 FROM banking.bank_transactions bt
-                WHERE bt.matched_relay_deposit_id = rd.id AND bt.voided_at IS NULL
-             )
+             -- LEAD 443.170 — consumed PER SIDE: the wallet line and the funding-bank line each link the same deposit.
+             AND ${RELAY_DEPOSIT_FREE_ON_THIS_ACCOUNT_SQL}
            LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR, _bankAccountId]
       );
       for (const row of deposits.rows) results.push(toCandidate("relay_deposit", row, "vendor"));
     }
@@ -1031,11 +1030,54 @@ async function fetchLedgerCandidates(
              AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
                                JOIN accounting.expenses e ON e.source_fuel_transaction_id = ft.id AND e.voided_at IS NULL
                               WHERE ft.relay_fuel_transaction_id = r.id)
+             -- LEAD 443.170 FIX 2 — one fill = one candidate: a live expense that ADOPTED this fill's own fuel_event JE
+             -- (Lead 443.41 A: "one JE, the document adopts it") is the document carrying the posting; offer it, not the fill.
+             AND NOT EXISTS (SELECT 1 FROM accounting.expenses e
+                               JOIN accounting.journal_entry_postings jp ON jp.journal_entry_uuid = e.journal_entry_id
+                              WHERE e.operating_company_id = r.operating_company_id AND e.voided_at IS NULL
+                                AND jp.source_transaction_type = 'fuel_event' AND jp.source_transaction_id = r.id::text
+                                AND jp.reversed_by_line_id IS NULL AND jp.reversal_of_line_id IS NULL)
            LIMIT $5
         `,
         [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
       );
       for (const row of fills.rows) results.push(toCandidate("relay_fuel", row, "vendor"));
+    }
+
+    // LEAD 443.170 — the money that FUNDED the Relay wallet left THIS register: the deposit's posted JE already credits
+    // this account's ledger (Dr 1295 + Dr fee / Cr bank). Offered on any register whose ledger that JE credits — posting-
+    // based, so a deposit funded from another bank / Transportation / an owner loan is never offered here. Accept is a
+    // link to that existing JE (CHAIN-05, no new posting); categorizing the line instead would credit the bank twice.
+    // Money IN on a bank is still never a Relay deposit (443.155 DEFECT 1); the wallet side (money IN on 1295) is above.
+    if (ledgerId && wants("relay_deposit")) {
+      const funding = await client.query<RawRow>(
+        `
+          SELECT rd.id::text,
+                 ${RELAY_DEPOSIT_CHARGED_AMOUNT_SQL} AS amount_cents,
+                 COALESCE(rd.relay_created_at, rd.created_at)::date::text AS event_date,
+                 ('Relay deposit ' || rd.deposit_id)::text AS memo,
+                 NULL::text AS counterparty_id,
+                 'Relay'::text AS counterparty_name,
+                 rd.deposit_id::text AS reference,
+                 ('Relay wallet funding ' || rd.deposit_id || COALESCE(' · card …' || rd.funding_card_last4, ''))::text AS description,
+                 NULL::int AS open_balance_cents,
+                 ${RELAY_DEPOSIT_WALLET_AMOUNT_SQL} AS relay_deposit_wallet_cents,
+                 ${RELAY_DEPOSIT_FEE_AMOUNT_SQL} AS relay_deposit_fee_cents
+            FROM integrations.relay_deposits rd
+           WHERE rd.operating_company_id = $1::uuid
+             AND rd.status = 'settled'
+             AND rd.voided_at IS NULL
+             AND COALESCE(rd.is_active, true) = true
+             AND COALESCE(rd.relay_created_at, rd.created_at)::date
+                   BETWEEN GREATEST($2::date, $6::date) AND $3::date
+             AND ($4::text IS NULL OR lower(COALESCE(rd.note_raw, '') || ' ' || COALESCE(rd.deposit_id, '') || ' relay deposit') LIKE $4)
+             AND ${RELAY_DEPOSIT_CREDITS_LEDGER_SQL}
+             AND ${RELAY_DEPOSIT_FREE_ON_THIS_ACCOUNT_SQL}
+           LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR, _bankAccountId, ledgerId]
+      );
+      for (const row of funding.rows) results.push(toCandidate("relay_deposit", row, "vendor"));
     }
 
     // ROUND 443.54 — Relay fills are paid from wallet 1295, NOT from the bank. They must never
@@ -1249,7 +1291,24 @@ async function storeMatch(
   // documents, but accept also takes ids from routes with no candidate step (transfer / je), so the refusal lives here,
   // where every accept passes. A row on THIS line (re-match after unmatch) is revived by the upsert below.
   if (input.match_state === "user_matched" || input.match_state === "auto_matched") {
-    const held = await client.query<{ bank_transaction_id: string }>(
+    // LEAD 443.170 — a Relay deposit has two sides (the funding bank's money out, the wallet's money in): one live match
+    // PER bank account, never two on the same account.
+    const held = input.ledger_entry_kind === "relay_deposit"
+      ? await client.query<{ bank_transaction_id: string }>(
+          `SELECT m.bank_transaction_id::text
+             FROM banking.reconciliation_matches m
+             JOIN banking.bank_transactions held_bt ON held_bt.id = m.bank_transaction_id
+             JOIN banking.bank_transactions this_bt ON this_bt.id = $4::uuid AND this_bt.bank_account_id = held_bt.bank_account_id
+            WHERE m.operating_company_id = $1::uuid
+              AND m.ledger_entry_kind = $2::text
+              AND m.ledger_entry_id = $3::uuid
+              AND m.bank_transaction_id <> $4::uuid
+              AND m.voided_at IS NULL
+              AND m.match_state IN ('auto_matched', 'user_matched')
+            LIMIT 1`,
+          [input.operating_company_id, input.ledger_entry_kind, input.ledger_entry_id, input.bank_transaction_id]
+        )
+      : await client.query<{ bank_transaction_id: string }>(
       `SELECT m.bank_transaction_id::text
          FROM banking.reconciliation_matches m
         WHERE m.operating_company_id = $1::uuid
