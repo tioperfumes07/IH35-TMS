@@ -167,7 +167,6 @@ export function AccountingCatalogListPage({
       ) : (
         <ParityTable<AccountingCatalogRow>
           key={tableKey}
-          title={status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}

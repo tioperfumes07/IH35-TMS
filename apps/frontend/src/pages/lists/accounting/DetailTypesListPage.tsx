@@ -190,7 +190,6 @@ export function DetailTypesListPage() {
           />
           <ParityTable
           columns={columns}
-          title="Account detail types"
           rows={rows}
           rowKey={(row) => row.id}
           loading={listQuery.isLoading}

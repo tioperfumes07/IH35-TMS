@@ -145,7 +145,6 @@ export function PostingTemplatesListPage() {
       ) : (
         <ParityTable<AccountingCatalogRow>
           rows={rows}
-          title={status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}
           columns={columns}
           rowKey={(row) => row.id}
           loading={query.isLoading}

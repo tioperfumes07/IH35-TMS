@@ -171,10 +171,40 @@
       "same_rows_toggle": 0,
       "inline_notice": 0
     },
+    "apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
     "apps/frontend/src/pages/lists/accounting/CoaBatchActions.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 2
+    },
+    "apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx": {
+      "untitled": 2,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/accounting/PostingTemplatesListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
+    },
+    "apps/frontend/src/pages/lists/accounting/QBOBulkLinkPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 1
+    },
+    "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx": {
+      "untitled": 1,
+      "same_rows_toggle": 0,
+      "inline_notice": 0
     },
     "apps/frontend/src/pages/onboarding/Step6SampleData.tsx": {
       "untitled": 0,
