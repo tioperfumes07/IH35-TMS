@@ -667,11 +667,9 @@ export async function listRelayFuelTransactions(params: {
 
   if (source.length > 0 && filtered.length === 0) {
     // eslint-disable-next-line no-console -- fail-loud: distinguishes empty account vs wrong date slice
-    // CodeQL js/log-injection: the window and entity are caller input — CR/LF stripped so one call is one log line.
-    const oneLine = (v: unknown) => String(v).replace(/[\r\n]+/g, " ");
-    console.warn(
-      `[RELAY_FUEL] date_filter_zero api_rows=${source.length} window=${oneLine(params.startDate)}..${oneLine(params.endDate)} entity=${oneLine(params.entityCode ?? "legacy")}`
-    );
+    // CodeQL js/log-injection: the window and entity are caller input, so they are never written to the log; the
+    // counts distinguish an empty account from a wrong date slice, and the caller already holds its own window.
+    console.warn(`[RELAY_FUEL] date_filter_zero api_rows=${source.length} filtered_rows=0`);
   }
 
   return filtered;
