@@ -14,8 +14,11 @@ export type DriverBillSettlementRow = {
   miles_basis: number | null;
   /**
    * WHERE THE MILES CAME FROM, stated on every row and never blank when miles are present:
-   *   'short' | 'practical'                  — the driver bill's own basis, as agreed
-   *   'practical (load)' | 'short (load)'    — filled from mdata.loads because the bill had none
+   *   'short'          — the driver bill's own basis, as agreed
+   *   'short (load)'   — filled from mdata.loads.miles_shortest because the bill had no short basis
+   * OWNER LAW (LEAD 443.192): per-mile drivers are ALWAYS paid SHORT miles. Practical miles never fill the pay miles,
+   * never divide out a rate, and a bill whose own basis is 'practical' shows the load's short miles instead (or
+   * nothing — miles_basis NULL — when the load has no short miles). Never a practical fallback.
    * A settlement that prints a mileage without saying which number it is cannot be audited, and
    * a driver cannot check his own pay against it.
    */
@@ -116,29 +119,32 @@ export async function listDriverBillsForSettlementPeriod(
             db.load_number,
             db.bill_number,
             db.gross_amount_cents,
-            -- the bill's own basis wins; mdata.loads fills the gap and SAYS so.
-            COALESCE(db.miles_basis, dbl.miles_practical, dbl.miles_shortest) AS miles_basis,
+            -- OWNER LAW (LEAD 443.192): pay miles are SHORT miles only. The bill's own basis wins when it is short;
+            -- else mdata.loads.miles_shortest fills the gap and SAYS so; else NULL. Practical never fills it.
             CASE
-              WHEN db.miles_basis IS NOT NULL THEN db.miles_basis_type
-              WHEN COALESCE(dbl.miles_practical, 0) > 0 THEN 'practical (load)'
+              WHEN db.miles_basis IS NOT NULL AND db.miles_basis_type IS DISTINCT FROM 'practical' THEN db.miles_basis
+              WHEN COALESCE(dbl.miles_shortest, 0) > 0 THEN dbl.miles_shortest
+              ELSE NULL
+            END AS miles_basis,
+            CASE
+              WHEN db.miles_basis IS NOT NULL AND db.miles_basis_type IS DISTINCT FROM 'practical' THEN db.miles_basis_type
               WHEN COALESCE(dbl.miles_shortest, 0) > 0 THEN 'short (load)'
               ELSE NULL
             END AS miles_basis_type,
-            -- filled ONLY when the bill itself has none; an agreed rate is never overwritten.
+            -- filled ONLY when the bill itself has none; an agreed rate is never overwritten. Divided by SHORT miles only.
             COALESCE(
               db.rate_per_mile_cents,
               CASE
                 WHEN db.miles_basis IS NULL
-                 AND COALESCE(dbl.miles_practical, dbl.miles_shortest, 0) > 0
+                 AND COALESCE(dbl.miles_shortest, 0) > 0
                  AND COALESCE(db.gross_amount_cents, 0) <> 0
-                THEN ROUND(db.gross_amount_cents::numeric
-                           / NULLIF(COALESCE(dbl.miles_practical, dbl.miles_shortest), 0))::integer
+                THEN ROUND(db.gross_amount_cents::numeric / NULLIF(dbl.miles_shortest, 0))::integer
                 ELSE NULL
               END
             ) AS rate_per_mile_cents,
             (db.rate_per_mile_cents IS NULL
              AND db.miles_basis IS NULL
-             AND COALESCE(dbl.miles_practical, dbl.miles_shortest, 0) > 0
+             AND COALESCE(dbl.miles_shortest, 0) > 0
              AND COALESCE(db.gross_amount_cents, 0) <> 0) AS rate_is_effective,
             NULLIF(concat_ws(' \u2192 ', dbll.origin_label, dbll.dest_label), '') AS lane,
             dbll.pickup_at::text AS pickup_at,
@@ -170,27 +176,24 @@ export async function listDriverBillsForSettlementPeriod(
             -- a dispatcher already sees, matching the canonical (non-legacy) branch above.
             l.load_number AS bill_number,
             LEAST(GREATEST(COALESCE(ab.amount_cents, 0), -2147483648::bigint), 2147483647::bigint)::integer AS gross_amount_cents,
+            -- LEAD 443.192: short miles only — no practical fallback for the miles or the divided-out rate.
             CASE
               WHEN COALESCE(l.miles_shortest, 0) > 0 THEN l.miles_shortest
-              WHEN COALESCE(l.miles_practical, 0) > 0 THEN l.miles_practical
               ELSE NULL
             END AS miles_basis,
             CASE
               WHEN COALESCE(l.miles_shortest, 0) > 0 THEN 'short'::text
-              WHEN COALESCE(l.miles_practical, 0) > 0 THEN 'practical'::text
               ELSE NULL
             END AS miles_basis_type,
             CASE
               WHEN COALESCE(l.miles_shortest, 0) > 0 AND COALESCE(ab.amount_cents, 0) <> 0
                 THEN ROUND(ab.amount_cents::numeric / NULLIF(l.miles_shortest, 0))::integer
-              WHEN COALESCE(l.miles_practical, 0) > 0 AND COALESCE(ab.amount_cents, 0) <> 0
-                THEN ROUND(ab.amount_cents::numeric / NULLIF(l.miles_practical, 0))::integer
               ELSE NULL
             END AS rate_per_mile_cents,
             -- this branch has no agreed rate to read: every rate it shows is gross divided by
             -- miles, so it is ALWAYS effective and is labelled as such. Calling a divided-out
             -- number a contracted rate is how a driver ends up arguing with a number nobody set.
-            (COALESCE(l.miles_shortest, l.miles_practical, 0) > 0
+            (COALESCE(l.miles_shortest, 0) > 0
              AND COALESCE(ab.amount_cents, 0) <> 0) AS rate_is_effective,
             NULLIF(concat_ws(' \u2192 ', abll.origin_label, abll.dest_label), '') AS lane,
             abll.pickup_at::text AS pickup_at,

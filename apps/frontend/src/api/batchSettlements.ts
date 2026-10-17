@@ -15,6 +15,8 @@ export type Set01EligibleLoad = {
   pickup_city: string | null;
   delivery_city: string | null;
   miles_practical: number | null;
+  /** LEAD 443.192 — short miles: the only load-side source of per-mile driver pay. */
+  miles_shortest: number | null;
   loaded_miles: number | null;
   empty_miles: number | null;
   rate_total_cents: number | null;
