@@ -12,7 +12,9 @@ import { updateDispatchLoad } from "../../apps/backend/src/dispatch/update-load.
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
-const LOADS = ["13656", "13680"];
+// 443.192 (Lead 12:35Z "merged-driver loads: YES"): the load list may be passed as --loads 13661,13666,… (default the first two).
+const LOADS = (() => { const i = process.argv.indexOf("--loads"); return i > 0 ? String(process.argv[i + 1]).split(",") : ["13656", "13680"]; })();
+const REQUIRE_ZERO_BILL = !process.argv.includes("--loads");
 const APPLY = process.argv.includes("--apply");
 const FORK = process.argv.includes("--fork-commit");
 if (APPLY) {
@@ -32,7 +34,7 @@ const scope = async () => {
   await db.query("SELECT set_config('app.current_user_id',$1,true)", [OWNER]);
 };
 const bill = async (loadId: string) =>
-  (await db.query(`SELECT b.id::text, b.driver_id::text, b.gross_amount_cents::int gross, b.rate_per_mile_cents rate, b.status,
+  (await db.query(`SELECT b.id::text, b.driver_id::text, b.gross_amount_cents::int gross, b.rate_per_mile_cents rate, b.status, b.miles_basis_type basis,
           b.settled_in_settlement_id::text settled_in
      FROM driver_finance.driver_bills b WHERE b.load_id=$1::uuid AND b.voided_at IS NULL ORDER BY b.created_at`, [loadId])).rows;
 const tb = async () =>
@@ -52,7 +54,7 @@ try {
     const before = await bill(r.load_id);
     console.log(`${r.load_number}: driver ${r.driver_id} merged_into ${r.survivor} · bills ${JSON.stringify(before)}`);
     if (!r.survivor) throw new Error(`REFUSE ${r.load_number}: driver is not a merged record — no evidence to re-stamp`);
-    if (!before.some((b: any) => b.gross === 0 && b.rate == null)) throw new Error(`REFUSE ${r.load_number}: no $0 / rate-NULL bill — already fixed?`);
+    if (REQUIRE_ZERO_BILL && !before.some((b: any) => b.gross === 0 && b.rate == null)) throw new Error(`REFUSE ${r.load_number}: no $0 / rate-NULL bill — already fixed?`);
     const res = await updateDispatchLoad(db as never, {
       loadId: r.load_id,
       operatingCompanyId: USMCA,
@@ -64,7 +66,10 @@ try {
     const after = await bill(r.load_id);
     console.log(`  → ${JSON.stringify(res).slice(0, 160)}\n  bills after ${JSON.stringify(after)}`);
     const live = after.filter((b: any) => b.status !== "voided");
-    if (!live.length || live.some((b: any) => b.driver_id !== r.survivor || !(b.gross > 0) || b.rate == null))
+    // Every live bill must now name the survivor; a per-mile price must come from SHORT miles (443.192 engine) — the
+    // bill's own miles basis is checked by verify-driver-bill-has-miles-and-rate after the run.
+    if (live.some((b: any) => b.driver_id !== r.survivor)) throw new Error(`NOT VERIFIED ${r.load_number}: a bill does not name the survivor`);
+    if (REQUIRE_ZERO_BILL && live.some((b: any) => !(b.gross > 0) || b.rate == null))
       throw new Error(`NOT VERIFIED ${r.load_number}: bill not re-priced on the survivor`);
   }
   const tbAfter = await tb();
