@@ -62,6 +62,7 @@ function fakeClient(opts: { deductions?: DedRow[]; bucketNetCents?: string } = {
       if (sql.includes("UPDATE driver_finance.driver_deduction_buckets")) return { rows: [{ remaining_balance_cents: 5000 }] as T[] };
       if (sql.includes("UPDATE driver_finance.driver_settlement_deductions")) return { rows: [{ id: values?.[0] }] as T[] };
       if (sql.includes("UPDATE driver_finance.driver_reimbursements")) return { rows: [{ id: REIMB_A }, { id: REIMB_B }] as T[] };
+      if (sql.includes("UPDATE driver_finance.driver_settlements") && sql.includes("SET trip_closed_at")) return { rows: [{ id: SETTLEMENT }] as T[] };
       if (sql.includes("UPDATE driver_finance.driver_settlements") && sql.includes("RETURNING id::text, updated_at::text"))
         return { rows: [{ id: SETTLEMENT, updated_at: "2026-10-17T00:00:00Z" }] as T[] };
       return { rows: [] as T[] };
@@ -161,5 +162,17 @@ describe("reverseSettlementForVoid — releases the dead settlement's open bills
     const res = await reverseSettlementForVoid(client, { operatingCompanyId: OPCO, settlementId: SETTLEMENT, reason: "r", actor: ACTOR });
     expect(calls.some((c) => c.sql.includes("UPDATE driver_finance.driver_settlement_deductions"))).toBe(false);
     expect(res).toMatchObject({ deductionsReleased: [], deductionsRetained: [] });
+  });
+  // LEAD 443.198 — fail-old: Creator "Edit = void and repost" cancelled P-0085 / P-0092 with trip_closed_at still NULL
+  // (dead settlement left "trip open + live anchor", guard 3069). The shared cascade now closes the trip before the flip.
+  it("closes the load_bookended trip before the header flip and names it in the reversed audit", async () => {
+    const { client, calls } = fakeClient();
+    await reverseSettlementForVoid(client, { operatingCompanyId: OPCO, settlementId: SETTLEMENT, reason: "Edit = void and repost", actor: ACTOR });
+    const tripIdx = calls.findIndex((c) => c.sql.includes("UPDATE driver_finance.driver_settlements") && c.sql.includes("SET trip_closed_at"));
+    const flipIdx = calls.findIndex((c) => c.sql.includes("UPDATE driver_finance.driver_settlements") && c.sql.includes("status = 'cancelled'"));
+    expect(tripIdx, "the void must close the bookend trip").toBeGreaterThan(-1);
+    expect(flipIdx).toBeGreaterThan(tripIdx);
+    const reversed = mocks.appendAudit.mock.calls.find((c) => c[2] === "driver_finance.driver_settlement.reversed");
+    expect(reversed![3]).toMatchObject({ trip_closed: true });
   });
 });

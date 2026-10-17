@@ -30,11 +30,14 @@ function fakeClient(opts: {
   priorVoidAudits: number;
   settledReimbursementIds?: string[];
   linkedDeductions?: Array<{ id: string; status: string; is_voided: boolean }>;
+  /** LEAD 443.198 — a load_bookended settlement whose trip_closed_at is still NULL. */
+  tripOpen?: boolean;
 }) {
   const calls: Q[] = [];
   let lines = [...opts.liveLineIds];
   let bills = [...opts.linkedOpenBillIds];
   let reimbursements = [...(opts.settledReimbursementIds ?? [])];
+  let tripOpen = opts.tripOpen ?? false;
   const client = {
     query: async <T,>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> => {
       calls.push({ sql, values });
@@ -65,6 +68,11 @@ function fakeClient(opts: {
       if (sql.includes("UPDATE driver_finance.driver_settlement_deductions") && sql.includes("applied_to_settlement_id = NULL"))
         return { rows: [{ id: values?.[0] }] as T[] };
       if (sql.includes("FROM audit.audit_events")) return { rows: [{ n: opts.priorVoidAudits }] as T[] };
+      if (sql.includes("UPDATE driver_finance.driver_settlements") && sql.includes("SET trip_closed_at")) {
+        const out = tripOpen ? [{ id: SETTLEMENT }] : [];
+        tripOpen = false;
+        return { rows: out as T[] };
+      }
       if (sql.includes("UPDATE driver_finance.driver_settlements")) return { rows: [{ id: SETTLEMENT }] as T[] };
       return { rows: [] as T[] };
     },
@@ -98,7 +106,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     expect(res.kind).toBe("ok");
     expect(calls.some((c) => c.sql.includes("UPDATE driver_finance.settlement_lines"))).toBe(true);
     // the header is not re-flipped (it is already cancelled; its original void stamp stands)
-    expect(calls.some((c) => c.sql.includes("UPDATE driver_finance.driver_settlements"))).toBe(false);
+    expect(calls.some((c) => c.sql.includes("UPDATE driver_finance.driver_settlements") && c.sql.includes("status = 'cancelled'"))).toBe(false);
     expect(mocks.reverse).toHaveBeenCalledTimes(1);
     expect(mocks.appendAudit).toHaveBeenCalledTimes(1);
     const [, , event, payload] = mocks.appendAudit.mock.calls[0]!;
@@ -135,7 +143,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     const res = await executeVoidCancel("driver_settlement", ctx(client));
     expect(res.kind).toBe("ok");
     const lineIdx = calls.findIndex((c) => c.sql.includes("UPDATE driver_finance.settlement_lines"));
-    const flipIdx = calls.findIndex((c) => c.sql.includes("UPDATE driver_finance.driver_settlements"));
+    const flipIdx = calls.findIndex((c) => c.sql.includes("UPDATE driver_finance.driver_settlements") && c.sql.includes("status = 'cancelled'"));
     expect(lineIdx).toBeGreaterThan(-1);
     expect(flipIdx).toBeGreaterThan(lineIdx);
     expect(mocks.appendAudit).toHaveBeenCalledTimes(1);
@@ -206,6 +214,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     { id: DED_APPLIED, status: "applied", is_voided: false },
     { id: DED_VOIDED, status: "pending", is_voided: true },
   ];
+  const isHeaderFlip = (c: Q) => c.sql.includes("UPDATE driver_finance.driver_settlements") && c.sql.includes("status = 'cancelled'");
   const voidsADeduction = (c: Q) => c.sql.includes("UPDATE driver_finance.driver_settlement_deductions") && /voided_at/.test(c.sql);
 
   it("fresh void, nothing to reverse: never voids a deduction; releases the pending one, retains collected/voided, names them in the audit", async () => {
@@ -217,7 +226,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     expect(released.map((c) => c.values?.[0])).toEqual([DED_PENDING]);
     expect(released[0]!.sql).toMatch(/status = 'pending'/);
     expect(released[0]!.sql).toMatch(/remaining_balance_cents = amount_cents/);
-    const flipIdx = calls.findIndex((c) => c.sql.includes("UPDATE driver_finance.driver_settlements"));
+    const flipIdx = calls.findIndex(isHeaderFlip);
     expect(flipIdx).toBeGreaterThan(calls.indexOf(released[0]!));
     expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ deductions_released: [DED_PENDING], deductions_retained: [DED_APPLIED, DED_VOIDED] });
   });
@@ -237,5 +246,41 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     expect(res.kind).toBe("ok");
     expect(calls.some((c) => c.sql.includes("driver_finance.driver_settlement_deductions"))).toBe(false);
     expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ gl_reversal_result: "reversed", deductions_released: [], deductions_retained: [] });
+  });
+  // LEAD 443.198 (ACCT-F347 root cause) — fail-old: no void path ever stamped trip_closed_at, so a cancelled load_bookended
+  // settlement stayed "trip open + live anchor" (7 USMCA on 2026-10-17: P-0085, P-0092, P-0093..P-0097; guard 3069 red),
+  // and a fully cascaded + audited cancelled header returned already_done without closing it.
+  const tripClose = (c: Q) => c.sql.includes("UPDATE driver_finance.driver_settlements") && c.sql.includes("SET trip_closed_at");
+
+  it("cancelled + already audited + trip still open: closes the trip (lifecycle only) and audits it — not already_done", async () => {
+    const { client, calls } = fakeClient({ status: "cancelled", liveLineIds: [], linkedOpenBillIds: [], priorVoidAudits: 1, tripOpen: true });
+    const res = await executeVoidCancel("driver_settlement", ctx(client));
+    expect(res.kind).toBe("ok");
+    const upd = calls.find(tripClose);
+    expect(upd, "a dead load_bookended settlement must have its trip closed").toBeDefined();
+    expect(upd!.sql).toMatch(/trip_closed_at = COALESCE\(voided_at, reversed_at, now\(\)\)/);
+    expect(upd!.sql).toMatch(/settlement_model = 'load_bookended'/);
+    expect(upd!.sql).toMatch(/trip_closed_at IS NULL/);
+    // lifecycle marker only — never a money column, never the status
+    expect(upd!.sql).not.toMatch(/gross_pay|net_pay|deductions_total|reimbursements_total|status\s*=/);
+    expect(upd!.values).toEqual([SETTLEMENT, COMPANY]);
+    expect(calls.some(isHeaderFlip)).toBe(false);
+    expect(mocks.appendAudit).toHaveBeenCalledTimes(1);
+    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ header_already_cancelled: true, trip_closed: true });
+  });
+
+  it("cancelled + already audited + trip already closed: still already_done (idempotent)", async () => {
+    const { client } = fakeClient({ status: "cancelled", liveLineIds: [], linkedOpenBillIds: [], priorVoidAudits: 1, tripOpen: false });
+    const res = await executeVoidCancel("driver_settlement", ctx(client));
+    expect(res.kind).toBe("already_done");
+    expect(mocks.appendAudit).not.toHaveBeenCalled();
+  });
+
+  it("a fresh void of an open bookend closes its trip in the cascade and names it in the audit", async () => {
+    const { client, calls } = fakeClient({ status: "open", liveLineIds: [], linkedOpenBillIds: [], priorVoidAudits: 0, tripOpen: true });
+    const res = await executeVoidCancel("driver_settlement", ctx(client));
+    expect(res.kind).toBe("ok");
+    expect(calls.some(tripClose)).toBe(true);
+    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ trip_closed: true });
   });
 });

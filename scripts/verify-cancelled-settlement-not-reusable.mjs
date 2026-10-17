@@ -21,6 +21,11 @@
  *      points the UI at dead paperwork.
  *   B. LIVE — no driver has a reusable cancelled/voided bookend settlement (trip open + live anchor).
  *      This is the condition that was true on prod and must never become true again.
+ *   C. STATIC (LEAD 443.198) — the void writers close the trip. ACCT-F347 named the root cause ("cancelling does not set
+ *      trip_closed_at") but fixed only the readers and hand-stamped 4 rows; no void path ever stamped it, so B went red
+ *      again on 2026-10-16 (7 USMCA: Creator Edit = void and repost, and the 443.167 regroup headers). The shared void
+ *      cascade (both engine paths) and the bulk reverse route must call closeVoidedSettlementTripInClientTx, and that
+ *      helper must stamp trip_closed_at for load_bookended only where it is NULL.
  *
  * The static half needs no database, so it runs in every CI context including the fresh-DB job.
  */
@@ -33,6 +38,8 @@ export const REQUIRES_LIVE_DB = "live-ledger guard: runs in the live-DB job (req
 
 const LABEL = "3069-verify-cancelled-settlement-not-reusable";
 const SERVICE = path.join("apps", "backend", "src", "driver-finance", "settlements-load-bookended.service.ts");
+const CASCADE = path.join("apps", "backend", "src", "driver-finance", "driver-settlement-void-cascade.service.ts");
+const BULK = path.join("apps", "backend", "src", "driver-finance", "settlements-bulk.routes.ts");
 
 function fail(msg) {
   console.error(`[${LABEL}] FAIL: ${msg}`);
@@ -60,6 +67,25 @@ export function checkReuseSites(src) {
   return broken;
 }
 
+/** C · the void writers close the trip (LEAD 443.198). Comments stripped (3065 lesson). */
+export function checkVoidClosesTrip(cascadeSrc, bulkSrc) {
+  const broken = [];
+  const cascade = stripComments(cascadeSrc);
+  const bulk = stripComments(bulkSrc);
+  const helper = cascade.match(/export async function closeVoidedSettlementTripInClientTx\([\s\S]*?\n\}/)?.[0] ?? "";
+  if (!helper) broken.push("closeVoidedSettlementTripInClientTx helper missing from the void cascade module");
+  else {
+    if (!/UPDATE driver_finance\.driver_settlements[\s\S]*SET trip_closed_at\s*=/.test(helper)) broken.push("helper no longer stamps trip_closed_at");
+    if (!/settlement_model\s*=\s*'load_bookended'/.test(helper)) broken.push("helper lost its load_bookended scope");
+    if (!/trip_closed_at\s+IS\s+NULL/.test(helper)) broken.push("helper lost its trip_closed_at IS NULL guard (would overwrite a real close)");
+    if (/gross_pay|net_pay|deductions_total|reimbursements_total|\bstatus\s*=/.test(helper)) broken.push("helper writes a money column or the status — trip close is a lifecycle marker only");
+  }
+  const cascadeFn = cascade.match(/export async function completeDriverSettlementVoidCascadeInClientTx\([\s\S]*?\n\}/)?.[0] ?? "";
+  if (!/closeVoidedSettlementTripInClientTx\(client/.test(cascadeFn)) broken.push("completeDriverSettlementVoidCascadeInClientTx no longer closes the trip");
+  if (!/closeVoidedSettlementTripInClientTx\(/.test(bulk)) broken.push(`${BULK}: bulk reverse no longer closes the trip`);
+  return broken;
+}
+
 /** B · live verdict: an empty scope is unverifiable (never a pass); any reusable cancelled/voided row fails. */
 export function liveVerdict(bookended, reusableRows) {
   if (bookended === 0) return { ok: false, reason: "empty" };
@@ -69,6 +95,9 @@ export function liveVerdict(bookended, reusableRows) {
 
 if (!fs.existsSync(SERVICE)) fail(`${SERVICE} not found — the bookend settlement path moved; re-point this guard rather than deleting it`);
 const src = fs.readFileSync(SERVICE, "utf8");
+for (const f of [CASCADE, BULK]) if (!fs.existsSync(f)) fail(`${f} not found — the settlement void path moved; re-point this guard rather than deleting it`);
+const cascadeSrc = fs.readFileSync(CASCADE, "utf8");
+const bulkSrc = fs.readFileSync(BULK, "utf8");
 
 if (process.argv.includes("--selftest")) {
   let ok = true;
@@ -85,8 +114,28 @@ if (process.argv.includes("--selftest")) {
   ex("empty scope is not a pass", liveVerdict(0, []).ok === false && liveVerdict(0, []).reason === "empty");
   ex("a reusable cancelled settlement fails", liveVerdict(69, [{ display_id: "S-1" }]).ok === false);
   ex("clean live scope passes", liveVerdict(69, []).ok === true);
-  console.log(ok ? `${LABEL} --selftest PASS (8/8)` : `${LABEL} --selftest FAIL`);
+  // C · LEAD 443.198
+  ex("real void writers close the trip", checkVoidClosesTrip(cascadeSrc, bulkSrc).length === 0);
+  const goodHelper = `export async function closeVoidedSettlementTripInClientTx(client, input) {
+  await client.query(\`UPDATE driver_finance.driver_settlements SET trip_closed_at = COALESCE(voided_at, now()) WHERE id = $1 AND settlement_model = 'load_bookended' AND trip_closed_at IS NULL\`);
+}`;
+  const goodCascade = `export async function completeDriverSettlementVoidCascadeInClientTx(client, input) {
+  const t = await closeVoidedSettlementTripInClientTx(client, input);
+}`;
+  ex("planted good shape passes", checkVoidClosesTrip(goodHelper + "\n" + goodCascade, "closeVoidedSettlementTripInClientTx(c, x)").length === 0);
+  ex("cascade that never closes the trip fails (the pre-443.198 engine)",
+    checkVoidClosesTrip(goodHelper + "\nexport async function completeDriverSettlementVoidCascadeInClientTx(client, input) {\n  // closeVoidedSettlementTripInClientTx(client\n}", "closeVoidedSettlementTripInClientTx(c, x)").length > 0);
+  ex("bulk reverse that never closes the trip fails", checkVoidClosesTrip(goodHelper + "\n" + goodCascade, "UPDATE driver_finance.driver_settlements SET status = 'cancelled'").length > 0);
+  ex("helper without the IS NULL guard fails", checkVoidClosesTrip(goodHelper.replace("AND trip_closed_at IS NULL", "") + "\n" + goodCascade, "closeVoidedSettlementTripInClientTx(c, x)").length > 0);
+  ex("helper that also writes status fails", checkVoidClosesTrip(goodHelper.replace("SET trip_closed_at", "SET status = 'closed', trip_closed_at") + "\n" + goodCascade, "closeVoidedSettlementTripInClientTx(c, x)").length > 0);
+  console.log(ok ? `${LABEL} --selftest PASS (14/14)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
+}
+
+const brokenWriters = checkVoidClosesTrip(cascadeSrc, bulkSrc);
+if (brokenWriters.length) {
+  for (const b of brokenWriters) console.error(` - ${b}`);
+  fail(`${brokenWriters.length} settlement void writer(s) leave the bookend trip open — a cancelled settlement stays "trip open + live anchor" (ACCT-F347 root cause, LEAD 443.198)`);
 }
 
 const broken = checkReuseSites(src);
