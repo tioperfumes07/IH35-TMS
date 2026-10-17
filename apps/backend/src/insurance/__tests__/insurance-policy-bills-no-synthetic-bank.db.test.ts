@@ -50,9 +50,11 @@ describeIntegration("K-10 — insurance creates A/P bills only (no synthetic ban
        VALUES ($1::uuid, $2::uuid, 'auto_liability', 'Auto Liability', true)`,
       [typeId, companyId]
     );
+    // mdata.vendors.vendor_type is NOT NULL with no default (0008_mdata_init.sql; non-blank CHECK) — the fixture
+    // omitted it, so this suite could never reach its first assertion. Free-text type, as every vendor fixture writes.
     await db.query(
-      `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, is_sample_data)
-       VALUES ($1::uuid, $2::uuid, $3, false)`,
+      `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type, is_sample_data)
+       VALUES ($1::uuid, $2::uuid, $3, 'Insurance', false)`,
       [vendorId, companyId, `K10 Insurer ${suffix}`]
     );
     await db.query(

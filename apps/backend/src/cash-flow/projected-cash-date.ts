@@ -16,6 +16,12 @@
 // math in cash-flow.service.ts.
 
 import { FACTORING_ADVANCE_DAYS, DEFAULT_NET_TERMS_DAYS } from "../dispatch/receivable-lag.js";
+import { FACTORING_PATH_LOAD_MDATA_STATUSES } from "../dispatch/delivery-evidence-status.js";
+
+/** Statuses where late-load receipt stays on the invoice due_date (not re-projected from the stop). */
+export const LATE_LOAD_KEEP_INVOICE_DUE_SQL = ["delivered", "cancelled", ...FACTORING_PATH_LOAD_MDATA_STATUSES]
+  .map((s) => `'${s}'`)
+  .join(",");
 
 /**
  * SQL `date` expression for projected_cash_date. Requires the query to expose:
@@ -59,6 +65,45 @@ export function lateLoadInvoiceDueDateSql(opts: {
 }): string {
   const pt = opts.paymentTermsAlias ?? "pt";
   return `((${opts.deliveryScheduledExpr})::date + COALESCE(NULLIF(${pt}.days_until_due, 0), 0) * INTERVAL '1 day')::date`;
+}
+
+/**
+ * Flag-ON receipt date for a LOAD's income (Lead 443.140 #8(b): "customer receipts on the invoice due date (or the
+ * Faro funding date when factored)"). Once the load carries a live receivable invoice — the rolling ledger's Invoice
+ * row: sent / partial, open balance, not voided, not factored — its receipt is that invoice's due date, with the same
+ * late-load rule the rolling ledger applies (an in-transit load re-projects from its current delivery appointment +
+ * terms). Otherwise (not invoiced, or factored -> tracked via the Faro funding) projectedCashDateSql. Same aliases as
+ * projectedCashDateSql; the earliest due date wins when one load carries several open invoices.
+ */
+export function loadReceiptCashDateSql(opts: {
+  loadAlias?: string;
+  customerAlias?: string;
+  paymentTermsAlias?: string;
+  deliveryScheduledExpr: string;
+}): string {
+  const l = opts.loadAlias ?? "l";
+  const lateLoad = lateLoadInvoiceDueDateSql({
+    deliveryScheduledExpr: opts.deliveryScheduledExpr,
+    paymentTermsAlias: opts.paymentTermsAlias,
+  });
+  return `COALESCE(
+    (SELECT CASE
+              WHEN ${l}.status::text NOT IN (${LATE_LOAD_KEEP_INVOICE_DUE_SQL}) AND (${opts.deliveryScheduledExpr}) IS NOT NULL
+              THEN ${lateLoad}
+              ELSE ri.due_date
+            END
+       FROM accounting.invoices ri
+      WHERE ri.source_load_id = ${l}.id
+        AND ri.operating_company_id = ${l}.operating_company_id
+        AND ri.status IN ('sent', 'partial')
+        AND ri.voided_at IS NULL
+        AND COALESCE(ri.factoring_status, 'not_factored') = 'not_factored'
+        AND COALESCE(ri.amount_open_cents, 0) > 0
+        AND ri.due_date IS NOT NULL
+      ORDER BY ri.due_date ASC
+      LIMIT 1),
+    ${projectedCashDateSql(opts)}
+  )`;
 }
 
 /**

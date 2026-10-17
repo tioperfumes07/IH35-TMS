@@ -25,6 +25,8 @@ import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking
 import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 import {
   projectedCashDateSql,
+  loadReceiptCashDateSql,
+  LATE_LOAD_KEEP_INVOICE_DUE_SQL,
   rawDeliveryDateSql,
   lateLoadInvoiceDueDateSql,
   expensePaymentDueDateSql,
@@ -38,13 +40,8 @@ import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.ser
 import {
   isFactoringPathLoadStatus,
   DELIVERY_EVIDENCE_MDATA_STATUSES,
-  FACTORING_PATH_LOAD_MDATA_STATUSES,
 } from "../dispatch/delivery-evidence-status.js";
 
-/** Statuses where late-load receipt stays on the invoice due_date (not re-projected from the stop). */
-const LATE_LOAD_KEEP_INVOICE_DUE_SQL = ["delivered", "cancelled", ...FACTORING_PATH_LOAD_MDATA_STATUSES]
-  .map((s) => `'${s}'`)
-  .join(",");
 import { BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL } from "../driver-finance/settlement-resolution.sql.js";
 
 type Queryable = pg.PoolClient;
@@ -221,7 +218,7 @@ export async function getDailyPrediction(
           fd.scheduled_arrival_at AS delivery_time,
           COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents,
           l.status::text AS status,
-          ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS projected_cash_date
+          ${loadReceiptCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS projected_cash_date
         FROM mdata.loads l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                    AND c.operating_company_id = l.operating_company_id
@@ -699,7 +696,7 @@ async function buildSevenDayStrip(
           WHERE l.operating_company_id = $1::uuid
             AND ${ACTIVE_LOAD_FILTER}
             AND ${noLiveProformaInvoiceSql("l")}
-            AND ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
+            AND ${loadReceiptCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
         ), 0)
         +
         COALESCE((
@@ -829,7 +826,7 @@ export async function getActualVsProjected(
     WITH lp AS (
       SELECT
         COALESCE(l.rate_total_cents, 0) AS rate_total_cents,
-        ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS bucket_date
+        ${loadReceiptCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS bucket_date
       FROM mdata.loads l
       LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                  AND c.operating_company_id = l.operating_company_id
