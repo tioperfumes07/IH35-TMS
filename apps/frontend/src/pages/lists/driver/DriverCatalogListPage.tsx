@@ -194,6 +194,7 @@ export function DriverCatalogListPage({
 
       <ParityTable
         columns={columns}
+        title={status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}
         rows={rows}
         rowKey={(row) => row.id}
         loading={query.isLoading}

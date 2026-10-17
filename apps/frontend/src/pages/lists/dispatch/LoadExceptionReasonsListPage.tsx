@@ -217,6 +217,7 @@ export function LoadExceptionReasonsListPage() {
       ) : (
         <ParityTable
           rows={rows}
+          title="Load exception reasons"
           columns={columns}
           rowKey={(row) => row.id}
           loading={listQuery.isLoading}

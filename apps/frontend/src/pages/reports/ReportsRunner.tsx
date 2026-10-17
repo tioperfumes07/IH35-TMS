@@ -254,7 +254,7 @@ export function ReportsRunnerPage() {
           <div className="text-xs text-[#6B7280]">
             Results ({resultRows.length} rows{runState ? ` · ${(runState.durationMs / 1000).toFixed(1)}s` : ""})
           </div>
-          {config.id === "csa-fleet" ? <CsaFleetScoreCard value={runState?.csaValue ?? {}} /> : <RunnerTable columns={config.columns} rows={resultRows} />}
+          {config.id === "csa-fleet" ? <CsaFleetScoreCard value={runState?.csaValue ?? {}} /> : <RunnerTable title={config.name} columns={config.columns} rows={resultRows} />}
         </section>
       )}
     </div>

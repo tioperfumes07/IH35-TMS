@@ -163,6 +163,7 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
       ) : (
         <ParityTable<DriversReferenceCatalogRow>
           columns={columns}
+          title={displayName}
           rows={rows}
           rowKey={(row) => row.id}
           loading={query.isLoading}

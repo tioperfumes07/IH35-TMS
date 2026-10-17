@@ -110,6 +110,7 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
         ) : (
           <ParityTable
             columns={columns}
+            title="IFTA miles — by state"
             rows={rows}
             rowKey={(row) => row.state}
             storageKey="ifta-step-miles"

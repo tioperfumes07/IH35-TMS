@@ -271,6 +271,7 @@ export function OemPartsCatalog() {
 
       <ParityTable<OemPartRow>
         columns={COLUMNS}
+        title="OEM parts catalog"
         rows={rows}
         rowKey={(row) => row.id}
         loading={query.isLoading}

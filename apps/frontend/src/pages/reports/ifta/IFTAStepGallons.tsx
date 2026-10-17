@@ -99,6 +99,7 @@ export function IFTAStepGallons({ operatingCompanyId, preparationId, quarter, ye
         ) : (
           <ParityTable
             columns={columns}
+            title="IFTA gallons — by state"
             rows={rows}
             rowKey={(row) => row.state}
             loading={prepQuery.isPending || (prepQuery.isFetching && rows.length === 0)}

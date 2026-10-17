@@ -183,6 +183,7 @@ export function LateArrivalReport() {
       ) : (
         <ParityTable
           rows={filtered}
+          title="Late arrivals — by stop"
           columns={columns}
           rowKey={(row) => row.entity_id}
           loading={reportQuery.isPending || (reportQuery.isFetching && filtered.length === 0)}

@@ -14,6 +14,7 @@ import { useAuth } from "../../auth/useAuth";
 import { MobileOptimizedTable } from "../../components/shared/MobileOptimizedTable";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { mmmDdTime } from "../../lib/formatDate";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 // SUBSCRIPTIONS-PRESET-FILTER-SILENT-NOOP: the "Saved" category's "Owner weekly pack" /
 // "Quarter close package" shortcuts (CategoryHoverNav.tsx, ReportsRunner.tsx's
@@ -256,8 +257,10 @@ export function SubscriptionManager() {
         <p className="font-semibold text-[#1F2A44]">Email delivery is not implemented yet</p>
         <p className="mt-1 text-[#4B5563]">
           Subscriptions below save correctly, but no backend worker exists to send them — "Active" status
-          does not mean emails are going out. Last sent / Next will stay empty for every subscription until
-          report delivery ships.
+          does not mean emails are going out.{" "}
+          <InfoPopover label="About subscription delivery">
+            Last sent / Next will stay empty for every subscription until report delivery ships.
+          </InfoPopover>
         </p>
       </div>
 

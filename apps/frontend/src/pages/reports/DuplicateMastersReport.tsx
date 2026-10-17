@@ -221,6 +221,7 @@ export function DuplicateMastersReport() {
 
       <ParityTable
         rows={groups}
+        title="Duplicate master records — by group"
         columns={columns}
         rowKey={(g) => g.group_key}
         loading={tableLoading}
@@ -254,6 +255,7 @@ export function DuplicateMastersReport() {
               <div className="p-2">
                 <ParityTable
                   rows={g.rows}
+                  title="Duplicate records in this group"
                   columns={[
                     {
                       key: "name",

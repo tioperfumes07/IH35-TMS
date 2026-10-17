@@ -350,6 +350,7 @@ export function LaneProfitabilityPage() {
 
           <ParityTable
             rows={filtered}
+            title="Lane profitability — by lane"
             columns={laneColumns}
             rowKey={(lane) => `${lane.origin_city}, ${lane.origin_state} → ${lane.destination_city}, ${lane.destination_state}`}
             loading={query.isPending || (query.isFetching && filtered.length === 0)}

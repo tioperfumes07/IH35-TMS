@@ -241,6 +241,7 @@ export function DeadheadReportPage() {
 
           <ParityTable
             rows={sortedUnits}
+            title="Deadhead — by unit"
             columns={columns}
             rowKey={(row) => row.unit_id}
             loading={reportQuery.isPending || (reportQuery.isFetching && sortedUnits.length === 0)}

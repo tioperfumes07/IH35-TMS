@@ -345,6 +345,7 @@ export function LocationsListPage() {
       ) : (
         <ParityTable
           rows={rows}
+          title="Locations"
           columns={COLUMNS}
           rowKey={(row) => row.id}
           loading={listQuery.isLoading}
