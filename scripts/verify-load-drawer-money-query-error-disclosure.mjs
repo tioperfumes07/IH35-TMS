@@ -38,10 +38,20 @@ export function audit(src) {
 
   // FactoringTab: 5 named feeds, each must reference their own query's .isError before their
   // existing empty/derived copy.
+  // REPOINTED (LEAD ROUND 443.187). bd00b7cac1 "FINDING: LDT-F04 Factoring tab real money + packet +
+  // step bar (#20822)" and ca42c9771d "FINDING: LDT-D Documents tab — unified table + shared BOL/POD read
+  // (#20882)" replaced the single `docsQ` + four per-item checklist notes with ONE shared packet read
+  // (loadDocsQ + invoiceDocsQ -> derivePacketDocuments) and ONE packet card. Same rule: a failed
+  // documents read must be disclosed on the packet, and the completeness message must not trust
+  // packetComplete while either read failed.
+  if (!/const docsLoadError = loadDocsQ\.isError \|\| invoiceDocsQ\.isError;/.test(src.factoring)) {
+    failures.push(`${FILES.factoring}: docsLoadError must combine loadDocsQ.isError and invoiceDocsQ.isError (the shared packet read)`);
+  }
+  if (!/\{docsLoadError \? \(\s*<div[^>]*>\s*<QueryErrorNote label="load documents"/.test(src.factoring)) {
+    failures.push(`${FILES.factoring}: the packet card must disclose a failed documents read with QueryErrorNote (rate con / BOL / POD / invoice PDF chips)`);
+  }
   const factoringChecks = [
-    { query: "docsQ", count: 4, why: "rate confirmation / BOL / POD checklist items + the packet-complete message" },
-    { query: "invoicesQ", count: 1, why: "the Invoice checklist item" },
-    { query: "invoiceDocsQ", count: 1, why: "the Invoice PDF checklist item" },
+    { query: "invoicesQ", count: 1, why: "the Invoice checklist item / packet-complete message" },
     { query: "factorsQ", count: 1, why: "the FARO factor picker" },
     { query: "candidateQ", count: 1, why: "the Submit-to-FARO eligibility note" },
   ];
@@ -52,7 +62,7 @@ export function audit(src) {
       failures.push(`${FILES.factoring}: expected ${query}.isError checked at least ${count}x (${why}), found ${found}`);
     }
   }
-  if (!/docsQ\.isError \|\| invoicesQ\.isError/.test(src.factoring)) {
+  if (!/docsLoadError \|\| invoicesQ\.isError\s*\?[^:]*:\s*packetComplete/.test(src.factoring)) {
     failures.push(`${FILES.factoring}: the "Mark Packet Ready" completeness message must also check docsQ/invoicesQ .isError before trusting packetComplete`);
   }
 
@@ -109,14 +119,11 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  // Mutation 2: revert one FactoringTab checklist item (docsQ) to the old unchecked shape (the
-  // exact pre-fix shape for the Rate Confirmation item).
+  // Mutation 2: drop the packet card's documents-read error disclosure (the pre-fix silent-empty shape
+  // on the current shared-packet card).
   const revertedDocsCheck = {
     ...good,
-    factoring: good.factoring.replace(
-      `note={docsQ.isError ? <QueryErrorNote label="documents" onRetry={() => docsQ.refetch()} /> : hasRateConf ? undefined : "Upload under Documents tab"}`,
-      `note={hasRateConf ? undefined : "Upload under Documents tab"}`,
-    ),
+    factoring: good.factoring.replace("{docsLoadError ? (", "{false ? ("),
   };
   if (revertedDocsCheck.factoring === good.factoring) {
     console.error(`${LABEL} SELFTEST FAIL — reverted-docs-check pattern did not match source, re-anchor`);
@@ -156,7 +163,18 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  console.log(`${LABEL} SELFTEST PASS — 3 mutations detected`);
+  // Mutation 4: the Mark Packet Ready message trusts packetComplete without the read-error gate.
+  const revertedMarkReady = { ...good, factoring: good.factoring.replace("{docsLoadError || invoicesQ.isError\n", "{false\n") };
+  if (revertedMarkReady.factoring === good.factoring) {
+    console.error(`${LABEL} SELFTEST FAIL — reverted-mark-ready pattern did not match source, re-anchor`);
+    process.exit(1);
+  }
+  if (audit(revertedMarkReady).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — reverted Mark Packet Ready regression escaped`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} SELFTEST PASS — 4 mutations detected`);
   process.exit(0);
 }
 

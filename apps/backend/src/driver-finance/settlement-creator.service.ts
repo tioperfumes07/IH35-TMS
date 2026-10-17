@@ -11,6 +11,7 @@ import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.servic
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { recordHistoricalDriverQualificationException } from "../dispatch/driver-qualification.service.js";
 import { createExpenseFromFuelTransaction, resolveFuelLineAccount, adoptRelayFillExpenseDocument, fillRelayFillExpenseSettlementRef } from "../fuel/fuel-expense-document.service.js";
 import { enteredFuelRowHash, FuelProviderTransactionDuplicateError, refuseDuplicateProviderTransaction } from "../fuel/fuel-provider-reference.js";
 import { findReceivedCardFillToAdopt } from "./creator-received-fill-adoption.js";
@@ -1311,6 +1312,14 @@ export async function postSettlementCreatorInClientTx(
         `,
         [draft.driver_id, draft.unit_id ?? null, row.id, draft.operating_company_id],
       );
+      // FAIL-DQF-GATE — this seats the document's driver on a load that already ran: the shared gate
+      // evaluates, and a block is recorded (never silent), same as Book Load's historical_backfill.
+      await recordHistoricalDriverQualificationException(client as never, actorUserId, {
+        driverId: draft.driver_id,
+        operatingCompanyId: draft.operating_company_id,
+        loadId: row.id,
+        writer: "driver_finance.settlement_creator",
+      });
     }
 
     // SB return: join outbound tour when join_outbound_load_number provided.

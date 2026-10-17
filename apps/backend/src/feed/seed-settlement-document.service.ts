@@ -72,6 +72,7 @@ import { postFactoringAdvanceEvent } from "../accounting/factoring-posting/poste
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { recordHistoricalDriverQualificationException } from "../dispatch/driver-qualification.service.js";
 import { resolveSettlementPdfItem, SettlementPdfItemError } from "../catalogs/settlement-pdf-item-map.js";
 import { findLiveFuelByProviderTransactionId, FuelProviderTransactionDuplicateError } from "../fuel/fuel-provider-reference.js";
 
@@ -639,6 +640,15 @@ async function seedLoad(
     `UPDATE mdata.loads SET assigned_primary_driver_id = $1::uuid, updated_at = now() WHERE id = $2::uuid`,
     [driverId, loadId]
   );
+  // FAIL-DQF-GATE — the driver is seated on an already-run load from a signed document: the shared
+  // gate evaluates, and a block is recorded (never silent), same as createLoadWithFullSideEffects'
+  // historical_backfill branch would have done had the driver been on the create.
+  await recordHistoricalDriverQualificationException(client as never, actorUserId, {
+    driverId,
+    operatingCompanyId,
+    loadId,
+    writer: "feed.seed_settlement_document",
+  });
 
   await appendCrudAudit(client, actorUserId, "mdata.load.alwaystrack_seed", { operating_company_id: operatingCompanyId, load_id: loadId, document_number: plan.documentNumber }, "info", "SEED-SETTLEMENT-DOCUMENT-01");
   return loadId;

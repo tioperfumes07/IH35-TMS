@@ -42,16 +42,29 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC_DIR = path.join(root, "apps/backend/src");
 const LABEL = "verify-load-write-paths-run-driver-qualification";
 const GATE = "assertDriverQualifiedForLoad";
+// LEAD ROUND 443.187 — the already-run-load writers (Settlement Creator, signed-settlement seed) run the
+// gate through ONE named wrapper that calls GATE and records the block (Book Load's historical_backfill
+// shape). The wrapper counts as the gate ONLY while its own body still calls GATE (checked below).
+const HISTORICAL_GATE = "recordHistoricalDriverQualificationException";
+const GATE_FILE = "apps/backend/src/dispatch/driver-qualification.service.ts";
+
+/** The wrapper's body must call the real gate AND record the block; otherwise it is not the gate. */
+export function historicalWrapperRunsGate(gateFileSrc) {
+  const code = strip(gateFileSrc ?? "");
+  const start = code.indexOf(`export async function ${HISTORICAL_GATE}(`);
+  if (start === -1) return false;
+  const next = code.indexOf("\nexport ", start + 1);
+  const body = code.slice(start, next === -1 ? undefined : next);
+  return new RegExp(`await ${GATE}\\(`).test(body) && /dispatch\.historical_backfill_gate_exception/.test(body);
+}
 
 /**
  * Known gaps at the time of writing, each with WHY it is tolerated. This list may only shrink — adding
  * to it is a deliberate act that shows up in review.
  */
 const KNOWN_GAPS = new Map([
-  [
-    "apps/backend/src/seed/csv-seed-import.ts",
-    "Bulk seed importer, not an operator surface — imported rows are exempt by the row-origin ruling.",
-  ],
+  // csv-seed-import.ts left by the shrink rule: f3dd0719d0 "loads.routes.ts + csv-seed-import.ts -- both
+  // fully onto the shared create path, ratchet closed at 0 (#22372)" — it no longer writes a driver itself.
   [
     "apps/backend/src/onboarding/seed-sample-data.ts",
     "Sample-data seeder; rows it writes are fixtures by construction.",
@@ -78,6 +91,8 @@ function walk(dir, out = []) {
  */
 export function classify(files) {
   const inScope = [];
+  const gateFile = files.find((f) => f.rel === GATE_FILE);
+  const wrapperOk = historicalWrapperRunsGate(gateFile?.src);
   for (const { rel, src } of files) {
     const code = strip(src);
     let writesDriver = false;
@@ -90,7 +105,7 @@ export function classify(files) {
       }
     }
     if (!writesDriver) continue;
-    inScope.push({ rel, runsGate: code.includes(GATE) });
+    inScope.push({ rel, runsGate: code.includes(GATE) || (wrapperOk && new RegExp(`await ${HISTORICAL_GATE}\\(`).test(code)) });
   }
   return inScope;
 }
@@ -145,6 +160,22 @@ function selftest() {
       name: "a KNOWN_GAP that starts calling the gate is flagged so the list shrinks",
       files: [mk("apps/backend/src/dispatch/x.ts", `${GATE}(c,{}); await c.query(\`${INSERT}\`)`)],
       expect: 0,
+    },
+    {
+      name: "the historical wrapper counts only while it still calls the gate",
+      files: [
+        mk(GATE_FILE, `export async function ${HISTORICAL_GATE}(c) { const b = await ${GATE}(c, {}); appendCrudAudit(c, u, "dispatch.historical_backfill_gate_exception"); }`),
+        mk("apps/backend/src/feed/w.ts", `await ${HISTORICAL_GATE}(c, u, {}); await c.query(\`UPDATE mdata.loads SET assigned_primary_driver_id = $1\`)`),
+      ],
+      expect: 0,
+    },
+    {
+      name: "a hollow historical wrapper (no gate call) does not satisfy the guard",
+      files: [
+        mk(GATE_FILE, `export async function ${HISTORICAL_GATE}(c) { appendCrudAudit(c, u, "dispatch.historical_backfill_gate_exception"); }`),
+        mk("apps/backend/src/feed/w.ts", `await ${HISTORICAL_GATE}(c, u, {}); await c.query(\`UPDATE mdata.loads SET assigned_primary_driver_id = $1\`)`),
+      ],
+      expectAtLeast: 1,
     },
     {
       name: "a load INSERT with no driver column is out of scope",

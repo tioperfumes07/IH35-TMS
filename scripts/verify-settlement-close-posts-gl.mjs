@@ -67,10 +67,19 @@ async function main() {
          WHERE s.operating_company_id = $1::uuid
            AND s.settlement_model = 'load_bookended'
            AND s.status IN ('closed', 'locked')
+           -- REPOINTED (ROUND 443.187): 31d926e537 "Claude-1-443.37: settlement_id stamp on bill JE
+           -- postings + driver escrow backfill seed (443.41-E)" + 7ef5410e20 "Claude-1-443.37-v2:
+           -- stamp settlement_id at INSERT through posting writer" moved settlement close onto the
+           -- settlement-ap-chain: the close posts the per-load A/P bill JE, tagged with the BILL as
+           -- its source_transaction_id and the settlement in journal_entry_postings.settlement_id
+           -- (fill-once at INSERT). Only the deductions JE is still sourced 'driver_settlement', so a
+           -- zero-deduction close carried GL the old lookup could not see (measured live 2026-10-17:
+           -- P-0017/P-0046/P-0069/P-0102 each carry 2-7 settlement_id-stamped postings). Same rule —
+           -- a closed/locked settlement with NO posting tied to it by EITHER link still fails.
            AND NOT EXISTS (
              SELECT 1 FROM accounting.journal_entry_postings jep
               WHERE jep.operating_company_id = s.operating_company_id
-                AND jep.source_transaction_id = s.id::text
+                AND (jep.source_transaction_id = s.id::text OR jep.settlement_id = s.id)
            )
          ORDER BY s.display_id
       `,

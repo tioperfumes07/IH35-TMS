@@ -55,13 +55,18 @@ export function check(catalogText, pageText, modalText) {
     failures.push(`${PAGE_FILE} REPORT_LABELS no longer aliases the shared catalog (drifted back to its own local list?)`);
   }
 
-  if (!/import \{ SCHEDULED_REPORT_LABELS \} from "\.\.\/\.\.\/lib\/scheduled-report-catalog";/.test(modalText)) {
+  // REPOINTED (ROUND 443.187): b2b053be7d "FINDING: GO-0045-REPORTS-LEFTOVER-SCHEDULABLE-ID-DRIFT-
+  // PLUS-LATE-ARRIVAL-DATE-ORDER (#17538)" made the modal import SCHEDULABLE_REPORT_IDS from the SAME
+  // shared catalog (picker restricted to deliverable ids) and moved the unknown-id fallback onto that
+  // filtered `schedulable` list. Same rules: the modal imports SCHEDULED_REPORT_LABELS from the shared
+  // catalog, and an edited row's unknown reportId is still synthesized as an option, never blank.
+  if (!/import \{ (?:SCHEDULABLE_REPORT_IDS, )?SCHEDULED_REPORT_LABELS \} from "\.\.\/\.\.\/lib\/scheduled-report-catalog";/.test(modalText)) {
     failures.push(`${MODAL_FILE} no longer imports SCHEDULED_REPORT_LABELS from the shared catalog`);
   }
   if (!/Object\.entries\(SCHEDULED_REPORT_LABELS\)\.map\(\(\[id, name\]\) => \(\{ id, name \}\)\)/.test(modalText)) {
     failures.push(`${MODAL_FILE} extraReports no longer derives from the shared SCHEDULED_REPORT_LABELS catalog`);
   }
-  if (!/if \(reportId && !combined\.some\(\(o\) => o\.id === reportId\)\)/.test(modalText)) {
+  if (!/if \(reportId && !schedulable\.some\(\(o\) => o\.id === reportId\)\) \{\s*const existing = combined\.find\(\(o\) => o\.id === reportId\);\s*schedulable\.push\(existing \?\? \{ id: reportId, name: reportId \}\);/.test(modalText)) {
     failures.push(`${MODAL_FILE} no longer synthesizes a fallback option for an unknown reportId (belt-and-suspenders removed)`);
   }
 

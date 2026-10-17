@@ -24,7 +24,9 @@ const CHECKS = [
     file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
     tests: [
       (s) => /Import Fuel Transactions/.test(s) || "fuel import CTA",
-      (s) => /No fuel transactions for USMCA yet/.test(s) || "honest empty fuel history",
+      // Repointed (ROUND 443.187): d5dd898df8 "FUEL-OFFICE-CREATE-MODAL (#6330)" reworded the empty
+      // state (no hardcoded entity name; + Create added). Same rule: an honest empty fuel history.
+      (s) => /No fuel transactions yet — use \+ Create for a manual office purchase, or Import Fuel Transactions/.test(s) || "honest empty fuel history",
     ],
   },
   {
@@ -49,15 +51,19 @@ const CHECKS = [
   },
 ];
 
-function run() {
+function readTracked(file) {
+  const abs = path.join(ROOT, file);
+  return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
+}
+
+function run(read = readTracked) {
   const problems = [];
   for (const { file, tests } of CHECKS) {
-    const abs = path.join(ROOT, file);
-    if (!fs.existsSync(abs)) {
+    const src = read(file);
+    if (src == null) {
       problems.push(`missing ${file}`);
       continue;
     }
-    const src = fs.readFileSync(abs, "utf8");
     for (const t of tests) {
       const msg = t(src);
       if (typeof msg === "string") problems.push(`${file}: ${msg}`);
@@ -67,12 +73,30 @@ function run() {
 }
 
 if (process.argv.includes("--selftest")) {
-  const problems = run();
-  if (!problems.length) {
-    console.error(`${LABEL} SELFTEST FAIL: nothing to catch on green tree`);
+  // ROUND 443.187: the old selftest PASSED only when the real tree was RED ("nothing to catch on
+  // green tree"), so it could never pass on a correct tree. It now plants in memory: every checked
+  // file blanked must be caught (one problem per positive test), and the real tree must be green.
+  const baseline = run();
+  if (baseline.length) {
+    console.error(`${LABEL} SELFTEST FAIL: clean tree is red:\n` + baseline.map((p) => `  ✗ ${p}`).join("\n"));
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS (green tree has wiring)`);
+  let caught = 0;
+  for (const { file } of CHECKS) {
+    const planted = run((rel) => (rel === file ? "" : readTracked(rel)));
+    if (planted.some((p) => p.startsWith(`${file}:`))) caught += 1;
+    else console.error(`${LABEL} SELFTEST: blanked ${file} escaped`);
+  }
+  const district = CHECKS.find((c) => c.file.endsWith("PropertyTaxRenditionPage.tsx")).file;
+  const nativeSelect = run((rel) =>
+    rel === district ? `${readTracked(rel)}\n<select value={districtId}></select>` : readTracked(rel),
+  );
+  const nativeCaught = nativeSelect.some((p) => p.includes("must not use a native ID-valued select"));
+  if (caught !== CHECKS.length || !nativeCaught) {
+    console.error(`${LABEL} SELFTEST FAIL: caught ${caught}/${CHECKS.length} blanked files; native select plant caught=${nativeCaught}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS (${caught}/${CHECKS.length} blanked-file plants + native-select plant caught)`);
   process.exit(0);
 }
 

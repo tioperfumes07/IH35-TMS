@@ -7,6 +7,7 @@ import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
 import { UniversalFilterBar, type FilterState } from "../../../components/planner/UniversalFilterBar";
 import { usePlannerRange } from "./PlannerRangeContext";
+import { companyToday } from "../../../lib/businessDate";
 
 const TABS = [
   // Timeline (Phase 1) is the default unified view; the 3 legacy planners stay reachable (archive-not-delete).
@@ -89,7 +90,7 @@ function exportPlannerCsv(dateRange: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `planner-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `planner-${companyToday()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

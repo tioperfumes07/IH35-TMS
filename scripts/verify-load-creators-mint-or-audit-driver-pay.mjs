@@ -51,14 +51,12 @@ const KNOWN_GAPS = new Map([
   // ACCT-F277 closed the mdata create + delivery path via ensureDriverBillArtifactsForLoad — do not
   // re-list apps/backend/src/mdata/loads.routes.ts. NOT listed: integrations/edi/.../inbound-204 —
   // it never writes assigned_primary_driver_id (no driver to pay / skip-audit).
-  [
-    "apps/backend/src/seed/csv-seed-import.ts",
-    "Bulk seed importer, not an operator surface - imported rows are exempt by the row-origin ruling.",
-  ],
-  [
-    "apps/backend/src/onboarding/seed-sample-data.ts",
-    "Sample-data seeder; rows it writes are fixtures by construction.",
-  ],
+  // RATCHET CLOSED AT 0 (LEAD ROUND 443.187). Both former entries left by the guard's own shrink rule:
+  //   csv-seed-import.ts  — f3dd0719d0 "loads.routes.ts + csv-seed-import.ts -- both fully onto the shared
+  //                         create path, ratchet closed at 0 (#22372)"
+  //   seed-sample-data.ts — 0ea7411760 "ACCT-F61 (E6 2-of-4 -- seed-sample-data.ts rewired onto the shared
+  //                         load-create path, createLoadWithFullSideEffects) (#22325)"
+  // Neither inserts mdata.loads with a driver any more; the shared create path is itself in scope above.
 ]);
 
 const strip = (s) => s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -162,6 +160,10 @@ export function collectMilesOnBookLoudProblems() {
   };
   const book = read("apps/backend/src/dispatch/book-load.service.ts");
   const routes = read("apps/backend/src/dispatch/loads.routes.ts");
+  // 25f2a8faa4 "Claude-3-R313-E31-routes-push-root-fix-R315-geofence-auto-delivery (#23821)" extracted the
+  // office transition into dispatch/load-transition.service.ts (the route delegates), so the transition's
+  // driver_bill_mint response now lives there. Same rule: the transition must return the mint outcome.
+  const transition = read("apps/backend/src/dispatch/load-transition.service.ts");
   const bookFe = read("apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx");
   const kanban = read("apps/frontend/src/components/dispatch/DispatchKanban.tsx");
   if (!book.includes("DriverBillMintOutcome") || !book.includes("skipped_no_pay_rate")) {
@@ -170,8 +172,11 @@ export function collectMilesOnBookLoudProblems() {
   if (!book.includes("driver_bill_mint")) {
     problems.push("book-load.service.ts: book response must include driver_bill_mint.");
   }
-  if (!routes.includes("driver_bill_mint") || !routes.includes("driverBillOutcome")) {
-    problems.push("loads.routes.ts: must return driver_bill_mint from transition (MILES-ON-BOOK).");
+  if (!/return transitionDispatchLoadInClientTx\(/.test(routes)) {
+    problems.push("loads.routes.ts: status route must delegate to the canonical transitionDispatchLoadInClientTx.");
+  }
+  if (!/driver_bill_mint:\s*driverBillOutcome/.test(transition) || !/driverBillOutcome = await ensureDriverBillArtifactsForLoad\(/.test(transition)) {
+    problems.push("load-transition.service.ts: must return driver_bill_mint from transition (MILES-ON-BOOK).");
   }
   if (!bookFe.includes("driver_bill_mint") || !bookFe.includes("skipped_no_pay_rate")) {
     problems.push("BookLoadModalV4.tsx: must toast skipped_no_pay_rate.");

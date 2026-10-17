@@ -1,3 +1,4 @@
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 // SHARED DRIVER-QUALIFICATION GATE (G9-C1 + D3-1).
 //
@@ -486,4 +487,47 @@ export class DriverNotQualifiedError extends Error {
     this.name = "DriverNotQualifiedError";
     this.block = block;
   }
+}
+
+/**
+ * FAIL-DQF-GATE (LEAD ROUND 443.187) — the SAME gate, for a path that seats a driver on a load that
+ * has ALREADY RUN (a signed settlement document, the Settlement Creator posting a past pay period).
+ * assertDriverQualifiedForLoad reads CURRENT CDL / medical / hazmat / D&A state, which says nothing
+ * about whether the driver was qualified when that trip happened — so, exactly like Book Load's
+ * `historical_backfill` branch (book-load.service.ts, event `dispatch.historical_backfill_gate_exception`),
+ * a block is RECORDED on the append-only audit trail and the write proceeds. Never a silent seat:
+ * the gate evaluates on every such write, and an unqualified driver leaves an attributed record.
+ */
+export async function recordHistoricalDriverQualificationException(
+  client: QueryableClient,
+  actorUserId: string,
+  args: { driverId: string; operatingCompanyId: string; loadId: string; isHazmat?: boolean; writer: string }
+): Promise<DriverQualificationBlock | null> {
+  const block = await assertDriverQualifiedForLoad(client, {
+    driverId: args.driverId,
+    operatingCompanyId: args.operatingCompanyId,
+    isHazmat: Boolean(args.isHazmat),
+  });
+  if (!block) return null;
+  await appendCrudAudit(
+    client,
+    actorUserId,
+    "dispatch.historical_backfill_gate_exception",
+    {
+      operating_company_id: args.operatingCompanyId,
+      load_id: args.loadId,
+      writer: args.writer,
+      gate: "driver_qualification",
+      driver_id: block.driverId,
+      driver_name: block.driverName,
+      reasons: block.reasons,
+      cdl_expires_at: block.cdlExpiresAt,
+      medical_expiry_date: block.medicalExpiryDate,
+      hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+      historical_backfill_gate_exception: true,
+    },
+    "warning",
+    "FAIL-DQF-GATE"
+  );
+  return block;
 }

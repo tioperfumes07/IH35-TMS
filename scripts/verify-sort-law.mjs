@@ -71,7 +71,10 @@ export function isSortLawViolation(src) {
   if (!src.includes("<ParityTable")) return false;
   if (!src.includes("onSortChange=")) return false;
   if (src.includes('sortMode="external"')) return false;
-  return /\boffset\b/.test(src) || /\bhas_more\b/.test(src) || /\.limit\(/.test(src);
+  // `offset` must be an identifier, not a hyphenated Tailwind class: `underline-offset-2` on a
+  // <Link> (8a4d2d833e, AccountRegisterPage — an unpaged full-population register) is not a
+  // pagination signal. Real signals (`offset:`, `offset,`, `.offset`, `{ offset }`) still match.
+  return /(?<![-\w])offset(?![-\w])/.test(src) || /\bhas_more\b/.test(src) || /\.limit\(/.test(src);
 }
 
 const DISPATCH_ALERT_BOARD_PATHS = [
@@ -182,6 +185,15 @@ if (SELFTEST) {
     {
       name: "SORT-02: no pagination signal = not a violation of this class",
       fn: () => isSortLawViolation('<ParityTable onSortChange={onSortChange} />\nlistThing({})') === false,
+    },
+    {
+      name: "SORT-02: Tailwind underline-offset class is not a pagination signal",
+      fn: () =>
+        isSortLawViolation('<ParityTable onSortChange={onSortChange} />\n<Link className="underline underline-offset-2" />') === false,
+    },
+    {
+      name: "SORT-02: offset: key in an API call is still a pagination signal",
+      fn: () => isSortLawViolation('<ParityTable onSortChange={onSortChange} />\nlistThing({ limit: 100, offset: 0 })') === true,
     },
     {
       name: "SORT-02: no ParityTable mount at all = not applicable",

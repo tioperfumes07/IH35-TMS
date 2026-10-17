@@ -38,7 +38,11 @@ export function collectFailures(src = source) {
     errors.push("Settlements Required matrix must parse");
   }
   const route = sliceBetween(src.backend, 'app.get("/api/v1/driver-finance/driver-bills/open"', "\n  });");
-  const listPanel = sliceBetween(src.list, "function OpenDriverBillsPanel(", "\nfunction setFilter(");
+  // Repointed (ROUND 443.187): 37b44599d4 "443.181 one table component: 13 DataTable panels/pages
+  // onto ParityTable (#26868)" moved the driver/load drill cells out of OpenDriverBillsPanel into
+  // buildOpenDriverBillColumns (ParityColumn render), directly above the panel. The slice now spans
+  // the column builder + the panel (ends at the next top-level function, KpiCard); same tokens checked.
+  const listPanel = sliceBetween(src.list, "function buildOpenDriverBillColumns(", "\nfunction KpiCard(");
   const detailSection = sliceBetween(src.detail, "function OpenDriverBillsSection(", "\nfunction ");
   const requireText = (text, token, message) => { if (!text.includes(token)) errors.push(message); };
 
@@ -58,9 +62,9 @@ export function collectFailures(src = source) {
   requireText(src.api, "apiRequest<OpenDriverBillsResponse>", "Frontend API must retain the canonical response type");
 
   requireText(src.list, "queryFn: () => getOpenDriverBills(companyId)", "Settlements list must query open bills for the selected company");
-  requireText(listPanel, 'kind="driver"\n                  id={bill.driver_id}', "Settlements list driver drill must bind bill.driver_id");
+  requireText(listPanel, 'kind="driver"\n        id={bill.driver_id}', "Settlements list driver drill must bind bill.driver_id");
   requireText(listPanel, 'label={entityLabel(bill.driver_name, bill.driver_id, "Driver")}', "Settlements list driver drill must use the human driver label");
-  requireText(listPanel, 'kind="load"\n                  id={bill.load_id ?? ""}', "Settlements list load drill must bind bill.load_id");
+  requireText(listPanel, 'kind="load"\n        id={bill.load_id ?? ""}', "Settlements list load drill must bind bill.load_id");
   requireText(listPanel, 'label={entityLabel(bill.load_number, bill.load_id, "Load")}', "Settlements list load drill must use the human load label");
   requireText(listPanel, "Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}", "Settlements list must surface count and gross totals");
   const listCode = listPanel.replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
@@ -105,7 +109,7 @@ function selftest() {
     ["list", 'entityLabel(bill.driver_name, bill.driver_id, "Driver")', 'entityLabel(null, bill.id, "Driver")'],
     ["list", 'id={bill.load_id ?? ""}', 'id={bill.id}'],
     ["list", 'entityLabel(bill.load_number, bill.load_id, "Load")', 'entityLabel(null, bill.id, "Load")'],
-    ["list", '<EntityLink\n                  kind="driver"', '<EntityLink kind="bill"\n                  data-bad="true"'],
+    ["list", '<EntityLink\n        kind="driver"', '<EntityLink kind="bill"\n        data-bad="true"'],
     ["detail", "getOpenDriverBills(companyId, driverId ?? undefined)", "getOpenDriverBills(companyId)"],
     ["detail", 'id={bill.load_id ?? ""}', 'id={bill.id}'],
     ["detail", 'entityLabel(bill.load_number, bill.load_id, "Load")', 'entityLabel(null, bill.id, "Load")'],

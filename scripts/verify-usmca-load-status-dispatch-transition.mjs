@@ -13,6 +13,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const API = "apps/frontend/src/api/loads.ts";
 const ROUTE = "apps/backend/src/mdata/loads.routes.ts";
 const DISPATCH_ROUTE = "apps/backend/src/dispatch/loads.routes.ts";
+// Repointed (ROUND 443.187): 25f2a8faa4 "R313-E31 ... office transition extracted to
+// dispatch/load-transition.service.ts (route delegates) (#23821)" moved the transition UPDATE out of
+// the route into transitionDispatchLoadInClientTx. Same rule, checked where the UPDATE now lives.
+const TRANSITION_SERVICE = "apps/backend/src/dispatch/load-transition.service.ts";
 const LABEL = "verify-usmca-load-status-dispatch-transition";
 
 function readSource(rel) {
@@ -24,6 +28,7 @@ export function run(read = readSource) {
   const src = read(API);
   const routeSrc = read(ROUTE);
   const dispatchRouteSrc = read(DISPATCH_ROUTE);
+  const transitionServiceSrc = read(TRANSITION_SERVICE);
   const routeStart = routeSrc.indexOf('app.patch("/api/v1/mdata/loads/:id/status"');
   const routeEnd = routeSrc.indexOf('app.patch("/api/v1/mdata/loads/:id"', routeStart);
   const statusRoute = routeStart < 0 ? "" : routeSrc.slice(routeStart, routeEnd);
@@ -71,10 +76,19 @@ export function run(read = readSource) {
   if (!/operating_company_id = \$2::uuid/.test(statusRoute) || !/operating_company_id = \$3::uuid/.test(statusRoute)) {
     errors.push(`${ROUTE}: status SELECT and UPDATE must both bind exact requested company`);
   }
+  const serviceStart = transitionServiceSrc.indexOf("export async function transitionDispatchLoadInClientTx(");
+  const transitionService = serviceStart < 0 ? "" : transitionServiceSrc.slice(serviceStart);
+  const updateAt = transitionService.search(/const transitionUpdate = await client\.query</);
+  const firstSideEffectAt = transitionService.search(/ensureDriverBillArtifactsForLoad\s*\(/);
   if (
-    !/const transitionUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,240}UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid\s+RETURNING id[\s\S]{0,180}if \(!transitionUpdate\.rows\[0\]\?\.id\) return \{ error: "not_found" as const \}/.test(
-      dispatchTransitionRoute
-    )
+    !/return transitionDispatchLoadInClientTx\(client, authUser\.uuid, operatingCompanyId,/.test(dispatchTransitionRoute) ||
+    // The UPDATE binds the exact company AND compare-and-sets the validated current status ($4),
+    // and a zero-row result returns before any side effect (driver-bill mint below it).
+    !/const transitionUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,240}UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid\s+AND status::text = \$4\s+RETURNING id[\s\S]{0,180}if \(!transitionUpdate\.rows\[0\]\?\.id\) return \{ error: "status_changed" as const/.test(
+      transitionService
+    ) ||
+    updateAt < 0 ||
+    firstSideEffectAt < updateAt
   ) {
     errors.push(`${DISPATCH_ROUTE}: dispatch transition UPDATE must bind company and prove the row changed before side effects`);
   }
@@ -110,12 +124,10 @@ function selftest() {
       .replaceAll('await assertCompanyMembership(authUser.uuid, scopedCompanyId);', '')
       .replaceAll("operating_company_id = $2::uuid", "operating_company_id IN (SELECT org.user_accessible_company_ids())")
       .replaceAll("operating_company_id = $3::uuid", "operating_company_id IN (SELECT org.user_accessible_company_ids())");
+  const brokenService = readSource(TRANSITION_SERVICE)
+      .replace("AND operating_company_id = $3::uuid", "AND operating_company_id IN (SELECT org.user_accessible_company_ids())")
+      .replace("if (!transitionUpdate.rows[0]?.id)", "if (false)");
   const brokenDispatchRoute = readSource(DISPATCH_ROUTE)
-      .replace(
-        "AND operating_company_id = $3::uuid\n         RETURNING id",
-        "AND operating_company_id IN (SELECT org.user_accessible_company_ids())\n         RETURNING id"
-      )
-      .replace("if (!transitionUpdate.rows[0]?.id)", "if (false)")
       .replace("FROM events.event_log e", "FROM mdata.loads e")
       .replace("e.operating_company_id = $2::uuid", "e.operating_company_id IN (SELECT org.user_accessible_company_ids())")
       .replace("NULLIF(e.payload->>'to_status', '') IS NOT NULL", "true")
@@ -125,8 +137,24 @@ function selftest() {
     if (rel === API) return broken;
     if (rel === ROUTE) return brokenRoute;
     if (rel === DISPATCH_ROUTE) return brokenDispatchRoute;
+    if (rel === TRANSITION_SERVICE) return brokenService;
     return readSource(rel);
   });
+  // Independent plants for the moved UPDATE: dropped company bind, dropped zero-row proof, and the
+  // route no longer delegating — each alone must fail the transition check.
+  const svc = readSource(TRANSITION_SERVICE);
+  const route = readSource(DISPATCH_ROUTE);
+  const single = [
+    [TRANSITION_SERVICE, svc.replace("AND operating_company_id = $3::uuid", "")],
+    [TRANSITION_SERVICE, svc.replace("if (!transitionUpdate.rows[0]?.id)", "if (false)")],
+    [DISPATCH_ROUTE, route.replace("return transitionDispatchLoadInClientTx(client,", "return otherTransition(client,")],
+  ];
+  for (const [file, text] of single) {
+    const errs = run((rel) => (rel === file ? text : readSource(rel)));
+    if (!errs.some((e) => e.includes("dispatch transition UPDATE must bind company"))) {
+      throw new Error(`single plant on ${file} escaped the dispatch transition check`);
+    }
+  }
   const expectedFailures = [
     "must require operating_company_id",
     "legacy mdata status request must serialize",
