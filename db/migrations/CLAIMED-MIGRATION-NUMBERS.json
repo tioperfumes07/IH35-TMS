@@ -173,6 +173,11 @@
       "claimed_at": "2026-10-12",
       "purpose": "443.136 follow-up: accounting.posting_source_load_id fuel_event resolves a Relay fill with no fuel row to its adopted expense document's load"
     },
+    "202616020100": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-17",
+      "purpose": "LEAD 443.197 SECURITY: ih35_ci_readonly (CI + seat read-only credential) inherits ih35_app write grants — revoke ih35_app, default_transaction_read_only = on, guard_reader EXECUTE on the 8 stable read functions it lacks"
+    },
     "202616010100": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-17",
