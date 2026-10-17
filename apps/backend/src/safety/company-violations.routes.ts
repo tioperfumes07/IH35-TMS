@@ -266,7 +266,10 @@ export async function registerSafetyCompanyViolationsRoutes(
         },
       );
       if (!result.found)
-        return reply.code(404).send({ error: "mdata_driver_not_found" });
+        return reply.code(404).send({
+          error: "mdata_driver_not_found",
+          message: "The selected driver could not be found for this company.",
+        });
       return { company_violations: result.rows, total_count: result.total_count };
     },
   );

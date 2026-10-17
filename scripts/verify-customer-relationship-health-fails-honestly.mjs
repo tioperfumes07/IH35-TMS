@@ -10,6 +10,9 @@ const REL = {
 };
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
+// 443.187 repoint — the summary <p> moved to the house colour token (6903e980d0 BANK-F4321 #25626, slate-600 -> #6B7280) and
+// tierLabel / tierClass gained (noData, partial) after the error flag (42451906b6 #21982). Same rules: any text-xs summary, and
+// the error flag still passed in the second position.
 export function verify(sources = {}) {
   const list = sources.list ?? read(REL.list);
   const detail = sources.detail ?? read(REL.detail);
@@ -18,9 +21,9 @@ export function verify(sources = {}) {
     ["list sortable value fails honestly when the complete at-risk read fails", /health_tier_label: relationshipTierBadge\([\s\S]*?atRiskQuery\.isError && !c\.relationship_health_tier[\s\S]*?\)\.label/.test(list)],
     ["list rendered badge uses the same failure contract", /relationshipTierBadge\(tier, atRiskQuery\.isError && !row\.relationship_health_tier\)/.test(list)],
     ["list recomputes rows when query failure state changes", /atRiskCustomerIds, atRiskQuery\.isError/.test(list)],
-    ["filter summary cannot claim the failed range loaded", /<p className="text-xs text-slate-600">\s*\{atRiskQuery\.isError\s*\? "Relationship health is unavailable; retry the failed read above\."\s*: `Relationship health loaded for all/.test(list)],
-    ["detail badge labels a failed read unavailable", /tierLabel\(score\?\.health_tier, Boolean\(error\)\)/.test(detail)],
-    ["detail badge styles a failed read unavailable", /tierClass\(score\?\.health_tier, Boolean\(error\)\)/.test(detail)],
+    ["filter summary cannot claim the failed range loaded", /<p className="[^"]*\btext-xs\b[^"]*">\s*\{atRiskQuery\.isError\s*\? "Relationship health is unavailable; retry the failed read above\."\s*: `Relationship health loaded for all/.test(list)],
+    ["detail badge labels a failed read unavailable", /tierLabel\(score\?\.health_tier, Boolean\(error\)[,)]/.test(detail)],
+    ["detail badge styles a failed read unavailable", /tierClass\(score\?\.health_tier, Boolean\(error\)[,)]/.test(detail)],
     ["detail preserves retry instead of hiding the failure", /!loading && error && onRetry \? <ListErrorState[\s\S]*?onRetry=\{onRetry\}/.test(detail)],
   ];
   return checks.filter(([, ok]) => !ok).map(([name]) => name);
@@ -32,8 +35,9 @@ if (process.argv.includes("--selftest")) {
     ["list unavailable label removed", { ...live, list: live.list.replace('if (unavailable) return { label: "Unavailable"', 'if (false) return { label: "Unavailable"') }],
     ["sortable rows ignore read failure", { ...live, list: live.list.replace("atRiskQuery.isError && !c.relationship_health_tier", "false") }],
     ["rendered badge ignores read failure", { ...live, list: live.list.replace("atRiskQuery.isError && !row.relationship_health_tier", "false") }],
-    ["filter summary claims stale success", { ...live, list: live.list.replace('atRiskQuery.isError\n                  ? "Relationship health is unavailable; retry the failed read above."', 'false\n                  ? "Relationship health is unavailable; retry the failed read above."') }],
-    ["detail error badge remains unknown", { ...live, detail: live.detail.replace("tierLabel(score?.health_tier, Boolean(error))", "tierLabel(score?.health_tier)") }],
+    ["filter summary claims stale success", { ...live, list: live.list.replace(/\{atRiskQuery\.isError(\s*\? "Relationship health is unavailable)/, "{false$1") }],
+    ["detail error badge remains unknown", { ...live, detail: live.detail.replaceAll("tierLabel(score?.health_tier, Boolean(error)", "tierLabel(score?.health_tier, false") }],
+    ["detail error badge styled as known", { ...live, detail: live.detail.replaceAll("tierClass(score?.health_tier, Boolean(error)", "tierClass(score?.health_tier, false") }],
   ];
   for (const [name, mutated] of mutations) {
     if (verify(mutated).length === 0) throw new Error(`selftest did not catch ${name}`);
