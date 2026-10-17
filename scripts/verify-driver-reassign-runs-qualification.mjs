@@ -36,6 +36,11 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC_DIR = path.join(root, "apps/backend/src");
 const LABEL = "verify-driver-reassign-runs-qualification";
 const GATE = "assertDriverQualifiedForLoad";
+// 443.187 (CC-2) — historical-backfill reassignments (Settlement Creator, settlement-document seed) run the gate through
+// this wrapper, which EVALUATES the same gate and RECORDS a block (owner ruling for historical_backfill: never skipped,
+// never silently passed). It counts as the gate only while the wrapper itself still calls the gate.
+const BACKFILL_GATE = "recordHistoricalReassignQualification";
+const GATE_MODULE = "apps/backend/src/dispatch/driver-qualification.service.ts";
 
 const KNOWN_GAPS = new Map([
   [
@@ -83,7 +88,15 @@ export function collectProblems(files) {
   for (const { rel, src } of files) {
     const code = strip(src);
     if (!reassignsDriver(code)) continue;
-    inScope.push({ rel, runsGate: code.includes(GATE) });
+    inScope.push({ rel, runsGate: code.includes(GATE) || new RegExp(`\\b${BACKFILL_GATE}\\(`).test(code) });
+  }
+  const gateModule = files.find((f) => f.rel === GATE_MODULE);
+  if (gateModule) {
+    const g = strip(gateModule.src);
+    const body = g.slice(g.indexOf(`export async function ${BACKFILL_GATE}(`));
+    if (g.includes(`export async function ${BACKFILL_GATE}(`) && !new RegExp(`await ${GATE}\\(`).test(body.slice(0, 900))) {
+      problems.push(`${GATE_MODULE}: ${BACKFILL_GATE} no longer calls ${GATE} — it cannot stand in for the gate.`);
+    }
   }
   for (const { rel, runsGate } of inScope) {
     const known = KNOWN_GAPS.has(rel);
@@ -123,6 +136,15 @@ function selftest() {
       expect: 0,
     },
     { name: "comment-only gate mention rejected", files: [mk("apps/backend/src/dispatch/c.ts", `// ${GATE}\n${UPD}`)], expectAtLeast: 1 },
+    { name: "backfill reassign through the recording gate passes", files: [mk("apps/backend/src/feed/b.ts", `await ${BACKFILL_GATE}(c, {}); ${UPD}`)], expect: 0 },
+    {
+      name: "a recording gate that stops calling the gate is caught",
+      files: [
+        mk(GATE_MODULE, `export async function ${BACKFILL_GATE}(c, a) { return null; }`),
+        mk("apps/backend/src/feed/b.ts", `await ${BACKFILL_GATE}(c, {}); ${UPD}`),
+      ],
+      expectAtLeast: 1,
+    },
   ];
   let pass = 0;
   for (const c of cases) {
