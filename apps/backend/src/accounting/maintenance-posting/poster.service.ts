@@ -1,9 +1,9 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import { enqueueTmsBillPushRequested } from "../../qbo/tms-bill-push-chain.service.js";
 import { ExpenseCategoryMapResolutionError } from "../expense-category-map/resolver.service.js";
-import { PostingEngineError, postSourceTransaction } from "../posting-engine.service.js";
+import { PostingEngineError } from "../posting-engine.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
-import { insertBillHeaderOnClient, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../bills.service.js";
+import { insertBillHeaderOnClient, insertBillLineOnClient, postBillDocument, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../bills.service.js";
 import { CAPITALIZE_REPAIR_THRESHOLD_CENTS, decideRepairBooksTreatment } from "../capitalize-threshold.js";
 import { resolveRoleAccount, CoaRoleResolutionError, type CoaRole } from "../coa-roles/resolver.service.js";
 import { registerCapitalizedRepairAsFixedAsset } from "../owned-unit-fixed-asset-register.service.js";
@@ -337,8 +337,8 @@ async function insertBillLinesFromWorkOrder(
       columns.push(accountColumn);
       values.push(capitalizeAccountId);
     }
-    const placeholders = values.map((_, idx) => `$${idx + 1}`).join(", ");
-    await client.query(`INSERT INTO accounting.bill_lines (${columns.join(", ")}) VALUES (${placeholders})`, values);
+    // 443.182 C step 2 — the bill line through the bill engine (same columns, same uncast values, same order).
+    await insertBillLineOnClient(client, columns.map((name, idx) => [name, { value: values[idx] }] as const));
     inserted += 1;
   }
 
@@ -423,12 +423,8 @@ export async function processMaintenanceWorkOrderClose(input: ClosePostingInput)
   }
 
   try {
-    const posting = await postSourceTransaction(
-      {
-        operating_company_id: input.operating_company_id,
-        source_transaction_type: "bill",
-        source_transaction_id: dbResult.bill_id,
-      },
+    const posting = await postBillDocument(
+      { operating_company_id: input.operating_company_id, bill_id: dbResult.bill_id },
       { userId: input.actor_user_id }
     );
     return {

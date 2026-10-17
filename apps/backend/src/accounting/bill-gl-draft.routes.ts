@@ -17,8 +17,9 @@ import {
   computeBillGlDraft,
 } from "./bill-gl-draft.service.js";
 import { BillLineAccountError } from "./bill-account-resolver.js";
-import { postSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
+import { PostingEngineError } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { postBillDocument } from "./bills.service.js";
 
 // CHAIN-03 posting gate (default OFF). Resolved PER-ENTITY via lib.feature_flags (isEnabled) inside the
 // request handler — NOT a global process.env read — so a flag flip is per-operating_company_id and
@@ -135,12 +136,8 @@ export async function registerBillGlDraftRoutes(app: FastifyInstance) {
     }
 
     try {
-      const result = await postSourceTransaction(
-        {
-          operating_company_id: query.data.operating_company_id,
-          source_transaction_type: "bill",
-          source_transaction_id: params.data.id,
-        },
+      const result = await postBillDocument(
+        { operating_company_id: query.data.operating_company_id, bill_id: params.data.id },
         { userId: user.uuid }
       );
       return { step: "CHAIN-03-STEP-2-post", posting_enabled: true, result };

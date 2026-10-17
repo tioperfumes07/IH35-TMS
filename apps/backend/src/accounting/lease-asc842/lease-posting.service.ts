@@ -27,8 +27,8 @@ import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
-import { ensureOpenPeriod, postSourceTransactionInClientTx } from "../posting-engine.service.js";
-import { createBillInClientTx } from "../bills.service.js";
+import { ensureOpenPeriod } from "../posting-engine.service.js";
+import { createBillInClientTx, postBillDocumentInClientTx } from "../bills.service.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this lease JE insert never
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
@@ -470,9 +470,9 @@ export async function postOperatingLesseeRentPeriod(
     }
     if (existingBill.rows[0]) {
       // The period's bill exists but never posted (e.g. created while the bill poster was off): post it now, once.
-      const reposted = await postSourceTransactionInClientTx(
+      const reposted = await postBillDocumentInClientTx(
         client as never,
-        { operating_company_id: input.lesseeOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: existingBill.rows[0].id },
+        { operating_company_id: input.lesseeOperatingCompanyId, bill_id: existingBill.rows[0].id },
         { userId: actor.userId }
       );
       const jeId = (reposted as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
@@ -537,9 +537,9 @@ export async function postOperatingLesseeRentPeriod(
       },
       actor.userId
     );
-    const posting = await postSourceTransactionInClientTx(
+    const posting = await postBillDocumentInClientTx(
       client as never,
-      { operating_company_id: input.lesseeOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: String(bill.id) },
+      { operating_company_id: input.lesseeOperatingCompanyId, bill_id: String(bill.id) },
       { userId: actor.userId }
     );
     const journalEntryId = (posting as { journal_entry_id?: string | null })?.journal_entry_id ?? null;

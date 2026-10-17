@@ -3,7 +3,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { insertBillHeaderOnClient } from "../accounting/bills.service.js";
+import { writeBillDocumentOnClient } from "../accounting/bills.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -129,9 +129,9 @@ export async function persistInsuranceDispersalBills(input: {
 
       // 443.182 C — written through the one bill writer (same columns, casts, literals and ON CONFLICT idempotency as the
       // former inline INSERT).
-      const billRes = await insertBillHeaderOnClient<{ id: string }>(
-        client,
-        [
+      // 443.182 C step 2 — header + the bill's number through the bill engine (same statements as before).
+      const billRes = await writeBillDocumentOnClient<{ id: string }>(client, {
+        header: [
           ["operating_company_id", { value: input.operatingCompanyId }],
           ["vendor_id", { value: vendorId }],
           ["vendor_uuid", { value: vendorId }],
@@ -152,27 +152,18 @@ export async function persistInsuranceDispersalBills(input: {
           // ACCT-F353 — derived from the insurer vendor above.
           ["is_sample_data", { value: vendorIsSampleData }],
         ],
-        { returning: "id::text", onConflict: "idempotency_key_do_nothing" },
-      );
+        returning: "id::text",
+        onConflict: "idempotency_key_do_nothing",
+        number: (newBillId) => ({
+          kind: "number_and_memo_in_company",
+          billId: newBillId,
+          operatingCompanyId: input.operatingCompanyId,
+          billNumber: `${input.policyNumber}-INS-${String(bill.sequence).padStart(2, "0")}`,
+          memo: bill.memo,
+        }),
+      });
       const createdBillId = billRes.rows[0]?.id;
       if (!createdBillId) throw new Error("insurance_created_bill_not_found");
-
-      await client.query(
-        `
-          UPDATE accounting.bills
-          SET bill_number = $3,
-              memo = $4,
-              updated_at = now()
-          WHERE id = $1
-            AND operating_company_id = $2::uuid
-        `,
-        [
-          createdBillId,
-          input.operatingCompanyId,
-          `${input.policyNumber}-INS-${String(bill.sequence).padStart(2, "0")}`,
-          bill.memo,
-        ]
-      );
 
       for (const allocation of bill.allocations) {
         await client.query(

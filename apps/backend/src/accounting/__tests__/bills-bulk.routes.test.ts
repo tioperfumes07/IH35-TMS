@@ -68,15 +68,16 @@ describe("bills-bulk.routes", () => {
   // opening a second transaction per item here would self-deadlock on the bill row's own lock),
   // flag-gated by the SAME BILL_PAYMENT_GL_POSTING_ENABLED check every other bill_payment poster
   // uses, best-effort so a post failure never fails the batch or the payment record.
-  it("mark_paid posts a bill_payment JE via postSourceTransactionInClientTx, flag-gated, and a failure fails the item (363-CC1-B)", () => {
+  it("mark_paid posts a bill_payment JE via the bill engine (postBillPaymentDocumentInClientTx), flag-gated, and a failure fails the item (363-CC1-B)", () => {
     expect(routes).toContain('import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js"');
-    expect(routes).toContain('import { postSourceTransactionInClientTx } from "./posting-engine.service.js"');
+    // 443.182 C step 2 — the bill-payment JE is posted through the bill engine's in-transaction stage.
+    expect(routes).toMatch(/import \{[^}]*\bpostBillPaymentDocumentInClientTx\b[^}]*\} from "\.\/bills\.service\.js"/);
     // 443.182 C — the row comes from the one bill-payment writer, which returns its id.
     expect(routes).toContain("insertBillPaymentRowInClientTx(client, {");
     expect(routes).toContain('}, "id");');
     expect(routes).toContain("isBillPaymentGlPostingEnabled(operatingCompanyId, actorUserId)");
-    expect(routes).toContain('source_transaction_type: "bill_payment"');
-    expect(routes).toContain("source_transaction_id: bulkPaymentId");
+    expect(routes).toContain("postBillPaymentDocumentInClientTx(");
+    expect(routes).toContain("bill_payment_id: bulkPaymentId");
     // 363-CC1-B: the poster is NOT wrapped in a swallowing catch — a failure throws, processBulkPerId's per-item SAVEPOINT
     // rolls this item (payment + postings) back and reports it failed; the batch continues.
     const posterBlock = routes.match(/if \(bulkPaymentId\) \{[\s\S]*?\n    \}/);

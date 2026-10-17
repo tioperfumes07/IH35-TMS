@@ -34,7 +34,8 @@ function collectFailures(root) {
   if (/resolveAccountForCategory\(\s*input\.operating_company_id,\s*["']maintenance["']/.test(source)) {
     failures.push(`${REL_PATH} must not resolve the WO-close bill-line account via the maintenance category default (resolveAccountForCategory) — see scripts/verify-capitalize-threshold-7000.mjs`);
   }
-  if (!/postSourceTransaction\(/.test(source) || !/source_transaction_type:\s*"bill"/.test(source)) {
+  // 443.182 C step 2 — postBillDocument is the bill engine's own-connection bill post (postSourceTransaction, "bill").
+  if (!/postBillDocument\(\s*\{\s*operating_company_id/.test(source) && (!/postSourceTransaction\(/.test(source) || !/source_transaction_type:\s*"bill"/.test(source))) {
     failures.push(`${REL_PATH} must post the bill via the shared posting backbone (postSourceTransaction, source_transaction_type: "bill")`);
   }
   return failures;

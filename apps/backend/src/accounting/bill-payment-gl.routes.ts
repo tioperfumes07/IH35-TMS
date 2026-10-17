@@ -9,7 +9,8 @@ import { z } from "zod";
 import { currentAuthUser, validationError } from "./shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { TRANSP_OPERATING_COMPANY_ID } from "./bill-gl-draft.service.js";
-import { postSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
+import { PostingEngineError } from "./posting-engine.service.js";
+import { postBillPaymentDocument } from "./bills.service.js";
 import {
   BILL_PAYMENT_GL_POSTING_FLAG_KEY,
   isBillPaymentGlPostingEnabled,
@@ -48,12 +49,8 @@ export async function registerBillPaymentGlRoutes(app: FastifyInstance) {
     }
 
     try {
-      const result = await postSourceTransaction(
-        {
-          operating_company_id: query.data.operating_company_id,
-          source_transaction_type: "bill_payment",
-          source_transaction_id: params.data.id,
-        },
+      const result = await postBillPaymentDocument(
+        { operating_company_id: query.data.operating_company_id, bill_payment_id: params.data.id },
         { userId: user.uuid }
       );
       return { step: "CHAIN-04-post", posting_enabled: true, result };

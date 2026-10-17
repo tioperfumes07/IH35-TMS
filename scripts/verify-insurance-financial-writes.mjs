@@ -12,7 +12,7 @@
  * Self-test: node scripts/verify-insurance-financial-writes.mjs --selftest
  */
 import fs from "node:fs";
-const BILL_WRITE_RE = /INSERT\s+INTO\s+accounting\.bills|insertBillHeaderOnClient\s*(?:<[^>]*>)?\s*\(/i;
+const BILL_WRITE_RE = /INSERT\s+INTO\s+accounting\.bills|(?:insertBillHeaderOnClient|writeBillDocumentOnClient)\s*(?:<[^>]*>)?\s*\(/i;
 import os from "node:os";
 import path from "node:path";
 
@@ -77,7 +77,8 @@ export function collectInsuranceFinancialWriteProblems(files) {
         `${SERVICE}: K-10 — must not pick banking.bank_accounts to invent a seed transaction`
       );
     }
-    // 443.182 C — the A/P bill is written through the one bill writer (insertBillHeaderOnClient) or inline.
+    // 443.182 C — the A/P bill is written through the one bill writer (insertBillHeaderOnClient / the engine's
+    // writeBillDocumentOnClient) or inline.
     if (!BILL_WRITE_RE.test(serviceSrc)) {
       failures.push(`${SERVICE}: K-10 — must INSERT accounting.bills (A/P bills)`);
     }

@@ -121,7 +121,21 @@ function inThenBranch(call, fnNode, conditionCheck) {
   return match;
 }
 
+// 443.182 C step 2 — the bill engine's in-transaction bill-payment post (postBillPaymentDocumentInClientTx) IS a
+// postSourceTransactionInClientTx bill_payment post: its type is fixed by the engine and its id travels as bill_payment_id.
+const ENGINE_BILL_PAYMENT_POSTER = "postBillPaymentDocumentInClientTx";
+function calleeName(call) {
+  const e = call.expression;
+  return ts.isIdentifier(e) ? e.text : ts.isPropertyAccessExpression(e) ? e.name.text : "";
+}
+function billPaymentPosterCalls(node) {
+  return [...findCalls(node, "postSourceTransactionInClientTx"), ...findCalls(node, ENGINE_BILL_PAYMENT_POSTER)];
+}
 function objectArgForType(call, type) {
+  if (type === "bill_payment" && calleeName(call) === ENGINE_BILL_PAYMENT_POSTER) {
+    for (const arg of call.arguments) if (ts.isObjectLiteralExpression(arg)) return arg;
+    return null;
+  }
   for (const arg of call.arguments) {
     if (!ts.isObjectLiteralExpression(arg)) continue;
     const value = propertyValue(arg, "source_transaction_type");
@@ -237,7 +251,7 @@ function analyzeCallWriter(text, filename, functionName, flagPath, expectedIdPat
   if (!fn) return [`missing ${functionName}`];
   const origin = isQboOriginRead(fn);
   if (origin) failures.push(`${functionName} contains QBO-origin provenance gate (${origin})`);
-  const posterCalls = findCalls(fn, "postSourceTransactionInClientTx").filter((call) => objectArgForType(call, "bill_payment"));
+  const posterCalls = billPaymentPosterCalls(fn).filter((call) => objectArgForType(call, "bill_payment"));
   if (!posterCalls.length) failures.push(`${functionName} does not post bill_payment through postSourceTransactionInClientTx`);
   for (const call of posterCalls) {
     if (!awaited(call)) failures.push(`${functionName} bill_payment poster is not awaited`);
@@ -248,7 +262,7 @@ function analyzeCallWriter(text, filename, functionName, flagPath, expectedIdPat
     if (!enclosingIfWithPositiveFlag(call, fn, flagPath)) failures.push(`${functionName} bill_payment poster lost positive ${flagPath} feature-flag gate`);
     if (expectedIdPath) {
       const object = objectArgForType(call, "bill_payment");
-      const sourceId = propertyValue(object, "source_transaction_id");
+      const sourceId = propertyValue(object, "source_transaction_id") ?? propertyValue(object, "bill_payment_id");
       if (!sourceId || memberPath(sourceId) !== expectedIdPath) failures.push(`${functionName} bill_payment poster is not linked to its created payment id`);
     }
   }
@@ -289,7 +303,7 @@ function replaceFirst(source, from, to) {
 function mutateTargetPoster(source, filename, functionName, mutation) {
   const { functions } = getFunctions(source, filename);
   const fn = functions.get(functionName);
-  const call = fn && findCalls(fn, "postSourceTransactionInClientTx").find((candidate) => objectArgForType(candidate, "bill_payment"));
+  const call = fn && billPaymentPosterCalls(fn).find((candidate) => objectArgForType(candidate, "bill_payment"));
   if (!call) return null;
   return mutation(source, call);
 }
@@ -300,7 +314,7 @@ function mutateExecutorFlag(source, filename, functionName, flagPath) {
   let target = null;
   walk(fn, (node) => {
     if (target || !ts.isIfStatement(node) || !hasPositiveFlag(node.expression, flagPath)) return;
-    const hasPoster = findCalls(node.thenStatement, "postSourceTransactionInClientTx").some((call) => !!objectArgForType(call, "bill_payment"));
+    const hasPoster = billPaymentPosterCalls(node.thenStatement).some((call) => !!objectArgForType(call, "bill_payment"));
     if (hasPoster) target = node.expression;
   });
   return target ? source.slice(0, target.getStart()) + `!(${target.getText()})` + source.slice(target.end) : null;
@@ -312,7 +326,7 @@ function mutateExecutorFlagBypass(source, filename, functionName, flagPath) {
   let target = null;
   walk(fn, (node) => {
     if (target || !ts.isIfStatement(node) || !hasPositiveFlag(node.expression, flagPath)) return;
-    if (findCalls(node.thenStatement, "postSourceTransactionInClientTx").some((call) => !!objectArgForType(call, "bill_payment"))) target = node.expression;
+    if (billPaymentPosterCalls(node.thenStatement).some((call) => !!objectArgForType(call, "bill_payment"))) target = node.expression;
   });
   return target ? source.slice(0, target.getStart()) + `(${flagPath} || true)` + source.slice(target.end) : null;
 }

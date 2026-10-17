@@ -16,8 +16,7 @@
  * accrued_bill_id = driver_id's, accrued_team_bill_id = team_driver_id's; each driver's settlement applies to its own.
  */
 import type pg from "pg";
-import { createBillInClientTx } from "../accounting/bills.service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { createBillInClientTx, postBillDocumentInClientTx } from "../accounting/bills.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverVendorLink } from "../accounting/driver-vendor-link.service.js";
 import { stampNewDriverBillTrailerFromLoad } from "../accounting/bill-trailer-stamp.service.js";
@@ -159,9 +158,9 @@ export async function accrueDriverPayAtDeliveryInClientTx(
       } as never, input.actorUserId);
       const billId = String((bill as { id: string }).id);
       await stampNewDriverBillTrailerFromLoad(client, { operatingCompanyId: opco, billId, loadId: input.loadId });
-      const p = await postSourceTransactionInClientTx(
+      const p = await postBillDocumentInClientTx(
         client as never,
-        { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post" } as never,
+        { operating_company_id: opco, bill_id: billId, posting_purpose: "initial_post" } as never,
         { userId: input.actorUserId } as never
       );
       const jeId = (p as { journal_entry_id?: string | null })?.journal_entry_id ?? null;

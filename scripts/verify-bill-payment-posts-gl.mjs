@@ -149,12 +149,13 @@ export function check() {
     if (w.requireBlockedFlagOff && !/blocked_flag_off/.test(body)) {
       failures.push(`${w.label}: must surface gl_posting:"blocked_flag_off" when posting is disabled (no silent success)`);
     }
-    if (!/postSourceTransactionInClientTx/.test(body)) {
+    // 443.182 C step 2 — postBillPaymentDocumentInClientTx is the bill engine's in-transaction bill-payment post.
+    if (!/postSourceTransactionInClientTx|postBillPaymentDocumentInClientTx/.test(body)) {
       failures.push(`${w.label}: must post the bill_payment JE via postSourceTransactionInClientTx (atomic, same txn as the bank-cache decrement) — else the bank decrements with no offsetting JE (P1-BILLPAY-GL / VEND-F-VENDOR-BILL-PAYMENT-NEVER-POSTS-GL regression)`);
     }
     // The JE must be conditional on the flag — an UNCONDITIONAL post would 409/error every payment on the
     // OFF entities (GUARD 2026-07-11: BILL_PAYMENT_GL_POSTING is OFF for all entities in prod).
-    if (/postSourceTransactionInClientTx/.test(body) && !/if\s*\(\s*(?:flags\.)?glPostingEnabled\s*(?:&&[^)]*)?\)/.test(body)) {
+    if (/postSourceTransactionInClientTx|postBillPaymentDocumentInClientTx/.test(body) && !/if\s*\(\s*(?:flags\.)?glPostingEnabled\s*(?:&&[^)]*)?\)/.test(body)) {
       failures.push(`${w.label}: must gate the JE post behind if(glPostingEnabled) so flag-OFF entities keep paying bills (no company-wide outage)`);
     }
   }
