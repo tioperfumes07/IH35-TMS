@@ -211,6 +211,9 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
     const user = (req as { user?: OfficeUser }).user;
     const opco = String((req.query as { operating_company_id?: string } | undefined)?.operating_company_id ?? "").trim();
     if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
+    // Heavy CI peel (verify-company-membership-assert): the refusal audit writes into the REQUESTED company under the
+    // bypass, so membership is proven first — a caller may never stamp a row into a company they do not belong to.
+    await assertCompanyMembership(user!.uuid, opco);
     if (String(user?.role ?? "") !== "Owner") {
       await withLuciaBypass(async (client) => {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
