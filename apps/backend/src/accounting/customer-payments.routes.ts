@@ -1,21 +1,16 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
-import { appendCrudAudit } from "../audit/crud-audit.js";
-import { DuplicateDocumentNumberError, nextPaymentDisplayId, resolvePaymentDisplayId } from "./display-id.js";
+import { DuplicateDocumentNumberError } from "./display-id.js";
 import { duplicateDocumentNumberBody } from "../lib/qbo-custom-document-number.js";
 import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
-import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
-import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
-import { isEnabled } from "../lib/feature-flags/service.js";
-import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { getAppliedCreditMemoCents } from "./payments/apply.service.js";
 import { directPaymentRoomCents } from "../factoring/purchased-gross.service.js";
-import { insertPaymentRowInClientTx } from "./payments.routes.js";
+import { recordCustomerPaymentInClientTx } from "./payments.routes.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -228,191 +223,67 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         if (!depositedToAccountId) return { code: 400 as const, error: "operating_bank_unmapped" };
       }
 
-      const displayId = await resolvePaymentDisplayId(
-        client,
-        query.data.operating_company_id,
-        new Date(`${body.data.received_at}T00:00:00.000Z`),
-        body.data.display_id
-      );
-
-      // 443.182 C — the one payment row writer (payments.routes.ts insertPaymentRowInClientTx); same columns as before.
+      // 443.182 C step 2 — the one payment engine (payments.routes.ts recordCustomerPaymentInClientTx) numbers the payment,
+      // writes it and its applications, posts its JE (or the skip audit), audits and emits its spine event. This form keeps
+      // its own per-invoice checks and its QBO outbox step.
       // FAIL-F2 / ACCT-F264 — customer payments can be marked TEST data: posting-engine resolves the flag from this SOURCE
       // row. Only an explicit true marks sample; omitting it keeps the column's false default.
-      const payment = await insertPaymentRowInClientTx(client, {
-        operating_company_id: query.data.operating_company_id,
-        customer_id: params.data.id,
-        display_id: displayId,
-        payment_method: body.data.payment_method,
-        payment_date: body.data.received_at,
-        reference: body.data.reference_number ?? null,
-        amount_cents: body.data.amount_cents,
-        deposited_to_account_id: depositedToAccountId,
-        notes: null,
-        created_by_user_id: user.uuid,
-        payment_source_kind: "manual",
-        source_bank_transaction_id: null,
-        is_sample_data: body.data.is_sample_data === true,
-      });
-      if (!payment?.id) return { code: 500 as const, error: "payment_create_failed" as const };
-
-      let applicationsCount = 0;
-      for (const applyRow of body.data.applications) {
-        const invoiceRes = await client.query(
-          `
-            SELECT id, amount_open_cents, status
-            FROM accounting.invoices
-            WHERE id = $1
-              AND operating_company_id = $2::uuid
-              AND customer_id = $3
-            LIMIT 1
-          `,
-          [applyRow.invoice_id, query.data.operating_company_id, params.data.id]
-        );
-        const invoice = invoiceRes.rows[0] as { id: string; amount_open_cents: number; status: string } | null;
-        if (!invoice) return { code: 404 as const, error: "invoice_not_found_for_customer" as const };
-        if (!["sent", "partial"].includes(String(invoice.status))) return { code: 409 as const, error: "invoice_not_open_for_payment" as const };
-        // ACCT-F5633 — amount_open_cents (a GENERATED column) has no knowledge of non-voided
-        // credit-memo applications; net them off the same way credit-memos.routes.ts's own apply
-        // route and ar-aging.service.ts (ACCT-F5612) already do, or a cash payment could still apply
-        // on top of a balance a credit memo already covered.
-        const appliedCreditMemoCents = await getAppliedCreditMemoCents(client, query.data.operating_company_id, invoice.id);
-        const invoiceRemainingCents = Number(invoice.amount_open_cents ?? 0) - appliedCreditMemoCents;
-        if (Number(applyRow.amount_cents) > invoiceRemainingCents) return { code: 400 as const, error: "apply_amount_exceeds_invoice_open" as const };
-        // LEAD 443.171 C — on a factored invoice only the NON-purchased part is payable to IH35 directly (one definition).
-        if (Number(applyRow.amount_cents) > (await directPaymentRoomCents(client as never, query.data.operating_company_id, invoice.id, invoiceRemainingCents))) {
-          return { code: 400 as const, error: "apply_amount_exceeds_non_purchased_portion" as const };
-        }
-
-        await client.query(
-          `
-            INSERT INTO accounting.payment_applications (
-              operating_company_id,
-              payment_id,
-              invoice_id,
-              target_kind,
-              target_id,
-              amount_cents,
-              amount_applied,
-              applied_by_user_id,
-              applied_by_user_uuid
-            ) VALUES ($1,$2,$3,'invoice',$3,$4,$5,$6,$6)
-          `,
-          [
-            query.data.operating_company_id,
-            payment.id,
-            applyRow.invoice_id,
-            applyRow.amount_cents,
-            applyRow.amount_cents / 100,
-            user.uuid,
-          ]
-        );
-        applicationsCount += 1;
-      }
-
-      // CLS-SUBLEDGER-GL-DARK / ACCT-F150 — POST THE RECEIPT.
-      //
-      // This route creates the payment AND its applications in one operation, so A/R moves here. It
-      // never called the poster, which is why USMCA payment a0b83bf5 applied $250.00 against an
-      // invoice on 2026-08-06 and produced ZERO journal_entry_postings — subledger moved, ledger
-      // stayed dark, books out by $250 with nothing reporting a failure. It was not a flag or a
-      // mapping problem: CUSTOMER_PAYMENT_GL_POSTING_ENABLED was true for USMCA, ar_control (1100)
-      // and undeposited_funds (1090) were bound and active fifteen days earlier, and the payment was
-      // source_system='tms'. The poster simply was never invoked on this path.
-      //
-      // apply.service.ts was audited and hardened for exactly this; the ROUTES were never wired to
-      // it. Same gate, same skip-audit, same poster — no new GL math (locked rule: reuse the existing
-      // poster). Flag OFF still writes the payment and applications and records the skip append-only,
-      // so a skip can never read as a silent success.
-      //
-      // ACCT-F5705: the `applicationsCount > 0` gate below used to also block the post-or-skip-audit
-      // pair entirely for a zero-application payment (a customer credit / unapplied cash / prepayment
-      // — a real, UI-supported outcome, see CustomerDetail.tsx's creditBalanceCents flow). buildCustomer
-      // PaymentLines (posting-engine.service.ts) posts purely from accounting.payments.amount_cents —
-      // it has NO dependency on payment_applications — so that condition was blocking a call the
-      // poster never needed gated. apply.service.ts's own applyPayment (the correct reference shape)
-      // has no such gate. Removed here to match: every real payment now either posts or is skip-audited,
-      // never silently neither.
-      const customerPaymentPostingEnabled = await isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", {
-        operating_company_id: query.data.operating_company_id,
-        user_uuid: user.uuid,
-      });
-      if (customerPaymentPostingEnabled) {
-        // ATOMICITY — this MUST be the in-client-tx poster, not postSourceTransaction().
-        // withCompanyScope -> withCurrentUser does pool.connect() + BEGIN ... COMMIT, so this callback
-        // runs inside an open transaction and the payment row above is NOT yet committed.
-        // postSourceTransaction() takes its own pool connection and its own transaction, so from there
-        // the payment does not exist yet — the poster would find nothing and the receipt would stay
-        // dark, which is the very defect this block fixes. Passing the caller's client also makes the
-        // payment, its applications and its journal entry commit or roll back as ONE unit: there is no
-        // window in which A/R has moved and the GL has not.
-        await postSourceTransactionInClientTx(
-          client,
-          {
-            operating_company_id: query.data.operating_company_id,
-            source_transaction_type: "customer_payment",
-            source_transaction_id: payment.id,
-            posting_purpose: "initial_post",
-          },
-          { userId: user.uuid }
-        );
-      } else {
-        await recordPostingFlagSkip(client, user.uuid, {
-          flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
-          postingDomain: "customer_payment",
-          operatingCompanyId: query.data.operating_company_id,
-          context: { payment_id: payment.id, route: "POST /api/v1/customers/:id/payments" },
-        });
-      }
-
-      const refreshedRes = await client.query(`SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 LIMIT 1`, [payment.id]);
-      const refreshed = refreshedRes.rows[0] ?? { amount_unapplied_cents: 0 };
-
-      await enqueueAccountingOutbox(client, query.data.operating_company_id, "qbo.customer_payment.created", "customer_payment", payment.id, {
-        payment_id: payment.id,
-        customer_id: params.data.id,
-        amount_cents: body.data.amount_cents,
-        payment_date: body.data.received_at,
-      });
-
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.customer_payment.created.p6_t11204",
-        {
-          resource_type: "accounting.payments",
-          resource_id: payment.id,
+      return recordCustomerPaymentInClientTx(client, {
+        row: {
           operating_company_id: query.data.operating_company_id,
           customer_id: params.data.id,
-          display_id: payment.display_id,
-          applications_count: applicationsCount,
+          payment_method: body.data.payment_method,
+          payment_date: body.data.received_at,
+          reference: body.data.reference_number ?? null,
+          amount_cents: body.data.amount_cents,
+          deposited_to_account_id: depositedToAccountId,
+          notes: null,
+          created_by_user_id: user.uuid,
+          payment_source_kind: "manual",
+          source_bank_transaction_id: null,
+          is_sample_data: body.data.is_sample_data === true,
         },
-        "info",
-        "P6-T11204-PAYMENTS"
-      );
-
-      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in a SEPARATE
-      // withCompanyScope transaction opened AFTER this one had already committed, with a bare
-      // .catch(warn) — a real emit failure was silently swallowed (the payment exists, the audit
-      // trail doesn't). Moved into the payment's own creation transaction, awaited, so the write and
-      // its spine event can never diverge.
-      await emitAccountingSpineEvent(client, {
-        operating_company_id: query.data.operating_company_id,
-        actor_user_id: String(user.uuid),
-        event_type: "payment.customer_created",
-        entity_id: payment.id,
-        entity_type: "customer_payment",
-        source_table: "accounting.payments",
+        requested_display_id: body.data.display_id,
+        applications: body.data.applications.map((a) => ({ invoice_id: a.invoice_id, amount_cents: a.amount_cents })),
+        validate_application: async (applyRow) => {
+          const invoiceRes = await client.query(
+            `
+              SELECT id, amount_open_cents, status
+              FROM accounting.invoices
+              WHERE id = $1
+                AND operating_company_id = $2::uuid
+                AND customer_id = $3
+              LIMIT 1
+            `,
+            [applyRow.invoice_id, query.data.operating_company_id, params.data.id]
+          );
+          const invoice = invoiceRes.rows[0] as { id: string; amount_open_cents: number; status: string } | null;
+          if (!invoice) return { code: 404 as const, error: "invoice_not_found_for_customer" };
+          if (!["sent", "partial"].includes(String(invoice.status))) return { code: 409 as const, error: "invoice_not_open_for_payment" };
+          // ACCT-F5633 — amount_open_cents (a GENERATED column) has no knowledge of non-voided credit-memo applications;
+          // net them off the same way credit-memos.routes.ts and ar-aging.service.ts (ACCT-F5612) do.
+          const appliedCreditMemoCents = await getAppliedCreditMemoCents(client, query.data.operating_company_id, invoice.id);
+          const invoiceRemainingCents = Number(invoice.amount_open_cents ?? 0) - appliedCreditMemoCents;
+          if (Number(applyRow.amount_cents) > invoiceRemainingCents) return { code: 400 as const, error: "apply_amount_exceeds_invoice_open" };
+          // LEAD 443.171 C — on a factored invoice only the NON-purchased part is payable to IH35 directly (one definition).
+          if (Number(applyRow.amount_cents) > (await directPaymentRoomCents(client as never, query.data.operating_company_id, invoice.id, invoiceRemainingCents))) {
+            return { code: 400 as const, error: "apply_amount_exceeds_non_purchased_portion" };
+          }
+          return null;
+        },
+        before_audit: (paymentId) =>
+          enqueueAccountingOutbox(client, query.data.operating_company_id, "qbo.customer_payment.created", "customer_payment", paymentId, {
+            payment_id: paymentId,
+            customer_id: params.data.id,
+            amount_cents: body.data.amount_cents,
+            payment_date: body.data.received_at,
+          }).then(() => undefined),
+        // CLS-SUBLEDGER-GL-DARK / ACCT-F150 + ACCT-F5705 — every payment posts (or is skip-audited), ungated by application
+        // count; the engine does it on this client so payment, applications and JE are one unit.
+        skip_context: { route: "POST /api/v1/customers/:id/payments" },
+        audit: { action: "accounting.customer_payment.created.p6_t11204", module: "P6-T11204-PAYMENTS" },
+        spine: { event_type: "payment.customer_created", entity_type: "customer_payment" },
       });
-
-      return {
-        code: 201 as const,
-        data: {
-          id: payment.id,
-          display_id: payment.display_id,
-          amount_unapplied_cents: Number(refreshed.amount_unapplied_cents ?? 0),
-          applications_count: applicationsCount,
-        },
-      };
     });
     } catch (error) {
       if (error instanceof DuplicateDocumentNumberError) {
