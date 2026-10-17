@@ -1,11 +1,11 @@
 {
  "date": "2026-10-17",
- "generated_at_iso": "2026-10-17T01:00:31.642Z",
+ "generated_at_iso": "2026-10-17T06:42:45.045Z",
  "counts": {
-  "PENDING": 17,
+  "PENDING": 18,
   "PENDING (GATED)": 31,
-  "NEEDS-VERIFY": 70,
-  "DONE": 549,
+  "NEEDS-VERIFY": 72,
+  "DONE": 546,
   "AUDIT-NOTE": 579
  },
  "universe": {
@@ -233,6 +233,17 @@
    "name": "",
    "registered_on": null,
    "pr": 1682
+  },
+  {
+   "id": "ACCT-QBOPAR-02",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "0/17 signature file(s) on main",
+   "name": "Shared ListView component (universal list behaviors): reusable table with sort, filter, gear, pagination, drag-reorder, ",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "AF-8-payroll-bridge",
@@ -768,6 +779,17 @@
    "pr": null
   },
   {
+   "id": "ACCT-QBOPAR-03",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "4/6 signature file(s) on main — partial, unverified",
+   "name": "Chart of Accounts list on ListView: QBO-parity columns, balances, hierarchy, batch archive/merge, gear/filter/export.",
+   "registered_on": null,
+   "pr": null
+  },
+  {
    "id": "BLOCK-02-DRIVER-ESCROW-DESIGN",
    "source": ".block-ready",
    "fin": true,
@@ -849,10 +871,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 cross-check signal for Codex/Cursor: ran verify-codex-vertical-nonmoney-zero-remainder.mjs directly, confirming rem",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-claim-reports-0223",
@@ -860,10 +882,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 claims POST-U14 leftover sequence order 5 (REPORTS, /reports) after driver-hub's unique-FINDING hunting came up emp",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-codex-progress-check-fleet-sweep-0223",
@@ -871,10 +893,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 confirms Codex is actively progressing (DRV-F6246-53 series, commit-message status not OUTBOX-CODEX.md) and reports",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-customers-reverse-proof-0223",
@@ -882,10 +904,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=customers reverse SQL/GET hops (per U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md). Live SQL ",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-dot-inspection-test-fixture-void-0223",
@@ -893,10 +915,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: found and voided a stray test-fixture row (safety.dot_inspections) live in the DOT audit ",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-driver-hub-chrome-law-note-0223",
@@ -904,10 +926,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep session close-out status: 3 PRs merged this leg (label-leak fix, sample-data-fixture-",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-driver-hub-chrome-law-pass2-0223",
@@ -915,10 +937,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: second chrome-law live pass. Leave Requests Range filter honest-empty state + Reset/Ca",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-driver-hub-create-void-verified-0223",
@@ -926,10 +948,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: live CREATE-TEST-THEN-VOID verification of the Assign Temp Cover control on production",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-driver-hub-postdeploy-confirm-0223",
@@ -937,10 +959,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: post-deploy live re-check confirms LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK's fix (#14",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-driver-hub-responsive-checked-0223",
@@ -948,10 +970,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: responsive-overflow check clean (Driver Scheduler + Reporting, ~500px viewport, 0 hori",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-driver-hub-row3-done-0223",
@@ -959,10 +981,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 3 (DRIVER HUB) DONE with full close-out summary, correcting stale claim-only text so th",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-driver-hub-sweep-status-0223",
@@ -970,10 +992,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep progress status. Documents that Overview/Driver Scheduler/Leave Requests tabs plus th",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-drivers-fleet-reverse-proof-0223",
@@ -981,10 +1003,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=drivers and MODULE=fleet reverse SQL/GET hops. Live SQL proof of forward+reverse FK chains f",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-mdata-reverse-sweep-0223b",
@@ -992,10 +1014,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). This pass",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-mdata-sweep-clean-0223c",
@@ -1003,10 +1025,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY). This pass swept clean acr",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-reports-full-category-sweep-0223",
@@ -1014,10 +1036,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg session close-out: all 9 report categories walked, 8 reports run live, all genuinely wired",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-reports-progress-status-0223",
@@ -1025,10 +1047,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg progress status: IFTA Quarterly Preparer entry confirmed real and correctly wired; Generat",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-reports-row-done-0223",
@@ -1036,10 +1058,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 5 (REPORTS) DONE, matching CC-3's table-exhausted close-out. Returning full attention t",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-reports-sweep2-clean-0223",
@@ -1047,10 +1069,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: Fleet utilization and Internal inspection-point rollup reports spot-checked live, both cl",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-sql-proof-rls-discriminator-0223",
@@ -1058,10 +1080,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #26854 title-match only, unverified",
+   "evidence": "PR #26910 title-match only, unverified",
    "name": "CC-2 delivers a hop-10 (RLS + completeness discriminator) SQL proof for Codex's MODULE=drivers and MODULE=fleet CERTIFIE",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc2-ack-go-0105-r1-guard-money-h4-after-live",
@@ -1333,6 +1355,17 @@
    "status": "NEEDS-VERIFY",
    "evidence": "27/29 signature file(s) on main — partial, unverified",
    "name": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCrea",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "GAP-91-MOBILE-RESPONSIVE-AUDIT",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "6/8 signature file(s) on main — partial, unverified",
+   "name": "Mobile responsive audit + PWA touch UI polish",
    "registered_on": null,
    "pr": null
   },
@@ -1993,28 +2026,6 @@
    "status": "DONE",
    "evidence": "all 16 file(s) on main",
    "name": "QBO-parity account type & detail type catalog: migration + seed (15 types / 5 groups) + GET /api/v1/accounting/account-t",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "ACCT-QBOPAR-02",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "all 17 file(s) on main",
-   "name": "Shared ListView component (universal list behaviors): reusable table with sort, filter, gear, pagination, drag-reorder, ",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "ACCT-QBOPAR-03",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "all 6 file(s) on main",
-   "name": "Chart of Accounts list on ListView: QBO-parity columns, balances, hierarchy, batch archive/merge, gear/filter/export.",
    "registered_on": null,
    "pr": null
   },
@@ -3072,7 +3083,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired 1-12 Live Chrome leftover (POST-URGENT-14 sequence order 3), triggered by an empty unique-F",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-driver-list-sample-data-exclusion-0223",
@@ -3083,7 +3094,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired leg, CREATE-flow probe on Assign Temp Cover found other seats' test/QA fixture units and dr",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-help-codex-certify-cdf-0223",
@@ -3094,7 +3105,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "CC-2 mdata reverse SQL/GET hunt on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). Found + root-caused + f",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "cc-2-reports-required-filter-indicator-0223",
@@ -3105,7 +3116,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /reports Fully-Wired leg. Live probe on driver-pay-history found Run report silently disabled with zero visual expl",
    "registered_on": null,
-   "pr": 26854
+   "pr": 26910
   },
   {
    "id": "CC1-FINANCE-SETTLEMENTS-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16",
@@ -4549,7 +4560,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "11-insurance G11-1 (LINKAGE half only) — insurance.claim had NO forward link to the accident it arose from, the load inv",
    "registered_on": null,
-   "pr": 26764
+   "pr": 26888
   },
   {
    "id": "G2-verify-block-acceptance",
@@ -5614,17 +5625,6 @@
    "status": "DONE",
    "evidence": "all 13 file(s) on main",
    "name": "Universal Cmd-K quick switcher search",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "GAP-91-MOBILE-RESPONSIVE-AUDIT",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "DONE",
-   "evidence": "all 8 file(s) on main",
-   "name": "Mobile responsive audit + PWA touch UI polish",
    "registered_on": null,
    "pr": null
   },
@@ -13738,6 +13738,360 @@
  ],
  "merged_prs": [
   {
+   "number": 26914,
+   "title": "FINDING: N/A (CLAIM migration 202616010400 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T06:17:59Z",
+   "branch": "chore/claim-migration-202616010400"
+  },
+  {
+   "number": 26913,
+   "title": "FINDING: N/A (CLAIM migration 202616011100 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T06:11:48Z",
+   "branch": "chore/claim-migration-202616011100"
+  },
+  {
+   "number": 26912,
+   "title": "FINDING: N/A (CLAIM-RESERVE 18573 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T06:11:45Z",
+   "branch": "chore/claim-reserve-18573"
+  },
+  {
+   "number": 26911,
+   "title": "FINDING: ACCT-F4431873 LANE: FINANCIAL — Claude-3- 443.187 econ-proofs R1 discriminator derived from data (no frozen 2214) + C30 active-only duplicates / partia",
+   "mergedAt": "2026-10-17T06:15:41Z",
+   "branch": "claude/cc3-443-187-econ"
+  },
+  {
+   "number": 26910,
+   "title": "CC-2- 443.189 related-party accounts: parent by role, child prefix from the parent's number (no literal 2410)",
+   "mergedAt": "2026-10-17T06:04:19Z",
+   "branch": "cc-2/443-189-party-account-role-v2"
+  },
+  {
+   "number": 26909,
+   "title": "FINDING: ACCT-F4431872 LANE: FINANCIAL — Claude-3- 443.187 rulings (06:55Z): settlement header deductions are TRUE (lines + advance repaid on the GL), owner-rul",
+   "mergedAt": "2026-10-17T06:15:37Z",
+   "branch": "claude/cc3-443-187-rulings"
+  },
+  {
+   "number": 26908,
+   "title": "FINDING: N/A (CLAIM migrations 202616010900 202616011000 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T05:36:24Z",
+   "branch": "chore/claim-migration-202616010900-cc3-roles-deductions"
+  },
+  {
+   "number": 26907,
+   "title": "FINDING: ACCT-F4431871 LANE: FINANCIAL — Claude-3- 443.187 IFTA diesel rates Q1–Q3 2026 from the official IFTA quarterly charts (Q3 was missing → the Q3 return ",
+   "mergedAt": "2026-10-17T05:54:01Z",
+   "branch": "claude/cc3-443-187-ifta-rates"
+  },
+  {
+   "number": 26906,
+   "title": "FINDING: ACCT-F4431870 LANE: FINANCIAL — Claude-3- 443.187 rows 49–96: 28 never-run guards GREEN + wired (5 real defects fixed, 23 repointed with the commit tha",
+   "mergedAt": "2026-10-17T05:54:26Z",
+   "branch": "claude/cc3-443-187-never-run-guards"
+  },
+  {
+   "number": 26905,
+   "title": "CC-2- 443.187 batch 3: 12 never-run guards green + wired; reassign gate, audit cap, pay-rate disclosure (18575)",
+   "mergedAt": "2026-10-17T05:29:03Z",
+   "branch": "cc-2/443-187-b3"
+  },
+  {
+   "number": 26904,
+   "title": "FINDING: N/A — docs/bus rotation: 15 hot bus files over the BUS-DIET caps archived (verify-bus-diet-outbox-cap RED → GREEN)",
+   "mergedAt": "2026-10-17T05:07:33Z",
+   "branch": "claude/443-190-bus-rotation"
+  },
+  {
+   "number": 26903,
+   "title": "FINDING: N/A (CLAIM migration 202616010300 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T05:06:27Z",
+   "branch": "chore/claim-migration-202616010300-cc3-schema-grants"
+  },
+  {
+   "number": 26902,
+   "title": "FINDING: ACCT-F443189 — the related-party parent (2410) had no CoA role, so party-account.service.ts could only find it by hard-coded account number",
+   "mergedAt": "2026-10-17T05:29:17Z",
+   "branch": "claude/443-189-related-party-parent-role"
+  },
+  {
+   "number": 26901,
+   "title": "CC-2- URGENT restore: #26879 payments engine + #26884 443.186 reverted on main by #26889",
+   "mergedAt": "2026-10-17T05:17:07Z",
+   "branch": "cc-2/restore-26879-26884"
+  },
+  {
+   "number": 26900,
+   "title": "FINDING: N/A (CLAIM migration 202616010100 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T05:00:07Z",
+   "branch": "claude/443-189-claim-migration"
+  },
+  {
+   "number": 26899,
+   "title": "FINDING: ACCT-F443188 — main red: verify-no-test-seed-in-prod-listings asserted the QBO-mirror constant on a route that now reads mdata.customers, and that rout",
+   "mergedAt": "2026-10-17T05:54:21Z",
+   "branch": "claude/443-188-customers-list-hides-test-seed"
+  },
+  {
+   "number": 26898,
+   "title": "FINDING: ACCT-F4431841 LANE: NON-FINANCIAL — Claude-3- 443.184 stop-event load status (at_pickup / at_delivery / in_transit / delivered) written only by the sta",
+   "mergedAt": "2026-10-17T05:06:45Z",
+   "branch": "claude/cc3-443-184-stop-substatus-engine"
+  },
+  {
+   "number": 26897,
+   "title": "CC-2- 443.187 batch 4: 10 never-run guards green + wired; 3 posters by role, not number (18579)",
+   "mergedAt": "2026-10-17T05:29:36Z",
+   "branch": "cc-2/443-187-b4"
+  },
+  {
+   "number": 26896,
+   "title": "CC-2- 443.187 batch 1: 11 never-run guards green + wired (5 UI error defects fixed) (18567)",
+   "mergedAt": "2026-10-17T05:07:44Z",
+   "branch": "cc-2/443-187-b1"
+  },
+  {
+   "number": 26895,
+   "title": "CC-2- 443.187 batch 2: 12 never-run dispatch guards repointed + wired (18571)",
+   "mergedAt": "2026-10-17T05:07:52Z",
+   "branch": "cc-2/443-187-b2"
+  },
+  {
+   "number": 26894,
+   "title": "FINDING: N/A (CLAIM-RESERVE 18569 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T04:44:52Z",
+   "branch": "chore/claim-reserve-cc3-18569"
+  },
+  {
+   "number": 26893,
+   "title": "FINDING: ACCT-F4431842 LANE: FINANCIAL — Claude-3- 443.184 bill provenance: the Settlement Creator owed-bill evidence rule (bill 13670-9, Lead 05:05Z)",
+   "mergedAt": "2026-10-17T04:56:22Z",
+   "branch": "claude/cc3-443-184-bill-creator-evidence"
+  },
+  {
+   "number": 26892,
+   "title": "CC-2-CLAIM-RESERVE: 18567 18571 18575 18579 for 443.187",
+   "mergedAt": "2026-10-17T04:37:43Z",
+   "branch": "chore/claim-reserve-cc2-443187"
+  },
+  {
+   "number": 26891,
+   "title": "FINDING: ACCT-F4431843 LANE: NON-FINANCIAL — Claude-3- 443.184 guards that never run: 367 GREEN guards wired into CI (verify-step 18565) + unwired register shri",
+   "mergedAt": "2026-10-17T04:41:25Z",
+   "branch": "claude/cc3-443-184-wire-guards"
+  },
+  {
+   "number": 26890,
+   "title": "FINDING: ACCT-F4431842 LANE: FINANCIAL — Claude-3- 443.184 bill provenance: every bill writer names itself (bills.source, refused at the one header INSERT) + ev",
+   "mergedAt": "2026-10-17T04:41:18Z",
+   "branch": "claude/cc3-443-184-bill-provenance"
+  },
+  {
+   "number": 26889,
+   "title": "Claude-1-443.182 B: CoA frozen-entity asymmetry panel — USMCA-centric (443.159 part 2)",
+   "mergedAt": "2026-10-17T04:35:40Z",
+   "branch": "cc-1/443-182-b-coa-panels"
+  },
+  {
+   "number": 26888,
+   "title": "FINDING: ACCT-F4431841 LANE: NON-FINANCIAL — Claude-3- 443.184 G11 fence evidence keeps real stamps: arrival never fakes a departure; replace-stops geocodes bef",
+   "mergedAt": "2026-10-17T04:35:48Z",
+   "branch": "claude/cc3-443-184-g11-geofence"
+  },
+  {
+   "number": 26887,
+   "title": "FINDING: ACCT-F4431840 LANE: FINANCIAL — Claude-3- 443.184 G15 a lumper advance posts as the load's lumper expense on every disburse path (no HOLD, no silent sk",
+   "mergedAt": "2026-10-17T04:35:57Z",
+   "branch": "claude/cc3-443-184-g15-lumper"
+  },
+  {
+   "number": 26886,
+   "title": "FINDING: N/A (CLAIM-RESERVE 18553 18557 18561 18565 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T04:10:27Z",
+   "branch": "chore/claim-reserve-cc3-18553-18565"
+  },
+  {
+   "number": 26885,
+   "title": "CC-2- 443.182 C expenses: last 7 files on the one engine (expense_engine baseline {})",
+   "mergedAt": "2026-10-17T05:30:03Z",
+   "branch": "cc-2/443-182c-expenses-rest"
+  },
+  {
+   "number": 26884,
+   "title": "FINDING: ACCT-F4431860 LANE: FINANCIAL — Claude-3- 443.186 expense lines complete at the one line writer: WO line account from its item, lumper split item, seed",
+   "mergedAt": "2026-10-17T04:01:21Z",
+   "branch": "claude/cc3-443-186-expense-line-writers"
+  },
+  {
+   "number": 26883,
+   "title": "CC-2- 443.182 C bills + bill payments step 2: one deep bill engine (JE-shape diff empty)",
+   "mergedAt": "2026-10-17T03:45:16Z",
+   "branch": "cc-2/443-182c-deep-bills"
+  },
+  {
+   "number": 26882,
+   "title": "FINDING: N/A (CLAIM-RESERVE 18549 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T03:34:07Z",
+   "branch": "chore/claim-reserve-cc3-18549"
+  },
+  {
+   "number": 26880,
+   "title": "FINDING: ACCT-F4431850 LANE: FINANCIAL — Claude-3- 443.185 G7 one fuel-to-load rule (trailer included) + G8 factoring advance lines carry the factor + their loa",
+   "mergedAt": "2026-10-17T03:31:10Z",
+   "branch": "claude/cc3-443-185-fuel-load-g7-g8-g12"
+  },
+  {
+   "number": 26879,
+   "title": "CC-2- 443.182 C payments step 2: one deep payment engine (JE-shape diff empty)",
+   "mergedAt": "2026-10-17T04:05:17Z",
+   "branch": "cc-2/443-182c-deep-payments"
+  },
+  {
+   "number": 26878,
+   "title": "FINDING: N/A (CLAIM-RESERVE 18537 18541 18545 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T02:57:33Z",
+   "branch": "chore/claim-reserve-cc3-18537-18545"
+  },
+  {
+   "number": 26877,
+   "title": "FINDING: ACCT-F4431810 LANE: NON-FINANCIAL — Claude-3- 443.181 guard 18533: one table component app-wide (allowlist = exemptions only, shrink-only)",
+   "mergedAt": "2026-10-17T03:30:09Z",
+   "branch": "claude/cc3-443-181-one-table"
+  },
+  {
+   "number": 26876,
+   "title": "CC-2- 443.182 C expenses: one header + one line insert (18481 expenses 13 → 1)",
+   "mergedAt": "2026-10-17T03:25:17Z",
+   "branch": "cc-2/443-182c-expenses"
+  },
+  {
+   "number": 26875,
+   "title": "CC-2- 443.182 C bill_payments: one row writer (18481 bill_payments 9 → 1)",
+   "mergedAt": "2026-10-17T03:02:42Z",
+   "branch": "cc-2/443-182c-billpay"
+  },
+  {
+   "number": 26874,
+   "title": "CC-2- 443.182 C payments: one writer (18481 payments 2 → 1)",
+   "mergedAt": "2026-10-17T02:45:02Z",
+   "branch": "cc-2/443-182c-payments"
+  },
+  {
+   "number": 26873,
+   "title": "CC-2- 443.182 C bills: one header writer (18481 bills 11 → 1)",
+   "mergedAt": "2026-10-17T02:44:51Z",
+   "branch": "cc-2/443-182c-bills"
+  },
+  {
+   "number": 26872,
+   "title": "CC-2- 443.183 G6: bank line on a load takes unit/driver/trailer from the load",
+   "mergedAt": "2026-10-17T02:19:38Z",
+   "branch": "cc-2/443-183-g6"
+  },
+  {
+   "number": 26871,
+   "title": "Claude-1-443.182-A catalog one-source consolidation",
+   "mergedAt": "2026-10-17T02:55:13Z",
+   "branch": "cc-1/443-182-a-catalog-one-source"
+  },
+  {
+   "number": 26870,
+   "title": "FINDING: ACCT-F4431810 LANE: NON-FINANCIAL — Claude-3- 443.181 one table component: FleetTable and the Chart of Accounts on ParityTable; ListView engine retired",
+   "mergedAt": "2026-10-17T02:56:07Z",
+   "branch": "claude/cc3-443-181-fleetcoa"
+  },
+  {
+   "number": 26869,
+   "title": "FINDING: ACCT-F4431810 LANE: NON-FINANCIAL — Claude-3- 443.181 one table component: ResizableTable + MobileOptimizedTable retired; ValidationPanel + Observabili",
+   "mergedAt": "2026-10-17T02:24:49Z",
+   "branch": "claude/cc3-443-181-shared"
+  },
+  {
+   "number": 26868,
+   "title": "FINDING: ACCT-F4431810 LANE: NON-FINANCIAL — Claude-3- 443.181 one table component: 13 DataTable panels/pages onto ParityTable",
+   "mergedAt": "2026-10-17T02:09:46Z",
+   "branch": "claude/cc3-443-181-dtable"
+  },
+  {
+   "number": 26867,
+   "title": "FINDING: ACCT-F4431810 LANE: NON-FINANCIAL — Claude-3- 443.181 one table component: financial reports on ParityTable (12 tables)",
+   "mergedAt": "2026-10-17T02:09:54Z",
+   "branch": "claude/cc3-443-181-reports"
+  },
+  {
+   "number": 26866,
+   "title": "CC-2- 443.183 G10 ALREADY DONE — guard 18547",
+   "mergedAt": "2026-10-17T01:58:52Z",
+   "branch": "cc-2/443-183-g10"
+  },
+  {
+   "number": 26865,
+   "title": "CC-2- 443.183 G9: Creator overflow loan kept and reversed on Edit (unit/trailer already done)",
+   "mergedAt": "2026-10-17T01:59:00Z",
+   "branch": "cc-2/443-183-g9"
+  },
+  {
+   "number": 26864,
+   "title": "FINDING: ACCT-F4431810 LANE: NON-FINANCIAL — Claude-3- 443.181 one table component: 13 catalog list pages off DataTable onto ParityTable",
+   "mergedAt": "2026-10-17T02:10:01Z",
+   "branch": "claude/cc3-443-181-lists"
+  },
+  {
+   "number": 26863,
+   "title": "FINDING: ACCT-F4431810 LANE: NON-FINANCIAL — Claude-3- 443.181 one table component: program screens on ParityTable (11 tables)",
+   "mergedAt": "2026-10-17T01:55:51Z",
+   "branch": "claude/cc3-443-181-program"
+  },
+  {
+   "number": 26862,
+   "title": "CC-2- 443.183 Creator G3/G4/G5/G13/G14 ALREADY DONE — guard 18535 + G13 guard fixed",
+   "mergedAt": "2026-10-17T01:59:08Z",
+   "branch": "cc-2/443-183-creator"
+  },
+  {
+   "number": 26861,
+   "title": "CC-2-CLAIM-RESERVE: 18535 18539 18543 18547 for 443.183",
+   "mergedAt": "2026-10-17T01:28:44Z",
+   "branch": "chore/claim-reserve-cc2-443183"
+  },
+  {
+   "number": 26860,
+   "title": "CC-2- 443.174 Accounting list pages titled (CC-1, Lead ruling 01:32Z)",
+   "mergedAt": "2026-10-17T01:40:01Z",
+   "branch": "cc-2/443-174-lists-accounting-titles"
+  },
+  {
+   "number": 26859,
+   "title": "FINDING: N/A (CLAIM-RESERVE 18533 -- reservation-only commit, no code fix)",
+   "mergedAt": "2026-10-17T01:23:38Z",
+   "branch": "chore/claim-reserve-cc3-18533"
+  },
+  {
+   "number": 26858,
+   "title": "CC-2- 443.174 Vendors list titled",
+   "mergedAt": "2026-10-17T01:25:51Z",
+   "branch": "cc-2/443-174-vendors-list-title"
+  },
+  {
+   "number": 26857,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-17T01:01:02Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 26856,
+   "title": "FINDING: ACCT-F443180 — clicking a purchase row on the Purchase report did not open the purchase; rows app-wide only opened from the underlined number",
+   "mergedAt": "2026-10-17T01:02:37Z",
+   "branch": "claude/443-180-purchase-row-opens-purchase"
+  },
+  {
+   "number": 26855,
+   "title": "CC-2- 443.174 Safety: every section titled",
+   "mergedAt": "2026-10-17T01:04:32Z",
+   "branch": "cc-2/443-174-section-titles-safety"
+  },
+  {
    "number": 26854,
    "title": "CC-2- 443.174 Lists + Reports: every section titled, notices behind an info button",
    "mergedAt": "2026-10-17T00:50:42Z",
@@ -16982,364 +17336,16 @@
    "title": "Claude-3- regenerate program scoreboard (84 behind, gates blocked on freshness)",
    "mergedAt": "2026-10-11T06:56:07Z",
    "branch": "cc-3/scoreboard-regen-20261011"
-  },
-  {
-   "number": 26297,
-   "title": "Claude-3- 443.42: Settlement Creator salaried path (5780/5816) + splits guard ties reimbursements",
-   "mergedAt": "2026-10-11T07:26:42Z",
-   "branch": "cc-3/443-42-creator-salaried"
-  },
-  {
-   "number": 26296,
-   "title": "CC-2-docs(bus): AUTH-412 re-consumed after the tail run",
-   "mergedAt": "2026-10-11T06:49:48Z",
-   "branch": "cc-2/auth412-reconsumed"
-  },
-  {
-   "number": 26295,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-11T06:49:38Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 26294,
-   "title": "CC-2-docs(bus): AUTH-412 reopened for the tail run",
-   "mergedAt": "2026-10-11T06:47:23Z",
-   "branch": "cc-2/auth412-reopen-tail"
-  },
-  {
-   "number": 26293,
-   "title": "CC-2-443.41: a Creator (historical_backfill) booking sends nothing — no packet, email, driver notice or Samsara fence; no fence around a zip center",
-   "mergedAt": "2026-10-11T06:47:29Z",
-   "branch": "cc-2/backfill-no-live-side-effects"
-  },
-  {
-   "number": 26292,
-   "title": "CC-2-docs(bus): AUTH-412 CONSUMED",
-   "mergedAt": "2026-10-11T06:46:36Z",
-   "branch": "cc-2/auth412-consumed"
-  },
-  {
-   "number": 26291,
-   "title": "CC-2-443.41 G(2): first-stop deadhead computed from the unit's previous load",
-   "mergedAt": "2026-10-11T06:43:59Z",
-   "branch": "cc-2/computed-deadhead"
-  },
-  {
-   "number": 26290,
-   "title": "Claude-1-443.37: settlement_id stamp on bill JE postings + driver escrow backfill seed (443.41-E)",
-   "mergedAt": "2026-10-11T08:52:25Z",
-   "branch": "cc-1/settle-je-settlement-id-link"
-  },
-  {
-   "number": 26289,
-   "title": "Claude-1-chore: claim migration 202615510300 + verify-step 18393 (settle-je settlement_id link)",
-   "mergedAt": "2026-10-11T08:51:43Z",
-   "branch": "chore/claim-reserve-18393-settle-je-link"
-  },
-  {
-   "number": 26288,
-   "title": "CC-2-443.38: stops resolve to the owner's Samsara address; no zip-center fence; no false rooftop",
-   "mergedAt": "2026-10-11T06:13:54Z",
-   "branch": "cc-2/stop-resolution"
-  },
-  {
-   "number": 26287,
-   "title": "Claude-3- 443.40: relay_deposit exempt only when it resolves to its integrations.relay_deposits row",
-   "mergedAt": "2026-10-11T06:41:16Z",
-   "branch": "cc-3/443-40b-relay-deposit-resolves"
-  },
-  {
-   "number": 26286,
-   "title": "CC-2-5785: advance-balance view counted each posting once per bridge row (advance recovered 4x)",
-   "mergedAt": "2026-10-11T06:11:57Z",
-   "branch": "cc-2/advance-once-5785"
-  },
-  {
-   "number": 26285,
-   "title": "CC-2-docs(bus): AUTH-408 CONSUMED",
-   "mergedAt": "2026-10-11T06:08:48Z",
-   "branch": "cc-2/auth408-consumed"
-  },
-  {
-   "number": 26284,
-   "title": "CC-2-verify-booked-loads-save-miles exits after its verdict",
-   "mergedAt": "2026-10-11T06:07:55Z",
-   "branch": "cc-2/guard-exit"
-  },
-  {
-   "number": 26282,
-   "title": "CC-2-D6 (a) fill-once: Creator postings get their entity; guard aligned with the DB trigger",
-   "mergedAt": "2026-10-11T05:59:42Z",
-   "branch": "cc-2/d6-fill-once"
-  },
-  {
-   "number": 26281,
-   "title": "CC-2-AUTH-408 runner: repo root path",
-   "mergedAt": "2026-10-11T05:53:03Z",
-   "branch": "cc-2/auth408-root-path"
-  },
-  {
-   "number": 26280,
-   "title": "CC-2-443.35: every booked load saves leg_miles, lane_mileage, point_mileage, customer_lanes",
-   "mergedAt": "2026-10-11T05:49:55Z",
-   "branch": "cc-2/booking-saves-miles"
-  },
-  {
-   "number": 26279,
-   "title": "Claude-3- 443.43 handwritten-JE guard: Relay deposits are a document engine (29 → 3)",
-   "mergedAt": "2026-10-11T05:48:23Z",
-   "branch": "cc-3/443-43-guard-exempt-relay-sources"
-  },
-  {
-   "number": 26278,
-   "title": "CC-2-Samsara address mirror refreshes on a schedule (froze at 2026-10-01)",
-   "mergedAt": "2026-10-11T05:39:54Z",
-   "branch": "cc-2/samsara-address-sync"
-  },
-  {
-   "number": 26277,
-   "title": "CC-2-CLAIM-RESERVE migration 202615500300 (5785 advance-balance view)",
-   "mergedAt": "2026-10-11T05:38:42Z",
-   "branch": "chore/claim-reserve-mig-202615500300"
-  },
-  {
-   "number": 26276,
-   "title": "CC-2-salaried week (rate 0 + Salaried reason) mints no per-load driver bill",
-   "mergedAt": "2026-10-11T05:38:33Z",
-   "branch": "cc-2/salaried-zero-override"
-  },
-  {
-   "number": 26275,
-   "title": "Claude-3- 443.41 Creator preview lists every refusal in one pass (preflight)",
-   "mergedAt": "2026-10-11T05:38:16Z",
-   "branch": "cc-3/443-41-creator-preflight-all-refusals"
-  },
-  {
-   "number": 26274,
-   "title": "CC-2-docs(bus): AUTH-405 CONSUMED",
-   "mergedAt": "2026-10-11T05:12:55Z",
-   "branch": "cc-2/auth405-consumed"
-  },
-  {
-   "number": 26273,
-   "title": "CC-2-AUTH-405: Relay deposits post through the import route; already-categorized bank charge HOLDS",
-   "mergedAt": "2026-10-11T05:06:13Z",
-   "branch": "cc-2/auth405-relay-deposits"
-  },
-  {
-   "number": 26272,
-   "title": "Claude-3- 443.40 Creator books its past loads as historical_backfill",
-   "mergedAt": "2026-10-11T04:56:04Z",
-   "branch": "cc-3/443-40-creator-books-historical"
-  },
-  {
-   "number": 26271,
-   "title": "CC-2-bookLoadOnClient takes the declared load source (Creator loads book as historical_backfill)",
-   "mergedAt": "2026-10-11T04:53:29Z",
-   "branch": "cc-2/bookload-source-opt"
-  },
-  {
-   "number": 26270,
-   "title": "Claude-3- 443.39 Creator Relay fills post through their fill (5772)",
-   "mergedAt": "2026-10-11T04:43:27Z",
-   "branch": "cc-3/443-39-relay-row-takes-fill-path"
-  },
-  {
-   "number": 26269,
-   "title": "CC-2-D6: every Creator posting carries its entity; audit pay = miles_shortest x rate + that load's extras",
-   "mergedAt": "2026-10-11T04:38:41Z",
-   "branch": "cc-2/d6-posting-entity"
-  },
-  {
-   "number": 26268,
-   "title": "Claude-3- 443.38 Creator expenses carry settlement_no (+ one-shot for the 7 posted)",
-   "mergedAt": "2026-10-11T04:19:06Z",
-   "branch": "cc-3/443-38-expense-settlement-no"
-  },
-  {
-   "number": 26267,
-   "title": "CC-2-historical advance credits 2170 Driver Net-Pay Clearing (1090 cannot hold a credit); 5775/5778 net = TOTAL DUE on a COMMITTED fork",
-   "mergedAt": "2026-10-11T04:00:22Z",
-   "branch": "cc-2/advance-credit-net-pay-clearing"
-  },
-  {
-   "number": 26266,
-   "title": "Claude-1-ROUND-443.36: relay-linked Creator fuel row posts through its fill (ACCT-F44335)",
-   "mergedAt": "2026-10-11T03:47:06Z",
-   "branch": "cc-1/r44335-relay-fill-posting-through-creator"
-  },
-  {
-   "number": 26265,
-   "title": "Claude-3- 443.37 Creator: Edit adopts prior loads (5769 repair), NB starts a new tour, Relay fills link to their Relay txn",
-   "mergedAt": "2026-10-11T03:34:17Z",
-   "branch": "cc-3/443-37-edit-adopts-prior-loads"
-  },
-  {
-   "number": 26264,
-   "title": "CC-2-register verify-step 12451 (advance bill-payment guard)",
-   "mergedAt": "2026-10-11T03:30:34Z",
-   "branch": "cc-2/register-step-12451"
-  },
-  {
-   "number": 26263,
-   "title": "CC-2-CLAIM-RESERVE 12451 (advance bill-payment guard)",
-   "mergedAt": "2026-10-11T03:30:14Z",
-   "branch": "cc-2/claim-reserve-12451"
-  },
-  {
-   "number": 26262,
-   "title": "CC-2-Advance = bill payment on its day's load (existing B5) + Option 1 disbursement to 1090 Undeposited Funds; 5775/5778 net = TOTAL DUE",
-   "mergedAt": "2026-10-11T03:29:35Z",
-   "branch": "cc-2/creator-advance-bill-payment"
-  },
-  {
-   "number": 26261,
-   "title": "Claude-1-ROUND-443.35: audit-creator-settlement.mjs — read-only audit script for Settlement Creator posts",
-   "mergedAt": "2026-10-11T03:17:13Z",
-   "branch": "cc-1/r44335-audit-creator-settlement"
-  },
-  {
-   "number": 26260,
-   "title": "Cursor-OUTBOX: ROUND 443.22-2f Option 2 + paid_direct export MERGED",
-   "mergedAt": "2026-10-11T03:06:16Z",
-   "branch": "cursor/outbox-f44322-2f-merged-c89b"
-  },
-  {
-   "number": 26259,
-   "title": "Cursor-FINDING: ACCT-F44322-2f-OPT2 — Scentsx Option 2 RPL backfill via engine",
-   "mergedAt": "2026-10-11T03:05:13Z",
-   "branch": "cursor/r44322-2f-scentsx-backfill-c89b"
-  },
-  {
-   "number": 26258,
-   "title": "Cursor-CLAIM-RESERVE 18374 — Scentsx Option 2 backfill guard",
-   "mergedAt": "2026-10-11T02:51:52Z",
-   "branch": "cursor/claim-reserve-18374-c89b"
-  },
-  {
-   "number": 26257,
-   "title": "Cursor- ACCT-F44322-2e-EXPORT — paid_direct_vendor writer callable for CC-2 Relay cards",
-   "mergedAt": "2026-10-11T02:42:44Z",
-   "branch": "cursor/r44322-2e-paid-direct-export-c89b"
-  },
-  {
-   "number": 26256,
-   "title": "CC-2-ROUND-443.29c page: Fuel > Relay wallet roll-forward (each number opens its documents)",
-   "mergedAt": "2026-10-11T02:34:52Z",
-   "branch": "cc-2/relay-wallet-roll-forward-page"
-  },
-  {
-   "number": 26255,
-   "title": "Claude-3- 443.36 Creator loads carry mileage_source with their miles",
-   "mergedAt": "2026-10-11T02:34:02Z",
-   "branch": "cc-3/443-36-creator-mileage-source"
-  },
-  {
-   "number": 26254,
-   "title": "CC-2-ROUND-443.33 one money rule for miles x rate (booking was 1c off: 586.39 vs 586.40 on 5778/5779)",
-   "mergedAt": "2026-10-11T02:29:36Z",
-   "branch": "cc-2/driver-pay-rounding-one-rule"
-  },
-  {
-   "number": 26253,
-   "title": "Claude-3- 443.35 feed gate: gross = driver bills + extra pay",
-   "mergedAt": "2026-10-11T02:19:55Z",
-   "branch": "cc-3/443-35-gate-gross-includes-extra-pay"
-  },
-  {
-   "number": 26252,
-   "title": "CC-2-CLAIM-RESERVE 12447 (ROUND 443.33 guard)",
-   "mergedAt": "2026-10-11T02:16:03Z",
-   "branch": "cc-2/claim-reserve-12447"
-  },
-  {
-   "number": 26251,
-   "title": "Claude-1- FINDING: ACCT-F44331 — D6: entity_uuid NULL on all postings; A/R→customer, A/P→vendor",
-   "mergedAt": "2026-10-11T02:05:46Z",
-   "branch": "cc-1/r44331-entity-uuid-posting-lines"
-  },
-  {
-   "number": 26250,
-   "title": "Claude-1- FINDING: ACCT-F44334 — Creator invoices must never queue customer email (luck→rule)",
-   "mergedAt": "2026-10-11T02:05:14Z",
-   "branch": "cc-1/r44334-creator-invoice-never-emails"
-  },
-  {
-   "number": 26249,
-   "title": "CC-2-ROUND-443.29d R6: DEF-only fill remainder = DEF at the file's average price, flagged (txn_8LZf -> 8.003 gal)",
-   "mergedAt": "2026-10-11T02:01:09Z",
-   "branch": "cc-2/relay-def-remainder-r6"
-  },
-  {
-   "number": 26248,
-   "title": "Claude-3- 443.34 R14 preview = the real post rolled back; invoice email on the same transaction",
-   "mergedAt": "2026-10-11T01:57:03Z",
-   "branch": "cc-3/443-34-preview-is-the-post"
-  },
-  {
-   "number": 26247,
-   "title": "CC-2-ROUND-443.29c Relay wallet roll-forward (deposits − fills − fees = balance by day, with documents) + 5007 -> Amex payable",
-   "mergedAt": "2026-10-11T01:54:42Z",
-   "branch": "cc-2/relay-wallet-roll-forward"
-  },
-  {
-   "number": 26246,
-   "title": "Claude-1- CLAIM-RESERVE 18389 (creator-invoice-never-emails)",
-   "mergedAt": "2026-10-11T01:51:08Z",
-   "branch": "chore/claim-reserve-18389"
-  },
-  {
-   "number": 26245,
-   "title": "Claude-3- 443.33 Creator: no bank payment (R12), fuel card + posted stamp (D1/D2), deduction line (D4), per-load applications (D5), no $0 empty line (D7)",
-   "mergedAt": "2026-10-11T01:49:34Z",
-   "branch": "cc-3/443-32-creator-deduction-line"
-  },
-  {
-   "number": 26244,
-   "title": "CC-2-ROUND-443.29b settled Relay deposits post (Dr 1295 + 5005 fee / Cr funding by card map); canceled nothing; unnamed held",
-   "mergedAt": "2026-10-11T01:41:42Z",
-   "branch": "cc-2/relay-deposit-poster"
-  },
-  {
-   "number": 26243,
-   "title": "Claude-1- FINDING: ACCT-F44330 LANE: FINANCIAL -- R13/D1: Creator fuel never reached ledger (relay_link bypass); creator_manual_entry:true posts immediately",
-   "mergedAt": "2026-10-11T01:37:19Z",
-   "branch": "cc-1/r44330-creator-fuel-reaches-ledger"
-  },
-  {
-   "number": 26242,
-   "title": "CC-2-ROUND-443.29a Relay fill can post: seed the missing Fuel Card Fee item (5005) + one fee rule + guard",
-   "mergedAt": "2026-10-11T01:29:06Z",
-   "branch": "cc-2/relay-fuel-card-fee-item"
-  },
-  {
-   "number": 26241,
-   "title": "Claude-1-chore: CLAIM-RESERVE verify-steps 18381 + 18385 (creator-fuel-ledger + entity-uuid-postings)",
-   "mergedAt": "2026-10-11T01:23:48Z",
-   "branch": "chore/claim-reserve-18381-18385"
-  },
-  {
-   "number": 26240,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-10-11T01:17:28Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 26239,
-   "title": "Claude-1- ACCT-F44328 (443.28): POST /expenses/:id/change-payment-source — reclassification JE for posted expense payment source",
-   "mergedAt": "2026-10-11T01:05:57Z",
-   "branch": "cc-1/r44328-change-payment-source"
-  },
-  {
-   "number": 26238,
-   "title": "CC-2-CLAIM-RESERVE 12443 (ROUND 443.29 guard)",
-   "mergedAt": "2026-10-11T01:00:37Z",
-   "branch": "cc-2/claim-reserve-12443"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 26887,
+   "title": "FINDING: ACCT-F4431840 LANE: FINANCIAL — Claude-3- 443.184 G15 a lumper advance posts as the load's lumper expense on every disburse path (no HOLD, no silent sk",
+   "mergedAt": "2026-10-17T04:35:57Z",
+   "category": "HOLD"
+  },
   {
    "number": 26802,
    "title": "Claude-3- 443.166 Dreamline import holds fills no load covers; never a load-less live fuel row",
