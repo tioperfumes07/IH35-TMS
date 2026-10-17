@@ -14,6 +14,9 @@ const extras = vi.hoisted(() => ({ geofences: vi.fn(async () => undefined), geoc
 vi.mock("../../telematics/auto-geofence.service.js", () => ({ autoCreateGeofencesForLoad: extras.geofences }));
 vi.mock("../../telematics/stops-geocode-backfill.service.js", () => ({ geocodeStopsBackfill: extras.geocode }));
 vi.mock("../google-reference-miles.service.js", async (orig) => ({ ...(await orig<Record<string, unknown>>()), computeAndPersistGoogleReferenceMilesForLoad: extras.refMiles }));
+// LEAD 443.192 — Book Load calls the one deadhead engine at booking (live feed only); stubbed here so no Google call runs.
+const deadhead = vi.hoisted(() => ({ fill: vi.fn(async (_c: unknown, a: { loadId: string }) => ({ load_id: a.loadId, load_number: null, status: "not_filled", miles: null, method: null, reason: "test stub" })) }));
+vi.mock("../mileage/miles-recommendations.service.js", async (orig) => ({ ...(await orig<Record<string, unknown>>()), fillLoadDeadhead: deadhead.fill }));
 import { bookLoadOnClient, type BookLoadInput } from "../book-load.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -125,5 +128,36 @@ describeIntegration("bookLoadOnClient books inside the CALLER's transaction (ROU
     expect(extras.geofences).not.toHaveBeenCalled();
     expect(extras.geocode).toHaveBeenCalledTimes(1);
     expect(extras.refMiles).toHaveBeenCalledTimes(1);
+  });
+
+  it("443.192: a live-feed booking fills the deadhead through the one engine on the caller's client; historical_backfill does not", async () => {
+    deadhead.fill.mockClear();
+    await db.query("BEGIN");
+    try {
+      const booked = await bookLoadOnClient(db, dispatchInput());
+      expect(booked.result.kind, `expected ok, got: ${JSON.stringify(booked.result)}`).toBe("ok");
+      if (booked.result.kind !== "ok") return;
+      const loadId = String(booked.result.row.id);
+      expect(deadhead.fill).toHaveBeenCalledTimes(1);
+      expect(deadhead.fill.mock.calls[0]![0]).toBe(db);
+      expect(deadhead.fill.mock.calls[0]![1]).toMatchObject({ operatingCompanyId: companyId, loadId });
+      // The refusal is audited inside the same transaction (never silent).
+      const ev = await db.query(
+        `SELECT count(*)::int AS n FROM audit.audit_events WHERE event_class = 'dispatch.load.deadhead_not_filled' AND payload->>'load_id' = $1`,
+        [loadId]
+      );
+      expect(ev.rows[0]?.n).toBe(1);
+    } finally {
+      await db.query("ROLLBACK");
+    }
+    deadhead.fill.mockClear();
+    await db.query("BEGIN");
+    try {
+      const backfill = await bookLoadOnClient(db, dispatchInput(), { source: "historical_backfill" });
+      expect(backfill.result.kind, `expected ok, got: ${JSON.stringify(backfill.result)}`).toBe("ok");
+      expect(deadhead.fill, "the Settlement Creator fills its own deadhead after stamping stops").not.toHaveBeenCalled();
+    } finally {
+      await db.query("ROLLBACK");
+    }
   });
 });

@@ -1792,8 +1792,48 @@ export async function bookLoadOnClient(
       loadId: String(result.row.id),
       actorUserId: input.requestingUserUuid,
     });
+    // LEAD 443.192 (11:40Z) — the deadhead at booking, through the ONE engine (fillLoadDeadhead, 7c78986aaa / RULING
+    // 443.86 #1): the previous load's last stop -> first pickup, else the truck's Samsara position, Google practical,
+    // method recorded, audited. Measured: Book Load never called it, so 28 live loads booked 2026-10-16 had no deadhead
+    // (148 of 148 earlier loads had one; of 33 booked that day only the 5 the Creator booked did). Same point as the
+    // Creator's call — after the load and its driver bill are written, so the bill minted here is unchanged — and the
+    // same semantics: a typed / document value is never replaced (already_set), a refusal never fails the booking. A
+    // historical_backfill caller (the Settlement Creator) keeps its own call AFTER it stamps stops from tracking.
+    if (source === "live_feed") await fillDeadheadAtBooking(client, input, String(result.row.id));
   }
   return { result, afterCommit: () => queueAfterBookExtras(input, result, source) };
+}
+
+/**
+ * LEAD 443.192 — fill the booked load's deadhead inside the booking transaction, under a SAVEPOINT so an engine error
+ * (e.g. the Google routes call) rolls back only the fill, never the booking. A refusal is never silent: not_filled and a
+ * thrown error are each audited (dispatch.load.deadhead_not_filled) with the reason, and the load is listed for the
+ * existing audited fill route (POST /api/v1/mdata/loads/deadhead-fill) — the same outcome the Creator's call leaves.
+ */
+export async function fillDeadheadAtBooking(client: DbClient, input: BookLoadInput, loadId: string): Promise<void> {
+  const { fillLoadDeadhead } = await import("./mileage/miles-recommendations.service.js");
+  const args = { operatingCompanyId: input.operating_company_id, loadId, actorUserId: input.requestingUserUuid };
+  await client.query("SAVEPOINT book_load_deadhead");
+  let reason: string | null = null;
+  try {
+    const out = await fillLoadDeadhead(client as never, args);
+    await client.query("RELEASE SAVEPOINT book_load_deadhead");
+    if (out.status === "not_filled") reason = out.reason ?? "not filled";
+  } catch (e) {
+    await client.query("ROLLBACK TO SAVEPOINT book_load_deadhead");
+    await client.query("RELEASE SAVEPOINT book_load_deadhead");
+    reason = `deadhead engine error: ${e instanceof Error ? e.message : String(e)}`;
+  }
+  if (reason) {
+    await appendCrudAudit(
+      client as Parameters<typeof appendCrudAudit>[0],
+      input.requestingUserUuid,
+      "dispatch.load.deadhead_not_filled",
+      { resource_type: "mdata.loads", resource_id: loadId, load_id: loadId, operating_company_id: input.operating_company_id, reason, at: "book_load" },
+      "warning",
+      "LEAD-443-192-DEADHEAD-AT-BOOKING"
+    );
+  }
 }
 
 /**
