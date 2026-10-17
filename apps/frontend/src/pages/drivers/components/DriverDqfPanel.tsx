@@ -13,6 +13,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { Combobox } from "../../../components/Combobox";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { listRequiredDocumentTypes } from "../../../api/requiredDocuments";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 type Props = {
   companyId: string;
@@ -139,7 +140,10 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
               Add DQF checklist item
             </h3>
             <p id="dqf-create-checklist-help" className="text-xs text-[#4B5563]">
-              Pick a required document type from the 49 CFR catalog below. Dates are optional. The button stays disabled until a catalog row is selected — it is not a free-text item name.
+              Pick a required document type from the 49 CFR catalog below.{" "}
+              <InfoPopover label="About adding a checklist item">
+                Dates are optional. The button stays disabled until a catalog row is selected — it is not a free-text item name.
+              </InfoPopover>
             </p>
           </div>
           <form
@@ -214,6 +218,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
         />
       ) : (
         <ParityTable<DriverQualificationFileItem>
+          title="Driver qualification file checklist"
           rows={visibleItems}
           rowKey={(item) => item.id}
           loading={itemsQ.isLoading}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { Button } from "../../../components/Button";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 import { Combobox } from "../../../components/Combobox";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -221,11 +222,13 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
           <div className="space-y-3">
             {noActiveTemplates ? (
               <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
-                <div className="font-semibold text-[#1F2A44]">No active templates for this entity yet.</div>
-                <p className="mt-0.5 text-xs text-[#4B5563]">
-                  The standard contract library (lease &amp; NDA templates) has not been provisioned for this
-                  operating company. Seed it once to enable the template picker below.
-                </p>
+                <div className="font-semibold text-[#1F2A44]">
+                  No active templates for this entity yet.{" "}
+                  <InfoPopover label="About the standard contract library">
+                    The standard contract library (lease &amp; NDA templates) has not been provisioned for this
+                    operating company. Seed it once to enable the template picker below.
+                  </InfoPopover>
+                </div>
                 <div className="mt-2">
                   <Button
                     size="sm"

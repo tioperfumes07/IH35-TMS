@@ -2405,6 +2405,7 @@ export function DriverDetailPage() {
             />
           ) : (
             <ParityTable<DriverQualificationRateHistoryItem>
+              title="Rate history — this pay line"
               columns={rateHistoryColumns}
               rows={selectedLineHistory}
               rowKey={(item) => `${item.effective_from}-${item.created_at}-${item.amount}-${String(item.was_corrected)}`}

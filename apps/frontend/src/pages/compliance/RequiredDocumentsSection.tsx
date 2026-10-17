@@ -153,6 +153,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
         <ListErrorBanner onRetry={() => void listQ.refetch()} />
       ) : (
         <ParityTable<RequiredDocumentType>
+          title="Required document types"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}

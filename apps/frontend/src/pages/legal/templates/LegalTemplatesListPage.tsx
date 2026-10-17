@@ -92,6 +92,7 @@ export function LegalTemplatesListPage() {
       <LegalModuleTabs />
 
       <ParityTable
+        title="Legal templates"
         rows={rows}
         columns={columns}
         rowKey={(row) => row.id}

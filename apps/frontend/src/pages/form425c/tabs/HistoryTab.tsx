@@ -92,8 +92,8 @@ export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props
   return (
     <div className="space-y-3 p-4">
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">Filing History</div>
         <ParityTable
+          title="Form 425C filing history"
           rows={filtered}
           columns={columns}
           rowKey={(r) => r.id}

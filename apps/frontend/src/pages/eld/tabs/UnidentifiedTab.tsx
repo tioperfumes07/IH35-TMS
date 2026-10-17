@@ -99,6 +99,7 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
       ) : null}
 
       <ParityTable<FleetLocationHosRow>
+        title="Units — unidentified driving"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.unit_id}

@@ -1,6 +1,7 @@
 import { suggestedFilename } from "../lib/buildPrintHTML";
 import { MONTHS } from "../lib/constants";
 import type { CompanyProfile } from "../types";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 type Props = {
   company: CompanyProfile;
@@ -17,9 +18,11 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
       <div className="rounded-sm border bg-white p-4">
         <div className="text-xs font-semibold text-[#0F1219]">Build Complete Report Package</div>
         <p className="mt-2 text-xs text-[#4B5563]">
-          Prints the current MOR without changing status or writing a filing PDF. Use{" "}
-          <strong>Generate PDF</strong> on Form 425C to create the court artifact and mark ready to
-          file. Browser destination <strong>Save as PDF</strong>.
+          Prints the current MOR without changing status or writing a filing PDF.{" "}
+          <InfoPopover label="About printing the report package">
+            Use <strong>Generate PDF</strong> on Form 425C to create the court artifact and mark ready to
+            file. Browser destination <strong>Save as PDF</strong>.
+          </InfoPopover>
         </p>
         <p className="mt-1 text-xs text-[#6B7280]">
           Suggested filename:{" "}

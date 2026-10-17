@@ -306,6 +306,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           />
         ) : (
           <ParityTable
+            title="Driver HOS roster — hours remaining"
             rows={filteredDrivers}
             columns={columns}
             rowKey={(driver) => driver.driver_id}

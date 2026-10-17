@@ -174,6 +174,7 @@ export function HosDriverMapPreviewPage() {
 
           {/* Driver map table */}
           <ParityTable
+            title="Drivers — Samsara HOS match"
             columns={DRIVER_MAP_COLUMNS}
             rows={visibleRows}
             rowKey={(row) => row.local_driver_id}

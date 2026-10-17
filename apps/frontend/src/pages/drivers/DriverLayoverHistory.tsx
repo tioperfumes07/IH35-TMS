@@ -186,6 +186,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
       )}
       {!isError && (
         <ParityTable
+          title="Driver layovers"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.uuid}
