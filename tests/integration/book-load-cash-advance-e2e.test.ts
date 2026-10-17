@@ -7,7 +7,6 @@ import {
   ensureIntegrationLoadId,
   ensureIntegrationPrerequisites,
   ensureSecondEntityLoad,
-  getIntegrationWorkOrderSeedIds,
   withCompanyRls,
 } from "../../apps/backend/test-helpers/db-fixture";
 import {
@@ -51,13 +50,33 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
 
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
-    ({ driverId } = await getIntegrationWorkOrderSeedIds());
     loadId = await ensureIntegrationLoadId();
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_DIRECT_URL or DATABASE_URL required");
     client = new pg.Client(buildPgClientConfig(cs));
     await client.connect();
     await client.query("SET ROLE ih35_app");
+    // Re-run safety: the shared work-order seed driver accumulates open driver bills from every other suite (and from
+    // this file's previous run — build-typecheck-heavy runs the backend suite twice on the SAME database), so the
+    // cascade linked the advance to an unrelated open bill on ANOTHER load and (b) read that load. This run owns a
+    // fresh driver with exactly ONE open driver bill — on this run's load — so approval deterministically takes the
+    // bill-payment branch for this load, which is what (b) asserts.
+    await tx(async () => {
+      await asCompany(companyId);
+      const nonce = randomUUID().slice(0, 8);
+      driverId = (await client.query<{ id: string }>(
+        `INSERT INTO mdata.drivers (operating_company_id, first_name, last_name, phone, status)
+         VALUES ($1::uuid, 'CashAdvE2E', $2, $3, 'Active') RETURNING id::text`,
+        [companyId, `D-${nonce}`, `+1007${nonce.replace(/[^0-9]/g, "0").slice(0, 7).padEnd(7, "0")}`]
+      )).rows[0]!.id;
+      const loadNumber = (await client.query<{ load_number: string }>(
+        `SELECT load_number FROM mdata.loads WHERE id = $1::uuid`, [loadId])).rows[0]!.load_number;
+      await client.query(
+        `INSERT INTO driver_finance.driver_bills (operating_company_id, load_id, load_number, bill_number, driver_id, gross_amount_cents, status)
+         VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, 0, 'open')`,
+        [companyId, loadId, loadNumber, `E2E-CA-${nonce}`, driverId]
+      );
+    });
     // 443.91 #4: the disbursement parents the driver's advance sub-account under the account bound to the
     // advance_recovery COA role (driver-subaccount-provision.service.ts, ROUND 389.3 — by role, never by name). A fresh
     // CI database has no binding; bind it once for the integration company, as the chart setup does in production.

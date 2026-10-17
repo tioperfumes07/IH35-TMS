@@ -25,6 +25,16 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
   let db: pg.Client;
   let companyId: string;
   const suffix = randomUUID().slice(0, 8);
+  // Re-run safety: build-typecheck-heavy runs this suite twice on the SAME database (verify:pre-commit, then
+  // test:coverage). A feed day is closed per (company, feed_date) on the shared integration company, so fixed dates are
+  // "feed_day_already_closed" (409) on the second run. Every date below keeps its position relative to the others
+  // (the sequencing law under test) but is shifted by a whole-year offset unique to this run. feed_date is only the
+  // sequencing key (never a posting date), so no period lock applies.
+  const runYearOffset = 1000 + Math.floor(Math.random() * 7000);
+  const fd = (iso: string): string => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return `${String(y! + runYearOffset).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  };
   let customerId: string;
   let driverId: string;
 
@@ -124,7 +134,7 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
 
   it("runs a clean day: commits, writes a real driver bill, and records the closed audit event", async () => {
     const loadId = await seedLoad("A");
-    const feedDate = "2026-08-10";
+    const feedDate = fd("2026-08-10");
 
     const res = await app.inject({
       method: "POST",
@@ -168,7 +178,7 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
   });
 
   it("REFUSES to re-run the same day (already closed), and writes nothing new", async () => {
-    const feedDate = "2026-08-10"; // same day as the previous test, already closed above
+    const feedDate = fd("2026-08-10"); // same day as the previous test, already closed above
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/driver-finance/feed-day/run",
@@ -199,8 +209,8 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
       headers: testAuthHeaders(undefined, "Owner"),
       payload: {
         operating_company_id: companyId,
-        feed_date: "2026-08-11",
-        previous_feed_date: "2026-01-01", // a real ISO date, but one never closed through this route
+        feed_date: fd("2026-08-11"),
+        previous_feed_date: fd("2026-01-01"), // a real ISO date, but one never closed through this route
         source_document_ref: `TEST-${suffix}-B`,
         loads: [
           { load_id: loadId, load_number: `FD-${suffix}-B`, driver_id: driverId, driver_bill: { gross_amount_cents: 100000 } },
@@ -224,8 +234,8 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
       headers: testAuthHeaders(undefined, "Owner"),
       payload: {
         operating_company_id: companyId,
-        feed_date: "2026-08-12",
-        previous_feed_date: "2026-08-10", // closed by the first test in this file
+        feed_date: fd("2026-08-12"),
+        previous_feed_date: fd("2026-08-10"), // closed by the first test in this file
         source_document_ref: `TEST-${suffix}-C`,
         loads: [
           { load_id: loadId, load_number: `FD-${suffix}-C`, driver_id: driverId, driver_bill: { gross_amount_cents: 200000 } },
@@ -246,8 +256,8 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
       headers: testAuthHeaders(undefined, "Owner"),
       payload: {
         operating_company_id: companyId,
-        feed_date: "2026-08-13",
-        previous_feed_date: "2026-08-12",
+        feed_date: fd("2026-08-13"),
+        previous_feed_date: fd("2026-08-12"),
         source_document_ref: `TEST-${suffix}-D`,
         loads: [
           // gross_amount_cents <= 0 -> createHistoricalDriverBill refuses this exact row.
@@ -270,7 +280,7 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
         `SELECT count(*)::text AS n FROM audit.audit_events
           WHERE event_class = 'driver-finance.feed_day.closed'
             AND payload->>'operating_company_id' = $1
-            AND payload->>'feed_date' = '2026-08-13'`,
+            AND payload->>'feed_date' = '${fd("2026-08-13")}'`,
         [companyId]
       )
     );
@@ -316,7 +326,7 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
       headers: testAuthHeaders(undefined, "Owner"),
       payload: {
         operating_company_id: companyId,
-        feed_date: "2026-08-19",
+        feed_date: fd("2026-08-19"),
         source_document_ref: `TEST-${suffix}-ESC`,
         stop_on_first_refusal: false,
         loads: [
@@ -348,8 +358,8 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
       headers: testAuthHeaders(undefined, "Owner"),
       payload: {
         operating_company_id: companyId,
-        feed_date: "2026-08-14",
-        previous_feed_date: "2026-08-12",
+        feed_date: fd("2026-08-14"),
+        previous_feed_date: fd("2026-08-12"),
         source_document_ref: `TEST-${suffix}-E`,
         dry_run: true,
         loads: [
@@ -375,7 +385,7 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
       headers: testAuthHeaders(undefined, "Manager"),
       payload: {
         operating_company_id: companyId,
-        feed_date: "2026-08-15",
+        feed_date: fd("2026-08-15"),
         source_document_ref: `TEST-${suffix}-F`,
         loads: [{ load_id: loadId, load_number: `FD-${suffix}-F`, driver_id: driverId, driver_bill: { gross_amount_cents: 100000 } }],
       },
@@ -406,7 +416,7 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
                     driver_bill: { gross_amount_cents: 123456, loaded_pay_cents: 120000, deadhead_pay_cents: 3456 } }],
         },
       });
-    const res = await run("2026-08-20", `TEST-${suffix}-G`);
+    const res = await run(fd("2026-08-20"), `TEST-${suffix}-G`);
     expect(res.statusCode).toBe(200);
     const body = res.json() as { report: { clean: boolean; created: number; filled: number; steps: Array<{ status: string }> } };
     expect(body.report.clean).toBe(true);
@@ -426,7 +436,7 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
     expect(Number(after.rows[0]!.deadhead)).toBe(3456);
 
     // Idempotent: the same printed amount on another (unclosed) day is already_exists, still one bill.
-    const again = await run("2026-08-21", `TEST-${suffix}-G2`);
+    const again = await run(fd("2026-08-21"), `TEST-${suffix}-G2`);
     expect(again.statusCode).toBe(200);
     const againBody = again.json() as { report: { filled: number; already_existed: number } };
     expect(againBody.report.filled).toBe(0);

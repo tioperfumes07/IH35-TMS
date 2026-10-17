@@ -180,15 +180,22 @@ async function ensureUnit(
   actorUserId: string,
   columns: Set<string>
 ) {
+  // mdata.units.unit_number and .vin are UNIQUE across ALL companies (units_unit_number_key / units_vin_key), so a fixed
+  // 'TEST-001' / 'VIN-TEST-0001' let only ONE company in the database ever seed sample data — every other company's
+  // seed died on the unique key. The first company keeps the plain sample number; any other company gets the same
+  // number suffixed with its own id (deterministic, so a re-seed finds and reuses it).
+  const companySuffix = companyId.replace(/-/g, "").slice(0, 8).toUpperCase();
+  const perCompanyUnitNumber = `TEST-001-${companySuffix}`;
   const existing = await client.query<{ id: string }>(
     `
       SELECT id::text AS id
       FROM mdata.units
-      WHERE unit_number = 'TEST-001'
+      WHERE unit_number IN ('TEST-001', $2)
         AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
+      ORDER BY (unit_number = 'TEST-001') DESC
       LIMIT 1
     `,
-    [companyId]
+    [companyId, perCompanyUnitNumber]
   );
   if (existing.rows[0]) {
     await client.query(
@@ -205,9 +212,12 @@ async function ensureUnit(
     return { id: existing.rows[0].id, created: false };
   }
 
+  const plainTaken = (
+    await client.query(`SELECT 1 FROM mdata.units WHERE unit_number = 'TEST-001' OR vin = 'VIN-TEST-0001' LIMIT 1`)
+  ).rows.length > 0;
   const insertValues: Record<string, unknown> = {
-    unit_number: "TEST-001",
-    vin: "VIN-TEST-0001",
+    unit_number: plainTaken ? perCompanyUnitNumber : "TEST-001",
+    vin: plainTaken ? `VIN-TEST-0001-${companySuffix}` : "VIN-TEST-0001",
     make: "Sample",
     model: "Freightliner",
     year: 2022,

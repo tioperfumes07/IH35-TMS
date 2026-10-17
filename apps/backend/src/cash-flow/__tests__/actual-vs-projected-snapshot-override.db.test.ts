@@ -12,7 +12,12 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import {
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
+  ensureIntegrationPrerequisites,
+  type IsolatedOperatingCompany,
+} from "../../../test-helpers/db-fixture.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { getActualVsProjected } from "../cash-flow.service.js";
 
@@ -21,6 +26,7 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 describeIntegration("getActualVsProjected — snapshot override (real Postgres)", () => {
   let db: pg.Client;
   let companyId: string;
+  let isolated: IsolatedOperatingCompany | undefined;
   const createdSnapshotIds: string[] = [];
 
   async function bypass<T>(fn: () => Promise<T>): Promise<T> {
@@ -57,7 +63,14 @@ describeIntegration("getActualVsProjected — snapshot override (real Postgres)"
   }
 
   beforeAll(async () => {
-    companyId = await ensureIntegrationPrerequisites();
+    // Re-run safety: forecast.cash_flow_projection_snapshots is append-only (no DELETE grant) with UNIQUE
+    // (operating_company_id, prediction_date). build-typecheck-heavy runs this suite twice on the SAME database
+    // (verify:pre-commit, then test:coverage), so snapshots on the shared integration company for "3 days ago" /
+    // "today" collide on the second run. Each run owns a fresh isolated company instead — which also keeps the
+    // "no loads / invoices seeded" premise true (the shared company accumulates other suites' activity).
+    await ensureIntegrationPrerequisites();
+    isolated = await createIsolatedOperatingCompany({ label: "cf-snapshot" });
+    companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
@@ -70,6 +83,7 @@ describeIntegration("getActualVsProjected — snapshot override (real Postgres)"
       // No DELETE grant by design (append-only) — leave the rows; they are harmless throwaway test
       // fixtures on a distant past date, not read by anything else.
     }
+    if (isolated) await deactivateIsolatedOperatingCompany(db, isolated).catch(() => {});
     await db.end();
   });
 
