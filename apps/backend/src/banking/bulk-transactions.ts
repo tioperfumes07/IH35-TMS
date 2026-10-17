@@ -1,11 +1,9 @@
 import type { PoolClient } from "pg";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { postBillPaymentGlIfEnabledInClientTx } from "../accounting/bill-payment-gl.service.js";
 import { assertBankTxnsNotInReconciledSession } from "./closed-session-immutability.js";
-import { insertBillHeaderOnClient, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
-import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
+import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx, postBillDocumentInClientTx, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort, writeBillDocumentOnClient } from "../accounting/bills.service.js";
 
 const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
@@ -249,9 +247,9 @@ export async function bulkPostTransactionsAsBills(
       // account (from_bank_account_id, resolved via the SAME bank->GL bridge every other bill_payment
       // poster uses) so the GL leg the posting engine builds actually reduces cash, not a phantom A/P.
       // 443.182 C — written through the one bill writer (same columns, casts and literals as the former inline INSERT).
-      const billRes = await insertBillHeaderOnClient<{ id: string }>(
-        client,
-        [
+      // 443.182 C step 2 — the bill document (header + its one line) through the bill engine; same statements as before.
+      const billRes = await writeBillDocumentOnClient<{ id: string }>(client, {
+        header: [
           ["operating_company_id", { value: input.operatingCompanyId }],
           ["vendor_id", { value: vendorId }],
           ["vendor_uuid", { value: vendorId }],
@@ -274,24 +272,26 @@ export async function bulkPostTransactionsAsBills(
           // ROUND 360 — the bank line that CREATED this bill: Undo on that line voids it (and nothing else).
           ["source_bank_transaction_id", { value: txn.id }],
         ],
-        { returning: "id" },
-      );
+        returning: "id",
+        // The GL poster reads accounting.bill_lines, not the header (same rule CHAIN-03 enforces
+        // everywhere else — see settlement-bill-payment-posting.service.ts). ps_category/ps_item here are
+        // free-text QBO Product/Service labels, not a resolvable expense_category_account_map key, so this
+        // single line carries NO category — it resolves via THE canonical resolver's Tier-3
+        // "uncategorized_expense" role (QBO-25 behavior: an unmapped category books to Uncategorized
+        // Expense rather than silently guessing or failing the whole batch).
+        lines: (newBillId) => [
+          [
+            ["bill_id", { value: newBillId, cast: "uuid" }],
+            ["line_sequence", { value: 1 }],
+            ["amount", { value: amountCents / 100 }],
+            ["description", { value: `${input.psCategory} — ${input.psItem}`.slice(0, 500) }],
+          ],
+        ],
+        lineOnConflict: "line_sequence_do_nothing",
+      });
       const billId = billRes.rows[0]?.id;
       if (!billId) throw new Error("bulk_post_bill_insert_failed");
       billIds.push(billId);
-
-      // The GL poster reads accounting.bill_lines, not the header (same rule CHAIN-03 enforces
-      // everywhere else — see settlement-bill-payment-posting.service.ts). ps_category/ps_item here are
-      // free-text QBO Product/Service labels, not a resolvable expense_category_account_map key, so this
-      // single line carries NO category — it resolves via THE canonical resolver's Tier-3
-      // "uncategorized_expense" role (QBO-25 behavior: an unmapped category books to Uncategorized
-      // Expense rather than silently guessing or failing the whole batch).
-      await client.query(
-        `INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description)
-         VALUES ($1::uuid, 1, $2, $3)
-         ON CONFLICT (bill_id, line_sequence) DO NOTHING`,
-        [billId, amountCents / 100, `${input.psCategory} — ${input.psItem}`.slice(0, 500)]
-      );
 
       // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before.
       // THREE-DATES-COVERAGE-GAP: bulk-posting an already-cleared bank transaction directly into a bill+payment — issued
@@ -383,11 +383,7 @@ export async function postCreatedBillsGlInClientTx(
     let billPosted = false;
     let billPaymentPosted = false;
     if (billGlEnabled) {
-      await postSourceTransactionInClientTx(
-        client as never,
-        { operating_company_id: operatingCompanyId, source_transaction_type: "bill", source_transaction_id: pair.billId },
-        { userId }
-      );
+      await postBillDocumentInClientTx(client as never, { operating_company_id: operatingCompanyId, bill_id: pair.billId }, { userId });
       billPosted = true;
       const outcome = await postBillPaymentGlIfEnabledInClientTx(client as never, operatingCompanyId, pair.billPaymentId, { userId });
       billPaymentPosted = outcome.posted;

@@ -18,8 +18,7 @@
  * Nothing is plugged: every total must tie to the pay-run's computed figure or the close refuses by name.
  */
 import type pg from "pg";
-import { createBillInClientTx, payBillInClientTx } from "../accounting/bills.service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { createBillInClientTx, payBillInClientTx, postBillDocumentInClientTx } from "../accounting/bills.service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverVendorLink, DriverVendorMissingError } from "../accounting/driver-vendor-link.service.js";
@@ -314,7 +313,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     const billId = String((bill as { id: string }).id);
     // 443.105 item 1: the bill carries its load's trailer (company -> trailer_id + line equipment_id; customer -> non_owned_trailer_id).
     await stampNewDriverBillTrailerFromLoad(client, { operatingCompanyId: opco, billId, loadId: b.loadId });
-    const p = await postSourceTransactionInClientTx(client as never, { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post", settlement_id: input.settlementId } as never, { userId: input.actorUserId } as never);
+    const p = await postBillDocumentInClientTx(client as never, { operating_company_id: opco, bill_id: billId, posting_purpose: "initial_post", settlement_id: input.settlementId } as never, { userId: input.actorUserId } as never);
     const billJeId = (p as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
     // AUTH-400 rehearsal (2026-10-04): 90 settlement GL-bill rows with NO bill_journal_entry_id made 45 settlements
     // unvoidable ("missing its original journal-entry linkage") — the reversal engine reverses exactly what this row names.

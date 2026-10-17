@@ -140,11 +140,12 @@ export function findC6Gaps(files) {
 
     // Layer A — money-table INSERT
     MONEY_INSERT_RE.lastIndex = 0;
-    // 443.182 C — a call to the one bill writer (insertBillHeaderOnClient) IS a money INSERT INTO accounting.bills at
+    // 443.182 C — a call to the one bill writer (insertBillHeaderOnClient, or the engine's writeBillDocumentOnClient) IS a
+    // money INSERT INTO accounting.bills at
     // the call site: the poster obligation stays with the caller, exactly as when the INSERT was inline.
     const moneyInserts = [
       ...(content.match(MONEY_INSERT_RE) ?? []),
-      ...(/\binsertBillHeaderOnClient\s*(?:<[^>]*>)?\s*\(\s*client/.test(content) ? ["INSERT INTO accounting.bills"] : []),
+      ...(/\b(?:insertBillHeaderOnClient|writeBillDocumentOnClient)\s*(?:<[^>]*>)?\s*\(\s*client/.test(content) ? ["INSERT INTO accounting.bills"] : []),
     ];
     if (moneyInserts && moneyInserts.length > 0) {
       evaluated.push(relPath);
