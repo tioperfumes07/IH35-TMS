@@ -49,8 +49,10 @@ if (!sourceText.includes("CustomerCOITab")) {
 if (!sourceText.includes("getCustomerBillingSummary")) {
   failures.push("customer header must load billing summary on selection");
 }
-if (!sourceText.includes("SecondaryNavTabs")) {
-  failures.push("Customers master-detail must use SecondaryNavTabs for sub-tab nav");
+// LST-F10179 (#18911, 2026-08-31): "Customers two SecondaryNavTabs instances replaced with shared NavyPageSubNav" — the
+// detail sub-tab nav is the shared NavyPageSubNav driven by CUSTOMER_TABS (SecondaryNavTabs still accepted).
+if (!sourceText.includes("SecondaryNavTabs") && !/<NavyPageSubNav[\s\S]{0,200}CUSTOMER_TABS\.map/.test(sourceText)) {
+  failures.push("Customers master-detail must use the shared sub-tab nav (NavyPageSubNav over CUSTOMER_TABS, or SecondaryNavTabs)");
 }
 
 for (const section of ["Transaction List", "COI Requests", "CRITICAL", "HIGH"]) {
@@ -68,6 +70,7 @@ if (process.argv.includes("--selftest")) {
     source.replaceAll("listAllInvoices(companyId", "listInvoices(companyId"),
     source.replace('activeTab === "coi_requests"', 'activeTab === "removed_coi"'),
     source.replaceAll("CustomerCOITab", "RemovedCOITab"),
+    source.replace(/<NavyPageSubNav(\s+items=\{CUSTOMER_TABS\.map)/, "<RemovedSubNav$1"),
   ];
   for (const [index, mutated] of mutations.entries()) {
     if (mutated === source || auditSources(mutated, audit).length === 0) {

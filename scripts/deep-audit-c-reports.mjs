@@ -20,7 +20,9 @@ const CANONICAL_REPORTS = [
   { path: "/reports/fuel-reconciliation", page: "FuelReconciliationPage", audit: "Fuel Reconciliation" },
   { path: "/reports/ar-aging", page: "ARAgingPage", audit: "AR Aging" },
   { path: "/reports/ap-aging", page: "APAgingPage", audit: "AP Aging" },
-  { path: "/reports/ifta", page: "IFTAPreparer", audit: "IFTA Quarterly" },
+  // #8462 LV-REPORTS-IFTA-RUNNER-DUPLICATE-POLICY-CHROME: the canonical IFTA mount is /reports/ifta-preparer (IftaPreparer);
+  // the legacy /reports/ifta path is a Navigate alias to it (checked below) — "no dual IFTAPreparer mount".
+  { path: "/reports/ifta-preparer", page: "IftaPreparer", audit: "IFTA Quarterly" },
 ];
 
 function fail(message) {
@@ -48,6 +50,10 @@ for (const report of CANONICAL_REPORTS) {
   if (!audit.includes(report.audit)) {
     fail(`audit doc missing section for ${report.audit}`);
   }
+}
+
+if (!/path="\/reports\/ifta"[\s\S]{0,400}<Navigate to="\/reports\/ifta-preparer" replace \/>/.test(manifest)) {
+  fail("legacy /reports/ifta must still redirect to /reports/ifta-preparer (#8462)");
 }
 
 for (const section of ["CRITICAL", "HIGH", "11 canonical"]) {
