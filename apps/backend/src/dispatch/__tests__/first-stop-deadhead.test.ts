@@ -42,7 +42,16 @@ describe("chooseLegMiles (443.53 #2)", () => {
   });
   it("neither: NULL with the reason — never a straight line", async () => {
     const r = await chooseLegMiles(chooseClient({}) as never, pick, blankOsrm, vi.fn(async () => null));
-    expect(r).toEqual({ miles: null, reason: "no_google_route_and_no_lane_average:osrm_not_configured" });
+    expect(r).toEqual({ miles: null, reason: "no_google_route_and_no_lane_average:osrm_not_configured;google_routes_no_route" });
+  });
+  // LEAD 443.192 (10:35Z): the 2026-10-16 deadheads said only "osrm_not_configured" — the Google miss was invisible.
+  it("443.192: a Google failure is named in the NULL reason (not configured)", async () => {
+    const r = await chooseLegMiles(chooseClient({}) as never, pick, blankOsrm, vi.fn(async () => ({ miles: null, reason: "google_routes_not_configured" as const })));
+    expect(r).toEqual({ miles: null, reason: "no_google_route_and_no_lane_average:osrm_not_configured;google_routes_not_configured" });
+  });
+  it("443.192: a Google HTTP error is named on the lane-average fallback too", async () => {
+    const r = await chooseLegMiles(chooseClient({ lane: "154.0" }) as never, pick, blankOsrm, vi.fn(async () => ({ miles: null, reason: "google_routes_http_403" as const })));
+    expect(r).toEqual({ miles: 154, method: "lane_average", engine_reason: "osrm_not_configured;google_routes_http_403" });
   });
   it("no city/state: no lane lookup, NULL", async () => {
     const c = chooseClient({ lane: "154.0" });
@@ -88,7 +97,7 @@ describe("computeFirstStopDeadhead", () => {
       prior: { id: "L1", load_number: "13500", lat: sanAntonio.lat, lng: sanAntonio.lng, city: "San Antonio", state: "TX" },
     });
     const r = await computeFirstStopDeadhead(c, args, blankProvider, vi.fn(async () => null));
-    expect(r).toMatchObject({ miles: null, reason: "no_google_route_and_no_lane_average:osrm_not_configured", stop_id: "s1" });
+    expect(r).toMatchObject({ miles: null, reason: "no_google_route_and_no_lane_average:osrm_not_configured;google_routes_no_route", stop_id: "s1" });
   });
 });
 

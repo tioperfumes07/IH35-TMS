@@ -77,7 +77,7 @@ describe("relearnLoadStopLegs", () => {
     const c = fake({ loaded: "400", stops: [stop("s1", 1, laredo, null), stop("s2", 2, sanAntonio, null), stop("s3", 3, dallas, null)] });
     const out = await relearnLoadStopLegs(c, args, blank, vi.fn(async () => null));
     expect(out.changed).toEqual([]);
-    expect(out.unresolved.map((u) => u.reason)).toEqual(["no_google_route_and_no_lane_average:osrm_not_configured", "no_google_route_and_no_lane_average:osrm_not_configured"]);
+    expect(out.unresolved.map((u) => u.reason)).toEqual(["no_google_route_and_no_lane_average:osrm_not_configured;google_routes_no_route", "no_google_route_and_no_lane_average:osrm_not_configured;google_routes_no_route"]); // 443.192: the Google miss is named
     expect(c.query.mock.calls.some((x) => /UPDATE mdata\.load_stops/.test(String(x[0])))).toBe(false);
   });
 });
