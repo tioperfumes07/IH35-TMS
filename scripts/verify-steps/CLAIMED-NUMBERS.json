@@ -16742,5 +16742,10 @@
     "claimed_at": "2026-10-17",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.192 (10:35Z): verify-google-route-failure-has-reason (Google Routes not configured / HTTP error is a named reason on deadhead + miles, never a silent null)"
+  },
+  "18587": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-17",
+    "purpose": "verify-no-public-write-grants"
   }
 }
