@@ -176,6 +176,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
         key={tableResetKey}
         rows={filteredRows}
         rowKey={(row) => row.id}
+        title="Vendors"
         storageKey="vendors-list"
         exportFilename="vendors"
         pageSizeOptions={[25, 50, 100, 250, 300]}
