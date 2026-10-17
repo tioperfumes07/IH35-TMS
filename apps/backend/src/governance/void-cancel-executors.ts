@@ -727,7 +727,6 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
   );
   if (!pre.rows[0]) return { kind: "not_found" };
   const status = String(pre.rows[0].status);
-  if (status === "cancelled") return { kind: "already_done" };
   if (status === "paid") return { kind: "not_completable" }; // already paid out to the driver — cannot reverse via this path
 
   const currentBusinessDate = companyBusinessDate();
@@ -738,30 +737,51 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     currentBusinessDate
   );
 
-  // SETL-LINES-VOID-GAP: the direct /settlements/:id/reverse route (settlements.routes.ts) already
-  // cascades this exact reversal to the settlement's own settlement_lines (is_active=false +
-  // voided_at/void_reason/voided_by_user_id) — this governance path reversed the SAME settlement
-  // via the SAME reverseSettlementBillPaymentInClientTx engine above but never touched the line
-  // items, leaving them readable as still-active/unvoided after their parent was cancelled. Matches
-  // the direct route's cascade exactly so a settlement reversed through governance leaves the same
-  // trail as one reversed directly.
-  await client.query(
-    `UPDATE driver_finance.settlement_lines
-        SET is_active = false,
-            voided_at = COALESCE(voided_at, now()),
-            void_reason = COALESCE(void_reason, $3),
-            voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
-            updated_at = now()
-      WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
-        AND (is_active IS DISTINCT FROM false OR voided_at IS NULL)`,
-    [entityId, operatingCompanyId, reason, userId]
-  );
+  // LEAD 443.192 (P-0070 cancel) — a header ALREADY 'cancelled' used to return already_done right here, before any
+  // child was touched. 24 USMCA settlements were header-cancelled "443.167 regroup" by a raw UPDATE outside this
+  // executor (status/voided_at only): 10 of their settlement_lines stayed live, a driver bill stayed linked to a dead
+  // settlement, and no void audit was ever written — and this engine could never finish them, because it refused to
+  // look past the header. A cancelled header is not a completed void: the reversal above (no-op when nothing posted,
+  // refuses live GL by name) and the child cascade below run either way; only the header flip is skipped.
+  const cascade = await completeDriverSettlementVoidCascadeInClientTx(client, {
+    operatingCompanyId,
+    settlementId: entityId,
+    userId,
+    reason,
+  });
 
-  // ROUND 138 -- the settlement_lines UPDATE above (pre-existing, SETL-LINES-VOID-GAP) only ever
-  // covered ONE child. cascadeVoidChildren adds the rest of driver_settlement's registered
-  // children (driver_settlement_deductions.voided_at, chiefly) without duplicating the lines
-  // write above -- idempotent, `WHERE ... IS NULL` only touches rows still live.
-  await cascadeVoidChildren(client, "driver_settlement", entityId, operatingCompanyId);
+  if (status === "cancelled") {
+    const priorAudit = await client.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM audit.audit_events
+        WHERE event_class = 'driver_finance.driver_settlement.voided'
+          AND payload->>'resource_id' = $1`,
+      [entityId]
+    );
+    const stampedAnything =
+      reversal.result !== "nothing_to_reverse" || cascade.lines_voided.length > 0 || cascade.driver_bills_released.length > 0 ||
+      cascade.children.some((c) => c.rowsStamped > 0);
+    if (!stampedAnything && Number(priorAudit.rows[0]?.n ?? 0) > 0) return { kind: "already_done" };
+    await appendCrudAudit(
+      client,
+      userId,
+      "driver_finance.driver_settlement.voided",
+      {
+        resource_type: "driver_finance.driver_settlements",
+        resource_id: entityId,
+        operating_company_id: operatingCompanyId,
+        reason,
+        gl_reversal_result: reversal.result,
+        gl_run_id: reversal.run_id,
+        header_already_cancelled: true,
+        settlement_lines_voided: cascade.lines_voided,
+        driver_bills_released: cascade.driver_bills_released,
+        via: "governance.void_cancel_requests",
+      },
+      "warning",
+      "VOID-CANCEL-GOV"
+    );
+    return { kind: "ok", reversing_entry_ref: reversal.run_id };
+  }
 
   // R-102-B (2026-09-23) — driver_settlements carries the SAME disjoint dual-marker-set defect
   // migration 202612480900 already fixed for accounting.bills (reversed_at/reversed_by_user_id/
@@ -802,6 +822,8 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
       reason,
       gl_reversal_result: reversal.result,
       gl_run_id: reversal.run_id,
+      settlement_lines_voided: cascade.lines_voided,
+      driver_bills_released: cascade.driver_bills_released,
       via: "governance.void_cancel_requests",
     },
     "warning",
@@ -809,6 +831,64 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
   );
   return { kind: "ok", reversing_entry_ref: reversal.run_id };
 };
+
+export type DriverSettlementVoidCascadeResult = {
+  lines_voided: string[];
+  driver_bills_released: string[];
+  children: Awaited<ReturnType<typeof cascadeVoidChildren>>;
+};
+
+/**
+ * The ONE child cascade of a driver-settlement void (executeVoidCancel('driver_settlement')). Runs on the caller's
+ * transaction; idempotent (every write touches only rows still live). Never deletes.
+ *
+ *  1. settlement_lines — SETL-LINES-VOID-GAP: the direct /settlements/:id/reverse route already cascades its reversal
+ *     to the settlement's own lines (is_active=false + voided_at/void_reason/voided_by_user_id); the governance path
+ *     reverses the SAME settlement via the SAME engine and matches that trail exactly.
+ *  2. cascadeVoidChildren — ROUND 138: the rest of driver_settlement's registered children
+ *     (driver_settlement_deductions.voided_at, chiefly).
+ *  3. driver bills — LEAD 443.192: a bill "settled" in a voided / cancelled settlement is settled in nothing. The GL
+ *     reversal restores the bills its posted run paid; an OPEN bill still naming this settlement (no posted run — a
+ *     shell that never posted) is released from the dead link here. A 'paid' bill is never touched (its money moves
+ *     only through the reversal engine).
+ */
+export async function completeDriverSettlementVoidCascadeInClientTx(
+  client: ExecutorContext["client"],
+  input: { operatingCompanyId: string; settlementId: string; userId: string; reason: string }
+): Promise<DriverSettlementVoidCascadeResult> {
+  const { operatingCompanyId, settlementId, userId, reason } = input;
+  const lines = await client.query<{ id: string }>(
+    `UPDATE driver_finance.settlement_lines
+        SET is_active = false,
+            voided_at = COALESCE(voided_at, now()),
+            void_reason = COALESCE(void_reason, $3),
+            voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
+            updated_at = now()
+      WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
+        AND (is_active IS DISTINCT FROM false OR voided_at IS NULL)
+      RETURNING id::text`,
+    [settlementId, operatingCompanyId, reason, userId]
+  );
+
+  const children = await cascadeVoidChildren(client, "driver_settlement", settlementId, operatingCompanyId);
+
+  const bills = await client.query<{ id: string }>(
+    `UPDATE driver_finance.driver_bills
+        SET settled_in_settlement_id = NULL, updated_at = now()
+      WHERE operating_company_id = $2::uuid
+        AND settled_in_settlement_id = $1::uuid
+        AND status = 'open'
+        AND voided_at IS NULL
+      RETURNING id::text`,
+    [settlementId, operatingCompanyId]
+  );
+
+  return {
+    lines_voided: (lines.rows ?? []).map((r) => r.id),
+    driver_bills_released: (bills.rows ?? []).map((r) => r.id),
+    children,
+  };
+}
 
 // ROUND 270/AUTH-132 (Lead + owner) — closing the hole this session found live: two
 // accounting.factoring_advances rows (invoices 13619/13615) had voided_at/void_reason stamped by a

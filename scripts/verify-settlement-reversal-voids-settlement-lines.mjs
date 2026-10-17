@@ -33,6 +33,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-reversal-voids-settlement-lines";
 
 const CALLEE_FILE = path.join(ROOT, "apps", "backend", "src", "driver-finance", "void-document-callees.service.ts");
+const EXECUTORS_FILE = path.join(ROOT, "apps", "backend", "src", "governance", "void-cancel-executors.ts");
 
 function extractCalleeBody(fnName, src) {
   const re = new RegExp(`export async function ${fnName}\\([\\s\\S]*?\\n\\}`);
@@ -66,6 +67,14 @@ const TARGETS = [
       const m = src.match(/const executeDriverSettlement: EntityExecutor = async \(ctx\) => \{[\s\S]*?\n\};/);
       return m ? m[0] : null;
     },
+    // LEAD 443.192: the executor runs its line cascade through completeDriverSettlementVoidCascadeInClientTx (same file),
+    // the ONE cascade both a fresh void and a header-already-cancelled void go through — check the real cascade there.
+    resolveDelegate: (body) => {
+      if (!body || !/completeDriverSettlementVoidCascadeInClientTx\s*\(/.test(body)) return null;
+      const src = fs.readFileSync(EXECUTORS_FILE, "utf8");
+      const m = src.match(/export async function completeDriverSettlementVoidCascadeInClientTx\([\s\S]*?\n\}/);
+      return m ? m[0] : null;
+    },
   },
 ];
 
@@ -92,7 +101,7 @@ export function check() {
       }
       if (delegate) {
         body = delegate;
-        checkedLabel = `${rel} (delegates to reverseSettlementForVoid in ${path.relative(ROOT, CALLEE_FILE)})`;
+        checkedLabel = `${rel} (via its delegated cascade function)`;
       }
     }
     if (!/UPDATE\s+driver_finance\.settlement_lines/.test(body)) {
@@ -104,7 +113,29 @@ export function check() {
     if (!/void_reason\s*=/.test(body)) offenders.push(`${checkedLabel}: cascade does not set void_reason`);
     if (!/voided_by_user_id\s*=/.test(body)) offenders.push(`${checkedLabel}: cascade does not set voided_by_user_id`);
   }
+  offenders.push(...cancelledHeaderOffenders());
   return offenders;
+}
+
+/**
+ * LEAD 443.192 (12:35Z — the "443.167 regroup" cancels): an ALREADY-cancelled settlement header must still get the cascade
+ * (lines voided, open bills released) and a void audit. Measured: 24 settlements cancelled by a raw UPDATE outside the engine
+ * kept 10 live lines + 1 linked bill and no audit, and executeDriverSettlement's `if (status === "cancelled") return
+ * { kind: "already_done" }` made the engine unable to finish them.
+ */
+export function cancelledHeaderOffenders(src = null) {
+  const file = TARGETS[1].file;
+  const text = src ?? (fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "");
+  const exec = text.match(/const executeDriverSettlement: EntityExecutor = async[\s\S]*?\n\};/)?.[0] ?? "";
+  const out = [];
+  if (/if \(status === "cancelled"\) return \{ kind: "already_done" \};/.test(exec))
+    out.push(`${path.relative(ROOT, file)}: executeDriverSettlement returns already_done for a cancelled header before the line cascade + audit`);
+  const cascadeAt = exec.indexOf("completeDriverSettlementVoidCascadeInClientTx(");
+  const cancelledAt = exec.indexOf('if (status === "cancelled") {');
+  if (cascadeAt < 0 || cancelledAt < 0 || cascadeAt > cancelledAt)
+    out.push(`${path.relative(ROOT, file)}: a cancelled header must run completeDriverSettlementVoidCascadeInClientTx before its already-done check`);
+  if (!/header_already_cancelled: true/.test(exec)) out.push(`${path.relative(ROOT, file)}: finishing a cancelled header must write the void audit`);
+  return out;
 }
 
 function report(offenders) {
@@ -161,6 +192,12 @@ async function selftest() {
   if (TARGETS[0].resolveDelegate(nonDelegatingBody) !== null) {
     failures.push("case5 FAIL — a route that already has its own inline cascade must not be redirected to the delegate.");
   }
+
+  // case6 (443.192): the cancelled-header short-circuit is caught; the real executor is clean.
+  const realExec = fs.readFileSync(TARGETS[1].file, "utf8");
+  if (cancelledHeaderOffenders(realExec).length) failures.push("case6 FAIL — the real executor must be clean");
+  if (!cancelledHeaderOffenders(realExec.replace('if (status === "cancelled") {', 'if (status === "cancelled") return { kind: "already_done" };\n  if (false) {')).length)
+    failures.push("case6 FAIL — an already_done short-circuit for a cancelled header went undetected");
 
   fs.rmSync(tmp, { recursive: true, force: true });
   if (failures.length) {
