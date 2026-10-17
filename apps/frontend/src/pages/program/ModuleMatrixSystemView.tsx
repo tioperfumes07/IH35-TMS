@@ -5,6 +5,8 @@
  */
 import { Fragment, useMemo, createContext, useContext } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable } from "../../components/parity/ParityTable";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import { ctDateTime } from "../../lib/businessDate";
@@ -512,7 +514,25 @@ function AblCell4({
   return <MatrixCell4 {...boxes} title={ablTitle(abl)} testId={testId} />;
 }
 
+type LaunchLadderRow = {
+  seq: number;
+  mod: string;
+  band: string;
+  row: SystemModuleRow | undefined;
+  missC: number;
+  builtPct: number;
+  livePct: number;
+  certify: boolean;
+};
+
+function proofMissC(row: SystemModuleRow): number {
+  const frozenOps = row.frozenOps ?? 0;
+  const opsClicked = row.opsClicked ?? 0;
+  return row.missOpsClicked ?? Math.max(0, frozenOps - Number(row.metrics?.liveCells ?? opsClicked));
+}
+
 export function ModuleMatrixSystemView() {
+  const navigate = useNavigate();
   // Distinct from per-module boards (esp. moduleId "system") — see LV-SYSTEM-MATRIX-LEAVES-NOT-ITERABLE.
   const { data, error, isError, isFetched, dataUpdatedAt, isFetching } = useQuery({
     queryKey: ["program", "module-matrix", "scope", "system"],
@@ -612,6 +632,20 @@ export function ModuleMatrixSystemView() {
 
   const colSpan = 1 + columns.length + 11 + FULLY_WIRED_SYSTEM_COLS.length;
   const verifierRollup = data?.verifierRollup ?? EMPTY_VERIFIER_ROLLUP;
+  const launchLadderRows: LaunchLadderRow[] = [...URGENT_6_MODULE_IDS, ...REST_OF_URGENT_MODULE_IDS].map((mod, i) => {
+    const row = orderedRows.find((r) => r.module === mod);
+    const missC = moduleMissC(row);
+    return {
+      seq: i + 1,
+      mod,
+      band: launchWaveForModule(mod),
+      row,
+      missC,
+      builtPct: row?.boxAbl?.builtPct ?? 0,
+      livePct: row?.boxAbl?.livePct ?? 0,
+      certify: apiLive && missC === 0,
+    };
+  });
 
   const renderModuleRow = (row: SystemModuleRow) => {
     const built = row.metrics?.builtCells ?? Math.round(((row.boxAbl?.builtPct ?? 0) / 100) * (row.boxAbl?.requiredCells ?? 0));
@@ -795,50 +829,63 @@ export function ModuleMatrixSystemView() {
             vertical {VERTICAL_CERTIFY_COL_LABEL} · Certify = Miss C 0 + FW 1–12
           </span>
         </h2>
-        <table className="launch-ladder" data-testid="module-matrix-launch-ladder-table">
-          <thead>
-            <tr>
-              <th>Seq</th>
-              <th>Wave</th>
-              <th>Module</th>
-              <th title="Drain one column across U6, then the next column">Vertical COL</th>
-              <th title="docs/bus/FAST-MERGE-4MIN-LAW.md">FAST-MERGE</th>
-              <th title="Fully-Wired items 1–11 (Built / Box 3)">FW 1–11</th>
-              <th title="Fully-Wired item 12 = Box 4 Live">Live 12</th>
-              <th title="CERTIFY only when Miss C is 0 on this module">Certify</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...URGENT_6_MODULE_IDS, ...REST_OF_URGENT_MODULE_IDS].map((mod, i) => {
-              const row = orderedRows.find((r) => r.module === mod);
-              const missC = moduleMissC(row);
-              const builtPct = row?.boxAbl?.builtPct ?? 0;
-              const livePct = row?.boxAbl?.livePct ?? 0;
-              const certify = apiLive && missC === 0;
-              const band = launchWaveForModule(mod);
-              return (
-                <tr key={mod} data-testid={`launch-ladder-row-${mod}`}>
-                  <td>{i + 1}</td>
-                  <td className={band === "U6" ? "wave-u6" : "wave-rest"}>{band}</td>
-                  <td>
-                    <b>{row?.label ?? mod}</b>
-                    <span className="mod-id">{mod}</span>
-                    {row ? (
-                      <EntityLink kind="program_matrix_module" id={row.module} label="Board →" className="board-link" />
-                    ) : null}
-                  </td>
-                  <td className="vert-col">{VERTICAL_CERTIFY_COL_LABEL}</td>
-                  <td>ON · 4min</td>
-                  <td>{row?.available ? `${builtPct}%` : "—"}</td>
-                  <td>{row?.available ? `${livePct}%` : "—"}</td>
-                  <td className={certify ? "certify-yes" : "certify-open"}>
-                    {apiLive ? (certify ? "CERTIFY" : `OPEN Miss C ${missC}`) : "—"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <ParityTable<LaunchLadderRow>
+          storageKey="ih35.program.matrix.launch-ladder.v1"
+          tableTestId="module-matrix-launch-ladder-table"
+          rowTestId={(r) => `launch-ladder-row-${r.mod}`}
+          rows={launchLadderRows}
+          rowKey={(r) => r.mod}
+          allowAllPageSize
+          columns={[
+            { key: "seq", label: "Seq", kind: "number" },
+            {
+              key: "band",
+              label: "Wave",
+              render: (r) => <span className={r.band === "U6" ? "font-semibold text-[#1F2A44]" : undefined}>{r.band}</span>,
+            },
+            {
+              key: "module",
+              label: "Module",
+              sortValue: (r) => r.row?.label ?? r.mod,
+              render: (r) => (
+                <>
+                  <b>{r.row?.label ?? r.mod}</b> <span className="text-[#6B7280]">{r.mod}</span>{" "}
+                  {r.row ? <EntityLink kind="program_matrix_module" id={r.row.module} label="Board →" className="board-link" /> : null}
+                </>
+              ),
+            },
+            {
+              key: "vertical",
+              label: "Vertical COL",
+              headerTitle: "Drain one column across U6, then the next column",
+              sortable: false,
+              render: () => VERTICAL_CERTIFY_COL_LABEL,
+            },
+            { key: "fastMerge", label: "FAST-MERGE", headerTitle: "docs/bus/FAST-MERGE-4MIN-LAW.md", sortable: false, render: () => "ON · 4min" },
+            {
+              key: "builtPct",
+              label: "FW 1–11",
+              headerTitle: "Fully-Wired items 1–11 (Built / Box 3)",
+              render: (r) => (r.row?.available ? `${r.builtPct}%` : "—"),
+            },
+            {
+              key: "livePct",
+              label: "Live 12",
+              headerTitle: "Fully-Wired item 12 = Box 4 Live",
+              render: (r) => (r.row?.available ? `${r.livePct}%` : "—"),
+            },
+            {
+              key: "missC",
+              label: "Certify",
+              headerTitle: "CERTIFY only when Miss C is 0 on this module",
+              render: (r) => (
+                <span className={r.certify ? "font-semibold text-[#16A34A]" : "font-semibold text-[#DC2626]"}>
+                  {apiLive ? (r.certify ? "CERTIFY" : `OPEN Miss C ${r.missC}`) : "—"}
+                </span>
+              ),
+            },
+          ]}
+        />
       </div>
 
       <MatrixBoxTracker
@@ -965,61 +1012,59 @@ export function ModuleMatrixSystemView() {
         </span>
       </h2>
       <div className="scroll" data-testid="module-matrix-proof-strip">
-        <table className="proof-strip-table">
-          <thead>
-            <tr>
-              <th>Module</th>
-              <th>Wave</th>
-              <th>V1 L6</th>
-              <th>Clicked</th>
-              <th>Ops click</th>
-              <th>Miss C</th>
-              <th>11 Guard</th>
-              <th>12 Clicked</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orderedRows
-              .filter((r) => isUrgent6Module(r.module) || isUrgent14Module(r.module))
-              .map((row) => {
-                const clicked = row.clickedCells ?? 0;
-                const frozenOps = row.frozenOps ?? 0;
-                const opsClicked = row.opsClicked ?? 0;
-                const missC =
-                  row.missOpsClicked ??
-                  Math.max(0, frozenOps - Number(row.metrics?.liveCells ?? opsClicked));
-                return (
-                  <tr key={`proof-${row.module}`} data-testid={`proof-row-${row.module}`}>
-                    <td>
-                      <b>{row.label}</b>
-                      <span className="mod-id">{row.module}</span>
-                    </td>
-                    <td>{launchWaveForModule(row.module)}</td>
-                    <td>
-                      <VerifierProofCell moduleId={row.module} columnId="l6" testId={`proof-${row.module}-l6`} />
-                    </td>
-                    <td className="sum-val good">{row.available ? clicked : "—"}</td>
-                    <td>{row.available ? opsClicked : "—"}</td>
-                    <td className="sum-val big">{row.available ? missC : "—"}</td>
-                    <td className="gc">
-                      <AblCell4
-                        abl={row.fwAbl?.fw11_guard ?? EMPTY_ABL}
-                        liveOk={row.available}
-                        testId={`proof-${row.module}-fw11`}
-                      />
-                    </td>
-                    <td className="gc">
-                      <AblCell4
-                        abl={row.fwAbl?.fw12_live ?? EMPTY_ABL}
-                        liveOk={row.available}
-                        testId={`proof-${row.module}-fw12`}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
+        <ParityTable<SystemModuleRow>
+          storageKey="ih35.program.matrix.proof-strip.v1"
+          rowTestId={(row) => `proof-row-${row.module}`}
+          rows={orderedRows.filter((r) => isUrgent6Module(r.module) || isUrgent14Module(r.module))}
+          rowKey={(row) => `proof-${row.module}`}
+          onRowClick={(row) => navigate(`/program/matrix?module=${row.module}`)}
+          allowAllPageSize
+          columns={[
+            {
+              key: "label",
+              label: "Module",
+              render: (row) => (
+                <>
+                  <b>{row.label}</b> <span className="text-[#6B7280]">{row.module}</span>
+                </>
+              ),
+            },
+            { key: "wave", label: "Wave", sortValue: (row) => launchWaveForModule(row.module), render: (row) => launchWaveForModule(row.module) },
+            {
+              key: "l6",
+              label: "V1 L6",
+              sortable: false,
+              overflowVisible: true,
+              render: (row) => <VerifierProofCell moduleId={row.module} columnId="l6" testId={`proof-${row.module}-l6`} />,
+            },
+            {
+              key: "clickedCells",
+              label: "Clicked",
+              render: (row) => <span className="font-semibold text-[#16A34A] tabular-nums">{row.available ? (row.clickedCells ?? 0) : "—"}</span>,
+            },
+            { key: "opsClicked", label: "Ops click", render: (row) => (row.available ? (row.opsClicked ?? 0) : "—") },
+            {
+              key: "missC",
+              label: "Miss C",
+              sortValue: (row) => proofMissC(row),
+              render: (row) => <span className="font-semibold text-[#DC2626] tabular-nums">{row.available ? proofMissC(row) : "—"}</span>,
+            },
+            {
+              key: "fw11",
+              label: "11 Guard",
+              sortable: false,
+              overflowVisible: true,
+              render: (row) => <AblCell4 abl={row.fwAbl?.fw11_guard ?? EMPTY_ABL} liveOk={row.available} testId={`proof-${row.module}-fw11`} />,
+            },
+            {
+              key: "fw12",
+              label: "12 Clicked",
+              sortable: false,
+              overflowVisible: true,
+              render: (row) => <AblCell4 abl={row.fwAbl?.fw12_live ?? EMPTY_ABL} liveOk={row.available} testId={`proof-${row.module}-fw12`} />,
+            },
+          ]}
+        />
       </div>
 
       <h2 data-testid="module-matrix-system-heading">

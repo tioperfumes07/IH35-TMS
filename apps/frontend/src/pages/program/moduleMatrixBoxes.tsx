@@ -3,6 +3,7 @@
  * Box 3 / Box 4 show BOTH percentages side-by-side (cumulative fill · exclusive tier / cert).
  */
 import { useEffect, useRef, useState } from "react";
+import { ParityTable } from "../../components/parity/ParityTable";
 
 export type TierMetrics = {
   requiredCells: number;
@@ -380,72 +381,72 @@ export function GroupRollupTable({ rollups, liveOk }: { rollups: GroupRollup[]; 
         <span className="sub">same columns as module boards · Box 3/4 show fill · wire / live · cert</span>
       </h2>
       <div className="scroll scroll-groups overflow-x-auto">
-        <table className="group-table" data-testid="module-matrix-group-rollups">
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th>Required</th>
-              <th>Audited %</th>
-              <th>Probe %</th>
-              <th>Built % (fill · wire)</th>
-              <th>Live % (live · cert)</th>
-              <th>Certified %</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rollups
-              .slice()
-              .sort((a, b) => {
-                const order = [
-                  "linkage",
-                  "money",
-                  "chrome",
-                  "wiring",
-                  "process",
-                  "economics",
-                  "verifier",
-                  "fully_wired",
-                  "other",
-                ];
-                return (order.indexOf(a.group) === -1 ? 99 : order.indexOf(a.group)) -
-                  (order.indexOf(b.group) === -1 ? 99 : order.indexOf(b.group));
-              })
-              .map((g) => {
-              const built = builtDualPcts(g);
-              const live = liveDualPcts(g);
-              return (
-                <tr key={g.group}>
-                  <td>
-                    <b>{g.label}</b>
-                    <span className="mod-id">{g.group}</span>
-                  </td>
-                  <td>{g.requiredCells}</td>
-                  <td>
-                    <span className={`pct ${pctClass(g.auditedOnlyPct)}`}>
-                      {liveOk ? `${g.auditedOnlyPct}%` : "—"}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`pct ${pctClass(g.probeOnlyPct)}`}>
-                      {liveOk ? `${g.probeOnlyPct}%` : "—"}
-                    </span>
-                  </td>
-                  <td>
-                    <DualPct a={built.fill} b={built.wire} liveOk={liveOk} testId={`group-${g.group}-built-dual`} />
-                  </td>
-                  <td>
-                    <DualPct a={live.live} b={live.cert} liveOk={liveOk} testId={`group-${g.group}-live-dual`} />
-                  </td>
-                  <td>
-                    <span className={`pct ${pctClass(g.certifiedPct)}`}>
-                      {liveOk ? `${g.certifiedPct}%` : "—"}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <ParityTable<GroupRollup>
+          storageKey="ih35.program.matrix.group-rollups.v1"
+          tableTestId="module-matrix-group-rollups"
+          rows={rollups.slice().sort((a, b) => {
+            const order = [
+              "linkage",
+              "money",
+              "chrome",
+              "wiring",
+              "process",
+              "economics",
+              "verifier",
+              "fully_wired",
+              "other",
+            ];
+            return (order.indexOf(a.group) === -1 ? 99 : order.indexOf(a.group)) -
+              (order.indexOf(b.group) === -1 ? 99 : order.indexOf(b.group));
+          })}
+          rowKey={(g) => g.group}
+          allowAllPageSize
+          columns={[
+            {
+              key: "label",
+              label: "Group",
+              render: (g) => (
+                <>
+                  <b>{g.label}</b> <span className="text-[#6B7280]">{g.group}</span>
+                </>
+              ),
+            },
+            { key: "requiredCells", label: "Required", kind: "number" },
+            {
+              key: "auditedOnlyPct",
+              label: "Audited %",
+              render: (g) => <span className={`pct ${pctClass(g.auditedOnlyPct)}`}>{liveOk ? `${g.auditedOnlyPct}%` : "—"}</span>,
+            },
+            {
+              key: "probeOnlyPct",
+              label: "Probe %",
+              render: (g) => <span className={`pct ${pctClass(g.probeOnlyPct)}`}>{liveOk ? `${g.probeOnlyPct}%` : "—"}</span>,
+            },
+            {
+              key: "builtFill",
+              label: "Built % (fill · wire)",
+              sortValue: (g) => builtDualPcts(g).fill,
+              render: (g) => {
+                const built = builtDualPcts(g);
+                return <DualPct a={built.fill} b={built.wire} liveOk={liveOk} testId={`group-${g.group}-built-dual`} />;
+              },
+            },
+            {
+              key: "liveLive",
+              label: "Live % (live · cert)",
+              sortValue: (g) => liveDualPcts(g).live,
+              render: (g) => {
+                const live = liveDualPcts(g);
+                return <DualPct a={live.live} b={live.cert} liveOk={liveOk} testId={`group-${g.group}-live-dual`} />;
+              },
+            },
+            {
+              key: "certifiedPct",
+              label: "Certified %",
+              render: (g) => <span className={`pct ${pctClass(g.certifiedPct)}`}>{liveOk ? `${g.certifiedPct}%` : "—"}</span>,
+            },
+          ]}
+        />
       </div>
     </>
   );
