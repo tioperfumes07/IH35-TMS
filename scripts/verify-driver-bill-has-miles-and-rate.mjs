@@ -46,6 +46,16 @@ export function findDefect(bill) {
   return reasons.length > 0 ? reasons : null;
 }
 
+// LEAD 443.192 — the note printed beside a defect. A bill whose settled_in_settlement_id names a voided / cancelled
+// settlement is settled in NOTHING (443.167-R); printing "INSIDE SETTLEMENT" for it sent the reader to a dead shell.
+// Display only: the defect fails the same either way — a dead link is never an exemption.
+export function settlementNote(bill) {
+  if (!bill.settled_in_settlement_id) return "";
+  return bill.settlement_live === false
+    ? ` [linked to VOIDED/CANCELLED settlement ${bill.settled_in_settlement_id} — settled in nothing]`
+    : ` [INSIDE SETTLEMENT ${bill.settled_in_settlement_id}]`;
+}
+
 function selftest() {
   const failures = [];
   const t = (l, c) => { if (!c) failures.push(l); };
@@ -70,11 +80,20 @@ function selftest() {
     return r === null;
   })());
 
+  // LEAD 443.192 plants: 13656 / 13680's shape — $0, per-mile basis snapshotted, rate NULL, linked to a cancelled seed shell.
+  t("443.192 shape ($0, practical miles, rate NULL, dead settlement link) is still caught — a dead link is no exemption", (() => {
+    const r = findDefect({ gross_amount_cents: 0, miles_basis: "1897.7", rate_per_mile_cents: null, miles_basis_type: "practical", settled_in_settlement_id: "s-dead", settlement_live: false });
+    return r !== null && r.includes("gross_amount_cents = 0") && r.includes("rate_per_mile_cents is NULL");
+  })());
+  t("a dead settlement link is labelled settled-in-nothing, never INSIDE SETTLEMENT", settlementNote({ settled_in_settlement_id: "s-dead", settlement_live: false }).includes("settled in nothing"));
+  t("a live settlement link is labelled INSIDE SETTLEMENT", settlementNote({ settled_in_settlement_id: "s-live", settlement_live: true }) === " [INSIDE SETTLEMENT s-live]");
+  t("no settlement link prints no note", settlementNote({ settled_in_settlement_id: null }) === "");
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK — 5 cases`);
+  console.log(`${LABEL} selftest OK — 9 cases`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -90,9 +109,12 @@ async function main() {
     // app.bypass_rls GUC but cannot escalate role membership ("permission denied to set role").
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
     const res = await client.query(`
-      SELECT id::text, load_number, gross_amount_cents, miles_basis::text, rate_per_mile_cents::text, miles_basis_type, settled_in_settlement_id::text
-        FROM driver_finance.driver_bills
-       WHERE status <> 'void'
+      SELECT b.id::text, b.load_number, b.gross_amount_cents, b.miles_basis::text, b.rate_per_mile_cents::text, b.miles_basis_type,
+             b.settled_in_settlement_id::text,
+             (s.id IS NOT NULL AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settlement_live
+        FROM driver_finance.driver_bills b
+        LEFT JOIN driver_finance.driver_settlements s ON s.id = b.settled_in_settlement_id
+       WHERE b.status <> 'void'
     `);
     await client.query("ROLLBACK");
 
@@ -109,8 +131,7 @@ async function main() {
     if (newRot.length > 0) {
       console.error(`${LABEL}: FAIL — ${newRot.length} NEW driver bill(s) with a real defect (not in baseline):`);
       for (const v of newRot) {
-        const settledNote = v.settled_in_settlement_id ? ` [INSIDE SETTLEMENT ${v.settled_in_settlement_id}]` : "";
-        console.error(`  ✗ load ${v.load_number} (bill ${v.id}): ${v.reasons.join(", ")}${settledNote}`);
+        console.error(`  ✗ load ${v.load_number} (bill ${v.id}): ${v.reasons.join(", ")}${settlementNote(v)}`);
       }
       process.exit(1);
     }
