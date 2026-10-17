@@ -29,6 +29,7 @@ function fakeClient(opts: {
   linkedOpenBillIds: string[];
   priorVoidAudits: number;
   settledReimbursementIds?: string[];
+  linkedDeductions?: Array<{ id: string; status: string; is_voided: boolean }>;
 }) {
   const calls: Q[] = [];
   let lines = [...opts.liveLineIds];
@@ -56,6 +57,13 @@ function fakeClient(opts: {
         reimbursements = [];
         return { rows: out as T[] };
       }
+      // LEAD 443.193 — the never-posted deduction restore's FOR UPDATE loader + its per-row state transition.
+      if (/FROM driver_finance\.driver_settlement_deductions/.test(sql) && /is_voided/.test(sql) && /FOR UPDATE/.test(sql))
+        return {
+          rows: (opts.linkedDeductions ?? []).map((d) => ({ ...d, deduction_type: "admin_fee", amount_cents: "1000", reason: null, bucket_id: null, source_expense_id: null })) as T[],
+        };
+      if (sql.includes("UPDATE driver_finance.driver_settlement_deductions") && sql.includes("applied_to_settlement_id = NULL"))
+        return { rows: [{ id: values?.[0] }] as T[] };
       if (sql.includes("FROM audit.audit_events")) return { rows: [{ n: opts.priorVoidAudits }] as T[] };
       if (sql.includes("UPDATE driver_finance.driver_settlements")) return { rows: [{ id: SETTLEMENT }] as T[] };
       return { rows: [] as T[] };
@@ -184,5 +192,50 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     const res = await executeVoidCancel("driver_settlement", ctx(client));
     expect(res.kind).toBe("ok");
     expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ reimbursements_released: ["6abbc20b-0000-4000-8000-000000000003"] });
+  });
+
+  // LEAD 443.193 — fail-old: the governance void ran cascadeVoidChildren with driver_settlement_deductions registered as a
+  // voided_at child, so a settlement void raw-stamped voided_at on every deduction applied to it — forgiving an
+  // applied-but-uncollected one ("why would I forgive the debt"). Now: no deduction is ever voided by a settlement void;
+  // with nothing posted, the pending ones are released through restoreSettlementDeductionsInClientTx({ glPosted: false }).
+  const DED_PENDING = "d0000000-0000-4000-8000-000000000001";
+  const DED_APPLIED = "d0000000-0000-4000-8000-000000000002";
+  const DED_VOIDED = "d0000000-0000-4000-8000-000000000003";
+  const DEDUCTIONS = [
+    { id: DED_PENDING, status: "pending", is_voided: false },
+    { id: DED_APPLIED, status: "applied", is_voided: false },
+    { id: DED_VOIDED, status: "pending", is_voided: true },
+  ];
+  const voidsADeduction = (c: Q) => c.sql.includes("UPDATE driver_finance.driver_settlement_deductions") && /voided_at/.test(c.sql);
+
+  it("fresh void, nothing to reverse: never voids a deduction; releases the pending one, retains collected/voided, names them in the audit", async () => {
+    const { client, calls } = fakeClient({ status: "closed", liveLineIds: [], linkedOpenBillIds: [], priorVoidAudits: 0, linkedDeductions: DEDUCTIONS });
+    const res = await executeVoidCancel("driver_settlement", ctx(client));
+    expect(res.kind).toBe("ok");
+    expect(calls.some(voidsADeduction), "a settlement void must never stamp voided_at on a deduction").toBe(false);
+    const released = calls.filter((c) => c.sql.includes("UPDATE driver_finance.driver_settlement_deductions"));
+    expect(released.map((c) => c.values?.[0])).toEqual([DED_PENDING]);
+    expect(released[0]!.sql).toMatch(/status = 'pending'/);
+    expect(released[0]!.sql).toMatch(/remaining_balance_cents = amount_cents/);
+    const flipIdx = calls.findIndex((c) => c.sql.includes("UPDATE driver_finance.driver_settlements"));
+    expect(flipIdx).toBeGreaterThan(calls.indexOf(released[0]!));
+    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ deductions_released: [DED_PENDING], deductions_retained: [DED_APPLIED, DED_VOIDED] });
+  });
+
+  it("cancelled + already audited: releasing a pending deduction is a real write (not already_done) and is audited", async () => {
+    const { client, calls } = fakeClient({ status: "cancelled", liveLineIds: [], linkedOpenBillIds: [], priorVoidAudits: 1, linkedDeductions: [DEDUCTIONS[0]!] });
+    const res = await executeVoidCancel("driver_settlement", ctx(client));
+    expect(res.kind).toBe("ok");
+    expect(calls.some(voidsADeduction)).toBe(false);
+    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ header_already_cancelled: true, deductions_released: [DED_PENDING] });
+  });
+
+  it("GL reversed: the reversal engine already restored the deductions — the void neither re-restores nor voids any", async () => {
+    mocks.reverse.mockResolvedValue({ result: "reversed", settlement_id: SETTLEMENT, run_id: "e0000000-0000-4000-8000-000000000001" });
+    const { client, calls } = fakeClient({ status: "closed", liveLineIds: [], linkedOpenBillIds: [], priorVoidAudits: 0, linkedDeductions: DEDUCTIONS });
+    const res = await executeVoidCancel("driver_settlement", ctx(client));
+    expect(res.kind).toBe("ok");
+    expect(calls.some((c) => c.sql.includes("driver_finance.driver_settlement_deductions"))).toBe(false);
+    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ gl_reversal_result: "reversed", deductions_released: [], deductions_retained: [] });
   });
 });

@@ -749,6 +749,9 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     settlementId: entityId,
     userId,
     reason,
+    // LEAD 443.193 — nothing_to_reverse => the cascade releases pending deductions (the SAME restore the GL reversal runs);
+    // deductions are never voided by a settlement void (no longer a CASCADE_CHILDREN entry).
+    glReversalResult: reversal.result,
   });
 
   if (status === "cancelled") {
@@ -760,7 +763,7 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     );
     const stampedAnything =
       reversal.result !== "nothing_to_reverse" || cascade.lines_voided.length > 0 || cascade.driver_bills_released.length > 0 ||
-      cascade.reimbursements_released.length > 0 || cascade.children.some((c) => c.rowsStamped > 0);
+      cascade.reimbursements_released.length > 0 || cascade.deductions_released.length > 0 || cascade.children.some((c) => c.rowsStamped > 0);
     if (!stampedAnything && Number(priorAudit.rows[0]?.n ?? 0) > 0) return { kind: "already_done" };
     await appendCrudAudit(
       client,
@@ -777,6 +780,8 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
         settlement_lines_voided: cascade.lines_voided,
         driver_bills_released: cascade.driver_bills_released,
         reimbursements_released: cascade.reimbursements_released,
+        deductions_released: cascade.deductions_released,
+        deductions_retained: cascade.deductions_retained,
         via: "governance.void_cancel_requests",
       },
       "warning",
@@ -827,6 +832,8 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
       settlement_lines_voided: cascade.lines_voided,
       driver_bills_released: cascade.driver_bills_released,
       reimbursements_released: cascade.reimbursements_released,
+      deductions_released: cascade.deductions_released,
+      deductions_retained: cascade.deductions_retained,
       via: "governance.void_cancel_requests",
     },
     "warning",
