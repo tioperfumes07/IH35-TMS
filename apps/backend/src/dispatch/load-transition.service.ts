@@ -12,7 +12,7 @@ import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bo
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
-import { fromMdataStatus, isReverseTransition, toMdataStatus, validateLoadStatusTransition } from "./load-state-machine.js";
+import { fromMdataStatus, isReverseTransition, toMdataStatus, validateLoadStatusTransition, validateLoadStopStatusWrite } from "./load-state-machine.js";
 import { loadStatusRequiresDeliveryDepartureStamp, stampFinalActiveDeliveryDeparture } from "./stamp-final-delivery-departure.js";
 import { ensureDriverBillArtifactsForLoad, type DriverBillMintOutcome } from "./book-load.service.js";
 
@@ -264,4 +264,58 @@ export async function transitionDispatchLoadInClientTx(client: TransitionClient,
     status: targetStatus,
     driver_bill_mint: driverBillOutcome,
   };
+}
+
+/**
+ * LEAD 443.184 (Lead 05:05Z, G11 reported item) — the status a STOP event writes (arrival → at_pickup / at_delivery,
+ * departure → in_transit / delivered_pending_docs). The driver app (driver/loads.routes.ts) and the office / Truck Line
+ * stamp (dispatch/stop-stamp.service.ts) used to UPDATE mdata.loads.status themselves; every load-status write now lives
+ * in this module. Same transitions as before (validateLoadStopStatusWrite — the at_* sub-statuses the canonical engine
+ * above does not carry), the same compare-and-set on the status the caller read, plus an audit row naming the stop event.
+ * The caller keeps its own side effects (proforma mint, delivery-evidence latch) exactly as before.
+ */
+export async function writeLoadStatusFromStopEventInClientTx(
+  client: TransitionClient,
+  input: {
+    actorUserId: string;
+    operatingCompanyId: string;
+    loadId: string;
+    fromMdataStatus: string;
+    toMdataStatus: string;
+    stopId: string;
+    event: "arrival" | "departure";
+    source: string;
+  }
+): Promise<{ ok: true } | { ok: false; error: "invalid_load_state"; from: string; to: string } | { ok: false; error: "load_transition_conflict" }> {
+  const transition = validateLoadStopStatusWrite(input.fromMdataStatus, input.toMdataStatus);
+  if (!transition.ok) return { ok: false, error: "invalid_load_state", from: transition.from, to: transition.to };
+  const upd = await client.query<{ id: string }>(
+    `UPDATE mdata.loads
+     SET status = $2
+     WHERE id = $1
+       AND operating_company_id = $3::uuid
+       AND status::text = $4
+     RETURNING id`,
+    [input.loadId, input.toMdataStatus, input.operatingCompanyId, input.fromMdataStatus]
+  );
+  if (!upd.rows[0]?.id) return { ok: false, error: "load_transition_conflict" };
+  if (input.fromMdataStatus !== input.toMdataStatus) {
+    await appendCrudAudit(
+      client,
+      input.actorUserId,
+      "dispatch.load.status_from_stop_event",
+      {
+        load_uuid: input.loadId,
+        operating_company_id: input.operatingCompanyId,
+        stop_id: input.stopId,
+        event: input.event,
+        source: input.source,
+        from_status: input.fromMdataStatus,
+        to_status: input.toMdataStatus,
+      },
+      "info",
+      "LEAD-443-184-STOP-STATUS"
+    );
+  }
+  return { ok: true };
 }
