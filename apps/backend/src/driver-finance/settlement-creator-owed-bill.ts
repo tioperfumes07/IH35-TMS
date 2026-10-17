@@ -71,6 +71,7 @@ export async function writeCreatorOwedBill(client: Queryable, input: CreatorOwed
     client as never,
     {
       operatingCompanyId: opco,
+      source: "settlement_creator_owed",
       vendorId: input.vendorId,
       // The vendor's invoice number stays the bill_number (per-vendor duplicate refusal); the spine number is the
       // bill's own document number. No vendor number -> the spine number is both.

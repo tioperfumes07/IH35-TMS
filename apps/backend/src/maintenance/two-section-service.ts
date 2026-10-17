@@ -906,6 +906,7 @@ export async function autoCreateBillFromWO(
         client,
         [
           ["operating_company_id", { value: woBill.operating_company_id, cast: "uuid" }],
+          ["source", { value: "work_order" }],
           ["vendor_id", { value: woBill.vendor_id }],
           ["vendor_uuid", { value: woBill.vendor_uuid }],
           ["mdata_vendor_id", { value: woBill.mdata_vendor_id, cast: "uuid" }],

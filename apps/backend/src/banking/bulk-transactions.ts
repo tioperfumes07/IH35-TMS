@@ -251,6 +251,7 @@ export async function bulkPostTransactionsAsBills(
       const billRes = await writeBillDocumentOnClient<{ id: string }>(client, {
         header: [
           ["operating_company_id", { value: input.operatingCompanyId }],
+          ["source", { value: "bank_bulk" }],
           ["vendor_id", { value: vendorId }],
           ["vendor_uuid", { value: vendorId }],
           ["mdata_vendor_id", { value: mdataVendorId }],

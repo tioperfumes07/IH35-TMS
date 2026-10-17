@@ -605,6 +605,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       const bill = await createBill(
         {
           operatingCompanyId: query.data.operating_company_id,
+          source: "manual",
           vendorId: body.data.vendor_id,
           billCategory: body.data.bill_category,
           billNumber: body.data.bill_number,

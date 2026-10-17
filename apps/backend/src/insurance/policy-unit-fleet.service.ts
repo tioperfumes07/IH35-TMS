@@ -141,6 +141,7 @@ export async function recordFleetPremiumJournalEntry(params: {
   const bill = await createBill(
     {
       operatingCompanyId: params.operatingCompanyId,
+      source: "insurance",
       vendorId: prepared.parties.vendorId,
       billDate: today,
       dueDate: today,

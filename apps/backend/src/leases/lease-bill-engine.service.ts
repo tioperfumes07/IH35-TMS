@@ -178,6 +178,7 @@ export async function generateLeaseBills(opco: string, periodStart: string, acto
     const bill = await createBill(
       {
         operatingCompanyId: opco,
+        source: "lease",
         vendorId: plan.vendor_id as string,
         billNumber: `LEASE-${plan.lease_display}-${plan.period_start.slice(0, 7)}${single ? `-${single.asset_label}` : ""}`,
         billDate: plan.period_start,

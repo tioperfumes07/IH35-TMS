@@ -525,6 +525,7 @@ export async function postOperatingLesseeRentPeriod(
       client as never,
       {
         operatingCompanyId: input.lesseeOperatingCompanyId,
+        source: "lease",
         vendorId: lease.lessee_vendor_id,
         billDate: period.period_date,
         dueDate: period.period_date,

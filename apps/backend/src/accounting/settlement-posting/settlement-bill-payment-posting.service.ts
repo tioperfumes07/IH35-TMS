@@ -616,6 +616,7 @@ export async function postSettlementBillPayment(
       const bill = await createBill(
         {
           operatingCompanyId: opco,
+          source: "settlement_bill_payment",
           vendorId: driverVendorId,
           // INV-01 (CC-1 CURRENT ASSIGNMENT, 2026-09-07): this is unambiguously a driver-pay bill
           // (settlement.driver_id is in scope the whole function) but createBill's driverId param

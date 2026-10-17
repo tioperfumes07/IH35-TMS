@@ -832,6 +832,7 @@ async function commitVendorBillSplitLineAtomic(input: {
     const billRes = await writeBillDocumentOnClient<{ id: string }>(client, {
       header: [
         ["operating_company_id", { value: input.companyId }],
+        ["source", { value: "bank_split" }],
         ["vendor_id", { value: input.vendorId }],
         ["vendor_uuid", { value: input.vendorId }],
         ["mdata_vendor_id", { value: mdataVendorId }],

@@ -171,6 +171,7 @@ async function getOrCreateBillForWorkOrder(
     client,
     [
       ["operating_company_id", { value: input.operating_company_id, cast: "uuid" }],
+      ["source", { value: "work_order_close" }],
       ["vendor_id", { value: vendorKey }],
       ["vendor_uuid", { value: vendorKey }],
       ["mdata_vendor_id", { value: mdataVendorId, cast: "uuid" }],

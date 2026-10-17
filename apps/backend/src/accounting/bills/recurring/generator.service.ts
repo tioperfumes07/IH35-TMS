@@ -112,6 +112,7 @@ export async function generateFromTemplate(
       client as never,
       {
         operatingCompanyId: tmpl.operating_company_id,
+        source: "recurring",
         vendorId: tmpl.vendor_uuid,
         billDate: targetDate,
         amountCents,

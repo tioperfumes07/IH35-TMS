@@ -83,6 +83,8 @@ export type CreateBillLineInput = {
 type CreateBillInput = {
   operatingCompanyId: string;
   vendorId: string;
+  /** LEAD 443.184 — the writer that creates this bill (accounting.bills.source); required, see BILL_SOURCES. */
+  source: BillSource;
   /** U10 — the bill's stored type when the operator chose one (Bills ▸ Maintenance / Repair / Fuel). Absent = the
    *  database derives it from facts (trg_bills_set_category: driver vendor -> driver, work order -> maintenance). */
   billCategory?: "vendor" | "maintenance" | "repair" | "fuel" | "driver";
@@ -2587,6 +2589,41 @@ const BILL_ON_CONFLICT = {
 const BILL_RETURNING = ["*", "id", "id::text", "id, operating_company_id"] as const;
 type BillQueryable = { query: (text: string, values?: unknown[]) => Promise<unknown> };
 
+/**
+ * LEAD 443.184 — BILL PROVENANCE. Every bill names the writer that created it (accounting.bills.source), so a bill's
+ * lineage is a stored fact, never read back out of memo text (measured on prod USMCA: 159 of 159 bills had source NULL).
+ * The one header INSERT below refuses a bill without one of these values. A work-order bill also carries
+ * linked_work_order_uuid (the WO writers already pass it).
+ */
+export const BILL_SOURCES = [
+  "manual",
+  "work_order",
+  "work_order_close",
+  "settlement_creator_owed",
+  "settlement_driver_bill",
+  "driver_pay_accrual",
+  "settlement_bill_payment",
+  "recurring",
+  "parts_purchase",
+  "lease",
+  "lease_buyout",
+  "legal",
+  "insurance",
+  "bank_split",
+  "bank_bulk",
+  "ops_script",
+  "qbo_clone",
+] as const;
+export type BillSource = (typeof BILL_SOURCES)[number];
+
+export class BillSourceRequiredError extends Error {
+  readonly code = "bill_source_required";
+  constructor(got: unknown) {
+    super(`bill_source_required: a bill must name the writer that created it (accounting.bills.source) — got ${JSON.stringify(got ?? null)}`);
+    this.name = "BillSourceRequiredError";
+  }
+}
+
 export async function insertBillHeaderOnClient<R = Record<string, unknown>>(
   client: BillQueryable,
   columns: ReadonlyArray<readonly [string, BillColumnValue]>,
@@ -2609,6 +2646,10 @@ export async function insertBillHeaderOnClient<R = Record<string, unknown>>(
   }
   const returning = opts.returning ?? "*";
   if (!(BILL_RETURNING as readonly string[]).includes(returning)) throw new Error(`bill_insert_bad_returning:${returning}`);
+  // LEAD 443.184 — after the column checks: a bill names its writer or it is not written.
+  const sourceCol = columns.find(([name]) => name === "source")?.[1];
+  const sourceValue = sourceCol && "value" in sourceCol ? sourceCol.value : undefined;
+  if (!(BILL_SOURCES as readonly unknown[]).includes(sourceValue)) throw new BillSourceRequiredError(sourceValue);
   const conflict = opts.onConflict ? ` ${BILL_ON_CONFLICT[opts.onConflict]}` : "";
   const sql = `INSERT INTO accounting.bills (${names.join(", ")}) VALUES (${exprs.join(", ")})${conflict} RETURNING ${returning}`;
   return (await client.query(sql, values)) as { rows: R[]; rowCount: number | null };
@@ -2856,6 +2897,7 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
     ["memo", { value: input.memo ?? null }],
     ["coa_account_id", { value: input.coaAccountId ?? null }],
     ["linked_work_order_uuid", { value: input.workOrderId ?? null }],
+    ["source", { value: input.source }],
     ["unit_id", { value: input.unitId ?? null }],
     ["driver_id", { value: input.driverId ?? null, cast: "uuid" }],
     ["load_id", { value: input.loadId ?? null, cast: "uuid" }],

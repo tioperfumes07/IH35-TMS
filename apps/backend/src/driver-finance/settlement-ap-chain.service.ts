@@ -292,6 +292,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     );
     const bill = await createBillInClientTx(client, {
       operatingCompanyId: opco,
+      source: "settlement_driver_bill",
       vendorId,
       driverId: input.driverId,
       // 443.106 (trg_refuse_driver_bill_without_links, BEFORE INSERT): a driver bill carries vendor, driver, load and unit on

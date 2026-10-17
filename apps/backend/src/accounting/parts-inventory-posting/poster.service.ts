@@ -223,6 +223,7 @@ export async function postPartsInventoryPurchase(
           client,
           {
             operatingCompanyId: input.operating_company_id,
+            source: "parts_purchase",
             vendorId: prepared.vendorId,
             billNumber: prepared.vendorInvoice ?? undefined,
             billDate: prepared.entryDate,
