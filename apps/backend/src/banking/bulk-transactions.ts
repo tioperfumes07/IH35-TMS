@@ -5,6 +5,7 @@ import { postSourceTransactionInClientTx } from "../accounting/posting-engine.se
 import { postBillPaymentGlIfEnabledInClientTx } from "../accounting/bill-payment-gl.service.js";
 import { assertBankTxnsNotInReconciledSession } from "./closed-session-immutability.js";
 import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
+import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
 
 const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
@@ -307,50 +308,28 @@ export async function bulkPostTransactionsAsBills(
         [billId, amountCents / 100, `${input.psCategory} — ${input.psItem}`.slice(0, 500)]
       );
 
-      const paymentRes = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.bill_payments (
-            operating_company_id,
-            bill_id,
-            vendor_id,
-            payment_date,
-            cleared_date,
-            amount_cents,
-            amount,
-            payment_method,
-            from_bank_account_id,
-            memo,
-            status,
-            payment_source_kind,
-            source_bank_transaction_id,
-            created_by_user_id,
-            created_at,
-            updated_at,
-            -- ACCT-F353 — same derivation as the bill row two statements up (vendorIsSampleData).
-            is_sample_data
-          )
-          VALUES ($1,$2,$3,$4,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_bulk_post',$9,$10,now(),now(),$11)
-          RETURNING id
-        `,
-        [
-          input.operatingCompanyId,
-          billId,
-          vendorId,
-          // THREE-DATES-COVERAGE-GAP: bulk-posting an already-cleared bank transaction directly
-          // into a bill+payment -- issued and cleared are legitimately the same moment here, both
-          // bound to $4. See bank-transaction-splits.service.ts for the non-bulk sibling flow.
-          txn.transaction_date,
-          amountCents,
-          amountCents / 100,
-          txn.bank_account_id,
-          // ACCT-F6284 — same reasoning; source_bank_transaction_id (bound below) already carries
-          // the transaction reference.
-          `Bank transaction bulk-post payment (bank_txn ${txn.id})`,
-          txn.id,
-          userId,
-          vendorIsSampleData,
-        ]
-      );
+      // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before.
+      // THREE-DATES-COVERAGE-GAP: bulk-posting an already-cleared bank transaction directly into a bill+payment — issued
+      // and cleared are the same moment (see bank-transaction-splits.service.ts). ACCT-F6284 memo; ACCT-F353 sample flag.
+      const paymentRes = await insertBillPaymentRowInClientTx(client, {
+        operating_company_id: input.operatingCompanyId,
+        bill_id: billId,
+        vendor_id: vendorId,
+        payment_date: txn.transaction_date,
+        cleared_date: txn.transaction_date,
+        amount_cents: amountCents,
+        amount: amountCents / 100,
+        payment_method: "ach",
+        from_bank_account_id: txn.bank_account_id,
+        memo: "Bank transaction bulk-post payment", // ROUND 390.3: human memo; the bank line is linked by source_bank_transaction_id
+        status: "posted",
+        payment_source_kind: "bank_tx_bulk_post",
+        source_bank_transaction_id: txn.id,
+        created_by_user_id: userId,
+        created_at: BILL_PAYMENT_NOW,
+        updated_at: BILL_PAYMENT_NOW,
+        is_sample_data: vendorIsSampleData,
+      }, "id");
       const billPaymentId = paymentRes.rows[0]?.id;
       if (!billPaymentId) throw new Error("bulk_post_bill_payment_insert_failed");
       billPaymentIds.push(billPaymentId);

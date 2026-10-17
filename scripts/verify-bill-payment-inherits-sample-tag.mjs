@@ -56,12 +56,39 @@ export function auditWriter(src) {
   while ((m = re.exec(clean)) !== null) {
     const cols = m[1];
     const vals = m[2];
+    // 443.182 C — the one row writer (bills.service.ts insertBillPaymentRowInClientTx) builds its column list from the
+    // caller's row; its marker expansion is checked by writerExpandsSampleFromBill, its callers below.
+    if (/\$\{\s*cols\.join/.test(cols)) continue;
     out.push({
       namesColumn: /\bis_sample_data\b/.test(cols),
       derivesFromBill: /SELECT\s+\w*\.?is_sample_data\s+FROM\s+accounting\.bills\b/i.test(vals),
     });
   }
+  // 443.182 C — a call into the one row writer: the row object must name is_sample_data and derive it from the bill
+  // (BILL_PAYMENT_SAMPLE_FROM_BILL), never a per-caller value.
+  for (const call of clean.matchAll(/insertBillPaymentRowInClientTx(?:<[^>]*>)?\(\s*\w+\s*,\s*\{/g)) {
+    let depth = 1;
+    let k = call.index + call[0].length;
+    for (; k < clean.length && depth > 0; k += 1) {
+      if (clean[k] === "{") depth += 1;
+      else if (clean[k] === "}") depth -= 1;
+    }
+    const obj = clean.slice(call.index + call[0].length, k - 1);
+    out.push({
+      namesColumn: /\bis_sample_data\s*:/.test(obj),
+      derivesFromBill: /\bis_sample_data\s*:\s*BILL_PAYMENT_SAMPLE_FROM_BILL\b/.test(obj),
+    });
+  }
   return out;
+}
+
+/** 443.182 C — the one row writer must expand BILL_PAYMENT_SAMPLE_FROM_BILL to the paid bill's is_sample_data. */
+export function writerExpandsSampleFromBill(src) {
+  const clean = stripComments(src);
+  return (
+    /v\s*===\s*BILL_PAYMENT_SAMPLE_FROM_BILL\s*\)\s*vals\.push\(`COALESCE\(\$\{fromBill\("b\.is_sample_data"\)\}, false\)`\)/.test(clean) &&
+    /FROM accounting\.bills b WHERE b\.id = \$\{billId\}::uuid/.test(clean)
+  );
 }
 
 export function collectProblems(files) {
@@ -127,14 +154,22 @@ if (process.argv.includes("--selftest")) {
     failures.push("a missing writer did not fail closed");
   }
 
+  // 443.182 C — the row-writer call form.
+  const CALL_GOOD = "await insertBillPaymentRowInClientTx(client, { bill_id: id, is_sample_data: BILL_PAYMENT_SAMPLE_FROM_BILL }, \"id\");";
+  if (collectProblems(mk(CALL_GOOD)).length !== 0) failures.push("a writer call deriving from the bill was flagged");
+  const CALL_PARAM = "await insertBillPaymentRowInClientTx(client, { bill_id: id, is_sample_data: isSample }, \"id\");";
+  if (!collectProblems(mk(CALL_PARAM)).some((p) => /NOT derived from accounting\.bills/.test(p))) failures.push("a writer call with a per-caller sample value was accepted");
+  const CALL_NONE = "await insertBillPaymentRowInClientTx(client, { bill_id: id, amount: 1 });";
+  if (!collectProblems(mk(CALL_NONE)).some((p) => /does not name is_sample_data/.test(p))) failures.push("a writer call omitting is_sample_data was accepted");
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 5/5 (inheriting writer passes, missing column caught, per-caller param ` +
-      `rejected, SQL comment cannot fake, missing writer fails closed)`
+    `${LABEL} SELFTEST OK — 8/8 (inheriting writer passes, missing column caught, per-caller param ` +
+      `rejected, SQL comment cannot fake, missing writer fails closed, writer-call form: derived passes, per-caller / missing rejected)`
   );
   process.exit(0);
 }
@@ -149,6 +184,10 @@ for (const f of WRITERS) {
   files.push({ file: f, src: fs.readFileSync(p, "utf8") });
 }
 const problems = collectProblems(files);
+const canonical = files.find((f) => f.file === "apps/backend/src/accounting/bills.service.ts");
+if (canonical && /insertBillPaymentRowInClientTx/.test(canonical.src) && !writerExpandsSampleFromBill(canonical.src)) {
+  problems.push("apps/backend/src/accounting/bills.service.ts: the one bill-payment row writer no longer expands BILL_PAYMENT_SAMPLE_FROM_BILL to the bill's is_sample_data (ACCT-F265).");
+}
 if (problems.length) {
   console.error(`${LABEL} FAIL — ${problems.length} bill_payment writer issue(s):`);
   for (const p of problems) console.error("  ✗ " + p);
