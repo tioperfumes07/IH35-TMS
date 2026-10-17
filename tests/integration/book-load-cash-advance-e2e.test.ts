@@ -59,7 +59,8 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
     // Re-run safety: the shared work-order seed driver accumulates open driver bills from every other suite (and from
     // this file's previous run — build-typecheck-heavy runs the backend suite twice on the SAME database), so the
     // cascade linked the advance to an unrelated open bill on ANOTHER load and (b) read that load. This run owns a
-    // fresh driver with exactly ONE open driver bill — on this run's load — so approval deterministically takes the
+    // fresh driver with exactly ONE open driver bill — on this run's load, with a balance above the advance (a bill
+    // with nothing remaining is a loan, never a bill payment) — so approval deterministically takes the
     // bill-payment branch for this load, which is what (b) asserts.
     await tx(async () => {
       await asCompany(companyId);
@@ -73,7 +74,7 @@ describeE2E("book-load cash advance — E2E (real DB, #1440)", () => {
         `SELECT load_number FROM mdata.loads WHERE id = $1::uuid`, [loadId])).rows[0]!.load_number;
       await client.query(
         `INSERT INTO driver_finance.driver_bills (operating_company_id, load_id, load_number, bill_number, driver_id, gross_amount_cents, status)
-         VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, 0, 'open')`,
+         VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, 50000, 'open')`,
         [companyId, loadId, loadNumber, `E2E-CA-${nonce}`, driverId]
       );
     });

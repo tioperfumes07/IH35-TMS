@@ -32,7 +32,7 @@ const LOAD = "55555555-5555-4555-8555-555555555555";
 const LOAD_BILL = "66666666-6666-4666-8666-666666666666";
 const OPEN_BILL = "77777777-7777-4777-8777-777777777777";
 
-function makeClient(scn: { activeLoad?: boolean; loadBill?: boolean; openBill?: boolean }) {
+function makeClient(scn: { activeLoad?: boolean; loadBill?: boolean; openBill?: boolean; billRemainingCents?: number }) {
   const client = {
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
       if (sql.includes("FROM driver_finance.cash_advance_requests") && sql.includes("FOR UPDATE")) {
@@ -53,6 +53,8 @@ function makeClient(scn: { activeLoad?: boolean; loadBill?: boolean; openBill?: 
       if (sql.includes("FROM mdata.loads")) {
         return { rows: scn.activeLoad ? [{ id: LOAD }] : [] };
       }
+      // remaining balance of the selected bill (default: plenty remaining)
+      if (sql.includes("remaining_cents")) return { rows: [{ remaining_cents: String(scn.billRemainingCents ?? 100_000_00) }] };
       if (sql.includes("FROM driver_finance.driver_bills") && sql.includes("load_id = $3")) {
         return { rows: scn.loadBill ? [{ id: LOAD_BILL }] : [] };
       }
