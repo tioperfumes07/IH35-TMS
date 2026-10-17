@@ -16702,5 +16702,10 @@
     "claimed_at": "2026-10-17",
     "claimed_by": "claude",
     "purpose": "CC-2 LEAD 443.187 batch 4/4: wire never-run guards (rows 37-48 of 2026-10-17-CC3-443-184-NEVER-RUN-GUARDS-RED-OR-DB.tsv) into verify:pre-commit after fixing / repointing each"
+  },
+  "18569": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.184 (05:05Z): verify-load-status-written-only-by-status-module (stop events write at_pickup / at_delivery / in_transit / delivered through load-transition.service, audited)"
   }
 }
