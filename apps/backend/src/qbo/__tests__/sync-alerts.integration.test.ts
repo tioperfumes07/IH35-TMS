@@ -106,7 +106,7 @@ describeIntegration("sync-alerts.routes integration — filters, paging, acknowl
     // three alerts, oldest first: error (open), critical (open), info (resolved)
     for (const [severity, resolved, ageMin] of [["error", false, 3], ["critical", false, 2], ["info", true, 1]] as const) {
       const r = await db.query(
-        `INSERT INTO qbo.sync_alerts (operating_company_id, entity_type, operation, error_message, severity, resolved_at, created_at)
+        `INSERT INTO qbo.sync_alerts (operating_company_id, kind, operation, message, severity, resolved_at, created_at)
          VALUES ($1::uuid, $2, 'sync', 'coverage fixture', $3, CASE WHEN $4 THEN now() END, now() - make_interval(mins => $5))
          RETURNING id::text`,
         [companyId, marker, severity, resolved, ageMin]
@@ -116,19 +116,19 @@ describeIntegration("sync-alerts.routes integration — filters, paging, acknowl
   });
 
   afterAll(async () => {
-    await db.query(`DELETE FROM qbo.sync_alerts WHERE entity_type = $1`, [marker]).catch(() => {});
+    await db.query(`DELETE FROM qbo.sync_alerts WHERE kind = $1`, [marker]).catch(() => {});
     await db.end().catch(() => {});
     await app.close();
   });
 
-  const mine = (body: { alerts: Array<{ entity_type?: string; id: string }> }) =>
-    body.alerts.filter((a) => a.entity_type === marker).map((a) => a.id);
+  const mine = (body: { alerts: Array<{ kind?: string; id: string }> }) =>
+    body.alerts.filter((a) => a.kind === marker).map((a) => a.id);
 
   it("filters by severity list + open only, and pages with a cursor", async () => {
     const base = `/api/v1/qbo/sync/alerts?operating_company_id=${companyId}&resolved=false&severity=error,critical`;
     const first = await app.inject({ method: "GET", url: `${base}&limit=1`, headers: owner() });
     expect(first.statusCode).toBe(200);
-    const p1 = first.json() as { alerts: Array<{ entity_type?: string; id: string; severity: string }>; next_cursor: string | null };
+    const p1 = first.json() as { alerts: Array<{ kind?: string; id: string; severity: string }>; next_cursor: string | null };
     expect(p1.alerts).toHaveLength(1);
     expect(["error", "critical"]).toContain(p1.alerts[0].severity);
     expect(p1.next_cursor).toEqual(expect.any(String));
@@ -137,7 +137,7 @@ describeIntegration("sync-alerts.routes integration — filters, paging, acknowl
     let cursor: string | null = null;
     for (let i = 0; i < 500; i += 1) {
       const res = await app.inject({ method: "GET", url: `${base}&limit=200${cursor ? `&cursor=${cursor}` : ""}`, headers: owner() });
-      const page = res.json() as { alerts: Array<{ entity_type?: string; id: string }>; next_cursor: string | null };
+      const page = res.json() as { alerts: Array<{ kind?: string; id: string }>; next_cursor: string | null };
       all.push(...mine(page));
       cursor = page.next_cursor;
       if (!cursor) break;
@@ -152,7 +152,7 @@ describeIntegration("sync-alerts.routes integration — filters, paging, acknowl
       headers: owner(),
     });
     expect(res.statusCode).toBe(200);
-    const page = res.json() as { alerts: Array<{ entity_type?: string; id: string; resolved_at: string | null }> };
+    const page = res.json() as { alerts: Array<{ kind?: string; id: string; resolved_at: string | null }> };
     expect(page.alerts.every((a) => a.resolved_at !== null)).toBe(true);
     const ownRows = mine(page);
     if (ownRows.length) expect(ownRows).toEqual([ids[2]]);
