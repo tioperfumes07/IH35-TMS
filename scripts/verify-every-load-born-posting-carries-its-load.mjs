@@ -219,7 +219,7 @@ export async function measure(client) {
       -- to_load_id on the leg that puts it on the new one; the undo entry the other way round). Every other posting is
       -- expected to carry what its source resolves to. Same strictness, read from the engine's own record.
       SELECT jep.id, jep.operating_company_id, jep.source_transaction_type, jep.source_transaction_id, jep.load_id, jep.created_at,
-             COALESCE(rc.expected_load, mv.moved_from_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id), sx.line_load, fx.doc_load) AS expected
+             COALESCE(rc.expected_load, mv.moved_from_load, rp.pair_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id), sx.line_load, fx.doc_load) AS expected
         FROM accounting.journal_entry_postings jep
         -- 443.110 G8 (RULE 4): a factoring lifecycle event is sourced by its factoring advance and carries the advance's
         -- load; a Faro reserve entry tied to a Faro invoice carries that invoice's load. Same company, never a guess.
@@ -249,6 +249,16 @@ export async function measure(client) {
                           WHERE sl.operating_company_id = jep.operating_company_id
                             AND sl.settlement_id::text = jep.source_transaction_id AND sl.load_id = jep.load_id)
         ) sx ON true
+        -- LEAD 443.192 (CC-3, 6 rows after the fuel re-attribution): a line already REVERSED (a fully reversed pair nets to zero
+        -- and can never be reclassified) is expected to carry its own reversal's load — the pair stays consistent where it was
+        -- booked. Measured: 2 Relay fills' 10-12 originals (443.129 E correction) stamped 13661 / 13667 with their reversals,
+        -- while the fills' live lines moved through the engine. The reversal half is checked by the resolver as before.
+        LEFT JOIN LATERAL (
+          SELECT r.load_id AS pair_load
+            FROM accounting.journal_entry_postings r
+           WHERE jep.reversed_by_line_id IS NOT NULL AND r.id = jep.reversed_by_line_id AND r.reversal_of_line_id = jep.id
+             AND r.operating_company_id = jep.operating_company_id
+        ) rp ON true
         -- LEAD 443.192 (CC-3): a line the reclassify engine MOVED to another load (its batch line names this posting, applied,
         -- from_load <> to_load) stays on the load it was moved FROM — the reclass entry reverses it there and posts it again on
         -- the new load, while its source document now names the new one. Read from the engine's record, never "any load".
