@@ -16717,5 +16717,20 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-17",
     "purpose": "verify-service-code-no-route-helper-import"
+  },
+  "18577": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.192: verify-revenue-earn-dated-by-evidence (revrec Event 1 JE dated by the delivery departure / manual authorization, never fire time)"
+  },
+  "18581": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.192: prod-data red writer guard (purge-era closures / driver bill rate) — reserved"
+  },
+  "18585": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.192: prod-data red writer guard (book = faro + alwaystrack) — reserved"
   }
 }
