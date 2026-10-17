@@ -57,6 +57,11 @@ export function reconcileExpenseWithLoad(
   const loadDrivers = [load.primaryDriverId, load.secondaryDriverId].filter((d): d is string => Boolean(d));
   if (driver && loadDrivers.length && !loadDrivers.includes(driver)) return { mismatch: "driver", supplied: driver, load: load.primaryDriverId };
   const trailer = supplied.trailerId ?? null;
+  // The explicit current choice wins over retained assignment history. Editing company -> none
+  // does not delete that history; it must not resurrect the old trailer on a new expense.
+  if (load.trailerSource === "none" && trailer) {
+    return { mismatch: "trailer", supplied: trailer, load: "no trailer" };
+  }
   if (trailer) {
     if (load.companyTrailerId && trailer !== load.companyTrailerId) return { mismatch: "trailer", supplied: trailer, load: load.companyTrailerId };
     // The load said "no trailer" or rides the customer's trailer: a company trailer on its expense contradicts it.
@@ -67,8 +72,8 @@ export function reconcileExpenseWithLoad(
   return {
     unitId: unit ?? load.unitId,
     driverId: driver ?? load.primaryDriverId,
-    trailerId: trailer ?? load.companyTrailerId,
-    nonOwnedTrailerId: trailer ? null : load.nonOwnedTrailerId,
+    trailerId: load.trailerSource === "none" ? null : trailer ?? load.companyTrailerId,
+    nonOwnedTrailerId: load.trailerSource === "none" || trailer ? null : load.nonOwnedTrailerId,
   };
 }
 
