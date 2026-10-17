@@ -228,6 +228,7 @@ export function DocumentsPage() {
         searchPlaceholder="Search filename"
       />
 
+      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Document files</h2>
       <DataTable
         rows={files}
         hideToolbar

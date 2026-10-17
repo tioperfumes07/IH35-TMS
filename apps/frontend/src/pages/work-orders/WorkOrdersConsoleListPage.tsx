@@ -407,6 +407,7 @@ export function WorkOrdersConsoleListPage() {
     <div className="space-y-2" data-testid="work-orders-console-list">
       {filterBar}
       <ParityTable<WoConsoleRow>
+        title="Work orders"
         columns={consoleColumns}
         rows={sortedRows}
         rowKey={(row) => String(row.id)}

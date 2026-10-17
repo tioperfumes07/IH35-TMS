@@ -224,6 +224,7 @@ export function InventoryPartsStockPage() {
         />
       ) : (
         <ParityTable
+          title="Parts in stock"
           columns={columns}
           rows={rows}
           loading={partsQuery.isLoading}

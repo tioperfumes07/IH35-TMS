@@ -31,6 +31,7 @@ import {
   ablPctToCell4,
   type TierMetrics,
 } from "./moduleMatrixBoxes";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 type AblPct = {
   requiredCells: number;
@@ -910,9 +911,11 @@ export function ModuleMatrixSystemView() {
       ) : null}
       <p className="foot" data-testid="module-matrix-kpi-glossary">
         <b>Named</b> = PROD-VERIFIED rows with an explicit <code>leaf:col</code> (not Box 4 fan-out).{" "}
-        <b>Leaves</b> = required-map surfaces (tabs/pages), not cells. <b>Modals</b> = those leaves whose
-        id looks like create/modal/drawer/wizard. <b>Clicked</b> = Chrome USMCA click credit (1–3 exact
-        cells; same as column 12 Clicked). Frozen / Miss C include money. Miss C is unpaid Live, not unpaid Clicked.
+        <InfoPopover label="About these counts">
+          <b>Leaves</b> = required-map surfaces (tabs/pages), not cells. <b>Modals</b> = those leaves whose
+          id looks like create/modal/drawer/wizard. <b>Clicked</b> = Chrome USMCA click credit (1–3 exact
+          cells; same as column 12 Clicked). Frozen / Miss C include money. Miss C is unpaid Live, not unpaid Clicked.
+        </InfoPopover>
       </p>
 
       <div className="legend" data-testid="module-matrix-system-legend">

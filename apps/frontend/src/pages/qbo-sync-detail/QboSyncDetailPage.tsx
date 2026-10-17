@@ -164,6 +164,7 @@ export function QboSyncDetailPage() {
         </div>
 
         <ParityTable
+          title="QuickBooks sync events"
           columns={columns}
           rows={events}
           rowKey={(row) => row.id}

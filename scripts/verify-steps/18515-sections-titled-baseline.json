@@ -1,115 +1,20 @@
 {
   "note": "LEAD 443.174 — shrink-only. Fix the screen; never raise a count.",
   "files": {
-    "apps/frontend/src/pages/CustomerDetail.tsx": {
-      "untitled": 3,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/Customers.tsx": {
-      "untitled": 4,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/Documents.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/DriverAppLandingPage.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/Users.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/VendorDetail.tsx": {
-      "untitled": 4,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/admin/ActivityLogPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
     "apps/frontend/src/pages/admin/DataImportPage.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
-      "inline_notice": 2
-    },
-    "apps/frontend/src/pages/admin/ErrorMonitor.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/admin/LaunchToggles.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/audit/AuditEventsList.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/audit/AuditTrailPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx": {
-      "untitled": 3,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
+      "inline_notice": 1
     },
     "apps/frontend/src/pages/chat/DispatchChatPage.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
     },
-    "apps/frontend/src/pages/customers/CoiTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/customers/CustomersListView.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
     "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 2
-    },
-    "apps/frontend/src/pages/docs/DocsHomePage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
     },
     "apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx": {
       "untitled": 0,
@@ -136,40 +41,10 @@
       "same_rows_toggle": 0,
       "inline_notice": 1
     },
-    "apps/frontend/src/pages/feed-gate/FeedGatePage.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/fleet/RosterIntegrityPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
     "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
-    },
-    "apps/frontend/src/pages/home/DriverHubReportingPage.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/integrations/edi/EdiTransactionLog.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/liabilities/components/LiabilitiesTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
     },
     "apps/frontend/src/pages/lists/LocationsListPage.tsx": {
       "untitled": 1,
@@ -331,45 +206,10 @@
       "same_rows_toggle": 0,
       "inline_notice": 0
     },
-    "apps/frontend/src/pages/onboarding/Step6SampleData.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/program/ModuleCompletionPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/program/ProgramBoardPage.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
     "apps/frontend/src/pages/program/U14ExclusiveStatusBanner.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
-    },
-    "apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/qbo-sync-detail/QboSyncDetailPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
     },
     "apps/frontend/src/pages/reports/BookingGapReport.tsx": {
       "untitled": 1,
@@ -676,42 +516,7 @@
       "same_rows_toggle": 0,
       "inline_notice": 0
     },
-    "apps/frontend/src/pages/system/EngineStatusBoardPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/system/SystemModulePage.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 3
-    },
-    "apps/frontend/src/pages/tasks/ReconcilerExceptionsPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/tasks/TasksMinePage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/tasks/TasksReportPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
     "apps/frontend/src/pages/vendors/VendorsListView.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/work-orders/WOTimeTrackingPanel.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx": {
       "untitled": 1,
       "same_rows_toggle": 0,
       "inline_notice": 0

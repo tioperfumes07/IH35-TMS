@@ -291,6 +291,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
         />
       ) : null}
       <ParityTable<CustomerRow>
+        title="Customers"
         key={tableResetKey}
         rows={enrichedRows}
         rowKey={(row) => row.id}

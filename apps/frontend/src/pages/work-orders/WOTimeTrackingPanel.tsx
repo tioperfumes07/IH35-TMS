@@ -293,6 +293,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId, readOnly 
           />
         ) : (
           <ParityTable
+            title="Time entries — this work order"
             storageKey="wo-time-tracking-entries"
             tableTestId="wo-time-tracking-entries-parity"
             columns={columns}

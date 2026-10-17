@@ -263,6 +263,7 @@ export function DriverHubReportingPage() {
 
           <div className="rounded-sm border border-gray-200 bg-white p-2">
             <ParityTable
+              title="Cash advance requests — by driver"
               rows={data.by_driver}
               columns={DRIVER_REPORTING_COLUMNS}
               rowKey={(r) => r.driver_id}
@@ -307,10 +308,8 @@ export function DriverHubReportingPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-2">
-            <div className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-              By load
-            </div>
             <ParityTable
+              title="Cash advance requests — by load"
               rows={data.by_load}
               columns={LOAD_REPORTING_COLUMNS}
               rowKey={(r) => r.load_id}

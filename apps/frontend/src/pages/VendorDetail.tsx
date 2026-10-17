@@ -69,6 +69,7 @@ import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTra
 import { VendorProfileOverview } from "../components/vendors/VendorProfileOverview";
 import { CappedListNotice } from "../components/CappedListNotice";
 import { formatUsdCents } from "../lib/money";
+import { InfoPopover } from "../components/shared/InfoPopover";
 
 type SaferEntityStatus = {
   id: string;
@@ -967,6 +968,7 @@ export function VendorDetailPage() {
               </p>
             ) : (
               <ParityTable<VendorBillPaymentListRow>
+                title="Bill payments — this vendor"
                 rows={vendorPaymentsQuery.data?.payments ?? vendorPaymentsQuery.data?.rows ?? []}
                 rowKey={(p) => p.id}
                 loading={vendorPaymentsQuery.isLoading}
@@ -1003,6 +1005,7 @@ export function VendorDetailPage() {
           {billsQuery.isError ? <ListErrorBanner message="Could not load bills." onRetry={() => void billsQuery.refetch()} /> : null}
           {!billsQuery.isError ? (
             <ParityTable<VendorBill>
+              title="Bills — this vendor"
               rows={billsQuery.data?.rows ?? []}
               rowKey={(b) => b.id}
               loading={billsQuery.isLoading}
@@ -1037,10 +1040,10 @@ export function VendorDetailPage() {
           ) : null}
           <CappedListNotice shown={(billsQuery.data?.rows ?? []).length} limit={200} />
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-semibold text-gray-900">Expenses</div>
             {vendorExpensesQuery.isError ? <ListErrorBanner message="Could not load expenses." onRetry={() => void vendorExpensesQuery.refetch()} /> : null}
             {!vendorExpensesQuery.isError ? (
               <ParityTable<ExpenseListRow>
+                title="Expenses — this vendor"
                 rows={vendorExpensesQuery.data ?? []}
                 rowKey={(e) => e.id}
                 loading={vendorExpensesQuery.isLoading}
@@ -1082,7 +1085,7 @@ export function VendorDetailPage() {
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-xs font-semibold text-gray-900">Vendor credits</div>
+              <h2 className="text-xs font-semibold text-gray-900">Vendor credits</h2>
               <Link to={`/accounting/vendor-credits?vendor_id=${encodeURIComponent(id)}`} className="text-xs text-[#1F2A44] hover:underline">
                 View all credits
               </Link>
@@ -1184,10 +1187,12 @@ export function VendorDetailPage() {
             </div>
           </DataPanelRow>
           <p className="mt-2 text-xs text-gray-500">
-            A signed W-9 is required before issuing a Form 1099-NEC. This panel is read-only — set
-            1099 eligibility and Tax ID on the Profile tab; attach the W-9 file on the Documents tab.
-            "Tax-form" documents are not verified to specifically be the W-9 (the category is shared
-            with 1099/IFTA filings) — confirm the actual file in the Documents tab.
+            A signed W-9 is required before issuing a Form 1099-NEC.{" "}
+            <InfoPopover label="About W-9 and 1099 status">
+              This panel is read-only — set 1099 eligibility and Tax ID on the Profile tab; attach the W-9 file on
+              the Documents tab. "Tax-form" documents are not verified to specifically be the W-9 (the category is
+              shared with 1099/IFTA filings) — confirm the actual file in the Documents tab.
+            </InfoPopover>
           </p>
         </DataPanel>
       ) : null}
