@@ -1,7 +1,9 @@
 /**
  * LEAD 443.184 item 2 re-stamp — a bill created before every writer named itself takes its source from evidence ALREADY
  * on record, never from memo text: a bill the settlement AP chain linked (driver_finance.driver_settlement_gl_bills with
- * the chain's own pay_basis, bill not posted at delivery) is a 'settlement_driver_bill'. Fill-null only; a bill with no
+ * the chain's own pay_basis, bill not posted at delivery) is a 'settlement_driver_bill'; a bill a Settlement Creator post
+ * named as its owed bill (audit event driver_finance.settlement_creator.posted, payload.owed_bill_ids — written in the
+ * same transaction as the bill) is a 'settlement_creator_owed' (Lead 05:05Z, bill 13670-9). Fill-null only; a bill with no
  * such evidence is left for the list. No money: amounts, accounts and postings are not touched. One audit event per bill.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -27,12 +29,34 @@ export async function restampBillSourceFromEvidence(
       RETURNING b.id::text AS bill_id, b.source`,
     [input.operatingCompanyId, input.billIds]
   );
+  const owed = await client.query<{ bill_id: string; source: string }>(
+    `UPDATE accounting.bills b
+        SET source = 'settlement_creator_owed', updated_at = now()
+      WHERE b.operating_company_id = $1::uuid
+        AND b.id = ANY($2::uuid[])
+        AND b.source IS NULL
+        AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_bills g WHERE g.accounting_bill_id = b.id)
+        AND EXISTS (SELECT 1 FROM audit.audit_events a
+                     WHERE a.event_class = 'driver_finance.settlement_creator.posted'
+                       AND a.payload -> 'owed_bill_ids' ? b.id::text)
+      RETURNING b.id::text AS bill_id, b.source`,
+    [input.operatingCompanyId, input.billIds]
+  );
+  res.rows.push(...owed.rows);
   for (const row of res.rows) {
     await appendCrudAudit(
       client,
       input.actorUserId,
       "bill.source_restamped_from_evidence",
-      { ...row, operating_company_id: input.operatingCompanyId, evidence: "driver_finance.driver_settlement_gl_bills (settlement AP chain: pay_basis set, not posted at delivery)", round: "LEAD 443.184" },
+      {
+        ...row,
+        operating_company_id: input.operatingCompanyId,
+        evidence:
+          row.source === "settlement_creator_owed"
+            ? "audit driver_finance.settlement_creator.posted payload.owed_bill_ids (same transaction as the bill)"
+            : "driver_finance.driver_settlement_gl_bills (settlement AP chain: pay_basis set, not posted at delivery)",
+        round: "LEAD 443.184",
+      },
       "info",
       "LEAD-443-184"
     );
