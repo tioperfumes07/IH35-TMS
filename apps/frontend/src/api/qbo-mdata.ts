@@ -1,5 +1,7 @@
 import { apiRequest } from "./client";
 import { itemsCatalogClient } from "./catalogs-accounting";
+import { searchVendorsQboAutocomplete } from "./catalog-vendors";
+import { searchCustomersQboAutocomplete } from "./catalog-customers";
 
 export type QboAutocompleteRow = {
   id: string;
@@ -22,11 +24,6 @@ export type QboAutocompleteResponse = {
   results: QboAutocompleteRow[];
 };
 
-function withCompany(path: string, operatingCompanyId: string) {
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
-}
-
 export function searchQboMasterData(
   entityType: "vendor" | "customer" | "item",
   operatingCompanyId: string,
@@ -37,12 +34,8 @@ export function searchQboMasterData(
   // (fixes the "create → disappears" split where writers wrote the real table but the picker read the
   // mdata.qbo_* mirror). Accounts never read the mirror (443.160: ./catalog-accounts getCoaAccounts).
   if (entityType === "customer" || entityType === "vendor") {
-    const search = new URLSearchParams();
-    search.set("autocomplete", "true");
-    search.set("q", params.q);
-    if (params.active_only === false) search.set("active_only", "false");
-    const path = entityType === "customer" ? "/api/v1/mdata/customers" : "/api/v1/mdata/vendors";
-    return apiRequest<QboAutocompleteResponse>(withCompany(`${path}?${search.toString()}`, operatingCompanyId));
+    const fn = entityType === "customer" ? searchCustomersQboAutocomplete : searchVendorsQboAutocomplete;
+    return fn(operatingCompanyId, params) as Promise<QboAutocompleteResponse>;
   }
 
   // LEAD 443.160 — items come from the ONE item source every item picker reads (itemsCatalogClient,

@@ -40,20 +40,19 @@ export const ZERO = {
   accounts: { owner: `${FE}/api/catalog-accounts.ts`, list: new RegExp(`/api/v1/catalogs/accounts${END}`), forbidden: [/\/api\/v1\/mdata\/qbo\/accounts/] },
   classes: { owner: `${FE}/api/catalogs-accounting.ts`, list: null, forbidden: [new RegExp(`/api/v1/catalogs/classes${END}`)] },
   items: { owner: `${FE}/api/catalogs-accounting.ts`, list: null, forbidden: [new RegExp(`/api/v1/catalogs/items${END}`)] },
+  vendors: { owner: `${FE}/api/catalog-vendors.ts`, list: new RegExp(`/api/v1/(mdata/vendors|vendors|accounting/vendors|maintenance/vendors)${END}`) },
+  customers: { owner: `${FE}/api/catalog-customers.ts`, list: new RegExp(`/api/v1/(mdata/customers|customers|accounting/customers)${END}`) },
+  drivers: { owner: `${FE}/api/catalog-drivers.ts`, list: new RegExp(`/api/v1/(mdata/drivers|drivers|dispatch/drivers|maintenance/drivers|driver-finance/drivers)${END}`) },
+  units: { owner: `${FE}/api/mdata.ts`, list: new RegExp(`/api/v1/(mdata/units|units|maintenance/units|fleet/units)${END}`) },
+  trailers: { owner: `${FE}/api/catalog-trailers.ts`, list: new RegExp(`/api/v1/(mdata/equipment|mdata/trailers|trailers|fleet/trailers)${END}`) },
+  loads: { owner: `${FE}/api/catalog-loads.ts`, list: new RegExp(`/api/v1/(mdata/loads|dispatch/loads|loads)${END}`) },
+  locations: { owner: `${FE}/api/lists-locations.ts`, list: new RegExp(`/api/v1/(mdata/locations|lists/locations|catalogs/locations|locations)${END}`) },
+  payment_terms: { owner: `${FE}/api/mdata.ts`, list: new RegExp(`/api/v1/(catalogs/payment-terms|catalogs/accounting/payment-terms|catalogs/accounting/terms)${END}`) },
+  payment_methods: { owner: `${FE}/api/paymentMethods.ts`, list: new RegExp(`/api/v1/(catalogs/payment-methods|catalogs/accounting/payment-methods|accounting/payment-methods)${END}`) },
+  bank_accounts: { owner: `${FE}/api/banking.ts`, list: new RegExp(`/api/v1/(banking/plaid/accounts|banking/bank-accounts|accounting/bank-accounts)${END}`) },
 };
 
-export const PINNED = {
-  vendors: new RegExp(`/api/v1/(mdata/vendors|vendors|accounting/vendors|maintenance/vendors)${END}`),
-  customers: new RegExp(`/api/v1/(mdata/customers|customers|accounting/customers)${END}`),
-  drivers: new RegExp(`/api/v1/(mdata/drivers|drivers|dispatch/drivers|maintenance/drivers|driver-finance/drivers)${END}`),
-  units: new RegExp(`/api/v1/(mdata/units|units|maintenance/units|fleet/units)${END}`),
-  trailers: new RegExp(`/api/v1/(mdata/equipment|mdata/trailers|trailers|fleet/trailers)${END}`),
-  loads: new RegExp(`/api/v1/(mdata/loads|dispatch/loads|loads)${END}`),
-  locations: new RegExp(`/api/v1/(mdata/locations|lists/locations|catalogs/locations|locations)${END}`),
-  payment_terms: new RegExp(`/api/v1/(catalogs/payment-terms|catalogs/accounting/payment-terms|catalogs/accounting/terms)${END}`),
-  payment_methods: new RegExp(`/api/v1/(catalogs/payment-methods|catalogs/accounting/payment-methods|accounting/payment-methods)${END}`),
-  bank_accounts: new RegExp(`/api/v1/(banking/plaid/accounts|banking/bank-accounts|accounting/bank-accounts)${END}`),
-};
+export const PINNED = {};
 
 function frontendFiles(dir = resolve(ROOT, FE), out = []) {
   for (const name of readdirSync(dir)) {
@@ -84,7 +83,7 @@ export function census(files) {
     if (DECLARATIONS.has(rel)) continue;
     for (const [k, c] of Object.entries(ZERO)) {
       if (c.list && rel !== c.owner && readSites(src, c.list).length) (zero[k] ??= []).push(`${rel}:${readSites(src, c.list)[0]} reads the ${k} catalog outside ${c.owner}`);
-      for (const f of c.forbidden) {
+      for (const f of (c.forbidden ?? [])) {
         const at = readSites(src, f);
         if (at.length) (zero[k] ??= []).push(`${rel}:${at[0]} reads a second ${k} source (${f.source.replace(/\\/g, "").slice(0, 40)})`);
       }
