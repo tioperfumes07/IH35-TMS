@@ -302,8 +302,8 @@ export async function adoptBankCategorizationExpenseDocument(
     `SELECT p.account_id::text, p.debit_or_credit, p.amount_cents::text,
             a.account_type, a.account_number, a.account_name
        FROM accounting.journal_entry_postings p
-       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
-       JOIN catalogs.accounts a ON a.id = p.account_id
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+       JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE p.journal_entry_uuid = $1::uuid AND p.operating_company_id = $2::uuid
         AND p.source_transaction_type = 'bank_categorization'
         AND p.source_transaction_id::text = $3

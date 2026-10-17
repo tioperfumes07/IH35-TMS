@@ -846,9 +846,10 @@ export async function seedExpense(
   const fromLoad = (
     await client.query<{ driver_id: string; assigned_unit_id: string | null }>(
       `SELECT d.id::text AS driver_id, l.assigned_unit_id::text AS assigned_unit_id
-         FROM mdata.loads l JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-        WHERE l.id = $1::uuid`,
-      [loadId]
+         FROM mdata.loads l
+         JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id AND d.operating_company_id = l.operating_company_id
+        WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid`,
+      [loadId, operatingCompanyId]
     )
   ).rows[0];
   if (!fromLoad) throw new Error("seed_expense_load_has_no_primary_driver");

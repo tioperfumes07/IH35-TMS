@@ -20,6 +20,7 @@
  * unmatch a bank line), and a closed period.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { resolveFillDriverAtTime } from "../fuel/fuel-load-at-time.js";
 import { ensureOpenPeriod } from "./posting-engine.service.js";
 import { insertPostingLineWithSpine } from "./posting-line-writer.js";
@@ -64,9 +65,6 @@ export class ExpenseCorrectionRefused extends Error {
   }
 }
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 /** The driver a fuel receipt document should carry, resolved from the fill it was posted from (443.126 rule). */
 async function driverFromFill(client: Queryable, operatingCompanyId: string, journalEntryId: string, unitId: string | null, loadId: string | null) {
@@ -276,7 +274,8 @@ export async function correctPostedExpense(
     journalEntryId: exp.journal_entry_id,
     reason: correctionMemo,
     actorUserId: input.actorUserId,
-    currentBusinessDate: todayIso(),
+    // The company business day (America/Chicago), never the host UTC day — after ~19:00 Chicago the UTC day is tomorrow.
+    currentBusinessDate: companyBusinessDate(),
   });
   const reversal = reversed.reversal;
   if (reversal.closed_period_reversal) throw new ExpenseCorrectionRefused(`period_closed: ${original.entry_date}`);

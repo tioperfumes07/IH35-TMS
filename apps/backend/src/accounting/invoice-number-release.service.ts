@@ -172,7 +172,7 @@ export async function voidAndReissueLoadInvoice(
     const c = await convertProformaToOfficial(client as never, { operatingCompanyId: co, loadId: inv.load_id, userId: input.actorUserId });
     if (!c.converted) throw new InvoiceReissueRefused(`proforma_convert_refused: ${c.reason}`);
   }
-  const fresh = (await client.query<{ display_id: string; total: number; customer_id: string }>(`SELECT display_id, total_cents::int AS total, customer_id::text AS customer_id FROM accounting.invoices WHERE id = $1::uuid`, [newId])).rows[0]!;
+  const fresh = (await client.query<{ display_id: string; total: number; customer_id: string }>(`SELECT display_id, total_cents::int AS total, customer_id::text AS customer_id FROM accounting.invoices WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [newId, co])).rows[0]!;
   if (fresh.total !== newTotal) throw new InvoiceReissueRefused(`reissued_total_${fresh.total}_not_${newTotal}`);
   if (input.newCustomerId && fresh.customer_id !== input.newCustomerId) throw new InvoiceReissueRefused("reissued_customer_does_not_follow_the_load");
   const sent = await sendDraftInvoice(client as never, { invoiceId: newId, operatingCompanyId: co, userId: input.actorUserId, mode: input.sendMode ?? "live_feed" });

@@ -38,9 +38,14 @@ export function check(text) {
     problems.push("could not find the work_order_lines source query in copyToAccountingLines.");
     return problems;
   }
-  const sourceQuery = fn.slice(sourceQueryStart, sourceQueryStart + 1800);
+  // The whole source-query literal (to its closing backtick), not a fixed-width window: the WHERE carries a long
+  // explanatory comment, and a fixed window silently stops covering the filter as that comment grows.
+  const literalEnd = fn.indexOf("`", sourceQueryStart);
+  const sourceQuery = fn.slice(sourceQueryStart, literalEnd === -1 ? undefined : literalEnd);
 
-  if (!/AND total_cost <> 0/.test(sourceQuery)) {
+  // ACCT-F4431334 (659d3c7187) aliased the source table (`maintenance.work_order_lines l`, joined to its parent line
+  // and the item catalog), so the filter is now `l.total_cost <> 0`; the bare spelling stays accepted.
+  if (!/AND\s+(?:l\.)?total_cost\s*<>\s*0\b/.test(sourceQuery)) {
     problems.push(
       "source query does not exclude total_cost = 0 rows — a $0 Section B container line will " +
         "still be copied into bill_lines/expense_lines and violate journal_entry_postings_amount_cents_check " +
@@ -70,8 +75,8 @@ function selftest() {
 
   // Offender: remove the total_cost <> 0 filter (the original bug — copies $0 container lines).
   const offender = real.replace(
-    /      WHERE work_order_uuid = \$1\n(\s*--[^\n]*\n)*\s*AND total_cost <> 0\n/,
-    "      WHERE work_order_uuid = $1\n"
+    /(      WHERE (?:l\.)?work_order_uuid = \$1\n)(\s*--[^\n]*\n)*\s*AND (?:l\.)?total_cost <> 0\n/,
+    "$1"
   );
   if (offender === real) {
     failures.push("offender mutation did not change the file — the guard's own regex may be stale.");

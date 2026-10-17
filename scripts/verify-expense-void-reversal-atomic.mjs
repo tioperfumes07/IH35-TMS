@@ -24,9 +24,14 @@ export function run(root = process.cwd()) {
   // ACCT-F4431310 (2026-10-12): the void route now reverses through reverseExpenseDocumentInClientTx (expense-void-reversal.ts),
   // the client-taking reversal of EVERY live posting of the document (own 'expense' lines + a fuel receipt's fuel_event
   // entry); it takes the same client, so the rule — reversal and status flip in ONE transaction — is unchanged.
+  // 443.136 follow-up (de3de55e09, #26737): the route now delegates the whole in-transaction void to THE one expense
+  // void, voidExpenseDocumentInClientTx (accounting/expense-void.service.ts), called with the route's client inside its
+  // single withCompanyScope. The rule is unchanged — reversal then status flip, one client, one transaction — so when the
+  // route delegates, the reversal-before-flip ordering is asserted on that service body instead of the route body.
+  const delegates = /import\s*\{[^}]*\bvoidExpenseDocumentInClientTx\b[^}]*\}\s*from\s*"\.\/expense-void\.service\.js"/.test(src);
   const engineImport = src.match(/import\s*\{([^}]*)\}\s*from\s*"\.\/posting-engine\.service\.js"/);
   const docImport = /import\s*\{[^}]*\breverseExpenseDocumentInClientTx\b[^}]*\}\s*from\s*"\.\/expense-void-reversal\.js"/.test(src);
-  if (!docImport && (!engineImport || !/\breversePostedSourceTransactionInClientTx\b/.test(engineImport[1]))) {
+  if (!delegates && !docImport && (!engineImport || !/\breversePostedSourceTransactionInClientTx\b/.test(engineImport[1]))) {
     failures.push("expenses.routes.ts must import a client-taking, atomic reverser (reverseExpenseDocumentInClientTx or reversePostedSourceTransactionInClientTx), not the non-atomic reversePostedSourceTransaction");
   }
   if (/\breversePostedSourceTransaction\(/.test(src.replace(/reversePostedSourceTransactionInClientTx/g, ""))) {
@@ -48,6 +53,40 @@ export function run(root = process.cwd()) {
     failures.push(
       `expected exactly 2 withCompanyScope calls in the void route (pre-check + atomic reversal-and-flip), found ${withCompanyScopeCalls} — the reversal and the status flip must share one transaction`
     );
+  }
+  if (delegates && /\bvoidExpenseDocumentInClientTx\(/.test(routeBody)) {
+    // The delegate must run on the route's transaction client, inside the (second) withCompanyScope callback.
+    if (!/withCompanyScope\([^)]*\)\s*=>\s*\{?\s*(?:return\s+)?(?:await\s+)?voidExpenseDocumentInClientTx\(\s*client\b/.test(routeBody.replace(/async\s*\(client\)/g, "(client)"))) {
+      failures.push("the void route must call voidExpenseDocumentInClientTx(client, ...) directly inside its withCompanyScope callback — the reversal and the status flip must share the route's one transaction");
+    }
+    const svcPath = `${root}/apps/backend/src/accounting/expense-void.service.ts`;
+    if (!fs.existsSync(svcPath)) {
+      failures.push("expenses.routes.ts imports voidExpenseDocumentInClientTx but accounting/expense-void.service.ts is missing");
+      return failures;
+    }
+    const svc = fs.readFileSync(svcPath, "utf8");
+    const start = svc.indexOf("export async function voidExpenseDocumentInClientTx(");
+    if (start === -1) {
+      failures.push("could not locate voidExpenseDocumentInClientTx in expense-void.service.ts to check");
+      return failures;
+    }
+    const nextExport = svc.indexOf("\nexport ", start + 1);
+    const fnBody = nextExport === -1 ? svc.slice(start) : svc.slice(start, nextExport);
+    if (/withCompanyScope\(|withCurrentUser\(|pool\.connect\(|getPool\(|\bBEGIN\b|\bCOMMIT\b/.test(fnBody)) {
+      failures.push("voidExpenseDocumentInClientTx must not open its own connection/transaction — it runs on the caller's client");
+    }
+    if (/\breversePostedSourceTransaction\(/.test(fnBody.replace(/reversePostedSourceTransactionInClientTx/g, ""))) {
+      failures.push("voidExpenseDocumentInClientTx must not call the non-atomic reversePostedSourceTransaction");
+    }
+    if (!/(?:reversePostedSourceTransactionInClientTx|reverseExpenseDocumentInClientTx)\(\s*client\b/.test(fnBody)) {
+      failures.push("voidExpenseDocumentInClientTx must reverse on its own `client` — anchored on reverseExpenseDocumentInClientTx(client, ...) / reversePostedSourceTransactionInClientTx(client, ...)");
+    }
+    const revIdx = fnBody.search(/(?:reversePostedSourceTransactionInClientTx|reverseExpenseDocumentInClientTx)\(/);
+    const flipIdx = fnBody.search(/stampDocumentVoided\(|UPDATE accounting\.expenses/);
+    if (revIdx === -1 || flipIdx === -1 || revIdx > flipIdx) {
+      failures.push("in voidExpenseDocumentInClientTx the status flip (stampDocumentVoided / UPDATE accounting.expenses) must run after the reversal call");
+    }
+    return failures;
   }
   if (!/(?:reversePostedSourceTransactionInClientTx|reverseExpenseDocumentInClientTx)\(\s*client,/.test(routeBody)) {
     failures.push("the reversal call must pass the same `client` used by the subsequent UPDATE — anchored on reverseExpenseDocumentInClientTx(client, ...) / reversePostedSourceTransactionInClientTx(client, ...)");
@@ -126,6 +165,46 @@ import { postSourceTransaction, reversePostedSourceTransactionInClientTx, Postin
     .replace("return { reversingJeId: rev.journal_entry_id };", "const rev = await reverseExpenseDocumentInClientTx(client, { operatingCompanyId: oci, expenseId });\n        return { reversingJeId: rev.journal_entry_id };");
   mk("apps/backend/src/accounting/expenses.routes.ts", badDoc);
   if (!run(tmp).length) throw new Error("FAIL fail: document reversal after the status flip should be caught");
+
+  // 443.136 follow-up shape: the route delegates to voidExpenseDocumentInClientTx on its client (PASS); the service
+  // flipping before it reverses, opening its own transaction, or the route calling it off its client -> caught.
+  const routeDelegate = `
+import { voidExpenseDocumentInClientTx } from "./expense-void.service.js";
+
+  app.post("/api/v1/expenses/:expenseId/void", async (req, reply) => {
+    const pre = await withCompanyScope(user.uuid, oci, async (client) => {
+      return { kind: "ok" };
+    });
+    try {
+      const voided = await withCompanyScope(user.uuid, oci, async (client) =>
+        voidExpenseDocumentInClientTx(client as never, { operatingCompanyId: oci, expenseId }));
+      return reply.code(200).send({ status: "void" });
+    } catch (err) {
+      throw err;
+    }
+  });
+`;
+  const svcGood = `
+export async function voidExpenseDocumentInClientTx(client, input) {
+  const rev = await reverseExpenseDocumentInClientTx(client as never, { operatingCompanyId: input.operatingCompanyId });
+  await stampDocumentVoided(client as never, { family: "expense" });
+  await client.query(\`UPDATE accounting.expenses SET posting_status='reversed' WHERE id=$1\`, []);
+  return { reversingJeId: rev.reversal_journal_entry_id };
+}
+`;
+  mk("apps/backend/src/accounting/expenses.routes.ts", routeDelegate);
+  mk("apps/backend/src/accounting/expense-void.service.ts", svcGood);
+  if (run(tmp).length) throw new Error("PASS fail (delegate): " + run(tmp).join("; "));
+  const svcFlipFirst = svcGood
+    .replace("  const rev = await reverseExpenseDocumentInClientTx(client as never, { operatingCompanyId: input.operatingCompanyId });\n", "")
+    .replace("  return { reversingJeId", "  const rev = await reverseExpenseDocumentInClientTx(client as never, { operatingCompanyId: input.operatingCompanyId });\n  return { reversingJeId");
+  mk("apps/backend/src/accounting/expense-void.service.ts", svcFlipFirst);
+  if (!run(tmp).length) throw new Error("FAIL fail: delegate service flipping status before the reversal should be caught");
+  mk("apps/backend/src/accounting/expense-void.service.ts", svcGood.replace("export async function voidExpenseDocumentInClientTx(client, input) {", "export async function voidExpenseDocumentInClientTx(client, input) {\n  return withCompanyScope(uid, input.operatingCompanyId, async (own) => {});"));
+  if (!run(tmp).length) throw new Error("FAIL fail: delegate service opening its own transaction should be caught");
+  mk("apps/backend/src/accounting/expense-void.service.ts", svcGood);
+  mk("apps/backend/src/accounting/expenses.routes.ts", routeDelegate.replace("voidExpenseDocumentInClientTx(client as never,", "voidExpenseDocumentInClientTx(otherClient as never,"));
+  if (!run(tmp).length) throw new Error("FAIL fail: route calling the delegate off its transaction client should be caught");
 
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-expense-void-reversal-atomic --selftest OK");

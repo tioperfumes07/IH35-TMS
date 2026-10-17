@@ -30,18 +30,18 @@ const PURCHASED_INVOICES_SQL = `
   WITH docs AS (
     SELECT pa.invoice_id AS invoice_id, COALESCE(pa.amount_cents, 0)::bigint AS cents, p.customer_id
       FROM accounting.payment_applications pa
-      JOIN accounting.payments p ON p.id = pa.payment_id AND p.voided_at IS NULL
+      JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = $1::uuid AND p.voided_at IS NULL
      WHERE $2::text = 'payment' AND pa.payment_id = $3::uuid AND pa.unapplied_at IS NULL AND pa.invoice_id IS NOT NULL
     UNION ALL
     SELECT pa.invoice_id, COALESCE(pa.amount_cents, 0)::bigint, p.customer_id
       FROM accounting.deposit_lines dl
-      JOIN accounting.payments p ON p.id = dl.source_payment_id AND p.voided_at IS NULL
+      JOIN accounting.payments p ON p.id = dl.source_payment_id AND p.operating_company_id = $1::uuid AND p.voided_at IS NULL
       JOIN accounting.payment_applications pa ON pa.payment_id = p.id AND pa.unapplied_at IS NULL AND pa.invoice_id IS NOT NULL
      WHERE $2::text = 'deposit' AND dl.deposit_id = $3::uuid
     UNION ALL
     SELECT i.id, 0::bigint, i.customer_id
       FROM accounting.invoices i
-     WHERE $2::text = 'invoice' AND i.id = $3::uuid
+     WHERE $2::text = 'invoice' AND i.id = $3::uuid AND i.operating_company_id = $1::uuid
   )
   SELECT d.invoice_id::text, d.cents::text AS cents, d.customer_id::text,
          l.id::text AS purchase_line_id, fp.id::text AS purchase_id, fp.factoring_company_vendor_id::text AS factor_vendor_id,

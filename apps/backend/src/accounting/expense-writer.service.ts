@@ -995,8 +995,8 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
         : (
             (
               await client.query(
-                `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label FROM catalogs.accounts a WHERE a.id = $1::uuid`,
-                [categoryAccountId]
+                `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label FROM catalogs.accounts a WHERE a.id = $1::uuid AND a.operating_company_id = $2::uuid`,
+                [categoryAccountId, body.operating_company_id]
               )
             ).rows[0] as { label?: string | null } | undefined
           )?.label ?? null;
