@@ -20,14 +20,20 @@ import fs from "node:fs";
 const LABEL = "verify-maintenance-paid-same-day-gl-and-no-double-bill";
 const TWO_SECTION = "apps/backend/src/maintenance/two-section-service.ts";
 const MAINT_POSTER = "apps/backend/src/accounting/maintenance-posting/poster.service.ts";
+// 443.182 C step 2 — the WO expense hands its document (and its post option) to the one expense engine.
+const ENGINE = "apps/backend/src/accounting/expense-writer.service.ts";
 
 function failures(sources) {
   const out = [];
   const twoSection = sources[TWO_SECTION];
   const poster = sources[MAINT_POSTER];
+  const engine = sources[ENGINE] ?? "";
+  const postAt = engine.indexOf("export async function postExpenseDocumentInClientTx");
+  const postEnd = engine.indexOf("\nexport ", postAt + 10);
+  const enginePost = postAt < 0 ? "" : engine.slice(postAt, postEnd > 0 ? postEnd : undefined);
 
   // --- Creation-time GL posting (two-section-service.ts) ---
-  if (!/postSourceTransactionInClientTx/.test(twoSection)) {
+  if (!/postSourceTransactionInClientTx/.test(enginePost)) {
     out.push("two-section-service.ts: autoCreateExpenseFromWO must call postSourceTransactionInClientTx (the same-transaction variant — a separate-connection call would hit the READ-COMMITTED visibility bug already fixed once this session for the revenue latch)");
   }
   const fnStart = twoSection.indexOf("export async function autoCreateExpenseFromWO");
@@ -43,16 +49,16 @@ function failures(sources) {
     // post, forever (live-proven gap: expense 57cabbab-f06a-4fa3-ad67-877eb2e64b0f sat
     // posting_status=unposted from creation until that fix). Do not narrow this back to
     // paymentAccountUuid alone — that is the exact regression this class exists to catch.
-    if (!/if\s*\(\s*paymentAccountUuid\s*\|\|\s*wo\.vendor_uuid\s*\)/.test(fnBody)) {
+    if (!/post:\s*paymentAccountUuid\s*\|\|\s*wo\.vendor_uuid\s*\?/.test(fnBody)) {
       out.push("two-section-service.ts: GL posting must be gated on paymentAccountUuid || wo.vendor_uuid (matches the canonical route's !payment_account_uuid && !vendor_uuid orphan rule) — narrowing this back to paymentAccountUuid alone reintroduces PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE");
     }
-    if (!/postSourceTransactionInClientTx\(/.test(fnBody)) {
+    if (!/writeExpenseDocumentInClientTx\(/.test(fnBody) || !/postSourceTransactionInClientTx\(/.test(enginePost)) {
       out.push("two-section-service.ts: autoCreateExpenseFromWO body must call postSourceTransactionInClientTx");
     }
-    if (!/source_transaction_type:\s*["']expense["']/.test(fnBody)) {
+    if (!/source_transaction_type:\s*["']expense["']/.test(enginePost)) {
       out.push("two-section-service.ts: the posting call must use source_transaction_type: 'expense' (the same source type the canonical route posts)");
     }
-    if (!/posting_status\s*=\s*'posted'/.test(fnBody)) {
+    if (!/stamp:\s*"status_and_posting"/.test(fnBody) || !/status\s*=\s*'posted',\s*posting_status\s*=\s*'posted'/.test(enginePost)) {
       out.push("two-section-service.ts: must stamp accounting.expenses.posting_status='posted' after a successful post (same as the canonical route)");
     }
     if (!/instanceof\s+PostingEngineError/.test(fnBody)) {
@@ -89,19 +95,19 @@ function failures(sources) {
   return out;
 }
 
-const live = { [TWO_SECTION]: fs.readFileSync(TWO_SECTION, "utf8"), [MAINT_POSTER]: fs.readFileSync(MAINT_POSTER, "utf8") };
+const live = { [TWO_SECTION]: fs.readFileSync(TWO_SECTION, "utf8"), [MAINT_POSTER]: fs.readFileSync(MAINT_POSTER, "utf8"), [ENGINE]: fs.readFileSync(ENGINE, "utf8") };
 
 if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
   const mutations = [
     {
       name: "creation-time posting call removed",
       file: TWO_SECTION,
-      mutate: (text) => text.replace(/const posting = await postSourceTransactionInClientTx\([\s\S]*?\);/, "const posting = { journal_entry_id: null };"),
+      mutate: (text) => text.replace('stamp: "status_and_posting",\n            onRefusal', 'stamp: "none",\n            onRefusal'),
     },
     {
       name: "gate narrowed back to paymentAccountUuid alone (PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE regression)",
       file: TWO_SECTION,
-      mutate: (text) => text.replace("if (paymentAccountUuid || wo.vendor_uuid) {", "if (paymentAccountUuid) {"),
+      mutate: (text) => text.replace("post:\n      paymentAccountUuid || wo.vendor_uuid\n", "post:\n      paymentAccountUuid\n"),
     },
     {
       // `if (!(err instanceof PostingEngineError)) throw err;` appears TWICE in this file — once
@@ -115,13 +121,15 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
         const fnStart = text.indexOf("export async function autoCreateExpenseFromWO");
         if (fnStart === -1) return text;
         const before = text.slice(0, fnStart);
-        const after = text.slice(fnStart).replace("if (!(err instanceof PostingEngineError)) throw err;", "throw err;");
+        // 443.182 C step 2 — the swallow is the WO expense's engine option onRefusal.
+        const after = text.slice(fnStart).replace('onRefusal: (err) => (err instanceof PostingEngineError ? "swallow" : "rethrow")', 'onRefusal: () => "rethrow"');
         return before + after;
       },
     },
     {
       name: "posting_status stamp removed",
-      file: TWO_SECTION,
+      // 443.182 C step 2 — the stamp is the engine's (postExpenseDocumentInClientTx), chosen by the WO's stamp option.
+      file: ENGINE,
       mutate: (text) => text.replace(/SET status = 'posted', posting_status = 'posted'.*?updated_at = now\(\)/s, "SET updated_at = now()"), // LST-F418: the stamp now sets status too (ROOT CAUSE FIX 2026-09-26)
     },
     {

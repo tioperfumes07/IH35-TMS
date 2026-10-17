@@ -67,10 +67,8 @@ import { createHistoricalDriverBill } from "../driver-finance/historical-driver-
 // forbids (it skips the "Driver Net-Pay Clearing" payment-method resolution CC-3's wrapper does).
 import { postLoadBookendedSettlementGlAfterClose } from "../driver-finance/settlement-payrun-close.service.js";
 import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { postFactoringAdvanceEvent } from "../accounting/factoring-posting/poster.service.js";
-import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
-import { insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
+import { postExpenseDocumentInClientTx, reserveExpenseNumber, writeExpenseDocumentInClientTx } from "../accounting/expense-writer.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveSettlementPdfItem, SettlementPdfItemError } from "../catalogs/settlement-pdf-item-map.js";
 import { findLiveFuelByProviderTransactionId, FuelProviderTransactionDuplicateError } from "../fuel/fuel-provider-reference.js";
@@ -806,8 +804,8 @@ export async function seedExpense(
   // "for expenses that are not load-attributed." generateExpenseNumber owns
   // expense_attribution.expense_seq_per_load's own increment internally; the manual UPSERT that
   // used to duplicate it below is gone — two writers incrementing the same sequence would double-count.
-  const attribution = await generateExpenseNumber(client as never, loadId, operatingCompanyId);
-  const expenseNumber = attribution.number;
+  // 443.182 C — numbered, written, linked and audited by the one expense engine (accounting/expense-writer.service.ts).
+  const number = await reserveExpenseNumber(client, operatingCompanyId, { loadId });
   // ROUND 178/182 (2026-09-28) — TWO real defects fixed in this one INSERT, found while adding
   // real settlement-cost-line data through this path for the first time this session:
   //
@@ -845,57 +843,58 @@ export async function seedExpense(
     )
   ).rows[0];
   if (!fromLoad) throw new Error("seed_expense_load_has_no_primary_driver");
-  const insertedExpenseId = await insertExpenseHeader(client, {
-    operating_company_id: operatingCompanyId,
-    expense_number: expenseNumber,
-    vendor_uuid: vendorId,
-    driver_uuid: fromLoad.driver_id,
-    transaction_date: line.date,
-    total_amount_cents: line.amountCents,
-    memo: line.description,
-    load_id: loadId,
-    status: "draft",
-    posting_status: "unposted",
-    created_by_user_id: actorUserId,
-    updated_by_user_id: actorUserId,
-    is_sample_data: false,
-    unit_id: fromLoad.assigned_unit_id,
-    vendor_document_number: line.invoice?.trim() || null,
+  const written = await writeExpenseDocumentInClientTx(client, {
+    header: {
+      operating_company_id: operatingCompanyId,
+      vendor_uuid: vendorId,
+      driver_uuid: fromLoad.driver_id,
+      transaction_date: line.date,
+      total_amount_cents: line.amountCents,
+      memo: line.description,
+      load_id: loadId,
+      status: "draft",
+      posting_status: "unposted",
+      created_by_user_id: actorUserId,
+      updated_by_user_id: actorUserId,
+      is_sample_data: false,
+      unit_id: fromLoad.assigned_unit_id,
+      vendor_document_number: line.invoice?.trim() || null,
+    },
+    number,
+    // (4) expense_lines_item_qty_rate_amount_check requires item_id/quantity/rate_cents/
+    // unit_of_measure to be ALL NULL or ALL set together (quantity*rate_cents = amount_cents) —
+    // this INSERT set item_id alone, violating the check on every real call. One line, one flat
+    // price: quantity=1 @ rate_cents=amount_cents satisfies the identity exactly. "each" is the
+    // same unit_of_measure convention check-create.service.ts already uses for a flat-price line.
+    lines: [
+      {
+        operating_company_id: operatingCompanyId,
+        line_sequence: 1,
+        amount: line.amountCents / 100,
+        amount_cents: line.amountCents,
+        description: line.description,
+        load_id: loadId,
+        load_required: true,
+        expense_account_uuid: item.expenseAccountId,
+        item_id: item.itemId,
+        quantity: 1,
+        rate_cents: line.amountCents,
+        unit_of_measure: "each",
+      },
+    ],
+    loadLink: { method: "auto_timestamp", confidence: "high", reason: null, userId: actorUserId, loadNumber },
+    audits: (expenseId) => [
+      {
+        actorUserId,
+        action: "accounting.expense.alwaystrack_seed",
+        payload: { operating_company_id: operatingCompanyId, expense_id: expenseId, load_id: loadId, item_name: item.itemName },
+        severity: "info",
+        tag: "SEED-SETTLEMENT-DOCUMENT-04",
+      },
+    ],
   });
-  if (!insertedExpenseId) throw new Error("seed_expense_insert_failed");
-  const expenseId = insertedExpenseId;
-
-  // (4) expense_lines_item_qty_rate_amount_check requires item_id/quantity/rate_cents/
-  // unit_of_measure to be ALL NULL or ALL set together (quantity*rate_cents = amount_cents) —
-  // this INSERT set item_id alone, violating the check on every real call. One line, one flat
-  // price: quantity=1 @ rate_cents=amount_cents satisfies the identity exactly. "each" is the
-  // same unit_of_measure convention check-create.service.ts already uses for a flat-price line.
-  await insertExpenseLine(client, {
-    operating_company_id: operatingCompanyId,
-    expense_id: expenseId,
-    line_sequence: 1,
-    amount: line.amountCents / 100,
-    amount_cents: line.amountCents,
-    description: line.description,
-    load_id: loadId,
-    load_required: true,
-    expense_account_uuid: item.expenseAccountId,
-    item_id: item.itemId,
-    quantity: 1,
-    rate_cents: line.amountCents,
-    unit_of_measure: "each",
-  });
-
-  await client.query(
-    `INSERT INTO expense_attribution.expense_load_links (
-       operating_company_id, expense_id, expense_source, load_id, load_number, expense_seq,
-       expense_number, attribution_method, attribution_confidence, attributed_by_user_id
-     )
-     VALUES ($1::uuid, $2::uuid, 'accounting', $3::uuid, $4, $5, $6, 'auto_timestamp', 'high', $7::uuid)`,
-    [operatingCompanyId, expenseId, loadId, loadNumber, attribution.seq, expenseNumber, actorUserId]
-  );
-
-  await appendCrudAudit(client, actorUserId, "accounting.expense.alwaystrack_seed", { operating_company_id: operatingCompanyId, expense_id: expenseId, load_id: loadId, item_name: item.itemName }, "info", "SEED-SETTLEMENT-DOCUMENT-04");
+  if (!written) throw new Error("seed_expense_insert_failed");
+  const expenseId = written.expenseId;
   return expenseId;
 }
 
@@ -1146,11 +1145,17 @@ export async function seedSettlementDocument(
     // is the one poster that takes this transaction's own client, so it is safe to call here —
     // see the "TWO PHASES" note above for why the others are not.
     for (const expenseId of thisLoadExpenseIds) {
-      await postSourceTransactionInClientTx(
-        client as never,
-        { operating_company_id: operatingCompanyId, source_transaction_type: "expense", source_transaction_id: expenseId },
-        { userId: actorUserId }
-      ).catch((err) => console.warn("seedSettlementDocument: expense AP posting did not post", expenseId, (err as Error)?.message));
+      // 443.182 C — through the one expense engine; best-effort, no posted stamp (as before).
+      await postExpenseDocumentInClientTx(client, {
+        operatingCompanyId,
+        expenseId,
+        actorUserId,
+        stamp: "none",
+        onRefusal: (err) => {
+          console.warn("seedSettlementDocument: expense AP posting did not post", expenseId, (err as Error)?.message);
+          return "swallow";
+        },
+      });
     }
   }
 

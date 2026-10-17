@@ -1,14 +1,13 @@
 import { resolveExpenseCategoryById } from "../accounting/expense-category-catalog.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
-import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { postSourceTransactionInClientTx, PostingEngineError } from "../accounting/posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
 // The one expense GL-posting flag key (accounting/expense-gl-posting-flag.ts), shared with every expense-GL call site.
 import { EXPENSE_GL_POSTING_FLAG_KEY as WO_EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
 import { resolveLineLoadExemption } from "../accounting/expense-line-load-exemption.js";
-import { EXPENSE_SQL_CURRENT_DATE, insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
+import { EXPENSE_SQL_CURRENT_DATE, writeExpenseDocumentInClientTx } from "../accounting/expense-writer.service.js";
 // Same flag key as accounting/bill-gl.service.ts's own BILL_GL_POSTING_FLAG_KEY, redefined here for
 // the same reason (avoid a service->service import cycle risk) — same value, same semantics.
 const WO_BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
@@ -625,7 +624,8 @@ async function copyToAccountingLines(
   destinationId: string,
   // 443.105 #2 — expense lines are written WITH their load or the reason they have none (never a bare line the DB
   // has to refuse and a later UPDATE has to fix).
-  expenseLineLink?: { loadId: string | null; loadExemptionReason: string | null }
+  // 443.182 C — and through the one expense engine's line writer (expense-writer.service.ts), never an INSERT of their own.
+  expenseLineLink?: { loadId: string | null; loadExemptionReason: string | null; insertLine: (row: Record<string, unknown>) => Promise<string | null> }
 ) {
   const woContext = await client.query<{ operating_company_id: string }>(
     `
@@ -785,8 +785,8 @@ async function copyToAccountingLines(
               })
             : null;
           // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseLine).
-          const lineId = await insertExpenseLine(client, {
-            expense_id: destinationId,
+          if (!expenseLineLink) throw new Error("expense_line_copy_requires_engine_line_writer");
+          const lineId = await expenseLineLink.insertLine({
             line_sequence: sequence,
             amount_cents: amountCents,
             amount: amountCents / 100,
@@ -1067,10 +1067,19 @@ export async function autoCreateExpenseFromWO(
   // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half, sibling site): this writer already
   // receives the authed userId as a parameter but never stamped created_by_user_id — the real actor
   // was in scope the whole time.
-  // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseHeader); unit_id /
-  // load_id are written only where the column exists, exactly as the four column-gated INSERTs did.
-  const expenseId =
-    (await insertExpenseHeader(client, {
+  // 443.182 C — numbered, written, audited and posted by the one expense engine (accounting/expense-writer.service.ts).
+  // unit_id / load_id are written only where the column exists, exactly as the four column-gated INSERTs did; the number is
+  // the company EXP series stamped right after the header; the post is flag-gated and non-fatal, as before.
+  const hasExpenseLines = await relationExists(client, "accounting.expense_lines");
+  const lineLoadExemption = resolveLineLoadExemption({
+    loadId: wo.load_id ?? null,
+    reason: exemptionReason.length >= 20 ? exemptionReason : null,
+    loadRequired: Boolean(expenseCategoryRequiresLoad.rows[0]?.requires_load),
+    accountLabel: "Maintenance work order cost",
+    context: `work order ${wo.display_id ?? woUuid}`,
+  });
+  const written = await writeExpenseDocumentInClientTx(client, {
+    header: {
       operating_company_id: wo.operating_company_id,
       vendor_uuid: wo.vendor_uuid,
       linked_work_order_uuid: woUuid,
@@ -1082,160 +1091,90 @@ export async function autoCreateExpenseFromWO(
       payment_account_uuid: paymentAccountUuid ?? null,
       is_sample_data: vendorIsSampleData,
       created_by_user_id: userId,
-    })) ?? "";
-  if (!expenseId) return null;
-  if (await columnExists(client, "accounting.expenses", "expense_number")) {
-    const expenseNumber = await nextExpenseDisplayId(client, wo.operating_company_id);
-    await client.query(
-      `UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1 AND expense_number IS NULL`,
-      [expenseId, expenseNumber]
-    );
-  }
-  if (await relationExists(client, "accounting.expense_lines")) {
-    const lineLoadExemption = resolveLineLoadExemption({
-      loadId: wo.load_id ?? null,
-      reason: exemptionReason.length >= 20 ? exemptionReason : null,
-      loadRequired: Boolean(expenseCategoryRequiresLoad.rows[0]?.requires_load),
-      accountLabel: "Maintenance work order cost",
-      context: `work order ${wo.display_id ?? woUuid}`,
-    });
-    await copyToAccountingLines(client, woUuid, "accounting.expense_lines", "expense_id", expenseId, {
-      loadId: wo.load_id ?? null,
-      loadExemptionReason: lineLoadExemption,
-    });
+    },
+    number: { kind: "company_after_header" },
+    lines: hasExpenseLines
+      ? async ({ expenseId, insertLine }) => {
+          await copyToAccountingLines(client, woUuid, "accounting.expense_lines", "expense_id", expenseId, {
+            loadId: wo.load_id ?? null,
+            loadExemptionReason: lineLoadExemption,
+            insertLine,
+          });
 
-    const hasLoadId = await columnExists(client, "accounting.expense_lines", "load_id");
-    const hasLoadRequired = await columnExists(client, "accounting.expense_lines", "load_required");
-    const hasExemption = await columnExists(client, "accounting.expense_lines", "load_exemption_reason");
-    const hasLineCategory = await columnExists(client, "accounting.expense_lines", "line_category");
-    if (hasLoadId || hasLoadRequired || hasExemption || hasLineCategory) {
-      const updates: string[] = [];
-      const values: unknown[] = [];
-      if (hasLoadId) {
-        values.push(wo.load_id ?? null);
-        updates.push(`load_id = $${values.length}`);
-      }
-      if (hasLoadRequired) {
-        values.push(Boolean(expenseCategoryRequiresLoad.rows[0]?.requires_load));
-        updates.push(`load_required = $${values.length}`);
-      }
-      if (hasExemption) {
-        values.push(lineLoadExemption);
-        updates.push(`load_exemption_reason = $${values.length}`);
-      }
-      if (hasLineCategory) {
-        updates.push(`
-          line_category = CASE
-            WHEN upper(COALESCE(description, '')) LIKE '%DIESEL%' OR upper(COALESCE(description, '')) LIKE '%FUEL%' THEN 'diesel'
-            WHEN upper(COALESCE(description, '')) LIKE '%TOLL%' THEN 'toll'
-            WHEN upper(COALESCE(description, '')) LIKE '%SCALE%' THEN 'scale'
-            WHEN upper(COALESCE(description, '')) LIKE '%LUMPER%' THEN 'lumper'
-            WHEN upper(COALESCE(description, '')) LIKE '%PARKING%' THEN 'parking'
-            WHEN upper(COALESCE(description, '')) LIKE '%ROADSIDE%' THEN 'roadside_repair'
-            ELSE line_category
-          END
-        `);
-      }
-      values.push(expenseId);
-      await client.query(
-        `
-          UPDATE accounting.expense_lines
-          SET ${updates.join(",\n              ")}
-          WHERE expense_id = $${values.length}
-        `,
-        values
-      );
-    }
-
-    if (wo.load_id) {
-      await appendCrudAudit(
-        client as never,
-        userId,
-        "accounting.expense_line.load_linked",
-        { work_order_id: woUuid, expense_id: expenseId, load_id: wo.load_id },
-        "info",
-        "P5-D5-LOAD-FK"
-      );
-    } else if (exemptionReason.length >= 20) {
-      await appendCrudAudit(
-        client as never,
-        userId,
-        "accounting.expense_line.load_exempted",
-        { work_order_id: woUuid, expense_id: expenseId, load_exemption_reason: exemptionReason },
-        "warning",
-        "P5-D5-LOAD-FK"
-      );
-    }
-  }
-  await appendCrudAudit(
-    client as never,
-    userId,
-    "accounting.expense.auto_created_from_wo",
-    { work_order_id: woUuid, expense_id: expenseId },
-    "info",
-    "P3-T11.17-TWO-SECTION-V5"
-  );
-
-  // MAINT-F5697-CLASS — a "paid same day" WO expense used to stop here: it was inserted
-  // status='posted' (document lifecycle) but never actually reached the GL, because the canonical
-  // POST /api/v1/expenses route's own gated posting call (EXPENSE_GL_POSTING_ENABLED ->
-  // postSourceTransaction) has no equivalent here. Reuses the SAME flag + the SAME posting engine
-  // entry point the canonical route uses — no new GL math. Runs IN THE CALLER'S OWN OPEN
-  // TRANSACTION via postSourceTransactionInClientTx (not postSourceTransaction's own connection) —
-  // the exact cross-connection READ-COMMITTED visibility bug already fixed once this session for
-  // the revenue latch (LV-REVREC-NOT-FIRING) would otherwise silently no-op here too, since this
-  // expense row is not yet committed on any other connection.
-  //
-  // PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE — this attempt was gated on `paymentAccountUuid`
-  // alone, so every in_house/vendor_invoice WO completion (no payment account chosen — that is the
-  // vendor-payable case, not a cash-out) NEVER even tried to post, forever, with no retry and no UI
-  // surfacing that posting was skipped rather than attempted-and-failed. The row above still writes
-  // status='posted' unconditionally, so the document reads finalized while GL state silently never
-  // catches up. Live proof of the gap: expense 57cabbab-f06a-4fa3-ad67-877eb2e64b0f (WO
-  // 850e2cc4-1578-40c2-b38d-a528f7ea821d) sat status=posted/posting_status=unposted from creation
-  // until this fix; posted live via the canonical poster (JE becfecd1-19f7-4fb3-a011-bef5be3f3638,
-  // DR category / CR "Expense AP", balanced) to close that instance. The canonical POST
-  // /api/v1/expenses/:id/post route's own orphan rule is `!payment_account_uuid && !vendor_uuid`
-  // (a known vendor with no payment account posts to A/P — not an orphan); this writer's own
-  // attempt-gate was narrower than the route it mirrors. Matching it here closes the gap for every
-  // future WO expense with a resolved vendor (the normal case — wo.vendor_uuid), not just this one.
-  if (paymentAccountUuid || wo.vendor_uuid) {
-    const flagOn = await isEnabled(client as never, WO_EXPENSE_GL_POSTING_FLAG_KEY, {
-      operating_company_id: wo.operating_company_id,
-      user_uuid: userId,
-    });
-    if (flagOn) {
-      try {
-        const posting = await postSourceTransactionInClientTx(
-          client as never,
-          { operating_company_id: wo.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
-          { userId }
-        );
-        await client.query(
-          // ROOT CAUSE FIX (Lead finding, 2026-09-26): status must move with posting_status -- see
-          // expenses.routes.ts's sister UPDATEs for the full note. Same defect, same table, fourth
-          // independent writer.
-          `
-            UPDATE accounting.expenses
-               SET status = 'posted', posting_status = 'posted', posted_at = now(), journal_entry_id = $2::uuid, updated_at = now()
-             WHERE id = $1::uuid AND operating_company_id = $3::uuid
-          `,
-          [expenseId, posting.journal_entry_id, wo.operating_company_id]
-        );
-        await appendCrudAudit(
-          client as never,
-          userId,
-          "expense.posted",
-          { expense_id: expenseId, journal_entry_id: posting.journal_entry_id, source: "auto_created_from_wo" },
-          "info"
-        );
-      } catch (err) {
-        // Same non-fatal contract as the canonical route: the expense already exists and is valid
-        // even unposted (re-postable later via /:id/post); a WO create must never 500 on this.
-        if (!(err instanceof PostingEngineError)) throw err;
-      }
-    }
-  }
+          const hasLoadId = await columnExists(client, "accounting.expense_lines", "load_id");
+          const hasLoadRequired = await columnExists(client, "accounting.expense_lines", "load_required");
+          const hasExemption = await columnExists(client, "accounting.expense_lines", "load_exemption_reason");
+          const hasLineCategory = await columnExists(client, "accounting.expense_lines", "line_category");
+          if (hasLoadId || hasLoadRequired || hasExemption || hasLineCategory) {
+            const updates: string[] = [];
+            const values: unknown[] = [];
+            if (hasLoadId) {
+              values.push(wo.load_id ?? null);
+              updates.push(`load_id = $${values.length}`);
+            }
+            if (hasLoadRequired) {
+              values.push(Boolean(expenseCategoryRequiresLoad.rows[0]?.requires_load));
+              updates.push(`load_required = $${values.length}`);
+            }
+            if (hasExemption) {
+              values.push(lineLoadExemption);
+              updates.push(`load_exemption_reason = $${values.length}`);
+            }
+            if (hasLineCategory) {
+              updates.push(`
+                line_category = CASE
+                  WHEN upper(COALESCE(description, '')) LIKE '%DIESEL%' OR upper(COALESCE(description, '')) LIKE '%FUEL%' THEN 'diesel'
+                  WHEN upper(COALESCE(description, '')) LIKE '%TOLL%' THEN 'toll'
+                  WHEN upper(COALESCE(description, '')) LIKE '%SCALE%' THEN 'scale'
+                  WHEN upper(COALESCE(description, '')) LIKE '%LUMPER%' THEN 'lumper'
+                  WHEN upper(COALESCE(description, '')) LIKE '%PARKING%' THEN 'parking'
+                  WHEN upper(COALESCE(description, '')) LIKE '%ROADSIDE%' THEN 'roadside_repair'
+                  ELSE line_category
+                END
+              `);
+            }
+            values.push(expenseId);
+            await client.query(
+              `
+                UPDATE accounting.expense_lines
+                SET ${updates.join(",\n              ")}
+                WHERE expense_id = $${values.length}
+              `,
+              values
+            );
+          }
+        }
+      : undefined,
+    audits: (expenseId) => [
+      ...(hasExpenseLines && wo.load_id
+        ? [{ actorUserId: userId, action: "accounting.expense_line.load_linked", payload: { work_order_id: woUuid, expense_id: expenseId, load_id: wo.load_id }, severity: "info" as const, tag: "P5-D5-LOAD-FK" }]
+        : hasExpenseLines && exemptionReason.length >= 20
+          ? [{ actorUserId: userId, action: "accounting.expense_line.load_exempted", payload: { work_order_id: woUuid, expense_id: expenseId, load_exemption_reason: exemptionReason }, severity: "warning" as const, tag: "P5-D5-LOAD-FK" }]
+          : []),
+      { actorUserId: userId, action: "accounting.expense.auto_created_from_wo", payload: { work_order_id: woUuid, expense_id: expenseId }, severity: "info", tag: "P3-T11.17-TWO-SECTION-V5" },
+    ],
+    // MAINT-F5697-CLASS / PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE — a WO expense with a payment account or a known vendor
+    // (A/P) posts through the SAME flag + the SAME poster the canonical route uses, in the caller's own transaction; status
+    // moves with posting_status; a posting refusal is non-fatal (the expense exists, re-postable via /:id/post).
+    post:
+      paymentAccountUuid || wo.vendor_uuid
+        ? {
+            actorUserId: userId,
+            gate: () =>
+              isEnabled(client as never, WO_EXPENSE_GL_POSTING_FLAG_KEY, {
+                operating_company_id: wo.operating_company_id,
+                user_uuid: userId,
+              }),
+            stamp: "status_and_posting",
+            onRefusal: (err) => (err instanceof PostingEngineError ? "swallow" : "rethrow"),
+            audits: (journalEntryId, expenseId) => [
+              { actorUserId: userId, action: "expense.posted", payload: { expense_id: expenseId, journal_entry_id: journalEntryId, source: "auto_created_from_wo" }, severity: "info" },
+            ],
+          }
+        : undefined,
+  });
+  if (!written) return null;
+  const expenseId = written.expenseId;
 
   return { uuid: expenseId };
 }

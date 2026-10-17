@@ -12,12 +12,9 @@
  * picks it: the operator's item, else the ONE item mapped to the account. Several items or none are refused by name, never
  * guessed.
  */
-import { generateExpenseNumber, insertExpenseLoadLink } from "../expense-attribution/expense-number.js";
-import { nextExpenseDisplayId } from "./display-id.js";
-import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
 import { readLoadAttribution, reconcileExpenseWithLoad, type ExpenseAttribution } from "./expense-load-attribution.js";
-import { EXPENSE_SQL_NOW, insertExpenseHeader, insertExpenseLine } from "./expense-writer.service.js";
+import { EXPENSE_SQL_NOW, reserveExpenseNumber, writeExpenseDocumentInClientTx, type ExpenseRow } from "./expense-writer.service.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -112,117 +109,91 @@ export async function createAndPostBankLineExpenseOnClient(
     dimensions = resolved;
   }
   // DEGH-06 / 443.113-C — a load-tagged bank-line expense uses the load spine (12225, 12225-1, …),
-  // never the generic EXP-YYYY-##### series. Same allocator as expenses.routes / fuel documents.
-  let expenseNumber: string;
-  let loadAttribution: { number: string; seq: number; loadNumber: string } | null = null;
-  if (input.loadId) {
-    loadAttribution = await generateExpenseNumber(client as never, input.loadId, input.operatingCompanyId);
-    expenseNumber = loadAttribution.number;
-  } else {
-    expenseNumber = await nextExpenseDisplayId(
-      client as never,
-      input.operatingCompanyId,
-      new Date(`${input.transactionDate}T00:00:00.000Z`)
-    );
-  }
-
-  // 443.182 C — persisted through the one expense writer (expense-writer.service.ts); this function keeps the bank-line
-  // policy: draft -> post through the expense poster unconditionally, company cost, no unit required, no memo dedup.
-  const expenseId = await insertExpenseHeader(client, {
-    operating_company_id: input.operatingCompanyId,
-    status: "draft",
-    posting_status: "unposted",
-    transaction_date: input.transactionDate,
-    total_amount_cents: input.amountCents,
-    memo: input.memo,
-    expense_number: expenseNumber,
-    vendor_uuid: input.vendorId,
-    payment_account_uuid: input.paymentAccountId,
-    is_sample_data: false,
-    is_company_expense: true,
-    is_reimbursable: false,
-    source_bank_transaction_id: input.sourceBankTransactionId,
-    load_id: input.loadId ?? null,
-    unit_id: dimensions.unitId,
-    trailer_id: dimensions.trailerId,
-    driver_uuid: dimensions.driverId,
-    created_by_user_id: actor.userId,
-    updated_by_user_id: actor.userId,
-    non_owned_trailer_id: dimensions.nonOwnedTrailerId,
+  // never the generic EXP-YYYY-##### series. 443.182 C — numbered, written, linked and posted by the one expense engine
+  // (expense-writer.service.ts); this function keeps the bank-line policy as engine options: company cost, no unit
+  // required, no memo dedup, ALWAYS posted (draft -> posted, status moves with posting_status).
+  const number = await reserveExpenseNumber(client, input.operatingCompanyId, {
+    loadId: input.loadId ?? null,
+    referenceDate: new Date(`${input.transactionDate}T00:00:00.000Z`),
   });
-  if (!expenseId) throw new BankLineExpenseError("expense_insert_failed", "The expense could not be created.");
-
-  if (loadAttribution && input.loadId) {
-    await insertExpenseLoadLink(client as never, {
-      operatingCompanyId: input.operatingCompanyId,
-      expenseId,
-      loadId: input.loadId,
-      loadNumber: loadAttribution.loadNumber,
-      seq: loadAttribution.seq,
-      expenseNumber: loadAttribution.number,
-      method: "user_assigned",
-      confidence: "high",
-      reason: "Bank-line expense attributed to its tagged load",
-      userId: actor.userId,
-    });
-  }
 
   // 443.105 #2 — a bank-line expense with no load says why: company cost on <account>, from this bank line.
-  const accountLabel = input.loadId
-    ? null
-    : (
-        await client.query<{ label: string | null }>(
-          `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label
-             FROM catalogs.accounts a WHERE a.id = $1::uuid AND a.operating_company_id = $2::uuid`,
-          [input.expenseAccountId, input.operatingCompanyId]
-        )
-      ).rows[0]?.label ?? null;
-  const loadExemptionReason = resolveLineLoadExemption({
-    loadId: input.loadId ?? null,
-    reason: input.loadExemptionReason ?? null,
-    accountLabel,
-    context: input.sourceBankTransactionId
-      ? `bank line ${input.transactionDate}`
-      : `reconciliation service charge ${input.transactionDate}`,
+  const lineFor = async (): Promise<ExpenseRow> => {
+    const accountLabel = input.loadId
+      ? null
+      : (
+          await client.query<{ label: string | null }>(
+            `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label
+               FROM catalogs.accounts a WHERE a.id = $1::uuid AND a.operating_company_id = $2::uuid`,
+            [input.expenseAccountId, input.operatingCompanyId]
+          )
+        ).rows[0]?.label ?? null;
+    const loadExemptionReason = resolveLineLoadExemption({
+      loadId: input.loadId ?? null,
+      reason: input.loadExemptionReason ?? null,
+      accountLabel,
+      context: input.sourceBankTransactionId
+        ? `bank line ${input.transactionDate}`
+        : `reconciliation service charge ${input.transactionDate}`,
+    });
+    return {
+      operating_company_id: input.operatingCompanyId,
+      line_sequence: 1,
+      amount: input.amountCents / 100,
+      amount_cents: input.amountCents,
+      description: input.lineDescription,
+      load_required: false,
+      expense_account_uuid: input.expenseAccountId,
+      item_id: input.itemId,
+      quantity: 1,
+      rate_cents: input.amountCents,
+      unit_of_measure: "each",
+      load_id: input.loadId ?? null,
+      unit_id: dimensions.unitId,
+      trailer_id: dimensions.trailerId,
+      driver_id: dimensions.driverId,
+      load_exemption_reason: loadExemptionReason,
+    };
+  };
+
+  const written = await writeExpenseDocumentInClientTx(client, {
+    header: {
+      operating_company_id: input.operatingCompanyId,
+      status: "draft",
+      posting_status: "unposted",
+      transaction_date: input.transactionDate,
+      total_amount_cents: input.amountCents,
+      memo: input.memo,
+      vendor_uuid: input.vendorId,
+      payment_account_uuid: input.paymentAccountId,
+      is_sample_data: false,
+      is_company_expense: true,
+      is_reimbursable: false,
+      source_bank_transaction_id: input.sourceBankTransactionId,
+      load_id: input.loadId ?? null,
+      unit_id: dimensions.unitId,
+      trailer_id: dimensions.trailerId,
+      driver_uuid: dimensions.driverId,
+      created_by_user_id: actor.userId,
+      updated_by_user_id: actor.userId,
+      non_owned_trailer_id: dimensions.nonOwnedTrailerId,
+    },
+    number,
+    lines: async ({ insertLine }) => {
+      await insertLine(await lineFor());
+    },
+    loadLink: input.loadId
+      ? { method: "user_assigned", confidence: "high", reason: "Bank-line expense attributed to its tagged load", userId: actor.userId }
+      : undefined,
+    post: { actorUserId: actor.userId, stamp: "status_and_posting" },
   });
-
-  await insertExpenseLine(client, {
-    operating_company_id: input.operatingCompanyId,
-    expense_id: expenseId,
-    line_sequence: 1,
-    amount: input.amountCents / 100,
-    amount_cents: input.amountCents,
-    description: input.lineDescription,
-    load_required: false,
-    expense_account_uuid: input.expenseAccountId,
-    item_id: input.itemId,
-    quantity: 1,
-    rate_cents: input.amountCents,
-    unit_of_measure: "each",
-    load_id: input.loadId ?? null,
-    unit_id: dimensions.unitId,
-    trailer_id: dimensions.trailerId,
-    driver_id: dimensions.driverId,
-    load_exemption_reason: loadExemptionReason,
-  });
-
-  const posting = await postSourceTransactionInClientTx(
-    client as never,
-    { operating_company_id: input.operatingCompanyId, source_transaction_type: "expense", source_transaction_id: expenseId },
-    { userId: actor.userId }
-  );
-
-  await client.query(
-    `UPDATE accounting.expenses
-        SET status = 'posted', posting_status = 'posted', posted_at = now(), journal_entry_id = $2::uuid, updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
-    [expenseId, posting.journal_entry_id, input.operatingCompanyId]
-  );
+  if (!written) throw new BankLineExpenseError("expense_insert_failed", "The expense could not be created.");
+  const post = written.post as { posted: true; journalEntryId: string; postingBatchId: string | null };
 
   return {
-    expense_id: expenseId,
-    journal_entry_id: posting.journal_entry_id,
-    posting_batch_id: (posting as { posting_batch_id?: string | null }).posting_batch_id ?? null,
+    expense_id: written.expenseId,
+    journal_entry_id: post.journalEntryId,
+    posting_batch_id: post.postingBatchId,
   };
 }
 
@@ -377,55 +348,13 @@ export async function adoptBankCategorizationExpenseDocument(
     "Bank categorization";
   const memo = `${description.slice(0, 400)} — document for journal entry ${line.matched_je} (G6: one JE, the document adopts it)`;
 
-  let expenseNumber: string;
-  let loadAttribution: { number: string; seq: number; loadNumber: string } | null = null;
-  if (line.load_id) {
-    loadAttribution = await generateExpenseNumber(client as never, line.load_id, company);
-    expenseNumber = loadAttribution.number;
-  } else {
-    expenseNumber = await nextExpenseDisplayId(client as never, company, new Date(`${txnDate}T00:00:00.000Z`));
-  }
-
-  // 443.182 C — persisted through the one expense writer; the adopting document is born posted on the existing JE.
-  const expenseId = await insertExpenseHeader(client, {
-    operating_company_id: company,
-    status: "posted",
-    posting_status: "posted",
-    transaction_date: txnDate,
-    total_amount_cents: totalCents,
-    memo: memo.slice(0, 500),
-    expense_number: expenseNumber,
-    vendor_uuid: line.vendor_id,
-    payment_account_uuid: credit.account_id,
-    is_sample_data: false,
-    is_company_expense: true,
-    is_reimbursable: false,
-    source_bank_transaction_id: input.bankTransactionId,
-    load_id: line.load_id,
-    unit_id: line.unit_id,
-    trailer_id: line.trailer_id,
-    driver_uuid: line.driver_id,
-    journal_entry_id: line.matched_je,
-    posted_at: EXPENSE_SQL_NOW,
-    created_by_user_id: actor.userId,
-    updated_by_user_id: actor.userId,
+  // 443.182 C — numbered, written and linked by the one expense engine; the adopting document is born posted on the
+  // existing JE and never re-posts.
+  const number = await reserveExpenseNumber(client, company, {
+    loadId: line.load_id,
+    referenceDate: new Date(`${txnDate}T00:00:00.000Z`),
   });
-  if (!expenseId) throw new BankLineExpenseError("expense_insert_failed", "The adopting expense could not be created.");
-
-  if (loadAttribution && line.load_id) {
-    await insertExpenseLoadLink(client as never, {
-      operatingCompanyId: company,
-      expenseId,
-      loadId: line.load_id,
-      loadNumber: loadAttribution.loadNumber,
-      seq: loadAttribution.seq,
-      expenseNumber: loadAttribution.number,
-      method: "user_assigned",
-      confidence: "high",
-      reason: "Adopted bank-categorization expense attributed to its tagged load",
-      userId: actor.userId,
-    });
-  }
+  const expenseNumber = number.number;
 
   const accountLabel = [debit.account_number, debit.account_name].filter(Boolean).join(" ") || null;
   const loadExemptionReason = resolveLineLoadExemption({
@@ -435,25 +364,56 @@ export async function adoptBankCategorizationExpenseDocument(
     context: `bank line ${txnDate} — adopted categorization`,
   });
 
-  await insertExpenseLine(client, {
-    operating_company_id: company,
-    expense_id: expenseId,
-    line_sequence: 1,
-    amount: totalCents / 100,
-    amount_cents: totalCents,
-    description: description.slice(0, 500),
-    load_required: false,
-    expense_account_uuid: debit.account_id,
-    item_id: input.itemId,
-    quantity: 1,
-    rate_cents: totalCents,
-    unit_of_measure: "each",
-    load_id: line.load_id,
-    unit_id: line.unit_id,
-    trailer_id: line.trailer_id,
-    driver_id: line.driver_id,
-    load_exemption_reason: loadExemptionReason,
+  const written = await writeExpenseDocumentInClientTx(client, {
+    header: {
+      operating_company_id: company,
+      status: "posted",
+      posting_status: "posted",
+      transaction_date: txnDate,
+      total_amount_cents: totalCents,
+      memo: memo.slice(0, 500),
+      vendor_uuid: line.vendor_id,
+      payment_account_uuid: credit.account_id,
+      is_sample_data: false,
+      is_company_expense: true,
+      is_reimbursable: false,
+      source_bank_transaction_id: input.bankTransactionId,
+      load_id: line.load_id,
+      unit_id: line.unit_id,
+      trailer_id: line.trailer_id,
+      driver_uuid: line.driver_id,
+      journal_entry_id: line.matched_je,
+      posted_at: EXPENSE_SQL_NOW,
+      created_by_user_id: actor.userId,
+      updated_by_user_id: actor.userId,
+    },
+    number,
+    lines: [
+      {
+        operating_company_id: company,
+        line_sequence: 1,
+        amount: totalCents / 100,
+        amount_cents: totalCents,
+        description: description.slice(0, 500),
+        load_required: false,
+        expense_account_uuid: debit.account_id,
+        item_id: input.itemId,
+        quantity: 1,
+        rate_cents: totalCents,
+        unit_of_measure: "each",
+        load_id: line.load_id,
+        unit_id: line.unit_id,
+        trailer_id: line.trailer_id,
+        driver_id: line.driver_id,
+        load_exemption_reason: loadExemptionReason,
+      },
+    ],
+    loadLink: line.load_id
+      ? { method: "user_assigned", confidence: "high", reason: "Adopted bank-categorization expense attributed to its tagged load", userId: actor.userId }
+      : undefined,
   });
+  if (!written) throw new BankLineExpenseError("expense_insert_failed", "The adopting expense could not be created.");
+  const expenseId = written.expenseId;
 
   await client.query(
     `UPDATE banking.bank_transactions

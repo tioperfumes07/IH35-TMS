@@ -74,25 +74,117 @@ export function check(files, baseline, mainBaseline) {
   return findings;
 }
 
+
+/**
+ * LEAD 443.182 C step 2 — the DEEP expense engine block (separate from the INSERT census above). Outside
+ * accounting/expense-writer.service.ts, a file may not number an expense (generateExpenseNumber / nextExpenseDisplayId),
+ * write an expense header or line (insertExpenseHeader / insertExpenseLine / INSERT INTO accounting.expense_lines), write
+ * an expense load link (insertExpenseLoadLink / INSERT INTO expense_attribution.expense_load_links) or post an expense
+ * JE (postSourceTransaction[InClientTx] with source_transaction_type "expense"). The two primitive definitions
+ * (expense-attribution/expense-number.ts, accounting/display-id.ts) are the engine's own building blocks and are not
+ * counted. Every remaining site is pinned per file in the baseline's `expense_engine` block — SHRINK-ONLY.
+ */
+export const EXPENSE_ENGINE = "apps/backend/src/accounting/expense-writer.service.ts";
+const ENGINE_PRIMITIVES = new Set(["apps/backend/src/expense-attribution/expense-number.ts", "apps/backend/src/accounting/display-id.ts"]);
+const ENGINE_PATTERNS = {
+  expense_number: /(?<!function\s)\b(?:generateExpenseNumber|nextExpenseDisplayId)\(/g,
+  expense_row: /(?<!function\s)\binsertExpense(?:Header|Line)\(|INSERT\s+INTO\s+accounting\.expense_lines\s*\(/gi,
+  expense_load_link: /(?<!function\s)\binsertExpenseLoadLink\(|INSERT\s+INTO\s+expense_attribution\.expense_load_links\b/gi,
+  expense_je_post: /\bpostSourceTransaction(?:InClientTx)?\((?:(?!\bpostSourceTransaction)[\s\S]){0,500}?source_transaction_type:\s*["']expense["']/g,
+};
+
+export function expenseEngineCensus(files) {
+  const sites = {};
+  for (const [rel, src] of files) {
+    if (rel === EXPENSE_ENGINE || ENGINE_PRIMITIVES.has(rel)) continue;
+    for (const [kind, re] of Object.entries(ENGINE_PATTERNS)) {
+      const n = (src.match(re) ?? []).length;
+      if (n) (sites[kind] ??= {})[rel] = n;
+    }
+  }
+  return sites;
+}
+
+export function checkExpenseEngine(files, baseline, mainBaseline) {
+  const findings = [];
+  const engineSrc = (files.find(([p]) => p === EXPENSE_ENGINE) ?? [, ""])[1];
+  for (const fn of ["writeExpenseDocumentInClientTx", "postExpenseDocumentInClientTx", "reserveExpenseNumber"]) {
+    if (!new RegExp(`export async function ${fn}\\(`).test(engineSrc)) findings.push(`expense_engine: ${EXPENSE_ENGINE} no longer exports ${fn}`);
+  }
+  for (const [kind, byFile] of Object.entries(expenseEngineCensus(files))) {
+    for (const [rel, n] of Object.entries(byFile)) {
+      const cap = (baseline?.[kind] ?? {})[rel];
+      if (cap == null) findings.push(`expense_engine ${kind}: ${rel} (${n}) — hand the document to ${EXPENSE_ENGINE} instead`);
+      else if (n > cap) findings.push(`expense_engine ${kind}: ${rel} has ${n}, baseline caps it at ${cap}`);
+    }
+  }
+  if (mainBaseline) {
+    for (const [kind, byFile] of Object.entries(baseline ?? {})) {
+      for (const [rel, cap] of Object.entries(byFile)) {
+        const was = (mainBaseline[kind] ?? {})[rel];
+        if (was == null) findings.push(`${BASELINE_REL}: expense_engine ${kind} gained ${rel} — the baseline only shrinks`);
+        else if (cap > was) findings.push(`${BASELINE_REL}: expense_engine ${kind} ${rel} raised ${was} → ${cap} — the baseline only shrinks`);
+      }
+    }
+  }
+  return findings;
+}
+
 const readAll = () => backendFiles().map((abs) => [relative(ROOT, abs), readFileSync(abs, "utf8")]);
+
+if (process.argv.includes("--write-engine-baseline")) {
+  // Writes ONLY the expense_engine block (the writers block is untouched — it is shrunk by hand per document).
+  const file = JSON.parse(readFileSync(resolve(ROOT, BASELINE_REL), "utf8"));
+  file.expense_engine = expenseEngineCensus(readAll());
+  writeFileSync(resolve(ROOT, BASELINE_REL), JSON.stringify(file, null, 2) + "\n");
+  console.log("expense_engine baseline written");
+  process.exit(0);
+}
 
 if (process.argv.includes("--write-baseline")) {
   writeFileSync(resolve(ROOT, BASELINE_REL), JSON.stringify({
     _doc: "LEAD 443.160 STEP 3 — INSERT sites per document per file (census 2026-10-16). SHRINK-ONLY: repoint a site to the document's canonical writer (see the guard's CANONICAL) and lower its count; never add a file or raise a count.",
     writers: census(readAll()),
+    expense_engine: expenseEngineCensus(readAll()),
   }, null, 2) + "\n");
   console.log("baseline written");
   process.exit(0);
 }
 
 const files = readAll();
-const baseline = JSON.parse(readFileSync(resolve(ROOT, BASELINE_REL), "utf8")).writers;
+const baselineFile = JSON.parse(readFileSync(resolve(ROOT, BASELINE_REL), "utf8"));
+const baseline = baselineFile.writers;
+const engineBaseline = baselineFile.expense_engine ?? {};
 const r = spawnSync("git", ["show", `origin/main:${BASELINE_REL}`], { cwd: ROOT, encoding: "utf8" });
-const mainBaseline = r.status === 0 ? JSON.parse(r.stdout).writers : null;
+const mainFile = r.status === 0 ? JSON.parse(r.stdout) : null;
+const mainBaseline = mainFile ? mainFile.writers : null;
+// First introduction of the block: main has none yet, so there is nothing to shrink against.
+const mainEngineBaseline = mainFile?.expense_engine ?? null;
 
 if (process.argv.includes("--selftest")) {
-  if (check(files, baseline, mainBaseline).length) {
-    console.error("SELFTEST FAIL: baseline not clean", check(files, baseline, mainBaseline));
+  if (check(files, baseline, mainBaseline).length || checkExpenseEngine(files, engineBaseline, mainEngineBaseline).length) {
+    console.error("SELFTEST FAIL: baseline not clean", check(files, baseline, mainBaseline), checkExpenseEngine(files, engineBaseline, mainEngineBaseline));
+    process.exit(1);
+  }
+  const X = "apps/backend/src/x.ts";
+  const enginePlants = [
+    ["an expense numbered outside the engine", [...files, [X, "const n = await generateExpenseNumber(client, loadId, co);"]], engineBaseline, mainEngineBaseline],
+    ["an EXP number outside the engine", [...files, [X, "const n = await nextExpenseDisplayId(client, co);"]], engineBaseline, mainEngineBaseline],
+    ["an expense line INSERT outside the engine", [...files, [X, "q(`INSERT INTO accounting.expense_lines (expense_id) VALUES ($1)`)"]], engineBaseline, mainEngineBaseline],
+    ["a load link outside the engine", [...files, [X, "await insertExpenseLoadLink(client, link);"]], engineBaseline, mainEngineBaseline],
+    ["an expense JE post outside the engine", [...files, [X, "await postSourceTransactionInClientTx(client, { operating_company_id: co, source_transaction_type: \"expense\", source_transaction_id: id }, a);"]], engineBaseline, mainEngineBaseline],
+    ["engine export gone", files.map(([p, src]) => [p, p === EXPENSE_ENGINE ? src.replace("export async function writeExpenseDocumentInClientTx(", "async function x(") : src]), engineBaseline, mainEngineBaseline],
+    ["engine baseline grows", files, { ...engineBaseline, expense_number: { ...(engineBaseline.expense_number ?? {}), [X]: 1 } }, engineBaseline],
+  ];
+  for (const [name, f, b, m] of enginePlants) {
+    if (checkExpenseEngine(f, b, m).length === 0) {
+      console.error(`SELFTEST FAIL: plant "${name}" not caught`);
+      process.exit(1);
+    }
+  }
+  // A bill post is not an expense post; a definition is not a call.
+  if (checkExpenseEngine([...files, [X, "await postSourceTransactionInClientTx(client, { source_transaction_type: \"bill\" });\nexport async function generateExpenseNumber(x) {}"]], engineBaseline, mainEngineBaseline).length) {
+    console.error("SELFTEST FAIL: a bill post / a definition was counted as an expense-engine site");
     process.exit(1);
   }
   const plants = [
@@ -108,15 +200,17 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`SELFTEST PASS: ${plants.length} plants caught`);
+  console.log(`SELFTEST PASS: ${plants.length + enginePlants.length} plants caught (incl. ${enginePlants.length} expense-engine)`);
   process.exit(0);
 }
 
-const findings = check(files, baseline, mainBaseline);
+const findings = [...check(files, baseline, mainBaseline), ...checkExpenseEngine(files, engineBaseline, mainEngineBaseline)];
 if (findings.length) {
   console.error(`verify-one-writer-per-document FAIL (${findings.length}):`);
   for (const f of findings) console.error(`  ${f}`);
   process.exit(1);
 }
 const sites = census(files);
+const engineSites = expenseEngineCensus(files);
+console.log(`verify-one-writer-per-document expense engine: ${Object.entries(engineSites).map(([k, m]) => `${k} ${Object.values(m).reduce((a, b) => a + b, 0)}/${Object.keys(m).length} files`).join(" · ") || "no site outside the engine"}`);
 console.log(`verify-one-writer-per-document PASS: ${Object.entries(sites).map(([d, m]) => `${d} ${Object.values(m).reduce((a, b) => a + b, 0)} sites/${Object.keys(m).length} files`).join(" · ")} (shrink-only)`);

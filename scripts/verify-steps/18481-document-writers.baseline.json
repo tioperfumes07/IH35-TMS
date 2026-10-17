@@ -29,5 +29,26 @@
       "apps/backend/src/accounting/customer-payments.routes.ts": 1,
       "apps/backend/src/accounting/payments.routes.ts": 1
     }
+  },
+  "expense_engine": {
+    "expense_load_link": {
+      "apps/backend/src/accounting/expense-load-link-backfill.service.ts": 1,
+      "apps/backend/src/accounting/expenses.routes.ts": 1,
+      "apps/backend/src/fuel/fuel-receipt-repoint.service.ts": 1
+    },
+    "expense_number": {
+      "apps/backend/src/accounting/expenses.routes.ts": 2,
+      "apps/backend/src/driver-finance/creator-document-categorization.service.ts": 1,
+      "apps/backend/src/driver-finance/settlement-creator-owed-bill.ts": 1,
+      "apps/backend/src/fuel/fuel-receipt-repoint.service.ts": 1
+    },
+    "expense_row": {
+      "apps/backend/src/accounting/expenses.routes.ts": 1
+    },
+    "expense_je_post": {
+      "apps/backend/src/accounting/expenses.routes.ts": 2,
+      "apps/backend/src/accounting/tour-close-posting.service.ts": 2,
+      "apps/backend/src/driver-finance/settlement-creator.service.ts": 2
+    }
   }
 }
