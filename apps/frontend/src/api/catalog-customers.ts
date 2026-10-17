@@ -1,43 +1,7 @@
 import { apiRequest } from "./client";
+// One definition of the list helpers (heavy CI peel; the copies pasted by 52699c6c2f are gone).
+import { appendCompanyScopedQuery, listEnvelopeTotal, normalizeMdataListRows, type CompanyScopedListParams } from "./mdata-list";
 import type { Customer } from "./mdata";
-
-type CompanyScopedListParams = {
-  status?: string;
-  search?: string;
-  customer_type?: "broker" | "direct_shipper";
-  operating_company_id?: string | null;
-  limit?: number;
-  offset?: number;
-  active_company_only?: boolean;
-  has_transactions?: boolean;
-};
-
-function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedListParams) {
-  if (params.status && params.status !== "All") query.set("status", params.status);
-  if (params.search) query.set("search", params.search);
-  if (params.customer_type) query.set("customer_type", params.customer_type);
-  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
-  if (params.limit != null) query.set("limit", String(params.limit));
-  if (params.offset != null) query.set("offset", String(params.offset));
-  if (params.active_company_only) query.set("active_company_only", "true");
-  if (params.has_transactions) query.set("has_transactions", "true");
-}
-
-function normalizeMdataRows<T>(raw: unknown): T[] {
-  if (Array.isArray(raw)) return raw as T[];
-  if (raw && typeof raw === "object") {
-    for (const key of ["customers", "rows", "data", "results"] as const) {
-      const nested = (raw as Record<string, unknown>)[key];
-      if (Array.isArray(nested)) return nested as T[];
-    }
-  }
-  return [];
-}
-
-function envelopeTotal(payload: unknown, rows: unknown[]): number {
-  const total = payload && typeof payload === "object" ? (payload as { total?: unknown }).total : undefined;
-  return typeof total === "number" && Number.isFinite(total) ? total : rows.length;
-}
 
 export function listCustomers(params: CompanyScopedListParams = {}) {
   const query = new URLSearchParams();
@@ -46,10 +10,10 @@ export function listCustomers(params: CompanyScopedListParams = {}) {
   return apiRequest<{ customers: Customer[]; total?: number } | Customer[]>(
     `/api/v1/mdata/customers${qs ? `?${qs}` : ""}`
   ).then((payload) => {
-    const customers = normalizeMdataRows<Customer>(
+    const customers = normalizeMdataListRows<Customer>(
       Array.isArray(payload) ? payload : (payload as { customers?: unknown })?.customers ?? payload
     );
-    return { customers, total: envelopeTotal(payload, customers) };
+    return { customers, total: listEnvelopeTotal(payload, customers) };
   });
 }
 
