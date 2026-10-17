@@ -80,7 +80,10 @@ export function collectFailures(migrationSrc, bookLoadSrc) {
   // Nothing between the milesShort/milesPrac computation and the INSERT sites may round/truncate
   // the miles quantity itself (Math.round on ratePerMileCents, the CENTS rate, is correct and
   // intentionally NOT flagged here).
-  const computeBlockMatch = stripped.match(/const milesShort[\s\S]{0,600}?milesBasisType = "practical";\s*\n\s*}/);
+  // 443.192 heavy CI peel — re-pointed, same rule: 648d3c9c9d (#26937, owner law "per-mile drivers are ALWAYS paid SHORT
+  //   miles") removed the practical fallback, so the block no longer ends at `milesBasisType = "practical";`. It now ends at
+  //   the short-miles assignment; both shapes are accepted, the no-rounding check is unchanged.
+  const computeBlockMatch = stripped.match(/const milesShort[\s\S]{0,700}?milesBasisType = "(?:short|practical)";\s*\n\s*}/);
   if (!computeBlockMatch) {
     failures.push("could not find the milesShort/milesPrac -> milesBasis computation block -- source shape drifted");
   } else if (
@@ -132,11 +135,17 @@ if (process.argv.includes("--selftest")) {
     escaped.push("milesShort computation rounds the decimal before it becomes milesBasis");
   }
 
+  // Plant 4 (443.192): round the short miles where they become the basis (the owner-law assignment).
+  const roundedAssign = bookLoadSrc.replace("milesBasis = milesShort;", "milesBasis = Math.round(milesShort);");
+  if (roundedAssign === bookLoadSrc || collectFailures(migrationSrc, roundedAssign).length === 0) {
+    escaped.push("short-miles assignment rounds the decimal before it becomes milesBasis");
+  }
+
   if (escaped.length) {
     console.error(`verify-driver-bill-miles-basis-numeric SELFTEST FAIL — escaped: ${escaped.join(", ")}`);
     process.exit(1);
   }
-  console.log("verify-driver-bill-miles-basis-numeric SELFTEST PASS — 3/3 plants rejected");
+  console.log("verify-driver-bill-miles-basis-numeric SELFTEST PASS — 4/4 plants rejected");
 }
 
 let migrationSrc = null;
