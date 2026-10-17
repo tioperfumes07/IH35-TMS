@@ -197,11 +197,15 @@ export async function persistInsuranceDispersalBills(input: {
       // policy-create-atomic.service.ts does for the wizard's bills. Before, the bills were written and never posted (the
       // file's old C6 exemption covered the synthetic bank lines K-10 545f4bd6cb removed, never the bills). Best-effort like
       // the wizard: a post failure does not abort the other installments, and it never vanishes silently — logged.
+      // Savepoint: a SQL error inside the post would otherwise abort the whole transaction while the catch hid its cause.
+      await client.query("SAVEPOINT dispersal_bill_post");
       try {
         if (await isBillGlPostingEnabled(input.operatingCompanyId, input.userId)) {
           await postBillDocumentInClientTx(client, { operating_company_id: input.operatingCompanyId, bill_id: createdBillId }, { userId: input.userId });
         }
+        await client.query("RELEASE SAVEPOINT dispersal_bill_post");
       } catch (err) {
+        await client.query("ROLLBACK TO SAVEPOINT dispersal_bill_post");
         logger.warn("insurance_dispersal_bill_gl_post_failed", {
           err: err instanceof Error ? err.message : String(err),
           company_id: input.operatingCompanyId,
