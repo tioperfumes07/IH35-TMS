@@ -52,7 +52,7 @@ describe("createBill — bill_lines persist (LAW-E2E #3167)", () => {
     await expect(
       createBill(
         {
-          operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", source: "manual",
           vendorId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
           billDate: "2026-07-21",
           amountCents: 1000,
@@ -68,7 +68,7 @@ describe("createBill — bill_lines persist (LAW-E2E #3167)", () => {
     await expect(
       createBill(
         {
-          operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", source: "manual",
           vendorId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
           billDate: "2026-07-21",
           amountCents: 5000,
@@ -128,7 +128,7 @@ describe("createBill — bill_lines persist (LAW-E2E #3167)", () => {
 
     await createBill(
       {
-        operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", source: "manual",
         vendorId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         billDate: "2026-07-21",
         amountCents: 2500,
@@ -178,7 +178,7 @@ describe("createBill — vendor must resolve inside the caller's entity (ACCT-F1
   const create = (vendorId: string) =>
     createBill(
       {
-        operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", source: "manual",
         vendorId,
         billDate: "2026-07-21",
         amountCents: 2500,

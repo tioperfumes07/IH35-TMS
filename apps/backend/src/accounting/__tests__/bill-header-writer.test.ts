@@ -30,28 +30,29 @@ describe("insertBillHeaderOnClient — the one bill header writer", () => {
         ["paid_cents", { sql: "0" }],
         ["qbo_sync_pending", { sql: "true" }],
         ["created_at", { sql: "now()" }],
+        ["source", { value: "manual" }],
       ],
       { returning: "id::text" },
     );
     expect(res.rows[0]?.id).toBe("bill-1");
     expect(c.calls).toHaveLength(1);
     expect(c.calls[0]!.sql).toBe(
-      "INSERT INTO accounting.bills (operating_company_id, vendor_id, mdata_vendor_id, bill_date, due_date, amount_cents, status, paid_cents, qbo_sync_pending, created_at) " +
-        "VALUES ($1::uuid, $2, $3::uuid, CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', $4, 'unpaid', 0, true, now()) RETURNING id::text",
+      "INSERT INTO accounting.bills (operating_company_id, vendor_id, mdata_vendor_id, bill_date, due_date, amount_cents, status, paid_cents, qbo_sync_pending, created_at, source) " +
+        "VALUES ($1::uuid, $2, $3::uuid, CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', $4, 'unpaid', 0, true, now(), $5) RETURNING id::text",
     );
-    expect(c.calls[0]!.values).toEqual(["oc-1", "v-1", "v-1", 12345]);
+    expect(c.calls[0]!.values).toEqual(["oc-1", "v-1", "v-1", 12345, "manual"]);
   });
 
   it("defaults to RETURNING * and appends the insurance idempotency ON CONFLICT only when asked", async () => {
     const c = client();
-    await insertBillHeaderOnClient(c, [["operating_company_id", { value: "oc-1" }]]);
-    expect(c.calls[0]!.sql).toBe("INSERT INTO accounting.bills (operating_company_id) VALUES ($1) RETURNING *");
-    await insertBillHeaderOnClient(c, [["qbo_idempotency_key", { value: "ins:p:1" }]], {
+    await insertBillHeaderOnClient(c, [["operating_company_id", { value: "oc-1" }], ["source", { value: "manual" }]]);
+    expect(c.calls[0]!.sql).toBe("INSERT INTO accounting.bills (operating_company_id, source) VALUES ($1, $2) RETURNING *");
+    await insertBillHeaderOnClient(c, [["qbo_idempotency_key", { value: "ins:p:1" }], ["source", { value: "insurance" }]], {
       returning: "id::text",
       onConflict: "idempotency_key_do_nothing",
     });
     expect(c.calls[1]!.sql).toBe(
-      "INSERT INTO accounting.bills (qbo_idempotency_key) VALUES ($1) ON CONFLICT (operating_company_id, qbo_idempotency_key) WHERE qbo_idempotency_key IS NOT NULL DO NOTHING RETURNING id::text",
+      "INSERT INTO accounting.bills (qbo_idempotency_key, source) VALUES ($1, $2) ON CONFLICT (operating_company_id, qbo_idempotency_key) WHERE qbo_idempotency_key IS NOT NULL DO NOTHING RETURNING id::text",
     );
   });
 

@@ -67,6 +67,7 @@ try {
   const bill = await createBill(
     {
       operatingCompanyId: USMCA,
+      source: "ops_script",
       vendorId: t.vendor_id,
       billNumber: `P38-FK-SMOKE-${Date.now()}`,
       billDate: "2026-08-11",

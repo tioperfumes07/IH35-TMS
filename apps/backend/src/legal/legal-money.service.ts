@@ -227,6 +227,7 @@ export async function postMatterReserve(args: {
     const bill = await createBill(
       {
         operatingCompanyId: args.operatingCompanyId,
+        source: "legal",
         vendorId: planned.m.vendor_id as string,
         billNumber: `LR-${planned.m.matter_number}-${Date.now().toString(36).slice(-6)}`,
         // AJK-09: the generated LR- reference is the bill's vendor reference (bill_number), never its document number — it
@@ -355,6 +356,7 @@ export async function postMatterLegalFee(args: {
   const bill = await createBill(
     {
       operatingCompanyId: args.operatingCompanyId,
+      source: "legal",
       vendorId: m.vendor_id as string,
       billNumber: input.bill_number?.trim() || `LF-${m.matter_number}-${Date.now().toString(36).slice(-6)}`,
       // AJK-09: a generated LF- reference fails the bill display_id shape (every fee without a typed number was refused);

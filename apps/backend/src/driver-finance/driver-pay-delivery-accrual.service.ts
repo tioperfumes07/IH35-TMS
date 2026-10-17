@@ -142,6 +142,7 @@ export async function accrueDriverPayAtDeliveryInClientTx(
       }
       const bill = await createBillInClientTx(client, {
         operatingCompanyId: opco,
+        source: "driver_pay_accrual",
         vendorId,
         driverId: share.driverId,
         // 443.106 (trg_refuse_driver_bill_without_links): vendor, driver, load and unit ride the INSERT row.

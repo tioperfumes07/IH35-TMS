@@ -98,6 +98,7 @@ async function persistBillsOnClient(
     const billRes = await writeBillDocumentOnClient<{ id: string }>(client, {
       header: [
         ["operating_company_id", { value: input.operatingCompanyId }],
+        ["source", { value: "insurance" }],
         ["vendor_id", { value: vendorId }],
         ["vendor_uuid", { value: vendorId }],
         // INSURANCE-POLICY-BILL-PARAM-FIX: vendor_id/vendor_uuid are text, mdata_vendor_id is uuid — only it is cast.

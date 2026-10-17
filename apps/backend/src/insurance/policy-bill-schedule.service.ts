@@ -235,6 +235,7 @@ export async function createPolicyBillSchedule(
       const bill = await createBill(
         {
           operatingCompanyId: policy.operating_company_id,
+          source: "insurance",
           vendorId: policy.vendor_id,
           billDate: row.dueDate,
           dueDate: row.dueDate,

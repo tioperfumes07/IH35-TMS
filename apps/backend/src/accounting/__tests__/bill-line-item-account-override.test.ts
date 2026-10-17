@@ -78,7 +78,7 @@ describe("createBill — item account override reason (443.67 G3)", () => {
 
   it("an enforcing company's line off its item's account with no reason is refused before the INSERT, as a named 422", async () => {
     mockDb(true);
-    const err = await createBill({ operatingCompanyId: OPCO, vendorId: VENDOR, billDate: "2026-10-12", amountCents: 2500, lines: [itemLine()] }, "u").catch((e) => e);
+    const err = await createBill({ operatingCompanyId: OPCO, source: "manual", vendorId: VENDOR, billDate: "2026-10-12", amountCents: 2500, lines: [itemLine()] }, "u").catch((e) => e);
     expect(err).toBeInstanceOf(LineCategorizationError);
     expect(lineCategorizationRefusal(err)).toMatchObject({ error: "line_account_differs_from_item", field: "item_account_override_reason" });
     expect(lineInserts()).toHaveLength(0);
@@ -86,7 +86,7 @@ describe("createBill — item account override reason (443.67 G3)", () => {
 
   it("with a reason the line is written and carries it", async () => {
     mockDb(true);
-    await createBill({ operatingCompanyId: OPCO, vendorId: VENDOR, billDate: "2026-10-12", amountCents: 2500, lines: [itemLine("  Owner: tires billed to repairs per vendor invoice  ")] }, "u");
+    await createBill({ operatingCompanyId: OPCO, source: "manual", vendorId: VENDOR, billDate: "2026-10-12", amountCents: 2500, lines: [itemLine("  Owner: tires billed to repairs per vendor invoice  ")] }, "u");
     const [[sql, params]] = lineInserts();
     expect(String(sql)).toContain("item_account_override_reason");
     expect((params as unknown[]).at(-1)).toBe("Owner: tires billed to repairs per vendor invoice");
@@ -94,7 +94,7 @@ describe("createBill — item account override reason (443.67 G3)", () => {
 
   it("a non-enforcing company is not asked for a reason", async () => {
     mockDb(false);
-    await createBill({ operatingCompanyId: OPCO, vendorId: VENDOR, billDate: "2026-10-12", amountCents: 2500, lines: [itemLine()] }, "u");
+    await createBill({ operatingCompanyId: OPCO, source: "manual", vendorId: VENDOR, billDate: "2026-10-12", amountCents: 2500, lines: [itemLine()] }, "u");
     expect(lineInserts()).toHaveLength(1);
   });
 

@@ -192,6 +192,7 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
     client,
     [
       ["operating_company_id", { value: oc, cast: "uuid" }],
+      ["source", { value: "recurring" }],
       ["vendor_id", { value: vendorId, cast: "uuid" }],
       ["vendor_uuid", { value: vendorId, cast: "uuid" }],
       ["mdata_vendor_id", { value: mdataVendorId, cast: "uuid" }],

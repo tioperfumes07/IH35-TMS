@@ -146,6 +146,7 @@ export async function buyOutLeaseToOwn(opco: string, actorUserId: string, leaseI
     const bill = await createBill(
       {
         operatingCompanyId: opco,
+        source: "lease_buyout",
         vendorId: planned.c.vendor_id as string,
         billNumber: `BUYOUT-${planned.c.display}`,
         billDate: input.buyout_date,

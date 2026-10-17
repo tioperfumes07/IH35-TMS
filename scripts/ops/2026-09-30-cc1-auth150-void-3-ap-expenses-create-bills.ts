@@ -226,6 +226,7 @@ async function main() {
       const bill = await createBill(
         {
           operatingCompanyId: USMCA_ID,
+          source: "ops_script",
           vendorId: target.vendorId,
           billDate: target.billDate,
           dueDate: target.billDate,

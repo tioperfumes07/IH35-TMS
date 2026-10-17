@@ -47,7 +47,7 @@ describe("443.182 C step 2 — bill engine", () => {
   it("writeBillDocumentOnClient writes header -> lines -> number, in that order, from the new bill id", async () => {
     const { calls, client } = recorder();
     const r = await engine.writeBillDocumentOnClient(client, {
-      header: [["operating_company_id", { value: "co" }]],
+      header: [["operating_company_id", { value: "co" }], ["source", { value: "manual" }]],
       returning: "id",
       lines: (id) => [[["bill_id", { value: id, cast: "uuid" }], ["line_sequence", { value: 1 }]]],
       lineOnConflict: "line_sequence_do_nothing",
@@ -61,7 +61,7 @@ describe("443.182 C step 2 — bill engine", () => {
   it("writeBillDocumentOnClient writes nothing more when the header is skipped (ON CONFLICT DO NOTHING)", async () => {
     const calls: string[] = [];
     const client = { query: vi.fn(async (sql: string) => { calls.push(sql); return { rows: [], rowCount: 0 }; }) };
-    const r = await engine.writeBillDocumentOnClient(client, { header: [["operating_company_id", { value: "co" }]], onConflict: "idempotency_key_do_nothing", lines: () => [[["a", { value: 1 }]]], number: (id) => ({ kind: "number", billId: id, billNumber: "x" }) });
+    const r = await engine.writeBillDocumentOnClient(client, { header: [["operating_company_id", { value: "co" }], ["source", { value: "manual" }]], onConflict: "idempotency_key_do_nothing", lines: () => [[["a", { value: 1 }]]], number: (id) => ({ kind: "number", billId: id, billNumber: "x" }) });
     expect(r.billId).toBeNull();
     expect(calls).toHaveLength(1);
   });
