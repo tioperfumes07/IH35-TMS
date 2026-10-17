@@ -1794,7 +1794,8 @@ export async function bookLoadOnClient(
     // (148 of 148 earlier loads had one; of 33 booked that day only the 5 the Creator booked did). Same point as the
     // Creator's call — after the load and its driver bill are written, so the bill minted here is unchanged — and the
     // same semantics: a typed / document value is never replaced (already_set), a refusal never fails the booking. A
-    // historical_backfill caller (the Settlement Creator) keeps its own call AFTER it stamps stops from tracking.
+    // historical_backfill caller (the Settlement Creator) never fills deadhead from the engine — LEAD RULING 15:10Z #2: the
+    // Creator's deadhead is the signed document's empty miles only, blank when the document has none.
     if (source === "live_feed") await fillDeadheadAtBooking(client, input, String(result.row.id));
   }
   return { result, afterCommit: () => queueAfterBookExtras(input, result, source) };
@@ -1804,7 +1805,7 @@ export async function bookLoadOnClient(
  * LEAD 443.192 — fill the booked load's deadhead inside the booking transaction, under a SAVEPOINT so an engine error
  * (e.g. the Google routes call) rolls back only the fill, never the booking. A refusal is never silent: not_filled and a
  * thrown error are each audited (dispatch.load.deadhead_not_filled) with the reason, and the load is listed for the
- * existing audited fill route (POST /api/v1/mdata/loads/deadhead-fill) — the same outcome the Creator's call leaves.
+ * existing audited fill route (POST /api/v1/mdata/loads/deadhead-fill).
  */
 export async function fillDeadheadAtBooking(client: DbClient, input: BookLoadInput, loadId: string): Promise<void> {
   const { fillLoadDeadhead } = await import("./mileage/miles-recommendations.service.js");
