@@ -9,6 +9,7 @@ import { bookLoadOnClient, type BookLoadInput } from "../dispatch/book-load.serv
 import type { SettlementCreatorDraft, SettlementCreatorLoadBlock } from "./settlement-creator.types.js";
 import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.js";
 import { milesTimesRateCents } from "./deadhead-rule.js";
+import { creatorLoadMiles } from "./settlement-creator-empty-pay.js";
 import { signedRateOverride } from "./settlement-creator-signed-rate.js";
 import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, type StopStamp } from "./settlement-creator-deliver.js";
 import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerEquipmentId, creatorTrailerChoice } from "./creator-trailer-choice.js";
@@ -19,6 +20,14 @@ export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
 // Lead 443.53 #7 (owner): weekly salary = LOCAL driver. Loads booked before the rename keep "Salaried (owner ruling)…";
 // every reader (isSalariedZeroRateOverride, feed gate, close, A/P chain) matches both prefixes.
 export const SALARIED_OVERRIDE_REASON = "Local driver — weekly salary (owner ruling): salary on the settlement, no per-load driver pay";
+
+/** LEAD 443.192 — shared by the preview (creatorPreflightRefusals) and the post, so both name the same fix. */
+export const CREATOR_SHORT_MILES_REQUIRED_MESSAGE =
+  "the signed settlement's SHORT (pay) miles are required — type them in Short mi (pay). Per-mile drivers are always paid " +
+  "short miles, never practical (owner law 443.192).";
+export const CREATOR_PRACTICAL_SEPARATE_MESSAGE =
+  "practical miles are required to book the load (E_MILES_PRACTICAL_REQUIRED) — a separate figure in Loaded mi (co) " +
+  "(or Historical / Google), never a copy of the short pay miles (owner law 443.192).";
 
 export class SettlementCreatorSeedError extends Error {
   code: string;
@@ -440,6 +449,16 @@ export async function ensureDispatchedLoadsForCreator(
       ? { driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: SALARIED_OVERRIDE_REASON }
       : signedRateOverride(draft.settlement_no, load, card);
 
+    // LEAD 443.192 (owner law) — the signed settlement's miles are the SHORT (pay) miles: they go to miles_shortest, and only
+    // there. Practical comes from its own figure. Neither is a copy of the other (creatorLoadMiles).
+    const miles = creatorLoadMiles(load);
+    if (miles.miles_shortest == null && !draft.salaried) {
+      throw new SettlementCreatorSeedError("short_miles_required", `Load ${load.load_number}: ${CREATOR_SHORT_MILES_REQUIRED_MESSAGE}`);
+    }
+    if (miles.miles_practical == null) {
+      throw new SettlementCreatorSeedError("practical_miles_required", `Load ${load.load_number}: ${CREATOR_PRACTICAL_SEPARATE_MESSAGE}`);
+    }
+
     const input: BookLoadInput = {
       ...(payOverride ?? {}),
       requestingUserUuid: actor.uuid,
@@ -460,12 +479,12 @@ export async function ensureDispatchedLoadsForCreator(
       // customer / shipper trailer, or an explicit none) — creatorTrailerChoice decided it above, never invented.
       trailer_choice: trailerChoice,
       load_trailer_equipment_id: trailerTypeId ?? undefined,
-      miles_practical: load.loaded_miles ?? load.line_haul_miles ?? null,
+      miles_practical: miles.miles_practical,
       // CC-2 finding 2026-10-11 (verify-mileage-g1-g5-live G4 on 5769's 13498 / 13508): miles carry their source. The
       // Creator's miles are typed from the signed settlement / AlwaysTrack record by the operator.
       mileage_source: (load.loaded_miles ?? load.line_haul_miles) != null ? "Operator entered" : undefined,
-      // Driver pay = short miles (company practical stays on miles_practical). Fall back to loaded when short omitted.
-      miles_shortest: load.miles_shortest ?? load.loaded_miles ?? load.line_haul_miles ?? null,
+      // LEAD 443.192 — the document's pay miles = SHORT miles only: the figure the earnings line pays (creatorPayMiles).
+      miles_shortest: miles.miles_shortest,
       miles_deadhead: load.empty_miles ?? null,
       save_mode: "book_dispatch",
       addToOpenPresettlement: true,

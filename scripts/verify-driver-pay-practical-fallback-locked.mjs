@@ -116,6 +116,56 @@ function checkSettlementReaders(root, problems) {
   }
 }
 
+// LEAD 443.192 (13:25Z item 2) — the Settlement Creator: its pay miles and the miles it books a load with.
+const CREATOR_PAY = "apps/backend/src/driver-finance/settlement-creator-empty-pay.ts";
+const CREATOR_SEED = "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts";
+const CREATOR_PREFLIGHT = "apps/backend/src/driver-finance/settlement-creator-preflight.ts";
+
+/** 443.192 — Creator pay = SHORT miles only; the seed books document miles on miles_shortest only; neither field copies the other. */
+export function creatorProblems(root = ROOT) {
+  const problems = [];
+  const read = (rel) => {
+    try {
+      return fs.readFileSync(path.join(root, rel), "utf8");
+    } catch {
+      problems.push(`${rel}: missing`);
+      return null;
+    }
+  };
+  const pay = read(CREATOR_PAY);
+  const seed = read(CREATOR_SEED);
+  const pre = read(CREATOR_PREFLIGHT);
+  if (pay) {
+    const fn = pay.slice(pay.indexOf("export function creatorPayMiles"), pay.indexOf("export function creatorPayMiles") + 400);
+    if (!pay.includes("export function creatorPayMiles") || !/const miles = Number\(load\.miles_shortest \?\? NaN\);/.test(fn)) {
+      problems.push(`${CREATOR_PAY}: creatorPayMiles must be load.miles_shortest ONLY (no loaded / practical fallback) — owner law 443.192`);
+    }
+    if (/creatorPayMiles[\s\S]{0,200}?miles_shortest\s*\?\?\s*load\.(loaded_miles|line_haul_miles|miles_practical)/.test(pay)) {
+      problems.push(`${CREATOR_PAY}: Creator pay miles fall back from short to loaded / practical miles — owner law 443.192`);
+    }
+  }
+  if (seed) {
+    if (/miles_shortest:\s*load\.miles_shortest\s*\?\?/.test(seed) || /miles_shortest:\s*load\.(loaded_miles|line_haul_miles)/.test(seed)) {
+      problems.push(`${CREATOR_SEED}: the seed books miles_shortest from a loaded / practical fallback — the document's pay miles only (443.192)`);
+    }
+    if (!/miles_shortest:\s*miles\.miles_shortest,/.test(seed) || !/miles_practical:\s*miles\.miles_practical,/.test(seed) || !/creatorLoadMiles\(load\)/.test(seed)) {
+      problems.push(`${CREATOR_SEED}: the seed must book miles through creatorLoadMiles (short = the pay figure, practical = its own figure)`);
+    }
+    if (!/"short_miles_required"/.test(seed)) {
+      problems.push(`${CREATOR_SEED}: a per-mile Creator load without short miles must be refused before booking (short_miles_required)`);
+    }
+  }
+  if (pre) {
+    if (!/CREATOR_SHORT_MILES_REQUIRED_MESSAGE/.test(pre)) {
+      problems.push(`${CREATOR_PREFLIGHT}: the preview must name the missing SHORT (pay) miles (CREATOR_SHORT_MILES_REQUIRED_MESSAGE)`);
+    }
+    if (/Number\(l\.loaded_miles \?\? l\.line_haul_miles/.test(pre) && !/creatorLoadMiles\(l\)/.test(pre)) {
+      problems.push(`${CREATOR_PREFLIGHT}: preview miles must come from creatorLoadMiles`);
+    }
+  }
+  return problems;
+}
+
 function extractFunction(src) {
   const start = src.indexOf("async function resolveDriverBasePayCents");
   if (start === -1) return null;
@@ -136,6 +186,7 @@ export function run(root = ROOT) {
     return [`${SVC}: missing`];
   }
 
+  problems.push(...creatorProblems(root));
   const fn = extractFunction(src);
   if (!fn) {
     problems.push(`${SVC}: resolveDriverBasePayCents not found — was it renamed or removed?`);
@@ -235,7 +286,28 @@ export function driverBillRowsToSettlementLoads(rows) { return rows; }
   const batchAbs = path.join(dir, BATCH);
   const settleAbs = path.join(dir, SETTLE);
   fs.mkdirSync(path.dirname(batchAbs), { recursive: true });
-  const check = (src, label, expectClean, batchSrc = goodBatch, settleSrc = goodSettle) => {
+  const creatorGood = {
+    [CREATOR_PAY]: `export function creatorPayMiles(load) {
+  const miles = Number(load.miles_shortest ?? NaN);
+  return Number.isFinite(miles) && miles > 0 ? miles : null;
+}`,
+    [CREATOR_SEED]: `const miles = creatorLoadMiles(load);
+if (miles.miles_shortest == null && !draft.salaried) throw new SettlementCreatorSeedError("short_miles_required", "x");
+const input = {
+  miles_practical: miles.miles_practical,
+  miles_shortest: miles.miles_shortest,
+};`,
+    [CREATOR_PREFLIGHT]: `const miles = creatorLoadMiles(l);
+if (miles.miles_shortest == null && !draft.salaried) out.push(CREATOR_SHORT_MILES_REQUIRED_MESSAGE);`,
+  };
+  const writeCreator = (over = {}) => {
+    for (const [rel, body] of Object.entries({ ...creatorGood, ...over })) {
+      fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+      fs.writeFileSync(path.join(dir, rel), body);
+    }
+  };
+  const check = (src, label, expectClean, batchSrc = goodBatch, settleSrc = goodSettle, creatorOver = {}) => {
+    writeCreator(creatorOver);
     fs.writeFileSync(abs, src);
     fs.writeFileSync(batchAbs, batchSrc);
     fs.writeFileSync(settleAbs, settleSrc);
@@ -264,8 +336,15 @@ export function driverBillRowsToSettlementLoads(rows) { return rows; }
     goodSettle.replace("NULLIF(dbl.miles_shortest, 0)", "NULLIF(COALESCE(dbl.miles_practical, dbl.miles_shortest), 0)"));
   check(good, "settle: practical-basis bill displayed", false, goodBatch,
     goodSettle.replace(" AND db.miles_basis_type IS DISTINCT FROM 'practical'", ""));
+  const cp = creatorGood[CREATOR_PAY];
+  const cs = creatorGood[CREATOR_SEED];
+  check(good, "Creator pay falls back to loaded miles", false, goodBatch, goodSettle, { [CREATOR_PAY]: cp.replace("load.miles_shortest ?? NaN", "load.miles_shortest ?? load.loaded_miles ?? NaN") });
+  check(good, "Creator seed miles_shortest falls back to loaded (the old :468)", false, goodBatch, goodSettle, { [CREATOR_SEED]: cs.replace("miles_shortest: miles.miles_shortest,", "miles_shortest: load.miles_shortest ?? load.loaded_miles ?? load.line_haul_miles ?? null,") });
+  check(good, "Creator seed practical straight from the document field (the old :463)", false, goodBatch, goodSettle, { [CREATOR_SEED]: cs.replace("miles_practical: miles.miles_practical,", "miles_practical: load.loaded_miles ?? load.line_haul_miles ?? null,") });
+  check(good, "Creator seed books without short miles", false, goodBatch, goodSettle, { [CREATOR_SEED]: cs.replace('"short_miles_required"', '"x"') });
+  check(good, "Creator preview says practical, not short", false, goodBatch, goodSettle, { [CREATOR_PREFLIGHT]: "const practical = Number(l.loaded_miles ?? l.line_haul_miles ?? 0);" });
   fs.rmSync(dir, { recursive: true, force: true });
-  console.log(`${LABEL} SELFTEST PASS (14 cases)`);
+  console.log(`${LABEL} SELFTEST PASS (19 cases)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -279,4 +358,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  - ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — per-mile driver pay is SHORT miles only (owner law 443.192): no practical fallback, short-miles mint gate, no derivation formula`);
+console.log(`${LABEL} OK — per-mile driver pay is SHORT miles only (owner law 443.192): no practical fallback, short-miles mint gate, no derivation formula; the Creator pays and books the document's miles as SHORT miles only`);
