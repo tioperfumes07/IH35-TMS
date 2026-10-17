@@ -27,6 +27,11 @@ const stripComments = (sql) => sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--[
 const GRANT_WRITE_TO_PUBLIC = /\bGRANT\s+[^;]*?\b(INSERT|UPDATE|DELETE|TRUNCATE|ALL)\b[^;]*?\bTO\s+(?:[A-Za-z0-9_",\s]*,\s*)?PUBLIC\b/i;
 const DEFAULT_TO_PUBLIC = /\bALTER\s+DEFAULT\s+PRIVILEGES\b[^;]*?\bGRANT\s+[^;]*?\b(INSERT|UPDATE|DELETE|TRUNCATE|ALL)\b[^;]*?\bTO\s+(?:[A-Za-z0-9_",\s]*,\s*)?PUBLIC\b/i;
 
+// verify-no-silent-db-skip: without DATABASE_URL this guard still runs its real static half (every migration scanned for a
+// write grant TO PUBLIC) and names the mode in its PASS line; the live half runs in required-live-load-guard.
+export const ALLOW_OFFLINE_SKIP =
+  "offline mode scans every migration for a write grant TO PUBLIC (static half, always enforced); the live half (0 PUBLIC write privileges / defaults) runs with DATABASE_URL in required-live-load-guard";
+
 export function staticProblems(files) {
   const problems = [];
   for (const [name, sql] of files) {

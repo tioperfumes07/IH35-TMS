@@ -69,7 +69,10 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
           // Practical miles are still typed, as the booking screen requires for a real load.
           miles_practical: 500,
           // LEAD 443.92 #3: a crewed booking (driver + miles) — Book Load mints the load's open bill at assignment.
-          ...(crewed ? { assigned_primary_driver_id: driverId } : {}),
+          // 648d3c9c (#26937, LEAD 443.192 OWNER LAW "per-mile drivers are ALWAYS paid short miles"): the fresh-mint
+          // gate is miles_shortest only (driver_bill.refused_no_shortest_miles) — practical miles never mint a bill.
+          // The crewed booking therefore types its SHORT miles, as a real crewed booking must.
+          ...(crewed ? { assigned_primary_driver_id: driverId, miles_shortest: 480 } : {}),
           // 6db7585fb6 "FINDING: R443.161-G1 trailer choice missing at shared load boundary (#26793)":
           // createLoadWithFullSideEffects now refuses EVERY non-draft booking without an explicit trailer choice
           // (422 trailer_choice_required), historical_backfill included. The fixture records the explicit
