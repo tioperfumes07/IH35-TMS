@@ -17,7 +17,7 @@
  *
  * THE PROPERTY:
  *  - the query resolves lane / pickup_at / delivery_at from mdata.load_stops
- *  - a mileage filled from mdata.loads is labelled "(load)" ON THE ROW, for the company settlement
+ *  - a mileage filled from mdata.loads (miles_shortest only — LEAD 443.192 short-miles law) is labelled "short (load)" ON THE ROW, for the company settlement
  *    and the audit trail
  *  - a rate divided out of gross / miles is flagged rate_is_effective ON THE ROW
  *  - NEITHER label is printed on the DRIVER document (owner ruling 2026-09-30: "the driver just
@@ -39,11 +39,16 @@ export function checkSettlementLegs(source) {
   if (!/AS\s+pickup_at\b/.test(source) || !/AS\s+delivery_at\b/.test(source)) {
     failures.push("pickup_at and delivery_at must be selected, so a leg can print the dates the trip actually ran");
   }
-  if (!/'practical \(load\)'/.test(source) || !/'short \(load\)'/.test(source)) {
-    failures.push("a mileage filled from mdata.loads must be labelled '(load)' — an unlabelled mileage cannot be audited");
+  // OWNER LAW (LEAD 443.192, #26937 / 68564881): per-mile drivers are ALWAYS paid SHORT miles. The fill from mdata.loads
+  // is miles_shortest only and is labelled 'short (load)'; practical miles never fill the pay miles or divide out a rate.
+  if (!/'short \(load\)'/.test(source)) {
+    failures.push("a mileage filled from mdata.loads must be labelled 'short (load)' — an unlabelled mileage cannot be audited");
   }
-  if (!/COALESCE\(db\.miles_basis,\s*dbl\.miles_practical,\s*dbl\.miles_shortest\)/.test(source)) {
-    failures.push("miles_basis must fall back to mdata.loads; the bill's own basis still wins");
+  if (!/WHEN db\.miles_basis IS NOT NULL AND db\.miles_basis_type IS DISTINCT FROM 'practical' THEN db\.miles_basis\s+WHEN COALESCE\(dbl\.miles_shortest, 0\) > 0 THEN dbl\.miles_shortest/.test(source)) {
+    failures.push("miles_basis must fall back to mdata.loads.miles_shortest; the bill's own (non-practical) basis still wins");
+  }
+  if (/'practical \(load\)'/.test(source) || /dbl\.miles_practical/.test(source) || /l\.miles_practical/.test(source)) {
+    failures.push("practical miles must never fill pay miles or divide out a rate (owner law LEAD 443.192: SHORT miles only)");
   }
   if (!/rate_is_effective/.test(source)) {
     failures.push("a rate divided out of gross / miles must be flagged rate_is_effective, never printed as a contracted rate");
@@ -82,8 +87,10 @@ if (process.argv.includes("--selftest")) {
     ["lane reverts to the memo", good.replace(/const lane = laneLabel \?[^\n]*\n/, 'const lane = String(row.notes ?? "Driver bill");\n'), 1],
     ["the load_stops lane subqueries are removed", good.replace(/origin_label/g, "x_removed"), 1],
     ["pickup/delivery dates dropped", good.replace(/AS pickup_at/g, "AS px_removed"), 1],
-    ["mileage source label stripped", good.replace(/'practical \(load\)'/g, "'practical'"), 1],
-    ["miles no longer fall back to mdata.loads", good.replace("COALESCE(db.miles_basis, dbl.miles_practical, dbl.miles_shortest)", "db.miles_basis"), 1],
+    ["mileage source label stripped", good.replace(/'short \(load\)'/g, "'short'"), 1],
+    ["miles no longer fall back to mdata.loads", good.replace("WHEN COALESCE(dbl.miles_shortest, 0) > 0 THEN dbl.miles_shortest", "WHEN false THEN NULL"), 1],
+    ["practical fallback brought back", good.replace("WHEN COALESCE(dbl.miles_shortest, 0) > 0 THEN dbl.miles_shortest", "WHEN COALESCE(dbl.miles_practical, 0) > 0 THEN dbl.miles_practical"), 1],
+    ["practical label brought back", good.replace("THEN 'short (load)'", "THEN 'practical (load)'"), 1],
     [
       "the internal basis label leaks back onto the driver leg",
       good.replace(
