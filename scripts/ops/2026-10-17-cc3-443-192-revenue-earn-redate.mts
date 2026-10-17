@@ -10,6 +10,9 @@
 // business date (America/Chicago). A load with no departure (no evidence) is NEVER touched — listed for the Lead.
 // Per load, refuses unless amounts after == before (A/R 1100, Unbilled 1150, revenue 4000) and the new earn is dated the
 // delivery day; whole run refuses unless the company trial balance is 0.
+// PHASE 2 (Lead 12:00Z — Event 2 bill dating, same runner): a standing bill whose entry_date ≠ GREATEST(its invoice's
+// issue_date, the standing earn's date) — the date the fixed engine (resolveBillEntryDate) gives — is reversed
+// (reverseJournalEntryNoFlip) and re-posted by postLoadRevenueLatch(completed_docs_received). Same refusals per load.
 //   default: dry run inside one transaction, ROLLED BACK · --fork-commit (assertNotProduction) · --apply --auth LEAD-ORDER-443.192
 import pg from "pg";
 import { assertIsIntendedProduction, assertNotProduction } from "../lib/assert-not-production.mjs";
@@ -65,6 +68,29 @@ const CANDIDATES = `
    WHERE l.operating_company_id = $1::uuid AND l.voided_at IS NULL
    ORDER BY l.load_number`;
 
+// The bill's expected date — the same SQL the engine's resolveBillEntryDate uses (invoice = the earliest live invoice on the load).
+const BILL_CANDIDATES = `
+  WITH bill AS (
+    SELECT p.load_id, je.entry_date
+      FROM accounting.load_revenue_recognition_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_id
+     WHERE p.operating_company_id = $1::uuid AND p.event = 'bill' AND p.is_active AND ${STANDING_LATCH_JE_PREDICATE}),
+  earn AS (
+    SELECT p.load_id, max(je.entry_date) AS entry_date
+      FROM accounting.load_revenue_recognition_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_id
+     WHERE p.operating_company_id = $1::uuid AND p.event = 'earn' AND p.is_active AND ${STANDING_LATCH_JE_PREDICATE}
+     GROUP BY p.load_id),
+  inv AS (
+    SELECT DISTINCT ON (i.source_load_id) i.source_load_id AS load_id, i.issue_date
+      FROM accounting.invoices i
+     WHERE i.operating_company_id = $1::uuid AND i.voided_at IS NULL
+     ORDER BY i.source_load_id, i.created_at ASC)
+  SELECT l.id::text load_id, l.load_number, b.entry_date::text billed_on,
+         GREATEST(inv.issue_date, e.entry_date)::text expected_on
+    FROM bill b JOIN mdata.loads l ON l.id = b.load_id
+    LEFT JOIN earn e ON e.load_id = b.load_id LEFT JOIN inv ON inv.load_id = b.load_id
+   WHERE l.operating_company_id = $1::uuid AND l.voided_at IS NULL
+   ORDER BY l.load_number`;
+
 let tbOk = false;
 try {
   await scope();
@@ -104,6 +130,35 @@ try {
       if (!same || newEarn?.entry_date !== r.delivered_on || !billOk) throw new Error(`NOT VERIFIED ${r.load_number} — stop and investigate`);
     }
   }
+  // PHASE 2 — Event 2 (bill) dated by its invoice.
+  await scope();
+  const bills = (await db.query(BILL_CANDIDATES, [USMCA])).rows as Array<{ load_id: string; load_number: string; billed_on: string; expected_on: string | null }>;
+  await db.query("ROLLBACK");
+  const billRedate = bills.filter((b) => b.expected_on && b.expected_on !== b.billed_on);
+  const closed = (await db.query(`SELECT accounting.closed_period_cutoff($1::uuid)::text c`, [USMCA])).rows[0]?.c ?? null;
+  console.log(`standing bills ${bills.length} · correct ${bills.length - billRedate.length} · to re-date ${billRedate.length}${closed ? ` · closed through ${closed}` : ""}`);
+  console.log(`bill re-date: ${billRedate.map((b) => `${b.load_number} ${b.billed_on}→${b.expected_on}`).join(" · ")}`);
+  if (APPLY || FORK) {
+    const reasonBill = "Lead 443.192 (12:00Z): delivery-latch bill was dated by the fire day — restate at its invoice issue date (amount unchanged)";
+    for (const b of billRedate) {
+      if (closed && b.expected_on! <= closed) { console.log(`${b.load_number}: expected ${b.expected_on} is in a closed period — left`); continue; }
+      await scope();
+      const before = await balances(b.load_id);
+      const bill = (await standing(b.load_id)).find((x) => x.event === "bill");
+      if (!bill) throw new Error(`REFUSE ${b.load_number}: no standing bill`);
+      await reverseJournalEntryNoFlip(db as never, { operatingCompanyId: USMCA, journalEntryId: bill.je, reason: reasonBill, actorUserId: OWNER, currentBusinessDate: companyBusinessDate() });
+      await db.query("COMMIT");
+      const e2 = await postLoadRevenueLatch({ operating_company_id: USMCA, load_id: b.load_id, target_status: "completed_docs_received", entry_date_iso: companyBusinessDate(), actor_user_id: OWNER } as never);
+      await scope();
+      const after = await balances(b.load_id);
+      const nowBill = (await standing(b.load_id)).find((x) => x.event === "bill");
+      await db.query("ROLLBACK");
+      const same = ["1100", "1150", "4000"].every((a) => Number(before[a] ?? 0) === Number(after[a] ?? 0));
+      console.log(`${b.load_number}: bill ${b.billed_on}→${nowBill?.entry_date} · balances ${JSON.stringify(before)} → ${JSON.stringify(after)} · ${JSON.stringify(e2).slice(0, 60)}`);
+      if (!same || nowBill?.entry_date !== b.expected_on) throw new Error(`NOT VERIFIED ${b.load_number} (bill) — stop and investigate`);
+    }
+  }
+
   await scope();
   const tb = (await db.query(`SELECT COALESCE(sum(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE -amount_cents END),0)::text net FROM accounting.journal_entry_postings WHERE operating_company_id=$1::uuid`, [USMCA])).rows[0];
   await db.query("ROLLBACK");
