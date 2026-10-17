@@ -83,11 +83,7 @@ function assertExpenseInsertStampsUnit(fnSrc, label, failures) {
   // Prefer the branch that includes unit_id (columnExists-gated).
   const unitInsert = /INSERT\s+INTO\s+accounting\.expenses\s*\([^)]*\bunit_id\b[^)]*\)/is;
   // 443.182 C — the expense is a row on the one expense writer; the row names unit_id (where the column exists).
-<<<<<<< HEAD
   const unitWriterRow = /(?:insertExpenseHeader\(client, \{|writeExpenseDocumentInClientTx\(client, \{\s*header: \{)[\s\S]{0,600}unit_id: hasUnitIdColumn \? wo\.unit_id/.test(fnSrc);
-=======
-  const unitWriterRow = /insertExpenseHeader\(client, \{[\s\S]{0,600}unit_id: hasUnitIdColumn \? wo\.unit_id/.test(fnSrc);
->>>>>>> origin/main
   if (!unitInsert.test(fnSrc) && !unitWriterRow) {
     failures.push(`${label}: expenses INSERT must include a unit_id branch`);
   }

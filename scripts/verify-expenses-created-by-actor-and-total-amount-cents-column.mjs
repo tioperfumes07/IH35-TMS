@@ -59,11 +59,7 @@ if (!autoCreateMatch) {
   // this is a floor, not an exact count).
   // 443.182 C — the 4 column-gated INSERT branches became ONE insertExpenseHeader row (one expense writer); that row
   // names created_by_user_id: userId. Either shape stamps the actor on every branch.
-<<<<<<< HEAD
   const oneWriterRow = /(?:insertExpenseHeader\(client, \{|writeExpenseDocumentInClientTx\(client, \{\s*header: \{)[\s\S]{0,900}created_by_user_id: userId,/.test(fn);
-=======
-  const oneWriterRow = /insertExpenseHeader\(client, \{[\s\S]{0,900}created_by_user_id: userId,/.test(fn);
->>>>>>> origin/main
   if (createdByCount < 4 && !oneWriterRow) {
     failures.push(`${twoSectionPath}: autoCreateExpenseFromWO no longer stamps created_by_user_id in all 4 INSERT branches (found ${createdByCount} references)`);
   }
@@ -86,11 +82,7 @@ const lumperPath = "apps/backend/src/cash-advances/lumper-cash-advance-split.ts"
 const lumperSrc = readFileSync(lumperPath, "utf8");
 // 443.182 C — the lumper expense is written through the one expense writer: insertExpenseHeader(client, { …,
 // created_by_user_id: actorUserUuid, … }).
-<<<<<<< HEAD
 const lumperWriterRow = /(?:insertExpenseHeader\(client, \{|writeExpenseDocumentInClientTx\(client, \{\s*header: \{)[\s\S]{0,600}created_by_user_id: actorUserUuid,/.test(lumperSrc);
-=======
-const lumperWriterRow = /insertExpenseHeader\(client, \{[\s\S]{0,600}created_by_user_id: actorUserUuid,/.test(lumperSrc);
->>>>>>> origin/main
 if (!lumperWriterRow && !/INSERT INTO accounting\.expenses[\s\S]{0,200}?created_by_user_id/.test(lumperSrc)) {
   failures.push(`${lumperPath}: lumper-expense leg's INSERT into accounting.expenses no longer includes created_by_user_id`);
 }

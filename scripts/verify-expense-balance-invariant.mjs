@@ -57,11 +57,7 @@ if (mig) {
 const writer = read(WRITER);
 if (writer) {
   // 443.182 C — the line is persisted through the one expense writer: insertExpenseLine(client, { …, amount_cents, … }).
-<<<<<<< HEAD
   if (!/INSERT INTO accounting\.expense_lines[\s\S]*amount_cents/i.test(writer) && !/(?:insertExpenseLine\(client, |expenseLineLink\.insertLine\()\{[\s\S]{0,200}amount_cents: amountCents,/.test(writer))
-=======
-  if (!/INSERT INTO accounting\.expense_lines[\s\S]*amount_cents/i.test(writer) && !/insertExpenseLine\(client, \{[\s\S]{0,200}amount_cents: amountCents,/.test(writer))
->>>>>>> origin/main
     fail(`${WRITER} expense branch must write amount_cents into accounting.expense_lines.`);
   if (!/UPDATE accounting\.expenses[\s\S]*total_amount_cents\s*=\s*COALESCE[\s\S]*SUM\(amount_cents\)/i.test(writer))
     fail(`${WRITER} must reconcile accounting.expenses.total_amount_cents = SUM(amount_cents) after writing expense lines.`);

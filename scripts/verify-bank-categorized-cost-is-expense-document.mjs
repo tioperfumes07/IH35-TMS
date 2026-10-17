@@ -136,13 +136,8 @@ export function staticProblems(src) {
     p.push("S12: the expense must retain the load's customer-owned trailer, reachable from each line's expense_id");
   }
   // 443.182 C — one writer per document: the bank-line expense persists through expense-writer.service.ts, never its own INSERT.
-<<<<<<< HEAD
   if (/INSERT\s+INTO\s+accounting\.expense(s|_lines)\s*\(/i.test(src.writer) || (src.writer.match(/writeExpenseDocumentInClientTx\(client, \{/g) ?? []).length < 2) {
     p.push("S13: the bank-line expense must persist through the one expense engine (writeExpenseDocumentInClientTx), never its own INSERT");
-=======
-  if (/INSERT\s+INTO\s+accounting\.expense(s|_lines)\s*\(/i.test(src.writer) || !/insertExpenseHeader\(/.test(src.writer) || !/insertExpenseLine\(/.test(src.writer)) {
-    p.push("S13: the bank-line expense must persist through the one expense writer (insertExpenseHeader / insertExpenseLine), never its own INSERT");
->>>>>>> origin/main
   }
   return p;
 }
@@ -245,11 +240,7 @@ if (process.argv.includes("--selftest")) {
     ["S10", staticProblems(plant("writer", "reconcileExpenseWithLoad(input, load)", "input"))],
     ["S11", staticProblems(plant("writer", "dimensions.driverId,", "input.driverId,"))],
     ["S12", staticProblems(plant("writer", "dimensions.nonOwnedTrailerId,", "null,"))],
-<<<<<<< HEAD
     ["S13", staticProblems(plant("writer", "await writeExpenseDocumentInClientTx(client, {", "await client.query(`INSERT INTO accounting.expenses (x) VALUES ($1)`, {"))],
-=======
-    ["S13", staticProblems(plant("writer", "await insertExpenseHeader(client, {", "await client.query(`INSERT INTO accounting.expenses (x) VALUES ($1)`, {"))],
->>>>>>> origin/main
     ["L2", linkageProblems({ ...good, bt_expense: null })],
     ["L3", linkageProblems({ ...good, net: 5 })],
     ["L4", linkageProblems({ ...good, dr_cat: 0 })],

@@ -49,11 +49,7 @@ const CHECKS = [
     name: "two-section-service.ts routes maintenance purchases into accounting.expenses",
     file: "apps/backend/src/maintenance/two-section-service.ts",
     // 443.182 C — persisted through the one expense writer (insertExpenseHeader) instead of its own INSERT.
-<<<<<<< HEAD
     pattern: /INSERT INTO accounting\.expenses|(?:insertExpenseHeader\(client, \{|writeExpenseDocumentInClientTx\(client, \{\s*header: \{)[\s\S]{0,300}linked_work_order_uuid: woUuid/,
-=======
-    pattern: /INSERT INTO accounting\.expenses|insertExpenseHeader\(client, \{[\s\S]{0,300}linked_work_order_uuid: woUuid/,
->>>>>>> origin/main
   },
   {
     name: "accounting.bills already carries real journal_entry_id (BillDetailPage, WAVE-C-gl_je-accounting-core-leaves)",
