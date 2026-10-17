@@ -83,8 +83,11 @@ function failures(sources) {
     }
     // The already-expensed check must run BEFORE the INSERT INTO accounting.bills.
     const skipIdx = fnBody.indexOf("skipped_already_expensed");
-    const insertIdx = fnBody.indexOf("INSERT INTO accounting.bills");
-    if (skipIdx === -1 || insertIdx === -1 || skipIdx > insertIdx) {
+    // 443.182 C — the bill header is written through the one writer (insertBillHeaderOnClient) or inline.
+    const inlineIdx = fnBody.indexOf("INSERT INTO accounting.bills");
+    const writerIdx = fnBody.search(/insertBillHeaderOnClient\s*(?:<[^>]*>)?\s*\(/);
+    const insertIdx = [inlineIdx, writerIdx].filter((i) => i !== -1).reduce((a, b) => Math.min(a, b), Infinity);
+    if (skipIdx === -1 || insertIdx === Infinity || skipIdx > insertIdx) {
       out.push("maintenance-posting/poster.service.ts: the already-expensed skip must be checked BEFORE the bill INSERT, not after");
     }
   }

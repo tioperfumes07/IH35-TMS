@@ -4,6 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { postBillPaymentGlIfEnabledInClientTx } from "../accounting/bill-payment-gl.service.js";
+import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
 
 const createCcPaymentBodySchema = z.object({
   bill_id: z.string().uuid(),
@@ -76,26 +77,25 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
 
         const vendorId = String(billRaw.vendor_id ?? billRaw.vendor_uuid ?? "");
 
-        const paymentRes = await client.query(
-          // ACCT-F353 — derive from the BILL being paid (billRaw.is_sample_data, already fetched
-          // above via SELECT *), matching bills.service.ts's own bill_payment writer precedent.
-          `INSERT INTO accounting.bill_payments (
-            operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount,
-            payment_method, cc_account_id, memo, status, created_by_user_id, created_at, updated_at, payment_source_kind, is_sample_data
-          ) VALUES ($1,$2,$3,$4,$5,$6,'cc',$7,$8,'posted',$9,now(),now(),'cc_bill_payment',$10) RETURNING id::text AS id`,
-          [
-            query.data.operating_company_id,
-            body.data.bill_id,
-            vendorId,
-            body.data.payment_date,
-            body.data.payment_amount_cents,
-            body.data.payment_amount_cents / 100,
-            body.data.cc_account_id,
-            body.data.memo ?? null,
-            user.uuid,
-            Boolean(billRaw.is_sample_data),
-          ]
-        );
+        // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before.
+        // ACCT-F353 — derive from the BILL being paid (billRaw.is_sample_data, already fetched above via SELECT *).
+        const paymentRes = await insertBillPaymentRowInClientTx(client, {
+          operating_company_id: query.data.operating_company_id,
+          bill_id: body.data.bill_id,
+          vendor_id: vendorId,
+          payment_date: body.data.payment_date,
+          amount_cents: body.data.payment_amount_cents,
+          amount: body.data.payment_amount_cents / 100,
+          payment_method: "cc",
+          cc_account_id: body.data.cc_account_id,
+          memo: body.data.memo ?? null,
+          status: "posted",
+          created_by_user_id: user.uuid,
+          created_at: BILL_PAYMENT_NOW,
+          updated_at: BILL_PAYMENT_NOW,
+          payment_source_kind: "cc_bill_payment",
+          is_sample_data: Boolean(billRaw.is_sample_data),
+        }, "id::text AS id");
         const paymentId = String((paymentRes.rows[0] as { id?: string } | undefined)?.id ?? "");
         if (!paymentId) return { code: 500 as const, error: "bill_payment_insert_failed" as const };
 

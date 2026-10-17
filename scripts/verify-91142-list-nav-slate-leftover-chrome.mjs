@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 const TARGETS = [
-  "apps/frontend/src/components/lists/ListView/components/ListViewHeader.tsx",
   "apps/frontend/src/components/table/TableHeaderCell.tsx",
   "apps/frontend/src/components/reports/ReportCategoryHoverNav.tsx",
 ];

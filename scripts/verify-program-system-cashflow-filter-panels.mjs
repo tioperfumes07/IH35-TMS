@@ -255,20 +255,22 @@ export function collectFailures(sources) {
   const listsReq = sources["docs/specs/scoreboard/modules/lists.required.json"] ?? "";
   if (listsReq) {
     if (
-      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "components\/lists\/ListView\/components\/FilterPopover\.tsx"/.test(
+      !/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/lists\/accounting\/ChartOfAccountsListPage\.tsx"/.test(
         listsReq,
       )
     ) {
-      failures.push("lists.required.json: chrome.toolbar_filter surface_path must be FilterPopover.tsx");
+      failures.push("lists.required.json: chrome.toolbar_filter surface_path must be ChartOfAccountsListPage.tsx");
     }
   }
-  const listsFilter = sources["apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx"] ?? "";
+  // LEAD 443.181 — ListView's FilterPopover retired; the lists filter is the Chart of Accounts' staged
+  // CollapsedListFilters (draft → Apply via useStagedListFilters).
+  const listsFilter = sources["apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx"] ?? "";
   if (listsFilter) {
-    if (!/\bApply\b/.test(listsFilter) || !/\bonClick=\{apply\}/.test(listsFilter)) {
-      failures.push("FilterPopover.tsx: must keep Apply commit for staged list filters");
+    if (!listsFilter.includes("<CollapsedListFilters") || !/onApply=\{statementStaged\.apply\}/.test(listsFilter)) {
+      failures.push("ChartOfAccountsListPage.tsx: must keep the Apply commit for its staged list filter");
     }
-    if (!listsFilter.includes("listview-filter-popover")) {
-      failures.push("FilterPopover.tsx: must keep listview-filter-popover test id");
+    if (!listsFilter.includes("useStagedListFilters")) {
+      failures.push("ChartOfAccountsListPage.tsx: must stage its list filter via useStagedListFilters");
     }
   }
 
@@ -548,8 +550,8 @@ function load() {
   map["docs/specs/scoreboard/modules/lists.required.json"] = read(
     "docs/specs/scoreboard/modules/lists.required.json",
   );
-  map["apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx"] = read(
-    "apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx",
+  map["apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx"] = read(
+    "apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx",
   );
   map["docs/specs/scoreboard/modules/accounting.required.json"] = read(
     "docs/specs/scoreboard/modules/accounting.required.json",
@@ -691,7 +693,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       "docs/specs/scoreboard/modules/lists.required.json": sources[
         "docs/specs/scoreboard/modules/lists.required.json"
       ].replaceAll(
-        "components/lists/ListView/components/FilterPopover.tsx",
+        "pages/lists/accounting/ChartOfAccountsListPage.tsx",
         "components/table/UniversalListToolbar.tsx",
       ),
     }),

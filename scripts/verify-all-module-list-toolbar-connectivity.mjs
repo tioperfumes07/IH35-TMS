@@ -6,9 +6,6 @@ import process from "node:process";
 const CORE = {
   columnChooser: "apps/frontend/src/components/table/ColumnChooser.tsx",
   dataTable: "apps/frontend/src/components/DataTable.tsx",
-  listView: "apps/frontend/src/components/lists/ListView/ListView.tsx",
-  listViewGear: "apps/frontend/src/components/lists/ListView/components/ListViewGear.tsx",
-  listViewHook: "apps/frontend/src/components/lists/ListView/hooks/useListView.ts",
   parityTable: "apps/frontend/src/components/parity/ParityTable.tsx",
 };
 
@@ -24,14 +21,14 @@ const EVIDENCE = {
   drivers: ["apps/frontend/src/pages/drivers/DriversTable.tsx", "<ParityTable"],
   factoring: ["apps/frontend/src/pages/factoring/FactoringHome.tsx", "<ParityTable"],
   finance: ["apps/frontend/src/pages/finance/ArApAgingPage.tsx", "<ParityTable"],
-  fleet: ["apps/frontend/src/components/FleetTable.tsx", "<TableControls"],
+  fleet: ["apps/frontend/src/components/FleetTable.tsx", "<ParityTable"],
   form_425: ["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx", "<ParityTable"],
   fuel: ["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx", "<ParityTable"],
   home: ["apps/frontend/src/components/home/DriverDaySummaryCard.tsx", "<ParityTable"],
   insurance: ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", "<ParityTable"],
   inventory: ["apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx", "<ParityTable"],
   legal: ["apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx", "<ParityTable"],
-  lists: ["apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx", "<ListView"],
+  lists: ["apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx", "<ParityTable"],
   maintenance: ["apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx", "<ParityTable"],
   program: ["apps/frontend/src/pages/program/ModuleCompletionPage.tsx", "<ParityTable"],
   reports: ["apps/frontend/src/components/reports/FrequentlyRunTable.tsx", "<ParityTable"],
@@ -81,19 +78,8 @@ export function verify(source) {
   }
   need(CORE.dataTable, "<ColumnChooser", "DataTable must expose the governed column gear");
   need(CORE.dataTable, "visibleColumns.map", "DataTable must render the applied visible-column set");
-  for (const token of ["const [draft, setDraft]", "onGearChange(draft)", "onClick={reset}", "onClick={cancel}", "onClick={apply}"]) {
-    need(CORE.listViewGear, token, `ListViewGear must retain ${token}`);
-  }
-  for (const token of [
-    "setPersistError(\"Table settings could not be saved. Your current view is temporary.\")",
-    "lastPersistedDraftRef.current = data",
-    "retryPersist",
-  ]) {
-    need(CORE.listViewHook, token, `ListView preference persistence must retain ${token}`);
-  }
-  for (const token of ['role="alert"', "persistError", "onClick={retryPersist}", "Retry save"]) {
-    need(CORE.listView, token, `ListView must expose failed preference persistence via ${token}`);
-  }
+  // LEAD 443.181 — ListView (and its ListViewGear / useListView) were retired: its last consumer, the Chart of
+  // Accounts, renders on ParityTable, whose draft-to-Apply gear is asserted below.
   for (const token of ["draftHidden", "draftDensity", "applyGear", "cancelGear", "resetGear", "onClick={applyGear}"]) {
     need(CORE.parityTable, token, `ParityTable must retain ${token}`);
   }
@@ -127,9 +113,6 @@ export function verify(source) {
   if (!source[SELF].split("import fs")[0].includes(EXACT_HEADER)) failures.push("exact all-module gear header missing");
   const duplicate = (JSON.parse(source[FEED]).entries ?? []).some((row) => row.guard === SELF && row.cols?.includes("connectivity"));
   if (duplicate) failures.push("manual feed duplicates exact toolbar gear ownership");
-  // BANK-F91295 leftover refuse — ListViewGear.tsx page-scoped text token ratchet
-  if (source[CORE.listViewGear]?.includes("text-[11px]")) failures.push("ListViewGear.tsx: leftover text-[11px]");
-  if (source[CORE.listViewGear]?.includes("#8A92AB") || source[CORE.listViewGear]?.includes("#334155")) failures.push("ListViewGear.tsx: leftover off-scale muted");
   return failures;
 }
 
@@ -145,9 +128,6 @@ if (process.argv.includes("--self-test")) {
   for (const [file, token] of [
     [CORE.columnChooser, "draftHidden"], [CORE.columnChooser, "onClick={apply}"],
     [CORE.dataTable, "<ColumnChooser"], [CORE.dataTable, "visibleColumns.map"],
-    [CORE.listViewGear, "const [draft, setDraft]"], [CORE.listViewGear, "onGearChange(draft)"],
-    [CORE.listViewHook, "lastPersistedDraftRef.current = data"], [CORE.listViewHook, "retryPersist"],
-    [CORE.listView, 'role="alert"'], [CORE.listView, "onClick={retryPersist}"],
     [CORE.parityTable, "draftHidden"], [CORE.parityTable, "onClick={applyGear}"],
   ]) mutations.push(() => ({ ...source, [file]: source[file].replaceAll(token, "BROKEN_GEAR_CONTRACT") }));
   for (const module of Object.keys(EVIDENCE)) {
@@ -173,13 +153,7 @@ if (process.argv.includes("--self-test")) {
   mutations.forEach((mutate, index) => {
     if (!verify(mutate()).length) throw new Error(`self-test mutation ${index + 1} survived`);
   });
-  // BANK-F91295 leftover plant — ListViewGear page-scoped text token ratchet
-  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>';
-  const leftoverHits = verify({ ...source, [CORE.listViewGear]: leftoverPlant });
-  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
-    throw new Error(`leftover plant escaped: ${JSON.stringify(leftoverHits)}`);
-  }
-  console.log(`PASS: ${mutations.length} planted list-toolbar gear defects were rejected + leftover plant`);
+  console.log(`PASS: ${mutations.length} planted list-toolbar gear defects were rejected`);
 }
 
 console.log("PASS: 28 applicable modules inherit draft-to-Apply gear; Help remains explicit N/A");

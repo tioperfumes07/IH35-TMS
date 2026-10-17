@@ -6,32 +6,30 @@ import process from "node:process";
 const targetFile = path.join(process.cwd(), "apps/frontend/src/components/FleetTable.tsx");
 const source = fs.readFileSync(targetFile, "utf8");
 
+// LEAD 443.181 — the Fleet roster renders on ParityTable. The SEL-01 contract is the same, carried by ParityTable's
+// selection: per-row checkboxes + a page header checkbox, the "select all N matching" action over the FULL filtered
+// set (rows = listFiltered, not one page), the page-owned bulk selection (controlled keys), and the 100-row cap.
 function audit(text) {
   const checks = [
-    ["selection context", /<TableSelection[\s\S]*rows=\{pageRows\}[\s\S]*pageRowIds=\{pageRowIds\}/],
-    ["matching ids memo", /matchingRowIds\s*=\s*useMemo\(\(\)\s*=>\s*listFiltered\.map/],
-    [
-      "header checkbox matching scope",
-      /<TableSelectionHeader[\s\S]*matchingRowIds=\{matchingRowIds\}[\s\S]*ariaLabel=\{`Select all \$\{matchingRowIds\.length\} matching units`\}/,
-    ],
-    ["row checkbox state", /type="checkbox"[\s\S]*checked=\{selectCtx\.isSelected\(row\.id\)\}/],
-    ["row checkbox toggle", /onChange=\{\(\) => selectCtx\.toggle\(row\.id\)\}/],
+    ["selectable roster", /<ParityTable[\s\S]*?\n\s*selectable\n/],
+    ["matching scope = full filtered set", /<ParityTable[\s\S]*?rows=\{listFiltered\}/],
+    ["row checkbox state", /selectedKeys=\{selectedKeys\}/],
+    ["selected keys memo", /const selectedKeys = useMemo\(\(\) => \[\.\.\.selection\.selectedIds\], \[selection\.selectedIds\]\)/],
+    ["row checkbox toggle", /onSelectionChange=\{\(keys\) => selection\.setSelectedIds\(new Set\(keys\)\)\}/],
+    ["selection cap", /maxSelectable=\{FLEET_SELECTION_CAP\}/],
   ];
   return checks.filter(([, pattern]) => !pattern.test(text)).map(([label]) => label);
 }
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace("rows={pageRows}", "rows={[]}"),
-    source.replace("matchingRowIds={matchingRowIds}", "matchingRowIds={pageRowIds}"),
-    source.replace("checked={selectCtx.isSelected(row.id)}", "checked={false}"),
-    source.replace("onChange={() => selectCtx.toggle(row.id)}", "onChange={() => {}}"),
-    source.replace(
-      "matchingRowIds = useMemo(() => listFiltered.map((row) => row.id), [listFiltered]);",
-      "matchingRowIds = pageRowIds;"
-    ),
+    source.replace(/\n(\s*)selectable\n/, "\n$1selectable={false}\n"),
+    source.replace("rows={listFiltered}", "rows={[]}"),
+    source.replace("selectedKeys={selectedKeys}", "selectedKeys={[]}"),
+    source.replace("onSelectionChange={(keys) => selection.setSelectedIds(new Set(keys))}", "onSelectionChange={() => {}}"),
+    source.replace("maxSelectable={FLEET_SELECTION_CAP}", ""),
   ];
-  const escaped = mutations.filter((fixture) => audit(fixture).length === 0);
+  const escaped = mutations.filter((fixture) => fixture === source || audit(fixture).length === 0);
   if (audit(source).length || escaped.length) {
     console.error(
       `[verify-fleet-bulk-select-checkbox-column] selftest failed: audit=${audit(source).join(",") || "ok"} escaped=${escaped.length}`

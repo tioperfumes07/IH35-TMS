@@ -9,7 +9,6 @@ const CORE = {
   controls: "apps/frontend/src/components/table/TableControls.tsx",
   controller: "apps/frontend/src/components/table/useTableController.ts",
   dataTable: "apps/frontend/src/components/DataTable.tsx",
-  listView: "apps/frontend/src/components/lists/ListView/ListView.tsx",
   parityTable: "apps/frontend/src/components/parity/ParityTable.tsx",
   fleetTable: "apps/frontend/src/components/FleetTable.tsx",
 };
@@ -26,14 +25,14 @@ const EVIDENCE = {
   drivers: ["apps/frontend/src/pages/drivers/DriversTable.tsx", "<ParityTable"],
   factoring: ["apps/frontend/src/pages/factoring/FactoringHome.tsx", "<ParityTable"],
   finance: ["apps/frontend/src/pages/finance/ArApAgingPage.tsx", "<ParityTable"],
-  fleet: ["apps/frontend/src/components/FleetTable.tsx", "<TableControls"],
+  fleet: ["apps/frontend/src/components/FleetTable.tsx", "<ParityTable"],
   form_425: ["apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx", "<ParityTable"],
   fuel: ["apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx", "<ParityTable"],
   home: ["apps/frontend/src/components/home/DriverDaySummaryCard.tsx", "<ParityTable"],
   insurance: ["apps/frontend/src/pages/insurance/LawsuitsTab.tsx", "<ParityTable"],
   inventory: ["apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx", "<ParityTable"],
   legal: ["apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx", "<ParityTable"],
-  lists: ["apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx", "<ListView"],
+  lists: ["apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx", "<ParityTable"],
   maintenance: ["apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx", "<ParityTable"],
   program: ["apps/frontend/src/pages/program/ModuleCompletionPage.tsx", "<ParityTable"],
   reports: ["apps/frontend/src/components/reports/FrequentlyRunTable.tsx", "<ParityTable"],
@@ -101,15 +100,17 @@ export function verify(source) {
     "Choose a field above to set From/To.",
     "UniversalListToolbar must prompt Choose a field when columns exist but none selected",
   );
-  for (const file of [CORE.dataTable, CORE.listView, CORE.parityTable]) {
+  for (const file of [CORE.dataTable, CORE.parityTable]) {
     need(file, "<UniversalListToolbar", `${file} must render UniversalListToolbar`);
     need(file, "applyUniversalListFilters", `${file} must apply toolbar filters to rows`);
   }
   need(CORE.controls, "<UniversalListToolbar", "TableControls must render UniversalListToolbar");
   need(CORE.controller, "applyUniversalListFilters", "useTableController must apply range filtering");
   need(CORE.controller, "setRange", "useTableController must expose applied range state");
-  need(CORE.fleetTable, "range={table.range}", "FleetTable must bind shared range state");
-  need(CORE.fleetTable, "onRangeApply={table.setRange}", "FleetTable must apply shared range state");
+  // LEAD 443.181 — the Fleet roster renders on ParityTable, whose own toolbar carries the shared range state; the
+  // roster must never switch that range off.
+  need(CORE.fleetTable, "<ParityTable", "FleetTable must render the roster on ParityTable (shared toolbar range state)");
+  if (source[CORE.fleetTable]?.includes("suppressToolbarRange")) failures.push("FleetTable must not suppress the shared toolbar range");
 
   for (const [module, [file, token]] of Object.entries(EVIDENCE)) {
     need(file, token, `${module} must retain production list evidence ${token} in ${file}`);
@@ -160,10 +161,9 @@ if (process.argv.includes("--self-test")) {
     [CORE.toolbar, "<TableSearch"], [CORE.toolbar, "<DatePicker"], [CORE.toolbar, "<MoneyInput"], [CORE.toolbar, "NUMBER_FIELD"],
     [CORE.toolbar, "onClick={apply}"], [CORE.toolbar, 'event.key === "Escape"'],
     [CORE.dataTable, "<UniversalListToolbar"], [CORE.dataTable, "applyUniversalListFilters"],
-    [CORE.listView, "<UniversalListToolbar"], [CORE.listView, "applyUniversalListFilters"],
     [CORE.parityTable, "<UniversalListToolbar"], [CORE.parityTable, "applyUniversalListFilters"],
     [CORE.controls, "<UniversalListToolbar"], [CORE.controller, "applyUniversalListFilters"],
-    [CORE.fleetTable, "range={table.range}"],
+    [CORE.fleetTable, "<ParityTable"],
   ]) mutations.push(() => ({ ...source, [file]: source[file].replaceAll(token, "BROKEN_TOOLBAR_CONTRACT") }));
   for (const [module, [file, token]] of Object.entries(EVIDENCE)) {
     mutations.push(() => ({ ...source, [file]: source[file].replaceAll(token, "BROKEN_PRODUCTION_CONSUMER") }));
@@ -193,6 +193,7 @@ if (process.argv.includes("--self-test")) {
       mutations.push(() => ({ ...source, [matrixFile]: source[matrixFile].replace(`"id": "${id}"`, `"id": "broken.${id}"`) }));
     }
   }
+  mutations.push(() => ({ ...source, [CORE.fleetTable]: source[CORE.fleetTable].replace("<ParityTable<FleetRow>", "<ParityTable<FleetRow>\n        suppressToolbarRange") }));
   mutations.push(() => ({ ...source, [SELF]: source[SELF].replace(SEARCH_HEADER, SEARCH_HEADER.replace("connectivity", "reverse_link")) }));
   mutations.push(() => ({ ...source, [SELF]: source[SELF].replace(FILTER_HEADER, FILTER_HEADER.replace("connectivity", "reverse_link")) }));
   mutations.push(() => ({ ...source, [FEED]: source[FEED].replace('"entries": [', `"entries": [{"guard":"${SELF}","cols":["connectivity"]},`) }));

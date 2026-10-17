@@ -12,6 +12,7 @@ import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents } 
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
 import { resolveVendorCreditDisplayId } from "./display-id.js";
+import { BILL_PAYMENT_NOW, BILL_PAYMENT_SAMPLE_FROM_BILL, insertBillPaymentRowInClientTx } from "./bills.service.js";
 
 const vendorIdParamsSchema = z.object({
   id: z.string().trim().min(1),
@@ -200,50 +201,28 @@ export async function applyVendorBillPaymentBatch(
     if (remaining <= 0) return { code: 409, error: "bill_already_paid" };
     if (applyRow.amount_cents > remaining) return { code: 400, error: "payment_exceeds_remaining_balance" };
 
-    const paymentRes = await client.query(
-      `
-        INSERT INTO accounting.bill_payments (
-          operating_company_id,
-          bill_id,
-          vendor_id,
-          payment_date,
-          amount_cents,
-          amount,
-          payment_method,
-          from_bank_account_id,
-          check_number,
-          reference_number,
-          memo,
-          status,
-          created_by_user_id,
-          created_at,
-          updated_at,
-          payment_batch_id,
-          payment_source_kind,
-          source_bank_transaction_id,
-          is_sample_data
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,'manual',$14,
-          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
-        RETURNING id
-      `,
-      [
-        operatingCompanyId,
-        applyRow.bill_id,
-        vendorId,
-        body.paid_at,
-        applyRow.amount_cents,
-        applyRow.amount_cents / 100,
-        body.payment_method,
-        body.bank_account_id ?? null,
-        checkNumberForInsert,
-        body.reference_number ?? null,
-        body.memo ?? null,
-        actorUserId,
-        batchId,
-        null,
-      ]
-    );
+    // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before.
+    const paymentRes = await insertBillPaymentRowInClientTx(client, {
+      operating_company_id: operatingCompanyId,
+      bill_id: applyRow.bill_id,
+      vendor_id: vendorId,
+      payment_date: body.paid_at,
+      amount_cents: applyRow.amount_cents,
+      amount: applyRow.amount_cents / 100,
+      payment_method: body.payment_method,
+      from_bank_account_id: body.bank_account_id ?? null,
+      check_number: checkNumberForInsert,
+      reference_number: body.reference_number ?? null,
+      memo: body.memo ?? null,
+      status: "posted",
+      created_by_user_id: actorUserId,
+      created_at: BILL_PAYMENT_NOW,
+      updated_at: BILL_PAYMENT_NOW,
+      payment_batch_id: batchId,
+      payment_source_kind: "manual",
+      source_bank_transaction_id: null,
+      is_sample_data: BILL_PAYMENT_SAMPLE_FROM_BILL,
+    }, "id");
     const paymentId = paymentRes.rows[0]?.id as string | undefined;
     if (!paymentId) return { code: 500, error: "bill_payment_insert_failed" };
     paymentIds.push(paymentId);

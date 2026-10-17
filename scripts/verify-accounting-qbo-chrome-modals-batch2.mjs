@@ -61,7 +61,7 @@ const CHECKS = [
   { name: "bill_payments.create: BillPaymentsListPage mounts the real PayBillModal", file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", pattern: /<PayBillModal/ },
   { name: "vendors: /accounting/vendors redirects to the real, already-verified /vendors page", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/accounting\/vendors"[\s\S]{0,200}Navigate to="\/vendors"/ },
   { name: "customers: /accounting/customers redirects to the real, already-verified /customers page", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/accounting\/customers"[\s\S]{0,200}Navigate to="\/customers"/ },
-  { name: "coa: ChartOfAccountsListPage real ListView + AccountDrawer nested create", file: "apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx", pattern: /<ListView[\s\S]*<AccountDrawer/ },
+  { name: "coa: ChartOfAccountsListPage real ParityTable + AccountDrawer nested create", file: "apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx", pattern: /<ParityTable[\s\S]*<AccountDrawer/ },
   { name: "period_close: MonthClosePage real chrome", file: "apps/frontend/src/pages/accounting/MonthClosePage.tsx", pattern: /(ParityTable|ParityDrawer|MoneyInput|DatePicker)/ },
   {
     name: "chrome.toolbar_filter: BillsPage filter toolbar (CollapsedListFilters triad OR FILTER-MULTI-01 MoneyListToolbar)",

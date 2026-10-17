@@ -2568,6 +2568,51 @@ function validateCreateBillInput(input: CreateBillInput) {
 }
 
 /** The bill row + lines + spine event, on the CALLER's client (one transaction with the caller). */
+/**
+ * LEAD 443.182 C — THE one INSERT INTO accounting.bills. Every bill header the app writes (manual Create Bill, recurring
+ * templates, maintenance WO bills, bank bulk-post / bank-split bills, insurance installments) is written here, on the
+ * caller's own client so it stays inside the caller's transaction. Behaviour-preserving by construction: the caller names
+ * exactly the columns it writes, in order, each as a bound value (with the cast it always used) or one of the fixed SQL
+ * literals below — no free SQL, no injection surface. Numbering, lines, postings, links and audit stay with the caller.
+ */
+export type BillColumnCast = "uuid" | "text" | "date" | "numeric" | "bigint" | "boolean";
+const BILL_COLUMN_SQL = ["now()", "CURRENT_DATE", "CURRENT_DATE + INTERVAL '30 days'", "0", "true", "false", "'unpaid'", "'paid'"] as const;
+export type BillColumnSql = (typeof BILL_COLUMN_SQL)[number];
+export type BillColumnValue = { value: unknown; cast?: BillColumnCast } | { sql: BillColumnSql };
+const BILL_ON_CONFLICT = {
+  idempotency_key_do_nothing:
+    "ON CONFLICT (operating_company_id, qbo_idempotency_key) WHERE qbo_idempotency_key IS NOT NULL DO NOTHING",
+} as const;
+const BILL_RETURNING = ["*", "id", "id::text", "id, operating_company_id"] as const;
+type BillQueryable = { query: (text: string, values?: unknown[]) => Promise<unknown> };
+
+export async function insertBillHeaderOnClient<R = Record<string, unknown>>(
+  client: BillQueryable,
+  columns: ReadonlyArray<readonly [string, BillColumnValue]>,
+  opts: { returning?: (typeof BILL_RETURNING)[number]; onConflict?: keyof typeof BILL_ON_CONFLICT } = {},
+): Promise<{ rows: R[]; rowCount: number | null }> {
+  if (!columns.length) throw new Error("bill_insert_no_columns");
+  const names: string[] = [];
+  const exprs: string[] = [];
+  const values: unknown[] = [];
+  for (const [name, v] of columns) {
+    if (!/^[a-z_][a-z0-9_]*$/.test(name) || names.includes(name)) throw new Error(`bill_insert_bad_column:${name}`);
+    names.push(name);
+    if ("sql" in v) {
+      if (!(BILL_COLUMN_SQL as readonly string[]).includes(v.sql)) throw new Error(`bill_insert_bad_sql:${v.sql}`);
+      exprs.push(v.sql);
+    } else {
+      values.push(v.value);
+      exprs.push(`$${values.length}${v.cast ? `::${v.cast}` : ""}`);
+    }
+  }
+  const returning = opts.returning ?? "*";
+  if (!(BILL_RETURNING as readonly string[]).includes(returning)) throw new Error(`bill_insert_bad_returning:${returning}`);
+  const conflict = opts.onConflict ? ` ${BILL_ON_CONFLICT[opts.onConflict]}` : "";
+  const sql = `INSERT INTO accounting.bills (${names.join(", ")}) VALUES (${exprs.join(", ")})${conflict} RETURNING ${returning}`;
+  return (await client.query(sql, values)) as { rows: R[]; rowCount: number | null };
+}
+
 async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillInput, userId: string) {
   const linesProvided = input.lines !== undefined;
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
@@ -2671,218 +2716,35 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
     }
   }
 
-  const res = await client.query<BillRow>(
-    hasInsuranceClaimId && hasClassId
-      ? `
-      INSERT INTO accounting.bills (
-        operating_company_id,
-        vendor_id,
-        vendor_uuid,
-        mdata_vendor_id,
-        bill_number,
-        bill_date,
-        due_date,
-        amount_cents,
-        total_amount,
-        paid_cents,
-        paid_amount,
-        status,
-        memo,
-        coa_account_id,
-        linked_work_order_uuid,
-        unit_id,
-        driver_id,
-        load_id,
-        trailer_id,
-        non_owned_trailer_id,
-        insurance_claim_id,
-        class_id,
-        created_by_user_id,
-        created_at,
-        updated_at
-      )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$17::uuid,$18::uuid,$19::uuid,$20::uuid,$15,$16,$12,now(),now())
-      RETURNING *
-    `
-      : hasInsuranceClaimId
-      ? `
-      INSERT INTO accounting.bills (
-        operating_company_id,
-        vendor_id,
-        vendor_uuid,
-        mdata_vendor_id,
-        bill_number,
-        bill_date,
-        due_date,
-        amount_cents,
-        total_amount,
-        paid_cents,
-        paid_amount,
-        status,
-        memo,
-        coa_account_id,
-        linked_work_order_uuid,
-        unit_id,
-        driver_id,
-        load_id,
-        trailer_id,
-        non_owned_trailer_id,
-        insurance_claim_id,
-        created_by_user_id,
-        created_at,
-        updated_at
-      )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$18::uuid,$19::uuid,$15,$12,now(),now())
-      RETURNING *
-    `
-      : hasClassId
-        ? `
-      INSERT INTO accounting.bills (
-        operating_company_id,
-        vendor_id,
-        vendor_uuid,
-        mdata_vendor_id,
-        bill_number,
-        bill_date,
-        due_date,
-        amount_cents,
-        total_amount,
-        paid_cents,
-        paid_amount,
-        status,
-        memo,
-        coa_account_id,
-        linked_work_order_uuid,
-        unit_id,
-        driver_id,
-        load_id,
-        trailer_id,
-        non_owned_trailer_id,
-        class_id,
-        created_by_user_id,
-        created_at,
-        updated_at
-      )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$16::uuid,$17::uuid,$18::uuid,$19::uuid,$15,$12,now(),now())
-      RETURNING *
-    `
-      : `
-      INSERT INTO accounting.bills (
-        operating_company_id,
-        vendor_id,
-        vendor_uuid,
-        mdata_vendor_id,
-        bill_number,
-        bill_date,
-        due_date,
-        amount_cents,
-        total_amount,
-        paid_cents,
-        paid_amount,
-        status,
-        memo,
-        coa_account_id,
-        linked_work_order_uuid,
-        unit_id,
-        driver_id,
-        load_id,
-        trailer_id,
-        non_owned_trailer_id,
-        created_by_user_id,
-        created_at,
-        updated_at
-      )
-      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15::uuid,$16::uuid,$17::uuid,$18::uuid,$12,now(),now())
-      RETURNING *
-    `,
-    hasInsuranceClaimId && hasClassId
-      ? [
-          input.operatingCompanyId,
-          vendorCols.vendorIdText,
-          vendorCols.vendorUuidText,
-          vendorCols.mdataVendorId,
-          input.billNumber ?? null,
-          input.billDate,
-          input.dueDate ?? null,
-          input.amountCents,
-          input.amountCents / 100,
-          input.memo ?? null,
-          input.coaAccountId ?? null,
-          userId,
-          input.workOrderId ?? null,
-          input.unitId ?? null,
-          insuranceClaimId,
-          classId,
-          input.driverId ?? null,
-          input.loadId ?? null,
-          trailerId,
-          nonOwnedTrailerId,
-        ]
-      : hasInsuranceClaimId
-      ? [
-          input.operatingCompanyId,
-          vendorCols.vendorIdText,
-          vendorCols.vendorUuidText,
-          vendorCols.mdataVendorId,
-          input.billNumber ?? null,
-          input.billDate,
-          input.dueDate ?? null,
-          input.amountCents,
-          input.amountCents / 100,
-          input.memo ?? null,
-          input.coaAccountId ?? null,
-          userId,
-          input.workOrderId ?? null,
-          input.unitId ?? null,
-          insuranceClaimId,
-          input.driverId ?? null,
-          input.loadId ?? null,
-          trailerId,
-          nonOwnedTrailerId,
-        ]
-      : hasClassId
-        ? [
-            input.operatingCompanyId,
-            vendorCols.vendorIdText,
-            vendorCols.vendorUuidText,
-            vendorCols.mdataVendorId,
-            input.billNumber ?? null,
-            input.billDate,
-            input.dueDate ?? null,
-            input.amountCents,
-            input.amountCents / 100,
-            input.memo ?? null,
-            input.coaAccountId ?? null,
-            userId,
-            input.workOrderId ?? null,
-            input.unitId ?? null,
-            classId,
-            input.driverId ?? null,
-            input.loadId ?? null,
-            trailerId,
-            nonOwnedTrailerId,
-          ]
-      : [
-          input.operatingCompanyId,
-          vendorCols.vendorIdText,
-          vendorCols.vendorUuidText,
-          vendorCols.mdataVendorId,
-          input.billNumber ?? null,
-          input.billDate,
-          input.dueDate ?? null,
-          input.amountCents,
-          input.amountCents / 100,
-          input.memo ?? null,
-          input.coaAccountId ?? null,
-          userId,
-          input.workOrderId ?? null,
-          input.unitId ?? null,
-          input.driverId ?? null,
-          input.loadId ?? null,
-          trailerId,
-          nonOwnedTrailerId,
-        ]
-  );
+  // 443.182 C — one write (insertBillHeaderOnClient). The two optional columns are written only when the column exists,
+  // exactly as the four former INSERT variants (insurance_claim_id x class_id) did.
+  const res = await insertBillHeaderOnClient<BillRow>(client, [
+    ["operating_company_id", { value: input.operatingCompanyId }],
+    ["vendor_id", { value: vendorCols.vendorIdText, cast: "text" }],
+    ["vendor_uuid", { value: vendorCols.vendorUuidText, cast: "text" }],
+    ["mdata_vendor_id", { value: vendorCols.mdataVendorId, cast: "uuid" }],
+    ["bill_number", { value: input.billNumber ?? null }],
+    ["bill_date", { value: input.billDate }],
+    ["due_date", { value: input.dueDate ?? null }],
+    ["amount_cents", { value: input.amountCents }],
+    ["total_amount", { value: input.amountCents / 100 }],
+    ["paid_cents", { sql: "0" }],
+    ["paid_amount", { sql: "0" }],
+    ["status", { sql: "'unpaid'" }],
+    ["memo", { value: input.memo ?? null }],
+    ["coa_account_id", { value: input.coaAccountId ?? null }],
+    ["linked_work_order_uuid", { value: input.workOrderId ?? null }],
+    ["unit_id", { value: input.unitId ?? null }],
+    ["driver_id", { value: input.driverId ?? null, cast: "uuid" }],
+    ["load_id", { value: input.loadId ?? null, cast: "uuid" }],
+    ["trailer_id", { value: trailerId, cast: "uuid" }],
+    ["non_owned_trailer_id", { value: nonOwnedTrailerId, cast: "uuid" }],
+    ...(hasInsuranceClaimId ? ([["insurance_claim_id", { value: insuranceClaimId }]] as const) : []),
+    ...(hasClassId ? ([["class_id", { value: classId }]] as const) : []),
+    ["created_by_user_id", { value: userId }],
+    ["created_at", { sql: "now()" }],
+    ["updated_at", { sql: "now()" }],
+  ]);
   if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");
 
   // ACCT-F186 — stamp the human-readable id. Bills were the ONLY money document without one:
@@ -2892,7 +2754,7 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
   // UUID, which is exactly what the app URL falls back to.
   //
   // Done as an UPDATE in THIS transaction rather than as an INSERT column, deliberately: there
-  // are FOUR INSERT variants above (insurance_claim_id x class_id), and the lockstep
+  // were FOUR INSERT variants above (insurance_claim_id x class_id — now one insertBillHeaderOnClient call), and the lockstep
   // column/values/placeholder pattern is a documented landmine here — one UPDATE is one place to
   // be right instead of four places to drift. Same client, so it is atomic with the insert.
   //
@@ -3350,6 +3212,69 @@ export async function createBill(input: CreateBillInput, userId: string) {
 }
 
 /**
+ * LEAD 443.182 C — the ONE bill-payment row writer (one writer per document; guard 18481). Every bill-payment
+ * path (pay bill, bulk mark-paid, vendor batch pay, AP payment application, bank split / bulk post, card payment, cash
+ * advance + lumper split) writes its row HERE, on its own client and transaction, with exactly the columns it always
+ * wrote — a column a caller does not give takes the table default, as before. Callers keep their own validation, bill
+ * update and GL posting; this function only owns the row.
+ *
+ * Values are bound parameters, except three fixed SQL forms:
+ *   BILL_PAYMENT_NOW               -> now()
+ *   BILL_PAYMENT_SAMPLE_FROM_BILL  -> the paid bill's is_sample_data (ACCT-F265: a payment inherits its bill's flag)
+ *   BILL_PAYMENT_VENDOR_FROM_BILL  -> the paid bill's vendor (vendor_id, else mdata_vendor_id) (ROUND 443.106)
+ */
+export const BILL_PAYMENT_NOW = Symbol("bill_payment_now");
+export const BILL_PAYMENT_SAMPLE_FROM_BILL = Symbol("bill_payment_sample_from_bill");
+export const BILL_PAYMENT_VENDOR_FROM_BILL = Symbol("bill_payment_vendor_from_bill");
+type BillPaymentSqlForm = typeof BILL_PAYMENT_NOW | typeof BILL_PAYMENT_SAMPLE_FROM_BILL | typeof BILL_PAYMENT_VENDOR_FROM_BILL;
+
+const BILL_PAYMENT_ROW_COLUMNS = new Set([
+  "operating_company_id", "bill_id", "vendor_id", "payment_date", "cleared_date", "amount_cents", "amount", "payment_method",
+  "from_bank_account_id", "cc_account_id", "check_number", "reference_number", "memo", "status", "created_by_user_id",
+  "created_at", "updated_at", "settlement_deduction_noncash", "payment_batch_id", "payment_source_kind",
+  "source_bank_transaction_id", "advance_id", "is_sample_data",
+]);
+const BILL_PAYMENT_RETURNING = new Set(["*", "id", "id::text", "id::text AS id"]);
+
+export type BillPaymentRowValues = { [column: string]: unknown | BillPaymentSqlForm } & {
+  operating_company_id: string;
+  bill_id: string;
+};
+
+// Any client with query(sql, values) — pg.PoolClient, the route DbClient shapes, withCurrentUser clients.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type BillPaymentRowClient = { query: (sql: string, values?: unknown[]) => Promise<any> };
+
+export async function insertBillPaymentRowInClientTx<R = { id: string }>(
+  client: BillPaymentRowClient,
+  row: BillPaymentRowValues,
+  returning: "*" | "id" | "id::text" | "id::text AS id" = "id"
+): Promise<{ rows: R[]; rowCount: number | null }> {
+  if (!BILL_PAYMENT_RETURNING.has(returning)) throw new Error(`bill_payment_returning_not_allowed:${returning}`);
+  const params: unknown[] = [];
+  const bind = (v: unknown) => { params.push(v); return `$${params.length}`; };
+  const oci = bind(row.operating_company_id);
+  const billId = bind(row.bill_id);
+  const fromBill = (expr: string) => `(SELECT ${expr} FROM accounting.bills b WHERE b.id = ${billId}::uuid AND b.operating_company_id = ${oci}::uuid)`;
+  const cols: string[] = [];
+  const vals: string[] = [];
+  for (const [col, v] of Object.entries(row)) {
+    if (!BILL_PAYMENT_ROW_COLUMNS.has(col)) throw new Error(`bill_payment_column_not_allowed:${col}`);
+    cols.push(col);
+    if (col === "operating_company_id") vals.push(oci);
+    else if (col === "bill_id") vals.push(billId);
+    else if (v === BILL_PAYMENT_NOW) vals.push("now()");
+    else if (v === BILL_PAYMENT_SAMPLE_FROM_BILL) vals.push(`COALESCE(${fromBill("b.is_sample_data")}, false)`);
+    else if (v === BILL_PAYMENT_VENDOR_FROM_BILL) vals.push(fromBill("COALESCE(NULLIF(btrim(COALESCE(b.vendor_id, '')), ''), b.mdata_vendor_id::text)"));
+    else vals.push(bind(v));
+  }
+  return (await client.query(
+    `INSERT INTO accounting.bill_payments (${cols.join(", ")}) VALUES (${vals.join(", ")}) RETURNING ${returning}`,
+    params
+  )) as { rows: R[]; rowCount: number | null };
+}
+
+/**
  * ROUND 326 (CC-1) — the bill payment row, bank decrement and (flag ON) its GL leg, on the CALLER's client. Shared by
  * payBill and payBillInClientTx so the single settlement close pays every per-load bill in its own transaction.
  */
@@ -3390,56 +3315,27 @@ async function payBillRowInClientTx(
     const remaining = Number(bill.amount_cents) - Number(bill.paid_cents) - appliedCreditsCents - appliedPaymentApplicationsCents;
     if (input.amountCents > remaining) throw new Error("payment_exceeds_remaining_balance");
 
-    const paymentRes = await client.query<BillPaymentRow>(
-      `
-        INSERT INTO accounting.bill_payments (
-          operating_company_id,
-          bill_id,
-          vendor_id,
-          payment_date,
-          amount_cents,
-          amount,
-          payment_method,
-          from_bank_account_id,
-          check_number,
-          reference_number,
-          memo,
-          status,
-          created_by_user_id,
-          created_at,
-          updated_at,
-          settlement_deduction_noncash,
-          is_sample_data
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,
-          -- ACCT-F265 — a bill payment INHERITS its bill's sample flag rather than asking the caller.
-          -- accounting.bill_payments.is_sample_data exists on 6,551 rows and no writer set it, so paying
-          -- a SAMPLE bill produced a REAL payment and (via posting-engine, which reads the source row)
-          -- a REAL journal entry. There are FOUR bill_payment writers; an optional parameter would mean
-          -- four callers each remembering, and the one that forgets is silent. Deriving from the parent
-          -- is correct by construction and matches how this codebase already does it — the invoice
-          -- derives from the load (ACCT-F193), the revrec latch derives from the load (ACCT-F210), the
-          -- settlement derives from the load. A payment is never more or less sample than the bill it
-          -- pays. COALESCE keeps the historical default if the bill row is somehow unreadable.
-          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
-        RETURNING *
-      `,
-      [
-        input.operatingCompanyId,
-        input.billId,
-        bill.vendor_id,
-        input.paymentDate,
-        input.amountCents,
-        input.amountCents / 100,
-        input.paymentMethod,
-        input.fromBankAccountId ?? null,
-        input.checkNumber ?? null,
-        input.referenceNumber ?? null,
-        input.memo ?? null,
-        userId,
-        input.settlementDeductionNoncash === true,
-      ]
-    );
+    // ACCT-F265 — a bill payment INHERITS its bill's sample flag rather than asking the caller (paying a SAMPLE bill
+    // must never produce a REAL payment / journal entry). Derived from the parent: correct by construction.
+    const paymentRes = await insertBillPaymentRowInClientTx<BillPaymentRow>(client, {
+      operating_company_id: input.operatingCompanyId,
+      bill_id: input.billId,
+      vendor_id: bill.vendor_id,
+      payment_date: input.paymentDate,
+      amount_cents: input.amountCents,
+      amount: input.amountCents / 100,
+      payment_method: input.paymentMethod,
+      from_bank_account_id: input.fromBankAccountId ?? null,
+      check_number: input.checkNumber ?? null,
+      reference_number: input.referenceNumber ?? null,
+      memo: input.memo ?? null,
+      status: "posted",
+      created_by_user_id: userId,
+      created_at: BILL_PAYMENT_NOW,
+      updated_at: BILL_PAYMENT_NOW,
+      settlement_deduction_noncash: input.settlementDeductionNoncash === true,
+      is_sample_data: BILL_PAYMENT_SAMPLE_FROM_BILL,
+    }, "*");
     if ((paymentRes.rowCount ?? 0) === 0 || !paymentRes.rows[0]) {
       throw new Error("bill_payment_insert_failed");
     }

@@ -168,10 +168,10 @@ function main() {
   assertIncludes(coaUtils, "feed_connected", "coa-list-utils.ts");
   assertIncludes(coaUtils, "feed_connected: bankBalance !== \"—\"", "coa-list-utils.ts");
   // BANK-F91031 — Description column from catalog (ORDERS §B-1 / QBO §11)
-  assertIncludes(coa, 'id: "description"', COA);
+  assertIncludes(coa, 'key: "description"', COA); // LEAD 443.181 — ParityTable column key
   assertIncludes(coa, 'label: "DESCRIPTION"', COA);
   assertIncludes(coa, 'data-b1-coa-description="1"', COA);
-  assertIncludes(coa, 'savedViewsKey="coa-list-v2"', COA);
+  assertIncludes(coa, 'storageKey="lists-chart-of-accounts"', COA); // LEAD 443.181 — ParityTable view prefs
   assertIncludes(coaUtils, "description: (row.description ?? \"\").trim() || \"—\"", "coa-list-utils.ts");
 
   const inlinePanel = read("apps/frontend/src/pages/accounting/RegisterInlineEditPanel.tsx");

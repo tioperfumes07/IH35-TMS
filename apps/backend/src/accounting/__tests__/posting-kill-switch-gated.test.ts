@@ -45,7 +45,9 @@ vi.mock("../../qbo/tms-bill-push-chain.service.js", () => ({
 }));
 
 // Recurring generator's bill creator.
-vi.mock("../bills.service.js", () => ({
+vi.mock("../bills.service.js", async (orig) => ({
+  // 443.182 C — the one bill writer is a pure client.query wrapper: keep the real one.
+  insertBillHeaderOnClient: (await orig<typeof import("../bills.service.js")>()).insertBillHeaderOnClient,
   createBill: async () => ({ id: "bill-recurring-1" }),
   // ROUND 389.4 RULING 1 — the recurring generator creates through the never-auto-posting variant.
   createBillInClientTx: async () => ({ id: "bill-recurring-1" }),

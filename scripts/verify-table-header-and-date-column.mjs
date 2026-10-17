@@ -29,8 +29,6 @@ const DATE_KEY_RE = /(?:^|_)(?:at|date|day|since)$|^effective_(?:from|to)$/;
 const RAW_TABLE = /<table[\s>]/i;
 const TABLE_INFRA = new Set([
   "components/DataTable.tsx",
-  "components/FleetTable.tsx",
-  "components/lists/ListView/ListView.tsx",
   "components/parity/ParityTable.tsx",
   "components/shared/MobileOptimizedTable.tsx",
   "components/shared/ResizableTable.tsx",

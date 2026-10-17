@@ -15,8 +15,6 @@
     "apps/frontend/src/pages/maintenance/WorkOrderCreateModal.tsx",
     "_comment_4: required by verify-design-parity.mjs",
     "apps/frontend/src/pages/maintenance/components/CreateWOSectionCostBreakdown.tsx",
-    "_comment_5: development harness, intentionally not in prod routes",
-    "apps/frontend/src/components/lists/ListView/demo/ListViewDemo.tsx",
     "_comment_6: archive stub (ARCHIVE A23-5, re-exports parent)",
     "apps/frontend/src/pages/safety/training/TrainingProgramsPage.tsx",
     "_comment_7: archive re-export stub (sunset 2026-09-01)",

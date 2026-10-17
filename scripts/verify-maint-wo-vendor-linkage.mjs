@@ -12,6 +12,7 @@ const paths = {
   routes: path.join(ROOT, "apps/backend/src/maintenance/vendors.routes.ts"),
   vendorsPage: path.join(ROOT, "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx"),
   maintenanceApi: path.join(ROOT, "apps/frontend/src/api/maintenance.ts"),
+  catalogVendors: path.join(ROOT, "apps/frontend/src/api/catalog-vendors.ts"),
   vendorDetailPage: path.join(ROOT, "apps/frontend/src/pages/maintenance/VendorDetailPage.tsx"),
 };
 
@@ -20,7 +21,9 @@ function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
 }
 
-export function checkLinkage(routes, vendorsPage, maintenanceApi, vendorDetailPage) {
+export function checkLinkage(routes, vendorsPage, maintenanceApi, vendorDetailPage, catalogVendors) {
+  // catalogVendors defaults to maintenanceApi for backward-compat with older callers/selftests.
+  const vendorTypeSource = catalogVendors ?? maintenanceApi;
   const failures = [];
 
   if (!/mdata_vendor_id:\s*z\.string\(\)\.uuid\(\)\.nullable\(\)\.optional\(\)/.test(routes)) {
@@ -49,10 +52,10 @@ export function checkLinkage(routes, vendorsPage, maintenanceApi, vendorDetailPa
   if (!vendorsPage.includes("mdata_vendor_id")) failures.push("VendorsPage must wire mdata_vendor_id in create/edit");
   if (!vendorsPage.includes("AP Vendor")) failures.push("VendorsPage must label AP vendor picker");
 
-  if (!maintenanceApi.includes("mdata_vendor_id: string | null")) {
+  if (!vendorTypeSource.includes("mdata_vendor_id: string | null")) {
     failures.push("MaintenanceVendorRow type must include mdata_vendor_id");
   }
-  if (!maintenanceApi.includes("mdata_vendor_name: string | null")) {
+  if (!vendorTypeSource.includes("mdata_vendor_name: string | null")) {
     failures.push("MaintenanceVendorRow type must include mdata_vendor_name");
   }
 
@@ -75,7 +78,8 @@ export function run() {
       read(paths.routes),
       read(paths.vendorsPage),
       read(paths.maintenanceApi),
-      read(paths.vendorDetailPage)
+      read(paths.vendorDetailPage),
+      read(paths.catalogVendors)
     );
   } catch (error) {
     return [error instanceof Error ? error.message : String(error)];

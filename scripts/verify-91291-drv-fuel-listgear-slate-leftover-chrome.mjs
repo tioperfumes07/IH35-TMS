@@ -4,7 +4,6 @@ import { readFileSync } from "node:fs";
 const TARGETS = [
   "apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx",
   "apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx",
-  "apps/frontend/src/components/lists/ListView/components/ListViewGear.tsx",
 ];
 const LABEL = "verify-91291-drv-fuel-listgear-slate-leftover-chrome";
 function leftoverHits(src) {

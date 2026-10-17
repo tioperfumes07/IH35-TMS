@@ -38,6 +38,7 @@ import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } 
 import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
 import { TABLE_MISSING } from "../../lib/money";
 import { TableMoneyCell } from "../table/TableMoneyCell";
+import { downloadXlsx, useParityServerView, type ParityServerView } from "./useParityServerView";
 
 export type ParityDensity = "regular" | "compact" | "ultra";
 
@@ -192,6 +193,17 @@ export type ParityTableProps<T> = {
   suppressToolbarRange?: boolean;
   /** When set, a ⤓ Export button appears that downloads the (sorted, visible-column) rows as CSV. */
   exportFilename?: string;
+  /**
+   * LEAD 443.181 (owner law: no capability lost) — also offer an Excel (.xlsx) download of the same
+   * rows/columns as the CSV export. Requires `exportFilename`. Additive: omit for CSV only.
+   */
+  exportExcel?: boolean;
+  /**
+   * LEAD 443.181 — store this table's view (column order / visibility / widths / page size /
+   * density) on the server under the user's preferences, so it follows the user to every device.
+   * localStorage (`storageKey`) still serves the first paint. Additive: omit for local-only.
+   */
+  serverViewKey?: string;
   /** Sticky header row on vertical scroll (universal-list standard). Default true. */
   stickyHeader?: boolean;
   /** Minimum table width in px. When set, the table never compresses below this inside the
@@ -666,6 +678,8 @@ export function ParityTable<T>({
   suppressToolbarSearch = false,
   suppressToolbarRange = false,
   exportFilename,
+  exportExcel = false,
+  serverViewKey,
   stickyHeader = true,
   minWidthPx,
   columnLayout = "fixed",
@@ -704,6 +718,7 @@ export function ParityTable<T>({
   footerCells,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
+  const serverView = useParityServerView(serverViewKey);
 
   // DSP-TBL — dev-only, once-per-mount nudge toward footerCells. Never in prod (bundlers strip
   // NODE_ENV-gated blocks like this one), never a build failure, never more than one line.
@@ -800,6 +815,42 @@ export function ParityTable<T>({
   const [gearPanelStyle, setGearPanelStyle] = useState<CSSProperties>({});
   const resizing = useRef<{ key: string; startX: number; startW: number } | null>(null);
 
+  // One write path for the table view: localStorage (storageKey) and, when serverViewKey is set, the
+  // user's server-side preferences (LEAD 443.181).
+  const persistTable = (value: Persisted) => {
+    savePersisted(storageKey, value);
+    if (serverView.enabled) {
+      const visibleColumns: Record<string, boolean> = {};
+      for (const c of columns) visibleColumns[String(c.key)] = !(value.hidden ?? []).includes(String(c.key));
+      serverView.persist({
+        columnOrder: value.colOrder,
+        columnWidths: value.colWidths,
+        visibleColumns,
+        pageSize: value.pageSize,
+        density: value.density,
+      });
+    }
+  };
+
+  // The server copy wins once it arrives (it is the cross-device view).
+  const appliedServerView = useRef<ParityServerView | null>(null);
+  useEffect(() => {
+    const v = serverView.view;
+    if (!v || appliedServerView.current === v) return;
+    appliedServerView.current = v;
+    if (v.visibleColumns) {
+      setHidden(new Set(Object.entries(v.visibleColumns).filter(([, shown]) => !shown).map(([key]) => key)));
+    }
+    if (v.density) setDensity(v.density);
+    if (v.columnWidths) setColWidths(clampColWidths(v.columnWidths));
+    if (v.columnOrder && !isColumnOrderControlled) setInternalColOrder(v.columnOrder);
+    if (v.pageSize && v.pageSize !== pageSize) {
+      onPageSizeChange?.(v.pageSize);
+      if (!isPageSizeControlled) setInternalPageSize(v.pageSize);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once per loaded server view
+  }, [serverView.view]);
+
   const cancelGear = () => {
     setDraftHidden(new Set(hidden));
     setDraftDensity(density);
@@ -818,7 +869,7 @@ export function ParityTable<T>({
     setHidden(new Set(draftHidden));
     setDensity(draftDensity);
     changePageSize(draftPageSize);
-    savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize: draftPageSize, colWidths, colOrder });
+    persistTable({ hidden: [...draftHidden], density: draftDensity, pageSize: draftPageSize, colWidths, colOrder });
     setGearOpen(false);
   };
 
@@ -939,7 +990,7 @@ export function ParityTable<T>({
       return;
     }
     setInternalColOrder(next);
-    savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths, colOrder: next });
+    persistTable({ hidden: [...hidden], density, pageSize, colWidths, colOrder: next });
   }
   const toolbarFilteredRows = useMemo(
     () => applyUniversalListFilters(sourceRows, toolbarSearch, toolbarRange),
@@ -1143,7 +1194,7 @@ export function ParityTable<T>({
       resizing.current = null;
       // Persist the LATEST widths (read via the state setter to avoid a stale closure value).
       setColWidths((cur) => {
-        savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: cur, colOrder });
+        persistTable({ hidden: [...hidden], density, pageSize, colWidths: cur, colOrder });
         return cur;
       });
     };
@@ -1167,7 +1218,7 @@ export function ParityTable<T>({
       document.removeEventListener("touchmove", onMove);
       document.removeEventListener("touchend", onEnd);
       setColWidths((cur) => {
-        savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: cur, colOrder });
+        persistTable({ hidden: [...hidden], density, pageSize, colWidths: cur, colOrder });
         return cur;
       });
     };
@@ -1182,7 +1233,7 @@ export function ParityTable<T>({
       const base = prev[key] || thEl?.getBoundingClientRect().width || 120;
       const w = Math.max(MIN_COL_WIDTH_PX, Math.round(base + delta));
       const next = { ...prev, [key]: w };
-      savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: next, colOrder });
+      persistTable({ hidden: [...hidden], density, pageSize, colWidths: next, colOrder });
       return next;
     });
   }
@@ -1193,6 +1244,23 @@ export function ParityTable<T>({
     e.stopPropagation();
     const step = (e.shiftKey ? 32 : 8) * (e.key === "ArrowLeft" ? -1 : 1);
     nudgeWidth(key, step, (e.currentTarget as HTMLElement).closest("th"));
+  }
+
+  function exportMatrix() {
+    const cols = visibleColumns;
+    const header = cols.map((c) => String(c.label ?? ""));
+    const body = sortedRows.map((row) =>
+      cols.map((c) => {
+        const v = c.exportValue ? c.exportValue(row) : (row as Record<string, unknown>)[String(c.key)];
+        return v == null ? "" : typeof v === "number" ? v : String(v);
+      })
+    );
+    return { header, body };
+  }
+
+  function exportXlsx() {
+    const { header, body } = exportMatrix();
+    void downloadXlsx(`${exportFilename}.xlsx`, header, body);
   }
 
   function exportCsv() {
@@ -1610,6 +1678,19 @@ export function ParityTable<T>({
               ⤓ Export
             </Button>
           ) : null}
+          {serverView.persistError ? (
+            <span className="flex items-center gap-1 text-xs text-[#B91C1C]" role="status" data-column-width-save-error data-testid="parity-table-view-save-error">
+              {serverView.persistError}
+              <Button type="button" variant="tertiary" size="sm" onClick={serverView.retryPersist}>
+                Retry save
+              </Button>
+            </span>
+          ) : null}
+          {exportFilename && exportExcel ? (
+            <Button type="button" variant="tertiary" size="sm" aria-label="Export Excel" data-testid="parity-table-export-xlsx" onClick={exportXlsx}>
+              ⤓ Excel
+            </Button>
+          ) : null}
           <div className="relative" ref={gearRef}>
             <Button
               type="button"
@@ -1640,7 +1721,7 @@ export function ParityTable<T>({
                       const next = Number(e.target.value);
                       setDraftPageSize(next);
                       changePageSize(next);
-                      savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize: next, colWidths, colOrder });
+                      persistTable({ hidden: [...draftHidden], density: draftDensity, pageSize: next, colWidths, colOrder });
                     }}
                   >
                     {renderedPageSizeOptions.map((opt) => (

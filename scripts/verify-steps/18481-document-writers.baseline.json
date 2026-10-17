@@ -5,28 +5,12 @@
       "apps/backend/src/accounting/expense-writer.service.ts": 1
     },
     "bill_payments": {
-      "apps/backend/src/accounting/bills-bulk.routes.ts": 1,
-      "apps/backend/src/accounting/bills.service.ts": 1,
-      "apps/backend/src/accounting/vendor-bill-payments.routes.ts": 1,
-      "apps/backend/src/ap/payment-application.routes.ts": 1,
-      "apps/backend/src/banking/bank-transaction-splits.service.ts": 1,
-      "apps/backend/src/banking/bulk-transactions.ts": 1,
-      "apps/backend/src/bill-payments/cc-payment.routes.ts": 1,
-      "apps/backend/src/cash-advances/cash-advances.routes.ts": 1,
-      "apps/backend/src/cash-advances/lumper-cash-advance-split.ts": 1
+      "apps/backend/src/accounting/bills.service.ts": 1
     },
     "bills": {
-      "apps/backend/src/accounting/bills.service.ts": 4,
-      "apps/backend/src/accounting/maintenance-posting/poster.service.ts": 1,
-      "apps/backend/src/accounting/recurring.worker.ts": 1,
-      "apps/backend/src/banking/bank-transaction-splits.service.ts": 1,
-      "apps/backend/src/banking/bulk-transactions.ts": 1,
-      "apps/backend/src/insurance/dispersal.routes.ts": 1,
-      "apps/backend/src/insurance/policy-create-atomic.service.ts": 1,
-      "apps/backend/src/maintenance/two-section-service.ts": 1
+      "apps/backend/src/accounting/bills.service.ts": 1
     },
     "payments": {
-      "apps/backend/src/accounting/customer-payments.routes.ts": 1,
       "apps/backend/src/accounting/payments.routes.ts": 1
     }
   },

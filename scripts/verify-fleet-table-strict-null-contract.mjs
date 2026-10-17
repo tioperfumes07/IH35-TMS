@@ -7,8 +7,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 export function problems(source) {
   const found = [];
-  if (!/column !== undefined && isVisible\(column\.key\)/.test(source)) {
-    found.push("ordered Fleet columns must explicitly exclude undefined before reading column.key");
+  // LEAD 443.181 — the roster renders on ParityTable: its columns are mapped straight off the registry (never a
+  // key lookup that can yield undefined); ParityTable owns order/visibility.
+  if (!/const parityColumns: ParityColumn<FleetRow>\[\] = columns\.map\(\(column\) =>/.test(source) || /byKey\.get\(/.test(source)) {
+    found.push("Fleet ParityTable columns must map straight off the column registry (no lookup that can yield undefined)");
   }
   if (/\{false && \(<\>/.test(source)) {
     found.push("dead fixed-order Fleet cells must not retain nullable field expressions");
@@ -17,10 +19,10 @@ export function problems(source) {
 }
 
 function selftest() {
-  const good = "column !== undefined && isVisible(column.key)";
+  const good = "const parityColumns: ParityColumn<FleetRow>[] = columns.map((column) => ({";
   if (problems(good).length) throw new Error("good fixture failed");
   const mutations = [
-    good.replace("column !== undefined && ", ""),
+    `${good}\nconst x = byKey.get(key);`,
     `${good}\n{false && (<>legacy</>)}`,
   ];
   for (const source of mutations) {

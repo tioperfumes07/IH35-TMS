@@ -5,6 +5,7 @@ import { postSourceTransactionInClientTx } from "../accounting/posting-engine.se
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { EXPENSE_SQL_CURRENT_DATE, reserveExpenseNumber, writeExpenseDocumentInClientTx } from "../accounting/expense-writer.service.js";
 import { logger } from "../observability/structured-logger.js";
+import { insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
 
 /**
  * Lumper Lifecycle STEP 3b — cash-advance disburse SPLIT engine.
@@ -170,22 +171,18 @@ export async function disburseCashAdvanceSplit(
             throw new DisburseSplitFailure(422, "bill_missing_vendor", `bill ${leg.bill_id} has no vendor_id`);
           }
           // advance→bill leg (payment_date/status default; payment_method matches the existing rail).
-          const bp = await client.query(
-            `INSERT INTO accounting.bill_payments
-               (operating_company_id, bill_id, vendor_id, amount, amount_cents, payment_method, advance_id, source_bank_transaction_id, is_sample_data)
-             VALUES ($1::uuid, $2::uuid, $3, $4, $5, 'cash_advance', $6::uuid, $7, $8)
-             RETURNING id::text AS id`,
-            [
-              companyId,
-              leg.bill_id,
-              billVendor,
-              leg.amount_cents / 100,
-              leg.amount_cents,
-              input.advance_id,
-              input.source_bank_transaction_id ?? null,
-              billSample.rows[0]?.is_sample_data === true,
-            ],
-          );
+          // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before.
+          const bp = await insertBillPaymentRowInClientTx(client, {
+            operating_company_id: companyId,
+            bill_id: leg.bill_id,
+            vendor_id: billVendor,
+            amount: leg.amount_cents / 100,
+            amount_cents: leg.amount_cents,
+            payment_method: "cash_advance",
+            advance_id: input.advance_id,
+            source_bank_transaction_id: input.source_bank_transaction_id ?? null,
+            is_sample_data: billSample.rows[0]?.is_sample_data === true,
+          }, "id::text AS id");
           const billPaymentId = String((bp.rows[0] as { id: string }).id);
           billPaymentIds.push(billPaymentId);
 

@@ -14,8 +14,9 @@ export function audit(src) {
   }
   if (!src.includes("/fleet/units/")) failures.push("missing canonical unit profile route");
   if (!src.includes("/fleet/trailers/")) failures.push("missing canonical trailer profile route");
-  const trOnClickPattern = /<tr[\s\S]*?onClick=\{\(\)\s*=>\s*navigate\(fleetProfilePath\(row\)\)\}[\s\S]*?>/m;
-  if (!trOnClickPattern.test(src)) failures.push("navigate call is not wired on <tr> onClick path");
+  // LEAD 443.181 — the roster is a ParityTable; its onRowClick is the whole-row click (ParityTable wires it on the <tr>).
+  const rowClickPattern = /<ParityTable[\s\S]*?onRowClick=\{\(row\)\s*=>\s*navigate\(fleetProfilePath\(row\)\)\}/m;
+  if (!rowClickPattern.test(src)) failures.push("navigate call is not wired on the ParityTable onRowClick (whole-row) path");
   return failures;
 }
 
@@ -24,7 +25,7 @@ if (process.argv.includes("--selftest")) {
     source.replace("function fleetProfilePath(row: FleetRow): string", "function removedFleetProfilePath(row: FleetRow): string"),
     source.replace("/fleet/units/", "/fleet/unit-missing/"),
     source.replace("/fleet/trailers/", "/fleet/trailer-missing/"),
-    source.replace("onClick={() => navigate(fleetProfilePath(row))}", "onClick={() => undefined}"),
+    source.replace("onRowClick={(row) => navigate(fleetProfilePath(row))}", "onRowClick={() => undefined}"),
   ];
   for (const [index, mutated] of mutations.entries()) {
     if (mutated === source || audit(mutated).length === 0) {

@@ -14,7 +14,7 @@ import { nextInvoiceDisplayId } from "./display-id.js";
 import { reserveExpenseNumber, writeExpenseDocumentInClientTx } from "./expense-writer.service.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "./bills.service.js";
+import { insertBillHeaderOnClient, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "./bills.service.js";
 
 export function computeNextRecurringRunUtc(fromIso: string, cadence: string, cronExpr: string | null): string {
   const dt = DateTime.fromISO(fromIso, { zone: "utc" });
@@ -187,48 +187,31 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
   // ACCT-F353 — derive from the vendor being billed (same relationship the FK above resolves).
   const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, oc, vendorId);
 
-  const ins = await client.query<{ id: string }>(
-    `
-      INSERT INTO accounting.bills (
-        operating_company_id,
-        vendor_id,
-        vendor_uuid,
-        mdata_vendor_id,
-        bill_number,
-        bill_date,
-        due_date,
-        amount_cents,
-        total_amount,
-        paid_cents,
-        paid_amount,
-        status,
-        memo,
-        coa_account_id,
-        created_by_user_id,
-        created_at,
-        updated_at,
-        -- ACCT-F353 — derived from the vendor being billed (vendorIsSampleData above).
-        is_sample_data
-      )
-      VALUES (
-        $1::uuid,$2::uuid,$2::uuid,$11::uuid,$3,$4::date,$5::date,$6,$7,0,0,'unpaid',$8,$9,$10::uuid,now(),now(),$12
-      )
-      RETURNING id::text
-    `,
+  // 443.182 C — written through the one bill writer (same columns, casts and literals as the former inline INSERT).
+  const ins = await insertBillHeaderOnClient<{ id: string }>(
+    client,
     [
-      oc,
-      vendorId,
-      body.bill_number ?? null,
-      billDate,
-      body.due_date ?? null,
-      amountCents,
-      amountCents / 100,
-      body.memo ?? null,
-      body.coa_account_id ?? null,
-      actorId,
-      mdataVendorId,
-      vendorIsSampleData,
-    ]
+      ["operating_company_id", { value: oc, cast: "uuid" }],
+      ["vendor_id", { value: vendorId, cast: "uuid" }],
+      ["vendor_uuid", { value: vendorId, cast: "uuid" }],
+      ["mdata_vendor_id", { value: mdataVendorId, cast: "uuid" }],
+      ["bill_number", { value: body.bill_number ?? null }],
+      ["bill_date", { value: billDate, cast: "date" }],
+      ["due_date", { value: body.due_date ?? null, cast: "date" }],
+      ["amount_cents", { value: amountCents }],
+      ["total_amount", { value: amountCents / 100 }],
+      ["paid_cents", { sql: "0" }],
+      ["paid_amount", { sql: "0" }],
+      ["status", { sql: "'unpaid'" }],
+      ["memo", { value: body.memo ?? null }],
+      ["coa_account_id", { value: body.coa_account_id ?? null }],
+      ["created_by_user_id", { value: actorId, cast: "uuid" }],
+      ["created_at", { sql: "now()" }],
+      ["updated_at", { sql: "now()" }],
+      // ACCT-F353 — derived from the vendor being billed (vendorIsSampleData above).
+      ["is_sample_data", { value: vendorIsSampleData }],
+    ],
+    { returning: "id::text" },
   );
   const billId = ins.rows[0]?.id;
   if (!billId) throw new Error("recurring_bill_insert_failed");

@@ -16642,5 +16642,20 @@
     "claimed_at": "2026-10-17",
     "claimed_by": "claude",
     "purpose": "CC-2 LEAD 443.183 G10: verify-invoice-itemized-from-load-charge-lines (line haul, fuel surcharge, each accessorial its own invoice line with item -> income account)"
+  },
+  "18537": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.185: verify-one-fuel-to-load-rule (G7: every fuel writer resolves load + trailer through resolveFuelLoadAtTime; Relay bridge/rematch write trailer)"
+  },
+  "18541": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.185: verify-posting-lines-carry-source-load (G8: fuel / factoring / cash-advance / bank-categorization lines carry load_id + entity through the one line writer)"
+  },
+  "18545": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.185: verify-fuel-duplicate-base-invoice-one-rule (G12: every fuel importer counts a base-invoice duplicate through findLiveFuelByProviderTransactionId)"
   }
 }
