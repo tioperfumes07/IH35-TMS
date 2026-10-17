@@ -41,8 +41,28 @@ if (!detailSource.includes("setProfileEditMode(false)")) {
 if (!detailSource.includes("updateVendorMutation")) {
   failures.push("VendorDetail Profile must wire Save → updateVendor");
 }
-if (!detailSource.includes("recordVendorBillPayment")) {
-  failures.push("VendorDetail A/P must wire Record Bill Payment submit");
+// #23768 (2026-10-01, ORDERS-2026-10-01-CURSOR.md §4 "bills + AP READ ONLY"): the vendor profile no longer writes bill
+// payments — "Remove Record Bill Payment write UI/mutation; readonly banner + Pay bills link". The A/P tab must keep the
+// read-only banner AND a working link that pays THIS vendor's bills; the old in-profile submit is still accepted.
+export function apPaymentPathFailures(src) {
+  if (src.includes("recordVendorBillPayment")) return [];
+  const out = [];
+  if (!src.includes('data-testid="vendor-record-bill-payment-disabled"')) out.push("VendorDetail A/P must show the read-only bill-payment banner");
+  if (!/to=\{`\/accounting\/bill-payments\?vendor_id=\$\{encodeURIComponent\(id\)\}`\}/.test(src)) {
+    out.push("VendorDetail A/P must link to Accounting → Pay bills for this vendor (/accounting/bill-payments?vendor_id=)");
+  }
+  return out;
+}
+failures.push(...apPaymentPathFailures(detailSource));
+if (process.argv.includes("--selftest")) {
+  const plants = [
+    detailSource.replace('data-testid="vendor-record-bill-payment-disabled"', 'data-testid="x"'),
+    detailSource.replace("/accounting/bill-payments?vendor_id=", "/accounting/nowhere?vendor_id="),
+  ];
+  for (const [i, m] of plants.entries()) {
+    if (m === detailSource || apPaymentPathFailures(m).length === 0) { console.error(`deep-audit-a-vendor-buttons SELFTEST FAILED — plant ${i + 1} escaped`); process.exit(1); }
+  }
+  console.log(`deep-audit-a-vendor-buttons SELFTEST PASS — ${plants.length} plants caught`);
 }
 if (!detailSource.includes("verifySaferMutation")) {
   failures.push("VendorDetail must retain Verify SAFER action");

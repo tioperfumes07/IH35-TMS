@@ -58,7 +58,7 @@ if (hook) {
   if (!new RegExp(`DEFAULT_VIEW_MODE[^\\n]*["']${PRIOR_DESIGN}["']`).test(hook)) {
     failures.push(`${hookRel}: DEFAULT_VIEW_MODE must be "${PRIOR_DESIGN}"`);
   }
-  if (!/\?\?\s*defaultMode/.test(hook)) {
+  if (!hookFallsBackToDefault(hook)) {
     failures.push(`${hookRel}: initial state must fall back to the defaultMode parameter`);
   }
 }
@@ -81,7 +81,7 @@ for (const { rel, entity } of pages) {
     failures.push(`${rel}: default view is "${m[1]}" (must be "${PRIOR_DESIGN}")`);
   }
   // The opt-in toggle must still exist (additive-only: do not delete the list view).
-  if (!src.includes(`data-view-mode-toggle="${entity}"`)) {
+  if (!hasViewModeToggle(src, entity)) {
     failures.push(`${rel}: opt-in view-mode toggle is missing (list view must remain available)`);
   }
 }
@@ -95,6 +95,17 @@ if (failures.length > 0) {
     `\nThe DEFAULT /customers and /vendors view must remain the prior "${PRIOR_DESIGN}" design (CLOSURE-31).`
   );
   process.exit(1);
+}
+
+
+// LST-F19 C-01 / C-02 (#23393, f20b4b03ca, 2026-09-30): the toggle became the shared SegmentedControl (the data attribute is
+// passed via dataAttributes={{ "data-view-mode-toggle": "<entity>" }}) and the hook seeds useState(() => defaultMode)
+// ("C-02: seed from code default only"). Both prior shapes are still accepted; dropping the toggle or the default is not.
+function hookFallsBackToDefault(src) {
+  return /\?\?\s*defaultMode/.test(src) || /useState<[^>]*>\(\s*\(\)\s*=>\s*defaultMode\s*\)/.test(src);
+}
+function hasViewModeToggle(src, entity) {
+  return src.includes(`data-view-mode-toggle="${entity}"`) || src.includes(`"data-view-mode-toggle": "${entity}"`);
 }
 
 if (process.argv.includes("--self-test")) {
@@ -117,7 +128,14 @@ if (process.argv.includes("--self-test")) {
       throw new Error(`planted defect survived: ${name}`);
     }
   }
-  console.log(`[verify-customers-vendors-default-is-prior-design] SELFTEST PASS — ${mutations.length}/6 planted preference failures rejected`);
+  if (hookFallsBackToDefault(hook.replace(/\(\)\s*=>\s*defaultMode/g, "() => \"list\"").replace(/\?\?\s*defaultMode/g, '?? "list"'))) {
+    throw new Error("planted defect survived: hook no longer seeds from defaultMode");
+  }
+  for (const entity of ["customers", "vendors"]) {
+    const stripped = pageSources[entity].replaceAll(`"data-view-mode-toggle": "${entity}"`, '"data-x": "y"').replaceAll(`data-view-mode-toggle="${entity}"`, "");
+    if (hasViewModeToggle(stripped, entity)) throw new Error(`planted defect survived: ${entity} toggle removed`);
+  }
+  console.log(`[verify-customers-vendors-default-is-prior-design] SELFTEST PASS — default-seed + 2 toggle plants rejected; — ${mutations.length}/6 planted preference failures rejected`);
 }
 
 console.log(

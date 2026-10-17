@@ -36,7 +36,9 @@ function main() {
   if (!/setDriversHomeView/.test(driversPage)) {
     failures.push("DriversPage must wire setDriversHomeView for Drivers/Teams tab onChange handler");
   }
-  if (!driversPage.includes('{ id: "teams", label: "Teams" }')) {
+  // DRV-F420 (#25517, 2026-10-05): "roster filters are SegmentedControl chips labelled List / Teams" — the Teams control
+  // moved from a tab list ({ id, label }) to a SegmentedControl option ({ value, label }); both shapes are a visible control.
+  if (!driversPage.includes('{ id: "teams", label: "Teams" }') && !/\{\s*value:\s*"teams",\s*label:\s*"Teams"/.test(driversPage)) {
     failures.push("DriversPage must render a visible Teams tab control");
   }
   if (!driversPage.includes('activeTab === "teams"')) {
