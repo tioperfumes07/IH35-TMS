@@ -5,8 +5,11 @@ import { fileURLToPath } from "node:url";
 import "./verify-drivers-home-complete-roster.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// Heavy CI peel — re-pointed, same rule: 52699c6c2f (#26871, 443.182-A catalog one-source consolidation) moved
+// listDrivers / listAllDrivers into api/catalog-drivers.ts; api/mdata.ts re-exports them (callers unchanged).
 const REL = {
-  api: "apps/frontend/src/api/mdata.ts",
+  api: "apps/frontend/src/api/catalog-drivers.ts",
+  mdataApi: "apps/frontend/src/api/mdata.ts",
   hos: "apps/frontend/src/pages/safety/HoursOfServicePage.tsx",
   cards: "apps/frontend/src/components/safety/DriverSafetyCards.tsx",
 };
@@ -14,10 +17,12 @@ const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
 export function verify(sources = {}) {
   const api = sources.api ?? read(REL.api);
+  const mdataApi = sources.mdataApi ?? read(REL.mdataApi);
   const hos = sources.hos ?? read(REL.hos);
   const cards = sources.cards ?? read(REL.cards);
   const checks = [
     ["shared complete-roster helper", /export async function listAllDrivers/.test(api)],
+    ["mdata.ts re-exports the one helper", /export \{[^}]*\blistAllDrivers\b[^}]*\} from "\.\/catalog-drivers"/.test(mdataApi) && !/export async function listAllDrivers/.test(mdataApi)],
     ["helper pages by exact server total", /for \(let pageIndex = 1; covered < expected/.test(api) && /offset: pageIndex \* pageSize/.test(api)],
     ["helper rejects incomplete scan", /throw new Error\(`Driver roster paging stopped/.test(api)],
     ["helper deduplicates canonical IDs", /new Map\(drivers\.map\(\(driver\) => \[driver\.id, driver\]\)\)/.test(api)],
@@ -33,9 +38,10 @@ export function verify(sources = {}) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const live = { api: read(REL.api), hos: read(REL.hos), cards: read(REL.cards) };
+  const live = { api: read(REL.api), mdataApi: read(REL.mdataApi), hos: read(REL.hos), cards: read(REL.cards) };
   const mutations = [
     ["first page only", { ...live, api: live.api.replace("for (let pageIndex = 1; covered < expected", "for (let pageIndex = 1; false") }],
+    ["second helper copy in mdata.ts", { ...live, mdataApi: live.mdataApi + "\nexport async function listAllDrivers() {}\n" }],
     ["HOS cap", { ...live, hos: live.hos.replace("listAllDrivers({", "listDrivers({\n    limit: 200,") }],
     ["unbounded HOS fan-out", { ...live, hos: live.hos.replace("detailBatchSize = 20", "detailBatchSize = drivers.length") }],
     ["cards cap", { ...live, cards: live.cards.replace("listAllDrivers({", "listDrivers({\n        limit: 200,") }],
