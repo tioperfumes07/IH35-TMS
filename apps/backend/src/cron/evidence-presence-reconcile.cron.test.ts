@@ -104,7 +104,7 @@ describe("reconcileEvidencePresence (H5-3)", () => {
   });
 
   it("does not throw when sampling fails — returns a skip reason", async () => {
-    const { deps, raiseAlarm } = makeDeps({
+    const { deps, raiseAlarm, appendAudit } = makeDeps({
       sampleEvidenceRefs: async () => {
         throw new Error("db down");
       },
@@ -115,5 +115,9 @@ describe("reconcileEvidencePresence (H5-3)", () => {
     expect(result.checked).toBe(0);
     expect(result.skippedReason).toContain("sample_failed");
     expect(raiseAlarm).not.toHaveBeenCalled();
+    // no silent failure: the skipped tick leaves a durable warning
+    expect(appendAudit).toHaveBeenCalledTimes(1);
+    expect(appendAudit.mock.calls[0][0]).toBe("warning");
+    expect(appendAudit.mock.calls[0][1]).toMatchObject({ reason: "evidence_presence_sample_failed" });
   });
 });

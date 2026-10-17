@@ -135,6 +135,12 @@ export async function reconcileEvidencePresence(
   } catch (e) {
     result.skippedReason = `sample_failed:${String((e as Error)?.message ?? e)}`;
     deps.logger.error({ err: e }, "[evidence-presence] failed to sample evidence rows");
+    // No silent failure: a reconcile that could not even sample leaves a durable warning, not just a log line.
+    try {
+      await deps.appendAudit("warning", { reason: "evidence_presence_sample_failed", error: result.skippedReason });
+    } catch (auditErr) {
+      deps.logger.error({ err: auditErr }, "[evidence-presence] failed to append sample-failure audit");
+    }
     return result;
   }
 
@@ -218,7 +224,9 @@ async function sampleEvidenceRefsFromDb(limit: number): Promise<EvidenceRef[]> {
       bucket: string;
       operating_company_id: string | null;
     }>(
-      `(
+      // ORDER BY random() over a UNION must sit outside it (PostgreSQL 0A000 "invalid UNION/INTERSECT/EXCEPT ORDER BY
+      // clause" — only result column names may be ordered on a bare set operation); the sampler failed on every tick.
+      `SELECT u.source, u.id, u.r2_key, u.bucket, u.operating_company_id FROM ((
          SELECT 'docs.files'::text AS source,
                 f.id::text          AS id,
                 f.r2_key            AS r2_key,
@@ -241,7 +249,7 @@ async function sampleEvidenceRefsFromDb(limit: number): Promise<EvidenceRef[]> {
           WHERE a.is_deleted = false
             AND a.r2_object_key IS NOT NULL
             AND a.r2_bucket = $1
-       )
+       )) u
        ORDER BY random()
        LIMIT $2`,
       [bucket, limit],
