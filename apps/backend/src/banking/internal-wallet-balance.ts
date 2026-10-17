@@ -114,6 +114,38 @@ async function sumLedgerBalanceCents(
 
   for (const row of res.rows) map.set(row.bank_account_id, Number(row.balance_cents));
 
+  // LEAD 443.179 (owner 2026-10-16, Banking tiles: Faro Cash Reserve / Faro Escrow Reserve / Faro Factoring all read
+  // $0.00). A non-Plaid account with NO bank-line history at all (Faro reserves, factoring, petty cash) is a ledger-only
+  // account: nothing ever writes a bank line for it, so the line sum above is a structural 0, never its balance. QBO
+  // parity: its balance is its book balance — the posted ledger on its mapped account (natural sign), the same number
+  // the embedded register and the tie-out header show. Accounts with bank lines (Relay Fuel Wallet) are unchanged.
+  const feedless = bankAccountIds.filter((id) => !map.has(id));
+  if (feedless.length > 0) {
+    const gl = await client.query<{ bank_account_id: string; balance_cents: string }>(
+      `
+        SELECT ba.id::text AS bank_account_id,
+               COALESCE(SUM(
+                 CASE WHEN ca.account_type IN ('Liability', 'Equity', 'Income', 'OtherIncome')
+                      THEN CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END
+                      ELSE CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END
+                 END), 0)::text AS balance_cents
+          FROM banking.bank_accounts ba
+          JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id
+          JOIN accounting.journal_entry_postings p
+            ON p.account_id = ba.ledger_account_id AND p.operating_company_id = ba.operating_company_id
+          JOIN accounting.journal_entries je
+            ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+         WHERE ba.operating_company_id = $1::uuid
+           AND ba.id = ANY($2::uuid[])
+           AND je.status = 'posted'
+           AND je.entry_date <= CURRENT_DATE
+         GROUP BY ba.id
+      `,
+      [operatingCompanyId, feedless]
+    );
+    for (const row of gl.rows) map.set(row.bank_account_id, Number(row.balance_cents));
+  }
+
   return map;
 
 }

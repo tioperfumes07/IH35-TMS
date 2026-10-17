@@ -362,6 +362,7 @@ export function ReserveTracker() {
           ) : (
             <>
               <ParityTable<FactoringReserveBalanceHistoryEntry>
+                title="Reserve movements — held and released"
                 columns={HISTORY_COLUMNS}
                 rows={historyQ.data?.movements ?? []}
                 rowKey={(row) => row.id}
@@ -417,8 +418,8 @@ export function ReserveTracker() {
         </div>
       ) : (chargebacksQ.data?.history ?? []).length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="mb-2 text-xs font-semibold text-gray-800">Chargeback + Fee History</div>
           <ParityTable<FactoringChargebackFeeRow>
+            title="Chargeback and fee history — latest 50"
             columns={CHARGEBACK_COLUMNS}
             rows={(chargebacksQ.data?.history ?? []).slice(0, 50)}
             rowKey={(row) => row.factoring_advance_id + row.created_at}

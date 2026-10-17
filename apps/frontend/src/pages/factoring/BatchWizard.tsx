@@ -207,6 +207,7 @@ export function BatchWizard() {
             </div>
           ) : (
             <ParityTable<FactoringBatchInvoice>
+              title="Paid-ready invoices — eligible for a new batch"
               columns={candidateColumns}
               rows={candidatesQuery.data ?? []}
               rowKey={(invoice) => invoice.id}

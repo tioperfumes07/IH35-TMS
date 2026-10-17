@@ -32,6 +32,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { SaveDropdown } from "../../components/forms/SaveDropdown";
 import { DataPanel } from "../../components/layout/DataPanel";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -786,6 +787,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
       {candidatesQuery.isError ? <ListErrorBanner onRetry={() => void candidatesQuery.refetch()} /> : null}
 
       <ParityTable
+        title={editing ? "Invoices on this purchase — and eligible to add" : "Invoices ready to factor"}
         rows={rows}
         rowKey={(r) => r.invoice_id}
         columns={columns}
@@ -934,8 +936,10 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
           <DataPanel title="Selected invoices — Faro actuals">
             <div className="p-3 text-xs" data-testid="submit-factor-actuals">
               <p className="mb-2 text-[#4B5563]">
-                Faro holds one 1.5% Security Reserve per invoice — normally as escrow reserve, on some invoices as cash reserve instead. Enter
-                Faro's purchase-report figures here when they differ from the expected split.
+                Enter Faro's purchase-report figures here when they differ from the expected split.{" "}
+                <InfoPopover label="About Faro's security reserve">
+                  Faro holds one 1.5% Security Reserve per invoice — normally as escrow reserve, on some invoices as cash reserve instead.
+                </InfoPopover>
               </p>
               {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). */}
               <ParityTable<PurchaseCandidate>

@@ -43,6 +43,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 import {
   AGING_BY_DEBTOR_COLUMNS,
   CHARGEBACKS_BY_CUSTOMER_COLUMNS,
@@ -187,29 +188,20 @@ function summaryMoneyOrDash(opts: {
 // behavior with no extra state or outside-click handler to wire.
 function AccountSummaryInfoPopover() {
   return (
-    <details className="relative inline-block" data-testid="factoring-account-summary-info">
-      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
-      <summary
-        className="flex h-5 w-5 cursor-pointer list-none items-center justify-center rounded-full border border-gray-300 text-xs font-semibold text-gray-500 hover:bg-gray-50 [&::-webkit-details-marker]:hidden"
-        aria-label="Why some values are blank"
-      >
-        ?
-      </summary>
-      <div className="absolute right-0 z-20 mt-1 w-72 rounded-sm border border-gray-200 bg-white p-3 text-xs leading-snug text-gray-700 shadow-md">
-        <div className="mb-1 font-semibold text-gray-900">Why some values are blank</div>
-        <p>
-          Some numbers below show "—" instead of an amount. That isn't a bug — for those figures
-          (like Beginning Balance or the individual Discount/Schedule/Wire fees) our data feed only
-          gives us a combined running total, which is already shown elsewhere on this page. Hover
-          any "—" for the specific reason. We never fill a blank with a made-up number.
-        </p>
-        <p className="mt-2">
-          There's also no date-range picker on this page yet: factoring balances are point-in-time
-          only, so a past date range couldn't change any figure below without inventing history we
-          don't have.
-        </p>
-      </div>
-    </details>
+    <InfoPopover label="Why some values are blank" align="right" testId="factoring-account-summary-info">
+      <span className="mb-1 block font-semibold text-gray-900">Why some values are blank</span>
+      <span className="block">
+        Some numbers below show "—" instead of an amount. That isn't a bug — for those figures
+        (like Beginning Balance or the individual Discount/Schedule/Wire fees) our data feed only
+        gives us a combined running total, which is already shown elsewhere on this page. Hover
+        any "—" for the specific reason. We never fill a blank with a made-up number.
+      </span>
+      <span className="mt-2 block">
+        There's also no date-range picker on this page yet: factoring balances are point-in-time
+        only, so a past date range couldn't change any figure below without inventing history we
+        don't have.
+      </span>
+    </InfoPopover>
   );
 }
 
@@ -1157,10 +1149,13 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {activeFactor && profileEditForm && (
             <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
               <div className="flex flex-col gap-3 text-xs" data-testid="factoring-profile-edit-modal">
-                <p className="text-xs text-gray-500">
-                  Rates write to the factoring profile record (advance_rate / fee_rate / escrow reserve_rate / cash_reserve_rate). Contacts → remittance_details. Not vendor notes.
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Canonical rates (%){" "}
+                  <InfoPopover label="About where these rates are saved">
+                    Rates are saved on the factoring profile (advance rate, fee rate, escrow reserve rate, cash reserve rate). Contacts are saved
+                    as the factor's remittance details. Nothing here is saved to vendor notes.
+                  </InfoPopover>
                 </p>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Canonical rates (%)</p>
                 <div className="grid grid-cols-2 gap-3">
                   {(
                     [
@@ -1336,6 +1331,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           ) : (
             <div className="overflow-x-auto">
               <ParityTable
+                title="Funds due — by debtor"
                 columns={[
                   {
                     key: "customer_name",
@@ -1445,6 +1441,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               ];
               return (
                 <ParityTable
+                  title="Debtor credit check — by debtor"
                   columns={debtorColumns}
                   rows={rows}
                   rowKey={(row) => row.customer_id}
@@ -1499,6 +1496,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               ];
               return (
                 <ParityTable
+                  title="Debtor receipts — payments received"
                   columns={receiptColumns}
                   rows={rows}
                   rowKey={(row) => row.payment_id}
@@ -1564,6 +1562,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               ];
               return (
                 <ParityTable
+                  title="Loan and save — by invoice"
                   columns={loanColumns}
                   rows={rows}
                   rowKey={(row) => row.factoring_advance_id}
@@ -1612,6 +1611,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               ];
               return (
                 <ParityTable
+                  title="Unapplied cash — customer payments"
                   columns={unappliedColumns}
                   rows={rows}
                   rowKey={(row) => row.payment_id}
@@ -1682,6 +1682,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               ];
               return (
                 <ParityTable
+                  title="Invoice status — by invoice"
                   columns={invoiceStatusColumns}
                   rows={rows}
                   rowKey={(row) => row.invoice_id}
@@ -1738,8 +1739,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   <div className="bg-gray-50 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Send a Message</div>
                     <p className="mt-1 text-xs text-gray-600">
-                      To contact {factor.name} about your factoring account, use the contact information above.
-                      In-app messaging to the factor company is not available — this is a read-only contact reference.
+                      To contact {factor.name} about your factoring account, use the contact information above.{" "}
+                      <InfoPopover label="About messaging the factor">
+                        In-app messaging to the factor company is not available — this is a read-only contact reference.
+                      </InfoPopover>
                     </p>
                   </div>
                 </div>
@@ -1796,6 +1799,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             ) : (
               <ParityTable
+                title="Escrow reserve — by purchase"
                 columns={[
                   {
                     key: "purchase_date",
@@ -1900,6 +1904,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             ) : (
               <ParityTable
+                title="Cash reserve — by purchase"
                 columns={[
                   {
                     key: "purchase_date",
@@ -2159,9 +2164,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   </div>
 
                   <div className="mt-3 border-t border-gray-200 pt-2">
-                    <div className="mb-1 text-xs font-medium text-gray-900">Beginning / Ending — Balance Sheet Items</div>
                     <div className="overflow-x-auto">
                       <ParityTable
+                        title="Beginning and ending — balance sheet items"
                         columns={[
                           { key: "label", label: "Item" },
                           {
@@ -2277,6 +2282,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           ) : (
             <div className="overflow-x-auto">
               <ParityTable<FactoringPurchaseReportLine>
+                title="Purchase report — by invoice"
                 columns={[
                   {
                     key: "customer_name",
@@ -2392,6 +2398,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             ) : (
               <div className="overflow-x-auto">
                 <ParityTable
+                  title="Fees paid — accrued on open invoices"
                   columns={[
                     {
                       key: "customer_name",
@@ -2440,6 +2447,13 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           ) : (
             <div className="overflow-x-auto">
               <ParityTable
+                title="Fees paid — all fee records"
+                titleInfo={
+                  <InfoPopover label="About fee descriptions" testId="factoring-fees-paid-all-fees-footnote">
+                    "Fee Description" is "Factor Fee" for every row — Faro's data carries one combined factor fee, not a
+                    Discount/Schedule/Wire-fee breakdown. "PO/Ref" has no source on this view — never made up.
+                  </InfoPopover>
+                }
                 columns={[
                   {
                     key: "customer_name",
@@ -2469,11 +2483,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   factor_fee_amount: fmtCurrency(feesPaidAllFeesTotal),
                 }}
               />
-              <p className="mt-2 text-xs text-gray-500" data-testid="factoring-fees-paid-all-fees-footnote">
-                "Fee Description" is honestly "Factor Fee" for every row — this schema tracks one
-                combined factor_fee_amount, not a Discount/Schedule/Wire-fee breakdown. "PO/Ref" has
-                no backing field on this view — never fabricated.
-              </p>
             </div>
           )}
         </div>
@@ -2734,6 +2743,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             ) : (
               <ParityTable
+                title="Monthly fee summaries"
                 columns={MONTHLY_FEE_COLUMNS}
                 rows={feesQuery.data?.monthly_summary ?? []}
                 rowKey={(row) => String(row.statement_month)}
@@ -2862,6 +2872,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               ) : (
                 <ParityTable
                   columns={STATEMENT_HISTORY_COLUMNS}
+                  title="Statement history"
                   rows={settingsQuery.data?.statements ?? []}
                   rowKey={(row) => String(row.statement_month)}
                   loading={settingsQuery.isLoading}
@@ -3101,6 +3112,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               </div>
             ) : (
               <ParityTable
+                title="Faro statement lines — imported"
                 columns={FARO_IMPORT_COLUMNS}
                 rows={(faroImportsQuery.data?.rows ?? []).filter((r) => {
                   if (applied.dateFrom && r.statement_date < applied.dateFrom) return false;
@@ -3383,6 +3395,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             ) : (
               <ParityTable
+                title="Vendor merge history"
                 columns={VENDOR_MERGE_COLUMNS}
                 rows={vendorMergesQuery.data?.rows ?? []}
                 rowKey={(row) => row.id}
