@@ -6,9 +6,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.service.js";
-import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
+import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx, postBillPaymentDocumentInClientTx } from "../accounting/bills.service.js";
 
 const paymentMethodSchema = z.enum(["check", "ach", "wire", "cash", "credit_card"]);
 
@@ -193,13 +192,9 @@ export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
           // ROUND 443.117 9b: provenance never exempts a native payment from the shared poster.
           // Same client: a missing bill A/P posting rolls the transaction back, including cash.
           if (glPostingEnabled) {
-            await postSourceTransactionInClientTx(
+            await postBillPaymentDocumentInClientTx(
               client,
-              {
-                operating_company_id: query.data.operating_company_id,
-                source_transaction_type: "bill_payment",
-                source_transaction_id: paymentId,
-              },
+              { operating_company_id: query.data.operating_company_id, bill_payment_id: paymentId },
               { userId: user.uuid }
             );
           }

@@ -30,6 +30,7 @@ import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/fuel-cre
  */
 
 import { resolveFuelLoadAtTime } from "./fuel-load-at-time.js";
+import { findLiveFuelByProviderTransactionId } from "./fuel-provider-reference.js";
 
 export type DbClient = {
   query: <T = Record<string, unknown>>(
@@ -305,27 +306,10 @@ export async function resolveVendorId(
   return res.rows[0]?.id ?? null;
 }
 
-/**
- * G18 load resolution: the load assigned to the resolved unit (fallback driver)
- * whose stop window brackets the transaction timestamp. Best-available linkage —
- * returns null when nothing matches so the caller records an exemption reason.
- * Exported for Relay→canonical bridge (WAVE-H2 — stop hardcoding load_id NULL).
- */
-// LEAD 443.110 G7 — the import no longer has its own load rule. It used a ±1-day SCHEDULED-stop window that ignored
-// actual times and returned null whenever two loads overlapped (ALWAYSTRACK-PARITY-FUEL-MISLINK-01: a driver's
-// back-to-back runs); the Relay post used loadAtTimeSql — so one fill could land on two different loads by source.
-// Both now ask resolveFuelLoadAtTime (fuel-load-at-time.ts): the load the unit was running at the fill time (actual
-// stamps, date-only = that whole day, NB-then-return aware), driver fallback, else null. The overlap that
-// MISLINK-01 refused to guess is now DECIDED by actual time, never by sort order.
-export async function resolveLoadId(
-  client: DbClient,
-  companyId: string,
-  unitId: string | null,
-  driverId: string | null,
-  transactionAt: string
-): Promise<string | null> {
-  return (await resolveFuelLoadAtTime(client, { operatingCompanyId: companyId, unitId, driverId, at: transactionAt }))?.load_id ?? null;
-}
+// LEAD 443.110 G7 / 443.185 G7 — there is no importer-local load rule and no load-only wrapper any more: every fuel
+// writer (this import, Dreamline, the Relay bridge + rematch, the Relay bank-match post, receipt repoint) asks
+// resolveFuelLoadAtTime (fuel-load-at-time.ts) — the load the unit was running at the fill time (actual stamps first,
+// date-only = that whole day, NB-then-return aware), driver fallback — and writes the load's TRAILER from the same hit.
 
 export async function importFuelCardTransactionsForCompany(
   client: DbClient,
@@ -354,6 +338,19 @@ export async function importFuelCardTransactionsForCompany(
     const driverId =
       (await resolveDriverId(client, companyId, row.driver_name)) ?? (byCard?.resolved ? byCard.driver_id : null);
     const vendorId = await resolveVendorId(client, companyId, row.merchant);
+    // LEAD 443.185 G12 — ONE duplicate rule: a base invoice is ONE purchase (fuel-provider-reference.ts). The import used
+    // to dedupe on its own row hash only, so "123-13571" and "123" hashed apart, the database trigger refused the second
+    // live row and the error ABORTED the whole file. Ask the one lookup first; a hit is a counted duplicate.
+    const alreadyRecorded = await findLiveFuelByProviderTransactionId(client, {
+      operatingCompanyId: companyId,
+      vendorId,
+      reference: row.transaction_reference,
+      fuelType: row.fuel_type,
+    });
+    if (alreadyRecorded) {
+      counts.rows_duplicate += 1;
+      continue;
+    }
     // 443.110 G7 — the one fuel-to-load rule; the fill also carries the load's company trailer (the one trailer rule).
     const loadHit = await resolveFuelLoadAtTime(client, { operatingCompanyId: companyId, unitId, driverId, at: row.transaction_at });
     const loadId = loadHit?.load_id ?? null;
@@ -425,7 +422,7 @@ export async function importFuelCardTransactionsForCompany(
           notes,
           loadExemptionReason,
           opts?.userId ?? null,
-          // load_required mirrors whether resolveLoadId() actually found a load — previously this
+          // load_required mirrors whether resolveFuelLoadAtTime() actually found a load — previously this
           // was hardcoded `true` for every imported row, so a legitimately unattributed row (real
           // loadExemptionReason set above) still claimed it needed a load it will never get
           // (CLS-LINKAGE-ONEWAY / verify-disp-wire-06-load-expense-link).

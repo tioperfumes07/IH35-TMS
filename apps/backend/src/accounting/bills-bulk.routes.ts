@@ -4,12 +4,11 @@ import { z } from "zod";
 import { buildPatchChanges } from "../audit/crud-audit.js";
 import { appendBulkCrudAudit, registerBulkRoute } from "../bulk/bulk-update.factory.js";
 import type { BulkPerEntityContext, BulkPerEntityResult } from "../bulk/bulk.types.js";
-import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents, voidBillInClientTx, type BillMutationClient } from "./bills.service.js";
+import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents, voidBillInClientTx, type BillMutationClient, postBillPaymentDocumentInClientTx } from "./bills.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { BATCH_VOID_ACTION } from "./bulk-void.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
-import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { logger } from "../observability/structured-logger.js";
 import { BILL_PAYMENT_NOW, BILL_PAYMENT_SAMPLE_FROM_BILL, insertBillPaymentRowInClientTx } from "./bills.service.js";
 
@@ -227,16 +226,12 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
       // 363-CC1-B (CC-3, 2026-10-04): a bill payment posts on its creating transaction or not at all. A posting failure THROWS — processBulkPerId's per-item SAVEPOINT rolls this item (payment + postings) back and reports it failed; the batch continues. It used to be logged and swallowed, leaving a payment with no GL (the 2170 clearing never cleared).
       const glPostingEnabled = await isBillPaymentGlPostingEnabled(operatingCompanyId, actorUserId);
       if (glPostingEnabled) {
-        await postSourceTransactionInClientTx(
+        await postBillPaymentDocumentInClientTx(
           // BulkPerEntityContext's client is a narrower structural type (non-generic query());
           // same underlying pg client every other InClientTx caller passes, just typed loosely
           // here for the bulk-framework's generic reuse across many entity kinds.
-          client as unknown as Parameters<typeof postSourceTransactionInClientTx>[0],
-          {
-            operating_company_id: operatingCompanyId,
-            source_transaction_type: "bill_payment",
-            source_transaction_id: bulkPaymentId,
-          },
+          client as unknown as Parameters<typeof postBillPaymentDocumentInClientTx>[0],
+          { operating_company_id: operatingCompanyId, bill_payment_id: bulkPaymentId },
           { userId: actorUserId }
         );
       }

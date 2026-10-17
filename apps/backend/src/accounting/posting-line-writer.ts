@@ -126,6 +126,8 @@ export const PARTY_FROM_DOCUMENT_SOURCE_TYPES = [
   "invoice", "bill", "bill_payment", "expense", "customer_payment", "credit_memo", "vendor_credit",
   "driver_settlement", "driver_advance", "cash_advance", "driver_reimbursement", "driver_liability", "relay_deposit",
   "bank_categorization", "fuel_event",
+  // LEAD 443.185 G8 — every advance leg is with the factor (resolvePostingSourceEntity: factoring_company_vendor_id).
+  "factoring_advance",
   // its poster (party-entry-post.service.ts) stamps the party itself; the Due to / from refusal backs it.
   "related_party_loan",
 ] as const;
@@ -134,7 +136,7 @@ export const PARTYLESS_SOURCE_TYPES = [
   "bank_deposit", "customer_payment_deposit", "fixed_asset", "fixed_asset_depreciation", "prepaid_purchase",
   "prepaid_amortization", "loan", "loan_payment", "lease_contract", "lease_rental", "lease_disposal", "liability",
   "escrow_account", "property_tax_rendition", "accident_liability", "insurance_claim", "warranty_claim", "safety_fine",
-  "settlement_dispute", "load", "factoring_advance", "factoring_advance_deposit", "factoring_funding",
+  "settlement_dispute", "load", "factoring_advance_deposit", "factoring_funding",
   "factoring_customer_payment", "factoring_reserve_release", "factoring_default_interest", "faro_reserve_entry",
   "faro_cash_reserve_reclass", "factoring_chargeback" ,
   // legacy aliases still read by reports; no live writer posts under them
@@ -180,7 +182,8 @@ export class PostingLineAlreadyReversedError extends Error {
  * (posting_source_load_id). A reversal line names what the line it reverses named. An explicit entity always wins.
  *   invoice -> its customer · bill -> its driver (a driver bill) else its vendor · bill_payment -> its bill's driver, else its vendor ·
  *   expense -> its vendor, else its driver, else its payee customer · driver_settlement / driver_advance -> the driver ·
- *   relay_deposit (every leg) and a Relay fuel_event -> the vendor Relay · another fuel_event -> its fuel transaction's vendor.
+ *   relay_deposit (every leg) and a Relay fuel_event -> the vendor Relay · another fuel_event -> its fuel transaction's vendor ·
+ *   factoring_advance (every leg) -> the factoring company vendor (LEAD 443.185 G8).
  */
 export async function resolvePostingSourceEntity(
   client: PostingWriterClient,
@@ -225,6 +228,10 @@ export async function resolvePostingSourceEntity(
     driver_reimbursement: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_reimbursements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     driver_liability: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_liabilities WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     driver_advance: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.driver_advances WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    // LEAD 443.185 G8 — every leg of a factoring advance is with the FACTOR (measured on prod: 1090 undeposited funds,
+    // 6400 fees, 1230 reserves, 2150 advance liability, 6300 wire fees — no A/R leg), so its party is the factoring
+    // company vendor. 155 of 155 lines carried no party before.
+    factoring_advance: `SELECT factoring_company_vendor_id::text AS e, 'vendor' AS t FROM accounting.factoring_advances WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     // 443.110 G8 — a categorized bank line names the party it was categorized to: its vendor, else its driver.
     bank_categorization: `SELECT COALESCE(categorization_vendor_id::text, categorization_driver_id::text) AS e,
                                  CASE WHEN categorization_vendor_id IS NOT NULL THEN 'vendor' ELSE 'driver' END AS t
@@ -303,9 +310,25 @@ export async function resolvePostingSourceLoad(
   if (line.reversal_of_line_id) return null;
   const id = String(line.source_transaction_id ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  if ((FACTORING_EVENT_SOURCE_TYPES as readonly string[]).includes(String(line.source_transaction_type)) && line.operating_company_id) {
+  // LEAD 443.185 G8 — the advance itself is included (it was missing, so its lines never carried a load), and an advance
+  // with no source_load_id carries the ONE load its live invoices name; invoices on several loads = no single load
+  // (never a guess — a line cannot carry two loads).
+  if (
+    (line.source_transaction_type === "factoring_advance" ||
+      (FACTORING_EVENT_SOURCE_TYPES as readonly string[]).includes(String(line.source_transaction_type))) &&
+    line.operating_company_id
+  ) {
     const fa = await client.query<{ load_id: string | null }>(
-      `SELECT source_load_id::text AS load_id FROM accounting.factoring_advances WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      `SELECT COALESCE(
+                a.source_load_id,
+                (SELECT (array_agg(DISTINCT i.source_load_id))[1]
+                   FROM accounting.invoices i
+                  WHERE i.factoring_advance_id = a.id AND i.operating_company_id = a.operating_company_id
+                    AND i.voided_at IS NULL AND i.source_load_id IS NOT NULL
+                 HAVING count(DISTINCT i.source_load_id) = 1)
+              )::text AS load_id
+         FROM accounting.factoring_advances a
+        WHERE a.id = $1::uuid AND a.operating_company_id = $2::uuid`,
       [id, line.operating_company_id]
     );
     return fa.rows[0]?.load_id ?? null;

@@ -34,7 +34,8 @@ export function problems(s) {
   if (!/await voidCreatorOwedBills\(client, \{[^}]*billIds: prior\.owed_bill_ids/.test(edit)) p.push("Edit does not void the prior post's owed bills (voidCreatorOwedBills with prior.owed_bill_ids)");
   if (!/const billNumber = await nextOwedBillSpineNumber\(/.test(owed) || !/displayId: billNumber/.test(owed)) p.push("the owed bill is not numbered on its load spine (nextOwedBillSpineNumber -> displayId)");
   if (!/if \(n\.number === n\.loadNumber\) continue;/.test(owed)) p.push("the spine number may hand the owed bill the bare load number (the driver bill's)");
-  if (!/postSourceTransactionInClientTx\([\s\S]{0,200}source_transaction_type: "bill"/.test(owed)) p.push("the owed bill is not GL-posted in the caller's transaction");
+  // 443.182 C step 2 — postBillDocumentInClientTx is the bill engine's in-transaction bill post.
+  if (!/postSourceTransactionInClientTx\([\s\S]{0,200}source_transaction_type: "bill"/.test(owed) && !/postBillDocumentInClientTx\(/.test(owed)) p.push("the owed bill is not GL-posted in the caller's transaction");
   if (!/if \(!journalEntryId\) \{[\s\S]{0,200}owed_bill_post_refused/.test(owed)) p.push("a bill that posts no journal entry is not refused");
   if (!/voidDocument\([^)]*\{[\s\S]{0,200}type: "bill"/.test(owed)) p.push("voidCreatorOwedBills does not void through the bill void engine");
   return p;
@@ -50,7 +51,7 @@ if (process.argv.includes("--selftest")) {
     problems({ ...real, creator: real.creator.replace("await writeCreatorOwedBill(client,", "await createBillInClientTx(client,") }).length > 0);
   ex("dropping the kept bill id is caught", problems({ ...real, creator: real.creator.replace("owedBillIds.push(owed.billId);", "") }).length > 0);
   ex("Edit no longer voiding owed bills is caught", problems({ ...real, creator: real.creator.replace("await voidCreatorOwedBills(client,", "void (client,") }).length > 0);
-  ex("posting removed is caught", problems({ ...real, owed: real.owed.replace("postSourceTransactionInClientTx(", "Promise.resolve(") }).length > 0);
+  ex("posting removed is caught", problems({ ...real, owed: real.owed.replace("postSourceTransactionInClientTx(", "Promise.resolve(").replace("postBillDocumentInClientTx(", "Promise.resolve(") }).length > 0);
   ex("bare load number allowed is caught", problems({ ...real, owed: real.owed.replace("if (n.number === n.loadNumber) continue;", "") }).length > 0);
   ex("void through a delete instead of the engine is caught", problems({ ...real, owed: real.owed.replace(/type: "bill"/g, 'type: "expense"') }).length > 0);
   ex("spine number not used as the display id is caught", problems({ ...real, owed: real.owed.replace("displayId: billNumber,", "") }).length > 0);

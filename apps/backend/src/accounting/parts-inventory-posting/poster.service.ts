@@ -17,9 +17,9 @@
 
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
-import { createBillInClientTx } from "../bills.service.js";
+import { createBillInClientTx, postBillDocumentInClientTx } from "../bills.service.js";
 import { createJournalEntryOnClient } from "../journal-entries.service.js";
-import { postSourceTransactionInClientTx, PostingEngineError } from "../posting-engine.service.js";
+import { PostingEngineError } from "../posting-engine.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 
@@ -239,13 +239,9 @@ export async function postPartsInventoryPurchase(
           input.actor_user_id
         );
         bId = bill.id;
-        const posting = await postSourceTransactionInClientTx(
+        const posting = await postBillDocumentInClientTx(
           client as never,
-          {
-            operating_company_id: input.operating_company_id,
-            source_transaction_type: "bill",
-            source_transaction_id: bill.id,
-          },
+          { operating_company_id: input.operating_company_id, bill_id: bill.id },
           { userId: input.actor_user_id }
         );
         jeId = posting.journal_entry_id ?? null;
