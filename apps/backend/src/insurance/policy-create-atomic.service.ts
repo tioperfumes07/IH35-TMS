@@ -167,12 +167,18 @@ async function persistBillsOnClient(
     // Flag-gated by the SAME BILL_GL_POSTING_ENABLED check postBillGlIfEnabled uses internally — no
     // new flag, no new GL math. Best-effort: a post failure must not abort policy creation or any
     // other bill in this loop, but must not vanish silently either (SWL-1) — logged.
+    // LEAD 14:50Z — under a savepoint: in this one BEGIN/COMMIT a SQL error inside the post would otherwise leave the
+    // transaction aborted (every later statement fails) while the catch below hid the cause. Now a failed post rolls
+    // back alone and is logged; the bill and the rest of the policy commit.
+    await client.query("SAVEPOINT policy_bill_post");
     try {
       const glPostingEnabled = await isBillGlPostingEnabled(input.operatingCompanyId, input.userId);
       if (glPostingEnabled) {
         await postBillDocumentInClientTx(client, { operating_company_id: input.operatingCompanyId, bill_id: billId }, { userId: input.userId });
       }
+      await client.query("RELEASE SAVEPOINT policy_bill_post");
     } catch (err) {
+      await client.query("ROLLBACK TO SAVEPOINT policy_bill_post");
       logger.warn("insurance_policy_bill_gl_post_failed", {
         err: err instanceof Error ? err.message : String(err),
         company_id: input.operatingCompanyId,
