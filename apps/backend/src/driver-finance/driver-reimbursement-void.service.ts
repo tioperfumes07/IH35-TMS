@@ -82,7 +82,7 @@ export async function voidUnsettledDriverReimbursement(
   const live = await client.query<{ n: number }>(
     `SELECT count(*)::int AS n
        FROM driver_finance.settlement_lines sl
-       JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
+       JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id AND s.operating_company_id = sl.operating_company_id
       WHERE sl.operating_company_id = $2::uuid
         AND (sl.source_reference_id = $1::uuid OR sl.source_id = $1::uuid)
         AND sl.voided_at IS NULL AND COALESCE(sl.is_active, true) AND s.voided_at IS NULL`,
