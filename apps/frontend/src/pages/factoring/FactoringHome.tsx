@@ -3320,10 +3320,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
               <div className="mb-2 font-medium text-gray-900">
                 Selected loan ledger:{" "}
-                {entityLabel(
-                  selectedEquipmentLoan?.equipment_number,
-                  selectedEquipmentLoan?.equipment_id,
-                  "Equipment"
+                {selectedEquipmentLoan?.equipment_id ? (
+                  <EntityLink
+                    kind="unit"
+                    id={selectedEquipmentLoan.equipment_id}
+                    label={entityLabel(selectedEquipmentLoan.equipment_number, selectedEquipmentLoan.equipment_id, "Equipment")}
+                  />
+                ) : (
+                  (selectedEquipmentLoan?.equipment_number ?? "—")
                 )}
               </div>
               <p>Attributions: {(selectedLoanLedgerQuery.data?.attributions ?? []).length}</p>
