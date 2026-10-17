@@ -242,6 +242,30 @@ export async function stampDreamlineReceiptAdopted(
   );
 }
 
+/**
+ * LEAD 443.195 — the inverse of the stamp, for a repair that moves a statement line off a receipt it never was (the
+ * matcher paired another truck's receipt): removes exactly that marker from the receipt's notes. The receipt's gross /
+ * discount are re-stamped by the line that truly adopts it. Returns the rows changed (0 = the marker was not there).
+ */
+export async function unstampDreamlineReceiptAdopted(
+  client: DbClient,
+  input: { companyId: string; fuelTransactionId: string; marker: string }
+): Promise<number> {
+  const row = (await client.query<{ notes: string | null }>(
+    `SELECT notes FROM fuel.fuel_transactions WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
+    [input.fuelTransactionId, input.companyId]
+  )).rows[0];
+  const parts = (row?.notes ?? "").split(";").map((p) => p.trim()).filter((p) => p !== "");
+  const kept = parts.filter((p) => p !== input.marker);
+  if (!row || kept.length === parts.length) return 0;
+  await client.query(
+    `UPDATE fuel.fuel_transactions SET notes = NULLIF($3::text, ''), updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.fuelTransactionId, input.companyId, kept.join("; ")]
+  );
+  return 1;
+}
+
 type BookedReceipt = {
   expense_id: string;
   expense_number: string | null;
@@ -333,6 +357,18 @@ export function matchBookedReceipt(
   return p4.length === 1 ? p4[0]! : null;
 }
 
+/**
+ * LEAD 443.195 — pure: the matched receipt may NOT be adopted by this line (card charged more than the receipt beyond
+ * the tolerance, or the receipt is more than 5% away from the pump retail). The line is listed (amount_mismatch) and the
+ * receipt stays free for its own statement line — it is never consumed by a line that does not stamp it.
+ */
+export function dreamlineAdoptionRefused(receiptCents: number, line: Pick<DreamlineStatementLine, "gross_cents" | "net_cents">): boolean {
+  const diff = receiptCents - line.net_cents;
+  const residual = receiptCents - line.gross_cents;
+  return diff < -RECEIPT_BELOW_CARD_TOLERANCE_CENTS
+    || Math.abs(residual) > Math.max(RECEIPT_BELOW_CARD_TOLERANCE_CENTS, MAX_RECEIPT_RESIDUAL_PCT * line.gross_cents / 100);
+}
+
 async function companyAccountId(client: DbClient, companyId: string, number: string): Promise<string> {
   const r = await client.query<{ id: string }>(
     `SELECT id::text FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = $2 AND deactivated_at IS NULL LIMIT 1`,
@@ -358,7 +394,7 @@ async function itemAccount(client: DbClient, companyId: string, itemName: string
  * charged LESS than the receipt (Dr 2510 / Cr Fuel Card Discount); negative = more (Dr Fuel Card Discount / Cr 2510).
  * Idempotent per statement line (posting idempotency keys).
  */
-async function postStatementDifference(
+export async function postStatementDifference(
   client: DbClient,
   input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string }
 ): Promise<string | null> {
@@ -620,11 +656,15 @@ export async function importDreamlineStatement(
     if (line.product !== "scale") {
       const hit = matchBookedReceipt(line, booked, used);
       if (hit) {
-        used.add(hit.expense_id);
+        // LEAD 443.195 — a receipt is consumed (`used`) ONLY when this line ADOPTS it (stamped with the line's marker in
+        // this same transaction, below). A cross-rail or amount-mismatch line writes nothing on the receipt, so it must
+        // not consume it either: on main it did, and the receipt's true statement line — later in the file — then found
+        // it taken and imported the same purchase a second time (load 13555 diesel EFS 72968; T175 08-20 diesel EFS
+        // 11946), while a re-run (no marker on the receipt) could pair it differently again.
         if (hit.rail === "1295") { record(line, "cross_rail", { expense_id: hit.expense_id, reason: "same purchase is booked on the Relay wallet (1295)" }); continue; }
         const diff = hit.cents - line.net_cents;
         const residual = hit.cents - line.gross_cents;
-        if (diff < -RECEIPT_BELOW_CARD_TOLERANCE_CENTS || Math.abs(residual) > Math.max(RECEIPT_BELOW_CARD_TOLERANCE_CENTS, MAX_RECEIPT_RESIDUAL_PCT * line.gross_cents / 100)) {
+        if (dreamlineAdoptionRefused(hit.cents, line)) {
           record(line, "amount_mismatch", {
             expense_id: hit.expense_id, difference_cents: diff,
             reason: diff < -RECEIPT_BELOW_CARD_TOLERANCE_CENTS
@@ -639,6 +679,8 @@ export async function importDreamlineStatement(
               companyId, actor: input.actor_user_uuid, expenseId: hit.expense_id, differenceCents: diff, date: hit.d, marker,
               payableId, discountAccountId: discount.account_id, discountItemId: discount.item_id,
             });
+            // the difference for this marker was posted by an earlier run: the line is reconciled, but this run did not
+            // adopt (stamp) the receipt, so the receipt is NOT consumed — another line may still be its purchase.
             if (!je) { record(line, "already_imported", { expense_id: hit.expense_id }); continue; }
             summary.difference_posted_cents += diff;
           }
@@ -648,6 +690,7 @@ export async function importDreamlineStatement(
             });
           }
         } else if (diff !== 0) summary.difference_posted_cents += diff;
+        used.add(hit.expense_id); // adopted (stamped above; the dry run computes the same plan)
         record(line, "adopted", { expense_id: hit.expense_id, fuel_transaction_id: hit.fuel_transaction_id, difference_cents: diff });
         continue;
       }

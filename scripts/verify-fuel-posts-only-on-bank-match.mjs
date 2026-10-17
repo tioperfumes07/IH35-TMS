@@ -29,6 +29,10 @@
 //      rail (fuel_card_id = the DREAMLINE card type — without it USMCA resolves Relay and the fill never posts) and posts
 //      only through the one fill poster (postFuelFillOnReceipt); the card-discount pair asks whether it already posted
 //      before it writes a journal entry (a re-run posts nothing).
+//  11. LEAD 443.195 — the statement matcher consumes a booked receipt (`used.add(hit.expense_id)`) ONLY when the line
+//      ADOPTS it: once, after the adoption stamp (stampDreamlineReceiptAdopted), never before the cross-rail /
+//      amount-mismatch outcomes (those write nothing on the receipt — consuming it made the receipt's true line import
+//      the same purchase a second time: 13555 diesel EFS 72968).
 // Static, <1s. --selftest plants each regression.
 import fs from "node:fs";
 import path from "node:path";
@@ -199,6 +203,15 @@ export function check(files) {
     const prior = dl.indexOf("if (prior.rows[0]) return null;");
     const je = dl.indexOf("INSERT INTO accounting.journal_entries");
     if (prior < 0 || je < 0 || prior > je) problems.push(`${DREAMLINE}: the card-discount pair writes a journal entry without asking whether it already posted — a re-run would post the discount twice`);
+    // 11 (LEAD 443.195) — a receipt is consumed only when adopted (stamped), never by a cross-rail / mismatch line.
+    const adoptedAt = adopt < 0 ? -1 : dl.indexOf('record(line, "adopted"', adopt);
+    const block = adopt < 0 || adoptedAt < 0 ? "" : dl.slice(adopt, adoptedAt);
+    const consumes = [...block.matchAll(/used\.add\(hit\.expense_id\)/g)].map((m) => m.index);
+    const stampAt = block.indexOf("await stampDreamlineReceiptAdopted(client, {");
+    const mismatchAt = block.indexOf('record(line, "amount_mismatch"');
+    const crossAt = block.indexOf('record(line, "cross_rail"');
+    if (!block || consumes.length !== 1 || stampAt < 0 || mismatchAt < 0 || crossAt < 0 || consumes[0] < stampAt || consumes[0] < mismatchAt || consumes[0] < crossAt)
+      problems.push(`${DREAMLINE}: the statement matcher consumes a booked receipt (used.add) without adopting it — a cross-rail / amount-mismatch line takes the receipt from its true statement line, which then imports the purchase a second time (443.195)`);
   }
   return problems;
 }
@@ -253,6 +266,12 @@ if (process.argv.includes("--selftest")) {
     ["dreamline posts through another poster", { ...real, [DREAMLINE]: real[DREAMLINE].replace("await postFuelFillOnReceipt(client as never, { operating_company_id: companyId", "await postFuelExpenseOnClient(client as never, { operating_company_id: companyId") }],
     ["dreamline writes a load-less fill", { ...real, [DREAMLINE]: real[DREAMLINE].replace('if (!loadHit) {\n      record(line, "held_no_load"', 'if (false) {\n      record(line, "held_no_load"') }],
     ["dreamline discount posts twice", { ...real, [DREAMLINE]: real[DREAMLINE].replace("if (prior.rows[0]) return null;", "") }],
+    // 443.195 — main's shape: the receipt consumed as soon as it is matched (before the mismatch / cross-rail exits).
+    ["dreamline mismatch consumes the receipt", { ...real, [DREAMLINE]: real[DREAMLINE]
+      .replace("const hit = matchBookedReceipt(line, booked, used);\n      if (hit) {", "const hit = matchBookedReceipt(line, booked, used);\n      if (hit) {\n        used.add(hit.expense_id);")
+      .replace("used.add(hit.expense_id); // adopted", "// adopted") }],
+    ["dreamline mismatch consumes (extra add)", { ...real, [DREAMLINE]: real[DREAMLINE].replace('record(line, "amount_mismatch", {', 'used.add(hit.expense_id);\n          record(line, "amount_mismatch", {') }],
+    ["dreamline adopts without stamping", { ...real, [DREAMLINE]: real[DREAMLINE].replace("await stampDreamlineReceiptAdopted(client, {", "await noop(client, {") }],
     ["creator posts the receipt again", { ...real, [CREATOR]: real[CREATOR].replace('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)', "Promise.resolve(null)") }],
     // 443.194 — the repointed anchor (one expense engine, #26885).
     ["creator posts before asking the receipt", { ...real, [CREATOR]: (() => {
