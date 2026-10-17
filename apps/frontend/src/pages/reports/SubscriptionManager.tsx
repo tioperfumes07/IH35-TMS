@@ -11,7 +11,7 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
-import { MobileOptimizedTable } from "../../components/shared/MobileOptimizedTable";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { mmmDdTime } from "../../lib/formatDate";
 import { InfoPopover } from "../../components/shared/InfoPopover";
@@ -264,145 +264,121 @@ export function SubscriptionManager() {
         </p>
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-2">
-        <MobileOptimizedTable
-          rows={rows}
-          rowKey={(row) => row.uuid}
-          emptyMessage={
-            // GO-0028: this used to be a binary isSuccess check, so a genuine fetch FAILURE was
-            // indistinguishable from "still loading" -- the table showed "Loading subscriptions…"
-            // forever with no error, no retry affordance.
-            subsQuery.isSuccess
-              ? "No subscriptions found."
-              : subsQuery.isError
-                ? "Failed to load subscriptions — please retry."
-                : "Loading subscriptions…"
-          }
-          columns={[
-            {
-              key: "report",
-              header: "Report",
-              render: (row) =>
-                REPORT_LABELS[row.report_slug] ?? row.report_slug,
-            },
-            {
-              key: "cadence",
-              header: "Cadence",
-              render: (row) => cadenceLabel(row),
-            },
-            {
-              key: "recipients",
-              header: "Recipients",
-              render: (row) => row.recipient_emails.join(", "),
-            },
-            {
-              key: "format",
-              header: "Format",
-              render: (row) => row.delivery_format.toUpperCase(),
-            },
-            {
-              key: "last",
-              header: "Last sent",
-              render: (row) => subscriptionTimestampLabel(row.last_sent_at),
-            },
-            {
-              key: "next",
-              header: "Next",
-              render: (row) => subscriptionTimestampLabel(row.next_scheduled_at),
-            },
-            {
-              key: "status",
-              header: "Status",
-              render: (row) => (
-                <span
-                  className={`rounded border px-2 py-0.5 text-xs font-semibold ${
-                    row.is_active
-                      ? "border-[#E5E7EB] bg-[#E5E7EB] text-[#0F1219]"
-                      : "border-gray-200 bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {subscriptionStatusLabel(row.is_active)}
-                </span>
-              ),
-            },
-            ...(isOwner
-              ? [
-                  {
-                    key: "actions",
-                    header: "Actions",
-                    render: (row: SubscriptionRow) => (
-                      <div className="space-x-1">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => {
-                            setEditing(row);
-                            setEditorOpen(true);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        {row.is_active ? (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            loading={deactivateMut.isPending}
-                            onClick={() => deactivateMut.mutate(row.uuid)}
-                          >
-                            Deactivate
-                          </Button>
-                        ) : null}
-                      </div>
-                    ),
-                  },
-                ]
-              : []),
-          ]}
-        />
-      </div>
+      {/* LEAD 443.181 — the app's one table. A subscription has no record page of its own (it is edited in the
+          SubscriptionEditor dialog via the Edit action), and a delivery-log line has none either: no row route. */}
+      <ParityTable<SubscriptionRow>
+        title="Subscriptions"
+        tableTestId="q8-subscriptions-table"
+        storageKey="ih35.reports.subscriptions.v1"
+        rows={rows}
+        rowKey={(row) => row.uuid}
+        emptyText={
+          // GO-0028: this used to be a binary isSuccess check, so a genuine fetch FAILURE was
+          // indistinguishable from "still loading" -- the table showed "Loading subscriptions…"
+          // forever with no error, no retry affordance.
+          subsQuery.isSuccess
+            ? "No subscriptions found."
+            : subsQuery.isError
+              ? "Failed to load subscriptions — please retry."
+              : "Loading subscriptions…"
+        }
+        columns={[
+          {
+            key: "report_slug",
+            label: "Report",
+            sortValue: (row) => REPORT_LABELS[row.report_slug] ?? row.report_slug,
+            render: (row) => REPORT_LABELS[row.report_slug] ?? row.report_slug,
+          },
+          { key: "cadence", label: "Cadence", sortValue: (row) => cadenceLabel(row), render: (row) => cadenceLabel(row) },
+          {
+            key: "recipient_emails",
+            label: "Recipients",
+            sortValue: (row) => row.recipient_emails.join(", "),
+            render: (row) => row.recipient_emails.join(", "),
+          },
+          { key: "delivery_format", label: "Format", render: (row) => row.delivery_format.toUpperCase() },
+          { key: "last_sent_at", label: "Last sent", render: (row) => subscriptionTimestampLabel(row.last_sent_at) },
+          { key: "next_scheduled_at", label: "Next", render: (row) => subscriptionTimestampLabel(row.next_scheduled_at) },
+          {
+            key: "is_active",
+            label: "Status",
+            sortValue: (row) => subscriptionStatusLabel(row.is_active),
+            render: (row) => (
+              <span
+                className={`rounded border px-2 py-0.5 text-xs font-semibold ${
+                  row.is_active
+                    ? "border-[#E5E7EB] bg-[#E5E7EB] text-[#0F1219]"
+                    : "border-gray-200 bg-gray-100 text-gray-700"
+                }`}
+              >
+                {subscriptionStatusLabel(row.is_active)}
+              </span>
+            ),
+          },
+        ]}
+        rowActionsWidth={190}
+        rowActions={
+          isOwner
+            ? (row) => (
+                <div className="flex flex-nowrap justify-end gap-1">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setEditing(row);
+                      setEditorOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  {row.is_active ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      loading={deactivateMut.isPending}
+                      onClick={() => deactivateMut.mutate(row.uuid)}
+                    >
+                      Deactivate
+                    </Button>
+                  ) : null}
+                </div>
+              )
+            : undefined
+        }
+      />
 
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold text-[#0F1219]">
-          Delivery history
-        </h3>
-        <div className="rounded-sm border border-gray-200 bg-white p-2">
-          <MobileOptimizedTable
-            rows={logRows}
-            rowKey={(log) => log.uuid}
-            emptyMessage={
-              // GO-0028: same fix as subsQuery above -- a fetch failure must not look identical
-              // to "still loading" forever.
-              logQuery.isSuccess
-                ? "No deliveries logged yet."
-                : logQuery.isError
-                  ? "Failed to load delivery history — please retry."
-                  : "Loading delivery history…"
-            }
-            columns={[
-              {
-                key: "sent",
-                header: "Sent at",
-                render: (log) => subscriptionTimestampLabel(log.sent_at),
-              },
-              { key: "status", header: "Status", render: (log) => log.status },
-              {
-                key: "recipients",
-                header: "Recipients",
-                render: (log) => (log.recipients ?? []).join(", ") || "—",
-              },
-              {
-                key: "error",
-                header: "Error",
-                render: (log) => (
-                  <span className="text-red-700">
-                    {log.error_message ?? "—"}
-                  </span>
-                ),
-              },
-            ]}
-          />
-        </div>
-      </section>
+      <ParityTable<DeliveryLogRow>
+        title="Delivery history"
+        tableTestId="q8-subscriptions-delivery-log-table"
+        storageKey="ih35.reports.subscriptions-delivery-log.v1"
+        rows={logRows}
+        rowKey={(log) => log.uuid}
+        emptyText={
+          // GO-0028: same fix as subsQuery above -- a fetch failure must not look identical
+          // to "still loading" forever.
+          logQuery.isSuccess
+            ? "No deliveries logged yet."
+            : logQuery.isError
+              ? "Failed to load delivery history — please retry."
+              : "Loading delivery history…"
+        }
+        columns={[
+          { key: "sent_at", label: "Sent at", render: (log) => subscriptionTimestampLabel(log.sent_at) },
+          { key: "status", label: "Status" },
+          {
+            key: "recipients",
+            label: "Recipients",
+            sortValue: (log) => (log.recipients ?? []).join(", "),
+            render: (log) => (log.recipients ?? []).join(", ") || "—",
+          },
+          {
+            key: "error_message",
+            label: "Error",
+            allowWrap: true,
+            render: (log) => <span className="text-red-700">{log.error_message ?? "—"}</span>,
+          },
+        ]}
+      />
 
       <SubscriptionEditor
         open={editorOpen}

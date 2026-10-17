@@ -1,8 +1,9 @@
+// TABLE_DATE_OMIT: this table has no date column by design — master-data roster (one row per customer: name / open balance / status / quality), not a time series.
 import { useMemo } from "react";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import type { Customer } from "../../api/mdata";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
-import { ResizableTable } from "../../components/shared/ResizableTable";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { CardLink } from "../../components/shared/CardLink";
 import { SidebarPagination } from "../../components/shared/SidebarPagination";
 import { SelectCombobox } from "../../components/Combobox";
@@ -128,76 +129,85 @@ export function CustomerListSidebar({
         <option value="balance_desc">Sort by balance (high-low)</option>
         <option value="balance_asc">Sort by balance (low-high)</option>
       </SelectCombobox>
-      {/* QBO columnar list: resizable, per-user-persisted column widths (shared ResizableTable/ResizableTh). */}
+      {/* LEAD 443.181 — the app's one table (ParityTable). The row opens the customer: ParityTable clicks the row's CardLink,
+          whose onNavigate selects the master-detail row in place (cmd/ctrl-click still opens the full page). Rows arrive
+          pre-sorted and pre-paged by this sidebar, so the built-in pager is hidden (SidebarPagination owns it). */}
       <div className={MASTER_DETAIL.listScrollClass} data-c05-list-scroll="true">
-        <ResizableTable
-          tableId="customers-master-list"
+        <ParityTable<Customer>
+          tableTestId="customers-master-list"
+          storageKey="ih35.customers.master-list.v1"
+          rows={pagedCustomers}
+          rowKey={(customer) => customer.id}
+          rowTestId={() => "customers-master-list-row"}
+          rowClassName={(customer) => (selectedCustomerId === customer.id ? MASTER_DETAIL.rowSelectedClass : "")}
+          loading={listState.isLoading}
+          emptyText={listState.isEmpty ? "No customers found." : ""}
+          pageSize={Math.max(1, pagedCustomers.length)}
+          hidePager
+          suppressToolbarSearch
+          suppressToolbarRange
+          embedded
           columns={[
-            { id: "name", label: "Name", defaultWidth: 170, align: "left" },
-            { id: "open_balance", label: "Open Balance", defaultWidth: 100, align: "right" },
-            // VC-DETAIL-01 (owner ROUND 14, 2026-09-06): Status is active/inactive (deactivated_at),
-            // NOT the quality chip; the quality chip moves to its own column (sibling to VendorListSidebar).
-            { id: "status", label: "Status", defaultWidth: 80, align: "left" },
-            { id: "quality", label: "Quality", defaultWidth: 90, align: "left" },
-          ]}
-        >
-          {(widths) => (
-            <tbody>
-              {pagedCustomers.map((customer) => {
-                const rating = customerQualityRating(customer.quality_payment_score, customer.quality_overall_flag);
+            {
+              key: "name",
+              label: "Name",
+              minWidth: 170,
+              render: (customer) => (
+                <CardLink href={`/customers/${customer.id}`} onNavigate={() => onSelectCustomer(customer.id)} className="block truncate text-xs font-medium text-gray-900 hover:underline">
+                  {/* invariant #23 (§7 owner-locked): the canonical `single-line-name` token + title for the full name. */}
+                  <span title={customer.name} className="single-line-name">{customer.name}</span>
+                </CardLink>
+              ),
+            },
+            {
+              key: "open_balance",
+              label: "Open Balance",
+              cellClass: "text-right tabular-nums",
+              sortValue: (customer) => (openByCustomerId.get(customer.id) ?? 0) + (unclearedByCustomerId?.get(customer.id)?.uncleared_cents ?? 0),
+              render: (customer) => (
+                <>
+                  {openBalancesAvailable ? (
+                    <>
+                      Cleared{" "}
+                      <MoneyCell
+                        cents={(openByCustomerId.get(customer.id) ?? 0) + (unclearedByCustomerId?.get(customer.id)?.uncleared_cents ?? 0)}
+                        format={fmtMoney}
+                        className="inline"
+                        drill={{ none: "Cleared balance = open invoices + uncleared payments — open the customer to see each" }}
+                      />
+                    </>
+                  ) : (
+                    "Unavailable"
+                  )}
+                  <UnclearedDocumentsNote docs={unclearedByCustomerId?.get(customer.id)?.uncleared_documents ?? []} />
+                </>
+              ),
+            },
+            // VC-DETAIL-01 (owner ROUND 14, 2026-09-06): Status is active/inactive (deactivated_at), NOT the quality chip.
+            {
+              key: "status",
+              label: "Status",
+              sortValue: (customer) => (customer.deactivated_at != null ? "Inactive" : "Active"),
+              render: (customer) => {
                 const isInactive = customer.deactivated_at != null;
-                const selected = selectedCustomerId === customer.id;
                 return (
-                  <tr
-                    key={customer.id}
-                    data-c04-row="true"
-                    className={`${MASTER_DETAIL.rowBorderClass} ${MASTER_DETAIL.rowStripeClass} ${
-                      selected ? MASTER_DETAIL.rowSelectedClass : MASTER_DETAIL.rowHoverClass
-                    }`}
-                  >
-                    <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5">
-                      {/* Anchor navigation (cmd-click / keyboard) via CardLink; also selects the master-detail row. */}
-                      <CardLink href={`/customers/${customer.id}`} onNavigate={() => onSelectCustomer(customer.id)} className="block truncate text-xs font-medium text-gray-900 hover:underline">
-                        {/* invariant #23 (§7 owner-locked): the canonical `single-line-name` token, plus the
-                            title so the full name is still readable once ellipsised. The surrounding
-                            `truncate` already prevented wrapping here — this page never rendered the name
-                            through ParityTable — so this adds the CANONICAL treatment and the tooltip, it
-                            does not repair a wrap. */}
-                        <span title={customer.name} className="single-line-name">{customer.name}</span>
-                      </CardLink>
-                    </td>
-                    <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">
-                      {openBalancesAvailable ? (
-                        <>
-                          Cleared{" "}
-                          <MoneyCell
-                            cents={(openByCustomerId.get(customer.id) ?? 0) + (unclearedByCustomerId?.get(customer.id)?.uncleared_cents ?? 0)}
-                            format={fmtMoney}
-                            className="inline"
-                            drill={{ none: "Cleared balance = open invoices + uncleared payments — open the customer to see each" }}
-                          />
-                        </>
-                      ) : (
-                        "Unavailable"
-                      )}
-                      <UnclearedDocumentsNote docs={unclearedByCustomerId?.get(customer.id)?.uncleared_documents ?? []} />
-                    </td>
-                    <td style={{ width: widths.status }} className="px-2 py-1.5">
-                      <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${isInactive ? "bg-gray-200 text-gray-700" : "bg-[#F7F8FA] text-[#1F2A44]"}`}>
-                        {isInactive ? "Inactive" : "Active"}
-                      </span>
-                    </td>
-                    <td style={{ width: widths.quality }} className="px-2 py-1.5">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${rating.className}`}>{rating.label}</span>
-                    </td>
-                  </tr>
+                  <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${isInactive ? "bg-gray-200 text-gray-700" : "bg-[#F7F8FA] text-[#1F2A44]"}`}>
+                    {isInactive ? "Inactive" : "Active"}
+                  </span>
                 );
-              })}
-            </tbody>
-          )}
-        </ResizableTable>
-        {listState.isLoading ? <p className="px-1 py-2 text-xs text-[#6B7280]">Loading customers…</p> : null}
-        {listState.isEmpty ? <p className="px-1 py-2 text-xs text-[#6B7280]">No customers found.</p> : null}
+              },
+            },
+            {
+              key: "quality",
+              label: "Quality",
+              sortValue: (customer) => customerQualityRating(customer.quality_payment_score, customer.quality_overall_flag).label,
+              render: (customer) => {
+                const rating = customerQualityRating(customer.quality_payment_score, customer.quality_overall_flag);
+                return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${rating.className}`}>{rating.label}</span>;
+              },
+            },
+          ]}
+        />
       </div>
       <div className="mt-2">
         <SidebarPagination

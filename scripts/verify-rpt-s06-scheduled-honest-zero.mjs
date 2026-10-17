@@ -43,7 +43,8 @@ export function run() {
   if (!/kpiReady \? String\(kpiQuery\.data\?\.run_last_7d/.test(home)) {
     failures.push(`${HOME}: Run last 7 days KPI must use kpiReady ? real count : "—"`);
   }
-  if (!/emptyMessage=/.test(subs) || !/No subscriptions found/.test(subs)) {
+  // LEAD 443.181: the table is ParityTable now (emptyText=); MobileOptimizedTable used emptyMessage=.
+  if (!/(?:emptyMessage|emptyText)=/.test(subs) || !/No subscriptions found/.test(subs)) {
     failures.push(`${SUBS}: must show honest emptyMessage when zero subscriptions`);
   }
   // Real copy is "No custom schedules — add daily dispatch board or AR aging." — still an
