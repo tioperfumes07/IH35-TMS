@@ -2324,15 +2324,15 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   { key: "escrow_rsv", label: "Escrow Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.escrow_reserve_cents), render: (row) => fmtCurrency(Number(row.escrow_reserve_cents) / 100) },
                   { key: "cash_rsv", label: "Cash Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.cash_reserve_cents), render: (row) => fmtCurrency(Number(row.cash_reserve_cents) / 100) },
                   { key: "fees", label: "Fees", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.fee_cents), render: (row) => fmtCurrency(Number(row.fee_cents) / 100) },
-                  { key: "invoice_total", label: "Invoice total", cellClass: "text-right", defaultHidden: true, render: (row) => fmtCurrency(Number(row.invoice_total_cents ?? 0) / 100) },
-                  { key: "faro_report_ref", label: "Faro report", defaultHidden: true, render: (row) => row.faro_report_ref ?? "—" },
-                  { key: "wire_date", label: "Wire date", defaultHidden: true, render: (row) => fmtDate(row.wire_date) },
-                  // Faro-portal columns with no backing field yet — kept (owner: nothing removed unless he says), hidden by
-                  // default so the table is not tight; each one is in the gear.
+                  { key: "invoice_total", label: "Invoice total", cellClass: "text-right", render: (row) => fmtCurrency(Number(row.invoice_total_cents ?? 0) / 100) },
+                  { key: "faro_report_ref", label: "Faro report", render: (row) => row.faro_report_ref ?? "—" },
+                  { key: "wire_date", label: "Wire date", render: (row) => fmtDate(row.wire_date) },
+                  // Faro-portal columns with no backing field yet — kept (owner: nothing removed unless he says). Visible by
+                  // default: the additive-only law (docs/LAW.md L379, verify-additive-only shrink-only defaultHidden ratchet)
+                  // forbids new hidden-by-default columns; the operator hides any of them from the gear.
                   ...(["PO", "Discount", "Wire Fee", "Rebate Income", "Returned Item Fee", "Schedule Fee", "Shipping Fee", "Cash Advance Fee", "Processing Fee", "Dispatch", "Receipts", "ChgBack (Refund)"] as const).map((label) => ({
                     key: `faro_${label.toLowerCase().replace(/[^a-z]+/g, "_")}`,
                     label,
-                    defaultHidden: true,
                     render: () => "—",
                   })),
                 ]}
