@@ -919,6 +919,67 @@ export const auditEventTypesCatalogConfig: GenericCatalogConfig = {
   hasDeactivatedAt: false,
 };
 
+/**
+ * LEAD 443.199 (heavy post-chain verify:catalog-factory-coverage) — two reference lists that were read by app code but
+ * reachable through NO route at all. Registered READ-ONLY because that is exactly what the database allows today
+ * (measured on prod 2026-10-17, read-only): FORCE RLS with a SELECT policy only (downtime_categories_select,
+ * downtime_fault_parties_select) and no INSERT/UPDATE policy, so a write route
+ * would 500 under RLS. Writes return 405 until a migration adds write policies (then flip readOnly off).
+ *   downtime_categories / downtime_fault_parties — per-entity (operating_company_id, code, label, description,
+ *     display_order, is_active, created_at); read by maintenance/kpi.routes.ts + company-settlement-report.service.ts.
+ * Shape-exact: `label` is served under its own key (no displayNameColumn alias — see dispatchErrorReasonsCatalogConfig),
+ * no updated_at / audit-user columns.
+ */
+export const downtimeCategoriesCatalogConfig: GenericCatalogConfig = {
+  catalogName: "maintenance.downtime_categories",
+  tableName: "downtime_categories",
+  routePrefix: "/api/v1/catalogs/maintenance",
+  urlSegment: "downtime-categories",
+  displayName: "Downtime Categories",
+  entityScoped: true,
+  readOnly: true,
+  hasUpdatedAt: false,
+  hasAuditUserColumns: false,
+  allowedColumns: ["code", "label", "description", "display_order", "is_active"],
+  requiredColumns: ["code", "label"],
+  validators: {
+    code: z.string().trim().min(1).max(80),
+    label: z.string().trim().min(1).max(160),
+    description: z.string().trim().max(500).optional(),
+    display_order: z.coerce.number().int().min(0).max(10000).default(0),
+    is_active: z.coerce.boolean().default(true),
+  },
+  searchableColumns: ["code", "label", "description"],
+  defaultSort: { column: "display_order", dir: "asc" },
+  softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
+};
+
+export const downtimeFaultPartiesCatalogConfig: GenericCatalogConfig = {
+  catalogName: "maintenance.downtime_fault_parties",
+  tableName: "downtime_fault_parties",
+  routePrefix: "/api/v1/catalogs/maintenance",
+  urlSegment: "downtime-fault-parties",
+  displayName: "Downtime Fault Parties",
+  entityScoped: true,
+  readOnly: true,
+  hasUpdatedAt: false,
+  hasAuditUserColumns: false,
+  allowedColumns: ["code", "label", "description", "display_order", "is_active"],
+  requiredColumns: ["code", "label"],
+  validators: {
+    code: z.string().trim().min(1).max(80),
+    label: z.string().trim().min(1).max(160),
+    description: z.string().trim().max(500).optional(),
+    display_order: z.coerce.number().int().min(0).max(10000).default(0),
+    is_active: z.coerce.boolean().default(true),
+  },
+  searchableColumns: ["code", "label", "description"],
+  defaultSort: { column: "display_order", dir: "asc" },
+  softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
+};
+
 export async function registerGenericCatalogRoutes(app: FastifyInstance) {
   createCatalogRoutes(app, fleetEquipmentTypesCatalogConfig, { mode: "extensions" });
   // LST-A-01: full CRUD — these had no write path at all before.
@@ -929,6 +990,9 @@ export async function registerGenericCatalogRoutes(app: FastifyInstance) {
   createCatalogRoutes(app, accountTypesCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, detailTypesCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, auditEventTypesCatalogConfig, { mode: "all" });
+  // LEAD 443.199 — read-only reference lists (SELECT-only RLS today).
+  createCatalogRoutes(app, downtimeCategoriesCatalogConfig, { mode: "all" });
+  createCatalogRoutes(app, downtimeFaultPartiesCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, driverTerminationReasonsCatalogConfig, { mode: "all" });
   createCatalogRoutes(app, customerTypesCatalogConfig, { mode: "all" });
   // LST-WIRE-08 — alias-served maintenance catalogs.
