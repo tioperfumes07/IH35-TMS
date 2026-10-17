@@ -30,7 +30,9 @@ function verify(s) {
     ["planner has no bounded unit-master call", !/const unitsQuery = useQuery\([\s\S]*?listUnits\(\{/.test(s.page)],
     ["unit read failure remains visible", /const isError = gridQuery\.isError \|\| unitsQuery\.isError \|\| reservedQuery\.isError/.test(s.page) && /unitsQuery\.refetch\(\)/.test(s.page)],
     ["OOS truth still mapped into grid", /Boolean\(unit\.is_oos\)/.test(s.page) && /status:\s*"in-shop"/.test(s.page)],
-    ["retired units excluded from planner master", /PLANNER_UNIT_STATUSES\.has\(String\(unit\.status \?\? ""\)\)/.test(s.page)],
+    // ed6239a3e0 (#21936, ROUND 20.6 K3) added the excluded-unit COUNTER, which repeats the same has() expression without
+    // excluding anything — the rule must be the grid's own `continue`, or removing the filter goes unnoticed.
+    ["retired units excluded from planner master", /if \(!PLANNER_UNIT_STATUSES\.has\(String\(unit\.status \?\? ""\)\)\) continue;/.test(s.page)],
     ["scheduler rows require active drivers", /AND d\.status = 'Active'::mdata\.driver_status/.test(s.scheduler)],
     ["scheduler vacant units require InService", /AND u\.assigned_driver_id IS NULL[\s\S]{0,100}AND u\.status = 'InService'::mdata\.unit_status/.test(s.scheduler)],
     ["timeline rows require active drivers", /AND d\.archived_at IS NULL[\s\S]{0,100}AND d\.status = 'Active'::mdata\.driver_status/.test(s.planner)],
