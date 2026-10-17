@@ -2335,6 +2335,8 @@ export const COA_ROLE_VALUES = [
   "reefer_fuel_expense",
   // LST-F424 (202615440200) — 2180 Accrued Accident Claims.
   "accrued_claims_liability",
+  // LEAD 443.189 (202616010100) — 2410 Owner / Related-Party Loan Payable (parent of every "Due to / from" account).
+  "related_party_loan_parent",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
