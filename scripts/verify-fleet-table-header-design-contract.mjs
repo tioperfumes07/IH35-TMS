@@ -19,6 +19,13 @@
 //      element (i.e. a header cell that isn't `TableHeaderCell` and isn't styled to the token).
 //   3. The header row no longer imports `colors`/`typography` from design/tokens.
 //
+// LEAD 443.181 (owner: "all tables built the same way"): the roster now renders on <ParityTable>, so every header
+// cell — checkbox, data columns and the row-actions (Edit) column — is painted by ParityTable itself from the same
+// design-contract tokens. The guard now fails if FleetTable.tsx:
+//   1. stops rendering on ParityTable, or
+//   2. hand-builds a header again (a raw <table> / <thead> / <th> beside it), or
+//   3. overrides ParityTable's contract header shade/ink/weight (headerBg / headerInk / headerWeight).
+//
 // Usage: node scripts/verify-fleet-table-header-design-contract.mjs [--selftest]
 
 import { readFileSync } from "node:fs";
@@ -27,37 +34,15 @@ const FILE = "apps/frontend/src/components/FleetTable.tsx";
 
 function audit(src) {
   const f = [];
-
-  if (!/import\s*\{[^}]*colors[^}]*typography[^}]*\}\s*from\s*"\.\.\/design\/tokens"/.test(src) &&
-      !/import\s*\{[^}]*typography[^}]*colors[^}]*\}\s*from\s*"\.\.\/design\/tokens"/.test(src)) {
-    f.push(`${FILE}: must import { colors, typography } from "../design/tokens"`);
+  if (!/<ParityTable\b/.test(src)) {
+    f.push(`${FILE}: the roster must render on <ParityTable> (the one table component carrying the header design contract)`);
   }
-
-  // The <thead> wrapper must not re-introduce a competing background/text-color class — the
-  // contract's background lives on each <th>, matching TableHeaderCell's own inline style.
-  if (/<thead\s+className="[^"]*bg-/.test(src)) {
-    f.push(`${FILE}: <thead> must not paint its own background class — style each <th> to colors.tableHeaderBg instead (row-level bg drifts out of sync with TableHeaderCell)`);
+  if (/<table[\s>]|<thead[\s>]|<th[\s>]/.test(src)) {
+    f.push(`${FILE}: hand-built <table>/<thead>/<th> header markup is back — the header contract lives in ParityTable`);
   }
-
-  // Every bare `<th` (not the shared TableHeaderCell component) inside the table header must
-  // carry colors.tableHeaderBg somewhere in its own opening tag. We scan each `<th ... >` block
-  // up to its closing `>` and require the token pairing.
-  const theadBlock = (src.match(/<thead>([\s\S]*?)<\/thead>/) ?? [])[1];
-  if (!theadBlock) {
-    f.push(`${FILE}: <thead> block not found — has the fleet table header markup moved?`);
-  } else {
-    const thOpenTags = theadBlock.match(/<th\b[^>]*>/g) ?? [];
-    for (const tag of thOpenTags) {
-      // Pull the full element (tag through matching style block) — cheap heuristic: look at the
-      // 400 chars following the tag open for the style prop, since style blocks are multi-line.
-      const idx = theadBlock.indexOf(tag);
-      const chunk = theadBlock.slice(idx, idx + 400);
-      if (!/colors\.tableHeaderBg/.test(chunk)) {
-        f.push(`${FILE}: a <th> header cell is missing colors.tableHeaderBg — every header cell must match the design-contract shade (${tag.trim()})`);
-      }
-    }
+  if (/\bheader(Bg|Ink|Weight)=/.test(src)) {
+    f.push(`${FILE}: must not override ParityTable's contract header shade / ink / weight`);
   }
-
   return f;
 }
 
@@ -73,18 +58,16 @@ function main() {
   }
 
   if (selftest) {
-    const mutated = src.replace(
-      /<thead>/,
-      '<thead className="bg-gray-50 text-[11px] uppercase text-gray-600">'
-    );
-    if (audit(mutated).length === 0) {
-      console.error("SELFTEST FAIL: reverted <thead> background did not trip");
-      process.exit(1);
-    }
-    const stripped = src.replace(/colors\.tableHeaderBg/g, "colors.tableHeaderBg /* removed */".replace(/colors\.tableHeaderBg/, "'#EEF2F6'"));
-    if (audit(stripped).length === 0) {
-      console.error("SELFTEST FAIL: removing colors.tableHeaderBg from a header cell did not trip");
-      process.exit(1);
+    const planted = [
+      ["hand-built header back", src + '\n<thead className="bg-gray-50"><tr><th>Edit</th></tr></thead>'],
+      ["ParityTable dropped", src.replace(/<ParityTable\b/g, "<HandTable")],
+      ["header shade overridden", src.replace("<ParityTable<FleetRow>", '<ParityTable<FleetRow> headerBg="#F9FAFB"')],
+    ];
+    for (const [name, mutated] of planted) {
+      if (audit(mutated).length === 0) {
+        console.error(`SELFTEST FAIL: ${name} did not trip`);
+        process.exit(1);
+      }
     }
     console.log("SELFTEST OK: guard trips on regression");
   }

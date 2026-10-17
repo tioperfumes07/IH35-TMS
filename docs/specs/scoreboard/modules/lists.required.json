@@ -2799,9 +2799,9 @@
       "id": "lists.popover.filter",
       "tab": "Popovers",
       "sub": "Popover: Filter Popover",
-      "route_hint": "surface://components/lists/ListView/components/FilterPopover.tsx",
+      "route_hint": "surface://components/table/CollapsedListFilters.tsx",
       "surface_kind": "popover",
-      "surface_path": "components/lists/ListView/components/FilterPopover.tsx",
+      "surface_path": "components/table/CollapsedListFilters.tsx",
       "required": [
         "qbo_chrome"
       ]
@@ -2900,7 +2900,7 @@
         "qbo_chrome",
         "connectivity"
       ],
-      "surface_path": "components/lists/ListView/components/FilterPopover.tsx"
+      "surface_path": "pages/lists/accounting/ChartOfAccountsListPage.tsx"
     },
     {
       "id": "lists.modal.detail_type",
@@ -7650,7 +7650,7 @@
           "removed": [
             "connectivity"
           ],
-          "reason": "FilterPopover.tsx filters already-fetched rows"
+          "reason": "CollapsedListFilters.tsx stages filters over already-fetched rows"
         },
         {
           "id": "lists.popover.info",

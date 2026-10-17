@@ -22,7 +22,8 @@ const coa = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/lists/accou
 if (!coa.includes('data-testid="coa-show-account-numbers-toggle"')) {
   failures.push("Chart of Accounts must expose show-account-numbers toggle");
 }
-if (!coa.includes("visible: showAccountNumbers")) {
+// LEAD 443.181 — on ParityTable the NUMBER column is dropped from the column set unless the toggle is ON.
+if (!/return showAccountNumbers \? columns : columns\.filter\(\(column\) => column\.key !== "number"\)/.test(coa)) {
   failures.push("NUMBER column must be gated by showAccountNumbers (default off)");
 }
 

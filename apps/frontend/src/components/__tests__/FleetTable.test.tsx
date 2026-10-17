@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import * as clientApi from "../../api/client";
@@ -123,11 +123,15 @@ describe("FleetTable unified list", () => {
 
   it("bulk-update routes to correct endpoint per kind", async () => {
     renderTable();
-    // Select the two rows by their stable per-row checkbox aria-labels (robust to the
-    // toolbar's select-all + column-chooser checkboxes).
-    fireEvent.click(screen.getByLabelText("Select unit 101"));
-    fireEvent.click(screen.getByLabelText("Select unit T-10"));
+    // Select the two rows by their own per-row checkbox, scoped to each row's stable testid
+    // (robust to the toolbar's select-all + column-chooser checkboxes). LEAD 443.181: the roster is a
+    // ParityTable now, whose per-row checkbox is "Select row".
+    fireEvent.click(within(screen.getByTestId("fleet-row-truck-1")).getByLabelText("Select row"));
+    fireEvent.click(within(screen.getByTestId("fleet-row-trailer-1")).getByLabelText("Select row"));
+    // "Change Status" is a Combobox: typing only filters, a value commits when its option is picked
+    // (typing alone left Apply disabled — this test was red on main before LEAD 443.181).
     fireEvent.change(screen.getByLabelText("Change Status"), { target: { value: "Active" } });
+    fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: "Active" }));
     fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 
     await vi.waitFor(() => {

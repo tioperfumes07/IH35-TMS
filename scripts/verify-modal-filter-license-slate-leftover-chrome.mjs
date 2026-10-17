@@ -4,7 +4,6 @@ import { readFileSync } from "node:fs";
 
 const TARGETS = [
   "apps/frontend/src/components/Modal.tsx",
-  "apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx",
   "apps/frontend/src/components/driver-profile/LicenseSection.tsx",
 ];
 const LABEL = "verify-modal-filter-license-slate-leftover-chrome";

@@ -42,7 +42,7 @@ describe("ChartOfAccountsListPage", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders QBO-parity columns on the ListView table", async () => {
+  it("renders QBO-parity columns on the ParityTable", async () => {
     vi.spyOn(chartOfAccountsCatalogClient, "list").mockResolvedValue({
       rows: [
         {
