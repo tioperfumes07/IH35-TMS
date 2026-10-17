@@ -72,6 +72,7 @@
  * void, and what stops a backfill from doubling half a million dollars of fuel expense.
  */
 
+import { relayFillUnitIdSql } from "./relay-fill-unit.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import {
   CompanyDirectCredit,
@@ -757,9 +758,11 @@ export async function adoptRelayFillExpenseDocument(
       ORDER BY ft.total_cost DESC NULLS LAST, ft.id`,
     [company, input.relay_fill_id],
   );
+  // 443.192 — the unit by the poster's one rule (fuel/relay-fill-unit.sql.ts): matched_unit_id, else the printed number
+  // when exactly one active unit carries it. Reading matched_unit_id alone left the document unit-less where the JE had one.
   const relayRow = await client.query<{ matched_driver_id: string | null; matched_unit_id: string | null }>(
-    `SELECT matched_driver_id::text, matched_unit_id::text FROM integrations.relay_fuel_transactions
-      WHERE id::text = $1 AND operating_company_id = $2::uuid`,
+    `SELECT r.matched_driver_id::text, ${relayFillUnitIdSql("r")}::text AS matched_unit_id FROM integrations.relay_fuel_transactions r
+      WHERE r.id::text = $1 AND r.operating_company_id = $2::uuid`,
     [input.relay_fill_id, company],
   );
   const primary = fills.rows.find((f) => !f.taken) ?? null;

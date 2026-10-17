@@ -37,7 +37,68 @@ export const REQUIRES_LIVE_DB = "money-relevant (purge-era closures) — must fa
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-purge-era-closures-still-hold";
+
+// 31 — LEAD 443.192 (CC-2): a COMPANY COST is not a "no-load expense case". ebd9f92d09 (ACCT-F443107, LEAD 443.105 #2)
+// made every expense line with no load carry an explicit reason, and companyCostExemptionReason
+// (apps/backend/src/accounting/expense-line-load-exemption.ts) names it: "Company cost — <account> — not tied to a
+// load (<document>)". Measured 2026-10-17: 16 of the 18 flagged expenses were exactly that — is_company_expense = true,
+// every line carrying that reason (Mexico dispatch pay 6110-01-001, BofA fees 6300/6310, QuickBooks, phone, office).
+// Overhead is not a load cost; counting it hid the 2 real cases (Relay fuel fills on T169 / T163 whose documents
+// carried no unit — fixed at the document writer, fuel/relay-fill-unit.sql.ts). The rule stays as strict for
+// everything else: a non-company expense, or a company expense with ANY line lacking the company-cost reason, still counts.
+export const CLOSURE_31_SQL = `SELECT COUNT(*)::int AS n FROM accounting.expenses e
+      WHERE e.operating_company_id = $1::uuid
+        AND e.is_sample_data IS NOT TRUE
+        AND e.deleted_at IS NULL
+        AND e.voided_at IS NULL
+        AND e.load_id IS NULL
+        AND e.driver_uuid IS NULL
+        AND e.unit_id IS NULL
+        AND NOT (
+          e.is_company_expense IS TRUE
+          AND EXISTS (SELECT 1 FROM accounting.expense_lines el WHERE el.expense_id = e.id)
+          AND NOT EXISTS (
+            SELECT 1 FROM accounting.expense_lines el
+             WHERE el.expense_id = e.id
+               AND (el.load_exemption_reason IS NULL OR el.load_exemption_reason NOT LIKE 'Company cost — %')
+          )
+        )`;
+
+/** Selftest: the closure-31 rule exempts ONLY a company cost whose every line carries the company-cost reason. */
+export function closure31Problems(sql) {
+  const p = [];
+  for (const must of ["e.load_id IS NULL", "e.driver_uuid IS NULL", "e.unit_id IS NULL", "e.voided_at IS NULL"]) {
+    if (!sql.includes(must)) p.push(`closure 31 no longer requires ${must}`);
+  }
+  if (!/e\.is_company_expense IS TRUE/.test(sql)) p.push("closure 31 exempts expenses that are not company costs");
+  if (!/load_exemption_reason IS NULL OR el\.load_exemption_reason NOT LIKE 'Company cost — %'/.test(sql)) p.push("closure 31 exempts a company expense without checking every line's company-cost reason");
+  if (!/EXISTS \(SELECT 1 FROM accounting\.expense_lines el WHERE el\.expense_id = e\.id\)/.test(sql)) p.push("closure 31 exempts a company expense with no lines at all");
+  return p;
+}
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
+export const CLOSURE_19_SQL = `WITH op AS (
+    SELECT car.account_id, a.account_number
+      FROM accounting.chart_of_accounts_roles car
+      JOIN catalogs.accounts a ON a.id = car.account_id
+     WHERE car.operating_company_id = $1::uuid
+       AND a.operating_company_id = $1::uuid
+       AND car.role = 'operating_bank'
+       AND car.is_active = true
+       AND a.deactivated_at IS NULL
+       AND a.is_postable = true
+     ORDER BY car.updated_at DESC
+     LIMIT 1
+  )
+  SELECT op.account_number::text,
+         COALESCE((SELECT SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END)
+                     FROM accounting.journal_entry_postings jep
+                     JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+                    WHERE jep.operating_company_id = $1::uuid
+                      AND jep.account_id = op.account_id
+                      AND je.status = 'posted'
+                      AND je.is_sample_data IS NOT TRUE), 0)::bigint AS balance_cents
+    FROM op`;
 
 /**
  * Run all closure checks against live state. Returns { liveLoads, failures }.
@@ -59,21 +120,16 @@ export async function measureClosures(client) {
   );
   const liveLoads = loadRes.rows[0].n;
 
-  // 19 — GL 1000 has no negative balance (sum of postings on 1000 should be >= 0)
-  const gl1000Res = await client.query(
-    `SELECT COALESCE(SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END), 0)::bigint AS balance_cents
-       FROM accounting.journal_entry_postings jep
-       JOIN catalogs.accounts a ON a.id = jep.account_id
-       JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-      WHERE jep.operating_company_id = $1::uuid
-        AND a.account_number = '1000'
-        AND je.status = 'posted'
-        AND je.is_sample_data IS NOT TRUE`,
-    [USMCA_COMPANY_ID],
-  );
-  const gl1000Balance = Number(gl1000Res.rows[0].balance_cents);
-  if (gl1000Balance < 0) {
-    failures.push(`19: GL 1000 balance is negative (${gl1000Balance} cents)`);
+  // 19 — the operating bank GL account has no negative balance (sum of postings should be >= 0).
+  // 443.192 (Lead ruling 11:40Z): resolved by the operating_bank ROLE (the resolver's own predicates: this entity's role
+  // row, this entity's active postable account), not the literal number '1000' — a renumbered chart would silently
+  // measure nothing. Unbound role -> fail closed.
+  const gl1000Res = await client.query(CLOSURE_19_SQL, [USMCA_COMPANY_ID]);
+  const opBank = gl1000Res.rows[0] ?? null;
+  if (!opBank) {
+    failures.push(`19: no active operating_bank role binding for USMCA — cannot measure the operating bank account (fail closed)`);
+  } else if (Number(opBank.balance_cents) < 0) {
+    failures.push(`19: GL ${opBank.account_number} (operating_bank) balance is negative (${Number(opBank.balance_cents)} cents)`);
   }
 
   // 24 — no duplicate invoice display_id
@@ -164,17 +220,7 @@ export async function measureClosures(client) {
   // the Smithfield Foods expense AUTH-150 voided and replaced with a real Bill (ROUND 290.2). A
   // voided document with no linkage is not a live defect; it is dead history and void-not-delete
   // keeps it exactly as it is.
-  const noLoadExpRes = await client.query(
-    `SELECT COUNT(*)::int AS n FROM accounting.expenses
-      WHERE operating_company_id = $1::uuid
-        AND is_sample_data IS NOT TRUE
-        AND deleted_at IS NULL
-        AND voided_at IS NULL
-        AND load_id IS NULL
-        AND driver_uuid IS NULL
-        AND unit_id IS NULL`,
-    [USMCA_COMPANY_ID],
-  );
+  const noLoadExpRes = await client.query(CLOSURE_31_SQL, [USMCA_COMPANY_ID]);
   if (noLoadExpRes.rows[0].n > 0) {
     failures.push(`31: ${noLoadExpRes.rows[0].n} expense(s) with no load/driver/unit`);
   }
@@ -235,7 +281,36 @@ function runSelftest() {
   // The selftest verifies the closure check logic with mock data.
   // Since this is a live guard, the full selftest requires DATABASE_URL.
   // Here we just verify the structure is correct.
-  console.log(`${LABEL} --selftest PASS — structure valid (live measurement requires DATABASE_URL)`);
+  const plants = [
+    ["the shipped closure-31 rule passes", CLOSURE_31_SQL, false],
+    ["a rule exempting any expense (company flag dropped) is caught", CLOSURE_31_SQL.replace("e.is_company_expense IS TRUE", "TRUE"), true],
+    ["a rule not checking every line's reason is caught", CLOSURE_31_SQL.replace("el.load_exemption_reason IS NULL OR el.load_exemption_reason NOT LIKE 'Company cost — %'", "FALSE"), true],
+    ["a rule dropping the unit requirement is caught", CLOSURE_31_SQL.replace("AND e.unit_id IS NULL", ""), true],
+    ["a rule exempting a line-less company expense is caught", CLOSURE_31_SQL.replace("AND EXISTS (SELECT 1 FROM accounting.expense_lines el WHERE el.expense_id = e.id)", ""), true],
+  ];
+  let bad = 0;
+  for (const [name, sql, expectCaught] of plants) {
+    const caught = closure31Problems(sql).length > 0;
+    if (caught !== expectCaught) { bad++; console.error(`  FAIL  ${name}`); } else console.log(`  PASS  ${name}`);
+  }
+  // Closure 19 (443.192, Lead 11:40Z): the operating bank account by ROLE, never a literal account number.
+  const closure19Problems = (sql) => [
+    ...(/car\.role = 'operating_bank'/.test(sql) ? [] : ["closure 19 must resolve the operating_bank role"]),
+    ...(/a\.operating_company_id = \$1::uuid/.test(sql) ? [] : ["closure 19 must pin the role's account to this entity"]),
+    ...(/account_number\s*=\s*'/.test(sql) ? ["closure 19 reads an account by literal number"] : []),
+  ];
+  const plants19 = [
+    ["the shipped closure-19 rule passes", CLOSURE_19_SQL, false],
+    ["a closure-19 rule by literal '1000' is caught", CLOSURE_19_SQL.replace("car.role = 'operating_bank'", "a.account_number = '1000'"), true],
+    ["a closure-19 rule without the entity pin is caught", CLOSURE_19_SQL.replace("AND a.operating_company_id = $1::uuid", ""), true],
+  ];
+  for (const [name, sql, expectCaught] of plants19) {
+    const caught = closure19Problems(sql).length > 0;
+    if (caught !== expectCaught) { bad++; console.error(`  FAIL  ${name}`); } else console.log(`  PASS  ${name}`);
+  }
+  const total = plants.length + plants19.length;
+  if (bad) { console.error(`${LABEL} --selftest FAIL ${bad}/${total}`); process.exit(1); }
+  console.log(`${LABEL} --selftest PASS — closure-31 rule ${plants.length}/${plants.length} + closure-19 role rule ${plants19.length}/${plants19.length}; structure valid (live measurement requires DATABASE_URL)`);
 }
 
 async function run({ selftest }) {

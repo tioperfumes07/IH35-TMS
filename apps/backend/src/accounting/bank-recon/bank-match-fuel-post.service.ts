@@ -8,6 +8,7 @@
  * Fail-closed: null unit_id is an ENGINE defect (owner), not a data soft-skip. A fill with no load covering its time
  * posts with the explicit deadhead/yard reason (LEAD 443.121 #2) and is re-pointed when its load is booked.
  */
+import { relayFillUnitIdSql } from "../../fuel/relay-fill-unit.sql.js";
 import { crossRailFuelRowsForRelayFill } from "../../fuel/relay-fill-link.service.js";
 import { postedRelayTwinsOf } from "../../fuel/relay-duplicate-purchase.service.js";
 import { adoptRelayFillExpenseDocument, createExpenseFromFuelTransaction } from "../../fuel/fuel-expense-document.service.js";
@@ -259,11 +260,8 @@ async function postRelayFuelFill(
              r.matched_driver_id::text AS driver_id,
              -- BANK-F2026100403: Relay printed the unit number but ingest never resolved its id (fc461eb6, T169). The
              -- number proves the unit only when exactly ONE active unit in the fleet carries it (one number, one truck); else refused.
-             COALESCE(r.matched_unit_id,
-                      (SELECT min(u2.id::text)::uuid FROM mdata.units u2
-                        WHERE u2.deactivated_at IS NULL
-                          AND btrim(u2.unit_number) = btrim(r.matched_unit_number)
-                       HAVING count(*) = 1))::text AS unit_id,
+             -- 443.192: the one rule lives in fuel/relay-fill-unit.sql.ts, shared with the fill's expense document.
+             ${relayFillUnitIdSql("r")}::text AS unit_id,
              COALESCE(u.unit_number, r.matched_unit_number)::text AS unit_number,
              r.location_state::text AS location_state,
              -- IFTA taxable gallons are ROAD diesel only: reefer (off-road) and DEF are not motor fuel (CC-2 2026-10-04;
