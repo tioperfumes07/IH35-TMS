@@ -17,7 +17,11 @@ const SERVICE = "apps/backend/src/integrations/samsara/geofences/reconciliation.
 
 function assertAll(srcs, service = fs.readFileSync(path.join(ROOT, SERVICE), "utf8")) {
   const problems = [];
-  for (const [file, src] of Object.entries(srcs)) {
+  for (const [file, rawSrc] of Object.entries(srcs)) {
+    // 443.187 repoint — AuditEventsList's bulkCallPreview() previews bulk_call_id, a batch-operation FILTER TOKEN, not an
+    // entity (there is no name to resolve; entityLabel would render "Record — not visible"); kept by 3648a7d633 BULK-6 and
+    // its own test. Only that named helper is excluded — any other id slice in the file still fails.
+    const src = rawSrc.replace(/function bulkCallPreview\([^)]*\)[^{]*\{[\s\S]*?\n\}/, "");
     if (/actor_user_id\.slice\(0,\s*8\)/.test(src) || /subject_id\.slice\(0,\s*8\)/.test(src) || /unit_id\?\.slice\(0,\s*8\)/.test(src) || /id\.slice\(0,\s*8\)/.test(src)) {
       problems.push(`${file}: still UUID-slices`);
     }
@@ -28,7 +32,7 @@ function assertAll(srcs, service = fs.readFileSync(path.join(ROOT, SERVICE), "ut
   const report = srcs[FILES[3]];
   if (!/entityLabel\(f\.unit_number, f\.unit_id, "Unit"\)/.test(report)) problems.push(`${FILES[3]}: unit link must consume unit_number`);
   if (!/entityLabel\(f\.geofence_label, f\.geofence_id, "Geofence"\)/.test(report)) problems.push(`${FILES[3]}: geofence link must consume geofence_label`);
-  if (!/g\.operating_company_id = f\.operating_company_id/.test(service) || !/u\.operating_company_id = f\.operating_company_id/.test(service)) {
+  if (!/g\.operating_company_id = f\.operating_company_id/.test(service) || !/COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = f\.operating_company_id/.test(service)) {
     problems.push(`${SERVICE}: unit/geofence label joins must remain same-company scoped`);
   }
   if (!/g\.label AS geofence_label/.test(service) || !/u\.unit_number/.test(service)) {
@@ -46,7 +50,10 @@ if (SELFTEST) {
     [{ ...srcs, [FILES[3]]: srcs[FILES[3]].replace("f.unit_number, f.unit_id", "null, f.unit_id") }, service],
     [{ ...srcs, [FILES[3]]: srcs[FILES[3]].replace("f.geofence_label, f.geofence_id", "null, f.geofence_id") }, service],
     [srcs, service.replace("g.operating_company_id = f.operating_company_id", "TRUE")],
-    [srcs, service.replace("u.operating_company_id = f.operating_company_id", "TRUE")],
+    // 443.187 — the unit join is scoped owner-or-lease (8cb645cd80 #7046 CLS-UNIT-JOIN-ENTITY-SCOPE); dropping it must fail.
+    [srcs, service.replace("COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = f.operating_company_id", "TRUE")],
+    // a real entity id slice elsewhere in AuditEventsList still fails (only the bulk token helper is excluded)
+    [{ ...srcs, [FILES[1]]: srcs[FILES[1]] + "\nconst x = row.actor_user_id.slice(0, 8);\n" }, service],
     [srcs, service.replace("g.label AS geofence_label", "NULL AS geofence_label")],
   ];
   if (mutations.some(([planted, changedService]) => !assertAll(planted, changedService).length)) {

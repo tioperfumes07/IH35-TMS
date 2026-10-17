@@ -113,6 +113,8 @@ describe("disburseCashAdvanceSplit — C6 bill_payment leg GL poster", () => {
       }
       if (sql.includes("INSERT INTO accounting.bill_payments")) return { rows: [{ id: BILL_PAYMENT_ID }] };
       if (sql.includes("FROM catalogs.accounts")) return { rows: [{ id: "acct-117" }] };
+      // LEAD 443.186 — the lumper line names its item ("Warehouse Lumper Expense", exactly one).
+      if (sql.includes("FROM catalogs.items") && sql.includes("item_name")) return { rows: [{ id: "item-lumper" }] };
       if (sql.includes("SELECT is_sample_data FROM mdata.loads")) return { rows: [{ is_sample_data: false }] };
       // N1 — generateExpenseNumber's own queries (expense_attribution.expense_seq_per_load atomic
       // upsert-counter, then the load's own number to format against).
@@ -174,6 +176,8 @@ describe("disburseCashAdvanceSplit — C6 bill_payment leg GL poster", () => {
       }
       if (sql.includes("INSERT INTO accounting.bill_payments")) return { rows: [{ id: BILL_PAYMENT_ID }] };
       if (sql.includes("FROM catalogs.accounts")) return { rows: [{ id: "acct-117" }] };
+      // LEAD 443.186 — the lumper line names its item ("Warehouse Lumper Expense", exactly one).
+      if (sql.includes("FROM catalogs.items") && sql.includes("item_name")) return { rows: [{ id: "item-lumper" }] };
       if (sql.includes("SELECT is_sample_data FROM mdata.loads")) return { rows: [{ is_sample_data: false }] };
       if (sql.includes("INSERT INTO expense_attribution.expense_seq_per_load")) return { rows: [] };
       if (sql.includes("UPDATE expense_attribution.expense_seq_per_load")) return { rows: [{ last_seq: 1 }] };
@@ -192,5 +196,9 @@ describe("disburseCashAdvanceSplit — C6 bill_payment leg GL poster", () => {
     expect(expenseInsert!.sql).toContain("expense_number");
     // First mint for this load — LOAD_ID's own number, no "-N" suffix (formatLoadExpenseNumber seq=1).
     expect(expenseInsert!.values).toContain("13508");
+    // LEAD 443.186 — the lumper line names its item.
+    const lineInsert = calls.find((c) => c.sql.includes("INSERT INTO accounting.expense_lines"));
+    expect(lineInsert!.sql).toContain("item_id");
+    expect(lineInsert!.values).toContain("item-lumper");
   });
 });

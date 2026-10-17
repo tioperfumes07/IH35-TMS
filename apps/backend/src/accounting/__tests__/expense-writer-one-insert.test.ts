@@ -55,7 +55,24 @@ describe("443.182 C — the one expense header / line INSERT", () => {
     for (const rel of writers) {
       const src = readFileSync(resolve(SRC, rel), "utf8");
       expect(src, rel).not.toMatch(/INSERT\s+INTO\s+accounting\.expense(s|_lines)\s*\(/i);
-      expect(src, rel).toMatch(/insertExpense(Header|Line)\(/);
+      expect(src, rel).toMatch(/(insertExpense(Header|Line)|writeExpense(Document|Lines)InClientTx|postExpenseDocument(InClientTx|OwnTx))\(/);
+    }
+    // 443.182 C step 2 — the document writers hand the engine their document: none numbers, links, or posts an expense itself.
+    // 443.182 C (Lead 03:55Z) — Record Expense / manual post / reattribute moved onto the engine too: no exception left.
+    const engineCallers = [
+      ...writers,
+      "accounting/tour-close-posting.service.ts",
+      "accounting/expense-load-link-backfill.service.ts",
+      "driver-finance/settlement-creator.service.ts",
+      "driver-finance/settlement-creator-owed-bill.ts",
+      "driver-finance/creator-document-categorization.service.ts",
+      "fuel/fuel-receipt-repoint.service.ts",
+    ];
+    for (const rel of engineCallers) {
+      const src = readFileSync(resolve(SRC, rel), "utf8");
+      expect(src, rel).not.toMatch(/\b(generateExpenseNumber|nextExpenseDisplayId|insertExpenseLoadLink|insertExpenseHeader|insertExpenseLine)\(/);
+      expect(src, rel).not.toMatch(/INSERT\s+INTO\s+expense_attribution\.expense_load_links/i);
+      expect(src, rel).not.toMatch(/postSourceTransaction(InClientTx)?\([^)]{0,400}source_transaction_type:\s*"expense"/);
     }
     const canon = readFileSync(resolve(SRC, "accounting/expense-writer.service.ts"), "utf8");
     expect((canon.match(/INSERT\s+INTO\s+accounting\.expenses\s*\(/gi) ?? []).length).toBe(1);

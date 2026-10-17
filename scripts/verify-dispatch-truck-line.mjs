@@ -76,7 +76,9 @@ export function verify(files) {
   ]) {
     if (/UPDATE\s+mdata\.loads\b/i.test(src)) problems.push(`(c) ${name} must not itself UPDATE mdata.loads — that belongs only to the shared stop-stamp.service.ts / existing routes`);
   }
-  if (!/UPDATE\s+mdata\.loads\b/i.test(stopStampService)) problems.push("(c) stop-stamp.service.ts must contain the (single, shared) mdata.loads status write both callers use");
+  // LEAD 443.184 (05:05Z): the single shared status write is load-transition.service.ts writeLoadStatusFromStopEventInClientTx;
+  // stop-stamp.service.ts (both Truck Line callers) reaches it — same rule, the write's home moved (verify-step 18569).
+  if (!/writeLoadStatusFromStopEventInClientTx\(/.test(stopStampService)) problems.push("(c) stop-stamp.service.ts must contain the (single, shared) mdata.loads status write both callers use");
   if (!driverPwaRoutes.includes("stampStopArrival") || !driverPwaRoutes.includes("stampStopDeparture")) {
     problems.push("(c) driver-pwa/dispatch-view.routes.ts must call the SAME shared stampStopArrival/stampStopDeparture as Truck Line, not its own copy");
   }

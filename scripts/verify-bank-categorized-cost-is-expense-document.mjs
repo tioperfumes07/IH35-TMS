@@ -38,9 +38,9 @@ const LABEL = "verify-bank-categorized-cost-is-expense-document";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 /** Measured 2026-10-13 USMCA after G6 adopt: 0 bare bank_categorization JEs on expense accounts (documents adopt the 4 legacy JEs). Never raise. */
 export const MAX_LEGACY_BARE_EXPENSE_CATS = 0;
-// verify-no-silent-db-skip (03d): the static rules S1–S8 always run and fail closed; the live rules run whenever
+// verify-no-silent-db-skip (03d): the static rules S1–S13 always run and fail closed; the live rules run whenever
 // DATABASE_URL is set, and the OK line says "static only" when they did not.
-export const ALLOW_OFFLINE_SKIP = "static S1–S8 always run and fail closed; live L1–L6 run whenever DATABASE_URL is set";
+export const ALLOW_OFFLINE_SKIP = "static S1–S13 always run and fail closed; live L1–L6 run whenever DATABASE_URL is set";
 
 export const FILES = {
   poster: "apps/backend/src/banking/bank-feed-gl-posting.service.ts",
@@ -49,6 +49,8 @@ export const FILES = {
   void: "apps/backend/src/accounting/void.service.ts",
   // DEGH-07 / 443.113-C — canonical fuel accept adopts the expense document
   fuelPost: "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts",
+  // 443.182 C step 2 — the deep expense engine the writer hands its document to (numbers, writes, links, posts).
+  engine: "apps/backend/src/accounting/expense-writer.service.ts",
 };
 
 function fnBody(src, name) {
@@ -77,7 +79,11 @@ export function staticProblems(src) {
     p.push("S3: the expense path must create the document with sourceBankTransactionId and stamp matched_expense_id + matched_journal_entry_id on the line");
   }
   const writer = fnBody(src.writer, "createAndPostBankLineExpenseOnClient");
-  if (!/postSourceTransactionInClientTx\(/.test(writer) || !/source_transaction_type: "expense"/.test(writer) ||
+  // 443.182 C step 2 — the writer hands its document to the engine with an always-post option; the engine posts through
+  // postSourceTransactionInClientTx 'expense'.
+  const enginePost = fnBody(src.engine ?? "", "postExpenseDocumentInClientTx");
+  if (!/post: \{ actorUserId: actor\.userId, stamp: "status_and_posting" \}/.test(writer) ||
+      !/postSourceTransactionInClientTx\(/.test(enginePost) || !/source_transaction_type: "expense"/.test(enginePost) ||
       /INSERT INTO accounting\.journal_entr/.test(writer) || !/created_by_user_id/.test(writer)) {
     p.push("S4: the writer must post through postSourceTransactionInClientTx 'expense' (no hand-written JE) and record created_by_user_id");
   }
@@ -89,8 +95,13 @@ export function staticProblems(src) {
     p.push("S6: voiding the expense must release the line (void.service BANK_MATCH_REVERSE_TABLE expense)");
   }
   // DEGH-06 / 443.113-C — load-tagged bank-line expense uses the load spine, not EXP-YYYY-#####
-  if (!/generateExpenseNumber/.test(src.writer) || !/insertExpenseLoadLink/.test(src.writer) ||
-      !/if \(input\.loadId\)/.test(src.writer) || !/nextExpenseDisplayId/.test(src.writer)) {
+  // 443.182 C step 2 — reserveExpenseNumber (engine) numbers a load on its spine (generateExpenseNumber) and anything else
+  // EXP- (nextExpenseDisplayId); the writer passes its load and asks for the load link when it has one.
+  const reserve = fnBody(src.engine ?? "", "reserveExpenseNumber");
+  if (!/reserveExpenseNumber\(client, input\.operatingCompanyId, \{\s*loadId: input\.loadId/.test(writer) ||
+      !/loadLink: input\.loadId\s*\?/.test(writer) ||
+      !/if \(spec\.loadId\)[\s\S]*generateExpenseNumber\(/.test(reserve) || !/nextExpenseDisplayId\(/.test(reserve) ||
+      !/insertExpenseLoadLink\(/.test(src.engine ?? "")) {
     p.push("S7/DEGH-06: bank-line expense must use generateExpenseNumber + insertExpenseLoadLink when loadId, else nextExpenseDisplayId");
   }
   // DEGH-07 / 443.113-C — canonical fuel accept creates/adopts the expense document; refuse on refused
@@ -125,8 +136,8 @@ export function staticProblems(src) {
     p.push("S12: the expense must retain the load's customer-owned trailer, reachable from each line's expense_id");
   }
   // 443.182 C — one writer per document: the bank-line expense persists through expense-writer.service.ts, never its own INSERT.
-  if (/INSERT\s+INTO\s+accounting\.expense(s|_lines)\s*\(/i.test(src.writer) || !/insertExpenseHeader\(/.test(src.writer) || !/insertExpenseLine\(/.test(src.writer)) {
-    p.push("S13: the bank-line expense must persist through the one expense writer (insertExpenseHeader / insertExpenseLine), never its own INSERT");
+  if (/INSERT\s+INTO\s+accounting\.expense(s|_lines)\s*\(/i.test(src.writer) || (src.writer.match(/writeExpenseDocumentInClientTx\(client, \{/g) ?? []).length < 2) {
+    p.push("S13: the bank-line expense must persist through the one expense engine (writeExpenseDocumentInClientTx), never its own INSERT");
   }
   return p;
 }
@@ -220,16 +231,16 @@ if (process.argv.includes("--selftest")) {
     ["S1", staticProblems(plant("poster", 'decision.direction === "money_out" && EXPENSE_DOCUMENT_ACCOUNT_TYPES.has(', 'false && EXPENSE_DOCUMENT_ACCOUNT_TYPES.has('))],
     ["S2", staticProblems(plant("poster", '"CostOfGoodsSold", ', ""))],
     ["S3", staticProblems(plant("poster", "SET matched_expense_id = $1::uuid,", "SET reviewed_note = $1::text,"))],
-    ["S4", staticProblems(plant("writer", 'source_transaction_type: "expense"', 'source_transaction_type: "journal_entry"'))],
+    ["S4", staticProblems(plant("engine", 'source_transaction_type: "expense"', 'source_transaction_type: "journal_entry"'))],
     ["S5", staticProblems(plant("undo", "SELECT 'expense', id::text FROM accounting.expenses", "SELECT 'expense', id::text FROM accounting.bills"))],
     ["S6", staticProblems(plant("void", 'expense: "accounting.expenses"', ""))],
-    ["S7", staticProblems({ ...src, writer: src.writer.replaceAll("generateExpenseNumber", "generateSomethingElse") })],
+    ["S7", staticProblems({ ...src, engine: src.engine.replaceAll("generateExpenseNumber", "generateSomethingElse") })],
     ["S8", staticProblems({ ...src, fuelPost: src.fuelPost.replaceAll("fuel_fill_document_refused", "fuel_fill_skipped") })],
     ["S9", staticProblems({ ...src, writer: src.writer.replaceAll("adoptBankCategorizationExpenseDocument", "adoptSomethingElse") })],
     ["S10", staticProblems(plant("writer", "reconcileExpenseWithLoad(input, load)", "input"))],
     ["S11", staticProblems(plant("writer", "dimensions.driverId,", "input.driverId,"))],
     ["S12", staticProblems(plant("writer", "dimensions.nonOwnedTrailerId,", "null,"))],
-    ["S13", staticProblems(plant("writer", "await insertExpenseHeader(client, {", "await client.query(`INSERT INTO accounting.expenses (x) VALUES ($1)`, {"))],
+    ["S13", staticProblems(plant("writer", "await writeExpenseDocumentInClientTx(client, {", "await client.query(`INSERT INTO accounting.expenses (x) VALUES ($1)`, {"))],
     ["L2", linkageProblems({ ...good, bt_expense: null })],
     ["L3", linkageProblems({ ...good, net: 5 })],
     ["L4", linkageProblems({ ...good, dr_cat: 0 })],

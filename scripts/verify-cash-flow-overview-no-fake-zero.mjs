@@ -14,9 +14,9 @@
  * `query.isError` via ReportBlockTPendingBanner with a retry button — removing the fake fallback
  * makes a real failure surface honestly instead of needing a new UI path.
  *
- * Deliberately NOT flagged: `isBankAccountHideEnabled(...).catch(() => false)` — a feature-flag
- * read, not a money-value query; defaulting to "flag off" on failure is a different, narrower
- * risk class than faking a dollar amount and is out of scope for this guard.
+ * The bank-hide flag read: originally carved out as `.catch(() => false)`; superseded by 2570e4f8ae
+ * (#16316) — a failed flag read must fail loud, so the guard now requires the plain awaited read and
+ * flags any catch on it.
  *
  * Usage:
  *   node scripts/verify-cash-flow-overview-no-fake-zero.mjs            # scan
@@ -32,7 +32,12 @@ const FILE = "apps/backend/src/reports/cash-flow-overview.routes.ts";
 const LABEL = "verify-cash-flow-overview-no-fake-zero";
 
 const FAKE_ZERO_CATCH_RE = /\.catch\(\(\)\s*=>\s*\(\{\s*rows:\s*\[\{[^}]*:\s*["']0["']/;
-const INTENTIONAL_FLAG_CATCH_RE = /isBankAccountHideEnabled\([^)]*\)\.catch\(\(\)\s*=>\s*false\)/;
+// 443.187 repoint — the bank-hide flag read was deliberately made to FAIL LOUD by 2570e4f8ae
+// (BANK-ACCOUNT-HIDE-CAPABILITY-FAILURE-FAILS-OPEN, #16316): `.catch(() => false)` treated a FAILED read as "hide is off" and
+// let hidden accounts back into the totals. Same intent as the original carve-out (keep the flag read; never invent a value):
+// the read must be present AND must not swallow its failure.
+const FLAG_READ_RE = /await\s+isBankAccountHideEnabled\(\s*client\s*,\s*companyId\s*\)/;
+const FLAG_SWALLOW_RE = /isBankAccountHideEnabled\([^)]*\)\.catch\(/;
 
 /** Strip `//` line comments so a mention only in prose can't false-positive. */
 function stripLineComments(src) {
@@ -54,8 +59,11 @@ export function checkNoFakeZeroCatch(src) {
         `a real query failure must surface as query.isError (ReportBlockTPendingBanner already handles it), not an authoritative fake $0.`,
     );
   }
-  if (!INTENTIONAL_FLAG_CATCH_RE.test(code)) {
-    offenders.push(`${FILE}: the intentional isBankAccountHideEnabled(...).catch(() => false) feature-flag default must stay — do not remove it while fixing the money-query catches.`);
+  if (!FLAG_READ_RE.test(code)) {
+    offenders.push(`${FILE}: the bank-account hide flag read (await isBankAccountHideEnabled(client, companyId)) is missing — the totals must honour hidden accounts.`);
+  }
+  if (FLAG_SWALLOW_RE.test(code)) {
+    offenders.push(`${FILE}: isBankAccountHideEnabled(...).catch(...) swallows a failed flag read — a failure must fail the request, never read as "hide is off" (2570e4f8ae).`);
   }
   return offenders;
 }
@@ -66,11 +74,15 @@ function main() {
   if (selftest) {
     const clean = `
       const bankRes = await client.query(sql, [companyId]);
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
+    `;
+    const swallowed = `
+      const bankRes = await client.query(sql, [companyId]);
       const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
     `;
     const bugged = `
       const bankRes = await client.query(sql, [companyId]).catch(() => ({ rows: [{ payroll_cents: "0", dip_cents: "0" }] }));
-      const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
     `;
     const flagRemoved = `
       const bankRes = await client.query(sql, [companyId]);
@@ -85,9 +97,13 @@ function main() {
       console.error(`${LABEL} SELFTEST FAIL — bugged fixture (fake-zero catch) NOT flagged`);
       process.exit(1);
     }
+    if (checkNoFakeZeroCatch(swallowed).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — a swallowed flag read (.catch(() => false)) NOT flagged`);
+      process.exit(1);
+    }
     const flagRemovedOffenders = checkNoFakeZeroCatch(flagRemoved);
     if (flagRemovedOffenders.length === 0) {
-      console.error(`${LABEL} SELFTEST FAIL — missing intentional flag-catch mutation NOT flagged`);
+      console.error(`${LABEL} SELFTEST FAIL — missing flag read NOT flagged`);
       process.exit(1);
     }
     console.log(`${LABEL} --selftest PASS`);

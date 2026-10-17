@@ -40,7 +40,9 @@ export function problems(s) {
   // LEAD 443.130: three Creator posting paths since 443.121 #1 (#26671) — the adopted fuel receipt, a fresh fuel posting, a
   // company expense. Each must stamp the expense posted with ITS journal entry (was: a bare count of 2 call sites).
   if (!/if \(receiptPosted\?\.journal_entry_id\) \{\s*await stampExpensePosted\(client, draft\.operating_company_id, doc\.expense_id, receiptPosted\.journal_entry_id\)/.test(s.creator)) p.push("a Creator expense (fuel, adopted receipt) is posted but not stamped posted");
-  if (!/if \(!posted\.journal_entry_id\) throw new Error\("posting engine returned no journal entry"\);\s*await stampExpensePosted\(client, draft\.operating_company_id, doc\.expense_id, posted\.journal_entry_id\)/.test(s.creator)) p.push("a Creator expense (fuel) is posted but not stamped posted");
+  // 443.182 C — the fuel post goes through the one expense engine (postExpenseDocumentInClientTx, stamp "none"); the Creator
+  // still stamps the expense posted with that journal entry.
+  if (!/if \(!posted\.posted\) throw new Error\("posting engine returned no journal entry"\);\s*await stampExpensePosted\(client, draft\.operating_company_id, doc\.expense_id, posted\.journalEntryId\)/.test(s.creator)) p.push("a Creator expense (fuel) is posted but not stamped posted");
   if (!/if \(!journalEntryId\) throw new Error\("posting engine returned no journal entry"\);\s*await stampExpensePosted\(client, draft\.operating_company_id, expenseId, journalEntryId\)/.test(s.creator)) p.push("a Creator expense (company) is posted but not stamped posted");
   if (!/SET posting_status = 'posted',(?: status = 'posted',)? posted_at = COALESCE\(posted_at, now\(\)\), journal_entry_id = \$3::uuid/.test(s.creator)) p.push("stampExpensePosted no longer stamps posting_status + journal_entry_id");
   if (!/extra_pay_item_required/.test(s.creator) || !/item_id, quantity, rate_cents,\s*unit_of_measure, is_active, is_sample_data/.test(s.creator)) p.push("extra pay is written without its item");

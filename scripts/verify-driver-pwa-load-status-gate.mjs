@@ -44,7 +44,9 @@ function contains(relativePath, content, checks) {
   }
 }
 
-// Unchanged — used only for driver/loads.routes.ts, which still inlines everything itself.
+// LEAD 443.184 (05:05Z): the stop-event status write moved into load-transition.service.ts writeLoadStatusFromStopEventInClientTx
+// (same gate, compare-and-set, captured company — asserted there by verify-step 18569); the callers are checked at the call.
+// Used only for driver/loads.routes.ts.
 function auditScopedStatusHandlers(relativePath, content, handlers) {
   const issues = [];
   for (const { label, start, end } of handlers) {
@@ -59,11 +61,11 @@ function auditScopedStatusHandlers(relativePath, content, handlers) {
     require(/is_authorized = true/, "must require active shared-driver authorization");
     require(/deactivated_at IS NULL/, "must reject deactivated shared-driver authorization");
     require(
-      /UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid/,
+      /writeLoadStatusFromStopEventInClientTx\(client as never, \{[\s\S]{0,120}operatingCompanyId: stop\.operating_company_id,/,
       "status UPDATE must bind exact captured company"
     );
     require(
-      /\[params\.data\.(?:id|uuid), nextLoadStatus, stop\.operating_company_id(?:, stop\.load_status)?\]/,
+      /loadId: params\.data\.(?:id|uuid),\s*fromMdataStatus: stop\.load_status,\s*toMdataStatus: nextLoadStatus,/,
       "status UPDATE parameters must use the captured load company"
     );
   }
@@ -81,8 +83,8 @@ function auditDriverArrivalLifecycle(content) {
   require(/FOR UPDATE OF s, l/, "must lock the stop and load before lifecycle validation");
   require(/actual_arrival_at IS NULL[\s\S]*?RETURNING id/, "must compare-and-set the first arrival stamp");
   require(/if \(!arrivalUpdate\.rows\[0\]\?\.id\) return \{ error: "arrival_already_recorded" as const \}/, "must reject an already-recorded arrival");
-  require(/AND status::text = \$4[\s\S]*?RETURNING id/, "must compare-and-set the validated load status");
-  require(/if \(!loadUpdate\.rows\[0\]\?\.id\) return \{ error: "load_transition_conflict" as const \}/, "must reject a lost load transition");
+  require(/fromMdataStatus: stop\.load_status,\s*toMdataStatus: nextLoadStatus,/, "must compare-and-set the validated load status");
+  require(/if \(!statusWrite\.ok\) return \{ error: "load_transition_conflict" as const \}/, "must reject a lost load transition");
   return issues;
 }
 
@@ -97,8 +99,8 @@ function auditDepartureLifecycle(relativePath, content, start, end) {
   require(/FOR UPDATE OF s, l/, "must lock the stop and load before lifecycle validation");
   require(/actual_departure_at IS NULL[\s\S]*?RETURNING id/, "must compare-and-set the first departure stamp");
   require(/if \(!departureUpdate\.rows\[0\]\?\.id\) return \{ error: "departure_already_recorded" as const \}/, "must reject a duplicate departure before side effects");
-  require(/AND status::text = \$4[\s\S]*?RETURNING id/, "must compare-and-set the validated load status");
-  require(/if \(!loadUpdate\.rows\[0\]\?\.id\) return \{ error: "load_transition_conflict" as const \}/, "must reject a lost load transition before side effects");
+  require(/fromMdataStatus: stop\.load_status,\s*toMdataStatus: nextLoadStatus,/, "must compare-and-set the validated load status");
+  require(/if \(!statusWrite\.ok\) return \{ error: "load_transition_conflict" as const \}/, "must reject a lost load transition before side effects");
   return issues;
 }
 
@@ -142,13 +144,13 @@ function auditServiceArrivalInvariants(serviceContent) {
   require(/actual_arrival_at IS NULL[\s\S]*?RETURNING id/, "must compare-and-set the first arrival stamp");
   require(/if \(!arrivalUpdate\.rows\[0\]\?\.id\) return \{ ok: false, error: "arrival_already_recorded" \}/, "must reject an already-recorded arrival before audit");
   require(
-    /UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid/,
+    /writeLoadStatusFromStopEventInClientTx\(client as never, \{[\s\S]{0,120}operatingCompanyId: stop\.operating_company_id,/,
     "status UPDATE must bind exact captured company"
   );
-  require(/AND status::text = \$4[\s\S]*?RETURNING id/, "must compare-and-set the validated load status");
-  require(/if \(!loadUpdate\.rows\[0\]\?\.id\) return \{ ok: false, error: "load_transition_conflict" \}/, "must reject a lost load transition before audit");
+  require(/fromMdataStatus: stop\.load_status,\s*toMdataStatus: nextLoadStatus,/, "must compare-and-set the validated load status");
+  require(/if \(!statusWrite\.ok\) return \{ ok: false, error: "load_transition_conflict" \}/, "must reject a lost load transition before audit");
   require(
-    /\[ctx\.loadId, nextLoadStatus, stop\.operating_company_id, stop\.load_status\]/,
+    /loadId: ctx\.loadId,\s*fromMdataStatus: stop\.load_status,\s*toMdataStatus: nextLoadStatus,/,
     "status UPDATE parameters must use the captured load company"
   );
   return issues;
@@ -165,13 +167,13 @@ function auditServiceDepartureInvariants(serviceContent) {
   require(/actual_departure_at IS NULL[\s\S]*?RETURNING id/, "must compare-and-set the first departure stamp");
   require(/if \(!departureUpdate\.rows\[0\]\?\.id\) return \{ ok: false, error: "departure_already_recorded" \}/, "must reject a duplicate departure before side effects");
   require(
-    /UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid/,
+    /writeLoadStatusFromStopEventInClientTx\(client as never, \{[\s\S]{0,120}operatingCompanyId: stop\.operating_company_id,/,
     "status UPDATE must bind exact captured company"
   );
-  require(/AND status::text = \$4[\s\S]*?RETURNING id/, "must compare-and-set the validated load status");
-  require(/if \(!loadUpdate\.rows\[0\]\?\.id\) return \{ ok: false, error: "load_transition_conflict" \}/, "must reject a lost load transition before side effects");
+  require(/fromMdataStatus: stop\.load_status,\s*toMdataStatus: nextLoadStatus,/, "must compare-and-set the validated load status");
+  require(/if \(!statusWrite\.ok\) return \{ ok: false, error: "load_transition_conflict" \}/, "must reject a lost load transition before side effects");
   require(
-    /\[ctx\.loadId, nextLoadStatus, stop\.operating_company_id, stop\.load_status\]/,
+    /loadId: ctx\.loadId,\s*fromMdataStatus: stop\.load_status,\s*toMdataStatus: nextLoadStatus,/,
     "status UPDATE parameters must use the captured load company"
   );
   return issues;
@@ -199,7 +201,7 @@ for (const [label, block] of [
     fail(`apps/backend/src/driver/loads.routes.ts: ${label} handler missing validateLoadStopStatusWrite`);
   }
   const gatePos = block.indexOf("validateLoadStopStatusWrite");
-  const updatePos = block.search(/UPDATE mdata\.loads\s+SET status/);
+  const updatePos = block.search(/writeLoadStatusFromStopEventInClientTx\(/);
   if (gatePos < 0 || updatePos < 0 || gatePos > updatePos) {
     fail(`apps/backend/src/driver/loads.routes.ts: ${label} must call gate before UPDATE mdata.loads`);
   }
@@ -265,6 +267,8 @@ if (process.argv.includes("--selftest")) {
   const brokenDriver = driverLoads
     .replaceAll("l.operating_company_id::text AS operating_company_id", "NULL::text AS operating_company_id")
     .replaceAll("AND operating_company_id = $3::uuid", "")
+    // LEAD 443.184 — the captured-company bind now lives on the status-module call
+    .replaceAll("operatingCompanyId: stop.operating_company_id,", "operatingCompanyId: requestedCompanyId,")
     .replaceAll(".is_authorized = true", ".is_authorized = false");
   const brokenDispatch = dispatchView
     .replaceAll("l.operating_company_id::text AS operating_company_id", "NULL::text AS operating_company_id")
@@ -310,8 +314,8 @@ if (process.argv.includes("--selftest")) {
   const arrivalMutations = [
     stopStampService.replace("AND actual_arrival_at IS NULL", ""),
     stopStampService.replace('if (!arrivalUpdate.rows[0]?.id) return { ok: false, error: "arrival_already_recorded" };', ""),
-    stopStampService.replace("AND status::text = $4", ""),
-    stopStampService.replace('if (!loadUpdate.rows[0]?.id) return { ok: false, error: "load_transition_conflict" };', ""),
+    stopStampService.replace("fromMdataStatus: stop.load_status,", "fromMdataStatus: 'x',"),
+    stopStampService.replace('if (!statusWrite.ok) return { ok: false, error: "load_transition_conflict" };', ""),
   ];
   const arrivalMutationsFail = arrivalMutations.every((mutant) => {
     if (mutant === stopStampService) return false; // mutation must actually change something
@@ -321,8 +325,8 @@ if (process.argv.includes("--selftest")) {
     driverLoads.replaceAll("FOR UPDATE OF s, l", ""),
     driverLoads.replace("AND actual_arrival_at IS NULL", ""),
     driverLoads.replace('if (!arrivalUpdate.rows[0]?.id) return { error: "arrival_already_recorded" as const };', ""),
-    driverLoads.replace("AND status::text = $4", ""),
-    driverLoads.replace('if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };', ""),
+    driverLoads.replace("fromMdataStatus: stop.load_status,", "fromMdataStatus: 'x',"),
+    driverLoads.replace('if (!statusWrite.ok) return { error: "load_transition_conflict" as const };', ""),
   ];
   const driverArrivalMutationsFail = driverArrivalMutations.every((mutant) => {
     if (mutant === driverLoads) return false;
@@ -332,8 +336,8 @@ if (process.argv.includes("--selftest")) {
     // stop-stamp.service.ts departure invariants
     stopStampService.replace("AND actual_departure_at IS NULL", ""),
     stopStampService.replace('if (!departureUpdate.rows[0]?.id) return { ok: false, error: "departure_already_recorded" };', ""),
-    stopStampService.replaceAll("AND status::text = $4", ""),
-    stopStampService.replaceAll('if (!loadUpdate.rows[0]?.id) return { ok: false, error: "load_transition_conflict" };', ""),
+    stopStampService.replaceAll("fromMdataStatus: stop.load_status,", "fromMdataStatus: 'x',"),
+    stopStampService.replaceAll('if (!statusWrite.ok) return { ok: false, error: "load_transition_conflict" };', ""),
   ];
   const departureMutationsFail = departureMutations.every((mutant) => {
     if (mutant === stopStampService) return false;
@@ -343,8 +347,8 @@ if (process.argv.includes("--selftest")) {
     driverLoads.replaceAll("FOR UPDATE OF s, l", ""),
     driverLoads.replace("AND actual_departure_at IS NULL", ""),
     driverLoads.replace('if (!departureUpdate.rows[0]?.id) return { error: "departure_already_recorded" as const };', ""),
-    driverLoads.replaceAll("AND status::text = $4", ""),
-    driverLoads.replaceAll('if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };', ""),
+    driverLoads.replaceAll("fromMdataStatus: stop.load_status,", "fromMdataStatus: 'x',"),
+    driverLoads.replaceAll('if (!statusWrite.ok) return { error: "load_transition_conflict" as const };', ""),
   ];
   const driverDepartureMutationsFail = driverDepartureMutations.every((mutant) => {
     if (mutant === driverLoads) return false;

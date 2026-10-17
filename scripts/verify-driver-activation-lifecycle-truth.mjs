@@ -11,16 +11,18 @@ function route(source, action) {
   return source.match(new RegExp(`app\\.post\\("/api/v1/mdata/drivers/:id/${action}"[\\s\\S]*?\\n  \\}\\);`))?.[0] ?? "";
 }
 
+// 443.187 (CC-2): the UPDATE checks anchor on the statement's own WHERE clause inside its SQL template — eac04463ba
+// (DRIVER-TEST-FIXTURES-LEAK-AS-REAL #21357) lengthened the SET list past the old fixed 320-char window. Same rule.
 function failuresFor(source) {
   const deactivate = route(source, "deactivate");
   const reactivate = route(source, "reactivate");
   const checks = [
     ["deactivate pre-read carries canonical company", /SELECT id, operating_company_id, deactivated_at, identity_user_id, status/.test(deactivate)],
     ["deactivate rejects an already inactive driver", /mdata_driver_already_deactivated/.test(deactivate)],
-    ["deactivate write is company-active and returned", /UPDATE mdata\.drivers[\s\S]{0,320}operating_company_id = \$3::uuid[\s\S]{0,100}deactivated_at IS NULL[\s\S]{0,100}RETURNING id, deactivated_at, status/.test(deactivate)],
+    ["deactivate write is company-active and returned", /UPDATE mdata\.drivers[^`]*?WHERE id = \$1\s+AND operating_company_id = \$3::uuid\s+AND deactivated_at IS NULL(?:\s+AND [^\n]+)*\s+RETURNING id, deactivated_at, status/.test(deactivate)],
     ["deactivate lost CAS stops before identity/audit", /if \(!changedRow\) return \{ error: "mdata_driver_state_changed" as const \};[\s\S]{0,180}identityUserId/.test(deactivate)],
     ["reactivate rejects active and terminated states", /mdata_driver_terminated/.test(reactivate) && /mdata_driver_already_active/.test(reactivate)],
-    ["reactivate write is company-inactive and returned", /UPDATE mdata\.drivers[\s\S]{0,320}operating_company_id = \$3::uuid[\s\S]{0,100}deactivated_at IS NOT NULL[\s\S]{0,140}RETURNING id, deactivated_at, status/.test(reactivate)],
+    ["reactivate write is company-inactive and returned", /UPDATE mdata\.drivers[^`]*?WHERE id = \$1\s+AND operating_company_id = \$3::uuid\s+AND deactivated_at IS NOT NULL(?:\s+AND [^\n]+)*\s+RETURNING id, deactivated_at, status/.test(reactivate)],
     ["reactivate lost CAS stops before identity/audit", /if \(!changedRow\) return \{ error: "mdata_driver_state_changed" as const \};[\s\S]{0,180}identityUserId/.test(reactivate)],
     ["both domain no-ops map to HTTP 409", /"error" in deactivated[\s\S]{0,100}reply\.code\(409\)/.test(deactivate) && /"error" in reactivated[\s\S]{0,100}reply\.code\(409\)/.test(reactivate)],
   ];

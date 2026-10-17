@@ -2,6 +2,7 @@
  * ROUND 443.54-7 — suggested related-party bank↔Relay pairs.
  * Owner confirms; nothing auto-pairs. Confirm categorizes as Due to/from + links deposit.
  */
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -79,7 +80,7 @@ export function RelatedPartyPairSuggestionsPanel({ companyId }: Props) {
           {isLoading ? (
             <p className="text-xs text-[#6B7280]">Loading…</p>
           ) : isError ? (
-            <p className="text-xs text-red-700">{String((error as Error)?.message ?? "Failed to load")}</p>
+            <p className="text-xs text-red-700">{userFacingApiError(error, "Failed to load")}</p>
           ) : rows.length === 0 ? (
             <p className="text-xs text-[#6B7280]">No related-party outflows need review.</p>
           ) : (

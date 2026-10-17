@@ -14,6 +14,7 @@
  */
 import type { DbClient } from "./presettlement-link.service.js";
 import { validateLoadStopStatusWrite } from "./load-state-machine.js";
+import { writeLoadStatusFromStopEventInClientTx } from "./load-transition.service.js";
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
@@ -58,16 +59,18 @@ export async function stampStopArrival(
   );
   if (!arrivalUpdate.rows[0]?.id) return { ok: false, error: "arrival_already_recorded" };
 
-  const loadUpdate = await client.query<{ id: string }>(
-    `UPDATE mdata.loads
-     SET status = $2
-     WHERE id = $1
-       AND operating_company_id = $3::uuid
-       AND status::text = $4
-     RETURNING id`,
-    [ctx.loadId, nextLoadStatus, stop.operating_company_id, stop.load_status]
-  );
-  if (!loadUpdate.rows[0]?.id) return { ok: false, error: "load_transition_conflict" };
+  // LEAD 443.184 — the load status moves through the one status module (load-transition.service.ts).
+  const statusWrite = await writeLoadStatusFromStopEventInClientTx(client as never, {
+    actorUserId: ctx.actorUserId,
+    operatingCompanyId: stop.operating_company_id,
+    loadId: ctx.loadId,
+    fromMdataStatus: stop.load_status,
+    toMdataStatus: nextLoadStatus,
+    stopId: stop.id,
+    event: "arrival",
+    source: String(ctx.source),
+  });
+  if (!statusWrite.ok) return { ok: false, error: "load_transition_conflict" };
 
   await appendCrudAudit(client, ctx.actorUserId, ctx.auditEvent, { load_id: ctx.loadId, stop_id: stop.id });
 
@@ -121,16 +124,18 @@ export async function stampStopDeparture(
   );
   if (!departureUpdate.rows[0]?.id) return { ok: false, error: "departure_already_recorded" };
 
-  const loadUpdate = await client.query<{ id: string }>(
-    `UPDATE mdata.loads
-     SET status = $2
-     WHERE id = $1
-       AND operating_company_id = $3::uuid
-       AND status::text = $4
-     RETURNING id`,
-    [ctx.loadId, nextLoadStatus, stop.operating_company_id, stop.load_status]
-  );
-  if (!loadUpdate.rows[0]?.id) return { ok: false, error: "load_transition_conflict" };
+  // LEAD 443.184 — the load status moves through the one status module (load-transition.service.ts).
+  const statusWrite = await writeLoadStatusFromStopEventInClientTx(client as never, {
+    actorUserId: ctx.actorUserId,
+    operatingCompanyId: stop.operating_company_id,
+    loadId: ctx.loadId,
+    fromMdataStatus: stop.load_status,
+    toMdataStatus: nextLoadStatus,
+    stopId: stop.id,
+    event: "departure",
+    source: String(ctx.source),
+  });
+  if (!statusWrite.ok) return { ok: false, error: "load_transition_conflict" };
 
   // Same non-fatal contract as the driver-pwa path — a settlement ping failure must never fail
   // the stamp itself.

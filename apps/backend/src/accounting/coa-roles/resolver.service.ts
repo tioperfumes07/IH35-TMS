@@ -226,6 +226,9 @@ export const COA_ROLE_VALUES = [
   /** LST-F424 (migration 202615440200) — 2180 Accrued Accident Claims: an accident cost the company absorbs, accrued at
    *  the owner's decision and cleared when the payee's bill is coded to it (never a raw A/P line with no payee). */
   "accrued_claims_liability",
+  /** LEAD 443.189 (migration 202616010100) — 2410 Owner / Related-Party Loan Payable: the parent every "Due to / from
+   *  <party>" account is created under (party-account.service.ts resolves it by role, never by the number). */
+  "related_party_loan_parent",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

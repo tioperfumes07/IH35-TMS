@@ -124,7 +124,7 @@ let writerFiles = [];
 try {
   const grepOut = execFileSync(
     "grep",
-    ["-rlE", "INSERT INTO accounting\\.expenses|insertExpenseHeader\\(", SCAN_DIR, "--include=*.ts"],
+    ["-rlE", "INSERT INTO accounting\\.expenses|insertExpenseHeader\\(|writeExpenseDocumentInClientTx\\(", SCAN_DIR, "--include=*.ts"],
     { cwd: ROOT, encoding: "utf8" }
   );
   const insertingFiles = grepOut.split("\n").filter(Boolean);
@@ -137,7 +137,11 @@ try {
     const insertColumnLists = [...src.matchAll(/INSERT INTO\s+accounting\.expenses\s*\(([^)]*)\)/gi)].map((m) => m[1]);
     // 443.182 C — expense headers are written through the one expense writer as row objects
     // (insertExpenseHeader(client, { …, source_fuel_transaction_id: …, … })); that row is the column list now.
-    const writerRows = [...src.matchAll(/insertExpenseHeader\(client, \{([\s\S]*?)\n\s*\}\)/g)].map((m) => m[1]);
+    // 443.182 C step 2 — or the header of a document handed to the engine (writeExpenseDocumentInClientTx({ header: { … } })).
+    const writerRows = [
+      ...[...src.matchAll(/insertExpenseHeader\(client, \{([\s\S]*?)\n\s*\}\)/g)].map((m) => m[1]),
+      ...[...src.matchAll(/writeExpenseDocumentInClientTx\(client, \{\s*(?:\/\/[^\n]*\n\s*)*header: \{([\s\S]*?)\n\s*\},\n/g)].map((m) => m[1]),
+    ];
     if (
       insertColumnLists.some((cols) => /\bsource_fuel_transaction_id\b/.test(cols)) ||
       writerRows.some((row) => /\bsource_fuel_transaction_id:/.test(row))

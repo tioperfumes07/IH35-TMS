@@ -86,7 +86,9 @@ export function paymentWritesTag(src) {
   const insert = /INSERT\s+INTO\s+accounting\.payments\s*\(([\s\S]{0,900}?)\)/i.exec(clean);
   // 443.182 C — the row is written by the one payment writer (payments.routes.ts insertPaymentRowInClientTx): the call
   // must hand it the ACCEPTED flag (a constant false would be accepted-and-dropped again).
-  const call = /insertPaymentRowInClientTx\(\s*\w+\s*,\s*\{[\s\S]{0,1600}?\bis_sample_data\s*:\s*body\.data\.is_sample_data\b/.test(clean);
+  const call = /insertPaymentRowInClientTx\(\s*\w+\s*,\s*\{[\s\S]{0,1600}?\bis_sample_data\s*:\s*body\.data\.is_sample_data\b/.test(clean) ||
+    // 443.182 C step 2 — or the route hands its document to the one payments engine, whose row carries the accepted flag
+    /recordCustomerPaymentInClientTx\(\s*\w+\s*,\s*\{\s*row:\s*\{[\s\S]{0,1600}?\bis_sample_data\s*:\s*body\.data\.is_sample_data\b/.test(clean);
   return {
     accepts: /is_sample_data\s*:\s*z\.boolean\(\)/.test(clean),
     writes: (insert ? /\bis_sample_data\b/.test(insert[1]) : false) || call,

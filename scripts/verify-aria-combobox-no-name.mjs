@@ -54,7 +54,9 @@ export function check(files) {
   if (!/ariaLabel="Filter by unit"/.test(files[FLEET_HOS_FILE])) {
     failures.push(`${FLEET_HOS_FILE} unit filter EntityPicker no longer has ariaLabel`);
   }
-  if (!/aria-label="Jump to page"/.test(files[PARITY_TABLE_FILE])) {
+  // 443.187 repoint: the label text became "Go to page" by owner order (0a0d563c83 BANK-F91044 B-1, #24113); same rule —
+  // the page-jump input keeps an accessible name.
+  if (!/aria-label="Go to page"/.test(files[PARITY_TABLE_FILE])) {
     failures.push(`${PARITY_TABLE_FILE} page-jump input no longer has aria-label`);
   }
   if (!/aria-label="Filter by category"/.test(files[LEGAL_TEMPLATES_FILE])) {
@@ -120,7 +122,7 @@ function selftest() {
 
   const offenderB = { ...files };
   offenderB[PARITY_TABLE_FILE] = files[PARITY_TABLE_FILE].replace(
-    '\n              aria-label="Jump to page"',
+    '\n              aria-label="Go to page"',
     ""
   );
   if (offenderB[PARITY_TABLE_FILE] === files[PARITY_TABLE_FILE]) {

@@ -19,7 +19,8 @@
  * SAVEPOINT. One audit row per linked expense. Idempotent: a second run considers 0.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { insertExpenseLoadLink, seqFromLoadExpenseNumber } from "../expense-attribution/expense-number.js";
+import { seqFromLoadExpenseNumber } from "../expense-attribution/expense-number.js";
+import { linkExpenseToLoadInClientTx } from "./expense-writer.service.js";
 
 type Queryable = { query: <R = any>(sql: string, params?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }> };
 
@@ -130,7 +131,8 @@ export async function linkExpensesToLoads(
 
     await client.query("SAVEPOINT expense_load_link_backfill");
     try {
-      await insertExpenseLoadLink(client as never, {
+      // 443.182 C — the load link is written by the one expense engine.
+      await linkExpenseToLoadInClientTx(client as never, {
         operatingCompanyId: opco,
         expenseId: c.expense_id,
         loadId: c.load_id,
