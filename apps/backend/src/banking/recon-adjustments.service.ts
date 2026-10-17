@@ -18,6 +18,7 @@
 import type { QueryableClient } from "../accounting/journal-entry-type-resolver.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { createAndPostBankLineExpenseOnClient } from "../accounting/bank-line-expense.service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 export type ReconAdjustmentInput = {
   operating_company_id: string;
@@ -323,6 +324,14 @@ export async function postReconciliationAdjustments(
     }
   }
 
+  // Audit spine: the reconciliation's service-charge / interest-earned entries (posted or re-found linked) are one event.
+  if (input.service_charge_cents > 0 || input.interest_earned_cents > 0) {
+    await appendCrudAudit(client as never, actor.userId, "banking.reconciliation_adjustments.posted", {
+      resource_type: "banking.reconciliation_sessions", resource_id: input.session_id, operating_company_id: input.operating_company_id,
+      bank_account_id: input.bank_account_id, service_charge_cents: input.service_charge_cents, interest_earned_cents: input.interest_earned_cents,
+      service_charge_journal_entry_id: serviceChargeJeId, service_charge_expense_id: serviceChargeExpenseId, interest_earned_journal_entry_id: interestJeId,
+    });
+  }
   return {
     service_charge_journal_entry_id: serviceChargeJeId,
     service_charge_expense_id: serviceChargeExpenseId,

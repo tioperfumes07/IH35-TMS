@@ -26,6 +26,7 @@ import { withLuciaBypass } from "../../auth/db.js";
 import { PostingEngineError } from "../posting-engine.service.js";
 import { wrapPdfDocument } from "../../render/pdf-template.js";
 import { renderCheckBody } from "../../render/check.template.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -565,6 +566,12 @@ export async function registerCheckRoutes(app: FastifyInstance) {
           bank_account_id: body.bank_account_id,
           used_check_number: body.check_number,
           actor_user_id: user.uuid,
+        });
+        // Audit spine: the check number issued for this bill payment (the batch itself audits in applyVendorBillPaymentBatch).
+        await appendCrudAudit(client, user.uuid, "accounting.check.bill_payment_issued", {
+          resource_type: "banking.check_number_registry", operating_company_id: body.operating_company_id,
+          bank_account_id: body.bank_account_id, check_number: body.check_number, amount_cents: totalCents,
+          payment_batch_id: batchResult.data.payment_batch_id, vendor_id: vendorId,
         });
         return batchResult;
       });

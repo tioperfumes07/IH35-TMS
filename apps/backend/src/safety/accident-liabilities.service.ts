@@ -10,6 +10,7 @@ import { createJournalEntryOnClient } from "../accounting/journal-entries.servic
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 export type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -108,6 +109,10 @@ export async function createLiabilityFromAccident(
       input.created_by_user_id,
     ]
   );
+  await appendCrudAudit(client, input.created_by_user_id, "safety.accident_liability.created", {
+    resource_type: "safety.accident_liabilities", resource_id: res.rows[0]!.id, operating_company_id: input.operating_company_id,
+    accident_id: input.accident_id, assessed_amount_cents: assessed, net_exposure_cents: netExposure,
+  });
   return { id: res.rows[0]!.id, action: "created", assessed_amount_cents: assessed, net_exposure_cents: netExposure };
 }
 
@@ -254,6 +259,11 @@ export async function decideAccidentLiability(client: DbClient, input: DecideInp
     `,
     [input.decision, input.decided_by_user_id, note, driverCharge, companyAbsorb, deductionId, journalEntryId, status, input.liability_id]
   );
+  await appendCrudAudit(client, input.decided_by_user_id, "safety.accident_liability.decided", {
+    resource_type: "safety.accident_liabilities", resource_id: input.liability_id, operating_company_id: input.operating_company_id,
+    decision: input.decision, driver_charge_cents: driverCharge, company_absorb_cents: companyAbsorb,
+    deduction_id: deductionId, journal_entry_id: journalEntryId, status,
+  });
 
   return {
     id: input.liability_id,
@@ -346,6 +356,10 @@ export async function voidAccidentLiability(client: DbClient, input: VoidInput) 
     `,
     [input.voided_by_user_id, reason, input.liability_id]
   );
+  await appendCrudAudit(client, input.voided_by_user_id, "safety.accident_liability.voided", {
+    resource_type: "safety.accident_liabilities", resource_id: input.liability_id, operating_company_id: input.operating_company_id,
+    reason, deduction_id: liab.deduction_id, reversed_journal_entry_id: liab.journal_entry_id,
+  });
 
   return { id: input.liability_id, voided: true };
 }

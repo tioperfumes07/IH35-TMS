@@ -91,6 +91,25 @@ const LEGACY_DIRECT_SAMSARA = new Set([
   // like the other master-sync/pull/probe services. Writes nothing.
   "apps/backend/src/integrations/samsara/hos-driver-map-preview.service.ts",
   "apps/backend/src/telematics/dashcam.service.ts",
+  // 443.199 (2026-10-17) — the tiers are TTL caches for repeated READS of live state. Each file below is a scheduled POLL,
+  // an on-demand IMPORT, or a WRITE to Samsara — none re-reads a cached view, so routing it through a tier would either
+  // serve stale data to a writer or cache a push. Same class as master-sync / HOS pull / hos-driver-map-preview above.
+  // They were added 09-04..09-30 while CI never reached this post-pre-commit step.
+  // POLL: daily listDriversAllActivationStatuses mirror into the driver roster (b8bf1872a8).
+  "apps/backend/src/integrations/samsara/driver-mirror-collector.ts",
+  // POLL: daily listVehicleFaultCodes written into the fault-code table (d70531ef6b).
+  "apps/backend/src/integrations/samsara/fault-poll.cron.ts",
+  // WRITE: pushes fuel purchases TO Samsara twice a day (fef76c0ffe).
+  "apps/backend/src/integrations/samsara/fuel-purchase-push.cron.ts",
+  // IMPORT: on-demand listAddresses import into mdata.locations / geo.geofences, dry-run unless approved (e272e9cf14).
+  "apps/backend/src/integrations/samsara/geofences/address-import.service.ts",
+  // IMPORT/WRITE: one-shot listAddresses to link OUR geofences to Samsara addresses (ROUND 304 T-46, 01d95c4a52).
+  "apps/backend/src/integrations/samsara/geofences/geofence-address-link.routes.ts",
+  "apps/backend/src/integrations/samsara/geofences/geofence-address-link.service.ts",
+  // WRITE: sends office chat messages TO drivers through Samsara (ROUND 306 E-30, 4c8cb7b650).
+  "apps/backend/src/integrations/samsara/messaging/driver-message-delivery.service.ts",
+  // WRITE: pushes dispatched loads as Samsara routes when their body hash changes (E-31, 3d11e91589).
+  "apps/backend/src/integrations/samsara/routes-integration.service.ts",
 ]);
 
 function walkTsFiles(dir, acc = []) {

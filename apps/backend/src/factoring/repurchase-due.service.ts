@@ -9,6 +9,7 @@
 // Nothing in this module writes a journal entry, posting, bill, payment or invoice status. Guard:
 // scripts/verify-day95-asks-never-recourses.mjs.
 import { FACTORING_REPURCHASE_DEADLINE_DAYS } from "../accounting/factoring-posting/contract-config.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -65,7 +66,16 @@ export async function registerRepurchaseDueEvents(
     `,
     [operatingCompanyId, asOf]
   );
-  return { registered: inserted.rowCount ?? 0, reasked: reasked.rowCount ?? 0 };
+  const result = { registered: inserted.rowCount ?? 0, reasked: reasked.rowCount ?? 0 };
+  // Audit spine: the day-95 cron's questions to the owner (system actor — no user), only when it asked something.
+  if (result.registered > 0 || result.reasked > 0) {
+    await client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, NULL, $3)`, [
+      "factoring.repurchase_due.registered",
+      JSON.stringify({ resource_type: "accounting.factoring_repurchase_due_events", operating_company_id: operatingCompanyId, as_of: asOf, ...result }),
+      "FACTORING-DAY95-CRON",
+    ]);
+  }
+  return result;
 }
 
 export type RepurchaseDueRow = {
@@ -168,5 +178,9 @@ export async function decideRepurchaseDue(
     ]
   );
   if (!upd.rows[0]) throw new RepurchaseDueDecisionError("repurchase_due_event_already_decided");
+  await appendCrudAudit(client, input.actor_user_id, "factoring.repurchase_due.decided", {
+    resource_type: "accounting.factoring_repurchase_due_events", resource_id: input.event_id, operating_company_id: input.operating_company_id,
+    decision: input.decision, state: upd.rows[0].state, extended_to: input.decision === "extend" ? input.extended_to : null, note: input.note ?? null,
+  });
   return upd.rows[0];
 }

@@ -5,6 +5,7 @@
 // (Write Check with an explicit number, or print-batch assignment), next_check_number advances to
 // used+1 so the next Write Check / print batch is gapless.
 import type { PoolClient } from "pg";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 
 export class CheckStockError extends Error {
   code: string;
@@ -84,6 +85,12 @@ export async function upsertCheckStockSettings(
                offset_x_mm::text, offset_y_mm::text, print_company_address`,
     [input.bank_account_id, input.operating_company_id, input.next_check_number, input.check_type ?? null, input.actor_user_id, input.offset_x_mm ?? null, input.offset_y_mm ?? null, input.print_company_address ?? null]
   );
+  // Audit spine: the operator-set starting check number / stock layout is one event (advanceCheckStockAfterUse is part of
+  // issuing a check and is covered by that check's own event — accounting.check.created / accounting.check.bill_payment_issued).
+  await appendCrudAudit(client, input.actor_user_id, "banking.check_stock_settings.updated", {
+    resource_type: "banking.check_stock_settings", resource_id: input.bank_account_id, operating_company_id: input.operating_company_id,
+    next_check_number: res.rows[0]?.next_check_number ?? null, check_type: res.rows[0]?.check_type ?? null,
+  });
   return res.rows[0];
 }
 

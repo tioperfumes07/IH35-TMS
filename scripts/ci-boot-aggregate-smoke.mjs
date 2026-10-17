@@ -90,7 +90,20 @@ async function ensureTranspCompany(client) {
   return String(id);
 }
 
-async function ensureSmokeOwnerUser(client, companyId) {
+// 202613312000_permission_model.sql (08-31) added identity.guard_role_escalation: only a primary owner — or a session that
+// sets the dedicated app.allow_owner_bootstrap GUC — may write role='Owner'. This CI fixture predates the trigger, so
+// every run died with "role_escalation_blocked". The fixture now sets the GUC (transaction-local, inside
+// withLuciaBypass), exactly as the backend DB tests do, and REFUSES to do so on anything but a local CI database.
+function assertLocalCiDatabase(url) {
+  const host = new URL(url).hostname;
+  if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(host)) {
+    throw new Error(`aggregate_smoke_setup: refusing to bootstrap the smoke Owner on non-local database host ${host}`);
+  }
+}
+
+async function ensureSmokeOwnerUser(client, companyId, url) {
+  assertLocalCiDatabase(url);
+  await client.query("SET LOCAL app.allow_owner_bootstrap = '1'");
   await client.query(
     `UPDATE identity.users SET google_user_id = NULL WHERE google_user_id = $1 AND id <> $2::uuid`,
     [testOwnerGoogleId, testOwnerUserId]
@@ -190,12 +203,12 @@ async function resolveUnitAndCompany() {
         );
         const cid = res.rows[0]?.company_id;
         if (!cid) throw new Error(`unit not found: ${unitId}`);
-        await ensureSmokeOwnerUser(client, cid);
+        await ensureSmokeOwnerUser(client, cid, url);
         return { unitId, companyId: String(cid) };
       }
 
       const transpId = await ensureTranspCompany(client);
-      await ensureSmokeOwnerUser(client, transpId);
+      await ensureSmokeOwnerUser(client, transpId, url);
       return ensureSmokeUnit(client, transpId);
     });
   });

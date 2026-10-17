@@ -39,6 +39,7 @@ import {
   suggestFromLastSaved,
 } from "../lib/qbo-custom-document-number.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 import { RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL } from "../driver-finance/settlement-resolution.sql.js";
 
@@ -1113,6 +1114,11 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           ]
         );
       }
+      // Audit spine: a bill's cost allocation across units (the prior allocation is superseded, never deleted).
+      await appendCrudAudit(client, String(user.uuid), "accounting.bill_unit_allocation.allocated", {
+        resource_type: "accounting.bill_unit_allocation", bill_id: params.data.id, operating_company_id: query.data.operating_company_id,
+        method: body.data.method, rows,
+      });
 
       return { kind: "ok" as const, rows };
     });
