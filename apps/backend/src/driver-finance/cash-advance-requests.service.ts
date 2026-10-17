@@ -570,6 +570,7 @@ export async function getCashAdvanceRequestDetail(client: QueryableClient, opera
  *   2) else any open driver_bill -> 'open_bill'
  *   3) else -> 'loan' (employee loan, no bill link)
  * Fork 3: an active load with no open bill falls through 2 -> 3.
+ * A selected bill with no remaining balance is reported as 'loan' (the core books it all as a loan).
  */
 export async function detectCashAdvanceCascadeBranch(
   client: QueryableClient,
@@ -626,6 +627,34 @@ export async function detectCashAdvanceCascadeBranch(
     if (openBillId) {
       linkedDriverBillId = openBillId;
       branch = "open_bill";
+    }
+  }
+
+  // A selected bill with NO remaining balance cannot take a bill payment: createDriverCashAdvanceCore books the whole
+  // amount as an overflow LOAN (cash-advance-create.ts loan-overflow rule) and returns that loan. Reporting such a
+  // case as a bill-payment branch made approval stamp the request's load onto the loan (load linkage leaking into a
+  // loan — verify-cash-advance-close-time-three-way-routing live half). Same selection, same money; the branch now
+  // says what the core actually books. Remaining = gross minus every live advance already linked (the core's own
+  // measure).
+  if (linkedDriverBillId) {
+    const remainingRes = await client.query(
+      `
+        SELECT b.gross_amount_cents - COALESCE((
+                 SELECT ROUND(SUM(a.amount) * 100)
+                   FROM driver_finance.driver_advances a
+                  WHERE a.operating_company_id = b.operating_company_id
+                    AND a.linked_driver_bill_id = b.id
+                    AND a.voided_at IS NULL
+               ), 0) AS remaining_cents
+          FROM driver_finance.driver_bills b
+         WHERE b.id = $1::uuid AND b.operating_company_id = $2::uuid
+      `,
+      [linkedDriverBillId, operatingCompanyId]
+    );
+    const remainingCents = Number((remainingRes.rows[0] as { remaining_cents?: unknown } | undefined)?.remaining_cents ?? 0);
+    if (!(remainingCents > 0)) {
+      linkedDriverBillId = null;
+      branch = "loan";
     }
   }
 

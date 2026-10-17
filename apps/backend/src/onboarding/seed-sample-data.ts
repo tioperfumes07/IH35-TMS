@@ -180,15 +180,24 @@ async function ensureUnit(
   actorUserId: string,
   columns: Set<string>
 ) {
+  // mdata.units.unit_number and .vin are UNIQUE across ALL companies (units_unit_number_key / units_vin_key), so a fixed
+  // 'TEST-001' / 'VIN-TEST-0001' let only ONE company in the database ever seed sample data — every other company's
+  // seed died on the unique key. The plain sample number is tried first; if the database already holds it (another
+  // company's sample), the unit gets the same number suffixed with this company's own id — deterministic, so a re-seed
+  // finds and reuses it. No other company's rows are ever read: the reuse lookup is scoped to this company, and a
+  // taken plain number is detected only by its own unique-key violation (inside a SAVEPOINT).
+  const companySuffix = companyId.replace(/-/g, "").slice(0, 8).toUpperCase();
+  const perCompanyUnitNumber = `TEST-001-${companySuffix}`;
   const existing = await client.query<{ id: string }>(
     `
       SELECT id::text AS id
       FROM mdata.units
-      WHERE unit_number = 'TEST-001'
+      WHERE unit_number IN ('TEST-001', $2)
         AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
+      ORDER BY (unit_number = 'TEST-001') DESC
       LIMIT 1
     `,
-    [companyId]
+    [companyId, perCompanyUnitNumber]
   );
   if (existing.rows[0]) {
     await client.query(
@@ -220,12 +229,32 @@ async function ensureUnit(
     updated_by_user_id: actorUserId,
     is_sample_data: true,
   };
-  const parts = toInsertParts(insertValues, columns);
-  const inserted = await client.query<{ id: string }>(
-    `INSERT INTO mdata.units (${parts.columns.join(", ")}) VALUES (${parts.placeholders.join(", ")}) RETURNING id::text AS id`,
-    parts.params
-  );
-  return { id: inserted.rows[0].id, created: true };
+  const insertUnit = async (values: Record<string, unknown>) => {
+    const parts = toInsertParts(values, columns);
+    return client.query<{ id: string }>(
+      `INSERT INTO mdata.units (${parts.columns.join(", ")}) VALUES (${parts.placeholders.join(", ")}) RETURNING id::text AS id`,
+      parts.params
+    );
+  };
+  await client.query("SAVEPOINT seed_sample_unit");
+  try {
+    const inserted = await insertUnit(insertValues);
+    await client.query("RELEASE SAVEPOINT seed_sample_unit");
+    return { id: inserted.rows[0].id, created: true };
+  } catch (err) {
+    const pgErr = err as { code?: string; constraint?: string };
+    if (pgErr.code !== "23505" || (pgErr.constraint !== "units_unit_number_key" && pgErr.constraint !== "units_vin_key")) {
+      throw err;
+    }
+    await client.query("ROLLBACK TO SAVEPOINT seed_sample_unit");
+    await client.query("RELEASE SAVEPOINT seed_sample_unit");
+    const inserted = await insertUnit({
+      ...insertValues,
+      unit_number: perCompanyUnitNumber,
+      vin: `VIN-TEST-0001-${companySuffix}`,
+    });
+    return { id: inserted.rows[0].id, created: true };
+  }
 }
 
 async function ensureLoad(

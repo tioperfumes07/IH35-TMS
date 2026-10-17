@@ -156,7 +156,13 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
         [userId, companyId]
       );
       // start from a clean flag state (no override) so the default (OFF) governs the flag-OFF test.
-      await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='BILL_PAYMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
+      // Re-run safety: setFlagOverride writes a USER-scoped override for this file's fixed actor (userId), and a
+      // previous run's row carries THAT run's isolated company id — so it must be cleared by user_uuid too, or the
+      // second run on the same database (verify:pre-commit, then test:coverage) starts with the flag ON.
+      await db.query(
+        `DELETE FROM lib.feature_flag_overrides WHERE flag_key='BILL_PAYMENT_GL_POSTING_ENABLED' AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`,
+        [companyId, userId]
+      );
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Fuel Test','Expense',true)`, [fuelAccountId, `F${suffix}`, companyId]);
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'AP Test','Liability',true)`, [apAccountId, `P${suffix}`, companyId]);
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Bank GL Test','Asset',true)`, [bankGlAccountId, `B${suffix}`, companyId]);
@@ -197,9 +203,18 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
 
   afterAll(async () => {
     if (!db) return;
+    // The flag override is cleared in its OWN transaction: the best-effort cleanup below can roll back as a whole
+    // (append-only ledger tables refuse DELETE), which used to take this delete with it and leave the flag ON.
     try {
       await bypass(async () => {
-        await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='BILL_PAYMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
+        await db.query(
+          `DELETE FROM lib.feature_flag_overrides WHERE flag_key='BILL_PAYMENT_GL_POSTING_ENABLED' AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`,
+          [companyId, userId]
+        );
+      });
+    } catch { /* best-effort; beforeAll clears it again on the next run */ }
+    try {
+      await bypass(async () => {
         await db.query(`DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`, [[...createdBillIds, ...createdPaymentIds]]);
         await db.query(`DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type IN ('bill','bill_payment')`, [[...createdBillIds, ...createdPaymentIds]]);
         await db.query(`DELETE FROM accounting.posting_batches WHERE source_transaction_id = ANY($1) AND source_transaction_type IN ('bill','bill_payment')`, [[...createdBillIds, ...createdPaymentIds]]);

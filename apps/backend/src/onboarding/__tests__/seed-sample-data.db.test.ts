@@ -10,7 +10,11 @@
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../../test-helpers/db-fixture.js";
+import {
+  createIsolatedOperatingCompany,
+  ensureIntegrationPrerequisites,
+  prepareCompanyForLoadInserts,
+} from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { seedSampleData } from "../seed-sample-data.js";
 
@@ -23,7 +27,12 @@ describeIntegration("seedSampleData -> the shared create path (E6)", () => {
   beforeAll(async () => {
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
-    companyId = await ensureIntegrationPrerequisites();
+    // Re-run safety: build-typecheck-heavy runs this suite twice on the SAME database (verify:pre-commit, then
+    // test:coverage). The sample load LD-SAMPLE-001 cannot be removed by the acting role (a DELETE as ih35_app is
+    // filtered by RLS to 0 rows, silently), so on the shared integration company the second run found the first
+    // run's load and created.load was false. Each run seeds into its own fresh isolated company instead.
+    await ensureIntegrationPrerequisites();
+    companyId = (await createIsolatedOperatingCompany({ label: "sample-seed" })).companyId;
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
@@ -42,19 +51,8 @@ describeIntegration("seedSampleData -> the shared create path (E6)", () => {
   });
 
   it("creates the sample load through createLoadWithFullSideEffects, with real stops, and is idempotent on re-run", async () => {
-    // seedSampleData manages its own BEGIN/COMMIT internally (it always has -- this predates
-    // the E6 rewire), so this test cannot wrap it in an outer transaction/savepoint the way the
-    // sibling `.db.test.ts` files do. Cleanup runs auto-committed before and after; this is safe
-    // only because `.db.test.ts` files run exclusively against CI's ephemeral, torn-down-after
-    // Postgres, never production (see file header).
-    const cleanup = async () => {
-      await db.query(
-        `DELETE FROM mdata.load_stops WHERE load_id IN (SELECT id FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = 'LD-SAMPLE-001')`,
-        [companyId]
-      );
-      await db.query(`DELETE FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = 'LD-SAMPLE-001'`, [companyId]);
-    };
-    await cleanup();
+    // seedSampleData manages its own BEGIN/COMMIT internally, so this test cannot wrap it in an outer
+    // transaction. The company is fresh for this run (beforeAll), so nothing needs removing before or after.
     try {
       const first = await seedSampleData(db, { operatingCompanyId: companyId, actorUserId: TEST_OWNER_USER_ID });
       expect(first.created.load).toBe(true);
@@ -86,7 +84,7 @@ describeIntegration("seedSampleData -> the shared create path (E6)", () => {
       );
       expect(count.rows[0]?.n).toBe("1");
     } finally {
-      await cleanup();
+      // nothing to clean: the isolated company is unique to this run
     }
   });
 });

@@ -17,7 +17,7 @@ const LOAD_BILL = "66666666-6666-4666-8666-666666666666";
 const OPEN_BILL = "77777777-7777-4777-8777-777777777777";
 const ACCT = "6a46bfea-4020-46ea-9f3c-99bab3cc06f5";
 
-function makeClient(scn: { activeLoad?: boolean; loadBill?: boolean; openBill?: boolean }) {
+function makeClient(scn: { activeLoad?: boolean; loadBill?: boolean; openBill?: boolean; billRemainingCents?: number }) {
   const sqls: string[] = [];
   const client = {
     query: vi.fn(async (sql: string) => {
@@ -26,6 +26,8 @@ function makeClient(scn: { activeLoad?: boolean; loadBill?: boolean; openBill?: 
         return { rows: [{ driver_id: DRIVER, requested_amount_cents: "50000" }] };
       }
       if (sql.includes("FROM mdata.loads")) return { rows: scn.activeLoad ? [{ id: LOAD }] : [] };
+      // remaining balance of the selected bill (default: plenty remaining)
+      if (sql.includes("remaining_cents")) return { rows: [{ remaining_cents: String(scn.billRemainingCents ?? 100_000_00) }] };
       if (sql.includes("FROM driver_finance.driver_bills") && sql.includes("load_id = $3")) {
         return { rows: scn.loadBill ? [{ id: LOAD_BILL }] : [] };
       }
@@ -47,6 +49,18 @@ describe("detectCashAdvanceCascadeBranch (B5 logic, reused by B6)", () => {
     const { client } = makeClient({ activeLoad: false, openBill: true });
     const r = await detectCashAdvanceCascadeBranch(client, OC, DRIVER);
     expect(r).toMatchObject({ branch: "open_bill", linkedDriverBillId: OPEN_BILL });
+  });
+  it("an open bill with NO remaining balance -> loan, no bill link (the core books it all as a loan; no load leaks onto it)", async () => {
+    const { client } = makeClient({ activeLoad: false, openBill: true, billRemainingCents: 0 });
+    const r = await detectCashAdvanceCascadeBranch(client, OC, DRIVER);
+    expect(r.branch).toBe("loan");
+    expect(r.linkedDriverBillId).toBe(null);
+  });
+  it("a load-bill fully covered by prior advances -> loan, no bill link", async () => {
+    const { client } = makeClient({ activeLoad: true, loadBill: true, billRemainingCents: 0 });
+    const r = await detectCashAdvanceCascadeBranch(client, OC, DRIVER);
+    expect(r.branch).toBe("loan");
+    expect(r.linkedDriverBillId).toBe(null);
   });
   it("active load but NO open bill -> falls through to loan", async () => {
     const { client } = makeClient({ activeLoad: true, loadBill: false, openBill: false });
