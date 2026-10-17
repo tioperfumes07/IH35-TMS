@@ -838,7 +838,7 @@ export function ModuleMatrixSystemView() {
           rowKey={(r) => r.mod}
           allowAllPageSize
           columns={[
-            { key: "seq", label: "Seq", kind: "number" },
+            { key: "seq", label: "Seq", sortable: true, kind: "number" },
             {
               key: "band",
               label: "Wave",
@@ -1030,7 +1030,7 @@ export function ModuleMatrixSystemView() {
                 </>
               ),
             },
-            { key: "wave", label: "Wave", sortValue: (row) => launchWaveForModule(row.module), render: (row) => launchWaveForModule(row.module) },
+            { key: "wave", label: "Wave", sortable: true, sortValue: (row) => launchWaveForModule(row.module), render: (row) => launchWaveForModule(row.module) },
             {
               key: "l6",
               label: "V1 L6",
@@ -1043,7 +1043,7 @@ export function ModuleMatrixSystemView() {
               label: "Clicked",
               render: (row) => <span className="font-semibold text-[#16A34A] tabular-nums">{row.available ? (row.clickedCells ?? 0) : "—"}</span>,
             },
-            { key: "opsClicked", label: "Ops click", render: (row) => (row.available ? (row.opsClicked ?? 0) : "—") },
+            { key: "opsClicked", label: "Ops click", sortable: true, render: (row) => (row.available ? (row.opsClicked ?? 0) : "—") },
             {
               key: "missC",
               label: "Miss C",

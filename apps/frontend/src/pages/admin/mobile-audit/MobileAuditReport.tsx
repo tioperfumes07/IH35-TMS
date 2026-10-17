@@ -64,11 +64,11 @@ export function MobileAuditReport() {
         rowKey={(row) => row.id}
         emptyText="No issues flagged — run the auditor in CI to refresh."
         columns={[
-          { key: "rule", label: "Rule" },
-          { key: "file", label: "File" },
-          { key: "message", label: "Finding", allowWrap: true },
-          { key: "owner_module", label: "Owner" },
-          { key: "suggested_fix", label: "Suggested fix", allowWrap: true },
+          { key: "rule", label: "Rule", sortable: true },
+          { key: "file", label: "File", sortable: true },
+          { key: "message", label: "Finding", sortable: true, allowWrap: true },
+          { key: "owner_module", label: "Owner", sortable: true },
+          { key: "suggested_fix", label: "Suggested fix", sortable: true, allowWrap: true },
         ]}
       />
     </div>

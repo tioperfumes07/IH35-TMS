@@ -15,8 +15,12 @@ function scanEscrowContext(relPath, source) {
   if (/Active drivers/i.test(escrowSection[0])) {
     failures.push(`${relPath}: escrow visualizer must not label counts as "Active drivers"`);
   }
-  if (!/Drivers with escrow:/i.test(escrowSection[0])) {
-    failures.push(`${relPath}: escrow visualizer must label non-zero escrow count as "Drivers with escrow:"`);
+  // BANK-F91062 (bf76525c70, 2026-10-02): the Banking-home escrow card counts the GL ACCOUNTS holding escrow (Driver Escrow
+  // and its per-driver sub-accounts — banking-kpi.service.ts escrow_held compare_label "Accounts holding escrow"), not
+  // drivers, so "Accounts holding escrow" is the honest label there; the board keeps "Drivers with escrow:". Either honest
+  // label passes; "Active drivers" (BANK-F6702's misleading count) still fails above.
+  if (!/Drivers with escrow:|Accounts holding escrow/i.test(escrowSection[0])) {
+    failures.push(`${relPath}: escrow visualizer must label the escrow count honestly ("Drivers with escrow:" or "Accounts holding escrow")`);
   }
 }
 

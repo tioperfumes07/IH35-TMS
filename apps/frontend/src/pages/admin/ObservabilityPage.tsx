@@ -234,8 +234,8 @@ function HealthzCheckTable({ title, storageKey, checks }: { title: string; stora
       suppressToolbarSearch
       suppressToolbarRange
       columns={[
-        { key: "name", label: "Check", cellClass: "font-mono" },
-        { key: "tier", label: "Tier" },
+        { key: "name", label: "Check", sortable: true, cellClass: "font-mono" },
+        { key: "tier", label: "Tier", sortable: true },
         {
           key: "duration_ms",
           label: "Duration",

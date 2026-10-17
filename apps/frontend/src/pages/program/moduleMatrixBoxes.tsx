@@ -412,7 +412,7 @@ export function GroupRollupTable({ rollups, liveOk }: { rollups: GroupRollup[]; 
                 </>
               ),
             },
-            { key: "requiredCells", label: "Required", kind: "number" },
+            { key: "requiredCells", label: "Required", sortable: true, kind: "number" },
             {
               key: "auditedOnlyPct",
               label: "Audited %",

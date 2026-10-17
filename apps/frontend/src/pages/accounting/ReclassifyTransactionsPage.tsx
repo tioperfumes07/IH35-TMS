@@ -543,7 +543,7 @@ export function ReclassifyTransactionsPage() {
               initialPageSize={25}
               columns={[
                 { key: "created_at", label: "When", render: (b) => <span className="whitespace-nowrap">{formatDateQboList(b.created_at)}</span> },
-                { key: "created_by_email", label: "By", render: (b) => b.created_by_email ?? "—" },
+                { key: "created_by_email", label: "By", sortable: true, render: (b) => b.created_by_email ?? "—" },
                 { key: "change", label: "Change", sortable: false, allowWrap: true, render: (b) => {[b.to_account_name ? `→ ${formatAccountDisplayLabel({ account_name: b.to_account_name, account_number: b.to_account_number }, { showNumber: showAccountNumbers })}` : null, b.to_class_name ? `class → ${b.to_class_name}` : null, b.to_location_name ? `location → ${b.to_location_name}` : null, b.to_entity_uuid ? `${b.to_entity_type ?? "entity"} → ${entityLabel(b.to_entity_name ?? null, b.to_entity_uuid, b.to_entity_type === "vendor" ? "Vendor" : b.to_entity_type === "customer" ? "Customer" : b.to_entity_type === "driver" ? "Driver" : b.to_entity_type === "unit" ? "Unit" : "Entity")}` : null].filter(Boolean).join(" · ")} },
                 { key: "reason", label: "Reason", render: (b) => <span className="block max-w-[18rem] truncate" title={b.reason}>{b.reason}</span> },
                 { key: "lines_applied", label: "Lines", kind: "number", render: (b) => <span data-quantity>{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</span> },

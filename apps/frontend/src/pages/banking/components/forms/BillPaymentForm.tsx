@@ -159,12 +159,12 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
             },
             {
               key: "total",
-              label: "Total",
+              label: "Total", sortable: true,
               render: (bill) => formatUsdCents(bill.amount_cents),
             },
             {
               key: "open",
-              label: "Open",
+              label: "Open", sortable: true,
               cellClass: "text-red-700",
               render: () => formatUsdCents(openBalanceCents),
             },

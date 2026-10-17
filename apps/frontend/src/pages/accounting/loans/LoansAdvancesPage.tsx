@@ -260,11 +260,11 @@ export function LoansAdvancesPage() {
             columns={[
               {
                 key: "person",
-                label: "Person",
+                label: "Person", sortable: true,
                 render: (r) =>
                   entityLabel(r.counterparty_name ?? r.account_name, r.account_id, "Related party"),
               },
-              { key: "relationship", label: "Relationship", render: (r) => r.relationship },
+              { key: "relationship", label: "Relationship", sortable: true, render: (r) => r.relationship },
               {
                 key: "account",
                 label: "Account",
@@ -285,14 +285,14 @@ export function LoansAdvancesPage() {
               },
               {
                 key: "advanced",
-                label: "Advanced",
+                label: "Advanced", sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.principal_advanced_cents),
               },
               {
                 key: "repaid",
-                label: "Repaid",
+                label: "Repaid", sortable: true,
                 className: "text-right",
                 cellClass: "text-right whitespace-nowrap",
                 render: (r) => money(r.principal_repaid_cents),
@@ -521,28 +521,28 @@ export function LoansAdvancesPage() {
             columns={[
               {
                 key: "display_id",
-                label: "Document",
+                label: "Document", sortable: true,
                 render: (r) => r.display_id ?? "—",
               },
               {
                 key: "entry_date",
-                label: "Date",
+                label: "Date", sortable: true,
                 render: (r) => formatDateUS(r.entry_date),
               },
               {
                 key: "direction",
-                label: "Direction",
+                label: "Direction", sortable: true,
                 render: (r) => (r.direction === "in" ? "To company" : "From company"),
               },
               {
                 key: "counterparty",
-                label: "Counterparty",
+                label: "Counterparty", sortable: true,
                 render: (r) => entityLabel(r.counterparty_name, r.counterparty_id, "Counterparty"),
               },
-              { key: "relationship", label: "Relationship", render: (r) => r.relationship },
+              { key: "relationship", label: "Relationship", sortable: true, render: (r) => r.relationship },
               {
                 key: "kind",
-                label: "Kind",
+                label: "Kind", sortable: true,
                 render: (r) => r.document_kind ?? r.target_type,
               },
               {

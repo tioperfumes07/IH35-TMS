@@ -262,8 +262,8 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
                   hidePager
                   initialPageSize={300}
                   columns={[
-                    { key: "label", label: "Bucket" },
-                    { key: "count", label: "Rows", kind: "number" },
+                    { key: "label", label: "Bucket", sortable: true },
+                    { key: "count", label: "Rows", sortable: true, kind: "number" },
                     ...(drillKpi.unit === "cents"
                       ? [{ key: "cents", label: "Amount", kind: "money" as const, render: (b: NonNullable<LedgerKpi["buckets"]>[number]) => <MoneyCell cents={b.cents} drill={{ none: "Breakdown bucket of this KPI — the rows listed below in this drill are its transactions" }} /> }]
                       : []),
