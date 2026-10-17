@@ -27,6 +27,7 @@ import { voidBillPaymentInClientTx } from "../accounting/bills.service.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { stampCustomerPaymentVoided } from "../accounting/payment-void-stamp.service.js";
 import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
+import { completeDriverSettlementVoidCascadeInClientTx } from "../driver-finance/driver-settlement-void-cascade.service.js";
 import { writeOffDriverReceivableInClientTx } from "../driver-finance/driver-receivable-writeoff.service.js";
 
 export type VoidCancelAction = "void" | "cancel";
@@ -759,7 +760,7 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     );
     const stampedAnything =
       reversal.result !== "nothing_to_reverse" || cascade.lines_voided.length > 0 || cascade.driver_bills_released.length > 0 ||
-      cascade.children.some((c) => c.rowsStamped > 0);
+      cascade.reimbursements_released.length > 0 || cascade.children.some((c) => c.rowsStamped > 0);
     if (!stampedAnything && Number(priorAudit.rows[0]?.n ?? 0) > 0) return { kind: "already_done" };
     await appendCrudAudit(
       client,
@@ -775,6 +776,7 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
         header_already_cancelled: true,
         settlement_lines_voided: cascade.lines_voided,
         driver_bills_released: cascade.driver_bills_released,
+        reimbursements_released: cascade.reimbursements_released,
         via: "governance.void_cancel_requests",
       },
       "warning",
@@ -824,6 +826,7 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
       gl_run_id: reversal.run_id,
       settlement_lines_voided: cascade.lines_voided,
       driver_bills_released: cascade.driver_bills_released,
+      reimbursements_released: cascade.reimbursements_released,
       via: "governance.void_cancel_requests",
     },
     "warning",
@@ -832,63 +835,12 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
   return { kind: "ok", reversing_entry_ref: reversal.run_id };
 };
 
-export type DriverSettlementVoidCascadeResult = {
-  lines_voided: string[];
-  driver_bills_released: string[];
-  children: Awaited<ReturnType<typeof cascadeVoidChildren>>;
-};
-
-/**
- * The ONE child cascade of a driver-settlement void (executeVoidCancel('driver_settlement')). Runs on the caller's
- * transaction; idempotent (every write touches only rows still live). Never deletes.
- *
- *  1. settlement_lines — SETL-LINES-VOID-GAP: the direct /settlements/:id/reverse route already cascades its reversal
- *     to the settlement's own lines (is_active=false + voided_at/void_reason/voided_by_user_id); the governance path
- *     reverses the SAME settlement via the SAME engine and matches that trail exactly.
- *  2. cascadeVoidChildren — ROUND 138: the rest of driver_settlement's registered children
- *     (driver_settlement_deductions.voided_at, chiefly).
- *  3. driver bills — LEAD 443.192: a bill "settled" in a voided / cancelled settlement is settled in nothing. The GL
- *     reversal restores the bills its posted run paid; an OPEN bill still naming this settlement (no posted run — a
- *     shell that never posted) is released from the dead link here. A 'paid' bill is never touched (its money moves
- *     only through the reversal engine).
- */
-export async function completeDriverSettlementVoidCascadeInClientTx(
-  client: ExecutorContext["client"],
-  input: { operatingCompanyId: string; settlementId: string; userId: string; reason: string }
-): Promise<DriverSettlementVoidCascadeResult> {
-  const { operatingCompanyId, settlementId, userId, reason } = input;
-  const lines = await client.query<{ id: string }>(
-    `UPDATE driver_finance.settlement_lines
-        SET is_active = false,
-            voided_at = COALESCE(voided_at, now()),
-            void_reason = COALESCE(void_reason, $3),
-            voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
-            updated_at = now()
-      WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
-        AND (is_active IS DISTINCT FROM false OR voided_at IS NULL)
-      RETURNING id::text`,
-    [settlementId, operatingCompanyId, reason, userId]
-  );
-
-  const children = await cascadeVoidChildren(client, "driver_settlement", settlementId, operatingCompanyId);
-
-  const bills = await client.query<{ id: string }>(
-    `UPDATE driver_finance.driver_bills
-        SET settled_in_settlement_id = NULL, updated_at = now()
-      WHERE operating_company_id = $2::uuid
-        AND settled_in_settlement_id = $1::uuid
-        AND status = 'open'
-        AND voided_at IS NULL
-      RETURNING id::text`,
-    [settlementId, operatingCompanyId]
-  );
-
-  return {
-    lines_voided: (lines.rows ?? []).map((r) => r.id),
-    driver_bills_released: (bills.rows ?? []).map((r) => r.id),
-    children,
-  };
-}
+// LEAD 443.192 (13:25Z follow-up): the cascade lives in driver-finance/driver-settlement-void-cascade.service.ts so the
+// Settlement Creator Edit / POST /settlements/:id/reverse path (reverseSettlementForVoid) runs the SAME one — re-exported here.
+export {
+  completeDriverSettlementVoidCascadeInClientTx,
+  type DriverSettlementVoidCascadeResult,
+} from "../driver-finance/driver-settlement-void-cascade.service.js";
 
 // ROUND 270/AUTH-132 (Lead + owner) — closing the hole this session found live: two
 // accounting.factoring_advances rows (invoices 13619/13615) had voided_at/void_reason stamped by a

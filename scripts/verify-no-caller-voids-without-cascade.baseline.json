@@ -4,7 +4,7 @@
     {
       "file": "apps/backend/src/driver-finance/void-document-callees.service.ts",
       "table": "driver_finance.driver_settlements",
-      "reason": "reverseSettlementForVoid() flips driver_settlements to status='cancelled'+voided_at directly (R-102-B) and already hand-cascades settlement_lines itself, but not driver_settlement_deductions -- the same gap ROUND 138 closed in governance/void-cancel-executors.ts's executeDriverSettlement for the SAME underlying entity. This file is driver-finance/** (CC-3's lane per LANES.md); CC-1 does not edit it. Flagged here rather than silently skipped -- CC-3 notified directly (ROUND 138 handoff) to add the one-line `cascadeVoidChildren(client, \"driver_settlement\", settlementId, operatingCompanyId)` call after the existing settlement_lines UPDATE. Remove this entry once wired."
+      "reason": "reverseSettlementForVoid() flips driver_settlements to status='cancelled'+voided_at directly (R-102-B). Since LEAD 443.192 (2026-10-17) it runs the shared driver-settlement void cascade completeDriverSettlementVoidCascadeInClientTx (lines voided, open driver bills + unpaid reimbursements released) with voidChildren:false ON PURPOSE: the only stamped child is driver_settlement_deductions.voided_at, and on this path (Settlement Creator Edit / POST /reverse) deductions go only through the owner-ruled three-branch deduction engine (reverseDeductionForVoid -> voidSettlementDeduction, 'why would I forgive the debt') or are restored to pending by the GL reversal; a raw voided_at stamp would forgive an uncollected deduction. Kept in the baseline with this reason, not wired."
     }
   ],
   "measured_at": "2026-09-24T00:30:00Z",

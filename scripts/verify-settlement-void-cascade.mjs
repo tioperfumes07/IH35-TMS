@@ -43,6 +43,14 @@ const VOID_SERVICE_FILE = "apps/backend/src/accounting/void.service.ts";
 // function -- one implementation, not two. The cascade-detail assertions below check the UNION of
 // this file and the route file, since the cascade now lives in the callee, not inline.
 const CALLEE_FILE = "apps/backend/src/driver-finance/void-document-callees.service.ts";
+// LEAD 443.192 follow-up: reverseSettlementForVoid runs the ONE shared driver-settlement void cascade
+// (completeDriverSettlementVoidCascadeInClientTx) instead of an inline settlement_lines UPDATE — it joins the union
+// only when the callee actually calls it, so removing the call can never pass on the strength of the leaf file alone.
+const CASCADE_FILE = "apps/backend/src/driver-finance/driver-settlement-void-cascade.service.ts";
+function withCascade(calleeSrc) {
+  if (!/completeDriverSettlementVoidCascadeInClientTx\(/.test(calleeSrc)) return calleeSrc;
+  return calleeSrc + "\n" + (read(CASCADE_FILE) ?? "");
+}
 
 function read(rel) {
   const p = path.join(ROOT, rel);
@@ -141,7 +149,7 @@ export function assertBankOrphanGuard(src) {
 
 function selftest() {
   const goodRoutes = read(ROUTES_FILE) ?? "";
-  const goodCallee = read(CALLEE_FILE) ?? "";
+  const goodCallee = withCascade(read(CALLEE_FILE) ?? "");
   const goodCascade = goodRoutes + "\n" + goodCallee;
   const goodVoidService = read(VOID_SERVICE_FILE) ?? "";
   const goodRoutesErrs = assertRoutesGuard(goodRoutes, goodCascade);
@@ -189,7 +197,7 @@ if (process.argv.includes("--selftest")) {
 }
 
 const liveRoutesSrc = read(ROUTES_FILE);
-const liveCalleeSrc = read(CALLEE_FILE) ?? "";
+const liveCalleeSrc = withCascade(read(CALLEE_FILE) ?? "");
 const routesErrs = assertRoutesGuard(liveRoutesSrc, (liveRoutesSrc ?? "") + "\n" + liveCalleeSrc);
 const voidServiceErrs = assertBankOrphanGuard(read(VOID_SERVICE_FILE));
 const errs = [...routesErrs, ...voidServiceErrs];

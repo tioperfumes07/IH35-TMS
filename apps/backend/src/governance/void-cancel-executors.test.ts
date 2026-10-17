@@ -103,7 +103,9 @@ describe("Task #24 — void/cancel executor wiring", () => {
     });
     const execBody = fnMatch ? fnMatch[0] : "";
     // LEAD 443.192: the line cascade lives in completeDriverSettlementVoidCascadeInClientTx, called from the executor.
-    const helperMatch = source.match(/export async function completeDriverSettlementVoidCascadeInClientTx\([\s\S]*?\n\}/);
+    // 443.192 follow-up: the cascade moved to a leaf module shared with reverseSettlementForVoid (re-exported here).
+    const cascadeSource = fs.readFileSync(path.join(here, "../driver-finance/driver-settlement-void-cascade.service.ts"), "utf8");
+    const helperMatch = cascadeSource.match(/export async function completeDriverSettlementVoidCascadeInClientTx\([\s\S]*?\n\}/);
     const body = helperMatch ? helperMatch[0] : "";
 
     it("the executor routes every void (fresh or header-already-cancelled) through the shared cascade", () => {
