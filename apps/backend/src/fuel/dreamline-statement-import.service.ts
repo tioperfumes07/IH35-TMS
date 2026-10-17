@@ -224,6 +224,24 @@ export function dreamlineAdoptMarker(line: Pick<DreamlineStatementLine, "efs_inv
   return `dreamline_efs=${line.efs_invoice}:${line.item}:${seq}`;
 }
 
+/**
+ * The ONE adoption stamp: a statement line adopts the receipt already on the books — the booked fuel row carries the
+ * line's marker (a re-run sees "already_imported" through it) and the card's gross / discount. Called by the import loop
+ * and by the LEAD 443.194 repair (a statement copy of a booked receipt is voided whole, then the line adopts the receipt).
+ */
+export async function stampDreamlineReceiptAdopted(
+  client: DbClient,
+  input: { companyId: string; fuelTransactionId: string; marker: string; grossCents: number; discountCents: number }
+): Promise<void> {
+  await client.query(
+    `UPDATE fuel.fuel_transactions
+        SET notes = concat_ws('; ', NULLIF(notes, ''), $3::text),
+            gross_cost = $4::numeric / 100, discount_amount = $5::numeric / 100, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.fuelTransactionId, input.companyId, input.marker, input.grossCents, input.discountCents]
+  );
+}
+
 type BookedReceipt = {
   expense_id: string;
   expense_number: string | null;
@@ -625,13 +643,9 @@ export async function importDreamlineStatement(
             summary.difference_posted_cents += diff;
           }
           if (hit.fuel_transaction_id) {
-            await client.query(
-              `UPDATE fuel.fuel_transactions
-                  SET notes = concat_ws('; ', NULLIF(notes, ''), $3::text),
-                      gross_cost = $4::numeric / 100, discount_amount = $5::numeric / 100, updated_at = now()
-                WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-              [hit.fuel_transaction_id, companyId, marker, line.gross_cents, line.discount_cents]
-            );
+            await stampDreamlineReceiptAdopted(client, {
+              companyId, fuelTransactionId: hit.fuel_transaction_id, marker, grossCents: line.gross_cents, discountCents: line.discount_cents,
+            });
           }
         } else if (diff !== 0) summary.difference_posted_cents += diff;
         record(line, "adopted", { expense_id: hit.expense_id, fuel_transaction_id: hit.fuel_transaction_id, difference_cents: diff });
