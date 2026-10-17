@@ -23,7 +23,6 @@ const ALLOWED = new Set([
   "components/table/TableSearch.tsx",
   "components/parity/ParityTable.tsx",
   "components/DataTable.tsx",
-  "components/lists/ListView/ListView.tsx",
 ]);
 // The canonical shared components a toolbar leaf's surface_path may legitimately point at — either
 // directly (surface_path IS one of ALLOWED, e.g. a leaf documenting the shared component itself) or

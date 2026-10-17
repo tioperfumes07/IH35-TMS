@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per account in the chart (name / type / balance as of today), a current-state list, not a time series.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
@@ -8,8 +9,8 @@ import { fetchAccountBalances, fetchAccountTypeCatalog, deactivateCatalogAccount
 import { getPlaidBankAccounts } from "../../../api/banking";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
-import { ListView } from "../../../components/lists/ListView";
-import type { ActiveFilter, ListViewColumn, ListViewFilter, SortConfig } from "../../../components/lists/ListView/types";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useToast } from "../../../components/Toast";
@@ -35,11 +36,15 @@ import {
 
 const PAGE_SIZE_DEFAULT = 50;
 
-const FILTERS: ListViewFilter[] = [
+// LEAD 443.181 — the chart renders on THE one table component (ParityTable). The View (statement) filter keeps
+// its own state shape; ListView's filter popover is replaced by the house staged filter panel (draft → Apply).
+type CoaFilter = { id: string; label: string; options: { value: string; label: string }[] };
+type ActiveFilter = { filterId: string; values: string[] };
+
+const FILTERS: CoaFilter[] = [
   {
     id: "statement",
     label: "View",
-    type: "multiselect",
     options: [
       { value: "BS", label: "Balance sheet" },
       { value: "P&L", label: "Profit & loss" },
@@ -110,23 +115,37 @@ function buildColumns(
   onMakeInactive: (row: CoaListRow) => void,
   showAccountNumbers: boolean,
   asOfDate: string
-): ListViewColumn<CoaListRow>[] {
-  return [
+): ParityColumn<CoaListRow>[] {
+  // The statement + sync badges sit in the first visible column (NUMBER when shown, else NAME) — same place
+  // ListView's badgeSlot put them.
+  const badges = (row: CoaListRow) => (
+    <>
+      <span className="ml-1 rounded-sm bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold text-[#1F2A44]">
+        {statementTag(row.statement as "BS" | "P&L")}
+      </span>
+      <span className={`ml-1 rounded-sm px-1 py-0.5 text-xs font-semibold ${syncBadgeClasses(row.syncBadge)}`}>
+        {row.syncBadge}
+      </span>
+    </>
+  );
+  const columns: ParityColumn<CoaListRow>[] = [
     {
-      id: "number",
+      key: "number",
+      sortable: true,
       label: "NUMBER",
-      width: 110,
-      sortType: "text",
-      pinned: true,
-      // Owner 2026-07-23: QBO/CoA numbers junk — hidden unless toggle ON.
-      visible: showAccountNumbers,
-      render: (row) => <span className="font-medium tracking-normal [font-variant-ligatures:none]">{row.number}</span>,
+      minWidth: 110,
+      render: (row) => (
+        <div className="flex items-center gap-1 overflow-hidden">
+          <span className="font-medium tracking-normal [font-variant-ligatures:none]">{row.number}</span>
+          {badges(row)}
+        </div>
+      ),
     },
     {
-      id: "name",
+      key: "name",
+      sortable: true,
       label: "NAME",
-      width: 260,
-      sortType: "text",
+      minWidth: 260,
       render: (row) => (
         <div className="flex items-center gap-1 min-w-0" style={{ paddingLeft: `${row.depth * 16}px` }}>
           {row.hasChildren ? (
@@ -145,14 +164,15 @@ function buildColumns(
             <span className="w-3 shrink-0" />
           )}
           <EntityLink kind="account" id={row.id} label={row.name} className="truncate" />
+          {showAccountNumbers ? null : badges(row)}
         </div>
       ),
     },
     {
-      id: "acct_type",
+      key: "acct_type",
+      sortable: true,
       label: "ACCOUNT TYPE",
-      width: 160,
-      sortType: "text",
+      minWidth: 160,
       // B-1 / ORDERS + QBO §11 — Type (+feed badge): bank-feed chip + BAL when connected.
       render: (row) => (
         <span className="inline-flex items-center gap-1" data-b1-coa-type="1">
@@ -171,16 +191,16 @@ function buildColumns(
       ),
     },
     {
-      id: "detail_type",
+      key: "detail_type",
+      sortable: true,
       label: "DETAIL TYPE",
-      width: 180,
-      sortType: "text",
+      minWidth: 180,
     },
     {
-      id: "description",
+      key: "description",
+      sortable: true,
       label: "DESCRIPTION",
-      width: 220,
-      sortType: "text",
+      minWidth: 220,
       render: (row) => (
         <span className="block truncate" data-b1-coa-description="1" title={row.description}>
           {row.description}
@@ -188,19 +208,19 @@ function buildColumns(
       ),
     },
     {
-      id: "details",
+      key: "details",
+      sortable: true,
       label: "DETAILS",
-      width: 220,
-      sortType: "text",
-      visible: false,
+      minWidth: 220,
+      defaultHidden: true,
     },
     {
-      id: "qb_balance",
+      key: "qb_balance",
+      sortable: true,
       // B-1 / ORDERS 2026-10-01 — QBO shows Book balance vs Bank balance side by side.
       // Field id stays qb_balance (book from account-balances); label is Book, never QuickBooks.
       label: "BOOK BALANCE",
-      width: 160,
-      sortType: "currency",
+      minWidth: 160,
       // ROUND 433.2 — the book balance is the account's balance through the as-of date: its register, to that date.
       render: (row) => (
         <span className="block text-right tabular-nums">
@@ -211,10 +231,10 @@ function buildColumns(
       ),
     },
     {
-      id: "bank_balance",
+      key: "bank_balance",
+      sortable: true,
       label: "BANK BALANCE",
-      width: 140,
-      sortType: "currency",
+      minWidth: 140,
       render: (row) => (
         <span className="block text-right tabular-nums">
           {row.bank_account_id ? <EntityLink kind="bank_account" id={row.bank_account_id} label={row.bank_balance} /> : row.bank_balance}
@@ -222,16 +242,18 @@ function buildColumns(
       ),
     },
     {
-      id: "status",
+      key: "status",
+      sortable: true,
       label: "STATUS",
-      width: 100,
-      sortType: "text",
+      minWidth: 100,
       render: (row) => <span className={statusPillClass(row.is_active)}>{row.status}</span>,
     },
     {
-      id: "action",
+      key: "action",
       label: "ACTION",
-      width: 200,
+      minWidth: 200,
+      sortable: false,
+      overflowVisible: true,
       render: (row) => {
         // BANK-F91046 — ORDERS §B-1 / QBO §11: Action [View register ▾] · Edit · Make inactive · Run report.
         const menuItems = [
@@ -309,6 +331,8 @@ function buildColumns(
       },
     },
   ];
+  // Owner 2026-07-23: QBO/CoA numbers junk — NUMBER hidden unless the toggle is ON.
+  return showAccountNumbers ? columns : columns.filter((column) => column.key !== "number");
 }
 
 export function ChartOfAccountsListPage() {
@@ -451,29 +475,23 @@ export function ChartOfAccountsListPage() {
     [collapsedParentIds, catalogQuery.data, showAccountNumbers, asOfDate]
   );
 
-  const sort: SortConfig = {
-    key: sortKey,
-    dir: sortDir,
-    onChange: (key, dir) => {
-      setSortKey(key);
-      setSortDir(dir);
-      setPage(1);
-    },
+  // The page sorts and pages its own full row set (Round 296: every account, filtered + sorted before paging);
+  // ParityTable paints the sort state and owns only the chrome (sortMode="external", controlled page).
+  const onSortChange = (key: string, dir: "asc" | "desc") => {
+    setSortKey(key);
+    setSortDir(dir);
+    setPage(1);
   };
 
-  // Round 296: ListView gets every account (fetchAllCatalogRows reads all pages) and runs the house toolbar over the
-  // full chart before paging — search finds any account, "N of M" counts the whole chart.
-  const pagination = {
-    clientSide: true,
-    page,
-    pageSize,
-    total: filteredRows.length,
-    onPageChange: setPage,
-    onPageSizeChange: (size: number) => {
-      setPageSize(size);
+  const statementActive = activeFilters.find((filter) => filter.filterId === "statement")?.values ?? [];
+  const statementStaged = useStagedListFilters({
+    applied: { statement: statementActive },
+    empty: { statement: [] as string[] },
+    onApply: (next) => {
+      setActiveFilters(next.statement.length > 0 ? [{ filterId: "statement", values: next.statement }] : []);
       setPage(1);
     },
-  };
+  });
 
   const isLoading = catalogQuery.isLoading || balancesQuery.isLoading;
   const isError = catalogQuery.isError || balancesQuery.isError;
@@ -559,34 +577,64 @@ export function ChartOfAccountsListPage() {
           <div className="px-4 py-8 text-xs text-gray-500">Loading chart of accounts…</div>
         ) : (
           <>
-          <div className="border-b border-gray-200 px-2 py-1.5">
-            <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="coa-list-title">Accounts</h2>
-          </div>
-          <ListView
+          <ParityTable<CoaListRow>
+            embedded
+            title="Accounts"
+            tableTestId="coa-list-table"
+            rowTestId={(row) => `coa-row-${row.id}`}
+            storageKey="lists-chart-of-accounts"
             columns={columns}
             rows={filteredRows}
             rowKey={(row) => row.id}
-            pagination={pagination}
-            sort={sort}
-            filters={FILTERS}
-            onFilterChange={(filters) => {
-              setActiveFilters(filters);
+            density="regular"
+            sortKey={sortKey}
+            sortDirection={sortDir}
+            onSortChange={onSortChange}
+            sortMode="external"
+            page={page}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={(size: number) => {
+              setPageSize(size);
               setPage(1);
             }}
-            savedViewsKey="coa-list-v2"
-            density="cozy"
-            badgeSlot={(row) => (
-              <>
-                <span className="ml-1 rounded-sm bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold text-[#1F2A44]">
-                  {statementTag(row.statement as "BS" | "P&L")}
-                </span>
-                <span className={`ml-1 rounded-sm px-1 py-0.5 text-xs font-semibold ${syncBadgeClasses(row.syncBadge)}`}>
-                  {row.syncBadge}
-                </span>
-              </>
-            )}
-            filterBarSlot={
+            exportFilename="chart-of-accounts"
+            // ListView pinned the NUMBER column; keep it fixed on horizontal scroll when it is shown.
+            stickyLeftCount={showAccountNumbers ? 1 : 0}
+            emptyText="No rows to display"
+            filterBar={
               <div className="flex flex-wrap items-center gap-2">
+                <CollapsedListFilters
+                  activeFilterCount={statementActive.length > 0 ? 1 : 0}
+                  onApply={statementStaged.apply}
+                  onReset={statementStaged.reset}
+                  onCancel={statementStaged.cancel}
+                  applyDisabled={!statementStaged.dirty}
+                  testIdPrefix="coa"
+                >
+                  {FILTERS.map((filter) => (
+                    <fieldset key={filter.id} className="space-y-1 text-xs" data-testid={`coa-filter-${filter.id}`}>
+                      <legend className="font-semibold text-[#4B5563]">{filter.label}</legend>
+                      {filter.options.map((option) => (
+                        <label key={option.value} className="flex items-center gap-1.5 text-gray-700">
+                          <input
+                            type="checkbox"
+                            className="rounded-sm border-gray-300"
+                            checked={statementStaged.draft.statement.includes(option.value)}
+                            onChange={() =>
+                              statementStaged.setDraft({
+                                statement: statementStaged.draft.statement.includes(option.value)
+                                  ? statementStaged.draft.statement.filter((v) => v !== option.value)
+                                  : [...statementStaged.draft.statement, option.value],
+                              })
+                            }
+                          />
+                          {option.label}
+                        </label>
+                      ))}
+                    </fieldset>
+                  ))}
+                </CollapsedListFilters>
                 <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs">
                   {(["all", "active", "inactive"] as const).map((value) => (
                     <button
@@ -619,9 +667,10 @@ export function ChartOfAccountsListPage() {
                 </label>
               </div>
             }
-            batchActions={({ selectedIds }) => (
+            selectable
+            batchActions={(selected) => (
               <CoaBatchActions
-                selectedIds={selectedIds}
+                selectedIds={selected.map((row) => row.id)}
                 rows={filteredRows}
                 operatingCompanyId={companyId}
                 onComplete={refetchAll}

@@ -1,26 +1,25 @@
-import { colors, typography } from "../design/tokens";
 import { humanizeEnumLabel } from "../lib/humanizeEnumLabel";
 import { entityLabel } from "../lib/entity-label";
 import { userFacingApiError } from "../lib/api-error-message";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
-import { BulkActionBar, TableSelection, TableSelectionHeader, useBulkSelection } from "./bulk";
+import { useBulkSelection } from "./bulk";
+import { useBulkPermission } from "../hooks/useBulkPermission";
 import { useToast } from "./Toast";
-import { Button } from "./Button";
 import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
 import { EditTrailerModal } from "./fleet/EditTrailerModal";
 import { EntityLink } from "./shared/EntityLink";
 import { ConfirmModal } from "./shared/ConfirmModal";
-import { TableControls, Paginator, TableHeaderCell, useTableController, CollapsedListFilters, useStagedListFilters, type TableColumn } from "./table";
+import { CollapsedListFilters, useStagedListFilters, type TableColumn } from "./table";
+import { ParityTable, type ParityColumn } from "./parity/ParityTable";
 import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatOosDate, formatOosDays } from "../lib/oos-display";
 import { formatOdometerCellHonest } from "../lib/odometerHonesty";
-import { useColumnReorder } from "./lists/ListView/hooks/useColumnReorder";
 
 export type FleetRow = {
   id: string;
@@ -81,31 +80,33 @@ const FLEET_SELECTION_CAP = 100;
 
 // Column registry for the gear/column-chooser. "Unit" is always visible (anchor column).
 // This is the BASE set rendered everywhere (incl. /fleet) — unchanged from before the keystone.
-const FLEET_COLUMNS: TableColumn[] = [
-  { key: "unit_number", label: "Unit", alwaysVisible: true },
-  { key: "vin", label: "VIN" },
-  { key: "type", label: "Type" },
-  { key: "make_model", label: "Make/Model" },
-  { key: "year", label: "Year" },
-  { key: "status", label: "Status" },
-  { key: "assigned_driver", label: "Assigned Driver" },
-  { key: "irp_expiration", label: "IRP Expires" },
-  { key: "us_insurance_expiration", label: "US Insurance" },
-  { key: "mx_insurance_expiration", label: "MX Insurance" },
-  { key: "oos_reason", label: "OOS Reason" },
-  { key: "oos_since", label: "Down Since" },
-  { key: "days_oos", label: "Days OOS" },
-  { key: "estimated_completion_date", label: "Expected Return" },
-  { key: "work_order_id", label: "Work Order" },
-  { key: "location", label: "Location" },
-  { key: "dot_oo", label: "DOT O/O" },
+type FleetColumn = TableColumn & { sortable: boolean };
+
+const FLEET_COLUMNS: FleetColumn[] = [
+  { key: "unit_number", label: "Unit", sortable: true, alwaysVisible: true },
+  { key: "vin", label: "VIN", sortable: true },
+  { key: "type", label: "Type", sortable: true },
+  { key: "make_model", label: "Make/Model", sortable: true },
+  { key: "year", label: "Year", sortable: true },
+  { key: "status", label: "Status", sortable: true },
+  { key: "assigned_driver", label: "Assigned Driver", sortable: true },
+  { key: "irp_expiration", label: "IRP Expires", sortable: true },
+  { key: "us_insurance_expiration", label: "US Insurance", sortable: true },
+  { key: "mx_insurance_expiration", label: "MX Insurance", sortable: true },
+  { key: "oos_reason", label: "OOS Reason", sortable: true },
+  { key: "oos_since", label: "Down Since", sortable: true },
+  { key: "days_oos", label: "Days OOS", sortable: true },
+  { key: "estimated_completion_date", label: "Expected Return", sortable: true },
+  { key: "work_order_id", label: "Work Order", sortable: true },
+  { key: "location", label: "Location", sortable: true },
+  { key: "dot_oo", label: "DOT O/O", sortable: true },
 ];
 
 // Keystone maintenance columns — inserted before DOT O/O ONLY when showMaintenanceColumns is set.
-const FLEET_MAINT_COLUMNS: TableColumn[] = [
-  { key: "odometer", label: "Odometer" },
-  { key: "next_pm", label: "Next PM" },
-  { key: "open_wo", label: "Open WO" },
+const FLEET_MAINT_COLUMNS: FleetColumn[] = [
+  { key: "odometer", label: "Odometer", sortable: true },
+  { key: "next_pm", label: "Next PM", sortable: true },
+  { key: "open_wo", label: "Open WO", sortable: true },
 ];
 
 function fmtMiles(value: number | null | undefined, readingAt?: string | null): string {
@@ -239,30 +240,12 @@ export function FleetTable({
   );
 
   // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence (shareable/bookmarkable sort) via the shared
-  // useUrlSort hook (BANK-SORT-ROLLOUT-ACCT). Client-side sort logic is unchanged (useTableController +
-  // fleetSortValue); this only seeds the initial state from the URL and mirrors every header click back
-  // into it. useTableController's toggleSort is 3-state (asc\u2192desc\u2192unsorted); an empty-string key
-  // clears the URL param (see useUrlSort.onSortChange).
+  // useUrlSort hook (BANK-SORT-ROLLOUT-ACCT), fed to ParityTable's controlled sort; ParityTable sorts the rows
+  // with each column's sortValue (fleetSortValue — unchanged).
   const urlSort = useUrlSort();
-  const table = useTableController<FleetRow>({
-    rows: listFiltered,
-    columns,
-    // Separate persisted column prefs for the maintenance view so /fleet's stored prefs stay identical.
-    tableKey: showMaintenanceColumns ? "fleet-maint" : "fleet",
-    searchText: fleetSearchText,
-    sortValue: fleetSortValue,
-    initialSortKey: urlSort.sortKey || null,
-    initialSortDir: urlSort.sortDirection,
-    onSortChange: (key, dir) => urlSort.onSortChange(key ?? "", dir),
-    defaultPageSize: 50,
-  });
-
-  const pageRows = table.paged;
-  const pageRowIds = useMemo(() => pageRows.map((row) => row.id), [pageRows]);
-  // SEL-01 — header select-all = all filter-matching rows (capped), not page-only.
-  const matchingRowIds = useMemo(() => listFiltered.map((row) => row.id), [listFiltered]);
   const vehicleTypes = useMemo(() => Array.from(new Set(rows.map(deriveVehicleType))), [rows]);
 
+  const bulkPermission = useBulkPermission();
   const selection = useBulkSelection({
     cap: FLEET_SELECTION_CAP,
     onCapExceeded: (error) => pushToast(error.message, "error"),
@@ -475,311 +458,192 @@ export function FleetTable({
     });
   }, [selectedRows, reactivateMutation, operatingCompanyId]);
 
-  const isVisible = (key: string) => table.isColumnVisible(key);
-  const persistedOrder = table.columnOrder.length ? table.columnOrder : columns.map((column) => column.key);
-  const { order: columnOrder, setOrder: setColumnOrder, dragHandleProps, dragOverId } = useColumnReorder(persistedOrder);
-
-  useEffect(() => {
-    const known = new Set(columns.map((column) => column.key));
-    const normalized = [
-      ...columnOrder.filter((key) => known.has(key)),
-      ...columns.map((column) => column.key).filter((key) => !columnOrder.includes(key)),
-    ];
-    if (normalized.join("|") !== columnOrder.join("|")) setColumnOrder(normalized);
-  }, [columns, columnOrder, setColumnOrder]);
-
-  useEffect(() => {
-    if (columnOrder.length) table.setColumnOrder(columnOrder);
-  }, [columnOrder, table.setColumnOrder]);
-
-  const orderedVisibleColumns = useMemo(() => {
-    const byKey = new Map(columns.map((column) => [column.key, column]));
-    return columnOrder
-      .map((key) => byKey.get(key))
-      .filter((column): column is TableColumn => column !== undefined && isVisible(column.key));
-  }, [columns, columnOrder, table.hidden]);
-
-  const renderFleetCell = (row: FleetRow, key: string) => {
+  // LEAD 443.181 — the roster renders on THE one table component (ParityTable): sort, column chooser,
+  // drag-reorder, resize, paging, search/range and CSV export are ParityTable's; every cell, sort value and
+  // export value below is the same expression the hand-built table used.
+  const renderFleetCell = (row: FleetRow, key: string): ReactNode => {
     switch (key) {
       case "unit_number":
         // Maintenance view: Link to the profile; the two arms stay distinct (LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES).
         // Base /fleet: EntityLink, never plain text or Link, so the reverse_link is Live-clickable.
-        return <td key={key} className="px-2 py-1" onClick={(e) => e.stopPropagation()}>{showMaintenanceColumns ? <Link to={fleetProfilePath(row)} className="font-semibold text-[#1F2A44] hover:underline">{entityLabel(row.unit_number, row.id, "Unit")}</Link> : <EntityLink kind={row.kind === "trailer" ? "trailer" : "unit"} id={row.id} label={entityLabel(row.unit_number, row.id, row.kind === "trailer" ? "Trailer" : "Unit")} className="font-semibold text-[#1F2A44] hover:underline" />}</td>;
-      case "vin": return <td key={key} className="truncate px-2 py-1">{String(row.vin ?? "—")}</td>;
-      case "type": return <td key={key} className="truncate px-2 py-1">{displayType(row)}</td>;
-      case "make_model": return <td key={key} className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>;
-      case "year": return <td key={key} className="px-2 py-1">{String(row.year ?? "—")}</td>;
-      case "status": return <td key={key} className="px-2 py-1">{row.status ? humanizeEnumLabel(row.status) : "—"}</td>;
-      case "assigned_driver": return <td key={key} className="px-2 py-1" onClick={(e) => e.stopPropagation()}>{row.assigned_driver_id ? <EntityLink kind="driver" id={row.assigned_driver_id} label={entityLabel(row.assigned_driver_name, row.assigned_driver_id, "Driver")} /> : "—"}</td>;
-      case "irp_expiration": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.irp_expiration)}</td>;
-      case "us_insurance_expiration": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.us_insurance_expiration)}</td>;
-      case "mx_insurance_expiration": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.mx_insurance_expiration)}</td>;
-      case "oos_reason": return <td key={key} className="truncate px-2 py-1">{row.oos_reason || "—"}</td>;
-      case "oos_since": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.oos_since)}</td>;
-      case "days_oos": return <td key={key} className="px-2 py-1 tabular-nums">{row.days_oos == null ? "—" : formatOosDays(row.days_oos)}</td>;
-      case "estimated_completion_date": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.estimated_completion_date)}</td>;
-      case "work_order_id": return <td key={key} className="px-2 py-1" onClick={(e) => e.stopPropagation()}>{row.work_order_id ? <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} /> : "—"}</td>;
-      case "location": return <td key={key} className="truncate px-2 py-1 text-xs text-[#1F2A44]">{fleetLocationText(row) || row.oos_location || "—"}</td>;
-      case "odometer": return <td key={key} className="px-2 py-1 tabular-nums">{fmtMiles(row.odometer_mi, row.odometer_reading_at)}</td>;
-      case "next_pm": return <td key={key} className="px-2 py-1 tabular-nums">{fmtMiles(row.next_due_odometer)}</td>;
-      case "open_wo": return <td key={key} className="px-2 py-1 tabular-nums">{Number(row.open_wo_count ?? 0) > 0 ? <span className="font-semibold text-[#0F1219]">{row.open_wo_count ?? 0}</span> : <span className="text-gray-400">{row.kind === "trailer" ? "—" : "0"}</span>}</td>;
-      case "dot_oo": return <td key={key} className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>;
+        return showMaintenanceColumns ? <Link to={fleetProfilePath(row)} className="font-semibold text-[#1F2A44] hover:underline">{entityLabel(row.unit_number, row.id, "Unit")}</Link> : <EntityLink kind={row.kind === "trailer" ? "trailer" : "unit"} id={row.id} label={entityLabel(row.unit_number, row.id, row.kind === "trailer" ? "Trailer" : "Unit")} className="font-semibold text-[#1F2A44] hover:underline" />;
+      case "vin": return String(row.vin ?? "—");
+      case "type": return displayType(row);
+      case "make_model": return `${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim();
+      case "year": return String(row.year ?? "—");
+      case "status": return row.status ? humanizeEnumLabel(row.status) : "—";
+      case "assigned_driver": return row.assigned_driver_id ? <EntityLink kind="driver" id={row.assigned_driver_id} label={entityLabel(row.assigned_driver_name, row.assigned_driver_id, "Driver")} /> : "—";
+      case "irp_expiration": return formatOosDate(row.irp_expiration);
+      case "us_insurance_expiration": return formatOosDate(row.us_insurance_expiration);
+      case "mx_insurance_expiration": return formatOosDate(row.mx_insurance_expiration);
+      case "oos_reason": return row.oos_reason || "—";
+      case "oos_since": return formatOosDate(row.oos_since);
+      case "days_oos": return row.days_oos == null ? "—" : formatOosDays(row.days_oos);
+      case "estimated_completion_date": return formatOosDate(row.estimated_completion_date);
+      case "work_order_id": return row.work_order_id ? <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} /> : "—";
+      case "location": return fleetLocationText(row) || row.oos_location || "—";
+      case "odometer": return fmtMiles(row.odometer_mi, row.odometer_reading_at);
+      case "next_pm": return fmtMiles(row.next_due_odometer);
+      case "open_wo": return Number(row.open_wo_count ?? 0) > 0 ? <span className="font-semibold text-[#0F1219]">{row.open_wo_count ?? 0}</span> : <span className="text-gray-400">{row.kind === "trailer" ? "—" : "0"}</span>;
+      case "dot_oo": return row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No";
       default: return null;
     }
   };
 
-  // Universal-list CSV export: the full filtered+sorted set, visible columns only (exportFilename=fleet-table).
-  const exportCsv = useCallback(() => {
-    const cols = columns.filter((c) => table.isColumnVisible(c.key));
-    const cell = (row: FleetRow, key: string): string => {
-      switch (key) {
-        case "unit_number": return entityLabel(row.unit_number, row.id, "Unit");
-        case "vin": return String(row.vin ?? "");
-        case "type": return displayType(row);
-        case "make_model": return `${row.make ?? ""} ${row.model ?? ""}`.trim();
-        case "year": return String(row.year ?? "");
-        case "status": return String(row.status ?? "");
-        case "assigned_driver": return String(row.assigned_driver_name ?? "");
-        case "irp_expiration": return String(row.irp_expiration ?? "");
-        case "us_insurance_expiration": return String(row.us_insurance_expiration ?? "");
-        case "mx_insurance_expiration": return String(row.mx_insurance_expiration ?? "");
-        case "location": return fleetLocationText(row);
-        case "odometer": return row.odometer_mi != null ? String(Math.round(row.odometer_mi)) : "";
-        case "next_pm": return row.next_due_odometer != null ? String(row.next_due_odometer) : "";
-        case "open_wo": return row.open_wo_count != null ? String(row.open_wo_count) : "";
-        case "dot_oo": return row.kind === "trailer" ? "" : row.is_oos ? "Yes" : "No";
-        default: return "";
-      }
-    };
-    const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
-    const header = cols.map((c) => esc(c.label)).join(",");
-    const body = table.filtered.map((row) => cols.map((c) => esc(cell(row, c.key))).join(",")).join("\n");
-    const blob = new Blob([`${header}\n${body}`], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "fleet-table.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [table, columns]);
+  // Universal-list CSV export (exportFilename=fleet-table): same per-column text as before, fed to ParityTable's
+  // export as each column's exportValue — the full filtered+sorted set, visible columns only.
+  const fleetExportValue = (row: FleetRow, key: string): string => {
+    switch (key) {
+      case "unit_number": return entityLabel(row.unit_number, row.id, "Unit");
+      case "vin": return String(row.vin ?? "");
+      case "type": return displayType(row);
+      case "make_model": return `${row.make ?? ""} ${row.model ?? ""}`.trim();
+      case "year": return String(row.year ?? "");
+      case "status": return String(row.status ?? "");
+      case "assigned_driver": return String(row.assigned_driver_name ?? "");
+      case "irp_expiration": return String(row.irp_expiration ?? "");
+      case "us_insurance_expiration": return String(row.us_insurance_expiration ?? "");
+      case "mx_insurance_expiration": return String(row.mx_insurance_expiration ?? "");
+      case "location": return fleetLocationText(row);
+      case "odometer": return row.odometer_mi != null ? String(Math.round(row.odometer_mi)) : "";
+      case "next_pm": return row.next_due_odometer != null ? String(row.next_due_odometer) : "";
+      case "open_wo": return row.open_wo_count != null ? String(row.open_wo_count) : "";
+      case "dot_oo": return row.kind === "trailer" ? "" : row.is_oos ? "Yes" : "No";
+      default: return "";
+    }
+  };
+
+  const parityColumns: ParityColumn<FleetRow>[] = columns.map((column) => ({
+    key: column.key,
+    label: column.label,
+    alwaysVisible: column.alwaysVisible,
+    sortable: column.sortable,
+    render: (row: FleetRow) => renderFleetCell(row, column.key),
+    sortValue: (row: FleetRow) => fleetSortValue(row, column.key),
+    exportValue: (row: FleetRow) => fleetExportValue(row, column.key),
+  }));
+
+  const selectedKeys = useMemo(() => [...selection.selectedIds], [selection.selectedIds]);
 
   return (
     <div className="space-y-2">
-      <TableControls
-        search={table.search}
-        onSearchChange={table.setSearch}
-        searchPlaceholder="Search Unit #, VIN, Make/Model…"
-        filteredCount={table.filteredCount}
-        totalCount={rows.length}
-        columns={columns}
-        hidden={table.hidden}
-        onToggleColumn={table.toggleColumn}
-        pageSize={table.pageSize}
-        onPageSizeChange={table.setPageSize}
-        range={table.range}
-        onRangeApply={table.setRange}
-        hideSearch={hideSearch}
-      >
-        <CollapsedListFilters
-          activeFilterCount={(softDeleteFilter !== "active" ? 1 : 0) + (statusFilter ? 1 : 0) + (typeListFilter ? 1 : 0)}
-          onApply={staged.apply}
-          onReset={staged.reset}
-          onCancel={staged.cancel}
-          applyDisabled={!staged.dirty}
-          testIdPrefix="fleet"
-          dataAttributes={{ "data-fleet-filter-toolbar": "collapsed" }}
-        >
-          <div className="space-y-2">
-            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="fleet">
-              {(["active", "inactive", "all"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`rounded-sm px-2 py-1 font-medium capitalize ${staged.draft.softDeleteFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                  onClick={() => staged.setDraft({ ...staged.draft, softDeleteFilter: value })}
-                >
-                  {value}
-                </button>
-              ))}
+      <ParityTable<FleetRow>
+        tableTestId="fleet-table"
+        rowTestId={(row) => `fleet-row-${row.id}`}
+        storageKey={showMaintenanceColumns ? "fleet-roster-maint" : "fleet-roster"}
+        columns={parityColumns}
+        rows={listFiltered}
+        rowKey={(row) => row.id}
+        onRowClick={(row) => navigate(fleetProfilePath(row))}
+        initialPageSize={50}
+        suppressToolbarSearch={hideSearch}
+        exportFilename={showMaintenanceColumns ? "fleet-table" : undefined}
+        sortKey={urlSort.sortKey || undefined}
+        sortDirection={urlSort.sortDirection}
+        onSortChange={(key, dir) => urlSort.onSortChange(key, dir)}
+        selectable
+        selectedKeys={selectedKeys}
+        onSelectionChange={(keys) => selection.setSelectedIds(new Set(keys))}
+        maxSelectable={FLEET_SELECTION_CAP}
+        onSelectionCapExceeded={() => pushToast(`Select at most ${FLEET_SELECTION_CAP} units at a time.`, "error")}
+        filterBar={
+          <CollapsedListFilters
+            activeFilterCount={(softDeleteFilter !== "active" ? 1 : 0) + (statusFilter ? 1 : 0) + (typeListFilter ? 1 : 0)}
+            onApply={staged.apply}
+            onReset={staged.reset}
+            onCancel={staged.cancel}
+            applyDisabled={!staged.dirty}
+            testIdPrefix="fleet"
+            dataAttributes={{ "data-fleet-filter-toolbar": "collapsed" }}
+          >
+            <div className="space-y-2">
+              <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="fleet">
+                {(["active", "inactive", "all"] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`rounded-sm px-2 py-1 font-medium capitalize ${staged.draft.softDeleteFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                    onClick={() => staged.setDraft({ ...staged.draft, softDeleteFilter: value })}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+              <select
+                aria-label="Filter by status"
+                className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                value={staged.draft.statusFilter}
+                onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value })}
+              >
+                <option value="">All statuses</option>
+                {statusOptions.map((s) => (
+                  <option key={s} value={s}>{humanizeEnumLabel(s)}</option>
+                ))}
+              </select>
+              <select
+                aria-label="Filter by type"
+                className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                value={staged.draft.typeListFilter}
+                onChange={(e) => staged.setDraft({ ...staged.draft, typeListFilter: e.target.value })}
+              >
+                <option value="">All types</option>
+                {typeOptions.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
-            <select
-              aria-label="Filter by status"
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-              value={staged.draft.statusFilter}
-              onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value })}
-            >
-              <option value="">All statuses</option>
-              {statusOptions.map((s) => (
-                <option key={s} value={s}>{humanizeEnumLabel(s)}</option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by type"
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-              value={staged.draft.typeListFilter}
-              onChange={(e) => staged.setDraft({ ...staged.draft, typeListFilter: e.target.value })}
-            >
-              <option value="">All types</option>
-              {typeOptions.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-        </CollapsedListFilters>
-        {showMaintenanceColumns ? (
-          // UI CONTROL LAW — was a hand-rolled Export button at its own ad-hoc size. Now the
-          // shared Button primitive, matching every other toolbar action's size.
-          <Button type="button" variant="tertiary" size="sm" aria-label="Export CSV" onClick={exportCsv}>
-            ⤓ Export
-          </Button>
-        ) : null}
-      </TableControls>
-
-      <BulkActionBar
-        selectedCount={selection.count}
-        selectedLabel={`Selected: ${selection.count} units`}
-        actions={[]}
-        applying={bulkApplying}
-        onClear={selection.clear}
-      >
-        <FleetBulkControls
-          vehicleTypes={vehicleTypes}
-          showTrailerTypeCatalog={hasTrailerSelection}
-          onApply={applyBulk}
-          applying={bulkApplying}
-        />
-        <button
-          type="button"
-          className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
-          disabled={bulkApplying || selection.count === 0}
-          onClick={onInactivateSelected}
-        >
-          Inactivate selected
-        </button>
-        {softDeleteFilter !== "active" ? (
+          </CollapsedListFilters>
+        }
+        batchActions={() =>
+          // Same permission gate the shared BulkActionBar applied (useBulkPermission → write roles only).
+          bulkPermission.canUseBulkOps ? (
+            <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Bulk actions">
+              <FleetBulkControls
+                vehicleTypes={vehicleTypes}
+                showTrailerTypeCatalog={hasTrailerSelection}
+                onApply={applyBulk}
+                applying={bulkApplying}
+              />
+              <button
+                type="button"
+                className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                disabled={bulkApplying || selection.count === 0}
+                onClick={onInactivateSelected}
+              >
+                Inactivate selected
+              </button>
+              {softDeleteFilter !== "active" ? (
+                <button
+                  type="button"
+                  className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA] disabled:opacity-50"
+                  disabled={bulkApplying || selection.count === 0}
+                  onClick={onReactivateSelected}
+                >
+                  Reactivate selected
+                </button>
+              ) : null}
+            </div>
+          ) : null
+        }
+        rowActionsWidth={72}
+        rowActions={(row) => (
           <button
             type="button"
-            className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA] disabled:opacity-50"
-            disabled={bulkApplying || selection.count === 0}
-            onClick={onReactivateSelected}
+            className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+            aria-label={
+              row.kind === "trailer"
+                ? `Edit trailer ${entityLabel(row.unit_number, row.id, "Trailer")}`
+                : `Edit unit ${entityLabel(row.unit_number, row.id, "Unit")}`
+            }
+            onClick={() => {
+              setEditingUnitId(row.id);
+              setEditingRow(row);
+            }}
           >
-            Reactivate selected
+            Edit
           </button>
-        ) : null}
-      </BulkActionBar>
-
-      <TableSelection
-        rows={pageRows}
-        getId={(row) => row.id}
-        selectedIds={selection.selectedIds}
-        onSelectionChange={selection.setSelectedIds}
-        pageRowIds={pageRowIds}
-        cap={FLEET_SELECTION_CAP}
-        onCapExceeded={(message) => pushToast(message, "error")}
-      >
-        {(selectCtx) => (
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="w-full table-fixed text-left text-xs">
-              {/* FLEET-TABLE-DESIGN-PARITY-01 (Codex X.7): the header row must match ParityTable's
-                  design-contract tokens everywhere, not just on the columns TableHeaderCell renders.
-                  The checkbox + Edit header cells previously fell back to Tailwind bg-gray-50/text-gray-600
-                  (no weight set), a visibly different shade/weight than the token-driven cells beside them. */}
-              <thead>
-                <tr>
-                  <th
-                    className="w-8 px-2 py-1 text-left"
-                    style={{
-                      backgroundColor: colors.tableHeaderBg,
-                      color: colors.tableHeaderText,
-                      fontSize: typography.panelHeader,
-                      fontWeight: 700,
-                      letterSpacing: typography.tightUpper,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    <TableSelectionHeader
-                      selectedIds={selection.selectedIds}
-                      pageRowIds={pageRowIds}
-                      matchingRowIds={matchingRowIds}
-                      onSelectionChange={selection.setSelectedIds}
-                      cap={FLEET_SELECTION_CAP}
-                      onCapExceeded={(message) => pushToast(message, "error")}
-                      ariaLabel={`Select all ${matchingRowIds.length} matching units`}
-                    />
-                  </th>
-                  {orderedVisibleColumns.map((c) => (
-                    <TableHeaderCell
-                      key={c.key}
-                      columnKey={c.key}
-                      label={c.label}
-                      sortKey={table.sortKey}
-                      sortDir={table.sortDir}
-                      onToggleSort={table.toggleSort}
-                      width={table.widths[c.key]}
-                      onResize={table.setColumnWidth}
-                      draggable
-                      dragHandleProps={dragHandleProps(c.key)}
-                      dragOver={dragOverId === c.key}
-                    />
-                  ))}
-                  <th
-                    className="w-14 px-2 py-1 text-left"
-                    style={{
-                      backgroundColor: colors.tableHeaderBg,
-                      color: colors.tableHeaderText,
-                      fontSize: typography.panelHeader,
-                      fontWeight: 700,
-                      letterSpacing: typography.tightUpper,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Edit
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="cursor-pointer hover:bg-gray-50"
-                    style={{ borderTop: `1px solid ${colors.tableBodyRule}` }}
-                    onClick={() => navigate(fleetProfilePath(row))}
-                  >
-                    <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        aria-label={`Select unit ${entityLabel(row.unit_number, row.id, "Unit")}`}
-                        checked={selectCtx.isSelected(row.id)}
-                        onChange={() => selectCtx.toggle(row.id)}
-                      />
-                    </td>
-                    {orderedVisibleColumns.map((column) => renderFleetCell(row, column.key))}
-                    <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                        aria-label={
-                          row.kind === "trailer"
-                            ? `Edit trailer ${entityLabel(row.unit_number, row.id, "Trailer")}`
-                            : `Edit unit ${entityLabel(row.unit_number, row.id, "Unit")}`
-                        }
-                        onClick={() => {
-                          setEditingUnitId(row.id);
-                          setEditingRow(row);
-                        }}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         )}
-      </TableSelection>
-
-      <Paginator page={table.page} pageCount={table.pageCount} onPageChange={table.setPage} />
+      />
 
       <EditVehicleModal
         open={editingUnitId !== null && editingRow?.kind !== "trailer"}

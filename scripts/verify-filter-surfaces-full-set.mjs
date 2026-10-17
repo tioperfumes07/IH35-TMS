@@ -11,16 +11,12 @@ import { readFileSync } from "node:fs";
 
 const SURFACES = [
   {
+    // LEAD 443.181 — the chart renders on ParityTable: it gets EVERY account (fetchAllCatalogRows) and ParityTable runs
+    // the house toolbar over the full set before it slices the page (controlled page, never caller pre-paged).
     name: "Chart of Accounts",
     file: "apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx",
-    must: [/<ListView[\s\S]{0,120}rows=\{filteredRows\}/, /const pagination = \{\s*\n?\s*clientSide: true,/, /async function fetchAllCatalogRows\(/, /\} while \(rows\.length < total\);/],
-    mustNot: [/rows=\{pageRows\}/],
-  },
-  {
-    name: "ListView pages after the toolbar",
-    file: "apps/frontend/src/components/lists/ListView/ListView.tsx",
-    must: [/result = applyUniversalListFilters\(result, toolbarSearch, toolbarRange\);/, /return processedRows\.slice\(start, start \+ pagination\.pageSize\);/, /\{pageRows\.map\(\(row\) => \{/, /resultCount=\{processedRows\.length\}/],
-    mustNot: [/\{processedRows\.map\(\(row\) => \{/],
+    must: [/<ParityTable<CoaListRow>[\s\S]{0,600}rows=\{filteredRows\}/, /onPageChange=\{setPage\}/, /async function fetchAllCatalogRows\(/, /\} while \(rows\.length < total\);/],
+    mustNot: [/rows=\{pageRows\}/, /hidePager/],
   },
   // Full-load catalogs (route has no LIMIT; filter columns operating_company_id + is_active are indexed): ONE search =
   // the house toolbar over every row; one Show selector; no "Show inactive" double filter; no page-level search box.
@@ -151,7 +147,7 @@ if (process.argv.includes("--selftest")) {
     ["CoA back to one page", (f) => f.endsWith("ChartOfAccountsListPage.tsx") ? read(f).replace("rows={filteredRows}", "rows={pageRows}") : read(f)],
     ["catalog page search comes back", (f) => f.endsWith("TerminationReasonsListPage.tsx") ? read(f) + "\n<CatalogListSearchInput value={x} />" : read(f)],
     ["Documents filters one page again", (f) => f.endsWith("Documents.tsx") ? read(f).replace("...filters,", "") : read(f)],
-    ["ListView renders unpaged", (f) => f.endsWith("ListView.tsx") ? read(f).replace("{pageRows.map((row) => {", "{processedRows.map((row) => {") : read(f)],
+    ["CoA hides the pager and pre-pages", (f) => f.endsWith("ChartOfAccountsListPage.tsx") ? read(f).replace("onPageChange={setPage}", "hidePager") : read(f)],
   ];
   for (const [name, r] of mutations) if (audit(r).length === 0) { console.error(`selftest FAIL: ${name}`); process.exit(1); }
   console.log(`verify-filter-surfaces-full-set selftest ${mutations.length}/${mutations.length} caught`);

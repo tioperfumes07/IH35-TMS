@@ -68,13 +68,16 @@ export function collectProblems(stripSrc, routesSrc, unifiedSrc = "", tableSrc =
   if (!/kind=["']work_order["']/.test(tableSrc)) {
     problems.push("main Fleet registry must drill its OOS work order to the canonical work-order route");
   }
-  if (!/columnOrder/.test(tableSrc) || !/setColumnOrder/.test(tableSrc)) {
+  // LEAD 443.181 — the roster renders on ParityTable: the operator column order persists under its storageKey,
+  // drag-reorder is ParityTable's (on unless enableColumnReorder={false}), and header + body are one ordered column
+  // list whose cells come from renderFleetCell.
+  if (!/<ParityTable/.test(tableSrc) || !/storageKey=/.test(tableSrc)) {
     problems.push("main Fleet registry must persist its operator column order");
   }
-  if (!/dragHandleProps/.test(tableSrc) || !/draggable/.test(tableSrc)) {
+  if (/enableColumnReorder=\{false\}/.test(tableSrc)) {
     problems.push("main Fleet registry headers must expose drag reorder controls");
   }
-  if (!/orderedVisibleColumns\.map/.test(tableSrc) || !/renderFleetCell/.test(tableSrc)) {
+  if (!/render: \(row: FleetRow\) => renderFleetCell\(row, column\.key\)/.test(tableSrc)) {
     problems.push("main Fleet registry header and body must render the same ordered columns");
   }
   return problems;
@@ -91,7 +94,7 @@ function selftest() {
   const goodStrip = `data-testid="fleet-oos-since" data-testid="fleet-oos-days" data-testid="fleet-oos-location"`;
   const goodRoutes = `SELECT id, unit_number, vin, status, oos_since, oos_location FROM mdata.units WHERE 1=1`;
   const goodUnified = `oos_since days_oos oos_reason oos_location estimated_completion_date work_order_id work_order_display_id assigned_driver_id assigned_driver_name irp_expiration us_insurance_expiration mx_insurance_expiration`;
-  const goodTable = `key: "unit_number" key: "vin" key: "type" key: "make_model" key: "year" key: "status" key: "assigned_driver" key: "irp_expiration" key: "us_insurance_expiration" key: "mx_insurance_expiration" key: "oos_reason" key: "oos_since" key: "days_oos" key: "estimated_completion_date" key: "work_order_id" kind="work_order" columnOrder setColumnOrder dragHandleProps draggable orderedVisibleColumns.map renderFleetCell`;
+  const goodTable = `key: "unit_number" key: "vin" key: "type" key: "make_model" key: "year" key: "status" key: "assigned_driver" key: "irp_expiration" key: "us_insurance_expiration" key: "mx_insurance_expiration" key: "oos_reason" key: "oos_since" key: "days_oos" key: "estimated_completion_date" key: "work_order_id" kind="work_order" <ParityTable storageKey="fleet-roster" render: (row: FleetRow) => renderFleetCell(row, column.key)`;
   const goodPage = `tone="in-shop" tone="oos"`;
   if (collectProblems(goodStrip, goodRoutes, goodUnified, goodTable, goodPage).length) {
     throw new Error("selftest good fixture must pass");
@@ -113,9 +116,9 @@ function selftest() {
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "estimated_completion_date"', ""), goodPage), "estimated_completion_date"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('kind="work_order"', ""), goodPage), "canonical work-order route"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable, goodPage.replace('tone="oos"', "")), "distinct visual tones"],
-    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("setColumnOrder", ""), goodPage), "persist its operator column order"],
-    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("dragHandleProps", ""), goodPage), "drag reorder controls"],
-    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("renderFleetCell", ""), goodPage), "same ordered columns"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('storageKey="fleet-roster"', ""), goodPage), "persist its operator column order"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, `${goodTable} enableColumnReorder={false}`, goodPage), "drag reorder controls"],
+    [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace("renderFleetCell(row, column.key)", "null"), goodPage), "same ordered columns"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified.replace("assigned_driver_name", ""), goodTable, goodPage), "assigned_driver_name"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "assigned_driver" ', ""), goodPage), "identity, status, assignment, compliance dates"],
     [() => collectProblems(goodStrip, goodRoutes, goodUnified, goodTable.replace('key: "irp_expiration" key: "us_insurance_expiration"', 'key: "us_insurance_expiration" key: "irp_expiration"'), goodPage), "identity, status, assignment, compliance dates"],

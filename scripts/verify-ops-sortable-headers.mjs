@@ -75,18 +75,21 @@ if (settlements) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Maintenance fleet table — already-sortable TableHeaderCell/useTableController grid, now
-//    with ?sort=/?dir= URL persistence via useUrlSort feeding useTableController's initial state.
+// 4. Maintenance fleet table — ParityTable (LEAD 443.181) with ?sort=/?dir= URL persistence via useUrlSort
+//    feeding ParityTable's controlled sort.
 // ---------------------------------------------------------------------------
 const fleetPath = "apps/frontend/src/components/FleetTable.tsx";
 const fleet = read(fleetPath);
 if (fleet) {
   if (!/useUrlSort/.test(fleet)) failures.push(`${fleetPath}: must wire useUrlSort (URL-persisted sort)`);
-  if (!/initialSortKey:\s*urlSort\.sortKey/.test(fleet)) failures.push(`${fleetPath}: must seed useTableController from urlSort.sortKey`);
-  if (!/onSortChange:[\s\S]{0,80}urlSort\.onSortChange/.test(fleet)) {
+  // LEAD 443.181 — the roster renders on ParityTable: its controlled sort is seeded from and mirrored into the URL.
+  if (!/sortKey=\{urlSort\.sortKey \|\| undefined\}/.test(fleet) || !/sortDirection=\{urlSort\.sortDirection\}/.test(fleet)) {
+    failures.push(`${fleetPath}: must seed the ParityTable sort from urlSort.sortKey / sortDirection`);
+  }
+  if (!/onSortChange=\{[\s\S]{0,80}urlSort\.onSortChange/.test(fleet)) {
     failures.push(`${fleetPath}: must mirror header clicks back into the URL via urlSort.onSortChange`);
   }
-  if (!/TableHeaderCell/.test(fleet)) failures.push(`${fleetPath}: must render sortable headers via TableHeaderCell`);
+  if (!/<ParityTable/.test(fleet) || /sortable:\s*false/.test(fleet)) failures.push(`${fleetPath}: must render sortable headers via ParityTable`);
 }
 
 const controllerPath = "apps/frontend/src/components/table/useTableController.ts";

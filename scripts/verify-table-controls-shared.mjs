@@ -58,8 +58,13 @@ if (fleet) {
   if (!/from "\.\/table"/.test(fleet)) {
     failures.push(`${FLEET}: must import the shared toolbar from "./table" (no per-page re-fork)`);
   }
-  for (const sym of ["TableControls", "Paginator", "useTableController"]) {
-    if (!fleet.includes(sym)) failures.push(`${FLEET}: must use shared ${sym}`);
+  // LEAD 443.181 — the Fleet roster renders on the one shared table component, ParityTable (its toolbar, gear,
+  // pager and sort are the shared ones); it must not re-fork a per-page paginator / chooser / search.
+  if (!/from "\.\/parity\/ParityTable"/.test(fleet) || !fleet.includes("<ParityTable")) {
+    failures.push(`${FLEET}: must render on the shared ParityTable`);
+  }
+  if (/<table[\s>]|<Paginator\b|<ColumnChooser\b|<TableSearch\b/.test(fleet)) {
+    failures.push(`${FLEET}: must not hand-build its own table / paginator / column chooser / search beside ParityTable`);
   }
 }
 
@@ -147,4 +152,4 @@ if (failures.length) {
   for (const f of failures) console.error("  - " + f);
   process.exit(1);
 }
-console.log("verify:table-controls-shared — OK (shared components/table/* present and reused by Fleet)");
+console.log("verify:table-controls-shared — OK (shared components/table/* present; Fleet on the shared ParityTable)");
