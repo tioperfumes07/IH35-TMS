@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { DataTable } from "../../../components/DataTable";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
@@ -10,7 +10,7 @@ import {
   QBO_DATE_PRESETS,
 } from "../../../components/table/UniversalListToolbar";
 
-// AUTO-15 — migrated onto the shared DataTable (sort/resize/paging/search/gear). Same 4 columns,
+// AUTO-15 — migrated onto the shared table (ParityTable since LEAD 443.181: sort/resize/paging/search/gear). Same 4 columns,
 // same cell rendering — additive only. Non-financial safety sub-list.
 type Row = Record<string, unknown>;
 type Props = {
@@ -83,12 +83,13 @@ export function TrainingTable({ rows, hidePager = false }: Props) {
           aria-label="Training date to"
         />
       </div>
-      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Training records</h2>
-      <DataTable<Row>
+      <ParityTable<Row>
+        title="Training records"
+        storageKey="safety-training"
         rows={filtered}
         rowKey={(row) => String(row.id)}
-        tableKey="safety-training"
         hidePager={hidePager}
+        pageSize={hidePager ? Math.max(1, filtered.length) : undefined}
         columns={[
           {
             key: "completed_at",

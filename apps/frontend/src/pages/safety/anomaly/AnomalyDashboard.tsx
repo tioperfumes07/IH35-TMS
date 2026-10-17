@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
-import { MobileOptimizedTable } from "../../../components/shared/MobileOptimizedTable";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
@@ -108,17 +108,29 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
           {userFacingApiError(q.error, "Could not load anomaly alerts.")}
         </p>
       ) : (
-        <MobileOptimizedTable
+        // LEAD 443.181 — the app's one table. A row opens its subject (driver / unit / load / geofence) through the
+        // Subject EntityLink; rows with no linkable subject stay un-clickable. Rows are server-paged — the external
+        // pager below owns paging, so the built-in pager is hidden.
+        <ParityTable<AlertRow>
+          title="Open anomaly alerts"
+          tableTestId="anomaly-alerts-table"
+          storageKey="ih35.safety.anomaly-alerts.v1"
           rows={rows}
           rowKey={(row) => String(row.uuid)}
-          emptyMessage="No open anomaly alerts"
+          loading={q.isPending}
+          emptyText="No open anomaly alerts"
+          pageSize={Math.max(1, rows.length)}
+          hidePager
+          suppressToolbarSearch
+          suppressToolbarRange
           columns={[
-            { key: "detected_at", header: "Detected", render: (row) => String(row.detected_at ?? "") },
-            { key: "severity", header: "Severity", render: (row) => <span className="font-semibold">{String(row.severity ?? "")}</span> },
-            { key: "rule_name", header: "Rule", render: (row) => String(row.rule_name ?? "Anomaly") },
+            { key: "detected_at", label: "Detected", sortValue: (row) => String(row.detected_at ?? ""), render: (row) => String(row.detected_at ?? "") },
+            { key: "severity", label: "Severity", sortValue: (row) => String(row.severity ?? ""), render: (row) => <span className="font-semibold">{String(row.severity ?? "")}</span> },
+            { key: "rule_name", label: "Rule", sortValue: (row) => String(row.rule_name ?? "Anomaly"), render: (row) => String(row.rule_name ?? "Anomaly") },
             {
               key: "subject",
-              header: "Subject",
+              label: "Subject",
+              sortValue: (row) => String(row.subject_label ?? ""),
               render: (row) => {
                 const kind = anomalySubjectKind(row);
                 const id = String(row.resolved_subject_uuid ?? row.subject_uuid ?? "") || null;
@@ -126,18 +138,19 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
                 return kind && id ? <EntityLink kind={kind} id={id} label={label} /> : <span>{label}</span>;
               },
             },
-            { key: "evidence", header: "Evidence", render: (row) => <span className="font-mono text-xs">{JSON.stringify(row.evidence ?? {})}</span> },
             {
-              key: "actions",
-              header: "Actions",
-              render: (row) => (
-                <div className="flex flex-wrap gap-1">
-                  <Button type="button" variant="secondary" onClick={() => ack.mutate({ uuid: String(row.uuid), companyId: operatingCompanyId, severity, generation: actionGenerationRef.current })}>Ack</Button>
-                  <Button type="button" onClick={() => resolve.mutate({ uuid: String(row.uuid), companyId: operatingCompanyId, severity, generation: actionGenerationRef.current, notes: "Resolved from dashboard" })}>Resolve</Button>
-                </div>
-              ),
+              key: "evidence",
+              label: "Evidence",
+              sortValue: (row) => JSON.stringify(row.evidence ?? {}),
+              render: (row) => <span className="font-mono text-xs">{JSON.stringify(row.evidence ?? {})}</span>,
             },
           ]}
+          rowActions={(row) => (
+            <div className="flex flex-wrap gap-1">
+              <Button type="button" variant="secondary" onClick={() => ack.mutate({ uuid: String(row.uuid), companyId: operatingCompanyId, severity, generation: actionGenerationRef.current })}>Ack</Button>
+              <Button type="button" onClick={() => resolve.mutate({ uuid: String(row.uuid), companyId: operatingCompanyId, severity, generation: actionGenerationRef.current, notes: "Resolved from dashboard" })}>Resolve</Button>
+            </div>
+          )}
         />
       )}
       {!q.isError && totalCount > pageSize ? (

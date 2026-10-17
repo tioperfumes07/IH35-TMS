@@ -1,12 +1,13 @@
 import type { UnitsWithoutLoad, UnitLiveLocation } from "../../../api/dispatch";
-import { DataTable } from "../../../components/DataTable";
+import { ParityTable } from "../../../components/parity/ParityTable";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
 import type { DataTableErrorState } from "../../../lib/tableError";
 
 type Props = {
-  /** LEAD 443.174 — the section's real title (DataTable has no title slot). */
+  /** LEAD 443.174 — the section's real title (rendered in ParityTable's title slot). */
   title?: string;
   rows: UnitsWithoutLoad[];
   onRowClick: (row: UnitsWithoutLoad) => void;
@@ -39,14 +40,21 @@ function LocationCell({ loc }: { loc: UnitLiveLocation | null }) {
 export function UnitsWithoutLoadTable({ title = "Units without a load", rows, onRowClick, loading, errorState }: Props) {
   return (
     <>
-    <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="dispatch-units-without-load-title">{title}</h2>
-    <DataTable
+    {errorState ? (
+      <ListErrorState
+        title="Couldn't load list"
+        status={errorState.status}
+        message={errorState.message}
+        onRetry={errorState.onRetry}
+      />
+    ) : (
+    <ParityTable<UnitsWithoutLoad>
+      title={<span data-testid="dispatch-units-without-load-title">{title}</span>}
+      storageKey="dispatch-units-without-load"
       rows={rows}
-      tableKey="dispatch-units-without-load"
       rowKey={(row) => row.id}
       onRowClick={onRowClick}
       loading={loading}
-      errorState={errorState}
       emptyText="All units currently have active loads."
       columns={[
         {
@@ -103,7 +111,8 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           key: "hours_since_last_delivery",
           label: "Hours Since",
           sortable: true,
-          numeric: true,
+          kind: "number",
+          cellClass: "text-right tabular-nums",
           render: (row) => (
             <span className={idleClass(row.hours_since_last_delivery)}>{row.hours_since_last_delivery ?? "—"}</span>
           ),
@@ -115,7 +124,9 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           // so a second, no-op sort control here would be misleading rather than useful.
           key: "idle_time",
           label: "Idle Time",
-          numeric: true,
+          sortable: false,
+          kind: "number",
+          cellClass: "text-right tabular-nums",
           render: (row) => (
             <span className={idleClass(row.hours_since_last_delivery)}>
               {row.hours_since_last_delivery !== null ? `${row.hours_since_last_delivery}h idle` : "—"}
@@ -124,6 +135,7 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
         },
       ]}
     />
+    )}
     </>
   );
 }

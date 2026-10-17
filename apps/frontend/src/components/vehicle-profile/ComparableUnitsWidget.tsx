@@ -1,6 +1,7 @@
+// TABLE_DATE_OMIT: this table has no date column by design — three fixed metric rows (maintenance per mile, difference from fleet, fleet rank), a current-state comparison, not a time series.
 import { useState } from "react";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
-import { DataTable, type DataTableColumn } from "../DataTable";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 type Comparable = {
   fleet_avg_maintenance_per_mile_cents?: number | null;
@@ -22,12 +23,12 @@ type ComparisonRow = {
   fleet: string;
 };
 
-// Not sortable: a fixed 3-row metric comparison (maintenance/deviation/rank), not a record list —
-// there is no meaningful "sort by This unit" over three named summary rows.
-const comparisonColumns: DataTableColumn<ComparisonRow>[] = [
-  { key: "metric", label: "Metric", align: "left", sortable: false },
-  { key: "unit", label: "This unit", align: "right", numeric: true, sortable: false },
-  { key: "fleet", label: "Fleet", align: "right", numeric: true, sortable: false },
+// A fixed 3-row metric comparison (maintenance/deviation/rank), not a record list. Headers keep the
+// app-wide sortable default (owner 2026-09-03 — every column header sorts, GLOBAL-TYPE-SIZE-BASELINE).
+const comparisonColumns: ParityColumn<ComparisonRow>[] = [
+  { key: "metric", label: "Metric", sortable: true, cellClass: "text-left", alwaysVisible: true },
+  { key: "unit", label: "This unit", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
+  { key: "fleet", label: "Fleet", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
 ];
 
 export function ComparableUnitsWidget({
@@ -96,12 +97,15 @@ export function ComparableUnitsWidget({
           aria-label={`Fleet comparison for unit ${unitNumber}`}
           className="mt-2 overflow-hidden"
         >
-          <DataTable
+          <ParityTable
+            storageKey="vehicle-fleet-unit-comparison"
             columns={comparisonColumns}
             rows={comparisonRows}
             rowKey={(row) => row.key}
-            hideToolbar
+            suppressToolbarSearch
+            suppressToolbarRange
             hidePager
+            pageSize={comparisonRows.length}
           />
         </div>
       ) : null}

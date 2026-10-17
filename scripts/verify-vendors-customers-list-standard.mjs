@@ -104,7 +104,7 @@ function analyze(src) {
 
   // --- VC-DETAIL-01 sidebars: Status = active/inactive + separate Quality column ---
   for (const [label, sidebar] of [["Vendor", vsidebar], ["Customer", csidebar]]) {
-    if (!/id:\s*"quality"/.test(sidebar))
+    if (!/(id|key):\s*"quality"/.test(sidebar))
       errors.push(`${label}ListSidebar has no separate Quality column (quality chip must move off the Status column)`);
     if (!/deactivated_at != null/.test(sidebar))
       errors.push(`${label}ListSidebar Status must derive from deactivated_at (active/inactive), not the quality label`);
@@ -185,9 +185,9 @@ if (process.argv.includes("--selftest")) {
     ["vendors drop All page size", withField("vlist", (s) => s.replace(/allowAllPageSize/g, "noAllPageSize"))],
     ["customers drop All page size", withField("clist", (s) => s.replace(/allowAllPageSize/g, "noAllPageSize"))],
     // VC-DETAIL-01 sidebars
-    ["vendor sidebar drops Quality column", withField("vsidebar", (s) => s.replace(/id:\s*"quality"/g, 'id: "gone_q"'))],
+    ["vendor sidebar drops Quality column", withField("vsidebar", (s) => s.replace(/(id|key):\s*"quality"/g, 'key: "gone_q"'))],
     ["vendor sidebar Status not active/inactive", withField("vsidebar", (s) => s.replace(/\? "Inactive" : "Active"/g, '? "x" : "y"'))],
-    ["customer sidebar drops Quality column", withField("csidebar", (s) => s.replace(/id:\s*"quality"/g, 'id: "gone_q"'))],
+    ["customer sidebar drops Quality column", withField("csidebar", (s) => s.replace(/(id|key):\s*"quality"/g, 'key: "gone_q"'))],
     ["customer sidebar Status not active/inactive", withField("csidebar", (s) => s.replace(/\? "Inactive" : "Active"/g, '? "x" : "y"'))],
     // VC-DETAIL-01 detail tables + tiles
     ["vendor detail drops unified Transactions", withField("vpage", (s) => s.replace(/vendor-transactions-unified/g, "gone"))],

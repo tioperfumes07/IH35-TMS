@@ -18,7 +18,7 @@
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { DataPanel } from "../layout/DataPanel";
-import { DataTable, type DataTableColumn } from "../DataTable";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { colors } from "../../design/tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
@@ -47,7 +47,7 @@ function renderLoadRange(row: OpenPreSettlement) {
   );
 }
 
-const columns: DataTableColumn<OpenPreSettlement>[] = [
+const columns: ParityColumn<OpenPreSettlement>[] = [
   {
     key: "driver",
     label: "Driver",
@@ -127,7 +127,7 @@ export function OpenPreSettlementsPanel({ rows, loading = false, isError = false
         </p>
       ) : null}
       {!loading && !isError && rows.length > 0 ? (
-        <DataTable columns={columns} rows={rows} rowKey={(row) => row.settlement_id} rowTestId={() => "open-pre-settlement-row"} hidePager />
+        <ParityTable storageKey="dispatch-open-pre-settlements" columns={columns} rows={rows} rowKey={(row) => row.settlement_id} rowTestId={() => "open-pre-settlement-row"} hidePager pageSize={Math.max(1, rows.length)} />
       ) : null}
       {!loading && !isError && rows.length === 0 ? (
         <p className="px-2 py-2 text-xs text-gray-500" data-testid="dispatch-open-pre-settlements-honest-empty">

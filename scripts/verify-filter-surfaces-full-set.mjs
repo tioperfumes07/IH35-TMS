@@ -21,10 +21,10 @@ const SURFACES = [
   // Full-load catalogs (route has no LIMIT; filter columns operating_company_id + is_active are indexed): ONE search =
   // the house toolbar over every row; one Show selector; no "Show inactive" double filter; no page-level search box.
   ...[
-    ["Load Cancellation Reasons", "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx", /<DataTable\b/],
+    ["Load Cancellation Reasons", "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx", /<ParityTable\b/],
     ["Load Exception Reasons", "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx", /<ParityTable\b/],
-    ["Driver Termination Reasons", "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx", /<DataTable\b/],
-    ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /<DataTable\b/],
+    ["Driver Termination Reasons", "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx", /<ParityTable\b/],
+    ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /<ParityTable\b/],
   ].map(([name, file, table]) => ({
     name,
     file,
@@ -40,14 +40,15 @@ const SURFACES = [
   ].map(([name, file]) => ({
     name,
     file,
-    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/, /<DataTable\b/],
-    mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /limit: 200, offset: 0/],
+    // LEAD 443.181: DataTable -> ParityTable; its own toolbar search stays the one search (never suppressed).
+    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/, /<ParityTable\b/],
+    mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /limit: 200, offset: 0/, /suppressToolbarSearch/],
   })),
   {
     name: "Brokers",
     file: "apps/frontend/src/pages/lists/names/BrokersListPage.tsx",
-    must: [/listAllCustomers\(\{[\s\S]{0,160}customer_type: "broker"/, /<DataTable\b/],
-    mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /search: search/],
+    must: [/listAllCustomers\(\{[\s\S]{0,160}customer_type: "broker"/, /<ParityTable\b/],
+    mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /search: search/, /suppressToolbarSearch/],
   },
   {
     name: "Safety catalogs (8 lists, one generic page)",
@@ -60,7 +61,7 @@ const SURFACES = [
   {
     name: "All Documents (page)",
     file: "apps/frontend/src/pages/Documents.tsx",
-    must: [/offset: \(page - 1\) \* PAGE_SIZE,\s*\.\.\.filters,/, /<UniversalListToolbar[\s\S]{0,400}resultCount=\{totalFiles\}\s*totalCount=\{libraryTotal\}/, /<DataTable\s+rows=\{files\}\s+hideToolbar/],
+    must: [/offset: \(page - 1\) \* PAGE_SIZE,\s*\.\.\.filters,/, /<UniversalListToolbar[\s\S]{0,400}resultCount=\{totalFiles\}\s*totalCount=\{libraryTotal\}/, /<ParityTable<DocsFile>[\s\S]{0,200}rows=\{files\}\s+suppressToolbarSearch/],
     mustNot: [/filteredFiles/, /original_filename\.toLowerCase\(\)\.includes/],
   },
   {

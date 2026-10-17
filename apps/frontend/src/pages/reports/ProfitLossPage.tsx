@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
+import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -113,6 +114,45 @@ export function ProfitLossPage() {
       return String(line.account_name ?? "").toLowerCase().includes(q) || String(line.account_code ?? "").toLowerCase().includes(q);
     });
   }, [query.data?.operating_expenses.lines, reportSearch]);
+
+  // LEAD 443.181 — one ParityTable per P&L section. Account name + amount keep their register AmountLink (the row
+  // opens the account ledger); the section total moves to the footer.
+  const plColumns = useMemo<ParityColumn<AccountingProfitLossLine>[]>(() => {
+    const cols: ParityColumn<AccountingProfitLossLine>[] = [];
+    if (showCodes) {
+      cols.push({ key: "account_code", label: "Account #", render: (line) => <span className="font-medium text-gray-900">{line.account_code || "—"}</span> });
+    }
+    cols.push(
+      {
+        key: "account_name",
+        label: "Account",
+        render: (line) => (
+          <AmountLink
+            filter={plFilter(line.account_id, applied)}
+            className="text-[#1F2A44] underline-offset-2 hover:underline"
+            data-testid={`pl-name-${line.account_id}`}
+          >
+            {line.account_name || "—"}
+          </AmountLink>
+        ),
+      },
+      { key: "account_type", label: "Type", render: (line) => formatAccountTypeLabel(line.account_type) },
+      {
+        key: "amount",
+        label: "Amount",
+        kind: "money",
+        sortValue: (line) => line.amount,
+        render: (line) => (
+          // LST-F405 — the account NAME drilled; the AMOUNT did not. The filter
+          // behind this figure IS its drill target: this account over this period.
+          <AmountLink filter={plFilter(line.account_id, applied)} data-testid={`pl-amount-${line.account_id}`}>
+            {money(line.amount)}
+          </AmountLink>
+        ),
+      },
+    );
+    return cols;
+  }, [showCodes, applied]);
 
   function printLetter() {
     const data = query.data;
@@ -289,62 +329,25 @@ export function ProfitLossPage() {
             { key: "cogs", title: "Cost of goods sold", lines: cogsLines, total: query.data.cogs.total },
             { key: "expenses", title: "Operating expenses", lines: expenseLines, total: query.data.operating_expenses.total },
           ].map((section) => (
-            <div key={section.key} className="overflow-auto rounded-sm border border-gray-200 bg-white">
-              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">{section.title}</div>
-              <table className="min-w-full text-left text-xs">
-                <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
-                  <tr>
-                    {showCodes ? <th className="px-3 py-2">Account #</th> : null}
-                    <th className="px-3 py-2">Account</th>
-                    <th className="px-3 py-2">Type</th>
-                    <th className="px-3 py-2 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {section.lines.length === 0 ? (
-                    <tr>
-                      <td colSpan={showCodes ? 4 : 3} className="px-3 py-4 text-gray-500">
-                        No rows
-                      </td>
-                    </tr>
-                  ) : (
-                    section.lines.map((line) => (
-                      <tr key={`${section.key}-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
-                        {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
-                        <td className="px-3 py-2">
-                          <AmountLink
-                            filter={plFilter(line.account_id, applied)}
-                            className="text-[#1F2A44] underline-offset-2 hover:underline"
-                            data-testid={`pl-name-${line.account_id}`}
-                          >
-                            {line.account_name || "—"}
-                          </AmountLink>
-                        </td>
-                        <td className="px-3 py-2">{formatAccountTypeLabel(line.account_type)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">
-                          {/* LST-F405 — the account NAME drilled; the AMOUNT did not. The filter
-                              behind this figure IS its drill target: this account over this period. */}
-                          <AmountLink
-                            filter={plFilter(line.account_id, applied)}
-                            data-testid={`pl-amount-${line.account_id}`}
-                          >
-                            {money(line.amount)}
-                          </AmountLink>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                  <tr className="bg-[#F7F8FA] font-semibold">
-                    <td colSpan={showCodes ? 3 : 2} className="px-3 py-2 text-right">
-                      Section total
-                    </td>
-                    <td className="px-3 py-2">
-                      <MoneyCell cents={section.total} format={money} drill={{ amount: sectionLedger(section.lines, applied.start, applied.end, applied.basis) }} data-testid={`pl-total-${section.key}`} />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <ParityTable
+              key={section.key}
+              title={section.title}
+              rows={section.lines}
+              columns={plColumns}
+              rowKey={(line) => `${section.key}-${line.account_code}-${line.account_name}`}
+              storageKey={`ih35.reports.profit-loss.${section.key}.v1`}
+              emptyText="No rows"
+              pageSize={ALL_PAGE_SIZE}
+              hidePager
+              suppressToolbarSearch
+              suppressToolbarRange
+              footerCells={{
+                account_name: "Section total",
+                amount: (
+                  <MoneyCell cents={section.total} format={money} drill={{ amount: sectionLedger(section.lines, applied.start, applied.end, applied.basis) }} data-testid={`pl-total-${section.key}`} />
+                ),
+              }}
+            />
           ))}
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
             <div className="flex items-center justify-between text-xs font-semibold">

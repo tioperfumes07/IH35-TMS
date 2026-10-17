@@ -23,6 +23,7 @@ import {
   type TabTally,
 } from "../../api/program";
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const AUTO_REFRESH_MS = 60_000; // board re-polls every 60s so refreshed_at_ct stays live
 
@@ -479,9 +480,6 @@ export function ProgramBoardPage() {
       .map(([r]) => r);
   }, [baseRows, debouncedFilter, sort]);
 
-  function toggleSort(key: SortKey) {
-    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
-  }
 
   // Column visibility. Owner-Batch shows a "Review" tag column; the Bugs & Audits tab adds the four
   // audit-finding columns (Severity, Module, Where, Live); and the Lifecycle column (uploaded→written→
@@ -490,7 +488,124 @@ export function ProgramBoardPage() {
   const showReview = tab === "owner";
   const showAuditCols = tab === "audit"; // severity/module/where/live
   const showLifecycleCol = tab === "all" || tab === "pending" || tab === "audit";
-  const colCount = 9 + (showReview ? 1 : 0) + (showAuditCols ? 4 : 0) + (showLifecycleCol ? 1 : 0);
+  const activeOrdinal = new Map(activeRows.map((r, i) => [r.key, i + 1]));
+  const workColumns: Array<ParityColumn<Row>> = [
+    { key: "__ordinal", label: "#", sortable: false, render: (r) => <span className="tabular-nums">{activeOrdinal.get(r.key)}</span> },
+    { key: "date", label: "Date", render: (r) => <span className="tabular-nums">{formatDateCt(r.date)}</span> },
+    { key: "id", label: "ID", render: (r) => <span className="font-semibold">{r.id}</span> },
+    { key: "wave", label: "Wave / Source" },
+    {
+      key: "description",
+      label: "Description",
+      allowWrap: true,
+      render: (r) => {
+        const qs = questionsByBlock.get(r.id) ?? [];
+        return (
+          <>
+            {r.description}
+            {qs.length ? <span className="ml-1 rounded bg-[#E5E7EB] px-1 text-[#4B5563]">Q{qs.length}</span> : null}
+          </>
+        );
+      },
+    },
+    { key: "tier", label: "Tier", render: (r) => <span className="tabular-nums">{r.tier || "—"}</span> },
+    {
+      key: "fin",
+      label: "Fin",
+      render: (r) =>
+        r.fin ? (
+          <span className="rounded px-1.5 py-0.5 font-semibold" style={{ background: "#FEE2E2", color: "#991B1B" }}>
+            FIN
+          </span>
+        ) : (
+          <span className="text-[#6B7280]">—</span>
+        ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (r) => {
+        const chip = statusChip(r.status);
+        return (
+          <span className="rounded px-1.5 py-0.5 font-semibold" style={{ background: chip.bg, color: chip.fg }}>
+            {r.status}
+          </span>
+        );
+      },
+    },
+    {
+      key: "pr",
+      label: "PR",
+      render: (r) =>
+        r.pr ? (
+          <a
+            href={`https://github.com/tioperfumes07/IH35-TMS/pull/${r.pr}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#1F2A44] underline hover:text-[#0F1219]"
+          >
+            #{r.pr}
+          </a>
+        ) : (
+          <span className="text-[#6B7280]">—</span>
+        ),
+    },
+    ...(showAuditCols
+      ? ([
+          {
+            key: "severity",
+            label: "Severity",
+            render: (r) =>
+              r.severity ? (
+                <span className="tabular-nums font-semibold text-[#4B5563]">{r.severity.toUpperCase()}</span>
+              ) : (
+                <span className="text-[#6B7280]">—</span>
+              ),
+          },
+          { key: "module", label: "Module", maxWidth: 150, render: (r) => <span title={r.module || undefined}>{r.module || "—"}</span> },
+          {
+            key: "where",
+            label: "Where",
+            maxWidth: 190,
+            render: (r) => <span className="font-mono" title={r.where || undefined}>{r.where || "—"}</span>,
+          },
+          {
+            key: "live",
+            label: "Live",
+            render: (r) => {
+              if (!r.live) return <span className="text-[#6B7280]">—</span>;
+              const lc = liveStateChip(r.live);
+              return (
+                <span className="rounded px-1.5 py-0.5 font-semibold" style={{ background: lc.bg, color: lc.fg }}>
+                  {lc.label}
+                </span>
+              );
+            },
+          },
+        ] satisfies Array<ParityColumn<Row>>)
+      : []),
+    ...(showLifecycleCol ? [{ key: "lifecycle", label: "Lifecycle", render: (r: Row) => <LifecycleCell row={r} /> }] : []),
+    ...(showReview
+      ? [
+          {
+            key: "review",
+            label: "Review",
+            render: (r: Row) => {
+              const tagVal = reviewTag(r.review);
+              const needsPreview = tagVal === "needs-your-preview";
+              return (
+                <span
+                  className="rounded px-1.5 py-0.5 font-semibold"
+                  style={needsPreview ? { background: "#FEF3C7", color: "#854F0B" } : { background: "#E2E8F0", color: "#4B5563" }}
+                >
+                  {tagVal}
+                </span>
+              );
+            },
+          },
+        ]
+      : []),
+  ];
   const lockedDecisions = data?.locked_decisions ?? [];
   const deltas = data?.meta?.deltas; // NEW: live-sync additions/completions badge (tolerated absent)
 
@@ -676,172 +791,35 @@ export function ProgramBoardPage() {
             </span>
           </div>
 
-          <div className="overflow-x-auto rounded border border-gray-200">
-            <table className="w-full border-collapse text-xs">
-              <thead className="sticky top-0 z-10 bg-[#F7F8FA] text-left text-[#4B5563]">
-                <tr>
-                  <th className="px-2 py-1.5 font-semibold">#</th>
-                  <Th label="Date" onClick={() => toggleSort("date")} active={sort.key === "date"} dir={sort.dir} />
-                  <Th label="ID" onClick={() => toggleSort("id")} active={sort.key === "id"} dir={sort.dir} />
-                  <Th label="Wave / Source" onClick={() => toggleSort("wave")} active={sort.key === "wave"} dir={sort.dir} />
-                  <Th label="Description" onClick={() => toggleSort("description")} active={sort.key === "description"} dir={sort.dir} />
-                  <Th label="Tier" onClick={() => toggleSort("tier")} active={sort.key === "tier"} dir={sort.dir} />
-                  <Th label="Fin" onClick={() => toggleSort("fin")} active={sort.key === "fin"} dir={sort.dir} />
-                  <Th label="Status" onClick={() => toggleSort("status")} active={sort.key === "status"} dir={sort.dir} />
-                  <Th label="PR" onClick={() => toggleSort("pr")} active={sort.key === "pr"} dir={sort.dir} />
-                  {showAuditCols ? (
-                    <>
-                      <Th label="Severity" onClick={() => toggleSort("severity")} active={sort.key === "severity"} dir={sort.dir} />
-                      <Th label="Module" onClick={() => toggleSort("module")} active={sort.key === "module"} dir={sort.dir} />
-                      <Th label="Where" onClick={() => toggleSort("where")} active={sort.key === "where"} dir={sort.dir} />
-                      <Th label="Live" onClick={() => toggleSort("live")} active={sort.key === "live"} dir={sort.dir} />
-                    </>
-                  ) : null}
-                  {showLifecycleCol ? (
-                    <Th label="Lifecycle" onClick={() => toggleSort("lifecycle")} active={sort.key === "lifecycle"} dir={sort.dir} />
-                  ) : null}
-                  {showReview ? <Th label="Review" onClick={() => toggleSort("review")} active={sort.key === "review"} dir={sort.dir} /> : null}
-                </tr>
-              </thead>
-              <tbody>
-                {activeRows.map((r, i) => {
-                  const chip = statusChip(r.status);
-                  const isOpen = expanded === r.key;
-                  const qs = questionsByBlock.get(r.id) ?? [];
-                  const ans = answersByBlock.get(r.id) ?? [];
-                  return (
-                    <Fragment key={r.key}>
-                      <tr
-                        onClick={() => setExpanded(isOpen ? null : r.key)}
-                        className="cursor-pointer border-t border-gray-100 hover:bg-[#F7F8FA]"
-                        style={r.fin ? { boxShadow: "inset 3px 0 0 0 #DC2626" } : undefined}
-                      >
-                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{i + 1}</td>
-                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{formatDateCt(r.date)}</td>
-                        <td className="px-2 py-1.5 font-semibold text-[#0F1219]">
-                          <span className="mr-1 text-[#6B7280]">{isOpen ? "▾" : "▸"}</span>
-                          {r.id}
-                        </td>
-                        <td className="whitespace-nowrap px-2 py-1.5 text-[#6B7280]">{r.wave}</td>
-                        <td className="px-2 py-1.5 text-[#1F2A44]">
-                          {r.description}
-                          {qs.length ? <span className="ml-1 rounded bg-[#E5E7EB] px-1 text-xs text-[#4B5563]">Q{qs.length}</span> : null}
-                        </td>
-                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#4B5563]">{r.tier || "—"}</td>
-                        <td className="px-2 py-1.5">
-                          {r.fin ? (
-                            <span className="rounded px-1.5 py-0.5 text-xs font-semibold" style={{ background: "#FEE2E2", color: "#991B1B" }}>
-                              FIN
-                            </span>
-                          ) : (
-                            <span className="text-[#6B7280]">—</span>
-                          )}
-                        </td>
-                        <td className="whitespace-nowrap px-2 py-1.5">
-                          <span className="rounded px-1.5 py-0.5 text-xs font-semibold" style={{ background: chip.bg, color: chip.fg }}>
-                            {r.status}
-                          </span>
-                        </td>
-                        <td className="px-2 py-1.5">
-                          {r.pr ? (
-                            <a
-                              href={`https://github.com/tioperfumes07/IH35-TMS/pull/${r.pr}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-[#1F2A44] underline hover:text-[#0F1219]"
-                            >
-                              #{r.pr}
-                            </a>
-                          ) : (
-                            <span className="text-[#6B7280]">—</span>
-                          )}
-                        </td>
-                        {showAuditCols ? (
-                          <>
-                            <td className="whitespace-nowrap px-2 py-1.5">
-                              {r.severity ? (
-                                <span className="tabular-nums font-semibold text-[#4B5563]">{r.severity.toUpperCase()}</span>
-                              ) : (
-                                <span className="text-[#6B7280]">—</span>
-                              )}
-                            </td>
-                            <td className="px-2 py-1.5 text-[#4B5563]">
-                              <span className="block max-w-[150px] truncate" title={r.module || undefined}>
-                                {r.module || "—"}
-                              </span>
-                            </td>
-                            <td className="px-2 py-1.5 text-[#6B7280]">
-                              <span className="block max-w-[190px] truncate font-mono text-xs" title={r.where || undefined}>
-                                {r.where || "—"}
-                              </span>
-                            </td>
-                            <td className="whitespace-nowrap px-2 py-1.5">
-                              {r.live ? (
-                                (() => {
-                                  const lc = liveStateChip(r.live);
-                                  return (
-                                    <span className="rounded px-1.5 py-0.5 text-xs font-semibold" style={{ background: lc.bg, color: lc.fg }}>
-                                      {lc.label}
-                                    </span>
-                                  );
-                                })()
-                              ) : (
-                                <span className="text-[#6B7280]">—</span>
-                              )}
-                            </td>
-                          </>
-                        ) : null}
-                        {showLifecycleCol ? (
-                          <td className="px-2 py-1.5">
-                            <LifecycleCell row={r} />
-                          </td>
-                        ) : null}
-                        {showReview ? (
-                          <td className="whitespace-nowrap px-2 py-1.5">
-                            {(() => {
-                              const tagVal = reviewTag(r.review);
-                              const needsPreview = tagVal === "needs-your-preview";
-                              return (
-                                <span
-                                  className="rounded px-1.5 py-0.5 text-xs font-semibold"
-                                  style={needsPreview ? { background: "#FEF3C7", color: "#854F0B" } : { background: "#E2E8F0", color: "#4B5563" }}
-                                >
-                                  {tagVal}
-                                </span>
-                              );
-                            })()}
-                          </td>
-                        ) : null}
-                      </tr>
-                      {isOpen ? (
-                        <tr className="border-t border-gray-100 bg-[#F7F8FA]">
-                          <td colSpan={colCount} className="px-4 py-3">
-                            <ThreadPanel
-                              blockId={r.id}
-                              questions={qs}
-                              answers={ans}
-                              onSubmit={async (body) => {
-                                await mutation.mutateAsync({ block_id: r.id, kind: "answer", body });
-                              }}
-                              submitting={mutation.isPending}
-                            />
-                          </td>
-                        </tr>
-                      ) : null}
-                    </Fragment>
-                  );
-                })}
-                {activeRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={colCount} className="px-2 py-6 text-center text-[#6B7280]">
-                      No rows.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable<Row>
+            title="Work items"
+            storageKey="ih35.program.board.work-items.v1"
+            rows={activeRows}
+            rowKey={(r) => r.key}
+            emptyText="No rows."
+            allowAllPageSize
+            sortKey={sort.key}
+            sortDirection={sort.dir}
+            onSortChange={(key, dir) => setSort({ key: key as SortKey, dir })}
+            sortMode="external"
+            renderExpanded={(r) => (
+              <ThreadPanel
+                blockId={r.id}
+                questions={questionsByBlock.get(r.id) ?? []}
+                answers={answersByBlock.get(r.id) ?? []}
+                onSubmit={async (body) => {
+                  await mutation.mutateAsync({ block_id: r.id, kind: "answer", body });
+                }}
+                submitting={mutation.isPending}
+              />
+            )}
+            expandOnRowClick
+            expandMode="single"
+            expandedKeys={expanded ? [expanded] : []}
+            onExpandedChange={(keys) => setExpanded(keys[keys.length - 1] ?? null)}
+            rowClassName={(r) => (r.fin ? "shadow-[inset_3px_0_0_0_#DC2626]" : "")}
+            columns={workColumns}
+          />
 
           {tab === "focus" && (data?.sequence?.length ?? 0) > 0 ? (
             <div className="rounded border border-gray-200 bg-white p-3">
@@ -875,46 +853,30 @@ export function ProgramBoardPage() {
               {(data?.merged_pr_total ?? 0) > (data?.merged_prs?.length ?? 0) ? " (most recent slice)" : ""}
             </span>
           </div>
-          <div className="overflow-x-auto rounded border border-gray-200">
-            <table className="w-full border-collapse text-xs">
-              <thead className="sticky top-0 z-10 bg-[#F7F8FA] text-left text-[#4B5563]">
-                <tr>
-                  <th className="px-2 py-1.5 font-semibold">#</th>
-                  <th className="px-2 py-1.5 font-semibold">PR #</th>
-                  <th className="px-2 py-1.5 font-semibold">Title</th>
-                  <th className="px-2 py-1.5 font-semibold">Merged At</th>
-                  <th className="px-2 py-1.5 font-semibold">Branch</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mergedFiltered.map((p, i) => (
-                  <tr key={p.number} className="border-t border-gray-100 hover:bg-[#F7F8FA]">
-                    <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{i + 1}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5 font-semibold">
-                      <a
-                        href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#1F2A44] underline hover:text-[#0F1219]"
-                      >
-                        #{p.number}
-                      </a>
-                    </td>
-                    <td className="px-2 py-1.5 text-[#1F2A44]">{p.title}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{formatDateTimeCt(p.mergedAt)}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-xs text-[#6B7280]">{p.branch ?? "—"}</td>
-                  </tr>
-                ))}
-                {mergedFiltered.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-2 py-6 text-center text-[#6B7280]">
-                      No merged PRs in this snapshot.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable<MergedPr>
+            title="Merged PRs"
+            storageKey="ih35.program.board.merged-prs.v1"
+            rows={mergedFiltered}
+            rowKey={(p) => String(p.number)}
+            emptyText="No merged PRs in this snapshot."
+            allowAllPageSize
+            columns={[
+              { key: "__ordinal", label: "#", sortable: false, render: (p) => <span className="tabular-nums">{mergedFiltered.indexOf(p) + 1}</span> },
+              { key: "number", label: "PR #", render: (p) => (
+                <a
+                  href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[#1F2A44] underline hover:text-[#0F1219]"
+                >
+                  #{p.number}
+                </a>
+              ) },
+              { key: "title", label: "Title", allowWrap: true },
+              { key: "mergedAt", label: "Merged At", render: (p) => <span className="tabular-nums">{formatDateTimeCt(p.mergedAt)}</span> },
+              { key: "branch", label: "Branch", render: (p) => <span className="font-mono">{p.branch ?? "—"}</span> },
+            ]}
+          />
         </div>
       ) : null}
 
@@ -934,56 +896,44 @@ export function ProgramBoardPage() {
           <p className="text-xs text-[#6B7280]">
             Merged but gated — typically behind a feature flag or awaiting deploy/ancestry. Not an owner merge-approval hold; flip flags or wait for deploy as applicable.
           </p>
-          <div className="overflow-x-auto rounded border border-gray-200">
-            <table className="w-full border-collapse text-xs">
-              <thead className="sticky top-0 z-10 bg-[#F7F8FA] text-left text-[#4B5563]">
-                <tr>
-                  <th className="px-2 py-1.5 font-semibold">#</th>
-                  <th className="px-2 py-1.5 font-semibold">PR #</th>
-                  <th className="px-2 py-1.5 font-semibold">Title</th>
-                  <th className="px-2 py-1.5 font-semibold">Merged At</th>
-                  <th className="px-2 py-1.5 font-semibold">Category</th>
-                </tr>
-              </thead>
-              <tbody>
-                {holdFiltered.map((p, i) => {
+          <ParityTable<HoldItem>
+            title="Held PRs"
+            storageKey="ih35.program.board.held-prs.v1"
+            rows={holdFiltered}
+            rowKey={(p) => String(p.number)}
+            emptyText="No HOLD-FOR-JORGE items in this snapshot."
+            allowAllPageSize
+            columns={[
+              { key: "__ordinal", label: "#", sortable: false, render: (p) => <span className="tabular-nums">{holdFiltered.indexOf(p) + 1}</span> },
+              { key: "number", label: "PR #", render: (p) => (
+                <a
+                  href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[#1F2A44] underline hover:text-[#0F1219]"
+                >
+                  #{p.number}
+                </a>
+              ) },
+              { key: "title", label: "Title", allowWrap: true },
+              { key: "mergedAt", label: "Merged At", render: (p) => <span className="tabular-nums">{formatDateTimeCt(p.mergedAt)}</span> },
+              {
+                key: "category",
+                label: "Category",
+                render: (p) => {
                   const isTier1 = /financial/i.test(p.category);
                   return (
-                    <tr key={p.number} className="border-t border-gray-100 hover:bg-[#F7F8FA]">
-                      <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{i + 1}</td>
-                      <td className="whitespace-nowrap px-2 py-1.5 font-semibold">
-                        <a
-                          href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#1F2A44] underline hover:text-[#0F1219]"
-                        >
-                          #{p.number}
-                        </a>
-                      </td>
-                      <td className="px-2 py-1.5 text-[#1F2A44]">{p.title}</td>
-                      <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{formatDateTimeCt(p.mergedAt)}</td>
-                      <td className="whitespace-nowrap px-2 py-1.5">
-                        <span
-                          className="rounded px-1.5 py-0.5 text-xs font-semibold"
-                          style={isTier1 ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#4B5563" }}
-                        >
-                          {p.category}
-                        </span>
-                      </td>
-                    </tr>
+                    <span
+                      className="rounded px-1.5 py-0.5 font-semibold"
+                      style={isTier1 ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#4B5563" }}
+                    >
+                      {p.category}
+                    </span>
                   );
-                })}
-                {holdFiltered.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-2 py-6 text-center text-[#6B7280]">
-                      No HOLD-FOR-JORGE items in this snapshot.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+                },
+              },
+            ]}
+          />
         </div>
       ) : null}
 
@@ -1117,33 +1067,20 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
       </div>
 
       <div>
-        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">By module</div>
-        <div className="overflow-x-auto rounded border border-gray-200">
-          <table className="w-full border-collapse text-xs">
-            <thead className="bg-[#F7F8FA] text-left text-[#4B5563]">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">Module</th>
-                <th className="px-2 py-1.5 font-semibold">Built</th>
-                <th className="px-2 py-1.5 font-semibold">Partial</th>
-                <th className="px-2 py-1.5 font-semibold">Not Built</th>
-                <th className="px-2 py-1.5 font-semibold">Needs Design</th>
-              </tr>
-            </thead>
-            <tbody>
-              {audit.by_module.map((m) => (
-                <tr key={m.module} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 font-semibold text-[#0F1219]">{m.module}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-[#4B5563]">{m.built}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-[#4B5563]">{m.partial}</td>
-                  <td className="px-2 py-1.5 tabular-nums" style={{ color: "#DC2626" }}>
-                    {m.not_built}
-                  </td>
-                  <td className="px-2 py-1.5 tabular-nums text-[#4B5563]">{m.needs_design}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<ProgramBoardAudit["by_module"][number]>
+          title="By module"
+          storageKey="ih35.program.board.audit-by-module.v1"
+          rows={audit.by_module}
+          rowKey={(m) => m.module}
+          allowAllPageSize
+          columns={[
+            { key: "module", label: "Module", render: (m) => <span className="font-semibold">{m.module}</span> },
+            { key: "built", label: "Built", kind: "number" },
+            { key: "partial", label: "Partial", kind: "number" },
+            { key: "not_built", label: "Not Built", render: (m) => <span className="tabular-nums" style={{ color: "#DC2626" }}>{m.not_built}</span> },
+            { key: "needs_design", label: "Needs Design", kind: "number" },
+          ]}
+        />
       </div>
 
       {audit.prod_verified_facts.length > 0 ? (
@@ -1180,105 +1117,67 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
       ) : null}
 
       <div>
-        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
-            Top open items ({filteredOpenItems.length} of {audit.top_open_items.length})
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <SelectCombobox
-              value={moduleFilter}
-              onChange={(e) => setModuleFilter(e.target.value)}
-              className="h-7 rounded border border-gray-300 px-1.5 text-xs"
-            >
-              <option value="all">All modules</option>
-              {modules.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </SelectCombobox>
-            <SelectCombobox
-              value={verdictFilter}
-              onChange={(e) => setVerdictFilter(e.target.value)}
-              className="h-7 rounded border border-gray-300 px-1.5 text-xs"
-            >
-              <option value="all">All verdicts</option>
-              {verdicts.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </SelectCombobox>
-          </div>
-        </div>
-        <div className="overflow-x-auto rounded border border-gray-200">
-          <table className="w-full border-collapse text-xs">
-            <thead className="bg-[#F7F8FA] text-left text-[#4B5563]">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">ID</th>
-                <th className="px-2 py-1.5 font-semibold">Module</th>
-                <th className="px-2 py-1.5 font-semibold">Verdict</th>
-                <th className="px-2 py-1.5 font-semibold">Tier</th>
-                <th className="px-2 py-1.5 font-semibold">Title</th>
-                <th className="px-2 py-1.5 font-semibold">Missing</th>
-                <th className="px-2 py-1.5 font-semibold">Spec</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOpenItems.map((it) => {
+        <ParityTable<ProgramBoardAudit["top_open_items"][number]>
+          title={`Top open items (${filteredOpenItems.length} of ${audit.top_open_items.length})`}
+          filterBar={
+            <div className="flex flex-wrap items-center gap-2">
+              <SelectCombobox
+                value={moduleFilter}
+                onChange={(e) => setModuleFilter(e.target.value)}
+                className="h-7 rounded border border-gray-300 px-1.5 text-xs"
+              >
+                <option value="all">All modules</option>
+                {modules.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </SelectCombobox>
+              <SelectCombobox
+                value={verdictFilter}
+                onChange={(e) => setVerdictFilter(e.target.value)}
+                className="h-7 rounded border border-gray-300 px-1.5 text-xs"
+              >
+                <option value="all">All verdicts</option>
+                {verdicts.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </SelectCombobox>
+            </div>
+          }
+          storageKey="ih35.program.board.audit-open-items.v1"
+          rows={filteredOpenItems}
+          rowKey={(it) => it.id}
+          emptyText="No items match this filter."
+          allowAllPageSize
+          columns={[
+            { key: "id", label: "ID", render: (it) => <span className="font-mono">{it.id}</span> },
+            { key: "module", label: "Module" },
+            {
+              key: "verdict",
+              label: "Verdict",
+              render: (it) => {
                 const isNotBuilt = it.verdict.toLowerCase().replace(/\s+/g, "-").includes("not-built");
                 return (
-                  <tr key={it.id} className="border-t border-gray-100">
-                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-xs text-[#6B7280]">{it.id}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5 text-[#4B5563]">{it.module}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5">
-                      <span
-                        className="rounded px-1.5 py-0.5 text-xs font-semibold"
-                        style={isNotBuilt ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#4B5563" }}
-                      >
-                        {it.verdict}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-2 py-1.5 text-[#4B5563]">{it.tier}</td>
-                    <td className="px-2 py-1.5 text-[#1F2A44]">
-                      <span className="block max-w-[320px] truncate" title={it.title}>
-                        {it.title}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5 text-[#4B5563]">
-                      <span className="block max-w-[280px] truncate" title={it.missing}>
-                        {it.missing}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5 text-[#6B7280]">
-                      <span className="block max-w-[140px] truncate" title={it.spec}>
-                        {it.spec}
-                      </span>
-                    </td>
-                  </tr>
+                  <span
+                    className="rounded px-1.5 py-0.5 font-semibold"
+                    style={isNotBuilt ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#4B5563" }}
+                  >
+                    {it.verdict}
+                  </span>
                 );
-              })}
-              {filteredOpenItems.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-2 py-6 text-center text-[#6B7280]">
-                    No items match this filter.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+              },
+            },
+            { key: "tier", label: "Tier" },
+            { key: "title", label: "Title", maxWidth: 320, render: (it) => <span title={it.title}>{it.title}</span> },
+            { key: "missing", label: "Missing", maxWidth: 280, render: (it) => <span title={it.missing}>{it.missing}</span> },
+            { key: "spec", label: "Spec", maxWidth: 140, render: (it) => <span title={it.spec}>{it.spec}</span> },
+          ]}
+        />
       </div>
     </div>
-  );
-}
-
-function Th({ label, onClick, active, dir }: { label: string; onClick: () => void; active: boolean; dir: "asc" | "desc" }) {
-  return (
-    <th className="cursor-pointer select-none px-2 py-1.5 font-semibold hover:text-[#0F1219]" onClick={onClick}>
-      {label}
-      {active ? <span className="ml-0.5 text-[#6B7280]">{dir === "asc" ? "▲" : "▼"}</span> : null}
-    </th>
   );
 }
 

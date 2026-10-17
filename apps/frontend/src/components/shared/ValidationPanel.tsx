@@ -1,7 +1,9 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per pre-dispatch blocker rule (rule / subject / what is missing / override), a current-state checklist.
 // GAP-14: Reusable ValidationPanel — used by pre-dispatch, pre-settlement (GAP-15), pre-accounting (GAP-16).
-// P0 2026-09-03: blockers render as a table with an Override column (one button per row).
+// P0 2026-09-03: blockers render as a table with an Override column (one button per row) — ParityTable (LEAD 443.181).
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { ParityTable } from "../parity/ParityTable";
 
 export type ValidationSeverity = "block" | "warn" | "info";
 
@@ -130,27 +132,9 @@ export function ValidationPanel({
   onRowReasonChange,
   onOverrideBlocker,
 }: Props) {
+  // LEAD 443.181: the blocker table renders through ParityTable (controlled sort, same default: rule code asc).
   const [sortKey, setSortKey] = useState<"rule" | "subject" | "missing">("rule");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const sortedBlockers = useMemo(() => {
-    const rows = result.blockers.map((item) => ({
-      item,
-      rule: item.rule_id,
-      subject: subjectFromItem(item),
-      missing: missingFromItem(item),
-    }));
-    const dir = sortDir === "asc" ? 1 : -1;
-    rows.sort((a, b) => a[sortKey].localeCompare(b[sortKey]) * dir);
-    return rows.map((r) => r.item);
-  }, [result.blockers, sortDir, sortKey]);
-
-  function toggleSort(key: "rule" | "subject" | "missing") {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  }
 
   if (loading) {
     return (
@@ -188,79 +172,67 @@ export function ValidationPanel({
   return (
     <div className="space-y-1.5">
       {allowBlockOverride && result.blockers.length > 0 ? (
-        <div className="overflow-x-auto" data-testid="pre-dispatch-blocker-override-table">
-          <table className="w-full border-collapse text-xs">
-            {/* TABLE-HEADER-RETIRE-NAVY LAW (owner ruling 2026-09-04, verbatim: "the blue is too
-               * aggressive") -- navy #14314F/white left table headers for good. This thead used to
-               * hardcode navy on the <tr> itself, which sits on top of the global `thead { !important }`
-               * light-gray rule (index.css GLB-02) since that rule targets the <thead> element's own
-               * background, not a child <tr>'s explicit background -- a real loophole the design-system
-               * ratchet guard never checked for. Removed the override; the locked #EEF2F6/#1F2937 11px
-               * token now applies here exactly like every other table header in the app. */}
-            <thead data-table-header="locked">
-              <tr className="h-[26px] tracking-[0.5px]">
-                <th className="border-r border-gray-300 px-2 text-center">
-                  <button type="button" className="w-full font-bold uppercase" onClick={() => toggleSort("rule")}>
-                    Rule code
-                  </button>
-                </th>
-                <th className="border-r border-gray-300 px-2 text-center">
-                  <button type="button" className="w-full font-bold uppercase" onClick={() => toggleSort("subject")}>
-                    Subject
-                  </button>
-                </th>
-                <th className="border-r border-gray-300 px-2 text-center">
-                  <button type="button" className="w-full font-bold uppercase" onClick={() => toggleSort("missing")}>
-                    What is missing
-                  </button>
-                </th>
-                <th className="px-2 text-center">Override</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedBlockers.map((item) => {
+        // A blocker is a rule result, not a record: no row route. The override reason input + button live in the
+        // Override cell, same behaviour as before.
+        <ParityTable<ValidationItem>
+          tableTestId="pre-dispatch-blocker-override-table"
+          storageKey="ih35.dispatch.pre-dispatch-blockers.v1"
+          rows={result.blockers}
+          rowKey={(item) => item.rule_id}
+          pageSize={Math.max(1, result.blockers.length)}
+          hidePager
+          suppressToolbarSearch
+          suppressToolbarRange
+          sortKey={sortKey}
+          sortDirection={sortDir}
+          onSortChange={(key, direction) => {
+            setSortKey(key as "rule" | "subject" | "missing");
+            setSortDir(direction);
+          }}
+          columns={[
+            { key: "rule", label: "Rule code", cellClass: "font-mono", sortValue: (item) => item.rule_id, render: (item) => ruleCodeLabel(item) },
+            { key: "subject", label: "Subject", sortValue: (item) => subjectFromItem(item), render: (item) => subjectFromItem(item) },
+            { key: "missing", label: "What is missing", allowWrap: true, sortValue: (item) => missingFromItem(item), render: (item) => missingFromItem(item) },
+            {
+              key: "override",
+              label: "Override",
+              sortable: false,
+              allowWrap: true,
+              minWidth: 240,
+              render: (item) => {
                 const rec = blockOverrides[item.rule_id];
                 const reason = rowReasons[item.rule_id] ?? "";
-                return (
-                  <tr key={item.rule_id} className="h-[30px] border-b border-gray-200 even:bg-[#F7F8FA]">
-                    <td className="border-r border-gray-200 px-2 font-mono">{ruleCodeLabel(item)}</td>
-                    <td className="border-r border-gray-200 px-2">{subjectFromItem(item)}</td>
-                    <td className="border-r border-gray-200 px-2">{missingFromItem(item)}</td>
-                    <td className="px-2 py-1">
-                      {rec ? (
-                        <span data-testid={`blocker-overridden-${item.rule_id}`}>
-                          Overridden {new Date(rec.at).toLocaleString()} — {rec.reason.slice(0, 48)}
-                          {rec.reason.length > 48 ? "…" : ""}
-                        </span>
-                      ) : canOwnerOverride ? (
-                        <div className="flex min-w-[14rem] flex-col gap-1">
-                          <input
-                            data-testid={`blocker-override-reason-${item.rule_id}`}
-                            value={reason}
-                            onChange={(e) => onRowReasonChange?.(item.rule_id, e.target.value)}
-                            placeholder="Reason (min 10 chars)"
-                            className="h-7 w-full rounded-sm border border-red-300 px-1 text-xs"
-                          />
-                          <button
-                            type="button"
-                            data-testid={`blocker-override-${item.rule_id}`}
-                            disabled={reason.trim().length < 10 || !onOverrideBlocker}
-                            onClick={() => onOverrideBlocker?.(item.rule_id)}
-                            className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-40 hover:bg-red-100"
-                          >
-                            Override
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-red-600">Owner only</span>
-                      )}
-                    </td>
-                  </tr>
+                return rec ? (
+                  <span data-testid={`blocker-overridden-${item.rule_id}`}>
+                    Overridden {new Date(rec.at).toLocaleString()} — {rec.reason.slice(0, 48)}
+                    {rec.reason.length > 48 ? "…" : ""}
+                  </span>
+                ) : canOwnerOverride ? (
+                  <div className="flex min-w-[14rem] flex-col gap-1">
+                    <input
+                      data-testid={`blocker-override-reason-${item.rule_id}`}
+                      value={reason}
+                      onChange={(e) => onRowReasonChange?.(item.rule_id, e.target.value)}
+                      placeholder="Reason (min 10 chars)"
+                      className="h-7 w-full rounded-sm border border-red-300 px-1 text-xs"
+                    />
+                    <button
+                      type="button"
+                      data-testid={`blocker-override-${item.rule_id}`}
+                      disabled={reason.trim().length < 10 || !onOverrideBlocker}
+                      onClick={() => onOverrideBlocker?.(item.rule_id)}
+                      className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-40 hover:bg-red-100"
+                    >
+                      Override
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-red-600">Owner only</span>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
+              },
+            },
+          ]}
+        />
       ) : (
         result.blockers.map((item) => (
           <ValidationRow

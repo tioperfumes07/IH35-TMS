@@ -364,8 +364,21 @@ type PriorCreatorPostPayload = {
   owed_bill_ids?: string[];
   fuel_transaction_ids?: string[];
   advance_ids?: string[];
+  /** 443.183 G9 — the loan the cash-advance engine books for the part of an advance above its bill's balance. */
+  overflow_loan_ids?: string[];
   invoice_ids?: string[];
 };
+
+/** 443.183 G9 — the overflow loan createDriverCashAdvanceCore booked above the linked bill's balance (null when none). */
+export function overflowLoanAdvanceId(data: Record<string, unknown> | undefined): string | null {
+  const loan = (data as { overflow_loan?: { advance_id?: unknown } | null } | undefined)?.overflow_loan;
+  return typeof loan?.advance_id === "string" && loan.advance_id ? loan.advance_id : null;
+}
+
+/** 443.183 G9 — every driver advance an Edit must reverse: the post's advances AND their overflow loans. */
+export function advanceIdsUndoneOnEdit(prior: { advance_ids?: string[]; overflow_loan_ids?: string[] }): string[] {
+  return [...new Set([...(prior.advance_ids ?? []), ...(prior.overflow_loan_ids ?? [])])];
+}
 
 /**
  * ROUND 180 §14 — Edit = void and repost. Existing engines only:
@@ -440,7 +453,8 @@ async function voidPriorCreatorSettlementForEdit(
   // provider transaction: voiding and re-inserting it collides on its provider hash), and the prior loads' sent invoices
   // (and any factoring advance on them) are KEPT: revenue never churns. Expenses, advances and the settlement are undone.
 
-  for (const advanceId of prior.advance_ids ?? []) {
+  // 443.183 G9 — an advance's overflow loan is a companion document of the post: it is undone with the advance.
+  for (const advanceId of advanceIdsUndoneOnEdit(prior)) {
     const adv = await client.query<{
       id: string;
       liability_id: string | null;
@@ -518,6 +532,7 @@ async function voidPriorCreatorSettlementForEdit(
       prior_owed_bill_ids: prior.owed_bill_ids ?? [],
       prior_invoice_ids: prior.invoice_ids ?? [],
       prior_advance_ids: prior.advance_ids ?? [],
+      prior_overflow_loan_ids: prior.overflow_loan_ids ?? [],
       prior_fuel_transaction_ids: prior.fuel_transaction_ids ?? [],
       prior_deduction_ids: priorDeductions.map((d) => d.id),
     },
@@ -1249,6 +1264,7 @@ export async function postSettlementCreatorInClientTx(
   const companyExpenseMemos = new Map<string, number>();
   const fuelTxnIds: string[] = [];
   const advanceIds: string[] = [];
+  const overflowLoanIds: string[] = [];
   const journalEntryIds: string[] = [];
 
   // Resolve loads (seeded via ensureDispatchedLoadsForCreator before this tx when missing).
@@ -1721,6 +1737,9 @@ export async function postSettlementCreatorInClientTx(
       throw new SettlementCreatorError("advance_failed", created.message ?? created.error);
     }
     advanceIds.push(created.advanceId);
+    // 443.183 G9 — the part above the bill's balance is booked by the engine as a separate loan; keep its id so an Edit voids it.
+    const overflowLoanId = overflowLoanAdvanceId(created.data);
+    if (overflowLoanId) overflowLoanIds.push(overflowLoanId);
   }
 
   // ROUND 443.6 — COMPANY EXPENSE: real payment source, full stamp, bill when owed (owner 2026-10-10: "create bills,
@@ -2307,6 +2326,7 @@ export async function postSettlementCreatorInClientTx(
       owed_bill_ids: owedBillIds,
       fuel_transaction_ids: fuelTxnIds,
       advance_ids: advanceIds,
+      overflow_loan_ids: overflowLoanIds,
       invoice_ids: invoiceIds,
       company_expenses_cents: preview.company_expenses_cents,
       driver_net_cents: preview.driver_net_cents,
@@ -2335,6 +2355,7 @@ export async function postSettlementCreatorInClientTx(
     owed_bill_ids: owedBillIds,
     fuel_transaction_ids: fuelTxnIds,
     advance_ids: advanceIds,
+    overflow_loan_ids: overflowLoanIds,
     journal_entry_ids: journalEntryIds,
     invoice_ids: invoiceIds,
     preview,

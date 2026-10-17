@@ -42,6 +42,13 @@ for (const [rel, label] of [
   ["apps/frontend/src/pages/drivers/DriverListSidebar.tsx", "Drivers sidebar"],
 ]) {
   const src = read(rel);
+  // LEAD 443.181: a sidebar rendered through <ParityTable> inherits the house hover/stripe/selected
+  // row treatment asserted on ParityTable above; it must still paint the open record as selected.
+  if (src.includes("<ParityTable")) {
+    if (!src.includes("MASTER_DETAIL.rowSelectedClass")) fail(`${label}: ParityTable sidebar must highlight the selected row via MASTER_DETAIL.rowSelectedClass`);
+    ok(`C-04 ${label} wired (ParityTable)`);
+    continue;
+  }
   if (!src.includes("MASTER_DETAIL.rowBorderClass")) fail(`${label}: missing rowBorderClass`);
   if (!src.includes("MASTER_DETAIL.rowStripeClass")) fail(`${label}: missing rowStripeClass`);
   if (!src.includes("MASTER_DETAIL.rowHoverClass")) fail(`${label}: missing rowHoverClass`);

@@ -16,7 +16,8 @@ function verify(source) {
     // Re-anchored round 296 (owner filter law: ONE search = the house toolbar over the full roster, "N of M").
     ["active lifecycle scope (default)", /useState<"active" \| "inactive" \| "all">\("active"\)/],
     ["status narrows server-side", /\.\.\.\(status === "all" \? \{\} : \{ status \}\)/],
-    ["house toolbar is the one search", /<DataTable\b(?![^>]*hideToolbar)/],
+    // LEAD 443.181: DataTable -> ParityTable; its toolbar search must not be suppressed.
+    ["house toolbar is the one search", /<ParityTable\b(?![\s\S]*suppressToolbarSearch)/],
     ["forward customer drill", /<EntityLink kind="customer" id=\{row\.id\}/],
     ["reverse route preserved", /navigate\(`\/customers\/\$\{row\.id\}`\)/],
     ["creator round-trip", /fixedCustomerType="broker"[\s\S]*onCreated=\{\(\) => \{[\s\S]*query\.refetch\(\)/],

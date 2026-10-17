@@ -33,16 +33,16 @@ function contains(relativePath, content, checks) {
 read("apps/frontend/src/audit/mobile-responsive/auditor.script.mjs");
 read("apps/frontend/src/audit/mobile-responsive/baseline.json");
 
-const table = read("apps/frontend/src/components/shared/MobileOptimizedTable.tsx");
-contains("apps/frontend/src/components/shared/MobileOptimizedTable.tsx", table, [
-  { pattern: /MobileOptimizedTable/, label: "table component export" },
-  { pattern: /sm:hidden/, label: "mobile card fallback" },
+// LEAD 443.181: MobileOptimizedTable was retired — ParityTable is the app's one table on mobile too
+// (its body scrolls horizontally inside an overflow-x-auto wrapper at 375px).
+const table = read("apps/frontend/src/components/parity/ParityTable.tsx");
+contains("apps/frontend/src/components/parity/ParityTable.tsx", table, [
+  { pattern: /export function ParityTable/, label: "table component export" },
+  { pattern: /overflow-x-auto/, label: "mobile horizontal-scroll fallback" },
 ]);
 
-const swipe = read("apps/frontend/src/components/shared/SwipeActionRow.tsx");
-contains("apps/frontend/src/components/shared/SwipeActionRow.tsx", swipe, [
-  { pattern: /onTouchStart/, label: "swipe gesture handlers" },
-]);
+// LEAD 443.181: SwipeActionRow was only MobileOptimizedTable's swipe-to-act card wrapper; retired with it
+// (ParityTable row actions are plain buttons in the row-actions column, reachable by tap).
 
 const touchBtn = read("apps/driver-pwa/src/components/shared/TouchOptimizedButton.tsx");
 contains("apps/driver-pwa/src/components/shared/TouchOptimizedButton.tsx", touchBtn, [
@@ -52,7 +52,7 @@ contains("apps/driver-pwa/src/components/shared/TouchOptimizedButton.tsx", touch
 const reportPage = read("apps/frontend/src/pages/admin/mobile-audit/MobileAuditReport.tsx");
 contains("apps/frontend/src/pages/admin/mobile-audit/MobileAuditReport.tsx", reportPage, [
   { pattern: /mobile-audit-report/, label: "audit report test id" },
-  { pattern: /MobileOptimizedTable/, label: "audit table wired" },
+  { pattern: /<ParityTable/, label: "audit table wired" },
 ]);
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");

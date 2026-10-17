@@ -8,7 +8,6 @@ const repoRoot = process.cwd();
 const REQUIRED_RESIZABLE_SURFACES = [
   "apps/frontend/src/pages/reports/runners/RunnerTable.tsx",
   "apps/frontend/src/components/shared/ResizableTh.tsx",
-  "apps/frontend/src/components/shared/ResizableTable.tsx",
   "apps/frontend/src/hooks/useColumnWidths.ts",
   "apps/backend/src/users/table-preferences.routes.ts",
 ];

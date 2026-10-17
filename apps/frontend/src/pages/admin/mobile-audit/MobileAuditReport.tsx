@@ -1,5 +1,6 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per static-scan finding; the run time is shown once above the table ("Last run").
 import { PageHeader } from "../../../components/layout/PageHeader";
-import { MobileOptimizedTable } from "../../../components/shared/MobileOptimizedTable";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import latestReport from "../../../audit/mobile-responsive/latest-report.json";
 import "../../../styles/mobile-responsive-tweaks.css";
 import { formatDateTimeUS } from "../../../lib/formatDate";
@@ -54,21 +55,22 @@ export function MobileAuditReport() {
         </dl>
       </section>
 
-      <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 text-xs font-semibold text-gray-800">Flagged issues</h2>
-        <MobileOptimizedTable
-          rows={report.issues}
-          rowKey={(row) => row.id}
-          emptyMessage="No issues flagged — run the auditor in CI to refresh."
-          columns={[
-            { key: "rule", header: "Rule", render: (row) => row.rule },
-            { key: "file", header: "File", render: (row) => row.file },
-            { key: "message", header: "Finding", render: (row) => row.message },
-            { key: "owner", header: "Owner", render: (row) => row.owner_module },
-            { key: "fix", header: "Suggested fix", render: (row) => row.suggested_fix },
-          ]}
-        />
-      </section>
+      {/* LEAD 443.181 — the app's one table. An audit finding is a static-scan line, not a record: no row route. */}
+      <ParityTable<AuditIssue>
+        title="Flagged issues"
+        tableTestId="mobile-audit-issues-table"
+        storageKey="ih35.admin.mobile-audit-issues.v1"
+        rows={report.issues}
+        rowKey={(row) => row.id}
+        emptyText="No issues flagged — run the auditor in CI to refresh."
+        columns={[
+          { key: "rule", label: "Rule" },
+          { key: "file", label: "File" },
+          { key: "message", label: "Finding", allowWrap: true },
+          { key: "owner_module", label: "Owner" },
+          { key: "suggested_fix", label: "Suggested fix", allowWrap: true },
+        ]}
+      />
     </div>
   );
 }

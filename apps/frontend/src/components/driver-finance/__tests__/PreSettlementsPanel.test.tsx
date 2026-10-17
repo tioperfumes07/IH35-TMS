@@ -77,7 +77,7 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
     expect(screen.getByText("No load assigned")).toBeTruthy();
   });
 
-  it("renders the governed columns and sorts through the shared DataTable header", () => {
+  it("renders the governed columns and sorts through the shared ParityTable header", () => {
     const rows = [
       {
         id: "s2",
@@ -108,6 +108,7 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /^Driver$/ }));
     expect(screen.getAllByTestId("pre-settlement-row-reverse")[0]?.textContent).toContain("Alpha Driver");
-    expect(screen.getByRole("columnheader", { name: /^Driver/ })).toHaveAttribute("aria-sort", "ascending");
+    // ParityTable paints the active sort direction as the ▲/▼ glyph on the header (no aria-sort attribute).
+    expect(screen.getByRole("columnheader", { name: /^Driver/ }).textContent).toContain("▲");
   });
 });

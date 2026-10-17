@@ -21,7 +21,6 @@ import {
 import { getSamsaraHealth } from "../api/samsara";
 import { VoidReasonModal } from "../components/accounting/VoidReasonModal";
 import { Button } from "../components/Button";
-import { DataTable } from "../components/DataTable";
 import { ListErrorState } from "../components/ListErrorState";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
@@ -302,6 +301,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     queryFn: () => listDriverTeams(selectedCompanyId!).then((result) => result.teams),
     enabled: Boolean(selectedCompanyId),
   });
+  const teamsErrorState = dataTableErrorState(teamsQuery.error, () => void teamsQuery.refetch());
 
   const teamDetailQuery = useQuery({
     queryKey: ["driver-team", selectedTeamId, selectedCompanyId],
@@ -690,14 +690,21 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
 
       {subnavTab === "roster" && activeTab === "teams" ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Driver teams</h2>
-            <Button size="sm" onClick={() => setTeamCreateOpen(true)}>+ Create Team</Button>
-          </div>
-          <DataTable
+          {teamsErrorState ? (
+            <ListErrorState
+              title="Couldn't load list"
+              status={teamsErrorState.status}
+              message={teamsErrorState.message}
+              onRetry={teamsErrorState.onRetry}
+            />
+          ) : null}
+          {!teamsErrorState ? (
+          <ParityTable
+            title="Driver teams"
+            storageKey="drivers-teams-roster"
+            toolbar={<Button size="sm" onClick={() => setTeamCreateOpen(true)}>+ Create Team</Button>}
             rows={teamsQuery.data ?? []}
             loading={teamsQuery.isLoading}
-            errorState={dataTableErrorState(teamsQuery.error, () => void teamsQuery.refetch())}
             rowKey={(row) => String(row.id)}
             onRowClick={(row) => {
               setSelectedTeamId(String(row.id));
@@ -752,6 +759,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               { key: "is_active", label: "Status", render: (row) => <StatusBadge status={row.is_active ? "Active" : "Inactive"} /> },
             ]}
           />
+          ) : null}
         </div>
       ) : null}
 

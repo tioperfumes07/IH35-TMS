@@ -5,7 +5,8 @@ import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useQuery } from "@tanstack/react-query";
 import { listDotViolationTypes, type DotBasicCategory, type DotViolationTypeRow } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
-import { DataTable } from "../../../components/DataTable";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DotViolationTypeModal } from "./DotViolationTypeModal";
@@ -58,7 +59,7 @@ export function DotViolationTypesListPage() {
   const rows = showInactive ? allRows : allRows.filter((r) => r.is_active !== false);
   const total = query.data?.total ?? 0;
 
-  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
+  // TBL-STANDARD: shared ParityTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
   const columns = [
     { key: "violation_code", label: "Code", sortable: true, render: (row: DotViolationTypeRow) => <span className="text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.violation_code}</span> },
     { key: "display_name", label: "Name", sortable: true },
@@ -88,7 +89,7 @@ export function DotViolationTypesListPage() {
         }
       />
 
-      {/* LST list chrome — single outer frame; filter row is border-b only (no nested card above DataTable). */}
+      {/* LST list chrome — single outer frame; filter row is border-b only (no nested card above ParityTable). */}
       <section
         className="overflow-hidden rounded-sm border border-gray-200 bg-white"
         data-testid="dot-violation-types-list-frame"
@@ -108,26 +109,31 @@ export function DotViolationTypesListPage() {
           Show inactive
         </label>
 
-        {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
+        {/* TBL-STANDARD: shared ParityTable (universal alignment + page-size + sort). Search/Status filters above
             feed `rows`; row-click → edit modal preserved exactly. */}
         <div className="[&>div]:rounded-none [&>div]:border-0">
-          <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">DOT violation types</h2>
-          <DataTable
-            columns={columns}
-            rows={rows}
-            rowKey={(row) => row.id}
-            onRowClick={(row) => {
-              setSelectedRow(row);
-              setModalOpen(true);
-            }}
-            loading={query.isLoading}
-            tableKey="safety-dot-violation-types"
-            errorState={
-              query.isError
-                ? { status: 0, message: "Failed to load DOT violation types.", onRetry: () => { void query.refetch(); } }
-                : undefined
-            }
-          />
+          {query.isError ? (
+            <ListErrorState
+              title="Couldn't load list"
+              status={0}
+              message="Failed to load DOT violation types."
+              onRetry={() => { void query.refetch(); }}
+            />
+          ) : (
+            <ParityTable
+              columns={columns}
+              rows={rows}
+              rowKey={(row) => row.id}
+              onRowClick={(row) => {
+                setSelectedRow(row);
+                setModalOpen(true);
+              }}
+              loading={query.isLoading}
+              storageKey="safety-dot-violation-types"
+              title="DOT violation types"
+              allowAllPageSize
+            />
+          )}
         </div>
       </section>
 

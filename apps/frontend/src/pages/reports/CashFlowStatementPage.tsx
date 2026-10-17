@@ -24,6 +24,7 @@ import { useExportAction } from "../../hooks/useExportAction";
 import { formatUsdCents } from "../../lib/money";
 import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
+import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -150,6 +151,34 @@ export function CashFlowStatementPage() {
       `,
     });
   }
+
+  // LEAD 443.181 — one ParityTable per cash-flow section; each line keeps its AmountLink (amount opens the
+  // account register for the period), the section total moves to the footer.
+  const cashFlowColumns = (sectionKey: string): ParityColumn<AccountingCashFlowLine>[] => [
+    { key: "account_type", label: "Class", render: (line) => formatAccountTypeLabel(line.account_type) },
+    { key: "account_subtype", label: "Subtype", render: (line) => humanizeEnumLabel(line.account_subtype) || "—" },
+    {
+      key: "label",
+      label: "Label",
+      render: (line) => <span className="font-medium text-gray-900">{formatCashFlowCompoundLabel(line.label)}</span>,
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      kind: "money",
+      sortValue: (line) => line.amount,
+      render: (line) => (
+        // ROUND 433.3 — the line is one account, so its amount drills to that account's register
+        // for the same period. AmountLink owns the basis rule (a cash-basis figure gets no drill).
+        <AmountLink
+          filter={line.account_id ? { target: "register", accountId: line.account_id, from: applied.start, to: applied.end, basis: applied.basis } : null}
+          data-testid={`cf-amount-${sectionKey}-${line.account_id ?? line.label}`}
+        >
+          {money(line.amount)}
+        </AmountLink>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -321,52 +350,23 @@ export function CashFlowStatementPage() {
             { key: "investing", title: "Investing activities", lines: investingLines, total: query.data.investing.total },
             { key: "financing", title: "Financing activities", lines: financingLines, total: query.data.financing.total },
           ].map((section) => (
-            <div key={section.key} className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">{section.title}</div>
-              <table className="min-w-full text-left text-xs">
-                <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
-                  <tr>
-                    <th className="px-3 py-2">Class</th>
-                    <th className="px-3 py-2">Subtype</th>
-                    <th className="px-3 py-2">Label</th>
-                    <th className="px-3 py-2 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {section.lines.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-3 py-4 text-gray-500">
-                        No rows
-                      </td>
-                    </tr>
-                  ) : (
-                    section.lines.map((line) => (
-                      <tr key={`${section.key}-${line.account_id ?? line.label}`} className="border-b border-gray-100">
-                        <td className="px-3 py-2">{formatAccountTypeLabel(line.account_type)}</td>
-                        <td className="px-3 py-2">{humanizeEnumLabel(line.account_subtype) || "—"}</td>
-                        <td className="px-3 py-2 font-medium text-gray-900">{formatCashFlowCompoundLabel(line.label)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">
-                          {/* ROUND 433.3 — the line is one account, so its amount drills to that account's register
-                              for the same period. AmountLink owns the basis rule (a cash-basis figure gets no drill). */}
-                          <AmountLink
-                            filter={line.account_id ? { target: "register", accountId: line.account_id, from: applied.start, to: applied.end, basis: applied.basis } : null}
-                            data-testid={`cf-amount-${section.key}-${line.account_id ?? line.label}`}
-                          >
-                            {money(line.amount)}
-                          </AmountLink>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                  <tr className="bg-[#F7F8FA] font-semibold">
-                    <td colSpan={3} className="px-3 py-2 text-right">
-                      Section total
-                    </td>
-                    <td className="px-3 py-2"><MoneyCell cents={section.total} format={money} drill={{ none: "Cash flow section total: cash allocated across the lines above, each of which opens its account" }} /></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <ParityTable
+              key={section.key}
+              title={section.title}
+              rows={section.lines}
+              columns={cashFlowColumns(section.key)}
+              rowKey={(line) => `${section.key}-${line.account_id ?? line.label}`}
+              storageKey={`ih35.reports.cash-flow.${section.key}.v1`}
+              emptyText="No rows"
+              pageSize={ALL_PAGE_SIZE}
+              hidePager
+              suppressToolbarSearch
+              suppressToolbarRange
+              footerCells={{
+                label: "Section total",
+                amount: <MoneyCell cents={section.total} format={money} drill={{ none: "Cash flow section total: cash allocated across the lines above, each of which opens its account" }} />,
+              }}
+            />
           ))}
         </div>
       ) : null}

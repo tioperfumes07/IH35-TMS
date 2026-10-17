@@ -8,6 +8,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { getProgramTracker, type ProgramTracker, type TrackerPhase, type TrackerBlockRow, type Tab } from "../../api/program-tracker";
 
 import { ctDateTime } from "../../lib/businessDate";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 /** UI tabs on Program Tracker (API `Tab` also has `not_counted`, which is not a sub-nav tab). */
 type TrackerTabId = "pending" | "in_progress" | "completed" | "sequence" | "modules";
@@ -47,15 +48,14 @@ function isLegacyGatedStatus(status: string | null | undefined): boolean {
 function TrackerStatusCell({ status, kind }: { status: string; kind: "open" | "completed" }) {
   const gated = isLegacyGatedStatus(status);
   return (
-    <td
-      className="px-3 py-2 text-[#4B5563]"
+    <span
       title={gated ? "Historical GATED tag; no owner approval required" : undefined}
       data-testid={gated ? "tracker-status-legacy-gated" : undefined}
     >
       {status}
       {kind === "completed" ? " · live" : ""}
-      {gated ? <span className="ml-1 text-[11px] uppercase tracking-wide text-[#6B7280]">(actionable)</span> : null}
-    </td>
+      {gated ? <span className="ml-1 uppercase tracking-wide text-[#6B7280]">(actionable)</span> : null}
+    </span>
   );
 }
 
@@ -100,111 +100,138 @@ function LayerChips({ r }: { r: TrackerBlockRow }) {
 
 // `extended` (By-Module drill-down only) adds 4 LIVE-from-registry columns: Wired / Needs design / Missing /
 // Completeness. Top-level Pending/In-Progress/Completed tables stay compact (extended omitted → false).
-function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBlockRow[]; kind: "open" | "completed"; moved: Set<string>; extended?: boolean }) {
-  if (rows.length === 0) return <p className="px-3 py-4 text-xs text-[#6B7280]">None.</p>;
+function BlockTable({
+  rows,
+  kind,
+  moved,
+  extended = false,
+  storageKey,
+  title,
+}: {
+  rows: TrackerBlockRow[];
+  kind: "open" | "completed";
+  moved: Set<string>;
+  extended?: boolean;
+  storageKey: string;
+  title?: string;
+}) {
+  const columns: Array<ParityColumn<TrackerBlockRow>> = [
+    {
+      key: "name",
+      label: "Block",
+      allowWrap: true,
+      render: (r) => (
+        <>
+          {r.name}
+          {r.financial ? <span className="ml-1 rounded-sm bg-[#F7F8FA] px-1 text-[#6B7280]">FIN</span> : null}
+          {r.feature_incomplete ? <span className="ml-1 rounded-sm border border-red-600 px-1 text-red-600">FEATURE INCOMPLETE</span> : null}
+          {r.cross_module.length ? <div className="mt-0.5 text-[#6B7280]">links: {r.cross_module.join(", ")}</div> : null}
+        </>
+      ),
+    },
+    { key: "kind", label: "Kind" },
+    { key: "layers", label: "Layers", sortable: false, render: (r) => <LayerChips r={r} /> },
+    ...(extended
+      ? ([
+          {
+            key: "wired",
+            label: "Wired",
+            render: (r) =>
+              r.wired ? (
+                <span className="font-semibold text-[#4B5563]" title="Linkage declared: financial primitive + operational module + hub table">✓</span>
+              ) : (
+                <span className="font-semibold text-red-600" title={`Undeclared linkage: ${r.missing.filter((m) => m.startsWith("link:")).join(", ") || "—"}`}>✗</span>
+              ),
+          },
+          {
+            key: "needs_design",
+            label: "Needs design",
+            render: (r) => (r.needs_design ? <span className="rounded-sm bg-[#F7F8FA] px-1 text-[#1F2A44]">Needs design</span> : "—"),
+          },
+          {
+            key: "missing",
+            label: "Missing",
+            allowWrap: true,
+            sortValue: (r) => r.missing.join(", "),
+            render: (r) => (r.missing.length ? r.missing.join(", ") : "—"),
+          },
+          {
+            key: "completeness",
+            label: "Completeness",
+            render: (r) => (
+              <div className="flex items-center gap-2">
+                <ProgressBar done={r.completeness} total={100} />
+                <span className="tabular-nums text-[#4B5563]">{r.completeness}%</span>
+              </div>
+            ),
+          },
+        ] satisfies Array<ParityColumn<TrackerBlockRow>>)
+      : []),
+    { key: "status", label: "Status", render: (r) => <TrackerStatusCell status={r.status} kind={kind} /> },
+    { key: "pr", label: "PR", render: (r) => <span className="font-mono">{r.pr ? `#${r.pr}` : "—"}</span> },
+    {
+      key: kind === "completed" ? "completed_at" : "last_changed_at",
+      label: kind === "completed" ? "Completed (deployed)" : "Last change",
+      cellClass: "text-right tabular-nums",
+      render: (r) => (kind === "completed" ? doneStamp(r) : changedStamp(r)),
+    },
+  ];
   return (
-    <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-      <table className="w-full border-collapse text-xs">
-        <thead>
-          <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-[#6B7280]">
-            <th className="px-3 py-2 text-left">Block</th>
-            <th className="px-3 py-2 text-left">Kind</th>
-            <th className="px-3 py-2 text-left">Layers</th>
-            {extended ? <th className="px-3 py-2 text-center">Wired</th> : null}
-            {extended ? <th className="px-3 py-2 text-left">Needs design</th> : null}
-            {extended ? <th className="px-3 py-2 text-left">Missing</th> : null}
-            {extended ? <th className="px-3 py-2 text-left">Completeness</th> : null}
-            <th className="px-3 py-2 text-left">Status</th>
-            <th className="px-3 py-2 text-left">PR</th>
-            <th className="px-3 py-2 text-right">{kind === "completed" ? "Completed (deployed)" : "Last change"}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} className={`border-b border-gray-100 last:border-b-0 align-top ${moved.has(r.id) ? "bg-[#D1FAE5]" : ""}`}>
-              <td className="px-3 py-2 text-[#0F1219]">
-                {r.name}
-                {r.financial ? <span className="ml-1 rounded-sm bg-[#F7F8FA] px-1 text-xs text-[#6B7280]">FIN</span> : null}
-                {r.feature_incomplete ? <span className="ml-1 rounded-sm border border-red-600 px-1 text-xs text-red-600">FEATURE INCOMPLETE</span> : null}
-                {r.cross_module.length ? <div className="mt-0.5 text-xs text-[#6B7280]">links: {r.cross_module.join(", ")}</div> : null}
-              </td>
-              <td className="px-3 py-2 text-[#6B7280]">{r.kind}</td>
-              <td className="px-3 py-2"><LayerChips r={r} /></td>
-              {extended ? (
-                <td className="px-3 py-2 text-center">
-                  {r.wired
-                    ? <span className="font-semibold text-[#4B5563]" title="Linkage declared: financial primitive + operational module + hub table">✓</span>
-                    : <span className="font-semibold text-red-600" title={`Undeclared linkage: ${r.missing.filter((m) => m.startsWith("link:")).join(", ") || "—"}`}>✗</span>}
-                </td>
-              ) : null}
-              {extended ? (
-                <td className="px-3 py-2 text-[#6B7280]">
-                  {r.needs_design ? <span className="rounded-sm bg-[#F7F8FA] px-1 text-[11px] text-[#1F2A44]">Needs design</span> : "—"}
-                </td>
-              ) : null}
-              {extended ? (
-                <td className="px-3 py-2 text-[11px] text-[#6B7280]">{r.missing.length ? r.missing.join(", ") : "—"}</td>
-              ) : null}
-              {extended ? (
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <ProgressBar done={r.completeness} total={100} />
-                    <span className="tabular-nums text-[11px] text-[#4B5563]">{r.completeness}%</span>
-                  </div>
-                </td>
-              ) : null}
-              <TrackerStatusCell status={r.status} kind={kind} />
-              <td className="px-3 py-2 font-mono text-[#6B7280]">{r.pr ? `#${r.pr}` : "—"}</td>
-              <td data-quantity className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-[#6B7280]">{kind === "completed" ? doneStamp(r) : changedStamp(r)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ParityTable<TrackerBlockRow>
+      title={title}
+      storageKey={storageKey}
+      rows={rows}
+      rowKey={(r) => r.id}
+      columns={columns}
+      emptyText="None."
+      allowAllPageSize
+      rowClassName={(r) => (moved.has(r.id) ? "bg-[#D1FAE5]" : "")}
+    />
   );
 }
 
 function CompletedSection({ rows, moved }: { rows: TrackerBlockRow[]; moved: Set<string> }) {
   return (
     <div className="space-y-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Completed &amp; live ({rows.length}) — 100% done, merged + deployed</h2>
-      <BlockTable rows={rows} kind="completed" moved={moved} />
+      <BlockTable
+        title={`Completed & live (${rows.length}) — 100% done, merged + deployed`}
+        storageKey="ih35.program.tracker.completed.v1"
+        rows={rows}
+        kind="completed"
+        moved={moved}
+      />
     </div>
   );
 }
 
 function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
   return (
-    <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-      <table className="w-full border-collapse text-xs">
-        <thead>
-          <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-[#6B7280]">
-            <th className="px-3 py-2 text-left">#</th>
-            <th className="px-3 py-2 text-left">Phase</th>
-            <th className="px-3 py-2 text-right">Total</th>
-            <th className="px-3 py-2 text-right">Pending</th>
-            <th className="px-3 py-2 text-right">In prog</th>
-            <th className="px-3 py-2 text-right">Done+live</th>
-            <th className="px-3 py-2 text-left">Progress</th>
-            <th className="px-3 py-2 text-left">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {phases.map((p) => (
-            <tr key={p.key} className="border-b border-gray-100 last:border-b-0">
-              <td className="px-3 py-2 text-[#6B7280]">{p.n}</td>
-              <td className="px-3 py-2 text-[#0F1219]">{p.label}</td>
-              <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{p.total}</td>
-              <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#6B7280]">{p.pending}</td>
-              <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#6B7280]">{p.in_progress}</td>
-              <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{p.completed}</td>
-              <td className="px-3 py-2"><ProgressBar done={p.completed} total={p.total} /></td>
-              <td className="px-3 py-2"><span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${PILL[p.status].cls}`}>{PILL[p.status].label}</span></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ParityTable<TrackerPhase>
+      title="Build sequence"
+      storageKey="ih35.program.tracker.sequence.v1"
+      rows={phases}
+      rowKey={(p) => p.key}
+      allowAllPageSize
+      columns={[
+        { key: "n", label: "#", kind: "number" },
+        { key: "label", label: "Phase" },
+        { key: "total", label: "Total", kind: "number" },
+        { key: "pending", label: "Pending", kind: "number" },
+        { key: "in_progress", label: "In prog", kind: "number" },
+        { key: "completed", label: "Done+live", kind: "number" },
+        {
+          key: "progress",
+          label: "Progress",
+          sortValue: (p) => (p.total > 0 ? p.completed / p.total : 0),
+          render: (p) => <ProgressBar done={p.completed} total={p.total} />,
+        },
+        {
+          key: "status",
+          label: "Status",
+          render: (p) => <span className={`inline-block rounded-full px-2 py-0.5 font-semibold ${PILL[p.status].cls}`}>{PILL[p.status].label}</span>,
+        },
+      ]}
+    />
   );
 }
 
@@ -221,37 +248,38 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
         <StatCard n={data.modules.length} label="Modules" />
       </div>
       <p className="text-[11px] text-[#6B7280]">Each block counted once, by module (from its file paths); reconciles to the registered total. Computed live from the registry.</p>
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="w-full border-collapse text-xs">
-          <thead>
-            <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-[#6B7280]">
-              <th className="px-3 py-2 text-left">Module</th>
-              <th className="px-3 py-2 text-right">Built</th>
-              <th className="px-3 py-2 text-right">Partial</th>
-              <th className="px-3 py-2 text-right">Not built</th>
-              <th className="px-3 py-2 text-right">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.modules.map((m) => [
-              <tr key={m.module} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => setOpen(open === m.module ? null : m.module)}>
-                <td className="px-3 py-2 text-[#0F1219]">{open === m.module ? "▾ " : "▸ "}{m.module}</td>
-                <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{m.built}</td>
-                <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#6B7280]">{m.partial}</td>
-                <td data-quantity className={`px-3 py-2 text-right tabular-nums ${m.not_built > 0 ? "font-semibold text-red-600" : "text-[#6B7280]"}`}>{m.not_built}</td>
-                <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{m.total}</td>
-              </tr>,
-              open === m.module ? (
-                <tr key={m.module + "-drill"}>
-                  <td colSpan={5} className="bg-gray-50 px-3 py-2">
-                    <BlockTable rows={allRows.filter((r) => (r.module ?? "uncategorized") === m.module)} kind="open" moved={moved} extended />
-                  </td>
-                </tr>
-              ) : null,
-            ])}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<ProgramTracker["modules"][number]>
+        title="By module"
+        storageKey="ih35.program.tracker.modules.v1"
+        rows={data.modules}
+        rowKey={(m) => m.module}
+        allowAllPageSize
+        expandOnRowClick
+        expandMode="single"
+        expandedKeys={open ? [open] : []}
+        onExpandedChange={(keys) => setOpen(keys[keys.length - 1] ?? null)}
+        renderExpanded={(m) => (
+          <BlockTable
+            storageKey="ih35.program.tracker.module-drill.v1"
+            rows={allRows.filter((r) => (r.module ?? "uncategorized") === m.module)}
+            kind="open"
+            moved={moved}
+            extended
+          />
+        )}
+        columns={[
+          { key: "module", label: "Module" },
+          { key: "built", label: "Built", kind: "number" },
+          { key: "partial", label: "Partial", kind: "number" },
+          {
+            key: "not_built",
+            label: "Not built",
+            cellClass: "text-right tabular-nums",
+            render: (m) => <span className={m.not_built > 0 ? "font-semibold text-red-600" : "text-[#6B7280]"}>{m.not_built}</span>,
+          },
+          { key: "total", label: "Total", kind: "number" },
+        ]}
+      />
     </div>
   );
 }
@@ -337,7 +365,7 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
         <CompletedSection rows={data.views.completed} moved={moved} />
       ) : (
         <div className="space-y-6">
-          <BlockTable rows={tab === "pending" ? data.views.pending : data.views.in_progress} kind="open" moved={moved} />
+          <BlockTable storageKey={`ih35.program.tracker.${tab}.v1`} rows={tab === "pending" ? data.views.pending : data.views.in_progress} kind="open" moved={moved} />
           {/* owner request: pending + in-progress tabs pin the completed-and-live list at the bottom */}
           <div className="border-t border-gray-200 pt-4"><CompletedSection rows={data.views.completed} moved={moved} /></div>
         </div>

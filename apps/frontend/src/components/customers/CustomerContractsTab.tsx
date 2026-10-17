@@ -13,7 +13,7 @@ import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { UploadModal } from "../documents/UploadModal";
-import { DataTable } from "../DataTable";
+import { ParityTable } from "../parity/ParityTable";
 import { legalContractsApi } from "../../api/legal-contracts";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
@@ -191,10 +191,13 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
           No contracts on file.{canWrite ? " Upload one above." : ""}
         </div>
       ) : (
-        <DataTable
+        <ParityTable<CustomerContract>
+          title="Contracts"
+          storageKey="customer-contracts-files"
+          tableTestId="customer-contracts-table"
           columns={[
             { key: "contract_type", label: "Type", render: (row: CustomerContract) => CONTRACT_TYPE_LABELS[row.contract_type] },
-            { key: "file_name", label: "File", render: (row: CustomerContract) => row.file_name ?? "—" },
+            { key: "file_name", label: "File", render: (row: CustomerContract) => <EntityLink kind="document" id={row.file_id} label={row.file_name ?? "—"} /> },
             { key: "file_size_bytes", label: "Size", render: (row: CustomerContract) => formatBytes(row.file_size_bytes) },
             { key: "effective_date", label: "Effective", render: (row: CustomerContract) => formatDate(row.effective_date) },
             { key: "expiration_date", label: "Expires", render: (row: CustomerContract) => formatDate(row.expiration_date) },
@@ -204,6 +207,8 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
               ? [{
                   key: "actions",
                   label: "",
+                  sortable: false,
+                  alwaysVisible: true,
                   render: (row: CustomerContract) =>
                     !row.supersedes_id ? (
                       <Button size="sm" variant="secondary" onClick={() => openSupersede(row)}>

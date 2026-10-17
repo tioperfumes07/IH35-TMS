@@ -16,6 +16,7 @@ import { generateExpenseNumber, insertExpenseLoadLink } from "../expense-attribu
 import { nextExpenseDisplayId } from "./display-id.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
+import { readLoadAttribution, reconcileExpenseWithLoad, type ExpenseAttribution } from "./expense-load-attribution.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -23,7 +24,7 @@ type Queryable = {
 
 export class BankLineExpenseError extends Error {
   constructor(
-    readonly code: "category_account_has_no_item" | "category_account_item_ambiguous" | "item_not_usable" | "expense_insert_failed",
+    readonly code: "category_account_has_no_item" | "category_account_item_ambiguous" | "item_not_usable" | "expense_insert_failed" | "load_not_in_company" | "load_attribution_mismatch",
     message: string
   ) {
     super(message);
@@ -94,6 +95,21 @@ export async function createAndPostBankLineExpenseOnClient(
   input: BankLineExpenseInput,
   actor: { userId: string }
 ): Promise<{ expense_id: string; journal_entry_id: string; posting_batch_id: string | null }> {
+  // G6: categorization tags are claims, not a second source of load assignments. Use the same
+  // company-scoped resolver and mismatch policy as Record Expense, before allocating or writing.
+  let dimensions: ExpenseAttribution = {
+    unitId: input.unitId ?? null, driverId: input.driverId ?? null,
+    trailerId: input.trailerId ?? null, nonOwnedTrailerId: null,
+  };
+  if (input.loadId) {
+    const load = await readLoadAttribution(client, input.operatingCompanyId, input.loadId);
+    if (!load) throw new BankLineExpenseError("load_not_in_company", "The load does not belong to this company.");
+    const resolved = reconcileExpenseWithLoad(input, load);
+    if ("mismatch" in resolved) {
+      throw new BankLineExpenseError("load_attribution_mismatch", `Expense ${resolved.mismatch} mismatch with the selected load.`);
+    }
+    dimensions = resolved;
+  }
   // DEGH-06 / 443.113-C — a load-tagged bank-line expense uses the load spine (12225, 12225-1, …),
   // never the generic EXP-YYYY-##### series. Same allocator as expenses.routes / fuel documents.
   let expenseNumber: string;
@@ -115,13 +131,13 @@ export async function createAndPostBankLineExpenseOnClient(
         memo, expense_number, vendor_uuid, payment_account_uuid,
         is_sample_data, is_company_expense, is_reimbursable,
         source_bank_transaction_id, load_id, unit_id, trailer_id, driver_uuid,
-        created_by_user_id, updated_by_user_id
+        created_by_user_id, updated_by_user_id, non_owned_trailer_id
       ) VALUES (
         $1::uuid, 'draft', 'unposted', $2::date, $3::bigint,
         $4, $5, $6::uuid, $7::uuid,
         false, true, false,
         $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12::uuid,
-        $13::uuid, $13::uuid
+        $13::uuid, $13::uuid, $14::uuid
       )
       RETURNING id::text AS id`,
     [
@@ -134,10 +150,11 @@ export async function createAndPostBankLineExpenseOnClient(
       input.paymentAccountId,
       input.sourceBankTransactionId,
       input.loadId ?? null,
-      input.unitId ?? null,
-      input.trailerId ?? null,
-      input.driverId ?? null,
+      dimensions.unitId,
+      dimensions.trailerId,
+      dimensions.driverId,
       actor.userId,
+      dimensions.nonOwnedTrailerId,
     ]
   );
   const expenseId = inserted.rows[0]?.id;
@@ -164,8 +181,8 @@ export async function createAndPostBankLineExpenseOnClient(
     : (
         await client.query<{ label: string | null }>(
           `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label
-             FROM catalogs.accounts a WHERE a.id = $1::uuid`,
-          [input.expenseAccountId]
+             FROM catalogs.accounts a WHERE a.id = $1::uuid AND a.operating_company_id = $2::uuid`,
+          [input.expenseAccountId, input.operatingCompanyId]
         )
       ).rows[0]?.label ?? null;
   const loadExemptionReason = resolveLineLoadExemption({
@@ -198,9 +215,9 @@ export async function createAndPostBankLineExpenseOnClient(
       input.expenseAccountId,
       input.itemId,
       input.loadId ?? null,
-      input.unitId ?? null,
-      input.trailerId ?? null,
-      input.driverId ?? null,
+      dimensions.unitId,
+      dimensions.trailerId,
+      dimensions.driverId,
       loadExemptionReason,
     ]
   );

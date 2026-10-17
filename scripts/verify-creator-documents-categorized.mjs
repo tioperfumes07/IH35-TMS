@@ -15,6 +15,8 @@
  *   L2 the line's account = the item's default account (expense / bill: expense account; invoice: income account) — D2;
  *   L3 expense status = posting_status;
  *   L4 every expense line carries the driver / unit / trailer its header has.
+ *   (443.183 Lead ruling 01:58Z: a CUSTOMER trailer — expenses.non_owned_trailer_id, load trailer_source = 'customer' — is a
+ *   trailer; only a header with neither an owned nor a customer trailer counts as "no trailer".)
  *   LISTED (not a failure): headers with no trailer (the settlement document's trailer number is not in the equipment
  *   master — owner data, never seeded by a coder).
  * --selftest plants each failure.
@@ -89,7 +91,7 @@ async function measure(client) {
            (e.driver_uuid IS NOT NULL AND el.driver_id IS NULL) AS miss_driver,
            (e.unit_id IS NOT NULL AND el.unit_id IS NULL) AS miss_unit,
            (e.trailer_id IS NOT NULL AND el.trailer_id IS NULL) AS miss_trailer,
-           (e.trailer_id IS NULL) AS header_no_trailer, e.document_trailer_number
+           (e.trailer_id IS NULL AND e.non_owned_trailer_id IS NULL) AS header_no_trailer, e.document_trailer_number
       FROM live JOIN accounting.expenses e ON e.operating_company_id = live.co AND e.settlement_no = live.ref AND e.voided_at IS NULL
       JOIN accounting.expense_lines el ON el.expense_id = e.id
       LEFT JOIN catalogs.items i ON i.id = el.item_id
