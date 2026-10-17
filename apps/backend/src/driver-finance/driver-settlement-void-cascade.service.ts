@@ -18,7 +18,36 @@ export type DriverSettlementVoidCascadeResult = {
   /** LEAD 443.193 — nothing_to_reverse only: deductions still linked but collected / voided — never touched. */
   deductions_retained: string[];
   children: Awaited<ReturnType<typeof cascadeVoidChildren>>;
+  /** LEAD 443.198 — true when this call closed the trip of a load_bookended settlement (trip_closed_at was NULL). */
+  trip_closed: boolean;
 };
+
+/**
+ * LEAD 443.198 (ACCT-F347 root cause) — a voided / cancelled load_bookended settlement's trip is CLOSED. ACCT-F347 (#5812)
+ * named the cause — "cancelling does not set trip_closed_at, and the close path never fires for a cancelled settlement" —
+ * but fixed only the two reuse queries and hand-stamped the 4 rows then on prod; no void path ever stamped it, so every
+ * later cancel of a still-open bookend (Creator Edit = void and repost; the 443.167 regroup headers) left a dead
+ * settlement "trip open + live anchor" (measured 2026-10-17: 7 USMCA, guard 3069 red). trip_closed_at is a LIFECYCLE
+ * marker, not a ledger column: gross / deductions / net / status are untouched. Stamped with the void's own time
+ * (voided_at, else reversed_at, else now()) so the data says when the trip ended. Idempotent (only a NULL is written).
+ * Shared by the cascade (both engine void paths) and the bulk reverse route.
+ */
+export async function closeVoidedSettlementTripInClientTx(
+  client: CascadeClient,
+  input: { operatingCompanyId: string; settlementId: string }
+): Promise<boolean> {
+  const res = await client.query<{ id: string }>(
+    `UPDATE driver_finance.driver_settlements
+        SET trip_closed_at = COALESCE(voided_at, reversed_at, now()),
+            updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        AND settlement_model = 'load_bookended'
+        AND trip_closed_at IS NULL
+      RETURNING id::text`,
+    [input.settlementId, input.operatingCompanyId]
+  );
+  return (res.rows ?? []).length > 0;
+}
 
 /**
  * The ONE child cascade of a driver-settlement void — executeVoidCancel('driver_settlement') AND reverseSettlementForVoid
@@ -42,6 +71,8 @@ export type DriverSettlementVoidCascadeResult = {
  *     When it returned nothing_to_reverse, the SAME restore runs here in its never-posted mode: plain pending, unvoided
  *     deductions are released (link cleared, full amount owed again); collected / partial / deferred / voided ones are
  *     retained untouched and named.
+ *  6. trip — LEAD 443.198: a load_bookended settlement's trip_closed_at is stamped (lifecycle marker only), so a dead
+ *     settlement is never "trip open + live anchor" (ACCT-F347 / guard 3069).
  */
 export async function completeDriverSettlementVoidCascadeInClientTx(
   client: CascadeClient,
@@ -114,6 +145,9 @@ export async function completeDriverSettlementVoidCascadeInClientTx(
       ? await restoreSettlementDeductionsInClientTx(client, { operatingCompanyId, settlementId, reason }, { userId }, { glPosted: false })
       : null;
 
+  // 6. trip — LEAD 443.198: a dead settlement is never left "trip open" (see closeVoidedSettlementTripInClientTx).
+  const tripClosed = await closeVoidedSettlementTripInClientTx(client, { operatingCompanyId, settlementId });
+
   return {
     lines_voided: (lines.rows ?? []).map((r) => r.id),
     driver_bills_released: (bills.rows ?? []).map((r) => r.id),
@@ -121,5 +155,6 @@ export async function completeDriverSettlementVoidCascadeInClientTx(
     deductions_released: deductionRelease?.deduction_ids ?? [],
     deductions_retained: deductionRelease?.retained_ids ?? [],
     children,
+    trip_closed: tripClosed,
   };
 }

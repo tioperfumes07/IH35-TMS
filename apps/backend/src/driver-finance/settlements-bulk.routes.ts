@@ -12,6 +12,7 @@ import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 import { unmatchBankTransactionById } from "../accounting/void.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { closeVoidedSettlementTripInClientTx } from "./driver-settlement-void-cascade.service.js";
 
 const emptyPayloadSchema = z.object({}).default({});
 
@@ -95,6 +96,9 @@ async function handleSettlementBulk(
     if (!flipped.rows[0]) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Settlement reverse race lost" };
     }
+    // LEAD 443.198 (ACCT-F347 root cause) — a reversed load_bookended settlement's trip is closed, so it is never left
+    // "trip open + live anchor" (guard 3069). The same helper the shared void cascade runs; lifecycle marker only.
+    const tripClosed = await closeVoidedSettlementTripInClientTx(client as never, { operatingCompanyId, settlementId: id });
 
     if (current.paid_via_bank_txn_id) {
       await unmatchBankTransactionById(client as never, operatingCompanyId, current.paid_via_bank_txn_id, {
@@ -120,6 +124,7 @@ async function handleSettlementBulk(
         after_status: "cancelled",
         gl_reversal_result: reversal.result,
         gl_run_id: reversal.run_id,
+        trip_closed: tripClosed,
         via: "settlements-bulk.routes",
         bulk_call_id: bulkCallId,
       },

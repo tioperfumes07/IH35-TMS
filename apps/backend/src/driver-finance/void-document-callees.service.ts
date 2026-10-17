@@ -192,6 +192,7 @@ export async function reverseSettlementForVoid(
       reimbursements_released: cascade.reimbursements_released,
       deductions_released: cascade.deductions_released,
       deductions_retained: cascade.deductions_retained,
+      trip_closed: cascade.trip_closed,
       via: "voidDocument.reverseSettlementForVoid",
     },
     "warning",
