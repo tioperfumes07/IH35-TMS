@@ -475,6 +475,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         />
       ) : (
         <ParityTable<InternalFineRow>
+          title="Internal fines"
           columns={columns}
           rows={rows}
           rowKey={(row) => String(row.id)}

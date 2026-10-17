@@ -245,6 +245,7 @@ export function EscrowRecordTab() {
       ) : null}
 
       <ParityTable<EscrowRecordRow>
+        title="Driver escrow records"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

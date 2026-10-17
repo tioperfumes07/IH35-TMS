@@ -194,6 +194,7 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
             ) : null}
 
             <ParityTable<DriverSafetyScoreRow>
+              title="Safety score — by period"
               columns={periodColumns}
               rows={periods}
               rowKey={(row) => `${row.period_start}-${row.period_end}`}

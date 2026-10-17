@@ -183,6 +183,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
         />
       ) : (
         <ParityTable<CompanyViolationRow>
+          title="Company violations"
           columns={columns}
           rows={rows}
           rowKey={(row) => String(row.id)}

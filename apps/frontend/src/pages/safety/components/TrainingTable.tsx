@@ -83,6 +83,7 @@ export function TrainingTable({ rows, hidePager = false }: Props) {
           aria-label="Training date to"
         />
       </div>
+      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Training records</h2>
       <DataTable<Row>
         rows={filtered}
         rowKey={(row) => String(row.id)}

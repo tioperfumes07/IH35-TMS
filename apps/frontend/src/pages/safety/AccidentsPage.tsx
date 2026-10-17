@@ -264,6 +264,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         />
       ) : (
       <ParityTable<AccidentRow>
+        title="Accidents"
         columns={columns}
         rows={rows}
         rowKey={(row) => String(row.id)}

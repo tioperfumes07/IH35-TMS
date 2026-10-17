@@ -498,6 +498,7 @@ export function DOTInspectionsTab() {
         />
       ) : (
       <ParityTable<Record<string, unknown>>
+        title="DOT inspections"
         columns={columns}
         rows={query.data?.dot_inspections ?? []}
         rowKey={(row) => String(row.id)}

@@ -88,6 +88,7 @@ export function DriverSchedulerRequestInboxPage({ embedded = false }: { embedded
 
       {!query.isError ? (
       <ParityTable<PendingRequestRow>
+        title="Time-off requests — pending"
         columns={columns}
         rows={rows}
         rowKey={(row) => String(row.id)}

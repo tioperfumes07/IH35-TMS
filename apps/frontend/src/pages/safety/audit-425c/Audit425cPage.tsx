@@ -376,6 +376,7 @@ export default function Audit425cPage() {
         />
       ) : (
         <ParityTable<AuditEventListItem>
+          title="425C audit events"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}

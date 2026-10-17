@@ -277,6 +277,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
         />
       ) : (
         <ParityTable<PermitRow>
+          title="Permits — active"
           columns={permitColumns}
           rows={activePermits}
           rowKey={(row) => String(row.id)}

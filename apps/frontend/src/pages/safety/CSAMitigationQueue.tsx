@@ -269,6 +269,7 @@ export function CSAMitigationQueuePage() {
         />
       ) : (
       <ParityTable<QueueItem>
+        title="CSA mitigation queue"
         columns={columns}
         rows={queue}
         rowKey={(row) => row.id}

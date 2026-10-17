@@ -106,6 +106,7 @@ export function DrugAlcoholTable({ rows, pageSize = 50, hidePager = false }: Pro
         />
       </div>
       <ParityTable<Row>
+        title="Drug & alcohol tests"
         rows={filtered}
         rowKey={(row) => String(row.id)}
         storageKey="safety-drug-alcohol"

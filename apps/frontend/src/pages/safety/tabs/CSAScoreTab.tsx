@@ -179,6 +179,7 @@ export function CSAScoreTab() {
         </p>
       ) : (
         <ParityTable<CsaScoreRow>
+          title="CSA score history"
           columns={historyColumns}
           rows={historyQuery.data?.csa_scores ?? []}
           rowKey={(row) => String(row.id)}

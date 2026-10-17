@@ -277,6 +277,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             />
           ) : (
           <ParityTable<FleetHosDriverRow>
+            title="Hours of service — by driver"
             columns={fleetColumns}
             rows={rows}
             rowKey={(row) => row.driverId}

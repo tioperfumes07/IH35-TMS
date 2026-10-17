@@ -167,6 +167,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
         />
       ) : (
       <ParityTable<SafetyMeetingRow>
+        title="Safety meetings"
         columns={meetingColumns}
         rows={meetings}
         rowKey={(m) => m.id}
