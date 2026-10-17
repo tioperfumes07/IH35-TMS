@@ -80,7 +80,7 @@ export function ComplianceFilingsDueWidget({ operatingCompanyId }: Props) {
                         quarter) -- render it as a muted secondary line, not just the program name. */}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate">{item.program}</span>
-                      {item.detail ? <span className="block truncate text-slate-400">{item.detail}</span> : null}
+                      {item.detail ? <span className="block truncate text-[#6B7280]">{item.detail}</span> : null}
                     </span>
                     <span className="shrink-0 text-[#6B7280]">{item.due_date ? formatDateUS(item.due_date) : "—"}</span>
                   </li>
