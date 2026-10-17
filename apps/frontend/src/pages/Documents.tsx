@@ -6,7 +6,8 @@ import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
-import { DataTable } from "../components/DataTable";
+import { ParityTable } from "../components/parity/ParityTable";
+import { ListErrorState } from "../components/ListErrorState";
 import { PreviewModal } from "../components/documents/PreviewModal";
 import { UploadModal } from "../components/documents/UploadModal";
 import { SettlementRefCell } from "../components/shared/SettlementRefCell";
@@ -108,6 +109,7 @@ export function DocumentsPage() {
     enabled: isOwnerOrAdmin && Boolean(selectedCompanyId),
   });
   const files = filesQuery.data?.files ?? [];
+  const filesErrorState = dataTableErrorState(filesQuery.error, () => void filesQuery.refetch());
   const totalFiles = filesQuery.data?.total ?? 0;
   const libraryTotal = filesQuery.data?.library_total ?? totalFiles;
   const totalPages = Math.max(1, Math.ceil(totalFiles / PAGE_SIZE));
@@ -228,14 +230,23 @@ export function DocumentsPage() {
         searchPlaceholder="Search filename"
       />
 
-      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Document files</h2>
-      <DataTable
+      {filesErrorState ? (
+        <ListErrorState
+          title="Couldn't load list"
+          status={filesErrorState.status}
+          message={filesErrorState.message}
+          onRetry={filesErrorState.onRetry}
+        />
+      ) : (
+      <ParityTable<DocsFile>
+        title="Document files"
+        storageKey="documents-library-files"
         rows={files}
-        hideToolbar
+        suppressToolbarSearch
+        suppressToolbarRange
         rowKey={(row) => row.id}
         loading={filesQuery.isLoading}
-        errorState={dataTableErrorState(filesQuery.error, () => void filesQuery.refetch())}
-        pageSize={50}
+        initialPageSize={50}
         onRowClick={(row) => setSelectedPreviewFile(row)}
         columns={[
           { key: "original_filename", label: "Filename", sortable: true },
@@ -292,6 +303,7 @@ export function DocumentsPage() {
           },
         ]}
       />
+      )}
 
       <div className="flex items-center justify-between text-xs text-gray-600">
         <span>

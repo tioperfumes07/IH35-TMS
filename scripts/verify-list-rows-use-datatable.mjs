@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 /**
  * GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31 Part 2 guard.
- * List rows must use DataTable columns, not middot sentences.
+ * List rows must use shared table columns, not middot sentences.
+ *
+ * LEAD 443.181 (owner 2026-10-16: "all tables built the same way") — both surfaces moved from the retired
+ * components/DataTable onto the ONE shared table, components/parity/ParityTable. Same columns, same
+ * factory, same governed headers; the primitive checks below now point at ParityTable.
  *
  * Checks the shared primitive and both driver-finance column-jam instances.
  */
@@ -24,17 +28,17 @@ export const PRE_SETTLEMENT_HEADERS = ["Period Begin", "Period End", "Driver", "
 
 export function collectFailures({ dataTableExists, settlements, preSettlements, dataTable, duplicateExists }) {
   const failures = [];
-  if (!dataTableExists) failures.push("canonical DataTable primitive missing at apps/frontend/src/components/DataTable.tsx");
-  if (!settlements.includes('from "../../components/DataTable"')) {
-    failures.push("SettlementsPage must import the canonical components/DataTable primitive");
+  if (!dataTableExists) failures.push("canonical ParityTable primitive missing at apps/frontend/src/components/parity/ParityTable.tsx");
+  if (!settlements.includes('from "../../components/parity/ParityTable"')) {
+    failures.push("SettlementsPage must import the canonical components/parity/ParityTable primitive");
   }
-  if (!/function buildOpenDriverBillColumns\([^)]*\): DataTableColumn<OpenDriverBill>\[\]/.test(settlements) ||
+  if (!/function buildOpenDriverBillColumns\([^)]*\): ParityColumn<OpenDriverBill>\[\]/.test(settlements) ||
       !/const columns = useMemo\(\(\) => buildOpenDriverBillColumns\(/.test(settlements) ||
-      !/<DataTable\s+columns=\{columns\}/.test(settlements)) {
-    failures.push("SettlementsPage must build the Open Driver Bills DataTable columns (buildOpenDriverBillColumns) and render them");
+      !/<ParityTable\s+storageKey="[^"]+"\s+columns=\{columns\}/.test(settlements)) {
+    failures.push("SettlementsPage must build the Open Driver Bills ParityTable columns (buildOpenDriverBillColumns) and render them");
   }
-  if (!preSettlements.includes('from "../DataTable"') || !preSettlements.includes("preSettlementColumns")) {
-    failures.push("PreSettlementsPanel must use the canonical components/DataTable column primitive");
+  if (!preSettlements.includes('from "../parity/ParityTable"') || !preSettlements.includes("preSettlementColumns")) {
+    failures.push("PreSettlementsPanel must use the canonical components/parity/ParityTable column primitive");
   }
   for (const header of PRE_SETTLEMENT_HEADERS) {
     if (!preSettlements.includes(`label: "${header}"`)) failures.push(`PreSettlementsPanel missing governed ${header} column`);
@@ -43,24 +47,24 @@ export function collectFailures({ dataTableExists, settlements, preSettlements, 
     failures.push("PreSettlementsPanel must not jam repeated row fields together with middots");
   }
   if (/OpenDriverBillsPanel[\s\S]*?flex flex-wrap items-center gap-1[\s\S]*?·[\s\S]*?Load/.test(settlements)) {
-    failures.push("OpenDriverBillsPanel must NOT use the old column-jam flex layout (Driver · Load · Bill in one cell) — use DataTable");
+    failures.push("OpenDriverBillsPanel must NOT use the old column-jam flex layout (Driver · Load · Bill in one cell) — use ParityTable");
   }
-  if (!dataTable.includes("<thead")) failures.push("DataTable primitive must use <thead> convention");
+  if (!dataTable.includes("<thead")) failures.push("ParityTable primitive must use <thead> convention");
   // GLB-02 (owner 2026-09-03): "grey-on-near-white did not differentiate" -- superseded to
   // ParityTable's own locked navy/white thead (docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md).
   // One token, everywhere: colors.tableHeaderBg/tableHeaderText, not a literal Tailwind class.
   if (!dataTable.includes("colors.tableHeaderBg") || !dataTable.includes("colors.tableHeaderText")) {
-    failures.push("DataTable primitive must use the canonical colors.tableHeaderBg/tableHeaderText thead standard (GLB-02, supersedes bg-gray-50)");
+    failures.push("ParityTable primitive must use the canonical colors.tableHeaderBg/tableHeaderText thead standard (GLB-02, supersedes bg-gray-50)");
   }
-  if (!dataTable.includes("aria-sort") || !dataTable.includes("column.sortValue")) {
-    failures.push("DataTable sortable columns must render an operable, accessible sort control");
+  if (!dataTable.includes("onClick={() => toggleSort(key)}") || !dataTable.includes("column.sortValue")) {
+    failures.push("ParityTable sortable columns must render an operable sort control (header <button> + column.sortValue)");
   }
-  if (duplicateExists) failures.push("duplicate shared/DataTable primitive must not exist; consolidate on components/DataTable");
+  if (duplicateExists) failures.push("duplicate shared/DataTable primitive must not exist; consolidate on components/parity/ParityTable");
   return failures;
 }
 
 const exists = (p) => { try { readFileSync(p, "utf8"); return true; } catch { return false; } };
-const dataTablePath = path.join(root, "apps/frontend/src/components/DataTable.tsx");
+const dataTablePath = path.join(root, "apps/frontend/src/components/parity/ParityTable.tsx");
 const SOURCES = {
   dataTableExists: exists(dataTablePath),
   settlements: readFileSync(path.join(root, "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx"), "utf8"),
@@ -72,11 +76,11 @@ const SOURCES = {
 if (process.argv.includes("--selftest")) {
   const plants = [
     ["open driver bills columns removed", { settlements: SOURCES.settlements.replaceAll("buildOpenDriverBillColumns", "REMOVED_COLUMNS") }],
-    ["open driver bills table not rendering the columns", { settlements: SOURCES.settlements.replace(/<DataTable\s+columns=\{columns\}/, "<DataTable columns={[]}") }],
+    ["open driver bills table not rendering the columns", { settlements: SOURCES.settlements.replace(/(<ParityTable\s+storageKey="[^"]+"\s+)columns=\{columns\}/, "$1columns={[]}") }],
     ["pre-settlement Settlement/Tour column dropped", { preSettlements: SOURCES.preSettlements.replace('label: "Settlement/Tour"', 'label: "Ref"') }],
     ["pre-settlement period end dropped", { preSettlements: SOURCES.preSettlements.replace('label: "Period End"', 'label: "End"') }],
     ["middot column jam", { preSettlements: SOURCES.preSettlements + '\n<span className="text-gray-400">·</span>' }],
-    ["sort control unaccessible", { dataTable: SOURCES.dataTable.replaceAll("aria-sort", "aria-disabled") }],
+    ["sort control inoperable", { dataTable: SOURCES.dataTable.replaceAll("onClick={() => toggleSort(key)}", "onClick={undefined}") }],
     ["duplicate primitive", { duplicateExists: true }],
   ];
   const escaped = plants.filter(([, patch]) => collectFailures({ ...SOURCES, ...patch }).length === 0).map(([n]) => n);
@@ -97,5 +101,5 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("verify-list-rows-use-datatable: OK — OpenDriverBillsPanel uses DataTable columns (not middot column-jam)");
+console.log("verify-list-rows-use-datatable: OK — OpenDriverBillsPanel uses ParityTable columns (not middot column-jam)");
 process.exit(0);

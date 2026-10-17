@@ -20,8 +20,9 @@
  *      unitsWithoutLoadQuery.isError` must gate a ListErrorState render with a real onRetry.
  *   2. DispatchBoard.tsx's Assignment view: the <UnitsWithoutLoadTable> call must pass
  *      errorState={dataTableErrorState(unitsWithoutLoadQuery.error, ...)}.
- *   3. UnitsWithoutLoadTable.tsx must forward that errorState prop into <DataTable
- *      errorState={errorState} ...> — DataTable already renders a real error state when given one.
+ *   3. UnitsWithoutLoadTable.tsx must render that errorState prop as a ListErrorState (with the
+ *      caller's onRetry) in place of its <ParityTable> — LEAD 443.181 moved the table off DataTable,
+ *      and ParityTable has no errorState slot, so the error branch lives in the component itself.
  *
  * Run:  node scripts/verify-dispatch-board-unassigned-units-error-state.mjs [--selftest]
  */
@@ -42,7 +43,7 @@ const SECTION_RE =
   /section\.key === "awaiting" && unitsWithoutLoadQuery\.isError[\s\S]{0,400}<ListErrorState[\s\S]{0,700}onRetry=\{\(\) => void unitsWithoutLoadQuery\.refetch\(\)\}/;
 const ASSIGNMENT_RE =
   /<UnitsWithoutLoadTable[\s\S]{0,300}errorState=\{dataTableErrorState\(unitsWithoutLoadQuery\.error/;
-const FORWARD_RE = /<DataTable[\s\S]{0,200}errorState=\{errorState\}/;
+const FORWARD_RE = /\{errorState \? \([\s\S]{0,80}<ListErrorState[\s\S]{0,200}onRetry=\{errorState\.onRetry\}[\s\S]{0,80}\) : \([\s\S]{0,40}<ParityTable/;
 // Re-anchored 2026-10-02 (owner design law: overview panels are one OverviewTable, whose ladder is loading -> ERROR with
 // Retry (query.refetch) -> empty). The unassigned panel must hand unitsWithoutLoadQ to it with its own error copy.
 const OVERVIEW_RE = /query=\{unitsWithoutLoadQ\}\s*errorMessage="Couldn't load unassigned units\."[\s\S]*function OverviewTable|function OverviewTable[\s\S]*query\.isError \?[\s\S]{0,300}query\.refetch\(\)[\s\S]{0,300}rows\.length === 0[\s\S]*query=\{unitsWithoutLoadQ\}\s*errorMessage="Couldn't load unassigned units\."/;
@@ -68,7 +69,7 @@ export function checkUnassignedUnitsErrorState(boardSrc, tableSrc, overviewSrc) 
 
   if (!FORWARD_RE.test(tableSrc)) {
     problems.push(
-      "UnitsWithoutLoadTable.tsx does not forward its errorState prop into <DataTable errorState={errorState} ...> — even if the caller passes one, it would never reach the rendered table"
+      "UnitsWithoutLoadTable.tsx does not render its errorState prop as a retryable ListErrorState in place of the <ParityTable> — even if the caller passes one, it would never reach the screen"
     );
   }
 
