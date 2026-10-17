@@ -30,7 +30,17 @@ if (!fs.existsSync(servicePath)) {
   if (!/FROM accounting\.bills[\s\S]*operating_company_id = \$2::uuid/.test(source)) {
     failures.push("apply.service bill query must filter by operating_company_id");
   }
-  if (!/INSERT INTO accounting\.payment_applications/.test(source)) {
+  // 443.182 C step 2 — apply.service persists through the one payment_applications writer in the payments engine
+  // (payments.routes.ts insertPaymentApplicationRowInClientTx), for both targets, with the request's company; the writer's
+  // INSERT must bind that company as the row's operating_company_id.
+  const enginePath = path.join(repoRoot, "apps/backend/src/accounting/payments.routes.ts");
+  const engine = fs.existsSync(enginePath) ? fs.readFileSync(enginePath, "utf8") : "";
+  const viaEngine =
+    /insertPaymentApplicationRowInClientTx\([\s\S]{0,200}operating_company_id: operatingCompanyId[\s\S]{0,120}target_kind: "invoice"/.test(source) &&
+    /insertPaymentApplicationRowInClientTx\([\s\S]{0,200}operating_company_id: operatingCompanyId[\s\S]{0,120}target_kind: "bill"/.test(source) &&
+    /INSERT INTO accounting\.payment_applications \(\s*operating_company_id,[\s\S]{0,400}VALUES \(\$1::uuid/.test(engine) &&
+    /\[row\.operating_company_id, row\.payment_id/.test(engine);
+  if (!/INSERT INTO accounting\.payment_applications/.test(source) && !viaEngine) {
     failures.push("apply.service must persist applications into accounting.payment_applications");
   }
 }

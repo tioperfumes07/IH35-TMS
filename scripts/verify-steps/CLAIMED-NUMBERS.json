@@ -16662,5 +16662,25 @@
     "claimed_at": "2026-10-17",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.186: verify-expense-line-writers-complete (WO line account from its item; lumper split line carries its item; seeded/Creator line carries the load's driver + unit)"
+  },
+  "18553": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.184: verify-lumper-advance-posts-at-disbursement (G15: every disburse path posts the lumper as the load's expense; no HOLD)"
+  },
+  "18557": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.184: verify-geofence-evidence-keeps-real-stamps (G11: fence arrival never overwrites the real departure; replace-stops geocodes before bind; only the final delivery delivers)"
+  },
+  "18561": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.184: verify-every-bill-writer-stamps-source (bill provenance: every bill writer stamps source; WO bills carry linked_work_order_uuid)"
+  },
+  "18565": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.184: verify-unwired-guards-shrink-only (guards authored but never run by CI: count shrink-only)"
   }
 }

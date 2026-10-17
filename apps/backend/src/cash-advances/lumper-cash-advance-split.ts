@@ -5,6 +5,8 @@ import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.ser
 import { EXPENSE_SQL_CURRENT_DATE, reserveExpenseNumber, writeExpenseDocumentInClientTx } from "../accounting/expense-writer.service.js";
 import { logger } from "../observability/structured-logger.js";
 import { insertBillPaymentRowInClientTx, postBillPaymentDocumentInClientTx } from "../accounting/bills.service.js";
+import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
+import { LUMPER_EXPENSE_ITEM_NAME } from "./lumper-item.js";
 
 /**
  * Lumper Lifecycle STEP 3b — cash-advance disburse SPLIT engine.
@@ -128,7 +130,7 @@ export async function disburseCashAdvanceSplit(
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
       // 1. Lock the advance + read its total (driver_advances.amount is numeric dollars).
       const adv = await client.query(
-        `SELECT amount::text AS amount FROM driver_finance.driver_advances
+        `SELECT amount::text AS amount, driver_id::text AS driver_id FROM driver_finance.driver_advances
          WHERE operating_company_id = $1::uuid AND id = $2::uuid FOR UPDATE`,
         [companyId, input.advance_id],
       );
@@ -211,6 +213,21 @@ export async function disburseCashAdvanceSplit(
             throw new DisburseSplitFailure(409, "lumper_expense_account_missing", "the 'reimbursement_expense' role (lumper expense) is not bound for this entity — bind it on the CoA Roles page");
           }
           const lumperAccountId = String(lumperRoleAccount);
+          // LEAD 443.186 — the lumper line names its item (CC-2 harness: split lines had no item_id) — the same
+          // "Warehouse Lumper Expense" item the sibling writer (lumper-advance-expense.service.ts) names; exactly one.
+          const lumperItem = (await client.query(
+            `SELECT id::text FROM catalogs.items
+              WHERE operating_company_id = $1::uuid AND item_name = $2 AND deactivated_at IS NULL AND default_expense_account_id IS NOT NULL LIMIT 2`,
+            [companyId, LUMPER_EXPENSE_ITEM_NAME],
+          )).rows as Array<{ id: string }>;
+          if (lumperItem.length !== 1) {
+            throw new DisburseSplitFailure(409, "lumper_item_missing", `this company needs exactly one active "${LUMPER_EXPENSE_ITEM_NAME}" item with an expense account (found ${lumperItem.length})`);
+          }
+          // LEAD 443.186 — the expense names the advance's driver and the load's unit (one unit rule: same entity).
+          const legUnit = (await client.query(
+            `SELECT ${sameEntityLoadUnitSql("$1::uuid", "$2::uuid")}::text AS unit_id`,
+            [leg.load_id, companyId],
+          )).rows[0] as { unit_id: string | null } | undefined;
 
           // ACCT-F353 — derive from the LOAD the lumper fee is tied to (mdata.loads.is_sample_data).
           const loadSample = await client.query<{ is_sample_data: boolean | null }>(
@@ -236,6 +253,8 @@ export async function disburseCashAdvanceSplit(
               transaction_date: EXPENSE_SQL_CURRENT_DATE,
               total_amount_cents: leg.amount_cents,
               load_id: leg.load_id,
+              driver_uuid: (adv.rows[0] as { driver_id: string | null }).driver_id ?? null,
+              unit_id: legUnit?.unit_id ?? null,
               is_sample_data: loadSample.rows[0]?.is_sample_data === true,
               created_by_user_id: actorUserUuid,
             },
@@ -247,6 +266,11 @@ export async function disburseCashAdvanceSplit(
                 amount: leg.amount_cents / 100,
                 description: "Lumper fee (cash-advance split)",
                 expense_account_uuid: lumperAccountId,
+                // LEAD 443.186 (CC-3 #26884) — the lumper line names its item, qty 1 @ the amount.
+                item_id: lumperItem[0]!.id,
+                quantity: 1,
+                rate_cents: leg.amount_cents,
+                unit_of_measure: "each",
                 load_id: leg.load_id,
                 load_required: true,
                 line_category: "lumper",
