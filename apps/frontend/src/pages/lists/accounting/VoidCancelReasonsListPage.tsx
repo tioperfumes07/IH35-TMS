@@ -13,7 +13,8 @@ import {
   type VoidCancelReason,
 } from "../../../api/catalogs";
 import { Button } from "../../../components/Button";
-import { DataTable } from "../../../components/DataTable";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -121,7 +122,7 @@ export function VoidCancelReasonsListPage() {
   });
 
   const allRows = listQuery.data?.reasons ?? [];
-  // Round 296 filter law: the whole catalog is loaded; Show narrows by is_active and the house toolbar (DataTable's
+  // Round 296 filter law: the whole catalog is loaded; Show narrows by is_active and the house toolbar (ParityTable's
   // UniversalListToolbar) is the ONE search, over every row, with "N of M".
   const rows = useMemo(
     () => allRows.filter((row) => status === "all" || (status === "active" ? row.is_active : !row.is_active)),
@@ -135,7 +136,7 @@ export function VoidCancelReasonsListPage() {
     { key: "reason_code", label: "Code", sortable: true, render: (row: VoidCancelReason) => <span className="font-semibold text-[#1F2A44]">{row.reason_code}</span> },
     { key: "reason_label", label: "Label", sortable: true, render: (row: VoidCancelReason) => <span className="text-[#1F2A44]">{row.reason_label}</span> },
     { key: "requires_note", label: "Note Required", sortable: true, render: (row: VoidCancelReason) => <span className="text-[#1F2A44]">{row.requires_note ? "Yes" : "No"}</span> },
-    { key: "sort_order", label: "Order", sortable: true, numeric: true, render: (row: VoidCancelReason) => <span className="text-[#1F2A44]">{row.sort_order}</span> },
+    { key: "sort_order", label: "Order", sortable: true, kind: "number" as const, render: (row: VoidCancelReason) => <span className="text-[#1F2A44]">{row.sort_order}</span> },
     { key: "is_active", label: "Status", sortable: true, render: (row: VoidCancelReason) => <span className={statusPill(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span> },
   ];
 
@@ -179,23 +180,28 @@ export function VoidCancelReasonsListPage() {
         </label>
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        onRowClick={(row) => {
-          setConflictError(null);
-          setActiveRow(row);
-          setModalMode("edit");
-        }}
-        loading={listQuery.isLoading}
-        tableKey="void-cancel-reasons"
-        errorState={
-          listQuery.isError
-            ? { status: 0, message: "Failed to load void/cancel reasons.", onRetry: () => { void listQuery.refetch(); } }
-            : undefined
-        }
-      />
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load list"
+          status={0}
+          message="Failed to load void/cancel reasons."
+          onRetry={() => { void listQuery.refetch(); }}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          onRowClick={(row) => {
+            setConflictError(null);
+            setActiveRow(row);
+            setModalMode("edit");
+          }}
+          loading={listQuery.isLoading}
+          storageKey="void-cancel-reasons"
+          allowAllPageSize
+        />
+      )}
 
 
       <VoidCancelReasonModal

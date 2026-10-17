@@ -4,7 +4,8 @@ import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQ
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listAllCustomers, type Customer } from "../../../api/mdata";
-import { DataTable } from "../../../components/DataTable";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
@@ -29,7 +30,7 @@ export function BrokersListPage() {
 
   const query = useQuery({
     // Round 296: every broker of the chosen status (customer_type + status narrow server-side; listAllCustomers reads
-    // every page to the total), then the house toolbar (DataTable's UniversalListToolbar) is the one search with
+    // every page to the total), then the house toolbar (ParityTable's UniversalListToolbar) is the one search with
     // "N of M". The page search + "Show voided" checkbox are gone (two searches, double status filter).
     queryKey: ["names", "brokers", companyId, status],
     queryFn: () =>
@@ -44,7 +45,7 @@ export function BrokersListPage() {
 
   const rows = query.data?.customers ?? [];
 
-  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
+  // TBL-STANDARD: shared ParityTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
   const columns = [
     { key: "name", label: "Name", sortable: true, render: (row: Customer) => {
       const label = entityLabel(row.name, row.id, "Customer");
@@ -102,22 +103,27 @@ export function BrokersListPage() {
         </label>
       </div>
 
-      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search filter above feeds
+      {/* TBL-STANDARD: shared ParityTable (universal alignment + page-size + sort). Search filter above feeds
           `rows`; row-click → customer record preserved exactly. */}
-      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}</h2>
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        onRowClick={(row) => navigate(`/customers/${row.id}`)}
-        loading={query.isLoading}
-        tableKey="names-brokers"
-        errorState={
-          query.isError
-            ? { status: 0, message: "Failed to load brokers.", onRetry: () => { void query.refetch(); } }
-            : undefined
-        }
-      />
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load list"
+          status={0}
+          message="Failed to load brokers."
+          onRetry={() => { void query.refetch(); }}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          onRowClick={(row) => navigate(`/customers/${row.id}`)}
+          loading={query.isLoading}
+          storageKey="names-brokers"
+          title={status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}
+          allowAllPageSize
+        />
+      )}
 
 
       {createOpen ? (
