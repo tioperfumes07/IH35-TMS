@@ -16617,5 +16617,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-16",
     "purpose": "verify-undone-pairs-and-voided-advances-hidden"
+  },
+  "18533": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.181: verify-one-table-component (raw <table> / <DataTable> in app pages = named allowlist only, shrink-only; every list/report table is ParityTable)"
   }
 }
