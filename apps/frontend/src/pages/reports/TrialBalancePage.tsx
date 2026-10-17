@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
+import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -126,16 +128,76 @@ export function TrialBalancePage() {
     return output;
   }, [query.data?.rows, sortDir, sortKey, reportSearch, applied.basis]);
 
-  function toggleSort(next: SortKey) {
-    if (sortKey === next) {
-      setSortDir((value) => (value === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(next);
-    setSortDir(next === "account_code" || next === "account_name" || next === "account_type" ? "asc" : "desc");
-  }
-
   const summary = query.data?.summary;
+
+  // LEAD 443.181 — the account name + every amount keep their register AmountLink (the row opens the account
+  // ledger). LST-F405 — canDrill already excludes SYNTHETIC_ACCOUNT_IDS, so the synthetic cash-basis AR/AP rows
+  // stay plain text instead of linking to an id that is not a real account.
+  const tbColumns = useMemo<ParityColumn<AccountingTrialBalanceRow>[]>(() => {
+    const canDrill = (row: AccountingTrialBalanceRow) => row.account_id && !SYNTHETIC_ACCOUNT_IDS.has(row.account_id);
+    const cols: ParityColumn<AccountingTrialBalanceRow>[] = [];
+    if (showCodes) {
+      cols.push({ key: "account_code", label: "Account #", render: (row) => <span className="font-medium text-gray-900">{row.account_code || "—"}</span> });
+    }
+    cols.push(
+      {
+        key: "account_name",
+        label: "Account",
+        render: (row) => (
+          <AmountLink
+            filter={tbFilter(canDrill(row), row.account_id, applied)}
+            className="text-[#1F2A44] underline-offset-2 hover:underline"
+            data-testid={`tb-name-${row.account_id}`}
+          >
+            {row.account_name || "—"}
+          </AmountLink>
+        ),
+      },
+      { key: "account_type", label: "Type", render: (row) => formatAccountTypeLabel(row.account_type) },
+      {
+        key: "total_debits",
+        label: "Debits",
+        kind: "money",
+        render: (row) => (
+          <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-debits-${row.account_id}`}>
+            {money(row.total_debits)}
+          </AmountLink>
+        ),
+      },
+      {
+        key: "total_credits",
+        label: "Credits",
+        kind: "money",
+        render: (row) => (
+          <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-credits-${row.account_id}`}>
+            {money(row.total_credits)}
+          </AmountLink>
+        ),
+      },
+      {
+        key: "net_balance",
+        label: "Net",
+        kind: "money",
+        render: (row) => (
+          <span className={row.net_balance < 0 ? "text-rose-700" : "text-[#0F1219]"}>
+            <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-net-${row.account_id}`}>
+              {money(row.net_balance)}
+            </AmountLink>
+          </span>
+        ),
+      },
+    );
+    return cols;
+  }, [showCodes, applied]);
+
+  // The grand totals are the server summary over every posted account row, so they drill to the ledger lines
+  // of exactly those accounts (same shape as the P&L / Balance Sheet section totals). A row with no account id
+  // means no ledger list sums to it, so the total stays plain. AmountLink owns the basis rule.
+  const grandTotalLedger = useMemo<AmountFilter | null>(() => {
+    const serverRows = query.data?.rows ?? [];
+    if (!serverRows.length || serverRows.some((r) => !r.account_id || SYNTHETIC_ACCOUNT_IDS.has(r.account_id))) return null;
+    return { target: "ledger", accountIds: serverRows.map((r) => String(r.account_id)), from: applied.start, to: applied.end, basis: applied.basis };
+  }, [query.data?.rows, applied]);
 
   function printLetter() {
     if (!query.data) return;
@@ -296,87 +358,36 @@ export function TrialBalancePage() {
         </div>
       ) : null}
 
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
-            <tr>
-              {showCodes ? (
-                <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_code")}>
-                  Account #
-                </th>
-              ) : null}
-              <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_name")}>
-                Account
-              </th>
-              <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_type")}>
-                Type
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("total_debits")}>
-                Debits
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("total_credits")}>
-                Credits
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("net_balance")}>
-                Net
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {query.isLoading ? (
-              <tr>
-                <td colSpan={showCodes ? 6 : 5} className="px-3 py-4 text-gray-500">
-                  Loading…
-                </td>
-              </tr>
-            ) : null}
-            {!query.isLoading && rows.length === 0 ? (
-              <tr>
-                <td colSpan={showCodes ? 6 : 5} className="px-3 py-4 text-gray-500">
-                  No rows
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((row) => {
-              const canDrill = row.account_id && !SYNTHETIC_ACCOUNT_IDS.has(row.account_id);
-              return (
-                <tr key={row.account_id} className="border-b border-gray-100">
-                  {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{row.account_code || "—"}</td> : null}
-                  <td className="px-3 py-2">
-                    <AmountLink
-                      filter={tbFilter(canDrill, row.account_id, applied)}
-                      className="text-[#1F2A44] underline-offset-2 hover:underline"
-                      data-testid={`tb-name-${row.account_id}`}
-                    >
-                      {row.account_name || "—"}
-                    </AmountLink>
-                  </td>
-                  <td className="px-3 py-2">{formatAccountTypeLabel(row.account_type)}</td>
-                  {/* LST-F405 — the account NAME drilled, the AMOUNTS did not. Reuses the page's own
-                      canDrill, which already excludes SYNTHETIC_ACCOUNT_IDS, so the synthetic
-                      cash-basis AR/AP rows stay plain text instead of linking to an id that is not
-                      a real account. The filter behind each figure IS its drill target. */}
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-debits-${row.account_id}`}>
-                      {money(row.total_debits)}
-                    </AmountLink>
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-credits-${row.account_id}`}>
-                      {money(row.total_credits)}
-                    </AmountLink>
-                  </td>
-                  <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-[#0F1219]"} tabular-nums`}>
-                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-net-${row.account_id}`}>
-                      {money(row.net_balance)}
-                    </AmountLink>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={rows}
+        columns={tbColumns}
+        rowKey={(row) => row.account_id}
+        loading={query.isLoading}
+        storageKey="ih35.reports.trial-balance.accounts.v1"
+        emptyText="No rows"
+        // LEAD 443.181 — ParityTable owns the header clicks; the page keeps the sorted order (default
+        // account_code asc, same comparator as before) so the printed letter follows the screen.
+        sortKey={sortKey}
+        sortDirection={sortDir}
+        onSortChange={(key, direction) => {
+          setSortKey(key as SortKey);
+          setSortDir(direction);
+        }}
+        sortMode="external"
+        pageSize={ALL_PAGE_SIZE}
+        hidePager
+        suppressToolbarSearch
+        suppressToolbarRange
+        footerCells={
+          summary
+            ? {
+                account_name: "Grand total",
+                total_debits: <MoneyCell cents={summary.grand_total_debits} format={money} drill={{ amount: grandTotalLedger }} />,
+                total_credits: <MoneyCell cents={summary.grand_total_credits} format={money} drill={{ amount: grandTotalLedger }} />,
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }
