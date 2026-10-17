@@ -13,6 +13,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 import { buildListSearchClause, billListSearchFields, billPaymentListSearchFields } from "../lib/list-search/build-list-search.js";
 import { postBillGlIfEnabled } from "./bill-gl.service.js";
 import {
+  postSourceTransaction,
   postSourceTransactionInClientTx,
   reversePostedSourceTransactionInClientTx,
 } from "./posting-engine.service.js";
@@ -2611,6 +2612,127 @@ export async function insertBillHeaderOnClient<R = Record<string, unknown>>(
   const conflict = opts.onConflict ? ` ${BILL_ON_CONFLICT[opts.onConflict]}` : "";
   const sql = `INSERT INTO accounting.bills (${names.join(", ")}) VALUES (${exprs.join(", ")})${conflict} RETURNING ${returning}`;
   return (await client.query(sql, values)) as { rows: R[]; rowCount: number | null };
+}
+
+/**
+ * LEAD 443.182 C step 2 (Lead 03:05Z — owner 443.160 "one form engine + one writer per document type") — THE BILL
+ * ENGINE. A bill's header, its lines, its number and its journal entry are written ONLY here. Callers hand the engine
+ * the document (header columns, lines, number) and ask it to post; they no longer issue any of those statements
+ * themselves (18481 fails a bill_lines INSERT, a bill-number stamp or a bill JE post anywhere else). Each stage issues
+ * exactly the statement its former caller issued (bound values with the caller's casts, fixed literals, fixed
+ * ON CONFLICT / RETURNING), so behaviour is unchanged — proven per caller by the before/after JE-shape diff.
+ */
+const BILL_LINE_ON_CONFLICT = { line_sequence_do_nothing: "ON CONFLICT (bill_id, line_sequence) DO NOTHING" } as const;
+const BILL_LINE_RETURNING = ["id"] as const;
+/** One accounting.bill_lines row — the one INSERT INTO accounting.bill_lines outside createBillRowInClientTx's own lines. */
+export async function insertBillLineOnClient<R = Record<string, unknown>>(
+  client: BillQueryable,
+  columns: ReadonlyArray<readonly [string, BillColumnValue]>,
+  opts: { returning?: (typeof BILL_LINE_RETURNING)[number]; onConflict?: keyof typeof BILL_LINE_ON_CONFLICT } = {},
+): Promise<{ rows: R[]; rowCount: number | null }> {
+  if (!columns.length) throw new Error("bill_line_insert_no_columns");
+  const names: string[] = [];
+  const exprs: string[] = [];
+  const values: unknown[] = [];
+  for (const [name, v] of columns) {
+    if (!/^[a-z_][a-z0-9_]*$/.test(name) || names.includes(name)) throw new Error(`bill_line_insert_bad_column:${name}`);
+    names.push(name);
+    if ("sql" in v) {
+      if (!(BILL_COLUMN_SQL as readonly string[]).includes(v.sql)) throw new Error(`bill_line_insert_bad_sql:${v.sql}`);
+      exprs.push(v.sql);
+    } else {
+      values.push(v.value);
+      exprs.push(`$${values.length}${v.cast ? `::${v.cast}` : ""}`);
+    }
+  }
+  if (opts.returning && !(BILL_LINE_RETURNING as readonly string[]).includes(opts.returning)) {
+    throw new Error(`bill_line_insert_bad_returning:${opts.returning}`);
+  }
+  const conflict = opts.onConflict ? ` ${BILL_LINE_ON_CONFLICT[opts.onConflict]}` : "";
+  const returning = opts.returning ? ` RETURNING ${opts.returning}` : "";
+  const sql = `INSERT INTO accounting.bill_lines (${names.join(", ")}) VALUES (${exprs.join(", ")})${conflict}${returning}`;
+  return (await client.query(sql, values)) as { rows: R[]; rowCount: number | null };
+}
+
+/** The bill's own number (bill_number) — set only here. The shapes are the exact statements the former callers ran. */
+export type BillNumberStamp =
+  | { kind: "number"; billId: string; billNumber: string }
+  | { kind: "number_and_memo_in_company"; billId: string; operatingCompanyId: string; billNumber: string; memo: unknown };
+export async function stampBillNumberOnClient(client: BillQueryable, stamp: BillNumberStamp): Promise<void> {
+  if (stamp.kind === "number") {
+    await client.query(`UPDATE accounting.bills SET bill_number = $2, updated_at = now() WHERE id = $1`, [stamp.billId, stamp.billNumber]);
+    return;
+  }
+  await client.query(
+    `UPDATE accounting.bills
+       SET bill_number = $3, memo = $4, updated_at = now()
+       WHERE id = $1 AND operating_company_id = $2::uuid`,
+    [stamp.billId, stamp.operatingCompanyId, stamp.billNumber, stamp.memo],
+  );
+}
+
+type BillPostInput = Omit<Parameters<typeof postSourceTransactionInClientTx>[1], "source_transaction_type" | "source_transaction_id"> & {
+  bill_id: string;
+};
+/** A bill's journal entry, on the CALLER's transaction — the one in-transaction bill post. */
+export async function postBillDocumentInClientTx(
+  client: Parameters<typeof postSourceTransactionInClientTx>[0],
+  input: BillPostInput,
+  actor: Parameters<typeof postSourceTransactionInClientTx>[2],
+) {
+  const { bill_id, ...rest } = input;
+  return postSourceTransactionInClientTx(client, { ...rest, source_transaction_type: "bill", source_transaction_id: bill_id }, actor);
+}
+/** A bill's journal entry on its own connection (after the caller committed) — the one own-connection bill post. */
+export async function postBillDocument(input: BillPostInput, actor: Parameters<typeof postSourceTransaction>[1]) {
+  const { bill_id, ...rest } = input;
+  return postSourceTransaction({ ...rest, source_transaction_type: "bill", source_transaction_id: bill_id }, actor);
+}
+
+type BillPaymentPostInput = Omit<Parameters<typeof postSourceTransactionInClientTx>[1], "source_transaction_type" | "source_transaction_id"> & {
+  bill_payment_id: string;
+};
+/** A bill payment's journal entry, on the CALLER's transaction — the one in-transaction bill-payment post. */
+export async function postBillPaymentDocumentInClientTx(
+  client: Parameters<typeof postSourceTransactionInClientTx>[0],
+  input: BillPaymentPostInput,
+  actor: Parameters<typeof postSourceTransactionInClientTx>[2],
+) {
+  const { bill_payment_id, ...rest } = input;
+  return postSourceTransactionInClientTx(client, { ...rest, source_transaction_type: "bill_payment", source_transaction_id: bill_payment_id }, actor);
+}
+/** A bill payment's journal entry on its own connection — the one own-connection bill-payment post. */
+export async function postBillPaymentDocument(input: BillPaymentPostInput, actor: Parameters<typeof postSourceTransaction>[1]) {
+  const { bill_payment_id, ...rest } = input;
+  return postSourceTransaction({ ...rest, source_transaction_type: "bill_payment", source_transaction_id: bill_payment_id }, actor);
+}
+
+/**
+ * The bill document in one call: header -> lines -> number, on the caller's client, in that order (the order every
+ * caller already used). Lines are built from the new bill's id. Posting stays a separate engine call
+ * (postBillDocumentInClientTx) because several callers write other rows (a bill payment, allocations) before they post.
+ */
+export async function writeBillDocumentOnClient<R extends { id: string } = { id: string }>(
+  client: BillQueryable,
+  doc: {
+    header: ReadonlyArray<readonly [string, BillColumnValue]>;
+    returning?: (typeof BILL_RETURNING)[number];
+    onConflict?: keyof typeof BILL_ON_CONFLICT;
+    lines?: (billId: string) => ReadonlyArray<ReadonlyArray<readonly [string, BillColumnValue]>>;
+    lineOnConflict?: keyof typeof BILL_LINE_ON_CONFLICT;
+    number?: (billId: string) => BillNumberStamp | null;
+  },
+): Promise<{ rows: R[]; rowCount: number | null; billId: string | null }> {
+  const res = await insertBillHeaderOnClient<R>(client, doc.header, { returning: doc.returning, onConflict: doc.onConflict });
+  const billId = res.rows[0]?.id ? String(res.rows[0].id) : null;
+  if (billId) {
+    for (const line of doc.lines ? doc.lines(billId) : []) {
+      await insertBillLineOnClient(client, line, { onConflict: doc.lineOnConflict });
+    }
+    const stamp = doc.number ? doc.number(billId) : null;
+    if (stamp) await stampBillNumberOnClient(client, stamp);
+  }
+  return { ...res, billId };
 }
 
 async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillInput, userId: string) {

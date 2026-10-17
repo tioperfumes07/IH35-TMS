@@ -56,7 +56,7 @@ export function collectFkOnCreateProblems(sources = {}) {
       if (!w.columns.includes("mdata_vendor_id")) problems.push(`${PATHS.bills}: bills INSERT variant ${i + 1} missing mdata_vendor_id`);
     });
   }
-  const lineInserts = bills.match(/INSERT INTO accounting\.bill_lines\s*\(([\s\S]*?)\)/g) ?? [];
+  const lineInserts = (bills.match(/INSERT INTO accounting\.bill_lines\s*\(([\s\S]*?)\)/g) ?? []).filter((stmt) => !stmt.includes("${")); // 443.182 C step 2 — skip the engine's own dynamic column template (insertBillLineOnClient)
   if (lineInserts.length === 0) {
     problems.push(`${PATHS.bills}: no INSERT INTO accounting.bill_lines`);
   } else {

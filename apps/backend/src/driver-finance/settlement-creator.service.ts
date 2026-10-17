@@ -9,6 +9,7 @@
 
 import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
+import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createExpenseFromFuelTransaction, resolveFuelLineAccount, adoptRelayFillExpenseDocument, fillRelayFillExpenseSettlementRef } from "../fuel/fuel-expense-document.service.js";
 import { enteredFuelRowHash, FuelProviderTransactionDuplicateError, refuseDuplicateProviderTransaction } from "../fuel/fuel-provider-reference.js";
@@ -1462,6 +1463,8 @@ export async function postSettlementCreatorInClientTx(
     }
     // U25 — a reefer fill records the trailer it fueled when this company owns or leases it (ROUND 373.5: a record never
     // references another company's equipment) and only a Reefer trailer (reefer fuel never goes to a dry van).
+    // LEAD 443.185 G7 — every other fill carries its load's company trailer from the ONE trailer rule (load-trailer.sql.ts),
+    // the same trailer the import / Dreamline / Relay writers take from resolveFuelLoadAtTime (it was NULL: 669 rows).
     const inserted = reused ? { rows: [{ id: reused }] } : await client.query<{ id: string }>(
       `
         INSERT INTO fuel.fuel_transactions (
@@ -1476,8 +1479,10 @@ export async function postSettlementCreatorInClientTx(
           $6, $7, $8, $9, $10,
           $11::timestamptz, $11::timestamptz, $12, $13,
           'manual', $14, $15, $16::uuid, $17,
-          (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $18::uuid AND eq.equipment_type ~* 'reefer'
-              AND (eq.owner_company_id = $1::uuid OR eq.currently_leased_to_company_id = $1::uuid)),
+          CASE WHEN $23::boolean
+               THEN (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $18::uuid AND eq.equipment_type ~* 'reefer'
+                       AND (eq.owner_company_id = $1::uuid OR eq.currently_leased_to_company_id = $1::uuid))
+               ELSE ${sameEntityLoadCompanyTrailerSql("$3::uuid", "$1::uuid")} END,
           $19::uuid,
           -- D1/D2 (Lead audit 2026-10-11) — the card the draft names, never NULL: a USMCA row with no card evidence is
           -- read as Relay (fuel-credit-preference.ts) and posts nothing; a Dreamline fill must post Dr fuel / Cr 2510.
@@ -1510,6 +1515,7 @@ export async function postSettlementCreatorInClientTx(
         fuel.card,
         fuel.notes?.trim() || null,
         relayFillId,
+        fuelType === "reefer_diesel",
       ],
     );
     const fuelId = inserted.rows[0]!.id;

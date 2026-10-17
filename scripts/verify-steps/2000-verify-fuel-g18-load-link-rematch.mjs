@@ -1,4 +1,4 @@
-// Step 2000 — G18 fuel load_id rematch via resolveLoadId (fill-null only).
+// Step 2000 — G18 fuel load_id rematch via resolveFuelLoadAtTime (fill-null only).
 // Rule 17: verify-steps ONLY — never edit package.json / ci.yml / CLAIMED-NUMBERS.json.
 export default {
   name: "verify-fuel-g18-load-link-rematch",

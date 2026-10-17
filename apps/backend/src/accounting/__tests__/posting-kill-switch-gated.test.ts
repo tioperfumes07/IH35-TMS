@@ -48,6 +48,10 @@ vi.mock("../../qbo/tms-bill-push-chain.service.js", () => ({
 vi.mock("../bills.service.js", async (orig) => ({
   // 443.182 C — the one bill writer is a pure client.query wrapper: keep the real one.
   insertBillHeaderOnClient: (await orig<typeof import("../bills.service.js")>()).insertBillHeaderOnClient,
+  // 443.182 C step 2 — the engine's line writer is a pure client.query wrapper and its own-connection post forwards to
+  // postSourceTransaction (mocked above as the spy): keep the real ones so a leaked post still trips the spy.
+  insertBillLineOnClient: (await orig<typeof import("../bills.service.js")>()).insertBillLineOnClient,
+  postBillDocument: (await orig<typeof import("../bills.service.js")>()).postBillDocument,
   createBill: async () => ({ id: "bill-recurring-1" }),
   // ROUND 389.4 RULING 1 — the recurring generator creates through the never-auto-posting variant.
   createBillInClientTx: async () => ({ id: "bill-recurring-1" }),

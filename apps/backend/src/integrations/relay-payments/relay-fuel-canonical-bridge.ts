@@ -15,7 +15,8 @@
 import { createHash } from "node:crypto";
 import type { DbClient } from "./db-client.type.js";
 import type { RelayFuelTransaction } from "./relay-client.js";
-import { resolveLoadId, resolveVendorId } from "../../fuel/fuel-transaction-import.js";
+import { resolveVendorId } from "../../fuel/fuel-transaction-import.js";
+import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 
 function mapFuelType(raw: string | null | undefined): "diesel" | "def" | "gas" | "reefer_diesel" | "other" {
   const t = (raw ?? "").trim().toLowerCase();
@@ -69,13 +70,15 @@ export async function bridgeRelayFuelToCanonical(
   const pricePerGallon = pricedGallons > 0 ? priceAccum / pricedGallons : gallons > 0 ? totalPaid / gallons : null;
   const sourceRowHash = createHash("sha256").update(`relay:${tx.transaction_id}`).digest("hex");
   const vendorId = await resolveVendorId(client, operatingCompanyId, tx.merchant?.name ?? null);
-  const loadId = await resolveLoadId(
-    client,
+  // LEAD 443.185 G7 — the ONE fuel-to-load rule; the fill's trailer comes from the same hit (it used to be dropped).
+  const loadHit = await resolveFuelLoadAtTime(client, {
     operatingCompanyId,
-    matched.unit_id,
-    matched.driver_id,
-    tx.created_at
-  );
+    unitId: matched.unit_id,
+    driverId: matched.driver_id,
+    at: tx.created_at,
+  });
+  const loadId = loadHit?.load_id ?? null;
+  const trailerId = loadHit?.trailer_id ?? null;
   const loadExemptionReason = loadId ? null : "relay_ingest_no_load_link";
   const notes = [
     `relay_bridge=1`,
@@ -111,7 +114,8 @@ export async function bridgeRelayFuelToCanonical(
         notes,
         imported_at,
         load_required,
-        load_exemption_reason
+        load_exemption_reason,
+        trailer_id
       )
       VALUES (
         $1, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7,
@@ -122,7 +126,7 @@ export async function bridgeRelayFuelToCanonical(
         -- why it is exempt". Four such rows exist on prod (created 2026-08-05), and every future
         -- relay ingest without a resolvable load would mint another, so any load-linkage ratchet
         -- would go permanently RED on expected state.
-        $19, $18
+        $19, $18, $20
       )
       ON CONFLICT (operating_company_id, source_row_hash) DO UPDATE SET
         transaction_at = EXCLUDED.transaction_at,
@@ -130,6 +134,7 @@ export async function bridgeRelayFuelToCanonical(
         driver_id = COALESCE(EXCLUDED.driver_id, fuel.fuel_transactions.driver_id),
         unit_id = COALESCE(EXCLUDED.unit_id, fuel.fuel_transactions.unit_id),
         load_id = COALESCE(EXCLUDED.load_id, fuel.fuel_transactions.load_id),
+        trailer_id = COALESCE(fuel.fuel_transactions.trailer_id, EXCLUDED.trailer_id),
         vendor_id = COALESCE(EXCLUDED.vendor_id, fuel.fuel_transactions.vendor_id),
         -- Keep the pair consistent on re-ingest too. Once a load resolves, the row genuinely requires
         -- one and the exemption is cleared ("an assigned load clears the exemption", the same rule
@@ -172,8 +177,10 @@ export async function bridgeRelayFuelToCanonical(
       notes,
       loadExemptionReason,
       // $19 — load_required, the mirror of loadExemptionReason above. Both derive from the SAME
-      // resolveLoadId result, so the pair can never contradict itself again.
+      // resolveFuelLoadAtTime hit, so the pair can never contradict itself again.
       loadId != null,
+      // $20 — the load's trailer from the same hit (LEAD 443.185 G7).
+      trailerId,
     ]
   );
 

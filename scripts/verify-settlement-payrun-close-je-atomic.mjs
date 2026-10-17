@@ -28,11 +28,13 @@ export function analyze(closeSrc, chainSrc) {
   const chain = strip(chainSrc);
   if (!/await postSettlementApChainInClientTx\(\s*client\b/.test(close)) failures.push(`${path.relative(ROOT, CLOSE)}: the close must post through postSettlementApChainInClientTx(client, …) on its own transaction`);
   if (/\bcreateJournalEntry\(/.test(close) && !/createJournalEntry\([\s\S]{0,400}\{\s*client\b/.test(close)) failures.push(`${path.relative(ROOT, CLOSE)}: createJournalEntry without the caller's client (a second-connection post)`);
-  for (const bad of ["createBill(", "payBill(", "postSourceTransaction(", "withCurrentUser(", "createJournalEntry("]) {
+  for (const bad of ["createBill(", "payBill(", "postSourceTransaction(", "postBillDocument(", "withCurrentUser(", "createJournalEntry("]) {
     if (chain.includes(bad)) failures.push(`${path.relative(ROOT, CHAIN)}: uses ${bad.slice(0, -1)} — the chain must post only on the caller's client (on-client variants)`);
   }
-  for (const need of ["createBillInClientTx(", "payBillInClientTx(", "postSourceTransactionInClientTx(", "createJournalEntryOnClient("]) {
-    if (!chain.includes(need)) failures.push(`${path.relative(ROOT, CHAIN)}: expected ${need.slice(0, -1)} on the caller's client`);
+  // 443.182 C step 2 — the bill JE is posted through the bill engine's in-transaction stage (postBillDocumentInClientTx).
+  for (const need of ["createBillInClientTx(", "payBillInClientTx(", ["postSourceTransactionInClientTx(", "postBillDocumentInClientTx("], "createJournalEntryOnClient("]) {
+    const alts = Array.isArray(need) ? need : [need];
+    if (!alts.some((n) => chain.includes(n))) failures.push(`${path.relative(ROOT, CHAIN)}: expected ${alts.map((n) => n.slice(0, -1)).join(" or ")} on the caller's client`);
   }
   return failures;
 }

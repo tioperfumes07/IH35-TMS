@@ -3,6 +3,8 @@
 // column X" read both shapes through this helper so the law they enforce is unchanged:
 //   - inline  `INSERT INTO accounting.bills ( col, col, … )`   (any file that still writes directly — must be the writer)
 //   - writer  `insertBillHeaderOnClient(client, [ ["col", { … }], … ])`
+//   - engine  `writeBillDocumentOnClient(client, { header: [ ["col", { … }], … ], … })`  (443.182 C step 2 — the whole
+//             bill document: header + lines + number through the bill engine)
 // The writer's own dynamic template (`INSERT INTO accounting.bills (${names.join(", ")})`) is not a caller and is skipped.
 
 /** End index (exclusive) of the bracket that opens at `open`, skipping strings / template literals / comments. */
@@ -84,6 +86,20 @@ export function billHeaderWrites(src) {
     const args = src.slice(open + 1, end - 1);
     const arr = args.indexOf("[");
     if (arr < 0) continue;
+    const arrEnd = matchBracket(args, arr);
+    const body = stripComments(args.slice(arr, arrEnd));
+    const columns = [...body.matchAll(/\[\s*"([a-z_][a-z0-9_]*)"\s*,\s*\{/g)].map((x) => x[1]);
+    writes.push({ kind: "writer", index: m.index, columns, text: args });
+  }
+  const doc = /writeBillDocumentOnClient\s*(?:<[^>]*>)?\s*\(/g;
+  while ((m = doc.exec(src))) {
+    if (/function\s+$/.test(src.slice(Math.max(0, m.index - 30), m.index))) continue; // the definition
+    const open = m.index + m[0].length - 1;
+    const end = matchBracket(src, open);
+    const args = src.slice(open + 1, end - 1);
+    const hdr = /header\s*:\s*\[/.exec(args);
+    if (!hdr) continue;
+    const arr = hdr.index + hdr[0].length - 1;
     const arrEnd = matchBracket(args, arr);
     const body = stripComments(args.slice(arr, arrEnd));
     const columns = [...body.matchAll(/\[\s*"([a-z_][a-z0-9_]*)"\s*,\s*\{/g)].map((x) => x[1]);

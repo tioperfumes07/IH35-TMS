@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Guard 2000 — G18 fuel load_id rematch via resolveLoadId (fill-null only, no fake FKs) + LEAD 443.110 G7: the ONE
+ * Guard 2000 — G18 fuel load_id rematch via resolveFuelLoadAtTime (fill-null only, no fake FKs) + LEAD 443.110 G7: the ONE
  * fuel-to-load rule (checkOneFuelLoadRule below).
  *
  * Rule 17: verify-steps wire this; do not edit package.json / ci.yml / CLAIMED-NUMBERS.json.
@@ -33,9 +33,8 @@ function assertIncludes(hay, needle, label) {
  */
 export function checkOneFuelLoadRule(src) {
   const p = [];
-  const fn = src.importer.match(/export async function resolveLoadId\([\s\S]*?\n\}/)?.[0] ?? "";
-  if (!fn) p.push("fuel-transaction-import.ts: resolveLoadId missing (callers: import, Relay rematch)");
-  else if (!/resolveFuelLoadAtTime\(/.test(fn) || /mdata\.loads|load_stops/.test(fn)) p.push("resolveLoadId must delegate to resolveFuelLoadAtTime, never query loads itself");
+  // LEAD 443.185 G7 — no load-only wrapper: it dropped the trailer for the Relay bridge + rematch. Callers ask the rule.
+  if (/export async function resolveLoadId\(/.test(src.importer)) p.push("fuel-transaction-import.ts: the load-only resolveLoadId wrapper is back — callers ask resolveFuelLoadAtTime (load + trailer)");
   if (!/resolveFuelLoadAtTime\(client,\s*\{\s*operatingCompanyId: companyId, unitId, driverId, at: row\.transaction_at/.test(src.importer)) p.push("the import must resolve each row's load through resolveFuelLoadAtTime");
   if (!/trailer_id\s*\)\s*VALUES[\s\S]{0,260}\$19::uuid/.test(src.importer) || !/const trailerId = loadHit\?\.trailer_id/.test(src.importer)) p.push("the import must write fuel_transactions.trailer_id from the load (one trailer rule)");
   if (!/resolveFuelLoadAtTime\(client, \{[\s\S]{0,200}driverId: row\.driver_id/.test(src.relay)) p.push("the Relay fill post must resolve its load through resolveFuelLoadAtTime (unit, driver fallback)");
@@ -125,7 +124,8 @@ function selftest() {
   const real = readRuleSources();
   const cases = [
     ["real tree passes", checkOneFuelLoadRule(real).length === 0],
-    ["import re-deriving its own load window is caught", checkOneFuelLoadRule({ ...real, importer: real.importer.replace(/return \(await resolveFuelLoadAtTime\([^;]*;/, "const r = await client.query(`SELECT l.id FROM mdata.loads l JOIN mdata.load_stops s ON s.load_id = l.id`); return r.rows[0]?.id ?? null;") }).length > 0],
+    ["import re-deriving its own load window is caught", checkOneFuelLoadRule({ ...real, importer: real.importer.replace("resolveFuelLoadAtTime(client, { operatingCompanyId: companyId, unitId, driverId, at: row.transaction_at", "ownLoadWindow(client, { operatingCompanyId: companyId, unitId, driverId, at: row.transaction_at") }).length > 0],
+    ["the load-only resolveLoadId wrapper coming back is caught", checkOneFuelLoadRule({ ...real, importer: real.importer + "\nexport async function resolveLoadId(c, a, b, d, e) {\n  return null;\n}\n" }).length > 0],
     ["import dropping the trailer is caught", checkOneFuelLoadRule({ ...real, importer: real.importer.replace("const trailerId = loadHit?.trailer_id", "const trailerId = null && loadHit?.trailer_id") }).length > 0],
     ["Relay back on its own SQL is caught", checkOneFuelLoadRule({ ...real, relay: real.relay.replace(/resolveFuelLoadAtTime\(client, \{/, "resolveLoadForUnitAt(client, {") + "\nconst q = `${loadAtTimeSql(\"u.unit_id\", \"$3\", \"lat\")}`;" }).length > 0],
     ["driver fallback removed is caught", checkOneFuelLoadRule({ ...real, helper: real.helper.replace('loadAtTimeForDriverSql("x.driver_id"', 'loadAtTimeSql("x.unit_id"') }).length > 0],
@@ -171,8 +171,8 @@ function main() {
 
   const rematch = read("apps/backend/src/integrations/relay-payments/relay-fuel-load-rematch.service.ts");
   assertIncludes(rematch, "export async function rematchRelayFuelLoads", "rematch service export");
-  assertIncludes(rematch, 'from "../../fuel/fuel-transaction-import.js"', "imports resolveLoadId module");
-  assertIncludes(rematch, "resolveLoadId(", "calls resolveLoadId");
+  assertIncludes(rematch, 'from "../../fuel/fuel-load-at-time.js"', "imports the one fuel-to-load rule");
+  assertIncludes(rematch, "resolveFuelLoadAtTime(", "calls resolveFuelLoadAtTime");
   assertIncludes(rematch, "load_id IS NULL", "scan fill-null only");
   assertIncludes(rematch, "archived_at IS NULL", "exclude archived rows");
   assertIncludes(rematch, "AND load_id IS NULL", "update fill-null guard");

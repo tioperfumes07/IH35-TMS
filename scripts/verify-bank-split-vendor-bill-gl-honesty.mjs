@@ -46,7 +46,7 @@ function inspect(service, dbTest, unitTest) {
   if (!/async\s+function\s+commitVendorBillSplitLineAtomic\s*\(/.test(service)) {
     failures.push(`${SERVICE}: must define commitVendorBillSplitLineAtomic (one-transaction architecture)`);
   }
-  if (!/postSourceTransactionInClientTx/.test(service)) {
+  if (!/postSourceTransactionInClientTx|postBillDocumentInClientTx|postBillPaymentDocumentInClientTx/.test(service)) {
     failures.push(`${SERVICE}: must use postSourceTransactionInClientTx (canonical in-client poster)`);
   }
 
@@ -59,7 +59,8 @@ function inspect(service, dbTest, unitTest) {
   if (!/FOR UPDATE/.test(region)) {
     failures.push(`${SERVICE}: atomic vendor-bill path must FOR UPDATE the split line / bank txn`);
   }
-  const inClientPosts = region.match(/postSourceTransactionInClientTx\s*\(/g) || [];
+  // 443.182 C step 2 — the bill and bill-payment posts go through the bill engine's in-transaction stages.
+  const inClientPosts = region.match(/(?:postSourceTransactionInClientTx|postBillDocumentInClientTx|postBillPaymentDocumentInClientTx)\s*\(/g) || [];
   if (inClientPosts.length < 2) {
     failures.push(
       `${SERVICE}: atomic path must call postSourceTransactionInClientTx at least twice (bill + bill_payment)`
