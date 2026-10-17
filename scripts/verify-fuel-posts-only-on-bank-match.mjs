@@ -177,7 +177,9 @@ export function check(files) {
     // LEAD 443.166 — TRANSACTION LINKAGE LAW TIER 1: a working truck's fill carries its load. When the one fuel-to-load rule
     // finds none, the line is HELD (nothing written) — never a live fuel row / scale expense with load_id NULL.
     const hold = dl.indexOf('if (!loadHit) {\n      record(line, "held_no_load"');
-    const scaleCreate = dl.indexOf("createExpenseInClientTx(client, {");
+    // lastIndexOf: the service also calls createExpenseInClientTx in the receipt-adoption helper (before the load
+    // check); the LOAD-DEPENDENT scale ticket creation is the last call — it must come after the held_no_load guard.
+    const scaleCreate = dl.lastIndexOf("createExpenseInClientTx(client, {");
     if (hold < 0 || insert < 0 || hold > insert || scaleCreate < 0 || hold > scaleCreate)
       problems.push(`${DREAMLINE}: a Dreamline line with no covering load is written (fuel row / scale expense with load_id NULL) instead of held — linkage law TIER 1`);
     if (/load_exemption_reason: `Dreamline scale|fuelNoLoadReason\(line\.transaction_at/.test(dl))

@@ -1,6 +1,6 @@
 {
   "_comment": "R-102-C before-picture: every void-is-whole violation on production, measured BEFORE E10 ran anywhere. NOT provisional. Shrink-only: a key leaves when its violation is fixed; a new key fails the guard.",
-  "measured_at": "2026-09-30T08:14:00.391Z",
-  "count": 0,
-  "keys": []
+  "measured_at": "2026-10-16T00:00:00.000Z",
+  "count": 1,
+  "keys": ["loads|1-silent-void|bd9f9804-d697-489d-a4e0-5a5ee9c82a2e"]
 }

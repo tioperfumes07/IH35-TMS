@@ -1,16 +1,16 @@
 // ACCT-CoA-ASYMMETRY — grouped diff report (READ-ONLY, owner-eyes).
 //
-// Surfaces how TRK / TRANSP / USMCA postable CoAs diverge. NEVER posts, writes, merges,
-// or creates accounts — every statement is a SELECT over catalogs.accounts
-// joined to org.companies for grouping only (Rule 19: reserve/holdback/retainage untouched).
+// Surfaces how the active entity's postable CoA diverges from the frozen-entity pool.
+// NEVER posts, writes, merges, or creates accounts — every statement is a SELECT over
+// catalogs.accounts joined to org.companies (Rule 19: reserve/holdback/retainage untouched).
 //
 // Cross-entity read uses app.bypass_rls='lucia' inside withCurrentUser (Rule 10) because the
-// report compares all three entities in one response. No operating_company_id filter is applied
-// to the diff itself — presence per entity IS the report.
+// report compares the active entity against frozen entities. Gated Owner/Admin only in the route.
+// Allowlisted in verify-steps/84-verify-mdata-entity-scope.baseline.json.
 
 import { withCurrentUser } from "../auth/db.js";
 
-const ENTITY_CODES = ["TRK", "TRANSP", "USMCA"] as const;
+const FROZEN_ENTITY_CODES = ["TRK", "TRANSP"] as const;
 
 export type CoaAsymmetryEntityCounts = {
   entity_code: string;
@@ -20,10 +20,11 @@ export type CoaAsymmetryEntityCounts = {
 
 export type CoaAsymmetryTypeBreakdown = {
   account_type: string;
-  trk_only_postable: number;
+  count: number;
 };
 
 export type CoaAsymmetrySampleRow = {
+  account_id: string;
   account_number: string;
   account_name: string;
   account_type: string;
@@ -37,23 +38,31 @@ export type CoaAsymmetryReport = {
   entity_codes: readonly string[];
   postable_by_entity: CoaAsymmetryEntityCounts[];
   diff_summary: {
-    trk_postable_absent_on_transp: number;
-    transp_postable_absent_on_trk: number;
+    active_only_postable: number;
+    frozen_absent_on_active: number;
   };
-  trk_only_postable_by_type: CoaAsymmetryTypeBreakdown[];
-  sample_trk_only_postable: CoaAsymmetrySampleRow[];
+  active_only_by_type: CoaAsymmetryTypeBreakdown[];
+  sample_active_only: CoaAsymmetrySampleRow[];
 };
 
 const num = (v: unknown): number => Number(v ?? 0);
 
-// Deliberately cross-entity (no operating_company_id filter): this report's whole purpose is
-// comparing TRK/TRANSP/USMCA postable counts side by side, gated by role (Owner/Admin only, checked
-// in the route) rather than per-request entity scope. See verify-steps/84-verify-mdata-entity-scope
-// baseline for the allowlisted queries this produces.
-export async function getCoaAsymmetryReport(input: { userId: string }): Promise<CoaAsymmetryReport> {
+export async function getCoaAsymmetryReport(input: {
+  userId: string;
+  operatingCompanyId: string;
+}): Promise<CoaAsymmetryReport> {
   return withCurrentUser(input.userId, async (client) => {
     await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
 
+    // Resolve entity code for the active company
+    const entityRes = await client.query<{ code: string }>(
+      `SELECT code FROM org.companies WHERE id = $1 LIMIT 1`,
+      [input.operatingCompanyId],
+    );
+    const activeCode = entityRes.rows[0]?.code ?? "ACTIVE";
+    const allCodes = [activeCode, ...FROZEN_ENTITY_CODES];
+
+    // Postable counts per entity (active + frozen, for reference)
     const countsRes = await client.query(
       `
         SELECT c.code AS entity_code,
@@ -63,11 +72,13 @@ export async function getCoaAsymmetryReport(input: { userId: string }): Promise<
           JOIN org.companies c ON c.id = a.operating_company_id
          WHERE c.code = ANY($1::text[])
          GROUP BY c.code
-         ORDER BY postable DESC
+         ORDER BY c.code = $2 DESC, postable DESC
       `,
-      [ENTITY_CODES],
+      [allCodes, activeCode],
     );
 
+    // Diff: accounts postable on the active entity but absent from ALL frozen entities
+    // (active-unique); and frozen entity accounts absent from the active entity (gaps to fill)
     const diffRes = await client.query(
       `
         WITH postable AS (
@@ -80,17 +91,20 @@ export async function getCoaAsymmetryReport(input: { userId: string }): Promise<
              AND c.code = ANY($1::text[])
              AND a.account_number IS NOT NULL
         ),
-        trk AS (SELECT account_number FROM postable WHERE entity_code = 'TRK'),
-        transp AS (SELECT account_number FROM postable WHERE entity_code = 'TRANSP')
+        active AS (SELECT account_number FROM postable WHERE entity_code = $2),
+        frozen AS (SELECT DISTINCT account_number FROM postable WHERE entity_code != $2)
         SELECT
-          (SELECT count(*)::bigint FROM trk t
-            WHERE NOT EXISTS (SELECT 1 FROM transp x WHERE x.account_number = t.account_number)) AS trk_absent_transp,
-          (SELECT count(*)::bigint FROM transp t
-            WHERE NOT EXISTS (SELECT 1 FROM trk x WHERE x.account_number = t.account_number)) AS transp_absent_trk
+          (SELECT count(*)::bigint FROM active a
+            WHERE NOT EXISTS (SELECT 1 FROM frozen f WHERE f.account_number = a.account_number))
+            AS active_only_postable,
+          (SELECT count(*)::bigint FROM frozen f
+            WHERE NOT EXISTS (SELECT 1 FROM active a WHERE a.account_number = f.account_number))
+            AS frozen_absent_on_active
       `,
-      [ENTITY_CODES],
+      [allCodes, activeCode],
     );
 
+    // Active-only accounts by type (accounts postable on active entity but absent on all frozen)
     const typeRes = await client.query(
       `
         WITH postable AS (
@@ -101,23 +115,26 @@ export async function getCoaAsymmetryReport(input: { userId: string }): Promise<
             JOIN org.companies c ON c.id = a.operating_company_id
            WHERE a.is_postable = true
              AND a.deactivated_at IS NULL
-             AND c.code IN ('TRK', 'TRANSP')
+             AND c.code = ANY($1::text[])
              AND a.account_number IS NOT NULL
+        ),
+        frozen_numbers AS (
+          SELECT DISTINCT account_number FROM postable WHERE entity_code != $2
         )
         SELECT p.account_type,
-               count(*)::bigint AS trk_only_postable
+               count(*)::bigint AS count
           FROM postable p
-         WHERE p.entity_code = 'TRK'
+         WHERE p.entity_code = $2
            AND NOT EXISTS (
-                 SELECT 1 FROM postable x
-                  WHERE x.entity_code = 'TRANSP'
-                    AND x.account_number = p.account_number
+                 SELECT 1 FROM frozen_numbers f WHERE f.account_number = p.account_number
                )
          GROUP BY p.account_type
-         ORDER BY trk_only_postable DESC
+         ORDER BY count DESC
       `,
+      [allCodes, activeCode],
     );
 
+    // Sample list of active-only postable accounts (present on active, absent on all frozen)
     const sampleRes = await client.query(
       `
         WITH postable AS (
@@ -130,24 +147,22 @@ export async function getCoaAsymmetryReport(input: { userId: string }): Promise<
             JOIN org.companies c ON c.id = a.operating_company_id
            WHERE a.is_postable = true
              AND a.deactivated_at IS NULL
-             AND c.code IN ('TRK', 'TRANSP')
+             AND c.code = ANY($1::text[])
              AND a.account_number IS NOT NULL
+        ),
+        frozen_numbers AS (
+          SELECT DISTINCT account_number FROM postable WHERE entity_code != $2
         )
-        SELECT p.account_id,
-               p.account_number,
-               p.account_name,
-               p.account_type,
-               p.entity_code
+        SELECT p.account_id, p.account_number, p.account_name, p.account_type, p.entity_code
           FROM postable p
-         WHERE p.entity_code = 'TRK'
+         WHERE p.entity_code = $2
            AND NOT EXISTS (
-                 SELECT 1 FROM postable x
-                  WHERE x.entity_code = 'TRANSP'
-                    AND x.account_number = p.account_number
+                 SELECT 1 FROM frozen_numbers f WHERE f.account_number = p.account_number
                )
          ORDER BY p.account_type, p.account_number
-         LIMIT 15
+         LIMIT 20
       `,
+      [allCodes, activeCode],
     );
 
     return {
@@ -156,21 +171,21 @@ export async function getCoaAsymmetryReport(input: { userId: string }): Promise<
         "Owner-eyes grouped diff only — no account is created, merged, reclassified, or deactivated. " +
         "Reserve/holdback/retainage accounts are owner-manual (Rule 19). Standardization is a CPA/owner decision.",
       generated_at: new Date().toISOString(),
-      entity_codes: ENTITY_CODES,
+      entity_codes: allCodes as readonly string[],
       postable_by_entity: countsRes.rows.map((row) => ({
         entity_code: String(row.entity_code),
         postable: num(row.postable),
         total_active: num(row.total_active),
       })),
       diff_summary: {
-        trk_postable_absent_on_transp: num(diffRes.rows[0]?.trk_absent_transp),
-        transp_postable_absent_on_trk: num(diffRes.rows[0]?.transp_absent_trk),
+        active_only_postable: num(diffRes.rows[0]?.active_only_postable),
+        frozen_absent_on_active: num(diffRes.rows[0]?.frozen_absent_on_active),
       },
-      trk_only_postable_by_type: typeRes.rows.map((row) => ({
+      active_only_by_type: typeRes.rows.map((row) => ({
         account_type: String(row.account_type),
-        trk_only_postable: num(row.trk_only_postable),
+        count: num(row.count),
       })),
-      sample_trk_only_postable: sampleRes.rows.map((row) => ({
+      sample_active_only: sampleRes.rows.map((row) => ({
         account_id: String(row.account_id),
         account_number: String(row.account_number),
         account_name: String(row.account_name),

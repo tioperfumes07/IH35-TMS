@@ -8,13 +8,14 @@ import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   enabled: boolean;
+  operatingCompanyId: string;
 };
 
-export function CoaAsymmetryReportPanel({ enabled }: Props) {
+export function CoaAsymmetryReportPanel({ enabled, operatingCompanyId }: Props) {
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["coa-asymmetry-report"],
-    queryFn: getCoaAsymmetryReport,
-    enabled,
+    queryKey: ["coa-asymmetry-report", operatingCompanyId],
+    queryFn: () => getCoaAsymmetryReport(operatingCompanyId),
+    enabled: enabled && Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
 
@@ -27,10 +28,11 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="flex items-center gap-1 text-xs font-semibold text-[#0F1219]">
-          Entity CoA asymmetry (read-only)
+          Frozen-entity CoA asymmetry (read-only)
           <InfoPopover label="About the CoA asymmetry report">
-            Grouped diff across TRK / TRANSP / USMCA postable charts. Reserve / holdback / retainage accounts are
-            owner-manual only (Rule 19) — this panel does not create, merge, or deactivate any account.
+            Active entity postable chart vs frozen-entity pool (TRK / TRANSP). Shows accounts unique to the active
+            entity and accounts present on frozen entities that the active entity is missing. Read-only — no account is
+            created, merged, or deactivated (Rule 19).
           </InfoPopover>
         </h2>
         <span className="text-xs font-medium uppercase tracking-wide text-[#1F2A44]">Owner-eyes · change nothing</span>
@@ -70,37 +72,37 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
 
           <div className="grid gap-2 sm:grid-cols-2">
             <p>
-              TRK postable numbers absent on TRANSP:{" "}
-              <span className="font-semibold tabular-nums">{data.diff_summary.trk_postable_absent_on_transp}</span>
+              Active-entity-only postable:{" "}
+              <span className="font-semibold tabular-nums">{data.diff_summary.active_only_postable}</span>
             </p>
             <p>
-              TRANSP postable numbers absent on TRK:{" "}
-              <span className="font-semibold tabular-nums">{data.diff_summary.transp_postable_absent_on_trk}</span>
+              Frozen-entity postable absent on active:{" "}
+              <span className="font-semibold tabular-nums">{data.diff_summary.frozen_absent_on_active}</span>
             </p>
           </div>
 
-          {data.trk_only_postable_by_type.length ? (
+          {data.active_only_by_type.length ? (
             <div>
               <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-                TRK-only postable by account type
+                Active-entity-only postable by account type
               </h3>
               <ul className="grid gap-1 sm:grid-cols-2">
-                {data.trk_only_postable_by_type.map((row) => (
+                {data.active_only_by_type.map((row) => (
                   <li key={row.account_type}>
-                    {row.account_type}: <span className="tabular-nums font-medium">{row.trk_only_postable}</span>
+                    {row.account_type}: <span className="tabular-nums font-medium">{row.count}</span>
                   </li>
                 ))}
               </ul>
             </div>
           ) : null}
 
-          {data.sample_trk_only_postable.length ? (
+          {data.sample_active_only.length ? (
             <div>
               <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-                Sample TRK-only postable (first 15)
+                Active-entity-only postable accounts (first 20)
               </h3>
               <ul className="space-y-1 text-xs">
-                {data.sample_trk_only_postable.map((row) => (
+                {data.sample_active_only.map((row) => (
                   <li key={row.account_id}>
                     <span className="font-mono">{row.account_number}</span> ·{" "}
                     <EntityLink

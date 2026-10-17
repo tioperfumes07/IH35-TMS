@@ -65,14 +65,27 @@ describe("ACCT-CoA-ASYMMETRY — route behavior", () => {
   it("Owner → 200 with read_only report", async () => {
     reportMock.mockResolvedValueOnce({
       read_only: true,
-      postable_by_entity: [{ entity_code: "TRK", postable: 947, total_active: 948 }],
+      postable_by_entity: [{ entity_code: "USMCA", postable: 196, total_active: 196 }],
     });
     const { registerCoaAsymmetryReportRoutes } = await import("./coa-asymmetry-report.routes.js");
     const app = Fastify();
     await registerCoaAsymmetryReportRoutes(app);
-    const res = await app.inject({ method: "GET", url: "/api/v1/accounting/coa-asymmetry-report" });
+    const companyId = "5c854333-6ea5-4faa-af31-67cb272fef80";
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/accounting/coa-asymmetry-report?operating_company_id=${companyId}`,
+    });
     expect(res.statusCode).toBe(200);
     expect(res.json().read_only).toBe(true);
+    await app.close();
+  });
+
+  it("missing operating_company_id → 400", async () => {
+    const { registerCoaAsymmetryReportRoutes } = await import("./coa-asymmetry-report.routes.js");
+    const app = Fastify();
+    await registerCoaAsymmetryReportRoutes(app);
+    const res = await app.inject({ method: "GET", url: "/api/v1/accounting/coa-asymmetry-report" });
+    expect(res.statusCode).toBe(400);
     await app.close();
   });
 });

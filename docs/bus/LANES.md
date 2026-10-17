@@ -9,6 +9,7 @@ ruling's filename to the PR body under `LANE-CROSS:`.
 db/migrations/**
 scripts/verify-*.mjs
 scripts/verify-*.baseline.json
+scripts/entity-link-adoption-baseline.json
 scripts/verify-steps/**
 scripts/.guard-exempt.json
 scripts/money-pr-local-gate.mjs
@@ -38,6 +39,7 @@ apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
 apps/backend/src/system/engine-status.catalog.ts
 scripts/db-migrate.mjs
 scripts/audit-creator-settlement.mjs
+scripts/test-typecheck-baseline.json
 # ROUND 443.140 8b (CC-1, 2026-10-12) — cash-flow projections: card_payable_2510 + relay_topup + late-load receipt
 apps/backend/src/cash-flow/cash-flow.service.ts
 apps/backend/src/cash-flow/projected-cash-date.ts

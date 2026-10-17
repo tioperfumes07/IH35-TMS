@@ -85,10 +85,7 @@ export function findViolations(root = ROOT) {
     }
 
     // And the positive requirement: if the file posts customer_payment at all, it must do so in-client-tx.
-    // 443.182 C step 2 — a form may delegate the post to the one payments engine (payments.routes.ts), which is itself in
-    // this list and must call postSourceTransactionInClientTx on the caller's client.
-    const delegates = /\b(?:recordCustomerPaymentInClientTx|postCustomerPaymentOrRecordSkipInClientTx)\s*\(\s*client\b/.test(src);
-    if (!delegates && !/postSourceTransactionInClientTx\s*\(/.test(src)) {
+    if (!/postSourceTransactionInClientTx\s*\(/.test(src)) {
       problems.push({
         where: rel,
         why: "references customer_payment posting but never calls postSourceTransactionInClientTx()",

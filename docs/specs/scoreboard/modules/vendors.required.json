@@ -641,7 +641,6 @@
       "surface_kind": "modal",
       "surface_path": "components/qbo/VendorLinkageModal.tsx",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },

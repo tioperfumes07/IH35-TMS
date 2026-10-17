@@ -1,6 +1,7 @@
 import { nextCreditMemoDisplayId } from "../display-id.js";
-import { POSTING_FLAG_SKIP_RESULT } from "../posting-flag-skip-audit.js";
-import { insertPaymentApplicationRowInClientTx, postCustomerPaymentOrRecordSkipInClientTx } from "../payments.routes.js";
+import { postSourceTransactionInClientTx } from "../posting-engine.service.js";
+import { isEnabled } from "../../lib/feature-flags/service.js";
+import { recordPostingFlagSkip, POSTING_FLAG_SKIP_RESULT } from "../posting-flag-skip-audit.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { backlinkBankTransactionToInvoice } from "./bank-invoice-backlink.service.js";
 import { directPaymentRoomCents } from "../../factoring/purchased-gross.service.js";
@@ -11,6 +12,7 @@ import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents } 
 // receipt JE to the GL is gated PER-ENTITY via lib.feature_flags (isEnabled). Default OFF => the payment
 // applies but no GL journal is posted (no-op), matching every other gated poster. Whether to turn this ON
 // (or leave A/R-receipt posting always-on) is an OWNER decision (CHAIN-06); OFF-by-default is the safe state.
+const CUSTOMER_PAYMENT_GL_POSTING_FLAG_KEY = "CUSTOMER_PAYMENT_GL_POSTING_ENABLED";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -187,15 +189,28 @@ async function applyToInvoice(
     );
   }
 
-  // 443.182 C step 2 — the one payment_applications writer (payments.routes.ts); same row, same ON CONFLICT merge.
-  return insertPaymentApplicationRowInClientTx(client as never, {
-    operating_company_id: operatingCompanyId,
-    payment_id: payment.id,
-    target_kind: "invoice",
-    target_id: row.target_id,
-    amount_cents: row.amount_cents,
-    user_id: userId,
-  });
+  const inserted = await client.query<{ id: string }>(
+    `
+      INSERT INTO accounting.payment_applications (
+        operating_company_id,
+        payment_id,
+        invoice_id,
+        target_kind,
+        target_id,
+        amount_cents,
+        amount_applied,
+        applied_by_user_id,
+        applied_by_user_uuid
+      ) VALUES ($1::uuid, $2::uuid, $3::uuid, 'invoice', $3::uuid, $4, $5::numeric(18,2), $6::uuid, $6::uuid)
+      ON CONFLICT (payment_id, target_kind, target_id)
+      DO UPDATE SET
+        amount_cents = accounting.payment_applications.amount_cents + EXCLUDED.amount_cents,
+        amount_applied = accounting.payment_applications.amount_applied + EXCLUDED.amount_applied
+      RETURNING id::text
+    `,
+    [operatingCompanyId, payment.id, row.target_id, row.amount_cents, row.amount_cents / 100, userId]
+  );
+  return inserted.rows[0]?.id ?? null;
 }
 
 async function applyToBill(
@@ -248,15 +263,28 @@ async function applyToBill(
     throw new ApplyPaymentError("amount_exceeds_bill_open", "application amount exceeds bill open amount");
   }
 
-  // 443.182 C step 2 — the one payment_applications writer (payments.routes.ts); same row, same ON CONFLICT merge.
-  return insertPaymentApplicationRowInClientTx(client as never, {
-    operating_company_id: operatingCompanyId,
-    payment_id: payment.id,
-    target_kind: "bill",
-    target_id: row.target_id,
-    amount_cents: row.amount_cents,
-    user_id: userId,
-  });
+  const inserted = await client.query<{ id: string }>(
+    `
+      INSERT INTO accounting.payment_applications (
+        operating_company_id,
+        payment_id,
+        invoice_id,
+        target_kind,
+        target_id,
+        amount_cents,
+        amount_applied,
+        applied_by_user_id,
+        applied_by_user_uuid
+      ) VALUES ($1::uuid, $2::uuid, NULL, 'bill', $3::uuid, $4, $5::numeric(18,2), $6::uuid, $6::uuid)
+      ON CONFLICT (payment_id, target_kind, target_id)
+      DO UPDATE SET
+        amount_cents = accounting.payment_applications.amount_cents + EXCLUDED.amount_cents,
+        amount_applied = accounting.payment_applications.amount_applied + EXCLUDED.amount_applied
+      RETURNING id::text
+    `,
+    [operatingCompanyId, payment.id, row.target_id, row.amount_cents, row.amount_cents / 100, userId]
+  );
+  return inserted.rows[0]?.id ?? null;
 }
 
 async function createArCreditMemo(
@@ -344,15 +372,47 @@ export async function applyPayment(client: Queryable, input: ApplyPaymentInput, 
 
   // Kill switch: resolve the per-entity flag on the same scoped client (operating_company_id already set
   // above). Flag OFF (default) => skip the GL post entirely; the payment + applications above still stand.
-  // 443.182 C step 2 — the one customer-payment post (or its skip audit when the per-entity flag is OFF), on the CALLER'S
-  // client (ACCT-F165: a second connection cannot see the uncommitted applications above). Payment, applications and JE
-  // commit or roll back as ONE unit.
-  const customerPaymentPostingEnabled = await postCustomerPaymentOrRecordSkipInClientTx(client as never, {
+  const customerPaymentPostingEnabled = await isEnabled(client, CUSTOMER_PAYMENT_GL_POSTING_FLAG_KEY, {
     operating_company_id: input.operating_company_id,
-    payment_id: input.payment_id,
-    user_id: actor.user_id,
-    skip_context: { payment_id: input.payment_id },
+    user_uuid: actor.user_id,
   });
+  if (customerPaymentPostingEnabled) {
+    // ACCT-F165 — MUST be the in-client-tx poster, on the CALLER'S client.
+    //
+    // This called postSourceTransaction(), which opens its OWN pool connection and its OWN
+    // transaction. Every write above — applyToInvoice/applyToBill inserting
+    // accounting.payment_applications — happens on `client`, inside the caller's still-open
+    // transaction. From a second connection those rows are UNCOMMITTED and therefore INVISIBLE, so
+    // the poster looked at a payment with no visible applications, had nothing to post, and returned
+    // without writing a journal entry. No error, no skip audit — the receipt just stayed dark.
+    //
+    // The two sibling ROUTES (payments.routes.ts, customer-payments.routes.ts) already carry this
+    // exact fix and this exact explanation in their comments. This shared service was missed, and it
+    // is the path the office UI's payment-application action actually runs through — which is why
+    // the routes read as fixed while USMCA payments kept posting nothing.
+    //
+    // Passing `client` also makes the applications and their journal entry commit or roll back as ONE
+    // unit: there is no window where A/R has moved in the subledger and the GL has not.
+    await postSourceTransactionInClientTx(
+      client,
+      {
+        operating_company_id: input.operating_company_id,
+        source_transaction_type: "customer_payment",
+        source_transaction_id: input.payment_id,
+        posting_purpose: "initial_post",
+      },
+      { userId: actor.user_id }
+    );
+  } else {
+    // Flag OFF: the payment + applications above still stand, but the GL receipt JE is skipped.
+    // Record the skip append-only so this is never a silent success (verify-no-silent-noop-posting).
+    await recordPostingFlagSkip(client, actor.user_id, {
+      flagKey: CUSTOMER_PAYMENT_GL_POSTING_FLAG_KEY,
+      postingDomain: "customer_payment",
+      operatingCompanyId: input.operating_company_id,
+      context: { payment_id: input.payment_id },
+    });
+  }
 
   const refreshedPaymentRes = await client.query<{ amount_unapplied_cents: number }>(
     `SELECT amount_unapplied_cents::bigint AS amount_unapplied_cents FROM accounting.payments WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,

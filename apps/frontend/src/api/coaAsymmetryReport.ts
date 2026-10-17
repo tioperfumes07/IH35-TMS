@@ -8,7 +8,7 @@ export type CoaAsymmetryEntityCounts = {
 
 export type CoaAsymmetryTypeBreakdown = {
   account_type: string;
-  trk_only_postable: number;
+  count: number;
 };
 
 export type CoaAsymmetrySampleRow = {
@@ -26,14 +26,16 @@ export type CoaAsymmetryReport = {
   entity_codes: readonly string[];
   postable_by_entity: CoaAsymmetryEntityCounts[];
   diff_summary: {
-    trk_postable_absent_on_transp: number;
-    transp_postable_absent_on_trk: number;
+    active_only_postable: number;
+    frozen_absent_on_active: number;
   };
-  trk_only_postable_by_type: CoaAsymmetryTypeBreakdown[];
-  sample_trk_only_postable: CoaAsymmetrySampleRow[];
+  active_only_by_type: CoaAsymmetryTypeBreakdown[];
+  sample_active_only: CoaAsymmetrySampleRow[];
 };
 
 /** Read-only grouped diff — never mutates catalogs.accounts (Rule 19). */
-export function getCoaAsymmetryReport() {
-  return apiRequest<CoaAsymmetryReport>("/api/v1/accounting/coa-asymmetry-report");
+export function getCoaAsymmetryReport(operatingCompanyId: string) {
+  return apiRequest<CoaAsymmetryReport>(
+    `/api/v1/accounting/coa-asymmetry-report?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+  );
 }

@@ -49,6 +49,7 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
       />
     ) : (
     <ParityTable<UnitsWithoutLoad>
+      appearance="board"
       title={<span data-testid="dispatch-units-without-load-title">{title}</span>}
       storageKey="dispatch-units-without-load"
       rows={rows}

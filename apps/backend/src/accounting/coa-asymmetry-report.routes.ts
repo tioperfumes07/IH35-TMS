@@ -1,11 +1,12 @@
 // ACCT-CoA-ASYMMETRY — grouped diff report (READ-ONLY, owner-eyes).
 //
-// GET /api/v1/accounting/coa-asymmetry-report
+// GET /api/v1/accounting/coa-asymmetry-report?operating_company_id=<uuid>
 //
-// Returns postable counts + per-group presence for TRK / TRANSP / USMCA. NEVER writes.
+// Returns postable counts for the active entity + diff vs frozen entities. NEVER writes.
 
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { currentAuthUser } from "./shared.js";
 import { getCoaAsymmetryReport } from "./coa-asymmetry-report.service.js";
 
@@ -27,7 +28,14 @@ export async function registerCoaAsymmetryReportRoutes(app: FastifyInstance) {
         return reply.code(403).send({ error: "forbidden" });
       }
 
-      const report = await getCoaAsymmetryReport({ userId: user.uuid });
+      const query = req.query as Record<string, string>;
+      const operatingCompanyId = query.operating_company_id ?? "";
+      if (!operatingCompanyId) {
+        return reply.code(400).send({ error: "operating_company_id is required" });
+      }
+
+      await assertCompanyMembership(user.uuid, operatingCompanyId);
+      const report = await getCoaAsymmetryReport({ userId: user.uuid, operatingCompanyId });
       return reply.code(200).send(report);
     },
   );

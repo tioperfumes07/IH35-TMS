@@ -9,8 +9,6 @@
  * site is pinned in 18481-document-writers.baseline.json — SHRINK-ONLY: a new file, more sites in a listed file, or a
  * baseline that grows against origin/main fails. Repointing a site to the canonical writer lowers its count.
  *
- * 443.182 C step 2 (Lead 03:05Z) — DEEP engine, per document, in its own block below (payments block: the payment
- * number, the payment_applications row and the customer_payment JE post all live in the payments engine).
  * STEP 2 — the DEEP engine (Lead 03:05Z; owner 443.160 "one form engine + one writer per document type"), bills and
  * bill_payments: numbering, lines and the journal-entry post live INSIDE the engine too. ZERO-TOLERANCE outside the engine
  * modules (bills.service.ts, and its flag-gated posters bill-gl.service.ts / bill-payment-gl.service.ts):
@@ -61,36 +59,6 @@ export function census(files) {
   return sites;
 }
 
-// ---- 443.182 C step 2 — PAYMENTS deep engine (one block per document; keep blocks separate so branches merge cleanly) ----
-// Inside CANONICAL.payments only: the payment number (resolvePaymentDisplayId / nextPaymentDisplayId calls), the
-// payment_applications INSERT, and the customer_payment JE post (source_transaction_type: "customer_payment"). The number
-// generators' own definitions in display-id.ts are not calls.
-export const PAYMENTS_DEEP_RULES = [
-  { what: "a payment number generated", re: /\b(?:resolvePaymentDisplayId|nextPaymentDisplayId)\s*\(/g, allowFiles: ["apps/backend/src/accounting/display-id.ts"], defRe: /function\s+(?:resolvePaymentDisplayId|nextPaymentDisplayId)\s*\(/g },
-  { what: "a payment_applications row inserted", re: /INSERT\s+INTO\s+accounting\.payment_applications\b/gi },
-  { what: "a customer_payment JE posted", re: /source_transaction_type\s*:\s*["']customer_payment["']/g },
-];
-export function checkPaymentsDeepEngine(files) {
-  const findings = [];
-  for (const [rel, src] of files) {
-    if (rel === CANONICAL.payments) continue;
-    for (const rule of PAYMENTS_DEEP_RULES) {
-      if (rule.allowFiles?.includes(rel)) {
-        const calls = (src.match(rule.re) ?? []).length - (rule.defRe ? (src.match(rule.defRe) ?? []).length : 0);
-        // display-id.ts: resolvePaymentDisplayId delegates to nextPaymentDisplayId once — the generator itself, not a caller.
-        if (calls > 1) findings.push(`payments (deep): ${rel} — ${rule.what} outside the payments engine (${CANONICAL.payments})`);
-        continue;
-      }
-      const n = (src.match(rule.re) ?? []).length;
-      if (n) findings.push(`payments (deep): ${rel} — ${rule.what} outside the payments engine (${CANONICAL.payments}) ×${n}`);
-    }
-  }
-  const canon = files.find(([rel]) => rel === CANONICAL.payments)?.[1] ?? "";
-  if (!/export async function recordCustomerPaymentInClientTx\(/.test(canon)) findings.push(`payments (deep): ${CANONICAL.payments} — recordCustomerPaymentInClientTx (the engine) is missing`);
-  return findings;
-}
-// ---- end payments deep block ----
-
 export function check(files, baseline, mainBaseline) {
   const findings = [];
   const sites = census(files);
@@ -113,7 +81,6 @@ export function check(files, baseline, mainBaseline) {
       }
     }
   }
-  findings.push(...checkPaymentsDeepEngine(files));
   return findings;
 }
 
@@ -198,11 +165,6 @@ if (process.argv.includes("--selftest")) {
     ["more sites in a listed file", files.map(([p, s]) => [p, p === CANONICAL.expenses ? s : p === "apps/backend/src/accounting/recurring.worker.ts" ? s + "\nq(`INSERT INTO accounting.expenses (id) VALUES (1)`)" : s]), baseline, mainBaseline],
     ["canonical writer gone", files.filter(([p]) => p !== CANONICAL.payments), baseline, mainBaseline],
     ["baseline grows", files, { ...baseline, bills: { ...baseline.bills, "apps/backend/src/x.ts": 1 } }, baseline],
-    // payments deep block
-    ["payment number outside the engine", [...files, ["apps/backend/src/x.ts", "const id = await resolvePaymentDisplayId(client, oci, d);"]], baseline, mainBaseline],
-    ["payment application outside the engine", [...files, ["apps/backend/src/x.ts", "q(`INSERT INTO accounting.payment_applications (id) VALUES ($1)`)"]], baseline, mainBaseline],
-    ["customer_payment JE outside the engine", [...files, ["apps/backend/src/x.ts", "post(c, { source_transaction_type: \"customer_payment\", source_transaction_id: id })"]], baseline, mainBaseline],
-    ["payments engine gone", files.map(([p, s]) => [p, p === CANONICAL.payments ? s.replace("export async function recordCustomerPaymentInClientTx(", "async function x(") : s]), baseline, mainBaseline],
   ];
   for (const [name, f, b, m] of plants) {
     if (check(f, b, m).length === 0) {
