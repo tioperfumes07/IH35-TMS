@@ -27,7 +27,9 @@ const CHECKS = [
   },
   {
     name: "widget also renders item.detail as a distinguishing secondary line",
-    test: (text) => /item\.detail \? <span className="block truncate text-slate-400">\{item\.detail\}<\/span> : null/.test(text),
+    // Heavy CI peel (Lead 13:45Z): the rule is "detail renders as a secondary line", not its colour — the pinned
+    // text-slate-400 contradicted verify-safety-rev-filings-slate-leftover-chrome (house tokens only, BANK-F91196).
+    test: (text) => /item\.detail \? <span className="block truncate [^"]*">\{item\.detail\}<\/span> : null/.test(text),
   },
   {
     name: "due_date column is still rendered (not accidentally dropped while adding detail)",
@@ -57,7 +59,7 @@ if (process.argv.includes("--selftest")) {
     {
       name: "drop the detail line (regress to program-only)",
       text: source.replace(
-        /\{item\.detail \? <span className="block truncate text-slate-400">\{item\.detail\}<\/span> : null\}/,
+        /\{item\.detail \? <span className="block truncate [^"]*">\{item\.detail\}<\/span> : null\}/,
         ""
       ),
     },
