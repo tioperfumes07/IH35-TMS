@@ -6,6 +6,8 @@
  * gate and dated the JE `input.entry_date_iso`, which every delivery path fills with companyBusinessDate() at fire time
  * (dispatch/delivery-evidence-latch.ts:82). Prod: every latch earn dated the fire day (2026-10-16), 15 standing earns
  * on loads delivered 10-05..10-14.
+ * LEAD 443.192 (12:00Z): Event 2 (bill) the same — dated by its invoice's issue_date (never before the earn; closed period
+ * falls back), not the fire time (prod: every standing bill dated 2026-10-16, invoices issued 10-05..10-16).
  * --selftest plants each regression.
  */
 import { readFileSync } from "node:fs";
@@ -29,6 +31,11 @@ export function check(src = read(POSTER)) {
   if (/entryDate:\s*input\.entry_date_iso/.test(latch))
     p.push(`${POSTER}: the JE is dated by the caller's fire-time date again — use the evidence-resolved entryDate`);
   if (!/\n\s+entryDate,\n/.test(latch)) p.push(`${POSTER}: the latch JE must carry the resolved entryDate`);
+  const bill = src.match(/export async function resolveBillEntryDate\([\s\S]*?\n\}/)?.[0] ?? "";
+  if (!bill || !/i\.issue_date/.test(bill) || !/GREATEST\(/.test(bill) || !/closed_period_cutoff/.test(bill))
+    p.push(`${POSTER}: resolveBillEntryDate must date Event 2 by the invoice issue_date, never before the earn, closed period falls back`);
+  if (!/entryDate = await resolveBillEntryDate\(client, input\.operating_company_id, input\.load_id, invoiceId, input\.entry_date_iso\)/.test(latch))
+    p.push(`${POSTER}: the bill must be dated through resolveBillEntryDate(invoice)`);
   return p;
 }
 
@@ -44,6 +51,8 @@ if (isMain && process.argv.includes("--selftest")) {
     ["resolver call removed", base.replace("entryDate = await resolveEarnEntryDate(client, input.operating_company_id, evidenceAt, input.entry_date_iso)", "entryDate = input.entry_date_iso.slice(0, 10)")],
     ["manual authorization not used as evidence", base.replace("evidenceAt = authorizedAt", "evidenceAt = null")],
     ["UTC calendar day instead of company day", base.replace("AT TIME ZONE $3", "")],
+    ["bill dated by fire time", base.replace("entryDate = await resolveBillEntryDate(client, input.operating_company_id, input.load_id, invoiceId, input.entry_date_iso);", "")],
+    ["bill may precede the earn", base.replace("SELECT GREATEST(", "SELECT COALESCE(")],
   ];
   for (const [n, src] of plants) {
     if (src === base) {
@@ -64,5 +73,5 @@ if (isMain) {
     console.error(`verify-revenue-earn-dated-by-evidence: FAIL —\n  ${p.join("\n  ")}`);
     process.exit(1);
   }
-  console.log("verify-revenue-earn-dated-by-evidence: OK — revrec earn is dated by its delivery evidence (company business date).");
+  console.log("verify-revenue-earn-dated-by-evidence: OK — revrec earn is dated by its delivery evidence (company business date); the bill by its invoice issue date.");
 }

@@ -509,6 +509,42 @@ export async function resolveEarnEntryDate(
   return evidenceDate;
 }
 
+/**
+ * LEAD 443.192 (12:00Z) — EVENT 2 IS DATED BY ITS INVOICE, NEVER BY WHEN THE CODE RAN.
+ *
+ * Event 2 (Dr A/R / Cr Unbilled) IS the invoice's A/R: it is gated on an issued invoice and its A/R line names that invoice.
+ * It used to be dated with the caller's fire-time date like Event 1 was — every standing bill on prod sat on 2026-10-16
+ * while its invoice was issued 10-05..10-16. The bill now takes the invoice's issue_date (company calendar date), never
+ * before the load's standing earn (Unbilled cannot be relieved before it is raised), with the same closed-period fallback as
+ * resolveEarnEntryDate. No invoice date → the caller's date stands.
+ */
+export async function resolveBillEntryDate(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string,
+  invoiceId: string | null,
+  fallbackDateIso: string
+): Promise<string> {
+  const fallback = fallbackDateIso.slice(0, 10);
+  if (!invoiceId) return fallback;
+  const res = await client.query<{ bill_date: string | null; closed_through: string | null }>(
+    `SELECT GREATEST(
+              (SELECT i.issue_date FROM accounting.invoices i WHERE i.id = $3::uuid AND i.operating_company_id = $1::uuid),
+              (SELECT max(je.entry_date) FROM accounting.load_revenue_recognition_postings p
+                 JOIN accounting.journal_entries je ON je.id = p.journal_entry_id
+                WHERE p.operating_company_id = $1::uuid AND p.load_id = $2::uuid AND p.event = 'earn' AND p.is_active
+                  AND ${STANDING_LATCH_JE_PREDICATE})
+            )::text AS bill_date,
+            accounting.closed_period_cutoff($1::uuid)::text AS closed_through`,
+    [operatingCompanyId, loadId, invoiceId]
+  );
+  const billDate = res.rows[0]?.bill_date ?? null;
+  if (!billDate) return fallback;
+  const closedThrough = res.rows[0]?.closed_through ?? null;
+  if (closedThrough && billDate <= closedThrough) return fallback;
+  return billDate;
+}
+
 function resolveEvent(targetStatus: string): RevrecEvent | null {
   // Dispatch machine uses delivered_pending_docs (not a separate "delivered") for earn.
   if (targetStatus === "delivered" || targetStatus === "delivered_pending_docs") return "earn";
@@ -634,6 +670,8 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
         [input.load_id, input.operating_company_id]
       );
       invoiceId = invoiceRes.rows[0]?.id ?? null;
+      // LEAD 443.192 — the bill is dated by its invoice's issue date (never before the earn), not by the fire time.
+      entryDate = await resolveBillEntryDate(client, input.operating_company_id, input.load_id, invoiceId, input.entry_date_iso);
     }
     // RULING 443.70 S5 (live acceptance run, fork 2026-10-11): the bill's A/R line used to be written with NO source and
     // stamped after insert (afterInsertBeforeCommit) — but the one posting-line writer refuses an unsourced line AT INSERT
