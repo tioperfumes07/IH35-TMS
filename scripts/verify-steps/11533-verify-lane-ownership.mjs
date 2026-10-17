@@ -9,6 +9,8 @@
 export default {
   name: "verify-lane-ownership",
   async run(ctx) {
+    // LEAD 14:30Z: the selftest proves a SURFACE-BREACH-AUTHORIZED line authorizes only the owning seat's files.
+    await ctx.run("node", ["scripts/verify-lane-ownership.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-lane-ownership.mjs"]);
   },
 };
