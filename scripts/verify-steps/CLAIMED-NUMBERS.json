@@ -16657,5 +16657,10 @@
     "claimed_at": "2026-10-17",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.185: verify-fuel-duplicate-base-invoice-one-rule (G12: every fuel importer counts a base-invoice duplicate through findLiveFuelByProviderTransactionId)"
+  },
+  "18549": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.186: verify-expense-line-writers-complete (WO line account from its item; lumper split line carries its item; seeded/Creator line carries the load's driver + unit)"
   }
 }
