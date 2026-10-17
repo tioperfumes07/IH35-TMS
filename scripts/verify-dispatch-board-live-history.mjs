@@ -23,11 +23,20 @@ function runChecks(rootDir) {
   const dispatchPage = readFileSync(join(rootDir, "apps/frontend/src/pages/Dispatch.tsx"), "utf8");
   const loadsRoutes = readFileSync(join(rootDir, "apps/backend/src/mdata/loads.routes.ts"), "utf8");
   const dispatchBoard = readFileSync(join(rootDir, "apps/frontend/src/pages/dispatch/DispatchBoard.tsx"), "utf8");
+  // 52699c6c2f (443.182-A catalog one-source, #26871) moved listLoads' query building into api/catalog-loads.ts
+  // (loads.ts re-exports it); 50bb604dc9 (TRUCKLINE-16, #23316) made board_scope=live an ALLOW-list
+  // (canonicalDispatchWorkStatusClause over DISPATCH_WORK_LOAD_STATUSES). Same rules, read where they live now.
+  const catalogLoads = readFileSync(join(rootDir, "apps/frontend/src/api/catalog-loads.ts"), "utf8");
+  const activeSet = readFileSync(join(rootDir, "apps/backend/src/dispatch/canonical-active-load-set.ts"), "utf8");
+  const listOf = (src, name) => {
+    const m = src.match(new RegExp(`const ${name} = \\[([\\s\\S]*?)\\]`));
+    return m ? [...m[1].matchAll(/"([a-z_]+)"/g)].map((x) => x[1]) : null;
+  };
 
   if (!loadsApi.includes('board_scope?: "live" | "history"')) {
     errors.push("LoadsListFilters must declare board_scope live|history");
   }
-  if (!loadsApi.includes('query.set("board_scope", filters.board_scope)')) {
+  if (!loadsApi.includes('query.set("board_scope", filters.board_scope)') && !catalogLoads.includes('query.set("board_scope", filters.board_scope)')) {
     errors.push("listLoads must pass board_scope query param");
   }
 
@@ -64,7 +73,13 @@ function runChecks(rootDir) {
     // (closed/cancelled/abandoned/walkoff/no-show) — a load stays LIVE until it is closed.
     errors.push("loads list must define CLOSED_LOAD_STATUSES for board_scope filtering");
   }
-  if (!loadsRoutes.includes("NOT (l.status = ANY")) {
+  // Either the old exclusion, or the TRUCKLINE-16 allow-list on the live branch that shares NO status with the closed cohort.
+  const closed = listOf(loadsRoutes, "CLOSED_LOAD_STATUSES");
+  const work = listOf(activeSet, "DISPATCH_WORK_LOAD_STATUSES");
+  const liveBranchUsesWorkSet = /board_scope === "live"\)\s*\{[\s\S]{0,1200}canonicalDispatchWorkStatusClause\("l"\)/.test(loadsRoutes)
+    && /canonicalDispatchWorkStatusClause[\s\S]{0,120}DISPATCH_WORK_LOAD_STATUSES/.test(activeSet);
+  const allowListExcludesClosed = Boolean(closed?.length && work?.length) && closed.every((st) => !work.includes(st));
+  if (!loadsRoutes.includes("NOT (l.status = ANY") && !(liveBranchUsesWorkSet && allowListExcludesClosed)) {
     errors.push("board_scope=live must exclude the closed cohort when no explicit status filter");
   }
 
@@ -102,7 +117,9 @@ function selftest() {
     );
     for (const rel of [
       "apps/frontend/src/api/loads.ts",
+      "apps/frontend/src/api/catalog-loads.ts",
       "apps/backend/src/mdata/loads.routes.ts",
+      "apps/backend/src/dispatch/canonical-active-load-set.ts",
       "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
     ]) {
       const tmpAbs = join(tmp, rel);
@@ -115,6 +132,22 @@ function selftest() {
     const planted = runChecks(tmp);
     if (!planted.some((e) => e.includes("force list view"))) {
       console.error(`${LABEL} SELFTEST FAIL — planted history/list regression not caught`);
+      process.exit(1);
+    }
+    // 443.187 plants: a closed status leaking into the live allow-list, and listLoads dropping board_scope.
+    const tmpActive = join(tmp, "apps/backend/src/dispatch/canonical-active-load-set.ts");
+    const goodActive = read("apps/backend/src/dispatch/canonical-active-load-set.ts");
+    writeFileSync(tmpActive, goodActive.replace('export const DISPATCH_WORK_LOAD_STATUSES = [\n  "booked",', 'export const DISPATCH_WORK_LOAD_STATUSES = [\n  "cancelled",\n  "booked",'));
+    writeFileSync(tmpPoisonAbs, read("apps/frontend/src/pages/Dispatch.tsx"));
+    if (!runChecks(tmp).some((e) => e.includes("closed cohort"))) {
+      console.error(`${LABEL} SELFTEST FAIL — a closed status in the live allow-list was not caught`);
+      process.exit(1);
+    }
+    writeFileSync(tmpActive, goodActive);
+    const tmpCatalog = join(tmp, "apps/frontend/src/api/catalog-loads.ts");
+    writeFileSync(tmpCatalog, read("apps/frontend/src/api/catalog-loads.ts").replace('query.set("board_scope", filters.board_scope)', "void 0"));
+    if (!runChecks(tmp).some((e) => e.includes("board_scope query param"))) {
+      console.error(`${LABEL} SELFTEST FAIL — listLoads dropping board_scope was not caught`);
       process.exit(1);
     }
     console.log(`${LABEL} SELFTEST PASS`);

@@ -54,7 +54,11 @@ function assertLive() {
   if (!/aria-label=\{`Book Southbound return for \$\{t\.unit_number/.test(trip)) {
     problems.push("S36 open-return action is not an accessible button");
   }
-  if (!/onClick=\{\(\) => setBookUnitId\(t\.unit_id\)\}/.test(trip)) {
+  // 8741a67708 (GO-05 WAVE1, raw table -> ParityTable, #19364): the open-return button lives in buildTripPairingColumns
+  // and calls onBookReturn(t.unit_id), with setBookUnitId passed as onBookReturn — same rule (opens Book Load for the unit).
+  const directOpen = /onClick=\{\(\) => setBookUnitId\(t\.unit_id\)\}/.test(trip);
+  const columnOpen = /onClick=\{\(\) => onBookReturn\(t\.unit_id\)\}/.test(trip) && /buildTripPairingColumns\(setBookUnitId\b/.test(trip);
+  if (!directOpen && !columnOpen) {
     problems.push("S36 open-return action does not open Book Load for the tour unit");
   }
   if (!/tours\.find\(\(tour\) => tour\.unit_id === bookUnitId\)\?\.driver_id/.test(trip)) {
@@ -74,7 +78,7 @@ if (SELFTEST) {
   const orig = fs.readFileSync(pagePath, "utf8");
   fs.writeFileSync(
     pagePath,
-    orig.replace(/onClick=\{\(\) => setBookUnitId\(t\.unit_id\)\}/, 'data-noop="open-return"'),
+    orig.replace(/onClick=\{\(\) => (?:setBookUnitId|onBookReturn)\(t\.unit_id\)\}/, 'data-noop="open-return"'),
   );
   try {
     if (!assertLive().length) {

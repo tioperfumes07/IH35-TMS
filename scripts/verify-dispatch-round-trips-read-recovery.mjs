@@ -10,7 +10,9 @@ const LABEL = "verify-dispatch-round-trips-read-recovery";
 export function audit(source = readFileSync(join(ROOT, FILE), "utf8")) {
   const problems = [];
   if (!/pairingReadFailed\s*=\s*preSettlementsQuery\.isError \|\| idleUnitsQuery\.isError/.test(source)) problems.push("both pairing feeds must fail closed");
-  if (!/if \(pairingReadFailed\)[\s\S]{0,1200}Round-trip pairing unavailable/.test(source)) problems.push("pairing failure must render before honest empty");
+  // bfcf2f3051 (DSP-F23037, #21790): the Timeline view stays reachable when a pairing feed fails (it paints assigned
+  // loads, not pairings); the PAIRING board stays fail-closed — same rule, gated to the pairing view.
+  if (!/if \(pairingReadFailed(?: && boardView !== "timeline")?\)[\s\S]{0,1200}Round-trip pairing unavailable/.test(source)) problems.push("pairing failure must render before honest empty");
   if (!/preSettlementsQuery\.isError\) void preSettlementsQuery\.refetch\(\)/.test(source)) problems.push("pre-settlement failure lacks exact retry");
   if (!/idleUnitsQuery\.isError\) void idleUnitsQuery\.refetch\(\)/.test(source)) problems.push("idle-unit failure lacks exact retry");
   if (!/Existing loads were not treated as an honest empty pairing/.test(source)) problems.push("failure truth is not explicit");
@@ -31,6 +33,9 @@ pairs.length === 0 ? <div>No open tours. A tour opens when a northbound load is 
     good.replace("No open tours. A tour opens when a northbound load is booked from the yard.", "No rows"),
   ];
   const failures = [];
+  const timelineGood = good.replace("if (pairingReadFailed)", 'if (pairingReadFailed && boardView !== "timeline")');
+  if (audit(timelineGood).length) failures.push(`timeline-exempt fixture rejected: ${audit(timelineGood).join(" | ")}`);
+  if (!audit(good.replace("if (pairingReadFailed)", "if (pairingReadFailed && false)")).length) failures.push("a disabled failure gate escaped");
   if (audit(good).length) failures.push(`good fixture rejected: ${audit(good).join(" | ")}`);
   mutations.forEach((mutation, index) => { if (!audit(mutation).length) failures.push(`mutation ${index + 1} escaped`); });
   if (failures.length) {

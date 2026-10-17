@@ -5,6 +5,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { validateLoadStopStatusWrite } from "../dispatch/load-state-machine.js";
+import { writeLoadStatusFromStopEventInClientTx } from "../dispatch/load-transition.service.js";
 import { requireDriverSession } from "./auth.js";
 // ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
@@ -560,16 +561,18 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
       if (!arrivalUpdate.rows[0]?.id) return { error: "arrival_already_recorded" as const };
 
-      const loadUpdate = await client.query(
-        `UPDATE mdata.loads
-         SET status = $2
-         WHERE id = $1
-           AND operating_company_id = $3::uuid
-           AND status::text = $4
-         RETURNING id`,
-        [params.data.id, nextLoadStatus, stop.operating_company_id, stop.load_status]
-      );
-      if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };
+      // LEAD 443.184 — the load status moves through the one status module (load-transition.service.ts).
+      const statusWrite = await writeLoadStatusFromStopEventInClientTx(client as never, {
+        actorUserId: req.user!.uuid,
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.id,
+        fromMdataStatus: stop.load_status,
+        toMdataStatus: nextLoadStatus,
+        stopId: String(params.data.stopId),
+        event: "arrival",
+        source: "driver_app",
+      });
+      if (!statusWrite.ok) return { error: "load_transition_conflict" as const };
 
       const pickupMint = await mintProformaInvoiceOnFirstPickup(client, {
         operatingCompanyId: stop.operating_company_id,
@@ -693,16 +696,18 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
       if (!departureUpdate.rows[0]?.id) return { error: "departure_already_recorded" as const };
 
-      const loadUpdate = await client.query(
-        `UPDATE mdata.loads
-         SET status = $2
-         WHERE id = $1
-           AND operating_company_id = $3::uuid
-           AND status::text = $4
-         RETURNING id`,
-        [params.data.id, nextLoadStatus, stop.operating_company_id, stop.load_status]
-      );
-      if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };
+      // LEAD 443.184 — the load status moves through the one status module (load-transition.service.ts).
+      const statusWrite = await writeLoadStatusFromStopEventInClientTx(client as never, {
+        actorUserId: req.user!.uuid,
+        operatingCompanyId: stop.operating_company_id,
+        loadId: params.data.id,
+        fromMdataStatus: stop.load_status,
+        toMdataStatus: nextLoadStatus,
+        stopId: String(params.data.stopId),
+        event: "departure",
+        source: "driver_app",
+      });
+      if (!statusWrite.ok) return { error: "load_transition_conflict" as const };
 
       // CLS-DISP-WIRE-07 — latch revenue on the DRIVER's delivery departure, not only the office
       // transition. No-op unless nextLoadStatus is a delivery-evidence status, and it can only be

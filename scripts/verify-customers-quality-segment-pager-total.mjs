@@ -12,11 +12,14 @@ const FILE = "apps/frontend/src/pages/Customers.tsx";
 function inspect(source) {
   const failures = [];
 
-  if (
-    !/const customersServerTotal =\s*\n\s*qualitySegment !== "all"\s*\n\s*\? customerTabCounts\[qualitySegment\]/.test(
-      source
-    )
-  ) {
+  // 443.187 repoint — 584f51c792 (#23495) put a "with_transactions" tab branch ahead of the quality-segment check. Same rule:
+  // inside the customersServerTotal expression, qualitySegment !== "all" ? customerTabCounts[qualitySegment] must come BEFORE
+  // the first listStatus branch (earlier tab branches are allowed).
+  const at = source.indexOf("const customersServerTotal =");
+  const expr = at < 0 ? "" : source.slice(at, source.indexOf(";", at));
+  const segAt = expr.search(/qualitySegment !== "all"\s*\n\s*\? customerTabCounts\[qualitySegment\]/);
+  const statusAt = expr.search(/listStatus ===/);
+  if (segAt < 0 || (statusAt >= 0 && statusAt < segAt)) {
     failures.push("customersServerTotal does not check qualitySegment before falling into the listStatus branches");
   }
 
@@ -30,10 +33,8 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-customers-quality-segment-pager-total --selftest FAILED: real source itself fails:", realFailures);
     process.exit(1);
   }
-  const mutated = real.replace(
-    'const customersServerTotal =\n    qualitySegment !== "all"\n      ? customerTabCounts[qualitySegment]\n      : listStatus === "inactive"',
-    'const customersServerTotal =\n    listStatus === "inactive"'
-  );
+  // drop the quality-segment branch so the expression falls straight into the listStatus branches
+  const mutated = real.replace(/: qualitySegment !== "all"\s*\n\s*\? customerTabCounts\[qualitySegment\]\s*\n\s*/, ": ");
   if (mutated === real) {
     console.error("verify-customers-quality-segment-pager-total --selftest: mutation did not match live source — update the test");
     process.exit(1);

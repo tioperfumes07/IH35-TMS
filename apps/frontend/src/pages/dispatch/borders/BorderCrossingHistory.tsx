@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -146,7 +147,7 @@ export function BorderCrossingHistory() {
         <ListErrorState
           title="Couldn't load border crossings"
           status={0}
-          message={(error as Error)?.message}
+          message={userFacingApiError(error, "Couldn't load border crossings")}
           onRetry={() => void refetch()}
         />
       ) : (
