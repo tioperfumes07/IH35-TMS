@@ -8,7 +8,7 @@
 // A purchase is sent only when EVERY line's load carries its BOL, POD and rate confirmation (409 with the per-load list).
 // Nothing here touches the GL or the purchase row: sending is evidence of transmission, not an accounting event.
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { withCompanyScope } from "../accounting/shared.js";
+import { withCompanyScope } from "../accounting/db-scope.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import type { EmailAttachment } from "../email/provider.js";

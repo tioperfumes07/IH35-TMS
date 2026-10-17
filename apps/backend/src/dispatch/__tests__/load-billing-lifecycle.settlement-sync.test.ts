@@ -5,7 +5,8 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 // than mocking syncLoadStatusToBilling itself (same-module functions aren't independently mockable
 // without module-boundary tricks, and this seam is the real one production code goes through).
 const queryMock = vi.fn();
-vi.mock("../../accounting/shared.js", () => ({
+// 443.191: the service under test takes withCompanyScope from accounting/db-scope.js (non-HTTP half of shared.ts).
+vi.mock("../../accounting/db-scope.js", () => ({
   withCompanyScope: vi.fn(async (_actorUserId: string, _opco: string, fn: (client: unknown) => unknown) =>
     fn({ query: queryMock })
   ),

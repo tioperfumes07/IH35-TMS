@@ -78,7 +78,7 @@ const FUEL_GPS_ROUTE = join(BACKEND_SRC, "safety/fuel-gps-match.routes.ts");
 // silently lose their assert either. Paths are relative to apps/backend/src.
 const REQUIRED_MEMBERSHIP_ASSERT_FILES = [
   // Canonical reference wrappers (already correct — kept here to prevent regression)
-  "accounting/shared.ts",
+  "accounting/db-scope.ts", // 443.191: withCompanyScope's one definition (accounting/shared.ts re-exports it)
   "banking/shared.ts",
   // --- Pass 1 (#1784 fix/cross-tenant-membership-assert): audited high-risk
   //     tenant-scope wrappers hardened in the first sweep.

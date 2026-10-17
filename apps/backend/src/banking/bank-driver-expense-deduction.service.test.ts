@@ -39,7 +39,8 @@ const h = vi.hoisted(() => {
 });
 const { state, updateCalls, chargeBucket, getOrCreateBucket, createSettlementDeduction } = h;
 
-vi.mock("../accounting/shared.js", () => ({
+// 443.191: the service under test takes withCompanyScope from accounting/db-scope.js (non-HTTP half of shared.ts).
+vi.mock("../accounting/db-scope.js", () => ({
   withCompanyScope: async (_u: string, _c: string, cb: (client: unknown) => unknown) => cb(h.mockClient),
 }));
 vi.mock("../lib/feature-flags/service.js", () => ({

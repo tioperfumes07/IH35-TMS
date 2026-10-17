@@ -8,7 +8,7 @@ import { readLoadAttribution, reconcileExpenseWithLoad, type ExpenseAttribution 
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
-import { withCompanyScope } from "../accounting/shared.js";
+import { withCompanyScope } from "../accounting/db-scope.js";
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
 import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
 import { generateExpenseNumber, insertExpenseLoadLink } from "../expense-attribution/expense-number.js";

@@ -19,7 +19,7 @@ import {
   InvoiceOnRollingLoadNeedsAuthorizationError,
   type InvoiceLineGuardRow,
 } from "./invoice-linkage-guards.js";
-import { recomputeInvoiceTotals } from "./shared.js";
+import { recomputeInvoiceTotals } from "./db-scope.js";
 import { finalActiveDeliveryDepartureAt, fireRevrecLatchOnInvoiceIssued } from "./revrec-delivery-posting/poster.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { assertSubjectMayCloseOnClient } from "../driver-finance/feed-gate/feed-gate.service.js";

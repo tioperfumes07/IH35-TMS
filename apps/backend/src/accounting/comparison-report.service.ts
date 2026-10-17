@@ -1,4 +1,4 @@
-import { withCompanyScope } from "./shared.js";
+import { withCompanyScope } from "./db-scope.js";
 import { getProfitLossReport, type ProfitLossLine, type ProfitLossReport } from "./profit-loss.service.js";
 import { getBalanceSheetReport, type BalanceSheetLine, type BalanceSheetReport } from "./balance-sheet.service.js";
 import { transformBalanceSheetToCashBasis } from "./cash-basis/report-transforms.js";

@@ -5,7 +5,7 @@
 import { resolveInvoiceDisplayId } from "./display-id.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { chargeLineType, planInvoiceChargeLines, resolveInvoiceLineItemId, type LoadChargeLineRow, type PlannedInvoiceLine } from "./invoice-charge-lines.js";
-import { recomputeInvoiceTotals } from "./shared.js";
+import { recomputeInvoiceTotals } from "./db-scope.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";

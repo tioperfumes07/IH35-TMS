@@ -43,7 +43,7 @@
 // FAIL-CLOSED on any unresolved / cross-entity / non-postable account, missing bank ledger bridge, or a
 // zero amount. Idempotent: a row already stamped matched_journal_entry_id returns already_posted.
 
-import { withCompanyScope } from "../accounting/shared.js";
+import { withCompanyScope } from "../accounting/db-scope.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import {
   resolveAccountForCategory,
