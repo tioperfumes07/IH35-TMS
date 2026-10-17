@@ -16,7 +16,7 @@ function lineKind(line: CounterpartyStatementLine): Parameters<typeof resolveEnt
   const kind = line.link_kind as Parameters<typeof resolveEntityRoute>[0];
   return line.link_id && resolveEntityRoute(kind, line.link_id) ? kind : null;
 }
-import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { formatUsdCents } from "../../lib/money";
@@ -145,6 +145,73 @@ const expenseColumns: Array<ParityColumn<ExpenseRow>> = [
  * /customers/:id/statement · /vendors/:id/statement pages it already served — one read model, one
  * rendering, never a second statement view that could drift from this one on what "balanced" means.
  */
+type StatementRow = {
+  key: string;
+  kind: "opening" | "line" | "empty";
+  line: CounterpartyStatementLine | null;
+  date: string;
+  running_balance_cents: number;
+};
+
+const statementColumns: ParityColumn<StatementRow>[] = [
+  {
+    key: "date",
+    label: "Date",
+    render: (r) => (r.kind === "line" ? mmmDd(r.date) : ""),
+  },
+  { key: "type", label: "Type", sortValue: (r) => (r.line ? typeLabel(r.line.type) : ""), render: (r) => (r.line ? typeLabel(r.line.type) : "") },
+  { key: "reference", label: "Reference", sortValue: (r) => r.line?.reference ?? "", render: (r) => (r.line ? r.line.reference || "—" : "") },
+  {
+    key: "description",
+    label: "Description",
+    allowWrap: true,
+    sortValue: (r) => r.line?.description ?? "",
+    render: (r) =>
+      r.kind === "opening" ? (
+        <span className="font-semibold">Opening balance ({mmmDd(r.date)})</span>
+      ) : r.kind === "empty" ? (
+        <span className="text-gray-500">No activity in this period</span>
+      ) : (
+        r.line!.description
+      ),
+  },
+  {
+    key: "debit_cents",
+    label: "Charge",
+    kind: "money",
+    sortValue: (r) => r.line?.debit_cents ?? 0,
+    render: (r) => {
+      const line = r.line;
+      if (!line) return "";
+      return line.debit_cents > 0 ? (lineKind(line) ? <EntityLink kind={lineKind(line)!} id={line.link_id} label={money(line.debit_cents)} /> : money(line.debit_cents)) : "—";
+    },
+  },
+  {
+    key: "credit_cents",
+    label: "Payment/Credit",
+    kind: "money",
+    sortValue: (r) => r.line?.credit_cents ?? 0,
+    render: (r) => {
+      const line = r.line;
+      if (!line) return "";
+      return line.credit_cents > 0 ? (lineKind(line) ? <EntityLink kind={lineKind(line)!} id={line.link_id} label={money(line.credit_cents)} /> : money(line.credit_cents)) : "—";
+    },
+  },
+  {
+    key: "running_balance_cents",
+    label: "Balance",
+    kind: "money",
+    render: (r) =>
+      r.kind === "opening" ? (
+        <MoneyCell cents={r.running_balance_cents} format={money} drill={{ none: "Opening balance of this statement: everything before the first line listed below" }} />
+      ) : r.kind === "empty" ? (
+        ""
+      ) : (
+        <MoneyCell cents={r.running_balance_cents} format={money} drill={{ none: "Running balance: opening plus every line up to this one, each of which opens its document" }} />
+      ),
+  },
+];
+
 export function CounterpartyStatementView({
   kind,
   counterpartyId: counterpartyIdProp,
@@ -193,6 +260,24 @@ export function CounterpartyStatementView({
     kind === "customer"
       ? `/api/v1/accounting/customers/${encodeURIComponent(counterpartyId)}/statement.html?operating_company_id=${encodeURIComponent(companyId)}&from_date=${appliedFilters.start}&to_date=${appliedFilters.end}`
       : `/api/v1/accounting/vendors/${encodeURIComponent(counterpartyId)}/statement.html?operating_company_id=${encodeURIComponent(companyId)}&from_date=${appliedFilters.start}&to_date=${appliedFilters.end}`;
+
+  // LEAD 443.181 — the statement ledger on ParityTable. The opening balance stays a (computed, un-linked) first
+  // row, each line keeps its EntityLink on the charge / credit figure (so the row opens its document), and the
+  // closing balance moves to the footer. Running balance is the server figure per line — no math here.
+  const statementRows: StatementRow[] = query.data
+    ? [
+        { key: "opening", kind: "opening", line: null, date: query.data.from_date, running_balance_cents: query.data.opening_balance_cents },
+        ...(query.data.lines.length === 0
+          ? [{ key: "no-activity", kind: "empty" as const, line: null, date: "", running_balance_cents: 0 }]
+          : query.data.lines.map((line, idx) => ({
+              key: `${line.link_kind}-${line.link_id}-${idx}`,
+              kind: "line" as const,
+              line,
+              date: line.date,
+              running_balance_cents: line.running_balance_cents,
+            }))),
+      ]
+    : [];
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -265,54 +350,21 @@ export function CounterpartyStatementView({
       </div>
 
       {query.data ? (
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-full text-left text-xs">
-            <thead className="border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-600">
-              <tr>
-                <th className="px-3 py-2">Date</th>
-                <th className="px-3 py-2">Type</th>
-                <th className="px-3 py-2">Reference</th>
-                <th className="px-3 py-2">Description</th>
-                <th className="px-3 py-2 text-right">Charge</th>
-                <th className="px-3 py-2 text-right">Payment/Credit</th>
-                <th className="px-3 py-2 text-right">Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-gray-100 bg-[#F7F8FA] font-semibold">
-                <td className="px-3 py-2" colSpan={6}>
-                  Opening balance ({mmmDd(query.data.from_date)})
-                </td>
-                <td className="px-3 py-2"><MoneyCell cents={query.data.opening_balance_cents} format={money} drill={{ none: "Opening balance of this statement: everything before the first line listed below" }} /></td>
-              </tr>
-              {query.data.lines.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-3 py-4 text-gray-500">
-                    No activity in this period
-                  </td>
-                </tr>
-              ) : (
-                query.data.lines.map((line, idx) => (
-                  <tr key={`${line.link_kind}-${line.link_id}-${idx}`} className="border-b border-gray-100">
-                    <td className="px-3 py-2">{mmmDd(line.date)}</td>
-                    <td className="px-3 py-2">{typeLabel(line.type)}</td>
-                    <td className="px-3 py-2">{line.reference || "—"}</td>
-                    <td className="px-3 py-2">{line.description}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{line.debit_cents > 0 ? (lineKind(line) ? <EntityLink kind={lineKind(line)!} id={line.link_id} label={money(line.debit_cents)} /> : money(line.debit_cents)) : "—"}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{line.credit_cents > 0 ? (lineKind(line) ? <EntityLink kind={lineKind(line)!} id={line.link_id} label={money(line.credit_cents)} /> : money(line.credit_cents)) : "—"}</td>
-                    <td className="px-3 py-2"><MoneyCell cents={line.running_balance_cents} format={money} drill={{ none: "Running balance: opening plus every line up to this one, each of which opens its document" }} /></td>
-                  </tr>
-                ))
-              )}
-              <tr className="bg-[#F7F8FA] font-semibold">
-                <td className="px-3 py-2" colSpan={6}>
-                  Closing balance ({mmmDd(query.data.to_date)})
-                </td>
-                <td className="px-3 py-2"><MoneyCell cents={query.data.closing_balance_cents} format={money} drill={{ none: "Closing balance of this statement: opening plus the lines listed above" }} /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={statementRows}
+          columns={statementColumns}
+          rowKey={(r) => r.key}
+          storageKey="ih35.reports.counterparty-statement.ledger.v1"
+          emptyText="No activity in this period"
+          pageSize={ALL_PAGE_SIZE}
+          hidePager
+          suppressToolbarSearch
+          suppressToolbarRange
+          footerCells={{
+            description: `Closing balance (${mmmDd(query.data.to_date)})`,
+            running_balance_cents: <MoneyCell cents={query.data.closing_balance_cents} format={money} drill={{ none: "Closing balance of this statement: opening plus the lines listed above" }} />,
+          }}
+        />
       ) : query.isLoading ? (
         <p className="text-xs text-gray-500">Loading…</p>
       ) : null}
