@@ -456,6 +456,29 @@ function isParityTableInteractiveTarget(target: EventTarget | null): boolean {
   return target instanceof Element && Boolean(target.closest(ROW_CLICK_INTERACTIVE_SELECTOR));
 }
 
+/** Master-data routes (who / what), as opposed to transactions (what happened). */
+const ROW_MASTER_DATA_HREF_RE = /^\/(customers|vendors|drivers|units|trailers|equipment|fleet|mdata|employees|lists)\b/;
+
+/**
+ * LEAD 443.180 (owner 2026-10-16 19:49 CT: "the entire app must be like quickbooks, clickable and must take you
+ * somewhere … in purchase report i am clicking on a purchase, and it is not taking me to that purchase … the entire app
+ * is designed in this format"). QuickBooks opens a transaction from a click ANYWHERE on its row, not only on the
+ * underlined number. A row with no onRowClick / expandOnRowClick now opens its own record: the first link in the row
+ * that points at a transaction, else the row's first link (a customer list's row opens that customer). Clicks on links,
+ * buttons, inputs and checkboxes keep their own behaviour, and a drag that selects text never navigates.
+ */
+export function openParityRowPrimaryLink(rowEl: Element, target: EventTarget | null): boolean {
+  if (isParityTableInteractiveTarget(target)) return false;
+  const sel = typeof window !== "undefined" ? window.getSelection?.() : null;
+  if (sel && String(sel).trim().length > 0) return false;
+  const anchors = Array.from(rowEl.querySelectorAll<HTMLAnchorElement>("a[href]"));
+  if (anchors.length === 0) return false;
+  const primary =
+    anchors.find((a) => !ROW_MASTER_DATA_HREF_RE.test(a.getAttribute("href") ?? "")) ?? anchors[0]!;
+  primary.click();
+  return true;
+}
+
 const DENSITY_LABEL: Record<ParityDensity, string> = {
   regular: "Regular",
   compact: "Compact",
@@ -1366,7 +1389,7 @@ export function ParityTable<T>({
       <tr
         data-testid={rowTestId ? rowTestId(row) : undefined}
         className={`border-t ${QBO_SURFACE_CLASS.rowHover} ${
-          onRowClick || (expandOnRowClick && renderExpanded) ? "cursor-pointer" : ""
+          onRowClick || (expandOnRowClick && renderExpanded) ? "cursor-pointer" : "[&:has(a[href])]:cursor-pointer"
         } ${rowClassName ? rowClassName(row) : ""}`}
         data-c04-row="true"
         style={{
@@ -1381,7 +1404,9 @@ export function ParityTable<T>({
         } : (expandOnRowClick && renderExpanded) ? (event) => {
           if (isParityTableInteractiveTarget(event.target)) return;
           toggleExpanded(id);
-        } : undefined}
+        } : (event) => {
+          openParityRowPrimaryLink(event.currentTarget, event.target);
+        }}
         onContextMenu={onRowContextMenu ? (event) => onRowContextMenu(row, event) : undefined}
       >
         {renderExpanded ? (

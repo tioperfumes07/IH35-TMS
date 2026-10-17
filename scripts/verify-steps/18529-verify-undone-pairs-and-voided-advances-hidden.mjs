@@ -10,6 +10,8 @@
  *  4. A factoring purchase link opens the purchase itself in the edit form ("click on it … take me to that purchase").
  *  5. A non-Plaid account with no bank lines (Faro reserves / factoring) reads its tile balance from its posted ledger,
  *     not a structural $0 (Banking tiles read $0.00 while Faro Escrow held $2,634.76).
+ *  6. LEAD 443.180 — a click anywhere on a ParityTable row opens that row's record (transaction link first), app-wide
+ *     ("the entire app must be like quickbooks, clickable and must take you somewhere").
  * --selftest: mutates each rule's source in memory and asserts the guard fails on every mutation.
  */
 import { readFileSync, readdirSync } from "node:fs";
@@ -45,6 +47,7 @@ function load() {
     banking: read("apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"),
     entity: read("apps/frontend/src/components/shared/EntityLink.tsx"),
     wallet: read("apps/backend/src/banking/internal-wallet-balance.ts"),
+    parity: read("apps/frontend/src/components/parity/ParityTable.tsx"),
   };
 }
 
@@ -71,6 +74,10 @@ function check(s) {
   if (!/const feedless = bankAccountIds\.filter\(\(id\) => !map\.has\(id\)\);[\s\S]{0,1600}JOIN accounting\.journal_entry_postings p[\s\S]{0,400}je\.status = 'posted'/.test(s.wallet)) {
     f.push("internal-wallet-balance.ts: a feedless non-Plaid account (Faro reserve / factoring) still reads a structural $0 tile balance");
   }
+  if (!/: \(event\) => \{\s*openParityRowPrimaryLink\(event\.currentTarget, event\.target\);\s*\}\}/.test(s.parity)
+      || !/anchors\.find\(\(a\) => !ROW_MASTER_DATA_HREF_RE\.test/.test(s.parity)) {
+    f.push("ParityTable.tsx: a row click no longer opens the row's record (transaction link first)");
+  }
   return f;
 }
 
@@ -83,6 +90,7 @@ if (process.argv.includes("--selftest")) {
     ["include_reversed unwired", { ...live, routes: live.routes.replace('include_reversed: query.data.include_reversed === "true"', "") }],
     ["panels on feedless accounts", { ...live, banking: live.banking.replace("{feedlessAccountId ? null : (", "{(") }],
     ["feedless tile balance back to $0", { ...live, wallet: live.wallet.replace("const feedless = bankAccountIds.filter((id) => !map.has(id));", "const feedless = [];") }],
+    ["row click opens nothing", { ...live, parity: live.parity.replace("openParityRowPrimaryLink(event.currentTarget, event.target);", "void event;") }],
     ["purchase link back to the list", { ...live, entity: live.entity.replace("/factoring/submit-invoice?edit_purchase_id=", "/factoring/payments-to-you?purchase_id=") }],
   ];
   for (const [label, m] of mutations) {
@@ -97,4 +105,4 @@ if (findings.length) {
   for (const x of findings) console.error(`  ${x}`);
   process.exit(1);
 }
-console.log("verify-undone-pairs-and-voided-advances-hidden PASS: 5 rules hold on the live tree");
+console.log("verify-undone-pairs-and-voided-advances-hidden PASS: 6 rules hold on the live tree");
