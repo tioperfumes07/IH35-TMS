@@ -56,8 +56,19 @@ export function assessDocumentWholeness(doc) {
   const problems = [];
 
   if (doc.loads.length === 0) {
-    problems.push(`document ${doc.documentNumber}: zero loads found for this settlement — nothing to check, treat as NOT whole`);
-    return { whole: false, problems };
+    // LEAD 443.187 (06:55Z) — the owner-ruled $0 structure: "Transportation loads were settled here in usmca as 0"
+    // (443.167-R2) and the closed USMCA settlements 5769–5819 tie EXACTLY to their signed documents
+    // (claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md). A settlement with no driver-bill load
+    // is whole ONLY when it is a $0 document (no lines, gross = net = 0) or every load its lines name is a $0-revenue
+    // load (rate_total_cents = 0). Any other zero-load document still fails.
+    const z = doc.zeroStructure;
+    const zeroDocument = z && z.lineCount === 0 && Number(z.gross) === 0 && Number(z.net) === 0;
+    const allZeroRevenueLoads = z && z.lineCount > 0 && z.lineLoadRates.length > 0 && z.lineLoadRates.every((r) => r === 0);
+    if (!zeroDocument && !allZeroRevenueLoads) {
+      problems.push(`document ${doc.documentNumber}: zero loads found for this settlement — nothing to check, treat as NOT whole`);
+      return { whole: false, problems };
+    }
+    return { whole: true, problems };
   }
 
   for (const load of doc.loads) {
@@ -128,6 +139,26 @@ function selfTest() {
       doc: { documentNumber: "X", loads: [] },
       want: false,
     },
+    {
+      name: "zero loads, a line on a load WITH revenue -> fail (the $0 structure is only $0 loads)",
+      want: false,
+      doc: { documentNumber: "X", loads: [], zeroStructure: { lineCount: 1, gross: 300, net: 300, lineLoadRates: [125000] } },
+    },
+    {
+      name: "zero loads, no lines but money on the header -> fail",
+      want: false,
+      doc: { documentNumber: "X", loads: [], zeroStructure: { lineCount: 0, gross: 50, net: 50, lineLoadRates: [] } },
+    },
+    {
+      name: "owner-ruled $0 document (5816 / P-0067 shape) -> whole",
+      want: true,
+      doc: { documentNumber: "X", loads: [], zeroStructure: { lineCount: 0, gross: 0, net: 0, lineLoadRates: [] } },
+    },
+    {
+      name: "pay on a $0 Transportation load (5780 / P-0069 shape) -> whole",
+      want: true,
+      doc: { documentNumber: "X", loads: [], zeroStructure: { lineCount: 1, gross: 300, net: 300, lineLoadRates: [0] } },
+    },
   ];
   let failed = 0;
   for (const c of cases) {
@@ -196,6 +227,25 @@ async function gatherDocumentLoads(client, documentNumber) {
   }));
 }
 
+/** LEAD 443.187 — the facts the owner-ruled $0 structure is judged on (see assessDocumentWholeness). */
+async function gatherZeroStructure(client, documentNumber) {
+  const res = await client.query(
+    `SELECT ds.gross_pay::text AS gross, ds.net_pay::text AS net,
+            (SELECT count(*) FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = ds.id AND sl.is_active AND sl.voided_at IS NULL) AS line_count,
+            (SELECT COALESCE(array_agg(COALESCE(l.rate_total_cents, -1)), '{}') FROM driver_finance.settlement_lines sl
+               JOIN mdata.loads l ON l.id = sl.load_id
+              WHERE sl.settlement_id = ds.id AND sl.is_active AND sl.voided_at IS NULL) AS rates
+       FROM driver_finance.driver_settlements ds
+      WHERE ds.operating_company_id = $1::uuid AND ds.source_document_ref = $2
+        AND ds.voided_at IS NULL AND ds.reversed_at IS NULL AND ds.status <> 'cancelled'
+      LIMIT 1`,
+    [USMCA_COMPANY_ID, documentNumber]
+  );
+  const r = res.rows[0];
+  if (!r) return null;
+  return { gross: Number(r.gross), net: Number(r.net), lineCount: Number(r.line_count), lineLoadRates: (r.rates ?? []).map(Number) };
+}
+
 async function listLiveDocumentNumbers(client) {
   const res = await client.query(
     `SELECT DISTINCT source_document_ref FROM driver_finance.driver_settlements
@@ -229,7 +279,8 @@ async function liveCheck() {
     let anyFail = false;
     for (const documentNumber of documentNumbers) {
       const loads = await gatherDocumentLoads(client, documentNumber);
-      const { whole, problems } = assessDocumentWholeness({ documentNumber, loads });
+      const zeroStructure = loads.length === 0 ? await gatherZeroStructure(client, documentNumber) : null;
+      const { whole, problems } = assessDocumentWholeness({ documentNumber, loads, zeroStructure });
       console.log(`${whole ? "PASS" : "FAIL"}  document ${documentNumber} — ${loads.length} load(s)`);
       for (const p of problems) console.log(`  ✗ ${p}`);
       if (!whole) anyFail = true;
