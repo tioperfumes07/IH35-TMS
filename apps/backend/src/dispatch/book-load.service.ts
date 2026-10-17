@@ -401,13 +401,34 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // the factoring company to a vendor id, entity-scoped. Accepts a uuid (what the FE now sends) or a
 // vendor display name (older-client compatibility) and returns null on no-match rather than throwing
 // — an unresolved factoring pick must never block booking the load.
-async function resolveFactoringVendorId(
+//
+// LEAD 443.197 1a: when the input carries NO factoring pick, the load takes its customer's factor
+// (mdata.customers.factoring_company_vendor_id, migration 0022 — the C9 column comment's own "NULL = use the
+// customer's default factor"). One change here covers every create path (Book Load, the Settlement Creator seed,
+// EDI 204, CSV import — all go through createLoadWithFullSideEffects). Entity-scoped both ways: the customer is
+// read through mdata.get_customer_same_company (same company only) and its factor must be an ACTIVE vendor of the
+// SAME company — a cross-company or deactivated factor resolves to null, never to another entity's vendor.
+export async function resolveFactoringVendorId(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   raw: string | undefined,
-  operatingCompanyId: string
+  operatingCompanyId: string,
+  customerId?: string | null
 ): Promise<string | null> {
   const value = (raw ?? "").trim();
-  if (!value) return null;
+  if (!value) {
+    const cust = String(customerId ?? "").trim();
+    if (!UUID_RE.test(cust)) return null;
+    const fallback = await client.query<{ id: string }>(
+      `SELECT v.id::text AS id
+         FROM mdata.get_customer_same_company($1::uuid, $2::uuid) c
+         JOIN mdata.vendors v ON v.id = c.factoring_company_vendor_id
+                             AND v.operating_company_id = $2::uuid
+                             AND v.deactivated_at IS NULL
+        LIMIT 1`,
+      [cust, operatingCompanyId]
+    );
+    return fallback.rows[0]?.id ?? null;
+  }
   const rows = UUID_RE.test(value)
     ? await client.query<{ id: string }>(
         `SELECT id::text AS id FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
@@ -3251,11 +3272,12 @@ export async function createLoadWithFullSideEffects(
 
     // C9 (migration 202609170000, HOLD-FOR-JORGE): resolve the load-level factoring override, then
     // persist all 8 new fields via the 42703-safe helper above. See writeC9HoldFieldsIfPresent's
-    // comment for why this is off the lockstep INSERT.
+    // comment for why this is off the lockstep INSERT. LEAD 443.197 1a: no load-level pick → the customer's factor.
     const resolvedFactoringVendorId = await resolveFactoringVendorId(
       client,
       input.factoring_company_vendor_id,
-      input.operating_company_id
+      input.operating_company_id,
+      input.customer_id
     );
     await writeC9HoldFieldsIfPresent(client, String(load.id), input, resolvedFactoringVendorId);
     // ACCT-F10159 (DEFECT A) — writeC9HoldFieldsIfPresent's UPDATE is the ONLY place

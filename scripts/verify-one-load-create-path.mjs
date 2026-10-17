@@ -151,6 +151,30 @@ export function checkSharedPathIntact() {
   return missing.map((m) => `createLoadWithFullSideEffects no longer calls/contains: ${m}`);
 }
 
+/**
+ * LEAD 443.197 1a — resolveFactoringVendorId must fall back to the CUSTOMER's factor when the input carries no pick,
+ * entity-scoped (same company, active vendor), and the shared path must hand it the load's customer. Before this, the
+ * resolver returned null for an empty pick and every create path (Book Load, Settlement Creator seed, EDI) booked loads
+ * with no factoring vendor — 56/56 in-scope loads on prod (FACTORING_VENDOR outcome below).
+ * Pure over the source text — exported for selftest.
+ */
+export function checkFactoringVendorCustomerFallback(src) {
+  const problems = [];
+  const fn = src.match(/async function resolveFactoringVendorId\([\s\S]*?\n\}\n/);
+  if (!fn) return ["resolveFactoringVendorId not found in book-load.service.ts"];
+  const body = fn[0];
+  const sig = (body.match(/^[\s\S]*?\n\)/) ?? [body])[0];
+  if (!/customerId/.test(sig)) problems.push("resolveFactoringVendorId takes no customerId — it cannot fall back to the customer's factor");
+  if (!/mdata\.get_customer_same_company\(/.test(body)) problems.push("resolveFactoringVendorId does not read the customer through mdata.get_customer_same_company (same-company customer read)");
+  if (!/c\.factoring_company_vendor_id/.test(body)) problems.push("resolveFactoringVendorId does not fall back to mdata.customers.factoring_company_vendor_id");
+  if (!/v\.operating_company_id\s*=\s*\$2/.test(body) || !/v\.deactivated_at IS NULL/.test(body)) {
+    problems.push("resolveFactoringVendorId's customer-factor fallback is not entity-scoped (same-company + active vendor)");
+  }
+  const call = src.match(/resolveFactoringVendorId\(\s*client,\s*input\.factoring_company_vendor_id,\s*input\.operating_company_id,\s*input\.customer_id\s*\)/);
+  if (!call) problems.push("createLoadWithFullSideEffects does not pass input.customer_id to resolveFactoringVendorId");
+  return problems.map((p) => `FACTORING_VENDOR_FALLBACK: ${p}`);
+}
+
 export function check() {
   const problems = [];
   const offenders = findOffenders();
@@ -166,6 +190,7 @@ export function check() {
     problems.push(`NEW offender(s) not in the seeded list (still under ceiling, named for visibility): ${newOffenders.join(", ")}`);
   }
   problems.push(...checkSharedPathIntact());
+  if (fs.existsSync(SHARED_PATH_FILE)) problems.push(...checkFactoringVendorCustomerFallback(fs.readFileSync(SHARED_PATH_FILE, "utf8")));
   return { problems, offenderCount: offenders.length, offenders };
 }
 
@@ -184,7 +209,10 @@ export function check() {
  *  1. CHARGE_LINES: every load has at least one dispatch.load_charge_lines row.
  *  2. FACTORING_VENDOR: every load has factoring_company_vendor_id set.
  *  3. TOUR_LINK: every load has tour_id set (presettlement tour linkage).
- *  4. DRIVER_BILLS: every load has at least one driver_finance.driver_bills row.
+ *  4. DRIVER_BILLS: every load OWED a per-load bill has at least one live driver_finance.driver_bills row. A load
+ *     booked with the salaried 0-rate override (driver_pay_rate_per_mile = 0 AND reason in the salaried family —
+ *     SALARIED_REASON_SQL_RE, the same test as isSalariedZeroRateOverride) is owed NO per-load bill (Lead 443.36 #2):
+ *     the salary is the settlement's own line. LEAD 443.197 1b.
  *
  * Pure function — exported for selftest.
  */
@@ -197,6 +225,8 @@ function loadClosedPurchaseDays() {
 export function classifyLoadOutcomes(input) {
   const { totalLoads, loadsWithChargeLines, loadsWithFactoringVendor,
     loadsWithTourLink, loadsWithDriverBills } = input;
+  // LEAD 443.197 1b — salaried 0-rate loads owe no per-load driver bill; loadsWithDriverBills counts non-salaried only.
+  const salariedLoads = Number(input.salariedZeroRateLoads ?? 0);
 
   const checks = [];
   const problems = [];
@@ -250,16 +280,17 @@ export function classifyLoadOutcomes(input) {
   }
 
   // 4. DRIVER_BILLS
-  const billGap = totalLoads - loadsWithDriverBills;
+  const billsOwed = totalLoads - salariedLoads;
+  const billGap = billsOwed - loadsWithDriverBills;
   checks.push({
     id: "DRIVER_BILLS",
     name: "DRIVER_BILLS",
-    expected: `${totalLoads}/${totalLoads} loads with driver bills`,
-    live: `${loadsWithDriverBills}/${totalLoads} (${billGap} missing)`,
+    expected: `${billsOwed}/${billsOwed} loads with driver bills${salariedLoads ? ` (${salariedLoads} salaried 0-rate excluded)` : ""}`,
+    live: `${loadsWithDriverBills}/${billsOwed} (${billGap} missing)`,
     pass: billGap === 0,
   });
   if (billGap > 0) {
-    problems.push(`DRIVER_BILLS_MISSING: ${billGap} of ${totalLoads} load(s) have no driver_finance.driver_bills row. The shared create path calls createDriverBillArtifacts but the outcome is absent.`);
+    problems.push(`DRIVER_BILLS_MISSING: ${billGap} of ${billsOwed} non-salaried load(s) have no driver_finance.driver_bills row. The shared create path calls createDriverBillArtifacts but the outcome is absent.`);
   }
 
   return { checks, problems, allPass: problems.length === 0 };
@@ -269,6 +300,25 @@ export function classifyLoadOutcomes(input) {
  * Measure live load outcomes from the database. Read-only.
  * Scoped to closed Faro purchase days (see loadClosedPurchaseDays).
  */
+/**
+ * LEAD 443.197 1b — the salaried 0-rate override family, keyed exactly like isSalariedZeroRateOverride
+ * (apps/backend/src/dispatch/book-load.service.ts): rate = 0 AND the trimmed reason (>= 10 chars) starts, case-
+ * insensitively, with "Salaried" or "Local driver — weekly salary" (SALARIED_OVERRIDE_REASON, 443.53 #7 rename).
+ * Never exact text. SALARIED_REASON_JS_RE mirrors it for the selftest plants.
+ */
+export const SALARIED_REASON_SQL_RE = "^\\s*(salaried|local driver — weekly salary)";
+export const SALARIED_REASON_JS_RE = /^\s*(salaried|local driver — weekly salary)/i;
+export const SALARIED_ZERO_RATE_SQL =
+  `(l.driver_pay_rate_per_mile = 0 AND length(btrim(COALESCE(l.driver_pay_rate_override_reason, ''))) >= 10 ` +
+  `AND l.driver_pay_rate_override_reason ~* '${SALARIED_REASON_SQL_RE}')`;
+/** JS mirror of SALARIED_ZERO_RATE_SQL — pure, for selftest. */
+export function isSalariedZeroRateRow(row) {
+  const raw = row.driver_pay_rate_per_mile;
+  if (raw === null || raw === undefined || String(raw).trim() === "") return false;
+  const reason = typeof row.driver_pay_rate_override_reason === "string" ? row.driver_pay_rate_override_reason.trim() : "";
+  return Number(raw) === 0 && reason.length >= 10 && SALARIED_REASON_JS_RE.test(reason);
+}
+
 /** Owner uuid used for FORCE-RLS reads (dispatch.load_charge_lines has no lucia bypass arm). */
 const MEASURE_OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 
@@ -291,6 +341,7 @@ export async function measureLoadOutcomes(client) {
       loadsWithFactoringVendor: 0,
       loadsWithTourLink: 0,
       loadsWithDriverBills: 0,
+      salariedZeroRateLoads: 0,
       closedPurchaseDays: closedDays,
     };
   }
@@ -335,7 +386,14 @@ export async function measureLoadOutcomes(client) {
   const billRes = await client.query(
     `SELECT count(*)::int AS cnt FROM mdata.loads l
       WHERE ${scopeSql}
+        AND NOT ${SALARIED_ZERO_RATE_SQL}
         AND EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id AND db.voided_at IS NULL)`,
+    [USMCA_COMPANY_ID, closedDays],
+  );
+  const salariedRes = await client.query(
+    `SELECT count(*)::int AS cnt FROM mdata.loads l
+      WHERE ${scopeSql}
+        AND ${SALARIED_ZERO_RATE_SQL}`,
     [USMCA_COMPANY_ID, closedDays],
   );
 
@@ -347,6 +405,7 @@ export async function measureLoadOutcomes(client) {
     loadsWithFactoringVendor: vendorRes.rows[0].cnt,
     loadsWithTourLink: tourRes.rows[0].cnt,
     loadsWithDriverBills: billRes.rows[0].cnt,
+    salariedZeroRateLoads: salariedRes.rows[0].cnt,
     closedPurchaseDays: closedDays,
   };
 }
@@ -448,6 +507,51 @@ async function selftest() {
     failures.push("case10 FAIL — self-arming: 0 loads should PASS (out of scope)");
   }
 
+  // case 11 (443.197 1b): salaried 0-rate loads are excluded from DRIVER_BILLS — 10 loads, 2 salaried, 8 billed → PASS.
+  const salariedOk = classifyLoadOutcomes({ totalLoads: 10, loadsWithChargeLines: 10, loadsWithFactoringVendor: 10, loadsWithTourLink: 10, loadsWithDriverBills: 8, salariedZeroRateLoads: 2 });
+  if (!salariedOk.checks.find((c) => c.id === "DRIVER_BILLS").pass) failures.push("case11 FAIL — 2 salaried 0-rate loads must not count as DRIVER_BILLS missing");
+  // case 12: a NON-salaried load without a bill still fails even when salaried loads are present.
+  const salariedRed = classifyLoadOutcomes({ totalLoads: 10, loadsWithChargeLines: 10, loadsWithFactoringVendor: 10, loadsWithTourLink: 10, loadsWithDriverBills: 7, salariedZeroRateLoads: 2 });
+  if (salariedRed.checks.find((c) => c.id === "DRIVER_BILLS").pass) failures.push("case12 FAIL — 1 non-salaried load with no bill must still FAIL DRIVER_BILLS");
+  // case 13: the salaried predicate — prefix family, case-insensitive, never exact text; rate must be exactly 0.
+  const plants = [
+    [{ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: "Salaried (owner ruling): salary on the settlement" }, true],
+    [{ driver_pay_rate_per_mile: "0.00", driver_pay_rate_override_reason: "  SALARIED driver, weekly pay" }, true],
+    [{ driver_pay_rate_per_mile: "0", driver_pay_rate_override_reason: "salaried — paid on settlement 5816" }, true],
+    [{ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: "Local driver — weekly salary (owner ruling): salary on the settlement, no per-load driver pay" }, true],
+    [{ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: "local DRIVER — Weekly Salary" }, true],
+    [{ driver_pay_rate_per_mile: 0.5, driver_pay_rate_override_reason: "Salaried (owner ruling)" }, false],
+    [{ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: "Not salaried — rate zero by mistake" }, false],
+    [{ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: "Salaried" }, false],
+    [{ driver_pay_rate_per_mile: null, driver_pay_rate_override_reason: "Salaried (owner ruling)" }, false],
+    [{ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: null }, false],
+  ];
+  plants.forEach(([row, want], i) => {
+    if (isSalariedZeroRateRow(row) !== want) failures.push(`case13.${i} FAIL — isSalariedZeroRateRow(${JSON.stringify(row)}) should be ${want}`);
+  });
+  if (!/driver_pay_rate_per_mile = 0/.test(SALARIED_ZERO_RATE_SQL) || !/~\*/.test(SALARIED_ZERO_RATE_SQL) || !SALARIED_ZERO_RATE_SQL.includes("salaried|local driver — weekly salary")) {
+    failures.push("case13 FAIL — SALARIED_ZERO_RATE_SQL must key on rate = 0 AND a case-insensitive salaried-family prefix (~*)");
+  }
+
+  // case 14 (443.197 1a): the factoring-vendor customer fallback. RED plant = origin/main's resolver (empty pick → null,
+  // no customer read); GREEN plant = the fallback; a call site that drops input.customer_id is RED.
+  const oldResolver =
+    `async function resolveFactoringVendorId(\n  client,\n  raw,\n  operatingCompanyId\n) {\n  const value = (raw ?? "").trim();\n  if (!value) return null;\n  return null;\n}\n` +
+    `const x = await resolveFactoringVendorId(\n      client,\n      input.factoring_company_vendor_id,\n      input.operating_company_id\n    );\n`;
+  const newResolver =
+    `export async function resolveFactoringVendorId(\n  client,\n  raw,\n  operatingCompanyId,\n  customerId\n) {\n` +
+    `  if (!value) { await client.query(\`SELECT v.id FROM mdata.get_customer_same_company($1::uuid, $2::uuid) c JOIN mdata.vendors v ON v.id = c.factoring_company_vendor_id AND v.operating_company_id = $2::uuid AND v.deactivated_at IS NULL\`); }\n}\n` +
+    `const x = await resolveFactoringVendorId(\n      client,\n      input.factoring_company_vendor_id,\n      input.operating_company_id,\n      input.customer_id\n    );\n`;
+  if (checkFactoringVendorCustomerFallback(oldResolver).length === 0) failures.push("case14a FAIL — the origin/main resolver (no customer fallback) must be RED");
+  const greenFallback = checkFactoringVendorCustomerFallback(newResolver);
+  if (greenFallback.length) failures.push(`case14b FAIL — the fallback resolver must be GREEN: ${greenFallback.join("; ")}`);
+  const noCustomerArg = newResolver.replace(",\n      input.customer_id\n", "\n");
+  if (!checkFactoringVendorCustomerFallback(noCustomerArg).some((p) => /does not pass input\.customer_id/.test(p))) failures.push("case14c FAIL — a call site without input.customer_id must be RED");
+  const crossCo = newResolver.replace(" AND v.operating_company_id = $2::uuid", "");
+  if (!checkFactoringVendorCustomerFallback(crossCo).some((p) => /not entity-scoped/.test(p))) failures.push("case14d FAIL — a fallback without the same-company vendor predicate must be RED");
+  const realFallback = checkFactoringVendorCustomerFallback(fs.readFileSync(SHARED_PATH_FILE, "utf8"));
+  if (realFallback.length) failures.push(`case14e FAIL — the REAL book-load.service.ts: ${realFallback.join("; ")}`);
+
   fs.rmSync(tmpDir, { recursive: true, force: true });
   fs.rmSync(offenderDir, { recursive: true, force: true });
 
@@ -455,7 +559,7 @@ async function selftest() {
     for (const f of failures) console.error(`${LABEL} ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — well-formed fixture passes, missing-symbol/planted-offender fixtures are correctly caught, real repo carries every required call, outcome classifier 6/6 (GREEN + 4 RED + self-arming).`);
+  console.log(`${LABEL} SELFTEST PASS — well-formed fixture passes, missing-symbol/planted-offender fixtures are correctly caught, real repo carries every required call, outcome classifier 6/6 (GREEN + 4 RED + self-arming), salaried 0-rate DRIVER_BILLS exclusion + 10 predicate plants, factoring-vendor customer fallback RED/GREEN plants + real file.`);
   return 0;
 }
 
