@@ -150,8 +150,16 @@ export function check(files) {
   if (rcpt < 0 || batch < 0 || rcpt > batch) problems.push(`${POSTER}: postFuelExpenseOnClient posts before asking whether the receipt already posted`);
   const cr = files[CREATOR] ?? "";
   const crAsk = cr.indexOf('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)');
-  const crPost = cr.indexOf('source_transaction_type: "expense",\n            source_transaction_id: doc.expense_id');
-  if (crAsk < 0 || crPost < 0 || crAsk > crPost) problems.push(`${CREATOR}: the Creator posts a fuel expense document without adopting the receipt's existing posting`);
+  // Heavy CI peel (Lead 13:45Z): ab76df5abf (#26885, 443.182 C) moved the Creator's post onto the one expense engine
+  // (postExpenseDocumentInClientTx), so the literal source_transaction_type anchor is gone. Same rule: the receipt is
+  // asked first, an existing posting is ADOPTED (stamp + continue — never a second post), and only then the engine posts.
+  const crPostRe = /source_transaction_type: "expense",\n\s*source_transaction_id: doc\.expense_id|postExpenseDocumentInClientTx\(client as never, \{\s*operatingCompanyId: draft\.operating_company_id,\s*expenseId: doc\.expense_id/g;
+  crPostRe.lastIndex = Math.max(0, crAsk);
+  const crPostMatch = crAsk < 0 ? null : crPostRe.exec(cr);
+  const crPost = crPostMatch ? crPostMatch.index : -1;
+  const between = crAsk < 0 || crPost < 0 ? "" : cr.slice(crAsk, crPost);
+  const adopts = /if \(receiptPosted\?\.journal_entry_id\) \{[\s\S]*?stampExpensePosted\(client, draft\.operating_company_id, doc\.expense_id, receiptPosted\.journal_entry_id\);[\s\S]*?continue;\s*\}/.test(between);
+  if (crAsk < 0 || crPost < 0 || crAsk > crPost || !adopts) problems.push(`${CREATOR}: the Creator posts a fuel expense document without adopting the receipt's existing posting`);
   // 9 (LEAD 443.133 A) — the linker pairs only Relay-card rows; the Relay fill poster refuses a fill that pairs with a row on
   // another rail (the same purchase may already be posted there — booking it again would double the fuel).
   const linker = files[LINKER] ?? "";
@@ -242,6 +250,7 @@ if (process.argv.includes("--selftest")) {
     ["dreamline writes a load-less fill", { ...real, [DREAMLINE]: real[DREAMLINE].replace('if (!loadHit) {\n      record(line, "held_no_load"', 'if (false) {\n      record(line, "held_no_load"') }],
     ["dreamline discount posts twice", { ...real, [DREAMLINE]: real[DREAMLINE].replace("if (prior.rows[0]) return null;", "") }],
     ["creator posts the receipt again", { ...real, [CREATOR]: real[CREATOR].replace('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)', "Promise.resolve(null)") }],
+    ["creator asks but posts anyway (adoption dropped)", { ...real, [CREATOR]: real[CREATOR].replace("journalEntryIds.push(receiptPosted.journal_entry_id);\n        continue;", "journalEntryIds.push(receiptPosted.journal_entry_id);") }],
   ];
   const missed = cases.filter(([, files]) => check(files).length === 0).map(([n]) => n);
   if (missed.length) { console.error(`${LABEL} --selftest FAIL: not caught: ${missed.join("; ")}`); process.exit(1); }
