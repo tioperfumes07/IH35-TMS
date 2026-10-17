@@ -18,15 +18,30 @@
  *     written in the same transaction. Nothing posts.
  */
 import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 import { PARTY_ACCOUNT_PREFIX } from "./party-ledger.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
-/** The CoA parent the related-party accounts sit under (202611240000: 2410 Owner / Related-Party Loan Payable). */
-export const RELATED_PARTY_PARENT_ACCOUNT_NUMBER = "2410";
-export const RELATED_PARTY_ACCOUNT_NUMBER_RE = /^2410-00-([0-9]{3})$/;
+/**
+ * LEAD 443.189 — the CoA parent the related-party accounts sit under is resolved by ROLE (related_party_loan_parent,
+ * migration 202616010100; USMCA → 2410 Owner / Related-Party Loan Payable), never by a literal number. The child accounts
+ * are numbered <parent account_number>-00-nnn, the prefix derived from the parent's own number.
+ */
+export const RELATED_PARTY_PARENT_ROLE = "related_party_loan_parent" as const;
+
+/** <parent>-00- — the child prefix derived from the parent's account number. */
+export function relatedPartyChildPrefix(parentAccountNumber: string): string {
+  return `${parentAccountNumber}-00-`;
+}
+
+/** ^<parent>-00-(nnn)$ for a given parent number (regex-escaped). */
+export function relatedPartyAccountNumberRe(parentAccountNumber: string): RegExp {
+  const esc = parentAccountNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^${esc}-00-([0-9]{3})$`);
+}
 
 export class RelatedPartyAccountError extends Error {
   constructor(public readonly code: string, message: string, public readonly status = 409) {
@@ -55,15 +70,16 @@ export type EnsureRelatedPartyAccountResult = {
   card_map_rows_linked: number;
 };
 
-/** "2410-00-" + the next 3-digit number after the highest used (pure; exported for the guard's selftest). */
-export function nextRelatedPartyAccountNumber(usedNumbers: string[]): string {
+/** "<parent>-00-" + the next 3-digit number after the highest used (pure; exported for the guard's selftest). */
+export function nextRelatedPartyAccountNumber(usedNumbers: string[], parentAccountNumber: string): string {
+  const re = relatedPartyAccountNumberRe(parentAccountNumber);
   let max = 0;
   for (const n of usedNumbers) {
-    const m = RELATED_PARTY_ACCOUNT_NUMBER_RE.exec(n);
+    const m = re.exec(n);
     if (m) max = Math.max(max, Number(m[1]));
   }
-  if (max >= 999) throw new RelatedPartyAccountError("related_party_number_space_exhausted", "2410-00-999 is the last related-party number");
-  return `${RELATED_PARTY_PARENT_ACCOUNT_NUMBER}-00-${String(max + 1).padStart(3, "0")}`;
+  if (max >= 999) throw new RelatedPartyAccountError("related_party_number_space_exhausted", `${relatedPartyChildPrefix(parentAccountNumber)}999 is the last related-party number`);
+  return `${relatedPartyChildPrefix(parentAccountNumber)}${String(max + 1).padStart(3, "0")}`;
 }
 
 export function relatedPartyAccountName(partyName: string): string {
@@ -110,20 +126,25 @@ export async function ensureRelatedPartyAccount(
     };
   }
 
-  const parents = (
-    await client.query<{ id: string }>(
-      `SELECT id::text FROM catalogs.accounts
-        WHERE operating_company_id = $1::uuid AND account_number = $2 AND deactivated_at IS NULL`,
-      [opco, RELATED_PARTY_PARENT_ACCOUNT_NUMBER]
-    )
-  ).rows;
-  if (parents.length !== 1) {
+  // LEAD 443.189 — the parent by ROLE, never by number; its own account_number gives the child prefix.
+  const parentRoleId = await resolveRoleAccountOptional(client as never, opco, RELATED_PARTY_PARENT_ROLE);
+  const parent = parentRoleId
+    ? (
+        await client.query<{ id: string; account_number: string }>(
+          `SELECT id::text, account_number FROM catalogs.accounts
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL`,
+          [parentRoleId, opco]
+        )
+      ).rows[0]
+    : undefined;
+  if (!parent) {
     throw new RelatedPartyAccountError(
       "related_party_parent_missing",
-      `the chart of accounts must hold exactly one active ${RELATED_PARTY_PARENT_ACCOUNT_NUMBER} Owner / Related-Party Loan Payable (found ${parents.length})`
+      `bind the ${RELATED_PARTY_PARENT_ROLE} CoA role to the active Owner / Related-Party Loan Payable parent account on the CoA Roles page`
     );
   }
-  const parentId = parents[0]!.id;
+  const parentId = parent.id;
+  const childPrefix = relatedPartyChildPrefix(parent.account_number);
 
   // An account already carrying this party's name under 2410, not linked to any party: adopt it (never a duplicate).
   const named = (
@@ -147,13 +168,13 @@ export async function ensureRelatedPartyAccount(
   const used = (
     await client.query<{ account_number: string }>(
       `SELECT account_number FROM catalogs.accounts
-        WHERE operating_company_id = $1::uuid AND account_number ~ '^2410-00-[0-9]{3}$'`,
-      [opco]
+        WHERE operating_company_id = $1::uuid AND starts_with(account_number, $2) AND substr(account_number, length($2) + 1) ~ '^[0-9]{3}$'`,
+      [opco, childPrefix]
     )
   ).rows.map((r) => r.account_number);
   const target = named[0]
     ? { id: named[0].id, account_number: named[0].account_number, account_name: named[0].account_name }
-    : { id: null as string | null, account_number: nextRelatedPartyAccountNumber(used), account_name: name };
+    : { id: null as string | null, account_number: nextRelatedPartyAccountNumber(used, parent.account_number), account_name: name };
 
   if (input.dryRun) {
     return {
