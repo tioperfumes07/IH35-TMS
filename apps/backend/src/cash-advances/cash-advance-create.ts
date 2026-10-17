@@ -453,7 +453,7 @@ export async function createDriverCashAdvanceCore(
       companyId,
       body.driver_id,
       body.liability_type ?? "advance",
-      isLoadExpense ? `Load expense advance ${displayId} (lumper — expense posting HOLD)` : `Cash advance ${displayId}`,
+      isLoadExpense ? `Load expense advance ${displayId} (lumper — posts as the load's lumper expense at disbursement)` : `Cash advance ${displayId}`,
       body.amount,
       // Load expense is NOT driver-owed settlement debt by default — balance 0 until chargeback policy says otherwise.
       isLoadExpense ? 0 : body.amount,
@@ -509,7 +509,7 @@ export async function createDriverCashAdvanceCore(
         liabilityId,
         body.driver_id,
         body.amount,
-        "load_expense_not_driver_debt — lumper expense posting HOLD (CPA/Neon)",
+        "load_expense_not_driver_debt — the lumper posts as the load's lumper expense at disbursement (LEAD 443.184 G15)",
       ]
     );
   }
@@ -521,7 +521,7 @@ export async function createDriverCashAdvanceCore(
 
   const recipientNotes = [
     body.recipient_info.notes ?? null,
-    isLoadExpense ? "economic_routing=load_expense; expense JE HOLD until CPA/Neon" : null,
+    isLoadExpense ? "economic_routing=load_expense; posts as the load's lumper expense at disbursement" : null,
     !hasWizardCols && body.from_bank_account_id
       ? `from_bank_account_id=${body.from_bank_account_id} (column UNVERIFIED / pending migration)`
       : null,

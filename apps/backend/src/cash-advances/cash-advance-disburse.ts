@@ -8,7 +8,7 @@ import { emitDriverRequestSpineEvent } from "../driver-finance/driver-request-sp
 import { logger } from "../observability/structured-logger.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
-const DRIVER_ADVANCE_GL_POSTING_FLAG_KEY = "DRIVER_ADVANCE_GL_POSTING_ENABLED";
+export const DRIVER_ADVANCE_GL_POSTING_FLAG_KEY = "DRIVER_ADVANCE_GL_POSTING_ENABLED";
 
 type PostingResult = Awaited<ReturnType<typeof postSourceTransactionInClientTx>>;
 
@@ -64,7 +64,7 @@ export async function disburseDriverAdvanceCore(
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     const cur = await client.query(
       `
-        SELECT id::text, disbursement_status::text, posting_date::text, amount::text, from_bank_account_id::text
+        SELECT id::text, disbursement_status::text, posting_date::text, amount::text, from_bank_account_id::text, purpose::text AS purpose
         FROM driver_finance.driver_advances
         WHERE operating_company_id = $1::uuid AND id::text = $2
         LIMIT 1
@@ -73,7 +73,7 @@ export async function disburseDriverAdvanceCore(
       [companyId, input.advance_id]
     );
     const row = cur.rows[0] as
-      | { disbursement_status?: string; posting_date?: string | null; amount?: string; from_bank_account_id?: string | null }
+      | { disbursement_status?: string; posting_date?: string | null; amount?: string; from_bank_account_id?: string | null; purpose?: string | null }
       | undefined;
     if (!row) return { ok: false as const, code: 404, error: "advance_not_found" };
     if (String(row.disbursement_status ?? "") !== "approved") {
@@ -83,6 +83,19 @@ export async function disburseDriverAdvanceCore(
         error: "advance_not_in_approved_state",
         message: `disbursement_status=${row.disbursement_status}`,
       };
+    }
+    // LEAD 443.184 G15 — a lumper advance IS the load's lumper expense at disbursement; with GL posting off it would be
+    // disbursed with no expense (the old silent skip). Refused before anything is written.
+    if (String(row.purpose ?? "") === "lumper") {
+      const gl = await isEnabled(client, DRIVER_ADVANCE_GL_POSTING_FLAG_KEY, { operating_company_id: companyId, user_uuid: actorUserUuid });
+      if (!gl) {
+        return {
+          ok: false as const,
+          code: 409,
+          error: "lumper_advance_requires_gl_posting",
+          message: "A lumper advance posts as the load's lumper expense when disbursed — turn on DRIVER_ADVANCE_GL_POSTING_ENABLED for this company.",
+        };
+      }
     }
     const postingDateOld = (row.posting_date as string | null) ?? null;
 
