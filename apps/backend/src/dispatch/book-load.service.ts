@@ -3385,7 +3385,11 @@ export async function createLoadWithFullSideEffects(
           : stop.latitude != null
             ? "picker"
             : null;
-      const geocodePrecision = stop.google_place_id?.trim() || stop.location_id ? "rooftop" : null;
+      // LEAD 443.184 G11 — a catalog location is rooftop only when the stop carries its street address; a city-level
+      // location (no street) stays NULL so the geocode pass decides (it binds right after, #26764) instead of a 400 m
+      // "rooftop" fence drawn around a city centre.
+      const geocodePrecision =
+        stop.google_place_id?.trim() || (stop.location_id && String(stop.address_line1 ?? "").trim()) ? "rooftop" : null;
       await client.query(
         `
           INSERT INTO mdata.load_stops (

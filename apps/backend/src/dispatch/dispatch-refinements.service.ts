@@ -19,6 +19,7 @@ import {
   type DriverQualificationBlock,
 } from "./driver-qualification.service.js";
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
+import { geocodeStopsWithClient } from "../telematics/stops-geocode-backfill.service.js";
 import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
 import { ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
@@ -475,6 +476,10 @@ export async function replaceLoadStopsRefined(
         }
       }
 
+      // LEAD 443.184 G11 — geocode the replaced stops BEFORE the bind (the same order as load edit,
+      // update-load.service.ts): the insert above writes no geocode_precision, so bindLoadToGeofences skipped every new
+      // stop until the stop-resolution cron ran. geocodeStopsWithClient writes lat/lng + precision from the resolver.
+      await geocodeStopsWithClient(client, userId, operatingCompanyId, loadId);
       await bindLoadToGeofences(client, operatingCompanyId, loadId);
 
       await appendCrudAudit(

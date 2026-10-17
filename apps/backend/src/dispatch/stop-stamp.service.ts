@@ -90,7 +90,19 @@ export async function stampStopDeparture(
 ): Promise<StampResult<{ proforma_invoice: unknown }> | { ok: false; error: "invalid_stop_state" }> {
   if (!["arrived", "loaded", "unloaded"].includes(stop.status)) return { ok: false, error: "invalid_stop_state" };
 
-  const nextLoadStatus = stop.stop_type === "delivery" ? "delivered_pending_docs" : "in_transit";
+  // LEAD 443.184 G11 — only the FINAL active delivery delivers the load (the same rule as the driver app,
+  // driver/loads.routes.ts, and the fence detector); an earlier drop on a multi-drop load leaves it in transit. This path
+  // used to deliver the load on ANY delivery departure.
+  const finalDelivery = stop.stop_type === "delivery"
+    ? (await client.query<{ id: string }>(
+        `SELECT s.id::text AS id FROM mdata.load_stops s
+          WHERE s.load_id = $1 AND s.stop_type::text = 'delivery' AND s.status::text <> 'cancelled' AND s.soft_deleted_at IS NULL
+          ORDER BY s.sequence_number DESC LIMIT 1`,
+        [ctx.loadId]
+      )).rows[0]?.id ?? null
+    : null;
+  const isFinalActiveDeliveryStop = stop.stop_type === "delivery" && finalDelivery === String(stop.id);
+  const nextLoadStatus = isFinalActiveDeliveryStop ? "delivered_pending_docs" : "in_transit";
   const transition = validateLoadStopStatusWrite(stop.load_status, nextLoadStatus);
   if (!transition.ok) return { ok: false, error: "invalid_load_state", from: transition.from, to: transition.to };
 
