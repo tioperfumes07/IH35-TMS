@@ -42,8 +42,12 @@ function main() {
   assert.match(poster, /expenseAccountId: input\.service_charge_account_id/);
   assert.match(poster, /itemId,/);
   const writer = read("apps/backend/src/accounting/bank-line-expense.service.ts");
-  assert.match(writer, /postSourceTransactionInClientTx/);
-  assert.match(writer, /source_transaction_type: "expense"/);
+  // 443.182 C step 2 — the bank-line writer hands its document to the engine with an always-post option; the engine posts
+  // through postSourceTransactionInClientTx 'expense'.
+  const engine = read("apps/backend/src/accounting/expense-writer.service.ts");
+  assert.match(writer, /post: \{ actorUserId: actor\.userId, stamp: "status_and_posting" \}/);
+  assert.match(engine, /postSourceTransactionInClientTx/);
+  assert.match(engine, /source_transaction_type: "expense"/);
   assert.match(writer, /is_company_expense/);
   assert.match(writer, /payment_account_uuid/);
   assert.match(writer, /unit_of_measure/);

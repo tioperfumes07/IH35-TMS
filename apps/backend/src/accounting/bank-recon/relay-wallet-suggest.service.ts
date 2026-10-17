@@ -9,6 +9,7 @@
  * Never posts. Never writes matched_* / categorized_*. Owner accepts through Match drawer.
  */
 import { withLuciaBypass } from "../../auth/db.js";
+import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 import { RELAY_DEPOSIT_MATCHABLE_SQL, RELAY_DEPOSIT_WALLET_AMOUNT_SQL } from "./relay-deposit-match-math.js";
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -137,8 +138,10 @@ export async function suggestRelayWalletLine(input: {
         rows = byTxn.rows;
       }
 
-      // Fallback: same date ±5d + fee-inclusive amount, payment account 1295.
-      if (!rows.length) {
+      // Fallback: same date ±5d + fee-inclusive amount, paid from the Relay fuel wallet — the account RESOLVED BY ROLE
+      // (fuel_wallet_relay; LEAD 443.187: never by number — prod maps the role to exactly the 1295 Relay Fuel Wallet).
+      const walletAccountId = rows.length ? null : await resolveRoleAccountOptional(client as never, input.operating_company_id, "fuel_wallet_relay");
+      if (!rows.length && walletAccountId) {
         const byAmt = await client.query<ExpRow>(
           `SELECT e.id::text, e.total_amount_cents::int AS amt,
                   COALESCE((
@@ -153,7 +156,7 @@ export async function suggestRelayWalletLine(input: {
                   COALESCE(e.expense_number, e.memo)::text AS ref,
                   v.vendor_name::text AS payee
              FROM accounting.expenses e
-             JOIN catalogs.accounts a ON a.id = e.payment_account_uuid AND a.operating_company_id = e.operating_company_id AND a.account_number = '1295'
+             JOIN catalogs.accounts a ON a.id = e.payment_account_uuid AND a.operating_company_id = e.operating_company_id AND a.id = $4::uuid
              LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
             WHERE e.operating_company_id = $1::uuid
               AND e.voided_at IS NULL AND e.is_active = true AND e.status = 'posted'
@@ -168,7 +171,7 @@ export async function suggestRelayWalletLine(input: {
                  WHERE m.ledger_entry_kind = 'expense' AND m.ledger_entry_id = e.id
                    AND m.match_state IN ('auto_matched', 'user_matched')
               )`,
-          [input.operating_company_id, txn.transaction_date, bankAbs]
+          [input.operating_company_id, txn.transaction_date, bankAbs, walletAccountId]
         );
         rows = byAmt.rows.filter((r) => feeInclusiveExact(bankAbs, Math.abs(r.amt), Number(r.fee_cents)));
       }

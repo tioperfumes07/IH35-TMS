@@ -7,11 +7,11 @@
  * Spec: docs/bus/09-25-2026-Devin-A-ROUND-180-SETTLEMENT-CREATOR-COMPANY-AND-DRIVER.md
  */
 
+import { recordHistoricalReassignQualification } from "../dispatch/driver-qualification.service.js";
 import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { recordHistoricalDriverQualificationException } from "../dispatch/driver-qualification.service.js";
 import { createExpenseFromFuelTransaction, resolveFuelLineAccount, adoptRelayFillExpenseDocument, fillRelayFillExpenseSettlementRef } from "../fuel/fuel-expense-document.service.js";
 import { enteredFuelRowHash, FuelProviderTransactionDuplicateError, refuseDuplicateProviderTransaction } from "../fuel/fuel-provider-reference.js";
 import { findReceivedCardFillToAdopt } from "./creator-received-fill-adoption.js";
@@ -28,7 +28,6 @@ import {
   isPresettlementPSeries,
 } from "./settlement-display-id.js";
 import { allocateNextSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { resolveCompanyDirectCreditAccount, postFuelExpenseOnClient, findPostedFuelReceipt, type FuelCategoryCode } from "../accounting/fuel-posting/poster.service.js";
@@ -76,7 +75,7 @@ import type {
 } from "./settlement-creator.types.js";
 import { isReeferFuelItemName } from "../fuel/reefer-fuel.service.js";
 import { voidCreatorOwedBills, writeCreatorOwedBill } from "./settlement-creator-owed-bill.js";
-import { createExpenseInClientTx, type CreateExpenseBody } from "../accounting/expense-writer.service.js";
+import { createExpenseInClientTx, postExpenseDocumentInClientTx, type CreateExpenseBody } from "../accounting/expense-writer.service.js";
 import { applyCreatorMilesChoices, CreatorMilesChoiceError } from "./settlement-creator-miles-choice.js";
 
 export type { DbClient };
@@ -1312,13 +1311,13 @@ export async function postSettlementCreatorInClientTx(
         `,
         [draft.driver_id, draft.unit_id ?? null, row.id, draft.operating_company_id],
       );
-      // FAIL-DQF-GATE — this seats the document's driver on a load that already ran: the shared gate
-      // evaluates, and a block is recorded (never silent), same as Book Load's historical_backfill.
-      await recordHistoricalDriverQualificationException(client as never, actorUserId, {
+      // FAIL-D1 — the reassigned driver runs the qualification gate; historical backfill records its outcome.
+      await recordHistoricalReassignQualification(client as never, {
         driverId: draft.driver_id,
         operatingCompanyId: draft.operating_company_id,
         loadId: row.id,
-        writer: "driver_finance.settlement_creator",
+        actorUserId,
+        via: "settlement_creator",
       });
     }
 
@@ -1670,18 +1669,19 @@ export async function postSettlementCreatorInClientTx(
       }
       // Stamp Comp. Exp. card rail already set by fuel writer; post through existing engine.
       try {
-        const posted = await postSourceTransactionInClientTx(
-          client as never,
-          {
-            operating_company_id: draft.operating_company_id,
-            source_transaction_type: "expense",
-            source_transaction_id: doc.expense_id,
+        // 443.182 C — the one expense engine posts it on this transaction; the Creator keeps its own posted stamp.
+        const posted = await postExpenseDocumentInClientTx(client as never, {
+          operatingCompanyId: draft.operating_company_id,
+          expenseId: doc.expense_id,
+          actorUserId,
+          stamp: "none",
+          verify: async (jeId) => {
+            if (!jeId) throw new Error("posting engine returned no journal entry");
           },
-          { userId: actorUserId },
-        );
-        if (!posted.journal_entry_id) throw new Error("posting engine returned no journal entry");
-        await stampExpensePosted(client, draft.operating_company_id, doc.expense_id, posted.journal_entry_id);
-        journalEntryIds.push(posted.journal_entry_id);
+        });
+        if (!posted.posted) throw new Error("posting engine returned no journal entry");
+        await stampExpensePosted(client, draft.operating_company_id, doc.expense_id, posted.journalEntryId);
+        journalEntryIds.push(posted.journalEntryId);
       } catch (err) {
         // ROUND 443.6 f — a posting refusal fails the whole post: never a fuel expense without its ledger entry.
         throw new SettlementCreatorError("fuel_expense_post_refused", `Fuel line ${fuel.date}: the ledger refused it — ${err instanceof Error ? err.message : String(err)}. Nothing was posted.`);
@@ -1874,12 +1874,14 @@ export async function postSettlementCreatorInClientTx(
     try {
       let journalEntryId = written.posted_journal_entry_id;
       if (!journalEntryId) {
-        const posted = await postSourceTransactionInClientTx(
-          client as never,
-          { operating_company_id: draft.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
-          { userId: actorUserId },
-        );
-        journalEntryId = posted.journal_entry_id;
+        // 443.182 C — the one expense engine posts it on this transaction; the Creator keeps its own posted stamp.
+        const posted = await postExpenseDocumentInClientTx(client as never, {
+          operatingCompanyId: draft.operating_company_id,
+          expenseId,
+          actorUserId,
+          stamp: "none",
+        });
+        journalEntryId = posted.posted ? posted.journalEntryId : null;
       }
       if (!journalEntryId) throw new Error("posting engine returned no journal entry");
       await stampExpensePosted(client, draft.operating_company_id, expenseId, journalEntryId);

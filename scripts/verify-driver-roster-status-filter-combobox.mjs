@@ -17,15 +17,17 @@ function assertContract(source) {
     'dataTestId="drivers-table-status-filter"',
     'options={DRIVER_STATUS_FILTERS.filter((option) => option.value)}',
     'value={staged.draft.status || null}',
-    'onChange={(next) => staged.setDraft({ status: next ?? "" })}',
+    // 443.187 (CC-2) repoint — DRIVER-F7334 (0141802168, #19555) added the tag filter beside status: the draft update
+    // became functional, Apply sets both filters, and the status predicate is conditional. Same contract.
+    'onChange={(next) => staged.setDraft((prev) => ({ ...prev, status: next ?? "" }))}',
     'placeholder="All statuses"',
-    'onApply: (next) => setStatusFilter(next.status)',
-    'return enrichedRows.filter((row) => row.status === statusFilter)',
+    'setStatusFilter(next.status);',
+    'if (statusFilter) out = out.filter((row) => row.status === statusFilter);',
   ]) if (!source.includes(token)) throw new Error(`missing Driver roster status contract: ${token}`);
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = diskSource.replace('onApply: (next) => setStatusFilter(next.status)', 'onApply: () => undefined');
+  const planted = diskSource.replace('setStatusFilter(next.status);', '');
   const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
     cwd: ROOT,
     env: { ...process.env, DRIVER_F6481_PLANTED_SOURCE: planted },

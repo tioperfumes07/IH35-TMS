@@ -21,7 +21,7 @@
  * computes everything inside a savepoint and rolls it back. One audit row per settlement with every count.
  */
 import { resolveCreatorTrailerId } from "./settlement-creator.service.js";
-import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
+import { reserveLoadSpineExpenseNumber } from "../accounting/expense-writer.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -260,7 +260,8 @@ export async function categorizeCreatorSettlement(
       )
     ).rows;
     for (const e of offSpine) {
-      const { number } = await generateExpenseNumber(client as never, e.load_id, co);
+      // 443.182 C — the spine number comes from the one expense engine.
+      const { number } = await reserveLoadSpineExpenseNumber(client as never, co, e.load_id);
       await client.query(`UPDATE accounting.expenses SET expense_number = $2, updated_at = now() WHERE id = $1::uuid AND expense_number = $3`, [e.id, number, e.expense_number]);
       out.d6_expenses_renumbered.push(`${e.expense_number} -> ${number}`);
     }

@@ -18,7 +18,7 @@
  * (updateDispatchLoad) and the Owner history route POST /api/v1/fuel/receipts/repoint-to-loads.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { generateExpenseNumber, insertExpenseLoadLink } from "../expense-attribution/expense-number.js";
+import { linkExpenseToLoadInClientTx, reserveLoadSpineExpenseNumber } from "../accounting/expense-writer.service.js";
 import { stampReceiptDocumentSettlementRef } from "./fuel-expense-document.service.js";
 import { resolveFuelLoadAtTime } from "./fuel-load-at-time.js";
 
@@ -145,7 +145,8 @@ export async function attachFuelReceiptToLoad(
   let expenseNumber: string | null = doc?.expense_number ?? null;
   let settlementNo: string | null = null;
   if (doc) {
-    const spine = await generateExpenseNumber(client as never, loadId, opco);
+    // 443.182 C — the spine number and the load link come from the one expense engine.
+    const spine = await reserveLoadSpineExpenseNumber(client as never, opco, loadId);
     expenseNumber = spine.number;
     await client.query(
       `UPDATE accounting.expenses
@@ -160,7 +161,7 @@ export async function attachFuelReceiptToLoad(
         WHERE expense_id = $1::uuid AND operating_company_id = $2::uuid AND load_id IS NULL`,
       [doc.id, opco, loadId, input.trailerId]
     );
-    await insertExpenseLoadLink(client as never, {
+    await linkExpenseToLoadInClientTx(client as never, {
       operatingCompanyId: opco,
       expenseId: doc.id,
       loadId,

@@ -1,3 +1,4 @@
+
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
 // SHARED DRIVER-QUALIFICATION GATE (G9-C1 + D3-1).
@@ -490,44 +491,44 @@ export class DriverNotQualifiedError extends Error {
 }
 
 /**
- * FAIL-DQF-GATE (LEAD ROUND 443.187) — the SAME gate, for a path that seats a driver on a load that
- * has ALREADY RUN (a signed settlement document, the Settlement Creator posting a past pay period).
- * assertDriverQualifiedForLoad reads CURRENT CDL / medical / hazmat / D&A state, which says nothing
- * about whether the driver was qualified when that trip happened — so, exactly like Book Load's
- * `historical_backfill` branch (book-load.service.ts, event `dispatch.historical_backfill_gate_exception`),
- * a block is RECORDED on the append-only audit trail and the write proceeds. Never a silent seat:
- * the gate evaluates on every such write, and an unqualified driver leaves an attributed record.
+ * FAIL-D1 (443.187, CC-2) — a driver (re)assigned to a load that ALREADY exists, on a historical backfill (the Settlement
+ * Creator and the settlement-document seed book the past load, then set its driver), runs the SAME gate. Owner ruling for
+ * historical_backfill (book-load.service.ts, gateOutcome): "the gate is still EVALUATED, its outcome is RECORDED, and
+ * creation proceeds. Never skipped, never silently passed." So a block is written as the same
+ * dispatch.historical_backfill_gate_exception audit Book Load writes, and the reassignment proceeds. Live (non-backfill)
+ * reassignment paths keep calling assertDriverQualifiedForLoad and block.
  */
-export async function recordHistoricalDriverQualificationException(
+export async function recordHistoricalReassignQualification(
   client: QueryableClient,
-  actorUserId: string,
-  args: { driverId: string; operatingCompanyId: string; loadId: string; isHazmat?: boolean; writer: string }
+  args: { driverId: string; operatingCompanyId: string; loadId: string; actorUserId: string; isHazmat?: boolean; via: string }
 ): Promise<DriverQualificationBlock | null> {
   const block = await assertDriverQualifiedForLoad(client, {
     driverId: args.driverId,
     operatingCompanyId: args.operatingCompanyId,
     isHazmat: Boolean(args.isHazmat),
   });
-  if (!block) return null;
-  await appendCrudAudit(
-    client,
-    actorUserId,
-    "dispatch.historical_backfill_gate_exception",
-    {
-      operating_company_id: args.operatingCompanyId,
-      load_id: args.loadId,
-      writer: args.writer,
-      gate: "driver_qualification",
-      driver_id: block.driverId,
-      driver_name: block.driverName,
-      reasons: block.reasons,
-      cdl_expires_at: block.cdlExpiresAt,
-      medical_expiry_date: block.medicalExpiryDate,
-      hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
-      historical_backfill_gate_exception: true,
-    },
-    "warning",
-    "FAIL-DQF-GATE"
-  );
+  if (block) {
+    await appendCrudAudit(
+      client as never,
+      args.actorUserId,
+      "dispatch.historical_backfill_gate_exception",
+      {
+        operating_company_id: args.operatingCompanyId,
+        load_id: args.loadId,
+        gate: "driver_qualification",
+        on: "driver_reassign",
+        via: args.via,
+        driver_id: block.driverId,
+        driver_name: block.driverName,
+        reasons: block.reasons,
+        cdl_expires_at: block.cdlExpiresAt,
+        medical_expiry_date: block.medicalExpiryDate,
+        hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+        historical_backfill_gate_exception: true,
+      },
+      "warning",
+      "FAIL-D1-REASSIGN"
+    );
+  }
   return block;
 }

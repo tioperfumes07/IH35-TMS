@@ -1110,8 +1110,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               AND payload->>'resource_id' = $1
             )
           ORDER BY created_at DESC
-          LIMIT 200
         `,
+        // 443.187 (verify-entity-audit-history-exact-pager) — the load's FULL audit history, never a silent first-200:
+        // the Audit tab filters it client-side (Range / Type / Who), so a cap would hide older events as if they never
+        // happened. One load's events are few (prod max 24 on 2026-10-17) and the scan is the same with or without a cap.
         [parsedParams.data.id]
       );
       return { events: res.rows };

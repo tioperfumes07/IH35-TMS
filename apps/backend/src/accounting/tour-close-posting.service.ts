@@ -10,9 +10,9 @@
 // has committed and returned. This module therefore opens its own withCompanyScope reads rather
 // than accepting the settlement-approve handler's client, and is invoked AFTER that handler's own
 // transaction has committed.
-import { postSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
+import { PostingEngineError } from "./posting-engine.service.js";
+import { postExpenseDocumentOwnTx } from "./expense-writer.service.js";
 import { postBillGlIfEnabled } from "./bill-gl.service.js";
-import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCompanyScope } from "./shared.js";
 import { isLoadTourOpen } from "./tour-open-gate.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -101,27 +101,15 @@ export async function postHeldDocumentsForClosedTour(
       continue;
     }
     try {
-      const posting = await postSourceTransaction(
-        { operating_company_id: operatingCompanyId, source_transaction_type: "expense", source_transaction_id: expense.id },
-        actor
-      );
-      await withCompanyScope(actor.userId, operatingCompanyId, async (client: DbClient) => {
-        await client.query(
-          // ROOT CAUSE FIX (Lead finding, 2026-09-26): status must move with posting_status -- see
-          // expenses.routes.ts's sister UPDATEs for the full note. Same defect, same table, third
-          // independent writer.
-          `UPDATE accounting.expenses
-              SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, posting_hold_reason=NULL, updated_at=now()
-            WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
-          [expense.id, posting.journal_entry_id, operatingCompanyId]
-        );
-        await appendCrudAudit(
-          client,
-          actor.userId,
-          "expense.posted",
-          { expense_id: expense.id, journal_entry_id: posting.journal_entry_id, source: "tour_close_batch" },
-          "info"
-        );
+      // 443.182 C — the one expense engine posts it (own transaction), stamps status + posting_status together and clears
+      // the hold (ROOT CAUSE FIX 2026-09-26: status moves with posting_status), and audits it.
+      await postExpenseDocumentOwnTx({
+        operatingCompanyId,
+        expenseId: expense.id,
+        actor,
+        scopeUserId: actor.userId,
+        clearHoldReason: true,
+        audit: { action: "expense.posted", payload: (jeId) => ({ expense_id: expense.id, journal_entry_id: jeId, source: "tour_close_batch" }) },
       });
       result.expenses_posted.push(expense.id);
     } catch (err) {
@@ -229,26 +217,19 @@ export async function retryHeldExpensePostings(
       continue;
     }
     try {
-      const posting = await postSourceTransaction(
-        { operating_company_id: operatingCompanyId, source_transaction_type: "expense", source_transaction_id: expense.id },
-        actor
-      );
-      await withCompanyScope(actor.userId, operatingCompanyId, async (client: DbClient) => {
-        await client.query(
-          `UPDATE accounting.expenses
-              SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, posting_hold_reason=NULL, updated_at=now()
-            WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
-          [expense.id, posting.journal_entry_id, operatingCompanyId]
-        );
-        await appendCrudAudit(
-          client,
-          actor.userId,
-          "expense.posted",
-          { expense_id: expense.id, journal_entry_id: posting.journal_entry_id, source: "held_expense_retry_batch", posting_batch_id: postingBatchId },
-          "info"
-        );
+      // 443.182 C — the one expense engine posts it (own transaction), stamps it posted, clears the hold and audits it.
+      const posted = await postExpenseDocumentOwnTx({
+        operatingCompanyId,
+        expenseId: expense.id,
+        actor,
+        scopeUserId: actor.userId,
+        clearHoldReason: true,
+        audit: {
+          action: "expense.posted",
+          payload: (jeId) => ({ expense_id: expense.id, journal_entry_id: jeId, source: "held_expense_retry_batch", posting_batch_id: postingBatchId }),
+        },
       });
-      outcomes.push({ expense_id: expense.id, outcome: "posted", journal_entry_id: posting.journal_entry_id, hold_reason: null });
+      outcomes.push({ expense_id: expense.id, outcome: "posted", journal_entry_id: posted.journalEntryId, hold_reason: null });
     } catch (err) {
       if (!(err instanceof PostingEngineError)) throw err;
       const holdReason = `post_failed:${err.code}`;

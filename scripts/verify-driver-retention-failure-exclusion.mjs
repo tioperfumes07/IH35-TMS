@@ -6,7 +6,9 @@ const source = fs.readFileSync(rel, "utf8");
 
 function audit(src) {
   const failures = [];
-  if (!src.includes("const rows = scoresQ.isError ? [] : scoresQ.data?.rows ?? []")) failures.push("failed retention reads must suppress cached driver cards");
+  // 443.187 (CC-2) repoint — GO20-F11 (7331509fa2) added the at-risk/critical filter and split the expression over three
+  // lines; the rule is unchanged: a failed read yields NO rows, never the cached data.
+  if (!/const rows = scoresQ\.isError\s*\?\s*\[\]\s*:\s*\(?scoresQ\.data\?\.rows \?\? \[\]\)?/.test(src)) failures.push("failed retention reads must suppress cached driver cards");
   if (!src.includes('title="Couldn\'t load retention scores"')) failures.push("failed retention reads need an exact visible error");
   if (!src.includes("onRetry={() => void scoresQ.refetch()}")) failures.push("retention failure state needs exact Retry");
   if (!src.includes("rows.map((row) =>")) failures.push("successful rows must still render canonical cards");
@@ -19,7 +21,7 @@ function audit(src) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["restore cached rows on failure", "const rows = scoresQ.isError ? [] : scoresQ.data?.rows ?? []", "const rows = scoresQ.data?.rows ?? []"],
+    ["restore cached rows on failure", /const rows = scoresQ\.isError\s*\?\s*\[\]\s*:\s*/, "const rows = "],
     ["remove Retry", "onRetry={() => void scoresQ.refetch()}", "onRetry={undefined}"],
     ["remove human label", 'entityLabel(row.driver_name, row.driver_uuid, "Driver")', "row.driver_uuid"],
     ["remove successful empty state", "scoresQ.isSuccess && rows.length === 0", "false"],

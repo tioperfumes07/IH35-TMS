@@ -45,7 +45,7 @@ const GATE = "assertDriverQualifiedForLoad";
 // LEAD ROUND 443.187 — the already-run-load writers (Settlement Creator, signed-settlement seed) run the
 // gate through ONE named wrapper that calls GATE and records the block (Book Load's historical_backfill
 // shape). The wrapper counts as the gate ONLY while its own body still calls GATE (checked below).
-const HISTORICAL_GATE = "recordHistoricalDriverQualificationException";
+const HISTORICAL_GATE = "recordHistoricalReassignQualification";
 const GATE_FILE = "apps/backend/src/dispatch/driver-qualification.service.ts";
 
 /** The wrapper's body must call the real gate AND record the block; otherwise it is not the gate. */

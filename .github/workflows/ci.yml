@@ -179,7 +179,12 @@ jobs:
             scripts/verify-disbursement-never-credits-receipt-clearing.mjs \
             scripts/verify-yard-location-and-fence.mjs \
             scripts/verify-vendor-balances-equals-ap-control.mjs \
-            scripts/verify-document-links-enforced-at-db.mjs
+            scripts/verify-document-links-enforced-at-db.mjs \
+            scripts/verify-event-log-spine.mjs \
+            scripts/verify-faro-default-interest-accrues-from-day-35.mjs \
+            scripts/verify-faro-no-accrued-reserve-release.mjs \
+            scripts/verify-faro-no-purchased-account-past-repurchase-deadline.mjs \
+            scripts/verify-faro-partial-payment-leaves-account-open.mjs
       # ROUND 389 (LEAD) — the ONLY place a credential-gated derived artifact's freshness can actually be
       # proven. scripts/canonical-relations.json is regenerated from the live schema, so its generator
       # declares requiresDatabase; every other job runs guards through scripts/verify-static.mjs, which

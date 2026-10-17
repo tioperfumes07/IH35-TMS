@@ -27,6 +27,8 @@ const F = {
   route: "apps/backend/src/banking/categorization.routes.ts",
   feedGl: "apps/backend/src/banking/bank-feed-gl-posting.service.ts",
   writer: "apps/backend/src/accounting/bank-line-expense.service.ts",
+  // 443.182 C step 2 — the deep expense engine numbers + links the writer's document.
+  engine: "apps/backend/src/accounting/expense-writer.service.ts",
   fuelPost: "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts",
 };
 const TOP = "scripts/verify-bank-categorized-cost-is-expense-document.mjs";
@@ -49,8 +51,9 @@ export function check(src, migrations) {
   if (!/createAndPostBankLineExpenseOnClient\(/.test(asExpense) || !/loadId: line\.load_id/.test(asExpense)) out.push(`${F.feedGl}: the expense document is not written by the bank-line writer with the tagged load (C1)`);
   // C2
   const w = fnBody(src.writer, "createAndPostBankLineExpenseOnClient");
-  if (!/if \(input\.loadId\) \{\s*loadAttribution = await generateExpenseNumber\(/.test(w)) out.push(`${F.writer}: a load-tagged bank expense is not numbered on the load spine (C2)`);
-  if (!/insertExpenseLoadLink\(/.test(w)) out.push(`${F.writer}: no expense_load_links row for a load-tagged bank expense (C2)`);
+  const reserve = fnBody(src.engine, "reserveExpenseNumber");
+  if (!/reserveExpenseNumber\(client, input\.operatingCompanyId, \{\s*loadId: input\.loadId/.test(w) || !/if \(spec\.loadId\) \{\s*const n = await generateExpenseNumber\(/.test(reserve)) out.push(`${F.writer}: a load-tagged bank expense is not numbered on the load spine (C2)`);
+  if (!/loadLink: input\.loadId\s*\?/.test(w) || !/insertExpenseLoadLink\(/.test(src.engine)) out.push(`${F.writer}: no expense_load_links row for a load-tagged bank expense (C2)`);
   if (!/await readLoadAttribution\(client, input\.operatingCompanyId, input\.loadId\)/.test(w) || !/reconcileExpenseWithLoad\(input, load\)/.test(w)) out.push(`${F.writer}: unit / driver / trailer are not taken from the load (C2)`);
   if (!/BankLineExpenseError\("load_not_in_company"/.test(w) || !/BankLineExpenseError\("load_attribution_mismatch"/.test(w)) out.push(`${F.writer}: another company's load or a contradicting tag is not refused (C2)`);
   for (const d of ["unitId", "driverId", "trailerId"]) {
@@ -93,8 +96,8 @@ if (process.argv.includes("--selftest")) {
   const plants = [
     ["C1 tag-only categorize", plant("feedGl", "return postBankLineAsExpenseOnClient(client, input, decision)", "return { posted: false }")],
     ["C1 no load on the document", plant("feedGl", "loadId: line.load_id", "loadId: null")],
-    ["C2 EXP- for a load", plant("writer", "loadAttribution = await generateExpenseNumber(", "loadAttribution = await nextNumber(")],
-    ["C2 no load link", { ...src, writer: src.writer.replaceAll("insertExpenseLoadLink(", "noLink(") }],
+    ["C2 EXP- for a load", plant("engine", "const n = await generateExpenseNumber(", "const n = await nextNumber(")],
+    ["C2 no load link", { ...src, engine: src.engine.replaceAll("insertExpenseLoadLink(", "noLink(") }],
     ["C2 tags trusted over the load", plant("writer", "reconcileExpenseWithLoad(input, load)", "input")],
     ["C2 line keeps the raw tag", plant("writer", "dimensions.driverId,", "input.driverId ?? null,")],
     ["C4 card fill without a document", { ...src, fuelPost: src.fuelPost.replaceAll("createExpenseFromFuelTransaction(", "skip(") }],

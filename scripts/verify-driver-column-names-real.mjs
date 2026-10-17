@@ -58,30 +58,87 @@ function stripComments(text) {
     .replace(/^[ \t]*--[^\n]*/gm, (m) => " ".repeat(m.length));
 }
 
-for (const file of walk(ROOT)) {
-  const raw = readFileSync(file, "utf8");
-  if (!/mdata\.drivers/.test(raw)) continue;
-  const src = stripComments(raw);
+/**
+ * 443.187 (CC-2) — resolve each `<alias>.<column>` to the table its NEAREST binding names, inside its own SQL template,
+ * innermost parenthesised scope first (a subquery like `(SELECT d.display_id FROM accounting.deposits d …)` re-binds `d`
+ * even when the outer query has `LEFT JOIN mdata.drivers d`). The old file-wide alias set flagged every `d.display_id`
+ * in a file that also joins drivers as `d` — 9 false 42703s on deposits (match.service.ts, feed-gate.*). A reference with
+ * no binding in its own template keeps the old file-wide rule, so nothing real escapes.
+ */
+export function bindingTableAt(sql, pos, alias) {
+  const pairs = [];
+  const stack = [];
+  for (let k = 0; k < sql.length; k += 1) {
+    if (sql[k] === "(") stack.push(k);
+    else if (sql[k] === ")" && stack.length) pairs.push([stack.pop(), k]);
+  }
+  const enclosing = pairs.filter(([a, b]) => a < pos && pos < b).sort((x, y) => (x[1] - x[0]) - (y[1] - y[0]));
+  enclosing.push([-1, sql.length]);
+  const bindRe = new RegExp(`\\b(?:FROM|JOIN)\\s+([a-z_][a-z0-9_.]*)\\s+(?:AS\\s+)?${alias}\\b`, "i");
+  for (const [a, b] of enclosing) {
+    let region = sql.slice(a + 1, b);
+    // blank every nested group that does not contain the reference: its bindings belong to another scope
+    for (const [x, y] of pairs) {
+      if (x > a && y < b && !(x < pos && pos < y)) region = region.slice(0, x - a - 1) + " ".repeat(y - x + 1) + region.slice(y - a);
+    }
+    const m = region.match(bindRe);
+    if (m) return m[1].toLowerCase();
+  }
+  return null;
+}
 
-  // Resolve the aliases bound to mdata.drivers in this file (FROM/JOIN mdata.drivers <alias>).
+export function scanFile(rel, raw) {
+  const out = [];
+  if (!/mdata\.drivers/.test(raw)) return out;
+  const src = stripComments(raw);
+  // Resolve the aliases bound to mdata.drivers anywhere in this file (FROM/JOIN mdata.drivers <alias>).
   const aliases = new Set();
   for (const m of src.matchAll(/mdata\.drivers\s+(?:AS\s+)?([a-z][a-z0-9_]*)/gi)) {
     const alias = m[1].toLowerCase();
     if (alias !== "on" && alias !== "where") aliases.add(alias);
   }
-  if (aliases.size === 0) continue;
-
+  if (aliases.size === 0) return out;
+  const templates = [...src.matchAll(/`[^`]*`/g)].map((m) => [m.index, m.index + m[0].length]);
   for (const { column, real } of BANNED) {
     for (const alias of aliases) {
       const re = new RegExp(`\\b${alias}\\.${column}\\b`, "g");
       for (const hit of src.matchAll(re)) {
+        const t = templates.find(([a, b]) => a <= hit.index && hit.index < b);
+        if (t) {
+          const table = bindingTableAt(src.slice(t[0], t[1]), hit.index - t[0], alias);
+          if (table && table !== "mdata.drivers") continue; // the alias names another table at this reference
+        }
         const line = src.slice(0, hit.index).split("\n").length;
-        failures.push(
-          `${relative(repoRoot, file)}:${line}: selects \`${alias}.${column}\` — mdata.drivers has no such column (use ${real}). This is a 42703 at runtime, not a lint nit.`
+        out.push(
+          `${rel}:${line}: selects \`${alias}.${column}\` — mdata.drivers has no such column (use ${real}). This is a 42703 at runtime, not a lint nit.`
         );
       }
     }
   }
+  return out;
+}
+
+if (process.argv.includes("--selftest")) {
+  const bad = "q(`SELECT d.display_id FROM mdata.drivers d WHERE d.id = $1`)";
+  const badCdl = "q(`SELECT d.cdl_expiration_date FROM mdata.drivers d`)";
+  const subquery = "q(`SELECT fi.*, (SELECT d.display_id FROM accounting.deposits d WHERE d.id = fi.x) FROM feed fi LEFT JOIN mdata.drivers d ON d.id = fi.driver_id`)";
+  const otherQuery = "q(`SELECT d.display_id FROM accounting.deposits d`); q(`SELECT d.first_name FROM mdata.drivers d`)";
+  const outerBad = "q(`SELECT d.display_id, (SELECT 1 FROM accounting.deposits d) FROM mdata.drivers d`)";
+  const cases = [
+    ["a drivers alias selecting display_id is caught", scanFile("x.ts", bad).length === 1],
+    ["cdl_expiration_date is caught", scanFile("x.ts", badCdl).length === 1],
+    ["a subquery re-binding d to deposits is not a drivers reference", scanFile("x.ts", subquery).length === 0],
+    ["another query's d (deposits) is not a drivers reference", scanFile("x.ts", otherQuery).length === 0],
+    ["the OUTER drivers d is still caught when a subquery re-binds d", scanFile("x.ts", outerBad).length === 1],
+  ];
+  const bad2 = cases.filter(([, ok]) => !ok);
+  if (bad2.length) { console.error(`SELFTEST FAIL: ${bad2.map(([n]) => n).join("; ")}`); process.exit(1); }
+  console.log(`SELFTEST PASS: ${cases.length} cases`);
+  process.exit(0);
+}
+
+for (const file of walk(ROOT)) {
+  failures.push(...scanFile(relative(repoRoot, file), readFileSync(file, "utf8")));
 }
 
 if (failures.length > 0) {

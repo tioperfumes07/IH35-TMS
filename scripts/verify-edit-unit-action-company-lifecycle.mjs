@@ -8,7 +8,8 @@ const checks = [
   ["context transition increments generation", /useEffect\(\(\) => \{\s*actionGenerationRef\.current \+= 1;[\s\S]*?\}, \[open, unitId, operatingCompanyId\]\)/],
   ["dismiss increments generation", /const resetAndClose = useCallback\(\(\) => \{\s*actionGenerationRef\.current \+= 1/],
   ["mutation snapshots scope and patch", /mutationFn: \(input: \{ unitId: string; companyId: string; generation: number; patch: Record<string, unknown> \}\) => patchUnit\(input\.unitId, input\.companyId, input\.patch\)/],
-  ["caller copies patch", /saveMutation\.mutate\(\{ unitId: unitId!, companyId: operatingCompanyId, generation: actionGenerationRef\.current, patch: \{ \.\.\.patchPayload \} \}\)/],
+  // 443.187 (CC-2) repoint — REG-025/026 (8205a9d94e, #21604) passes unitId shorthand (narrowed above, no `!`); same rule.
+  ["caller copies patch", /saveMutation\.mutate\(\{ unitId(?:: unitId!?)?, companyId: operatingCompanyId, generation: actionGenerationRef\.current, patch: \{ \.\.\.patchPayload \} \}\)/],
   ["stale success rejected", /onSuccess: \(_data, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return/],
   ["stale error rejected", /input\.generation === actionGenerationRef\.current/],
   ["exact modal invalidation", /\["edit-vehicle-modal", input\.unitId, input\.companyId\]/],
