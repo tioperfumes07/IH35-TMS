@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -155,16 +156,18 @@ export function CashFlowStatementPage() {
   // LEAD 443.181 — one ParityTable per cash-flow section; each line keeps its AmountLink (amount opens the
   // account register for the period), the section total moves to the footer.
   const cashFlowColumns = (sectionKey: string): ParityColumn<AccountingCashFlowLine>[] => [
-    { key: "account_type", label: "Class", render: (line) => formatAccountTypeLabel(line.account_type) },
-    { key: "account_subtype", label: "Subtype", render: (line) => humanizeEnumLabel(line.account_subtype) || "—" },
+    { key: "account_type", label: "Class", sortable: true, render: (line) => formatAccountTypeLabel(line.account_type) },
+    { key: "account_subtype", label: "Subtype", sortable: true, render: (line) => humanizeEnumLabel(line.account_subtype) || "—" },
     {
       key: "label",
       label: "Label",
+      sortable: true,
       render: (line) => <span className="font-medium text-gray-900">{formatCashFlowCompoundLabel(line.label)}</span>,
     },
     {
       key: "amount",
       label: "Amount",
+      sortable: true,
       kind: "money",
       sortValue: (line) => line.amount,
       render: (line) => (

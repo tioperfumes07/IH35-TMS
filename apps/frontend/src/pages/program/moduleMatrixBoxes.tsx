@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per module / build block with its completion status — a current-state program matrix, not a time series.
 /**
  * Shared 4-box tracker + column-group rollup for module boards and All-modules system rollup.
  * Box 3 / Box 4 show BOTH percentages side-by-side (cumulative fill · exclusive tier / cert).

@@ -286,22 +286,25 @@ export function SubscriptionManager() {
           {
             key: "report_slug",
             label: "Report",
+            sortable: true,
             sortValue: (row) => REPORT_LABELS[row.report_slug] ?? row.report_slug,
             render: (row) => REPORT_LABELS[row.report_slug] ?? row.report_slug,
           },
-          { key: "cadence", label: "Cadence", sortValue: (row) => cadenceLabel(row), render: (row) => cadenceLabel(row) },
+          { key: "cadence", label: "Cadence", sortable: true, sortValue: (row) => cadenceLabel(row), render: (row) => cadenceLabel(row) },
           {
             key: "recipient_emails",
             label: "Recipients",
+            sortable: true,
             sortValue: (row) => row.recipient_emails.join(", "),
             render: (row) => row.recipient_emails.join(", "),
           },
-          { key: "delivery_format", label: "Format", render: (row) => row.delivery_format.toUpperCase() },
-          { key: "last_sent_at", label: "Last sent", render: (row) => subscriptionTimestampLabel(row.last_sent_at) },
-          { key: "next_scheduled_at", label: "Next", render: (row) => subscriptionTimestampLabel(row.next_scheduled_at) },
+          { key: "delivery_format", label: "Format", sortable: true, render: (row) => row.delivery_format.toUpperCase() },
+          { key: "last_sent_at", label: "Last sent", sortable: true, render: (row) => subscriptionTimestampLabel(row.last_sent_at) },
+          { key: "next_scheduled_at", label: "Next", sortable: true, render: (row) => subscriptionTimestampLabel(row.next_scheduled_at) },
           {
             key: "is_active",
             label: "Status",
+            sortable: true,
             sortValue: (row) => subscriptionStatusLabel(row.is_active),
             render: (row) => (
               <span
@@ -363,17 +366,19 @@ export function SubscriptionManager() {
               : "Loading delivery history…"
         }
         columns={[
-          { key: "sent_at", label: "Sent at", render: (log) => subscriptionTimestampLabel(log.sent_at) },
-          { key: "status", label: "Status" },
+          { key: "sent_at", label: "Sent at", sortable: true, render: (log) => subscriptionTimestampLabel(log.sent_at) },
+          { key: "status", label: "Status" , sortable: true},
           {
             key: "recipients",
             label: "Recipients",
+            sortable: true,
             sortValue: (log) => (log.recipients ?? []).join(", "),
             render: (log) => (log.recipients ?? []).join(", ") || "—",
           },
           {
             key: "error_message",
             label: "Error",
+            sortable: true,
             allowWrap: true,
             render: (log) => <span className="text-red-700">{log.error_message ?? "—"}</span>,
           },
