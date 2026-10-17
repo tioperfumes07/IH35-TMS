@@ -36,6 +36,17 @@ if (!/k\.confrelid = \$1::regclass/.test(svc)) fails.push("engine must discover 
 if (!/INSERT INTO \$\{q\(cfg\.aliasTable\)\}/.test(svc) || !/snapshot/.test(svc)) fails.push("engine must keep an alias with the deleted row's snapshot");
 if (!/DELETE FROM \$\{q\(cfg\.table\)\} WHERE id = \$1::uuid/.test(svc)) fails.push("engine must delete the merged duplicate (no cancelled shells)");
 if (!/export async function reverseCanonicalMerge/.test(svc)) fails.push("merges must be reversible");
+// LEAD 443.194 writer: the create route must re-check the canonical key under a (company, key) lock INSIDE its insert
+// transaction (two creates submitted together both passed the out-of-transaction check on 2026-10-16).
+{
+  const createRoute = readFileSync("apps/backend/src/mdata/customers.routes.ts", "utf8");
+  const helper = readFileSync("apps/backend/src/mdata/customer-create-dedup.ts", "utf8");
+  const lockAt = createRoute.indexOf("await lockAndFindCanonicalCustomer(client, resolvedOperatingCompanyId, normalizedName)");
+  const insertAt = createRoute.indexOf("`INSERT INTO mdata.customers (${columns.join(\", \")})");
+  const txnAt = lockAt < 0 ? -1 : createRoute.lastIndexOf("const created = await withCurrentUser(authUser.uuid, async (client) => {", lockAt);
+  if (lockAt < 0 || txnAt < 0 || insertAt < lockAt) fails.push("customer create must call lockAndFindCanonicalCustomer inside its insert transaction, before the INSERT");
+  if (!/pg_advisory_xact_lock/.test(helper) || !/normalizedKeySql\("customer_name"\)/.test(helper)) fails.push("create dedup must lock (company, key) and match on the canonical engine's normalizedKeySql");
+}
 const prof = readFileSync("apps/backend/src/mdata/canonical/customer-profile.service.ts", "utf8");
 const ui = readFileSync("apps/frontend/src/components/customers/CustomerProfileOverview.tsx", "utf8");
 const routes = readFileSync("apps/backend/src/mdata/canonical/canonical-entities.routes.ts", "utf8");

@@ -72,12 +72,12 @@ describe("Settlement Creator — Short (pay) miles are never auto-filled (443.19
 describe("creatorDrawerMiles helpers (443.192)", () => {
   const full = { load_id: null, fields: { practical: rec(800), short: rec(777), empty: rec(55) } };
 
-  it("fills empty Practical / Empty estimates but never Short", () => {
+  it("fills an empty Practical estimate but never Short nor Empty (Lead 15:10Z #2: Empty = the document's only)", () => {
     const out = fillEstimateMilesFromRecommendations(
       { loaded_miles: null, line_haul_miles: null, miles_shortest: null, empty_miles: null },
       full,
     );
-    expect(out).toEqual({ loaded_miles: 800, line_haul_miles: 800, miles_shortest: null, empty_miles: 55 });
+    expect(out).toEqual({ loaded_miles: 800, line_haul_miles: 800, miles_shortest: null, empty_miles: null });
   });
 
   it("never overwrites a document value", () => {

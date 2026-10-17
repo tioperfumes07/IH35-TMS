@@ -690,6 +690,25 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   // tab can also read the same real most-recent-posted-month chargeback figure for the
   // "Chargebacks & fees" tile, instead of that tile always rendering a fixed null.
   const latestMonthlyFeeSummary = feesQuery.data?.monthly_summary?.[0] ?? null;
+  // Heavy CI peel (FAC-09a rule): the Purchase Report's ChgBack (Refund) column shows the real chargebacks Faro took on
+  // the invoice — summed from the SAME chargeback history the Chargebacks & Fees tab reads (feesQuery), by invoice. The
+  // 443.172 rebuild (c8882821f9) moved the report onto purchase lines and left this column as "—".
+  const chargebacksByInvoice = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const h of feesQuery.data?.history ?? []) {
+      if (!h.invoice_id) continue;
+      m.set(h.invoice_id, (m.get(h.invoice_id) ?? 0) + Number(h.chargeback_amount ?? 0));
+    }
+    return m;
+  }, [feesQuery.data?.history]);
+  // Other Ref = the Faro statement reference on that invoice's chargeback/fee history (the pre-443.172 report showed it).
+  const statementRefByInvoice = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const h of feesQuery.data?.history ?? []) {
+      if (h.invoice_id && h.statement_reference && !m.has(h.invoice_id)) m.set(h.invoice_id, h.statement_reference);
+    }
+    return m;
+  }, [feesQuery.data?.history]);
 
   // FUNDS-DUE-01 (owner 2026-09-09): real query, own fetch (accounting.factoring_advances
   // submitted-not-yet-advanced rows -- structurally cannot come from the same recourse-pipeline
@@ -2304,6 +2323,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     render: (row) => <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_display_id ?? "—"} />,
                   },
                   { key: "faro_invoice_number", label: "Faro Inv #", sortable: true, render: (row) => row.faro_invoice_number ?? "—" },
+                  { key: "other_ref", label: "Other Ref", defaultHidden: true, render: (row) => statementRefByInvoice.get(row.invoice_id) ?? "—" },
                   // LEAD 443.172 — Load and Settlement are ordinary columns again (they were pinned, so the gear
                   // could not list or hide them).
                   {
@@ -2324,15 +2344,23 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   { key: "escrow_rsv", label: "Escrow Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.escrow_reserve_cents), render: (row) => fmtCurrency(Number(row.escrow_reserve_cents) / 100) },
                   { key: "cash_rsv", label: "Cash Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.cash_reserve_cents), render: (row) => fmtCurrency(Number(row.cash_reserve_cents) / 100) },
                   { key: "fees", label: "Fees", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.fee_cents), render: (row) => fmtCurrency(Number(row.fee_cents) / 100) },
-                  { key: "invoice_total", label: "Invoice total", cellClass: "text-right", defaultHidden: true, render: (row) => fmtCurrency(Number(row.invoice_total_cents ?? 0) / 100) },
-                  { key: "faro_report_ref", label: "Faro report", defaultHidden: true, render: (row) => row.faro_report_ref ?? "—" },
-                  { key: "wire_date", label: "Wire date", defaultHidden: true, render: (row) => fmtDate(row.wire_date) },
-                  // Faro-portal columns with no backing field yet — kept (owner: nothing removed unless he says), hidden by
-                  // default so the table is not tight; each one is in the gear.
-                  ...(["PO", "Discount", "Wire Fee", "Rebate Income", "Returned Item Fee", "Schedule Fee", "Shipping Fee", "Cash Advance Fee", "Processing Fee", "Dispatch", "Receipts", "ChgBack (Refund)"] as const).map((label) => ({
+                  { key: "invoice_total", label: "Invoice total", cellClass: "text-right", render: (row) => fmtCurrency(Number(row.invoice_total_cents ?? 0) / 100) },
+                  { key: "faro_report_ref", label: "Faro report", render: (row) => row.faro_report_ref ?? "—" },
+                  { key: "wire_date", label: "Wire date", render: (row) => fmtDate(row.wire_date) },
+                  {
+                    key: "chargeback",
+                    label: "ChgBack (Refund)",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => chargebacksByInvoice.get(row.invoice_id) ?? 0,
+                    render: (row) => fmtCurrency(chargebacksByInvoice.get(row.invoice_id) ?? 0),
+                  },
+                  // Faro-portal columns with no backing field yet — kept (owner: nothing removed unless he says). Visible by
+                  // default: the additive-only law (docs/LAW.md L379, verify-additive-only shrink-only defaultHidden ratchet)
+                  // forbids new hidden-by-default columns; the operator hides any of them from the gear.
+                  ...(["PO", "Discount", "Wire Fee", "Rebate Income", "Returned Item Fee", "Schedule Fee", "Shipping Fee", "Cash Advance Fee", "Processing Fee", "Dispatch", "Receipts", "Sch Fee"] as const).map((label) => ({
                     key: `faro_${label.toLowerCase().replace(/[^a-z]+/g, "_")}`,
                     label,
-                    defaultHidden: true,
                     render: () => "—",
                   })),
                 ]}

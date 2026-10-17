@@ -1,3 +1,8 @@
+// C6-MONEY-JE-EXEMPT: inserts an invoice LINE under an existing DRAFT invoice header (refused otherwise, invoice_not_draft).
+// The real revenue-recognition JE posts once via revrec-delivery-posting/poster.service.ts's postLoadRevenueLatch (calls
+// createJournalEntry), triggered by delivery evidence and invoice-linking, not by a line edit. Same exemption the route
+// carried (invoice-lines.routes.ts, verified 2026-09-02 GO-23 C6) — it did not move with the INSERT when a9ec441762
+// (443.128 A) extracted this writer (heavy CI peel, step 1503).
 /**
  * LEAD 443.128 A — THE invoice-line writer (extracted from invoice-lines.routes.ts POST, unchanged behaviour): a line is added only
  * to a DRAFT invoice; its income account is the explicit postable Income account or the line type's revenue resolution; the item

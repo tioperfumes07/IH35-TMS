@@ -54,8 +54,15 @@ export function staticProblems(root) {
   // ROUND 443.54 (04ae209084, #26376) RETIRED the 441.21-B R5 rule that fills are bank Match candidates: a Relay fill
   // draws from wallet 1295, never the bank, so the bank drawer must NOT list it (same law as
   // verify-relay-fill-not-a-bank-match-candidate). An existing matched_relay_fuel_transaction_id pointer still accepts.
-  if (/wants\(\s*["']relay_fuel["']\s*\)/.test(match)) {
-    p.push("fetchLedgerCandidates must NOT surface relay_fuel as a bank Match candidate (443.54: fills draw from 1295)");
+  // Heavy CI peel, repointed (same law): bd24c146b1 (#26806, LEAD 443.168 N) offers a fill ONLY on the Relay Fuel Wallet
+  // register (money OUT of 1295, where the fill IS that account's document) — `onRelayWallet && wants("relay_fuel")`,
+  // onRelayWallet = register.relay_wallet. Every other wants("relay_fuel") is a bank-register candidate and stays banned.
+  const relayFuelWants = [...match.matchAll(/(\w+\s*&&\s*)?wants\(\s*["']relay_fuel["']\s*\)/g)];
+  if (relayFuelWants.some((m) => !/^onRelayWallet\s*&&\s*$/.test(m[1] ?? ""))) {
+    p.push("fetchLedgerCandidates must NOT surface relay_fuel as a bank Match candidate (443.54: fills draw from 1295) — only on the Relay Fuel Wallet register (onRelayWallet && wants(\"relay_fuel\"), 443.168 N)");
+  }
+  if (relayFuelWants.length && !/const onRelayWallet = Boolean\(register\?\.relay_wallet\)/.test(match)) {
+    p.push("match.service: onRelayWallet must come from the line's register (register?.relay_wallet) — a fill is never a bank-register candidate");
   }
   if (!match.includes("matched_relay_fuel_transaction_id")) {
     p.push("match.service must keep matched_relay_fuel_transaction_id so an existing fill pointer still accepts / unmatches");

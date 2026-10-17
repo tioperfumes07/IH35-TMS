@@ -36,7 +36,11 @@ const TARGETS = [
   { file: "apps/backend/src/accounting/invoices.routes.ts", expectedCount: 4 },
   { file: "apps/backend/src/accounting/bills.routes.ts", expectedCount: 0 },
   { file: "apps/backend/src/accounting/bills.service.ts", expectedCount: 4 },
-  { file: "apps/backend/src/accounting/payments.routes.ts", expectedCount: 2 },
+  /* Heavy CI peel (Lead 13:45Z) — old: payments.routes.ts 2 (engine create emit + void emit); new: payments.routes.ts 1
+     (void) + payment-writer.service.ts 1 (the engine's create emit) — the engine moved byte-for-byte out of the route
+     module because the apply service imported the route to reach it (verify-steps 12399). Same total, same transaction. */
+  { file: "apps/backend/src/accounting/payments.routes.ts", expectedCount: 1 },
+  { file: "apps/backend/src/accounting/payment-writer.service.ts", expectedCount: 1 },
   /* 443.182 C step 2 — old: customer-payments.routes.ts 1 (its own create emit); new: 0 — the route hands its document to the
      one payments engine (payments.routes.ts recordCustomerPaymentInClientTx), whose single awaited in-transaction emit now
      serves BOTH create forms; payments.routes.ts stays at 2 (engine create emit + void emit). */

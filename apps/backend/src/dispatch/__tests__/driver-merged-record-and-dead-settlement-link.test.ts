@@ -156,7 +156,9 @@ describe("443.192 (2) — a bill linked to a voided / cancelled settlement is se
     await createDriverBillArtifacts(c, input(SURVIVOR), load, "13656", stops);
     const sql = c.billSql[0]!.replace(/\s+/g, " ");
     expect(sql).toContain("CASE WHEN settlement_live THEN settled_in_settlement_id::text END AS settled_in_settlement_id");
-    expect(sql).toContain("s.id = db.settled_in_settlement_id AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settlement_live");
+    // 443.193 group A (#26979, step 2648 entity scope) added the same-company predicate to this subquery — the settlement
+    // must be the bill's own company's. Same rule otherwise: voided / cancelled = settled in nothing.
+    expect(sql).toContain("s.id = db.settled_in_settlement_id AND s.operating_company_id = db.operating_company_id AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settlement_live");
   });
 
   it("a bill inside a LIVE settlement is still settled history: the reassignment is refused, nothing is re-priced", async () => {

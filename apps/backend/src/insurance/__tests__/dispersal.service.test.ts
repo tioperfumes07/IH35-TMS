@@ -6,6 +6,14 @@ import {
   splitCentsExact,
 } from "../dispersal.service.js";
 
+// Heavy CI peel (SWEEP-C6) — dispersal bills post through the one bill poster when BILL_GL_POSTING_ENABLED is on.
+const glMocks = vi.hoisted(() => ({ enabled: vi.fn(async () => false), post: vi.fn(async () => ({ journal_entry_id: "je-1" })) }));
+vi.mock("../../accounting/bill-gl.service.js", () => ({ isBillGlPostingEnabled: glMocks.enabled }));
+vi.mock("../../accounting/bills.service.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../accounting/bills.service.js")>();
+  return { ...actual, postBillDocumentInClientTx: glMocks.post };
+});
+
 vi.mock("../../auth/db.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../auth/db.js")>();
   return {
@@ -195,6 +203,27 @@ describe("generate-bills endpoint contract", () => {
     expect(created).toHaveLength(3);
     expect(created[0]?.bill_id).toBe("bill-1");
     expect(created[2]?.bill_id).toBe("bill-3");
+    // Flag OFF (default) -> no post.
+    expect(glMocks.post).not.toHaveBeenCalled();
+
+    // Flag ON -> each installment bill posts once through the bill poster, on the SAME client that wrote it.
+    glMocks.enabled.mockResolvedValue(true);
+    const again = await persistInsuranceDispersalBills({
+      userId: "user-1",
+      operatingCompanyId: "88888888-8888-4888-8888-888888888888",
+      policyId: "66666666-6666-4666-8666-666666666666",
+      policyNumber: "POL-PERSIST",
+      insurerName: "Persist Insurer",
+      bills,
+    });
+    expect(again).toHaveLength(3);
+    expect(glMocks.post).toHaveBeenCalledTimes(3);
+    expect(glMocks.post.mock.calls.map((c) => (c as unknown[])[1])).toEqual([
+      { operating_company_id: "88888888-8888-4888-8888-888888888888", bill_id: "bill-1" },
+      { operating_company_id: "88888888-8888-4888-8888-888888888888", bill_id: "bill-2" },
+      { operating_company_id: "88888888-8888-4888-8888-888888888888", bill_id: "bill-3" },
+    ]);
+    glMocks.enabled.mockResolvedValue(false);
   });
 });
 

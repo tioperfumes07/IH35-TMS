@@ -89,7 +89,7 @@ const MONTH_COLUMNS: ParityColumn<PaymentsToYouMonthRow>[] = [
   { key: "invoices", label: "Invoices", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => r.invoices },
   { key: "gross_cents", label: "Purchased", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => formatUsdCents(r.gross_cents) },
   { key: "escrow_reserve_cents", label: "Escrow reserve", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => formatUsdCents(r.escrow_reserve_cents) },
-  { key: "cash_reserve_cents", label: "Cash reserve", sortable: true, className: "text-right", cellClass: "text-right", defaultHidden: true, render: (r) => formatUsdCents(r.cash_reserve_cents) },
+  { key: "cash_reserve_cents", label: "Cash reserve", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => formatUsdCents(r.cash_reserve_cents) },
   { key: "fees_cents", label: "Fees", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => formatUsdCents(r.fees_cents) },
   { key: "net_to_company_cents", label: "Net to IH35", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => formatUsdCents(r.net_to_company_cents) },
 ];

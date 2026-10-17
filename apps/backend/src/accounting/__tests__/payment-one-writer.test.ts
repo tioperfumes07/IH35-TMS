@@ -1,9 +1,9 @@
 // LEAD 443.182 C — one writer per document: every accounting.payments row is written by insertPaymentRowInClientTx
-// (payments.routes.ts). Pins each caller's column list (unchanged) and that the customer route keeps no INSERT of its own.
+// (payment-writer.service.ts — moved out of payments.routes.ts in the heavy CI peel, verify-steps 12399). Pins each caller's column list (unchanged) and that the customer route keeps no INSERT of its own.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { insertPaymentRowInClientTx } from "../payments.routes.js";
+import { insertPaymentRowInClientTx } from "../payment-writer.service.js";
 
 const base = {
   operating_company_id: "oci", customer_id: "c", display_id: "PMT-1", payment_method: "ach", payment_date: "2026-10-16",
@@ -38,7 +38,10 @@ describe("443.182 C — the one payment row writer", () => {
     // 443.182 C step 2 — the route hands its document to the engine, which calls the one row writer.
     expect(cust).toContain("recordCustomerPaymentInClientTx(client, {");
     expect(cust).not.toMatch(/INSERT\s+INTO\s+accounting\.payments\s*\(/i);
-    const canon = readFileSync(resolve(root, "payments.routes.ts"), "utf8");
+    // Heavy CI peel: the engine (and its one INSERT) moved byte-for-byte to payment-writer.service.ts; the route keeps none.
+    const canon = readFileSync(resolve(root, "payment-writer.service.ts"), "utf8");
     expect((canon.match(/INSERT\s+INTO\s+accounting\.payments\s*\(/gi) ?? []).length).toBe(1);
+    const route = readFileSync(resolve(root, "payments.routes.ts"), "utf8");
+    expect(route).not.toMatch(/INSERT\s+INTO\s+accounting\.payments\s*\(/i);
   });
 });

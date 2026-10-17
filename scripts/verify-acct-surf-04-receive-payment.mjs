@@ -40,6 +40,8 @@ const FILES = {
   modal: "apps/frontend/src/pages/accounting/RecordPaymentModal.tsx",
   api: "apps/frontend/src/api/accounting.ts",
   service: "apps/backend/src/accounting/payments.routes.ts",
+  // Heavy CI peel (Lead 13:45Z): the one payments engine (and its INSERT) moved byte-for-byte to payment-writer.service.ts.
+  engine: "apps/backend/src/accounting/payment-writer.service.ts",
   topbar: "apps/frontend/src/components/Topbar.tsx",
 };
 
@@ -135,8 +137,11 @@ function contractErrors(src) {
   if (!src.service.includes('app.post("/api/v1/accounting/payments"')) {
     errors.push("VERIFY-3: server must mount POST /api/v1/accounting/payments (canonical, not customers/:id/payments)");
   }
-  if (!src.service.includes("INSERT INTO accounting.payments")) {
-    errors.push("VERIFY-3: createPayment server must INSERT INTO accounting.payments (canonical)");
+  const writesCanonical = src.engine
+    ? src.engine.includes("INSERT INTO accounting.payments") && /recordCustomerPaymentInClientTx\(client, \{/.test(src.service)
+    : src.service.includes("INSERT INTO accounting.payments");
+  if (!writesCanonical) {
+    errors.push("VERIFY-3: createPayment server must INSERT INTO accounting.payments (canonical) — directly or via the one payments engine");
   }
   if (/INSERT INTO\s+bank\.payments|INSERT INTO\s+payroll\.payments/i.test(src.service)) {
     errors.push("VERIFY-3: createPayment must not write RETIRE schemas");
@@ -203,6 +208,22 @@ function selftest() {
   };
   if (!contractErrors(noCustomerLink).some((e) => e.includes("PaymentsListPage must EntityLink customer"))) {
     console.error(`${LABEL} --selftest FAIL missing customer EntityLink on list not caught`);
+    process.exit(1);
+  }
+  // Engine shape (heavy CI peel): the route delegates; the INSERT lives in the engine.
+  const engineGood = { ...good, service: 'app.post("/api/v1/accounting/payments", async (req, reply) => { await recordCustomerPaymentInClientTx(client, { row }); });', engine: "INSERT INTO accounting.payments (operating_company_id)" };
+  if (contractErrors(engineGood).length) {
+    console.error(`${LABEL} --selftest FAIL engine shape:`, contractErrors(engineGood));
+    process.exit(1);
+  }
+  const engineNoInsert = { ...engineGood, engine: "UPDATE accounting.payments SET notes = $1" };
+  if (!contractErrors(engineNoInsert).some((e) => e.includes("VERIFY-3"))) {
+    console.error(`${LABEL} --selftest FAIL engine without the canonical INSERT not caught`);
+    process.exit(1);
+  }
+  const routeBypassesEngine = { ...engineGood, service: 'app.post("/api/v1/accounting/payments", async (req, reply) => {});' };
+  if (!contractErrors(routeBypassesEngine).some((e) => e.includes("VERIFY-3"))) {
+    console.error(`${LABEL} --selftest FAIL route not delegating to the engine not caught`);
     process.exit(1);
   }
   const noCreateDeepLink = { ...good, topbar: '[t("topbar.create_receive_payment", "Receive payment"), "/accounting/payments"]' };

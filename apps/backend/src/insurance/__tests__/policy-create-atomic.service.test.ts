@@ -2,6 +2,8 @@ import { membershipAware } from "../../../test-helpers/membership-aware-query.js
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createInsurancePolicyWithBills } from "../policy-create-atomic.service.js";
 
+const sqlLog = vi.hoisted(() => [] as string[]);
+
 vi.mock("../../auth/db.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../auth/db.js")>();
   return {
@@ -12,6 +14,7 @@ vi.mock("../../auth/db.js", async (importOriginal) => {
       let billSeq = 0;
       return fn({
         query: membershipAware(vi.fn(async (sql: string) => {
+          sqlLog.push(sql);
           if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
           if (sql.includes("FROM insurance.type_catalog")) return { rows: [{ id: "type-1" }] };
           if (sql.includes("INSERT INTO insurance.policy")) {
@@ -162,5 +165,19 @@ describe("createInsurancePolicyWithBills — C6 bill GL poster", () => {
     const result = await createInsurancePolicyWithBills(baseInput);
     expect(result.billCount).toBe(2);
     expect(mockPostSourceTransactionInClientTx).toHaveBeenCalledTimes(2);
+  });
+
+  it("LEAD 14:50Z: each post runs under a savepoint — a failed post rolls back alone, a good one is released", async () => {
+    sqlLog.length = 0;
+    mockIsBillGlPostingEnabled.mockResolvedValue(true);
+    mockPostSourceTransactionInClientTx.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce({ journal_entry_id: "je-2" });
+    await createInsurancePolicyWithBills(baseInput);
+    const sp = sqlLog.filter((q) => /SAVEPOINT policy_bill_post/.test(q));
+    expect(sp).toEqual([
+      "SAVEPOINT policy_bill_post",
+      "ROLLBACK TO SAVEPOINT policy_bill_post",
+      "SAVEPOINT policy_bill_post",
+      "RELEASE SAVEPOINT policy_bill_post",
+    ]);
   });
 });

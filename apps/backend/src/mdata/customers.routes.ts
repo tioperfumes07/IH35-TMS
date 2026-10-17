@@ -24,6 +24,7 @@ import { enqueueTmsCustomerPushRequested } from "../qbo/tms-customer-push-chain.
 import { listActiveCustomerClassifications } from "./classification-queries.js";
 import { searchCustomersForAutocomplete } from "./customer-autocomplete.shared.js";
 import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
+import { lockAndFindCanonicalCustomer, type ExistingCanonicalCustomer } from "./customer-create-dedup.js";
 import { EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL } from "./test-seed-archive.js";
 
 const listQuerySchema = z.object({
@@ -320,6 +321,13 @@ async function assertUniqueCustomerFields(
     return null;
   });
   return conflict;
+}
+
+/** LEAD 443.194: thrown inside the create transaction when the canonical key is already held (mapped to 409). */
+class CustomerCanonicalNameConflict extends Error {
+  constructor(readonly existing: ExistingCanonicalCustomer) {
+    super("mdata_customer_name_conflict");
+  }
 }
 
 // D1-4: sub-customer -> parent link integrity. Enforces a clean, cycle-free 2-level hierarchy at the
@@ -795,6 +803,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
         const resolvedOperatingCompanyId = createOperatingCompanyId;
+        // LEAD 443.194: the pre-check above runs in its own transaction — two creates of one customer submitted
+        // together both passed it. Under a (company, canonical key) lock in THIS transaction, re-check on the
+        // canonical key (the one verify-canonical-customers groups by) before inserting.
+        const existing = await lockAndFindCanonicalCustomer(client, resolvedOperatingCompanyId, normalizedName);
+        if (existing) throw new CustomerCanonicalNameConflict(existing);
         const columns: string[] = ["customer_name", "customer_type", "status", "operating_company_id", "created_by_user_id", "updated_by_user_id"];
         const values: unknown[] = [normalizedName, normalizedCustomerType, b.status ?? "active", resolvedOperatingCompanyId, authUser.uuid, authUser.uuid];
         const placeholders: string[] = ["$1", "$2", "$3", "$4", "$5", "$6"];
@@ -931,6 +944,14 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       });
       return reply.code(201).send(created.customer);
     } catch (err) {
+      if (err instanceof CustomerCanonicalNameConflict) {
+        return reply.code(409).send({
+          error: "mdata_customer_name_conflict",
+          message: `Customer "${err.existing.customer_name}" already exists${err.existing.deactivated_at ? " (inactive — reactivate it)" : ""}`,
+          existing_customer_id: err.existing.id,
+          fieldErrors: { legal_name: "Already in use" },
+        });
+      }
       if ((err as { code?: string }).code === "23505") {
         const constraint = String((err as { constraint?: string }).constraint ?? "");
         if (constraint.includes("customer_code")) {

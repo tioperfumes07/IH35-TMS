@@ -499,3 +499,64 @@ export async function fillLoadDeadhead(
   });
   return { ...base, status: "filled", miles, method, reason: null };
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// LEAD 443.195 (ruling 15:55Z; owner 2026-09-02 "blank = honest unknown; the document decides Creator pay"): a deadhead the
+// engine WROTE (fillLoadDeadhead, Google practical) on a load whose signed document prints no empty miles is cleared back to
+// NULL — through this engine, the ONE writer of miles_deadhead / its method / miles_choice.empty — with an audit row each.
+// Refused unless the load's own record proves the value is the engine's: miles_choice.empty.source = 'google', the method is
+// a google_practical_* engine method, and the recorded engine value is the column value (nobody changed it since). The empty
+// choice becomes source 'document' with value NULL and document_value NULL, so 'document' can never be re-chosen to a number
+// it never printed; the cleared engine value is kept in the choice (cleared_engine_value) and the audit. Loaded miles, bills,
+// settlements and pay are not read or written here — the caller proves pay impact.
+export const ENGINE_DEADHEAD_METHODS = ["google_practical_prev_stop", "google_practical_samsara_position"] as const;
+export type DeadheadClearResult = {
+  load_id: string; load_number: string | null;
+  status: "cleared" | "refused";
+  cleared_miles: number | null; cleared_method: string | null; reason: string | null;
+};
+
+export async function clearEngineDeadhead(
+  client: Queryable,
+  args: { operatingCompanyId: string; loadId: string; actorUserId: string; reason: string }
+): Promise<DeadheadClearResult> {
+  const reason = String(args.reason ?? "").trim();
+  if (reason.length < 10) throw new MilesChoiceError("deadhead_clear_requires_reason");
+  const row = (
+    await client.query<{ load_number: string | null; miles_deadhead: string | null; method: string | null; empty: Record<string, unknown> | null }>(
+      `SELECT load_number, miles_deadhead::text, deadhead_miles_calculation_method AS method, miles_choice->'empty' AS empty
+         FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL FOR UPDATE`,
+      [args.loadId, args.operatingCompanyId]
+    )
+  ).rows[0];
+  const base = { load_id: args.loadId, load_number: row?.load_number ?? null, cleared_miles: null, cleared_method: null };
+  const refuse = (why: string): DeadheadClearResult => ({ ...base, status: "refused", reason: why });
+  if (!row) return refuse("load not found");
+  const value = num(row.miles_deadhead);
+  if (value == null) return refuse("no deadhead on the load");
+  if (row.empty?.source !== "google") return refuse(`deadhead source is ${String(row.empty?.source ?? "unrecorded")}, not the engine's`);
+  if (!(ENGINE_DEADHEAD_METHODS as readonly string[]).includes(String(row.method))) return refuse(`deadhead method ${String(row.method)} is not an engine method`);
+  if (num(row.empty?.value) !== value) return refuse("deadhead changed since the engine wrote it");
+
+  const choice = {
+    value: null, source: "document", historical: row.empty?.historical ?? null, google: row.empty?.google ?? value, document_value: null,
+    reason, flag_far_from_both: false, cleared_engine_value: value, cleared_engine_method: row.method,
+    chosen_by: args.actorUserId, chosen_at: new Date().toISOString(),
+  };
+  const upd = await client.query<{ id: string }>(
+    `UPDATE mdata.loads
+        SET miles_deadhead = NULL, deadhead_miles_calculation_method = NULL,
+            miles_choice = coalesce(miles_choice, '{}'::jsonb) || jsonb_build_object('empty', $4::jsonb), updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND miles_deadhead = $3::numeric
+        AND miles_choice->'empty'->>'source' = 'google'
+      RETURNING id::text`,
+    [args.loadId, args.operatingCompanyId, value, JSON.stringify(choice)]
+  );
+  if (upd.rows.length !== 1) return refuse("load changed under the clear");
+  await appendCrudAudit(client as never, args.actorUserId, "dispatch.load.miles_deadhead_cleared", {
+    resource_type: "mdata.loads", resource_id: args.loadId, load_id: args.loadId, operating_company_id: args.operatingCompanyId,
+    field: "empty", column: "miles_deadhead", old_value: value, old_method: row.method, old_source: "google",
+    new_value: null, new_source: "document", reason,
+  });
+  return { ...base, status: "cleared", cleared_miles: value, cleared_method: row.method, reason: null };
+}

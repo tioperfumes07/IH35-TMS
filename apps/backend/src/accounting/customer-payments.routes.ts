@@ -10,7 +10,7 @@ import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { getAppliedCreditMemoCents } from "./payments/apply.service.js";
 import { directPaymentRoomCents } from "../factoring/purchased-gross.service.js";
-import { PaymentApplicationRefusedError, recordCustomerPaymentInClientTx } from "./payments.routes.js";
+import { PaymentApplicationRefusedError, recordCustomerPaymentInClientTx } from "./payment-writer.service.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -223,7 +223,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         if (!depositedToAccountId) return { code: 400 as const, error: "operating_bank_unmapped" };
       }
 
-      // 443.182 C step 2 — the one payment engine (payments.routes.ts recordCustomerPaymentInClientTx) numbers the payment,
+      // 443.182 C step 2 — the one payment engine (payment-writer.service.ts recordCustomerPaymentInClientTx) numbers the payment,
       // writes it and its applications, posts its JE (or the skip audit), audits and emits its spine event. This form keeps
       // its own per-invoice checks and its QBO outbox step.
       // FAIL-F2 / ACCT-F264 — customer payments can be marked TEST data: posting-engine resolves the flag from this SOURCE

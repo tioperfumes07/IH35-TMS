@@ -7,8 +7,12 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => fs.readFileSync(path.join(root, rel), "utf8");
+// Heavy CI peel — re-pointed, same rule: 52699c6c2f (#26871, 443.182-A catalog one-source consolidation) moved
+// listVendors / listAllVendors from api/mdata.ts into api/catalog-vendors.ts; mdata.ts re-exports them so every caller is
+// unchanged. The helper is read where it now lives, and mdata.ts must re-export it (no second definition).
 const live = {
-  api: read("apps/frontend/src/api/mdata.ts"),
+  api: read("apps/frontend/src/api/catalog-vendors.ts"),
+  mdataApi: read("apps/frontend/src/api/mdata.ts"),
   backend: read("apps/backend/src/mdata/vendors.routes.ts"),
   vendors: read("apps/frontend/src/pages/Vendors.tsx"),
   parts: read("apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx"),
@@ -19,9 +23,12 @@ const ACTIVE_ROSTER_CALL = /listAllVendors\(\{\s*operating_company_id: companyId
 const INACTIVE_ROSTER_CALL = /listAllVendors\(\{\s*operating_company_id: companyId,\s*status: "inactive",?\s*\}\)/;
 
 function verify(s) {
-  const helper = s.api.slice(s.api.indexOf("export async function listAllVendors"), s.api.indexOf("export function getVendor"));
+  const start = s.api.indexOf("export async function listAllVendors");
+  const next = start < 0 ? -1 : s.api.indexOf("\nexport ", start + 1);
+  const helper = start < 0 ? "" : s.api.slice(start, next < 0 ? undefined : next);
   const checks = [
     ["exhaustive helper", helper.startsWith("export async function listAllVendors")],
+    ["mdata.ts re-exports the one helper", /export \{[^}]*\blistAllVendors\b[^}]*\} from "\.\/catalog-vendors"/.test(s.mdataApi) && !/export async function listAllVendors/.test(s.mdataApi)],
     ["stable authoritative total", /expectedTotal = page\.total/.test(helper) && /page\.total !== expectedTotal/.test(helper)],
     ["deduplicated IDs", /seen\.has\(vendor\.id\)/.test(helper) && /seen\.add\(vendor\.id\)/.test(helper)],
     ["progress-safe offset", /offset \+= page\.vendors\.length/.test(helper) && /page\.vendors\.length === 0/.test(helper)],
@@ -45,6 +52,7 @@ if (process.argv.includes("--selftest")) {
     ["total drift accepted", { ...live, api: live.api.replace('if (page.total !== expectedTotal) throw new Error("Vendor roster changed during pagination. Retry.");', 'if (false) throw new Error("Vendor roster changed during pagination. Retry.");') }],
     ["early empty accepted", { ...live, api: live.api.replace('if (page.vendors.length === 0) throw new Error("Vendor roster pagination stopped before the reported total.");', 'if (false) throw new Error("Vendor roster pagination stopped before the reported total.");') }],
     ["unstable SQL", { ...live, backend: live.backend.replace(", id DESC", "") }],
+    ["second helper copy in mdata.ts", { ...live, mdataApi: live.mdataApi + "\nexport async function listAllVendors() {}\n" }],
     ["active first page", { ...live, vendors: live.vendors.replace(ACTIVE_ROSTER_CALL, "listVendors({ operating_company_id: companyId, limit: 5000, active_company_only: true })") }],
     ["inactive first page", { ...live, vendors: live.vendors.replace(INACTIVE_ROSTER_CALL, "listVendors({ operating_company_id: companyId, limit: 5000, status: \"inactive\" })") }],
     ["parts first page", { ...live, parts: live.parts.replace("listAllVendors({ operating_company_id: companyId })", "listVendors({ operating_company_id: companyId })") }],

@@ -50,10 +50,20 @@ function extractColumnKeys(blockSrc) {
   // Same heuristic class as verify-sortable-columns-and-void-visibility.mjs's own column scan:
   // a `{ ... key: "x" ... }` object up to the next top-level `},`. Not a parser — good enough to
   // count column entries and their keys inside a bounded array-literal block.
-  const re = /\{[^{}]*?\bkey\s*:\s*"([a-zA-Z0-9_]+)"[^{}]*?\}/g;
+  // Heavy CI peel (443.192) — brace-balanced, same rule: a column is an object directly inside the array literal, and its
+  //   key is the `key: "x"` at that object's own top level. The old regex only matched objects with NO inner braces, so
+  //   7a570c3432 (#26744) giving the Load Costs Revenue column a JSX render (`{fmt(...)}`) made it look REMOVED.
   const keys = [];
-  let m;
-  while ((m = re.exec(blockSrc)) !== null) keys.push(m[1]);
+  let depth = 0;
+  for (let i = 0; i < blockSrc.length; i++) {
+    const ch = blockSrc[i];
+    if (ch === "{") depth++;
+    else if (ch === "}") depth = Math.max(0, depth - 1);
+    else if (depth === 1 && (ch === "k") && /[\s{,]/.test(blockSrc[i - 1] ?? " ")) {
+      const m = /^key\s*:\s*"([a-zA-Z0-9_]+)"/.exec(blockSrc.slice(i, i + 80));
+      if (m) keys.push(m[1]);
+    }
+  }
   return keys;
 }
 
@@ -181,6 +191,13 @@ function selftest() {
   const fails = shrinkFailures(fakeCurrent, fakeBaseline);
   if (fails.length < 6) {
     console.error(`${LABEL}: SELFTEST FAIL — expected >=6 shrink failures, got ${fails.length}: ${fails.join("; ")}`);
+    process.exit(1);
+  }
+  // A column whose render carries JSX braces is still a column (443.192: the Load Costs Revenue column).
+  const jsxBlock = 'const columns: Array<ParityColumn<Row>> = [\n    { key: "load", label: "Load" },\n    { key: "revenue", label: "Revenue", render: r => <span title={r.t}>{fmt(r.v)}</span> },\n    {\n      key: "status",\n      render: r => { const s = f(r); return <b>{s}</b>; },\n    },\n  ];';
+  const jsxKeys = extractColumnKeys(jsxBlock);
+  if (jsxKeys.join(",") !== "load,revenue,status") {
+    console.error(`${LABEL}: SELFTEST FAIL — column keys inside JSX-render objects not extracted: got [${jsxKeys.join(",")}]`);
     process.exit(1);
   }
   const cleanFails = shrinkFailures(fakeBaseline, fakeBaseline);
