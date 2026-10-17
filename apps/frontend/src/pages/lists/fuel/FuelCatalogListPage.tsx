@@ -4,7 +4,8 @@ import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQ
 import { useQuery } from "@tanstack/react-query";
 import type { FuelCatalogRow } from "../../../api/catalogs-fuel";
 import { Button } from "../../../components/Button";
-import { DataTable } from "../../../components/DataTable";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
@@ -50,7 +51,7 @@ export function FuelCatalogListPage({ client, displayName, breadcrumbPath }: Pro
 
   const query = useQuery({
     // Round 296: every row of the catalog (status narrows server-side on the indexed is_active), then the house toolbar
-    // (DataTable's UniversalListToolbar) is the one search over all of it with "N of M" -- no 200-row cap.
+    // (ParityTable's UniversalListToolbar) is the one search over all of it with "N of M" -- no 200-row cap.
     queryKey: ["catalogs", "fuel", displayName, companyId, status],
     queryFn: () => fetchAllCatalogPages(client.list, { operating_company_id: companyId, is_active: status }),
     enabled: Boolean(companyId),
@@ -61,12 +62,12 @@ export function FuelCatalogListPage({ client, displayName, breadcrumbPath }: Pro
   const rows = allRows;
   const total = query.data?.total ?? 0;
 
-  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
+  // TBL-STANDARD: shared ParityTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
   const columns = [
     { key: "code", label: "Code", sortable: true, render: (row: FuelCatalogRow) => <span className="text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</span> },
     { key: "display_name", label: "Display Name", sortable: true },
     { key: "description", label: "Description", sortable: true, render: (row: FuelCatalogRow) => row.description || "—" },
-    { key: "sort_order", label: "Order", sortable: true, numeric: true },
+    { key: "sort_order", label: "Order", sortable: true, kind: "number" as const },
     { key: "is_active", label: "Status", sortable: true, render: (row: FuelCatalogRow) => <span className={statusPillClass(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span> },
   ];
 
@@ -109,26 +110,31 @@ export function FuelCatalogListPage({ client, displayName, breadcrumbPath }: Pro
         </label>
       </div>
 
-      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
+      {/* TBL-STANDARD: shared ParityTable (universal alignment + page-size + sort). Search/Status filters above
           feed `rows`; row-click → edit modal preserved exactly. */}
-      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}</h2>
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        onRowClick={(row) => {
-          setModalMode("edit");
-          setSelectedRow(row);
-          setModalOpen(true);
-        }}
-        loading={query.isLoading}
-        tableKey="catalogs-fuel"
-        errorState={
-          query.isError
-            ? { status: 0, message: `Failed to load ${displayName.toLowerCase()}.`, onRetry: () => { void query.refetch(); } }
-            : undefined
-        }
-      />
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load list"
+          status={0}
+          message={`Failed to load ${displayName.toLowerCase()}.`}
+          onRetry={() => { void query.refetch(); }}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          onRowClick={(row) => {
+            setModalMode("edit");
+            setSelectedRow(row);
+            setModalOpen(true);
+          }}
+          loading={query.isLoading}
+          storageKey="catalogs-fuel"
+          title={status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}
+          allowAllPageSize
+        />
+      )}
 
       <FuelCatalogModal
         open={modalOpen}
