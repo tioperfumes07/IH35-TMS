@@ -22,6 +22,20 @@
 //       extract, each quoting the printed settlement; every other line's date must equal its document's.
 //   Kept unchanged: DEF/diesel GL segregation (assertion 3) and the cross-load duplicate receipt list.
 //
+// LEAD 443.198 (2026-10-17) — a fourth source. Old rule -> new rule -> why:
+//   OLD: a live row was sourced only by a settlement document line, a Creator posted event or a Relay transaction.
+//   NEW: a row written by the Dreamline provider-statement import (fuel/dreamline-statement-import.service.ts,
+//   LEAD 443.142) is STATEMENT-SOURCED — the provider's own statement is its source document. Proven from the
+//   import's own record only, never from a note alone: source = 'import', notes carry the import's marker
+//   "443.142 Dreamline statement" AND "efs_invoice=<the row's transaction_reference>", and the row was written in the
+//   SAME transaction as a fuel.dreamline_statement_imported audit event (created_at = that event's created_at). Every
+//   such batch must hold exactly the event's by_outcome.imported.lines rows (live + voided) — a marker on a row the
+//   import never wrote, or a batch that grew, fails. A statement-sourced row never satisfies a document line (a
+//   document line with no live row is still "missing") and is kept out of the per-load document tie (shown apart).
+//   WHY: the 2026-10-16 14:46Z import booked 75 statement lines with no booked receipt (63 still live after the
+//   443.194/443.197 voids); the guard knew no statement source and named all 63 "unsourced" (PASS at 14:21Z, red
+//   from the next run).
+//
 // --selftest runs the pure comparator against fixtures (no DB). Live: fails closed with no DATABASE_URL
 // (requireLiveDbOrExit, ROUND 29.9-B); money-pr-local-gate.mjs runs it when its own domain paths change.
 import fs from "node:fs";
@@ -46,10 +60,18 @@ export const baseInvoice = (ref) => String(ref ?? "").replace(/-1[0-9]{4}$/, "")
  * Pure comparator. documents: [{settlement_no, fuel_purchases:[{load_number, invoice, date, receipt_cents, card}]}]
  * live: active rows [{id, load_number, ref, cents, date, relay_id}]; purged: [{ref, cents, auth_id}];
  * relayTotals: Map(relay_id -> {paid_cents, dead}); creatorIds: Set(fuel id named by a Creator posted event).
+ * statementIds: Set(fuel id the Dreamline statement import wrote — proven by statementRowIsImported + its batch);
+ * statementBatches: [{event_id, at, declared_lines, rows}] — every import event's declared imported lines vs the rows
+ * (live + voided) written in its transaction.
  */
-export function compareFuel({ documents, corrections = [], documentDuplicates = [], live, purged = [], relayTotals = new Map(), creatorIds = new Set() }) {
+export function compareFuel({ documents, corrections = [], documentDuplicates = [], live, purged = [], relayTotals = new Map(), creatorIds = new Set(), statementIds = new Set(), statementBatches = [] }) {
   const failures = [];
   const notes = [];
+  for (const b of statementBatches) {
+    if (b.rows !== b.declared_lines) {
+      failures.push(`statement: Dreamline import ${String(b.event_id).slice(0, 8)} at ${b.at} declares ${b.declared_lines} imported line(s) but ${b.rows} fuel row(s) carry its marker in its transaction`);
+    }
+  }
   const fix = new Map(corrections.map((c) => [`${c.load_number}|${c.invoice}|${c.receipt_cents}`, c]));
   const byLoad = new Map();
   for (const r of live) {
@@ -108,8 +130,16 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
       failures.push(`missing: settlement ${doc.settlement_no} load ${load} invoice ${line.invoice} ${money(line.receipt_cents)} ${line.date} has no live fuel row`);
     }
   }
+  let statementSourced = 0;
   for (const r of live) {
     const t = perLoad.get(r.load_number);
+    // 443.198: a statement-sourced row no document line took is the provider statement's fill, not the document's —
+    // shown apart from the per-load document tie, never a failure.
+    if (!used.has(r.id) && statementIds.has(r.id)) {
+      statementSourced++;
+      if (t) { t.stmtN = (t.stmtN || 0) + 1; t.stmtC = (t.stmtC || 0) + r.cents; }
+      continue;
+    }
     if (t) { t.liveN = (t.liveN || 0) + 1; t.liveC = (t.liveC || 0) + r.cents; }
     if (used.has(r.id)) continue;
     if (t) {
@@ -122,6 +152,7 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
   for (const [load, t] of perLoad) {
     if (t.docN === (t.liveN || 0) && t.docC === (t.liveC || 0)) loadsTied++;
     else notes.push(`load ${load}: document ${t.docN} / ${money(t.docC)} vs live ${t.liveN || 0} / ${money(t.liveC || 0)}`);
+    if (t.stmtN) notes.push(`load ${load}: + ${t.stmtN} Dreamline statement fill(s) / ${money(t.stmtC)} not printed on its settlement document (statement-sourced)`);
   }
   const relaySums = new Map();
   for (const r of live) if (r.relay_id) relaySums.set(r.relay_id, (relaySums.get(r.relay_id) || 0) + r.cents);
@@ -131,7 +162,15 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
     else if (rt.dead) failures.push(`relay: Relay transaction ${rid} is voided/inactive but ${money(sum)} of live fuel rows still point at it`);
     else if (rt.paid_cents !== sum) failures.push(`relay: Relay transaction ${rid} paid ${money(rt.paid_cents)} but its live fuel rows sum to ${money(sum)}`);
   }
-  return { failures, notes, expectedRows, loads: perLoad.size, loadsTied, relayTxns: relaySums.size };
+  return { failures, notes, expectedRows, loads: perLoad.size, loadsTied, relayTxns: relaySums.size, statementSourced };
+}
+
+/** 443.198 — the import's own marker on one row (pure; the batch tie to the audit event is applied by the caller). */
+export const STATEMENT_MARKER = "443.142 Dreamline statement";
+export function statementRowIsImported(r) {
+  if (r.source !== "import" || !r.notes || !r.ref) return false;
+  const parts = String(r.notes).split(";").map((p) => p.trim());
+  return parts.includes(STATEMENT_MARKER) && parts.includes(`efs_invoice=${r.ref}`);
 }
 
 function selftest() {
@@ -166,6 +205,23 @@ function selftest() {
         live: [R({ fuel_type: "def" })] }, 1],
     ["receipt printed on two documents, live on neither load fails twice",
       { documents: [{ settlement_no: "1", fuel_purchases: [L()] }, { settlement_no: "2", fuel_purchases: [L({ load_number: "200" })] }], live: [] }, 2],
+    // 443.198 — the Dreamline statement source.
+    ["statement-sourced fill on a documented load passes and stays out of the tie",
+      { documents: doc([L()]), live: [R(), R({ id: "ssssssss-1", ref: "61620", cents: 2533 })], statementIds: new Set(["ssssssss-1"]),
+        statementBatches: [{ event_id: "e1", at: "t", declared_lines: 1, rows: 1 }] }, 0],
+    ["statement-sourced fill on an undocumented load passes",
+      { documents: doc([]), live: [R({ id: "ssssssss-1", load_number: "200", ref: "03980" })], statementIds: new Set(["ssssssss-1"]) }, 0],
+    ["a row the import never wrote (marker not proven) on a documented load still fails",
+      { documents: doc([L()]), live: [R(), R({ id: "ssssssss-1", ref: "61620", cents: 2533 })] }, 1],
+    ["a row the import never wrote on an undocumented load still fails",
+      { documents: doc([]), live: [R({ id: "ssssssss-1", load_number: "200", ref: "03980" })] }, 1],
+    ["a statement fill never excuses a missing document line",
+      { documents: doc([L()]), live: [R({ id: "ssssssss-1", ref: "61620", cents: 2533 })], statementIds: new Set(["ssssssss-1"]) }, 1],
+    ["an import batch that holds more rows than its event declares fails",
+      { documents: doc([]), live: [], statementBatches: [{ event_id: "e1", at: "t", declared_lines: 75, rows: 76 }] }, 1],
+    ["a statement fill does not excuse a Relay sum that differs",
+      { documents: doc([]), live: [R({ id: "ssssssss-1", load_number: "200", relay_id: "r1" })], statementIds: new Set(["ssssssss-1"]),
+        relayTotals: new Map([["r1", { paid_cents: 4000, dead: false }]]) }, 1],
   ];
   let bad = 0;
   for (const [name, input, want] of cases) {
@@ -173,6 +229,21 @@ function selftest() {
     console.log(`${got === want ? "ok  " : "FAIL"} ${name} (${got} failure(s), want ${want})`);
     if (got !== want) bad++;
   }
+  // 443.198 — the marker predicate: the import's own marker AND its own invoice, from source 'import', or nothing.
+  const N = (o) => ({ source: "import", ref: "61620", notes: "card=…7005; efs_invoice=61620; file_unit=171; 443.142 Dreamline statement", ...o });
+  const markerCases = [
+    ["import row with marker + own invoice is a statement row", N(), true],
+    ["a manual row carrying the marker is not", N({ source: "manual" }), false],
+    ["a marker naming another invoice is not", N({ ref: "61621" }), false],
+    ["an adopted receipt (dreamline_efs= stamp only) is not", N({ source: "manual", notes: "dreamline_efs=61620:ULSD:1" }), false],
+    ["no marker is not", N({ notes: "efs_invoice=61620" }), false],
+  ];
+  for (const [name, row, want] of markerCases) {
+    const got = statementRowIsImported(row);
+    console.log(`${got === want ? "ok  " : "FAIL"} ${name} (${got}, want ${want})`);
+    if (got !== want) bad++;
+  }
+  cases.push(...markerCases);
   console.log(`${LABEL} selftest: ${cases.length - bad}/${cases.length}`);
   process.exit(bad ? 1 : 0);
 }
@@ -191,6 +262,7 @@ async function live() {
       // stampDocumentVoided renumbers a voided load VOID-<original>-<id8> (#22442); its documents still name the original.
       `SELECT ft.id::text AS id, ft.transaction_reference AS ref, round(ft.total_cost * 100)::bigint AS cents,
               ft.transaction_at::date::text AS date, ft.fuel_type, ft.relay_fuel_transaction_id::text AS relay_id,
+              ft.source, ft.notes, ft.created_at,
               regexp_replace(l.load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number
          FROM fuel.fuel_transactions ft
          LEFT JOIN mdata.loads l ON l.id = ft.load_id
@@ -222,6 +294,24 @@ async function live() {
           AND jsonb_typeof(payload->'fuel_transaction_ids') = 'array'`,
       [USMCA_COMPANY_ID]
     );
+    // 443.198 — the Dreamline statement import's own record: each import event, and every row (live AND voided) that
+    // carries the import's marker in that event's transaction (created_at = the event's created_at, one transaction).
+    const stmtEvents = await client.query(
+      `SELECT ae.uuid::text AS event_id, ae.created_at, ae.created_at::text AS at,
+              coalesce((ae.payload->'by_outcome'->'imported'->>'lines')::int, 0) AS declared_lines,
+              (SELECT count(*)::int FROM fuel.fuel_transactions ft
+                WHERE ft.operating_company_id = $1::uuid AND ft.created_at = ae.created_at AND ft.source = 'import'
+                  AND ft.notes LIKE '%' || $2::text || '%') AS rows
+         FROM audit.audit_events ae
+        WHERE ae.event_class = 'fuel.dreamline_statement_imported' AND ae.payload->>'operating_company_id' = $1::text`,
+      [USMCA_COMPANY_ID, STATEMENT_MARKER]
+    );
+    const batchTimes = new Set(stmtEvents.rows.map((e) => new Date(e.created_at).toISOString()));
+    // A marker on a row no import event wrote is never a source — and is named, not ignored.
+    const strayMarked = liveRows.filter((r) => String(r.notes ?? "").includes(STATEMENT_MARKER) && !batchTimes.has(new Date(r.created_at).toISOString()));
+    const statementIds = new Set(liveRows
+      .filter((r) => statementRowIsImported(r) && batchTimes.has(new Date(r.created_at).toISOString()))
+      .map((r) => r.id));
     const result = compareFuel({
       documents: source.documents,
       corrections: source.date_corrections || [],
@@ -230,7 +320,12 @@ async function live() {
       purged: purgedRes.rows.map((r) => ({ ...r, cents: Number(r.cents) })),
       relayTotals: new Map(relayRes.rows.map((r) => [r.id, { paid_cents: Number(r.paid), dead: r.dead }])),
       creatorIds: new Set(creatorRes.rows.map((r) => r.id)),
+      statementIds,
+      statementBatches: stmtEvents.rows.map((e) => ({ event_id: e.event_id, at: e.at, declared_lines: e.declared_lines, rows: e.rows })),
     });
+    for (const r of strayMarked) {
+      result.failures.push(`statement: live row ${r.id.slice(0, 8)} load ${r.load_number ?? "(none)"} invoice ${r.ref} carries the Dreamline statement marker but no fuel.dreamline_statement_imported event wrote it`);
+    }
     let failures = result.failures.length;
     for (const n of result.notes) console.log(`${LABEL}: ${n}`);
     for (const f of result.failures) console.error(`  ✗ ${f}`);
@@ -299,7 +394,8 @@ async function live() {
     await client.query("COMMIT");
     const liveCents = liveRows.reduce((s, r) => s + r.cents, 0);
     const summary = `${source.documents.length} settlement documents, ${result.expectedRows} fuel lines; live ${liveRows.length} rows / ${money(liveCents)}; ` +
-      `${result.loadsTied}/${result.loads} loads tie in count and dollars; ${result.relayTxns} Relay transactions tie to the Relay file; ` +
+      `${result.loadsTied}/${result.loads} loads tie in count and dollars; ${result.statementSourced} Dreamline statement fill(s) sourced to ${stmtEvents.rows.length} import event(s); ` +
+      `${result.relayTxns} Relay transactions read against the Relay file; ` +
       `${purgedRes.rows.length} governed-purge deletions read; DEF shares ${sharedCount} posting(s) with diesel`;
     if (failures > 0) {
       console.error(`${LABEL}: LIVE FAIL — ${failures} failure(s). ${summary}`);
