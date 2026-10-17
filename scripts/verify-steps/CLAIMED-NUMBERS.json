@@ -16682,5 +16682,25 @@
     "claimed_at": "2026-10-17",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.184: verify-unwired-guards-shrink-only (guards authored but never run by CI: count shrink-only)"
+  },
+  "18567": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.187 batch 1/4: wire never-run guards (rows 1-12 of 2026-10-17-CC3-443-184-NEVER-RUN-GUARDS-RED-OR-DB.tsv) into verify:pre-commit after fixing / repointing each"
+  },
+  "18571": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.187 batch 2/4: wire never-run guards (rows 13-24 of 2026-10-17-CC3-443-184-NEVER-RUN-GUARDS-RED-OR-DB.tsv) into verify:pre-commit after fixing / repointing each"
+  },
+  "18575": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.187 batch 3/4: wire never-run guards (rows 25-36 of 2026-10-17-CC3-443-184-NEVER-RUN-GUARDS-RED-OR-DB.tsv) into verify:pre-commit after fixing / repointing each"
+  },
+  "18579": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.187 batch 4/4: wire never-run guards (rows 37-48 of 2026-10-17-CC3-443-184-NEVER-RUN-GUARDS-RED-OR-DB.tsv) into verify:pre-commit after fixing / repointing each"
   }
 }
