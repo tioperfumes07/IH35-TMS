@@ -16712,5 +16712,10 @@
     "claimed_at": "2026-10-17",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.191: verify-views-keep-security-invoker (replaying db/migrations, every user-schema view ends security_invoker=true; CREATE OR REPLACE VIEW without it drops the option)"
+  },
+  "18583": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-17",
+    "purpose": "verify-service-code-no-route-helper-import"
   }
 }
