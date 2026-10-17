@@ -3324,7 +3324,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   <EntityLink
                     kind="unit"
                     id={selectedEquipmentLoan.equipment_id}
-                    label={entityLabel(selectedEquipmentLoan.equipment_number, selectedEquipmentLoan.equipment_id, "Equipment")}
+                    label={entityLabel(selectedEquipmentLoan?.equipment_number, selectedEquipmentLoan?.equipment_id, "Equipment")}
                   />
                 ) : (
                   (selectedEquipmentLoan?.equipment_number ?? "—")
