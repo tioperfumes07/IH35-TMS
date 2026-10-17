@@ -82,7 +82,11 @@ import {
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/company-direct-credit-account.js";
 import { resolveLineItemAndAccount } from "../accounting/line-item-account.js";
 import { resolveFuelItem, resolveItemByName } from "../accounting/fuel-posting/fuel-item-account.js";
+<<<<<<< HEAD
 import { EXPENSE_SQL_NOW, reserveExpenseNumber, writeExpenseDocumentInClientTx, type ExpenseRow } from "../accounting/expense-writer.service.js";
+=======
+import { EXPENSE_SQL_NOW, insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
+>>>>>>> origin/main
 import { resolveLineLoadExemption } from "../accounting/expense-line-load-exemption.js";
 
 export type QueryableClient = {
@@ -460,7 +464,48 @@ export async function createExpenseFromFuelTransaction(
   // path posts it, applies the category account, and writes the GL — unchanged, so no new
   // posting math enters the system and the reversal path it already has stays the only one.
   // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseHeader).
+<<<<<<< HEAD
   // 443.182 C — written, linked and audited by the one expense engine (accounting/expense-writer.service.ts).
+=======
+  const insertedExpenseId = await insertExpenseHeader(client, {
+    operating_company_id: input.operating_company_id,
+    vendor_uuid: fuel.vendor_id,
+    // A document that adopts a posting is posted. One that does not is a draft.
+    status: adoptedJeId ? "posted" : "draft",
+    transaction_date: txnDate,
+    // total_amount_cents is the REAL column and it is bigint NOT NULL. There is no
+    // `total_amount` numeric column on accounting.expenses -- verified live. Cents is the
+    // spine; nothing here divides by 100 and hands a float to the ledger.
+    // ROUND 192: the document's total is net + fee (both lines), never just the fuel line --
+    // "lines must sum to total" applies here exactly like every other multi-line expense.
+    total_amount_cents: totalAmountCents,
+    memo,
+    expense_number: expenseNumber,
+    source_fuel_transaction_id: fuel.id,
+    load_id: fuel.load_id,
+    is_sample_data: false,
+    journal_entry_id: adoptedJeId,
+    posted_at: adoptedJeId ? (fuel.purchased_at ?? fuel.transaction_at) : null,
+    // R-153.6/153.7: the card-rail account (Dreamline 2510 / Relay 1295 for USMCA), resolved
+    // above through the SAME function the live poster uses -- never 1090, never a guess.
+    payment_account_uuid: paymentAccountId,
+    // ROUND 291 fix: the fuel transaction already carries this attribution (set at ingestion,
+    // same source verify-fuel-cost-posts-exactly-once.mjs's FULL_LOAD_LINKAGE check reads) --
+    // it was being fetched into `fuel` above and used only in the audit-log payload below,
+    // never written onto the document it actually attributes. That silently produced 35 new
+    // linkage-incomplete expenses (ratchet baseline 7) from every backfill call this session.
+    driver_uuid: fuel.driver_id,
+    unit_id: fuel.unit_id,
+    trailer_id: headerTrailerId,
+    // A document that carries a journal entry is posted in the GL, so it says so: the void
+    // route reverses only posting_status='posted' rows, and 'unposted' with a live JE left 5
+    // fuel documents (94 expenses in all) voidable with their entry still on the books.
+    // accounting.expenses CHECK expenses_journal_entry_implies_not_unposted (202615140700).
+    posting_status: adoptedJeId ? "posted" : "unposted",
+  });
+  if (!insertedExpenseId) throw new Error("fuel_expense_insert_failed");
+  const expenseId = insertedExpenseId;
+>>>>>>> origin/main
 
   const fuelLineLoadExemption = (accountLabel: string) =>
     resolveLineLoadExemption({
@@ -479,9 +524,15 @@ export async function createExpenseFromFuelTransaction(
   // (expense_lines_item_qty_rate_amount_check). Without them every fuel expense create refused.
   // RULING 443.66 D5: the line carries the header's driver / unit / trailer (806 fuel lines had none).
   // 443.105 #2: a line with no load carries the fuel transaction's own exemption reason, or says no load matched.
+<<<<<<< HEAD
   const fuelLines: ExpenseRow[] = [];
   fuelLines.push({
     operating_company_id: input.operating_company_id,
+=======
+  await insertExpenseLine(client, {
+    operating_company_id: input.operating_company_id,
+    expense_id: expenseId,
+>>>>>>> origin/main
     line_sequence: 1,
     amount: amountCents / 100,
     amount_cents: amountCents,
@@ -505,8 +556,14 @@ export async function createExpenseFromFuelTransaction(
   // feeItem is resolved (or the whole document already refused) above.
   if (feeCents > 0 && feeItem) {
     const feeMemo = `Card fee — ${fuel.fuel_type ?? "Fuel"} purchase ${fuel.id}` + (fuel.transaction_reference ? `, ref ${fuel.transaction_reference}` : "");
+<<<<<<< HEAD
     fuelLines.push({
       operating_company_id: input.operating_company_id,
+=======
+    await insertExpenseLine(client, {
+      operating_company_id: input.operating_company_id,
+      expense_id: expenseId,
+>>>>>>> origin/main
       line_sequence: 2,
       amount: feeCents / 100,
       amount_cents: feeCents,
@@ -790,6 +847,7 @@ export async function adoptRelayFillExpenseDocument(
   const number = await reserveExpenseNumber(client, company, { loadId, referenceDate: new Date(`${txnDate}T00:00:00.000Z`) });
   const expenseNumber = number.number;
   const memo = `Relay fuel fill ${input.relay_fill_id} — document for journal entry ${input.journal_entry_id} (Lead 443.41 A: one JE, the document adopts it)`;
+<<<<<<< HEAD
   const written = await writeExpenseDocumentInClientTx(client, {
     // The adopting document is born posted on the Relay fill's JE — nothing posts here.
     header: {
@@ -871,5 +929,88 @@ export async function adoptRelayFillExpenseDocument(
   });
   if (!written) throw new Error("relay_fill_expense_insert_failed");
   const expenseId = written.expenseId;
+=======
+  // 443.182 C — persisted through the one expense writer; the adopting document is born posted on the Relay fill's JE.
+  const insertedExpenseId = await insertExpenseHeader(client, {
+    operating_company_id: company,
+    vendor_uuid: relay.rows[0]!.id,
+    status: "posted",
+    transaction_date: txnDate,
+    total_amount_cents: totalCents,
+    memo,
+    expense_number: expenseNumber,
+    source_fuel_transaction_id: primary?.id ?? null,
+    load_id: loadId,
+    is_sample_data: false,
+    journal_entry_id: input.journal_entry_id,
+    posted_at: EXPENSE_SQL_NOW,
+    payment_account_uuid: credits[0]!.account_id,
+    driver_uuid: driverId,
+    unit_id: unitId,
+    trailer_id: primary?.trailer_id ?? input.trailer_id ?? null,
+    posting_status: "posted",
+  });
+  if (!insertedExpenseId) throw new Error("relay_fill_expense_insert_failed");
+  const expenseId = insertedExpenseId;
+  if (input.settlement_no) {
+    await fillRelayFillExpenseSettlementRef(client, { operating_company_id: company, expense_id: expenseId, settlement_no: input.settlement_no, actor_user_uuid: input.requesting_user_uuid ?? null });
+  }
+  let seq = 0;
+  for (const d of debits) {
+    seq += 1;
+    const cents = Math.round(Number(d.amount_cents));
+    const itemId = itemByAccount.get(d.account_id) ?? null;
+    // RULING 443.66 D5 — each line carries the header's driver / unit / trailer.
+    // 443.105 #2 — a line with no load carries the fill's own exemption reason, or says no load matched.
+    // An item line carries qty 1 x amount 'each'; a line with no item carries none of the three.
+    await insertExpenseLine(client, {
+      operating_company_id: company,
+      expense_id: expenseId,
+      line_sequence: seq,
+      amount: cents / 100,
+      amount_cents: cents,
+      description: `Relay fuel fill — line ${seq}`,
+      load_id: d.load_id ?? loadId,
+      load_required: Boolean(d.load_id ?? loadId),
+      expense_account_uuid: d.account_id,
+      item_id: itemId,
+      quantity: itemId == null ? null : 1,
+      rate_cents: itemId == null ? null : cents,
+      unit_of_measure: itemId == null ? null : "each",
+      driver_id: driverId,
+      unit_id: unitId,
+      trailer_id: primary?.trailer_id ?? input.trailer_id ?? null,
+      load_exemption_reason: resolveLineLoadExemption({
+        loadId: d.load_id ?? loadId,
+        reason: primary?.load_exemption_reason ?? fills.rows[0]?.load_exemption_reason ?? input.load_exemption_reason ?? null,
+        accountLabel: "Relay fuel",
+        context: `Relay fill ${input.relay_fill_id} — no load matched`,
+      }),
+    });
+  }
+  if (loadAttribution && loadId) {
+    await client.query(
+      `INSERT INTO expense_attribution.expense_load_links (
+         operating_company_id, expense_id, expense_source, load_id, load_number, expense_seq, expense_number,
+         attribution_method, attribution_confidence, attribution_reason, attributed_by_user_id)
+       VALUES ($1::uuid, $2::uuid, 'accounting', $3::uuid, $4, $5, $6, 'auto_timestamp', 'high', $7, $8::uuid)`,
+      [company, expenseId, loadId, loadAttribution.loadNumber, loadAttribution.seq, expenseNumber,
+        "Relay fill — load carried on its posting", input.requesting_user_uuid ?? null],
+    );
+  }
+  if (!input.settlement_no) {
+    await stampReceiptDocumentSettlementRef(client, { operating_company_id: company, expense_id: expenseId, actor_user_uuid: input.requesting_user_uuid ?? null });
+  }
+  await appendCrudAudit(
+    client,
+    input.requesting_user_uuid ?? FUEL_EXPENSE_SYSTEM_ACTOR,
+    "accounting.expense.created_for_relay_fill",
+    { expense_id: expenseId, expense_number: expenseNumber, operating_company_id: company, relay_fill_id: input.relay_fill_id,
+      journal_entry_id: input.journal_entry_id, fuel_transaction_id: primary?.id ?? null, vendor_id: relay.rows[0]!.id,
+      amount_cents: totalCents, lines: debits.length },
+    "info",
+    "LEAD-443.41-A",
+  );
+>>>>>>> origin/main
   return { outcome: "created", expense_id: expenseId, expense_number: expenseNumber, journal_entry_id: input.journal_entry_id, amount_cents: totalCents };
 }

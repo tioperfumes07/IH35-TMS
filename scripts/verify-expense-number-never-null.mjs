@@ -36,11 +36,17 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 const CHECKED_FILES = [
   // 443.182 C — the lumper expense is persisted through the one expense writer; its header row names expense_number.
+<<<<<<< HEAD
   // 443.182 C step 2 — each path hands the engine a number: a reserved one (reserveExpenseNumber) or the company EXP series
   // stamped right after the header ({ kind: "company_after_header" }).
   { path: "apps/backend/src/cash-advances/lumper-cash-advance-split.ts", needle: /const number = await reserveExpenseNumber\(client, companyId, \{ loadId: leg\.load_id \}\);[\s\S]{0,1200}\n\s*number,/ },
   { path: "apps/backend/src/accounting/recurring.worker.ts", needle: /reserveExpenseNumber\(client, oc,[\s\S]{0,1500}\n\s*number,/ },
   { path: "apps/backend/src/maintenance/two-section-service.ts", needle: /number: \{ kind: "company_after_header" \}/ },
+=======
+  { path: "apps/backend/src/cash-advances/lumper-cash-advance-split.ts", needle: /insertExpenseHeader\(client, \{[\s\S]{0,600}expense_number: numbered\.number,/ },
+  { path: "apps/backend/src/accounting/recurring.worker.ts", needle: /nextExpenseDisplayId\(client, oc,/ },
+  { path: "apps/backend/src/maintenance/two-section-service.ts", needle: /UPDATE accounting\.expenses SET expense_number = \$2 WHERE id = \$1 AND expense_number IS NULL/ },
+>>>>>>> origin/main
 ];
 
 function load(rel) {

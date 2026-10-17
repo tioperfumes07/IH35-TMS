@@ -3,7 +3,12 @@ import { withCurrentUser } from "../auth/db.js";
 import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+<<<<<<< HEAD
 import { EXPENSE_SQL_CURRENT_DATE, reserveExpenseNumber, writeExpenseDocumentInClientTx } from "../accounting/expense-writer.service.js";
+=======
+import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
+import { EXPENSE_SQL_CURRENT_DATE, insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
+>>>>>>> origin/main
 import { logger } from "../observability/structured-logger.js";
 import { insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
 
@@ -233,9 +238,14 @@ export async function disburseCashAdvanceSplit(
 
           // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half, sibling site): actorUserUuid
           // is already threaded into this function — it was just never stamped on the expense row.
+<<<<<<< HEAD
           // 443.182 C — numbered and written by the one expense engine (accounting/expense-writer.service.ts).
           const written = await writeExpenseDocumentInClientTx(client, {
             header: {
+=======
+          // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts).
+          const insertedExpenseId = await insertExpenseHeader(client, {
+>>>>>>> origin/main
               operating_company_id: companyId,
               status: "posted",
               transaction_date: EXPENSE_SQL_CURRENT_DATE,
@@ -243,6 +253,7 @@ export async function disburseCashAdvanceSplit(
               load_id: leg.load_id,
               is_sample_data: loadSample.rows[0]?.is_sample_data === true,
               created_by_user_id: actorUserUuid,
+<<<<<<< HEAD
             },
             number,
             lines: [
@@ -261,6 +272,26 @@ export async function disburseCashAdvanceSplit(
           });
           if (!written) throw new Error("lumper_expense_insert_failed");
           expenseIds.push(written.expenseId);
+=======
+              expense_number: numbered.number,
+            });
+          if (!insertedExpenseId) throw new Error("lumper_expense_insert_failed");
+          const expenseId = insertedExpenseId;
+          expenseIds.push(expenseId);
+
+          await insertExpenseLine(client, {
+            expense_id: expenseId,
+            line_sequence: 1,
+            amount_cents: leg.amount_cents,
+            amount: leg.amount_cents / 100,
+            description: "Lumper fee (cash-advance split)",
+            expense_account_uuid: lumperAccountId,
+            load_id: leg.load_id,
+            load_required: true,
+            line_category: "lumper",
+            billable_customer_uuid: leg.billable_customer_uuid ?? null,
+          });
+>>>>>>> origin/main
         }
       }
 

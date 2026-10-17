@@ -79,6 +79,7 @@ export async function insertExpenseLine(client: any, row: ExpenseRow): Promise<s
   return id ? String(id) : null;
 }
 
+<<<<<<< HEAD
 /**
  * LEAD 443.182 C step 2 — the DEEP expense engine. A caller hands over the expense DOCUMENT (header, lines, how it is
  * numbered, whether it is linked to its load, whether it posts, what is audited); this file numbers it, writes the header
@@ -243,6 +244,8 @@ export async function writeExpenseDocumentInClientTx(client: any, doc: ExpenseDo
   return { expenseId, expenseNumber, post };
 }
 
+=======
+>>>>>>> origin/main
 /** OWNER LAW 2026-10-01: an expense created in the app always posts; a poster failure refuses the create (transaction rolls back). */
 export class ExpensePostRefused extends Error { constructor(public code: string, public detail: string) { super(`expense_post_refused_gl_post_failed:${code}`); } }
 

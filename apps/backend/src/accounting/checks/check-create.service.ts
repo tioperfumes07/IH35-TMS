@@ -18,7 +18,11 @@ import { isEnabled } from "../../lib/feature-flags/service.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expense-gl-posting-flag.js";
 import { advanceCheckStockAfterUse } from "./check-stock.service.js";
 import { resolveLineLoadExemption } from "../expense-line-load-exemption.js";
+<<<<<<< HEAD
 import { writeExpenseDocumentInClientTx } from "../expense-writer.service.js";
+=======
+import { insertExpenseHeader, insertExpenseLine } from "../expense-writer.service.js";
+>>>>>>> origin/main
 
 export type CreateCheckLineInput = {
   line_kind: "category" | "item";
@@ -188,10 +192,143 @@ export async function createCheck(
     // wins over the payee's freshly-resolved one; omitted/null means save the resolved address as-is.
     const remitToAddress = input.remit_to_address ?? payee.remit_to_address ?? null;
 
+<<<<<<< HEAD
     // 443.182 C — written and posted by the one expense engine (expense-writer.service.ts). The check's own rules are engine
     // options: no expense number (the check number is its identity), registry / stock / attachments right after the header,
     // flag-off refuses (gate throws), a posting refusal is named, the JE is read back before the posted stamp, and the stamp
     // moves posting_status only.
+=======
+    // 443.182 C — persisted through the one expense writer (expense-writer.service.ts insertExpenseHeader); the check keeps
+    // its own policy: born draft / unposted, posted below through the expense poster when the flag is on.
+    const expenseId = await insertExpenseHeader(client, {
+      operating_company_id,
+      transaction_date: input.check_date,
+      // payment_account_uuid is a catalogs.accounts (GL) id, not a banking.bank_accounts id --
+      // confirmed live in posting-engine.service.ts's buildExpenseLines. The bank account's OWN
+      // ledger_account_id (resolved above) is what belongs here.
+      payment_account_uuid: bankAccount.ledger_account_id,
+      total_amount_cents: totalCents,
+      memo: input.memo ?? `Check${checkNumber ? ` #${checkNumber}` : ""} · ${payee.print_on_check_name}`,
+      vendor_uuid: input.payee_kind === "vendor" ? input.payee_id : null,
+      driver_uuid: input.payee_kind === "driver" ? input.payee_id : null,
+      payee_customer_uuid: input.payee_kind === "customer" ? input.payee_id : null,
+      payee_kind: input.payee_kind,
+      payment_type: "check",
+      check_number: checkNumber,
+      print_status: checkNumber ? "not_set" : "need_to_print",
+      print_on_check_name: payee.print_on_check_name,
+      remit_to_address: JSON.stringify(remitToAddress),
+      tags: input.tags ?? [],
+      unit_id: input.unit_id ?? null,
+      trailer_id: input.trailer_id ?? null,
+      load_id: input.load_id ?? null,
+      linked_work_order_uuid: input.linked_work_order_uuid ?? null,
+      insurance_claim_id: input.insurance_claim_id ?? null,
+      legal_matter_id: input.legal_matter_id ?? null,
+      class_id: input.class_id ?? null,
+      settlement_no: (input.settlement_no ?? "").trim() || null,
+      location_id: input.location_id ?? null,
+      recover_from_driver: input.recover_from_driver ?? false,
+      status: "draft",
+      posting_status: "unposted",
+      created_by_user_id: actorUserId,
+      updated_by_user_id: actorUserId,
+      is_sample_data: input.is_sample_data === true,
+    });
+    if (!expenseId) throw new Error("check_expense_insert_failed");
+
+    // R-172 step 6 -- re-key any files the operator attached during create (Option B, same mechanism
+    // bills/expenses already use) onto the real expense id, inside this same transaction.
+    await reassignDraftAttachments(client, {
+      operatingCompanyId: operating_company_id,
+      entityType: "expense",
+      draftId: input.attachment_draft_id ?? null,
+      newId: expenseId,
+    });
+
+    if (checkNumber) {
+      await client.query(
+        `UPDATE banking.check_number_registry SET source_id = $1::uuid
+           WHERE operating_company_id = $2::uuid AND bank_account_id = $3::uuid AND check_number = $4 AND source_kind = 'check'`,
+        [expenseId, operating_company_id, input.bank_account_id, checkNumber]
+      );
+      // R-190 — advance stock so the next Write Check shows used+1 (QBO parity). Creates the stock
+      // row from the operator-typed number when none existed yet — never invents a starting number.
+      await advanceCheckStockAfterUse(client, {
+        operating_company_id,
+        bank_account_id: input.bank_account_id,
+        used_check_number: checkNumber,
+        actor_user_id: actorUserId,
+      });
+    }
+
+    let seq = 1;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const resolved = resolvedLines[i];
+      const expenseCategoryUuid =
+        line.line_kind === "category"
+          ? await resolveExpenseCategoryId(client, {
+              operatingCompanyId: operating_company_id,
+              categoryCode: line.category_code ?? null,
+              accountId: resolved.account_id,
+            })
+          : null;
+      // Items law (443.92 #1b): expense_lines_item_id_required demands item_id on every line.
+      // DEGH-03 (443.113): the category line's item is the one the operator NAMED, or the ONE active item whose
+      // default expense account is the line's account — never an arbitrary item picked by `account ... LIMIT 1`.
+      const categoryItemId =
+        line.line_kind === "category"
+          ? await resolveCheckCategoryItem(client, operating_company_id, resolved.account_id, line.item_id ?? null)
+          : null;
+      // 443.105 #2 — a check line with no load says why (company cost on <account>, check #).
+      const lineLoadId = line.load_id ?? input.load_id ?? null;
+      const lineAccountLabel = lineLoadId
+        ? null
+        : (
+            await client.query<{ label: string | null }>(
+              `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label
+                 FROM catalogs.accounts a WHERE a.id = $1::uuid AND a.operating_company_id = $2::uuid`,
+              [resolved.account_id, operating_company_id]
+            )
+          ).rows[0]?.label ?? null;
+      const lineLoadExemption = resolveLineLoadExemption({
+        loadId: lineLoadId,
+        accountLabel: lineAccountLabel,
+        context: checkNumber ? `check #${checkNumber}` : "check (print later)",
+      });
+      await insertExpenseLine(client, {
+        expense_id: expenseId,
+        line_sequence: seq++,
+        amount: line.amount_cents / 100,
+        amount_cents: line.amount_cents,
+        description: line.description ?? payee.print_on_check_name,
+        expense_account_uuid: resolved.account_id,
+        expense_category_uuid: expenseCategoryUuid,
+        item_id: line.line_kind === "item" ? line.item_id : categoryItemId,
+        billable_customer_uuid: line.billable_customer_uuid ?? null,
+        load_id: lineLoadId,
+        operating_company_id,
+        // A per-line value wins; omitted/null falls back to the check header's own dimension --
+        // e.g. a single-truck repair check needs no per-line override at all.
+        driver_id: line.driver_id ?? input.driver_id ?? null,
+        unit_id: line.unit_id ?? input.unit_id ?? null,
+        trailer_id: line.trailer_id ?? input.trailer_id ?? null,
+        linked_work_order_uuid: line.linked_work_order_uuid ?? input.linked_work_order_uuid ?? null,
+        // R-83: quantity/rate_cents/unit_of_measure travel together with item_id (normalized above
+        // for item lines). Category lines that resolved a categoryItemId must satisfy the same
+        // CHECK (expense_lines_item_qty_rate_amount_check): quantity=1, rate_cents=amount_cents,
+        // unit_of_measure='each' so that round(1 × amount_cents) = amount_cents holds exactly.
+        // Category lines WITHOUT a resolved item_id still send null for all three (item_id is also
+        // null in that case, so the "all null" branch of the CHECK is satisfied).
+        quantity: line.line_kind === "item" ? line.quantity : categoryItemId !== null ? 1 : null,
+        rate_cents: line.line_kind === "item" ? line.rate_cents : categoryItemId !== null ? line.amount_cents : null,
+        unit_of_measure: line.line_kind === "item" ? line.unit_of_measure : categoryItemId !== null ? "each" : null,
+        load_exemption_reason: lineLoadExemption,
+      });
+    }
+
+>>>>>>> origin/main
     // R-172 step 7 -- post via the ONLY existing poster (postSourceTransactionInClientTx), atomically
     // inside this same transaction: either the check + its JE both exist, or neither does. Same
     // feature-flag gate as a regular expense's own create-time post (expenses.routes.ts) -- a check

@@ -10,8 +10,13 @@ import { withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { invoiceLineTotalCents } from "./invoice-line-total.js";
+<<<<<<< HEAD
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { reserveExpenseNumber, writeExpenseDocumentInClientTx } from "./expense-writer.service.js";
+=======
+import { nextInvoiceDisplayId, nextExpenseDisplayId } from "./display-id.js";
+import { insertExpenseHeader } from "./expense-writer.service.js";
+>>>>>>> origin/main
 import { recomputeInvoiceTotals } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { insertBillHeaderOnClient, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "./bills.service.js";
@@ -249,6 +254,7 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
   // 443.182 C — numbered, written and audited by the one expense engine (expense-writer.service.ts). No lines, no post.
   const number = await reserveExpenseNumber(client, oc, { referenceDate: new Date(`${expenseDate}T00:00:00.000Z`) });
 
+<<<<<<< HEAD
   // accounting.expenses has NO total_amount column: total_amount_cents (bigint) is the authoritative spine.
   const written = await writeExpenseDocumentInClientTx(client, {
     header: {
@@ -276,6 +282,32 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
   });
   if (!written) throw new Error("recurring_expense_insert_failed");
   const expenseId = written.expenseId;
+=======
+  // 443.182 C — persisted through the one expense writer (expense-writer.service.ts insertExpenseHeader).
+  // accounting.expenses has NO total_amount column: total_amount_cents (bigint) is the authoritative spine.
+  const expenseId = await insertExpenseHeader(client, {
+    operating_company_id: oc,
+    vendor_uuid: body.vendor_uuid ?? null,
+    // ROUND 389.4 RULING 1 — the worker CREATES, it never books: the expense lands as a draft (posting_status
+    // 'unposted', no journal entry) and is posted through the expense's own post path, which has void and reversal.
+    status: "draft",
+    transaction_date: expenseDate,
+    total_amount_cents: amountCents,
+    memo: body.memo ?? null,
+    payment_account_uuid: body.payment_account_uuid ?? null,
+    is_sample_data: vendorIsSampleData,
+    expense_number: expenseNumber,
+  });
+  if (!expenseId) throw new Error("recurring_expense_insert_failed");
+
+  await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,$4::uuid,$5)`, [
+    "accounting.recurring_template.materialized",
+    "info",
+    JSON.stringify({ template_id: tmpl.id, entity: "expense", entity_id: expenseId }),
+    actorId,
+    "P7-W2-RECURRING",
+  ]);
+>>>>>>> origin/main
 
   return expenseId;
 }

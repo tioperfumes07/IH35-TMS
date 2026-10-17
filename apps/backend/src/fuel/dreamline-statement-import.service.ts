@@ -42,7 +42,12 @@ import { FUEL_POSTS_ON_RECEIPT_FLAG_KEY } from "../accounting/fuel-posting/maybe
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { createExpenseInClientTx } from "../accounting/expense-writer.service.js";
+<<<<<<< HEAD
 import { postExpenseDocumentInClientTx } from "../accounting/expense-writer.service.js";
+=======
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { insertExpenseLine } from "../accounting/expense-writer.service.js";
+>>>>>>> origin/main
 import { resolveFuelLoadAtTime, resolveFillDriverAtTime } from "./fuel-load-at-time.js";
 
 type DbClient = {
@@ -442,6 +447,7 @@ export async function postStatementScaleExpense(
   if (!e) throw new Error(`dreamline_scale_expense_missing:${expenseId}`);
   if (e.posting_status === "posted") return "already_posted";
   const cents = Number(e.cents);
+<<<<<<< HEAD
   // 443.182 C — the missing line and the post go through the one expense engine (accounting/expense-writer.service.ts).
   await postExpenseDocumentInClientTx(client, {
     operatingCompanyId: companyId,
@@ -480,6 +486,40 @@ export async function postStatementScaleExpense(
       },
     ],
   });
+=======
+  if (Number(e.lines) === 0) {
+    // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseLine).
+    await insertExpenseLine(client, {
+      expense_id: expenseId,
+      line_sequence: 1,
+      amount_cents: cents,
+      amount: cents / 100,
+      description: e.memo ?? "Dreamline scale ticket",
+      expense_account_uuid: scaleItem.account_id,
+      operating_company_id: companyId,
+      load_id: e.load_id,
+      load_exemption_reason: e.load_id ? null : "Dreamline scale ticket with no load covering the truck at the fill time (443.142)",
+      item_id: scaleItem.item_id,
+      quantity: 1,
+      rate_cents: cents,
+      unit_of_measure: "each",
+      driver_id: e.driver,
+      unit_id: e.unit_id,
+      trailer_id: e.trailer_id,
+    });
+  }
+  const posting = await postSourceTransactionInClientTx(
+    client as never,
+    { operating_company_id: companyId, source_transaction_type: "expense", source_transaction_id: expenseId },
+    { userId: actor }
+  );
+  await client.query(
+    `UPDATE accounting.expenses SET status = 'posted', posting_status = 'posted', posted_at = now(), journal_entry_id = $2::uuid, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
+    [expenseId, posting.journal_entry_id, companyId]
+  );
+  await appendCrudAudit(client as never, actor, "expense.posted", { expense_id: expenseId, journal_entry_id: posting.journal_entry_id, source: "dreamline_statement_scale_repair" }, "info", "LEAD-443.142-FIX");
+>>>>>>> origin/main
   return "posted";
 }
 

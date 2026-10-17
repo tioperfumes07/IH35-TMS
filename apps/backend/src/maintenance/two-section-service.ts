@@ -7,7 +7,11 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 // The one expense GL-posting flag key (accounting/expense-gl-posting-flag.ts), shared with every expense-GL call site.
 import { EXPENSE_GL_POSTING_FLAG_KEY as WO_EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
 import { resolveLineLoadExemption } from "../accounting/expense-line-load-exemption.js";
+<<<<<<< HEAD
 import { EXPENSE_SQL_CURRENT_DATE, writeExpenseDocumentInClientTx } from "../accounting/expense-writer.service.js";
+=======
+import { EXPENSE_SQL_CURRENT_DATE, insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
+>>>>>>> origin/main
 // Same flag key as accounting/bill-gl.service.ts's own BILL_GL_POSTING_FLAG_KEY, redefined here for
 // the same reason (avoid a service->service import cycle risk) — same value, same semantics.
 const WO_BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
@@ -785,8 +789,13 @@ async function copyToAccountingLines(
               })
             : null;
           // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseLine).
+<<<<<<< HEAD
           if (!expenseLineLink) throw new Error("expense_line_copy_requires_engine_line_writer");
           const lineId = await expenseLineLink.insertLine({
+=======
+          const lineId = await insertExpenseLine(client, {
+            expense_id: destinationId,
+>>>>>>> origin/main
             line_sequence: sequence,
             amount_cents: amountCents,
             amount: amountCents / 100,
@@ -1093,6 +1102,7 @@ export async function autoCreateExpenseFromWO(
   // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half, sibling site): this writer already
   // receives the authed userId as a parameter but never stamped created_by_user_id — the real actor
   // was in scope the whole time.
+<<<<<<< HEAD
   // 443.182 C — numbered, written, audited and posted by the one expense engine (accounting/expense-writer.service.ts).
   // unit_id / load_id are written only where the column exists, exactly as the four column-gated INSERTs did; the number is
   // the company EXP series stamped right after the header; the post is flag-gated and non-fatal, as before.
@@ -1106,6 +1116,142 @@ export async function autoCreateExpenseFromWO(
   });
   const written = await writeExpenseDocumentInClientTx(client, {
     header: {
+=======
+  // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseHeader); unit_id /
+  // load_id are written only where the column exists, exactly as the four column-gated INSERTs did.
+  const expenseId =
+    (await insertExpenseHeader(client, {
+      operating_company_id: wo.operating_company_id,
+      vendor_uuid: wo.vendor_uuid,
+      linked_work_order_uuid: woUuid,
+      unit_id: hasUnitIdColumn ? wo.unit_id ?? null : undefined,
+      load_id: hasLoadIdColumn ? wo.load_id : undefined,
+      status: "posted",
+      transaction_date: EXPENSE_SQL_CURRENT_DATE,
+      total_amount_cents: wo.total_amount_cents,
+      payment_account_uuid: paymentAccountUuid ?? null,
+      is_sample_data: vendorIsSampleData,
+      created_by_user_id: userId,
+    })) ?? "";
+  if (!expenseId) return null;
+  if (await columnExists(client, "accounting.expenses", "expense_number")) {
+    const expenseNumber = await nextExpenseDisplayId(client, wo.operating_company_id);
+    await client.query(
+      `UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1 AND expense_number IS NULL`,
+      [expenseId, expenseNumber]
+    );
+  }
+  if (await relationExists(client, "accounting.expense_lines")) {
+    const lineLoadExemption = resolveLineLoadExemption({
+      loadId: wo.load_id ?? null,
+      reason: exemptionReason.length >= 20 ? exemptionReason : null,
+      loadRequired: Boolean(expenseCategoryRequiresLoad.rows[0]?.requires_load),
+      accountLabel: "Maintenance work order cost",
+      context: `work order ${wo.display_id ?? woUuid}`,
+    });
+    await copyToAccountingLines(client, woUuid, "accounting.expense_lines", "expense_id", expenseId, {
+      loadId: wo.load_id ?? null,
+      loadExemptionReason: lineLoadExemption,
+    });
+
+    const hasLoadId = await columnExists(client, "accounting.expense_lines", "load_id");
+    const hasLoadRequired = await columnExists(client, "accounting.expense_lines", "load_required");
+    const hasExemption = await columnExists(client, "accounting.expense_lines", "load_exemption_reason");
+    const hasLineCategory = await columnExists(client, "accounting.expense_lines", "line_category");
+    if (hasLoadId || hasLoadRequired || hasExemption || hasLineCategory) {
+      const updates: string[] = [];
+      const values: unknown[] = [];
+      if (hasLoadId) {
+        values.push(wo.load_id ?? null);
+        updates.push(`load_id = $${values.length}`);
+      }
+      if (hasLoadRequired) {
+        values.push(Boolean(expenseCategoryRequiresLoad.rows[0]?.requires_load));
+        updates.push(`load_required = $${values.length}`);
+      }
+      if (hasExemption) {
+        values.push(lineLoadExemption);
+        updates.push(`load_exemption_reason = $${values.length}`);
+      }
+      if (hasLineCategory) {
+        updates.push(`
+          line_category = CASE
+            WHEN upper(COALESCE(description, '')) LIKE '%DIESEL%' OR upper(COALESCE(description, '')) LIKE '%FUEL%' THEN 'diesel'
+            WHEN upper(COALESCE(description, '')) LIKE '%TOLL%' THEN 'toll'
+            WHEN upper(COALESCE(description, '')) LIKE '%SCALE%' THEN 'scale'
+            WHEN upper(COALESCE(description, '')) LIKE '%LUMPER%' THEN 'lumper'
+            WHEN upper(COALESCE(description, '')) LIKE '%PARKING%' THEN 'parking'
+            WHEN upper(COALESCE(description, '')) LIKE '%ROADSIDE%' THEN 'roadside_repair'
+            ELSE line_category
+          END
+        `);
+      }
+      values.push(expenseId);
+      await client.query(
+        `
+          UPDATE accounting.expense_lines
+          SET ${updates.join(",\n              ")}
+          WHERE expense_id = $${values.length}
+        `,
+        values
+      );
+    }
+
+    if (wo.load_id) {
+      await appendCrudAudit(
+        client as never,
+        userId,
+        "accounting.expense_line.load_linked",
+        { work_order_id: woUuid, expense_id: expenseId, load_id: wo.load_id },
+        "info",
+        "P5-D5-LOAD-FK"
+      );
+    } else if (exemptionReason.length >= 20) {
+      await appendCrudAudit(
+        client as never,
+        userId,
+        "accounting.expense_line.load_exempted",
+        { work_order_id: woUuid, expense_id: expenseId, load_exemption_reason: exemptionReason },
+        "warning",
+        "P5-D5-LOAD-FK"
+      );
+    }
+  }
+  await appendCrudAudit(
+    client as never,
+    userId,
+    "accounting.expense.auto_created_from_wo",
+    { work_order_id: woUuid, expense_id: expenseId },
+    "info",
+    "P3-T11.17-TWO-SECTION-V5"
+  );
+
+  // MAINT-F5697-CLASS — a "paid same day" WO expense used to stop here: it was inserted
+  // status='posted' (document lifecycle) but never actually reached the GL, because the canonical
+  // POST /api/v1/expenses route's own gated posting call (EXPENSE_GL_POSTING_ENABLED ->
+  // postSourceTransaction) has no equivalent here. Reuses the SAME flag + the SAME posting engine
+  // entry point the canonical route uses — no new GL math. Runs IN THE CALLER'S OWN OPEN
+  // TRANSACTION via postSourceTransactionInClientTx (not postSourceTransaction's own connection) —
+  // the exact cross-connection READ-COMMITTED visibility bug already fixed once this session for
+  // the revenue latch (LV-REVREC-NOT-FIRING) would otherwise silently no-op here too, since this
+  // expense row is not yet committed on any other connection.
+  //
+  // PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE — this attempt was gated on `paymentAccountUuid`
+  // alone, so every in_house/vendor_invoice WO completion (no payment account chosen — that is the
+  // vendor-payable case, not a cash-out) NEVER even tried to post, forever, with no retry and no UI
+  // surfacing that posting was skipped rather than attempted-and-failed. The row above still writes
+  // status='posted' unconditionally, so the document reads finalized while GL state silently never
+  // catches up. Live proof of the gap: expense 57cabbab-f06a-4fa3-ad67-877eb2e64b0f (WO
+  // 850e2cc4-1578-40c2-b38d-a528f7ea821d) sat status=posted/posting_status=unposted from creation
+  // until this fix; posted live via the canonical poster (JE becfecd1-19f7-4fb3-a011-bef5be3f3638,
+  // DR category / CR "Expense AP", balanced) to close that instance. The canonical POST
+  // /api/v1/expenses/:id/post route's own orphan rule is `!payment_account_uuid && !vendor_uuid`
+  // (a known vendor with no payment account posts to A/P — not an orphan); this writer's own
+  // attempt-gate was narrower than the route it mirrors. Matching it here closes the gap for every
+  // future WO expense with a resolved vendor (the normal case — wo.vendor_uuid), not just this one.
+  if (paymentAccountUuid || wo.vendor_uuid) {
+    const flagOn = await isEnabled(client as never, WO_EXPENSE_GL_POSTING_FLAG_KEY, {
+>>>>>>> origin/main
       operating_company_id: wo.operating_company_id,
       vendor_uuid: wo.vendor_uuid,
       linked_work_order_uuid: woUuid,
