@@ -15,6 +15,29 @@ import path from "node:path";
 const repoRoot = process.cwd();
 const disallowedPattern = /\bqbo_archive\./;
 
+// A comment that names qbo_archive is not a read (scan-duplicate-vendors.routes.ts documents WHY it no longer reads it,
+// 675b7f0f06). Only code is scanned: lines that are wholly a comment (// …, /* …, * …) are dropped first; a qbo_archive
+// reference anywhere in a code line — SQL template strings included — still fails.
+export function codeOnly(content) {
+  return content
+    .split("\n")
+    .filter((line) => !/^\s*(\/\/|\/\*|\*)/.test(line))
+    .join("\n");
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["comment-only mention passes", !disallowedPattern.test(codeOnly("  // validated against qbo_archive.entities_snapshot\nconst x = 1;"))],
+    ["block-comment line passes", !disallowedPattern.test(codeOnly(" * see qbo_archive.entities_snapshot\n"))],
+    ["SQL read in a template string fails", disallowedPattern.test(codeOnly("  const r = await q(`SELECT 1 FROM qbo_archive.entities_snapshot`);"))],
+    ["read after code on the same line fails", disallowedPattern.test(codeOnly("q('FROM qbo_archive.x'); // note"))],
+  ];
+  const bad = cases.filter(([, ok]) => !ok).map(([n]) => n);
+  if (bad.length) { console.error(`verify-no-qbo-archive-runtime-reads --selftest FAIL: ${bad.join("; ")}`); process.exit(1); }
+  console.log(`verify-no-qbo-archive-runtime-reads --selftest PASS ${cases.length}/${cases.length}`);
+  process.exit(0);
+}
+
 // Files that are ALLOWED to read qbo_archive (forensic/admin/import pipeline only).
 const ALLOWED_PATHS = new Set([
   "apps/backend/src/integrations/qbo/forensic-admin.routes.ts",
@@ -57,7 +80,7 @@ const offenders = [];
 for (const filePath of allFiles) {
   const relativePath = filePath.replace(repoRoot + "/", "").replace(repoRoot + path.sep, "");
   if (ALLOWED_PATHS.has(relativePath)) continue;
-  const content = fs.readFileSync(filePath, "utf8");
+  const content = codeOnly(fs.readFileSync(filePath, "utf8"));
   if (!disallowedPattern.test(content)) continue;
   offenders.push(relativePath);
 }
