@@ -11,6 +11,8 @@ const RUNTIME_ROLE = "ih35_app";
 const SKIP_SCHEMAS = new Set([
   "information_schema",
   "pg_catalog",
+  // LEAD 443.188: the session temp schema (a db test reads FROM pg_temp.<fixture>) is never granted.
+  "pg_temp",
   "_system",
   "ih35_migrations",
   "public",
