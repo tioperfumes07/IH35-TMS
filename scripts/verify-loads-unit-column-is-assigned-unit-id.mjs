@@ -29,7 +29,10 @@ export function offendingBlocks(source) {
     // Only real SQL literals — not prose or JSDoc that happens to name the table.
     if (!/^\s*(SELECT|WITH|INSERT|UPDATE|DELETE)\b/i.test(block)) continue;
     const tables = new Set(
-      [...block.matchAll(/\b(?:FROM|JOIN)\s+([a-z_]+\.[a-z_]+)/gi)].map((t) => t[1].toLowerCase())
+      // Heavy CI peel (443.192): the UPDATE / INSERT INTO target is a relation too. `UPDATE driver_finance.driver_bills b
+      //   SET unit_id = l.assigned_unit_id FROM mdata.loads l` (eb2c883525 / f6b993dc76, driver-bill-unit-trailer.ts) writes
+      //   the BILL's unit_id — it was flagged only because the UPDATE target was not counted.
+      [...block.matchAll(/\b(?:FROM|JOIN|UPDATE|INSERT\s+INTO)\s+([a-z_]+\.[a-z_]+)/gi)].map((t) => t[1].toLowerCase())
     );
     if (tables.size !== 1 || !tables.has("mdata.loads")) continue;
     // A WITH ... AS ( ... ) CTE inside the same literal introduces other relations by name.
@@ -58,6 +61,10 @@ if (process.argv.includes("--selftest")) {
     ["SELECT ft.unit_id FROM fuel.fuel_transactions ft", 0],
     ["SELECT assigned_unit_id FROM mdata.loads", 0],
     ["SELECT unit_id FROM mdata.loads l LEFT JOIN downtime.events e ON e.unit_id = l.assigned_unit_id", 0],
+    // 443.192: an UPDATE of another table reading mdata.loads writes THAT table's unit_id.
+    ["UPDATE driver_finance.driver_bills b SET unit_id = l.assigned_unit_id FROM mdata.loads l WHERE b.load_id = l.id", 0],
+    // ...but an UPDATE of mdata.loads itself that names a bare unit_id is still the missing column.
+    ["UPDATE mdata.loads SET unit_id = $2 WHERE id = $1", 1],
   ];
   let bad = 0;
   for (const [sql, want] of cases) {
