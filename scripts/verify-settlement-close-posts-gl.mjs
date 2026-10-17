@@ -81,6 +81,13 @@ async function main() {
               WHERE jep.operating_company_id = s.operating_company_id
                 AND (jep.source_transaction_id = s.id::text OR jep.settlement_id = s.id)
            )
+           -- LEAD 443.187 (06:55Z): a $0 settlement posts nothing — owner ruling "Transportation loads were settled here in
+           -- usmca as 0" (443.167-R2) and the closed settlements tie to their signed documents
+           -- (claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md; e.g. 5816 / P-0067 = $0).
+           -- Only an ALL-ZERO settlement (gross = deductions = reimbursements = net = 0) is excused; any money on the
+           -- header with no posting still fails.
+           AND NOT (COALESCE(s.gross_pay, 0) = 0 AND COALESCE(s.deductions_total, 0) = 0
+                    AND COALESCE(s.reimbursements_total, 0) = 0 AND COALESCE(s.net_pay, 0) = 0)
          ORDER BY s.display_id
       `,
       [USMCA]

@@ -216,7 +216,21 @@ try {
       SELECT ds.id::text, ds.display_id, ds.gross_pay, ds.deductions_total, ds.reimbursements_total,
         COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type IN (${sqlList(BUCKETS.earnings)})), 0) AS lines_gross,
         COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type IN (${sqlList(BUCKETS.deductions)})), 0) AS lines_deductions,
-        COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type IN (${sqlList(BUCKETS.reimbursements)})), 0) AS lines_reimbursements
+        COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type IN (${sqlList(BUCKETS.reimbursements)})), 0) AS lines_reimbursements,
+        -- LEAD 443.187 (measured 2026-10-17, CC-3): a cash advance repaid on the settlement is part of the header
+        -- deductions (settlement-payrun-close.service.ts: deductions_total = deductions + escrow + appliedAdvanceRecovery
+        -- + chargebacks) but is NEVER a settlement line — it posts as a credit to the driver's cash-advance account on the
+        -- settlement's own entry. All 12 "header > lines" settlements (P-0009 … P-0062) tie header = GL = signed PDF to the
+        -- cent; lines + this GL credit = header on all 77 closed USMCA settlements. Read from the GL (a partial repayment
+        -- stamps no recovered_in_settlement_id), live postings only.
+        (SELECT COALESCE(SUM(p.amount_cents), 0)::numeric / 100
+           FROM accounting.journal_entry_postings p
+          WHERE (p.settlement_id = ds.id
+                 OR (p.source_transaction_type = 'driver_settlement' AND p.source_transaction_id::text = ds.id::text))
+            AND p.debit_or_credit = 'credit'
+            AND p.reversal_of_line_id IS NULL AND p.reversed_by_line_id IS NULL
+            AND p.account_id IN (SELECT a.coa_account_id FROM driver_finance.driver_advance_accounts a
+                                  WHERE a.operating_company_id = ds.operating_company_id)) AS advance_repaid
         FROM driver_finance.driver_settlements ds
         JOIN driver_finance.settlement_lines sl ON sl.settlement_id = ds.id AND sl.is_active = true AND sl.voided_at IS NULL
        WHERE ds.operating_company_id = $1
@@ -303,14 +317,14 @@ try {
   }
   const mismatches = totalsCheck.rows.filter((r) => {
     const grossDiff = Math.abs(Number(r.lines_gross) - Number(r.gross_pay));
-    const dedDiff = Math.abs(Number(r.lines_deductions) - Number(r.deductions_total));
+    const dedDiff = Math.abs(Number(r.lines_deductions) + Number(r.advance_repaid) - Number(r.deductions_total));
     const reimbDiff = Math.abs(Number(r.lines_reimbursements) - Number(r.reimbursements_total));
     return grossDiff > 0.01 || dedDiff > 0.01 || reimbDiff > 0.01;
   });
   if (mismatches.length > 0) {
     failures.push(
       `${mismatches.length} settlement(s) where SUM(lines) != header totals: ${mismatches
-        .map((r) => `${r.display_id} (lines gross=${r.lines_gross}/header=${r.gross_pay}, lines ded=${r.lines_deductions}/header=${r.deductions_total}, lines reimb=${r.lines_reimbursements}/header=${r.reimbursements_total})`)
+        .map((r) => `${r.display_id} (lines gross=${r.lines_gross}/header=${r.gross_pay}, lines ded=${r.lines_deductions} + advance repaid ${r.advance_repaid}/header=${r.deductions_total}, lines reimb=${r.lines_reimbursements}/header=${r.reimbursements_total})`)
         .join("; ")}`
     );
   }
