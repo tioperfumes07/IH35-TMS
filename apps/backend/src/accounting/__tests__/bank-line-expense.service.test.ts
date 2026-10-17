@@ -1,5 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
+
+/** 443.182 C — rows go through the one expense writer's INSERT; read a value by column name, not by position. */
+function col(call: { text: string; values?: unknown[] }, name: string): unknown {
+  const m = /\(([^)]*)\)\s*VALUES\s*\(([\s\S]*)\)\s*(?:RETURNING[\s\S]*)?$/.exec(call.text.trim());
+  if (!m) throw new Error(`not an INSERT: ${call.text.slice(0, 80)}`);
+  const cols = m[1]!.split(",").map((c) => c.trim());
+  const vals = m[2]!.split(",").map((v) => v.trim());
+  const i = cols.indexOf(name);
+  if (i < 0) throw new Error(`column ${name} not written`);
+  const v = vals[i]!;
+  return /^\$\d+$/.test(v) ? call.values?.[Number(v.slice(1)) - 1] : v;
+}
+
 // ROUND 441.5 — the one writer of an expense paid straight from a bank line, and its item rule (every expense line names
 // an item, expense_lines_item_id_required): the operator's item, else the ONE item mapped to the account; none or
 // several are refused by name, never guessed.
@@ -83,12 +96,19 @@ describe("createAndPostBankLineExpenseOnClient", () => {
     );
     expect(out).toEqual({ expense_id: "exp-1", journal_entry_id: "je-1", posting_batch_id: "pb-1" });
     const header = calls.find((c) => /INSERT INTO accounting\.expenses/.test(c.text))!;
-    expect(header.values).toEqual([CO, "2026-08-18", 14614, "ED-HER PLASTICS", "EXP-2026-00042", "v-edher", "acct-1000", "bt-1", null, null, null, null, "u-1", null]);
+    const headerExpect: Record<string, unknown> = {
+      operating_company_id: CO, status: "draft", posting_status: "unposted", transaction_date: "2026-08-18", total_amount_cents: 14614,
+      memo: "ED-HER PLASTICS", expense_number: "EXP-2026-00042", vendor_uuid: "v-edher", payment_account_uuid: "acct-1000",
+      is_sample_data: false, is_company_expense: true, is_reimbursable: false, source_bank_transaction_id: "bt-1",
+      load_id: null, unit_id: null, trailer_id: null, driver_uuid: null, created_by_user_id: "u-1", updated_by_user_id: "u-1",
+      non_owned_trailer_id: null,
+    };
+    for (const [k, v] of Object.entries(headerExpect)) expect(col(header, k), k).toEqual(v);
     const line = calls.find((c) => /INSERT INTO accounting\.expense_lines/.test(c.text))!;
-    expect(line.values?.slice(0, 7)).toEqual([CO, "exp-1", 146.14, 14614, "ED-HER PLASTICS", "acct-6900", "item-misc"]);
+    expect(["operating_company_id", "expense_id", "amount", "amount_cents", "description", "expense_account_uuid", "item_id"].map((k) => col(line, k))).toEqual([CO, "exp-1", 146.14, 14614, "ED-HER PLASTICS", "acct-6900", "item-misc"]);
     // 443.105 #2 — no load: the line says why (company cost on its account, from this bank line).
     expect(line.text).toMatch(/load_exemption_reason/);
-    expect(line.values?.[11]).toBe("Company cost — 6900 Miscellaneous — not tied to a load (bank line 2026-08-18)");
+    expect(col(line, "load_exemption_reason")).toBe("Company cost — 6900 Miscellaneous — not tied to a load (bank line 2026-08-18)");
     expect(postSourceTransactionInClientTx).toHaveBeenCalledWith(
       client,
       { operating_company_id: CO, source_transaction_type: "expense", source_transaction_id: "exp-1" },
@@ -127,8 +147,8 @@ describe("createAndPostBankLineExpenseOnClient — load or exemption reason (443
   };
   it("a line with a load carries no reason (the load is the link)", async () => {
     const line = await run({ loadId: "load-1" });
-    expect(line.values?.[7]).toBe("load-1");
-    expect(line.values?.[11]).toBeNull();
+    expect(col(line, "load_id")).toBe("load-1");
+    expect(col(line, "load_exemption_reason")).toBeNull();
   });
   // DEGH-06 / 443.113-C — load-tagged bank-line expense uses the load spine, never EXP-YYYY-#####
   it("DEGH-06: loadId uses generateExpenseNumber + insertExpenseLoadLink, not nextExpenseDisplayId", async () => {
@@ -156,15 +176,15 @@ describe("createAndPostBankLineExpenseOnClient — load or exemption reason (443
     );
     expect(nextExpenseDisplayId).not.toHaveBeenCalled();
     const header = calls.find((c) => /INSERT INTO accounting\.expenses/.test(c.text))!;
-    expect(header.values?.[4]).toBe("12225");
+    expect(col(header, "expense_number")).toBe("12225");
   });
   it("the caller's reason wins over the derived one", async () => {
     const line = await run({ loadExemptionReason: "Owner: bank fee for the operating account" });
-    expect(line.values?.[11]).toBe("Owner: bank fee for the operating account");
+    expect(col(line, "load_exemption_reason")).toBe("Owner: bank fee for the operating account");
   });
   it("a reconciliation service charge (no bank line) names that context", async () => {
     const line = await run({ sourceBankTransactionId: null });
-    expect(line.values?.[11]).toBe("Company cost — 6300 Bank Service Charges & Wire Fees — not tied to a load (reconciliation service charge 2026-01-15)");
+    expect(col(line, "load_exemption_reason")).toBe("Company cost — 6300 Bank Service Charges & Wire Fees — not tied to a load (reconciliation service charge 2026-01-15)");
   });
 });
 
@@ -224,8 +244,9 @@ describe("adoptBankCategorizationExpenseDocument — G6 (one JE, document adopts
     expect(postSourceTransactionInClientTx).not.toHaveBeenCalled();
     expect(nextExpenseDisplayId).toHaveBeenCalled();
     const header = calls.find((c) => /INSERT INTO accounting\.expenses/.test(c.text))!;
-    expect(header.values?.[12]).toBe("je-legacy"); // journal_entry_id adopted
-    expect(header.values?.[4]).toBe("EXP-2026-00042");
+    expect(col(header, "journal_entry_id")).toBe("je-legacy"); // journal_entry_id adopted
+    expect(col(header, "posted_at")).toBe("now()");
+    expect(col(header, "expense_number")).toBe("EXP-2026-00042");
     expect(calls.some((c) => /SET matched_expense_id = \$1::uuid/.test(c.text))).toBe(true);
   });
 

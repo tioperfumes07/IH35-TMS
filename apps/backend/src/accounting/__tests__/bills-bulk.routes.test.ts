@@ -71,7 +71,9 @@ describe("bills-bulk.routes", () => {
   it("mark_paid posts a bill_payment JE via postSourceTransactionInClientTx, flag-gated, and a failure fails the item (363-CC1-B)", () => {
     expect(routes).toContain('import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js"');
     expect(routes).toContain('import { postSourceTransactionInClientTx } from "./posting-engine.service.js"');
-    expect(routes).toContain("RETURNING id");
+    // 443.182 C — the row comes from the one bill-payment writer, which returns its id.
+    expect(routes).toContain("insertBillPaymentRowInClientTx(client, {");
+    expect(routes).toContain('}, "id");');
     expect(routes).toContain("isBillPaymentGlPostingEnabled(operatingCompanyId, actorUserId)");
     expect(routes).toContain('source_transaction_type: "bill_payment"');
     expect(routes).toContain("source_transaction_id: bulkPaymentId");

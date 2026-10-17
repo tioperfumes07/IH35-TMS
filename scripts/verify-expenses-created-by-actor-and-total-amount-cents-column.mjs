@@ -57,7 +57,10 @@ if (!autoCreateMatch) {
   // 4 INSERT branches; each must both name the column and pass userId as a value — expect at least
   // 8 occurrences (column name + value-array reference is folded into one push in some branches, so
   // this is a floor, not an exact count).
-  if (createdByCount < 4) {
+  // 443.182 C — the 4 column-gated INSERT branches became ONE insertExpenseHeader row (one expense writer); that row
+  // names created_by_user_id: userId. Either shape stamps the actor on every branch.
+  const oneWriterRow = /insertExpenseHeader\(client, \{[\s\S]{0,900}created_by_user_id: userId,/.test(fn);
+  if (createdByCount < 4 && !oneWriterRow) {
     failures.push(`${twoSectionPath}: autoCreateExpenseFromWO no longer stamps created_by_user_id in all 4 INSERT branches (found ${createdByCount} references)`);
   }
   // The non-existent column: match "total_amount" NOT immediately followed by "_cents". Strip both
@@ -77,7 +80,10 @@ if (!autoCreateMatch) {
 
 const lumperPath = "apps/backend/src/cash-advances/lumper-cash-advance-split.ts";
 const lumperSrc = readFileSync(lumperPath, "utf8");
-if (!/INSERT INTO accounting\.expenses[\s\S]{0,200}?created_by_user_id/.test(lumperSrc)) {
+// 443.182 C — the lumper expense is written through the one expense writer: insertExpenseHeader(client, { …,
+// created_by_user_id: actorUserUuid, … }).
+const lumperWriterRow = /insertExpenseHeader\(client, \{[\s\S]{0,600}created_by_user_id: actorUserUuid,/.test(lumperSrc);
+if (!lumperWriterRow && !/INSERT INTO accounting\.expenses[\s\S]{0,200}?created_by_user_id/.test(lumperSrc)) {
   failures.push(`${lumperPath}: lumper-expense leg's INSERT into accounting.expenses no longer includes created_by_user_id`);
 }
 // N1 (2026-09-02): the values array grew a 6th element (numbered.number, for
@@ -90,7 +96,7 @@ if (!/INSERT INTO accounting\.expenses[\s\S]{0,200}?created_by_user_id/.test(lum
 const lumperInsertValuesMatch = lumperSrc.match(
   /INSERT INTO accounting\.expenses[\s\S]{0,400}?\n\s*\[([\s\S]{0,300}?)\],\s*\n\s*\);/
 );
-if (!lumperInsertValuesMatch || !/\bactorUserUuid\b/.test(lumperInsertValuesMatch[1])) {
+if (!lumperWriterRow && (!lumperInsertValuesMatch || !/\bactorUserUuid\b/.test(lumperInsertValuesMatch[1]))) {
   failures.push(`${lumperPath}: lumper-expense leg's INSERT no longer passes actorUserUuid as a value`);
 }
 

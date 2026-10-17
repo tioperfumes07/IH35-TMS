@@ -43,6 +43,7 @@ import { EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-fl
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { createExpenseInClientTx } from "../accounting/expense-writer.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { insertExpenseLine } from "../accounting/expense-writer.service.js";
 import { resolveFuelLoadAtTime, resolveFillDriverAtTime } from "./fuel-load-at-time.js";
 
 type DbClient = {
@@ -443,14 +444,25 @@ export async function postStatementScaleExpense(
   if (e.posting_status === "posted") return "already_posted";
   const cents = Number(e.cents);
   if (Number(e.lines) === 0) {
-    await client.query(
-      `INSERT INTO accounting.expense_lines (expense_id, line_sequence, amount_cents, amount, description, expense_account_uuid, operating_company_id,
-         load_id, load_exemption_reason, item_id, quantity, rate_cents, unit_of_measure, driver_id, unit_id, trailer_id)
-       VALUES ($1::uuid, 1, $2::bigint, $12::numeric, $3, $4::uuid, $5::uuid, $6::uuid, $7, $8::uuid, 1, $2::bigint, 'each', $9::uuid, $10::uuid, $11::uuid)`,
-      [expenseId, cents, e.memo ?? "Dreamline scale ticket", scaleItem.account_id, companyId, e.load_id,
-        e.load_id ? null : "Dreamline scale ticket with no load covering the truck at the fill time (443.142)",
-        scaleItem.item_id, e.driver, e.unit_id, e.trailer_id, cents / 100]
-    );
+    // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseLine).
+    await insertExpenseLine(client, {
+      expense_id: expenseId,
+      line_sequence: 1,
+      amount_cents: cents,
+      amount: cents / 100,
+      description: e.memo ?? "Dreamline scale ticket",
+      expense_account_uuid: scaleItem.account_id,
+      operating_company_id: companyId,
+      load_id: e.load_id,
+      load_exemption_reason: e.load_id ? null : "Dreamline scale ticket with no load covering the truck at the fill time (443.142)",
+      item_id: scaleItem.item_id,
+      quantity: 1,
+      rate_cents: cents,
+      unit_of_measure: "each",
+      driver_id: e.driver,
+      unit_id: e.unit_id,
+      trailer_id: e.trailer_id,
+    });
   }
   const posting = await postSourceTransactionInClientTx(
     client as never,
