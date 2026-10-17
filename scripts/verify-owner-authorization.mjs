@@ -103,8 +103,11 @@ try {
  * that action matches actualAction byte for byte.
  */
 export function evaluateAuthBlock(fileText, authId, nowMs, actualAction = null) {
+  // CodeQL js/regex-injection: authId is caller input (argv) — escape every metacharacter so it can only
+  // ever match itself literally (the CLI also restricts it to AUTH-<digits>; the export takes any string).
+  const authIdLiteral = String(authId).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const blockRe = new RegExp(
-    `## ${authId}\\n((?:(?!\\n## AUTH-)[\\s\\S])*)`,
+    `## ${authIdLiteral}\\n((?:(?!\\n## AUTH-)[\\s\\S])*)`,
     "m"
   );
   const m = fileText.match(blockRe);

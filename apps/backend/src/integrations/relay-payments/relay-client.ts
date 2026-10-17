@@ -667,8 +667,10 @@ export async function listRelayFuelTransactions(params: {
 
   if (source.length > 0 && filtered.length === 0) {
     // eslint-disable-next-line no-console -- fail-loud: distinguishes empty account vs wrong date slice
+    // CodeQL js/log-injection: the window and entity are caller input — CR/LF stripped so one call is one log line.
+    const oneLine = (v: unknown) => String(v).replace(/[\r\n]+/g, " ");
     console.warn(
-      `[RELAY_FUEL] date_filter_zero api_rows=${source.length} window=${params.startDate}..${params.endDate} entity=${params.entityCode ?? "legacy"}`
+      `[RELAY_FUEL] date_filter_zero api_rows=${source.length} window=${oneLine(params.startDate)}..${oneLine(params.endDate)} entity=${oneLine(params.entityCode ?? "legacy")}`
     );
   }
 
