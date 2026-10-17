@@ -17,6 +17,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELFTEST = process.argv.includes("--selftest");
 const LABEL = "verify-loaded-miles-written-on-book";
 const SVC = "apps/backend/src/dispatch/book-load.service.ts";
+// 443.193: the one loaded-miles rule moved here (cycle break with the mileage engine); book-load.service.ts re-exports it.
+const RULE = "apps/backend/src/dispatch/loaded-miles.ts";
 const MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 const STRIP = "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesStrip.tsx";
 const ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
@@ -64,7 +66,8 @@ function assert(files) {
   // loaded_miles VALUE SLOT sits after is_sample_data. P0: shortest when typed, else practical.
   // fab68f23f3 (#24006, LST-F3270): the rule lives in ONE exported helper, loadedMilesFor(shortest, practical),
   // recomputed by every writer — so the slot must call it and the helper must carry the practical fallback.
-  const helperBody = (src.match(/export function loadedMilesFor\(shortest: unknown, practical: unknown\): number \| null \{([\s\S]*?)\n\}/) ?? [])[1] ?? "";
+  // 443.193: the helper moved to dispatch/loaded-miles.ts (re-exported by book-load.service.ts) — read it there.
+  const helperBody = ((files[RULE] ?? "").match(/export function loadedMilesFor\(shortest: unknown, practical: unknown\): number \| null \{([\s\S]*?)\n\}/) ?? [])[1] ?? "";
   if (
     !/input\.is_sample_data \?\? false,[\s\S]{0,900}?loadedMilesFor\(input\.miles_shortest, input\.miles_practical\),/.test(src) ||
     !/if \(Number\.isFinite\(s\) && s > 0\) return s;\s*return practical == null \? null : Number\(practical\);/.test(helperBody)
@@ -189,7 +192,7 @@ function assert(files) {
 }
 
 const files = Object.fromEntries(
-  [SVC, MODAL, STRIP, ROUTES, HELPER, PROOF_BE, PROOF_FE, PROOF_LAW].map((r) => [r, readFileSync(path.join(ROOT, r), "utf8")]),
+  [SVC, RULE, MODAL, STRIP, ROUTES, HELPER, PROOF_BE, PROOF_FE, PROOF_LAW].map((r) => [r, readFileSync(path.join(ROOT, r), "utf8")]),
 );
 
 if (SELFTEST) {
@@ -205,9 +208,9 @@ if (SELFTEST) {
   };
   const helperNoFallback = {
     ...files,
-    [SVC]: files[SVC].replace("return practical == null ? null : Number(practical);", "return null;"),
+    [RULE]: files[RULE].replace("return practical == null ? null : Number(practical);", "return null;"),
   };
-  if (noFallback[SVC] === files[SVC] || helperNoFallback[SVC] === files[SVC]) {
+  if (noFallback[SVC] === files[SVC] || helperNoFallback[RULE] === files[RULE]) {
     console.error(`${LABEL} SELFTEST FAIL — could not plant the loaded_miles no-fallback mutation`);
     process.exit(1);
   }
