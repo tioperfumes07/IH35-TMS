@@ -25,7 +25,11 @@ vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({
 }));
 
 const mockQuery = vi.fn();
+// 443.191 — ab76df5abf (#26885, 443.182 C "last 7 files on the one engine") moved this module onto
+// the bills + expense engines, whose import chain reaches auth/lucia.ts and reads luciaPool at load.
+// The pool is never used here (every query goes through withCurrentUser's client below).
 vi.mock("../../auth/db.js", () => ({
+  luciaPool: {},
   withCurrentUser: async (_userId: string, fn: (client: { query: typeof mockQuery }) => Promise<unknown>) =>
     fn({ query: mockQuery }),
 }));
