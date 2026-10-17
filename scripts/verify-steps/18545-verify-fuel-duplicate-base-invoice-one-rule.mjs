@@ -37,7 +37,9 @@ export function check(files = backendFiles().map((a) => [relative(ROOT, a), read
   for (const [rel, src] of files) {
     if (/INSERT INTO fuel\.fuel_transactions/.test(src) && !EXEMPT[rel] && !/findLiveFuelByProviderTransactionId\(|refuseDuplicateProviderTransaction\(/.test(src))
       p.push(`${rel}: writes a fuel purchase without the one base-invoice duplicate rule (1)`);
-    if (/`\$\{[^}]*\}-\$\{[^}]*load_number[^}]*\}`/.test(src) && /suggest/i.test(src)) p.push(`${rel}: suggests a "<ticket>-<load>" reference (3)`);
+    // Line-based, linear checks (no backtracking regex — CodeQL js/redos).
+    if (/suggest/i.test(src) && src.split("\n").some((l) => l.includes("}-${") && l.includes("load_number") && l.includes("`")))
+      p.push(`${rel}: suggests a "<ticket>-<load>" reference (3)`);
   }
   const imp = files.find(([rel]) => rel === IMPORTER)?.[1] ?? "";
   if (!/const alreadyRecorded = await findLiveFuelByProviderTransactionId\(client, \{[\s\S]{0,200}\}\);\s*if \(alreadyRecorded\) \{\s*counts\.rows_duplicate \+= 1;\s*continue;/.test(imp))
