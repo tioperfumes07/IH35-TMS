@@ -212,7 +212,6 @@ function buildColumns(
       sortable: true,
       label: "DETAILS",
       minWidth: 220,
-      defaultHidden: true,
     },
     {
       key: "qb_balance",
