@@ -239,7 +239,17 @@ run("443.114 AJK-12 — dismissing a fine clears the driver charge in one action
       const fineId = await newFine(7_500);
       const ghost = randomUUID();
       // OLD.converted_to_liability_id IS NULL, so the lock does not fire: this is how a purge leaves the pointer.
-      await tx(() => db.query(`UPDATE safety.civil_fines SET converted_to_liability_id = $2::uuid WHERE id = $1::uuid`, [fineId, ghost]));
+      // Since e326311b49 "Claude-3- FINDING: AJK-12 LANE: FINANCIAL -- 443.120 A fine liability FK (#26664)" the FK
+      // civil_fines_converted_to_liability_id_fkey refuses a new dangling pointer (23503), so the legacy pre-FK state the
+      // Owner route exists to clean is planted with FK/trigger enforcement off for this one statement (same pattern as
+      // accounting/__tests__/expense-load-link-backfill.db.test.ts; this client runs SET ROLE ih35_app, so the plant
+      // drops to the session (owner) role for this transaction only). The route under test runs with enforcement on.
+      await tx(async () => {
+        await db.query(`SET LOCAL ROLE NONE`);
+        await db.query(`SET LOCAL session_replication_role = replica`);
+        await db.query(`UPDATE safety.civil_fines SET converted_to_liability_id = $2::uuid WHERE id = $1::uuid`, [fineId, ghost]);
+        await db.query(`SET LOCAL session_replication_role = origin`);
+      });
       return { fineId, ghost };
     }
     const pointer = async (fineId: string) =>

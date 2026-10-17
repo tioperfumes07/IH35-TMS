@@ -44,6 +44,16 @@ describe("ACCT-CoA-ASYMMETRY — static read-only invariant", () => {
 });
 
 const reportMock = vi.fn();
+// Fixture (class c, ROUND 443.191): b73d58e55f "FINDING: ACCT-F443820001 (443.182 B: CoA
+// frozen-entity asymmetry panel — USMCA-centric / 443.159 part 2) (#26889)" added
+// assertCompanyMembership(user.uuid, operating_company_id) to the route. Unstubbed, it ran
+// org.user_accessible_company_ids() against the CI DB for this fake user → 403. Stub it like the
+// sibling route tests (break-even.readonly.test.ts) and assert it is called with the scoped ids.
+const membershipMock = vi.fn().mockResolvedValue(undefined);
+
+vi.mock("../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: (...args: unknown[]) => membershipMock(...args),
+}));
 
 vi.mock("./shared.js", async (orig) => {
   const actual = (await orig()) as Record<string, unknown>;
@@ -60,6 +70,7 @@ vi.mock("./coa-asymmetry-report.service.js", () => ({
 describe("ACCT-CoA-ASYMMETRY — route behavior", () => {
   afterEach(() => {
     reportMock.mockReset();
+    membershipMock.mockClear();
   });
 
   it("Owner → 200 with read_only report", async () => {
@@ -77,6 +88,11 @@ describe("ACCT-CoA-ASYMMETRY — route behavior", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json().read_only).toBe(true);
+    expect(membershipMock).toHaveBeenCalledWith("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", companyId);
+    expect(reportMock).toHaveBeenCalledWith({
+      userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      operatingCompanyId: companyId,
+    });
     await app.close();
   });
 
@@ -86,6 +102,7 @@ describe("ACCT-CoA-ASYMMETRY — route behavior", () => {
     await registerCoaAsymmetryReportRoutes(app);
     const res = await app.inject({ method: "GET", url: "/api/v1/accounting/coa-asymmetry-report" });
     expect(res.statusCode).toBe(400);
+    expect(membershipMock).not.toHaveBeenCalled();
     await app.close();
   });
 });

@@ -15,6 +15,7 @@ import { normalizeBankTransactionDescription } from "../banking/transaction-inge
 import { repairUtf8Mojibake } from "../lib/repair-utf8-mojibake.js";
 import { createLoadWithFullSideEffects } from "../dispatch/book-load.service.js";
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
+import { printedTrailerChoice } from "../driver-finance/creator-trailer-choice.js";
 
 // NEVER bulk-apply default classification tags (Late-pay, FMCSA: Not verified, Medium)
 // to real customer/vendor rows during seed import. Classifications require explicit
@@ -991,6 +992,21 @@ async function upsertLoads(
           );
         }
 
+        // R443.161-G1 (6db7585fb6 "FINDING: R443.161-G1 trailer choice missing at shared load boundary (#26793)"):
+        // createLoadWithFullSideEffects refuses every non-draft booking without an explicit trailer choice, and "legacy
+        // CSV booking require[s] resolving missing trailer first; no guessing". The row names it in the optional
+        // columns trailer_number (a fleet trailer of this company -> company, any other printed number -> customer /
+        // shipper trailer) or trailer_none=true (bobtail / power only) — the same document decision the Settlement
+        // Creator makes (printedTrailerChoice). A row naming neither is refused by name, never defaulted.
+        const trailerNone = /^(true|yes|1)$/i.test(nullable(row.trailer_none) ?? "");
+        const trailerChoice = await printedTrailerChoice(client, operatingCompanyId, nullable(row.trailer_number), trailerNone);
+        if (!trailerChoice) {
+          throw new Error(
+            "trailer_choice_required: name the load's trailer in trailer_number (fleet or customer / shipper trailer) " +
+              "or set trailer_none=true (bobtail / power only)"
+          );
+        }
+
         if (!dryRun) {
           const stops = [
             ...(hasPickupStop
@@ -1036,6 +1052,7 @@ async function upsertLoads(
               load_number: loadNumber,
               charges: rateParsed > 0 ? [{ code: "LINEHAUL", amount_cents: rateParsed }] : [],
               stops,
+              trailer_choice: trailerChoice,
             },
             { source: "historical_backfill" }
           );
