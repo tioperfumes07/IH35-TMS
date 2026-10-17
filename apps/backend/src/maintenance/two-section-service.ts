@@ -133,7 +133,10 @@ export type SectionBLine = {
 /** A work-order line names a catalog item of the WORK ORDER's company (work_order_lines has no company column). */
 export class WorkOrderLineItemError extends Error {
   readonly code: string;
-  constructor(code: "wo_line_item_not_in_company" | "wo_line_item_required" | "wo_line_item_account_mismatch", message: string) {
+  constructor(
+    code: "wo_line_item_not_in_company" | "wo_line_item_required" | "wo_line_item_account_mismatch" | "wo_line_account_not_cost",
+    message: string
+  ) {
     super(`${code}: ${message}`);
     this.code = code;
     this.name = "WorkOrderLineItemError";
@@ -185,6 +188,47 @@ export async function assertWorkOrderCategoryLineItem(
     throw new WorkOrderLineItemError(
       "wo_line_item_account_mismatch",
       `item "${row.item_name}" posts to a different account than this line's category — pick an item of that category, or add the cost as a Section B item line`
+    );
+  }
+}
+
+/**
+ * Cost account types a work-order line may post to — the server twin of the frontend's shared picker scope
+ * (apps/frontend/src/lib/account-picker-scope.ts EXPENSE_ACCOUNT_TYPES / isExpenseAccount), compared normalized
+ * because the chart carries both spellings ("CostOfGoodsSold" and "Cost of Goods Sold").
+ */
+export const WO_COST_ACCOUNT_TYPES_NORMALIZED: readonly string[] = ["expense", "costofgoodssold", "otherexpense"];
+
+/**
+ * LEAD RULING 2026-10-17 15:10Z #1 (ACCT-F92 stands): a work-order cost line posts to a COST account only — never
+ * 4210-4240 Detention/Layover/Lumper/TONU Income, an asset or a liability. Bills keep the full chart (443.159); this
+ * runs only on the work-order writers. Money writers do not trust the UI picker: the entry would still balance, so
+ * nothing downstream catches a WO repair booked to revenue. Refused by name (422), nothing written.
+ *
+ * A Section A id that is not a catalogs.accounts row of this company (a legacy catalogs.expense_categories /
+ * qbo_categories id from the server engines) is left to the existing category paths — this decides account TYPE only.
+ * A postable=false header account is refused too: it is not a posting target.
+ */
+export async function assertWorkOrderCostAccount(
+  client: DbClient,
+  operatingCompanyId: string,
+  categoryId: string | null | undefined
+): Promise<void> {
+  if (!categoryId) return;
+  const row = (
+    await client.query<{ account_name: string; account_type: string | null; is_postable: boolean | null; is_cost: boolean }>(
+      `SELECT a.account_name, a.account_type, a.is_postable,
+              lower(regexp_replace(coalesce(a.account_type, ''), '[^a-zA-Z0-9]', '', 'g')) = ANY($3::text[]) AS is_cost
+         FROM catalogs.accounts a
+        WHERE a.id = $1::uuid AND a.operating_company_id = $2::uuid`,
+      [categoryId, operatingCompanyId, WO_COST_ACCOUNT_TYPES_NORMALIZED]
+    )
+  ).rows[0];
+  if (!row) return;
+  if (!row.is_cost || row.is_postable === false) {
+    throw new WorkOrderLineItemError(
+      "wo_line_account_not_cost",
+      `account "${row.account_name}" (${row.account_type ?? "no type"}${row.is_postable === false ? ", header" : ""}) is not a cost account — a work-order line posts to an Expense, Cost of Goods Sold or Other Expense account`
     );
   }
 }
@@ -474,6 +518,8 @@ export async function createWorkOrderWithLines(
   for (const line of sectionALines) {
     const amount = asNumber(line.amount);
     const quantity = Math.max(1, asNumber(line.quantity));
+    // LEAD RULING 2026-10-17 #1: the one Section A writer every WO creator calls refuses a non-cost account.
+    await assertWorkOrderCostAccount(client, header.operating_company_id, line.expense_category_uuid);
     await client.query(
       `
         INSERT INTO maintenance.work_order_lines (
