@@ -259,7 +259,14 @@ export function checkPurchaseReportReal(src) {
     failures.push(`${HOME}: could not find a dedicated Purchase Report ("tab === \"purchase_report\" ?") block.`);
     return failures;
   }
-  const section = src.slice(idx, idx + 8000);
+  // Heavy CI peel (Lead 13:45Z): c8882821f9 (#26825, LEAD 443.172) rebuilt the report on the purchase engine's lines
+  // (summary by purchase + detail by invoice) and moved the Faro-portal columns into one hidden-by-default label array,
+  // so the section runs to the next tab block (not a fixed 8000 chars) and a label counts in either form.
+  const nextTab = src.indexOf('show("', idx + marker.length);
+  const section = src.slice(idx, nextTab === -1 ? src.length : nextTab);
+  const spreadLabels = new Set(
+    [...section.matchAll(/\.\.\.\(\[([^\]]*)\] as const\)\.map\(\(label\) =>/g)].flatMap((m) => [...m[1].matchAll(/"([^"]+)"/g)].map((x) => `"${x[1]}"`)),
+  );
   const requiredColumnLabels = [
     '"Debtor"', '"Date"', '"Inv #"', '"PO"', '"Other Ref"', '"Purchase"', '"Escrow Rsv"', '"Cash Rsv"',
     '"Discount"', '"Fees"', '"Wire Fee"', '"Rebate Income"', '"Returned Item Fee"', '"Schedule Fee"',
@@ -267,16 +274,17 @@ export function checkPurchaseReportReal(src) {
     '"Sch Fee"', '"ChgBack (Refund)"',
   ];
   for (const label of requiredColumnLabels) {
-    if (!section.includes(`label: ${label}`)) {
+    if (!section.includes(`label: ${label}`) && !spreadLabels.has(label)) {
       failures.push(`${HOME}: Purchase Report missing required column label ${label}.`);
     }
   }
+  // Same rule, the engine's fields (c8882821f9): purchased gross, cash reserve, net advance, and the real chargeback.
   const requiredRealBindings = [
-    { pattern: /purchaseReportRows/, label: "table bound to purchaseReportRows (agingRows + fee/chargeback join)" },
-    { pattern: /row\.invoice_amount/, label: "Purchase column bound to row.invoice_amount" },
-    { pattern: /row\.reserve_amount/, label: "Cash Rsv column bound to row.reserve_amount" },
-    { pattern: /row\.advance_amount/, label: "Net Adv column bound to row.advance_amount" },
-    { pattern: /row\.chargeback/, label: "ChgBack column bound to row.chargeback (real per-advance chargeback sum)" },
+    { pattern: /rows=\{purchaseReportLines\}/, label: "table bound to purchaseReportLines (the purchase engine's posted, non-voided lines)" },
+    { pattern: /row\.gross_cents/, label: "Purchased column bound to row.gross_cents" },
+    { pattern: /row\.cash_reserve_cents/, label: "Cash Rsv column bound to row.cash_reserve_cents" },
+    { pattern: /row\.net_advance_cents/, label: "Net Adv column bound to row.net_advance_cents" },
+    { pattern: /label: "ChgBack \(Refund\)",[\s\S]{0,300}?chargebacksByInvoice\.get\(row\.invoice_id\)/, label: "ChgBack (Refund) column bound to the real chargeback history by invoice (chargebacksByInvoice)" },
   ];
   for (const { pattern, label } of requiredRealBindings) {
     if (!pattern.test(section)) {
@@ -457,34 +465,33 @@ if (process.argv.includes("--selftest")) {
 const fundsDueQuery = useQuery({ queryFn: () => getFactoringFundsDue(companyId) });
 const fundsDueRows = fundsDueQuery.data?.invoices ?? [];
   `;
+  // Engine shape (c8882821f9, LEAD 443.172): purchase-engine lines; Faro-portal columns in one hidden label array.
   const purchaseReportBlock = `
       {show("purchase_report") ? (
         <ParityTable
           columns={[
             { key: "customer_name", label: "Debtor" },
-            { key: "factored_at", label: "Date" },
-            { key: "invoice_reference", label: "Inv #" },
-            { key: "po", label: "PO" },
-            { key: "other_ref", label: "Other Ref" },
-            { key: "purchase", label: "Purchase", render: (row) => fmtCurrency(row.invoice_amount) },
+            { key: "purchase_date", label: "Date" },
+            { key: "purchase_display_id", label: "Purchase" },
+            { key: "invoice_display_id", label: "Inv #" },
+            { key: "other_ref", label: "Other Ref", render: (row) => statementRefByInvoice.get(row.invoice_id) ?? "—" },
+            { key: "purchase", label: "Purchased", render: (row) => fmtCurrency(Number(row.gross_cents) / 100) },
+            { key: "advance_amount", label: "Net Adv", render: (row) => fmtCurrency(Number(row.net_advance_cents) / 100) },
             { key: "escrow_rsv", label: "Escrow Rsv" },
-            { key: "cash_rsv", label: "Cash Rsv", render: (row) => fmtCurrency(row.reserve_amount) },
-            { key: "discount", label: "Discount" },
+            { key: "cash_rsv", label: "Cash Rsv", render: (row) => fmtCurrency(Number(row.cash_reserve_cents) / 100) },
             { key: "fees", label: "Fees" },
-            { key: "wire_fee", label: "Wire Fee" },
-            { key: "rebate_income", label: "Rebate Income" },
-            { key: "returned_item_fee", label: "Returned Item Fee" },
-            { key: "schedule_fee", label: "Schedule Fee" },
-            { key: "shipping_fee", label: "Shipping Fee" },
-            { key: "cash_advance_fee", label: "Cash Advance Fee" },
-            { key: "processing_fee", label: "Processing Fee" },
-            { key: "dispatch", label: "Dispatch" },
-            { key: "advance_amount", label: "Net Adv", render: (row) => fmtCurrency(row.advance_amount) },
-            { key: "receipts", label: "Receipts" },
-            { key: "sch_fee", label: "Sch Fee" },
-            { key: "chargeback", label: "ChgBack (Refund)", render: (row) => fmtCurrency(row.chargeback) },
+            {
+              key: "chargeback",
+              label: "ChgBack (Refund)",
+              render: (row) => fmtCurrency(chargebacksByInvoice.get(row.invoice_id) ?? 0),
+            },
+            ...(["PO", "Discount", "Wire Fee", "Rebate Income", "Returned Item Fee", "Schedule Fee", "Shipping Fee", "Cash Advance Fee", "Processing Fee", "Dispatch", "Receipts", "Sch Fee"] as const).map((label) => ({
+              key: label,
+              label,
+              render: () => "—",
+            })),
           ]}
-          rows={purchaseReportRows}
+          rows={purchaseReportLines}
         />
       ) : null}
   `;
@@ -584,9 +591,10 @@ ${accountSummaryBlock}
     'show("payments_to_you") ? (',
     'show("payments_to_you") ||\n      show("purchase_report") ? (',
   );
-  const badPurchaseReportMissingColumn = goodSrc.replace('{ key: "chargeback", label: "ChgBack (Refund)", render: (row) => fmtCurrency(row.chargeback) },', "");
+  const badPurchaseReportMissingColumn = goodSrc.replace('"Receipts", "Sch Fee"] as const', '"Receipts"] as const');
+  const badPurchaseReportChargebackDash = goodSrc.replace("render: (row) => fmtCurrency(chargebacksByInvoice.get(row.invoice_id) ?? 0),", 'render: () => "—",');
   const badPurchaseReportFakeBinding = goodSrc.replace(
-    '{ key: "advance_amount", label: "Net Adv", render: (row) => fmtCurrency(row.advance_amount) },',
+    '{ key: "advance_amount", label: "Net Adv", render: (row) => fmtCurrency(Number(row.net_advance_cents) / 100) },',
     '{ key: "advance_amount", label: "Net Adv", render: () => fmtCurrency(9999) },',
   );
   const badChargebacksOverpaymentsStillStub = goodSrc.replace(
@@ -630,6 +638,7 @@ ${accountSummaryBlock}
     ["purchase report still stub fails", checkPurchaseReportReal(badPurchaseReportStillStub).length > 0],
     ["purchase report missing column fails", checkPurchaseReportReal(badPurchaseReportMissingColumn).length > 0],
     ["purchase report fake binding fails", checkPurchaseReportReal(badPurchaseReportFakeBinding).length > 0],
+    ["purchase report chargeback column back to a dash fails", checkPurchaseReportReal(badPurchaseReportChargebackDash).length > 0],
     ["chargebacks & overpayments still stub fails", checkChargebacksOverpaymentsReal(badChargebacksOverpaymentsStillStub).length > 0],
     ["chargebacks & overpayments fake binding fails", checkChargebacksOverpaymentsReal(badChargebacksOverpaymentsFakeBinding).length > 0],
     ["reserve still stub fails", checkReserveReal(badReserveStillStub, panelFixture).length > 0],
