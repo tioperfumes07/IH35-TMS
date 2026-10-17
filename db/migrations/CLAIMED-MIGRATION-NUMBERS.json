@@ -183,6 +183,16 @@
       "claimed_at": "2026-10-17",
       "purpose": "CC-3 LEAD 443.187: GRANT USAGE ON SCHEMA views, migration TO ih35_app (verify-migration-schema-grants: no migration grants the app role the schemas its views / migration ledger live in)"
     },
+    "202616010900": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-17",
+      "purpose": "CC-3 LEAD 443.187 (06:55Z): coa role rows — deactivate duplicate active (operating_company_id, role) rows (keep the one the resolver returns) + partial UNIQUE index WHERE is_active"
+    },
+    "202616011000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-17",
+      "purpose": "CC-3 LEAD 443.187 (06:55Z): driver_settlements.deductions_total derived from its lines (ROUND 394: stored copies go)"
+    },
     "202616000100": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-16",
