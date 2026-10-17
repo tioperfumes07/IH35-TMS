@@ -60,7 +60,9 @@ if (settlements) {
   if (/TableHeaderCell/.test(settlements)) {
     failures.push(`${settlementsPath}: must not regress to TableHeaderCell after ParityTable migration`);
   }
-  for (const col of ["driver", "period", "gross", "deductions", "net_pay", "status", "debt_flag"]) {
+  // ACCT-F6350 (REG-010/011, 2f526f4002): the single "period" column was split into "Period Begin" (period_start) and
+  // "Period End" (period_end) grid columns — both must stay sortable.
+  for (const col of ["driver", "period_start", "period_end", "gross", "deductions", "net_pay", "status", "debt_flag"]) {
     if (!new RegExp(`key:\\s*["']${col}["'][^}]*sortable:\\s*true`).test(settlements)) {
       failures.push(`${settlementsPath}: column "${col}" must be sortable: true`);
     }
