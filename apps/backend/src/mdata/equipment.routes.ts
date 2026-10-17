@@ -132,6 +132,10 @@ async function resolveAssetCompanyIds(
     // dispatcher creating a unit/equipment leased it to USMCA (5c854333… < 91e0bf0a…).
     resolvedLeasedId = await resolveDefaultOperatingCompanyId(client, userId);
   }
+  // LEAD 443.199: a company never leases an asset to itself. Defaulting leased-to to the user's company when that
+  // company is also the owner marked owned assets "leased with no live lease contract" (live 10-16: equipment 56702 /
+  // 10518 created by the owner). Leased-to is derived from a signed contract by the lease engine (deriveLeasedTo).
+  if (resolvedLeasedId && resolvedOwnerId && resolvedLeasedId === resolvedOwnerId) resolvedLeasedId = null;
 
   return { resolvedOwnerId, resolvedLeasedId };
 }

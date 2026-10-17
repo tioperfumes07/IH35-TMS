@@ -97,6 +97,9 @@ async function liveCheck() {
         SELECT DISTINCT s.driver_id, s.operating_company_id, 'settlement' AS source FROM driver_finance.driver_settlements s
         LEFT JOIN mdata.vendors v ON v.driver_id = s.driver_id AND v.operating_company_id = s.operating_company_id AND v.deactivated_at IS NULL
         WHERE v.id IS NULL
+          -- 443.199: a cancelled + voided settlement owes nothing — it is not A/P activity (live 10-17: P-0072/73/78/82/88/89,
+          -- the 443.167 regroup's cancelled drafts on duplicate driver records; 0 driver_bills on those drivers).
+          AND s.voided_at IS NULL AND s.status <> 'cancelled'
         UNION
         SELECT DISTINCT db.driver_id, db.operating_company_id, 'driver_bill' AS source FROM driver_finance.driver_bills db
         LEFT JOIN mdata.vendors v ON v.driver_id = db.driver_id AND v.operating_company_id = db.operating_company_id AND v.deactivated_at IS NULL

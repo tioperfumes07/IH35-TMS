@@ -38,7 +38,10 @@ export function check(src) {
     [/entry_kind === "short_pay"\) \{\s*(?:if \(await faroInvoiceClosed\([^;]+;\s*)?legs = \[\s*\{ account: await role\("factoring_advance_liability"\), dc: "debit"/, "short-pay must debit factoring_advance_liability (2150)"],
     [/payment = \{ cents: Number\(entry\.short_pay_paid_cents \?\? 0\), entry \}/, "short-pay must carry Faro's \"Paid\" as the customer payment"],
     [/payment = \{ cents: await faroUnpaidFaceCents\(/, "escrow -> cash must carry the unpaid face as the customer payment"],
-    [/\{ account: await role\("factoring_advance_liability"\), dc: "debit", amount: payment\.cents, entry: payment\.entry \},\s*\{ account: await role\("ar_control"\), dc: "credit", amount: payment\.cents, entry: payment\.entry \}/, "the customer payment must be DR 2150 / CR 1100"],
+    // LEAD 443.171 C (#26828, partial purchase): 2150 is relieved only up to the line's unrelieved PURCHASED gross; the excess
+    // Faro collected for us is due from Faro (Dr cash_clearing); A/R is credited the WHOLE payment (one A/R document).
+    [/const to2150 = Math\.min\(payment\.cents, room\);\s*const excess = payment\.cents - to2150;\s*legs\.push\(\s*\.\.\.\(to2150 > 0 \? \[\{ account: liability, dc: "debit" as const, amount: to2150, entry: payment\.entry \}\] : \[\]\),\s*\.\.\.\(excess > 0 \? \[\{ account: await role\("cash_clearing"\), dc: "debit" as const, amount: excess, entry: payment\.entry \}\] : \[\]\),\s*\{ account: await role\("ar_control"\), dc: "credit", amount: payment\.cents, entry: payment\.entry \}/, "the customer payment must be DR 2150 (purchased part) + DR cash_clearing (excess) / CR 1100 (whole payment)"],
+    [/const liability = await role\("factoring_advance_liability"\);[\s\S]{0,400}const room = Math\.max\(0, \(await unrelievedPurchasedGrossCents\(client, oci, link!\.purchase_line_id\)\) - inThisEntry\);/, "2150 relief must be capped at the line's unrelieved purchased gross (factoring_advance_liability)"],
     [/if \(payment\.cents > Number\(inv\.total\) - Number\(inv\.paid\)\) throw new FaroReserveError\("faro_payment_exceeds_invoice_open_balance"\)/, "the customer payment must be capped at the invoice's open balance"],
     [/\{ account: await role\("intercompany_receivable_ih35_transportation"\), dc: "debit"/, "client payable to IH 35 must debit the intercompany receivable (8000)"],
     [/\{ account: cash, dc: "debit", amount, entry: cashSide \},\s*\{ account: await role\("factor_reserve_held"\), dc: "credit"/, "escrow -> cash must be DR 1235 / CR 1230"],
@@ -91,6 +94,10 @@ if (process.argv.includes("--selftest")) {
     ["fee expensed to 6405", { svc: g.svc.replace('account: await role("factor_default_interest_payable"), dc: "debit" as const, amount: accruedAll', 'account: await role("factor_transaction_fee"), dc: "debit" as const, amount: accruedAll') }],
     ["fee posts without accrual", { svc: g.svc.replace("if (pos.due_cents > 0) {", "if (false) {") }],
     ["deposit refused on its own line again", { svc: g.svc.replace('} else if (entry.entry_kind === "rsv_deposit") {', '} else if (entry.entry_kind === "rsv_deposit_never") {') }],
+    ["payment credits cash not A/R", { svc: g.svc.replace('{ account: await role("ar_control"), dc: "credit", amount: payment.cents, entry: payment.entry }', '{ account: cash, dc: "credit", amount: payment.cents, entry: payment.entry }') }],
+    ["excess posted to 2150", { svc: g.svc.replace('account: await role("cash_clearing"), dc: "debit" as const, amount: excess', 'account: liability, dc: "debit" as const, amount: excess') }],
+    ["2150 relief uncapped", { svc: g.svc.replace("const to2150 = Math.min(payment.cents, room);", "const to2150 = payment.cents;") }],
+    ["2150 room off the purchased gross", { svc: g.svc.replace("(await unrelievedPurchasedGrossCents(client, oci, link!.purchase_line_id))", "(Number.MAX_SAFE_INTEGER)") }],
     ["customer payment uncapped", { svc: g.svc.replace('if (payment.cents > Number(inv.total) - Number(inv.paid)) throw new FaroReserveError("faro_payment_exceeds_invoice_open_balance");', "") }],
     ["release credits escrow", { svc: g.svc.replace('{ account: await role("cash_clearing"), dc: "debit", amount, entry },\n      { account: cash, dc: "credit", amount, entry },', '{ account: await role("cash_clearing"), dc: "debit", amount, entry },\n      { account: await role("factor_reserve_held"), dc: "credit", amount, entry },') }],
     ["swap accepted", { svc: g.svc.replace('"inv_po_swapped"', '"ok"') }],
