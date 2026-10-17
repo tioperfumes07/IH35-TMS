@@ -2650,6 +2650,9 @@ export async function insertBillHeaderOnClient<R = Record<string, unknown>>(
   const sourceCol = columns.find(([name]) => name === "source")?.[1];
   const sourceValue = sourceCol && "value" in sourceCol ? sourceCol.value : undefined;
   if (!(BILL_SOURCES as readonly unknown[]).includes(sourceValue)) throw new BillSourceRequiredError(sourceValue);
+  // G6-4 (bills_amount_cents_present) — amount_cents is the canonical money column; the one header writer refuses a bill
+  // without it rather than leaving the DB constraint to fail late (heavy CI peel: verify-bills-amount-cents-canonical A5).
+  if (!names.includes("amount_cents")) throw new Error("bill_insert_amount_cents_required");
   const conflict = opts.onConflict ? ` ${BILL_ON_CONFLICT[opts.onConflict]}` : "";
   const sql = `INSERT INTO accounting.bills (${names.join(", ")}) VALUES (${exprs.join(", ")})${conflict} RETURNING ${returning}`;
   return (await client.query(sql, values)) as { rows: R[]; rowCount: number | null };

@@ -73,6 +73,21 @@ export function billsInsertListsAmountCents(sqlText) {
   return results;
 }
 
+/**
+ * 443.182 C (b58baf82d0) made insertBillHeaderOnClient (bills.service.ts) THE one INSERT INTO accounting.bills, with a
+ * column list built from its callers (`${names.join(", ")}`). A dynamic list cannot be read statically, so for that one
+ * writer A5 is asserted in two halves instead: (1) the writer itself refuses a header without amount_cents, and (2) every
+ * production caller of insertBillHeaderOnClient / writeBillDocumentOnClient names amount_cents in what it passes.
+ */
+export const DYNAMIC_LIST_RE = /INSERT\s+INTO\s+accounting\.bills\s*\(\$\{names\.join\(", "\)\}\)/;
+export const WRITER_REFUSES_RE = /if \(!names\.includes\("amount_cents"\)\) throw new Error\("bill_insert_amount_cents_required"\)/;
+export function callerSitesMissingAmountCents(text) {
+  // Call sites (not the import, not the definitions, not the engine forwarding its own doc.header).
+  const calls = [...text.matchAll(/\b(?:insertBillHeaderOnClient|writeBillDocumentOnClient)\s*(?:<[^>]*>)?\s*\(\s*client\s*,\s*(?!doc\.header)(?=\S)/g)].length;
+  const named = (text.match(/\[\s*"amount_cents"\s*,/g) ?? []).length;
+  return Math.max(0, calls - named);
+}
+
 function isProductionSource(rel) {
   return (
     rel.startsWith("apps/") &&
@@ -138,12 +153,28 @@ function run() {
     let text;
     try { text = fs.readFileSync(abs, "utf8"); } catch { continue; }
     if (!/INSERT\s+INTO\s+accounting\.bills/i.test(text)) continue;
-    for (const site of billsInsertListsAmountCents(text)) {
+    if (DYNAMIC_LIST_RE.test(text)) {
+      prodInsertSites++;
+      if (!WRITER_REFUSES_RE.test(text)) {
+        fail("A5", `${rel}: the one bill header writer (dynamic column list) must refuse a bill without amount_cents (bill_insert_amount_cents_required)`, errs);
+      }
+    }
+    for (const site of billsInsertListsAmountCents(text.replace(DYNAMIC_LIST_RE, ""))) {
       prodInsertSites++;
       if (!site.hasAmountCents) {
         fail("A5", `${rel}: INSERT INTO accounting.bills omits amount_cents (columns: ${site.cols.join(", ")}) — reintroduces the NULL-canonical drift G6-4 closed`, errs);
       }
     }
+  }
+  // A5 (callers of the one writer): each call site names amount_cents.
+  for (const abs of walk(path.join(ROOT, "apps"))) {
+    const rel = path.relative(ROOT, abs);
+    if (!isProductionSource(rel)) continue;
+    let text;
+    try { text = fs.readFileSync(abs, "utf8"); } catch { continue; }
+    if (!/insertBillHeaderOnClient|writeBillDocumentOnClient/.test(text)) continue;
+    const missing = callerSitesMissingAmountCents(text);
+    if (missing) fail("A5", `${rel}: ${missing} call(s) of the one bill writer pass no ["amount_cents", …] column`, errs);
   }
   if (prodInsertSites === 0) {
     // Not a hard fail (the writer could legitimately move), but surface it —
@@ -172,6 +203,16 @@ if (process.argv.includes("--selftest")) {
       billsInsertListsAmountCents("INSERT INTO accounting.bills (amount_cents) VALUES (1); INSERT INTO accounting.bills (total_amount) VALUES (2)").length === 2],
     ["case-insensitive table match",
       billsInsertListsAmountCents("insert into accounting.bills (amount_cents) values (1)")[0].hasAmountCents === true],
+    ["the one writer's dynamic column list is recognised",
+      DYNAMIC_LIST_RE.test('const sql = `INSERT INTO accounting.bills (${names.join(", ")}) VALUES (${exprs.join(", ")})`;')],
+    ["the one writer without the amount_cents refusal is caught",
+      !WRITER_REFUSES_RE.test("const sql = 1; // refusal removed")],
+    ["a caller passing no amount_cents column is caught",
+      callerSitesMissingAmountCents('await insertBillHeaderOnClient<{ id: string }>(client, [["source", { value: "manual" }]]);') === 1],
+    ["a caller passing amount_cents passes",
+      callerSitesMissingAmountCents('await writeBillDocumentOnClient(client, { header: [["amount_cents", { value: 1 }]] });') === 0],
+    ["the engine forwarding its own doc.header is not a caller",
+      callerSitesMissingAmountCents("await insertBillHeaderOnClient<R>(client, doc.header, {});") === 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
