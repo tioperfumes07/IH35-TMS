@@ -7,6 +7,10 @@ const paths = {
   page: "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx",
   routes: "apps/backend/src/maintenance/vendors.routes.ts",
   api: "apps/frontend/src/api/maintenance.ts",
+  // 443.182-A catalog one-source consolidation (52699c6c2f, #26871) moved listMaintenanceVendors
+  // into catalog-vendors.ts; maintenance.ts now imports + re-exports it (the reverse section and
+  // VendorsPage still import it from ../api/maintenance).
+  catalogVendors: "apps/frontend/src/api/catalog-vendors.ts",
   reverse: "apps/frontend/src/pages/vendors/VendorMaintenanceCatalogReverseSection.tsx",
   vendor: "apps/frontend/src/pages/VendorDetail.tsx",
 };
@@ -23,7 +27,8 @@ const checks = [
   ["routes", /withCompany\(user\.uuid, parsed\.data\.operating_company_id[\s\S]{0,120}const values: unknown\[\] = \[parsed\.data\.operating_company_id\][\s\S]{0,120}const filters = \["mvendor\.operating_company_id = \$1::uuid"\]/, "reverse list seeds the selected-company predicate"],
   ["routes", /if \(parsed\.data\.mdata_vendor_id\) \{[\s\S]{0,100}values\.push\(parsed\.data\.mdata_vendor_id\)[\s\S]{0,120}filters\.push\(`mvendor\.linked_vendor_id = \$\$\{values\.length\}::uuid`\)/, "reverse list binds the AP vendor FK as a UUID query parameter"],
   ["routes", /FROM catalogs\.maintenance_vendors mvendor[\s\S]{0,700}WHERE \$\{filters\.join\(" AND "\)\}[\s\S]{0,180}values/, "reverse list executes the composed company and vendor predicates"],
-  ["api", /listMaintenanceVendors\([\s\S]{0,140}operatingCompanyId: string,[\s\S]{0,160}mdata_vendor_id\?: string[\s\S]{0,220}operating_company_id: operatingCompanyId[\s\S]{0,320}q\.set\("mdata_vendor_id", params\.mdata_vendor_id\)[\s\S]{0,220}`\/api\/v1\/maintenance\/vendors\?\$\{q\.toString\(\)\}`/, "typed client serializes company and AP vendor filter into the canonical GET"],
+  ["api", /import \{ listMaintenanceVendors \} from "\.\/catalog-vendors";[\s\S]{0,400}export \{ listMaintenanceVendors \};/, "maintenance API re-exports the one-source catalog listMaintenanceVendors"],
+  ["catalogVendors", /listMaintenanceVendors\([\s\S]{0,140}operatingCompanyId: string,[\s\S]{0,160}mdata_vendor_id\?: string[\s\S]{0,220}operating_company_id: operatingCompanyId[\s\S]{0,320}q\.set\("mdata_vendor_id", params\.mdata_vendor_id\)[\s\S]{0,220}`\/api\/v1\/maintenance\/vendors\?\$\{q\.toString\(\)\}`/, "typed client serializes company and AP vendor filter into the canonical GET"],
   ["reverse", /queryKey: \["vendor-maintenance-catalog", operatingCompanyId, vendorId\][\s\S]{0,200}listMaintenanceVendors\(operatingCompanyId, \{ mdata_vendor_id: vendorId, include_archived: true \}\)[\s\S]{0,100}enabled: Boolean\(operatingCompanyId && vendorId\)/, "vendor reverse query identity, GET, and enablement share company plus vendor id"],
   ["reverse", /rows\.map\(\(row\) => \([\s\S]{0,180}<div key=\{row\.id\}[\s\S]{0,180}<EntityLink kind="maintenance_vendor" id=\{row\.id\} label=\{entityLabel\(row\.display_name, row\.id, "Maintenance vendor"\)\}/, "each returned maintenance vendor drills by canonical id with a human label"],
   ["reverse", /query\.isError[\s\S]{0,220}query\.refetch\(\)[\s\S]{0,260}No maintenance vendor catalog records link to this AP vendor/, "reverse surface exposes retryable error and honest empty states"],

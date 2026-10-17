@@ -42,19 +42,38 @@ function latestChargebacksFeesViewMigration() {
   return matches[matches.length - 1] ?? null;
 }
 
-export function checkChargebacksFeesViewSource(src) {
-  const problems = [];
+// The CREATE VIEW views.factoring_chargebacks_fees statement only (up to its terminating `;`), so a
+// sibling view in the same migration (202616000100 also re-creates views.factoring_recourse_at_risk,
+// which reads fa.factor_fee_cents-free columns through its own `fa` alias) can neither satisfy nor
+// trip these checks.
+export function chargebacksFeesViewStatement(src) {
+  const m = /CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+views\.factoring_chargebacks_fees\b[\s\S]*?;/i.exec(src);
+  return m ? m[0] : src;
+}
 
-  if (!/fa\.factor_fee_cents::numeric\s*\/\s*100/.test(src)) {
+export function checkChargebacksFeesViewSource(fullSrc) {
+  const problems = [];
+  const src = chargebacksFeesViewStatement(fullSrc);
+
+  // LEAD 443.178 (202616000100, #26850) re-created this view from a pg_get_viewdef dump, which prints
+  // columns UNQUALIFIED (`factor_fee_cents`, `memo`) even though the FROM keeps the `fa` alias. With a
+  // single-relation FROM (accounting.factoring_advances fa, no JOIN) an unqualified column can only be
+  // fa's column, so it is the same real-column read. The unqualified form is accepted ONLY in that
+  // single-relation shape; once a JOIN appears the `fa.` qualifier is required again.
+  const singleRelation =
+    /FROM\s+accounting\.factoring_advances\s+fa\b/i.test(src) && !/\bJOIN\b/i.test(src);
+  const q = singleRelation ? "(?:fa\\.)?" : "fa\\.";
+
+  if (!new RegExp(`\\(?\\b${q}factor_fee_cents\\)?::numeric\\s*\\/\\s*\\(?100`).test(src)) {
     problems.push("factor_fee_amount no longer reads fa.factor_fee_cents (real column) — still dead or reverted");
   }
-  if (!/NULLIF\(fa\.memo, ''\)/.test(src)) {
+  if (!new RegExp(`NULLIF\\(${q}memo, ''(?:::text)?\\)`).test(src)) {
     problems.push("statement_reference no longer reads fa.memo directly — still dead or reverted");
   }
-  if (/to_jsonb\(fa\.\*\)->>'(factor_fee_amount|fee_amount|statement_reference|chargeback_amount)'/.test(src)) {
+  if (/to_jsonb\((?:fa\.)?\*\)->>'(factor_fee_amount|fee_amount|statement_reference|chargeback_amount)'/.test(src)) {
     problems.push("dead to_jsonb(fa.*)->>'factor_fee_amount'/'fee_amount'/'statement_reference'/'chargeback_amount' key lookup reintroduced");
   }
-  if (!/0::numeric AS chargeback_amount/.test(src)) {
+  if (!/\(?0\)?::numeric AS chargeback_amount/.test(src)) {
     problems.push("chargeback_amount no longer an honest 0::numeric literal (no backing column/table exists)");
   }
 
@@ -84,6 +103,26 @@ function selftest() {
       "COALESCE(NULLIF(to_jsonb(fa.*)->>'factor_fee_amount', '')::numeric, NULLIF(to_jsonb(fa.*)->>'fee_amount', '')::numeric, 0)::numeric AS factor_fee_amount,"
     ),
   ];
+  // 202616000100 shape: pg_get_viewdef unqualified columns over a single-relation FROM — must pass.
+  const goodUnqualified = `
+    CREATE OR REPLACE VIEW views.factoring_chargebacks_fees AS
+     SELECT id AS factoring_advance_id,
+        0::numeric AS chargeback_amount,
+        factor_fee_cents::numeric / 100::numeric AS factor_fee_amount,
+        COALESCE(NULLIF(memo, ''::text), display_id, id::text) AS statement_reference
+       FROM accounting.factoring_advances fa
+      WHERE fa.voided_at IS NULL;
+  `;
+  const unqualifiedProblems = checkChargebacksFeesViewSource(goodUnqualified);
+  if (unqualifiedProblems.length) {
+    console.error(`${LABEL} SELFTEST FAIL — single-relation unqualified fixture flagged: ${unqualifiedProblems.join("; ")}`);
+    process.exit(1);
+  }
+  // Same unqualified columns once a JOIN makes them ambiguous-in-intent — must fail.
+  mutations.push(goodUnqualified.replace("FROM accounting.factoring_advances fa", "FROM accounting.factoring_advances fa LEFT JOIN accounting.invoices i ON i.factoring_advance_id = fa.id"));
+  // A sibling view in the same file must not satisfy the chargebacks/fees checks.
+  mutations.push(`CREATE OR REPLACE VIEW views.other AS SELECT 0::numeric AS chargeback_amount, (fa.factor_fee_cents::numeric / 100) AS x, NULLIF(fa.memo, '') AS y FROM accounting.factoring_advances fa;
+CREATE OR REPLACE VIEW views.factoring_chargebacks_fees AS SELECT 0::numeric AS chargeback_amount, fa.id AS factoring_advance_id FROM accounting.factoring_advances fa;`);
   for (const [i, mutated] of mutations.entries()) {
     if (checkChargebacksFeesViewSource(mutated).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL — regression mutation ${i} escaped detection`);

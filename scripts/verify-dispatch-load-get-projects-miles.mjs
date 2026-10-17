@@ -34,19 +34,30 @@ function checkFe(srcLoads, srcDrawer) {
 
 function check(src) {
   const problems = [];
-  // Detail GET (:id) — trip_type pattern
-  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,800}?ml\.miles_shortest\s+AS\s+miles_shortest/.test(src)) {
+  // Detail GET (:id) — trip_type pattern. The miles must sit in the SAME select list as
+  // ml.trip_type: the region runs from `ml.trip_type AS trip_type` to that statement's
+  // `FROM views.dispatch_load_with_driver_status l`. This replaced a fixed 800-1100 char window,
+  // which went stale (not wrong) when 443.107 (6882b1ea31, #26620) inserted the trailer_source /
+  // assigned_trailer_unit_id / non_owned_trailer_number projections between trip_type and the
+  // miles block — the miles were still projected by the detail GET, just >1100 chars away.
+  const detailRegions = [];
+  for (const m of src.matchAll(/ml\.trip_type\s+AS\s+trip_type/g)) {
+    const end = src.indexOf("FROM views.dispatch_load_with_driver_status l", m.index);
+    if (end > m.index) detailRegions.push(src.slice(m.index, end));
+  }
+  const inDetail = (re) => detailRegions.some((region) => re.test(region));
+  if (!inDetail(/ml\.miles_shortest\s+AS\s+miles_shortest/)) {
     problems.push(
       `${TARGET}: GET detail must project ml.miles_shortest next to ml.trip_type (ml join path)`,
     );
   }
-  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,900}?ml\.miles_practical\s+AS\s+miles_practical/.test(src)) {
+  if (!inDetail(/ml\.miles_practical\s+AS\s+miles_practical/)) {
     problems.push(`${TARGET}: GET detail must project ml.miles_practical AS miles_practical`);
   }
-  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,1000}?ml\.loaded_miles\s+AS\s+loaded_miles/.test(src)) {
+  if (!inDetail(/ml\.loaded_miles\s+AS\s+loaded_miles/)) {
     problems.push(`${TARGET}: GET detail must project ml.loaded_miles AS loaded_miles`);
   }
-  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,1100}?ml\.miles_deadhead\s+AS\s+miles_deadhead/.test(src)) {
+  if (!inDetail(/ml\.miles_deadhead\s+AS\s+miles_deadhead/)) {
     problems.push(`${TARGET}: GET detail must project ml.miles_deadhead AS miles_deadhead`);
   }
   if (!/ml\.loaded_miles\s+AS\s+loaded_miles[\s\S]{0,120}?ml\.miles_deadhead\s+AS\s+miles_deadhead/.test(src)) {
@@ -95,6 +106,16 @@ function main() {
       const problems = check(broken);
       if (problems.length === 0) {
         console.error(`${LABEL}: --selftest FAIL — mutation not detected`);
+        process.exit(1);
+      }
+      // Detail-only mutation: strip the miles block from the trip_type select list only
+      // (the list GET keeps its miles) — the region check must still catch it.
+      const detailOnlyBroken = src.replace(
+        /(-- DISPATCH-MILES-GET: view has no mile cols — project from mdata\.loads via ml\.\s*)ml\.miles_shortest AS miles_shortest,\s*ml\.miles_practical AS miles_practical,\s*ml\.loaded_miles AS loaded_miles,\s*ml\.miles_deadhead AS miles_deadhead,/,
+        "$1",
+      );
+      if (detailOnlyBroken === src || check(detailOnlyBroken).filter((p) => p.includes("GET detail")).length !== 4) {
+        console.error(`${LABEL}: --selftest FAIL — detail-only miles mutation not detected`);
         process.exit(1);
       }
       const lifecycleBroken = src.replace(/\s+AND soft_deleted_at IS NULL/g, "");

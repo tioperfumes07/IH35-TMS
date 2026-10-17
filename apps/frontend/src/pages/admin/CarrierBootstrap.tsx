@@ -118,7 +118,7 @@ export function CarrierBootstrapPage() {
         <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs">
           <p className="font-medium text-green-900">Bootstrap complete</p>
           {lastResult.coa_refused ? (
-            <p className="text-slate-700" data-testid="carrier-bootstrap-coa-refused">
+            <p className="text-[#4B5563]" data-testid="carrier-bootstrap-coa-refused">
               Chart of accounts: not cloned ({lastResult.coa_refused.code}). {lastResult.coa_refused.reason}
             </p>
           ) : (

@@ -26,3 +26,5 @@ reopen as new work.
 
 Tip census bare bank_cat_no_expense reads **0**. Match/categorize
 suggestions stay suggest-only (Law B) — owner Chrome accept only.
+
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
