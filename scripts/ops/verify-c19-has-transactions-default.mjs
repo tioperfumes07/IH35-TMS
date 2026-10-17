@@ -24,8 +24,12 @@ if (!process.argv.includes("--selftest")) {
 // appendCompanyScopedQuery verbatim out of mdata.ts into the one-source catalog clients (mdata.ts only
 // re-exports them). Each catalog client now owns its own query builder, so EACH must forward the flag.
 const CLIENTS = ["apps/frontend/src/api/catalog-customers.ts", "apps/frontend/src/api/catalog-vendors.ts"];
-function auditClient(rel, src) {
+// #26976 (heavy CI peel 118) moved the shared params + query builder into api/mdata-list.ts, which both catalog clients
+// import — a client that imports it is audited together with that shared module.
+const SHARED = "apps/frontend/src/api/mdata-list.ts";
+function auditClient(rel, clientSrc, sharedSrc = read(SHARED)) {
   const out = [];
+  const src = /from "\.\/mdata-list"/.test(clientSrc) ? `${clientSrc}\n${sharedSrc}` : clientSrc;
   if (!src.includes("has_transactions?: boolean")) out.push(`${rel} missing has_transactions on CompanyScopedListParams`);
   if (!src.includes('query.set("has_transactions", "true")')) out.push(`${rel} must forward has_transactions query param`);
   return out;
@@ -34,9 +38,12 @@ for (const rel of CLIENTS) {
   const src = read(rel);
   const problems = auditClient(rel, src);
   if (problems.length) fail(problems.join("; "));
-  // Planted regression: a client that stops forwarding the flag must be rejected.
-  const planted = src.replace('query.set("has_transactions", "true")', "void 0");
-  if (planted === src || auditClient(rel, planted).length === 0) fail(`selftest: dropped has_transactions forward in ${rel} NOT detected`);
+  // Planted regression: a client (or the shared module it imports) that stops forwarding the flag must be rejected.
+  const shared = read(SHARED);
+  const plantedClient = src.replace('query.set("has_transactions", "true")', "void 0");
+  const plantedShared = shared.replace('query.set("has_transactions", "true")', "void 0");
+  const caught = plantedClient !== src ? auditClient(rel, plantedClient, shared).length > 0 : plantedShared !== shared && auditClient(rel, src, plantedShared).length > 0;
+  if (!caught) fail(`selftest: dropped has_transactions forward in ${rel} NOT detected`);
 }
 ok("C-19 API clients (customers + vendors catalogs) forward has_transactions");
 

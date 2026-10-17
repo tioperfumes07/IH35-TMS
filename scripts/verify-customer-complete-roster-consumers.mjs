@@ -11,6 +11,9 @@ const files = {
   // 443.182-A (52699c6c2f, #26871) moved listCustomers / listAllCustomers verbatim out of mdata.ts into the
   // one-source customer catalog; mdata.ts only re-exports them now. The scanner rule follows the code.
   api: "apps/frontend/src/api/catalog-customers.ts",
+  // #26976 (heavy CI peel 118) moved the shared CompanyScopedListParams + appendCompanyScopedQuery into one leaf module
+  // both catalog clients import; the range contract (offset param + its query forward) is read there.
+  listShared: "apps/frontend/src/api/mdata-list.ts",
   route: "apps/backend/src/mdata/customers.routes.ts",
   customers: "apps/frontend/src/pages/Customers.tsx",
   detail: "apps/frontend/src/pages/CustomerDetail.tsx",
@@ -28,7 +31,8 @@ export function audit(s) {
   const scannerEnd = scannerStart < 0 ? -1 : s.api.indexOf("\nexport ", scannerStart + 1);
   const scanner = scannerStart < 0 ? "" : s.api.slice(scannerStart, scannerEnd < 0 ? undefined : scannerEnd);
   for (const needle of ["offset?: number", 'query.set("offset", String(params.offset))']) {
-    if (!s.api.includes(needle)) failures.push(`customer list range contract missing ${needle}`);
+    const contract = /from "\.\/mdata-list"/.test(s.api) ? `${s.api}\n${s.listShared ?? ""}` : s.api;
+    if (!contract.includes(needle)) failures.push(`customer list range contract missing ${needle}`);
   }
   for (const needle of [
     "export async function listAllCustomers",
@@ -64,6 +68,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["scanner total", "api", "page.total !== expectedTotal", "false"],
     ["scanner offset", "api", "offset += page.customers.length", "offset += 5000"],
+    ["shared list params drop the offset forward", "listShared", 'query.set("offset", String(params.offset))', "void 0"],
     ["route tie-break", "route", "ORDER BY created_at DESC, id DESC", "ORDER BY created_at DESC"],
     ["active roster", "customers", "listAllCustomers({ operating_company_id: companyId, active_company_only: true })", "listCustomers({ operating_company_id: companyId, limit: 5000, active_company_only: true })"],
     ["detail picker", "detail", "listAllCustomers({ operating_company_id: operatingCompanyId! })", "listCustomers({ operating_company_id: operatingCompanyId!, limit: 5000 })"],
