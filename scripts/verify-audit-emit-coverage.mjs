@@ -35,6 +35,12 @@ const EMIT_MARKERS = [
   "bankingSpineEmit",
   "maintenanceSpineEmit",
   "events.log_event",
+  // 443.199: the audit spine's own primitives. appendCrudAudit (audit/crud-audit.ts) is a one-line wrapper over
+  // audit.append_event(); services that call the SQL function directly (system-actor crons / webhooks, e.g.
+  // cap-14 incident.service, geofence-address-link.service) or insert the canonical audit.audit_events row
+  // (telematics/load-stop-geofence-sync.service) DO emit, and were reported as "no emit" only by name.
+  "audit.append_event(",
+  "INSERT INTO audit.audit_events",
 ];
 
 function hasEmit(content) {
@@ -64,6 +70,20 @@ function walkDir(dir, exts, out = []) {
     }
   }
   return out;
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["appendCrudAudit counts", hasEmit("await appendCrudAudit(client, u, 'x', {})")],
+    ["audit.append_event SQL counts", hasEmit("await client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, NULL, $3)`)")],
+    ["direct audit.audit_events INSERT counts", hasEmit("INSERT INTO audit.audit_events (uuid, event_class) VALUES")],
+    ["a mutation with no audit does not count", !hasEmit("await client.query(`UPDATE mdata.loads SET x = 1`)") && !hasEmitImport("import { a } from './b.js'")],
+    ["reading audit.audit_events does not count", !hasEmit("SELECT * FROM audit.audit_events WHERE 1")],
+  ];
+  const bad = cases.filter(([, ok]) => !ok).map(([n]) => n);
+  if (bad.length) { console.error(`[${LABEL}] --selftest FAIL: ${bad.join("; ")}`); process.exit(1); }
+  console.log(`[${LABEL}] --selftest PASS ${cases.length}/${cases.length}`);
+  process.exit(0);
 }
 
 const srcDir = path.join(ROOT, "apps/backend/src");

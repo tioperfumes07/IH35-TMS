@@ -21,6 +21,7 @@ import {
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { writeFactoringSpineLinks } from "./factoring-spine-links.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -162,6 +163,10 @@ export async function proposeInterestAccrual(
       ]
     );
   }
+  await appendCrudAudit(client, input.actor_user_id, "factoring.interest_accrual.proposed", {
+    resource_type: "accounting.factoring_interest_accrual_runs", resource_id: runId, operating_company_id: input.operating_company_id,
+    run_kind: "period_close", period_end: preview.period_end, line_count: preview.lines.length, total_cents: preview.total_cents,
+  });
   return { run_id: runId, line_count: preview.lines.length, total_cents: preview.total_cents };
 }
 
@@ -195,6 +200,10 @@ export async function decideInterestAccrual(
         WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
       [input.run_id, input.operating_company_id, input.actor_user_id, input.note ?? null]
     );
+    await appendCrudAudit(client, input.actor_user_id, "factoring.interest_accrual.rejected", {
+      resource_type: "accounting.factoring_interest_accrual_runs", resource_id: input.run_id, operating_company_id: input.operating_company_id,
+      note: input.note ?? null,
+    });
     return { run_id: input.run_id, state: "rejected", journal_entry_id: null };
   }
 
@@ -237,6 +246,10 @@ export async function decideInterestAccrual(
       WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     [input.run_id, input.operating_company_id, input.actor_user_id, input.note ?? null, je.id]
   );
+  await appendCrudAudit(client, input.actor_user_id, "factoring.interest_accrual.posted", {
+    resource_type: "accounting.factoring_interest_accrual_runs", resource_id: input.run_id, operating_company_id: input.operating_company_id,
+    journal_entry_id: je.id, total_cents: total, period_end: run.period_end, note: input.note ?? null,
+  });
   return { run_id: input.run_id, state: "posted", journal_entry_id: je.id };
 }
 
@@ -360,5 +373,9 @@ export async function proposeEventInterestAccrual(
       pos.net_cents, pos.days_charged, pos.cumulative_interest_cents, pos.accrued_cents, pos.due_cents,
     ]
   );
+  await appendCrudAudit(client, input.actor_user_id, "factoring.interest_accrual.proposed", {
+    resource_type: "accounting.factoring_interest_accrual_runs", resource_id: runId, operating_company_id: input.operating_company_id,
+    run_kind: "event", purchase_line_id: input.purchase_line_id, event_date: input.event_date, accrual_cents: pos.due_cents,
+  });
   return { run_id: runId, accrual_cents: pos.due_cents, pending: true };
 }

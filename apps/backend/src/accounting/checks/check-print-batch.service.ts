@@ -12,6 +12,7 @@
 // must never be wrong.
 import type { PoolClient } from "pg";
 import { withLuciaBypass } from "../../auth/db.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { CheckNumberPlanError, planCheckNumbers, type CheckNumberGap } from "./check-number-plan.js";
 
 export class CheckPrintBatchError extends Error {
@@ -262,6 +263,12 @@ export async function assignPrintBatch(
       [preview.next_after, actorUserId, input.bank_account_id, operating_company_id, input.check_type]
     );
 
+    // Audit spine: check numbers assigned to a print batch (skipped numbers carry their recorded reason).
+    await appendCrudAudit(client, actorUserId, "banking.check_print_batch.assigned", {
+      resource_type: "banking.check_print_batches", resource_id: printBatchId, operating_company_id,
+      bank_account_id: input.bank_account_id, check_count: assignments.length,
+      check_numbers: assignments.map((a) => a.check_number), skipped: preview.gaps, gap_reason: gapReason || null,
+    });
     return { print_batch_id: printBatchId, assignments, skipped: preview.gaps };
   });
 }
@@ -306,6 +313,10 @@ export async function confirmPrintBatch(
         `UPDATE banking.check_print_batches SET status = 'confirmed', confirmed_at = now(), confirmed_by_user_id = $2::uuid WHERE id = $1::uuid`,
         [printBatchId, actorUserId]
       );
+      await appendCrudAudit(client, actorUserId, "banking.check_print_batch.confirmed", {
+        resource_type: "banking.check_print_batches", resource_id: printBatchId, operating_company_id,
+        check_numbers: itemsRes.rows.map((i) => i.check_number),
+      });
       return { status: "confirmed", spoiled_check_ids: [] };
     }
 
@@ -331,6 +342,10 @@ export async function confirmPrintBatch(
       spoiledCheckIds.push(item.check_id);
     }
     await client.query(`UPDATE banking.check_print_batches SET status = 'reprinting' WHERE id = $1::uuid`, [printBatchId]);
+    await appendCrudAudit(client, actorUserId, "banking.check_print_batch.spoiled_for_reprint", {
+      resource_type: "banking.check_print_batches", resource_id: printBatchId, operating_company_id,
+      reprint_from_number: String(reprintFrom), spoiled_check_ids: spoiledCheckIds,
+    });
     return { status: "reprinting", spoiled_check_ids: spoiledCheckIds };
   });
 }

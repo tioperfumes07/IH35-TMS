@@ -7,6 +7,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 const createConfirmationSchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -53,6 +54,12 @@ export async function registerScheduleConfirmationRoutes(app: FastifyInstance) {
         [body.operating_company_id, body.driver_id ?? null, body.load_id ?? null, body.unit_id ?? null, body.policy_id ?? null,
          user.uuid, body.reason ?? null, body.confirmation_type, body.rule_id]
       );
+      // Audit spine: an operator's insurance-schedule confirmation (an override of a coverage rule) is one event.
+      await appendCrudAudit(client, user.uuid, "insurance.schedule_confirmation.created", {
+        resource_type: "insurance.schedule_confirmations", resource_id: res.rows[0]?.id ?? null, operating_company_id: body.operating_company_id,
+        confirmation_type: body.confirmation_type, rule_id: body.rule_id, driver_id: body.driver_id ?? null, load_id: body.load_id ?? null,
+        unit_id: body.unit_id ?? null, policy_id: body.policy_id ?? null, reason: body.reason ?? null,
+      });
       return res.rows[0];
     });
 

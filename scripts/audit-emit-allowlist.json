@@ -668,6 +668,138 @@
     {
       "file": "apps/backend/src/integrations/relay-payments/relay-deposit-review.routes.ts",
       "reason": "Relay deposit review queue (Part B) — display + owner-editable company-card config over the same staging rows; the classification UPDATE is a non-financial status snapshot (posted_to_gl untouched), the company-card upsert is config. No GL/financial commit. Same disposition as relay-deposit-classifier.service.ts."
+    },
+    {
+      "file": "apps/backend/src/accounting/company-settlement-close.service.ts",
+      "reason": "Company-settlement close helper — runs only inside the driver pay-run close / tour close transaction; the event is driver_finance.settlement.payrun_closed (settlement-payrun-close.service.ts) and the tour close / tour-readout appendCrudAudit, in the same transaction (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/accounting/related-party-loan-posting/advance-note.service.ts",
+      "reason": "Related-party advance note (PDF document mint) — called only from createRelatedPartyLoanEntry, whose accounting.related_party_loan.created appendCrudAudit (create-entry.service.ts) records the entry in the same transaction (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/accounting/related-party-loan-posting/facility.service.ts",
+      "reason": "Related-party loan facility find-or-create + display-id allocator — called only from createRelatedPartyLoanEntry, whose accounting.related_party_loan.created event carries facility_id and display_id, same transaction (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/banking/bank-tieout.service.ts",
+      "reason": "Bank tie-out snapshot — the INSERT into banking.bank_account_tieouts IS the computed control record (book vs bank per account per day), written by the tie-out cron / route; it changes no business document (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/banking/drift-alerts.service.ts",
+      "reason": "Reconciliation drift detectors — the alert rows ARE detector output (resolved, never deleted); the operator finalize action that runs them is audited in banking/p7-wave2.routes.ts (banking.reconciliation_final…) (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/dispatch/analytics/late-arrival.service.ts",
+      "reason": "Late-arrival analytics — dispatch.late_arrival_aggregates is a derived aggregate recomputed from stop events; no business document changes (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/dispatch/google-reference-miles.service.ts",
+      "reason": "Google reference miles — mdata.load_stop_legs is a cached distance lookup (expires; expireStaleGoogleReferenceMiles), never pay; the load booking that triggers it is audited by book-load.service.ts (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/dispatch/mileage/mileage.service.ts",
+      "reason": "Point-to-point mileage cache — catalogs.point_mileage stores a resolved distance lookup for reuse; derived reference data, no business document (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/driver-finance/feed-gate/feed-gate.service.ts",
+      "reason": "Settlement feed intake gate — feed_intakes / feed_intake_checks are the gate's own check record; the settlement create / approval that runs it is audited at the call site (settlement-creator.service.ts, settlements/approval.service.ts appendCrudAudit) (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/driver-finance/negative-settlement-liability.service.ts",
+      "reason": "Negative-settlement liability posting helper — called from settlements.routes.ts / pre-settlement.routes.ts, each of which appendCrudAudit-s the settlement action in the same transaction (verified at the call site) (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/driver-finance/settlement-ap-chain.service.ts",
+      "reason": "Settlement A/P chain (bill apply / GL run anchor) — runs only inside postSettlementApChainInClientTx / the pay line, whose callers emit driver_finance.settlement.payrun_closed (settlement-payrun-close.service.ts) and the pay-line appendCrudAudit in the same transaction (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/driver-finance/settlement-payrun-subledger-unwind.service.ts",
+      "reason": "Pay-run subledger unwind — called only from settlement-payrun-reverse.service.ts and settlement-bill-payment-posting.service.ts, each of which appendCrudAudit-s the reversal in the same transaction (verified at the call site) (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/factoring/misdirected-payment-alert.service.ts",
+      "reason": "Misdirected-payment detector — factoring_misdirected_payment_alerts rows ARE detector output raised during bank match; no money moves (alert only) (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/fleet/roster-integrity.service.ts",
+      "reason": "Fleet roster integrity detector — fleet.roster_findings rows ARE detector output (opened / resolved), never a business document (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/fuel/fuel-card-assignments.service.ts",
+      "reason": "Fuel card assignment engine — every mutating route in fuel/fuel-card-assignments.routes.ts appendCrudAudit-s (fuel.card_assignment.*) in the same transaction (verified at each call site) (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/fuel/fuel-fraud-recovery.service.ts",
+      "reason": "Fuel fraud recovery helper — called from fuel-card-overage.service.ts and integrations/fuel/fraud-detector/routes.ts, both appendCrudAudit at the call site (fuel.fraud_alert.*) (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/fuel/fuel-time-derivation.service.ts",
+      "reason": "Fuel time derivation — fuel_transaction_derivations is a derived record of how a fill time was inferred; the fuel transaction itself is audited by its writer (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/documents/samsara-documents.service.ts",
+      "reason": "Samsara documents ingest — mirrors driver-submitted Samsara documents into docs.files / file_links (integration sync, same class as samsara vehicle / driver import) (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/fuel-purchase-push.service.ts",
+      "reason": "Samsara fuel-purchase push engine — writes only integrations.integration_sync_log (its own push ledger); the cron caller fuel-purchase-push.cron.ts audit.append_event-s each run (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/geofences/address-import.service.ts",
+      "reason": "Samsara address import — on-demand integration import (dry-run unless approved, scripts/ops/import-samsara-addresses.ts) into mirror tables / locations; the link flow that reuses projectSamsaraAddress audits in geofence-address-link.service.ts (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/geofences/fence-push.service.ts",
+      "reason": "Samsara fence push — integration sync: writes its push ledger (integrations.integration_sync_log) and stamps the Samsara address id on our geofence; no business document (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/geofences/geofence-odometer-capture.service.ts",
+      "reason": "Geofence odometer capture — telemetry evidence row (telematics.geofence_odometer_captures) taken at a fence crossing; derived from Samsara stats, never edited by a user (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/geofences/real-driven-miles.service.ts",
+      "reason": "Real driven miles — materializes telematics.load_odometer_segments from odometer evidence; the tour close that materializes them appendCrudAudit-s in dispatch/driver-pwa/tour-close.service.ts (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/messaging/driver-message-delivery.service.ts",
+      "reason": "Samsara driver-message delivery — writes only its delivery ledger (integrations.integration_sync_log); the chat message itself lives in chat.messages (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/messaging/driver-message-inbound.service.ts",
+      "reason": "Samsara inbound driver messages — opens the chat thread / participant for a message the driver sent from the truck (integration ingest into the ONE chat system), no business document (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/legal/contract-document.service.ts",
+      "reason": "Legal contract document — audits via appendContractAuditLog -> legal.contract_audit_log (append-only), same pattern as legal/signed-links.service.ts and legal/contracts.service.ts (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/maintenance/pm-auto-engine.service.ts",
+      "reason": "PM auto engine — run log / schedule advance; the run route (pm-auto-engine.routes.ts, maintenance.pm_auto_engine.*) and the WO-complete advance (work-orders.routes.ts emitMaintenanceSpineEvent) audit at the call site (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/reconciliation/ledger-integrity-detectors.service.ts",
+      "reason": "Ledger integrity detectors — _system.reconciliation_findings rows ARE detector output (opened / resolved); detectors never change ledger data (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/safety/samsara-dvir-ingest.service.ts",
+      "reason": "Samsara DVIR ingest — mirrors DVIR submissions; the poll cron samsara-dvir-poll.cron.ts audit.append_event-s each run (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/telematics/odometer-manual-upsert.service.ts",
+      "reason": "Manual odometer upsert — the route telematics/odometer-manual.routes.ts appendCrudAudit-s telematics.odometer_reading.* at the call site, same transaction (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/telematics/preservation.service.ts",
+      "reason": "Telematics preservation — copies evidence rows into the preserve.* legal-hold schema (append-only copies of existing records), the copy itself is the preservation record (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/telematics/samsara-fuel-reports.service.ts",
+      "reason": "Samsara fuel reports — mirrors Samsara fuel/energy report rows into integrations.samsara_fuel_reports (integration sync) (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/users/table-preferences.routes.ts",
+      "reason": "Per-user table preferences (column order / widths / sort) in identity.user_preferences — UI convenience, not a business or financial event; same disposition as the identity/driver preference routes (443.199 heavy post-step review 2026-10-17)"
     }
   ]
 }

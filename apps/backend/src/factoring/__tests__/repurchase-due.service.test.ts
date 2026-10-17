@@ -52,7 +52,9 @@ describe("repurchase-due — day 95 asks, never recourses", () => {
     );
     const res = await decideRepurchaseDue(c, { operating_company_id: OPCO, event_id: EVT, decision: "confirm_repurchase", actor_user_id: OWNER });
     expect(res).toEqual({ id: EVT, state: "repurchase_confirmed" });
-    expect(c.query).toHaveBeenCalledTimes(2);
+    // read FOR UPDATE + the decision UPDATE + the audit spine event (audit.append_event) — nothing else
+    expect(c.query).toHaveBeenCalledTimes(3);
+    expect(String(c.query.mock.calls[2][0])).toContain("audit.append_event");
     expect(c.query.mock.calls.some((x) => WRITES_MONEY.test(String(x[0])))).toBe(false);
   });
 

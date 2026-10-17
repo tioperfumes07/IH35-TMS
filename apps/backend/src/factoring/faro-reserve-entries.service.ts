@@ -37,6 +37,7 @@
 import { createHash } from "node:crypto";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeFactoringSpineLinks } from "./factoring-spine-links.js";
 import { interestPositionThrough, proposeEventInterestAccrual } from "./interest-accrual.service.js";
 import { unrelievedPurchasedGrossCents } from "./purchased-gross.service.js";
@@ -374,6 +375,12 @@ export async function commitFaroReserveImport(
     );
     statementUpdated = (u.rowCount ?? 0) === 1;
   }
+  // Audit spine: one event per committed import (who imported which Faro report into which register, what it wrote).
+  await appendCrudAudit(client, input.actor_user_id, "factoring.faro_reserve_import.committed", {
+    resource_type: "accounting.faro_reserve_entries", operating_company_id: input.operating_company_id,
+    bank_account_id: input.bank_account_id, register: preview.register, batch_ref: batchRef, imported,
+    rejected: preview.rejected.length, statement_balance_cents: statementUpdated ? preview.ending_balance_cents : null,
+  });
   return {
     register: preview.register, imported, already_imported: preview.rows.length - preview.new_count, rejected: preview.rejected, batch_ref: batchRef,
     statement_balance_cents: statementUpdated ? preview.ending_balance_cents : null, statement_updated: statementUpdated,
@@ -411,6 +418,12 @@ async function stampPosted(client: DbClient, oci: string, entry: EntryRow, jeId:
       WHERE id = $2::uuid AND operating_company_id = $3::uuid AND matched_journal_entry_id IS NULL`,
     [jeId, entry.bank_transaction_id, oci, kind]
   );
+  // Audit spine: every Faro reserve line posted (matched to an existing JE or a JE this poster created) is one event.
+  await appendCrudAudit(client, actor, "factoring.faro_reserve_entry.posted", {
+    resource_type: "accounting.faro_reserve_entries", resource_id: entry.id, operating_company_id: oci, journal_entry_id: jeId,
+    kind, register: entry.register, entry_kind: entry.entry_kind, amount_cents: entry.amount_cents,
+    faro_invoice_number: entry.faro_invoice_number, bank_transaction_id: entry.bank_transaction_id,
+  });
 }
 
 /** True once Faro released the invoice's escrow (a posted escrow -> cash row): the invoice is closed at Faro. */

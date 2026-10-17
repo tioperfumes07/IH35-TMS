@@ -9,6 +9,7 @@
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { writeDocumentSpineLinks } from "./factoring-spine-links.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -135,5 +136,9 @@ export async function postCashReserveReclass(
     `UPDATE accounting.faro_cash_reserve_reclasses SET journal_entry_id = $2::uuid, reversal_journal_entry_id = $3::uuid WHERE id = $1::uuid`,
     [id, je.id, reversal.id]
   );
+  await appendCrudAudit(client, input.actor_user_id, "factoring.cash_reserve_reclass.posted", {
+    resource_type: "accounting.faro_cash_reserve_reclasses", resource_id: id, operating_company_id: oci, period_end: input.period_end,
+    deficit_cents: amount, journal_entry_id: je.id, reversal_journal_entry_id: reversal.id,
+  });
   return { reclass_id: id, deficit_cents: amount, journal_entry_id: je.id, reversal_journal_entry_id: reversal.id };
 }

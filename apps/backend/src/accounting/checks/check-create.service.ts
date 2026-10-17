@@ -19,6 +19,7 @@ import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expense-gl-posting-flag.js";
 import { advanceCheckStockAfterUse } from "./check-stock.service.js";
 import { resolveLineLoadExemption } from "../expense-line-load-exemption.js";
 import { writeExpenseDocumentInClientTx } from "../expense-writer.service.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 
 export type CreateCheckLineInput = {
   line_kind: "category" | "item";
@@ -362,6 +363,11 @@ export async function createCheck(
     const expenseId = written.expenseId;
     const journalEntryId = (written.post as { posted: true; journalEntryId: string }).journalEntryId;
     const postingStatus: "posted" | "unposted" = "posted";
+    // Audit spine: the check (an accounting.expenses row + its registry number + its posted JE) is one event.
+    await appendCrudAudit(client, actorUserId, "accounting.check.created", {
+      resource_type: "accounting.expenses", resource_id: expenseId, operating_company_id, bank_account_id: input.bank_account_id,
+      check_number: checkNumber, payee_kind: input.payee_kind, total_amount_cents: totalCents, journal_entry_id: journalEntryId,
+    });
 
     return {
       id: expenseId,

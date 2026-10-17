@@ -277,7 +277,15 @@ export async function projectRouteStopEvent(client: RouteDbClient, input: {
       RETURNING ls.id::text`,
     [input.operatingCompanyId, loadId, stopId, arrival, occurredAt, departure]
   );
-  return update.rows[0] ? { success: true } : { success: false, error: "route_stop_not_found_in_company" };
+  if (!update.rows[0]) return { success: false, error: "route_stop_not_found_in_company" };
+  // Audit spine: a Samsara route webhook stamped a stop's arrival / departure (system actor — no user).
+  await client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, NULL, $3)`, [
+    "dispatch.load_stop.samsara_route_stamped",
+    JSON.stringify({ resource_type: "mdata.load_stops", resource_id: stopId, load_id: loadId, operating_company_id: input.operatingCompanyId,
+      event: arrival ? "arrival" : "departure", occurred_at: occurredAt }),
+    "SAMSARA-ROUTES-WEBHOOK",
+  ]);
+  return { success: true };
 }
 
 

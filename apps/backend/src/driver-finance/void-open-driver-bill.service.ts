@@ -1,4 +1,5 @@
 import { restampDriverBillUnitAndTrailer } from "./driver-bill-unit-trailer.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 /**
  * void-open-driver-bill.service.ts — SETL-TIEOUT-01 (owner order 2026-09-05, deadline 02:30Z).
  *
@@ -211,6 +212,12 @@ export async function correctOpenDriverBillMileage(
     );
     newLineIds.push(lineRes.rows[0]!.id);
   }
+  // Audit spine: a void-and-re-mint of an open driver bill (driver pay changed) is one event naming both bills.
+  await appendCrudAudit(client, input.actorUserId, "driver_finance.driver_bill.corrected", {
+    resource_type: "driver_finance.driver_bills", resource_id: newBillId, voided_bill_id: bill.id, operating_company_id: input.operatingCompanyId,
+    load_id: input.loadId, load_number: input.loadNumber, reason: input.reason, new_gross_amount_cents: grossAmountCents,
+    voided_settlement_line_ids: voidedLineIds, new_settlement_line_ids: newLineIds,
+  });
 
   return {
     voided_bill_id: bill.id,
