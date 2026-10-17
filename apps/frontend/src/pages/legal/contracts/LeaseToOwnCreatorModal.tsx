@@ -362,6 +362,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
               <ListErrorState title="Couldn't load eligible fleet" status={0} message={(fleetQuery.error as Error)?.message} onRetry={() => void fleetQuery.refetch()} />
             ) : (
               <ParityTable<FleetPickerRow>
+                title="Eligible trucks — select for this lease"
                 columns={fleetColumns}
                 rows={fleetRows}
                 rowKey={(row) => row.id}
@@ -378,6 +379,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         {/* Step 3 — Per-truck terms */}
         {stepIdx === 2 && (
           <ParityTable<PerTruckTermsRow>
+            title="Per-truck lease terms"
             columns={perTruckTermsColumns}
             rows={perTruckTermsRows}
             rowKey={(row) => row.unit.id}

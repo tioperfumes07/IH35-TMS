@@ -207,6 +207,7 @@ export function PendingSettlementDeductionsPanel() {
         ) : null}
         {!query.isLoading && !query.isError && orderedRows.length > 0 ? (
           <ParityTable
+            title="Settlement deductions — pending"
             columns={deductionColumns}
             rows={orderedRows}
             rowKey={(row) => row.id}

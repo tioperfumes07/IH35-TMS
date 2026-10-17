@@ -175,6 +175,7 @@ export function QBImportTab({
 
       {parsed.length ? (
         <ParityTable
+          title="QuickBooks rows to import — preview"
           columns={columns}
           rows={parsedRows}
           rowKey={(row) => `${row.date}-${row.idx}`}

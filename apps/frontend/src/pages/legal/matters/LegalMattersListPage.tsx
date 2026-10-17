@@ -243,6 +243,7 @@ export function LegalMattersListPage() {
           </span>
         </div>
         <ParityTable
+          title="Legal matters"
           rows={rows}
           columns={columns}
           rowKey={(row) => String(row.id ?? "")}

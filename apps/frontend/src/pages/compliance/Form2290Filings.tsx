@@ -260,6 +260,7 @@ export function Form2290Filings({ showModuleHeader = true }: Form2290FilingsProp
         />
       ) : (
         <ParityTable<Filing>
+          title="Form 2290 filings"
           columns={columns}
           rows={filings}
           rowKey={(filing) => String(filing.id)}

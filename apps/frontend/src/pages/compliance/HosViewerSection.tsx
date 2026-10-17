@@ -15,6 +15,7 @@ import {
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 // SAFETY-1: the HOS date filter defaults to the current duty day in the CARRIER timezone
 // (America/Chicago), never the UTC calendar date (which rolls to "tomorrow" after ~19:00 CT and
@@ -232,6 +233,14 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
 
             {/* Duty-segment ELD log (the day's timeline) */}
             <ParityTable<HosSegment>
+              title="ELD log — duty segments this day"
+              titleInfo={
+                <InfoPopover label="About this ELD log">
+                  Timeline and totals are rebuilt from the ELD duty-status events. The remaining clocks above use the FMCSA rule
+                  numbers; they switch to Samsara's certified clocks once that connection is live. The full 15-column FMCSA
+                  daily-log grid will be on the HOS tracker.
+                </InfoPopover>
+              }
               columns={segmentColumns}
               rows={daily.segments}
               rowKey={(segment) => `${segment.start_utc}-${segment.end_utc}-${segment.duty_status}`}
@@ -255,11 +264,6 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
               ))}
             </div>
 
-            <p className="text-xs text-[#6B7280]">
-              Timeline + totals are reconstructed from the ELD duty-status events (recompute). The remaining clocks above are the
-              FMCSA-rule numbers and flip to Samsara's certified computed clocks once the verbatim reader (PR&nbsp;C2) ships. The full
-              15-column FMCSA daily-log grid is HOS Tracker Block&nbsp;05.
-            </p>
           </div>
         )}
       </div>

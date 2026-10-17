@@ -340,6 +340,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
         />
       ) : (
         <ParityTable
+          title="Fleet HOS — live units"
           rows={liveRows}
           columns={FLEET_HOS_COLUMNS}
           rowKey={(row) => row.unit_id}
@@ -431,6 +432,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           {showOffline ? (
             <div className="mt-2">
               <ParityTable
+                title="Fleet HOS — offline or stale units"
                 rows={offlineRows}
                 columns={OFFLINE_FLEET_HOS_COLUMNS}
                 rowKey={(row) => row.unit_id}

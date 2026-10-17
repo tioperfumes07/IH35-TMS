@@ -178,6 +178,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
         ) : (
           // COMP-F3538: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
           <ParityTable<HosEventRow>
+            title="HOS events — this driver"
             columns={columns}
             rows={events}
             rowKey={(ev) => `${ev.started_at}-${ev.duty_status}-${ev.ended_at ?? "open"}`}

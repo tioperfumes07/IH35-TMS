@@ -174,6 +174,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         />
       ) : (
         <ParityTable
+        title="Lawsuits"
         rows={rows}
         columns={columns}
         rowKey={(lawsuit) => lawsuit.id}

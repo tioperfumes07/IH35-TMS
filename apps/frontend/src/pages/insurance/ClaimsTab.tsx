@@ -503,6 +503,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         />
       ) : (
         <ParityTable
+        title="Insurance claims"
         rows={rows}
         columns={columns}
         rowKey={(claim) => claim.id}

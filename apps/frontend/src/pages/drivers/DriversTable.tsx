@@ -191,6 +191,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
   return (
     <>
     <ParityTable<EnrichedDriverRow>
+      title="Drivers — qualification file status"
       rows={filteredRows}
       rowKey={(row) => row.driverId}
       storageKey="drivers-table"

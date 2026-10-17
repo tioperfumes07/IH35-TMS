@@ -151,6 +151,7 @@ export function LegalDeadlineAlertsPage() {
 
           {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table): sortable headers, gear, export. */}
           <ParityTable<LegalDeadlineAlert>
+            title="Legal deadline alerts"
             rows={filtered}
             rowKey={(a) => a.alert_id}
             storageKey="legal-deadline-alerts"

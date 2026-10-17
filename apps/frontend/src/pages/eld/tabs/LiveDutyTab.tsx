@@ -130,6 +130,7 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
       ) : null}
 
       <ParityTable<HosRosterDriver>
+        title="Drivers — live duty status"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.driver_id}

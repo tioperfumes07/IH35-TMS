@@ -387,6 +387,7 @@ export function TypeCatalogAdmin() {
         />
       ) : (
         <ParityTable<InsuranceTypeCatalogEntry>
+          title="Insurance types"
           columns={columns}
           rows={orderedRows}
           rowKey={(row) => row.id}

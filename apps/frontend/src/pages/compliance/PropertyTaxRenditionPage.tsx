@@ -303,6 +303,7 @@ function RenditionListView({
 
       {/* Renditions table */}
       <ParityTable<Rendition>
+        title="Property tax renditions"
         columns={renditionColumns}
         rows={renditions}
         rowKey={(r) => r.id}
@@ -579,6 +580,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
 
       {/* Basis lines — COMP-F3548: ParityTable owns Search+Range+gear on taxable assets. */}
       <ParityTable<RenditionLine>
+        title="Taxable assets on this rendition"
         columns={[
           {
             key: "asset_description",

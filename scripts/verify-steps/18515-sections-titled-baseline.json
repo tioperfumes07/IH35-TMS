@@ -1,27 +1,7 @@
 {
   "note": "LEAD 443.174 — shrink-only. Fix the screen; never raise a count.",
   "files": {
-    "apps/frontend/src/pages/DriverDetail.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/Drivers.tsx": {
-      "untitled": 3,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
     "apps/frontend/src/pages/admin/DataImportPage.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/cash-advances/components/CashAdvancesTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
@@ -30,46 +10,6 @@
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
-    },
-    "apps/frontend/src/pages/compliance/FilingsComplianceDueSection.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/compliance/Form2290Filings.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/compliance/HosHistorySection.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/compliance/HosTrackerSection.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/compliance/HosViewerSection.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/compliance/RequiredDocumentsSection.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
     },
     "apps/frontend/src/pages/dispatch/components/book-load-v4/MilesInvertAckDialog.tsx": {
       "untitled": 0,
@@ -96,150 +36,15 @@
       "same_rows_toggle": 0,
       "inline_notice": 1
     },
-    "apps/frontend/src/pages/drivers/DriverDuplicatesPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/drivers/DriverImportModal.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/drivers/DriversTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/drivers/SettlementDisputeList.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/eld/tabs/LiveDutyTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/eld/tabs/UnidentifiedTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/eld/tabs/ViolationsTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
     "apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
     },
-    "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/form425c/tabs/MergeExportTab.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/form425c/tabs/QBImportTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
     "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
-    },
-    "apps/frontend/src/pages/insurance/ClaimsTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/insurance/LawsuitsTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/insurance/PoliciesList.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/legal/LegalAttorneyReviewPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/legal/LegalPoliciesPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/legal/alerts/LegalDeadlineAlertsPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/legal/contracts/LeaseToOwnCreatorModal.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/legal/templates/LegalTemplatesListPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
     },
     "apps/frontend/src/pages/lists/LocationsListPage.tsx": {
       "untitled": 1,
@@ -708,21 +513,6 @@
     },
     "apps/frontend/src/pages/safety/tabs/IntegrityReportsTab.tsx": {
       "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/samsara-vendor-mapping/HosDriverMapPreviewPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx": {
-      "untitled": 3,
       "same_rows_toggle": 0,
       "inline_notice": 0
     },
