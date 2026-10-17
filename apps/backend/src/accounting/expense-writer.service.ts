@@ -13,7 +13,7 @@ import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
 import { generateExpenseNumber, insertExpenseLoadLink } from "../expense-attribution/expense-number.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
-import { postSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js";
+import { postSourceTransaction, postSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { nextExpenseDisplayId } from "./display-id.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
@@ -241,6 +241,114 @@ export async function writeExpenseDocumentInClientTx(client: any, doc: ExpenseDo
   await writeExpenseAudits(client, audits);
   const post = doc.post ? await postExpenseDocumentInClientTx(client, { operatingCompanyId, expenseId, ...doc.post }) : null;
   return { expenseId, expenseNumber, post };
+}
+
+/** A load-spine number (12225, 12225-1, …) for a load — the same reservation reserveExpenseNumber makes, typed for callers
+ *  that also need its seq / load number (re-attribution, a receipt repoint, the Creator's owed-bill spine). */
+export async function reserveLoadSpineExpenseNumber(
+  client: any,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<{ number: string; seq: number; loadNumber: string }> {
+  return generateExpenseNumber(client, loadId, operatingCompanyId);
+}
+
+/** Lines added to an existing document (a line-less expense gets its one "Uncategorized" line before a manual post). */
+export async function writeExpenseLinesInClientTx(client: any, expenseId: string, rows: ExpenseRow[]): Promise<void> {
+  for (const row of rows) await insertExpenseLine(client, { expense_id: expenseId, ...row });
+}
+
+/** The one expense_attribution.expense_load_links writer outside a whole-document write (backfill, receipt repoint). */
+export async function linkExpenseToLoadInClientTx(client: any, link: Parameters<typeof insertExpenseLoadLink>[1]): Promise<void> {
+  await insertExpenseLoadLink(client, link);
+}
+
+/** Re-attribute an existing expense to another load: its new spine number + its load link (updated, or written once). */
+export async function relinkExpenseToLoadInClientTx(
+  client: any,
+  input: {
+    operatingCompanyId: string;
+    expenseId: string;
+    loadId: string;
+    reason: string | null;
+    userId: string | null;
+    existingLinkId: string | null;
+    priorNumber: string | null;
+  }
+): Promise<{ number: string; seq: number; loadNumber: string }> {
+  const numbered = await generateExpenseNumber(client, input.loadId, input.operatingCompanyId);
+  if (input.existingLinkId) {
+    await client.query(
+      `
+        UPDATE expense_attribution.expense_load_links
+        SET load_id = $2,
+            load_number = $3,
+            expense_seq = $4,
+            expense_number = $5,
+            attribution_method = 'manual_override',
+            attribution_confidence = 'high',
+            attribution_reason = $6,
+            attributed_at = now(),
+            attributed_by_user_id = $7,
+            overridden_from_expense_number = COALESCE(overridden_from_expense_number, $8)
+        WHERE id = $1
+      `,
+      [input.existingLinkId, input.loadId, numbered.loadNumber, numbered.seq, numbered.number, input.reason, input.userId, input.priorNumber]
+    );
+  } else {
+    await insertExpenseLoadLink(client, {
+      operatingCompanyId: input.operatingCompanyId,
+      expenseId: input.expenseId,
+      loadId: input.loadId,
+      loadNumber: numbered.loadNumber,
+      seq: numbered.seq,
+      expenseNumber: numbered.number,
+      method: "manual_override",
+      confidence: "high",
+      reason: input.reason,
+      userId: input.userId,
+      overriddenFromExpenseNumber: input.priorNumber,
+    });
+  }
+  return numbered;
+}
+
+/**
+ * Post an expense through the one poster on its OWN connection and transaction (postSourceTransaction — never from inside
+ * an open caller transaction: Record Expense after its create commits, the manual "Post to GL", the tour-close batch and
+ * the held-expense retry), then stamp it posted and audit it in one company-scoped step. A PostingEngineError from the
+ * post propagates to the caller unchanged (each caller keeps its own refusal handling).
+ */
+export async function postExpenseDocumentOwnTx(input: {
+  operatingCompanyId: string;
+  expenseId: string;
+  /** The actor the poster records. */
+  actor: { userId: string };
+  /** The user the stamp's company scope and audit run as (the route's user id as it always passed it). */
+  scopeUserId: any;
+  /** The tour-close / retry batches also clear posting_hold_reason. */
+  clearHoldReason?: boolean;
+  audit: { action: string; payload: (journalEntryId: string) => Record<string, unknown> };
+}): Promise<{ journalEntryId: string }> {
+  const posting = await postSourceTransaction(
+    { operating_company_id: input.operatingCompanyId, source_transaction_type: "expense", source_transaction_id: input.expenseId },
+    input.actor
+  );
+  const journalEntryId = posting.journal_entry_id;
+  await withCompanyScope(input.scopeUserId, input.operatingCompanyId, async (client: any) => {
+    await client.query(
+      input.clearHoldReason
+        ? `UPDATE accounting.expenses
+              SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, posting_hold_reason=NULL, updated_at=now()
+            WHERE id=$1::uuid AND operating_company_id=$3::uuid`
+        : `UPDATE accounting.expenses
+              SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
+            WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
+      [input.expenseId, journalEntryId, input.operatingCompanyId]
+    );
+    await appendCrudAudit(client, input.scopeUserId, input.audit.action, input.audit.payload(journalEntryId), "info");
+  });
+  return { journalEntryId };
 }
 
 /** OWNER LAW 2026-10-01: an expense created in the app always posts; a poster failure refuses the create (transaction rolls back). */

@@ -9,11 +9,10 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
 import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
-import { generateExpenseNumber, insertExpenseLoadLink } from "../expense-attribution/expense-number.js";
 import { ExpenseLoadLinkBackfillError, linkExpensesToLoads, refuseNonOwnerExpenseLoadLink } from "./expense-load-link-backfill.service.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
-import { postSourceTransaction, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx, PostingEngineError, ensureOpenPeriod } from "./posting-engine.service.js";
+import { postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx, PostingEngineError, ensureOpenPeriod } from "./posting-engine.service.js";
 import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.js";
 
@@ -23,7 +22,6 @@ import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { listExpenseDuplicateGroups } from "./expense-duplicate.service.js";
-import { nextExpenseDisplayId } from "./display-id.js";
 import { parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { buildListSearchClause, expenseListSearchFields } from "../lib/list-search/build-list-search.js";
 import {
@@ -32,7 +30,7 @@ import {
 } from "./reinstate-document.service.js";
 
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
-import { columnExists, createExpenseBodySchema, createExpenseInClientTx, emitOutbox, ExpensePostRefused, FIXED_COST_CATEGORY_CODES, insertExpenseLine, insertUnattributedAlert, relationExists, type CreateExpenseBody } from "./expense-writer.service.js";
+import { columnExists, createExpenseBodySchema, createExpenseInClientTx, emitOutbox, ExpensePostRefused, FIXED_COST_CATEGORY_CODES, insertUnattributedAlert, postExpenseDocumentOwnTx, relinkExpenseToLoadInClientTx, reserveExpenseNumber, writeExpenseLinesInClientTx, relationExists, type CreateExpenseBody } from "./expense-writer.service.js";
 export { createExpenseInClientTx, type CreateExpenseBody } from "./expense-writer.service.js";
 export { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 
@@ -466,7 +464,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           `,
           values: [parsed.data.operating_company_id],
         },
-        () => nextExpenseDisplayId(client, parsed.data.operating_company_id)
+        async () => (await reserveExpenseNumber(client, parsed.data.operating_company_id, {})).number
       );
       if (!parsed.data.check) return base;
       const check = parseOperatorDocumentNumber(parsed.data.check);
@@ -737,26 +735,16 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         );
         if (flagOn) {
           try {
-            const posting = await postSourceTransaction(
-              { operating_company_id: body.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
-              { userId: String(user.uuid) }
-            );
-            journal_entry_id = posting.journal_entry_id;
-            await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
-              await client.query(
-                // ROOT CAUSE FIX (Lead finding, 2026-09-26): this UPDATE flipped posting_status to
-                // 'posted' but never touched the SEPARATE `status` column (draft/posted/void) --
-                // leaving a genuinely GL-posted expense's own header reading status='draft' forever
-                // (15 live USMCA rows found this way, no code path ever advances it). A document
-                // whose GL just posted IS posted; status must move in lockstep with posting_status
-                // here, not stay behind for some later, nonexistent step.
-                `UPDATE accounting.expenses
-                    SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
-                  WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
-                [expenseId, journal_entry_id, body.operating_company_id]
-              );
-              await appendCrudAudit(client, user.uuid, "expense.posted", { expense_id: expenseId, journal_entry_id, source: "record_expense_create" }, "info");
+            const posted = await postExpenseDocumentOwnTx({
+              // 443.182 C — the one expense engine: own transaction (after the create committed), status + posting_status
+              // stamped together (ROOT CAUSE FIX 2026-09-26: status moves in lockstep), audited.
+              operatingCompanyId: body.operating_company_id,
+              expenseId,
+              actor: { userId: String(user.uuid) },
+              scopeUserId: user.uuid,
+              audit: { action: "expense.posted", payload: (jeId) => ({ expense_id: expenseId, journal_entry_id: jeId, source: "record_expense_create" }) },
             });
+            journal_entry_id = posted.journalEntryId;
             posting_status = "posted";
           } catch (err) {
             if (!(err instanceof PostingEngineError)) throw err;
@@ -821,50 +809,16 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         const existingLink = (linkRes.rows[0] as { id: string; expense_number: string | null } | undefined) ?? null;
         const priorNumber = existingLink?.expense_number ?? null;
 
-        const numbered = await generateExpenseNumber(client, body.new_load_id, body.operating_company_id);
-
-        if (existingLink?.id) {
-          await client.query(
-            `
-              UPDATE expense_attribution.expense_load_links
-              SET load_id = $2,
-                  load_number = $3,
-                  expense_seq = $4,
-                  expense_number = $5,
-                  attribution_method = 'manual_override',
-                  attribution_confidence = 'high',
-                  attribution_reason = $6,
-                  attributed_at = now(),
-                  attributed_by_user_id = $7,
-                  overridden_from_expense_number = COALESCE(overridden_from_expense_number, $8)
-              WHERE id = $1
-            `,
-            [
-              existingLink.id,
-              body.new_load_id,
-              numbered.loadNumber,
-              numbered.seq,
-              numbered.number,
-              body.reason,
-              user.uuid,
-              priorNumber,
-            ]
-          );
-        } else {
-          await insertExpenseLoadLink(client, {
-            operatingCompanyId: body.operating_company_id,
-            expenseId: params.data.expenseId,
-            loadId: body.new_load_id,
-            loadNumber: numbered.loadNumber,
-            seq: numbered.seq,
-            expenseNumber: numbered.number,
-            method: "manual_override",
-            confidence: "high",
-            reason: body.reason,
-            userId: user.uuid,
-            overriddenFromExpenseNumber: priorNumber,
-          });
-        }
+        // 443.182 C — the one expense engine numbers the expense on its new load and writes / updates its load link.
+        const numbered = await relinkExpenseToLoadInClientTx(client, {
+          operatingCompanyId: body.operating_company_id,
+          expenseId: params.data.expenseId,
+          loadId: body.new_load_id,
+          reason: body.reason,
+          userId: user.uuid,
+          existingLinkId: existingLink?.id ?? null,
+          priorNumber,
+        });
 
         if (await columnExists(client, "accounting", "expenses", "expense_number")) {
           await client.query(`UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1`, [
@@ -1025,8 +979,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       if (!exp.payment_account_uuid && !exp.vendor_uuid) return { kind: "orphan" as const };
       if (exp.line_count === 0) {
         const cents = Number(exp.total_amount_cents);
-        // 443.182 C — persisted through the one expense writer (expense-writer.service.ts insertExpenseLine).
-        await insertExpenseLine(client, { expense_id: expenseId, line_sequence: 1, amount_cents: cents, amount: cents / 100, description: "Uncategorized" });
+        // 443.182 C — persisted through the one expense engine (expense-writer.service.ts writeExpenseLinesInClientTx).
+        await writeExpenseLinesInClientTx(client, expenseId, [{ line_sequence: 1, amount_cents: cents, amount: cents / 100, description: "Uncategorized" }]);
       }
       return { kind: "ok" as const };
     });
@@ -1038,13 +992,20 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     if (pre.kind === "orphan") return reply.code(409).send({ error: "expense_orphan_no_payment_account_or_vendor" });
 
     // Step B: post the balanced JE (own tx, idempotent — re-post returns the existing batch).
+    // Steps B + C — the one expense engine posts the balanced JE on its own transaction (idempotent — re-post returns the
+    // existing batch), then flips the header to posted (status moves with posting_status — ROOT CAUSE FIX 2026-09-26) and
+    // audits it. Phase-1.5 gate passes (total = sum after synthesis).
     let journalEntryId: string;
     try {
-      const posting = await postSourceTransaction(
-        { operating_company_id: oci, source_transaction_type: "expense", source_transaction_id: expenseId },
-        { userId: String(user.uuid) }
-      );
-      journalEntryId = posting.journal_entry_id;
+      journalEntryId = (
+        await postExpenseDocumentOwnTx({
+          operatingCompanyId: oci,
+          expenseId,
+          actor: { userId: String(user.uuid) },
+          scopeUserId: user.uuid,
+          audit: { action: "expense.posted", payload: (jeId) => ({ expense_id: expenseId, journal_entry_id: jeId }) },
+        })
+      ).journalEntryId;
     } catch (err) {
       if (err instanceof PostingEngineError) {
         if (err.code === "ACCOUNT_MAPPING_MISSING") return reply.code(409).send({ error: "expense_account_mapping_missing", detail: err.message });
@@ -1054,18 +1015,6 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       throw err;
     }
 
-    // Step C: flip the header to posted — Phase-1.5 gate passes (total = sum after synthesis).
-    // ROOT CAUSE FIX (Lead finding, 2026-09-26): status must move with posting_status here too --
-    // see the sister UPDATE above (record_expense_create's inline auto-post) for the full note.
-    await withCompanyScope(user.uuid, oci, async (client) => {
-      await client.query(
-        `UPDATE accounting.expenses
-         SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
-         WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
-        [expenseId, journalEntryId, oci]
-      );
-      await appendCrudAudit(client, user.uuid, "expense.posted", { expense_id: expenseId, journal_entry_id: journalEntryId }, "info");
-    });
     return reply.code(200).send({ expense_id: expenseId, posting_status: "posted", journal_entry_id: journalEntryId });
   });
 
