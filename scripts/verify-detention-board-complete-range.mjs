@@ -44,7 +44,8 @@ function failures(service, page) {
   ]) {
     if (!page.includes(`kind="${kind}"`) || !page.includes(testProp)) found.push(`${kind} EntityLink missing on the board page`);
   }
-  if (!/getDetentionBoard\(companyId,\s*\{\s*\.\.\.range,\s*\.\.\.sort\s*\}\)/.test(page))
+  // c711dc0d2e (COL-01-ALERT-BOARDS-REMAINING-SORT, #19264) renamed the page's sort object to serverSort — same contract.
+  if (!/getDetentionBoard\(companyId,\s*\{\s*\.\.\.range,\s*\.\.\.(?:server[Ss]ort|sort)\s*\}\)/.test(page))
     found.push("board page must consume getDetentionBoard with the canonical server range/sort contract");
   if (!page.includes('label: "Detention status"') || !page.includes("operationalStateLabel(event.operational_state)")) found.push("operational detention column missing");
   if (!page.includes('label: "Customer balance"') || !page.includes("billingStateLabel(event.billing_state)")) found.push("customer receivable column missing");
@@ -69,6 +70,7 @@ if (process.argv.includes("--selftest")) {
     [service.replaceAll('operational_state: row.status === "accruing" ? "active" : "complete"', 'operational_state: "active"'), page],
     [service.replace('billing_state: row.status === "closed" ? "unbilled_receivable" : "estimated"', 'billing_state: "estimated"'), page],
     [service, page.replace('label: "Customer balance"', 'label: "Status"')],
+    [service, page.replace("getDetentionBoard(companyId, { ...range, ...serverSort })", "getDetentionBoard(companyId, { ...serverSort })")],
     [service.replace("AND de.status IN ('accruing', 'closed')", "AND de.status IN ('accruing', 'closed')\n          AND l.status = 'in_transit'"), page],
   ];
   const missed = mutations.filter(([s, p]) => failures(s, p).length === 0);

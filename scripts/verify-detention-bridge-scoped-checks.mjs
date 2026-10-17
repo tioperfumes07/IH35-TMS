@@ -75,7 +75,9 @@ export function audit(src) {
   } else {
     const afterUpdate = body.slice(body.indexOf(eventsUpdateMatch[0]) + eventsUpdateMatch[0].length);
     const auditIdx = afterUpdate.indexOf("await appendCrudAudit(");
-    const checkIdx = afterUpdate.search(/if \(!updated\.rows\[0\]\) \{\s*return \{ ok: false as const, error: "event_billed_stamp_failed" as const \};/);
+    // dd17a57c80 (ROUND 337) made the lost-write branch THROW (rolls the already-raised load rate back) instead of
+    // returning ok:false — stronger, same rule: a lost event stamp must fail the bridge before audit/success.
+    const checkIdx = afterUpdate.search(/if \(!updated\.rows\[0\]\) \{[\s\S]{0,400}?(?:return \{ ok: false as const, error: "event_billed_stamp_failed" as const \};|throw new Error\("detention_event_billed_stamp_failed"\);)/);
     if (checkIdx === -1) {
       failures.push(
         `${FILES.service}: the detention_events UPDATE result must be checked (updated.rows[0]) before ` +
@@ -147,18 +149,7 @@ if (process.argv.includes("--selftest")) {
 
   // Mutation 3: remove the zero-row check on the detention_events UPDATE (the exact pre-fix shape).
   const droppedEventCheck = {
-    service: good.service.replace(
-      `    // DSP-MONEY-F7214 — the event status UPDATE above was previously unchecked: a lost write
-    // (e.g. the event flipped to 'billed' by a concurrent caller between the initial SELECT and
-    // this UPDATE) would fall through to appendCrudAudit + \`{ok:true, event:undefined}\` anyway,
-    // asserting the bridge succeeded when the canonical event row was never actually stamped.
-    if (!updated.rows[0]) {
-      return { ok: false as const, error: "event_billed_stamp_failed" as const };
-    }
-
-`,
-      "",
-    ),
+    service: good.service.replace(/    if \(!updated\.rows\[0\]\) \{\n[\s\S]*?throw new Error\("detention_event_billed_stamp_failed"\);\n    \}\n/, ""),
   };
   if (droppedEventCheck.service === good.service) {
     console.error(`${LABEL} SELFTEST FAIL — dropped-event-check pattern did not match source, re-anchor`);

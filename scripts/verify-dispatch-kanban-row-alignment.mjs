@@ -73,7 +73,10 @@ export function audit(src) {
   check(
     "UnitRow.unitKey uses assigned_unit_id or load id for real loads",
     /unitKey:\s*(unitId\s*\?\?\s*`load:\$\{load\.id\}`|`load:\$\{load\.id\}`)/.test(src)
-    || /const key\s*=\s*unitId\s*\?\?\s*`load:\$\{load\.id\}`/.test(src),
+    || /const key\s*=\s*unitId\s*\?\?\s*`load:\$\{load\.id\}`/.test(src)
+    // 2098b6968a (Lead #23311, measured live 2026-09-30): a unit's SECOND leg keeps its own row, keyed unit + load id,
+    // aligned under its sibling — still unit-derived; unassigned loads stay load:<id>.
+    || (/const key\s*=\s*unitId\s*\?\s*`unit:\$\{unitId\}:load:\$\{load\.id\}`\s*:\s*`load:\$\{load\.id\}`/.test(src) && /unitKey:\s*key\b/.test(src)),
     "real load rows must use assigned_unit_id (or load:<id> for unassigned) as the row key",
   );
   check(
@@ -96,7 +99,10 @@ export function audit(src) {
   );
   check(
     "KanbanSwimLaneColumn maps over allUnits (not a column-local array)",
-    /allUnits\.map\(/.test(src),
+    /allUnits\.map\(/.test(src)
+    // 67203a8fec (ROUND 20.3 swim-lane bloat, owner-live 2026-09-12): a column renders the CONTIGUOUS slice of the
+    // board-wide rows between its first and last own card — interior placeholders kept, so alignment still holds.
+    || (/const visibleUnits\s*=\s*firstOwnIndex === -1 \? \[\] : allUnits\.slice\(firstOwnIndex, lastOwnIndex \+ 1\)/.test(src) && /visibleUnits\.map\(/.test(src)),
   );
   check(
     "Empty placeholder rendered when unit.columnKey !== column.key",
@@ -199,6 +205,11 @@ export const SYNTHETIC_OK = [
   '<div data-testid="kanban-swim-lane-board"><KanbanSwimLaneColumn column={c} allUnits={allUnits} /></div>',
 ].join("\n");
 
+const SLICE_OK = SYNTHETIC_OK.replace(
+  "  return allUnits.map((unit) => unit.columnKey !== column.key",
+  "  const visibleUnits = firstOwnIndex === -1 ? [] : allUnits.slice(firstOwnIndex, lastOwnIndex + 1);\n  return visibleUnits.map((unit) => unit.columnKey !== column.key",
+);
+
 if (process.argv.includes("--selftest")) {
   const ok = SYNTHETIC_OK;
   const cases = [
@@ -208,6 +219,10 @@ if (process.argv.includes("--selftest")) {
     ["dropping the empty-row placeholder fails", audit(ok.split("data-kanban-swim-lane-empty").join("x")).failures.length > 0],
     ["losing the per-unit row key fails", audit(ok.split("data-kanban-swim-lane-row-key={unit.unitKey}").join("x")).failures.length > 0],
     ["per-column sort instead of board sort fails", audit(ok.split("setBoardSort(").join("setColumnSort(")).failures.length > 0],
+    // 443.187 — the current shapes pass, and a column-local filter in place of the board-wide slice still fails.
+    ["the second-leg unit+load key passes", audit(ok.replace("const key = unitId ?? `load:${load.id}`;", "const key = unitId ? `unit:${unitId}:load:${load.id}` : `load:${load.id}`; rows.push({ unitKey: key });")).failures.length === 0],
+    ["the trimmed board-wide slice passes", audit(SLICE_OK).failures.length === 0],
+    ["a column-local filter instead of the board-wide slice fails", audit(SLICE_OK.replace("allUnits.slice(firstOwnIndex, lastOwnIndex + 1)", "allUnits.filter((u) => u.columnKey === column.key)")).failures.length > 0],
   ];
   for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, p]) => !p).length;

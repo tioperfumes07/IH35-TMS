@@ -56,6 +56,23 @@ function isRealTime(expr) {
   return false;
 }
 
+/**
+ * 443.187 (CC-2, 2026-10-17) — EVENT-TIME writers. These sites stamp the time the departure HAPPENED (a telematics stop
+ * event / geofence exit / the settlement document's own date); now() there would FABRICATE evidence. Each is pinned to its
+ * exact SQL text + the evidence that the value cannot be null — any edit to the line makes it a finding again, and the
+ * list may only shrink. Written after this guard: 443.51 settlement-creator-deliver, geofence detector + retro sync.
+ */
+export const EVENT_TIME_WRITERS = [
+  { file: "apps/backend/src/driver-finance/settlement-creator-deliver.ts", expr: "$3::timestamptz,",
+    why: "departed = pick.ended_at ?? pick.started_at; telematics.unit_stop_events.started_at is NOT NULL (202615030000)" },
+  { file: "apps/backend/src/driver-finance/settlement-creator-deliver.ts", expr: "($2::date)::timestamp AT TIME ZONE $3,",
+    why: "$2 = the stop's settlement-document day; `if (!day) continue` leaves the stop unstamped before this UPDATE" },
+  { file: "apps/backend/src/telematics/geofence-detector.service.ts", expr: "$4::timestamptz,",
+    why: "$4 = input.occurred_at — a required string on the geofence transition input (the exit's own time)" },
+  { file: "apps/backend/src/telematics/load-stop-geofence-sync.service.ts", expr: "COALESCE(actual_departure_at, $3::timestamptz),",
+    why: "$3 = the recorded exit (NULL only while the truck has not exited); status stays 'arrived' unless a departure exists — never departed without evidence" },
+];
+
 export function auditSource(src, rel) {
   const problems = [];
   for (const line of src.split("\n")) {
@@ -68,7 +85,8 @@ export function auditSource(src, rel) {
     ASSIGN_RE.lastIndex = 0;
     let m;
     while ((m = ASSIGN_RE.exec(line)) !== null) {
-      if (!isRealTime(m[1])) {
+      const pinned = EVENT_TIME_WRITERS.some((w) => w.file === rel && m[1].trim() === w.expr);
+      if (!isRealTime(m[1]) && !pinned) {
         problems.push(
           `${rel}: writes actual_departure_at = ${m[1].trim()} — a client-supplied value can arrive ` +
             `null, leaving a delivered load with NO delivery evidence. Use now() or ` +
@@ -99,6 +117,17 @@ if (process.argv.includes("--selftest")) {
     ["COALESCE WITHOUT now() still can be null", `SET actual_departure_at = COALESCE($2, $3),`, 1],
     ["a comment describing the pattern is not a write", ` * SET actual_departure_at = $2 is the bug`, 0],
   ];
+  // A pinned event-time writer passes ONLY in its own file with its exact text; elsewhere, or edited, it is a finding.
+  const pin = EVENT_TIME_WRITERS[2];
+  if (auditSource(`SET actual_departure_at = ${pin.expr}`, pin.file).length !== 0) {
+    console.error("SELFTEST FAIL: a pinned event-time writer was flagged"); process.exit(1);
+  }
+  if (auditSource(`SET actual_departure_at = ${pin.expr}`, "apps/backend/src/x.ts").length !== 1) {
+    console.error("SELFTEST FAIL: a pinned expression in ANOTHER file was not flagged"); process.exit(1);
+  }
+  if (auditSource(`SET actual_departure_at = $5::timestamptz,`, pin.file).length !== 1) {
+    console.error("SELFTEST FAIL: an edited pinned line was not flagged"); process.exit(1);
+  }
   let failed = 0;
   for (const [name, src, want] of cases) {
     const got = auditSource(src, "<mem>").length;
@@ -158,7 +187,7 @@ if (problems.length) {
 }
 
 console.log(
-  `${LABEL} OK — ${writeSites} site(s) stamp actual_departure_at, all with a real clock value; ` +
+  `${LABEL} OK — ${writeSites} site(s) stamp actual_departure_at, each a real clock value or a pinned event-time writer (${EVENT_TIME_WRITERS.length}); ` +
     `stamper COALESCE fallback intact.`,
 );
 process.exit(0);
