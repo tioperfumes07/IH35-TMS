@@ -3,7 +3,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { writeBillDocumentOnClient } from "../accounting/bills.service.js";
+import { postBillDocumentInClientTx, writeBillDocumentOnClient } from "../accounting/bills.service.js";
+import { isBillGlPostingEnabled } from "../accounting/bill-gl.service.js";
+import { logger } from "../observability/structured-logger.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -188,6 +190,24 @@ export async function persistInsuranceDispersalBills(input: {
             allocation.allocated_amount_cents,
           ]
         );
+      }
+
+      // Heavy CI peel (SWEEP-C6, step 1503) — a dispersal bill is an A/P bill like every other: it posts through the one bill
+      // poster, flag-gated by the SAME BILL_GL_POSTING_ENABLED check, on this same transaction — exactly as
+      // policy-create-atomic.service.ts does for the wizard's bills. Before, the bills were written and never posted (the
+      // file's old C6 exemption covered the synthetic bank lines K-10 545f4bd6cb removed, never the bills). Best-effort like
+      // the wizard: a post failure does not abort the other installments, and it never vanishes silently — logged.
+      try {
+        if (await isBillGlPostingEnabled(input.operatingCompanyId, input.userId)) {
+          await postBillDocumentInClientTx(client, { operating_company_id: input.operatingCompanyId, bill_id: createdBillId }, { userId: input.userId });
+        }
+      } catch (err) {
+        logger.warn("insurance_dispersal_bill_gl_post_failed", {
+          err: err instanceof Error ? err.message : String(err),
+          company_id: input.operatingCompanyId,
+          bill_id: createdBillId,
+          policy_id: input.policyId,
+        });
       }
 
       created.push({
