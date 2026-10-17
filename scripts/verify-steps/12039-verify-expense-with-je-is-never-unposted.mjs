@@ -23,7 +23,8 @@ function selftest() {
   if (!/CHECK \(journal_entry_id IS NULL OR posting_status <> 'unposted'\) NOT VALID/.test(mig)) problems.push("migration must add the exact CHECK, NOT VALID");
   if (!/VALIDATE CONSTRAINT expenses_journal_entry_implies_not_unposted/.test(mig) || !/RAISE NOTICE/.test(mig)) problems.push("VALIDATE must be conditional (NOTICE, never an aborting RAISE on data)");
   const w = read("apps/backend/src/fuel/fuel-expense-document.service.ts");
-  if (!/CASE WHEN \$10::uuid IS NULL THEN 'unposted' ELSE 'posted' END/.test(w)) problems.push("createExpenseFromFuelTransaction must write posting_status from the adopted journal entry");
+  // 443.182 C — the fuel document is a row on the one expense writer: posting_status follows the adopted JE in JS.
+  if (!/CASE WHEN \$10::uuid IS NULL THEN 'unposted' ELSE 'posted' END/.test(w) && !/journal_entry_id: adoptedJeId,[\s\S]{0,2000}posting_status: adoptedJeId \? "posted" : "unposted",/.test(w)) problems.push("createExpenseFromFuelTransaction must write posting_status from the adopted journal entry");
   const BAD_ACTOR = "00000000-0000-0000-0000-000000000001";
   const walk = (dir) => readdirSync(dir).flatMap((n) => {
     const p = `${dir}/${n}`;

@@ -1,6 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 import { adoptRelayFillExpenseDocument } from "./fuel-expense-document.service.js";
 
+
+/** 443.182 C — rows go through the one expense writer's INSERT; read a value by column name, not by position. */
+function col(w: { sql: string; values: unknown[] }, name: string): unknown {
+  const m = /\(([^)]*)\)\s*VALUES\s*\(([\s\S]*)\)\s*(?:RETURNING[\s\S]*)?$/.exec(w.sql.trim());
+  if (!m) throw new Error(`not an INSERT: ${w.sql.slice(0, 80)}`);
+  const cols = m[1]!.split(",").map((c) => c.trim());
+  const vals = m[2]!.split(",").map((v) => v.trim());
+  const i = cols.indexOf(name);
+  if (i < 0) throw new Error(`column ${name} not written`);
+  const v = vals[i]!;
+  return /^\$\d+$/.test(v) ? w.values[Number(v.slice(1)) - 1] : v;
+}
+
 // Lead 443.41 A: a Relay fill gets ONE expense document that adopts the SAME journal entry — lines = the entry's own
 // debit legs, payment account = its credit leg (1295), vendor Relay — and nothing posts.
 
@@ -48,12 +61,12 @@ describe("adoptRelayFillExpenseDocument (443.41 A)", () => {
     const out = await adoptRelayFillExpenseDocument(client as never, { operating_company_id: CO, relay_fill_id: "fill-1", journal_entry_id: "je-1" });
     expect(out).toMatchObject({ outcome: "created", expense_id: "exp-1", journal_entry_id: "je-1", amount_cents: 19903 });
     const header = writes.find((w) => /INSERT INTO accounting\.expenses/.test(w.sql))!;
-    expect(header.values[1]).toBe("vendor-relay");
-    expect(header.values[3]).toBe(19903);
-    expect(header.values[8]).toBe("je-1");
-    expect(header.values[9]).toBe("acct-1295");
+    expect(col(header, "vendor_uuid")).toBe("vendor-relay");
+    expect(col(header, "total_amount_cents")).toBe(19903);
+    expect(col(header, "journal_entry_id")).toBe("je-1");
+    expect(col(header, "payment_account_uuid")).toBe("acct-1295");
     const lines = writes.filter((w) => /INSERT INTO accounting\.expense_lines/.test(w.sql));
-    expect(lines.map((l) => [l.values[8], l.values[4]])).toEqual([["acct-5000", 13098], ["acct-5010", 6605], ["acct-5005", 200]]);
+    expect(lines.map((l) => [col(l, "expense_account_uuid"), col(l, "amount_cents")])).toEqual([["acct-5000", 13098], ["acct-5010", 6605], ["acct-5005", 200]]);
     expect(writes.some((w) => /journal_entr(y|ies)_post|INSERT INTO accounting\.journal/.test(w.sql))).toBe(false);
   });
 });

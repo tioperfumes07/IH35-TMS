@@ -35,7 +35,8 @@ const LABEL = "verify-expense-number-never-null";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 const CHECKED_FILES = [
-  { path: "apps/backend/src/cash-advances/lumper-cash-advance-split.ts", needle: /expense_number\)\s*\n\s*VALUES/ },
+  // 443.182 C — the lumper expense is persisted through the one expense writer; its header row names expense_number.
+  { path: "apps/backend/src/cash-advances/lumper-cash-advance-split.ts", needle: /insertExpenseHeader\(client, \{[\s\S]{0,600}expense_number: numbered\.number,/ },
   { path: "apps/backend/src/accounting/recurring.worker.ts", needle: /nextExpenseDisplayId\(client, oc,/ },
   { path: "apps/backend/src/maintenance/two-section-service.ts", needle: /UPDATE accounting\.expenses SET expense_number = \$2 WHERE id = \$1 AND expense_number IS NULL/ },
 ];

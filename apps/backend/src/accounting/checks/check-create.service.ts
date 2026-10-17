@@ -18,6 +18,7 @@ import { isEnabled } from "../../lib/feature-flags/service.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expense-gl-posting-flag.js";
 import { advanceCheckStockAfterUse } from "./check-stock.service.js";
 import { resolveLineLoadExemption } from "../expense-line-load-exemption.js";
+import { insertExpenseHeader, insertExpenseLine } from "../expense-writer.service.js";
 
 export type CreateCheckLineInput = {
   line_kind: "category" | "item";
@@ -187,55 +188,44 @@ export async function createCheck(
     // wins over the payee's freshly-resolved one; omitted/null means save the resolved address as-is.
     const remitToAddress = input.remit_to_address ?? payee.remit_to_address ?? null;
 
-    const expenseRes: { rows: Array<{ id: string }> } = await client.query(
-      `INSERT INTO accounting.expenses (
-         operating_company_id, transaction_date, payment_account_uuid, total_amount_cents, memo,
-         vendor_uuid, driver_uuid, payee_customer_uuid, payee_kind, payment_type, check_number,
-         print_status, print_on_check_name, remit_to_address, tags,
-         unit_id, trailer_id, load_id, linked_work_order_uuid, insurance_claim_id, legal_matter_id,
-         class_id, settlement_no, location_id, recover_from_driver, status, posting_status,
-         created_by_user_id, updated_by_user_id, is_sample_data
-       ) VALUES (
-         $1::uuid, $2::date, $3::uuid, $4, $5,
-         $6::uuid, $7::uuid, $8::uuid, $9, 'check', $10,
-         $11, $12, $13::jsonb, $14::text[],
-         $15::uuid, $16::uuid, $17::uuid, $18::uuid, $19::uuid, $20::uuid,
-         $21::uuid, $22, $23::uuid, $24, 'draft', 'unposted',
-         $25::uuid, $25::uuid, $26
-       ) RETURNING id::text`,
-      [
-        operating_company_id,
-        input.check_date,
-        // payment_account_uuid is a catalogs.accounts (GL) id, not a banking.bank_accounts id --
-        // confirmed live in posting-engine.service.ts's buildExpenseLines. The bank account's OWN
-        // ledger_account_id (resolved above) is what belongs here.
-        bankAccount.ledger_account_id,
-        totalCents,
-        input.memo ?? `Check${checkNumber ? ` #${checkNumber}` : ""} · ${payee.print_on_check_name}`,
-        input.payee_kind === "vendor" ? input.payee_id : null,
-        input.payee_kind === "driver" ? input.payee_id : null,
-        input.payee_kind === "customer" ? input.payee_id : null,
-        input.payee_kind,
-        checkNumber,
-        checkNumber ? "not_set" : "need_to_print",
-        payee.print_on_check_name,
-        JSON.stringify(remitToAddress),
-        input.tags ?? [],
-        input.unit_id ?? null,
-        input.trailer_id ?? null,
-        input.load_id ?? null,
-        input.linked_work_order_uuid ?? null,
-        input.insurance_claim_id ?? null,
-        input.legal_matter_id ?? null,
-        input.class_id ?? null,
-        (input.settlement_no ?? "").trim() || null,
-        input.location_id ?? null,
-        input.recover_from_driver ?? false,
-        actorUserId,
-        input.is_sample_data === true,
-      ]
-    );
-    const expenseId = expenseRes.rows[0].id;
+    // 443.182 C — persisted through the one expense writer (expense-writer.service.ts insertExpenseHeader); the check keeps
+    // its own policy: born draft / unposted, posted below through the expense poster when the flag is on.
+    const expenseId = await insertExpenseHeader(client, {
+      operating_company_id,
+      transaction_date: input.check_date,
+      // payment_account_uuid is a catalogs.accounts (GL) id, not a banking.bank_accounts id --
+      // confirmed live in posting-engine.service.ts's buildExpenseLines. The bank account's OWN
+      // ledger_account_id (resolved above) is what belongs here.
+      payment_account_uuid: bankAccount.ledger_account_id,
+      total_amount_cents: totalCents,
+      memo: input.memo ?? `Check${checkNumber ? ` #${checkNumber}` : ""} · ${payee.print_on_check_name}`,
+      vendor_uuid: input.payee_kind === "vendor" ? input.payee_id : null,
+      driver_uuid: input.payee_kind === "driver" ? input.payee_id : null,
+      payee_customer_uuid: input.payee_kind === "customer" ? input.payee_id : null,
+      payee_kind: input.payee_kind,
+      payment_type: "check",
+      check_number: checkNumber,
+      print_status: checkNumber ? "not_set" : "need_to_print",
+      print_on_check_name: payee.print_on_check_name,
+      remit_to_address: JSON.stringify(remitToAddress),
+      tags: input.tags ?? [],
+      unit_id: input.unit_id ?? null,
+      trailer_id: input.trailer_id ?? null,
+      load_id: input.load_id ?? null,
+      linked_work_order_uuid: input.linked_work_order_uuid ?? null,
+      insurance_claim_id: input.insurance_claim_id ?? null,
+      legal_matter_id: input.legal_matter_id ?? null,
+      class_id: input.class_id ?? null,
+      settlement_no: (input.settlement_no ?? "").trim() || null,
+      location_id: input.location_id ?? null,
+      recover_from_driver: input.recover_from_driver ?? false,
+      status: "draft",
+      posting_status: "unposted",
+      created_by_user_id: actorUserId,
+      updated_by_user_id: actorUserId,
+      is_sample_data: input.is_sample_data === true,
+    });
+    if (!expenseId) throw new Error("check_expense_insert_failed");
 
     // R-172 step 6 -- re-key any files the operator attached during create (Option B, same mechanism
     // bills/expenses already use) onto the real expense id, inside this same transaction.
@@ -297,50 +287,35 @@ export async function createCheck(
         accountLabel: lineAccountLabel,
         context: checkNumber ? `check #${checkNumber}` : "check (print later)",
       });
-      await client.query(
-        `INSERT INTO accounting.expense_lines (
-           expense_id, line_sequence, amount, amount_cents, description, expense_account_uuid,
-           expense_category_uuid, item_id, billable_customer_uuid, load_id, operating_company_id,
-           driver_id, unit_id, trailer_id, linked_work_order_uuid, quantity, rate_cents, unit_of_measure,
-           load_exemption_reason
-         ) VALUES ($1::uuid, $2, $3, $4, $5, $6::uuid, $7::uuid, $8::uuid, $9::uuid, $10::uuid, $11::uuid,
-                   $12::uuid, $13::uuid, $14::uuid, $15::uuid, $16, $17, $18, $19)`,
-        [
-          expenseId,
-          seq++,
-          line.amount_cents / 100,
-          line.amount_cents,
-          line.description ?? payee.print_on_check_name,
-          resolved.account_id,
-          expenseCategoryUuid,
-          line.line_kind === "item" ? line.item_id : categoryItemId,
-          line.billable_customer_uuid ?? null,
-          lineLoadId,
-          operating_company_id,
-          // A per-line value wins; omitted/null falls back to the check header's own dimension --
-          // e.g. a single-truck repair check needs no per-line override at all.
-          line.driver_id ?? input.driver_id ?? null,
-          line.unit_id ?? input.unit_id ?? null,
-          line.trailer_id ?? input.trailer_id ?? null,
-          line.linked_work_order_uuid ?? input.linked_work_order_uuid ?? null,
-          // R-83: quantity/rate_cents/unit_of_measure travel together with item_id (normalized above
-          // for item lines). Category lines that resolved a categoryItemId must satisfy the same
-          // CHECK (expense_lines_item_qty_rate_amount_check): quantity=1, rate_cents=amount_cents,
-          // unit_of_measure='each' so that round(1 × amount_cents) = amount_cents holds exactly.
-          // Category lines WITHOUT a resolved item_id still send null for all three (item_id is also
-          // null in that case, so the "all null" branch of the CHECK is satisfied).
-          line.line_kind === "item"
-            ? line.quantity
-            : categoryItemId !== null ? 1 : null,
-          line.line_kind === "item"
-            ? line.rate_cents
-            : categoryItemId !== null ? line.amount_cents : null,
-          line.line_kind === "item"
-            ? line.unit_of_measure
-            : categoryItemId !== null ? "each" : null,
-          lineLoadExemption,
-        ]
-      );
+      await insertExpenseLine(client, {
+        expense_id: expenseId,
+        line_sequence: seq++,
+        amount: line.amount_cents / 100,
+        amount_cents: line.amount_cents,
+        description: line.description ?? payee.print_on_check_name,
+        expense_account_uuid: resolved.account_id,
+        expense_category_uuid: expenseCategoryUuid,
+        item_id: line.line_kind === "item" ? line.item_id : categoryItemId,
+        billable_customer_uuid: line.billable_customer_uuid ?? null,
+        load_id: lineLoadId,
+        operating_company_id,
+        // A per-line value wins; omitted/null falls back to the check header's own dimension --
+        // e.g. a single-truck repair check needs no per-line override at all.
+        driver_id: line.driver_id ?? input.driver_id ?? null,
+        unit_id: line.unit_id ?? input.unit_id ?? null,
+        trailer_id: line.trailer_id ?? input.trailer_id ?? null,
+        linked_work_order_uuid: line.linked_work_order_uuid ?? input.linked_work_order_uuid ?? null,
+        // R-83: quantity/rate_cents/unit_of_measure travel together with item_id (normalized above
+        // for item lines). Category lines that resolved a categoryItemId must satisfy the same
+        // CHECK (expense_lines_item_qty_rate_amount_check): quantity=1, rate_cents=amount_cents,
+        // unit_of_measure='each' so that round(1 × amount_cents) = amount_cents holds exactly.
+        // Category lines WITHOUT a resolved item_id still send null for all three (item_id is also
+        // null in that case, so the "all null" branch of the CHECK is satisfied).
+        quantity: line.line_kind === "item" ? line.quantity : categoryItemId !== null ? 1 : null,
+        rate_cents: line.line_kind === "item" ? line.rate_cents : categoryItemId !== null ? line.amount_cents : null,
+        unit_of_measure: line.line_kind === "item" ? line.unit_of_measure : categoryItemId !== null ? "each" : null,
+        load_exemption_reason: lineLoadExemption,
+      });
     }
 
     // R-172 step 7 -- post via the ONLY existing poster (postSourceTransactionInClientTx), atomically

@@ -13,7 +13,12 @@ const LABEL = "verify-fuel-expense-line-and-number-engine";
 /** Pure: the failures for the fuel-expense-document source + the expense-number source. */
 export function check(fuel, num) {
   const fails = [];
-  const ins = fuel.match(/INSERT INTO accounting\.expense_lines \(([\s\S]*?)\)/g) ?? [];
+  // 443.182 C — lines are written through the one expense writer as row objects (insertExpenseLine(client, { … })); the
+  // old SQL column lists are still read, so either shape is checked the same way.
+  const ins = [
+    ...(fuel.match(/INSERT INTO accounting\.expense_lines \(([\s\S]*?)\)/g) ?? []),
+    ...(fuel.match(/insertExpenseLine\(client, \{[\s\S]*?\n\s*\}\);/g) ?? []).map((o) => o.replace(/(\w+):/g, "$1")),
+  ];
   for (const i of ins) {
     if (/\bitem_id\b/.test(i) && !(/\bquantity\b/.test(i) && /\brate_cents\b/.test(i) && /\bunit_of_measure\b/.test(i)))
       fails.push("fuel-expense-document expense_lines insert sets item_id without quantity/rate_cents/unit_of_measure");

@@ -103,7 +103,8 @@ export function staticProblems(src) {
   void fuel;
   // G6 / DEGH-02 adopt — legacy bare bank_categorization JEs get an expense document without re-posting
   if (!/export async function adoptBankCategorizationExpenseDocument\(/.test(src.writer) ||
-      !/journal_entry_id, posted_at/.test(src.writer) ||
+      // 443.182 C — the adopting document is written through the one expense writer, born posted on the live JE.
+      !/journal_entry_id: line\.matched_je,[\s\S]{0,60}posted_at: EXPENSE_SQL_NOW/.test(fnBody(src.writer, "adoptBankCategorizationExpenseDocument")) ||
       !/SET matched_expense_id = \$1::uuid/.test(src.writer) ||
       /postSourceTransactionInClientTx\(/.test(fnBody(src.writer, "adoptBankCategorizationExpenseDocument"))) {
     p.push("S9/G6: adoptBankCategorizationExpenseDocument must INSERT expense+line adopting the live JE (no re-post) and stamp matched_expense_id");
@@ -120,8 +121,12 @@ export function staticProblems(src) {
       p.push(`S11: resolved ${dimension} must reach both expense header and line`);
     }
   }
-  if (!writer.includes("updated_by_user_id, non_owned_trailer_id") || !writer.includes("dimensions.nonOwnedTrailerId,")) {
+  if (!writer.includes("non_owned_trailer_id: dimensions.nonOwnedTrailerId,")) {
     p.push("S12: the expense must retain the load's customer-owned trailer, reachable from each line's expense_id");
+  }
+  // 443.182 C — one writer per document: the bank-line expense persists through expense-writer.service.ts, never its own INSERT.
+  if (/INSERT\s+INTO\s+accounting\.expense(s|_lines)\s*\(/i.test(src.writer) || !/insertExpenseHeader\(/.test(src.writer) || !/insertExpenseLine\(/.test(src.writer)) {
+    p.push("S13: the bank-line expense must persist through the one expense writer (insertExpenseHeader / insertExpenseLine), never its own INSERT");
   }
   return p;
 }
@@ -224,6 +229,7 @@ if (process.argv.includes("--selftest")) {
     ["S10", staticProblems(plant("writer", "reconcileExpenseWithLoad(input, load)", "input"))],
     ["S11", staticProblems(plant("writer", "dimensions.driverId,", "input.driverId,"))],
     ["S12", staticProblems(plant("writer", "dimensions.nonOwnedTrailerId,", "null,"))],
+    ["S13", staticProblems(plant("writer", "await insertExpenseHeader(client, {", "await client.query(`INSERT INTO accounting.expenses (x) VALUES ($1)`, {"))],
     ["L2", linkageProblems({ ...good, bt_expense: null })],
     ["L3", linkageProblems({ ...good, net: 5 })],
     ["L4", linkageProblems({ ...good, dr_cat: 0 })],
@@ -236,7 +242,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL — not caught: ${missed.join(", ")}${clean.length ? `; clean row flagged: ${clean.join("; ")}` : ""}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — real tree clean; ${cases.length}/${cases.length} rules proven able to fail (S1–S12, L2–L6)`);
+  console.log(`${LABEL} --selftest PASS — real tree clean; ${cases.length}/${cases.length} rules proven able to fail (S1–S13, L2–L6)`);
   process.exit(0);
 }
 

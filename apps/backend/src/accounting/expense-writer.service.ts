@@ -18,6 +18,67 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { nextExpenseDisplayId } from "./display-id.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 
+/**
+ * LEAD 443.182 C — ONE writer per document. These two functions are the only INSERTs of an expense header
+ * (accounting.expenses) and an expense line (accounting.expense_lines) in the backend; every expense writer —
+ * createExpenseInClientTx below, the bank-line expense, checks, recurring templates, the lumper split, the settlement
+ * seed, the fuel document, the maintenance work order — persists through them on the caller's client. Each caller keeps
+ * its own document policy (status, numbering, posting, links); the row itself is written in one place
+ * (verify-steps/18481 counts it).
+ *
+ * A value is bound as a parameter; the only SQL allowed in a value is now() / CURRENT_DATE (EXPENSE_SQL_NOW /
+ * EXPENSE_SQL_CURRENT_DATE). Column names must be plain identifiers.
+ */
+export const EXPENSE_SQL_NOW = Object.freeze({ sql: "now()" as const });
+export const EXPENSE_SQL_CURRENT_DATE = Object.freeze({ sql: "CURRENT_DATE" as const });
+type ExpenseSqlToken = typeof EXPENSE_SQL_NOW | typeof EXPENSE_SQL_CURRENT_DATE;
+export type ExpenseRow = Record<string, unknown>;
+
+const isSqlToken = (v: unknown): v is ExpenseSqlToken => v === EXPENSE_SQL_NOW || v === EXPENSE_SQL_CURRENT_DATE;
+
+function expenseRowSql(row: ExpenseRow): { columns: string[]; placeholders: string[]; values: unknown[] } {
+  const columns: string[] = [];
+  const placeholders: string[] = [];
+  const values: unknown[] = [];
+  for (const [col, val] of Object.entries(row)) {
+    if (val === undefined) continue;
+    if (!/^[a-z_][a-z0-9_]*$/.test(col)) throw new Error(`expense_row_bad_column:${col}`);
+    columns.push(col);
+    if (isSqlToken(val)) {
+      placeholders.push(val.sql);
+    } else {
+      values.push(val);
+      placeholders.push(`$${values.length}`);
+    }
+  }
+  if (!columns.length) throw new Error("expense_row_empty");
+  return { columns, placeholders, values };
+}
+
+/** The one INSERT of accounting.expenses. Returns the new id (null only if the database returned no row). */
+export async function insertExpenseHeader(client: any, row: ExpenseRow): Promise<string | null> {
+  if (!row.operating_company_id) throw new Error("expense_header_requires_operating_company_id");
+  const { columns, placeholders, values } = expenseRowSql(row);
+  const res = await client.query(
+    `INSERT INTO accounting.expenses (${columns.join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING id::text AS id`,
+    values
+  );
+  const id = (res.rows[0] as { id?: string } | undefined)?.id;
+  return id ? String(id) : null;
+}
+
+/** The one INSERT of accounting.expense_lines. Returns the new line id. */
+export async function insertExpenseLine(client: any, row: ExpenseRow): Promise<string | null> {
+  if (!row.expense_id) throw new Error("expense_line_requires_expense_id");
+  const { columns, placeholders, values } = expenseRowSql(row);
+  const res = await client.query(
+    `INSERT INTO accounting.expense_lines (${columns.join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING id::text AS id`,
+    values
+  );
+  const id = (res?.rows?.[0] as { id?: string } | undefined)?.id;
+  return id ? String(id) : null;
+}
+
 /** OWNER LAW 2026-10-01: an expense created in the app always posts; a poster failure refuses the create (transaction rolls back). */
 export class ExpensePostRefused extends Error { constructor(public code: string, public detail: string) { super(`expense_post_refused_gl_post_failed:${code}`); } }
 
@@ -520,15 +581,7 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
     values.push(body.load_id);
   }
 
-  const placeholders = columns.map((_, i) => `$${i + 1}`).join(", ");
-  const insertSql = `
-    INSERT INTO accounting.expenses (${columns.join(", ")})
-    VALUES (${placeholders})
-    RETURNING id
-  `;
-
-  const inserted = await client.query(insertSql, values);
-  const expenseId = String((inserted.rows[0] as { id?: string } | undefined)?.id ?? "");
+  const expenseId = (await insertExpenseHeader(client, Object.fromEntries(columns.map((c, i) => [c, values[i]])))) ?? "";
   if (!expenseId) throw new Error("expense_insert_failed");
 
   // Option B: link create-time draft receipts to the real expense id, atomically with the insert.
@@ -641,11 +694,7 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
       }
     }
 
-    await client.query(
-      `INSERT INTO accounting.expense_lines (${lineColumns.join(", ")})
-       VALUES (${lineColumns.map((_, i) => `$${i + 1}`).join(", ")})`,
-      lineValues
-    );
+    await insertExpenseLine(client, Object.fromEntries(lineColumns.map((c, i) => [c, lineValues[i]])));
   }
 
 

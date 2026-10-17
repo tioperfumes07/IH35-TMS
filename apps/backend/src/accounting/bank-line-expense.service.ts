@@ -17,6 +17,7 @@ import { nextExpenseDisplayId } from "./display-id.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { resolveLineLoadExemption } from "./expense-line-load-exemption.js";
 import { readLoadAttribution, reconcileExpenseWithLoad, type ExpenseAttribution } from "./expense-load-attribution.js";
+import { EXPENSE_SQL_NOW, insertExpenseHeader, insertExpenseLine } from "./expense-writer.service.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -125,39 +126,30 @@ export async function createAndPostBankLineExpenseOnClient(
     );
   }
 
-  const inserted = await client.query<{ id: string }>(
-    `INSERT INTO accounting.expenses (
-        operating_company_id, status, posting_status, transaction_date, total_amount_cents,
-        memo, expense_number, vendor_uuid, payment_account_uuid,
-        is_sample_data, is_company_expense, is_reimbursable,
-        source_bank_transaction_id, load_id, unit_id, trailer_id, driver_uuid,
-        created_by_user_id, updated_by_user_id, non_owned_trailer_id
-      ) VALUES (
-        $1::uuid, 'draft', 'unposted', $2::date, $3::bigint,
-        $4, $5, $6::uuid, $7::uuid,
-        false, true, false,
-        $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12::uuid,
-        $13::uuid, $13::uuid, $14::uuid
-      )
-      RETURNING id::text AS id`,
-    [
-      input.operatingCompanyId,
-      input.transactionDate,
-      input.amountCents,
-      input.memo,
-      expenseNumber,
-      input.vendorId,
-      input.paymentAccountId,
-      input.sourceBankTransactionId,
-      input.loadId ?? null,
-      dimensions.unitId,
-      dimensions.trailerId,
-      dimensions.driverId,
-      actor.userId,
-      dimensions.nonOwnedTrailerId,
-    ]
-  );
-  const expenseId = inserted.rows[0]?.id;
+  // 443.182 C — persisted through the one expense writer (expense-writer.service.ts); this function keeps the bank-line
+  // policy: draft -> post through the expense poster unconditionally, company cost, no unit required, no memo dedup.
+  const expenseId = await insertExpenseHeader(client, {
+    operating_company_id: input.operatingCompanyId,
+    status: "draft",
+    posting_status: "unposted",
+    transaction_date: input.transactionDate,
+    total_amount_cents: input.amountCents,
+    memo: input.memo,
+    expense_number: expenseNumber,
+    vendor_uuid: input.vendorId,
+    payment_account_uuid: input.paymentAccountId,
+    is_sample_data: false,
+    is_company_expense: true,
+    is_reimbursable: false,
+    source_bank_transaction_id: input.sourceBankTransactionId,
+    load_id: input.loadId ?? null,
+    unit_id: dimensions.unitId,
+    trailer_id: dimensions.trailerId,
+    driver_uuid: dimensions.driverId,
+    created_by_user_id: actor.userId,
+    updated_by_user_id: actor.userId,
+    non_owned_trailer_id: dimensions.nonOwnedTrailerId,
+  });
   if (!expenseId) throw new BankLineExpenseError("expense_insert_failed", "The expense could not be created.");
 
   if (loadAttribution && input.loadId) {
@@ -194,33 +186,25 @@ export async function createAndPostBankLineExpenseOnClient(
       : `reconciliation service charge ${input.transactionDate}`,
   });
 
-  await client.query(
-    `INSERT INTO accounting.expense_lines (
-        operating_company_id, expense_id, line_sequence, amount, amount_cents,
-        description, load_required, expense_account_uuid, item_id,
-        quantity, rate_cents, unit_of_measure,
-        load_id, unit_id, trailer_id, driver_id, load_exemption_reason
-      ) VALUES (
-        $1::uuid, $2::uuid, 1, $3::numeric, $4::bigint,
-        $5, false, $6::uuid, $7::uuid,
-        1, $4::bigint, 'each',
-        $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12
-      )`,
-    [
-      input.operatingCompanyId,
-      expenseId,
-      input.amountCents / 100,
-      input.amountCents,
-      input.lineDescription,
-      input.expenseAccountId,
-      input.itemId,
-      input.loadId ?? null,
-      dimensions.unitId,
-      dimensions.trailerId,
-      dimensions.driverId,
-      loadExemptionReason,
-    ]
-  );
+  await insertExpenseLine(client, {
+    operating_company_id: input.operatingCompanyId,
+    expense_id: expenseId,
+    line_sequence: 1,
+    amount: input.amountCents / 100,
+    amount_cents: input.amountCents,
+    description: input.lineDescription,
+    load_required: false,
+    expense_account_uuid: input.expenseAccountId,
+    item_id: input.itemId,
+    quantity: 1,
+    rate_cents: input.amountCents,
+    unit_of_measure: "each",
+    load_id: input.loadId ?? null,
+    unit_id: dimensions.unitId,
+    trailer_id: dimensions.trailerId,
+    driver_id: dimensions.driverId,
+    load_exemption_reason: loadExemptionReason,
+  });
 
   const posting = await postSourceTransactionInClientTx(
     client as never,
@@ -402,41 +386,30 @@ export async function adoptBankCategorizationExpenseDocument(
     expenseNumber = await nextExpenseDisplayId(client as never, company, new Date(`${txnDate}T00:00:00.000Z`));
   }
 
-  const inserted = await client.query<{ id: string }>(
-    `INSERT INTO accounting.expenses (
-        operating_company_id, status, posting_status, transaction_date, total_amount_cents,
-        memo, expense_number, vendor_uuid, payment_account_uuid,
-        is_sample_data, is_company_expense, is_reimbursable,
-        source_bank_transaction_id, load_id, unit_id, trailer_id, driver_uuid,
-        journal_entry_id, posted_at,
-        created_by_user_id, updated_by_user_id
-      ) VALUES (
-        $1::uuid, 'posted', 'posted', $2::date, $3::bigint,
-        $4, $5, $6::uuid, $7::uuid,
-        false, true, false,
-        $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12::uuid,
-        $13::uuid, now(),
-        $14::uuid, $14::uuid
-      )
-      RETURNING id::text AS id`,
-    [
-      company,
-      txnDate,
-      totalCents,
-      memo.slice(0, 500),
-      expenseNumber,
-      line.vendor_id,
-      credit.account_id,
-      input.bankTransactionId,
-      line.load_id,
-      line.unit_id,
-      line.trailer_id,
-      line.driver_id,
-      line.matched_je,
-      actor.userId,
-    ]
-  );
-  const expenseId = inserted.rows[0]?.id;
+  // 443.182 C — persisted through the one expense writer; the adopting document is born posted on the existing JE.
+  const expenseId = await insertExpenseHeader(client, {
+    operating_company_id: company,
+    status: "posted",
+    posting_status: "posted",
+    transaction_date: txnDate,
+    total_amount_cents: totalCents,
+    memo: memo.slice(0, 500),
+    expense_number: expenseNumber,
+    vendor_uuid: line.vendor_id,
+    payment_account_uuid: credit.account_id,
+    is_sample_data: false,
+    is_company_expense: true,
+    is_reimbursable: false,
+    source_bank_transaction_id: input.bankTransactionId,
+    load_id: line.load_id,
+    unit_id: line.unit_id,
+    trailer_id: line.trailer_id,
+    driver_uuid: line.driver_id,
+    journal_entry_id: line.matched_je,
+    posted_at: EXPENSE_SQL_NOW,
+    created_by_user_id: actor.userId,
+    updated_by_user_id: actor.userId,
+  });
   if (!expenseId) throw new BankLineExpenseError("expense_insert_failed", "The adopting expense could not be created.");
 
   if (loadAttribution && line.load_id) {
@@ -462,33 +435,25 @@ export async function adoptBankCategorizationExpenseDocument(
     context: `bank line ${txnDate} — adopted categorization`,
   });
 
-  await client.query(
-    `INSERT INTO accounting.expense_lines (
-        operating_company_id, expense_id, line_sequence, amount, amount_cents,
-        description, load_required, expense_account_uuid, item_id,
-        quantity, rate_cents, unit_of_measure,
-        load_id, unit_id, trailer_id, driver_id, load_exemption_reason
-      ) VALUES (
-        $1::uuid, $2::uuid, 1, $3::numeric, $4::bigint,
-        $5, false, $6::uuid, $7::uuid,
-        1, $4::bigint, 'each',
-        $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12
-      )`,
-    [
-      company,
-      expenseId,
-      totalCents / 100,
-      totalCents,
-      description.slice(0, 500),
-      debit.account_id,
-      input.itemId,
-      line.load_id,
-      line.unit_id,
-      line.trailer_id,
-      line.driver_id,
-      loadExemptionReason,
-    ]
-  );
+  await insertExpenseLine(client, {
+    operating_company_id: company,
+    expense_id: expenseId,
+    line_sequence: 1,
+    amount: totalCents / 100,
+    amount_cents: totalCents,
+    description: description.slice(0, 500),
+    load_required: false,
+    expense_account_uuid: debit.account_id,
+    item_id: input.itemId,
+    quantity: 1,
+    rate_cents: totalCents,
+    unit_of_measure: "each",
+    load_id: line.load_id,
+    unit_id: line.unit_id,
+    trailer_id: line.trailer_id,
+    driver_id: line.driver_id,
+    load_exemption_reason: loadExemptionReason,
+  });
 
   await client.query(
     `UPDATE banking.bank_transactions
