@@ -1,7 +1,9 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per live /healthz probe (name / tier / duration / status), a current-state checklist.
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable } from "../../components/parity/ParityTable";
 
 type ObservabilityStatus = {
   sentry_configured: boolean;
@@ -204,48 +206,61 @@ function HealthzChecksSection({ query }: { query: UseQueryResult<HealthzPayload,
 
       {ledgerChecks.length > 0 && (
         <div className="mt-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
-            Ledger / financial ({ledgerChecks.length})
-          </h3>
-          <HealthzCheckTable checks={ledgerChecks} />
+          <HealthzCheckTable title={`Ledger / financial (${ledgerChecks.length})`} storageKey="ih35.admin.healthz-ledger-checks.v1" checks={ledgerChecks} />
         </div>
       )}
 
       {otherChecks.length > 0 && (
         <div className="mt-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
-            Infrastructure ({otherChecks.length})
-          </h3>
-          <HealthzCheckTable checks={otherChecks} />
+          <HealthzCheckTable title={`Infrastructure (${otherChecks.length})`} storageKey="ih35.admin.healthz-infra-checks.v1" checks={otherChecks} />
         </div>
       )}
     </div>
   );
 }
 
-function HealthzCheckTable({ checks }: { checks: HealthzCheck[] }) {
+/** LEAD 443.181 — the app's one table. A health check is a live probe result, not a record: no row route. */
+function HealthzCheckTable({ title, storageKey, checks }: { title: string; storageKey: string; checks: HealthzCheck[] }) {
   return (
-    <table className="mt-1 w-full text-xs" data-testid="healthz-check-table">
-      <tbody className="divide-y divide-[#E5E7EB]">
-        {checks.map((c) => (
-          <tr key={c.name} data-testid="healthz-check-row">
-            <td className="py-1 pr-2 font-mono text-[#4B5563]">{c.name}</td>
-            <td className="py-1 pr-2 text-[#6B7280]">{c.tier}</td>
-            <td className="py-1 pr-2 text-[#6B7280]">{c.duration_ms != null ? `${c.duration_ms}ms` : "—"}</td>
-            <td className="py-1 text-right">
-              <span
-                className={
-                  c.ok
-                    ? "rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#4B5563]"
-                    : "rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-800"
-                }
-              >
-                {c.ok ? "OK" : (c.error ?? "FAIL")}
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <ParityTable<HealthzCheck>
+      title={title}
+      tableTestId="healthz-check-table"
+      storageKey={storageKey}
+      rows={checks}
+      rowKey={(c) => c.name}
+      rowTestId={() => "healthz-check-row"}
+      pageSize={Math.max(1, checks.length)}
+      hidePager
+      suppressToolbarSearch
+      suppressToolbarRange
+      columns={[
+        { key: "name", label: "Check", cellClass: "font-mono" },
+        { key: "tier", label: "Tier" },
+        {
+          key: "duration_ms",
+          label: "Duration",
+          cellClass: "text-right tabular-nums",
+          sortValue: (c) => c.duration_ms ?? null,
+          render: (c) => (c.duration_ms != null ? `${c.duration_ms}ms` : "—"),
+        },
+        {
+          key: "ok",
+          label: "Status",
+          cellClass: "text-right",
+          sortValue: (c) => (c.ok ? "OK" : (c.error ?? "FAIL")),
+          render: (c) => (
+            <span
+              className={
+                c.ok
+                  ? "rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#4B5563]"
+                  : "rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-800"
+              }
+            >
+              {c.ok ? "OK" : (c.error ?? "FAIL")}
+            </span>
+          ),
+        },
+      ]}
+    />
   );
 }

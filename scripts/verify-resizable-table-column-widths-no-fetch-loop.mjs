@@ -27,7 +27,8 @@ const repoRoot = process.cwd();
 const COLUMN_WIDTHS_FILE = "apps/frontend/src/hooks/useColumnWidths.ts";
 const LIST_VIEW_FILE = "apps/frontend/src/components/lists/ListView/hooks/useListView.ts";
 const LIST_VIEW_COMPONENT = "apps/frontend/src/components/lists/ListView/ListView.tsx";
-const RESIZABLE_TABLE_COMPONENT = "apps/frontend/src/components/shared/ResizableTable.tsx";
+// LEAD 443.181: components/shared/ResizableTable.tsx was retired (its consumers moved to ParityTable); ListView is the
+// remaining useColumnWidths consumer, so it is the one save-error surface this guard pins.
 
 const FETCH_EFFECT_MARKER = "table-preferences?table_id=";
 
@@ -67,7 +68,7 @@ export function checkNoFetchLoop({ columnWidthsSrc, listViewSrc }) {
   return offenders;
 }
 
-export function checkPersistenceFailureTruth({ columnWidthsSrc, listViewComponentSrc, resizableTableSrc }) {
+export function checkPersistenceFailureTruth({ columnWidthsSrc, listViewComponentSrc }) {
   const offenders = [];
   for (const token of [
     "lastPersistDraftRef.current = next",
@@ -76,7 +77,7 @@ export function checkPersistenceFailureTruth({ columnWidthsSrc, listViewComponen
   ]) {
     if (!columnWidthsSrc.includes(token)) offenders.push(`${COLUMN_WIDTHS_FILE}: missing ${token}`);
   }
-  for (const [file, source] of [[LIST_VIEW_COMPONENT, listViewComponentSrc], [RESIZABLE_TABLE_COMPONENT, resizableTableSrc]]) {
+  for (const [file, source] of [[LIST_VIEW_COMPONENT, listViewComponentSrc]]) {
     for (const token of ["persistError", "retryPersist", "data-column-width-save-error", "Retry save"]) {
       if (!source.includes(token)) offenders.push(`${file}: missing ${token}`);
     }
@@ -88,10 +89,9 @@ export function run() {
   const columnWidthsSrc = fs.readFileSync(path.join(repoRoot, COLUMN_WIDTHS_FILE), "utf8");
   const listViewSrc = fs.readFileSync(path.join(repoRoot, LIST_VIEW_FILE), "utf8");
   const listViewComponentSrc = fs.readFileSync(path.join(repoRoot, LIST_VIEW_COMPONENT), "utf8");
-  const resizableTableSrc = fs.readFileSync(path.join(repoRoot, RESIZABLE_TABLE_COMPONENT), "utf8");
   const offenders = [
     ...checkNoFetchLoop({ columnWidthsSrc, listViewSrc }),
-    ...checkPersistenceFailureTruth({ columnWidthsSrc, listViewComponentSrc, resizableTableSrc }),
+    ...checkPersistenceFailureTruth({ columnWidthsSrc, listViewComponentSrc }),
   ];
   return { ok: offenders.length === 0, offenders };
 }
@@ -139,20 +139,18 @@ if (process.argv.includes("--selftest")) {
   const actual = {
     columnWidthsSrc: fs.readFileSync(path.join(repoRoot, COLUMN_WIDTHS_FILE), "utf8"),
     listViewComponentSrc: fs.readFileSync(path.join(repoRoot, LIST_VIEW_COMPONENT), "utf8"),
-    resizableTableSrc: fs.readFileSync(path.join(repoRoot, RESIZABLE_TABLE_COMPONENT), "utf8"),
   };
   const mutations = [
     { ...actual, columnWidthsSrc: actual.columnWidthsSrc.replace("lastPersistDraftRef.current = next", "BROKEN_DRAFT") },
     { ...actual, columnWidthsSrc: actual.columnWidthsSrc.replace("Column widths could not be saved. This layout is temporary.", "BROKEN_ERROR") },
     { ...actual, columnWidthsSrc: actual.columnWidthsSrc.replaceAll("retryPersist", "BROKEN_RETRY") },
     { ...actual, listViewComponentSrc: actual.listViewComponentSrc.replace("data-column-width-save-error", "BROKEN_ERROR_SURFACE") },
-    { ...actual, resizableTableSrc: actual.resizableTableSrc.replace("data-column-width-save-error", "BROKEN_ERROR_SURFACE") },
-    { ...actual, resizableTableSrc: actual.resizableTableSrc.replaceAll("retryPersist", "BROKEN_RETRY") },
+    { ...actual, listViewComponentSrc: actual.listViewComponentSrc.replaceAll("retryPersist", "BROKEN_RETRY") },
   ];
   mutations.forEach((mutation, index) => {
     if (!checkPersistenceFailureTruth(mutation).length) throw new Error(`persistence mutation ${index + 1} survived`);
   });
-  console.log(`verify:resizable-table-column-widths-no-fetch-loop selftest OK — fetch-loop pair + ${mutations.length}/6 persistence defects rejected`);
+  console.log(`verify:resizable-table-column-widths-no-fetch-loop selftest OK — fetch-loop pair + ${mutations.length}/5 persistence defects rejected`);
   process.exit(0);
 }
 
