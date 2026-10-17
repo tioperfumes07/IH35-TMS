@@ -16,10 +16,11 @@ describe("insertBillHeaderOnClient — every bill names its writer", () => {
 
   it("writes a bill that names its writer", async () => {
     const client = { query: vi.fn(async () => ({ rows: [{ id: "b1" }], rowCount: 1 })) };
-    await insertBillHeaderOnClient(client, [["operating_company_id", { value: "co" }], ["source", { value: "work_order" }], ["linked_work_order_uuid", { value: "wo-1" }]]);
+    // heavy CI peel: the one writer also refuses a bill without amount_cents (G6-4), so the header names it.
+    await insertBillHeaderOnClient(client, [["operating_company_id", { value: "co" }], ["source", { value: "work_order" }], ["linked_work_order_uuid", { value: "wo-1" }], ["amount_cents", { value: 100 }]]);
     const [sql, values] = client.query.mock.calls[0] as unknown as [string, unknown[]];
-    expect(sql).toMatch(/INSERT INTO accounting\.bills \(operating_company_id, source, linked_work_order_uuid\)/);
-    expect(values).toEqual(["co", "work_order", "wo-1"]);
+    expect(sql).toMatch(/INSERT INTO accounting\.bills \(operating_company_id, source, linked_work_order_uuid, amount_cents\)/);
+    expect(values).toEqual(["co", "work_order", "wo-1", 100]);
     expect(BILL_SOURCES).toContain("settlement_driver_bill");
   });
 });
