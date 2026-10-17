@@ -11,7 +11,7 @@
       "apps/backend/src/accounting/bills.service.ts": 1
     },
     "payments": {
-      "apps/backend/src/accounting/payments.routes.ts": 1
+      "apps/backend/src/accounting/payment-writer.service.ts": 1
     }
   },
   "expense_engine": {}

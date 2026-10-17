@@ -31,9 +31,10 @@ if (!fs.existsSync(servicePath)) {
     failures.push("apply.service bill query must filter by operating_company_id");
   }
   // 443.182 C step 2 — apply.service persists through the one payment_applications writer in the payments engine
-  // (payments.routes.ts insertPaymentApplicationRowInClientTx), for both targets, with the request's company; the writer's
+  // (payment-writer.service.ts insertPaymentApplicationRowInClientTx), for both targets, with the request's company; the writer's
   // INSERT must bind that company as the row's operating_company_id.
-  const enginePath = path.join(repoRoot, "apps/backend/src/accounting/payments.routes.ts");
+  // Heavy CI peel (Lead 13:45Z): the engine moved byte-for-byte to payment-writer.service.ts (no route import).
+  const enginePath = path.join(repoRoot, "apps/backend/src/accounting/payment-writer.service.ts");
   const engine = fs.existsSync(enginePath) ? fs.readFileSync(enginePath, "utf8") : "";
   const viaEngine =
     /insertPaymentApplicationRowInClientTx\([\s\S]{0,200}operating_company_id: operatingCompanyId[\s\S]{0,120}target_kind: "invoice"/.test(source) &&
