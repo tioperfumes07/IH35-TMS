@@ -25,7 +25,7 @@
 //
 // node scripts/verify-deployed-sha-matches-main.mjs --selftest
 // DEPLOYED_SHA_CHECK_LIVE=1 node scripts/verify-deployed-sha-matches-main.mjs
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const LABEL = "verify-deployed-sha-matches-main";
 
@@ -120,11 +120,23 @@ async function fetchJson(url, timeoutMs = 10000) {
   }
 }
 
-function git(cmd) {
+// CodeQL js/command-line-injection: no shell — git runs with an argument array, and every caller-influenced
+// value (the deployed sha from the health endpoint, GIT_MAIN_REF) is validated before it reaches argv.
+const SHA_RE = /^[0-9a-f]{7,40}$/i;
+const REF_RE = /^[A-Za-z0-9._/-]+$/;
+function git(args) {
   try {
-    return execSync(cmd, { encoding: "utf8" }).trim();
+    return execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
   } catch {
     return null;
+  }
+}
+function gitIsAncestor(sha, ref) {
+  try {
+    execFileSync("git", ["merge-base", "--is-ancestor", sha, ref], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -132,22 +144,28 @@ async function liveCheck() {
   const backendUrl = (process.env.BACKEND_URL || "https://api.ih35dispatch.com").replace(/\/$/, "");
   const maxCommitsBehind = Number(process.env.MAX_COMMITS_BEHIND || 5);
   const mainRef = process.env.GIT_MAIN_REF || "origin/main";
+  if (!REF_RE.test(mainRef) || mainRef.startsWith("-")) {
+    console.error(`FAIL ${LABEL}: GIT_MAIN_REF ${JSON.stringify(mainRef)} is not a plain git ref.`);
+    process.exit(1);
+  }
 
   const health = await fetchJson(`${backendUrl}/api/v1/healthz/shallow`);
-  const deployedSha = health?.git_sha || health?.commit || health?.version || null;
+  const reportedSha = health?.git_sha || health?.commit || health?.version || null;
+  // A value that is not a hex sha is treated exactly like "unavailable" (computeStaleness fails it by name).
+  const deployedSha = typeof reportedSha === "string" && SHA_RE.test(reportedSha) ? reportedSha : null;
+  if (reportedSha && !deployedSha) console.error(`${LABEL}: health endpoint reported a non-sha version; treated as unavailable.`);
 
   let isAncestorOfMain = null;
   let commitsBehind = null;
   let financialCommitsBehind = [];
 
   if (deployedSha) {
-    const ancestorCheck = git(`git merge-base --is-ancestor ${deployedSha} ${mainRef} && echo yes || echo no`);
-    isAncestorOfMain = ancestorCheck === "yes";
+    isAncestorOfMain = gitIsAncestor(deployedSha, mainRef);
     if (isAncestorOfMain) {
-      const countRaw = git(`git rev-list --count ${deployedSha}..${mainRef}`);
+      const countRaw = git(["rev-list", "--count", `${deployedSha}..${mainRef}`]);
       commitsBehind = countRaw !== null ? Number(countRaw) : null;
       if (commitsBehind) {
-        const log = git(`git log --oneline ${deployedSha}..${mainRef} --grep="LANE: FINANCIAL" -i`);
+        const log = git(["log", "--oneline", `${deployedSha}..${mainRef}`, "--grep=LANE: FINANCIAL", "-i"]);
         financialCommitsBehind = log ? log.split("\n").filter(Boolean) : [];
       }
     }

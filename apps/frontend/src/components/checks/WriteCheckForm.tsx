@@ -81,7 +81,8 @@ function checkDraftStorageKey(operatingCompanyId: string) {
 type PersistedCheckDraft = {
   payeeKind: CheckPayeeKind;
   payeeId: string | null;
-  bankAccountId: string | null;
+  /** CodeQL js/clear-text-storage-of-sensitive-data: the bank account is NEVER written to browser storage — a
+   *  restored draft asks the user to pick the bank again. Old drafts may still carry the key; it is ignored. */
   checkDate: string;
   checkNumber: string;
   printLater: boolean;
@@ -1014,7 +1015,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         return;
       }
       const parsed = JSON.parse(raw) as PersistedCheckDraft;
-      if (parsed?.payeeId || parsed?.bankAccountId || parsed?.memo || parsed?.checkNumber) {
+      if (parsed?.payeeId || parsed?.memo || parsed?.checkNumber) {
         setRestoreDraftOffer(parsed);
       } else {
         setRestoreDraftOffer(null);
@@ -1032,7 +1033,6 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     const payload: PersistedCheckDraft = {
       payeeKind,
       payeeId,
-      bankAccountId,
       checkDate,
       checkNumber,
       printLater,
@@ -1198,7 +1198,6 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   const d = restoreDraftOffer;
                   setPayeeKind(d.payeeKind);
                   setPayeeId(d.payeeId);
-                  setBankAccountId(d.bankAccountId);
                   setCheckDate(d.checkDate || todayCT());
                   setCheckNumber(d.checkNumber ?? "");
                   setPrintLater(Boolean(d.printLater));

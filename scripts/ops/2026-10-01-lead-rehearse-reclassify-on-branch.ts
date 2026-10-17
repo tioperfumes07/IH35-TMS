@@ -13,7 +13,14 @@ const pool = new pg.Pool({ connectionString: url, ssl: { rejectUnauthorized: fal
 const client = await pool.connect();
 await assertNotProduction(client, { label: "rehearse-reclassify" });
 const postingId = process.env.POSTING_ID!;
-const target = process.env.TARGET_ACCOUNT_ID!;
+// CodeQL js/clear-text-logging: nothing read from process.env is ever printed. The target account is resolved
+// from the database (and refused if it is not a USMCA account), and only that DB value is logged below.
+const targetRow = await client.query<{ id: string }>(
+  `SELECT id::text AS id FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+  [process.env.TARGET_ACCOUNT_ID ?? "", USMCA]
+);
+if (targetRow.rows.length !== 1) throw new Error("TARGET_ACCOUNT_ID is not a USMCA catalogs.accounts row");
+const target = targetRow.rows[0]!.id;
 const actor = { userId: process.env.ACTOR_USER_ID!, role: "Owner" };
 
 async function balance(accountId: string) {
