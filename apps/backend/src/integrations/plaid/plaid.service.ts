@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: inserts Plaid FEED rows into banking.bank_transactions — bank evidence, not a booked transaction.
+// Owner Law B (LEAD 443.168 H, 2db6387ae3): Plaid rules only SUGGEST; the GL posts when the operator accepts a categorize
+// or match (banking categorize / match accept -> the bank-feed GL poster). 2db6387ae3 removed the suggestion-time poster
+// on purpose, which is why this file no longer carries one (heavy CI peel, step 1503).
 import { CountryCode } from "plaid";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";

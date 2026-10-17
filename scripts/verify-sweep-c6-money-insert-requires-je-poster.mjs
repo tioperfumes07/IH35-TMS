@@ -65,9 +65,14 @@ const MONEY_TABLES = [
 const MONEY_SCHEMA_TABLE = `(?:accounting|banking|driver_finance)\\.(?:${MONEY_TABLES.join("|")})`;
 const MONEY_INSERT_RE = new RegExp(`\\bINSERT\\s+INTO\\s+${MONEY_SCHEMA_TABLE}\\b`, "gi");
 
-/** Existing poster / JE writers — reuse only; no new GL math. */
+/**
+ * Existing poster / JE writers — reuse only; no new GL math.
+ * Heavy CI peel: the one-engine-per-document posters (443.182 C — a0629f2b52 bills + bill payments, #26885 expenses) are
+ * thin wrappers over postSourceTransaction(InClientTx) (bills.service.ts postBillDocument*, expense-writer.service.ts
+ * postExpenseDocument*), so a caller of one of them posts exactly as a direct postSourceTransaction caller does.
+ */
 const POSTER_RE =
-  /postSourceTransaction(?:InClientTx)?|createJournalEntry(?:OnClient)?|postBillGlIfEnabled|postVoidReversal|maybePostBankCategorizationToGl|postFuelExpenseFromEvent|postFactoring(?:Advance|FeeExpense|CustomerPayment|Release|Chargeback|DefaultInterest)Event|processMaintenanceWorkOrderClose|postPropertyTax(?:Accrual|Payment)|postDepreciation|recordEscrowPostingOnly|apply_escrow_posting|postWarrantyReimbursement|postPartsInventoryPurchase|postCompanyPaidCivilFine|posting-engine\.service|from\s+["'][^"']*posting-engine|postSettlementToGl|createCorrectiveJournalEntry|postBillPaymentGlIfEnabled/;
+  /postSourceTransaction(?:InClientTx)?|postBill(?:Payment)?Document(?:InClientTx)?|postExpenseDocument(?:InClientTx|OwnTx)|createJournalEntry(?:OnClient)?|postBillGlIfEnabled|postVoidReversal|maybePostBankCategorizationToGl|postFuelExpenseFromEvent|postFactoring(?:Advance|FeeExpense|CustomerPayment|Release|Chargeback|DefaultInterest)Event|processMaintenanceWorkOrderClose|postPropertyTax(?:Accrual|Payment)|postDepreciation|recordEscrowPostingOnly|apply_escrow_posting|postWarrantyReimbursement|postPartsInventoryPurchase|postCompanyPaidCivilFine|posting-engine\.service|from\s+["'][^"']*posting-engine|postSettlementToGl|createCorrectiveJournalEntry|postBillPaymentGlIfEnabled/;
 
 const EXEMPT_RE = /C6-MONEY-JE-EXEMPT:/;
 
