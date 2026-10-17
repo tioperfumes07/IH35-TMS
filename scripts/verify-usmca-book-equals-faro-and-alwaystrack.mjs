@@ -233,10 +233,14 @@ async function item2(client) {
   return { mismatches, grand_total_cents: grandTotalCents };
 }
 
-// ---- ITEM 3 — every live invoiced load's dispatch.load_charge_lines sums to its invoice total -----
-async function item3(client) {
-  const res = await client.query(
-    `SELECT l.load_number::text, i.total_cents::bigint,
+// ---- ITEM 3 — every live invoiced load's ACTIVE dispatch.load_charge_lines sum to its invoice total -----
+// 443.192: only is_active lines count. Charge lines are never deleted — editing a load's charges deactivates the
+// whole active set and inserts the replacement set (ba182eab96 #5931 P44; locked + row-count-checked by e0b43b840f
+// #17444, dispatch/update-load.service.ts :885-911). The owner-reconciliation void-and-reissues (Lead 443.151 b /
+// 443.157) did exactly that on 8 loads (13570 13578 13587 13589 13609 13611 13640 13658): the voided invoice's line
+// is is_active = false, the reissued invoice's line is active. Summing both doubled each load (prod 2026-10-17:
+// 169 live invoiced loads — all-lines sum 8 mismatches, active-lines sum 0).
+export const ITEM3_SQL = `SELECT l.load_number::text, i.total_cents::bigint,
             COALESCE(clc.sum_cents, 0)::bigint AS charge_lines_sum_cents
        FROM mdata.loads l
        JOIN accounting.invoices i ON i.source_load_id = l.id AND i.operating_company_id = l.operating_company_id
@@ -244,11 +248,19 @@ async function item3(client) {
          SELECT sum(cl.amount_cents)::bigint AS sum_cents
            FROM dispatch.load_charge_lines cl
           WHERE cl.load_id = l.id AND cl.operating_company_id = l.operating_company_id
+            AND cl.is_active = true
        ) clc ON true
       WHERE l.operating_company_id = $1::uuid
-        AND i.voided_at IS NULL`,
-    [USMCA_ID]
-  );
+        AND i.voided_at IS NULL`;
+
+/** Selftest helper: the ITEM3 charge-line sum must be restricted to active lines inside the lateral. */
+export function item3SqlCountsOnlyActiveLines(sql) {
+  const lateral = /LEFT JOIN LATERAL \(([\s\S]*?)\) clc ON true/.exec(sql);
+  return Boolean(lateral && /\bcl\.is_active\s*(?:=\s*true\b|\bIS\s+TRUE\b|(?=\s*(?:\)|AND\b|$)))/i.test(lateral[1]));
+}
+
+async function item3(client) {
+  const res = await client.query(ITEM3_SQL, [USMCA_ID]);
   for (const row of res.rows) {
     if (Number(row.charge_lines_sum_cents) !== Number(row.total_cents)) {
       fail(
@@ -271,17 +283,30 @@ const SELF_CARRIED = [
   { display_id: "009", label: "FLS" },
   { display_id: "010", label: "Supply Chain Mgmt" },
   { display_id: "026", label: "IM Specialized" },
-  { display_id: "13555", label: "2EMS (load 13555)" },
+  // 443.192: the 2026-10-16 USMCA rebuild numbers load-linked invoices "<faro#>-<load>" (live: "55-13555"), so a
+  // load-linked self-carried invoice is found by its SOURCE LOAD; the load-less four keep their document numbers.
+  { display_id: "13555", load_number: "13555", label: "2EMS (load 13555)" },
   { display_id: "074", label: "Alligator (no TMS dispatch record found; load-less)" },
 ];
+// Load-linked entries match their live (non-voided) invoice on the source load; the rest match by display_id.
+export const ITEM6_SQL = `SELECT i.display_id::text, l.load_number::text, i.factoring_status::text, i.total_cents::bigint, i.voided_at
+       FROM accounting.invoices i
+       LEFT JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = i.operating_company_id
+      WHERE i.operating_company_id = $1::uuid
+        AND (i.display_id = ANY($2::text[]) OR (l.load_number::text = ANY($3::text[]) AND i.voided_at IS NULL))
+      ORDER BY i.voided_at NULLS FIRST, i.created_at DESC`;
+
 async function item6(client) {
-  const res = await client.query(
-    `SELECT display_id::text, factoring_status::text, total_cents::bigint, voided_at
-       FROM accounting.invoices
-      WHERE operating_company_id = $1::uuid AND display_id = ANY($2::text[])`,
-    [USMCA_ID, SELF_CARRIED.map((s) => s.display_id)]
-  );
-  const byDisplay = new Map(res.rows.map((r) => [r.display_id, r]));
+  const res = await client.query(ITEM6_SQL, [
+    USMCA_ID,
+    SELF_CARRIED.map((s) => s.display_id),
+    SELF_CARRIED.filter((s) => s.load_number).map((s) => s.load_number),
+  ]);
+  const byDisplay = new Map();
+  for (const r of res.rows) {
+    const s = SELF_CARRIED.find((x) => (x.load_number ? x.load_number === r.load_number : x.display_id === r.display_id));
+    if (s && !byDisplay.has(s.display_id)) byDisplay.set(s.display_id, r);
+  }
   let totalCents = 0;
   for (const s of SELF_CARRIED) {
     const row = byDisplay.get(s.display_id);
@@ -301,8 +326,17 @@ async function item6(client) {
 }
 
 if (process.argv.includes("--selftest")) {
-  console.log(`${LABEL}: SELFTEST PASS — no pure/static logic to self-test (every arm is a direct live measurement); see money-pr-local-gate.mjs's live run for RED-BEFORE-GREEN evidence.`);
-  process.exit(0);
+  // Every arm is a live measurement; the one static rule is ITEM3's active-lines-only sum (443.192).
+  const planted = ITEM3_SQL.replace(/\n\s*AND cl\.is_active = true/, "");
+  const cases = [
+    { name: "ITEM3_SQL sums only active charge lines", ok: item3SqlCountsOnlyActiveLines(ITEM3_SQL) === true },
+    { name: "planted: is_active filter dropped -> caught", ok: planted !== ITEM3_SQL && item3SqlCountsOnlyActiveLines(planted) === false },
+    { name: "ITEM6 load-linked lookup matches only a LIVE invoice on the source load", ok: /l\.load_number::text = ANY\(\$3::text\[\]\) AND i\.voided_at IS NULL/.test(ITEM6_SQL) },
+  ];
+  for (const c of cases) console.log(`  ${c.ok ? "PASS" : "FAIL"}  ${c.name}`);
+  const passed = cases.filter((c) => c.ok).length;
+  console.log(`${LABEL}: SELFTEST ${passed === cases.length ? "PASS" : "FAIL"} ${passed}/${cases.length}`);
+  process.exit(passed === cases.length ? 0 : 1);
 }
 
 const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
