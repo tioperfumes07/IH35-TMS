@@ -101,7 +101,15 @@ describe("Task #24 — void/cancel executor wiring", () => {
     it("function body found", () => {
       expect(fnMatch, "executeDriverSettlement function body not found").toBeTruthy();
     });
-    const body = fnMatch ? fnMatch[0] : "";
+    const execBody = fnMatch ? fnMatch[0] : "";
+    // LEAD 443.192: the line cascade lives in completeDriverSettlementVoidCascadeInClientTx, called from the executor.
+    const helperMatch = source.match(/export async function completeDriverSettlementVoidCascadeInClientTx\([\s\S]*?\n\}/);
+    const body = helperMatch ? helperMatch[0] : "";
+
+    it("the executor routes every void (fresh or header-already-cancelled) through the shared cascade", () => {
+      expect(execBody).toContain("completeDriverSettlementVoidCascadeInClientTx(client");
+      expect(execBody).not.toMatch(/if \(status === "cancelled"\) return \{ kind: "already_done" \}/);
+    });
 
     it("cascades is_active=false to the settlement's own settlement_lines rows", () => {
       expect(body).toContain("UPDATE driver_finance.settlement_lines");
@@ -115,8 +123,8 @@ describe("Task #24 — void/cancel executor wiring", () => {
     });
 
     it("the settlement_lines cascade runs BEFORE the header flips to cancelled (same ordering as the direct route)", () => {
-      const cascadeIdx = body.indexOf("UPDATE driver_finance.settlement_lines");
-      const flipIdx = body.indexOf("UPDATE driver_finance.driver_settlements");
+      const cascadeIdx = execBody.indexOf("completeDriverSettlementVoidCascadeInClientTx(client");
+      const flipIdx = execBody.indexOf("UPDATE driver_finance.driver_settlements");
       expect(cascadeIdx).toBeGreaterThan(-1);
       expect(flipIdx).toBeGreaterThan(cascadeIdx);
     });
