@@ -70,7 +70,7 @@ export function staticChecks(sources = {}) {
   if (!/SELECT COUNT\(\*\)::int AS total[\s\S]{0,180}e\.operating_company_id = \$1::uuid[\s\S]{0,100}e\.load_id = \$2::uuid/.test(expenses)) {
     problems.push("load expenses reverse route must return an authoritative company+load-scoped total");
   }
-  if (!/resolveLoadId/.test(bridge) || !/resolveVendorId/.test(bridge)) {
+  if (!/resolveFuelLoadAtTime/.test(bridge) || !/resolveVendorId/.test(bridge)) {
     problems.push("relay-fuel-canonical-bridge must resolve load_id/vendor_id via import helpers");
   }
   // Ban the old hardcoded NULL,NULL pair for load_id + vendor_id in VALUES
@@ -117,7 +117,7 @@ function selftest() {
     process.exit(1);
   }
   const bridge = read("apps/backend/src/integrations/relay-payments/relay-fuel-canonical-bridge.ts");
-  const broken = bridge.replace(/resolveLoadId/g, "REMOVED_RESOLVE").replace(/resolveVendorId/g, "REMOVED_VENDOR");
+  const broken = bridge.replace(/resolveFuelLoadAtTime/g, "REMOVED_RESOLVE").replace(/resolveVendorId/g, "REMOVED_VENDOR");
   const red = staticChecks({ bridge: broken });
   if (!red.some((p) => /resolve load_id\/vendor_id/.test(p))) {
     console.error(`${LABEL} SELFTEST FAIL: planted bridge regression not caught`);
