@@ -1,6 +1,6 @@
 import { nextCreditMemoDisplayId } from "../display-id.js";
 import { POSTING_FLAG_SKIP_RESULT } from "../posting-flag-skip-audit.js";
-import { insertPaymentApplicationRowInClientTx, postCustomerPaymentOrRecordSkipInClientTx } from "../payments.routes.js";
+import { insertPaymentApplicationRowInClientTx, postCustomerPaymentOrRecordSkipInClientTx } from "../payment-writer.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { backlinkBankTransactionToInvoice } from "./bank-invoice-backlink.service.js";
 import { directPaymentRoomCents } from "../../factoring/purchased-gross.service.js";

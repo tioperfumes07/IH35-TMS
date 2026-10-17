@@ -42,11 +42,12 @@ const checks = [
   { file: "apps/backend/src/accounting/expenses.routes.ts", events: ["expense.reattributed"] },
   { file: "apps/backend/src/accounting/payments.routes.ts", events: ["payment.created", "payment.voided"] },
   // 443.182 C step 2 — the customer Record Payment route hands its document (with its spine event) to the one payments
-  // engine (payments.routes.ts recordCustomerPaymentInClientTx), which emits it in-transaction.
+  // engine (payment-writer.service.ts recordCustomerPaymentInClientTx), which emits it in-transaction.
   { file: "apps/backend/src/accounting/customer-payments.routes.ts", events: ["payment.customer_created"], viaEngine: true },
 ];
 
-const ENGINE_FILE = "apps/backend/src/accounting/payments.routes.ts";
+// Heavy CI peel (Lead 13:45Z): the engine moved byte-for-byte to payment-writer.service.ts (a service imported the route).
+const ENGINE_FILE = "apps/backend/src/accounting/payment-writer.service.ts";
 for (const { file, events, viaEngine } of checks) {
   const src = read(file);
   const shortName = path.basename(file);

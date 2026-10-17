@@ -35,7 +35,9 @@ const BASELINE_REL = "scripts/verify-steps/18481-document-writers.baseline.json"
 export const CANONICAL = {
   bills: "apps/backend/src/accounting/bills.service.ts",
   expenses: "apps/backend/src/accounting/expense-writer.service.ts",
-  payments: "apps/backend/src/accounting/payments.routes.ts",
+  // Heavy CI peel (Lead 13:45Z): the engine moved byte-for-byte to payment-writer.service.ts (the apply service imported
+  // payments.routes.ts to reach it — verify-steps 12399). Same one writer, its own plain module.
+  payments: "apps/backend/src/accounting/payment-writer.service.ts",
   bill_payments: "apps/backend/src/accounting/bills.service.ts",
 };
 const TABLE = { bills: "accounting\\.bills", expenses: "accounting\\.expenses", payments: "accounting\\.payments", bill_payments: "accounting\\.bill_payments" };
@@ -108,7 +110,12 @@ export function check(files, baseline, mainBaseline) {
     for (const [doc, byFile] of Object.entries(baseline)) {
       for (const [rel, cap] of Object.entries(byFile)) {
         const was = (mainBaseline[doc] ?? {})[rel];
-        if (was == null) findings.push(`${BASELINE_REL}: ${doc} gained ${rel} — the baseline only shrinks`);
+        // Heavy CI peel (Lead 13:45Z): the ONE exception — the canonical writer itself moved to a new file (payments engine
+        // out of payments.routes.ts, verify-steps 12399). Allowed only for CANONICAL[doc], and only when the document's
+        // total writer sites do not rise against main; any other gained file still fails.
+        const sum = (o) => Object.values(o ?? {}).reduce((a, b) => a + Number(b), 0);
+        const canonicalMove = rel === CANONICAL[doc] && sum(baseline[doc]) <= sum(mainBaseline[doc]);
+        if (was == null && !canonicalMove) findings.push(`${BASELINE_REL}: ${doc} gained ${rel} — the baseline only shrinks`);
         else if (cap > was) findings.push(`${BASELINE_REL}: ${doc} ${rel} raised ${was} → ${cap} — the baseline only shrinks`);
       }
     }
@@ -289,6 +296,9 @@ if (process.argv.includes("--selftest")) {
     ["more sites in a listed file", files.map(([p, s]) => [p, p === CANONICAL.expenses ? s : p === "apps/backend/src/accounting/recurring.worker.ts" ? s + "\nq(`INSERT INTO accounting.expenses (id) VALUES (1)`)" : s]), baseline, mainBaseline],
     ["canonical writer gone", files.filter(([p]) => p !== CANONICAL.payments), baseline, mainBaseline],
     ["baseline grows", files, { ...baseline, bills: { ...baseline.bills, "apps/backend/src/x.ts": 1 } }, baseline],
+    // the canonical-move exception (heavy CI peel): only CANONICAL[doc], and never with a higher total
+    ["baseline gains a NON-canonical payments file", files, { ...baseline, payments: { "apps/backend/src/x.ts": 1 } }, { ...baseline, payments: { "apps/backend/src/accounting/old-home.ts": 1 } }],
+    ["canonical move raises the payments total", files, { ...baseline, payments: { [CANONICAL.payments]: 2 } }, { ...baseline, payments: { "apps/backend/src/accounting/old-home.ts": 1 } }],
     // payments deep block
     ["payment number outside the engine", [...files, ["apps/backend/src/x.ts", "const id = await resolvePaymentDisplayId(client, oci, d);"]], baseline, mainBaseline],
     ["payment application outside the engine", [...files, ["apps/backend/src/x.ts", "q(`INSERT INTO accounting.payment_applications (id) VALUES ($1)`)"]], baseline, mainBaseline],
