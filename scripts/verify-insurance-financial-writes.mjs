@@ -12,6 +12,7 @@
  * Self-test: node scripts/verify-insurance-financial-writes.mjs --selftest
  */
 import fs from "node:fs";
+const BILL_WRITE_RE = /INSERT\s+INTO\s+accounting\.bills|insertBillHeaderOnClient\s*(?:<[^>]*>)?\s*\(/i;
 import os from "node:os";
 import path from "node:path";
 
@@ -76,7 +77,8 @@ export function collectInsuranceFinancialWriteProblems(files) {
         `${SERVICE}: K-10 — must not pick banking.bank_accounts to invent a seed transaction`
       );
     }
-    if (!/INSERT\s+INTO\s+accounting\.bills/i.test(serviceSrc)) {
+    // 443.182 C — the A/P bill is written through the one bill writer (insertBillHeaderOnClient) or inline.
+    if (!BILL_WRITE_RE.test(serviceSrc)) {
       failures.push(`${SERVICE}: K-10 — must INSERT accounting.bills (A/P bills)`);
     }
   }
@@ -112,7 +114,7 @@ export function collectInsuranceFinancialWriteProblems(files) {
         `${DISPERSAL}: K-10 — must not pick banking.bank_accounts to invent a seed transaction`
       );
     }
-    if (!/INSERT\s+INTO\s+accounting\.bills/i.test(dispersalSrc)) {
+    if (!BILL_WRITE_RE.test(dispersalSrc)) {
       failures.push(`${DISPERSAL}: K-10 — must INSERT accounting.bills (A/P bills)`);
     }
     if (!/`ins:\$\{input\.policyId\}:\$\{bill\.sequence\}`/.test(dispersalSrc)) {
@@ -204,7 +206,9 @@ function selftest() {
       files: {
         serviceSrc: liveService,
         routesSrc: liveRoutes,
-        dispersalSrc: liveDispersal.replace(/INSERT\s+INTO\s+accounting\.bills/gi, "INSERT INTO accounting.expenses"),
+        dispersalSrc: liveDispersal
+          .replace(/INSERT\s+INTO\s+accounting\.bills/gi, "INSERT INTO accounting.expenses")
+          .replace(/insertBillHeaderOnClient\s*(?:<[^>]*>)?\s*\(/g, "insertExpenseHeader("),
       },
       expectSubstr: "must INSERT accounting.bills",
     },

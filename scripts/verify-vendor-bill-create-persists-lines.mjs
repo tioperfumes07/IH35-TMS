@@ -84,7 +84,8 @@ export function evaluate({ routesSrc, serviceSrc, formSrc, apiSrc }) {
     if (!/INSERT\s+INTO\s+accounting\.bill_lines\b/i.test(rowBody)) {
       failures.push(`${SERVICE_REL} — createBill() must INSERT INTO accounting.bill_lines`);
     }
-    if (!/INSERT\s+INTO\s+accounting\.bills\b/i.test(rowBody)) {
+    // 443.182 C — createBill writes its header through the one bill writer (insertBillHeaderOnClient).
+    if (!/INSERT\s+INTO\s+accounting\.bills\b|insertBillHeaderOnClient\s*(?:<[^>]*>)?\s*\(/i.test(rowBody)) {
       failures.push(`${SERVICE_REL} — createBill() must still INSERT INTO accounting.bills`);
     }
     if (!/bill_lines_required/.test(validateBody)) {

@@ -25,7 +25,9 @@ vi.mock("../../posting-engine.service.js", () => ({
   PostingEngineError: class PostingEngineError extends Error {},
   postSourceTransaction: vi.fn(),
 }));
-vi.mock("../../bills.service.js", () => ({
+vi.mock("../../bills.service.js", async (orig) => ({
+  // 443.182 C — the one bill writer is a pure client.query wrapper: keep the real one.
+  insertBillHeaderOnClient: (await orig<typeof import("../../bills.service.js")>()).insertBillHeaderOnClient,
   resolveMdataVendorIdBestEffort: vi.fn(async () => null),
   resolveVendorIsSampleDataBestEffort: vi.fn(async () => false),
 }));

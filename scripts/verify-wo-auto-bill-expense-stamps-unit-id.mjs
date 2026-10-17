@@ -12,6 +12,7 @@
  * Run: node scripts/verify-wo-auto-bill-expense-stamps-unit-id.mjs [--selftest]
  */
 
+import { billHeaderWrites } from "./lib/bill-header-writes.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,6 +46,17 @@ function extractFunction(src, name) {
 function assertBillInsertStampsUnit(fnSrc, label, failures) {
   if (!fnSrc) {
     failures.push(`${label}: function not found`);
+    return;
+  }
+  // 443.182 C — the bill header is written through the one writer (insertBillHeaderOnClient): check its column list.
+  const writerWrites = billHeaderWrites(fnSrc).filter((w) => w.kind === "writer");
+  if (writerWrites.length) {
+    for (const w of writerWrites) {
+      if (!w.columns.includes("unit_id")) failures.push(`${label}: bills INSERT must include unit_id column`);
+      if (!w.columns.includes("vendor_uuid") && !w.columns.includes("vendor_id")) {
+        failures.push(`${label}: bills INSERT must preserve vendor (vendor_uuid / vendor_id / COALESCE)`);
+      }
+    }
     return;
   }
   const insertIdx = fnSrc.search(/INSERT\s+INTO\s+accounting\.bills\b/i);
@@ -122,6 +134,21 @@ export async function autoCreateExpenseFromWO() {
   const f3 = [];
   assertExpenseInsertStampsUnit(extractFunction(goodExpense, "autoCreateExpenseFromWO"), "goodExpense", f3);
   if (f3.length) failures.push("goodExpense should PASS: " + f3.join("; "));
+  // 443.182 C — the one-writer call form.
+  const wGood = `
+export async function autoCreateBillFromWO() {
+  await insertBillHeaderOnClient(client, [["vendor_uuid", { value: v }], ["unit_id", { value: u, cast: "uuid" }]]);
+}`;
+  const wBad = `
+export async function autoCreateBillFromWO() {
+  await insertBillHeaderOnClient(client, [["vendor_uuid", { value: v }], ["load_id", { value: l }]]);
+}`;
+  const f4 = [];
+  assertBillInsertStampsUnit(extractFunction(wGood, "autoCreateBillFromWO"), "writerGood", f4);
+  if (f4.length) failures.push("writer call with unit_id should PASS: " + f4.join("; "));
+  const f5 = [];
+  assertBillInsertStampsUnit(extractFunction(wBad, "autoCreateBillFromWO"), "writerBad", f5);
+  if (f5.length === 0) failures.push("writer call without unit_id should FAIL");
 
   if (failures.length) {
     console.error("verify-wo-auto-bill-expense-stamps-unit-id SELFTEST FAILED:");

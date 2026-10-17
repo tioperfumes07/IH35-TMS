@@ -55,7 +55,7 @@ import {
 } from "../accounting/posting-engine.service.js";
 import { BILL_GL_POSTING_FLAG_KEY } from "../accounting/bill-gl.service.js";
 import { BILL_PAYMENT_GL_POSTING_FLAG_KEY } from "../accounting/bill-payment-gl.service.js";
-import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
+import { insertBillHeaderOnClient, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
 import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
 
 export const BANK_TX_SPLIT_FLAG_KEY = "BANK_TX_SPLIT_ENABLED";
@@ -831,38 +831,33 @@ async function commitVendorBillSplitLineAtomic(input: {
     // ACCT-F353 — derive from the vendor being paid (same relationship the FK above resolves).
     const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, input.companyId, input.vendorId);
 
-    const billRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.bills (
-          operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id, bill_date, due_date, amount_cents, total_amount,
-          paid_cents, paid_amount, status, memo, coa_account_id, source_bank_transaction_id,
-          created_by_user_id, created_at, updated_at,
-          -- ACCT-F353 — derived from the vendor being paid (vendorIsSampleData above).
-          is_sample_data
-        )
-        VALUES ($1,$2,$2,$10,$3,$3,$4,$5,$4,$5,'paid',$6,$7,$8,$9,now(),now(),$11)
-        RETURNING id::text
-      `,
+    // 443.182 C — written through the one bill writer (same columns, casts and literals as the former inline INSERT).
+    const billRes = await insertBillHeaderOnClient<{ id: string }>(
+      client,
       [
-        input.companyId,
-        input.vendorId,
-        input.txnPostingDate,
-        input.amountCents,
-        input.amountCents / 100,
-        // ACCT-F6284 — memo is a human-readable free-text column, not internal audit metadata; the
-        // structured shape (source/bank_transaction_id/split_line_no) previously JSON.stringify()'d
-        // here leaked verbatim into any reader that treats memo as a display fallback (Accounting
-        // hub "Find Transactions" panel, etc.). The transaction id is already carried losslessly by
-        // source_bank_transaction_id (bound below) and category_kind is already reflected in
-        // input.glAccountId/coa_account_id — nothing structured is lost by writing a plain sentence
-        // here, matching the human string bill_lines.description already uses for the same row.
-        `Bank-split vendor bill (bank_txn ${input.bankTransactionId}, line ${input.lineNo})`,
-        input.glAccountId,
-        input.bankTransactionId,
-        input.actorUserUuid,
-        mdataVendorId,
-        vendorIsSampleData,
-      ]
+        ["operating_company_id", { value: input.companyId }],
+        ["vendor_id", { value: input.vendorId }],
+        ["vendor_uuid", { value: input.vendorId }],
+        ["mdata_vendor_id", { value: mdataVendorId }],
+        ["bill_date", { value: input.txnPostingDate }],
+        ["due_date", { value: input.txnPostingDate }],
+        ["amount_cents", { value: input.amountCents }],
+        ["total_amount", { value: input.amountCents / 100 }],
+        ["paid_cents", { value: input.amountCents }],
+        ["paid_amount", { value: input.amountCents / 100 }],
+        ["status", { sql: "'paid'" }],
+        // ACCT-F6284 — memo is a human-readable free-text column; the transaction id is carried losslessly by
+        // source_bank_transaction_id and category_kind by coa_account_id — a plain sentence, same as bill_lines.description.
+        ["memo", { value: `Bank-split vendor bill (bank_txn ${input.bankTransactionId}, line ${input.lineNo})` }],
+        ["coa_account_id", { value: input.glAccountId }],
+        ["source_bank_transaction_id", { value: input.bankTransactionId }],
+        ["created_by_user_id", { value: input.actorUserUuid }],
+        ["created_at", { sql: "now()" }],
+        ["updated_at", { sql: "now()" }],
+        // ACCT-F353 — derived from the vendor being paid (vendorIsSampleData above).
+        ["is_sample_data", { value: vendorIsSampleData }],
+      ],
+      { returning: "id::text" },
     );
     const billId = billRes.rows[0]?.id;
     if (!billId) throw new VendorBillSplitAtomicError("bill_insert_failed", "Bill insert returned no id");

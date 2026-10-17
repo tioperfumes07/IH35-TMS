@@ -22,6 +22,7 @@
  * Invariant A runs everywhere (static). Invariant B needs a DB and SKIPs without one, so CI's
  * static-context run still enforces the half that does not need Postgres.
  */
+import { billHeaderWrites } from "./lib/bill-header-writes.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
@@ -45,7 +46,8 @@ const src = fs.readFileSync(SERVICE, "utf8");
 /** INVARIANT A as a pure check: every bills INSERT variant binds unit_id + mdata_vendor_id, every line INSERT binds load_id. */
 export function checkWritePath(text) {
   const problems = [];
-  const billsInserts = text.match(/INSERT INTO accounting\.bills\s*\(([\s\S]*?)\)/g) ?? [];
+  // 443.182 C — the bill header is written through insertBillHeaderOnClient: every write's column list is checked.
+  const billsInserts = billHeaderWrites(text).map((w) => w.columns.join(", "));
   const lineInserts = text.match(/INSERT INTO accounting\.bill_lines\s*\(([\s\S]*?)\)/g) ?? [];
   if (billsInserts.length === 0) problems.push("no INSERT INTO accounting.bills found in bills.service.ts — the create path moved or was removed");
   if (lineInserts.length === 0) problems.push("no INSERT INTO accounting.bill_lines found — the line write path moved or was removed");
@@ -105,9 +107,9 @@ if (process.argv.includes("--selftest")) {
   let ok = true;
   const ex = (n, c) => { if (!c) { console.error(`SELFTEST FAIL: ${n}`); ok = false; } };
   ex("real write path passes", checkWritePath(src).problems.length === 0);
-  ex("a bills variant dropping unit_id is caught", checkWritePath(src.replace(/(INSERT INTO accounting\.bills\s*\([^)]*?)\bunit_id\b,?/, "$1")).problems.some((p) => /unit_id/.test(p)));
-  ex("a bills variant dropping mdata_vendor_id is caught", checkWritePath(src.replace(/(INSERT INTO accounting\.bills\s*\([^)]*?)\bmdata_vendor_id\b,?/, "$1")).problems.some((p) => /mdata_vendor_id/.test(p)));
-  ex("a bills variant dropping trailer_id is caught", checkWritePath(src.replace(/(INSERT INTO accounting\.bills\s*\([^)]*?)\btrailer_id\b,?/, "$1")).problems.some((p) => /trailer_id/.test(p)));
+  ex("a bills write dropping unit_id is caught", checkWritePath(src.replace('["unit_id", { value: input.unitId', '["unit_id_dropped", { value: input.unitId')).problems.some((p) => /unit_id/.test(p)));
+  ex("a bills write dropping mdata_vendor_id is caught", checkWritePath(src.replace('["mdata_vendor_id", { value: vendorCols', '["mdata_vendor_id_dropped", { value: vendorCols')).problems.some((p) => /mdata_vendor_id/.test(p)));
+  ex("a bills write dropping trailer_id is caught", checkWritePath(src.replace('["trailer_id", { value: trailerId', '["trailer_id_dropped", { value: trailerId')).problems.some((p) => /trailer_id/.test(p)));
   ex("dropping resolveDriverBillTrailerFromLoad is caught", checkWritePath(src.replaceAll("resolveDriverBillTrailerFromLoad", "noop")).problems.some((p) => /resolveDriverBillTrailerFromLoad/.test(p)));
   ex("a line variant dropping load_id is caught", checkWritePath(src.replace(/(INSERT INTO accounting\.bill_lines\s*\([^)]*?)\bload_id\b,?/, "$1")).problems.some((p) => /load_id/.test(p)));
   ex("write path removed is caught", checkWritePath("export {}").problems.length >= 2);

@@ -3,6 +3,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { insertBillHeaderOnClient } from "../accounting/bills.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -126,31 +127,32 @@ export async function persistInsuranceDispersalBills(input: {
     for (const bill of input.bills) {
       const idempotencyKey = `ins:${input.policyId}:${bill.sequence}`;
 
-      const billRes = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.bills (
-            operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id,
-            bill_date, due_date, amount_cents, total_amount,
-            paid_cents, paid_amount, status, memo,
-            qbo_idempotency_key, created_by_user_id, created_at, updated_at,
-            is_sample_data
-          )
-          VALUES ($1,$2,$2,$2::uuid,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,now(),now(),$9)
-          ON CONFLICT (operating_company_id, qbo_idempotency_key)
-            WHERE qbo_idempotency_key IS NOT NULL DO NOTHING
-          RETURNING id::text
-        `,
+      // 443.182 C — written through the one bill writer (same columns, casts, literals and ON CONFLICT idempotency as the
+      // former inline INSERT).
+      const billRes = await insertBillHeaderOnClient<{ id: string }>(
+        client,
         [
-          input.operatingCompanyId,
-          vendorId,
-          bill.due_date,
-          Math.abs(bill.amount_cents),
-          Math.abs(bill.amount_cents) / 100,
-          `Insurance dispersal bill — policy ${input.policyNumber}, installment ${bill.sequence} (${bill.phase}) · ${INSURANCE_PS_CATEGORY}::${bill.ps_item ?? "Insurance Premium"}`,
-          idempotencyKey,
-          input.userId,
-          vendorIsSampleData,
-        ]
+          ["operating_company_id", { value: input.operatingCompanyId }],
+          ["vendor_id", { value: vendorId }],
+          ["vendor_uuid", { value: vendorId }],
+          // INSURANCE-POLICY-BILL-PARAM-FIX: vendor_id/vendor_uuid are text, mdata_vendor_id is uuid — only it is cast.
+          ["mdata_vendor_id", { value: vendorId, cast: "uuid" }],
+          ["bill_date", { value: bill.due_date }],
+          ["due_date", { value: bill.due_date }],
+          ["amount_cents", { value: Math.abs(bill.amount_cents) }],
+          ["total_amount", { value: Math.abs(bill.amount_cents) / 100 }],
+          ["paid_cents", { sql: "0" }],
+          ["paid_amount", { sql: "0" }],
+          ["status", { sql: "'unpaid'" }],
+          ["memo", { value: `Insurance dispersal bill — policy ${input.policyNumber}, installment ${bill.sequence} (${bill.phase}) · ${INSURANCE_PS_CATEGORY}::${bill.ps_item ?? "Insurance Premium"}` }],
+          ["qbo_idempotency_key", { value: idempotencyKey }],
+          ["created_by_user_id", { value: input.userId }],
+          ["created_at", { sql: "now()" }],
+          ["updated_at", { sql: "now()" }],
+          // ACCT-F353 — derived from the insurer vendor above.
+          ["is_sample_data", { value: vendorIsSampleData }],
+        ],
+        { returning: "id::text", onConflict: "idempotency_key_do_nothing" },
       );
       const createdBillId = billRes.rows[0]?.id;
       if (!createdBillId) throw new Error("insurance_created_bill_not_found");
