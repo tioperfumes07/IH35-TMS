@@ -1,17 +1,19 @@
 // @vitest-environment jsdom
 import * as jestDomMatchers from "@testing-library/jest-dom/matchers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/client";
 import { ToastProvider } from "../components/Toast";
 import { UsersPage } from "./Users";
 import { within } from "@testing-library/react";
 
 expect.extend(jestDomMatchers);
+// verify-users-add-user-submits runs this file from the repo root (no auto-cleanup there): unmount between tests.
+afterEach(() => cleanup());
 
 const createUserMock = vi.fn();
 const listUsersMock = vi.fn();
@@ -60,6 +62,14 @@ function wrap(ui: ReactElement) {
   );
 }
 
+/** LST-F05 C-55 (#23568) + LST-F19 C-02 (#23393): /users mounts Regular | Master-detail and DEFAULTS to master-detail; the
+ *  row actions (Change role, Deactivate) and the search box live in the Regular table, so every test opens it the way a
+ *  user does — by clicking the house view toggle — instead of assuming list is the default. */
+async function renderUsersRegularView() {
+  render(wrap(<UsersPage />));
+  await userEvent.setup().click(await screen.findByRole("button", { name: "Regular" }));
+}
+
 /** Click the first "+ Create User" button (PageHeader may render multiple in some viewport breakpoints). */
 async function openInviteModal(user: ReturnType<typeof userEvent.setup>) {
   const btns = screen.getAllByRole("button", { name: /\+ Create User/i });
@@ -106,7 +116,7 @@ describe("UsersPage — Add User submit", () => {
       })
     );
     const user = userEvent.setup();
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     await openInviteModal(user);
     await chooseSetPasswordMode(user);
     await fillModalBasics(user);
@@ -121,7 +131,7 @@ describe("UsersPage — Add User submit", () => {
 
   it("(b) weak password shows hint toast and does NOT call API", async () => {
     const user = userEvent.setup();
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     await openInviteModal(user);
     await chooseSetPasswordMode(user);
     await fillModalBasics(user);
@@ -138,7 +148,7 @@ describe("UsersPage — Add User submit", () => {
 
   it("(c) invite mode: submit enabled without password, no checklist shown", async () => {
     const user = userEvent.setup();
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     await openInviteModal(user);
     expect((screen.getByRole("radio", { name: /email invite/i }) as HTMLInputElement).checked).toBe(true);
     expect(screen.getByRole("button", { name: /create and send invite/i })).not.toBeDisabled();
@@ -153,7 +163,7 @@ describe("UsersPage — Add User submit", () => {
       role: "Manager",
     });
     const user = userEvent.setup();
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     await openInviteModal(user);
     await chooseSetPasswordMode(user);
     await fillModalBasics(user);
@@ -183,7 +193,7 @@ describe("UsersPage — Add User submit", () => {
   it("(e) any unexpected API error surfaces a visible error toast — never silently swallowed", async () => {
     createUserMock.mockRejectedValue(new ApiError(500, { error: "internal_server_error" }));
     const user = userEvent.setup();
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     await openInviteModal(user);
     await chooseSetPasswordMode(user);
     await fillModalBasics(user);
@@ -206,7 +216,7 @@ describe("UsersPage — Add User submit", () => {
     });
     createUserMock.mockResolvedValue({ id: "00000000-0000-4000-8000-000000000004" });
     const user = userEvent.setup();
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     await openInviteModal(user);
     await fillModalBasics(user);
 
@@ -266,9 +276,11 @@ describe("UsersPage — Deactivate control", () => {
     listUsersMock.mockResolvedValue({ users: [activeUser] });
     deactivateUserMock.mockResolvedValue({ id: "u1", deactivated_at: "2026-07-03T00:00:00Z", was_already_deactivated: false });
     const user = userEvent.setup();
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     const btn = await screen.findByRole("button", { name: /^Deactivate Alice Active$/ });
     await user.click(btn);
+    // USERS-F6622 (#16234): the row action stages a shared ConfirmModal; the API fires only on "Deactivate user".
+    await user.click(await screen.findByRole("button", { name: /^Deactivate user$/ }));
     await waitFor(() => expect(deactivateUserMock).toHaveBeenCalledWith("u1", expect.anything()));
     await waitFor(() => expect(toastMessages().some((m) => /deactivated/i.test(m))).toBe(true));
   });
@@ -277,15 +289,17 @@ describe("UsersPage — Deactivate control", () => {
     listUsersMock.mockResolvedValue({ users: [activeUser] });
     deactivateUserMock.mockRejectedValue(new ApiError(400, { error: "cannot_deactivate_last_owner" }));
     const user = userEvent.setup();
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     const btn = await screen.findByRole("button", { name: /^Deactivate Alice Active$/ });
     await user.click(btn);
+    // USERS-F6622 (#16234): the row action stages a shared ConfirmModal; the API fires only on "Deactivate user".
+    await user.click(await screen.findByRole("button", { name: /^Deactivate user$/ }));
     await waitFor(() => expect(toastMessages().some((m) => /last active owner/i.test(m))).toBe(true));
   });
 
   it("(i) already-deactivated user renders a disabled control (no silent action)", async () => {
     listUsersMock.mockResolvedValue({ users: [deactivatedUser] });
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     const btn = await screen.findByRole("button", { name: /^Deactivate Bob Gone$/ });
     expect(btn).toBeDisabled();
   });
@@ -306,14 +320,16 @@ describe("UsersPage — Change role ceremony", () => {
   it("requires a distinct approver for policy-sensitive role changes", async () => {
     createIdentityWorkflowMock.mockResolvedValue({ id: "wf-1" });
     const user = userEvent.setup();
-    render(wrap(<UsersPage />));
+    await renderUsersRegularView();
     // Target User (Manager) — change role button aria includes name
     const changeBtn = await screen.findByRole("button", { name: /change role for target user/i });
     await user.click(changeBtn);
 
     const roleInput = screen.getAllByPlaceholderText("Select role").at(-1)!;
-    await user.clear(roleInput);
-    await user.type(roleInput, "Administrator");
+    // Shared Combobox WIZ-46 D1: focus keeps the committed label visible and SELECTS it (rAF) so the first keystroke
+    // replaces it; jsdom does not run that rAF before typing, so the test types over the same selection explicitly.
+    await user.click(roleInput);
+    await user.type(roleInput, "Administrator", { initialSelectionStart: 0, initialSelectionEnd: (roleInput as HTMLInputElement).value.length });
     const roleListbox = await screen.findByRole("listbox");
     await user.click(within(roleListbox).getByRole("option", { name: /^Administrator$/i }));
 
@@ -326,8 +342,8 @@ describe("UsersPage — Change role ceremony", () => {
     expect(createIdentityWorkflowMock).not.toHaveBeenCalled();
 
     const approverInput = screen.getByPlaceholderText("Select approver");
-    await user.clear(approverInput);
-    await user.type(approverInput, "Admin One");
+    await user.click(approverInput);
+    await user.type(approverInput, "Admin One", { initialSelectionStart: 0, initialSelectionEnd: (approverInput as HTMLInputElement).value.length });
     const approverListbox = await screen.findByRole("listbox");
     await user.click(within(approverListbox).getByRole("option", { name: /Admin One/i }));
 
