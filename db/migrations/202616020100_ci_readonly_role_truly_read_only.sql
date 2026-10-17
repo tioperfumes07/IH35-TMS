@@ -19,8 +19,17 @@ DECLARE r text;
 BEGIN
   FOREACH r IN ARRAY ARRAY['ih35_ci_readonly', 'ih35_guard_reader'] LOOP
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = r) THEN
-      EXECUTE format('ALTER ROLE %I SET default_transaction_read_only = on', r);
-      RAISE NOTICE '202616020100: % now starts every session read-only', r;
+      BEGIN
+        EXECUTE format('ALTER ROLE %I SET default_transaction_read_only = on', r);
+        RAISE NOTICE '202616020100: % now starts every session read-only', r;
+      EXCEPTION WHEN insufficient_privilege THEN
+        -- Production 2026-10-17 12:08Z: "permission denied to alter role" for ih35_ci_readonly — a Neon
+        -- console-created role; the migrator holds no ADMIN OPTION on it (PG16), so no migration can change
+        -- its settings. Refusing here blocked every backend deploy (pre_deploy_failed #27006, #27011).
+        -- That role is replaced by a credential action (owner item), not by SQL. Verified state is reported,
+        -- never assumed: the WARNING names the role left unchanged.
+        RAISE WARNING '202616020100: % NOT changed — migrator lacks ADMIN OPTION on this console-created role', r;
+      END;
     END IF;
   END LOOP;
 END $$;
