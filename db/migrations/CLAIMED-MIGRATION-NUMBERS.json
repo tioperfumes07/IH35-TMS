@@ -178,6 +178,11 @@
       "claimed_at": "2026-10-17",
       "purpose": "LEAD 443.189: CoA role related_party_loan_parent admitted to chart_of_accounts_roles_role_check and bound on USMCA to 2410 Owner / Related-Party Loan Payable (party-account.service.ts stops hard-coding 2410; CC-2 443.187 batch finding)"
     },
+    "202616010300": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-17",
+      "purpose": "CC-3 LEAD 443.187: GRANT USAGE ON SCHEMA views, migration TO ih35_app (verify-migration-schema-grants: no migration grants the app role the schemas its views / migration ledger live in)"
+    },
     "202616000100": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-16",
