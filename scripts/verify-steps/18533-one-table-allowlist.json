@@ -1,0 +1,145 @@
+{
+  "_doc": "LEAD 443.181 (owner 2026-10-16: \"the entire app must be like quickbooks clickable and must take you somewhere\" · \"have a coder check all tables so they are built the same way. Not guess.\") — the ONLY files that may render a raw <table>, a print-HTML <table>, a <DataTable> or a second table component, with the count of each and the reason it is not a data list. Every list/report table is <ParityTable>. SHRINK-ONLY: never add a file or raise a count. Census: IH35-LEAD-CHANNEL SEATS-TO-LEAD 2026-10-17 01:25Z.",
+  "sites": {
+    "apps/frontend/src/components/DataTable.tsx": {
+      "raw_table": 1,
+      "reason": "component internals: the retired DataTable engine — 0 screens render <DataTable>; file kept (Lead ruling 02:50Z: no deletion, closed)"
+    },
+    "apps/frontend/src/components/dispatch/FreshnessIndicator.usage.example.tsx": {
+      "raw_table": 1,
+      "reason": "not a data list: unrouted documentation example of freshness pills"
+    },
+    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx": {
+      "raw_table": 1,
+      "reason": "not a data list: label/value stat popup inside the load drawer"
+    },
+    "apps/frontend/src/components/parity/ParityTable.tsx": {
+      "raw_table": 1,
+      "reason": "component internals: ParityTable is the one table component"
+    },
+    "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx": {
+      "print_table": 1,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/accounting/ExpenseDetailPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx": {
+      "print_table": 1,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx": {
+      "print_table": 1,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx": {
+      "raw_table": 1,
+      "reason": "layout grid: driver × day planner calendar with drag-and-drop load chips"
+    },
+    "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx": {
+      "raw_table": 1,
+      "reason": "not a data list: charge-input form layout (linehaul / fuel / accessorial inputs)"
+    },
+    "apps/frontend/src/pages/finance/ArApAgingPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx": {
+      "print_table": 7,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/home/OwnerHome.tsx": {
+      "print_table": 3,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/home/roles/AccountingHome.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/home/roles/DefaultHome.tsx": {
+      "print_table": 3,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx": {
+      "raw_table": 2,
+      "reason": "layout grid: module × class heatmap and module × entity gate matrix (grouped rowSpan/colSpan headers)"
+    },
+    "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx": {
+      "raw_table": 1,
+      "reason": "layout grid: leaf × column-group status matrix (grouped colSpan headers)"
+    },
+    "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx": {
+      "raw_table": 1,
+      "reason": "layout grid: all-modules × column-group matrix (grouped colSpan headers)"
+    },
+    "apps/frontend/src/pages/reports/APAgingPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/ARAgingPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/BalanceSheetPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/CashFlowOverviewPage.tsx": {
+      "print_table": 3,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/CashFlowStatementPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/CustomerProfitabilityPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/MaintenanceCostPerUnitPage.tsx": {
+      "print_table": 3,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/ProfitLossPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/SettlementSummaryPage.tsx": {
+      "print_table": 3,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/reports/TrialBalancePage.tsx": {
+      "print_table": 2,
+      "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
+    },
+    "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx": {
+      "raw_table": 1,
+      "reason": "layout grid: driver × day leave/absence calendar"
+    },
+    "apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx": {
+      "raw_table": 1,
+      "reason": "layout grid: employee × day task calendar"
+    }
+  }
+}
