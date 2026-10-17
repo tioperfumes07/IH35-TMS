@@ -78,7 +78,7 @@ async function walkLoadStatusFromFence(
       operatingCompanyId,
       loadId,
       step === "delivered_pending_docs"
-        ? { new_status: step, delivered_at: deliveredAt ?? null }
+        ? { new_status: step, delivered_at: deliveredAt ?? null, departure_evidence: "fence" as const }
         : { new_status: step }
     );
     if ("error" in r) return;

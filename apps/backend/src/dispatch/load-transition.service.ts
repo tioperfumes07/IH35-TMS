@@ -20,6 +20,13 @@ export type DispatchTransitionInput = {
   new_status: Parameters<typeof validateLoadStatusTransition>[1];
   reason?: string | null;
   delivered_at?: string | null;
+  /**
+   * LEAD 443.184 G11 — "fence": the move comes from a geofence ARRIVAL at the final delivery. The fence detector already
+   * stamped the stop's real arrival and will stamp its real departure when the truck leaves the fence, so the transition
+   * must NOT attest a departure (it used to stamp departure = the arrival time, source 'manual', which then blocked the
+   * real fence exit stamp — fill-null — and lost the dwell). Default: the office attests the departure, as before.
+   */
+  departure_evidence?: "attested" | "fence";
 };
 
 /** The transaction client of withCompanyScope / withLuciaBypass (after-commit queue keyed on it). */
@@ -171,8 +178,8 @@ export async function transitionDispatchLoadInClientTx(client: TransitionClient,
   // office action, never over historical rows (see DISPATCH-STATUS-STOP-COUPLING-SCOPE §3 — loads
   // already past the gate stay flagged and unrecognized until a human supplies real evidence).
   if (loadStatusRequiresDeliveryDepartureStamp(targetStatus)) {
-    // CLS-DISP-WIRE-07 — shared stamp (also used by bulk + mdata status paths).
-    await stampFinalActiveDeliveryDeparture(
+    // CLS-DISP-WIRE-07 — shared stamp (also used by bulk + mdata status paths). Not on a fence arrival (G11, above).
+    if (input.departure_evidence !== "fence") await stampFinalActiveDeliveryDeparture(
       client,
       operatingCompanyId,
       loadId,
