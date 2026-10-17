@@ -29,6 +29,7 @@ const LABEL = "verify-exp-posted-no-je-void-and-bulk";
 const EXPENSES_FILE = "apps/backend/src/accounting/expenses.routes.ts";
 const BILLS_FILE = "apps/backend/src/accounting/bills.service.ts";
 const HELPER_FILE = "apps/backend/src/accounting/expense-void-reversal.ts";
+const VOID_SERVICE_FILE = "apps/backend/src/accounting/expense-void.service.ts";
 const BULK_FILE = "apps/backend/src/bulk/bulk-update.factory.ts";
 const MIGRATION_FILE = "db/migrations/202613310500_expenses_bills_posted_requires_je_check_not_valid.sql";
 
@@ -37,7 +38,7 @@ function read(rel) {
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
 }
 
-export function assertGuard(expensesSrc, billsSrc, bulkSrc, migrationSrc, helperSrc) {
+export function assertGuard(expensesSrc, billsSrc, bulkSrc, migrationSrc, helperSrc, voidServiceSrc = read(VOID_SERVICE_FILE)) {
   const errs = [];
   if (!expensesSrc) return [`${EXPENSES_FILE}: missing`];
 
@@ -48,11 +49,23 @@ export function assertGuard(expensesSrc, billsSrc, bulkSrc, migrationSrc, helper
   //             (its own 'expense' lines + a fuel receipt's 'fuel_event' entry): nothing live -> a status-only void (still
   //             never a fabricated reversal); something live -> reversed; any reversal error propagates (no catch).
   //   why: the SOURCE_NOT_FOUND catch also swallowed the fuel receipt case — a voided fuel receipt document kept its JE live.
-  if (!/await reverseExpenseDocumentInClientTx\(client, \{/.test(expensesSrc)) {
-    errs.push(`${EXPENSES_FILE}: expense void must reverse through reverseExpenseDocumentInClientTx (every live posting of the document)`);
+  // 443.192 / LEAD 13:00Z — re-pointed, same rule: de3de55e09 (443.136 follow-up, ACCT-F4431371) moved the route's void
+  //   into the ONE in-transaction expense void, voidExpenseDocumentInClientTx (expense-void.service.ts), shared with the
+  //   Owner duplicate-purchase repair. The void path is now route -> that service -> reverseExpenseDocumentInClientTx, so
+  //   both hops are required: the route delegates to the service, and the service reverses through the one reverser.
+  const reversesDirectly = /await reverseExpenseDocumentInClientTx\(client(?: as never)?, \{/.test(expensesSrc);
+  const delegates = /\bvoidExpenseDocumentInClientTx\(client(?: as never)?, \{/.test(expensesSrc);
+  const serviceReverses = Boolean(voidServiceSrc) && /await reverseExpenseDocumentInClientTx\(client(?: as never)?, \{/.test(voidServiceSrc);
+  if (!reversesDirectly && !(delegates && serviceReverses)) {
+    errs.push(`${EXPENSES_FILE}: expense void must reverse through reverseExpenseDocumentInClientTx (every live posting of the document) — directly or via ${VOID_SERVICE_FILE} voidExpenseDocumentInClientTx`);
   }
-  if (/SOURCE_NOT_FOUND"\) throw revErr|code !== "SOURCE_NOT_FOUND"/.test(expensesSrc)) {
-    errs.push(`${EXPENSES_FILE}: expense void must not catch SOURCE_NOT_FOUND — "nothing posted" is decided by reading, never by swallowing a reversal error`);
+  for (const [file, src] of [[EXPENSES_FILE, expensesSrc], [VOID_SERVICE_FILE, voidServiceSrc ?? ""]]) {
+    if (/SOURCE_NOT_FOUND"\) throw revErr|code !== "SOURCE_NOT_FOUND"/.test(src)) {
+      errs.push(`${file}: expense void must not catch SOURCE_NOT_FOUND — "nothing posted" is decided by reading, never by swallowing a reversal error`);
+    }
+  }
+  if (voidServiceSrc && /\bcatch\b/.test(voidServiceSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, ""))) {
+    errs.push(`${VOID_SERVICE_FILE}: a reversal error must never be swallowed in the void (no catch)`);
   }
   if (helperSrc !== undefined) {
     if (!helperSrc) errs.push(`${HELPER_FILE}: missing`);
@@ -112,14 +125,17 @@ function selftest() {
   const goodBulk = read(BULK_FILE) ?? "";
   const goodMigration = read(MIGRATION_FILE) ?? "";
   const goodHelper = read(HELPER_FILE) ?? "";
-  const goodErrs = assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper);
+  const goodVoidService = read(VOID_SERVICE_FILE) ?? "";
+  const goodErrs = assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper, goodVoidService);
   if (goodErrs.length) {
     console.error(`${LABEL} --selftest FAIL good (${goodErrs.length}): ${goodErrs.join("; ")}`);
     process.exit(1);
   }
 
   const mutations = [
-    ["bad1-expense-void-bypasses-helper", assertGuard(goodExpenses.replace("await reverseExpenseDocumentInClientTx(client, {", "await somethingElse(client, {"), goodBills, goodBulk, goodMigration, goodHelper)],
+    ["bad1-expense-void-bypasses-helper", assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper, goodVoidService.replace("await reverseExpenseDocumentInClientTx(client as never, {", "await somethingElse(client as never, {"))],
+    ["bad1-route-bypasses-void-service", assertGuard(goodExpenses.replace("voidExpenseDocumentInClientTx(client as never, {", "somethingElse(client as never, {"), goodBills, goodBulk, goodMigration, goodHelper, goodVoidService)],
+    ["bad1f-void-service-swallows-reversal-error", assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper, goodVoidService.replace("const reversingJeId = rev.reversal_journal_entry_id;", "try { void 0; } catch { /* x */ }\n  const reversingJeId = rev.reversal_journal_entry_id;"))],
     ["bad1b-expense-void-swallows-source-not-found", assertGuard(goodExpenses + '\nif (revErr.code !== "SOURCE_NOT_FOUND") throw revErr;', goodBills, goodBulk, goodMigration, goodHelper)],
     ["bad1c-helper-fabricates-reversal-when-nothing-live", assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper.replace("if (live.expense_source_live) {", "if (true) {"))],
     ["bad1d-helper-skips-fuel-receipt", assertGuard(goodExpenses, goodBills, goodBulk, goodMigration, goodHelper.replace('entityType: "fuel_event", entityId: fillId', 'entityType: "expense", entityId: fillId'))],
