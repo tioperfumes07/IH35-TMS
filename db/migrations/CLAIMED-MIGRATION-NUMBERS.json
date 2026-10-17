@@ -188,6 +188,11 @@
       "claimed_at": "2026-10-17",
       "purpose": "CC-3 LEAD 443.187 (06:55Z): coa role rows — deactivate duplicate active (operating_company_id, role) rows (keep the one the resolver returns) + partial UNIQUE index WHERE is_active"
     },
+    "202616010400": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-17",
+      "purpose": "CC-3 LEAD 443.191: restore security_invoker=true on views.factoring_recourse_at_risk + views.factoring_chargebacks_fees (replaces 202616011100: HH 09-11 needs a cc-3/ branch; claude/ branches draw HH 00-05) — 202616011100 left unused"
+    },
     "202616011100": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-17",
