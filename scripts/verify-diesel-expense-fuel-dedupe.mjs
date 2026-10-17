@@ -16,6 +16,11 @@
 //                                copies post — the purchase is in the GL twice. A twin that exists
 //                                but does not post is a WARN (void the expense only after re-posting it).
 //   live_diesel_expenses         every live Diesel expense (no new ones may appear)
+//   duplicate_fill_pairs         LEAD 443.197 — the SAME PURCHASE recorded twice, caught by the fill itself, not by an
+//                                invoice string (a statement copy and the Creator receipt carry different references):
+//                                two live fuel rows of the same unit + product, company days at most 1 apart, gallons
+//                                within 0.01 and an amount within 5 cents (any of total / gross on either side — the
+//                                card's gross vs the receipt). 2026-10-17: 8 Dreamline statement copies of booked fills.
 //   current > baseline -> FAIL (new double, or a new Diesel expense was written)
 //   current <= baseline -> PASS; when lower, prints the tighter number to commit to the baseline
 // Plus the prior regression lock: the two settlement-5782 rows stay voided with their disclosed reason.
@@ -42,7 +47,37 @@ const KNOWN_VOIDED_5782_IDS = [ // STALE-LITERAL-OK: known voided IDs for settle
   "fc1e34b9-98a2-49cc-bfcb-febf2b67f678",
   "0154cb7e-6b14-4d97-9ebc-8b19268ad124",
 ];
-const METRICS = ["doubled_with_live_fuel_twin", "live_diesel_expenses"];
+const METRICS = ["doubled_with_live_fuel_twin", "live_diesel_expenses", "duplicate_fill_pairs"];
+
+// LEAD 443.197 — one fill, recorded twice. The SQL narrows to candidate pairs (same unit + product, company days <= 1
+// apart, gallons within 0.01); the pure predicate below decides — the same code the selftest plants against.
+const FILL_PAIR_SQL = `
+  SELECT a.id::text AS a_id, b.id::text AS b_id, a.unit_id::text AS a_unit, b.unit_id::text AS b_unit,
+         a.fuel_type::text AS a_type, b.fuel_type::text AS b_type,
+         (coalesce(a.purchased_at, a.transaction_at) AT TIME ZONE 'America/Chicago')::date::text AS a_day,
+         (coalesce(b.purchased_at, b.transaction_at) AT TIME ZONE 'America/Chicago')::date::text AS b_day,
+         a.gallons::text AS a_gal, b.gallons::text AS b_gal,
+         a.total_cost::text AS a_total, b.total_cost::text AS b_total, a.gross_cost::text AS a_gross, b.gross_cost::text AS b_gross
+    FROM fuel.fuel_transactions a
+    JOIN fuel.fuel_transactions b
+      ON b.operating_company_id = a.operating_company_id AND b.unit_id = a.unit_id AND b.fuel_type = a.fuel_type AND a.id < b.id
+     AND b.voided_at IS NULL AND b.archived_at IS NULL AND b.gallons > 0
+     AND abs(a.gallons - b.gallons) <= 0.01
+     AND abs((coalesce(a.purchased_at, a.transaction_at) AT TIME ZONE 'America/Chicago')::date
+           - (coalesce(b.purchased_at, b.transaction_at) AT TIME ZONE 'America/Chicago')::date) <= 1
+   WHERE a.operating_company_id = $1::uuid AND a.voided_at IS NULL AND a.archived_at IS NULL AND a.gallons > 0`;
+
+const cents = (v) => (v === null || v === undefined || v === "" ? null : Math.round(Number(v) * 100));
+const dayGap = (x, y) => Math.abs(Date.parse(`${x}T00:00:00Z`) - Date.parse(`${y}T00:00:00Z`)) / 86_400_000;
+/** Pure: two fuel rows are the same fill — same unit + product, <= 1 company day, gallons within 0.01, amount within 5c. */
+export function isDuplicateFill(p) {
+  if (!p.a_unit || p.a_unit !== p.b_unit || p.a_type !== p.b_type) return false;
+  if (dayGap(p.a_day, p.b_day) > 1) return false;
+  if (Math.round(Math.abs(Number(p.a_gal) - Number(p.b_gal)) * 1000) > 10) return false;
+  const as = [cents(p.a_total), cents(p.a_gross)].filter((v) => v !== null);
+  const bs = [cents(p.b_total), cents(p.b_gross)].filter((v) => v !== null);
+  return as.some((x) => bs.some((y) => Math.abs(x - y) <= 5));
+}
 
 // A posting is live only when all five hold: je.status='posted', je.voided_at, je.reversed_by_je_id,
 // je.reverses_je_id and p.reversed_by_line_id all NULL (a JE-level reversal leaves the line fields NULL).
@@ -119,7 +154,8 @@ async function live() {
 
     const rows = (await client.query(DIESEL_SQL, [USMCA_COMPANY_ID])).rows;
     const doubled = rows.filter((r) => r.doubled);
-    const current = { doubled_with_live_fuel_twin: doubled.length, live_diesel_expenses: rows.length };
+    const pairs = (await client.query(FILL_PAIR_SQL, [USMCA_COMPANY_ID])).rows.filter(isDuplicateFill);
+    const current = { doubled_with_live_fuel_twin: doubled.length, live_diesel_expenses: rows.length, duplicate_fill_pairs: pairs.length };
     const usd = (list) => (list.reduce((a, r) => a + Number(r.total_amount_cents), 0) / 100).toFixed(2);
 
     const r8 = ratchet(current, baseline);
@@ -143,6 +179,11 @@ async function live() {
       }
     }
 
+    if (current.duplicate_fill_pairs > baseline.duplicate_fill_pairs) {
+      console.error(`  the same fill is on the books twice (same unit + product, <= 1 day, gallons within 0.01, amount within 5c) — void the copy through the engines:`);
+    }
+    for (const p of pairs.slice(0, 20)) console.log(`  · duplicate fill pair ${p.a_id} / ${p.b_id} (${p.a_day} / ${p.b_day}, ${p.a_gal} / ${p.b_gal} gal)`);
+
     const knownRes = await client.query(
       `SELECT id, status, void_reason FROM accounting.expenses WHERE id = ANY($1::uuid[]) AND operating_company_id = $2::uuid`,
       [KNOWN_VOIDED_5782_IDS, USMCA_COMPANY_ID]
@@ -160,7 +201,8 @@ async function live() {
     console.log(
       `${LABEL}: LIVE PASS — ${current.doubled_with_live_fuel_twin} doubled ($${usd(doubled)}) <= baseline ` +
         `${baseline.doubled_with_live_fuel_twin}; ${current.live_diesel_expenses} live Diesel expenses ($${usd(rows)}) <= baseline ` +
-        `${baseline.live_diesel_expenses}; 2/2 settlement-5782 rows voided.`
+        `${baseline.live_diesel_expenses}; ${current.duplicate_fill_pairs} duplicate fill pairs <= baseline ${baseline.duplicate_fill_pairs}; ` +
+        `2/2 settlement-5782 rows voided.`
     );
   } finally {
     client.release();
@@ -169,16 +211,28 @@ async function live() {
 }
 
 if (process.argv.includes("--selftest")) {
-  const base = { doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10 };
+  const base = { doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10, duplicate_fill_pairs: 0 };
+  // LEAD 443.197 plants — the 2026-10-17 Dreamline copy shape: statement copy (card net / gross) beside the Creator receipt.
+  const copy = { a_unit: "u173", b_unit: "u173", a_type: "diesel", b_type: "diesel", a_day: "2026-08-26", b_day: "2026-08-26",
+    a_gal: "101.999", b_gal: "102.000", a_total: "559.87", a_gross: null, b_total: "514.08", b_gross: "559.88" };
   const cases = [
-    ["at the baseline nothing grows", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10 }, base).grew.length === 0],
-    ["a new doubled purchase grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 3, live_diesel_expenses: 10 }, base).grew.includes("doubled_with_live_fuel_twin")],
-    ["a new Diesel expense grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 11 }, base).grew.includes("live_diesel_expenses")],
-    ["a shrink is reported, not failed", (() => { const r = ratchet({ doubled_with_live_fuel_twin: 1, live_diesel_expenses: 10 }, base); return r.grew.length === 0 && r.shrank.includes("doubled_with_live_fuel_twin"); })()],
+    ["at the baseline nothing grows", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10, duplicate_fill_pairs: 0 }, base).grew.length === 0],
+    ["a new doubled purchase grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 3, live_diesel_expenses: 10, duplicate_fill_pairs: 0 }, base).grew.includes("doubled_with_live_fuel_twin")],
+    ["a new Diesel expense grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 11, duplicate_fill_pairs: 0 }, base).grew.includes("live_diesel_expenses")],
+    ["a shrink is reported, not failed", (() => { const r = ratchet({ doubled_with_live_fuel_twin: 1, live_diesel_expenses: 10, duplicate_fill_pairs: 0 }, base); return r.grew.length === 0 && r.shrank.includes("doubled_with_live_fuel_twin"); })()],
     ["a correctly voided 5782 row passes", badlyVoided([{ id: "a", status: "void", void_reason: VOID_REASON_5782 }]).length === 0],
     ["a 5782 row un-voided fails", badlyVoided([{ id: "a", status: "posted", void_reason: VOID_REASON_5782 }]).length === 1],
     ["a 5782 row voided with another reason fails", badlyVoided([{ id: "a", status: "void", void_reason: "other" }]).length === 1],
     ["a purged 5782 row (absent) is accepted", badlyVoided([]).length === 0],
+    ["PLANT: a statement copy of a booked fill (card gross = receipt, other invoice) is a duplicate", isDuplicateFill(copy)],
+    ["PLANT: the copy a day later is still a duplicate", isDuplicateFill({ ...copy, b_day: "2026-08-27" })],
+    ["PLANT: an adopted receipt whose gross was overwritten still matches on total", isDuplicateFill({ ...copy, a_gross: "537.97" })],
+    ["two days apart is not the same fill", !isDuplicateFill({ ...copy, b_day: "2026-08-28" })],
+    ["gallons 0.02 apart is not the same fill", !isDuplicateFill({ ...copy, b_gal: "102.019" })],
+    ["another truck is not the same fill", !isDuplicateFill({ ...copy, b_unit: "u171" })],
+    ["another product is not the same fill", !isDuplicateFill({ ...copy, b_type: "def" })],
+    ["amounts 6 cents apart are not the same fill", !isDuplicateFill({ ...copy, b_gross: "559.93", b_total: "514.08" })],
+    ["a new duplicate fill pair grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10, duplicate_fill_pairs: 1 }, base).grew.includes("duplicate_fill_pairs")],
   ];
   for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, p]) => !p).length;

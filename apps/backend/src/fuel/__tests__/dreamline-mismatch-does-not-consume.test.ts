@@ -98,7 +98,7 @@ describe("Dreamline statement matcher — a receipt is consumed only when adopte
     }) };
     expect(await unstampDreamlineReceiptAdopted(client as never, { companyId: "co", fuelTransactionId: "ft", marker: "dreamline_efs=11946:DEFD:1" })).toBe(1);
     expect(updates[0]![2]).toBe("gallons estimated at average price (owner 10-10)");
-    expect(updates[0]![3]).toBe(false); // no line adopts it any more: the wrong card facts are cleared
+    expect(updates[0]).toHaveLength(3); // LEAD 443.197 — notes only: the receipt's amounts are never touched
     expect(await unstampDreamlineReceiptAdopted(client as never, { companyId: "co", fuelTransactionId: "ft", marker: "dreamline_efs=1194:DEFD:1" })).toBe(0);
   });
 });
