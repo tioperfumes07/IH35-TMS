@@ -47,6 +47,9 @@ export type Set01EligibleLoad = {
   pickup_city: string | null;
   delivery_city: string | null;
   miles_practical: number | null;
+  /** LEAD 443.192 — the load's SHORT miles: the only load-side source of per-mile driver pay. */
+  miles_shortest: number | null;
+  /** mdata.loads.loaded_miles is DERIVED (loadedMilesFor: short > 0, else practical) — informational, never pay. */
   loaded_miles: number | null;
   empty_miles: number | null;
   rate_total_cents: number | null;
@@ -55,6 +58,8 @@ export type Set01EligibleLoad = {
   bill_loaded_pay_cents: number | null;
   bill_rate_per_mile_cents: number | null;
   bill_miles_basis: number | null;
+  /** The bill's own basis label ('short' | 'practical'); a 'practical' basis never prices batch pay (LEAD 443.192). */
+  bill_miles_basis_type: string | null;
   bill_miles_deadhead: number | null;
   bill_rate_empty_per_mile_cents: number | null;
   presettlement_link_id: string | null;
@@ -100,6 +105,7 @@ async function listSet01LoadsInTx(
     pickup_city: string | null;
     delivery_city: string | null;
     miles_practical: string | null;
+    miles_shortest: string | null;
     loaded_miles: string | null;
     empty_miles: string | null;
     rate_total_cents: string | null;
@@ -107,6 +113,7 @@ async function listSet01LoadsInTx(
     bill_loaded_pay_cents: string | null;
     bill_rate_per_mile_cents: string | null;
     bill_miles_basis: string | null;
+    bill_miles_basis_type: string | null;
     bill_miles_deadhead: string | null;
     bill_rate_empty_per_mile_cents: string | null;
     presettlement_link_id: string | null;
@@ -151,6 +158,7 @@ async function listSet01LoadsInTx(
           ORDER BY s.sequence_number DESC NULLS LAST, s.created_at DESC LIMIT 1
         ) AS delivery_city,
         l.miles_practical::text AS miles_practical,
+        l.miles_shortest::text AS miles_shortest,
         l.loaded_miles::text AS loaded_miles,
         l.empty_miles::text AS empty_miles,
         l.rate_total_cents::text AS rate_total_cents,
@@ -158,6 +166,7 @@ async function listSet01LoadsInTx(
         db.loaded_pay_cents::text AS bill_loaded_pay_cents,
         db.rate_per_mile_cents::text AS bill_rate_per_mile_cents,
         db.miles_basis::text AS bill_miles_basis,
+        db.miles_basis_type::text AS bill_miles_basis_type,
         db.miles_deadhead::text AS bill_miles_deadhead,
         db.rate_empty_per_mile_cents::text AS bill_rate_empty_per_mile_cents,
         l.presettlement_link_id::text AS presettlement_link_id,
@@ -176,7 +185,7 @@ async function listSet01LoadsInTx(
       LEFT JOIN mdata.customers c ON c.id = l.customer_id
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
       LEFT JOIN LATERAL (
-        SELECT b.loaded_pay_cents, b.rate_per_mile_cents, b.miles_basis, b.miles_deadhead, b.rate_empty_per_mile_cents
+        SELECT b.loaded_pay_cents, b.rate_per_mile_cents, b.miles_basis, b.miles_basis_type, b.miles_deadhead, b.rate_empty_per_mile_cents
           FROM driver_finance.driver_bills b
          WHERE b.load_id = l.id AND b.operating_company_id = l.operating_company_id
            AND b.driver_id = $2::uuid AND b.voided_at IS NULL
@@ -228,6 +237,7 @@ async function listSet01LoadsInTx(
     pickup_city: r.pickup_city,
     delivery_city: r.delivery_city,
     miles_practical: r.miles_practical != null ? Number(r.miles_practical) : null,
+    miles_shortest: r.miles_shortest != null ? Number(r.miles_shortest) : null,
     loaded_miles: r.loaded_miles != null ? Number(r.loaded_miles) : null,
     empty_miles: r.empty_miles != null ? Number(r.empty_miles) : null,
     rate_total_cents: r.rate_total_cents != null ? Number(r.rate_total_cents) : null,
@@ -235,11 +245,28 @@ async function listSet01LoadsInTx(
     bill_loaded_pay_cents: r.bill_loaded_pay_cents != null ? Number(r.bill_loaded_pay_cents) : null,
     bill_rate_per_mile_cents: r.bill_rate_per_mile_cents != null ? Number(r.bill_rate_per_mile_cents) : null,
     bill_miles_basis: r.bill_miles_basis != null ? Number(r.bill_miles_basis) : null,
+    bill_miles_basis_type: r.bill_miles_basis_type ?? null,
     bill_miles_deadhead: r.bill_miles_deadhead != null ? Number(r.bill_miles_deadhead) : null,
     bill_rate_empty_per_mile_cents: r.bill_rate_empty_per_mile_cents != null ? Number(r.bill_rate_empty_per_mile_cents) : null,
     presettlement_link_id: r.presettlement_link_id,
     already_on_closed_settlement: Boolean(r.already_on_closed_settlement),
   }));
+}
+
+/**
+ * OWNER LAW (LEAD 443.192, 12:35Z/13:25Z): "Per-mile drivers are ALWAYS paid SHORT miles — never practical miles."
+ * Batch pay miles = the driver bill's own miles basis when that basis is short, else the load's miles_shortest, else
+ * null (the creator preflight then refuses the load — it is never priced). Practical miles never feed pay, and neither
+ * does mdata.loads.loaded_miles: it is derived (loadedMilesFor: short > 0, else PRACTICAL), not a document's pay miles.
+ */
+export function batchPayMiles(
+  load: Pick<Set01EligibleLoad, "bill_loaded_pay_cents" | "bill_miles_basis" | "bill_miles_basis_type" | "miles_shortest">,
+): number | null {
+  const hasBill = load.bill_loaded_pay_cents != null;
+  const billBasis = Number(load.bill_miles_basis ?? Number.NaN);
+  if (hasBill && Number.isFinite(billBasis) && billBasis > 0 && load.bill_miles_basis_type !== "practical") return billBasis;
+  const short = Number(load.miles_shortest ?? Number.NaN);
+  return Number.isFinite(short) && short > 0 ? short : null;
 }
 
 export function toLoadBlock(load: Set01EligibleLoad): SettlementCreatorLoadBlock {
@@ -253,7 +280,7 @@ export function toLoadBlock(load: Set01EligibleLoad): SettlementCreatorLoadBlock
   // the line-haul amount and never paid deadhead (empty rate null). No bill -> the load's own miles / rate, and the
   // creator applies the same deadhead rule.
   const hasBill = load.bill_loaded_pay_cents != null;
-  const miles = hasBill && load.bill_miles_basis != null ? load.bill_miles_basis : load.loaded_miles ?? load.miles_practical;
+  const miles = batchPayMiles(load);
   const ratePerMileCents = hasBill && load.bill_rate_per_mile_cents != null
     ? load.bill_rate_per_mile_cents
     : load.driver_pay_rate_per_mile != null ? Math.round(Number(load.driver_pay_rate_per_mile) * 100) : null;
@@ -270,6 +297,7 @@ export function toLoadBlock(load: Set01EligibleLoad): SettlementCreatorLoadBlock
     line_haul_amount_cents: hasBill ? load.bill_loaded_pay_cents : null,
     factoring: "faro_usmca",
     loaded_miles: miles,
+    miles_shortest: miles,
     empty_miles: hasBill ? load.bill_miles_deadhead ?? 0 : load.empty_miles ?? 0,
     empty_rate_cents: hasBill ? load.bill_rate_empty_per_mile_cents : null,
     trip_type: trip,

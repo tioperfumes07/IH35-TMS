@@ -5,6 +5,11 @@
  * bill writer: loaded pay = load.miles_shortest x the rate ONLY (no practical fallback, no card-configured practical basis),
  * the fresh-mint gate refuses without short miles, the bill's miles basis is never "practical"; and (kept) no formula derives
  * short miles from practical. Measured 2026-10-17 before the change: 8 open USMCA per-mile bills priced at practical miles.
+ * LEAD 443.192 (13:25Z) item 1 — EXTENDED to the two settlement readers: batch-settlements.service.ts (batchPayMiles /
+ * toLoadBlock: the miles the Settlement Creator prices batch pay with) and settlements.service.ts
+ * (listDriverBillsForSettlementPeriod: the pay miles + derived rate the settlement document / weekly close display). Neither
+ * may read miles_practical, nor mdata.loads.loaded_miles (derived: short > 0, else practical), nor take a bill basis whose
+ * type is 'practical'. No short miles = null / refused, never a practical fallback.
  * The text below is the superseded 2026-09-04 history (the fallback it locked existed only because short miles had no source).
  *
  * OWNER RULING 2026-09-04 (LANE-MILEAGE-IMPORT-DROPPED-COLUMNS, item 3): "invoice -> practical
@@ -34,6 +39,82 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SVC = "apps/backend/src/dispatch/book-load.service.ts";
 const LABEL = "verify-driver-pay-practical-fallback-locked";
+const BATCH = "apps/backend/src/driver-finance/batch-settlements.service.ts";
+const SETTLE = "apps/backend/src/driver-finance/settlements.service.ts";
+
+/** A top-level function's body (to the next top-level declaration), without its doc comment. */
+function fnBody(src, signature) {
+  const start = src.indexOf(signature);
+  if (start === -1) return null;
+  const rest = src.slice(start + 1);
+  const end = rest.search(/\n(?:export\s+)?(?:async\s+)?(?:function|const|let|class|interface|type)\s/);
+  return src.slice(start, end === -1 ? src.length : start + 1 + end);
+}
+
+/** Code only: drop // and /* *\/ comments and SQL -- comment lines, so a history comment naming a column is not code. */
+function codeOnly(s) {
+  return s
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n")
+    .map((line) => line.replace(/^\s*\/\/.*$/, "").replace(/--.*$/, ""))
+    .join("\n");
+}
+
+/** LEAD 443.192 item 1 — batch pay miles and the settlement's displayed pay miles / derived rate are SHORT miles only. */
+function checkSettlementReaders(root, problems) {
+  let batch;
+  try {
+    batch = fs.readFileSync(path.join(root, BATCH), "utf8");
+  } catch {
+    problems.push(`${BATCH}: missing`);
+    batch = null;
+  }
+  if (batch) {
+    const payMiles = fnBody(batch, "export function batchPayMiles(");
+    const block = fnBody(batch, "export function toLoadBlock(");
+    if (!payMiles) problems.push(`${BATCH}: batchPayMiles (the one short-miles pay-miles rule for batch settlements) not found`);
+    if (!block) problems.push(`${BATCH}: toLoadBlock not found`);
+    if (payMiles) {
+      const code = codeOnly(payMiles);
+      if (/miles_practical|loaded_miles/.test(code)) {
+        problems.push(`${BATCH}: batchPayMiles reads practical / derived loaded_miles — owner law (443.192): batch pay is SHORT miles only`);
+      }
+      if (!/load\.miles_shortest/.test(code)) problems.push(`${BATCH}: batchPayMiles must fall back to load.miles_shortest (and only that)`);
+      if (!/bill_miles_basis_type\s*!==\s*"practical"/.test(code)) {
+        problems.push(`${BATCH}: batchPayMiles must refuse a driver bill whose miles basis is 'practical'`);
+      }
+    }
+    if (block) {
+      const code = codeOnly(block);
+      if (/load\.miles_practical|load\.loaded_miles/.test(code)) {
+        problems.push(`${BATCH}: toLoadBlock feeds practical / derived loaded_miles into the settlement's pay miles — owner law (443.192)`);
+      }
+      if (!/const miles = batchPayMiles\(load\);/.test(code)) problems.push(`${BATCH}: toLoadBlock pay miles must be batchPayMiles(load), verbatim`);
+      if (!/miles_shortest:\s*miles\b/.test(code)) problems.push(`${BATCH}: toLoadBlock must hand the creator miles_shortest = the short pay miles`);
+    }
+  }
+
+  let settle;
+  try {
+    settle = fs.readFileSync(path.join(root, SETTLE), "utf8");
+  } catch {
+    problems.push(`${SETTLE}: missing`);
+    return;
+  }
+  const list = fnBody(settle, "export async function listDriverBillsForSettlementPeriod(");
+  if (!list) {
+    problems.push(`${SETTLE}: listDriverBillsForSettlementPeriod not found`);
+    return;
+  }
+  const code = codeOnly(list);
+  if (/miles_practical/.test(code)) {
+    problems.push(`${SETTLE}: listDriverBillsForSettlementPeriod reads miles_practical for the pay miles / derived rate — owner law (443.192): SHORT miles only`);
+  }
+  if (/'practical \(load\)'/.test(code)) problems.push(`${SETTLE}: the 'practical (load)' pay-miles label is gone for good (443.192)`);
+  if (!/db\.miles_basis_type IS DISTINCT FROM 'practical'/.test(code)) {
+    problems.push(`${SETTLE}: a driver bill whose own basis is 'practical' must not supply the displayed pay miles`);
+  }
+}
 
 function extractFunction(src) {
   const start = src.indexOf("async function resolveDriverBasePayCents");
@@ -94,6 +175,7 @@ export function run(root = ROOT) {
     problems.push(`${SVC}: the OWNER LAW (LEAD 443.192) comment on the short-miles pay rule is missing`);
   }
 
+  checkSettlementReaders(root, problems);
   return problems;
 }
 
@@ -120,8 +202,43 @@ async function createDriverBillArtifacts() {
   }
 }
 `;
-  const check = (src, label, expectClean) => {
+  const goodBatch = `
+export function batchPayMiles(load) {
+  const hasBill = load.bill_loaded_pay_cents != null;
+  const billBasis = Number(load.bill_miles_basis ?? Number.NaN);
+  if (hasBill && billBasis > 0 && load.bill_miles_basis_type !== "practical") return billBasis;
+  const short = Number(load.miles_shortest ?? Number.NaN);
+  return short > 0 ? short : null;
+}
+
+export function toLoadBlock(load) {
+  // history: used to be load.loaded_miles ?? load.miles_practical
+  const miles = batchPayMiles(load);
+  return { line_haul_miles: miles, loaded_miles: miles, miles_shortest: miles };
+}
+`;
+  const goodSettle = `
+export async function listDriverBillsForSettlementPeriod(client, input) {
+  return client.query(\`
+    -- bill 13577 miles_basis NULL -> mdata.loads.miles_practical 1435.9 (history comment, not code)
+    CASE
+      WHEN db.miles_basis IS NOT NULL AND db.miles_basis_type IS DISTINCT FROM 'practical' THEN db.miles_basis
+      WHEN COALESCE(dbl.miles_shortest, 0) > 0 THEN dbl.miles_shortest
+      ELSE NULL
+    END AS miles_basis,
+    ROUND(db.gross_amount_cents::numeric / NULLIF(dbl.miles_shortest, 0))::integer
+  \`);
+}
+
+export function driverBillRowsToSettlementLoads(rows) { return rows; }
+`;
+  const batchAbs = path.join(dir, BATCH);
+  const settleAbs = path.join(dir, SETTLE);
+  fs.mkdirSync(path.dirname(batchAbs), { recursive: true });
+  const check = (src, label, expectClean, batchSrc = goodBatch, settleSrc = goodSettle) => {
     fs.writeFileSync(abs, src);
+    fs.writeFileSync(batchAbs, batchSrc);
+    fs.writeFileSync(settleAbs, settleSrc);
     const p = run(dir);
     if (expectClean ? p.length : !p.length) throw new Error(`${expectClean ? "PASS fail" : "FAIL to catch"}: ${label} ${JSON.stringify(p)}`);
   };
@@ -132,8 +249,23 @@ async function createDriverBillArtifacts() {
   check(good.replace("const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;", "const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0 || Number(load.miles_practical ?? 0) > 0;"), "gate accepts practical-only", false);
   check(good.replace('milesBasisType = "short";\n  }', 'milesBasisType = "short";\n  } else { milesBasisType = "practical"; }'), "bill basis practical", false);
   check(good.replace("// OWNER LAW (LEAD 443.192, 12:35Z): short miles only.\n", ""), "owner-law comment dropped", false);
+  // LEAD 443.192 item 1 — the two settlement readers.
+  check(good, "batch: pay miles fall back to loaded_miles/practical (origin/main shape)", false,
+    goodBatch.replace("const miles = batchPayMiles(load);", "const miles = load.bill_miles_basis ?? load.loaded_miles ?? load.miles_practical;"));
+  check(good, "batch: batchPayMiles falls back to practical", false,
+    goodBatch.replace("const short = Number(load.miles_shortest ?? Number.NaN);", "const short = Number(load.miles_shortest ?? load.miles_practical ?? Number.NaN);"));
+  check(good, "batch: practical-basis bill accepted", false,
+    goodBatch.replace(' && load.bill_miles_basis_type !== "practical"', ""));
+  check(good, "batch: creator not handed short miles", false,
+    goodBatch.replace(", miles_shortest: miles }", " }"));
+  check(good, "settle: COALESCE(db.miles_basis, dbl.miles_practical, ...) (origin/main shape)", false, goodBatch,
+    goodSettle.replace("WHEN COALESCE(dbl.miles_shortest, 0) > 0 THEN dbl.miles_shortest", "WHEN COALESCE(dbl.miles_practical, 0) > 0 THEN dbl.miles_practical"));
+  check(good, "settle: rate divided by practical", false, goodBatch,
+    goodSettle.replace("NULLIF(dbl.miles_shortest, 0)", "NULLIF(COALESCE(dbl.miles_practical, dbl.miles_shortest), 0)"));
+  check(good, "settle: practical-basis bill displayed", false, goodBatch,
+    goodSettle.replace(" AND db.miles_basis_type IS DISTINCT FROM 'practical'", ""));
   fs.rmSync(dir, { recursive: true, force: true });
-  console.log(`${LABEL} SELFTEST PASS (7 cases)`);
+  console.log(`${LABEL} SELFTEST PASS (14 cases)`);
 }
 
 if (process.argv.includes("--selftest")) {
