@@ -33,16 +33,30 @@ async function fleetTrailerByNumber(client: Q, companyId: string, n: string): Pr
   return r.rows.length === 1 ? r.rows[0]!.id : null;
 }
 
+/**
+ * The trailer choice a document makes from its PRINTED trailer number (or an explicit "no trailer"): a fleet trailer of
+ * this company -> company; any other number -> customer / shipper trailer; none -> none; nothing -> null (no guessing).
+ * Shared by the Settlement Creator and the historical CSV loads import (seed/csv-seed-import.ts, R443.161-G1).
+ */
+export async function printedTrailerChoice(
+  client: Q,
+  companyId: string,
+  printedNumber: string | null | undefined,
+  none: boolean,
+): Promise<TrailerChoice | null> {
+  const printed = printedNumber?.trim();
+  if (printed) {
+    const fleet = await fleetTrailerByNumber(client, companyId, printed);
+    return fleet ? { kind: "company", equipment_id: fleet } : { kind: "customer", trailer_number: printed };
+  }
+  if (none) return { kind: "none" };
+  return null;
+}
+
 /** The trailer choice the document makes for every load of this draft, or null when it makes none. */
 export async function creatorTrailerChoice(client: Q, draft: SettlementCreatorDraft): Promise<TrailerChoice | null> {
   if (draft.trailer_id) return { kind: "company", equipment_id: draft.trailer_id };
-  const printed = draft.trailer_equipment_number?.trim();
-  if (printed) {
-    const fleet = await fleetTrailerByNumber(client, draft.operating_company_id, printed);
-    return fleet ? { kind: "company", equipment_id: fleet } : { kind: "customer", trailer_number: printed };
-  }
-  if (draft.trailer_none === true) return { kind: "none" };
-  return null;
+  return printedTrailerChoice(client, draft.operating_company_id, draft.trailer_equipment_number, draft.trailer_none === true);
 }
 
 /**

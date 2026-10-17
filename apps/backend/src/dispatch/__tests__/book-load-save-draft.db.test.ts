@@ -149,6 +149,11 @@ describeIntegration("Save draft — real Postgres round-trip (ROUND 24.3)", () =
       requestingUserUuid: TEST_OWNER_USER_ID,
       requestingUserRole: "Dispatcher",
       fields: { notes: "finished from resume" },
+      // Finishing a draft must name its trailer, as the Edit Load form sends it (editLoadMapping.ts trailer_choice):
+      // 6db7585fb6 "R443.161-G1 trailer choice missing at shared load boundary (#26793)" made updateDispatchLoad
+      // refuse a PATCH that would preserve an unresolved trailer gap (requireRecordedTrailerChoice), and a draft
+      // records none (bookLoad skips the choice for save_mode 'draft').
+      trailer_choice: { kind: "none" },
     });
 
     const after = await db.query(

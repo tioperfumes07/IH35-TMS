@@ -87,6 +87,9 @@ describeIntegration("csv-seed-import.ts loads import (real Postgres, shared crea
       "delivery_state",
       "delivery_country",
       "notes",
+      // R443.161-G1 (6db7585fb6 "FINDING: R443.161-G1 trailer choice missing at shared load boundary (#26793)"): the
+      // shared create path refuses a non-draft booking without an explicit trailer choice; the row names it.
+      "trailer_none",
     ].join(",");
     const row = [
       companyCode,
@@ -108,6 +111,7 @@ describeIntegration("csv-seed-import.ts loads import (real Postgres, shared crea
       "TX",
       "US",
       "csv import test",
+      "true",
     ].join(",");
     const csvText = `${header}\n${row}\n`;
 
@@ -142,6 +146,34 @@ describeIntegration("csv-seed-import.ts loads import (real Postgres, shared crea
       db.query<{ stop_type: string }>(`SELECT stop_type FROM mdata.load_stops WHERE load_id = $1::uuid ORDER BY sequence_number`, [loadId])
     );
     expect(stops.rows.map((r) => r.stop_type)).toEqual(["pickup", "delivery"]);
+
+    const trailer = await bypass(() =>
+      db.query<{ trailer_source: string | null }>(`SELECT trailer_source FROM mdata.loads WHERE id = $1::uuid`, [loadId])
+    );
+    expect(trailer.rows[0]?.trailer_source).toBe("none"); // the row's explicit choice is recorded, not a gap
+  });
+
+  it("REFUSES a row that names no trailer (R443.161-G1: no guessing) and writes nothing", async () => {
+    const loadNumber = `CSV-NOTRL-${suffix}`;
+    const header = ["company_code", "load_number", "customer_code", "rate_total_cents", "status", "currency_code", "dispatcher_email",
+      "assigned_unit_number", "primary_driver_cdl", "secondary_driver_cdl", "pickup_scheduled_arrival_at", "pickup_city", "pickup_state",
+      "pickup_country", "delivery_scheduled_arrival_at", "delivery_city", "delivery_state", "delivery_country", "notes"].join(",");
+    const row = [companyCode, loadNumber, customerCode, "50000", "booked", "USD", "", "", "", "", "", "Laredo", "TX", "US", "", "Dallas", "TX", "US", ""].join(",");
+    await db.query(`SELECT set_config('app.bypass_rls', 'lucia', false)`);
+    await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
+    await db.query("BEGIN");
+    let thrown: unknown = null;
+    try {
+      await runAdminCsvImport(db, { csvText: `${header}\n${row}\n`, seedKind: "loads", preview: false });
+    } catch (err) {
+      thrown = err;
+    } finally {
+      await db.query("ROLLBACK");
+    }
+    expect(thrown).toBeInstanceOf(CsvImportRowErrors);
+    expect((thrown as CsvImportRowErrors).errors.some((e) => /trailer_choice_required/.test(e.message))).toBe(true);
+    const created = await db.query(`SELECT count(*)::int AS n FROM mdata.loads WHERE load_number = $1`, [loadNumber]);
+    expect(created.rows[0]?.n).toBe(0);
   });
 
   it("REJECTS MXN rather than silently coercing to USD", async () => {

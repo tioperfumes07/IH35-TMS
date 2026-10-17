@@ -100,6 +100,11 @@ describeIntegration("Zero-dollar charge-lines at dispatch gate (FEED-PARITY-02)"
         { stop_type: "delivery", sequence_number: 2, city: "Dallas", state: "TX", scheduled_arrival_at: dayAfter },
       ],
       save_mode: "book_dispatch", // + a crewed driver -> statusForInsert = 'dispatched'
+      // A real booking records an explicit trailer choice before any other gate runs — 6882b1ea31 "443.107 Book
+      // Load requires trailer choice (#26620)" and 6db7585fb6 "R443.161-G1 trailer choice missing at shared load
+      // boundary (#26793)" (createLoadWithFullSideEffects refuses 422 trailer_choice_required for every source).
+      // "none" (bobtail / power only) is the choice that leaves the zero-dollar gate as the only gate under test.
+      trailer_choice: { kind: "none" },
       ...overrides,
     };
   }

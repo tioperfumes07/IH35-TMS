@@ -70,6 +70,11 @@ describeIntegration("POST /api/v1/driver-finance/feed-day/run (real Postgres)", 
           miles_practical: 500,
           // LEAD 443.92 #3: a crewed booking (driver + miles) — Book Load mints the load's open bill at assignment.
           ...(crewed ? { assigned_primary_driver_id: driverId } : {}),
+          // 6db7585fb6 "FINDING: R443.161-G1 trailer choice missing at shared load boundary (#26793)":
+          // createLoadWithFullSideEffects now refuses EVERY non-draft booking without an explicit trailer choice
+          // (422 trailer_choice_required), historical_backfill included. The fixture records the explicit
+          // "no trailer (bobtail / power only)" choice, as the other Book Load fixtures do (443.107).
+          trailer_choice: { kind: "none" },
           notes: "feed-day route test fixture",
           is_sample_data: false,
           charges: [],
