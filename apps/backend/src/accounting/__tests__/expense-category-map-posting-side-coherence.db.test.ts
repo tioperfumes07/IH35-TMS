@@ -150,6 +150,35 @@ describeIntegration("ACCT-F99 expense-category map posting_side coherence (real 
     `);
     const r = rows[0];
 
+    // Heavy CI peel (LEAD 16:55Z): n_live_tup is a LAGGING statistics estimate. In CI this file shares the database with
+    // the other DB test files running at the same time; when they delete their fixture accounts, count(*) sees it at once
+    // while n_live_tup still holds the old figure — 244 visible vs ~277 "live" failed #26985 with no RLS masking at all.
+    // Prefer the TRUE row count, read on a second connection as the connecting role with row_security = off (that SET
+    // raises instead of silently filtering when the role cannot bypass, so a returned count is unfiltered). Fall back
+    // to the estimate only when that is not possible. The discriminator stays the same: masked = rows exist, few visible.
+    const truth = new pg.Client(buildPgClientConfig((process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL) as string));
+    await truth.connect();
+    try {
+      await refuseProductionDatabase(truth);
+      await truth.query("SET row_security = off");
+      const t = await truth.query<{ map_n: string; acct_n: string }>(
+        `SELECT (SELECT count(*) FROM accounting.expense_category_account_map)::text AS map_n,
+                (SELECT count(*) FROM catalogs.accounts)::text AS acct_n`
+      );
+      const again = await db.query<{ map_visible: string; acct_visible: string }>(
+        `SELECT (SELECT count(*) FROM accounting.expense_category_account_map)::text AS map_visible,
+                (SELECT count(*) FROM catalogs.accounts)::text AS acct_visible`
+      );
+      r.map_live = t.rows[0].map_n;
+      r.acct_live = t.rows[0].acct_n;
+      r.map_visible = again.rows[0].map_visible;
+      r.acct_visible = again.rows[0].acct_visible;
+    } catch {
+      // The connecting role cannot read without RLS — keep the n_live_tup estimate (tolerance below).
+    } finally {
+      await truth.end();
+    }
+
     // The failure mode being defended against is RLS MASKING: rows exist but are invisible, so every
     // violation query returns nothing and the suite reports green while asserting nothing.
     //
