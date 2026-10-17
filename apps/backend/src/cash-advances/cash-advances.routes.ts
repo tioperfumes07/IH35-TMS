@@ -2,6 +2,9 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { DRIVER_ADVANCE_GL_POSTING_FLAG_KEY } from "./cash-advance-disburse.js";
+import { postLumperAdvanceAtDisbursementInClientTx } from "./lumper-advance-expense.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars, reverseDriverAdvanceInClientTx } from "./cash-advance-create.js";
@@ -377,6 +380,12 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
       const advance = advanceRes.rows[0];
       if (!advance) return { code: 404 as const, error: "cash_advance_not_found" };
       if (String(advance.disbursement_status ?? "") === "reversed") return { code: 400 as const, error: "cash_advance_reversed" };
+      // LEAD 443.184 G15 — a lumper advance disbursed here is the load's lumper expense now (this path used to flip the
+      // status and post nothing). It needs GL posting on; refused before anything is written.
+      const isLumper = String(advance.purpose ?? "") === "lumper";
+      if (isLumper && !(await isEnabled(client, DRIVER_ADVANCE_GL_POSTING_FLAG_KEY, { operating_company_id: companyId, user_uuid: user.uuid }))) {
+        return { code: 409 as const, error: "lumper_advance_requires_gl_posting" };
+      }
 
       const method = body.data.disbursement_method ?? String(advance.disbursement_method ?? "");
       let linkedBillPaymentId: string | null = null;
@@ -458,6 +467,11 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           body.data.comdata_txn_id ?? body.data.comchek_txn_id ?? body.data.check_number ?? body.data.wire_confirmation_ref ?? null,
         ]
       );
+      // LEAD 443.184 G15 — the advance's own entry (if it has none live) + the load's lumper expense (and, billable, the
+      // invoice line) through the expense writer, in this transaction; a failure rolls the disbursement back.
+      if (isLumper) {
+        await postLumperAdvanceAtDisbursementInClientTx(client, { operatingCompanyId: companyId, advanceId: String(advance.id), actorUserId: user.uuid });
+      }
 
       await appendCrudAudit(
         client,

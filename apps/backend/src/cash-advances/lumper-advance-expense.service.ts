@@ -13,6 +13,7 @@
  * A/R posts when the office sends it). Idempotent per advance.
  */
 import { createExpenseInClientTx, type CreateExpenseBody } from "../accounting/expense-writer.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { createInvoiceLineInClientTx } from "../accounting/invoice-line-create.js";
 import { resolveInvoiceLineItemId } from "../accounting/invoice-charge-lines.js";
 import { createExpandedInvoice } from "../accounting/invoices.service.js";
@@ -148,4 +149,29 @@ export async function recordLumperAdvanceExpenseInClientTx(client: any, input: {
     journal_entry_id: journalEntryId, credit_account_id: debited[0]!.account_id, billable, invoice_id: invoiceId, invoice_line_id: invoiceLineId,
   }, "info", "443.128-A");
   return { recorded: true, expense_id: expenseId, journal_entry_id: journalEntryId, billable, invoice_id: invoiceId, invoice_line_id: invoiceLineId };
+}
+
+/**
+ * LEAD 443.184 G15 — a lumper advance is the load's lumper expense the moment it is disbursed, on EVERY disburse path
+ * (the approve/core path and PATCH mark-disbursed), never a "HOLD": the advance's own driver_advance entry posts if it has
+ * no live one yet (Dr the driver advance account / Cr the paying account — the same post the core disburse makes), then
+ * recordLumperAdvanceExpenseInClientTx writes the expense through the expense writer on the load (and, billable, the
+ * invoice line). Same transaction as the disbursement; a failure rolls the disbursement back.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function postLumperAdvanceAtDisbursementInClientTx(client: any, input: { operatingCompanyId: string; advanceId: string; actorUserId: string }): Promise<LumperAdvanceExpenseResult> {
+  const live = (await client.query(
+    `SELECT 1 AS one FROM accounting.journal_entry_postings p
+      WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'driver_advance' AND p.source_transaction_id::text = $2
+        AND p.reversal_of_line_id IS NULL AND p.reversed_by_line_id IS NULL LIMIT 1`,
+    [input.operatingCompanyId, input.advanceId]
+  )).rows[0];
+  if (!live) {
+    await postSourceTransactionInClientTx(
+      client,
+      { operating_company_id: input.operatingCompanyId, source_transaction_type: "driver_advance", source_transaction_id: input.advanceId },
+      { userId: input.actorUserId }
+    );
+  }
+  return recordLumperAdvanceExpenseInClientTx(client, input);
 }
