@@ -1,5 +1,12 @@
 [
   {
+    "id": "R443-183-G6-BANK-EXPENSE-LOAD-LINKAGE",
+    "title": "Categorized load costs create native expense documents with canonical load dimensions (unit, driver, trailer from the load; contradictions refused)",
+    "source_file": "apps/backend/src/accounting/bank-line-expense.service.ts",
+    "guard": "scripts/verify-bank-categorized-cost-is-expense-document.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "R443-161-G2-CREATOR-TRAILER-EQUIPMENT",
     "title": "Creator refuses unresolved trailer equipment before booking instead of defaulting to Dry Van",
     "source_file": "apps/backend/src/driver-finance/creator-trailer-choice.ts",

@@ -108,6 +108,21 @@ export function staticProblems(src) {
       /postSourceTransactionInClientTx\(/.test(fnBody(src.writer, "adoptBankCategorizationExpenseDocument"))) {
     p.push("S9/G6: adoptBankCategorizationExpenseDocument must INSERT expense+line adopting the live JE (no re-post) and stamp matched_expense_id");
   }
+  // G6 / 443.161 — share Record Expense's load attribution; never trust independent bank tags.
+  if (!writer.includes("await readLoadAttribution(client, input.operatingCompanyId, input.loadId)") ||
+      !writer.includes("reconcileExpenseWithLoad(input, load)") ||
+      !writer.includes('if (!load) throw new BankLineExpenseError("load_not_in_company"') ||
+      !writer.includes('if ("mismatch" in resolved)')) {
+    p.push("S10: bank expense must resolve its company's load and refuse missing or contradictory attribution before writing");
+  }
+  for (const dimension of ["unitId", "driverId", "trailerId"]) {
+    if (writer.split(`dimensions.${dimension},`).length - 1 !== 2) {
+      p.push(`S11: resolved ${dimension} must reach both expense header and line`);
+    }
+  }
+  if (!writer.includes("updated_by_user_id, non_owned_trailer_id") || !writer.includes("dimensions.nonOwnedTrailerId,")) {
+    p.push("S12: the expense must retain the load's customer-owned trailer, reachable from each line's expense_id");
+  }
   return p;
 }
 
@@ -206,6 +221,9 @@ if (process.argv.includes("--selftest")) {
     ["S7", staticProblems({ ...src, writer: src.writer.replaceAll("generateExpenseNumber", "generateSomethingElse") })],
     ["S8", staticProblems({ ...src, fuelPost: src.fuelPost.replaceAll("fuel_fill_document_refused", "fuel_fill_skipped") })],
     ["S9", staticProblems({ ...src, writer: src.writer.replaceAll("adoptBankCategorizationExpenseDocument", "adoptSomethingElse") })],
+    ["S10", staticProblems(plant("writer", "reconcileExpenseWithLoad(input, load)", "input"))],
+    ["S11", staticProblems(plant("writer", "dimensions.driverId,", "input.driverId,"))],
+    ["S12", staticProblems(plant("writer", "dimensions.nonOwnedTrailerId,", "null,"))],
     ["L2", linkageProblems({ ...good, bt_expense: null })],
     ["L3", linkageProblems({ ...good, net: 5 })],
     ["L4", linkageProblems({ ...good, dr_cat: 0 })],
@@ -218,7 +236,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL — not caught: ${missed.join(", ")}${clean.length ? `; clean row flagged: ${clean.join("; ")}` : ""}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — real tree clean; ${cases.length}/${cases.length} rules proven able to fail (S1–S9, L2–L6)`);
+  console.log(`${LABEL} --selftest PASS — real tree clean; ${cases.length}/${cases.length} rules proven able to fail (S1–S12, L2–L6)`);
   process.exit(0);
 }
 

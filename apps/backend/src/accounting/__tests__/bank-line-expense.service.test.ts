@@ -24,7 +24,7 @@ const CO = "11111111-1111-4111-8111-111111111111";
 function itemsClient(mapped: Array<{ id: string; item_name: string }>, explicitOk = true) {
   return {
     query: vi.fn(async (text: string) => {
-      if (/WHERE id = \$1::uuid AND operating_company_id/.test(text)) return { rows: explicitOk ? [{ id: "item-x" }] : [] };
+      if (/WHERE id = \$1::uuid AND operating_company_id/.test(text)) return { rows: explicitOk ? [{ id: "item-x", default_expense_account_id: "a" }] : [] };
       return { rows: mapped };
     }),
   };
@@ -83,7 +83,7 @@ describe("createAndPostBankLineExpenseOnClient", () => {
     );
     expect(out).toEqual({ expense_id: "exp-1", journal_entry_id: "je-1", posting_batch_id: "pb-1" });
     const header = calls.find((c) => /INSERT INTO accounting\.expenses/.test(c.text))!;
-    expect(header.values).toEqual([CO, "2026-08-18", 14614, "ED-HER PLASTICS", "EXP-2026-00042", "v-edher", "acct-1000", "bt-1", null, null, null, null, "u-1"]);
+    expect(header.values).toEqual([CO, "2026-08-18", 14614, "ED-HER PLASTICS", "EXP-2026-00042", "v-edher", "acct-1000", "bt-1", null, null, null, null, "u-1", null]);
     const line = calls.find((c) => /INSERT INTO accounting\.expense_lines/.test(c.text))!;
     expect(line.values?.slice(0, 7)).toEqual([CO, "exp-1", 146.14, 14614, "ED-HER PLASTICS", "acct-6900", "item-misc"]);
     // 443.105 #2 — no load: the line says why (company cost on its account, from this bank line).
@@ -117,6 +117,7 @@ describe("createAndPostBankLineExpenseOnClient — load or exemption reason (443
       query: vi.fn(async (text: string, values?: unknown[]) => {
         calls.push({ text, values });
         if (/INSERT INTO accounting\.expenses/.test(text)) return { rows: [{ id: "exp-9" }] };
+        if (/FROM mdata\.loads l/.test(text)) return { rows: [{ unit_id: null, primary_driver_id: null, secondary_driver_id: null, company_trailer_id: null, non_owned_trailer_id: null, trailer_source: "none" }] };
         if (/FROM catalogs\.accounts a WHERE a\.id/.test(text)) return { rows: [{ label: "6300 Bank Service Charges & Wire Fees" }] };
         return { rows: [] };
       }),
@@ -139,6 +140,7 @@ describe("createAndPostBankLineExpenseOnClient — load or exemption reason (443
       query: vi.fn(async (text: string, values?: unknown[]) => {
         calls.push({ text, values });
         if (/INSERT INTO accounting\.expenses/.test(text)) return { rows: [{ id: "exp-load" }] };
+        if (/FROM mdata\.loads l/.test(text)) return { rows: [{ unit_id: null, primary_driver_id: null, secondary_driver_id: null, company_trailer_id: null, non_owned_trailer_id: null, trailer_source: "none" }] };
         return { rows: [] };
       }),
     };
@@ -202,7 +204,7 @@ describe("adoptBankCategorizationExpenseDocument — G6 (one JE, document adopts
           };
         }
         if (/WHERE id = \$1::uuid AND operating_company_id/.test(text) && /catalogs\.items/.test(text)) {
-          return { rows: [{ id: "item-phone" }] };
+          return { rows: [{ id: "item-phone", default_expense_account_id: "acct-6100" }] };
         }
         if (/INSERT INTO accounting\.expenses/.test(text)) return { rows: [{ id: "exp-adopt" }] };
         return { rows: [] };
