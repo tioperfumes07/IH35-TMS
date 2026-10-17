@@ -192,7 +192,10 @@ export async function recordCustomerPaymentInClientTx(client: PaymentEngineClien
     skip_context: { payment_id: payment.id, ...doc.skip_context },
   });
 
-  const refreshedRes = await client.query(`SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 LIMIT 1`, [payment.id]);
+  const refreshedRes = await client.query(
+    `SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+    [payment.id, oci]
+  );
   const refreshed = refreshedRes.rows[0] ?? { amount_unapplied_cents: 0 };
 
   if (doc.before_audit) await doc.before_audit(payment.id);
