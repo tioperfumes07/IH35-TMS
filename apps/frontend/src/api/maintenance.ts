@@ -1,5 +1,13 @@
 import { ApiError, apiRequest, resolveApiUrl } from "./client";
 import { isOperatorVisibleWorkOrder } from "../lib/operator-fleet-visibility";
+import { listMaintenanceVendors } from "./catalog-vendors";
+import type { MaintenanceVendorRow } from "./catalog-vendors";
+import { listMaintenanceDrivers } from "./catalog-drivers";
+import type { MaintenanceDriverRow } from "./catalog-drivers";
+export { listMaintenanceVendors };
+export type { MaintenanceVendorRow };
+export { listMaintenanceDrivers };
+export type { MaintenanceDriverRow };
 
 export type WorkOrderType = "pm" | "repair" | "tire" | "accident";
 export type WorkOrderStatus = "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
@@ -1733,39 +1741,9 @@ export function listMaintenanceReeferHoursPmDue(operatingCompanyId: string) {
   );
 }
 
-export function listMaintenanceVendors(
-  operatingCompanyId: string,
-  params: { search?: string; include_archived?: boolean; mdata_vendor_id?: string } = {}
-) {
-  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  if (params.search) q.set("search", params.search);
-  if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
-  if (params.mdata_vendor_id) q.set("mdata_vendor_id", params.mdata_vendor_id);
-  return apiRequest<{ rows: MaintenanceVendorRow[]; csv_import_enabled: boolean }>(
-    `/api/v1/maintenance/vendors?${q.toString()}`
-  );
-}
+// listMaintenanceVendors → re-exported from catalog-vendors.ts above
 
-export type MaintenanceVendorRow = {
-  id: string;
-  code: string;
-  display_name: string;
-  name?: string;
-  description: string | null;
-  type: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
-  address: string | null;
-  payment_terms: string | null;
-  notes: string | null;
-  /** Canonical AP vendor (mdata.vendors) for WO/AP correlation. */
-  mdata_vendor_id: string | null;
-  mdata_vendor_name: string | null;
-  is_active: boolean;
-  active?: boolean;
-  archived_at?: string | null;
-  archive_reason?: string | null;
-};
+// MaintenanceVendorRow → re-exported from catalog-vendors.ts above
 
 export function getMaintenanceVendorDetail(vendorId: string, operatingCompanyId: string, pages: { woPage?: number; invoicePage?: number; pageSize?: number } = {}) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
@@ -1874,20 +1852,7 @@ export type MaintenanceVehicleRow = {
   voided_reason: string | null;
 };
 
-export type MaintenanceDriverRow = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  phone: string | null;
-  email: string | null;
-  cdl_number: string | null;
-  cdl_state: string | null;
-  status: string;
-  notes: string | null;
-  source: "Samsara" | "Manual" | "Voided" | string;
-  voided_at: string | null;
-  voided_reason: string | null;
-};
+// MaintenanceDriverRow → re-exported from catalog-drivers.ts above
 
 export type MaintenancePartRow = {
   id: string;
@@ -1976,17 +1941,7 @@ export function importMaintenanceVehicles(operatingCompanyId: string, file: File
   );
 }
 
-export function listMaintenanceDrivers(
-  operatingCompanyId: string,
-  params: { search?: string; include_voided?: boolean } = {}
-) {
-  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  if (params.search) q.set("search", params.search);
-  if (params.include_voided != null) q.set("include_voided", String(params.include_voided));
-  return apiRequest<{ rows: MaintenanceDriverRow[]; csv_import_enabled: boolean }>(
-    `/api/v1/maintenance/drivers?${q.toString()}`
-  );
-}
+// listMaintenanceDrivers → re-exported from catalog-drivers.ts above
 
 export function createMaintenanceDriver(
   operatingCompanyId: string,
