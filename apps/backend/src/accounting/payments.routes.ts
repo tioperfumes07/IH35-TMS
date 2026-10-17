@@ -243,6 +243,48 @@ function requirePaymentWriteRole(reply: FastifyReply, role: string) {
   return true;
 }
 
+/**
+ * LEAD 443.182 C — the ONE accounting.payments row writer (one writer per document; guard 18481). Both customer-payment
+ * create paths (POST /api/v1/accounting/payments here, POST /customers/:id/payments in customer-payments.routes.ts) write
+ * their row through this function, on their own client and transaction, with exactly the columns they always wrote:
+ * payment_source_kind / source_bank_transaction_id are written only when the caller gives them (else the table default).
+ * Callers keep their own validation, display-id, applications, attachments and GL posting.
+ */
+export type PaymentRowInsert = {
+  operating_company_id: string;
+  customer_id: string;
+  display_id: string;
+  payment_method: string;
+  payment_date: string;
+  reference: string | null;
+  amount_cents: number;
+  deposited_to_account_id: string;
+  notes: string | null;
+  created_by_user_id: string;
+  /** ACCT-F353 / ACCT-F264 — only an explicit true marks sample; posting-engine reads it from this SOURCE row. */
+  is_sample_data: boolean;
+  payment_source_kind?: string;
+  source_bank_transaction_id?: string | null;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function insertPaymentRowInClientTx(client: { query: (sql: string, values?: unknown[]) => Promise<any> }, row: PaymentRowInsert) {
+  const cols: Array<keyof PaymentRowInsert> = [
+    "operating_company_id", "customer_id", "display_id", "payment_method", "payment_date", "reference", "amount_cents",
+    "deposited_to_account_id", "notes", "created_by_user_id",
+  ];
+  if ("payment_source_kind" in row) cols.push("payment_source_kind");
+  if ("source_bank_transaction_id" in row) cols.push("source_bank_transaction_id");
+  // is_sample_data is ALWAYS written (last), never left to a caller to remember (ACCT-F353 / ACCT-F264).
+  const values: unknown[] = [...cols.map((c) => row[c] ?? null), row.is_sample_data === true];
+  const res = await client.query(
+    `INSERT INTO accounting.payments (${cols.join(", ")}, is_sample_data) VALUES (${values.map((_, i) => `$${i + 1}`).join(", ")})
+     RETURNING id, display_id, amount_unapplied_cents`,
+    values
+  );
+  return res.rows[0] as { id: string; display_id: string; amount_unapplied_cents: number } | undefined;
+}
+
 export async function registerPaymentsRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -487,41 +529,22 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         body.data.display_id
       );
 
-      const paymentRes = await client.query(
-        `
-          INSERT INTO accounting.payments (
-            operating_company_id,
-            customer_id,
-            display_id,
-            payment_method,
-            payment_date,
-            reference,
-            amount_cents,
-            deposited_to_account_id,
-            notes,
-            created_by_user_id,
-            -- ACCT-F353 — this route never wrote the sample tag at all; posting-engine resolves it
-            -- from this SOURCE row, so an untagged payment yielded an untagged journal entry.
-            is_sample_data
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-          RETURNING id, display_id, amount_unapplied_cents
-        `,
-        [
-          query.data.operating_company_id,
-          body.data.customer_id,
-          displayId,
-          body.data.payment_method,
-          body.data.payment_date,
-          body.data.reference ?? null,
-          body.data.amount_cents,
-          depositedToAccountId,
-          body.data.notes ?? null,
-          user.uuid,
-          // only an explicit true marks sample; omitting it keeps the column's false default.
-          body.data.is_sample_data === true,
-        ]
-      );
-      const payment = paymentRes.rows[0] as { id: string; display_id: string; amount_unapplied_cents: number } | undefined;
+      // 443.182 C — the one payment row writer (above); same columns as before (no source kind / bank line on this path).
+      // ACCT-F353 — this route never wrote the sample tag at all; posting-engine resolves it from this SOURCE row. Only an
+      // explicit true marks sample; omitting it keeps the column's false default.
+      const payment = await insertPaymentRowInClientTx(client, {
+        operating_company_id: query.data.operating_company_id,
+        customer_id: body.data.customer_id,
+        display_id: displayId,
+        payment_method: body.data.payment_method,
+        payment_date: body.data.payment_date,
+        reference: body.data.reference ?? null,
+        amount_cents: body.data.amount_cents,
+        deposited_to_account_id: depositedToAccountId,
+        notes: body.data.notes ?? null,
+        created_by_user_id: user.uuid,
+        is_sample_data: body.data.is_sample_data === true,
+      });
       if (!payment?.id) return { code: 500 as const, error: "payment_create_failed" };
       // Option B inc 2: link create-time draft attachments (check/ACH/wire confirmations) to the real
       // payment id, atomically in this txn.
