@@ -134,6 +134,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate, filterBar }: Prop
 
   return (
     <ParityTable
+      title="Chargebacks and factor fees — by record"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.factoring_advance_id}

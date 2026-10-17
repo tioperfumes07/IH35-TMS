@@ -405,6 +405,7 @@ export function FactorAdmin() {
         />
       ) : (
         <ParityTable<Factor>
+          title="Factoring companies"
           columns={FACTOR_COLUMNS}
           rows={factorRows}
           rowKey={(factor) => factor.id}
@@ -523,6 +524,7 @@ export function FactorAdmin() {
                   />
                 ) : (
                   <ParityTable<CustomerFactorAssignment>
+                    title={`Factor assignment history${selectedCustomer ? ` — ${selectedCustomer.name}` : ""}`}
                     columns={ASSIGNMENT_COLUMNS}
                     rows={assignmentRows}
                     rowKey={(row) => row.id}
@@ -535,7 +537,6 @@ export function FactorAdmin() {
               </div>
 
               <div className="border-t border-gray-200 p-3">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Batch History</div>
                 {batchesListState.isError ? (
                   <ListErrorState
                     title="Couldn't load batch history"
@@ -545,6 +546,7 @@ export function FactorAdmin() {
                   />
                 ) : (
                   <ParityTable<FactorBatchHistoryRow>
+                    title="Factoring batches — this customer"
                     columns={BATCH_COLUMNS}
                     rows={batchRows}
                     rowKey={(row) => row.id}

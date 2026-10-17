@@ -307,6 +307,7 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
         />
       ) : (
         <ParityTable
+          title="Factoring cash flow — wires received and projected"
           columns={columns}
           rows={rows}
           rowKey={(row) => `${row.kind}:${row.day}`}

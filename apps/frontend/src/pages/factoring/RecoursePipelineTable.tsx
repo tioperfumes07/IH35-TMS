@@ -208,6 +208,7 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar, f
 
   return (
     <ParityTable<RecoursePipelineRow>
+      title="Recourse pipeline — factored invoices by recourse date"
       columns={columns}
       rows={rows}
       rowKey={(row) => row.factoring_advance_id}
