@@ -23,6 +23,22 @@ const P = {
   handoff: "apps/backend/src/legal/signed-finance-handoff.service.ts",
   mig: "db/migrations/202615190100_legal_contract_and_matter_linkage.sql",
 };
+/** The argument text of every `fn(` call in src (balanced parentheses; string/template contents are not parsed). */
+export function callArgs(src, fn) {
+  const out = [];
+  let i = src.indexOf(`${fn}(`);
+  while (i !== -1) {
+    let depth = 0, j = i + fn.length;
+    for (; j < src.length; j++) {
+      if (src[j] === "(") depth++;
+      else if (src[j] === ")" && --depth === 0) break;
+    }
+    out.push(src.slice(i + fn.length + 1, j));
+    i = src.indexOf(`${fn}(`, j);
+  }
+  return out;
+}
+
 export function check(s) {
   const p = [];
   if (!/await applyContractLinkage\(client as never, \{/.test(s.contracts) || !/mergeLinks\(signerLinks\(input\.signer_type, input\.signer_entity_id\), input\.links \?\? \{\}\)/.test(s.contracts)) p.push(`${P.contracts}: contract creation no longer writes its linkage + signer FK.`);
@@ -36,7 +52,11 @@ export function check(s) {
   if ((s.matters.match(/assertMatterPartyInCompany\(client, "mdata\.(customers|vendors|loads)"/g) ?? []).length < 6) p.push(`${P.matters}: matter customer/vendor/load not scope-checked on create + update.`);
   // The reserve posts as a bill linked to its matter (createBill … legalMatterId → the bill poster), and the matter is
   // stamped with the entry it produced. A raw JE was the old shape; A/P is written only by documents (ROUND 393.1).
-  if (!/createBill\([\s\S]{0,600}?legalMatterId:/.test(s.money) || !/SET reserve_journal_entry_id = COALESCE\(\$3::uuid/.test(s.money)) p.push(`${P.money}: the matter reserve must post as a bill linked to the matter (createBill … legalMatterId) and stamp legal.matters.reserve_journal_entry_id.`);
+  // Heavy CI peel (Lead 13:45Z): the old `createBill\([\s\S]{0,600}?legalMatterId:` window stopped reaching the field
+  // when e2566972e6 (AJK-09, 443.134) added the autoDisplayId comment + attribution (388 -> 667 chars; 3116fedd81 added
+  // source). Same rule, measured per call: EVERY createBill( in legal-money.service.ts carries legalMatterId.
+  const billCalls = callArgs(s.money, "createBill").filter((a) => /\boperatingCompanyId\b/.test(a));
+  if (!billCalls.length || billCalls.some((a) => !/\blegalMatterId:/.test(a)) || !/SET reserve_journal_entry_id = COALESCE\(\$3::uuid/.test(s.money)) p.push(`${P.money}: the matter reserve must post as a bill linked to the matter (createBill … legalMatterId) and stamp legal.matters.reserve_journal_entry_id.`);
   if (!/"\/api\/v1\/legal\/matters\/:id\/reserve"/.test(s.routes)) p.push(`${P.routes}: reserve route missing.`);
   if (!/UPDATE accounting\.lease_contract lc SET contract_instance_id = ci\.id/.test(s.handoff)) p.push(`${P.handoff}: a signed lease contract no longer stamps its lease.`);
   return p;
@@ -49,9 +69,10 @@ if (process.argv.includes("--selftest")) {
   ex("linkage dropped", { ...real, contracts: real.contracts.replace("await applyContractLinkage(client as never, {", "await noop({") }, true);
   ex("matter load dropped from update", { ...real, matters: real.matters.replace('push("load_id", input.load_id)', 'void 0') }, true);
   ex("reserve not linked to its matter", { ...real, money: real.money.replace(/legalMatterId: [^,\n]+,/g, "") }, true);
+  ex("only the reserve bill drops its matter", { ...real, money: real.money.replace("legalMatterId: planned.m.id,", "") }, true);
   ex("reserve entry not stamped on the matter", { ...real, money: real.money.replace(/SET reserve_journal_entry_id = COALESCE\(\$3::uuid/g, "SET updated_at = COALESCE($3::uuid") }, true);
   ex("handoff stamp dropped", { ...real, handoff: real.handoff.replace("UPDATE accounting.lease_contract lc SET contract_instance_id = ci.id", "SELECT 1") }, true);
-  console.log(ok ? `${LABEL} --selftest PASS (5/5)` : `${LABEL} --selftest FAIL`);
+  console.log(ok ? `${LABEL} --selftest PASS (6/6)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 const problems = check(real);
