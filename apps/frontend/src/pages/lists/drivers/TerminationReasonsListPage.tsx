@@ -13,7 +13,8 @@ import {
   type UpdateDriverTerminationReasonInput,
 } from "../../../api/catalogs";
 import { Button } from "../../../components/Button";
-import { DataTable } from "../../../components/DataTable";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -143,7 +144,7 @@ export function TerminationReasonsListPage() {
 
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
 
-  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
+  // TBL-STANDARD: shared ParityTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
   const columns = [
     { key: "code", label: "Code", sortable: true, render: (row: DriverTerminationReason) => <span className="text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</span> },
     { key: "label", label: "Label", sortable: true },
@@ -196,26 +197,31 @@ export function TerminationReasonsListPage() {
         </label>
       </div>
 
-      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
+      {/* TBL-STANDARD: shared ParityTable (universal alignment + page-size + sort). Search/Status filters above
           feed `rows`; row-click → edit modal preserved exactly. */}
-      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}</h2>
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        onRowClick={(row) => {
-          setConflictError(null);
-          setActiveRow(row);
-          setModalOpen(true);
-        }}
-        loading={listQuery.isLoading}
-        tableKey="driver-termination-reasons"
-        errorState={
-          listQuery.isError
-            ? { status: 0, message: "Failed to load termination reasons.", onRetry: () => { void listQuery.refetch(); } }
-            : undefined
-        }
-      />
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load list"
+          status={0}
+          message="Failed to load termination reasons."
+          onRetry={() => { void listQuery.refetch(); }}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          onRowClick={(row) => {
+            setConflictError(null);
+            setActiveRow(row);
+            setModalOpen(true);
+          }}
+          loading={listQuery.isLoading}
+          storageKey="driver-termination-reasons"
+          title={status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}
+          allowAllPageSize
+        />
+      )}
 
       <TerminationReasonModal
         open={modalOpen}

@@ -19,7 +19,7 @@ import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
-import { DataTable, type DataTableColumn } from "../../components/DataTable";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
@@ -710,13 +710,13 @@ export function SettlementsPage() {
   );
 }
 
-// GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31: Open Driver Bills uses DataTable columns
+// GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31: Open Driver Bills uses shared table columns (ParityTable since LEAD 443.181)
 // (DRIVER · LOAD NUMBER · BILL NUMBER · AMOUNT) instead of the old column-jam flex
 // layout (Driver · Load · Bill in one cell).
 // Q22 (CC-2, ROUND 27 — ACCT-F20260911 ALL-SEATS ROLLOUT): builds columns per-render so the
 // Settlement / Presettlement cell can read a live useSettlementReferences() Map — a bare module-level
 // array can't call a hook.
-function buildOpenDriverBillColumns(settlementReferences: Map<string, SettlementReference>): DataTableColumn<OpenDriverBill>[] {
+function buildOpenDriverBillColumns(settlementReferences: Map<string, SettlementReference>): ParityColumn<OpenDriverBill>[] {
   return [
   {
     key: "driver",
@@ -809,11 +809,13 @@ function OpenDriverBillsPanel({
       {items.length === 0 ? (
         <p className="text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
       ) : (
-        <DataTable
+        <ParityTable
+          storageKey="settlements-open-driver-bills"
           columns={columns}
           rows={items}
           rowKey={(bill) => bill.id}
           hidePager
+          pageSize={Math.max(1, items.length)}
         />
       )}
     </DataPanel>

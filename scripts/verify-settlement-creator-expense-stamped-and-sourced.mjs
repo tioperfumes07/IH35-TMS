@@ -29,7 +29,9 @@ const F = {
   svc: "apps/backend/src/driver-finance/settlement-creator.service.ts",
   rule: "apps/backend/src/driver-finance/settlement-creator-line-load.ts",
   drawer: "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx",
-  writer: "apps/backend/src/accounting/expenses.routes.ts",
+  // 443.130 P0 (#26691) moved THE shared expense writer out of the route module into expense-writer.service.ts;
+  // 443.128 B (#26654-era) made the line take the load's driver / trailer (expenseDriverId / expenseTrailerId).
+  writer: "apps/backend/src/accounting/expense-writer.service.ts",
   test: "apps/backend/src/driver-finance/__tests__/settlement-creator-line-load.test.ts",
 };
 
@@ -48,7 +50,7 @@ export function problems(src) {
   if (!s.includes("await createExpenseInClientTx(") || !/vendor_uuid: vendor\.id,/.test(call) || !/unit_id: expLoad\.unitId,/.test(call) || !/trailer_id: draft\.trailer_id/.test(call) || !/vendor_document_number:/.test(call) || !/load_id: loadId,/.test(call) || !/driver_id: expLoad\.driverId,/.test(call) || !/const expLoad = await creatorFillLoad\(client, draft,/.test(s))
     p.push("the company expense must carry vendor, unit, trailer and vendor_document_number");
   if (!/item_id: itemAcct\.item_id,/.test(call) || !/quantity: qty,/.test(call) || !/rate_cents: rateCents,/.test(call) || !/unit_of_measure: uom,/.test(call)
-      || !/lineColumns\.push\("item_id", "quantity", "rate_cents", "unit_of_measure"\)/.test(src.writer) || !/\["driver_id", body\.driver_id \?\? null\], \["unit_id", headerUnitId\], \["trailer_id", body\.trailer_id \?\? null\]/.test(src.writer))
+      || !/lineColumns\.push\("item_id", "quantity", "rate_cents", "unit_of_measure"\)/.test(src.writer) || !/\["driver_id", expenseDriverId\], \["unit_id", headerUnitId\], \["trailer_id", expenseTrailerId\]/.test(src.writer))
     p.push("expense lines must carry the source quantity / unit / rate");
   if (/other_operating_expense"\);\s*\n\s*return fallback/.test(s) || !/"expense_item_unresolved"/.test(s)) p.push("an unresolved item must refuse (no fallback account)");
   if (/EXPENSE_POST_GL_REFUSED\|not posting-eligible/.test(s)) p.push("a posting refusal is swallowed — it must fail the whole post");

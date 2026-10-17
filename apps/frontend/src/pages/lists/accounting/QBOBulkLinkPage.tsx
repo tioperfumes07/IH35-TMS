@@ -7,6 +7,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ApiError } from "../../../api/client";
 import { getQboUnlinkedEntities, type UnlinkedEntityRow } from "../../../api/qbo-integration";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 /*
  * 443.137 9e — QBO is a read-only archive ("USMCA is entirely our TMS ERP").
@@ -103,8 +104,11 @@ export function QBOBulkLinkPage() {
 
       {qboAvailable ? (
         <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]" data-testid="qbo-bulk-link-read-only">
-          QuickBooks is a read-only archive. This review shows the archive&apos;s suggested matches and writes nothing. Link a
-          driver&apos;s payee with the A/P vendor on the driver profile; a unit&apos;s ownership is its Owner Company in Edit.
+          QuickBooks is a read-only archive.{" "}
+          <InfoPopover label="About QuickBooks matches">
+            This review shows the archive&apos;s suggested matches and writes nothing. Link a driver&apos;s payee with the A/P
+            vendor on the driver profile; a unit&apos;s ownership is its Owner Company in Edit.
+          </InfoPopover>
         </p>
       ) : null}
 
@@ -150,6 +154,7 @@ export function QBOBulkLinkPage() {
               <p className="text-xs text-gray-600">Matches use Levenshtein-style confidence on entity names vs QBO archive labels.</p>
               <ParityTable<UnlinkedEntityRow>
                 columns={columns}
+                title="Unlinked records — QuickBooks match suggestions"
                 rows={rows}
                 rowKey={(r) => `${r.entity_kind}-${r.id}`}
                 emptyText="No unlinked entities."

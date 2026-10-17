@@ -280,6 +280,7 @@ export function ItemsListPage() {
                   {!isCollapsed ? (
                     <ParityTable
                       columns={columns}
+                      title={`Items — ${name}`}
                       rows={groupRows}
                       rowKey={(r) => r.id}
                       loading={query.isLoading}
@@ -299,6 +300,7 @@ export function ItemsListPage() {
       ) : (
         <ParityTable
           columns={columns}
+          title="Products and services"
           rows={rows}
           rowKey={(r) => r.id}
           loading={query.isLoading}

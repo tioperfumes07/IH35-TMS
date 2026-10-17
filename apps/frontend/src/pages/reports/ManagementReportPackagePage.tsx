@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MoneyCell } from "../../components/shared/MoneyCell";
+import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 // ACCT-F411 — the aging bucket drills. Unlike the A/P and A/R aging PAGES, this package's tables
 // carry current_cents and bucket_1_30_cents SEPARATELY, so each cell is exactly one bucket id and
@@ -156,48 +157,69 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
   const q = searchQuery.toLowerCase();
   const filterLines = (lines: typeof revenue.lines) => q ? lines.filter((line) => String(line.account_name ?? "").toLowerCase().includes(q)) : lines;
 
+  // LEAD 443.181 — each P&L section is one ParityTable; the account name + amount keep their register AmountLink
+  // (so the row opens the account ledger), the section total moves to the footer.
+  const plColumns: ParityColumn<(typeof revenue.lines)[number]>[] = [
+    { key: "account_code", label: "Account #", render: (line) => <span className="text-[#4B5563]">{line.account_code}</span> },
+    {
+      key: "account_name",
+      label: "Account",
+      render: (line) => (
+        <AmountLink
+          filter={plFilter(line.account_id, fromDate, toDate, basis)}
+          className="hover:underline"
+          data-testid={`mrp-pl-name-${line.account_id}`}
+        >
+          {line.account_name}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      kind: "money",
+      sortValue: (line) => line.amount,
+      render: (line) => (
+        <AmountLink
+          filter={plFilter(line.account_id, fromDate, toDate, basis)}
+          data-testid={`mrp-pl-amount-${line.account_id}`}
+        >
+          {money(line.amount)}
+        </AmountLink>
+      ),
+    },
+  ];
+
   const renderSection = (title: string, lines: typeof revenue.lines, total: number) => (
     <div className="mb-4">
-      <div className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] mb-1">{title}</div>
       {filterLines(lines).length === 0 ? (
-        <p className="text-xs text-[#6B7280] pl-2">— no entries —</p>
+        <>
+          <div className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] mb-1">{title}</div>
+          <p className="text-xs text-[#6B7280] pl-2">— no entries —</p>
+        </>
       ) : (
-        <div className="overflow-x-auto"><table className="min-w-full text-xs">
-          <tbody>
-            {filterLines(lines).map((line) => (
-              <tr key={`${line.account_code}-${line.account_name}`} className="border-b border-gray-50">
-                <td className="py-0.5 pl-2 text-[#4B5563]">{line.account_code}</td>
-                <td className="py-0.5 pl-1 text-[#0F1219]">
-                  <AmountLink
-                    filter={plFilter(line.account_id, fromDate, toDate, basis)}
-                    className="hover:underline"
-                    data-testid={`mrp-pl-name-${line.account_id}`}
-                  >
-                    {line.account_name}
-                  </AmountLink>
-                </td>
-                <td className="py-0.5 text-right text-[#0F1219] tabular-nums">
-                  <AmountLink
-                    filter={plFilter(line.account_id, fromDate, toDate, basis)}
-                    data-testid={`mrp-pl-amount-${line.account_id}`}
-                  >
-                    {money(line.amount)}
-                  </AmountLink>
-                </td>
-              </tr>
-            ))}
-            <tr className="font-semibold border-t border-[#E5E7EB]">
-              <td colSpan={2} className="py-0.5 pl-2 text-right text-[#1F2A44]">Total {title}</td>
-              <td className="py-0.5">
-                <MoneyCell
-                  cents={total}
-                  format={money}
-                  drill={{ amount: lines.length && lines.every((l) => l.account_id) ? { target: "ledger", accountIds: lines.map((l) => String(l.account_id)), from: fromDate, to: toDate, basis } : null }}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table></div>
+        <ParityTable
+          title={title}
+          rows={filterLines(lines)}
+          columns={plColumns}
+          rowKey={(line) => `${line.account_code}-${line.account_name}`}
+          storageKey={`ih35.reports.management-package.pl.${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.v1`}
+          emptyText="— no entries —"
+          pageSize={ALL_PAGE_SIZE}
+          hidePager
+          suppressToolbarSearch
+          suppressToolbarRange
+          footerCells={{
+            account_name: `Total ${title}`,
+            amount: (
+              <MoneyCell
+                cents={total}
+                format={money}
+                drill={{ amount: lines.length && lines.every((l) => l.account_id) ? { target: "ledger", accountIds: lines.map((l) => String(l.account_id)), from: fromDate, to: toDate, basis } : null }}
+              />
+            ),
+          }}
+        />
       )}
     </div>
   );
@@ -292,80 +314,92 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   const filtered = q ? rows.filter((row) => String(row.customer_name ?? "").toLowerCase().includes(q)) : rows;
   if (filtered.length === 0) return <p className="py-4 text-xs text-[#6B7280]">No open A/R as of {asOfDate}</p>;
 
+  // LEAD 443.181 — ParityTable; the customer cell keeps its EntityLink (row opens the customer), every bucket keeps its
+  // AmountLink drill (ACCT-F411).
+  const agingColumns: ParityColumn<(typeof filtered)[number]>[] = [
+    { key: "customer_name", label: "Customer", render: (row) => <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} /> },
+    {
+      key: "current_cents",
+      label: "Current",
+      kind: "money",
+      sortValue: (row) => row.current_cents,
+      render: (row) => (
+        <AmountLink filter={arAgingBucketFilter(row.customer_id, "current", asOfDate)} data-testid={`mrp-ar-current-${row.customer_id}`}>
+          {money(row.current_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "bucket_1_30_cents",
+      label: "1–30",
+      kind: "money",
+      sortValue: (row) => row.bucket_1_30_cents,
+      render: (row) => (
+        <AmountLink filter={arAgingBucketFilter(row.customer_id, "d1_30", asOfDate)} data-testid={`mrp-ar-1-30-${row.customer_id}`}>
+          {money(row.bucket_1_30_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "bucket_31_60_cents",
+      label: "31–60",
+      kind: "money",
+      sortValue: (row) => row.bucket_31_60_cents,
+      render: (row) => (
+        <AmountLink filter={arAgingBucketFilter(row.customer_id, "d31_60", asOfDate)} data-testid={`mrp-ar-31-60-${row.customer_id}`}>
+          {money(row.bucket_31_60_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "bucket_61_90_cents",
+      label: "61–90",
+      kind: "money",
+      sortValue: (row) => row.bucket_61_90_cents,
+      render: (row) => (
+        <AmountLink filter={arAgingBucketFilter(row.customer_id, "d61_90", asOfDate)} data-testid={`mrp-ar-61-90-${row.customer_id}`}>
+          {money(row.bucket_61_90_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "bucket_91_plus_cents",
+      label: "91+",
+      kind: "money",
+      sortValue: (row) => row.bucket_91_plus_cents,
+      render: (row) => (
+        <AmountLink filter={arAgingBucketFilter(row.customer_id, "d90_plus", asOfDate)} data-testid={`mrp-ar-91-plus-${row.customer_id}`}>
+          {money(row.bucket_91_plus_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "total_open_cents",
+      label: "Total",
+      kind: "money",
+      sortValue: (row) => row.total_open_cents,
+      render: (row) => (
+        // ACCT-F411 — the Total is every open document for this ar, which the
+        // has_balance list already reproduces, so no bucket rides along.
+        <AmountLink filter={arAgingInvoiceFilter(row.customer_id)} data-testid={`mrp-ar-total-${row.customer_id}`}>
+          <span className="font-semibold">{money(row.total_open_cents)}</span>
+        </AmountLink>
+      ),
+    },
+  ];
+
   return (
-    <div className="mt-3 overflow-auto">
-      <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] border-b border-[#E5E7EB]">
-          <tr>
-            <th className="py-1 text-left">Customer</th>
-            <th className="py-1 text-right">Current</th>
-            <th className="py-1 text-right">1–30</th>
-            <th className="py-1 text-right">31–60</th>
-            <th className="py-1 text-right">61–90</th>
-            <th className="py-1 text-right">91+</th>
-            <th className="py-1 text-right font-bold">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((row) => (
-            <tr key={row.customer_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-[#0F1219]">
-                <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={arAgingBucketFilter(row.customer_id, "current", asOfDate)}
-                  data-testid={`mrp-ar-current-${row.customer_id}`}
-                >
-                  {money(row.current_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={arAgingBucketFilter(row.customer_id, "d1_30", asOfDate)}
-                  data-testid={`mrp-ar-1-30-${row.customer_id}`}
-                >
-                  {money(row.bucket_1_30_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={arAgingBucketFilter(row.customer_id, "d31_60", asOfDate)}
-                  data-testid={`mrp-ar-31-60-${row.customer_id}`}
-                >
-                  {money(row.bucket_31_60_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={arAgingBucketFilter(row.customer_id, "d61_90", asOfDate)}
-                  data-testid={`mrp-ar-61-90-${row.customer_id}`}
-                >
-                  {money(row.bucket_61_90_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={arAgingBucketFilter(row.customer_id, "d90_plus", asOfDate)}
-                  data-testid={`mrp-ar-91-plus-${row.customer_id}`}
-                >
-                  {money(row.bucket_91_plus_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right font-semibold tabular-nums">
-                {/* ACCT-F411 — the Total is every open document for this ar, which the
-                    has_balance list already reproduces, so no bucket rides along. */}
-                <AmountLink
-                  filter={arAgingInvoiceFilter(row.customer_id)}
-                  data-testid={`mrp-ar-total-${row.customer_id}`}
-                >
-                  {money(row.total_open_cents)}
-                </AmountLink>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table></div>
+    <div className="mt-3">
+      <ParityTable
+        rows={filtered}
+        columns={agingColumns}
+        rowKey={(row) => row.customer_id}
+        storageKey="ih35.reports.management-package.ar-aging.v1"
+        pageSize={ALL_PAGE_SIZE}
+        hidePager
+        suppressToolbarSearch
+        suppressToolbarRange
+      />
     </div>
   );
 }
@@ -385,80 +419,92 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   const filtered = q ? rows.filter((row) => String(row.vendor_name ?? "").toLowerCase().includes(q)) : rows;
   if (filtered.length === 0) return <p className="py-4 text-xs text-[#6B7280]">No open A/P as of {asOfDate}</p>;
 
+  // LEAD 443.181 — ParityTable; the vendor cell keeps its EntityLink (row opens the vendor), every bucket keeps its
+  // AmountLink drill (ACCT-F411).
+  const agingColumns: ParityColumn<(typeof filtered)[number]>[] = [
+    { key: "vendor_name", label: "Vendor", render: (row) => <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} /> },
+    {
+      key: "current_cents",
+      label: "Current",
+      kind: "money",
+      sortValue: (row) => row.current_cents,
+      render: (row) => (
+        <AmountLink filter={apAgingBucketFilter(row.vendor_id, "current", asOfDate)} data-testid={`mrp-ap-current-${row.vendor_id}`}>
+          {money(row.current_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "bucket_1_30_cents",
+      label: "1–30",
+      kind: "money",
+      sortValue: (row) => row.bucket_1_30_cents,
+      render: (row) => (
+        <AmountLink filter={apAgingBucketFilter(row.vendor_id, "d1_30", asOfDate)} data-testid={`mrp-ap-1-30-${row.vendor_id}`}>
+          {money(row.bucket_1_30_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "bucket_31_60_cents",
+      label: "31–60",
+      kind: "money",
+      sortValue: (row) => row.bucket_31_60_cents,
+      render: (row) => (
+        <AmountLink filter={apAgingBucketFilter(row.vendor_id, "d31_60", asOfDate)} data-testid={`mrp-ap-31-60-${row.vendor_id}`}>
+          {money(row.bucket_31_60_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "bucket_61_90_cents",
+      label: "61–90",
+      kind: "money",
+      sortValue: (row) => row.bucket_61_90_cents,
+      render: (row) => (
+        <AmountLink filter={apAgingBucketFilter(row.vendor_id, "d61_90", asOfDate)} data-testid={`mrp-ap-61-90-${row.vendor_id}`}>
+          {money(row.bucket_61_90_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "bucket_91_plus_cents",
+      label: "91+",
+      kind: "money",
+      sortValue: (row) => row.bucket_91_plus_cents,
+      render: (row) => (
+        <AmountLink filter={apAgingBucketFilter(row.vendor_id, "d90_plus", asOfDate)} data-testid={`mrp-ap-91-plus-${row.vendor_id}`}>
+          {money(row.bucket_91_plus_cents)}
+        </AmountLink>
+      ),
+    },
+    {
+      key: "total_open_cents",
+      label: "Total",
+      kind: "money",
+      sortValue: (row) => row.total_open_cents,
+      render: (row) => (
+        // ACCT-F411 — the Total is every open document for this ap, which the
+        // has_balance list already reproduces, so no bucket rides along.
+        <AmountLink filter={apAgingBillsFilter(row.vendor_id)} data-testid={`mrp-ap-total-${row.vendor_id}`}>
+          <span className="font-semibold">{money(row.total_open_cents)}</span>
+        </AmountLink>
+      ),
+    },
+  ];
+
   return (
-    <div className="mt-3 overflow-auto">
-      <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] border-b border-[#E5E7EB]">
-          <tr>
-            <th className="py-1 text-left">Vendor</th>
-            <th className="py-1 text-right">Current</th>
-            <th className="py-1 text-right">1–30</th>
-            <th className="py-1 text-right">31–60</th>
-            <th className="py-1 text-right">61–90</th>
-            <th className="py-1 text-right">91+</th>
-            <th className="py-1 text-right font-bold">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((row) => (
-            <tr key={row.vendor_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-[#0F1219]">
-                <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={apAgingBucketFilter(row.vendor_id, "current", asOfDate)}
-                  data-testid={`mrp-ap-current-${row.vendor_id}`}
-                >
-                  {money(row.current_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={apAgingBucketFilter(row.vendor_id, "d1_30", asOfDate)}
-                  data-testid={`mrp-ap-1-30-${row.vendor_id}`}
-                >
-                  {money(row.bucket_1_30_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={apAgingBucketFilter(row.vendor_id, "d31_60", asOfDate)}
-                  data-testid={`mrp-ap-31-60-${row.vendor_id}`}
-                >
-                  {money(row.bucket_31_60_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={apAgingBucketFilter(row.vendor_id, "d61_90", asOfDate)}
-                  data-testid={`mrp-ap-61-90-${row.vendor_id}`}
-                >
-                  {money(row.bucket_61_90_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right tabular-nums">
-                <AmountLink
-                  filter={apAgingBucketFilter(row.vendor_id, "d90_plus", asOfDate)}
-                  data-testid={`mrp-ap-91-plus-${row.vendor_id}`}
-                >
-                  {money(row.bucket_91_plus_cents)}
-                </AmountLink>
-              </td>
-              <td className="py-0.5 text-right font-semibold tabular-nums">
-                {/* ACCT-F411 — the Total is every open document for this ap, which the
-                    has_balance list already reproduces, so no bucket rides along. */}
-                <AmountLink
-                  filter={apAgingBillsFilter(row.vendor_id)}
-                  data-testid={`mrp-ap-total-${row.vendor_id}`}
-                >
-                  {money(row.total_open_cents)}
-                </AmountLink>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table></div>
+    <div className="mt-3">
+      <ParityTable
+        rows={filtered}
+        columns={agingColumns}
+        rowKey={(row) => row.vendor_id}
+        storageKey="ih35.reports.management-package.ap-aging.v1"
+        pageSize={ALL_PAGE_SIZE}
+        hidePager
+        suppressToolbarSearch
+        suppressToolbarRange
+      />
     </div>
   );
 }
@@ -479,28 +525,30 @@ function CustomerSummarySection({ companyId, fromDate, toDate, searchQuery }: { 
   const q = searchQuery.toLowerCase();
   const filteredRows = q ? rows.filter((row) => String(row.customer_name ?? "").toLowerCase().includes(q)) : rows;
   const sorted = [...filteredRows].sort((a, b) => b.revenue_cents - a.revenue_cents);
+  // LEAD 443.181 — ParityTable; the customer cell keeps its EntityLink so the row opens the customer.
+  const customerColumns: ParityColumn<(typeof sorted)[number]>[] = [
+    { key: "customer_name", label: "Customer", render: (row) => <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} /> },
+    {
+      key: "revenue_cents",
+      label: "Revenue",
+      kind: "money",
+      sortValue: (row) => row.revenue_cents,
+      render: (row) => <MoneyCell cents={row.revenue_cents} format={money} drill={{ none: "Revenue for the period for this customer — the customer link opens its invoices" }} />,
+    },
+    { key: "load_count", label: "Load count", kind: "number", sortValue: (row) => row.load_count, render: (row) => row.load_count },
+  ];
   return (
-    <div className="mt-3 overflow-auto">
-      <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] border-b border-[#E5E7EB]">
-          <tr>
-            <th className="py-1 text-left">Customer</th>
-            <th className="py-1 text-right">Revenue</th>
-            <th className="py-1 text-right">Load count</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.slice(0, 30).map((row) => (
-            <tr key={row.customer_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-[#0F1219]">
-                <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
-              </td>
-              <td className="py-0.5"><MoneyCell cents={row.revenue_cents} format={money} drill={{ none: "Revenue for the period for this customer — the customer link opens its invoices" }} /></td>
-              <td className="py-0.5 text-right">{row.load_count}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table></div>
+    <div className="mt-3">
+      <ParityTable
+        rows={sorted.slice(0, 30)}
+        columns={customerColumns}
+        rowKey={(row) => row.customer_id}
+        storageKey="ih35.reports.management-package.customer-summary.v1"
+        pageSize={ALL_PAGE_SIZE}
+        hidePager
+        suppressToolbarSearch
+        suppressToolbarRange
+      />
     </div>
   );
 }
@@ -521,28 +569,30 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate, searchQuery 
   const q = searchQuery.toLowerCase();
   const filteredRows = q ? rows.filter((row) => String(row.vendor_name ?? "").toLowerCase().includes(q)) : rows;
   const sorted = [...filteredRows].sort((a, b) => b.total_open_cents - a.total_open_cents);
+  // LEAD 443.181 — ParityTable; the vendor cell keeps its EntityLink so the row opens the vendor.
+  const vendorColumns: ParityColumn<(typeof sorted)[number]>[] = [
+    { key: "vendor_name", label: "Vendor", render: (row) => <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} /> },
+    {
+      key: "total_open_cents",
+      label: "Open balance",
+      kind: "money",
+      sortValue: (row) => row.total_open_cents,
+      render: (row) => <MoneyCell cents={row.total_open_cents} format={money} drill={{ amount: apAgingBillsFilter(row.vendor_id) }} />,
+    },
+    { key: "open_bill_count", label: "Bill count", kind: "number", sortValue: (row) => row.open_bill_count, render: (row) => row.open_bill_count },
+  ];
   return (
-    <div className="mt-3 overflow-auto">
-      <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] border-b border-[#E5E7EB]">
-          <tr>
-            <th className="py-1 text-left">Vendor</th>
-            <th className="py-1 text-right">Open balance</th>
-            <th className="py-1 text-right">Bill count</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.slice(0, 30).map((row) => (
-            <tr key={row.vendor_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-[#0F1219]">
-                <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
-              </td>
-              <td className="py-0.5"><MoneyCell cents={row.total_open_cents} format={money} drill={{ amount: apAgingBillsFilter(row.vendor_id) }} /></td>
-              <td className="py-0.5 text-right">{row.open_bill_count}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table></div>
+    <div className="mt-3">
+      <ParityTable
+        rows={sorted.slice(0, 30)}
+        columns={vendorColumns}
+        rowKey={(row) => row.vendor_id}
+        storageKey="ih35.reports.management-package.vendor-summary.v1"
+        pageSize={ALL_PAGE_SIZE}
+        hidePager
+        suppressToolbarSearch
+        suppressToolbarRange
+      />
     </div>
   );
 }

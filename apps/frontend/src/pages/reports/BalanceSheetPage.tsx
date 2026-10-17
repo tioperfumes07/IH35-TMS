@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
+import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -65,6 +66,27 @@ function sectionLedger(
 ): AmountFilter | null {
   if (!lines.length || lines.some((l) => !l.account_id)) return null;
   return { target: "ledger", accountIds: lines.map((l) => String(l.account_id)), from, to, basis };
+}
+
+type BsRow = {
+  key: string;
+  account_code: string;
+  account_name: string;
+  amount: number;
+  /** The posted balance-sheet line, or null for a computed row (no ledger behind it). */
+  line: AccountingBalanceSheetLine | null;
+  /** Which computed equity row this is (no ledger behind it); unset for a posted line. */
+  computed?: "cash_basis_adjustment" | "current_year_earnings";
+};
+
+function lineRow(prefix: string, line: AccountingBalanceSheetLine): BsRow {
+  return {
+    key: `${prefix}-${line.account_code}-${line.account_name}`,
+    account_code: String(line.account_code ?? ""),
+    account_name: String(line.account_name ?? ""),
+    amount: line.amount,
+    line,
+  };
 }
 
 export function BalanceSheetPage() {
@@ -132,6 +154,79 @@ export function BalanceSheetPage() {
       ),
     [equity],
   );
+
+  // LEAD 443.181 — one ParityTable per section. Account lines keep their AmountLink (name + amount open the
+  // account register); the computed equity rows (cash-basis adjustment, current-year earnings) stay as rows
+  // with no ledger link — the same MoneyCell `none` drill they carried before.
+  const assetRows = useMemo<BsRow[]>(() => assets.map((line) => lineRow("asset", line)), [assets]);
+  const liabilityRows = useMemo<BsRow[]>(() => liabilities.map((line) => lineRow("liability", line)), [liabilities]);
+  const equityRows = useMemo<BsRow[]>(() => {
+    const rows = equityLinesWithoutAdjustment.map((line) => lineRow("equity", line));
+    if (!query.data) return rows;
+    if (applied.basis === "cash") {
+      rows.push({
+        key: "equity-cash-basis-adjustment",
+        account_code: cashBasisAdjustment?.account_code ?? "CASH_BASIS_ADJ",
+        account_name: cashBasisAdjustment?.account_name ?? "Cash Basis Adjustment",
+        amount: cashBasisAdjustment?.amount ?? 0,
+        line: null,
+        computed: "cash_basis_adjustment",
+      });
+    }
+    rows.push({
+      key: "equity-current-year-earnings",
+      account_code: "",
+      account_name: "Current year earnings",
+      amount: query.data.equity.current_year_earnings,
+      line: null,
+      computed: "current_year_earnings",
+    });
+    return rows;
+  }, [equityLinesWithoutAdjustment, cashBasisAdjustment, applied.basis, query.data]);
+
+  const bsColumns = useMemo<ParityColumn<BsRow>[]>(() => {
+    const cols: ParityColumn<BsRow>[] = [];
+    if (showCodes) {
+      cols.push({
+        key: "account_code",
+        label: "Account #",
+        render: (r) => <span className="font-medium text-gray-900">{r.account_code || "—"}</span>,
+      });
+    }
+    cols.push({
+      key: "account_name",
+      label: "Account",
+      render: (r) =>
+        r.line ? (
+          <AmountLink
+            filter={bsFilter(r.line.account_id, applied)}
+            className="text-[#1F2A44] underline-offset-2 hover:underline"
+            data-testid={`bs-name-${r.line.account_id}`}
+          >
+            {r.account_name || "—"}
+          </AmountLink>
+        ) : (
+          r.account_name
+        ),
+    });
+    cols.push({
+      key: "amount",
+      label: "Amount",
+      kind: "money",
+      sortValue: (r) => r.amount,
+      render: (r) =>
+        r.line ? (
+          <AmountLink filter={bsFilter(r.line.account_id, applied)} data-testid={`bs-amount-${r.line.account_id}`}>
+            {money(r.amount)}
+          </AmountLink>
+        ) : r.computed === "cash_basis_adjustment" ? (
+          <MoneyCell cents={r.amount} format={money} drill={{ none: "Cash-basis adjustment: computed by the cash-basis engine from open A/R and A/P, not a posting" }} />
+        ) : (
+          <MoneyCell cents={r.amount} format={money} drill={{ none: "Current-year earnings: computed from this fiscal year's Profit & Loss, not a posted account" }} />
+        ),
+    });
+    return cols;
+  }, [showCodes, applied]);
 
   function printLetter() {
     const data = query.data;
@@ -295,182 +390,63 @@ export function BalanceSheetPage() {
 
       {query.data ? (
         <div className="grid gap-3 lg:grid-cols-2">
-          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-            <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">Assets</div>
-            <table className="min-w-full text-left text-xs">
-              <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
-                <tr>
-                  {showCodes ? <th className="px-3 py-2">Account #</th> : null}
-                  <th className="px-3 py-2">Account</th>
-                  <th className="px-3 py-2 text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assets.length === 0 ? (
-                  <tr>
-                    <td colSpan={showCodes ? 3 : 2} className="px-3 py-4 text-gray-500">
-                      No rows
-                    </td>
-                  </tr>
-                ) : (
-                  assets.map((line) => (
-                    <tr key={`asset-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
-                      {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
-                      <td className="px-3 py-2">
-                        <AmountLink
-                          filter={bsFilter(line.account_id, applied)}
-                          className="text-[#1F2A44] underline-offset-2 hover:underline"
-                          data-testid={`bs-name-${line.account_id}`}
-                        >
-                          {line.account_name || "—"}
-                        </AmountLink>
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        <AmountLink
-                          filter={bsFilter(line.account_id, applied)}
-                          data-testid={`bs-amount-${line.account_id}`}
-                        >
-                          {money(line.amount)}
-                        </AmountLink>
-                      </td>
-                    </tr>
-                  ))
-                )}
-                <tr className="bg-[#F7F8FA] font-semibold">
-                  <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
-                    Total assets
-                  </td>
-                  <td className="px-3 py-2">
-                    <MoneyCell cents={query.data.assets.total} format={money} drill={{ amount: sectionLedger(query.data.assets.lines, `${applied.asOfDate.slice(0, 7)}-01`, applied.asOfDate, applied.basis) }} data-testid="bs-total-assets" />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            title="Assets"
+            rows={assetRows}
+            columns={bsColumns}
+            rowKey={(r) => r.key}
+            storageKey="ih35.reports.balance-sheet.assets.v1"
+            emptyText="No rows"
+            pageSize={ALL_PAGE_SIZE}
+            hidePager
+            suppressToolbarSearch
+            suppressToolbarRange
+            footerCells={{
+              account_name: "Total assets",
+              amount: (
+                <MoneyCell cents={query.data.assets.total} format={money} drill={{ amount: sectionLedger(query.data.assets.lines, `${applied.asOfDate.slice(0, 7)}-01`, applied.asOfDate, applied.basis) }} data-testid="bs-total-assets" />
+              ),
+            }}
+          />
 
           <div className="space-y-3">
-            <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">Liabilities</div>
-              <table className="min-w-full text-left text-xs">
-                <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
-                  <tr>
-                    {showCodes ? <th className="px-3 py-2">Account #</th> : null}
-                    <th className="px-3 py-2">Account</th>
-                    <th className="px-3 py-2 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {liabilities.length === 0 ? (
-                    <tr>
-                      <td colSpan={showCodes ? 3 : 2} className="px-3 py-4 text-gray-500">
-                        No rows
-                      </td>
-                    </tr>
-                  ) : (
-                    liabilities.map((line) => (
-                      <tr key={`liability-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
-                        {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
-                        <td className="px-3 py-2">
-                          <AmountLink
-                            filter={bsFilter(line.account_id, applied)}
-                            className="text-[#1F2A44] underline-offset-2 hover:underline"
-                            data-testid={`bs-name-${line.account_id}`}
-                          >
-                            {line.account_name || "—"}
-                          </AmountLink>
-                        </td>
-                        <td className="px-3 py-2 text-right tabular-nums">
-                        <AmountLink
-                          filter={bsFilter(line.account_id, applied)}
-                          data-testid={`bs-amount-${line.account_id}`}
-                        >
-                          {money(line.amount)}
-                        </AmountLink>
-                      </td>
-                      </tr>
-                    ))
-                  )}
-                  <tr className="bg-[#F7F8FA] font-semibold">
-                    <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
-                      Total liabilities
-                    </td>
-                    <td className="px-3 py-2">
-                      <MoneyCell cents={query.data.liabilities.total} format={money} drill={{ amount: sectionLedger(query.data.liabilities.lines, `${applied.asOfDate.slice(0, 7)}-01`, applied.asOfDate, applied.basis) }} data-testid="bs-total-liabilities" />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <ParityTable
+              title="Liabilities"
+              rows={liabilityRows}
+              columns={bsColumns}
+              rowKey={(r) => r.key}
+              storageKey="ih35.reports.balance-sheet.liabilities.v1"
+              emptyText="No rows"
+              pageSize={ALL_PAGE_SIZE}
+              hidePager
+              suppressToolbarSearch
+              suppressToolbarRange
+              footerCells={{
+                account_name: "Total liabilities",
+                amount: (
+                  <MoneyCell cents={query.data.liabilities.total} format={money} drill={{ amount: sectionLedger(query.data.liabilities.lines, `${applied.asOfDate.slice(0, 7)}-01`, applied.asOfDate, applied.basis) }} data-testid="bs-total-liabilities" />
+                ),
+              }}
+            />
 
-            <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-              <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">Equity</div>
-              <table className="min-w-full text-left text-xs">
-                <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
-                  <tr>
-                    {showCodes ? <th className="px-3 py-2">Account #</th> : null}
-                    <th className="px-3 py-2">Account</th>
-                    <th className="px-3 py-2 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {equityLinesWithoutAdjustment.length === 0 ? (
-                    <tr>
-                      <td colSpan={showCodes ? 3 : 2} className="px-3 py-4 text-gray-500">
-                        No rows
-                      </td>
-                    </tr>
-                  ) : (
-                    equityLinesWithoutAdjustment.map((line) => (
-                      <tr key={`equity-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
-                        {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
-                        <td className="px-3 py-2">
-                          <AmountLink
-                            filter={bsFilter(line.account_id, applied)}
-                            className="text-[#1F2A44] underline-offset-2 hover:underline"
-                            data-testid={`bs-name-${line.account_id}`}
-                          >
-                            {line.account_name || "—"}
-                          </AmountLink>
-                        </td>
-                        <td className="px-3 py-2 text-right tabular-nums">
-                        <AmountLink
-                          filter={bsFilter(line.account_id, applied)}
-                          data-testid={`bs-amount-${line.account_id}`}
-                        >
-                          {money(line.amount)}
-                        </AmountLink>
-                      </td>
-                      </tr>
-                    ))
-                  )}
-                  {applied.basis === "cash" ? (
-                    <tr className="border-b border-gray-100">
-                      {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{cashBasisAdjustment?.account_code ?? "CASH_BASIS_ADJ"}</td> : null}
-                      <td className="px-3 py-2">{cashBasisAdjustment?.account_name ?? "Cash Basis Adjustment"}</td>
-                      <td className="px-3 py-2">
-                        <MoneyCell cents={cashBasisAdjustment?.amount ?? 0} format={money} drill={{ none: "Cash-basis adjustment: computed by the cash-basis engine from open A/R and A/P, not a posting" }} />
-                      </td>
-                    </tr>
-                  ) : null}
-                  <tr className="bg-[#F7F8FA] font-semibold">
-                    <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
-                      Current year earnings
-                    </td>
-                    <td className="px-3 py-2">
-                      <MoneyCell cents={query.data.equity.current_year_earnings} format={money} drill={{ none: "Current-year earnings: computed from this fiscal year's Profit & Loss, not a posted account" }} />
-                    </td>
-                  </tr>
-                  <tr className="bg-[#F7F8FA] font-semibold">
-                    <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
-                      Total equity
-                    </td>
-                    <td className="px-3 py-2">
-                      <MoneyCell cents={query.data.equity.total} format={money} drill={{ none: "Total equity includes current-year earnings, which are computed, so no ledger list sums to it" }} />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <ParityTable
+              title="Equity"
+              rows={equityRows}
+              columns={bsColumns}
+              rowKey={(r) => r.key}
+              storageKey="ih35.reports.balance-sheet.equity.v1"
+              emptyText="No rows"
+              pageSize={ALL_PAGE_SIZE}
+              hidePager
+              suppressToolbarSearch
+              suppressToolbarRange
+              footerCells={{
+                account_name: "Total equity",
+                amount: (
+                  <MoneyCell cents={query.data.equity.total} format={money} drill={{ none: "Total equity includes current-year earnings, which are computed, so no ledger list sums to it" }} />
+                ),
+              }}
+            />
           </div>
         </div>
       ) : null}

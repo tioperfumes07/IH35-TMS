@@ -5,7 +5,8 @@ import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useQuery } from "@tanstack/react-query";
 import { listCargoClaimReasons, type CargoClaimCategory, type CargoClaimReasonRow } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
-import { DataTable } from "../../../components/DataTable";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CargoClaimReasonModal } from "./CargoClaimReasonModal";
@@ -54,12 +55,12 @@ export function CargoClaimReasonsListPage() {
   const rows = showInactive ? allRows : allRows.filter((r) => r.is_active !== false);
   const total = query.data?.total ?? 0;
 
-  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
+  // TBL-STANDARD: shared ParityTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
   const columns = [
     { key: "reason_code", label: "Code", sortable: true, render: (row: CargoClaimReasonRow) => <span className="text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.reason_code}</span> },
     { key: "display_name", label: "Name", sortable: true },
     { key: "claim_category", label: "Category", sortable: true, render: (row: CargoClaimReasonRow) => (row.claim_category ? CATEGORY_LABELS[row.claim_category] : "—") },
-    { key: "sort_order", label: "Order", sortable: true, numeric: true },
+    { key: "sort_order", label: "Order", sortable: true, kind: "number" as const },
     { key: "is_active", label: "Status", sortable: true, render: (row: CargoClaimReasonRow) => <span className={statusPillClass(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span> },
   ];
 
@@ -98,25 +99,30 @@ export function CargoClaimReasonsListPage() {
         Show inactive
       </label>
 
-      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
+      {/* TBL-STANDARD: shared ParityTable (universal alignment + page-size + sort). Search/Status filters above
           feed `rows`; row-click → edit modal preserved exactly. */}
-      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Cargo claim reasons</h2>
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        onRowClick={(row) => {
-          setSelectedRow(row);
-          setModalOpen(true);
-        }}
-        loading={query.isLoading}
-        tableKey="safety-cargo-claim-reasons"
-        errorState={
-          query.isError
-            ? { status: 0, message: "Failed to load cargo claim reasons.", onRetry: () => { void query.refetch(); } }
-            : undefined
-        }
-      />
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load list"
+          status={0}
+          message="Failed to load cargo claim reasons."
+          onRetry={() => { void query.refetch(); }}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          onRowClick={(row) => {
+            setSelectedRow(row);
+            setModalOpen(true);
+          }}
+          loading={query.isLoading}
+          storageKey="safety-cargo-claim-reasons"
+          title="Cargo claim reasons"
+          allowAllPageSize
+        />
+      )}
 
       <CargoClaimReasonModal
         open={modalOpen}

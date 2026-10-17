@@ -16622,5 +16622,25 @@
     "claimed_at": "2026-10-17",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.181: verify-one-table-component (raw <table> / <DataTable> in app pages = named allowlist only, shrink-only; every list/report table is ParityTable)"
+  },
+  "18535": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.183 Creator: verify-creator-refuses-unmatched-customer-and-loadless-lines (G3 no oldest-customer fallback; G5 every reimbursement / additional pay / reimbursable / fuel line carries its load or refuses; G4 owed bill posted through the bill poster, id kept, voided on Edit; G13 company expenses through the shared expense writer; G14 deductions mapped by type)"
+  },
+  "18539": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.183 G6: verify-bank-categorize-to-load-creates-expense-document (categorize-to-load + fuel fill at bank match create the expense document through the shared expense writer, load-spine number, load_id on postings)"
+  },
+  "18543": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.183 G9: verify-driver-bill-and-advance-unit-trailer-from-load (driver_bills unit/trailer stamped at mint; cash advance unit/trailer from the load; overflow loan id kept + voided on Edit)"
+  },
+  "18547": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-2 LEAD 443.183 G10: verify-invoice-itemized-from-load-charge-lines (line haul, fuel surcharge, each accessorial its own invoice line with item -> income account)"
   }
 }

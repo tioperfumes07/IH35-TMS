@@ -1,4 +1,5 @@
-import { DataTable, type DataTableColumn } from "../DataTable";
+// TABLE_DATE_OMIT: this table has no date column by design — one row per settlement-to-settlement attribution (source document, original / round-trip settlement, journal, basis, amount); the row type carries no date.
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { DataPanel } from "../layout/DataPanel";
 import { EntityLink } from "../shared/EntityLink";
 import { formatUsd } from "../../lib/money";
@@ -15,7 +16,7 @@ export type HistoricalSettlementAttributionRow = {
   allocated_net_cents: string | null;
 };
 
-const columns: DataTableColumn<HistoricalSettlementAttributionRow>[] = [
+const columns: ParityColumn<HistoricalSettlementAttributionRow>[] = [
   { key: "source_document_ref", label: "Source document", sortable: true },
   { key: "source_settlement_display_id", label: "Original settlement", sortable: true,
     render: row => <EntityLink kind="settlement" id={row.source_settlement_id} label={row.source_settlement_display_id} /> },
@@ -37,6 +38,6 @@ export function HistoricalSettlementAttributions({ rows }: { rows: HistoricalSet
       These round trips reference an original posted journal. This does not establish a bank payment.
       Unallocated amounts are unknown. Posting, payment and reopening require resolution of the original attribution.
     </p>
-    <DataTable columns={columns} rows={rows} rowKey={row => row.id} hidePager />
+    <ParityTable storageKey="historical-settlement-attributions" columns={columns} rows={rows} rowKey={row => row.id} hidePager pageSize={Math.max(1, rows.length)} />
   </DataPanel>;
 }

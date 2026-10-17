@@ -10,7 +10,7 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
-import { DataTable } from "../../components/DataTable";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useListState } from "../../components/list-state";
 import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
@@ -99,14 +99,14 @@ export function PoliciesList() {
       policy.coverage_type_name ?? (typesQuery.isError ? undefined : typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name),
     );
 
-  // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
-  const columns = [
+  // TBL-STANDARD: shared ParityTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
+  const columns: ParityColumn<InsurancePolicy>[] = [
     { key: "policy_number", label: "Policy #", sortable: true, render: (p: InsurancePolicy) => <EntityLink kind="insurance_policy" id={p.id} label={entityLabel(p.policy_number, p.id, "Policy")} className="font-medium text-[#0F1219]" /> },
     { key: "insurer_name", label: "Insurer", sortable: true },
     { key: "coverage_type", label: "Type", sortable: true, render: (p: InsurancePolicy) => coverageTypeName(p) },
-    { key: "total_premium_cents", label: "Coverage Amount", sortable: true, numeric: true, render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
-    { key: "effective_date", label: "Effective Date", sortable: true, align: "right" as const, render: (p: InsurancePolicy) => formatDateUS(p.effective_date) },
-    { key: "expiry_date", label: "Expiry Date", sortable: true, align: "right" as const, render: (p: InsurancePolicy) => formatDateUS(p.expiry_date) },
+    { key: "total_premium_cents", label: "Coverage Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
+    { key: "effective_date", label: "Effective Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatDateUS(p.effective_date) },
+    { key: "expiry_date", label: "Expiry Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatDateUS(p.expiry_date) },
     { key: "status", label: "Status", sortable: true, render: (p: InsurancePolicy) => (
       <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${statusBadge(p.status)}`}>{p.status}</span>
     ) },
@@ -219,23 +219,27 @@ export function PoliciesList() {
         </div>
       </CollapsedListFilters>
 
-      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Insurance policies</h2>
-      {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Filters (Type/Status/
+      {/* TBL-STANDARD: shared ParityTable (universal alignment + page-size + sort). Filters (Type/Status/
           Expiring-soon) above feed `rows`; row-click → policy details preserved exactly. */}
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(policy) => policy.id}
-        onRowClick={(policy) => navigate(`/safety/insurance/policies/${policy.id}`)}
-        loading={listState.isLoading}
-        emptyText="No insurance policies found for this entity yet."
-        tableKey="insurance-policies"
-        errorState={
-          policiesQuery.isError
-            ? { status: 0, message: "Failed to load insurance policies.", onRetry: () => { void policiesQuery.refetch(); } }
-            : undefined
-        }
-      />
+      {policiesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load list"
+          status={0}
+          message="Failed to load insurance policies."
+          onRetry={() => { void policiesQuery.refetch(); }}
+        />
+      ) : (
+        <ParityTable
+          title="Insurance policies"
+          storageKey="insurance-policies"
+          columns={columns}
+          rows={rows}
+          rowKey={(policy) => policy.id}
+          onRowClick={(policy) => navigate(`/safety/insurance/policies/${policy.id}`)}
+          loading={listState.isLoading}
+          emptyText="No insurance policies found for this entity yet."
+        />
+      )}
 
       <PolicyCreateModal
         open={createOpen}

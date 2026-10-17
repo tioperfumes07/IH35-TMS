@@ -12,7 +12,7 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
-import { DataTable } from "../DataTable";
+import { ParityTable } from "../parity/ParityTable";
 import { useToast } from "../Toast";
 import { formatDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
@@ -200,7 +200,8 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
 
       {documentsError ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{documentsError}</div> : null}
 
-      <DataTable
+      <ParityTable<DocsFile>
+        storageKey="entity-documents-tab"
         rows={filteredFiles}
         rowKey={(row) => row.id}
         loading={filesQuery.isLoading}
@@ -224,6 +225,9 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
             key: "actions",
             label: "Actions",
             className: "w-[270px]",
+            minWidth: 270,
+            sortable: false,
+            alwaysVisible: true,
             render: (row) => (
               <div className="flex flex-wrap gap-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                 <Button size="sm" variant="secondary" onClick={() => setSelectedPreviewFile(row)} disabled={!row.upload_completed_at}>

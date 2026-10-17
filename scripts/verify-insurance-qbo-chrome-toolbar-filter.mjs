@@ -23,10 +23,10 @@ const LABEL = "verify-insurance-qbo-chrome-toolbar-filter";
 
 const CHECKS = [
   {
-    name: "PoliciesList: CollapsedListFilters Apply triad + DataTable",
+    name: "PoliciesList: CollapsedListFilters Apply triad + ParityTable",
     file: "apps/frontend/src/pages/insurance/PoliciesList.tsx",
     pattern:
-      /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}[\s\S]*DataTable/,
+      /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}[\s\S]*<ParityTable/,
   },
   {
     name: "ClaimsTab: CollapsedListFilters Apply triad + ParityTable",
