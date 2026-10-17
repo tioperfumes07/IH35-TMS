@@ -157,13 +157,15 @@ const statementColumns: ParityColumn<StatementRow>[] = [
   {
     key: "date",
     label: "Date",
+    sortable: true,
     render: (r) => (r.kind === "line" ? mmmDd(r.date) : ""),
   },
-  { key: "type", label: "Type", sortValue: (r) => (r.line ? typeLabel(r.line.type) : ""), render: (r) => (r.line ? typeLabel(r.line.type) : "") },
-  { key: "reference", label: "Reference", sortValue: (r) => r.line?.reference ?? "", render: (r) => (r.line ? r.line.reference || "—" : "") },
+  { key: "type", label: "Type", sortable: true, sortValue: (r) => (r.line ? typeLabel(r.line.type) : ""), render: (r) => (r.line ? typeLabel(r.line.type) : "") },
+  { key: "reference", label: "Reference", sortable: true, sortValue: (r) => r.line?.reference ?? "", render: (r) => (r.line ? r.line.reference || "—" : "") },
   {
     key: "description",
     label: "Description",
+    sortable: true,
     allowWrap: true,
     sortValue: (r) => r.line?.description ?? "",
     render: (r) =>
@@ -178,6 +180,7 @@ const statementColumns: ParityColumn<StatementRow>[] = [
   {
     key: "debit_cents",
     label: "Charge",
+    sortable: true,
     kind: "money",
     sortValue: (r) => r.line?.debit_cents ?? 0,
     render: (r) => {
@@ -189,6 +192,7 @@ const statementColumns: ParityColumn<StatementRow>[] = [
   {
     key: "credit_cents",
     label: "Payment/Credit",
+    sortable: true,
     kind: "money",
     sortValue: (r) => r.line?.credit_cents ?? 0,
     render: (r) => {
@@ -200,6 +204,7 @@ const statementColumns: ParityColumn<StatementRow>[] = [
   {
     key: "running_balance_cents",
     label: "Balance",
+    sortable: true,
     kind: "money",
     render: (r) =>
       r.kind === "opening" ? (

@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
@@ -120,12 +121,13 @@ export function ProfitLossPage() {
   const plColumns = useMemo<ParityColumn<AccountingProfitLossLine>[]>(() => {
     const cols: ParityColumn<AccountingProfitLossLine>[] = [];
     if (showCodes) {
-      cols.push({ key: "account_code", label: "Account #", render: (line) => <span className="font-medium text-gray-900">{line.account_code || "—"}</span> });
+      cols.push({ key: "account_code", label: "Account #", sortable: true, render: (line) => <span className="font-medium text-gray-900">{line.account_code || "—"}</span> });
     }
     cols.push(
       {
         key: "account_name",
         label: "Account",
+        sortable: true,
         render: (line) => (
           <AmountLink
             filter={plFilter(line.account_id, applied)}
@@ -136,10 +138,11 @@ export function ProfitLossPage() {
           </AmountLink>
         ),
       },
-      { key: "account_type", label: "Type", render: (line) => formatAccountTypeLabel(line.account_type) },
+      { key: "account_type", label: "Type", sortable: true, render: (line) => formatAccountTypeLabel(line.account_type) },
       {
         key: "amount",
         label: "Amount",
+        sortable: true,
         kind: "money",
         sortValue: (line) => line.amount,
         render: (line) => (

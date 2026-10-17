@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useMemo, useState } from "react";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
@@ -190,12 +191,14 @@ export function BalanceSheetPage() {
       cols.push({
         key: "account_code",
         label: "Account #",
+        sortable: true,
         render: (r) => <span className="font-medium text-gray-900">{r.account_code || "—"}</span>,
       });
     }
     cols.push({
       key: "account_name",
       label: "Account",
+      sortable: true,
       render: (r) =>
         r.line ? (
           <AmountLink
@@ -212,6 +215,7 @@ export function BalanceSheetPage() {
     cols.push({
       key: "amount",
       label: "Amount",
+      sortable: true,
       kind: "money",
       sortValue: (r) => r.amount,
       render: (r) =>
