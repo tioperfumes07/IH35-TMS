@@ -17,7 +17,19 @@
 -- Any invariant whose pass condition is "zero rows" MUST be preceded by this probe.
 -- Zero rows from an RLS-scoped blind read is indistinguishable from zero rows from a
 -- clean ledger. Only a non-zero control read can tell them apart.
-SELECT count(*) AS je_control FROM accounting.journal_entries;
+-- 443.187 (LEAD, 2026-10-17): the control's EXPECTATION is derived at run time, never a frozen
+-- literal (2214, the 2026-08-30 count, rotted to 4102). je_control is read through RLS (the path
+-- every proof uses); je_control_expected is the server's own live-tuple counter for the same
+-- table, kept by the stats subsystem, which RLS does not filter. They must be equal and non-zero:
+--   blind read (bypass GUC did not take, no company context) -> 0 vs N    -> FAIL
+--   one-entity read (a stray app.operating_company_id)        -> 2314 vs N -> FAIL
+--   empty / wrong database                                     -> 0 vs 0    -> FAIL (non-zero rule)
+-- Measured exact on prod 2026-10-17: journal_entries 4102=4102, journal_entry_postings 9292=9292,
+-- invoices 12201=12201, chart_of_accounts_roles 161=161 (after autovacuum/autoanalyze). If the
+-- counter ever drifts it can only make the probe FAIL (disagree), never PASS a blind read.
+SELECT count(*) AS je_control,
+       pg_stat_get_live_tuples('accounting.journal_entries'::regclass) AS je_control_expected
+FROM accounting.journal_entries;
 
 \echo '=== INV-0B  ENTITY-SCOPED CONTROL (discriminator: proves this connection can see role rows under ENFORCED RLS with a company context set) ==='
 -- packet 10-RLS-WILL-BREAK-THE-FIRST-RUN.txt, 2026-08-30, section 3: INV-0's own probe runs
@@ -28,7 +40,16 @@ SELECT count(*) AS je_control FROM accounting.journal_entries;
 -- nothing." The runner sets app.operating_company_id as its own statement (never inline SQL,
 -- same pattern as app.bypass_rls) before this query runs -- this block itself carries no
 -- WHERE clause. FORCE ROW LEVEL SECURITY does the entity-scoping.
-SELECT count(*) AS role_control FROM accounting.chart_of_accounts_roles;
+-- 443.187 (2026-10-17): the frozen role_control=49 rotted (USMCA now has 73 rows). The expectation
+-- is derived in the same row: role_control_expected counts only the rows that belong to the
+-- company context the runner set. Equal and non-zero proves BOTH that the read saw something AND
+-- that every row it saw is THIS entity's -- i.e. RLS really was enforced. A bypass-capable read
+-- sees all entities (prod 2026-10-17: 161 vs 73) and FAILs; a blind read (no context) is 0 vs 0
+-- and FAILs on the non-zero rule.
+SELECT count(*) AS role_control,
+       count(*) FILTER (WHERE operating_company_id =
+         NULLIF(current_setting('app.operating_company_id', true), '')::uuid) AS role_control_expected
+FROM accounting.chart_of_accounts_roles;
 
 \echo '=== INV-1  TRIAL BALANCE (expect difference_cents = 0) ==='
 SELECT sum(CASE WHEN debit_or_credit='debit'  THEN amount_cents ELSE 0 END) AS total_debits_cents,
@@ -88,6 +109,12 @@ SELECT c.code AS opco, i.display_id, i.status, i.total_cents/100.0 AS total,
 FROM accounting.invoices i JOIN org.companies c ON c.id=i.operating_company_id
 WHERE i.source_system='tms' AND i.voided_at IS NULL
   AND i.status IN ('sent','partial','paid')
+  -- 443.187 TASK 3 (LEAD 2026-10-17): a $0 document posts nothing, so it needs no invoice JE.
+  -- Owner standing ruling (443.167-R2 / claude 10-16): "Transportation loads were settled here in
+  -- usmca as 0". Measured on prod 2026-10-17: the 19 USMCA invoices this block listed
+  -- (0-13497 .. 0-13627) total exactly 0 cents, none non-zero. A NON-zero sent/partial/paid
+  -- invoice with no invoice-sourced posting still fails, exactly as before.
+  AND i.total_cents <> 0
   AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p
                   WHERE p.source_transaction_type='invoice' AND p.source_transaction_id=i.id::text)
 ORDER BY i.created_at;
@@ -141,16 +168,34 @@ FROM accounting.chart_of_accounts_roles r JOIN org.companies c ON c.id=r.operati
 GROUP BY 1,2 HAVING bool_or(r.is_active) IS NOT TRUE
 ORDER BY 1,2;
 
-\echo '--- 10c: DUPLICATE role rows — resolution is order-dependent (expect 0) ---'
-SELECT c.code AS opco, r.role, count(*) AS dup_rows,
-       count(*) FILTER (WHERE r.is_active) AS active_rows
+\echo '--- 10c: DUPLICATE ACTIVE role rows — resolution is order-dependent (expect 0) ---'
+-- 443.187 TASK 2 (2026-10-17): a duplicate is >1 ACTIVE row per (company, role) — the same rule
+-- the resolver depends on (coa-roles/resolver.service.ts reads only car.is_active = true), and the
+-- same rule the database enforces (uq_coa_roles_company_role_active, migration 0223, reasserted
+-- by 202613300800). Inactive rows are WORM history (nothing is deletable) and cannot be resolved,
+-- so they are not duplicates. Measured on prod 2026-10-17: 14 (company, role) groups have >1 row
+-- (USMCA 4, TRANSP 4, TRK 6) and EVERY one has exactly ONE active row — the extras are inactive
+-- history. The old HAVING count(*)>1 graded that history as a defect.
+SELECT c.code AS opco, r.role, count(*) FILTER (WHERE r.is_active) AS dup_rows,
+       count(*) AS rows_incl_inactive_history
 FROM accounting.chart_of_accounts_roles r JOIN org.companies c ON c.id=r.operating_company_id
-GROUP BY 1,2 HAVING count(*)>1
-ORDER BY count(*) DESC,1,2;
+GROUP BY 1,2 HAVING count(*) FILTER (WHERE r.is_active) > 1
+ORDER BY count(*) FILTER (WHERE r.is_active) DESC,1,2;
 
-\echo '--- 10d: is there a unique constraint protecting (operating_company_id, role)? ---'
-SELECT conname, pg_get_constraintdef(oid) AS def FROM pg_constraint
-WHERE conrelid='accounting.chart_of_accounts_roles'::regclass AND contype IN ('u','p');
+\echo '--- 10d: is there a UNIQUE index protecting (operating_company_id, role) WHERE is_active? (expect >= 1 row) ---'
+-- 443.187 TASK 2: the protecting key is a PARTIAL UNIQUE INDEX, not a table constraint, so the old
+-- pg_constraint read (contype u/p) could never see it and only ever listed the primary key. This
+-- lists valid unique indexes on exactly (operating_company_id, role) whose predicate is is_active.
+-- Prod 2026-10-17: uq_coa_roles_company_role_active (migration 0223 / 202613300800) and
+-- ux_coa_roles_one_active_per_company_role (present on prod, created by no migration in db/migrations).
+SELECT x.indexrelid::regclass::text AS index_name, pg_get_indexdef(x.indexrelid) AS def
+FROM pg_index x
+WHERE x.indrelid='accounting.chart_of_accounts_roles'::regclass
+  AND x.indisunique AND x.indisvalid
+  AND pg_get_expr(x.indpred, x.indrelid) ~ 'is_active'
+  AND (SELECT array_agg(a.attname::text ORDER BY a.attname::text)
+       FROM unnest(x.indkey::int2[]) k JOIN pg_attribute a ON a.attrelid=x.indrelid AND a.attnum=k)
+      = ARRAY['operating_company_id','role'];
 
 \echo '=== INV-11 REVERSAL SYMMETRY (expect reversal_of = reversed_by) ==='
 SELECT count(*) FILTER (WHERE reverses_je_id IS NOT NULL)   AS je_marked_reversal,

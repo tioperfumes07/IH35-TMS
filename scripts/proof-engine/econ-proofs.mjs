@@ -17,14 +17,25 @@
  */
 export const INVARIANTS_FILE = "scripts/verify-gl-invariants.sql";
 
-/** je_control: accounting.journal_entries row count. Non-zero, known, and cheap to re-read. */
-export const DISCRIMINATOR = { column: "je_control", value: 2214 };
+/**
+ * je_control: accounting.journal_entries row count read through RLS, which must EQUAL
+ * je_control_expected — the same table's live-tuple count derived at run time by an independent
+ * read (the stats subsystem, which RLS does not filter) — and be non-zero.
+ *
+ * LEAD 443.187 (2026-10-17): this used to be the frozen literal { value: 2214 } (the count on
+ * 2026-08-30). It rotted — prod read 4102 — and failed all five wrappers on the probe alone.
+ * Bumping it would rot again; sql-runner R1-c now rejects any literal. The guarantee is kept:
+ * a blind read (0 vs N), a one-entity read (subset vs N) and an empty database (0 vs 0) all fail.
+ */
+export const DISCRIMINATOR = { column: "je_control", equals_column: "je_control_expected" };
 
 /**
- * The probe block for every zero-rows proof. Must be ADDED to verify-gl-invariants.sql:
+ * The probe block for every zero-rows proof, in verify-gl-invariants.sql:
  *
  *   \echo '=== INV-0  CONTROL (discriminator: this connection can see the ledger) ==='
- *   SELECT count(*) AS je_control FROM accounting.journal_entries;
+ *   SELECT count(*) AS je_control,
+ *          pg_stat_get_live_tuples('accounting.journal_entries'::regclass) AS je_control_expected
+ *   FROM accounting.journal_entries;
  *
  * Without it a zero-rows proof cannot tell a clean ledger from a blind read.
  */
@@ -124,10 +135,11 @@ export const ECON_PROOFS = {
       file: INVARIANTS_FILE, query_id: "INV-10", sub_id: "10c",
       // C30's own discriminator + probe (2026-08-30): INV-10c's own GROUP BY (opco, role) is
       // ALREADY per-entity in shape -- it needs no rewriting, only a real company context to
-      // see anything at all under enforced RLS. role_control=49 is the live USMCA row count
-      // (chart_of_accounts_roles), read the same way this discriminator convention already
-      // works (a known, non-zero, re-readable control value -- never a guess).
-      discriminator: { column: "role_control", value: 49 },
+      // see anything at all under enforced RLS. 443.187 (2026-10-17): the frozen
+      // role_control=49 rotted (USMCA has 73 rows). The expectation is now derived in the same
+      // probe row: role_control_expected = rows belonging to the company context. Equal and
+      // non-zero proves the read saw this entity's rows AND nothing outside it (RLS enforced).
+      discriminator: { column: "role_control", equals_column: "role_control_expected" },
       expect_rows: 0, probe_query_id: C30_PROBE_QUERY_ID,
       expect: [],
       rls_sensitive: true,
@@ -135,15 +147,22 @@ export const ECON_PROOFS = {
       // is THE line that must never read "bypass": bypassing RLS to prove RLS is the purest
       // closed loop the whole R5 rule exists to forbid.
       rls: "enforced",
+      // 443.187: run the read AS the application role (SET LOCAL ROLE inside the read-only txn).
+      // The read-only logins are BYPASSRLS, so without this R7 correctly refuses every run.
+      // Requires the connecting login to be a member of ih35_app: ih35_ci_readonly is (prod
+      // 2026-10-17); ih35_guard_reader is NOT, so C30 cannot run under that credential.
+      rls_role: "ih35_app",
       // Scopes BOTH the probe and the main 10c query to one real entity (USMCA) under enforced
       // RLS. Live-verified before wiring: 10c's own duplicate-detection logic works correctly
       // scoped to a single company (it does not need cross-entity visibility to prove "THIS
       // entity's own role resolution is unambiguous" -- C30's actual definition) -- and, scoped
-      // this way, it currently and correctly finds 4 real duplicate role groups for USMCA
+      // this way. 443.187 (2026-10-17, measured on prod): the 4 USMCA groups it used to report
       // (damage_recovery, driver_payroll_clearing, escrow_liability_default,
-      // reimbursement_expense), matching the owner's own manual count exactly. C30 will keep
-      // FAILing honestly until CC-2 lands the UNIQUE(operating_company_id, role) constraint
-      // (work order, packet 7) -- that is the real defect, not a probe problem anymore.
+      // reimbursement_expense) -- 14 across all entities -- each have exactly ONE active row; the
+      // extras are inactive WORM history the resolver never reads. The UNIQUE key already exists
+      // as the partial index uq_coa_roles_company_role_active ON (operating_company_id, role)
+      // WHERE is_active (migration 0223, reasserted by 202613300800), so the old "until CC-2
+      // lands the UNIQUE constraint" note is obsolete. 10c now counts ACTIVE duplicates only.
       company_context: C30_COMPANY_CONTEXT,
       note: "Order-dependent role resolution is the defect. Zero duplicate groups is the only pass.",
     },

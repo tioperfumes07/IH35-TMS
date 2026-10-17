@@ -18,9 +18,20 @@
  *      An RLS-scoped read that returns nothing satisfies "difference == 0" vacuously, because
  *      there is no row to contradict it. This exact trap produced a false "zero reconciliation
  *      sessions exist" read on 2026-08-30 and a false "board broken, 0/14" read before it.
- *      Every sql proof MUST carry a discriminator column with a known non-zero expected value
- *      (je_control = 2214). If the discriminator is absent or wrong, the proof is REJECTED —
- *      not failed, rejected — so it can never be mistaken for a passing assertion.
+ *      Every sql proof MUST carry a discriminator: a control column read through the SAME
+ *      RLS-subject path the proof uses, which must exactly equal an expectation DERIVED AT RUN
+ *      TIME by an INDEPENDENT read in the same probe row (`equals_column`), and that derived
+ *      expectation must be non-zero. If the discriminator is absent or wrong, the proof is
+ *      REJECTED — not failed, rejected — so it can never be mistaken for a passing assertion.
+ *
+ *      R1-c NO FROZEN LITERAL (LEAD 443.187, 2026-10-17). The discriminator used to be a literal
+ *      (je_control = 2214, the journal-entry count on 2026-08-30). A literal rots: the ledger
+ *      grew and was purged (AUTH-400 record_deletions) and prod read 4102, so every C25-C31
+ *      proof failed on the probe for a reason that says nothing about the ledger — and the only
+ *      "fix" a literal invites is bumping it to whatever was just read, which is a guess dressed
+ *      as a control. A `discriminator.value` literal is now REJECTED at load. The expectation
+ *      is computed from data, by a read RLS cannot filter the same way (see INV-0 / INV-0B in
+ *      verify-gl-invariants.sql), and a blind, partial, or wrong-entity read disagrees with it.
  *
  *   R2 AN EMPTY RESULT SET IS A FAIL, NEVER A PASS.
  *      "No rows" is the shape of both "clean" and "I could not see the data." They must not
@@ -67,6 +78,9 @@ const WRITE_TOKENS =
 
 /* ---------- R5 ---------- */
 const BYPASS = /bypass_rls/i;
+
+/** Roles an enforced-RLS proof may SET LOCAL ROLE to. The app role, never an owner/reader. */
+export const RLS_ROLES = new Set(["ih35_app"]);
 
 /**
  * Extract one \echo-delimited block from a psql invariant file.
@@ -150,12 +164,26 @@ export function assertSqlProofShape(proof) {
     throw new Error(`SQL PROOF REJECTED ${id}: proof.query_id must name a block in that file (R3).`);
 
   const d = proof.discriminator;
-  if (!d || !d.column || d.value === undefined)
+  if (!d || !d.column)
     throw new Error(
       `SQL PROOF REJECTED ${id}: a discriminator is mandatory (R1). An RLS-empty read satisfies ` +
-      `any all-rows assertion vacuously. Supply {column, value} with a known non-zero control.`);
-  if (Number(d.value) === 0)
-    throw new Error(`SQL PROOF REJECTED ${id}: discriminator value 0 cannot distinguish empty from clean (R1).`);
+      `any all-rows assertion vacuously. Supply {column, equals_column}: a control read plus an ` +
+      `independently-derived expectation in the same probe row.`);
+  // R1-c: a frozen literal rots (2214 -> 4102, LEAD 443.187). Rejected outright, including 0 —
+  // never re-introduced by "bumping" it to the value the last run happened to read.
+  if (d.value !== undefined)
+    throw new Error(
+      `SQL PROOF REJECTED ${id}: discriminator.value is a frozen literal (R1-c). A literal rots as ` +
+      `the ledger moves and invites a bump-to-green. Derive the expectation at run time: ` +
+      `{column, equals_column} where equals_column is an INDEPENDENT read in the probe row.`);
+  if (!d.equals_column)
+    throw new Error(
+      `SQL PROOF REJECTED ${id}: discriminator.equals_column is mandatory (R1-c) — the run-time ` +
+      `expectation the control must agree with.`);
+  if (d.equals_column === d.column)
+    throw new Error(
+      `SQL PROOF REJECTED ${id}: discriminator.equals_column must differ from column (R1-c). A ` +
+      `value compared with itself proves nothing.`);
 
   const hasAssertions = Array.isArray(proof.expect) && proof.expect.length > 0;
   const hasRowCount = proof.expect_rows !== undefined;
@@ -202,6 +230,18 @@ export function assertSqlProofShape(proof) {
       throw new Error(`SQL PROOF REJECTED ${id}: company_context must be a real UUID string (got ${JSON.stringify(proof.company_context)}).`);
   }
 
+  // rls_role (443.187, 2026-10-17): an enforced-RLS proof may name the NON-bypass role it runs
+  // as (SET LOCAL ROLE inside the read-only transaction), so a BYPASSRLS read-only login that is
+  // a member of that role can still produce a genuinely enforced read. Only meaningful under
+  // rls:"enforced", and only ih35_app — the role the application itself runs as. R7 still checks
+  // the RESULTING current_user's rolbypassrls, so naming a bypass-capable role cannot pass.
+  if (proof.rls_role !== undefined) {
+    if (rls !== "enforced")
+      throw new Error(`SQL PROOF REJECTED ${id}: rls_role is only valid with rls:"enforced".`);
+    if (!RLS_ROLES.has(proof.rls_role))
+      throw new Error(`SQL PROOF REJECTED ${id}: rls_role must be one of ${[...RLS_ROLES].join(", ")} (got ${JSON.stringify(proof.rls_role)}).`);
+  }
+
   return true;
 }
 
@@ -238,6 +278,9 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
       const rlsMode = proof.rls ?? "enforced";
       // Absent unless a proof needs enforced-RLS visibility scoped to one real entity (C30).
       const companyContext = proof.company_context;
+      const execOpts = { readOnly: true, rls: rlsMode, company_context: companyContext, rls_role: proof.rls_role };
+      let probeSeen;
+      let discriminatorObserved;
 
       const abs = path.join(repoRoot, proof.file);
       const src = fs.readFileSync(abs, "utf8");
@@ -256,7 +299,7 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
         const probeBody = resolvePsqlVars(src, extractBlock(src, proof.probe_query_id, proof.probe_sub_id));
         if (WRITE_TOKENS.test(probeBody))
           return done(false, null, `read-only violation in probe block (R4)`);
-        const probeRows = await exec(probeBody, { readOnly: true, rls: rlsMode, company_context: companyContext });
+        const probeRows = await exec(probeBody, execOpts);
         if (probeRows.length === 0)
           return done(false, "probe returned 0 rows",
             `the discriminator probe itself came back empty — the connection cannot see the data (R1-b)`);
@@ -264,13 +307,26 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
         for (const r of probeRows) {
           if (!(d0.column in r))
             return done(false, null, `probe block lacks discriminator column "${d0.column}" (R1-b)`);
-          if (num(r[d0.column]) !== num(d0.value))
-            return done(false, `probe ${d0.column}=${r[d0.column]}`,
-              `probe discriminator mismatch: expected ${d0.value}, read ${r[d0.column]} (R1-b)`);
+          if (!(d0.equals_column in r))
+            return done(false, null, `probe block lacks derived-expectation column "${d0.equals_column}" (R1-c)`);
+          const seen = num(r[d0.column]);
+          const derived = num(r[d0.equals_column]);
+          const obs = `probe ${d0.column}=${r[d0.column]} ${d0.equals_column}=${r[d0.equals_column]}`;
+          // R1: the expectation itself must be a real, non-zero population, or "0 == 0" would
+          // let an empty database / reset statistics pass as a clean one.
+          if (!(derived > 0))
+            return done(false, obs,
+              `derived expectation ${d0.equals_column}=${r[d0.equals_column]} is not a non-zero population — cannot distinguish empty from clean (R1)`);
+          if (seen !== derived)
+            return done(false, obs,
+              `probe discriminator mismatch: read ${d0.column}=${r[d0.column]}, independently derived ` +
+              `${d0.equals_column}=${r[d0.equals_column]} — the connection did not see the whole population (R1-b)`);
+          probeSeen = seen;
+          discriminatorObserved = { [d0.column]: r[d0.column], [d0.equals_column]: r[d0.equals_column] };
         }
       }
 
-      const rows = await exec(body, { readOnly: true, rls: rlsMode, company_context: companyContext });
+      const rows = await exec(body, execOpts);
 
       // R2 — empty is never a silent pass.
       const expectRows = proof.expect_rows;
@@ -284,9 +340,9 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
       if (rows.length > 0 && proof.discriminator.column in rows[0]) {
         const d = proof.discriminator;
         for (const r of rows) {
-          if (num(r[d.column]) !== num(d.value))
+          if (num(r[d.column]) !== probeSeen)
             return done(false, `${d.column}=${r[d.column]}`,
-              `discriminator mismatch: expected ${d.value}, read ${r[d.column]}. ` +
+              `discriminator mismatch: probe read ${probeSeen}, graded block read ${r[d.column]}. ` +
               `The query did not see the data it must see (R1).`);
         }
       }
@@ -310,7 +366,7 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
         }
       }
 
-      return done(true, { ...observed, _file_sha: fileSha, _rows: rows.length });
+      return done(true, { ...observed, _discriminator: discriminatorObserved, _file_sha: fileSha, _rows: rows.length });
     } catch (e) {
       return done(false, null, String(e.message || e).slice(0, 300));
     }
@@ -365,6 +421,12 @@ function defaultPgQuery(connectionString) {
       await client.query("BEGIN");
       await client.query("SET TRANSACTION READ ONLY");
       await client.query("SET LOCAL statement_timeout = '30s'");
+      // Safe to inline: assertSqlProofShape only admits names in RLS_ROLES. Issued BEFORE the R7
+      // role check so R7 grades the role the query will actually run as.
+      if (opts.rls === "enforced" && opts.rls_role) {
+        if (!RLS_ROLES.has(opts.rls_role)) throw new Error(`rls_role ${JSON.stringify(opts.rls_role)} not allowed`);
+        await client.query(`SET LOCAL ROLE ${opts.rls_role}`);
+      }
       if (opts.rls === "enforced") {
         const roleCheck = await client.query(
           "SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user"

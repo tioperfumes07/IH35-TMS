@@ -1392,7 +1392,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
 
         // Relay-wallet rule: if new account = fuel_wallet_relay role, relay_txn_id is required
         const relayRoleRow = await client.query(
-          `SELECT account_id::text FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid AND role_name = 'fuel_wallet_relay' LIMIT 1`,
+          `SELECT account_id::text FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid AND role = 'fuel_wallet_relay' AND is_active LIMIT 1`,
           [oci]
         );
         const relayAccountId = (relayRoleRow.rows[0] as { account_id: string } | undefined)?.account_id;
