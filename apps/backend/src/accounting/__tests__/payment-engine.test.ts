@@ -62,10 +62,11 @@ describe("443.182 C step 2 — the one payment engine", () => {
     expect(h.skip.mock.calls[0]![2]).toEqual({ flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", postingDomain: "customer_payment", operatingCompanyId: "oci", context: { payment_id: "p1", route: "POST /x" } });
   });
 
-  it("a refused application stops before its row is written (same as before: the form's error code)", async () => {
+  it("a refused application THROWS (Lead 03:22Z atomic) so the caller's transaction rolls the whole payment back", async () => {
     const validate = vi.fn(async (a: { invoice_id: string }) => (a.invoice_id === "i2" ? { code: 409 as const, error: "invoice_not_open_for_payment" } : null));
-    const r = await recordCustomerPaymentInClientTx(client, doc({ validate_application: validate }) as never);
-    expect(r).toEqual({ code: 409, error: "invoice_not_open_for_payment" });
+    await expect(recordCustomerPaymentInClientTx(client, doc({ validate_application: validate }) as never)).rejects.toMatchObject({
+      name: "PaymentApplicationRefusedError", code: 409, error: "invoice_not_open_for_payment",
+    });
     expect(h.calls.filter((c) => c === "application")).toHaveLength(1);
     expect(h.post).not.toHaveBeenCalled();
   });

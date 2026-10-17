@@ -10,7 +10,7 @@ import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { getAppliedCreditMemoCents } from "./payments/apply.service.js";
 import { directPaymentRoomCents } from "../factoring/purchased-gross.service.js";
-import { recordCustomerPaymentInClientTx } from "./payments.routes.js";
+import { PaymentApplicationRefusedError, recordCustomerPaymentInClientTx } from "./payments.routes.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -289,6 +289,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
       if (error instanceof DuplicateDocumentNumberError) {
         return reply.code(409).send(duplicateDocumentNumberBody(error));
       }
+      if (error instanceof PaymentApplicationRefusedError) return reply.code(error.code).send({ error: error.error });
       throw error;
     }
 

@@ -288,6 +288,14 @@ export async function insertPaymentRowInClientTx(client: { query: (sql: string, 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PaymentEngineClient = { query: (sql: string, values?: unknown[]) => Promise<any> };
 
+/** Lead 03:22Z — a refused invoice application aborts the payment's transaction (nothing is committed). */
+export class PaymentApplicationRefusedError extends Error {
+  constructor(readonly code: 400 | 404 | 409, readonly error: string) {
+    super(error);
+    this.name = "PaymentApplicationRefusedError";
+  }
+}
+
 /**
  * 443.182 C step 2 — the ONE payment_applications writer (invoice or bill target). The ON CONFLICT merge is the shape the
  * apply service always wrote; on a brand-new payment (the two create routes) no row exists yet and duplicate targets are
@@ -394,7 +402,9 @@ export async function recordCustomerPaymentInClientTx(client: PaymentEngineClien
   let applicationsCount = 0;
   for (const application of doc.applications) {
     const refused = await doc.validate_application(application);
-    if (refused) return refused;
+    // Lead 03:22Z — atomic: a refused application rolls the WHOLE payment back (row, number, earlier applications,
+    // attachments). Thrown, not returned, so the caller's transaction aborts; the route answers with the same status/body.
+    if (refused) throw new PaymentApplicationRefusedError(refused.code, refused.error);
     await insertPaymentApplicationRowInClientTx(client, {
       operating_company_id: oci,
       payment_id: payment.id,
@@ -750,6 +760,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       if (error instanceof DuplicateDocumentNumberError) {
         return reply.code(409).send(duplicateDocumentNumberBody(error));
       }
+      if (error instanceof PaymentApplicationRefusedError) return reply.code(error.code).send({ error: error.error });
       throw error;
     }
 
