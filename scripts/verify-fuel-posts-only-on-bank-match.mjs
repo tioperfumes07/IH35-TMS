@@ -150,8 +150,20 @@ export function check(files) {
   if (rcpt < 0 || batch < 0 || rcpt > batch) problems.push(`${POSTER}: postFuelExpenseOnClient posts before asking whether the receipt already posted`);
   const cr = files[CREATOR] ?? "";
   const crAsk = cr.indexOf('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)');
-  const crPost = cr.indexOf('source_transaction_type: "expense",\n            source_transaction_id: doc.expense_id');
+  // LEAD 443.194 — repointed, same rule: ab76df5abf (#26885, 443.182 C "one expense engine") moved the Creator's fuel
+  // document post from an inline posting call (source_transaction_type "expense" / source_transaction_id doc.expense_id)
+  // onto the one expense engine, postExpenseDocumentInClientTx(expenseId: doc.expense_id). The ask still precedes it; the
+  // guard read the old text and failed on main. Now also proven: a hit ADOPTS (stamps the receipt's entry, never posts).
+  const crPost = cr.indexOf("postExpenseDocumentInClientTx(client as never, {\n          operatingCompanyId: draft.operating_company_id,\n          expenseId: doc.expense_id,");
+  const crAdoptBody = crAsk < 0 || crPost < 0 ? "" : cr.slice(crAsk, crPost);
   if (crAsk < 0 || crPost < 0 || crAsk > crPost) problems.push(`${CREATOR}: the Creator posts a fuel expense document without adopting the receipt's existing posting`);
+  else if (!/if \(receiptPosted\?\.journal_entry_id\) \{\s*await stampExpensePosted\(client, draft\.operating_company_id, doc\.expense_id, receiptPosted\.journal_entry_id\);\s*journalEntryIds\.push\(receiptPosted\.journal_entry_id\);\s*continue;\s*\}/.test(crAdoptBody))
+    problems.push(`${CREATOR}: the Creator asks whether the receipt already posted but does not adopt that entry (stamp + skip the post) — it would post the receipt a second time`);
+  // The Relay branch: the fill posts through the receipt-asking poster, and its document ADOPTS that same entry (one JE).
+  const rlPost = cr.indexOf("const fillPosted = await postFuelExpenseOnClient(client as never, {");
+  const rlAdopt = cr.indexOf("adoptRelayFillExpenseDocument(client as never, {", rlPost < 0 ? 0 : rlPost);
+  if (rlPost < 0 || rlAdopt < 0 || !/journal_entry_id: fillPosted\.journal_entry_id,/.test(cr.slice(rlAdopt, rlAdopt + 400)))
+    problems.push(`${CREATOR}: the Creator's Relay fill document does not adopt the fill's own entry (fillPosted.journal_entry_id) — a second fuel expense`);
   // 9 (LEAD 443.133 A) — the linker pairs only Relay-card rows; the Relay fill poster refuses a fill that pairs with a row on
   // another rail (the same purchase may already be posted there — booking it again would double the fuel).
   const linker = files[LINKER] ?? "";
@@ -242,6 +254,15 @@ if (process.argv.includes("--selftest")) {
     ["dreamline writes a load-less fill", { ...real, [DREAMLINE]: real[DREAMLINE].replace('if (!loadHit) {\n      record(line, "held_no_load"', 'if (false) {\n      record(line, "held_no_load"') }],
     ["dreamline discount posts twice", { ...real, [DREAMLINE]: real[DREAMLINE].replace("if (prior.rows[0]) return null;", "") }],
     ["creator posts the receipt again", { ...real, [CREATOR]: real[CREATOR].replace('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)', "Promise.resolve(null)") }],
+    // 443.194 — the repointed anchor (one expense engine, #26885).
+    ["creator posts before asking the receipt", { ...real, [CREATOR]: (() => {
+      const s = real[CREATOR];
+      const ask = 'const receiptPosted = await findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id);';
+      const post = "const posted = await postExpenseDocumentInClientTx(client as never, {\n          operatingCompanyId: draft.operating_company_id,\n          expenseId: doc.expense_id,";
+      return s.replace(ask, "const receiptPosted = null as any;").replace(post, `${ask}\n        ${post}`);
+    })() }],
+    ["creator asks but still posts (no adopt)", { ...real, [CREATOR]: real[CREATOR].replace("journalEntryIds.push(receiptPosted.journal_entry_id);\n        continue;", "journalEntryIds.push(receiptPosted.journal_entry_id);") }],
+    ["creator relay document mints its own entry", { ...real, [CREATOR]: real[CREATOR].replace("journal_entry_id: fillPosted.journal_entry_id,", "journal_entry_id: null as never,") }],
   ];
   const missed = cases.filter(([, files]) => check(files).length === 0).map(([n]) => n);
   if (missed.length) { console.error(`${LABEL} --selftest FAIL: not caught: ${missed.join("; ")}`); process.exit(1); }
