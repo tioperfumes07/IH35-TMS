@@ -47,7 +47,11 @@ export function check(files, writer, routes) {
   const w = strip(writer);
   if (!/export async function ensureRelatedPartyAccount\(/.test(w)) p.push(`${WRITER}: ensureRelatedPartyAccount is gone`);
   if (!/pg_advisory_xact_lock\(hashtext\('related-party-account:'/.test(w)) p.push(`${WRITER}: allocation is not serialized per company (advisory lock)`);
-  if (!/account_number ~ '\^2410-00-\[0-9\]\{3\}\$'/.test(w) || !/nextRelatedPartyAccountNumber\(used\)/.test(w)) p.push(`${WRITER}: the number is not allocated from every 2410-00-nnn ever used`);
+  // LEAD 443.189 — the parent is resolved by ROLE (related_party_loan_parent) and the child numbers are allocated from every
+  // <parent>-00-nnn ever used under the parent's own number; looking the parent up by a literal number is refused.
+  if (!/resolveRoleAccountOptional\(client as never, opco, RELATED_PARTY_PARENT_ROLE\)/.test(w) || !/RELATED_PARTY_PARENT_ROLE = "related_party_loan_parent"/.test(w)) p.push(`${WRITER}: the related-party parent is not resolved by the related_party_loan_parent role`);
+  if (!/starts_with\(account_number, \$2\)/.test(w) || !/nextRelatedPartyAccountNumber\(used, parent\.account_number\)/.test(w)) p.push(`${WRITER}: the number is not allocated from every <parent>-00-nnn ever used`);
+  if (/account_number = \$2 AND deactivated_at IS NULL`,\s*\[opco, (?:RELATED_PARTY_PARENT_ACCOUNT_NUMBER|"2410")\]/.test(w) || /RELATED_PARTY_PARENT_ACCOUNT_NUMBER\s*=\s*"2410"/.test(w)) p.push(`${WRITER}: the parent is looked up by a literal account number, not by role`);
   if (/'2410-00-[0-9]{3}'/.test(w)) p.push(`${WRITER}: a literal related-party sub-account number`);
   if (!/FROM accounting\.related_party_accounts l[\s\S]{0,400}party_vendor_id = \$2::uuid/.test(w) || !/dry_run: input\.dryRun, outcome: "exists"/.test(w)) p.push(`${WRITER}: not idempotent (the party's linked account is not returned first)`);
   if (!/INSERT INTO accounting\.related_party_accounts/.test(w) || !/"accounting\.related_party_account_ensured"/.test(w)) p.push(`${WRITER}: the link row / audit event is not written`);
@@ -70,7 +74,9 @@ if (process.argv.includes("--selftest")) {
   ex("a second writer of related_party_accounts is caught", check({ ...real.files, "apps/backend/src/x.ts": "await q(`INSERT INTO accounting.related_party_accounts (a) VALUES (1)`);" }, real.writer, real.routes).length > 0);
   ex("a hand-made Due to / from account elsewhere is caught", check({ ...real.files, "apps/backend/src/y.ts": "await q(`INSERT INTO catalogs.accounts (account_name) VALUES ('Due to / from X') RETURNING id`);" }, real.writer, real.routes).length > 0);
   ex("dropping the advisory lock is caught", check(real.files, real.writer.replace("pg_advisory_xact_lock(hashtext('related-party-account:'", "pg_sleep(0 + hashtext('x:'"), real.routes).length > 0);
-  ex("a literal sub-account number is caught", check(real.files, real.writer.replace("nextRelatedPartyAccountNumber(used)", "'2410-00-005'"), real.routes).length > 0);
+  ex("a literal sub-account number is caught", check(real.files, real.writer.replace("nextRelatedPartyAccountNumber(used, parent.account_number)", "'2410-00-005'"), real.routes).length > 0);
+  ex("dropping the parent role lookup is caught", check(real.files, real.writer.replace("resolveRoleAccountOptional(client as never, opco, RELATED_PARTY_PARENT_ROLE)", "null"), real.routes).length > 0);
+  ex("a parent by literal number is caught", check(real.files, real.writer + '\nexport const RELATED_PARTY_PARENT_ACCOUNT_NUMBER = "2410";', real.routes).length > 0);
   ex("losing idempotency is caught", check(real.files, real.writer.replace('dry_run: input.dryRun, outcome: "exists"', 'dry_run: input.dryRun, outcome: "created"'), real.routes).length > 0);
   ex("dropping the audit event is caught", check(real.files, real.writer.replace('"accounting.related_party_account_ensured"', '"x"'), real.routes).length > 0);
   ex("an open (non-Owner) route is caught", check(real.files, real.writer, real.routes.replace('if (role !== "Owner")', "if (false)")).length > 0);

@@ -30,10 +30,17 @@ describeIntegration("accounting.related_party_accounts is WORM (443.136 #2, real
       await db.query("SET LOCAL app.bypass_rls = 'lucia'");
       await db.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       const one = async <T = { id: string }>(sql: string, params: unknown[]) => (await db.query<T>(sql, params)).rows[0]!;
-      await one(
+      const parent = (await one(
         `INSERT INTO catalogs.accounts (operating_company_id, account_number, account_name, account_type, is_postable)
          VALUES ($1, '2410', 'Owner / Related-Party Loan Payable', 'Liability', true) RETURNING id::text AS id`,
         [opco]
+      )).id;
+      // LEAD 443.189 — the writer resolves the parent by ROLE (related_party_loan_parent), never by number.
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id)
+         SELECT $1::uuid, 'related_party_loan_parent', $2::uuid
+          WHERE NOT EXISTS (SELECT 1 FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid AND role = 'related_party_loan_parent')`,
+        [opco, parent]
       );
       const vendor = (await one(
         `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type) VALUES ($1, 'WORM Party', 'other') RETURNING id::text AS id`,
