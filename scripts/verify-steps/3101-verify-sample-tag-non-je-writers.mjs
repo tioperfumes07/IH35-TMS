@@ -82,15 +82,43 @@ export function findInsertColumnLists(src, table) {
       i += 1;
     }
     const list = code.slice(start, i - 1);
-    if (!list.includes("${")) lists.push(list); // 443.182 C — skip the one bill writer's own dynamic column list
+    // 443.182 C — skip the one bill writer's own dynamic column list; a dynamic list that names is_sample_data literally
+    // (the one payment writer: `${cols.join(", ")}, is_sample_data`) is a real, checkable write and counts.
+    if (!list.includes("${") || /\bis_sample_data\b/.test(list)) lists.push(list);
   }
   // 443.182 C — bill headers are written through insertBillHeaderOnClient(client, [["col", …], …]): its column list counts too.
   if (table === "accounting.bills") for (const w of billHeaderWrites(src)) if (w.kind === "writer") lists.push(w.columns.join(", "));
   return lists;
 }
 
+/** 443.182 C — calls into the one bill-payment row writer (bills.service.ts insertBillPaymentRowInClientTx): each row object. */
+export function findBillPaymentWriterRows(src) {
+  const code = stripComments(src);
+  const rows = [];
+  for (const call of code.matchAll(/insertBillPaymentRowInClientTx(?:<[^>]*>)?\(\s*\w+\s*,\s*\{/g)) {
+    let depth = 1;
+    let i = call.index + call[0].length;
+    for (; i < code.length && depth > 0; i += 1) {
+      if (code[i] === "{") depth += 1;
+      else if (code[i] === "}") depth -= 1;
+    }
+    rows.push(code.slice(call.index + call[0].length, i - 1));
+  }
+  return rows;
+}
+
 export function checkWriter(src, table) {
   const lists = findInsertColumnLists(src, table);
+  if (table === "accounting.bill_payments") {
+    const rows = findBillPaymentWriterRows(src);
+    if (lists.length === 0 && rows.length === 0) return { ok: false, reason: `no INSERT INTO ${table} found` };
+    const missingRows = rows.filter((r) => !/\bis_sample_data\s*:/.test(r));
+    const missingLists = lists.filter((l) => !/is_sample_data/.test(l) && !/\$\{\s*cols\.join/.test(l));
+    if (missingRows.length || missingLists.length) {
+      return { ok: false, reason: `${missingRows.length + missingLists.length} of ${rows.length + lists.length} ${table} write(s) missing is_sample_data` };
+    }
+    return { ok: true };
+  }
   if (lists.length === 0) return { ok: false, reason: `no INSERT INTO ${table} found` };
   const missing = lists.filter((l) => !/is_sample_data/.test(l));
   if (missing.length > 0) {
@@ -115,6 +143,12 @@ if (process.argv.includes("--selftest")) {
   const wBad = `await insertBillHeaderOnClient(client, [["operating_company_id", { value: oc }], // ["is_sample_data", { value: false }]\n ["vendor_id", { value: v }]])`;
   if (!checkWriter(wGood, "accounting.bills").ok) fail("selftest: writer-call fixture WITH is_sample_data flagged");
   if (checkWriter(wBad, "accounting.bills").ok) fail("selftest: writer-call fixture WITHOUT is_sample_data (commented out) was not caught");
+
+  // 443.182 C — the bill-payment row-writer call form.
+  const callGood = `await insertBillPaymentRowInClientTx(client, { operating_company_id: oci, bill_id: b, is_sample_data: false }, "id");`;
+  const callBad = `await insertBillPaymentRowInClientTx(client, { operating_company_id: oci, bill_id: b }, "id");`;
+  if (!checkWriter(callGood, "accounting.bill_payments").ok) fail("selftest: a writer call naming is_sample_data was flagged");
+  if (checkWriter(callBad, "accounting.bill_payments").ok) fail("selftest: a writer call omitting is_sample_data was not caught");
 
   // Real-file regression check: each of the writer/table pairs must currently pass.
   for (const w of WRITERS) {

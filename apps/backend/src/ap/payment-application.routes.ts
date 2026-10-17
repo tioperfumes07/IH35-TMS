@@ -8,6 +8,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.service.js";
+import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
 
 const paymentMethodSchema = z.enum(["check", "ach", "wire", "cash", "credit_card"]);
 
@@ -148,52 +149,29 @@ export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
           if (remaining <= 0) return { code: 409 as const, error: "bill_already_paid" as const };
           if (applyRow.amount_cents > remaining) return { code: 400 as const, error: "payment_exceeds_remaining_balance" as const };
 
-          const paymentRes = await client.query(
-            `
-              INSERT INTO accounting.bill_payments (
-                operating_company_id,
-                bill_id,
-                vendor_id,
-                payment_date,
-                amount_cents,
-                amount,
-                payment_method,
-                from_bank_account_id,
-                check_number,
-                reference_number,
-                memo,
-                status,
-                created_by_user_id,
-                created_at,
-                updated_at,
-                payment_batch_id,
-                payment_source_kind,
-                source_bank_transaction_id,
-                -- ACCT-F353 — derive from the BILL being paid, matching bills.service.ts's own
-                -- bill_payment writer precedent: paying a sample bill is a sample payment.
-                is_sample_data
-              )
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,'manual',$14,$15)
-              RETURNING id
-            `,
-            [
-              query.data.operating_company_id,
-              applyRow.bill_id,
-              body.data.vendor_id,
-              body.data.paid_at,
-              applyRow.amount_cents,
-              applyRow.amount_cents / 100,
-              body.data.payment_method,
-              body.data.bank_account_id ?? null,
-              checkNumberForInsert,
-              body.data.reference_number ?? null,
-              body.data.memo ?? null,
-              user.uuid,
-              batchId,
-              null,
-              Boolean(billRaw.is_sample_data),
-            ]
-          );
+          // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before. ACCT-F353: the
+          // sample flag is the BILL's (billRaw, read above), matching the writer's own precedent.
+          const paymentRes = await insertBillPaymentRowInClientTx(client, {
+            operating_company_id: query.data.operating_company_id,
+            bill_id: applyRow.bill_id,
+            vendor_id: body.data.vendor_id,
+            payment_date: body.data.paid_at,
+            amount_cents: applyRow.amount_cents,
+            amount: applyRow.amount_cents / 100,
+            payment_method: body.data.payment_method,
+            from_bank_account_id: body.data.bank_account_id ?? null,
+            check_number: checkNumberForInsert,
+            reference_number: body.data.reference_number ?? null,
+            memo: body.data.memo ?? null,
+            status: "posted",
+            created_by_user_id: user.uuid,
+            created_at: BILL_PAYMENT_NOW,
+            updated_at: BILL_PAYMENT_NOW,
+            payment_batch_id: batchId,
+            payment_source_kind: "manual",
+            source_bank_transaction_id: null,
+            is_sample_data: Boolean(billRaw.is_sample_data),
+          }, "id");
           const paymentId = paymentRes.rows[0]?.id as string | undefined;
           if (!paymentId) return { code: 500 as const, error: "bill_payment_insert_failed" as const };
           paymentIds.push(paymentId);

@@ -3212,6 +3212,69 @@ export async function createBill(input: CreateBillInput, userId: string) {
 }
 
 /**
+ * LEAD 443.182 C — the ONE bill-payment row writer (one writer per document; guard 18481). Every bill-payment
+ * path (pay bill, bulk mark-paid, vendor batch pay, AP payment application, bank split / bulk post, card payment, cash
+ * advance + lumper split) writes its row HERE, on its own client and transaction, with exactly the columns it always
+ * wrote — a column a caller does not give takes the table default, as before. Callers keep their own validation, bill
+ * update and GL posting; this function only owns the row.
+ *
+ * Values are bound parameters, except three fixed SQL forms:
+ *   BILL_PAYMENT_NOW               -> now()
+ *   BILL_PAYMENT_SAMPLE_FROM_BILL  -> the paid bill's is_sample_data (ACCT-F265: a payment inherits its bill's flag)
+ *   BILL_PAYMENT_VENDOR_FROM_BILL  -> the paid bill's vendor (vendor_id, else mdata_vendor_id) (ROUND 443.106)
+ */
+export const BILL_PAYMENT_NOW = Symbol("bill_payment_now");
+export const BILL_PAYMENT_SAMPLE_FROM_BILL = Symbol("bill_payment_sample_from_bill");
+export const BILL_PAYMENT_VENDOR_FROM_BILL = Symbol("bill_payment_vendor_from_bill");
+type BillPaymentSqlForm = typeof BILL_PAYMENT_NOW | typeof BILL_PAYMENT_SAMPLE_FROM_BILL | typeof BILL_PAYMENT_VENDOR_FROM_BILL;
+
+const BILL_PAYMENT_ROW_COLUMNS = new Set([
+  "operating_company_id", "bill_id", "vendor_id", "payment_date", "cleared_date", "amount_cents", "amount", "payment_method",
+  "from_bank_account_id", "cc_account_id", "check_number", "reference_number", "memo", "status", "created_by_user_id",
+  "created_at", "updated_at", "settlement_deduction_noncash", "payment_batch_id", "payment_source_kind",
+  "source_bank_transaction_id", "advance_id", "is_sample_data",
+]);
+const BILL_PAYMENT_RETURNING = new Set(["*", "id", "id::text", "id::text AS id"]);
+
+export type BillPaymentRowValues = { [column: string]: unknown | BillPaymentSqlForm } & {
+  operating_company_id: string;
+  bill_id: string;
+};
+
+// Any client with query(sql, values) — pg.PoolClient, the route DbClient shapes, withCurrentUser clients.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type BillPaymentRowClient = { query: (sql: string, values?: unknown[]) => Promise<any> };
+
+export async function insertBillPaymentRowInClientTx<R = { id: string }>(
+  client: BillPaymentRowClient,
+  row: BillPaymentRowValues,
+  returning: "*" | "id" | "id::text" | "id::text AS id" = "id"
+): Promise<{ rows: R[]; rowCount: number | null }> {
+  if (!BILL_PAYMENT_RETURNING.has(returning)) throw new Error(`bill_payment_returning_not_allowed:${returning}`);
+  const params: unknown[] = [];
+  const bind = (v: unknown) => { params.push(v); return `$${params.length}`; };
+  const oci = bind(row.operating_company_id);
+  const billId = bind(row.bill_id);
+  const fromBill = (expr: string) => `(SELECT ${expr} FROM accounting.bills b WHERE b.id = ${billId}::uuid AND b.operating_company_id = ${oci}::uuid)`;
+  const cols: string[] = [];
+  const vals: string[] = [];
+  for (const [col, v] of Object.entries(row)) {
+    if (!BILL_PAYMENT_ROW_COLUMNS.has(col)) throw new Error(`bill_payment_column_not_allowed:${col}`);
+    cols.push(col);
+    if (col === "operating_company_id") vals.push(oci);
+    else if (col === "bill_id") vals.push(billId);
+    else if (v === BILL_PAYMENT_NOW) vals.push("now()");
+    else if (v === BILL_PAYMENT_SAMPLE_FROM_BILL) vals.push(`COALESCE(${fromBill("b.is_sample_data")}, false)`);
+    else if (v === BILL_PAYMENT_VENDOR_FROM_BILL) vals.push(fromBill("COALESCE(NULLIF(btrim(COALESCE(b.vendor_id, '')), ''), b.mdata_vendor_id::text)"));
+    else vals.push(bind(v));
+  }
+  return (await client.query(
+    `INSERT INTO accounting.bill_payments (${cols.join(", ")}) VALUES (${vals.join(", ")}) RETURNING ${returning}`,
+    params
+  )) as { rows: R[]; rowCount: number | null };
+}
+
+/**
  * ROUND 326 (CC-1) — the bill payment row, bank decrement and (flag ON) its GL leg, on the CALLER's client. Shared by
  * payBill and payBillInClientTx so the single settlement close pays every per-load bill in its own transaction.
  */
@@ -3252,56 +3315,27 @@ async function payBillRowInClientTx(
     const remaining = Number(bill.amount_cents) - Number(bill.paid_cents) - appliedCreditsCents - appliedPaymentApplicationsCents;
     if (input.amountCents > remaining) throw new Error("payment_exceeds_remaining_balance");
 
-    const paymentRes = await client.query<BillPaymentRow>(
-      `
-        INSERT INTO accounting.bill_payments (
-          operating_company_id,
-          bill_id,
-          vendor_id,
-          payment_date,
-          amount_cents,
-          amount,
-          payment_method,
-          from_bank_account_id,
-          check_number,
-          reference_number,
-          memo,
-          status,
-          created_by_user_id,
-          created_at,
-          updated_at,
-          settlement_deduction_noncash,
-          is_sample_data
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,
-          -- ACCT-F265 — a bill payment INHERITS its bill's sample flag rather than asking the caller.
-          -- accounting.bill_payments.is_sample_data exists on 6,551 rows and no writer set it, so paying
-          -- a SAMPLE bill produced a REAL payment and (via posting-engine, which reads the source row)
-          -- a REAL journal entry. There are FOUR bill_payment writers; an optional parameter would mean
-          -- four callers each remembering, and the one that forgets is silent. Deriving from the parent
-          -- is correct by construction and matches how this codebase already does it — the invoice
-          -- derives from the load (ACCT-F193), the revrec latch derives from the load (ACCT-F210), the
-          -- settlement derives from the load. A payment is never more or less sample than the bill it
-          -- pays. COALESCE keeps the historical default if the bill row is somehow unreadable.
-          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
-        RETURNING *
-      `,
-      [
-        input.operatingCompanyId,
-        input.billId,
-        bill.vendor_id,
-        input.paymentDate,
-        input.amountCents,
-        input.amountCents / 100,
-        input.paymentMethod,
-        input.fromBankAccountId ?? null,
-        input.checkNumber ?? null,
-        input.referenceNumber ?? null,
-        input.memo ?? null,
-        userId,
-        input.settlementDeductionNoncash === true,
-      ]
-    );
+    // ACCT-F265 — a bill payment INHERITS its bill's sample flag rather than asking the caller (paying a SAMPLE bill
+    // must never produce a REAL payment / journal entry). Derived from the parent: correct by construction.
+    const paymentRes = await insertBillPaymentRowInClientTx<BillPaymentRow>(client, {
+      operating_company_id: input.operatingCompanyId,
+      bill_id: input.billId,
+      vendor_id: bill.vendor_id,
+      payment_date: input.paymentDate,
+      amount_cents: input.amountCents,
+      amount: input.amountCents / 100,
+      payment_method: input.paymentMethod,
+      from_bank_account_id: input.fromBankAccountId ?? null,
+      check_number: input.checkNumber ?? null,
+      reference_number: input.referenceNumber ?? null,
+      memo: input.memo ?? null,
+      status: "posted",
+      created_by_user_id: userId,
+      created_at: BILL_PAYMENT_NOW,
+      updated_at: BILL_PAYMENT_NOW,
+      settlement_deduction_noncash: input.settlementDeductionNoncash === true,
+      is_sample_data: BILL_PAYMENT_SAMPLE_FROM_BILL,
+    }, "*");
     if ((paymentRes.rowCount ?? 0) === 0 || !paymentRes.rows[0]) {
       throw new Error("bill_payment_insert_failed");
     }

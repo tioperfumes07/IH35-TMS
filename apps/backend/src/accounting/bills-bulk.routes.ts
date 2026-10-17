@@ -11,6 +11,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { logger } from "../observability/structured-logger.js";
+import { BILL_PAYMENT_NOW, BILL_PAYMENT_SAMPLE_FROM_BILL, insertBillPaymentRowInClientTx } from "./bills.service.js";
 
 const billStatusSchema = z.enum(["open", "partial", "paid", "voided"]);
 
@@ -193,42 +194,23 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
       return { ok: false, code: "E_STATE_INVALID", message: "Bill has no remaining balance" };
     }
 
-    const bulkPaymentRes = await client.query(
-      `
-        INSERT INTO accounting.bill_payments (
-          operating_company_id,
-          bill_id,
-          vendor_id,
-          payment_date,
-          amount_cents,
-          amount,
-          payment_method,
-          check_number,
-          status,
-          created_by_user_id,
-          created_at,
-          updated_at,
-          is_sample_data
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'posted',$9,now(),now(),
-          -- ACCT-F265 — inherit the parent bill's sample flag (see bills.service.ts). This is the BULK
-          -- path, where a per-caller parameter is most likely to be forgotten and least likely to be
-          -- noticed: one omission silently marks an entire batch of payments as real money.
-          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
-        RETURNING id
-      `,
-      [
-        operatingCompanyId,
-        id,
-        oldRow.vendor_id,
-        paidPayload.paid_at,
-        remaining,
-        remaining / 100,
-        paidPayload.payment_method,
-        paidPayload.check_number ?? null,
-        actorUserId,
-      ]
-    );
+    // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before. ACCT-F265: the BULK path
+    // inherits the parent bill's sample flag (one omission would mark a whole batch as real money).
+    const bulkPaymentRes = await insertBillPaymentRowInClientTx(client, {
+      operating_company_id: operatingCompanyId,
+      bill_id: id,
+      vendor_id: oldRow.vendor_id,
+      payment_date: paidPayload.paid_at,
+      amount_cents: remaining,
+      amount: remaining / 100,
+      payment_method: paidPayload.payment_method,
+      check_number: paidPayload.check_number ?? null,
+      status: "posted",
+      created_by_user_id: actorUserId,
+      created_at: BILL_PAYMENT_NOW,
+      updated_at: BILL_PAYMENT_NOW,
+      is_sample_data: BILL_PAYMENT_SAMPLE_FROM_BILL,
+    }, "id");
     const bulkPaymentId = (bulkPaymentRes.rows[0] as { id?: string } | undefined)?.id;
 
     // C6 (GO-23) — bills-bulk's mark-paid action inserted accounting.bill_payments with NO JE
