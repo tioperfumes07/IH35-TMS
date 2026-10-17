@@ -181,7 +181,8 @@ describe("governance void/cancel — atomic driver-settlement cancellation", () 
       // settlement_lines (matching the direct /settlements/:id/reverse route's own cascade) before
       // flipping the settlement itself -- teach the double this specific query.
       { match: (s) => s.includes("UPDATE driver_finance.settlement_lines"), rows: [] },
-      // cascadeVoidChildren also voids the settlement's own deductions (applied_to_settlement_id) — same cascade.
+      // LEAD 443.193: a settlement void never voids its deductions (no longer a CASCADE_CHILDREN entry); on a reversed
+      // run the GL engine (mocked here) restores them — this matcher stays only as a harmless catch-all.
       { match: (s) => s.includes("UPDATE driver_finance.driver_settlement_deductions"), rows: [] },
       // LEAD 443.192: an OPEN driver bill still naming the cancelled settlement is released from the dead link (none here).
       { match: (s) => s.includes("UPDATE driver_finance.driver_bills"), rows: [] },

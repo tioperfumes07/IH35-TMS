@@ -518,32 +518,77 @@ export type RestoredSettlementDeductions = {
   total_amount_cents: number;
   bucketed_count: number;
   bucketed_amount_cents: number;
+  /**
+   * LEAD 443.193 — glPosted:false only: deductions still linked to the never-posted settlement that this restore did NOT
+   * release because they are not plain 'pending' (a collected 'applied' / 'partial' / 'deferred' row) or are already
+   * voided. Never touched — named so the caller's audit shows them. Always [] when glPosted (the GL reversal undid the
+   * collection, so every linked row is restored).
+   */
+  retained_ids: string[];
 };
+
+type UnpostedDeductionRow = DeductionRow & { status: string; is_voided: boolean };
 
 /**
  * Canonical operational deduction unwind. The applied rows are locked before any bucket mutation,
  * then detached from the cancelled settlement in the same transaction. A retry sees no attached rows,
  * so it cannot restore a bucket twice or make the deduction eligible more than once.
+ *
+ * LEAD 443.193 — glPosted:false is the SAME unwind for a settlement voided with NOTHING in the GL to reverse
+ * (reverseSettlementBillPaymentInClientTx -> nothing_to_reverse: a draft / closed-unposted settlement cancelled through
+ * POST /settlements/:id/reverse or the Creator's Edit). Nothing was collected, so only a plain 'pending', unvoided
+ * deduction is released (link cleared, remaining back to the full amount — the exact state the GL reversal leaves); a
+ * collected 'applied' / 'partial' / 'deferred' row or a voided row is never touched (retained_ids). A bucket is credited
+ * back ONLY for an application the bucket ledger actually recorded against this settlement + deduction (applications
+ * are written only by the GL poster, so normally none) — never a credit for a draw that never happened.
  */
 export async function restoreSettlementDeductionsInClientTx(
   client: DbClient,
   input: { operatingCompanyId: string; settlementId: string; reason: string },
-  actor: Actor
+  actor: Actor,
+  options: { glPosted?: boolean } = {}
 ): Promise<RestoredSettlementDeductions> {
-  const deductions = await loadDeductions(client, input.operatingCompanyId, input.settlementId);
+  const glPosted = options.glPosted !== false;
+  const linked: UnpostedDeductionRow[] = glPosted
+    ? (await loadDeductions(client, input.operatingCompanyId, input.settlementId)).map((d) => ({ ...d, status: "applied", is_voided: false }))
+    : (
+        await client.query<UnpostedDeductionRow>(
+          `
+            SELECT id::text, deduction_type, amount_cents::text, reason, bucket_id::text, source_expense_id::text,
+                   status, (voided_at IS NOT NULL) AS is_voided
+            FROM driver_finance.driver_settlement_deductions
+            WHERE operating_company_id = $1::uuid AND applied_to_settlement_id = $2::uuid
+            ORDER BY created_at ASC, id ASC
+            FOR UPDATE
+          `,
+          [input.operatingCompanyId, input.settlementId]
+        )
+      ).rows;
+  const deductions = glPosted ? linked : linked.filter((d) => d.status === "pending" && !d.is_voided);
+  const retainedIds = glPosted ? [] : linked.filter((d) => !deductions.includes(d)).map((d) => d.id);
   let totalAmountCents = 0;
   let bucketedCount = 0;
   let bucketedAmountCents = 0;
   for (const deduction of deductions) {
     const amountCents = Number(deduction.amount_cents);
     totalAmountCents += amountCents;
-    if (deduction.bucket_id) {
+    let bucketDrawCents = amountCents;
+    if (deduction.bucket_id && !glPosted) {
+      const net = await client.query<{ net_cents: string }>(
+        `SELECT COALESCE(SUM(CASE event_type WHEN 'application' THEN amount_cents WHEN 'reversal' THEN -amount_cents ELSE 0 END), 0)::text AS net_cents
+           FROM driver_finance.driver_deduction_bucket_events
+          WHERE operating_company_id = $1::uuid AND bucket_id = $2::uuid AND settlement_id = $3::uuid AND deduction_id = $4::uuid`,
+        [input.operatingCompanyId, deduction.bucket_id, input.settlementId, deduction.id]
+      );
+      bucketDrawCents = Math.max(Number(net.rows[0]?.net_cents ?? 0), 0);
+    }
+    if (deduction.bucket_id && bucketDrawCents > 0) {
       bucketedCount += 1;
-      bucketedAmountCents += amountCents;
+      bucketedAmountCents += bucketDrawCents;
       await reverseDeductionFromBucket(client, {
         operatingCompanyId: input.operatingCompanyId,
         bucketId: deduction.bucket_id,
-        amountCents,
+        amountCents: bucketDrawCents,
         settlementId: input.settlementId,
         deductionId: deduction.id,
         actorUserId: actor.userId,
@@ -570,6 +615,7 @@ export async function restoreSettlementDeductionsInClientTx(
     total_amount_cents: totalAmountCents,
     bucketed_count: bucketedCount,
     bucketed_amount_cents: bucketedAmountCents,
+    retained_ids: retainedIds,
   };
 }
 

@@ -106,13 +106,12 @@ export const CASCADE_CHILDREN: Record<CascadeParentFamily, ChildSpec[]> = {
       livenessColumn: "voided_at",
       writeKind: "timestamp",
     },
-    {
-      schema: "driver_finance",
-      table: "driver_settlement_deductions",
-      fkColumn: "applied_to_settlement_id",
-      livenessColumn: "voided_at",
-      writeKind: "timestamp",
-    },
+    // LEAD 443.193 — driver_settlement_deductions is NOT a void child of a settlement. A raw voided_at stamp here forgave
+    // an applied-but-uncollected deduction (owner 2026-09-05: "why would I forgive the debt"). A cancelled settlement
+    // RELEASES its deductions instead, through the ONE deduction restore (restoreSettlementDeductionsInClientTx): the GL
+    // reversal restores every applied one to pending; with nothing posted, completeDriverSettlementVoidCascadeInClientTx
+    // releases the plain pending ones and retains (never touches) a collected / voided one. A deduction is voided only
+    // through its own owner-ruled engine (voidSettlementDeduction). Prod 2026-10-17: 0 deductions ever stamped by this entry.
     { schema: "driver_finance", table: "escrow_ledger", fkColumn: "settlement_id", livenessColumn: null, writeKind: null },
     { schema: "driver_finance", table: "driver_settlement_gl_bills", fkColumn: "settlement_id", livenessColumn: null, writeKind: null },
     { schema: "driver_finance", table: "driver_settlement_gl_runs", fkColumn: "settlement_id", livenessColumn: null, writeKind: null },
