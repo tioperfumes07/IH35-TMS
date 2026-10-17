@@ -173,6 +173,11 @@
       "claimed_at": "2026-10-12",
       "purpose": "443.136 follow-up: accounting.posting_source_load_id fuel_event resolves a Relay fill with no fuel row to its adopted expense document's load"
     },
+    "202616020300": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-17",
+      "purpose": "LEAD 443.199: qbo.sync_alerts schema convergence — fresh DBs (0144) carry entity_type/error_message NOT NULL + operation NOT NULL while production has kind/message; drop those NOT NULLs where the legacy columns exist (no-op on production)"
+    },
     "202616020200": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-17",
