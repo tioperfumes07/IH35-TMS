@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { computeRouteReference } from "./routes-api-client.js";
+import { computeRouteReference, computeRouteReferenceOrReason } from "./routes-api-client.js";
 
 describe("computeRouteReference (DSP-48)", () => {
   const priorKey = process.env.GOOGLE_PLACES_API_KEY;
@@ -55,5 +55,30 @@ describe("computeRouteReference (DSP-48)", () => {
     const result = await fresh.computeRouteReference({ lat: 1, lng: 1 }, { lat: 2, lng: 2 });
     expect(result).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+  // LEAD 443.192 (10:35Z): every failure used to be a bare null — a revoked key / disabled API / missing config was invisible.
+  it("443.192: names the HTTP status of a failed call (never the key)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403, json: async () => ({}) }));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(await computeRouteReferenceOrReason({ lat: 1, lng: 1 }, { lat: 2, lng: 2 })).toEqual({ miles: null, reason: "google_routes_http_403" });
+    expect(String(warn.mock.calls[0]?.[0])).toContain("google_routes_http_403");
+    expect(String(warn.mock.calls[0]?.[0])).not.toContain("test-key");
+    warn.mockRestore();
+  });
+  it("443.192: names a disabled flag and an empty route", async () => {
+    process.env.GOOGLE_PLACES_ENABLED = "false";
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await computeRouteReferenceOrReason({ lat: 1, lng: 1 }, { lat: 2, lng: 2 })).toEqual({ miles: null, reason: "google_routes_disabled" });
+    expect(fetchMock).not.toHaveBeenCalled();
+    process.env.GOOGLE_PLACES_ENABLED = "true";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ routes: [] }) }));
+    expect(await computeRouteReferenceOrReason({ lat: 1, lng: 1 }, { lat: 2, lng: 2 })).toEqual({ miles: null, reason: "google_routes_no_route" });
+  });
+  it("443.192: names a missing key", async () => {
+    delete process.env.GOOGLE_PLACES_API_KEY;
+    vi.resetModules();
+    const fresh = await import("./routes-api-client.js");
+    expect(await fresh.computeRouteReferenceOrReason({ lat: 1, lng: 1 }, { lat: 2, lng: 2 })).toEqual({ miles: null, reason: "google_routes_not_configured" });
   });
 });

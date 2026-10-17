@@ -54,13 +54,26 @@ function parseDurationSeconds(duration: string | undefined): number {
 }
 
 /**
- * One computeRoutes call for one leg (origin -> destination, DRIVE mode). Returns null on any
- * config/HTTP/parse failure — a reference figure that fails to load must degrade to "not shown
- * yet", never a thrown error that blocks the wizard.
+ * LEAD 443.192 (10:35Z) — a Google route that does not come back says WHY. Before this, every failure was a bare null, so the
+ * 2026-10-16 bookings (written by a process with no GOOGLE_PLACES_* config) left first-stop deadhead NULL with a reason that
+ * named only OSRM ("osrm_not_configured") — the Google side of the miss was invisible. The reason never carries the key.
  */
-export async function computeRouteReference(origin: LatLng, destination: LatLng): Promise<RouteReferenceResult | null> {
+export type RouteFailure = { miles: null; reason: RouteFailureReason };
+export type RouteFailureReason =
+  | "google_routes_not_configured"
+  | "google_routes_disabled"
+  | `google_routes_http_${number}`
+  | "google_routes_no_route"
+  | "google_routes_fetch_failed";
+
+/**
+ * One computeRoutes call for one leg (origin -> destination, DRIVE mode): the route, or a named failure. Never throws — a
+ * reference figure that fails to load must degrade to "not shown yet", never a thrown error that blocks the wizard.
+ */
+export async function computeRouteReferenceOrReason(origin: LatLng, destination: LatLng): Promise<RouteReferenceResult | RouteFailure> {
   const cfg = loadConfig();
-  if (!cfg) return null;
+  if (!cfg) return { miles: null, reason: "google_routes_not_configured" };
+  if (!isGoogleRoutesEnabled()) return { miles: null, reason: "google_routes_disabled" };
   try {
     const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
       method: "POST",
@@ -75,15 +88,26 @@ export async function computeRouteReference(origin: LatLng, destination: LatLng)
         travelMode: "DRIVE",
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const reason = `google_routes_http_${Number(res.status) || 0}` as const;
+      // The status only (never the key, never the body) — so a revoked key / disabled API / quota shows in the API logs.
+      console.warn(`[google-routes] computeRoutes failed: ${reason}`);
+      return { miles: null, reason };
+    }
     const data = (await res.json()) as ComputeRoutesResponse;
     const route = data.routes?.[0];
-    if (!route || typeof route.distanceMeters !== "number") return null;
+    if (!route || typeof route.distanceMeters !== "number") return { miles: null, reason: "google_routes_no_route" };
     const miles = Math.round((route.distanceMeters / METERS_PER_MILE) * 10) / 10;
     const minutes = Math.round(parseDurationSeconds(route.duration) / 60);
     return { miles, minutes };
   } catch {
     // Never log the key; a transient provider failure degrades to "no reference yet".
-    return null;
+    return { miles: null, reason: "google_routes_fetch_failed" };
   }
+}
+
+/** The route or null (callers that only show a reference figure). The reason is on computeRouteReferenceOrReason. */
+export async function computeRouteReference(origin: LatLng, destination: LatLng): Promise<RouteReferenceResult | null> {
+  const r = await computeRouteReferenceOrReason(origin, destination);
+  return r.miles == null ? null : (r as RouteReferenceResult);
 }

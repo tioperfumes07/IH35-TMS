@@ -41,7 +41,7 @@
  */
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { computeRouteReference, type RouteReferenceResult } from "../integrations/google/routes-api-client.js";
+import { computeRouteReferenceOrReason, type RouteFailure, type RouteReferenceResult } from "../integrations/google/routes-api-client.js";
 import { resolvePointMileage } from "./mileage/mileage.service.js";
 import type { MileageProvider } from "./mileage/mileage-provider.js";
 import { OsrmProvider } from "./mileage/osrm.provider.js";
@@ -65,8 +65,11 @@ export type LaneLearningResult = {
 };
 
 export type DeadheadMethod = "point_mileage_cache" | "routing_provider" | "google" | "lane_average" | "same_point";
-/** The Google routing call (injectable for tests). Returns null when Google has no route / is not configured. */
-export type RouteFn = (from: { lat: number; lng: number }, to: { lat: number; lng: number }) => Promise<RouteReferenceResult | null>;
+/** The Google routing call (injectable for tests). No route = null, or (443.192) a named failure saying why. */
+export type RouteFn = (from: { lat: number; lng: number }, to: { lat: number; lng: number }) => Promise<RouteReferenceResult | RouteFailure | null>;
+/** 443.192: the named reason a Google route did not come back ("google_routes_no_route" when the caller gave none). */
+const googleMissReason = (r: RouteReferenceResult | RouteFailure | null): string =>
+  r && r.miles == null && "reason" in r ? r.reason : "google_routes_no_route";
 type Place = { city: string | null; state: string | null };
 /** Audit classes that mark a leg as written by this module (so relearnLoadStopLegs may recompute it). */
 export const LEG_LEARNED_EVENT = "dispatch.load_stop.leg_miles_learned";
@@ -163,7 +166,7 @@ export async function chooseLegMiles(
   client: Queryable,
   args: { operatingCompanyId: string; from: { lat: number; lng: number }; to: { lat: number; lng: number }; fromPlace?: Place; toPlace?: Place },
   provider: MileageProvider = new OsrmProvider(),
-  route: RouteFn = computeRouteReference
+  route: RouteFn = computeRouteReferenceOrReason
 ): Promise<{ miles: number; method: DeadheadMethod; engine_reason?: string } | { miles: null; reason: string }> {
   // Two stops at the same real point (two docks of one warehouse, 13628) are 0.0 miles apart — exact, not an estimate.
   if (round4(args.from.lat) === round4(args.to.lat) && round4(args.from.lng) === round4(args.to.lng)) return { miles: 0, method: "same_point" };
@@ -171,18 +174,21 @@ export async function chooseLegMiles(
   if (engine.practical_miles != null)
     return { miles: round1(engine.practical_miles), method: engine.source === "cache" ? "point_mileage_cache" : "routing_provider" };
   const google = await route(args.from, args.to);
-  if (google && Number.isFinite(google.miles) && google.miles > 0) {
+  const googleMiles = google?.miles ?? null;
+  if (googleMiles != null && Number.isFinite(googleMiles) && googleMiles > 0) {
     await client.query(
       `INSERT INTO catalogs.point_mileage (origin_lat, origin_lng, dest_lat, dest_lng, practical_miles, shortest_miles, engine, engine_version)
        VALUES ($1::numeric, $2::numeric, $3::numeric, $4::numeric, $5::numeric, NULL, 'google', 'routes-v2-drive')
        ON CONFLICT (origin_lat, origin_lng, dest_lat, dest_lng) DO NOTHING`,
-      [round4(args.from.lat), round4(args.from.lng), round4(args.to.lat), round4(args.to.lng), round1(google.miles)]
+      [round4(args.from.lat), round4(args.from.lng), round4(args.to.lat), round4(args.to.lng), round1(googleMiles)]
     );
-    return { miles: round1(google.miles), method: "google", engine_reason: engine.reason };
+    return { miles: round1(googleMiles), method: "google", engine_reason: engine.reason };
   }
   const lane = await laneAverageMiles(client, args.operatingCompanyId, args.fromPlace, args.toPlace);
-  if (lane != null) return { miles: round1(lane), method: "lane_average", engine_reason: engine.reason };
-  return { miles: null, reason: `no_google_route_and_no_lane_average${engine.reason ? `:${engine.reason}` : ""}` };
+  // 443.192: the Google miss is named next to the engine's (it was invisible: 2026-10-16 deadheads said only "osrm_not_configured").
+  const why = [engine.reason, googleMissReason(google)].filter(Boolean).join(";");
+  if (lane != null) return { miles: round1(lane), method: "lane_average", engine_reason: why };
+  return { miles: null, reason: `no_google_route_and_no_lane_average:${why}` };
 }
 
 /**
@@ -194,7 +200,7 @@ export async function googleLegMiles(
   client: Queryable,
   from: { lat: number; lng: number },
   to: { lat: number; lng: number },
-  route: RouteFn = computeRouteReference
+  route: RouteFn = computeRouteReferenceOrReason
 ): Promise<{ miles: number; fetched_at: string } | null> {
   const key = [round4(from.lat), round4(from.lng), round4(to.lat), round4(to.lng)];
   const hit = (
@@ -207,14 +213,15 @@ export async function googleLegMiles(
   ).rows[0];
   if (hit && pos(hit.m) != null) return { miles: round1(Number(hit.m)), fetched_at: hit.at };
   const google = await route(from, to);
-  if (!google || !Number.isFinite(google.miles) || google.miles <= 0) return null;
+  const googleMiles = google?.miles ?? null;
+  if (googleMiles == null || !Number.isFinite(googleMiles) || googleMiles <= 0) return null;
   await client.query(
     `INSERT INTO catalogs.point_mileage (origin_lat, origin_lng, dest_lat, dest_lng, practical_miles, shortest_miles, engine, engine_version)
      VALUES ($1::numeric, $2::numeric, $3::numeric, $4::numeric, $5::numeric, NULL, 'google', 'routes-v2-drive')
      ON CONFLICT (origin_lat, origin_lng, dest_lat, dest_lng) DO NOTHING`,
-    [...key, round1(google.miles)]
+    [...key, round1(googleMiles)]
   );
-  return { miles: round1(google.miles), fetched_at: new Date().toISOString() };
+  return { miles: round1(googleMiles), fetched_at: new Date().toISOString() };
 }
 
 /** The historical lane average (catalogs.lane_mileage, this company) for a city/state pair, either direction. */
@@ -236,7 +243,7 @@ export async function computeFirstStopDeadhead(
   client: Queryable,
   args: { operatingCompanyId: string; loadId: string },
   provider: MileageProvider = new OsrmProvider(),
-  route: RouteFn = computeRouteReference
+  route: RouteFn = computeRouteReferenceOrReason
 ): Promise<FirstStopDeadhead> {
   const first = (
     await client.query<{ stop_id: string; unit_id: string | null; lat: number | null; lng: number | null; at: string | null; city: string | null; state: string | null }>(
@@ -696,7 +703,7 @@ export async function relearnLoadStopLegs(
   client: Queryable,
   args: { operatingCompanyId: string; loadId: string; actorUserId: string },
   provider: MileageProvider = new OsrmProvider(),
-  route: RouteFn = computeRouteReference
+  route: RouteFn = computeRouteReferenceOrReason
 ): Promise<RelearnLoadStopLegsResult> {
   const out: RelearnLoadStopLegsResult = { changed: [], kept_owner_legs: 0, unresolved: [] };
   const load = (
