@@ -37,6 +37,7 @@ import { releaseBankLinesNamingDocument, unmatchBankTransactionById } from "../a
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { voidSettlementDeduction, DeductionVoidError } from "./settlement-deduction-void.service.js";
+import { completeDriverSettlementVoidCascadeInClientTx } from "./driver-settlement-void-cascade.service.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -56,6 +57,10 @@ export type ReverseSettlementForVoidResult = {
   bankTransactionUnmatched: boolean;
   /** ROUND 300 — the pay-run sub-ledger unwind, when the settlement was posted through the per-load A/P chain. */
   payrunUnwind?: { run_id: string; advances_restored: number; escrow_reversed_cents: number } | null;
+  /** LEAD 443.192 — what the shared void cascade released from the dead settlement (ids also in the reversed audit). */
+  settlementLinesVoided: string[];
+  driverBillsReleased: string[];
+  reimbursementsReleased: string[];
 };
 
 /**
@@ -94,17 +99,22 @@ export async function reverseSettlementForVoid(
     currentBusinessDate
   );
 
-  await client.query(
-    `UPDATE driver_finance.settlement_lines
-        SET is_active = false,
-            voided_at = COALESCE(voided_at, now()),
-            void_reason = COALESCE(void_reason, $3),
-            voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
-            updated_at = now()
-      WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
-        AND (is_active IS DISTINCT FROM false OR voided_at IS NULL)`,
-    [settlementId, operatingCompanyId, reason, actor.userId]
-  );
+  // LEAD 443.192 (13:25Z follow-up) — the SAME cascade executeVoidCancel('driver_settlement') runs (replaces the inline
+  // settlement_lines UPDATE that used to sit here — identical SQL, now in one place, so nothing is applied twice). Before,
+  // this path (Settlement Creator Edit = void and repost; POST /settlements/:id/reverse) voided the lines but left every
+  // OPEN driver bill and every unpaid reimbursement still pointing at the cancelled settlement (measured: P-0085 1 open
+  // bill + 2 reimbursements, P-0092 2 reimbursements), so the repost / the next settlement could never pick them up —
+  // the materialize + computeSettlementReimbursements writers select settlement_line_id / applied_to_settlement_id IS
+  // NULL, and the bill writers settled_in_settlement_id IS NULL. voidChildren:false — deductions on this path go only
+  // through the owner-ruled deduction engine (Creator: reverseDeductionForVoid before this call) or are restored to
+  // pending by the GL reversal above; a raw voided_at stamp would forgive an uncollected deduction.
+  const cascade = await completeDriverSettlementVoidCascadeInClientTx(client, {
+    operatingCompanyId,
+    settlementId,
+    userId: actor.userId,
+    reason,
+    voidChildren: false,
+  });
 
   // R-102-B (2026-09-23) — mirror both void-marker sets (same fix as governance/void-cancel-
   // executors.ts's identical path); see that file's comment for the live-measured root cause.
@@ -171,6 +181,9 @@ export async function reverseSettlementForVoid(
       gl_reversal_result: reversal.result,
       gl_run_id: reversal.run_id,
       bank_transaction_unmatched: bankTransactionUnmatched,
+      settlement_lines_voided: cascade.lines_voided,
+      driver_bills_released: cascade.driver_bills_released,
+      reimbursements_released: cascade.reimbursements_released,
       via: "voidDocument.reverseSettlementForVoid",
     },
     "warning",
@@ -183,6 +196,9 @@ export async function reverseSettlementForVoid(
     payrunUnwind: reversal.payrun_unwind ?? null,
     glReversalResult: reversal.result,
     bankTransactionUnmatched,
+    settlementLinesVoided: cascade.lines_voided,
+    driverBillsReleased: cascade.driver_bills_released,
+    reimbursementsReleased: cascade.reimbursements_released,
   };
 }
 

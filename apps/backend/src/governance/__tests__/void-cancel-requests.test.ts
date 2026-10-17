@@ -185,6 +185,8 @@ describe("governance void/cancel — atomic driver-settlement cancellation", () 
       { match: (s) => s.includes("UPDATE driver_finance.driver_settlement_deductions"), rows: [] },
       // LEAD 443.192: an OPEN driver bill still naming the cancelled settlement is released from the dead link (none here).
       { match: (s) => s.includes("UPDATE driver_finance.driver_bills"), rows: [] },
+      // LEAD 443.192 13:25Z: an unpaid reimbursement settled against the cancelled settlement is released too (none here).
+      { match: (s) => s.includes("UPDATE driver_finance.driver_reimbursements"), rows: [] },
       // ROUND 368.2(b): a void releases the bank lines that name its document (none here).
       { match: (s) => s.includes("banking.release_bank_line_matches"), rows: [{ n: 0 }] },
       { match: (s) => s.includes("UPDATE banking.bank_transactions"), rows: [] },

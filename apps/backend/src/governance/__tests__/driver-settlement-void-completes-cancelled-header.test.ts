@@ -23,10 +23,17 @@ const USER = "00000000-0000-0000-0000-0000000000aa";
 
 type Q = { sql: string; values?: unknown[] };
 
-function fakeClient(opts: { status: string; liveLineIds: string[]; linkedOpenBillIds: string[]; priorVoidAudits: number }) {
+function fakeClient(opts: {
+  status: string;
+  liveLineIds: string[];
+  linkedOpenBillIds: string[];
+  priorVoidAudits: number;
+  settledReimbursementIds?: string[];
+}) {
   const calls: Q[] = [];
   let lines = [...opts.liveLineIds];
   let bills = [...opts.linkedOpenBillIds];
+  let reimbursements = [...(opts.settledReimbursementIds ?? [])];
   const client = {
     query: async <T,>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> => {
       calls.push({ sql, values });
@@ -42,6 +49,11 @@ function fakeClient(opts: { status: string; liveLineIds: string[]; linkedOpenBil
       if (sql.includes("UPDATE driver_finance.driver_bills")) {
         const out = bills.map((id) => ({ id }));
         bills = [];
+        return { rows: out as T[] };
+      }
+      if (sql.includes("UPDATE driver_finance.driver_reimbursements")) {
+        const out = reimbursements.map((id) => ({ id }));
+        reimbursements = [];
         return { rows: out as T[] };
       }
       if (sql.includes("FROM audit.audit_events")) return { rows: [{ n: opts.priorVoidAudits }] as T[] };
@@ -127,5 +139,50 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     const res = await executeVoidCancel("driver_settlement", ctx(client));
     expect(res.kind).toBe("not_completable");
     expect(mocks.reverse).not.toHaveBeenCalled();
+  });
+
+  // LEAD 443.192 13:25Z item 3 — fail-old: before the fix the cascade never touched driver_reimbursements, so the 8 unpaid
+  // reimbursements on cancelled P-0085/0090/0091/0092 stayed 'settled' against a dead settlement, and a fully audited
+  // cancelled header returned already_done without releasing them.
+  it("releases unpaid reimbursements settled against the cancelled settlement and names them in the void audit", async () => {
+    const { client, calls } = fakeClient({
+      status: "cancelled",
+      liveLineIds: [],
+      linkedOpenBillIds: [],
+      priorVoidAudits: 1,
+      settledReimbursementIds: ["fdf68d29-0000-4000-8000-000000000001", "c53079a2-0000-4000-8000-000000000002"],
+    });
+    const res = await executeVoidCancel("driver_settlement", ctx(client));
+    // a prior void audit exists, but releasing reimbursements is a real write — not already_done
+    expect(res.kind).toBe("ok");
+    const upd = calls.find((c) => c.sql.includes("UPDATE driver_finance.driver_reimbursements"));
+    expect(upd).toBeDefined();
+    // back to the pre-settlement state the settlement writers select on
+    expect(upd!.sql).toMatch(/WHEN r\.status = 'settled' THEN 'pending'/);
+    expect(upd!.sql).toMatch(/applied_to_settlement_id = NULL/);
+    expect(upd!.sql).toMatch(/settlement_line_id = NULL/);
+    // never a paid / voided reimbursement
+    expect(upd!.sql).toMatch(/r\.paid_at IS NULL/);
+    expect(upd!.sql).toMatch(/r\.voided_at IS NULL/);
+    expect(upd!.sql).toMatch(/r\.status IN \('settled', 'pending'\)/);
+    expect(upd!.values).toEqual([SETTLEMENT, COMPANY]);
+    expect(mocks.appendAudit).toHaveBeenCalledTimes(1);
+    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({
+      header_already_cancelled: true,
+      reimbursements_released: ["fdf68d29-0000-4000-8000-000000000001", "c53079a2-0000-4000-8000-000000000002"],
+    });
+  });
+
+  it("a fresh void also releases the settlement's reimbursements and names them in its audit", async () => {
+    const { client } = fakeClient({
+      status: "closed",
+      liveLineIds: ["4db01ee2-5404-45e4-bf6f-0ec11e5b3c29"],
+      linkedOpenBillIds: [],
+      priorVoidAudits: 0,
+      settledReimbursementIds: ["6abbc20b-0000-4000-8000-000000000003"],
+    });
+    const res = await executeVoidCancel("driver_settlement", ctx(client));
+    expect(res.kind).toBe("ok");
+    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ reimbursements_released: ["6abbc20b-0000-4000-8000-000000000003"] });
   });
 });
