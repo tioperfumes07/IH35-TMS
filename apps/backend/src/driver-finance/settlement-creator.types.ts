@@ -304,6 +304,8 @@ export type SettlementCreatorPostResult = {
   owed_bill_ids?: string[];
   fuel_transaction_ids: string[];
   advance_ids: string[];
+  /** 443.183 G9 — overflow loans the cash-advance engine booked above a bill's balance (voided with the post on Edit). */
+  overflow_loan_ids?: string[];
   journal_entry_ids: string[];
   /** Customer invoices minted+sent for delivered loads (empty when all not_yet_delivered). */
   invoice_ids: string[];
