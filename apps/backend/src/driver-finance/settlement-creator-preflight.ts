@@ -2,7 +2,7 @@
  * Lead 443.38 / 443.39 — the Settlement Creator preview lists EVERY refusal of a draft in one pass. The rehearsal post
  * (R14) stops at the first engine refusal, so the problems the 69 entry files hit one at a time on the prod fork are
  * checked here up front, all together, read-only:
- *   loads: PO or W/O, practical miles > 0, short (pay) miles not above practical (loads_miles_shortest_not_over_practical),
+ *   loads: PO or W/O, short (pay) miles > 0 (443.192), practical miles > 0, short (pay) miles not above practical (loads_miles_shortest_not_over_practical),
  *          pickup + delivery coordinates (feed gate load.stops_geocoded), customer of this company, an existing load number
  *          that is not the replaced settlement's own (Edit)
  *   fuel:  vendor mapped in Vendors, a provider ticket not already live on another fill (same vendor + product), a Relay
@@ -13,7 +13,8 @@
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 import { findLiveFuelByProviderTransactionId, fuelPurchaseAlreadyRecordedMessage, providerTransactionId } from "../fuel/fuel-provider-reference.js";
 import { findReceivedCardFillToAdopt } from "./creator-received-fill-adoption.js";
-import { findCreatorCustomer } from "./settlement-creator-seed-loads.js";
+import { CREATOR_SHORT_MILES_REQUIRED_MESSAGE, findCreatorCustomer } from "./settlement-creator-seed-loads.js";
+import { creatorLoadMiles } from "./settlement-creator-empty-pay.js";
 import { creatorLineLoadNumber } from "./settlement-creator-line-load.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
 import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerEquipmentId, creatorTrailerChoice } from "./creator-trailer-choice.js";
@@ -48,10 +49,16 @@ export async function creatorPreflightRefusals(client: Q, draft: SettlementCreat
   for (const l of draft.loads ?? []) {
     const n = l.load_number?.trim() || "(no number)";
     if (!l.customer_po_number?.trim() && !l.customer_wo_number?.trim()) out.push(`Load ${n}: the customer's PO number (or W/O number) is required.`);
-    const practical = Number(l.loaded_miles ?? l.line_haul_miles ?? 0);
-    if (!(practical > 0)) out.push(`Load ${n}: practical miles are required (E_MILES_PRACTICAL_REQUIRED).`);
-    if (l.miles_shortest != null && practical > 0 && Number(l.miles_shortest) > practical) {
-      out.push(`Load ${n}: pay (short) miles ${l.miles_shortest} exceed practical miles ${practical} (loads_miles_shortest_not_over_practical).`);
+    // LEAD 443.192 — the document's miles are the SHORT (pay) miles, required for a per-mile driver; practical is its own
+    // figure, required to book (creatorLoadMiles — neither is a copy of the other).
+    const miles = creatorLoadMiles(l);
+    const practical = miles.miles_practical;
+    if (miles.miles_shortest == null && !draft.salaried) out.push(`Load ${n}: ${CREATOR_SHORT_MILES_REQUIRED_MESSAGE}`);
+    if (practical == null) {
+      out.push(`Load ${n}: practical miles are required to book the load (E_MILES_PRACTICAL_REQUIRED) — a separate figure in Loaded mi (co) (or Historical / Google), never a copy of the short pay miles.`);
+    }
+    if (miles.miles_shortest != null && practical != null && miles.miles_shortest > practical) {
+      out.push(`Load ${n}: pay (short) miles ${miles.miles_shortest} exceed practical miles ${practical} (loads_miles_shortest_not_over_practical).`);
     }
     if (l.pickup_lat == null || l.pickup_lng == null) out.push(`Load ${n}: pickup stop has no coordinates (load.stops_geocoded).`);
     if (l.delivery_lat == null || l.delivery_lng == null) out.push(`Load ${n}: delivery stop has no coordinates (load.stops_geocoded).`);

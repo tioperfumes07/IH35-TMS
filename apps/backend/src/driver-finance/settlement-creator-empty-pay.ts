@@ -33,9 +33,30 @@ export function creatorEmptyPayCents(load: EmptyPayLoad): number {
  */
 type LoadedPayLoad = { miles_shortest?: number | null; loaded_miles?: number | null; line_haul_rate_cents?: number | null };
 
+/**
+ * OWNER LAW (LEAD 443.192): "Per-mile drivers are ALWAYS paid SHORT miles" and "The signed AlwaysTrack settlement miles are
+ * the PC*MILER pay miles = SHORT miles." Creator pay miles are miles_shortest ONLY — never loaded / practical miles; a load
+ * with no short miles has no pay miles (the post refuses driver_pay_rate_missing, the preview lists it).
+ */
 export function creatorPayMiles(load: LoadedPayLoad): number | null {
-  const miles = Number(load.miles_shortest ?? load.loaded_miles ?? NaN);
+  const miles = Number(load.miles_shortest ?? NaN);
   return Number.isFinite(miles) && miles > 0 ? miles : null;
+}
+
+/**
+ * LEAD 443.192 — the miles a Creator load is BOOKED with. The document's pay miles go to miles_shortest (the same figure the
+ * settlement's earnings line pays: creatorPayMiles), and miles_practical comes only from the separate practical figure
+ * (Loaded mi (co)). Neither is ever copied into the other.
+ */
+export function creatorLoadMiles(load: LoadedPayLoad & { line_haul_miles?: number | null }): {
+  miles_shortest: number | null;
+  miles_practical: number | null;
+} {
+  const practical = Number(load.loaded_miles ?? load.line_haul_miles ?? NaN);
+  return {
+    miles_shortest: creatorPayMiles(load),
+    miles_practical: Number.isFinite(practical) && practical > 0 ? practical : null,
+  };
 }
 
 /** Loaded-miles pay in cents (pay rate x short miles), or null when the load carries no miles or no pay rate. */
