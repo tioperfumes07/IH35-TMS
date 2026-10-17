@@ -30,9 +30,9 @@ import {
   type DreamlineStatementLine,
 } from "../dreamline-statement-import.service.js";
 
-const line = (n: number, at: string, local: string, gross: number, net: number): DreamlineStatementLine => ({
+const line = (n: number, at: string, local: string, gross: number, net: number, unit = "164"): DreamlineStatementLine => ({
   line_number: n, card_number: "7083050030797447047", transaction_at: at, local_date: local, efs_invoice: `INV${n}`,
-  unit_label: "164", driver_name: null, location_name: "LOVES #1 TRAVEL STOP", city: "LAREDO", state: "TX",
+  unit_label: unit, driver_name: null, location_name: "LOVES #1 TRAVEL STOP", city: "LAREDO", state: "TX",
   item: "ULSD", product: "diesel", quantity: 100, retail_ppu: null, gross_cents: gross, discount_cents: gross - net, net_cents: net, fee_cents: 0,
 });
 
@@ -61,8 +61,9 @@ describe("Dreamline statement matcher — a receipt is consumed only when adopte
     const { client, stamps } = fakeClient();
     // A: 08-19 fill, card net 803.78 — matches R by truck+day±1 (within 15%) but the card charged more than R -> mismatch.
     const a = line(2, "2026-08-19T06:28:00.000Z", "2026-08-19", 84376, 80378);
-    // B: R's own line — card gross 726.80 == receipt.
-    const b = line(3, "2026-08-21T01:11:00.000Z", "2026-08-20", 72680, 67257);
+    // B: R's own line — card gross 726.80 == receipt — on a card whose unit label is stale (the any-truck fallback, so
+    // the 443.196 same-truck plan does not reserve R for it: A meets R first in the walk).
+    const b = line(3, "2026-08-21T01:11:00.000Z", "2026-08-20", 72680, 67257, "999");
     const s = await importDreamlineStatement(client as never, { operating_company_id: "co", actor_user_uuid: "u", lines: [a, b] });
     const byLine = Object.fromEntries(s.results.map((r) => [r.line_number, r]));
     expect(byLine[2]!.outcome).toBe("amount_mismatch");
@@ -76,7 +77,7 @@ describe("Dreamline statement matcher — a receipt is consumed only when adopte
     const { client, stamps } = fakeClient();
     const s = await importDreamlineStatement(client as never, {
       operating_company_id: "co", actor_user_uuid: "u", dry_run: true,
-      lines: [line(2, "2026-08-19T06:28:00.000Z", "2026-08-19", 84376, 80378), line(3, "2026-08-21T01:11:00.000Z", "2026-08-20", 72680, 67257)],
+      lines: [line(2, "2026-08-19T06:28:00.000Z", "2026-08-19", 84376, 80378), line(3, "2026-08-21T01:11:00.000Z", "2026-08-20", 72680, 67257, "999")],
     });
     expect(s.results.map((r) => r.outcome)).toEqual(["amount_mismatch", "adopted"]);
     expect(stamps).toEqual([]);
@@ -97,6 +98,7 @@ describe("Dreamline statement matcher — a receipt is consumed only when adopte
     }) };
     expect(await unstampDreamlineReceiptAdopted(client as never, { companyId: "co", fuelTransactionId: "ft", marker: "dreamline_efs=11946:DEFD:1" })).toBe(1);
     expect(updates[0]![2]).toBe("gallons estimated at average price (owner 10-10)");
+    expect(updates[0]![3]).toBe(false); // no line adopts it any more: the wrong card facts are cleared
     expect(await unstampDreamlineReceiptAdopted(client as never, { companyId: "co", fuelTransactionId: "ft", marker: "dreamline_efs=1194:DEFD:1" })).toBe(0);
   });
 });
