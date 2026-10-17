@@ -104,6 +104,7 @@ export function BrokersListPage() {
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search filter above feeds
           `rows`; row-click → customer record preserved exactly. */}
+      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}</h2>
       <DataTable
         columns={columns}
         rows={rows}

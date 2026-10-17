@@ -214,6 +214,7 @@ export function ScheduledReportsPage() {
 
       <ParityTable
         rows={rows}
+        title="Scheduled reports"
         columns={columns}
         rowKey={(r) => r.id}
         loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}

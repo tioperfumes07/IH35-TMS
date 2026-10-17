@@ -245,6 +245,7 @@ export function NamesMasterHub() {
       ) : (
         <ParityTable<NamesMasterRow>
           columns={columns}
+          title="Names — customers, vendors, drivers and brokers"
           rows={rows}
           rowKey={(row) => `${row.entity_type}-${row.entity_id}`}
           loading={searchQuery.isLoading}

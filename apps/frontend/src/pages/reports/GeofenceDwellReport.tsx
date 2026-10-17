@@ -227,6 +227,7 @@ export function GeofenceDwellReport() {
 
       <ParityTable
         rows={filteredRows}
+        title="Geofence dwell — by visit"
         columns={columns}
         rowKey={(row) => `${row.geofence_id}-${row.unit_id}-${row.entered_at}`}
         loading={reportQuery.isPending || (reportQuery.isFetching && filteredRows.length === 0)}

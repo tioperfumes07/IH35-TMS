@@ -337,6 +337,7 @@ export function FuelReconciliationPage() {
 
           <ParityTable
             rows={filtered}
+            title="Fuel reconciliation — by truck"
             columns={truckColumns}
             rowKey={(r) => r.unit_id}
             loading={query.isPending || (query.isFetching && filtered.length === 0)}
@@ -359,6 +360,7 @@ export function FuelReconciliationPage() {
             {tab === "card" ? (
               <ParityTable
                 rows={query.data.unmatched_card_transactions ?? []}
+                title="Unmatched card transactions"
                 columns={cardColumns}
                 rowKey={(row) => row.transaction_id}
                 loading={false}
@@ -388,6 +390,7 @@ export function FuelReconciliationPage() {
             ) : (
               <ParityTable
                 rows={query.data.unmatched_wo_entries ?? []}
+                title="Unmatched work-order fuel entries"
                 columns={woColumns}
                 rowKey={(row) => row.wo_id}
                 loading={false}

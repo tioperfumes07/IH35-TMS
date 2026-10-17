@@ -190,6 +190,7 @@ export function DispatchMarginPage() {
 
           <ParityTable
             rows={filtered}
+            title="Dispatch margin — by load"
             columns={columns}
             rowKey={(row) => row.load_id}
             loading={query.isPending || (query.isFetching && filtered.length === 0)}

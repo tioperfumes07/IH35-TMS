@@ -239,6 +239,7 @@ export function BookingGapReport() {
       {!isError && (
         <ParityTable
           rows={filtered}
+          title="Booking gaps — by unit"
           columns={columns}
           rowKey={(row) => row.dispatcher_id ?? row.dispatcher_label}
           loading={isLoading || (isFetching && filtered.length === 0)}

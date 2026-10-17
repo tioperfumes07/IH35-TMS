@@ -120,6 +120,7 @@ export function PostedWhileTourOpenReportPage() {
 
       <ParityTable
         rows={rows}
+        title="Entries posted while the tour was open"
         columns={columns}
         rowKey={(r) => `${r.doc_type}-${r.doc_id}`}
         loading={reportQuery.isPending}

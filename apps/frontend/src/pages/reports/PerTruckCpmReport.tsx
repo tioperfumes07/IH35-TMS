@@ -144,6 +144,7 @@ export function PerTruckCpmReport() {
       ) : (
         <ParityTable
           rows={filtered}
+          title="Cost per mile — by truck"
           columns={columns}
           rowKey={(row) => row.unit_uuid}
           loading={query.isPending || (query.isFetching && filtered.length === 0)}

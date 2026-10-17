@@ -12,6 +12,7 @@ import { IFTAStepMiles } from "./IFTAStepMiles";
 import { IFTAStepTax } from "./IFTAStepTax";
 import { filingQuarterLabel, parseQuarterLabel, recentQuarterOptions, toQuarterLabel } from "./quarter";
 import { SelectCombobox } from "../../../components/Combobox";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 export function IFTAPreparer() {
   const { selectedCompanyId } = useCompanyContext();
@@ -47,8 +48,10 @@ export function IFTAPreparer() {
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
       <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
-        Tax filing prep only — no ledger posting. Accrual basis under the owner-locked reporting policy. Run Steps 1→4 in
-        order; CSV uploads to secure storage with signed download.
+        Tax filing prep only — no ledger posting. Accrual basis under the owner-locked reporting policy.{" "}
+        <InfoPopover label="About IFTA preparation">
+          Run Steps 1→4 in order; CSV uploads to secure storage with signed download.
+        </InfoPopover>
       </p>
 
       {!prepReady ? (

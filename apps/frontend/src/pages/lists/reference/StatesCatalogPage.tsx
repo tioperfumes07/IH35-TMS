@@ -31,6 +31,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import type { CatalogColumnConfig, CatalogRow } from "../../../hooks/useCatalogQuery";
 import { listMexicoStates, listUsStates } from "../../../api/catalogs";
 import { ListsSubNav } from "../ListsSubNav";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 const COLUMNS: CatalogColumnConfig[] = [
   { key: "code", label: "Code", sortable: true, filterable: true },
@@ -78,8 +79,11 @@ export function StatesCatalogPage({ variant }: { variant: Variant }) {
       />
 
       <p className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
-        Fixed geographic reference — view only. States are not operator-maintained: they feed driver and
-        customer address validation, and the list is identical for every entity.
+        Fixed geographic reference — view only.{" "}
+        <InfoPopover label="About the states list">
+          States are not operator-maintained: they feed driver and customer address validation, and the list is
+          identical for every entity.
+        </InfoPopover>
       </p>
 
       {query.isError ? (

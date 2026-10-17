@@ -230,6 +230,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
       ) : (
         <ParityTable
           rows={rows}
+          title={status === "all" ? "All entries" : status === "inactive" ? "Inactive entries" : "Active entries"}
           columns={COLUMNS}
           rowKey={(row) => row.id}
           loading={listQuery.isLoading}

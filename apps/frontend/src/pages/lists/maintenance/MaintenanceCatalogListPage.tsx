@@ -111,6 +111,7 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
           feed `rows`; row-click → edit modal preserved exactly. */}
+      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{status === "all" ? "All entries" : status === "false" ? "Inactive entries" : "Active entries"}</h2>
       <DataTable
         columns={columns}
         rows={rows}

@@ -217,6 +217,7 @@ export function DriverTeamsPage() {
 
       <ParityTable
         columns={TEAM_COLUMNS}
+        title="Driver teams"
         rows={rows}
         rowKey={(row) => row.id}
         loading={query.isLoading}

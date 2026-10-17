@@ -45,6 +45,7 @@ export function QboSyncHealthCard({ rows, onForceSync, syncing }: Props) {
       </div>
       <ParityTable<ListsQboSyncHealthRow>
         columns={COLUMNS}
+        title="QuickBooks sync health — by list"
         rows={rows}
         rowKey={(row) => row.entity}
         storageKey="lists-qbo-sync-health"

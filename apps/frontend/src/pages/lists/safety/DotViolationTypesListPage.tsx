@@ -111,6 +111,7 @@ export function DotViolationTypesListPage() {
         {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
             feed `rows`; row-click → edit modal preserved exactly. */}
         <div className="[&>div]:rounded-none [&>div]:border-0">
+          <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">DOT violation types</h2>
           <DataTable
             columns={columns}
             rows={rows}
