@@ -258,15 +258,21 @@ export async function unstampDreamlineReceiptAdopted(
   const parts = (row?.notes ?? "").split(";").map((p) => p.trim()).filter((p) => p !== "");
   const kept = parts.filter((p) => p !== input.marker);
   if (!row || kept.length === parts.length) return 0;
+  // LEAD 443.196 — a receipt no statement line adopts any more carries no card facts: the gross / discount the wrong line
+  // stamped are cleared (back to the receipt's own amount, as the Settlement Creator wrote it) until its true line adopts it.
+  const stillAdopted = kept.some((p) => p.startsWith("dreamline_efs="));
   await client.query(
-    `UPDATE fuel.fuel_transactions SET notes = NULLIF($3::text, ''), updated_at = now()
+    `UPDATE fuel.fuel_transactions SET notes = NULLIF($3::text, ''),
+            gross_cost = CASE WHEN $4::boolean THEN gross_cost ELSE NULL END,
+            discount_amount = CASE WHEN $4::boolean THEN discount_amount ELSE 0 END,
+            updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-    [input.fuelTransactionId, input.companyId, kept.join("; ")]
+    [input.fuelTransactionId, input.companyId, kept.join("; "), stillAdopted]
   );
   return 1;
 }
 
-type BookedReceipt = {
+export type BookedReceipt = {
   expense_id: string;
   expense_number: string | null;
   d: string;
@@ -331,6 +337,13 @@ async function loadBookedReceipts(client: DbClient, companyId: string, from: str
 }
 
 /**
+ * LEAD 443.196 — how far one matcher call may look: the truck's own receipts at the exact amount, the truck's own
+ * receipts near the amount, or (the fallback) any truck. The import runs the two same-truck scopes over the WHOLE
+ * statement before any line may take another truck's receipt (planDreamlineSameTruckAdoptions).
+ */
+export type DreamlineMatchScope = "same_truck_exact" | "same_truck" | "any_truck";
+
+/**
  * Pure matcher: statement fuel line -> the booked receipt that is the same purchase. Deterministic (file order, then
  * nearest day, then nearest amount). Truck first (the unit typed at the pump); then, for a card whose unit label is
  * stale, the day + product + amount alone when that is exact or the ONLY candidate within 3%.
@@ -338,7 +351,8 @@ async function loadBookedReceipts(client: DbClient, companyId: string, from: str
 export function matchBookedReceipt(
   line: Pick<DreamlineStatementLine, "local_date" | "unit_label" | "product" | "gross_cents" | "net_cents">,
   booked: BookedReceipt[],
-  used: Set<string>
+  used: Set<string>,
+  scope: DreamlineMatchScope = "any_truck"
 ): BookedReceipt | null {
   const near = (b: BookedReceipt) => !used.has(b.expense_id) && b.kind === line.product && dayDiff(b.d, line.local_date) <= 1;
   const exact = (b: BookedReceipt) => Math.abs(b.cents - line.gross_cents) <= 1 || Math.abs(b.cents - line.net_cents) <= 1;
@@ -348,13 +362,42 @@ export function matchBookedReceipt(
   const sameTruck = booked.filter((b) => near(b) && b.unit_norm === unit);
   const p1 = sameTruck.filter(exact).sort(rank);
   if (p1[0]) return p1[0];
+  if (scope === "same_truck_exact") return null;
   const p2 = sameTruck.filter((b) => Math.abs(b.cents - line.gross_cents) <= Math.max(500, 0.15 * line.gross_cents)).sort(rank);
   if (p2[0]) return p2[0];
+  if (scope === "same_truck") return null;
   const anyTruck = booked.filter(near);
   const p3 = anyTruck.filter(exact).sort(rank);
   if (p3[0]) return p3[0];
   const p4 = anyTruck.filter((b) => Math.abs(b.cents - line.gross_cents) <= Math.max(100, 0.03 * line.gross_cents));
   return p4.length === 1 ? p4[0]! : null;
+}
+
+/**
+ * LEAD 443.196 — pure: the same-truck adoptions of the whole statement, decided BEFORE any line may fall back to
+ * another truck's receipt. On main the walk was file order with the any-truck fallback inline, so the first line of a
+ * day took another truck's receipt before that truck's own line was reached (08-20: T163's EFS 09992 took T164's diesel
+ * and T175's DEF; T175's EFS 11946 DEF then took T164's 08-21 DEF; T164's own lines imported copies). Two passes over
+ * every candidate line: the truck's own receipt at the exact amount, then near the amount. A receipt is reserved only
+ * for a line that may ADOPT it (card rail 2510, inside the adoption tolerance) — the import loop then stamps it.
+ * `used` is extended in place with the reserved receipts; the returned map is line -> receipt.
+ */
+export function planDreamlineSameTruckAdoptions(
+  candidates: Array<Pick<DreamlineStatementLine, "local_date" | "unit_label" | "product" | "gross_cents" | "net_cents">>,
+  booked: BookedReceipt[],
+  used: Set<string>
+): Map<object, BookedReceipt> {
+  const plan = new Map<object, BookedReceipt>();
+  for (const scope of ["same_truck_exact", "same_truck"] as const) {
+    for (const line of candidates) {
+      if (plan.has(line)) continue;
+      const hit = matchBookedReceipt(line, booked, used, scope);
+      if (!hit || hit.rail !== "2510" || dreamlineAdoptionRefused(hit.cents, line)) continue;
+      plan.set(line, hit);
+      used.add(hit.expense_id);
+    }
+  }
+  return plan;
 }
 
 /**
@@ -631,15 +674,27 @@ export async function importDreamlineStatement(
   }
   for (const b of booked) if ((b.notes ?? "").includes("dreamline_efs=")) used.add(b.expense_id);
 
-  for (const line of lines) {
+  // Each line's position on its receipt (seq), stable identity (hash) and adoption marker — computed once, in file order.
+  const keyed = lines.map((line) => {
     const fillKey = `${line.card_number}|${line.efs_invoice}|${line.transaction_at}`;
     const seqKey = `${fillKey}|${line.item}`;
     const seq = (seqOf.get(seqKey) ?? 0) + 1;
     seqOf.set(seqKey, seq);
+    return { line, fillKey, seq, hash: dreamlineLineHash(line, seq), marker: dreamlineAdoptMarker(line, seq) };
+  });
+  // LEAD 443.196 — same truck first, across the whole statement: every line's own-truck receipt is reserved before any
+  // line may fall back to another truck's receipt (the inline fallback below).
+  const sameTruckPlan = planDreamlineSameTruckAdoptions(
+    keyed
+      .filter((k) => k.line.local_date >= start && k.line.product !== "scale" && !lineIsLive(k.hash) && !adoptedMarkers.has(k.marker))
+      .map((k) => k.line),
+    booked,
+    used
+  );
+
+  for (const { line, fillKey, seq, hash, marker } of keyed) {
     if (line.local_date < start) { record(line, "pre_cutoff"); continue; }
     if (!feeSeen.has(fillKey)) { feeSeen.add(fillKey); summary.fees_not_posted_cents += line.fee_cents; }
-    const hash = dreamlineLineHash(line, seq);
-    const marker = dreamlineAdoptMarker(line, seq);
     if (lineIsLive(hash) || adoptedMarkers.has(marker)) {
       if (adoptedMarkers.has(marker)) used.add(adoptedMarkers.get(marker)!);
       record(line, "already_imported");
@@ -654,7 +709,7 @@ export async function importDreamlineStatement(
     }
 
     if (line.product !== "scale") {
-      const hit = matchBookedReceipt(line, booked, used);
+      const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used);
       if (hit) {
         // LEAD 443.195 — a receipt is consumed (`used`) ONLY when this line ADOPTS it (stamped with the line's marker in
         // this same transaction, below). A cross-rail or amount-mismatch line writes nothing on the receipt, so it must
@@ -681,7 +736,7 @@ export async function importDreamlineStatement(
             });
             // the difference for this marker was posted by an earlier run: the line is reconciled, but this run did not
             // adopt (stamp) the receipt, so the receipt is NOT consumed — another line may still be its purchase.
-            if (!je) { record(line, "already_imported", { expense_id: hit.expense_id }); continue; }
+            if (!je) { used.delete(hit.expense_id); record(line, "already_imported", { expense_id: hit.expense_id }); continue; }
             summary.difference_posted_cents += diff;
           }
           if (hit.fuel_transaction_id) {

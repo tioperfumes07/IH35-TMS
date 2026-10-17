@@ -64,6 +64,9 @@ const MOVES: Move[] = [
 ];
 const trueMarker = (m: Move) => `dreamline_efs=${m.efs}:${m.item}:1`;
 
+// LEAD 443.196 (16:35Z): SUPERSEDED — this runner carried the owner's file amounts as constants; statement facts must
+// come from the database. Use scripts/ops/2026-10-17-cc3-443-196-dreamline-repair.mts.
+throw new Error("SUPERSEDED by LEAD 443.196 — run scripts/ops/2026-10-17-cc3-443-196-dreamline-repair.mts (statement facts from the DB)");
 const APPLY = process.argv.includes("--apply");
 const FORK = process.argv.includes("--fork-commit");
 if (APPLY) {

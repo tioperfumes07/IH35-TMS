@@ -33,6 +33,11 @@
 //      ADOPTS it: once, after the adoption stamp (stampDreamlineReceiptAdopted), never before the cross-rail /
 //      amount-mismatch outcomes (those write nothing on the receipt — consuming it made the receipt's true line import
 //      the same purchase a second time: 13555 diesel EFS 72968).
+//  12. LEAD 443.196 — same truck first, across the WHOLE statement: the import plans every line's own-truck adoption
+//      (planDreamlineSameTruckAdoptions: the exact same-truck pass, then the near same-truck pass, reserving only what the
+//      line may adopt) BEFORE the walk, and the walk's any-truck fallback runs only for a line the plan left unpaired.
+//      matchBookedReceipt stops at the same-truck tiers for those scopes. On main the fallback ran inline in file order:
+//      08-20 T163's EFS 09992 took T164's diesel and T175's DEF.
 // Static, <1s. --selftest plants each regression.
 import fs from "node:fs";
 import path from "node:path";
@@ -183,7 +188,7 @@ export function check(files) {
   // 10 (LEAD 443.142) — the Dreamline statement adopts before it imports, stamps the rail, posts through the one poster.
   const dl = files[DREAMLINE] ?? "";
   if (dl) {
-    const adopt = dl.indexOf("const hit = matchBookedReceipt(line, booked, used);");
+    const adopt = dl.indexOf("const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used);");
     const insert = dl.indexOf("INSERT INTO fuel.fuel_transactions");
     if (adopt < 0 || insert < 0 || adopt > insert) problems.push(`${DREAMLINE}: a statement line is inserted before it is matched to the receipt already on the books — the purchase would post twice`);
     if (!/operating_company_id, transaction_at, purchased_at, load_id, driver_id, unit_id, vendor_id, fuel_card_id,/.test(dl) || !/cardType\.id, line\.product/.test(dl))
@@ -212,6 +217,23 @@ export function check(files) {
     const crossAt = block.indexOf('record(line, "cross_rail"');
     if (!block || consumes.length !== 1 || stampAt < 0 || mismatchAt < 0 || crossAt < 0 || consumes[0] < stampAt || consumes[0] < mismatchAt || consumes[0] < crossAt)
       problems.push(`${DREAMLINE}: the statement matcher consumes a booked receipt (used.add) without adopting it — a cross-rail / amount-mismatch line takes the receipt from its true statement line, which then imports the purchase a second time (443.195)`);
+    // 12 (LEAD 443.196) — same-truck adoptions are planned over the whole statement before any any-truck fallback.
+    const planFn = dl.indexOf("export function planDreamlineSameTruckAdoptions(");
+    const planBody = planFn < 0 ? "" : dl.slice(planFn, dl.indexOf("\n}\n", planFn));
+    const planCall = dl.indexOf("const sameTruckPlan = planDreamlineSameTruckAdoptions(");
+    const walk = dl.indexOf("for (const { line, fillKey, seq, hash, marker } of keyed) {");
+    const matchFn = dl.indexOf("export function matchBookedReceipt(");
+    const matchBody = matchFn < 0 ? "" : dl.slice(matchFn, dl.indexOf("\n}\n", matchFn));
+    const exactStop = matchBody.indexOf('if (scope === "same_truck_exact") return null;');
+    const nearStop = matchBody.indexOf('if (scope === "same_truck") return null;');
+    const anyTruck = matchBody.indexOf("const anyTruck = booked.filter(near);");
+    const p2At = matchBody.indexOf("const p2 = sameTruck.filter(");
+    if (planFn < 0 || !/for \(const scope of \["same_truck_exact", "same_truck"\] as const\)/.test(planBody)
+        || !/matchBookedReceipt\(line, booked, used, scope\)/.test(planBody)
+        || !/hit\.rail !== "2510" \|\| dreamlineAdoptionRefused\(hit\.cents, line\)/.test(planBody)
+        || planCall < 0 || walk < 0 || planCall > walk || adopt < 0 || adopt < walk
+        || exactStop < 0 || nearStop < 0 || anyTruck < 0 || p2At < 0 || exactStop > p2At || nearStop > anyTruck)
+      problems.push(`${DREAMLINE}: the statement matcher lets a line take another truck's receipt before every line's own-truck receipt is paired — the first line of a day (08-20 T163 EFS 09992) takes T164's / T175's receipts and their own lines import copies (443.196)`);
   }
   return problems;
 }
@@ -261,16 +283,21 @@ if (process.argv.includes("--selftest")) {
     ["linker pairs any card", { ...real, [LINKER]: real[LINKER].replace("AND ${RELAY_CARD_ROW_SQL}`;", "`;") }],
     ["linker card rule loosened", { ...real, [LINKER]: real[LINKER].replace("upper(ct.code) = 'RELAY'", "ct.code IS NOT NULL") }],
     ["poster ignores cross-rail rows", { ...real, [FILLPOST]: real[FILLPOST].replace("const crossRail = await crossRailFuelRowsForRelayFill(client, input.operating_company_id, input.fill_id);", "const crossRail = [];") }],
-    ["dreamline imports before adopting", { ...real, [DREAMLINE]: real[DREAMLINE].replace("const hit = matchBookedReceipt(line, booked, used);", "const hit = null as BookedReceipt | null;") }],
+    ["dreamline imports before adopting", { ...real, [DREAMLINE]: real[DREAMLINE].replace("const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used);", "const hit = null as BookedReceipt | null;") }],
     ["dreamline fill without the card rail", { ...real, [DREAMLINE]: real[DREAMLINE].replace("cardType.id, line.product", "null, line.product") }],
     ["dreamline posts through another poster", { ...real, [DREAMLINE]: real[DREAMLINE].replace("await postFuelFillOnReceipt(client as never, { operating_company_id: companyId", "await postFuelExpenseOnClient(client as never, { operating_company_id: companyId") }],
     ["dreamline writes a load-less fill", { ...real, [DREAMLINE]: real[DREAMLINE].replace('if (!loadHit) {\n      record(line, "held_no_load"', 'if (false) {\n      record(line, "held_no_load"') }],
     ["dreamline discount posts twice", { ...real, [DREAMLINE]: real[DREAMLINE].replace("if (prior.rows[0]) return null;", "") }],
     // 443.195 — main's shape: the receipt consumed as soon as it is matched (before the mismatch / cross-rail exits).
     ["dreamline mismatch consumes the receipt", { ...real, [DREAMLINE]: real[DREAMLINE]
-      .replace("const hit = matchBookedReceipt(line, booked, used);\n      if (hit) {", "const hit = matchBookedReceipt(line, booked, used);\n      if (hit) {\n        used.add(hit.expense_id);")
+      .replace("const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used);\n      if (hit) {", "const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used);\n      if (hit) {\n        used.add(hit.expense_id);")
       .replace("used.add(hit.expense_id); // adopted", "// adopted") }],
     ["dreamline mismatch consumes (extra add)", { ...real, [DREAMLINE]: real[DREAMLINE].replace('record(line, "amount_mismatch", {', 'used.add(hit.expense_id);\n          record(line, "amount_mismatch", {') }],
+    // 443.196 — main's shape: no whole-statement same-truck plan (the walk's inline fallback in file order).
+    ["dreamline no same-truck plan", { ...real, [DREAMLINE]: real[DREAMLINE].replace("const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used);", "const hit = matchBookedReceipt(line, booked, used);") }],
+    ["dreamline plan after the walk", { ...real, [DREAMLINE]: real[DREAMLINE].replace("const sameTruckPlan = planDreamlineSameTruckAdoptions(", "const sameTruckPlanX = planDreamlineSameTruckAdoptions(") }],
+    ["dreamline plan reaches other trucks", { ...real, [DREAMLINE]: real[DREAMLINE].replace('if (scope === "same_truck") return null;', "") }],
+    ["dreamline plan reserves a refused receipt", { ...real, [DREAMLINE]: real[DREAMLINE].replace('hit.rail !== "2510" || dreamlineAdoptionRefused(hit.cents, line)', 'hit.rail !== "2510"') }],
     ["dreamline adopts without stamping", { ...real, [DREAMLINE]: real[DREAMLINE].replace("await stampDreamlineReceiptAdopted(client, {", "await noop(client, {") }],
     ["creator posts the receipt again", { ...real, [CREATOR]: real[CREATOR].replace('findPostedFuelReceipt(client as never, draft.operating_company_id, "expense", doc.expense_id)', "Promise.resolve(null)") }],
     // 443.194 — the repointed anchor (one expense engine, #26885).
