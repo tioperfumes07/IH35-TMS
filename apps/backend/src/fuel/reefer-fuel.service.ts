@@ -1,4 +1,4 @@
-import { loadAtTimeSql } from "../maintenance/driver-attribution.js";
+import { loadAtTimeForDriverSql, loadAtTimeSql } from "../maintenance/driver-attribution.js";
 import { relayLineIsGallonsSql, relayLineKindSql } from "./relay-product-kind.js";
 
 // U25 (owner UI register 2026-10-03; owner 2026-10-03: "nothing on the books but it does affect the categorization. We can
@@ -226,8 +226,9 @@ export function relayPromptReeferTrailerSql(rf: string): string {
 /**
  * ROUND 391.2 (owner order 432-CC2 item 4) — the Reefer trailer a reefer fuel row went into, resolved from records, never
  * guessed. In order:
- *   1. the trailer on the load the truck was hauling at the fill (the row's own load, else loadAtTimeSql — the one
- *      load-at-time rule): its assignment history's trailer as of the fill time (mdata.loads has no trailer column;
+ *   1. the trailer on the load the truck was hauling at the fill (the row's own load, else the one fuel-to-load rule —
+ *      loadAtTimeSql on the unit, then loadAtTimeForDriverSql on the driver, LEAD 443.185 G7): its assignment history's
+ *      trailer as of the fill time (mdata.loads has no trailer column;
  *      dispatch.load_assignment_history.new_trailer_id is the only load<->trailer link);
  *   2. the trailer number the driver keyed at the pump (the Relay fill's "Trailer #" / "Reefer #" prompt), when exactly
  *      one of this company's trailers carries it.
@@ -237,7 +238,7 @@ export function relayPromptReeferTrailerSql(rf: string): string {
 export async function resolveReeferTrailerForFuelRow(client: Db, companyId: string, fuelTransactionId: string): Promise<string | null> {
   const r = await client.query<{ trailer_id: string }>(
     `WITH f AS (
-       SELECT ft.unit_id, ft.load_id, ft.relay_fuel_transaction_id, COALESCE(ft.purchased_at, ft.transaction_at)::timestamptz AS ts
+       SELECT ft.unit_id, ft.driver_id, ft.load_id, ft.relay_fuel_transaction_id, COALESCE(ft.purchased_at, ft.transaction_at)::timestamptz AS ts
          FROM fuel.fuel_transactions ft
         WHERE ft.id = $2::uuid AND ft.operating_company_id = $1::uuid
      ),
@@ -245,9 +246,10 @@ export async function resolveReeferTrailerForFuelRow(client: Db, companyId: stri
        SELECT h.new_trailer_id AS id, 1 AS pri
          FROM f
          ${loadAtTimeSql("f.unit_id", "f.ts", "lat")}
+         ${loadAtTimeForDriverSql("f.driver_id", "f.ts", "lad")}
          JOIN LATERAL (
            SELECT x.new_trailer_id FROM dispatch.load_assignment_history x
-            WHERE x.operating_company_id = $1::uuid AND x.load_id = COALESCE(f.load_id, lat.load_id) AND x.new_trailer_id IS NOT NULL
+            WHERE x.operating_company_id = $1::uuid AND x.load_id = COALESCE(f.load_id, lat.load_id, lad.load_id) AND x.new_trailer_id IS NOT NULL
             ORDER BY (x.assigned_at <= f.ts) DESC, x.assigned_at DESC, x.created_at DESC
             LIMIT 1
          ) h ON true
