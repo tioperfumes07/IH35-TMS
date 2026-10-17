@@ -229,6 +229,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
         />
       ) : (
       <ParityTable<ProgramRow>
+        title="Training programs"
         columns={programColumns}
         rows={programs}
         rowKey={(p) => p.id}

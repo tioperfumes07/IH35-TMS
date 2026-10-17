@@ -170,6 +170,7 @@ export function DashcamViewerPage() {
 
       {!clipsQ.isError ? (
         <ParityTable
+          title="Dashcam clips"
           rows={rows}
           columns={columns}
           rowKey={(row) => row.id}

@@ -861,6 +861,7 @@ export function CargoClaimIntakeSurface({
         />
       ) : (
       <ParityTable<Record<string, unknown>>
+        title="Cargo claims"
         columns={claimColumns}
         rows={rows}
         rowKey={(row) => String(row.id ?? "")}

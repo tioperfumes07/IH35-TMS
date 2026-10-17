@@ -199,6 +199,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         />
       ) : (
         <ParityTable<TrainingRecordRow>
+          title="Training records"
           columns={recordColumns}
           rows={rows}
           rowKey={(row) => String(row.id)}

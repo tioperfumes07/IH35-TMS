@@ -168,6 +168,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         />
       ) : (
       <ParityTable<DvirRow>
+        title="Driver vehicle inspection reports"
         columns={columns}
         rows={rows}
         rowKey={(row) => String(row.id)}

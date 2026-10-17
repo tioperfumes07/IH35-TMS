@@ -348,6 +348,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       {pageTab === "inbox" ? (
         <>
         <ParityTable<IntegrityAlertRow>
+          title="Integrity alerts — inbox"
           columns={alertColumns}
           rows={rows}
           rowKey={(row) => String(row.id)}
@@ -466,6 +467,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         </>
       ) : (
         <ParityTable<IntegrityAlertRuleRow>
+          title="Integrity alert rules"
           columns={ruleColumns}
           rows={rules}
           rowKey={(row) => String(row.id)}

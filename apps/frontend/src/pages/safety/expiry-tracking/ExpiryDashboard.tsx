@@ -151,6 +151,7 @@ export function ExpiryDashboard({ breadcrumbLabel = "Cert Expiry" }: ExpiryDashb
         </div>
       ) : (
         <ParityTable<CertExpiryAlert>
+          title="Certificate expiries"
           columns={columns}
           rows={filteredRows}
           rowKey={(row) => `${row.driver_uuid}:${row.cert_type}:${row.expiry_date}`}

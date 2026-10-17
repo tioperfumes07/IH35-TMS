@@ -168,6 +168,7 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
         />
       ) : (
         <ParityTable<ComplaintRow>
+          title="Complaints"
           columns={columns}
           rows={query.data?.complaints ?? []}
           rowKey={(row) => String(row.id)}

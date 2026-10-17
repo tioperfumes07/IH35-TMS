@@ -119,6 +119,7 @@ export function SafetyEventsTable({ rows, onOpenAccident, loading }: Props) {
 
   return (
     <ParityTable<SafetyEventRow>
+      title="Safety events"
       columns={columns}
       rows={rows}
       rowKey={(row) => String(row.id)}

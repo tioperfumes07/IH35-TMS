@@ -696,6 +696,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         />
       ) : (
         <ParityTable<DraftState>
+          title="Safety incidents"
           columns={incidentColumns}
           rows={rows}
           rowKey={(row) => String(row.id)}

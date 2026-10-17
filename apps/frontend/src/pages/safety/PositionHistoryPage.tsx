@@ -296,6 +296,7 @@ export default function PositionHistoryPage() {
       ) : (
         <div className="mobile-table-fallback w-full" data-testid="mobile-optimized-table">
           <ParityTable<PositionHistoryRecord>
+            title="Position history"
             columns={columns}
             rows={records}
             rowKey={(row) => row.id}

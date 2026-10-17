@@ -107,6 +107,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
         />
       ) : (
         <ParityTable<DotInspectionRow>
+          title="DOT inspections"
           columns={columns}
           rows={query.data?.dot_inspections ?? []}
           rowKey={(row) => String(row.id)}

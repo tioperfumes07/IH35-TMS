@@ -176,6 +176,7 @@ export function AnomaliesTab() {
         />
       ) : (
       <ParityTable<SafetyAnomaly>
+        title="Safety anomalies"
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

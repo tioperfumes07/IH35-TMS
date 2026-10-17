@@ -145,6 +145,7 @@ export function DriverLeaveBalancesPage() {
           </div>
         ) : (
           <ParityTable
+            title="Leave balances — by driver"
             rows={rows}
             columns={columns}
             rowKey={(row) => String(row.id)}

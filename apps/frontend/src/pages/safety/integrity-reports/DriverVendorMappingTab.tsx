@@ -135,6 +135,7 @@ export function DriverVendorMappingTab() {
         />
       ) : (
       <ParityTable<FindingRow>
+        title="Driver-vendor mapping drift"
         columns={columns}
         rows={rows}
         rowKey={(row) => row._rowId}

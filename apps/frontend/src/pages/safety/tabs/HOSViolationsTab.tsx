@@ -432,6 +432,7 @@ export function HOSViolationsTab() {
       )}
 
       <ParityTable<HosViolationRow>
+        title="Hours-of-service violations"
         columns={columns}
         rows={query.data?.hos_violations ?? []}
         rowKey={(row) => String(row.id)}

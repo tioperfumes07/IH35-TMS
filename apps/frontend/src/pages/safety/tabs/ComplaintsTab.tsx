@@ -617,6 +617,7 @@ export function ComplaintsTab() {
         </div>
       ) : (
       <ParityTable<Record<string, unknown>>
+        title="Complaints"
         columns={columns}
         rows={complaintsQuery.data?.complaints ?? []}
         rowKey={(row) => String(row.id)}

@@ -293,6 +293,7 @@ export function IntegrityReportsTab() {
         </div>
       ) : (
       <ParityTable<IntegrityRow>
+        title={subTab === "wo-cost" ? "Integrity findings — work-order cost" : subTab === "fuel-mpg" ? "Integrity findings — fuel MPG" : subTab === "driver-dwell" ? "Integrity findings — driver dwell" : "Integrity findings — hours-of-service patterns"}
         columns={columns}
         rows={keyedRows}
         rowKey={(row) => row._rowKey}

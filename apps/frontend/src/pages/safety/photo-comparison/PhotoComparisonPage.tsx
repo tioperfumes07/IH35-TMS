@@ -87,6 +87,7 @@ export function PhotoComparisonPage() {
         />
       ) : (
         <ParityTable<SessionRow>
+          title="Photo comparison sessions"
           columns={columns}
           rows={sessions}
           rowKey={(session) => session.uuid}

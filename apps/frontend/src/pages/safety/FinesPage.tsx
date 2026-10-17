@@ -285,6 +285,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
         />
       ) : (
       <ParityTable<FineRow>
+        title="Fines"
         columns={columns}
         rows={rows}
         rowKey={(row) => String(row.id)}

@@ -33,6 +33,7 @@ import { useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
+import { InfoPopover } from "../../../components/shared/InfoPopover";
 import { uploadSourceDocumentFromFile } from "../../../api/docs";
 
 const EMPTY_HISTORY_FILTERS = { type: "", result: "", from: "", to: "" };
@@ -510,12 +511,14 @@ export function DrugAlcoholTab() {
       </div>
 
       <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-xs font-semibold text-[#0F1219]">Random pool enrollment (FMCSA consortium)</h2>
-        <p className="text-xs text-[#6B7280]">
-          The random-testing pool is built from consortium enrollment (49 CFR 382.305). An empty pool
-          means no drivers are enrolled — bulk-enroll every active CDL driver below so the quarterly
-          random draw has a population to select from. Enrolling here populates the consortium pool.
-        </p>
+        <h2 className="text-xs font-semibold text-[#0F1219]">
+          Random pool enrollment (FMCSA consortium){" "}
+          <InfoPopover label="About random pool enrollment">
+            The random-testing pool is built from consortium enrollment (49 CFR 382.305). An empty pool
+            means no drivers are enrolled — bulk-enroll every active CDL driver below so the quarterly
+            random draw has a population to select from. Enrolling here populates the consortium pool.
+          </InfoPopover>
+        </h2>
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-xs text-[#6B7280]">
             Consortium / C-TPA name
