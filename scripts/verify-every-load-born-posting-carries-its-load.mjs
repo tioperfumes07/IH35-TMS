@@ -219,7 +219,7 @@ export async function measure(client) {
       -- to_load_id on the leg that puts it on the new one; the undo entry the other way round). Every other posting is
       -- expected to carry what its source resolves to. Same strictness, read from the engine's own record.
       SELECT jep.id, jep.operating_company_id, jep.source_transaction_type, jep.source_transaction_id, jep.load_id, jep.created_at,
-             COALESCE(rc.expected_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id), sx.line_load, fx.doc_load) AS expected
+             COALESCE(rc.expected_load, mv.moved_from_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id), sx.line_load, fx.doc_load) AS expected
         FROM accounting.journal_entry_postings jep
         -- 443.110 G8 (RULE 4): a factoring lifecycle event is sourced by its factoring advance and carries the advance's
         -- load; a Faro reserve entry tied to a Faro invoice carries that invoice's load. Same company, never a guess.
@@ -249,6 +249,17 @@ export async function measure(client) {
                           WHERE sl.operating_company_id = jep.operating_company_id
                             AND sl.settlement_id::text = jep.source_transaction_id AND sl.load_id = jep.load_id)
         ) sx ON true
+        -- LEAD 443.192 (CC-3): a line the reclassify engine MOVED to another load (its batch line names this posting, applied,
+        -- from_load <> to_load) stays on the load it was moved FROM — the reclass entry reverses it there and posts it again on
+        -- the new load, while its source document now names the new one. Read from the engine's record, never "any load".
+        LEFT JOIN LATERAL (
+          SELECT bl.from_load_id AS moved_from_load
+            FROM accounting.reclassify_batch_lines bl
+           WHERE bl.operating_company_id = jep.operating_company_id AND bl.posting_id = jep.id
+             AND bl.result = 'applied' AND bl.to_load_id IS NOT NULL AND bl.to_load_id IS DISTINCT FROM bl.from_load_id
+             AND jep.reversed_by_line_id IS NOT NULL
+           LIMIT 1
+        ) mv ON true
         LEFT JOIN LATERAL (
           SELECT CASE
                    WHEN bl.reclass_journal_entry_id = jep.journal_entry_uuid

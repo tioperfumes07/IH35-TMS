@@ -27,6 +27,8 @@ import { PostingEngineError } from "../posting-engine.service.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { syncReeferFuelForExpenseLine } from "../../fuel/reefer-fuel.service.js";
 import { LEDGER_POSTING_COUNTS_SQL } from "../ledger-membership.js";
+import { relinkExpenseToLoadInClientTx } from "../expense-writer.service.js";
+import { sameEntityLoadCompanyTrailerSql } from "../load-trailer.sql.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 
@@ -555,6 +557,15 @@ export function classifySelection(
       if (!(control.overridable && opts.overrideRefusals)) { refused.push({ posting: p, why: control.overridable ? `${control.reason} — the owner may override` : control.reason }); continue; }
       overridden.set(p.posting_id, control.reason);
     }
+    // LEAD 443.192 — a fuel receipt (fuel_event) carries its load on the RECEIPT (its fuel rows + the expense document that
+    // adopted its entry), not on a line: it moves to another load whole, and on its own (never with an account / class /
+    // location / entity change in the same batch — those follow the adopting expense line, one amount at a time).
+    if (p.source_transaction_type === "fuel_event" && target.to_load_id && !target.to_item_id) {
+      if (target.to_account_id || target.to_class_id || target.to_location_id || target.to_entity_uuid) {
+        refused.push({ posting: p, why: "a fuel receipt moves to another load on its own — apply the load move and the account / class / location / entity change as two batches" });
+        continue;
+      }
+    } else
     // U24 — an item or load lives on a document LINE: only expense and bill lines carry both.
     if ((target.to_item_id || target.to_load_id) && p.source_transaction_type !== "expense" && p.source_transaction_type !== "bill") {
       refused.push({ posting: p, why: `${p.source_transaction_type ?? "journal entry"} lines carry no item / load to move — by item and by load apply to expense and bill lines` });
@@ -642,9 +653,14 @@ export async function rewriteDocumentLine(
   companyId: string,
   p: SelectedPosting,
   target: { account_id: string | null; class_id: string | null; location_id: string | null; entity_uuid: string | null; entity_type: string | null; item_id?: string | null; load_id?: string | null },
+  actorUserId: string | null = null,
 ): Promise<{ updated: boolean; note: string | null }> {
   const type = p.source_transaction_type;
   if (!type || !p.source_transaction_id) return { updated: false, note: "hand-keyed journal entry: no source document to rewrite (ledger moved by the reclass JE)" };
+  // LEAD 443.192 — a fuel receipt's load move: the whole receipt (fuel rows + adopting expense document) follows the ledger.
+  if (type === "fuel_event" && target.load_id) {
+    return moveFuelReceiptDocumentToLoad(client, companyId, { fillId: p.source_transaction_id, loadId: target.load_id, actorUserId, reason: "reclassify by load" });
+  }
   // A fuel purchase's entry is ADOPTED by its expense document (ROUND 290.1: the feed posts, the document adopts that
   // entry), so the expense IS the document that must follow the ledger. Before (CC-2 2026-10-04) a fuel_event leg was
   // refused here as "no line rewrite yet", which meant no feed-posted fuel cost could ever be reclassified. The line is
@@ -769,6 +785,80 @@ export async function rewriteDocumentLine(
   return { updated: false, note: `${type}: ledger moved by the reclass JE; this document type has no line rewrite yet` };
 }
 
+/**
+ * LEAD 443.192 — the fuel receipt DOCUMENT moves to `loadId` (the reclassify engine moves its ledger lines in the same
+ * transaction): every live fuel row of the fill (its id, or the Relay fill's linked rows) takes the load and — unless it is a
+ * reefer fill (U25: a reefer fill keeps its Reefer trailer) — that load's company trailer by the ONE trailer rule; the ONE
+ * live expense document that adopted the fill's entry takes the load, its load-spine number and its load link
+ * (relinkExpenseToLoadInClientTx, the one expense engine), and its lines take the load. Two live documents for one fill is
+ * refused by name (never a guess). Idempotent: a document already on the load is left as it is.
+ */
+export async function moveFuelReceiptDocumentToLoad(
+  client: DbClient,
+  companyId: string,
+  input: { fillId: string; loadId: string; actorUserId: string | null; reason: string },
+): Promise<{ updated: boolean; note: string | null }> {
+  const docs = await client.query<{ id: string; load_id: string | null; expense_number: string | null }>(
+    `SELECT e.id::text, e.load_id::text, e.expense_number
+       FROM accounting.expenses e
+      WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL
+        AND (e.journal_entry_id IN (SELECT DISTINCT p.journal_entry_uuid FROM accounting.journal_entry_postings p
+                                     WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'fuel_event'
+                                       AND p.source_transaction_id::text = $2)
+             OR e.source_fuel_transaction_id IN (SELECT ft.id FROM fuel.fuel_transactions ft
+                                                  WHERE ft.operating_company_id = $1::uuid
+                                                    AND (ft.id::text = $2 OR ft.relay_fuel_transaction_id::text = $2)))`,
+    [companyId, input.fillId],
+  );
+  if (docs.rows.length > 1) {
+    return { updated: false, note: `fuel_event: ${docs.rows.length} live expense documents carry this receipt (need at most 1); nothing moved` };
+  }
+  await client.query(
+    `UPDATE fuel.fuel_transactions ft
+        SET load_id = $2::uuid,
+            trailer_id = CASE WHEN ft.fuel_type = 'reefer_diesel' THEN ft.trailer_id
+                              ELSE ${sameEntityLoadCompanyTrailerSql("$2::uuid", "$1::uuid")} END,
+            load_exemption_reason = NULL, updated_at = now()
+      WHERE ft.operating_company_id = $1::uuid AND (ft.id::text = $3 OR ft.relay_fuel_transaction_id::text = $3)
+        AND ft.voided_at IS NULL AND ft.load_id IS DISTINCT FROM $2::uuid`,
+    [companyId, input.loadId, input.fillId],
+  );
+  const doc = docs.rows[0];
+  if (doc && doc.load_id !== input.loadId) {
+    const link = (await client.query<{ id: string }>(
+      `SELECT id::text FROM expense_attribution.expense_load_links
+        WHERE expense_source = 'accounting' AND expense_id::text = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+      [doc.id, companyId],
+    )).rows[0] ?? null;
+    const numbered = await relinkExpenseToLoadInClientTx(client, {
+      operatingCompanyId: companyId,
+      expenseId: doc.id,
+      loadId: input.loadId,
+      reason: input.reason,
+      userId: input.actorUserId,
+      existingLinkId: link?.id ?? null,
+      priorNumber: doc.expense_number,
+    });
+    const reefer = (await client.query<{ reefer: boolean }>(
+      `SELECT EXISTS (SELECT 1 FROM fuel.fuel_transactions ft WHERE ft.operating_company_id = $1::uuid
+                         AND (ft.id::text = $2 OR ft.relay_fuel_transaction_id::text = $2) AND ft.fuel_type = 'reefer_diesel') AS reefer`,
+      [companyId, input.fillId],
+    )).rows[0]?.reefer === true;
+    const trailer = reefer ? "trailer_id" : sameEntityLoadCompanyTrailerSql("$3::uuid", "$2::uuid");
+    await client.query(
+      `UPDATE accounting.expenses SET load_id = $3::uuid, expense_number = $4, trailer_id = ${trailer}, updated_at = now()
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [doc.id, companyId, input.loadId, numbered.number],
+    );
+    await client.query(
+      `UPDATE accounting.expense_lines SET load_id = $3::uuid, load_required = true, load_exemption_reason = NULL, trailer_id = ${trailer}
+        WHERE expense_id = $1::uuid AND operating_company_id = $2::uuid`,
+      [doc.id, companyId, input.loadId],
+    );
+  }
+  return { updated: true, note: null };
+}
+
 const INSERT_LINE = `
   INSERT INTO accounting.reclassify_batch_lines
     (batch_id, operating_company_id, posting_id, journal_entry_id, source_transaction_type, source_transaction_id, source_transaction_line_id,
@@ -779,6 +869,15 @@ const INSERT_LINE = `
           $26::uuid, $27::uuid, $28::uuid, $29::uuid)`;
 
 export async function applyReclassify(input: ApplyReclassifyInput, actor: { userId: string; role: string }): Promise<ReclassifyBatchResult> {
+  return withCurrentUser(actor.userId, (client) => applyReclassifyOnClient(client as DbClient, input, actor));
+}
+
+/**
+ * The reclassify engine on the CALLER's client (one transaction with the caller's own writes) — LEAD 443.192: the fuel
+ * receipt booking / edit hook moves a receipt whose load the one fuel-to-load rule no longer names through this engine.
+ * The input is validated here; a per-document failure is recorded as a refusal, never thrown.
+ */
+export async function applyReclassifyOnClient(client: DbClient, input: ApplyReclassifyInput, actor: { userId: string; role: string }): Promise<ReclassifyBatchResult> {
   const reason = input.reason.trim();
   if (reason.length < 3) throw new Error("reclassify_reason_required");
   if (!input.to_account_id && !input.to_class_id && !input.to_location_id && !input.to_entity_uuid && !input.to_item_id && !input.to_load_id) throw new Error("reclassify_changes_nothing");
@@ -789,8 +888,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
   const overrideRefusals = input.override_refusals === true;
   if (overrideRefusals && actor.role !== "Owner") throw new Error("reclassify_override_owner_only");
   const target = { to_account_id: input.to_account_id ?? null, to_class_id: input.to_class_id ?? null, to_location_id: input.to_location_id ?? null, to_entity_uuid: input.to_entity_uuid ?? null, to_entity_type: input.to_entity_type ?? null, to_item_id: input.to_item_id ?? null, to_load_id: input.to_load_id ?? null };
-
-  return withCurrentUser(actor.userId, async (client) => {
+  {
     const companyId = input.operating_company_id;
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
 
@@ -883,7 +981,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
           const handKeyed = isHandKeyed(p);
           const rw = handKeyed
             ? { updated: true, note: null }
-            : await rewriteDocumentLine(client as DbClient, companyId, p, { account_id: target.to_account_id, class_id: target.to_class_id, location_id: target.to_location_id, entity_uuid: target.to_entity_uuid, entity_type: target.to_entity_type, item_id: target.to_item_id, load_id: target.to_load_id });
+            : await rewriteDocumentLine(client as DbClient, companyId, p, { account_id: target.to_account_id, class_id: target.to_class_id, location_id: target.to_location_id, entity_uuid: target.to_entity_uuid, entity_type: target.to_entity_type, item_id: target.to_item_id, load_id: target.to_load_id }, actor.userId);
           if (!rw.updated) throw new ReclassifyDocumentNotRewritableError(rw.note ?? "document line could not be rewritten");
           rewrites.set(p.posting_id, rw);
         }
@@ -957,7 +1055,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
 
     await client.query(`UPDATE accounting.reclassify_batches SET lines_applied = $2, lines_refused = $3, amount_cents_moved = $4 WHERE id = $1::uuid`, [batchId, result.lines_applied, result.lines_refused, result.amount_cents_moved]);
     return result;
-  });
+  }
 }
 
 export async function undoReclassifyBatch(input: { operating_company_id: string; batch_id: string; reason: string }, actor: { userId: string; role: string }) {
@@ -985,8 +1083,18 @@ export async function undoReclassifyBatch(input: { operating_company_id: string;
          FROM accounting.reclassify_batch_lines WHERE batch_id = $1::uuid AND result = 'applied'`,
       [input.batch_id],
     );
+    const fuelReceiptsBack = new Set<string>();
     for (const l of lines.rows) {
       if (!l.document_updated) continue;
+      // LEAD 443.192 — a fuel receipt moved by load goes back whole (fuel rows + adopting document), once per receipt.
+      if (l.source_transaction_type === "fuel_event" && l.source_transaction_id && l.from_load_id && l.to_load_id !== l.from_load_id) {
+        if (!fuelReceiptsBack.has(l.source_transaction_id)) {
+          fuelReceiptsBack.add(l.source_transaction_id);
+          const back = await moveFuelReceiptDocumentToLoad(client as DbClient, input.operating_company_id, { fillId: l.source_transaction_id, loadId: l.from_load_id, actorUserId: actor.userId, reason: `undo reclassify batch ${input.batch_id}` });
+          if (!back.updated) throw new Error(`reclassify_undo_fuel_receipt_refused: ${back.note}`);
+        }
+        continue;
+      }
       // U24 — an item / load move goes back on the document line it was made on.
       const itemMoved = l.to_item_id !== l.from_item_id;
       const loadMoved = l.to_load_id !== l.from_load_id;
