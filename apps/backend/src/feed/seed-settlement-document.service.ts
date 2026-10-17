@@ -54,6 +54,7 @@
 // truth-JSON entries for all 34 documents in the 5769-5803 range (see the companion --selftest
 // script) — totals tie exactly to verify-alwaystrack-parity.mjs's own --selftest targets.
 
+import { recordHistoricalReassignQualification } from "../dispatch/driver-qualification.service.js";
 import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import type { QueryResultRow } from "pg";
 import { createLoadWithFullSideEffects, type BookLoadInput } from "../dispatch/book-load.service.js";
@@ -639,6 +640,14 @@ async function seedLoad(
     `UPDATE mdata.loads SET assigned_primary_driver_id = $1::uuid, updated_at = now() WHERE id = $2::uuid`,
     [driverId, loadId]
   );
+  // FAIL-D1 — the assigned driver runs the qualification gate; historical backfill records its outcome.
+  await recordHistoricalReassignQualification(client as never, {
+    driverId,
+    operatingCompanyId,
+    loadId,
+    actorUserId,
+    via: "seed_settlement_document",
+  });
 
   await appendCrudAudit(client, actorUserId, "mdata.load.alwaystrack_seed", { operating_company_id: operatingCompanyId, load_id: loadId, document_number: plan.documentNumber }, "info", "SEED-SETTLEMENT-DOCUMENT-01");
   return loadId;

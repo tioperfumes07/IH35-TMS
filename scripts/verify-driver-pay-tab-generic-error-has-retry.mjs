@@ -26,14 +26,17 @@ const LABEL = "verify-driver-pay-tab-generic-error-has-retry";
 
 export function audit(src) {
   const failures = [];
+  // 443.187 (CC-2) repoint — LDT-3 (32d417e9bb) renamed the driver-bills query `billsQuery` -> `query`; same reader,
+  // same branches. The rule is unchanged: the error block of THAT query keeps 501 / 403 and retries THAT query.
   const errorBlockMatch = src.tab.match(
-    /if \(billsQuery\.error\) \{[\s\S]*?\n  \}/,
+    /if \((billsQuery|query)\.error\) \{[\s\S]*?\n  \}/,
   );
   if (!errorBlockMatch) {
-    failures.push(`${FILES.tab}: billsQuery.error handling block not found`);
+    failures.push(`${FILES.tab}: the driver-bills query error handling block not found`);
     return failures;
   }
   const body = errorBlockMatch[0];
+  const q = errorBlockMatch[1];
   if (!/status === 501/.test(body) || !/not yet configured/.test(body)) {
     failures.push(`${FILES.tab}: the deliberate 501-not-configured state must be preserved`);
   }
@@ -46,10 +49,10 @@ export function audit(src) {
         `static dead-end message — a transient read failure needs a way to recover`,
     );
   }
-  if (!/onRetry=\{\(\) => void billsQuery\.refetch\(\)\}/.test(body)) {
+  if (!new RegExp(`onRetry=\\{\\(\\) => void ${q}\\.refetch\\(\\)\\}`).test(body)) {
     failures.push(
       `${FILES.tab}: the generic error branch's ListErrorState must bind onRetry to the exact ` +
-        `billsQuery.refetch() instance, not a page reload or a different query`,
+        `${q}.refetch() instance (the query that failed), not a page reload or a different query`,
     );
   }
   return failures;
@@ -69,18 +72,8 @@ if (process.argv.includes("--selftest")) {
   }
   const noRetry = {
     tab: good.tab.replace(
-      `    return (
-      <ListErrorState
-        title="Failed to load driver pay data."
-        status={err?.status ?? 0}
-        onRetry={() => void billsQuery.refetch()}
-      />
-    );`,
-      `    return (
-      <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        Failed to load driver pay data.
-      </div>
-    );`,
+      /<ListErrorState title="Failed to load driver pay data\." status=\{err\?\.status \?\? 0\} onRetry=\{\(\) => void (billsQuery|query)\.refetch\(\)\} \/>/,
+      `<div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">Failed to load driver pay data.</div>`,
     ),
   };
   if (noRetry.tab === good.tab) {
@@ -102,7 +95,12 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — 501 state removal escaped`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 2 mutations detected`);
+  const wrongQuery = { tab: good.tab.replace("onRetry={() => void query.refetch()}", "onRetry={() => void rollup.refetch()}") };
+  if (wrongQuery.tab === good.tab || audit(wrongQuery).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — retrying a different query escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — 3 mutations detected`);
   process.exit(0);
 }
 

@@ -7,6 +7,7 @@
  * Spec: docs/bus/09-25-2026-Devin-A-ROUND-180-SETTLEMENT-CREATOR-COMPANY-AND-DRIVER.md
  */
 
+import { recordHistoricalReassignQualification } from "../dispatch/driver-qualification.service.js";
 import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
@@ -1311,6 +1312,14 @@ export async function postSettlementCreatorInClientTx(
         `,
         [draft.driver_id, draft.unit_id ?? null, row.id, draft.operating_company_id],
       );
+      // FAIL-D1 — the reassigned driver runs the qualification gate; historical backfill records its outcome.
+      await recordHistoricalReassignQualification(client as never, {
+        driverId: draft.driver_id,
+        operatingCompanyId: draft.operating_company_id,
+        loadId: row.id,
+        actorUserId,
+        via: "settlement_creator",
+      });
     }
 
     // SB return: join outbound tour when join_outbound_load_number provided.

@@ -3038,7 +3038,7 @@ export function BookLoadModalV4({
               )}
               <div className="text-xs text-gray-500">
                 {driverBillPreview === null
-                  ? `Missing ${driverBillMissing.join(" and ")} for this preview. Booking is not blocked. Driver pay on submit is loaded miles × loaded rate plus empty miles × empty rate when a rate card exists.`
+                  ? `Missing ${driverBillMissing.join(" and ")} for this preview. Booking is not blocked. Driver pay on submit is loaded miles × loaded rate plus empty miles × empty rate from the active driver rate card; with no rate card the load still books and records a skipped-no-rate event instead of a driver bill.`
                   : `${Number(milesPractical || 0).toLocaleString()} loaded miles × $${Number(driverPayRatePerMile || 0).toFixed(2)} per mile (empty miles billed on submit from the rate card). Recalculates when fields change.`}
               </div>
             </div>
