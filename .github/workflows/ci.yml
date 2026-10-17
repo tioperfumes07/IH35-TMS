@@ -75,6 +75,7 @@ jobs:
         run: |
           node scripts/lib/run-required-guards.mjs \
             scripts/verify-one-load-create-path.mjs \
+            scripts/verify-assignment-coverage-excludes-test-units.mjs \
             scripts/verify-load-costs-wizard-amounts.mjs \
             scripts/verify-g2-extra-pay-requires-item.mjs \
             scripts/verify-telematics-feed-is-live.mjs \

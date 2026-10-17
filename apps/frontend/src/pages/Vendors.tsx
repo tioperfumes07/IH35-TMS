@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../lib/api-error-message";
 import { visibleDocumentLabel } from "../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
@@ -657,7 +658,7 @@ export function VendorsPage() {
         <ListErrorState
           title="Couldn't load vendors"
           status={0}
-          message={(err as Error)?.message}
+          message={userFacingApiError(err, "Couldn't load vendors")}
           onRetry={() =>
             void Promise.all([vendorCountsQuery.refetch(), withTxnVendorsQuery.refetch(), vendorsQuery.refetch()])
           }

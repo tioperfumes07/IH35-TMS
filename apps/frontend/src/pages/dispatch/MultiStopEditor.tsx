@@ -295,7 +295,8 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
     },
     onError: (err, input) => {
       if (input.generation !== actionGenerationRef.current) return;
-      const msg = String((err as Error)?.message ?? "");
+      // the error CODE is matched, never displayed (the toast is fixed copy)
+      const msg = err instanceof Error ? err.message : "";
       pushToast(msg === "need_two_stops" ? "Need at least 2 stops to save" : "Could not save stops", "error");
     },
   });
