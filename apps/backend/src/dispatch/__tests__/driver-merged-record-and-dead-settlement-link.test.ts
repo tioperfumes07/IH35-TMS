@@ -129,7 +129,8 @@ function billClient(settlementLive: boolean) {
   return { query, updates, billSql };
 }
 
-const load = { id: LOAD_ID, load_number: "13656", miles_practical: 1897.7, miles_shortest: null };
+// LEAD 443.192 (12:35Z) OWNER LAW: per-mile pay is SHORT miles only — the fixture carries short miles (practical differs and is ignored).
+const load = { id: LOAD_ID, load_number: "13656", miles_practical: 1997.7, miles_shortest: 1897.7 };
 const stops = [{ stop_type: "pickup", sequence_number: 1 }, { stop_type: "delivery", sequence_number: 2 }] as BookLoadStop[];
 
 describe("443.192 (2) — a bill linked to a voided / cancelled settlement is settled in nothing", () => {

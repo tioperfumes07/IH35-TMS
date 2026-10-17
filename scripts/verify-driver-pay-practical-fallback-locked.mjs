@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 /**
+ * INVERTED — LEAD 443.192 (12:35Z), OWNER LAW: "Per-mile drivers are ALWAYS paid SHORT miles — never practical miles. Short
+ * miles is the fixed pay basis, not a per-load choice." This guard now locks THAT rule in resolveDriverBasePayCents and the
+ * bill writer: loaded pay = load.miles_shortest x the rate ONLY (no practical fallback, no card-configured practical basis),
+ * the fresh-mint gate refuses without short miles, the bill's miles basis is never "practical"; and (kept) no formula derives
+ * short miles from practical. Measured 2026-10-17 before the change: 8 open USMCA per-mile bills priced at practical miles.
+ * The text below is the superseded 2026-09-04 history (the fallback it locked existed only because short miles had no source).
+ *
  * OWNER RULING 2026-09-04 (LANE-MILEAGE-IMPORT-DROPPED-COLUMNS, item 3): "invoice -> practical
  * miles; driver pay -> short miles loaded + empty miles deadhead ... the practical fallback in
  * book-load.service.ts:498-500 is the ONLY correct loaded-pay path today. Keep it, document it as
@@ -54,13 +61,21 @@ export function run(root = ROOT) {
     return problems;
   }
 
-  // 1. The exact fallback expression, allowing only whitespace/formatting drift.
-  const fallbackRe =
-    /rate\.miles_basis\s*===\s*"practical_miles"\s*\|\|\s*!\(Number\(load\.miles_shortest\s*\?\?\s*0\)\s*>\s*0\)\s*\n?\s*\?\s*Number\(load\.miles_practical\s*\?\?\s*Number\.NaN\)\s*\n?\s*:\s*Number\(load\.miles_shortest\s*\?\?\s*Number\.NaN\)/;
-  if (!fallbackRe.test(fn)) {
-    problems.push(
-      `${SVC}: resolveDriverBasePayCents no longer falls back to miles_practical when miles_shortest is missing or the rate card is explicitly practical_miles — this is the owner-ruled loaded-pay path (2026-09-04), do not remove it`
-    );
+  // 1. (443.192) Loaded pay is SHORT miles only — the old practical fallback / practical card basis must be gone.
+  if (/rate\.miles_basis\s*===\s*"practical_miles"/.test(fn) || /Number\(load\.miles_practical/.test(fn)) {
+    problems.push(`${SVC}: resolveDriverBasePayCents prices loaded pay from practical miles — owner law (443.192): per-mile drivers are ALWAYS paid SHORT miles`);
+  }
+  if (!/const miles = Number\(load\.miles_shortest \?\? Number\.NaN\);/.test(fn)) {
+    problems.push(`${SVC}: resolveDriverBasePayCents loaded miles must be load.miles_shortest, verbatim`);
+  }
+  if (!/const perLoadMiles = Number\(load\.miles_shortest \?\? Number\.NaN\);/.test(src)) {
+    problems.push(`${SVC}: the per-load override rate must pay short miles too (perLoadMiles = miles_shortest)`);
+  }
+  if (!/const hasAnyRealMiles = Number\(load\.miles_shortest \?\? 0\) > 0;/.test(src)) {
+    problems.push(`${SVC}: a fresh driver bill must be refused without SHORT miles (driver_bill.refused_no_shortest_miles)`);
+  }
+  if (/milesBasisType = "practical"/.test(src)) {
+    problems.push(`${SVC}: a driver bill's miles basis can never be "practical"`);
   }
 
   // 2. No derivation formula for short-from-practical inside this function. A derivation would
@@ -74,71 +89,51 @@ export function run(root = ROOT) {
     );
   }
 
-  // 3. The owner-ruling comment survives.
-  if (!/OWNER RULING 2026-09-04/.test(fn) || !/loaded-pay path today/.test(fn)) {
-    problems.push(
-      `${SVC}: the OWNER RULING 2026-09-04 doc comment above the practical-miles fallback is missing — re-add it so a future refactor understands why this branch cannot be simplified away`
-    );
+  // 3. The owner-law comment survives.
+  if (!/OWNER LAW \(LEAD 443\.192/.test(fn)) {
+    problems.push(`${SVC}: the OWNER LAW (LEAD 443.192) comment on the short-miles pay rule is missing`);
   }
 
   return problems;
 }
 
 function selftest() {
-  const dir = fs.mkdtempSync("/tmp/driver-pay-practical-fallback-selftest-");
-  const rel = SVC;
-  const abs = path.join(dir, rel);
+  const dir = fs.mkdtempSync("/tmp/driver-pay-short-miles-selftest-");
+  const abs = path.join(dir, SVC);
   fs.mkdirSync(path.dirname(abs), { recursive: true });
-
-  const goodSnippet = `
-/**
- * OWNER RULING 2026-09-04 (LANE-MILEAGE-IMPORT-DROPPED-COLUMNS, item 3): encoded here.
- */
+  const good = `
 async function resolveDriverBasePayCents(client, operatingCompanyId, driverId, load, actorUserId) {
   if (rate.basis_type === "per_load_pay") {
     // ...
   } else {
-    // OWNER RULING 2026-09-04: this is THE ONLY correct loaded-pay path today.
-    const miles =
-      rate.miles_basis === "practical_miles" || !(Number(load.miles_shortest ?? 0) > 0)
-        ? Number(load.miles_practical ?? Number.NaN)
-        : Number(load.miles_shortest ?? Number.NaN);
+    // OWNER LAW (LEAD 443.192, 12:35Z): short miles only.
+    const miles = Number(load.miles_shortest ?? Number.NaN);
     cardCents = miles;
+  }
+  const perLoadMiles = Number(load.miles_shortest ?? Number.NaN);
+}
+async function createDriverBillArtifacts() {
+  const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;
+  if (milesShort && milesShort > 0) {
+    milesBasis = milesShort;
+    milesBasisType = "short";
   }
 }
 `;
-  fs.writeFileSync(abs, goodSnippet);
-  const passProblems = run(dir);
-  if (passProblems.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(passProblems));
-
-  // Mutation 1: remove the fallback (always use shortest).
-  const brokenFallback = goodSnippet.replace(
-    /const miles =\n[\s\S]*?: Number\(load\.miles_shortest \?\? Number\.NaN\);/,
-    "const miles = Number(load.miles_shortest ?? Number.NaN);"
-  );
-  fs.writeFileSync(abs, brokenFallback);
-  const f1 = run(dir);
-  if (f1.length === 0) throw new Error("FAIL to catch: removing the practical-miles fallback went undetected");
-
-  // Mutation 2: derive short from practical by a formula.
-  const derived = goodSnippet.replace(
-    "cardCents = miles;",
-    "const derivedShort = load.miles_practical * 1.1;\n    cardCents = derivedShort;"
-  );
-  fs.writeFileSync(abs, derived);
-  const f2 = run(dir);
-  if (f2.length === 0) throw new Error("FAIL to catch: deriving short miles from practical miles went undetected");
-
-  // Mutation 3: strip the owner-ruling comment.
-  const noComment = goodSnippet
-    .replace(/\/\*\*\n \* OWNER RULING[\s\S]*?\*\/\n/, "")
-    .replace(/\/\/ OWNER RULING 2026-09-04:.*\n/, "");
-  fs.writeFileSync(abs, noComment);
-  const f3 = run(dir);
-  if (f3.length === 0) throw new Error("FAIL to catch: removing the owner-ruling comment went undetected");
-
+  const check = (src, label, expectClean) => {
+    fs.writeFileSync(abs, src);
+    const p = run(dir);
+    if (expectClean ? p.length : !p.length) throw new Error(`${expectClean ? "PASS fail" : "FAIL to catch"}: ${label} ${JSON.stringify(p)}`);
+  };
+  check(good, "clean baseline", true);
+  check(good.replace("const miles = Number(load.miles_shortest ?? Number.NaN);", 'const miles = rate.miles_basis === "practical_miles" || !(Number(load.miles_shortest ?? 0) > 0) ? Number(load.miles_practical ?? Number.NaN) : Number(load.miles_shortest ?? Number.NaN);'), "practical fallback back", false);
+  check(good.replace("cardCents = miles;", "const derivedShort = load.miles_practical * 1.1;\n    cardCents = derivedShort;"), "short derived from practical", false);
+  check(good.replace("const perLoadMiles = Number(load.miles_shortest ?? Number.NaN);", "const perLoadMiles = Number(load.miles_practical ?? Number.NaN);"), "override pays practical", false);
+  check(good.replace("const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;", "const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0 || Number(load.miles_practical ?? 0) > 0;"), "gate accepts practical-only", false);
+  check(good.replace('milesBasisType = "short";\n  }', 'milesBasisType = "short";\n  } else { milesBasisType = "practical"; }'), "bill basis practical", false);
+  check(good.replace("// OWNER LAW (LEAD 443.192, 12:35Z): short miles only.\n", ""), "owner-law comment dropped", false);
   fs.rmSync(dir, { recursive: true, force: true });
-  console.log(`${LABEL} SELFTEST PASS`);
+  console.log(`${LABEL} SELFTEST PASS (7 cases)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -152,4 +147,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  - ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — the owner-ruled practical-miles fallback in resolveDriverBasePayCents is intact, and no short-from-practical derivation formula was found`);
+console.log(`${LABEL} OK — per-mile driver pay is SHORT miles only (owner law 443.192): no practical fallback, short-miles mint gate, no derivation formula`);

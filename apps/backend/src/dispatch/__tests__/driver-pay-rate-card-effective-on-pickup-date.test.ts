@@ -67,7 +67,8 @@ function fakeClient(pickupDate: string | null, cards: Card[]) {
   return { query, inserted, rateSql };
 }
 
-const load = { id: LOAD_ID, load_number: "13498", miles_practical: 1263.9, miles_shortest: null };
+// LEAD 443.192 (12:35Z) OWNER LAW: per-mile pay is SHORT miles only — the fixture carries short miles (practical differs and is ignored).
+const load = { id: LOAD_ID, load_number: "13498", miles_practical: 1363.9, miles_shortest: 1263.9 };
 const stops = [{ stop_type: "pickup", sequence_number: 1 }, { stop_type: "delivery", sequence_number: 2 }] as BookLoadStop[];
 const RATE_COL = 9;
 
@@ -119,5 +120,15 @@ describe("driver pay card = the card effective on the pickup date (ROUND 443.31)
     expect(sql).toContain("effective_from <= $3::date");
     expect(sql).toContain("(effective_to IS NULL OR effective_to >= $3::date)");
     expect(sql).not.toMatch(/AND is_active AND effective_to IS NULL/);
+  });
+  // LEAD 443.192 (12:35Z) OWNER LAW: "Per-mile drivers are ALWAYS paid SHORT miles — never practical miles." Before: a load with
+  // practical miles and no short miles was priced at practical (13656: 1897.7 x 45c = $853.97). Fails on the old engine.
+  it("443.192: practical miles only (no short miles) is never priced — refused by name, never practical x rate", async () => {
+    audit.calls.length = 0;
+    const practicalOnly = { ...load, miles_practical: 1897.7, miles_shortest: null };
+    const c = fakeClient("2026-08-20", [{ effective_from: "2026-08-07", effective_to: null, is_active: true, rate_per_mile_cents: "45" }]);
+    await createDriverBillArtifacts(c, input(), practicalOnly, "13498", stops);
+    for (const v of c.inserted) expect(v.includes(85397)).toBe(false);
+    expect(audit.calls.some((a) => a.eventClass === "driver_finance.driver_bill.refused_no_shortest_miles")).toBe(true);
   });
 });

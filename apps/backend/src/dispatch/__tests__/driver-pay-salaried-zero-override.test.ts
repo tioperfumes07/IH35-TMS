@@ -58,7 +58,8 @@ function fakeClient() {
 }
 
 const stops = [{ stop_type: "pickup", sequence_number: 1 }, { stop_type: "delivery", sequence_number: 2 }] as BookLoadStop[];
-const baseLoad = { id: LOAD_ID, load_number: "13530", miles_practical: 600, miles_shortest: null, miles_deadhead: 40 };
+// LEAD 443.192 (12:35Z) OWNER LAW: per-mile pay is SHORT miles only — the fixture carries short miles (practical differs and is ignored).
+const baseLoad = { id: LOAD_ID, load_number: "13530", miles_practical: 700, miles_shortest: 600, miles_deadhead: 40 };
 
 describe("salaried week: rate 0 + reason 'Salaried…' (Lead 443.36 #2)", () => {
   it("mints NO driver bill, never reads the card, audits the override at 0 and the no-bill decision", async () => {

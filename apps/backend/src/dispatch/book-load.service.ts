@@ -724,10 +724,14 @@ async function resolveDriverBasePayCents(
       // explicitly ruled that out ("Any formula would fabricate driver pay") because short and
       // practical are independent measures in the real data, not a shorter/longer pair. Locked by
       // scripts/verify-driver-pay-practical-fallback-locked.mjs.
-      const miles =
-        rate.miles_basis === "practical_miles" || !(Number(load.miles_shortest ?? 0) > 0)
-          ? Number(load.miles_practical ?? Number.NaN)
-          : Number(load.miles_shortest ?? Number.NaN);
+      //
+      // OWNER LAW (LEAD 443.192, 12:35Z — supersedes the 2026-09-04 practical FALLBACK above and ROUND 155.12): "Per-mile
+      // drivers are ALWAYS paid SHORT miles — never practical miles. Short miles is the fixed pay basis, not a per-load
+      // choice." Loaded pay = miles_shortest x the rate, ONLY. No shortest -> no card price (the bill stays unpriced and the
+      // mint gate below refuses a fresh one: driver_bill.refused_no_shortest_miles) — never practical, never a formula.
+      // Measured 2026-10-17: 8 open bills priced at practical miles (13656 / 13680 at $853.97 / $217.13). Locked by
+      // scripts/verify-driver-pay-practical-fallback-locked.mjs (inverted to lock THIS rule).
+      const miles = Number(load.miles_shortest ?? Number.NaN);
       const perMile = Number(rate.rate_per_mile_cents ?? 0);
       // ROUND 443.33: THE one money rule (driver-finance/deadhead-rule.ts milesTimesRateCents — integer cents, half-up, float
       // noise removed). A raw Math.round(perMile * miles) priced 1303.1 mi x 45c as 58639 (float 58639.4999…) while the
@@ -743,10 +747,8 @@ async function resolveDriverBasePayCents(
   // that comment below for why a loaded-only override was itself a defect.
   const overrideReason = typeof load.driver_pay_rate_override_reason === "string" ? load.driver_pay_rate_override_reason.trim() : "";
   const perLoadRateDollars = Number(load.driver_pay_rate_per_mile ?? Number.NaN);
-  const perLoadMiles =
-    Number(load.miles_shortest ?? Number.NaN) > 0
-      ? Number(load.miles_shortest)
-      : Number(load.miles_practical ?? Number.NaN);
+  // OWNER LAW (443.192): a per-load override rate pays SHORT miles too — never practical.
+  const perLoadMiles = Number(load.miles_shortest ?? Number.NaN);
   const hasValidOverride =
     overrideReason.length >= 10 &&
     Number.isFinite(perLoadRateDollars) &&
@@ -1048,9 +1050,11 @@ export async function createDriverBillArtifacts(
   // below, unchanged) — this refuses only a NEW mint attempt going forward. Never applies when an
   // existing bill is already priced (gross > 0) — that is settled history, not a fresh mint.
   const isFreshMintAttempt = !existing || (Number(existing.gross_amount_cents ?? 0) === 0 && String(existing.status) === "open");
-  const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0 || Number(load.miles_practical ?? 0) > 0;
+  // OWNER LAW (LEAD 443.192, 12:35Z): per-mile pay is SHORT miles only — the gate is miles_shortest again (the 09-14 rule),
+  // superseding ROUND 155.12's "shortest or practical". Practical miles are never a pay basis.
+  const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;
   if (isFreshMintAttempt && !hasAnyRealMiles) {
-    const reason = "No miles have been captured for this load (neither shortest nor practical) — driver pay is computed from document miles, never invented. Enter miles before a driver bill can be created.";
+    const reason = "No SHORT miles have been captured for this load — per-mile drivers are always paid short miles, never practical, never invented. Enter the load's short miles before a driver bill can be priced.";
     const priorRefusal = await client.query<{ exists: boolean }>(
       `SELECT EXISTS (
          SELECT 1
@@ -1171,12 +1175,11 @@ export async function createDriverBillArtifacts(
   const milesPrac = Number(load.miles_practical ?? 0) || null;
   let milesBasis: number | null = null;
   let milesBasisType: "short" | "practical" | null = null;
+  // OWNER LAW (443.192): the bill's miles basis is SHORT miles only (practical is recorded on the load, never the pay basis).
+  void milesPrac;
   if (milesShort && milesShort > 0) {
     milesBasis = milesShort;
     milesBasisType = "short";
-  } else if (milesPrac && milesPrac > 0) {
-    milesBasis = milesPrac;
-    milesBasisType = "practical";
   }
 
   const trackingNotes = unpriced
