@@ -10,8 +10,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { isBillGlPostingEnabled } from "../accounting/bill-gl.service.js";
-import { insertBillHeaderOnClient } from "../accounting/bills.service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { postBillDocumentInClientTx, writeBillDocumentOnClient } from "../accounting/bills.service.js";
 import { logger } from "../observability/structured-logger.js";
 import {
   computeInsuranceDispersal,
@@ -95,9 +94,9 @@ async function persistBillsOnClient(
     // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — vendorId is already a resolved, entity-scoped mdata.vendors.id (looked up
     // above by name), so it stamps the typed FK directly. 443.182 C — written through the one bill writer (same columns,
     // casts, literals and ON CONFLICT idempotency as the former inline INSERT).
-    const billRes = await insertBillHeaderOnClient<{ id: string }>(
-      client,
-      [
+    // 443.182 C step 2 — header + the bill's number through the bill engine (same statements as before).
+    const billRes = await writeBillDocumentOnClient<{ id: string }>(client, {
+      header: [
         ["operating_company_id", { value: input.operatingCompanyId }],
         ["vendor_id", { value: vendorId }],
         ["vendor_uuid", { value: vendorId }],
@@ -118,22 +117,18 @@ async function persistBillsOnClient(
         // ACCT-F353 — derived from the insurer vendor above (vendorIsSampleData).
         ["is_sample_data", { value: vendorIsSampleData }],
       ],
-      { returning: "id::text", onConflict: "idempotency_key_do_nothing" },
-    );
+      returning: "id::text",
+      onConflict: "idempotency_key_do_nothing",
+      number: (newBillId) => ({
+        kind: "number_and_memo_in_company",
+        billId: newBillId,
+        operatingCompanyId: input.operatingCompanyId,
+        billNumber: `${input.policyNumber}-INS-${String(bill.sequence).padStart(2, "0")}`,
+        memo: bill.memo,
+      }),
+    });
     const billId = billRes.rows[0]?.id;
     if (!billId) throw new Error("insurance_created_bill_not_found");
-
-    await client.query(
-      `UPDATE accounting.bills
-       SET bill_number = $3, memo = $4, updated_at = now()
-       WHERE id = $1 AND operating_company_id = $2::uuid`,
-      [
-        billId,
-        input.operatingCompanyId,
-        `${input.policyNumber}-INS-${String(bill.sequence).padStart(2, "0")}`,
-        bill.memo,
-      ]
-    );
 
     for (const allocation of bill.allocations) {
       await client.query(
@@ -174,15 +169,7 @@ async function persistBillsOnClient(
     try {
       const glPostingEnabled = await isBillGlPostingEnabled(input.operatingCompanyId, input.userId);
       if (glPostingEnabled) {
-        await postSourceTransactionInClientTx(
-          client,
-          {
-            operating_company_id: input.operatingCompanyId,
-            source_transaction_type: "bill",
-            source_transaction_id: billId,
-          },
-          { userId: input.userId }
-        );
+        await postBillDocumentInClientTx(client, { operating_company_id: input.operatingCompanyId, bill_id: billId }, { userId: input.userId });
       }
     } catch (err) {
       logger.warn("insurance_policy_bill_gl_post_failed", {

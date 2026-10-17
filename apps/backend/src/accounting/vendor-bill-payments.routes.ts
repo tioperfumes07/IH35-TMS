@@ -8,7 +8,7 @@ import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
-import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents } from "./bills.service.js";
+import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents, postBillPaymentDocumentInClientTx } from "./bills.service.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
 import { resolveVendorCreditDisplayId } from "./display-id.js";
@@ -243,13 +243,9 @@ export async function applyVendorBillPaymentBatch(
 
     // ROUND 443.117 9b: QBO provenance does not exempt a native payment from its A/P/cash posting.
     if (glPostingEnabled) {
-      await postSourceTransactionInClientTx(
+      await postBillPaymentDocumentInClientTx(
         client as never,
-        {
-          operating_company_id: operatingCompanyId,
-          source_transaction_type: "bill_payment",
-          source_transaction_id: paymentId,
-        },
+        { operating_company_id: operatingCompanyId, bill_payment_id: paymentId },
         { userId: actorUserId }
       );
     }

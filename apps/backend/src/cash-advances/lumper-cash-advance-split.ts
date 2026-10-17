@@ -1,12 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { withCurrentUser } from "../auth/db.js";
 import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { EXPENSE_SQL_CURRENT_DATE, insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
 import { logger } from "../observability/structured-logger.js";
-import { insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
+import { insertBillPaymentRowInClientTx, postBillPaymentDocumentInClientTx } from "../accounting/bills.service.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
 import { LUMPER_EXPENSE_ITEM_NAME } from "./lumper-item.js";
 
@@ -200,13 +199,9 @@ export async function disburseCashAdvanceSplit(
           // 363-CC1-B (CC-3, 2026-10-04): a bill payment posts on its creating transaction or not at all. A posting failure THROWS and the whole split disburse rolls back (DisburseSplitFailure / withCurrentUser) — it used to be logged and swallowed, leaving a payment with no GL.
           const glPostingEnabled = await isBillPaymentGlPostingEnabled(companyId, actorUserUuid);
           if (glPostingEnabled) {
-            await postSourceTransactionInClientTx(
+            await postBillPaymentDocumentInClientTx(
               client,
-              {
-                operating_company_id: companyId,
-                source_transaction_type: "bill_payment",
-                source_transaction_id: billPaymentId,
-              },
+              { operating_company_id: companyId, bill_payment_id: billPaymentId },
               { userId: actorUserUuid }
             );
           }

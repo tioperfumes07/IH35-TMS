@@ -72,7 +72,10 @@ function checkWiring() {
   assertContains(lesseeFn, "createBillInClientTx(", "lessee leg creates the lessor's bill");
   assertContains(lesseeFn, "vendorId: lease.lessee_vendor_id", "lessee bill owed to lessee_vendor_id");
   assertContains(lesseeFn, "leaseBillKey", "lessee bill idempotency key");
-  assertContains(lesseeFn, 'source_transaction_type: "bill"', "lessee bill posts through the bill poster");
+  // 443.182 C step 2 — the bill poster is reached through the bill engine's in-transaction stage (postBillDocumentInClientTx).
+  if (!lesseeFn.includes('source_transaction_type: "bill"') && !lesseeFn.includes("postBillDocumentInClientTx(")) {
+    fail('lessee bill posts through the bill poster: missing "source_transaction_type: \\"bill\\"" or postBillDocumentInClientTx(');
+  }
   if (/"ap_control"/.test(posting)) fail("lease-posting.service.ts resolves ap_control — the lessee leg must post through its bill, never a raw A/P line (LST-F422)");
   const rentalRoute = routes.slice(routes.indexOf("lease-posting/operating/rental"));
   assertContains(rentalRoute.slice(0, 1500), "postOperatingActivationEntries(", "rental route posts both legs per period");

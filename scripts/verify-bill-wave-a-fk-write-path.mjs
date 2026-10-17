@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting"],"cols":["ap_bill","vendor","unit","load"],"leafRe":"^bills\\.","task":"P38","pr":"443.182 C"} */
 /**
  * P38 (38 OF 50) — Wave-A linkage ratchet for accounting bills.
  *
@@ -48,7 +49,7 @@ export function checkWritePath(text) {
   const problems = [];
   // 443.182 C — the bill header is written through insertBillHeaderOnClient: every write's column list is checked.
   const billsInserts = billHeaderWrites(text).map((w) => w.columns.join(", "));
-  const lineInserts = text.match(/INSERT INTO accounting\.bill_lines\s*\(([\s\S]*?)\)/g) ?? [];
+  const lineInserts = (text.match(/INSERT INTO accounting\.bill_lines\s*\(([\s\S]*?)\)/g) ?? []).filter((stmt) => !stmt.includes("${")); // 443.182 C step 2 — skip the engine's own dynamic column template (insertBillLineOnClient)
   if (billsInserts.length === 0) problems.push("no INSERT INTO accounting.bills found in bills.service.ts — the create path moved or was removed");
   if (lineInserts.length === 0) problems.push("no INSERT INTO accounting.bill_lines found — the line write path moved or was removed");
   // EVERY bills INSERT variant must bind the FKs. The service branches on which optional columns exist
