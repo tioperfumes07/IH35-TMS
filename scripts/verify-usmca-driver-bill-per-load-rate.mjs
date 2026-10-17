@@ -47,7 +47,10 @@ export function run() {
     errors,
   );
   assert(
-    /Math\.round\(perLoadRateDollars \* 100 \* perLoadMiles\)/.test(bookLoad),
+    // Repointed (ROUND 443.187): 9dca3e6acc "ROUND 443.33: booking priced a load 1 cent off ... every
+    // miles x rate now prices through milesTimesRateCents (#26254)" replaced the raw
+    // Math.round(perLoadRateDollars * 100 * perLoadMiles) with the one money rule.
+    /milesTimesRateCents\(perLoadMiles, perLoadRateDollars \* 100\)/.test(bookLoad),
     "book-load.service.ts must convert per-load $/mi to cents",
     errors,
   );
@@ -56,13 +59,24 @@ export function run() {
     "book-load.service.ts must call createDriverBillArtifacts",
     errors,
   );
+  // Repointed (ROUND 443.187): 25f2a8faa4 "R313-E31 ... office transition extracted to
+  // dispatch/load-transition.service.ts (route delegates) (#23821)" moved the delivery mint out of
+  // loads.routes.ts. The route must delegate to transitionDispatchLoadInClientTx, and that service
+  // must mint through ensureDriverBillArtifactsForLoad.
   assert(
-    /ensureDriverBillArtifactsForLoad\s*\(/.test(read("apps/backend/src/dispatch/loads.routes.ts")),
-    "dispatch/loads.routes.ts transition delivery path must call ensureDriverBillArtifactsForLoad",
+    /return transitionDispatchLoadInClientTx\s*\(/.test(read("apps/backend/src/dispatch/loads.routes.ts")),
+    "dispatch/loads.routes.ts transition route must delegate to transitionDispatchLoadInClientTx",
     errors,
   );
   assert(
-    bookLoadTest.includes("uses the per-load driver_pay_rate_per_mile override"),
+    /ensureDriverBillArtifactsForLoad\s*\(/.test(read("apps/backend/src/dispatch/load-transition.service.ts")),
+    "dispatch/load-transition.service.ts transition delivery path must call ensureDriverBillArtifactsForLoad",
+    errors,
+  );
+  assert(
+    // Repointed (ROUND 443.187): 9cb649ba1b "ACCT-F19470 (#19578)" (GO-21 B5) renamed the case — a
+    // per-load rate now mints only with an explicit, logged override reason.
+    bookLoadTest.includes("GO-21 B5: a typed per-load rate WITH a real override reason is used, and the override is logged"),
     "driver-bills.test.ts must cover per-load override mint",
     errors,
   );
@@ -91,7 +105,9 @@ function selftest() {
   const backup = read(realRel);
   let failed = false;
   try {
-    PLANTED.set(realRel, backup.replace(/load\.driver_pay_rate_per_mile/, "load._removed_driver_pay_rate_per_mile"));
+    // Plant at the functional read (book-load.service.ts now carries the field name in a doc
+    // comment ABOVE the call site, so a first-occurrence replace planted into a comment and escaped).
+    PLANTED.set(realRel, backup.replace(/Number\(load\.driver_pay_rate_per_mile/, "Number(load._removed_driver_pay_rate_per_mile"));
     const planted = run();
     if (!planted.some((e) => e.includes("driver_pay_rate_per_mile"))) {
       console.error("[verify-usmca-driver-bill-per-load-rate] SELFTEST FAIL: planted override removal not detected");
@@ -99,8 +115,21 @@ function selftest() {
     } else {
       console.log(`[verify-usmca-driver-bill-per-load-rate] SELFTEST PASS (${planted.length} planted failures detected)`);
     }
-  } finally {
+    PLANTED.set(realRel, backup.replace(/milesTimesRateCents\(perLoadMiles, perLoadRateDollars \* 100\)/, "Math.round(perLoadMiles * perLoadRateDollars * 100)"));
+    if (!run().some((e) => e.includes("convert per-load $/mi to cents"))) {
+      console.error("[verify-usmca-driver-bill-per-load-rate] SELFTEST FAIL: planted raw-float pricing not detected");
+      failed = true;
+    }
     PLANTED.delete(realRel);
+    const transitionRel = "apps/backend/src/dispatch/load-transition.service.ts";
+    PLANTED.set(transitionRel, read(transitionRel).replace(/ensureDriverBillArtifactsForLoad\s*\(/g, "skipDriverBill("));
+    if (!run().some((e) => e.includes("load-transition.service.ts"))) {
+      console.error("[verify-usmca-driver-bill-per-load-rate] SELFTEST FAIL: planted transition mint removal not detected");
+      failed = true;
+    }
+    PLANTED.delete(transitionRel);
+  } finally {
+    PLANTED.clear();
   }
   if (failed) process.exit(1);
 }

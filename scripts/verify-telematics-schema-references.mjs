@@ -29,7 +29,22 @@ const validUnitsColumns = new Set([
   "deactivated_at",
   "created_by_user_id",
   "updated_by_user_id",
+  // Repointed (ROUND 443.187) — columns added to mdata.units after this list was written
+  // (996703e135); both present on prod (information_schema, 2026-10-17):
+  "ctpat_status", // db/migrations/0295_vehicle_profile_part1.sql — 15936622a6 VEHICLE-PROFILE-PART-1 (#362)
+  "is_sample_data", // db/migrations/0403_onboarding_state.sql — 07fdc1790d CLOSURE-24 sample data (#582)
 ]);
+
+/**
+ * A `u.` on a line that binds `u` as a JS arrow parameter (`(u) => u.fleetClass`, live-fleet.ts
+ * filtering in-memory unit objects) is a TypeScript property access, not SQL. Every other `u.x`
+ * in a file that aliases `mdata.units u` is still checked against the column list.
+ */
+function isJsArrowParamAccess(source, index) {
+  const lineStart = source.lastIndexOf("\n", index) + 1;
+  const before = source.slice(lineStart, index);
+  return /(?:\(\s*u\s*(?::[^)]*)?\)|\bu)\s*=>/.test(before);
+}
 
 function walkTsFiles(dir) {
   const out = [];
@@ -54,6 +69,7 @@ for (const filePath of walkTsFiles(telematicsDir)) {
   const refs = source.matchAll(/\bu\.([a-zA-Z_][a-zA-Z0-9_]*)\b/g);
   for (const match of refs) {
     const column = match[1];
+    if (isJsArrowParamAccess(source, match.index)) continue;
     if (!validUnitsColumns.has(column)) {
       failures.push({ filePath, column });
     }

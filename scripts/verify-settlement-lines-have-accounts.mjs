@@ -53,6 +53,31 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 // rows already in prod before this ship keep their grandfathered 'other' classification.
 const MERGE_CUTOFF = "2026-09-06T02:00:00Z";
 
+// Repointed (ROUND 443.187): the tie-out buckets were hand-copied here and drifted from the engine.
+// ba74c3967f "M.3 used flat close-time escrow ... (#20605)" moved escrow_contribution into the
+// DEDUCTION bucket and 6049a94009 (ACCT-F1312) fixed earnings to exclude detention_pay — so every
+// closed settlement with escrow read "lines gross = header + escrow, lines ded = header - escrow"
+// (51 false mismatches on prod 2026-10-17). The header is written by aggregateSettlementTotals from
+// apps/backend/src/driver-finance/settlement-line-buckets.ts; the guard now reads those SAME arrays
+// (one source of truth) and the same active + non-voided line filter, so it can no longer drift.
+const BUCKETS_PATH = "apps/backend/src/driver-finance/settlement-line-buckets.ts";
+
+export function readCanonicalBuckets(src) {
+  const grab = (name) => {
+    const m = src.match(new RegExp(`export const ${name} = \\[([^\\]]*)\\] as const`));
+    if (!m) return null;
+    const items = [...m[1].matchAll(/"([a-z_]+)"/g)].map((x) => x[1]);
+    return items.length ? items : null;
+  };
+  const earnings = grab("SETTLEMENT_EARNINGS_LINE_TYPES");
+  const deductions = grab("SETTLEMENT_DEDUCTION_LINE_TYPES");
+  const reimbursements = grab("SETTLEMENT_REIMBURSEMENT_LINE_TYPES");
+  if (!earnings || !deductions || !reimbursements) return null;
+  return { earnings, deductions, reimbursements };
+}
+
+const sqlList = (xs) => xs.map((x) => `'${x}'`).join(",");
+
 export function materializerForcesPendingWhenUnresolved(src) {
   // Both the reimbursement/extra_pay branch and the deduction branch must gate approval_status on
   // postingAccountId being non-null, never approving on source-status alone.
@@ -107,7 +132,17 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL — the four typed deduction kinds are not all present in SettlementDeductionSourceType`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — 3/3 plants rejected (unresolved-role gate, typed-role regression, missing typed union members)`);
+  const bucketsSrc = fs.readFileSync(BUCKETS_PATH, "utf8");
+  const buckets = readCanonicalBuckets(bucketsSrc);
+  if (!buckets || !buckets.deductions.includes("escrow_contribution") || !buckets.earnings.includes("deadhead_pay")) {
+    console.error(`${LABEL} SELFTEST FAIL — canonical settlement buckets not readable from ${BUCKETS_PATH}`);
+    process.exit(1);
+  }
+  if (readCanonicalBuckets(bucketsSrc.replace("export const SETTLEMENT_DEDUCTION_LINE_TYPES", "export const RENAMED"))) {
+    console.error(`${LABEL} SELFTEST FAIL — a missing canonical bucket was not rejected (guard would compare against nothing)`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST OK — 4/4 plants rejected (unresolved-role gate, typed-role regression, missing typed union members, missing canonical bucket)`);
 }
 
 // LST-F418: a selftest is pure — it must not fall through to the live DB check.
@@ -126,6 +161,12 @@ if (!materializerForcesPendingWhenUnresolved(fs.readFileSync(MATERIALIZE_PATH, "
   process.exit(1);
 }
 console.log(`${LABEL}: static OK — materializer never approves a line with an unresolved GL account`);
+
+const BUCKETS = readCanonicalBuckets(fs.readFileSync(BUCKETS_PATH, "utf8"));
+if (!BUCKETS) {
+  console.error(`${LABEL}: FAIL — cannot read the canonical line-type buckets from ${BUCKETS_PATH}`);
+  process.exit(1);
+}
 
 // Live half.
 if (!process.env.DATABASE_URL) {
@@ -173,11 +214,11 @@ try {
   const totalsCheck = await client.query(
     `
       SELECT ds.id::text, ds.display_id, ds.gross_pay, ds.deductions_total, ds.reimbursements_total,
-        COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type IN ('earnings','deadhead_pay','extra_pay','team_split_primary','team_split_secondary','detention_pay','escrow_contribution','dispute_adjustment')), 0) AS lines_gross,
-        COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type IN ('deduction','advance_recovery','auto_deduction','abandonment_chargeback')), 0) AS lines_deductions,
-        COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type = 'reimbursement'), 0) AS lines_reimbursements
+        COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type IN (${sqlList(BUCKETS.earnings)})), 0) AS lines_gross,
+        COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type IN (${sqlList(BUCKETS.deductions)})), 0) AS lines_deductions,
+        COALESCE(SUM(sl.amount) FILTER (WHERE sl.line_type IN (${sqlList(BUCKETS.reimbursements)})), 0) AS lines_reimbursements
         FROM driver_finance.driver_settlements ds
-        JOIN driver_finance.settlement_lines sl ON sl.settlement_id = ds.id AND sl.is_active = true
+        JOIN driver_finance.settlement_lines sl ON sl.settlement_id = ds.id AND sl.is_active = true AND sl.voided_at IS NULL
        WHERE ds.operating_company_id = $1
          AND ds.status <> 'open'
        GROUP BY ds.id, ds.display_id, ds.gross_pay, ds.deductions_total, ds.reimbursements_total
@@ -185,16 +226,42 @@ try {
     [USMCA]
   );
 
-  // SETL-DED-GL: no ACTIVE (non-voided) deduction created after MERGE_CUTOFF may carry the retired
-  // generic 'other' type — grandfathers everything already in prod before this ship.
+  // SETL-DED-GL: an 'other' deduction must never be an unaccounted bucket. Repointed (ROUND 443.187):
+  // the 2026-09-06 form ("'other' is retired — no new row may carry it") was superseded by
+  // 90398860f5 "443.110 G14: every Settlement Creator deduction posted as 'other' ... (#26623)":
+  // 'other' is now the ADMIN-FEE type BY NAME, bound to role other_recovery (7200 Driver Admin Fee &
+  // Chargeback Income) — settlement-creator-deduction-type.ts. Same rule, current truth: every ACTIVE
+  // 'other' deduction created after MERGE_CUTOFF that is APPLIED to a settlement must materialize as
+  // an active settlement line posting to the currently bound other_recovery account (an unapplied,
+  // still-pending deduction has no settlement line yet by design).
   const newOther = await client.query(
     `
-      SELECT id::text, created_at::text, reason
-        FROM driver_finance.driver_settlement_deductions
-       WHERE operating_company_id = $1
-         AND deduction_type = 'other'
-         AND voided_at IS NULL
-         AND created_at > $2::timestamptz
+      WITH role AS (
+        SELECT account_id
+          FROM accounting.chart_of_accounts_roles
+         WHERE operating_company_id = $1 AND role = 'other_recovery' AND is_active = true
+      )
+      SELECT d.id::text, d.created_at::text, d.reason
+        FROM driver_finance.driver_settlement_deductions d
+       WHERE d.operating_company_id = $1
+         AND d.deduction_type = 'other'
+         AND d.voided_at IS NULL
+         AND d.created_at > $2::timestamptz
+         AND (
+           NOT EXISTS (SELECT 1 FROM role)
+           OR (
+             d.applied_to_settlement_id IS NOT NULL
+             AND NOT EXISTS (
+               SELECT 1
+                 FROM driver_finance.settlement_lines sl
+                WHERE sl.source_table = 'driver_finance.driver_settlement_deductions'
+                  AND sl.source_reference_id = d.id
+                  AND sl.is_active = true
+                  AND sl.voided_at IS NULL
+                  AND sl.posting_account_id = (SELECT account_id FROM role LIMIT 1)
+             )
+           )
+         )
     `,
     [USMCA, MERGE_CUTOFF]
   );
@@ -249,7 +316,7 @@ try {
   }
   if (newOther.rows.length > 0) {
     failures.push(
-      `${newOther.rows.length} deduction(s) created after MERGE_CUTOFF (${MERGE_CUTOFF}) still use the retired 'other' type: ${newOther.rows.map((r) => `${r.id}(${r.created_at})`).join(", ")}`
+      `${newOther.rows.length} deduction(s) created after MERGE_CUTOFF (${MERGE_CUTOFF}) are 'other' but not posted to the bound other_recovery account (or the role is unbound): ${newOther.rows.map((r) => `${r.id}(${r.created_at})`).join(", ")}`
     );
   }
   if (typedMismatch.rows.length > 0) {

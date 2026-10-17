@@ -13,8 +13,9 @@
 //   3. driver_finance.driver_bills     — at least one bill per load, settled_in_settlement_id
 //                                        equals THIS settlement (never null, never a different one)
 //   4. accounting.expenses             — every expense row for a document load carries a matching
-//                                        expense_attribution.expense_load_links row (expense_number
-//                                        = the load's load_number, exact match)
+//                                        expense_attribution.expense_load_links row for THAT load
+//                                        (load_id + load_number = the load's, expense_number = the
+//                                        expense's own load-scoped number, e.g. "13508-2")
 //   5. fuel.fuel_transactions          — every fuel row for a document load has load_id set
 //   6. driver_finance.driver_settlements — the settlement row itself (already the query anchor)
 //   7. accounting.factoring_advances    — NOT required by this guard yet; the seeder does not write
@@ -169,7 +170,15 @@ async function gatherDocumentLoads(client, documentNumber) {
           AND db4.settled_in_settlement_id IS NULL) AS bills_unsettled,
        (SELECT count(*) FROM accounting.expenses e
           LEFT JOIN expense_attribution.expense_load_links ell
-            ON ell.expense_source = 'accounting' AND ell.expense_id = e.id AND ell.expense_number = dl.load_number
+            ON ell.expense_source = 'accounting' AND ell.expense_id = e.id
+           -- REPOINTED (ROUND 443.187): 230815ec1d "Claude-1- ROUND 169 -- three engine root fixes:
+           -- fuel load-numbering + expense line, tour gate zero-pay (#22694)" made seedExpense mint the
+           -- load-scoped number via generateExpenseNumber and write THAT on the link row
+           -- (expense_number = e.g. "13508-2"); writing the bare load_number there was named a bug in
+           -- that same commit. Same rule: the link must point at THIS load and carry the expense's
+           -- own number — measured live 2026-10-16: 722/819 false "unlinked" under the old literal,
+           -- 0/819 under this one, 0 expenses with no link row at all.
+           AND ell.load_id = dl.id AND ell.load_number = dl.load_number AND ell.expense_number = e.expense_number
          WHERE e.load_id = dl.id AND e.voided_at IS NULL AND ell.id IS NULL) AS expense_unlinked_count
      FROM doc_loads dl`,
     [USMCA_COMPANY_ID, documentNumber]

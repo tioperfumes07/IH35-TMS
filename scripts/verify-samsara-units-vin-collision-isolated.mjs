@@ -11,13 +11,22 @@ import fs from "node:fs";
 
 const FILE = "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts";
 
+// REPOINTED (ROUND 443.187): 715c5b809a "Claude-3- Samsara master sync link-only (0 failures, 0
+// creates) + canonical driver map in every CC-3 engine (#23690)" (LEAD DECISION 2026-10-01, guarded
+// by verify-samsara-master-sync-link-only.mjs) rewrote this pass: VIN is globally unique, so the
+// lookup is no longer company-scoped in SQL — it matches GLOBALLY by samsara_vehicle_id OR vin and a
+// row owned by another company is SKIPPED in code (other_company), never re-inserted; the UPDATE
+// links samsara_vehicle_id fill-empty (COALESCE) instead of overwriting. Same three rules as before.
 function inspect(source) {
   const failures = [];
 
-  if (!/WHERE \(samsara_vehicle_id = \$2 OR \(\$3::text IS NOT NULL AND vin = \$3\)\)\s*\n\s*AND COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$1::uuid\s*\n\s*LIMIT 1\s*\n\s*`,\s*\n\s*\[operatingCompanyId, v\.id, vinRaw\]/.test(source)) {
+  if (!/FROM mdata\.units\s*\n\s*WHERE deactivated_at IS NULL AND \(samsara_vehicle_id = \$1 OR \(\$2::text IS NOT NULL AND vin = \$2\)\)\s*\n\s*ORDER BY \(samsara_vehicle_id = \$1\) DESC NULLS LAST\s*\n\s*LIMIT 1`,\s*\n\s*\[v\.id, vin\]/.test(source)) {
     failures.push("mdata.units existingUnit lookup no longer matches by samsara_vehicle_id OR vin");
   }
-  if (!/SET vin = COALESCE\(\$1, vin\),[\s\S]{0,300}samsara_vehicle_id = \$7,/.test(source)) {
+  if (!/else if \(row\.oc !== operatingCompanyId\) bump\(counts, "other_company"\);/.test(source)) {
+    failures.push("mdata.units VIN match no longer skips a row owned by another company (cross-entity link)");
+  }
+  if (!/UPDATE mdata\.units\s*\n\s*SET samsara_vehicle_id = COALESCE\(samsara_vehicle_id, \$2\),\s*\n\s*vin = COALESCE\(NULLIF\(vin, ''\), \$3\),/.test(source)) {
     failures.push("mdata.units UPDATE branch no longer writes samsara_vehicle_id (VIN-matched rows would stay unlinked)");
   }
   if (!/await client\.query\("SAVEPOINT unit_row"\);/.test(source) || !/await client\.query\("ROLLBACK TO SAVEPOINT unit_row"\)\.catch/.test(source)) {
@@ -35,8 +44,8 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutated = real.replace(
-    "WHERE (samsara_vehicle_id = $2 OR ($3::text IS NOT NULL AND vin = $3))\n              AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid\n            LIMIT 1\n          `,\n          [operatingCompanyId, v.id, vinRaw]",
-    "WHERE samsara_vehicle_id = $2\n              AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid\n            LIMIT 1\n          `,\n          [operatingCompanyId, v.id]"
+    "WHERE deactivated_at IS NULL AND (samsara_vehicle_id = $1 OR ($2::text IS NOT NULL AND vin = $2))\n          ORDER BY (samsara_vehicle_id = $1) DESC NULLS LAST\n          LIMIT 1`,\n        [v.id, vin]",
+    "WHERE deactivated_at IS NULL AND samsara_vehicle_id = $1\n          LIMIT 1`,\n        [v.id]"
   );
   if (mutated === real) {
     console.error("verify-samsara-units-vin-collision-isolated --selftest: mutation did not match live source — update the test");

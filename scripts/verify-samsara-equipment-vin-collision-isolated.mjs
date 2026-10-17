@@ -13,16 +13,30 @@ import fs from "node:fs";
 
 const FILE = "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts";
 
+// REPOINTED (ROUND 443.187): 715c5b809a "Claude-3- Samsara master sync link-only (0 failures, 0
+// creates) + canonical driver map in every CC-3 engine (#23690)" (LEAD DECISION 2026-10-01, guarded
+// by verify-samsara-master-sync-link-only.mjs: "vehicles never write mdata.equipment (trucks are not
+// trailers)") MOVED the mdata.equipment write out of syncSamsaraVehiclesMaster() into
+// syncSamsaraTrailersMaster(), and made it link-only: the lookup matches GLOBALLY (VIN is globally
+// unique) by samsara_vehicle_id OR vin (OR equipment_number), a row owned by another company is
+// SKIPPED in code (other_company), the UPDATE links samsara_vehicle_id fill-empty, and the per-row
+// SAVEPOINT is now `trailer_row`. Same three rules, asserted on the block that now owns the write.
 function inspect(source) {
   const failures = [];
+  const startIdx = source.indexOf("export async function syncSamsaraTrailersMaster(");
+  const block = startIdx >= 0 ? source.slice(startIdx) : "";
+  if (!block) failures.push("syncSamsaraTrailersMaster() (owner of the mdata.equipment write) not found");
 
-  if (!/WHERE \(samsara_vehicle_id = \$2 OR \(\$3::text IS NOT NULL AND vin = \$3\)\)\s*\n\s*AND COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$1::uuid\s*\n\s*LIMIT 1\s*\n\s*`,\s*\n\s*\[operatingCompanyId, v\.id, vinRaw\]\s*\n\s*\);\s*\n\s*\n\s*if \(existing\.rows\[0\]\) \{\s*\n\s*const equipId/.test(source)) {
+  if (!/FROM mdata\.equipment\s*\n\s*WHERE samsara_vehicle_id = \$1 OR \(\$2::text IS NOT NULL AND vin = \$2\)[^\n]*\n\s*ORDER BY \(samsara_vehicle_id = \$1\) DESC NULLS LAST[^\n]*\n\s*LIMIT 1`,\s*\n\s*\[t\.id, vin, equipmentNumber\]\s*\n\s*\);\s*\n\s*const row = /.test(block)) {
     failures.push("mdata.equipment existing lookup no longer matches by samsara_vehicle_id OR vin");
   }
-  if (!/SET vin = COALESCE\(\$1, vin\),[\s\S]{0,300}samsara_vehicle_id = \$7,[\s\S]{0,50}updated_at = now\(\)\s*\n\s*WHERE id = \$8::uuid/.test(source)) {
+  if (!/else if \(row\.oc !== operatingCompanyId\) bump\(counts, "other_company"\);/.test(block)) {
+    failures.push("mdata.equipment VIN match no longer skips a row owned by another company (cross-entity link)");
+  }
+  if (!/UPDATE mdata\.equipment\s*\n\s*SET samsara_vehicle_id = COALESCE\(samsara_vehicle_id, \$2\),\s*\n\s*vin = COALESCE\(NULLIF\(vin, ''\), \$3\),[\s\S]{0,400}updated_at = now\(\)\s*\n\s*WHERE id = \$1::uuid/.test(block)) {
     failures.push("mdata.equipment UPDATE branch no longer writes samsara_vehicle_id (VIN-matched rows would stay unlinked)");
   }
-  if (!/await client\.query\("SAVEPOINT equipment_row"\);/.test(source) || !/await client\.query\("ROLLBACK TO SAVEPOINT equipment_row"\)\.catch/.test(source)) {
+  if (!/await client\.query\("SAVEPOINT trailer_row"\);/.test(block) || !/await client\.query\("ROLLBACK TO SAVEPOINT trailer_row"\)\.catch/.test(block)) {
     failures.push("mdata.equipment upsert is no longer SAVEPOINT-isolated per row");
   }
 
@@ -37,10 +51,10 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutated = real.replace(
-    'await client.query("SAVEPOINT equipment_row");\n    try {',
+    'await client.query("SAVEPOINT trailer_row");\n    try {',
     "{"
   ).replace(
-    'await client.query("RELEASE SAVEPOINT equipment_row");\n    } catch (e) {\n      await client.query("ROLLBACK TO SAVEPOINT equipment_row").catch(() => {});\n      errors.push(`equipment_upsert_failed:${v.id}:${String((e as Error)?.message ?? e)}`);\n    }',
+    'await client.query("RELEASE SAVEPOINT trailer_row");\n    } catch (e) {\n      await client.query("ROLLBACK TO SAVEPOINT trailer_row").catch(() => {});\n      bump(counts, "failed");\n      errors.push(`trailer_link_failed:${t.id}:${String((e as Error)?.message ?? e)}`);\n    }',
     "}"
   );
   if (mutated === real) {

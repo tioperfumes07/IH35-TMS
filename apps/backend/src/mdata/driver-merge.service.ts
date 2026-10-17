@@ -22,6 +22,8 @@
 //      Samsara accounts follow the driver (one driver, many Samsara users); Samsara itself is never written.
 //   6. PROVE: zero references to the merged record remain (except the superseded 1:1 rows); otherwise the whole
 //      transaction is refused.
+import { companyBusinessDate } from "../lib/company-business-date.js";
+
 type Db = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount?: number | null }> };
 
 export type DriverRef = { table: string; column: string };
@@ -342,7 +344,7 @@ export async function executeDriverMerge(
           client,
           {
             operating_company_id: args.companyId,
-            entry_date: new Date().toISOString().slice(0, 10),
+            entry_date: companyBusinessDate(),
             memo: `Driver merge escrow transfer: ${pv.merged.name} (${M.slice(0, 8)}) -> ${pv.survivor.name} (${S.slice(0, 8)})`,
             source: "manual",
             postings: [

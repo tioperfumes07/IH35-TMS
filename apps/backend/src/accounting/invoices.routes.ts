@@ -72,6 +72,34 @@ const INVOICE_LIST_SORT_SQL: Record<string, string> = {
   total_cents: "i.total_cents",
   amount_open_cents: "COALESCE(i.amount_open_cents, 0)",
   source_load_id: "l.load_number",
+  // SORT-02 (ROUND 443.187): the Invoice Search report + Invoices list key these columns by the
+  // field they render (source_load_number / factoring_status); without an entry the server fell
+  // back to issue_date and only the fetched page was reordered.
+  source_load_number: "l.load_number",
+  factoring_status: "COALESCE(i.factoring_status, 'not_factored')",
+  // The number the Settlement / Presettlement cell renders — same resolution as
+  // POST /api/v1/driver-finance/settlement-references (settlements.routes.ts): the closed
+  // settlement's AlwaysTrack ref when the load is on one, else the open cycle's ref. Read-only.
+  settlement_reference: `(
+    SELECT CASE WHEN closed.id IS NOT NULL THEN closed.source_document_ref ELSE open_cycle.source_document_ref END
+      FROM (SELECT 1) one
+      LEFT JOIN LATERAL (
+        SELECT s.id, s.source_document_ref
+          FROM driver_finance.settlement_lines sl
+          JOIN driver_finance.driver_settlements s
+            ON s.id = sl.settlement_id
+           AND s.operating_company_id = l.operating_company_id
+         WHERE sl.load_id = l.id
+           AND sl.operating_company_id = l.operating_company_id
+           AND sl.is_active = true
+           AND (s.locked_at IS NOT NULL OR s.paid_at IS NOT NULL OR s.status IN ('closed','final','paid'))
+         ORDER BY s.locked_at DESC NULLS LAST, s.created_at DESC
+         LIMIT 1
+      ) closed ON true
+      LEFT JOIN driver_finance.driver_settlements open_cycle
+        ON open_cycle.id = l.presettlement_link_id
+       AND open_cycle.operating_company_id = l.operating_company_id
+  )`,
   memo: "COALESCE(i.internal_notes, i.customer_notes)",
 };
 

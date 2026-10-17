@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = process.cwd();
 const FILE = "apps/frontend/src/pages/reports/ScheduledReportsPanel.tsx";
+const API_FILE = "apps/frontend/src/api/scheduled-reports.ts";
 
 function read(relativePath, root = ROOT) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -28,8 +29,21 @@ export function run(root = ROOT) {
   }
   const src = read(FILE, root);
 
-  if (!/apiRequest\s*<\{ rows: ScheduledRow\[\] \}>\s*\(\s*withCompany\("\/api\/v1\/reports\/scheduled"/.test(src)) {
-    failures.push(`${FILE}: must fetch scheduled reports from /api/v1/reports/scheduled scoped by company`);
+  // REPOINTED (ROUND 443.187): 232772852b "FINDING: REPORTS-SCHEDULED-PANEL-SILENT-FALSE-EMPTY
+  // (#15292)" moved this panel off the legacy reports.scheduled_reports table
+  // (GET /api/v1/reports/scheduled, always 0 rows) onto the canonical reporting.scheduled_reports
+  // reader (GET /api/v1/scheduled-reports, owner-locked SS9.6) via listScheduledReportsV2(companyId).
+  // Same rule — the count must come from the real, company-scoped scheduled-reports endpoint.
+  if (!/queryFn:\s*\(\)\s*=>\s*listScheduledReportsV2\(\s*companyId\s*\)/.test(src)) {
+    failures.push(`${FILE}: must fetch scheduled reports via listScheduledReportsV2(companyId) (company-scoped)`);
+  }
+  if (!exists(API_FILE, root)) {
+    failures.push(`MISSING: ${API_FILE}`);
+  } else {
+    const api = read(API_FILE, root);
+    if (!/export async function listScheduledReportsV2\(operatingCompanyId: string\)\s*\{\s*return apiRequest<\{ rows: ScheduledReportListRow\[\] \}>\(withCompany\("\/api\/v1\/scheduled-reports", operatingCompanyId\)\)/.test(api)) {
+      failures.push(`${API_FILE}: listScheduledReportsV2 must fetch /api/v1/scheduled-reports scoped by company (withCompany)`);
+    }
   }
 
   if (!/rows\.length === 0/.test(src)) {
@@ -59,7 +73,7 @@ function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-rpt-s06-scheduled-count-honest-selftest-"));
-    for (const rel of [FILE]) {
+    for (const rel of [FILE, API_FILE]) {
       fs.mkdirSync(path.dirname(path.join(tmpRoot, rel)), { recursive: true });
       fs.writeFileSync(path.join(tmpRoot, rel), read(rel), "utf8");
     }

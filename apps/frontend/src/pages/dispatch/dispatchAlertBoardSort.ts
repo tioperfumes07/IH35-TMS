@@ -8,6 +8,10 @@ export const DISPATCH_ALERT_CLIENT_SORT_KEYS = new Set([
   "live_accrued_amount_cents",
   "operational_state",
   "billing_state",
+  // SORT-03 (ROUND 443.187): the Settlement / Presettlement column (fc5d0e2796, ACCT-F26141) is
+  // resolved per load by a second read (useSettlementReferences), not an SQL column, so it sorts
+  // over the full fetched population client-side using the same value the cell renders.
+  "settlement_reference",
 ]);
 
 export function isDispatchAlertClientSortKey(key: string): boolean {
@@ -40,12 +44,20 @@ function comparePrimitive(a: unknown, b: unknown): number {
   return String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: "base" });
 }
 
+/** Value the Settlement / Presettlement cell renders for a row (null = "Not on a tour"). */
+export type SettlementReferenceSortValue = (row: Record<string, unknown>) => string | null;
+
 export function compareDispatchAlertBoardRow(
   a: Record<string, unknown>,
   b: Record<string, unknown>,
   sortKey: string,
+  settlementReferenceValue?: SettlementReferenceSortValue,
 ): number {
   switch (sortKey) {
+    case "settlement_reference":
+      return settlementReferenceValue
+        ? comparePrimitive(settlementReferenceValue(a), settlementReferenceValue(b))
+        : 0;
     case "risk_state":
       return comparePrimitive(riskStateValue(a), riskStateValue(b));
     case "eta_signal":
@@ -70,11 +82,12 @@ export function sortDispatchAlertBoardRows<T extends Record<string, unknown>>(
   rows: T[],
   sortKey: string,
   direction: "asc" | "desc",
+  settlementReferenceValue?: SettlementReferenceSortValue,
 ): T[] {
   if (!isDispatchAlertClientSortKey(sortKey)) return rows;
   const copy = [...rows];
   copy.sort((a, b) => {
-    const cmp = compareDispatchAlertBoardRow(a, b, sortKey);
+    const cmp = compareDispatchAlertBoardRow(a, b, sortKey, settlementReferenceValue);
     return direction === "desc" ? -cmp : cmp;
   });
   return copy;

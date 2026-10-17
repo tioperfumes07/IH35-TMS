@@ -41,6 +41,16 @@ const DELEGATES_TO = {
     checkedAs: "apps/backend/src/settlements/approval.service.ts",
   },
 };
+// REPOINTED (round 443.187): settlement-pdf-renderer.service.ts never ran SQL against the
+// settlement.* schema — its only match was the JS property access `settlement.settlement_model`
+// added in 352bc13a98 ("load-bookended settlement model ..."), which 415e7cc628 ("fix(truck-line):
+// station node must outrank the truck graphic ...", #23394) removed. The renderer reads the
+// canonical store (driver_finance.driver_settlements, LINKAGE LAW §10 / P2.4a repoint 2026-07-15).
+// Same rule — this caller's settlement read must be on a granted, named store — checked against
+// the store it actually reads, never skipped.
+const REPOINTED_TO_CANONICAL = {
+  "apps/backend/src/driver-finance/settlement-pdf-renderer.service.ts": /\bFROM\s+driver_finance\.driver_settlements\b/,
+};
 const CALLERS = [
   "apps/backend/src/settlements/approval.service.ts",
   "apps/backend/src/settlements/approval.routes.ts",
@@ -51,6 +61,10 @@ for (const rel of CALLERS) {
   const fp = join(root, rel);
   if (!existsSync(fp)) fail(`expected caller missing from codebase: ${rel}`);
   const src = readFileSync(fp, "utf8");
+  if (REPOINTED_TO_CANONICAL[rel]) {
+    if (REPOINTED_TO_CANONICAL[rel].test(src)) continue;
+    fail(`${rel}: no read of the canonical driver_finance.driver_settlements store — settlement caller moved without updating grant guard`);
+  }
   if (/settlement\.settlement/.test(src)) continue;
   const delegate = DELEGATES_TO[rel];
   if (delegate && new RegExp(delegate.module.replace(/[.[\]]/g, "\\$&")).test(src) && CALLERS.includes(delegate.checkedAs)) {
@@ -58,6 +72,6 @@ for (const rel of CALLERS) {
   }
   fail(`${rel}: no reference to settlement.settlement — caller removed without updating grant guard`);
 }
-pass(`all ${CALLERS.length} callers verified to reference settlement.settlement (directly or via a checked delegate)`);
+pass(`all ${CALLERS.length} callers verified to reference settlement.settlement (directly, via a checked delegate, or repointed to the canonical driver_finance store)`);
 
 console.log("verify-p0-settlement-schema-grants: ALL CHECKS PASSED");

@@ -86,29 +86,41 @@ const contracts = [
     },
     (s) => s.replace("await onStatusDrop(loadId, nextStatus)", "await onStatusDrop_DISABLED(loadId, nextStatus)"),
   ],
+  // REPOINTED (LEAD ROUND 443.187). 5f292613f4 "Claude-Lead — unblock main (2 red guards) + Kanban:
+  // drag to At pickup / Loaded / At delivery, header contrast (#23282)" replaced derivedOnly on these
+  // three lanes with `manualStamp`: a drop now writes the SAME manual stop stamp Truck Line writes
+  // (stampTruckLineArrival / stampTruckLineDeparture), never a status transition. The rule this guard
+  // owns is unchanged — a drop on these lanes must NEVER reach onStatusDrop as a same-state transition
+  // the backend rejects — so it is asserted on the current mechanism: each lane carries its exact
+  // stamp, and handleDragEnd takes the manualStamp branch (and returns) BEFORE the status-drop path.
   [
-    "at_pickup lane is derivedOnly (telematics-set, not drag-droppable — KANBAN-CROSS-COLUMN-DRAG)",
-    (s) => {
-      const m = s.match(/key:\s*"at_pickup"[^}]*derivedOnly:\s*true/);
-      return m !== null;
-    },
-    (s) => s.replace('key: "at_pickup", title: "At pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true, derivedOnly: true', 'key: "at_pickup", title: "At pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true'),
+    "at_pickup lane records a manual pickup ARRIVAL stamp, never a status transition (5f292613f4)",
+    (s) => /key:\s*"at_pickup"[^}]*manualStamp:\s*\{\s*stop:\s*"pickup",\s*event:\s*"arrive"\s*\}/.test(s),
+    (s) => s.replace(/(key:\s*"at_pickup"[^\n]*?), manualStamp: \{ stop: "pickup", event: "arrive" \}/, "$1"),
   ],
   [
-    "at_delivery lane is derivedOnly (telematics-set, not drag-droppable — KANBAN-CROSS-COLUMN-DRAG)",
-    (s) => {
-      const m = s.match(/key:\s*"at_delivery"[^}]*derivedOnly:\s*true/);
-      return m !== null;
-    },
-    (s) => s.replace('key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true, derivedOnly: true', 'key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true'),
+    "loaded lane records a manual pickup DEPARTURE stamp, never a status transition (5f292613f4)",
+    (s) => /key:\s*"loaded"[^}]*manualStamp:\s*\{\s*stop:\s*"pickup",\s*event:\s*"depart"\s*\}/.test(s),
+    (s) => s.replace(/(key:\s*"loaded"[^\n]*?), manualStamp: \{ stop: "pickup", event: "depart" \}/, "$1"),
   ],
   [
-    "loaded lane is derivedOnly (telematics-set, not drag-droppable)",
+    "at_delivery lane records a manual delivery ARRIVAL stamp, never a status transition (5f292613f4)",
+    (s) => /key:\s*"at_delivery"[^}]*manualStamp:\s*\{\s*stop:\s*"delivery",\s*event:\s*"arrive"\s*\}/.test(s),
+    (s) => s.replace(/(key:\s*"at_delivery"[^\n]*?), manualStamp: \{ stop: "delivery", event: "arrive" \}/, "$1"),
+  ],
+  [
+    "handleDragEnd takes the manualStamp branch (stamp route + return) before onStatusDrop (no same-state transition)",
     (s) => {
-      const m = s.match(/key:\s*"loaded"[^}]*derivedOnly:\s*true/);
-      return m !== null;
+      const start = s.indexOf("const handleDragEnd");
+      if (start === -1) return false;
+      const body = s.slice(start, s.indexOf("\n  };", start) + 1);
+      const branch = body.indexOf("if (targetGroup.manualStamp) {");
+      const statusDrop = body.indexOf("await onStatusDrop(loadId");
+      if (branch === -1 || statusDrop === -1 || branch > statusDrop) return false;
+      const branchBody = body.slice(branch, body.indexOf("if (targetGroup.derivedOnly)", branch));
+      return /stampTruckLineArrival\(/.test(branchBody) && /stampTruckLineDeparture\(/.test(branchBody) && /\n\s*return;\n\s*\}\s*$/.test(branchBody);
     },
-    (s) => s.replace('key: "loaded", title: "Loaded", statuses: [], dropStatus: "in_transit", derivedOnly: true', 'key: "loaded", title: "Loaded", statuses: [], dropStatus: "in_transit"'),
+    (s) => s.replace("if (targetGroup.manualStamp) {", "if (targetGroup.manualStamp && false) {"),
   ],
   [
     "synthetic unit: cards are excluded from load-status dragging (LV-KANBAN-SYNTHETIC-CARD-INERT-DRAG)",
@@ -142,5 +154,5 @@ if (process.argv.includes("--selftest")) {
 }
 
 console.log(
-  "[verify-kanban-cross-column-drag-wired] OK — DndContext + PointerSensor + pointerWithin present, all 3 card densities register useDraggable/useDroppable, handleDragEnd resolves nested droppables and calls onStatusDrop, at_pickup/at_delivery/loaded are derivedOnly, synthetic unit: cards excluded from drag"
+  "[verify-kanban-cross-column-drag-wired] OK — DndContext + PointerSensor + pointerWithin present, all 3 card densities register useDraggable/useDroppable, handleDragEnd resolves nested droppables and calls onStatusDrop, at_pickup/loaded/at_delivery record manual stop stamps before any status drop, synthetic unit: cards excluded from drag"
 );

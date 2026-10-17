@@ -280,6 +280,9 @@ export function InvoiceSearchReportPage() {
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSortChange={onSortChange}
+            // SORT-02: sort/dir go to listInvoices (server ORDER BY over the whole filtered
+            // population, limit 100) — the table must not re-sort only the fetched page.
+            sortMode="external"
             initialPageSize={50}
           />
         )}
