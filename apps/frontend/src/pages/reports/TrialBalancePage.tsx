@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
@@ -137,12 +138,13 @@ export function TrialBalancePage() {
     const canDrill = (row: AccountingTrialBalanceRow) => row.account_id && !SYNTHETIC_ACCOUNT_IDS.has(row.account_id);
     const cols: ParityColumn<AccountingTrialBalanceRow>[] = [];
     if (showCodes) {
-      cols.push({ key: "account_code", label: "Account #", render: (row) => <span className="font-medium text-gray-900">{row.account_code || "—"}</span> });
+      cols.push({ key: "account_code", label: "Account #", sortable: true, render: (row) => <span className="font-medium text-gray-900">{row.account_code || "—"}</span> });
     }
     cols.push(
       {
         key: "account_name",
         label: "Account",
+        sortable: true,
         render: (row) => (
           <AmountLink
             filter={tbFilter(canDrill(row), row.account_id, applied)}
@@ -153,10 +155,11 @@ export function TrialBalancePage() {
           </AmountLink>
         ),
       },
-      { key: "account_type", label: "Type", render: (row) => formatAccountTypeLabel(row.account_type) },
+      { key: "account_type", label: "Type", sortable: true, render: (row) => formatAccountTypeLabel(row.account_type) },
       {
         key: "total_debits",
         label: "Debits",
+        sortable: true,
         kind: "money",
         render: (row) => (
           <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-debits-${row.account_id}`}>
@@ -167,6 +170,7 @@ export function TrialBalancePage() {
       {
         key: "total_credits",
         label: "Credits",
+        sortable: true,
         kind: "money",
         render: (row) => (
           <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-credits-${row.account_id}`}>
@@ -177,6 +181,7 @@ export function TrialBalancePage() {
       {
         key: "net_balance",
         label: "Net",
+        sortable: true,
         kind: "money",
         render: (row) => (
           <span className={row.net_balance < 0 ? "text-rose-700" : "text-[#0F1219]"}>

@@ -212,7 +212,9 @@ function selftest() {
     [LIST_REL, "open_balance: number | null", "customer list"],
     [LIST_REL, 'c.open_balance == null ? "Unavailable" : fmtMoney(c.open_balance)', "CSV export"],
     [LIST_REL, '(opt) => openBalancesAvailable || (opt.value !== "overdue" && opt.value !== "with_open")', "filter chips"],
-    [SIDEBAR_REL, '"Unavailable"\n                      )}', "sidebar"],
+    // 443.181 (7158b60ce5, #26869) re-indented the sidebar cell when its table moved onto ParityTable; the
+    // anchor is the same "Unavailable" false branch, matched indentation-agnostic.
+    [SIDEBAR_REL, /"Unavailable"\n\s*\)\}/, "sidebar"],
     [DRILL_REL, 'openBalanceCents == null ? "Unavailable" : fmtMoney(openBalanceCents)', "quick-view"],
   ]) {
     const mutatedSources = { ...sources, [file]: sources[file].replace(needle, "BROKEN_OPEN_BALANCE_FAILURE_TRUTH") };

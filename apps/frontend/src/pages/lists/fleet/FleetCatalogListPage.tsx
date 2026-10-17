@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per catalog entry (code / name / order / status) — a reference list, not a time series.
 import { useState } from "react";
 import { fetchAllCatalogPages } from "../../../lib/fetchAllCatalogPages";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";

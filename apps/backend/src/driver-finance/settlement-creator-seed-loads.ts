@@ -330,7 +330,7 @@ export async function isSeededLoadFreeForThisSettlement(client: DbClient, draft:
           AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL
           AND NOT EXISTS (
             SELECT 1 FROM driver_finance.settlement_lines sl
-              JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
+              JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id AND s.operating_company_id = l.operating_company_id
              WHERE sl.load_id = l.id AND sl.voided_at IS NULL
                AND s.voided_at IS NULL AND s.status <> 'cancelled'
                AND COALESCE(s.source_document_ref, '') <> $4)

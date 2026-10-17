@@ -8,7 +8,11 @@ function inspect(value) {
   const failures = [];
   const checks = [
     [/actionGenerationRef = useRef\(0\)/, "missing action generation"],
-    [/createDrugProgramTest\(input\.companyId, input\.payload\)/, "test create uses mutable company/form"],
+    // UPL-04 (e425f051e4, #19134) wrapped the create with a source-document upload and spreads the
+    // snapshotted payload so source_doc_id rides along — still the immutable input snapshot, never
+    // the live companyId/form state. Both the upload scope and the create must read input.*.
+    [/createDrugProgramTest\(input\.companyId, \{ \.\.\.input\.payload, source_doc_id: sourceDocId \}\)/, "test create uses mutable company/form"],
+    [/uploadSourceDocumentFromFile\(input\.file, \{[\s\S]*?operating_company_id: input\.companyId,[\s\S]*?entity_id: input\.driverId/, "test evidence upload uses mutable company/driver"],
     [/driver_id: effectiveDriverId[\s\S]*test_type: testType[\s\S]*result: testResult[\s\S]*test_date: testDate/, "test create does not snapshot driver/form"],
     [/bulkEnrollRandomPool\(input\.companyId, input\.consortiumName\)/, "bulk enrollment uses mutable company/name"],
     [/createRtdCase\(input\.companyId, \{ driver_id: input\.driverId \}\)/, "RTD open uses mutable company/driver"],
@@ -36,7 +40,8 @@ function inspect(value) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     "actionGenerationRef = useRef(0)",
-    "createDrugProgramTest(input.companyId, input.payload)",
+    "createDrugProgramTest(input.companyId, { ...input.payload",
+    "operating_company_id: input.companyId",
     "bulkEnrollRandomPool(input.companyId, input.consortiumName)",
     "createRtdCase(input.companyId, { driver_id: input.driverId })",
     "advanceRtdCase(input.caseId, input.companyId",

@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per module / build block with its completion status — a current-state program matrix, not a time series.
 /**
  * System-wide module matrix — SAME column groups + SAME 4-box ✓/●/✕ chrome as each module board.
  * Rows = modules (Urgent 6 → rest of urgent → WAVE2) · columns = LINK/MONEY/CHROME/WIRE/PROC atoms.

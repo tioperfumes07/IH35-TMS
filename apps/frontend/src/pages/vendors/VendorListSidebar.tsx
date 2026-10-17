@@ -136,6 +136,7 @@ export function VendorListSidebar({
           pre-sorted and pre-paged by this sidebar, so the built-in pager is hidden (SidebarPagination owns it). */}
       <div className={MASTER_DETAIL.listScrollClass} data-c05-list-scroll="true">
         <ParityTable<VendorOption>
+          title="Vendors"
           tableTestId="vendors-master-list"
           storageKey="ih35.vendors.master-list.v1"
           rows={pagedVendors}

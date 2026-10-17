@@ -51,7 +51,7 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
 
       const values: unknown[] = [resolvedOperatingCompanyId];
-      const filters = ["operating_company_id = $1::uuid"];
+      const filters: string[] = [];
       if (typeof active === "boolean") {
         values.push(active);
         filters.push(`(deactivated_at IS NULL) = $${values.length}`);
@@ -62,14 +62,14 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
         filters.push(`(account_name ILIKE $${idx} OR COALESCE(account_number, '') ILIKE $${idx})`);
       }
       values.push(limit, offset);
-      const whereClause = `WHERE ${filters.join(" AND ")}`;
+      const extraFilters = filters.map((f) => ` AND ${f}`).join("");
       const res = await client.query(
         `
           SELECT id, operating_company_id, qbo_account_id AS qbo_id, account_name AS name,
                  account_number AS full_qualified_name, account_type, account_subtype AS account_sub_type,
                  (deactivated_at IS NULL) AS active, updated_at AS mirrored_at, created_at, updated_at
           FROM catalogs.accounts
-          ${whereClause}
+          WHERE operating_company_id = $1::uuid${extraFilters}
           ORDER BY updated_at DESC
           LIMIT $${values.length - 1}
           OFFSET $${values.length}

@@ -2,7 +2,10 @@
 // from the dead settlement, registered children). Shared by governance executeVoidCancel('driver_settlement') and
 // driver-finance reverseSettlementForVoid. A leaf module (imports only the cascade-void engine) so neither caller pulls
 // the other's dependency graph. Never deletes; every write touches only rows still linked/live (idempotent).
+// LEAD 443.193: also the ONE deduction rule for a voided settlement (restoreSettlementDeductionsInClientTx — the GL
+// reversal's own restore, already in both callers' graph via reverseSettlementBillPaymentInClientTx).
 import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
+import { restoreSettlementDeductionsInClientTx } from "../accounting/settlement-posting/settlement-posting.service.js";
 
 type CascadeClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -10,6 +13,10 @@ export type DriverSettlementVoidCascadeResult = {
   lines_voided: string[];
   driver_bills_released: string[];
   reimbursements_released: string[];
+  /** LEAD 443.193 — nothing_to_reverse only: plain pending deductions released from the dead settlement. */
+  deductions_released: string[];
+  /** LEAD 443.193 — nothing_to_reverse only: deductions still linked but collected / voided — never touched. */
+  deductions_retained: string[];
   children: Awaited<ReturnType<typeof cascadeVoidChildren>>;
 };
 
@@ -21,14 +28,20 @@ export type DriverSettlementVoidCascadeResult = {
  *  1. settlement_lines — SETL-LINES-VOID-GAP: the direct /settlements/:id/reverse route already cascades its reversal
  *     to the settlement's own lines (is_active=false + voided_at/void_reason/voided_by_user_id); the governance path
  *     reverses the SAME settlement via the SAME engine and matches that trail exactly.
- *  2. cascadeVoidChildren — ROUND 138: the rest of driver_settlement's registered children
- *     (driver_settlement_deductions.voided_at, chiefly).
+ *  2. cascadeVoidChildren — ROUND 138: the rest of driver_settlement's registered children (since LEAD 443.193 none
+ *     of them is a deduction — see step 5; the remaining entries are settlement_lines + dead-by-inheritance tables).
  *  3. driver bills — LEAD 443.192: a bill "settled" in a voided / cancelled settlement is settled in nothing. The GL
  *     reversal restores the bills its posted run paid; an OPEN bill still naming this settlement (no posted run — a
  *     shell that never posted) is released from the dead link here. A 'paid' bill is never touched (its money moves
  *     only through the reversal engine).
  *  4. reimbursements — LEAD 443.192 13:25Z: released exactly like the bills (status 'settled' -> 'pending',
  *     applied_to_settlement_id + settlement_line_id NULL); a paid / void reimbursement is never touched.
+ *  5. deductions — LEAD 443.193: NEVER voided by a settlement void (driver_settlement_deductions is no longer a
+ *     CASCADE_CHILDREN entry — a raw voided_at stamp forgave the driver's debt). When the caller's GL reversal REVERSED a
+ *     posted run, that engine already restored every applied deduction to pending (restoreSettlementDeductionsInClientTx).
+ *     When it returned nothing_to_reverse, the SAME restore runs here in its never-posted mode: plain pending, unvoided
+ *     deductions are released (link cleared, full amount owed again); collected / partial / deferred / voided ones are
+ *     retained untouched and named.
  */
 export async function completeDriverSettlementVoidCascadeInClientTx(
   client: CascadeClient,
@@ -37,12 +50,12 @@ export async function completeDriverSettlementVoidCascadeInClientTx(
     settlementId: string;
     userId: string;
     reason: string;
+    /** LEAD 443.193 — the caller's reverseSettlementBillPaymentInClientTx result; nothing_to_reverse => step 5 releases deductions. */
+    glReversalResult: "reversed" | "nothing_to_reverse";
     /**
-     * false = do NOT run step 2 (cascadeVoidChildren raw-stamps driver_settlement_deductions.voided_at). The Creator Edit /
-     * POST /reverse path (reverseSettlementForVoid) passes false: its deductions go only through the owner-ruled
-     * three-branch engine (reverseDeductionForVoid -> voidSettlementDeduction, "why would I forgive the debt") or are
-     * restored to pending by the GL reversal — a raw voided_at stamp on an applied-but-uncollected deduction there would
-     * forgive the driver's debt. Default true (executeVoidCancel's existing behaviour, unchanged).
+     * false = do NOT run step 2 (cascadeVoidChildren). The Creator Edit / POST /reverse path (reverseSettlementForVoid)
+     * passes false (it used to raw-stamp driver_settlement_deductions.voided_at; since LEAD 443.193 that entry is gone from
+     * CASCADE_CHILDREN on every path and deductions follow step 5). Default true (executeVoidCancel).
      */
     voidChildren?: boolean;
   }
@@ -95,10 +108,18 @@ export async function completeDriverSettlementVoidCascadeInClientTx(
     [settlementId, operatingCompanyId]
   );
 
+  // 5. deductions — LEAD 443.193 (see the header). Only when nothing was posted: a reversed run already restored them.
+  const deductionRelease =
+    input.glReversalResult === "nothing_to_reverse"
+      ? await restoreSettlementDeductionsInClientTx(client, { operatingCompanyId, settlementId, reason }, { userId }, { glPosted: false })
+      : null;
+
   return {
     lines_voided: (lines.rows ?? []).map((r) => r.id),
     driver_bills_released: (bills.rows ?? []).map((r) => r.id),
     reimbursements_released: (reimbursements.rows ?? []).map((r) => r.id),
+    deductions_released: deductionRelease?.deduction_ids ?? [],
+    deductions_retained: deductionRelease?.retained_ids ?? [],
     children,
   };
 }

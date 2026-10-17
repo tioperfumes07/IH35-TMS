@@ -48,12 +48,20 @@ function assertSources() {
   }
   if (!/PERMIT/.test(mapper)) problems.push(`${MAPPER}: must keep PERMIT alias`);
 
+  // 443.159 (747999d9fb, #26794 — owner 2026-10-16) moved bill Section A options off
+  // catalogs.expense_categories onto the Chart of Accounts: a NEW pick is a GL account and posts through
+  // bill_lines.account_id (poster explicit tier), so editor options no longer carry ECON-012 map keys.
+  // The map keys still matter for LEGACY lines that already hold a catalogs.expense_categories id — the
+  // rule now locks that those lines keep their category (never re-stamped as account_id) and that the
+  // mapper only falls to the map-key path when no account_id was picked.
   const editor = read(EDITOR);
-  if (!/category_kind: String\(meta\.category_kind/.test(editor)) {
-    problems.push(`${EDITOR}: bill options must carry metadata.category_kind`);
+  if (!/legacyCategoryIdsRef/.test(editor) || !/legacyCategoryIdsRef\.current\.has\(picked\)/.test(editor)) {
+    problems.push(`${EDITOR}: legacy expense-category lines must keep their category id (and its ECON-012 map keys), not be re-stamped as account_id`);
   }
-  if (!/category_map_code: String\(meta\.category_code/.test(editor)) {
-    problems.push(`${EDITOR}: bill options must carry metadata.category_code`);
+  const accountBranch = mapper.indexOf("if (accountId)");
+  const mapBranch = mapper.indexOf("mapExpenseCatalogCodeToBillCategory(line.expense_category_code");
+  if (accountBranch < 0 || mapBranch < 0 || accountBranch > mapBranch) {
+    problems.push(`${MAPPER}: a picked account_id must post on its own branch BEFORE the ECON-012 map-key fallback`);
   }
 
   const box = read(BOX);
@@ -114,7 +122,22 @@ if (process.argv.includes("--selftest")) {
       fs.writeFileSync(migAbs, original);
     }
     if (child.status === 0) throw new Error("planted revenue-exclusion removal should fail live assert");
-    console.log(`${LABEL} selftest OK (planted failure exit=${child.status})`);
+    // Planted failure: legacy category lines re-stamped as account_id → must fail.
+    const edAbs = path.join(ROOT, EDITOR);
+    const edOriginal = fs.readFileSync(edAbs, "utf8");
+    if (!edOriginal.includes("legacyCategoryIdsRef.current.has(picked)")) throw new Error("selftest setup: legacy guard text not found");
+    fs.writeFileSync(edAbs, edOriginal.replace("legacyCategoryIdsRef.current.has(picked)", "false"));
+    let child2;
+    try {
+      child2 = spawnSync(process.execPath, [path.join(ROOT, "scripts", "verify-econ-012-expense-category-map-align.mjs")], {
+        cwd: ROOT,
+        encoding: "utf8",
+      });
+    } finally {
+      fs.writeFileSync(edAbs, edOriginal);
+    }
+    if (child2.status === 0) throw new Error("planted legacy-category re-stamp should fail live assert");
+    console.log(`${LABEL} selftest OK (planted failures exit=${child.status}/${child2.status})`);
     process.exit(0);
   } catch (e) {
     console.error(`${LABEL} selftest FAIL`, e);

@@ -19,7 +19,7 @@ type Db = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]
 const RELIEVED_SQL = `
   SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::bigint AS relieved
     FROM accounting.journal_entry_postings p
-    JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid
+    JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.operating_company_id = p.operating_company_id
     JOIN accounting.faro_reserve_entries e ON p.source_transaction_type = 'faro_reserve_entry' AND p.source_transaction_id = e.id::text
    WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid AND e.faro_invoice_number = $3
      AND j.voided_at IS NULL AND j.reversed_by_je_id IS NULL AND j.reverses_je_id IS NULL AND p.reversal_of_line_id IS NULL`;

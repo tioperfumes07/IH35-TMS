@@ -36,6 +36,10 @@ const CALLEE_FILE = path.join(ROOT, "apps", "backend", "src", "driver-finance", 
 const EXECUTORS_FILE = path.join(ROOT, "apps", "backend", "src", "governance", "void-cancel-executors.ts");
 // LEAD 443.192 follow-up: the ONE driver-settlement void cascade, shared by the executor AND reverseSettlementForVoid.
 const CASCADE_FILE = path.join(ROOT, "apps", "backend", "src", "driver-finance", "driver-settlement-void-cascade.service.ts");
+// LEAD 443.193: the canonical deduction restore (the GL reversal's own unwind), reused for the nothing_to_reverse path.
+const RESTORE_FILE = path.join(ROOT, "apps", "backend", "src", "accounting", "settlement-posting", "settlement-posting.service.ts");
+const RESTORE_RE = /export async function restoreSettlementDeductionsInClientTx\([\s\S]*?\n\}/;
+const ENGINE_FILE = path.join(ROOT, "apps", "backend", "src", "accounting", "cascade-void-engine.service.ts");
 const CASCADE_RE = /export async function completeDriverSettlementVoidCascadeInClientTx\([\s\S]*?\n\}/;
 function readCascade() {
   // The cascade lived in void-cancel-executors.ts before the 443.192 follow-up moved it to a leaf module — read either.
@@ -151,6 +155,8 @@ export function cancelledHeaderOffenders(src = null) {
   if (!/header_already_cancelled: true/.test(exec)) out.push(`${path.relative(ROOT, file)}: finishing a cancelled header must write the void audit`);
   out.push(...reimbursementReleaseOffenders(text, src === null ? readCascade() : (text.match(CASCADE_RE)?.[0] ?? readCascade())));
   if (src === null) out.push(...calleeReleaseOffenders());
+  // LEAD 443.193: no deduction is ever voided by a settlement void; nothing_to_reverse releases them (both paths).
+  if (src === null) out.push(...deductionReleaseOffenders());
   return out;
 }
 
@@ -210,6 +216,74 @@ export function calleeReleaseOffenders(calleeText = null) {
   if (!/voidChildren:\s*false/.test(callArgs)) out.push(`${rel}: reverseSettlementForVoid must pass voidChildren: false (deductions go only through the owner-ruled deduction engine)`);
   if (!/driver_bills_released:\s*cascade\.driver_bills_released/.test(body)) out.push(`${rel}: the reversed audit must name the released driver bills`);
   if (!/reimbursements_released:\s*cascade\.reimbursements_released/.test(body)) out.push(`${rel}: the reversed audit must name the released reimbursements`);
+  return out;
+}
+
+/**
+ * LEAD 443.193 (Lead 14:05Z (b) + follow-up): a settlement void NEVER voids a deduction, on EITHER path.
+ *  - Before: executeVoidCancel('driver_settlement') ran cascadeVoidChildren with driver_settlement_deductions registered as a
+ *    voided_at child (a raw stamp forgave an applied-but-uncollected deduction — 0 such rows on prod 2026-10-17), and
+ *    reverseSettlementForVoid on nothing_to_reverse left them linked to the cancelled settlement (0 rows today).
+ *  - Requires: CASCADE_CHILDREN.driver_settlement has no driver_settlement_deductions entry; the shared cascade releases them
+ *    through restoreSettlementDeductionsInClientTx(..., { glPosted: false }) only when glReversalResult is
+ *    nothing_to_reverse (a reversed run already restored them); BOTH callers pass glReversalResult: reversal.result and name
+ *    deductions_released in every void / reversed audit; the executor counts a release as a write (else an audited cancelled
+ *    header is already_done); the restore's never-posted mode releases only plain pending + unvoided rows, never stamps
+ *    voided_at, and credits a bucket back only for an application the bucket ledger recorded.
+ */
+const DRIVER_SETTLEMENT_CHILDREN_RE = /driver_settlement:\s*\[[\s\S]*?\n  \],/;
+const readOr = (f) => (fs.existsSync(f) ? fs.readFileSync(f, "utf8") : "");
+export function deductionReleaseOffenders(srcs = {}) {
+  const calleeText = srcs.callee ?? readOr(CALLEE_FILE);
+  const execText = srcs.exec ?? readOr(EXECUTORS_FILE);
+  const cascade = srcs.cascade ?? readCascade();
+  const engine = srcs.engine ?? readOr(ENGINE_FILE);
+  const restoreText = srcs.restore ?? readOr(RESTORE_FILE);
+  const out = [];
+  const R = (f) => path.relative(ROOT, f);
+
+  const children = engine.match(DRIVER_SETTLEMENT_CHILDREN_RE)?.[0] ?? "";
+  if (!children) out.push(`${R(ENGINE_FILE)}: CASCADE_CHILDREN.driver_settlement not found`);
+  else if (/table:\s*"driver_settlement_deductions"/.test(children))
+    out.push(`${R(ENGINE_FILE)}: CASCADE_CHILDREN.driver_settlement registers driver_settlement_deductions — a settlement void would raw-stamp voided_at and forgive the driver's debt`);
+
+  const callAt = cascade.search(/restoreSettlementDeductionsInClientTx\(/);
+  if (callAt < 0) {
+    out.push(`${R(CASCADE_FILE)}: the settlement void cascade does not release deductions on nothing_to_reverse (restoreSettlementDeductionsInClientTx)`);
+  } else {
+    const call = cascade.slice(callAt).match(/^restoreSettlementDeductionsInClientTx\([\s\S]*?\}\s*\)/)?.[0] ?? "";
+    if (!/glPosted:\s*false/.test(call)) out.push(`${R(CASCADE_FILE)}: the deduction release must use the restore's never-posted mode (glPosted: false)`);
+    if (!/glReversalResult\s*===\s*"nothing_to_reverse"/.test(cascade.slice(Math.max(0, callAt - 200), callAt)))
+      out.push(`${R(CASCADE_FILE)}: the deduction release must run only when the GL reversal returned nothing_to_reverse (a reversed run already restored them)`);
+  }
+  if (!/deductions_released:\s*deductionRelease/.test(cascade)) out.push(`${R(CASCADE_FILE)}: the cascade must return the released deduction ids`);
+
+  const calleeBody = extractCalleeBody("reverseSettlementForVoid", calleeText) ?? "";
+  const calleeCall = calleeBody.slice(Math.max(0, calleeBody.indexOf("completeDriverSettlementVoidCascadeInClientTx("))).match(/^completeDriverSettlementVoidCascadeInClientTx\([\s\S]*?\}\)/)?.[0] ?? "";
+  if (!/glReversalResult:\s*reversal\.result/.test(calleeCall)) out.push(`${R(CALLEE_FILE)}: reverseSettlementForVoid must pass glReversalResult: reversal.result to the cascade`);
+  if (!/deductions_released:\s*cascade\.deductions_released/.test(calleeBody)) out.push(`${R(CALLEE_FILE)}: the reversed audit must name the released deduction ids`);
+
+  const exec = execText.match(/const executeDriverSettlement: EntityExecutor = async[\s\S]*?\n\};/)?.[0] ?? "";
+  const execCall = exec.slice(Math.max(0, exec.indexOf("completeDriverSettlementVoidCascadeInClientTx("))).match(/^completeDriverSettlementVoidCascadeInClientTx\([\s\S]*?\}\)/)?.[0] ?? "";
+  if (!/glReversalResult:\s*reversal\.result/.test(execCall)) out.push(`${R(EXECUTORS_FILE)}: executeDriverSettlement must pass glReversalResult: reversal.result to the cascade`);
+  if (!/deductions_released\.length\s*>\s*0/.test(exec))
+    out.push(`${R(EXECUTORS_FILE)}: executeDriverSettlement must count released deductions as a write (else an audited cancelled header is already_done)`);
+  if ((exec.match(/deductions_released:\s*cascade\.deductions_released/g) ?? []).length < 2)
+    out.push(`${R(EXECUTORS_FILE)}: both void audits (cancelled header + fresh void) must name the released deductions`);
+
+  const restore = restoreText.match(RESTORE_RE)?.[0] ?? "";
+  if (!restore) {
+    out.push(`${R(RESTORE_FILE)}: restoreSettlementDeductionsInClientTx not found`);
+    return out;
+  }
+  if (!/glPosted\?:\s*boolean/.test(restore)) out.push(`${R(RESTORE_FILE)}: restoreSettlementDeductionsInClientTx has no never-posted mode (glPosted option)`);
+  if (!/d\.status\s*===\s*"pending"\s*&&\s*!d\.is_voided/.test(restore))
+    out.push(`${R(RESTORE_FILE)}: the never-posted restore must release only plain pending, unvoided deductions (never a collected / voided one)`);
+  const upd = restore.match(/UPDATE\s+driver_finance\.driver_settlement_deductions\b[\s\S]*?RETURNING[^`]*`/)?.[0] ?? "";
+  if (!upd || /voided_at/.test(upd) || !/applied_to_settlement_id\s*=\s*NULL/.test(upd) || !/status\s*=\s*'pending'/.test(upd))
+    out.push(`${R(RESTORE_FILE)}: the restore must clear the link and return the deduction to 'pending' — never void / forgive it`);
+  if (!/'application'/.test(restore) || !/driver_deduction_bucket_events/.test(restore))
+    out.push(`${R(RESTORE_FILE)}: the never-posted restore must credit a bucket back only for an application the bucket ledger recorded`);
   return out;
 }
 
@@ -303,6 +377,29 @@ async function selftest() {
   for (const [name, planted] of calleePlants) {
     if (planted === realCallee) failures.push(`case8 setup FAIL — plant '${name}' did not change the source`);
     else if (!calleeReleaseOffenders(planted).length) failures.push(`case8 FAIL — plant '${name}' went undetected`);
+  }
+
+  // case9 (443.193): a settlement void never voids a deduction; nothing_to_reverse releases them via the canonical restore.
+  const real = { callee: realCallee, exec: realExec, cascade: realCascade, engine: fs.readFileSync(ENGINE_FILE, "utf8"), restore: fs.readFileSync(RESTORE_FILE, "utf8") };
+  if (deductionReleaseOffenders(real).length) failures.push(`case9 FAIL — the real sources must be clean: ${deductionReleaseOffenders(real).join("; ")}`);
+  const dedPlants = [
+    ["deductions re-registered as a settlement void child", { engine: real.engine.replace(/(\{ schema: "driver_finance", table: "escrow_ledger")/, '{ schema: "driver_finance", table: "driver_settlement_deductions", fkColumn: "applied_to_settlement_id", livenessColumn: "voided_at", writeKind: "timestamp" },\n    $1') }],
+    ["cascade release call removed", { cascade: real.cascade.replace(/restoreSettlementDeductionsInClientTx\(/, "noRestore(") }],
+    ["full (GL) mode on an unposted settlement", { cascade: real.cascade.replace(/glPosted: false/, "glPosted: true") }],
+    ["release not gated on nothing_to_reverse", { cascade: real.cascade.replace(/input\.glReversalResult === "nothing_to_reverse"/, "true") }],
+    ["executor does not pass the GL result", { exec: real.exec.replace(/\n\s*glReversalResult: reversal\.result,/, "") }],
+    ["callee does not pass the GL result", { callee: real.callee.replace(/\n\s*glReversalResult: reversal\.result,/, "") }],
+    ["executor release not counted as a write", { exec: real.exec.replace(/ \|\| cascade\.deductions_released\.length > 0/, "") }],
+    ["executor audit omits released deductions", { exec: real.exec.replace(/\n\s*deductions_released: cascade\.deductions_released,/, "") }],
+    ["callee audit omits released deductions", { callee: real.callee.replace(/\n\s*deductions_released: cascade\.deductions_released,/, "") }],
+    ["collected deductions released", { restore: real.restore.replace(/d\.status === "pending" && !d\.is_voided/, "!d.is_voided") }],
+    ["deduction voided instead of released", { restore: real.restore.replace(/SET applied_to_settlement_id = NULL,/, "SET applied_to_settlement_id = NULL, voided_at = now(),") }],
+    ["bucket credited without a recorded draw", { restore: real.restore.replace(/'application'/g, "'charge'") }],
+  ];
+  for (const [name, patch] of dedPlants) {
+    const k = Object.keys(patch)[0];
+    if (patch[k] === real[k]) failures.push(`case9 setup FAIL — plant '${name}' did not change the source`);
+    else if (!deductionReleaseOffenders({ ...real, ...patch }).length) failures.push(`case9 FAIL — plant '${name}' went undetected`);
   }
 
   fs.rmSync(tmp, { recursive: true, force: true });

@@ -41,8 +41,13 @@ const EXPECTED_WRITABLE_CHILDREN = [
   { schema: "accounting", table: "invoice_lines", fkColumn: "invoice_id", livenessColumn: "soft_deleted_at" },
   { schema: "accounting", table: "bill_lines", fkColumn: "bill_id", livenessColumn: "voided_at" },
   { schema: "driver_finance", table: "settlement_lines", fkColumn: "settlement_id", livenessColumn: "voided_at" },
-  { schema: "driver_finance", table: "driver_settlement_deductions", fkColumn: "applied_to_settlement_id", livenessColumn: "voided_at" },
 ];
+
+// LEAD 443.193 — children a parent void must NEVER stamp. driver_settlement_deductions left CASCADE_CHILDREN: a raw
+// voided_at stamp under a voided settlement forgave an applied-but-uncollected deduction. A cancelled settlement RELEASES
+// its deductions (restoreSettlementDeductionsInClientTx — GL reversal, or the void cascade's never-posted step 5), so the
+// live arm's "no live deduction still linked to a cancelled settlement" below keeps holding — by release, not by void.
+const FORBIDDEN_CHILDREN = [{ schema: "driver_finance", table: "driver_settlement_deductions" }];
 
 // SCOPED EXCLUSION (Lead ruling, docs/bus/09-28-2026-LEAD-RULING-BILL-LINE-2822f791-CC1-ADOPTION-DEBRIS.md):
 // bill_lines row 2822f791-ff2e-43c5-9dfb-d8d0ba4f1e65 under voided bill d03de0c0-a54c-467a-8c04-
@@ -131,6 +136,11 @@ function staticCheck({ src, spec } = readStaticSources()) {
     }
   }
 
+  for (const f of FORBIDDEN_CHILDREN) {
+    if (new RegExp(`table:\\s*"${f.table}"`).test(src))
+      mismatches.push(`${f.schema}.${f.table}: must NOT be a CASCADE_CHILDREN entry (a settlement void would raw-stamp voided_at and forgive the driver's debt; release it through restoreSettlementDeductionsInClientTx)`);
+  }
+
   return mismatches;
 }
 
@@ -211,6 +221,7 @@ async function selftest() {
   const planted = [
     ["engine stops cascading invoice_lines", staticCheck({ ...sources, src: sources.src.replace(/table:\s*"invoice_lines"/, 'table: "invoice_lines_x"') }).length > 0],
     ["engine cascades settlement_lines on the wrong column", staticCheck({ ...sources, src: sources.src.replace(/(table:\s*"settlement_lines",\s*fkColumn:\s*"settlement_id",\s*livenessColumn:\s*)"voided_at"/, '$1"soft_deleted_at"') }).length > 0],
+    ["deductions re-registered as a void child", staticCheck({ ...sources, src: sources.src.replace(/(\{ schema: "driver_finance", table: "escrow_ledger")/, '{ schema: "driver_finance", table: "driver_settlement_deductions", fkColumn: "applied_to_settlement_id", livenessColumn: "voided_at", writeKind: "timestamp" },\n    $1') }).length > 0],
     ["spec JSON live_predicate drifts", staticCheck({ ...sources, spec: specDrift }).length > 0],
     ["live bill_line under a voided bill", (await liveCheck(fakeClient((c) => (c.childTable === "accounting.bill_lines" ? 1 : 0)))).length === 1],
     ["live deduction under a cancelled settlement", (await liveCheck(fakeClient((c) => (c.childTable === "driver_finance.driver_settlement_deductions" ? 3 : 0)))).length === 1],

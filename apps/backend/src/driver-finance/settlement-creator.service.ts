@@ -234,7 +234,8 @@ export async function restateOpenDriverBillToSignedPay(
     // A bill "settled" in a voided / cancelled settlement (a seed shell regrouped away) is settled in nothing.
     `SELECT b.status::text,
             (SELECT s.id::text FROM driver_finance.driver_settlements s
-              WHERE s.id = b.settled_in_settlement_id AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settled,
+              WHERE s.id = b.settled_in_settlement_id AND s.operating_company_id = b.operating_company_id
+                AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settled,
             b.accrued_bill_id::text AS accrued
        FROM driver_finance.driver_bills b WHERE b.id = $1::uuid`,
     [b.id],
@@ -297,7 +298,7 @@ export async function restateAdoptedLoadToZeroRevenue(
   const earn = (await client.query<{ je: string }>(
     `SELECT DISTINCT p.journal_entry_uuid::text AS je
        FROM accounting.journal_entry_postings p
-       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid AND p.load_id = $2::uuid AND p.source_transaction_type = 'load'
         AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL`,
     [input.companyId, input.loadId],

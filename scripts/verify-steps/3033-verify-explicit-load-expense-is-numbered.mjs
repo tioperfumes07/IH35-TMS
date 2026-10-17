@@ -23,7 +23,13 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const LABEL = "3033-verify-explicit-load-expense-is-numbered";
-const TARGET = path.join(ROOT, "apps/backend/src/accounting/expenses.routes.ts");
+// 443.130 #3 (c4dc73d5ba, #26691) moved the expense create path (createExpenseInClientTx, both attribution
+// branches) out of the HTTP route module expenses.routes.ts into the shared writer expense-writer.service.ts.
+const TARGET = path.join(ROOT, "apps/backend/src/accounting/expense-writer.service.ts");
+// 443.112 #1 (fcf3e8434a, #26635) replaced the branch's inline link INSERT with the ONE link writer
+// insertExpenseLoadLink (expense-number.ts). The branch must call it with the CHECK-valid literals, and the
+// helper must still be the real INSERT — both halves are asserted, so neither can be hollowed out.
+const LINK_HELPER = path.join(ROOT, "apps/backend/src/expense-attribution/expense-number.ts");
 
 function fail(msg) {
   console.error(`[${LABEL}] FAIL: ${msg}`);
@@ -39,11 +45,27 @@ function explicitLoadBranch(src) {
   return endRel === -1 ? rest : rest.slice(0, endRel);
 }
 
-// srcOverride: planted text for --selftest (no file is written).
-function audit(srcOverride) {
+/** The body of `export async function insertExpenseLoadLink(` up to the next top-level `export`. */
+function linkHelperBody(src) {
+  const start = src.indexOf("export async function insertExpenseLoadLink(");
+  if (start === -1) return null;
+  const next = src.indexOf("\nexport ", start + 1);
+  return next === -1 ? src.slice(start) : src.slice(start, next);
+}
+
+// srcOverride / helperOverride: planted text for --selftest (no file is written).
+function audit(srcOverride, helperOverride) {
   const problems = [];
   if (srcOverride === undefined && !fs.existsSync(TARGET)) return [`missing ${path.relative(ROOT, TARGET)}`];
   const src = srcOverride ?? fs.readFileSync(TARGET, "utf8");
+  if (helperOverride === undefined && !fs.existsSync(LINK_HELPER)) return [`missing ${path.relative(ROOT, LINK_HELPER)}`];
+  const helper = linkHelperBody(helperOverride ?? fs.readFileSync(LINK_HELPER, "utf8"));
+  if (!helper) {
+    return ["could not locate `export async function insertExpenseLoadLink(` — the one link writer is gone; the guard must not pass silently"];
+  }
+  if (!/INSERT INTO\s+expense_attribution\.expense_load_links/i.test(helper)) {
+    problems.push("insertExpenseLoadLink no longer INSERTs expense_attribution.expense_load_links — the one link writer writes nothing");
+  }
 
   const branch = explicitLoadBranch(src);
   if (!branch) {
@@ -58,9 +80,11 @@ function audit(srcOverride) {
       "explicit-load branch does not call generateExpenseNumber — a hand-stamped load expense would be attributed in substance and unnumbered in data (the original defect)"
     );
   }
-  if (!/INSERT INTO\s+expense_attribution\.expense_load_links/i.test(branch)) {
+  // The link row: the one writer insertExpenseLoadLink (443.112 #1), or — never both needed — a raw INSERT.
+  const callsLinkWriter = /await\s+insertExpenseLoadLink\s*\(/.test(branch);
+  if (!callsLinkWriter && !/INSERT INTO\s+expense_attribution\.expense_load_links/i.test(branch)) {
     problems.push(
-      "explicit-load branch does not INSERT expense_attribution.expense_load_links — the attribution would exist on the expense row but nowhere in the attribution ledger"
+      "explicit-load branch does not record expense_attribution.expense_load_links (insertExpenseLoadLink) — the attribution would exist on the expense row but nowhere in the attribution ledger"
     );
   }
   if (!/UPDATE accounting\.expenses SET expense_number/i.test(branch)) {
@@ -74,14 +98,17 @@ function audit(srcOverride) {
   }
 
   // ACCT-F5044 — CHECK-compatible literals on the link INSERT only (outbox may still say explicit_load).
-  if (!/VALUES\s*\([^)]*'user_assigned'\s*,\s*'high'/s.test(branch)) {
+  const linkCall = callsLinkWriter ? branch.slice(branch.search(/await\s+insertExpenseLoadLink\s*\(/)).split(/\}\s*\)\s*;/)[0] : "";
+  const literalOk = /VALUES\s*\([^)]*'user_assigned'\s*,\s*'high'/s.test(branch);
+  const callOk = /\bmethod:\s*["']user_assigned["']/.test(linkCall) && /\bconfidence:\s*["']high["']/.test(linkCall);
+  if (!literalOk && !callOk) {
     problems.push(
-      "explicit-load branch must INSERT expense_load_links VALUES with attribution_method='user_assigned' and attribution_confidence='high' (CHECK-compatible)"
+      "explicit-load branch must record expense_load_links with attribution_method='user_assigned' and attribution_confidence='high' (CHECK-compatible)"
     );
   }
-  if (/VALUES\s*\([^)]*'explicit_load'/s.test(branch)) {
+  if (/VALUES\s*\([^)]*'explicit_load'/s.test(branch) || /\bmethod:\s*["']explicit_load["']/.test(linkCall)) {
     problems.push(
-      "explicit-load branch INSERT still uses CHECK-illegal attribution_method 'explicit_load'"
+      "explicit-load branch still uses CHECK-illegal attribution_method 'explicit_load'"
     );
   }
 
@@ -118,8 +145,8 @@ function selftest() {
       ),
     ],
     [
-      "link-row insert removed",
-      inBranch((b) => b.replace(/INSERT INTO expense_attribution\.expense_load_links/, "INSERT INTO expense_attribution.disabled_links")),
+      "link-row writer call removed",
+      inBranch((b) => b.replace(/await insertExpenseLoadLink\(/, "await someOtherWriter(")),
     ],
     [
       "expense_number stamp removed",
@@ -127,7 +154,11 @@ function selftest() {
     ],
     [
       "CHECK-illegal attribution_method restored",
-      inBranch((b) => b.replace(/'user_assigned','high'/, "'explicit_load',1")),
+      inBranch((b) => b.replace(/method: "user_assigned"/, 'method: "explicit_load"')),
+    ],
+    [
+      "CHECK-illegal confidence restored",
+      inBranch((b) => b.replace(/confidence: "high"/, "confidence: 1")),
     ],
     ["branch renamed away (inert-guard detection)", (s) => s.replace("} else if (body.load_id) {", "} else if (body.some_other_field) {")],
   ];
@@ -141,6 +172,13 @@ function selftest() {
     if (stillClean) fail(`selftest: expected FAIL after mutation "${name}"`);
     planted += 1;
   }
+
+  // The one link writer hollowed out: the branch still calls it, but it writes nothing.
+  const originalHelper = fs.readFileSync(LINK_HELPER, "utf8");
+  const hollow = originalHelper.replace(/INSERT INTO expense_attribution\.expense_load_links/, "INSERT INTO expense_attribution.disabled_links");
+  if (hollow === originalHelper) fail('selftest INERT: mutation "link writer hollowed" did not apply');
+  if (audit(undefined, hollow).length === 0) fail('selftest: expected FAIL after mutation "link writer hollowed"');
+  planted += 1;
 
   const clean = audit();
   if (clean.length) fail(`selftest cleanup still red: ${clean.join("; ")}`);

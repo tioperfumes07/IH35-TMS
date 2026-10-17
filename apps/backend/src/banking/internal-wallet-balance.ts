@@ -130,7 +130,7 @@ async function sumLedgerBalanceCents(
                       ELSE CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END
                  END), 0)::text AS balance_cents
           FROM banking.bank_accounts ba
-          JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id
+          JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id AND ca.operating_company_id = ba.operating_company_id
           JOIN accounting.journal_entry_postings p
             ON p.account_id = ba.ledger_account_id AND p.operating_company_id = ba.operating_company_id
           JOIN accounting.journal_entries je

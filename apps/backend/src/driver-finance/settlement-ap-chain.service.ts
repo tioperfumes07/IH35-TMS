@@ -328,7 +328,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     const ls = lines.get(apChainBillKey(b))!;
     if (b.accruedBillId) {
       const acc = (await client.query<{ amount: number; open: number; voided: boolean; vendor: string | null; je: string | null }>(
-        `SELECT b.amount_cents::int AS amount, (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS open, (b.voided_at IS NOT NULL) AS voided,
+        `SELECT b.amount_cents::int AS amount, (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS open, (b.voided_at IS NOT NULL OR b.revoked_at IS NOT NULL) AS voided,
                 b.mdata_vendor_id::text AS vendor,
                 (SELECT p.journal_entry_uuid::text FROM accounting.journal_entry_postings p
                   WHERE p.operating_company_id = b.operating_company_id AND p.source_transaction_type = 'bill' AND p.source_transaction_id::text = b.id::text

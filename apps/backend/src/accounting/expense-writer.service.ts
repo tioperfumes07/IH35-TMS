@@ -18,6 +18,7 @@ import { postSourceTransaction, postSourceTransactionInClientTx, PostingEngineEr
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { nextExpenseDisplayId } from "./display-id.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
+import { logger } from "../observability/structured-logger.js";
 
 /**
  * LEAD 443.182 C — ONE writer per document. These two functions are the only INSERTs of an expense header
@@ -452,7 +453,12 @@ export async function emitOutbox(client: any, eventType: string, payload: Record
 
 export async function insertUnattributedAlert(client: any, operatingCompanyId: string, expenseId: string) {
   const ok = await relationExists(client, "qbo.sync_alerts");
-  if (!ok) return;
+  if (!ok) {
+    logger.warn("expense_unattributed_alert_unavailable", { operating_company_id: operatingCompanyId, expense_id: expenseId, missing: "qbo.sync_alerts" });
+    // Degrade WITH a signal (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE): with no alert table the unattributed-expense alert
+    // cannot be raised — say so instead of silently dropping it. The expense itself is unaffected.
+    return;
+  }
   // 443.129 — schema drift: a fresh migration chain gives qbo.sync_alerts entity_type + error_message NOT NULL, prod's
   // table has neither column. Writing them only when they exist keeps this alert (and the expense create that raises
   // it) working on both — it used to fail every driver expense without a load on a fresh database (CI).
@@ -995,8 +1001,8 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
         : (
             (
               await client.query(
-                `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label FROM catalogs.accounts a WHERE a.id = $1::uuid`,
-                [categoryAccountId]
+                `SELECT NULLIF(concat_ws(' ', a.account_number, a.account_name), '') AS label FROM catalogs.accounts a WHERE a.id = $1::uuid AND a.operating_company_id = $2::uuid`,
+                [categoryAccountId, body.operating_company_id]
               )
             ).rows[0] as { label?: string | null } | undefined
           )?.label ?? null;

@@ -26,3 +26,5 @@ new work. Palette/breadcrumb leftovers are non-money FE and are not this closeou
 
 If a new money defect appears on tip census, file it in OUTBOX-CC-1 with Neon proof and wait for
 Lead assignment. Do not invent a queue from Downloads or GUARD-WORKORDERS.
+
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.

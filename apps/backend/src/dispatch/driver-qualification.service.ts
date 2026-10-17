@@ -347,7 +347,7 @@ export async function assertDriverQualifiedForLoad(
         CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
         -- 443.192: a merged-away record (driver-merge engine / Samsara "Same person") is not a person — see below.
         d.merged_into_driver_id::text AS merged_into,
-        (SELECT CONCAT_WS(' ', s.first_name, s.last_name) FROM mdata.drivers s WHERE s.id = d.merged_into_driver_id) AS merged_into_name,
+        (SELECT CONCAT_WS(' ', s.first_name, s.last_name) FROM mdata.drivers s WHERE s.id = d.merged_into_driver_id AND s.operating_company_id = d.operating_company_id) AS merged_into_name,
         (d.deactivated_at IS NOT NULL) AS is_deactivated,
         (d.archived_at IS NOT NULL) AS is_archived,
         -- LV-INACTIVE-DRIVER-ASSIGNED-AND-DELIVERED-REVENUE-LOAD: status can independently say

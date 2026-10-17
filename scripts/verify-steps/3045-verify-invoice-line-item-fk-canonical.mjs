@@ -26,6 +26,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const LABEL = "3045-verify-invoice-line-item-fk-canonical";
 const MIGRATION = path.join(ROOT, "db/migrations/202612481100_invoice_lines_item_id_canonical_fk.sql");
 const ROUTE = path.join(ROOT, "apps/backend/src/accounting/invoice-lines.routes.ts");
+// LEAD 443.128 A (a9ec441762, #26708) extracted the POST's INSERT into THE invoice-line writer
+// createInvoiceLineInClientTx (invoice-line-create.ts), which the route calls with its parsed body. The create
+// path is therefore asserted on the writer (INSERT names item_id and binds input.item_id) AND on the route
+// (it hands the whole parsed body — item_id included — to that writer).
+const WRITER = path.join(ROOT, "apps/backend/src/accounting/invoice-line-create.ts");
 
 function fail(msg) {
   console.error(`[${LABEL}] FAIL: ${msg}`);
@@ -40,7 +45,7 @@ function stripTs(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, " ").split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
 }
 
-// over: {mig, route} planted text for --selftest (no file is written).
+// over: {mig, route, writer} planted text for --selftest (no file is written).
 function audit(over = {}) {
   const problems = [];
 
@@ -73,19 +78,33 @@ function audit(over = {}) {
     problems.push("route no longer handles qbo_item_id — the QBO-realm linkage must survive alongside item_id");
   }
 
-  // CREATE path: column named in the INSERT and a value bound for it.
-  const insertBlock = src.match(/INSERT INTO accounting\.invoice_lines[\s\S]*?RETURNING \*/);
+  // CREATE path (writer): column named in the INSERT and a value bound for it.
+  if (over.writer === undefined && !fs.existsSync(WRITER)) {
+    problems.push(`missing ${path.relative(ROOT, WRITER)}`);
+    return problems;
+  }
+  const writer = stripTs(over.writer ?? fs.readFileSync(WRITER, "utf8"));
+  const insertBlock = writer.match(/INSERT INTO accounting\.invoice_lines[\s\S]*?RETURNING \*/);
   if (!insertBlock) {
-    problems.push("could not locate the INSERT INTO accounting.invoice_lines block — guard cannot verify the create path and must not pass silently");
+    problems.push("could not locate the INSERT INTO accounting.invoice_lines block in the invoice-line writer — guard cannot verify the create path and must not pass silently");
   } else if (!/\bitem_id\b/.test(insertBlock[0])) {
     problems.push("the invoice-line INSERT does not persist item_id — the column would be decoration (ACCT-F329)");
+  }
+  if (!/input\.item_id\s*\?\?\s*null/.test(writer)) {
+    problems.push("the invoice-line writer never binds input.item_id — the INSERT names the column but writes no value");
+  }
+  // CREATE path (route): the parsed body, item_id included, reaches the writer.
+  if (!/createInvoiceLineInClientTx\s*\([^)]*\.\.\.body\.data\b/.test(src)) {
+    problems.push("the POST route no longer hands its parsed body (item_id included) to createInvoiceLineInClientTx — the API would accept an item and silently discard it");
   }
   if (!/body\.data\.item_id/.test(src)) {
     problems.push("route never reads body.data.item_id — the API would accept an item and silently discard it");
   }
 
   // PATCH path: settable AND clearable.
-  if (!/"item_id" in body\.data/.test(src)) {
+  // The PATCH must ADD item_id to the SET list — `"item_id" in body.data` alone also matches the item/account
+  // consistency read (443.100 row 816, 001f9ea35f), which persists nothing.
+  if (!/"item_id" in body\.data\)\s*add\(\s*"item_id"\s*,\s*body\.data\.item_id/.test(src)) {
     problems.push("the PATCH path does not persist item_id — a line whose item cannot be corrected is the same dead end in slower motion");
   }
 
@@ -95,20 +114,25 @@ function audit(over = {}) {
 function selftest() {
   const originalMig = fs.readFileSync(MIGRATION, "utf8");
   const originalRoute = fs.readFileSync(ROUTE, "utf8");
+  const originalWriter = fs.readFileSync(WRITER, "utf8");
   let planted = 0;
 
   // Each mutation returns the planted {mig, route} text; nothing on disk is written.
   const mutations = [
     ["FK downgraded to a bare uuid", () => ({ mig: originalMig.replace(/item_id\s+uuid\s+REFERENCES\s+catalogs\.items\s*\(\s*id\s*\)/i, "item_id uuid") })],
     ["qbo_item_id dropped (would break QBO-realm entities)", () => ({ mig: originalMig.replace(/COMMIT;/, "ALTER TABLE accounting.invoice_lines DROP COLUMN qbo_item_id;\nCOMMIT;") })],
-    ["create path stops persisting item_id", () => ({ route: originalRoute.replace(/\n\s*item_id,\n(\s*display_order\n)/, "\n$1") })],
+    ["create path stops persisting item_id", () => ({ writer: originalWriter.replace(/\n(\s*)item_id,\n(\s*item_account_override_reason,\n)/, "\n$2") })],
+    ["writer stops binding item_id", () => ({ writer: originalWriter.replace(/input\.item_id \?\? null/, "null") })],
+    ["route stops handing the body to the writer", () => ({ route: originalRoute.replace(/\.\.\.body\.data \}/, "description: body.data.description }") })],
     ["patch path stops persisting item_id", () => ({ route: originalRoute.replace(/if \("item_id" in body\.data\) add\("item_id", body\.data\.item_id \?\? null\);/, "") })],
   ];
 
   for (const [name, mutate] of mutations) {
     const over = mutate();
     const changed =
-      (over.mig !== undefined && over.mig !== originalMig) || (over.route !== undefined && over.route !== originalRoute);
+      (over.mig !== undefined && over.mig !== originalMig) ||
+      (over.route !== undefined && over.route !== originalRoute) ||
+      (over.writer !== undefined && over.writer !== originalWriter);
     if (!changed) {
       fail(`selftest INERT: mutation "${name}" did not apply — the guard proves nothing`);
     }

@@ -531,7 +531,7 @@ export async function resolveBillEntryDate(
     `SELECT GREATEST(
               (SELECT i.issue_date FROM accounting.invoices i WHERE i.id = $3::uuid AND i.operating_company_id = $1::uuid),
               (SELECT max(je.entry_date) FROM accounting.load_revenue_recognition_postings p
-                 JOIN accounting.journal_entries je ON je.id = p.journal_entry_id
+                 JOIN accounting.journal_entries je ON je.id = p.journal_entry_id AND je.operating_company_id = p.operating_company_id
                 WHERE p.operating_company_id = $1::uuid AND p.load_id = $2::uuid AND p.event = 'earn' AND p.is_active
                   AND ${STANDING_LATCH_JE_PREDICATE})
             )::text AS bill_date,
