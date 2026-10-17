@@ -1635,6 +1635,26 @@ export async function postSettlementCreatorInClientTx(
           trailer_id: draft.trailer_id ?? null,
         });
         if (fillDoc.outcome === "refused") throw new SettlementCreatorError("relay_fill_document_refused", `Fuel line: ${fillDoc.reason}`);
+        // LEAD 443.192 — the fill's fuel row (its postings' source) names this settlement's load; a fill already POSTED ON
+        // RECEIPT carries the load the receipt engine stamped then. Carry the receipt to the row's load in this transaction
+        // (attach if load-less, else move through the reclassify engine) — before, the row and the postings disagreed
+        // (verify-every-load-born-posting-carries-its-load RULE 2: 44 postings / 12 Relay fills on prod 2026-10-17).
+        {
+          const { carryFuelReceiptToLoad } = await import("../fuel/fuel-receipt-repoint.service.js");
+          try {
+            await carryFuelReceiptToLoad(client as never, {
+              operatingCompanyId: draft.operating_company_id,
+              actorUserId,
+              fillKind: "relay_fuel",
+              fillId: relayFillId,
+              toLoadId: loadId,
+              toLoadNumber: fillLoad.loadNumber,
+              reason: `LEAD 443.192 — Settlement ${sourceDocumentRef ?? displayId} carries Relay fill to load ${fillLoad.loadNumber}`,
+            });
+          } catch (err) {
+            throw new SettlementCreatorError("relay_fill_load_move_refused", `Fuel line: the Relay fill already posted on another load and cannot move to load ${fillLoad.loadNumber} — ${(err as Error)?.message ?? err}`);
+          }
+        }
         expenseIds.push(fillDoc.expense_id);
       }
     }
