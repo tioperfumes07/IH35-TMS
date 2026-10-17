@@ -16707,5 +16707,10 @@
     "claimed_at": "2026-10-17",
     "claimed_by": "claude",
     "purpose": "CC-3 LEAD 443.184 (05:05Z): verify-load-status-written-only-by-status-module (stop events write at_pickup / at_delivery / in_transit / delivered through load-transition.service, audited)"
+  },
+  "18573": {
+    "claimed_at": "2026-10-17",
+    "claimed_by": "claude",
+    "purpose": "CC-3 LEAD 443.191: verify-views-keep-security-invoker (replaying db/migrations, every user-schema view ends security_invoker=true; CREATE OR REPLACE VIEW without it drops the option)"
   }
 }
