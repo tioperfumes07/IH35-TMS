@@ -29,6 +29,7 @@ const mocks = vi.hoisted(() => {
     mockUpdateBankBalance: vi.fn(),
     mockAudit: vi.fn(),
     mockIsEnabled: vi.fn(),
+    mockLumperExpense: vi.fn(async () => undefined),
   };
 });
 
@@ -38,6 +39,11 @@ vi.mock("../../accounting/bills.service.js", () => ({ updateBankBalance: mocks.m
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: mocks.mockAudit }));
 vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: mocks.mockIsEnabled }));
 vi.mock("../../driver-finance/driver-request-spine-emit.js", () => ({ emitDriverRequestSpineEvent: vi.fn() }));
+// a9ec441762 (#26708, 443.128 A — "a lumper paid by cash advance booked no expense") made the disburse transaction also
+// book the lumper advance's expense via recordLumperAdvanceExpenseInClientTx; that service's import graph reaches
+// auth/lucia.ts (luciaPool), which the auth/db mock above does not provide, so this file failed to load. It is a
+// collaborator inside the SAME transaction — mocked here and asserted below to receive the posting engine's client.
+vi.mock("../lumper-advance-expense.service.js", () => ({ recordLumperAdvanceExpenseInClientTx: mocks.mockLumperExpense }));
 
 const { disburseDriverAdvanceCore } = await import("../cash-advance-disburse.js");
 
@@ -76,6 +82,7 @@ describe("BCF-01: atomic disburse — UPDATE + GL in one transaction", () => {
     mocks.mockPost.mockReset();
     mocks.mockUpdateBankBalance.mockReset();
     mocks.mockAudit.mockReset();
+    mocks.mockLumperExpense.mockClear();
   });
 
   it("BCF-01-1: UPDATE and GL post happen inside ONE withCurrentUser call (single atomic tx)", async () => {
@@ -97,6 +104,9 @@ describe("BCF-01: atomic disburse — UPDATE + GL in one transaction", () => {
     // The first call's callback invoked the posting engine (mockPost), confirming atomicity.
     // If the old two-phase code ran, mockPost would appear in the SECOND withCurrentUser call.
     expect(mocks.withCurrentUser.mock.calls.length).toBeGreaterThanOrEqual(1);
+    // a9ec441762: the lumper-expense step runs on the SAME client as the GL post (one transaction), never its own.
+    expect(mocks.mockLumperExpense).toHaveBeenCalledTimes(1);
+    expect((mocks.mockLumperExpense.mock.calls[0] as unknown[])[0]).toBe((mocks.mockPost.mock.calls[0] as unknown[])[0]);
   });
 
   it("BCF-01-2 (regression gate): GL post failure must propagate — advance must NOT be silently left in half-disbursed state", async () => {
@@ -109,6 +119,7 @@ describe("BCF-01: atomic disburse — UPDATE + GL in one transaction", () => {
     await expect(
       disburseDriverAdvanceCore(ACTOR, "Owner", OPCO, { advance_id: ADV_ID })
     ).rejects.toThrow("PostingEngineError: BALANCE_SHEET_UNBALANCED");
+    expect(mocks.mockLumperExpense).not.toHaveBeenCalled();
   });
 
   it("BCF-01-3 (idempotency): a second call with already-disbursed advance returns 409 and never re-posts", async () => {
@@ -128,5 +139,6 @@ describe("BCF-01: atomic disburse — UPDATE + GL in one transaction", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.code).toBe(409);
     expect(mocks.mockPost).not.toHaveBeenCalled();
+    expect(mocks.mockLumperExpense).not.toHaveBeenCalled();
   });
 });
