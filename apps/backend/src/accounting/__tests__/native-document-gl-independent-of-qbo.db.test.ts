@@ -300,11 +300,10 @@ describeIntegration("QBO-origin documents post to independent native GL (real lo
     await local.connect();
     try {
       await refuseProductionDatabase(local);
-      await local.query(`CREATE TEMP TABLE lineage_scope_fixture (
-        id uuid, operating_company_id uuid, source_transaction_type text,
-        source_transaction_id text, source_transaction_line_id text, load_id uuid,
-        created_at timestamptz, reversal_of_line_id uuid, journal_entry_uuid uuid,
-        debit_or_credit text, amount_cents bigint)`);
+      // The fixture takes the real posting table's columns (no data, no NOT NULL / defaults) so it never drifts from
+      // what the guard reads: a hand-listed column set broke when 443.192 (#26930) taught the guard jep.reversed_by_line_id.
+      await local.query(`CREATE TEMP TABLE lineage_scope_fixture AS
+        SELECT * FROM accounting.journal_entry_postings WITH NO DATA`);
       const target = "5c854333-6ea5-4faa-af31-67cb272fef80";
       for (const opco of [target, randomUUID(), null]) {
         await local.query(`INSERT INTO pg_temp.lineage_scope_fixture
