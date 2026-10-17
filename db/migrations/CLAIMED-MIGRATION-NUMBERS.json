@@ -173,6 +173,11 @@
       "claimed_at": "2026-10-12",
       "purpose": "443.136 follow-up: accounting.posting_source_load_id fuel_event resolves a Relay fill with no fuel row to its adopted expense document's load"
     },
+    "202616020200": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-17",
+      "purpose": "LEAD 443.198 SECURITY step 2: revoke PUBLIC INSERT/UPDATE/DELETE/TRUNCATE + schema default ACLs; ih35_app keeps exactly its designed grants (explicit grants for the 5 queue/token tables it reached only through PUBLIC + abandonment_defaults upsert UPDATE)"
+    },
     "202616020100": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-17",
