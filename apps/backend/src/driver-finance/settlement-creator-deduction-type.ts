@@ -85,6 +85,7 @@ export async function resolveCreatorDeductionType(
               ) AS is_escrow
          FROM catalogs.items i
          LEFT JOIN catalogs.accounts a ON a.id = COALESCE(i.default_income_account_id, i.default_expense_account_id)
+                                      AND a.operating_company_id = i.operating_company_id
         WHERE i.id = $1::uuid AND i.operating_company_id = $2::uuid`,
       [line.item_id, operatingCompanyId]
     )

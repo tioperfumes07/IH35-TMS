@@ -37,11 +37,19 @@ function audit(src) {
     return failures;
   }
 
-  // Isolate the bill_lines INSERT block — including the JS parameter array after RETURNING id,
-  // which is where the raw-vs-resolved expense_category_uuid value actually gets bound.
-  const billBranchMatch = src.match(
-    /const isBillLineCopy = destinationTable === "accounting\.bill_lines";[\s\S]{0,2200}?INSERT INTO accounting\.bill_lines[\s\S]{0,1500}?\]\s*\n\s*\);/
-  );
+  // Isolate the bill_lines write — including the bound values, which is where the raw-vs-resolved
+  // expense_category_uuid value actually gets bound. Two shapes:
+  //   · legacy: an inline `INSERT INTO accounting.bill_lines ... RETURNING id`, [...]);
+  //   · 443.182 C step 2 (a0629f2b52, #26883): the bill line goes through THE bill engine's line writer
+  //     insertBillLineOnClient(client, [[column, { value }], ...], { returning: "id" }) in bills.service.ts —
+  //     same columns, values and casts, so the rule is asserted on the ["expense_category_uuid", { value }] tuple.
+  const billBranchMatch =
+    src.match(
+      /const isBillLineCopy = destinationTable === "accounting\.bill_lines";[\s\S]{0,4000}?insertBillLineOnClient\s*(?:<[^>]*>)?\s*\([\s\S]{0,2500}?\{\s*returning:\s*"id"\s*\}\s*,?\s*\n\s*\);/
+    ) ??
+    src.match(
+      /const isBillLineCopy = destinationTable === "accounting\.bill_lines";[\s\S]{0,2200}?INSERT INTO accounting\.bill_lines[\s\S]{0,1500}?\]\s*\n\s*\);/
+    );
   if (!billBranchMatch) {
     failures.push(`${TARGET} — could not isolate the bill_lines INSERT branch`);
     return failures;
@@ -56,6 +64,20 @@ function audit(src) {
 
   // The JS parameter array must bind the resolved variable, never the raw row.expense_category_uuid,
   // at the expense_category_uuid position (immediately after parentMapped).
+  const tuple = billBranch.match(/\[\s*"expense_category_uuid"\s*,\s*\{\s*value:\s*([^,}]+?)\s*[,}]/);
+  if (/insertBillLineOnClient/.test(billBranch)) {
+    if (!tuple) {
+      failures.push(`${TARGET} — bill engine line write does not bind expense_category_uuid at all; the guard cannot verify it and must not pass silently`);
+    } else {
+      const bound = tuple[1];
+      const resolvedVar = new RegExp(`const\\s+${bound.replace(/[.$]/g, "\\$&")}\\s*=\\s*row\\.expense_category_uuid\\s*\\?\\s*await\\s+resolveExpenseCategoryById\\s*\\(`);
+      if (/^row\./.test(bound) || !resolvedVar.test(billBranch)) {
+        failures.push(
+          `${TARGET} — bill_lines write binds expense_category_uuid to \`${bound}\`, not the resolveExpenseCategoryById() result; this reproduces bill_lines_expense_category_same_entity_fkey on any categorized line`
+        );
+      }
+    }
+  }
   if (/parentMapped,\s*\n\s*row\.expense_category_uuid,/.test(billBranch)) {
     failures.push(
       `${TARGET} — bill_lines INSERT still binds the RAW row.expense_category_uuid instead of a resolved id; this reproduces bill_lines_expense_category_same_entity_fkey on any categorized line`
@@ -76,12 +98,18 @@ function main() {
       process.exit(1);
     }
 
-    // Offender 1: raw passthrough (the actual pre-fix shape) — the VALUES array binds the raw
+    // Offender 1: raw passthrough (the actual pre-fix shape) — the bound value is the raw
     // row.expense_category_uuid instead of the resolved variable. Must be caught.
-    const offender1 = real.replace(
-      /parentMapped,(\s*)projectedBillCategoryId,(\s*)row\.service_item_uuid,/,
-      (_m, i1, i2) => `parentMapped,${i1}row.expense_category_uuid,${i2}row.service_item_uuid,`
-    );
+    const offender1 = real
+      .replace(
+        /parentMapped,(\s*)projectedBillCategoryId,(\s*)row\.service_item_uuid,/,
+        (_m, i1, i2) => `parentMapped,${i1}row.expense_category_uuid,${i2}row.service_item_uuid,`
+      )
+      .replace(/\["expense_category_uuid", \{ value: projectedBillCategoryId \}\]/, '["expense_category_uuid", { value: row.expense_category_uuid }]');
+    if (offender1 === real) {
+      console.error("SELFTEST FAIL: offender 1 did not apply — the guard proves nothing");
+      process.exit(1);
+    }
     const f1 = audit(offender1);
     if (f1.length === 0) {
       console.error("SELFTEST FAIL: raw row.expense_category_uuid passthrough was not caught");
@@ -90,9 +118,20 @@ function main() {
 
     // Offender 2: resolver call removed entirely but a different (still-raw) variable name used.
     const offender2 = real.replace(/resolveExpenseCategoryById\s*\(\s*client,\s*\{\s*\n(\s*)operatingCompanyId,\s*\n(\s*)categoryId: row\.expense_category_uuid,\s*\n(\s*)\}\s*\)/, "row.expense_category_uuid");
+    if (offender2 === real) {
+      console.error("SELFTEST FAIL: offender 2 did not apply — the guard proves nothing");
+      process.exit(1);
+    }
     const f2 = audit(offender2);
     if (f2.length === 0) {
       console.error("SELFTEST FAIL: removed resolveExpenseCategoryById() call was not caught");
+      process.exit(1);
+    }
+
+    // Offender 3: the resolved variable exists but an unrelated variable is bound instead.
+    const offender3 = real.replace(/\["expense_category_uuid", \{ value: projectedBillCategoryId \}\]/, '["expense_category_uuid", { value: someOtherId }]');
+    if (offender3 === real || audit(offender3).length === 0) {
+      console.error("SELFTEST FAIL: binding a non-resolved variable was not caught");
       process.exit(1);
     }
 
@@ -103,7 +142,7 @@ function main() {
       process.exit(1);
     }
 
-    console.log("verify-wo-bill-lines-expense-category-resolved --selftest — OK (2/2 offenders caught, real file clean)");
+    console.log("verify-wo-bill-lines-expense-category-resolved --selftest — OK (3/3 offenders caught, real file clean)");
     process.exit(0);
   }
 

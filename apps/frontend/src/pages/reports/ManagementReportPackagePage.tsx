@@ -400,6 +400,7 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   return (
     <div className="mt-3">
       <ParityTable
+        title="Open receivables by customer"
         rows={filtered}
         columns={agingColumns}
         rowKey={(row) => row.customer_id}
@@ -511,6 +512,7 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   return (
     <div className="mt-3">
       <ParityTable
+        title="Open payables by vendor"
         rows={filtered}
         columns={agingColumns}
         rowKey={(row) => row.vendor_id}
@@ -556,6 +558,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate, searchQuery }: { 
   return (
     <div className="mt-3">
       <ParityTable
+        title="Sales by customer"
         rows={sorted.slice(0, 30)}
         columns={customerColumns}
         rowKey={(row) => row.customer_id}
@@ -601,6 +604,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate, searchQuery 
   return (
     <div className="mt-3">
       <ParityTable
+        title="Expenses by vendor"
         rows={sorted.slice(0, 30)}
         columns={vendorColumns}
         rowKey={(row) => row.vendor_id}

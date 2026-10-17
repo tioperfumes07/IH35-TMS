@@ -986,7 +986,7 @@ export async function createDriverBillArtifacts(
        FROM (
          SELECT db.*,
                 EXISTS (SELECT 1 FROM driver_finance.driver_settlements s
-                         WHERE s.id = db.settled_in_settlement_id AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settlement_live
+                         WHERE s.id = db.settled_in_settlement_id AND s.operating_company_id = db.operating_company_id AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settlement_live
            FROM driver_finance.driver_bills db
           WHERE db.operating_company_id = $1::uuid
             AND db.load_id = $2::uuid

@@ -356,6 +356,7 @@ export function CounterpartyStatementView({
 
       {query.data ? (
         <ParityTable
+          title={kind === "customer" ? "Customer statement activity" : "Vendor statement activity"}
           rows={statementRows}
           columns={statementColumns}
           rowKey={(r) => r.key}
