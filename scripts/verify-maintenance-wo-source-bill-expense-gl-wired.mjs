@@ -41,7 +41,8 @@ const CHECKS = [
   {
     name: "maintenance auto-bill stamps the work order load on the canonical bill",
     file: "apps/backend/src/maintenance/two-section-service.ts",
-    pattern: /INSERT INTO accounting\.bills \([\s\S]*linked_work_order_uuid, unit_id, load_id,[\s\S]*w\.id,[\s\S]*w\.unit_id,[\s\S]*w\.load_id,/,
+    // 443.182 C — the work order's id / unit / load are read, then written through the one bill writer.
+    pattern: /w\.id::text AS linked_work_order_uuid,[\s\S]*w\.unit_id::text AS unit_id,[\s\S]*w\.load_id::text AS load_id,[\s\S]*insertBillHeaderOnClient[\s\S]*\["linked_work_order_uuid", \{ value: woBill\.linked_work_order_uuid[\s\S]*\["unit_id", \{ value: woBill\.unit_id[\s\S]*\["load_id", \{ value: woBill\.load_id/,
   },
   {
     name: "maintenance close routes enforce the shared financial-link invariant before terminal UPDATE",
@@ -110,7 +111,7 @@ if (process.argv.includes("--selftest")) {
     "apps/backend/src/maintenance/work-order-financial-link.ts":
       "assertWorkOrderCostFinancialLink linked_work_order_uuid unit_id vendor linked.load_id IS NOT DISTINCT FROM $5::text",
     "apps/backend/src/maintenance/two-section-service.ts":
-      "INSERT INTO accounting.bills (linked_work_order_uuid, unit_id, load_id,) SELECT w.id, w.unit_id, w.load_id,",
+      'SELECT w.id::text AS linked_work_order_uuid, w.unit_id::text AS unit_id, w.load_id::text AS load_id, FROM maintenance.work_orders w; insertBillHeaderOnClient(client, [["linked_work_order_uuid", { value: woBill.linked_work_order_uuid }], ["unit_id", { value: woBill.unit_id }], ["load_id", { value: woBill.load_id }]])',
     "apps/backend/src/maintenance/work-orders.routes.ts":
       "assertWorkOrderCostFinancialLink UPDATE maintenance.work_orders SET status = 'complete'",
     "apps/backend/src/work-orders/work-orders.routes.ts":

@@ -14,6 +14,7 @@
  *   - driver_finance.driver_settlements (driver_id on create)
  *   - driver_finance.settlement_lines.load_id → ratcheted when CC-1 P36 merges (see REMAINING line)
  */
+import { billHeaderWrites } from "./lib/bill-header-writes.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,13 +46,14 @@ export function collectFkOnCreateProblems(sources = {}) {
   const claims = stripComments(sources[PATHS.claims] ?? read(PATHS.claims));
   const settlements = stripComments(sources[PATHS.settlements] ?? read(PATHS.settlements));
 
-  const billsInserts = bills.match(/INSERT INTO accounting\.bills\s*\(([\s\S]*?)\)/g) ?? [];
+  // 443.182 C — the bill header is written through insertBillHeaderOnClient; every write (inline or writer call) is checked.
+  const billsInserts = billHeaderWrites(bills);
   if (billsInserts.length === 0) {
     problems.push(`${PATHS.bills}: no INSERT INTO accounting.bills — create path moved`);
   } else {
-    billsInserts.forEach((stmt, i) => {
-      if (!/\bunit_id\b/.test(stmt)) problems.push(`${PATHS.bills}: bills INSERT variant ${i + 1} missing unit_id`);
-      if (!/\bmdata_vendor_id\b/.test(stmt)) problems.push(`${PATHS.bills}: bills INSERT variant ${i + 1} missing mdata_vendor_id`);
+    billsInserts.forEach((w, i) => {
+      if (!w.columns.includes("unit_id")) problems.push(`${PATHS.bills}: bills INSERT variant ${i + 1} missing unit_id`);
+      if (!w.columns.includes("mdata_vendor_id")) problems.push(`${PATHS.bills}: bills INSERT variant ${i + 1} missing mdata_vendor_id`);
     });
   }
   const lineInserts = bills.match(/INSERT INTO accounting\.bill_lines\s*\(([\s\S]*?)\)/g) ?? [];

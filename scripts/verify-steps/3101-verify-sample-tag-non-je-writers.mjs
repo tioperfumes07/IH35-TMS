@@ -22,6 +22,7 @@
  *
  * Self-test: node scripts/verify-steps/3101-verify-sample-tag-non-je-writers.mjs --selftest
  */
+import { billHeaderWrites } from "../lib/bill-header-writes.mjs";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -80,8 +81,11 @@ export function findInsertColumnLists(src, table) {
       else if (code[i] === ")") depth -= 1;
       i += 1;
     }
-    lists.push(code.slice(start, i - 1));
+    const list = code.slice(start, i - 1);
+    if (!list.includes("${")) lists.push(list); // 443.182 C — skip the one bill writer's own dynamic column list
   }
+  // 443.182 C — bill headers are written through insertBillHeaderOnClient(client, [["col", …], …]): its column list counts too.
+  if (table === "accounting.bills") for (const w of billHeaderWrites(src)) if (w.kind === "writer") lists.push(w.columns.join(", "));
   return lists;
 }
 
@@ -106,6 +110,11 @@ if (process.argv.includes("--selftest")) {
   if (b.ok) fail("selftest: bad fixture (is_sample_data stripped) was not caught — invariant is inert");
   const c = checkWriter(commentTrap, "accounting.bills");
   if (c.ok) fail("selftest: a mention of is_sample_data in a COMMENT satisfied the check — comment-matching trap");
+  // 443.182 C — the one-writer call form for accounting.bills.
+  const wGood = `await insertBillHeaderOnClient(client, [["operating_company_id", { value: oc }], ["is_sample_data", { value: false }]])`;
+  const wBad = `await insertBillHeaderOnClient(client, [["operating_company_id", { value: oc }], // ["is_sample_data", { value: false }]\n ["vendor_id", { value: v }]])`;
+  if (!checkWriter(wGood, "accounting.bills").ok) fail("selftest: writer-call fixture WITH is_sample_data flagged");
+  if (checkWriter(wBad, "accounting.bills").ok) fail("selftest: writer-call fixture WITHOUT is_sample_data (commented out) was not caught");
 
   // Real-file regression check: each of the writer/table pairs must currently pass.
   for (const w of WRITERS) {
