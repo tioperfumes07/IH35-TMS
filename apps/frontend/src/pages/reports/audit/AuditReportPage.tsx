@@ -183,6 +183,7 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
       {!query.isError && (
         <ParityTable
           rows={tableRows}
+          title={title}
           columns={AUDIT_REPORT_COLUMNS}
           rowKey={(row) => row.row_key}
           loading={query.isLoading}

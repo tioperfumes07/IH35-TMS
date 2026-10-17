@@ -139,6 +139,7 @@ export function IFTAStepTax({ operatingCompanyId, preparationId, quarter, year }
         ) : (
           <ParityTable
             columns={columns}
+            title="IFTA tax — by state"
             rows={rows}
             rowKey={(row) => row.state}
             loading={prepQuery.isPending || (prepQuery.isFetching && rows.length === 0)}

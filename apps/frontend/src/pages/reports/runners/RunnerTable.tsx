@@ -11,6 +11,8 @@ type Props = {
   rows: Record<string, unknown>[];
   onSort?: (key: string) => void;
   tableId?: string;
+  /** LEAD 443.174 — the section's title: the running report's own name. */
+  title?: string;
 };
 
 
@@ -45,7 +47,7 @@ type ParityRunnerRow = {
   rowKey: string;
 };
 
-export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner" }: Props) {
+export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner", title }: Props) {
   const [sortKey, setSortKey] = useState("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
@@ -85,6 +87,7 @@ export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner" 
   return (
     <ParityTable
       columns={parityColumns}
+      title={title}
       rows={parityRows}
       rowKey={(row) => row.rowKey}
       storageKey={tableId}

@@ -292,6 +292,7 @@ export function DriverQualificationReportPage() {
         ) : (
           <ParityTable<DqfRosterDriver>
             columns={columns}
+            title="Driver qualification — by driver"
             rows={rows}
             rowKey={(r) => r.driver_id}
             loading={rosterQ.isLoading}

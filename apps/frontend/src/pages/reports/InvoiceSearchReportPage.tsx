@@ -269,6 +269,7 @@ export function InvoiceSearchReportPage() {
         ) : (
           <ParityTable<Invoice>
             columns={columns}
+            title="Invoices — search results"
             rows={rows}
             rowKey={(r) => r.id}
             loading={invoicesQ.isLoading}

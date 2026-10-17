@@ -184,6 +184,7 @@ export function GeofenceReconciliationReport() {
       {!isError && (
         <ParityTable
           rows={findings}
+          title="Geofence reconciliation findings"
           columns={findingColumns}
           rowKey={(f) => f.uuid}
           loading={isLoading}

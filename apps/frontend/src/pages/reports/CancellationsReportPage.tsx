@@ -110,12 +110,10 @@ function CancellationBucketTable({
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white">
-      <div className="border-b border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-600">
-        {title}
-      </div>
       <div className="p-2">
         <ParityTable
           rows={rows}
+          title={`Cancellations — ${title.toLowerCase()}`}
           columns={columns}
           rowKey={(row) => row.key}
           loading={loading}

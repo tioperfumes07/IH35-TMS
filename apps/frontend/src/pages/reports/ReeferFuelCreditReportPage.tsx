@@ -20,6 +20,7 @@ import { useStagedListFilters } from "../../components/table";
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
 import { getReeferFuelCreditReport, recordReeferFuelGallons, setReeferFuelTrailer, type ReeferCreditRow } from "../../api/reports";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 function quarterRange(year: number, quarter: number): { from: string; to: string } {
   const startMonth = (quarter - 1) * 3 + 1;
@@ -280,6 +281,7 @@ export function ReeferFuelCreditReportPage() {
 
       <ParityTable
         rows={rows}
+        title="Reefer fuel credit — by purchase"
         columns={columns}
         rowKey={(r) => `${r.source}-${r.source_id}`}
         loading={reportQuery.isPending}
@@ -288,8 +290,11 @@ export function ReeferFuelCreditReportPage() {
         exportFilename={`reefer-fuel-credit-${year}-Q${quarter}.csv`}
       />
       <p className="text-xs text-gray-500">
-        Estimate only: the per-gallon rate and the claim (Form 4136 with the income tax return, or Form 8849 Schedule 1 for a quarterly
-        refund) are confirmed by the CPA. Truck diesel is IFTA road fuel; reefer diesel is excluded from IFTA.
+        Estimate only.{" "}
+        <InfoPopover label="About the reefer fuel credit estimate">
+          The per-gallon rate and the claim (Form 4136 with the income tax return, or Form 8849 Schedule 1 for a quarterly
+          refund) are confirmed by the CPA. Truck diesel is IFTA road fuel; reefer diesel is excluded from IFTA.
+        </InfoPopover>
       </p>
 
       {reportQuery.isError ? (

@@ -132,6 +132,7 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
 
       <ParityTable
         columns={COLUMNS}
+        title={displayName}
         rows={rows}
         rowKey={(row) => row.id}
         loading={query.isLoading}

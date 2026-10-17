@@ -150,6 +150,7 @@ export function MaintenancePartsCatalog() {
       ) : (
         <ParityTable
           columns={COLUMNS}
+          title={showInactive ? "All entries — including inactive" : "Active entries"}
           rows={rows}
           rowKey={(row) => row.id}
           loading={query.isLoading}

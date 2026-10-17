@@ -250,6 +250,7 @@ export function MaintenanceServicesCatalog() {
       ) : (
         <ParityTable
           rows={rows}
+          title="Maintenance services"
           columns={columns}
           rowKey={(svc) => svc.id}
           loading={query.isLoading}
