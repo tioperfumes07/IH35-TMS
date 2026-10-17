@@ -2197,6 +2197,16 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* C-36 (#23515): /maintenance/home is the Home tab's canonical path (MAINTENANCE_TAB_PATH.home); route-manifest.ts maps
+            it to rm_status_board — the path was declared but never registered, so the link 404'd. */}
+        <Route
+          path="/maintenance/home"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="rm_status_board" />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/maintenance/rm-status-board"
           element={
