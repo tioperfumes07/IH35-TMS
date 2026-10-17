@@ -81,7 +81,12 @@ function assertLive(overrides = {}) {
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(timeline)) problems.push("S30 not company-gated");
   if (!/<EntityLinkOrTombstone kind="customer" id=\{load\.customer_id\} name=\{load\.customer_name\} noun="Customer"/.test(timeline)) problems.push("S30 timeline rows missing canonical customer link or tombstone");
   if (!/<EntityLink kind="driver" id=\{driver\.id\}/.test(timeline)) problems.push("S30 driver rows missing canonical driver link");
-  if (!/<EntityLinkOrTombstone kind="unit" id=\{driver\.unit_id\} name=\{driver\.unit_number\} noun="Unit"/.test(timeline)) problems.push("S30 driver rows missing canonical unit link or tombstone");
+  // ed6239a3e0 (ROUND 20.6 T2, owner-live 2026-09-12): the week's driver rows never carry a unit, so the unit is the
+  // driver's own unit with the scheduler-grid fallback (const unitId / unitNumber) — same canonical link-or-tombstone.
+  const directUnitLink = /<EntityLinkOrTombstone kind="unit" id=\{driver\.unit_id\} name=\{driver\.unit_number\} noun="Unit"/.test(timeline);
+  const fallbackUnitLink = /const unitId = driver\.unit_id \?\?/.test(timeline) && /const unitNumber = driver\.unit_number \?\?/.test(timeline)
+    && /<EntityLinkOrTombstone kind="unit" id=\{unitId \?\? undefined\} name=\{unitNumber\} noun="Unit"/.test(timeline);
+  if (!directUnitLink && !fallbackUnitLink) problems.push("S30 driver rows missing canonical unit link or tombstone");
   if (!/PlannerAxisHead/.test(timeline)) problems.push("S30 timeline missing two-row PlannerAxisHead");
   if (!/timeline-util-/.test(timeline)) problems.push("S30 timeline missing util column");
   if (!/h-\[34px\]/.test(timeline)) problems.push("S30 timeline missing 34px row height");
@@ -109,6 +114,7 @@ if (SELFTEST) {
   }
   const cases = [
     [FILES.timeline, "timeline-util-"],
+    [FILES.timeline, '<EntityLinkOrTombstone kind="unit" id={unitId ?? undefined} name={unitNumber} noun="Unit"'],
     [FILES.grid, '<EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver"'],
     [FILES.grid, '<EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit"'],
     [FILES.truck, '<EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit"'],

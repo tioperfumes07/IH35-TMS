@@ -13,8 +13,12 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HELPER = "apps/backend/src/dispatch/stamp-final-delivery-departure.ts";
+// 25f2a8faa4 (R313/R315, auto-status through the canonical transition, #23821): the office transition's delivery stamp
+// moved from dispatch/loads.routes.ts into load-transition.service.ts (transitionDispatchLoadInClientTx), which the route
+// calls. Same rule, read at the writer; the route must still reach the canonical transition (ROUTE_REACHES below).
+const ROUTE = "apps/backend/src/dispatch/loads.routes.ts";
 const CALLERS = [
-  "apps/backend/src/dispatch/loads.routes.ts",
+  "apps/backend/src/dispatch/load-transition.service.ts",
   "apps/backend/src/dispatch/loads-bulk.routes.ts",
   "apps/backend/src/mdata/loads.routes.ts",
 ];
@@ -67,6 +71,13 @@ export function run(overrides = {}) {
     );
   }
 
+  const route = read(ROUTE, overrides);
+  assert(
+    /transitionDispatchLoadInClientTx\s*\(/.test(route),
+    `${ROUTE} must reach the canonical transition (transitionDispatchLoadInClientTx), which stamps the delivery departure`,
+    errors
+  );
+
   return errors;
 }
 
@@ -78,11 +89,19 @@ function selftest() {
     "$3::timestamptz"
   );
   const plantedErrors = run({ [HELPER]: planted });
-  assert(
-    plantedErrors.some((e) => e.includes("now()") || e.includes("deliveredAt is null")),
-    "selftest expected planted COALESCE removal to be detected",
-    plantedErrors
-  );
+  if (run().length) {
+    console.error("verify-disp-wire-07-stamp-defaults-now: SELFTEST FAIL — the live tree is not clean"); process.exit(1);
+  }
+  if (!plantedErrors.some((e) => e.includes("now()") || e.includes("deliveredAt is null"))) {
+    console.error("verify-disp-wire-07-stamp-defaults-now: SELFTEST FAIL — planted COALESCE removal not detected"); process.exit(1);
+  }
+  const transition = read(CALLERS[0]);
+  if (!run({ [CALLERS[0]]: transition.replace(/stampFinalActiveDeliveryDeparture\(\s*client,/, "noStamp(client,") }).length) {
+    console.error("verify-disp-wire-07-stamp-defaults-now: SELFTEST FAIL — a transition that stops stamping was not detected"); process.exit(1);
+  }
+  if (!run({ [ROUTE]: read(ROUTE).replace(/transitionDispatchLoadInClientTx\s*\(/g, "otherTransition(") }).length) {
+    console.error("verify-disp-wire-07-stamp-defaults-now: SELFTEST FAIL — a route that bypasses the transition was not detected"); process.exit(1);
+  }
   console.log(`verify-disp-wire-07-stamp-defaults-now: SELFTEST PASS (${plantedErrors.length} planted failures detected)`);
 }
 
