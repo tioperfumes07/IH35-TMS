@@ -63,7 +63,10 @@ export type DeliveryEvidenceLatchInput = {
   loadId: string;
   targetStatus: string;
   actorUserId: string;
-  /** Defaults to the COMPANY business date (America/Chicago), never UTC. */
+  /**
+   * Defaults to the COMPANY business date (America/Chicago), never UTC. Event 2 (bill) is dated with it;
+   * Event 1 (earn) is dated by its delivery evidence and uses this only for a closed period (LEAD 443.192).
+   */
   entryDateIso?: string;
 };
 
@@ -84,8 +87,9 @@ async function firePostLoadRevenueLatch(input: DeliveryEvidenceLatchInput): Prom
       operating_company_id: input.operatingCompanyId,
       load_id: input.loadId,
       target_status: "delivered_pending_docs",
-      // Resolved at FIRE time, not enqueue time: the business date the entry belongs to is the date
-      // the write became durable.
+      // LEAD 443.192 — FALLBACK ONLY for Event 1: the poster dates the earn by its own evidence (the final
+      // delivery stop's departure, or the manual authorization), resolveEarnEntryDate. This fire-time
+      // business date is used only when that date sits in a closed period.
       entry_date_iso: entryDateIso,
       actor_user_id: input.actorUserId,
     });

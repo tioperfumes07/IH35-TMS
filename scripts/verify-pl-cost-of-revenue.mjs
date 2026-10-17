@@ -189,16 +189,26 @@ async function auditLive(databaseUrl) {
     }
 
     // ── Revenue postings for in-scope loads only ────────────────────────────────────────
-    // Revenue postings use source_transaction_type='load' and source_transaction_id=load.id::text.
+    // LEAD 443.192: a load's revenue reaches the ledger by ONE of two writers — the revrec latch (line sourced
+    // 'load', source_transaction_id = load.id) OR the invoice poster (line sourced 'invoice', resolved to its
+    // load through accounting.invoices.source_load_id). Reading only the first left 57 of 74 in-scope loads'
+    // real revenue invisible, so the "revenue range" was one load. A REVERSED entry (or its reversal) is not
+    // standing revenue — `je.status` stays 'posted' on both halves of a reversal pair, so the pair is excluded
+    // by its header link, exactly as the cost side below.
     const revenueRes = await client.query(
       `SELECT count(*) AS n, min(je.entry_date)::text AS min_date, max(je.entry_date)::text AS max_date
          FROM accounting.journal_entry_postings p
          JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
-         JOIN accounting.chart_of_accounts_roles r ON r.account_id = p.account_id
-         JOIN mdata.loads l ON l.id::text = p.source_transaction_id AND l.operating_company_id = p.operating_company_id
+         JOIN accounting.chart_of_accounts_roles r ON r.account_id = p.account_id AND r.operating_company_id = p.operating_company_id
+         LEFT JOIN accounting.invoices i ON p.source_transaction_type = 'invoice' AND i.id::text = p.source_transaction_id
+                                        AND i.operating_company_id = p.operating_company_id
+         JOIN mdata.loads l ON l.operating_company_id = p.operating_company_id
+                           AND ((p.source_transaction_type = 'load' AND l.id::text = p.source_transaction_id)
+                             OR (p.source_transaction_type = 'invoice' AND l.id = i.source_load_id))
         WHERE p.operating_company_id = $1 AND r.role = 'revenue_default' AND r.is_active = true
           AND p.debit_or_credit = 'credit' AND je.status <> 'void' AND je.voided_at IS NULL
-          AND p.source_transaction_type = 'load' AND l.load_number = ANY($2::text[])`,
+          AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+          AND l.load_number = ANY($2::text[])`,
       [USMCA_OPCO_ID, inScopeLoads]
     );
     const hasInScopeRevenue = Number(revenueRes.rows[0].n) > 0;
@@ -239,6 +249,7 @@ async function auditLive(databaseUrl) {
          JOIN mdata.loads l ON l.id = load_id.id AND l.operating_company_id = r.operating_company_id
         WHERE r.operating_company_id = $1 AND r.is_active = true AND r.role = ANY($2::text[])
           AND je.status <> 'void' AND je.voided_at IS NULL
+          AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
           AND l.load_number = ANY($3::text[])
         GROUP BY r.role, a.account_number, a.account_name`,
       [USMCA_OPCO_ID, roleRoles, inScopeLoads]

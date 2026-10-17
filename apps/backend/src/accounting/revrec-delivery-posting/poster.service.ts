@@ -26,7 +26,7 @@ import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { enqueueAfterCommit } from "../../lib/after-commit.js";
-import { companyBusinessDate } from "../../lib/company-business-date.js";
+import { COMPANY_TIME_ZONE, companyBusinessDate } from "../../lib/company-business-date.js";
 
 export const REVENUE_RECOGNITION_POST_FLAG = "REVENUE_RECOGNITION_POST_ENABLED";
 
@@ -473,6 +473,42 @@ async function activeManualDeliveryAuthorizationAt(
   return res.rows[0]?.authorized_at ?? null;
 }
 
+/**
+ * LEAD 443.192 — EVENT 1 IS DATED BY ITS EVIDENCE, NEVER BY WHEN THE CODE RAN.
+ *
+ * Locked revenue-recognition decision (§5, two-event latch): the accrual recognition event is the final
+ * active delivery stop's actual departure. The poster already READ that timestamp as the earn gate, then
+ * threw it away and dated the JE with the caller's `entry_date_iso` — which every delivery path fills with
+ * `companyBusinessDate()` at fire time (dispatch/delivery-evidence-latch.ts, manual-delivery-authorization
+ * route). A load delivered 2026-08-28 and latched on 2026-10-16 earned on 10-16, so revenue left the period
+ * whose fuel, tolls and driver pay it belongs with (verify-pl-cost-of-revenue). The date now comes from the
+ * same evidence the gate reads: the departure (or the manual authorization's own timestamp), as a company
+ * business date (America/Chicago — never the UTC calendar day).
+ *
+ * Closed period: a closed month cannot take a new entry, so the earn falls back to the caller's date —
+ * the same rule every reversal uses (void.service.ts resolveReversalDate). With no evidence timestamp
+ * (unreachable past the gate) the caller's date stands.
+ */
+export async function resolveEarnEntryDate(
+  client: DbClient,
+  operatingCompanyId: string,
+  evidenceAt: string | null,
+  fallbackDateIso: string
+): Promise<string> {
+  const fallback = fallbackDateIso.slice(0, 10);
+  if (!evidenceAt) return fallback;
+  const res = await client.query<{ evidence_date: string | null; closed_through: string | null }>(
+    `SELECT ($1::timestamptz AT TIME ZONE $3)::date::text AS evidence_date,
+            accounting.closed_period_cutoff($2::uuid)::text AS closed_through`,
+    [evidenceAt, operatingCompanyId, COMPANY_TIME_ZONE]
+  );
+  const evidenceDate = res.rows[0]?.evidence_date ?? null;
+  if (!evidenceDate) return fallback;
+  const closedThrough = res.rows[0]?.closed_through ?? null;
+  if (closedThrough && evidenceDate <= closedThrough) return fallback;
+  return evidenceDate;
+}
+
 function resolveEvent(targetStatus: string): RevrecEvent | null {
   // Dispatch machine uses delivered_pending_docs (not a separate "delivered") for earn.
   if (targetStatus === "delivered" || targetStatus === "delivered_pending_docs") return "earn";
@@ -536,12 +572,14 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
     // Event 1 earns on real captured delivery evidence, OR an explicit, on-the-record manual
     // delivery authorization (MANUAL-DELIVERY-AUTH-01) — never on status alone, never silently.
     let manualAuthEvidence = false;
+    let entryDate = input.entry_date_iso.slice(0, 10);
     if (event === "earn") {
       const departedAt = await finalActiveDeliveryDepartureAt(
         client,
         input.operating_company_id,
         input.load_id
       );
+      let evidenceAt = departedAt;
       if (!departedAt) {
         const authorizedAt = await activeManualDeliveryAuthorizationAt(
           client,
@@ -550,7 +588,10 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
         );
         if (!authorizedAt) return { gate: "missing_delivery_evidence" as const };
         manualAuthEvidence = true;
+        evidenceAt = authorizedAt;
       }
+      // LEAD 443.192 — the earn is dated by the evidence that let it post, not by the fire time.
+      entryDate = await resolveEarnEntryDate(client, input.operating_company_id, evidenceAt, input.entry_date_iso);
     }
 
     let amount = load.rate_total_cents;
@@ -612,7 +653,7 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       memo,
       amount,
       invoiceId,
-      entryDate: input.entry_date_iso.slice(0, 10),
+      entryDate,
       // ACCT-F210 — read from the LOAD, never from a memo or load-number string match.
       isSampleData: load.is_sample_data,
       postings,
