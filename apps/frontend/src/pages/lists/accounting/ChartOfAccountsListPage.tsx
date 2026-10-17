@@ -599,6 +599,8 @@ export function ChartOfAccountsListPage() {
               setPage(1);
             }}
             exportFilename="chart-of-accounts"
+            exportExcel
+            serverViewKey="coa-list-v2"
             // ListView pinned the NUMBER column; keep it fixed on horizontal scroll when it is shown.
             stickyLeftCount={showAccountNumbers ? 1 : 0}
             emptyText="No rows to display"
