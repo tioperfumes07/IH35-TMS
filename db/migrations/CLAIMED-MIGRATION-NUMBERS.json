@@ -173,6 +173,11 @@
       "claimed_at": "2026-10-12",
       "purpose": "443.136 follow-up: accounting.posting_source_load_id fuel_event resolves a Relay fill with no fuel row to its adopted expense document's load"
     },
+    "202616010100": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-17",
+      "purpose": "LEAD 443.189: CoA role related_party_loan_parent admitted to chart_of_accounts_roles_role_check and bound on USMCA to 2410 Owner / Related-Party Loan Payable (party-account.service.ts stops hard-coding 2410; CC-2 443.187 batch finding)"
+    },
     "202616000100": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-16",
