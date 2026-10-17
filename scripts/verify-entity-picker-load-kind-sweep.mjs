@@ -25,6 +25,9 @@ const LIST_LOADS_ALLOW = new Set([
   "apps/frontend/src/components/parity/entityPickerRegistry.ts",
   "apps/frontend/src/api/loads.ts",
   "apps/frontend/src/api/dispatch.ts",
+  // 443.182-A (52699c6c2f, #26871) moved the listLoads / listDispatchLoads DEFINITIONS (+ their listAll*
+  // scanners) verbatim out of loads.ts / dispatch.ts into the one-source load catalog. Same API layer, not a picker.
+  "apps/frontend/src/api/catalog-loads.ts",
   "apps/frontend/src/hooks/useInvoiceCreateFromLoad.ts",
   "apps/frontend/src/pages/CustomerDetail.tsx",
   "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",

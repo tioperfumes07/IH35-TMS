@@ -129,14 +129,19 @@ export function staticChecks(sources = {}) {
     );
   }
 
-  if (!/expenseCategoriesCatalogClient/.test(editor)) {
-    problems.push("TwoSectionLineEditor must list catalogs.expense_categories via expenseCategoriesCatalogClient");
+  // 443.159 (747999d9fb, #26794 — owner 2026-10-16: "all accounts must appear when creating a bill, any type
+  // of bill … same picker as Banking, all uniform") moved bill Section A off catalogs.expense_categories onto
+  // the ONE Chart of Accounts source Banking categorize reads. The H1 bill-catalog rule follows that ruling:
+  // Section A (and its +Create) must be the chart in EVERY mode, never a bill-only expense-category branch.
+  // The ECON-012 expense_categories catalog itself stays enforced below (registry) and by verify-econ-012.
+  if (!/queryFn:\s*\(\)\s*=>\s*getCoaAccounts\(operatingCompanyId\)/.test(editor)) {
+    problems.push("TwoSectionLineEditor Section A must read the Chart of Accounts via getCoaAccounts(operatingCompanyId) (443.159)");
   }
-  if (!/mode === "bill"/.test(editor) || !/expenseCategoriesQuery/.test(editor)) {
-    problems.push("TwoSectionLineEditor bill mode must use expenseCategoriesQuery (not CoA-as-category)");
+  if (/mode\s*!==\s*"bill"\s*&&/.test(editor) || /expenseCategoryOptions[\s\S]{0,200}if\s*\(mode\s*===\s*"bill"\)/.test(editor)) {
+    problems.push("TwoSectionLineEditor bill mode must not branch Section A off the Chart of Accounts (443.159)");
   }
-  if (!/categoryCreateKind=\{mode === "bill" \? "expense_category" : "category"\}/.test(editor)) {
-    problems.push('Bill mode +Create must use createKind expense_category (not CoA category)');
+  if (!/categoryCreateKind="category"/.test(editor) || /categoryCreateKind=\{[^}]*"expense_category"/.test(editor)) {
+    problems.push('Section A +Create must create a Chart-of-Accounts account (createKind "category") in every mode, bill included (443.159)');
   }
   const registry = sources.registry ?? read("apps/frontend/src/components/parity/catalogPickerRegistry.ts");
   if (!/expense_category:\s*catalogEntry/.test(registry) || !/catalogs\.expense_categories/.test(registry)) {
@@ -269,10 +274,27 @@ function selftest() {
     process.exit(1);
   }
   const editor = read("apps/frontend/src/components/forms/TwoSectionLineEditor.tsx");
-  const brokenEditor = editor.replace(/expenseCategoriesCatalogClient/g, "REMOVED_CLIENT");
+  // Plant the pre-443.159 bill-mode +Create (expense-category catalog) — must be caught.
+  if (!editor.includes('categoryCreateKind="category"')) {
+    console.error(`${LABEL} SELFTEST FAIL: setup — categoryCreateKind="category" not found in editor`);
+    process.exit(1);
+  }
+  const brokenEditor = editor.replace(
+    'categoryCreateKind="category"',
+    'categoryCreateKind={mode === "bill" ? "expense_category" : "category"}',
+  );
   const red = staticChecks({ editor: brokenEditor });
-  if (!red.some((p) => /expenseCategoriesCatalogClient/.test(p))) {
-    console.error(`${LABEL} SELFTEST FAIL: planted editor regression not caught`);
+  if (!red.some((p) => /\+Create/.test(p))) {
+    console.error(`${LABEL} SELFTEST FAIL: planted bill-mode expense_category +Create not caught`);
+    process.exit(1);
+  }
+  // Plant the pre-443.159 bill-mode gate on the Chart of Accounts query — must be caught.
+  const gatedEditor = editor.replace(
+    /queryFn:\s*\(\)\s*=>\s*getCoaAccounts\(operatingCompanyId\),(\s*(?:\/\/[^\n]*\n\s*)*)enabled:\s*Boolean\(operatingCompanyId\),/,
+    'queryFn: () => getCoaAccounts(operatingCompanyId),$1enabled: Boolean(operatingCompanyId) && mode !== "bill" && (mode === "expense" || categoryFetchActive),',
+  );
+  if (gatedEditor === editor || !staticChecks({ editor: gatedEditor }).some((p) => /must not branch/.test(p))) {
+    console.error(`${LABEL} SELFTEST FAIL: planted bill-mode Chart-of-Accounts gate not caught`);
     process.exit(1);
   }
   const billLines = read("apps/frontend/src/components/accounting/vendorBillLines.ts");

@@ -20,10 +20,25 @@ if (!process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const api = read("apps/frontend/src/api/mdata.ts");
-if (!api.includes("has_transactions?: boolean")) fail("mdata.ts missing has_transactions on CompanyScopedListParams");
-if (!api.includes('query.set("has_transactions", "true")')) fail("mdata.ts must forward has_transactions query param");
-ok("C-19 API client forwards has_transactions");
+// 443.182-A (52699c6c2f, #26871) moved listCustomers / listVendors and their CompanyScopedListParams +
+// appendCompanyScopedQuery verbatim out of mdata.ts into the one-source catalog clients (mdata.ts only
+// re-exports them). Each catalog client now owns its own query builder, so EACH must forward the flag.
+const CLIENTS = ["apps/frontend/src/api/catalog-customers.ts", "apps/frontend/src/api/catalog-vendors.ts"];
+function auditClient(rel, src) {
+  const out = [];
+  if (!src.includes("has_transactions?: boolean")) out.push(`${rel} missing has_transactions on CompanyScopedListParams`);
+  if (!src.includes('query.set("has_transactions", "true")')) out.push(`${rel} must forward has_transactions query param`);
+  return out;
+}
+for (const rel of CLIENTS) {
+  const src = read(rel);
+  const problems = auditClient(rel, src);
+  if (problems.length) fail(problems.join("; "));
+  // Planted regression: a client that stops forwarding the flag must be rejected.
+  const planted = src.replace('query.set("has_transactions", "true")', "void 0");
+  if (planted === src || auditClient(rel, planted).length === 0) fail(`selftest: dropped has_transactions forward in ${rel} NOT detected`);
+}
+ok("C-19 API clients (customers + vendors catalogs) forward has_transactions");
 
 for (const [rel, label] of [
   ["apps/frontend/src/pages/Customers.tsx", "Customers"],

@@ -5,14 +5,21 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
-  api: "apps/frontend/src/api/loads.ts",
+  // 443.182-A (52699c6c2f, #26871) moved listLoads / listAllLoads verbatim out of loads.ts into the one-source
+  // load catalog (loads.ts only re-exports them). The scanner rules follow the code; none is relaxed.
+  api: "apps/frontend/src/api/catalog-loads.ts",
   detail: "apps/frontend/src/pages/CustomerDetail.tsx",
   route: "apps/backend/src/mdata/loads.routes.ts",
 };
 const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
 
 export function verify(sources = {}) {
-  const api = sources.api ?? read(FILES.api);
+  const apiFile = sources.api ?? read(FILES.api);
+  // Scope scanner rules to listAllLoads itself: the catalog also holds listAllDispatchLoads, whose own
+  // seen/total checks must not satisfy (or mask) this scanner's.
+  const scanStart = apiFile.indexOf("export async function listAllLoads(");
+  const scanEnd = scanStart < 0 ? -1 : apiFile.indexOf("\nexport ", scanStart + 1);
+  const api = scanStart < 0 ? "" : apiFile.slice(scanStart, scanEnd < 0 ? undefined : scanEnd);
   const detail = sources.detail ?? read(FILES.detail);
   const route = sources.route ?? read(FILES.route);
   const checks = [
@@ -46,7 +53,9 @@ if (process.argv.includes("--selftest")) {
     ["customer live+history merge not de-duplicated", { ...live, detail: live.detail.replace("if (seen.has(row.id)) continue;", "") }],
     ["unstable created order", { ...live, route: live.route.replace("`${sortColumn} ${sortDirection}, l.id ASC`", "`${sortColumn} ${sortDirection}`") }],
   ];
+  if (verify(live).length) throw new Error(`selftest: real tree not green: ${verify(live).join("; ")}`);
   for (const [name, mutated] of mutations) {
+    if (Object.keys(live).every((key) => mutated[key] === live[key])) throw new Error(`selftest setup: ${name} anchor not found (source drifted)`);
     if (verify(mutated).length === 0) throw new Error(`selftest did not catch ${name}`);
   }
   console.log(`PASS: selftest caught ${mutations.length} customer load range regressions`);
