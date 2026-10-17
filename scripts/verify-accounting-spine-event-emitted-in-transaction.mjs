@@ -37,7 +37,10 @@ const TARGETS = [
   { file: "apps/backend/src/accounting/bills.routes.ts", expectedCount: 0 },
   { file: "apps/backend/src/accounting/bills.service.ts", expectedCount: 4 },
   { file: "apps/backend/src/accounting/payments.routes.ts", expectedCount: 2 },
-  { file: "apps/backend/src/accounting/customer-payments.routes.ts", expectedCount: 1 },
+  /* 443.182 C step 2 — old: customer-payments.routes.ts 1 (its own create emit); new: 0 — the route hands its document to the
+     one payments engine (payments.routes.ts recordCustomerPaymentInClientTx), whose single awaited in-transaction emit now
+     serves BOTH create forms; payments.routes.ts stays at 2 (engine create emit + void emit). */
+  { file: "apps/backend/src/accounting/customer-payments.routes.ts", expectedCount: 0 },
   /* 443.130 #3 — old: expenses.routes.ts alone; new: + expense-writer.service.ts; why: createExpenseInClientTx moved there (service may not import a route) */
   { file: "apps/backend/src/accounting/expenses.routes.ts", expectedCount: 1 },
   { file: "apps/backend/src/accounting/expense-writer.service.ts", expectedCount: 1 },

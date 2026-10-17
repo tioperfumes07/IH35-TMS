@@ -41,12 +41,28 @@ const checks = [
   { file: "apps/backend/src/accounting/expense-writer.service.ts", events: ["expense.created"] },
   { file: "apps/backend/src/accounting/expenses.routes.ts", events: ["expense.reattributed"] },
   { file: "apps/backend/src/accounting/payments.routes.ts", events: ["payment.created", "payment.voided"] },
-  { file: "apps/backend/src/accounting/customer-payments.routes.ts", events: ["payment.customer_created"] },
+  // 443.182 C step 2 — the customer Record Payment route hands its document (with its spine event) to the one payments
+  // engine (payments.routes.ts recordCustomerPaymentInClientTx), which emits it in-transaction.
+  { file: "apps/backend/src/accounting/customer-payments.routes.ts", events: ["payment.customer_created"], viaEngine: true },
 ];
 
-for (const { file, events } of checks) {
+const ENGINE_FILE = "apps/backend/src/accounting/payments.routes.ts";
+for (const { file, events, viaEngine } of checks) {
   const src = read(file);
   const shortName = path.basename(file);
+  if (viaEngine) {
+    const engine = read(ENGINE_FILE);
+    if (!src.includes("recordCustomerPaymentInClientTx(") || !/emitAccountingSpineEvent\([\s\S]{0,200}event_type: doc\.spine\.event_type/.test(engine)) {
+      fail(`${shortName}: does not hand its spine event to the payments engine, or the engine does not emit it`);
+      continue;
+    }
+    pass(`${shortName}: spine event emitted by the payments engine`);
+    for (const ev of events) {
+      if (!src.includes(`event_type: "${ev}"`)) fail(`${shortName}: missing emit for "${ev}"`);
+      else pass(`${shortName}: emits "${ev}" (via the engine)`);
+    }
+    continue;
+  }
   if (!src.includes("emitAccountingSpineEvent")) {
     fail(`${shortName}: missing emitAccountingSpineEvent import/call`);
     continue;
