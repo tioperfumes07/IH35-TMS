@@ -127,7 +127,18 @@ export async function measureClosures(client) {
   const gl1000Res = await client.query(CLOSURE_19_SQL, [USMCA_COMPANY_ID]);
   const opBank = gl1000Res.rows[0] ?? null;
   if (!opBank) {
-    failures.push(`19: no active operating_bank role binding for USMCA — cannot measure the operating bank account (fail closed)`);
+    // Unbound role: fail closed ONLY when USMCA has postings to measure. A database with no posted USMCA journal lines (CI's
+    // fresh migrated DB) has no cash balance that could be negative — the literal-'1000' version measured 0 there and
+    // passed; the role repoint (#26931) must not turn "nothing to measure" into a red (heavy CI peel, Lead 13:45Z).
+    const anyPosted = await client.query(
+      `SELECT EXISTS (SELECT 1 FROM accounting.journal_entry_postings jep
+                        JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+                       WHERE jep.operating_company_id = $1::uuid AND je.status = 'posted' AND je.is_sample_data IS NOT TRUE) AS any`,
+      [USMCA_COMPANY_ID],
+    );
+    if (anyPosted.rows[0]?.any) {
+      failures.push(`19: no active operating_bank role binding for USMCA — cannot measure the operating bank account (fail closed)`);
+    }
   } else if (Number(opBank.balance_cents) < 0) {
     failures.push(`19: GL ${opBank.account_number} (operating_bank) balance is negative (${Number(opBank.balance_cents)} cents)`);
   }
