@@ -19,8 +19,9 @@ import { createExpandedInvoice } from "../accounting/invoices.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { shouldBillLumperToCustomer, type CustomerLumperBillingMode } from "./lumper-auto-invoice.js";
 
-/** The lumper item the expense names (its default expense account is the lumper expense account, 5310 on USMCA). */
-export const LUMPER_EXPENSE_ITEM_NAME = "Warehouse Lumper Expense";
+// The lumper item the expense names — one source (lumper-item.ts), shared with the cash-advance split.
+import { LUMPER_EXPENSE_ITEM_NAME } from "./lumper-item.js";
+export { LUMPER_EXPENSE_ITEM_NAME };
 
 export class LumperAdvanceExpenseError extends Error {
   constructor(public readonly code: string, message: string) {
