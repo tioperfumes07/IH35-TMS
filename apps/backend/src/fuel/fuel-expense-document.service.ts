@@ -853,7 +853,7 @@ export async function adoptRelayFillExpenseDocument(
       line_sequence: seq,
       amount: cents / 100,
       amount_cents: cents,
-      description: `Relay fill ${input.relay_fill_id} — line ${seq}`,
+      description: `Relay fuel fill — line ${seq}`,
       load_id: d.load_id ?? loadId,
       load_required: Boolean(d.load_id ?? loadId),
       expense_account_uuid: d.account_id,
