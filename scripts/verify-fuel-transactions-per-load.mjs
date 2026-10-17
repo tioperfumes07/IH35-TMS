@@ -36,6 +36,16 @@
 //   443.194/443.197 voids); the guard knew no statement source and named all 63 "unsourced" (PASS at 14:21Z, red
 //   from the next run).
 //
+// LEAD 443.198 (2026-10-17) — the Relay records' WRITER is checked too (static, no DB). Old rule -> new rule -> why:
+//   OLD: the guard read the data only; the Settlement Creator wrote a Relay fill's row at the amount typed off the printed
+//   settlement (netCents = the PUMP price) and no row for the fill's DEF line, so every new Relay settlement re-broke the
+//   "Relay sum = Relay paid" check after the fact (5839-5842, 2026-10-16: 24 fills).
+//   NEW: --static (and every live run) asserts the Creator writes a Relay fill's rows through the one engine
+//   (fuel/relay-fill-fuel-rows.ts writeRelayFillFuelRows), which reads integrations.relay_fuel_transaction_lines (discounted
+//   amount per product line) and refuses lines that do not foot to Relay's paid; the Creator's own INSERT is never reached
+//   for a Relay row.
+//   WHY: the record must be wrong-proof at the writer, not caught a day later on prod.
+//
 // --selftest runs the pure comparator against fixtures (no DB). Live: fails closed with no DATABASE_URL
 // (requireLiveDbOrExit, ROUND 29.9-B); money-pr-local-gate.mjs runs it when its own domain paths change.
 import fs from "node:fs";
@@ -165,6 +175,42 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
   return { failures, notes, expectedRows, loads: perLoad.size, loadsTied, relayTxns: relaySums.size, statementSourced };
 }
 
+/** 443.198 — the Creator's Relay rows come from the fill's own lines (pure: source texts in, problems out). */
+export const CREATOR_PATH = "apps/backend/src/driver-finance/settlement-creator.service.ts";
+export const RELAY_ROWS_ENGINE_PATH = "apps/backend/src/fuel/relay-fill-fuel-rows.ts";
+export function creatorRelayRowProblems(creatorSrc, engineSrc) {
+  const p = [];
+  if (!/import\s*\{[^}]*\bwriteRelayFillFuelRows\b[^}]*\}\s*from\s*"\.\.\/fuel\/relay-fill-fuel-rows\.js"/.test(creatorSrc)) {
+    p.push("the Settlement Creator does not import writeRelayFillFuelRows (fuel/relay-fill-fuel-rows.ts)");
+  }
+  if (!/if \(!reused && fuel\.card === "relay" && relayFillId\) \{[\s\S]{0,900}await writeRelayFillFuelRows\(/.test(creatorSrc)) {
+    p.push("the Settlement Creator's Relay path does not write the fill's rows through writeRelayFillFuelRows");
+  }
+  if (!/const inserted = reused \? \{ rows: \[\{ id: reused \}\] \} : relayRowId \? \{ rows: \[\{ id: relayRowId \}\] \} : await client\.query/.test(creatorSrc)) {
+    p.push("the Settlement Creator's own fuel INSERT (netCents, the printed amount) is still reachable for a Relay row");
+  }
+  if (!engineSrc) {
+    p.push(`${RELAY_ROWS_ENGINE_PATH} is missing`);
+    return p;
+  }
+  if (!/FROM integrations\.relay_fuel_transaction_lines/.test(engineSrc) || !/total_discounted_price_cents/.test(engineSrc)) {
+    p.push("writeRelayFillFuelRows does not read the fill's own lines (relay_fuel_transaction_lines.total_discounted_price_cents)");
+  }
+  if (!/p\.total_cents \/ 100/.test(engineSrc)) p.push("writeRelayFillFuelRows does not write total_cost from the line amount");
+  if (!/"relay_fill_lines_do_not_foot"/.test(engineSrc)) p.push("writeRelayFillFuelRows does not refuse lines that do not foot to Relay's paid");
+  if (!/FUEL_TYPE_FOR_RELAY_KIND\[relayLineKind\(l\)\]/.test(engineSrc)) p.push("writeRelayFillFuelRows does not take each row's product from the line (DEF its own fuel_type)");
+  return p;
+}
+function readOrNull(rel) {
+  const f = path.join(process.cwd(), rel);
+  return fs.existsSync(f) ? fs.readFileSync(f, "utf8") : null;
+}
+function staticCheck() {
+  const problems = creatorRelayRowProblems(readOrNull(CREATOR_PATH) ?? "", readOrNull(RELAY_ROWS_ENGINE_PATH));
+  for (const q of problems) console.error(`  ✗ static: ${q}`);
+  return problems;
+}
+
 /** 443.198 — the import's own marker on one row (pure; the batch tie to the audit event is applied by the caller). */
 export const STATEMENT_MARKER = "443.142 Dreamline statement";
 export function statementRowIsImported(r) {
@@ -244,6 +290,26 @@ function selftest() {
     if (got !== want) bad++;
   }
   cases.push(...markerCases);
+  // 443.198 — the Creator Relay writer: the real sources pass; origin/main's shape (INSERT at netCents, no engine) fails.
+  const realCreator = readOrNull(CREATOR_PATH) ?? "";
+  const realEngine = readOrNull(RELAY_ROWS_ENGINE_PATH);
+  const oldCreator = realCreator
+    .replace(/import \{ writeRelayFillFuelRows, RelayFillFuelRowsError \} from "\.\.\/fuel\/relay-fill-fuel-rows\.js";\n/, "")
+    .replace(/relayRowId \? \{ rows: \[\{ id: relayRowId \}\] \} : /, "");
+  const writerCases = [
+    ["the real Creator + engine pass", creatorRelayRowProblems(realCreator, realEngine).length, 0],
+    ["planted: Creator INSERTs the Relay row at the typed amount (origin/main shape) fails", creatorRelayRowProblems(oldCreator, realEngine).length > 0 ? 1 : 0, 1],
+    ["planted: engine missing fails", creatorRelayRowProblems(realCreator, null).length > 0 ? 1 : 0, 1],
+    ["planted: engine writes a typed amount, not the line fails",
+      creatorRelayRowProblems(realCreator, (realEngine ?? "").replace(/p\.total_cents \/ 100/g, "typedCents / 100")).length > 0 ? 1 : 0, 1],
+    ["planted: engine without the foot refusal fails",
+      creatorRelayRowProblems(realCreator, (realEngine ?? "").replace(/"relay_fill_lines_do_not_foot"/g, '"x"')).length > 0 ? 1 : 0, 1],
+  ];
+  for (const [name, got, want] of writerCases) {
+    console.log(`${got === want ? "ok  " : "FAIL"} ${name} (${got}, want ${want})`);
+    if (got !== want) bad++;
+  }
+  cases.push(...writerCases);
   console.log(`${LABEL} selftest: ${cases.length - bad}/${cases.length}`);
   process.exit(bad ? 1 : 0);
 }
@@ -253,6 +319,7 @@ async function live() {
   const { exitIfEmptyByPurge } = await import("./lib/purge-window.mjs");
   const source = JSON.parse(fs.readFileSync(SOURCE_PATH, "utf8"));
   const baseline = fs.existsSync(BASELINE_PATH) ? JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8")) : {};
+  const staticProblems = staticCheck();
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     // BANK-F30150: one explicit transaction with a transaction-scoped bypass, never a session SET on the pooler.
@@ -326,7 +393,7 @@ async function live() {
     for (const r of strayMarked) {
       result.failures.push(`statement: live row ${r.id.slice(0, 8)} load ${r.load_number ?? "(none)"} invoice ${r.ref} carries the Dreamline statement marker but no fuel.dreamline_statement_imported event wrote it`);
     }
-    let failures = result.failures.length;
+    let failures = result.failures.length + staticProblems.length;
     for (const n of result.notes) console.log(`${LABEL}: ${n}`);
     for (const f of result.failures) console.error(`  ✗ ${f}`);
 
@@ -410,5 +477,13 @@ async function live() {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv.includes("--selftest")) selftest();
+  else if (process.argv.includes("--static")) {
+    const problems = staticCheck();
+    if (problems.length) {
+      console.error(`${LABEL}: STATIC FAIL — ${problems.length} problem(s) in the Settlement Creator's Relay record writer`);
+      process.exit(1);
+    }
+    console.log(`${LABEL}: STATIC PASS — the Settlement Creator writes a Relay fill's rows from the fill's own lines (writeRelayFillFuelRows)`);
+  }
   else await live();
 }

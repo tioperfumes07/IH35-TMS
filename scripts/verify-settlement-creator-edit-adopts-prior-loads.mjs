@@ -19,7 +19,8 @@ export function problems(s) {
   if (!/s\.source_document_ref = \$2 AND s\.driver_id = \$3::uuid/.test(s.seed)) p.push("adoption is not limited to the same AlwaysTrack number and driver");
   if (/for \(const invoiceId of prior\.invoice_ids/.test(s.svc)) p.push("Edit voids the prior loads' sent invoices (Option 1 keeps them)");
   if (/family: "fuel_transaction",\s*documentId: fuelId/.test(s.svc)) p.push("Edit voids the prior fill rows instead of re-using them");
-  if (!/const inserted = reused \? \{ rows: \[\{ id: reused \}\] \} : await client\.query/.test(s.svc)) p.push("a re-used fill is inserted a second time");
+  // LEAD 443.198: a Relay row is the fill's own row (relayRowId, written from its lines) — still never a second insert.
+  if (!/const inserted = reused \? \{ rows: \[\{ id: reused \}\] \} : (?:relayRowId \? \{ rows: \[\{ id: relayRowId \}\] \} : )?await client\.query/.test(s.svc)) p.push("a re-used fill is inserted a second time");
   if (!/if \(postedRun\.rows\[0\] && !creatorPosted\)/.test(s.svc)) p.push("a Creator settlement posted through the close cannot be replaced");
   if (!/await reverseSettlementForVoid\(client, \{/.test(s.svc)) p.push("Edit no longer reverses the replaced settlement through the engine");
   // 5777: an NB in a Creator settlement starts a new tour; 5772: a Relay fill links to its ingested Relay transaction.

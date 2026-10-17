@@ -9,6 +9,7 @@
 
 import { recordHistoricalReassignQualification } from "../dispatch/driver-qualification.service.js";
 import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
+import { writeRelayFillFuelRows, RelayFillFuelRowsError } from "../fuel/relay-fill-fuel-rows.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -1370,6 +1371,11 @@ export async function postSettlementCreatorInClientTx(
   // RELAY-F442: total_cost = fuel net; fee_amount = card fee (own expense line via createExpenseFromFuelTransaction).
   // Relay fills posted through their own fill by this post (one posting per fill, however many rows link to it).
   const postedRelayFills = new Set<string>();
+  // LEAD 443.198 — a Relay fill's records are written ONCE per post from the fill's own lines (writeRelayFillFuelRows):
+  // every product line (DEF too) at Relay's discounted amount. A second draft line of the same ticket (diesel + DEF printed
+  // apart) takes its product's row from here; the same product named twice is refused by name.
+  const relayRowsByTxn = new Map<string, Array<{ id: string; fuel_type: string }>>();
+  const relayProductsNamed = new Set<string>();
   for (const fuel of draft.fuel_purchases ?? []) {
     const { netCents, feeCents } = fuelPurchaseNetAndFeeCents(fuel);
     if (netCents + feeCents <= 0) continue;
@@ -1433,7 +1439,8 @@ export async function postSettlementCreatorInClientTx(
         })
       : null;
     const reused = priorReused ?? adoptedReceipt;
-    if (!reused) try {
+    const relayRowsThisPost = fuel.card === "relay" && fuel.relay_transaction_id ? relayRowsByTxn.get(fuel.relay_transaction_id) ?? null : null;
+    if (!reused && fuel.card !== "relay") try {
       await refuseDuplicateProviderTransaction(client, {
         operatingCompanyId: draft.operating_company_id,
         vendorId: vendor.id,
@@ -1467,6 +1474,11 @@ export async function postSettlementCreatorInClientTx(
       if (reused) {
         await client.query(`UPDATE fuel.fuel_transactions SET relay_fuel_transaction_id = $2::uuid, updated_at = now() WHERE id = $1::uuid`, [reused, relayFillId]);
       }
+      const productKey = `${fuel.relay_transaction_id}|${fuel.fuel_type ?? "diesel"}`;
+      if (relayProductsNamed.has(productKey)) {
+        throw new SettlementCreatorError("relay_fill_product_named_twice", `Fuel line ${fuel.date}: Relay transaction ${fuel.relay_transaction_id} ${fuel.fuel_type ?? "diesel"} is already on this settlement — one row per product per ticket.`);
+      }
+      relayProductsNamed.add(productKey);
     } else if (fuel.relay_transaction_id) {
       throw new SettlementCreatorError("relay_transaction_on_non_relay_card", `Fuel line ${fuel.date}: names Relay transaction ${fuel.relay_transaction_id} but is paid by ${fuel.card}.`);
     }
@@ -1474,7 +1486,47 @@ export async function postSettlementCreatorInClientTx(
     // references another company's equipment) and only a Reefer trailer (reefer fuel never goes to a dry van).
     // LEAD 443.185 G7 — every other fill carries its load's company trailer from the ONE trailer rule (load-trailer.sql.ts),
     // the same trailer the import / Dreamline / Relay writers take from resolveFuelLoadAtTime (it was NULL: 669 rows).
-    const inserted = reused ? { rows: [{ id: reused }] } : await client.query<{ id: string }>(
+    // LEAD 443.198 — a Relay fill's rows come from the fill's own lines (never netCents, the printed pump amount).
+    let relayRowId: string | null = null;
+    if (!reused && fuel.card === "relay" && relayFillId) {
+      let rows = relayRowsThisPost;
+      if (!rows) {
+        try {
+          // The engine refuses a ticket product already recorded (provider-ID rule) before it writes any row.
+          const written = await writeRelayFillFuelRows(client as never, {
+            operatingCompanyId: draft.operating_company_id,
+            relayFillId,
+            vendorId: vendor.id,
+            loadId,
+            driverId: fillLoad.driverId,
+            unitId: fillLoad.unitId,
+            reeferTrailerId: draft.trailer_id ?? null,
+            reference: fuel.invoice ?? null,
+            purchasedAt: `${fuel.date}T12:00:00.000Z`,
+            locationCity: fuel.location ?? null,
+            loadExemptionReason: "Settlement Creator fuel line with no load number on the PDF row.",
+            actorUserId,
+            sourceDocId: fuel.source_doc_id ?? null,
+            notes: fuel.notes?.trim() || null,
+          });
+          rows = written.map((w) => ({ id: w.id, fuel_type: w.fuel_type }));
+        } catch (err) {
+          if (err instanceof FuelProviderTransactionDuplicateError) throw new SettlementCreatorError(err.code, `Fuel line ${fuel.date}: ${err.message}`);
+          if (err instanceof RelayFillFuelRowsError) throw new SettlementCreatorError(err.code, `Fuel line ${fuel.date}: ${err.message}`);
+          throw err;
+        }
+        relayRowsByTxn.set(fuel.relay_transaction_id!, rows);
+        for (const r of rows) fuelTxnIds.push(r.id);
+      }
+      relayRowId = rows.find((r) => r.fuel_type === fuelType)?.id ?? null;
+      if (!relayRowId) {
+        throw new SettlementCreatorError(
+          "relay_fill_product_absent",
+          `Fuel line ${fuel.date}: the settlement names ${fuelType} but Relay transaction ${fuel.relay_transaction_id} carries ${rows.map((r) => r.fuel_type).join(" + ")} — correct the line's product.`,
+        );
+      }
+    }
+    const inserted = reused ? { rows: [{ id: reused }] } : relayRowId ? { rows: [{ id: relayRowId }] } : await client.query<{ id: string }>(
       `
         INSERT INTO fuel.fuel_transactions (
           operating_company_id, vendor_id, load_id, driver_id, unit_id,
@@ -1532,7 +1584,7 @@ export async function postSettlementCreatorInClientTx(
     if (!cardStamp.rows[0]?.ok) {
       throw new SettlementCreatorError("fuel_card_type_missing", `Fuel line ${fuel.date}: no active fuel card type '${fuel.card.toUpperCase()}' for this company — the fill cannot say how it was paid.`);
     }
-    fuelTxnIds.push(fuelId);
+    if (!relayRowId) fuelTxnIds.push(fuelId);
 
     const doc = await createExpenseFromFuelTransaction(client, {
       operating_company_id: draft.operating_company_id,
