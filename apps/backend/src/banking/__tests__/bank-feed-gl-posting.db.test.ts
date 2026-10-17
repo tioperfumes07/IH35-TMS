@@ -12,7 +12,10 @@
  *   (8) idempotency                      -> second call already_posted; exactly ONE batch + TWO lines.
  *
  * Direction is derived ONLY from is_credit (never the amount_cents sign). The posting path is the EXISTING
- * postSourceTransaction('bank_categorization') — this test writes no GL math of its own. Runs only in CI
+ * postSourceTransaction('bank_categorization') — this test writes no GL math of its own. A money-OUT line to an
+ * Expense / COGS / Other Expense account becomes an Expense DOCUMENT posted by the expense poster
+ * (d0ce8cef59 "Cursor- DEGH-02+06+07 G6: categorize creates expense doc", #26668), so its JE is sourced 'expense'
+ * and its one line names the item mapped to the account (resolveExpenseItemForAccount; expense_lines_item_id_required). Runs only in CI
  * (GITHUB_ACTIONS=true) where a migrated Postgres is available.
  */
 import { randomUUID } from "node:crypto";
@@ -144,13 +147,18 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
     return id;
   }
 
+  // Every JE line this bank line produced: the CHAIN-05 'bank_categorization' JE, or — for a money-out line to an
+  // expense account (d0ce8cef59, #26668) — the JE of the Expense document the line created
+  // (expenses.source_bank_transaction_id). Reading both keeps every "zero JE" assertion below honest.
   async function jeLines(bankTxnId: string) {
     return scopedRead<{ account_id: string; debit_or_credit: string; amount_cents: string; batch: string }>(
       `SELECT account_id::text, debit_or_credit, amount_cents::text, posting_batch_id::text AS batch
        FROM accounting.journal_entry_postings
        WHERE operating_company_id = $1::uuid
-         AND source_transaction_type = 'bank_categorization'
-         AND source_transaction_id = $2
+         AND ((source_transaction_type = 'bank_categorization' AND source_transaction_id = $2)
+           OR (source_transaction_type = 'expense' AND source_transaction_id IN (
+                 SELECT e.id::text FROM accounting.expenses e
+                  WHERE e.operating_company_id = $1::uuid AND e.source_bank_transaction_id = $2::uuid)))
        ORDER BY line_sequence ASC`,
       [companyId, bankTxnId]
     );
@@ -191,6 +199,12 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
       await mk(acct.liability, "CLIA", "Liability");
       await mk(acct.bank, "CBNK", "Asset");
       await mk(acct.driverAdvance, "CDADV", "Asset");
+      // The ONE item mapped to the expense account — the money-out expense line names it (d0ce8cef59, #26668).
+      await db.query(
+        `INSERT INTO catalogs.items (operating_company_id, item_name, item_type, default_expense_account_id)
+         VALUES ($1::uuid, $2, 'Service', $3::uuid)`,
+        [companyId, `C5 Expense Item ${suffix}`, acct.expense]
+      );
 
       // Driver-advance receivable mapping (the cede target — BLOCK-6's authoritative account).
       // FLAKE FIX: companyId is the SHARED TRANSP company and migration 202606130146 may seed an active

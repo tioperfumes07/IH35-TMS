@@ -125,13 +125,19 @@ describeIntegration(
       return id;
     }
 
+    // Every JE line this feed line produced. A money-out line to an Expense account posts as an Expense DOCUMENT
+    // (d0ce8cef59 "Cursor- DEGH-02+06+07 G6: categorize creates expense doc", #26668), so its JE is sourced 'expense'
+    // via expenses.source_bank_transaction_id; the legacy 'bank_categorization' shape is still read so the
+    // refusal test's "zero JE" stays a real check, not a vacuous one.
     async function jeLines(bankTxnId: string) {
       return scopedRead<{ account_id: string }>(
         `SELECT account_id::text
          FROM accounting.journal_entry_postings
          WHERE operating_company_id = $1::uuid
-           AND source_transaction_type = 'bank_categorization'
-           AND source_transaction_id = $2`,
+           AND ((source_transaction_type = 'bank_categorization' AND source_transaction_id = $2)
+             OR (source_transaction_type = 'expense' AND source_transaction_id IN (
+                   SELECT e.id::text FROM accounting.expenses e
+                    WHERE e.operating_company_id = $1::uuid AND e.source_bank_transaction_id = $2::uuid)))`,
         [companyId, bankTxnId]
       );
     }
@@ -159,6 +165,12 @@ describeIntegration(
         await mk(acct.expense, "XDEXP", "Expense");
         await mk(acct.fromBank, "XDFRB", "Asset");
         await mk(acct.toBank, "XDTOB", "Asset");
+        // The ONE item mapped to the expense account — the money-out expense line names it (d0ce8cef59, #26668).
+        await db.query(
+          `INSERT INTO catalogs.items (operating_company_id, item_name, item_type, default_expense_account_id)
+           VALUES ($1::uuid, $2, 'Service', $3::uuid)`,
+          [companyId, `XFERDEDUP Expense Item ${suffix}`, acct.expense]
+        );
 
         await db.query(
           `INSERT INTO banking.bank_accounts (id, operating_company_id, account_name, ledger_account_id)
