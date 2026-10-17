@@ -173,6 +173,10 @@ async function main() {
     // (is_reimbursable) row posts as a 'reimbursement' settlement line — Dr expense / Cr 2175 through the close engine —
     // not as an accounting.expenses row (settlement-creator.service.ts, "Drv reimbursements"). The total is still the
     // document's $140.20 exactly: a lost row, a duplicate, or a voided charge brought back all move it.
+    // 443.199: a Dreamline statement card-difference row (443.142 import, vendor_document_number
+    // 'dreamline_efs=<efs>:<product>:<n>-CARD-DIFF', memo 'Dreamline statement … card charged N cents more than receipt')
+    // is the company's card cost from the bank-side statement — it is not on the driver's signed document, so it is
+    // excluded from the document total by its own marker (live 10-17: 13555-7 / 13555-8, 2¢ each) and never by amount.
     const settl5787Res = await client.query(
       `WITH s AS (
          SELECT ds.id FROM driver_finance.driver_settlements ds
@@ -186,6 +190,7 @@ async function main() {
                      FROM accounting.expenses e
                     WHERE e.operating_company_id = $1::uuid AND e.load_id IN (SELECT load_id FROM loads)
                       AND e.voided_at IS NULL
+                      AND NOT (e.vendor_document_number LIKE 'dreamline\\_efs=%-CARD-DIFF' AND e.memo LIKE 'Dreamline statement %')
                       AND (e.source_fuel_transaction_id IS NULL
                            OR EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
                                        WHERE ft.id = e.source_fuel_transaction_id AND ft.fuel_type <> 'diesel'))), 0)
