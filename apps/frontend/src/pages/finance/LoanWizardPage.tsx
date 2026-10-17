@@ -288,9 +288,9 @@ export function LoanWizardPage() {
                     </div>
                   </div>
                   <div>
-                    <div className="font-medium text-[#1F2A44]">Opening journal entry</div>
                     <div className="mt-1">
                       <ParityTable
+                        title="Opening journal entry"
                         columns={OPENING_JE_COLUMNS}
                         rows={[
                           ...preview.opening_journal_entry.lines.map(

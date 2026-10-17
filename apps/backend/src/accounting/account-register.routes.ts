@@ -21,6 +21,9 @@ const accountRegisterQuerySchema = companyQuerySchema.extend({
   // (@decision Q7: "Basis defaults to accrual (frontend default, no per-user memory)"), so every
   // existing caller keeps the exact payload it gets today.
   basis: z.enum(["accrual", "cash"]).optional(),
+  // LEAD 443.179 — undone pairs (original + full reversal) are hidden by default, as QuickBooks hides an undone
+  // transaction; "true" shows them (audit use).
+  include_reversed: z.enum(["true", "false"]).optional(),
 });
 
 const toggleClearedBodySchema = companyQuerySchema.extend({
@@ -81,6 +84,7 @@ async function registerAccountRegisterRoutes(app: FastifyInstance) {
           search: query.data.search ?? null,
           type: query.data.type ?? null,
           basis: query.data.basis ?? null,
+          include_reversed: query.data.include_reversed === "true",
           roleMatches,
         });
       });

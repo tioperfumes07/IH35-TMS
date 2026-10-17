@@ -146,110 +146,10 @@
       "same_rows_toggle": 0,
       "inline_notice": 0
     },
-    "apps/frontend/src/pages/factoring/BatchDetail.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/factoring/BatchWizard.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/factoring/ChargebacksTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/factoring/FactorAdmin.tsx": {
-      "untitled": 3,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/factoring/FactoringHome.tsx": {
-      "untitled": 15,
-      "same_rows_toggle": 0,
-      "inline_notice": 5
-    },
-    "apps/frontend/src/pages/factoring/PaymentsToYouPanel.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/factoring/ReserveTracker.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/factoring/SubmissionQueue.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
     "apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 2
-    },
-    "apps/frontend/src/pages/finance/AmortizationPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/ArApAgingPage.tsx": {
-      "untitled": 4,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/finance/BreakEvenPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/BreakEvenWorkbookCreator.tsx": {
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
-    },
-    "apps/frontend/src/pages/finance/FinanceHubPage.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/finance/FinanceScenariosPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx": {
-      "untitled": 2,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/LoanWizardPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/finance/components/ScenarioLinesTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
     },
     "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx": {
       "untitled": 1,
@@ -270,41 +170,6 @@
       "untitled": 0,
       "same_rows_toggle": 0,
       "inline_notice": 1
-    },
-    "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/fuel/cards/FuelCardsPage.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 1
-    },
-    "apps/frontend/src/pages/fuel/components/RelayDepositReview.tsx": {
-      "untitled": 0,
-      "same_rows_toggle": 0,
-      "inline_notice": 2
-    },
-    "apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
-    },
-    "apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx": {
-      "untitled": 1,
-      "same_rows_toggle": 0,
-      "inline_notice": 0
     },
     "apps/frontend/src/pages/insurance/ClaimsTab.tsx": {
       "untitled": 1,

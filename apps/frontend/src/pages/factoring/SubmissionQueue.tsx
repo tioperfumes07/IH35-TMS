@@ -326,6 +326,7 @@ export function SubmissionQueue() {
           {/* FAC-F3540: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar. */}
           <div data-testid="factoring-submit-honest-empty">
             <ParityTable<SubmissionQueueItem>
+              title="Invoices waiting to submit — no batch yet"
               columns={columns}
               rows={items}
               rowKey={(item) => item.invoice_id}
