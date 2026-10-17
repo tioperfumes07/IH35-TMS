@@ -87,16 +87,34 @@ export function findBareIdentifierCalls(src, fileRel) {
   return problems;
 }
 
-/** Raw GET list URL builders in FE — must set board_scope= in the query (api/loads.ts is the hub). */
+/**
+ * The hub is the ONE file that DEFINES listLoads. Heavy CI peel (443.192) — re-pointed, same rule: 52699c6c2f (#26871,
+ * 443.182-A catalog one-source consolidation) moved listLoads + listAllLoads into api/catalog-loads.ts and left
+ * api/loads.ts as a re-export, so a hard-coded "api/loads.ts" hub checked a file that no longer builds the URL and
+ * flagged the real hub's own fetch as a raw list GET.
+ */
+export function isListLoadsHub(src) {
+  return /export function listLoads\(/.test(src);
+}
+
+/** Raw GET list URL builders in FE — must set board_scope= in the query (the listLoads hub forwards it). */
 export function findRawListGets(src, fileRel) {
   const problems = [];
-  // Only flag files that build the list URL outside api/loads.ts
-  if (fileRel.endsWith("api/loads.ts")) {
+  if (isListLoadsHub(src)) {
     // Hub must still put board_scope on the query when provided — and must not invent a silent default.
-    // Assert listLoads forwards board_scope when present.
+    // Assert listLoads forwards board_scope when present, and refuses a call with neither board_scope nor drafts_only.
     if (!/if\s*\(\s*filters\.board_scope\s*\)\s*query\.set\(\s*["']board_scope["']/.test(src)) {
       problems.push(`${fileRel} — listLoads must query.set("board_scope", ...) when filters.board_scope is set`);
     }
+    if (!/if\s*\(\s*!filters\.board_scope\s*&&\s*!filters\.drafts_only\s*\)\s*\{\s*throw new Error\(/.test(src)) {
+      problems.push(`${fileRel} — listLoads must refuse a call with neither board_scope nor drafts_only (ROUND 283.3 fail-closed)`);
+    }
+    return problems;
+  }
+  // api/loads.ts keeps its pre-existing exemption from the raw-GET scan (it holds the load detail / create / update
+  // fetchers); since 52699c6c2f it must RE-EXPORT the hub's listLoads, never define a second one.
+  if (fileRel.endsWith("api/loads.ts")) {
+    if (!/export \{[^}]*\blistLoads\b[^}]*\}/.test(src)) problems.push(`${fileRel} — must re-export listLoads from the one hub (api/catalog-loads.ts)`);
     return problems;
   }
   let m;
@@ -118,15 +136,18 @@ export function findRawListGets(src, fileRel) {
 function main() {
   const files = walk(FE_SRC);
   const all = [];
+  const hubs = [];
   for (const f of files) {
     const rel = path.relative(ROOT, f);
     const src = fs.readFileSync(f, "utf8");
-    if (!rel.endsWith("api/loads.ts")) {
+    if (isListLoadsHub(src)) hubs.push(rel);
+    if (!isListLoadsHub(src) && !rel.endsWith("api/loads.ts")) {
       all.push(...findUnscopedCalls(src, rel));
       all.push(...findBareIdentifierCalls(src, rel));
     }
     all.push(...findRawListGets(src, rel));
   }
+  if (hubs.length !== 1) all.push(`exactly ONE file must define listLoads (the hub that forwards board_scope) — found ${hubs.length}: ${hubs.join(", ") || "none"}`);
   if (all.length) {
     console.error(`${LABEL}: FAIL — ${all.length} call site(s) omit board_scope (build must fail):`);
     for (const p of all) console.error(`  - ${p}`);
@@ -157,6 +178,10 @@ if (process.argv.includes("--selftest")) {
     "bare id without board_scope fails",
     findBareIdentifierCalls(`const loadListFilters = { sort: "x" };\nlistAllLoads(loadListFilters)`, "x.tsx").length === 1
   );
+  const hubSrc = 'export function listLoads(filters) {\n  if (!filters.board_scope && !filters.drafts_only) {\n    throw new Error("x");\n  }\n  const query = new URLSearchParams();\n  if (filters.board_scope) query.set("board_scope", filters.board_scope);\n  return apiRequest(`/api/v1/mdata/loads?${query}`);\n}';
+  t("the hub (wherever listLoads is defined) passes", findRawListGets(hubSrc, "api/catalog-loads.ts").length === 0);
+  t("a hub that drops board_scope forwarding fails", findRawListGets(hubSrc.replace('if (filters.board_scope) query.set("board_scope", filters.board_scope);', ""), "api/catalog-loads.ts").length === 1);
+  t("a hub without the fail-closed refusal fails", findRawListGets(hubSrc.replace("throw new Error", "console.warn"), "api/catalog-loads.ts").length === 1);
   if (bad) process.exit(1);
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);
