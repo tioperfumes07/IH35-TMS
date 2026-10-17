@@ -879,10 +879,6 @@ export async function seedExpense(
     description: line.description,
     load_id: loadId,
     load_required: true,
-    // LEAD 443.186 — the line carries its load's driver + unit, the same as its header (CC-2 harness: seeded lines
-    // with a load and no driver/unit); trg_refuse_expense_line_attr_mismatch requires them equal.
-    driver_id: fromLoad.driver_id,
-    unit_id: fromLoad.assigned_unit_id,
     expense_account_uuid: item.expenseAccountId,
     item_id: item.itemId,
     quantity: 1,

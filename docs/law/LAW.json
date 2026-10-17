@@ -1060,14 +1060,14 @@
     "id": "LAW-2026-10-12-BCF01-ADVANCE-DISBURSE-ATOMIC",
     "title": "BCF-01 (LEAD 443.113) — disburseDriverAdvanceCore must run the disbursement UPDATE and the GL post in ONE atomic withCurrentUser transaction (disburse + post or nothing); retry is idempotent (advance must be in approved state to proceed); the two-phase pattern is permanently removed",
     "source_file": "AGENTS.md",
-    "guard": "scripts/verify-steps/18411-verify-advance-disburse-atomic.mjs",
+    "guard": "scripts/verify-steps/18409-verify-advance-disburse-atomic.mjs",
     "type": "enforced"
   },
   {
     "id": "LAW-2026-10-12-BCF02-ADVANCE-BILL-DRIVER-LOAD-CHECK",
     "title": "BCF-02 (LEAD 443.113) — when creating a cash advance linked to a driver_bill, the bill must match the advance's driver, be live (open + not voided), and be locked FOR UPDATE before the allocation read to prevent concurrent allocation races",
     "source_file": "AGENTS.md",
-    "guard": "scripts/verify-steps/18415-verify-advance-bill-driver-load-check.mjs",
+    "guard": "scripts/verify-steps/18415-verify-cash-advance-applied-bill-matches-driver-load.mjs",
     "type": "enforced"
   },
   {

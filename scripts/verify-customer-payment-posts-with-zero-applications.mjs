@@ -21,35 +21,22 @@ const LABEL = "verify-customer-payment-posts-with-zero-applications";
 const ROUTE_A = "apps/backend/src/accounting/customer-payments.routes.ts";
 const ROUTE_B = "apps/backend/src/accounting/payments.routes.ts";
 
-// 443.182 C step 2 — both create routes hand their document to the one payments engine (ROUTE_B,
-// recordCustomerPaymentInClientTx), which posts-or-skip-audits through postCustomerPaymentOrRecordSkipInClientTx. The
-// ACCT-F5705 rule now has to hold in the ENGINE: the flag resolution's if/else is ungated, and the engine's call to it is
-// not gated on applicationsCount. Each route must delegate (no route-level post of its own).
 function failures(sources) {
   const out = [];
-  const engine = sources[ROUTE_B];
-  const flagIdx = engine.indexOf('isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED"');
-  if (flagIdx === -1) {
-    out.push(`${ROUTE_B}: CUSTOMER_PAYMENT_GL_POSTING_ENABLED flag resolution not found in the payments engine — re-check this guard`);
-  } else {
-    const scoped = engine.slice(flagIdx, flagIdx + 1400);
-    if (/if \(applicationsCount > 0 && enabled\)/.test(scoped) || /^\s*if \(applicationsCount > 0\)/m.test(scoped)) {
-      out.push(`${ROUTE_B}: the post call is gated on applicationsCount > 0 — a zero-application payment (real customer credit) would never post`);
-    }
-    if (/else if \(applicationsCount > 0\)/.test(scoped) || !/\} else \{\s*await recordPostingFlagSkip\(/.test(scoped)) {
-      out.push(`${ROUTE_B}: the skip-audit call is gated (or missing) — a zero-application payment with the flag OFF would silently skip with no audit trail`);
-    }
-  }
-  const engineBody = (engine.match(/export async function recordCustomerPaymentInClientTx\([\s\S]*?\n}\n/) ?? [""])[0];
-  const callIdx = engineBody.indexOf("await postCustomerPaymentOrRecordSkipInClientTx(client, {");
-  if (callIdx === -1) {
-    out.push(`${ROUTE_B}: recordCustomerPaymentInClientTx does not post-or-skip-audit every payment`);
-  } else if (/if \(applicationsCount > 0\)[^\n]*\n?[^\n]*$/.test(engineBody.slice(Math.max(0, callIdx - 200), callIdx))) {
-    out.push(`${ROUTE_B}: the engine's post-or-skip call is gated on applicationsCount > 0`);
-  }
   for (const file of [ROUTE_A, ROUTE_B]) {
-    if (!/recordCustomerPaymentInClientTx\(client, \{/.test(sources[file].replace(engineBody, ""))) {
-      out.push(`${file}: the create route does not hand its payment to the one payments engine`);
+    const text = sources[file];
+    const flagIdx = text.indexOf('isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED"');
+    if (flagIdx === -1) {
+      out.push(`${file}: CUSTOMER_PAYMENT_GL_POSTING_ENABLED flag resolution not found — re-check this guard`);
+      continue;
+    }
+    // Scope to the flag resolution + the if/else pair immediately following it.
+    const scoped = text.slice(flagIdx, flagIdx + 1400);
+    if (/if \(applicationsCount > 0 && customerPaymentPostingEnabled\)/.test(scoped) || /^\s*if \(applicationsCount > 0\)/m.test(scoped)) {
+      out.push(`${file}: the post call is still gated on applicationsCount > 0 — a zero-application payment (real customer credit) would never post`);
+    }
+    if (/else if \(applicationsCount > 0\)/.test(scoped)) {
+      out.push(`${file}: the skip-audit call is still gated on applicationsCount > 0 — a zero-application payment with the flag OFF would silently skip with no audit trail`);
     }
   }
   return out;
@@ -63,24 +50,32 @@ const live = {
 if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
   const mutations = [
     {
-      name: `${ROUTE_B}: gate the engine's post on applicationsCount`,
-      file: ROUTE_B,
-      mutate: (text) => text.replace("  if (enabled) {", "  if (applicationsCount > 0 && enabled) {"),
-    },
-    {
-      name: `${ROUTE_B}: gate the engine's skip-audit on applicationsCount`,
-      file: ROUTE_B,
-      mutate: (text) => text.replace("  } else {\n    await recordPostingFlagSkip(client, input.user_id, {", "  } else if (applicationsCount > 0) {\n    await recordPostingFlagSkip(client, input.user_id, {"),
-    },
-    {
-      name: `${ROUTE_B}: gate the engine's post-or-skip call on applicationsCount`,
-      file: ROUTE_B,
-      mutate: (text) => text.replace("  await postCustomerPaymentOrRecordSkipInClientTx(client, {\n    operating_company_id: oci,", "  if (applicationsCount > 0) await postCustomerPaymentOrRecordSkipInClientTx(client, {\n    operating_company_id: oci,"),
-    },
-    {
-      name: `${ROUTE_A}: the customer route stops using the engine`,
+      name: `${ROUTE_A}: reintroduce the applicationsCount post gate`,
       file: ROUTE_A,
-      mutate: (text) => text.replace("recordCustomerPaymentInClientTx(client, {", "somethingElse(client, {"),
+      mutate: (text) => text.replace("if (customerPaymentPostingEnabled) {", "if (applicationsCount > 0 && customerPaymentPostingEnabled) {"),
+    },
+    {
+      name: `${ROUTE_A}: reintroduce the applicationsCount skip-audit gate`,
+      file: ROUTE_A,
+      mutate: (text) =>
+        text.replace(
+          `      } else {\n        await recordPostingFlagSkip(client, user.uuid, {\n          flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",\n          postingDomain: "customer_payment",\n          operatingCompanyId: query.data.operating_company_id,\n          context: { payment_id: payment.id, route: "POST /api/v1/customers/:id/payments" },`,
+          `      } else if (applicationsCount > 0) {\n        await recordPostingFlagSkip(client, user.uuid, {\n          flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",\n          postingDomain: "customer_payment",\n          operatingCompanyId: query.data.operating_company_id,\n          context: { payment_id: payment.id, route: "POST /api/v1/customers/:id/payments" },`
+        ),
+    },
+    {
+      name: `${ROUTE_B}: reintroduce the applicationsCount post gate`,
+      file: ROUTE_B,
+      mutate: (text) => text.replace("if (customerPaymentPostingEnabled) {", "if (applicationsCount > 0 && customerPaymentPostingEnabled) {"),
+    },
+    {
+      name: `${ROUTE_B}: reintroduce the applicationsCount skip-audit gate`,
+      file: ROUTE_B,
+      mutate: (text) =>
+        text.replace(
+          `      } else {\n        await recordPostingFlagSkip(client, user.uuid, {\n          flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",\n          postingDomain: "customer_payment",\n          operatingCompanyId: query.data.operating_company_id,\n          context: { payment_id: payment.id, route: "POST /api/v1/accounting/payments" },`,
+          `      } else if (applicationsCount > 0) {\n        await recordPostingFlagSkip(client, user.uuid, {\n          flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",\n          postingDomain: "customer_payment",\n          operatingCompanyId: query.data.operating_company_id,\n          context: { payment_id: payment.id, route: "POST /api/v1/accounting/payments" },`
+        ),
     },
   ];
   const escaped = [];
@@ -106,4 +101,4 @@ if (missing.length) {
   console.error(`${LABEL} FAIL\n${missing.map((f) => ` - ${f}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — both customer-payment create routes go through the one payments engine, which posts-or-skip-audits every real payment, including zero-application payments (customer credits)`);
+console.log(`${LABEL} PASS — both customer-payment create routes post-or-skip-audit every real payment, including zero-application payments (customer credits)`);

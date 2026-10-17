@@ -22,8 +22,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Do NOT rebuild — only add files that already use isEnabled + a posting flag.
 const POSTING_FILES = [
   "apps/backend/src/accounting/payments/apply.service.ts",
-  // 443.182 C step 2 — the customer-payment GL gate moved into the one payments engine (postCustomerPaymentOrRecordSkipInClientTx).
-  "apps/backend/src/accounting/payments.routes.ts",
   "apps/backend/src/accounting/bill-payment-gl.service.ts",
   "apps/backend/src/accounting/bill-gl.service.ts",
   "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts",
@@ -84,9 +82,7 @@ function matchBlockEnd(source, openBraceIdx) {
 // NOT this defect, so we only inspect the positive-gate shape to avoid false positives.
 export function analyze(source) {
   const offenders = [];
-  // 443.182 C step 2 — the flag argument may be a constant OR a string literal ("CUSTOMER_PAYMENT_GL_POSTING_ENABLED"); a
-  // literal-arg gate used to be invisible to this guard.
-  const assign = /(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*await\s+isEnabled\s*\(\s*[^,]*,\s*((?:["'][A-Z0-9_]+["'])|[A-Za-z_$][\w$."'\[\]]*)/g;
+  const assign = /(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*await\s+isEnabled\s*\(\s*[^,]*,\s*([A-Za-z_$][\w$."'\[\]]*)/g;
   let m;
   while ((m = assign.exec(source)) !== null) {
     const varName = m[1];
@@ -134,7 +130,6 @@ if (process.argv.includes("--selftest")) {
   const readGate = `const show = await isEnabled(client, SHOW_BREAK_EVEN_WIDGET, {}); if (show) { render(); }`;
   const checks = [
     ["silent no-op posting gate is flagged", analyze(silent).length === 1],
-    ["silent gate with a string-literal flag is flagged", analyze(silent.replace("CUSTOMER_PAYMENT_GL_POSTING_FLAG_KEY", '"CUSTOMER_PAYMENT_GL_POSTING_ENABLED"')).length === 1],
     ["honest gate (recordPostingFlagSkip + gl_posting) is not flagged", analyze(honest).length === 0],
     ["non-posting read gate is not flagged", analyze(readGate).length === 0],
   ];

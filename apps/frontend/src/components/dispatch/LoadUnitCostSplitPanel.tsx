@@ -64,6 +64,7 @@ export function LoadUnitCostSplitPanel({
         </span>
       </div>
       <ParityTable<UnitCostShare>
+        appearance="board"
         tableTestId="load-unit-cost-split-table"
         storageKey="ih35.dispatch.load-unit-cost-split.v1"
         rows={data.units}

@@ -702,7 +702,7 @@ export function ChartOfAccountsListPage() {
                   onDriftFilterToggle={setDriftOnly}
                 />
               ) : null}
-              <CoaAsymmetryReportPanel enabled={showCoaAsymmetry} />
+              <CoaAsymmetryReportPanel enabled={showCoaAsymmetry} operatingCompanyId={companyId} />
             </div>
           ) : null}
         </div>

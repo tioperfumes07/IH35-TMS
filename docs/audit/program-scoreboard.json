@@ -1,10 +1,10 @@
 {
-  "healthzSha": "747999d",
-  "generated_at": "2026-10-16T17:44:33.574Z",
+  "healthzSha": "0064a56",
+  "generated_at": "2026-10-17T03:35:36.201Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "747999d",
+    "deployedSha": "0064a56",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 26794,
-      "title": "FINDING: ACCT-F443159 — bills picked Section A from the expense-categories catalog, not the Chart of Accounts Banking uses; accounts created in the app (6110-01-001 Dispatch — Mexico) never appeared on any bill",
+      "number": 26882,
+      "title": "FINDING: N/A (CLAIM-RESERVE 18549 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 12:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26794",
-      "sha": "747999d9fb",
-      "committedAtIso": "2026-10-16T12:35:12-05:00"
+      "mergedAtCt": "10/16/2026, 10:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26882",
+      "sha": "a3e14bfccd",
+      "committedAtIso": "2026-10-16T22:34:07-05:00"
     },
     {
-      "number": 26793,
-      "title": "FINDING: R443.161-G1 trailer choice missing at shared load boundary",
+      "number": 26880,
+      "title": "FINDING: ACCT-F4431850 LANE: FINANCIAL — Claude-3- 443.185 G7 one fuel-to-load rule (trailer included) + G8 factoring advance lines carry the factor + their load + G12 one base-invoice duplicate rule",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 12:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26793",
-      "sha": "6db7585fb6",
-      "committedAtIso": "2026-10-16T12:32:45-05:00"
+      "mergedAtCt": "10/16/2026, 10:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26880",
+      "sha": "76f19bdb22",
+      "committedAtIso": "2026-10-16T22:31:10-05:00"
     },
     {
-      "number": 26795,
-      "title": "Claude-3- 443.163 M3+M5: Categorize/Match embeds MatchDrawer (one matcher on screen); Payee / Amount from-to / types on that matcher",
+      "number": 26877,
+      "title": "FINDING: ACCT-F4431810 LANE: NON-FINANCIAL — Claude-3- 443.181 guard 18533: one table component app-wide (allowlist = exemptions only, shrink-only)",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 12:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26795",
-      "sha": "8a58f20d9c",
-      "committedAtIso": "2026-10-16T12:26:13-05:00"
+      "mergedAtCt": "10/16/2026, 10:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26877",
+      "sha": "0064a56310",
+      "committedAtIso": "2026-10-16T22:30:09-05:00"
     },
     {
-      "number": 26792,
-      "title": "FINDING: N/A (CLAIM-RESERVE 18457 -- reservation-only commit, no code fix)",
+      "number": 26876,
+      "title": "CC-2- 443.182 C expenses: one header + one line insert (18481 expenses 13 → 1)",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 12:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26792",
-      "sha": "63bf97aa5a",
-      "committedAtIso": "2026-10-16T12:16:52-05:00"
+      "mergedAtCt": "10/16/2026, 10:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26876",
+      "sha": "355455cc2a",
+      "committedAtIso": "2026-10-16T22:25:17-05:00"
     },
     {
-      "number": 26791,
-      "title": "Claude-3- 443.158 M1c relevance floor; fix bank-recon unit tests my #26786/#26790 broke; architecture/blueprint match laws",
+      "number": 26875,
+      "title": "FINDING: ACCT-F2026101708 LANE: claude — bill payments have ONE row writer: insertBillPaymentRowInClientTx in bills.service.ts (443.182 C bill_payments, 18481: 9 sites / 9 files -> 1 / 1)",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 12:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26791",
-      "sha": "7118025464",
-      "committedAtIso": "2026-10-16T12:05:15-05:00"
+      "mergedAtCt": "10/16/2026, 10:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26875",
+      "sha": "53074028c4",
+      "committedAtIso": "2026-10-16T22:02:42-05:00"
     },
     {
-      "number": 26789,
-      "title": "FINDING: ACCT-F2026101603 LANE: claude — a voided invoice held its number forever, so a corrected reissue could never keep the number submitted to Faro",
+      "number": 26878,
+      "title": "FINDING: N/A (CLAIM-RESERVE 18537 18541 18545 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 12:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26789",
-      "sha": "566f2c2acf",
-      "committedAtIso": "2026-10-16T12:02:37-05:00"
+      "mergedAtCt": "10/16/2026, 09:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26878",
+      "sha": "f93c4b1f52",
+      "committedAtIso": "2026-10-16T21:57:33-05:00"
     },
     {
-      "number": 26790,
-      "title": "Claude-3- 443.158 M1b: a document already consumed by a bank line is never a candidate for another line",
+      "number": 26870,
+      "title": "FINDING: ACCT-F4431810 LANE: NON-FINANCIAL — Claude-3- 443.181 one table component: FleetTable and the Chart of Accounts on ParityTable; ListView engine retired",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 11:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26790",
-      "sha": "cafe0df27e",
-      "committedAtIso": "2026-10-16T11:49:44-05:00"
+      "mergedAtCt": "10/16/2026, 09:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26870",
+      "sha": "49b886ed66",
+      "committedAtIso": "2026-10-16T21:56:07-05:00"
     },
     {
-      "number": 26785,
-      "title": "FINDING: ACCT-F2026101603 LANE: claude — claim migration 202615960910 (443.151 b, void frees invoice number)",
+      "number": 26871,
+      "title": "FINDING: N/A (443.182-A catalog one-source consolidation) LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 11:46 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26785",
-      "sha": "34a9a5bfa6",
-      "committedAtIso": "2026-10-16T11:46:43-05:00"
+      "mergedAtCt": "10/16/2026, 09:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26871",
+      "sha": "52699c6c2f",
+      "committedAtIso": "2026-10-16T21:55:13-05:00"
     },
     {
-      "number": 26788,
-      "title": "Claude-3- 443.158: commit the master engine register + the bank-match handoff register; AGENTS.md read-first entry",
+      "number": 26874,
+      "title": "FINDING: ACCT-F2026101707 LANE: claude — payments have ONE writer: insertPaymentRowInClientTx in payments.routes.ts (443.182 C payments, 18481: 2 sites / 2 files -> 1 / 1)",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 11:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26788",
-      "sha": "429c529ddf",
-      "committedAtIso": "2026-10-16T11:38:40-05:00"
+      "mergedAtCt": "10/16/2026, 09:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26874",
+      "sha": "06ecd2ec2b",
+      "committedAtIso": "2026-10-16T21:45:01-05:00"
     },
     {
-      "number": 26787,
-      "title": "Claude-3- 443.155 F: a Faro wire suggests its purchase (exact net or same-date group) with a reason; stored 2150 not served when the purchase is on the books",
+      "number": 26873,
+      "title": "FINDING: ACCT-F2026101706 LANE: claude — bills have ONE header writer: every accounting.bills INSERT goes through insertBillHeaderOnClient (443.182 C bills, 18481: 11 sites / 8 files -> 1 / 1)",
       "state": "merged",
-      "mergedAtCt": "10/16/2026, 11:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26787",
-      "sha": "add69bd031",
-      "committedAtIso": "2026-10-16T11:36:46-05:00"
+      "mergedAtCt": "10/16/2026, 09:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26873",
+      "sha": "b58baf82d0",
+      "committedAtIso": "2026-10-16T21:44:51-05:00"
     }
   ]
 }

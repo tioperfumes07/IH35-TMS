@@ -67,51 +67,9 @@ export async function insertExpenseHeader(client: any, row: ExpenseRow): Promise
   return id ? String(id) : null;
 }
 
-/**
- * LEAD 443.186 — a line written through the one INSERT is COMPLETE from evidence on its own document, whoever calls:
- *   · company            ← its header (trg_expense_lines_attribution_from_header only fills a line whose company is
- *                          already set, so a line written without it got no attribution at all);
- *   · driver/unit/trailer ← its header, when the line sits on the header's load (trg_refuse_expense_line_attr_mismatch
- *                          already requires them equal) — CC-2 harness: seeded / Creator lines with a load and no
- *                          driver/unit;
- *   · account            ← its item's default expense account (same company) — CC-2 harness: work-order lines with an
- *                          item and no expense_account_uuid.
- * A value the caller passed always wins. Never guesses: no item → no account from here; no header value → none.
- */
-export async function completeExpenseLine(client: any, row: ExpenseRow): Promise<ExpenseRow> {
-  const out: ExpenseRow = { ...row };
-  const hdr = (
-    await client.query(
-      `SELECT operating_company_id::text AS co, driver_uuid::text AS d, unit_id::text AS u, trailer_id::text AS t, load_id::text AS l
-         FROM accounting.expenses WHERE id = $1::uuid`,
-      [row.expense_id]
-    )
-  )?.rows?.[0] as { co: string | null; d: string | null; u: string | null; t: string | null; l: string | null } | undefined;
-  if (hdr) {
-    if (out.operating_company_id == null && hdr.co) out.operating_company_id = hdr.co;
-    const onHeaderLoad = out.load_id == null || hdr.l == null || String(out.load_id) === hdr.l;
-    if (onHeaderLoad) {
-      if (out.driver_id == null && hdr.d) out.driver_id = hdr.d;
-      if (out.unit_id == null && hdr.u) out.unit_id = hdr.u;
-      if (out.trailer_id == null && hdr.t) out.trailer_id = hdr.t;
-    }
-  }
-  if (out.expense_account_uuid == null && out.item_id && out.operating_company_id) {
-    const acct = (
-      await client.query(
-        `SELECT default_expense_account_id::text AS a FROM catalogs.items WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-        [out.item_id, out.operating_company_id]
-      )
-    )?.rows?.[0]?.a as string | null | undefined;
-    if (acct) out.expense_account_uuid = acct;
-  }
-  return out;
-}
-
 /** The one INSERT of accounting.expense_lines. Returns the new line id. */
 export async function insertExpenseLine(client: any, row: ExpenseRow): Promise<string | null> {
   if (!row.expense_id) throw new Error("expense_line_requires_expense_id");
-  row = await completeExpenseLine(client, row);
   const { columns, placeholders, values } = expenseRowSql(row);
   const res = await client.query(
     `INSERT INTO accounting.expense_lines (${columns.join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING id::text AS id`,

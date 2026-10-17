@@ -1230,6 +1230,7 @@ export function DriverDetailPage() {
                 ) : driver?.operating_company_id ? (
                   <EntityPicker
                     kind="vendor"
+                    allowCreate={false}
                     operatingCompanyId={String(driver.operating_company_id)}
                     value={apVendorPickId}
                     selectedOption={
