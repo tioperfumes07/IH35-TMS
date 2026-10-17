@@ -30,7 +30,7 @@ import {
 } from "./reinstate-document.service.js";
 
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
-import { columnExists, createExpenseBodySchema, createExpenseInClientTx, emitOutbox, ExpensePostRefused, FIXED_COST_CATEGORY_CODES, insertUnattributedAlert, postExpenseDocumentOwnTx, relinkExpenseToLoadInClientTx, reserveExpenseNumber, writeExpenseLinesInClientTx, relationExists, type CreateExpenseBody } from "./expense-writer.service.js";
+import { columnExists, createExpenseBodySchema, createExpenseInClientTx, emitOutbox, ExpensePostRefused, FIXED_COST_CATEGORY_CODES, insertUnattributedAlert, postExpenseDocumentOwnTx, relinkExpenseToLoadInClientTx, reserveExpenseNumber, writeUncategorizedLineInClientTx, relationExists, type CreateExpenseBody } from "./expense-writer.service.js";
 export { createExpenseInClientTx, type CreateExpenseBody } from "./expense-writer.service.js";
 export { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 
@@ -978,9 +978,10 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       // buildExpenseLines keeps the same guard as the engine-level backstop.
       if (!exp.payment_account_uuid && !exp.vendor_uuid) return { kind: "orphan" as const };
       if (exp.line_count === 0) {
-        const cents = Number(exp.total_amount_cents);
-        // 443.182 C — persisted through the one expense engine (expense-writer.service.ts writeExpenseLinesInClientTx).
-        await writeExpenseLinesInClientTx(client, expenseId, [{ line_sequence: 1, amount_cents: cents, amount: cents / 100, description: "Uncategorized" }]);
+        // 443.182 C + Lead 04:10Z — the one expense engine writes the "Uncategorized" line on the role-resolved
+        // Uncategorized Expense account (QuickBooks behaviour); an unmapped role is refused by name, never posted bare.
+        const account = await writeUncategorizedLineInClientTx(client, { operatingCompanyId: oci, expenseId, amountCents: Number(exp.total_amount_cents) });
+        if (!account) return { kind: "uncategorized_unmapped" as const };
       }
       return { kind: "ok" as const };
     });
@@ -990,6 +991,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     if (pre.kind === "not_eligible") return reply.code(409).send({ error: "expense_not_posting_eligible" });
     if (pre.kind === "already_posted") return reply.code(409).send({ error: "expense_already_posted" });
     if (pre.kind === "orphan") return reply.code(409).send({ error: "expense_orphan_no_payment_account_or_vendor" });
+    if (pre.kind === "uncategorized_unmapped") return reply.code(409).send({ error: "uncategorized_expense_role_unmapped" });
 
     // Step B: post the balanced JE (own tx, idempotent — re-post returns the existing batch).
     // Steps B + C — the one expense engine posts the balanced JE on its own transaction (idempotent — re-post returns the

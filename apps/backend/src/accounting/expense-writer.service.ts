@@ -3,6 +3,7 @@
  * (driver-finance/settlement-creator.service.ts) never imports a route (verify-no-service-imports-an-http-route-module).
  * Unchanged code; accounting/expenses.routes.ts imports it back and re-exports it for existing callers.
  */
+import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { readLoadAttribution, reconcileExpenseWithLoad, type ExpenseAttribution } from "./expense-load-attribution.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -256,6 +257,23 @@ export async function reserveLoadSpineExpenseNumber(
 /** Lines added to an existing document (a line-less expense gets its one "Uncategorized" line before a manual post). */
 export async function writeExpenseLinesInClientTx(client: any, expenseId: string, rows: ExpenseRow[]): Promise<void> {
   for (const row of rows) await insertExpenseLine(client, { expense_id: expenseId, ...row });
+}
+
+/**
+ * Lead 04:10Z — a line-less expense posted manually gets ONE "Uncategorized" line on the company's role-resolved
+ * Uncategorized Expense account (CoA role uncategorized_expense), like QuickBooks. Before, the synthesized line carried no
+ * account and the post was refused. Returns the account used, or null when the role is not mapped (caller refuses by name).
+ */
+export async function writeUncategorizedLineInClientTx(
+  client: any,
+  input: { operatingCompanyId: string; expenseId: string; amountCents: number },
+): Promise<string | null> {
+  const account = await resolveRoleAccountOptional(client, input.operatingCompanyId, "uncategorized_expense");
+  if (!account) return null;
+  await writeExpenseLinesInClientTx(client, input.expenseId, [
+    { line_sequence: 1, amount_cents: input.amountCents, amount: input.amountCents / 100, description: "Uncategorized", expense_account_uuid: account },
+  ]);
+  return account;
 }
 
 /** The one expense_attribution.expense_load_links writer outside a whole-document write (backfill, receipt repoint). */
