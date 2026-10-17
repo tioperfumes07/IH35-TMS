@@ -44,7 +44,8 @@ const WRITERS = [
   { file: "apps/backend/src/maintenance/two-section-service.ts", table: "accounting.bills" },
   { file: "apps/backend/src/maintenance/two-section-service.ts", table: "accounting.expenses" },
   { file: "apps/backend/src/insurance/policy-create-atomic.service.ts", table: "accounting.bills" },
-  { file: "apps/backend/src/accounting/payments.routes.ts", table: "accounting.payments" },
+  // #26982 (heavy CI peel 12399) moved the customer-payment INSERT out of the route into the payment engine module.
+  { file: "apps/backend/src/accounting/payment-writer.service.ts", table: "accounting.payments" },
   { file: "apps/backend/src/ap/payment-application.routes.ts", table: "accounting.bill_payments" },
   { file: "apps/backend/src/cash-advances/lumper-cash-advance-split.ts", table: "accounting.bill_payments" },
   { file: "apps/backend/src/cash-advances/lumper-cash-advance-split.ts", table: "accounting.expenses" },
