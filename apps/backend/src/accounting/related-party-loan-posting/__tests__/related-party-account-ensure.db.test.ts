@@ -44,6 +44,13 @@ describeIntegration("ensureRelatedPartyAccount — one running Due to / from acc
       const fee = await account("5005", "Fuel Card Fees", "CostOfGoodsSold");
       await account("1000", "Bank of America - Operating", "Asset");
       const parent = await account("2410", "Owner / Related-Party Loan Payable", "Liability");
+      // LEAD 443.189 — the writer resolves the parent by ROLE (related_party_loan_parent, migration 202616010100), never by number.
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id)
+         SELECT $1::uuid, 'related_party_loan_parent', $2::uuid
+          WHERE NOT EXISTS (SELECT 1 FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid AND role = 'related_party_loan_parent')`,
+        [opco, parent]
+      );
       // Two existing party accounts; one retired number above them so the allocator never reuses it.
       await account("2410-00-001", "Due to / from Jorge", "Liability", null, parent);
       await account("2410-00-002", "Due to / from Scentsx", "Liability", null, parent);
