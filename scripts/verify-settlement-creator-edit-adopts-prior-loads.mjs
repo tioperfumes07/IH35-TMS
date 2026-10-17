@@ -35,7 +35,8 @@ function selftest() {
   const plants = [
     ["seed", (x) => x.replace("draft.edit_void_repost && (await isPriorCreatorSettlementLoad", "false && (await isPriorCreatorSettlementLoad")],
     ["seed", (x) => x.replace("s.source_document_ref = $2 AND s.driver_id = $3::uuid", "s.driver_id = $3::uuid")],
-    ["svc", (x) => x.replace("const inserted = reused ? { rows: [{ id: reused }] } : await client.query", "const inserted = await client.query")],
+    // 443.198 (#27011): the Relay branch adds a relayRowId arm — the plant matches both shapes and drops BOTH reuse arms.
+    ["svc", (x) => x.replace(/const inserted = reused \? \{ rows: \[\{ id: reused \}\] \} : (?:relayRowId \? \{ rows: \[\{ id: relayRowId \}\] \} : )?await client\.query/, "const inserted = await client.query")],
     ["svc", (x) => x.replace("if (postedRun.rows[0] && !creatorPosted)", "if (postedRun.rows[0])")],
     ["svc", (x) => x + "\nfor (const invoiceId of prior.invoice_ids ?? []) {}"],
     ["seed", (x) => x.replace(/tripType === "NB"\s*\?\s*randomUUID\(\)/, 'tripType === "NB" ? null')],
