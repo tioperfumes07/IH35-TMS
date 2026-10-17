@@ -79,12 +79,25 @@ export function analyse(files) {
   const editor = editorRaw == null ? null : stripComments(editorRaw);
   if (editor == null) {
     problems.push(`${LINE_EDITOR} is missing.`);
-  } else if (!/isExpenseAccount/.test(editor)) {
-    problems.push(
-      `${LINE_EDITOR}: the expense/work-order cost-line picker does not use isExpenseAccount. Without ` +
-        `it the WO "Type" list offers REVENUE (Detention/Layover/Lumper/TONU Income) and Inter-company ` +
-        `accounts as cost categories.`
-    );
+  } else {
+    // 443.159 (747999d9fb, #26794 — owner 2026-10-16: "all accounts must appear when creating a bill, any
+    // type of bill … same picker as Banking, all uniform") superseded the ACCT-F92 expense-only scope on
+    // this editor: Section A now lists the full active Chart of Accounts from getCoaAccounts — the exact list
+    // Banking categorize shows — in bill, expense and work-order mode. The one-definition rule this guard
+    // exists for still holds: the editor must read that ONE source, and any account-type scope on it must
+    // come from the shared helper, never a hand-rolled inline type test (how ACCT-F92's two pickers drifted).
+    if (!/getCoaAccounts\(operatingCompanyId\)/.test(editor)) {
+      problems.push(
+        `${LINE_EDITOR}: the cost-line Section A picker no longer reads the one Chart of Accounts source ` +
+          `(getCoaAccounts) that Banking categorize uses (443.159).`
+      );
+    }
+    if (/account_type\s*[!=]==/.test(editor) || /account_subtype\s*[!=]==/.test(editor)) {
+      problems.push(
+        `${LINE_EDITOR}: hand-rolled inline account-type filter on the cost-line picker. Scope only through ` +
+          `lib/account-picker-scope.ts so a fix to one picker cannot leave another behind.`
+      );
+    }
   }
 
   return problems;
@@ -101,15 +114,20 @@ function selftest() {
   const t = (l, c) => { if (!c) failures.push(l); };
   const goodHelper = "export function isPaymentAccount(a){} export function isExpenseAccount(a){}";
   const goodExpense = ".filter(isPaymentAccount)\n.filter(isExpenseAccount)";
-  const goodEditor = ".filter(isExpenseAccount)";
+  const goodEditor = "queryFn: () => getCoaAccounts(operatingCompanyId)\naccounts.map((a) => ({ id: a.id }))";
 
   t("all scoped passes", analyse({ [HELPER]: goodHelper, [EXPENSE_FORM]: goodExpense, [LINE_EDITOR]: goodEditor }).length === 0);
   // The REAL pre-fix payment filter.
   t("inline Asset test FAILS",
     analyse({ [HELPER]: goodHelper, [EXPENSE_FORM]: '.filter((a) => a.account_type === "Asset")', [LINE_EDITOR]: goodEditor }).length === 2);
-  // The REAL pre-fix WO picker: no filter at all.
-  t("unfiltered cost-line picker FAILS",
+  // 443.159: the cost-line picker must read the one chart source Banking uses.
+  t("cost-line picker off the shared chart source FAILS",
     analyse({ [HELPER]: goodHelper, [EXPENSE_FORM]: goodExpense, [LINE_EDITOR]: "accounts.map((a) => ({ id: a.id }))" }).length === 1);
+  // The drift shape ACCT-F92 named: an inline type test instead of the shared helper.
+  t("inline account_type test on the cost-line picker FAILS",
+    analyse({ [HELPER]: goodHelper, [EXPENSE_FORM]: goodExpense, [LINE_EDITOR]: 'getCoaAccounts(operatingCompanyId)\n.filter((a) => a.account_type === "Expense")' }).length === 1);
+  t("cost-line picker scoped through the shared helper passes",
+    analyse({ [HELPER]: goodHelper, [EXPENSE_FORM]: goodExpense, [LINE_EDITOR]: "getCoaAccounts(operatingCompanyId)\n.filter(isExpenseAccount)" }).length === 0);
   t("helper missing FAILS", analyse({ [HELPER]: null, [EXPENSE_FORM]: goodExpense, [LINE_EDITOR]: goodEditor }).length === 1);
   t("the fix's own explanatory comment does NOT trip it",
     analyse({ [HELPER]: goodHelper, [EXPENSE_FORM]: '// was account_type === "Asset" before\n.filter(isPaymentAccount)\n.filter(isExpenseAccount)', [LINE_EDITOR]: goodEditor }).length === 0);
@@ -125,7 +143,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 6 cases (2 pass-shapes incl. comment-immunity, 4 fail-shapes incl. both real defects)`);
+  console.log(`${LABEL} selftest OK — 8 cases (3 pass-shapes incl. comment-immunity, 5 fail-shapes incl. the real payment defect)`);
   process.exit(0);
 }
 const problems = analyse(readAll());
@@ -133,4 +151,4 @@ if (problems.length) {
   console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — payment and cost-line pickers both scoped through the shared helper`);
+console.log(`${LABEL} OK — payment picker scoped through the shared helper; cost-line picker reads the one Chart of Accounts source (443.159) with no inline type test`);

@@ -16,6 +16,10 @@ const SURFACES = ["apps/frontend/src/components/dispatch/InlineDriverPicker.tsx"
 const REGISTRY = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
 const PICKER = "apps/frontend/src/components/EntityPicker.tsx";
 const MDATA_API = "apps/frontend/src/api/mdata.ts";
+// 443.182-A (52699c6c2f, #26871) moved listDrivers verbatim into the one-source driver catalog; mdata.ts
+// (which the registry imports) re-exports it. The roster reader must exist at the catalog AND stay
+// reachable through mdata.ts.
+const DRIVER_CATALOG = "apps/frontend/src/api/catalog-drivers.ts";
 
 function readRel(root, rel) {
   const p = path.join(root, rel);
@@ -47,8 +51,14 @@ export function collectProblems(root = ROOT) {
   }
 
   const api = readRel(root, MDATA_API);
-  if (!api || !/export function listDrivers/.test(api)) {
-    problems.push(`${MDATA_API}: must export listDrivers for driver roster`);
+  const catalog = readRel(root, DRIVER_CATALOG);
+  const catalogDefines = Boolean(catalog && /export function listDrivers\b/.test(catalog) && /\/api\/v1\/mdata\/drivers/.test(catalog));
+  const apiDefines = Boolean(api && /export function listDrivers\b/.test(api));
+  const apiReexports = Boolean(api && /export\s*\{[^}]*\blistDrivers\b[^}]*\}\s*from\s*["']\.\/catalog-drivers["']/.test(api));
+  if (!apiDefines && !(catalogDefines && apiReexports)) {
+    problems.push(
+      `${DRIVER_CATALOG}: must export listDrivers (GET /api/v1/mdata/drivers) for the driver roster, re-exported by ${MDATA_API}`
+    );
   }
 
   const picker = readRel(root, PICKER);
@@ -97,6 +107,22 @@ export function getEntityPickerConfig() { return ENTITY_PICKERS.unit; }`
     fs.writeFileSync(path.join(tmpStubDir, "EntityPicker.tsx"), `export function EntityPicker() { return null; }`);
     fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/api"), { recursive: true });
     fs.writeFileSync(path.join(tmpStubRoot, "apps/frontend/src/api/mdata.ts"), `export function listDrivers() {}`);
+    // Planted: catalog moved but mdata.ts no longer re-exports it → roster reader unreachable.
+    const apiOnlyRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-inline-drv-ep-api-"));
+    try {
+      fs.mkdirSync(path.join(apiOnlyRoot, "apps/frontend/src/api"), { recursive: true });
+      fs.writeFileSync(path.join(apiOnlyRoot, "apps/frontend/src/api/mdata.ts"), `export { listAllDrivers } from "./catalog-drivers";`);
+      fs.writeFileSync(
+        path.join(apiOnlyRoot, "apps/frontend/src/api/catalog-drivers.ts"),
+        "export function listDrivers() { return apiRequest(`/api/v1/mdata/drivers`); }"
+      );
+      if (!collectProblems(apiOnlyRoot).some((p) => /must export listDrivers/.test(p))) {
+        console.error(`${LABEL} SELFTEST FAIL: dropped mdata.ts listDrivers re-export not caught`);
+        process.exit(1);
+      }
+    } finally {
+      fs.rmSync(apiOnlyRoot, { recursive: true, force: true });
+    }
     fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/components/dispatch"), { recursive: true });
     fs.writeFileSync(
       path.join(tmpStubRoot, "apps/frontend/src/components/dispatch/InlineDriverPicker.tsx"),

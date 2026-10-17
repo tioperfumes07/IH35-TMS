@@ -8,7 +8,9 @@ import "./verify-brokers-directory-complete-range.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const files = {
-  api: "apps/frontend/src/api/mdata.ts",
+  // 443.182-A (52699c6c2f, #26871) moved listCustomers / listAllCustomers verbatim out of mdata.ts into the
+  // one-source customer catalog; mdata.ts only re-exports them now. The scanner rule follows the code.
+  api: "apps/frontend/src/api/catalog-customers.ts",
   route: "apps/backend/src/mdata/customers.routes.ts",
   customers: "apps/frontend/src/pages/Customers.tsx",
   detail: "apps/frontend/src/pages/CustomerDetail.tsx",
@@ -22,10 +24,9 @@ const read = (rel) => fs.readFileSync(path.join(root, rel), "utf8");
 
 export function audit(s) {
   const failures = [];
-  const scanner = s.api.slice(
-    s.api.indexOf("export async function listAllCustomers"),
-    s.api.indexOf("export function getCustomerRelationshipScore"),
-  );
+  const scannerStart = s.api.indexOf("export async function listAllCustomers");
+  const scannerEnd = scannerStart < 0 ? -1 : s.api.indexOf("\nexport ", scannerStart + 1);
+  const scanner = scannerStart < 0 ? "" : s.api.slice(scannerStart, scannerEnd < 0 ? undefined : scannerEnd);
   for (const needle of ["offset?: number", 'query.set("offset", String(params.offset))']) {
     if (!s.api.includes(needle)) failures.push(`customer list range contract missing ${needle}`);
   }

@@ -179,7 +179,9 @@ export function TwoSectionLineEditor({
     // expense, work order) is a COST line, so Income/asset/liability are never valid here.
     const fromCoa = (coaAccountsQuery.data?.accounts ?? []).map((account) => ({
       id: String(account.id ?? ""),
-      label: `${account.account_name ?? ""}`.trim(),
+      // CLS-UUID-LABEL: this chart path replaced the bill-mode category branch (443.159); a blank or
+      // uuid-shaped account_name reads as "Account — not visible", never an empty row or a raw id.
+      label: entityLabel(account.account_name, account.id, "Account"),
     }));
     const merged = new Map<string, CostContextOption>();
     for (const row of fromCoa) {

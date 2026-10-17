@@ -9,6 +9,9 @@ import fs from "node:fs";
 const LABEL = "verify-customer-picker-canonical-labels";
 const FILES = {
   api: "apps/frontend/src/api/mdata.ts",
+  // 443.182-A (52699c6c2f, #26871) moved listCustomers verbatim into the one-source customer catalog; the
+  // canonical Customer type stays in mdata.ts and the catalog must import THAT type (no local re-definition).
+  customersApi: "apps/frontend/src/api/catalog-customers.ts",
   registry: "apps/frontend/src/components/parity/entityPickerRegistry.ts",
   legal: "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx",
   dispatch: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
@@ -22,7 +25,8 @@ const readSources = () => Object.fromEntries(
 
 const checks = [
   ["api", /export type Customer = \{[\s\S]{0,120}name: string;/, "canonical Customer contract exposes name"],
-  ["api", /apiRequest<\{ customers: Customer\[\]; total\?: number \} \| Customer\[\]>/, "listCustomers returns the typed canonical contract"],
+  ["customersApi", /apiRequest<\{ customers: Customer\[\]; total\?: number \} \| Customer\[\]>/, "listCustomers returns the typed canonical contract"],
+  ["customersApi", /import type \{[^}]*\bCustomer\b[^}]*\} from "\.\/mdata";/, "listCustomers types its rows with the canonical mdata Customer contract"],
   ["registry", /customer:[\s\S]{0,900}label: customer\.name,[\s\S]{0,120}sublabel: customer\.customer_code \|\| undefined/, "shared customer EntityPicker uses canonical labels"],
   ["legal", /<EntityPicker[\s\S]*?kind=["']customer["'][\s\S]*?allowCreate/, "Legal customer signer uses EntityPicker allowCreate"],
   ["legal", /entityLabel\(customer\.name, customer\.id, "Customer"\)/, "Legal customer hydrate uses canonical labels"],
@@ -59,7 +63,8 @@ const sources = readSources();
 if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
   const mutations = [
     ["api", "export type Customer = {\n  id: string;\n  name: string;", "export type Customer = {\n  id: string;\n  canonical_name_removed: string;"],
-    ["api", "customers: Customer[]; total?: number } | Customer[]", "customers: Array<Record<string, unknown>>; total?: number }"],
+    ["customersApi", "customers: Customer[]; total?: number } | Customer[]", "customers: Array<Record<string, unknown>>; total?: number }"],
+    ["customersApi", 'import type { Customer } from "./mdata";', "type Customer = { id: string };"],
     ["registry", "label: customer.name,", "label: customer.id,"],
     ["legal", 'kind="customer"', 'kind="unit"'],
     ["legal", 'entityLabel(customer.name, customer.id, "Customer")', "String(customer.id)"],

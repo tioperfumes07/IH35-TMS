@@ -305,11 +305,13 @@ const SIBLINGS = [
     good: /entityLabel\(\s*entry\.account_number\s*,\s*entry\.id\s*\?\?\s*entry\.qbo_id\s*,\s*"Account"\s*\)/,
   },
   {
-    // BILL-EXPENSE-CATEGORY-PICKER-RAW-UUID-FALLBACK — the separate bill-mode expense-category
-    // fallback on the same file/component; the CoA entry above only covered the non-bill path.
+    // BILL-EXPENSE-CATEGORY-PICKER-RAW-UUID-FALLBACK — Section A's primary option label. 443.159
+    // (747999d9fb, #26794) deleted the bill-mode catalogs.expense_categories branch this entry used to
+    // pin (entityLabel(row.display_name ?? row.code, row.id, "Category")); Section A now lists the Chart of
+    // Accounts in every mode, so the same no-raw-id / no-blank rule follows the code onto that chart label.
     rel: "apps/frontend/src/components/forms/TwoSectionLineEditor.tsx",
-    bad: /\.trim\(\)\s*\|\|\s*String\(row\.id\s*\?\?\s*""\)/,
-    good: /entityLabel\(\s*row\.display_name\s*\?\?\s*row\.code\s*,\s*row\.id\s*,\s*"Category"\s*\)/,
+    bad: /\.trim\(\)\s*\|\|\s*String\(row\.id\s*\?\?\s*""\)|label:\s*`\$\{account\.account_name\s*\?\?\s*""\}`\.trim\(\)|account\.account_name\s*(?:\?\?|\|\|)\s*account\.id/,
+    good: /entityLabel\(\s*account\.account_name\s*,\s*account\.id\s*,\s*"Account"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/factoring/BatchWizard.tsx",
@@ -2084,6 +2086,20 @@ ORDER BY w.opened_at DESC NULLS LAST`;
     }
     if (!auditSibling(entry.rel, fixture.bad, entry.bad, entry.good).some((p) => p.includes("name||id"))) {
       failures.push(`selftest: raw document fallback NOT detected for ${fixture.rel}`);
+    }
+  }
+  const sectionALabelSibling = SIBLINGS.find(
+    (entry) => entry.rel.endsWith("TwoSectionLineEditor.tsx") && entry.good.source.includes("account\\.account_name")
+  );
+  if (!sectionALabelSibling) {
+    failures.push("selftest: TwoSectionLineEditor Section A chart-label sibling guard missing");
+  } else {
+    const blankLabel = 'label: `${account.account_name ?? ""}`.trim(),';
+    if (!auditSibling(sectionALabelSibling.rel, blankLabel, sectionALabelSibling.bad, sectionALabelSibling.good).some((p) => p.includes("name||id"))) {
+      failures.push("selftest: TwoSectionLineEditor blank chart label NOT detected");
+    }
+    if (auditSibling(sectionALabelSibling.rel, 'label: entityLabel(account.account_name, account.id, "Account"),', sectionALabelSibling.bad, sectionALabelSibling.good).length) {
+      failures.push("selftest: TwoSectionLineEditor entityLabel chart label flagged");
     }
   }
   const dispatchDriverSibling = SIBLINGS.find(
