@@ -97,3 +97,21 @@ export function isExpenseAccount(a: PickerAccount): boolean {
   if (!isSelectable(a)) return false;
   return EXPENSE_ACCOUNT_TYPES.has(normalizeSubtype(a.account_type));
 }
+
+/** The modes the shared cost-line editor (TwoSectionLineEditor) serves. */
+export type CostLinePickerMode = "wo" | "bill" | "expense";
+
+/**
+ * LEAD RULING 2026-10-17 15:10Z #1 — the Section A account list for a cost-line editor, by mode. The ONE place
+ * that decides it, so no editor carries its own inline type test (the drift ACCT-F92 named).
+ *
+ *  - "wo" (work order): COST accounts only — isExpenseAccount (Expense / Cost of Goods Sold / Other Expense,
+ *    postable, active). ACCT-F92 stands: a repair line booked to 4210-4240 Detention/Layover/Lumper/TONU Income
+ *    still balances, so only the picker (and the server refusal in two-section-service) can stop it.
+ *  - "bill" / "expense": the FULL chart, unchanged (owner 443.159, 2026-10-16: "all accounts must appear when
+ *    creating a bill, any type of bill … same picker as Banking" — e.g. Dispatch — Mexico).
+ */
+export function scopeCostLineAccounts<T extends PickerAccount>(accounts: readonly T[], mode: CostLinePickerMode): T[] {
+  if (mode === "wo") return accounts.filter(isExpenseAccount);
+  return [...accounts];
+}
