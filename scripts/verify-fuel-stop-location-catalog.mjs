@@ -19,6 +19,9 @@ const LABEL = "verify-fuel-stop-location-catalog";
 const PICKER = path.join(ROOT, "apps/frontend/src/components/locations/FuelStopLocationPicker.tsx");
 const LABEL_LIB = path.join(ROOT, "apps/frontend/src/lib/fuelStopLocationLabel.ts");
 const MDATA_API = path.join(ROOT, "apps/frontend/src/api/mdata.ts");
+// 52699c6c2f (443.182-A catalog one-source consolidation, #26871) moved listLocations out of
+// mdata.ts into lists-locations.ts; mdata.ts now re-exports it. Same rule, current home.
+const LOCATIONS_API = path.join(ROOT, "apps/frontend/src/api/lists-locations.ts");
 const CREATOR = path.join(ROOT, "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx");
 const FUEL_MODAL = path.join(ROOT, "apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx");
 const EXPENSE_FORM = path.join(ROOT, "apps/frontend/src/components/expenses/RecordExpenseForm.tsx");
@@ -37,6 +40,7 @@ function runChecks() {
   const picker = read(PICKER);
   const labelLib = read(LABEL_LIB);
   const mdata = read(MDATA_API);
+  const locationsApi = read(LOCATIONS_API);
   const creator = read(CREATOR);
   const fuelModal = read(FUEL_MODAL);
   const expenseForm = read(EXPENSE_FORM);
@@ -50,7 +54,9 @@ function runChecks() {
   assert(/address/.test(labelLib) && /Love's/.test(labelLib),
     "Label helper must prefer address then Love's catalog name", failures);
 
-  assert(/location_type/.test(mdata) && /listLocations/.test(mdata),
+  assert(/export\s*\{[^}]*\blistLocations\b[^}]*\}\s*from\s*"\.\/lists-locations"/.test(mdata),
+    "mdata.ts must re-export the canonical listLocations from lists-locations.ts", failures);
+  assert(/export function listLocations\([\s\S]*?location_type\?:\s*string[\s\S]*?query\.set\("location_type",\s*params\.location_type\)/.test(locationsApi),
     "listLocations API client must accept location_type query param", failures);
 
   assert(/FuelStopLocationPicker/.test(creator) && /sc-fuel-location/.test(creator),

@@ -37,7 +37,12 @@ function assertRouteFilters() {
   if (!mdataCustomersSrc.includes("EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL")) {
     fail("mdata customers list route must filter archived test/seed rows");
   }
-  if (!qboCustomersSrc.includes("EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL")) {
+  // LEAD 443.188: /api/v1/accounting/customers reads the canonical mdata.customers (canonical-table law: write/read
+  // mdata.*, never the accounting.qbo_* mirror), so its archived filter is the mdata alias constant. Same rule.
+  if (
+    !qboCustomersSrc.includes("EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL") &&
+    !/AND \$\{EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_ALIAS_SQL\}/.test(qboCustomersSrc)
+  ) {
     fail("accounting customers list route must filter archived test/seed rows");
   }
   if (!usersSrc.includes("EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL")) {

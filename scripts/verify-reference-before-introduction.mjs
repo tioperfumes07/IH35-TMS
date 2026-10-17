@@ -68,10 +68,85 @@ function migSortKey(filename) {
   return [n, filename];
 }
 
+// ROUND 443.187 parser-accuracy repairs (same rules, fewer false findings). This guard was never run
+// in CI; run once on 2026-10-16 it reported 28 INDEX_COLUMN_PHANTOM rows, and every column it named
+// EXISTS on prod (information_schema, read-only, 2026-10-16) except the ones on
+// telematics.odometer_readings, a table no migration creates (scripts/db-migrate.mjs documents the
+// same drift: "telematics.odometer_readings exists in production but NO migration creates it").
+// The other rows were the scanner misreading DDL the corpus really uses:
+//   (1) a `--` INSIDE a string literal (COALESCE(faro_entry_id, '--'), 202615250600) was taken as a
+//       comment and ate the rest of the line -> stripComments is now string-literal aware;
+//   (2) several columns on ONE line (202615220900 preserve.*) registered only the first ->
+//       CREATE TABLE bodies split on top-level commas, not newlines;
+//   (3) tables created / extended in a DO-block format() loop over ARRAY['a','b'] (0062, 0152,
+//       202607490000) were invisible -> registered from the loop's ARRAY list;
+//   (4) materialized-view output columns (0311, 202613310000 reports.lane_metrics_monthly) were never
+//       registered -> registered from the view's top-level SELECT list;
+//   (5) a schema-qualified function call in an index expression
+//       (telematics.odometer_reading_day(read_at), 202614950000) was read as a column named
+//       "telematics" -> any `ident(` / `schema.ident(` is an expression (informational, like lower()).
+// No check is removed; a phantom / forward / ALTER-before-CREATE finding still blocks.
 function stripComments(sql) {
-  return sql
-    .replace(/\/\*[\s\S]*?\*\//g, " ")
-    .replace(/--[^\n\r]*/g, " ");
+  let out = "";
+  let i = 0;
+  const n = sql.length;
+  while (i < n) {
+    const c = sql[i];
+    if (c === "'") {
+      let j = i + 1;
+      while (j < n) {
+        if (sql[j] === "'" && sql[j + 1] === "'") { j += 2; continue; }
+        if (sql[j] === "'") break;
+        j++;
+      }
+      out += sql.slice(i, j + 1);
+      i = j + 1;
+    } else if (c === "-" && sql[i + 1] === "-") {
+      while (i < n && sql[i] !== "\n" && sql[i] !== "\r") i++;
+      out += " ";
+    } else if (c === "/" && sql[i + 1] === "*") {
+      const e = sql.indexOf("*/", i + 2);
+      i = e === -1 ? n : e + 2;
+      out += " ";
+    } else {
+      out += c;
+      i++;
+    }
+  }
+  return out;
+}
+
+/** Split on top-level commas (outside parens and single-quoted strings). */
+function splitTopLevel(body) {
+  const parts = [];
+  let depth = 0;
+  let inStr = false;
+  let start = 0;
+  for (let i = 0; i < body.length; i++) {
+    const c = body[i];
+    if (inStr) {
+      if (c === "'" && body[i + 1] === "'") { i++; continue; }
+      if (c === "'") inStr = false;
+      continue;
+    }
+    if (c === "'") inStr = true;
+    else if (c === "(") depth++;
+    else if (c === ")") depth--;
+    else if (c === "," && depth === 0) {
+      parts.push(body.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(body.slice(start));
+  return parts;
+}
+
+/** Column name defined by one CREATE TABLE body element, or null for a table constraint. */
+function columnOfElement(el) {
+  const t = el.trim();
+  if (!t || /^(CONSTRAINT|PRIMARY|UNIQUE|CHECK|FOREIGN|EXCLUDE|LIKE)\b/i.test(t)) return null;
+  const cm = /^([a-z_][a-z0-9_]*)\s+/i.exec(t);
+  return cm ? cm[1].toLowerCase() : null;
 }
 
 function extractParenBody(s, openIdx) {
@@ -142,6 +217,17 @@ function collectBareAlterTableTargets(sql, migNum, filename, sink) {
   }
 }
 
+/** LEAD 443.187 — the fresh-DB bootstrap CREATE TABLE in scripts/db-migrate.mjs (see its use in main()). */
+function collectFreshDbBootstrapIntros() {
+  const file = path.join(path.dirname(MIG_DIR), "..", "scripts", "db-migrate.mjs");
+  if (!fs.existsSync(file)) return [];
+  const src = fs.readFileSync(file, "utf8");
+  const needed = /const FRESH_DB_ODOMETER_LEDGER_NEEDED_BY = "([^"]+)"/.exec(src)?.[1];
+  if (!needed || !/async function ensureFreshDbOdometerLedger\(/.test(src)) return [];
+  const migNum = migSortKey(needed)[0];
+  return collectIntros(src.match(/CREATE TABLE telematics\.odometer_readings \([\s\S]*?\n\s*\);/)?.[0] ?? "", migNum, "scripts/db-migrate.mjs#ensureFreshDbOdometerLedger").map((i) => ({ ...i, pos: -1 }));
+}
+
 /** Column intros: CREATE TABLE + ALTER ADD COLUMN */
 function collectIntros(sql, migNum, filename) {
   const out = [];
@@ -154,22 +240,113 @@ function collectIntros(sql, migNum, filename) {
     const openParenIdx = createRe.lastIndex - 1;
     const { body, closeIdx } = extractParenBody(s, openParenIdx);
     const pos = m.index;
-    for (const line of body.split("\n")) {
-      const t = line.trim();
-      if (!t || /^CONSTRAINT\b/i.test(t) || /^PRIMARY\b/i.test(t) || /^UNIQUE\b/i.test(t))
-        continue;
-      if (/^CHECK\b/i.test(t) || /^FOREIGN\b/i.test(t) || /^EXCLUDE\b/i.test(t)) continue;
-      const cm = /^([a-z_][a-z0-9_]*)\s+/i.exec(t);
-      if (!cm) continue;
-      const col = cm[1].toLowerCase();
+    for (const el of splitTopLevel(body)) {
+      const col = columnOfElement(el);
+      if (!col) continue;
       out.push({ fq, col, migNum, pos, source: `${filename}:CREATE`, kind: "create" });
     }
     createRe.lastIndex = closeIdx + 1;
   }
 
   collectAlterTableAddColumns(s, migNum, filename, out);
+  collectDynamicLoopIntros(sql, migNum, filename, out);
+  collectViewColumns(s, migNum, filename, out);
 
   return out;
+}
+
+/**
+ * (3) DO-block loops: FOREACH t IN ARRAY ARRAY['a', 'schema.b'] … EXECUTE format('CREATE TABLE IF NOT
+ * EXISTS schema.%I ( … )' / 'ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS col …'). Registers the columns
+ * for every table named in that DO body's ARRAY[...] literal lists.
+ */
+function collectDynamicLoopIntros(sql, migNum, filename, sink) {
+  // Any dollar tag (DO $$ … $$, DO $seed$ … $seed$ — 202607490000 uses the latter).
+  const bodies = [...sql.matchAll(/\bDO\s+(\$[a-z0-9_]*\$)([\s\S]*?)\1/gi)].map((d) => d[2]);
+  for (const raw of bodies) {
+    const b = stripComments(raw);
+    if (!/%I/.test(b)) continue;
+    const names = [];
+    const arrRe = /\bARRAY\s*\[([^\]]*)\]/gi;
+    let am;
+    while ((am = arrRe.exec(b))) {
+      for (const lit of am[1].matchAll(/'([a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)?)'/gi)) names.push(lit[1].toLowerCase());
+    }
+    if (!names.length) continue;
+    const fqFor = (schema, name) => (name.includes(".") ? name : schema ? `${schema}.${name}` : null);
+    const createRe = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:([a-z_][a-z0-9_]*)|%I)\.%I\s*\(/gi;
+    let m;
+    while ((m = createRe.exec(b))) {
+      const schema = m[1] ? m[1].toLowerCase() : null;
+      const { body, closeIdx } = extractParenBody(b, createRe.lastIndex - 1);
+      for (const name of names) {
+        const fq = fqFor(schema, name);
+        if (!fq) continue;
+        for (const el of splitTopLevel(body)) {
+          const col = columnOfElement(el);
+          if (col) sink.push({ fq, col, migNum, pos: m.index, source: `${filename}:CREATE(loop)`, kind: "create" });
+        }
+      }
+      createRe.lastIndex = closeIdx + 1;
+    }
+    const alterRe = /ALTER\s+TABLE\s+(?:([a-z_][a-z0-9_]*)|%I)\.%I\s+ADD\s+COLUMN(?:\s+IF\s+NOT\s+EXISTS)?\s+([a-z_][a-z0-9_]*)/gi;
+    while ((m = alterRe.exec(b))) {
+      const schema = m[1] ? m[1].toLowerCase() : null;
+      for (const name of names) {
+        const fq = fqFor(schema, name);
+        if (fq) sink.push({ fq, col: m[2].toLowerCase(), migNum, pos: m.index, source: `${filename}:ALTER(loop)`, kind: "alter" });
+      }
+    }
+  }
+}
+
+/** (4) CREATE [MATERIALIZED] VIEW fq [(cols)] AS … — output columns of the top-level SELECT list. */
+function collectViewColumns(s, migNum, filename, sink) {
+  const viewRe =
+    /CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?VIEW\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)\s*(\([^)]*\))?\s*AS\b/gi;
+  let m;
+  while ((m = viewRe.exec(s))) {
+    const fq = m[1].toLowerCase();
+    const push = (col) => sink.push({ fq, col, migNum, pos: m.index, source: `${filename}:VIEW`, kind: "view" });
+    if (m[2]) {
+      for (const c of m[2].slice(1, -1).split(",")) {
+        const id = /^\s*([a-z_][a-z0-9_]*)\s*$/i.exec(c);
+        if (id) push(id[1].toLowerCase());
+      }
+      continue;
+    }
+    // Scan to the statement end at depth 0; take the select list of the first depth-0 SELECT.
+    let depth = 0;
+    let inStr = false;
+    let selStart = -1;
+    let selEnd = -1;
+    for (let i = viewRe.lastIndex; i < s.length; i++) {
+      const c = s[i];
+      if (inStr) {
+        if (c === "'" && s[i + 1] === "'") { i++; continue; }
+        if (c === "'") inStr = false;
+        continue;
+      }
+      if (c === "'") { inStr = true; continue; }
+      if (c === "(") depth++;
+      else if (c === ")") depth--;
+      else if (c === ";" && depth === 0) break;
+      else if (depth === 0 && /[a-z]/i.test(c) && !/[a-z0-9_]/i.test(s[i - 1] ?? " ")) {
+        const word = /^[a-z_]+/i.exec(s.slice(i, i + 12))[0].toLowerCase();
+        if (word === "select" && selStart === -1) selStart = i + word.length;
+        else if (word === "from" && selStart !== -1) { selEnd = i; break; }
+        i += word.length - 1;
+      }
+    }
+    if (selStart === -1 || selEnd === -1) continue;
+    let list = s.slice(selStart, selEnd).replace(/^\s*DISTINCT(?:\s+ON\s*)?/i, "");
+    if (/^\s*\(/.test(list)) list = list.slice(extractParenBody(list, list.indexOf("(")).closeIdx + 1);
+    for (const item of splitTopLevel(list)) {
+      const t = item.trim();
+      const alias = /\bAS\s+"?([a-z_][a-z0-9_]*)"?\s*$/i.exec(t) ?? /(?:^|\.)([a-z_][a-z0-9_]*)\s*$/i.exec(t);
+      if (alias) push(alias[1].toLowerCase());
+    }
+  }
 }
 
 /** Every `ADD COLUMN [IF NOT EXISTS] name` within each `ALTER TABLE schema.table … ;` statement. */
@@ -235,12 +412,14 @@ function collectIndexColumnUses(sql, migNum, filename) {
     const fq = m[1].toLowerCase();
     const openParenIdx = re.lastIndex - 1;
     const { body } = extractParenBody(masked, openParenIdx);
-    for (const rawPart of body.split(",")) {
+    for (const rawPart of splitTopLevel(body)) {
       const part = rawPart.trim();
       const pm = /^([a-z_][a-z0-9_]*)\b/i.exec(part);
       if (!pm) continue;
       const col = pm[1].toLowerCase();
-      out.push({ fq, col, migNum, file: filename });
+      // (5) `fn(` or `schema.fn(` is an expression, never a column (informational like lower()).
+      const expr = /^[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)?\s*\(/i.test(part);
+      out.push({ fq, col, migNum, file: filename, expr });
     }
   }
   return out;
@@ -317,6 +496,13 @@ function main() {
     collectIndexColumnUsesInsideDo(sql, migNum, file, infoDoIndexes);
     collectBareAlterTableTargets(sql, migNum, file, bareAlters);
   }
+
+  // LEAD 443.187 — telematics.odometer_readings was made live in production; NO migration creates it, and
+  // 202614950000 (which ALTERs / indexes it) is applied in production so it cannot be edited and a migration cannot be
+  // inserted before it. scripts/db-migrate.mjs ensureFreshDbOdometerLedger (CC-1, 2026-10-01) creates the table on every
+  // database built from source, immediately BEFORE 202614950000. That bootstrap IS the table's introduction for this
+  // check: its own CREATE TABLE body is read here (pos -1 at that migration), so a column it does not create still fails.
+  for (const intro of collectFreshDbBootstrapIntros()) intros.push(intro);
 
   const tableCreateMig = new Map();
   for (const i of intros) {
@@ -395,7 +581,7 @@ function main() {
     seenIdx.add(dedupe);
 
     if (!intro) {
-      if (INDEX_EXPR_PREFIXES.has(u.col)) {
+      if (INDEX_EXPR_PREFIXES.has(u.col) || u.expr) {
         exprUnknownIdx.push(u);
       } else {
         phantomIdx.push({

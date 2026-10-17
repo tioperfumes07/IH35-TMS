@@ -11,7 +11,10 @@ function failures(p, a) {
   if (!p.includes("fuelHistoryPage, setFuelHistoryPage") || !p.includes("fuelHistoryPageCount")) out.push("history needs controlled exact paging");
   if (!p.includes("offset: (fuelHistoryPage - 1) * fuelHistoryPageSize")) out.push("history must send server offset");
   if (!p.includes('data-testid="fuel-history-server-pager"')) out.push("history pager must be mounted");
-  if (!/queryKey:\s*\[\s*"fuel",\s*"transactions",[\s\S]*?deepLinkTransactionId,\s*fuelHistoryPage,\s*\]/.test(p)) out.push("query key must own every reverse filter and page");
+  // d7de33bcd7 (CC-2-R-102-B: voided documents read VOIDED, disclosed counts…) appended
+  // `includeVoidedFuel` after `fuelHistoryPage`; the page must still follow the last reverse
+  // filter, and any later key must be a plain identifier (another owned filter), never dropped.
+  if (!/queryKey:\s*\[\s*"fuel",\s*"transactions",[\s\S]*?deepLinkTransactionId,\s*fuelHistoryPage,(?:\s*[A-Za-z_]\w*,)*\s*\]/.test(p)) out.push("query key must own every reverse filter and page");
   if (!p.includes("setFuelHistoryPage(1);") || !p.includes("fuelHistoryPage > fuelHistoryPageCount")) out.push("scope/filter and empty-page recovery required");
   if (/CappedListNotice/.test(p)) out.push("a cap notice is not navigation");
   if (!a.includes("total_count: number") || !a.includes("has_more: boolean")) out.push("canonical API must expose exact count");
@@ -22,7 +25,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     page.replace("offset: (fuelHistoryPage - 1) * fuelHistoryPageSize,", "offset: 0,"),
     page.replace('data-testid="fuel-history-server-pager"', 'data-testid="disabled"'),
-    page.replace("      fuelHistoryPage,\n    ],", "    ],"),
+    page.replace("deepLinkTransactionId,\n      fuelHistoryPage,", "deepLinkTransactionId,"),
     page.replace("fuelHistoryPage > fuelHistoryPageCount", "false"),
     `${page}\nconst regression = CappedListNotice;`,
   ];

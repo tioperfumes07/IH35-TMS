@@ -26,7 +26,10 @@ const CHECKS = [
   { name: "list schema accepts load FK", file: F.route, pattern: /const listQuerySchema = z\.object\(\{[\s\S]{0,3000}load_id: z\.string\(\)\.uuid\(\)\.optional\(\)/ },
   { name: "list schema accepts driver FK", file: F.route, pattern: /const listQuerySchema = z\.object\(\{[\s\S]{0,3200}driver_id: z\.string\(\)\.uuid\(\)\.optional\(\)/ },
   { name: "list read starts selected-company scoped", file: F.route, pattern: /const values: unknown\[\] = \[q\.operating_company_id\];\s+const where: string\[\] = \["w\.operating_company_id = \$1::uuid"\]/ },
-  { name: "load/driver/vendor scoped history bypasses open-only but keeps void filter", file: F.route, pattern: /else if \(q\.equipment_id \|\| q\.load_id \|\| q\.driver_id \|\| q\.vendor_id\) \{[\s\S]{0,220}where\.push\("w\.voided_at IS NULL"\)/ },
+  // cae25c35d3 (ROUND 305 A-48: unit -> its work orders resolves in the backend, #23603) appended unit_id /
+  // customer_id to the caller-scoped drill list; the load/driver/vendor scopes must still lead it and the
+  // void filter must still apply. Extra trailing scopes are plain q.<fk> identifiers only.
+  { name: "load/driver/vendor scoped history bypasses open-only but keeps void filter", file: F.route, pattern: /else if \(q\.equipment_id \|\| q\.load_id \|\| q\.driver_id \|\| q\.vendor_id(?: \|\| q\.[a-z_]+_id)*\) \{[\s\S]{0,220}where\.push\("w\.voided_at IS NULL"\)/ },
   { name: "route filters exact load FK", file: F.route, pattern: /if \(q\.load_id\) \{\s+values\.push\(q\.load_id\);\s+where\.push\(`w\.load_id = \$\$\{values\.length\}`\);\s+\}/ },
   { name: "route filters exact driver FK", file: F.route, pattern: /if \(q\.driver_id\) \{\s+values\.push\(q\.driver_id\);\s+where\.push\(`w\.driver_id = \$\$\{values\.length\}`\);\s+\}/ },
   { name: "client filtered read accepts load FK", file: F.client, pattern: /export function listWorkOrdersFiltered\([\s\S]{0,500}load_id\?: string/ },
@@ -48,7 +51,9 @@ const CHECKS = [
   { name: "load drawer imports reverse section", file: F.drawer, pattern: /import \{ LoadWorkOrdersReverseSection \}/ },
   { name: "load drawer mounts exact reverse section", file: F.drawer, pattern: /<LoadWorkOrdersReverseSection(?![A-Za-z0-9_])/ },
   { name: "WO route projects claim human number", file: F.route, pattern: /ic\.claim_number AS insurance_claim_number/ },
-  { name: "WO claim join is selected-company scoped", file: F.route, pattern: /ic\.tenant_id = w\.operating_company_id/ },
+  // 66dd0c5944 (ACCT-F2988 — reads on the 17 double-scoped tables ... every read now scopes on
+  // operating_company_id, so tenant_id can be dropped, #24307) moved the claim join off tenant_id.
+  { name: "WO claim join is selected-company scoped", file: F.route, pattern: /LEFT JOIN insurance\.claim ic ON ic\.id = w\.insurance_claim_id AND ic\.operating_company_id = w\.operating_company_id/ },
   { name: "client types claim human number", file: F.client, pattern: /insurance_claim_number\?: string \| null/ },
   { name: "WO detail linkage section marker", file: F.detail, pattern: /data-testid="wo-detail-linkage-section"/ },
   { name: "WO detail load drill binds exact FK", file: F.detail, pattern: /kind="load"[\s\S]{0,180}wo\.load_id/ },

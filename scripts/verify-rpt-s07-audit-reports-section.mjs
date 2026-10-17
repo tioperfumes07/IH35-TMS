@@ -44,7 +44,10 @@ export function run() {
     failures.push(`${SUBNAV}: must surface Audit flyout with AUDIT_REPORT_CHILDREN`);
   }
   for (const href of AUDIT_HREFS) {
-    if (!sub.includes(`href: "${href}"`)) {
+    // REPOINTED (ROUND 443.187): d665e9510b "FINDING: LST-F10182 navy subnav: 31 of 178 (Reports
+    // module) (#18922)" moved this sub-nav onto NavySubNavChild, whose link key is `to:` (was
+    // `href:`). Same rule: every audit child must be linked from the Audit flyout.
+    if (!sub.includes(`to: "${href}"`)) {
       failures.push(`${SUBNAV}: missing audit child ${href}`);
     }
     if (!man.includes(`path="${href}"`)) {
@@ -63,7 +66,7 @@ export function run() {
 function main() {
   if (process.argv.includes("--selftest")) {
     const orig = read(SUBNAV);
-    const broken = orig.replace(/href: "\/reports\/audit\/activity-by-user"/g, 'href: "/reports/audit/REMOVED"');
+    const broken = orig.replace(/to: "\/reports\/audit\/activity-by-user"/g, 'to: "/reports/audit/REMOVED"');
     fs.writeFileSync(path.join(ROOT, SUBNAV), broken);
     let fail;
     try {

@@ -284,11 +284,17 @@ export function DetentionBoardPage() {
   // return below — a React hook-order violation that throws "rendered more hooks than during
   // the previous render" the moment an operator with no selected company lands here, then
   // selects one. Hooks must run unconditionally, so the memo is hoisted above every early return.
+  // SORT-03: references are read for the fetched population (order-independent) so the
+  // Settlement / Presettlement column can sort by the same number its cell renders.
+  const settlementReferences = useSettlementReferences(companyId, (boardQ.data?.events ?? []).map((event) => event.load_id));
   const events = useMemo(
-    () => sortDispatchAlertBoardRows(boardQ.data?.events ?? [], paritySortKey, sortDirection),
-    [boardQ.data?.events, paritySortKey, sortDirection],
+    () =>
+      sortDispatchAlertBoardRows(boardQ.data?.events ?? [], paritySortKey, sortDirection, (row) => {
+        const reference = settlementReferences.get(String(row.load_id ?? ""));
+        return reference?.settlement_display_id ?? reference?.presettlement_display_id ?? null;
+      }),
+    [boardQ.data?.events, paritySortKey, sortDirection, settlementReferences],
   );
-  const settlementReferences = useSettlementReferences(companyId, events.map((event) => event.load_id));
   type DetentionRow = (typeof events)[number];
 
   if (!companyId) {
@@ -305,7 +311,7 @@ export function DetentionBoardPage() {
       className: "font-medium",
       render: (event) => <EntityLinkOrTombstone kind="load" id={event.load_id} name={event.load_number} noun="Load" />,
     },
-    { key: "settlement_reference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (event) => <SettlementReferenceCell reference={settlementReferences.get(event.load_id)} /> },
+    { key: "settlement_reference", label: "Settlement / Presettlement", sortable: true, testId: "settlement-reference-column", render: (event) => <SettlementReferenceCell reference={settlementReferences.get(event.load_id)} /> },
     {
       key: "customer_name",
       label: "Customer",
