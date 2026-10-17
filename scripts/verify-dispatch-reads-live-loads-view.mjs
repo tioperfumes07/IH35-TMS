@@ -57,6 +57,10 @@ const ALLOWLIST = new Map([
   //        or backfill historical loads. Those loads are routinely settled/closed, which views.live_loads hides by design, so
   //        moving them onto the view would silently skip exactly the loads they exist to fill. Same class as
   //        load-history.service.ts above. Nothing here renders a board.
+  // LEAD 443.199 (2026-10-17): the 443.197 1a factoring-vendor stamp — locks ONE load by id FOR UPDATE and stamps
+  // factoring_company_vendor_id from that load's own factoring advance. Settled loads are exactly the ones it stamps
+  // (views.live_loads hides them), so it cannot read the view. Single-record writer, not a list/board read.
+  ["dispatch/load-factoring-vendor-stamp.service.ts", "443.197 1a: locks ONE load by id FOR UPDATE and stamps its factoring vendor from its own advance — settled loads included, which views.live_loads excludes. Single-record writer, not a list/board read."],
   ["dispatch/load-lane-learning.service.ts", "443.35 lane learning: reads ONE booked load by id and the unit's PREVIOUS / NEXT load for deadhead legs — those neighbours are usually settled, which views.live_loads excludes. Not a list/board read."],
   ["dispatch/mileage/mileage-source-backfill.service.ts", "443.60 #2 backfill: stamps mileage_source on historical loads (settled included) that carry miles but no source. Not a list/board read."],
   ["dispatch/mileage/miles-recommendations.routes.ts", "443.55 deadhead fill: selects the company's loads still missing miles_deadhead (historical, settled included) to fill them. Not a list/board read."],
