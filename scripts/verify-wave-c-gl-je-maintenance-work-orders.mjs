@@ -42,7 +42,8 @@ const CHECKS = [
   {
     name: "two-section-service.ts routes maintenance purchases into accounting.bills",
     file: "apps/backend/src/maintenance/two-section-service.ts",
-    pattern: /INSERT INTO accounting\.bills/,
+    // 443.182 C — through the one bill writer (insertBillHeaderOnClient) or inline.
+    pattern: /INSERT INTO accounting\.bills|insertBillHeaderOnClient\s*(?:<[^>]*>)?\s*\(/,
   },
   {
     name: "two-section-service.ts routes maintenance purchases into accounting.expenses",

@@ -22,6 +22,7 @@
  *
  * Self-test: node scripts/verify-steps/3093-verify-bills-writers-bind-mdata-vendor-id.mjs --selftest
  */
+import { billHeaderWrites } from "../lib/bill-header-writes.mjs";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -65,8 +66,11 @@ export function findBillsInsertColumnLists(src) {
       else if (code[i] === ")") depth -= 1;
       i += 1;
     }
-    lists.push(code.slice(start, i - 1));
+    const list = code.slice(start, i - 1);
+    if (!list.includes("${")) lists.push(list); // 443.182 C — skip the one writer's own dynamic column list
   }
+  // 443.182 C — bill headers are written through insertBillHeaderOnClient(client, [["col", …], …]): its column list counts too.
+  for (const w of billHeaderWrites(src)) if (w.kind === "writer") lists.push(w.columns.join(", "));
   return lists;
 }
 
@@ -94,6 +98,11 @@ if (process.argv.includes("--selftest")) {
   if (b.ok) fail("selftest: bad fixture (mdata_vendor_id stripped) was not caught — invariant is inert");
   const c = checkWriter(commentTrap);
   if (c.ok) fail("selftest: a mention of mdata_vendor_id in a COMMENT satisfied the check — comment-matching trap (see 3065 precedent)");
+  // 443.182 C — the one-writer call form: a writer call without the column fails; with it, passes; a commented column never counts.
+  const wGood = `await insertBillHeaderOnClient(client, [["operating_company_id", { value: oc }], ["mdata_vendor_id", { value: v, cast: "uuid" }]], { returning: "id::text" })`;
+  const wBad = `await insertBillHeaderOnClient(client, [["operating_company_id", { value: oc }], // ["mdata_vendor_id", { value: v }]\n ["vendor_id", { value: v }]])`;
+  if (!checkWriter(wGood).ok) fail("selftest: writer-call fixture WITH mdata_vendor_id flagged");
+  if (checkWriter(wBad).ok) fail("selftest: writer-call fixture WITHOUT mdata_vendor_id (commented out) was not caught");
 
   // Real-file regression check: each of the 6 live writers must currently pass.
   for (const w of WRITERS) {

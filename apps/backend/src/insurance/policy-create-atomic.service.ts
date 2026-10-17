@@ -10,6 +10,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { isBillGlPostingEnabled } from "../accounting/bill-gl.service.js";
+import { insertBillHeaderOnClient } from "../accounting/bills.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { logger } from "../observability/structured-logger.js";
 import {
@@ -91,41 +92,33 @@ async function persistBillsOnClient(
   for (const bill of input.bills) {
     const idempotencyKey = `ins:${input.policyId}:${bill.sequence}`;
 
-    const billRes = await client.query<{ id: string }>(
-      // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — vendorId is already a resolved, entity-scoped
-      // mdata.vendors.id (looked up above by name), so it stamps the typed FK directly — no
-      // separate resolution needed, unlike the other 5 writers in the sweep.
-      // INSURANCE-POLICY-BILL-PARAM-FIX: vendor_id/vendor_uuid are text but mdata_vendor_id is uuid — reusing the
-      // bare $2 placeholder across all three left Postgres unable to deduce one consistent type
-      // for it ("inconsistent types deduced for parameter $2"), failing this insert every time
-      // regardless of vehicle count or premium. The first two occurrences infer text from their
-      // column context; only the mdata_vendor_id occurrence needs an explicit cast.
-      `INSERT INTO accounting.bills (
-         operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id,
-         bill_date, due_date, amount_cents, total_amount,
-         paid_cents, paid_amount, status, memo,
-         qbo_idempotency_key, created_by_user_id, created_at, updated_at,
-         -- ACCT-F353 — derived from the insurer vendor above (vendorIsSampleData).
-         is_sample_data
-       )
-       VALUES ($1,$2,$2,$2::uuid,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,now(),now(),$9)
-       ON CONFLICT (operating_company_id, qbo_idempotency_key)
-         WHERE qbo_idempotency_key IS NOT NULL DO NOTHING
-       RETURNING id::text`,
+    // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — vendorId is already a resolved, entity-scoped mdata.vendors.id (looked up
+    // above by name), so it stamps the typed FK directly. 443.182 C — written through the one bill writer (same columns,
+    // casts, literals and ON CONFLICT idempotency as the former inline INSERT).
+    const billRes = await insertBillHeaderOnClient<{ id: string }>(
+      client,
       [
-        input.operatingCompanyId,
-        vendorId,
-        bill.due_date,
-        Math.abs(bill.amount_cents),
-        Math.abs(bill.amount_cents) / 100,
-        // ACCT-F6284 — plain sentence, not a serialized object, in this free-text memo column;
-        // qbo_idempotency_key (bound below) already carries idempotencyKey losslessly.
-        // ps_category/ps_item live on bill.ps_category / bill.ps_item from dispersal math.
-        `Insurance wizard bill — policy ${input.policyNumber}, installment ${bill.sequence} (${bill.phase}) · ${INSURANCE_PS_CATEGORY}::${bill.ps_item ?? "Insurance Premium"}`,
-        idempotencyKey,
-        input.userId,
-        vendorIsSampleData,
-      ]
+        ["operating_company_id", { value: input.operatingCompanyId }],
+        ["vendor_id", { value: vendorId }],
+        ["vendor_uuid", { value: vendorId }],
+        // INSURANCE-POLICY-BILL-PARAM-FIX: vendor_id/vendor_uuid are text, mdata_vendor_id is uuid — only it is cast.
+        ["mdata_vendor_id", { value: vendorId, cast: "uuid" }],
+        ["bill_date", { value: bill.due_date }],
+        ["due_date", { value: bill.due_date }],
+        ["amount_cents", { value: Math.abs(bill.amount_cents) }],
+        ["total_amount", { value: Math.abs(bill.amount_cents) / 100 }],
+        ["paid_cents", { sql: "0" }],
+        ["paid_amount", { sql: "0" }],
+        ["status", { sql: "'unpaid'" }],
+        ["memo", { value: `Insurance wizard bill — policy ${input.policyNumber}, installment ${bill.sequence} (${bill.phase}) · ${INSURANCE_PS_CATEGORY}::${bill.ps_item ?? "Insurance Premium"}` }],
+        ["qbo_idempotency_key", { value: idempotencyKey }],
+        ["created_by_user_id", { value: input.userId }],
+        ["created_at", { sql: "now()" }],
+        ["updated_at", { sql: "now()" }],
+        // ACCT-F353 — derived from the insurer vendor above (vendorIsSampleData).
+        ["is_sample_data", { value: vendorIsSampleData }],
+      ],
+      { returning: "id::text", onConflict: "idempotency_key_do_nothing" },
     );
     const billId = billRes.rows[0]?.id;
     if (!billId) throw new Error("insurance_created_bill_not_found");
