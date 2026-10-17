@@ -4,7 +4,8 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { postBillPaymentGlIfEnabledInClientTx } from "../accounting/bill-payment-gl.service.js";
 import { assertBankTxnsNotInReconciledSession } from "./closed-session-immutability.js";
-import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
+import { insertBillHeaderOnClient, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
+import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
 
 const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
@@ -247,48 +248,33 @@ export async function bulkPostTransactionsAsBills(
       // created ALREADY paid + a matching accounting.bill_payments row credits the real source bank
       // account (from_bank_account_id, resolved via the SAME bank->GL bridge every other bill_payment
       // poster uses) so the GL leg the posting engine builds actually reduces cash, not a phantom A/P.
-      const billRes = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.bills (
-            operating_company_id,
-            vendor_id,
-            vendor_uuid,
-            mdata_vendor_id,
-            bill_date,
-            due_date,
-            amount_cents,
-            total_amount,
-            paid_cents,
-            paid_amount,
-            status,
-            memo,
-            created_by_user_id,
-            created_at,
-            updated_at,
-            -- ACCT-F353 — derived from the vendor being paid (vendorIsSampleData above).
-            is_sample_data,
-            -- ROUND 360 — the bank line that CREATED this bill: Undo on that line voids it (and nothing else).
-            source_bank_transaction_id
-          )
-          VALUES ($1,$2,$2,$8,$3,$3,$4,$5,$4,$5,'paid',$6,$7,now(),now(),$9,$10)
-          RETURNING id
-        `,
+      // 443.182 C — written through the one bill writer (same columns, casts and literals as the former inline INSERT).
+      const billRes = await insertBillHeaderOnClient<{ id: string }>(
+        client,
         [
-          input.operatingCompanyId,
-          vendorId,
-          txn.transaction_date,
-          amountCents,
-          amountCents / 100,
-          // ACCT-F6284 — see the memo comment above; plain sentence, not a serialized object, in a
-          // free-text memo column. bank_transaction_id is already carried losslessly by
-          // source_bank_transaction_id (bound below); ps_category/ps_item are already the bill_lines
-          // description text two statements down.
-          `Bank transaction bulk-post: ${input.psCategory} — ${input.psItem} (bank_txn ${txn.id})`,
-          userId,
-          mdataVendorId,
-          vendorIsSampleData,
-          txn.id,
-        ]
+          ["operating_company_id", { value: input.operatingCompanyId }],
+          ["vendor_id", { value: vendorId }],
+          ["vendor_uuid", { value: vendorId }],
+          ["mdata_vendor_id", { value: mdataVendorId }],
+          ["bill_date", { value: txn.transaction_date }],
+          ["due_date", { value: txn.transaction_date }],
+          ["amount_cents", { value: amountCents }],
+          ["total_amount", { value: amountCents / 100 }],
+          ["paid_cents", { value: amountCents }],
+          ["paid_amount", { value: amountCents / 100 }],
+          ["status", { sql: "'paid'" }],
+          // ACCT-F6284 — plain sentence, not a serialized object, in a free-text memo column. bank_transaction_id is
+          // already carried losslessly by source_bank_transaction_id; ps_category/ps_item are the bill_lines description.
+          ["memo", { value: `Bank transaction bulk-post: ${input.psCategory} — ${input.psItem} (bank_txn ${txn.id})` }],
+          ["created_by_user_id", { value: userId }],
+          ["created_at", { sql: "now()" }],
+          ["updated_at", { sql: "now()" }],
+          // ACCT-F353 — derived from the vendor being paid (vendorIsSampleData above).
+          ["is_sample_data", { value: vendorIsSampleData }],
+          // ROUND 360 — the bank line that CREATED this bill: Undo on that line voids it (and nothing else).
+          ["source_bank_transaction_id", { value: txn.id }],
+        ],
+        { returning: "id" },
       );
       const billId = billRes.rows[0]?.id;
       if (!billId) throw new Error("bulk_post_bill_insert_failed");
@@ -307,50 +293,28 @@ export async function bulkPostTransactionsAsBills(
         [billId, amountCents / 100, `${input.psCategory} — ${input.psItem}`.slice(0, 500)]
       );
 
-      const paymentRes = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.bill_payments (
-            operating_company_id,
-            bill_id,
-            vendor_id,
-            payment_date,
-            cleared_date,
-            amount_cents,
-            amount,
-            payment_method,
-            from_bank_account_id,
-            memo,
-            status,
-            payment_source_kind,
-            source_bank_transaction_id,
-            created_by_user_id,
-            created_at,
-            updated_at,
-            -- ACCT-F353 — same derivation as the bill row two statements up (vendorIsSampleData).
-            is_sample_data
-          )
-          VALUES ($1,$2,$3,$4,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_bulk_post',$9,$10,now(),now(),$11)
-          RETURNING id
-        `,
-        [
-          input.operatingCompanyId,
-          billId,
-          vendorId,
-          // THREE-DATES-COVERAGE-GAP: bulk-posting an already-cleared bank transaction directly
-          // into a bill+payment -- issued and cleared are legitimately the same moment here, both
-          // bound to $4. See bank-transaction-splits.service.ts for the non-bulk sibling flow.
-          txn.transaction_date,
-          amountCents,
-          amountCents / 100,
-          txn.bank_account_id,
-          // ACCT-F6284 — same reasoning; source_bank_transaction_id (bound below) already carries
-          // the transaction reference.
-          `Bank transaction bulk-post payment (bank_txn ${txn.id})`,
-          txn.id,
-          userId,
-          vendorIsSampleData,
-        ]
-      );
+      // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before.
+      // THREE-DATES-COVERAGE-GAP: bulk-posting an already-cleared bank transaction directly into a bill+payment — issued
+      // and cleared are the same moment (see bank-transaction-splits.service.ts). ACCT-F6284 memo; ACCT-F353 sample flag.
+      const paymentRes = await insertBillPaymentRowInClientTx(client, {
+        operating_company_id: input.operatingCompanyId,
+        bill_id: billId,
+        vendor_id: vendorId,
+        payment_date: txn.transaction_date,
+        cleared_date: txn.transaction_date,
+        amount_cents: amountCents,
+        amount: amountCents / 100,
+        payment_method: "ach",
+        from_bank_account_id: txn.bank_account_id,
+        memo: "Bank transaction bulk-post payment", // ROUND 390.3: human memo; the bank line is linked by source_bank_transaction_id
+        status: "posted",
+        payment_source_kind: "bank_tx_bulk_post",
+        source_bank_transaction_id: txn.id,
+        created_by_user_id: userId,
+        created_at: BILL_PAYMENT_NOW,
+        updated_at: BILL_PAYMENT_NOW,
+        is_sample_data: vendorIsSampleData,
+      }, "id");
       const billPaymentId = paymentRes.rows[0]?.id;
       if (!billPaymentId) throw new Error("bulk_post_bill_payment_insert_failed");
       billPaymentIds.push(billPaymentId);

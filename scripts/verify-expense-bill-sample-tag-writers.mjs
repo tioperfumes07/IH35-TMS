@@ -84,9 +84,12 @@ export function billWritesTag(src) {
 export function paymentWritesTag(src) {
   const clean = stripComments(src);
   const insert = /INSERT\s+INTO\s+accounting\.payments\s*\(([\s\S]{0,900}?)\)/i.exec(clean);
+  // 443.182 C — the row is written by the one payment writer (payments.routes.ts insertPaymentRowInClientTx): the call
+  // must hand it the ACCEPTED flag (a constant false would be accepted-and-dropped again).
+  const call = /insertPaymentRowInClientTx\(\s*\w+\s*,\s*\{[\s\S]{0,1600}?\bis_sample_data\s*:\s*body\.data\.is_sample_data\b/.test(clean);
   return {
     accepts: /is_sample_data\s*:\s*z\.boolean\(\)/.test(clean),
-    writes: insert ? /\bis_sample_data\b/.test(insert[1]) : false,
+    writes: (insert ? /\bis_sample_data\b/.test(insert[1]) : false) || call,
   };
 }
 
@@ -173,6 +176,11 @@ if (process.argv.includes("--selftest")) {
   }
 
   const GOOD_P = "is_sample_data: z.boolean().optional(),\nINSERT INTO accounting.payments (a, is_sample_data) VALUES ($1,$2)";
+  // 443.182 C — the writer-call form: the accepted flag must reach the row; a constant false is accepted-and-dropped.
+  const CALL_P = "is_sample_data: z.boolean().optional(),\nawait insertPaymentRowInClientTx(client, { a: 1, is_sample_data: body.data.is_sample_data === true });";
+  if (collectProblems(GOOD_E, GOOD_B, CALL_P).length !== 0) failures.push("the payment writer call passing the accepted flag was flagged");
+  const CALL_DROP = "is_sample_data: z.boolean().optional(),\nawait insertPaymentRowInClientTx(client, { a: 1, is_sample_data: false });";
+  if (!collectProblems(GOOD_E, GOOD_B, CALL_DROP).some((p) => /accepted and dropped/.test(p))) failures.push("a payment writer call dropping the accepted flag was NOT caught");
   if (collectProblems(GOOD_E, GOOD_B, GOOD_P).length !== 0) failures.push("the corrected payment writer was flagged");
   if (!collectProblems(GOOD_E, GOOD_B, "INSERT INTO accounting.payments (a, is_sample_data) VALUES ($1,$2)").some((p) => /cannot be marked TEST data/.test(p))) {
     failures.push("a payment schema missing the field was NOT caught");

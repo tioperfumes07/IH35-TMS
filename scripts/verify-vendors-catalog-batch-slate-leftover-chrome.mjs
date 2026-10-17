@@ -5,7 +5,6 @@ import { readFileSync } from "node:fs";
 const TARGETS = [
   "apps/frontend/src/pages/Vendors.tsx",
   "apps/frontend/src/pages/lists/GenericCatalogPage.tsx",
-  "apps/frontend/src/components/lists/ListView/components/BatchActionsBar.tsx",
 ];
 const LABEL = "verify-vendors-catalog-batch-slate-leftover-chrome";
 

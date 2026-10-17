@@ -9,25 +9,27 @@ const source = fs.readFileSync(targetFile, "utf8");
 
 function audit(text) {
   const checks = [
-    ["Type registry", /\{ key: "type", label: "Type" \}/],
+    ["Type registry", /\{ key: "type", label: "Type"(?:, sortable: true)? \}/],
     ["explicit row type", /if \(row\.type\?\.trim\(\)\) return row\.type\.trim\(\)/],
     ["trailer equipment fallback", /row\.kind === "trailer"[\s\S]{0,80}row\.equipment_type\?\.trim\(\) \|\| "Trailer"/],
     ["truck fallback", /return "Truck"/],
     ["sort value", /function fleetSortValue[\s\S]{0,600}case "type": return displayType\(row\)/],
     ["filter options", /new Set\(rows\.map\(displayType\)\)/],
     ["filter predicate", /typeListFilter && displayType\(r\) !== typeListFilter/],
-    ["CSV export", /const cell = \(row: FleetRow, key: string\)[\s\S]{0,300}case "type": return displayType\(row\)/],
+    // LEAD 443.181 — on ParityTable the CSV text is each column's exportValue (fleetExportValue) and the cell is
+    // each column's render (renderFleetCell); same displayType(row) on both edges.
+    ["CSV export", /const fleetExportValue = \(row: FleetRow, key: string\): string => \{[\s\S]{0,300}case "type": return displayType\(row\)/],
     // 2026-09-06 (lead): #20538 (MAINT-X7-01) moved cell rendering into renderFleetCell's switch — the old
     // `isVisible("type") ? <td>` shape no longer exists, so this pin went stale and reddened build-typecheck-heavy on
     // main for every PR. Pin the real render edge: the "type" case returns a <td> whose content is displayType(row).
-    ["visible table cell", /case "type": return <td[^>]*>\{displayType\(row\)\}<\/td>;/],
+    ["visible table cell", /const renderFleetCell = \(row: FleetRow, key: string\): ReactNode => \{[\s\S]{0,1400}case "type": return displayType\(row\);/],
   ];
   return checks.filter(([, pattern]) => !pattern.test(text)).map(([label]) => label);
 }
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace('{ key: "type", label: "Type" }', '{ key: "status", label: "Status" }'),
+    source.replace(/\{ key: "type", label: "Type"(?:, sortable: true)? \}/, '{ key: "status", label: "Status" }'),
     source.replace("if (row.type?.trim()) return row.type.trim();", "if (false) return row.type ?? '';"),
     source.replace('row.equipment_type?.trim() || "Trailer"', '"Trailer"'),
     source.replace('return "Truck";', 'return "Unknown";'),
@@ -35,7 +37,7 @@ if (process.argv.includes("--selftest")) {
     source.replace("new Set(rows.map(displayType))", "new Set([])"),
     source.replace("typeListFilter && displayType(r) !== typeListFilter", "false"),
     source.replaceAll('case "type": return displayType(row);', 'case "type": return "";'),
-    source.replace('case "type": return <td key={key} className="truncate px-2 py-1">{displayType(row)}</td>;', 'case "type": return <td key={key} />;'),
+    source.replace(/(const renderFleetCell[\s\S]*?)case "type": return displayType\(row\);/, '$1case "type": return null;'),
   ];
   const escaped = mutations.filter((fixture) => audit(fixture).length === 0);
   if (audit(source).length || escaped.length) {

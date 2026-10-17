@@ -6,6 +6,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { requireAuth } from "../auth/session-middleware.js";
 import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars, reverseDriverAdvanceInClientTx } from "./cash-advance-create.js";
 import { postBillPaymentGlIfEnabledInClientTx } from "../accounting/bill-payment-gl.service.js";
+import { BILL_PAYMENT_SAMPLE_FROM_BILL, BILL_PAYMENT_VENDOR_FROM_BILL, insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
 
 const COMPANY_QUERY = z.object({
   operating_company_id: z.string().uuid(),
@@ -380,31 +381,18 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
       const method = body.data.disbursement_method ?? String(advance.disbursement_method ?? "");
       let linkedBillPaymentId: string | null = null;
       if (advance.linked_bill_id) {
-        const billPaymentRes = await client.query(
-          `
-            INSERT INTO accounting.bill_payments (
-              operating_company_id,
-              bill_id,
-              vendor_id,
-              amount,
-              payment_method,
-              advance_id,
-              is_sample_data
-            )
-            VALUES ($1, $2,
-              -- ROUND 443.106 — stamp vendor from the bill being paid (DB refuses a blank vendor_id).
-              (SELECT COALESCE(NULLIF(btrim(COALESCE(b.vendor_id, '')), ''), b.mdata_vendor_id::text)
-                 FROM accounting.bills b
-                WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid),
-              $3, $4, $5,
-              -- ACCT-F265 — inherit the parent bill's sample flag (see bills.service.ts). A cash advance
-              -- settled against a SAMPLE bill must not produce a REAL payment; the driver-advance path
-              -- is the one most likely to be exercised with fixture data.
-              COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
-            RETURNING id
-          `,
-          [companyId, advance.linked_bill_id, advance.amount, "cash_advance", advance.id]
-        );
+        // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before (payment_date / status /
+        // timestamps take the table defaults, as they always did on this path). ROUND 443.106: vendor stamped from the bill
+        // being paid (DB refuses a blank vendor_id). ACCT-F265: inherit the bill's sample flag.
+        const billPaymentRes = await insertBillPaymentRowInClientTx(client, {
+          operating_company_id: companyId,
+          bill_id: String(advance.linked_bill_id),
+          vendor_id: BILL_PAYMENT_VENDOR_FROM_BILL,
+          amount: advance.amount,
+          payment_method: "cash_advance",
+          advance_id: advance.id,
+          is_sample_data: BILL_PAYMENT_SAMPLE_FROM_BILL,
+        }, "id");
         linkedBillPaymentId = String(billPaymentRes.rows[0]?.id ?? "");
         await client.query(
           `

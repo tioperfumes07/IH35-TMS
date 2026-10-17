@@ -1,6 +1,6 @@
 import { resolveExpenseCategoryById } from "../accounting/expense-category-catalog.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
+import { insertBillHeaderOnClient, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { postSourceTransactionInClientTx, PostingEngineError } from "../accounting/posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -842,49 +842,75 @@ export async function autoCreateBillFromWO(
   // review step for a WO-auto-created bill, the operator already committed by clicking "Create
   // work order & Bill"), and populate vendor_id alongside vendor_uuid/mdata_vendor_id from the
   // SAME resolved vendor.
-  const billRes = await client.query<{ id: string }>(
-    `
-      INSERT INTO accounting.bills (
-        operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id, linked_work_order_uuid, unit_id, load_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending, is_sample_data
+  // 443.182 C — read the work order's bill values with the SAME expressions the former INSERT … SELECT used, on the same
+  // client, then write the header through the one bill writer. A missing work order writes nothing (as before).
+  const woBill = (
+    await client.query<{
+      operating_company_id: string;
+      vendor_id: string | null;
+      vendor_uuid: string | null;
+      mdata_vendor_id: string | null;
+      linked_work_order_uuid: string;
+      unit_id: string | null;
+      load_id: string | null;
+      amount_cents: string | number;
+      total_amount: string | number;
+      is_sample_data: boolean;
+    }>(
+      `
+        SELECT
+          w.operating_company_id::text AS operating_company_id,
+          (SELECT v.id::text FROM mdata.vendors v
+            WHERE v.id = COALESCE(w.external_vendor_id, w.vendor_id)
+              AND v.operating_company_id = w.operating_company_id
+            LIMIT 1) AS vendor_id,
+          COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_uuid,
+          -- LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — external_vendor_id/vendor_id are already typed uuid FKs into
+          -- mdata.vendors; entity-scoped so a cross-entity id resolves to nothing rather than another entity's vendor.
+          (SELECT v.id::text FROM mdata.vendors v
+            WHERE v.id = COALESCE(w.external_vendor_id, w.vendor_id)
+              AND v.operating_company_id = w.operating_company_id
+            LIMIT 1) AS mdata_vendor_id,
+          w.id::text AS linked_work_order_uuid,
+          w.unit_id::text AS unit_id,
+          w.load_id::text AS load_id,
+          -- CANONICAL integer-cents (G6-4). Derived from the SAME dollars expression as total_amount so the two never
+          -- diverge (every read uses COALESCE(amount_cents, ROUND(total_amount*100))).
+          ROUND(COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0) * 100)::bigint AS amount_cents,
+          COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0) AS total_amount,
+          -- ACCT-F353 — derived from the same resolved vendor above.
+          COALESCE((SELECT v.is_sample_data FROM mdata.vendors v
+            WHERE v.id = COALESCE(w.external_vendor_id, w.vendor_id)
+              AND v.operating_company_id = w.operating_company_id
+            LIMIT 1), false) AS is_sample_data
+        FROM maintenance.work_orders w
+        WHERE w.id = $1
+      `,
+      [woUuid]
+    )
+  ).rows[0];
+  const billRes = woBill
+    ? await insertBillHeaderOnClient<{ id: string; operating_company_id: string }>(
+        client,
+        [
+          ["operating_company_id", { value: woBill.operating_company_id, cast: "uuid" }],
+          ["vendor_id", { value: woBill.vendor_id }],
+          ["vendor_uuid", { value: woBill.vendor_uuid }],
+          ["mdata_vendor_id", { value: woBill.mdata_vendor_id, cast: "uuid" }],
+          ["linked_work_order_uuid", { value: woBill.linked_work_order_uuid, cast: "uuid" }],
+          ["unit_id", { value: woBill.unit_id, cast: "uuid" }],
+          ["load_id", { value: woBill.load_id, cast: "uuid" }],
+          ["status", { sql: "'unpaid'" }],
+          ["bill_date", { sql: "CURRENT_DATE" }],
+          ["due_date", { sql: "CURRENT_DATE + INTERVAL '30 days'" }],
+          ["amount_cents", { value: woBill.amount_cents, cast: "bigint" }],
+          ["total_amount", { value: woBill.total_amount, cast: "numeric" }],
+          ["qbo_sync_pending", { sql: "true" }],
+          ["is_sample_data", { value: woBill.is_sample_data, cast: "boolean" }],
+        ],
+        { returning: "id, operating_company_id" },
       )
-      SELECT
-        w.operating_company_id,
-        (SELECT v.id::text FROM mdata.vendors v
-          WHERE v.id = COALESCE(w.external_vendor_id, w.vendor_id)
-            AND v.operating_company_id = w.operating_company_id
-          LIMIT 1),
-        COALESCE(w.external_vendor_id, w.vendor_id),
-        -- LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — external_vendor_id/vendor_id are already typed uuid
-        -- FKs into mdata.vendors, so resolve the canonical FK directly rather than leave it NULL;
-        -- entity-scoped so a cross-entity id (should be structurally impossible given the FK, but
-        -- never trusted unchecked) resolves to nothing rather than another entity's vendor.
-        (SELECT v.id FROM mdata.vendors v
-          WHERE v.id = COALESCE(w.external_vendor_id, w.vendor_id)
-            AND v.operating_company_id = w.operating_company_id
-          LIMIT 1),
-        w.id,
-        w.unit_id,
-        w.load_id,
-        'unpaid',
-        CURRENT_DATE,
-        CURRENT_DATE + INTERVAL '30 days',
-        -- CANONICAL integer-cents (G6-4). Derived from the SAME dollars expression as total_amount so
-        -- the two never diverge (every read uses COALESCE(amount_cents, ROUND(total_amount*100))).
-        -- Previously omitted -> violated bills_amount_cents_present / created a NULL-canonical row.
-        ROUND(COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0) * 100)::bigint,
-        COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0),
-        true,
-        -- ACCT-F353 — derived from the same resolved vendor above.
-        COALESCE((SELECT v.is_sample_data FROM mdata.vendors v
-          WHERE v.id = COALESCE(w.external_vendor_id, w.vendor_id)
-            AND v.operating_company_id = w.operating_company_id
-          LIMIT 1), false)
-      FROM maintenance.work_orders w
-      WHERE w.id = $1
-      RETURNING id, operating_company_id
-    `,
-    [woUuid]
-  );
+    : { rows: [] as Array<{ id: string; operating_company_id: string }>, rowCount: 0 };
   const billId = String(billRes.rows[0]?.id ?? "");
   const billOperatingCompanyId = String((billRes.rows[0] as { operating_company_id?: string } | undefined)?.operating_company_id ?? "");
   const billNumber = String(opts?.billNumber ?? "").trim();

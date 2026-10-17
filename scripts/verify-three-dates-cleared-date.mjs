@@ -50,12 +50,13 @@ export function assertGuard(migrationSrc, splitsSrc, bulkSrc, matchSrc, worklist
   }
 
   if (!splitsSrc) errs.push(`${SPLITS_FILE}: missing`);
-  else if (!/INSERT INTO accounting\.bill_payments \(\s*\n\s*operating_company_id, bill_id, vendor_id, payment_date, cleared_date,/.test(splitsSrc)) {
+  // 443.182 C — the row is written by the one bill-payment writer; cleared_date must be set to the SAME value as payment_date.
+  else if (!/payment_date:\s*([\w.]+),\s*\n\s*cleared_date:\s*\1,/.test(splitsSrc)) {
     errs.push(`${SPLITS_FILE}: the bank-transaction-split bill_payments insert must set cleared_date alongside payment_date`);
   }
 
   if (!bulkSrc) errs.push(`${BULK_FILE}: missing`);
-  else if (!/payment_date,\s*\n\s*cleared_date,/.test(bulkSrc)) {
+  else if (!/payment_date:\s*([\w.]+),\s*\n\s*cleared_date:\s*\1,/.test(bulkSrc)) {
     errs.push(`${BULK_FILE}: the bulk-post bill_payments insert must set cleared_date alongside payment_date`);
   }
 
@@ -100,8 +101,8 @@ function selftest() {
     ["bad1-payments-column-missing", assertGuard(goodMigration.replace("ALTER TABLE accounting.payments ADD COLUMN IF NOT EXISTS cleared_date date;", ""), goodSplits, goodBulk, goodMatch, goodWorklist)],
     ["bad2-bill-payments-column-missing", assertGuard(goodMigration.replace("ALTER TABLE accounting.bill_payments ADD COLUMN IF NOT EXISTS cleared_date date;", ""), goodSplits, goodBulk, goodMatch, goodWorklist)],
     ["bad3-no-transaction", assertGuard(goodMigration.replace("BEGIN;", "-- no txn").replace("COMMIT;", "-- no txn"), goodSplits, goodBulk, goodMatch, goodWorklist)],
-    ["bad4-splits-not-wired", assertGuard(goodMigration, goodSplits.replace(/payment_date, cleared_date,/g, "payment_date,"), goodBulk, goodMatch, goodWorklist)],
-    ["bad5-bulk-not-wired", assertGuard(goodMigration, goodSplits, goodBulk.replace(/payment_date,\n            cleared_date,/g, "payment_date,"), goodMatch, goodWorklist)],
+    ["bad4-splits-not-wired", assertGuard(goodMigration, goodSplits.replace(/\n\s*cleared_date:[^\n]*/g, ""), goodBulk, goodMatch, goodWorklist)],
+    ["bad5-bulk-not-wired", assertGuard(goodMigration, goodSplits, goodBulk.replace(/\n\s*cleared_date:[^\n]*/g, ""), goodMatch, goodWorklist)],
     [
       "bad6-match-payment-not-wired",
       assertGuard(

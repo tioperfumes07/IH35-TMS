@@ -33,6 +33,7 @@
  * METHOD: static source-text assertions on two-section-service.ts, road-service/wo-integration.ts and
  * road-service/tickets.routes.ts. --selftest mutates the REAL files and requires every assertion to fail.
  */
+import { billHeaderWrites } from "./lib/bill-header-writes.mjs";
 import { readFileSync } from "node:fs";
 
 const LABEL = "verify-wo-auto-bill-posts-gl";
@@ -75,19 +76,23 @@ export function check(text) {
   const fnEnd = text.indexOf("export async function autoCreateExpenseFromWO");
   const fn = fnEnd === -1 ? text.slice(fnStart) : text.slice(fnStart, fnEnd);
 
-  if (!/vendor_id, vendor_uuid, mdata_vendor_id/.test(fn)) {
+  // 443.182 C — the header is written through the one bill writer (insertBillHeaderOnClient): read its column list.
+  const writes = billHeaderWrites(fn);
+  const cols = writes.flatMap((w) => w.columns);
+  const writerText = writes.map((w) => w.text).join("\n");
+  if (!(["vendor_id", "vendor_uuid", "mdata_vendor_id"].every((c) => cols.includes(c)) || /vendor_id, vendor_uuid, mdata_vendor_id/.test(fn))) {
     problems.push("INSERT column list does not include vendor_id alongside vendor_uuid/mdata_vendor_id.");
   }
   if (!/\(SELECT v\.id::text FROM mdata\.vendors v/.test(fn)) {
     problems.push("vendor_id is not resolved from the same mdata.vendors subquery as vendor_uuid.");
   }
-  if (!/'unpaid',\s*\n\s*CURRENT_DATE,/.test(fn)) {
+  if (!(/\["status", \{ sql: "'unpaid'" \}\]/.test(writerText) || /'unpaid',\s*\n\s*CURRENT_DATE,/.test(fn))) {
     problems.push("bill status is not inserted as 'unpaid' (LV-060 refuses to post status='draft').");
   }
-  if (/'draft',\s*\n\s*CURRENT_DATE,/.test(fn)) {
+  if (/'draft',\s*\n\s*CURRENT_DATE,/.test(fn) || /\["status", \{[^}]*draft/.test(writerText)) {
     problems.push("bill status still inserts 'draft' — LV-060 will refuse to post it, forever.");
   }
-  if (!/RETURNING id, operating_company_id/.test(fn)) {
+  if (!(/returning: "id, operating_company_id"/.test(writerText) || /RETURNING id, operating_company_id/.test(fn))) {
     problems.push("INSERT does not RETURNING operating_company_id (needed for the poster call).");
   }
   if (!/postSourceTransactionInClientTx\(\s*\n\s*client as never,\s*\n\s*\{ operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId \}/.test(fn)) {
@@ -142,14 +147,14 @@ function selftest() {
   if (baseline.length) failures.push(`baseline (real fixed file) should pass, got: ${baseline.join(" | ")}`);
 
   // Offender 1: revert status back to 'draft' (the original bug — silently unpostable forever).
-  const o1 = real.replace("'unpaid',\n        CURRENT_DATE,", "'draft',\n        CURRENT_DATE,");
+  const o1 = real.replace(`["status", { sql: "'unpaid'" }]`, `["status", { value: "draft" }]`);
   const p1 = check(o1);
   if (!p1.some((m) => m.includes("LV-060 will refuse")) && !p1.some((m) => m.includes("not inserted as 'unpaid'"))) {
     failures.push(`offender-1 (status reverted to draft) NOT caught: ${p1.join(" | ") || "none"}`);
   }
 
   // Offender 2: remove vendor_id from the column list (original bug).
-  const o2 = real.replace("vendor_id, vendor_uuid, mdata_vendor_id", "vendor_uuid, mdata_vendor_id");
+  const o2 = real.replace(`["vendor_id", { value: woBill.vendor_id }],`, "");
   const p2 = check(o2);
   if (!p2.some((m) => m.includes("does not include vendor_id"))) {
     failures.push(`offender-2 (missing vendor_id column) NOT caught: ${p2.join(" | ") || "none"}`);

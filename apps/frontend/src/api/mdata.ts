@@ -1,75 +1,16 @@
 import { ApiError, apiRequest, apiRequestFormData } from "./client";
-import { filterHumanDrivers } from "../lib/driver-pseudo-user";
 import type { CreateDriverInput, CustomerType, Driver, DriverOnboardingCreateResponse, MilesBasis, UpdateDriverInput } from "../types/api";
+import type { MdataLocation } from "./lists-locations";
+export { listDrivers, listAllDrivers } from "./catalog-drivers";
+export type { ListDriversParams, MaintenanceDriverRow } from "./catalog-drivers";
+export { listCustomers, listAllCustomers, searchCustomersAutocomplete } from "./catalog-customers";
+export type { CustomerAutocompleteRow } from "./catalog-customers";
+export { listVendors, listAllVendors } from "./catalog-vendors";
+export type { MaintenanceVendorRow } from "./catalog-vendors";
+export { listLocations } from "./lists-locations";
+export type { MdataLocation } from "./lists-locations";
 
-// DRIVERPROFILE-1 guard: `operating_company_id` is REQUIRED (not optional) so a caller can never
-// silently omit the company scope. An unscoped /mdata/drivers read fail-closes to 0 rows (the table
-// is entity-scoped), which silently emptied the Driver roster despite 83 real drivers. Pass the
-// current company id (or null when none is selected yet + gate the query with `enabled`). This
-// compile-time requirement supersedes a grep guard — an omitted scope no longer compiles.
-export type ListDriversParams = {
-  status?: string;
-  search?: string;
-  operating_company_id: string | null | undefined; // REQUIRED key (no `?`): can't be silently omitted
-  include_system?: boolean;
-  /**
-   * VOID-COLUMN LAW (2026-09-03) / WIZ-44 follow-up: the canonical list endpoint now defaults to
-   * deactivated_at IS NULL (a merged/deactivated driver is never selectable through this endpoint
-   * by default). Pass true ONLY for admin management views that must still show deactivated rows
-   * (e.g. the Drivers roster's "All statuses" tab) -- never for a picker/dropdown.
-   */
-  include_deactivated?: boolean;
-  limit?: number;
-  offset?: number;
-};
-
-export function listDrivers(params: ListDriversParams) {
-  const query = new URLSearchParams();
-  if (params.status && params.status !== "All") {
-    const statusValue = params.status === "Suspended" ? "Inactive" : params.status;
-    query.set("status", statusValue);
-  }
-  if (params.search) query.set("search", params.search);
-  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
-  if (params.include_system) query.set("include_system", "true");
-  if (params.include_deactivated) query.set("include_deactivated", "true");
-  if (params.limit != null) query.set("limit", String(params.limit));
-  if (params.offset != null) query.set("offset", String(params.offset));
-  const qs = query.toString();
-  // total = real server-side count for the same filters (so the UI can page through the FULL roster,
-  // not just the default-50 first page). See GO-LIVE Block 1A.
-  return apiRequest<{ drivers: Driver[]; total?: number }>(`/api/v1/mdata/drivers${qs ? `?${qs}` : ""}`).then((payload) => ({
-    drivers: params.include_system ? payload.drivers : filterHumanDrivers(payload.drivers),
-    total: payload.total ?? payload.drivers.length,
-  }));
-}
-
-/**
- * Read every page of the canonical, company-scoped driver roster.
- *
- * This is intentionally separate from picker/search reads. Fleet-wide compliance summaries must
- * not describe the first API page as the whole company, while pickers should continue to search
- * incrementally. Progress is measured in server offsets because listDrivers removes system rows
- * client-side while the server total can still include them.
- */
-export async function listAllDrivers(params: Omit<ListDriversParams, "limit" | "offset">) {
-  const pageSize = 200;
-  const first = await listDrivers({ ...params, limit: pageSize, offset: 0 });
-  const expected = first.total ?? first.drivers.length;
-  const drivers = [...first.drivers];
-  let covered = pageSize;
-  const maxPages = 500;
-  for (let pageIndex = 1; covered < expected && pageIndex < maxPages; pageIndex += 1) {
-    const next = await listDrivers({ ...params, limit: pageSize, offset: pageIndex * pageSize });
-    drivers.push(...next.drivers);
-    covered += pageSize;
-  }
-  if (covered < expected) {
-    throw new Error(`Driver roster paging stopped after ${covered} of ${expected} records`);
-  }
-  const uniqueDrivers = [...new Map(drivers.map((driver) => [driver.id, driver])).values()];
-  return { drivers: uniqueDrivers, total: expected };
-}
+// listDrivers, listAllDrivers, ListDriversParams → re-exported from catalog-drivers.ts above
 
 export type DriverLabel = { id: string; label: string };
 
@@ -1297,37 +1238,6 @@ export function updateDriverCompanyAuthorization(
   );
 }
 
-type CompanyScopedListParams = {
-  status?: string;
-  search?: string;
-  customer_type?: "broker" | "direct_shipper";
-  operating_company_id?: string | null;
-  // limit: client-side pickers must pass it — vendors/customers endpoints default to 50, so a >50 set
-  // silently truncates the picker (same class as the driver/unit 50-cap). Endpoint max is 200.
-  limit?: number;
-  offset?: number;
-  // ITEM 3 = B (owner ruling 2026-07-11): opt-in flag passed ONLY by the Customers/Vendors LIST pages so
-  // the list shows solely the ACTIVE company's records. Shared pickers/dropdowns MUST NOT pass this (they
-  // legitimately need the per-call operating_company_id scope for cross-entity booking).
-  active_company_only?: boolean;
-  // A-21 (2026-09-30, owner): the shared "has transactions" default filter — same predicate on both
-  // the customers and vendors list endpoints (customerHasTransactionsSql / vendorHasTransactionsSql).
-  has_transactions?: boolean;
-};
-
-function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedListParams) {
-  if (params.status && params.status !== "All") {
-    query.set("status", params.status);
-  }
-  if (params.search) query.set("search", params.search);
-  if (params.customer_type) query.set("customer_type", params.customer_type);
-  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
-  if (params.limit != null) query.set("limit", String(params.limit));
-  if (params.offset != null) query.set("offset", String(params.offset));
-  if (params.active_company_only) query.set("active_company_only", "true");
-  if (params.has_transactions) query.set("has_transactions", "true");
-}
-
 /**
  * LV-CUSTOMERS-FULL-EDIT-LIST-RESPONSE-NOT-ARRAY — live Full Edit crashed with
  * `(o ?? []).map is not a function` because `listCustomers().customers` was sometimes a non-array
@@ -1346,99 +1256,7 @@ export function normalizeMdataListRows<T>(raw: unknown): T[] {
   return [];
 }
 
-function listEnvelopeTotal(payload: unknown, rows: unknown[]): number {
-  if (payload && typeof payload === "object") {
-    const total = (payload as { total?: unknown }).total;
-    if (typeof total === "number" && Number.isFinite(total)) return total;
-  }
-  return rows.length;
-}
-
-export function listCustomers(params: CompanyScopedListParams = {}) {
-  const query = new URLSearchParams();
-  appendCompanyScopedQuery(query, params);
-  const qs = query.toString();
-  // CUST-1: expose the server's `total` (real count for the same filters) so the UI can page the FULL
-  // roster, not just the first default-50 page. `total` falls back to the returned page length.
-  return apiRequest<{ customers: Customer[]; total?: number } | Customer[]>(
-    `/api/v1/mdata/customers${qs ? `?${qs}` : ""}`
-  ).then((payload) => {
-    const customers = normalizeMdataListRows<Customer>(
-      Array.isArray(payload) ? payload : (payload as { customers?: unknown })?.customers ?? payload
-    );
-    return { customers, total: listEnvelopeTotal(payload, customers) };
-  });
-}
-
-export type CustomerAutocompleteRow = {
-  id: string;
-  qbo_id: string;
-  display_name: string;
-  primary_email: string | null;
-  primary_phone: string | null;
-  mc_number: string | null;
-  active: boolean;
-};
-
-/**
- * GO-21 A2 — the real fix for a type-ahead customer picker: hits the server's dedicated
- * ?autocomplete=true mode (searchCustomersForAutocomplete, apps/backend/src/mdata/
- * customer-autocomplete.shared.ts), which ranks exact match / prefix match / full-text relevance
- * across the WHOLE company customer set (~2.7k rows in prod) — not a plain paginated list capped
- * to a page-sized slice. This endpoint already existed and was already used by EntityPicker
- * kind="customer" elsewhere; BookLoadCustomerSection was the one caller still on the old
- * listCustomers(limit) shape, which is why a customer past the cap could go missing.
- * `limit` is server-clamped to 2000 regardless of what's requested (raised 100 -> 300 -> 2000,
- * A2 TURBO 2026-09-02, customer-autocomplete.shared.ts) — this comment previously said 100, stale
- * since that raise; caught during the GO-23 wave 1 row 1 systemic picker-cap sweep. Callers pass
- * their own limit (defaulting to 2000 below) so CappedListNotice's shown>=limit heuristic can
- * honestly report "showing the first N" when a search is broad enough to still exceed that.
- */
-export function searchCustomersAutocomplete(
-  operatingCompanyId: string,
-  term: string,
-  opts: { activeOnly?: boolean; limit?: number } = {}
-) {
-  const query = new URLSearchParams({
-    operating_company_id: operatingCompanyId,
-    autocomplete: "true",
-    limit: String(opts.limit ?? 2000),
-  });
-  if (term.trim()) query.set("search", term.trim());
-  if (opts.activeOnly === false) query.set("active_only", "false");
-  return apiRequest<{ results: CustomerAutocompleteRow[] }>(`/api/v1/mdata/customers?${query.toString()}`).then(
-    (payload) => payload.results ?? []
-  );
-}
-
-/**
- * Exhaust a stable, scoped customer population for surfaces that present a complete roster.
- * Search-as-you-type pickers should keep using listCustomers; complete lists and unsearched
- * canonical selectors must not treat the server's max page as the end of the population.
- */
-export async function listAllCustomers(
-  params: Omit<CompanyScopedListParams, "limit" | "offset"> = {},
-) {
-  const limit = 5000;
-  const customers: Customer[] = [];
-  const seen = new Set<string>();
-  let offset = 0;
-  let expectedTotal: number | null = null;
-  while (true) {
-    const page = await listCustomers({ ...params, limit, offset });
-    if (expectedTotal == null) expectedTotal = page.total;
-    if (page.total !== expectedTotal) throw new Error("Customer roster changed during pagination. Retry.");
-    for (const customer of page.customers) {
-      if (!seen.has(customer.id)) {
-        seen.add(customer.id);
-        customers.push(customer);
-      }
-    }
-    if (customers.length >= expectedTotal) return { customers, total: expectedTotal };
-    if (page.customers.length === 0) throw new Error("Customer roster pagination stopped before the reported total.");
-    offset += page.customers.length;
-  }
-}
+// listCustomers, listAllCustomers, searchCustomersAutocomplete, CustomerAutocompleteRow → re-exported from catalog-customers.ts above
 
 /** C-50 — tab counts from the dedicated counts route (never invent client-side money filters). */
 export type CustomerVendorRosterCounts = {
@@ -1797,46 +1615,7 @@ export function createPaymentTermOption(body: {
   return apiRequest<PaymentTermOption>("/api/v1/catalogs/payment-terms", { method: "POST", body });
 }
 
-export function listVendors(params: CompanyScopedListParams = {}) {
-  const query = new URLSearchParams();
-  appendCompanyScopedQuery(query, params);
-  const qs = query.toString();
-  // VEND-1: expose the server's `total` so the UI can page the FULL roster, not just the first 50.
-  // Same array-normalization class as listCustomers (LV-CUSTOMERS-FULL-EDIT-LIST-RESPONSE-NOT-ARRAY).
-  return apiRequest<{ vendors: VendorOption[]; total?: number } | VendorOption[]>(
-    `/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`
-  ).then((payload) => {
-    const vendors = normalizeMdataListRows<VendorOption>(
-      Array.isArray(payload) ? payload : (payload as { vendors?: unknown })?.vendors ?? payload
-    );
-    return { vendors, total: listEnvelopeTotal(payload, vendors) };
-  });
-}
-
-/** Exhaust a stable scoped vendor population for complete-roster and complete-suggestion surfaces. */
-export async function listAllVendors(
-  params: Omit<CompanyScopedListParams, "limit" | "offset"> = {},
-) {
-  const limit = 5000;
-  const vendors: VendorOption[] = [];
-  const seen = new Set<string>();
-  let offset = 0;
-  let expectedTotal: number | null = null;
-  while (true) {
-    const page = await listVendors({ ...params, limit, offset });
-    if (expectedTotal == null) expectedTotal = page.total;
-    if (page.total !== expectedTotal) throw new Error("Vendor roster changed during pagination. Retry.");
-    for (const vendor of page.vendors) {
-      if (!seen.has(vendor.id)) {
-        seen.add(vendor.id);
-        vendors.push(vendor);
-      }
-    }
-    if (offset + page.vendors.length >= expectedTotal) return { vendors, total: expectedTotal };
-    if (page.vendors.length === 0) throw new Error("Vendor roster pagination stopped before the reported total.");
-    offset += page.vendors.length;
-  }
-}
+// listVendors, listAllVendors → re-exported from catalog-vendors.ts above
 
 /** C-50 — tab counts from the dedicated counts route (A-21 predicate server-side). */
 export function getVendorRosterCounts(operatingCompanyId: string) {
@@ -2070,42 +1849,7 @@ export function getCustomerFinanceRollup(operatingCompanyId: string) {
 }
 
 // GO-24: mdata.locations is the live stop-location catalog (FK'd from mdata.load_stops.location_id,
-// catalogs.locations does NOT exist — never create it). Typed so the Book Load stop location picker
-// can read name/city/state/postal_code/lat/lng off a selected row without an `unknown` cast.
-export type MdataLocation = {
-  id: string;
-  name: string;
-  location_code: string | null;
-  location_type: string;
-  linked_customer_id: string | null;
-  linked_vendor_id: string | null;
-  operating_company_id: string;
-  address: string | null;
-  address_line2: string | null;
-  city: string | null;
-  state: string | null;
-  postal_code: string | null;
-  country: string | null;
-  lat: number | null;
-  lng: number | null;
-};
-
-export function listLocations(
-  params: CompanyScopedListParams & {
-    /** mdata.location_type_enum — e.g. fuel_stop for Love's / fuel vendor catalog. */
-    location_type?: string;
-    city?: string;
-    state?: string;
-  } = {},
-) {
-  const query = new URLSearchParams();
-  appendCompanyScopedQuery(query, params);
-  if (params.location_type) query.set("location_type", params.location_type);
-  if (params.city) query.set("city", params.city);
-  if (params.state) query.set("state", params.state);
-  const qs = query.toString();
-  return apiRequest<{ locations: MdataLocation[] }>(`/api/v1/mdata/locations${qs ? `?${qs}` : ""}`);
-}
+// MdataLocation, listLocations → re-exported from lists-locations.ts above
 
 export function createLocation(body: {
   name: string;

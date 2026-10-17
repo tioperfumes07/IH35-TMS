@@ -75,14 +75,19 @@ describe("autoCreateBillFromWO — bill_lines write (Phase 1.5 bill-branch regre
     const res = await autoCreateBillFromWO(client, "user-1", "wo-1");
     expect(res, "bill should be created (relationExists mocked true)").not.toBeNull();
 
-    // Law §9: auto WO→bill must stamp unit_id from work_orders (and keep vendor_uuid).
+    // Law §9: auto WO→bill must stamp unit_id from work_orders (and keep vendor_uuid). 443.182 C — the work order's
+    // values are read with the same expressions, then the header is written through the one bill writer.
+    const woRead = calls.find((c) => c.sql.includes("FROM maintenance.work_orders") && c.sql.includes("AS linked_work_order_uuid"));
+    expect(woRead, "the work order read must run").toBeTruthy();
+    expect(woRead!.sql).toMatch(/w\.unit_id/);
+    expect(woRead!.sql).toMatch(/w\.load_id/);
+    expect(woRead!.sql).toMatch(/COALESCE\(w\.external_vendor_id,\s*w\.vendor_id\)/);
     const billInsert = calls.find((c) => c.sql.includes("INSERT INTO accounting.bills"));
     expect(billInsert, "bills INSERT must run").toBeTruthy();
     expect(billInsert!.sql).toMatch(/\bunit_id\b/);
-    expect(billInsert!.sql).toMatch(/w\.unit_id/);
     expect(billInsert!.sql).toMatch(/\bload_id\b/);
-    expect(billInsert!.sql).toMatch(/w\.load_id/);
-    expect(billInsert!.sql).toMatch(/COALESCE\(w\.external_vendor_id,\s*w\.vendor_id\)/);
+    expect(billInsert!.sql).toMatch(/\bvendor_uuid\b/);
+    expect(billInsert!.sql).toMatch(/\bmdata_vendor_id\b/);
 
     const billLineInsert = calls.find((c) => c.sql.includes("INSERT INTO accounting.bill_lines"));
     expect(billLineInsert, "bill_lines INSERT must run").toBeTruthy();

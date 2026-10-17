@@ -15,6 +15,11 @@
  *
  * This guard makes the regression impossible to re-ship in either hook.
  *
+ * LEAD 443.181 (one table component): ListView and ResizableTable are retired (their screens render
+ * <ParityTable>), so useListView and both component surfaces are gone; the guard keeps the
+ * useColumnWidths hook honest, and covers ParityTable's server-saved view (useParityServerView) — the
+ * same fetch-loop rule and the same "a failed save is said, with Retry" rule.
+ *
  * Usage:
  *   node scripts/verify-resizable-table-column-widths-no-fetch-loop.mjs            # scan
  *   node scripts/verify-resizable-table-column-widths-no-fetch-loop.mjs --selftest # regression harness -> must FAIL on bug
@@ -25,10 +30,8 @@ import process from "node:process";
 
 const repoRoot = process.cwd();
 const COLUMN_WIDTHS_FILE = "apps/frontend/src/hooks/useColumnWidths.ts";
-const LIST_VIEW_FILE = "apps/frontend/src/components/lists/ListView/hooks/useListView.ts";
-const LIST_VIEW_COMPONENT = "apps/frontend/src/components/lists/ListView/ListView.tsx";
-// LEAD 443.181: components/shared/ResizableTable.tsx was retired (its consumers moved to ParityTable); ListView is the
-// remaining useColumnWidths consumer, so it is the one save-error surface this guard pins.
+const SERVER_VIEW_FILE = "apps/frontend/src/components/parity/useParityServerView.ts";
+const PARITY_TABLE_FILE = "apps/frontend/src/components/parity/ParityTable.tsx";
 
 const FETCH_EFFECT_MARKER = "table-preferences?table_id=";
 
@@ -44,8 +47,14 @@ function findEffectDeps(src, marker) {
   return src.slice(depsIdx, closeIdx + 2);
 }
 
-export function checkNoFetchLoop({ columnWidthsSrc, listViewSrc }) {
+export function checkNoFetchLoop({ columnWidthsSrc, serverViewSrc }) {
   const offenders = [];
+  const svDeps = findEffectDeps(serverViewSrc, FETCH_EFFECT_MARKER);
+  if (svDeps === null) {
+    offenders.push(`${SERVER_VIEW_FILE}: table-preferences fetch effect marker not found (has it moved?)`);
+  } else if (!/^\}, \[tableId\]\);$/.test(svDeps)) {
+    offenders.push(`${SERVER_VIEW_FILE}: fetch effect must depend on [tableId] only — RESIZABLE-TABLE-COLUMN-WIDTHS-FETCH-LOOP regression.`);
+  }
 
   const cwDeps = findEffectDeps(columnWidthsSrc, FETCH_EFFECT_MARKER);
   if (cwDeps === null) {
@@ -56,20 +65,15 @@ export function checkNoFetchLoop({ columnWidthsSrc, listViewSrc }) {
     );
   }
 
-  const lvDeps = findEffectDeps(listViewSrc, FETCH_EFFECT_MARKER);
-  if (lvDeps === null) {
-    offenders.push(`${LIST_VIEW_FILE}: table-preferences fetch effect marker not found (has it moved?)`);
-  } else if (/\bcolumns\b/.test(lvDeps)) {
-    offenders.push(
-      `${LIST_VIEW_FILE}: fetch effect depends on 'columns' (an array literal callers rebuild every render, and never read inside the effect body) — RESIZABLE-TABLE-COLUMN-WIDTHS-FETCH-LOOP regression. Depend only on tableId.`,
-    );
-  }
 
   return offenders;
 }
 
-export function checkPersistenceFailureTruth({ columnWidthsSrc, listViewComponentSrc }) {
+export function checkPersistenceFailureTruth({ columnWidthsSrc, parityTableSrc }) {
   const offenders = [];
+  for (const token of ["persistError", "retryPersist", "data-column-width-save-error", "Retry save"]) {
+    if (!parityTableSrc.includes(token)) offenders.push(`${PARITY_TABLE_FILE}: missing ${token}`);
+  }
   for (const token of [
     "lastPersistDraftRef.current = next",
     "Column widths could not be saved. This layout is temporary.",
@@ -77,21 +81,16 @@ export function checkPersistenceFailureTruth({ columnWidthsSrc, listViewComponen
   ]) {
     if (!columnWidthsSrc.includes(token)) offenders.push(`${COLUMN_WIDTHS_FILE}: missing ${token}`);
   }
-  for (const [file, source] of [[LIST_VIEW_COMPONENT, listViewComponentSrc]]) {
-    for (const token of ["persistError", "retryPersist", "data-column-width-save-error", "Retry save"]) {
-      if (!source.includes(token)) offenders.push(`${file}: missing ${token}`);
-    }
-  }
   return offenders;
 }
 
 export function run() {
   const columnWidthsSrc = fs.readFileSync(path.join(repoRoot, COLUMN_WIDTHS_FILE), "utf8");
-  const listViewSrc = fs.readFileSync(path.join(repoRoot, LIST_VIEW_FILE), "utf8");
-  const listViewComponentSrc = fs.readFileSync(path.join(repoRoot, LIST_VIEW_COMPONENT), "utf8");
+  const serverViewSrc = fs.readFileSync(path.join(repoRoot, SERVER_VIEW_FILE), "utf8");
+  const parityTableSrc = fs.readFileSync(path.join(repoRoot, PARITY_TABLE_FILE), "utf8");
   const offenders = [
-    ...checkNoFetchLoop({ columnWidthsSrc, listViewSrc }),
-    ...checkPersistenceFailureTruth({ columnWidthsSrc, listViewComponentSrc }),
+    ...checkNoFetchLoop({ columnWidthsSrc, serverViewSrc }),
+    ...checkPersistenceFailureTruth({ columnWidthsSrc, parityTableSrc }),
   ];
   return { ok: offenders.length === 0, offenders };
 }
@@ -111,23 +110,9 @@ if (process.argv.includes("--selftest")) {
       })();
     }, [tableId]);
   `;
-  const buggyListView = `
-    useEffect(() => {
-      void (async () => {
-        const resp = await apiRequest(\`/api/v1/users/me/table-preferences?table_id=\${tableId}\`);
-      })();
-    }, [tableId, columns]);
-  `;
-  const fixedListView = `
-    useEffect(() => {
-      void (async () => {
-        const resp = await apiRequest(\`/api/v1/users/me/table-preferences?table_id=\${tableId}\`);
-      })();
-    }, [tableId]);
-  `;
 
-  const buggyOffenders = checkNoFetchLoop({ columnWidthsSrc: buggyColumnWidths, listViewSrc: buggyListView });
-  const fixedOffenders = checkNoFetchLoop({ columnWidthsSrc: fixedColumnWidths, listViewSrc: fixedListView });
+  const buggyOffenders = checkNoFetchLoop({ columnWidthsSrc: buggyColumnWidths, serverViewSrc: buggyColumnWidths.replace("defaultWidths", "columns") });
+  const fixedOffenders = checkNoFetchLoop({ columnWidthsSrc: fixedColumnWidths, serverViewSrc: fixedColumnWidths });
 
   if (buggyOffenders.length !== 2 || fixedOffenders.length !== 0) {
     console.error("verify:resizable-table-column-widths-no-fetch-loop selftest FAILED", {
@@ -138,14 +123,14 @@ if (process.argv.includes("--selftest")) {
   }
   const actual = {
     columnWidthsSrc: fs.readFileSync(path.join(repoRoot, COLUMN_WIDTHS_FILE), "utf8"),
-    listViewComponentSrc: fs.readFileSync(path.join(repoRoot, LIST_VIEW_COMPONENT), "utf8"),
+    parityTableSrc: fs.readFileSync(path.join(repoRoot, PARITY_TABLE_FILE), "utf8"),
   };
   const mutations = [
     { ...actual, columnWidthsSrc: actual.columnWidthsSrc.replace("lastPersistDraftRef.current = next", "BROKEN_DRAFT") },
     { ...actual, columnWidthsSrc: actual.columnWidthsSrc.replace("Column widths could not be saved. This layout is temporary.", "BROKEN_ERROR") },
     { ...actual, columnWidthsSrc: actual.columnWidthsSrc.replaceAll("retryPersist", "BROKEN_RETRY") },
-    { ...actual, listViewComponentSrc: actual.listViewComponentSrc.replace("data-column-width-save-error", "BROKEN_ERROR_SURFACE") },
-    { ...actual, listViewComponentSrc: actual.listViewComponentSrc.replaceAll("retryPersist", "BROKEN_RETRY") },
+    { ...actual, parityTableSrc: actual.parityTableSrc.replace("data-column-width-save-error", "BROKEN_ERROR_SURFACE") },
+    { ...actual, parityTableSrc: actual.parityTableSrc.replaceAll("retryPersist", "BROKEN_RETRY") },
   ];
   mutations.forEach((mutation, index) => {
     if (!checkPersistenceFailureTruth(mutation).length) throw new Error(`persistence mutation ${index + 1} survived`);
@@ -163,6 +148,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1);
   }
   console.log(
-    "verify:resizable-table-column-widths-no-fetch-loop OK — both table-preferences fetch effects depend only on tableId, not a per-render object/array literal",
+    "verify:resizable-table-column-widths-no-fetch-loop OK — both table-preferences fetch effects (useColumnWidths, useParityServerView) depend only on tableId, not a per-render object/array literal",
   );
 }

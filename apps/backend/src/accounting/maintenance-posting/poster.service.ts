@@ -3,7 +3,7 @@ import { enqueueTmsBillPushRequested } from "../../qbo/tms-bill-push-chain.servi
 import { ExpenseCategoryMapResolutionError } from "../expense-category-map/resolver.service.js";
 import { PostingEngineError, postSourceTransaction } from "../posting-engine.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
-import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../bills.service.js";
+import { insertBillHeaderOnClient, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../bills.service.js";
 import { CAPITALIZE_REPAIR_THRESHOLD_CENTS, decideRepairBooksTreatment } from "../capitalize-threshold.js";
 import { resolveRoleAccount, CoaRoleResolutionError, type CoaRole } from "../coa-roles/resolver.service.js";
 import { registerCapitalizedRepairAsFixedAsset } from "../owned-unit-fixed-asset-register.service.js";
@@ -166,48 +166,32 @@ async function getOrCreateBillForWorkOrder(
   // vendor the FK above resolves, matching the relationship every other bill writer in this sweep uses.
   const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, input.operating_company_id, vendorKey);
   // Law §9: stamp unit_id from WO (migration 202607050810). Vendor preserved via vendorKey.
-  const billInsert = await client.query<{ id: string }>(
-    `
-      INSERT INTO accounting.bills (
-        operating_company_id,
-        vendor_id,
-        vendor_uuid,
-        mdata_vendor_id,
-        linked_work_order_uuid,
-        unit_id,
-        status,
-        bill_date,
-        due_date,
-        total_amount,
-        amount_cents,
-        paid_amount,
-        paid_cents,
-        memo,
-        qbo_sync_pending,
-        created_by_user_id,
-        created_at,
-        updated_at,
-        -- ACCT-F353 — derived from the vendor being billed (vendorIsSampleData above).
-        is_sample_data
-      )
-      VALUES (
-        $1::uuid, $2, $2, $9::uuid, $3::uuid, $8::uuid, 'unpaid', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days',
-        $4, $5, 0, 0, $6, true, $7::uuid, now(), now(), $10
-      )
-      RETURNING id::text
-    `,
+  // 443.182 C — written through the one bill writer (same columns, casts and literals as the former inline INSERT).
+  const billInsert = await insertBillHeaderOnClient<{ id: string }>(
+    client,
     [
-      input.operating_company_id,
-      vendorKey,
-      input.work_order_id,
-      totalAmount,
-      Math.round(totalAmount * 100),
-      `Auto-created from work order ${String(wo.display_id ?? input.work_order_id)}`,
-      input.actor_user_id,
-      wo.unit_id ?? null,
-      mdataVendorId,
-      vendorIsSampleData,
-    ]
+      ["operating_company_id", { value: input.operating_company_id, cast: "uuid" }],
+      ["vendor_id", { value: vendorKey }],
+      ["vendor_uuid", { value: vendorKey }],
+      ["mdata_vendor_id", { value: mdataVendorId, cast: "uuid" }],
+      ["linked_work_order_uuid", { value: input.work_order_id, cast: "uuid" }],
+      ["unit_id", { value: wo.unit_id ?? null, cast: "uuid" }],
+      ["status", { sql: "'unpaid'" }],
+      ["bill_date", { sql: "CURRENT_DATE" }],
+      ["due_date", { sql: "CURRENT_DATE + INTERVAL '30 days'" }],
+      ["total_amount", { value: totalAmount }],
+      ["amount_cents", { value: Math.round(totalAmount * 100) }],
+      ["paid_amount", { sql: "0" }],
+      ["paid_cents", { sql: "0" }],
+      ["memo", { value: `Auto-created from work order ${String(wo.display_id ?? input.work_order_id)}` }],
+      ["qbo_sync_pending", { sql: "true" }],
+      ["created_by_user_id", { value: input.actor_user_id, cast: "uuid" }],
+      ["created_at", { sql: "now()" }],
+      ["updated_at", { sql: "now()" }],
+      // ACCT-F353 — derived from the vendor being billed (vendorIsSampleData above).
+      ["is_sample_data", { value: vendorIsSampleData }],
+    ],
+    { returning: "id::text" },
   );
   return { bill_id: billInsert.rows[0]?.id ?? null, action: "created" };
 }

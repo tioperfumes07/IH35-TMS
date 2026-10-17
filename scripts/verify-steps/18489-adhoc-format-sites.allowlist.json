@@ -47,8 +47,6 @@
     "apps/frontend/src/components/fuel/FuelTransactionsReverseSection.tsx": 1,
     "apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx": 3,
     "apps/frontend/src/components/home/TodaysAttentionTop5.tsx": 1,
-    "apps/frontend/src/components/lists/ListView/components/ListViewFooter.tsx": 1,
-    "apps/frontend/src/components/lists/ListView/demo/ListViewDemo.tsx": 1,
     "apps/frontend/src/components/loads/MilesRecommendationsPanel.tsx": 3,
     "apps/frontend/src/components/maintenance/TireWearProjectionChart.tsx": 1,
     "apps/frontend/src/components/maintenance/UnitSevereRepairsReverseSection.tsx": 1,

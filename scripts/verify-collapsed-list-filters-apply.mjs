@@ -193,11 +193,6 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — FilterPopover silent apply escaped");
     process.exit(1);
   }
-  const goodPopover = auditFilterPopover(fs.readFileSync(path.join(ROOT, "apps/frontend/src", FILTER_POPOVER), "utf8"));
-  if (goodPopover.length) {
-    console.error(`verify-collapsed-list-filters-apply SELFTEST FAIL — live FilterPopover not Apply-gated:\n${goodPopover.join("\n")}`);
-    process.exit(1);
-  }
   const portalPlanted = auditPortalOwnership(
     `useEffect(() => { const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) cancelAndClose(); }; }, []);`,
     `kind="unit" allowClear\nkind="driver" allowClear`,
@@ -215,7 +210,10 @@ if (process.argv.includes("--selftest")) {
 }
 
 const result = audit(sources);
-const popoverFailures = auditFilterPopover(sources[FILTER_POPOVER] ?? "");
+// LEAD 443.181 — ListView's FilterPopover was retired with ListView (its last consumer, the Chart of Accounts View
+// filter, is now a CollapsedListFilters consumer, held by audit() above). The popover audit still runs on any
+// FilterPopover that comes back.
+const popoverFailures = sources[FILTER_POPOVER] != null ? auditFilterPopover(sources[FILTER_POPOVER]) : [];
 const portalFailures = auditPortalOwnership(
   sources["components/table/CollapsedListFilters.tsx"] ?? "",
   sources["pages/reports/runners/RunnerFilters.tsx"] ?? "",
