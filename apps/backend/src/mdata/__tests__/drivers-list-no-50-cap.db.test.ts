@@ -17,13 +17,19 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import {
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
+  ensureIntegrationPrerequisites,
+  type IsolatedOperatingCompany,
+} from "../../../test-helpers/db-fixture.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
 describeIntegration("driver picker — full active set, no 50-cap (real Postgres)", () => {
   let db: pg.Client;
   let companyId: string;
+  let isolated: IsolatedOperatingCompany | undefined;
   const suffix = randomUUID().slice(0, 8);
   const SEED_COUNT = 55; // > default 50
   const ids: string[] = [];
@@ -54,7 +60,14 @@ describeIntegration("driver picker — full active set, no 50-cap (real Postgres
   }
 
   beforeAll(async () => {
-    companyId = await ensureIntegrationPrerequisites();
+    // Re-run safety: build-typecheck-heavy runs the backend suite twice on the SAME database (verify:pre-commit, then
+    // test:coverage), and the DELETE cleanup below runs as ih35_app (best-effort, swallowed), so on the shared integration
+    // company every run's 55 active drivers stayed — the "complete active set within limit 200" claim then depended on
+    // how many runs and other suites had touched that company (local 3rd run: 238 active → 54 of 55 seeded returned).
+    // Each run owns a fresh isolated company, so the active set is exactly this run's seeded drivers.
+    await ensureIntegrationPrerequisites();
+    isolated = await createIsolatedOperatingCompany({ label: "driver-picker-cap" });
+    companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required");
     db = new pg.Client(buildPgClientConfig(cs));
@@ -86,6 +99,7 @@ describeIntegration("driver picker — full active set, no 50-cap (real Postgres
     await withBypass(async () => {
       await db.query(`DELETE FROM mdata.drivers WHERE id = ANY($1::uuid[])`, [ids]);
     }).catch(() => {});
+    if (isolated) await deactivateIsolatedOperatingCompany(db, isolated).catch(() => {});
     await db.end().catch(() => {});
   });
 
