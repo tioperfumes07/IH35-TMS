@@ -198,6 +198,7 @@ export function VoidCancelReasonsListPage() {
             setModalMode("edit");
           }}
           loading={listQuery.isLoading}
+          title="Void and cancel reasons"
           storageKey="void-cancel-reasons"
           allowAllPageSize
         />
