@@ -226,26 +226,32 @@ export function dreamlineAdoptMarker(line: Pick<DreamlineStatementLine, "efs_inv
 
 /**
  * The ONE adoption stamp: a statement line adopts the receipt already on the books — the booked fuel row carries the
- * line's marker (a re-run sees "already_imported" through it) and the card's gross / discount. Called by the import loop
- * and by the LEAD 443.194 repair (a statement copy of a booked receipt is voided whole, then the line adopts the receipt).
+ * line's marker (a re-run sees "already_imported" through it). Called by the import loop and by the LEAD 443.194
+ * repair (a statement copy of a booked receipt is voided whole, then the line adopts the receipt).
+ *
+ * LEAD 443.197 — the stamp writes the MARKER ONLY. The receipt keeps its own amounts (total_cost / gross_cost /
+ * discount_amount exactly as the Settlement Creator wrote them): the card's gross / discount belong to the statement
+ * line, and the card difference already posts on its own (Dr 2510 / Cr Fuel Card Discount, postStatementDifference).
+ * On main (bd41d055ba #26780) the stamp overwrote the receipt's gross / discount with the card's, so 305 receipts read
+ * total_cost <> gross_cost − discount_amount (verify-control-totals' fuel-discount check).
  */
 export async function stampDreamlineReceiptAdopted(
   client: DbClient,
-  input: { companyId: string; fuelTransactionId: string; marker: string; grossCents: number; discountCents: number }
+  input: { companyId: string; fuelTransactionId: string; marker: string }
 ): Promise<void> {
   await client.query(
     `UPDATE fuel.fuel_transactions
-        SET notes = concat_ws('; ', NULLIF(notes, ''), $3::text),
-            gross_cost = $4::numeric / 100, discount_amount = $5::numeric / 100, updated_at = now()
+        SET notes = concat_ws('; ', NULLIF(notes, ''), $3::text), updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-    [input.fuelTransactionId, input.companyId, input.marker, input.grossCents, input.discountCents]
+    [input.fuelTransactionId, input.companyId, input.marker]
   );
 }
 
 /**
  * LEAD 443.195 — the inverse of the stamp, for a repair that moves a statement line off a receipt it never was (the
- * matcher paired another truck's receipt): removes exactly that marker from the receipt's notes. The receipt's gross /
- * discount are re-stamped by the line that truly adopts it. Returns the rows changed (0 = the marker was not there).
+ * matcher paired another truck's receipt): removes exactly that marker from the receipt's notes. Returns the rows
+ * changed (0 = the marker was not there). LEAD 443.197 — like the stamp, it touches the notes ONLY: the receipt's
+ * amounts were never the line's to write, so there is nothing to clear.
  */
 export async function unstampDreamlineReceiptAdopted(
   client: DbClient,
@@ -258,16 +264,10 @@ export async function unstampDreamlineReceiptAdopted(
   const parts = (row?.notes ?? "").split(";").map((p) => p.trim()).filter((p) => p !== "");
   const kept = parts.filter((p) => p !== input.marker);
   if (!row || kept.length === parts.length) return 0;
-  // LEAD 443.196 — a receipt no statement line adopts any more carries no card facts: the gross / discount the wrong line
-  // stamped are cleared (back to the receipt's own amount, as the Settlement Creator wrote it) until its true line adopts it.
-  const stillAdopted = kept.some((p) => p.startsWith("dreamline_efs="));
   await client.query(
-    `UPDATE fuel.fuel_transactions SET notes = NULLIF($3::text, ''),
-            gross_cost = CASE WHEN $4::boolean THEN gross_cost ELSE NULL END,
-            discount_amount = CASE WHEN $4::boolean THEN discount_amount ELSE 0 END,
-            updated_at = now()
+    `UPDATE fuel.fuel_transactions SET notes = NULLIF($3::text, ''), updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-    [input.fuelTransactionId, input.companyId, kept.join("; "), stillAdopted]
+    [input.fuelTransactionId, input.companyId, kept.join("; ")]
   );
   return 1;
 }
@@ -740,9 +740,7 @@ export async function importDreamlineStatement(
             summary.difference_posted_cents += diff;
           }
           if (hit.fuel_transaction_id) {
-            await stampDreamlineReceiptAdopted(client, {
-              companyId, fuelTransactionId: hit.fuel_transaction_id, marker, grossCents: line.gross_cents, discountCents: line.discount_cents,
-            });
+            await stampDreamlineReceiptAdopted(client, { companyId, fuelTransactionId: hit.fuel_transaction_id, marker });
           }
         } else if (diff !== 0) summary.difference_posted_cents += diff;
         used.add(hit.expense_id); // adopted (stamped above; the dry run computes the same plan)
