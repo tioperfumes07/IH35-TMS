@@ -21,6 +21,8 @@ const MAX_CREATE_GAP_MS = 2000; // a double submit, not two people entering the 
 // Derived rows the engine may remove on a unique-key collision (the survivor already holds its own) — snapshotted in
 // the alias repoint log and restored by reverseCanonicalMerge. Anything else removed = refuse.
 const DERIVED_REMOVABLE = new Set(["master_data.customer_relationship_scores.customer_uuid"]);
+// The merge's own record (the alias row naming the survivor) is written BY the engine — not a business reference.
+const AFTER_SKIP = new Set([...DERIVED_REMOVABLE, "mdata.customer_aliases.canonical_customer_id"]);
 const APPLY = process.argv.includes("--apply");
 const FORK = process.argv.includes("--fork-commit");
 if (APPLY) {
@@ -116,8 +118,8 @@ try {
     const s = g.survivor.id, d = g.duplicates[0]!.id;
     if (sum(refsAfter[d]!) !== 0) throw new Error(`NOT VERIFIED: ${d} still referenced ${JSON.stringify(refsAfter[d])}`);
     const before = sum(refsBefore[s]!, DERIVED_REMOVABLE) + sum(refsBefore[d]!, DERIVED_REMOVABLE);
-    const after = sum(refsAfter[s]!, DERIVED_REMOVABLE);
-    if (after !== before) throw new Error(`NOT VERIFIED: ${s} business references ${after} != ${before} before — a reference was lost`);
+    const after = sum(refsAfter[s]!, AFTER_SKIP);
+    if (after !== before) throw new Error(`NOT VERIFIED: ${s} business references ${after} != ${before} before — a reference was lost — before ${JSON.stringify(refsBefore[s])} + ${JSON.stringify(refsBefore[d])} · after ${JSON.stringify(refsAfter[s])}`);
   }
   const aliases = (await db.query(`SELECT a.id::text, a.merged_customer_id::text merged, a.canonical_customer_id::text canonical, a.auth_id,
         (a.snapshot->>'id') snap_id, jsonb_array_length(a.repoint_log) log_tables,
