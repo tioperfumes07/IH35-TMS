@@ -47,13 +47,16 @@ describeIntegration("notification e2e — settlement.approved (Block H)", () => 
     const settlementNo = `ST-E2E-${randomUUID().slice(0, 8)}`;
 
     await client.query("BEGIN");
-    await client.query("SET ROLE ih35_app");
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
 
     try {
+      // 443.198: the pre-clean runs as the connecting role — ih35_app has no DELETE on the notification queues (it had
+      // DELETE only through PUBLIC; the dispatcher never deletes). The session then continues as ih35_app, as before.
+      await client.query("RESET ROLE");
       await client.query(`DELETE FROM sms.queue WHERE body LIKE $1`, [`%${settlementNo}%`]);
       await client.query(`DELETE FROM whatsapp.queue WHERE body LIKE $1`, [`%${settlementNo}%`]);
       await client.query(`DELETE FROM email.email_queue WHERE subject ILIKE $1`, [`%${settlementNo}%`]);
+      await client.query("SET ROLE ih35_app");
+      await client.query("SET LOCAL app.bypass_rls = 'lucia'");
 
       await client.query("COMMIT");
     } catch (err) {

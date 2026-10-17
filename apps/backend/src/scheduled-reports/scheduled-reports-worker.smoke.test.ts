@@ -154,7 +154,9 @@ describeIntegration("scheduled-reports-worker smoke (integration)", () => {
       expect(String(runs.rows[0]?.status ?? "")).toBe("success");
       expect(String(runs.rows[0]?.generated_file_r2_path ?? "")).toContain("scheduled-reports/smoke");
 
-      await client.query(`DELETE FROM reporting.scheduled_reports WHERE id = $1::uuid`, [scheduleId]);
+      // 443.198: ih35_app has no DELETE on reporting.scheduled_reports (nothing is deletable; it had DELETE only through
+      // PUBLIC). Retire the fixture schedule the way the product does — void it (scheduled-reports.routes.ts void path).
+      await client.query(`UPDATE reporting.scheduled_reports SET voided_at = now(), status = 'paused' WHERE id = $1::uuid AND voided_at IS NULL`, [scheduleId]);
     });
 
     expect(vi.mocked(deliverScheduledReportToEmail).mock.calls.length).toBeGreaterThan(0);
