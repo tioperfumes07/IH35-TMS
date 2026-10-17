@@ -132,20 +132,9 @@ function buildColumns(operatingCompanyId?: string): Array<ParityColumn<Deduction
     key: "_actions",
     label: "",
     sortable: false,
-    render: (row) =>
-      row.is_held ? (
-        <Button size="sm" variant="secondary" onClick={() => undefined} disabled={!row.source_deduction_id}>
-          Held
-        </Button>
-      ) : row.source_deduction_id ? (
-        <Button size="sm" variant="secondary" onClick={() => undefined}>
-          Hold
-        </Button>
-      ) : (
-        <span className="text-[#6B7280]" title="No linked deduction record to hold">
-          —
-        </span>
-      ),
+    // The real Hold / Resume / Edit buttons are rendered by DeductionsSection, which replaces this column's render with
+    // one that closes over onHold / onResume / onEdit. This module-level default never draws a button with no handler.
+    render: () => <span className="text-[#6B7280]">—</span>,
   },
   ];
 }
