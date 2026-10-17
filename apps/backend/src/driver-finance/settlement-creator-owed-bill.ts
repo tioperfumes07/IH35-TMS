@@ -16,7 +16,7 @@ import { createBillInClientTx, postBillDocumentInClientTx } from "../accounting/
 import { voidDocument } from "../accounting/void-document.service.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
 import { stampNewDriverBillTrailerFromLoad } from "../accounting/bill-trailer-stamp.service.js";
-import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
+import { reserveLoadSpineExpenseNumber } from "../accounting/expense-writer.service.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
 
 type Queryable = { query: <R = any>(sql: string, params?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }> };
@@ -48,7 +48,8 @@ export type CreatorOwedBill = { billId: string; billNumber: string; journalEntry
 /** The next spine number for this load that is neither the bare load number (the driver bill's) nor any bill's number. */
 export async function nextOwedBillSpineNumber(client: Queryable, operatingCompanyId: string, loadId: string): Promise<string> {
   for (let i = 0; i < 50; i += 1) {
-    const n = await generateExpenseNumber(client as never, loadId, operatingCompanyId);
+    // 443.182 C — the load-spine number comes from the one expense engine (the same reservation an expense makes).
+    const n = await reserveLoadSpineExpenseNumber(client as never, operatingCompanyId, loadId);
     if (n.number === n.loadNumber) continue;
     const taken = await client.query(
       `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND (display_id = $2 OR bill_number = $2) LIMIT 1`,

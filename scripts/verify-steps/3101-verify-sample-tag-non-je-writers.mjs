@@ -88,9 +88,10 @@ export function findInsertColumnLists(src, table) {
   }
   // 443.182 C — one writer per document: an expense header is written through insertExpenseHeader(client, { … }); that row
   // object is its column list (each key is a column), so it is checked exactly like an INSERT column list.
-  const writerFn = { "accounting.expenses": "insertExpenseHeader", "accounting.expense_lines": "insertExpenseLine" }[table];
+  // 443.182 C step 2 — or the header of a document handed to the deep engine: writeExpenseDocumentInClientTx(client, { header: { … } }).
+  const writerFn = { "accounting.expenses": "(?:insertExpenseHeader\\(client, \\{|writeExpenseDocumentInClientTx\\(client, \\{\\s*(?:\\/\\/[^\\n]*\\n\\s*)*header: \\{)", "accounting.expense_lines": "insertExpenseLine\\(client, \\{" }[table];
   if (writerFn) {
-    const call = new RegExp(`${writerFn}\\(client, \\{`, "g");
+    const call = new RegExp(writerFn, "g");
     while ((m = call.exec(code))) {
       const start = m.index + m[0].length;
       let depth = 1;

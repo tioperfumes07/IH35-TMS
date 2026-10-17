@@ -80,7 +80,9 @@ export function checkFuelReceiptAttach(src) {
     if (ft < 0 || jp < 0 || ft > jp) p.push("attach must move the fuel row BEFORE the postings (posting_source_load_id reads the fuel row)");
     if (!/UPDATE accounting\.journal_entry_postings\s+SET load_id = \$2::uuid[\s\S]{0,200}AND load_id IS NULL/.test(attach)) p.push("attach must fill the postings' load once (only where load_id IS NULL), never move it");
     if (/INSERT INTO accounting\.journal_entr|reverse|postFuelExpenseOnClient/i.test(attach)) p.push("attach must not repost or reverse — the SAME journal entry moves");
-    if (!/generateExpenseNumber\(/.test(attach) || !/insertExpenseLoadLink\(/.test(attach)) p.push("attach must give the document its load-spine number through the one link writer");
+    // 443.182 C — the spine number and the link come from the one expense engine (reserveLoadSpineExpenseNumber /
+    // linkExpenseToLoadInClientTx, which wrap generateExpenseNumber / insertExpenseLoadLink).
+    if (!/(?:generateExpenseNumber|reserveLoadSpineExpenseNumber)\(/.test(attach) || !/(?:insertExpenseLoadLink|linkExpenseToLoadInClientTx)\(/.test(attach)) p.push("attach must give the document its load-spine number through the one link writer");
     if (!/stampReceiptDocumentSettlementRef\(/.test(attach)) p.push("attach must stamp the settlement reference (443.121 #3)");
   }
   if (!/resolveFuelLoadAtTime\(/.test(src.repoint)) p.push("the attach must decide coverage by the one rule (resolveFuelLoadAtTime)");
@@ -145,7 +147,7 @@ function selftest() {
         ["a no-load fill refused again is caught", bad({ relay: a.relay + '\nthrow new FuelMatchPostError("fuel_fill_missing_load", `x`);' })],
         ["attach moving an already-set posting load is caught", bad({ repoint: a.repoint.replace(/AND source_transaction_id::text = \$3\n\s+AND load_id IS NULL/, "AND source_transaction_id::text = $3") })],
         ["attach reposting the fill is caught", bad({ repoint: a.repoint.replace("// 2) The SAME postings", "await postFuelExpenseOnClient(client, {}); // 2) The SAME postings") })],
-        ["attach skipping the link writer is caught", bad({ repoint: a.repoint.replace("await insertExpenseLoadLink(client", "await noLink(client") })],
+        ["attach skipping the link writer is caught", bad({ repoint: a.repoint.replace("await insertExpenseLoadLink(client", "await noLink(client").replace("await linkExpenseToLoadInClientTx(client", "await noLink(client") })],
         ["attach skipping the settlement stamp is caught", bad({ repoint: a.repoint.replace("settlementNo = await stampReceiptDocumentSettlementRef(", "settlementNo = await noStamp(") })],
         ["Book Load not attaching is caught", bad({ bookLoad: a.bookLoad.replaceAll("repointFuelReceiptsToLoad(", "noop(") })],
         ["rematch moving the fuel row alone is caught", bad({ rematch: a.rematch.replaceAll("attachFuelReceiptToLoad(", "noop(") })],

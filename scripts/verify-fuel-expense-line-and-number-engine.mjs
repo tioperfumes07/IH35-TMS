@@ -18,6 +18,8 @@ export function check(fuel, num) {
   const ins = [
     ...(fuel.match(/INSERT INTO accounting\.expense_lines \(([\s\S]*?)\)/g) ?? []),
     ...(fuel.match(/insertExpenseLine\(client, \{[\s\S]*?\n\s*\}\);/g) ?? []).map((o) => o.replace(/(\w+):/g, "$1")),
+    // 443.182 C step 2 — or line rows handed to the deep engine (fuelLines.push({ … }) on the card document).
+    ...(fuel.match(/fuelLines\.push\(\{[\s\S]*?\n\s*\}\);/g) ?? []).map((o) => o.replace(/(\w+):/g, "$1")),
   ];
   for (const i of ins) {
     if (/\bitem_id\b/.test(i) && !(/\bquantity\b/.test(i) && /\brate_cents\b/.test(i) && /\bunit_of_measure\b/.test(i)))

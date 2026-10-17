@@ -40,7 +40,12 @@ export function check(src = {}) {
     p.push(`${F.wo}: the work-order expense copy must name the line's item + its account and refuse an item-less line (2)`);
   if (!/item_id: lumperItem\[0\]!\.id,/.test(s.lumper) || !/LUMPER_EXPENSE_ITEM_NAME/.test(s.lumper) || !/driver_uuid: \(adv\.rows\[0\]/.test(s.lumper) || !/sameEntityLoadUnitSql\(/.test(s.lumper))
     p.push(`${F.lumper}: the lumper split must name its item and its header the advance's driver + the load's unit (3)`);
-  const seedLine = s.seed.slice(s.seed.indexOf("await insertExpenseLine(client, {"), s.seed.indexOf("expense_account_uuid: item.expenseAccountId,"));
+  // 443.182 C step 2 — the seed line is written by the one expense engine (writeExpenseDocumentInClientTx … lines: [ … ]);
+  // the older inline insertExpenseLine form is still accepted. Same rule: the line carries the load's driver + unit.
+  const inlineAt = s.seed.indexOf("await insertExpenseLine(client, {");
+  const engineAt = s.seed.indexOf("lines: [", Math.max(0, s.seed.indexOf("writeExpenseDocumentInClientTx(")));
+  const seedStart = inlineAt >= 0 ? inlineAt : engineAt;
+  const seedLine = seedStart >= 0 ? s.seed.slice(seedStart, s.seed.indexOf("expense_account_uuid: item.expenseAccountId,", seedStart)) : "";
   if (!/driver_id: fromLoad\.driver_id,/.test(seedLine) || !/unit_id: fromLoad\.assigned_unit_id,/.test(seedLine))
     p.push(`${F.seed}: the seeded expense line must carry its load's driver + unit (4)`);
   return p;
@@ -59,7 +64,7 @@ if (isMain && process.argv.includes("--selftest")) {
     ["no driver from header", { writer: base.writer.replace("out.driver_id == null && hdr.d", "false && hdr.d") }],
     ["WO line without item", { wo: base.wo.replace("            item_id: row.item_id,\n            expense_account_uuid: row.item_account_id,\n", "") }],
     ["lumper without item", { lumper: base.lumper.replace("item_id: lumperItem[0]!.id,", "") }],
-    ["seed line without driver", { seed: base.seed.replace("    driver_id: fromLoad.driver_id,\n", "") }],
+    ["seed line without driver", { seed: base.seed.replace(/\n[ \t]*driver_id: fromLoad\.driver_id,(?=\n[ \t]*unit_id: fromLoad\.assigned_unit_id,\n[ \t]*expense_account_uuid)/, "") }],
   ];
   for (const [n, src] of plants) {
     if (!check(src).length) {
