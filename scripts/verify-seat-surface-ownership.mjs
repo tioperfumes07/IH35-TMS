@@ -36,6 +36,7 @@
  * and names the correct seat.
  */
 import { spawnSync } from "node:child_process";
+import { authorizedSeatsFromBody } from "./lib/surface-breach-lines.mjs";
 
 const SURFACES = [
   { seat: "Cursor", fragments: ["pages/dispatch", "components/dispatch"], files: ["book-load.service.ts"], money: true },
@@ -58,16 +59,9 @@ const BRANCH_PREFIXES = [
 ];
 
 const LABEL = "verify-seat-surface-ownership";
-const AUTH_RE = /SURFACE-BREACH-AUTHORIZED:\s*([A-Za-z0-9-]+)/gi;
-
-/** All seats named in SURFACE-BREACH-AUTHORIZED lines (app-wide sweeps may list one per owner). */
-export function authorizedSeatsFromBody(commitBody) {
-  const seats = new Set();
-  for (const match of String(commitBody ?? "").matchAll(AUTH_RE)) {
-    if (match[1]) seats.add(match[1]);
-  }
-  return seats;
-}
+// The ONE SURFACE-BREACH-AUTHORIZED parser lives in scripts/lib/surface-breach-lines.mjs (also read by
+// verify-lane-ownership.mjs — LEAD 14:30Z, one cross-lane system); re-exported for existing callers.
+export { authorizedSeatsFromBody };
 
 export function seatForBranch(branch) {
   const b = (branch || "").toLowerCase();

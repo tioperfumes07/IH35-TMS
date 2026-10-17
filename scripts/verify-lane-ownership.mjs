@@ -7,8 +7,12 @@
 //   2. branch name prefix (cc-1/..., cc1/..., claude-coder-1/...)
 // No seat resolved -> FAIL. Never assume a lane.
 //
-// Lane cross: put `LANE-CROSS: <ruling-filename>` in the PR body AND pass
-// LANE_CROSS=<ruling-filename> to this script. The ruling file must exist in docs/bus/.
+// Lane cross (either one):
+//   - a `SURFACE-BREACH-AUTHORIZED: <owning seat> <reason>` line in any commit body on the branch (BASE..HEAD) —
+//     the SAME line verify-seat-surface-ownership.mjs accepts (LEAD 14:30Z: one cross-lane system, so CI needs no
+//     local env). It authorizes only files whose LANES.md owner is the seat it names; UNASSIGNED only by a LEAD line (14:50Z); FORBIDDEN never.
+//   - legacy: `LANE-CROSS: <ruling-filename>` in the PR body AND LANE_CROSS=<ruling-filename> passed to this script
+//     (the ruling file must exist in docs/bus/).
 //
 // @independent-input git-diff:BASE...HEAD -- this guard's real evidence is the LIVE, dynamic
 // changed-file list for the current branch (execSync git diff below), cross-referenced against
@@ -19,6 +23,7 @@
 
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import { authorizedCanonicalSeats, canonicalSeat } from './lib/surface-breach-lines.mjs';
 
 const LANES_FILE = 'docs/bus/LANES.md';
 const BASE = process.env.LANE_BASE || 'origin/main';
@@ -93,6 +98,23 @@ export function classifyFiles(files, seat, sections) {
   return { violations, forbidden };
 }
 
+/**
+ * LEAD 14:30Z — a violation is authorized when a SURFACE-BREACH-AUTHORIZED line in the branch's commit bodies names
+ * the file's OWNING seat. A line naming another seat authorizes nothing. LEAD 14:50Z: an UNASSIGNED file (no LANES.md
+ * owner to name) is authorized only by a LEAD line (`SURFACE-BREACH-AUTHORIZED: LEAD <reason>`); a seat line never.
+ */
+export function authorizeViolations(violations, commitBody) {
+  const seats = authorizedCanonicalSeats(commitBody);
+  const authorized = [];
+  const unauthorized = [];
+  for (const v of violations) {
+    const needed = v.owner === 'UNASSIGNED' ? 'LEAD' : canonicalSeat(v.owner);
+    if (seats.has(needed)) authorized.push(v);
+    else unauthorized.push(v);
+  }
+  return { authorized, unauthorized };
+}
+
 // ---- --selftest: plant each violation this guard exists to catch, in memory ----------------
 if (process.argv.includes("--selftest")) {
   const LANES = [
@@ -121,6 +143,17 @@ if (process.argv.includes("--selftest")) {
   expect('detached push checkout resolves GITHUB_REF_NAME', resolveBranchName('HEAD', { GITHUB_REF_NAME: 'cursor/y' }) === 'cursor/y');
   expect('a real local branch is never overridden by CI env', resolveBranchName('cc-1/z', { GITHUB_HEAD_REF: 'cc-3/x' }) === 'cc-1/z');
   expect('detached with no CI ref stays unresolved (seat check still fails)', resolveBranchName('HEAD', {}) === 'HEAD');
+  // LEAD 14:30Z — SURFACE-BREACH-AUTHORIZED lines are the cross-lane authorization (one system with the surface guard).
+  const withLine = authorizeViolations(cross.violations, 'FINDING: X\n\nSURFACE-BREACH-AUTHORIZED: CC-1 heavy CI peel (Lead ruling 13:45Z)');
+  expect('cross-lane file + line naming its owner passes', withLine.unauthorized.length === 0 && withLine.authorized.length === 1);
+  expect('cross-lane file without a line fails', authorizeViolations(cross.violations, 'FINDING: X\n\nno line here').unauthorized.length === 1);
+  expect('a line naming ANOTHER seat does not authorize', authorizeViolations(cross.violations, 'SURFACE-BREACH-AUTHORIZED: CC-3 wrong seat').unauthorized.length === 1);
+  expect('owner spelled cc1 / Cursor-case still matches its LANES.md seat', authorizeViolations([{ file: 'a', owner: 'CC-1' }, { file: 'b', owner: 'CURSOR' }], 'SURFACE-BREACH-AUTHORIZED: cc1 x\nSURFACE-BREACH-AUTHORIZED: Cursor y').unauthorized.length === 0);
+  expect('an UNASSIGNED file is not authorized by an UNASSIGNED / seat line', authorizeViolations(unassigned.violations, 'SURFACE-BREACH-AUTHORIZED: UNASSIGNED x\nSURFACE-BREACH-AUTHORIZED: CC-1 y').unauthorized.length === 1);
+  expect('an UNASSIGNED file IS authorized by a LEAD line (LEAD 14:50Z)', authorizeViolations(unassigned.violations, 'SURFACE-BREACH-AUTHORIZED: LEAD heavy CI peel').unauthorized.length === 0);
+  expect('a LEAD line does not authorize a file another seat owns', authorizeViolations(cross.violations, 'SURFACE-BREACH-AUTHORIZED: LEAD x').unauthorized.length === 1);
+  const forbWithLine = classifyFiles(['db/migrations/.ledger.json'], 'CC-2', clean.sections);
+  expect('a FORBIDDEN file stays forbidden even with a line', forbWithLine.forbidden.length === 1 && forbWithLine.violations.length === 0);
   console.log(`verify-lane-ownership SELFTEST: ${caught}/${planted} planted violations caught`);
   process.exit(caught === planted ? 0 : 1);
 }
@@ -205,21 +238,33 @@ if (cross) {
 // ---- verdict ----------------------------------------------------------------
 const { violations, forbidden } = classifyFiles(files, seat, sections);
 
+let commitBody = '';
+try {
+  const mb = execSync(`git merge-base ${BASE} HEAD`, { encoding: 'utf8' }).trim();
+  commitBody = execSync(`git log ${mb}..HEAD --format=%B`, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+} catch {}
+const { authorized: lineAuthorized, unauthorized } = authorizeViolations(violations, commitBody);
+
 if (forbidden.length) {
   fail(`${forbidden.length} file(s) in the FORBIDDEN list. No ruling overrides this:\n` +
        forbidden.map((f) => `    ${f}`).join('\n'));
 }
 
-if (violations.length && !crossOk) {
-  fail(`${seat} touched ${violations.length} file(s) outside its lane:\n` +
-       violations.map((v) => `    ${v.file}   -> owned by ${v.owner}`).join('\n') +
-       `\n\n  To cross: post to that seat's OUTBOX, get the Lead's written ruling into docs/bus/,` +
-       `\n  then re-run with LANE_CROSS=<ruling-filename> and the same line in the PR body.`);
+if (unauthorized.length && !crossOk) {
+  fail(`${seat} touched ${unauthorized.length} file(s) outside its lane:\n` +
+       unauthorized.map((v) => `    ${v.file}   -> owned by ${v.owner}`).join('\n') +
+       `\n\n  To cross: add "SURFACE-BREACH-AUTHORIZED: <owning seat> <reason>" exactly as the Lead wrote it to a commit` +
+       `\n  body on this branch (the same line verify-seat-surface-ownership accepts), or re-run with` +
+       `\n  LANE_CROSS=<ruling-filename> and the same line in the PR body.`);
 }
 
-if (violations.length && crossOk) {
-  console.log(`  ${violations.length} out-of-lane file(s), authorised:`);
-  for (const v of violations) console.log(`    ${v.file}   -> ${v.owner}`);
+if (lineAuthorized.length) {
+  console.log(`  ${lineAuthorized.length} out-of-lane file(s), authorised by SURFACE-BREACH-AUTHORIZED:`);
+  for (const v of lineAuthorized) console.log(`    ${v.file}   -> ${v.owner}`);
+}
+if (unauthorized.length && crossOk) {
+  console.log(`  ${unauthorized.length} out-of-lane file(s), authorised by LANE_CROSS:`);
+  for (const v of unauthorized) console.log(`    ${v.file}   -> ${v.owner}`);
 }
 
 ok(`${seat}: ${files.length} changed file(s), all in lane.`);
