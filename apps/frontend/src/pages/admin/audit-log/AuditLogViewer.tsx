@@ -281,6 +281,7 @@ export function AuditLogViewer() {
       ) : (
         <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2">
           <ParityTable
+            title="Audit log entries"
             rows={rows}
             columns={COLUMNS}
             rowKey={(row) => row.id}

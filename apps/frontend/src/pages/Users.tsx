@@ -676,6 +676,7 @@ export function UsersPage() {
 
       {viewMode === "list" ? (
       <ParityTable<IdentityUser>
+        title="Users"
         columns={userColumns}
         rows={filteredUsers}
         rowKey={(row) => row.id}

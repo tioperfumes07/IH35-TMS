@@ -18,6 +18,7 @@ import {
 import { SIDEBAR_ITEM_IDS } from "../../components/layout/sidebar-config";
 import { U14ExclusiveStatusBanner } from "./U14ExclusiveStatusBanner";
 import { SelectCombobox } from "../../components/Combobox";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 type ProofFilter = "all" | ModuleCompletionProof | "undefined";
 
@@ -334,12 +335,15 @@ export function ModuleCompletionPage() {
         data-testid="module-completion-honest-purpose"
       >
         This is Rule 24&apos;s <b>N of M</b> checklist from <code>docs/module-completion/*.json</code> — CI
-        items, not USMCA launch. <b>Code-verified</b> = repo/CI says the item passed. <b>Certified</b> =
-        GUARD live-clicked it. Launch 100% is Module matrix Box 1–4 + money on USMCA, then Scenario
-        tracker. Frozen TRANSP/TRK rows here are historical. This table is loaded from{" "}
-        <code>GET /api/v1/program/module-completion</code> on the running API (
-        <code>served_sha={live.data?.served_sha ?? "…"}</code>
-        ), not from the gitignored Vite bundle.
+        items, not USMCA launch.{" "}
+        <InfoPopover label="About module completion">
+          <b>Code-verified</b> = repo/CI says the item passed. <b>Certified</b> =
+          GUARD live-clicked it. Launch 100% is Module matrix Box 1–4 + money on USMCA, then Scenario
+          tracker. Frozen TRANSP/TRK rows here are historical. This table is loaded from{" "}
+          <code>GET /api/v1/program/module-completion</code> on the running API (
+          <code>served_sha={live.data?.served_sha ?? "…"}</code>
+          ), not from the gitignored Vite bundle.
+        </InfoPopover>
       </p>
       {live.isError ? (
         <ListErrorBanner
@@ -448,6 +452,7 @@ export function ModuleCompletionPage() {
       </CollapsedListFilters>
 
       <ParityTable<ModuleRow>
+        title="Module completion — by module"
         columns={columns}
         rows={filteredRows}
         rowKey={(row) => row.id}

@@ -22,6 +22,7 @@ import {
   type ReconBlock,
   type TabTally,
 } from "../../api/program";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const AUTO_REFRESH_MS = 60_000; // board re-polls every 60s so refreshed_at_ct stays live
 
@@ -652,8 +653,10 @@ export function ProgramBoardPage() {
                 <div className="h-full rounded" style={{ width: `${pendingSummary.pct}%`, background: "#1F2A44" }} />
               </div>
               <p className="text-xs text-[#6B7280]">
-                Everything not yet concluded — pending, legacy GATED (actionable; no owner approval), and needs-verify. Live on every load; as items are
-                finished they leave this list and the completion metric above rises.
+                Everything not yet concluded — pending, legacy GATED (actionable; no owner approval), and needs-verify.{" "}
+                <InfoPopover label="About the pending list">
+                  Live on every load; as items are finished they leave this list and the completion metric above rises.
+                </InfoPopover>
               </p>
             </div>
           ) : null}

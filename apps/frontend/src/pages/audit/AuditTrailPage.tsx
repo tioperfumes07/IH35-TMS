@@ -431,6 +431,7 @@ export function AuditTrailPage() {
           />
         ) : (
           <ParityTable
+            title="Audit trail entries"
             rows={rows}
             pageSize={PAGE_SIZE}
             hidePager

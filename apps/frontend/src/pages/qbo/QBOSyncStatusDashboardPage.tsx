@@ -326,6 +326,7 @@ export function QBOSyncStatusDashboardPage() {
 
       <div className="grid gap-3 xl:grid-cols-[1fr_320px]">
         <ParityTable
+          title="QuickBooks sync runs"
           rows={runs}
           columns={runColumns}
           rowKey={(r) => r.id}

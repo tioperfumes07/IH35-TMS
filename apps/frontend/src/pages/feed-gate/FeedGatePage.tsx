@@ -15,6 +15,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { closeFeedIntake, getFeedIntake, listFeedIntakes, runFeedGate, type FeedCheck, type FeedIntake, type FeedKind } from "../../api/feedGate";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const STATUS_CLS: Record<string, string> = {
   passed: "bg-[#0F1219] text-white", closed: "bg-[#1F2A44] text-white", blocked: "bg-red-600 text-white", open: "bg-[#E5E7EB] text-[#1F2A44]", voided: "bg-[#F7F8FA] text-[#6B7280]",
@@ -201,8 +202,13 @@ export function FeedGatePage() {
   }
   return (
     <div className="mx-auto max-w-6xl p-4" data-testid="feed-gate-page">
-      <h1 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Feed gate</h1>
-      <p className="mb-3 text-xs text-[#4B5563]">Every feed — a settlement, a load, an invoice, an expense, a bill, a fuel purchase — is verified for full linkage, wiring, accounts and date stamps before it is accepted. A settlement commits only when every check is green and the next settlement for the same driver cannot open until the previous one is closed; an invoice is sent and an expense is saved only through this gate. Red rows carry the link to the screen that fixes them.</p>
+      <h1 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+        Feed gate{" "}
+        <InfoPopover label="About the feed gate">
+          <span className="block">Every feed — a settlement, a load, an invoice, an expense, a bill, a fuel purchase — is verified for full linkage, wiring, accounts and date stamps before it is accepted.</span>
+          <span className="mt-1 block">A settlement commits only when every check is green and the next settlement for the same driver cannot open until the previous one is closed; an invoice is sent and an expense is saved only through this gate. Red rows carry the link to the screen that fixes them.</span>
+        </InfoPopover>
+      </h1>
       {error ? <div className="mb-2 rounded border border-red-600 bg-red-50 p-2 text-xs text-red-800" role="alert">{error}</div> : null}
       <ParityTable<FeedIntake>
         rows={rows}

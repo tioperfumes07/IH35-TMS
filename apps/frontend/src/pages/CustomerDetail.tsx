@@ -102,6 +102,7 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../components/ListErrorState";
+import { InfoPopover } from "../components/shared/InfoPopover";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -1998,7 +1999,10 @@ export function CustomerDetailPage() {
             </div>
             {/* ROUND 297 audit (ties): name the basis -- this is booked load revenue, Billing is invoiced revenue. */}
             <p className="mb-2 text-xs text-gray-500" data-testid="customer-pnl-basis">
-              Revenue here is booked load revenue (load rates, cancelled loads excluded) — Billing &amp; Receivables shows invoiced amounts; a load not yet invoiced appears here first.
+              Revenue here is booked load revenue (load rates, cancelled loads excluded).{" "}
+              <InfoPopover label="About this revenue figure">
+                Billing &amp; Receivables shows invoiced amounts; a load not yet invoiced appears here first.
+              </InfoPopover>
             </p>
             {customerPnlQuery.isError ? (
               <ListErrorBanner
@@ -2244,6 +2248,7 @@ export function CustomerDetailPage() {
               />
             ) : (
               <ParityTable<CustomerPaymentListRow>
+                title="Payment history"
                 rows={customerPaymentsQuery.data?.rows ?? []}
                 rowKey={(p) => p.id}
                 loading={customerPaymentsListState.isLoading}
@@ -2393,6 +2398,7 @@ export function CustomerDetailPage() {
               />
             ) : (
             <ParityTable<Invoice>
+              title="Recent invoices"
               rows={recentInvoices}
               rowKey={(invoice) => invoice.id}
               loading={recentInvoicesListState.isLoading}
@@ -2441,11 +2447,11 @@ export function CustomerDetailPage() {
 
       {activeTab === "Lanes & Pricing" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <div className="mb-3 text-xs text-gray-600">Customer lane pricing definitions</div>
           {lanesQuery.isError ? (
             <ListErrorState title="Couldn't load customer lanes" status={0} message={lanesQuery.error instanceof Error ? lanesQuery.error.message : undefined} onRetry={() => void lanesQuery.refetch()} />
           ) : (
           <ParityTable<CustomerLane>
+            title="Customer lane pricing definitions"
             rows={customerLanes}
             rowKey={(lane) => lane.id}
             loading={customerLanesListState.isLoading}

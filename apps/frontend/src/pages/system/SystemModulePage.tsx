@@ -25,6 +25,7 @@ import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday, ctDateTime } from "../../lib/businessDate";
 import { formatUsdCents } from "../../lib/money";
+import { InfoPopover } from "../../components/shared/InfoPopover";
 
 /**
  * SYSTEM — Owner-only module. Single home for QuickBooks Reconciliation (TMS↔QBO tie-out — NOT bank
@@ -852,8 +853,13 @@ function QboSyncTab({ data }: { data: SystemData }) {
       <Card title="Notes" sub="How this connection behaves.">
         <div className="space-y-2 text-xs text-[#4B5563]">
           <p>QuickBooks is the system-of-record. The TMS pulls A/P (into <span className="font-mono">accounting.bills</span>) and never writes back to QuickBooks — write-back is OFF by design.</p>
-          <p>The QBO A/P figure and vendor count above are read live via the QBO reconciliation + A/P aging endpoints. If a value shows "—", the relevant pull/flag is not yet enabled for this entity.</p>
-          <p className="text-[#4B5563]">Realm identifier and the A/P daily-pull flag state are owner/admin settings surfaced under Users → QBO Vendor Linkage and the feature-flags admin — not duplicated here.</p>
+          <p>
+            The QBO A/P figure and vendor count above are read live via the QBO reconciliation + A/P aging endpoints.{" "}
+            <InfoPopover label="About the A/P figures and connection settings">
+              <span className="block">If a value shows "—", the relevant pull/flag is not yet enabled for this entity.</span>
+              <span className="mt-1 block">Realm identifier and the A/P daily-pull flag state are owner/admin settings surfaced under Users → QBO Vendor Linkage and the feature-flags admin — not duplicated here.</span>
+            </InfoPopover>
+          </p>
         </div>
       </Card>
     </div>
@@ -932,6 +938,7 @@ function ProgramTab({ data }: { data: SystemData }) {
               </label>
             </CollapsedListFilters>
             <ParityTable<TrackerPhase>
+              title="Program phases"
               rows={phaseRows}
               rowKey={(p) => p.key}
               loading={!t && tracker.isLoading}
@@ -1088,6 +1095,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
           />
         ) : (
         <ParityTable<{ number: number; title: string; mergedAt: string | null }>
+          title="Recently merged changes"
           rows={recentMerged.slice(0, 8)}
           rowKey={(p) => String(p.number)}
           loading={tracker.isLoading && recentMerged.length === 0}
@@ -1120,9 +1128,11 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
         />
         )}
         <p className="mt-2 text-xs text-[#4B5563]">
-          Program Tracker reconciliation snapshot as of {ctDateTime(tracker.data?.recon_synced_at)}. This is not a
-          live GitHub feed; it refreshes when a new reconciliation snapshot is published. The service-health mirror
-          below remains live.
+          Program Tracker reconciliation snapshot as of {ctDateTime(tracker.data?.recon_synced_at)}.{" "}
+          <InfoPopover label="About the build activity snapshot">
+            This is not a live GitHub feed; it refreshes when a new reconciliation snapshot is published. The
+            service-health mirror below remains live.
+          </InfoPopover>
         </p>
 
         <div className="mt-3.5 overflow-auto rounded-[10px] bg-[#0F1729] px-4 py-3.5 font-mono text-xs leading-[1.7] text-[#CBD5E1]">

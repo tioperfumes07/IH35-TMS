@@ -415,6 +415,7 @@ export function DocsHomePage() {
           />
         ) : (
           <ParityTable
+            title="Documents"
             rows={rows}
             columns={columns}
             rowKey={(row) => row.id}

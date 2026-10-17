@@ -365,6 +365,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
         />
       ) : (
         <ParityTable
+          title="Actual vs projected — by date"
           columns={COLUMNS}
           rows={filteredGroups}
           rowKey={(g) => g.date}

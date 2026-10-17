@@ -152,6 +152,7 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
 
   return (
     <ParityTable
+      title="Liabilities"
       columns={columns}
       rows={rows}
       rowKey={(row) => String(row.id)}

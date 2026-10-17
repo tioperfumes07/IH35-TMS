@@ -961,7 +961,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             {rowKindFilter !== "expenses" && (
               <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
                 <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Expected income</span>
+                  <h2 className="inline text-xs font-bold uppercase tracking-wide text-[#4B5563]">Expected income</h2>
                   <span className="ml-2 text-xs text-[#6B7280]">{incomeRows.length} rows</span>
                 </div>
                 <ParityTable
@@ -1008,9 +1008,9 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             {rowKindFilter !== "income" && (
               <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
                 <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+                  <h2 className="inline text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                     Expected expenses{selectedDate ? ` · ${fmtDate(selectedDate)}` : ""}
-                  </span>
+                  </h2>
                   <span className="ml-2 text-xs text-[#6B7280]">{expenseRowsToday.length} rows</span>
                 </div>
                 <ParityTable
@@ -1043,9 +1043,9 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           {/* Day grid */}
           <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
             <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+              <h2 className="inline text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                 Day grid · {fmtDateShort(from)} → {fmtDateShort(to)}
-              </span>
+              </h2>
               <span className="ml-2 text-xs text-[#6B7280]">click a date → its rows above · carried = still-open older items</span>
             </div>
             <ParityTable
