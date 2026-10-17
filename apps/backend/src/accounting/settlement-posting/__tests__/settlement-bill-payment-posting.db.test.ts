@@ -269,6 +269,19 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
            VALUES ($1::uuid,$2,$3::uuid,'delivered_pending_docs',$4,$5::uuid,$6::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $1::uuid AND code = 'DRY_VAN' LIMIT 1),$7::uuid)`,
           [companyId, loadNumbers[i], customerId, grossCents[i]! * 3, userId, loadIds[i], unitId]
         );
+        // fac801d0f0 (Cursor-DEGH-05, #26726, ROUND 443.131) "driver-bill trailer clause": a live driver/load-born bill is
+        // refused at INSERT without its load's trailer (or the load's explicit no-trailer choice). The load's assignment
+        // records the company trailer it rides, so createBill carries it on the header row (resolveDriverBillTrailerFromLoad).
+        const trailerId = randomUUID();
+        await db.query(
+          `INSERT INTO mdata.equipment (id, equipment_number, equipment_type, owner_company_id, is_sample_data) VALUES ($1::uuid,$2,'DryVan',$3::uuid,true)`,
+          [trailerId, `SBT${suffix}${i}`.slice(0, 20), companyId]
+        );
+        await db.query(
+          `INSERT INTO dispatch.load_assignment_history (operating_company_id, load_id, assignment_method, assigned_by_user_id, new_trailer_id)
+           VALUES ($1::uuid,$2::uuid,'inline_quicksave_trailer',$3::uuid,$4::uuid)`,
+          [companyId, loadIds[i], userId, trailerId]
+        );
         await db.query(
           `INSERT INTO driver_finance.driver_bills
              (id, operating_company_id, load_id, load_number, bill_number, driver_id, gross_amount_cents, status, settled_in_settlement_id)
