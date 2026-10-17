@@ -2,14 +2,7 @@
   "_doc": "LEAD 443.160 STEP 3 — INSERT sites per document per file (census 2026-10-16). SHRINK-ONLY: repoint a site to the document's canonical writer (see the guard's CANONICAL) and lower its count; never add a file or raise a count.",
   "writers": {
     "expenses": {
-      "apps/backend/src/accounting/bank-line-expense.service.ts": 2,
-      "apps/backend/src/accounting/checks/check-create.service.ts": 1,
-      "apps/backend/src/accounting/expense-writer.service.ts": 1,
-      "apps/backend/src/accounting/recurring.worker.ts": 1,
-      "apps/backend/src/cash-advances/lumper-cash-advance-split.ts": 1,
-      "apps/backend/src/feed/seed-settlement-document.service.ts": 1,
-      "apps/backend/src/fuel/fuel-expense-document.service.ts": 2,
-      "apps/backend/src/maintenance/two-section-service.ts": 4
+      "apps/backend/src/accounting/expense-writer.service.ts": 1
     },
     "bill_payments": {
       "apps/backend/src/accounting/bills-bulk.routes.ts": 1,

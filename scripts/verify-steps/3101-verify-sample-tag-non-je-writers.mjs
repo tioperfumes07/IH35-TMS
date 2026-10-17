@@ -82,6 +82,23 @@ export function findInsertColumnLists(src, table) {
     }
     lists.push(code.slice(start, i - 1));
   }
+  // 443.182 C — one writer per document: an expense header is written through insertExpenseHeader(client, { … }); that row
+  // object is its column list (each key is a column), so it is checked exactly like an INSERT column list.
+  const writerFn = { "accounting.expenses": "insertExpenseHeader", "accounting.expense_lines": "insertExpenseLine" }[table];
+  if (writerFn) {
+    const call = new RegExp(`${writerFn}\\(client, \\{`, "g");
+    while ((m = call.exec(code))) {
+      const start = m.index + m[0].length;
+      let depth = 1;
+      let i = start;
+      while (i < code.length && depth > 0) {
+        if (code[i] === "{") depth += 1;
+        else if (code[i] === "}") depth -= 1;
+        i += 1;
+      }
+      lists.push(code.slice(start, i - 1));
+    }
+  }
   return lists;
 }
 

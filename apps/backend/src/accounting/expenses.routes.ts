@@ -32,7 +32,7 @@ import {
 } from "./reinstate-document.service.js";
 
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
-import { columnExists, createExpenseBodySchema, createExpenseInClientTx, emitOutbox, ExpensePostRefused, FIXED_COST_CATEGORY_CODES, insertUnattributedAlert, relationExists, type CreateExpenseBody } from "./expense-writer.service.js";
+import { columnExists, createExpenseBodySchema, createExpenseInClientTx, emitOutbox, ExpensePostRefused, FIXED_COST_CATEGORY_CODES, insertExpenseLine, insertUnattributedAlert, relationExists, type CreateExpenseBody } from "./expense-writer.service.js";
 export { createExpenseInClientTx, type CreateExpenseBody } from "./expense-writer.service.js";
 export { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 
@@ -1025,11 +1025,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       if (!exp.payment_account_uuid && !exp.vendor_uuid) return { kind: "orphan" as const };
       if (exp.line_count === 0) {
         const cents = Number(exp.total_amount_cents);
-        await client.query(
-          `INSERT INTO accounting.expense_lines (expense_id, line_sequence, amount_cents, amount, description)
-           VALUES ($1::uuid, 1, $2, $3, 'Uncategorized')`,
-          [expenseId, cents, cents / 100]
-        );
+        // 443.182 C — persisted through the one expense writer (expense-writer.service.ts insertExpenseLine).
+        await insertExpenseLine(client, { expense_id: expenseId, line_sequence: 1, amount_cents: cents, amount: cents / 100, description: "Uncategorized" });
       }
       return { kind: "ok" as const };
     });

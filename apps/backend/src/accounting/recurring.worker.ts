@@ -11,6 +11,7 @@ import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { invoiceLineTotalCents } from "./invoice-line-total.js";
 import { nextInvoiceDisplayId, nextExpenseDisplayId } from "./display-id.js";
+import { insertExpenseHeader } from "./expense-writer.service.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "./bills.service.js";
@@ -264,43 +265,21 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
   // (nextExpenseDisplayId, EXP-<year>-NNNNN) -- never a second numbering series invented.
   const expenseNumber = await nextExpenseDisplayId(client, oc, new Date(`${expenseDate}T00:00:00.000Z`));
 
-  const ins = await client.query<{ id: string }>(
-    `
-      INSERT INTO accounting.expenses (
-        operating_company_id,
-        vendor_uuid,
-        status,
-        transaction_date,
-        -- accounting.expenses has NO total_amount column. The real column is
-        -- total_amount_cents (bigint NOT NULL) -- verified live against production. This INSERT
-        -- named a column that does not exist, so EVERY recurring-template expense
-        -- materialization failed at runtime. Found while giving fuel purchases their own expense
-        -- document; fixed here rather than left for someone else to hit.
-        total_amount_cents,
-        memo,
-        payment_account_uuid,
-        is_sample_data,
-        expense_number
-      )
-      VALUES (
-        $1::uuid,
-        $2::uuid,
-        -- ROUND 389.4 RULING 1 — the worker CREATES, it never books: the expense lands as a draft (posting_status
-        -- 'unposted', no journal entry) and is posted through the expense's own post path, which has void and reversal.
-        'draft',
-        $3::date,
-        $4::bigint,
-        $5,
-        $6::uuid,
-        $7,
-        $8
-      )
-      RETURNING id::text
-    `,
-    // amountCents, not totalAmount: cents is the authoritative spine and the column is bigint.
-    [oc, body.vendor_uuid ?? null, expenseDate, amountCents, body.memo ?? null, body.payment_account_uuid ?? null, vendorIsSampleData, expenseNumber]
-  );
-  const expenseId = ins.rows[0]?.id;
+  // 443.182 C — persisted through the one expense writer (expense-writer.service.ts insertExpenseHeader).
+  // accounting.expenses has NO total_amount column: total_amount_cents (bigint) is the authoritative spine.
+  const expenseId = await insertExpenseHeader(client, {
+    operating_company_id: oc,
+    vendor_uuid: body.vendor_uuid ?? null,
+    // ROUND 389.4 RULING 1 — the worker CREATES, it never books: the expense lands as a draft (posting_status
+    // 'unposted', no journal entry) and is posted through the expense's own post path, which has void and reversal.
+    status: "draft",
+    transaction_date: expenseDate,
+    total_amount_cents: amountCents,
+    memo: body.memo ?? null,
+    payment_account_uuid: body.payment_account_uuid ?? null,
+    is_sample_data: vendorIsSampleData,
+    expense_number: expenseNumber,
+  });
   if (!expenseId) throw new Error("recurring_expense_insert_failed");
 
   await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,$4::uuid,$5)`, [

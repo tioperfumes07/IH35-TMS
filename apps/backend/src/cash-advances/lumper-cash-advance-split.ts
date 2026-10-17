@@ -4,6 +4,7 @@ import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.ser
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
+import { EXPENSE_SQL_CURRENT_DATE, insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
 import { logger } from "../observability/structured-logger.js";
 
 /**
@@ -236,31 +237,33 @@ export async function disburseCashAdvanceSplit(
 
           // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half, sibling site): actorUserUuid
           // is already threaded into this function — it was just never stamped on the expense row.
-          const exp = await client.query(
-            `INSERT INTO accounting.expenses
-               (operating_company_id, status, transaction_date, total_amount_cents, load_id, is_sample_data, created_by_user_id, expense_number)
-             VALUES ($1::uuid, 'posted', CURRENT_DATE, $2, $3::uuid, $4, $5::uuid, $6)
-             RETURNING id::text AS id`,
-            [companyId, leg.amount_cents, leg.load_id, loadSample.rows[0]?.is_sample_data === true, actorUserUuid, numbered.number],
-          );
-          const expenseId = String((exp.rows[0] as { id: string }).id);
+          // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts).
+          const insertedExpenseId = await insertExpenseHeader(client, {
+              operating_company_id: companyId,
+              status: "posted",
+              transaction_date: EXPENSE_SQL_CURRENT_DATE,
+              total_amount_cents: leg.amount_cents,
+              load_id: leg.load_id,
+              is_sample_data: loadSample.rows[0]?.is_sample_data === true,
+              created_by_user_id: actorUserUuid,
+              expense_number: numbered.number,
+            });
+          if (!insertedExpenseId) throw new Error("lumper_expense_insert_failed");
+          const expenseId = insertedExpenseId;
           expenseIds.push(expenseId);
 
-          await client.query(
-            `INSERT INTO accounting.expense_lines
-               (expense_id, line_sequence, amount_cents, amount, description, expense_account_uuid,
-                load_id, load_required, line_category, billable_customer_uuid)
-             VALUES ($1::uuid, 1, $2, $3, $4, $5::uuid, $6::uuid, true, 'lumper', $7)`,
-            [
-              expenseId,
-              leg.amount_cents,
-              leg.amount_cents / 100,
-              "Lumper fee (cash-advance split)",
-              lumperAccountId,
-              leg.load_id,
-              leg.billable_customer_uuid ?? null,
-            ],
-          );
+          await insertExpenseLine(client, {
+            expense_id: expenseId,
+            line_sequence: 1,
+            amount_cents: leg.amount_cents,
+            amount: leg.amount_cents / 100,
+            description: "Lumper fee (cash-advance split)",
+            expense_account_uuid: lumperAccountId,
+            load_id: leg.load_id,
+            load_required: true,
+            line_category: "lumper",
+            billable_customer_uuid: leg.billable_customer_uuid ?? null,
+          });
         }
       }
 

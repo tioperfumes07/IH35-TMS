@@ -124,7 +124,7 @@ let writerFiles = [];
 try {
   const grepOut = execFileSync(
     "grep",
-    ["-rlE", "INSERT INTO accounting\\.expenses", SCAN_DIR, "--include=*.ts"],
+    ["-rlE", "INSERT INTO accounting\\.expenses|insertExpenseHeader\\(", SCAN_DIR, "--include=*.ts"],
     { cwd: ROOT, encoding: "utf8" }
   );
   const insertingFiles = grepOut.split("\n").filter(Boolean);
@@ -135,7 +135,13 @@ try {
     // merely READS the column elsewhere (a dedupe check, a WHERE filter) must not count as a
     // writer just because it also happens to contain some unrelated INSERT into the same table.
     const insertColumnLists = [...src.matchAll(/INSERT INTO\s+accounting\.expenses\s*\(([^)]*)\)/gi)].map((m) => m[1]);
-    if (insertColumnLists.some((cols) => /\bsource_fuel_transaction_id\b/.test(cols))) writerFiles.push(f);
+    // 443.182 C — expense headers are written through the one expense writer as row objects
+    // (insertExpenseHeader(client, { …, source_fuel_transaction_id: …, … })); that row is the column list now.
+    const writerRows = [...src.matchAll(/insertExpenseHeader\(client, \{([\s\S]*?)\n\s*\}\)/g)].map((m) => m[1]);
+    if (
+      insertColumnLists.some((cols) => /\bsource_fuel_transaction_id\b/.test(cols)) ||
+      writerRows.some((row) => /\bsource_fuel_transaction_id:/.test(row))
+    ) writerFiles.push(f);
   }
 } catch (e) {
   // grep exits 1 with no matches — that IS zero writers, a real (bad) result, not a tool failure.

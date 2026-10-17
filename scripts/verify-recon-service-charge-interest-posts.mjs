@@ -47,7 +47,8 @@ function main() {
   assert.match(writer, /is_company_expense/);
   assert.match(writer, /payment_account_uuid/);
   assert.match(writer, /unit_of_measure/);
-  assert.match(writer, /'each'/);
+  // 443.182 C — the line is a row object on the one expense writer (unit_of_measure: "each").
+  assert.match(writer, /'each'|unit_of_measure: "each"/);
   assert.match(poster, /createJournalEntryOnClient/); // interest still income JE (not a 5xxx/6xxx cost)
   assert.match(poster, /Interest earned/);
   // SC must not mint a bare cost JE: only one createJournalEntryOnClient *call* (interest).

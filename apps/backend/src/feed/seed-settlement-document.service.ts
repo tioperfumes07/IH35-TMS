@@ -70,6 +70,7 @@ import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/post
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { postFactoringAdvanceEvent } from "../accounting/factoring-posting/poster.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
+import { insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveSettlementPdfItem, SettlementPdfItemError } from "../catalogs/settlement-pdf-item-map.js";
 import { findLiveFuelByProviderTransactionId, FuelProviderTransactionDuplicateError } from "../fuel/fuel-provider-reference.js";
@@ -832,34 +833,58 @@ export async function seedExpense(
   // incompatible id space (catalogs.load_trailer_equipment) — passing the load's trailer id here
   // throws a guaranteed FK violation for every load carrying a real trailer assignment. unit_id
   // (mdata.loads.assigned_unit_id -> mdata.units, verified compatible) is unaffected and kept.
-  const expense = await client.query<{ id: string }>(
-    `INSERT INTO accounting.expenses (
-       operating_company_id, expense_number, vendor_uuid, driver_uuid, transaction_date,
-       total_amount_cents, memo, load_id, status, posting_status, created_by_user_id, updated_by_user_id, is_sample_data,
-       unit_id, vendor_document_number
-     )
-     SELECT $1::uuid, $2, $3::uuid, d.id, $4::date, $5, $6, $7::uuid, 'draft', 'unposted', $8::uuid, $8::uuid, false,
-            l.assigned_unit_id, $9
-       FROM mdata.loads l JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-      WHERE l.id = $7::uuid
-     RETURNING id::text`,
-    [operatingCompanyId, expenseNumber, vendorId, line.date, line.amountCents, line.description, loadId, actorUserId, line.invoice?.trim() || null]
-  );
-  const expenseId = expense.rows[0].id;
+  // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts). The driver and unit come
+  // from the load (its primary driver, its assigned unit), read on this transaction exactly as the INSERT ... SELECT did;
+  // a load with no primary driver writes nothing and fails, as before.
+  const fromLoad = (
+    await client.query<{ driver_id: string; assigned_unit_id: string | null }>(
+      `SELECT d.id::text AS driver_id, l.assigned_unit_id::text AS assigned_unit_id
+         FROM mdata.loads l JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+        WHERE l.id = $1::uuid`,
+      [loadId]
+    )
+  ).rows[0];
+  if (!fromLoad) throw new Error("seed_expense_load_has_no_primary_driver");
+  const insertedExpenseId = await insertExpenseHeader(client, {
+    operating_company_id: operatingCompanyId,
+    expense_number: expenseNumber,
+    vendor_uuid: vendorId,
+    driver_uuid: fromLoad.driver_id,
+    transaction_date: line.date,
+    total_amount_cents: line.amountCents,
+    memo: line.description,
+    load_id: loadId,
+    status: "draft",
+    posting_status: "unposted",
+    created_by_user_id: actorUserId,
+    updated_by_user_id: actorUserId,
+    is_sample_data: false,
+    unit_id: fromLoad.assigned_unit_id,
+    vendor_document_number: line.invoice?.trim() || null,
+  });
+  if (!insertedExpenseId) throw new Error("seed_expense_insert_failed");
+  const expenseId = insertedExpenseId;
 
   // (4) expense_lines_item_qty_rate_amount_check requires item_id/quantity/rate_cents/
   // unit_of_measure to be ALL NULL or ALL set together (quantity*rate_cents = amount_cents) —
   // this INSERT set item_id alone, violating the check on every real call. One line, one flat
   // price: quantity=1 @ rate_cents=amount_cents satisfies the identity exactly. "each" is the
   // same unit_of_measure convention check-create.service.ts already uses for a flat-price line.
-  await client.query(
-    `INSERT INTO accounting.expense_lines (
-       operating_company_id, expense_id, line_sequence, amount, amount_cents, description, load_id, load_required,
-       expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure
-     )
-     VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, true, $7::uuid, $8::uuid, 1, $4::bigint, 'each')`,
-    [operatingCompanyId, expenseId, line.amountCents / 100, line.amountCents, line.description, loadId, item.expenseAccountId, item.itemId]
-  );
+  await insertExpenseLine(client, {
+    operating_company_id: operatingCompanyId,
+    expense_id: expenseId,
+    line_sequence: 1,
+    amount: line.amountCents / 100,
+    amount_cents: line.amountCents,
+    description: line.description,
+    load_id: loadId,
+    load_required: true,
+    expense_account_uuid: item.expenseAccountId,
+    item_id: item.itemId,
+    quantity: 1,
+    rate_cents: line.amountCents,
+    unit_of_measure: "each",
+  });
 
   await client.query(
     `INSERT INTO expense_attribution.expense_load_links (

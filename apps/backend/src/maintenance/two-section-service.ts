@@ -8,6 +8,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 // The one expense GL-posting flag key (accounting/expense-gl-posting-flag.ts), shared with every expense-GL call site.
 import { EXPENSE_GL_POSTING_FLAG_KEY as WO_EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
 import { resolveLineLoadExemption } from "../accounting/expense-line-load-exemption.js";
+import { EXPENSE_SQL_CURRENT_DATE, insertExpenseHeader, insertExpenseLine } from "../accounting/expense-writer.service.js";
 // Same flag key as accounting/bill-gl.service.ts's own BILL_GL_POSTING_FLAG_KEY, redefined here for
 // the same reason (avoid a service->service import cycle risk) — same value, same semantics.
 const WO_BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
@@ -783,33 +784,25 @@ async function copyToAccountingLines(
                 categoryId: row.expense_category_uuid,
               })
             : null;
-          return client.query<{ id: string }>(
-            `
-              INSERT INTO accounting.expense_lines (
-                expense_id, line_sequence, amount_cents, amount, description, section, parent_line_uuid,
-                expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid,
-                load_id, load_exemption_reason
-              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-              RETURNING id
-            `,
-            [
-              destinationId,
-              sequence,
-              amountCents,
-              amountCents / 100,
-              row.description,
-              row.section,
-              parentMapped,
-              projectedCategoryId,
-              row.service_item_uuid,
-              row.part_uuid,
-              row.labor_rate_uuid,
-              row.part_location_codes ?? null,
-              row.id,
-              expenseLineLink?.loadId ?? null,
-              expenseLineLink?.loadExemptionReason ?? null,
-            ]
-          );
+          // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseLine).
+          const lineId = await insertExpenseLine(client, {
+            expense_id: destinationId,
+            line_sequence: sequence,
+            amount_cents: amountCents,
+            amount: amountCents / 100,
+            description: row.description,
+            section: row.section,
+            parent_line_uuid: parentMapped,
+            expense_category_uuid: projectedCategoryId,
+            service_item_uuid: row.service_item_uuid,
+            part_uuid: row.part_uuid,
+            labor_rate_uuid: row.labor_rate_uuid,
+            part_location_codes: row.part_location_codes ?? null,
+            linked_wo_line_uuid: row.id,
+            load_id: expenseLineLink?.loadId ?? null,
+            load_exemption_reason: expenseLineLink?.loadExemptionReason ?? null,
+          });
+          return { rows: lineId ? [{ id: lineId }] : [] };
         })();
     idMap.set(row.id, String(insert.rows[0]?.id ?? ""));
   }
@@ -1074,89 +1067,22 @@ export async function autoCreateExpenseFromWO(
   // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half, sibling site): this writer already
   // receives the authed userId as a parameter but never stamped created_by_user_id — the real actor
   // was in scope the whole time.
-  let expenseRes: { rows: { id: string }[] };
-  if (hasUnitIdColumn && hasLoadIdColumn) {
-    expenseRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.expenses (
-          operating_company_id,
-          vendor_uuid,
-          linked_work_order_uuid,
-          unit_id,
-          load_id,
-          status,
-          transaction_date,
-          total_amount_cents,
-          payment_account_uuid,
-          is_sample_data,
-          created_by_user_id
-        )
-        VALUES ($1, $2, $3, $4, $5, 'posted', CURRENT_DATE, $6, $7, $8, $9)
-        RETURNING id
-      `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.load_id, wo.total_amount_cents, paymentAccountUuid ?? null, vendorIsSampleData, userId]
-    );
-  } else if (hasUnitIdColumn) {
-    expenseRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.expenses (
-          operating_company_id,
-          vendor_uuid,
-          linked_work_order_uuid,
-          unit_id,
-          status,
-          transaction_date,
-          total_amount_cents,
-          payment_account_uuid,
-          is_sample_data,
-          created_by_user_id
-        )
-        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6, $7, $8)
-        RETURNING id
-      `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.total_amount_cents, paymentAccountUuid ?? null, vendorIsSampleData, userId]
-    );
-  } else if (hasLoadIdColumn) {
-    expenseRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.expenses (
-          operating_company_id,
-          vendor_uuid,
-          linked_work_order_uuid,
-          load_id,
-          status,
-          transaction_date,
-          total_amount_cents,
-          payment_account_uuid,
-          is_sample_data,
-          created_by_user_id
-        )
-        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6, $7, $8)
-        RETURNING id
-      `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, wo.total_amount_cents, paymentAccountUuid ?? null, vendorIsSampleData, userId]
-    );
-  } else {
-    expenseRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.expenses (
-          operating_company_id,
-          vendor_uuid,
-          linked_work_order_uuid,
-          status,
-          transaction_date,
-          total_amount_cents,
-          payment_account_uuid,
-          is_sample_data,
-          created_by_user_id
-        )
-        VALUES ($1, $2, $3, 'posted', CURRENT_DATE, $4, $5, $6, $7)
-        RETURNING id
-      `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.total_amount_cents, paymentAccountUuid ?? null, vendorIsSampleData, userId]
-    );
-  }
-  const expenseId = String(expenseRes.rows[0]?.id ?? "");
+  // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseHeader); unit_id /
+  // load_id are written only where the column exists, exactly as the four column-gated INSERTs did.
+  const expenseId =
+    (await insertExpenseHeader(client, {
+      operating_company_id: wo.operating_company_id,
+      vendor_uuid: wo.vendor_uuid,
+      linked_work_order_uuid: woUuid,
+      unit_id: hasUnitIdColumn ? wo.unit_id ?? null : undefined,
+      load_id: hasLoadIdColumn ? wo.load_id : undefined,
+      status: "posted",
+      transaction_date: EXPENSE_SQL_CURRENT_DATE,
+      total_amount_cents: wo.total_amount_cents,
+      payment_account_uuid: paymentAccountUuid ?? null,
+      is_sample_data: vendorIsSampleData,
+      created_by_user_id: userId,
+    })) ?? "";
   if (!expenseId) return null;
   if (await columnExists(client, "accounting.expenses", "expense_number")) {
     const expenseNumber = await nextExpenseDisplayId(client, wo.operating_company_id);
