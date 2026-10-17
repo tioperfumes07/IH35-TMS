@@ -32,10 +32,11 @@ describe("443.182 C — the one payment row writer", () => {
     expect(calls[0]!.values).toHaveLength(13);
   });
 
-  it("the customer route calls the one writer and keeps no INSERT INTO accounting.payments of its own", () => {
+  it("the customer route calls the one engine and keeps no INSERT INTO accounting.payments of its own", () => {
     const root = resolve(__dirname, "..");
     const cust = readFileSync(resolve(root, "customer-payments.routes.ts"), "utf8");
-    expect(cust).toContain("insertPaymentRowInClientTx(client, {");
+    // 443.182 C step 2 — the route hands its document to the engine, which calls the one row writer.
+    expect(cust).toContain("recordCustomerPaymentInClientTx(client, {");
     expect(cust).not.toMatch(/INSERT\s+INTO\s+accounting\.payments\s*\(/i);
     const canon = readFileSync(resolve(root, "payments.routes.ts"), "utf8");
     expect((canon.match(/INSERT\s+INTO\s+accounting\.payments\s*\(/gi) ?? []).length).toBe(1);

@@ -779,8 +779,25 @@ async function copyToAccountingLines(
                 categoryId: row.expense_category_uuid,
               })
             : null;
+          // LEAD 443.186 — the expense branch follows the bill branch above: the line's account is its ITEM's account
+          // (CC-2 harness: WO expense lines were written with no expense_account_uuid and no item), quantity x rate =
+          // amount, and an item-less line is refused by name — never guessed.
+          if (!row.item_id || !row.item_account_id) {
+            throw new WorkOrderLineItemError(
+              "wo_line_item_required",
+              `work-order line "${row.description}" names no catalog item with an expense account — pick the item before expensing`
+            );
+          }
+          const woQty = asNumber(row.quantity);
+          const woRateCents = Math.round(asNumber(row.unit_cost) * 100);
+          const footsExactly = woQty > 0 && woRateCents > 0 && Math.round(woQty * woRateCents) === amountCents;
           // 443.182 C — persisted through the one expense writer (accounting/expense-writer.service.ts insertExpenseLine).
           const lineId = await insertExpenseLine(client, {
+            item_id: row.item_id,
+            expense_account_uuid: row.item_account_id,
+            quantity: footsExactly ? woQty : 1,
+            rate_cents: footsExactly ? woRateCents : amountCents,
+            unit_of_measure: row.line_type === "labor" ? "hour" : "each",
             expense_id: destinationId,
             line_sequence: sequence,
             amount_cents: amountCents,
