@@ -5,7 +5,7 @@
 // previews the purchase; Save creates the purchase (POST /factoring/purchases — the server runs the FEED GATE on every
 // invoice first) and posts it (POST /:id/post) through the one secured-borrowing poster. "Save and send" also emails
 // the invoices + their documents to the factor. Owner-only: the server refuses everyone else (403).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
@@ -754,16 +754,27 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
 
   const activeFilterCount = [applied.customerId, applied.from, applied.to].filter(Boolean).length;
 
+  // LEAD 443.180 — a click on a purchase anywhere in the app lands HERE; bring the purchase into view instead of
+  // leaving the owner at the top of the Factoring page with the purchase below the fold.
+  const editBannerRef = useRef<HTMLDivElement | null>(null);
+  const editDetailId = editDetail?.id ?? null;
+  useEffect(() => {
+    if (editDetailId) editBannerRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }, [editDetailId]);
+
   return (
     <div className="space-y-3" data-testid="submit-to-factor-tab">
       {editing ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="submit-factor-edit-banner">
+        <div ref={editBannerRef} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="submit-factor-edit-banner">
           <span>
             {editQuery.isLoading ? "Loading purchase…" : null}
             {editQuery.isError ? <span className="text-red-700">Could not load the purchase to edit.</span> : null}
             {editDetail ? (
               <>
-                Editing purchase <strong><EntityLink kind="factoring_purchase" id={editDetail.id} label={editDetail.display_id} /></strong>
+                <span className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]" data-testid="submit-factor-edit-title">
+                  Purchase {editDetail.display_id}
+                </span>{" "}
+                · Editing purchase <strong><EntityLink kind="factoring_purchase" id={editDetail.id} label={editDetail.display_id} /></strong>
                 {editDetail.factoring_company_name ? ` · ${editDetail.factoring_company_name}` : ""} — change dates, amounts or invoices, then Save changes.
               </>
             ) : null}
