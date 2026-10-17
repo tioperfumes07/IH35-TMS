@@ -254,7 +254,8 @@ try {
     const on = await markerRows(`dreamline_efs=${key}:1`);
     if (on.length !== 1 || on[0] !== fuel) misplaced.push(`${key} on ${JSON.stringify(on)}`);
   }
-  for (const w of WRONG) if ((await markerRows(w.marker)).length) misplaced.push(`${w.marker} still live`);
+  // A wrong marker must be gone from the WRONG receipt; the same marker may (correctly) now sit on its true receipt (ADOPT).
+  for (const w of WRONG) if ((await markerRows(w.marker)).includes(w.receipt)) misplaced.push(`${w.marker} still on ${w.receipt}`);
   const copiesLive = Number((await db.query(
     `SELECT count(*)::int n FROM accounting.journal_entries WHERE id = ANY($1::uuid[]) AND reversed_by_je_id IS NULL`, [copyRows.map((r) => r.je)])).rows[0].n);
   const copiesNotVoid = Number((await db.query(`SELECT count(*)::int n FROM fuel.fuel_transactions WHERE id = ANY($1::uuid[]) AND voided_at IS NULL`, [copyRows.map((r) => r.id)])).rows[0].n);
