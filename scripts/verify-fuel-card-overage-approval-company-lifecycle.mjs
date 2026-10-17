@@ -6,14 +6,24 @@ const source = fs.readFileSync(file, "utf8");
 
 function audit(text) {
   const failures = [];
+  // LEAD 443.187 — REPOINTED, same rule: 461d5f83ea (ACCT-F2995) added exempt + void mutations with their own stale checks,
+  // so a page-wide search let the APPROVAL lose its stale-success / stale-error / exact-refresh guards unnoticed. These
+  // checks now read the approval mutation's own block (const approveMut … up to the next useMutation).
+  const at = text.indexOf("const approveMut");
+  const approve = at < 0 ? "" : text.slice(at, (text.indexOf("useMutation(", at + 30) + 1 || text.length + 1) - 1);
   const need = (ok, message) => { if (!ok) failures.push(message); };
   need(text.includes("actionGenerationRef = useRef(0)"), "generation ref missing");
-  need(/useEffect\(\(\) => \{[\s\S]{0,80}actionGenerationRef\.current \+= 1;[\s\S]{0,50}\}, \[companyId\]\)/.test(text), "company transition does not advance lifecycle");
-  need(/mutationFn: \(input: \{ eventId: string; companyId: string; generation: number \}\) =>[\s\S]{0,180}input\.eventId[\s\S]{0,180}operating_company_id: input\.companyId/.test(text), "approval does not submit immutable event/company/generation");
-  need(/onSuccess: \(_result, input\) => \{[\s\S]{0,100}input\.generation !== actionGenerationRef\.current/.test(text), "stale success is not rejected");
-  need(text.includes('["fuel", "card-overage-events", input.companyId]'), "submitted company queue is not refreshed exactly");
-  need(/onError: \(err: unknown, input\) => \{[\s\S]{0,120}input\.generation === actionGenerationRef\.current/.test(text), "stale error is not rejected");
-  need(/approveMut\.mutateAsync\(\{[\s\S]*eventId: confirmApproveRow\.id,[\s\S]*companyId,[\s\S]*generation: actionGenerationRef\.current/.test(text), "UI does not capture approval context");
+  // LEAD 443.187 — REPOINTED, same rule: the company-change effect also closes the open exempt / void / approve dialogs
+  // (setExemptRow / setVoidRow / setConfirmApproveRow(null)), which pushed its closing `}, [companyId])` past the old
+  // 50-char window. The increment must still sit inside the ONE effect keyed on [companyId] (no other dependency, no
+  // nested effect in between).
+  need(/useEffect\(\(\) => \{[\s\S]{0,80}actionGenerationRef\.current \+= 1;(?:(?!useEffect\()[\s\S]){0,240}\}, \[companyId\]\)/.test(text), "company transition does not advance lifecycle");
+  need(/mutationFn: \(input: \{ eventId: string; companyId: string; generation: number \}\) =>[\s\S]{0,180}input\.eventId[\s\S]{0,180}operating_company_id: input\.companyId/.test(approve), "approval does not submit immutable event/company/generation");
+  need(/onSuccess: \(_result, input\) => \{[\s\S]{0,100}input\.generation !== actionGenerationRef\.current/.test(approve), "stale success is not rejected");
+  need(approve.includes('["fuel", "card-overage-events", input.companyId]'), "submitted company queue is not refreshed exactly");
+  need(/onError: \(err: unknown, input\) => \{[\s\S]{0,120}input\.generation === actionGenerationRef\.current/.test(approve), "stale error is not rejected");
+  // bounded to the approval call itself ([^}]*) — a greedy [\s\S]* borrowed the void / exempt calls' generation (461d5f83ea).
+  need(/approveMut\.mutateAsync\(\{[^}]*eventId: confirmApproveRow\.id,[^}]*companyId,[^}]*generation: actionGenerationRef\.current/.test(text), "UI does not capture approval context");
   need(text.includes("@matrix-built modules=fuel cols=driver,unit,gl_je,connectivity,reverse_link"), "leaf annotation missing");
   return failures;
 }

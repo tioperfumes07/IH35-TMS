@@ -127,6 +127,16 @@ export function collectProblems({ dbTs, triggerSql }) {
   return problems;
 }
 
+/**
+ * 443.187 — only a migration that DEFINES the function counts (CREATE [OR REPLACE] FUNCTION audit.tg_audit_row). Every new
+ * audited table ATTACHES it (`FOR EACH ROW EXECUTE FUNCTION audit.tg_audit_row()`), and the old matcher took the newest
+ * attachment (202615980910_factoring_misdirected_payment_alerts.sql) for the definition — so the guard read a file with no
+ * function body and failed on correct code. Same rule; it now reads the function prod actually runs.
+ */
+export function definesAuditTrigger(sql) {
+  return /CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+audit\.tg_audit_row\b/i.test(stripSqlComments(sql));
+}
+
 /** The newest migration that defines audit.tg_audit_row wins — that is what prod runs. */
 function latestTriggerSql() {
   if (!fs.existsSync(MIGRATIONS)) return null;
@@ -134,9 +144,7 @@ function latestTriggerSql() {
     .readdirSync(MIGRATIONS)
     .filter((f) => f.endsWith(".sql"))
     .sort()
-    .filter((f) =>
-      /FUNCTION\s+audit\.tg_audit_row/i.test(fs.readFileSync(path.join(MIGRATIONS, f), "utf8"))
-    );
+    .filter((f) => definesAuditTrigger(fs.readFileSync(path.join(MIGRATIONS, f), "utf8")));
   if (hits.length === 0) return null;
   return fs.readFileSync(path.join(MIGRATIONS, hits[hits.length - 1]), "utf8");
 }
@@ -154,6 +162,12 @@ if (process.argv.includes("--selftest")) {
     "IF TG_OP = 'UPDATE' THEN v_noise_keys text[] := ARRAY['updated_at','last_qbo_synced_at'];" +
     " IF (to_jsonb(OLD) - v_noise_keys) IS NOT DISTINCT FROM (to_jsonb(NEW) - v_noise_keys) THEN RETURN NEW; END IF; END IF;";
 
+  if (definesAuditTrigger("CREATE TRIGGER t AFTER UPDATE ON x FOR EACH ROW EXECUTE FUNCTION audit.tg_audit_row();")) {
+    failures.push("a trigger ATTACHMENT was taken for the function definition");
+  }
+  if (!definesAuditTrigger("CREATE OR REPLACE FUNCTION audit.tg_audit_row() RETURNS trigger AS $$ BEGIN RETURN NEW; END $$ LANGUAGE plpgsql;")) {
+    failures.push("the function definition was not recognised");
+  }
   if (collectProblems({ dbTs: GOOD_TS, triggerSql: GOOD_SQL }).length !== 0) {
     failures.push("the corrected pair was flagged");
   }

@@ -242,7 +242,9 @@ function failures(s = files) {
     ],
   [
     "company violation invalid driver is not false empty",
-    /if \(!result\.found\)\s*return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(
+    // 443.187 — the 404 now also carries a human message (verify-company-violations-error-messages forbids a bare
+    // handled error); same rule: an invalid driver answers 404 mdata_driver_not_found, never a false empty list.
+    /if \(!result\.found\)\s*return reply\.code\(404\)\.send\(\{\s*error: "mdata_driver_not_found"[,\s}]/.test(
       s.companyRoutes,
     ),
     ],

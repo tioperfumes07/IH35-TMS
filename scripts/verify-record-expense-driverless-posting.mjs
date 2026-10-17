@@ -34,7 +34,8 @@ if (!/FROM\s+catalogs\.accounts[\s\S]{0,160}qbo_account_id\s*=\s*\$1[\s\S]{0,160
 if (!/category_not_in_ledger_chart/.test(route)) fail("route must reject an unbridged category (category_not_in_ledger_chart)");
 if (!/category_required_for_driverless_expense/.test(route)) fail("route must require a category for a driverless expense");
 if (!/payment_account_required_for_driverless_expense/.test(route)) fail("route must require a payment account for a driverless expense");
-if (!/EXPENSE_GL_POSTING_FLAG_KEY[\s\S]{0,400}postSourceTransaction\(/.test(route))
+// 443.182 C — the create-time post goes through the one expense engine (postExpenseDocumentOwnTx -> postSourceTransaction).
+if (!/EXPENSE_GL_POSTING_FLAG_KEY[\s\S]{0,400}(?:postSourceTransaction|postExpenseDocumentOwnTx)\(/.test(route))
   fail("create-time posting must stay gated behind EXPENSE_GL_POSTING_ENABLED and go through postSourceTransaction");
 
 // 4) QBO sync sources the line AccountRef from the category account

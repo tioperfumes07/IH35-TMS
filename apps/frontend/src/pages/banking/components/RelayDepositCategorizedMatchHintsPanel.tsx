@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getRelayDepositMatchReview, type RelayDepositMatchReviewRow } from "../../../api/banking";
@@ -54,7 +55,7 @@ export function RelayDepositCategorizedMatchHintsPanel({ companyId }: Props) {
           {isLoading ? (
             <p className="text-xs text-[#6B7280]">Loading…</p>
           ) : isError ? (
-            <p className="text-xs text-red-700">{String((error as Error)?.message ?? "Failed to load")}</p>
+            <p className="text-xs text-red-700">{userFacingApiError(error, "Failed to load")}</p>
           ) : rows.length === 0 ? (
             <p className="text-xs text-[#6B7280]">No wallet-categorized outflows need review.</p>
           ) : (

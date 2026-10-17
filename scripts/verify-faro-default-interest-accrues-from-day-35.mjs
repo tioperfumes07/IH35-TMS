@@ -11,6 +11,16 @@ export const REQUIRES_LIVE_DB = "Neon live verification required";
 // has no ACTIVE row for it (or none dated on/after default_interest_starts_on) — the exact "flagged
 // as accruing but no accrual actually recorded" gap named in the spec.
 //
+// LEAD 443.187 (CC-2 2026-10-17) — REPOINTED to the owner's ruling, same rule ("an account past day 35 must not go
+// un-accrued, and nothing accrues before day 35"): 6e94681aa0 (ACCT-F2972, Lead ROUND 296 / 297, owner 2026-10-02)
+// RETIRED the nightly accrual ("default interest accrues at period close with approval (DR 6830 / CR 2155), not
+// nightly" — default-interest.service.ts NIGHTLY_INTEREST_ACCRUAL_RETIRED). Accrual now lands through the period-close
+// run (accounting.factoring_interest_accrual_runs, state 'posted', + its run_lines per purchase line). So:
+//   FAIL  an accruing line covered by a POSTED period-close run (run.period_end >= default_interest_starts_on) that the
+//         run omitted — the real "flagged accruing, never accrued" gap;
+//   FAIL  any accrual (nightly row, or run line) dated before the line's default_interest_starts_on;
+//   LIST  accruing lines no posted run has covered yet — awaiting the owner's period close, not a defect.
+//
 // Database-required: exits 2 (UNVERIFIED) if DATABASE_URL/DATABASE_DIRECT_URL is unset.
 import pg from "pg";
 
@@ -47,34 +57,46 @@ async function main() {
         `SELECT v.operating_company_id::text, v.display_id, v.default_interest_starts_on::text,
                 v.default_interest_unpaid_cents,
                 (SELECT count(*) FROM accounting.factoring_default_interest_accruals a
-                  WHERE a.factoring_advance_id = v.factoring_advance_id AND a.is_active) AS active_accrual_count,
-                (SELECT count(*) FROM accounting.factoring_default_interest_accruals a
                   WHERE a.factoring_advance_id = v.factoring_advance_id AND a.is_active
-                    AND a.accrual_date < v.default_interest_starts_on) AS accruals_before_day_35
+                    AND a.accrual_date < v.default_interest_starts_on) AS nightly_before_day_35,
+                (SELECT count(*) FROM accounting.factoring_interest_accrual_runs r
+                  WHERE r.operating_company_id = v.operating_company_id AND r.state = 'posted'
+                    AND r.period_end >= v.default_interest_starts_on) AS covering_posted_runs,
+                (SELECT count(*) FROM accounting.factoring_interest_accrual_runs r
+                   JOIN accounting.factoring_interest_accrual_run_lines l ON l.run_id = r.id
+                  WHERE r.operating_company_id = v.operating_company_id AND r.state = 'posted'
+                    AND r.period_end >= v.default_interest_starts_on AND l.purchase_line_id = v.purchase_line_id) AS covered_lines,
+                (SELECT count(*) FROM accounting.factoring_interest_accrual_runs r
+                   JOIN accounting.factoring_interest_accrual_run_lines l ON l.run_id = r.id
+                  WHERE r.operating_company_id = v.operating_company_id AND r.state = 'posted'
+                    AND l.purchase_line_id = v.purchase_line_id AND r.period_end < v.default_interest_starts_on
+                    AND l.accrual_cents > 0) AS run_accrual_before_day_35
            FROM views.factoring_repurchase_obligation v
           WHERE v.accruing_default_interest = true
           ORDER BY v.display_id`
       );
       await client.query("ROLLBACK");
 
-      const failures = res.rows.filter(
-        (row) => Number(row.active_accrual_count) === 0 || Number(row.accruals_before_day_35) > 0
-      );
+      const failures = [];
+      const awaiting = [];
+      for (const row of res.rows) {
+        if (Number(row.nightly_before_day_35) > 0 || Number(row.run_accrual_before_day_35) > 0) {
+          failures.push(`${row.display_id} (${row.operating_company_id}): accrued BEFORE default_interest_starts_on (${row.default_interest_starts_on})`);
+        } else if (Number(row.covering_posted_runs) > 0 && Number(row.covered_lines) === 0) {
+          failures.push(`${row.display_id} (${row.operating_company_id}): accruing since ${row.default_interest_starts_on} but the posted period-close run(s) covering it omitted the line`);
+        } else if (Number(row.covering_posted_runs) === 0) {
+          awaiting.push(row.display_id);
+        }
+      }
 
       if (failures.length > 0) {
         console.error("verify-faro-default-interest-accrues-from-day-35 FAILED:");
-        for (const row of failures) {
-          const reason =
-            Number(row.active_accrual_count) === 0
-              ? "flagged accruing_default_interest=true but has ZERO active accrual rows"
-              : `has ${row.accruals_before_day_35} accrual row(s) dated BEFORE default_interest_starts_on (${row.default_interest_starts_on})`;
-          console.error(`  - ${row.display_id} (${row.operating_company_id}): ${reason}`);
-        }
+        for (const f of failures) console.error(`  - ${f}`);
         process.exit(1);
         return;
       }
       console.log(
-        `verify-faro-default-interest-accrues-from-day-35: OK — ${res.rows.length} accruing account(s) all have a real active accrual row, none dated before day 35`
+        `verify-faro-default-interest-accrues-from-day-35: OK — ${res.rows.length} accruing account(s): none accrued before day 35, none omitted by a posted period-close run; LISTED ${awaiting.length} awaiting the owner's first period-close accrual run`
       );
       process.exit(0);
     } finally {

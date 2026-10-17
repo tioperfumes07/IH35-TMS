@@ -62,7 +62,9 @@ export const EXPENSE_WRITER = "apps/backend/src/accounting/expenses.routes.ts";
 export function writerGaps(src) {
   const f = [];
   if (/INSERT INTO expense_attribution\.expense_load_links/.test(src)) f.push(`${EXPENSE_WRITER} writes expense_load_links with a raw INSERT — use insertExpenseLoadLink`);
-  if (!/await insertExpenseLoadLink\(client, \{/.test(src)) f.push(`${EXPENSE_WRITER} no longer writes the load link through insertExpenseLoadLink`);
+  // 443.182 C — the re-attribution link goes through the one expense engine (relinkExpenseToLoadInClientTx, which calls
+  // insertExpenseLoadLink); the route may not write it itself.
+  if (!/await (?:insertExpenseLoadLink|relinkExpenseToLoadInClientTx)\(client, \{/.test(src)) f.push(`${EXPENSE_WRITER} no longer writes the load link through insertExpenseLoadLink`);
   return f;
 }
 
@@ -85,7 +87,7 @@ if (process.argv.includes("--selftest")) {
     ["load expense without its link", liveGaps({ ...clean, unlinkedExpenses: ["13500-1"] }, PIN).length === 1],
     ["writer real", writerGaps(writerSrc).length === 0],
     ["writer raw link INSERT", writerGaps(writerSrc + "\nINSERT INTO expense_attribution.expense_load_links (x)").length === 1],
-    ["writer drops the helper", writerGaps(writerSrc.replaceAll("await insertExpenseLoadLink(client, {", "await other(client, {")).length === 1],
+    ["writer drops the helper", writerGaps(writerSrc.replaceAll("await insertExpenseLoadLink(client, {", "await other(client, {").replaceAll("await relinkExpenseToLoadInClientTx(client, {", "await other(client, {")).length === 1],
   ];
   const bad = cases.filter(([, v]) => !v);
   if (bad.length) { console.error(`${LABEL} selftest FAIL: ${bad.map(([n]) => n).join(", ")}`); process.exit(1); }

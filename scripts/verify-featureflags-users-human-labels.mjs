@@ -18,7 +18,9 @@ const required = {
   service: [/AS user_label/, /AS company_label/, /LEFT JOIN identity\.users u ON u\.id = o\.user_uuid/, /LEFT JOIN org\.companies c ON c\.id = o\.operating_company_id/],
   client: [/user_label: string \| null/, /company_label: string \| null/],
   manager: [/entityLabel\(override\.user_label, override\.user_uuid, "User"\)/, /entityLabel\(override\.company_label, override\.operating_company_id, "Tenant"\)/],
-  users: [/entityLabel\(null,\s*probeJobId,\s*"Job"\)/],
+  // LEAD 443.187 — REPOINTED, same rule (no raw / truncated id shown to the operator): 1c6a964284 (LST-F407-B, "10
+  // truncated-uuid labels") replaced the job id with the words "Probe job" + its status — the id is not shown at all.
+  users: [/Probe job\{" "\}/],
 };
 
 function assertAll(srcs) {
@@ -28,6 +30,7 @@ function assertAll(srcs) {
   }
   for (const [key, src] of Object.entries(srcs)) {
     if (/user_uuid\.slice\(0,\s*8\)/.test(src) || /operating_company_id\?\.slice\(0,\s*8\)/.test(src) || /probeJobId\.slice\(0,\s*8\)/.test(src)) problems.push(`${FILES[key]}: still UUID-slices`);
+    if (key === "users" && /\{\s*probeJobId\s*\}/.test(src)) problems.push(`${FILES[key]}: renders the raw probe job id`);
   }
   return problems;
 }
@@ -45,7 +48,8 @@ if (SELFTEST) {
     ["client", "company_label: string | null", "company_label?: string | null"],
     ["manager", 'entityLabel(override.user_label, override.user_uuid, "User")', 'entityLabel(null, override.user_uuid, "User")'],
     ["manager", 'entityLabel(override.company_label, override.operating_company_id, "Tenant")', 'entityLabel(null, override.operating_company_id, "Tenant")'],
-    ["users", 'entityLabel(null, probeJobId, "Job")', "probeJobId.slice(0, 8)"],
+    ["users", 'Probe job{" "}', 'Job {probeJobId.slice(0, 8)}{" "}'],
+    ["users", 'Probe job{" "}', 'Probe job {probeJobId}{" "}'],
   ];
   for (const [key, from, to] of mutations) {
     if (!srcs[key].includes(from)) { console.error(`${LABEL} SELFTEST FAILED: mutation anchor missing: ${key} ${from}`); process.exit(1); }

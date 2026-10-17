@@ -8,7 +8,7 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { DuplicateDocumentNumberError, nextPaymentDisplayId, resolvePaymentDisplayId } from "./display-id.js";
 import { duplicateDocumentNumberBody, parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
-import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { emitAccountingSpineEvent, type AccountingSpineEvent } from "./accounting-spine-emit.js";
 import { requireVoidCancelExecutorWired, canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
@@ -285,6 +285,187 @@ export async function insertPaymentRowInClientTx(client: { query: (sql: string, 
   return res.rows[0] as { id: string; display_id: string; amount_unapplied_cents: number } | undefined;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PaymentEngineClient = { query: (sql: string, values?: unknown[]) => Promise<any> };
+
+/** Lead 03:22Z — a refused invoice application aborts the payment's transaction (nothing is committed). */
+export class PaymentApplicationRefusedError extends Error {
+  constructor(readonly code: 400 | 404 | 409, readonly error: string) {
+    super(error);
+    this.name = "PaymentApplicationRefusedError";
+  }
+}
+
+/**
+ * 443.182 C step 2 — the ONE payment_applications writer (invoice or bill target). The ON CONFLICT merge is the shape the
+ * apply service always wrote; on a brand-new payment (the two create routes) no row exists yet and duplicate targets are
+ * refused before this is reached, so the merge never fires there and the inserted row is the same as before.
+ */
+export async function insertPaymentApplicationRowInClientTx(
+  client: PaymentEngineClient,
+  row: { operating_company_id: string; payment_id: string; target_kind: "invoice" | "bill"; target_id: string; amount_cents: number; user_id: string }
+) {
+  const res = await client.query(
+    `
+      INSERT INTO accounting.payment_applications (
+        operating_company_id,
+        payment_id,
+        invoice_id,
+        target_kind,
+        target_id,
+        amount_cents,
+        amount_applied,
+        applied_by_user_id,
+        applied_by_user_uuid
+      ) VALUES ($1::uuid, $2::uuid, ${row.target_kind === "invoice" ? "$3::uuid" : "NULL"}, $4, $3::uuid, $5, $6::numeric(18,2), $7::uuid, $7::uuid)
+      ON CONFLICT (payment_id, target_kind, target_id)
+      DO UPDATE SET
+        amount_cents = accounting.payment_applications.amount_cents + EXCLUDED.amount_cents,
+        amount_applied = accounting.payment_applications.amount_applied + EXCLUDED.amount_applied
+      RETURNING id::text
+    `,
+    [row.operating_company_id, row.payment_id, row.target_id, row.target_kind, row.amount_cents, row.amount_cents / 100, row.user_id]
+  );
+  return (res.rows[0] as { id: string } | undefined)?.id ?? null;
+}
+
+/**
+ * 443.182 C step 2 — the ONE customer-payment GL post (or its append-only skip audit when the per-entity flag is OFF), on
+ * the caller's client so the payment, its applications and its JE commit or roll back together. Returns whether it posted.
+ */
+export async function postCustomerPaymentOrRecordSkipInClientTx(
+  client: PaymentEngineClient,
+  input: { operating_company_id: string; payment_id: string; user_id: string; skip_context: Record<string, unknown> }
+) {
+  const enabled = await isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", {
+    operating_company_id: input.operating_company_id,
+    user_uuid: input.user_id,
+  });
+  if (enabled) {
+    await postSourceTransactionInClientTx(
+      client,
+      {
+        operating_company_id: input.operating_company_id,
+        source_transaction_type: "customer_payment",
+        source_transaction_id: input.payment_id,
+        posting_purpose: "initial_post",
+      },
+      { userId: input.user_id }
+    );
+  } else {
+    await recordPostingFlagSkip(client, input.user_id, {
+      flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
+      postingDomain: "customer_payment",
+      operatingCompanyId: input.operating_company_id,
+      context: input.skip_context,
+    });
+  }
+  return enabled;
+}
+
+/** A payment document as the create forms hand it to the engine. */
+export type CustomerPaymentDocument = {
+  row: Omit<PaymentRowInsert, "display_id">;
+  /** Operator-typed number (QBO custom document number) — the engine resolves / numbers it. */
+  requested_display_id?: string;
+  /** Invoice applications, in the order the form sent them. */
+  applications: Array<{ invoice_id: string; amount_cents: number }>;
+  /** The form's own per-invoice check (run before each application row is written); returns an error code or null. */
+  validate_application: (application: { invoice_id: string; amount_cents: number }) => Promise<{ code: 400 | 404 | 409; error: string } | null>;
+  /** Form-specific step right after the payment row exists (e.g. draft attachments). */
+  after_payment_insert?: (paymentId: string) => Promise<void>;
+  /** Form-specific step right before the audit row (e.g. the QBO outbox). */
+  before_audit?: (paymentId: string) => Promise<void>;
+  /** Extra fields for the flag-OFF skip audit (the engine adds payment_id). */
+  skip_context: Record<string, unknown>;
+  audit: { action: string; module: string };
+  spine: { event_type: AccountingSpineEvent; entity_type: string };
+};
+
+/**
+ * 443.182 C step 2 — the ONE engine that records a customer payment: numbers it, writes the payment row, writes its
+ * invoice applications, posts its JE (or the skip audit), audits it, emits its spine event — in that order, on the
+ * caller's client. Both create forms (Receive Payment and the customer's Record Payment) pass their document here.
+ */
+export async function recordCustomerPaymentInClientTx(client: PaymentEngineClient, doc: CustomerPaymentDocument) {
+  const oci = doc.row.operating_company_id;
+  const displayId = await resolvePaymentDisplayId(
+    client,
+    oci,
+    new Date(`${doc.row.payment_date}T00:00:00.000Z`),
+    doc.requested_display_id
+  );
+  const payment = await insertPaymentRowInClientTx(client, { ...doc.row, display_id: displayId } as PaymentRowInsert);
+  if (!payment?.id) return { code: 500 as const, error: "payment_create_failed" };
+  if (doc.after_payment_insert) await doc.after_payment_insert(payment.id);
+
+  let applicationsCount = 0;
+  for (const application of doc.applications) {
+    const refused = await doc.validate_application(application);
+    // Lead 03:22Z — atomic: a refused application rolls the WHOLE payment back (row, number, earlier applications,
+    // attachments). Thrown, not returned, so the caller's transaction aborts; the route answers with the same status/body.
+    if (refused) throw new PaymentApplicationRefusedError(refused.code, refused.error);
+    await insertPaymentApplicationRowInClientTx(client, {
+      operating_company_id: oci,
+      payment_id: payment.id,
+      target_kind: "invoice",
+      target_id: application.invoice_id,
+      amount_cents: application.amount_cents,
+      user_id: doc.row.created_by_user_id,
+    });
+    applicationsCount += 1;
+  }
+
+  await postCustomerPaymentOrRecordSkipInClientTx(client, {
+    operating_company_id: oci,
+    payment_id: payment.id,
+    user_id: doc.row.created_by_user_id,
+    skip_context: { payment_id: payment.id, ...doc.skip_context },
+  });
+
+  const refreshedRes = await client.query(`SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 LIMIT 1`, [payment.id]);
+  const refreshed = refreshedRes.rows[0] ?? { amount_unapplied_cents: 0 };
+
+  if (doc.before_audit) await doc.before_audit(payment.id);
+
+  await appendCrudAudit(
+    client,
+    doc.row.created_by_user_id,
+    doc.audit.action,
+    {
+      resource_type: "accounting.payments",
+      resource_id: payment.id,
+      operating_company_id: oci,
+      customer_id: doc.row.customer_id,
+      display_id: payment.display_id,
+      applications_count: applicationsCount,
+    },
+    "info",
+    doc.audit.module
+  );
+
+  // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: in the payment's own creation transaction, awaited, so the write
+  // and its spine event can never diverge.
+  await emitAccountingSpineEvent(client, {
+    operating_company_id: oci,
+    actor_user_id: String(doc.row.created_by_user_id),
+    event_type: doc.spine.event_type,
+    entity_id: payment.id,
+    entity_type: doc.spine.entity_type,
+    source_table: "accounting.payments",
+  });
+
+  return {
+    code: 201 as const,
+    data: {
+      id: payment.id,
+      display_id: payment.display_id,
+      amount_unapplied_cents: Number(refreshed.amount_unapplied_cents ?? 0),
+      applications_count: applicationsCount,
+    },
+  };
+}
+
 export async function registerPaymentsRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -522,182 +703,64 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         if (!depositedToAccountId) return { code: 400 as const, error: "operating_bank_unmapped" };
       }
 
-      const displayId = await resolvePaymentDisplayId(
-        client,
-        query.data.operating_company_id,
-        new Date(`${body.data.payment_date}T00:00:00.000Z`),
-        body.data.display_id
-      );
-
-      // 443.182 C — the one payment row writer (above); same columns as before (no source kind / bank line on this path).
+      // 443.182 C step 2 — the one payment engine numbers the payment, writes it and its applications, posts its JE (or the
+      // skip audit), audits and emits its spine event. This form keeps only its own checks and its draft-attachment step.
       // ACCT-F353 — this route never wrote the sample tag at all; posting-engine resolves it from this SOURCE row. Only an
       // explicit true marks sample; omitting it keeps the column's false default.
-      const payment = await insertPaymentRowInClientTx(client, {
-        operating_company_id: query.data.operating_company_id,
-        customer_id: body.data.customer_id,
-        display_id: displayId,
-        payment_method: body.data.payment_method,
-        payment_date: body.data.payment_date,
-        reference: body.data.reference ?? null,
-        amount_cents: body.data.amount_cents,
-        deposited_to_account_id: depositedToAccountId,
-        notes: body.data.notes ?? null,
-        created_by_user_id: user.uuid,
-        is_sample_data: body.data.is_sample_data === true,
-      });
-      if (!payment?.id) return { code: 500 as const, error: "payment_create_failed" };
-      // Option B inc 2: link create-time draft attachments (check/ACH/wire confirmations) to the real
-      // payment id, atomically in this txn.
-      await reassignDraftAttachments(client, {
-        operatingCompanyId: query.data.operating_company_id,
-        entityType: "payment",
-        draftId: body.data.attachment_draft_id,
-        newId: payment.id,
-      });
-
-      let applicationsCount = 0;
-      for (const applyRow of body.data.apply_to ?? []) {
-        const invoiceRes = await client.query(
-          `
-            SELECT id, amount_open_cents, status
-            FROM accounting.invoices
-            WHERE id = $1
-              AND operating_company_id = $2::uuid
-              AND customer_id = $3
-            LIMIT 1
-          `,
-          [applyRow.invoice_id, query.data.operating_company_id, body.data.customer_id]
-        );
-        const invoice = invoiceRes.rows[0] as { id: string; amount_open_cents: number; status: string } | null;
-        if (!invoice) return { code: 404 as const, error: "invoice_not_found_for_payment_customer" };
-        if (!["sent", "partial"].includes(String(invoice.status))) return { code: 409 as const, error: "invoice_not_open_for_payment" };
-        if (Number(applyRow.amount_cents) > Number(invoice.amount_open_cents ?? 0)) return { code: 400 as const, error: "apply_amount_exceeds_invoice_open" };
-
-        await client.query(
-          `
-            INSERT INTO accounting.payment_applications (
-              operating_company_id,
-              payment_id,
-              invoice_id,
-              target_kind,
-              target_id,
-              amount_cents,
-              amount_applied,
-              applied_by_user_id,
-              applied_by_user_uuid
-            ) VALUES ($1,$2,$3,'invoice',$3,$4,$5,$6,$6)
-          `,
-          [
-            query.data.operating_company_id,
-            payment.id,
-            applyRow.invoice_id,
-            applyRow.amount_cents,
-            applyRow.amount_cents / 100,
-            user.uuid,
-          ]
-        );
-        applicationsCount += 1;
-      }
-
-      // CLS-SUBLEDGER-GL-DARK / ACCT-F150 instance 2 — POST THE RECEIPT.
-      //
-      // Second live instance of the same class, on a DIFFERENT write path. customer-payments.routes.ts
-      // was the one found from a live $250 USMCA payment; this route has the identical shape — it
-      // INSERTs accounting.payments and accounting.payment_applications in one transaction, so A/R
-      // moves here too, and it never invoked the poster. Both routes were dark for the same reason:
-      // apply.service.ts was hardened for exactly this and the ROUTES were never wired to it.
-      //
-      // Same gate, same skip-audit, same poster as the sibling route — no new GL math (locked rule:
-      // reuse the existing poster). Flag OFF still writes the payment and applications and records the
-      // skip append-only, so a skip can never read as a silent success.
-      //
-      // ACCT-F5705: same fix as the sibling customer-payments.routes.ts route — the
-      // `applicationsCount > 0` gate blocked the post-or-skip-audit pair entirely for a zero-
-      // application payment (customer credit / unapplied cash), which buildCustomerPaymentLines never
-      // needed gated (it posts purely from accounting.payments.amount_cents). Removed to match
-      // apply.service.ts's ungated reference shape.
-      const customerPaymentPostingEnabled = await isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", {
-        operating_company_id: query.data.operating_company_id,
-        user_uuid: user.uuid,
-      });
-      if (customerPaymentPostingEnabled) {
-        // ATOMICITY — this MUST be the in-client-tx poster, not postSourceTransaction().
-        // withCompanyScope -> withCurrentUser does pool.connect() + BEGIN ... COMMIT, so this callback
-        // runs inside an open transaction and the payment row above is NOT yet committed.
-        // postSourceTransaction() takes its own pool connection and its own transaction, so from there
-        // the payment does not exist yet — the poster would find nothing and the receipt would stay
-        // dark, which is the very defect this block fixes. Passing the caller's client also makes the
-        // payment, its applications and its journal entry commit or roll back as ONE unit: there is no
-        // window in which A/R has moved and the GL has not.
-        await postSourceTransactionInClientTx(
-          client,
-          {
-            operating_company_id: query.data.operating_company_id,
-            source_transaction_type: "customer_payment",
-            source_transaction_id: payment.id,
-            posting_purpose: "initial_post",
-          },
-          { userId: user.uuid }
-        );
-      } else {
-        await recordPostingFlagSkip(client, user.uuid, {
-          flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
-          postingDomain: "customer_payment",
-          operatingCompanyId: query.data.operating_company_id,
-          context: { payment_id: payment.id, route: "POST /api/v1/accounting/payments" },
-        });
-      }
-
-      const refreshedRes = await client.query(
-        `SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 LIMIT 1`,
-        [payment.id]
-      );
-      const refreshed = refreshedRes.rows[0] ?? { amount_unapplied_cents: 0 };
-
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.payment_recorded",
-        {
-          resource_type: "accounting.payments",
-          resource_id: payment.id,
+      return recordCustomerPaymentInClientTx(client, {
+        row: {
           operating_company_id: query.data.operating_company_id,
           customer_id: body.data.customer_id,
-          display_id: payment.display_id,
-          applications_count: applicationsCount,
+          payment_method: body.data.payment_method,
+          payment_date: body.data.payment_date,
+          reference: body.data.reference ?? null,
+          amount_cents: body.data.amount_cents,
+          deposited_to_account_id: depositedToAccountId,
+          notes: body.data.notes ?? null,
+          created_by_user_id: user.uuid,
+          is_sample_data: body.data.is_sample_data === true,
         },
-        "info",
-        "P3-T11.20.3-PAYMENT-RECORDING"
-      );
-
-      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in a SEPARATE
-      // withCompanyScope transaction opened AFTER this one had already committed, with a bare
-      // .catch(warn) — a real emit failure was silently swallowed (the payment exists, the audit
-      // trail doesn't). Moved into the payment's own creation transaction, awaited, so the write and
-      // its spine event can never diverge.
-      await emitAccountingSpineEvent(client, {
-        operating_company_id: query.data.operating_company_id,
-        actor_user_id: String(user.uuid),
-        event_type: "payment.created",
-        entity_id: payment.id,
-        entity_type: "payment",
-        source_table: "accounting.payments",
+        requested_display_id: body.data.display_id,
+        applications: (body.data.apply_to ?? []).map((a) => ({ invoice_id: a.invoice_id, amount_cents: a.amount_cents })),
+        // Option B inc 2: link create-time draft attachments (check/ACH/wire confirmations) to the real payment id,
+        // atomically in this txn.
+        after_payment_insert: (paymentId) =>
+          reassignDraftAttachments(client, {
+            operatingCompanyId: query.data.operating_company_id,
+            entityType: "payment",
+            draftId: body.data.attachment_draft_id,
+            newId: paymentId,
+          }).then(() => undefined),
+        validate_application: async (applyRow) => {
+          const invoiceRes = await client.query(
+            `
+              SELECT id, amount_open_cents, status
+              FROM accounting.invoices
+              WHERE id = $1
+                AND operating_company_id = $2::uuid
+                AND customer_id = $3
+              LIMIT 1
+            `,
+            [applyRow.invoice_id, query.data.operating_company_id, body.data.customer_id]
+          );
+          const invoice = invoiceRes.rows[0] as { id: string; amount_open_cents: number; status: string } | null;
+          if (!invoice) return { code: 404 as const, error: "invoice_not_found_for_payment_customer" };
+          if (!["sent", "partial"].includes(String(invoice.status))) return { code: 409 as const, error: "invoice_not_open_for_payment" };
+          if (Number(applyRow.amount_cents) > Number(invoice.amount_open_cents ?? 0)) return { code: 400 as const, error: "apply_amount_exceeds_invoice_open" };
+          return null;
+        },
+        // CLS-SUBLEDGER-GL-DARK / ACCT-F150 instance 2 + ACCT-F5705 — every payment posts (or is skip-audited), ungated
+        // by application count; the engine does it on this client so payment, applications and JE are one unit.
+        skip_context: { route: "POST /api/v1/accounting/payments" },
+        audit: { action: "accounting.payment_recorded", module: "P3-T11.20.3-PAYMENT-RECORDING" },
+        spine: { event_type: "payment.created", entity_type: "payment" },
       });
-
-      return {
-        code: 201 as const,
-        data: {
-          id: payment.id,
-          display_id: payment.display_id,
-          amount_unapplied_cents: Number(refreshed.amount_unapplied_cents ?? 0),
-          applications_count: applicationsCount,
-        },
-      };
     });
     } catch (error) {
       if (error instanceof DuplicateDocumentNumberError) {
         return reply.code(409).send(duplicateDocumentNumberBody(error));
       }
+      if (error instanceof PaymentApplicationRefusedError) return reply.code(error.code).send({ error: error.error });
       throw error;
     }
 

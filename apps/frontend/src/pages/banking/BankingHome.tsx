@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../../lib/api-error-message";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -456,7 +457,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       void queryClient.invalidateQueries({ queryKey: ["banking", "tiles", companyId] });
       void queryClient.invalidateQueries({ queryKey: ["banking", "accounts", companyId] });
     } catch (err) {
-      pushToast(`Failed to create Petty Cash account: ${(err as Error)?.message ?? "Unknown error"}`, "error");
+      pushToast(userFacingApiError(err, "Failed to create Petty Cash account"), "error");
     }
   };
   // ROUND 304 / C-64 — Statement Import, Plaid Connections, + Create Account fold into + New
