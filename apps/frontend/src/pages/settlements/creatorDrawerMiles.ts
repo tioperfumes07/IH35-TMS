@@ -2,10 +2,15 @@
  * LEAD 443.192 (14:05Z) — OWNER LAW: "pay miles (Short) are NEVER filled from Google or historical (Google/historical are for
  * estimates, not pay miles); preview shows short only; refuse without short = CONFIRMED correct."
  *
+ * LEAD RULING 15:10Z #2 — "Empty (deadhead) miles: Settlement Creator = the signed document's empty miles ONLY (document
+ * decides pay); never auto-filled from the engine; blank when the document has none." (Book Load's own Google estimate at
+ * booking stays allowed — that is the live-booking path, not the Creator.)
+ *
  * The Settlement Creator drawer's two miles rules, kept here so they are one pure, tested place:
- *   1. fillEstimateMilesFromRecommendations — an EMPTY Practical ("Loaded mi (co)") / Empty field may take the mileage
- *      engine's recommended estimate (Historical / Google). The Short (pay) field is NEVER written by it: Short miles come
- *      only from the settlement document or the operator's typing.
+ *   1. fillEstimateMilesFromRecommendations — an EMPTY Practical ("Loaded mi (co)") field may take the mileage engine's
+ *      recommended estimate (Historical / Google). It NEVER writes Short (pay) miles nor Empty (deadhead) miles: both are
+ *      pay figures and come only from the signed settlement document or the operator's typing (Empty stays blank when the
+ *      document prints none).
  *   2. creatorDrawerPayMiles — the live preview / totals price loaded pay on SHORT miles only, never loaded / practical
  *      miles. No short miles = null (the drawer shows "—" and the backend preview refuses: short_miles_required).
  * Mirrors the backend rule in apps/backend/src/driver-finance/settlement-creator-empty-pay.ts (creatorPayMiles).
@@ -28,17 +33,13 @@ function recommendedEstimate(rec: MilesRecommendations, f: MilesField): number |
   return null;
 }
 
-/** Fill only EMPTY estimate fields (Practical, Empty) from the engine. Short (pay) miles are never filled. Same row when unchanged. */
+/** Fill only an EMPTY Practical estimate from the engine. Short (pay) and Empty (deadhead pay) miles are never filled. Same row when unchanged. */
 export function fillEstimateMilesFromRecommendations<T extends MilesRow>(row: T, rec: MilesRecommendations | null | undefined): T {
   if (!rec) return row;
   let out = row;
   const practical = recommendedEstimate(rec, "practical");
   if (practical != null && !(out.loaded_miles != null && out.loaded_miles > 0)) {
     out = { ...out, loaded_miles: practical, line_haul_miles: practical };
-  }
-  const empty = recommendedEstimate(rec, "empty");
-  if (empty != null && !(out.empty_miles != null && out.empty_miles > 0)) {
-    out = { ...out, empty_miles: empty };
   }
   return out;
 }

@@ -155,7 +155,7 @@ describeIntegration("bookLoadOnClient books inside the CALLER's transaction (ROU
     try {
       const backfill = await bookLoadOnClient(db, dispatchInput(), { source: "historical_backfill" });
       expect(backfill.result.kind, `expected ok, got: ${JSON.stringify(backfill.result)}`).toBe("ok");
-      expect(deadhead.fill, "the Settlement Creator fills its own deadhead after stamping stops").not.toHaveBeenCalled();
+      expect(deadhead.fill, "historical_backfill (the Settlement Creator) never fills deadhead from the engine — document only (Lead 15:10Z #2)").not.toHaveBeenCalled();
     } finally {
       await db.query("ROLLBACK");
     }

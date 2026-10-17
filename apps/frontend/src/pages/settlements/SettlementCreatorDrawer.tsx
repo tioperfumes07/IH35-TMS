@@ -972,9 +972,10 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     }),
   });
 
-  // An ESTIMATE field the settlement left empty (Practical / Empty) takes the engine's recommended value (Historical when its
+  // The ESTIMATE field the settlement left empty (Practical) takes the engine's recommended value (Historical when its
   // confidence allows autofill, else Google). LEAD 443.192 (14:05Z) owner law: Short (pay) miles are NEVER filled from Google
-  // or Historical — they come only from the settlement document or the operator. A typed value is never overwritten.
+  // or Historical. LEAD RULING 15:10Z #2: Empty (deadhead) miles are the signed document's ONLY — never auto-filled from the
+  // engine, blank when the document has none. A typed value is never overwritten.
   useEffect(() => {
     setLoads((prev) => {
       let changed = false;
@@ -1871,15 +1872,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                             return next;
                           });
                         }}
-                        title={
-                          !unitId
-                            ? "Pick a unit — empty miles fill from that truck's last delivery → this pickup"
-                            : !load.pickup_city || !load.pickup_state
-                              ? "Set pickup city + state — empty miles use this truck's last delivery → pickup"
-                              : milesRecFetching
-                                ? "Looking up this unit's last delivery…"
-                                : "Settlement's empty miles (Document) — the engine's deadhead from this truck's last stop is in Load miles below"
-                        }
+                        title="Empty (deadhead) miles from the signed settlement document only — never filled from Google / Historical; leave blank when the document has none"
+                        placeholder="—"
                         data-testid={`sc-load-empty-miles-${idx}`}
                         ariaLabel="Empty miles"
                       />
