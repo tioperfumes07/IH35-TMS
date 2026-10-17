@@ -24,6 +24,26 @@ function assertIncludes(src, needle, where) {
   if (!src.includes(needle)) throw new Error(`${where}: missing ${JSON.stringify(needle)}`);
 }
 
+export function registerColumnProblems(page) {
+  const problems = [];
+  for (const [key, label] of [["memo", "Memo"], ["type", "Type"], ["split_account", "Account"], ["location", "Location"]]) {
+    const at = page.search(new RegExp(`key: "${key}",\\s*label: "${label}"`));
+    if (at < 0) { problems.push(`column ${key} ("${label}") missing`); continue; }
+    const next = page.indexOf("key: ", at + 5);
+    const def = page.slice(at, next < 0 ? undefined : next);
+    if (/defaultHidden:\s*true/.test(def)) problems.push(`column ${key} is defaultHidden — ADDITIVE-ONLY (b6ef72cea2): shown by default, hidden from the gear`);
+  }
+  return problems;
+}
+
+function assertRegisterColumnsShown(page) {
+  const problems = registerColumnProblems(page);
+  if (problems.length) throw new Error(`${PAGE}: ${problems.join("; ")}`);
+  // Self-check of the rule on the real page: hiding Memo by default must be caught.
+  const planted = page.replace(/(key: "memo",\s*label: "Memo",)/, '$1 defaultHidden: true,');
+  if (planted === page || registerColumnProblems(planted).length === 0) throw new Error(`${PAGE}: the shown-by-default check could not catch a planted defaultHidden (rule drifted)`);
+}
+
 function main() {
   const page = read(PAGE);
   const service = read(SERVICE);
@@ -111,13 +131,13 @@ function main() {
   assertIncludes(page, "statusFilter", PAGE);
   assertIncludes(page, "filteredRows", PAGE);
   assertIncludes(page, "printList", PAGE);
-  // BANK-F91053 — ORDERS §B-1 gear (column chooser) beside Export/Print; Memo/Type/Account/Location
-  // stay defaultHidden so the ParityTable gear has real columns to toggle.
+  // BANK-F91053 — ORDERS §B-1 gear (column chooser) beside Export/Print, with Memo/Type/Account/Location as gear columns.
+  // Heavy CI peel, repointed (same intent, stricter): b6ef72cea2 (443.102, ADDITIVE-ONLY LAW docs/LAW.md L379) made these
+  // four SHOWN by default — they had been added defaultHidden by BANK-F1001 (#23713) with no OWNER-REMOVE wording, which
+  // the shrink-only ratchet counts as a removal; the owner hides any of them from the gear. So: the gear stays, the four
+  // columns exist, and none of them is hidden by default.
   assertIncludes(page, 'gearButtonTestId="b1-account-register-gear"', PAGE);
-  assertIncludes(page, 'defaultHidden: true', PAGE);
-  assertIncludes(page, 'key: "memo"', PAGE);
-  assertIncludes(page, 'key: "type"', PAGE);
-  assertIncludes(page, 'key: "split_account"', PAGE);
+  assertRegisterColumnsShown(page);
   // BANK-F91054 — ORDERS §B-1 print / export / gear trio + Bank transactions / Reconcile hops named.
   assertIncludes(page, 'data-testid="b1-account-register-export"', PAGE);
   assertIncludes(page, 'data-testid="b1-account-register-print"', PAGE);

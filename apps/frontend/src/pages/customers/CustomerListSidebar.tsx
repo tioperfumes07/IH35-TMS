@@ -134,6 +134,7 @@ export function CustomerListSidebar({
           pre-sorted and pre-paged by this sidebar, so the built-in pager is hidden (SidebarPagination owns it). */}
       <div className={MASTER_DETAIL.listScrollClass} data-c05-list-scroll="true">
         <ParityTable<Customer>
+          title="Customers"
           tableTestId="customers-master-list"
           storageKey="ih35.customers.master-list.v1"
           rows={pagedCustomers}

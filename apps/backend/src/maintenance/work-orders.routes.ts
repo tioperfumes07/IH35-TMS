@@ -8,6 +8,7 @@ import { withCurrentUser } from "../auth/db.js";
 import {
   allocateInHouseFromWO,
   assertWorkOrderCategoryLineItem,
+  assertWorkOrderCostAccount,
   assertWorkOrderLineItem,
   autoCreateBillFromWO,
   autoCreateExpenseFromWO,
@@ -1926,6 +1927,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         const itemId = await assertWorkOrderLineItem(client as never, companyId, parsed.data.item_id);
         // ACCT-F4431382 (DEGH-03): a line that names its category posts to it — its item must post to the same account.
         await assertWorkOrderCategoryLineItem(client as never, companyId, itemId, parsed.data.expense_category_uuid);
+        // LEAD RULING 2026-10-17 #1 (ACCT-F92 stands): a WO cost line posts to a cost account only.
+        await assertWorkOrderCostAccount(client as never, companyId, parsed.data.expense_category_uuid);
         const res = await client.query(
           `
             INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost, item_id, expense_category_uuid)

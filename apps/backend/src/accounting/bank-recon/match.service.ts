@@ -1697,7 +1697,8 @@ export async function findCandidates(input: {
     // An explicit filter (dates, search, payee, kinds, amount) is the owner searching himself — no floor there.
     const cardRegister = (await client.query<{ card: boolean }>(
       `SELECT COALESCE(ca.account_subtype, '') = 'CreditCard' AS card
-         FROM banking.bank_accounts ba LEFT JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id
+         FROM banking.bank_accounts ba
+         LEFT JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id AND ca.operating_company_id = ba.operating_company_id
         WHERE ba.id = $1::uuid AND ba.operating_company_id = $2::uuid`,
       [txn.bank_account_id, input.operating_company_id]
     )).rows[0]?.card === true;

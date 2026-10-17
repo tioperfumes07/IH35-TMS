@@ -29,8 +29,9 @@ import { WizardReclassifyPanel } from "./WizardReclassifyPanel";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
 import { formatFuelStopLocationLabel } from "../../lib/fuelStopLocationLabel";
 import { peekNextLoadNumber, getDriverPayCard } from "../../api/dispatch";
-import { postMilesRecommendations, type MilesField, type MilesRecommendations } from "../../api/milesRecommendations";
+import { postMilesRecommendations, type MilesRecommendations } from "../../api/milesRecommendations";
 import { CreatorMilesChoicePanel } from "./CreatorMilesChoicePanel";
+import { creatorDrawerPayMiles, fillEstimateMilesFromRecommendations } from "./creatorDrawerMiles";
 import {
   previewSettlementCreator,
   postSettlementCreator,
@@ -59,6 +60,7 @@ function DecimalNumberInput({
   "data-testid": dataTestId,
   ariaLabel,
   allowZero = true,
+  placeholder,
 }: {
   value: number | null | undefined;
   onChange: (n: number | null) => void;
@@ -67,6 +69,7 @@ function DecimalNumberInput({
   "data-testid"?: string;
   ariaLabel?: string;
   allowZero?: boolean;
+  placeholder?: string;
 }) {
   const display =
     value == null || Number.isNaN(value) || (!allowZero && value === 0) ? "" : String(value);
@@ -81,6 +84,7 @@ function DecimalNumberInput({
       inputMode="decimal"
       value={text}
       title={title}
+      placeholder={placeholder}
       aria-label={ariaLabel}
       data-testid={dataTestId}
       onFocus={() => {
@@ -968,37 +972,17 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     }),
   });
 
-  // A field the settlement left empty takes the engine's recommended value (Historical when its confidence allows autofill,
-  // else Google) — the same default as the Load screen. A typed value is never overwritten.
+  // The ESTIMATE field the settlement left empty (Practical) takes the engine's recommended value (Historical when its
+  // confidence allows autofill, else Google). LEAD 443.192 (14:05Z) owner law: Short (pay) miles are NEVER filled from Google
+  // or Historical. LEAD RULING 15:10Z #2: Empty (deadhead) miles are the signed document's ONLY — never auto-filled from the
+  // engine, blank when the document has none. A typed value is never overwritten.
   useEffect(() => {
     setLoads((prev) => {
       let changed = false;
       const next = prev.map((cur, idx) => {
         if (milesTouchedRef.current[idx]) return cur;
-        const rec = milesRecQueries[idx]?.data as MilesRecommendations | undefined;
-        if (!rec) return cur;
-        const pick = (f: MilesField): number | null => {
-          const r = rec.fields[f];
-          if (r.default_source === "historical") return r.historical?.value ?? null;
-          if (r.default_source === "google") return r.google?.value ?? null;
-          return null;
-        };
-        let row = cur;
-        const practical = pick("practical");
-        if (practical != null && !(row.loaded_miles != null && row.loaded_miles > 0)) {
-          row = { ...row, loaded_miles: practical, line_haul_miles: practical };
-          changed = true;
-        }
-        const short = pick("short");
-        if (short != null && !(row.miles_shortest != null && row.miles_shortest > 0)) {
-          row = { ...row, miles_shortest: short };
-          changed = true;
-        }
-        const empty = pick("empty");
-        if (empty != null && !(row.empty_miles != null && row.empty_miles > 0)) {
-          row = { ...row, empty_miles: empty };
-          changed = true;
-        }
+        const row = fillEstimateMilesFromRecommendations(cur, milesRecQueries[idx]?.data as MilesRecommendations | undefined);
+        if (row !== cur) changed = true;
         return row;
       });
       return changed ? next : prev;
@@ -1185,9 +1169,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     const accessorial = (l.accessorials ?? []).reduce((a, row) => a + Math.max(0, Number(row.amount_cents ?? 0)), 0);
     return s + revenue + accessorial;
   }, 0);
-  /** Company-side driver salary (mileage pay) — short miles × rate + empty × empty rate. */
+  /** Company-side driver salary (mileage pay) — SHORT miles × rate + empty × empty rate. 443.192: never loaded / practical miles. */
   const driverSalaryCents = loads.reduce((s, l) => {
-    const payMiles = Number(l.miles_shortest ?? l.loaded_miles ?? 0);
+    const payMiles = creatorDrawerPayMiles(l) ?? 0;
     const rate = Number(l.line_haul_rate_cents ?? 0);
     const loadedPay = Math.round(payMiles * rate);
     const emptyMi = Number(l.empty_miles ?? 0);
@@ -1197,6 +1181,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     const emptyPay = Math.round(emptyMi * emptyRate);
     return s + loadedPay + emptyPay;
   }, 0);
+  /** 443.192 — a load without SHORT miles has no pay miles: the salary shows "—" (the preview refuses: short_miles_required). */
+  const missingShortPayMiles = loads.some((l) => creatorDrawerPayMiles(l) == null);
+  const driverSalaryDisplayCents = missingShortPayMiles ? null : driverSalaryCents;
   const compExpSubtotal = companyExpenses.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
   const companySubtotal = fuelSubtotal + compExpSubtotal;
   const drvReimbSubtotal = drvReimbursements.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
@@ -1865,7 +1852,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                             return next;
                           });
                         }}
-                        title="Driver pay miles (short) — company practical miles stay on Loaded mi"
+                        title="Driver pay miles (short) — from the settlement only, never Google / Historical; company practical miles stay on Loaded mi"
+                        placeholder="—"
                         data-testid={`sc-load-short-miles-${idx}`}
                         ariaLabel="Driver short miles"
                       />
@@ -1884,15 +1872,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                             return next;
                           });
                         }}
-                        title={
-                          !unitId
-                            ? "Pick a unit — empty miles fill from that truck's last delivery → this pickup"
-                            : !load.pickup_city || !load.pickup_state
-                              ? "Set pickup city + state — empty miles use this truck's last delivery → pickup"
-                              : milesRecFetching
-                                ? "Looking up this unit's last delivery…"
-                                : "Settlement's empty miles (Document) — the engine's deadhead from this truck's last stop is in Load miles below"
-                        }
+                        title="Empty (deadhead) miles from the signed settlement document only — never filled from Google / Historical; leave blank when the document has none"
+                        placeholder="—"
                         data-testid={`sc-load-empty-miles-${idx}`}
                         ariaLabel="Empty miles"
                       />
@@ -2510,7 +2491,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   <div data-testid="sc-driver-salary">
                     <MoneyInput
                       className={moneyInputClass}
-                      valueCents={driverSalaryCents || null}
+                      valueCents={driverSalaryDisplayCents || null}
+                      placeholder={missingShortPayMiles ? "—" : undefined}
                       onChangeCents={() => undefined}
                       ariaLabel="Driver salary (short miles × rate)"
                       disabled
@@ -2540,7 +2522,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             </h2>
 
             {/* Driver pay miles (short) + empty + rate — editable; company practical miles stay on Company side. */}
-            <Section title="Loads carried from company" subtotalCents={driverSalaryCents}>
+            <Section title="Loads carried from company" subtotalCents={driverSalaryDisplayCents}>
               <p className="text-center text-xs text-[#6B7280]">
                 Short / empty miles + pay $/mi are editable here (driver short miles ≠ company practical)
               </p>
@@ -2570,7 +2552,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                           return next;
                         });
                       }}
-                      title="Driver pay miles (short) — edit here; company Loaded mi stays on Company Settlement"
+                      title="Driver pay miles (short) — edit here; never Google / Historical; company Loaded mi stays on Company Settlement"
+                      placeholder="—"
                       data-testid={`sc-drv-short-miles-${idx}`}
                       ariaLabel="Driver short miles"
                     />
@@ -3128,7 +3111,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   <div data-testid="sc-drv-salary-live">
                     <MoneyInput
                       className={moneyInputClass}
-                      valueCents={driverSalaryCents || null}
+                      valueCents={driverSalaryDisplayCents || null}
+                      placeholder={missingShortPayMiles ? "—" : undefined}
                       onChangeCents={() => undefined}
                       ariaLabel="Live driver salary"
                       disabled
@@ -3187,7 +3171,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               <TotalRow label="Invoice / line haul" cents={loadsSubtotal} />
               <TotalRow label="Fuel purchases" cents={fuelSubtotal} />
               <TotalRow label="Company expenses" cents={compExpSubtotal} />
-              <TotalRow label="Driver salary" cents={driverSalaryCents} />
+              <TotalRow label="Driver salary" cents={driverSalaryDisplayCents} />
               <TotalRow label="Company total" cents={companySubtotal} strong />
               {pdfCompanyExpenses != null ? (
                 <TotalRow
@@ -3198,7 +3182,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               ) : null}
             </div>
             <div>
-              <TotalRow label="Driver salary (pay)" cents={driverSalaryCents} />
+              <TotalRow label="Driver salary (pay)" cents={driverSalaryDisplayCents} />
               <TotalRow label="Driver reimbursements" cents={drvReimbSubtotal} />
               <TotalRow label="Additional pay" cents={addPaySubtotal} />
               <TotalRow label="Deductions" cents={dedSubtotal + adminFeeCents} />

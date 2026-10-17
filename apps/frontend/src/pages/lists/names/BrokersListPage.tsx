@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per broker (name / code / MC # / email / status) — a names directory, not a time series.
 import { useState } from "react";
 import { SelectCombobox } from "../../../components/Combobox";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";

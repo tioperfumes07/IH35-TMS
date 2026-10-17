@@ -11,15 +11,20 @@
  *   1. CreateBillInput has loadId field (bills.service.ts).
  *   2. CreateBillInput has vendorDocumentNumber field (bills.service.ts).
  *   3. createBillInClientTx stamps loadId via UPDATE-after-INSERT (before auto-derive).
- *   4. createExpenseInClientTx is exported from expenses.routes.ts.
- *   5. settlement-creator no longer throws expense_owed_bill_unavailable; calls createBillInClientTx.
+ *   4. createExpenseInClientTx is exported from the shared expense writer (expense-writer.service.ts).
+ *      443.130 #3 (c4dc73d5ba, #26691) moved it out of the HTTP route module expenses.routes.ts so a
+ *      service never imports a route module; expenses.routes.ts keeps a re-export for old importers.
+ *   5. settlement-creator no longer throws expense_owed_bill_unavailable; the owed company expense
+ *      becomes a bill through createBillInClientTx. 443.110 G4 (918edad7dd, #26624) moved that call into
+ *      settlement-creator-owed-bill.ts (writeCreatorOwedBill), which settlement-creator.service.ts calls.
  *   6. 443.12 CORRECTION: isAuthorizedZeroInvoice uses isLoadRevenueLineType (not just total_cents===0).
  */
 import { readFileSync } from "node:fs";
 
 const BILLS_PATH = "apps/backend/src/accounting/bills.service.ts";
-const EXPENSES_PATH = "apps/backend/src/accounting/expenses.routes.ts";
+const EXPENSES_PATH = "apps/backend/src/accounting/expense-writer.service.ts";
 const SC_PATH = "apps/backend/src/driver-finance/settlement-creator.service.ts";
+const SC_OWED_BILL_PATH = "apps/backend/src/driver-finance/settlement-creator-owed-bill.ts";
 const SEND_PATH = "apps/backend/src/accounting/invoice-send.service.ts";
 
 function loadFile(p) {
@@ -31,6 +36,7 @@ export function collectFailures(
   expensesSrc = loadFile(EXPENSES_PATH),
   scSrc = loadFile(SC_PATH),
   sendSrc = loadFile(SEND_PATH),
+  owedBillSrc = loadFile(SC_OWED_BILL_PATH),
 ) {
   const failures = [];
 
@@ -55,18 +61,21 @@ export function collectFailures(
 
   // Rule 4: createExpenseInClientTx exported from expenses.routes.ts
   if (!/export async function createExpenseInClientTx/.test(expensesSrc)) {
-    failures.push("expenses.routes.ts does not export createExpenseInClientTx — programmatic callers cannot reuse expense creation");
+    failures.push("expense-writer.service.ts does not export createExpenseInClientTx — programmatic callers cannot reuse expense creation");
   }
   if (!/export type CreateExpenseBody/.test(expensesSrc)) {
-    failures.push("expenses.routes.ts does not export CreateExpenseBody type — importers cannot type their input");
+    failures.push("expense-writer.service.ts does not export CreateExpenseBody type — importers cannot type their input");
   }
 
   // Rule 5: settlement-creator no longer throws expense_owed_bill_unavailable and calls createBillInClientTx
-  if (/expense_owed_bill_unavailable/.test(scSrc)) {
+  if (/expense_owed_bill_unavailable/.test(scSrc) || /expense_owed_bill_unavailable/.test(owedBillSrc)) {
     failures.push("settlement-creator still throws expense_owed_bill_unavailable — ROUND 443.13 part (a) unblocked the bill engine but the throw was not removed");
   }
-  if (!/createBillInClientTx/.test(scSrc)) {
-    failures.push("settlement-creator does not call createBillInClientTx — owed company expenses cannot become bills");
+  if (!/await\s+createBillInClientTx\(/.test(owedBillSrc)) {
+    failures.push("settlement-creator-owed-bill.ts does not call createBillInClientTx — owed company expenses cannot become bills");
+  }
+  if (!/await\s+writeCreatorOwedBill\(/.test(scSrc)) {
+    failures.push("settlement-creator does not call writeCreatorOwedBill — owed company expenses cannot become bills");
   }
 
   // Rule 6: 443.12 CORRECTION — isAuthorizedZeroInvoice uses isLoadRevenueLineType, not just total_cents===0
@@ -90,6 +99,7 @@ if (process.argv.includes("--selftest")) {
   const expensesSrc = loadFile(EXPENSES_PATH);
   const scSrc = loadFile(SC_PATH);
   const sendSrc = loadFile(SEND_PATH);
+  const owedBillSrc = loadFile(SC_OWED_BILL_PATH);
   const LOAD_ID_HEADER_MARKER = "ROUND 443.13 (CC-1) — explicit bill→load header link";
   const VENDOR_DOC_MARKER = "ROUND 443.13 (CC-1) — the vendor's own document/invoice reference number";
   const mutations = [
@@ -109,15 +119,22 @@ if (process.argv.includes("--selftest")) {
       scSrc, sendSrc],
     ["settlement-creator still throws owed_bill_unavailable",
       billsSrc, expensesSrc,
-      scSrc.replace("createBillInClientTx(", "// createBillInClientTx(\n      throw new SettlementCreatorError('expense_owed_bill_unavailable', 'x')"),
-      sendSrc],
+      scSrc.replace("await writeCreatorOwedBill(", "// await writeCreatorOwedBill(\n      throw new SettlementCreatorError('expense_owed_bill_unavailable', 'x'); ("),
+      sendSrc, owedBillSrc],
+    ["owed-bill writer no longer calls the bill engine",
+      billsSrc, expensesSrc, scSrc, sendSrc,
+      owedBillSrc.replace(/await\s+createBillInClientTx\(/, "await someOtherWriter(")],
+    ["CreateExpenseBody type not exported",
+      billsSrc,
+      expensesSrc.replace("export type CreateExpenseBody", "type CreateExpenseBody"),
+      scSrc, sendSrc],
     ["443.12 correction removed — isLoadRevenueLineType not called",
       billsSrc, expensesSrc, scSrc,
       sendSrc.replace("isLoadRevenueLineType(l.line_type)", "true /* REMOVED */")],
   ];
   const escaped = [];
-  for (const [name, b, e, s, sv] of mutations) {
-    const result = collectFailures(b, e, s, sv);
+  for (const [name, b, e, s, sv, ob = owedBillSrc] of mutations) {
+    const result = collectFailures(b, e, s, sv, ob);
     if (result.length === 0) escaped.push(name);
   }
   if (escaped.length) {

@@ -5,6 +5,7 @@ import { expenseCategoriesCatalogClient } from "../../api/catalogs-accounting";
 import { entityLabel } from "../../lib/entity-label";
 import { tirePositionsCatalogClient } from "../../api/catalogs-fleet";
 import { getCoaAccounts } from "../../api/banking";
+import { scopeCostLineAccounts } from "../../lib/account-picker-scope";
 import { getWoCostContext, type WoCostSourceStatus } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAccountingCategoriesQuery } from "../../hooks/useAccountingCategoriesQuery";
@@ -167,30 +168,31 @@ export function TwoSectionLineEditor({
   const sectionA = useMemo(() => lines.filter((line) => line.section === "A"), [lines]) as CategoryLine[];
   const sectionB = useMemo(() => lines.filter((line) => line.section === "B"), [lines]) as ItemLine[];
   const expenseCategoryOptions = useMemo<CostContextOption[]>(() => {
-    // 443.159 (owner 2026-10-16, his instruction is law): Section A lists the FULL active Chart of Accounts —
-    // exactly the list Banking categorize shows (getCoaAccounts) — in bill, expense and work-order mode.
-    // The earlier expense-only filter (ACCT-F92, below) is superseded by the owner's ruling.
-    // Expense/WO cost line: expense-side accounts ONLY.
-    // ACCT-F92 (live 2026-08-02): this mapped the FULL chart with no type filter, so the Work Order
-    // "Parts & Labor > Type" picker offered Detention / Layover / Lumper / TONU Income (4210-4240
-    // REVENUE), Driver Cash Advance (asset) and the Inter-company lease accounts as cost categories.
-    // A repair parts line could be booked to revenue or to an inter-company account — the entry would
-    // still balance, so nothing downstream would catch it. Every mode this editor serves (bill,
-    // expense, work order) is a COST line, so Income/asset/liability are never valid here.
-    const fromCoa = (coaAccountsQuery.data?.accounts ?? []).map((account) => ({
+    // 443.159 (owner 2026-10-16): Section A reads the ONE Chart of Accounts source Banking categorize uses
+    // (getCoaAccounts). Bill / expense mode list the FULL chart (owner: "all accounts must appear when creating a
+    // bill"). LEAD RULING 2026-10-17 #1: work-order mode lists COST accounts only — ACCT-F92 stands (a WO repair
+    // line booked to 4210-4240 Detention/Layover/Lumper/TONU Income still balances; only the picker and the server
+    // refusal can stop it). The mode decision lives in the shared helper scopeCostLineAccounts, never inline here.
+    const chartRows = coaAccountsQuery.data?.accounts ?? [];
+    const fromCoa = scopeCostLineAccounts(chartRows, mode).map((account) => ({
       id: String(account.id ?? ""),
       // CLS-UUID-LABEL: this chart path replaced the bill-mode category branch (443.159); a blank or
       // uuid-shaped account_name reads as "Account — not visible", never an empty row or a raw id.
       label: entityLabel(account.account_name, account.id, "Account"),
     }));
+    // An inline-created account is shown optimistically only until the chart refetch returns it; from then on the
+    // scoped chart decides (so a just-created Income account cannot ride into work-order mode past the filter).
+    const chartIds = new Set(chartRows.map((account) => String(account.id ?? "")));
     const merged = new Map<string, CostContextOption>();
     for (const row of fromCoa) {
       if (row.id) merged.set(row.id, row);
     }
     for (const row of createdCategoryOptions) {
-      if (row.id) merged.set(row.id, row);
+      if (row.id && !chartIds.has(row.id)) merged.set(row.id, row);
     }
-    if (merged.size > 0) return Array.from(merged.values());
+    // Once the chart has loaded it is the answer — an empty work-order cost list must not fall through to the
+    // unscoped legacy sources below.
+    if (merged.size > 0 || chartRows.length > 0) return Array.from(merged.values());
     const fromAccounting = (accountingCategoriesQuery.data ?? []).map((entry) => ({
       id: String(entry.id ?? ""),
       label: `${entry.name ?? ""}`.trim() || entityLabel(entry.account_number, entry.id ?? entry.qbo_id, "Account"),

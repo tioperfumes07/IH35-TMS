@@ -9,7 +9,10 @@ import "./verify-truck-planner-complete-unit-roster.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => fs.readFileSync(path.join(root, rel), "utf8");
 const live = {
-  api: read("apps/frontend/src/api/dispatch.ts"),
+  // Heavy CI peel — re-pointed, same rule: 52699c6c2f (#26871, 443.182-A catalog one-source consolidation) moved
+  // listDispatchLoads / listAllDispatchLoads into api/catalog-loads.ts; api/dispatch.ts re-exports them (callers unchanged).
+  api: read("apps/frontend/src/api/catalog-loads.ts"),
+  dispatchApi: read("apps/frontend/src/api/dispatch.ts"),
   drivers: read("apps/frontend/src/pages/Drivers.tsx"),
   dispatch: read("apps/frontend/src/pages/dispatch/DispatchOverview.tsx"),
   backend: read("apps/backend/src/dispatch/loads.routes.ts"),
@@ -19,6 +22,7 @@ const live = {
 function verify(s) {
   const checks = [
     ["shared exhaustive scanner", /export async function listAllDispatchLoads/.test(s.api)],
+    ["dispatch.ts re-exports the one scanner", /export \{[^}]*\blistAllDispatchLoads\b[^}]*\} from "\.\/catalog-loads"/.test(s.dispatchApi) && !/export async function listAllDispatchLoads/.test(s.dispatchApi)],
     ["authoritative stable total", /expectedTotal = page\.total_count/.test(s.api) && /page\.total_count !== expectedTotal/.test(s.api)],
     ["deduplicated load IDs", /const seen = new Set<string>\(\)/.test(s.api) && /seen\.add\(load\.id\)/.test(s.api)],
     ["progress-safe offset", /offset \+= page\.loads\.length/.test(s.api) && /page\.loads\.length === 0/.test(s.api)],
@@ -53,6 +57,7 @@ if (process.argv.includes("--selftest")) {
     ["unstable total accepted", { ...live, api: live.api.replace("if (page.total_count !== expectedTotal)", "if (false)") }],
     ["no progress guard", { ...live, api: live.api.replace("if (page.loads.length === 0)", "if (false)") }],
     ["unstable backend order", { ...live, backend: live.backend.replace(", l.id DESC", "") }],
+    ["second scanner copy in dispatch.ts", { ...live, dispatchApi: live.dispatchApi + "\nexport async function listAllDispatchLoads() {}\n" }],
     ["drivers first page", { ...live, drivers: live.drivers.replace("listAllDispatchLoads({", "listDispatchLoads({\n        limit: 200, offset: 0,") }],
     ["OOS first page", { ...live, dispatch: live.dispatch.replace(/(const oosLoadsQ = useQuery\([\s\S]*?)listAllDispatchLoads\(\{/, "$1listDispatchLoads({\n        limit: 50, offset: 0,") }],
     ["OOS predicate lost", { ...live, dispatch: live.dispatch.replace("load.is_dispatch_blocked", "true") }],

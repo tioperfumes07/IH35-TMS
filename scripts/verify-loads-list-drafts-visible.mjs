@@ -20,6 +20,9 @@ import fs from "node:fs";
 const files = {
   backendRoutes: "apps/backend/src/mdata/loads.routes.ts",
   apiLoads: "apps/frontend/src/api/loads.ts",
+  // heavy CI peel: 52699c6c2f (#26871, 443.182-A catalog one-source consolidation) moved listLoads into catalog-loads.ts;
+  // loads.ts re-exports it. The send is asserted where listLoads now lives.
+  apiCatalogLoads: "apps/frontend/src/api/catalog-loads.ts",
   dispatchPage: "apps/frontend/src/pages/Dispatch.tsx",
   dispatchBoard: "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
   sidebarConfig: "apps/frontend/src/components/layout/sidebar-config.ts",
@@ -34,7 +37,9 @@ function failures(input = source) {
   if (!/drafts_only:\s*z\.coerce\.boolean\(\)\.default\(false\)/.test(input.backendRoutes)) out.push("backend drafts_only query param missing");
   if (!/if \(drafts_only\) \{[\s\S]{0,1200}l\.status = 'draft' OR l\.is_quicksave_draft = true/.test(input.backendRoutes)) out.push("backend drafts_only filter override missing");
   if (!/drafts_only\?:\s*boolean/.test(input.apiLoads)) out.push("frontend LoadsListFilters.drafts_only missing");
-  if (!/filters\.drafts_only\)\s*query\.set\("drafts_only"/.test(input.apiLoads)) out.push("frontend listLoads does not send drafts_only");
+  if (!/filters\.drafts_only\)\s*query\.set\("drafts_only"/.test(input.apiCatalogLoads)) out.push("frontend listLoads does not send drafts_only");
+  if (!/export function listLoads\(filters: LoadsListFilters\)/.test(input.apiCatalogLoads)) out.push("frontend listLoads (catalog-loads.ts) missing");
+  if (!/export \{ listLoads, listAllLoads \};/.test(input.apiLoads)) out.push("frontend loads.ts must re-export listLoads from catalog-loads.ts (one listLoads)");
   if (!/data-testid="dispatch-drafts-pill"/.test(input.dispatchPage)) out.push("Dispatch.tsx Drafts pill missing");
   if (!/draftsOnly = searchParams\.get\("drafts"\) === "1"/.test(input.dispatchPage)) out.push("Dispatch.tsx draftsOnly state missing");
   if (!/drafts_only:\s*draftsOnly \|\| undefined/.test(input.dispatchPage)) out.push("Dispatch.tsx loadListFilters does not pass drafts_only");
@@ -65,6 +70,8 @@ function failures(input = source) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     { key: "backendRoutes", from: "l.status = 'draft' OR l.is_quicksave_draft = true", to: "l.status = 'draft'", expect: "backend drafts_only filter override missing" },
+    { key: "apiCatalogLoads", from: 'if (filters.drafts_only) query.set("drafts_only", "true");', to: "", expect: "frontend listLoads does not send drafts_only" },
+    { key: "apiLoads", from: "export { listLoads, listAllLoads };", to: "", expect: "frontend loads.ts must re-export listLoads from catalog-loads.ts (one listLoads)" },
     { key: "dispatchPage", from: 'data-testid="dispatch-drafts-pill"', to: 'data-testid="removed"', expect: "Dispatch.tsx Drafts pill missing" },
     { key: "dispatchBoard", from: 'const isDraft = load.status === "draft" || load.is_quicksave_draft === true;', to: 'const isDraft = load.status === "draft";', expect: "DispatchBoard isDraft predicate missing" },
     { key: "sidebar", from: 'showDraftsBadge = meta.badgeKey === "dispatch_drafts" && draftsBadgeCount > 0', to: "showDraftsBadge = false", expect: "Sidebar.tsx showDraftsBadge predicate missing" },

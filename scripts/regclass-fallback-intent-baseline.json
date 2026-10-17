@@ -1,7 +1,6 @@
 {
   "apps/backend/src/accounting/ap-aging.service.ts": 3,
   "apps/backend/src/accounting/expense-category-catalog.ts": 1,
-  "apps/backend/src/accounting/expenses.routes.ts": 1,
   "apps/backend/src/accounting/journal-entry-qbo-push.service.ts": 1,
   "apps/backend/src/accounting/role-home/accounting-home.service.ts": 1,
   "apps/backend/src/accounting/role-home/pending-approvals-gl.service.ts": 1,

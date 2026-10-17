@@ -54,10 +54,33 @@ if (mig) {
     fail(`${MIGRATION} header trigger must fire on INSERT OR UPDATE OF ... (INSERT coverage closes the one-shot line-less-posted hole).`);
 }
 
+/**
+ * The expense branch writes amount_cents through the one expense line writer. Heavy CI peel — re-pointed, same rule:
+ * #26884 (CC-3 443.186, restored on main by 19721edcb0) put item_id / expense_account_uuid / quantity / rate_cents /
+ * unit_of_measure ahead of amount_cents in the insertLine({...}) argument, so the old fixed 200-char window missed the
+ * field that is still written. Now: the WHOLE argument object of the engine call (up to its closing `})`) must carry
+ * `amount_cents: amountCents` — still required, never optional.
+ */
+export function writerWritesLineCents(src) {
+  if (/INSERT INTO accounting\.expense_lines[\s\S]*amount_cents/i.test(src)) return true;
+  for (const m of src.matchAll(/(?:insertExpenseLine\(client, |expenseLineLink\.insertLine\()\{/g)) {
+    const end = src.indexOf("\n          });", m.index);
+    const arg = src.slice(m.index, end < 0 ? m.index + 4000 : end);
+    if (/\bamount_cents: amountCents,/.test(arg)) return true;
+  }
+  return false;
+}
+
 const writer = read(WRITER);
+if (process.argv.includes("--selftest")) {
+  const planted = writer.replace(/\n\s*amount_cents: amountCents,/, "");
+  const ok = writer && writerWritesLineCents(writer) && planted !== writer && !writerWritesLineCents(planted);
+  console.log(`verify-expense-balance-invariant --selftest ${ok ? "PASS" : "FAIL"} — real writer accepted, amount_cents removed from the engine call ${ok ? "rejected" : "NOT rejected"}`);
+  process.exit(ok ? 0 : 1);
+}
 if (writer) {
   // 443.182 C — the line is persisted through the one expense writer: insertExpenseLine(client, { …, amount_cents, … }).
-  if (!/INSERT INTO accounting\.expense_lines[\s\S]*amount_cents/i.test(writer) && !/(?:insertExpenseLine\(client, |expenseLineLink\.insertLine\()\{[\s\S]{0,200}amount_cents: amountCents,/.test(writer))
+  if (!writerWritesLineCents(writer))
     fail(`${WRITER} expense branch must write amount_cents into accounting.expense_lines.`);
   if (!/UPDATE accounting\.expenses[\s\S]*total_amount_cents\s*=\s*COALESCE[\s\S]*SUM\(amount_cents\)/i.test(writer))
     fail(`${WRITER} must reconcile accounting.expenses.total_amount_cents = SUM(amount_cents) after writing expense lines.`);

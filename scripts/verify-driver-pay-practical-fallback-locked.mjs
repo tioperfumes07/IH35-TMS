@@ -10,6 +10,16 @@
  * (listDriverBillsForSettlementPeriod: the pay miles + derived rate the settlement document / weekly close display). Neither
  * may read miles_practical, nor mdata.loads.loaded_miles (derived: short > 0, else practical), nor take a bill basis whose
  * type is 'practical'. No short miles = null / refused, never a practical fallback.
+ * LEAD 443.192 (14:05Z) — EXTENDED to the Settlement Creator FRONTEND (owner: "pay miles (Short) are NEVER filled from Google
+ * or historical ... preview shows short only"): the drawer's mileage-engine autofill may fill the Practical / Empty estimates
+ * but never miles_shortest, and its live preview / totals price loaded pay on creatorDrawerPayMiles (short only, no
+ * loaded_miles fallback). See frontendDrawerProblems.
+ * LEAD RULING 15:10Z #2 — EXTENDED to Empty (deadhead) miles in the Settlement Creator: "Settlement Creator = the signed
+ * document's empty miles ONLY (document decides pay); never auto-filled from the engine; blank when the document has none.
+ * Live booking (Book Load) = Google estimate at booking is allowed." The drawer's autofill never writes empty_miles (nor reads
+ * the engine's Empty recommendation); the backend Creator seed books miles_deadhead = the document's empty miles and never
+ * calls the deadhead engine (fillLoadDeadhead / fillDeadheadAtBooking / computeFirstStopDeadhead); the Creator's deadhead pay
+ * line and bill price the draft's (document) empty miles only. See creatorEmptyMilesProblems.
  * The text below is the superseded 2026-09-04 history (the fallback it locked existed only because short miles had no source).
  *
  * OWNER RULING 2026-09-04 (LANE-MILEAGE-IMPORT-DROPPED-COLUMNS, item 3): "invoice -> practical
@@ -166,6 +176,134 @@ export function creatorProblems(root = ROOT) {
   return problems;
 }
 
+// LEAD 443.192 (14:05Z) — the Settlement Creator drawer (frontend): Short (pay) miles never auto-filled; preview = short only.
+const FE_DRAWER = "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx";
+const FE_MILES = "apps/frontend/src/pages/settlements/creatorDrawerMiles.ts";
+
+/** 443.192 (14:05Z) — the drawer never writes Short miles from Google / Historical / the miles engine; its pay miles are short only. */
+export function frontendDrawerProblems(root = ROOT) {
+  const problems = [];
+  const read = (rel) => {
+    try {
+      return fs.readFileSync(path.join(root, rel), "utf8");
+    } catch {
+      problems.push(`${rel}: missing`);
+      return null;
+    }
+  };
+  const drawer = read(FE_DRAWER);
+  const miles = read(FE_MILES);
+  if (miles) {
+    const fill = fnBody(miles, "export function fillEstimateMilesFromRecommendations");
+    const pay = fnBody(miles, "export function creatorDrawerPayMiles(");
+    if (!fill) problems.push(`${FE_MILES}: fillEstimateMilesFromRecommendations (the drawer's one miles-engine autofill) not found`);
+    else {
+      const code = codeOnly(fill);
+      if (/miles_shortest/.test(code) || /["']short["']/.test(code)) {
+        problems.push(`${FE_MILES}: the miles-engine autofill touches Short (pay) miles — owner law 443.192: Short is NEVER filled from Google / Historical`);
+      }
+    }
+    if (!pay) problems.push(`${FE_MILES}: creatorDrawerPayMiles (the drawer's pay-miles rule) not found`);
+    else {
+      const code = codeOnly(pay);
+      if (!/load\.miles_shortest/.test(code) || /loaded_miles|line_haul_miles|practical/.test(code)) {
+        problems.push(`${FE_MILES}: creatorDrawerPayMiles must be load.miles_shortest ONLY (no loaded / practical fallback) — owner law 443.192`);
+      }
+    }
+  }
+  if (drawer) {
+    const code = codeOnly(drawer);
+    // Any write of miles_shortest other than the operator's own typed value `n` (or the blank-load null) is an autofill.
+    for (const m of code.matchAll(/miles_shortest:\s*([^,}\n]+)/g)) {
+      const v = m[1].trim();
+      if (v !== "n" && v !== "null") {
+        problems.push(`${FE_DRAWER}: miles_shortest is written from "${v}" — Short (pay) miles come only from the document / the operator (443.192)`);
+      }
+    }
+    if (/miles_shortest\s*\?\?\s*\w+\.(loaded_miles|line_haul_miles|miles_practical)/.test(code)) {
+      problems.push(`${FE_DRAWER}: pay miles fall back from short to loaded / practical miles — preview shows SHORT only (443.192)`);
+    }
+    if (/pick\(\s*["']short["']\s*\)|fields\.short\b|fields\[\s*["']short["']\s*\]/.test(code)) {
+      problems.push(`${FE_DRAWER}: reads the miles engine's SHORT recommendation — Google / Historical are estimates, never pay miles (443.192)`);
+    }
+    if (!/fillEstimateMilesFromRecommendations\(/.test(code)) {
+      problems.push(`${FE_DRAWER}: the miles-engine autofill must go through fillEstimateMilesFromRecommendations (practical / empty only)`);
+    }
+    if (!/creatorDrawerPayMiles\(l\)/.test(code)) {
+      problems.push(`${FE_DRAWER}: the driver salary preview must price loaded pay on creatorDrawerPayMiles (short only)`);
+    }
+  }
+  return problems;
+}
+
+// LEAD RULING 15:10Z #2 — Empty (deadhead) miles in the Settlement Creator are the signed document's ONLY.
+const CREATOR_SVC = "apps/backend/src/driver-finance/settlement-creator.service.ts";
+const DEADHEAD_ENGINE_RE = /\b(fillLoadDeadhead|fillDeadheadAtBooking|computeFirstStopDeadhead|recomputeFirstStopDeadhead|fillFirstStopDeadhead)\b/;
+
+/** 15:10Z #2 — the drawer never auto-fills Empty miles; the backend Creator never fills / pays deadhead from the engine. */
+export function creatorEmptyMilesProblems(root = ROOT) {
+  const problems = [];
+  const read = (rel) => {
+    try {
+      return fs.readFileSync(path.join(root, rel), "utf8");
+    } catch {
+      problems.push(`${rel}: missing`);
+      return null;
+    }
+  };
+  const miles = read(FE_MILES);
+  const drawer = read(FE_DRAWER);
+  const seed = read(CREATOR_SEED);
+  const pay = read(CREATOR_PAY);
+  const svc = read(CREATOR_SVC);
+  if (miles) {
+    const fill = fnBody(miles, "export function fillEstimateMilesFromRecommendations");
+    if (fill) {
+      const code = codeOnly(fill);
+      if (/empty_miles/.test(code) || /["']empty["']/.test(code)) {
+        problems.push(`${FE_MILES}: the miles-engine autofill touches Empty (deadhead) miles — Lead 15:10Z #2: the signed document's empty miles ONLY, blank when it has none`);
+      }
+    }
+  }
+  if (drawer) {
+    const code = codeOnly(drawer);
+    for (const m of code.matchAll(/empty_miles:\s*([^,}\n]+)/g)) {
+      const v = m[1].trim();
+      if (v !== "n" && v !== "null") {
+        problems.push(`${FE_DRAWER}: empty_miles is written from "${v}" — Empty (deadhead) miles come only from the document / the operator (15:10Z #2)`);
+      }
+    }
+    if (/pick\(\s*["']empty["']\s*\)|fields\.empty\b|fields\[\s*["']empty["']\s*\]|recommendedEstimate\([^)]*["']empty["']/.test(code)) {
+      problems.push(`${FE_DRAWER}: reads the miles engine's EMPTY recommendation to fill the field — Google / Historical are never the Creator's deadhead (15:10Z #2)`);
+    }
+  }
+  if (seed) {
+    const code = codeOnly(seed);
+    const hit = code.match(DEADHEAD_ENGINE_RE);
+    if (hit) problems.push(`${CREATOR_SEED}: the Creator seed calls the deadhead engine (${hit[1]}) — Lead 15:10Z #2: the load's deadhead is the document's empty miles only`);
+    if (!/miles_deadhead:\s*load\.empty_miles \?\? null,/.test(code)) {
+      problems.push(`${CREATOR_SEED}: the Creator must book miles_deadhead = the document's empty miles (load.empty_miles ?? null), verbatim`);
+    }
+  }
+  if (pay) {
+    if (!/deadheadPayCents\(load\.empty_miles, creatorEmptyRateCents\(load\)\)/.test(codeOnly(pay))) {
+      problems.push(`${CREATOR_PAY}: creatorEmptyPayCents must price the draft's (document) empty miles only — deadheadPayCents(load.empty_miles, ...)`);
+    }
+  }
+  if (svc) {
+    const code = codeOnly(svc);
+    const hit = code.match(DEADHEAD_ENGINE_RE);
+    if (hit) problems.push(`${CREATOR_SVC}: the Creator calls the deadhead engine (${hit[1]}) — Lead 15:10Z #2`);
+    if (!/lineType: "deadhead_pay",[\s\S]{0,200}quantity: Number\(load\.empty_miles\)/.test(code)) {
+      problems.push(`${CREATOR_SVC}: the Creator's deadhead_pay line quantity must be the draft's (document) empty miles — Number(load.empty_miles)`);
+    }
+    if (!/emptyMiles: creatorEmptyRateCents\(load\) != null && Number\(load\.empty_miles \?\? 0\) > 0 \? Number\(load\.empty_miles\) : null,/.test(code)) {
+      problems.push(`${CREATOR_SVC}: the Creator's driver bill miles_deadhead must be the draft's (document) empty miles`);
+    }
+  }
+  return problems;
+}
+
 function extractFunction(src) {
   const start = src.indexOf("async function resolveDriverBasePayCents");
   if (start === -1) return null;
@@ -187,6 +325,8 @@ export function run(root = ROOT) {
   }
 
   problems.push(...creatorProblems(root));
+  problems.push(...frontendDrawerProblems(root));
+  problems.push(...creatorEmptyMilesProblems(root));
   const fn = extractFunction(src);
   if (!fn) {
     problems.push(`${SVC}: resolveDriverBasePayCents not found — was it renamed or removed?`);
@@ -290,16 +430,47 @@ export function driverBillRowsToSettlementLoads(rows) { return rows; }
     [CREATOR_PAY]: `export function creatorPayMiles(load) {
   const miles = Number(load.miles_shortest ?? NaN);
   return Number.isFinite(miles) && miles > 0 ? miles : null;
+}
+export function creatorEmptyPayCents(load) {
+  return deadheadPayCents(load.empty_miles, creatorEmptyRateCents(load));
 }`,
+    [CREATOR_SVC]: `await writeBill({
+      emptyMiles: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? Number(load.empty_miles) : null,
+    });
+    lines.push({
+        settlementId, companyId, loadId, loadNumber: load.load_number, lineType: "deadhead_pay",
+        description: emptyDesc, cents: emptyCents, quantity: Number(load.empty_miles), rateCents: emptyRateCents, itemId: payItems.empty.id,
+    });`,
     [CREATOR_SEED]: `const miles = creatorLoadMiles(load);
 if (miles.miles_shortest == null && !draft.salaried) throw new SettlementCreatorSeedError("short_miles_required", "x");
 const input = {
   miles_practical: miles.miles_practical,
   miles_shortest: miles.miles_shortest,
+  // history: RULING 443.86 #1 used to await fillLoadDeadhead(...) here when the document had no empty miles
+  miles_deadhead: load.empty_miles ?? null,
 };`,
     [CREATOR_PREFLIGHT]: `const miles = creatorLoadMiles(l);
 if (miles.miles_shortest == null && !draft.salaried) out.push(CREATOR_SHORT_MILES_REQUIRED_MESSAGE);`,
   };
+  creatorGood[FE_MILES] = `export function fillEstimateMilesFromRecommendations(row, rec) {
+  if (!rec) return row;
+  let out = row;
+  const practical = recommendedEstimate(rec, "practical");
+  if (practical != null && !(out.loaded_miles > 0)) out = { ...out, loaded_miles: practical, line_haul_miles: practical };
+  return out;
+}
+
+export function creatorDrawerPayMiles(load) {
+  const miles = Number(load.miles_shortest ?? Number.NaN);
+  return Number.isFinite(miles) && miles > 0 ? miles : null;
+}
+`;
+  creatorGood[FE_DRAWER] = `function emptyLoad() { return { loaded_miles: null, miles_shortest: null, empty_miles: null }; }
+// history: the old effect did pick("short") and wrote miles_shortest: short
+const next = prev.map((cur, idx) => fillEstimateMilesFromRecommendations(cur, milesRecQueries[idx]?.data));
+const driverSalaryCents = loads.reduce((s, l) => s + Math.round((creatorDrawerPayMiles(l) ?? 0) * rate), 0);
+onChange={(n) => setLoads((prev) => { next[idx] = { ...cur, miles_shortest: n }; })}
+`;
   const writeCreator = (over = {}) => {
     for (const [rel, body] of Object.entries({ ...creatorGood, ...over })) {
       fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
@@ -343,8 +514,31 @@ if (miles.miles_shortest == null && !draft.salaried) out.push(CREATOR_SHORT_MILE
   check(good, "Creator seed practical straight from the document field (the old :463)", false, goodBatch, goodSettle, { [CREATOR_SEED]: cs.replace("miles_practical: miles.miles_practical,", "miles_practical: load.loaded_miles ?? load.line_haul_miles ?? null,") });
   check(good, "Creator seed books without short miles", false, goodBatch, goodSettle, { [CREATOR_SEED]: cs.replace('"short_miles_required"', '"x"') });
   check(good, "Creator preview says practical, not short", false, goodBatch, goodSettle, { [CREATOR_PREFLIGHT]: "const practical = Number(l.loaded_miles ?? l.line_haul_miles ?? 0);" });
+  // LEAD 443.192 (14:05Z) — the Creator drawer (frontend).
+  const fm = creatorGood[FE_MILES];
+  const fd = creatorGood[FE_DRAWER];
+  check(good, "FE: autofill writes Short from the engine", false, goodBatch, goodSettle, { [FE_MILES]: fm.replace("  return out;\n}", '  const short = recommendedEstimate(rec, "short");\n  if (short != null) out = { ...out, miles_shortest: short };\n  return out;\n}') });
+  check(good, "FE: drawer effect writes miles_shortest: short (origin/main shape)", false, goodBatch, goodSettle, { [FE_DRAWER]: fd + 'const short = pick("short");\nrow = { ...row, miles_shortest: short };\n' });
+  check(good, "FE: drawer reads rec.fields.short", false, goodBatch, goodSettle, { [FE_DRAWER]: fd + "const g = rec.fields.short.google?.value;\n" });
+  check(good, "FE: preview pay miles fall back to loaded (origin/main :1190)", false, goodBatch, goodSettle, { [FE_DRAWER]: fd.replace("(creatorDrawerPayMiles(l) ?? 0)", "Number(l.miles_shortest ?? l.loaded_miles ?? 0)") });
+  check(good, "FE: creatorDrawerPayMiles falls back to loaded", false, goodBatch, goodSettle, { [FE_MILES]: fm.replace("load.miles_shortest ?? Number.NaN", "load.miles_shortest ?? load.loaded_miles ?? Number.NaN") });
+  check(good, "FE: drawer bypasses the estimate-only autofill", false, goodBatch, goodSettle, { [FE_DRAWER]: fd.replace("fillEstimateMilesFromRecommendations(cur,", "applyAll(cur,") });
+  // LEAD RULING 15:10Z #2 — Empty (deadhead) miles in the Creator: the signed document's only.
+  const cp2 = creatorGood[CREATOR_PAY];
+  const csv = creatorGood[CREATOR_SVC];
+  check(good, "FE: autofill writes Empty from the engine (origin/main shape, #26978)", false, goodBatch, goodSettle, { [FE_MILES]: fm.replace("  return out;\n}", '  const empty = recommendedEstimate(rec, "empty");\n  if (empty != null && !(out.empty_miles > 0)) out = { ...out, empty_miles: empty };\n  return out;\n}') });
+  check(good, "FE: drawer effect writes empty_miles from the engine", false, goodBatch, goodSettle, { [FE_DRAWER]: fd + 'const e = pick("empty");\nrow = { ...row, empty_miles: e };\n' });
+  check(good, "FE: drawer reads rec.fields.empty", false, goodBatch, goodSettle, { [FE_DRAWER]: fd + "const g = rec.fields.empty.google?.value;\n" });
+  check(good, "FE: a typed empty_miles: n / blank null stays clean", true, goodBatch, goodSettle, { [FE_DRAWER]: fd + "next[idx] = { ...cur, empty_miles: n };\nconst blank = { empty_miles: null };\n" });
+  check(good, "BE: Creator seed fills a missing deadhead through fillLoadDeadhead (origin/main shape, seed:531)", false, goodBatch, goodSettle, { [CREATOR_SEED]: cs + "\nif (bookedId && load.empty_miles == null) {\n  await fillLoadDeadhead(client, { operatingCompanyId, loadId: bookedId, actorUserId });\n}\n" });
+  check(good, "BE: Creator seed books deadhead from the stop-1 engine", false, goodBatch, goodSettle, { [CREATOR_SEED]: cs.replace("miles_deadhead: load.empty_miles ?? null,", "miles_deadhead: load.empty_miles ?? (await computeFirstStopDeadhead(client, args)).miles,") });
+  check(good, "BE: Creator seed drops the document deadhead", false, goodBatch, goodSettle, { [CREATOR_SEED]: cs.replace("  miles_deadhead: load.empty_miles ?? null,\n", "") });
+  check(good, "BE: Creator deadhead pay priced on the load's (engine) miles_deadhead", false, goodBatch, goodSettle, { [CREATOR_PAY]: cp2.replace("deadheadPayCents(load.empty_miles,", "deadheadPayCents(load.empty_miles ?? load.miles_deadhead,") });
+  check(good, "BE: Creator deadhead_pay line quantity from the engine", false, goodBatch, goodSettle, { [CREATOR_SVC]: csv.replace("quantity: Number(load.empty_miles)", "quantity: Number(recs.empty.google.value)") });
+  check(good, "BE: Creator service calls fillLoadDeadhead", false, goodBatch, goodSettle, { [CREATOR_SVC]: csv + "\nawait fillLoadDeadhead(client, args);\n" });
+  check(good, "BE: Creator bill miles_deadhead not the document's", false, goodBatch, goodSettle, { [CREATOR_SVC]: csv.replace("? Number(load.empty_miles) : null,", "? Number(row.miles_deadhead) : null,") });
   fs.rmSync(dir, { recursive: true, force: true });
-  console.log(`${LABEL} SELFTEST PASS (19 cases)`);
+  console.log(`${LABEL} SELFTEST PASS (36 cases)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -358,4 +552,4 @@ if (problems.length) {
   for (const p of problems) console.error(`  - ${p}`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — per-mile driver pay is SHORT miles only (owner law 443.192): no practical fallback, short-miles mint gate, no derivation formula; the Creator pays and books the document's miles as SHORT miles only`);
+console.log(`${LABEL} OK — per-mile driver pay is SHORT miles only (owner law 443.192): no practical fallback, short-miles mint gate, no derivation formula; the Creator pays and books the document's miles as SHORT miles only; the Creator drawer never auto-fills Short miles and previews short only; the Creator's Empty (deadhead) miles are the signed document's only — never auto-filled from the engine (Lead 15:10Z #2)`);

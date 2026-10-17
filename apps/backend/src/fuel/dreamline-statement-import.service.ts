@@ -224,6 +224,24 @@ export function dreamlineAdoptMarker(line: Pick<DreamlineStatementLine, "efs_inv
   return `dreamline_efs=${line.efs_invoice}:${line.item}:${seq}`;
 }
 
+/**
+ * The ONE adoption stamp: a statement line adopts the receipt already on the books — the booked fuel row carries the
+ * line's marker (a re-run sees "already_imported" through it) and the card's gross / discount. Called by the import loop
+ * and by the LEAD 443.194 repair (a statement copy of a booked receipt is voided whole, then the line adopts the receipt).
+ */
+export async function stampDreamlineReceiptAdopted(
+  client: DbClient,
+  input: { companyId: string; fuelTransactionId: string; marker: string; grossCents: number; discountCents: number }
+): Promise<void> {
+  await client.query(
+    `UPDATE fuel.fuel_transactions
+        SET notes = concat_ws('; ', NULLIF(notes, ''), $3::text),
+            gross_cost = $4::numeric / 100, discount_amount = $5::numeric / 100, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.fuelTransactionId, input.companyId, input.marker, input.grossCents, input.discountCents]
+  );
+}
+
 type BookedReceipt = {
   expense_id: string;
   expense_number: string | null;
@@ -253,12 +271,16 @@ async function loadBookedReceipts(client: DbClient, companyId: string, from: str
     `SELECT e.id::text AS expense_id, e.expense_number, e.transaction_date::text AS d, u.unit_number,
             ft.fuel_type::text AS fuel_type,
             (SELECT array_agg(DISTINCT la.account_number) FROM accounting.expense_lines l
-               JOIN catalogs.accounts la ON la.id = l.expense_account_uuid WHERE l.expense_id = e.id) AS accts,
+               JOIN catalogs.accounts la ON la.id = l.expense_account_uuid AND la.operating_company_id = e.operating_company_id
+              WHERE l.expense_id = e.id) AS accts,
             e.total_amount_cents::text AS cents, (CASE pa.id WHEN $4::uuid THEN '2510' ELSE '1295' END) AS rail,
             e.source_fuel_transaction_id::text AS fuel_transaction_id, ft.notes
        FROM accounting.expenses e
-       JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid AND pa.id IN ($4::uuid, $5::uuid)
+       JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid AND pa.operating_company_id = e.operating_company_id
+                                AND pa.id IN ($4::uuid, $5::uuid)
+       -- the unit counts only when the expense's company owns or leases it (the load-unit.sql.ts rule)
        LEFT JOIN mdata.units u ON u.id = e.unit_id
+                              AND (u.owner_company_id = e.operating_company_id OR u.currently_leased_to_company_id = e.operating_company_id)
        LEFT JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
       WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.deleted_at IS NULL
         AND e.posting_status = 'posted'
@@ -621,13 +643,9 @@ export async function importDreamlineStatement(
             summary.difference_posted_cents += diff;
           }
           if (hit.fuel_transaction_id) {
-            await client.query(
-              `UPDATE fuel.fuel_transactions
-                  SET notes = concat_ws('; ', NULLIF(notes, ''), $3::text),
-                      gross_cost = $4::numeric / 100, discount_amount = $5::numeric / 100, updated_at = now()
-                WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-              [hit.fuel_transaction_id, companyId, marker, line.gross_cents, line.discount_cents]
-            );
+            await stampDreamlineReceiptAdopted(client, {
+              companyId, fuelTransactionId: hit.fuel_transaction_id, marker, grossCents: line.gross_cents, discountCents: line.discount_cents,
+            });
           }
         } else if (diff !== 0) summary.difference_posted_cents += diff;
         record(line, "adopted", { expense_id: hit.expense_id, fuel_transaction_id: hit.fuel_transaction_id, difference_cents: diff });

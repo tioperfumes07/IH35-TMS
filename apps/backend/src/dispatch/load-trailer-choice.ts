@@ -69,8 +69,10 @@ export async function requireRecordedTrailerChoice(
   }
   if (load.trailer_source === "company" && !load.non_owned_trailer_id) {
     const history = await client.query<{ new_trailer_id: string | null }>(
+      // No JOIN to mdata.equipment: new_trailer_id is FK-bound to it (load_assignment_history_new_trailer_id_fkey) and the
+      // history row is this company's (h.operating_company_id = $2), so the join filtered nothing — it only read another
+      // entity's equipment row unscoped (verify-join-entity-scoped).
       `SELECT h.new_trailer_id::text FROM dispatch.load_assignment_history h
-        JOIN mdata.equipment e ON e.id = h.new_trailer_id
         WHERE h.load_id = $1::uuid AND h.operating_company_id = $2::uuid AND h.new_trailer_id IS NOT NULL
         ORDER BY h.created_at DESC, h.id DESC LIMIT 1`,
       [loadId, operatingCompanyId],

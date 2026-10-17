@@ -63,7 +63,13 @@ export function driverOverwrites(files) {
     while ((m = re.exec(src))) {
       const [, table, setPart] = m;
       const line = src.slice(0, m.index).split("\n").length;
-      if (table === "expenses" && /\bdriver_uuid\s*=/.test(setPart)) p.push(`${path}:${line}: overwrites accounting.expenses.driver_uuid outside correctPostedExpense.`);
+      // Heavy CI peel (443.192) — same rule as the line arm: a fill-once `driver_uuid = COALESCE(<alias>.driver_uuid, ...)`
+      //   fills an EMPTY header driver and never replaces one, so it is not an overwrite. CC-3's 443.186 attribution
+      //   re-stamp (e43a226b50, restampExpenseAttributionFromLoad) does exactly that and was flagged only because the header
+      //   arm lacked the fill-once allowance the line arm already had.
+      if (table === "expenses" && /\bdriver_uuid\s*=/.test(setPart) && !/\bdriver_uuid\s*=\s*COALESCE\(\s*(?:\w+\.)?driver_uuid\s*,/.test(setPart)) {
+        p.push(`${path}:${line}: overwrites accounting.expenses.driver_uuid outside correctPostedExpense.`);
+      }
       if (table === "expense_lines" && /\bdriver_id\s*=/.test(setPart) && !/\bdriver_id\s*=\s*COALESCE\(\s*(?:\w+\.)?driver_id\s*,/.test(setPart)) {
         p.push(`${path}:${line}: overwrites accounting.expense_lines.driver_id (not a fill-once COALESCE) outside correctPostedExpense.`);
       }
@@ -108,9 +114,13 @@ if (process.argv.includes("--selftest")) {
     driverOverwrites([{ path: "apps/backend/src/y.ts", src: "await q(`UPDATE accounting.expense_lines SET driver_id = $2 WHERE expense_id = $1`)" }]).length === 1);
   ex("a fill-once line driver is allowed",
     driverOverwrites([{ path: "apps/backend/src/z.ts", src: "await q(`UPDATE accounting.expense_lines el SET driver_id = COALESCE(el.driver_id, e.driver_uuid) WHERE el.expense_id = e.id`)" }]).length === 0);
+  ex("a fill-once header driver is allowed",
+    driverOverwrites([{ path: "apps/backend/src/w.ts", src: "await q(`UPDATE accounting.expenses e SET driver_uuid = COALESCE(e.driver_uuid, $2) WHERE e.id = $1`)" }]).length === 0);
+  ex("a header COALESCE that prefers the NEW driver (an overwrite) is caught",
+    driverOverwrites([{ path: "apps/backend/src/v.ts", src: "await q(`UPDATE accounting.expenses e SET driver_uuid = COALESCE($2, e.driver_uuid) WHERE e.id = $1`)" }]).length === 1);
   ex("the correction service itself is exempt",
     driverOverwrites([{ path: SERVICE, src: "await q(`UPDATE accounting.expenses SET driver_uuid = $3 WHERE id = $1`)" }]).length === 0);
-  console.log(ok ? `${LABEL} --selftest PASS (10/10)` : `${LABEL} --selftest FAIL`);
+  console.log(ok ? `${LABEL} --selftest PASS (12/12)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 

@@ -1,4 +1,3 @@
-import { fillLoadDeadhead } from "../dispatch/mileage/miles-recommendations.service.js";
 import { randomUUID } from "node:crypto";
 import { looksLikeStreet } from "../telematics/stops-geocode-backfill.service.js";
 /**
@@ -330,7 +329,7 @@ export async function isSeededLoadFreeForThisSettlement(client: DbClient, draft:
           AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL
           AND NOT EXISTS (
             SELECT 1 FROM driver_finance.settlement_lines sl
-              JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
+              JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id AND s.operating_company_id = l.operating_company_id
              WHERE sl.load_id = l.id AND sl.voided_at IS NULL
                AND s.voided_at IS NULL AND s.status <> 'cancelled'
                AND COALESCE(s.source_document_ref, '') <> $4)
@@ -485,6 +484,9 @@ export async function ensureDispatchedLoadsForCreator(
       mileage_source: (load.loaded_miles ?? load.line_haul_miles) != null ? "Operator entered" : undefined,
       // LEAD 443.192 — the document's pay miles = SHORT miles only: the figure the earnings line pays (creatorPayMiles).
       miles_shortest: miles.miles_shortest,
+      // LEAD RULING 15:10Z #2 (supersedes RULING 443.86 #1 for the Creator): the load's deadhead = the signed document's empty
+      // miles ONLY — never filled from the miles engine (fillLoadDeadhead is not called here), blank when the document has
+      // none. Book Load's own Google estimate at a LIVE booking (fillDeadheadAtBooking, live_feed only) is unaffected.
       miles_deadhead: load.empty_miles ?? null,
       save_mode: "book_dispatch",
       addToOpenPresettlement: true,
@@ -525,11 +527,6 @@ export async function ensureDispatchedLoadsForCreator(
     if (delivered && bookedId) {
       stopStamps.push(...(await stampStopsFromTracking(client, bookedId, draft.operating_company_id, { pickupDate: load.pickup_date, deliveryDate: load.delivery_date })));
       await deliverLoadThroughDispatch(client, actor.uuid, draft.operating_company_id, bookedId, load.delivery_date);
-    }
-    // RULING 443.86 #1: a document that prints no empty miles still has a deadhead when the truck ran a load before this
-    // one (or sat somewhere at dispatch) — the one engine fills it (Google practical, method recorded); never the pay basis.
-    if (bookedId && load.empty_miles == null) {
-      await fillLoadDeadhead(client as never, { operatingCompanyId: draft.operating_company_id, loadId: bookedId, actorUserId: actor.uuid });
     }
   }
 

@@ -61,6 +61,9 @@ export type ReverseSettlementForVoidResult = {
   settlementLinesVoided: string[];
   driverBillsReleased: string[];
   reimbursementsReleased: string[];
+  /** LEAD 443.193 — nothing_to_reverse only: pending deductions released from the cancelled settlement / linked ones left untouched. */
+  deductionsReleased: string[];
+  deductionsRetained: string[];
 };
 
 /**
@@ -113,6 +116,9 @@ export async function reverseSettlementForVoid(
     settlementId,
     userId: actor.userId,
     reason,
+    // LEAD 443.193 (Lead 14:05Z (b)) — /reverse with nothing to reverse releases the settlement's pending deductions
+    // through the cascade's step 5 (the SAME restore the GL reversal runs when it did reverse a run).
+    glReversalResult: reversal.result,
     voidChildren: false,
   });
 
@@ -184,6 +190,8 @@ export async function reverseSettlementForVoid(
       settlement_lines_voided: cascade.lines_voided,
       driver_bills_released: cascade.driver_bills_released,
       reimbursements_released: cascade.reimbursements_released,
+      deductions_released: cascade.deductions_released,
+      deductions_retained: cascade.deductions_retained,
       via: "voidDocument.reverseSettlementForVoid",
     },
     "warning",
@@ -199,6 +207,8 @@ export async function reverseSettlementForVoid(
     settlementLinesVoided: cascade.lines_voided,
     driverBillsReleased: cascade.driver_bills_released,
     reimbursementsReleased: cascade.reimbursements_released,
+    deductionsReleased: cascade.deductions_released,
+    deductionsRetained: cascade.deductions_retained,
   };
 }
 

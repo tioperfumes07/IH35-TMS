@@ -33,6 +33,11 @@ const VENDORS_PAGE = "apps/frontend/src/pages/Vendors.tsx";
 const CUSTOMERS_ROUTE = "apps/backend/src/mdata/customers.routes.ts";
 const VENDORS_ROUTE = "apps/backend/src/mdata/vendors.routes.ts";
 const MDATA_API = "apps/frontend/src/api/mdata.ts";
+// Heavy CI peel (Lead 13:45Z): 52699c6c2f (#26871, 443.182-A) moved listCustomers / listVendors into these catalog
+// files; the shared list helpers now have ONE definition in mdata-list.ts (the consolidation had pasted private copies).
+const MDATA_LIST_API = "apps/frontend/src/api/mdata-list.ts";
+const CATALOG_CUSTOMERS_API = "apps/frontend/src/api/catalog-customers.ts";
+const CATALOG_VENDORS_API = "apps/frontend/src/api/catalog-vendors.ts";
 const CUSTOMER_EDIT_MODAL = "apps/frontend/src/components/customers/CustomerEditModal.tsx";
 
 function assertGuard(sources) {
@@ -60,15 +65,30 @@ function assertGuard(sources) {
 
   // 2 — API clients expose server total (not page-length-only) AND always normalize collection to T[]
   // LV-CUSTOMERS-FULL-EDIT-LIST-RESPONSE-NOT-ARRAY: non-array `customers` crashed Full Edit `.map`.
-  if (!/function normalizeMdataListRows[\s\S]*?Array\.isArray\(raw\)/.test(sources.mdata)) {
+  if (!/function normalizeMdataListRows[\s\S]*?Array\.isArray\(raw\)/.test(sources.mdataList ?? sources.mdata)) {
     errors.push(`${MDATA_API}: must export normalizeMdataListRows that Array.isArray-guards list envelopes`);
   }
-  const listCustomersBlock = (sources.mdata.match(
-    /export function listCustomers[\s\S]*?(?=export function (?:listPaymentTermOptions|listVendors|getVendor|getCustomer))/
-  ) || [])[0] || "";
-  const listVendorsBlock = (sources.mdata.match(
-    /export function listVendors[\s\S]*?(?=export function getVendor|export type CreateVendorInput|$)/
-  ) || [])[0] || "";
+  const catalogBlock = (src, fn) => (src.match(new RegExp(`export function ${fn}\\b[\\s\\S]*?(?=\\nexport |$)`)) || [])[0] || "";
+  const listCustomersBlock = sources.catalogCustomers !== undefined
+    ? catalogBlock(sources.catalogCustomers, "listCustomers")
+    : (sources.mdata.match(
+        /export function listCustomers[\s\S]*?(?=export function (?:listPaymentTermOptions|listVendors|getVendor|getCustomer))/
+      ) || [])[0] || "";
+  const listVendorsBlock = sources.catalogVendors !== undefined
+    ? catalogBlock(sources.catalogVendors, "listVendors")
+    : (sources.mdata.match(
+        /export function listVendors[\s\S]*?(?=export function getVendor|export type CreateVendorInput|$)/
+      ) || [])[0] || "";
+  // One definition: the catalog clients import the shared helpers and never carry a private copy.
+  for (const [label, src] of [[CATALOG_CUSTOMERS_API, sources.catalogCustomers], [CATALOG_VENDORS_API, sources.catalogVendors]]) {
+    if (src === undefined) continue;
+    if (!/import \{[^}]*\bnormalizeMdataListRows\b[^}]*\blistEnvelopeTotal\b[^}]*\} from "\.\/mdata-list"|import \{[^}]*\blistEnvelopeTotal\b[^}]*\bnormalizeMdataListRows\b[^}]*\} from "\.\/mdata-list"/.test(src)) {
+      errors.push(`${label}: must import normalizeMdataListRows + listEnvelopeTotal from ./mdata-list (one definition)`);
+    }
+    if (/function (?:normalizeMdataRows|normalizeMdataListRows|envelopeTotal|listEnvelopeTotal)\s*[<(]/.test(src)) {
+      errors.push(`${label}: carries a private copy of a shared list helper — import it from ./mdata-list`);
+    }
+  }
   if (!/normalizeMdataListRows(?:<Customer>)?/.test(listCustomersBlock) || !/listEnvelopeTotal/.test(listCustomersBlock)) {
     errors.push(`${MDATA_API}: listCustomers must normalize customers via normalizeMdataListRows + listEnvelopeTotal`);
   }
@@ -295,6 +315,48 @@ function selftest() {
     },
   ];
 
+  // Catalog shape (52699c6c2f moved listCustomers / listVendors out of mdata.ts).
+  const goodMdataList = `
+    export function normalizeMdataListRows(raw) { if (Array.isArray(raw)) return raw; return []; }
+    export function listEnvelopeTotal(payload, rows) { return typeof payload?.total === "number" ? payload.total : rows.length; }
+  `;
+  const goodCatalogCustomers = `import { appendCompanyScopedQuery, listEnvelopeTotal, normalizeMdataListRows, type CompanyScopedListParams } from "./mdata-list";
+export function listCustomers(params = {}) {
+  return apiRequest(\`/api/v1/mdata/customers\`).then((payload) => {
+    const customers = normalizeMdataListRows<Customer>(payload?.customers ?? payload);
+    return { customers, total: listEnvelopeTotal(payload, customers) };
+  });
+}
+export async function listAllCustomers() {}
+`;
+  const goodCatalogVendors = `import { appendCompanyScopedQuery, listEnvelopeTotal, normalizeMdataListRows, type CompanyScopedListParams } from "./mdata-list";
+export function listVendors(params = {}) {
+  return apiRequest(\`/api/v1/mdata/vendors\`).then((payload) => {
+    const vendors = normalizeMdataListRows<VendorOption>(payload?.vendors ?? payload);
+    return { vendors, total: listEnvelopeTotal(payload, vendors) };
+  });
+}
+`;
+  const catalogBase = { ...base, mdataList: goodMdataList, catalogCustomers: goodCatalogCustomers, catalogVendors: goodCatalogVendors };
+  cases.push(
+    { name: "catalog shape intact -> 0 errors", in: catalogBase, want: 0 },
+    {
+      name: "catalog listCustomers uses a private normalizer copy -> FAIL",
+      in: { ...catalogBase, catalogCustomers: goodCatalogCustomers.replace(/normalizeMdataListRows/g, "normalizeMdataRows") + "\nfunction normalizeMdataRows(raw) { return raw; }\n" },
+      wantMin: 1,
+    },
+    {
+      name: "catalog listVendors drops the server total -> FAIL",
+      in: { ...catalogBase, catalogVendors: goodCatalogVendors.replace("total: listEnvelopeTotal(payload, vendors)", "total: vendors.length") },
+      wantMin: 1,
+    },
+    {
+      name: "shared normalizer loses its Array.isArray guard -> FAIL",
+      in: { ...catalogBase, mdataList: goodMdataList.replace("if (Array.isArray(raw)) return raw; ", "") },
+      wantMin: 1,
+    },
+  );
+
   let failed = 0;
   for (const c of cases) {
     const errs = assertGuard(c.in);
@@ -321,6 +383,9 @@ const errors = assertGuard({
   customersRoute: readReal(CUSTOMERS_ROUTE),
   vendorsRoute: readReal(VENDORS_ROUTE),
   mdata: readReal(MDATA_API),
+  mdataList: readReal(MDATA_LIST_API),
+  catalogCustomers: readReal(CATALOG_CUSTOMERS_API),
+  catalogVendors: readReal(CATALOG_VENDORS_API),
   customerEditModal: readReal(CUSTOMER_EDIT_MODAL),
 });
 

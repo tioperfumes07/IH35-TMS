@@ -67,7 +67,9 @@ if (process.argv.includes("--selftest")) {
     ["IS NOT NULL gate removed", "AND presettlement_link_id IS NOT NULL\n", ""],
     [
       "zero-settlement_lines scope removed",
-      "AND NOT EXISTS (\n                  SELECT 1 FROM driver_finance.settlement_lines sl WHERE sl.load_id = $1::uuid\n                )\n",
+      // heavy CI peel: 05c031c602 (443.113, owner approval runs the same cascade) re-indented this clause and the exact-
+      // whitespace plant stopped matching; matched by shape now, so re-indentation cannot silently disarm it.
+      /AND NOT EXISTS \(\s*SELECT 1 FROM driver_finance\.settlement_lines sl WHERE sl\.load_id = \$1::uuid\s*\)\n/,
       "",
     ],
     [
@@ -78,7 +80,7 @@ if (process.argv.includes("--selftest")) {
   ];
   const escaped = [];
   for (const [name, from, to] of mutations) {
-    if (!src.includes(from)) {
+    if (typeof from === "string" ? !src.includes(from) : !from.test(src)) {
       escaped.push(`${name} (plant target not found -- source drifted)`);
       continue;
     }

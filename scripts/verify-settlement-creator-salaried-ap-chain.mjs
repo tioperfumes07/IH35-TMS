@@ -28,8 +28,12 @@ export function staticProblems(chain, mig) {
   const body = f < 0 ? "" : chain.slice(f, chain.indexOf("\n}\n", f));
   if (!/l\.driver_pay_rate_per_mile = 0/.test(body) || !body.includes("driver_pay_rate_override_reason ~* '^\\\\s*(salaried|local driver — weekly salary)'") || !/>= 10/.test(body)) p.push("RULE 1 the salaried loader does not require the 0-rate Salaried override");
   if (!/driverBillId: null, [^}]*payBasis: "salaried"/.test(body)) p.push("RULE 1 a salaried load is not billed with no driver bill and payBasis 'salaried'");
-  if (!/if \(x\.b\.driverBillId\) \{\s*await client\.query\(\s*`UPDATE driver_finance\.driver_bills SET settled_in_settlement_id/.test(chain)) p.push("RULE 1 the driver-bill settle UPDATE is not skipped for a salaried load");
-  if (!/deduction_cents, cash_cents, pay_basis\)/.test(chain) || !/x\.b\.payBasis \?\? "per_load_driver_bill"/.test(chain)) p.push("RULE 1 the run row does not record pay_basis");
+  // Heavy CI peel — re-pointed, same rule: 289d317cb3 (LEAD 443.116 (c), driver pay recognized at delivery) added the
+  // close_supplement role, so the settle UPDATE is now also skipped for a close-time supplement
+  // (`if (x.b.driverBillId && x.role !== "close_supplement")`) and the run-row column list continues after pay_basis
+  // (bill_posted_at_delivery, supplements_driver_bill_id). The salaried skip and the pay_basis record are still required.
+  if (!/if \(x\.b\.driverBillId(?: && x\.role !== "close_supplement")?\) \{[\s\S]{0,260}?await client\.query\(\s*`UPDATE driver_finance\.driver_bills SET settled_in_settlement_id/.test(chain)) p.push("RULE 1 the driver-bill settle UPDATE is not skipped for a salaried load");
+  if (!/deduction_cents, cash_cents, pay_basis[,)]/.test(chain) || !/x\.b\.payBasis \?\? "per_load_driver_bill"/.test(chain)) p.push("RULE 1 the run row does not record pay_basis");
   if (!/ADD COLUMN IF NOT EXISTS pay_basis text NOT NULL DEFAULT 'per_load_driver_bill'/.test(mig) || !/CHECK \(driver_bill_id IS NOT NULL OR pay_basis = 'salaried'\)/.test(mig)) p.push("RULE 1 migration 202615530900 does not add pay_basis + the driver-bill-or-salaried CHECK");
   return p;
 }
@@ -46,7 +50,8 @@ function selftest() {
   const plants = [
     [(c) => c.replace("if (!bills.length) bills = await loadSalariedSettlementLoads(client, opco, input.settlementId);", ""), (m) => m],
     [(c) => c.replace("AND l.driver_pay_rate_per_mile = 0", "AND true"), (m) => m],
-    [(c) => c.replace("if (x.b.driverBillId) {", "if (true) {"), (m) => m],
+    [(c) => c.replace('if (x.b.driverBillId && x.role !== "close_supplement") {', "if (true) {"), (m) => m],
+    [(c) => c.replace("deduction_cents, cash_cents, pay_basis,", "deduction_cents, cash_cents,"), (m) => m],
     [(c) => c.replace('x.b.payBasis ?? "per_load_driver_bill"', '"per_load_driver_bill"'), (m) => m],
     [(c) => c, (m) => m.replace("CHECK (driver_bill_id IS NOT NULL OR pay_basis = 'salaried')", "CHECK (true)")],
   ];

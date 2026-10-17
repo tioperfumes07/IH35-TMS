@@ -127,12 +127,10 @@ export async function postRelayDeposit(
   if (String(d.status).toLowerCase() !== "settled") return { outcome: "not_settled", deposit_id: d.deposit_id, status: d.status };
 
   // LEAD 443.133 B: the deposit's ONE live entry is in integrations.relay_deposit_postings (database refusal); entries
-  // written before that registry are found from their posting lines. to_regclass: the registry ships in migration
-  // 202615870910 — until a database has it, the posting-line scan below is the answer.
-  const hasRegistry = (
-    await client.query<{ ok: boolean }>(`SELECT to_regclass('integrations.relay_deposit_postings') IS NOT NULL AS ok`)
-  ).rows[0]?.ok === true;
-  const registered = !hasRegistry ? undefined : (
+  // written before that registry are found from their posting lines. Heavy CI peel: the registry (migration
+  // 202615870910) is on every migrated database incl. prod, so it is read unconditionally — a database without it now
+  // fails closed (relation does not exist) instead of silently skipping the one-posting registry.
+  const registered = (
     await client.query<{ id: string }>(
       `SELECT journal_entry_id::text AS id FROM integrations.relay_deposit_postings
         WHERE operating_company_id = $1::uuid AND relay_deposit_id = $2::uuid AND released_at IS NULL LIMIT 1`,

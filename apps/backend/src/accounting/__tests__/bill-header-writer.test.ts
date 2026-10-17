@@ -45,14 +45,15 @@ describe("insertBillHeaderOnClient — the one bill header writer", () => {
 
   it("defaults to RETURNING * and appends the insurance idempotency ON CONFLICT only when asked", async () => {
     const c = client();
-    await insertBillHeaderOnClient(c, [["operating_company_id", { value: "oc-1" }], ["source", { value: "manual" }]]);
-    expect(c.calls[0]!.sql).toBe("INSERT INTO accounting.bills (operating_company_id, source) VALUES ($1, $2) RETURNING *");
-    await insertBillHeaderOnClient(c, [["qbo_idempotency_key", { value: "ins:p:1" }], ["source", { value: "insurance" }]], {
+    // heavy CI peel: every header names amount_cents (G6-4) — the writer refuses one that does not (test below).
+    await insertBillHeaderOnClient(c, [["operating_company_id", { value: "oc-1" }], ["source", { value: "manual" }], ["amount_cents", { value: 100 }]]);
+    expect(c.calls[0]!.sql).toBe("INSERT INTO accounting.bills (operating_company_id, source, amount_cents) VALUES ($1, $2, $3) RETURNING *");
+    await insertBillHeaderOnClient(c, [["qbo_idempotency_key", { value: "ins:p:1" }], ["source", { value: "insurance" }], ["amount_cents", { value: 100 }]], {
       returning: "id::text",
       onConflict: "idempotency_key_do_nothing",
     });
     expect(c.calls[1]!.sql).toBe(
-      "INSERT INTO accounting.bills (qbo_idempotency_key, source) VALUES ($1, $2) ON CONFLICT (operating_company_id, qbo_idempotency_key) WHERE qbo_idempotency_key IS NOT NULL DO NOTHING RETURNING id::text",
+      "INSERT INTO accounting.bills (qbo_idempotency_key, source, amount_cents) VALUES ($1, $2, $3) ON CONFLICT (operating_company_id, qbo_idempotency_key) WHERE qbo_idempotency_key IS NOT NULL DO NOTHING RETURNING id::text",
     );
   });
 
@@ -63,6 +64,8 @@ describe("insertBillHeaderOnClient — the one bill header writer", () => {
     await expect(insertBillHeaderOnClient(c, [["memo", { value: 1 }], ["memo", { value: 2 }]])).rejects.toThrow(/bill_insert_bad_column/);
     await expect(insertBillHeaderOnClient(c, [["memo", { value: 1 }]], { returning: "id; DROP" as never })).rejects.toThrow(/bill_insert_bad_returning/);
     await expect(insertBillHeaderOnClient(c, [])).rejects.toThrow(/bill_insert_no_columns/);
+    // G6-4: a bill without the canonical money column is refused at the one writer (verify-bills-amount-cents-canonical A5).
+    await expect(insertBillHeaderOnClient(c, [["operating_company_id", { value: "oc-1" }], ["source", { value: "manual" }]])).rejects.toThrow(/bill_insert_amount_cents_required/);
     expect(c.calls).toHaveLength(0);
   });
 });

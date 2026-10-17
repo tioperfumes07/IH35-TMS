@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: this table has no date column by design — one row per account / customer / vendor aggregate; the package's period is chosen in the report header, not a column.
 import { useState } from "react";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -160,10 +161,11 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
   // LEAD 443.181 — each P&L section is one ParityTable; the account name + amount keep their register AmountLink
   // (so the row opens the account ledger), the section total moves to the footer.
   const plColumns: ParityColumn<(typeof revenue.lines)[number]>[] = [
-    { key: "account_code", label: "Account #", render: (line) => <span className="text-[#4B5563]">{line.account_code}</span> },
+    { key: "account_code", label: "Account #", sortable: true, render: (line) => <span className="text-[#4B5563]">{line.account_code}</span> },
     {
       key: "account_name",
       label: "Account",
+      sortable: true,
       render: (line) => (
         <AmountLink
           filter={plFilter(line.account_id, fromDate, toDate, basis)}
@@ -177,6 +179,7 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
     {
       key: "amount",
       label: "Amount",
+      sortable: true,
       kind: "money",
       sortValue: (line) => line.amount,
       render: (line) => (
@@ -317,10 +320,11 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   // LEAD 443.181 — ParityTable; the customer cell keeps its EntityLink (row opens the customer), every bucket keeps its
   // AmountLink drill (ACCT-F411).
   const agingColumns: ParityColumn<(typeof filtered)[number]>[] = [
-    { key: "customer_name", label: "Customer", render: (row) => <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} /> },
+    { key: "customer_name", label: "Customer", sortable: true, render: (row) => <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} /> },
     {
       key: "current_cents",
       label: "Current",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.current_cents,
       render: (row) => (
@@ -332,6 +336,7 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "bucket_1_30_cents",
       label: "1–30",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.bucket_1_30_cents,
       render: (row) => (
@@ -343,6 +348,7 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "bucket_31_60_cents",
       label: "31–60",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.bucket_31_60_cents,
       render: (row) => (
@@ -354,6 +360,7 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "bucket_61_90_cents",
       label: "61–90",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.bucket_61_90_cents,
       render: (row) => (
@@ -365,6 +372,7 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "bucket_91_plus_cents",
       label: "91+",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.bucket_91_plus_cents,
       render: (row) => (
@@ -376,6 +384,7 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "total_open_cents",
       label: "Total",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.total_open_cents,
       render: (row) => (
@@ -391,6 +400,7 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   return (
     <div className="mt-3">
       <ParityTable
+        title="Open receivables by customer"
         rows={filtered}
         columns={agingColumns}
         rowKey={(row) => row.customer_id}
@@ -422,10 +432,11 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   // LEAD 443.181 — ParityTable; the vendor cell keeps its EntityLink (row opens the vendor), every bucket keeps its
   // AmountLink drill (ACCT-F411).
   const agingColumns: ParityColumn<(typeof filtered)[number]>[] = [
-    { key: "vendor_name", label: "Vendor", render: (row) => <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} /> },
+    { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} /> },
     {
       key: "current_cents",
       label: "Current",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.current_cents,
       render: (row) => (
@@ -437,6 +448,7 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "bucket_1_30_cents",
       label: "1–30",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.bucket_1_30_cents,
       render: (row) => (
@@ -448,6 +460,7 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "bucket_31_60_cents",
       label: "31–60",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.bucket_31_60_cents,
       render: (row) => (
@@ -459,6 +472,7 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "bucket_61_90_cents",
       label: "61–90",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.bucket_61_90_cents,
       render: (row) => (
@@ -470,6 +484,7 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "bucket_91_plus_cents",
       label: "91+",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.bucket_91_plus_cents,
       render: (row) => (
@@ -481,6 +496,7 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
     {
       key: "total_open_cents",
       label: "Total",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.total_open_cents,
       render: (row) => (
@@ -496,6 +512,7 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   return (
     <div className="mt-3">
       <ParityTable
+        title="Open payables by vendor"
         rows={filtered}
         columns={agingColumns}
         rowKey={(row) => row.vendor_id}
@@ -527,19 +544,21 @@ function CustomerSummarySection({ companyId, fromDate, toDate, searchQuery }: { 
   const sorted = [...filteredRows].sort((a, b) => b.revenue_cents - a.revenue_cents);
   // LEAD 443.181 — ParityTable; the customer cell keeps its EntityLink so the row opens the customer.
   const customerColumns: ParityColumn<(typeof sorted)[number]>[] = [
-    { key: "customer_name", label: "Customer", render: (row) => <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} /> },
+    { key: "customer_name", label: "Customer", sortable: true, render: (row) => <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} /> },
     {
       key: "revenue_cents",
       label: "Revenue",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.revenue_cents,
       render: (row) => <MoneyCell cents={row.revenue_cents} format={money} drill={{ none: "Revenue for the period for this customer — the customer link opens its invoices" }} />,
     },
-    { key: "load_count", label: "Load count", kind: "number", sortValue: (row) => row.load_count, render: (row) => row.load_count },
+    { key: "load_count", label: "Load count", sortable: true, kind: "number", sortValue: (row) => row.load_count, render: (row) => row.load_count },
   ];
   return (
     <div className="mt-3">
       <ParityTable
+        title="Sales by customer"
         rows={sorted.slice(0, 30)}
         columns={customerColumns}
         rowKey={(row) => row.customer_id}
@@ -571,19 +590,21 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate, searchQuery 
   const sorted = [...filteredRows].sort((a, b) => b.total_open_cents - a.total_open_cents);
   // LEAD 443.181 — ParityTable; the vendor cell keeps its EntityLink so the row opens the vendor.
   const vendorColumns: ParityColumn<(typeof sorted)[number]>[] = [
-    { key: "vendor_name", label: "Vendor", render: (row) => <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} /> },
+    { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} /> },
     {
       key: "total_open_cents",
       label: "Open balance",
+      sortable: true,
       kind: "money",
       sortValue: (row) => row.total_open_cents,
       render: (row) => <MoneyCell cents={row.total_open_cents} format={money} drill={{ amount: apAgingBillsFilter(row.vendor_id) }} />,
     },
-    { key: "open_bill_count", label: "Bill count", kind: "number", sortValue: (row) => row.open_bill_count, render: (row) => row.open_bill_count },
+    { key: "open_bill_count", label: "Bill count", sortable: true, kind: "number", sortValue: (row) => row.open_bill_count, render: (row) => row.open_bill_count },
   ];
   return (
     <div className="mt-3">
       <ParityTable
+        title="Expenses by vendor"
         rows={sorted.slice(0, 30)}
         columns={vendorColumns}
         rowKey={(row) => row.vendor_id}

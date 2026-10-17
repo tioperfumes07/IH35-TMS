@@ -1438,6 +1438,9 @@ type CoaAccountPickerRow = {
   account_number: string;
   account_name: string;
   account_type?: string;
+  account_subtype?: string | null;
+  /** Read by the shared picker scope (lib/account-picker-scope.ts) — header accounts are not cost lines. */
+  is_postable?: boolean | null;
   deactivated_at?: string | null;
 };
 

@@ -1,6 +1,7 @@
 import { ApiError, apiRequest, apiRequestFormData } from "./client";
 import type { CreateDriverInput, CustomerType, Driver, DriverOnboardingCreateResponse, MilesBasis, UpdateDriverInput } from "../types/api";
 import type { MdataLocation } from "./lists-locations";
+import { normalizeMdataListRows } from "./mdata-list";
 export { listDrivers, listAllDrivers } from "./catalog-drivers";
 export type { ListDriversParams, MaintenanceDriverRow } from "./catalog-drivers";
 export { listCustomers, listAllCustomers, searchCustomersAutocomplete } from "./catalog-customers";
@@ -1238,23 +1239,8 @@ export function updateDriverCompanyAuthorization(
   );
 }
 
-/**
- * LV-CUSTOMERS-FULL-EDIT-LIST-RESPONSE-NOT-ARRAY — live Full Edit crashed with
- * `(o ?? []).map is not a function` because `listCustomers().customers` was sometimes a non-array
- * envelope (nested rows / bare array / missing key). Normalize at the API client boundary so every
- * consumer always receives `T[]`.
- */
-export function normalizeMdataListRows<T>(raw: unknown): T[] {
-  if (Array.isArray(raw)) return raw as T[];
-  if (raw && typeof raw === "object") {
-    const o = raw as Record<string, unknown>;
-    for (const key of ["rows", "customers", "vendors", "data", "results", "payment_terms"] as const) {
-      const nested = o[key];
-      if (Array.isArray(nested)) return nested as T[];
-    }
-  }
-  return [];
-}
+// LV-CUSTOMERS-FULL-EDIT normalizer: one definition in ./mdata-list (shared with catalog-customers / catalog-vendors).
+export { normalizeMdataListRows } from "./mdata-list";
 
 // listCustomers, listAllCustomers, searchCustomersAutocomplete, CustomerAutocompleteRow → re-exported from catalog-customers.ts above
 

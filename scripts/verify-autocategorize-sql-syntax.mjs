@@ -61,15 +61,12 @@ if (process.argv.includes("--selftest")) {
   const passFailures = auditFile(good);
   if (passFailures.length) throw new Error("SELFTEST FAIL (should be clean): " + JSON.stringify(passFailures));
 
+  // Heavy CI peel (443.192) — plant re-pointed, same mutation: 2db6387ae3 (443.168 H, Law B — Plaid rules only suggest)
+  //   rewrote autoCategorize's UPDATE and dropped the `--` comment block the old plant swapped to `//`. The plant now
+  //   injects a `//` line into the CURRENT UPDATE's SET list (inside the autoCategorize body the audit scopes to).
   const brokenComment = good.replace(
-    `          -- GO-23 (owner FINISH LAW 2026-09-03, "record who and when"): opts.actorUserUuid is
-          -- the human who clicked "Apply to Historical Transactions" (apply-historical route,
-          -- dry_run=false); NULL here is honest, not a bug, for any future fully-automatic caller
-          -- with no human in the loop -- COALESCE never overwrites an already-attributed row.`,
-    `          // GO-23 (owner FINISH LAW 2026-09-03, "record who and when"): opts.actorUserUuid is
-          // the human who clicked "Apply to Historical Transactions" (apply-historical route,
-          // dry_run=false); NULL here is honest, not a bug, for any future fully-automatic caller
-          // with no human in the loop -- COALESCE never overwrites an already-attributed row.`
+    "          suggested_source = $4,\n",
+    "          suggested_source = $4,\n          // a JS comment inside the SQL template literal (not valid SQL)\n",
   );
   if (brokenComment === good) throw new Error("SELFTEST setup broken -- the -- comment text to swap back to // was not found");
   if (auditFile(brokenComment).length === 0) throw new Error("SELFTEST FAIL: reintroducing the // JS-comment-in-SQL bug went undetected");
