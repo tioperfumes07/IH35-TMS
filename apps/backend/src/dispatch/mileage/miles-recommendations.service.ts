@@ -13,7 +13,7 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { computeRouteReference } from "../../integrations/google/routes-api-client.js";
 import { googleLegMiles, type RouteFn } from "../load-lane-learning.service.js";
-import { loadedMilesFor } from "../book-load.service.js";
+import { loadedMilesFor } from "../loaded-miles.js";
 import { canonicalHappenedNotVoidedLoadClause } from "../canonical-active-load-set.js";
 
 type Queryable = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };

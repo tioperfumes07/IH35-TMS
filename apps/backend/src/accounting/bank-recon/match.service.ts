@@ -40,7 +40,11 @@ import {
   bankLineHasLiveDocumentPointer,
   bankLinePointerSelectSql,
 } from "../../banking/bank-line-match-pointer.js";
-import { RELAY_FUEL_WALLET_AMOUNT_SQL } from "./relay-bank-match.service.js";
+// 443.193 — the wallet drawdown amount comes from the one paid rule's own module (relay-sender-fee-cents.ts), not from
+// relay-bank-match.service.ts: that service calls this one's storeMatch (849bee2220, #26821), so importing it back was a
+// cycle (verify-no-circular-dependencies). Same expression relay-bank-match.service.ts exports (relayFuelWalletAmountSql("r")).
+import { relayFuelWalletAmountSql } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
+const RELAY_FUEL_WALLET_AMOUNT_SQL = relayFuelWalletAmountSql("r");
 import {
   RELAY_DEPOSIT_CHARGED_AMOUNT_SQL,
   RELAY_DEPOSIT_CREDITS_LEDGER_SQL,

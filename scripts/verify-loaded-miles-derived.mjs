@@ -33,7 +33,11 @@ for (const f of files) {
 }
 const upd = readFileSync("apps/backend/src/dispatch/update-load.service.ts", "utf8");
 if (!/add\("loaded_miles", loadedMilesFor\(/.test(upd)) fails.push("update-load.service.ts: a miles edit must recompute loaded_miles via loadedMilesFor");
+// 443.193: the rule moved to dispatch/loaded-miles.ts (cycle break with the mileage engine); book-load.service.ts re-exports it.
+const rule = readFileSync("apps/backend/src/dispatch/loaded-miles.ts", "utf8");
 const book = readFileSync("apps/backend/src/dispatch/book-load.service.ts", "utf8");
-if (!/export function loadedMilesFor\(/.test(book)) fails.push("book-load.service.ts: loadedMilesFor (the one loaded-miles rule) is missing");
+if (!/export function loadedMilesFor\(/.test(rule)) fails.push("dispatch/loaded-miles.ts: loadedMilesFor (the one loaded-miles rule) is missing");
+if (!/export \{ loadedMilesFor \} from "\.\/loaded-miles\.js";/.test(book)) fails.push("book-load.service.ts: must re-export the one loaded-miles rule from ./loaded-miles.js (no second definition)");
+if (/export function loadedMilesFor\(/.test(book)) fails.push("book-load.service.ts: a second loadedMilesFor definition — the rule lives in dispatch/loaded-miles.ts");
 if (fails.length) { console.error("verify-loaded-miles-derived: FAIL\n  " + fails.join("\n  ")); process.exit(1); }
 console.log(`verify-loaded-miles-derived: OK — ${files.length} miles writer file(s) all recompute loaded_miles with the one rule`);

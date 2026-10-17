@@ -48,6 +48,7 @@ import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 import { resolveInboundLoadEntity, type InboundSource } from "./inbound-load-entity.js";
 import { deadheadPayCents, deadheadRateCents, milesTimesRateCents } from "../driver-finance/deadhead-rule.js";
+import { loadedMilesFor } from "./loaded-miles.js";
 
 // FEED PARITY (docs/manuals/04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md, 2026-09-22).
 // Minimal client shape (same pattern as presettlement-link.service.ts's DbClient) so
@@ -62,16 +63,8 @@ type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unk
 //    cannot retroactively fail a drug test that has already passed. The gate is still EVALUATED,
 //    its outcome is RECORDED, and creation proceeds. Never skipped, never silently passed.
 
-/**
- * The ONE rule for mdata.loads.loaded_miles (owner miles spec 2026-09-02, two-line rule): typed shortest miles when
- * present, else practical. Every writer of miles_shortest / miles_practical recomputes it with this (CC-3 queue 2g —
- * it used to be written only at booking, so a later miles edit left it stale for break-even, scoring, batch pay).
- */
-export function loadedMilesFor(shortest: unknown, practical: unknown): number | null {
-  const s = shortest == null ? 0 : Number(shortest);
-  if (Number.isFinite(s) && s > 0) return s;
-  return practical == null ? null : Number(practical);
-}
+// The one loaded-miles rule lives in ./loaded-miles.ts (no Book Load imports) — re-exported for every existing caller.
+export { loadedMilesFor } from "./loaded-miles.js";
 
 /**
  * 443.60 #2 — every miles write carries its source (verify-mileage-g1-g5-live G4). A caller that sends miles with no source
