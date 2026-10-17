@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button } from "../../components/Button";
-import { DataTable } from "../../components/DataTable";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -76,9 +76,10 @@ export function SettlementDisputeList({ driverId }: { driverId?: string } = {}) 
           Could not load settlement disputes. <button type="button" className="font-semibold underline" onClick={() => void refetch()}>Retry</button>
         </div>
       ) : null}
-      {isSuccess && rows.length === 0 ? <p className="text-xs text-gray-500">No settlement disputes found.</p> : null}
-      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Settlement disputes</h2>
-      {!isError ? <DataTable
+      {!isError ? <ParityTable<SettlementDisputeRow>
+        title="Settlement disputes"
+        storageKey="driver-settlement-disputes"
+        emptyText={isSuccess ? "No settlement disputes found." : undefined}
         rows={rows}
         loading={isLoading}
         rowKey={(row) => row.id}
@@ -118,11 +119,13 @@ export function SettlementDisputeList({ driverId }: { driverId?: string } = {}) 
             render: (row) => (row.period_end ? formatDateUS(row.period_end) : "—"),
           },
           { key: "dispute_type", label: "Type" },
-          { key: "claimed_amount_cents", label: "Claimed", render: (row) => money(row.claimed_amount_cents) },
+          { key: "claimed_amount_cents", label: "Claimed", cellClass: "text-right tabular-nums", render: (row) => money(row.claimed_amount_cents) },
           { key: "status", label: "Status", render: (row) => <StatusBadge status={row.status} /> },
           {
             key: "actions",
             label: "Actions",
+            sortable: false,
+            alwaysVisible: true,
             render: (row) => {
               if (row.status === "submitted") {
                 return (

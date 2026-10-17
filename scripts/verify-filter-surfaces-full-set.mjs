@@ -64,7 +64,7 @@ const SURFACES = [
   {
     name: "All Documents (page)",
     file: "apps/frontend/src/pages/Documents.tsx",
-    must: [/offset: \(page - 1\) \* PAGE_SIZE,\s*\.\.\.filters,/, /<UniversalListToolbar[\s\S]{0,400}resultCount=\{totalFiles\}\s*totalCount=\{libraryTotal\}/, /<DataTable\s+rows=\{files\}\s+hideToolbar/],
+    must: [/offset: \(page - 1\) \* PAGE_SIZE,\s*\.\.\.filters,/, /<UniversalListToolbar[\s\S]{0,400}resultCount=\{totalFiles\}\s*totalCount=\{libraryTotal\}/, /<ParityTable<DocsFile>[\s\S]{0,200}rows=\{files\}\s+suppressToolbarSearch/],
     mustNot: [/filteredFiles/, /original_filename\.toLowerCase\(\)\.includes/],
   },
   {

@@ -4,7 +4,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { DataPanel } from "../layout/DataPanel";
 import { DataPanelRow } from "../layout/DataPanelRow";
-import { DataTable, type DataTableColumn } from "../DataTable";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { colors } from "../../design/tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
@@ -56,7 +56,7 @@ function renderSettlementLinks(settlement: SettlementListRow) {
 // COL-06: both endpoints were already on SettlementListRow and already rendered, just collapsed
 // under one ambiguous "Date" header instead of the canonical Settlement # / Period Begin / Period
 // End contract (components/dispatch/LoadDetailSettlementTab.tsx) -- split to match it.
-const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
+const preSettlementColumns: ParityColumn<SettlementListRow>[] = [
   {
     key: "period_start",
     label: "Period Begin",
@@ -148,12 +148,22 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
         </p>
       ) : null}
       {!loading && !isError && rows.length > 0 ? (
-        <DataTable
+        <ParityTable
+          storageKey="pre-settlements-panel"
           columns={preSettlementColumns}
           rows={rows}
           rowKey={(row) => row.id}
           rowTestId={() => "pre-settlement-row-reverse"}
           hidePager
+          pageSize={Math.max(1, rows.length)}
+          footerCells={
+            showTotal
+              ? {
+                  period_start: <span className="font-semibold">Total payout this batch</span>,
+                  amount: <span className="font-semibold">{formatMoney(total)}</span>,
+                }
+              : undefined
+          }
         />
       ) : null}
       {!loading && !isError && rows.length === 0 ? (
@@ -164,7 +174,7 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
           {emptyText}
         </p>
       ) : null}
-      {!loading && !isError && showTotal ? (
+      {!loading && !isError && showTotal && rows.length === 0 ? (
         <DataPanelRow>
           <span className="font-semibold">Total payout this batch</span>
           <span className="font-semibold">{formatMoney(total)}</span>
