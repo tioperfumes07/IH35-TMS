@@ -12,6 +12,9 @@ describe("native bill-payment writer contract", () => {
       expect(result.error, result.stderr).toBeUndefined();
       expect(result.signal, result.stderr).toBeNull();
       expect(result.status, result.stdout + result.stderr).toBe(0);
-    });
+      // Heavy CI peel: this test spawns a node process running an AST guard (--selftest ~2 s idle). Under CI's
+      // parallel suite it crossed vitest's 5 s default twice on main (run 39025600792) — a load timeout, not a
+      // contract failure. The assertions are unchanged; only the time budget for the child process.
+    }, 60_000);
   }
 });
