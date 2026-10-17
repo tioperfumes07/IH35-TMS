@@ -15,6 +15,7 @@ import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { getAppliedCreditMemoCents } from "./payments/apply.service.js";
 import { directPaymentRoomCents } from "../factoring/purchased-gross.service.js";
+import { insertPaymentRowInClientTx } from "./payments.routes.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -234,49 +235,24 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
         body.data.display_id
       );
 
-      const paymentRes = await client.query(
-        `
-          INSERT INTO accounting.payments (
-            operating_company_id,
-            customer_id,
-            display_id,
-            payment_method,
-            payment_date,
-            reference,
-            amount_cents,
-            deposited_to_account_id,
-            notes,
-            created_by_user_id,
-            payment_source_kind,
-            source_bank_transaction_id,
-            -- FAIL-F2 sweep / ACCT-F264 — customer payments could not be marked TEST data either.
-            -- accounting.payments.is_sample_data exists (12,129 rows) and NOTHING wrote it, exactly as
-            -- expenses and bills did not until #4993. posting-engine resolves the flag from the SOURCE
-            -- row (customer_payment is in SAMPLE_TAGGED_SOURCE_TABLES), so an untagged payment yields
-            -- an untagged journal entry and sample cash lands in real books.
-            is_sample_data
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-          RETURNING id, display_id, amount_unapplied_cents
-        `,
-        [
-          query.data.operating_company_id,
-          params.data.id,
-          displayId,
-          body.data.payment_method,
-          body.data.received_at,
-          body.data.reference_number ?? null,
-          body.data.amount_cents,
-          depositedToAccountId,
-          null,
-          user.uuid,
-          "manual",
-          null,
-          // $13 — only an explicit true marks sample; omitting it keeps the column's false default, so
-          // no existing caller changes behaviour and nothing is retroactively re-classified.
-          body.data.is_sample_data === true,
-        ]
-      );
-      const payment = paymentRes.rows[0] as { id: string; display_id: string; amount_unapplied_cents: number } | undefined;
+      // 443.182 C — the one payment row writer (payments.routes.ts insertPaymentRowInClientTx); same columns as before.
+      // FAIL-F2 / ACCT-F264 — customer payments can be marked TEST data: posting-engine resolves the flag from this SOURCE
+      // row. Only an explicit true marks sample; omitting it keeps the column's false default.
+      const payment = await insertPaymentRowInClientTx(client, {
+        operating_company_id: query.data.operating_company_id,
+        customer_id: params.data.id,
+        display_id: displayId,
+        payment_method: body.data.payment_method,
+        payment_date: body.data.received_at,
+        reference: body.data.reference_number ?? null,
+        amount_cents: body.data.amount_cents,
+        deposited_to_account_id: depositedToAccountId,
+        notes: null,
+        created_by_user_id: user.uuid,
+        payment_source_kind: "manual",
+        source_bank_transaction_id: null,
+        is_sample_data: body.data.is_sample_data === true,
+      });
       if (!payment?.id) return { code: 500 as const, error: "payment_create_failed" as const };
 
       let applicationsCount = 0;
