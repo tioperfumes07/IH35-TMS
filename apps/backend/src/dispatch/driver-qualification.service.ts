@@ -95,7 +95,9 @@ export type DriverQualificationReason =
   // Live at the time of writing: 484,004 rows in hos.duty_status_events across 76 drivers, 165 rows in
   // views.drivers_with_hos_status, and 7 drivers flagged in violation. Two of four assignment paths
   // would have dispatched any of those 7 without objection.
-  | "hos_violation";
+  | "hos_violation"
+  // LEAD 443.192: a merged-away driver record (merged_into_driver_id set). Thrown as DriverMergedError, never overridable.
+  | "driver_merged";
 
 export type DriverQualificationBlock = {
   driverId: string;
@@ -336,11 +338,16 @@ export async function assertDriverQualifiedForLoad(
     med_expiry_date: string | null;
     hazmat_blocked: boolean;
     hazmat_endorsement_expires_at: string | null;
+    merged_into: string | null;
+    merged_into_name: string | null;
   }>(
     `
       SELECT
         d.id::text AS id,
         CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+        -- 443.192: a merged-away record (driver-merge engine / Samsara "Same person") is not a person — see below.
+        d.merged_into_driver_id::text AS merged_into,
+        (SELECT CONCAT_WS(' ', s.first_name, s.last_name) FROM mdata.drivers s WHERE s.id = d.merged_into_driver_id) AS merged_into_name,
         (d.deactivated_at IS NOT NULL) AS is_deactivated,
         (d.archived_at IS NOT NULL) AS is_archived,
         -- LV-INACTIVE-DRIVER-ASSIGNED-AND-DELIVERED-REVENUE-LOAD: status can independently say
@@ -386,6 +393,15 @@ export async function assertDriverQualifiedForLoad(
 
   const dr = credRows.rows[0];
   if (!dr) return null;
+
+  // LEAD 443.192 — a driver record merged into another (mdata.drivers.merged_into_driver_id) is the SAME person under a
+  // superseded identity; the merge engine's contract is that zero references to it remain. Measured on prod: loads 13656
+  // and 13680 were booked 2026-10-16 on merged record 5363ee51 (merged into 61727a46) through an Owner credential override
+  // ("driver_status_inactive, cdl_missing, medical_card_missing"); the pay writer then looked up the merged record's
+  // rate card (it has none — the survivor's 45c card governs both pickup dates) and minted two $0.00, rate-NULL driver
+  // bills. This is identity, not a credential: no Owner override and no historical_backfill exception can make a
+  // merged record the driver of a load. THROWN (never a returned block), so no caller's override path can pass it.
+  if (dr.merged_into) throw new DriverMergedError(dr.id, dr.driver_name, dr.merged_into, dr.merged_into_name);
 
   // SAF-F07 — unresolved D&A violation check (49 CFR §382.501 removal from safety-sensitive duty).
   //
@@ -487,6 +503,35 @@ export class DriverNotQualifiedError extends Error {
     );
     this.name = "DriverNotQualifiedError";
     this.block = block;
+  }
+}
+
+/**
+ * LEAD 443.192 — the driver is a merged-away record. A DriverNotQualifiedError subclass so every route that already renders
+ * E_DRIVER_NOT_QUALIFIED as a 422 renders this one too (reason "driver_merged", naming the driver it was merged into).
+ */
+export class DriverMergedError extends DriverNotQualifiedError {
+  readonly survivorDriverId: string;
+  readonly survivorDriverName: string | null;
+  constructor(driverId: string, driverName: string | null, survivorDriverId: string, survivorDriverName: string | null) {
+    super({
+      driverId,
+      driverName,
+      reasons: ["driver_merged"],
+      cdlExpiresAt: null,
+      medicalExpiryDate: null,
+      hazmatEndorsementExpiresAt: null,
+      drugAlcoholViolationAt: null,
+      drugAlcoholViolationSource: null,
+      clearinghouseProhibitedSince: null,
+      hosMinutesUntilViolation: null,
+    });
+    this.message =
+      `Driver ${driverName ?? driverId} is a merged record — it was merged into ${survivorDriverName ?? survivorDriverId}. ` +
+      `Assign ${survivorDriverName ?? survivorDriverId} instead; a merged record can never be a load's driver.`;
+    this.name = "DriverMergedError";
+    this.survivorDriverId = survivorDriverId;
+    this.survivorDriverName = survivorDriverName;
   }
 }
 

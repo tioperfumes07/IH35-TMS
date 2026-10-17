@@ -923,6 +923,33 @@ export type DriverBillMintOutcome =
   // Lead 443.36 #2: a salaried week (isSalariedZeroRateOverride) has NO per-load driver bill — recorded, never silent.
   | { outcome: "not_minted_salaried"; reason: string };
 
+/**
+ * LEAD 443.192 — an open bill whose settled_in_settlement_id named a voided / cancelled settlement is released from that
+ * dead link when the mint re-prices or reassigns it (the settlement it named is settled in nothing). Recorded by name.
+ */
+async function auditDeadSettlementLinkReleased(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: BookLoadInput,
+  existing: { id: string; dead_settlement_id?: string | null },
+  loadId: string
+): Promise<void> {
+  if (!existing.dead_settlement_id) return;
+  await appendCrudAudit(
+    client,
+    input.requestingUserUuid,
+    "driver_finance.driver_bill.dead_settlement_link_released",
+    {
+      operating_company_id: input.operating_company_id,
+      driver_bill_id: existing.id,
+      load_id: loadId,
+      released_settlement_id: existing.dead_settlement_id,
+      rule: "a bill settled in a voided / cancelled settlement is settled in nothing (443.167-R / 443.192)",
+    },
+    "info",
+    "LEAD-443.192"
+  );
+}
+
 export async function createDriverBillArtifacts(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: BookLoadInput,
@@ -947,14 +974,28 @@ export async function createDriverBillArtifacts(
     gross_amount_cents: string | number | null;
     voided_at: string | null;
     settled_in_settlement_id: string | null;
+    dead_settlement_id?: string | null;
     driver_id: string | null;
     team_driver_id: string | null;
   }>(
-    `SELECT id::text, status, gross_amount_cents, voided_at, settled_in_settlement_id::text,
+    // LEAD 443.192 — the same rule the Settlement Creator applies (settlement-creator.service.ts, 443.167-R): a bill
+    // "settled" in a voided / cancelled settlement is settled in NOTHING. settled_in_settlement_id is read as the LIVE
+    // settlement only; a link to a dead one is surfaced separately (dead_settlement_id) so the re-price below can release
+    // it, audited. Measured: 13656 / 13680's $0 tracking bills still point at their seed shells P-0072 / P-0089, voided
+    // "443.167 regroup" — read raw, the link froze both bills as "settled" and refused the reassignment that re-prices them.
+    `SELECT id::text, status, gross_amount_cents, voided_at,
+            CASE WHEN settlement_live THEN settled_in_settlement_id::text END AS settled_in_settlement_id,
+            CASE WHEN settled_in_settlement_id IS NOT NULL AND NOT settlement_live THEN settled_in_settlement_id::text END
+              AS dead_settlement_id,
             driver_id::text, team_driver_id::text
-       FROM driver_finance.driver_bills
-      WHERE operating_company_id = $1::uuid
-        AND load_id = $2::uuid
+       FROM (
+         SELECT db.*,
+                EXISTS (SELECT 1 FROM driver_finance.driver_settlements s
+                         WHERE s.id = db.settled_in_settlement_id AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settlement_live
+           FROM driver_finance.driver_bills db
+          WHERE db.operating_company_id = $1::uuid
+            AND db.load_id = $2::uuid
+       ) b
       ORDER BY created_at ASC
       LIMIT 1`,
     [input.operating_company_id, String(load.id)]
@@ -1183,10 +1224,11 @@ export async function createDriverBillArtifacts(
       if (!identityChanged) return { outcome: "already_exists" };
       // The bill moves to the new driver; its money is not re-priced from an unpriced / $0 resolution.
       await client.query(
-        `UPDATE driver_finance.driver_bills SET driver_id = $2::uuid, team_driver_id = $3::uuid
-          WHERE id = $1::uuid AND status = 'open' AND settled_in_settlement_id IS NULL`,
-        [existing.id, toDriverId, toTeamDriverId]
+        `UPDATE driver_finance.driver_bills SET driver_id = $2::uuid, team_driver_id = $3::uuid, settled_in_settlement_id = NULL
+          WHERE id = $1::uuid AND status = 'open' AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $4::uuid)`,
+        [existing.id, toDriverId, toTeamDriverId, existing.dead_settlement_id ?? null]
       );
+      await auditDeadSettlementLinkReleased(client, input, existing, String(load.id));
       await appendCrudAudit(
         client,
         input.requestingUserUuid,
@@ -1223,10 +1265,11 @@ export async function createDriverBillArtifacts(
                miles_deadhead = $9,
                rate_empty_per_mile_cents = $10,
                loaded_pay_cents = $11,
-               deadhead_pay_cents = $12
+               deadhead_pay_cents = $12,
+               settled_in_settlement_id = NULL
          WHERE id = $1::uuid
            AND status = 'open'
-           AND settled_in_settlement_id IS NULL
+           AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $13::uuid)
       `,
       [
         existing.id,
@@ -1241,8 +1284,10 @@ export async function createDriverBillArtifacts(
         deadheadPayCentsForBill > 0 ? pay.rateEmptyPerMileCentsUsed : null,
         loadedPayCentsForBill,
         deadheadPayCentsForBill,
+        existing.dead_settlement_id ?? null,
       ]
     );
+    await auditDeadSettlementLinkReleased(client, input, existing, String(load.id));
     return mintOutcome(billNumber);
   }
   if (existing) return { outcome: "already_exists" };
@@ -1935,12 +1980,14 @@ export async function createLoadWithFullSideEffects(
         termination_date: string | null;
         status: string | null;
         employment_status: string | null;
+        merged_into?: string | null;
       }>(
         `
           SELECT d.id::text,
                  NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), '') AS full_name,
                  d.deactivated_at::text, d.archived_at::text,
-                 d.termination_date::text, d.status::text, d.employment_status::text
+                 d.termination_date::text, d.status::text, d.employment_status::text,
+                 d.merged_into_driver_id::text AS merged_into
           FROM mdata.drivers d
           WHERE d.id = $1::uuid
             AND (
@@ -1967,6 +2014,15 @@ export async function createLoadWithFullSideEffects(
       );
       if (!driver) {
         return { kind: "error", status: 400, payload: { error: "historical_import_driver_not_in_company" } };
+      }
+      // LEAD 443.192 — a merged record is inactive by construction but is not a person: the historical-import path
+      // skips the shared qualification gate for this driver, so it refuses a merged record here itself.
+      if (driver.merged_into) {
+        return {
+          kind: "error",
+          status: 422,
+          payload: { error: "historical_import_driver_merged", details: { driver_id: driver.id, merged_into_driver_id: driver.merged_into } },
+        };
       }
       if (!inactive) {
         return { kind: "error", status: 400, payload: { error: "historical_import_driver_must_be_inactive" } };
