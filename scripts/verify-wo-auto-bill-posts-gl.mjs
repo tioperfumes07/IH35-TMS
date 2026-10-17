@@ -52,7 +52,7 @@ export function checkPostsOrNothing(text, woi, routes) {
   const strictStart = fn.indexOf("if (flagOn && opts?.requirePosted) {");
   const strictEnd = fn.indexOf("} else if (flagOn) {", strictStart);
   const strict = strictStart === -1 || strictEnd === -1 ? "" : fn.slice(strictStart, strictEnd);
-  if (!strict || !/postSourceTransactionInClientTx\(/.test(strict)) {
+  if (!strict || !/(?:postSourceTransactionInClientTx|postBillDocumentInClientTx)\(/.test(strict)) {
     problems.push("the requirePosted branch does not post the bill in the caller's transaction.");
   } else if (/\bcatch\b/.test(strict)) {
     problems.push("the requirePosted branch catches the posting error — a refusal must propagate, never be caught-and-logged.");
@@ -95,7 +95,9 @@ export function check(text) {
   if (!(/returning: "id, operating_company_id"/.test(writerText) || /RETURNING id, operating_company_id/.test(fn))) {
     problems.push("INSERT does not RETURNING operating_company_id (needed for the poster call).");
   }
-  if (!/postSourceTransactionInClientTx\(\s*\n\s*client as never,\s*\n\s*\{ operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId \}/.test(fn)) {
+  // 443.182 C step 2 — postBillDocumentInClientTx is the bill engine's in-transaction bill post (same call, same args).
+  if (!/postSourceTransactionInClientTx\(\s*\n\s*client as never,\s*\n\s*\{ operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId \}/.test(fn)
+      && !/postBillDocumentInClientTx\(client as never, \{ operating_company_id: billOperatingCompanyId, bill_id: billId \}, \{ userId \}\)/.test(fn)) {
     problems.push("does not call postSourceTransactionInClientTx with source_transaction_type 'bill' in the caller's own transaction.");
   }
   if (/postBillGlIfEnabled\(/.test(fn)) {
@@ -164,6 +166,9 @@ function selftest() {
   const o3 = real.replace(
     /await postSourceTransactionInClientTx\(\s*\n\s*client as never,\s*\n\s*\{ operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId \},\s*\n\s*\{ userId \}\s*\n\s*\);/,
     'await postBillGlIfEnabled(billOperatingCompanyId, billId, { userId });'
+  ).replace(
+    /await postBillDocumentInClientTx\(client as never, \{ operating_company_id: billOperatingCompanyId, bill_id: billId \}, \{ userId \}\);/g,
+    'await postBillGlIfEnabled(billOperatingCompanyId, billId, { userId });'
   );
   const p3 = check(o3);
   if (!p3.some((m) => m.includes("cross-connection") || m.includes("cannot see"))) {
@@ -185,7 +190,7 @@ function selftest() {
   const o5 = real.replace(/if \(!flagOn && opts\?\.requirePosted\) \{\s*throw new WoBillGlPostingDisabledError\(billOperatingCompanyId\);\s*\}/, "");
   if (!checkPostsOrNothing(o5, woi, routes).some((m) => m.includes("not refused when BILL_GL_POSTING_ENABLED is off"))) failures.push("offender-5 (flag-off requirePosted not refused) NOT caught");
   const o6 = real.replace(
-    /(if \(flagOn && opts\?\.requirePosted\) \{\s*)(await postSourceTransactionInClientTx\([\s\S]*?\);)/,
+    /(if \(flagOn && opts\?\.requirePosted\) \{\s*)(await post(?:SourceTransaction|BillDocument)InClientTx\([\s\S]*?\);)/,
     "$1try { $2 } catch (err) { if (!(err instanceof PostingEngineError)) throw err; }"
   );
   if (!checkPostsOrNothing(o6, woi, routes).some((m) => m.includes("catches the posting error"))) failures.push("offender-6 (requirePosted posting swallowed) NOT caught");

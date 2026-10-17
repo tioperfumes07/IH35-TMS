@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { resolveFuelLoadAtTime } from "../fuel-load-at-time.js";
 import {
   mapFuelCardRows,
   normalizeFuelType,
   computeFuelRowHash,
   importFuelCardTransactionsForCompany,
-  resolveLoadId,
   type DbClient,
 } from "../fuel-transaction-import.js";
 
@@ -101,6 +101,8 @@ function makeClient(opts: {
   /** The load's company trailer the one trailer rule returns with the load (443.110 G7). */
   trailerId?: string | null;
   insertRowCount?: number;
+  /** A live fill already recorded for the same base invoice (443.185 G12). */
+  existingFuel?: { id: string; load_id: string | null; load_number: string | null } | null;
   captured: Captured[];
 }): DbClient {
   return {
@@ -120,6 +122,9 @@ function makeClient(opts: {
       }
       if (sql.includes("FROM mdata.vendors")) {
         return opts.vendorId ? { rows: [{ id: opts.vendorId }] } : { rows: [] };
+      }
+      if (sql.includes("regexp_replace(btrim(f.transaction_reference)")) {
+        return opts.existingFuel ? { rows: [opts.existingFuel] } : { rows: [] };
       }
       if (sql.includes("INSERT INTO fuel.fuel_transactions")) {
         const rc = opts.insertRowCount ?? 1;
@@ -232,6 +237,22 @@ describe("importFuelCardTransactionsForCompany", () => {
     expect(counts.rows_unlinked_to_load).toBe(0);
   });
 
+  it("443.185 G12 — a base invoice already recorded (e.g. as <ticket>-<load>) is ONE purchase: counted duplicate, no INSERT, the file goes on", async () => {
+    // Fail-old: the import deduped on its own row hash only, so the second spelling hashed apart, reached the INSERT,
+    // the base-invoice trigger refused it and the thrown error aborted the whole import.
+    const captured: Captured[] = [];
+    const client = makeClient({ unitId: UNIT_ID, driverId: DRIVER_ID, vendorId: VENDOR_ID, loadId: LOAD_ID, existingFuel: { id: "existing", load_id: LOAD_ID, load_number: "13571" }, captured });
+    const ticketWithLoad = mapFuelCardRows([
+      { transaction_date: "2026-06-15T14:32:00Z", transaction_id: "884210-13571", unit: "TRK-102", driver: "Juan Perez", merchant: "Love's #123", product: "Diesel", gallons: "112.5", ppg: "3.459", total_amount: "389.14" },
+    ]);
+    const counts = await importFuelCardTransactionsForCompany(client, COMPANY, ticketWithLoad);
+    expect(counts.rows_duplicate).toBe(1);
+    expect(counts.rows_inserted).toBe(0);
+    expect(captured.some((c) => c.sql.includes("INSERT INTO fuel.fuel_transactions"))).toBe(false);
+    const lookup = captured.find((c) => c.sql.includes("regexp_replace(btrim(f.transaction_reference)"))!;
+    expect(lookup.values).toEqual([COMPANY, VENDOR_ID, "884210", "diesel"]);
+  });
+
   it("resolves the load through the ONE fuel-to-load rule and carries the load's trailer (443.110 G7)", async () => {
     // The import used its own ±1-day SCHEDULED window (ignored actual stamps; null on any overlap). It now asks the same
     // rule the Relay post asks (resolveFuelLoadAtTime -> loadAtTimeSql, driver fallback): overlaps are decided by actual
@@ -261,9 +282,10 @@ describe("importFuelCardTransactionsForCompany", () => {
     expect((v[15] as string).length).toBeGreaterThanOrEqual(20);
   });
 
-  it("resolveLoadId delegates to the one rule: the rule's load, else null", async () => {
-    expect(await resolveLoadId(makeClient({ loadId: LOAD_ID, captured: [] }), COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z")).toBe(LOAD_ID);
-    expect(await resolveLoadId(makeClient({ loadId: null, captured: [] }), COMPANY, UNIT_ID, DRIVER_ID, "2026-08-12T00:00:00Z")).toBeNull();
-    expect(await resolveLoadId(makeClient({ loadId: LOAD_ID, captured: [] }), COMPANY, null, null, "2026-08-12T00:00:00Z")).toBeNull();
+  it("the one rule (resolveFuelLoadAtTime): the rule's load, else null; no unit and no driver = no query", async () => {
+    const at = { operatingCompanyId: COMPANY, unitId: UNIT_ID, driverId: DRIVER_ID, at: "2026-08-12T00:00:00Z" };
+    expect((await resolveFuelLoadAtTime(makeClient({ loadId: LOAD_ID, captured: [] }), at))?.load_id).toBe(LOAD_ID);
+    expect(await resolveFuelLoadAtTime(makeClient({ loadId: null, captured: [] }), at)).toBeNull();
+    expect(await resolveFuelLoadAtTime(makeClient({ loadId: LOAD_ID, captured: [] }), { ...at, unitId: null, driverId: null })).toBeNull();
   });
 });

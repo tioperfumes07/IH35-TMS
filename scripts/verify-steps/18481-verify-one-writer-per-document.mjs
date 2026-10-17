@@ -11,6 +11,15 @@
  *
  * 443.182 C step 2 (Lead 03:05Z) — DEEP engine, per document, in its own block below (payments block: the payment
  * number, the payment_applications row and the customer_payment JE post all live in the payments engine).
+ * STEP 2 — the DEEP engine (Lead 03:05Z; owner 443.160 "one form engine + one writer per document type"), bills and
+ * bill_payments: numbering, lines and the journal-entry post live INSIDE the engine too. ZERO-TOLERANCE outside the engine
+ * modules (bills.service.ts, and its flag-gated posters bill-gl.service.ts / bill-payment-gl.service.ts):
+ *   L  an INSERT INTO accounting.bill_lines                            -> insertBillLineOnClient / writeBillDocumentOnClient
+ *   N  an UPDATE accounting.bills that sets bill_number or display_id,
+ *      or a resolveBillDisplayId() call                               -> stampBillNumberOnClient / the engine's own numbering
+ *   P  a journal-entry post for a bill or a bill payment
+ *      (source_transaction_type "bill" / "bill_payment" literal)       -> postBillDocument(InClientTx) / postBillPaymentDocument(InClientTx)
+ * and the engine must still export those stages (E).
  *
  * --selftest: plants each regression and asserts the guard fails.
  */
@@ -108,6 +117,45 @@ export function check(files, baseline, mainBaseline) {
   return findings;
 }
 
+/** STEP 2 — the deep engine: numbering, lines and posting for bills and bill payments only inside these modules. */
+export const ENGINE_FILES = [
+  "apps/backend/src/accounting/bills.service.ts",
+  "apps/backend/src/accounting/bill-gl.service.ts",
+  "apps/backend/src/accounting/bill-payment-gl.service.ts",
+];
+const ENGINE_EXPORTS = [
+  "insertBillHeaderOnClient", "insertBillLineOnClient", "stampBillNumberOnClient", "writeBillDocumentOnClient",
+  "postBillDocumentInClientTx", "postBillDocument", "insertBillPaymentRowInClientTx",
+  "postBillPaymentDocumentInClientTx", "postBillPaymentDocument",
+];
+const templates = (src) => [...src.matchAll(/`([^`]*)`/g)].map((m) => m[1]);
+export function deepFindings(files) {
+  const findings = [];
+  for (const [rel, src] of files) {
+    if (ENGINE_FILES.includes(rel)) continue;
+    const n = (src.match(/INSERT\s+INTO\s+accounting\.bill_lines\s*\(/gi) ?? []).length;
+    if (n) findings.push(`L ${rel}: ${n} INSERT INTO accounting.bill_lines outside the bill engine — use insertBillLineOnClient / writeBillDocumentOnClient`);
+    for (const t of templates(src)) {
+      if (/UPDATE\s+accounting\.bills\b/i.test(t) && /\b(bill_number|display_id)\s*=/.test(t.split(/\bWHERE\b/i)[0])) {
+        findings.push(`N ${rel}: sets a bill's number outside the bill engine — use stampBillNumberOnClient`);
+      }
+    }
+    if (rel !== "apps/backend/src/accounting/display-id.ts" && /\bresolveBillDisplayId\s*\(/.test(src.replace(/^\s*(\/\/|\*).*$/gm, ""))) {
+      findings.push(`N ${rel}: numbers a bill (resolveBillDisplayId) outside the bill engine`);
+    }
+    for (const [doc, fn] of [["bill", "postBillDocument(InClientTx)"], ["bill_payment", "postBillPaymentDocument(InClientTx)"]]) {
+      const re = new RegExp(`source_transaction_type:\\s*["']${doc}["']`, "g");
+      const k = (src.match(re) ?? []).length;
+      if (k) findings.push(`P ${rel}: ${k} ${doc} journal-entry post(s) outside the bill engine — use ${fn}`);
+    }
+  }
+  const engine = files.find(([rel]) => rel === ENGINE_FILES[0])?.[1] ?? "";
+  for (const name of ENGINE_EXPORTS) {
+    if (!new RegExp(`export\\s+(async\\s+)?function\\s+${name}\\b`).test(engine)) findings.push(`E ${ENGINE_FILES[0]}: the engine no longer exports ${name}`);
+  }
+  return findings;
+}
+
 const readAll = () => backendFiles().map((abs) => [relative(ROOT, abs), readFileSync(abs, "utf8")]);
 
 if (process.argv.includes("--write-baseline")) {
@@ -125,9 +173,24 @@ const r = spawnSync("git", ["show", `origin/main:${BASELINE_REL}`], { cwd: ROOT,
 const mainBaseline = r.status === 0 ? JSON.parse(r.stdout).writers : null;
 
 if (process.argv.includes("--selftest")) {
-  if (check(files, baseline, mainBaseline).length) {
-    console.error("SELFTEST FAIL: baseline not clean", check(files, baseline, mainBaseline));
+  if (check(files, baseline, mainBaseline).length || deepFindings(files).length) {
+    console.error("SELFTEST FAIL: baseline not clean", check(files, baseline, mainBaseline), deepFindings(files));
     process.exit(1);
+  }
+  const X = "apps/backend/src/x.ts";
+  const deepPlants = [
+    ["bill line outside the engine", [...files, [X, "q(`INSERT INTO accounting.bill_lines (bill_id) VALUES ($1)`)"]]],
+    ["bill number outside the engine", [...files, [X, "q(`UPDATE accounting.bills SET bill_number = $2 WHERE id = $1`)"]]],
+    ["bill display id outside the engine", [...files, [X, "await resolveBillDisplayId(client, oc, new Date(), null);"]]],
+    ["bill post outside the engine", [...files, [X, 'postSourceTransactionInClientTx(c, { operating_company_id: o, source_transaction_type: "bill", source_transaction_id: b }, a);']]],
+    ["bill-payment post outside the engine", [...files, [X, "postSourceTransaction({ operating_company_id: o, source_transaction_type: 'bill_payment', source_transaction_id: p }, a);"]]],
+    ["engine stage removed", files.map(([p, src]) => [p, p === ENGINE_FILES[0] ? src.replace("export async function postBillDocumentInClientTx", "async function postBillDocumentInClientTx_") : src])],
+  ];
+  for (const [name, f] of deepPlants) {
+    if (deepFindings(f).length === 0) {
+      console.error(`SELFTEST FAIL: deep plant "${name}" not caught`);
+      process.exit(1);
+    }
   }
   const plants = [
     ["new bill writer", [...files, ["apps/backend/src/x.ts", "q(`INSERT INTO accounting.bills (id) VALUES ($1)`)"]], baseline, mainBaseline],
@@ -147,15 +210,15 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`SELFTEST PASS: ${plants.length} plants caught`);
+  console.log(`SELFTEST PASS: ${plants.length} writer plants + ${deepPlants.length} deep-engine plants caught`);
   process.exit(0);
 }
 
-const findings = check(files, baseline, mainBaseline);
+const findings = [...check(files, baseline, mainBaseline), ...deepFindings(files)];
 if (findings.length) {
   console.error(`verify-one-writer-per-document FAIL (${findings.length}):`);
   for (const f of findings) console.error(`  ${f}`);
   process.exit(1);
 }
 const sites = census(files);
-console.log(`verify-one-writer-per-document PASS: ${Object.entries(sites).map(([d, m]) => `${d} ${Object.values(m).reduce((a, b) => a + b, 0)} sites/${Object.keys(m).length} files`).join(" · ")} (shrink-only)`);
+console.log(`verify-one-writer-per-document PASS: ${Object.entries(sites).map(([d, m]) => `${d} ${Object.values(m).reduce((a, b) => a + b, 0)} sites/${Object.keys(m).length} files`).join(" · ")} (shrink-only); bills + bill_payments deep engine: numbering, lines and JE posts only in ${ENGINE_FILES.map((f) => f.split("/").pop()).join(" / ")}`);

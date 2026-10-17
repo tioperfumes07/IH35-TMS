@@ -12,8 +12,7 @@
  *  - its id is returned so the Creator keeps it in the posted audit (owed_bill_ids) and Edit (void and repost) voids it
  *    through the bill void engine — a reversal, never a delete.
  */
-import { createBillInClientTx } from "../accounting/bills.service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { createBillInClientTx, postBillDocumentInClientTx } from "../accounting/bills.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
 import { stampNewDriverBillTrailerFromLoad } from "../accounting/bill-trailer-stamp.service.js";
@@ -105,9 +104,9 @@ export async function writeCreatorOwedBill(client: Queryable, input: CreatorOwed
   await stampNewDriverBillTrailerFromLoad(client as never, { operatingCompanyId: opco, billId, loadId: input.loadId });
   let journalEntryId: string | null = null;
   try {
-    const posted = await postSourceTransactionInClientTx(
+    const posted = await postBillDocumentInClientTx(
       client as never,
-      { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post" } as never,
+      { operating_company_id: opco, bill_id: billId, posting_purpose: "initial_post" } as never,
       { userId: input.actorUserId } as never,
     );
     journalEntryId = (posted as { journal_entry_id?: string | null })?.journal_entry_id ?? null;

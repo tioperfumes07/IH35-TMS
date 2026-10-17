@@ -49,14 +49,10 @@ import { createEmployeeLoanCore } from "../cash-advances/cash-advance-create.js"
 import { disburseDriverAdvanceCore } from "../cash-advances/cash-advance-disburse.js";
 import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import {
-  postSourceTransactionInClientTx,
-  PostingEngineError,
-} from "../accounting/posting-engine.service.js";
+import { PostingEngineError } from "../accounting/posting-engine.service.js";
 import { BILL_GL_POSTING_FLAG_KEY } from "../accounting/bill-gl.service.js";
 import { BILL_PAYMENT_GL_POSTING_FLAG_KEY } from "../accounting/bill-payment-gl.service.js";
-import { insertBillHeaderOnClient, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
-import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx } from "../accounting/bills.service.js";
+import { BILL_PAYMENT_NOW, insertBillPaymentRowInClientTx, postBillDocumentInClientTx, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort, writeBillDocumentOnClient, postBillPaymentDocumentInClientTx } from "../accounting/bills.service.js";
 
 export const BANK_TX_SPLIT_FLAG_KEY = "BANK_TX_SPLIT_ENABLED";
 export const BANK_TX_SPLIT_GL_POSTING_FLAG_KEY = "BANK_TX_SPLIT_GL_POSTING_ENABLED";
@@ -832,9 +828,9 @@ async function commitVendorBillSplitLineAtomic(input: {
     const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, input.companyId, input.vendorId);
 
     // 443.182 C — written through the one bill writer (same columns, casts and literals as the former inline INSERT).
-    const billRes = await insertBillHeaderOnClient<{ id: string }>(
-      client,
-      [
+    // 443.182 C step 2 — the bill document (header + its one line) through the bill engine; same statements as before.
+    const billRes = await writeBillDocumentOnClient<{ id: string }>(client, {
+      header: [
         ["operating_company_id", { value: input.companyId }],
         ["vendor_id", { value: input.vendorId }],
         ["vendor_uuid", { value: input.vendorId }],
@@ -857,22 +853,20 @@ async function commitVendorBillSplitLineAtomic(input: {
         // ACCT-F353 — derived from the vendor being paid (vendorIsSampleData above).
         ["is_sample_data", { value: vendorIsSampleData }],
       ],
-      { returning: "id::text" },
-    );
+      returning: "id::text",
+      lines: (newBillId) => [
+        [
+          ["bill_id", { value: newBillId, cast: "uuid" }],
+          ["line_sequence", { value: 1 }],
+          ["amount", { value: input.amountCents / 100 }],
+          ["description", { value: `Bank-split vendor bill (bank_txn ${input.bankTransactionId}, line ${input.lineNo})` }],
+          ["account_id", { value: input.glAccountId, cast: "uuid" }],
+        ],
+      ],
+      lineOnConflict: "line_sequence_do_nothing",
+    });
     const billId = billRes.rows[0]?.id;
     if (!billId) throw new VendorBillSplitAtomicError("bill_insert_failed", "Bill insert returned no id");
-
-    await client.query(
-      `INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description, account_id)
-       VALUES ($1::uuid, 1, $2, $3, $4::uuid)
-       ON CONFLICT (bill_id, line_sequence) DO NOTHING`,
-      [
-        billId,
-        input.amountCents / 100,
-        `Bank-split vendor bill (bank_txn ${input.bankTransactionId}, line ${input.lineNo})`,
-        input.glAccountId,
-      ]
-    );
 
     // 443.182 C — the one bill-payment row writer (bills.service.ts); same columns as before.
     // THREE-DATES-COVERAGE-GAP: this flow categorizes an ALREADY-POSTED bank transaction directly into a bill+payment —
@@ -904,22 +898,14 @@ async function commitVendorBillSplitLineAtomic(input: {
       throw new VendorBillSplitAtomicError("bill_payment_insert_failed", "Bill payment insert returned no id");
     }
 
-    const billPost = await postSourceTransactionInClientTx(
+    const billPost = await postBillDocumentInClientTx(
       client as never,
-      {
-        operating_company_id: input.companyId,
-        source_transaction_type: "bill",
-        source_transaction_id: billId,
-      },
+      { operating_company_id: input.companyId, bill_id: billId },
       { userId: input.actorUserUuid }
     );
-    const paymentPost = await postSourceTransactionInClientTx(
+    const paymentPost = await postBillPaymentDocumentInClientTx(
       client as never,
-      {
-        operating_company_id: input.companyId,
-        source_transaction_type: "bill_payment",
-        source_transaction_id: billPaymentId,
-      },
+      { operating_company_id: input.companyId, bill_payment_id: billPaymentId },
       { userId: input.actorUserUuid }
     );
 

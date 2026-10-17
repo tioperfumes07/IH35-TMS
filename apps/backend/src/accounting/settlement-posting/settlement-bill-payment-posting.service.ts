@@ -43,9 +43,8 @@ import { isEnabled } from "../../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../../banking/bank-account-visibility.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
-import { createBill, payBill, voidBillInClientTx, voidBillPaymentInClientTx } from "../bills.service.js";
+import { createBill, insertBillLineOnClient, payBill, postBillDocument, voidBillInClientTx, voidBillPaymentInClientTx, postBillPaymentDocument } from "../bills.service.js";
 import { createJournalEntry, reverseJournalEntryNoFlip } from "../journal-entries.service.js";
-import { postSourceTransaction } from "../posting-engine.service.js";
 import { restoreSettlementDeductionsInClientTx } from "./settlement-posting.service.js";
 import { resolveRoleAccountOptional, isCoaRole } from "../coa-roles/resolver.service.js";
 import {
@@ -659,11 +658,18 @@ export async function postSettlementBillPayment(
       // Backstop, not the primary path: if a future createBill change stops writing bill_lines, the
       // poster must still find its line rather than fail closed on a settlement mid-flight.
       await scoped(actor, opco, (client) =>
-        client.query(
-          `INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description, account_id, load_id)
-           VALUES ($1::uuid, 1, $2, $3, $4::uuid, $5::uuid)
-           ON CONFLICT (bill_id, line_sequence) DO NOTHING`,
-          [accountingBillId, b.gross_amount_cents / 100, lineDescription, driverPayAccount, b.load_id]
+        // 443.182 C step 2 — the bill line through the bill engine (same columns, casts and ON CONFLICT as before).
+        insertBillLineOnClient(
+          client,
+          [
+            ["bill_id", { value: accountingBillId, cast: "uuid" }],
+            ["line_sequence", { value: 1 }],
+            ["amount", { value: b.gross_amount_cents / 100 }],
+            ["description", { value: lineDescription }],
+            ["account_id", { value: driverPayAccount, cast: "uuid" }],
+            ["load_id", { value: b.load_id, cast: "uuid" }],
+          ],
+          { onConflict: "line_sequence_do_nothing" },
         )
       );
       // 443.105 item 1: the bill carries its load's trailer (company -> trailer_id + line equipment_id; customer ->
@@ -697,8 +703,8 @@ export async function postSettlementBillPayment(
     if (!billJeId) {
       // 443.100: stamp the settlement on every bill JE line at INSERT (the ap-chain path's 443.37-v2 rule, 7ef5410e20) —
       // the pay-run path posted its bill with no settlement_id, so verify-step 18393 found its lines unlinked.
-      const billPost = await postSourceTransaction(
-        { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: accountingBillId, posting_purpose: "initial_post", settlement_id: settlementId },
+      const billPost = await postBillDocument(
+        { operating_company_id: opco, bill_id: accountingBillId, posting_purpose: "initial_post", settlement_id: settlementId },
         { userId: actor.userId }
       );
       billJeId = billPost.journal_entry_id;
@@ -737,8 +743,8 @@ export async function postSettlementBillPayment(
         actor.userId
       );
       cashBpId = cashPayment.id;
-      const cashPost = await postSourceTransaction(
-        { operating_company_id: opco, source_transaction_type: "bill_payment", source_transaction_id: cashBpId, posting_purpose: "initial_post" },
+      const cashPost = await postBillPaymentDocument(
+        { operating_company_id: opco, bill_payment_id: cashBpId, posting_purpose: "initial_post" },
         { userId: actor.userId }
       );
       cashJeId = cashPost.journal_entry_id;

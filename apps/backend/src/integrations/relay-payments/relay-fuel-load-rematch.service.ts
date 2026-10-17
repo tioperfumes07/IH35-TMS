@@ -1,10 +1,10 @@
 /**
  * Backfill load_id on canonical fuel.fuel_transactions when ingest left them NULL
- * but driver_id and/or unit_id are present (G18 load window resolution via resolveLoadId).
+ * but driver_id and/or unit_id are present (G18 load window resolution via resolveFuelLoadAtTime — the one fuel-to-load rule, trailer included).
  *
  * Fills NULL only — never overwrites an existing load link. No fake FKs.
  */
-import { resolveLoadId } from "../../fuel/fuel-transaction-import.js";
+import { resolveFuelLoadAtTime } from "../../fuel/fuel-load-at-time.js";
 import type { DbClient } from "./db-client.type.js";
 
 export type RelayFuelLoadRematchResult = {
@@ -65,13 +65,14 @@ export async function rematchRelayFuelLoads(
       continue;
     }
 
-    const loadId = await resolveLoadId(
-      client,
-      row.operating_company_id,
-      row.unit_id,
-      row.driver_id,
-      row.transaction_at,
-    );
+    // LEAD 443.185 G7 — the ONE fuel-to-load rule; the trailer comes from the same hit.
+    const loadHit = await resolveFuelLoadAtTime(client, {
+      operatingCompanyId: row.operating_company_id,
+      unitId: row.unit_id,
+      driverId: row.driver_id,
+      at: row.transaction_at,
+    });
+    const loadId = loadHit?.load_id ?? null;
     if (!loadId) {
       skippedNoLoadInWindow += 1;
       continue;
@@ -104,7 +105,7 @@ export async function rematchRelayFuelLoads(
         receipt: { fill_kind: postedFill.rows[0].kind, fill_id: postedFill.rows[0].fill_id, at: row.transaction_at, unit_id: row.unit_id, driver_id: row.driver_id },
         loadId,
         loadNumber: l.rows[0]?.load_number ?? null,
-        trailerId: null,
+        trailerId: loadHit?.trailer_id ?? null,
       });
       updated += 1;
       continue;
@@ -114,12 +115,13 @@ export async function rematchRelayFuelLoads(
       `
         UPDATE fuel.fuel_transactions
         SET load_id = $1::uuid,
+            trailer_id = COALESCE(trailer_id, $3::uuid),
             load_exemption_reason = NULL,
             updated_at = now()
         WHERE id = $2::uuid
           AND load_id IS NULL
       `,
-      [loadId, row.id],
+      [loadId, row.id, loadHit?.trailer_id ?? null],
     );
     updated += up.rowCount ?? 0;
   }

@@ -1,6 +1,6 @@
 import { resolveExpenseCategoryById } from "../accounting/expense-category-catalog.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { insertBillHeaderOnClient, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
+import { insertBillHeaderOnClient, insertBillLineOnClient, postBillDocumentInClientTx, resolveVendorIsSampleDataBestEffort, stampBillNumberOnClient } from "../accounting/bills.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { postSourceTransactionInClientTx, PostingEngineError } from "../accounting/posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -734,36 +734,31 @@ async function copyToAccountingLines(
                 categoryId: row.expense_category_uuid,
               })
             : null;
-          return client.query<{ id: string }>(
-            `
-              INSERT INTO accounting.bill_lines (
-                ${destinationFkColumn}, line_sequence, amount, description, section, parent_line_uuid,
-                expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid,
-                category_kind, category_code, account_id, item_id, quantity, rate_cents, unit_of_measure
-              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::uuid,$17,$18,$19)
-              RETURNING id
-            `,
+          // 443.182 C step 2 — the bill line through the bill engine (same columns, values and casts as before).
+          return insertBillLineOnClient<{ id: string }>(
+            client,
             [
-              destinationId,
-              sequence,
-              asNumber(row.amount),
-              row.description,
-              row.section,
-              parentMapped,
-              projectedBillCategoryId,
-              row.service_item_uuid,
-              row.part_uuid,
-              row.labor_rate_uuid,
-              row.part_location_codes ?? null,
-              row.id,
-              resolution.category_kind,
-              resolution.category_code,
-              resolution.account_id,
-              row.item_id,
-              itemQty,
-              itemRateCents,
-              itemUom,
-            ]
+              [destinationFkColumn, { value: destinationId }],
+              ["line_sequence", { value: sequence }],
+              ["amount", { value: asNumber(row.amount) }],
+              ["description", { value: row.description }],
+              ["section", { value: row.section }],
+              ["parent_line_uuid", { value: parentMapped }],
+              ["expense_category_uuid", { value: projectedBillCategoryId }],
+              ["service_item_uuid", { value: row.service_item_uuid }],
+              ["part_uuid", { value: row.part_uuid }],
+              ["labor_rate_uuid", { value: row.labor_rate_uuid }],
+              ["part_location_codes", { value: row.part_location_codes ?? null }],
+              ["linked_wo_line_uuid", { value: row.id }],
+              ["category_kind", { value: resolution.category_kind }],
+              ["category_code", { value: resolution.category_code }],
+              ["account_id", { value: resolution.account_id }],
+              ["item_id", { value: row.item_id, cast: "uuid" }],
+              ["quantity", { value: itemQty }],
+              ["rate_cents", { value: itemRateCents }],
+              ["unit_of_measure", { value: itemUom }],
+            ],
+            { returning: "id" },
           );
         })()
       : await (async () => {
@@ -917,7 +912,7 @@ export async function autoCreateBillFromWO(
   const memo = String(opts?.memo ?? "").trim();
   if (!billId) return null;
   if (billNumber) {
-    await client.query(`UPDATE accounting.bills SET bill_number = $2, updated_at = now() WHERE id = $1`, [billId, billNumber]);
+    await stampBillNumberOnClient(client, { kind: "number", billId, billNumber });
   }
   if (memo) {
     await client.query(`UPDATE accounting.bills SET memo = $2, updated_at = now() WHERE id = $1`, [billId, memo]);
@@ -948,11 +943,7 @@ export async function autoCreateBillFromWO(
       throw new WoBillGlPostingDisabledError(billOperatingCompanyId);
     }
     if (flagOn && opts?.requirePosted) {
-      await postSourceTransactionInClientTx(
-        client as never,
-        { operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId },
-        { userId }
-      );
+      await postBillDocumentInClientTx(client as never, { operating_company_id: billOperatingCompanyId, bill_id: billId }, { userId });
       posted = true;
       await appendCrudAudit(
         client as never,
@@ -964,11 +955,7 @@ export async function autoCreateBillFromWO(
       );
     } else if (flagOn) {
       try {
-        await postSourceTransactionInClientTx(
-          client as never,
-          { operating_company_id: billOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: billId },
-          { userId }
-        );
+        await postBillDocumentInClientTx(client as never, { operating_company_id: billOperatingCompanyId, bill_id: billId }, { userId });
         posted = true;
         await appendCrudAudit(
           client as never,
