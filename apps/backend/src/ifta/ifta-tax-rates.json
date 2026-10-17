@@ -1,6 +1,6 @@
 {
   "_source": "https://www.iftach.org/taxmatrix4/ (official per-quarter charts: https://www.iftach.org/taxmatrix/charts/<N>Q<YYYY>.csv)",
-  "_note": "Quarterly diesel tax rates per gallon (USD). Update when IFTA matrix publishes new quarters. Values = the U.S.-dollar \"Special Diesel\" base rate per jurisdiction from the official IFTA quarterly chart CSV (OR = 0, weight-mile state). Surcharge rows (IN/KY/VA SurChg) are NOT included.",
+  "_note": "Quarterly diesel tax rates per gallon (USD). Update when IFTA matrix publishes new quarters. Values = the U.S.-dollar \"Special Diesel\" base rate per jurisdiction from the official IFTA quarterly chart CSV (OR = 0, weight-mile state). Surcharge rows (IN/KY/VA SurChg) are NOT included. Q2-2026 carried temporary tax holidays the base rate above does not show: GA (3/20–6/2) and KY (5/11–6/10, -10c/gal) — USMCA had no Q2 miles in either, so no effect (Lead review 2026-10-17 06:55Z).",
   "Q1-2026": {
     "AL": 0.31,
     "AZ": 0.26,
