@@ -10,7 +10,8 @@
 //
 // The immediate GL post is per-entity OFF by default (money-posting flag). With it OFF the pay-out still
 // records (status='paid', journal_entry_id NULL) so the claim is settled operationally; the GL leg posts
-// once Jorge flips the flag (TRANSP first). Void-not-delete: cancel sets status='void'.
+// once Jorge flips the flag (TRANSP first). Void-not-delete: an unsettled (pending, unpaid, unposted, unapplied)
+// reimbursement is voided ONLY through voidUnsettledDriverReimbursement (driver-reimbursement-void.service.ts) -> status 'void'.
 
 import { withCurrentUser } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
