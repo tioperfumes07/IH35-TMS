@@ -78,7 +78,19 @@ function variableLooksTempDerived(src, varName) {
   const assignRe = new RegExp(`\\b(?:const|let|var)\\s+${varName}\\s*=([^;\\n]*)`);
   const match = src.match(assignRe);
   if (!match) return false;
-  return TMP_SAFE_RE.test(match[1]) || (TMP_NAME_HINT_RE.test(match[1]) && TMP_SAFE_RE.test(src));
+  if (TMP_SAFE_RE.test(match[1]) || (TMP_NAME_HINT_RE.test(match[1]) && TMP_SAFE_RE.test(src))) return true;
+  // LEAD 443.199: one more hop — the declaration references an identifier whose OWN declaration is a real temp
+  // primitive (LST-F408's dominant shape: `const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), …))`, then
+  // `const tmpStubDir = path.join(stubRoot, "apps/frontend/…")` — a mirrored apps/ layout INSIDE the temp root).
+  const referenced = match[1].match(/[A-Za-z_$][A-Za-z0-9_$]*/g) ?? [];
+  return referenced.some((id) => identifierIsTempPrimitive(src, id));
+}
+
+function identifierIsTempPrimitive(src, varName) {
+  if (!varName || !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(varName)) return false;
+  const assignRe = new RegExp(`\\b(?:const|let|var)\\s+${varName}\\s*=([^;\\n]*)`);
+  const match = src.match(assignRe);
+  return Boolean(match) && TMP_SAFE_RE.test(match[1]);
 }
 
 // Two-hop trace, the dominant real pattern in this repo (e.g. verify-driver-qualification
@@ -270,6 +282,21 @@ function selftest() {
     }
   `;
   assert.equal(scanSource(financeRestoreSrc).length, 2, "both the plant and the finally-restore write must be flagged");
+
+  // Mirrored apps/ layout inside a mkdtemp root (LST-F408 shape) is a copy, not a mutation.
+  const mirroredTempSrc = `
+    const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-guard-"));
+    const tmpStubDir = path.join(stubRoot, "apps/frontend/src/pages/safety");
+    fs.writeFileSync(path.join(tmpStubDir, "Page.tsx"), planted);
+  `;
+  assert.equal(scanSource(mirroredTempSrc).length, 0, "an apps/ layout mirrored inside a mkdtemp root must not be flagged");
+  // …but the same shape rooted at the real repo still is.
+  const mirroredRealSrc = `
+    const stubRoot = path.join(ROOT, "scratch");
+    const tmpStubDir = path.join(stubRoot, "apps/frontend/src/pages/safety");
+    fs.writeFileSync(path.join(tmpStubDir, "Page.tsx"), planted);
+  `;
+  assert.equal(scanSource(mirroredRealSrc).length, 1, "an apps/ path under a non-temp root must still be flagged");
 
   console.log("verify:no-selftest-mutates-tracked-source --selftest PASS");
 }

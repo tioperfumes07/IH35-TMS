@@ -46,6 +46,27 @@ const EXCLUDED_TABLE_SUFFIXES = [
 // rows per entity, FORCE RLS — was read by nothing.
 const KNOWN_STUB_TABLES = ["account_merge_records", "payee_tax_profile", "tax_form_thresholds"];
 
+/**
+ * LEAD 443.199 — catalogs.* tables that are NOT operator lists, named with why (closed list, never a suffix rule).
+ * Each is written only by an engine or a migration; giving it Lists/Excel CRUD chrome would invite an operator to
+ * edit computed or locked data.
+ */
+export const NON_CATALOG_TABLES = new Map([
+  ["lane_mileage", "GO-16 Rev B / GO-19-2b: geography-keyed distance cache computed by the mileage engine and reused (reference mileage, no operator edit)"],
+  ["point_mileage", "GO-19-2b §5: coordinate-keyed point-to-point distance cache written by the mileage engine (dispatch/mileage), not an operator list"],
+  ["blocked_feature_flags", "202614530000 owner law: permanent QBO flag block written only by migration, enforced by trigger lib.refuse_blocked_flag_enable — must never gain an edit route"],
+]);
+
+/**
+ * LEAD 443.199 — catalogs whose registration is a DEDICATED route outside apps/backend/src/catalogs (same treatment
+ * void_cancel_reasons got when its dedicated route shipped). Every leg is checked, so a removed route fails here:
+ * `file` must exist and contain every `must` string.
+ */
+export const DEDICATED_ROUTE_TABLES = new Map([
+  ["driver_tags", { file: "apps/backend/src/mdata/driver-tags.routes.ts", must: ["FROM catalogs.driver_tags", "INSERT INTO catalogs.driver_tags"] }],
+  ["cash_flow_adjustment_reasons", { file: "apps/backend/src/cash-flow/cash-flow.routes.ts", must: ["listCashFlowAdjustmentReasons(client)"] }],
+]);
+
 function fail(message) {
   console.error(`verify:catalog-factory-coverage FAIL: ${message}`);
   process.exit(1);
@@ -100,7 +121,13 @@ function collectRouteSources() {
 function collectFactorySources() {
   return walkFiles(
     CATALOGS_DIR,
-    (filePath) => filePath.endsWith("/factory.ts") || filePath.endsWith("/index.ts") || filePath.endsWith("generic-catalog.factory.ts")
+    (filePath) =>
+      filePath.endsWith("/factory.ts") ||
+      filePath.endsWith("/index.ts") ||
+      filePath.endsWith("generic-catalog.factory.ts") ||
+      // LEAD 443.199: the driver factory reads its tables from subcatalog-config.ts (DRIVER_SUBCATALOG_CONFIGS, consumed by
+      // lists/driver-catalogs.routes.ts -> catalogs/driver/factory.ts); a config the factory consumes IS the registration.
+      filePath.endsWith("-config.ts")
   );
 }
 
@@ -140,7 +167,17 @@ const factorySources = collectFactorySources().map((filePath) => ({
 const catalogTables = extractCatalogTablesFromMigrations();
 const missing = [];
 
+const dedicatedProblems = [];
+for (const [tableName, { file, must }] of DEDICATED_ROUTE_TABLES) {
+  const full = path.join(ROOT, file);
+  if (!fs.existsSync(full)) { dedicatedProblems.push(`${tableName}: dedicated route ${file} is missing`); continue; }
+  const src = fs.readFileSync(full, "utf8");
+  for (const needle of must) if (!src.includes(needle)) dedicatedProblems.push(`${tableName}: ${file} no longer contains ${needle}`);
+}
+if (dedicatedProblems.length) fail(`dedicated catalog route broken: ${dedicatedProblems.join("; ")}`);
+
 for (const tableName of catalogTables) {
+  if (NON_CATALOG_TABLES.has(tableName) || DEDICATED_ROUTE_TABLES.has(tableName)) continue;
   const inRoutes = routeSources.some(({ source }) => hasTableRegistration(source, tableName));
   const inFactory = factorySources.some(({ source }) => hasTableRegistration(source, tableName));
   if (!inRoutes && !inFactory) {
