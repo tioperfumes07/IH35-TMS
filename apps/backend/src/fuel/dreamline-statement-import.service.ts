@@ -45,6 +45,7 @@ import { createExpenseInClientTx } from "../accounting/expense-writer.service.js
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { insertExpenseLine } from "../accounting/expense-writer.service.js";
 import { resolveFuelLoadAtTime, resolveFillDriverAtTime } from "./fuel-load-at-time.js";
+import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -240,6 +241,12 @@ const unitNorm = (u: string | null | undefined) => String(u ?? "").trim().toUppe
 const dayDiff = (a: string, b: string) => Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000;
 
 async function loadBookedReceipts(client: DbClient, companyId: string, from: string, to: string): Promise<BookedReceipt[]> {
+  // LEAD 443.187 — the two fuel rails are RESOLVED BY ROLE (never by account number): fuel_card_payable_dreamline (the
+  // card, rail label "2510") and fuel_wallet_relay (the wallet, rail label "1295"). Prod maps each role to exactly the
+  // 2510 / 1295 account the old literal matched. An unbound role contributes no receipts.
+  const cardAccountId = await resolveRoleAccountOptional(client as never, companyId, "fuel_card_payable_dreamline");
+  const walletAccountId = await resolveRoleAccountOptional(client as never, companyId, "fuel_wallet_relay");
+  if (!cardAccountId && !walletAccountId) return [];
   const res = await client.query<{
     expense_id: string; expense_number: string | null; d: string; unit_number: string | null; fuel_type: string | null;
     accts: string[] | null; cents: string; rail: "2510" | "1295"; fuel_transaction_id: string | null; notes: string | null;
@@ -248,10 +255,10 @@ async function loadBookedReceipts(client: DbClient, companyId: string, from: str
             ft.fuel_type::text AS fuel_type,
             (SELECT array_agg(DISTINCT la.account_number) FROM accounting.expense_lines l
                JOIN catalogs.accounts la ON la.id = l.expense_account_uuid WHERE l.expense_id = e.id) AS accts,
-            e.total_amount_cents::text AS cents, pa.account_number AS rail,
+            e.total_amount_cents::text AS cents, (CASE pa.id WHEN $4::uuid THEN '2510' ELSE '1295' END) AS rail,
             e.source_fuel_transaction_id::text AS fuel_transaction_id, ft.notes
        FROM accounting.expenses e
-       JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid AND pa.account_number IN ('2510', '1295')
+       JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid AND pa.id IN ($4::uuid, $5::uuid)
        LEFT JOIN mdata.units u ON u.id = e.unit_id
        LEFT JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
       WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.deleted_at IS NULL
@@ -261,7 +268,7 @@ async function loadBookedReceipts(client: DbClient, companyId: string, from: str
         AND coalesce(e.vendor_document_number, '') NOT LIKE 'EFS-%'
         AND e.transaction_date BETWEEN ($2::date - 1) AND ($3::date + 1)
       ORDER BY e.transaction_date, e.expense_number, e.id`,
-    [companyId, from, to]
+    [companyId, from, to, cardAccountId, walletAccountId]
   );
   return res.rows.map((r) => {
     const accts = r.accts ?? [];

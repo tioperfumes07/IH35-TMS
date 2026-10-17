@@ -34,6 +34,7 @@ import {
   addPaymentTermsDays,
 } from "./projected-cash-date.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import {
   isFactoringPathLoadStatus,
   DELIVERY_EVIDENCE_MDATA_STATUSES,
@@ -1652,7 +1653,13 @@ export async function getRollingLedgerRows(
   // must appear in the rolling ledger. Due date defaults to today (it is an already-incurred
   // liability); the owner can roll it forward via cash_flow_row_adjustments if the card payment
   // date is in the future.
-  const cardPayable2510Promise = client.query<{
+  // LEAD 443.187 — the card-payable account is RESOLVED BY ROLE (fuel_card_payable_dreamline), never by number / name
+  // (verify-every-poster-resolves-by-role-not-by-name-or-number). Prod: the role maps to exactly the 2510 "Dreamline Diesel
+  // Card Payable" account the old literal matched; an unbound role yields no row (as a company with no 2510 did before).
+  const cardPayableAccountId = await resolveRoleAccountOptional(client as never, operatingCompanyId, "fuel_card_payable_dreamline");
+  const cardPayable2510Promise = !cardPayableAccountId
+    ? Promise.resolve({ rows: [] as { account_id: string; account_name: string; balance_cents: number; due_date: string }[] })
+    : client.query<{
     account_id: string;
     account_name: string;
     balance_cents: number;
@@ -1676,7 +1683,7 @@ export async function getRollingLedgerRows(
       AND je.operating_company_id = $1::uuid
       AND je.voided_at IS NULL
     WHERE ca.operating_company_id = $1::uuid
-      AND (ca.account_number = '2510' OR ca.account_name ILIKE '%diesel card payable%')
+      AND ca.id = $3::uuid
       AND ca.deactivated_at IS NULL
     GROUP BY ca.id, ca.account_name
     HAVING GREATEST(
@@ -1686,7 +1693,7 @@ export async function getRollingLedgerRows(
       0
     ) > 0
     `,
-    [operatingCompanyId, today]
+    [operatingCompanyId, today, cardPayableAccountId]
   ).catch((err) => {
     logger.warn("cash-flow rolling-ledger: card_payable_2510 subquery failed", {
       operating_company_id: operatingCompanyId,

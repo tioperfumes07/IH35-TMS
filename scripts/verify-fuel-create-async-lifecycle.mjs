@@ -6,13 +6,16 @@ const file = "apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal
 const source = fs.readFileSync(file, "utf8");
 const DIRTY_CLOSE_FAILURE = "drawer and Cancel safely register shared dirty-confirmation boundary";
 
+// LEAD 443.187 — REPOINTED, same rule ("the dirty predicate covers the complete Fuel intent"): gallons and price per gallon
+// became numeric inputs (number | null; 8a20962fb2 QTY-DEC-ALL "NumberInput + fuel/cost/WO qty accept typed decimals"), so the predicate reads `gallons != null || pricePerGallon != null` instead of the
+// old `.trim()` strings. Either form satisfies the rule; dropping either field still fails (selftest plant added).
 function failures(input = source) {
   return [
     ["lifecycle generation advances per open/company", /lifecycleGenerationRef\.current \+= 1;\s*setSaving\(false\);\s*if \(!open\) return;\s*resetDraft\(\);\s*\}, \[open, operatingCompanyId, resetDraft\]\);/.test(input)],
     ["completed lifecycle retires request and resets full draft", /const completeClose = useCallback\(\(\) => \{\s*lifecycleGenerationRef\.current \+= 1;\s*setSaving\(false\);\s*resetDraft\(\);\s*onClose\(\);/.test(input)],
     ["pending create cannot be dismissed", /const handleClose = useCallback\(\(\) => \{\s*if \(saving\) return;\s*completeClose\(\);\s*\}, \[completeClose, saving\]\);/.test(input)],
     [DIRTY_CLOSE_FAILURE, /<Modal open=\{open\} onClose=\{handleClose\}[^>]*confirmDiscardOnClose[^>]*isDirty=\{isDirty\}[^>]*onRegisterAttemptClose=\{\(next\) => setAttemptClose\(\(\) => next\)\}[\s\S]*?<Button size="sm" variant="secondary" onClick=\{attemptClose\} disabled=\{saving\}>/.test(input)],
-    ["dirty predicate covers complete Fuel intent", /const isDirty = transactionDate !== companyToday\(\)[\s\S]*driverId \|\| unitId \|\| trailerId \|\| vendorId \|\| loadId[\s\S]*loadExemptionReason\.trim\(\)[\s\S]*fuelType !== "diesel"[\s\S]*gallons\.trim\(\) \|\| pricePerGallon\.trim\(\)[\s\S]*totalCost != null[\s\S]*locationCity\.trim\(\) \|\| locationState\.trim\(\) \|\| notes\.trim\(\)/.test(input)],
+    ["dirty predicate covers complete Fuel intent", /const isDirty = transactionDate !== companyToday\(\)[\s\S]*driverId \|\| unitId \|\| trailerId \|\| vendorId \|\| loadId[\s\S]*loadExemptionReason\.trim\(\)[\s\S]*fuelType !== "diesel"[\s\S]*(?:gallons\.trim\(\) \|\| pricePerGallon\.trim\(\)|gallons != null\s*\|\| pricePerGallon != null)[\s\S]*totalCost != null[\s\S]*locationCity\.trim\(\) \|\| locationState\.trim\(\) \|\| notes\.trim\(\)/.test(input)],
     ["submit captures lifecycle generation", /const submissionGeneration = lifecycleGenerationRef\.current;\s*setSaving\(true\);/.test(input)],
     ["stale success cannot toast, select, or close", /if \(lifecycleGenerationRef\.current !== submissionGeneration\) return;\s*pushToast\("Fuel purchase recorded", "success"\);\s*onCreated\(\);\s*completeClose\(\);/.test(input)],
     ["stale rejection cannot paint the next drawer", /catch \(error\) \{\s*if \(lifecycleGenerationRef\.current !== submissionGeneration\) return;\s*pushToast\(userFacingApiError\(error, "Failed to record fuel purchase"\), "error"\);/.test(input)],
@@ -28,6 +31,7 @@ if (process.argv.includes("--selftest")) {
   const rawDrawerClose = source.replace("confirmDiscardOnClose", "");
   const rawCancel = source.replace("onClick={attemptClose} disabled={saving}", "onClick={handleClose}");
   const incompleteDirty = source.replace("|| Boolean(loadExemptionReason.trim())", "");
+  const noGallonsDirty = source.replace(/\n\s*\|\| gallons != null/, "");
   const staleSuccess = source.replace("if (lifecycleGenerationRef.current !== submissionGeneration) return;", "void submissionGeneration;");
   const staleError = source.replace(/catch \(error\) \{\s*if \(lifecycleGenerationRef\.current !== submissionGeneration\) return;/, "catch (error) {");
   const staleFinally = source.replace("if (lifecycleGenerationRef.current === submissionGeneration) setSaving(false);", "setSaving(false);");
@@ -38,12 +42,13 @@ if (process.argv.includes("--selftest")) {
     failures(rawDrawerClose).includes(DIRTY_CLOSE_FAILURE),
     failures(rawCancel).includes(DIRTY_CLOSE_FAILURE),
     failures(incompleteDirty).includes("dirty predicate covers complete Fuel intent"),
+    failures(noGallonsDirty).includes("dirty predicate covers complete Fuel intent"),
     failures(staleSuccess).includes("stale success cannot toast, select, or close"),
     failures(staleError).includes("stale rejection cannot paint the next drawer"),
     failures(staleFinally).includes("stale request cannot clear current saving state"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-fuel-create-async-lifecycle selftest PASS — 9/9 lifecycle mutations red");
+  console.log("verify-fuel-create-async-lifecycle selftest PASS — 10/10 lifecycle mutations red");
   process.exit(0);
 }
 
