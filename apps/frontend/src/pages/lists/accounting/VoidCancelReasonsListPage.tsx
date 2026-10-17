@@ -179,6 +179,7 @@ export function VoidCancelReasonsListPage() {
         </label>
       </div>
 
+      <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Void and cancel reasons</h2>
       <DataTable
         columns={columns}
         rows={rows}
