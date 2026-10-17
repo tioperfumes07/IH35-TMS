@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
+import { EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_ALIAS_SQL } from "../mdata/test-seed-archive.js";
 
 const listQuerySchema = companyQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -60,6 +61,9 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
           FROM mdata.customers c
           WHERE c.operating_company_id = $1::uuid
             AND c.deactivated_at IS NULL
+            -- LEAD 443.188: this route reads the canonical mdata.customers (no longer the QBO mirror), so the
+            -- archived test/seed filter is the mdata one — the guard asserted the old QBO-mirror constant.
+            AND ${EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_ALIAS_SQL}
             ${cursorSql}
           ORDER BY c.updated_at DESC, c.id DESC
           LIMIT $${limIdx}
