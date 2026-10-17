@@ -82,7 +82,12 @@ function main() {
   assertIncludes(glLines, 'driver_cash_advance: "Cash Advance"', GL_LINES);
   assertIncludes(glLines, 'load: "Load"', GL_LINES);
   assertIncludes(glLines, 'escrow_account: "Escrow"', GL_LINES);
-  assertIncludes(workspace, "tx.type_label !== appliedTxnType", WORKSPACE);
+  // Heavy CI peel (Lead 13:45Z): f6f50f2383 (BANK-F443156, 443.156 QBO parity) made the Type filter a multi-select set,
+  // so the single-value `tx.type_label !== appliedTxnType` became `!appliedTxnType.includes(tx.type_label …)`. Same rule:
+  // the applied Type filter actually narrows the rows.
+  if (!typeFilterApplied(workspace)) {
+    throw new Error(`${WORKSPACE}: the applied Type filter must narrow rows by tx.type_label (single value or multi-select set)`);
+  }
   assertIncludes(workspace, "reconDocumentHref", WORKSPACE);
   assertIncludes(workspace, "data-b2-recon-row-open", WORKSPACE);
   assertIncludes(workspace, "/accounting/expenses/", WORKSPACE);
@@ -136,7 +141,17 @@ function main() {
   console.log(`${LABEL}: PASS`);
 }
 
+export function typeFilterApplied(src) {
+  return src.includes("tx.type_label !== appliedTxnType") || /!appliedTxnType\.includes\(tx\.type_label\b/.test(src);
+}
+
 function selftest() {
+  // Planted: the Type filter no longer narrows rows.
+  const plant = "if (appliedTxnType.length && !appliedTxnType.includes(tx.type_label as ReconTxnTypeFilter)) return false;";
+  if (!typeFilterApplied(plant) || typeFilterApplied(plant.replace("!appliedTxnType.includes(tx.type_label as ReconTxnTypeFilter)", "false"))) {
+    console.error(`${LABEL}: SELFTEST FAIL — the Type-filter check does not tell an applied filter from a dropped one`);
+    process.exit(1);
+  }
   try {
     main();
   } catch (err) {
