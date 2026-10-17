@@ -1099,6 +1099,15 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
                  $7::uuid,$8::uuid,$7::uuid,$8::uuid,0.6,0.4,'one_off_team',$5::uuid,now())`,
         [loadId, companyId, loadNumber, cust, userId, unit, d1, d2]
       );
+      // fac801d0f0 (Cursor-DEGH-05, #26726, ROUND 443.131) "driver-bill trailer clause": each driver's A/P bill is refused at
+      // INSERT without the load's trailer — the team load's assignment records the company trailer it rides, as above.
+      const teamTrailer = randomUUID();
+      await db.query(`INSERT INTO mdata.equipment (id, equipment_number, equipment_type, owner_company_id, is_sample_data) VALUES ($1::uuid,$2,'DryVan',$3::uuid,true)`, [teamTrailer, `TMT${loadNumber.slice(-6)}`, companyId]);
+      await db.query(
+        `INSERT INTO dispatch.load_assignment_history (operating_company_id, load_id, assignment_method, assigned_by_user_id, new_trailer_id)
+         VALUES ($1::uuid,$2::uuid,'inline_quicksave_trailer',$3::uuid,$4::uuid)`,
+        [companyId, loadId, userId, teamTrailer]
+      );
       await db.query(`INSERT INTO mdata.load_stops (load_id, sequence_number, stop_type, actual_departure_at) VALUES ($1::uuid, 2, 'delivery', now())`, [loadId]);
       await db.query(
         `INSERT INTO driver_finance.driver_bills (id, operating_company_id, load_id, load_number, bill_number, driver_id, team_driver_id, gross_amount_cents, status)

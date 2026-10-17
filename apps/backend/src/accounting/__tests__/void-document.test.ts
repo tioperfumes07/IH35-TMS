@@ -63,7 +63,14 @@ import { reverseFactoringAdvanceEvent } from "../factoring-posting/poster.servic
 import { reverseExpenseDocumentInClientTx } from "../expense-void-reversal.js";
 import { reverseSettlementForVoid, reverseDeductionForVoid } from "../../driver-finance/void-document-callees.service.js";
 
-const fakeClient = { query: vi.fn() } as unknown as Parameters<typeof voidDocument>[0];
+// 6b66d609fb (ACCT-F443165, #26797) "three expense-void reversal memos interpolate the expense's internal id": the expense
+// door now reads expense_number for the reversal memo (expenseVoidReversalMemo), so the client answers that one read with
+// the human number; every other query keeps returning nothing, exactly as before.
+const fakeClient = {
+  query: vi.fn(async (sql: string) =>
+    /SELECT expense_number FROM accounting\.expenses/.test(sql) ? { rows: [{ expense_number: "13545-5" }] } : undefined
+  ),
+} as unknown as Parameters<typeof voidDocument>[0];
 const baseInput = {
   operatingCompanyId: "opco-1",
   reason: "test void",
@@ -123,6 +130,11 @@ describe("voidDocument — ROUND 31.2/32.2 dispatcher (not a new reversal engine
     expect(reverseExpenseDocumentInClientTx).toHaveBeenCalledWith(
       fakeClient,
       expect.objectContaining({ operatingCompanyId: baseInput.operatingCompanyId, expenseId: "exp-1", actorUserId: "user-1", currentBusinessDate: "2026-09-22", expenseReverser: "source" })
+    );
+    // ROUND 390.3 / 6b66d609fb — the memo a person reads names the expense by its number, never its internal id.
+    expect(reverseExpenseDocumentInClientTx).toHaveBeenCalledWith(
+      fakeClient,
+      expect.objectContaining({ memo: "Void reversal of expense 13545-5: test void" })
     );
     expect(result.reversalJournalEntryId).toBe("je-exp-1");
   });
