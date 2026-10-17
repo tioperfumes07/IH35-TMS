@@ -39,7 +39,9 @@ function frontendFiles(dir = resolve(ROOT, SRC), out = []) {
 
 const stripComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1").replace(/\{\s*\}/g, "");
 
-const TEMPLATE = /`(?:\\[\s\S]|\$\{(?:[^{}]|\{[^{}]*\})*\}|[^`\\])*`/g;
+// Linear (no ReDoS — CodeQL js/redos): a backtick string is `…` with escapes; a nested template inside ${…} just
+// splits into neighbouring strings, which keeps every HTML <table> inside a string.
+const TEMPLATE = /`(?:\\[\s\S]|[^`\\])*`/g;
 
 /**
  * Sites in one file (comments ignored): a rendered JSX <table>, a <DataTable>, and a <table> inside an HTML string
