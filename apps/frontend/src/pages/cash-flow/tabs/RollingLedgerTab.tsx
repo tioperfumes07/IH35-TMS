@@ -676,7 +676,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   }, [data, allRows, today]);
 
   const incomeColumns: ParityColumn<RollingLedgerRow>[] = [
-    { key: "type", label: "Type", render: (row) => row.type },
+    { key: "type", label: "Type", sortable: true, render: (row) => row.type },
     {
       key: "counterparty",
       label: "Customer · No.",
@@ -712,11 +712,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     },
     {
       key: "invoice_date",
-      label: "Invoice date",
+      label: "Invoice date", sortable: true,
       render: (row) => fmtDateShort(row.origin_date),
       sortValue: (row) => row.origin_date,
     },
-    { key: "due_date", label: "Due", render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
+    { key: "due_date", label: "Due", sortable: true, render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
     {
       key: "in",
       label: "In",
@@ -737,11 +737,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   ];
 
   const expenseColumns: ParityColumn<RollingLedgerRow>[] = [
-    { key: "type", label: "Type", render: (row) => row.type },
+    { key: "type", label: "Type", sortable: true, render: (row) => row.type },
     { key: "no", label: "No.", render: (row) => <EntityLink kind={row.document_kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} /> },
-    { key: "counterparty", label: "Name", render: (row) => row.counterparty },
+    { key: "counterparty", label: "Name", sortable: true, render: (row) => row.counterparty },
     { key: "period", label: "Period", sortable: false, render: (row) => `${fmtDateShort(row.origin_date)} → ${fmtDateShort(row.due_date)}` },
-    { key: "due_date", label: "Due", render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
+    { key: "due_date", label: "Due", sortable: true, render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
     {
       key: "days_overdue",
       label: "Days",
@@ -801,18 +801,18 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         </>
       ),
     },
-    { key: "income_due_cents", label: "Income due", className: "text-right", cellClass: "text-right", render: (day) => (day.income_due_cents === 0 ? "—" : formatCents(day.income_due_cents)) },
-    { key: "expenses_due_cents", label: "Expenses due", className: "text-right", cellClass: "text-right", render: (day) => (day.expenses_due_cents === 0 ? "—" : formatCents(day.expenses_due_cents)) },
+    { key: "income_due_cents", label: "Income due", sortable: true, className: "text-right", cellClass: "text-right", render: (day) => (day.income_due_cents === 0 ? "—" : formatCents(day.income_due_cents)) },
+    { key: "expenses_due_cents", label: "Expenses due", sortable: true, className: "text-right", cellClass: "text-right", render: (day) => (day.expenses_due_cents === 0 ? "—" : formatCents(day.expenses_due_cents)) },
     {
       key: "income_carry_over_cents",
-      label: "Income carried",
+      label: "Income carried", sortable: true,
       className: "text-right",
       cellClass: "text-right text-[#6B7280]",
       render: (day) => (day.income_carry_over_cents === 0 ? "—" : formatCents(day.income_carry_over_cents)),
     },
     {
       key: "expenses_carry_over_cents",
-      label: "Expenses carried",
+      label: "Expenses carried", sortable: true,
       className: "text-right",
       cellClass: "text-right text-[#6B7280]",
       render: (day) => (day.expenses_carry_over_cents === 0 ? "—" : formatCents(day.expenses_carry_over_cents)),

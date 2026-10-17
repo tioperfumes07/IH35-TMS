@@ -145,7 +145,7 @@ export function DepositDetailPage() {
                 hidePager
                 initialPageSize={300}
                 columns={[
-                  { key: "line_type", label: "Type", render: (line) => (line.line_type ?? "—").replaceAll("_", " ") },
+                  { key: "line_type", label: "Type", sortable: true, render: (line) => (line.line_type ?? "—").replaceAll("_", " ") },
                   {
                     key: "payment", label: "Payment / Advance", sortValue: (line) => line.payment_display_id ?? line.factoring_advance_display_id ?? "",
                     render: (line) =>
@@ -176,8 +176,8 @@ export function DepositDetailPage() {
                   },
                   { key: "invoice_display_id", label: "Invoice", render: (line) => (line.invoice_id ? <EntityLink kind="invoice" id={line.invoice_id} label={line.invoice_display_id ?? "Invoice"} /> : "—") },
                   { key: "load_number", label: "Load", render: (line) => (line.load_id ? <EntityLink kind="load" id={line.load_id} label={line.load_number ?? "Load"} /> : "—") },
-                  { key: "amount_cents", label: "Amount", kind: "money", sortValue: (line) => Number(line.amount_cents ?? 0), render: (line) => formatCurrencyFromCents(Number(line.amount_cents ?? 0)) },
-                  { key: "memo", label: "Memo", render: (line) => line.memo ?? "—" },
+                  { key: "amount_cents", label: "Amount", sortable: true, kind: "money", sortValue: (line) => Number(line.amount_cents ?? 0), render: (line) => formatCurrencyFromCents(Number(line.amount_cents ?? 0)) },
+                  { key: "memo", label: "Memo", sortable: true, render: (line) => line.memo ?? "—" },
                 ]}
               />
             </section>

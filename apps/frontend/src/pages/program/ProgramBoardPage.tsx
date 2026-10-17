@@ -493,7 +493,7 @@ export function ProgramBoardPage() {
     { key: "__ordinal", label: "#", sortable: false, render: (r) => <span className="tabular-nums">{activeOrdinal.get(r.key)}</span> },
     { key: "date", label: "Date", render: (r) => <span className="tabular-nums">{formatDateCt(r.date)}</span> },
     { key: "id", label: "ID", render: (r) => <span className="font-semibold">{r.id}</span> },
-    { key: "wave", label: "Wave / Source" },
+    { key: "wave", label: "Wave / Source", sortable: true },
     {
       key: "description",
       label: "Description",
@@ -872,7 +872,7 @@ export function ProgramBoardPage() {
                   #{p.number}
                 </a>
               ) },
-              { key: "title", label: "Title", allowWrap: true },
+              { key: "title", label: "Title", sortable: true, allowWrap: true },
               { key: "mergedAt", label: "Merged At", render: (p) => <span className="tabular-nums">{formatDateTimeCt(p.mergedAt)}</span> },
               { key: "branch", label: "Branch", render: (p) => <span className="font-mono">{p.branch ?? "—"}</span> },
             ]}
@@ -915,7 +915,7 @@ export function ProgramBoardPage() {
                   #{p.number}
                 </a>
               ) },
-              { key: "title", label: "Title", allowWrap: true },
+              { key: "title", label: "Title", sortable: true, allowWrap: true },
               { key: "mergedAt", label: "Merged At", render: (p) => <span className="tabular-nums">{formatDateTimeCt(p.mergedAt)}</span> },
               {
                 key: "category",
@@ -1075,10 +1075,10 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
           allowAllPageSize
           columns={[
             { key: "module", label: "Module", render: (m) => <span className="font-semibold">{m.module}</span> },
-            { key: "built", label: "Built", kind: "number" },
-            { key: "partial", label: "Partial", kind: "number" },
+            { key: "built", label: "Built", sortable: true, kind: "number" },
+            { key: "partial", label: "Partial", sortable: true, kind: "number" },
             { key: "not_built", label: "Not Built", render: (m) => <span className="tabular-nums" style={{ color: "#DC2626" }}>{m.not_built}</span> },
-            { key: "needs_design", label: "Needs Design", kind: "number" },
+            { key: "needs_design", label: "Needs Design", sortable: true, kind: "number" },
           ]}
         />
       </div>
@@ -1154,7 +1154,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
           allowAllPageSize
           columns={[
             { key: "id", label: "ID", render: (it) => <span className="font-mono">{it.id}</span> },
-            { key: "module", label: "Module" },
+            { key: "module", label: "Module", sortable: true },
             {
               key: "verdict",
               label: "Verdict",
@@ -1170,7 +1170,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                 );
               },
             },
-            { key: "tier", label: "Tier" },
+            { key: "tier", label: "Tier", sortable: true },
             { key: "title", label: "Title", maxWidth: 320, render: (it) => <span title={it.title}>{it.title}</span> },
             { key: "missing", label: "Missing", maxWidth: 280, render: (it) => <span title={it.missing}>{it.missing}</span> },
             { key: "spec", label: "Spec", maxWidth: 140, render: (it) => <span title={it.spec}>{it.spec}</span> },

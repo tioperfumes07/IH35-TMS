@@ -124,9 +124,9 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
           suppressToolbarSearch
           suppressToolbarRange
           columns={[
-            { key: "detected_at", label: "Detected", sortValue: (row) => String(row.detected_at ?? ""), render: (row) => String(row.detected_at ?? "") },
+            { key: "detected_at", label: "Detected", sortable: true, sortValue: (row) => String(row.detected_at ?? ""), render: (row) => String(row.detected_at ?? "") },
             { key: "severity", label: "Severity", sortValue: (row) => String(row.severity ?? ""), render: (row) => <span className="font-semibold">{String(row.severity ?? "")}</span> },
-            { key: "rule_name", label: "Rule", sortValue: (row) => String(row.rule_name ?? "Anomaly"), render: (row) => String(row.rule_name ?? "Anomaly") },
+            { key: "rule_name", label: "Rule", sortable: true, sortValue: (row) => String(row.rule_name ?? "Anomaly"), render: (row) => String(row.rule_name ?? "Anomaly") },
             {
               key: "subject",
               label: "Subject",

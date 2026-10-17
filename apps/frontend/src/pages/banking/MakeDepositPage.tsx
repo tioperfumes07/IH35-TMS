@@ -306,7 +306,7 @@ export function MakeDepositPage() {
                     key: "selected", label: "Select", sortable: false, minWidth: 40,
                     render: (r) => <input type="checkbox" aria-label="Select receipt" checked={Boolean(selected[`${r.kind}:${r.id}`])} onChange={() => toggle(r)} />,
                   },
-                  { key: "kind", label: "Type", render: (r) => (r.kind === "customer_payment" ? "Payment" : "Faro advance") },
+                  { key: "kind", label: "Type", sortable: true, render: (r) => (r.kind === "customer_payment" ? "Payment" : "Faro advance") },
                   {
                     key: "display_id", label: "Ref",
                     render: (r) =>
@@ -316,9 +316,9 @@ export function MakeDepositPage() {
                         <EntityLink kind="factoring_advance" id={r.id} label={r.display_id ?? r.id.slice(0, 8)} />
                       ),
                   },
-                  { key: "payee_name", label: "Payee", render: (r) => r.payee_name ?? "—" },
-                  { key: "receipt_date", label: "Date", sortValue: (r) => r.receipt_date ?? "", render: (r) => (r.receipt_date ? formatDateUS(r.receipt_date) : "—") },
-                  { key: "amount_cents", label: "Amount", kind: "money", render: (r) => formatCurrencyFromCents(r.amount_cents) },
+                  { key: "payee_name", label: "Payee", sortable: true, render: (r) => r.payee_name ?? "—" },
+                  { key: "receipt_date", label: "Date", sortable: true, sortValue: (r) => r.receipt_date ?? "", render: (r) => (r.receipt_date ? formatDateUS(r.receipt_date) : "—") },
+                  { key: "amount_cents", label: "Amount", sortable: true, kind: "money", render: (r) => formatCurrencyFromCents(r.amount_cents) },
                 ]}
               />
             </div>
@@ -528,9 +528,9 @@ export function MakeDepositPage() {
             pageSizeOptions={[50, 100, 300]}
             columns={[
               { key: "display_id", label: "Deposit", render: (d) => <EntityLink kind="deposit" id={d.id} label={d.display_id} /> },
-              { key: "deposit_date", label: "Date", render: (d) => formatDateUS(d.deposit_date) },
-              { key: "bank_account_name", label: "Bank", render: (d) => d.bank_account_name ?? "—" },
-              { key: "amount_deposited_cents", label: "Amount", kind: "money", sortValue: (d) => Number(d.amount_deposited_cents), render: (d) => formatCurrencyFromCents(Number(d.amount_deposited_cents)) },
+              { key: "deposit_date", label: "Date", sortable: true, render: (d) => formatDateUS(d.deposit_date) },
+              { key: "bank_account_name", label: "Bank", sortable: true, render: (d) => d.bank_account_name ?? "—" },
+              { key: "amount_deposited_cents", label: "Amount", sortable: true, kind: "money", sortValue: (d) => Number(d.amount_deposited_cents), render: (d) => formatCurrencyFromCents(Number(d.amount_deposited_cents)) },
               { key: "journal_entry_id", label: "JE", sortable: false, render: (d) => (d.journal_entry_id ? <EntityLink kind="journal_entry" id={d.journal_entry_id} label="JE" /> : "—") },
               {
                 key: "actions", label: "Actions", sortable: false,

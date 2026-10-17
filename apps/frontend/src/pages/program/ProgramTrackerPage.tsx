@@ -130,7 +130,7 @@ function BlockTable({
         </>
       ),
     },
-    { key: "kind", label: "Kind" },
+    { key: "kind", label: "Kind", sortable: true },
     { key: "layers", label: "Layers", sortable: false, render: (r) => <LayerChips r={r} /> },
     ...(extended
       ? ([
@@ -146,12 +146,12 @@ function BlockTable({
           },
           {
             key: "needs_design",
-            label: "Needs design",
+            label: "Needs design", sortable: true,
             render: (r) => (r.needs_design ? <span className="rounded-sm bg-[#F7F8FA] px-1 text-[#1F2A44]">Needs design</span> : "—"),
           },
           {
             key: "missing",
-            label: "Missing",
+            label: "Missing", sortable: true,
             allowWrap: true,
             sortValue: (r) => r.missing.join(", "),
             render: (r) => (r.missing.length ? r.missing.join(", ") : "—"),
@@ -214,12 +214,12 @@ function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
       rowKey={(p) => p.key}
       allowAllPageSize
       columns={[
-        { key: "n", label: "#", kind: "number" },
-        { key: "label", label: "Phase" },
-        { key: "total", label: "Total", kind: "number" },
-        { key: "pending", label: "Pending", kind: "number" },
-        { key: "in_progress", label: "In prog", kind: "number" },
-        { key: "completed", label: "Done+live", kind: "number" },
+        { key: "n", label: "#", sortable: true, kind: "number" },
+        { key: "label", label: "Phase", sortable: true },
+        { key: "total", label: "Total", sortable: true, kind: "number" },
+        { key: "pending", label: "Pending", sortable: true, kind: "number" },
+        { key: "in_progress", label: "In prog", sortable: true, kind: "number" },
+        { key: "completed", label: "Done+live", sortable: true, kind: "number" },
         {
           key: "progress",
           label: "Progress",
@@ -269,16 +269,16 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
           />
         )}
         columns={[
-          { key: "module", label: "Module" },
-          { key: "built", label: "Built", kind: "number" },
-          { key: "partial", label: "Partial", kind: "number" },
+          { key: "module", label: "Module", sortable: true },
+          { key: "built", label: "Built", sortable: true, kind: "number" },
+          { key: "partial", label: "Partial", sortable: true, kind: "number" },
           {
             key: "not_built",
             label: "Not built",
             cellClass: "text-right tabular-nums",
             render: (m) => <span className={m.not_built > 0 ? "font-semibold text-red-600" : "text-[#6B7280]"}>{m.not_built}</span>,
           },
-          { key: "total", label: "Total", kind: "number" },
+          { key: "total", label: "Total", sortable: true, kind: "number" },
         ]}
       />
     </div>

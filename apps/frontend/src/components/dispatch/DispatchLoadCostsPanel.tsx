@@ -147,7 +147,7 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
                 </>
               ),
             },
-            { key: "unit", label: "Truck", render: (row) => row.load.assigned_unit_number ?? "Unassigned" },
+            { key: "unit", label: "Truck", sortable: true, render: (row) => row.load.assigned_unit_number ?? "Unassigned" },
             { key: "line_haul", label: "Line haul", kind: "money", render: (row) => <span data-testid="dispatch-wizard-line-haul">{formatDash(row.lineHaul)}</span> },
             { key: "fsc", label: "FSC", kind: "money", sortable: false, render: (row) => <span data-testid="dispatch-wizard-fsc">{formatDash(row.fuelSurcharge)}</span> },
             { key: "accessorials", label: "Accessorials", kind: "money", sortable: false, render: (row) => <span data-testid="dispatch-wizard-accessorials">{formatDash(row.accessorials)}</span> },

@@ -276,15 +276,15 @@ export function CheckPrintPage() {
         </Link>
       ),
     },
-    { key: "transaction_date", label: "Date", render: (row) => formatDateUS(row.transaction_date) },
+    { key: "transaction_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.transaction_date) },
     {
       key: "total_amount_cents",
-      label: "Amount",
+      label: "Amount", sortable: true,
       className: "text-right",
       cellClass: "text-right",
       render: (row) => formatMoneyCents(row.total_amount_cents),
     },
-    { key: "memo", label: "Memo", render: (row) => row.memo ?? "—" },
+    { key: "memo", label: "Memo", sortable: true, render: (row) => row.memo ?? "—" },
   ];
 
   return (

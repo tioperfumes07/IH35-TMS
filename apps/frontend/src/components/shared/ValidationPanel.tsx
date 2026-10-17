@@ -190,9 +190,9 @@ export function ValidationPanel({
             setSortDir(direction);
           }}
           columns={[
-            { key: "rule", label: "Rule code", cellClass: "font-mono", sortValue: (item) => item.rule_id, render: (item) => ruleCodeLabel(item) },
-            { key: "subject", label: "Subject", sortValue: (item) => subjectFromItem(item), render: (item) => subjectFromItem(item) },
-            { key: "missing", label: "What is missing", allowWrap: true, sortValue: (item) => missingFromItem(item), render: (item) => missingFromItem(item) },
+            { key: "rule", label: "Rule code", sortable: true, cellClass: "font-mono", sortValue: (item) => item.rule_id, render: (item) => ruleCodeLabel(item) },
+            { key: "subject", label: "Subject", sortable: true, sortValue: (item) => subjectFromItem(item), render: (item) => subjectFromItem(item) },
+            { key: "missing", label: "What is missing", sortable: true, allowWrap: true, sortValue: (item) => missingFromItem(item), render: (item) => missingFromItem(item) },
             {
               key: "override",
               label: "Override",

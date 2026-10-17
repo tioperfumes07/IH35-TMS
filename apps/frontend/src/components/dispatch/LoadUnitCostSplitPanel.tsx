@@ -77,10 +77,10 @@ export function LoadUnitCostSplitPanel({
         suppressToolbarRange
         embedded
         columns={[
-          { key: "truck", label: "Truck", sortValue: (u) => u.unit_number ?? "", render: (u) => u.unit_number ?? "—" },
+          { key: "truck", label: "Truck", sortable: true, sortValue: (u) => u.unit_number ?? "", render: (u) => u.unit_number ?? "—" },
           {
             key: "miles",
-            label: "Miles",
+            label: "Miles", sortable: true,
             cellClass: "text-right tabular-nums",
             sortValue: (u) => u.miles,
             render: (u) => (u.miles > 0 ? u.miles.toFixed(1) : "—"),

@@ -269,7 +269,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
 
   const columns = useMemo<ParityColumn<EscrowLedgerRow>[]>(
     () => [
-      { key: "created_at", label: "Date", render: (row) => formatDateUS(row.created_at) },
+      { key: "created_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.created_at) },
       {
         key: "driver_name",
         label: "Driver",
@@ -281,19 +281,19 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
       },
       {
         key: "entry_type",
-        label: "Type",
+        label: "Type", sortable: true,
         render: (row) => POSTING_TYPE_LABEL[row.entry_type as EscrowPostingType] ?? String(row.entry_type ?? ""),
       },
-      { key: "memo", label: "Description", render: (row) => String(row.memo ?? "") },
+      { key: "memo", label: "Description", sortable: true, render: (row) => String(row.memo ?? "") },
       {
         key: "amount",
-        label: "Amount",
+        label: "Amount", sortable: true,
         cellClass: "text-[#1F2A44]",
         render: (row) => formatUsd(row.amount),
       },
       {
         key: "cleared",
-        label: "Status",
+        label: "Status", sortable: true,
         render: (row) =>
           row.cleared ? (
             <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">Cleared</span>
