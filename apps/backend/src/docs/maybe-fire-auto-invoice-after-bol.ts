@@ -2,7 +2,7 @@
  * ROUND 285.4.10 — after a BOL (ROUND 321: or a POD) is saved+linked to a load, retry auto-invoice → Faro submit.
  * Swallow-and-log: never 500 a document upload because invoicing hiccuped.
  */
-import { withCompanyScope } from "../accounting/shared.js";
+import { withCompanyScope } from "../accounting/db-scope.js";
 import { autoInvoiceOnBol, BILLING_EVIDENCE_DOC_CODES } from "../accounting/auto-invoice-on-bol.service.js";
 import { autoSubmitDeliveredLoadToFactor } from "../factoring/auto-submit-on-delivery.service.js";
 import { isDeliveryEvidenceStatus } from "../dispatch/delivery-evidence-status.js";

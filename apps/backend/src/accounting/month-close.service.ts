@@ -1,6 +1,6 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
-import { withCompanyScope } from "./shared.js";
+import { withCompanyScope } from "./db-scope.js";
 import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-retained-earnings.service.js";
 import { writePeriodCashBasisSnapshotAtClose } from "./cash-basis/period-close-snapshot.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";

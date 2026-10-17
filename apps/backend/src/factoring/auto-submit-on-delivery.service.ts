@@ -30,7 +30,7 @@
  * (resolveCanonicalActiveFactor). Both are owner-controlled data, so factor assignment IS the switch
  * (per Rule 50 there is no OFF flag state for USMCA money; the owner turns this on/off per customer).
  */
-import { withCompanyScope, INVOICE_PLEDGE_CENTS_SQL } from "../accounting/shared.js";
+import { withCompanyScope, INVOICE_PLEDGE_CENTS_SQL } from "../accounting/db-scope.js";
 // (INVOICE_PLEDGE_CENTS_SQL is the shared open-AR pledge base — same one the manual create route uses.)
 import { nextFactoringDisplayId } from "../accounting/display-id.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";

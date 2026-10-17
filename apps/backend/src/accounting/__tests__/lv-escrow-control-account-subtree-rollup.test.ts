@@ -31,7 +31,8 @@ const { mockQuery, mockWithCompanyScope, mockGetArAgingReport, mockGetApAgingRep
     };
   });
 
-vi.mock("../shared.js", () => ({ withCompanyScope: mockWithCompanyScope }));
+// 443.191: the service under test takes withCompanyScope from accounting/db-scope.js (non-HTTP half of shared.ts).
+vi.mock("../db-scope.js", () => ({ withCompanyScope: mockWithCompanyScope }));
 vi.mock("../ar-aging.service.js", () => ({ getArAgingReport: mockGetArAgingReport }));
 vi.mock("../ap-aging.service.js", () => ({ getApAgingReport: mockGetApAgingReport }));
 vi.mock("../coa-roles/resolver.service.js", () => ({ resolveRoleAccountOptional: mockResolveRoleAccountOptional }));

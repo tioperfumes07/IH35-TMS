@@ -13,7 +13,7 @@
  * Nothing auto-pairs. Owner must POST confirm.
  */
 import { appendCrudAudit } from "../../audit/crud-audit.js";
-import { withCompanyScope } from "../shared.js";
+import { withCompanyScope } from "../db-scope.js";
 import { postBankCategorizationOnClient } from "../../banking/bank-feed-gl-posting.service.js";
 import { createRelatedPartyLoanEntry } from "../related-party-loan-posting/create-entry.service.js";
 import { RELATED_PARTY_PAIR_WINDOW_DAYS } from "./related-party-pair-suggestions.service.js";

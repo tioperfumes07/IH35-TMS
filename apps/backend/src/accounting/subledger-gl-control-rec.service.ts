@@ -10,7 +10,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 import { getApAgingReport } from "./ap-aging.service.js";
 import { getArAgingReport } from "./ar-aging.service.js";
 import { resolveRoleAccountOptional, type CoaRole } from "./coa-roles/resolver.service.js";
-import { withCompanyScope } from "./shared.js";
+import { withCompanyScope } from "./db-scope.js";
 
 /** Standing control roles reconciled by this report (TRANSP + USMCA per-opco).
  *

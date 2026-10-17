@@ -8,7 +8,7 @@
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { withCompanyScope } from "./shared.js";
+import { withCompanyScope } from "./db-scope.js";
 
 export const INVOICE_DISPUTE_FLAG = "INVOICE_DISPUTE_ENABLED";
 

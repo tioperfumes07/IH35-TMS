@@ -12,7 +12,7 @@ import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-rev
 import { invoiceLineTotalCents } from "./invoice-line-total.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { reserveExpenseNumber, writeExpenseDocumentInClientTx } from "./expense-writer.service.js";
-import { recomputeInvoiceTotals } from "./shared.js";
+import { recomputeInvoiceTotals } from "./db-scope.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { insertBillHeaderOnClient, resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "./bills.service.js";
 

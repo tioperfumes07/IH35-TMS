@@ -39,7 +39,7 @@
 //   BILL_GL_POSTING_ENABLED / BILL_PAYMENT_GL_POSTING_ENABLED — required ON inside the atomic vendor
 //     path (nested kill-switches); OFF → fail loud, no subledger insert.
 
-import { withCompanyScope } from "../accounting/shared.js";
+import { withCompanyScope } from "../accounting/db-scope.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import {
   resolveAccountForCategory,

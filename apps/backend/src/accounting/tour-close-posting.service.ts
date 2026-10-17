@@ -13,7 +13,7 @@
 import { PostingEngineError } from "./posting-engine.service.js";
 import { postExpenseDocumentOwnTx } from "./expense-writer.service.js";
 import { postBillGlIfEnabled } from "./bill-gl.service.js";
-import { withCompanyScope } from "./shared.js";
+import { withCompanyScope } from "./db-scope.js";
 import { isLoadTourOpen } from "./tour-open-gate.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { randomUUID } from "node:crypto";

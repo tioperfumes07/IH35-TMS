@@ -25,7 +25,7 @@
  */
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { nextInvoiceDisplayId } from "../accounting/display-id.js";
-import { recomputeInvoiceTotals } from "../accounting/shared.js";
+import { recomputeInvoiceTotals } from "../accounting/db-scope.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
 export const TONU_CANCELLATION_AR_POSTING_FLAG_KEY = "TONU_CANCELLATION_AR_POSTING_ENABLED";

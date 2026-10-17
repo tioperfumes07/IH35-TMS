@@ -34,7 +34,7 @@
  *  * Per-row failures are collected, never thrown past the loop: one bad row must not strand the rest
  *    half-corrected.
  */
-import { withCompanyScope } from "../accounting/shared.js";
+import { withCompanyScope } from "../accounting/db-scope.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import {

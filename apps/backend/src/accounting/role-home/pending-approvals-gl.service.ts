@@ -20,7 +20,7 @@
  * No posting, mutation, schema DDL, or new GL math.
  */
 
-import { withCompanyScope } from "../shared.js";
+import { withCompanyScope } from "../db-scope.js";
 
 /** Exception codes returned when structure/assignment/capability is missing. */
 export type PendingApprovalExceptionCode =

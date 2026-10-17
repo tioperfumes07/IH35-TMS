@@ -23,7 +23,7 @@
 // mapping is not designated for the entity we DO NOT post (reason: driver_advance_account_not_designated);
 // we never guess an account.
 
-import { withCompanyScope } from "../accounting/shared.js";
+import { withCompanyScope } from "../accounting/db-scope.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import {

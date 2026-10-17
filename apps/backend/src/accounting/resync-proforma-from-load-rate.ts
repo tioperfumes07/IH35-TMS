@@ -18,7 +18,7 @@
  * first), so calling it after a resync that touched zero rows is safe — it either creates the
  * long-overdue proforma or finds a real invoice already exists (of any status) and no-ops.
  */
-import { recomputeInvoiceTotals } from "./shared.js";
+import { recomputeInvoiceTotals } from "./db-scope.js";
 import { buildInvoiceFromLoad } from "./from-load.js";
 
 type DbClient = {

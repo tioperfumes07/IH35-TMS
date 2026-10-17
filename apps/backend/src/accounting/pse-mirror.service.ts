@@ -1,4 +1,4 @@
-import { withCompanyScope } from "./shared.js";
+import { withCompanyScope } from "./db-scope.js";
 
 export async function syncPseMirror(userId: string, operatingCompanyId: string) {
   return withCompanyScope(userId, operatingCompanyId, async (client) => {

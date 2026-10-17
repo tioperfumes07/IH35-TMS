@@ -10,7 +10,7 @@
 //   net to IH35 (the wire)   = advance - cash reserve - wire fee
 //   funding JE: DR 1090 net + DR escrow (factor_reserve_held, Faro Escrow Reserve 1230) + DR cash reserve (factor_cash_reserve_held, 1235) + DR 6400 fee + DR 6300 wire fee / CR 2150 gross
 import { nextFactoringDisplayId, nextFactoringPurchaseDisplayId } from "../accounting/display-id.js";
-import { INVOICE_PLEDGE_CENTS_SQL } from "../accounting/shared.js";
+import { INVOICE_PLEDGE_CENTS_SQL } from "../accounting/db-scope.js";
 import {
   postFactoringAdvanceEventInClientTx,
   reverseFactoringAdvanceEventInClientTx,

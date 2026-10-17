@@ -63,7 +63,8 @@ vi.mock("../../ap-aging.service.js", () => ({
   })),
 }));
 
-vi.mock("../../shared.js", () => ({
+// 443.191: the service under test takes withCompanyScope from accounting/db-scope.js (non-HTTP half of shared.ts).
+vi.mock("../../db-scope.js", () => ({
   withCompanyScope: vi.fn(async (_userId: string, _oci: string, fn: (client: unknown) => Promise<unknown>) => {
     const client = {
       async query(sql: string) {

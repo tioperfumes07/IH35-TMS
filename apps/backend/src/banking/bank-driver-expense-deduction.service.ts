@@ -28,7 +28,7 @@
 // CONSENT GATE (FLSA): a charge against a driver's pay requires a signed deduction authorization on file
 // (hasSignedDeductionAuthorization). Missing → fail-closed (reason: "consent_missing"); the tags stay.
 
-import { withCompanyScope } from "../accounting/shared.js";
+import { withCompanyScope } from "../accounting/db-scope.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import {
   resolveAccountForCategory,

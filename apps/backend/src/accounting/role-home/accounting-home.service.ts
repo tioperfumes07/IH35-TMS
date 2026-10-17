@@ -1,6 +1,6 @@
 import { getApAgingReport, type ApAgingTotals } from "../ap-aging.service.js";
 import { getArAgingReport, type ArAgingTotals } from "../ar-aging.service.js";
-import { withCompanyScope } from "../shared.js";
+import { withCompanyScope } from "../db-scope.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { countPendingJournalApprovals } from "./pending-approvals-gl.service.js";
 import type { UnclearedDocument } from "../uncleared-applied-documents.js";

@@ -9,7 +9,7 @@ import { deriveRevenueCode, resolveInvoiceLineRevenueAccountId } from "../invoic
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { invoiceLineTotalCents } from "./invoice-line-total.js";
 import { assertLineAccountMatchesItem } from "./line-categorization.js";
-import { recomputeInvoiceTotals } from "./shared.js";
+import { recomputeInvoiceTotals } from "./db-scope.js";
 
 export type InvoiceLineType = "linehaul" | "fsc" | "detention" | "layover" | "lumper" | "tonu" | "accessorial" | "tax" | "adjustment" | "other";
 

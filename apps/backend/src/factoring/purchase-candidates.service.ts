@@ -10,7 +10,7 @@
 //                            purchase — a red invoice cannot enter one.
 //   loadPurchaseSendPacket   what "Save and send" emails to the factor: the posted purchase's lines + their load docs.
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { INVOICE_PLEDGE_CENTS_SQL } from "../accounting/shared.js";
+import { INVOICE_PLEDGE_CENTS_SQL } from "../accounting/db-scope.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { assertSubjectMayCloseOnClient, FeedGateError, type FeedCheckRow } from "../driver-finance/feed-gate/feed-gate.service.js";
 import { resolvePurchaseRate, type PurchaseRateSource } from "./factor.service.js";

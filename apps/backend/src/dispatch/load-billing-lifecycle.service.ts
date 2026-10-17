@@ -18,7 +18,7 @@
  * one-shot backfill can never double-apply. Void-not-delete is preserved: `closed` is a status, fully
  * reversible by an owner transition; nothing is deleted.
  */
-import { withCompanyScope } from "../accounting/shared.js";
+import { withCompanyScope } from "../accounting/db-scope.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { assertClosedLoadHasPricedDriverBill } from "./book-load.service.js";
 
