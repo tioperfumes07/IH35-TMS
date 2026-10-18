@@ -1,6 +1,6 @@
 {
  "date": "2026-10-18",
- "generated_at_iso": "2026-10-18T01:06:02.741Z",
+ "generated_at_iso": "2026-10-18T06:43:05.017Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27037,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-18T01:06:35Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27036,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-17T18:32:20Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.69 #2: fuel guard rebuilt at root — expected set from the settlement documents, purges honoured, no frozen count",
    "mergedAt": "2026-10-11T21:09:17Z",
    "branch": "cc-2/443-69-fuel-guard-root"
-  },
-  {
-   "number": 26414,
-   "title": "Cursor-Party ledger MoneyCell drills + tip unblock (ACCT-F433)",
-   "mergedAt": "2026-10-12T02:08:20Z",
-   "branch": "cursor/loans-party-ledger-money-cells-556e"
   }
  ],
  "merged_pr_total": 3000,
