@@ -1,6 +1,6 @@
 {
  "date": "2026-10-18",
- "generated_at_iso": "2026-10-18T06:43:05.017Z",
+ "generated_at_iso": "2026-10-18T12:37:30.244Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27038,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-18T06:43:30Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27037,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-18T01:06:35Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.72 #3: fuel date-correction engine + AUTH-438 re-date of 13557/99462408 and 13550/99460605 (fork-rehearsed)",
    "mergedAt": "2026-10-11T21:34:57Z",
    "branch": "cc-2/443-72-fuel-date-reissue"
-  },
-  {
-   "number": 26415,
-   "title": "CC-2-443.69 #2: fuel guard rebuilt at root — expected set from the settlement documents, purges honoured, no frozen count",
-   "mergedAt": "2026-10-11T21:09:17Z",
-   "branch": "cc-2/443-69-fuel-guard-root"
   }
  ],
  "merged_pr_total": 3000,
