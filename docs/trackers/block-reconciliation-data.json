@@ -1,6 +1,6 @@
 {
- "date": "2026-10-17",
- "generated_at_iso": "2026-10-17T18:31:44.943Z",
+ "date": "2026-10-18",
+ "generated_at_iso": "2026-10-18T01:06:02.741Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,18 @@
  ],
  "merged_prs": [
   {
+   "number": 27036,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-17T18:32:20Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 27035,
+   "title": "LEAD: 5 DB test files re-run-safe (heavy job runs the suite twice on one DB) + sample-unit seeder unique-key defect",
+   "mergedAt": "2026-10-17T19:28:09Z",
+   "branch": "claude/db-tests-rerun-safe"
+  },
+  {
    "number": 27034,
    "title": "LEAD: qbo.sync_alerts schema convergence (fresh DB vs prod) + FactoringHome entityLabel form",
    "mergedAt": "2026-10-17T17:27:15Z",
@@ -17324,18 +17336,6 @@
    "title": "Cursor-Party ledger MoneyCell drills + tip unblock (ACCT-F433)",
    "mergedAt": "2026-10-12T02:08:20Z",
    "branch": "cursor/loans-party-ledger-money-cells-556e"
-  },
-  {
-   "number": 26413,
-   "title": "CC-2-443.67 #2: live Book Load no longer throws for drivers with a posted settlement; unknown status fails closed; Google place id born on every stop",
-   "mergedAt": "2026-10-11T20:49:40Z",
-   "branch": "cc-2/443-67-born-null"
-  },
-  {
-   "number": 26412,
-   "title": "Claude-3- 443.65 #2: Due to / from engine — party entries post, party ledger from the GL, no party = refused, ledger = GL guard",
-   "mergedAt": "2026-10-11T19:40:07Z",
-   "branch": "cc-3/443-65-party-ledger"
   }
  ],
  "merged_pr_total": 3000,
