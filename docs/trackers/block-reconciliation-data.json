@@ -1,6 +1,6 @@
 {
  "date": "2026-10-19",
- "generated_at_iso": "2026-10-19T12:45:08.436Z",
+ "generated_at_iso": "2026-10-19T18:38:46.683Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27046,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-19T12:45:54Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27042,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-19T07:01:01Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.73 #1: verify-sql-column-existence green — explicit AS on mileage-source-backfill aliases (mp/ms/md)",
    "mergedAt": "2026-10-11T21:59:17Z",
    "branch": "cc-2/443-73-sql-column-aliases"
-  },
-  {
-   "number": 26420,
-   "title": "Claude-1-443.72: register 8 unaccounted guards (census 8→0, budget ≤3)",
-   "mergedAt": "2026-10-11T22:19:36Z",
-   "branch": "cc-1/443-72-guard-registration"
   }
  ],
  "merged_pr_total": 3000,
