@@ -1,6 +1,6 @@
 {
- "date": "2026-10-18",
- "generated_at_iso": "2026-10-18T18:32:34.350Z",
+ "date": "2026-10-19",
+ "generated_at_iso": "2026-10-19T01:06:03.998Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27040,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-18T18:33:07Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27039,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-18T12:38:02Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.70: live-load-lifecycle acceptance script — S1/S3/S4-feed on a fork (60/61, 9/17, 74/81) + AUTH-438 CONSUMED",
    "mergedAt": "2026-10-11T21:46:55Z",
    "branch": "cc-2/443-70-acceptance-s1-s3-s4"
-  },
-  {
-   "number": 26417,
-   "title": "CC-2-443.72 #3: AUTH-438 runner reads through the RLS bypass and skips a receipt already re-dated (13557 done on prod; 13550-4 next)",
-   "mergedAt": "2026-10-11T21:40:59Z",
-   "branch": "cc-2/443-72-fuel-date-reissue-2"
   }
  ],
  "merged_pr_total": 3000,
