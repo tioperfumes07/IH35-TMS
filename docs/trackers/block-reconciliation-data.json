@@ -1,6 +1,6 @@
 {
  "date": "2026-10-20",
- "generated_at_iso": "2026-10-20T12:42:56.893Z",
+ "generated_at_iso": "2026-10-20T18:36:54.757Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27050,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-20T12:43:58Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27049,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-20T06:47:39Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.73 #6(e): fuel guard keys duplicates on the base invoice; a receipt on two documents is shown 'already on load N'",
    "mergedAt": "2026-10-11T22:23:06Z",
    "branch": "cc-2/443-73-fuel-guard-base-invoice"
-  },
-  {
-   "number": 26424,
-   "title": "CC-2-443.74 #4: AUTH-439 set re-tested against GPS before apply — 99549122 keeps 13603; 1848853 taken out (GPS contradicts the ruling)",
-   "mergedAt": "2026-10-11T22:18:06Z",
-   "branch": "cc-2/443-74-gps-fuel-double-cost"
   }
  ],
  "merged_pr_total": 3000,
