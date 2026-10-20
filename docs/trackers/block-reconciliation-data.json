@@ -1,6 +1,6 @@
 {
- "date": "2026-10-19",
- "generated_at_iso": "2026-10-19T18:38:46.683Z",
+ "date": "2026-10-20",
+ "generated_at_iso": "2026-10-20T01:01:54.233Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27047,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-19T18:40:23Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27046,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-19T12:45:54Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.73 #3: ONE fence per stop — the resolver queues the stop's location fence to Samsara; Book Load stops drawing the customer-keyed second fence",
    "mergedAt": "2026-10-11T22:11:25Z",
    "branch": "cc-2/443-73-one-fence-per-stop"
-  },
-  {
-   "number": 26421,
-   "title": "CC-2-443.73 #1: verify-sql-column-existence green — explicit AS on mileage-source-backfill aliases (mp/ms/md)",
-   "mergedAt": "2026-10-11T21:59:17Z",
-   "branch": "cc-2/443-73-sql-column-aliases"
   }
  ],
  "merged_pr_total": 3000,
