@@ -1,6 +1,6 @@
 {
  "date": "2026-10-20",
- "generated_at_iso": "2026-10-20T01:01:54.233Z",
+ "generated_at_iso": "2026-10-20T06:46:56.241Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27048,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-20T01:02:53Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27047,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-19T18:40:23Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.73 #6(a,b): AUTH-439 — void the second copy of 7 double-expensed fuel receipt lines ($2,291.25), keeping the load the owner named",
    "mergedAt": "2026-10-11T22:11:33Z",
    "branch": "cc-2/443-73-fuel-double-cost"
-  },
-  {
-   "number": 26422,
-   "title": "CC-2-443.73 #3: ONE fence per stop — the resolver queues the stop's location fence to Samsara; Book Load stops drawing the customer-keyed second fence",
-   "mergedAt": "2026-10-11T22:11:25Z",
-   "branch": "cc-2/443-73-one-fence-per-stop"
   }
  ],
  "merged_pr_total": 3000,
