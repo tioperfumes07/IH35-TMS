@@ -1,6 +1,6 @@
 {
  "date": "2026-10-20",
- "generated_at_iso": "2026-10-20T06:46:56.241Z",
+ "generated_at_iso": "2026-10-20T12:42:56.893Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27049,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-20T06:47:39Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27048,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-20T01:02:53Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.74 #4: AUTH-439 set re-tested against GPS before apply — 99549122 keeps 13603; 1848853 taken out (GPS contradicts the ruling)",
    "mergedAt": "2026-10-11T22:18:06Z",
    "branch": "cc-2/443-74-gps-fuel-double-cost"
-  },
-  {
-   "number": 26423,
-   "title": "CC-2-443.73 #6(a,b): AUTH-439 — void the second copy of 7 double-expensed fuel receipt lines ($2,291.25), keeping the load the owner named",
-   "mergedAt": "2026-10-11T22:11:33Z",
-   "branch": "cc-2/443-73-fuel-double-cost"
   }
  ],
  "merged_pr_total": 3000,
