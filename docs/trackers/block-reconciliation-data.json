@@ -1,6 +1,6 @@
 {
  "date": "2026-10-21",
- "generated_at_iso": "2026-10-21T06:47:19.173Z",
+ "generated_at_iso": "2026-10-21T12:43:27.591Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27056,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-21T06:48:03Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27055,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-21T01:02:42Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.77 #3: AUTH-440 — last double-expensed fuel lines decided by GPS: 1848853 stays on 13543, 99448116 on 13519 ($656.14)",
    "mergedAt": "2026-10-11T23:15:25Z",
    "branch": "cc-2/443-77-last-double-cost"
-  },
-  {
-   "number": 26427,
-   "title": "Claude-3- 443.66 D1/D3/D4/D5: Creator-born lines categorized at write + categorize engine for the 68; QBO AR guard removed (443.71); live A/R tie guard",
-   "mergedAt": "2026-10-11T23:19:36Z",
-   "branch": "cc-3/443-66-categorized"
   }
  ],
  "merged_pr_total": 3000,
