@@ -305,6 +305,7 @@ export type BookLoadInput = {
   // quicksave_pending_fields (nested under a "pending_fields" key, see v3Metadata below). Ignored
   // unless save_mode === "draft".
   quicksave_pending_fields?: string[];
+  driver_pay_plan?: AdditionalOnlyDriverPayPlan;
   override_token?: string;
   override_reason?: string;
   override_rules?: Array<{ rule_code: string; reason: string; subject?: string }>;
@@ -634,6 +635,41 @@ export function isSalariedZeroRateOverride(load: Record<string, unknown>): boole
   return Number(raw) === 0 && reason.length >= 10 && /^(salaried|local driver — weekly salary)/i.test(reason);
 }
 
+export type AdditionalOnlyDriverPayPlan = { mode: "additional_pay_only"; amount_cents: number; reason: string;
+  lines: Array<{ item_id: string; amount_cents: number; description: string }> };
+
+export function additionalOnlyDriverPay(load: Record<string, unknown>): AdditionalOnlyDriverPayPlan | null {
+  const metadata = load.quicksave_pending_fields as { driver_pay_plan?: AdditionalOnlyDriverPayPlan } | null;
+  const plan = metadata?.driver_pay_plan;
+  if (!plan) return null;
+  if (plan.mode !== "additional_pay_only" || !Number.isSafeInteger(plan.amount_cents) || plan.amount_cents <= 0 || !plan.reason?.trim() ||
+      !Array.isArray(plan.lines) || plan.lines.length !== 1 || plan.lines.some(l => !l.item_id || !Number.isSafeInteger(l.amount_cents) || l.amount_cents <= 0) ||
+      plan.lines.reduce((sum, l) => sum + l.amount_cents, 0) !== plan.amount_cents) {
+    throw new Error("driver_pay_plan_invalid");
+  }
+  return plan;
+}
+
+export async function additionalOnlyPayItems(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  operatingCompanyId: string, plan: AdditionalOnlyDriverPayPlan,
+) {
+  additionalOnlyDriverPay({ quicksave_pending_fields: { driver_pay_plan: plan } });
+  const lines = [];
+  for (const line of plan.lines) {
+    const item = (await client.query<{ account_id: string; account_number: string | null; account_name: string }>(
+      `SELECT a.id::text AS account_id, a.account_number, a.account_name FROM catalogs.items i JOIN catalogs.accounts a
+         ON a.id = i.default_expense_account_id AND a.operating_company_id = i.operating_company_id
+       WHERE i.id = $1::uuid AND i.operating_company_id = $2::uuid
+         AND i.deactivated_at IS NULL AND a.deactivated_at IS NULL AND a.is_postable = true FOR SHARE OF i, a`,
+      [line.item_id, operatingCompanyId],
+    )).rows[0];
+    if (!item) throw new Error("additional_only_pay_item_unmapped");
+    lines.push({ ...line, ...item });
+  }
+  return lines;
+}
+
 async function resolveDriverBasePayCents(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   operatingCompanyId: string,
@@ -643,6 +679,14 @@ async function resolveDriverBasePayCents(
 ): Promise<DriverPayResolution | null> {
   lastRateCardRefusal = null;
   if (!driverId) return null;
+  const additionalOnly = additionalOnlyDriverPay(load);
+  if (additionalOnly) {
+    lastResolvedRateWasTestData = false;
+    if (load.team_id || load.assigned_secondary_driver_id) throw new Error("additional_only_team_requires_explicit_split");
+    await additionalOnlyPayItems(client, operatingCompanyId, additionalOnly);
+    return { totalCents: additionalOnly.amount_cents, loadedCents: additionalOnly.amount_cents,
+      deadheadCents: 0, milesDeadheadUsed: null, rateEmptyPerMileCentsUsed: null, rateLoadedPerMileCentsUsed: null };
+  }
 
   if (isSalariedZeroRateOverride(load)) {
     if (actorUserId) {
@@ -1067,7 +1111,8 @@ export async function createDriverBillArtifacts(
   // OWNER LAW (LEAD 443.192, 12:35Z): per-mile pay is SHORT miles only — the gate is miles_shortest again (the 09-14 rule),
   // superseding ROUND 155.12's "shortest or practical". Practical miles are never a pay basis.
   const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;
-  if (isFreshMintAttempt && !hasAnyRealMiles) {
+  const additionalOnly = additionalOnlyDriverPay(load);
+  if (isFreshMintAttempt && !hasAnyRealMiles && !additionalOnly) {
     const reason = "No SHORT miles have been captured for this load — per-mile drivers are always paid short miles, never practical, never invented. Enter the load's short miles before a driver bill can be priced.";
     const priorRefusal = await client.query<{ exists: boolean }>(
       `SELECT EXISTS (
@@ -1176,11 +1221,11 @@ export async function createDriverBillArtifacts(
     rateEmptyPerMileCentsUsed: null,
     rateLoadedPerMileCentsUsed: null,
   };
-  const totalBillCents = pay.totalCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
+  const totalBillCents = additionalOnly ? pay.totalCents : pay.totalCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
   // MILES SPEC — the loaded/deadhead breakdown driver_bills now snapshots, so it can render as two
   // settlement lines. Stop bonuses/tarp/lumper stay folded into the loaded side (they are not a
   // property of empty miles).
-  const loadedPayCentsForBill = pay.loadedCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
+  const loadedPayCentsForBill = additionalOnly ? pay.loadedCents : pay.loadedCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
   const deadheadPayCentsForBill = pay.deadheadCents;
 
   const resolvedLoadNumber = String(load.load_number ?? loadNumber);
@@ -1191,7 +1236,7 @@ export async function createDriverBillArtifacts(
   let milesBasisType: "short" | "practical" | null = null;
   // OWNER LAW (443.192): the bill's miles basis is SHORT miles only (practical is recorded on the load, never the pay basis).
   void milesPrac;
-  if (milesShort && milesShort > 0) {
+  if (!additionalOnly && milesShort && milesShort > 0) {
     milesBasis = milesShort;
     milesBasisType = "short";
   }
@@ -1536,6 +1581,39 @@ export async function createDriverBillArtifacts(
  * cannot be priced because shortest miles are absent, createDriverBillArtifacts records the loud,
  * queryable skip instead of deriving wages from customer revenue.
  */
+/** Persist the explicit signed per-load plan before the same canonical mint/reprice is retried. */
+export async function setAdditionalOnlyDriverPayForLoad(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: { loadId: string; operatingCompanyId: string; actorUserId: string; plan: AdditionalOnlyDriverPayPlan },
+): Promise<DriverBillMintOutcome> {
+  additionalOnlyDriverPay({ quicksave_pending_fields: { driver_pay_plan: input.plan } });
+  await additionalOnlyPayItems(client, input.operatingCompanyId, input.plan);
+  await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [input.loadId]);
+  const load = (await client.query<{ quicksave_pending_fields: Record<string, unknown> | null }>(
+    `SELECT quicksave_pending_fields FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid
+       AND soft_deleted_at IS NULL AND voided_at IS NULL FOR UPDATE`, [input.loadId, input.operatingCompanyId],
+  )).rows[0];
+  if (!load) throw new Error("driver_bill_load_not_found_or_cross_entity");
+  const frozen = (await client.query<{ id: string }>(
+    `SELECT b.id::text FROM driver_finance.driver_bills b WHERE b.load_id = $1::uuid AND b.operating_company_id = $2::uuid
+       AND b.voided_at IS NULL AND b.status <> 'void'
+       AND (b.status <> 'open' OR b.accrued_bill_id IS NOT NULL OR EXISTS (
+         SELECT 1 FROM driver_finance.driver_settlements s WHERE s.id = b.settled_in_settlement_id
+           AND s.operating_company_id = b.operating_company_id AND s.voided_at IS NULL AND s.status <> 'cancelled'))`,
+    [input.loadId, input.operatingCompanyId],
+  )).rows;
+  const prior = load.quicksave_pending_fields?.driver_pay_plan as AdditionalOnlyDriverPayPlan | undefined;
+  if (frozen.length && (prior?.mode !== input.plan.mode || prior?.amount_cents !== input.plan.amount_cents || JSON.stringify(prior.lines) !== JSON.stringify(input.plan.lines))) throw new Error("driver_bill_pay_plan_frozen");
+  if (!frozen.length) {
+    if (Array.isArray(load.quicksave_pending_fields)) throw new Error("driver_pay_plan_metadata_shape_invalid");
+    await client.query(`UPDATE mdata.loads SET quicksave_pending_fields = COALESCE(quicksave_pending_fields, '{}'::jsonb) || jsonb_build_object('driver_pay_plan', $3::jsonb), updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [input.loadId, input.operatingCompanyId, JSON.stringify(input.plan)]);
+    await appendCrudAudit(client, input.actorUserId, "driver_finance.driver_pay_plan.changed",
+      { load_id: input.loadId, operating_company_id: input.operatingCompanyId, prior_plan: prior ?? null, plan: input.plan }, "info", "443.200");
+  }
+  return ensureDriverBillArtifactsForLoad(client, input);
+}
+
 export async function ensureDriverBillArtifactsForLoad(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: { loadId: string; operatingCompanyId: string; actorUserId: string }
@@ -1562,7 +1640,7 @@ export async function ensureDriverBillArtifactsForLoad(
     `SELECT id, operating_company_id, load_number, customer_id, status,
             assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
             requires_tarps, miles_shortest, miles_practical, driver_pay_rate_per_mile,
-            driver_pay_rate_override_reason, miles_deadhead
+            driver_pay_rate_override_reason, miles_deadhead, quicksave_pending_fields
        FROM mdata.loads
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
@@ -2980,6 +3058,7 @@ export async function createLoadWithFullSideEffects(
     const v3Metadata = {
       customer_po_number: input.customer_po_number ?? null,
       hazmat: Boolean(input.hazmat),
+      ...(input.driver_pay_plan ? { driver_pay_plan: input.driver_pay_plan } : {}),
       ...(input.save_mode === "draft" && input.quicksave_pending_fields?.length
         ? { pending_fields: input.quicksave_pending_fields }
         : {}),

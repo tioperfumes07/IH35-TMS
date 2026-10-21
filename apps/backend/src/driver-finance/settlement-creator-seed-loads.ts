@@ -10,6 +10,7 @@ import { isAuthorizedZeroRevenueLoad } from "./settlement-creator-zero-revenue.j
 import { milesTimesRateCents } from "./deadhead-rule.js";
 import { creatorLoadMiles } from "./settlement-creator-empty-pay.js";
 import { signedRateOverride } from "./settlement-creator-signed-rate.js";
+import { creatorAdditionalOnlyPay } from "./settlement-creator-pay-mode.js";
 import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, type StopStamp } from "./settlement-creator-deliver.js";
 import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerEquipmentId, creatorTrailerChoice } from "./creator-trailer-choice.js";
 
@@ -455,12 +456,12 @@ export async function ensureDispatchedLoadsForCreator(
     // driver bill, the per-mile card is neither read nor ended.
     const payOverride = draft.salaried
       ? { driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: SALARIED_OVERRIDE_REASON }
-      : signedRateOverride(draft.settlement_no, load, card);
+      : load.driver_pay_mode === "additional_pay_only" ? null : signedRateOverride(draft.settlement_no, load, card);
 
     // LEAD 443.192 (owner law) — the signed settlement's miles are the SHORT (pay) miles: they go to miles_shortest, and only
     // there. Practical comes from its own figure. Neither is a copy of the other (creatorLoadMiles).
     const miles = creatorLoadMiles(load);
-    if (miles.miles_shortest == null && !draft.salaried) {
+    if (miles.miles_shortest == null && !draft.salaried && load.driver_pay_mode !== "additional_pay_only") {
       throw new SettlementCreatorSeedError("short_miles_required", `Load ${load.load_number}: ${CREATOR_SHORT_MILES_REQUIRED_MESSAGE}`);
     }
     if (miles.miles_practical == null) {
@@ -493,6 +494,7 @@ export async function ensureDispatchedLoadsForCreator(
       mileage_source: (load.loaded_miles ?? load.line_haul_miles) != null ? "Operator entered" : undefined,
       // LEAD 443.192 — the document's pay miles = SHORT miles only: the figure the earnings line pays (creatorPayMiles).
       miles_shortest: miles.miles_shortest,
+      driver_pay_plan: creatorAdditionalOnlyPay(draft, load) ?? undefined,
       // LEAD RULING 15:10Z #2 (supersedes RULING 443.86 #1 for the Creator): the load's deadhead = the signed document's empty
       // miles ONLY — never filled from the miles engine (fillLoadDeadhead is not called here), blank when the document has
       // none. Book Load's own Google estimate at a LIVE booking (fillDeadheadAtBooking, live_feed only) is unaffected.
