@@ -72,8 +72,8 @@ export function check(creator, doc) {
 }
 export const STALE_CEILING = 0; // 443.203: 34 -> 0
 // RULE 6 live: Relay documents naming a settlement that did not print them. 25 on prod 2026-10-21 20:30Z: 2 cleared by the
-// 443.203 runner (P-0071 / P-0080, Lead 20:22Z); 23 named by the 10-11/10-12 load-holder fill (5780..5831) — listed to the Lead.
-export const UNPRINTED_CEILING = 23;
+// 443.203 runner (P-0071 / P-0080), 23 by the 443.206 runner (Lead 21:25Z GO) → 0.
+export const UNPRINTED_CEILING = 0;
 export const judge = (n, stale = 0, unprinted = 0) => [
   ...(unprinted > UNPRINTED_CEILING ? [`RULE 6: ${unprinted} Relay-fill expense documents name a settlement that did not print them — ceiling ${UNPRINTED_CEILING} (shrink-only)`] : []),
   ...(n > CEILING ? [`${n} Relay-fill expense documents name no settlement although one live settlement holds their load — ceiling ${CEILING}`] : []),
