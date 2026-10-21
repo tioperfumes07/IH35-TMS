@@ -17,8 +17,8 @@
  * itself is non-voided and not void/voided/cancelled. Every consumer below MUST import from here
  * — never re-type this predicate inline (that is exactly how the three surfaces drifted apart).
  */
-export const ACTIVE_SETTLEMENT_LINE_PREDICATE_SQL =
-  `sl.is_active = true AND sl.voided_at IS NULL AND ds.voided_at IS NULL AND ds.status NOT IN ('void', 'voided', 'cancelled')`;
+import { activeSettlementLine, driverBillHasActiveSettlement, liveSettlement, liveDriverBill } from "../accounting/live-document-predicates.sql.js";
+export const ACTIVE_SETTLEMENT_LINE_PREDICATE_SQL = activeSettlementLine("sl", "ds");
 
 /**
  * LEFT JOIN LATERAL resolving exactly one active settlement identity for a driver bill aliased
@@ -43,14 +43,7 @@ export const RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL = `LEFT JOIN LATERAL (
  * exclude it from open obligations" check) that don't need the resolved id/number, only the
  * boolean.
  */
-export const BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL = `EXISTS (
-          SELECT 1 FROM driver_finance.settlement_lines sl
-          JOIN driver_finance.driver_settlements ds
-            ON ds.id = sl.settlement_id AND ds.operating_company_id = db.operating_company_id
-         WHERE sl.source_driver_bill_id = db.id
-           AND sl.operating_company_id = db.operating_company_id
-           AND ${ACTIVE_SETTLEMENT_LINE_PREDICATE_SQL}
-        )`;
+export const BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL = driverBillHasActiveSettlement("db");
 
 /**
  * 443.210R ONE-SETTLEMENT-RESOLVER — the single canonical per-load settlement resolver.
@@ -69,8 +62,7 @@ export function resolveLoadSettlementSql(loadAlias: string): string {
     SELECT ds.id::text AS settlement_id, ds.source_document_ref AS settlement_number
       FROM driver_finance.driver_settlements ds
      WHERE ds.operating_company_id = ${loadAlias}.operating_company_id
-       AND ds.voided_at IS NULL
-       AND ds.status NOT IN ('void', 'voided', 'cancelled')
+       AND ${liveSettlement("ds")}
        AND ds.id = COALESCE(
          -- 1. Active line on closed/locked settlement (settled money is final)
          (SELECT sl1.settlement_id
@@ -78,14 +70,14 @@ export function resolveLoadSettlementSql(loadAlias: string): string {
             JOIN driver_finance.driver_settlements ds1
               ON ds1.id = sl1.settlement_id
              AND ds1.operating_company_id = ${loadAlias}.operating_company_id
-             AND ds1.voided_at IS NULL
+             AND ${liveSettlement("ds1")}
              AND ds1.status IN ('closed', 'locked')
             JOIN driver_finance.driver_bills db1
               ON db1.id = sl1.source_driver_bill_id
              AND db1.load_id = ${loadAlias}.id
              AND db1.operating_company_id = ${loadAlias}.operating_company_id
-             AND db1.status NOT IN ('void', 'voided') AND db1.voided_at IS NULL
-           WHERE sl1.is_active = true AND sl1.voided_at IS NULL
+             AND ${liveDriverBill("db1")}
+           WHERE ${activeSettlementLine("sl1", "ds1")}
              AND sl1.operating_company_id = ${loadAlias}.operating_company_id
            ORDER BY ds1.closed_at DESC NULLS LAST, sl1.created_at DESC
            LIMIT 1),
@@ -96,8 +88,7 @@ export function resolveLoadSettlementSql(loadAlias: string): string {
                SELECT 1 FROM driver_finance.driver_settlements ds2
                 WHERE ds2.id = ${loadAlias}.presettlement_link_id
                   AND ds2.operating_company_id = ${loadAlias}.operating_company_id
-                  AND ds2.voided_at IS NULL
-                  AND ds2.status NOT IN ('void', 'voided', 'cancelled')
+                  AND ${liveSettlement("ds2")}
              )),
          -- 3. Any active line (bookend / fallback)
          (SELECT sl3.settlement_id
@@ -106,12 +97,12 @@ export function resolveLoadSettlementSql(loadAlias: string): string {
               ON db3.id = sl3.source_driver_bill_id
              AND db3.load_id = ${loadAlias}.id
              AND db3.operating_company_id = ${loadAlias}.operating_company_id
-             AND db3.status NOT IN ('void', 'voided') AND db3.voided_at IS NULL
+             AND ${liveDriverBill("db3")}
             JOIN driver_finance.driver_settlements ds3
               ON ds3.id = sl3.settlement_id
              AND ds3.operating_company_id = ${loadAlias}.operating_company_id
-             AND ds3.voided_at IS NULL AND ds3.status NOT IN ('void', 'voided', 'cancelled')
-           WHERE sl3.is_active = true AND sl3.voided_at IS NULL
+             AND ${liveSettlement("ds3")}
+           WHERE ${activeSettlementLine("sl3", "ds3")}
              AND sl3.operating_company_id = ${loadAlias}.operating_company_id
            ORDER BY sl3.created_at DESC
            LIMIT 1)

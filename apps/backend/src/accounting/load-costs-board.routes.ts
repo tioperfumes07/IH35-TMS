@@ -1,3 +1,4 @@
+import { liveDriverBill, liveSettlement } from "./live-document-predicates.sql.js";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -151,7 +152,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
+              AND ${liveDriverBill("db")}
               AND db.team_driver_id IS NULL
             ORDER BY db.load_id, db.created_at DESC
          -- SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11, verbatim: "remove and delete any
@@ -214,14 +215,14 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                JOIN driver_finance.settlement_lines sl ON sl.source_driver_bill_id = db.id
                JOIN driver_finance.driver_settlements legacy ON legacy.id = sl.settlement_id
                  AND legacy.operating_company_id = linked.operating_company_id
-                 AND legacy.voided_at IS NULL
+                 AND ${liveSettlement("legacy")}
                WHERE db.operating_company_id = linked.operating_company_id
-                 AND db.load_id = linked.id AND db.status <> 'void' AND db.voided_at IS NULL
+                 AND db.load_id = linked.id AND ${liveDriverBill("db")}
                ORDER BY db.created_at DESC, sl.id LIMIT 1
              ) bill_link ON linked.presettlement_link_id IS NULL
              JOIN driver_finance.driver_settlements ds
                ON ds.id = COALESCE(linked.presettlement_link_id, bill_link.settlement_id)
-              AND ds.operating_company_id = linked.operating_company_id AND ds.voided_at IS NULL
+              AND ds.operating_company_id = linked.operating_company_id AND ${liveSettlement("ds")}
             WHERE linked.operating_company_id = $1::uuid
          ), driver_pay_amounts AS (
            SELECT db.load_id,
@@ -231,7 +232,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
+              AND ${liveDriverBill("db")}
             GROUP BY db.load_id
          ), repair_documents AS (
            SELECT cd.load_id, cd.amount_cents
@@ -252,7 +253,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
+              AND ${liveDriverBill("db")}
             GROUP BY db.load_id
          )
          SELECT l.id::text AS load_id, l.load_number, l.status::text, COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id,l.operating_company_id)) AS customer_name,

@@ -34,8 +34,8 @@ function makeSettlementClient(row: Record<string, unknown> | null) {
       if (/FROM driver_finance\.driver_settlements/.test(sql) && /FOR UPDATE/.test(sql)) {
         return { rows: row ? [row] : [] };
       }
-      if (/UPDATE driver_finance\.driver_settlements/.test(sql) && /RETURNING id::text, updated_at::text/.test(sql)) {
-        return { rows: [{ id: SETTLEMENT_ID, updated_at: "2026-09-23T00:00:00Z" }] };
+      if (/UPDATE driver_finance\.driver_settlements/.test(sql) && /RETURNING voided_at::text/.test(sql)) {
+        return { rows: [{ voided_at: "2026-09-23T00:00:00Z" }] };
       }
       return { rows: [] };
     }),
