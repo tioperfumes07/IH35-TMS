@@ -213,10 +213,22 @@ function staticCheck() {
 
 /** 443.198 — the import's own marker on one row (pure; the batch tie to the audit event is applied by the caller). */
 export const STATEMENT_MARKER = "443.142 Dreamline statement";
+/**
+ * LEAD 443.202 (2026-10-21) — one fuel-card statement engine, two rails. Old rule -> new rule -> why:
+ *   OLD: only the Dreamline statement import (marker + efs_invoice + fuel.dreamline_statement_imported) was a source.
+ *   NEW: every rail of the ONE statement engine (fuel/dreamline-statement-import.service.ts FuelCardStatementRail) is a
+ *   source, proven the same way — its own marker + its own invoice key + a row written in the SAME transaction as its
+ *   own import event, the batch holding exactly the event's by_outcome.imported.lines.
+ *   WHY: the 10-21 21:05Z England WEX import posted 9 fills (loads 13686 / 13688 / 13693) the guard named "unsourced".
+ */
+export const STATEMENT_RAILS = [
+  { event: "fuel.dreamline_statement_imported", marker: STATEMENT_MARKER, invoiceKey: "efs_invoice", label: "Dreamline" },
+  { event: "fuel.wex_statement_imported", marker: "443.202 England WEX statement", invoiceKey: "wex_invoice", label: "England WEX" },
+];
 export function statementRowIsImported(r) {
   if (r.source !== "import" || !r.notes || !r.ref) return false;
   const parts = String(r.notes).split(";").map((p) => p.trim());
-  return parts.includes(STATEMENT_MARKER) && parts.includes(`efs_invoice=${r.ref}`);
+  return STATEMENT_RAILS.some((rail) => parts.includes(rail.marker) && parts.includes(`${rail.invoiceKey}=${r.ref}`));
 }
 
 function selftest() {
@@ -283,6 +295,13 @@ function selftest() {
     ["a marker naming another invoice is not", N({ ref: "61621" }), false],
     ["an adopted receipt (dreamline_efs= stamp only) is not", N({ source: "manual", notes: "dreamline_efs=61620:ULSD:1" }), false],
     ["no marker is not", N({ notes: "efs_invoice=61620" }), false],
+    // 443.202 — the England WEX rail of the same engine.
+    ["a WEX import row with its marker + own wex_invoice is a statement row",
+      N({ ref: "93567", notes: "card=…0022; wex_invoice=93567; file_unit=148; 443.202 England WEX statement" }), true],
+    ["a WEX marker with the Dreamline invoice key is not",
+      N({ ref: "93567", notes: "efs_invoice=93567; 443.202 England WEX statement" }), false],
+    ["a WEX marker naming another invoice is not",
+      N({ ref: "93568", notes: "wex_invoice=93567; 443.202 England WEX statement" }), false],
   ];
   for (const [name, row, want] of markerCases) {
     const got = statementRowIsImported(row);
@@ -363,22 +382,28 @@ async function live() {
     );
     // 443.198 — the Dreamline statement import's own record: each import event, and every row (live AND voided) that
     // carries the import's marker in that event's transaction (created_at = the event's created_at, one transaction).
-    const stmtEvents = await client.query(
-      `SELECT ae.uuid::text AS event_id, ae.created_at, ae.created_at::text AS at,
-              coalesce((ae.payload->'by_outcome'->'imported'->>'lines')::int, 0) AS declared_lines,
-              (SELECT count(*)::int FROM fuel.fuel_transactions ft
-                WHERE ft.operating_company_id = $1::uuid AND ft.created_at = ae.created_at AND ft.source = 'import'
-                  AND ft.notes LIKE '%' || $2::text || '%') AS rows
-         FROM audit.audit_events ae
-        WHERE ae.event_class = 'fuel.dreamline_statement_imported' AND ae.payload->>'operating_company_id' = $1::text`,
-      [USMCA_COMPANY_ID, STATEMENT_MARKER]
-    );
-    const batchTimes = new Set(stmtEvents.rows.map((e) => new Date(e.created_at).toISOString()));
-    // A marker on a row no import event wrote is never a source — and is named, not ignored.
-    const strayMarked = liveRows.filter((r) => String(r.notes ?? "").includes(STATEMENT_MARKER) && !batchTimes.has(new Date(r.created_at).toISOString()));
-    const statementIds = new Set(liveRows
-      .filter((r) => statementRowIsImported(r) && batchTimes.has(new Date(r.created_at).toISOString()))
-      .map((r) => r.id));
+    const stmtEvents = { rows: [] };
+    const railBatchTimes = new Map();
+    for (const rail of STATEMENT_RAILS) {
+      const ev = await client.query(
+        `SELECT ae.uuid::text AS event_id, ae.created_at, ae.created_at::text AS at,
+                coalesce((ae.payload->'by_outcome'->'imported'->>'lines')::int, 0) AS declared_lines,
+                (SELECT count(*)::int FROM fuel.fuel_transactions ft
+                  WHERE ft.operating_company_id = $1::uuid AND ft.created_at = ae.created_at AND ft.source = 'import'
+                    AND ft.notes LIKE '%' || $2::text || '%') AS rows
+           FROM audit.audit_events ae
+          WHERE ae.event_class = $3::text AND ae.payload->>'operating_company_id' = $1::text`,
+        [USMCA_COMPANY_ID, rail.marker, rail.event]
+      );
+      stmtEvents.rows.push(...ev.rows);
+      railBatchTimes.set(rail.marker, new Set(ev.rows.map((e) => new Date(e.created_at).toISOString())));
+    }
+    // A row is statement-sourced only inside ITS rail's batch; a marker on a row no import event of that rail wrote is
+    // never a source — and is named, not ignored.
+    const inOwnBatch = (r) => STATEMENT_RAILS.some((rail) => String(r.notes ?? "").includes(rail.marker)
+      && railBatchTimes.get(rail.marker).has(new Date(r.created_at).toISOString()));
+    const strayMarked = liveRows.filter((r) => STATEMENT_RAILS.some((rail) => String(r.notes ?? "").includes(rail.marker)) && !inOwnBatch(r));
+    const statementIds = new Set(liveRows.filter((r) => statementRowIsImported(r) && inOwnBatch(r)).map((r) => r.id));
     const result = compareFuel({
       documents: source.documents,
       corrections: source.date_corrections || [],
@@ -391,7 +416,7 @@ async function live() {
       statementBatches: stmtEvents.rows.map((e) => ({ event_id: e.event_id, at: e.at, declared_lines: e.declared_lines, rows: e.rows })),
     });
     for (const r of strayMarked) {
-      result.failures.push(`statement: live row ${r.id.slice(0, 8)} load ${r.load_number ?? "(none)"} invoice ${r.ref} carries the Dreamline statement marker but no fuel.dreamline_statement_imported event wrote it`);
+      result.failures.push(`statement: live row ${r.id.slice(0, 8)} load ${r.load_number ?? "(none)"} invoice ${r.ref} carries a statement marker but no import event of that rail wrote it`);
     }
     let failures = result.failures.length + staticProblems.length;
     for (const n of result.notes) console.log(`${LABEL}: ${n}`);
@@ -461,7 +486,7 @@ async function live() {
     await client.query("COMMIT");
     const liveCents = liveRows.reduce((s, r) => s + r.cents, 0);
     const summary = `${source.documents.length} settlement documents, ${result.expectedRows} fuel lines; live ${liveRows.length} rows / ${money(liveCents)}; ` +
-      `${result.loadsTied}/${result.loads} loads tie in count and dollars; ${result.statementSourced} Dreamline statement fill(s) sourced to ${stmtEvents.rows.length} import event(s); ` +
+      `${result.loadsTied}/${result.loads} loads tie in count and dollars; ${result.statementSourced} card-statement fill(s) (Dreamline + England WEX) sourced to ${stmtEvents.rows.length} import event(s); ` +
       `${result.relayTxns} Relay transactions read against the Relay file; ` +
       `${purgedRes.rows.length} governed-purge deletions read; DEF shares ${sharedCount} posting(s) with diesel`;
     if (failures > 0) {
