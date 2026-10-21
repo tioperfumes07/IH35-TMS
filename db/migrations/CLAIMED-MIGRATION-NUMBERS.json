@@ -2697,5 +2697,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-21",
     "purpose": "443.206R item 3 (Lead 22:58Z, SURFACE-BREACH CC-1 line): CREATE OR REPLACE VIEW views.live_loads adding 'voided' (status) + voided_at IS NULL to the exclusion (register B2); explicit column list, security_invoker kept"
+  },
+  "202616090100": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-22",
+    "purpose": "443.215 extension (Lead 22:55Z): driver_finance.driver_settlements.source_fingerprint jsonb — the printed source (settlement no, printed date, TOTAL DUE, Net Revenue, normalized lines, line hash) a settlement was posted from; a later source is compared against it (source changed: repost needed)"
   }
 }
