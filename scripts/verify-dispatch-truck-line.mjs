@@ -46,13 +46,11 @@ export function verify(files) {
   } = files;
 
   // (a) row count = in-service USMCA trucks under the SAME Kanban/units-without-load predicate.
+  // LEAD 443.206 D3: both read THE board unit gate (canonicalBoardUnitGateSql — COALESCE(leased, owner), in service,
+  // real, not sold / disposed; asserted in canonical-active-load-set.ts by verify-load-boards-agree) + the awaiting extras.
   const sharedTokens = [
-    "u.currently_leased_to_company_id = $1::uuid",
-    "u.is_sample_data IS NOT TRUE",
-    "u.sold_date IS NULL",
-    "u.disposed_date IS NULL",
+    'canonicalBoardUnitGateSql("u", "$1::uuid")',
     "u.is_oos IS NOT TRUE",
-    "u.status = 'InService'::mdata.unit_status",
   ];
   for (const token of sharedTokens) {
     if (!truckLineRoutes.includes(token)) problems.push(`(a) truck-line.routes.ts missing unit predicate token: ${token}`);
@@ -264,7 +262,7 @@ function runSelftest() {
   }
 
   const cases = [
-    ["(a) unit predicate token removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace("u.status = 'InService'::mdata.unit_status", "") }],
+    ["(a) unit predicate token removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace('canonicalBoardUnitGateSql("u", "$1::uuid")', "true") }],
     ["(c) new status writer planted in truck-line.routes.ts", { ...good, truckLineRoutes: good.truckLineRoutes + "\n-- UPDATE mdata.loads SET status = 'x'" }],
     ["(c) office route stopped using the shared stamp function", { ...good, stopStampRoutes: good.stopStampRoutes.replaceAll("stampStopArrival", "REMOVED").replaceAll("stampStopDeparture", "REMOVED") }],
     ["(d) error surfacing removed", { ...good, boardTsx: good.boardTsx.replaceAll("userFacingApiError", "REMOVED") }],

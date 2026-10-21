@@ -1,6 +1,6 @@
 // Trip Pairing Board (Block 05) — read-only aggregation. Entity-scoped, NO cap (all ~32 units on one
 // screen). KPI definitions reconcile: Active = NB + NB-unbooked; Northbound = SB + SB-unbooked.
-import { canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
+import { canonicalBoardUnitGateSql, canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
 
 type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
 
@@ -63,9 +63,10 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
   const unitsRes = await client.query<{ unit_id: string; unit_number: string | null }>(
     `SELECT u.id::text AS unit_id, u.unit_number
        FROM mdata.units u
-      WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
-        AND u.deactivated_at IS NULL
-        AND u.status::text = 'InService'`,
+      -- LEAD 443.206 D3/D4 — THE board unit gate, and never a gate on load membership: a unit carrying a board-set
+      -- load is listed even when the gate would drop it (its load shows on every other board).
+      WHERE ${canonicalBoardUnitGateSql("u", "$1::uuid")}
+         OR EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.assigned_unit_id = u.id AND ${canonicalDispatchWorkWhereClause("bl", "$1::uuid")})`,
     [operatingCompanyId]
   );
 
@@ -174,10 +175,17 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
   // FAIL-TP1: the driver the DISPATCHER assigned, per unit. Later rows win so this ends up holding the
   // most recently listed leg's driver, and a leg with no assigned driver never overwrites one that has it.
   const loadDriverByUnit = new Map<string, { driver_id: string; driver_name: string | null }>();
+  // LEAD 443.206 D12 — the unit's CURRENT leg is its earliest-pickup board-set load (the truck runs it now; a later leg is
+  // its next booking): the row's driver and status come from that leg, never from whichever row the query listed last.
+  const currentLegByUnit = new Map<string, (typeof loadsRes.rows)[number]>();
   for (const r of loadsRes.rows) {
-    if (r.load_driver_id) {
-      loadDriverByUnit.set(r.unit_id, { driver_id: r.load_driver_id, driver_name: r.load_driver_name });
-    }
+    const cur = currentLegByUnit.get(r.unit_id);
+    if (!cur || (r.pickup_date ?? "\uffff").localeCompare(cur.pickup_date ?? "\uffff") < 0) currentLegByUnit.set(r.unit_id, r);
+  }
+  for (const [unitId, r] of currentLegByUnit) {
+    if (r.load_driver_id) loadDriverByUnit.set(unitId, { driver_id: r.load_driver_id, driver_name: r.load_driver_name });
+  }
+  for (const r of loadsRes.rows) {
     const list = legsByUnit.get(r.unit_id) ?? [];
     list.push({
       load_id: r.load_id, trip_type: r.trip_type, status: r.status,
@@ -196,7 +204,7 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
     const loadDrv = loadDriverByUnit.get(u.unit_id) ?? null;
     const drv = loadDrv ?? eldDrv;
     const legs = (legsByUnit.get(u.unit_id) ?? []).slice().sort(
-      (a, b) => (a.pickup_date ?? "").localeCompare(b.pickup_date ?? "")
+      (a, b) => (a.pickup_date ?? "\uffff").localeCompare(b.pickup_date ?? "\uffff")
     );
     if (legs.length === 0) {
       unbooked.push({ unit_id: u.unit_id, unit_number: u.unit_number, driver_name: drv?.driver_name?.trim() || null, location: locationFor(u.unit_id) });
@@ -221,7 +229,7 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
       return_avail_date: openReturn ? lastOutbound?.delivery_date ?? null : null,
       up_north_days: upNorthDays,
       settlement_signal: hasSb ? "round_trip" : hasNb ? "settlement_open" : null,
-      status: legs[legs.length - 1]?.status ?? null,
+      status: legs[0]?.status ?? null, // 443.206 D12 — the current (earliest-pickup) leg, not the last one
       location: locationFor(u.unit_id),
     });
   }

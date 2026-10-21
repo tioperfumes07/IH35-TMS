@@ -392,7 +392,32 @@ export function canonicalDispatchWorkStatusClause(alias = "l"): string {
  * literal value — this function never accepts or interpolates a raw UUID.
  */
 export function canonicalDispatchWorkWhereClause(alias: string, operatingCompanyIdParam: string): string {
-  return `${canonicalDispatchWorkStatusClause(alias)} AND ${alias}.operating_company_id = ${operatingCompanyIdParam}`;
+  // LEAD 443.206 (owner 10-21 "check all loadboards, they are not in sync"): THE board set. Every load board (List, Kanban,
+  // Units, Truck Line, Trip Pairing, Planner grid + list, Overview tiles / panels, units-without-load) reads this one
+  // clause — the row exclusions views.live_loads applied privately (deleted / voided / sample) live here, so no board
+  // reads a different set through a view or its own WHERE.
+  return `${canonicalDispatchWorkStatusClause(alias)} AND ${alias}.operating_company_id = ${operatingCompanyIdParam}
+    AND ${canonicalBoardRowClause(alias)}`;
+}
+
+/** LEAD 443.206 — the row half of the board set (never deleted, voided or sample); for a caller that applies its own
+ *  entity scope (GET /mdata/loads board_scope=live scopes to the user's companies), always beside the status clause. */
+export function canonicalBoardRowClause(alias: string): string {
+  return `${alias}.soft_deleted_at IS NULL AND ${alias}.voided_at IS NULL AND ${alias}.is_sample_data IS NOT TRUE`;
+}
+
+/**
+ * LEAD 443.206 D3/D4 — THE board unit gate: a unit of this company (leased to it, else owned by it — COALESCE, never the
+ * lease alone) that is in service and real. Every board that lists UNITS (Truck Line, Trip Pairing, units-without-load,
+ * Units tab) applies exactly this; no board gates LOAD membership on its unit (a loaded truck never vanishes from one
+ * board while another shows its load). Assignability extras (out-of-service flag, open work order) are a separate
+ * question for "can I dispatch this truck" and never decide which loads a board shows.
+ */
+export function canonicalBoardUnitGateSql(unitAlias: string, operatingCompanyIdParam: string): string {
+  return `${unitAlias}.deactivated_at IS NULL
+    AND COALESCE(${unitAlias}.currently_leased_to_company_id, ${unitAlias}.owner_company_id) = ${operatingCompanyIdParam}
+    AND ${unitAlias}.is_sample_data IS NOT TRUE AND ${unitAlias}.sold_date IS NULL AND ${unitAlias}.disposed_date IS NULL
+    AND ${unitAlias}.status = 'InService'::mdata.unit_status`;
 }
 
 type Queryable = {
