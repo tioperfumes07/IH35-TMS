@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { loadMissingDriverBillWhereSql } from "../lib/document-status-vocabulary.js";
 import { loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { z } from "zod";
 import { trailerChoiceSchema } from "../dispatch/load-trailer-choice.js";
@@ -1591,12 +1592,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               FROM mdata.loads l
               LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
                                         AND d.operating_company_id = l.operating_company_id
-              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
-               AND l.soft_deleted_at IS NULL
-               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
-               AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
-               AND db.id IS NULL
+               -- LEAD 443.219 G-VOCAB — THE missing-driver-bill predicate (no voided / exit / draft load; a void bill is no bill).
+               AND ${loadMissingDriverBillWhereSql("l")}
              ORDER BY l.is_sample_data ASC, l.load_number ASC
           `,
           [scopedCompanyId]
@@ -1630,12 +1628,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           `
             SELECT l.id::text, l.load_number
               FROM mdata.loads l
-              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
-               AND l.soft_deleted_at IS NULL
-               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
-               AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
-               AND db.id IS NULL
+               -- LEAD 443.219 G-VOCAB — THE missing-driver-bill predicate (no voided / exit / draft load; a void bill is no bill).
+               AND ${loadMissingDriverBillWhereSql("l")}
              ORDER BY l.load_number ASC
           `,
           [scopedCompanyId]
