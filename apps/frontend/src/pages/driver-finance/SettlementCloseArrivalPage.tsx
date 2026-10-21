@@ -6,7 +6,7 @@ import {
   closeSettlementPayRun,
   getDebtSummary,
   getPreSettlementForDriver,
-  listOpenPreSettlements,
+  listOpenPreSettlementsByDriver,
   settleAndPay,
   type PreSettlementLine,
 } from "../../api/driverFinance";
@@ -108,7 +108,7 @@ export function SettlementCloseArrivalPage() {
 
   const openQuery = useQuery({
     queryKey: ["driver-finance", "pre-settlements", "open-by-driver", companyId],
-    queryFn: () => listOpenPreSettlements(companyId),
+    queryFn: () => listOpenPreSettlementsByDriver(companyId),
     enabled: Boolean(companyId),
   });
 

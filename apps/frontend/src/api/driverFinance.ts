@@ -829,8 +829,10 @@ export type PreSettlementDetail = {
   lines: PreSettlementLine[];
 };
 
-/** Board: bulk list of all open pre-settlements keyed by driver. */
-export function listOpenPreSettlements(companyId: string) {
+/** Board: bulk list of all open pre-settlements keyed by driver (Dispatch board, E11-D4).
+ *  Renamed from listOpenPreSettlements to resolve the name collision with preSettlements.ts
+ *  (443.210R one-predicate cleanup — that file's client-side-filtered version serves Drivers.tsx). */
+export function listOpenPreSettlementsByDriver(companyId: string) {
   return apiRequest<{ pre_settlements: OpenPreSettlement[] }>(
     `/api/v1/driver-finance/pre-settlements/open-by-driver?${q(companyId)}`
   );

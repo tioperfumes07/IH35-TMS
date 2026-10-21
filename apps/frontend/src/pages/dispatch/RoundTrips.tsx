@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
-import { listOpenPreSettlements } from "../../api/driverFinance";
+import { listOpenPreSettlementsByDriver } from "../../api/driverFinance";
 import { listUnitsWithoutLoad, type UnitsWithoutLoad } from "../../api/dispatch";
 import { listLoadInvoices } from "../../api/accounting";
 import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
@@ -473,7 +473,7 @@ export function RoundTrips({
 
   const preSettlementsQuery = useQuery({
     queryKey: ["dispatch", "round-trips", "pre-settlements", operatingCompanyId],
-    queryFn: () => listOpenPreSettlements(operatingCompanyId),
+    queryFn: () => listOpenPreSettlementsByDriver(operatingCompanyId),
     enabled,
     refetchInterval: 60_000,
   });
