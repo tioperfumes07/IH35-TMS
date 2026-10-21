@@ -208,6 +208,9 @@ export const COA_ROLE_VALUES = [
   "interest_receivable",
   /** 2510 Dreamline Diesel Card Payable — the billed-in-arrears card rail (fuel poster, settlement creator). */
   "fuel_card_payable_dreamline",
+  /** 10-21-2026 (migration 202616030100) — 2520 England Logistics WEX Fuel Card Payable: the WEX card rail (billed in
+   *  arrears, paid from the operating bank). Fails closed where unbound, like Dreamline. */
+  "fuel_card_payable_wex",
   /** 2200 Driver Settlements Payable — a broker advance disbursed against a driver bill reduces it (broker-advances). */
   "driver_settlements_payable",
   /** 4200 Accessorial / Detention Income — customer accessorial charges (settlement creator projection). */

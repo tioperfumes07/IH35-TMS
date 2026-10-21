@@ -2329,6 +2329,8 @@ export const COA_ROLE_VALUES = [
   // ROUND 365.1 (202615370930) — posters resolve these by role, never by account number.
   "interest_receivable",
   "fuel_card_payable_dreamline",
+  // 10-21-2026 (202616030100) — 2520 England Logistics WEX fuel card payable.
+  "fuel_card_payable_wex",
   "driver_settlements_payable",
   "accessorial_revenue",
   // ROUND 391.2 (202615400930) — reefer diesel, its own account (federal off-highway credit; off IFTA).

@@ -4,9 +4,9 @@
  */
 
 export type SettlementCreatorFactorOption = "faro_usmca" | "faro_transportation" | "direct";
-export type SettlementCreatorExpensePaymentSource = "relay" | "dreamline" | "owed";
+export type SettlementCreatorExpensePaymentSource = "relay" | "dreamline" | "wex" | "owed";
 
-export type SettlementCreatorFuelCard = "dreamline" | "relay";
+export type SettlementCreatorFuelCard = "dreamline" | "relay" | "wex";
 
 export type SettlementCreatorAccessorialLine = {
   item_name: string;

@@ -145,7 +145,7 @@ const draftSchema = z.object({
         receipt_cents: z.number().int().nullable().optional(),
         fees_cents: z.number().int().nullable().optional(),
         discount_cents: z.number().int().nullable().optional(),
-        card: z.enum(["dreamline", "relay"]),
+        card: z.enum(["dreamline", "relay", "wex"]),
         load_number: z.string().trim().max(40).nullable().optional(),
         fuel_type: z.enum(["diesel", "def", "reefer_diesel"]).optional(),
         source_doc_id: z.string().uuid().nullable().optional(),
@@ -175,7 +175,7 @@ const draftSchema = z.object({
         account_id: z.string().uuid().nullable().optional(),
         load_id: z.string().uuid().nullable().optional(),
         // ROUND 443.6 — payment source (owed = A/P bill), vendor, vendor document number, quantity / unit.
-        card: z.enum(["dreamline", "relay", "owed"]).nullable().optional(),
+        card: z.enum(["dreamline", "relay", "wex", "owed"]).nullable().optional(),
         vendor_name: z.string().trim().max(200).nullable().optional(),
         vendor_document_number: z.string().trim().max(60).nullable().optional(),
         quantity: z.number().positive().nullable().optional(),

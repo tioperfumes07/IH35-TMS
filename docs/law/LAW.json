@@ -1,5 +1,12 @@
 [
   {
+    "id": "R443-200-FUEL-CARD-RAILS",
+    "title": "Every active USMCA fuel card resolves through its own declared rail and designated account role",
+    "source_file": "apps/backend/src/accounting/fuel-posting/company-direct-credit-account.ts",
+    "guard": "scripts/verify-fuel-card-rails-complete.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "R443-183-G6-BANK-EXPENSE-LOAD-LINKAGE",
     "title": "Categorized load costs create native expense documents with canonical load dimensions (unit, driver, trailer from the load; contradictions refused)",
     "source_file": "apps/backend/src/accounting/bank-line-expense.service.ts",

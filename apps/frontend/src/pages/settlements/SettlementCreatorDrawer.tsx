@@ -2175,6 +2175,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         options={[
                           { value: "dreamline", label: "Dreamline" },
                           { value: "relay", label: "Relay" },
+                          { value: "wex", label: "England WEX" },
                         ]}
                         value={fuel.card}
                         onChange={(v) => {
@@ -2360,6 +2361,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       options={[
                         { value: "dreamline", label: "Dreamline" },
                         { value: "relay", label: "Relay" },
+                        { value: "wex", label: "England WEX" },
                         { value: "owed", label: "Owed to vendor (bill)" },
                       ]}
                       value={exp.card ?? ""}

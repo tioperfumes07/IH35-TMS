@@ -75,6 +75,7 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   fuel_wallet_relay: "Relay fuel wallet (prefunded)",
   interest_receivable: "Interest receivable (loans we made)",
   fuel_card_payable_dreamline: "Dreamline diesel card payable",
+  fuel_card_payable_wex: "England Logistics WEX fuel card payable",
   driver_settlements_payable: "Driver settlements payable",
   accessorial_revenue: "Accessorial / detention income",
   reefer_fuel_expense: "Reefer Diesel (Off-Highway)",

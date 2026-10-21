@@ -3,17 +3,22 @@ import { resolveRoleAccount, resolveRoleAccountOptional } from "../coa-roles/res
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
-export type CompanyDirectCredit = "cash" | "dreamline_card_payable" | "relay_fuel_wallet";
+export type CompanyDirectCredit = "cash" | "dreamline_card_payable" | "relay_fuel_wallet" | "wex_card_payable";
 
 async function resolveFuelCardRailAccount(
   client: DbClient,
   operatingCompanyId: string,
-  rail: "dreamline_card_payable" | "relay_fuel_wallet"
+  rail: "dreamline_card_payable" | "relay_fuel_wallet" | "wex_card_payable"
 ): Promise<{ account_id: string; source: string }> {
   // ROUND 352 F-3: the Relay wallet resolves through its declared role (fuel_wallet_relay), never by account number —
   // 1295 had no role, which is how it drifted to -$33,839.80 unseen. resolveRoleAccount fails closed.
   if (rail === "relay_fuel_wallet") {
     return { account_id: await resolveRoleAccount(client, operatingCompanyId, "fuel_wallet_relay"), source: "role:fuel_wallet_relay" };
+  }
+  // 10-21-2026 (owner: "england wex gets paid from our bank account ... its a fuel card") — the England Logistics WEX
+  // card is billed in arrears like Dreamline: its own payable (2520 on USMCA), resolved by role, fails closed unbound.
+  if (rail === "wex_card_payable") {
+    return { account_id: await resolveRoleAccount(client, operatingCompanyId, "fuel_card_payable_wex"), source: "role:fuel_card_payable_wex" };
   }
   // ROUND 365.1 — Dreamline (2510 on USMCA) resolves through its role too, never by account number (202615370930).
   return {
@@ -27,7 +32,7 @@ export async function resolveCompanyDirectCreditAccount(
   operatingCompanyId: string,
   preference: CompanyDirectCredit
 ): Promise<{ account_id: string; source: string }> {
-  if (preference === "dreamline_card_payable" || preference === "relay_fuel_wallet") {
+  if (preference === "dreamline_card_payable" || preference === "relay_fuel_wallet" || preference === "wex_card_payable") {
     return resolveFuelCardRailAccount(client, operatingCompanyId, preference);
   }
 
