@@ -16772,5 +16772,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-21",
     "purpose": "CC-3 LEAD 22:25Z #6 / 443.206R #7: verify-load-report-and-picker-scope (wire the #27085 guard; fail closed without a live DB)"
+  },
+  "18382": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-21",
+    "purpose": "verify-live-document-predicates-single-source"
   }
 }
