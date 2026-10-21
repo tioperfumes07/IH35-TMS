@@ -58,6 +58,9 @@ export function check(sources) {
     failures.push(`${POSTER_FILE}: fireRevrecLatchOnInvoiceIssued export not found`);
   } else {
     const helperBody = posterSrc.slice(helperStart, helperStart + 1500);
+    if (helperBody.includes("enqueueAfterCommit") || helperBody.includes("console.warn") || !helperBody.includes("}, client as QueryableClient)")) {
+      failures.push(`${POSTER_FILE}: invoice issuance must await Event 2 on its caller transaction, never defer or swallow A/R`);
+    }
     if (!/postLoadRevenueLatch\s*\(/.test(helperBody)) {
       failures.push(
         `${POSTER_FILE}: fireRevrecLatchOnInvoiceIssued no longer calls postLoadRevenueLatch -- ` +
@@ -115,8 +118,7 @@ export { check as run };
 if (process.argv.includes("--selftest")) {
   const goodPoster = `
     export async function fireRevrecLatchOnInvoiceIssued(client, input) {
-      const fire = async () => { await postLoadRevenueLatch({ load_id: input.source_load_id }); };
-      if (!enqueueAfterCommit(client, { label: "x", run: fire })) await fire();
+      await postLoadRevenueLatch({ load_id: input.source_load_id }, client as QueryableClient);
     }
   `;
   const regressedPosterSecondPoster = `
@@ -166,6 +168,7 @@ if (process.argv.includes("--selftest")) {
   `;
 
   const checks = [
+    ["after-commit A/R regression is caught", check({ poster: goodPoster.replace("}, client as QueryableClient)", "}); enqueueAfterCommit(client, fire)"), send: goodSend, bulk: goodBulk }).some(f => f.includes("caller transaction"))],
     ["fully-fixed shape produces zero failures", check({ poster: goodPoster, send: goodSend, bulk: goodBulk }).length === 0],
     [
       "poster helper regressing to a second/independent poster is caught",

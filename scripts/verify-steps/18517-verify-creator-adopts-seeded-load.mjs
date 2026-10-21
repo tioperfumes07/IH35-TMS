@@ -56,6 +56,12 @@ export function check(src = {}) {
   const adoptAt = ensure.indexOf("await isSeededLoadFreeForThisSettlement(client, draft, existing.rows[0].id)");
   const refuseAt = ensure.indexOf("only books NEW load numbers");
   if (adoptAt === -1 || refuseAt === -1 || adoptAt > refuseAt) f.push(`${SEED}: the seeded-load adoption does not run before the NEW-loads refusal (2)`);
+  const adoption = ensure.slice(adoptAt, refuseAt);
+  const earlyRestate = adoption.indexOf("await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actor.uuid)");
+  const earlyDeliver = adoption.indexOf("await deliverLoadThroughDispatch(client, actor.uuid");
+  if (!adoption.includes("if (!(load.not_yet_delivered !== false && !load.delivery_date))") || earlyRestate < 0 || earlyDeliver < earlyRestate || !adoption.includes("await stampStopsFromTracking")) {
+    f.push(`${SEED}: adopted completed leg must restate signed pay and stamp/deliver before booking the next leg (7)`);
+  }
   const restate = svc.match(/export async function restateOpenDriverBillToSignedPay\([\s\S]*?\n}\n/)?.[0] ?? "";
   if (!restate) f.push(`${SVC}: restateOpenDriverBillToSignedPay missing (3)`);
   else {
@@ -66,6 +72,7 @@ export function check(src = {}) {
   const restCall = svc.indexOf("await restateOpenDriverBillToSignedPay(client, {");
   const payCall = svc.indexOf('lineType: "earnings",', restCall === -1 ? 0 : restCall);
   if (restCall === -1 || payCall === -1) f.push(`${SVC}: the post never restates the proforma bill before writing pay (3)`);
+  if (!svc.includes("await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actorUserId)")) f.push(`${SVC}: posting must reuse the same signed-pay restatement as early delivery (7)`);
   if (/draft\.edit_void_repost && \["delivered", "delivered_pending_docs", "invoiced"/.test(svc)) f.push(`${SVC}: a delivered adopted load is re-delivered unless the post is an Edit (4)`);
   return f;
 }
@@ -74,6 +81,10 @@ if (process.argv.includes("--selftest")) {
   const seed = read(SEED), svc = read(SVC), adm = read(ADM);
   if (check().length) { console.error("SELFTEST FAIL: baseline not clean", check()); process.exit(1); }
   const plants = [
+    ["early restatement removed", { seed: seed.replace("await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actor.uuid)", "void 0") }],
+    ["unfinished leg delivered", { seed: seed.replace("if (!(load.not_yet_delivered !== false && !load.delivery_date))", "if (true)") }],
+    ["early delivery removed", { seed: seed.replace("await deliverLoadThroughDispatch(client, actor.uuid", "void (client, actor.uuid") }],
+    ["shared restatement disconnected", { svc: svc.replace("await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actorUserId)", "void 0") }],
     ["any driver", { seed: seed.replace("AND l.assigned_primary_driver_id = $3::uuid", "AND $3::uuid IS NOT NULL") }],
     ["live other settlement", { seed: seed.replace("AND s.voided_at IS NULL AND s.status <> 'cancelled'", "AND false") }],
     ["adoption removed", { seed: seed.replace("await isSeededLoadFreeForThisSettlement(client, draft, existing.rows[0].id)", "false") }],
