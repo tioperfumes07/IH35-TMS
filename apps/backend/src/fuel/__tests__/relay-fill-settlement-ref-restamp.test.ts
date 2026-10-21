@@ -38,8 +38,8 @@ function fakeClient(row: { settlement_no: string | null; source_settlement_ref: 
   return { client, doc };
 }
 
-const fill = (client: unknown, no: string) =>
-  fillRelayFillExpenseSettlementRef(client as never, { operating_company_id: OPCO, expense_id: EXP, settlement_no: no, actor_user_uuid: ACTOR });
+const fill = (client: unknown, no: string, restamp_stale = true) =>
+  fillRelayFillExpenseSettlementRef(client as never, { operating_company_id: OPCO, expense_id: EXP, settlement_no: no, actor_user_uuid: ACTOR, restamp_stale });
 
 describe("LEAD 443.203 — a stale Relay-fill settlement reference is restamped", () => {
   it("restamps a reference to a settlement that no longer holds the load (cancelled P-0072 → 5845) and audits the old one", async () => {
@@ -59,6 +59,14 @@ describe("LEAD 443.203 — a stale Relay-fill settlement reference is restamped"
     const { client, doc } = fakeClient({ settlement_no: "5839", source_settlement_ref: "5839", load_id: LOAD }, ["5839", "5845"]);
     expect(await fill(client, "5845")).toBe(false);
     expect(doc).toMatchObject({ settlement_no: "5839", source_settlement_ref: "5839" });
+    expect(mockAudit).not.toHaveBeenCalled();
+  });
+
+  it("never restamps without the carrying settlement's say-so (an unprinted fill on a held load is not that settlement's — ruling #3)", async () => {
+    mockAudit.mockClear();
+    const { client, doc } = fakeClient({ settlement_no: "P-0071", source_settlement_ref: "P-0071", load_id: LOAD }, ["5839"]);
+    expect(await fill(client, "5839", false)).toBe(false);
+    expect(doc).toMatchObject({ settlement_no: "P-0071", source_settlement_ref: "P-0071" });
     expect(mockAudit).not.toHaveBeenCalled();
   });
 
