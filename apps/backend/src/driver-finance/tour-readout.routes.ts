@@ -134,7 +134,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     miles_practical: unknown; miles_shortest: unknown; miles_deadhead: unknown; pickup_city: string | null; pickup_state: string | null; delivery_city: string | null; delivery_state: string | null;
     pickup_date: string | null; delivery_date: string | null;
     unit_id: string | null; unit_number: string | null; trailer_id: string | null; trailer_number: string | null;
-    costs_cents: unknown; driver_pay_cents: unknown; cost_count: unknown; pod_count: unknown; miles_real: unknown;
+    lc_revenue_cents: unknown; costs_cents: unknown; driver_pay_cents: unknown; cost_count: unknown; pod_count: unknown; miles_real: unknown;
   }>(
     `WITH legs AS (
        SELECT l.* FROM mdata.loads l
