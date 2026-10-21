@@ -16777,5 +16777,15 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-21",
     "purpose": "verify-live-document-predicates-single-source"
+  },
+  "18607": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "verify-load-change-signal-complete"
+  },
+  "18611": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "verify-load-mutations-invalidate-load-views"
   }
 }
