@@ -311,3 +311,28 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
   });
 
 });
+
+// LEAD 443.219 G-ERR (audit F25a) — while the board is loading or failed, the KPI tiles read "—", never $0 / 0. On origin/main
+// a failed board still painted "$0.00" revenue / costs / driver pay and "0" loads in motion next to the error banner.
+describe("443.219 — Load Costs KPI tiles never show a fake $0 / 0", () => {
+  it("board request fails: every KPI tile reads —", async () => {
+    apiRequestMock.mockImplementation(async (path: string) => {
+      if (path.includes("/api/v1/accounting/load-costs-board/documents")) return { rows: [] };
+      if (path.includes("/api/v1/accounting/load-costs-board")) throw Object.assign(new Error("boom"), { status: 500 });
+      throw new Error(`unexpected apiRequest path: ${path}`);
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByTestId("kpi-revenue-booked").textContent).toContain("Could not load"));
+    for (const id of ["kpi-loads-in-motion", "kpi-revenue-booked", "kpi-costs-recorded", "kpi-driver-pay", "kpi-approx-margin", "kpi-bank-unmatched"]) {
+      const text = screen.getByTestId(id).textContent ?? "";
+      expect(text).toContain("—");
+      expect(text).not.toMatch(/\$0\.00/);
+    }
+  });
+
+  it("board loaded: tiles show the real figures (no regression)", async () => {
+    mockBoardRequest();
+    renderPage();
+    await waitFor(() => expect(screen.getByTestId("kpi-revenue-booked").textContent).toContain("1,500"));
+  });
+});
