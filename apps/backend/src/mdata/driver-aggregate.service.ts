@@ -1,3 +1,4 @@
+import { loadServiceMembershipSql } from "../dispatch/load-service.js";
 import { withSavepoint } from "../auth/db.js";
 import { computeDriverScoreFromCounts } from "../safety/driver-scoring.service.js";
 import { getCurrentClocks, type HosDutyStatus } from "../telematics/hos-clocks.service.js";
@@ -288,8 +289,12 @@ export async function buildDriverAggregate(
       WHERE (l.assigned_primary_driver_id = $1::uuid OR l.assigned_secondary_driver_id = $1::uuid)
         AND l.operating_company_id = $2::uuid
         AND l.soft_deleted_at IS NULL
-        AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')
-      ORDER BY l.updated_at DESC
+        -- LEAD 443.206R (register B5): the current load = the load service's open_dispatch set (owner law 09-28), never a
+        -- private NOT IN list ('void' / 'completed' are not enum values; invoiced / paid / abandoned / draft leaked through);
+        -- the driver's CURRENT leg is its earliest-pickup unfinished load (the next booking waits behind it).
+        AND ${loadServiceMembershipSql("l", "open_dispatch", "$2::uuid")}
+      ORDER BY (SELECT min(COALESCE(ps.scheduled_arrival_at, ps.appointment_start_at)) FROM mdata.load_stops ps
+                 WHERE ps.load_id = l.id AND ps.stop_type = 'pickup' AND ps.soft_deleted_at IS NULL) ASC NULLS LAST, l.load_number ASC
       LIMIT 1
     `,
     [driverId, operatingCompanyId]

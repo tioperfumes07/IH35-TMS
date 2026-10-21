@@ -1,3 +1,5 @@
+import { loadServiceMembershipSql } from "../../dispatch/load-service.js";
+import { DISPATCH_ON_LOAD_STATUSES } from "../../dispatch/active-loads-count.js";
 /**
  * ROUND 326.5 — Driver Hub Home board (docs/design/boards/driver-customers-vendors/Main.dc.html): six tiles, status
  * chips, the driver list sorted by settlement due, and the selected driver's panel (five figures, integrity, recent
@@ -18,7 +20,9 @@ const cents = (dollars: unknown) => Math.round(Number(dollars ?? 0) * 100);
 
 const DUE_SQL = `s.voided_at IS NULL AND s.reversed_at IS NULL AND coalesce(s.is_presettlement, false) = false
   AND s.payment_state = 'unpaid' AND s.paid_at IS NULL AND coalesce(s.is_sample_data, false) = false`;
-const ON_LOAD_STATUSES = `('assigned_not_dispatched', 'dispatched')`;
+// LEAD 443.206R — on load = the load service's open_dispatch set narrowed to THE on-load status subset (was a private
+// ('assigned_not_dispatched','dispatched') — a driver in transit / at a stop showed "not on load").
+const ON_LOAD_STATUSES = `(${DISPATCH_ON_LOAD_STATUSES.map((s) => `'${s}'`).join(", ")})`;
 
 export const PAY_BASIS_LABEL: Record<string, string> = { per_mile_pay: "Per mile", per_load_pay: "Per load" };
 
@@ -37,7 +41,7 @@ export async function readDriverHub(client: Q, oc: string) {
                 WHERE s.operating_company_id = $1::uuid AND s.driver_id = d.id AND ${DUE_SQL})::int AS due_count,
               EXISTS (SELECT 1 FROM mdata.loads l WHERE l.operating_company_id = $1::uuid
                         AND (l.assigned_primary_driver_id = d.id OR l.assigned_secondary_driver_id = d.id)
-                        AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL AND l.canceled_at IS NULL AND l.status IN ${ON_LOAD_STATUSES}) AS on_load
+                        AND ${loadServiceMembershipSql("l", "open_dispatch", "$1::uuid")} AND l.status IN ${ON_LOAD_STATUSES}) AS on_load
          FROM mdata.drivers d
         WHERE d.operating_company_id = $1::uuid AND d.merged_into_driver_id IS NULL`,
       [oc]

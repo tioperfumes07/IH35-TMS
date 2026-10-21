@@ -1,3 +1,4 @@
+import { loadServiceIdInSql } from "./load-service.js";
 /**
  * ROUND 36.1 (Lead ruling, 2026-09-22, docs/manuals/02-RULING-LIVE-LOADS-VIEW-THE-PERMANENT-FIX.md):
  * a shared SQL fragment for surfaces that read FROM views.dispatch_load_with_driver_status (not
@@ -11,12 +12,8 @@
  * to match, mirrors canonical-active-load-set.ts's own convention).
  */
 export function liveLoadsOpenDispatchExistsSql(loadIdColumn = "l.id"): string {
-  return `
-    EXISTS (
-      SELECT 1 FROM views.live_loads vll
-       WHERE vll.id = ${loadIdColumn} AND vll.live_state = 'open_dispatch'
-    )
-  `;
+  // LEAD 443.206R — delegates to THE load service (its only reader of views.live_loads).
+  return `(${loadServiceIdInSql(loadIdColumn, "open_dispatch")})`;
 }
 
 /** Pre-built default (loadIdColumn = "l.id") for the common case. */

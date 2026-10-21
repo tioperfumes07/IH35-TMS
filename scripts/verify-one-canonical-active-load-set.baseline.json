@@ -53,29 +53,17 @@
     "driver-finance/settlements.routes.ts": {
       "count": 2
     },
-    "home/scenario-registry.ts": {
-      "count": 2
-    },
     "integrations/samsara/cap-14-cargo-sensors/ingester.service.ts": {
       "count": 1
     },
     "integrations/samsara/geofences/real-driven-miles.service.ts": {
       "count": 1
     },
-    "mdata/driver-aggregate.service.ts": {
-      "count": 1
-    },
     "mdata/driver-team.service.ts": {
-      "count": 1
-    },
-    "mdata/equipment-aggregate.service.ts": {
       "count": 1
     },
     "mdata/loads.routes.ts": {
       "count": 3
-    },
-    "mdata/unit-aggregate.service.ts": {
-      "count": 1
     },
     "reports/exception-queue.routes.ts": {
       "count": 4
