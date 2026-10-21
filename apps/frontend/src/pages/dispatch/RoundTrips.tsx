@@ -5,7 +5,7 @@ import type { DispatchLoadRow } from "../../api/loads";
 import { listOpenPreSettlements } from "../../api/driverFinance";
 import { listUnitsWithoutLoad, type UnitsWithoutLoad } from "../../api/dispatch";
 import { listLoadInvoices } from "../../api/accounting";
-import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
+import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -17,6 +17,7 @@ import { RT_KANBAN_CARD_CLASS, RT_KANBAN_COL_MIN, RT_PAIRING_ACTIVE_STATUSES, NE
 import { RoundTripsTimeline, defaultTimelineRange } from "./RoundTripsTimeline";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import { SelectCombobox } from "../../components/Combobox";
+import { loadStatusLabel } from "../../lib/load-status";
 
 const SORT_KEY = "ih35.roundTrips.sort";
 const VIEW_KEY = "ih35.roundTrips.view";
@@ -135,7 +136,7 @@ function TourRail({ legs, hasSb }: { legs: DispatchLoadRow[]; hasSb: boolean }) 
           return (
             <span
               key={leg.id}
-              title={`${leg.load_number} · ${STATUS_LABEL[leg.status] ?? leg.status}`}
+              title={`${leg.load_number} · ${loadStatusLabel(leg.status)}`}
               data-testid={`round-trip-rail-bead-${leg.load_number}`}
               data-rt-bead-state={delivered ? "delivered" : running ? "running" : "pending"}
               className="inline-flex h-3 w-3 items-center justify-center rounded-full leading-none text-white"
@@ -296,7 +297,7 @@ function TripCard({
             onClick={(e) => e.stopPropagation()}
           />
         </span>
-        <span className="rounded-sm bg-gray-100 px-1.5 py-0.5">{STATUS_LABEL[load.status]}</span>
+        <span className="rounded-sm bg-gray-100 px-1.5 py-0.5">{loadStatusLabel(load.status)}</span>
       </div>
       <div className="mt-1 text-xs font-semibold text-gray-800">
         {formatMoneyCents(load.rate_total_cents, load.currency_code)}

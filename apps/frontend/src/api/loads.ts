@@ -26,7 +26,9 @@ export type LoadStatus =
   | "cancelled"
   | "abandoned"
   | "driver_walkoff"
-  | "driver_no_show";
+  | "driver_no_show"
+  // LEAD 443.206R (register C5) — mdata.load_status_enum carries 'voided'; it rendered undefined without it.
+  | "voided";
 
 export type LoadStop = {
   id: string;

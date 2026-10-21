@@ -6,7 +6,7 @@ import "../../design/design-tokens.css";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable } from "../parity/ParityTable";
-import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents } from "./constants";
+import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, formatMoneyCents } from "./constants";
 import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
 import { DriverHosClockValue, DriverHosStatusDot } from "./hos/DriverHosClocks";
 import { HOS_COLUMNS } from "./hos/hosClocks";
@@ -14,6 +14,7 @@ import { InlineUnitPicker } from "./InlineUnitPicker";
 import { InlineDriverPicker } from "./InlineDriverPicker";
 import type { DispatchListProps, SortField } from "./dispatchListTypes";
 import { entityLabel } from "../../lib/entity-label";
+import { loadStatusLabel } from "../../lib/load-status";
 
 export type { DispatchListProps } from "./dispatchListTypes";
 
@@ -342,7 +343,7 @@ export function DispatchList({
               render: (load) => (
                 <div className="flex items-center gap-1">
                   <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
-                    {STATUS_LABEL[load.status]}
+                    {loadStatusLabel(load.status)}
                   </span>
                   {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
                     <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Geofence alert</span>

@@ -31,6 +31,7 @@ import { useToast } from "../Toast";
 import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
 import { InlineStatusPicker } from "./InlineStatusPicker";
+import { BACKLOG_STATUSES, TERMINAL_EXIT_STATUSES } from "../../lib/load-status";
 
 function combineRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
   return (node: T | null) => {
@@ -201,6 +202,12 @@ type KanbanColumnDef = {
    */
   derivedOnly?: boolean;
   /**
+   * LEAD 443.206 D7 — the Kanban is a LIVE-only board (board_scope=live = the dispatch-work set: booked .. at_delivery).
+   * A load that reaches this lane's statuses leaves the live set, so the lane is empty by definition. It stays as a drop
+   * target (dropping here delivers / closes the load) and says so instead of a bare "(empty)" that reads as missing data.
+   */
+  leavesLiveBoard?: boolean;
+  /**
    * KANBAN-DRAG-UNBLOCK (Lead, 09-30-2026, owner: "the boxes were supposed to be dragable so i
    * could drag from dispatch to at pick up if i wanted or to loaded etc").
    *
@@ -261,16 +268,29 @@ const KANBAN_STATUS_GROUPS: KanbanColumnDef[] = [
   { key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true, manualStamp: { stop: "delivery", event: "arrive" } },
   // WIRE-07: drop must use delivered_pending_docs so mdata status stamps actual_departure_at.
   // Bare "delivered" skips loadStatusRequiresDeliveryDepartureStamp (backend stamp helper).
-  { key: "delivered", title: "Delivered", statuses: ["delivered", "delivered_pending_docs"], dropStatus: "delivered_pending_docs" },
-  { key: "completed", title: "Completed", statuses: ["invoiced", "paid", "closed", "completed_docs_received"], dropStatus: "closed" },
+  { key: "delivered", title: "Delivered", statuses: ["delivered", "delivered_pending_docs"], dropStatus: "delivered_pending_docs", leavesLiveBoard: true },
+  { key: "completed", title: "Completed", statuses: ["invoiced", "paid", "closed", "completed_docs_received"], dropStatus: "closed", leavesLiveBoard: true },
   {
     key: "cancelled",
     title: "Cancelled",
     statuses: ["cancelled", "abandoned", "driver_walkoff", "driver_no_show"],
     dropStatus: "cancelled",
     collapsedByDefault: true,
+    leavesLiveBoard: true,
   },
 ];
+
+/** The text an empty lane shows (both lane renderers) — LEAD 443.206 D7: a lane the live board never fills says why. */
+export function kanbanEmptyLaneText(column: Pick<KanbanColumnDef, "key" | "manualStamp" | "leavesLiveBoard" | "title">): string {
+  if (column.key === "drafts") return "No open drafts. Drafts come only from Save draft — you can't drag a card here.";
+  if (column.manualStamp) {
+    return `Fills from geofence / driver PWA — or drop a card here to stamp the ${column.manualStamp.stop} ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} manually.`;
+  }
+  if (column.leavesLiveBoard) {
+    return `Live board: a ${column.title.toLowerCase()} load leaves the live set — drop a card here to move it; find it under History.`;
+  }
+  return "(empty)";
+}
 
 function readExtras(load: DispatchLoadRow): KanbanLoad {
   return load as KanbanLoad;
@@ -347,7 +367,8 @@ export function optimisticGeofenceAfterManualStamp(
 // the List/Table view and Load Costs board, never hidden from the app, just not a second
 // competing Kanban card). A unit whose only loads are all cancelled still shows its (cancelled)
 // card rather than vanishing. Loads with no assigned_unit_id never compete against each other.
-const KANBAN_TERMINAL_CANCELLED_STATUSES = new Set(["cancelled", "abandoned", "driver_walkoff", "driver_no_show"]);
+// LEAD 443.206R (register B11) — shared sets from lib/load-status.ts, never copied literals.
+const KANBAN_TERMINAL_CANCELLED_STATUSES = new Set<string>(TERMINAL_EXIT_STATUSES);
 
 // KANBAN-HIDES-A-REAL-LEG (Lead, 09-30-2026, owner live: "there are 16 dispatched ... now I still
 // only see 11").
@@ -372,14 +393,7 @@ const KANBAN_TERMINAL_CANCELLED_STATUSES = new Set(["cancelled", "abandoned", "d
 //     board; a leg the dispatcher must act on is never collapsed to make the grid tidier.
 // A unit with only backlog loads still shows its newest one rather than vanishing, and a unit with
 // only cancelled loads still shows its cancelled card, both exactly as before.
-const KANBAN_BACKLOG_STATUSES = new Set([
-  "delivered",
-  "delivered_pending_docs",
-  "completed_docs_received",
-  "invoiced",
-  "paid",
-  "closed",
-]);
+const KANBAN_BACKLOG_STATUSES = new Set<string>(BACKLOG_STATUSES);
 function dedupeLoadsByUnit(loads: DispatchLoadRow[]): DispatchLoadRow[] {
   const byUnit = new Map<string, DispatchLoadRow[]>();
   const unassigned: DispatchLoadRow[] = [];
@@ -1426,11 +1440,7 @@ export function KanbanDispatchColumn({
       >
         {loads.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
-            {column.key === "drafts"
-              ? "No open drafts. Drafts come only from Save draft — you can't drag a card here."
-              : column.manualStamp
-                ? `Fills from geofence / driver PWA — or drop a card here to stamp the ${column.manualStamp.stop} ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} manually.`
-                : "(empty)"}
+            {kanbanEmptyLaneText(column)}
           </div>
         ) : null}
         {loads.map((load) => {
@@ -1671,11 +1681,7 @@ function KanbanSwimLaneColumn({
       >
         {visibleUnits.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
-            {column.key === "drafts"
-              ? "No open drafts. Drafts come only from Save draft — you can't drag a card here."
-              : column.manualStamp
-                ? `Fills from geofence / driver PWA — or drop a card here to stamp the ${column.manualStamp.stop} ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} manually.`
-                : "(empty)"}
+            {kanbanEmptyLaneText(column)}
           </div>
         ) : null}
         {visibleUnits.map((unit) => {
@@ -1797,6 +1803,7 @@ export function DispatchKanban({
     mutationFn: ({ loadId, unitId }: { loadId: string; unitId: string }) =>
       patchAssignUnit(loadId, { operating_company_id: operatingCompanyId ?? "", unit_uuid: unitId }),
     onSuccess: (_data, variables) => {
+      // TODO(443.208R): CC-2 invalidateLoadViews refreshes every board on this write.
       queryClient.invalidateQueries({ queryKey: ["loads"] });
       const loadNumber = pendingAssign?.loadNumber || variables.loadId;
       const unitNumber = pendingAssign?.unitNumber || variables.unitId;
@@ -2072,6 +2079,7 @@ export function DispatchKanban({
         }
         pushToast(`Load ${load.load_number} moved to ${targetGroup.title} — stamped manually (recorded as Manual).`, "success");
         // Same key the assign mutation already invalidates — one refresh contract on this board.
+        // TODO(443.208R): CC-2 invalidateLoadViews refreshes every board on this write.
         await queryClient.invalidateQueries({ queryKey: ["loads"] });
       } catch (error) {
         const reason = userFacingApiError(error, "the server rejected it and gave no reason").trim();

@@ -31,6 +31,7 @@ import { EntityLink } from "../components/shared/EntityLink";
 import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 import { userFacingApiError } from "../lib/api-error-message";
 import { companyToday, addDaysIso } from "../lib/businessDate";
+import { isDraftLoad } from "../lib/load-status";
 import { dispatchSecondaryTabFromPath } from "../router/route-manifest";
 
 type ViewMode = "overview" | "list" | "kanban" | "units" | "truck-line";
@@ -61,6 +62,8 @@ function parseFilters(params: URLSearchParams, fallbackCompanies: string[]): Dis
     statuses: parseMulti(params.get("statuses")) as LoadStatus[],
     customerId: params.get("customer_id"),
     driverId: params.get("driver_id"),
+    // LEAD 443.206R (register B13) — the TruckPlanner Book link's unit_id was ignored here, so the link did nothing.
+    unitId: params.get("unit_id"),
     dateMode: params.get("date_mode") === "delivery" ? "delivery" : "pickup",
     dateFrom: params.get("date_from") ?? "",
     dateTo: params.get("date_to") ?? "",
@@ -77,6 +80,8 @@ function serializeFilters(params: URLSearchParams, filters: DispatchFilterState)
   else next.delete("customer_id");
   if (filters.driverId) next.set("driver_id", filters.driverId);
   else next.delete("driver_id");
+  if (filters.unitId) next.set("unit_id", filters.unitId);
+  else next.delete("unit_id");
   next.set("date_mode", filters.dateMode);
   if (filters.dateFrom) next.set("date_from", filters.dateFrom);
   else next.delete("date_from");
@@ -190,7 +195,11 @@ export function DispatchPage({
   // window, not a single 50-row page. GET /mdata/loads rejects limit>200 (zod max 200) — a 1000
   // one-shot 400s the whole board ("Too big: expected number to be <=200"). Page with listAllLoads
   // (200/page). Terminal closed/cancelled rows are still filtered out client-side by RT_TIMELINE_STATUSES.
+  // LEAD 443.206 D5 — the Kanban is a whole-board view with no pager too: it rendered the first 50 rows of the List's page
+  // (limit=50) and silently dropped every load past it. Every board view without a pager fetches the full set (listAllLoads
+  // pages 200 at a time and refuses a short read); only the List keeps its pager, which states "Showing x–y of N".
   const roundTripsFullFetch = subTab === "load_board" && view === "units";
+  const wholeBoardFetch = roundTripsFullFetch || (subTab === "load_board" && view === "kanban");
   const [sortField, sortDirection] = sort.split(":") as [
     "created_at" | "load_number" | "status" | "rate_total_cents",
     "asc" | "desc",
@@ -251,10 +260,13 @@ export function DispatchPage({
     // ROUND 285.4.2 — one open_dispatch set for every board view (List/Kanban/Round Trips included).
     drafts_only: draftsOnly || undefined,
   };
+  // LEAD 443.206R (register B13) — a unit narrowing reads the WHOLE board then keeps that unit's loads (GET /mdata/loads has no
+  // unit filter yet), so a pager never hides one of the unit's loads.
+  const fullSetFetch = wholeBoardFetch || Boolean(filters.unitId);
   const loadsQuery = useQuery({
-    queryKey: ["loads", "list", roundTripsFullFetch ? "all" : "page", loadListFilters, roundTripsFullFetch ? null : { limit, offset }],
+    queryKey: ["loads", "list", fullSetFetch ? "all" : "page", loadListFilters, fullSetFetch ? null : { limit, offset }],
     queryFn: () =>
-      roundTripsFullFetch
+      fullSetFetch
         ? listAllLoads(loadListFilters)
         : listLoads({ ...loadListFilters, limit, offset }),
     refetchInterval: 60000,
@@ -323,7 +335,10 @@ export function DispatchPage({
     setSearchParams(next, { replace: true });
   };
 
-  const loads = loadsQuery.data?.loads ?? [];
+  const loads = useMemo(() => {
+    const rows = loadsQuery.data?.loads ?? [];
+    return filters.unitId ? rows.filter((load) => load.assigned_unit_id === filters.unitId) : rows;
+  }, [filters.unitId, loadsQuery.data]);
 
   // Truck-derived "Awaiting assignment" lane on the Kanban (active fleet roster minus loaded trucks).
   const awaitingTrucksQuery = useQuery({
@@ -678,7 +693,7 @@ export function DispatchPage({
               // ROUND 24.2 (owner 2026-09-14): "a saved draft load must be findable ... Row click on
               // a draft opens the Book Load wizard to resume." A draft never opens the detail drawer.
               const clicked = loads.find((load) => load.id === id);
-              const isDraft = clicked ? clicked.status === "draft" || clicked.is_quicksave_draft === true : false;
+              const isDraft = clicked ? isDraftLoad(clicked) : false; // LEAD 443.206R B9 — the one draft definition (lib/load-status.ts)
               if (isDraft) {
                 setEditLoadId(id);
                 openBookLoadModal();

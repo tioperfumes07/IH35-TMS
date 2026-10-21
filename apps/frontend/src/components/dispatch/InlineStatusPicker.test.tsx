@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { getOfficeTransitionButtons } from "@ih35/shared-types";
 import { InlineStatusPicker } from "./InlineStatusPicker";
 import type { LoadStatus } from "../../api/loads";
-import { STATUS_LABEL } from "./constants";
+import { loadStatusLabel } from "../../lib/load-status";
 
 // STATUS-DROPDOWN-CORRECTNESS (owner correction 2026-09-11, verbatim): "the guard must assert
 // CORRECTNESS not presence -- for the status dropdown, the guard must assert the option list
@@ -49,7 +49,7 @@ describe("InlineStatusPicker — option list matches getOfficeTransitionButtons 
       for (const t of expected) {
         expect(renderedTargets).toContain(`inline-status-option-load-1-${t.target}`);
         expect(within(menu).getByTestId(`inline-status-option-load-1-${t.target}`)).toHaveTextContent(
-          STATUS_LABEL[t.target as LoadStatus] ?? t.label
+          loadStatusLabel(t.target as LoadStatus) || t.label
         );
       }
     });

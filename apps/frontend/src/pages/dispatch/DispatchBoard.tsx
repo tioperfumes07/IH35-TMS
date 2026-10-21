@@ -42,7 +42,7 @@ function renderCustomerCell(load: DispatchLoadRow): ReactNode {
 function renderLoadNumberCell(load: DispatchLoadRow, className = "code-cell font-medium"): ReactNode {
   // Awaiting-assignment rows are keyed by a synthetic "unit:<uuid>" or "unit:inshop:<uuid>" id — no
   // load exists to link to. The row's Status cell already renders the "Unassigned" pill (statusVariant
-  // + STATUS_LABEL.unassigned); repeating the word here duplicated it (owner, dispatch board #17: "the
+  // + loadStatusLabel('unassigned')); repeating the word here duplicated it (owner, dispatch board #17: "the
   // dash in Load# is enough"). unitToBoardRow's own comment already documents every load-specific cell
   // falling through to "—" — this one branch was the exception; it no longer is.
   if (load.id.startsWith("unit:")) {
@@ -85,7 +85,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { dataTableErrorState } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
 import { listOpenPreSettlements, patchSettlementNumber, type OpenPreSettlement } from "../../api/driverFinance";
-import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
+import { formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
+import { isDraftLoad, loadStatusLabel } from "../../lib/load-status";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
@@ -641,7 +642,7 @@ export function DispatchBoard({
     setStatusPendingIds((current) => new Set(current).add(load.id));
     try {
       await statusMutation.mutateAsync({ id: load.id, body: { new_status: next } });
-      pushToast(`Load ${load.load_number || load.id} → ${STATUS_LABEL[next]}`, "success");
+      pushToast(`Load ${load.load_number || load.id} → ${loadStatusLabel(next)}`, "success");
       // ROUND 203 F3 — clear optimistic override on success so effectiveLoads tracks server state.
       setRowOverrides((current) => {
         const nextOverrides = { ...current };
@@ -1212,12 +1213,12 @@ export function DispatchBoard({
     // driver but still missing unit/trailer, whose status pill reads whatever real status it has —
     // "assigned"/"booked" — so this badge is the ONLY visible signal for that case). Rendered for
     // both so the badge is a consistent, unconditional draft marker, not just the quicksave case.
-    const isDraft = load.status === "draft" || load.is_quicksave_draft === true;
+    const isDraft = isDraftLoad(load); // LEAD 443.206R B9 — the one draft definition (lib/load-status.ts)
     return (
       <div className="flex items-center gap-1">
         {isSyntheticRow ? (
           <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
-            {STATUS_LABEL[load.status]}
+            {loadStatusLabel(load.status)}
           </span>
         ) : (
           <InlineStatusPicker

@@ -1,4 +1,5 @@
 import { ApiError } from "../api/client";
+import { loadStatusLabel } from "./load-status";
 
 const BARE_E_CODE = /^E_[A-Z0-9_]+$/;
 
@@ -9,23 +10,11 @@ export function humanizeErrorCode(code: string): string {
   return trimmed.replace(/^E_/, "").replace(/_/g, " ").toLowerCase();
 }
 
-const DISPATCH_STATUS_LABELS: Record<string, string> = {
-  unassigned: "draft (unassigned)",
-  assigned_not_dispatched: "assigned",
-  dispatched: "dispatched",
-  driver_no_show: "driver no-show",
-  driver_walkoff: "driver walk-off",
-  in_transit: "in transit",
-  delivered_pending_docs: "delivered (pending docs)",
-  completed_docs_received: "completed",
-  invoiced: "invoiced",
-  paid: "paid",
-  cancelled: "cancelled",
-  abandoned: "abandoned",
-};
-
+// LEAD 443.206R (register C5) — one label source; the transition route speaks the dispatch vocabulary, where
+// "unassigned" is the draft stage.
 function dispatchStatusLabel(status: string): string {
-  return DISPATCH_STATUS_LABELS[status] ?? status.replace(/_/g, " ");
+  if (status === "unassigned") return "draft (unassigned)";
+  return loadStatusLabel(status).toLowerCase();
 }
 
 /**

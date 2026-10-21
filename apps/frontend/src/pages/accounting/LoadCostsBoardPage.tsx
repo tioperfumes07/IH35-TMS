@@ -24,7 +24,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { useToast } from "../../components/Toast";
 import { parseExpenseMemo } from "../../lib/expense-memo";
-import { STATUS_LABEL } from "../../components/dispatch/constants";
+import { loadStatusLabel } from "../../lib/load-status";
 import { InlineStatusPicker } from "../../components/dispatch/InlineStatusPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { settlementLabel } from "../../lib/settlementNumber";
@@ -573,7 +573,7 @@ export function LoadCostsBoardPage() {
       setStatusPendingIds((current) => new Set(current).add(row.load_id));
       try {
         await updateLoadStatus(row.load_id, { new_status: next }, companyId);
-        pushToast(`Load ${row.load_number} → ${STATUS_LABEL[next] ?? next}`, "success");
+        pushToast(`Load ${row.load_number} → ${loadStatusLabel(next)}`, "success");
         await queryClientForStatus.invalidateQueries({ queryKey: ["accounting", "load-costs-board"] });
       } catch (error) {
         pushToast(userFacingApiError(error, "Failed to change load status"), "error");

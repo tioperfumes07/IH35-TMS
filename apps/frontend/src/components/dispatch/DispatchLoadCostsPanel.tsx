@@ -48,7 +48,9 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
     queryFn: () =>
       listAllLoads({
         operating_company_id: [operatingCompanyId],
-        // ROUND 285.4.2 — same open_dispatch set as Load Costs board; no status[] bypass.
+        // LEAD 443.206 D14 — board_scope "live" = the DISPATCH-WORK live set (the List / Kanban set), NOT the Load Costs
+        // board's set (canonicalLoadCostsOpenClause keeps delivered / invoiced loads until their settlement closes).
+        // This panel therefore shows the costs of the loads trucks are carrying now; no status[] bypass.
         board_scope: "live",
         sort: "created_at:desc",
       }),

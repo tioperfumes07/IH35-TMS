@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { apiRequest } from "../api/client";
+import { loadStatusLabel } from "../lib/load-status";
 import { Button } from "../components/Button";
 import { StatusBadge } from "../components/layout/StatusBadge";
 
@@ -84,7 +85,7 @@ export function PortalLoadDetailPage() {
           <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-page-title font-semibold">Load {detail.load.load_number}</h1>
-              <StatusBadge variant="neutral">{detail.load.status.replace(/_/g, " ")}</StatusBadge>
+              <StatusBadge variant="neutral">{loadStatusLabel(detail.load.status)}</StatusBadge>
               <StatusBadge variant="info">{detail.load.progress_status ?? "unknown"}</StatusBadge>
             </div>
             {detail.load.progress_eta_delta_minutes != null ? (
