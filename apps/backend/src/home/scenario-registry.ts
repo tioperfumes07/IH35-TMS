@@ -147,17 +147,24 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
            AND EXISTS (
              SELECT 1
                FROM dispatch.load_assignment_history h
+              -- LEAD 443.206 — a history row naming a merged-away driver record counts as its survivor (the merge engine's
+              -- merged_into_driver_id), and a later TRAILER-ONLY row (no driver, no unit: the trailer backfills and every
+              -- booking's trailer row) is not a reassignment.
+              LEFT JOIN mdata.drivers hd ON hd.id = h.new_driver_id
               WHERE h.load_id = l.id
                 AND h.operating_company_id = l.operating_company_id
-                AND h.new_driver_id = l.assigned_primary_driver_id
+                AND COALESCE(hd.merged_into_driver_id, h.new_driver_id) = l.assigned_primary_driver_id
                 AND h.new_unit_id = l.assigned_unit_id
                 AND NOT EXISTS (
                   SELECT 1
                     FROM dispatch.load_assignment_history later
+                    LEFT JOIN mdata.drivers ld ON ld.id = later.new_driver_id
                    WHERE later.load_id = h.load_id
                      AND later.operating_company_id = h.operating_company_id
                      AND (later.assigned_at, later.created_at, later.id) > (h.assigned_at, h.created_at, h.id)
-                     AND (later.new_driver_id IS DISTINCT FROM h.new_driver_id OR later.new_unit_id IS DISTINCT FROM h.new_unit_id)
+                     AND (later.new_driver_id IS NOT NULL OR later.new_unit_id IS NOT NULL)
+                     AND (COALESCE(ld.merged_into_driver_id, later.new_driver_id) IS DISTINCT FROM COALESCE(hd.merged_into_driver_id, h.new_driver_id)
+                          OR later.new_unit_id IS DISTINCT FROM h.new_unit_id)
                 )
            )
            AND ($1::uuid IS NULL OR b.operating_company_id = $1::uuid)

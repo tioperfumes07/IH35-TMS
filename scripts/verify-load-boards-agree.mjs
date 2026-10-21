@@ -50,6 +50,7 @@ export const BOARD_FILES = {
   planner: "apps/backend/src/dispatch/planner.service.ts",
   overview: "apps/backend/src/dispatch/active-loads-count.ts",
   canonical: "apps/backend/src/dispatch/canonical-active-load-set.ts",
+  scenarios: "apps/backend/src/home/scenario-registry.ts",
 };
 export function staticFailures(src) {
   const f = [];
@@ -73,6 +74,10 @@ export function staticFailures(src) {
   ban("overview", /FROM views\.live_loads\s+WHERE operating_company_id = \$1::uuid\s+AND live_state = 'open_dispatch'/, "Overview counts read views.live_loads open_dispatch (D2)");
   for (const k of ["list", "dispatchLoads", "truckLine", "tripPairing", "planner", "overview"])
     ban(k, /ORDER BY [a-z_.]+\.(?:created_at|assigned_at) DESC LIMIT 1\)[^\n]*new_driver_id|new_driver_id[^\n]*ORDER BY [a-z_.]+\.(?:created_at|assigned_at) DESC/, "reads a board driver from the latest assignment-history row (driver comes from mdata.loads)");
+  // 443.206 — assignment-history readers: a later trailer-only row (no driver, no unit) is not a reassignment, and a
+  // merged-away driver record counts as its survivor (Home hop.assign probe: 23 -> 134 on prod, = its ceiling).
+  need("scenarios", /AND \(later\.new_driver_id IS NOT NULL OR later\.new_unit_id IS NOT NULL\)/, "hop.assign treats a trailer-only history row as a reassignment");
+  need("scenarios", /COALESCE\(hd\.merged_into_driver_id, h\.new_driver_id\) = l\.assigned_primary_driver_id/, "hop.assign compares a merged-away driver record, not its survivor");
   return f;
 }
 const readBoards = () => Object.fromEntries(Object.entries(BOARD_FILES).map(([k, rel]) => [k, readFileSync(new URL(`../${rel}`, import.meta.url), "utf8")]));
@@ -103,6 +108,7 @@ async function selftest() {
     ["trip pairing last-leg status", "tripPairing", (x) => x.replace("status: legs[0]?.status", "status: legs[legs.length - 1]?.status")],
     ["planner on views.live_loads", "planner", (x) => x + "\nconst q = `SELECT 1 FROM views.live_loads cl`;"],
     ["overview on views.live_loads", "overview", (x) => x + "\nconst q = `FROM views.live_loads\n WHERE operating_company_id = $1::uuid\n AND live_state = 'open_dispatch'`;"],
+    ["scenario counts trailer-only rows", "scenarios", (x) => x.replace("AND (later.new_driver_id IS NOT NULL OR later.new_unit_id IS NOT NULL)", "")],
     ["driver from latest history", "tripPairing", (x) => x + "\nconst q = `SELECT h.new_driver_id FROM dispatch.load_assignment_history h ORDER BY h.created_at DESC LIMIT 1`;"],
   ];
   for (const [name, k, mut] of plants) {
