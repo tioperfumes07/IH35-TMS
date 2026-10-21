@@ -38,6 +38,13 @@
 //      line may adopt) BEFORE the walk, and the walk's any-truck fallback runs only for a line the plan left unpaired.
 //      matchBookedReceipt stops at the same-truck tiers for those scopes. On main the fallback ran inline in file order:
 //      08-20 T163's EFS 09992 took T164's diesel and T175's DEF.
+//  13. LEAD 443.203 (ACCT-F4432033) — an existing fuel posting is a STANDING journal entry only. The batch lookup
+//      (postedResultForBatch, behind resolveExistingPostedResult and findPostedFuelReceipt) filters the JE to posted, not
+//      voided, reversed_by_je_id IS NULL, not a reversal, no reversed line; postFuelExpenseOnClient adopts its own key's
+//      batch only when it STANDS, otherwise falls through to the fill's live posting (findPostedFuelReceipt) and, when
+//      there is none, refuses (fuel_posting_refused_reversed_no_live_posting) — never re-posts under the spent key. On main
+//      the batch's batch_status='posted' alone was trusted: Relay fill txn_CWhET7bpU861jH handed back reversed JE 683c941f
+//      (443.129 E) and the Creator refused settlement 5847 ("debits 0, credits 0").
 // Static, <1s. --selftest plants each regression.
 import fs from "node:fs";
 import path from "node:path";
@@ -168,6 +175,27 @@ export function check(files) {
   if (crAsk < 0 || crPost < 0 || crAsk > crPost) problems.push(`${CREATOR}: the Creator posts a fuel expense document without adopting the receipt's existing posting`);
   else if (!/if \(receiptPosted\?\.journal_entry_id\) \{\s*await stampExpensePosted\(client, draft\.operating_company_id, doc\.expense_id, receiptPosted\.journal_entry_id\);\s*journalEntryIds\.push\(receiptPosted\.journal_entry_id\);\s*continue;\s*\}/.test(crAdoptBody))
     problems.push(`${CREATOR}: the Creator asks whether the receipt already posted but does not adopt that entry (stamp + skip the post) — it would post the receipt a second time`);
+  // 13 (LEAD 443.203) — an existing posting is a STANDING journal entry; a reversed batch is never handed back.
+  const pr = poster.indexOf("async function postedResultForBatch(");
+  const prBody = pr < 0 ? "" : poster.slice(pr, poster.indexOf("\n}\n", pr));
+  for (const [needle, what] of [
+    ["JOIN accounting.journal_entries je", "joins the journal entry"],
+    ["AND je.status = 'posted'", "requires je.status = 'posted'"],
+    ["AND je.voided_at IS NULL", "excludes a voided JE"],
+    ["AND je.reversed_by_je_id IS NULL", "excludes a reversed JE (reversed_by_je_id IS NULL)"],
+    ["AND je.reverses_je_id IS NULL", "excludes a reversal JE"],
+    ["rl.reversed_by_line_id IS NOT NULL", "excludes a batch with a reversed line"],
+  ]) if (!prBody.includes(needle)) problems.push(`${POSTER}: postedResultForBatch no longer ${what} — the fuel poster would hand back a reversed journal entry as "already posted" (443.203)`);
+  const rx = poster.indexOf("async function resolveExistingPostedResult(");
+  const rxBody = rx < 0 ? "" : poster.slice(rx, poster.indexOf("\n}\n", rx));
+  if (!/return state\.kind === "standing" \? state\.result : null;/.test(rxBody))
+    problems.push(`${POSTER}: resolveExistingPostedResult returns a batch that does not STAND (batch_status alone) — a reversed JE comes back as "already posted" (443.203)`);
+  const stand = peBody.indexOf('if (existingState.kind === "standing") return existingState.result;');
+  const refuse = peBody.indexOf('if (existingState.kind === "reversed") {');
+  if (stand < 0 || rcpt < 0 || stand > rcpt)
+    problems.push(`${POSTER}: postFuelExpenseOnClient adopts its key's batch without requiring it to STAND, ahead of the fill's live posting (443.203)`);
+  if (refuse < 0 || refuse < rcpt || (batch >= 0 && refuse > batch) || !/fuel_posting_refused_reversed_no_live_posting/.test(peBody.slice(refuse, refuse + 400)))
+    problems.push(`${POSTER}: a reversed batch with no live posting is not refused before the insert — the poster would re-post under the spent key (443.203)`);
   // The Relay branch: the fill posts through the receipt-asking poster, and its document ADOPTS that same entry (one JE).
   const rlPost = cr.indexOf("const fillPosted = await postFuelExpenseOnClient(client as never, {");
   const rlAdopt = cr.indexOf("adoptRelayFillExpenseDocument(client as never, {", rlPost < 0 ? 0 : rlPost);
@@ -280,6 +308,10 @@ if (process.argv.includes("--selftest")) {
     ["receipt registration trigger gone", { ...real, [RECEIPT_MIG]: real[RECEIPT_MIG].replace("CREATE TRIGGER trg_register_fuel_receipt_posting", "-- CREATE TRIGGER trg_register_fuel_receipt_posting") }],
     ["bank match blind to the Creator's posting", { ...real, [POSTER]: real[POSTER].replace('?? (await findPostedFuelReceipt(client, operatingCompanyId, "fuel_event", fuelEventId))', "") }],
     ["poster posts without asking the receipt", { ...real, [POSTER]: real[POSTER].replace('const receiptPosted = await findPostedFuelReceipt(client, input.operating_company_id, "fuel_event", input.fuel_event_id);', "const receiptPosted = null;") }],
+    ["443.203 reversed JE counts as posted", { ...real, [POSTER]: real[POSTER].replace("        AND je.reversed_by_je_id IS NULL\n", "\n") }],
+    ["443.203 batch_status alone trusted", { ...real, [POSTER]: real[POSTER].replace('return state.kind === "standing" ? state.result : null;', 'return state.kind === "none" ? null : (state as any).result;') }],
+    ["443.203 poster adopts a reversed batch", { ...real, [POSTER]: real[POSTER].replace('if (existingState.kind === "standing") return existingState.result;', 'if (existingState.kind !== "none") return (existingState as any).result;') }],
+    ["443.203 reversed batch not refused", { ...real, [POSTER]: real[POSTER].replace('if (existingState.kind === "reversed") {', 'if (false) {') }],
     ["linker pairs any card", { ...real, [LINKER]: real[LINKER].replace("AND ${RELAY_CARD_ROW_SQL}`;", "`;") }],
     ["linker card rule loosened", { ...real, [LINKER]: real[LINKER].replace("upper(ct.code) = 'RELAY'", "ct.code IS NOT NULL") }],
     ["poster ignores cross-rail rows", { ...real, [FILLPOST]: real[FILLPOST].replace("const crossRail = await crossRailFuelRowsForRelayFill(client, input.operating_company_id, input.fill_id);", "const crossRail = [];") }],
