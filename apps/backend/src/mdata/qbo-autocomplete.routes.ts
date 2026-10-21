@@ -6,10 +6,11 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import { searchCustomersForAutocomplete } from "./customer-autocomplete.shared.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const querySchema = z.object({
   q: z.string().trim().default(""),
   operating_company_id: z.string().uuid(),
-  active_only: z.coerce.boolean().optional().default(true),
+  active_only: queryBoolean().optional().default(true),
 });
 
 function officeRole(role: string) {

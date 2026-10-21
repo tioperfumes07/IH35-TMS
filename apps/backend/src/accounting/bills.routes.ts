@@ -43,6 +43,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 import { RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL } from "../driver-finance/settlement-resolution.sql.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 // Resolve the register's settlement through current source lines, not the unpopulated bill stamp.
 // Aggregate to one identity: repeated lines cannot duplicate bills; conflicting active identities
 // remain unknown rather than selecting an arbitrary settlement. Original settlement stamps stay
@@ -70,14 +71,14 @@ const idParamsSchema = z.object({
 });
 
 const listVendorBalancesQuerySchema = companyQuerySchema.extend({
-  all: z.coerce.boolean().optional().default(false),
+  all: queryBoolean().optional().default(false),
   sort: z.enum(["balance_desc", "balance_asc", "vendor_asc"]).optional().default("balance_desc"),
 });
 
 const listBillsQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().trim().min(1).optional(),
-  include_balance: z.coerce.boolean().optional(),
-  has_balance: z.coerce.boolean().optional(),
+  include_balance: queryBoolean().optional(),
+  has_balance: queryBoolean().optional(),
   status: z.enum(["open", "partial", "paid", "voided", "unpaid", "active", "all", "posted"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),

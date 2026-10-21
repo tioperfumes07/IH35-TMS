@@ -6,12 +6,13 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { INSURANCE_COVERAGE_TYPES } from "./policy.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
 const listQuerySchema = companyQuerySchema.extend({
-  include_inactive: z.coerce.boolean().optional(),
+  include_inactive: queryBoolean().optional(),
 });
 
 const idParamsSchema = z.object({

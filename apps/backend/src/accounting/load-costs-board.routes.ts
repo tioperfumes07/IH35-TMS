@@ -9,6 +9,7 @@ import { LOAD_COST_DOCUMENTS_CTE, loadCostsRevenueJoin } from "./load-costs-live
 import { wizardChargesLeftJoin } from "./load-wizard-charges.sql.js";
 import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 /** TAB-COMPLETION-STANDARD A — twelve hubs, both-way or explicit N/A. Silence is a defect. */
 export const LOAD_COSTS_HUB_LINKAGE = {
   1: { hub: "org.companies", via: "operating_company_id on loads, expenses, bills, driver_bills", reverse: "company-scoped lists" },
@@ -49,7 +50,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       ]).default("load"),
       sort_direction: z.enum(["asc", "desc"]).default("desc"),
       /** LOAD-COSTS-COMPLETE item (3): voided (cancelled) loads hidden by default. */
-      show_voided: z.coerce.boolean().default(false),
+      show_voided: queryBoolean().default(false),
     }).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 

@@ -23,7 +23,7 @@ if (!routesSrc.includes("EXCLUDE_PSEUDO_DRIVERS_SQL")) {
   fail("drivers list route must apply EXCLUDE_PSEUDO_DRIVERS_SQL for human-facing listings");
 }
 
-if (!routesSrc.includes("include_system: z.coerce.boolean()")) {
+if (!routesSrc.includes("include_system: queryBoolean()")) {
   fail("drivers list query schema must accept include_system");
 }
 

@@ -7,13 +7,14 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { PART_INVENTORY_CATEGORY_VALUES } from "./part-inventory-categories.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const partCategorySchema = z.enum(PART_INVENTORY_CATEGORY_VALUES);
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   search: z.string().trim().optional(),
   vendor_id: z.string().uuid().optional(),
-  include_voided: z.coerce.boolean().optional().default(false),
+  include_voided: queryBoolean().optional().default(false),
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });

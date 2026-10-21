@@ -17,7 +17,7 @@ function verify(routes, api, list, vendor, unit) {
   const createStart = routes.indexOf('app.post("/api/v1/maintenance/work-orders/:id/parts-invoice-links"');
   const listRoute = routes.slice(getStart, unitStart);
   const unitRoute = routes.slice(unitStart, createStart);
-  need(routes, /unit_linked_only: z\.coerce\.boolean\(\)\.optional\(\)[\s\S]*limit: z\.coerce\.number\(\).*max\(300\)\.default\(50\)[\s\S]*offset: z\.coerce\.number\(\).*default\(0\)/, "route must validate exact list ranges and the linked-unit filter");
+  need(routes, /unit_linked_only: queryBoolean\(\)\.optional\(\)[\s\S]*limit: z\.coerce\.number\(\).*max\(300\)\.default\(50\)[\s\S]*offset: z\.coerce\.number\(\).*default\(0\)/, "route must validate exact list ranges and the linked-unit filter");
   need(listRoute, /SELECT COUNT\(\*\)::text AS total_count[\s\S]*WHERE \$\{filters\.join\(" AND "\)\} AND pil\.voided_at IS NULL/, "assignment list needs an identical scoped count");
   need(listRoute, /LIMIT \$\$\{values\.length \+ 1\}[\s\S]*OFFSET \$\$\{values\.length \+ 2\}/, "assignment list needs bound paging after dynamic filters");
   need(listRoute, /unit_linked_only[\s\S]*wo\.unit_id IS NOT NULL/, "unit-linked filter must execute on the server");

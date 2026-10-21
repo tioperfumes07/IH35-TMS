@@ -34,7 +34,7 @@ function failures(input = source) {
   const out = [];
 
   // 1. Backend drafts_only override + frontend pill wired to it.
-  if (!/drafts_only:\s*z\.coerce\.boolean\(\)\.default\(false\)/.test(input.backendRoutes)) out.push("backend drafts_only query param missing");
+  if (!/drafts_only:\s*queryBoolean\(\)\.default\(false\)/.test(input.backendRoutes)) out.push("backend drafts_only query param missing");
   if (!/if \(drafts_only\) \{[\s\S]{0,1200}l\.status = 'draft' OR l\.is_quicksave_draft = true/.test(input.backendRoutes)) out.push("backend drafts_only filter override missing");
   if (!/drafts_only\?:\s*boolean/.test(input.apiLoads)) out.push("frontend LoadsListFilters.drafts_only missing");
   if (!/filters\.drafts_only\)\s*query\.set\("drafts_only"/.test(input.apiCatalogLoads)) out.push("frontend listLoads does not send drafts_only");

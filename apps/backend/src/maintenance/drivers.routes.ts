@@ -6,10 +6,11 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { createDriverCanonical } from "../mdata/drivers.routes.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   search: z.string().trim().optional(),
-  include_voided: z.coerce.boolean().optional().default(false),
+  include_voided: queryBoolean().optional().default(false),
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });

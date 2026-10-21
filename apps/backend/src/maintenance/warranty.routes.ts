@@ -12,11 +12,12 @@ import { postWarrantyReimbursement } from "../accounting/warranty-posting/poster
 // eligibility/expiry against the wrong day and post the reimbursement JE on the wrong business date.
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   work_order_id: z.string().uuid().optional(),
   vendor_id: z.string().uuid().optional(),
-  include_archived: z.coerce.boolean().optional().default(false),
+  include_archived: queryBoolean().optional().default(false),
   status: z.string().trim().optional(),
 });
 

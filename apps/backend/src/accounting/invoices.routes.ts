@@ -23,6 +23,7 @@ import {
   ReinstateDocumentError,
 } from "./reinstate-document.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 const listQuerySchema = companyQuerySchema.extend({
@@ -36,7 +37,7 @@ const listQuerySchema = companyQuerySchema.extend({
   to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   // Aging / open-AR drill: filter full entity set by open balance BEFORE LIMIT/OFFSET
   // (mirrors accounting bills has_balance). Excludes draft/voided; includes sent/partial/etc.
-  has_balance: z.coerce.boolean().optional(),
+  has_balance: queryBoolean().optional(),
   // ACCT-F411 — the A/R AGING WINDOW, so an aging bucket on a report has a destination that
   // reproduces it. Days OVERDUE relative to as_of, inclusive both ends, measured off i.due_date —
   // the same column ar-aging.service.ts buckets on. Boundaries come from

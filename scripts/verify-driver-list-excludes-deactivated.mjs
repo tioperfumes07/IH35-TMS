@@ -30,7 +30,7 @@ export function run(root = process.cwd()) {
     );
   }
 
-  if (!/include_deactivated: z\.coerce\.boolean\(\)\.optional\(\)\.default\(false\)/.test(src)) {
+  if (!/include_deactivated: queryBoolean\(\)\.optional\(\)\.default\(false\)/.test(src)) {
     failures.push(`${REL}: include_deactivated must default to false -- it is an explicit admin opt-in, never ambient`);
   }
 
@@ -44,7 +44,7 @@ function selftest() {
 
   const fixed = `
 const listQuerySchema = z.object({
-  include_deactivated: z.coerce.boolean().optional().default(false),
+  include_deactivated: queryBoolean().optional().default(false),
 });
 
 async function handler() {
@@ -72,8 +72,8 @@ async function handler() {
 
   // Mutation 2: flip the default to true (silently ambient instead of an explicit admin opt-in).
   const broken2 = fixed.replace(
-    "include_deactivated: z.coerce.boolean().optional().default(false)",
-    "include_deactivated: z.coerce.boolean().optional().default(true)"
+    "include_deactivated: queryBoolean().optional().default(false)",
+    "include_deactivated: queryBoolean().optional().default(true)"
   );
   fs.writeFileSync(tmpFile, broken2);
   const f2 = run(tmpDir);

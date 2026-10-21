@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { stopBooleanish, stopIntish, stopDatetimeish } from "../loads.routes.js";
 
+import { queryBoolean } from "../../lib/query-boolean.js";
 // CI GUARD (2026-06-24) — W-1 booking blocker. Book Load §C relocates stop fields to hidden
 // react-hook-form <input>s, which submit their value as a STRING ("" when empty). A bare
 // z.boolean()/z.number()/z.string().datetime() rejected the wire string -> the booking POST 400'd on
@@ -13,7 +14,7 @@ describe("Book Load stop-field coercion (W-1 is_tarp_stop 400 guard)", () => {
     });
     it("maps the string \"true\" -> true and \"false\" -> false (no inversion)", () => {
       expect(stopBooleanish.parse("true")).toBe(true);
-      expect(stopBooleanish.parse("false")).toBe(false); // z.coerce.boolean() would WRONGLY give true
+      expect(stopBooleanish.parse("false")).toBe(false); // queryBoolean() would WRONGLY give true
     });
     it("passes real booleans through", () => {
       expect(stopBooleanish.parse(true)).toBe(true);

@@ -4,11 +4,12 @@ import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(100),
   offset: z.coerce.number().int().min(0).default(0),
   search: z.string().trim().min(1).max(100).optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBoolean().optional(),
   operating_company_id: z.string().uuid().optional(),
 });
 

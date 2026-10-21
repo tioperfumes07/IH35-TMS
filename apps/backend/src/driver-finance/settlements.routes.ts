@@ -31,6 +31,7 @@ import {
   isPreCloseStatus,
 } from "./settlement-line-buckets.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const settlementStatusSchema = z.enum([
   "draft",
   "presettle",
@@ -49,7 +50,7 @@ const PAYMENT_STATES = ["unpaid", "queued", "sent_to_bank", "cleared", "bounced"
 /** 432-CUR #1 — payment_state is multi-select (?payment_state=a&payment_state=b); single still accepted. */
 const paymentStateListParam = statusListParam(PAYMENT_STATES);
 const listQuerySchema = z.object({
-  include_reversed: z.coerce.boolean().default(false),
+  include_reversed: queryBoolean().default(false),
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),

@@ -24,6 +24,7 @@ import {
   updateFactor,
 } from "./factor.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const FEE_APP_MODES = ["replace", "segmented", "additive"] as const;
 
 // ── Shared tier schemas ───────────────────────────────────────────────────────
@@ -49,7 +50,7 @@ const customerParamsSchema = z.object({
 });
 
 const listFactorsQuerySchema = companyQuerySchema.extend({
-  active_only: z.coerce.boolean().optional(),
+  active_only: queryBoolean().optional(),
 });
 
 const createFactorBodySchema = companyQuerySchema.extend({

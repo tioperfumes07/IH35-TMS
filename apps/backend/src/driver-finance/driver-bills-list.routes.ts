@@ -14,9 +14,10 @@ import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL } from "./settlement-resolution.sql.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
-  include_voided: z.coerce.boolean().default(false),
+  include_voided: queryBoolean().default(false),
   limit: z.coerce.number().int().min(1).max(500).default(200),
   offset: z.coerce.number().int().min(0).default(0),
 });
