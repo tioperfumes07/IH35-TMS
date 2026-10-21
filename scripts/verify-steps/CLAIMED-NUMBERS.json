@@ -16757,5 +16757,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-21",
     "purpose": "verify-wex-import-idempotent-and-adoptable"
+  },
+  "18599": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "verify-driver-dq-gate-grandfather"
   }
 }
