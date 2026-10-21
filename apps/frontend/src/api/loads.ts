@@ -230,7 +230,8 @@ export type LoadsListFilters = {
   include_progress?: boolean;
   include_live_eta?: boolean;
   /** ROUND 283 — required with status[] or drafts_only; backend defaults missing scope to live (fail closed). */
-  board_scope?: "live" | "history";
+  /** LEAD 443.206 D10 — "picker" = every real load that happened (the cross-module load picker). */
+  board_scope?: "live" | "history" | "picker";
   /** ROUND-20.2 (RT-FULL-TOUR) — Round Trips-only opt-in; every other board_scope=live caller must
    * leave this unset so OPEN-ONLY stays unchanged for them. See mdata/loads.routes.ts. */
   include_open_tour_legs?: boolean;
