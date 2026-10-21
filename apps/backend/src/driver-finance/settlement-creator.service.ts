@@ -248,9 +248,36 @@ export async function restateOpenDriverBillToSignedPay(
       ORDER BY created_at DESC`,
     [input.companyId, input.loadId],
   )).rows;
+  const signed = input.loadedCents + input.emptyCents;
+  // LEAD 443.203 (17:05Z, settlement 5849 / load 13684): an adopted load can carry NO live driver bill (booked before its
+  // short miles existed — the mint refused, 443.192). Returning here left the invoice gate red ("no live driver bill for
+  // this load") and the signed settlement could never post. The signed settlement IS the pay: mint the ONE bill at the
+  // signed miles x rate for the load's own driver (same INSERT shape as the restate below), audited by its notes.
+  if (bill.length === 0) {
+    const ld = (await client.query<{ driver: string | null; team: string | null }>(
+      `SELECT assigned_primary_driver_id::text AS driver, assigned_secondary_driver_id::text AS team
+         FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [input.loadId, input.companyId],
+    )).rows[0];
+    if (!ld?.driver) {
+      throw new SettlementCreatorError("driver_bill_no_driver", `Load ${input.loadNumber}: no driver on the load — cannot mint its driver bill from the signed settlement.`);
+    }
+    const reason = `443.203: minted from signed settlement ${input.settlementNo} pay ${dollarsFromCents(signed)} (adopted load had no live driver bill)`;
+    await client.query(
+      `INSERT INTO driver_finance.driver_bills (
+         operating_company_id, load_id, load_number, bill_number, driver_id, team_driver_id,
+         gross_amount_cents, miles_basis, miles_basis_type, rate_per_mile_cents, status, notes,
+         created_by_user_id, miles_deadhead, rate_empty_per_mile_cents, loaded_pay_cents, deadhead_pay_cents
+       ) VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, $6::uuid, $7, $8, 'short', $9, 'open', $10, $11::uuid, $12, $13, $14, $15)`,
+      [input.companyId, input.loadId, input.loadNumber, input.loadNumber, ld.driver, ld.team, signed, input.milesBasis,
+        input.rateCents, reason, input.actorUserId, input.emptyMiles, input.emptyRateCents, input.loadedCents, input.emptyCents],
+    );
+    const { restampDriverBillUnitAndTrailer } = await import("./driver-bill-unit-trailer.js");
+    await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.companyId, loadId: input.loadId });
+    return;
+  }
   if (bill.length !== 1) return;
   const b = bill[0]!;
-  const signed = input.loadedCents + input.emptyCents;
   if (Number(b.gross) === signed) return;
   const state = (await client.query<{ status: string; settled: string | null; accrued: string | null }>(
     // A bill "settled" in a voided / cancelled settlement (a seed shell regrouped away) is settled in nothing.
