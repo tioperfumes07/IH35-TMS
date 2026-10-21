@@ -513,6 +513,14 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         return { unit_id: r.unit_id as string, unit_number: r.unit_number as string, row };
       });
 
+    // Detect duplicate unit_ids in available rows (multiple free drivers on same last unit) and
+    // log server-side. groupTruckLineByUnit merges them; this log aids observability.
+    const availableUnitCounts = new Map<string, number>();
+    for (const a of availableBuilt) availableUnitCounts.set(a.unit_id, (availableUnitCounts.get(a.unit_id) ?? 0) + 1);
+    for (const [unitId, count] of availableUnitCounts) {
+      if (count > 1) req.log.error({ unit_id: unitId, count }, "truck_line_available_duplicate_unit_merged");
+    }
+
     type LoadedBuilt = ReturnType<typeof buildLoadedRow>;
     type AvailableBuilt = (typeof availableBuilt)[number]["row"];
     const groups = groupTruckLineByUnit<LoadedBuilt | AvailableBuilt>(loadedLegs, availableBuilt as Array<{

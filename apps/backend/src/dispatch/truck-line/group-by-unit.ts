@@ -86,17 +86,25 @@ export function groupTruckLineByUnit<T>(
   }
 
   const loadedUnitIds = new Set(byUnit.keys());
-  const available: TruckLineUnitGroup<T>[] = [];
+  // Merge available rows by unit_id: multiple free drivers may share the same last unit.
+  // One top-level group per unit; all their rows stack in legs[].
+  const availableByUnit = new Map<string, TruckLineUnitGroup<T>>();
   for (const a of availableRows) {
     if (loadedUnitIds.has(a.unit_id)) continue; // never duplicate a unit that already has a load
-    available.push({
-      section: "available",
-      unit_id: a.unit_id,
-      unit_number: a.unit_number,
-      tour_display_id: null,
-      legs: [a.row],
-    });
+    const existing = availableByUnit.get(a.unit_id);
+    if (existing) {
+      existing.legs.push(a.row);
+    } else {
+      availableByUnit.set(a.unit_id, {
+        section: "available",
+        unit_id: a.unit_id,
+        unit_number: a.unit_number,
+        tour_display_id: null,
+        legs: [a.row],
+      });
+    }
   }
+  const available: TruckLineUnitGroup<T>[] = [...availableByUnit.values()];
 
   const sortByUnit = (a: TruckLineUnitGroup<T>, b: TruckLineUnitGroup<T>) =>
     a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true });
