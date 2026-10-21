@@ -7,6 +7,7 @@ import {
 } from "../lib/untrusted-spreadsheet-read.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { importDreamlineStatement, importWexStatement, parseDreamlineStatementRows } from "./dreamline-statement-import.service.js";
+import { runFuelFollowsTruck } from "./fill-truck-and-load.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -185,7 +186,7 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return reply;
     if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
-    const query = companyQuerySchema.extend({ dry_run: z.enum(["true", "false"]).optional() }).safeParse(req.query ?? {});
+    const query = companyQuerySchema.extend({ dry_run: z.enum(["true", "false"]).optional(), stamp_only: z.enum(["true", "false"]).optional() }).safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     const dryRun = query.data.dry_run !== "false";
@@ -211,20 +212,53 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
         actor_user_uuid: authUser.uuid,
         lines: parsed.lines,
         dry_run: dryRun,
+        stamp_only: query.data.stamp_only === "true",
       });
     });
-    return { dry_run: dryRun, file: filePart.filename, dead_letters: parsed.dead_letters.slice(0, 25), ...summary };
+    return { dry_run: dryRun, stamp_only: query.data.stamp_only === "true", file: filePart.filename, dead_letters: parsed.dead_letters.slice(0, 25), ...summary };
   });
 
   // LEAD 443.202 — the England Logistics WEX card statement (owner's TransactionReport .csv, or .xlsx): one fuel row per
   // ticket + product on card WEX at what WEX charged, posted on receipt Dr fuel / Cr 2520 through the one poster; a
   // receipt a settlement already carries is ADOPTED (listed with its settlement), never a second row. dry_run=true
   // (the default) writes nothing and returns the plan.
+  // LEAD 443.214 — fuel follows the truck at the pump: every fill's truck by Samsara GPS at the station and the load that
+  // truck was running at the provider's real pump moment. dry_run (default) lists every fill; apply moves the confident
+  // re-points + the owner's rulings through the one engine (fuel rows + expense document + GL load, audited, TB unchanged).
+  const fuelFollowsTruckBody = z.object({
+    operating_company_id: z.string().uuid(),
+    dry_run: z.boolean().default(true),
+    fuel_ids: z.array(z.string().uuid()).max(5000).optional(),
+    rulings: z.array(z.object({
+      fuel_id: z.string().uuid(),
+      to_unit_id: z.string().uuid().nullable().optional(),
+      to_load_id: z.string().uuid().nullable().optional(),
+      reason: z.string().trim().min(10).max(500),
+    })).max(200).optional(),
+  });
+  app.post("/api/v1/fuel/fill-truck-and-load/rerun", { config: { rateLimit: { max: 6, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
+    const body = fuelFollowsTruckBody.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const b = body.data;
+    if (!b.dry_run && !["Owner", "Admin"].includes(String(authUser.role ?? ""))) return reply.code(403).send({ error: "owner_or_admin_applies_fuel_repoints" });
+    await assertCompanyMembership(authUser.uuid, b.operating_company_id);
+    const result = await withLuciaBypass(async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [b.operating_company_id]);
+      return runFuelFollowsTruck(client as never, {
+        companyId: b.operating_company_id, actorUserId: authUser.uuid, dryRun: b.dry_run, fuelIds: b.fuel_ids ?? null, rulings: b.rulings ?? [],
+      });
+    });
+    return { dry_run: b.dry_run, ...result };
+  });
+
   app.post("/api/v1/fuel/wex/statement-import", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return reply;
     if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
-    const query = companyQuerySchema.extend({ dry_run: z.enum(["true", "false"]).optional() }).safeParse(req.query ?? {});
+    const query = companyQuerySchema.extend({ dry_run: z.enum(["true", "false"]).optional(), stamp_only: z.enum(["true", "false"]).optional() }).safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     const dryRun = query.data.dry_run !== "false";
@@ -252,8 +286,9 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
         actor_user_uuid: authUser.uuid,
         lines: parsed.lines,
         dry_run: dryRun,
+        stamp_only: query.data.stamp_only === "true",
       });
     });
-    return { dry_run: dryRun, file: filePart.filename, dead_letters: parsed.dead_letters.slice(0, 25), ...summary };
+    return { dry_run: dryRun, stamp_only: query.data.stamp_only === "true", file: filePart.filename, dead_letters: parsed.dead_letters.slice(0, 25), ...summary };
   });
 }
