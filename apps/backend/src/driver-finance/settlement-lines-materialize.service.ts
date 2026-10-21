@@ -59,6 +59,7 @@
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount, isCoaRole } from "../accounting/coa-roles/resolver.service.js";
+import { resolveReimbursementLineAccount } from "./reimbursement-line-account.js";
 import { bucketRecoveryRoleKey } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
 import { resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
@@ -465,23 +466,32 @@ export async function backfillExistingSettlementLineAccounts(
   // by their real driver_finance.driver_reimbursements.reimbursement_type first, then resolve +
   // apply the shared per-type account per group, so a repaired row lands on the SAME account a
   // freshly-materialized row of the same type would get.
-  const reimbTypesRes = await client.query<{ reimbursement_type: string | null; line_ids: string[] }>(
+  // 443.203 R (ACCT-F4432034) — a stuck line that carries an item takes ITS item's account (the one rule,
+  // resolveReimbursementLineAccount); only an item-less line is grouped onto the per-type account. Stamping the type
+  // account on an itemed line made the per-load A/P bill refuse it (line_account_differs_from_item).
+  const reimbTypesRes = await client.query<{ reimbursement_type: string | null; item_id: string | null; line_ids: string[] }>(
     `
-      SELECT dr.reimbursement_type, array_agg(sl.id::text) AS line_ids
+      SELECT dr.reimbursement_type, sl.item_id::text AS item_id, array_agg(sl.id::text) AS line_ids
         FROM driver_finance.settlement_lines sl
         JOIN driver_finance.driver_reimbursements dr
           ON dr.id::text = sl.source_reference_id::text
        WHERE sl.settlement_id = $1::uuid AND sl.operating_company_id = $2::uuid
          AND sl.line_type = 'reimbursement' AND sl.posting_account_id IS NULL AND sl.is_active = true
          AND sl.source_table = 'driver_finance.driver_reimbursements'
-       GROUP BY dr.reimbursement_type
+       GROUP BY dr.reimbursement_type, sl.item_id
     `,
     [input.settlementId, input.operatingCompanyId]
   );
   let reimbursementUpdated = 0;
   for (const group of reimbTypesRes.rows) {
-    const accountId = await resolveReimbursementExpenseAccount(client, input.operatingCompanyId, group.reimbursement_type);
-    if (!accountId) continue;
+    const resolved = await resolveReimbursementLineAccount(
+      client as never,
+      input.operatingCompanyId,
+      { posting_account_id: null, item_id: group.item_id, reimbursement_type: group.reimbursement_type },
+      (t) => resolveReimbursementExpenseAccount(client, input.operatingCompanyId, t)
+    );
+    if ("refused" in resolved) continue;
+    const accountId = resolved.accountId;
     const res = await client.query<{ id: string }>(
       `
         UPDATE driver_finance.settlement_lines

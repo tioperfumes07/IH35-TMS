@@ -69,6 +69,7 @@ import { categorizeSettlementLines } from "./settlement-line-categorize.service.
 import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
 import { driverReceivableFor } from "./driver-receivable-roles.js";
 import { resolveDriverAdvanceSubAccountOptional } from "./driver-advance-account-resolver.js";
+import { resolveReimbursementLineAccount } from "./reimbursement-line-account.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -436,22 +437,7 @@ export async function loadSettlementPayItems(
     return componentItem.get(c) ?? null;
   };
   for (const r of earn.rows) items.push({ kind: "pay", cents: dollarsToCents(r.amount), accountId: r.posting_account_id ?? accounts.driverPay, loadId: r.load_id, date: r.d, description: r.description || r.line_type.replace(/_/g, " "), itemId: r.item_id ?? (await itemOf(r.line_type, r.description)) });
-  const reimb = await client.query<{ amount: string; reimbursement_type: string | null; posting_account_id: string | null; load_id: string | null; d: string | null; item_id: string | null }>(
-    `SELECT ABS(sl.amount)::text AS amount, dr.reimbursement_type, sl.posting_account_id::text AS posting_account_id, COALESCE(sl.load_id, dr.load_id)::text AS load_id,
-            sl.item_id::text AS item_id,
-            COALESCE(dr.posting_date, sl.created_at::date)::text AS d
-       FROM driver_finance.settlement_lines sl
-       JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
-       LEFT JOIN driver_finance.driver_reimbursements dr ON dr.id::text = sl.source_reference_id::text AND sl.source_table = 'driver_finance.driver_reimbursements'
-      WHERE sl.settlement_id = $2::uuid AND ds.operating_company_id = $1::uuid AND sl.line_type = 'reimbursement' AND sl.is_active = true`,
-    [operatingCompanyId, settlementId]
-  );
-  for (const r of reimb.rows) {
-    // ROUND 363-CC2-D — the account picked on the line at creation wins; the type map is the fallback.
-    const acct = r.posting_account_id ?? (await accounts.reimbursementByType(r.reimbursement_type));
-    if (!acct) throw new SettlementPayRunError("REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING", `No active reimbursement expense account resolved for type '${r.reimbursement_type ?? "unknown"}'`);
-    items.push({ kind: "reimbursement", cents: dollarsToCents(r.amount), accountId: acct, loadId: r.load_id, date: r.d, description: `${r.reimbursement_type ?? "driver"} reimbursement`, itemId: r.item_id });
-  }
+  items.push(...(await loadReimbursementPayItems(client, operatingCompanyId, settlementId, accounts.reimbursementByType)));
   const det = await client.query<{ amount: string; load_id: string | null; d: string | null; item_id: string | null; posting_account_id: string | null }>(
     `SELECT ABS(sl.amount)::text AS amount, sl.load_id::text, sl.created_at::date::text AS d, sl.item_id::text AS item_id, sl.posting_account_id::text AS posting_account_id
        FROM driver_finance.settlement_lines sl
@@ -463,6 +449,37 @@ export async function loadSettlementPayItems(
     const accountId = r.posting_account_id ?? accounts.detention;
     if (!accountId) throw new SettlementPayRunError("DETENTION_PAY_EXPENSE_ACCOUNT_MISSING", "No active 'detention_pay_expense' CoA role designation for settlement detention pay");
     items.push({ kind: "detention_pay", cents: dollarsToCents(r.amount), accountId, loadId: r.load_id, date: r.d, description: "detention pay", itemId: r.item_id });
+  }
+  return items;
+}
+
+/**
+ * 443.203 R (ACCT-F4432034) — every active reimbursement line of the settlement with the account it posts to, by THE
+ * ONE RULE (resolveReimbursementLineAccount): the line's stamped account, else its item's account, and the type map
+ * only for an item-less line. Read by the A/P chain (loadSettlementPayItems) and the pay-run JE preview, so the two can
+ * never post one reimbursement to two accounts.
+ */
+async function loadReimbursementPayItems(
+  client: DbClient,
+  operatingCompanyId: string,
+  settlementId: string,
+  reimbursementByType: (t: string | null) => Promise<string | null>
+): Promise<ApChainPayItem[]> {
+  const reimb = await client.query<{ amount: string; reimbursement_type: string | null; posting_account_id: string | null; load_id: string | null; d: string | null; item_id: string | null }>(
+    `SELECT ABS(sl.amount)::text AS amount, dr.reimbursement_type, sl.posting_account_id::text AS posting_account_id, COALESCE(sl.load_id, dr.load_id)::text AS load_id,
+            sl.item_id::text AS item_id,
+            COALESCE(dr.posting_date, sl.created_at::date)::text AS d
+       FROM driver_finance.settlement_lines sl
+       JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+       LEFT JOIN driver_finance.driver_reimbursements dr ON dr.id::text = sl.source_reference_id::text AND sl.source_table = 'driver_finance.driver_reimbursements'
+      WHERE sl.settlement_id = $2::uuid AND ds.operating_company_id = $1::uuid AND sl.line_type = 'reimbursement' AND sl.is_active = true`,
+    [operatingCompanyId, settlementId]
+  );
+  const items: ApChainPayItem[] = [];
+  for (const r of reimb.rows) {
+    const acct = await resolveReimbursementLineAccount(client as never, operatingCompanyId, r, reimbursementByType);
+    if ("refused" in acct) throw new SettlementPayRunError("REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING", acct.refused);
+    items.push({ kind: "reimbursement", cents: dollarsToCents(r.amount), accountId: acct.accountId, loadId: r.load_id, date: r.d, description: `${r.reimbursement_type ?? "driver"} reimbursement`, itemId: r.item_id });
   }
   return items;
 }
@@ -941,16 +958,16 @@ export async function closeSettlementPayRun(
       // account, matching this function's pre-existing behavior exactly. Fails CLOSED (never
       // silently drops the reimbursement from the JE) if even the fallback account is unresolved —
       // same failure this function already raised before this fix.
+      // 443.203 R — per LINE by the one rule (stamped account, else item account, type map only when item-less), the
+      // same accounts the A/P chain posts; the type-only grouping previewed an itemed Scale line on 5310 Lumper.
       const reimbursementsByAccount = new Map<string, number>();
-      for (const [reimbType, cents] of reimbursementsByType) {
-        const acctId = await resolveReimbursementExpenseAccount(client, opco, reimbType);
-        if (!acctId) {
-          throw new SettlementPayRunError(
-            "REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING",
-            `No active reimbursement expense account resolved for type '${reimbType ?? "unknown"}'`
-          );
-        }
-        reimbursementsByAccount.set(acctId, (reimbursementsByAccount.get(acctId) ?? 0) + cents);
+      const previewTypeCache = new Map<string | null, string | null>();
+      const previewByType = async (t: string | null) => {
+        if (!previewTypeCache.has(t)) previewTypeCache.set(t, await resolveReimbursementExpenseAccount(client, opco, t));
+        return previewTypeCache.get(t) ?? null;
+      };
+      for (const it of await loadReimbursementPayItems(client, opco, settlementId, previewByType)) {
+        reimbursementsByAccount.set(it.accountId, (reimbursementsByAccount.get(it.accountId) ?? 0) + it.cents);
       }
       for (const [accountId, cents] of reimbursementsByAccount) {
         legs.push({ account_id: accountId, debit_or_credit: "debit", amount_cents: cents, description: `${label} — driver reimbursement` });
