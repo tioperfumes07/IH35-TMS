@@ -561,3 +561,21 @@ Per LEAD 20:22Z — standing down on loads; Codex books all 8.
 
 **Proof (live DB):** One active GAMPAC LOGISTICS (`c3683c6a`), 2 loads, invoices name it. Duplicate (`99bbb870`) deactivated with merge pointer. ✓
 
+
+---
+
+## CC-1 443.207 P0 FIX — TRUCK LINE 500 — 2026-10-21 ~21:25Z
+
+**PR #27084** `Claude-1- 443.207 P0: Fix Truck Line 500 — merge duplicate available rows by unit_id`
+
+**Root cause (confirmed):** Two free drivers whose most-recent load was on T152 each appeared as a separate row in `availableBuilt`, both with `unit_id = 19d29860-...`. `groupTruckLineByUnit` pushed both as top-level groups → `assertUniqueUnitIds` threw `truck_line_duplicate_top_level_unit:19d29860-...` → HTTP 500 on every `GET /api/v1/dispatch/truck-line`.
+
+**Fix:**
+- `group-by-unit.ts`: `availableByUnit` Map merges rows sharing the same `unit_id` — one group per unit, all free-driver rows in `legs[]`. `assertUniqueUnitIds` stays as post-merge invariant.
+- `truck-line.routes.ts`: Logs `truck_line_available_duplicate_unit_merged` as server error for observability — board still returns 200.
+- `__tests__/group-by-unit.test.ts`: Fail-old test — two available rows same unit_id → 1 group, 2 legs (threw on main before fix).
+- `scripts/verify-truck-line-unit-top-level-unique.mjs`: Static check for `availableByUnit` + planted selftest (14/14).
+
+**Preflight:** guard OK · selftest 14/14 · verify:static inherited reds only (4 pre-existing DB-gated failures unrelated to this PR) · LANE: NON-FINANCIAL
+
+**Status:** CI pending on PR #27084. Fast-merge on green → deploy → LIVE PROOF posted below.
