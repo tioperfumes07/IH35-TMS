@@ -15,6 +15,11 @@ import {
   type NamesMasterRow,
   validationError,
 } from "./names-master.shared.js";
+import { strictListQuery } from "../lib/strict-query.js";
+
+// LEAD 443.219 G-STRICT — unknown query params: 400 outside production, logged + stripped in production (one rule).
+const strictNamesSearchQuerySchema = strictListQuery(namesSearchQuerySchema, "GET /api/v1/lists/names/search");
+const strictNamesCountsQuerySchema = strictListQuery(namesCountsQuerySchema, "GET /api/v1/lists/names/counts");
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -234,7 +239,7 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
   app.get("/api/v1/lists/names/search", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return reply;
-    const parsed = namesSearchQuerySchema.safeParse(req.query ?? {});
+    const parsed = strictNamesSearchQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const { q, type, limit, offset, include_archived, operating_company_id } = parsed.data;
     // Per-type fetch ceiling: each entity type is queried independently, then all buckets are
@@ -270,7 +275,7 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
   app.get("/api/v1/lists/names/counts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return reply;
-    const parsed = namesCountsQuerySchema.safeParse(req.query ?? {});
+    const parsed = strictNamesCountsQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const { operating_company_id, include_archived } = parsed.data;
     const archivedCustomers = include_archived

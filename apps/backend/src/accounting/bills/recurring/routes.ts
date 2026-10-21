@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { strictListQuery } from "../../../lib/strict-query.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { assertCompanyMembership } from "../../../_helpers/company-membership-guard.js";
@@ -48,6 +49,8 @@ const listQuerySchema = companyQuerySchema.extend({
   active_only: z.coerce.boolean().optional().default(false),
   due_soon: z.coerce.boolean().optional().default(false),
 });
+// LEAD 443.219 G-STRICT — unknown query params: 400 outside production, logged + stripped in production (one rule).
+const strictListQuerySchema = strictListQuery(listQuerySchema, "GET /api/v1/accounting/recurring-bill-templates");
 
 const generationLogQuerySchema = companyQuerySchema.extend({
   template_uuid: z.string().uuid().optional(),
@@ -109,7 +112,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const query = listQuerySchema.safeParse(req.query);
+    const query = strictListQuerySchema.safeParse(req.query);
     if (!query.success) return validationError(reply, query.error);
 
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
