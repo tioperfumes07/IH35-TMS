@@ -15,7 +15,7 @@ import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createExpenseFromFuelTransaction, resolveFuelLineAccount, adoptRelayFillExpenseDocument, fillRelayFillExpenseSettlementRef } from "../fuel/fuel-expense-document.service.js";
 import { enteredFuelRowHash, FuelProviderTransactionDuplicateError, refuseDuplicateProviderTransaction } from "../fuel/fuel-provider-reference.js";
-import { findReceivedCardFillToAdopt } from "./creator-received-fill-adoption.js";
+import { findReceivedCardFillByShape, findReceivedCardFillToAdopt, SHAPE_ADOPTION_CARDS } from "./creator-received-fill-adoption.js";
 import { resolveLineItemAndAccount, type ResolvedLineAccount } from "../accounting/line-item-account.js";
 import {
   createDriverCashAdvanceCore,
@@ -45,6 +45,7 @@ import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-consta
 import { resolveDeductionPostingAccount } from "./settlement-lines-materialize.service.js";
 import { stampCreatorExpenseSettlementNo } from "./settlement-creator-expense-settlement-no.js";
 import { creatorPreflightRefusals } from "./settlement-creator-preflight.js";
+import { fuelPurchaseNetAndFeeCents } from "./settlement-creator-fuel-amount.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { deliverLoadThroughDispatch, stampStopsFromTracking } from "./settlement-creator-deliver.js";
 import { afterCommitMark, afterCommitRollbackTo } from "../lib/after-commit.js";
@@ -168,22 +169,6 @@ export async function stampExpensePosted(client: DbClient, companyId: string, ex
     [companyId, expenseId, journalEntryId],
   );
   if (r.rowCount !== 1) throw new SettlementCreatorError("expense_post_stamp_failed", `Expense ${expenseId}: posted but its header could not be stamped posted.`);
-}
-
-function fuelPurchaseNetAndFeeCents(fuel: {
-  receipt_cents?: number | null;
-  gallons?: number | null;
-  cpg_cents?: number | null;
-  fees_cents?: number | null;
-  discount_cents?: number | null;
-}): { netCents: number; feeCents: number } {
-  const feeCents = Math.max(0, Math.round(Number(fuel.fees_cents || 0)));
-  const netCents =
-    fuel.receipt_cents != null
-      ? Math.round(Number(fuel.receipt_cents))
-      : Math.round(Number(fuel.gallons || 0) * Number(fuel.cpg_cents || 0)) -
-        Math.round(Number(fuel.discount_cents || 0));
-  return { netCents, feeCents };
 }
 
 /**
@@ -1503,7 +1488,24 @@ export async function postSettlementCreatorInClientTx(
           loadId,
         })
       : null;
-    const reused = priorReused ?? adoptedReceipt;
+    // LEAD 443.202 — a WEX line prints the station's receipt number, never WEX's invoice: the fill the England WEX statement
+    // already received is found by its shape (card, product, truck / load, day ±1, amount, gallons) and ADOPTED; received
+    // but not adoptable here (another load, already settled) is refused by name — never a second row for one purchase.
+    let shapeAdopted: string | null = null;
+    if (!priorReused && !adoptedReceipt && SHAPE_ADOPTION_CARDS.has(fuel.card)) {
+      const shape = await findReceivedCardFillByShape(client, {
+        operatingCompanyId: draft.operating_company_id, card: fuel.card, fuelType: fuel.fuel_type ?? "diesel", loadId,
+        unitId: fillLoad.unitId ?? null, date: fuel.date, amountCents: netCents, gallons: fuel.gallons ?? null,
+      });
+      if (shape.blocking) {
+        throw new SettlementCreatorError(
+          "card_fill_already_received",
+          `Fuel line ${fuel.date}: the ${fuel.card.toUpperCase()} statement already received this purchase (fuel transaction ${shape.blocking.id}) but ${shape.blocking.reason}.`,
+        );
+      }
+      shapeAdopted = shape.adopt;
+    }
+    const reused = priorReused ?? adoptedReceipt ?? shapeAdopted;
     const relayRowsThisPost = fuel.card === "relay" && fuel.relay_transaction_id ? relayRowsByTxn.get(fuel.relay_transaction_id) ?? null : null;
     if (!reused && fuel.card !== "relay") try {
       await refuseDuplicateProviderTransaction(client, {

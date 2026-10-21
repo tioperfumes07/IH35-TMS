@@ -93,7 +93,7 @@ function excelWallClockToCompanyInstant(value: Date): Date {
   ).toJSDate();
 }
 
-function readGatedCsvText(buffer: Buffer): Record<string, unknown>[] {
+function readGatedCsvText(buffer: Buffer, csvText = false): Record<string, unknown>[] {
   let text = buffer.toString("utf8").replace(/^\uFEFF/, "");
   const firstLine = text.split(/\r?\n/, 1)[0] ?? "";
   const separatorDirective = /^sep=(.)\r?\n/i.exec(text);
@@ -158,7 +158,8 @@ function readGatedCsvText(buffer: Buffer): Record<string, unknown>[] {
   return parsedRows.map((values) => {
     const mapped: Record<string, unknown> = {};
     headers.forEach((header, index) => {
-      mapped[header] = coerceLegacyCsvValue(values[index] ?? "");
+      const value = values[index] ?? "";
+      mapped[header] = csvText ? (value === "" ? null : value) : coerceLegacyCsvValue(value);
     });
     return mapped;
   });
@@ -229,7 +230,12 @@ function countUnquotedDelimiter(line: string, delimiter: string): number {
 export async function readUntrustedSpreadsheetRows(
   buffer: Buffer,
   filename: string,
-  options?: { cellDates?: boolean }
+  /**
+   * csvText (LEAD 443.202): a .csv cell is returned as the text the provider printed ("" -> null) instead of the legacy
+   * coercion — an invoice "05661" stays "05661" (not 5661) and a date "2026-10-11" stays a date string (not an Excel
+   * serial). The .xlsx path is unchanged.
+   */
+  options?: { cellDates?: boolean; csvText?: boolean }
 ): Promise<Record<string, unknown>[]> {
   const kind = validateSpreadsheetUploadBytes(buffer, filename);
 
@@ -242,7 +248,7 @@ export async function readUntrustedSpreadsheetRows(
   }
 
   if (kind === "csv") {
-    return readGatedCsvText(buffer);
+    return readGatedCsvText(buffer, options?.csvText === true);
   }
 
   throw new SpreadsheetUploadRejectedError("unsupported_extension", "Unsupported spreadsheet extension");

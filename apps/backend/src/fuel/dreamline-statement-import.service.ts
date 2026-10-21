@@ -29,9 +29,19 @@
  * Fees: the per-fill "Fees" column is not part of any Dreamline invoice total (the invoices bill products only), so
  * posting it would break the 2510 invoice tie. Counted, never posted (443.142 report).
  * Caller owns the transaction (all-or-nothing). dry_run computes the same plan and the caller rolls back.
+ *
+ * LEAD 443.202 — ONE statement engine for every fuel CARD whose provider exports this layout. England Logistics' WEX
+ * card (owner 2026-10-21: "england wex gets paid from our bank account") exports the same columns (Card #, Tran Date,
+ * Tran Time, Invoice, Unit, Driver Name, … Item ULSD/DEFD, Unit Price, Disc PPU, Qty, Disc Amt, Amt), so it runs this
+ * walk with its own rail (FuelCardStatementRail: card type WEX, role fuel_card_payable_wex -> 2520, its own line hash and
+ * adoption marker). The card payable is resolved BY ROLE for every rail; a receipt on any OTHER fuel rail (the Relay
+ * wallet, the other card) is cross_rail. A Settlement Creator receipt already on the card (Creator card 'wex', receipt =
+ * the card charge) is ADOPTED — never a second row — and the summary names its settlement.
  */
 import { findLiveFuelByProviderTransactionId } from "./fuel-provider-reference.js";
 import crypto from "node:crypto";
+import { DateTime } from "luxon";
+import { COMPANY_TIME_ZONE } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { insertPostingLineWithSpine } from "../accounting/posting-line-writer.js";
 import { ensureOpenPeriod } from "../accounting/posting-engine.service.js";
@@ -44,7 +54,7 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { createExpenseInClientTx } from "../accounting/expense-writer.service.js";
 import { postExpenseDocumentInClientTx } from "../accounting/expense-writer.service.js";
 import { resolveFuelLoadAtTime, resolveFillDriverAtTime } from "./fuel-load-at-time.js";
-import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-roles/resolver.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -59,6 +69,73 @@ export const RECEIPT_BELOW_CARD_TOLERANCE_CENTS = 100;
 /** An adopted receipt may differ from the pump retail by rounding / a mistyped receipt; above this it is listed, not corrected. */
 export const MAX_RECEIPT_RESIDUAL_PCT = 5;
 const SCALE_ITEM = "OTR-Scale Expense";
+
+/** One fuel card whose provider statement this engine reconciles (LEAD 443.202). */
+export type FuelCardStatementRail = {
+  /** stable key: line hash / adoption marker / idempotency-key prefix */
+  key: "dreamline" | "wex";
+  label: string;
+  card_type_code: string;
+  payable_role: CoaRole;
+  /** every OTHER fuel rail a receipt of the same purchase may sit on (listed cross_rail, never adopted) */
+  other_rail_roles: CoaRole[];
+  start_date: string;
+  /** adoption marker prefix written in the receipt's notes */
+  marker_prefix: string;
+  /** notes tag on a fuel row this import writes (such a row is never a candidate to adopt another line) */
+  notes_tag: string;
+  /** vendor document number prefix of an expense this import writes */
+  document_prefix: string;
+  audit_event: string;
+  audit_tag: string;
+  /**
+   * how far a line may reach for ANOTHER truck's receipt: "any_truck" (Dreamline — stale unit labels: exact amount, else
+   * the only receipt within 3%) or "any_truck_exact" (WEX — the export prints the truck the driver keys in; another
+   * truck's receipt only at the exact amount. Measured 10-21 on a prod fork: the 3% fallback paired 4 real WEX fills of
+   * T171 / T176 with T173 / T170 Relay receipts and listed them cross_rail, never posted).
+   */
+  any_truck_scope: "any_truck" | "any_truck_exact";
+  /** match the driver by the name the card prints (Dreamline) — else the truck's assignment at the fill time */
+  driver_from_file_name: boolean;
+};
+
+export const DREAMLINE_STATEMENT_RAIL: FuelCardStatementRail = {
+  key: "dreamline",
+  label: "Dreamline",
+  card_type_code: DREAMLINE_CARD_TYPE_CODE,
+  payable_role: "fuel_card_payable_dreamline",
+  other_rail_roles: ["fuel_wallet_relay", "fuel_card_payable_wex"],
+  start_date: DREAMLINE_USMCA_START_DATE,
+  marker_prefix: "dreamline_efs",
+  notes_tag: "443.142 Dreamline statement",
+  document_prefix: "EFS-",
+  audit_event: DREAMLINE_STATEMENT_EVENT,
+  audit_tag: "LEAD-443.142",
+  driver_from_file_name: true,
+  any_truck_scope: "any_truck",
+};
+
+/**
+ * England Logistics WEX card (LEAD 443.202). No start cutoff (empty start_date): the card is USMCA's own (owner
+ * 2026-10-21), never shared with Transportation like the Dreamline account before 08-03.
+ */
+export const WEX_STATEMENT_RAIL: FuelCardStatementRail = {
+  key: "wex",
+  label: "England WEX",
+  card_type_code: "WEX",
+  payable_role: "fuel_card_payable_wex",
+  other_rail_roles: ["fuel_wallet_relay", "fuel_card_payable_dreamline"],
+  start_date: "",
+  marker_prefix: "wex_inv",
+  notes_tag: "443.202 England WEX statement",
+  document_prefix: "WEX-",
+  audit_event: "fuel.wex_statement_imported",
+  audit_tag: "LEAD-443.202",
+  driver_from_file_name: false,
+  any_truck_scope: "any_truck_exact",
+};
+
+const STATEMENT_RAILS = [DREAMLINE_STATEMENT_RAIL, WEX_STATEMENT_RAIL];
 
 export type DreamlineProduct = "diesel" | "reefer_diesel" | "def" | "scale" | "other";
 
@@ -106,6 +183,8 @@ export type DreamlineLineResult = {
   fuel_transaction_id?: string | null;
   difference_cents?: number;
   reason?: string;
+  /** an adopted receipt that sits on a settlement (Settlement Creator) — the line is that settlement's fill */
+  settlement_no?: string | null;
 };
 
 export type DreamlineImportSummary = {
@@ -159,6 +238,27 @@ function companyLocalDate(d: Date): string {
 }
 
 /**
+ * LEAD 443.202 — the fill instant + its printed local date. An .xlsx export arrives as a Date (cellDates: the reader
+ * places the wall clock in the company zone); the WEX .csv export prints "2026-10-11" (or 10/11/2026) in Tran Date and
+ * "00:15" in Tran Time — read as company-zone wall clock, the printed date kept as the local date.
+ */
+export function statementInstant(dateCell: unknown, timeCell: unknown): { at: Date; local_date: string } | null {
+  if (dateCell instanceof Date && !Number.isNaN(dateCell.getTime())) return { at: dateCell, local_date: companyLocalDate(dateCell) };
+  const text = typeof dateCell === "string" ? dateCell.trim() : "";
+  const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  const mdy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text);
+  const [y, mo, d] = ymd ? [Number(ymd[1]), Number(ymd[2]), Number(ymd[3])] : mdy ? [Number(mdy[3]), Number(mdy[1]), Number(mdy[2])] : [NaN, NaN, NaN];
+  if (!Number.isFinite(y)) return null;
+  const hm = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(typeof timeCell === "string" ? timeCell.trim() : "");
+  const wall = DateTime.fromObject(
+    { year: y, month: mo, day: d, hour: hm ? Number(hm[1]) : 12, minute: hm ? Number(hm[2]) : 0, second: hm?.[3] ? Number(hm[3]) : 0 },
+    { zone: COMPANY_TIME_ZONE }
+  );
+  if (!wall.isValid) return null;
+  return { at: wall.toJSDate(), local_date: wall.toISODate()! };
+}
+
+/**
  * Pure: the Dreamline export's "Discounted" sheet rows (header in row 1, read with cellDates) -> statement lines.
  * Amt = what the card charged; Disc Amt = the discount; gross (pump retail) = Amt + Disc Amt.
  */
@@ -171,12 +271,12 @@ export function parseDreamlineStatementRows(rawRows: Record<string, unknown>[]):
   rawRows.forEach((raw, idx) => {
     const line_number = idx + 2;
     const card = pick(raw, ["Card #", "card_number", "card"]);
-    const when = pick(raw, ["Tran Date", "transaction_date"]);
+    const when = statementInstant(pick(raw, ["Tran Date", "transaction_date"]), pick(raw, ["Tran Time"]));
     const invoice = pick(raw, ["Invoice", "Invoice Number"]);
     const item = pick(raw, ["Item"]);
     const amt = num(pick(raw, ["Amt", "Amount"]));
     const discAmt = num(pick(raw, ["Disc Amt"])) ?? 0;
-    if (!card || !(when instanceof Date) || !invoice || !item || amt === null) {
+    if (!card || !when || !invoice || !item || amt === null) {
       if (card || invoice) dead_letters.push({ line_number, reason: "missing card / tran date / invoice / item / amount" });
       return;
     }
@@ -189,8 +289,8 @@ export function parseDreamlineStatementRows(rawRows: Record<string, unknown>[]):
     lines.push({
       line_number,
       card_number: String(card).trim(),
-      transaction_at: when.toISOString(),
-      local_date: companyLocalDate(when),
+      transaction_at: when.at.toISOString(),
+      local_date: when.local_date,
       efs_invoice: String(invoice).trim(),
       unit_label: pick(raw, ["Unit"]) != null ? String(pick(raw, ["Unit"])).trim() : null,
       driver_name: pick(raw, ["Driver Name"]) != null ? String(pick(raw, ["Driver Name"])).trim() : null,
@@ -213,15 +313,23 @@ export function parseDreamlineStatementRows(rawRows: Record<string, unknown>[]):
 }
 
 /** Stable identity of one statement product line: provider + card + EFS invoice + product (+ position on the receipt). */
-export function dreamlineLineHash(line: Pick<DreamlineStatementLine, "card_number" | "efs_invoice" | "item" | "transaction_at">, seq: number): string {
+export function dreamlineLineHash(
+  line: Pick<DreamlineStatementLine, "card_number" | "efs_invoice" | "item" | "transaction_at">,
+  seq: number,
+  rail: FuelCardStatementRail = DREAMLINE_STATEMENT_RAIL
+): string {
   return crypto
     .createHash("sha256")
-    .update(`dreamline:${line.card_number}:${line.efs_invoice}:${line.transaction_at}:${line.item}:${seq}`)
+    .update(`${rail.key}:${line.card_number}:${line.efs_invoice}:${line.transaction_at}:${line.item}:${seq}`)
     .digest("hex");
 }
 
-export function dreamlineAdoptMarker(line: Pick<DreamlineStatementLine, "efs_invoice" | "item">, seq: number): string {
-  return `dreamline_efs=${line.efs_invoice}:${line.item}:${seq}`;
+export function dreamlineAdoptMarker(
+  line: Pick<DreamlineStatementLine, "efs_invoice" | "item">,
+  seq: number,
+  rail: FuelCardStatementRail = DREAMLINE_STATEMENT_RAIL
+): string {
+  return `${rail.marker_prefix}=${line.efs_invoice}:${line.item}:${seq}`;
 }
 
 /**
@@ -279,47 +387,66 @@ export type BookedReceipt = {
   unit_norm: string;
   kind: "diesel" | "reefer_diesel" | "def" | "scale" | "other";
   cents: number;
-  rail: "2510" | "1295";
+  /** "card" = paid from THIS statement's card payable; "other_rail" = the same purchase on another fuel rail */
+  rail: "card" | "other_rail";
   fuel_transaction_id: string | null;
   notes: string | null;
+  /** the settlement the receipt is on (Settlement Creator), when it is */
+  settlement_no?: string | null;
 };
 
 const unitNorm = (u: string | null | undefined) => String(u ?? "").trim().toUpperCase().replace(/^T/, "");
 const dayDiff = (a: string, b: string) => Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000;
 
-async function loadBookedReceipts(client: DbClient, companyId: string, from: string, to: string): Promise<BookedReceipt[]> {
-  // LEAD 443.187 — the two fuel rails are RESOLVED BY ROLE (never by account number): fuel_card_payable_dreamline (the
-  // card, rail label "2510") and fuel_wallet_relay (the wallet, rail label "1295"). Prod maps each role to exactly the
-  // 2510 / 1295 account the old literal matched. An unbound role contributes no receipts.
-  const cardAccountId = await resolveRoleAccountOptional(client as never, companyId, "fuel_card_payable_dreamline");
-  const walletAccountId = await resolveRoleAccountOptional(client as never, companyId, "fuel_wallet_relay");
-  if (!cardAccountId && !walletAccountId) return [];
+async function loadBookedReceipts(
+  client: DbClient,
+  companyId: string,
+  from: string,
+  to: string,
+  rail: FuelCardStatementRail = DREAMLINE_STATEMENT_RAIL
+): Promise<BookedReceipt[]> {
+  // LEAD 443.187 — the fuel rails are RESOLVED BY ROLE (never by account number). LEAD 443.202 — per statement rail: the
+  // statement's own card payable (rail label "card": Dreamline fuel_card_payable_dreamline -> 2510, England WEX
+  // fuel_card_payable_wex -> 2520) and every OTHER fuel rail (label "other_rail": the Relay wallet 1295, the other card).
+  // An unbound role contributes no receipts.
+  const cardAccountId = await resolveRoleAccountOptional(client as never, companyId, rail.payable_role);
+  const otherIds: string[] = [];
+  for (const role of rail.other_rail_roles) {
+    const id = await resolveRoleAccountOptional(client as never, companyId, role);
+    if (id) otherIds.push(id);
+  }
+  if (!cardAccountId && otherIds.length === 0) return [];
+  // a document ANY statement import created is never a candidate to adopt another statement line
+  const importTags = STATEMENT_RAILS.map((r) => `%${r.notes_tag}%`);
+  const importPrefixes = STATEMENT_RAILS.map((r) => `${r.document_prefix}%`);
   const res = await client.query<{
     expense_id: string; expense_number: string | null; d: string; unit_number: string | null; fuel_type: string | null;
-    accts: string[] | null; cents: string; rail: "2510" | "1295"; fuel_transaction_id: string | null; notes: string | null;
+    accts: string[] | null; cents: string; rail: "card" | "other_rail"; fuel_transaction_id: string | null; notes: string | null;
+    settlement_no: string | null;
   }>(
     `SELECT e.id::text AS expense_id, e.expense_number, e.transaction_date::text AS d, u.unit_number,
             ft.fuel_type::text AS fuel_type,
             (SELECT array_agg(DISTINCT la.account_number) FROM accounting.expense_lines l
                JOIN catalogs.accounts la ON la.id = l.expense_account_uuid AND la.operating_company_id = e.operating_company_id
               WHERE l.expense_id = e.id) AS accts,
-            e.total_amount_cents::text AS cents, (CASE pa.id WHEN $4::uuid THEN '2510' ELSE '1295' END) AS rail,
-            e.source_fuel_transaction_id::text AS fuel_transaction_id, ft.notes
+            e.total_amount_cents::text AS cents,
+            (CASE WHEN pa.id = $4::uuid THEN 'card' ELSE 'other_rail' END) AS rail,
+            e.source_fuel_transaction_id::text AS fuel_transaction_id, ft.notes,
+            COALESCE(e.settlement_no::text, e.source_settlement_ref::text) AS settlement_no
        FROM accounting.expenses e
        JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid AND pa.operating_company_id = e.operating_company_id
-                                AND pa.id IN ($4::uuid, $5::uuid)
+                                AND (pa.id = $4::uuid OR pa.id = ANY($5::uuid[]))
        -- the unit counts only when the expense's company owns or leases it (the load-unit.sql.ts rule)
        LEFT JOIN mdata.units u ON u.id = e.unit_id
                               AND (u.owner_company_id = e.operating_company_id OR u.currently_leased_to_company_id = e.operating_company_id)
        LEFT JOIN fuel.fuel_transactions ft ON ft.id = e.source_fuel_transaction_id
       WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.deleted_at IS NULL
         AND e.posting_status = 'posted'
-        -- a document this statement import created is never a candidate to adopt another statement line
-        AND coalesce(ft.notes, '') NOT LIKE '%443.142 Dreamline statement%'
-        AND coalesce(e.vendor_document_number, '') NOT LIKE 'EFS-%'
+        AND NOT (coalesce(ft.notes, '') LIKE ANY ($6::text[]))
+        AND NOT (coalesce(e.vendor_document_number, '') LIKE ANY ($7::text[]))
         AND e.transaction_date BETWEEN ($2::date - 1) AND ($3::date + 1)
       ORDER BY e.transaction_date, e.expense_number, e.id`,
-    [companyId, from, to, cardAccountId, walletAccountId]
+    [companyId, from, to, cardAccountId, otherIds, importTags, importPrefixes]
   );
   return res.rows.map((r) => {
     const accts = r.accts ?? [];
@@ -332,6 +459,7 @@ async function loadBookedReceipts(client: DbClient, companyId: string, from: str
     return {
       expense_id: r.expense_id, expense_number: r.expense_number, d: r.d, unit_norm: unitNorm(r.unit_number), kind,
       cents: Number(r.cents), rail: r.rail, fuel_transaction_id: r.fuel_transaction_id, notes: r.notes,
+      settlement_no: r.settlement_no ?? null,
     };
   });
 }
@@ -341,7 +469,7 @@ async function loadBookedReceipts(client: DbClient, companyId: string, from: str
  * receipts near the amount, or (the fallback) any truck. The import runs the two same-truck scopes over the WHOLE
  * statement before any line may take another truck's receipt (planDreamlineSameTruckAdoptions).
  */
-export type DreamlineMatchScope = "same_truck_exact" | "same_truck" | "any_truck";
+export type DreamlineMatchScope = "same_truck_exact" | "same_truck" | "any_truck_exact" | "any_truck";
 
 /**
  * Pure matcher: statement fuel line -> the booked receipt that is the same purchase. Deterministic (file order, then
@@ -369,6 +497,7 @@ export function matchBookedReceipt(
   const anyTruck = booked.filter(near);
   const p3 = anyTruck.filter(exact).sort(rank);
   if (p3[0]) return p3[0];
+  if (scope === "any_truck_exact") return null;
   const p4 = anyTruck.filter((b) => Math.abs(b.cents - line.gross_cents) <= Math.max(100, 0.03 * line.gross_cents));
   return p4.length === 1 ? p4[0]! : null;
 }
@@ -392,7 +521,7 @@ export function planDreamlineSameTruckAdoptions(
     for (const line of candidates) {
       if (plan.has(line)) continue;
       const hit = matchBookedReceipt(line, booked, used, scope);
-      if (!hit || hit.rail !== "2510" || dreamlineAdoptionRefused(hit.cents, line)) continue;
+      if (!hit || hit.rail !== "card" || dreamlineAdoptionRefused(hit.cents, line)) continue;
       plan.set(line, hit);
       used.add(hit.expense_id);
     }
@@ -410,15 +539,6 @@ export function dreamlineAdoptionRefused(receiptCents: number, line: Pick<Dreaml
   const residual = receiptCents - line.gross_cents;
   return diff < -RECEIPT_BELOW_CARD_TOLERANCE_CENTS
     || Math.abs(residual) > Math.max(RECEIPT_BELOW_CARD_TOLERANCE_CENTS, MAX_RECEIPT_RESIDUAL_PCT * line.gross_cents / 100);
-}
-
-async function companyAccountId(client: DbClient, companyId: string, number: string): Promise<string> {
-  const r = await client.query<{ id: string }>(
-    `SELECT id::text FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = $2 AND deactivated_at IS NULL LIMIT 1`,
-    [companyId, number]
-  );
-  if (!r.rows[0]) throw new Error(`dreamline_import_account_missing:${number}`);
-  return r.rows[0].id;
 }
 
 async function itemAccount(client: DbClient, companyId: string, itemName: string): Promise<{ item_id: string; account_id: string }> {
@@ -439,8 +559,9 @@ async function itemAccount(client: DbClient, companyId: string, itemName: string
  */
 export async function postStatementDifference(
   client: DbClient,
-  input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string }
+  input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string; rail?: FuelCardStatementRail }
 ): Promise<string | null> {
+  const rail = input.rail ?? DREAMLINE_STATEMENT_RAIL;
   // LEAD (verify-costs-are-expenses-not-handwritten-jes): the card charged MORE than the receipt — a COST (Dr Fuel Card
   // Discount / Cr 2510). A cost is an expense document, never a handwritten journal entry: it goes through THE expense
   // writer (createExpenseInClientTx, same as the statement scale ticket), carrying the receipt's vendor, load, driver,
@@ -449,11 +570,11 @@ export async function postStatementDifference(
   const prior = await client.query<{ je: string }>(
     `SELECT journal_entry_uuid::text AS je FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid AND idempotency_key = ANY($2::text[]) LIMIT 1`,
-    [input.companyId, [`dreamline-statement:${input.companyId}:${input.marker}:debit`, `dreamline-statement:${input.companyId}:${input.marker}:credit`]]
+    [input.companyId, [`${rail.key}-statement:${input.companyId}:${input.marker}:debit`, `${rail.key}-statement:${input.companyId}:${input.marker}:credit`]]
   );
   if (prior.rows[0]) return null;
   await ensureOpenPeriod(client as never, input.companyId, input.date);
-  const memo = `Dreamline statement ${input.marker} — ${FUEL_CARD_DISCOUNT_ITEM}`;
+  const memo = `${rail.label} statement ${input.marker} — ${FUEL_CARD_DISCOUNT_ITEM}`;
   const typeId = (await hasJournalEntryTypeColumn(client as never))
     ? await resolveJournalEntryTypeId(client as never, { source: "auto", memo })
     : null;
@@ -484,7 +605,7 @@ export async function postStatementDifference(
       operating_company_id: input.companyId, journal_entry_uuid: jeId, line_sequence: seq, account_id,
       debit_or_credit: side, amount_cents: magnitude,
       description: `${FUEL_CARD_DISCOUNT_ITEM} — ${input.marker} (${role})`,
-      idempotency_key: `dreamline-statement:${input.companyId}:${input.marker}:${side}`,
+      idempotency_key: `${rail.key}-statement:${input.companyId}:${input.marker}:${side}`,
       source_transaction_type: "expense", source_transaction_id: input.expenseId, class_id: classId,
       relationship_role: "fuel_card_discount",
     });
@@ -495,8 +616,9 @@ export async function postStatementDifference(
 /** The card charged more than the receipt: an expense document (Dr Fuel Card Discount / Cr 2510) through the writer. */
 export async function postStatementCostDifferenceAsExpense(
   client: DbClient,
-  input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string }
+  input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string; rail?: FuelCardStatementRail }
 ): Promise<string | null> {
+  const rail = input.rail ?? DREAMLINE_STATEMENT_RAIL;
   const r = (await client.query<{ vendor: string | null; load_id: string | null; driver: string | null; unit_id: string | null; trailer_id: string | null }>(
     `SELECT vendor_uuid::text AS vendor, load_id::text, driver_uuid::text AS driver, unit_id::text, trailer_id::text
        FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
@@ -519,7 +641,7 @@ export async function postStatementCostDifferenceAsExpense(
     ...(r.load_id ? { load_id: r.load_id } : {}),
     // the trailer is the LOAD's (the writer's load attribution) — never the receipt's older stamp
     vendor_document_number: `${input.marker}-CARD-DIFF`.slice(0, 120),
-    memo: `Dreamline statement ${input.marker} — card charged ${cents} cents more than receipt (${FUEL_CARD_DISCOUNT_ITEM})`,
+    memo: `${rail.label} statement ${input.marker} — card charged ${cents} cents more than receipt (${FUEL_CARD_DISCOUNT_ITEM})`,
     is_company_expense: true,
   } as never, input.actor);
   const dup = created as { duplicateVendorDocumentNumber?: boolean; duplicateSubmission?: boolean };
@@ -603,28 +725,49 @@ export async function importDreamlineStatement(
   client: DbClient,
   input: { operating_company_id: string; actor_user_uuid: string; lines: DreamlineStatementLine[]; start_date?: string; dry_run?: boolean }
 ): Promise<DreamlineImportSummary> {
+  return importFuelCardStatement(client, { ...input, rail: DREAMLINE_STATEMENT_RAIL });
+}
+
+/** LEAD 443.202 — the England Logistics WEX card statement (owner's TransactionReport export) through the same walk. */
+export async function importWexStatement(
+  client: DbClient,
+  input: { operating_company_id: string; actor_user_uuid: string; lines: DreamlineStatementLine[]; dry_run?: boolean }
+): Promise<DreamlineImportSummary> {
+  return importFuelCardStatement(client, { ...input, rail: WEX_STATEMENT_RAIL });
+}
+
+export async function importFuelCardStatement(
+  client: DbClient,
+  input: {
+    operating_company_id: string; actor_user_uuid: string; lines: DreamlineStatementLine[]; start_date?: string; dry_run?: boolean;
+    rail: FuelCardStatementRail;
+  }
+): Promise<DreamlineImportSummary> {
+  const rail = input.rail;
   const companyId = input.operating_company_id;
-  const start = input.start_date ?? DREAMLINE_USMCA_START_DATE;
+  const start = input.start_date ?? rail.start_date;
   const dry = input.dry_run === true;
   const ctx = { operating_company_id: companyId, user_uuid: input.actor_user_uuid };
   if (!dry) {
     if (!(await isEnabled(client as never, FUEL_POSTS_ON_RECEIPT_FLAG_KEY, ctx)) || !(await isEnabled(client as never, EXPENSE_GL_POSTING_FLAG_KEY, ctx))) {
-      throw new Error("dreamline_import_requires_posting_on_receipt: FUEL_POSTS_ON_RECEIPT_ENABLED and EXPENSE_GL_POSTING_ENABLED must be ON");
+      throw new Error(`${rail.key}_import_requires_posting_on_receipt: FUEL_POSTS_ON_RECEIPT_ENABLED and EXPENSE_GL_POSTING_ENABLED must be ON`);
     }
   }
   const cardType = (await client.query<{ id: string }>(
     `SELECT id::text FROM catalogs.fuel_card_types WHERE operating_company_id = $1::uuid AND code = $2 AND is_active LIMIT 1`,
-    [companyId, DREAMLINE_CARD_TYPE_CODE]
+    [companyId, rail.card_type_code]
   )).rows[0];
-  if (!cardType) throw new Error("dreamline_card_type_missing");
-  const payableId = await companyAccountId(client, companyId, "2510");
+  if (!cardType) throw new Error(`${rail.key}_card_type_missing`);
+  // LEAD 443.202 — the card payable BY ROLE (Dreamline -> 2510, England WEX -> 2520); unbound fails closed.
+  const payableId = await resolveRoleAccountOptional(client as never, companyId, rail.payable_role);
+  if (!payableId) throw new Error(`${rail.key}_import_account_missing:${rail.payable_role}`);
   const discount = await itemAccount(client, companyId, FUEL_CARD_DISCOUNT_ITEM);
   const scaleItem = await itemAccount(client, companyId, SCALE_ITEM);
 
   const lines = [...input.lines].sort((a, b) => a.transaction_at.localeCompare(b.transaction_at) || a.line_number - b.line_number);
   const usmca = lines.filter((l) => l.local_date >= start);
   const dates = usmca.map((l) => l.local_date).sort();
-  const booked = dates.length ? await loadBookedReceipts(client, companyId, dates[0]!, dates[dates.length - 1]!) : [];
+  const booked = dates.length ? await loadBookedReceipts(client, companyId, dates[0]!, dates[dates.length - 1]!, rail) : [];
   const used = new Set<string>();
   const summary: DreamlineImportSummary = {
     lines: lines.length,
@@ -670,9 +813,10 @@ export async function importDreamlineStatement(
   };
   const adoptedMarkers = new Map<string, string>();
   for (const b of booked) {
-    for (const m of (b.notes ?? "").match(/dreamline_efs=[^;\s]+/g) ?? []) adoptedMarkers.set(m, b.expense_id);
+    for (const m of (b.notes ?? "").match(new RegExp(`${rail.marker_prefix}=[^;\\s]+`, "g")) ?? []) adoptedMarkers.set(m, b.expense_id);
   }
-  for (const b of booked) if ((b.notes ?? "").includes("dreamline_efs=")) used.add(b.expense_id);
+  // a receipt ANY statement line adopted is that line's purchase
+  for (const b of booked) if (STATEMENT_RAILS.some((r) => (b.notes ?? "").includes(`${r.marker_prefix}=`))) used.add(b.expense_id);
 
   // Each line's position on its receipt (seq), stable identity (hash) and adoption marker — computed once, in file order.
   const keyed = lines.map((line) => {
@@ -680,7 +824,7 @@ export async function importDreamlineStatement(
     const seqKey = `${fillKey}|${line.item}`;
     const seq = (seqOf.get(seqKey) ?? 0) + 1;
     seqOf.set(seqKey, seq);
-    return { line, fillKey, seq, hash: dreamlineLineHash(line, seq), marker: dreamlineAdoptMarker(line, seq) };
+    return { line, fillKey, seq, hash: dreamlineLineHash(line, seq, rail), marker: dreamlineAdoptMarker(line, seq, rail) };
   });
   // LEAD 443.196 — same truck first, across the whole statement: every line's own-truck receipt is reserved before any
   // line may fall back to another truck's receipt (the inline fallback below).
@@ -702,21 +846,21 @@ export async function importDreamlineStatement(
     }
 
     if (line.product === "scale") {
-      const hit = booked.find((b) => !used.has(b.expense_id) && b.rail === "2510" && b.kind === "other"
+      const hit = booked.find((b) => !used.has(b.expense_id) && b.rail === "card" && b.kind === "other"
         && Math.abs(b.cents - line.gross_cents) <= 1 && dayDiff(b.d, line.local_date) <= 1);
       if (hit) { used.add(hit.expense_id); record(line, "scale_adopted", { expense_id: hit.expense_id }); continue; }
       if (line.gross_cents <= 0) { record(line, "scale_adopted", { reason: "zero_amount_scale_line" }); continue; }
     }
 
     if (line.product !== "scale") {
-      const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used);
+      const hit = sameTruckPlan.get(line) ?? matchBookedReceipt(line, booked, used, rail.any_truck_scope);
       if (hit) {
         // LEAD 443.195 — a receipt is consumed (`used`) ONLY when this line ADOPTS it (stamped with the line's marker in
         // this same transaction, below). A cross-rail or amount-mismatch line writes nothing on the receipt, so it must
         // not consume it either: on main it did, and the receipt's true statement line — later in the file — then found
         // it taken and imported the same purchase a second time (load 13555 diesel EFS 72968; T175 08-20 diesel EFS
         // 11946), while a re-run (no marker on the receipt) could pair it differently again.
-        if (hit.rail === "1295") { record(line, "cross_rail", { expense_id: hit.expense_id, reason: "same purchase is booked on the Relay wallet (1295)" }); continue; }
+        if (hit.rail === "other_rail") { record(line, "cross_rail", { expense_id: hit.expense_id, reason: `same purchase is booked on another fuel rail (not the ${rail.label} card)` }); continue; }
         const diff = hit.cents - line.net_cents;
         const residual = hit.cents - line.gross_cents;
         if (dreamlineAdoptionRefused(hit.cents, line)) {
@@ -732,7 +876,7 @@ export async function importDreamlineStatement(
           if (diff !== 0) {
             const je = await postStatementDifference(client, {
               companyId, actor: input.actor_user_uuid, expenseId: hit.expense_id, differenceCents: diff, date: hit.d, marker,
-              payableId, discountAccountId: discount.account_id, discountItemId: discount.item_id,
+              payableId, discountAccountId: discount.account_id, discountItemId: discount.item_id, rail,
             });
             // the difference for this marker was posted by an earlier run: the line is reconciled, but this run did not
             // adopt (stamp) the receipt, so the receipt is NOT consumed — another line may still be its purchase.
@@ -744,7 +888,7 @@ export async function importDreamlineStatement(
           }
         } else if (diff !== 0) summary.difference_posted_cents += diff;
         used.add(hit.expense_id); // adopted (stamped above; the dry run computes the same plan)
-        record(line, "adopted", { expense_id: hit.expense_id, fuel_transaction_id: hit.fuel_transaction_id, difference_cents: diff });
+        record(line, "adopted", { expense_id: hit.expense_id, fuel_transaction_id: hit.fuel_transaction_id, difference_cents: diff, settlement_no: hit.settlement_no ?? null });
         continue;
       }
     }
@@ -766,7 +910,9 @@ export async function importDreamlineStatement(
         )).rows[0]
       : undefined;
     if (!vendor) { record(line, "unresolved", { reason: `no vendor for merchant ${line.location_name ?? "(blank)"}` }); continue; }
-    const namedDriver = line.driver_name
+    // LEAD 443.202 — a WEX line takes its driver from the truck's assignment at the fill time (the card prints a typed name,
+    // e.g. "Neftalia Coronado"); Dreamline keeps the named driver first.
+    const namedDriver = line.driver_name && rail.driver_from_file_name
       ? (await client.query<{ id: string }>(
           `SELECT DISTINCT d.id::text FROM mdata.drivers d
              LEFT JOIN mdata.driver_samsara_accounts a ON a.driver_id = d.id AND a.is_active
@@ -815,8 +961,8 @@ export async function importDreamlineStatement(
         unit_id: unit.id,
         ...(driver ? { driver_id: driver.driver_id } : {}),
         load_id: loadHit.load_id,
-        vendor_document_number: `EFS-${line.efs_invoice}-SCLE${seq > 1 ? `-${seq}` : ""}`,
-        memo: `Dreamline scale ticket — EFS invoice ${line.efs_invoice}, ${line.location_name ?? ""} ${line.city ?? ""} ${line.state ?? ""}`.trim(),
+        vendor_document_number: `${rail.document_prefix}${line.efs_invoice}-SCLE${seq > 1 ? `-${seq}` : ""}`,
+        memo: `${rail.label} scale ticket — invoice ${line.efs_invoice}, ${line.location_name ?? ""} ${line.city ?? ""} ${line.state ?? ""}`.trim(),
         is_company_expense: true,
       } as never, input.actor_user_uuid);
       const dup = created as { duplicateVendorDocumentNumber?: boolean; duplicateSubmission?: boolean; existingExpenseId?: string };
@@ -833,11 +979,11 @@ export async function importDreamlineStatement(
       record(line, "scale_imported", { expense_id: createdId });
       continue;
     }
-    if (line.product === "other") { record(line, "unresolved", { reason: `unknown Dreamline item ${line.item}` }); continue; }
+    if (line.product === "other") { record(line, "unresolved", { reason: `unknown ${rail.label} item ${line.item}` }); continue; }
     if (dry) { record(line, "imported", { reason: "dry_run" }); continue; }
 
-    const notes = [`card=…${line.card_number.replace(/\D+/g, "").slice(-4)}`, `efs_invoice=${line.efs_invoice}`, `file_unit=${line.unit_label ?? ""}`,
-      line.driver_name ? `file_driver=${line.driver_name}` : null, "443.142 Dreamline statement"].filter(Boolean).join("; ");
+    const notes = [`card=…${line.card_number.replace(/\D+/g, "").slice(-4)}`, `${rail.key === "dreamline" ? "efs_invoice" : `${rail.key}_invoice`}=${line.efs_invoice}`, `file_unit=${line.unit_label ?? ""}`,
+      line.driver_name ? `file_driver=${line.driver_name}` : null, rail.notes_tag].filter(Boolean).join("; ");
     // Never a silent second copy: the same provider transaction (EFS invoice + product) already recorded live — by an
     // earlier statement, the fuel-card import or a Settlement Creator line — is that purchase (fuel-provider-reference.ts).
     const already = await findLiveFuelByProviderTransactionId(client as never, {
@@ -874,9 +1020,9 @@ export async function importDreamlineStatement(
 
   if (!dry) {
     const { results: _r, ...counts } = summary;
-    await appendCrudAudit(client as never, input.actor_user_uuid, DREAMLINE_STATEMENT_EVENT, {
+    await appendCrudAudit(client as never, input.actor_user_uuid, rail.audit_event, {
       resource_type: "fuel.fuel_transactions", resource_id: companyId, operating_company_id: companyId, ...counts,
-    }, "info", "LEAD-443.142");
+    }, "info", rail.audit_tag);
   }
   return summary;
 }

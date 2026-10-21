@@ -277,6 +277,41 @@ export function importFuelTransactions(companyId: string, file: File): Promise<F
   );
 }
 
+/** LEAD 443.202 — England WEX card statement import (POST /api/v1/fuel/wex/statement-import). dry_run first, then post. */
+export type WexStatementOutcome =
+  | "pre_cutoff" | "already_imported" | "adopted" | "cross_rail" | "amount_mismatch" | "imported"
+  | "scale_adopted" | "scale_imported" | "held_no_load" | "unresolved";
+
+export type WexStatementImportResult = {
+  dry_run: boolean;
+  file: string;
+  lines: number;
+  fills: number;
+  by_outcome: Record<WexStatementOutcome, { lines: number; cents: number }>;
+  difference_posted_cents: number;
+  fees_not_posted_cents: number;
+  dead_letters: Array<{ line_number: number; reason: string }>;
+  results: Array<{
+    line_number: number;
+    efs_invoice: string;
+    item: string;
+    local_date: string;
+    net_cents: number;
+    outcome: WexStatementOutcome;
+    settlement_no?: string | null;
+    reason?: string;
+  }>;
+};
+
+export function importWexStatement(companyId: string, file: File, dryRun: boolean): Promise<WexStatementImportResult> {
+  const form = new FormData();
+  form.append("file", file);
+  return apiRequestFormData<WexStatementImportResult>(
+    `/api/v1/fuel/wex/statement-import?${q(companyId)}&dry_run=${dryRun ? "true" : "false"}`,
+    form
+  );
+}
+
 /** RANK3 FE — office manual create (POST /api/v1/fuel/transactions, #6319). */
 export type FuelType = "diesel" | "def" | "gas" | "reefer_diesel" | "other";
 

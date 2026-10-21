@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 353 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 354 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 281 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 252 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 959 | |
+| **TOTAL POST endpoints** | 960 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -535,7 +535,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/factoring/repurchase-due/:id/decide` | `apps/backend/src/factoring/repurchase-due.routes.ts:42` | — | — | — |
 | create | `/api/v1/factoring/submission-queue/submit-batch` | `apps/backend/src/factoring/submission-queue.routes.ts:59` | — | — | — |
 
-### fuel — 12 create-surface(s)
+### fuel — 13 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -544,13 +544,14 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/fuel/card-overage-events/:id/exempt` | `apps/backend/src/fuel/fuel-card-overage.routes.ts:299` | — | — | — |
 | create | `/api/v1/fuel/card-overage-events/reprocess` | `apps/backend/src/fuel/fuel-card-overage.routes.ts:363` | — | — | — |
 | nested | `/api/v1/fuel/card-types/:id/issuer` | `apps/backend/src/fuel/fuel-card-assignments.routes.ts:169` | — | — | — |
-| create | `/api/v1/fuel/dreamline/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts:166` | — | — | — |
+| create | `/api/v1/fuel/dreamline/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts:184` | — | — | — |
 | create | `/api/v1/fuel/gl/reflush-unposted` | `apps/backend/src/fuel/fuel-gl-reflush.routes.ts:26` | — | — | — |
 | nested | `/api/v1/fuel/planner/recommendations/:id/send-to-driver` | `apps/backend/src/fuel/planner.routes.ts:284` | — | — | — |
 | create | `/api/v1/fuel/receipts/repoint-to-loads` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:18` | — | — | — |
 | create | `/api/v1/fuel/relay-duplicates/void-later` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:64` | — | — | — |
 | create | `/api/v1/fuel/relay-links/undo-cross-rail` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:41` | — | — | — |
 | create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts:350` | — | — | — |
+| create | `/api/v1/fuel/wex/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts:223` | — | — | — |
 
 ### compliance — 11 create-surface(s)
 
