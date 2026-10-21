@@ -16,6 +16,9 @@
  *            reference audited — ONLY when the carrying settlement asks (restamp_stale, the Creator for a fill it prints),
  *            never from who holds the load (ruling 443.203 #3: unprinted fills on a held load are not that settlement's).
  *            7 Relay documents on 5845's loads still said cancelled P-0072 because the fill was coalesce-only.
+ *   RULE 6 — LEAD 443.203 (20:22Z, ruling #3): the load-holder stamp names a settlement only when it PRINTED the fill — its own
+ *            posted audit (settlement_creator.posted) names the document (expense_ids) or a fuel row of the fill
+ *            (fuel_transaction_ids). Before, it named any single live holder of the load (unprinted T170 fills -> 5846).
  * LIVE (read-only, USMCA): Relay-fill documents with settlement_no NULL whose load is held by exactly ONE live settlement that
  *   posted the document (its settlement_creator.posted expense_ids — ruling 443.203 #3: unprinted fills on a held load are not it)
  *   <= CEILING (shrink-only; lowered to 0 when AUTH-425 is applied); and (RULE 5) Relay-fill documents whose settlement
@@ -48,6 +51,10 @@ export function check(creator, doc) {
   if (!/input\.restamp_stale === true && ref !== null/.test(fill)) f.push(`RULE 5 ${DOC}: a restamp must be asked for by the carrying settlement (restamp_stale), never inferred from the load's holder`);
   if (/restamp_stale/.test(doc.slice(doc.indexOf("export async function stampReceiptDocumentSettlementRef("), doc.indexOf("export async function adoptRelayFillExpenseDocument(")))) f.push(`RULE 5 ${DOC}: the load-holder stamp must never restamp (ruling 443.203 #3)`);
   if (!/relay_fill_settlement_ref_restamped/.test(fill) || !/old_settlement_no: cur\.settlement_no/.test(fill)) f.push(`RULE 5 ${DOC}: a restamp must audit the old reference`);
+  const stamp6 = doc.slice(doc.indexOf("export async function stampReceiptDocumentSettlementRef("), doc.indexOf("export async function adoptRelayFillExpenseDocument("));
+  if (!/a\.event_class = 'driver_finance\.settlement_creator\.posted' AND a\.payload->>'resource_id' = s\.id::text/.test(stamp6)
+      || !/a\.payload->'expense_ids' \? doc\.id::text/.test(stamp6) || !/a\.payload->'fuel_transaction_ids' \?\| ARRAY\(SELECT id FROM fill_rows\)/.test(stamp6))
+    f.push(`RULE 6 ${DOC}: the load-holder stamp must name only a settlement that printed the fill (its posted expense_ids / fuel_transaction_ids — ruling 443.203 #3)`);
   const holds = doc.slice(doc.indexOf("async function settlementRefHoldsLoad("), doc.indexOf("export async function stampReceiptDocumentSettlementRef("));
   if (!/s\.voided_at IS NULL AND s\.status <> 'cancelled'/.test(holds) || !/settlement_lines sl WHERE sl\.load_id = \$3::uuid/.test(holds) || !/driver_settlement_gl_bills/.test(holds))
     f.push(`RULE 5 ${DOC}: the live-holder test must use the live check's settlement predicate (live, gl_bills or lines by load)`);
@@ -64,7 +71,11 @@ export function check(creator, doc) {
   return f;
 }
 export const STALE_CEILING = 0; // 443.203: 34 -> 0
-export const judge = (n, stale = 0) => [
+// RULE 6 live: Relay documents naming a settlement that did not print them. 25 on prod 2026-10-21 20:30Z: 2 cleared by the
+// 443.203 runner (P-0071 / P-0080, Lead 20:22Z); 23 named by the 10-11/10-12 load-holder fill (5780..5831) — listed to the Lead.
+export const UNPRINTED_CEILING = 23;
+export const judge = (n, stale = 0, unprinted = 0) => [
+  ...(unprinted > UNPRINTED_CEILING ? [`RULE 6: ${unprinted} Relay-fill expense documents name a settlement that did not print them — ceiling ${UNPRINTED_CEILING} (shrink-only)`] : []),
   ...(n > CEILING ? [`${n} Relay-fill expense documents name no settlement although one live settlement holds their load — ceiling ${CEILING}`] : []),
   ...(stale > STALE_CEILING ? [`RULE 5: ${stale} Relay-fill expense documents posted by a live settlement name another settlement (stale / cancelled) — ceiling ${STALE_CEILING}`] : []),
 ];
@@ -85,6 +96,9 @@ if (process.argv.includes("--selftest")) {
     ["a Creator that never re-names after the carry fails", check(c.replace(/(\/\/ LEAD 443\.203[\s\S]*?)await fillRelayFillExpenseSettlementRef\(client as never, \{/, "$1void ({"), d).some((x) => x.startsWith("RULE 5"))],
     ["a fill without the load requirement fails", check(c, d.replace("AND load_id IS NOT NULL", "")).some((x) => x.startsWith("RULE 3"))],
     ["over the ceiling fails", judge(CEILING + 1).length === 1 && judge(CEILING).length === 0],
+    ["a stamp that names any holder of the load (not the printer) fails", check(c, d.replace("AND (a.payload->'expense_ids' ? doc.id::text", "AND (true")).some((x) => x.startsWith("RULE 6"))],
+    ["a stamp without the printed test fails", check(c, d.replace("a.payload->'fuel_transaction_ids' ?| ARRAY(SELECT id FROM fill_rows)", "true")).some((x) => x.startsWith("RULE 6"))],
+    ["unprinted over the ceiling fails", judge(0, 0, UNPRINTED_CEILING + 1).length === 1 && judge(0, 0, UNPRINTED_CEILING).length === 0],
     ["a stale reference over the ceiling fails", judge(0, STALE_CEILING + 1).length === 1 && judge(0, STALE_CEILING).length === 0],
     ["adoption that never stamps the holding settlement fails", check(c, d.replace(/stampReceiptDocumentSettlementRef\(client/g, "noop(client")).some((x) => x.startsWith("RULE 4"))],
     ["a stamp that picks one of several settlements fails", check(c, d.replace("row.n !== 1", "row.n < 1")).some((x) => x.startsWith("RULE 4"))],
@@ -126,12 +140,28 @@ try {
     SELECT count(DISTINCT e.id)::int AS n FROM accounting.expenses e JOIN mdata.vendors v ON v.id = e.vendor_uuid JOIN posted p ON p.expense_id = e.id::text
      WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND v.vendor_name ~* '^relay( |$)'
        AND e.settlement_no IS DISTINCT FROM p.ref`, [USMCA]);
+  const up = await c.query(`
+    SELECT count(*)::int AS n FROM accounting.expenses e JOIN mdata.vendors v ON v.id = e.vendor_uuid
+     WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND v.vendor_name ~* '^relay( |$)' AND e.settlement_no IS NOT NULL
+       AND NOT EXISTS (
+         SELECT 1 FROM driver_finance.driver_settlements s JOIN audit.audit_events a
+             ON a.event_class = 'driver_finance.settlement_creator.posted' AND a.payload->>'resource_id' = s.id::text
+          WHERE s.operating_company_id = e.operating_company_id AND s.voided_at IS NULL AND s.status <> 'cancelled'
+            AND COALESCE(NULLIF(btrim(s.source_document_ref), ''), s.display_id) = e.settlement_no
+            AND (a.payload->'expense_ids' ? e.id::text
+                 OR a.payload->'fuel_transaction_ids' ?| ARRAY(
+                      SELECT ft.id::text FROM fuel.fuel_transactions ft
+                       WHERE ft.operating_company_id = e.operating_company_id AND ft.voided_at IS NULL
+                         AND (ft.id = e.source_fuel_transaction_id
+                              OR ft.id::text IN (SELECT p.source_transaction_id::text FROM accounting.journal_entry_postings p WHERE p.journal_entry_uuid = e.journal_entry_id AND p.source_transaction_type = 'fuel_event')
+                              OR ft.relay_fuel_transaction_id::text IN (SELECT p.source_transaction_id::text FROM accounting.journal_entry_postings p WHERE p.journal_entry_uuid = e.journal_entry_id AND p.source_transaction_type = 'fuel_event')))))`, [USMCA]);
   await c.query("ROLLBACK");
   const n = r.rows[0].n;
   const stale = st.rows[0].n;
-  const bad = judge(n, stale);
+  const unprinted = up.rows[0].n;
+  const bad = judge(n, stale, unprinted);
   if (bad.length) { console.error(`${LABEL}: FAIL\n  ${bad.join("\n  ")}`); process.exit(1); }
-  console.log(`${LABEL}: PASS — ${n} Relay-fill documents without their settlement (ceiling ${CEILING}), ${stale} with a stale settlement (ceiling ${STALE_CEILING}), shrink-only`);
+  console.log(`${LABEL}: PASS — ${n} Relay-fill documents without their settlement (ceiling ${CEILING}), ${stale} with a stale settlement (ceiling ${STALE_CEILING}), ${unprinted} naming a settlement that did not print them (ceiling ${UNPRINTED_CEILING}), shrink-only`);
   process.exit(0);
 } catch (err) {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);

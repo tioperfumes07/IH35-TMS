@@ -81,3 +81,36 @@ describe("LEAD 443.203 — a stale Relay-fill settlement reference is restamped"
     expect(b.doc.settlement_no).toBe("P-0072");
   });
 });
+
+const { stampReceiptDocumentSettlementRef } = await import("../fuel-expense-document.service.js");
+
+describe("LEAD 443.203 (20:22Z) — the load-holder stamp names only a settlement that printed the fill", () => {
+  /** Emulates Postgres for the stamp: 5846 holds the load; its posted audit names the fill only when `printed`. */
+  function stampClient(printed: boolean) {
+    const writes: unknown[][] = [];
+    const client = {
+      query: vi.fn(async (sql: string, v: unknown[] = []) => {
+        if (/SELECT min\(ref\) AS ref, count\(\*\)::int AS n FROM holders/.test(sql)) {
+          const asksPrinted = /settlement_creator\.posted/.test(sql) && /fuel_transaction_ids/.test(sql);
+          return { rows: [asksPrinted && !printed ? { ref: null, n: 0 } : { ref: "5846", n: 1 }] };
+        }
+        if (/FOR UPDATE/.test(sql)) return { rows: [{ settlement_no: null, source_settlement_ref: null, load_id: LOAD }] };
+        if (/UPDATE accounting\.expenses/.test(sql)) { writes.push(v); return { rows: [{ id: EXP }] }; }
+        return { rows: [] };
+      }),
+    };
+    return { client, writes };
+  }
+
+  it("an unprinted fill on a load 5846 holds stays unnamed (ruling #3: T170 fills)", async () => {
+    const { client, writes } = stampClient(false);
+    expect(await stampReceiptDocumentSettlementRef(client as never, { operating_company_id: OPCO, expense_id: EXP, actor_user_uuid: ACTOR })).toBeNull();
+    expect(writes).toHaveLength(0);
+  });
+
+  it("a fill the holding settlement printed is named", async () => {
+    const { client, writes } = stampClient(true);
+    expect(await stampReceiptDocumentSettlementRef(client as never, { operating_company_id: OPCO, expense_id: EXP, actor_user_uuid: ACTOR })).toBe("5846");
+    expect(writes).toHaveLength(1);
+  });
+});
