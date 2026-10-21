@@ -134,7 +134,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     miles_practical: unknown; miles_shortest: unknown; miles_deadhead: unknown; pickup_city: string | null; pickup_state: string | null; delivery_city: string | null; delivery_state: string | null;
     pickup_date: string | null; delivery_date: string | null;
     unit_id: string | null; unit_number: string | null; trailer_id: string | null; trailer_number: string | null;
-    costs_cents: unknown; driver_pay_cents: unknown; cost_count: unknown; pod_count: unknown; miles_real: unknown;
+    lc_revenue_cents: unknown; costs_cents: unknown; driver_pay_cents: unknown; cost_count: unknown; pod_count: unknown; miles_real: unknown;
   }>(
     `WITH legs AS (
        SELECT l.* FROM mdata.loads l
@@ -188,6 +188,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
             -- Reads the canonical lateral (lcr, joined below) instead; live-verified equivalent
             -- first (0 driver_bills rows where status<>'void' but voided_at is set; the expense/
             -- bill_lines predicates were already identical).
+            lcr.revenue_cents AS lc_revenue_cents,
             lcr.costs_cents AS costs_cents,
             lcr.driver_pay_cents AS driver_pay_cents,
             (SELECT COUNT(*) FROM accounting.expenses e WHERE e.load_id = l.id AND e.operating_company_id = l.operating_company_id AND e.status <> 'void')
@@ -228,7 +229,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   const CANCELLED = new Set(["cancelled", "canceled", "abandoned", "driver_walkoff", "driver_no_show"]);
   const legs: TourLeg[] = legsRes.rows.map((r) => {
     const cancelled = CANCELLED.has(String(r.status).toLowerCase());
-    const revenue = cancelled ? 0 : n(r.rate_total_cents); const costs = n(r.costs_cents); const pay = n(r.driver_pay_cents); const margin = revenue - costs - pay;
+    const revenue = cancelled ? 0 : n(r.lc_revenue_cents); const costs = n(r.costs_cents); const pay = n(r.driver_pay_cents); const margin = revenue - costs - pay;
     return {
       load_id: r.load_id, load_number: r.load_number, trip_type: r.trip_type, status: r.status, is_delivered: DELIVERED.has(String(r.status).toLowerCase()), is_cancelled: cancelled,
       lane: `${[r.pickup_city, r.pickup_state].filter(Boolean).join(" ")} → ${[r.delivery_city, r.delivery_state].filter(Boolean).join(" ")}`.trim(),

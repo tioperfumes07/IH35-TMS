@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { openDriverBill } from "../accounting/live-document-predicates.sql.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { canAccessDriverLoadBills } from "./driver-bills-access.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
@@ -431,7 +432,7 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
       const countRes = await client.query(
         `SELECT count(*)::int AS cnt, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS total_gross_cents
          FROM driver_finance.driver_bills db
-         WHERE db.operating_company_id = $1::uuid AND db.status = 'open' ${driverFilter}`,
+         WHERE db.operating_company_id = $1::uuid AND ${openDriverBill("db")} ${driverFilter}`,
         countValues
       );
 
@@ -451,7 +452,7 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
             concat_ws(' ', d.first_name, d.last_name) AS driver_name
           FROM driver_finance.driver_bills db
           LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
-          WHERE db.operating_company_id = $1::uuid AND db.status = 'open' ${driverFilter}
+          WHERE db.operating_company_id = $1::uuid AND ${openDriverBill("db")} ${driverFilter}
           ORDER BY db.created_at DESC
           LIMIT $${queryValues.length - 1} OFFSET $${queryValues.length}
         `,

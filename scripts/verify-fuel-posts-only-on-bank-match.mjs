@@ -209,6 +209,15 @@ export function check(files) {
   const rlAdopt = cr.indexOf("adoptRelayFillExpenseDocument(client as never, {", rlPost < 0 ? 0 : rlPost);
   if (rlPost < 0 || rlAdopt < 0 || !/journal_entry_id: fillPosted\.journal_entry_id,/.test(cr.slice(rlAdopt, rlAdopt + 400)))
     problems.push(`${CREATOR}: the Creator's Relay fill document does not adopt the fill's own entry (fillPosted.journal_entry_id) — a second fuel expense`);
+  // 13c (LEAD 443.215, 5842 repost) — Edit = void and repost: the replaced settlement's void reverses the fill's posting, so the
+  // repost posts it under the next correction revision (nextFuelPostingRevision) and ADOPTS the fill's live rows instead of
+  // writing them twice; before, the repost was refused ("already recorded" / "reversed and no live posting").
+  if (!/export async function nextFuelPostingRevision\(/.test(poster) || !/if \(state\.kind !== "reversed"\) return rev;/.test(poster))
+    problems.push(`${POSTER}: nextFuelPostingRevision (first revision whose batch is not reversed) is missing (443.215)`);
+  if (!/const correctionRevision = draft\.edit_void_repost\s*\?\s*await nextFuelPostingRevision\(/.test(cr) || !/correction_revision: correctionRevision \|\| null,/.test(cr))
+    problems.push(`${CREATOR}: an Edit repost of a Relay fill does not post under the next correction revision (443.215)`);
+  if (!/if \(!rows && draft\.edit_void_repost\) \{/.test(cr) || !/WHERE ft\.operating_company_id = \$1::uuid AND ft\.relay_fuel_transaction_id = \$2::uuid AND ft\.voided_at IS NULL/.test(cr))
+    problems.push(`${CREATOR}: an Edit repost does not adopt the Relay fill's live rows (it would write the fill twice) (443.215)`);
   // 9 (LEAD 443.133 A) — the linker pairs only Relay-card rows; the Relay fill poster refuses a fill that pairs with a row on
   // another rail (the same purchase may already be posted there — booking it again would double the fuel).
   const linker = files[LINKER] ?? "";
@@ -349,6 +358,9 @@ if (process.argv.includes("--selftest")) {
     })() }],
     ["creator asks but still posts (no adopt)", { ...real, [CREATOR]: real[CREATOR].replace("journalEntryIds.push(receiptPosted.journal_entry_id);\n        continue;", "journalEntryIds.push(receiptPosted.journal_entry_id);") }],
     ["creator relay document mints its own entry", { ...real, [CREATOR]: real[CREATOR].replace("journal_entry_id: fillPosted.journal_entry_id,", "journal_entry_id: null as never,") }],
+    ["edit repost without correction revision", { ...real, [CREATOR]: real[CREATOR].replace("correction_revision: correctionRevision || null,", "") }],
+    ["edit repost writes the fill twice", { ...real, [CREATOR]: real[CREATOR].replace("if (!rows && draft.edit_void_repost) {", "if (false) {") }],
+    ["revision helper hands back a reversed key", { ...real, [POSTER]: real[POSTER].replace('if (state.kind !== "reversed") return rev;', "return rev;") }],
   ];
   const missed = cases.filter(([, files]) => check(files).length === 0).map(([n]) => n);
   if (missed.length) { console.error(`${LABEL} --selftest FAIL: not caught: ${missed.join("; ")}`); process.exit(1); }

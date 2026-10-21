@@ -13,6 +13,7 @@ import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement
 import { unmatchBankTransactionById } from "../accounting/void.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { closeVoidedSettlementTripInClientTx } from "./driver-settlement-void-cascade.service.js";
+import { stampSettlementVoidedInClientTx } from "./settlement-void-state.service.js";
 
 const emptyPayloadSchema = z.object({}).default({});
 
@@ -85,17 +86,9 @@ async function handleSettlementBulk(
       [id, operatingCompanyId, `settlement reversed (bulk): ${reason.trim()}`, actorUserId]
     );
 
-    const flipped = await client.query(
-      `UPDATE driver_finance.driver_settlements
-          SET status = 'cancelled', reversed_at = now(), reversed_by_user_id = $3::uuid,
-              reversal_reason = $4, updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'cancelled'
-        RETURNING id::text`,
-      [id, operatingCompanyId, actorUserId, reason.trim()]
-    );
-    if (!flipped.rows[0]) {
-      return { ok: false, code: "E_UPDATE_FAILED", message: "Settlement reverse race lost" };
-    }
+    await stampSettlementVoidedInClientTx(client as never, {
+      settlementId: id, operatingCompanyId, userId: actorUserId, reason: reason.trim(),
+    });
     // LEAD 443.198 (ACCT-F347 root cause) — a reversed load_bookended settlement's trip is closed, so it is never left
     // "trip open + live anchor" (guard 3069). The same helper the shared void cascade runs; lifecycle marker only.
     const tripClosed = await closeVoidedSettlementTripInClientTx(client as never, { operatingCompanyId, settlementId: id });
