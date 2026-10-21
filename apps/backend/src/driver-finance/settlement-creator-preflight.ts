@@ -19,7 +19,7 @@ import { creatorLoadMiles } from "./settlement-creator-empty-pay.js";
 import { creatorLineLoadNumber } from "./settlement-creator-line-load.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
 import { creatorAdditionalOnlyPay } from "./settlement-creator-pay-mode.js";
-import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerEquipmentId, creatorTrailerChoice } from "./creator-trailer-choice.js";
+import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerChoice, creatorLoadTrailerEquipmentId } from "./creator-trailer-choice.js";
 
 type Q = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -35,15 +35,17 @@ export async function creatorPreflightRefusals(client: Q, draft: SettlementCreat
       [co, typedNumbers],
     );
     const born = typedNumbers.filter((n) => !existing.rows.some((r) => r.load_number === n));
-    if (born.length) {
-      const choice = await creatorTrailerChoice(client, draft);
-      if (!choice) out.push(`Loads ${born.join(", ")}: ${CREATOR_TRAILER_REQUIRED_MESSAGE}`);
+    // LEAD 443.203 — each born load's own printed trailer (else the settlement's) decides it.
+    for (const n of born) {
+      const load = (draft.loads ?? []).find((l) => l.load_number?.trim() === n) ?? {};
+      const choice = await creatorLoadTrailerChoice(client, draft, load);
+      if (!choice) out.push(`Load ${n}: ${CREATOR_TRAILER_REQUIRED_MESSAGE}`);
       else {
         try {
           await creatorLoadTrailerEquipmentId(client, co, choice);
         } catch (err) {
           if (!(err instanceof SettlementCreatorError)) throw err;
-          out.push(`Loads ${born.join(", ")}: ${err.message}`);
+          out.push(`Load ${n}: ${err.message}`);
         }
       }
     }

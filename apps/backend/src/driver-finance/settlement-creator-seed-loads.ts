@@ -12,7 +12,7 @@ import { creatorLoadMiles } from "./settlement-creator-empty-pay.js";
 import { signedRateOverride } from "./settlement-creator-signed-rate.js";
 import { creatorAdditionalOnlyPay } from "./settlement-creator-pay-mode.js";
 import { deliverLoadThroughDispatch, localDayStartIso, stampStopsFromTracking, type StopStamp } from "./settlement-creator-deliver.js";
-import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerEquipmentId, creatorTrailerChoice } from "./creator-trailer-choice.js";
+import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerChoice, creatorLoadTrailerEquipmentId } from "./creator-trailer-choice.js";
 
 export const SETTLEMENT_CREATOR_QUAL_OVERRIDE_REASON =
   "entered from the AlwaysTrack settlement / load history (Settlement Creator)";
@@ -362,8 +362,7 @@ export async function ensureDispatchedLoadsForCreator(
   // LEAD 443.109 — a load is never born without its trailer (the document decides; preview refuses trailer_required).
   // Resolved BEFORE any load is booked (443.110 G2): the printed number becomes the fleet trailer id, a customer trailer
   // or an explicit none, and the trailer TYPE follows it (Reefer / Dry Van / power-only) instead of book-load's DRY_VAN.
-  const trailerChoice = seed && draft.loads.length ? await creatorTrailerChoice(client, draft) : null;
-  let trailerTypeId: string | null = null;
+  // LEAD 443.203 — each load's own printed trailer decides it (creatorLoadTrailerChoice); the type follows that choice.
   for (const load of draft.loads) {
     const existing = await client.query<{ id: string }>(
       `SELECT id::text FROM mdata.loads
@@ -407,10 +406,11 @@ export async function ensureDispatchedLoadsForCreator(
       );
     }
     // LEAD 443.109 — this load is about to be born: it is never born without its trailer.
+    const trailerChoice = await creatorLoadTrailerChoice(client, draft, load);
     if (!trailerChoice) throw new SettlementCreatorSeedError("trailer_required", `Load ${load.load_number}: ${CREATOR_TRAILER_REQUIRED_MESSAGE}`);
     // Resolve only for a genuinely NEW load. An Edit adopting its existing loads must not revalidate historical
-    // equipment against today's catalog. Cache the shared document choice before the first booking.
-    trailerTypeId ??= await creatorLoadTrailerEquipmentId(client, draft.operating_company_id, trailerChoice);
+    // equipment against today's catalog.
+    const trailerTypeId = await creatorLoadTrailerEquipmentId(client, draft.operating_company_id, trailerChoice);
 
     // SETL-F438 — bookLoad() refuses a non-draft load with neither PO nor W/O
     // (customer_po_or_wo_number_required, ROUND 285.3.6). The Creator books with
@@ -483,7 +483,9 @@ export async function ensureDispatchedLoadsForCreator(
       live_load_number: load.load_number.trim(),
       assigned_primary_driver_id: draft.driver_id,
       assigned_unit_id: draft.unit_id ?? undefined,
-      assigned_trailer_unit_id: (trailerChoice?.kind === "company" ? trailerChoice.equipment_id : draft.trailer_id) ?? undefined,
+      // LEAD 443.203 — a fleet trailer only when THIS load's choice is one; a customer / none load never takes the
+      // settlement's fleet trailer.
+      assigned_trailer_unit_id: trailerChoice.kind === "company" ? trailerChoice.equipment_id : undefined,
       // LEAD 443.107 item 3 + 443.109: the document's trailer is the load's recorded choice at birth (fleet trailer,
       // customer / shipper trailer, or an explicit none) — creatorTrailerChoice decided it above, never invented.
       trailer_choice: trailerChoice,

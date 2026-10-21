@@ -1089,6 +1089,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         delivery_date: l.delivery_date || null,
         date_sent_to_factoring: l.date_sent_to_factoring || null,
         invoice_number: (l.invoice_number ?? "").trim() || null,
+        trailer_equipment_number: (l.trailer_equipment_number ?? "").trim() || null,
         join_outbound_load_number: l.join_outbound_load_number || null,
       })),
       fuel_purchases: fuels.map(({ location_id: _lid, vendor_id: _vid, ...fuel }) => fuel),
@@ -1609,6 +1610,22 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         title="The invoice number presented to Faro / QBO. The invoice is numbered <invoice>-<load>; blank = the next invoice number."
                         aria-label="Invoice number"
                         data-testid={`sc-load-invoice-no-${idx}`}
+                      />
+                    </Field>
+                    {/* LEAD 443.203 — the trailer the document prints on this load's row (blank = the settlement trailer). */}
+                    <Field label="Trailer # (this load)">
+                      <input
+                        className={inputClass}
+                        value={load.trailer_equipment_number ?? ""}
+                        onChange={(e) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, trailer_equipment_number: e.target.value };
+                          setLoads(next);
+                        }}
+                        placeholder="Settlement trailer"
+                        title="The trailer printed on this load's row of the company settlement. A number that is not a fleet trailer is recorded as the customer / broker trailer for this load."
+                        aria-label="Trailer number for this load"
+                        data-testid={`sc-load-trailer-${idx}`}
                       />
                     </Field>
                   </div>

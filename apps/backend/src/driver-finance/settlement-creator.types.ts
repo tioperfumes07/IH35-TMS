@@ -45,6 +45,12 @@ export type SettlementCreatorLoadBlock = {
    */
   customer_po_number?: string | null;
   customer_wo_number?: string | null;
+  /**
+   * LEAD 443.203 (20:22Z, 5851 / 13689) — the trailer the signed document prints on THIS load's row (the company settlement
+   * load table carries one trailer per load: 13678 fleet 10209, 13689 customer 10204). Overrides the settlement-level
+   * trailer for this load only; empty = the settlement-level choice.
+   */
+  trailer_equipment_number?: string | null;
   pickup_date?: string | null; // YYYY-MM-DD
   /** Google / Places one-line address (same field Book Load writes). */
   pickup_address?: string | null;
