@@ -1,7 +1,29 @@
 import type { PoolClient } from "pg";
 import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
+import { COMPANY_TIME_ZONE } from "../lib/company-business-date.js";
 
+/**
+ * LEAD 443.206 D8 — the report date is the load's SCHEDULED stop date, the same field every board reads
+ * (planner.service.ts: COALESCE(scheduled_arrival_at, appointment_start_at)), as a company business date. "pickup" =
+ * the first active pickup stop, "delivery" = the last active delivery stop. Never created_at / updated_at (bookkeeping
+ * timestamps, not when the load ran). "created" is accepted from older clients and reported as "pickup".
+ */
 export type LoadsReportDateField = "created" | "pickup" | "delivery";
+export type LoadsReportEffectiveDateField = "pickup" | "delivery";
+
+/**
+ * LEAD 443.206 D9 — the report's scope, stated in every response: real loads that happened. Excludes draft,
+ * cancelled, voided (status or voided_at), soft-deleted and sample rows. Before, only cancelled was excluded.
+ */
+export const LOADS_REPORT_SCOPE = "real_loads_that_happened" as const;
+export const LOADS_REPORT_SCOPE_LABEL =
+  "Real loads that happened — excludes draft, cancelled, voided, deleted and sample loads; dated by the scheduled pickup (or delivery) stop";
+export const LOADS_REPORT_SCOPE_SQL = [
+  `l.soft_deleted_at IS NULL`,
+  `l.voided_at IS NULL`,
+  `l.is_sample_data IS NOT TRUE`,
+  `l.status::text NOT IN ('draft', 'cancelled', 'voided')`,
+] as const;
 
 export type LoadsReportRow = {
   load_id: string;
@@ -49,7 +71,9 @@ export type LoadsReportTotals = {
 };
 
 export type LoadsReportPayload = {
-  date_field: LoadsReportDateField;
+  date_field: LoadsReportEffectiveDateField;
+  scope: typeof LOADS_REPORT_SCOPE;
+  scope_label: string;
   period: { start: string; end: string };
   totals: LoadsReportTotals;
   rows: LoadsReportRow[];
@@ -80,33 +104,24 @@ function nullableNum(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** The scheduled date of the load's first pickup / last delivery stop (company business date) — the boards' field. */
+export function scheduledStopDateSql(stopType: "pickup" | "delivery", loadAlias = "l"): string {
+  const order = stopType === "pickup" ? "ASC" : "DESC";
+  return `(SELECT (COALESCE(ls.scheduled_arrival_at, ls.appointment_start_at) AT TIME ZONE '${COMPANY_TIME_ZONE}')::date
+         FROM mdata.load_stops ls
+        WHERE ls.load_id = ${loadAlias}.id
+          AND ls.stop_type = '${stopType}'
+          AND ls.soft_deleted_at IS NULL
+        ORDER BY ls.sequence_number ${order}
+        LIMIT 1)`;
+}
+
+export function effectiveDateField(dateField: LoadsReportDateField): LoadsReportEffectiveDateField {
+  return dateField === "delivery" ? "delivery" : "pickup";
+}
+
 function buildDateExpr(dateField: LoadsReportDateField): string {
-  if (dateField === "pickup") {
-    return `COALESCE(
-      (SELECT (COALESCE(ls.actual_arrival_at, ls.appointment_start_at, ls.created_at))::date
-         FROM mdata.load_stops ls
-        WHERE ls.load_id = l.id
-          AND ls.stop_type = 'pickup'
-          AND ls.soft_deleted_at IS NULL
-        ORDER BY ls.sequence_number ASC
-        LIMIT 1),
-      l.created_at::date
-    )`;
-  }
-  if (dateField === "delivery") {
-    return `COALESCE(
-      (SELECT (COALESCE(ls.actual_departure_at, ls.actual_arrival_at, ls.appointment_end_at))::date
-         FROM mdata.load_stops ls
-        WHERE ls.load_id = l.id
-          AND ls.stop_type = 'delivery'
-          AND ls.soft_deleted_at IS NULL
-        ORDER BY ls.sequence_number DESC
-        LIMIT 1),
-      l.updated_at::date,
-      l.created_at::date
-    )`;
-  }
-  return `l.created_at::date`;
+  return scheduledStopDateSql(effectiveDateField(dateField));
 }
 
 export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery): Promise<LoadsReportPayload> {
@@ -114,8 +129,7 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
   const values: unknown[] = [operatingCompanyId, from, to];
   const filters: string[] = [
     `l.operating_company_id = $1::uuid`,
-    `l.soft_deleted_at IS NULL`,
-    `l.status IS DISTINCT FROM 'cancelled'`,
+    ...LOADS_REPORT_SCOPE_SQL,
     `${buildDateExpr(dateField)} BETWEEN $2::date AND $3::date`,
   ];
 
@@ -168,7 +182,7 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
           ls.load_id,
           NULLIF(trim(ls.city), '') AS origin_city,
           NULLIF(trim(ls.state), '') AS origin_state,
-          (COALESCE(ls.actual_arrival_at, ls.appointment_start_at))::date AS pickup_date
+          (COALESCE(ls.scheduled_arrival_at, ls.appointment_start_at) AT TIME ZONE '${COMPANY_TIME_ZONE}')::date AS pickup_date
         FROM mdata.load_stops ls
         WHERE ls.stop_type = 'pickup' AND ls.soft_deleted_at IS NULL
         ORDER BY ls.load_id, ls.sequence_number ASC
@@ -178,7 +192,7 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
           ls.load_id,
           NULLIF(trim(ls.city), '') AS destination_city,
           NULLIF(trim(ls.state), '') AS destination_state,
-          (COALESCE(ls.actual_departure_at, ls.actual_arrival_at, ls.appointment_end_at))::date AS delivery_date
+          (COALESCE(ls.scheduled_arrival_at, ls.appointment_start_at) AT TIME ZONE '${COMPANY_TIME_ZONE}')::date AS delivery_date
         FROM mdata.load_stops ls
         WHERE ls.stop_type = 'delivery' AND ls.soft_deleted_at IS NULL
         ORDER BY ls.load_id, ls.sequence_number DESC
@@ -322,5 +336,12 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
     { load_count: 0, revenue_cents: 0, driver_pay_cents: 0, fuel_cents: 0, margin_cents: 0 }
   );
 
-  return { date_field: dateField, period: { start: from, end: to }, totals, rows };
+  return {
+    date_field: effectiveDateField(dateField),
+    scope: LOADS_REPORT_SCOPE,
+    scope_label: LOADS_REPORT_SCOPE_LABEL,
+    period: { start: from, end: to },
+    totals,
+    rows,
+  };
 }

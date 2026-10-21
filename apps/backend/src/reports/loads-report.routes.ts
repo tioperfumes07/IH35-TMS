@@ -6,7 +6,8 @@ import { getLoadsReport, type LoadsReportDateField } from "./loads-report.servic
 const querySchema = companyQuerySchema.extend({
   from: z.string().date(),
   to: z.string().date(),
-  date_field: z.enum(["created", "pickup", "delivery"]).default("created"),
+  // LEAD 443.206 D8 — default = the scheduled pickup date (the boards' field); "created" is accepted and reported as pickup.
+  date_field: z.enum(["created", "pickup", "delivery"]).default("pickup"),
   customer_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),

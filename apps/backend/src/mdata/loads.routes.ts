@@ -14,6 +14,7 @@ import { computeProgressStatus } from "../telematics/load-progress.service.js";
 import { enrichLoadsLiveEta } from "../telematics/dispatch-live-eta.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
+import { loadPickerScopeSql } from "./load-picker-scope.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
@@ -204,7 +205,8 @@ const listLoadsQuerySchema = z.object({
   ),
   include_progress: z.coerce.boolean().default(false),
   include_live_eta: z.coerce.boolean().default(false),
-  board_scope: z.enum(["live", "history"]).optional(),
+  // LEAD 443.206 D10 — "picker": every real load that happened (load-picker-scope.ts), for the cross-module load picker.
+  board_scope: z.enum(["live", "history", "picker"]).optional(),
   // ROUND-20.2 (RT-FULL-TOUR) — owner ruling: "DISPATCH OPEN-ONLY stands everywhere else. Round
   // Trips is the ONE exception, because the tour IS the unit of this view." An opt-in flag, not a
   // behavior change to board_scope=live itself: every OTHER board_scope=live consumer (Kanban,
@@ -671,6 +673,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         } else if (board_scope === "history") {
           values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
           filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
+        } else if (board_scope === "picker") {
+          filters.push(loadPickerScopeSql("l"));
         } else {
           // ROUND 283.1 — fail closed. No status filter and no board_scope used to return EVERY
           // load (closed/cancelled/settled/billing-tail). Owner law 2026-09-11 OPEN-ONLY: Dispatch
