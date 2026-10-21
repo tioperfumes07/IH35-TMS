@@ -529,3 +529,35 @@ WEX bills as batch ACH settlements, not per-fill bank lines. The individual $294
 - **TB:** 0 ✓
 
 **Blocker resolved:** `line_account_differs_from_item` — scale expense reimbursements moved from `reimbursements[]` to `expenses[is_reimbursable=true]` so `resolveExpenseLineAccount` sets `posting_account_id = 5300` matching item `a0a97d92` default; trigger passes.
+
+---
+
+## CC-1 443.202 LOAD STATE REPORT — 2026-10-21 ~20:22Z (STAND DOWN PER LEAD)
+
+Per LEAD 20:22Z — standing down on loads; Codex books all 8.
+
+| Load | State | Detail |
+|------|-------|--------|
+| 13693 | **BOOKED** by CC-1 | id=`5a40e039-6ab3-4e57-b742-3571a276cc38`, status=dispatched, Leonel/T175/FB-56713, $4,900, SEM66593 |
+| 13692 | **NOT booked** — standing down | Blocked: Neftali's pre-settlement P-0079 (`8827e8be`) stale-open; anchor loads invoiced; `uq_driver_settlements_one_open_per_driver` fires on any new NB for this driver. LEAD 20:58Z: join P-0079 directly — Codex handles. |
+| 13695 | **NOT booked** — standing down | Blocked: FB-56210 UUID in CC-2 prep had typo (`bebb25` vs DB `bebb15`); trailer owned by `b49a737b` (not USMCA), needs `kind:"interchange"`. Codex handles. |
+| 13694 | **HELD** by design | trip_type TR, needs 13688's tour_id. Codex handles per LEAD 20:32Z. |
+
+---
+
+## CC-1 443.205 GAMPAC RENAME PROOF — 2026-10-21 20:58Z
+
+**Op-1 — RENAME c3683c6a:**
+- `c3683c6a-be52-44ec-824f-46a7c00393b0` · customer_name: "Gampac Express Inc" → **"GAMPAC LOGISTICS"**
+- print_on_invoice_name: null → **"GAMPAC LOGISTICS"**
+- deactivated_at: null (active) · loads linked: 2 (13665, 13680) · invoices intact
+- Audit: `mdata.customers.updated` + `mdata.customers.profile_updated` @ 20:58:41Z · source=`cc1-443205-owner-10-21`
+
+**Op-2 — DEACTIVATE 99bbb870 (empty duplicate):**
+- `99bbb870-290c-4564-add9-5855abc96292` · was: "GAMPAC LOGISTICS" (0 loads, 1 invoice)
+- deactivated_at: **2026-10-21T20:58:41.954Z** · is_duplicate=true · merge_target_id=`c3683c6a-be52-44ec-824f-46a7c00393b0`
+- notes: "duplicate of c3683c6a (owner 10-21)" — never deleted
+- Audit: `mdata.customers.updated` @ 20:58:41Z · source=`cc1-443205-owner-10-21`
+
+**Proof (live DB):** One active GAMPAC LOGISTICS (`c3683c6a`), 2 loads, invoices name it. Duplicate (`99bbb870`) deactivated with merge pointer. ✓
+
