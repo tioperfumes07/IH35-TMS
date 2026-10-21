@@ -380,6 +380,15 @@ export async function ensureDispatchedLoadsForCreator(
     }
     if (existing.rows[0] && (await isSeededLoadFreeForThisSettlement(client, draft, existing.rows[0].id))) {
       // LEAD 443.167-R — a seeded load this settlement pays: adopted, never re-booked (see isSeededLoadFreeForThisSettlement).
+      // Complete this signed, same-draft leg before booking the next one on its truck. Restate pay
+      // BEFORE delivery accrues its bill; unrelated active loads and unfinished legs remain untouched.
+      if (!(load.not_yet_delivered !== false && !load.delivery_date)) {
+        const loadId = existing.rows[0].id;
+        const { restateCreatorDriverBillFromSignedLoad } = await import("./settlement-creator.service.js");
+        await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actor.uuid);
+        stopStamps.push(...await stampStopsFromTracking(client, loadId, draft.operating_company_id, { pickupDate: load.pickup_date, deliveryDate: load.delivery_date }));
+        await deliverLoadThroughDispatch(client, actor.uuid, draft.operating_company_id, loadId, load.delivery_date);
+      }
       continue;
     }
     if (existing.rows[0]) {
