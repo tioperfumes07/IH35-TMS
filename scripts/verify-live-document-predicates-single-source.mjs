@@ -42,7 +42,12 @@ function contracts(at,overrides={}){
  const predicates=read(predicatePath);
  for(const name of ['liveSettlement','liveDriverBill','liveExpense','liveBill','openDriverBill'])if(!predicates.includes(`export function ${name}(`))errors.push(`missing shared ${name}`);
  const cash=read('apps/backend/src/cash-flow/cash-flow.service.ts');
- for(const name of ['liveSettlement','openDriverBill','loadCostsRevenueJoin','canonicalHappenedNotVoidedLoadClause'])if(!cash.includes('${'+name+'('))errors.push(`cash flow does not execute ${name}`);
+ for(const name of ['liveSettlement','openDriverBill'])if(!cash.includes('${'+name+'('))errors.push(`cash flow does not execute ${name}`);
+ const receipts=read('apps/backend/src/cash-flow/cash-flow-receipts.sql.ts');
+ for(const name of ['loadCostsRevenueJoin','loadServiceMembershipSql'])if(!receipts.includes('${'+name+'('))errors.push(`receipt source does not execute ${name}`);
+ if((cash.match(/\$\{cashFlowReceiptsSql\(/g)??[]).length!==5)errors.push('all five cash-flow receipt consumers must use the one source');
+ const invoiceStream=receipts.split('invoice_receipts AS (')[1]?.split('SELECT * FROM unbilled_receipts')[0]??'';
+ if(!invoiceStream.includes('i.amount_open_cents::bigint AS amount_cents')||invoiceStream.includes('loadServiceMembershipSql'))errors.push('unpaid invoice receipts must survive driver settlement closure');
  if(cash.includes('canonicalLoadCostsOpenClause'))errors.push('driver settlement closure must not hide unpaid customer receipts');
  // The legacy response property rate_total_cents is not a SQL source. Inspect
  // SQL templates, not TypeScript mapping of the canonical query's result.
@@ -71,11 +76,18 @@ if(process.argv.includes('--selftest')){
  }
  const cashPath='apps/backend/src/cash-flow/cash-flow.service.ts';
  const cash=fs.readFileSync(path.join(ownRoot,cashPath),'utf8');
- for(const name of ['liveSettlement','openDriverBill','loadCostsRevenueJoin','canonicalHappenedNotVoidedLoadClause']){
+ for(const name of ['liveSettlement','openDriverBill']){
   assert.ok(contracts(ownRoot,{[cashPath]:cash.replaceAll('${'+name+'(', '${removed_'+name+'(')}).includes(`cash flow does not execute ${name}`));
  }
+ const receiptPath='apps/backend/src/cash-flow/cash-flow-receipts.sql.ts';
+ const receipts=fs.readFileSync(path.join(ownRoot,receiptPath),'utf8');
+ for(const name of ['loadCostsRevenueJoin','loadServiceMembershipSql']){
+  assert.ok(contracts(ownRoot,{[receiptPath]:receipts.replaceAll('${'+name+'(', '${removed_'+name+'(')}).includes(`receipt source does not execute ${name}`));
+ }
+ assert.ok(contracts(ownRoot,{[cashPath]:cash.replace('${cashFlowReceiptsSql(', '${removedReceipts(')}).includes('all five cash-flow receipt consumers must use the one source'));
+ assert.ok(contracts(ownRoot,{[receiptPath]:receipts.replace('i.amount_open_cents::bigint','i.total_cents::bigint')}).includes('unpaid invoice receipts must survive driver settlement closure'));
  assert.ok(contracts(ownRoot,{[cashPath]:cash+'\n// canonicalLoadCostsOpenClause'}).includes('driver settlement closure must not hide unpaid customer receipts'));
- console.log('verify-live-document-predicates-single-source SELFTEST PASS 18/18');
+ console.log('verify-live-document-predicates-single-source SELFTEST PASS 20/20');
 }else if(arg('--seed-from')){
  if(fs.existsSync(baselinePath))throw Error('initial baseline already exists; may only shrink');
  const source=arg('--seed-from'),entries=inventory(source);

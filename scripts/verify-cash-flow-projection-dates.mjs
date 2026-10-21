@@ -33,6 +33,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const F = {
   service: "apps/backend/src/cash-flow/cash-flow.service.ts",
   engine: "apps/backend/src/cash-flow/projected-cash-date.ts",
+  receipts: "apps/backend/src/cash-flow/cash-flow-receipts.sql.ts",
 };
 const ENGINE_SPECIFIER = "./projected-cash-date.js";
 
@@ -140,7 +141,7 @@ export function scan(src) {
 const lineOf = (text, offset) => text.slice(0, offset).split("\n").length;
 
 /** The rule, pure: findings for one service text + engine text (either may be "" when missing). */
-export function projectionDateFindings(serviceSrc, engineSrc) {
+export function projectionDateFindings(serviceSrc, engineSrc, receiptsSrc = "") {
   const findings = [];
   const add = (rule, line, msg) => findings.push({ rule, file: F.service, line, msg });
   if (!serviceSrc) {
@@ -168,6 +169,17 @@ export function projectionDateFindings(serviceSrc, engineSrc) {
   }
   if (engineNames.length === 0) add("ENGINE_IMPORT", 1, `the service does not import the projected-cash-date engine (${ENGINE_SPECIFIER})`);
 
+  // Follow the shared receipt source rather than requiring duplicated date calls
+  // in each consumer. Its SQL must pass exactly the same engine rules first.
+  if (/import\s*\{\s*cashFlowReceiptsSql\s*\}\s*from\s*["']\.\/cash-flow-receipts\.sql\.js["']/.test(code)) {
+    if (!receiptsSrc) add("ENGINE_IMPORT", 1, "shared receipt source is missing");
+    else {
+      const dependencyFindings = projectionDateFindings(receiptsSrc, engineSrc);
+      findings.push(...dependencyFindings.map(f => ({...f, file: F.receipts})));
+      if (dependencyFindings.length === 0) engineNames.push("cashFlowReceiptsSql");
+    }
+  }
+
   // RAW_DELIVERY_BUCKET + INLINE_LAG, line by line on comment-blanked code
   const lines = code.split("\n");
   lines.forEach((ln, k) => {
@@ -190,7 +202,7 @@ export function projectionDateFindings(serviceSrc, engineSrc) {
 
 function loadReal() {
   const read = (rel) => (existsSync(join(ROOT, rel)) ? readFileSync(join(ROOT, rel), "utf8") : "");
-  return { service: read(F.service), engine: read(F.engine) };
+  return { service: read(F.service), engine: read(F.engine), receipts: read(F.receipts) };
 }
 
 const key = (f) => `${f.rule}|${f.msg}`;
@@ -212,7 +224,7 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL: a real source is missing (${F.service} / ${F.engine})`);
     process.exit(1);
   }
-  const base = projectionDateFindings(real.service, real.engine);
+  const base = projectionDateFindings(real.service, real.engine, real.receipts);
   const append = (snippet) => `${real.service}\n${snippet}\n`;
   const plants = [
     ["RAW_DELIVERY_BUCKET", "raw stop bucket", append("export const __p1 = `SELECT 1 FROM mdata.load_stops ls WHERE ls.scheduled_arrival_at::date = $2::date`;")],
@@ -242,17 +254,17 @@ function selftest() {
     if (text === null) {
       const engine = real.engine.replace(/export\s+function\s+projectedCashDateSql\b/, "function projectedCashDateSql");
       if (engine === real.engine) { console.error(`  FAIL plant inert: ${label}`); failed += 1; continue; }
-      findings = projectionDateFindings(real.service, engine);
+      findings = projectionDateFindings(real.service, engine, real.receipts);
     } else {
       if (text === real.service) { console.error(`  FAIL plant inert: ${label}`); failed += 1; continue; }
-      findings = projectionDateFindings(text, real.engine);
+      findings = projectionDateFindings(text, real.engine, real.receipts);
     }
     const added = newFindings(base, findings).filter((f) => f.rule === rule);
     if (added.length === 0) { console.error(`  FAIL plant not refused: ${label} (${rule})`); failed += 1; }
     else { console.log(`  ok   plant refused: ${label} -> ${rule}`); passed += 1; }
   }
   for (const [label, text] of nearMisses) {
-    const added = newFindings(base, projectionDateFindings(text, real.engine));
+    const added = newFindings(base, projectionDateFindings(text, real.engine, real.receipts));
     if (added.length) { console.error(`  FAIL near miss flagged: ${label}: ${added.map((f) => f.msg).join("; ")}`); failed += 1; }
     else { console.log(`  ok   near miss ignored: ${label}`); passed += 1; }
   }
@@ -270,6 +282,15 @@ function selftest() {
   if (clean.length) { console.error(`  FAIL compliant service flagged: ${clean.map((f) => `${f.rule} ${f.msg}`).join("; ")}`); failed += 1; }
   else { console.log("  ok   compliant service passes with 0 findings"); passed += 1; }
 
+  for (const [label, source] of [
+    ["missing receipt source", ""],
+    ["raw date inside receipt source", real.receipts + '\nconst bad = `SELECT i.due_date FROM accounting.invoices i`;'],
+    ["inline lag inside receipt source", real.receipts + '\nconst bad = `SELECT now() + INTERVAL \'30 days\'`;'],
+  ]) {
+    if (!newFindings(base, projectionDateFindings(real.service, real.engine, source)).length) {
+      console.error(`FAIL receipt dependency mutation escaped: ${label}`); failed++;
+    } else { console.log(`ok receipt dependency refused: ${label}`); passed++; }
+  }
   const total = passed + failed;
   if (failed) {
     console.error(`${LABEL} SELFTEST FAIL: ${failed} of ${total} checks failed`);
@@ -285,7 +306,7 @@ if (!invokedDirectly) {
   selftest();
 } else {
   const real = loadReal();
-  const findings = projectionDateFindings(real.service, real.engine);
+  const findings = projectionDateFindings(real.service, real.engine, real.receipts);
   if (process.argv.includes("--json")) console.log(JSON.stringify({ label: LABEL, findings }, null, 2));
   if (findings.length) {
     const byRule = findings.reduce((m, f) => ((m[f.rule] = (m[f.rule] ?? 0) + 1), m), {});
