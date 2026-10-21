@@ -15,6 +15,7 @@
  * out right now" is a narrower question than "is this load active").
  */
 import { assertCanonicalSubset, canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
+import { loadServiceMembershipSql } from "./load-service.js";
 
 export const DISPATCH_ACTIVE_LOAD_STATUSES = [
   "assigned_not_dispatched",
@@ -67,7 +68,7 @@ export async function countDispatchLoadsByStatuses(
     `
       SELECT count(*)::int AS count
       -- LEAD 443.206 D2 — THE board set (canonical dispatch work), narrowed to the status subset; never
-      -- views.live_loads' money-gated open_dispatch bucket (a different set than every board shows).
+      -- private status list on mdata.loads (LEAD 443.206R: the set is the load service's).
       FROM mdata.loads l
       WHERE ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
         AND l.status IN (${statusInClause(statuses)})
@@ -100,10 +101,11 @@ export async function countDeliveredPendingDocsLoads(client: Queryable, operatin
   const res = await client.query<{ count: number }>(
     `
       SELECT count(*)::int AS count
-      FROM views.live_loads
-      WHERE operating_company_id = $1::uuid
-        AND live_state = 'pre_settlement'
-        AND status = 'delivered_pending_docs'::mdata.load_status_enum
+      FROM mdata.loads l
+      -- LEAD 443.206R: the load service's pre_settlement state, narrowed to this status.
+      WHERE l.operating_company_id = $1::uuid
+        AND ${loadServiceMembershipSql("l", "pre_settlement", "$1::uuid")}
+        AND l.status = 'delivered_pending_docs'::mdata.load_status_enum
     `,
     [operatingCompanyId]
   );

@@ -144,6 +144,8 @@ export type DispatchLoadListQuery = {
   from?: string;
   to?: string;
   search?: string;
+  /** LEAD 443.206R — "board" (default, live loads) or "all" (explicit history read). */
+  scope?: "board" | "all";
 };
 
 export type DispatchBookLoadPayload = {

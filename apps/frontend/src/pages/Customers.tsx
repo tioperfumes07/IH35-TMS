@@ -1035,6 +1035,7 @@ export function CustomersPage() {
       view: "home",
       status: [],
       customer: selectedCustomer?.id,
+      scope: "all", // LEAD 443.206R — the customer's transaction list, every stage
     }),
     enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "transaction_list"),
   });

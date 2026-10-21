@@ -203,7 +203,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
             -- ROUND 36.1: reads views.live_loads's open_dispatch bucket, structurally excluding a
             -- load stuck at 'dispatched' but already settled/driver-billed (was a per-caller money
             -- predicate in ROUND 35.1).
-            -- LEAD 443.206 D2 — the board set (canonical dispatch work), not views.live_loads' money-gated bucket.
+            -- LEAD 443.206R — the board set: the load service via canonicalDispatchWorkWhereClause.
             OR EXISTS (
               SELECT 1 FROM mdata.loads cl
               WHERE ${canonicalDispatchWorkWhereClause("cl", "$1::uuid")}

@@ -19,6 +19,8 @@ export function listDispatchLoads(query: DispatchLoadListQuery) {
   if (query.from) params.set("from", query.from);
   if (query.to) params.set("to", query.to);
   if (query.search) params.set("search", query.search);
+  // LEAD 443.206R — default is the board (live loads); "all" is the explicit history read.
+  if (query.scope) params.set("scope", query.scope);
   return apiRequest<{ loads: DispatchLoad[]; total_count: number; has_more: boolean }>(`/api/v1/dispatch/loads?${params.toString()}`);
 }
 
