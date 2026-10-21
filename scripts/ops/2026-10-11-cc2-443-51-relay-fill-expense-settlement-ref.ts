@@ -2,10 +2,11 @@
 /**
  * Lead 443.51 #5 (AUTH-425): the Relay-fill expense documents created by the AUTH-411 backfill name no settlement
  * (settlement_no and source_settlement_ref NULL) — the Creator stamps settlement_no only on the expenses of its own post, and
- * these were adopted afterwards. Fill both, ONCE, through fillRelayFillExpenseSettlementRef (fuel-expense-document.service.ts),
- * with the settlement that holds the document's load: driver_finance.driver_settlement_gl_bills (load_number) or
- * driver_finance.settlement_lines (load_id), live settlements only; the number = source_document_ref (AlwaysTrack) else
- * display_id — the same value the Creator stamps. A load held by zero or by more than one live settlement is LISTED, never guessed.
+ * these were adopted afterwards.
+ * LEAD 22:25Z #1 (owner 10-21): this script used to name "the settlement that holds the document's load" — printed or not — and
+ * that is the ROOT of the 23 receipts stamped by a settlement that never printed them. It now runs THE engine backfill
+ * (backfillRelayFillSettlementRefs → stampReceiptDocumentSettlementRef): a settlement is named only when its own posted
+ * audit printed the fill; everything else is LISTED unnamed, never guessed.
  *
  * Usage:
  *   DATABASE_URL=<fork> npx tsx scripts/ops/2026-10-11-cc2-443-51-relay-fill-expense-settlement-ref.ts --fork-commit
@@ -15,7 +16,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import pg from "pg";
-import { fillRelayFillExpenseSettlementRef } from "../../apps/backend/src/fuel/fuel-expense-document.service.js";
+import { backfillRelayFillSettlementRefs } from "../../apps/backend/src/fuel/fuel-expense-document.service.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -48,23 +49,9 @@ try {
        FROM accounting.expenses e WHERE e.id::text IN (SELECT id FROM (${RELAY_DOCS}) x)`, [USMCA])).rows[0]!;
   const before = await count();
   console.log(`BEFORE: ${before.n} Relay-fill expense documents; settlement_no NULL ${before.s}; source_settlement_ref NULL ${before.r}`);
-  const docs = (await client.query<{ id: string; load_id: string | null }>(
-    `SELECT d.id, d.load_id FROM (${RELAY_DOCS}) d JOIN accounting.expenses e ON e.id::text = d.id
-      WHERE e.settlement_no IS NULL OR e.source_settlement_ref IS NULL`, [USMCA])).rows;
-  let filled = 0;
-  const listed: string[] = [];
-  for (const d of docs) {
-    if (!d.load_id) { listed.push(`${d.id}: no load on the document`); continue; }
-    const settlements = (await client.query<{ no: string }>(
-      `SELECT DISTINCT coalesce(nullif(trim(s.source_document_ref), ''), s.display_id) AS no
-         FROM driver_finance.driver_settlements s
-        WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL AND s.status <> 'cancelled'
-          AND (s.id IN (SELECT g.settlement_id FROM driver_finance.driver_settlement_gl_bills g JOIN mdata.loads l ON l.load_number = g.load_number AND l.operating_company_id = g.operating_company_id WHERE l.id = $2::uuid)
-               OR s.id IN (SELECT sl.settlement_id FROM driver_finance.settlement_lines sl WHERE sl.load_id = $2::uuid))`,
-      [USMCA, d.load_id])).rows;
-    if (settlements.length !== 1) { listed.push(`${d.id}: load ${d.load_id} held by ${settlements.length} live settlements`); continue; }
-    if (await fillRelayFillExpenseSettlementRef(client as never, { operating_company_id: USMCA, expense_id: d.id, settlement_no: settlements[0]!.no, actor_user_uuid: OWNER })) filled++;
-  }
+  const { stamped, unnamed } = await backfillRelayFillSettlementRefs(client as never, { operating_company_id: USMCA, actor_user_uuid: OWNER });
+  const filled = stamped.length;
+  const listed = unnamed.map((id) => `${id}: no live settlement printed this fill — left unnamed`);
   const after = await count();
   console.log(`Filled ${filled} document(s); listed ${listed.length}.`);
   for (const l of listed) console.log(`  LISTED ${l}`);

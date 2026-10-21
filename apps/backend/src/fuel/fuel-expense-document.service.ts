@@ -757,6 +757,35 @@ export async function stampReceiptDocumentSettlementRef(
   return row.ref;
 }
 
+/**
+ * LEAD 22:25Z #1 (owner: "why are they stamped by the wrong settlement ... fix that engine and rule ... never happen again")
+ * — THE backfill for Relay-fill documents that name no settlement. Root cause of the 23 wrong receipts: the 443.51 backfill
+ * (2026-10-11 AUTH-425) named "the settlement holding the load", printed or not. Every backfill now goes through
+ * stampReceiptDocumentSettlementRef — a settlement is named only when its own posted audit printed the fill — so a re-run
+ * stamps zero unprinted documents. Returns what it stamped and what it left unnamed (never guessed).
+ */
+export async function backfillRelayFillSettlementRefs(
+  client: QueryableClient,
+  input: { operating_company_id: string; actor_user_uuid: string },
+): Promise<{ stamped: Array<{ expense_id: string; settlement_no: string }>; unnamed: string[] }> {
+  const docs = (await client.query<{ id: string }>(
+    `SELECT e.id::text FROM accounting.expenses e JOIN mdata.vendors v ON v.id = e.vendor_uuid
+      WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND v.vendor_name ~* '^relay( |$)'
+        AND (e.settlement_no IS NULL OR e.source_settlement_ref IS NULL)
+        AND EXISTS (SELECT 1 FROM accounting.journal_entry_postings p WHERE p.journal_entry_uuid = e.journal_entry_id AND p.source_transaction_type = 'fuel_event')
+      ORDER BY e.id`,
+    [input.operating_company_id],
+  )).rows;
+  const stamped: Array<{ expense_id: string; settlement_no: string }> = [];
+  const unnamed: string[] = [];
+  for (const d of docs) {
+    const ref = await stampReceiptDocumentSettlementRef(client, { operating_company_id: input.operating_company_id, expense_id: d.id, actor_user_uuid: input.actor_user_uuid });
+    if (ref) stamped.push({ expense_id: d.id, settlement_no: ref });
+    else unnamed.push(d.id);
+  }
+  return { stamped, unnamed };
+}
+
 export async function adoptRelayFillExpenseDocument(
   client: QueryableClient,
   input: { operating_company_id: string; relay_fill_id: string; journal_entry_id: string; requesting_user_uuid?: string | null; settlement_no?: string | null; trailer_id?: string | null; load_exemption_reason?: string | null; driver_id?: string | null },

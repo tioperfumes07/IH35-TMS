@@ -114,3 +114,31 @@ describe("LEAD 443.203 (20:22Z) — the load-holder stamp names only a settlemen
     expect(writes).toHaveLength(1);
   });
 });
+
+describe("LEAD 22:25Z #1 — the 443.51 backfill, re-run, stamps 0 unprinted documents", () => {
+  it("names only a settlement that printed the fill; an unprinted fill on a held load stays unnamed", async () => {
+    const mod = (await import("../fuel-expense-document.service.js")) as Record<string, unknown>;
+    const backfill = mod.backfillRelayFillSettlementRefs as
+      | ((c: unknown, i: { operating_company_id: string; actor_user_uuid: string }) => Promise<{ stamped: unknown[]; unnamed: string[] }>)
+      | undefined;
+    expect(typeof backfill).toBe("function");
+    const writes: unknown[][] = [];
+    const client = {
+      query: vi.fn(async (sql: string, v: unknown[] = []) => {
+        if (/AND \(e\.settlement_no IS NULL OR e\.source_settlement_ref IS NULL\)/.test(sql) && /ORDER BY e\.id/.test(sql)) return { rows: [{ id: "UNPRINTED" }, { id: "PRINTED" }] };
+        if (/SELECT min\(ref\) AS ref, count\(\*\)::int AS n FROM holders/.test(sql)) {
+          // Load held by 5846 either way; only PRINTED appears in 5846's posted audit.
+          const printedTest = /settlement_creator\.posted/.test(sql);
+          return { rows: [printedTest && v[0] === "UNPRINTED" ? { ref: null, n: 0 } : { ref: "5846", n: 1 }] };
+        }
+        if (/FOR UPDATE/.test(sql)) return { rows: [{ settlement_no: null, source_settlement_ref: null, load_id: LOAD }] };
+        if (/UPDATE accounting\.expenses/.test(sql)) { writes.push(v); return { rows: [{ id: v[1] }] }; }
+        return { rows: [] };
+      }),
+    };
+    const out = await backfill!(client, { operating_company_id: OPCO, actor_user_uuid: ACTOR });
+    expect(out.stamped).toEqual([{ expense_id: "PRINTED", settlement_no: "5846" }]);
+    expect(out.unnamed).toEqual(["UNPRINTED"]);
+    expect(writes.map((w) => w[1])).toEqual(["PRINTED"]);
+  });
+});
