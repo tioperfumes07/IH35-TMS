@@ -74,4 +74,22 @@ describe("groupTruckLineByUnit", () => {
   it("throws when a caller forces duplicate top-level unit_ids", () => {
     expect(findDuplicateTopLevelUnitIds([{ unit_id: "a" }, { unit_id: "a" }])).toEqual(["a"]);
   });
+
+  // 443.207 — two free drivers whose last load was on the same unit must NOT 500 the board.
+  // On main (before fix) groupTruckLineByUnit threw truck_line_duplicate_top_level_unit;
+  // after fix it merges into ONE group with 2 legs.
+  it("merges two available rows with the same unit_id into one group with 2 legs (443.207)", () => {
+    const groups = groupTruckLineByUnit(
+      [],
+      [
+        { unit_id: "t152", unit_number: "T152", row: { driver_id: "d1", kind: "available" } },
+        { unit_id: "t152", unit_number: "T152", row: { driver_id: "d2", kind: "available" } },
+      ]
+    );
+    expect(groups).toHaveLength(1);
+    expect(groups[0].section).toBe("available");
+    expect(groups[0].unit_id).toBe("t152");
+    expect(groups[0].legs).toHaveLength(2);
+    expect(findDuplicateTopLevelUnitIds(groups)).toEqual([]);
+  });
 });

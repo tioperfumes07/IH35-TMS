@@ -93,6 +93,10 @@ export function findProblems({ groupSrc, routesSrc, boardSrc, helperSrc }) {
   if (!/useLoadCostRollups/.test(boardCode) || !/costRollups\.get\(r\.load\.load_id\)/.test(boardCode)) {
     problems.push("TruckLineBoard must keep useLoadCostRollups + costRollups.get(r.load.load_id) (LAW-5 / R-173)");
   }
+  // 443.207 — available rows with same unit_id must be merged (not blown up by assertUniqueUnitIds).
+  if (!/availableByUnit/.test(groupSrc)) {
+    problems.push("group-by-unit.ts must merge duplicate available rows by unit_id via availableByUnit map (443.207)");
+  }
   return problems;
 }
 
@@ -137,6 +141,7 @@ const CLEAN_FIXTURE = {
     "export function groupTruckLineByUnit(rows) { return assertUniqueUnitIds(rows); }",
     "function findDuplicateTopLevelUnitIds(g) {}",
     'throw new Error("truck_line_duplicate_top_level_unit");',
+    "const availableByUnit = new Map();",
   ].join("\n"),
   routesSrc: 'import { CURRENT_TRUCK_LINE_LOAD_SQL } from "../current-truck-line-load.js";\nconst groups = groupTruckLineByUnit(rows);',
   helperSrc: [
@@ -169,6 +174,7 @@ if (process.argv.includes("--selftest")) {
     ["cost rollup hook unwired", { boardSrc: f.boardSrc.replace("useLoadCostRollups(ids)", "new Map()") }],
     ["retired TOUR / PRE-SETTLEMENT header back", { boardSrc: f.boardSrc.replace('<H label="TOUR" />', '<H label="TOUR / PRE-SETTLEMENT" />') }],
     ["LOAD before TOUR (column order)", { boardSrc: f.boardSrc.replace('<H label="TOUR" /><H label="LOAD" />', '<H label="LOAD" /><H label="TOUR" />') }],
+    ["443.207 merge map removed (available duplicates would 500)", { groupSrc: f.groupSrc.replace("availableByUnit", "availableList") }],
   ];
   let caught = 0;
   for (const [name, patch] of planted) {
