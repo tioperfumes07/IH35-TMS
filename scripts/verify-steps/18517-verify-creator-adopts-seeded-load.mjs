@@ -42,6 +42,13 @@ export function check(src = {}) {
   if (!accrual.includes('additionalOnlyPayItems(client, opco, additionalOnly)') || !accrual.includes('accountId: l.account_id') || !accrual.includes('itemId: l.item_id')) f.push(`${ACCRUAL}: delivery must use the actual additional-pay item and its account (8)`);
   if (!/const usmcaSettlementDocument = isAlwaysTrackSettlementNumber\(String\(draft\.settlement_no/.test(adm) || !/!usmcaSettlementDocument && loads\.every\(\(l\) => l\.factoring === "faro_transportation"\)/.test(adm))
     f.push(`${ADM}: a USMCA settlement document with only Transportation loads is refused (5: owner standing ruling 443.167-R2)`);
+  // 10 (LEAD 443.215 extension): a posted settlement stores the printed source it was posted from, and a second source for the
+  // same number is never silent — the "already exists" refusal compares it (already posted vs source changed + line diff).
+  if (!svc.includes("await storeSettlementSourceFingerprint(client as never, draft.operating_company_id, settlementId, draft);"))
+    f.push(`${SVC}: a Creator post does not store its source fingerprint (10: 443.215)`);
+  if (!/const v = await checkSettlementSourceOnClient\(client as never, \{ operatingCompanyId: draft\.operating_company_id, draft, actorUserId, record: false \}\);/.test(svc)
+      || !svc.includes('"settlement_source_changed_repost_needed"'))
+    f.push(`${SVC}: a second source for an existing settlement number is refused without comparing it (10: 443.215 — a changed PDF sat unnoticed)`);
   const zero = svc.match(/export async function restateAdoptedLoadToZeroRevenue\([\s\S]*?\n}\n/)?.[0] ?? "";
   if (!zero) f.push(`${SVC}: restateAdoptedLoadToZeroRevenue missing (6)`);
   else {
@@ -73,7 +80,8 @@ export function check(src = {}) {
   if (!restate) f.push(`${SVC}: restateOpenDriverBillToSignedPay missing (3)`);
   else {
     if (/DELETE\s+FROM/i.test(restate)) f.push(`${SVC}: the restate deletes a money row (3)`);
-    if (!/SET status = 'void', voided_at = now\(\)/.test(restate) || !/`\$\{input\.loadNumber\}-R`/.test(restate)) f.push(`${SVC}: the restate must void the bill and mint one -R replacement (3)`);
+    // 443.213 (#27107): the void goes through the ONE driver-bill void writer (stampDriverBillVoidedInClientTx).
+    if (!/SET status = 'void', voided_at = now\(\)|stampDriverBillVoidedInClientTx\(/.test(restate) || !/`\$\{input\.loadNumber\}-R`/.test(restate)) f.push(`${SVC}: the restate must void the bill and mint one -R replacement (3)`);
     if (!/state\.settled \|\| state\.accrued/.test(restate)) f.push(`${SVC}: the restate does not refuse a live-settled or delivery-accrued bill (3)`);
     // LEAD 443.203 (5849 / 13684): an adopted load with ZERO live bills must get its ONE bill minted from the signed pay —
     // returning early left the invoice feed gate red ("no live driver bill for this load"); a load with no driver is refused.
@@ -117,6 +125,8 @@ if (process.argv.includes("--selftest")) {
     ["series refused", { adm: adm.replace("!usmcaSettlementDocument && loads.every", "loads.every") }],
     ["no earn reversal", { svc: svc.replace("await reverseJournalEntryNoFlip(client as never, { operatingCompanyId: input.companyId, journalEntryId: e.je", "void ({ operatingCompanyId: input.companyId, journalEntryId: e.je") }],
     ["zero restate skipped", { svc: svc.replace("await restateAdoptedLoadToZeroRevenue(client, {", "void ({") }],
+    ["no source fingerprint at post", { svc: svc.replace("await storeSettlementSourceFingerprint(client as never, draft.operating_company_id, settlementId, draft);", "") }],
+    ["silent second source", { svc: svc.replace('"settlement_source_changed_repost_needed"', '"settlement_exists"') }],
     ["re-deliver unless edit", { svc: svc.replace('if (!["delivered", "delivered_pending_docs", "invoiced"', 'if (!(draft.edit_void_repost && ["delivered", "delivered_pending_docs", "invoiced"') }],
   ];
   for (const [n, s] of plants) {
