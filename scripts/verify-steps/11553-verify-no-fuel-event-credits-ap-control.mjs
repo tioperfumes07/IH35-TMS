@@ -13,5 +13,6 @@ export default {
   name: "verify-no-fuel-event-credits-ap-control",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-no-fuel-event-credits-ap-control.mjs"]);
+    await ctx.run("node", ["scripts/verify-fuel-card-rails-complete.mjs", "--selftest"]);
   },
 };

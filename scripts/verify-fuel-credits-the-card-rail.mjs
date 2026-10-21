@@ -148,16 +148,16 @@ async function liveCheck() {
         WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL
           AND e.source_fuel_transaction_id IS NOT NULL AND p.debit_or_credit = 'credit'
           AND a.account_number != ALL($2::text[])`,
-      [USMCA_COMPANY_ID, ["2510", "1295"]]
+      [USMCA_COMPANY_ID, ["2510", "1295", "2520"]]
     );
     await client.query("ROLLBACK");
     const badCount = Number(badRes.rows[0].n);
     if (badCount > 0) {
-      console.error(`  ${LIVE_LABEL}: FAIL — ${badCount} of ${population} live fuel expense(s) credit an account other than 2510/1295.`);
+      console.error(`  ${LIVE_LABEL}: FAIL — ${badCount} of ${population} live fuel expense(s) credit an account other than 2510/1295/2520.`);
       process.exitCode = 1;
       return;
     }
-    console.log(`  ${LIVE_LABEL}: PASS — all ${population} live fuel expense(s) credit only 2510/1295.`);
+    console.log(`  ${LIVE_LABEL}: PASS — all ${population} live fuel expense(s) credit only 2510/1295/2520.`);
   } catch (e) {
     await client.query("ROLLBACK").catch(() => {});
     console.error(`  ${LIVE_LABEL}: connection/query error (not fatal to the static PASS above): ${e.message}`);

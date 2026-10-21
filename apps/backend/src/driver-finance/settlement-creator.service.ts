@@ -127,8 +127,8 @@ async function itemAccountByName(
 }
 
 /** The card rail's role — never its account number (2510 / 1295 on USMCA). Same roles the fuel poster resolves. */
-function cardRailRole(card: "dreamline" | "relay"): CoaRole {
-  return card === "dreamline" ? "fuel_card_payable_dreamline" : "fuel_wallet_relay";
+function cardRailRole(card: "dreamline" | "relay" | "wex"): CoaRole {
+  return card === "dreamline" ? "fuel_card_payable_dreamline" : card === "wex" ? "fuel_card_payable_wex" : "fuel_wallet_relay";
 }
 
 function dollarsFromCents(cents: number): number {
@@ -640,7 +640,7 @@ export async function previewSettlementCreator(
     push({
       load_number: fuel.load_number ?? null,
       account_number: rail?.account_number ?? null,
-      account_name: rail?.account_name ?? (fuel.card === "dreamline" ? "Dreamline" : "Relay"),
+      account_name: rail?.account_name ?? (fuel.card === "dreamline" ? "Dreamline" : fuel.card === "wex" ? "England WEX" : "Relay"),
       debit_cents: 0,
       credit_cents: amount,
       memo: `Fuel card rail ${fuel.card}`,
@@ -1596,7 +1596,7 @@ export async function postSettlementCreatorInClientTx(
       // 2026-10-11) is NOT posted as an expense against the wallet — trg_relay_wallet_consumed_only_by_relay_fill refuses
       // that — it takes the relay_link outcome and posts THROUGH its linked Relay fill as source, below. 5772 fork:
       // with creator_manual_entry on a Relay row the expense credited 1295 and the post was refused.
-      company_direct_credit: fuel.card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet",
+      company_direct_credit: fuel.card === "dreamline" ? "dreamline_card_payable" : fuel.card === "wex" ? "wex_card_payable" : "relay_fuel_wallet",
       creator_manual_entry: fuel.card !== "relay",
       trailer_id: draft.trailer_id ?? null,
     });
@@ -1900,7 +1900,7 @@ export async function postSettlementCreatorInClientTx(
       journalEntryIds.push(owed.journalEntryId);
       continue;
     }
-    const preference = card === "dreamline" ? "dreamline_card_payable" : "relay_fuel_wallet";
+    const preference = card === "dreamline" ? "dreamline_card_payable" : card === "wex" ? "wex_card_payable" : "relay_fuel_wallet";
     const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(client as never, draft.operating_company_id, preference);
     // 443.110 G13 — a paid-now company expense goes through THE shared expense writer (expenses.routes.ts
     // createExpenseInClientTx), like every other expense: load-spine number + expense_load_links row, the vendor-document

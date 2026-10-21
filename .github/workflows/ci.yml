@@ -143,6 +143,7 @@ jobs:
             scripts/verify-register-reversal-never-precedes-original.mjs \
             scripts/verify-vendor-customer-merge.mjs \
             scripts/verify-fuel-transactions-per-load.mjs \
+            scripts/verify-fuel-card-rails-complete.mjs \
             scripts/verify-new-units-have-gps-or-deactivation-reason.mjs \
             scripts/verify-bank-possible-duplicates-flagged-never-removed.mjs \
             scripts/verify-for-review-has-no-document.mjs \

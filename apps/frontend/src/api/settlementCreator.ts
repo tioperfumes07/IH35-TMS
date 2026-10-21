@@ -1,9 +1,9 @@
 import { apiRequest } from "./client";
 
 export type SettlementCreatorFactorOption = "faro_usmca" | "faro_transportation" | "direct";
-export type SettlementCreatorFuelCard = "dreamline" | "relay";
+export type SettlementCreatorFuelCard = "dreamline" | "relay" | "wex";
 /** ROUND 443.6 — how a company expense was paid: a card (paid now) or owed to the vendor (A/P bill). Required. */
-export type SettlementCreatorExpensePaymentSource = "dreamline" | "relay" | "owed";
+export type SettlementCreatorExpensePaymentSource = "dreamline" | "relay" | "wex" | "owed";
 
 export type SettlementCreatorDraft = {
   operating_company_id: string;

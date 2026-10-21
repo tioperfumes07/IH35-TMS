@@ -3,7 +3,7 @@ import { USMCA_COMPANY_ID } from "../../org/company-ids.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>; };
 
-export type CompanyDirectCredit = "cash" | "dreamline_card_payable" | "relay_fuel_wallet";
+export type CompanyDirectCredit = "cash" | "dreamline_card_payable" | "relay_fuel_wallet" | "wex_card_payable";
 
 export type FuelTxnGlPostCandidate = {
   operating_company_id: string;
@@ -91,6 +91,8 @@ export function resolveCompanyDirectCreditPreference(
 
   const code = (txnSignals?.fuel_card_code ?? "").toUpperCase();
   if (code === "DREAMLINE") return "dreamline_card_payable";
+  // 10-21-2026 — England Logistics WEX card (billed in arrears, paid from the operating bank) -> its own payable.
+  if (code === "WEX") return "wex_card_payable";
   // ACCT-F403: every Relay-rail answer below is a fill that posts from its wallet line, never from this fuel row.
   if (code === "RELAY") throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
   // Legacy Relay-bridge rows created before fuel_card_id was stamped to the RELAY catalog row.

@@ -31,7 +31,10 @@ vi.mock("../fuel-item-account.js", async (orig) => {
 });
 
 describe("fuel-posting poster.service company-direct path", () => {
-  it("posts Dr fuel expense / Cr the operating bank (operating_bank role, ROUND 377)", async () => {
+  it.each([
+    ["cash", "operating_bank"],
+    ["wex_card_payable", "fuel_card_payable_wex"],
+  ] as const)("posts Dr fuel expense / Cr the bound %s role", async (rail, role) => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
     mockResolveAccountForCategory.mockReset();
@@ -64,12 +67,16 @@ describe("fuel-posting poster.service company-direct path", () => {
       posted_at: "2026-05-23T12:00:00.000Z",
       amount_cents: 1899,
       posting_path: "company_direct",
-      company_direct_credit: "cash",
+      company_direct_credit: rail,
       ifta_state: "OK",
       ifta_gallons: 12.5,
     });
 
     expect(result.result).toBe("posted");
+    expect(mockQuery.mock.calls.some(([sql, values]) =>
+      String(sql).includes("FROM accounting.chart_of_accounts_roles") &&
+      Array.isArray(values) && values[1] === role
+    )).toBe(true);
     expect(mockResolveAccountForCategory).toHaveBeenCalledWith(
       expect.anything(),
       "11111111-1111-4111-8111-111111111111",
