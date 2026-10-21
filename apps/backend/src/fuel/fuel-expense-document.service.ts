@@ -711,6 +711,10 @@ async function settlementRefHoldsLoad(client: QueryableClient, operatingCompanyI
  * verify-relay-fill-expense-settlement-ref (driver_settlement_gl_bills by load number, or settlement_lines by load); same
  * reference the Creator passes (source_document_ref ?? display_id); fill-once through fillRelayFillExpenseSettlementRef.
  * Zero or several holding settlements -> nothing is stamped (the Creator adopt names it when the settlement posts).
+ * LEAD 443.203 (20:22Z, ruling #3): holding the load is not enough — the settlement must have PRINTED this fill: its own
+ * posted audit (driver_finance.settlement_creator.posted) names the document (expense_ids) or one of the fill's fuel rows
+ * (fuel_transaction_ids: the document's source row, or a row of the fill its posting is sourced on). An unprinted fill on a
+ * held load (5846's T170 fills) stays unnamed.
  */
 export async function stampReceiptDocumentSettlementRef(
   client: QueryableClient,
@@ -718,9 +722,17 @@ export async function stampReceiptDocumentSettlementRef(
 ): Promise<string | null> {
   const r = await client.query<{ ref: string | null; n: number }>(
     `WITH doc AS (
-       SELECT e.load_id, e.operating_company_id FROM accounting.expenses e
+       SELECT e.id, e.load_id, e.operating_company_id, e.journal_entry_id, e.source_fuel_transaction_id FROM accounting.expenses e
         WHERE e.id = $1::uuid AND e.operating_company_id = $2::uuid AND e.voided_at IS NULL AND e.load_id IS NOT NULL
           AND (e.settlement_no IS NULL OR e.source_settlement_ref IS NULL)
+     ), fill_src AS (
+       SELECT p.source_transaction_id::text AS src FROM accounting.journal_entry_postings p, doc
+        WHERE p.journal_entry_uuid = doc.journal_entry_id AND p.source_transaction_type = 'fuel_event'
+     ), fill_rows AS (
+       SELECT ft.id::text AS id FROM fuel.fuel_transactions ft, doc
+        WHERE ft.operating_company_id = doc.operating_company_id AND ft.voided_at IS NULL
+          AND (ft.id = doc.source_fuel_transaction_id OR ft.id::text IN (SELECT src FROM fill_src)
+               OR ft.relay_fuel_transaction_id::text IN (SELECT src FROM fill_src))
      ), holders AS (
        SELECT DISTINCT s.id, COALESCE(NULLIF(btrim(s.source_document_ref), ''), s.display_id) AS ref
          FROM doc
@@ -730,6 +742,11 @@ export async function stampReceiptDocumentSettlementRef(
                           JOIN mdata.loads l ON l.load_number = g.load_number AND l.operating_company_id = g.operating_company_id
                          WHERE l.id = doc.load_id)
                OR s.id IN (SELECT sl.settlement_id FROM driver_finance.settlement_lines sl WHERE sl.load_id = doc.load_id))
+          -- 443.203 ruling #3: the holder printed this fill (its own posted audit names the document or a fuel row of the fill).
+          AND EXISTS (SELECT 1 FROM audit.audit_events a
+                       WHERE a.event_class = 'driver_finance.settlement_creator.posted' AND a.payload->>'resource_id' = s.id::text
+                         AND (a.payload->'expense_ids' ? doc.id::text
+                              OR a.payload->'fuel_transaction_ids' ?| ARRAY(SELECT id FROM fill_rows)))
      )
      SELECT min(ref) AS ref, count(*)::int AS n FROM holders`,
     [input.expense_id, input.operating_company_id],
