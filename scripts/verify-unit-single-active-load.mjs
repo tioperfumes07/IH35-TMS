@@ -27,6 +27,13 @@ const LABEL = "verify-unit-single-active-load";
 
 const GUARD_FILE = "apps/backend/src/dispatch/unit-active-load-guard.ts";
 const MIGRATION_FILE = "db/migrations/202614042200_loads_one_active_unit_lock.sql";
+// LEAD 443.209 (2026-10-21) — old rule -> new rule -> why:
+//   OLD: the DB backstop was uq_loads_one_active_unit (202614042200).
+//   NEW: the DB backstop is the DEFERRED constraint trigger trg_refuse_second_active_load_on_unit (202616050700): one
+//   active load per unit except the same tour's sequential leg (13688 -> 13694), the app gate's exact rule. The index is
+//   dropped there (it was already absent on prod, which ran an untracked date-window trigger instead).
+//   WHY: a unique index cannot express "the same tour's next leg"; it refused the legitimate 13694 on every fresh DB.
+const BACKSTOP_FILE = "db/migrations/202616050700_unit_overlap_trigger_tracked_same_tour_legs.sql";
 
 /** Parse the ACTIVE_UNIT_STATUSES string literals out of the guard source so the lockstep check is
  *  driven by the single source of truth, never a re-hardcoded copy that could itself drift. */
@@ -69,6 +76,7 @@ function readSources() {
   const sources = { [GUARD_FILE]: fs.readFileSync(path.join(ROOT, GUARD_FILE), "utf8") };
   for (const wp of WRITE_PATHS) sources[wp.file] = fs.readFileSync(path.join(ROOT, wp.file), "utf8");
   sources[MIGRATION_FILE] = fs.readFileSync(path.join(ROOT, MIGRATION_FILE), "utf8");
+  sources[BACKSTOP_FILE] = fs.existsSync(path.join(ROOT, BACKSTOP_FILE)) ? fs.readFileSync(path.join(ROOT, BACKSTOP_FILE), "utf8") : "";
   return sources;
 }
 
@@ -114,31 +122,31 @@ export function audit(sources) {
   // DB-level backstop (#21713): the partial unique index must exist with the correct predicate, and
   // its status set must stay in lockstep with ACTIVE_UNIT_STATUSES — otherwise the app guard and the
   // DB index could silently diverge (one narrower than the other reopens the double-dispatch class).
-  const migSrc = sources[MIGRATION_FILE];
+  const migSrc = sources[BACKSTOP_FILE];
   if (!migSrc) {
-    failures.push(`${MIGRATION_FILE}: not found — the DB-level double-dispatch backstop is missing`);
+    failures.push(`${BACKSTOP_FILE}: not found — the DB-level double-dispatch backstop is missing`);
   } else {
-    if (!/CREATE UNIQUE INDEX IF NOT EXISTS\s+uq_loads_one_active_unit/i.test(migSrc)) {
-      failures.push(`${MIGRATION_FILE}: uq_loads_one_active_unit unique index missing (double-dispatch DB backstop removed)`);
+    if (!/CREATE CONSTRAINT TRIGGER trg_refuse_second_active_load_on_unit[\s\S]*?DEFERRABLE INITIALLY DEFERRED[\s\S]*?EXECUTE FUNCTION mdata\.refuse_second_active_load_on_unit\(\)/.test(migSrc)) {
+      failures.push(`${BACKSTOP_FILE}: trg_refuse_second_active_load_on_unit (deferred) missing (double-dispatch DB backstop removed)`);
     }
-    if (!/ON\s+mdata\.loads\s*\(\s*assigned_unit_id\s*\)/i.test(migSrc)) {
-      failures.push(`${MIGRATION_FILE}: index no longer keyed ON mdata.loads (assigned_unit_id)`);
+    if (!/AFTER INSERT OR UPDATE OF assigned_unit_id, status, soft_deleted_at, tour_id ON mdata\.loads/.test(migSrc)) {
+      failures.push(`${BACKSTOP_FILE}: the backstop no longer fires on unit / status / soft-delete / tour changes`);
     }
-    if (!/assigned_unit_id IS NOT NULL/.test(migSrc)) {
-      failures.push(`${MIGRATION_FILE}: index predicate no longer requires assigned_unit_id IS NOT NULL`);
+    if (!/PERFORM pg_advisory_xact_lock\(hashtext\('mdata\.loads\.unit:' \|\| cur\.assigned_unit_id::text\)\)/.test(migSrc)) {
+      failures.push(`${BACKSTOP_FILE}: the backstop no longer serializes per unit (two concurrent bookings could both pass)`);
     }
-    if (!/soft_deleted_at IS NULL/.test(migSrc)) {
-      failures.push(`${MIGRATION_FILE}: index predicate no longer excludes soft_deleted_at IS NULL (would lock deleted rows)`);
+    if (!/AND NOT mdata\.unit_legs_are_same_tour_sequential\(l\.id, cur\.id\)/.test(migSrc)) {
+      failures.push(`${BACKSTOP_FILE}: the only exception is no longer the same-tour sequential leg`);
     }
     const activeStatuses = parseActiveStatuses(guardSrc);
     if (activeStatuses.length === 0) {
       failures.push(`${GUARD_FILE}: could not parse ACTIVE_UNIT_STATUSES for the lockstep check`);
     } else {
-      const idxWhere = (migSrc.match(/status\s*=\s*ANY\(ARRAY\[([\s\S]*?)\]/) || [])[1] ?? "";
-      for (const st of activeStatuses) {
-        if (!new RegExp(`["']${st}["']`).test(idxWhere)) {
-          failures.push(`${MIGRATION_FILE}: index status set is out of lockstep with ACTIVE_UNIT_STATUSES — missing '${st}'`);
-        }
+      const fn = (migSrc.match(/FUNCTION mdata\.refuse_second_active_load_on_unit\(\)[\s\S]*?\$function\$;/) || [])[0] ?? "";
+      const sets = [...fn.matchAll(/status::text (?:NOT )?IN \(([^)]*)\)/g)].map((m) => m[1]);
+      if (sets.length < 2) failures.push(`${BACKSTOP_FILE}: could not find the backstop's active status sets`);
+      for (const set of sets) for (const st of activeStatuses) {
+        if (!new RegExp(`'${st}'`).test(set)) failures.push(`${BACKSTOP_FILE}: backstop status set is out of lockstep with ACTIVE_UNIT_STATUSES — missing '${st}'`);
       }
     }
   }
@@ -182,21 +190,22 @@ if (process.argv.includes("--selftest")) {
     }
   }
 
-  // Planted regression: drop the DB-level unique index from the migration (removing the backstop).
-  const mutatedMig = live[MIGRATION_FILE].replace(/CREATE UNIQUE INDEX IF NOT EXISTS\s+uq_loads_one_active_unit/i, "CREATE INDEX IF NOT EXISTS uq_loads_removed");
-  if (mutatedMig === live[MIGRATION_FILE]) {
-    console.error(`${LABEL} SELFTEST FAIL — uq_loads_one_active_unit anchor not found in migration to mutate`);
+  // Planted regression: remove the deferred DB backstop.
+  const mutatedMig = live[BACKSTOP_FILE].replace("CREATE CONSTRAINT TRIGGER trg_refuse_second_active_load_on_unit", "CREATE TRIGGER trg_removed");
+  if (mutatedMig === live[BACKSTOP_FILE] || !audit({ ...live, [BACKSTOP_FILE]: mutatedMig }).some((f) => f.includes("backstop removed"))) {
+    console.error(`${LABEL} SELFTEST FAIL — planted removal of the DB backstop escaped`);
     process.exit(1);
   }
-  if (!audit({ ...live, [MIGRATION_FILE]: mutatedMig }).some((f) => f.includes("uq_loads_one_active_unit unique index missing"))) {
-    console.error(`${LABEL} SELFTEST FAIL — planted removal of the DB unique index escaped`);
+  // Planted regression: narrow the backstop status set (drop 'dispatched') — must trip the lockstep check.
+  const mutatedLockstep = live[BACKSTOP_FILE].replace("'assigned_not_dispatched','dispatched','at_pickup'", "'assigned_not_dispatched','at_pickup'");
+  if (mutatedLockstep === live[BACKSTOP_FILE] || !audit({ ...live, [BACKSTOP_FILE]: mutatedLockstep }).some((f) => f.includes("out of lockstep"))) {
+    console.error(`${LABEL} SELFTEST FAIL — planted backstop/ACTIVE_UNIT_STATUSES drift escaped`);
     process.exit(1);
   }
-
-  // Planted regression: narrow the index status set (drop 'dispatched') — must trip the lockstep check.
-  const mutatedLockstep = live[MIGRATION_FILE].replace(/^\s*'dispatched',\n/m, "");
-  if (mutatedLockstep !== live[MIGRATION_FILE] && !audit({ ...live, [MIGRATION_FILE]: mutatedLockstep }).some((f) => f.includes("out of lockstep"))) {
-    console.error(`${LABEL} SELFTEST FAIL — planted index/ACTIVE_UNIT_STATUSES drift escaped`);
+  // Planted regression: no per-unit serialization.
+  const mutatedLock = live[BACKSTOP_FILE].replace("PERFORM pg_advisory_xact_lock(hashtext('mdata.loads.unit:' || cur.assigned_unit_id::text));", "");
+  if (mutatedLock === live[BACKSTOP_FILE] || !audit({ ...live, [BACKSTOP_FILE]: mutatedLock }).some((f) => f.includes("serializes"))) {
+    console.error(`${LABEL} SELFTEST FAIL — planted removal of the per-unit lock escaped`);
     process.exit(1);
   }
 

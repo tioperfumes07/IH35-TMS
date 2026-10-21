@@ -3080,9 +3080,27 @@ export async function createLoadWithFullSideEffects(
     // unit that was already assigned/dispatched/in_transit on an existing one. This is a new INSERT
     // (no exclude_load_id — there is no existing load id to exclude yet).
     if (input.assigned_unit_id && (ACTIVE_UNIT_STATUSES as readonly string[]).includes(statusForInsert)) {
+      // LEAD 443.209 — a TR/SB leg joins a tour: the tour's prior leg on this unit is not an overlap when this leg picks
+      // up after that leg's scheduled delivery (13688 -> 13694). The tour is the one the trip-pairing step below joins:
+      // the explicit pick, else the unit's latest NB tour.
+      let nextLegTour: string | null = null;
+      if (input.trip_type === "TR" || input.trip_type === "SB") {
+        nextLegTour = input.tour_id ?? (await client.query<{ tour_id: string | null }>(
+          `SELECT tour_id::text FROM mdata.loads
+             WHERE assigned_unit_id = $1::uuid AND trip_type = 'NB' AND tour_id IS NOT NULL
+               AND soft_deleted_at IS NULL AND operating_company_id = $2::uuid
+             ORDER BY created_at DESC LIMIT 1`,
+          [input.assigned_unit_id, input.operating_company_id]
+        )).rows[0]?.tour_id ?? null;
+      }
+      const firstPickup = (input.stops ?? []).filter((st) => st.stop_type === "pickup")
+        .sort((a, b) => Number(a.sequence_number ?? 0) - Number(b.sequence_number ?? 0))[0];
       await assertUnitNotActiveOnAnotherLoad(client, {
         operating_company_id: input.operating_company_id,
         unit_id: input.assigned_unit_id,
+        same_tour_next_leg: nextLegTour
+          ? { tour_id: nextLegTour, pickup_at: firstPickup?.appointment_start_at ?? firstPickup?.scheduled_arrival_at ?? null }
+          : null,
       });
     }
 
