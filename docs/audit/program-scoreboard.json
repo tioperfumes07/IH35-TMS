@@ -1,10 +1,10 @@
 {
-  "healthzSha": "ee2bf49",
-  "generated_at": "2026-10-22T03:05:16.608Z",
+  "healthzSha": "2fed570",
+  "generated_at": "2026-10-21T22:21:27.514Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "ee2bf49",
+    "deployedSha": "2fed570",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27142,
-      "title": "FINDING: N/A LANE: DOCS — CC-3- 443.230(a) re-pin verify-driverhub-unit-source to the load service's board set (red on main since the 443.206R scheduler change)",
+      "number": 27052,
+      "title": "chore(deps): bump qs from 6.15.3 to 6.16.1",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 10:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27142",
-      "sha": "7a24e7e830",
-      "committedAtIso": "2026-10-21T22:04:41-05:00"
+      "mergedAtCt": "10/21/2026, 05:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27052",
+      "sha": "2fed570d05",
+      "committedAtIso": "2026-10-21T17:13:32-05:00"
     },
     {
-      "number": 27141,
-      "title": "CC-2- fix 2 main reds from my merges: fuel unit FKs (443.214) + money-evidence guard reads the 443.220 editable lock",
+      "number": 27043,
+      "title": "chore(ci): bump github/codeql-action from 4.38.3 to 4.39.0",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 09:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27141",
-      "sha": "9a7762a35a",
-      "committedAtIso": "2026-10-21T21:56:48-05:00"
+      "mergedAtCt": "10/21/2026, 05:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27043",
+      "sha": "9966fb6356",
+      "committedAtIso": "2026-10-21T17:13:24-05:00"
     },
     {
-      "number": 27140,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202616120700 -- reservation-only commit, no code fix)",
+      "number": 27054,
+      "title": "chore(deps): bump fast-uri from 3.1.5 to 3.1.9",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 09:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27140",
-      "sha": "19383e3040",
-      "committedAtIso": "2026-10-21T21:55:15-05:00"
+      "mergedAtCt": "10/21/2026, 05:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27054",
+      "sha": "da14dd662d",
+      "committedAtIso": "2026-10-21T17:13:01-05:00"
     },
     {
-      "number": 27133,
-      "title": "FINDING: ACCT-F4432183 LANE: FINANCIAL — Claude-1- 443.218 F2b: Driver EarningsTab open-AP KPI from full aggregate",
+      "number": 27093,
+      "title": "CC-2- verify-lane-ownership: seat + lane for dependabot/* (manifests, lockfiles, workflows only)",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 09:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27133",
-      "sha": "ee2bf4901b",
-      "committedAtIso": "2026-10-21T21:51:21-05:00"
+      "mergedAtCt": "10/21/2026, 05:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27093",
+      "sha": "9dc5664505",
+      "committedAtIso": "2026-10-21T17:12:13-05:00"
     },
     {
-      "number": 27045,
-      "title": "chore(deps): bump the production-dependencies group across 1 directory with 24 updates",
+      "number": 27097,
+      "title": "FINDING: ACCT-F4432041 LANE: FINANCIAL — Claude-3- 23-receipt root cause closed: the 443.51 backfill now runs the printed-by engine (backfillRelayFillSettlementRefs); a re-run stamps 0 unprinted docs",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 09:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27045",
-      "sha": "1fada6dcdc",
-      "committedAtIso": "2026-10-21T21:15:48-05:00"
+      "mergedAtCt": "10/21/2026, 05:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27097",
+      "sha": "ebffad7d2b",
+      "committedAtIso": "2026-10-21T17:09:44-05:00"
     },
     {
-      "number": 27092,
-      "title": "chore(deps-dev): bump the npm_and_yarn group across 2 directories with 1 update",
+      "number": 0,
+      "title": "FINDING: N/A (443.212 REPLY — D3 retract + Q4 correction + Q2/Q1 refinements) LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 09:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27092",
-      "sha": "8c7b7817f4",
-      "committedAtIso": "2026-10-21T21:09:00-05:00"
+      "mergedAtCt": "10/21/2026, 05:06 PM CT",
+      "url": "",
+      "sha": "bb0e3c62b7",
+      "committedAtIso": "2026-10-21T17:06:59-05:00"
     },
     {
-      "number": 27135,
-      "title": "chore(deps): bump the development-dependencies group across 1 directory with 9 updates",
+      "number": 27096,
+      "title": "FINDING: N/A LANE: CI-GUARDS — Claude-3- wire the #27085 orphan guard: verify-load-report-and-picker-scope fails closed without a DB + verify-step 18605 (main red for every PR)",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 08:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27135",
-      "sha": "5311274c94",
-      "committedAtIso": "2026-10-21T20:58:31-05:00"
+      "mergedAtCt": "10/21/2026, 05:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27096",
+      "sha": "f2e78a7c9d",
+      "committedAtIso": "2026-10-21T17:05:46-05:00"
     },
     {
-      "number": 27138,
-      "title": "FINDING: N/A LANE: DOCS — Claude-3- re-pin verify-load-costs-live-documents to the one rollup (#27108 board → lcr.* left it red on main for every seat's gate)",
+      "number": 27095,
+      "title": "FINDING: N/A (CLAIM-RESERVE 18605 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 08:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27138",
-      "sha": "159324ece4",
-      "committedAtIso": "2026-10-21T20:56:44-05:00"
+      "mergedAtCt": "10/21/2026, 05:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27095",
+      "sha": "601042e1f0",
+      "committedAtIso": "2026-10-21T17:02:05-05:00"
     },
     {
-      "number": 27136,
-      "title": "CC-2- 443.220 a booked load always has its driver bill — awaiting_short_miles, priced in place when short miles land",
+      "number": 27091,
+      "title": "CC-2- 443.209 unit overlap: the same tour's sequential leg is not an overlap — one rule, app gate + deferred DB backstop",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 08:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27136",
-      "sha": "12899c3b22",
-      "committedAtIso": "2026-10-21T20:51:06-05:00"
+      "mergedAtCt": "10/21/2026, 04:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27091",
+      "sha": "8e111c3f81",
+      "committedAtIso": "2026-10-21T16:57:38-05:00"
     },
     {
-      "number": 27099,
-      "title": "chore(deps): bump @vitest/ui from 5.0.3 to 5.0.5",
+      "number": 27089,
+      "title": "FINDING: N/A (CLAIM-RESERVE 18603 + migration 202616050700 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 08:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27099",
-      "sha": "f2fee1e55e",
-      "committedAtIso": "2026-10-21T20:36:50-05:00"
+      "mergedAtCt": "10/21/2026, 04:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27089",
+      "sha": "5fd4f08362",
+      "committedAtIso": "2026-10-21T16:40:04-05:00"
     }
   ]
 }
