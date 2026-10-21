@@ -92,6 +92,8 @@
  * predicate, or an accounting-classified consumer imports the dispatch-work predicate.
  */
 
+import { loadServiceMembershipSql } from "./load-service.js";
+
 export const CANONICAL_ACTIVE_LOAD_STATUSES = [
   "booked",
   "planned",
@@ -392,18 +394,24 @@ export function canonicalDispatchWorkStatusClause(alias = "l"): string {
  * literal value — this function never accepts or interpolates a raw UUID.
  */
 export function canonicalDispatchWorkWhereClause(alias: string, operatingCompanyIdParam: string): string {
-  // LEAD 443.206 (owner 10-21 "check all loadboards, they are not in sync"): THE board set. Every load board (List, Kanban,
-  // Units, Truck Line, Trip Pairing, Planner grid + list, Overview tiles / panels, units-without-load) reads this one
-  // clause — the row exclusions views.live_loads applied privately (deleted / voided / sample) live here, so no board
-  // reads a different set through a view or its own WHERE.
+  // LEAD 443.206R (owner law 2026-09-28, ONE LOAD SERVICE): THE board set is views.live_loads open_dispatch, read through the
+  // load service (load-service.ts). The dispatch-work status list stays only as the narrower STATUS half (it equals the view's
+  // open_dispatch statuses today; assertCanonicalSubset keeps any narrower board inside it). The TRUCKLINE-16 second set
+  // (status-only on mdata.loads, no money half) is retired: a load whose settlement CLOSED is no longer dispatch work.
   return `${canonicalDispatchWorkStatusClause(alias)} AND ${alias}.operating_company_id = ${operatingCompanyIdParam}
-    AND ${canonicalBoardRowClause(alias)}`;
+    AND ${loadServiceMembershipSql(alias, "open_dispatch", operatingCompanyIdParam)}`;
 }
 
-/** LEAD 443.206 — the row half of the board set (never deleted, voided or sample); for a caller that applies its own
- *  entity scope (GET /mdata/loads board_scope=live scopes to the user's companies), always beside the status clause. */
+/** LEAD 443.206R — a REAL load (not deleted, voided or sample), whatever its stage: the row rule for an explicit history /
+ *  all-loads read (GET /dispatch/loads?scope=all — profiles' load lists, customer transaction list, statements). Not a board. */
+export function canonicalRealLoadRowClause(alias: string): string {
+  return `${alias}.soft_deleted_at IS NULL AND ${alias}.voided_at IS NULL AND ${alias}.is_sample_data IS NOT TRUE AND ${alias}.status::text <> 'voided'`;
+}
+
+/** LEAD 443.206R — the board set for a caller that applies its own entity scope (GET /mdata/loads board_scope=live scopes to
+ *  the user's companies): membership in the load service's open_dispatch state, beside the status clause. */
 export function canonicalBoardRowClause(alias: string): string {
-  return `${alias}.soft_deleted_at IS NULL AND ${alias}.voided_at IS NULL AND ${alias}.is_sample_data IS NOT TRUE`;
+  return loadServiceMembershipSql(alias, "open_dispatch");
 }
 
 /**

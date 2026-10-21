@@ -394,6 +394,22 @@ export async function findPostedFuelEvent(
  * when its card bank line is MATCHED in Banking, and the entry is written in the same transaction as that match). The
  * bank-match engine calls this inside its transaction; idempotent by the fuel event's posting key.
  */
+/**
+ * LEAD 443.215 (5842 repost) — the revision a fill must post under: the first whose batch is not REVERSED (0 when the
+ * original key is unused or still stands). An Edit = void and repost reverses the fill's posting in the void; the repost then
+ * posts it again under ':rN' — the correction-revision key — instead of being refused for re-using the reversed key.
+ */
+export async function nextFuelPostingRevision(
+  client: DbClient,
+  input: Pick<FuelPostingInput, "operating_company_id" | "fuel_event_id" | "posting_path">,
+): Promise<number> {
+  for (let rev = 0; rev < 50; rev += 1) {
+    const state = await resolveExistingBatchState(client, input.operating_company_id, buildFuelIdempotencyKey({ ...input, correction_revision: rev }));
+    if (state.kind !== "reversed") return rev;
+  }
+  throw new Error(`fuel_posting_revision_exhausted: fuel event ${input.fuel_event_id}`);
+}
+
 export async function postFuelExpenseOnClient(client: DbClient, input: FuelPostingInput): Promise<FuelPostingResult> {
   const fuelKind = normalizeFuelKind(input.fuel_kind);
   const postingDate = input.posted_at.slice(0, 10);

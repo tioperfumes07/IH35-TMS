@@ -1,3 +1,4 @@
+import { stampDriverBillVoidedInClientTx } from "./driver-bill-void-state.service.js";
 import { restampDriverBillUnitAndTrailer } from "./driver-bill-unit-trailer.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 /**
@@ -133,10 +134,11 @@ export async function correctOpenDriverBillMileage(
   }
 
   // 1. Void the wrong bill + its lines. void-not-delete throughout.
-  await client.query(
-    `UPDATE driver_finance.driver_bills SET status = 'void', voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid WHERE id = $1::uuid AND status = 'open'`,
-    [bill.id, input.reason, input.actorUserId]
-  );
+  const stamped = await stampDriverBillVoidedInClientTx(client, {
+    driverBillId: bill.id, operatingCompanyId: input.operatingCompanyId,
+    reason: input.reason, userId: input.actorUserId, openOnly: true,
+  });
+  if (!stamped) throw new DriverBillVoidRefusedError("driver bill changed while voiding");
   const voidedLineIds: string[] = [];
   for (const line of liveLines) {
     await client.query(

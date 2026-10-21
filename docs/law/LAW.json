@@ -1,5 +1,19 @@
 [
   {
+    "id": "R443-213-USMCA-LIVE-DOCUMENT-STATE",
+    "title": "Every USMCA settlement and driver bill has consistent void status and timestamps; zero baseline",
+    "source_file": "apps/backend/src/driver-finance/settlement-void-state.service.ts",
+    "guard": "scripts/verify-usmca-live-document-state.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "R443-213-LIVE-DOCUMENT-SINGLE-SOURCE",
+    "title": "Money readers share canonical document liveness; void marker writers stamp state atomically; existing inline debt only shrinks",
+    "source_file": "apps/backend/src/accounting/live-document-predicates.sql.ts",
+    "guard": "scripts/verify-live-document-predicates-single-source.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "R443-200-FUEL-CARD-RAILS",
     "title": "Every active USMCA fuel card resolves through its own declared rail and designated account role",
     "source_file": "apps/backend/src/accounting/fuel-posting/company-direct-credit-account.ts",

@@ -32,6 +32,7 @@ function fakeClient(opts: {
   linkedDeductions?: Array<{ id: string; status: string; is_voided: boolean }>;
   /** LEAD 443.198 — a load_bookended settlement whose trip_closed_at is still NULL. */
   tripOpen?: boolean;
+  missingReverseMarker?: boolean;
 }) {
   const calls: Q[] = [];
   let lines = [...opts.liveLineIds];
@@ -42,6 +43,12 @@ function fakeClient(opts: {
     query: async <T,>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> => {
       calls.push({ sql, values });
       if (sql.includes("to_regclass")) return { rows: [{ ok: true }] as T[] };
+      if (sql.includes("SELECT status::text, voided_at::text, reversed_at::text")) {
+        return { rows: [{ status: opts.status,
+          voided_at: opts.status === "cancelled" ? "2026-10-01" : null,
+          reversed_at: opts.status === "cancelled" && !opts.missingReverseMarker ? "2026-10-01" : null,
+        }] as T[] };
+      }
       if (sql.includes("SELECT status::text AS status FROM driver_finance.driver_settlements")) {
         return { rows: [{ status: opts.status }] as T[] };
       }
@@ -73,7 +80,7 @@ function fakeClient(opts: {
         tripOpen = false;
         return { rows: out as T[] };
       }
-      if (sql.includes("UPDATE driver_finance.driver_settlements")) return { rows: [{ id: SETTLEMENT }] as T[] };
+      if (sql.includes("UPDATE driver_finance.driver_settlements")) return { rows: [{ id: SETTLEMENT, voided_at: "2026-10-01" }] as T[] };
       return { rows: [] as T[] };
     },
   };
@@ -90,6 +97,13 @@ const ctx = (client: unknown) => ({
 });
 
 describe("executeVoidCancel('driver_settlement') — header already cancelled (443.167 regroup)", () => {
+  it("repairs a cancelled header missing reversed_at even after an earlier void audit", async () => {
+    const { client, calls } = fakeClient({ status: "cancelled", liveLineIds: [], linkedOpenBillIds: [], priorVoidAudits: 1, missingReverseMarker: true });
+    const result = await executeVoidCancel("driver_settlement", ctx(client));
+    expect(result.kind).toBe("ok");
+    expect(calls.some(c => c.sql.includes("reversed_at = COALESCE(reversed_at, voided_at, now())"))).toBe(true);
+    expect(mocks.appendAudit.mock.calls.some(c => c[2] === "driver_finance.driver_settlement.void_state_completed")).toBe(true);
+  });
   beforeEach(() => {
     mocks.reverse.mockReset().mockResolvedValue({ result: "nothing_to_reverse", settlement_id: SETTLEMENT, run_id: null });
     mocks.appendAudit.mockReset().mockResolvedValue(undefined);
@@ -146,8 +160,8 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     const flipIdx = calls.findIndex((c) => c.sql.includes("UPDATE driver_finance.driver_settlements") && c.sql.includes("status = 'cancelled'"));
     expect(lineIdx).toBeGreaterThan(-1);
     expect(flipIdx).toBeGreaterThan(lineIdx);
-    expect(mocks.appendAudit).toHaveBeenCalledTimes(1);
-    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ settlement_lines_voided: ["4db01ee2-5404-45e4-bf6f-0ec11e5b3c29"] });
+    expect(mocks.appendAudit).toHaveBeenCalledTimes(2);
+    expect(mocks.appendAudit.mock.calls.find(c => c[2] === "driver_finance.driver_settlement.voided")![3]).toMatchObject({ settlement_lines_voided: ["4db01ee2-5404-45e4-bf6f-0ec11e5b3c29"] });
   });
 
   it("a paid settlement is still refused (money moves only through the reversal engine)", async () => {
@@ -183,7 +197,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     expect(upd!.sql).toMatch(/r\.status IN \('settled', 'pending'\)/);
     expect(upd!.values).toEqual([SETTLEMENT, COMPANY]);
     expect(mocks.appendAudit).toHaveBeenCalledTimes(1);
-    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({
+    expect(mocks.appendAudit.mock.calls.find(c => c[2] === "driver_finance.driver_settlement.voided")![3]).toMatchObject({
       header_already_cancelled: true,
       reimbursements_released: ["fdf68d29-0000-4000-8000-000000000001", "c53079a2-0000-4000-8000-000000000002"],
     });
@@ -199,7 +213,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     });
     const res = await executeVoidCancel("driver_settlement", ctx(client));
     expect(res.kind).toBe("ok");
-    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ reimbursements_released: ["6abbc20b-0000-4000-8000-000000000003"] });
+    expect(mocks.appendAudit.mock.calls.find(c => c[2] === "driver_finance.driver_settlement.voided")![3]).toMatchObject({ reimbursements_released: ["6abbc20b-0000-4000-8000-000000000003"] });
   });
 
   // LEAD 443.193 — fail-old: the governance void ran cascadeVoidChildren with driver_settlement_deductions registered as a
@@ -228,7 +242,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     expect(released[0]!.sql).toMatch(/remaining_balance_cents = amount_cents/);
     const flipIdx = calls.findIndex(isHeaderFlip);
     expect(flipIdx).toBeGreaterThan(calls.indexOf(released[0]!));
-    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ deductions_released: [DED_PENDING], deductions_retained: [DED_APPLIED, DED_VOIDED] });
+    expect(mocks.appendAudit.mock.calls.find(c => c[2] === "driver_finance.driver_settlement.voided")![3]).toMatchObject({ deductions_released: [DED_PENDING], deductions_retained: [DED_APPLIED, DED_VOIDED] });
   });
 
   it("cancelled + already audited: releasing a pending deduction is a real write (not already_done) and is audited", async () => {
@@ -236,7 +250,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     const res = await executeVoidCancel("driver_settlement", ctx(client));
     expect(res.kind).toBe("ok");
     expect(calls.some(voidsADeduction)).toBe(false);
-    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ header_already_cancelled: true, deductions_released: [DED_PENDING] });
+    expect(mocks.appendAudit.mock.calls.find(c => c[2] === "driver_finance.driver_settlement.voided")![3]).toMatchObject({ header_already_cancelled: true, deductions_released: [DED_PENDING] });
   });
 
   it("GL reversed: the reversal engine already restored the deductions — the void neither re-restores nor voids any", async () => {
@@ -245,7 +259,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     const res = await executeVoidCancel("driver_settlement", ctx(client));
     expect(res.kind).toBe("ok");
     expect(calls.some((c) => c.sql.includes("driver_finance.driver_settlement_deductions"))).toBe(false);
-    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ gl_reversal_result: "reversed", deductions_released: [], deductions_retained: [] });
+    expect(mocks.appendAudit.mock.calls.find(c => c[2] === "driver_finance.driver_settlement.voided")![3]).toMatchObject({ gl_reversal_result: "reversed", deductions_released: [], deductions_retained: [] });
   });
   // LEAD 443.198 (ACCT-F347 root cause) — fail-old: no void path ever stamped trip_closed_at, so a cancelled load_bookended
   // settlement stayed "trip open + live anchor" (7 USMCA on 2026-10-17: P-0085, P-0092, P-0093..P-0097; guard 3069 red),
@@ -266,7 +280,7 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     expect(upd!.values).toEqual([SETTLEMENT, COMPANY]);
     expect(calls.some(isHeaderFlip)).toBe(false);
     expect(mocks.appendAudit).toHaveBeenCalledTimes(1);
-    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ header_already_cancelled: true, trip_closed: true });
+    expect(mocks.appendAudit.mock.calls.find(c => c[2] === "driver_finance.driver_settlement.voided")![3]).toMatchObject({ header_already_cancelled: true, trip_closed: true });
   });
 
   it("cancelled + already audited + trip already closed: still already_done (idempotent)", async () => {
@@ -281,6 +295,6 @@ describe("executeVoidCancel('driver_settlement') — header already cancelled (4
     const res = await executeVoidCancel("driver_settlement", ctx(client));
     expect(res.kind).toBe("ok");
     expect(calls.some(tripClose)).toBe(true);
-    expect(mocks.appendAudit.mock.calls[0]![3]).toMatchObject({ trip_closed: true });
+    expect(mocks.appendAudit.mock.calls.find(c => c[2] === "driver_finance.driver_settlement.voided")![3]).toMatchObject({ trip_closed: true });
   });
 });

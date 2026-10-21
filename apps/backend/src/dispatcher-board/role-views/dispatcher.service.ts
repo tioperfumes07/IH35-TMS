@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../../auth/db.js";
+import { loadServiceMembershipSql } from "../../dispatch/load-service.js";
 import { resolveOperatingCompanyId } from "../../auth/operating-company-scope.js";
 
 type Queryable = {
@@ -111,11 +112,11 @@ async function loadKpis(
         -- LOADS" tile (the owner's own acceptance criterion) — both now read views.live_loads's
         -- open_dispatch bucket, narrowed to the same DISPATCH_ON_LOAD_STATUSES-shaped set.
         COUNT(*) FILTER (
-          WHERE l.live_state = 'open_dispatch'
+          WHERE ${loadServiceMembershipSql("l", "open_dispatch")}
             AND l.status IN ('assigned_not_dispatched', 'dispatched', 'in_transit', 'at_pickup', 'at_delivery')
         )::int AS active_loads,
         COUNT(*) FILTER (
-          WHERE l.live_state = 'open_dispatch'
+          WHERE ${loadServiceMembershipSql("l", "open_dispatch")}
             AND l.status IN ('assigned_not_dispatched', 'dispatched', 'in_transit')
             AND (
               COALESCE(next_pickup.scheduled_arrival_at, next_delivery.scheduled_arrival_at) < now()
@@ -127,7 +128,8 @@ async function loadKpis(
         COUNT(*) FILTER (
           WHERE delivery_today.c > 0
         )::int AS today_deliveries
-      FROM views.live_loads l
+      -- LEAD 443.206R: the load service (owner law 09-28) — its open_dispatch state, the status list narrows it.
+      FROM mdata.loads l
       LEFT JOIN LATERAL (
         SELECT ls.scheduled_arrival_at
         FROM mdata.load_stops ls
@@ -205,9 +207,8 @@ async function loadActiveLoads(
         u.unit_number::text AS unit_number,
         inv.invoice_display_id,
         inv.invoice_status
-      -- ROUND 36.1: reads views.live_loads (structural guarantee, open_dispatch bucket via
-      -- ACTIVE_STATUSES below) instead of mdata.loads with the per-caller money predicate.
-      FROM views.live_loads l
+      -- LEAD 443.206R: the load service's open_dispatch state (owner law 09-28), narrowed by ACTIVE_STATUSES below.
+      FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
                             AND c.operating_company_id = l.operating_company_id
       LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id
@@ -253,6 +254,7 @@ async function loadActiveLoads(
         LIMIT 1
       ) inv ON true
       WHERE l.soft_deleted_at IS NULL
+        AND ${loadServiceMembershipSql("l", "open_dispatch")}
         AND l.dispatcher_user_id = $1::uuid
         AND l.status::text = ANY($3::text[])
         AND (l.operating_company_id = $2::uuid OR $2::uuid IS NULL)

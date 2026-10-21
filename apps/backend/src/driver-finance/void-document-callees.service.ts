@@ -33,11 +33,12 @@ import {
   reverseSettlementBillPaymentInClientTx,
   type SettlementBillPaymentReversalResult,
 } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
-import { releaseBankLinesNamingDocument, unmatchBankTransactionById } from "../accounting/void.service.js";
+import { unmatchBankTransactionById } from "../accounting/void.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { voidSettlementDeduction, DeductionVoidError } from "./settlement-deduction-void.service.js";
 import { completeDriverSettlementVoidCascadeInClientTx } from "./driver-settlement-void-cascade.service.js";
+import { stampSettlementVoidedInClientTx } from "./settlement-void-state.service.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -124,21 +125,8 @@ export async function reverseSettlementForVoid(
 
   // R-102-B (2026-09-23) — mirror both void-marker sets (same fix as governance/void-cancel-
   // executors.ts's identical path); see that file's comment for the live-measured root cause.
-  const flipped = await client.query<{ id: string; updated_at: string }>(
-    `UPDATE driver_finance.driver_settlements
-        SET status = 'cancelled', reversed_at = now(), reversed_by_user_id = $3::uuid,
-            reversal_reason = $4,
-            voided_at = now(), void_reason = $4, voided_by_user_id = $3::uuid,
-            updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'cancelled'
-      RETURNING id::text, updated_at::text`,
-    [settlementId, operatingCompanyId, actor.userId, reason]
-  );
-  if (!flipped.rows[0]) throw new Error("settlement_reverse_race_lost");
-  // ROUND 368.2(b) — a bank line matched to this settlement (matched_settlement_id) goes back to For review too.
-  await releaseBankLinesNamingDocument(client, { operatingCompanyId, pointerColumn: "matched_settlement_id", documentId: settlementId }, {
-    userId: actor.userId,
-    reason: `settlement reversal: ${settlementId}`,
+  const flipped = await stampSettlementVoidedInClientTx(client, {
+    settlementId, operatingCompanyId, userId: actor.userId, reason,
   });
 
   let bankTransactionUnmatched = false;
@@ -200,7 +188,7 @@ export async function reverseSettlementForVoid(
   );
 
   return {
-    voidedAt: flipped.rows[0]!.updated_at,
+    voidedAt: flipped.voidedAt,
     reversalJournalEntryId,
     payrunUnwind: reversal.payrun_unwind ?? null,
     glReversalResult: reversal.result,

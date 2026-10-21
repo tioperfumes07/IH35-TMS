@@ -151,7 +151,11 @@ export function findViolations(relPath, src) {
       // R443.139: current-cost membership is owned by the shared cost predicate.
       // Permission is per query and only for this board, never a whole-file exemption.
       if (relPath === "accounting/load-costs-board.routes.ts" && /\$\{\s*canonicalLoadCostsOpenClause\s*\(/.test(statement)) continue;
-      if (/\$\{\s*canonicalDispatchWorkWhereClause\s*\(|\$\{\s*canonicalDispatchWorkStatusClause\s*\(|currentTruckLineLoadSql\s*\(|CURRENT_TRUCK_LINE_LOAD_SQL\b/.test(statement)) continue;
+      // LEAD 443.206R (owner law 2026-09-28, ONE LOAD SERVICE): a board reads views.live_loads THROUGH the load service
+      // (dispatch/load-service.ts loadServiceMembershipSql / loadServiceIdInSql, or canonicalDispatchWorkWhereClause /
+      // canonicalBoardRowClause / currentTruckLineLoadSql which now embed it). The status-only clause
+      // (canonicalDispatchWorkStatusClause) is NO LONGER a pass on its own — a status list is not the view (TRUCKLINE-16 retired).
+      if (/\$\{\s*(?:loadServiceMembershipSql|loadServiceIdInSql|canonicalDispatchWorkWhereClause|canonicalBoardRowClause)\s*\(|currentTruckLineLoadSql\s*\(|CURRENT_TRUCK_LINE_LOAD_SQL\b/.test(statement)) continue;
     }
     const lineNo = src.slice(0, m.index).split("\n").length;
     violations.push(

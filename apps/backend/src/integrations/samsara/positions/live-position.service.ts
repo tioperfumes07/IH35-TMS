@@ -1,3 +1,4 @@
+import { loadServiceMembershipSql } from "../../../dispatch/load-service.js";
 /**
  * GAP-55 — CAP-1 live GPS positions for active loads.
  */
@@ -67,7 +68,9 @@ export async function getLivePositionsForActiveLoads(
        ORDER BY recorded_at DESC LIMIT 1
      ) p ON true
      WHERE l.operating_company_id = $1::uuid
-       AND l.status::text = 'in_transit'
+       -- LEAD 443.206R (register B6): every working truck — the load service's open_dispatch set, not in_transit only
+       -- (dispatched / at_pickup / at_delivery trucks were missing from the Live Map).
+       AND ${loadServiceMembershipSql("l", "open_dispatch", "$1::uuid")}
        AND l.soft_deleted_at IS NULL
        AND p.lat IS NOT NULL`,
     [operatingCompanyId]
