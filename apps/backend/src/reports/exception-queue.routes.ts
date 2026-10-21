@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { loadMissingDriverBillWhereSql } from "../lib/document-status-vocabulary.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 
 type Queryable = {
@@ -45,11 +46,9 @@ export async function registerExceptionQueueRoutes(app: FastifyInstance) {
           `
             SELECT count(*)::text AS count
               FROM mdata.loads l
-              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
-               AND l.soft_deleted_at IS NULL
-               AND l.status <> 'cancelled'
-               AND db.id IS NULL
+               -- LEAD 443.219 G-VOCAB — THE missing-driver-bill predicate (no voided / exit / draft load; a void bill is no bill).
+               AND ${loadMissingDriverBillWhereSql("l")}
           `,
           [parsed.data.operating_company_id]
         );
@@ -131,11 +130,9 @@ export async function registerExceptionQueueRoutes(app: FastifyInstance) {
               LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
                                         AND d.operating_company_id = l.operating_company_id
               LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
-              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
-               AND l.soft_deleted_at IS NULL
-               AND l.status <> 'cancelled'
-               AND db.id IS NULL
+               -- LEAD 443.219 G-VOCAB — THE missing-driver-bill predicate (no voided / exit / draft load; a void bill is no bill).
+               AND ${loadMissingDriverBillWhereSql("l")}
              ORDER BY l.load_number ASC
           `,
           [parsed.data.operating_company_id]
