@@ -33,6 +33,7 @@ import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-role
 import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { resolveCompanyDirectCreditAccount, postFuelExpenseOnClient, findPostedFuelReceipt, type FuelCategoryCode } from "../accounting/fuel-posting/poster.service.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
+import { creatorAdditionalOnlyPay } from "./settlement-creator-pay-mode.js";
 import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
 import { resolveCreatorDeductionType } from "./settlement-creator-deduction-type.js";
@@ -200,6 +201,15 @@ function isDeliveredCreatorLoad(load: SettlementCreatorLoadBlock): boolean {
 export async function restateCreatorDriverBillFromSignedLoad(
   client: DbClient, draft: SettlementCreatorDraft, load: SettlementCreatorDraft["loads"][number], loadId: string, actorUserId: string,
 ): Promise<void> {
+  const additionalOnly = creatorAdditionalOnlyPay(draft, load);
+  if (additionalOnly) {
+    const { setAdditionalOnlyDriverPayForLoad } = await import("../dispatch/book-load.service.js");
+    await setAdditionalOnlyDriverPayForLoad(client, { loadId, operatingCompanyId: draft.operating_company_id, actorUserId, plan: additionalOnly });
+    const bills = (await client.query<{ gross: string }>(`SELECT gross_amount_cents::text AS gross FROM driver_finance.driver_bills
+      WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND voided_at IS NULL AND status <> 'void'`, [draft.operating_company_id, loadId])).rows;
+    if (bills.length !== 1 || Number(bills[0]?.gross) !== additionalOnly.amount_cents) throw new SettlementCreatorError("additional_only_bill_mismatch", `Load ${load.load_number}: additional-only bill must equal its itemized pay.`);
+    return;
+  }
   if (draft.salaried) {
     if (Number(load.line_haul_rate_cents ?? 0) > 0) throw new SettlementCreatorError("salaried_load_has_pay_rate", `Load ${load.load_number}: a salaried settlement carries no per-load pay rate.`);
     return;
@@ -233,9 +243,36 @@ export async function restateOpenDriverBillToSignedPay(
       ORDER BY created_at DESC`,
     [input.companyId, input.loadId],
   )).rows;
+  const signed = input.loadedCents + input.emptyCents;
+  // LEAD 443.203 (17:05Z, settlement 5849 / load 13684): an adopted load can carry NO live driver bill (booked before its
+  // short miles existed — the mint refused, 443.192). Returning here left the invoice gate red ("no live driver bill for
+  // this load") and the signed settlement could never post. The signed settlement IS the pay: mint the ONE bill at the
+  // signed miles x rate for the load's own driver (same INSERT shape as the restate below), audited by its notes.
+  if (bill.length === 0) {
+    const ld = (await client.query<{ driver: string | null; team: string | null }>(
+      `SELECT assigned_primary_driver_id::text AS driver, assigned_secondary_driver_id::text AS team
+         FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [input.loadId, input.companyId],
+    )).rows[0];
+    if (!ld?.driver) {
+      throw new SettlementCreatorError("driver_bill_no_driver", `Load ${input.loadNumber}: no driver on the load — cannot mint its driver bill from the signed settlement.`);
+    }
+    const reason = `443.203: minted from signed settlement ${input.settlementNo} pay ${dollarsFromCents(signed)} (adopted load had no live driver bill)`;
+    await client.query(
+      `INSERT INTO driver_finance.driver_bills (
+         operating_company_id, load_id, load_number, bill_number, driver_id, team_driver_id,
+         gross_amount_cents, miles_basis, miles_basis_type, rate_per_mile_cents, status, notes,
+         created_by_user_id, miles_deadhead, rate_empty_per_mile_cents, loaded_pay_cents, deadhead_pay_cents
+       ) VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, $6::uuid, $7, $8, 'short', $9, 'open', $10, $11::uuid, $12, $13, $14, $15)`,
+      [input.companyId, input.loadId, input.loadNumber, input.loadNumber, ld.driver, ld.team, signed, input.milesBasis,
+        input.rateCents, reason, input.actorUserId, input.emptyMiles, input.emptyRateCents, input.loadedCents, input.emptyCents],
+    );
+    const { restampDriverBillUnitAndTrailer } = await import("./driver-bill-unit-trailer.js");
+    await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.companyId, loadId: input.loadId });
+    return;
+  }
   if (bill.length !== 1) return;
   const b = bill[0]!;
-  const signed = input.loadedCents + input.emptyCents;
   if (Number(b.gross) === signed) return;
   const state = (await client.query<{ status: string; settled: string | null; accrued: string | null }>(
     // A bill "settled" in a voided / cancelled settlement (a seed shell regrouped away) is settled in nothing.
@@ -333,6 +370,7 @@ async function writeDriverPayLine(
   input: {
     settlementId: string; companyId: string; loadId: string; loadNumber: string;
     lineType: "earnings" | "deadhead_pay"; description: string; cents: number; quantity: number; rateCents: number; itemId: string;
+    unitOfMeasure?: "mi" | "each"; postingAccountId?: string; sourceDriverBillId?: string;
   },
 ): Promise<void> {
   const existing = (
@@ -352,18 +390,19 @@ async function writeDriverPayLine(
     }
     await client.query(
       `UPDATE driver_finance.settlement_lines
-          SET description = $2, quantity = $3, rate_cents = $4, unit_of_measure = 'mi', item_id = $5::uuid
+          SET description = $2, quantity = $3, rate_cents = $4, unit_of_measure = $6, item_id = $5::uuid,
+              posting_account_id = COALESCE($7::uuid, posting_account_id), source_driver_bill_id = COALESCE($8::uuid, source_driver_bill_id)
         WHERE id = $1::uuid`,
-      [existing.id, input.description, input.quantity, input.rateCents, input.itemId],
+      [existing.id, input.description, input.quantity, input.rateCents, input.itemId, input.unitOfMeasure ?? "mi", input.postingAccountId ?? null, input.sourceDriverBillId ?? null],
     );
     return;
   }
   await client.query(
     `INSERT INTO driver_finance.settlement_lines (
        settlement_id, operating_company_id, line_type, description, amount, load_id,
-       quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data)
-     VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, $7, $8, 'mi', $9::uuid, true, false)`,
-    [input.settlementId, input.companyId, input.lineType, input.description, dollarsFromCents(input.cents), input.loadId, input.quantity, input.rateCents, input.itemId],
+       quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data, posting_account_id, source_driver_bill_id)
+     VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, $7, $8, $10, $9::uuid, true, false, $11::uuid, $12::uuid)`,
+    [input.settlementId, input.companyId, input.lineType, input.description, dollarsFromCents(input.cents), input.loadId, input.quantity, input.rateCents, input.itemId, input.unitOfMeasure ?? "mi", input.postingAccountId ?? null, input.sourceDriverBillId ?? null],
   );
 }
 
@@ -733,6 +772,7 @@ export async function previewSettlementCreator(
   let mileagePayCents = 0;
   for (const load of draft.loads ?? []) {
     // ROUND 443.4 — the same formula the post writes (pay rate x short miles); never the invoice amount.
+    if (creatorAdditionalOnlyPay(draft, load)) continue;
     const loaded = creatorLoadedPayCents(load) ?? 0;
     // Empty miles × the empty rate, else the loaded per-mile rate (queue item 7, owner MILES SPEC).
     const empty = creatorEmptyPayCents(load);
@@ -791,12 +831,13 @@ export async function previewSettlementCreator(
   // credit_total_cents check. Same account pair as the is_reimbursable path: Dr reimbursement
   // expense (other_operating_expense role -- never 6100 Telephone, ROUND 365.1) / Cr 2175 Driver Reimbursements Payable.
   let reimbCents = 0;
-  const reimbItemAcct =
-    await accountByRole(client, draft.operating_company_id, "other_operating_expense");
   const reimbAcct2175 = acct2175;
   for (const r of draft.reimbursements ?? []) {
     if (r.amount_cents <= 0) continue;
     reimbCents += r.amount_cents;
+    const reimbItemAcct = await previewExpenseLineAccount(client, draft.operating_company_id,
+      { item_id: r.item_id, item_name: r.description || "Driver reimbursement" }, blockers);
+    if (!reimbItemAcct) continue;
     if (!reimbAcct2175) {
       blockers.push("Account 2175 Driver Reimbursements Payable missing — cannot post reimbursements.");
       continue;
@@ -838,10 +879,13 @@ export async function previewSettlementCreator(
   for (const p of draft.additional_pay ?? []) {
     if (p.amount_cents <= 0) continue;
     additionalPayCents += p.amount_cents;
+    const payLoad = draft.loads.find(l => l.load_number === (p.load_number?.trim() || (draft.loads.length === 1 ? draft.loads[0]!.load_number : "")));
+    const plan = payLoad ? creatorAdditionalOnlyPay(draft, payLoad) : null;
+    const itemAccount = plan ? (await (await import("../dispatch/book-load.service.js")).additionalOnlyPayItems(client, draft.operating_company_id, plan))[0] : null;
     push({
       load_number: p.load_number ?? null,
-      account_number: addPayExpenseAcct?.account_number ?? null,
-      account_name: addPayExpenseAcct?.account_name ?? "Driver pay expense",
+      account_number: itemAccount?.account_number ?? addPayExpenseAcct?.account_number ?? null,
+      account_name: itemAccount?.account_name ?? addPayExpenseAcct?.account_name ?? "Driver pay expense",
       debit_cents: p.amount_cents,
       credit_cents: 0,
       memo: p.description || "Additional pay",
@@ -1731,6 +1775,14 @@ export async function postSettlementCreatorInClientTx(
             throw new SettlementCreatorError("relay_fill_load_move_refused", `Fuel line: the Relay fill already posted on another load and cannot move to load ${fillLoad.loadNumber} — ${(err as Error)?.message ?? err}`);
           }
         }
+        // LEAD 443.203 (19:52Z) — the document now sits on this settlement's load: a reference to a settlement that no longer
+        // holds it (the fill's earlier settlement, or a cancelled one) is restamped to this one, old reference audited.
+        await fillRelayFillExpenseSettlementRef(client as never, {
+          operating_company_id: draft.operating_company_id,
+          expense_id: fillDoc.expense_id,
+          settlement_no: sourceDocumentRef ?? displayId,
+          actor_user_uuid: actorUserId,
+        });
         expenseIds.push(fillDoc.expense_id);
       }
     }
@@ -1999,18 +2051,21 @@ export async function postSettlementCreatorInClientTx(
       : null;
   for (const r of draft.reimbursements ?? []) {
     if (r.amount_cents <= 0) continue;
-    const rItem = await companyItem(r.item_id);
+    const rAccount = await resolveExpenseLineAccount(client, draft.operating_company_id,
+      { item_id: r.item_id, item_name: r.description || "Driver reimbursement" });
+    if (!rAccount) throw new SettlementCreatorError("expense_account_missing", "No expense account for reimbursement.");
+    const rItem = rAccount.item_id;
     // 443.110 G5 — the draft line names its load; it was dropped, so the reimbursement was written with no load.
     const rLoadId = await creatorLineLoadId(client, draft, { label: `Reimbursement "${r.description ?? ""}"`, load_number: r.load_number });
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (
           settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data,
-          item_id, quantity, rate_cents, unit_of_measure, load_id
+          item_id, quantity, rate_cents, unit_of_measure, load_id, posting_account_id
         )
         VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false,
                 $5::uuid, CASE WHEN $5::uuid IS NULL THEN NULL ELSE 1 END, CASE WHEN $5::uuid IS NULL THEN NULL ELSE $6::bigint END,
-                CASE WHEN $5::uuid IS NULL THEN NULL ELSE 'each' END, $7::uuid)
+                CASE WHEN $5::uuid IS NULL THEN NULL ELSE 'each' END, $7::uuid, $8::uuid)
       `,
       [
         settlementId,
@@ -2020,6 +2075,7 @@ export async function postSettlementCreatorInClientTx(
         rItem,
         r.amount_cents,
         rLoadId,
+        rAccount.id,
       ],
     );
   }
@@ -2091,7 +2147,10 @@ export async function postSettlementCreatorInClientTx(
   // Additional pay → settlement_lines (detention_pay / extra_pay). Never reimbursement.
   for (const p of draft.additional_pay ?? []) {
     if (p.amount_cents <= 0) continue;
-    const lineType = p.pay_kind === "detention" ? "detention_pay" : "extra_pay";
+    const payLoad = draft.loads.find(l => l.load_number === (p.load_number?.trim() || (draft.loads.length === 1 ? draft.loads[0]!.load_number : "")));
+    const additionalOnly = payLoad ? creatorAdditionalOnlyPay(draft, payLoad) : null;
+    // Bill-backed flat earnings are counted once: not also the extra_pay bucket added on top of driver bills.
+    const lineType = additionalOnly ? "earnings" : p.pay_kind === "detention" ? "detention_pay" : "extra_pay";
     // 443.110 G5 — additional pay belongs to its load (typed, else the settlement's only load); never load-less.
     const loadId = await creatorLineLoadId(client, draft, { label: `Additional pay "${p.description ?? ""}"`, load_number: p.load_number });
     // Fork rehearsal of 5771 (2026-10-11): the insert dropped the draft's item_id, so every extra-pay line hit
@@ -2102,8 +2161,21 @@ export async function postSettlementCreatorInClientTx(
           [p.item_id, draft.operating_company_id],
         )).rows[0]?.id ?? null
       : null;
-    if (lineType === "extra_pay" && !itemId) {
+    if ((lineType === "extra_pay" || additionalOnly) && !itemId) {
       throw new SettlementCreatorError("extra_pay_item_required", `Additional pay "${p.description}": pick its Driver Pay item (none, or not this company's).`);
+    }
+    const postingAccountId = additionalOnly
+      ? (await (await import("../dispatch/book-load.service.js")).additionalOnlyPayItems(client, draft.operating_company_id, additionalOnly)).find(l => l.item_id === itemId)!.account_id
+      : null;
+    if (additionalOnly && payLoad && itemId && postingAccountId) {
+      await restateCreatorDriverBillFromSignedLoad(client, draft, payLoad, loadId, actorUserId);
+      const sourceBill = (await client.query<{ id: string }>(`SELECT id::text FROM driver_finance.driver_bills
+        WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND voided_at IS NULL AND status <> 'void'`, [draft.operating_company_id, loadId])).rows;
+      if (sourceBill.length !== 1) throw new SettlementCreatorError("additional_only_bill_mismatch", `Load ${payLoad.load_number}: exactly one live bill required.`);
+      await writeDriverPayLine(client, { settlementId, companyId: draft.operating_company_id, loadId, loadNumber: payLoad.load_number,
+        lineType: "earnings", description: p.description || "Additional pay", cents: p.amount_cents, quantity: 1, rateCents: p.amount_cents,
+        itemId, unitOfMeasure: "each", postingAccountId, sourceDriverBillId: sourceBill[0]!.id });
+      continue;
     }
     const qty = p.quantity != null && Number(p.quantity) > 0 ? Number(p.quantity) : 1;
     const rateCents = qty === 1 ? p.amount_cents : Math.round(p.amount_cents / qty);
@@ -2111,9 +2183,9 @@ export async function postSettlementCreatorInClientTx(
       `
         INSERT INTO driver_finance.settlement_lines (
           settlement_id, operating_company_id, line_type, description, amount, load_id, item_id, quantity, rate_cents,
-          unit_of_measure, is_active, is_sample_data
+          unit_of_measure, is_active, is_sample_data, posting_account_id
         )
-        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, $7::uuid, $8, $9, 'each', true, false)
+        VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, $7::uuid, $8, $9, 'each', true, false, $10::uuid)
       `,
       [
         settlementId,
@@ -2125,6 +2197,7 @@ export async function postSettlementCreatorInClientTx(
         itemId,
         itemId ? qty : null,
         itemId ? rateCents : null,
+        postingAccountId,
       ],
     );
   }
@@ -2216,13 +2289,15 @@ export async function postSettlementCreatorInClientTx(
       if (Number(load.line_haul_rate_cents ?? 0) > 0) {
         throw new SettlementCreatorError("salaried_load_has_pay_rate", `Load ${load.load_number}: a salaried settlement carries no per-load pay rate.`);
       }
+    } else if (load.driver_pay_mode === "additional_pay_only") {
+      await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actorUserId);
     } else if (payMiles == null || loadedCents == null) {
       throw new SettlementCreatorError(
         "driver_pay_rate_missing",
         `Load ${load.load_number}: driver pay needs the short miles and the driver's pay rate per mile.`,
       );
     }
-    if (!draft.salaried && payMiles != null && loadedCents != null) {
+    if (!draft.salaried && load.driver_pay_mode !== "additional_pay_only" && payMiles != null && loadedCents != null) {
     // LEAD 443.167-R — an adopted seeded load carries the seed's proforma driver bill (priced from the seed's miles).
     // The signed settlement is the pay: an open, unsettled bill that differs is restated (void + one "-R" replacement).
     await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actorUserId);

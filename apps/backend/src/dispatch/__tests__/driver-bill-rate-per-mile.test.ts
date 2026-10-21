@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createDriverBillArtifacts, type BookLoadInput } from "../book-load.service.js";
+import { createDriverBillArtifacts, setAdditionalOnlyDriverPayForLoad, type BookLoadInput } from "../book-load.service.js";
 import type { BookLoadStop } from "../book-load.service.js";
 
 // CC-3 ROOT-CAUSE FINDING (2026-09-05, docs/bus/INBOX-CC-2.md, "book-load.service.ts mints a
@@ -53,6 +53,7 @@ function fakeClient(opts: { rateRow?: Record<string, unknown> | null; teamRow?: 
     // ROUND 443.31: the pickup date the card must be effective on (first pickup stop).
     if (/FROM mdata\.load_stops/.test(sql)) return { rows: [{ d: "2026-09-01" }] };
     if (/FROM driver_finance\.driver_pay_rates/.test(sql)) return { rows: opts.rateRow ? [opts.rateRow] : [] };
+    if (/FROM catalogs.items/.test(sql)) return { rows: [{ account_id: "pay-account" }] };
     if (/FROM mdata\.driver_teams/.test(sql)) return { rows: opts.teamRow ? [opts.teamRow] : [] };
     if (/INSERT INTO driver_finance\.driver_bills/.test(sql)) {
       inserted.push({ sql, values });
@@ -69,6 +70,54 @@ function fakeClient(opts: { rateRow?: Record<string, unknown> | null; teamRow?: 
 const RATE_PER_MILE_CENTS_COL_INDEX = 9; // 0-based position of rate_per_mile_cents in both INSERTs' VALUES list
 
 describe("createDriverBillArtifacts() — rate_per_mile_cents is never a blended total/miles artifact (CC-3 finding)", () => {
+  it("refuses a multi-item flat plan before silently collapsing its itemization", async () => {
+    const client = fakeClient();
+    const load = { id: LOAD_ID, quicksave_pending_fields: { driver_pay_plan: { mode: "additional_pay_only", amount_cents: 10000,
+      reason: "signed", lines: [{ item_id: "layover", amount_cents: 5000, description: "Layover" }, { item_id: "detention", amount_cents: 5000, description: "Detention" }] } } };
+    await expect(createDriverBillArtifacts(client, baseInput(), load, "synthetic", [])).rejects.toThrow("driver_pay_plan_invalid");
+    expect(client.inserted).toHaveLength(0);
+  });
+  it("ordinary mileage pay still refuses missing short miles", async () => {
+    const client = fakeClient();
+    const result = await createDriverBillArtifacts(client, baseInput(), { id: LOAD_ID, miles_practical: 482.5 }, "synthetic", []);
+    expect(result.outcome).toBe("refused_no_shortest_miles");
+    expect(client.inserted).toHaveLength(0);
+  });
+  it("refuses an inactive, foreign or unmapped flat-pay item before minting", async () => {
+    const inner = fakeClient();
+    const query = vi.fn(async (sql: string, values?: unknown[]) => /FROM catalogs.items/.test(sql) ? { rows: [] } : inner.query(sql, values));
+    const load = { id: LOAD_ID, quicksave_pending_fields: { driver_pay_plan: { mode: "additional_pay_only", amount_cents: 10000,
+      reason: "signed", lines: [{ item_id: "foreign", amount_cents: 10000, description: "Layover" }] } } };
+    await expect(createDriverBillArtifacts({ query } as never, baseInput(), load, "synthetic", [])).rejects.toThrow("additional_only_pay_item_unmapped");
+    expect(inner.inserted).toHaveLength(0);
+    expect(query.mock.calls.find(([sql]) => /FROM catalogs.items/.test(sql))?.[1]).toEqual(["foreign", OPCO]);
+  });
+  it("refuses to change an accrued or settled pay plan before any metadata write", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (/FROM catalogs.items/.test(sql)) return { rows: [{ account_id: "account" }] };
+      if (/FROM mdata.loads/.test(sql)) return { rows: [{ quicksave_pending_fields: {} }] };
+      if (/FROM driver_finance.driver_bills/.test(sql)) return { rows: [{ id: "accrued" }] };
+      return { rows: [] };
+    });
+    await expect(setAdditionalOnlyDriverPayForLoad({ query } as never, { loadId: LOAD_ID, operatingCompanyId: OPCO, actorUserId: "actor",
+      plan: { mode: "additional_pay_only", amount_cents: 10000, reason: "signed", lines: [{ item_id: "layover", amount_cents: 10000, description: "Layover" }] } })).rejects.toThrow("driver_bill_pay_plan_frozen");
+    expect(query.mock.calls.some(([sql]) => /^\s*(UPDATE|INSERT)\b/.test(sql))).toBe(false);
+  });
+  it("explicit additional-only load retains operational miles but bills exactly its layover once, with no mileage basis (fails old)", async () => {
+    const client = fakeClient({ rateRow: { basis_type: "per_mile_pay", rate_per_mile_cents: "48" } });
+    const load = { id: LOAD_ID, miles_shortest: null, miles_practical: 482.5, miles_deadhead: 53,
+      quicksave_pending_fields: { driver_pay_plan: { mode: "additional_pay_only", amount_cents: 10000,
+        reason: "Signed document layover only", lines: [{ item_id: "layover", amount_cents: 10000, description: "Layover" }] } } };
+    await createDriverBillArtifacts(client, baseInput({ requires_tarps: true }), load, "synthetic", [stop(), stop({ sequence_number: 2 })]);
+    expect(client.inserted).toHaveLength(1);
+    const v = client.inserted[0]!.values;
+    expect(v[6]).toBe(10000);
+    expect(v[7]).toBeNull();
+    expect(v[8]).toBeNull();
+    expect(v[9]).toBeNull();
+    expect(load.miles_practical).toBe(482.5);
+    expect(load.miles_deadhead).toBe(53);
+  });
   it("single driver, per_mile_pay: rate_per_mile_cents is the card's real rate, not (loaded+deadhead)/loadedMiles", async () => {
     const client = fakeClient({
       rateRow: {

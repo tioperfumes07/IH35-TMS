@@ -214,11 +214,24 @@ async function resolveFuelPostingClassId(
   }
 }
 
-async function resolveExistingPostedResult(
+/**
+ * LEAD 443.203 (ACCT-F4432033) — the batch under this idempotency key, classified by whether its journal entry still
+ * STANDS. A batch can stay batch_status='posted' while its journal entry was reversed (443.129 E corrected Relay fill
+ * txn_CWhET7bpU861jH: JE 683c941f reversed by 49d784b2 and re-posted under a ':correction:r1' key, batch d2183d68 still
+ * 'posted'). Handing that reversed JE back as "already posted" made the Settlement Creator adopt a dead entry (0 live legs)
+ * and refuse settlement 5847. 'standing' = JE posted, not voided, reversed_by_je_id IS NULL, no reversed line;
+ * 'reversed' = the batch posted but its entry no longer stands; 'none' = no posted batch under the key.
+ */
+type ExistingBatchState =
+  | { kind: "none" }
+  | { kind: "standing"; result: FuelPostingResult }
+  | { kind: "reversed"; posting_batch_id: string; journal_entry_id: string | null };
+
+async function resolveExistingBatchState(
   client: DbClient,
   operatingCompanyId: string,
   idempotencyKey: string
-): Promise<FuelPostingResult | null> {
+): Promise<ExistingBatchState> {
   const existingBatch = await client.query<{ id: string; batch_status: string }>(
     `
       SELECT id::text, batch_status::text
@@ -230,8 +243,25 @@ async function resolveExistingPostedResult(
     [operatingCompanyId, idempotencyKey]
   );
   const batch = existingBatch.rows[0];
-  if (!batch || batch.batch_status !== "posted") return null;
-  return postedResultForBatch(client, operatingCompanyId, batch.id, idempotencyKey);
+  if (!batch || batch.batch_status !== "posted") return { kind: "none" };
+  const standing = await postedResultForBatch(client, operatingCompanyId, batch.id, idempotencyKey);
+  if (standing) return { kind: "standing", result: standing };
+  const je = await client.query<{ journal_entry_uuid: string | null }>(
+    `SELECT journal_entry_uuid::text FROM accounting.journal_entry_postings
+      WHERE operating_company_id = $1::uuid AND posting_batch_id = $2::uuid LIMIT 1`,
+    [operatingCompanyId, batch.id]
+  );
+  return { kind: "reversed", posting_batch_id: batch.id, journal_entry_id: je.rows[0]?.journal_entry_uuid ?? null };
+}
+
+/** The STANDING posting under this key, or null — never a reversed / voided journal entry (443.203). */
+async function resolveExistingPostedResult(
+  client: DbClient,
+  operatingCompanyId: string,
+  idempotencyKey: string
+): Promise<FuelPostingResult | null> {
+  const state = await resolveExistingBatchState(client, operatingCompanyId, idempotencyKey);
+  return state.kind === "standing" ? state.result : null;
 }
 
 /**
@@ -260,8 +290,29 @@ export async function findPostedFuelReceipt(
     [operatingCompanyId, sourceType, sourceId]
   );
   const row = hit.rows[0];
-  if (!row) return null;
-  return postedResultForBatch(client, operatingCompanyId, row.posting_batch_id, row.idempotency_key ?? "");
+  if (row) {
+    const registered = await postedResultForBatch(client, operatingCompanyId, row.posting_batch_id, row.idempotency_key ?? "");
+    if (registered) return registered;
+  }
+  // 443.203 (5847, fill 249c2831): a receipt whose registered batch was REVERSED and re-posted under a ':correction:rN'
+  // key (443.129 E) keeps its registry row on the reversed original — the correction batch was never registered. The
+  // fill's live posting is then the newest STANDING batch sourced by the same fill (same source type + id); never a
+  // reversed one (postedResultForBatch refuses those), never a second posting.
+  const batches = await client.query<{ id: string; idempotency_key: string | null }>(
+    `SELECT b.id::text, b.idempotency_key
+       FROM accounting.posting_batches b
+      WHERE b.operating_company_id = $1::uuid
+        AND b.batch_status = 'posted'
+        AND b.source_transaction_type = $2
+        AND b.source_transaction_id::text = $3
+      ORDER BY b.created_at DESC`,
+    [operatingCompanyId, sourceType, sourceId]
+  );
+  for (const b of batches.rows) {
+    const standing = await postedResultForBatch(client, operatingCompanyId, b.id, b.idempotency_key ?? "");
+    if (standing) return standing;
+  }
+  return null;
 }
 
 async function postedResultForBatch(
@@ -272,13 +323,35 @@ async function postedResultForBatch(
 ): Promise<FuelPostingResult | null> {
   const batch = { id: batchId };
 
+  // 443.203 — only a STANDING entry is an existing posting: the JE is posted, not voided, not reversed
+  // (reversed_by_je_id IS NULL, is not itself a reversal) and none of the batch's lines was reversed.
   const postingRows = await client.query<{ posting_id: string; journal_entry_uuid: string }>(
     `
-      SELECT id::text AS posting_id, journal_entry_uuid::text
-      FROM accounting.journal_entry_postings
-      WHERE operating_company_id = $1::uuid
-        AND posting_batch_id = $2::uuid
-      ORDER BY line_sequence ASC, created_at ASC
+      SELECT p.id::text AS posting_id, p.journal_entry_uuid::text
+      FROM accounting.journal_entry_postings p
+      JOIN accounting.journal_entries je
+        ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+      WHERE p.operating_company_id = $1::uuid
+        AND p.posting_batch_id = $2::uuid
+        AND je.status = 'posted'
+        AND je.voided_at IS NULL
+        AND je.reversed_by_je_id IS NULL
+        AND je.reverses_je_id IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM accounting.journal_entry_postings rl
+           WHERE rl.operating_company_id = p.operating_company_id
+             AND rl.posting_batch_id = p.posting_batch_id
+             AND rl.reversed_by_line_id IS NOT NULL
+             -- 443.203 (5847): a line the RECLASSIFY engine moved to another load (443.192 fuel re-attribution) is reversed
+             -- line-by-line and re-posted by the reclass entry — the fill's posting still stands. Only a reversal that is
+             -- not a recorded reclassify move (void / correction) takes the batch out of standing.
+             AND NOT EXISTS (
+               SELECT 1 FROM accounting.reclassify_batch_lines bl
+                WHERE bl.operating_company_id = rl.operating_company_id
+                  AND bl.posting_id = rl.id AND bl.result = 'applied'
+             )
+        )
+      ORDER BY p.line_sequence ASC, p.created_at ASC
     `,
     [operatingCompanyId, batch.id]
   );
@@ -376,11 +449,21 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
   const legsTotal = debitLegs.reduce((t, l) => t + l.amount_cents, 0);
   if (legsTotal !== amountCents) throw new Error(`fuel_posting_cost_lines_do_not_foot: lines ${legsTotal} != total ${amountCents}`);
 
-  const existing = await resolveExistingPostedResult(client, input.operating_company_id, idempotencyKey);
-  if (existing) return existing;
+  // 443.203 — a batch under this key whose journal entry was reversed is NOT an existing posting: fall through to the
+  // fill's live posting (e.g. the correction re-post under ':correction:rN'), never hand back the reversed entry.
+  const existingState = await resolveExistingBatchState(client, input.operating_company_id, idempotencyKey);
+  if (existingState.kind === "standing") return existingState.result;
   // LEAD 443.121 #1 — the receipt already posted through another writer (e.g. the Creator's fuel expense document): adopt.
   const receiptPosted = await findPostedFuelReceipt(client, input.operating_company_id, "fuel_event", input.fuel_event_id);
   if (receiptPosted) return receiptPosted;
+  if (existingState.kind === "reversed") {
+    // The key is spent on a reversed entry and no live posting exists: refuse — a re-post goes through a correction
+    // revision key, never by re-using (or double-posting under) the reversed batch's key.
+    throw new Error(
+      `fuel_posting_refused_reversed_no_live_posting: fuel event ${input.fuel_event_id} — batch ${existingState.posting_batch_id} ` +
+        `(journal entry ${existingState.journal_entry_id ?? "?"}) was reversed and the fill has no live posting; post a correction revision`
+    );
+  }
   await ensureOpenPeriod(client, input.operating_company_id, postingDate);
 
   let creditAccountId = "";

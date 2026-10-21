@@ -32,6 +32,8 @@ export type SettlementCreatorDraftStop = {
 
 export type SettlementCreatorLoadBlock = {
   load_number: string;
+  /** Explicit signed-document exception: itemized flat earnings, no mileage wages. Operational miles remain real. */
+  driver_pay_mode?: "mileage" | "additional_pay_only";
   customer_name?: string | null;
   customer_id?: string | null;
   /**

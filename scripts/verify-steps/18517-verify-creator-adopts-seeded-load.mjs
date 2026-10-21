@@ -26,13 +26,20 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const SEED = "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts";
 const SVC = "apps/backend/src/driver-finance/settlement-creator.service.ts";
 const ADM = "apps/backend/src/driver-finance/settlement-creator-admission.ts";
+const BOOK = "apps/backend/src/dispatch/book-load.service.ts";
+const ACCRUAL = "apps/backend/src/driver-finance/driver-pay-delivery-accrual.service.ts";
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
 export function check(src = {}) {
   const seed = src.seed ?? read(SEED);
   const svc = src.svc ?? read(SVC);
   const adm = src.adm ?? read(ADM);
+  const book = src.book ?? read(BOOK), accrual = src.accrual ?? read(ACCRUAL);
   const f = [];
+  if (!svc.includes('const reimbItemAcct = await previewExpenseLineAccount(client, draft.operating_company_id,') || !svc.includes('const rAccount = await resolveExpenseLineAccount(client, draft.operating_company_id,') || !svc.includes('item_id, quantity, rate_cents, unit_of_measure, load_id, posting_account_id') || !svc.includes('rAccount.id,')) f.push(`${SVC}: explicit reimbursements must preview and post the actual item account (9)`);
+  if (!book.includes('const additionalOnly = additionalOnlyDriverPay(load)') || !book.includes('!hasAnyRealMiles && !additionalOnly') || !book.includes('!additionalOnly && milesShort') || !book.includes('driver_bill_pay_plan_frozen')) f.push(`${BOOK}: explicit additional-only plan must retain mileage refusal for ordinary loads, no wage-mile basis, and frozen pay protection (8)`);
+  if (!svc.includes('lineType: "earnings", description: p.description || "Additional pay"') || !svc.includes('sourceDriverBillId: sourceBill[0]!.id') || !svc.includes('load.driver_pay_mode !== "additional_pay_only"')) f.push(`${SVC}: additional-only must reuse bill-backed earnings once, not also mileage or extra pay (8)`);
+  if (!accrual.includes('additionalOnlyPayItems(client, opco, additionalOnly)') || !accrual.includes('accountId: l.account_id') || !accrual.includes('itemId: l.item_id')) f.push(`${ACCRUAL}: delivery must use the actual additional-pay item and its account (8)`);
   if (!/const usmcaSettlementDocument = isAlwaysTrackSettlementNumber\(String\(draft\.settlement_no/.test(adm) || !/!usmcaSettlementDocument && loads\.every\(\(l\) => l\.factoring === "faro_transportation"\)/.test(adm))
     f.push(`${ADM}: a USMCA settlement document with only Transportation loads is refused (5: owner standing ruling 443.167-R2)`);
   const zero = svc.match(/export async function restateAdoptedLoadToZeroRevenue\([\s\S]*?\n}\n/)?.[0] ?? "";
@@ -68,6 +75,13 @@ export function check(src = {}) {
     if (/DELETE\s+FROM/i.test(restate)) f.push(`${SVC}: the restate deletes a money row (3)`);
     if (!/SET status = 'void', voided_at = now\(\)/.test(restate) || !/`\$\{input\.loadNumber\}-R`/.test(restate)) f.push(`${SVC}: the restate must void the bill and mint one -R replacement (3)`);
     if (!/state\.settled \|\| state\.accrued/.test(restate)) f.push(`${SVC}: the restate does not refuse a live-settled or delivery-accrued bill (3)`);
+    // LEAD 443.203 (5849 / 13684): an adopted load with ZERO live bills must get its ONE bill minted from the signed pay —
+    // returning early left the invoice feed gate red ("no live driver bill for this load"); a load with no driver is refused.
+    if (!/if \(bill\.length === 0\) \{[\s\S]*?INSERT INTO driver_finance\.driver_bills[\s\S]*?return;\s*\}/.test(restate))
+      f.push(`${SVC}: an adopted load with no live driver bill must mint one from the signed pay (8)`);
+    if (!/driver_bill_no_driver/.test(restate)) f.push(`${SVC}: minting the missing bill must refuse a load with no driver (8)`);
+    if (restate.indexOf("if (bill.length === 0)") > restate.indexOf("if (bill.length !== 1) return;"))
+      f.push(`${SVC}: the zero-bill mint must run before the early return (8)`);
   }
   const restCall = svc.indexOf("await restateOpenDriverBillToSignedPay(client, {");
   const payCall = svc.indexOf('lineType: "earnings",', restCall === -1 ? 0 : restCall);
@@ -78,25 +92,35 @@ export function check(src = {}) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const seed = read(SEED), svc = read(SVC), adm = read(ADM);
+  const seed = read(SEED), svc = read(SVC), adm = read(ADM), book = read(BOOK), accrual = read(ACCRUAL);
   if (check().length) { console.error("SELFTEST FAIL: baseline not clean", check()); process.exit(1); }
   const plants = [
+    ["explicit reimbursement generic preview", { svc: svc.replace('const reimbItemAcct = await previewExpenseLineAccount(client, draft.operating_company_id,', 'const reimbItemAcct = await wrongResolver(client, draft.operating_company_id,') }],
+    ["explicit reimbursement drops account", { svc: svc.replace('rAccount.id,', 'null,') }],
+    ["additional-only ordinary miles bypass", { book: book.replace('!hasAnyRealMiles && !additionalOnly', '!hasAnyRealMiles && false') }],
+    ["additional-only invents pay basis", { book: book.replace('!additionalOnly && milesShort', 'milesShort') }],
+    ["additional-only frozen pay changed", { book: book.replace('driver_bill_pay_plan_frozen', 'ignored_frozen_plan') }],
+    ["additional-only loses bill link", { svc: svc.replace('sourceDriverBillId: sourceBill[0]!.id', 'sourceDriverBillId: undefined') }],
+    ["additional-only also mileage pay", { svc: svc.replace('load.driver_pay_mode !== "additional_pay_only"', 'true') }],
+    ["additional-only wrong delivery item", { accrual: accrual.replace('itemId: l.item_id', 'itemId: "loaded"') }],
     ["early restatement removed", { seed: seed.replace("await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actor.uuid)", "void 0") }],
     ["unfinished leg delivered", { seed: seed.replace("if (!(load.not_yet_delivered !== false && !load.delivery_date))", "if (true)") }],
     ["early delivery removed", { seed: seed.replace("await deliverLoadThroughDispatch(client, actor.uuid", "void (client, actor.uuid") }],
-    ["shared restatement disconnected", { svc: svc.replace("await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actorUserId)", "void 0") }],
+    ["shared restatement disconnected", { svc: svc.replaceAll("await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actorUserId)", "void 0") }],
     ["any driver", { seed: seed.replace("AND l.assigned_primary_driver_id = $3::uuid", "AND $3::uuid IS NOT NULL") }],
     ["live other settlement", { seed: seed.replace("AND s.voided_at IS NULL AND s.status <> 'cancelled'", "AND false") }],
     ["adoption removed", { seed: seed.replace("await isSeededLoadFreeForThisSettlement(client, draft, existing.rows[0].id)", "false") }],
     ["restate skipped", { svc: svc.replace("await restateOpenDriverBillToSignedPay(client, {", "void ({") }],
     ["restate no refusal", { svc: svc.replace("state.settled || state.accrued", "false") }],
+    ["missing bill not minted (443.203)", { svc: svc.replace("if (bill.length === 0) {", "if (false) {") }],
+    ["no-driver refusal removed (443.203)", { svc: svc.replace(/"driver_bill_no_driver"/, '"x"') }],
     ["series refused", { adm: adm.replace("!usmcaSettlementDocument && loads.every", "loads.every") }],
     ["no earn reversal", { svc: svc.replace("await reverseJournalEntryNoFlip(client as never, { operatingCompanyId: input.companyId, journalEntryId: e.je", "void ({ operatingCompanyId: input.companyId, journalEntryId: e.je") }],
     ["zero restate skipped", { svc: svc.replace("await restateAdoptedLoadToZeroRevenue(client, {", "void ({") }],
     ["re-deliver unless edit", { svc: svc.replace('if (!["delivered", "delivered_pending_docs", "invoiced"', 'if (!(draft.edit_void_repost && ["delivered", "delivered_pending_docs", "invoiced"') }],
   ];
   for (const [n, s] of plants) {
-    const same = (s.seed ?? seed) === seed && (s.svc ?? svc) === svc && (s.adm ?? adm) === adm;
+    const same = (s.seed ?? seed) === seed && (s.svc ?? svc) === svc && (s.adm ?? adm) === adm && (s.book ?? book) === book && (s.accrual ?? accrual) === accrual;
     if (same || !check(s).length) { console.error(`SELFTEST FAIL: plant "${n}" ${same ? "did not apply" : "not caught"}`); process.exit(1); }
   }
   console.log(`SELFTEST PASS: ${plants.length} plants caught`);

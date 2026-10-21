@@ -22,6 +22,7 @@
  */
 import { resolveCreatorTrailerId } from "./settlement-creator.service.js";
 import { reserveLoadSpineExpenseNumber } from "../accounting/expense-writer.service.js";
+import { resolveLineItemAndAccount } from "../accounting/line-item-account.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -129,10 +130,15 @@ export async function categorizeCreatorSettlement(
       if (!target) { out.reimbursements_unmatched.push(`${r.description} ${r.amount_cents}: no settlement line`); continue; }
       usedLine.add(target.id);
       if (target.item_id) continue;
+      // 443.203 R (ACCT-F4432034) — the line takes its item AND that item's posting account (the one rule,
+      // resolveLineItemAndAccount); an item with no stamped account fell to the type map at close (5310 Lumper).
+      const itemAcct = await resolveLineItemAndAccount(client as never, co, { item_id: r.item_id });
+      if (!itemAcct || "refused" in itemAcct) { out.reimbursements_unmatched.push(`${r.description} ${r.amount_cents}: ${itemAcct && "refused" in itemAcct ? itemAcct.refused : "item did not resolve"}`); continue; }
       await client.query(
-        `UPDATE driver_finance.settlement_lines SET item_id = $2::uuid, quantity = 1, rate_cents = $3::bigint, unit_of_measure = 'each', updated_at = now()
+        `UPDATE driver_finance.settlement_lines SET item_id = $2::uuid, quantity = 1, rate_cents = $3::bigint, unit_of_measure = 'each',
+                posting_account_id = $4::uuid, updated_at = now()
           WHERE id = $1::uuid AND item_id IS NULL`,
-        [target.id, r.item_id, r.amount_cents]
+        [target.id, r.item_id, r.amount_cents, itemAcct.account_id]
       );
       target.item_id = r.item_id;
       out.d1_settlement_lines_itemed++;

@@ -24,6 +24,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolvePayComponentItem } from "./pay-component-items.js";
 import { resolveTeamSplitForLoad } from "../settlements/team-splits/apply.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
+import { additionalOnlyDriverPay, additionalOnlyPayItems } from "../dispatch/book-load.service.js";
 
 export class DriverPayAccrualError extends Error {
   constructor(public readonly code: string, message: string, public readonly details: Record<string, unknown> = {}) {
@@ -77,9 +78,9 @@ export async function accrueDriverPayAtDeliveryInClientTx(
   const deliveryDate = due.due_date;
 
   const bills = (
-    await client.query<{ id: string; load_number: string; driver_id: string | null; team_driver_id: string | null; gross: number; loaded: number | null; deadhead: number | null; unit_id: string | null }>(
+    await client.query<{ id: string; load_number: string; driver_id: string | null; team_driver_id: string | null; gross: number; loaded: number | null; deadhead: number | null; unit_id: string | null; quicksave_pending_fields?: Record<string, unknown> }>(
       `SELECT db.id::text, COALESCE(l.load_number, db.load_number) AS load_number, db.driver_id::text, db.team_driver_id::text,
-              db.gross_amount_cents::int AS gross, db.loaded_pay_cents::int AS loaded, db.deadhead_pay_cents::int AS deadhead,
+              db.gross_amount_cents::int AS gross, db.loaded_pay_cents::int AS loaded, db.deadhead_pay_cents::int AS deadhead, l.quicksave_pending_fields,
               COALESCE(db.unit_id, ${sameEntityLoadUnitSql("l.id", "l.operating_company_id")})::text AS unit_id
          FROM driver_finance.driver_bills db
          JOIN mdata.loads l ON l.id = db.load_id AND l.operating_company_id = db.operating_company_id
@@ -101,6 +102,9 @@ export async function accrueDriverPayAtDeliveryInClientTx(
   if (!apAccount) throw new DriverPayAccrualError("AP_ACCOUNT_MISSING", "No A/P control account (ap_control) designated");
 
   for (const b of bills) {
+    const additionalOnly = additionalOnlyDriverPay(b);
+    if (additionalOnly && (b.team_driver_id || additionalOnly.amount_cents !== b.gross)) throw new DriverPayAccrualError("ADDITIONAL_ONLY_BILL_MISMATCH", "Additional-only pay must equal the single driver's bill.");
+    const additionalLines = additionalOnly ? await additionalOnlyPayItems(client, opco, additionalOnly) : null;
     if (!b.driver_id) throw new DriverPayAccrualError("DRIVER_BILL_HAS_NO_DRIVER", `Driver bill for load ${b.load_number} names no driver`, { driver_bill_id: b.id });
     // LEAD 443.128 C — a team bill (one row for two drivers) is incurred at delivery too: one A/P bill per driver for that
     // driver's share of the load's team split (resolveTeamSplitForLoad — the split the settlement close itself uses).
@@ -131,8 +135,9 @@ export async function accrueDriverPayAtDeliveryInClientTx(
       }
       // Lead ROUND 330.6 ruling 1 — a spent document number is never reused: bill_number stays the load number, display fresh.
       const spent = await client.query(`SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND display_id = $2 LIMIT 1`, [opco, b.load_number]);
-      const lines = [];
-      for (const l of share.lines) {
+      const lines: Array<{ accountId: string; amountCents: number; loadId: string; description: string; itemId?: string; quantity?: number; rateCents?: number; unitOfMeasure?: string }> = additionalLines?.map(l => ({ accountId: l.account_id, amountCents: l.amount_cents, loadId: input.loadId,
+        description: `Load ${b.load_number} — ${l.description}`, itemId: l.item_id, quantity: 1, rateCents: l.amount_cents, unitOfMeasure: "each" })) ?? [];
+      for (const l of additionalLines ? [] : share.lines) {
         const itemId = l.component ? await resolvePayComponentItem(client as never, opco, l.component) : null;
         lines.push({
           accountId: payAccount, amountCents: l.cents, loadId: input.loadId,

@@ -635,7 +635,10 @@ const RELAY_FILL_FUEL_TYPES = ["diesel", "def", "reefer_diesel"] as const;
 /**
  * Lead 443.51 #5: a Relay-fill expense document names the settlement that posted the fill — settlement_no (the Creator's
  * convention, stampCreatorExpenseSettlementNo) and source_settlement_ref (the parsed settlement number,
- * expense-parse-backfill.service.ts). Fill-once: a column already carrying a value is never overwritten. Audited.
+ * expense-parse-backfill.service.ts). Fill-once: a column already carrying a LIVE reference is never overwritten. Audited.
+ * LEAD 443.203 (19:52Z, 5845): a reference is STALE when no live settlement by that reference holds the document's load —
+ * the fill was carried to another settlement's load, or the named settlement was cancelled (7 Relay documents on 5845's
+ * loads still said cancelled P-0072). A stale reference is restamped to this settlement; the old one goes in the audit.
  */
 export async function fillRelayFillExpenseSettlementRef(
   client: QueryableClient,
@@ -643,27 +646,62 @@ export async function fillRelayFillExpenseSettlementRef(
 ): Promise<boolean> {
   const no = String(input.settlement_no ?? "").trim();
   if (!no) return false;
+  const cur = (await client.query<{ settlement_no: string | null; source_settlement_ref: string | null; load_id: string | null }>(
+    `SELECT settlement_no, source_settlement_ref, load_id::text FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND id = $2::uuid AND voided_at IS NULL FOR UPDATE`,
+    [input.operating_company_id, input.expense_id],
+  )).rows[0];
+  if (!cur?.load_id) return false;
+  const stale = async (ref: string | null) =>
+    ref !== null && ref.trim() !== no && !(await settlementRefHoldsLoad(client, input.operating_company_id, ref.trim(), cur.load_id!));
+  const restampNo = await stale(cur.settlement_no);
+  const restampRef = await stale(cur.source_settlement_ref);
   const r = await client.query<{ id: string }>(
     `UPDATE accounting.expenses
-        SET settlement_no = coalesce(settlement_no, $3), source_settlement_ref = coalesce(source_settlement_ref, $3), updated_at = now()
+        SET settlement_no = CASE WHEN $4::boolean THEN $3 ELSE coalesce(settlement_no, $3) END,
+            source_settlement_ref = CASE WHEN $5::boolean THEN $3 ELSE coalesce(source_settlement_ref, $3) END, updated_at = now()
       WHERE operating_company_id = $1::uuid AND id = $2::uuid AND voided_at IS NULL
-        AND (settlement_no IS NULL OR source_settlement_ref IS NULL)
+        AND (settlement_no IS NULL OR source_settlement_ref IS NULL OR $4::boolean OR $5::boolean)
         -- owner law 443.52 B: an expense that carries a settlement number must carry its load.
         AND load_id IS NOT NULL
       RETURNING id::text`,
-    [input.operating_company_id, input.expense_id, no],
+    [input.operating_company_id, input.expense_id, no, restampNo, restampRef],
   );
   if (r.rows[0] && input.actor_user_uuid) {
+    const restamped = restampNo || restampRef;
     await appendCrudAudit(
       client as never,
       input.actor_user_uuid,
-      "accounting.expense.relay_fill_settlement_ref_filled",
-      { resource_type: "accounting.expenses", resource_id: input.expense_id, operating_company_id: input.operating_company_id, settlement_no: no },
+      restamped ? "accounting.expense.relay_fill_settlement_ref_restamped" : "accounting.expense.relay_fill_settlement_ref_filled",
+      {
+        resource_type: "accounting.expenses",
+        resource_id: input.expense_id,
+        operating_company_id: input.operating_company_id,
+        settlement_no: no,
+        ...(restamped ? { old_settlement_no: cur.settlement_no, old_source_settlement_ref: cur.source_settlement_ref, reason: "stale_reference_no_live_holder" } : {}),
+      },
       "info",
-      "443.51",
+      restamped ? "443.203" : "443.51",
     );
   }
   return Boolean(r.rows[0]);
+}
+
+/** A live settlement by this reference (source_document_ref ?? display_id) holds the load — same predicate as stampReceiptDocumentSettlementRef. */
+async function settlementRefHoldsLoad(client: QueryableClient, operatingCompanyId: string, ref: string, loadId: string): Promise<boolean> {
+  const r = await client.query<{ held: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM driver_finance.driver_settlements s
+        WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL AND s.status <> 'cancelled'
+          AND (COALESCE(NULLIF(btrim(s.source_document_ref), ''), s.display_id) = $2)
+          AND (s.id IN (SELECT g.settlement_id FROM driver_finance.driver_settlement_gl_bills g
+                          JOIN mdata.loads l ON l.load_number = g.load_number AND l.operating_company_id = g.operating_company_id
+                         WHERE l.id = $3::uuid)
+               OR s.id IN (SELECT sl.settlement_id FROM driver_finance.settlement_lines sl WHERE sl.load_id = $3::uuid))
+     ) AS held`,
+    [operatingCompanyId, ref, loadId],
+  );
+  return Boolean(r.rows[0]?.held);
 }
 
 /**

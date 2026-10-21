@@ -18,6 +18,7 @@ import { CREATOR_SHORT_MILES_REQUIRED_MESSAGE, findCreatorCustomer } from "./set
 import { creatorLoadMiles } from "./settlement-creator-empty-pay.js";
 import { creatorLineLoadNumber } from "./settlement-creator-line-load.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
+import { creatorAdditionalOnlyPay } from "./settlement-creator-pay-mode.js";
 import { CREATOR_TRAILER_REQUIRED_MESSAGE, creatorLoadTrailerEquipmentId, creatorTrailerChoice } from "./creator-trailer-choice.js";
 
 type Q = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
@@ -54,7 +55,11 @@ export async function creatorPreflightRefusals(client: Q, draft: SettlementCreat
     // figure, required to book (creatorLoadMiles — neither is a copy of the other).
     const miles = creatorLoadMiles(l);
     const practical = miles.miles_practical;
-    if (miles.miles_shortest == null && !draft.salaried) out.push(`Load ${n}: ${CREATOR_SHORT_MILES_REQUIRED_MESSAGE}`);
+    try { creatorAdditionalOnlyPay(draft, l); } catch (err) {
+      if (!(err instanceof SettlementCreatorError)) throw err;
+      out.push(err.message);
+    }
+    if (miles.miles_shortest == null && !draft.salaried && l.driver_pay_mode !== "additional_pay_only") out.push(`Load ${n}: ${CREATOR_SHORT_MILES_REQUIRED_MESSAGE}`);
     if (practical == null) {
       out.push(`Load ${n}: practical miles are required to book the load (E_MILES_PRACTICAL_REQUIRED) — a separate figure in Loaded mi (co) (or Historical / Google), never a copy of the short pay miles.`);
     }

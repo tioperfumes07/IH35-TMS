@@ -97,6 +97,7 @@ const draftSchema = z.object({
           .max(20)
           .nullable()
           .optional(),
+        driver_pay_mode: z.enum(["mileage", "additional_pay_only"]).optional(),
         line_haul_miles: z.number().nullable().optional(),
         line_haul_rate_cents: z.number().int().nullable().optional(),
         line_haul_amount_cents: z.number().int().nullable().optional(),
