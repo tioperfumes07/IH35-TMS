@@ -1773,6 +1773,14 @@ export async function postSettlementCreatorInClientTx(
             throw new SettlementCreatorError("relay_fill_load_move_refused", `Fuel line: the Relay fill already posted on another load and cannot move to load ${fillLoad.loadNumber} — ${(err as Error)?.message ?? err}`);
           }
         }
+        // LEAD 443.203 (19:52Z) — the document now sits on this settlement's load: a reference to a settlement that no longer
+        // holds it (the fill's earlier settlement, or a cancelled one) is restamped to this one, old reference audited.
+        await fillRelayFillExpenseSettlementRef(client as never, {
+          operating_company_id: draft.operating_company_id,
+          expense_id: fillDoc.expense_id,
+          settlement_no: sourceDocumentRef ?? displayId,
+          actor_user_uuid: actorUserId,
+        });
         expenseIds.push(fillDoc.expense_id);
       }
     }
