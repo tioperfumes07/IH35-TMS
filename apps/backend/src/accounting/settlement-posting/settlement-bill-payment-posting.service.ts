@@ -1243,13 +1243,17 @@ export async function reverseSettlementBillPaymentInClientTx(
     // LEAD 443.116 (c): a close-time supplement row settles no driver bill of its own (its load's accrued row does).
     const driverBillIds = glBills.filter((row) => row.pay_basis !== "close_supplement").map((row) => row.driver_bill_id);
     if (new Set(driverBillIds).size !== driverBillIds.length) throw new Error("settlement_reversal_duplicate_driver_bill_link");
+    // LEAD 443.215 (5842 repost): a CLOSED settlement whose driver pay is not yet paid out holds its driver bills 'approved'
+    // (the Creator close: every closed-unpaid USMCA settlement P-0057..P-0111), a paid one holds them 'paid'. Both are the
+    // bills this settlement settled — the reversal reopens either. Before: 'paid' only, so no closed-unpaid settlement could
+    // be voided and reposted (settlement_driver_bill_restore_incomplete expected=3 actual=0 on P-0101).
     const restoredDriverBills = await client.query<{ id: string }>(
       `UPDATE driver_finance.driver_bills
           SET status = 'open', settled_in_settlement_id = NULL, updated_at = now()
         WHERE operating_company_id = $1::uuid
           AND id = ANY($2::uuid[])
           AND settled_in_settlement_id = $3::uuid
-          AND status = 'paid'
+          AND status IN ('paid', 'approved')
         RETURNING id::text`,
       [opco, driverBillIds, settlementId]
     );

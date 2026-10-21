@@ -41,6 +41,8 @@ function inspect(service, poster, bills, settlementPoster, governance, dbTest, u
     "SET status = 'open'",
     "GROUP BY account_id, class_id, entity_uuid",
     "WHERE id = $1::uuid AND status = 'posted'",
+    // LEAD 443.215: a closed-UNPAID settlement holds its driver bills 'approved' — the reversal must reopen them too.
+    "AND status IN ('paid', 'approved')",
   ]) {
     if (!service.includes(token)) violations.push(`settlement reversal missing invariant: ${token}`);
   }
@@ -156,6 +158,7 @@ const goodFixture = {
       settlement_reversal_not_equal_and_opposite
       settlement_subledger_reconciliation_failed
       SET status = 'open'
+      AND status IN ('paid', 'approved')
       SET status = 'reversed'
       WHERE id = $1::uuid AND status = 'posted'
     }`,
