@@ -16,6 +16,7 @@ import { z } from "zod";
 import { currentAuthUser, withCompanyScope } from "../../accounting/shared.js";
 import { openWorkOrderPredicateSql } from "../../maintenance/in-shop-condition.js";
 import { CURRENT_TRUCK_LINE_LOAD_SQL } from "../current-truck-line-load.js";
+import { canonicalBoardUnitGateSql } from "../canonical-active-load-set.js";
 import { assertCanonicalSubset, DISPATCH_WORK_LOAD_STATUSES } from "../canonical-active-load-set.js";
 import { groupTruckLineByUnit } from "./group-by-unit.js";
 import { deriveTruckLineStation, STATION_KEYS, STATION_LABELS, type StampSource } from "./station.js";
@@ -119,14 +120,12 @@ const HOS_STALE_MIN = 120;
 
 // Exported (ROUND 177 JOB 1) so verify-load-boards-agree.mjs can reuse this SAME fragment rather
 // than re-deriving its own "is this unit in service" copy that could drift from the real one.
+// LEAD 443.206 D3 — built on THE board unit gate (canonicalBoardUnitGateSql: COALESCE(leased, owner) = company) plus the
+// assignability extras (out-of-service flag, open work order). It gates the AVAILABLE (free truck) rows only; the loaded
+// rows show every board-set load whatever its unit (a loaded truck in the shop never vanishes from Truck Line alone).
 export const UNIT_IN_SERVICE_SQL = `
-  u.deactivated_at IS NULL
-  AND u.currently_leased_to_company_id = $1::uuid
-  AND u.is_sample_data IS NOT TRUE
-  AND u.sold_date IS NULL
-  AND u.disposed_date IS NULL
+  ${canonicalBoardUnitGateSql("u", "$1::uuid")}
   AND u.is_oos IS NOT TRUE
-  AND u.status = 'InService'::mdata.unit_status
   AND NOT EXISTS (
     SELECT 1 FROM maintenance.work_orders wo
     WHERE wo.unit_id = u.id AND wo.operating_company_id = $1::uuid
@@ -229,7 +228,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           AND l.soft_deleted_at IS NULL
           AND l.assigned_unit_id IS NOT NULL
           AND ${CURRENT_TRUCK_LINE_LOAD_SQL.replace(/\bx\./g, "l.")}
-          AND ${UNIT_IN_SERVICE_SQL}
+          -- LEAD 443.206 D3 — load membership is the board set alone (no unit gate), same as List / Kanban / Trip Pairing.
         ORDER BY u.unit_number ASC, l.created_at ASC
         `,
         [operating_company_id]

@@ -19,7 +19,9 @@ if (!/LEFT JOIN mdata\.drivers ud ON ud\.id = u\.assigned_driver_id/.test(route)
 }
 // ACTIVE units only — Awaiting must not pull Sold/Totaled/OutOfService/InMaintenance trucks
 // (the active/inactive desync that inflated the count).
-if (!/AND u\.status = 'InService'::mdata\.unit_status/.test(route)) {
+// LEAD 443.206 D3: through THE board unit gate (canonicalBoardUnitGateSql carries status = 'InService').
+const canonicalSrc = read("apps/backend/src/dispatch/canonical-active-load-set.ts");
+if (!/WHERE \$\{canonicalBoardUnitGateSql\("u", "\$1::uuid"\)\}/.test(route) || !/\.status = 'InService'::mdata\.unit_status/.test(canonicalSrc)) {
   fail("units-without-load must filter to active trucks only (u.status = 'InService')");
 }
 if (!/ud\.id::text AS driver_id/.test(route)) fail("units-without-load must return driver_id");

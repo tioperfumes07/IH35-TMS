@@ -14,7 +14,7 @@
  * active-load-set.ts's A4 (DSP-KPI-ON-LOAD, owner ruling 2026-09-09: "a truck actually has a load
  * out right now" is a narrower question than "is this load active").
  */
-import { assertCanonicalSubset } from "./canonical-active-load-set.js";
+import { assertCanonicalSubset, canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
 
 export const DISPATCH_ACTIVE_LOAD_STATUSES = [
   "assigned_not_dispatched",
@@ -66,10 +66,11 @@ export async function countDispatchLoadsByStatuses(
   const res = await client.query<{ count: number }>(
     `
       SELECT count(*)::int AS count
-      FROM views.live_loads
-      WHERE operating_company_id = $1::uuid
-        AND live_state = 'open_dispatch'
-        AND status IN (${statusInClause(statuses)})
+      -- LEAD 443.206 D2 — THE board set (canonical dispatch work), narrowed to the status subset; never
+      -- views.live_loads' money-gated open_dispatch bucket (a different set than every board shows).
+      FROM mdata.loads l
+      WHERE ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+        AND l.status IN (${statusInClause(statuses)})
     `,
     [operatingCompanyId]
   );
@@ -145,9 +146,9 @@ export async function getOpenLoadsBreakdown(
         count(*) FILTER (WHERE status IN (${transitIn}))::int AS in_transit,
         count(*) FILTER (WHERE status NOT IN (${transitIn}) AND assigned_primary_driver_id IS NOT NULL)::int AS assigned,
         count(*) FILTER (WHERE status NOT IN (${transitIn}) AND assigned_primary_driver_id IS NULL)::int AS unassigned
-      FROM views.live_loads
-      WHERE operating_company_id = $1::uuid
-        AND live_state = 'open_dispatch'
+      -- LEAD 443.206 D2 / D13 — the Overview OPEN LOADS breakdown is the board set itself.
+      FROM mdata.loads l
+      WHERE ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
     `,
     [operatingCompanyId]
   );

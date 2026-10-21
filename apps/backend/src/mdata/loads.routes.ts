@@ -13,7 +13,7 @@ import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
 import { enrichLoadsLiveEta } from "../telematics/dispatch-live-eta.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
-import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
+import { canonicalBoardRowClause, canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
 import { loadPickerScopeSql } from "./load-picker-scope.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -653,7 +653,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           // entity gate is already applied separately below (l.operating_company_id = ANY($1)),
           // so only the status half is used here — canonicalDispatchWorkWhereClause's own
           // required entity-gate param is for callers with no scoping of their own.
-          const existsSql = canonicalDispatchWorkStatusClause("l");
+          // LEAD 443.206 — the same row exclusions every other board applies (deleted / voided / sample).
+          const existsSql = `${canonicalDispatchWorkStatusClause("l")} AND ${canonicalBoardRowClause("l")}`;
           if (include_open_tour_legs) {
             // ROUND-20.2 (RT-FULL-TOUR) — retired for 285.4.2 one-set law: no live caller passes
             // this flag anymore; branch kept so stale URLs fail closed to open_dispatch only.
@@ -681,7 +682,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           // and everything inside it renders only current/open loads. A caller must OPT IN to
           // history (or pass an explicit status list); forgetting scope must never dump the table.
           // TRUCKLINE-16: same dispatch-work predicate as the board_scope==="live" branch above.
-          filters.push(canonicalDispatchWorkStatusClause("l"));
+          filters.push(`${canonicalDispatchWorkStatusClause("l")} AND ${canonicalBoardRowClause("l")}`);
         }
         if (status && status.length > 0) {
           values.push(status);

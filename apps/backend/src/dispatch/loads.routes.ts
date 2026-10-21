@@ -46,7 +46,7 @@ import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countInTransitDispatchLoads } from "./active-loads-count.js";
-import { countCanonicalDispatchWorkLoads } from "./canonical-active-load-set.js";
+import { canonicalBoardRowClause, canonicalBoardUnitGateSql, canonicalDispatchWorkStatusClause, canonicalDispatchWorkWhereClause, countCanonicalDispatchWorkLoads } from "./canonical-active-load-set.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -1009,7 +1009,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const query = parsed.data;
 
     const values: unknown[] = [query.operating_company_id];
-    const filters: string[] = [`l.operating_company_id = $1::uuid`, `l.soft_deleted_at IS NULL`];
+    // LEAD 443.206 D13 — scope gate: never a voided / sample load, and with no explicit status the board set
+    // (canonical dispatch work), never every load in the table.
+    const filters: string[] = [
+      `l.operating_company_id = $1::uuid`,
+      `l.soft_deleted_at IS NULL`,
+      `EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.id = l.id AND ${canonicalBoardRowClause("bl")})`,
+    ];
+    if (!query.status || query.status.length === 0) filters.push(canonicalDispatchWorkStatusClause("l"));
     if (query.status && query.status.length > 0) {
       const mappedStatuses = query.status.map((status) => toMdataStatus(status));
       values.push(mappedStatuses);
@@ -2050,10 +2057,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         client.query<{ count: number }>(
           `
             SELECT count(*)::int AS count
-            FROM views.live_loads
-            WHERE operating_company_id = $1::uuid
-              AND live_state = 'open_dispatch'
-              AND status IN ('dispatched'::mdata.load_status_enum, 'in_transit'::mdata.load_status_enum)
+            FROM mdata.loads l
+            -- LEAD 443.206 D2 — the board set (not views.live_loads' money-gated bucket), narrowed to these statuses.
+            WHERE ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+              AND l.status IN ('dispatched'::mdata.load_status_enum, 'in_transit'::mdata.load_status_enum)
           `,
           [operatingCompanyId]
         ),
@@ -2148,11 +2155,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- delivered-pending-docs backlog (T171/T173/T156/T170/T163/T176) is dropped from Awaiting AND
             -- excluded from the Booked band (delivered_pending_docs is terminal there), and vanishes. It
             -- now surfaces ONCE in Awaiting. In-flight = assigned_not_dispatched/dispatched/in_transit.
-            AND l.status IN (
-              'assigned_not_dispatched'::mdata.load_status_enum,
-              'dispatched'::mdata.load_status_enum,
-              'in_transit'::mdata.load_status_enum
-            )
+            -- LEAD 443.206 D6 — occupied = the board set (canonical dispatch work: booked through at_delivery, never
+            -- delivered_pending_docs), the same loads every other board shows; at_pickup / at_delivery trucks were
+            -- listed as awaiting before.
+            AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
           -- The unit's DEFAULT driver (mdata.units.assigned_driver_id), so awaiting-truck rows can
           -- show Driver + HOS even with no load. (The old join used the load's driver, which is
           -- null for an unloaded truck.)
@@ -2213,19 +2219,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             ORDER BY g.captured_at DESC
             LIMIT 1
           ) loc ON (p.city IS NULL AND p.state IS NULL)
-          WHERE u.deactivated_at IS NULL
-            -- Rule 49: USMCA in-service is the LEASE, never owner_company_id. TRANSP owns the
-            -- trucks; USMCA leases them. owner OR lease inflates Awaiting with Transportation
-            -- in-service units that are not leased to this company.
-            AND u.currently_leased_to_company_id = $1::uuid
-            AND u.is_sample_data IS NOT TRUE
-            AND u.sold_date IS NULL
-            AND u.disposed_date IS NULL
+          -- LEAD 443.206 D3/D4 — THE board unit gate (canonicalBoardUnitGateSql: leased to this company, else owned by it —
+          -- COALESCE, so a Transportation-owned truck leased to no one never counts for USMCA; in service; real), plus the
+          -- awaiting-only assignability extras (not flagged out of service, no open work order below).
+          WHERE ${canonicalBoardUnitGateSql("u", "$1::uuid")}
             AND u.is_oos IS NOT TRUE
-            -- ACTIVE trucks only. Excludes Sold/Totaled (some are not deactivated_at — a known
-            -- active/inactive desync that inflated "Awaiting assignment" to ~49 vs ~32 active) and
-            -- OutOfService/InMaintenance (those belong to the In-shop / Fleet-OOS surfaces, not Awaiting).
-            AND u.status = 'InService'::mdata.unit_status
             AND l.id IS NULL
             -- FLT-IN-SHOP-EXCLUSIVE: Awaiting and In shop are mutually exclusive at the API
             -- contract, not merely filtered in one frontend. Use the exact predicate that

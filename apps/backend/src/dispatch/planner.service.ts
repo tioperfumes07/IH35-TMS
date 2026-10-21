@@ -16,8 +16,7 @@ import { advanceDraftStatusIfCrewed } from "./draft-crew-status-advance.js";
 import { addBusinessDateDays, companyBusinessDate, companyBusinessDateStartIso } from "../lib/company-business-date.js";
 import { linkLoadToPresettlementAfterAssignmentInClientTx, type TripType } from "./presettlement-link.service.js";
 import { ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
-import { assertCanonicalSubset } from "./canonical-active-load-set.js";
-import { liveLoadsOpenDispatchExistsSql } from "./live-loads-view.js";
+import { assertCanonicalSubset, canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
 
 const CONFLICT_WINDOW_MS = 4 * 60 * 60 * 1000;
 
@@ -204,10 +203,10 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
             -- ROUND 36.1: reads views.live_loads's open_dispatch bucket, structurally excluding a
             -- load stuck at 'dispatched' but already settled/driver-billed (was a per-caller money
             -- predicate in ROUND 35.1).
+            -- LEAD 443.206 D2 — the board set (canonical dispatch work), not views.live_loads' money-gated bucket.
             OR EXISTS (
-              SELECT 1 FROM views.live_loads cl
-              WHERE cl.operating_company_id = $1::uuid
-                AND cl.live_state = 'open_dispatch'
+              SELECT 1 FROM mdata.loads cl
+              WHERE ${canonicalDispatchWorkWhereClause("cl", "$1::uuid")}
                 AND (cl.assigned_primary_driver_id = d.id OR cl.assigned_secondary_driver_id = d.id)
                 AND cl.status = ANY($2::mdata.load_status_enum[])
             )
@@ -250,7 +249,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         ) del ON true
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
-          AND l.assigned_primary_driver_id IS NOT NULL
+          -- LEAD 443.206 D4 — a board load with no driver is returned too (unassigned_loads below), never dropped.
           -- ROUND 36.1 / E11-D2 (Lead ruling, 2026-09-22/23): the hardcoded exclusion list here
           -- enforced only the status half of "is this load live" (and a narrower one than
           -- DISPATCH_LIVE_EXCLUDED_STATUSES besides -- it let 'delivered'/'invoiced'/'paid' through
@@ -259,7 +258,8 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
           -- views.live_loads bakes the money half in too -- a load already settled/driver-billed/
           -- invoiced never renders on the Timeline or Loads Planner just because its pickup falls in
           -- this week's window.
-          AND ${liveLoadsOpenDispatchExistsSql("l.id")}
+          -- LEAD 443.206 D2 — THE board set (canonicalDispatchWorkWhereClause), same as every other board.
+          AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
           AND COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at) >= $2::timestamptz
           AND COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at) < $3::timestamptz
         ORDER BY start_at ASC, l.load_number ASC
@@ -295,7 +295,9 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
       };
     });
 
-    const loads: PlannerLoadEvent[] = loadsRes.rows.map((row) => ({
+    // LEAD 443.206 D4 — the driver grid carries driver rows; a board load with no driver yet is returned beside it
+    // (unassigned_loads) so the planner shows the same set as every other board.
+    const toEvent = (row: Record<string, unknown>) => ({
       id: String(row.id),
       load_number: String(row.load_number),
       driver_id: String(row.driver_id),
@@ -307,9 +309,11 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
       end_at: row.end_at ? String(row.end_at) : null,
       pickup_city: row.pickup_city ? String(row.pickup_city) : null,
       pickup_state: row.pickup_state ? String(row.pickup_state) : null,
-    }));
+    });
+    const loads: PlannerLoadEvent[] = loadsRes.rows.filter((row) => row.driver_id != null).map(toEvent);
+    const unassigned_loads: PlannerLoadEvent[] = loadsRes.rows.filter((row) => row.driver_id == null).map((row) => ({ ...toEvent(row), driver_id: "" }));
 
-    return { week_start: weekStart, week_end: weekEnd, drivers, loads };
+    return { week_start: weekStart, week_end: weekEnd, drivers, loads, unassigned_loads };
   });
 }
 
