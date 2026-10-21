@@ -246,6 +246,13 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # `two-section-service.ts` (persisting the three dates on create) -- UNASSIGNED, assigned to CC-1 by
 # the orders; guarded by CC-1's step 11965.
 
+## DEPENDABOT — dependency bumps only (LEAD 10-21 22:25Z: the bot branch had no seat; every bump was red by construction)
+package*.json             (root package.json + package-lock.json)
+apps/*/package*.json      (each workspace's package.json + package-lock.json)
+.github/workflows/**
+TABLES: none. No SHARED grant: a dependabot branch that touches anything else (apps/** source, scripts, docs)
+        fails verify-lane-ownership like any out-of-lane change.
+
 ## SHARED — any seat, but say so in the PR body
 docs/**
 scripts/ops/**            (one-shot ops scripts, named for the round)

@@ -39,7 +39,7 @@ export function parseLanes(text) {
   const sections = {};
   let cur = null;
   for (const raw of text.split('\n')) {
-    const h = raw.match(/^##\s+(CC-[123]|LEAD|CURSOR|CODEX|SHARED|FORBIDDEN)/);
+    const h = raw.match(/^##\s+(CC-[123]|LEAD|CURSOR|CODEX|DEPENDABOT|SHARED|FORBIDDEN)/);
     if (h) { cur = h[1]; sections[cur] = []; continue; }
     if (!cur) continue;
     const line = raw.trim();
@@ -89,9 +89,13 @@ export function classifyFiles(files, seat, sections) {
   const others = ['CC-1', 'CC-2', 'CC-3', 'LEAD', 'CURSOR', 'CODEX'].filter((s) => s !== seat && sections[s]?.length);
   const violations = [];
   const forbidden = [];
+  // LEAD 22:25Z (443 dependabot lane): the bot seat owns ONLY its own lane — the SHARED grants (apps/frontend/**, docs/**,
+  // scripts/ops/**) are for seats that declare their change in a PR body; a bot never does, so a dependabot branch
+  // touching apps/** source fails exactly like any out-of-lane file.
+  const shared = seat === 'DEPENDABOT' ? [] : (sections.SHARED || []);
   for (const f of files) {
     if (matches(f, sections.FORBIDDEN || [])) { forbidden.push(f); continue; }
-    if (matches(f, mine) || matches(f, sections.SHARED)) continue;
+    if (matches(f, mine) || matches(f, shared)) continue;
     const owner = others.find((s) => matches(f, sections[s]));
     violations.push({ file: f, owner: owner || 'UNASSIGNED' });
   }
@@ -143,6 +147,25 @@ if (process.argv.includes("--selftest")) {
   expect('detached push checkout resolves GITHUB_REF_NAME', resolveBranchName('HEAD', { GITHUB_REF_NAME: 'cursor/y' }) === 'cursor/y');
   expect('a real local branch is never overridden by CI env', resolveBranchName('cc-1/z', { GITHUB_HEAD_REF: 'cc-3/x' }) === 'cc-1/z');
   expect('detached with no CI ref stays unresolved (seat check still fails)', resolveBranchName('HEAD', {}) === 'HEAD');
+  // LEAD 22:25Z — the dependabot lane: manifests / lockfiles / workflows pass; app source never does (no SHARED grant).
+  const BOT_LANES = parseLanes([
+    '## CC-1 money', 'apps/backend/src/accounting/**', 'package*.json',
+    '## CC-2 guard', 'scripts/verify-*.mjs',
+    '## CC-3 fe', 'apps/backend/src/dispatch/**',
+    '## DEPENDABOT', 'package*.json', 'apps/*/package*.json', '.github/workflows/**',
+    '## SHARED', 'apps/frontend/**', '.github/workflows/**',
+    '## FORBIDDEN', 'db/migrations/.ledger.json',
+  ].join('\n'));
+  expect('the bot lane file parses', !BOT_LANES.error);
+  const botSections = BOT_LANES.sections ?? {};
+  const bot = classifyFiles(['package-lock.json', 'apps/frontend/package.json', 'apps/driver-pwa/package-lock.json', '.github/workflows/codeql.yml'], 'DEPENDABOT', botSections);
+  expect('a dependabot bump of manifests / lockfiles / workflows is in lane', bot.violations.length === 0 && bot.forbidden.length === 0);
+  const botApp = classifyFiles(['package-lock.json', 'apps/frontend/src/main.tsx'], 'DEPENDABOT', botSections);
+  expect('a dependabot branch touching apps/** source still FAILS', botApp.violations.some((v) => v.file === 'apps/frontend/src/main.tsx'));
+  const botBackend = classifyFiles(['apps/backend/src/index.ts'], 'DEPENDABOT', botSections);
+  expect('a dependabot branch touching backend source still FAILS', botBackend.violations.length === 1);
+  expect('a CC seat keeps its SHARED grant (apps/frontend/**)', classifyFiles(['apps/frontend/src/main.tsx'], 'CC-2', botSections).violations.length === 0);
+  expect('the real LANES.md carries the DEPENDABOT lane', (parseLanes(readFileSync(LANES_FILE, 'utf8')).sections?.DEPENDABOT ?? []).includes('package*.json'));
   // LEAD 14:30Z — SURFACE-BREACH-AUTHORIZED lines are the cross-lane authorization (one system with the surface guard).
   const withLine = authorizeViolations(cross.violations, 'FINDING: X\n\nSURFACE-BREACH-AUTHORIZED: CC-1 heavy CI peel (Lead ruling 13:45Z)');
   expect('cross-lane file + line naming its owner passes', withLine.unauthorized.length === 0 && withLine.authorized.length === 1);
@@ -216,8 +239,12 @@ if (!seat) {
   // LANE_CROSS: this guard recognised no DEVIN-A seat, blocking the push. Minimum viable
   // fix — add the branch prefix mapping. Devin-A owns the factoring lane per docs/bus/LANES.md.
   else if (/^devin-a\//.test(branch.toLowerCase())) seat = 'DEVIN-A';
+  // DEPENDABOT: LEAD 10-21 22:25Z — a dependabot/* branch had no seat ("could not resolve the seat"), so every dependency
+  // bump was red on this guard by construction (masked only while heavy CI stopped earlier). Its lane (LANES.md
+  // "## DEPENDABOT") is the package manifests, lockfiles and workflows — nothing else, and no SHARED grant.
+  else if (/^dependabot\//.test(branch.toLowerCase())) seat = 'DEPENDABOT';
 }
-if (!/^(CC-[123]|LEAD|CURSOR|CODEX|DEVIN-A)$/.test(seat)) {
+if (!/^(CC-[123]|LEAD|CURSOR|CODEX|DEVIN-A|DEPENDABOT)$/.test(seat)) {
   fail(`could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3|LEAD|CURSOR|CODEX|DEVIN-A, or name the branch ` +
        `cc-1/<topic> (seat), claude/<topic> (Lead), cursor/<topic> (Cursor), codex/<topic> (Codex), ` +
        `or devin-a/<topic> (Devin-A). ` +
