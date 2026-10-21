@@ -339,7 +339,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       listAllDispatchLoads({
         operating_company_id: selectedCompanyId!,
         view: "home",
-        status: ["assigned_not_dispatched", "dispatched", "in_transit"],
+        // LEAD 443.206R (register B3/B11) — "on a load" = the board set: an empty status list = the load service's default scope.
+        status: [],
       }),
     enabled: Boolean(selectedCompanyId),
   });

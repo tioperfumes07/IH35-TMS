@@ -6,7 +6,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
-import { STATUS_LABEL } from "../../../components/dispatch/constants";
+import { loadStatusLabel } from "../../../lib/load-status";
 import { addDaysIso, widenPlannerRange } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -51,7 +51,10 @@ async function fetchLoadsForRange(operatingCompanyId: string, rangeStart: string
   const payloads = await Promise.all(weekStarts.map((w) => getDispatchPlannerWeek(operatingCompanyId, w)));
   const seen = new Map<string, PlannerLoadEvent>();
   for (const payload of payloads) {
-    for (const load of payload.loads) {
+    // LEAD 443.206 D4 — the loads planner shows every board load, including one with no driver yet (unassigned_loads).
+    // (unassigned_loads is returned by the backend since #27086; read through a local widening — api/dispatch.ts is the backend lane's file.)
+    const unassigned = (payload as { unassigned_loads?: PlannerLoadEvent[] }).unassigned_loads ?? [];
+    for (const load of [...payload.loads, ...unassigned]) {
       const day = toDayKey(load.start_at);
       if (day && day >= rangeStart && day <= rangeEnd) {
         seen.set(load.id, load);
@@ -68,7 +71,9 @@ export function LoadsPlanner() {
   const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
 
   const loadsQuery = useQuery({
-    queryKey: ["dispatch", "planners", "loads", operatingCompanyId, range.start, range.end],
+    // LEAD 443.206 D1 — the week-events read (PlannerLoadEvent) and the list read (DispatchLoadRow, planner-bars.ts) shared
+    // one cache key with different row shapes; whichever resolved first fed the other view. Distinct keys, same prefix.
+    queryKey: ["dispatch", "planners", "loads", "week-events", operatingCompanyId, range.start, range.end],
     enabled: Boolean(operatingCompanyId),
     queryFn: () => fetchLoadsForRange(operatingCompanyId, range.start, range.end),
   });
@@ -117,8 +122,8 @@ export function LoadsPlanner() {
             unit: load.assigned_unit_number ?? "—",
             customer: load.customer_name ?? "—",
             // ROUND 20.6 L1 (owner-live 2026-09-12): raw enum values ("in_transit", "dispatched")
-            // were shown to the user -- every other surface renders STATUS_LABEL.
-            status: STATUS_LABEL[load.status as keyof typeof STATUS_LABEL] ?? load.status,
+            // were shown to the user -- every other surface renders loadStatusLabel (lib/load-status.ts).
+            status: loadStatusLabel(load.status),
             pickupDate: load.pickup_scheduled_at ? load.pickup_scheduled_at.slice(0, 10) : "—",
             deliveryDate: load.scheduled_delivery_date ?? (load.delivery_appointment_start_at ? load.delivery_appointment_start_at.slice(0, 10) : "—"),
             rate: load.rate_total_cents != null
@@ -231,8 +236,8 @@ export function LoadsPlanner() {
                   <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />
                 </>
               ),
-              // ROUND 20.6 L1 -- same STATUS_LABEL mapping as the list view above.
-              status: STATUS_LABEL[load.status as keyof typeof STATUS_LABEL] ?? load.status,
+              // ROUND 20.6 L1 -- same loadStatusLabel as the list view above.
+              status: loadStatusLabel(load.status),
               name: <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
               bars: [
                 {

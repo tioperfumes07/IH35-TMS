@@ -39,7 +39,7 @@ async function fetchTimelineForRange(
   operatingCompanyId: string,
   rangeStart: string,
   rangeEnd: string
-): Promise<{ drivers: PlannerDriverRow[]; loads: PlannerLoadEvent[] }> {
+): Promise<{ drivers: PlannerDriverRow[]; loads: PlannerLoadEvent[]; unassignedLoads: PlannerLoadEvent[] }> {
   const weekStarts: string[] = [];
   let weekStart = rangeStart;
   while (weekStart <= rangeEnd) {
@@ -49,14 +49,20 @@ async function fetchTimelineForRange(
   const payloads = await Promise.all(weekStarts.map((ws) => getDispatchPlannerWeek(operatingCompanyId, ws)));
   const driverById = new Map<string, PlannerDriverRow>();
   const loadById = new Map<string, PlannerLoadEvent>();
+  const unassignedById = new Map<string, PlannerLoadEvent>();
   for (const payload of payloads) {
     for (const d of payload.drivers) driverById.set(d.id, d);
     for (const l of payload.loads) {
       const day = toDayKey(l.start_at);
       if (day && day >= rangeStart && day <= rangeEnd) loadById.set(l.id, l);
     }
+    // LEAD 443.206 D4 — board loads with no driver yet are the planner's "Unassigned" row (same set as every board).
+    for (const l of (payload as { unassigned_loads?: PlannerLoadEvent[] }).unassigned_loads ?? []) {
+      const day = toDayKey(l.start_at);
+      if (day && day >= rangeStart && day <= rangeEnd) unassignedById.set(l.id, l);
+    }
   }
-  return { drivers: [...driverById.values()], loads: [...loadById.values()] };
+  return { drivers: [...driverById.values()], loads: [...loadById.values()], unassignedLoads: [...unassignedById.values()] };
 }
 
 function parseLeaveCells(rows: Array<Record<string, unknown>> | undefined): Map<string, string> {
@@ -278,6 +284,24 @@ export function UnifiedTimelinePlanner() {
   // actually is; the grouping/predicate itself is correct (HOS violations genuinely need their own
   // visual group), only the label was a lie.
   const inService = drivers.filter((d) => d.hos_status !== "violation");
+  // LEAD 443.206 D4 — the "Unassigned" row: board loads no driver has yet (never dropped from the planner).
+  const unassignedLoads = [...(timelineQuery.data?.unassignedLoads ?? [])].sort((a, b) => String(a.start_at).localeCompare(String(b.start_at)));
+  const unassignedRow: PlannerGridRow[] = unassignedLoads.length
+    ? [{
+        id: "unassigned-loads",
+        name: <span data-testid="timeline-unassigned-row" className="text-xs font-semibold text-[#4B5563]">Unassigned ({unassignedLoads.length})</span>,
+        secondary: <span className="text-xs text-[#4B5563]">Loads with no driver yet</span>,
+        unit: "—",
+        bars: unassignedLoads.map((load) => ({
+          id: load.id,
+          label: entityLabel(load.load_number, load.id, "Load"),
+          startYmd: toDayKey(load.start_at) ?? days[0],
+          endYmd: toDayKey(load.end_at) ?? toDayKey(load.start_at) ?? days[0],
+          kind: barKind(tripTypeByLoadId.get(load.id)),
+          testId: `timeline-load-${load.id}`,
+        })),
+      }]
+    : [];
   const hosViolation = drivers.filter((d) => d.hos_status === "violation");
 
   return (
@@ -313,6 +337,18 @@ export function UnifiedTimelinePlanner() {
               loadCount: sorted.length,
             };
           });
+          // LEAD 443.206 D4 — the Unassigned row in the list view too.
+          if (unassignedLoads.length) {
+            listRows.push({
+              driverId: "unassigned-loads",
+              driverName: "Unassigned",
+              unit: "—",
+              hosStatus: "—",
+              leaveStatus: "—",
+              currentLoad: unassignedLoads[0]!.load_number,
+              loadCount: unassignedLoads.length,
+            });
+          }
           const columns: Array<ParityColumn<TimelineListRow>> = [
             { key: "driverName", label: "Driver Name", sortable: true },
             { key: "unit", label: "Unit", sortable: true },
@@ -341,7 +377,7 @@ export function UnifiedTimelinePlanner() {
             frozenLabel="Driver / Unit"
             actionLabel="Book"
             frozenPx={360}
-            rows={toRows(inService)}
+            rows={[...toRows(inService), ...unassignedRow]}
             onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
             empty={
               <span data-testid="dispatch-timeline-honest-empty">

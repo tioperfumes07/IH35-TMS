@@ -291,7 +291,8 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
       if (input.generation !== actionGenerationRef.current) return;
       pushToast("Stops saved", "success");
       await qc.invalidateQueries({ queryKey: ["dispatch", "load-stops-refined", input.loadId, input.companyId] });
-      await qc.invalidateQueries({ queryKey: ["loads", "detail", input.loadId] });
+      // LEAD 443.206 — the real detail key is ["loads","detail",company,id] (api/loads.ts); the id-only key matched nothing.
+      await qc.invalidateQueries({ queryKey: ["loads", "detail", input.companyId, input.loadId] });
     },
     onError: (err, input) => {
       if (input.generation !== actionGenerationRef.current) return;
