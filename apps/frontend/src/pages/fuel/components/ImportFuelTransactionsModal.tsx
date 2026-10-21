@@ -6,6 +6,7 @@ import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import type { FuelTransactionImportResult, WexStatementImportResult, WexStatementOutcome } from "../../../api/fuelPlanner";
+import { QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 
 type ImportKind = "fleet" | "wex";
 
