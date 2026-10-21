@@ -28,7 +28,7 @@ vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mock
 vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 
-const { postLoadRevenueLatch } = await import("../poster.service.js");
+const { postLoadRevenueLatch, fireRevrecLatchOnInvoiceIssued, RevrecLatchAlreadyPostedError } = await import("../poster.service.js");
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const LOAD_ID = "44444444-4444-4444-8444-444444444444";
@@ -68,6 +68,35 @@ function postedEntryDate(): string {
 }
 
 describe("LEAD 443.192 — revrec Event 2 is dated by its invoice", () => {
+  it("443.200: issuance posts A/R on the caller transaction before Creator validates it", async () => {
+    install({ billDate: "2026-10-19" });
+    mockWithLuciaBypass.mockClear();
+    const client = { query: mockQuery };
+    await fireRevrecLatchOnInvoiceIssued(client, { operating_company_id: OPCO, source_load_id: LOAD_ID, actor_user_id: ACTOR, invoice_id: INVOICE_ID });
+    expect(mockWithLuciaBypass).not.toHaveBeenCalled();
+    expect(mockCreateJournalEntry).toHaveBeenCalledTimes(1);
+    expect(mockCreateJournalEntry.mock.calls[0]![2]).toMatchObject({ client, suppressSideEffects: true });
+    expect(mockQuery).toHaveBeenCalledWith("SAVEPOINT revrec_caller_post");
+    expect(mockQuery).toHaveBeenCalledWith("RELEASE SAVEPOINT revrec_caller_post");
+  });
+
+  it("443.200: a lost latch race rolls back the duplicate JE before returning already_posted", async () => {
+    install({ billDate: "2026-10-19" });
+    mockCreateJournalEntry.mockRejectedValue(new RevrecLatchAlreadyPostedError());
+    const result = await postLoadRevenueLatch({ operating_company_id: OPCO, load_id: LOAD_ID, target_status: "completed_docs_received", entry_date_iso: FIRE_DAY, actor_user_id: ACTOR }, { query: mockQuery });
+    expect(result).toEqual({ posted: false, reason: "already_posted" });
+    const statements = mockQuery.mock.calls.map(call => call[0]);
+    expect(statements.slice(-2)).toEqual(["ROLLBACK TO SAVEPOINT revrec_caller_post", "RELEASE SAVEPOINT revrec_caller_post"]);
+  });
+
+  it("443.200: an A/R failure is propagated, never swallowed after issuing the invoice", async () => {
+    install({ billDate: "2026-10-19" });
+    mockCreateJournalEntry.mockRejectedValue(new Error("ar_post_refused"));
+    await expect(fireRevrecLatchOnInvoiceIssued({ query: mockQuery }, { operating_company_id: OPCO, source_load_id: LOAD_ID, actor_user_id: ACTOR, invoice_id: INVOICE_ID })).rejects.toThrow("ar_post_refused");
+    const statements = mockQuery.mock.calls.map(call => call[0]);
+    expect(statements.slice(-2)).toEqual(["ROLLBACK TO SAVEPOINT revrec_caller_post", "RELEASE SAVEPOINT revrec_caller_post"]);
+  });
+
   it("dates the bill on the invoice's issue date (or the earn's, whichever is later), not the day the latch fired", async () => {
     install({ billDate: "2026-10-05" });
     const r = await fire();

@@ -21,11 +21,10 @@
 
 import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
-import { createJournalEntry } from "../journal-entries.service.js";
+import { createJournalEntry, type QueryableClient } from "../journal-entries.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
-import { enqueueAfterCommit } from "../../lib/after-commit.js";
 import { COMPANY_TIME_ZONE, companyBusinessDate } from "../../lib/company-business-date.js";
 
 export const REVENUE_RECOGNITION_POST_FLAG = "REVENUE_RECOGNITION_POST_ENABLED";
@@ -555,11 +554,11 @@ function resolveEvent(targetStatus: string): RevrecEvent | null {
 /**
  * Post Event 1 or Event 2 for a load status transition. INERT while flag OFF.
  */
-export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Promise<RevrecPostResult> {
+export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput, callerClient?: QueryableClient): Promise<RevrecPostResult> {
   const event = resolveEvent(input.target_status);
   if (!event) return { posted: false, reason: "wrong_status" };
 
-  const prepared = await withLuciaBypass(async (client: DbClient) => {
+  const prepare = async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       input.operating_company_id,
     ]);
@@ -696,7 +695,8 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       isSampleData: load.is_sample_data,
       postings,
     };
-  });
+  };
+  const prepared = callerClient ? await prepare(callerClient) : await withLuciaBypass(prepare);
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
   if (prepared.gate === "latch_table_missing") return { posted: false, reason: "latch_table_missing" };
@@ -719,6 +719,9 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
   // $4,900 since 2026-09-24). Now a lost race on the unique (load, event) row throws inside the JE's own transaction,
   // so the duplicate JE never commits and the poster answers already_posted.
   let created: { id: string };
+  // The standalone writer rolls its own transaction back on a lost latch race. In a caller-owned
+  // transaction the same rollback must happen locally before answering already_posted.
+  if (callerClient) await callerClient.query("SAVEPOINT revrec_caller_post");
   try {
     created = await createJournalEntry(
       {
@@ -733,6 +736,8 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       },
       { userId: input.actor_user_id, role: "system" },
       {
+        client: callerClient,
+        suppressSideEffects: Boolean(callerClient),
         afterInsertBeforeCommit: async (client, header) => {
           if (prepared.event === "bill") {
             if (prepared.invoiceId) {
@@ -842,7 +847,12 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
         },
       }
     );
+    if (callerClient) await callerClient.query("RELEASE SAVEPOINT revrec_caller_post");
   } catch (err) {
+    if (callerClient) {
+      await callerClient.query("ROLLBACK TO SAVEPOINT revrec_caller_post");
+      await callerClient.query("RELEASE SAVEPOINT revrec_caller_post");
+    }
     if (err instanceof RevrecLatchAlreadyPostedError) return { posted: false, reason: "already_posted" };
     throw err;
   }
@@ -923,18 +933,18 @@ export type FireRevrecLatchOnInvoiceIssuedInput = {
  * posts, so calling this from a status writer that turns out not to be evidence-complete is a
  * documented no-op, never a double-post.
  *
- * After-commit, same reasoning as firePostLoadRevenueLatch in delivery-evidence-latch.ts: the poster
- * opens its OWN connection via withLuciaBypass and must not race the caller's own status-write
- * transaction. Swallow-and-log: a latch failure must never fail an invoice status change that
- * already succeeded (invoice-send.service.ts's existing before/after commit reasoning, unchanged).
+ * ROUND 443.200: Event 2 belongs to the invoice's transaction. Creator validates its newly issued
+ * invoice before commit; an after-commit poster cannot see it in time. Reuse the same JE/latch
+ * writer on the caller's client and propagate failures so neither half can commit alone.
  */
 export async function fireRevrecLatchOnInvoiceIssued(
   client: object,
   input: FireRevrecLatchOnInvoiceIssuedInput
 ): Promise<void> {
-  const fire = async () => {
-    try {
-      await postLoadRevenueLatch({
+  if (!("query" in client) || typeof client.query !== "function") {
+    throw new Error("revrec_invoice_issued_requires_transaction_client");
+  }
+  await postLoadRevenueLatch({
         operating_company_id: input.operating_company_id,
         load_id: input.source_load_id,
         // resolveEvent() maps this literal to the "bill" event; postLoadRevenueLatch's own gates
@@ -943,15 +953,5 @@ export async function fireRevrecLatchOnInvoiceIssued(
         target_status: "completed_docs_received",
         entry_date_iso: companyBusinessDate(),
         actor_user_id: input.actor_user_id,
-      });
-    } catch (err) {
-      console.warn(
-        { err, invoice_id: input.invoice_id, load_id: input.source_load_id },
-        "acct_option_b_revrec_latch_on_send_failed"
-      );
-    }
-  };
-  if (!enqueueAfterCommit(client, { label: `revrec-latch-on-send:${input.invoice_id}`, run: fire })) {
-    await fire();
-  }
+      }, client as QueryableClient);
 }

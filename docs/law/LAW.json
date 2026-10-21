@@ -1090,5 +1090,12 @@
     "source_file": "docs/bus/2026-10-12-CODEX-443-117-NATIVE-BILL-PAYMENTS.md",
     "guard": "scripts/verify-qbo-origin-bill-payment-writers-post-native-gl.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-21-INVOICE-ISSUANCE-ATOMIC-AR",
+    "title": "Invoice issuance and its existing Event2 A/R writer share the caller transaction; no deferred or swallowed A/R posting and no second poster",
+    "source_file": "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts",
+    "guard": "scripts/verify-revrec-latch-fires-on-bulk-invoice-issuance.mjs",
+    "type": "enforced"
   }
 ]
