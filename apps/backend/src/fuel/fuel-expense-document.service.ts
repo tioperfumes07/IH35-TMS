@@ -635,14 +635,15 @@ const RELAY_FILL_FUEL_TYPES = ["diesel", "def", "reefer_diesel"] as const;
 /**
  * Lead 443.51 #5: a Relay-fill expense document names the settlement that posted the fill — settlement_no (the Creator's
  * convention, stampCreatorExpenseSettlementNo) and source_settlement_ref (the parsed settlement number,
- * expense-parse-backfill.service.ts). Fill-once: a column already carrying a LIVE reference is never overwritten. Audited.
- * LEAD 443.203 (19:52Z, 5845): a reference is STALE when no live settlement by that reference holds the document's load —
- * the fill was carried to another settlement's load, or the named settlement was cancelled (7 Relay documents on 5845's
- * loads still said cancelled P-0072). A stale reference is restamped to this settlement; the old one goes in the audit.
+ * expense-parse-backfill.service.ts). Fill-once: a column already carrying a reference is never overwritten. Audited.
+ * LEAD 443.203 (19:52Z, 5845): restamp_stale — ONLY the settlement that carries this document (the Creator, for a fill it
+ * prints) may pass it: a reference naming no live settlement that holds the document's load (the fill's earlier settlement,
+ * or a cancelled one: 7 Relay documents on 5845's loads still said cancelled P-0072) is restamped, the old one audited.
+ * Never inferred from who holds the load — an unprinted fill on a held load is not that settlement's (Lead ruling 443.203 #3).
  */
 export async function fillRelayFillExpenseSettlementRef(
   client: QueryableClient,
-  input: { operating_company_id: string; expense_id: string; settlement_no: string; actor_user_uuid?: string | null },
+  input: { operating_company_id: string; expense_id: string; settlement_no: string; actor_user_uuid?: string | null; restamp_stale?: boolean },
 ): Promise<boolean> {
   const no = String(input.settlement_no ?? "").trim();
   if (!no) return false;
@@ -653,7 +654,7 @@ export async function fillRelayFillExpenseSettlementRef(
   )).rows[0];
   if (!cur?.load_id) return false;
   const stale = async (ref: string | null) =>
-    ref !== null && ref.trim() !== no && !(await settlementRefHoldsLoad(client, input.operating_company_id, ref.trim(), cur.load_id!));
+    input.restamp_stale === true && ref !== null && ref.trim() !== no && !(await settlementRefHoldsLoad(client, input.operating_company_id, ref.trim(), cur.load_id!));
   const restampNo = await stale(cur.settlement_no);
   const restampRef = await stale(cur.source_settlement_ref);
   const r = await client.query<{ id: string }>(
