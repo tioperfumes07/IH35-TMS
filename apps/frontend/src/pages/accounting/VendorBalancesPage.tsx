@@ -186,7 +186,14 @@ export function VendorBalancesPage() {
           <div className="max-h-[65vh] overflow-auto">
             {!selectedVendor ? <p className="px-3 py-3 text-xs text-gray-500">Select a vendor to view bills.</p> : null}
             {selectedVendor && billsQuery.isLoading ? <p className="px-3 py-3 text-xs text-gray-500">Loading bills...</p> : null}
-            {selectedVendor && !billsQuery.isLoading && (billsQuery.data?.rows ?? []).length === 0 ? <p className="px-3 py-3 text-xs text-gray-500">No bills for this vendor.</p> : null}
+            {/* LEAD 443.219 G-ERR (audit F25b): a failed request is an error, never "No bills for this vendor". */}
+            {selectedVendor && billsQuery.isError ? (
+              <p className="px-3 py-3 text-xs text-red-600" data-testid="vendor-bills-error">
+                Could not load bills — {billsQuery.error instanceof Error ? billsQuery.error.message : String(billsQuery.error)}{" "}
+                <button type="button" className="underline" onClick={() => void billsQuery.refetch()}>Retry</button>
+              </p>
+            ) : null}
+            {selectedVendor && !billsQuery.isLoading && !billsQuery.isError && (billsQuery.data?.rows ?? []).length === 0 ? <p className="px-3 py-3 text-xs text-gray-500">No bills for this vendor.</p> : null}
             {(billsQuery.data?.rows ?? []).map((bill) => {
               const remaining = Math.max(0, Number(bill.amount_cents) - Number(bill.paid_cents));
               const dueDelta = bill.due_date ? daysUntil(bill.due_date) : null;
