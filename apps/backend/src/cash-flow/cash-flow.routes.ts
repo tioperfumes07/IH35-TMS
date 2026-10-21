@@ -5,6 +5,8 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { withOperatingCompanyScope } from "../auth/operating-company-scope.js";
+import { pullManualTransactions } from "./manual-pull.service.js";
 import {
   getDailyPrediction,
   getActualVsProjected,
@@ -72,6 +74,20 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promise<void> {
+  app.post("/api/v1/cash-flow/pull-transactions", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    if (!["Owner","Administrator","SuperAdmin","Manager","Accountant","Dispatcher","Safety","Mechanic"].includes(String(user.role))) {
+      return reply.code(403).send({error:"forbidden"});
+    }
+    const body = dailyPredictionQuerySchema.safeParse(req.body);
+    if (!body.success) return reply.code(400).send({error:"validation_error",details:body.error.flatten()});
+    await assertCompanyMembership(user.uuid,body.data.operating_company_id);
+    const result = await withOperatingCompanyScope(user.uuid,body.data.operating_company_id,client =>
+      pullManualTransactions(client,user.uuid,body.data.operating_company_id,body.data.date));
+    return reply.send(result);
+  });
+
   app.get("/api/v1/cash-flow/daily-prediction", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;

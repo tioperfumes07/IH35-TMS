@@ -5,6 +5,7 @@ import { withOperatingCompanyScope } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { createCashForecastEntry } from "./cash-forecast-entry.service.js";
 
 // FIREWALL: this module is the hand-entered cash projection. It must NEVER import
 // accounting/finance/reports, post to the GL, or FK into another schema. Enforced by
@@ -49,6 +50,7 @@ const entryBody = z.object({
   party_ref_label: z.string().trim().max(200).nullish(),
 });
 const entryPatch = entryBody.partial().extend({ operating_company_id: z.string().uuid() });
+export type ForecastEntryInput = z.infer<typeof entryBody>;
 const openingBalanceBody = z.object({
   operating_company_id: z.string().uuid(),
   amount_cents: z.number().int(),
@@ -120,71 +122,7 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
     if (!b.success) return sendZodValidation(reply, b.error);
     await assertCompanyMembership(user.uuid, b.data.operating_company_id);
     const row = await withOperatingCompanyScope(user.uuid, b.data.operating_company_id, async (client) => {
-      let refLabel = b.data.ref_label ?? null;
-      if (b.data.ref_kind === "unit") {
-        if (!b.data.ref_external_id) throw Object.assign(new Error("Select a unit."), { statusCode: 400 });
-        const unit = await client.query<{ label: string }>(
-          `SELECT unit_number AS label FROM mdata.units WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
-          [b.data.ref_external_id, b.data.operating_company_id],
-        );
-        if (!unit.rows[0]) throw Object.assign(new Error("Unit does not belong to this operating company."), { statusCode: 400 });
-        refLabel = unit.rows[0].label;
-      }
-      let partyName = b.data.party_name ?? null;
-      let partyRefLabel = b.data.party_ref_label ?? null;
-      if (b.data.party_ref_kind === "driver") {
-        if (!b.data.party_ref_id) throw Object.assign(new Error("Select a driver."), { statusCode: 400 });
-        const driver = await client.query<{ label: string }>(
-          `SELECT trim(concat_ws(' ', first_name, last_name)) AS label
-             FROM mdata.drivers
-            WHERE id = $1::uuid AND operating_company_id = $2::uuid
-            LIMIT 1`,
-          [b.data.party_ref_id, b.data.operating_company_id],
-        );
-        if (!driver.rows[0]) throw Object.assign(new Error("Driver does not belong to this operating company."), { statusCode: 400 });
-        partyName = driver.rows[0].label;
-        partyRefLabel = driver.rows[0].label;
-      } else if (b.data.party_ref_kind === "customer") {
-        if (!b.data.party_ref_id) throw Object.assign(new Error("Select a customer."), { statusCode: 400 });
-        const customer = await client.query<{ label: string }>(
-          `SELECT customer_name AS label FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-          [b.data.party_ref_id, b.data.operating_company_id],
-        );
-        if (!customer.rows[0]) throw Object.assign(new Error("Customer does not belong to this operating company."), { statusCode: 400 });
-        partyName = customer.rows[0].label;
-        partyRefLabel = customer.rows[0].label;
-      } else if (b.data.party_ref_kind === "vendor") {
-        if (!b.data.party_ref_id) throw Object.assign(new Error("Select a vendor."), { statusCode: 400 });
-        const vendor = await client.query<{ label: string }>(
-          `SELECT vendor_name AS label FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-          [b.data.party_ref_id, b.data.operating_company_id],
-        );
-        if (!vendor.rows[0]) throw Object.assign(new Error("Vendor does not belong to this operating company."), { statusCode: 400 });
-        partyName = vendor.rows[0].label;
-        partyRefLabel = vendor.rows[0].label;
-      }
-      const res = await client.query(
-        `INSERT INTO forecast.cash_entries
-           (operating_company_id, entry_date, direction, amount_cents, party_name, invoice_no,
-            category, memo, ref_kind, ref_label, ref_external_id,
-            load_ref_id, load_ref_label, unit_ref_label, customer_ref_label,
-            party_ref_kind, party_ref_id, party_ref_label,
-            created_by_user_id, updated_by_user_id)
-         VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::uuid,$19::uuid)
-         RETURNING *`,
-        [b.data.operating_company_id, b.data.entry_date, b.data.direction, b.data.amount_cents,
-         partyName, b.data.invoice_no ?? null, b.data.category ?? null, b.data.memo ?? null,
-         b.data.ref_kind ?? null, refLabel, b.data.ref_external_id ?? null,
-         b.data.load_ref_id ?? null, b.data.load_ref_label ?? null, b.data.unit_ref_label ?? null,
-         b.data.customer_ref_label ?? null, b.data.party_ref_kind ?? null, b.data.party_ref_id ?? null,
-         partyRefLabel, user.uuid]
-      );
-      const created = res.rows[0];
-      await appendCrudAudit(client, user.uuid, "forecast.cash_entry.created", {
-        resource_id: created?.id,
-        resource_type: "forecast.cash_entries",
-      });
-      return created;
+      return createCashForecastEntry(client, user.uuid, b.data);
     });
     return reply.code(201).send(row);
   });

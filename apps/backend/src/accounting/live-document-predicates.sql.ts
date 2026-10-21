@@ -37,6 +37,18 @@ export function liveBill(alias: string): string {
   return `(${a}.status NOT IN ('void', 'voided') AND ${a}.voided_at IS NULL AND ${a}.revoked_at IS NULL)`;
 }
 
+/** Open A/P includes both supported partial-payment spellings. Balance is supplied
+ * by the canonical bill balance expression, net of payments and applications. */
+export function openBill(alias: string, balanceSql: string): string {
+  const a = sqlAlias(alias);
+  return `(${liveBill(a)} AND ${a}.status IN ('open','unpaid','partial','partially_paid') AND (${balanceSql}) > 0)`;
+}
+
+export function liveBillPayment(alias: string): string {
+  const a = sqlAlias(alias);
+  return `(${a}.revoked_at IS NULL AND ${a}.voided_at IS NULL AND COALESCE(${a}.status,'') NOT IN ('void','voided'))`;
+}
+
 /** Bill lines have a void timestamp, but no document status. */
 export function liveBillLine(alias: string): string {
   return `${sqlAlias(alias)}.voided_at IS NULL`;

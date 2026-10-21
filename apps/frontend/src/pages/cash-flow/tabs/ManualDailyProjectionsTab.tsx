@@ -21,7 +21,7 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { Link, useSearchParams } from "react-router-dom";
 import { getBankingTiles } from "../../../api/banking";
-import { listBills, listBillPayments, listExpenses, listInvoices } from "../../../api/accounting";
+import { pullManualTransactions } from "../../../api/cashFlow";
 
 function fmtCents(c: number) {
   return formatUsdCents(c);
@@ -382,119 +382,16 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const pullMutation = useMutation({
     mutationFn: async () => {
       if (!projectionDate) throw new Error("Pick a Projection date first");
-      const existingKeys = new Set(
-        allEntries
-          .filter((e) => String(e.entry_date).slice(0, 10) === projectionDate)
-          .map((e) => `${e.direction}:${e.invoice_no ?? ""}:${e.party_ref_id ?? ""}`),
-      );
-      const [bills, expenses, payments, invoices] = await Promise.all([
-        listBills(operatingCompanyId, { status: "unpaid", include_balance: true, date_to: projectionDate, limit: 100 }),
-        listExpenses(operatingCompanyId, { date_from: projectionDate, date_to: projectionDate, limit: 100 }),
-        listBillPayments(operatingCompanyId, { date_from: projectionDate, date_to: projectionDate, limit: 100 }),
-        listInvoices(operatingCompanyId, { to_date: projectionDate, has_balance: true, limit: 100 }),
-      ]);
-      const created: string[] = [];
-      for (const bill of bills.rows ?? []) {
-        const invoiceNo = bill.bill_number || bill.id;
-        const key = `expense:${invoiceNo}:${bill.vendor_uuid ?? ""}`;
-        if (existingKeys.has(key)) continue;
-        const cents = toCents(bill.balance_cents ?? bill.amount_cents);
-        if (cents <= 0) continue;
-        await createForecastEntry({
-          operating_company_id: operatingCompanyId,
-          entry_date: projectionDate,
-          direction: "expense",
-          amount_cents: cents,
-          invoice_no: invoiceNo,
-          party_name: bill.vendor_name ?? null,
-          party_ref_kind: bill.vendor_uuid ? "vendor" : null,
-          party_ref_id: bill.vendor_uuid ?? null,
-          category: "Bill (software)",
-          memo: "Pulled from unpaid bills",
-        });
-        existingKeys.add(key);
-        created.push(invoiceNo);
-      }
-      for (const row of expenses.rows ?? []) {
-        const invoiceNo = row.expense_number || row.id;
-        const key = `expense:${invoiceNo}:${row.vendor_uuid ?? row.driver_uuid ?? ""}`;
-        if (existingKeys.has(key)) continue;
-        const cents = toCents(row.total_amount_cents);
-        if (cents <= 0) continue;
-        await createForecastEntry({
-          operating_company_id: operatingCompanyId,
-          entry_date: projectionDate,
-          direction: "expense",
-          amount_cents: cents,
-          invoice_no: invoiceNo,
-          party_name: row.vendor_name ?? ([row.driver_first_name, row.driver_last_name].filter(Boolean).join(" ") || null),
-          party_ref_kind: row.vendor_uuid ? "vendor" : row.driver_uuid ? "driver" : null,
-          party_ref_id: row.vendor_uuid ?? row.driver_uuid ?? null,
-          category: "Expense (software)",
-          memo: row.memo ?? "Pulled from expenses",
-        });
-        existingKeys.add(key);
-        created.push(invoiceNo);
-      }
-      for (const pay of payments.rows ?? []) {
-        const invoiceNo = pay.reference_number || pay.check_number || pay.id;
-        const key = `expense:${invoiceNo}:${pay.mdata_vendor_id ?? ""}`;
-        if (existingKeys.has(key)) continue;
-        const cents = toCents(pay.amount_cents);
-        if (cents <= 0) continue;
-        await createForecastEntry({
-          operating_company_id: operatingCompanyId,
-          entry_date: projectionDate,
-          direction: "expense",
-          amount_cents: cents,
-          invoice_no: invoiceNo,
-          party_name: pay.vendor_name ?? null,
-          party_ref_kind: pay.mdata_vendor_id ? "vendor" : null,
-          party_ref_id: pay.mdata_vendor_id ?? null,
-          category: `Payment (${pay.payment_method})`,
-          memo: "Pulled from bill payments / card",
-        });
-        existingKeys.add(key);
-        created.push(invoiceNo);
-      }
-      const invoiceRows = invoices.invoices ?? [];
-      for (const inv of invoiceRows) {
-        const invoiceNo = inv.display_id || inv.id;
-        const key = `income:${invoiceNo}:${inv.customer_id ?? ""}`;
-        if (existingKeys.has(key)) continue;
-        const cents = toCents(inv.amount_open_cents ?? inv.total_cents);
-        if (cents <= 0) continue;
-        await createForecastEntry({
-          operating_company_id: operatingCompanyId,
-          entry_date: projectionDate,
-          direction: "income",
-          amount_cents: cents,
-          invoice_no: invoiceNo,
-          party_name: inv.customer_name ?? null,
-          party_ref_kind: inv.customer_id ? "customer" : null,
-          party_ref_id: inv.customer_id ?? null,
-          category: "Invoice (software)",
-          memo: "Pulled from invoices",
-        });
-        existingKeys.add(key);
-        created.push(invoiceNo);
-      }
-      return created.length;
+      return pullManualTransactions(operatingCompanyId, projectionDate);
     },
-    onSuccess: (count) => {
+    onSuccess: (result) => {
       setPullError(null);
       void qc.invalidateQueries({ queryKey: ["forecast", "entries", operatingCompanyId] });
-      if (count === 0) setPullError("No new software bills, expenses, payments, or invoices for this date (already pulled or empty).");
+      if (result.issues.length) setPullError(`${result.issues.length} prior snapshots preserved for review: ${[...new Set(result.issues.map(row => row.reason))].join("; ")}`);
+      else if (result.created === 0) setPullError("No new software bills, expenses, payments, or invoices for this date (already pulled or empty).");
     },
-    // GO-0042-CASH-FLOW-MANUAL-PULL-RETRY-DUPLICATE-ENTRIES: this loop POSTs one
-    // createForecastEntry() per candidate row, sequentially, with no idempotency key tying a
-    // row to its create -- POST /api/v1/forecast/cash-entries is rate-limited to 30/min, and a
-    // real backlog pull (up to ~400 candidate rows across 4 categories) can exceed that mid-loop,
-    // throwing AFTER some rows already committed. Without invalidating here (only onSuccess did),
-    // a retry rebuilt existingKeys from the STALE query cache -- missing the rows just created --
-    // and re-created them, silently doubling Expected Expenses/Income with no error on the
-    // eventual successful retry. Invalidate on error too so the next attempt (gated by
-    // entriesQuery.isFetching below) always sees the rows that already landed.
+    // The server pull is atomic and serializes same-company/date retries. Refresh
+    // cached snapshots after errors as well, including an uncertain network response.
     onError: (e) => {
       setPullError(e instanceof Error ? e.message : "Pull from software failed");
       void qc.invalidateQueries({ queryKey: ["forecast", "entries", operatingCompanyId] });
