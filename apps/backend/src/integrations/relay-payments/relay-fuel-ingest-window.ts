@@ -10,9 +10,13 @@
  * The window now resumes from the last day this company's tick actually covered, re-reads a short
  * overlap for late-published fills, and never reaches back further than a cap. Re-reading is safe:
  * the ingest upserts on (operating_company_id, transaction_id).
+ *
+ * 443.201: RELAY_INGEST_OVERLAP_DAYS raised 3→7. Prod data shows Relay posts fills up to 39 days
+ * after relay_created_at; 184 historical rows had lag >3 days. 7 days covers the observed
+ * post-latency tail without meaningfully increasing API load (1 extra day per tick).
  */
 
-export const RELAY_INGEST_OVERLAP_DAYS = 3;
+export const RELAY_INGEST_OVERLAP_DAYS = 7;
 export const RELAY_INGEST_MAX_CATCHUP_DAYS = 30;
 
 function addDays(iso: string, days: number): string {
