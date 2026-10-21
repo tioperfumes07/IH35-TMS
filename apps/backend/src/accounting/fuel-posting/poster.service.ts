@@ -290,8 +290,29 @@ export async function findPostedFuelReceipt(
     [operatingCompanyId, sourceType, sourceId]
   );
   const row = hit.rows[0];
-  if (!row) return null;
-  return postedResultForBatch(client, operatingCompanyId, row.posting_batch_id, row.idempotency_key ?? "");
+  if (row) {
+    const registered = await postedResultForBatch(client, operatingCompanyId, row.posting_batch_id, row.idempotency_key ?? "");
+    if (registered) return registered;
+  }
+  // 443.203 (5847, fill 249c2831): a receipt whose registered batch was REVERSED and re-posted under a ':correction:rN'
+  // key (443.129 E) keeps its registry row on the reversed original — the correction batch was never registered. The
+  // fill's live posting is then the newest STANDING batch sourced by the same fill (same source type + id); never a
+  // reversed one (postedResultForBatch refuses those), never a second posting.
+  const batches = await client.query<{ id: string; idempotency_key: string | null }>(
+    `SELECT b.id::text, b.idempotency_key
+       FROM accounting.posting_batches b
+      WHERE b.operating_company_id = $1::uuid
+        AND b.batch_status = 'posted'
+        AND b.source_transaction_type = $2
+        AND b.source_transaction_id::text = $3
+      ORDER BY b.created_at DESC`,
+    [operatingCompanyId, sourceType, sourceId]
+  );
+  for (const b of batches.rows) {
+    const standing = await postedResultForBatch(client, operatingCompanyId, b.id, b.idempotency_key ?? "");
+    if (standing) return standing;
+  }
+  return null;
 }
 
 async function postedResultForBatch(
@@ -321,6 +342,14 @@ async function postedResultForBatch(
            WHERE rl.operating_company_id = p.operating_company_id
              AND rl.posting_batch_id = p.posting_batch_id
              AND rl.reversed_by_line_id IS NOT NULL
+             -- 443.203 (5847): a line the RECLASSIFY engine moved to another load (443.192 fuel re-attribution) is reversed
+             -- line-by-line and re-posted by the reclass entry — the fill's posting still stands. Only a reversal that is
+             -- not a recorded reclassify move (void / correction) takes the batch out of standing.
+             AND NOT EXISTS (
+               SELECT 1 FROM accounting.reclassify_batch_lines bl
+                WHERE bl.operating_company_id = rl.operating_company_id
+                  AND bl.posting_id = rl.id AND bl.result = 'applied'
+             )
         )
       ORDER BY p.line_sequence ASC, p.created_at ASC
     `,

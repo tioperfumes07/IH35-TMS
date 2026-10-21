@@ -185,7 +185,15 @@ export function check(files) {
     ["AND je.reversed_by_je_id IS NULL", "excludes a reversed JE (reversed_by_je_id IS NULL)"],
     ["AND je.reverses_je_id IS NULL", "excludes a reversal JE"],
     ["rl.reversed_by_line_id IS NOT NULL", "excludes a batch with a reversed line"],
+    ["accounting.reclassify_batch_lines bl", "exempts lines the reclassify engine moved (443.203 b — a moved receipt still stands)"],
+    ["bl.posting_id = rl.id AND bl.result = 'applied'", "keys the reclassify exemption on an APPLIED move of that very line (443.203 b)"],
   ]) if (!prBody.includes(needle)) problems.push(`${POSTER}: postedResultForBatch no longer ${what} — the fuel poster would hand back a reversed journal entry as "already posted" (443.203)`);
+  // 13b (443.203 b) — the receipt lookup falls back to the newest STANDING batch of the same fill when its registered
+  // batch no longer stands (a ':correction:rN' re-post is never registered); never returns a reversed batch.
+  const fr = poster.indexOf("export async function findPostedFuelReceipt(");
+  const frBody = fr < 0 ? "" : poster.slice(fr, poster.indexOf("\n}\n", fr));
+  if (!/const registered = await postedResultForBatch\(/.test(frBody) || !/AND b\.source_transaction_id::text = \$3/.test(frBody) || !/ORDER BY b\.created_at DESC/.test(frBody) || !/const standing = await postedResultForBatch\(/.test(frBody))
+    problems.push(`${POSTER}: findPostedFuelReceipt does not fall back to the fill's newest STANDING batch when the registered one was reversed — a corrected fill reads as unposted (443.203 b)`);
   const rx = poster.indexOf("async function resolveExistingPostedResult(");
   const rxBody = rx < 0 ? "" : poster.slice(rx, poster.indexOf("\n}\n", rx));
   if (!/return state\.kind === "standing" \? state\.result : null;/.test(rxBody))

@@ -85,3 +85,42 @@ describe("fuel poster — a reversed batch is not an existing posting (443.203)"
     expect(none).toBeNull();
   });
 });
+
+// 443.203 follow-up (5847 rehearsal on prod): two shapes the first fix still refused.
+describe("fuel poster — the fill's live posting is found when the registry points at the reversed original (443.203 b)", () => {
+  it("registry row on the REVERSED original, the ':correction:r1' batch never registered -> returns the correction (newest standing batch of the same fill)", async () => {
+    const calls: string[] = [];
+    const query = vi.fn(async (sql: string, values?: unknown[]) => {
+      calls.push(sql);
+      if (sql.includes("fuel.fuel_receipt_postings")) return { rows: [{ posting_batch_id: ORIG_BATCH, idempotency_key: "fuel:x" }] };
+      if (sql.includes("FROM accounting.posting_batches b") && sql.includes("source_transaction_id")) return { rows: [{ id: LIVE_BATCH, idempotency_key: "fuel:x:correction:r1" }, { id: ORIG_BATCH, idempotency_key: "fuel:x" }] };
+      if (sql.includes("FROM accounting.posting_batches")) return { rows: [{ id: ORIG_BATCH, batch_status: "posted" }] };
+      if (sql.includes("FROM accounting.journal_entry_postings")) {
+        if (values?.[1] === LIVE_BATCH) return { rows: [{ posting_id: "jep-live-1", journal_entry_uuid: LIVE_JE }] };
+        return { rows: [] }; // the original no longer stands
+      }
+      if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
+      return { rows: [] };
+    });
+    const r = await postFuelExpenseOnClient({ query } as never, input as never);
+    expect(r.journal_entry_id).toBe(LIVE_JE);
+    expect(calls.some((q) => q.includes("INSERT INTO accounting."))).toBe(false);
+  });
+
+  it("a line the RECLASSIFY engine moved (applied reclassify_batch_lines) does not take the batch out of standing", async () => {
+    const calls: string[] = [];
+    const query = vi.fn(async (sql: string) => {
+      calls.push(sql);
+      if (sql.includes("fuel.fuel_receipt_postings")) return { rows: [] };
+      if (sql.includes("FROM accounting.posting_batches")) return { rows: [{ id: ORIG_BATCH, batch_status: "posted" }] };
+      if (sql.includes("FROM accounting.journal_entry_postings")) {
+        // the standing query must exempt reclassify-moved lines; answer "stands" only when it does
+        return sql.includes("reclassify_batch_lines") ? { rows: [{ posting_id: "jep-orig-1", journal_entry_uuid: ORIG_JE }] } : { rows: [] };
+      }
+      if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
+      return { rows: [] };
+    });
+    const r = await postFuelExpenseOnClient({ query } as never, input as never);
+    expect(r.journal_entry_id).toBe(ORIG_JE);
+  });
+});
