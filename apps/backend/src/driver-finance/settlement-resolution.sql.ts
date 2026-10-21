@@ -79,7 +79,7 @@ export function resolveLoadSettlementSql(loadAlias: string): string {
              AND ${liveDriverBill("db1")}
            WHERE ${activeSettlementLine("sl1", "ds1")}
              AND sl1.operating_company_id = ${loadAlias}.operating_company_id
-           ORDER BY ds1.closed_at DESC NULLS LAST, sl1.created_at DESC
+           ORDER BY ds1.trip_closed_at DESC NULLS LAST, sl1.created_at DESC
            LIMIT 1),
          -- 2. Live presettlement_link_id (booking-time forward pointer, if not voided)
          (SELECT ${loadAlias}.presettlement_link_id
