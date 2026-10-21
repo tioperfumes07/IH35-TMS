@@ -68,6 +68,8 @@ const draftSchema = z.object({
         pickup_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
         customer_po_number: z.string().trim().max(80).nullable().optional(),
         customer_wo_number: z.string().trim().max(80).nullable().optional(),
+        // LEAD 443.203 — the trailer printed on this load's row (overrides the settlement-level trailer for this load).
+        trailer_equipment_number: z.string().trim().max(40).nullable().optional(),
         pickup_address: z.string().trim().max(240).nullable().optional(),
         pickup_city: z.string().trim().max(120).nullable().optional(),
         pickup_state: z.string().trim().min(2).max(6).nullable().optional(),

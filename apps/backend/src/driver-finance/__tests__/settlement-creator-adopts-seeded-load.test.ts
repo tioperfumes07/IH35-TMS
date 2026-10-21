@@ -10,7 +10,7 @@ import { bookLoadOnClient } from "../../dispatch/book-load.service.js";
 import { deliverLoadThroughDispatch, stampStopsFromTracking } from "../settlement-creator-deliver.js";
 vi.mock("../../dispatch/book-load.service.js", async orig => ({ ...(await orig()), bookLoadOnClient: vi.fn() }));
 vi.mock("../settlement-creator-deliver.js", async orig => ({ ...(await orig()), stampStopsFromTracking: vi.fn(async () => []), deliverLoadThroughDispatch: vi.fn() }));
-vi.mock("../creator-trailer-choice.js", async orig => ({ ...(await orig()), creatorTrailerChoice: vi.fn(async () => ({ kind: "none" })), creatorLoadTrailerEquipmentId: vi.fn(async () => "equipment-type") }));
+vi.mock("../creator-trailer-choice.js", async orig => ({ ...(await orig()), creatorTrailerChoice: vi.fn(async () => ({ kind: "none" })), creatorLoadTrailerChoice: vi.fn(async () => ({ kind: "none" })), creatorLoadTrailerEquipmentId: vi.fn(async () => "equipment-type") }));
 
 const draft = { operating_company_id: "co", settlement_no: "5839", driver_id: "drv" } as never;
 

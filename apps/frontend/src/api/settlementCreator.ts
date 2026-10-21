@@ -23,6 +23,8 @@ export type SettlementCreatorDraft = {
     /** SETL-F438 — bookLoad refuses a load carrying neither; Faro matches the invoice on them. */
     customer_po_number?: string | null;
     customer_wo_number?: string | null;
+    /** LEAD 443.203 — the trailer printed on this load's row; overrides the settlement trailer for this load. */
+    trailer_equipment_number?: string | null;
     pickup_date?: string | null;
     pickup_address?: string | null;
     pickup_city?: string | null;

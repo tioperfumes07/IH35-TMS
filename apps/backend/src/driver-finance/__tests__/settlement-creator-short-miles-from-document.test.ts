@@ -10,6 +10,7 @@ vi.mock("../../dispatch/book-load.service.js", () => ({ bookLoadOnClient: (...a:
 vi.mock("../creator-trailer-choice.js", () => ({
   CREATOR_TRAILER_REQUIRED_MESSAGE: "trailer required",
   creatorTrailerChoice: vi.fn(async () => ({ kind: "none" })),
+  creatorLoadTrailerChoice: vi.fn(async () => ({ kind: "none" })),
   creatorLoadTrailerEquipmentId: vi.fn(async () => "equipment-type-id"),
 }));
 vi.mock("../../dispatch/mileage/miles-recommendations.service.js", () => ({ fillLoadDeadhead: vi.fn() }));

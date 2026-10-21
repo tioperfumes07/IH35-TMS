@@ -8,8 +8,10 @@
  *       shipper trailer, one dispatch.non_owned_trailers row per number)
  *   - the operator marked "No trailer (bobtail / power only)" -> { kind: "none" } (an explicit, recorded choice)
  *   - nothing at all -> null: the preview refuses (trailer_required) and the seed refuses to book the load.
- * The document carries ONE trailer for the whole settlement (fuel / expense rows have no per-row trailer), so there is
- * no other source on the document to read.
+ * LEAD 443.203 (20:22Z): the company settlement's LOAD table prints a trailer per load — a load row's printed trailer
+ * decides that load (creatorLoadTrailerChoice); the settlement-level trailer decides loads whose row names none and the
+ * expense documents (fuel / expense rows have no per-row trailer). Before, every load took the settlement-level trailer:
+ * 5851's 13689 (customer trailer 10204) was born on fleet trailer 10209.
  */
 import type { TrailerChoice } from "../dispatch/load-trailer-choice.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
@@ -57,6 +59,17 @@ export async function printedTrailerChoice(
 export async function creatorTrailerChoice(client: Q, draft: SettlementCreatorDraft): Promise<TrailerChoice | null> {
   if (draft.trailer_id) return { kind: "company", equipment_id: draft.trailer_id };
   return printedTrailerChoice(client, draft.operating_company_id, draft.trailer_equipment_number, draft.trailer_none === true);
+}
+
+/** The trailer choice for ONE load of the draft: its own printed trailer when the row names one, else the settlement's. */
+export async function creatorLoadTrailerChoice(
+  client: Q,
+  draft: SettlementCreatorDraft,
+  load: { trailer_equipment_number?: string | null },
+): Promise<TrailerChoice | null> {
+  const printed = load.trailer_equipment_number?.trim();
+  if (printed) return printedTrailerChoice(client, draft.operating_company_id, printed, false);
+  return creatorTrailerChoice(client, draft);
 }
 
 /**
