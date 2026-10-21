@@ -1,3 +1,4 @@
+import { stampDriverBillVoidedInClientTx } from "../driver-finance/driver-bill-void-state.service.js";
 // [HOLD-FOR-JORGE — TIER 1] Void/cancel executor DISPATCH MAP (governance maker-checker).
 //
 // When an executor APPROVES a governance.void_cancel_requests row, the underlying void/cancel must
@@ -28,6 +29,7 @@ import { stampDocumentVoided } from "../accounting/void-document-stamp.service.j
 import { stampCustomerPaymentVoided } from "../accounting/payment-void-stamp.service.js";
 import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
 import { completeDriverSettlementVoidCascadeInClientTx } from "../driver-finance/driver-settlement-void-cascade.service.js";
+import { stampSettlementVoidedInClientTx } from "../driver-finance/settlement-void-state.service.js";
 import { writeOffDriverReceivableInClientTx } from "../driver-finance/driver-receivable-writeoff.service.js";
 
 export type VoidCancelAction = "void" | "cancel";
@@ -754,6 +756,9 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     glReversalResult: reversal.result,
   });
 
+  const voidState = await stampSettlementVoidedInClientTx(client, {
+    operatingCompanyId, settlementId: entityId, userId, reason,
+  });
   if (status === "cancelled") {
     const priorAudit = await client.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM audit.audit_events
@@ -764,7 +769,7 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     const stampedAnything =
       reversal.result !== "nothing_to_reverse" || cascade.lines_voided.length > 0 || cascade.driver_bills_released.length > 0 ||
       cascade.reimbursements_released.length > 0 || cascade.deductions_released.length > 0 || cascade.children.some((c) => c.rowsStamped > 0) ||
-      cascade.trip_closed;
+      cascade.trip_closed || voidState.changed;
     if (!stampedAnything && Number(priorAudit.rows[0]?.n ?? 0) > 0) return { kind: "already_done" };
     await appendCrudAudit(
       client,
@@ -799,26 +804,7 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
   // reversed_at but a NULL voided_at, so the shared VoidedBanner (reads voided_at/voided_by_user_id
   // uniformly across every void-tracked family) could never render them as voided. Mirror both sets
   // in the same UPDATE — additive only, same pattern as bill_payments' ACCT-SETL-BILLPAY-VOID-MIRROR.
-  const flipped = await client.query<{ id: string }>(
-    `UPDATE driver_finance.driver_settlements
-        SET status = 'cancelled',
-            reversed_at = now(),
-            reversed_by_user_id = $3::uuid,
-            reversal_reason = $4,
-            voided_at = now(),
-            void_reason = $4,
-            voided_by_user_id = $3::uuid,
-            updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'cancelled'
-      RETURNING id::text`,
-    [entityId, operatingCompanyId, userId, reason]
-  );
-  if (!flipped.rows[0]) return { kind: "already_done" };
-  // ROUND 368.2(b) — a bank line matched to this settlement goes back to For review (match kept, release recorded).
-  await releaseBankLinesNamingDocument(client, { operatingCompanyId, pointerColumn: "matched_settlement_id", documentId: entityId }, {
-    userId,
-    reason: `void: driver_settlement ${entityId} — ${reason}`,
-  });
+  // The shared settlement state writer releases naming bank lines before changing state.
 
   await appendCrudAudit(
     client,
@@ -1011,14 +997,10 @@ const executeDriverBill: EntityExecutor = async (ctx) => {
   );
   if (!pre.rows[0]) return { kind: "not_found" };
   if (pre.rows[0].voided_at || String(pre.rows[0].status) === "void") return { kind: "already_done" };
-  const flipped = await client.query(
-    `UPDATE driver_finance.driver_bills
-        SET status = 'void', voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid, updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
-      RETURNING id::text`,
-    [entityId, operatingCompanyId, reason, userId]
-  );
-  if (!flipped.rows[0]) return { kind: "already_done" };
+  const stamped = await stampDriverBillVoidedInClientTx(client, {
+    driverBillId: entityId, operatingCompanyId, reason, userId,
+  });
+  if (!stamped) return { kind: "already_done" };
   await appendCrudAudit(client, userId, "driver_finance.driver_bill.voided", {
     resource_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests",
   }, "warning", "VOID-CANCEL-GOV");

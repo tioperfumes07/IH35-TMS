@@ -42,7 +42,9 @@ import {
   DELIVERY_EVIDENCE_MDATA_STATUSES,
 } from "../dispatch/delivery-evidence-status.js";
 
-import { BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL } from "../driver-finance/settlement-resolution.sql.js";
+import { liveSettlement, liveExpense, liveBill, openDriverBill } from "../accounting/live-document-predicates.sql.js";
+import { loadCostsRevenueJoin } from "../accounting/load-costs-live-documents.sql.js";
+import { canonicalHappenedNotVoidedLoadClause } from "../dispatch/canonical-active-load-set.js";
 
 type Queryable = pg.PoolClient;
 
@@ -138,9 +140,6 @@ function variancePct(projected: number, actual: number): number | null {
   return Math.round(((actual - projected) / Math.abs(projected)) * 10000) / 100;
 }
 
-/** Statuses that mean "this load is real revenue" (excludes only 'cancelled'). */
-const ACTIVE_LOAD_FILTER = `l.status <> 'cancelled'`;
-
 /**
  * CASH-1 fix (void-exclusion no-op): the canonical void write-path
  * (`accounting/bills.service.ts` `voidBill` / `voidBillPayment`) stores
@@ -156,7 +155,7 @@ const ACTIVE_LOAD_FILTER = `l.status <> 'cancelled'`;
  * posting logic change.
  */
 export function notVoidedSql(alias: string): string {
-  return `${alias}.status NOT IN ('void', 'voided') AND ${alias}.revoked_at IS NULL`;
+  return liveBill(alias);
 }
 
 /** CASHFLOW-PROFORMA-PROJECTED-LABELED — a live proforma is the labeled projection for that load. */
@@ -182,10 +181,11 @@ export function lastDeliveryStopLateralSql(loadAlias: string): string {
   ) fd ON true`;
 }
 
-/** Remaining projected cash: do not re-count paid or broker-advance dollars already in the bank. */
+/** Remaining projected cash from canonical booked/issued revenue, less receipts
+ * already applied. The caller joins loadCostsRevenueJoin as revenue. */
 export function proformaRemainingCentsSql(invoiceAlias: string): string {
   return `GREATEST(
-    COALESCE(${invoiceAlias}.total_cents, 0)
+    COALESCE(revenue.revenue_cents, 0)
     - COALESCE(${invoiceAlias}.amount_paid_cents, 0)
     - COALESCE(${invoiceAlias}.broker_advance_applied_cents, 0)
   , 0)`;
@@ -216,10 +216,11 @@ export async function getDailyPrediction(
           l.customer_id,
           COALESCE(c.customer_name, 'Unknown') AS customer_name,
           fd.scheduled_arrival_at AS delivery_time,
-          COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents,
+          COALESCE(revenue.revenue_cents, 0)::int AS rate_total_cents,
           l.status::text AS status,
           ${loadReceiptCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS projected_cash_date
         FROM mdata.loads l
+      ${loadCostsRevenueJoin("l")}
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                    AND c.operating_company_id = l.operating_company_id
         LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
@@ -232,7 +233,7 @@ export async function getDailyPrediction(
           LIMIT 1
         ) fd ON true
         WHERE l.operating_company_id = $1::uuid
-          AND ${ACTIVE_LOAD_FILTER}
+          AND ${canonicalHappenedNotVoidedLoadClause("l")}
           AND ${noLiveProformaInvoiceSql("l")}
       )
       SELECT id::text, load_number, customer_id::text AS customer_id, customer_name, delivery_time::text AS delivery_time, rate_total_cents, status
@@ -247,9 +248,10 @@ export async function getDailyPrediction(
       l.customer_id::text AS customer_id,
       COALESCE(c.customer_name, 'Unknown') AS customer_name,
       ls.scheduled_arrival_at::text AS delivery_time,
-      COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents,
+      COALESCE(revenue.revenue_cents, 0)::int AS rate_total_cents,
       l.status::text AS status
     FROM mdata.loads l
+      ${loadCostsRevenueJoin("l")}
     JOIN mdata.load_stops ls
       ON ls.load_id = l.id
       AND ls.stop_type = 'delivery'
@@ -257,7 +259,7 @@ export async function getDailyPrediction(
     LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                AND c.operating_company_id = l.operating_company_id
     WHERE l.operating_company_id = $1::uuid
-      AND ${ACTIVE_LOAD_FILTER}
+      AND ${canonicalHappenedNotVoidedLoadClause("l")}
       AND ${noLiveProformaInvoiceSql("l")}
     ORDER BY ls.scheduled_arrival_at ASC NULLS LAST, l.load_number ASC
     `;
@@ -289,6 +291,7 @@ export async function getDailyPrediction(
         JOIN mdata.loads l
           ON l.id = i.source_load_id
          AND l.operating_company_id = i.operating_company_id
+        ${loadCostsRevenueJoin("l")}
         LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                    AND c.operating_company_id = l.operating_company_id
         LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
@@ -298,7 +301,7 @@ export async function getDailyPrediction(
           AND i.status = 'proforma'
           AND i.voided_at IS NULL
           AND i.source_load_id IS NOT NULL
-          AND ${ACTIVE_LOAD_FILTER}
+          AND ${canonicalHappenedNotVoidedLoadClause("l")}
         ORDER BY l.id, i.created_at DESC NULLS LAST
       )
       SELECT id::text, load_number, customer_id::text AS customer_id, customer_name, delivery_time::text AS delivery_time, amount_cents
@@ -363,7 +366,7 @@ export async function getDailyPrediction(
       LEFT JOIN mdata.drivers d ON d.id = s.driver_id
                              AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1::uuid
-        AND s.reversed_at IS NULL
+        AND ${liveSettlement("s")}
         AND COALESCE(s.net_pay, 0) > 0
         AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
         AND (
@@ -509,7 +512,7 @@ export async function getDailyPrediction(
                                           AND ept.operating_company_id = $1::uuid
       WHERE e.operating_company_id = $1::uuid
         AND e.status = 'posted'
-        AND e.voided_at IS NULL
+        AND ${liveExpense("e")}
         AND COALESCE(e.total_amount_cents, 0) <> 0
         AND ${expensePaymentDueDateSql({ transactionDateExpr: "e.transaction_date", paymentTermsAlias: "ept" })} = $2::date
         AND NOT EXISTS (
@@ -597,8 +600,7 @@ export async function getDailyPrediction(
       FROM driver_finance.driver_bills db
       LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
       WHERE db.operating_company_id = $1::uuid
-        AND NOT ${BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL}
-        AND db.voided_at IS NULL
+        AND ${openDriverBill("db")}
         ${dueCols ? "AND db.accrued_bill_id IS NULL" : ""}
         AND COALESCE(db.gross_amount_cents, 0) > 0
         AND ${driverBillCashDueDateSql({ hasDueColumns: dueCols, todayParam: "$2::date" })} = $2::date
@@ -682,8 +684,9 @@ async function buildSevenDayStrip(
   // individually wrapped in COALESCE(...,0) before being added.
   const incomeSubquery = cashFollowsEta
     ? `COALESCE((
-          SELECT SUM(COALESCE(l.rate_total_cents, 0))
+          SELECT SUM(COALESCE(revenue.revenue_cents, 0))
           FROM mdata.loads l
+      ${loadCostsRevenueJoin("l")}
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                      AND c.operating_company_id = l.operating_company_id
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
@@ -694,7 +697,7 @@ async function buildSevenDayStrip(
             ORDER BY sequence_number DESC LIMIT 1
           ) fd ON true
           WHERE l.operating_company_id = $1::uuid
-            AND ${ACTIVE_LOAD_FILTER}
+            AND ${canonicalHappenedNotVoidedLoadClause("l")}
             AND ${noLiveProformaInvoiceSql("l")}
             AND ${loadReceiptCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
         ), 0)
@@ -708,6 +711,7 @@ async function buildSevenDayStrip(
             JOIN mdata.loads l
               ON l.id = i.source_load_id
              AND l.operating_company_id = i.operating_company_id
+            ${loadCostsRevenueJoin("l")}
             LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                        AND c.operating_company_id = l.operating_company_id
             LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
@@ -717,19 +721,20 @@ async function buildSevenDayStrip(
               AND i.status = 'proforma'
               AND i.voided_at IS NULL
               AND i.source_load_id IS NOT NULL
-              AND ${ACTIVE_LOAD_FILTER}
+              AND ${canonicalHappenedNotVoidedLoadClause("l")}
               AND ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
             ORDER BY l.id, i.created_at DESC NULLS LAST
           ) pf
         ), 0)`
     : `COALESCE((
-          SELECT SUM(COALESCE(l.rate_total_cents, 0))
+          SELECT SUM(COALESCE(revenue.revenue_cents, 0))
           FROM mdata.loads l
+      ${loadCostsRevenueJoin("l")}
           JOIN mdata.load_stops ls
             ON ls.load_id = l.id AND ls.stop_type = 'delivery'
             AND ${rawDeliveryDateSql("ls.scheduled_arrival_at")} = $2::date
           WHERE l.operating_company_id = $1::uuid
-            AND ${ACTIVE_LOAD_FILTER}
+            AND ${canonicalHappenedNotVoidedLoadClause("l")}
             AND ${noLiveProformaInvoiceSql("l")}
         ), 0)
         +
@@ -742,12 +747,13 @@ async function buildSevenDayStrip(
             JOIN mdata.loads l
               ON l.id = i.source_load_id
              AND l.operating_company_id = i.operating_company_id
+            ${loadCostsRevenueJoin("l")}
             ${lastDeliveryStopLateralSql("l")}
             WHERE i.operating_company_id = $1::uuid
               AND i.status = 'proforma'
               AND i.voided_at IS NULL
               AND i.source_load_id IS NOT NULL
-              AND ${ACTIVE_LOAD_FILTER}
+              AND ${canonicalHappenedNotVoidedLoadClause("l")}
               AND ${rawDeliveryDateSql("fd.scheduled_arrival_at")} = $2::date
             ORDER BY l.id, i.created_at DESC NULLS LAST
           ) pf
@@ -776,7 +782,7 @@ async function buildSevenDayStrip(
             SELECT SUM(ROUND(COALESCE(s.net_pay, 0) * 100)::bigint)
             FROM driver_finance.driver_settlements s
             WHERE s.operating_company_id = $1::uuid
-              AND s.reversed_at IS NULL
+              AND ${liveSettlement("s")}
               AND COALESCE(s.net_pay, 0) > 0
               AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
               AND (
@@ -825,9 +831,10 @@ export async function getActualVsProjected(
     ? `
     WITH lp AS (
       SELECT
-        COALESCE(l.rate_total_cents, 0) AS rate_total_cents,
+        COALESCE(revenue.revenue_cents, 0) AS rate_total_cents,
         ${loadReceiptCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} AS bucket_date
       FROM mdata.loads l
+      ${loadCostsRevenueJoin("l")}
       LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                  AND c.operating_company_id = l.operating_company_id
       LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
@@ -838,7 +845,7 @@ export async function getActualVsProjected(
         ORDER BY sequence_number DESC LIMIT 1
       ) fd ON true
       WHERE l.operating_company_id = $1::uuid
-        AND ${ACTIVE_LOAD_FILTER}
+        AND ${canonicalHappenedNotVoidedLoadClause("l")}
         AND ${noLiveProformaInvoiceSql("l")}
     ),
     pf AS (
@@ -849,6 +856,7 @@ export async function getActualVsProjected(
       JOIN mdata.loads l
         ON l.id = i.source_load_id
        AND l.operating_company_id = i.operating_company_id
+      ${loadCostsRevenueJoin("l")}
       LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                  AND c.operating_company_id = l.operating_company_id
       LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
@@ -858,7 +866,7 @@ export async function getActualVsProjected(
         AND i.status = 'proforma'
         AND i.voided_at IS NULL
         AND i.source_load_id IS NOT NULL
-        AND ${ACTIVE_LOAD_FILTER}
+        AND ${canonicalHappenedNotVoidedLoadClause("l")}
       ORDER BY l.id, i.created_at DESC NULLS LAST
     ),
     combined AS (
@@ -877,13 +885,14 @@ export async function getActualVsProjected(
     FROM (
       SELECT
         ${rawDeliveryDateSql("ls.scheduled_arrival_at")}::text AS delivery_date,
-        SUM(COALESCE(l.rate_total_cents, 0))::int AS projected_income_cents
+        SUM(COALESCE(revenue.revenue_cents, 0))::int AS projected_income_cents
       FROM mdata.loads l
+      ${loadCostsRevenueJoin("l")}
       JOIN mdata.load_stops ls
         ON ls.load_id = l.id AND ls.stop_type = 'delivery'
       WHERE l.operating_company_id = $1::uuid
         AND ${rawDeliveryDateSql("ls.scheduled_arrival_at")} BETWEEN $2::date AND $3::date
-        AND ${ACTIVE_LOAD_FILTER}
+        AND ${canonicalHappenedNotVoidedLoadClause("l")}
         AND ${noLiveProformaInvoiceSql("l")}
       GROUP BY ${rawDeliveryDateSql("ls.scheduled_arrival_at")}
       UNION ALL
@@ -906,12 +915,13 @@ export async function getActualVsProjected(
         JOIN mdata.loads l
           ON l.id = i.source_load_id
          AND l.operating_company_id = i.operating_company_id
+        ${loadCostsRevenueJoin("l")}
         ${lastDeliveryStopLateralSql("l")}
         WHERE i.operating_company_id = $1::uuid
           AND i.status = 'proforma'
           AND i.voided_at IS NULL
           AND i.source_load_id IS NOT NULL
-          AND ${ACTIVE_LOAD_FILTER}
+          AND ${canonicalHappenedNotVoidedLoadClause("l")}
           AND ${rawDeliveryDateSql("fd.scheduled_arrival_at")} BETWEEN $2::date AND $3::date
         ORDER BY l.id, i.created_at DESC NULLS LAST
       ) pf
@@ -1312,7 +1322,7 @@ export async function getRollingLedgerRows(
       FROM driver_finance.driver_settlements s
       LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1::uuid
-        AND s.reversed_at IS NULL
+        AND ${liveSettlement("s")}
         AND COALESCE(s.net_pay, 0) > 0
         AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
         AND s.status = 'closed'
@@ -1368,8 +1378,7 @@ export async function getRollingLedgerRows(
         -- also wrongly excluded a bill whose ONLY settlement_lines row pointed at a CANCELLED
         -- settlement (that bill IS still an open obligation — the cancellation didn't pay it).
         -- Now uses the same shared active-settlement predicate the register/list routes use.
-        AND NOT ${BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL}
-        AND db.voided_at IS NULL
+        AND ${openDriverBill("db")}
         ${dueCols ? "AND db.accrued_bill_id IS NULL" : ""}
         AND COALESCE(db.gross_amount_cents, 0) > 0
       ORDER BY 5 ASC, db.created_at ASC
@@ -1406,7 +1415,7 @@ export async function getRollingLedgerRows(
                                         AND ept.operating_company_id = $1::uuid
     WHERE e.operating_company_id = $1::uuid
       AND e.status = 'posted'
-      AND e.voided_at IS NULL
+      AND ${liveExpense("e")}
       AND COALESCE(e.total_amount_cents, 0) > 0
       AND NOT EXISTS (
         SELECT 1 FROM banking.bank_transactions bt
@@ -1625,20 +1634,21 @@ export async function getRollingLedgerRows(
       COALESCE(c.customer_name, 'Customer') AS customer_name,
       ${rawDeliveryDateSql("fd.scheduled_arrival_at")}::text AS delivery_date,
       ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })}::text AS due_date,
-      COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents
+      COALESCE(revenue.revenue_cents, 0)::int AS rate_total_cents
     FROM mdata.loads l
+      ${loadCostsRevenueJoin("l")}
     LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = $1::uuid
     LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id AND pt.operating_company_id = $1::uuid
     ${lastDeliveryStopLateralSql("l")}
     WHERE l.operating_company_id = $1::uuid
-      AND ${ACTIVE_LOAD_FILTER}
+      AND ${canonicalHappenedNotVoidedLoadClause("l")}
       AND l.status::text = ANY($2::text[])
       AND ${noLiveProformaInvoiceSql("l")}
       AND NOT EXISTS (
         SELECT 1 FROM accounting.invoices i2
         WHERE i2.source_load_id = l.id AND i2.operating_company_id = l.operating_company_id AND i2.voided_at IS NULL
       )
-      AND COALESCE(l.rate_total_cents, 0) > 0
+      AND COALESCE(revenue.revenue_cents, 0) > 0
     ORDER BY fd.scheduled_arrival_at ASC NULLS LAST
     `,
     [operatingCompanyId, notInvoicedStatuses]

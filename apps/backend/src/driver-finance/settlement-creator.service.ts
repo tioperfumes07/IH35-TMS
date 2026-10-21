@@ -1,3 +1,4 @@
+import { stampDriverBillVoidedInClientTx } from "./driver-bill-void-state.service.js";
 /**
  * ROUND 180 / R-186 — Settlement Creator orchestration.
  *
@@ -291,11 +292,11 @@ export async function restateOpenDriverBillToSignedPay(
     );
   }
   const reason = `443.167-R: restated to signed settlement ${input.settlementNo} pay ${dollarsFromCents(signed)} (was ${dollarsFromCents(Number(b.gross))})`;
-  await client.query(
-    `UPDATE driver_finance.driver_bills SET status = 'void', voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid, updated_at = now()
-      WHERE id = $1::uuid AND status = 'open'`,
-    [b.id, reason, input.actorUserId],
-  );
+  const stamped = await stampDriverBillVoidedInClientTx(client, {
+    driverBillId: b.id, operatingCompanyId: input.companyId,
+    reason, userId: input.actorUserId, openOnly: true,
+  });
+  if (!stamped) throw new SettlementCreatorError("driver_bill_not_restatable", "Driver bill changed while restating signed pay.");
   await client.query(
     `UPDATE driver_finance.settlement_lines SET is_active = false, voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid
       WHERE source_driver_bill_id = $1::uuid AND is_active = true`,

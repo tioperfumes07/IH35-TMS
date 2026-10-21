@@ -63,8 +63,8 @@ function fakeClient(opts: { deductions?: DedRow[]; bucketNetCents?: string } = {
       if (sql.includes("UPDATE driver_finance.driver_settlement_deductions")) return { rows: [{ id: values?.[0] }] as T[] };
       if (sql.includes("UPDATE driver_finance.driver_reimbursements")) return { rows: [{ id: REIMB_A }, { id: REIMB_B }] as T[] };
       if (sql.includes("UPDATE driver_finance.driver_settlements") && sql.includes("SET trip_closed_at")) return { rows: [{ id: SETTLEMENT }] as T[] };
-      if (sql.includes("UPDATE driver_finance.driver_settlements") && sql.includes("RETURNING id::text, updated_at::text"))
-        return { rows: [{ id: SETTLEMENT, updated_at: "2026-10-17T00:00:00Z" }] as T[] };
+      if (sql.includes("UPDATE driver_finance.driver_settlements") && sql.includes("RETURNING voided_at::text"))
+        return { rows: [{ voided_at: "2026-10-17T00:00:00Z" }] as T[] };
       return { rows: [] as T[] };
     },
   };

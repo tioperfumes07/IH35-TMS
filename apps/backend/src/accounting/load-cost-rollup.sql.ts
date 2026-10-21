@@ -18,6 +18,7 @@
 import { loadCostsRevenueJoin } from "./load-costs-live-documents.sql.js";
 import { resolveLoadSettlementSql } from "../driver-finance/settlement-resolution.sql.js";
 import { wizardChargesLeftJoin } from "./load-wizard-charges.sql.js";
+import { liveExpense, liveBill, liveBillLine, liveDriverBill } from "./live-document-predicates.sql.js";
 
 export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): string {
   return `LEFT JOIN LATERAL (
@@ -56,7 +57,7 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
           COALESCE(SUM(e.total_amount_cents) FILTER (WHERE e.source_fuel_transaction_id IS NULL), 0)::bigint AS non_fuel_expense_cents
           FROM accounting.expenses e
          WHERE e.load_id IS NOT NULL
-           AND e.status NOT IN ('void', 'voided') AND e.voided_at IS NULL
+           AND ${liveExpense("e")}
          GROUP BY e.load_id
       ) ec ON ec.load_id = cl.id
       LEFT JOIN (
@@ -65,13 +66,13 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
           FROM accounting.bill_lines bl
           JOIN accounting.bills b ON b.id = bl.bill_id
          WHERE bl.load_id IS NOT NULL
-           AND b.status NOT IN ('void', 'voided') AND b.voided_at IS NULL
+           AND ${liveBill("b")}
            AND b.revoked_at IS NULL
-           AND bl.voided_at IS NULL
+           AND ${liveBillLine("bl")}
            AND NOT EXISTS (
              SELECT 1 FROM driver_finance.driver_bills db2
               WHERE db2.operating_company_id = b.operating_company_id
-                AND db2.voided_at IS NULL AND db2.status NOT IN ('void', 'voided')
+                AND ${liveDriverBill("db2")}
                 AND b.id IN (db2.accrued_bill_id, db2.accrued_team_bill_id)
            )
          GROUP BY bl.load_id
@@ -80,7 +81,7 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
         SELECT db.load_id, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
           FROM driver_finance.driver_bills db
          WHERE db.load_id IS NOT NULL
-           AND db.status NOT IN ('void', 'voided') AND db.voided_at IS NULL
+           AND ${liveDriverBill("db")}
          GROUP BY db.load_id
       ) dp ON dp.load_id = cl.id
       ${wizardChargesLeftJoin("cl.id", "cl.operating_company_id", "wiz")}
