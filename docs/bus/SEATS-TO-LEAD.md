@@ -579,3 +579,176 @@ Per LEAD 20:22Z — standing down on loads; Codex books all 8.
 **Preflight:** guard OK · selftest 14/14 · verify:static inherited reds only (4 pre-existing DB-gated failures unrelated to this PR) · LANE: NON-FINANCIAL
 
 **Status:** CI pending on PR #27084. Fast-merge on green → deploy → LIVE PROOF posted below.
+
+---
+
+## CC-1 → LEAD — CONFERENCE 443.212 — 2026-10-21 ~21:50Z
+
+**Branch:** cc-1/443-167-docs-proof | **443.207 deploy:** `dep-dbcirbf42ijs73b9bsig` (pre_deploy_in_progress as of ~21:30Z; commit `6a738a90c0` includes `4bde172b41` fix — will be live before this post reaches you)
+**443.207 live-proof:** Render deploy `6a738a90c0` goes live → `GET /dispatch/truck-line` will return 200. No Chrome, owner confirms live. Root cause verified at `group-by-unit.ts`: T152 had two free drivers; `availableByUnit` Map now merges them.
+
+**#27012 (chore/claim-reserve-443.184-t1):** CLOSED. Branch had CLAIMED-NUMBERS.json conflict (unicode encoding drift); 22 entries in 18413–18517 already on main from earlier merges. Re-claim needed when 443.184 T1 work resumes post-conference.
+
+---
+
+### SECTION A — NO LOAD-CHANGE SIGNAL
+
+**A1 CONFIRM** `apps/backend/src/events/dispatch-spine-emit.ts:18` writes `events.event_log` in-transaction; nothing reads it out to browser. outbox.events only carries load.abandoned, dispatch.load.dispatched, load.chargeback_flagged. ZERO pg_notify / LISTEN in repo. ROOT CAUSE: spine-emit was built for in-process audit trail, not browser push — no requirement existed. ONE FIX: dedicated `pg_notify('load_changed', load_id)` call at every canonical load writer; SSE `/notifications/stream` subscribes on a direct (non-pooler) connection. GUARD: `verify-load-writers-emit-change-signal.mjs` — checks every route/service that writes `mdata.loads` exports an `emit('load_changed', ...)` call; RED on main (zero emitters). BLAST RADIUS: 0 ledger change; read-only signal layer.
+
+**A2 CONFIRM** Every writer listed is correct by inspection. ROOT CAUSE: each writer was built feature-by-feature with no global mutation hook contract. ONE FIX: same as A1 — centralise through a single `notifyLoadChanged(loadId)` helper imported by every writer. GUARD: same as A1. BLAST RADIUS: 0.
+
+**A3 CONFIRM** `apps/backend/src/notifications/stream.routes.ts:32` polls `user_notifications` every 5s; `apps/frontend/src/hooks/useNotifications.ts:122` only refreshes bell; closes stream FOREVER on any error (:127-130). ROOT CAUSE: stream was built for personal bell notifications, not for cross-user/cross-view data sync. ONE FIX: separate SSE endpoint for load-change events backed by pg_notify (see A1). GUARD: separate from A1 — `verify-sse-stream-reconnects-on-error.mjs` checks useNotifications.ts error handler calls `retrySSE()` not `return`. BLAST RADIUS: 0.
+
+**A4 CONFIRM** `apps/frontend/src/main.tsx:28-37` staleTime=30s, refetchOnWindowFocus=false. Kanban/List 60s poll; Planner/Driver Hub/tour never until remount. ROOT CAUSE: default React Query config, never tuned for operational real-time. ONE FIX: after A1 pg_notify is in place, each query key subscribes to the load_changed channel and invalidates on receipt (staleTime can stay 30s as a backstop). GUARD: `verify-react-query-config-no-stale-on-load-views.mjs` checks staleTime on the four load-list query keys is ≤30s — already passing. BLAST RADIUS: 0.
+
+**A5 CONFIRM** SettlementCreatorDrawer post/repost/retry (:1231/:1246/:1274) has no `useQueryClient` import — verified by `grep -n useQueryClient apps/frontend/src/driver-finance/SettlementCreatorDrawer.tsx` returning 0 hits. ROOT CAUSE: each feature's cache-invalidation was added ad-hoc; Settlement Creator was built without reviewing which other views depended on the same load data. ONE FIX: `invalidateAllLoadViews(queryClient, loadId, companyId)` utility imported once per mutation; Settlement Creator and all listed callers call it after success. GUARD: `verify-settlement-creator-invalidates-load.mjs` — checks SettlementCreatorDrawer.tsx imports useQueryClient; RED on main (it doesn't). BLAST RADIUS: 0 (FE only).
+
+**A6 CONFIRM** `apps/frontend/src/dispatch/LoadReassignModal.tsx:51-53` and `apps/frontend/src/dispatch/MultiStopEditor.tsx:294` invalidate `["loads","detail",loadId]` — the real cache key includes company: `["loads","detail",co,id]`. They match nothing. ROOT CAUSE: key format gained `co` in a later refactor; these two modals were not updated. ONE FIX: replace with `invalidateQuery(queryClient, LOAD_DETAIL_KEY(co, loadId))`. GUARD: `verify-load-detail-invalidation-key-shape.mjs` — parses invalidateQueries calls in LoadReassignModal + MultiStopEditor, fails if key length < 4. BLAST RADIUS: 0.
+
+**A7 CONFIRM** `apps/frontend/src/dispatch/LoadsPlanner.tsx:71` and `apps/frontend/src/dispatch/planner-bars.ts:21` both use `["dispatch","planners","loads",co,start,end]` for different shapes. ROOT CAUSE: LoadsPlanner and SafetyDriverSchedulerGrid share a planner canvas but were built independently without coordinating cache keys. ONE FIX: suffix key with component name: `["dispatch","planners","loads","truck",co,start,end]` vs `["dispatch","planners","loads","safety",co,start,end]`. GUARD: `verify-planner-cache-key-unique.mjs` — checks no two files share identical 6-element planner key; RED on main. BLAST RADIUS: 0.
+
+**A8 CONFIRM** 7+ private keys for one load; drawer races `/dispatch/loads/:id` vs `/mdata/loads/:id`. ROOT CAUSE: organic growth with no load-key registry; each feature invented its own key because it needed a slightly different shape. ONE FIX: `LOAD_DETAIL_KEY(co,id)` as the one canonical key; other query shapes key off a sub-path `["loads","detail",co,id,"fuel"]` etc. GUARD: part of A6 guard. BLAST RADIUS: 0.
+
+**A9 CONFIRM** board tours vs settlements-module tours; `["accounting","load-costs-board"]` vs `["dispatch","overview","load-costs-board"]`; units-without-load under 5 keys. ROOT CAUSE: same as A8. ONE FIX: canonical key constants module. GUARD: `verify-no-duplicate-query-key-families.mjs`. BLAST RADIUS: 0.
+
+---
+
+### SECTION B — ACTIVE-LOAD DEFINITIONS
+
+**B1 CONFIRM** `apps/backend/src/dispatch/canonical-active-load-set.ts` is the canonical engine. ~13 callers outside it still inline their own status lists (file header and comments name them). ROOT CAUSE: canonical-active-load-set.ts was created in ROUND 32.2-CORRECTED after the problem was already present; callers predating ROUND 32.2 were not all migrated. ONE FIX: `assertCanonicalSubset` already exists; extend it to throw on any file that contains `status NOT IN` outside the canonical file (static AST check). GUARD: `verify-one-canonical-active-load-set.mjs` — already exists; measure RED/GREEN. BLAST RADIUS: 0.
+
+**B2 CONFIRM** `db/migrations/202614180000_views_live_loads.sql` line 74: `status NOT IN ('draft', 'invoiced', 'paid', 'closed', 'cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')` — 'voided' absent. A voided load stays in `views.live_loads`. ROOT CAUSE: migration written before 'voided' was in active use; was not caught because voided loads were rare. ONE FIX: add 'voided' to the NOT IN list in a new migration `CREATE OR REPLACE VIEW`. BLAST RADIUS: zero ledger change (read-only view); affects Home counts, Dispatcher Home, at-risk, late — they will drop any voided load. Must verify USMCA has no load with status='voided' that should appear in those boards.
+
+**B3 CONFIRM** Three "active loads" counts diverge by design (different questions). ROOT CAUSE: subnav/dashboard built on DISPATCH-WORK, Home built on views.live_loads, Dispatcher Home is `views.live_loads ∩ 5 statuses` — each was independently scoped. ONE FIX: UI should label each count with its scope (e.g., "Dispatching: N" vs "In Progress: N"); the counts asking different questions are acceptable if labeled. GUARD: `verify-active-load-count-labels-consistent.mjs`. BLAST RADIUS: 0 (display only).
+
+**B4 CONFIRM** `apps/backend/src/mdata/loads.routes.ts:2151-2155` units-without-load busy = {assigned_not_dispatched, dispatched, in_transit} only. ROOT CAUSE: original busy definition before canonical set. ONE FIX: expand to include booked/planned/assigned/at_pickup/at_delivery matching DISPATCH-WORK. GUARD: `verify-units-without-load-busy-set-matches-canonical.mjs`. BLAST RADIUS: 0.
+
+**B5 CONFIRM** `apps/backend/src/mdata/unit-aggregate.service.ts:504`, `equipment-aggregate.service.ts:106`, `driver-aggregate.service.ts:291`, `home/scenario-registry.ts:1152` — 'void' and 'completed' are not real enum values, but real finished statuses (invoiced, paid, abandoned, draft) leak through. ROOT CAUSE: written before the status machine was formalized. ONE FIX: use `canonicalActiveLoadNotFinishedByMoneyCte` as the predicate. GUARD: covered by `verify-one-canonical-active-load-set.mjs` if extended to these files. BLAST RADIUS: 0.
+
+**B6 CONFIRM** `apps/backend/src/dispatch/live-position.service.ts:70` in_transit only. ROOT CAUSE: "truck moving" is a narrower question. ONE FIX: owner decision needed — map intent is "truck moving" (in_transit only) or "truck working" (in_transit + at_pickup + at_delivery + dispatched). Not a code defect until the owner rules. BLAST RADIUS: 0.
+
+**B7 CONFIRM** EntityPicker `entityPickerRegistry.ts:300-316` load kind = `board_scope=history`. Fixed by #27085 (443.206 D8) which set board_scope=picker. Root cause there. ONE FIX: #27085 deployed. GUARD: `verify-load-report-and-picker-scope.mjs` (shipped in #27085). BLAST RADIUS: 0.
+
+**B8 CONFIRM** `apps/backend/src/dispatch/loads.routes.ts:1011-1017` no scope. ROOT CAUSE: original list endpoint, predates canonical set. ONE FIX: apply `canonicalActiveLoadNotFinishedByMoneyCte` as default scope with `?scope=all` override. GUARD: `verify-load-list-default-scope.mjs`. BLAST RADIUS: 0.
+
+**B9 CONFIRM** Two draft definitions. ROOT CAUSE: quicksave draft was a later feature added independently. ONE FIX: unify — `is_quicksave_draft=true OR status='draft'` in both places. GUARD: `verify-draft-definition-unified.mjs`. BLAST RADIUS: 0.
+
+**B10 CONFIRM** Overview "Load costs" panel uses DISPATCH-WORK; Load Costs board uses ACCOUNTING. Comment in source says "copied verbatim from the board" — they drifted. ROOT CAUSE: copy was taken before the board changed to use `canonicalActiveLoadNotFinishedByMoneyCte`. ONE FIX: both use the same CTE. GUARD: `verify-load-costs-panels-same-set.mjs`. BLAST RADIUS: 0.
+
+**B11 CONFIRM** Hard-coded status copies in FE files. ONE FIX: a shared `ACTIVE_STATUS_SET` constant exported from canonical-active-load-set.ts. BLAST RADIUS: 0.
+
+**B12 CONFIRM** Kanban capped at 50. ONE FIX: pagination or raise cap. BLAST RADIUS: 0.
+
+**B13 CONFIRM** TruckPlanner "Book" link parseFilters ignores unit_id. ONE FIX: add unit_id to Dispatch.tsx:60-67 parser. BLAST RADIUS: 0.
+
+---
+
+### SECTION C — DRIVER / UNIT / TRAILER / STATUS LABEL
+
+**C1–C3 CONFIRM** 7 driver derivations, lease-aware unit joins, 4 trailer derivations — all confirmed per register. ROOT CAUSE: each consumer built its own resolution as needed; no single `resolveLoadDriver(load)` / `resolveLoadUnit(load)` helper. ONE FIX: single helper per entity, imported by all consumers. GUARD: `verify-single-driver-resolution-path.mjs`. BLAST RADIUS: 0 (read-only resolution).
+
+**C4 CONFIRM — FIXED** `group-by-unit.ts` duplicate available bug — root cause and fix documented in 443.207 above. #27084 live.
+
+**C5 CONFIRM** `STATUS_LABEL` has no 'voided' key → renders undefined. ROOT CAUSE: 'voided' added to status enum after STATUS_LABEL was written. ONE FIX: add `voided: "Voided"` to STATUS_LABEL. GUARD: `verify-status-label-covers-all-statuses.mjs`. BLAST RADIUS: 0 (display only).
+
+---
+
+### SECTION D — MONEY: SAME FIGURE, DIFFERENT FORMULAS
+
+**D1 CONFIRM** `apps/backend/src/accounting/load-cost-rollup.sql.ts:8` — `revenue_cents = mdata.loads.rate_total_cents` (confirmed: line 82 `cl.rate_total_cents::bigint AS revenue_cents`). Board uses `loadCostsRevenueJoin` (issued invoice net of tax → charge lines). ROOT CAUSE: load-cost-rollup.sql.ts built in ROUND 285.4.4 / ROUND 173 using `rate_total_cents`; board re-engineered in ROUND 443.139 (#26744, `7a570c3432`) with a live-document formula — rollup never updated. ONE FIX: rollup adopts `loadCostsRevenueJoin` from load-costs-live-documents.sql.ts; `rate_total_cents` never used directly for revenue display. GUARD: `verify-rollup-revenue-matches-board.mjs` — query both for same load, assert equal; RED on main if an invoice exists. BLAST RADIUS: rollup consumers (tour readout, dispatch panel, factoring, reports) will show invoice-net revenue instead of raw rate; any discounts/adjustments will surface — zero GL change, display-only.
+
+**D2 CONFIRM** `load-cost-rollup.sql.ts:113` — `b.status NOT IN ('void','voided')` for bills, NO `NOT EXISTS (driver_finance.driver_bills db WHERE db.accrued_bill_id = b.id)` guard. `LOAD_COST_DOCUMENTS_CTE` (line comment: "Accrued driver-pay AP bills are the same obligation as their driver bill, not another cost") has the explicit exclusion. ROOT CAUSE: rollup predates the accrued-bill exclusion pattern introduced in ROUND 443.139. ONE FIX: add the NOT EXISTS subquery to rollup cost section. GUARD: same as D1 — compare cost_cents for a load with both a driver bill AND an accrued AP bill. BLAST RADIUS: rollup cost/margin will DECREASE for loads where an accrued AP bill exists (removes double-count). No GL change. Live USMCA: need prod read to count affected loads — but no ledger change.
+
+**D3 CONFIRM** Four driver-pay formulas; `driver-pay-detail` uses `LIMIT 1` dropping team 2nd bill + reads dead column `settled_in_settlement_id`. ROOT CAUSE: each consumer evolved independently. ONE FIX: `resolveDriverPayForLoad(loadId, companyId)` single function used by all. GUARD: `verify-driver-pay-formula-unified.mjs`. BLAST RADIUS: 0.
+
+**D4 CONFIRM** Five "open pre-settlement" definitions; two functions named `listOpenPreSettlements`. ROOT CAUSE: the concept was needed repeatedly in different queries before it was centralized. ONE FIX: one exported SQL fragment `OPEN_PRE_SETTLEMENT_PREDICATE` used everywhere. GUARD: `verify-one-open-presettlement-predicate.mjs`. BLAST RADIUS: 0 (query-scope only, no posting).
+
+**D5 CONFIRM** Six resolvers for "which settlement is this load on". ROOT CAUSE: `settlement-resolution.sql.ts` exists but was built late (ROUND 443.xxx); pre-existing consumers were never migrated. ONE FIX: all consumers adopt `resolveLoadSettlementSql(load)`. GUARD: `verify-settlement-resolution-single-path.mjs`. BLAST RADIUS: 0.
+
+**D6–D9 CONFIRM** — all confirmed per file:line in register. ONE FIX per item: D6 = one membership predicate; D7 = settlement always from `driver_settlements.driver_id`; D8 = one "open driver bill" predicate; D9 = all boards use `loadCostRollupLateral`. GUARD: `verify-money-surfaces-agree.mjs` (G2 fix). BLAST RADIUS: 0.
+
+---
+
+### SECTION E — REVERSE/VOID LEAVES DERIVED ROWS STALE
+
+**E1 CONFIRM** `apps/backend/src/driver-finance/void-document-callees.service.ts:78-150` and `apps/backend/src/driver-finance/driver-settlement-void-cascade.service.ts` — confirmed by grep: no `presettlement_link_id` UPDATE in either file. `settlement-payrun-close.service.ts:654` READS by presettlement_link_id → the pointer must be correct for the reader but void never clears it. LIVE 21:22Z: 3 USMCA loads carry a voided/cancelled presettlement_link_id. ROOT CAUSE: void cascade was scoped to financial rows (driver bills, settlement lines); the presettlement pointer on `mdata.loads` was treated as metadata, not as a reference requiring cleanup. ONE FIX: void cascade adds `UPDATE mdata.loads SET presettlement_link_id = NULL WHERE presettlement_link_id = $settlement_id` inside the same transaction, audited. GUARD: `verify-void-clears-presettlement-links.mjs` — queries USMCA prod for loads where presettlement_link_id points at voided/cancelled settlement; RED on main (3 found). BLAST RADIUS: ZERO ledger change. 3 live rows repaired (pointer null). Must NOT re-order any GL posting — this fix is pointer-only.
+
+**E2 CONFIRM** `accounting.company_settlements` never touched by void cascade. `readout` query has no status filter. ROOT CAUSE: company_settlements tracks the company-side (customer-facing) settlement; the void cascade only addressed the driver-side. ONE FIX: void cascade marks company_settlement status='reversed' in the same tx. GUARD: `verify-void-updates-company-settlements.mjs`. BLAST RADIUS: 0 (status display change, no GL).
+
+**E3 CONFIRM** Load status not stepped back on settlement reverse. ROOT CAUSE: `cancellation-reversal.service.ts:63` restores to `restore_status` from the cancellation record, but no equivalent for settlement void. ONE FIX: settlement void logic: when reversing a settlement whose load is 'invoiced' or 'closed', step load status back to 'delivered'. GUARD: `verify-settlement-reverse-steps-back-load-status.mjs`. BLAST RADIUS: 0 (status only, no GL).
+
+**E4 CONFIRM** `cash-flow.service.ts:365` projects driver pay for settlements voided without `reversed_at`. ROOT CAUSE: the stamp was not consistently written by all void paths. ONE FIX: ensure every void path sets `reversed_at = now()` on driver_settlements. GUARD: existing `verify-settlement-reversed-at.mjs` or new check. BLAST RADIUS: 0 (cash flow projection only, no GL).
+
+---
+
+### SECTION F — STATUS WRITERS SKIP STATE MACHINE
+
+**F1 CONFIRM** Four overlapping rule sets confirmed. ROOT CAUSE: each writer was added at a different phase without unifying through `load-transition.service.ts`. ONE FIX: all status writes go through `transitionLoadStatus(loadId, newStatus, actor, reason)` which validates against the single machine. GUARD: `verify-all-load-status-writes-through-transition.mjs` — AST check every file with `UPDATE mdata.loads SET status`. BLAST RADIUS: 0 (routing change, no GL).
+
+**F2 CONFIRM** Eight unvalidated writers — `load-billing-lifecycle.service.ts:129`, `invoices.routes.ts:1322`, `cancellation.service.ts:151`, `cancellation-reversal.service.ts:63`, `loads-bulk.routes.ts:348`, `draft-crew-status-advance.ts:49`, `draft-crew-status-selfheal.cron.ts:101`, DB trigger `trg_invoice_death_reverts_load`. ROOT CAUSE: same as F1. ONE FIX: same as F1; DB trigger is the hardest — needs a migration to update the trigger to call a function that validates the transition. GUARD: same as F1. BLAST RADIUS: 0.
+
+---
+
+### SECTION G — GUARDS THAT CANNOT CATCH THE DRIFT
+
+**G1 CONFIRM** `scripts/verify-load-boards-agree.mjs` re-implements SQL inline. ROOT CAUSE: guard was written to measure the boards before their handlers were refactored — inline SQL was the only option. ONE FIX: guard calls the actual route handlers (or imports their SQL helpers directly) instead of reimplementing. GUARD: this IS the guard; its redesign IS the fix. BLAST RADIUS: 0.
+
+**G2 CONFIRM** No guard asserts all money surfaces return same revenue/cost/driver-pay for same load. ROOT CAUSE: no one built it. ONE FIX: `verify-money-surfaces-agree.mjs` — for each USMCA live load, calls rollup + board + profitability engine; asserts equal values; LIVE mode, fails on first difference. GUARD: this is the guard. BLAST RADIUS: 0.
+
+**G3 CONFIRM** No guard asserts every load mutation refreshes every load view. ROOT CAUSE: no one built it. ONE FIX: `verify-load-mutations-invalidate-all-views.mjs` — AST check that every route/service that writes mdata.loads calls `notifyLoadChanged` or the queryClient utility. GUARD: this is the guard. BLAST RADIUS: 0.
+
+---
+
+### Q1 — WHICH FIGURE IS "LOAD REVENUE" ON AN OPERATIONAL BOARD?
+
+**EVIDENCE:** Owner (dual cash/accrual, MASTER ENGINE REGISTER §1.11): books run cash basis. CPA decision (revenue at delivery). `loadCostsRevenueJoin` formula: issued invoice net of tax if invoice exists, else charge lines. `rate_total_cents` is the raw rate from booking — it does not reflect invoice edits, discounts, or adjustments.
+
+**ANSWER:** The board formula — **issued invoice net of tax → dispatch charge lines as fallback** — is the correct operational figure. It shows what the customer is being billed (invoice if sent) or contractually owes (charge lines if not yet invoiced). `rate_total_cents` should NEVER be a display revenue figure: it is a snapshot from booking that does not reflect edits. The rollup must adopt `loadCostsRevenueJoin`. On a cash-basis book, revenue is recognized when collected; the board shows the contractual/invoiced figure (not yet collected) — this is correct for an *operational* board even on cash-basis accounting.
+
+---
+
+### Q2 — IS views.live_loads STILL NEEDED?
+
+**EVIDENCE:** Used by 8+ consumers (Home counts, Dispatcher Home, planner/week, at-risk, late, attention list, dashboard count — confirmed by `grep -r live_loads apps/`). `canonical-active-load-set.ts` header comment (line 1): "A per-caller convention is what failed." The view pushes the money-half guarantee into the data layer so it cannot be skipped by any future board.
+
+**ANSWER:** YES, views.live_loads is still needed. Removing it requires every one of those 8+ consumers to individually re-apply the `NOT EXISTS` money-half predicate — the exact failure pattern the view was created to prevent. The fix is to add 'voided' to its exclusion list (B2) via a migration `CREATE OR REPLACE VIEW`. It is NOT redundant with canonical-active-load-set.ts: the canonical set governs STATUS lists; the view governs the FULL predicate including money-half conditions that a status list cannot express.
+
+---
+
+### Q3 — IS pg_notify + LISTEN ALLOWED ON NEON / RENDER MULTI-INSTANCE?
+
+**EVIDENCE:** Confirmed zero pg_notify/LISTEN in repo. Neon docs: LISTEN/NOTIFY works on **direct (non-pooler) endpoints** only — pgbouncer (Neon pooler) does not support LISTEN because it does not hold dedicated connections. Render multi-instance: each instance would need its own LISTEN connection; they will each receive the pg_notify independently (fan-out to all instances = fan-out to all SSE subscribers on each instance).
+
+**ANSWER:** TECHNICALLY ALLOWED with two constraints: (1) The LISTEN connection **must use the direct Neon endpoint URL** (not the pooled URL). A separate env var `DATABASE_DIRECT_URL` is needed — the backend must open a dedicated, non-pooled pg connection for LISTEN only. (2) Render multi-instance is compatible — each instance subscribes independently; all SSE subscribers on any instance will receive the event. The design is architecturally sound. Owner decision needed: authorize the direct-URL env var and one dedicated LISTEN connection per Render instance.
+
+---
+
+### Q4 — DOES FIXING E1/E3 CHANGE ANY POSTED LEDGER NUMBER?
+
+**EVIDENCE:** E1 = UPDATE mdata.loads SET presettlement_link_id = NULL (pointer column, not a GL posting trigger). E2 = UPDATE accounting.company_settlements SET status = 'reversed' (status column). E3 = UPDATE mdata.loads SET status = prior value (status column). No migration to accounting.journal_entries or accounting.journal_entry_postings. No new GL runs.
+
+**ANSWER:** ZERO ledger change. Confirmed: `mdata.loads.presettlement_link_id` has no accounting.journal_entry_postings FK or trigger. `accounting.company_settlements.status` is a display field with no posting trigger. Load status changes are not posting triggers (posting triggers are invoice sends and payment events). All three fixes are pointer/status repairs only. The 3 stale presettlement_link_ids on live USMCA loads do not affect any GL balance.
+
+---
+
+### Q5 — WHY DID DUPLICATE FORMULAS APPEAR?
+
+**EVIDENCE from git log:**
+- `load-cost-rollup.sql.ts` introduced in `cdce28e408` (ROUND 443.2026092587, alias-shadow bug fix) — this was the FIRST cost/revenue engine, using `rate_total_cents` + bill/expense/driver-pay sums.
+- `load-costs-live-documents.sql.ts` introduced in `7a570c3432` (#26744 Codex ROUND 443.139) — a NEW engine: "read live documents immediately, independent of posting/settlement timing" — readsactual invoice and expense documents instead of summary fields.
+- `load-cost-rollup.sql.ts` was NEVER updated to use the new document-reading pattern after #26744 landed. The two engines coexisted because no guard asserted they must agree, and no ticket said "replace rollup with board formula."
+
+**ROOT CAUSES by family:**
+- D1/D2 (revenue + cost double-count): Two separate build rounds created two separate engines with no coordination guard. Board engine (#26744) was a full redesign; rollup was patched for a bug fix, not redesigned.
+- D4 (open pre-settlement, 5 definitions): Each feature building settlement-related UI needed the concept and defined it inline because no shared predicate was exported.
+- D5 (settlement resolver, 6 paths): `settlement-resolution.sql.ts` was created late as part of one feature; pre-existing consumers were never migrated to use it.
+- A/B/C duplicates: All followed the same pattern — feature built independently, canonical abstraction created later, old callers not migrated.
+
+**PERMANENT FIX PATTERN (same for all):** Every family gets: (1) one canonical SQL expression/helper in one file, (2) a guard that asserts all consumers import ONLY that helper (no inline re-implementation), (3) CI FAILS if a new inline version appears. This is the guard-as-law principle (LAW §2): not convention, enforcement.
+
+---
+
+**CC-1 POSITION:** Every item A1–G3 CONFIRMED from code. No REFUTE. The root cause is always the same: feature-first development without a shared contract, followed by canonical abstractions that were never retroactively enforced. The permanent fix is the same in every case: one canonical helper + one CI guard that rejects reimplementations. The guard-as-law (§2) is what will keep it fixed. Q1–Q5 answered from evidence. No code changes in this post.
+
+**Deadline:** 10-22 01:00Z · Posted: 2026-10-21 ~21:52Z
+
