@@ -68,6 +68,13 @@ export function check(src = {}) {
     if (/DELETE\s+FROM/i.test(restate)) f.push(`${SVC}: the restate deletes a money row (3)`);
     if (!/SET status = 'void', voided_at = now\(\)/.test(restate) || !/`\$\{input\.loadNumber\}-R`/.test(restate)) f.push(`${SVC}: the restate must void the bill and mint one -R replacement (3)`);
     if (!/state\.settled \|\| state\.accrued/.test(restate)) f.push(`${SVC}: the restate does not refuse a live-settled or delivery-accrued bill (3)`);
+    // LEAD 443.203 (5849 / 13684): an adopted load with ZERO live bills must get its ONE bill minted from the signed pay —
+    // returning early left the invoice feed gate red ("no live driver bill for this load"); a load with no driver is refused.
+    if (!/if \(bill\.length === 0\) \{[\s\S]*?INSERT INTO driver_finance\.driver_bills[\s\S]*?return;\s*\}/.test(restate))
+      f.push(`${SVC}: an adopted load with no live driver bill must mint one from the signed pay (8)`);
+    if (!/driver_bill_no_driver/.test(restate)) f.push(`${SVC}: minting the missing bill must refuse a load with no driver (8)`);
+    if (restate.indexOf("if (bill.length === 0)") > restate.indexOf("if (bill.length !== 1) return;"))
+      f.push(`${SVC}: the zero-bill mint must run before the early return (8)`);
   }
   const restCall = svc.indexOf("await restateOpenDriverBillToSignedPay(client, {");
   const payCall = svc.indexOf('lineType: "earnings",', restCall === -1 ? 0 : restCall);
@@ -90,6 +97,8 @@ if (process.argv.includes("--selftest")) {
     ["adoption removed", { seed: seed.replace("await isSeededLoadFreeForThisSettlement(client, draft, existing.rows[0].id)", "false") }],
     ["restate skipped", { svc: svc.replace("await restateOpenDriverBillToSignedPay(client, {", "void ({") }],
     ["restate no refusal", { svc: svc.replace("state.settled || state.accrued", "false") }],
+    ["missing bill not minted (443.203)", { svc: svc.replace("if (bill.length === 0) {", "if (false) {") }],
+    ["no-driver refusal removed (443.203)", { svc: svc.replace(/"driver_bill_no_driver"/, '"x"') }],
     ["series refused", { adm: adm.replace("!usmcaSettlementDocument && loads.every", "loads.every") }],
     ["no earn reversal", { svc: svc.replace("await reverseJournalEntryNoFlip(client as never, { operatingCompanyId: input.companyId, journalEntryId: e.je", "void ({ operatingCompanyId: input.companyId, journalEntryId: e.je") }],
     ["zero restate skipped", { svc: svc.replace("await restateAdoptedLoadToZeroRevenue(client, {", "void ({") }],
