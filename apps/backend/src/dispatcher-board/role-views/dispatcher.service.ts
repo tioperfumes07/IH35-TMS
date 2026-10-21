@@ -296,8 +296,10 @@ async function loadBookingGap(
     `
       SELECT
         COUNT(*)::int AS loads_booked_7d,
-        COUNT(*) FILTER (WHERE l.status::text = ANY($4::text[]))::int AS unresolved_dispatch_gaps_7d,
-        COUNT(*) FILTER (WHERE l.status::text = ANY($5::text[]))::int AS exception_loads_7d
+        -- LEAD 23:45Z P0 (Dispatcher Home 500 "could not determine data type of parameter $3"): the binds are
+        -- [user, company, gap statuses, exception statuses] = $1..$4 — this read $4/$5 since #6162 (2026-08-12), leaving $3 untyped.
+        COUNT(*) FILTER (WHERE l.status::text = ANY($3::text[]))::int AS unresolved_dispatch_gaps_7d,
+        COUNT(*) FILTER (WHERE l.status::text = ANY($4::text[]))::int AS exception_loads_7d
       FROM mdata.loads l
       WHERE l.soft_deleted_at IS NULL
         AND l.dispatcher_user_id = $1::uuid
@@ -401,6 +403,18 @@ async function loadIncomingMessageQueue(
   return num(res.rows[0]?.c);
 }
 
+/** LEAD 23:45Z — the five Dispatcher Home reads on one client (the live board guard executes them against prod, read-only). */
+export async function loadDispatcherHomeOnClient(client: Queryable, userId: string, operatingCompanyId?: string) {
+  const [kpis, activeLoads, bookingGap, detentionApprovals, incomingQueue] = await Promise.all([
+    loadKpis(client, userId, operatingCompanyId),
+    loadActiveLoads(client, userId, operatingCompanyId),
+    loadBookingGap(client, userId, operatingCompanyId),
+    loadPendingDetentionApprovals(client, userId, operatingCompanyId),
+    loadIncomingMessageQueue(client, userId, operatingCompanyId),
+  ]);
+  return { kpis, activeLoads, bookingGap, detentionApprovals, incomingQueue };
+}
+
 export async function getDispatcherHomeData(
   userId: string,
   options: DispatcherHomeOptions = {}
@@ -411,13 +425,7 @@ export async function getDispatcherHomeData(
     // resolve the operating company so every one of the five queries binds the company predicate.
     const operatingCompanyId =
       options.operatingCompanyId ?? (await resolveOperatingCompanyId(client, userId)) ?? undefined;
-    const [kpis, activeLoads, bookingGap, detentionApprovals, incomingQueue] = await Promise.all([
-      loadKpis(client, userId, operatingCompanyId),
-      loadActiveLoads(client, userId, operatingCompanyId),
-      loadBookingGap(client, userId, operatingCompanyId),
-      loadPendingDetentionApprovals(client, userId, operatingCompanyId),
-      loadIncomingMessageQueue(client, userId, operatingCompanyId),
-    ]);
+    const { kpis, activeLoads, bookingGap, detentionApprovals, incomingQueue } = await loadDispatcherHomeOnClient(client, userId, operatingCompanyId);
 
     return {
       generated_at: new Date().toISOString(),

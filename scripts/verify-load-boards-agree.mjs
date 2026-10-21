@@ -293,7 +293,22 @@ async function main() {
 
     await client.query("ROLLBACK");
 
-    const realFailures = [];
+    // LEAD 23:45Z P0 — EXECUTE every repointed reader against real Postgres (a reader that cannot even run — Dispatcher Home's
+    // "could not determine data type of parameter $3" — is the worst disagreement of all).
+    const executed = [];
+    const OWNER_USER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
+    const tryRead = async (name, fn) => {
+      try { await client.query("BEGIN READ ONLY"); await client.query("SELECT set_config('app.bypass_rls','lucia',true)"); await fn(); executed.push(name); }
+      catch (e) { executeFailures.push(`${name} does not execute on prod: ${e.message}`); }
+      finally { await client.query("ROLLBACK").catch(() => {}); }
+    };
+    const executeFailures = [];
+    const { loadDispatcherHomeOnClient } = await import("../apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts");
+    await tryRead("Dispatcher Home", () => loadDispatcherHomeOnClient(client, OWNER_USER, USMCA));
+    await tryRead("Driver Hub", () => readDriverHub(client, USMCA));
+    await tryRead("Overview OPEN LOADS", () => getOpenLoadsBreakdown(client, USMCA));
+
+    const realFailures = [...executeFailures];
     const sDrift = [...[...serviceIds].filter((x) => !boardIds.has(x)), ...[...boardIds].filter((x) => !serviceIds.has(x))];
     if (sDrift.length) realFailures.push(`load service open_dispatch ≠ board set: ${sDrift.length}`);
     const hubMissing = [...onLoadDrivers].filter((x) => !hubOnLoad.has(x));
@@ -340,7 +355,7 @@ async function main() {
     console.log(
       `${LABEL}: PASS — Load Costs agrees with the accounting canonical (${canonicalSet.size} loads); ` +
         `List/Kanban/Round Trips, Trip Pairing and Truck Line all agree with the dispatch-work canonical (${dispatchWorkSet.size} loads); ` +
-        `real functions: load service ${serviceIds.size}, Trip Pairing ${tpIds.size} legs, Overview OPEN LOADS ${breakdown.total}, ON LOAD ${onLoad}, Driver Hub on-load ${hubOnLoad.size}.`
+        `executed ${executed.length} readers (${executed.join(", ")}); real functions: load service ${serviceIds.size}, Trip Pairing ${tpIds.size} legs, Overview OPEN LOADS ${breakdown.total}, ON LOAD ${onLoad}, Driver Hub on-load ${hubOnLoad.size}.`
     );
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
