@@ -212,6 +212,27 @@ function isDeliveredCreatorLoad(load: SettlementCreatorLoadBlock): boolean {
  * correctOpenDriverBillMileage / book-load). A bill already equal to the signed pay is left alone (a load booked by
  * this post).
  */
+export async function restateCreatorDriverBillFromSignedLoad(
+  client: DbClient, draft: SettlementCreatorDraft, load: SettlementCreatorDraft["loads"][number], loadId: string, actorUserId: string,
+): Promise<void> {
+  if (draft.salaried) {
+    if (Number(load.line_haul_rate_cents ?? 0) > 0) throw new SettlementCreatorError("salaried_load_has_pay_rate", `Load ${load.load_number}: a salaried settlement carries no per-load pay rate.`);
+    return;
+  }
+  const payMiles = creatorPayMiles(load);
+  const loadedCents = creatorLoadedPayCents(load);
+  if (payMiles == null || loadedCents == null) throw new SettlementCreatorError("driver_pay_rate_missing", `Load ${load.load_number}: driver pay needs the short miles and the driver's pay rate per mile.`);
+  const hasEmpty = creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0;
+  await restateOpenDriverBillToSignedPay(client, {
+    companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, actorUserId,
+    milesBasis: payMiles, rateCents: Number(load.line_haul_rate_cents), loadedCents,
+    emptyMiles: hasEmpty ? Number(load.empty_miles) : null,
+    emptyRateCents: hasEmpty ? creatorEmptyRateCents(load) : null,
+    emptyCents: hasEmpty ? creatorEmptyPayCents(load) : 0,
+    settlementNo: draft.settlement_no,
+  });
+}
+
 export async function restateOpenDriverBillToSignedPay(
   client: DbClient,
   input: {
@@ -2202,14 +2223,7 @@ export async function postSettlementCreatorInClientTx(
     if (!draft.salaried && payMiles != null && loadedCents != null) {
     // LEAD 443.167-R — an adopted seeded load carries the seed's proforma driver bill (priced from the seed's miles).
     // The signed settlement is the pay: an open, unsettled bill that differs is restated (void + one "-R" replacement).
-    await restateOpenDriverBillToSignedPay(client, {
-      companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, actorUserId,
-      milesBasis: payMiles, rateCents: Number(load.line_haul_rate_cents), loadedCents,
-      emptyMiles: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? Number(load.empty_miles) : null,
-      emptyRateCents: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? creatorEmptyRateCents(load) : null,
-      emptyCents: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? creatorEmptyPayCents(load) : 0,
-      settlementNo: draft.settlement_no,
-    });
+    await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actorUserId);
     const loadedDesc = `Load ${load.load_number} — Loaded Miles ${payMiles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`;
     await writeDriverPayLine(client, {
       settlementId, companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, lineType: "earnings",

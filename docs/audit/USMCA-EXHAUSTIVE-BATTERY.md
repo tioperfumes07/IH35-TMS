@@ -63,15 +63,15 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/account-register/toggle-cleared` | `apps/backend/src/accounting/account-register.routes.ts:101` | — | — | — |
 | create | `/api/v1/accounting/bank-deposits` | `apps/backend/src/accounting/bank-deposits.routes.ts:94` | — | — | — |
 | nested | `/api/v1/accounting/bill-payments/:id/post-gl` | `apps/backend/src/accounting/bill-payment-gl.routes.ts:20` | — | — | — |
-| nested | `/api/v1/accounting/bill-payments/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:926` | — | — | — |
-| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:589` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/allocate` | `apps/backend/src/accounting/bills.routes.ts:1025` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/pay` | `apps/backend/src/accounting/bills.routes.ts:695` | — | — | — |
+| nested | `/api/v1/accounting/bill-payments/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:927` | — | — | — |
+| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:590` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/allocate` | `apps/backend/src/accounting/bills.routes.ts:1026` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/pay` | `apps/backend/src/accounting/bills.routes.ts:696` | — | — | — |
 | nested | `/api/v1/accounting/bills/:id/post-gl` | `apps/backend/src/accounting/bill-gl-draft.routes.ts:103` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:840` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:841` | — | — | — |
 | create | `/api/v1/accounting/bills/draft-je-preview` | `apps/backend/src/accounting/bill-gl-draft.routes.ts:46` | — | — | — |
-| create | `/api/v1/accounting/bills/stamp-trailers-from-loads` | `apps/backend/src/accounting/bills.routes.ts:774` | — | — | — |
-| create | `/api/v1/accounting/bills/stamp-units-from-loads` | `apps/backend/src/accounting/bills.routes.ts:749` | — | — | — |
+| create | `/api/v1/accounting/bills/stamp-trailers-from-loads` | `apps/backend/src/accounting/bills.routes.ts:775` | — | — | — |
+| create | `/api/v1/accounting/bills/stamp-units-from-loads` | `apps/backend/src/accounting/bills.routes.ts:750` | — | — | — |
 | create | `/api/v1/accounting/broker-advances` | `apps/backend/src/accounting/broker-advances.routes.ts:38` | — | — | — |
 | nested | `/api/v1/accounting/broker-advances/:id/disburse-to-driver-bill` | `apps/backend/src/accounting/broker-advances.routes.ts:76` | — | — | — |
 | nested | `/api/v1/accounting/collections/:taskId/contact` | `apps/backend/src/accounting/collections.routes.ts:92` | — | — | — |
@@ -236,10 +236,10 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/mdata/drivers/bulk-invite` | `apps/backend/src/mdata/drivers.routes.ts:1982` | — | — | — |
 | create | `/api/v1/mdata/drivers/bulk-tag` | `apps/backend/src/mdata/driver-tags.routes.ts:179` | — | — | — |
 | create | `/api/v1/mdata/drivers/check-returning` | `apps/backend/src/mdata/driver-returning-detection.routes.ts:155` | — | — | — |
-| create | `/api/v1/mdata/equipment` | `apps/backend/src/mdata/equipment.routes.ts:252` | — | — | — |
+| create | `/api/v1/mdata/equipment` | `apps/backend/src/mdata/equipment.routes.ts:256` | — | — | — |
 | create | `/api/v1/mdata/equipment-log` | `apps/backend/src/mdata/equipment-log.routes.ts:146` | — | — | — |
 | nested | `/api/v1/mdata/equipment/:id/plates` | `apps/backend/src/mdata/equipment-plates.routes.ts:83` | — | — | — |
-| nested | `/api/v1/mdata/equipment/:id/status-change` | `apps/backend/src/mdata/equipment.routes.ts:417` | — | — | — |
+| nested | `/api/v1/mdata/equipment/:id/status-change` | `apps/backend/src/mdata/equipment.routes.ts:421` | — | — | — |
 | create | `/api/v1/mdata/loads` | `apps/backend/src/mdata/loads.routes.ts:427` | — | — | — |
 | nested | `/api/v1/mdata/loads/:id/miles-choice` | `apps/backend/src/dispatch/mileage/miles-recommendations.routes.ts:114` | — | — | — |
 | nested | `/api/v1/mdata/loads/:id/remint-driver-bill` | `apps/backend/src/mdata/loads.routes.ts:1458` | — | — | — |
@@ -255,12 +255,12 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/mdata/qbo/customers` | `apps/backend/src/mdata/qbo-master-write.routes.ts:254` | — | — | — |
 | create | `/api/v1/mdata/qbo/items` | `apps/backend/src/mdata/qbo-master-write.routes.ts:369` | — | — | — |
 | create | `/api/v1/mdata/qbo/vendors` | `apps/backend/src/mdata/qbo-master-write.routes.ts:109` | — | — | — |
-| create | `/api/v1/mdata/units` | `apps/backend/src/mdata/units.routes.ts:460` | — | — | — |
+| create | `/api/v1/mdata/units` | `apps/backend/src/mdata/units.routes.ts:464` | — | — | — |
 | nested | `/api/v1/mdata/units/:id/drivers/clear-default` | `apps/backend/src/mdata/unit-default-driver.routes.ts:229` | — | — | — |
 | nested | `/api/v1/mdata/units/:id/drivers/default` | `apps/backend/src/mdata/unit-default-driver.routes.ts:182` | — | — | — |
 | nested | `/api/v1/mdata/units/:id/photos` | `apps/backend/src/mdata/unit-photos.routes.ts:60` | — | — | — |
 | nested | `/api/v1/mdata/units/:id/plates` | `apps/backend/src/mdata/unit-plates.routes.ts:137` | — | — | — |
-| nested | `/api/v1/mdata/units/:id/quick-availability` | `apps/backend/src/mdata/units.routes.ts:1014` | — | — | — |
+| nested | `/api/v1/mdata/units/:id/quick-availability` | `apps/backend/src/mdata/units.routes.ts:1018` | — | — | — |
 | nested | `/api/v1/mdata/units/:id/trip-cost` | `apps/backend/src/mdata/unit-trip-cost.routes.ts:43` | — | — | — |
 | create | `/api/v1/mdata/vendors` | `apps/backend/src/mdata/vendors.routes.ts:601` | — | — | — |
 | nested | `/api/v1/mdata/vendors/:id/payment-methods` | `apps/backend/src/mdata/vendor-payment-methods.routes.ts:147` | — | — | — |
@@ -581,7 +581,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/insurance/policies/:policy_id/renew` | `apps/backend/src/insurance/policy.routes.ts:701` | — | — | — |
 | nested | `/api/v1/insurance/policies/:policy_id/units` | `apps/backend/src/insurance/policy.routes.ts:518` | — | — | — |
 | create | `/api/v1/insurance/policies/with-bills` | `apps/backend/src/insurance/policy-create-atomic.routes.ts:42` | — | — | — |
-| create | `/api/v1/insurance/schedule-confirmations` | `apps/backend/src/insurance/schedule-confirmations.routes.ts:35` | — | — | — |
+| create | `/api/v1/insurance/schedule-confirmations` | `apps/backend/src/insurance/schedule-confirmations.routes.ts:36` | — | — | — |
 | create | `/api/v1/insurance/type-catalog` | `apps/backend/src/insurance/type-catalog.routes.ts:116` | — | — | — |
 
 ### identity — 9 create-surface(s)
@@ -653,12 +653,12 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/checks` | `apps/backend/src/accounting/checks/checks.routes.ts:147` | — | — | — |
-| nested | `/api/v1/checks/:id/reissue` | `apps/backend/src/accounting/checks/checks.routes.ts:919` | — | — | — |
-| nested | `/api/v1/checks/:id/unvoid` | `apps/backend/src/accounting/checks/checks.routes.ts:886` | — | — | — |
-| create | `/api/v1/checks/pay-bills` | `apps/backend/src/accounting/checks/checks.routes.ts:497` | — | — | — |
-| create | `/api/v1/checks/print-batch` | `apps/backend/src/accounting/checks/checks.routes.ts:774` | — | — | — |
-| nested | `/api/v1/checks/print-batch/:id/confirm` | `apps/backend/src/accounting/checks/checks.routes.ts:810` | — | — | — |
+| create | `/api/v1/checks` | `apps/backend/src/accounting/checks/checks.routes.ts:148` | — | — | — |
+| nested | `/api/v1/checks/:id/reissue` | `apps/backend/src/accounting/checks/checks.routes.ts:926` | — | — | — |
+| nested | `/api/v1/checks/:id/unvoid` | `apps/backend/src/accounting/checks/checks.routes.ts:893` | — | — | — |
+| create | `/api/v1/checks/pay-bills` | `apps/backend/src/accounting/checks/checks.routes.ts:498` | — | — | — |
+| create | `/api/v1/checks/print-batch` | `apps/backend/src/accounting/checks/checks.routes.ts:781` | — | — | — |
+| nested | `/api/v1/checks/print-batch/:id/confirm` | `apps/backend/src/accounting/checks/checks.routes.ts:817` | — | — | — |
 
 ### driver-pay — 6 create-surface(s)
 
