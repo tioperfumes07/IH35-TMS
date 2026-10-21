@@ -51,6 +51,45 @@ type SuggestResult = {
   suggested_reason: string;
 };
 
+/** Header pointers are cached boundaries, not ownership. Repair only open headers whose
+ * boundary was reassigned to another live settlement; never alter the receiving settlement. */
+export async function repairReassignedPresettlementBoundaries(client: DbClient, input: {
+  operating_company_id: string; driver_id: string; tour_id: string; actor_user_id: string;
+}): Promise<void> {
+  const headers = await client.query<{ id: string }>(`SELECT s.id
+    FROM driver_finance.driver_settlements s
+    WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2::uuid AND s.tour_id = $3::uuid
+      AND s.status = 'open' AND s.trip_closed_at IS NULL AND s.voided_at IS NULL AND s.posted_at IS NULL
+      AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_runs gr
+        WHERE gr.operating_company_id = s.operating_company_id AND gr.settlement_id = s.id AND gr.status = 'posted')
+    ORDER BY s.id FOR UPDATE OF s`, [input.operating_company_id, input.driver_id, input.tour_id]);
+  for (const header of headers.rows) {
+    // Separate statement after the lock: a concurrent confirmation cannot leave a stale snapshot.
+    const repaired = await client.query<{ old_first: string | null; old_last: string | null; first_load_id: string | null; last_load_id: string | null }>(`
+      WITH stale AS (
+        SELECT s.id, s.first_load_id AS old_first, s.last_load_id AS old_last
+        FROM driver_finance.driver_settlements s
+        WHERE s.id = $1::uuid AND s.operating_company_id = $2::uuid
+          AND EXISTS (SELECT 1 FROM mdata.loads l
+            JOIN driver_finance.driver_settlements other ON other.id = l.presettlement_link_id
+              AND other.operating_company_id = l.operating_company_id AND other.voided_at IS NULL
+            WHERE l.operating_company_id = s.operating_company_id
+              AND l.id IN (s.first_load_id, s.last_load_id) AND other.id <> s.id)
+      ), boundaries AS (
+        SELECT array_agg(l.id ORDER BY l.created_at, l.id) AS ids FROM mdata.loads l
+        WHERE l.operating_company_id = $2::uuid AND l.presettlement_link_id = $1::uuid
+          AND l.soft_deleted_at IS NULL AND l.voided_at IS NULL AND l.status::text <> 'cancelled'
+      )
+      UPDATE driver_finance.driver_settlements s
+      SET first_load_id = b.ids[1], last_load_id = b.ids[array_length(b.ids, 1)], updated_at = now()
+      FROM stale old, boundaries b WHERE s.id = old.id AND s.operating_company_id = $2::uuid
+      RETURNING old.old_first, old.old_last, s.first_load_id, s.last_load_id`, [header.id, input.operating_company_id]);
+    if (repaired.rows.length) await appendCrudAudit(client, input.actor_user_id,
+      'driver_finance.presettlement.boundaries_rederived',
+      { settlement_id: header.id, operating_company_id: input.operating_company_id, ...repaired.rows[0] }, 'info', '443.200-C');
+  }
+}
+
 /** REG-040: inherit the latest unit/driver tour, including a closed tour's continuation. */
 export async function findOpenPresettlementTourForUnit(
   client: DbClient,
@@ -109,6 +148,7 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
   if (input.tour_id) await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
     `presettlement-tour:${input.operating_company_id}:${input.driver_id}:${input.tour_id}`,
   ]);
+  if (input.tour_id) await repairReassignedPresettlementBoundaries(client, { ...input, tour_id: input.tour_id });
   let suggestionTourId = input.tour_id ?? null;
   let suggestedSettlementId: string | null = null;
   let reason: string;
@@ -143,7 +183,14 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
              AND tour_id = $3::uuid
              AND voided_at IS NULL
              AND status IN ('open', 'closed', 'locked', 'approved', 'paid', 'final')
-             AND ($4::uuid IS NULL OR EXISTS (
+             AND ($4::uuid IS NULL OR (
+               status = 'open' AND trip_closed_at IS NULL AND posted_at IS NULL AND first_load_id IS NULL
+               AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_runs gr
+                 WHERE gr.operating_company_id = driver_settlements.operating_company_id
+                   AND gr.settlement_id = driver_settlements.id AND gr.status = 'posted')
+               AND NOT EXISTS (SELECT 1 FROM mdata.loads held WHERE held.operating_company_id = driver_settlements.operating_company_id
+                 AND held.presettlement_link_id = driver_settlements.id)
+             ) OR EXISTS (
                SELECT 1 FROM mdata.loads l
                WHERE l.operating_company_id = driver_settlements.operating_company_id
                  AND l.tour_id = driver_settlements.tour_id
@@ -151,7 +198,7 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
                  AND (l.presettlement_link_id = driver_settlements.id OR l.id = driver_settlements.first_load_id)
                  AND l.soft_deleted_at IS NULL AND l.status::text <> 'cancelled'
              ))
-           ORDER BY created_at DESC
+           ORDER BY (status = 'open' AND trip_closed_at IS NULL) DESC, created_at DESC
            LIMIT 1
         `,
         [input.operating_company_id, input.driver_id, input.tour_id, input.unit_id ?? null, input.load_id]
@@ -481,12 +528,23 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
         "link_existing requires either the suggested_settlement_id or an explicit override_settlement_id."
       );
     }
+    if (suggestion.tour_id) await repairReassignedPresettlementBoundaries(client, {
+      operating_company_id: input.operating_company_id, driver_id: suggestion.driver_id,
+      tour_id: suggestion.tour_id, actor_user_id: input.actor_user_id,
+    });
     const targetRes = await client.query<{ id: string; status?: string; trip_closed_at?: string | null; tour_id?: string | null }>(
       `SELECT id, status, trip_closed_at::text, tour_id::text FROM driver_finance.driver_settlements
        WHERE id = $1::uuid AND operating_company_id = $2::uuid
          AND driver_id = $3::uuid AND ($6::boolean OR tour_id IS NOT DISTINCT FROM $4::uuid)
          AND voided_at IS NULL AND status IN ('open', 'closed', 'locked', 'approved', 'paid', 'final')
-         AND ($5::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.loads l
+         AND ($5::uuid IS NULL OR (
+           status = 'open' AND trip_closed_at IS NULL AND posted_at IS NULL AND first_load_id IS NULL
+           AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_runs gr
+             WHERE gr.operating_company_id = driver_settlements.operating_company_id
+               AND gr.settlement_id = driver_settlements.id AND gr.status = 'posted')
+           AND NOT EXISTS (SELECT 1 FROM mdata.loads held WHERE held.operating_company_id = driver_settlements.operating_company_id
+             AND held.presettlement_link_id = driver_settlements.id)
+         ) OR EXISTS (SELECT 1 FROM mdata.loads l
            WHERE l.operating_company_id = driver_settlements.operating_company_id
              AND l.tour_id = driver_settlements.tour_id AND l.assigned_unit_id = $5::uuid
              AND (l.presettlement_link_id = driver_settlements.id OR l.id = driver_settlements.first_load_id)
@@ -533,8 +591,9 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
       ]);
     }
     await client.query(
-      `UPDATE driver_finance.driver_settlements SET last_load_id = $1::uuid, updated_at = now() WHERE id = $2::uuid`,
-      [suggestion.load_id, settlementId]
+      `UPDATE driver_finance.driver_settlements SET first_load_id = COALESCE(first_load_id, $1::uuid),
+        last_load_id = $1::uuid, updated_at = now() WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+      [suggestion.load_id, settlementId, input.operating_company_id]
     );
   }
 
