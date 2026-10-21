@@ -62,7 +62,7 @@ export function check(files, appSources) {
   if (!/"dispatch\.driver_dq_file_on_paper"/.test(gate) || !/await recordDqFileOnPaper\(client, \{/.test(gate)) p.push(`${GATE}: a waived reason is not recorded (never silent)`);
 
   if (!/if \(hos\?\.is_in_violation && hosPaperSince\) \{\s*await recordDqFileOnPaper\(/.test(book)) p.push(`${BOOK}: Book Load's HOS gate blocks a paper-file driver`);
-  if (!/actorUserId: input\.requestingUserUuid,\s*loadNumber: input\.live_load_number \?\? null,\s*via: "book_load",/.test(book)) p.push(`${BOOK}: the gate call does not carry the actor (paper-file record unattributed)`);
+  if (!/actorUserId: input\.requestingUserUuid,\s*loadNumber: input\.load_number\?\.trim\(\) \|\| input\.requested_load_number\?\.trim\(\) \|\| input\.live_load_number \|\| null,\s*via: "book_load",/.test(book)) p.push(`${BOOK}: the gate call does not carry the actor (paper-file record unattributed)`);
 
   if (!/const dqMissing = newDriverDqFileMissing\(b\);\s*if \(dqMissing\.length > 0\) return \{ error: "driver_dq_file_required"/.test(create)) p.push(`${CREATE}: driver create does not require the DQ file for a new driver`);
   for (const k of ["cdl_number", "cdl_expires_at", "dot_medical_expires_at"]) if (!new RegExp(`missing\\.push\\(\\{ code: "${k}"`).test(create)) p.push(`${CREATE}: driver create does not require ${k}`);

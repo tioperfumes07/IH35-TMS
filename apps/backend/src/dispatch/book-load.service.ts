@@ -2550,7 +2550,7 @@ export async function createLoadWithFullSideEffects(
         await recordDqFileOnPaper(client, {
           actorUserId: input.requestingUserUuid, operatingCompanyId: input.operating_company_id, driverId: String(hos.id),
           driverName: (hos.full_name as string | null) ?? null, waived: ["hos_violation"], dqFileOnPaperSince: hosPaperSince,
-          loadNumber: input.live_load_number ?? null, via: "book_load",
+          loadNumber: input.load_number?.trim() || input.requested_load_number?.trim() || input.live_load_number || null, via: "book_load",
         });
       } else if (hos?.is_in_violation) {
         // FEED PARITY: a driver's CURRENT HOS clock says nothing about whether they were in
@@ -2752,7 +2752,7 @@ export async function createLoadWithFullSideEffects(
           operatingCompanyId: input.operating_company_id,
           isHazmat: isHazmatLoad,
           actorUserId: input.requestingUserUuid,
-          loadNumber: input.live_load_number ?? null,
+          loadNumber: input.load_number?.trim() || input.requested_load_number?.trim() || input.live_load_number || null,
           via: "book_load",
         });
         if (block) {

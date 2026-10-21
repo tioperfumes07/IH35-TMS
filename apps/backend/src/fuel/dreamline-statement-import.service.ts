@@ -343,6 +343,35 @@ export function dreamlineAdoptMarker(
  * On main (bd41d055ba #26780) the stamp overwrote the receipt's gross / discount with the card's, so 305 receipts read
  * total_cost <> gross_cost − discount_amount (verify-control-totals' fuel-discount check).
  */
+/**
+ * LEAD 443.214 — the provider's REAL pump moment + station onto the fuel row(s) of this statement line (imported, adopted,
+ * or already there from an earlier run). A settlement-entered receipt carries only a typed DATE (07:00 CT placeholder);
+ * the statement is the one record of when and where the truck fuelled, and fill-truck-and-load.service.ts places the
+ * truck and the load from it. Only fills a row whose moment is still unknown — never overwrites a stamped one.
+ */
+export async function stampStatementFillMoment(
+  client: DbClient,
+  input: { companyId: string; railKey: string; at: string; city: string | null; state: string | null; stationName?: string | null; fuelTransactionId?: string | null; marker?: string | null; hash?: string | null }
+): Promise<void> {
+  // the station's coordinates: every Love's store Relay has reported, by store number (the statement prints "LOVES #471").
+  const store = /LOVE/i.test(input.stationName ?? "") ? (input.stationName ?? "").match(/#\s*(\d{2,5})\b/)?.[1] ?? null : null;
+  await client.query(
+    `UPDATE fuel.fuel_transactions
+        SET fill_moment_at = $3::timestamptz, fill_moment_source = $4, time_unknown = false,
+            location_city = COALESCE(location_city, $5), location_state = COALESCE(location_state, $6),
+            station_lat = COALESCE(station_lat, (SELECT avg(r.location_latitude) FROM integrations.relay_fuel_transactions r
+                                                  WHERE $9::text IS NOT NULL AND r.location_fuel_merchant_location_id = $9::text
+                                                    AND upper(r.merchant_name) LIKE 'LOVE%')),
+            station_lng = COALESCE(station_lng, (SELECT avg(r.location_longitude) FROM integrations.relay_fuel_transactions r
+                                                  WHERE $9::text IS NOT NULL AND r.location_fuel_merchant_location_id = $9::text
+                                                    AND upper(r.merchant_name) LIKE 'LOVE%')),
+            updated_at = now()
+      WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND fill_moment_at IS NULL
+        AND (id = $2::uuid OR ($7::text IS NOT NULL AND notes LIKE '%' || $7::text || '%') OR ($8::text IS NOT NULL AND source_row_hash LIKE $8::text || '%'))`,
+    [input.companyId, input.fuelTransactionId ?? null, input.at, `${input.railKey}_statement`, input.city, input.state, input.marker ?? null, input.hash ?? null, store]
+  );
+}
+
 export async function stampDreamlineReceiptAdopted(
   client: DbClient,
   input: { companyId: string; fuelTransactionId: string; marker: string }
@@ -727,7 +756,7 @@ function emptyOutcomes(): DreamlineImportSummary["by_outcome"] {
 
 export async function importDreamlineStatement(
   client: DbClient,
-  input: { operating_company_id: string; actor_user_uuid: string; lines: DreamlineStatementLine[]; start_date?: string; dry_run?: boolean }
+  input: { operating_company_id: string; actor_user_uuid: string; lines: DreamlineStatementLine[]; start_date?: string; dry_run?: boolean; stamp_only?: boolean }
 ): Promise<DreamlineImportSummary> {
   return importFuelCardStatement(client, { ...input, rail: DREAMLINE_STATEMENT_RAIL });
 }
@@ -735,7 +764,7 @@ export async function importDreamlineStatement(
 /** LEAD 443.202 — the England Logistics WEX card statement (owner's TransactionReport export) through the same walk. */
 export async function importWexStatement(
   client: DbClient,
-  input: { operating_company_id: string; actor_user_uuid: string; lines: DreamlineStatementLine[]; dry_run?: boolean }
+  input: { operating_company_id: string; actor_user_uuid: string; lines: DreamlineStatementLine[]; dry_run?: boolean; stamp_only?: boolean }
 ): Promise<DreamlineImportSummary> {
   return importFuelCardStatement(client, { ...input, rail: WEX_STATEMENT_RAIL });
 }
@@ -744,13 +773,16 @@ export async function importFuelCardStatement(
   client: DbClient,
   input: {
     operating_company_id: string; actor_user_uuid: string; lines: DreamlineStatementLine[]; start_date?: string; dry_run?: boolean;
+    /** LEAD 443.214 — backfill: stamp the provider moment + station on lines ALREADY on the books; every other outcome is planned only (nothing imported / adopted / posted). */
+    stamp_only?: boolean;
     rail: FuelCardStatementRail;
   }
 ): Promise<DreamlineImportSummary> {
   const rail = input.rail;
   const companyId = input.operating_company_id;
   const start = input.start_date ?? rail.start_date;
-  const dry = input.dry_run === true;
+  const stampOnly = input.stamp_only === true && input.dry_run !== true;
+  const dry = input.dry_run === true || stampOnly;
   const ctx = { operating_company_id: companyId, user_uuid: input.actor_user_uuid };
   if (!dry) {
     if (!(await isEnabled(client as never, FUEL_POSTS_ON_RECEIPT_FLAG_KEY, ctx)) || !(await isEnabled(client as never, EXPENSE_GL_POSTING_FLAG_KEY, ctx))) {
@@ -845,6 +877,9 @@ export async function importFuelCardStatement(
     if (!feeSeen.has(fillKey)) { feeSeen.add(fillKey); summary.fees_not_posted_cents += line.fee_cents; }
     if (lineIsLive(hash) || adoptedMarkers.has(marker)) {
       if (adoptedMarkers.has(marker)) used.add(adoptedMarkers.get(marker)!);
+      if (!dry || stampOnly) {
+        await stampStatementFillMoment(client, { companyId, railKey: rail.key, at: line.transaction_at, city: line.city, state: line.state, stationName: line.location_name, marker, hash });
+      }
       record(line, "already_imported");
       continue;
     }
@@ -889,6 +924,7 @@ export async function importFuelCardStatement(
           }
           if (hit.fuel_transaction_id) {
             await stampDreamlineReceiptAdopted(client, { companyId, fuelTransactionId: hit.fuel_transaction_id, marker });
+            await stampStatementFillMoment(client, { companyId, railKey: rail.key, at: line.transaction_at, city: line.city, state: line.state, stationName: line.location_name, fuelTransactionId: hit.fuel_transaction_id });
           }
         } else if (diff !== 0) summary.difference_posted_cents += diff;
         used.add(hit.expense_id); // adopted (stamped above; the dry run computes the same plan)
@@ -1014,6 +1050,7 @@ export async function importFuelCardStatement(
     );
     const fuelId = ins.rows[0]?.id;
     if (!fuelId) { record(line, "already_imported"); continue; }
+    await stampStatementFillMoment(client, { companyId, railKey: rail.key, at: line.transaction_at, city: line.city, state: line.state, stationName: line.location_name, fuelTransactionId: fuelId });
     await postFuelFillOnReceipt(client as never, { operating_company_id: companyId, actor_user_uuid: input.actor_user_uuid, kind: "fuel_transaction", fill_id: fuelId });
     const doc = (await client.query<{ id: string }>(
       `SELECT id::text FROM accounting.expenses WHERE source_fuel_transaction_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL LIMIT 1`,
