@@ -649,9 +649,11 @@ export type SettlementCreatorDrawerProps = {
   onClose: () => void;
   /** When true, Post is available; owner walk uses Preview only by default. */
   allowPost?: boolean;
+  /** LEAD 443.215 — open pre-filled from a new source (the "source changed: repost needed" Edit). */
+  initialDraft?: SettlementCreatorDraft | null;
 };
 
-export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: SettlementCreatorDrawerProps) {
+export function SettlementCreatorDrawer({ open, onClose, allowPost = false, initialDraft = null }: SettlementCreatorDrawerProps) {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -693,6 +695,32 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const [attemptClose, setAttemptClose] = useState<(() => void) | null>(null);
   const [confirmRepostOpen, setConfirmRepostOpen] = useState(false);
   const [confirmRepostMessage, setConfirmRepostMessage] = useState<string>("");
+  // LEAD 443.215 — "source changed: repost needed": fill every field from the NEW source once when the drawer opens with it.
+  const prefilledFrom = useRef<SettlementCreatorDraft | null>(null);
+  useEffect(() => {
+    if (!open || !initialDraft || prefilledFrom.current === initialDraft) return;
+    prefilledFrom.current = initialDraft;
+    const d = initialDraft;
+    setSettlementNo(d.settlement_no ?? "");
+    setDriverId(d.driver_id ?? null);
+    setUnitId(d.unit_id ?? null);
+    setTrailerId(d.trailer_id ?? null);
+    setTrailerNumber(d.trailer_equipment_number ?? "");
+    setTrailerKind(d.trailer_id || d.trailer_equipment_number ? "company" : "none");
+    setPeriodStart(d.period_start ?? "");
+    setPeriodEnd(d.period_end ?? "");
+    setLoads(d.loads?.length ? d.loads : [emptyLoad()]);
+    setFuels((d.fuel_purchases ?? []) as FuelDraft[]);
+    setCompanyExpenses((d.expenses ?? []).filter((e) => !e.is_reimbursable) as ExpDraft[]);
+    setDrvReimbursements((d.expenses ?? []).filter((e) => e.is_reimbursable) as ExpDraft[]);
+    setAdditionalPay((d.additional_pay ?? []) as MoneyDraft[]);
+    setDeductions((d.deductions ?? []) as MoneyDraft[]);
+    setEscrow((d.escrow ?? []).map((e) => ({ ...e, escrow_type: e.amount_cents < 0 ? "release" : "hold", amount_cents: Math.abs(e.amount_cents) })) as MoneyDraft[]);
+    setAdvances((d.advances ?? []) as MoneyDraft[]);
+    setAdminFeeCents(0);
+    setPdfCompanyExpenses(d.pdf_company_expenses_cents ?? 0);
+    setPdfDriverNet(d.pdf_driver_net_cents ?? 0);
+  }, [open, initialDraft]);
   /** Operator typed miles/rate — do not overwrite with lane / pay-card autofill. */
   const milesTouchedRef = useRef<Record<number, boolean>>({});
   const ratesTouchedRef = useRef(false);
@@ -1256,7 +1284,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       setPosted({ label: `Settlement ${res.source_document_ref || res.display_id} posted`, documentIds: [...(res.expense_ids ?? [])] });
     } catch (e) {
       const apiErr = e as { status?: number; data?: { error?: string; message?: string }; message?: string };
-      if (apiErr?.status === 409 && apiErr?.data?.error === "settlement_exists") {
+      // LEAD 443.215 — a changed source for an existing number ("source changed: repost needed") is the same Edit decision.
+      if (apiErr?.status === 409 && (apiErr?.data?.error === "settlement_exists" || apiErr?.data?.error === "settlement_source_changed_repost_needed")) {
         setConfirmRepostMessage(`${apiErr.data.message ?? "Settlement already exists."}\n\nEdit = void the prior settlement and all Creator companion docs, then repost. Continue?`);
         setConfirmRepostOpen(true);
         return;

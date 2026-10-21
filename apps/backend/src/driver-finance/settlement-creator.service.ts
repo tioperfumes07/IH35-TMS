@@ -8,6 +8,7 @@ import { stampDriverBillVoidedInClientTx } from "./driver-bill-void-state.servic
  * Spec: docs/bus/09-25-2026-Devin-A-ROUND-180-SETTLEMENT-CREATOR-COMPANY-AND-DRIVER.md
  */
 
+import { checkSettlementSourceOnClient, describeSourceDiff, storeSettlementSourceFingerprint } from "./settlement-source-fingerprint.js";
 import { recordHistoricalReassignQualification } from "../dispatch/driver-qualification.service.js";
 import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import { writeRelayFillFuelRows, RelayFillFuelRowsError } from "../fuel/relay-fill-fuel-rows.js";
@@ -1232,9 +1233,13 @@ export async function postSettlementCreatorInClientTx(
       );
       if (existing.rows[0]) {
         if (!draft.edit_void_repost) {
+          // LEAD 443.215 — never two live settlements for one number, and never silent about WHY: compare this source with the
+          // one the live settlement was posted from (already posted vs source changed, with the exact line diff).
+          const v = await checkSettlementSourceOnClient(client as never, { operatingCompanyId: draft.operating_company_id, draft, actorUserId, record: false });
+          const detail = v.verdict === "source_changed" ? ` Source changed: repost needed — ${describeSourceDiff(v.diff).join("; ")}.` : v.verdict === "already_posted" ? " Already posted from this same source." : "";
           throw new SettlementCreatorError(
-            "settlement_exists",
-            `Settlement ${typedNo} already exists (${existing.rows[0].display_id}). Confirm Edit = void and repost to replace it.`,
+            v.verdict === "source_changed" ? "settlement_source_changed_repost_needed" : "settlement_exists",
+            `Settlement ${typedNo} already exists (${existing.rows[0].display_id}).${detail} Confirm Edit = void and repost to replace it.`,
           );
         }
         priorFuelIds = await voidPriorCreatorSettlementForEdit(
@@ -2483,6 +2488,8 @@ export async function postSettlementCreatorInClientTx(
     if (closed.journal_entry_id) journalEntryIds.push(closed.journal_entry_id);
   }
 
+  // LEAD 443.215 — the settlement stores the printed source it was posted from; a later source is compared against it.
+  await storeSettlementSourceFingerprint(client as never, draft.operating_company_id, settlementId, draft);
   // Lead order 2026-10-11 — every expense of this post names its AlwaysTrack settlement (accounting.expenses.settlement_no).
   await stampCreatorExpenseSettlementNo(client as never, {
     operatingCompanyId: draft.operating_company_id, settlementId, settlementNo: sourceDocumentRef ?? displayId, expenseIds, actorUserId,

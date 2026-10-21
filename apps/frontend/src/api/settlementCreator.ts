@@ -224,3 +224,32 @@ export function peekNextSettlementNumber(operatingCompanyId: string) {
     `/api/v1/driver-finance/settlement-creator/next-settlement-peek?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
   );
 }
+
+/** LEAD 443.215 — a live settlement whose newest printed source differs from the one it was posted from. */
+export type SourceChangedSettlement = {
+  settlement_id: string;
+  display_id: string;
+  settlement_no: string | null;
+  net_pay: string;
+  new_total_due_cents: number | null;
+  measured_at: string;
+  diff: {
+    changed: Array<{ field: string; before: unknown; after: unknown }>;
+    added: Array<{ kind: string; load: string | null; text: string; amount_cents: number }>;
+    removed: Array<{ kind: string; load: string | null; text: string; amount_cents: number }>;
+  };
+  new_draft: SettlementCreatorDraft | null;
+};
+
+export function listSourceChangedSettlements(operatingCompanyId: string) {
+  return apiRequest<{ settlements: SourceChangedSettlement[] }>(
+    `/api/v1/driver-finance/settlements/source-changed?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+  );
+}
+
+export function checkSettlementSource(draft: SettlementCreatorDraft) {
+  return apiRequest<{ verdict: { verdict: "new" | "already_posted" | "source_changed"; settlement_no: string }; summary: string[] }>(
+    "/api/v1/driver-finance/settlement-creator/source-check",
+    { method: "POST", body: draft },
+  );
+}

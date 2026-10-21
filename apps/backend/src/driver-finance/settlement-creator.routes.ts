@@ -2,6 +2,7 @@
  * ROUND 180 / R-186 — Settlement Creator routes.
  * POST preview + POST commit. USMCA + Owner/Admin/Accountant only. No Book Load.
  */
+import { checkSettlementSourceOnClient, describeSourceDiff } from "./settlement-source-fingerprint.js";
 import { FeedGateError } from "./feed-gate/feed-gate.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { CreatorCategorizationError, categorizeCreatorSettlement } from "./creator-document-categorization.service.js";
@@ -214,6 +215,9 @@ const draftSchema = z.object({
     .default([]),
   admin_fee_cents: z.number().int().nullable().optional(),
   pdf_driver_net_cents: z.number().int(),
+  // LEAD 443.215 — the printed source's date and Net Revenue (part of the stored source fingerprint); optional.
+  source_printed_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  pdf_company_net_revenue_cents: z.number().int().nullable().optional(),
   pdf_company_expenses_cents: z.number().int(),
   edit_void_repost: z.boolean().optional().default(false),
   // Lead 443.36 (owner closed ruling): a SALARIED driver's settlement — loads booked with the 0-rate "Salaried" override
@@ -283,6 +287,51 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       return previewSettlementCreatorThroughClose(client, user.uuid, draft, user.role);
     });
     return reply.code(200).send({ preview });
+  });
+
+  // LEAD 443.215 — a new source (PDF / feed draft) for a settlement number is compared with the source the live settlement was
+  // posted from: "new" | "already_posted" | "source_changed" (+ the exact line diff), recorded on the settlement's feed intake.
+  app.post("/api/v1/driver-finance/settlement-creator/source-check", WRITE_RL, async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!AUTHORITY_ROLES.has(user.role)) return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    const parsed = draftSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const draft = parsed.data as SettlementCreatorDraft;
+    if (draft.operating_company_id !== USMCA) return reply.code(400).send({ error: "usmca_only" });
+    await assertCompanyMembership(user.uuid, draft.operating_company_id);
+    const verdict = await withCurrentUser(user.uuid, async (client) => {
+      // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [draft.operating_company_id]);
+      return checkSettlementSourceOnClient(client as never, { operatingCompanyId: draft.operating_company_id, draft, actorUserId: user.uuid });
+    });
+    return reply.code(200).send({ verdict, summary: verdict.verdict === "new" ? [] : describeSourceDiff(verdict.diff) });
+  });
+
+  // LEAD 443.215 — the Settlements screen's "source changed: repost needed" list: live settlements whose LATEST source check
+  // failed, with the line diff and the new source for the Edit = void and repost.
+  app.get("/api/v1/driver-finance/settlements/source-changed", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    const co = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!co) return reply.code(400).send({ error: "operating_company_id_required" });
+    await assertCompanyMembership(user.uuid, co);
+    const rows = await withCurrentUser(user.uuid, async (client) => {
+      // membership-scope-exempt: operating_company_id validated by assertCompanyMembership above.
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [co]);
+      return (await client.query(
+        `SELECT DISTINCT ON (s.id) s.id::text AS settlement_id, s.display_id, s.source_document_ref AS settlement_no, s.net_pay::text,
+                c.status, c.measured_at::text, c.measured->'diff' AS diff, c.measured->'new_draft' AS new_draft,
+                (c.measured->>'new_total_due_cents')::bigint AS new_total_due_cents
+           FROM driver_finance.driver_settlements s
+           JOIN driver_finance.feed_intakes fi ON fi.subject_id = s.id AND fi.operating_company_id = s.operating_company_id
+            AND fi.feed_kind = 'settlement' AND fi.voided_at IS NULL
+           JOIN driver_finance.feed_intake_checks c ON c.intake_id = fi.id AND c.check_group = 'source' AND c.check_key = 'source_unchanged'
+          WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL AND s.status <> 'cancelled'
+          ORDER BY s.id, c.measured_at DESC`,
+        [co])).rows.filter((r: Record<string, unknown>) => r.status === "fail");
+    });
+    return reply.code(200).send({ settlements: rows });
   });
 
   app.post("/api/v1/driver-finance/settlement-creator/post", WRITE_RL, async (req, reply) => {
@@ -359,6 +408,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       if (err instanceof SettlementCreatorError || err instanceof SettlementCreatorSeedError) {
         const conflict = new Set([
           "settlement_exists",
+          "settlement_source_changed_repost_needed",
           "settlement_reverse_blocked_paid",
           "settlement_reverse_blocked_locked",
           "settlement_already_cancelled",
