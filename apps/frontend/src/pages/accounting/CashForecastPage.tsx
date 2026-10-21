@@ -51,6 +51,7 @@ export function CashForecastPage() {
   const effectiveSettings = settingsFromServer ?? draft;
 
   const saveSettings = useMutation({
+    meta: { loads: true },
     mutationFn: (payload: CashForecastSettings) => upsertCashForecastSettings(companyId, payload),
     onSuccess: async () => {
       pushToast("Cash forecast settings saved", "success");

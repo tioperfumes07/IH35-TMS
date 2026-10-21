@@ -86,6 +86,7 @@ export function ExpenseCategoryMapPage() {
   );
 
   const createMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       createExpenseCategoryMapping({
         operating_company_id: companyId,
@@ -106,6 +107,7 @@ export function ExpenseCategoryMapPage() {
   });
 
   const deactivateMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (id: string) => deactivateExpenseCategoryMapping(id, companyId),
     onSuccess: async () => {
       pushToast("Expense category mapping deactivated", "success");

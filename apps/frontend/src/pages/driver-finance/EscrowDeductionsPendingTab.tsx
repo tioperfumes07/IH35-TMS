@@ -62,6 +62,7 @@ export function EscrowDeductionsPendingTab() {
   const isOwner = auth.user?.role === "Owner";
 
   const approveMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!selected) return;
       const overrideAmountCents =
@@ -86,6 +87,7 @@ export function EscrowDeductionsPendingTab() {
   });
 
   const rejectMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!selected) return;
       return rejectPendingEscrowDeduction(selected.id, {

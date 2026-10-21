@@ -1794,6 +1794,7 @@ export function DispatchKanban({
   const queryClient = useQueryClient();
 
   const assignMutation = useMutation({
+    meta: { loads: true },
     mutationFn: ({ loadId, unitId }: { loadId: string; unitId: string }) =>
       patchAssignUnit(loadId, { operating_company_id: operatingCompanyId ?? "", unit_uuid: unitId }),
     onSuccess: (_data, variables) => {

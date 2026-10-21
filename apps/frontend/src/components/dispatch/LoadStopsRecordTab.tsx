@@ -262,6 +262,7 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
   });
 
   const geocodeMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () => geocodeDispatchLoadStops(loadId, operatingCompanyId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["load-stops-record", loadId, operatingCompanyId] });

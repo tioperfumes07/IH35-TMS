@@ -67,6 +67,7 @@ export function DispatchSettingsPage() {
   });
 
   const saveViewM = useMutation({
+    meta: { loads: true },
     mutationFn: (view: DispatchV2View) => updateDispatchPreferences(view),
     onSuccess: (data) => {
       queryClient.setQueryData(["dispatch-preferences"], data);

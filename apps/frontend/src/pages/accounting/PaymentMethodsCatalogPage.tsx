@@ -106,6 +106,7 @@ export function PaymentMethodsCatalogPage() {
   const invalidate = () => void qc.invalidateQueries({ queryKey: ["catalogs", "payment-methods", companyId] });
 
   const createMut = useMutation({
+    meta: { loads: true },
     mutationFn: () => createPaymentMethod(companyId, { name: createForm.name.trim(), gl_account_id: createForm.gl_account_id, sort_order: createForm.sort_order }),
     onSuccess: () => {
       pushToast("Payment method created", "success");
@@ -117,6 +118,7 @@ export function PaymentMethodsCatalogPage() {
   });
 
   const updateMut = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       updatePaymentMethod(editId as string, companyId, {
         name: editForm.name.trim(),
@@ -132,12 +134,14 @@ export function PaymentMethodsCatalogPage() {
   });
 
   const setActiveMut = useMutation({
+    meta: { loads: true },
     mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => updatePaymentMethod(id, companyId, { is_active }),
     onSuccess: () => invalidate(),
     onError: (err) => pushToast(err instanceof Error ? err.message : "Update failed", "error"),
   });
 
   const voidMut = useMutation({
+    meta: { loads: true },
     mutationFn: ({ id, reason }: { id: string; reason: string }) => voidPaymentMethod(id, companyId, reason),
     onSuccess: () => {
       pushToast("Payment method voided", "success");

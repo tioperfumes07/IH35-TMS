@@ -28,6 +28,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
   });
 
   const settleMutation = useMutation({
+    meta: { loads: true },
     mutationFn: ({ settlementId }: { settlementId: string }) =>
       settleAndPay(settlementId, operatingCompanyId),
     onSuccess: (data) => {

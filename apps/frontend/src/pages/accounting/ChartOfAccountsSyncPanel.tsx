@@ -54,6 +54,7 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
   });
 
   const pullMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () => postCoaAction("/api/v1/qbo-sync/chart-of-accounts/pull-now", operatingCompanyId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coa-sync-status", operatingCompanyId] }),
     onError: (error) => {

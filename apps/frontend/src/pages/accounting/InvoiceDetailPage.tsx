@@ -101,6 +101,7 @@ export function InvoiceDetailPage() {
   });
 
   const sendMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () => sendInvoice(id, selectedCompanyId!),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
@@ -110,6 +111,7 @@ export function InvoiceDetailPage() {
   });
 
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (reason?: string) => voidInvoice(id, selectedCompanyId!, reason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
@@ -121,6 +123,7 @@ export function InvoiceDetailPage() {
   const [voidOpen, setVoidOpen] = useState(false);
 
   const addLineMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (payload: { description: string; unit_amount_cents: number; account_id: string }) =>
       addInvoiceLine(id, selectedCompanyId!, {
         line_type: "linehaul",
@@ -150,6 +153,7 @@ export function InvoiceDetailPage() {
   });
 
   const patchLineMutation = useMutation({
+    meta: { loads: true },
     mutationFn: ({ lineId, unit_amount_cents }: { lineId: string; unit_amount_cents: number }) =>
       patchInvoiceLine(id, lineId, selectedCompanyId!, { unit_amount_cents }),
     onSuccess: () => {
@@ -160,6 +164,7 @@ export function InvoiceDetailPage() {
   });
 
   const deleteLineMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (lineId: string) => deleteInvoiceLine(id, lineId, selectedCompanyId!),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });

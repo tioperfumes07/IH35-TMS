@@ -89,6 +89,7 @@ export function FactoringDetailPage() {
   });
 
   const mutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!selectedCompanyId || !action) return;
       if (action === "advance") {

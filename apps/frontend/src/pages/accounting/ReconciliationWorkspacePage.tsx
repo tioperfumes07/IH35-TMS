@@ -66,6 +66,7 @@ export function ReconciliationWorkspacePage() {
   });
 
   const matchMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (input: {
       bank_transaction_id: string;
       ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";
@@ -84,6 +85,7 @@ export function ReconciliationWorkspacePage() {
   });
 
   const unmatchMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (input: {
       bank_transaction_id: string;
       ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";

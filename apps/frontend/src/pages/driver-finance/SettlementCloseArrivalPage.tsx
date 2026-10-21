@@ -155,6 +155,7 @@ export function SettlementCloseArrivalPage() {
   }, [accountsQuery.data, paymentMethodGlAccountId]);
 
   const closeMut = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       const settlementId = String(detailQuery.data?.settlement?.id);
       await settleAndPay(settlementId, companyId);

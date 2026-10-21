@@ -69,6 +69,7 @@ export function CollectionsPage() {
   };
 
   const syncMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () => triggerSync({ operating_company_id: companyId }),
     onSuccess: async (result) => {
       await invalidateCollections();
@@ -78,6 +79,7 @@ export function CollectionsPage() {
   });
 
   const logContactMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!selectedTask) throw new Error("Select a task first");
       return logContact(selectedTask, {
@@ -96,6 +98,7 @@ export function CollectionsPage() {
   });
 
   const resolveMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!selectedTask) throw new Error("Select a task first");
       return resolveTask(selectedTask, {

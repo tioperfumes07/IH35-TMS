@@ -283,6 +283,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
   };
 
   const mut = useMutation({
+    meta: { loads: true },
     mutationFn: async (input: SaveStopsInput) => {
       if (input.body.stops.length < 2) throw new Error("need_two_stops");
       return replaceLoadStopsDispatch(input.loadId, input.body);
@@ -291,7 +292,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
       if (input.generation !== actionGenerationRef.current) return;
       pushToast("Stops saved", "success");
       await qc.invalidateQueries({ queryKey: ["dispatch", "load-stops-refined", input.loadId, input.companyId] });
-      await qc.invalidateQueries({ queryKey: ["loads", "detail", input.loadId] });
+      await qc.invalidateQueries({ queryKey: ["loads", "detail", input.companyId, input.loadId] });
     },
     onError: (err, input) => {
       if (input.generation !== actionGenerationRef.current) return;

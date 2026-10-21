@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -7,6 +7,8 @@ import { installStaleChunkRecovery } from "./bootstrap/installStaleChunkRecovery
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { StaleDeployBanner } from "./components/StaleDeployBanner";
 import { ToastProvider } from "./components/Toast";
+import { RealtimeBus } from "./hooks/useRealtimeBus";
+import { invalidateLoadViews } from "./lib/invalidateLoadViews";
 import { initFrontendSentry } from "./observability/sentry-client";
 import "./index.css";
 import "./design/design-tokens.css";
@@ -25,7 +27,14 @@ void initFrontendSentry();
 // provider GETs (sync-health, qbo, preferences, notifications, identity/me) fired many times per load
 // and overran the edge per-IP rate limit — a following status-change WRITE then tipped to 429. Sane
 // defaults (cache + dedupe identical keys, no refetch-on-focus) cut the volume so writes stay under it.
-const queryClient = new QueryClient({
+// LEAD 443.208R: ONE place refreshes every load + money view after a load write — every mutation tagged
+// meta { loads: true } (verify-load-mutations-invalidate-load-views), plus the realtime bus for writes made anywhere else.
+const queryClient: QueryClient = new QueryClient({
+  mutationCache: new MutationCache({
+    onSuccess: (_data, _vars, _ctx, mutation) => {
+      if ((mutation.meta as { loads?: boolean } | undefined)?.loads) void invalidateLoadViews(queryClient);
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 30_000,
@@ -41,6 +50,7 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <StaleDeployBanner />
+        <RealtimeBus />
         {/*
           React Router 7 defaults BrowserRouter history updates to startTransition.
           A pending route render can therefore retain the previous committed screen even

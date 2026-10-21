@@ -72,6 +72,7 @@ export function PaymentDetailPage() {
   });
 
   const applyMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (payload: { invoice_id: string; amount_cents: number }) => applyPayment(id, selectedCompanyId!, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "payment", selectedCompanyId, id] });
@@ -83,6 +84,7 @@ export function PaymentDetailPage() {
   });
 
   const unapplyMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (applicationId: string) => unapplyPayment(id, applicationId, selectedCompanyId!),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "payment", selectedCompanyId, id] });
@@ -93,6 +95,7 @@ export function PaymentDetailPage() {
   });
 
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (reason: string) => voidPayment(id, selectedCompanyId!, reason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "payment", selectedCompanyId, id] });

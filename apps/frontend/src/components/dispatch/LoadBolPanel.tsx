@@ -29,6 +29,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
   });
 
   const generateMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { loadId: string; companyId: string; generation: number }) =>
       generateLoadBol(input.loadId, input.companyId),
     onMutate: () => setGenerateError(null),

@@ -136,6 +136,7 @@ export function CheckPrintPage() {
   }
 
   const saveStockMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       putCheckStockSettings({
         operating_company_id: companyId,

@@ -65,6 +65,7 @@ export function LocationPicker({ operatingCompanyId, value, onChange, disabled, 
   }));
 
   const createMut = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       createLocation({
         operating_company_id: operatingCompanyId,
