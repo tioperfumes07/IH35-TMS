@@ -51,3 +51,71 @@ export const BILL_HAS_ACTIVE_SETTLEMENT_EXISTS_SQL = `EXISTS (
            AND sl.operating_company_id = db.operating_company_id
            AND ${ACTIVE_SETTLEMENT_LINE_PREDICATE_SQL}
         )`;
+
+/**
+ * 443.210R ONE-SETTLEMENT-RESOLVER — the single canonical per-load settlement resolver.
+ * Replaces six inline resolvers (board settlement_info, rollup, tour COALESCE, resolveSettlementForLoad,
+ * driver-pay-detail, shared settlement-resolution) that silently drifted apart.
+ *
+ * Precedence (D5 root cause fix):
+ *   1. Active line on a CLOSED or LOCKED settlement — the load's money is finalized; this wins.
+ *   2. Live presettlement_link_id on the load — the booking link (forward pointer from load to open settlement).
+ *   3. Any active settlement_lines row for a live bill on this load — bookend / fallback.
+ * Returns NULL when no settlement is attached. Aliases `load_settlement`.
+ * Caller must alias the load row as `${loadAlias}`.
+ */
+export function resolveLoadSettlementSql(loadAlias: string): string {
+  return `LEFT JOIN LATERAL (
+    SELECT ds.id::text AS settlement_id, ds.source_document_ref AS settlement_number
+      FROM driver_finance.driver_settlements ds
+     WHERE ds.operating_company_id = ${loadAlias}.operating_company_id
+       AND ds.voided_at IS NULL
+       AND ds.status NOT IN ('void', 'voided', 'cancelled')
+       AND ds.id = COALESCE(
+         -- 1. Active line on closed/locked settlement (settled money is final)
+         (SELECT sl1.settlement_id
+            FROM driver_finance.settlement_lines sl1
+            JOIN driver_finance.driver_settlements ds1
+              ON ds1.id = sl1.settlement_id
+             AND ds1.operating_company_id = ${loadAlias}.operating_company_id
+             AND ds1.voided_at IS NULL
+             AND ds1.status IN ('closed', 'locked')
+            JOIN driver_finance.driver_bills db1
+              ON db1.id = sl1.source_driver_bill_id
+             AND db1.load_id = ${loadAlias}.id
+             AND db1.operating_company_id = ${loadAlias}.operating_company_id
+             AND db1.status NOT IN ('void', 'voided') AND db1.voided_at IS NULL
+           WHERE sl1.is_active = true AND sl1.voided_at IS NULL
+             AND sl1.operating_company_id = ${loadAlias}.operating_company_id
+           ORDER BY ds1.closed_at DESC NULLS LAST, sl1.created_at DESC
+           LIMIT 1),
+         -- 2. Live presettlement_link_id (booking-time forward pointer, if not voided)
+         (SELECT ${loadAlias}.presettlement_link_id
+           WHERE ${loadAlias}.presettlement_link_id IS NOT NULL
+             AND EXISTS (
+               SELECT 1 FROM driver_finance.driver_settlements ds2
+                WHERE ds2.id = ${loadAlias}.presettlement_link_id
+                  AND ds2.operating_company_id = ${loadAlias}.operating_company_id
+                  AND ds2.voided_at IS NULL
+                  AND ds2.status NOT IN ('void', 'voided', 'cancelled')
+             )),
+         -- 3. Any active line (bookend / fallback)
+         (SELECT sl3.settlement_id
+            FROM driver_finance.settlement_lines sl3
+            JOIN driver_finance.driver_bills db3
+              ON db3.id = sl3.source_driver_bill_id
+             AND db3.load_id = ${loadAlias}.id
+             AND db3.operating_company_id = ${loadAlias}.operating_company_id
+             AND db3.status NOT IN ('void', 'voided') AND db3.voided_at IS NULL
+            JOIN driver_finance.driver_settlements ds3
+              ON ds3.id = sl3.settlement_id
+             AND ds3.operating_company_id = ${loadAlias}.operating_company_id
+             AND ds3.voided_at IS NULL AND ds3.status NOT IN ('void', 'voided', 'cancelled')
+           WHERE sl3.is_active = true AND sl3.voided_at IS NULL
+             AND sl3.operating_company_id = ${loadAlias}.operating_company_id
+           ORDER BY sl3.created_at DESC
+           LIMIT 1)
+       )
+     LIMIT 1
+  ) load_settlement ON true`;
+}
