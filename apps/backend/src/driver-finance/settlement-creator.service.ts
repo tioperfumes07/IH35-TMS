@@ -241,14 +241,23 @@ export async function restateOpenDriverBillToSignedPay(
     emptyMiles: number | null; emptyRateCents: number | null; emptyCents: number;
   },
 ): Promise<void> {
-  const bill = (await client.query<{ id: string; gross: string; driver_id: string; team_driver_id: string | null }>(
+  const readBills = async () => (await client.query<{ id: string; gross: string; driver_id: string; team_driver_id: string | null }>(
     `SELECT id::text, gross_amount_cents::text AS gross, driver_id::text, team_driver_id::text
        FROM driver_finance.driver_bills
       WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND voided_at IS NULL AND status <> 'void'
       ORDER BY created_at DESC`,
     [input.companyId, input.loadId],
   )).rows;
-  if (bill.length !== 1) return;
+  let bill = await readBills();
+  if (bill.length === 0) {
+    const { ensureDriverBillArtifactsForLoad } = await import("../dispatch/book-load.service.js");
+    await ensureDriverBillArtifactsForLoad(client, {
+      loadId: input.loadId, operatingCompanyId: input.companyId, actorUserId: input.actorUserId,
+      signedPay: { shortMiles: input.milesBasis, rateCents: input.rateCents, emptyMiles: input.emptyMiles, settlementNo: input.settlementNo },
+    });
+    bill = await readBills();
+  }
+  if (bill.length !== 1) throw new SettlementCreatorError("driver_bill_missing_or_ambiguous", `Load ${input.loadNumber}: expected exactly one live driver bill after canonical mint; found ${bill.length}.`);
   const b = bill[0]!;
   const signed = input.loadedCents + input.emptyCents;
   if (Number(b.gross) === signed) return;

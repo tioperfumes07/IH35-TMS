@@ -26,13 +26,16 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const SEED = "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts";
 const SVC = "apps/backend/src/driver-finance/settlement-creator.service.ts";
 const ADM = "apps/backend/src/driver-finance/settlement-creator-admission.ts";
+const BOOK = "apps/backend/src/dispatch/book-load.service.ts";
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
 export function check(src = {}) {
   const seed = src.seed ?? read(SEED);
   const svc = src.svc ?? read(SVC);
   const adm = src.adm ?? read(ADM);
+  const book = src.book ?? read(BOOK);
   const f = [];
+  if (!book.includes("load.miles_shortest = pay.shortMiles") || !book.includes("load.driver_pay_rate_per_mile = pay.rateCents / 100") || !book.includes("driver_bill_signed_pay_invalid")) f.push(`${BOOK}: canonical adopted mint must validate and carry signed short miles/rate (8)`);
   if (!/const usmcaSettlementDocument = isAlwaysTrackSettlementNumber\(String\(draft\.settlement_no/.test(adm) || !/!usmcaSettlementDocument && loads\.every\(\(l\) => l\.factoring === "faro_transportation"\)/.test(adm))
     f.push(`${ADM}: a USMCA settlement document with only Transportation loads is refused (5: owner standing ruling 443.167-R2)`);
   const zero = svc.match(/export async function restateAdoptedLoadToZeroRevenue\([\s\S]*?\n}\n/)?.[0] ?? "";
@@ -65,6 +68,7 @@ export function check(src = {}) {
   const restate = svc.match(/export async function restateOpenDriverBillToSignedPay\([\s\S]*?\n}\n/)?.[0] ?? "";
   if (!restate) f.push(`${SVC}: restateOpenDriverBillToSignedPay missing (3)`);
   else {
+    if (!restate.includes("await ensureDriverBillArtifactsForLoad(client, {") || !restate.includes("bill = await readBills()") || !restate.includes("driver_bill_missing_or_ambiguous")) f.push(`${SVC}: missing adopted bill must use canonical mint, re-read and refuse unless exactly one live bill (8)`);
     if (/DELETE\s+FROM/i.test(restate)) f.push(`${SVC}: the restate deletes a money row (3)`);
     if (!/SET status = 'void', voided_at = now\(\)/.test(restate) || !/`\$\{input\.loadNumber\}-R`/.test(restate)) f.push(`${SVC}: the restate must void the bill and mint one -R replacement (3)`);
     if (!/state\.settled \|\| state\.accrued/.test(restate)) f.push(`${SVC}: the restate does not refuse a live-settled or delivery-accrued bill (3)`);
@@ -78,9 +82,13 @@ export function check(src = {}) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const seed = read(SEED), svc = read(SVC), adm = read(ADM);
+  const seed = read(SEED), svc = read(SVC), adm = read(ADM), book = read(BOOK);
   if (check().length) { console.error("SELFTEST FAIL: baseline not clean", check()); process.exit(1); }
   const plants = [
+    ["signed short projection removed", { book: book.replace("load.miles_shortest = pay.shortMiles", "void pay.shortMiles") }],
+    ["signed rate projection removed", { book: book.replace("load.driver_pay_rate_per_mile = pay.rateCents / 100", "void pay.rateCents") }],
+    ["missing bill mint removed", { svc: svc.replace("await ensureDriverBillArtifactsForLoad(client, {", "void ({") }],
+    ["missing bill refusal removed", { svc: svc.replace("driver_bill_missing_or_ambiguous", "silent_missing_bill") }],
     ["early restatement removed", { seed: seed.replace("await restateCreatorDriverBillFromSignedLoad(client, draft, load, loadId, actor.uuid)", "void 0") }],
     ["unfinished leg delivered", { seed: seed.replace("if (!(load.not_yet_delivered !== false && !load.delivery_date))", "if (true)") }],
     ["early delivery removed", { seed: seed.replace("await deliverLoadThroughDispatch(client, actor.uuid", "void (client, actor.uuid") }],
@@ -96,7 +104,7 @@ if (process.argv.includes("--selftest")) {
     ["re-deliver unless edit", { svc: svc.replace('if (!["delivered", "delivered_pending_docs", "invoiced"', 'if (!(draft.edit_void_repost && ["delivered", "delivered_pending_docs", "invoiced"') }],
   ];
   for (const [n, s] of plants) {
-    const same = (s.seed ?? seed) === seed && (s.svc ?? svc) === svc && (s.adm ?? adm) === adm;
+    const same = (s.seed ?? seed) === seed && (s.svc ?? svc) === svc && (s.adm ?? adm) === adm && (s.book ?? book) === book;
     if (same || !check(s).length) { console.error(`SELFTEST FAIL: plant "${n}" ${same ? "did not apply" : "not caught"}`); process.exit(1); }
   }
   console.log(`SELFTEST PASS: ${plants.length} plants caught`);

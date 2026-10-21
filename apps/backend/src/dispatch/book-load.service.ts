@@ -1538,7 +1538,8 @@ export async function createDriverBillArtifacts(
  */
 export async function ensureDriverBillArtifactsForLoad(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
-  input: { loadId: string; operatingCompanyId: string; actorUserId: string }
+  input: { loadId: string; operatingCompanyId: string; actorUserId: string;
+    signedPay?: { shortMiles: number; rateCents: number; emptyMiles: number | null; settlementNo: string } }
 ): Promise<DriverBillMintOutcome> {
   // SETL-45-DRIVER-BILL-MINT-DROPS-PER-LOAD-RATE-OVERRIDE — this SELECT used to omit
   // driver_pay_rate_per_mile. resolveDriverBasePayCents() (below, via createDriverBillArtifacts)
@@ -1572,6 +1573,19 @@ export async function ensureDriverBillArtifactsForLoad(
   );
   const load = loadRes.rows[0];
   if (!load) throw new Error("driver_bill_load_not_found_or_cross_entity");
+  // Historical Creator adoption can precede any driver bill. Price that first mint through
+  // this same writer using the signed pay facts, not today's rate card or customer revenue.
+  if (input.signedPay) {
+    const pay = input.signedPay;
+    if (!Number.isFinite(pay.shortMiles) || pay.shortMiles <= 0 || !Number.isFinite(pay.rateCents) || pay.rateCents <= 0 ||
+        (pay.emptyMiles != null && (!Number.isFinite(pay.emptyMiles) || pay.emptyMiles < 0)) || !pay.settlementNo.trim()) {
+      throw new Error("driver_bill_signed_pay_invalid");
+    }
+    load.miles_shortest = pay.shortMiles;
+    load.miles_deadhead = pay.emptyMiles;
+    load.driver_pay_rate_per_mile = pay.rateCents / 100;
+    load.driver_pay_rate_override_reason = `Signed settlement ${pay.settlementNo}: driver paid $${(pay.rateCents / 100).toFixed(2)}/mi`;
+  }
   if (!load.assigned_primary_driver_id && !load.team_id) return { outcome: "not_applicable" };
 
   const stopsRes = await client.query<BookLoadStop>(

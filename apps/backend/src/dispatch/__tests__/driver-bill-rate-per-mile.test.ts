@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createDriverBillArtifacts, type BookLoadInput } from "../book-load.service.js";
+import { createDriverBillArtifacts, ensureDriverBillArtifactsForLoad, type BookLoadInput } from "../book-load.service.js";
 import type { BookLoadStop } from "../book-load.service.js";
 
 // CC-3 ROOT-CAUSE FINDING (2026-09-05, docs/bus/INBOX-CC-2.md, "book-load.service.ts mints a
@@ -69,6 +69,24 @@ function fakeClient(opts: { rateRow?: Record<string, unknown> | null; teamRow?: 
 const RATE_PER_MILE_CENTS_COL_INDEX = 9; // 0-based position of rate_per_mile_cents in both INSERTs' VALUES list
 
 describe("createDriverBillArtifacts() — rate_per_mile_cents is never a blended total/miles artifact (CC-3 finding)", () => {
+  it("canonical ensure mints signed short-mile pay for an adopted load whose stored miles and rate are null", async () => {
+    const inner = fakeClient({ rateRow: { basis_type: "per_mile_pay", rate_per_mile_cents: "60", rate_empty_per_mile_cents: "60" } });
+    const query = vi.fn(async (sql: string, values: unknown[] = []) => {
+      if (/FROM mdata.loads/.test(sql)) return { rows: [{ id: LOAD_ID, operating_company_id: OPCO, load_number: "synthetic",
+        customer_id: "44444444-4444-4444-8444-444444444444", assigned_primary_driver_id: DRIVER,
+        miles_shortest: null, miles_practical: null, driver_pay_rate_per_mile: null, miles_deadhead: 30.9 }] };
+      if (/SELECT stop_type/.test(sql)) return { rows: [stop(), stop({ stop_type: "delivery", sequence_number: 2 })] };
+      return inner.query(sql, values);
+    });
+    await ensureDriverBillArtifactsForLoad({ query } as never, { loadId: LOAD_ID, operatingCompanyId: OPCO,
+      actorUserId: baseInput().requestingUserUuid, signedPay: { shortMiles: 100, rateCents: 45, emptyMiles: 10, settlementNo: "synthetic" } });
+    expect(inner.inserted).toHaveLength(1);
+    const values = inner.inserted[0]!.values;
+    expect(values[RATE_PER_MILE_CENTS_COL_INDEX]).toBe(45);
+    expect(values[6]).toBe(4950);
+    expect(values[7]).toBe(100);
+    expect(query.mock.calls.find(([sql]) => /FROM mdata.loads/.test(sql))?.[1]).toEqual([LOAD_ID, OPCO]);
+  });
   it("single driver, per_mile_pay: rate_per_mile_cents is the card's real rate, not (loaded+deadhead)/loadedMiles", async () => {
     const client = fakeClient({
       rateRow: {

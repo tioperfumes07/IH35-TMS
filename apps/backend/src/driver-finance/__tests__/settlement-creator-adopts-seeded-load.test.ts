@@ -6,9 +6,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { ensureDispatchedLoadsForCreator, isSeededLoadFreeForThisSettlement } from "../settlement-creator-seed-loads.js";
 import { restateOpenDriverBillToSignedPay } from "../settlement-creator.service.js";
-import { bookLoadOnClient } from "../../dispatch/book-load.service.js";
+import { bookLoadOnClient, ensureDriverBillArtifactsForLoad } from "../../dispatch/book-load.service.js";
 import { deliverLoadThroughDispatch, stampStopsFromTracking } from "../settlement-creator-deliver.js";
-vi.mock("../../dispatch/book-load.service.js", async orig => ({ ...(await orig()), bookLoadOnClient: vi.fn() }));
+vi.mock("../../dispatch/book-load.service.js", async orig => ({ ...(await orig()), bookLoadOnClient: vi.fn(), ensureDriverBillArtifactsForLoad: vi.fn() }));
 vi.mock("../settlement-creator-deliver.js", async orig => ({ ...(await orig()), stampStopsFromTracking: vi.fn(async () => []), deliverLoadThroughDispatch: vi.fn() }));
 vi.mock("../creator-trailer-choice.js", async orig => ({ ...(await orig()), creatorTrailerChoice: vi.fn(async () => ({ kind: "none" })), creatorLoadTrailerEquipmentId: vi.fn(async () => "equipment-type") }));
 
@@ -88,6 +88,23 @@ function client(bill: { gross: string; status?: string; settled?: string | null;
 const base = { companyId: "co", loadId: "load-1", loadNumber: "13655", actorUserId: "u", settlementNo: "5839", milesBasis: 1339.1, rateCents: 45, loadedCents: 60260, emptyMiles: null, emptyRateCents: null, emptyCents: 0 };
 
 describe("restateOpenDriverBillToSignedPay", () => {
+  it("mints a missing adopted bill through the canonical writer using signed facts before continuing (fails old)", async () => {
+    let minted = false;
+    const query = vi.fn(async () => ({ rows: minted ? [{ id: "b", gross: "60260", driver_id: "drv", team_driver_id: null }] : [] }));
+    vi.mocked(ensureDriverBillArtifactsForLoad).mockImplementationOnce(async () => { minted = true; return { outcome: "created" } as never; });
+    const c = { query };
+    await restateOpenDriverBillToSignedPay(c as never, base);
+    expect(ensureDriverBillArtifactsForLoad).toHaveBeenLastCalledWith(c, {
+      loadId: "load-1", operatingCompanyId: "co", actorUserId: "u",
+      signedPay: { shortMiles: 1339.1, rateCents: 45, emptyMiles: null, settlementNo: "5839" },
+    });
+    expect(query).toHaveBeenCalledTimes(2);
+    expect(query.mock.calls.some(([sql]) => /INSERT|UPDATE/.test(String(sql)))).toBe(false);
+  });
+  it("refuses when canonical mint leaves no live bill instead of falsely completing adoption (fails old)", async () => {
+    vi.mocked(ensureDriverBillArtifactsForLoad).mockResolvedValueOnce({ outcome: "already_exists" } as never);
+    await expect(restateOpenDriverBillToSignedPay(client(null) as never, base)).rejects.toThrow("expected exactly one live driver bill");
+  });
   it("voids a proforma bill priced off the seed and mints one -R bill at the signed pay", async () => {
     const c = client({ gross: "60917" });
     await restateOpenDriverBillToSignedPay(c as never, base);
