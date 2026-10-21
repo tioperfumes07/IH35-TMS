@@ -318,9 +318,80 @@ type QueryableClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
+/**
+ * LEAD 443.204 (owner 2026-10-21 15:27 CT: "for the current drivers, it cannot block, we do have the files in person"):
+ * the reasons a paper DQ file answers. For a driver with mdata.drivers.dq_file_on_paper_since (stamped by migration
+ * 202616040700 on every driver that existed then) these are RECORDED (dispatch.driver_dq_file_on_paper), never blocking.
+ * A recorded violation — deactivated / archived / inactive, drug & alcohol, Clearinghouse — is not a paper-file gap and
+ * still blocks. A driver created after the migration has no stamp: the full gate applies.
+ */
+export const DQ_PAPER_FILE_WAIVABLE: ReadonlySet<DriverQualificationReason> = new Set<DriverQualificationReason>([
+  "cdl_missing",
+  "cdl_expired",
+  "medical_card_missing",
+  "medical_card_expired",
+  "hazmat_endorsement_missing",
+  "hos_violation",
+]);
+
+/** Pure: split a gate's reasons for a driver whose DQ file is held on paper. */
+export function splitPaperFileReasons(
+  reasons: DriverQualificationReason[],
+  dqFileOnPaperSince: string | null
+): { blocking: DriverQualificationReason[]; waived: DriverQualificationReason[] } {
+  if (!dqFileOnPaperSince) return { blocking: reasons, waived: [] };
+  return {
+    blocking: reasons.filter((r) => !DQ_PAPER_FILE_WAIVABLE.has(r)),
+    waived: reasons.filter((r) => DQ_PAPER_FILE_WAIVABLE.has(r)),
+  };
+}
+
+/** LEAD 443.204 — the driver's paper-DQ-file stamp (NULL = full gate). Fail-closed: a direct query. */
+export async function driverDqFileOnPaperSince(client: QueryableClient, driverId: string): Promise<string | null> {
+  const r = await client.query<{ since: string | null }>(
+    `SELECT dq_file_on_paper_since::text AS since FROM mdata.drivers WHERE id = $1::uuid`,
+    [driverId]
+  );
+  return r.rows[0]?.since ?? null;
+}
+
+/** LEAD 443.204 — the record a waived paper-file reason leaves (never silent). */
+export async function recordDqFileOnPaper(
+  client: QueryableClient,
+  args: { actorUserId: string; operatingCompanyId: string; driverId: string; driverName: string | null; waived: DriverQualificationReason[]; dqFileOnPaperSince: string; loadId?: string | null; loadNumber?: string | null; via: string }
+): Promise<void> {
+  await appendCrudAudit(
+    client as never,
+    args.actorUserId,
+    "dispatch.driver_dq_file_on_paper",
+    {
+      operating_company_id: args.operatingCompanyId,
+      load_id: args.loadId ?? null,
+      load_number: args.loadNumber ?? null,
+      via: args.via,
+      driver_id: args.driverId,
+      driver_name: args.driverName,
+      waived_reasons: args.waived,
+      dq_file_on_paper_since: args.dqFileOnPaperSince,
+      note: "DQ file held on paper (owner 10-21)",
+    },
+    "warning",
+    "LEAD-443.204"
+  );
+}
+
 export async function assertDriverQualifiedForLoad(
   client: QueryableClient,
-  args: { driverId: string; operatingCompanyId: string; isHazmat: boolean }
+  args: {
+    driverId: string;
+    operatingCompanyId: string;
+    isHazmat: boolean;
+    /** LEAD 443.204: who is assigning — the paper-file record is written with this actor. */
+    actorUserId?: string | null;
+    loadId?: string | null;
+    loadNumber?: string | null;
+    via?: string;
+  }
 ): Promise<DriverQualificationBlock | null> {
   const { driverId, operatingCompanyId, isHazmat } = args;
 
@@ -340,6 +411,7 @@ export async function assertDriverQualifiedForLoad(
     hazmat_endorsement_expires_at: string | null;
     merged_into: string | null;
     merged_into_name: string | null;
+    dq_file_on_paper_since: string | null;
   }>(
     `
       SELECT
@@ -364,7 +436,8 @@ export async function assertDriverQualifiedForLoad(
         (d.endorsement_h IS NOT TRUE
           OR d.hazmat_endorsement_expires_at IS NULL
           OR d.hazmat_endorsement_expires_at < CURRENT_DATE) AS hazmat_blocked,
-        d.hazmat_endorsement_expires_at::text AS hazmat_endorsement_expires_at
+        d.hazmat_endorsement_expires_at::text AS hazmat_endorsement_expires_at,
+        d.dq_file_on_paper_since::text AS dq_file_on_paper_since
       FROM mdata.drivers d
       LEFT JOIN LATERAL (
         SELECT expiry_date
@@ -474,12 +547,25 @@ export async function assertDriverQualifiedForLoad(
   if (chBlock) reasons.push("clearinghouse_prohibited");
   if (hosInViolation) reasons.push("hos_violation");
 
-  if (reasons.length === 0) return null;
+  // LEAD 443.204 — a current driver's paper DQ file answers the paperwork reasons: recorded, never blocking.
+  const { blocking, waived } = splitPaperFileReasons(reasons, dr.dq_file_on_paper_since);
+  if (waived.length > 0 && dr.dq_file_on_paper_since) {
+    // the assigning user: the caller's actor, else the request's session user (every route sets app.current_user_id)
+    const actor = args.actorUserId ?? (await client.query<{ u: string | null }>(
+      `SELECT NULLIF(current_setting('app.current_user_id', true), '') AS u`
+    )).rows[0]?.u ?? null;
+    if (actor) await recordDqFileOnPaper(client, {
+      actorUserId: actor, operatingCompanyId, driverId: dr.id, driverName: dr.driver_name, waived,
+      dqFileOnPaperSince: dr.dq_file_on_paper_since, loadId: args.loadId, loadNumber: args.loadNumber, via: args.via ?? "assign",
+    });
+  }
+
+  if (blocking.length === 0) return null;
 
   return {
     driverId: dr.id,
     driverName: dr.driver_name,
-    reasons,
+    reasons: blocking,
     cdlExpiresAt: dr.cdl_expires_at,
     medicalExpiryDate: dr.med_expiry_date,
     hazmatEndorsementExpiresAt: dr.hazmat_endorsement_expires_at,

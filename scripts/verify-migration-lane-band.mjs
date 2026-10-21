@@ -90,6 +90,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.204 (owner 2026-10-21 15:27 CT: "for the current drivers, it cannot block, we do have the files in person";
+  // owner 2026-10-01 no-handoff): driver DQ file on paper — stamp current drivers. Claimed #(202616040700) in #27079.
+  [
+    "cc-2/443-204-dq-file-on-paper",
+    new Set(["db/migrations/202616040700_driver_dq_file_on_paper.sql"]),
+  ],
   // Lead 443.151 (b) (owner 2026-10-16 ruling option 3; owner 2026-10-01 no-handoff): void-and-reissue keeps the SAME
   // invoice number — the voided row is renamed "<number>-V<n>". Claimed #(202615960910) in #26785.
   [
