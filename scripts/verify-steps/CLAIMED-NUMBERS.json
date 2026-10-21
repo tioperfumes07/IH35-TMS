@@ -16777,5 +16777,15 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-21",
     "purpose": "verify-live-document-predicates-single-source"
+  },
+  "18615": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "verify-fuel-follows-truck-one-resolver"
+  },
+  "18619": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "verify-fuel-load-covers-fill-time"
   }
 }
