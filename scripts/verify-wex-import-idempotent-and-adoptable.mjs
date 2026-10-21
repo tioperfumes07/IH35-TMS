@@ -19,6 +19,9 @@
  *     settlement); and a later Creator WEX line — which prints the STATION's ticket number, not WEX's invoice — adopts
  *     the received fill BY SHAPE (findReceivedCardFillByShape, SHAPE_ADOPTION_CARDS has "wex") in the post AND the
  *     preflight, and refuses it by name when it sits elsewhere (card_fill_already_received). Never a second row.
+ *  7. A receipt booked at exactly what the card charged adopts (dreamlineAdoptionRefused returns false at |diff| <= 1).
+ *     Prod dry run 10-21 20:40Z: the settlements book each WEX receipt at Amt; the 5%-from-retail rule listed 28 of 92
+ *     lines amount_mismatch because the WEX discount runs 6-13% of retail.
  *  6. The route reads the .csv as the provider printed it (csvText: invoice "05661" stays "05661"), and the GENERIC fleet
  *     import refuses a provider-statement file (it would land card-less rows and a second copy of every receipt).
  *
@@ -72,6 +75,10 @@ export function check(files) {
   }
   const wexRun = fnBody(engine, "export async function importWexStatement(");
   if (!/rail:\s*WEX_STATEMENT_RAIL/.test(wexRun)) p.push(`${ENGINE}: importWexStatement does not run the WEX rail`);
+
+  // 7. a receipt at the card charge is the charge
+  const refused = fnBody(engine, "export function dreamlineAdoptionRefused(");
+  if (!/if \(Math\.abs\(diff\) <= 1\) return false;/.test(refused)) p.push(`${ENGINE}: dreamlineAdoptionRefused refuses a receipt booked at exactly the card charge (28 WEX lines amount_mismatch on the 10-21 prod dry run)`);
 
   // 2. by role, per rail, cross-rail never adopted
   const walk = fnBody(engine, "export async function importFuelCardStatement(");
@@ -170,6 +177,7 @@ if (process.argv.includes("--selftest")) {
     ["preflight skips the shape rule", plant(PREFLIGHT, "findReceivedCardFillByShape(client as never, {", "noShape(client as never, {")],
     ["route coerces the csv", plant(ROUTES, "{ cellDates: true, csvText: true }", "{ cellDates: true }")],
     ["route posts by default", plant(ROUTES, 'const dryRun = query.data.dry_run !== "false";\n    await assertCompanyMembership(authUser.uuid, companyId);\n\n    const filePart = await req.file();\n    if (!filePart) return reply.code(400).send({ error: "file_required" });\n    const name', 'const dryRun = query.data.dry_run === "true";\n    await assertCompanyMembership(authUser.uuid, companyId);\n\n    const filePart = await req.file();\n    if (!filePart) return reply.code(400).send({ error: "file_required" });\n    const name')],
+    ["receipt at the charge refused", plant(ENGINE, "if (Math.abs(diff) <= 1) return false;", "")],
     ["generic import takes a statement", plant(ROUTES, "if (isProviderStatementShape(rawRows)) {\n      return reply.code(400)", "if (false) {\n      return reply.code(400)")],
   ];
   let ok = 0;

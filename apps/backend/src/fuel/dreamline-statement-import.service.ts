@@ -536,6 +536,10 @@ export function planDreamlineSameTruckAdoptions(
  */
 export function dreamlineAdoptionRefused(receiptCents: number, line: Pick<DreamlineStatementLine, "gross_cents" | "net_cents">): boolean {
   const diff = receiptCents - line.net_cents;
+  // LEAD 443.202 — a receipt booked at exactly what the card charged IS the card's charge (difference 0, nothing to
+  // post). The 5%-from-retail rule catches a mistyped retail receipt; it must not refuse the charge itself. WEX
+  // settlements book the charged amount, and WEX discounts run 6-13% of retail (28 of 92 lines on the 10-21 file).
+  if (Math.abs(diff) <= 1) return false;
   const residual = receiptCents - line.gross_cents;
   return diff < -RECEIPT_BELOW_CARD_TOLERANCE_CENTS
     || Math.abs(residual) > Math.max(RECEIPT_BELOW_CARD_TOLERANCE_CENTS, MAX_RECEIPT_RESIDUAL_PCT * line.gross_cents / 100);
