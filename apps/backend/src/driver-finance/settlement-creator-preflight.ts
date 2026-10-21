@@ -12,7 +12,8 @@
  */
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
 import { findLiveFuelByProviderTransactionId, fuelPurchaseAlreadyRecordedMessage, providerTransactionId } from "../fuel/fuel-provider-reference.js";
-import { findReceivedCardFillToAdopt } from "./creator-received-fill-adoption.js";
+import { findReceivedCardFillByShape, findReceivedCardFillToAdopt, SHAPE_ADOPTION_CARDS } from "./creator-received-fill-adoption.js";
+import { fuelPurchaseNetAndFeeCents } from "./settlement-creator-fuel-amount.js";
 import { CREATOR_SHORT_MILES_REQUIRED_MESSAGE, findCreatorCustomer } from "./settlement-creator-seed-loads.js";
 import { creatorLoadMiles } from "./settlement-creator-empty-pay.js";
 import { creatorLineLoadNumber } from "./settlement-creator-line-load.js";
@@ -147,6 +148,19 @@ export async function creatorPreflightRefusals(client: Q, draft: SettlementCreat
       if (existing && !draft.edit_void_repost && !adoptable) {
         out.push(`${label}: ${fuelPurchaseAlreadyRecordedMessage(providerTransactionId(f.invoice)!, existing.id, existing.load_number)}`);
       }
+    }
+    // LEAD 443.202 — the same shape rule the post uses: a WEX purchase the England WEX statement already received is
+    // adopted on this line's load, and refused by name when it sits elsewhere (another load, a settlement).
+    if (f.card !== "relay" && SHAPE_ADOPTION_CARDS.has(f.card) && !draft.edit_void_repost) {
+      const lineLoadId = f.load_id
+        ?? (f.load_number?.trim()
+          ? ((await client.query(`SELECT id::text FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL LIMIT 1`, [co, f.load_number.trim()])).rows[0]?.id as string | undefined) ?? null
+          : null);
+      const shape = await findReceivedCardFillByShape(client as never, {
+        operatingCompanyId: co, card: f.card, fuelType: f.fuel_type ?? "diesel", loadId: lineLoadId, unitId: null,
+        date: f.date, amountCents: fuelPurchaseNetAndFeeCents(f).netCents, gallons: f.gallons ?? null,
+      });
+      if (shape.blocking) out.push(`${label}: the ${f.card.toUpperCase()} statement already received this purchase (fuel transaction ${shape.blocking.id}) but ${shape.blocking.reason}.`);
     }
   }
   for (const e of draft.expenses ?? []) {

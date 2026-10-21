@@ -53,7 +53,7 @@ const BOOKED = [
   ["71d18efd", "2026-08-20", "T175", "def", 2459],
 ].map(([id, d, unit, ft, c]) => ({
   expense_id: `exp-${id}`, expense_number: null, d, unit_number: unit, fuel_type: ft, accts: [ft === "def" ? "5010" : "5000"],
-  cents: String(c), rail: "2510", fuel_transaction_id: `ft-${id}`, notes: null,
+  cents: String(c), rail: "card", fuel_transaction_id: `ft-${id}`, notes: null,
 }));
 
 function fakeClient() {

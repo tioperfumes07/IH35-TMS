@@ -44,7 +44,7 @@ function fakeClient() {
     if (sql.includes("FROM catalogs.items")) return { rows: [{ id: "item-1", account_id: "acct-5000" }] };
     if (sql.includes("e.source_fuel_transaction_id::text AS fuel_transaction_id")) {
       return { rows: [{ expense_id: "exp-R", expense_number: "13555-1", d: "2026-08-20", unit_number: "T164", fuel_type: "diesel",
-        accts: ["5000"], cents: "72680", rail: "2510", fuel_transaction_id: "ft-R", notes: null }] };
+        accts: ["5000"], cents: "72680", rail: "card", fuel_transaction_id: "ft-R", notes: null }] };
     }
     if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-diff" }] };
     if (sql.includes("UPDATE fuel.fuel_transactions") && sql.includes("concat_ws")) {
