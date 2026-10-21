@@ -2677,5 +2677,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
     "purpose": "443.134 AJK-13: reports.ifta_filings versions — a re-prepare of an approved / filed quarter is a NEW draft version (version + supersedes_filing_uuid); the unique key becomes (company, quarter, version); a filed / approved filing is never modified"
+  },
+  "202616040700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.204 (owner 10-21 15:27 CT): driver DQ gate — mdata.drivers.dq_file_on_paper_since set for every driver existing at migration time (files held in person); the gate never blocks a flagged driver; new drivers need the full file at create"
   }
 }
