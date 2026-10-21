@@ -590,7 +590,7 @@ async function fetchLedgerCandidates(
   operatingCompanyId: string,
   txnDate: string,
   isCredit: boolean,
-  _bankAccountId: string,
+  bankAccountId: string,
   options: CandidateFilters = {}
 ): Promise<RawLedgerCandidate[]> {
   const results: RawLedgerCandidate[] = [];
@@ -627,7 +627,7 @@ async function fetchLedgerCandidates(
        FROM banking.bank_accounts ba
        LEFT JOIN catalogs.accounts ca ON ca.id = ba.ledger_account_id AND ca.operating_company_id = ba.operating_company_id
       WHERE ba.id = $1::uuid AND ba.operating_company_id = $2::uuid`,
-    [_bankAccountId, operatingCompanyId]
+    [bankAccountId, operatingCompanyId]
   )).rows[0];
   const ledgerId = register?.ledger_id ?? null;
   const onOperatingBank = Boolean(register?.operating);
@@ -669,7 +669,7 @@ async function fetchLedgerCandidates(
                             WHERE cbt.matched_transfer_id = t.id AND cbt.voided_at IS NULL)
          LIMIT $5
       `,
-      [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, isCredit, _bankAccountId, ledgerId ?? ""]
+      [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, isCredit, bankAccountId, ledgerId ?? ""]
     );
     for (const row of transfers.rows) results.push(toCandidate("transfer", row, "vendor"));
   }
@@ -774,7 +774,7 @@ async function fetchLedgerCandidates(
                               WHERE cbt.matched_deposit_id = d.id AND cbt.voided_at IS NULL)
            LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, _bankAccountId]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, bankAccountId]
       );
       for (const row of deposits.rows) results.push(toCandidate("deposit", row, "customer"));
     }
@@ -795,6 +795,18 @@ async function fetchLedgerCandidates(
                AND fp.voided_at IS NULL
                AND fp.factoring_advance_id IS NOT NULL
                AND fp.purchase_date BETWEEN $2::date AND $3::date
+               -- M1 completion 443.M1: scope to THIS bank account via the purchase's JE.
+               -- The Faro wire debits the receiving bank's ledger account; any other operating
+               -- bank has no debit to this ledger and is therefore excluded.
+               -- $6 = ledgerId (the GL account for the bank account being reconciled).
+               AND fp.journal_entry_id IS NOT NULL
+               AND EXISTS (
+                 SELECT 1 FROM accounting.journal_entry_postings jp
+                  WHERE jp.journal_entry_uuid = fp.journal_entry_id
+                    AND jp.account_id = $6::uuid
+                    AND jp.debit_or_credit = 'debit'
+                    AND jp.reversal_of_line_id IS NULL
+               )
                AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions bt
                                 WHERE bt.matched_factoring_advance_id = fp.factoring_advance_id AND bt.voided_at IS NULL)
                AND NOT EXISTS (SELECT 1 FROM banking.reconciliation_matches m
@@ -820,7 +832,7 @@ async function fetchLedgerCandidates(
            WHERE ($4::text IS NULL OR lower(COALESCE(fp.display_id, '') || ' faro purchase ' || COALESCE(v.vendor_name, '')) LIKE $4)
            LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, ledgerId]
       );
       for (const row of purchases.rows) results.push(toCandidate("factoring_advance", row, "vendor"));
     }
@@ -882,7 +894,7 @@ async function fetchLedgerCandidates(
              AND ${RELAY_DEPOSIT_FREE_ON_THIS_ACCOUNT_SQL}
            LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR, _bankAccountId]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR, bankAccountId]
       );
       for (const row of deposits.rows) results.push(toCandidate("relay_deposit", row, "vendor"));
     }
@@ -925,7 +937,7 @@ async function fetchLedgerCandidates(
                                 AND jp.reversal_of_line_id IS NULL))
            LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, _bankAccountId, ledgerId]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, bankAccountId, ledgerId]
       );
       for (const row of billPayments.rows) results.push(toCandidate("bill_payment", row, "vendor"));
     }
@@ -1079,7 +1091,7 @@ async function fetchLedgerCandidates(
              AND ${RELAY_DEPOSIT_FREE_ON_THIS_ACCOUNT_SQL}
            LIMIT $5
         `,
-        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR, _bankAccountId, ledgerId]
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, RELAY_USMCA_DATA_FLOOR, bankAccountId, ledgerId]
       );
       for (const row of funding.rows) results.push(toCandidate("relay_deposit", row, "vendor"));
     }
