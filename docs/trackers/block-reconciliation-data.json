@@ -1,6 +1,6 @@
 {
- "date": "2026-10-20",
- "generated_at_iso": "2026-10-20T18:36:54.757Z",
+ "date": "2026-10-21",
+ "generated_at_iso": "2026-10-21T01:01:52.987Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27051,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-20T18:38:02Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27050,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-10-20T12:43:58Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2-443.73 #6(d): one receipt, one expense — the '<invoice>-<load>' suffix no longer slips a second expense past the fuel writers; AUTH-439 CONSUMED",
    "mergedAt": "2026-10-11T22:29:02Z",
    "branch": "cc-2/443-73-one-receipt-one-expense"
-  },
-  {
-   "number": 26425,
-   "title": "CC-2-443.73 #6(e): fuel guard keys duplicates on the base invoice; a receipt on two documents is shown 'already on load N'",
-   "mergedAt": "2026-10-11T22:23:06Z",
-   "branch": "cc-2/443-73-fuel-guard-base-invoice"
   }
  ],
  "merged_pr_total": 3000,
