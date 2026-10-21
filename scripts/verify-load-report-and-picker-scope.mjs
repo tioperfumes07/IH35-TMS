@@ -18,6 +18,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-load-report-and-picker-scope";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -109,20 +110,15 @@ if (fails.length) {
   console.error(`${LABEL}: FAIL\n  ${fails.join("\n  ")}`);
   process.exit(1);
 }
-if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL}: PASS (static) — report scope + scheduled date + picker scope wired; live check needs DATABASE_URL`);
-  process.exit(0);
-}
 const { register } = await import("tsx/esm/api");
 register();
 const { LOADS_REPORT_SCOPE_SQL } = await import("../apps/backend/src/reports/loads-report.service.ts");
 const { loadPickerScopeSql } = await import("../apps/backend/src/mdata/load-picker-scope.ts");
 const { canonicalDispatchWorkStatusClause } = await import("../apps/backend/src/dispatch/canonical-active-load-set.ts");
-const { default: pg } = await import("pg");
-const c = new pg.Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 15000 });
+// LEAD 22:25Z #6 — fail closed without a live DB (verify-no-silent-db-skip): the live half is the proof, never skipped.
+const { client: c, pool } = await requireLiveDbOrExit({ label: LABEL });
 const NONREAL = `(l.status::text IN ('draft','cancelled','voided') OR l.voided_at IS NOT NULL OR l.is_sample_data OR l.soft_deleted_at IS NOT NULL)`;
 try {
-  await c.connect();
   await c.query("BEGIN READ ONLY");
   await c.query("SET LOCAL app.bypass_rls = 'lucia'");
   const r = (await c.query(
@@ -145,6 +141,7 @@ try {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);
   process.exit(1);
 } finally {
-  await c.end().catch(() => {});
+  c.release();
+  await pool.end().catch(() => {});
 }
 }
