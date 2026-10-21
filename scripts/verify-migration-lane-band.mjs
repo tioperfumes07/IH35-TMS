@@ -90,6 +90,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.209 (21:25Z, moved from Codex chrome-only lane; owner 2026-10-01 no-handoff): unit overlap — same-tour
+  // sequential leg; prod's untracked trigger tracked. Claimed #(202616050700) in #27089.
+  [
+    "cc-2/443-209-tour-overlap",
+    new Set(["db/migrations/202616050700_unit_overlap_trigger_tracked_same_tour_legs.sql"]),
+  ],
   // Lead 443.204 (owner 2026-10-21 15:27 CT: "for the current drivers, it cannot block, we do have the files in person";
   // owner 2026-10-01 no-handoff): driver DQ file on paper — stamp current drivers. Claimed #(202616040700) in #27079.
   [

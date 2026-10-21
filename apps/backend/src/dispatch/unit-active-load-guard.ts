@@ -58,25 +58,57 @@ type QueryableClient = {
  * `excludeLoadId` is the load currently being written (a load keeping its own already-assigned
  * unit is not a conflict with itself).
  */
+/**
+ * LEAD 443.209 (20:32Z ruling, moved from Codex): the next leg of the SAME tour is not an overlap when it picks up after
+ * the prior leg's scheduled delivery. Measured 10-21: 13694 (T148, Avenel NJ pickup 10-20) is the TR leg after 13688
+ * (T148, delivers Swedesboro NJ 10-19, still dispatched in AlwaysTrack) and was refused "unit already active on 13688".
+ * A conflicting load is excused ONLY when it is on this tour (non-null) AND every one of its stops has a scheduled time
+ * AND the latest of those ends at or before this leg's pickup. No stop time on record -> still a conflict (never assumed).
+ * The DB trigger mdata.refuse_overlapping_unit_assignment (migration 202616050700) applies the same rule.
+ */
+export type SameTourNextLeg = { tour_id: string | null | undefined; pickup_at: string | null | undefined };
+
 export async function assertUnitNotActiveOnAnotherLoad(
   client: QueryableClient,
-  input: { operating_company_id: string; unit_id: string | null | undefined; exclude_load_id?: string | null }
+  input: { operating_company_id: string; unit_id: string | null | undefined; exclude_load_id?: string | null; same_tour_next_leg?: SameTourNextLeg | null }
 ): Promise<void> {
   if (!input.unit_id) return;
+  const values: unknown[] = [input.operating_company_id, input.unit_id, ACTIVE_UNIT_STATUSES];
+  let excludeSql = "";
+  if (input.exclude_load_id) {
+    values.push(input.exclude_load_id);
+    excludeSql = `AND l.id <> $${values.length}::uuid`;
+  }
+  let sameTourSql = "";
+  const leg = input.same_tour_next_leg;
+  if (leg?.tour_id && leg.pickup_at) {
+    values.push(leg.tour_id, leg.pickup_at);
+    const t = values.length - 1;
+    sameTourSql = `
+        AND NOT (
+          l.tour_id = $${t}::uuid
+          AND EXISTS (SELECT 1 FROM mdata.load_stops s0 WHERE s0.load_id = l.id)
+          AND NOT EXISTS (
+            SELECT 1 FROM mdata.load_stops s1
+             WHERE s1.load_id = l.id
+               AND COALESCE(s1.appointment_end_at, s1.appointment_start_at, s1.scheduled_arrival_at) IS NULL
+          )
+          AND (SELECT max(COALESCE(s2.appointment_end_at, s2.appointment_start_at, s2.scheduled_arrival_at))
+                 FROM mdata.load_stops s2 WHERE s2.load_id = l.id) <= $${t + 1}::timestamptz
+        )`;
+  }
   const res = await client.query<{ id: string; load_number: string | null }>(
     `
-      SELECT id, load_number
-      FROM mdata.loads
-      WHERE operating_company_id = $1::uuid
-        AND assigned_unit_id = $2::uuid
-        AND soft_deleted_at IS NULL
-        AND status = ANY($3::mdata.load_status_enum[])
-        ${input.exclude_load_id ? "AND id <> $4::uuid" : ""}
+      SELECT l.id, l.load_number
+      FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid
+        AND l.assigned_unit_id = $2::uuid
+        AND l.soft_deleted_at IS NULL
+        AND l.status = ANY($3::mdata.load_status_enum[])
+        ${excludeSql}${sameTourSql}
       LIMIT 1
     `,
-    input.exclude_load_id
-      ? [input.operating_company_id, input.unit_id, ACTIVE_UNIT_STATUSES, input.exclude_load_id]
-      : [input.operating_company_id, input.unit_id, ACTIVE_UNIT_STATUSES]
+    values
   );
   const conflict = res.rows[0];
   if (conflict) {
