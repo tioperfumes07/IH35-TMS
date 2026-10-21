@@ -2687,5 +2687,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
     "purpose": "443.209 (Lead 21:25Z, moved from Codex): unit overlap — same tour + prior leg delivered-by-schedule before this leg's pickup is not an overlap; tracks mdata.refuse_overlapping_unit_assignment in migrations; fresh-DB uq_loads_one_active_unit parity with prod"
+  },
+  "202616060700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.208R (Lead 22:58Z): one load-change signal — AFTER INSERT/UPDATE/DELETE triggers pg_notify('load_changed', {company_id, load_ids, table, op}) on mdata.loads, load_stops, driver_settlements (+lines), driver_bills, invoices, load_cancellations and load-linked expense/bill/fuel rows"
   }
 }
