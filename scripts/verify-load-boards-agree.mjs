@@ -308,7 +308,37 @@ async function main() {
     await tryRead("Driver Hub", () => readDriverHub(client, USMCA));
     await tryRead("Overview OPEN LOADS", () => getOpenLoadsBreakdown(client, USMCA));
 
-    const realFailures = [...executeFailures];
+    // LEAD 23:45Z parity — the four disagreements the owner's harness found, measured on the REAL readers.
+    const parity = [];
+    const { loadPlannerWeekOnClient } = await import("../apps/backend/src/dispatch/planner.service.ts");
+    const { getFleetSchedule } = await import("../apps/backend/src/safety/driver-scheduler.service.ts");
+    const { getLivePositionsForActiveLoads } = await import("../apps/backend/src/integrations/samsara/positions/live-position.service.ts");
+    const { loadServiceTrailerNumberSql } = await import("../apps/backend/src/dispatch/load-service.ts");
+    const boardRows = (await (async () => { await client.query("BEGIN READ ONLY"); await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+      const r = (await client.query(`SELECT l.id::text id, l.load_number, l.assigned_primary_driver_id::text driver_id, l.assigned_unit_id::text unit_id, l.trailer_source,
+          ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number
+        FROM mdata.loads l LEFT JOIN LATERAL (SELECT eq.equipment_number FROM dispatch.load_assignment_history lah JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+          WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL ORDER BY lah.assigned_at DESC LIMIT 1) tr ON true
+        WHERE l.id = ANY($1::uuid[])`, [[...serviceIds]])).rows; await client.query("ROLLBACK"); return r; })());
+    const today = new Date().toISOString().slice(0, 10);
+    await tryRead("Planner week", async () => {
+      const wk = await loadPlannerWeekOnClient(client, USMCA, "2000-01-01", "2100-01-01", "2000-01-01T00:00:00Z", "2100-01-01T00:00:00Z");
+      const rosterIds = new Set(wk.drivers.map((d) => d.id));
+      for (const r of boardRows) if (r.driver_id && wk.loads.some((x) => x.id === r.id) && !rosterIds.has(r.driver_id)) parity.push(`Planner: load ${r.load_number}'s driver is not on the planner roster (driver shows null)`);
+    });
+    await tryRead("Fleet schedule (Driver Hub scheduler)", async () => {
+      const fs = await getFleetSchedule(client, { operatingCompanyId: USMCA, startDate: today, endDate: today });
+      const busy = new Set(boardRows.map((r) => r.unit_id).filter(Boolean));
+      for (const u of fs.vacant_units) if (busy.has(u.unit_id)) parity.push(`Driver Hub scheduler lists working truck ${u.unit_number} as vacant`);
+    });
+    await tryRead("Live map", async () => {
+      const pos = await getLivePositionsForActiveLoads(client, USMCA);
+      for (const p of pos) if (!("driver_id" in p)) { parity.push("Live map rows carry no driver"); break; }
+      for (const p of pos) { const b = boardRows.find((r) => r.id === p.load_uuid); if (b?.driver_id && p.driver_id !== b.driver_id) parity.push(`Live map driver for load ${b.load_number} ≠ the load's driver`); }
+    });
+    for (const r of boardRows) if (r.trailer_source === "customer" && !r.trailer_number) parity.push(`load ${r.load_number}: customer trailer missing from the board projection`);
+
+    const realFailures = [...executeFailures, ...parity];
     const sDrift = [...[...serviceIds].filter((x) => !boardIds.has(x)), ...[...boardIds].filter((x) => !serviceIds.has(x))];
     if (sDrift.length) realFailures.push(`load service open_dispatch ≠ board set: ${sDrift.length}`);
     const hubMissing = [...onLoadDrivers].filter((x) => !hubOnLoad.has(x));
@@ -355,7 +385,7 @@ async function main() {
     console.log(
       `${LABEL}: PASS — Load Costs agrees with the accounting canonical (${canonicalSet.size} loads); ` +
         `List/Kanban/Round Trips, Trip Pairing and Truck Line all agree with the dispatch-work canonical (${dispatchWorkSet.size} loads); ` +
-        `executed ${executed.length} readers (${executed.join(", ")}); real functions: load service ${serviceIds.size}, Trip Pairing ${tpIds.size} legs, Overview OPEN LOADS ${breakdown.total}, ON LOAD ${onLoad}, Driver Hub on-load ${hubOnLoad.size}.`
+        `executed ${executed.length} readers (${executed.join(", ")}); parity 0 (planner drivers, scheduler vacancy, live-map driver, customer trailers); real functions: load service ${serviceIds.size}, Trip Pairing ${tpIds.size} legs, Overview OPEN LOADS ${breakdown.total}, ON LOAD ${onLoad}, Driver Hub on-load ${hubOnLoad.size}.`
     );
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

@@ -47,7 +47,7 @@ import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countInTransitDispatchLoads } from "./active-loads-count.js";
 import { canonicalBoardUnitGateSql, canonicalDispatchWorkStatusClause, canonicalDispatchWorkWhereClause, canonicalRealLoadRowClause, countCanonicalDispatchWorkLoads } from "./canonical-active-load-set.js";
-import { loadServiceDriverNameSql, loadServiceDriverShortLabelSql, loadServiceMembershipSql } from "./load-service.js";
+import { loadServiceDriverNameSql, loadServiceDriverShortLabelSql, loadServiceMembershipSql, loadServiceTrailerNumberSql } from "./load-service.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -1106,7 +1106,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- resolver already used by invoices.routes.ts and cancellations-report.routes.ts.
             COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
             u.unit_number,
-            tr.equipment_number AS trailer_number,
+            -- LEAD 23:45Z parity — the one projection: the trailer follows the load's trailer choice (customer trailers too).
+            ${loadServiceTrailerNumberSql("ml", "tr")} AS trailer_number,
             tr.equipment_type AS trailer_equipment_type,
             ${loadServiceDriverShortLabelSql("l", "d")} AS driver_short_name,
             -- LEAD 443.206R item 4 (C1): the full name, one projection — never overwritten by the short label.
