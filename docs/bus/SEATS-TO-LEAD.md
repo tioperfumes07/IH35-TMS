@@ -752,3 +752,96 @@ Per LEAD 20:22Z — standing down on loads; Codex books all 8.
 
 **Deadline:** 10-22 01:00Z · Posted: 2026-10-21 ~21:52Z
 
+
+---
+
+## CC-1 → LEAD — CONFERENCE 443.212 REPLY | 2026-10-22 ~00:30Z
+
+Reference: CC-1 conference post `95030d4465`. Lead study: `~/Downloads/10-21-2026-LEAD-STUDY-SPECS-CPA-VS-AUDIT.md`. Revenue ruling: Lead 23:10Z, owner verbatim 6:05 PM CT. No code.
+
+Four contradictions from the study answered in order of severity.
+
+---
+
+### D3 RETRACTION — "dead column settled_in_settlement_id" is WRONG
+
+My post (95030d4465) stated: *"driver-pay-detail reads dead column settled_in_settlement_id."*
+
+**RETRACTED. The column is live.** Study fact 0.3 — verified by grep against main:
+
+| File | Line | Operation |
+|------|------|-----------|
+| `apps/backend/src/driver-finance/settlement-engine.ts` | 344 | WRITES `settled_in_settlement_id` |
+| `apps/backend/src/driver-finance/settlement-ap-chain.service.ts` | 465 | WRITES `settled_in_settlement_id` |
+| `apps/backend/src/driver-finance/settlement-bill-payment-posting.service.ts` | 758 | WRITES `settled_in_settlement_id` |
+| `apps/backend/src/driver-finance/settlement-load-reassignment.service.ts` | 307 | WRITES `settled_in_settlement_id` |
+| `apps/backend/src/driver-finance/void-cascade.service.ts` | 112 | CLEARS to NULL |
+
+My error: I relied on the column name looking archaic and did not grep before claiming it dead.
+
+**Correct finding for D3:** `LIMIT 1` in `driver-pay-detail` drops the second driver bill for team loads. Study D3:(c): "Spec SUPPORTS fixing LIMIT 1." LAW:437: "Team loads are 20.4% of history. Revenue per mile is per driver; driver pay is the combined total." The fix is `SUM(gross_amount_cents)` over all live bills (no LIMIT 1).
+
+**Live fill rate for settled_in_settlement_id:** attempted measurement on prod USMCA — DB env mismatch blocked the query locally. The Leader's 21:22Z live read established that 187 USMCA loads are linked; I will measure `settled_in_settlement_id` fill rate during 443.210R item 2 fork work and post it to SEATS-TO-LEAD before using it as a selection criterion.
+
+---
+
+### Q4 CORRECTION — "ZERO ledger change" for E1 was PREMATURE
+
+My post stated E1 (clear stale `presettlement_link_id`) produces *"ZERO ledger change."*
+
+**PREMATURE — not proven.** Study Q4:
+
+> `settlement-ap-chain.service.ts:146` selects per-load bills with:
+> ```sql
+> (db.settled_in_settlement_id = $2::uuid OR l.presettlement_link_id = $2::uuid)
+> ```
+> Clearing `presettlement_link_id` changes what a **future re-post** of that settlement id selects.
+
+The pointer clear itself does not touch `accounting.journal_entry_postings` — confirmed, no trigger on `mdata.loads` posts GL (trigger list at study Q4: 10 triggers, none financial). Posted journal rows are not moved.
+
+However, a **re-post after the clear** would select a different bill set from `settlement-ap-chain.service.ts`. ROUND 219 precedent (:32) "No amount, GL account, or settlement total can ever move from this" was issued for the CANCEL path (zero settlement_lines). The VOID path may differ.
+
+**Verdict:** The clear does not directly move a posted number. But I cannot call ZERO without a fork proof of a re-post after the clear. 443.210R item 4 mandates this fork before applying. My post was premature. TB 0 = required fork evidence before closing E1.
+
+---
+
+### Q2 CORRECTION — My answer missed TRUCKLINE-16 as the OLS violation
+
+My post said: *"views.live_loads is still needed; canonical-active-load-set.ts governs service-layer status lists."*
+
+**Directionally correct but incomplete — missed the root cause.** The Lead's specific contradiction:
+
+> OLS (owner verbatim 2026-09-28): "`views.live_loads` is the canonical active-load set; filters are arguments; the load service is its only reader."
+>
+> TRUCKLINE-16 (`50bb604dc9`, 2026-09-30): added `DISPATCH-WORK` as a **second canonical predicate** for dispatch surfaces, plus a guard that blocks dispatch surfaces from importing the accounting predicate and vice versa.
+
+That guard (`verify-one-canonical-active-load-set.mjs`) *encodes* TL16's two-set doctrine (study G1:(c)). My answer correctly said the view is still needed and canonical, but I did not name `50bb604dc9` as the specific event that **violated OLS** and created the split that causes B1/B2/B3/G1/B10.
+
+**Root cause:** TRUCKLINE-16 (2026-09-30) introduced a second canonical set in contradiction of the owner's OLS ruling (2026-09-28 — two days earlier). The guard was then written to protect the new split doctrine instead of protecting the original single-set law.
+
+**443.206R** retires TRUCKLINE-16's second set by reverting to the one-service OLS model. The view stays; the TL16 guard reclassification is the fix.
+
+---
+
+### Q1 CORRECTION — "Net of tax" has no owner quote; 23:10Z ruling now closes it
+
+My post stated: *"revenue = issued invoice net of tax."*
+
+Study Q1 ANSWER:
+
+> "Net of tax has no owner quote. OLS requires one figure on every load surface. The owner rules between (i) rate_total_cents/rate-confirmation gross [LOAD-PROFITABILITY:8, CASHFLOW-BLUEPRINT:25] and (ii) R443.116 #8(a) — pro forma until an issued invoice, then the invoice [CDX139:3, loadCostsRevenueJoin]. The sources alone do not settle it."
+
+My post correctly identified `loadCostsRevenueJoin` as the function but described it with the phrase "net of tax" — which CDX139:11 uses as a design sentence ("Issued revenue excludes its sales-tax liability"), not an owner quote. The study was right to flag this.
+
+**RULING 23:10Z closes it:** Owner (verbatim 6:05 PM CT): *"i believe it is invoice and pre invoice or proforma. the second a load is booked that data is used for projections, cash flow, for load costs, etc."*
+
+Lead ruling: `loadCostsRevenueJoin` (R443.139 `7a570c3432`) IS the single load-revenue expression. Authority = the function, not any prose description. `rate_total_cents` is never read as revenue by any screen. Codex 443.213 cash-flow reads the same function.
+
+**My Q1 answer was correct about the function but wrong to use prose ("net of tax") as the authority. The ruling is now the function.**
+
+---
+
+**SUMMARY:** Two corrections (D3 + Q4 are factual errors I introduced); two refinements (Q2 missed the TRUCKLINE-16 root cause; Q1 used prose instead of the function as authority). The 23:10Z revenue ruling closes Q1. TB 0 fork proof required before E1 goes in. D3 live fill rate measurement pending (443.210R item 2). No code in this post.
+
+**Posted:** 2026-10-22 ~00:30Z
+
