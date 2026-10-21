@@ -19,6 +19,8 @@
  *   RULE 6 — LEAD 443.203 (20:22Z, ruling #3): the load-holder stamp names a settlement only when it PRINTED the fill — its own
  *            posted audit (settlement_creator.posted) names the document (expense_ids) or a fuel row of the fill
  *            (fuel_transaction_ids). Before, it named any single live holder of the load (unprinted T170 fills -> 5846).
+ *   RULE 7 — LEAD 22:25Z #1 (root of the 23 receipts): the only backfill (backfillRelayFillSettlementRefs) goes through the
+ *            printed-by stamp, and the 443.51 backfill script runs it — it never selects "the settlement holding the load".
  * LIVE (read-only, USMCA): Relay-fill documents with settlement_no NULL whose load is held by exactly ONE live settlement that
  *   posted the document (its settlement_creator.posted expense_ids — ruling 443.203 #3: unprinted fills on a held load are not it)
  *   <= CEILING (shrink-only; lowered to 0 when AUTH-425 is applied); and (RULE 5) Relay-fill documents whose settlement
@@ -55,6 +57,12 @@ export function check(creator, doc) {
   if (!/a\.event_class = 'driver_finance\.settlement_creator\.posted' AND a\.payload->>'resource_id' = s\.id::text/.test(stamp6)
       || !/a\.payload->'expense_ids' \? doc\.id::text/.test(stamp6) || !/a\.payload->'fuel_transaction_ids' \?\| ARRAY\(SELECT id FROM fill_rows\)/.test(stamp6))
     f.push(`RULE 6 ${DOC}: the load-holder stamp must name only a settlement that printed the fill (its posted expense_ids / fuel_transaction_ids — ruling 443.203 #3)`);
+  const BACKFILL = "scripts/ops/2026-10-11-cc2-443-51-relay-fill-expense-settlement-ref.ts";
+  const bf = doc.slice(doc.indexOf("export async function backfillRelayFillSettlementRefs("), doc.indexOf("export async function adoptRelayFillExpenseDocument("));
+  if (!/await stampReceiptDocumentSettlementRef\(client, \{/.test(bf)) f.push(`RULE 7 ${DOC}: backfillRelayFillSettlementRefs must name a settlement only through the printed-by stamp`);
+  const script = readOpt(BACKFILL);
+  if (script !== null && (!/await backfillRelayFillSettlementRefs\(client as never/.test(script) || /driver_settlement_gl_bills|fillRelayFillExpenseSettlementRef\(/.test(script)))
+    f.push(`RULE 7 ${BACKFILL}: the 443.51 backfill must run backfillRelayFillSettlementRefs, never pick the settlement holding the load`);
   const holds = doc.slice(doc.indexOf("async function settlementRefHoldsLoad("), doc.indexOf("export async function stampReceiptDocumentSettlementRef("));
   if (!/s\.voided_at IS NULL AND s\.status <> 'cancelled'/.test(holds) || !/settlement_lines sl WHERE sl\.load_id = \$3::uuid/.test(holds) || !/driver_settlement_gl_bills/.test(holds))
     f.push(`RULE 5 ${DOC}: the live-holder test must use the live check's settlement predicate (live, gl_bills or lines by load)`);
@@ -81,6 +89,7 @@ export const judge = (n, stale = 0, unprinted = 0) => [
 ];
 
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+function readOpt(rel) { try { return fs.readFileSync(path.join(ROOT, rel), "utf8"); } catch { return null; } }
 if (process.argv.includes("--selftest")) {
   const c = read(CREATOR), d = read(DOC);
   const cases = [
@@ -91,6 +100,7 @@ if (process.argv.includes("--selftest")) {
     ["a coalesce-only fill (stale reference kept) fails", check(c, d.replace("const restampNo = await stale(cur.settlement_no)", "const restampNo = false")).some((x) => x.startsWith("RULE 5"))],
     ["a restamp without the old reference in the audit fails", check(c, d.replace("old_settlement_no: cur.settlement_no", "x: 1")).some((x) => x.startsWith("RULE 5"))],
     ["a holder test that counts a cancelled settlement fails", check(c, d.replace("s.voided_at IS NULL AND s.status <> 'cancelled'\n          AND (COALESCE", "s.voided_at IS NULL\n          AND (COALESCE")).some((x) => x.startsWith("RULE 5"))],
+    ["a backfill that names the load holder fails", check(c, d.replace("const ref = await stampReceiptDocumentSettlementRef(client, {", "const ref = await holderOf(client, {")).some((x) => x.startsWith("RULE 7"))],
     ["a restamp inferred without the carrying settlement fails", check(c, d.replace("input.restamp_stale === true && ref !== null", "ref !== null")).some((x) => x.startsWith("RULE 5"))],
     ["a load-holder stamp that restamps fails", check(c, d.replace("settlement_no: row.ref, actor_user_uuid: input.actor_user_uuid ?? null });", "settlement_no: row.ref, actor_user_uuid: input.actor_user_uuid ?? null, restamp_stale: true });")).some((x) => x.startsWith("RULE 5"))],
     ["a Creator that never re-names after the carry fails", check(c.replace(/(\/\/ LEAD 443\.203[\s\S]*?)await fillRelayFillExpenseSettlementRef\(client as never, \{/, "$1void ({"), d).some((x) => x.startsWith("RULE 5"))],
