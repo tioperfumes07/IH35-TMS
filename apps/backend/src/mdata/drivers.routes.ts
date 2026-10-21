@@ -483,6 +483,15 @@ export interface CreateDriverCanonicalOptions {
   provisionSubAccounts?: boolean;
 }
 
+/** LEAD 443.204 — pure: the DQ-file credentials a NEW driver's create must carry (owner 10-21: "create with the entire file"). */
+export function newDriverDqFileMissing(b: { cdl_number?: string | null; cdl_expires_at?: string | null; dot_medical_expires_at?: string | null }): Array<{ code: string; label: string }> {
+  const missing: Array<{ code: string; label: string }> = [];
+  if (!b.cdl_number?.trim()) missing.push({ code: "cdl_number", label: "CDL number" });
+  if (!b.cdl_expires_at) missing.push({ code: "cdl_expires_at", label: "CDL expiration date" });
+  if (!b.dot_medical_expires_at) missing.push({ code: "dot_medical_expires_at", label: "DOT medical card expiration date" });
+  return missing;
+}
+
 /**
  * DRIVER-1 (single canonical driver-create code path).
  *
@@ -888,6 +897,16 @@ export async function createDriverCanonical(
       // hard_block (med_cert/mvr/clearinghouse/driver_application/w9) fails closed with a named
       // reason rather than silently passing, since their records don't exist until after the
       // driver row does; that two-phase gap is real and reported, not hidden.
+      // LEAD 443.204 (owner 2026-10-21 15:27 CT: "for new drivers starting today we must create with the entire file"):
+      // a driver created from today carries no dq_file_on_paper_since, so the dispatch gate needs the file in the app.
+      // The office hire flow refuses a create without the credentials this payload can carry (CDL number + expiry, DOT
+      // medical expiry); the scans / MVR / application attach after the row exists, and until they do the shared
+      // dispatch gate keeps the new driver off loads (no paper-file stamp — migration 202616040700 stamps only drivers
+      // that existed then).
+      if (b.operating_company_id) {
+        const dqMissing = newDriverDqFileMissing(b);
+        if (dqMissing.length > 0) return { error: "driver_dq_file_required" as const, missing: dqMissing };
+      }
       if (b.operating_company_id) {
         const hardBlockRes = await client.query<{ code: string; label: string }>(
           `SELECT code, label
@@ -1310,6 +1329,16 @@ export async function createDriverCanonical(
       if (created.error === "prior_driver_not_most_recent_in_chain")
         return { status: 409, body: { error: "prior_driver_not_most_recent_in_chain" } };
       if (created.error === "override_required_for_rehire") return { status: 400, body: { error: "override_required_for_rehire" } };
+      if (created.error === "driver_dq_file_required") {
+        return {
+          status: 422,
+          body: {
+            error: "driver_dq_file_required",
+            message: `A new driver is created with the full DQ file (owner 10-21). Missing: ${(created.missing as Array<{ code: string; label: string }>).map((m) => m.label).join(", ")}.`,
+            missing: created.missing,
+          },
+        };
+      }
       if (created.error === "driver_dqf_required_document_missing") {
         return {
           status: 409,

@@ -8845,6 +8845,7 @@
       "deactivated_at",
       "default_expense_account_id",
       "dot_medical_expires_at",
+      "dq_file_on_paper_since",
       "driver_employment_status_id",
       "email",
       "emergency_contact_address",

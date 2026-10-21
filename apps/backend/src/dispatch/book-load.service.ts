@@ -23,7 +23,7 @@ import {
 } from "../driver-finance/settlement-engine.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
-import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
+import { assertDriverQualifiedForLoad, driverDqFileOnPaperSince, recordDqFileOnPaper } from "./driver-qualification.service.js";
 import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import {
@@ -2544,7 +2544,15 @@ export async function createLoadWithFullSideEffects(
           },
         };
       }
-      if (hos?.is_in_violation) {
+      // LEAD 443.204 — a current driver (DQ file held on paper, owner 10-21) is never blocked on HOS: recorded instead.
+      const hosPaperSince = hos?.is_in_violation ? await driverDqFileOnPaperSince(client, String(hos.id)) : null;
+      if (hos?.is_in_violation && hosPaperSince) {
+        await recordDqFileOnPaper(client, {
+          actorUserId: input.requestingUserUuid, operatingCompanyId: input.operating_company_id, driverId: String(hos.id),
+          driverName: (hos.full_name as string | null) ?? null, waived: ["hos_violation"], dqFileOnPaperSince: hosPaperSince,
+          loadNumber: input.live_load_number ?? null, via: "book_load",
+        });
+      } else if (hos?.is_in_violation) {
         // FEED PARITY: a driver's CURRENT HOS clock says nothing about whether they were in
         // violation at the time a historical_backfill's load actually ran -- record, don't block.
         let bypassedAsHistoricalBackfillException = false;
@@ -2743,6 +2751,9 @@ export async function createLoadWithFullSideEffects(
           driverId: gatedDriverId,
           operatingCompanyId: input.operating_company_id,
           isHazmat: isHazmatLoad,
+          actorUserId: input.requestingUserUuid,
+          loadNumber: input.live_load_number ?? null,
+          via: "book_load",
         });
         if (block) {
           // FEED PARITY: a historical_backfill's driver-qualification snapshot is CURRENT-state
