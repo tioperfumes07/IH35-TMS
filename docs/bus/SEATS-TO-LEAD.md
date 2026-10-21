@@ -490,3 +490,18 @@ WEX bills as batch ACH settlements, not per-fill bank lines. The individual $294
 
 **WEX confirmed as payer.** No data contradicts the lead ruling. Settlement 5847 ticket = WEX card #77615. The $294.97 Love's Laredo fill is inside the Oct 13 WEX ACH batch to USMCA. No other payer found in any table (Relay, banking individual lines, advances, expenses, fuel.fuel_transactions).
 
+
+---
+
+## CC-1 443.201 MERGE PROOF — 2026-10-21 ~16:56 UTC
+
+**PR #27061 MERGED** — `Claude-1-443.201 relay ingest overlap 3→7 + guard + fail-old test`
+
+- **Merge SHA:** `45a1547f132673ada022bbfe24b0b53d6e4041bf`
+- **Branch:** `cc-1/443-201-relay-ingest-lookback` → `main` (squash, branch deleted)
+- **Inherited reds proven:** `build-typecheck-heavy` fail = `202616030100_england_wex_fuel_card_rail.sql` migration failure (same on PR #27065 which merged at 16:42Z — identical on clean main)
+- **Guard selftest:** `[verify-relay-ingest-lookback] --selftest PASS (3/3 mutations caught)` — overlap=3, overlap=6, constant-removed all caught
+- **`RELAY_INGEST_OVERLAP_DAYS` on main:** 7 (was 3)
+- **Claim PR:** #27058 `dbf60842`
+- **Step:** 18597
+
