@@ -61,6 +61,9 @@ export const BOARD_FILES = {
   dispatcherHome: "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts",
   // LEAD 443.235 / B9 — sidebar draft badge uses this list; must match isDraftLoad.
   drafts: "apps/backend/src/dispatch/quick-assign.service.ts",
+  // LEAD 443.249 — the Truck / Driver / Loads / Timeline planners (FE hook) and the load list reader they call.
+  plannerBars: "apps/frontend/src/pages/dispatch/planners/planner-bars.ts",
+  mdataLoads: "apps/backend/src/mdata/loads.routes.ts",
 };
 export function staticFailures(src) {
   const f = [];
@@ -107,6 +110,12 @@ export function staticFailures(src) {
     ban(k, /ORDER BY [a-z_.]+\.(?:created_at|assigned_at) DESC LIMIT 1\)[^\n]*new_driver_id|new_driver_id[^\n]*ORDER BY [a-z_.]+\.(?:created_at|assigned_at) DESC/, "reads a board driver from the latest assignment-history row (driver comes from mdata.loads)");
   // 443.206 — assignment-history readers: a later trailer-only row (no driver, no unit) is not a reassignment, and a
   // merged-away driver record counts as its survivor (Home hop.assign probe: 23 -> 134 on prod, = its ceiling).
+  // LEAD 443.249 — the planners show THE board set (board_scope live, no date filter) and keep the loads whose span overlaps
+  // the range; the load list's stop time is the appointment, then the scheduled arrival (the load service's rule).
+  need("plannerBars", /const board = await listAllLoads\(\{ operating_company_id: \[operatingCompanyId\], board_scope: "live" \}\);/, "the planners read THE board set (board_scope live, no date filter)");
+  need("plannerBars", /\.filter\(\(load\) => plannerLoadInRange\(load, rangeStart, rangeEnd\)\)/, "the planners keep the board loads whose span OVERLAPS the range");
+  ban("plannerBars", /pickup_date_from|delivery_date_from/, "the planners filter by pickup / delivery date (a load spanning the range drops out)");
+  need("mdataLoads", /SELECT city, COALESCE\(appointment_start_at, scheduled_arrival_at\) AS scheduled_arrival_at/, "the load list's stop time is appointment, then scheduled arrival");
   need("scenarios", /AND \(later\.new_driver_id IS NOT NULL OR later\.new_unit_id IS NOT NULL\)/, "hop.assign treats a trailer-only history row as a reassignment");
   need("scenarios", /COALESCE\(hd\.merged_into_driver_id, h\.new_driver_id\) = l\.assigned_primary_driver_id/, "hop.assign compares a merged-away driver record, not its survivor");
   return f;
@@ -193,6 +202,9 @@ async function selftest() {
     ["scenario counts trailer-only rows", "scenarios", (x) => x.replace("AND (later.new_driver_id IS NOT NULL OR later.new_unit_id IS NOT NULL)", "")],
     ["driver from latest history", "tripPairing", (x) => x + "\nconst q = `SELECT h.new_driver_id FROM dispatch.load_assignment_history h ORDER BY h.created_at DESC LIMIT 1`;"],
     ["available back to driver-centric CTE", "truckLine", (x) => x.replace("FROM mdata.units u", "FROM qualifying q")],
+    ["planners back on date-filtered reads", "plannerBars", (x) => x.replace('board_scope: "live" });', 'board_scope: "live", pickup_date_from: rangeStart });')],
+    ["planners drop the overlap rule", "plannerBars", (x) => x.replace(".filter((load) => plannerLoadInRange(load, rangeStart, rangeEnd))", "")],
+    ["load list stop time back to scheduled only", "mdataLoads", (x) => x.replaceAll("SELECT city, COALESCE(appointment_start_at, scheduled_arrival_at) AS scheduled_arrival_at", "SELECT city, scheduled_arrival_at")],
     ["units-without-load drops UNIT_IN_SERVICE_SQL", "dispatchLoads", (x) => x.replace("WHERE ${UNIT_IN_SERVICE_SQL}", "WHERE true")],
   ];
   for (const [name, k, mut] of plants) {

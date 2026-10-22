@@ -16,30 +16,36 @@ export function barKind(tripType: string | null | undefined): PlannerBarKind {
   return "tr";
 }
 
+/** Pure: the load's planned span (pickup → delivery, YYYY-MM-DD); a missing end is the start. */
+export function plannerLoadSpan(load: Pick<DispatchLoadRow, "pickup_scheduled_at" | "delivery_scheduled_at" | "scheduled_delivery_date">): { start: string | null; end: string | null } {
+  const ymd = (v: string | null | undefined) => (v ? String(v).slice(0, 10) : null);
+  const start = ymd(load.pickup_scheduled_at) ?? ymd(load.delivery_scheduled_at ?? load.scheduled_delivery_date);
+  const end = ymd(load.delivery_scheduled_at ?? load.scheduled_delivery_date) ?? start;
+  return { start, end };
+}
+
+/** Pure: LEAD 443.249 — a board load belongs on the planner when its span OVERLAPS the range (a load picked up before the
+ *  range and delivered after it, or one with no planned date at all, is still on the truck — never dropped). */
+export function plannerLoadInRange(load: Pick<DispatchLoadRow, "pickup_scheduled_at" | "delivery_scheduled_at" | "scheduled_delivery_date">, rangeStart: string, rangeEnd: string): boolean {
+  const { start, end } = plannerLoadSpan(load);
+  if (!start || !end) return true;
+  return start <= rangeEnd && end >= rangeStart;
+}
+
 export function usePlannerLoads(operatingCompanyId: string, rangeStart: string, rangeEnd: string) {
   return useQuery({
     // LEAD 443.206 D1 — distinct from LoadsPlanner's week-events key (different row shape), same prefix.
     queryKey: ["dispatch", "planners", "loads", "rows", operatingCompanyId, rangeStart, rangeEnd],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
-      const [byPickup, byDelivery] = await Promise.all([
-        listAllLoads({
-          operating_company_id: [operatingCompanyId],
-          board_scope: "live",
-          pickup_date_from: rangeStart,
-          pickup_date_to: rangeEnd,
-        }),
-        listAllLoads({
-          operating_company_id: [operatingCompanyId],
-          board_scope: "live",
-          delivery_date_from: rangeStart,
-          delivery_date_to: rangeEnd,
-        }),
-      ]);
-      const map = new Map<string, DispatchLoadRow>();
-      for (const load of byPickup.loads) map.set(load.id, load);
-      for (const load of byDelivery.loads) map.set(load.id, load);
-      return [...map.values()].sort((a, b) => a.load_number.localeCompare(b.load_number));
+      // LEAD 443.249 (owner: "Driver Planner shows 2 of 13 active loads"): the planners read THE board set (board_scope live —
+      // the load service's membership, the same loads as List / Kanban / Truck Line), then keep the loads whose span
+      // overlaps the range. Before: two date-filtered reads (pickup in range OR delivery in range) dropped every load that
+      // spans the range and every load whose stops carry only an appointment.
+      const board = await listAllLoads({ operating_company_id: [operatingCompanyId], board_scope: "live" });
+      return board.loads
+        .filter((load) => plannerLoadInRange(load, rangeStart, rangeEnd))
+        .sort((a, b) => a.load_number.localeCompare(b.load_number));
     },
   });
 }
