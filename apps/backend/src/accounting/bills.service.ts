@@ -631,7 +631,7 @@ const APPLIED_BILL_PAYMENT_APPLICATIONS_SQL = `COALESCE((
       ), 0)`;
 
 /** Open balance net of payments AND non-voided vendor credits AND non-unapplied payment_applications. */
-const BILL_OPEN_BALANCE_SQL = `(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0) - ${APPLIED_VENDOR_CREDITS_SQL} - ${APPLIED_BILL_PAYMENT_APPLICATIONS_SQL})`;
+export const BILL_OPEN_BALANCE_SQL = `(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0) - ${APPLIED_VENDOR_CREDITS_SQL} - ${APPLIED_BILL_PAYMENT_APPLICATIONS_SQL})`;
 
 /**
  * ACCT-F5623 — the sum of non-voided accounting.vendor_credit_applications for ONE bill, for callers

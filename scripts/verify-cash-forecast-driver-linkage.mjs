@@ -14,6 +14,7 @@ const files = {
   ui: "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
   api: "apps/frontend/src/api/forecast.ts",
   route: "apps/backend/src/forecast/cash-forecast-manual.routes.ts",
+  writer: "apps/backend/src/forecast/cash-forecast-entry.service.ts",
   dispute: "apps/frontend/src/pages/accounting/DisputeQueuePage.tsx",
   disputeRoute: "apps/backend/src/accounting/disputes.routes.ts",
 };
@@ -49,7 +50,9 @@ function failures(source) {
     ["client contract carries id", source.api.includes("party_ref_id: string | null")],
     ["backend accepts UUID only", source.route.includes("party_ref_id: z.string().uuid().nullish()")],
     ["backend scopes driver owner", /FROM mdata\.drivers[\s\S]*operating_company_id = \$2::uuid/.test(source.route)],
-    ["backend resolves canonical label", source.route.includes("partyRefLabel = driver.rows[0].label")],
+    ["create uses canonical writer", source.route.includes("return createCashForecastEntry(client, user.uuid, b.data)")],
+    ["writer scopes driver owner", /FROM mdata\.drivers[\s\S]*operating_company_id = \$2::uuid/.test(source.writer)],
+    ["backend resolves canonical label", source.writer.includes("partyRefLabel = driver.rows[0].label")],
     ["dispute decision driver drill", source.dispute.includes('<EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />')],
     ["dispute queue company membership", /app\.get\("\/api\/v1\/disputes"[\s\S]*assertCompanyMembership\(user\.uuid, query\.data\.operating_company_id\)/.test(source.disputeRoute)],
   ];
@@ -58,6 +61,15 @@ function failures(source) {
 
 const source = Object.fromEntries(Object.entries(files).map(([key, rel]) => [key, fs.readFileSync(path.join(root, rel), "utf8")]));
 if (process.argv.includes("--selftest")) {
+  if (failures(source).length) throw Error(`live source is not clean: ${failures(source).join(", ")}`);
+  for (const [key,from,to] of [
+    ["writer","operating_company_id = $2::uuid","TRUE"],
+    ["writer","partyRefLabel = driver.rows[0].label","partyRefLabel = null"],
+    ["route","return createCashForecastEntry(client, user.uuid, b.data)","return otherWriter(client, user.uuid, b.data)"],
+  ]) {
+    if(!source[key].includes(from))throw Error(`inert mutation ${from}`);
+    if(!failures({...source,[key]:source[key].replaceAll(from,to)}).length)throw Error(`escaped mutation ${from}`);
+  }
   const broken = { ...source, route: source.route.replaceAll("operating_company_id = $2::uuid", "TRUE") };
   if (failures(broken).length === 0) {
     console.error("verify-cash-forecast-driver-linkage selftest FAIL — entity-scope mutation stayed green");
