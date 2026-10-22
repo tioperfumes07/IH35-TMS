@@ -57,6 +57,13 @@ const TEST_CASES = [
 
 let passed = 0;
 let failed = 0;
+for (const workflow of ['ci.yml','security-checks.yml']) {
+  const source = fs.readFileSync(path.resolve(__dirname,'../.github/workflows',workflow),'utf8');
+  const persistsIdentity = s => s.includes('docker exec "$FRESH_POSTGRES_CONTAINER"')
+    && s.includes('IH35_FRESH_DB_SYSTEM_IDENTIFIER=%s') && s.includes('>> "$GITHUB_ENV"');
+  if (persistsIdentity(source) && !persistsIdentity(source.replace('>> "$GITHUB_ENV"','REMOVED'))) passed++;
+  else { failed++; console.error('FAIL fresh DB identity must survive later reset/migrate steps',workflow); }
+}
 // Real assertion arms: known production, unidentified Docker and mismatched
 // independent container identities all refuse. Existing default stays closed.
 for (const [branch, address, expected, actual, allowed] of [
