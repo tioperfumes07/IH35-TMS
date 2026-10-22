@@ -613,7 +613,18 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
           cents: Number(r.cents ?? 0),
         }));
         const totalCents = byAccount.reduce((sum: number, row: { cents: number }) => sum + row.cents, 0);
-        return { totalCents, byAccount };
+
+        // F24: return the last completed bank reconciliation date so the FE "Last reconciled" cell renders.
+        const reconRes = await client.query<{ last_reconciled_at: string | null }>(
+          `SELECT MAX(reconciled_at)::text AS last_reconciled_at
+             FROM banking.reconciliation_sessions
+            WHERE operating_company_id = $1::uuid
+              AND reconciled_at IS NOT NULL`,
+          [parsed.data.operating_company_id]
+        );
+        const lastReconciledAt = reconRes.rows[0]?.last_reconciled_at ?? null;
+
+        return { totalCents, byAccount, last_reconciled_at: lastReconciledAt };
       } catch (err) {
         req.log.error({ err, operating_company_id: parsed.data.operating_company_id }, "home.cash-position query failed");
         throw err;
