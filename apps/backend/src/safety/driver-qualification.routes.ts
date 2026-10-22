@@ -7,6 +7,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
 import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "../mdata/test-seed-archive.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
@@ -245,7 +246,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.extend({
-      include_inactive: z.coerce.boolean().default(false),
+      include_inactive: queryBoolean().default(false),
     }).safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 

@@ -9,9 +9,10 @@ import {
   voidPaymentMethod,
 } from "./payment-methods-catalog.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const idParamsSchema = z.object({ id: z.string().uuid() });
-const listQuerySchema = companyQuerySchema.extend({ include_inactive: z.coerce.boolean().optional().default(false) });
+const listQuerySchema = companyQuerySchema.extend({ include_inactive: queryBoolean().optional().default(false) });
 const createBodySchema = companyQuerySchema.extend({
   name: z.string().trim().min(1).max(120),
   gl_account_id: z.string().uuid().nullable().optional(),

@@ -27,23 +27,24 @@ import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
 import { lockAndFindCanonicalCustomer, type ExistingCanonicalCustomer } from "./customer-create-dedup.js";
 import { EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL } from "./test-seed-archive.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(5000).default(50), // CUST-1: allow loading the full roster (was capped at 200, hiding ~1,159 of 1,209)
   offset: z.coerce.number().int().min(0).default(0),
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
   q: z.string().trim().max(100).optional(),
-  active_only: z.coerce.boolean().optional().default(true),
-  autocomplete: z.coerce.boolean().optional().default(false),
+  active_only: queryBoolean().optional().default(true),
+  autocomplete: queryBoolean().optional().default(false),
   customer_type: z.enum(["broker", "direct_shipper"]).optional(),
   operating_company_id: z.string().uuid().optional(),
   // ITEM 3 = B (owner ruling 2026-07-11): master data is SHARED by design, but the Customers LIST VIEW
   // must show ONLY the ACTIVE company's records. This is an OPT-IN flag passed by the Customers list page
   // alone; shared pickers/autocomplete NEVER pass it, so cross-entity booking dropdowns are unaffected.
-  active_company_only: z.coerce.boolean().optional().default(false),
+  active_company_only: queryBoolean().optional().default(false),
   // A-21: shared with mdata/vendors.routes.ts via customerHasTransactionsSql — the ONE "has
   // transactions" definition, so the two lists' default filter can never disagree.
-  has_transactions: z.coerce.boolean().optional(),
+  has_transactions: queryBoolean().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });

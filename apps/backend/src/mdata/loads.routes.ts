@@ -66,6 +66,7 @@ import {
 import type { PoolClient } from "pg";
 import { settleRevrecOnCancel } from "../accounting/revrec-delivery-posting/poster.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const loadStatusSchema = z.enum([
   "draft",
   "booked",
@@ -206,8 +207,8 @@ const listLoadsQuerySchema = z.object({
       .default("created_at:desc")
       .catch("created_at:desc")
   ),
-  include_progress: z.coerce.boolean().default(false),
-  include_live_eta: z.coerce.boolean().default(false),
+  include_progress: queryBoolean().default(false),
+  include_live_eta: queryBoolean().default(false),
   // LEAD 443.206 D10 — "picker": every real load that happened (load-picker-scope.ts), for the cross-module load picker.
   board_scope: z.enum(["live", "history", "picker"]).optional(),
   // ROUND-20.2 (RT-FULL-TOUR) — owner ruling: "DISPATCH OPEN-ONLY stands everywhere else. Round
@@ -215,13 +216,13 @@ const listLoadsQuerySchema = z.object({
   // behavior change to board_scope=live itself: every OTHER board_scope=live consumer (Kanban,
   // List, Trip Pairing) is unaffected unless it explicitly asks for this. Round Trips is the only
   // caller that passes it (apps/frontend/src/pages/Dispatch.tsx's roundTripsFullFetch gate).
-  include_open_tour_legs: z.coerce.boolean().default(false),
+  include_open_tour_legs: queryBoolean().default(false),
   // ROUND 24.2 (owner 2026-09-14): "a saved draft load must be findable from the Loads list" —
   // supersedes the OWNER-REQUEST-REGISTER row 13 "drafts never appear" line. When set, REPLACES the
   // normal status/board_scope filtering below with `status='draft' OR is_quicksave_draft=true` so a
   // draft is findable regardless of the live OPEN-ONLY exclusion and regardless of any status
   // already selected.
-  drafts_only: z.coerce.boolean().default(false),
+  drafts_only: queryBoolean().default(false),
 });
 
 const loadStatusTransitionBodySchema = z.object({
@@ -260,7 +261,7 @@ const createLoadBodySchema = z.object({
   // false default. Prod 2026-08-08: LUSMCAFREIGHT-20260808-0001..0004 plus two older ones were 0-for-6
   // tagged at INSERT while the "L-" path was 11-of-11. Untagged is not cosmetic — one Delivered step on
   // an untagged load fires revrec into REAL income.
-  is_sample_data: z.coerce.boolean().default(false),
+  is_sample_data: queryBoolean().default(false),
   pickup: z.object({
     location_id: z.string().uuid().optional(),
     address_line1: z.string().trim().max(300).optional(),

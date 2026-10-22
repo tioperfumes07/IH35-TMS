@@ -2,10 +2,11 @@ import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 // Mirrors apps/backend/src/banking/banking.routes.ts accountsAllQuerySchema behavior.
 const accountsAllQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  include_inactive: z.coerce.boolean().optional().default(false),
+  include_inactive: queryBoolean().optional().default(false),
 });
 
 describe("banking accounts inactive query parsing", () => {

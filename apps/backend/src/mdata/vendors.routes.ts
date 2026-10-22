@@ -14,6 +14,7 @@ import { isTestVendorFixtureName } from "./fixture-vendor-name-pattern.js";
 import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
 import { searchVendorsForAutocomplete } from "./vendor-autocomplete.shared.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 // LST-PICKER-01 / LST-F5009 (LST-VENDOR-TYPE-CREATE-RW-MISMATCH) — vendor_type is CATALOG-BACKED
 // (catalogs.vendor_types), per entity, with inline "+ Add new vendor type". App + DB must share the same
 // 1–100 non-blank contract so a catalog-created type round-trips on POST/PATCH (R=W).
@@ -97,16 +98,16 @@ const listQuerySchema = z.object({
   operating_company_id: z.string().uuid().optional(),
   // QboCombobox picker repoint: autocomplete mode reads the CANONICAL mdata.vendors (with qbo_vendor_id)
   // instead of the mdata.qbo_vendors mirror, so vendors created via the canonical writer are visible.
-  autocomplete: z.coerce.boolean().optional().default(false),
+  autocomplete: queryBoolean().optional().default(false),
   q: z.string().trim().max(100).optional(),
-  active_only: z.coerce.boolean().optional(),
+  active_only: queryBoolean().optional(),
   // ITEM 3 = B (owner ruling 2026-07-11): master data is SHARED by design, but the Vendors LIST VIEW
   // must show ONLY the ACTIVE company's records. OPT-IN flag passed by the Vendors list page alone; shared
   // pickers/autocomplete NEVER pass it, so cross-entity bill/expense vendor dropdowns are unaffected.
-  active_company_only: z.coerce.boolean().optional().default(false),
+  active_company_only: queryBoolean().optional().default(false),
   // A-21: shared with mdata/customers.routes.ts via vendorHasTransactionsSql — the ONE "has
   // transactions" definition, so the two lists' default filter can never disagree.
-  has_transactions: z.coerce.boolean().optional(),
+  has_transactions: queryBoolean().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });

@@ -4,6 +4,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
 import { EXCLUDE_ARCHIVED_DRIVERS_SQL, EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL } from "../mdata/test-seed-archive.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 export const NAMES_ENTITY_TYPES = ["customer", "vendor", "driver", "contact", "company"] as const;
 export type NamesEntityType = (typeof NAMES_ENTITY_TYPES)[number];
 
@@ -23,13 +24,13 @@ export const namesSearchQuerySchema = z.object({
   type: z.enum(["all", ...NAMES_ENTITY_TYPES]).default("all"),
   limit: z.coerce.number().int().min(1).max(50).default(50),
   offset: z.coerce.number().int().min(0).default(0),
-  include_archived: z.coerce.boolean().optional().default(false),
+  include_archived: queryBoolean().optional().default(false),
   operating_company_id: z.string().uuid(),
 });
 
 export const namesCountsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  include_archived: z.coerce.boolean().optional().default(false),
+  include_archived: queryBoolean().optional().default(false),
 });
 
 export function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {

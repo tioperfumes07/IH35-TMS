@@ -6,6 +6,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
 const RL_WRITE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } as const;
 
@@ -15,7 +16,7 @@ const INSPECTION_OUTCOMES = ["pass", "fail", "pending"] as const;
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  include_archived: z.coerce.boolean().optional().default(false),
+  include_archived: queryBoolean().optional().default(false),
   unit_id: z.string().uuid().optional(),
   dvir_submission_id: z.string().uuid().optional(),
   search: z.string().trim().max(120).optional(),

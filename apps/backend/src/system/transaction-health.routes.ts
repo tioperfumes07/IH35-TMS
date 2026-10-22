@@ -11,6 +11,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { decodeTxHealthCursor, fetchTransactionHealth } from "./transaction-health.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const querySchema = z.object({
   // Zero or more explicit entity filters; omitted/empty means "every active company" (TRANSP +
   // USMCA + TRK today) — the spec's own "not USMCA-only" requirement. Fastify gives a repeated
@@ -19,7 +20,7 @@ const querySchema = z.object({
   operating_company_id: z.union([z.string().uuid(), z.array(z.string().uuid())]).optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
-  issues_only: z.coerce.boolean().optional().default(true),
+  issues_only: queryBoolean().optional().default(true),
 });
 
 function currentOwner(req: FastifyRequest, reply: FastifyReply) {

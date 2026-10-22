@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { resolveDefaultOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const assetTypeSchema = z.enum(["tractor", "dry_van", "reefer", "flatbed", "personnel_vehicle", "other"]);
 const assetStatusSchema = z.enum(["active", "damaged", "idle", "in_repair", "sold", "retired"]);
 
@@ -13,7 +14,7 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   type: assetTypeSchema.optional(),
   status: assetStatusSchema.optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBoolean().optional(),
   operating_company_id: z.string().uuid().optional(),
 });
 

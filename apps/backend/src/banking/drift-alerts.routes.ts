@@ -9,6 +9,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { DriftAlertError, resolveDriftAlert, runDriftDetectors, type DbClient } from "./drift-alerts.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
@@ -18,7 +19,7 @@ const idParamsSchema = z.object({
 });
 
 const listQuerySchema = companyQuerySchema.extend({
-  resolved: z.coerce.boolean().default(false),
+  resolved: queryBoolean().default(false),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
