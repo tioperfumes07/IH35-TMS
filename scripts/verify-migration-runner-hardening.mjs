@@ -15,6 +15,7 @@ import {
   isMigrationFile,
   validateMigrationFilenames,
 } from "./lib/migration-filename-validation.mjs";
+import { prepareFreshDbWexIssuer, WEX_MIGRATION } from './lib/fresh-db-wex-prerequisite.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.resolve(__dirname, "..", "db", "migrations");
@@ -54,6 +55,42 @@ const TEST_CASES = [
 
 let passed = 0;
 let failed = 0;
+const wexSource=fs.readFileSync(new URL('./lib/fresh-db-wex-prerequisite.mjs',import.meta.url),'utf8');
+function wexSourceSafe(source) {
+  return source.includes("file !== WEX_MIGRATION") && source.includes(".includes(hostname)) return")
+    && source.includes("code='WEX' AND is_active") && source.includes("issuer_vendor_id IS NULL AND display_name='WEX card'")
+    && source.includes("FROM org.companies WHERE code='USMCA'");
+}
+for(const [source,expected] of [[wexSource,true],
+  [wexSource.replace("code='WEX' AND is_active","code='WEX'"),false],
+  [wexSource.replace("issuer_vendor_id IS NULL AND display_name='WEX card'","true"),false],
+  [wexSource.replace('.includes(hostname)) return','.includes(hostname)) continue'),false]]) {
+  if(wexSourceSafe(source)===expected) passed++;else failed++;
+}
+
+// Execute the actual prerequisite, including negative arms: no production
+// connection and no overwrite of an inactive/assigned card are permitted.
+for (const [hostname, seed, expectedWrites] of [
+  ['ep-broad-block-akykk7bw.neon.tech', true, 0],
+  ['127.0.0.1', false, 0],
+  ['127.0.0.1', true, 1],
+]) {
+  const calls = [];
+  const client = { query: async (sql, params) => {
+    calls.push({sql,params});
+    if (sql.includes('neon.branch_id')) return {rows:[{branch:null}]};
+    if (sql.includes('FROM org.companies')) return {rows:[{id:'fresh-company'}]};
+    if (sql.includes('FROM catalogs.fuel_card_types')) return {rows:seed?[{id:'seed'}]:[]};
+    if (sql.includes('FROM mdata.vendors')) return {rows:[{id:'issuer'}]};
+    return {rows:[]};
+  }};
+  await prepareFreshDbWexIssuer(client,{file:WEX_MIGRATION,hostname});
+  const writes=calls.filter(c=>c.sql.startsWith('UPDATE'));
+  const ok=writes.length===expectedWrites && (hostname.startsWith('ep-') ? calls.length===0 : true)
+    && (!seed || !expectedWrites || writes[0].params[2]==='fresh-company');
+  if(ok){passed++;console.log('PASS WEX prerequisite target/seed safety',hostname,seed);}
+  else {failed++;console.error('FAIL WEX prerequisite target/seed safety');}
+}
 
 console.log("Testing filename pattern recognition...\n");
 

@@ -10,6 +10,7 @@ import {
 } from "./lib/migration-filename-validation.mjs";
 import { loadHeldSet, shouldSkipHeldOnProd } from "./lib/held-migrations.mjs";
 import { writeLedgerSnapshot } from "./db-ledger-snapshot.mjs";
+import { prepareFreshDbWexIssuer } from "./lib/fresh-db-wex-prerequisite.mjs";
 
 dotenv.config();
 
@@ -1025,6 +1026,7 @@ try {
     await ensureFreshDbTrgmInPublic(client, file);
     await ensureFreshDbPostingLoadId(client, file);
     await ensureFreshDbFuelTankTables(client, file);
+    await prepareFreshDbWexIssuer(client, { file, hostname: RESOLVED_HOST });
     const dataOnlyReason = freshDbProductionDataOnlySkip(file);
     if (dataOnlyReason) {
       console.log(
