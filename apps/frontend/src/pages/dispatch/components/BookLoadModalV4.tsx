@@ -1331,8 +1331,8 @@ export function BookLoadModalV4({
         ).driver_bill_mint;
         if (mint?.outcome === "skipped_no_pay_rate" || (mint?.outcome === "minted" && mint.unpriced)) {
           pushToast(driverBillMintSkippedMessage("updated", mint.missing), "info");
-        } else if (mint?.outcome === "refused_no_shortest_miles") {
-          pushToast(mint.reason ?? "No driver bill was created — shortest miles are required.", "error");
+        } else if (mint?.outcome === "awaiting_short_miles") {
+          pushToast("Driver bill created — awaiting SHORT miles (AlwaysTrack L.Miles). Enter the short miles on the load and the bill is priced automatically.", "error");
         }
         const prop = patchResult.lock_override_propagation;
         if (Array.isArray(prop) && prop.length > 0) {
@@ -1751,10 +1751,9 @@ export function BookLoadModalV4({
       const mint = (payload as { driver_bill_mint?: { outcome?: string; missing?: string[]; unpriced?: boolean; reason?: string } }).driver_bill_mint;
       if (mint?.outcome === "skipped_no_pay_rate" || (mint?.outcome === "minted" && mint.unpriced)) {
         pushToast(driverBillMintSkippedMessage("booked", mint.missing), "info");
-      } else if (mint?.outcome === "refused_no_shortest_miles") {
-        // P1 (owner 2026-09-14) — "Refuse LOUDLY with the reason on screen." Distinct from the
-        // info-level $0-tracking-bill toast above: no bill was created at all here.
-        pushToast(mint.reason ?? "No driver bill was created — shortest miles are required.", "error");
+      } else if (mint?.outcome === "awaiting_short_miles") {
+        // LEAD 443.220 — the load is booked AND its driver bill exists ($0, awaiting short miles) — never a silent refusal.
+        pushToast("Driver bill created — awaiting SHORT miles (AlwaysTrack L.Miles). Enter the short miles on the load and the bill is priced automatically.", "error");
       }
       // GO-23 A1 — trailer_interchanges.load_id is a real FK, so this can only be created AFTER the
       // load itself exists. The load is already committed at this point regardless of outcome here;

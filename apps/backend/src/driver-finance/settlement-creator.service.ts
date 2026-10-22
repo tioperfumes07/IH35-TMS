@@ -82,6 +82,7 @@ import { isReeferFuelItemName } from "../fuel/reefer-fuel.service.js";
 import { voidCreatorOwedBills, writeCreatorOwedBill } from "./settlement-creator-owed-bill.js";
 import { createExpenseInClientTx, postExpenseDocumentInClientTx, type CreateExpenseBody } from "../accounting/expense-writer.service.js";
 import { applyCreatorMilesChoices, CreatorMilesChoiceError } from "./settlement-creator-miles-choice.js";
+import { isEditableDriverBillStatus } from "../lib/document-status-vocabulary.js";
 
 export type { DbClient };
 
@@ -286,7 +287,7 @@ export async function restateOpenDriverBillToSignedPay(
        FROM driver_finance.driver_bills b WHERE b.id = $1::uuid`,
     [b.id],
   )).rows[0]!;
-  if (state.status !== "open" || state.settled || state.accrued) {
+  if (!isEditableDriverBillStatus(state.status) || state.settled || state.accrued) {
     throw new SettlementCreatorError(
       "driver_bill_not_restatable",
       `Load ${input.loadNumber}: its driver bill (${dollarsFromCents(Number(b.gross))}) differs from the signed pay ${dollarsFromCents(signed)} and is ${state.settled ? "already settled" : state.accrued ? "accrued at delivery" : state.status} — restate it first.`,

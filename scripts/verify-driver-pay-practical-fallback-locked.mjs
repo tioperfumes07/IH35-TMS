@@ -344,7 +344,18 @@ export function run(root = ROOT) {
     problems.push(`${SVC}: the per-load override rate must pay short miles too (perLoadMiles = miles_shortest)`);
   }
   if (!/const hasAnyRealMiles = Number\(load\.miles_shortest \?\? 0\) > 0;/.test(src)) {
-    problems.push(`${SVC}: a fresh driver bill must be refused without SHORT miles (driver_bill.refused_no_shortest_miles)`);
+    problems.push(`${SVC}: a fresh driver bill is priced only from SHORT miles (hasAnyRealMiles = miles_shortest > 0)`);
+  }
+  // LEAD 443.220 (CC-2): without short miles the bill is still CREATED (awaiting_short_miles) — never a silent refusal — and
+  // only ONE rule exists: no "shortest or practical" pay-input path, no ROUND 155.12 practical-basis text left in the engine.
+  if (!/return mintDriverBillAwaitingShortMiles\(client, input, load, loadNumber, existing\);/.test(src)) {
+    problems.push(`${SVC}: a per-mile load without SHORT miles must still get its driver bill at booking (mintDriverBillAwaitingShortMiles) — LEAD 443.220`);
+  }
+  if (/outcome: "refused_no_shortest_miles"/.test(src)) {
+    problems.push(`${SVC}: the silent refusal (refused_no_shortest_miles, no bill row) is back — LEAD 443.220`);
+  }
+  if (/shortest or practical|ROUND 155\.12/.test(src)) {
+    problems.push(`${SVC}: a practical-miles pay path / ROUND 155.12 text is back — short miles is the only rule (LEAD 443.220)`);
   }
   if (/milesBasisType = "practical"/.test(src)) {
     problems.push(`${SVC}: a driver bill's miles basis can never be "practical"`);
@@ -387,6 +398,9 @@ async function resolveDriverBasePayCents(client, operatingCompanyId, driverId, l
 }
 async function createDriverBillArtifacts() {
   const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;
+  if (isFreshMintAttempt && !hasAnyRealMiles && !additionalOnly) {
+    return mintDriverBillAwaitingShortMiles(client, input, load, loadNumber, existing);
+  }
   if (milesShort && milesShort > 0) {
     milesBasis = milesShort;
     milesBasisType = "short";
@@ -492,6 +506,8 @@ onChange={(n) => setLoads((prev) => { next[idx] = { ...cur, miles_shortest: n };
   check(good.replace("const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;", "const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0 || Number(load.miles_practical ?? 0) > 0;"), "gate accepts practical-only", false);
   check(good.replace('milesBasisType = "short";\n  }', 'milesBasisType = "short";\n  } else { milesBasisType = "practical"; }'), "bill basis practical", false);
   check(good.replace("// OWNER LAW (LEAD 443.192, 12:35Z): short miles only.\n", ""), "owner-law comment dropped", false);
+  check(good.replace("return mintDriverBillAwaitingShortMiles(client, input, load, loadNumber, existing);", 'return { outcome: "refused_no_shortest_miles", reason };'), "443.220: silent refusal instead of the awaiting bill", false);
+  check(good + '\nfunction missingPayInputs(load) { missing.push("miles (shortest or practical)"); }\n', "443.220: shortest-or-practical pay input back", false);
   // LEAD 443.192 item 1 — the two settlement readers.
   check(good, "batch: pay miles fall back to loaded_miles/practical (origin/main shape)", false,
     goodBatch.replace("const miles = batchPayMiles(load);", "const miles = load.bill_miles_basis ?? load.loaded_miles ?? load.miles_practical;"));

@@ -147,6 +147,8 @@ export async function buildLoadSaveProof(
     did_not.push(
       `Did not mint a driver bill — missing ${(args.driverBillMint?.missing ?? []).join(", ") || "pay rate"}.`
     );
+  } else if (mint === "awaiting_short_miles") {
+    did_not.push("Driver bill created at $0 — awaiting SHORT miles (AlwaysTrack L.Miles); it is priced when they are entered.");
   } else if (mint !== "minted" && mint !== "already_exists") {
     did_not.push("Did not mint a driver bill on this save.");
   }

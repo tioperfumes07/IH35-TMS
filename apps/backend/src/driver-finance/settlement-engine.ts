@@ -141,6 +141,9 @@ export async function appendSettlementLineFromDriverBillIfMissing(
         -- loads happen to have the void one FIRST, so the ordering saves it by accident; that is not
         -- a control.
         AND status <> 'void'
+        -- LEAD 443.220: a bill awaiting its SHORT miles is $0 by construction — it becomes an earnings line only once the
+        -- engine prices it (status -> open); a $0 snapshot line would never follow the price.
+        AND status <> 'awaiting_short_miles'
       ORDER BY created_at DESC
       LIMIT 1
     `,

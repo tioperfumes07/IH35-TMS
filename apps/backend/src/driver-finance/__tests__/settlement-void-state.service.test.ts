@@ -71,7 +71,7 @@ describe("one driver-bill void-state writer", () => {
     const query = vi.fn(async (sql: string) => ({ rows: sql.includes("UPDATE") ? [{ id: "bill" }] : [] }));
     expect(await stampDriverBillVoidedInClientTx({ query } as never, { ...input, driverBillId: "bill", openOnly: true })).toBe(true);
     expect(query.mock.calls[0][0]).toContain("operating_company_id = $2::uuid");
-    expect(query.mock.calls[0][0]).toContain("status = 'open' AND voided_at IS NULL");
+    expect(query.mock.calls[0][0]).toContain("status IN ('open', 'awaiting_short_miles') AND voided_at IS NULL"); // 443.220 editable statuses
     expect(query.mock.calls.some(([sql]) => sql.includes("audit.append_event"))).toBe(true);
   });
   it("does not invent success or audit when no row was updated", async () => {

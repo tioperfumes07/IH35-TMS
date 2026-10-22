@@ -155,6 +155,9 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
           ·{" "}
           <span className={pillClass(bill.status === "open" ? "pending" : "approved")}>{statusLabel(bill.status)}</span>
           {bill.status === "open" ? <span className="ldt-muted"> · accrues to the open tour</span> : null}
+          {bill.status === "awaiting_short_miles" ? (
+            <span className="ldt-muted" data-testid="driver-bill-awaiting-short-miles"> · enter the load's SHORT miles (AlwaysTrack L.Miles) — this bill is priced automatically</span>
+          ) : null}
           {/* LST-F420 — reverse link to the settlement that paid this bill. driver_finance.driver_bills != accounting.bills:
               this row is never an /accounting/bills/:id link (kind="bill" 404s for it); a settled driver bill drills to its
               settlement, an open one to the driver above and its own driver-bill record below. */}

@@ -281,6 +281,10 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 -- the non-void expense+bill total on live USMCA data every push.
                 (COALESCE(ec.expense_cents,0) + COALESCE(bc.bill_cents,0) - COALESCE(rm.repairs_maintenance_cents,0) - COALESCE(cb.fuel_cents,0) - COALESCE(cb.lumper_cents,0) - COALESCE(cb.late_fee_cents,0))::text AS other_cost_cents,
                 dpd.short_miles::text AS short_miles,
+                -- LEAD 443.220: the load's driver bill exists but waits for its SHORT miles ($0 until entered) — the board flags it.
+                EXISTS (SELECT 1 FROM driver_finance.driver_bills awb
+                         WHERE awb.load_id = l.id AND awb.operating_company_id = l.operating_company_id
+                           AND awb.status = 'awaiting_short_miles' AND awb.voided_at IS NULL) AS driver_bill_awaiting_short_miles,
                 dpd.rate_loaded_cents::text AS rate_loaded_cents,
                 dpd.empty_miles::text AS empty_miles,
                 dpd.rate_empty_cents::text AS rate_empty_cents,

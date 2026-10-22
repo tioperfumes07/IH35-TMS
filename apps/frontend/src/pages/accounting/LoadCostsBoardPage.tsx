@@ -41,6 +41,8 @@ type BoardRow = {
   pickup_date: string | null; scheduled_delivery_at: string | null; actual_delivery_at: string | null; created_at: string;
   revenue_cents: string; expense_cents: string; bill_cents: string; repairs_maintenance_cents: string; driver_pay_cents: string;
   revenue_source: "invoice" | "proforma";
+  /** LEAD 443.220 — the driver bill exists but waits for its SHORT miles (AlwaysTrack L.Miles); $0 until they are entered. */
+  driver_bill_awaiting_short_miles?: boolean;
   /** U3 — what the general ledger carries for this load (expense + COGS postings, net of reversals). */
   ledger_cost_cents?: number;
   /** ROUND 285.4.4 — Book Load wizard amounts from dispatch.load_charge_lines. */
@@ -133,7 +135,7 @@ const COST_TABS: Array<{ id: CostTab; label: string; measured: boolean; has: (r:
   { id: "bills", label: "Bills", measured: true, has: (r) => r.bill_count > 0 },
   { id: "fuel_advances", label: "Fuel advances", measured: true, has: (r) => Number(r.fuel_cents) > 0 },
   { id: "broker_advances", label: "Broker advances", measured: false, has: () => true },
-  { id: "driver_pay", label: "Driver pay", measured: true, has: (r) => Number(r.driver_pay_cents) > 0 },
+  { id: "driver_pay", label: "Driver pay", measured: true, has: (r) => Number(r.driver_pay_cents) > 0 || r.driver_bill_awaiting_short_miles === true },
   { id: "repairs_maintenance", label: "Repairs & maintenance", measured: true, has: (r) => Number(r.repairs_maintenance_cents) > 0 },
   { id: "documents", label: "Documents", measured: false, has: () => true },
   // LDT-TABS (owner 2026-09-06 02:4xZ): Pre-Settlement = every OPEN tour (legs, Ready-to-close, the Close button);
@@ -782,7 +784,9 @@ export function LoadCostsBoardPage() {
     { key: "empty_miles", label: "Empty Miles", testId: "col-empty-miles", sortable: true, className: NUM, sortValue: r => r.empty_miles == null ? -1 : Number(r.empty_miles), render: r => fmtMiles(r.empty_miles) },
     { key: "rate_empty", label: "Rate Empty", testId: "col-rate-empty", sortable: true, className: NUM, sortValue: r => r.rate_empty_cents == null ? -1 : Number(r.rate_empty_cents), render: r => fmtRate(r.rate_empty_cents) },
     { key: "deadhead_pay", label: "Deadhead Pay", testId: "col-deadhead-pay", sortable: true, className: NUM, sortValue: r => r.deadhead_pay_cents == null ? -1 : Number(r.deadhead_pay_cents), render: r => (r.deadhead_pay_cents == null ? DASH : fmtBlank(r.deadhead_pay_cents)) },
-    { key: "gross", label: "Gross", testId: "col-gross", sortable: true, className: NUM, sortValue: r => rowPay(r), render: r => fmt(rowPay(r)) },
+    { key: "gross", label: "Gross", testId: "col-gross", sortable: true, className: NUM, sortValue: r => rowPay(r), render: r => r.driver_bill_awaiting_short_miles
+      ? <span data-testid="needs-short-miles" title="Driver bill awaiting SHORT miles (AlwaysTrack L.Miles) — enter them on the load and the bill is priced automatically">{fmt(rowPay(r))} · Needs short miles</span>
+      : fmt(rowPay(r)) },
     // Kept as an opt-in extra (never in the owner's exact default list) rather than deleted --
     // additive-only law (Rule 07): hidden by default, still reachable from the gear chooser.
     { key: "margin", label: "Margin", testId: "col-margin", sortable: true, className: NUM, defaultHidden: true, sortValue: r => rowMargin(r), render: r => fmt(rowMargin(r)) },
