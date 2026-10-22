@@ -196,7 +196,36 @@ async function backlinkContractLine(
 
 export type MpgBonusResult =
   | { applied: true; mpg: number; miles: number; gallons: number; bonusCents: number; settlementLineId: string }
-  | { applied: false; reason: "already_applied" | "mpg_source_absent" | "below_threshold"; mpg: number | null; miles: number; gallons: number };
+  | { applied: false; reason: "already_applied" | "mpg_source_absent" | "below_threshold" | "bonus_pay_item_not_configured"; mpg: number | null; miles: number; gallons: number };
+
+/**
+ * LEAD 443.232 (P0 GPS down) — every extra_pay settlement line must carry its pay item (settlement_lines_extra_pay_requires_item,
+ * G2). The contract-terms bonuses (MPG, referral) inserted an itemless line, the check failed, and — inside a delivery's
+ * settlement ping on the GPS positions tick — that aborted the whole fleet's position write for 9 h. No MPG / referral
+ * bonus has ever been paid on prod (the line always failed). Which item pays a contract bonus is the OWNER's decision:
+ * until a bonus pay item is configured, the bonus is SKIPPED BY NAME (audited) before anything is written — never an
+ * itemless line, never a guessed item, and the settlement close continues.
+ */
+export const CONTRACT_BONUS_PAY_ITEM_ID: string | null = null;
+async function skipBonusWithoutPayItem(
+  client: DbClient,
+  input: { operatingCompanyId: string; settlementId: string; driverId: string; actorUserId: string; bonus: "mpg_bonus" | "referral_bonus"; amountCents: number }
+): Promise<boolean> {
+  if (CONTRACT_BONUS_PAY_ITEM_ID) return false;
+  await appendCrudAudit(
+    client as never,
+    input.actorUserId,
+    "driver_finance.contract_bonus_skipped_no_pay_item",
+    {
+      resource_type: "driver_finance.driver_settlements", resource_id: input.settlementId, operating_company_id: input.operatingCompanyId,
+      driver_id: input.driverId, bonus: input.bonus, amount_cents: input.amountCents,
+      reason: "no pay item configured for contract bonuses (owner decision) — no line written",
+    },
+    "warning",
+    "LEAD-443-232"
+  );
+  return true;
+}
 
 /**
  * ITEM 1 — MPG fuel-efficiency bonus. Trip MPG = total loaded+empty miles of the settlement's loads /
@@ -281,6 +310,13 @@ export async function computeSettlementMpgBonus(
     return { applied: false, reason: "below_threshold", mpg, miles, gallons };
   }
 
+  if (await skipBonusWithoutPayItem(client, {
+    operatingCompanyId: input.operatingCompanyId, settlementId: input.settlementId, driverId: input.driverId,
+    actorUserId: input.actorUserId, bonus: "mpg_bonus", amountCents: input.config.mpgBonusCents,
+  })) {
+    return { applied: false, reason: "bonus_pay_item_not_configured", mpg, miles, gallons };
+  }
+
   // Idempotency ledger first (unique per settlement + kind).
   const contractLineId = await recordContractLine(client, {
     operatingCompanyId: input.operatingCompanyId,
@@ -355,6 +391,10 @@ export async function computeReferralBonuses(
     // Defense-in-depth boundary re-check (the SQL already filters; this also guards a mocked/edge row):
     // 29 days => skip, 30 days => pay.
     if (!referralEligibleAsOf(referred.hire_date, input.config.referralMinDays)) continue;
+    if (await skipBonusWithoutPayItem(client, {
+      operatingCompanyId: input.operatingCompanyId, settlementId: input.settlementId, driverId: input.referrerDriverId,
+      actorUserId: input.actorUserId, bonus: "referral_bonus", amountCents: input.config.referralRewardCents,
+    })) continue;
 
     const contractLineId = await recordContractLine(client, {
       operatingCompanyId: input.operatingCompanyId,

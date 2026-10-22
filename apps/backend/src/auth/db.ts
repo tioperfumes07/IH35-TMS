@@ -298,7 +298,9 @@ export async function withSavepoint<T>(
   client: SavepointQueryClient,
   name: string,
   fn: () => Promise<T>,
-  fallback: T
+  fallback: T,
+  /** LEAD 443.232 — name the failure (logged / audited by the caller); the outer transaction stays usable either way. */
+  onError?: (err: unknown) => void
 ): Promise<T> {
   const safe = name.replace(/[^a-z0-9_]/gi, "_");
   // The after-commit queue is rolled back with the savepoint. Without this, the bulk runner (which
@@ -310,9 +312,10 @@ export async function withSavepoint<T>(
     const out = await fn();
     await client.query(`RELEASE SAVEPOINT ${safe}`);
     return out;
-  } catch {
+  } catch (err) {
     await client.query(`ROLLBACK TO SAVEPOINT ${safe}`).catch(() => {});
     afterCommitRollbackTo(client, mark);
+    onError?.(err);
     return fallback;
   }
 }

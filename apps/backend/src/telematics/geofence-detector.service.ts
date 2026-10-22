@@ -15,6 +15,8 @@ import { GEOFENCE_AUTO_DELIVERY_ACTOR } from "../dispatch/geofence-auto-delivery
 import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
 import { fromMdataStatus, type DispatchStatus } from "../dispatch/load-state-machine.js";
 import { normalizeVertices, pointInPolygon } from "./geofence.js";
+import { withSavepoint } from "../auth/db.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 export { pointInPolygon } from "./geofence.js";
 
 type DbClient = {
@@ -36,6 +38,37 @@ assertCanonicalSubset("FENCE_STATUS_PATH", FENCE_STATUS_PATH);
  * invents a raw UPDATE; ignores invalid_transition / status_changed silently (idempotent).
  */
 async function walkLoadStatusFromFence(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string,
+  target: "in_transit" | "delivered_pending_docs",
+  deliveredAt?: string | null
+): Promise<void> {
+  // LEAD 443.232 (P0) — one load's walk can never abort the caller's transaction (the positions tick writes the whole
+  // fleet's GPS in it). The walk runs in its own SAVEPOINT; a failure is rolled back, audited by name and skipped.
+  let failure: unknown = null;
+  await withSavepoint(
+    client as never,
+    "fence_status_walk",
+    () => walkLoadStatusFromFenceInSavepoint(client, operatingCompanyId, loadId, target, deliveredAt),
+    undefined,
+    (err) => { failure = err; }
+  );
+  if (failure) {
+    const message = String((failure as Error)?.message ?? failure);
+    console.warn({ err: failure, load_id: loadId, target }, "fence_status_walk_failed");
+    await appendCrudAudit(
+      client as never,
+      GEOFENCE_AUTO_DELIVERY_ACTOR,
+      "telematics.fence_status_walk_failed",
+      { resource_type: "mdata.loads", resource_id: loadId, load_id: loadId, operating_company_id: operatingCompanyId, target, error: message.slice(0, 500) },
+      "warning",
+      "LEAD-443-232-GPS-P0"
+    );
+  }
+}
+
+async function walkLoadStatusFromFenceInSavepoint(
   client: DbClient,
   operatingCompanyId: string,
   loadId: string,
