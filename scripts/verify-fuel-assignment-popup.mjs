@@ -19,7 +19,7 @@ const FILES = {
   api: "apps/frontend/src/api/fuelAssignmentQuestions.ts",
   service: "apps/backend/src/fuel/fuel-assignment-question.service.ts",
   routes: "apps/backend/src/fuel/fuel-assignment-question.routes.ts",
-  migration: "db/migrations/202616140700_fuel_assignment_questions.sql",
+  migration: "db/migrations/202616141200_fuel_assignment_questions.sql",
   loadCosts: "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx",
   loadDrawer: "apps/frontend/src/components/dispatch/LoadDetailCostsTab.tsx",
   createFuel: "apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx",
