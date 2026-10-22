@@ -1,3 +1,4 @@
+import { companyToday } from "../../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -347,7 +348,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const hasReverseFilter = Object.values(reverseFilter).some(Boolean);
   // MDP-SINGLE-ROW: ONE projection date (daily projections — one day per entry), not a From/To
   // range. It is the default entry_date for new rows on both panels.
-  const [projectionDate, setProjectionDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [projectionDate, setProjectionDate] = useState(() => companyToday());
   const [openingDraft, setOpeningDraft] = useState<number | null>(null);
   const [pullError, setPullError] = useState<string | null>(null);
 

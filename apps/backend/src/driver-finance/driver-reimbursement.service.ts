@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 // Driver REIMBURSEMENT service — out-of-pocket toll/fuel pay-outs (hire-contract item 5).
 // TIER-1 FINANCIAL, BUILD-AND-HOLD. A reimbursement is money the COMPANY owes the DRIVER — the opposite of
 // a cash advance (a receivable). Two pay modes:
@@ -192,7 +193,7 @@ export async function payDriverReimbursementImmediately(
     if (String(row.status) === "paid") {
       return {
         ok: true as const,
-        postingDate: String(row.posting_date ?? new Date().toISOString().slice(0, 10)),
+        postingDate: String(row.posting_date ?? companyBusinessDate()),
         alreadyPaid: true,
         amountCents,
         fromBankAccountId,

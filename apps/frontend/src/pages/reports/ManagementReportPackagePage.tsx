@@ -1,3 +1,4 @@
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account / customer / vendor aggregate; the package's period is chosen in the report header, not a column.
 import { useState } from "react";
 import { MoneyCell } from "../../components/shared/MoneyCell";
@@ -127,10 +128,7 @@ function bsFilter(
 }
 
 function currentMonthRange() {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  return monthBoundsIso(companyToday());
 }
 
 function SectionDivider({ title, index }: { title: string; index: number }) {

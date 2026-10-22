@@ -1,3 +1,4 @@
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -64,10 +65,7 @@ function exportStatementCsv(response: CounterpartyStatementResponse) {
 }
 
 function currentMonthRange() {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  return monthBoundsIso(companyToday());
 }
 
 function typeLabel(type: CounterpartyStatementLine["type"]) {

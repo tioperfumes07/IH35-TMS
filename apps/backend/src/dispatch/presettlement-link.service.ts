@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 // GO-22 pre-settlement (owner direct instruction 2026-09-02), superseded by SET-01 (owner ruling
 // 2026-09-03/09-04, settled): "The instant a load is CREATED it joins a pre-settlement. Not at
 // delivery. Not at invoice. At creation. Assignment is automatic. Closing is human-confirmed."
@@ -31,7 +32,7 @@ export class PresettlementLinkError extends Error {
 export type TripType = "NB" | "TR" | "SB" | "LOCAL";
 
 /** Compatibility entry point: settlement identity never consumes the load counter. */
-export async function allocateNextSettlementDisplayId(client: DbClient, operatingCompanyId: string, periodDate = new Date().toISOString().slice(0, 10)): Promise<string> {
+export async function allocateNextSettlementDisplayId(client: DbClient, operatingCompanyId: string, periodDate = companyBusinessDate()): Promise<string> {
   return allocateSettlementDisplayId(client, operatingCompanyId, periodDate);
 }
 

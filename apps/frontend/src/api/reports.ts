@@ -1,3 +1,4 @@
+import { companyToday } from "../lib/businessDate";
 import { ApiError, apiRequest, resolveApiUrl } from "./client";
 
 export type ReportCategory =
@@ -706,7 +707,7 @@ export async function runDriverSettlementSummary(companyId: string, cycleStart?:
 
 export async function runArAging(companyId: string) {
   const startedAt = Date.now();
-  const result = await getArAgingReport(companyId, new Date().toISOString().slice(0, 10));
+  const result = await getArAgingReport(companyId, companyToday());
   await postRunLog({
     operating_company_id: companyId,
     report_id: "ar-aging",

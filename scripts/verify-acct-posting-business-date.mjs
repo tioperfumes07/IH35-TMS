@@ -22,9 +22,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runExecutableGuard } from "./guard-executable-contract.mjs";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(process.argv.find(a => a.startsWith("--root="))?.slice(7) ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."));
 const LABEL = "verify-acct-posting-business-date";
-const SCAN_DIR = "apps/backend/src/accounting";
+const SCAN_DIRS = ["accounting", "driver-finance", "banking", "factoring", "dispatch", "governance", "reconciliation", "driver"].map(dir => `apps/backend/src/${dir}`);
 
 // Bare `new Date()` (empty parens = the current instant) -> UTC date-only. A `new Date(<arg>)` (date
 // arithmetic) or `<ident>.toISOString()` (formatting an anchored value) is NOT matched.
@@ -66,7 +66,7 @@ function checkAccountingBusinessDates(files) {
 }
 
 function loadRepositoryFixture() {
-  return walk(SCAN_DIR).map((rel) => ({
+  return SCAN_DIRS.flatMap(walk).map((rel) => ({
     rel,
     source: fs.readFileSync(path.join(ROOT, rel), "utf8"),
   }));

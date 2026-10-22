@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -154,7 +155,7 @@ function validateTiers(
 }
 
 function todayDateString() {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 // ── Routes ────────────────────────────────────────────────────────────────────

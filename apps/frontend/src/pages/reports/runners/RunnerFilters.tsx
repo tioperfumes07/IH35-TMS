@@ -1,3 +1,4 @@
+import { companyToday, addDaysIso, localDateFromIso } from "../../../lib/businessDate";
 import { useMemo } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import type { RunnerFilter } from "./runner-config";
@@ -16,7 +17,7 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 const MONTH_OPTIONS = Array.from({ length: 15 }, (_, i) => {
-  const d = new Date();
+  const d = localDateFromIso(`${companyToday().slice(0, 7)}-01`);
   d.setMonth(d.getMonth() - 12 + i);
   const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   const label = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
@@ -52,14 +53,12 @@ function FilterLabel({ filter }: { filter: RunnerFilter }) {
 }
 
 function todayMinus(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
+  return addDaysIso(companyToday(), -days);
 }
 
 export function defaultFilterValues(filters: RunnerFilter[]) {
   const fromDefault = todayMinus(30);
-  const toDefault = new Date().toISOString().slice(0, 10);
+  const toDefault = companyToday();
   const result: Record<string, unknown> = { from: fromDefault, to: toDefault };
   for (const filter of filters) {
     if (filter.type === "month_picker" && filter.default) result[filter.key] = filter.default;

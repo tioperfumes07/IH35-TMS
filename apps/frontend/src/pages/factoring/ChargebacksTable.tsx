@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 /**
  * Factoring chargebacks/fees list — display-only (props in; parent owns query).
  * Migrated to shared ParityTable grammar; amount formatting, sign, column order,
@@ -156,7 +157,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate, filterBar }: Prop
                 return;
               }
               downloadCsv(
-                `factoring-chargebacks-${new Date().toISOString().slice(0, 10)}.csv`,
+                `factoring-chargebacks-${companyToday()}.csv`,
                 ["Advance Id", "Date", "Statement Ref", "Chargeback", "Fee"],
                 selected.map((row) => [
                   row.factoring_advance_id,

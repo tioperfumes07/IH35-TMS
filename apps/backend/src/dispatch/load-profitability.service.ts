@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import type { PoolClient } from "pg";
 // FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): the same shared exclusion already required
 // on the Fleet roster/KPI (mdata/fleet-visibility.ts) applies here — a fixture unit must not
@@ -234,7 +235,7 @@ export async function computeLoadProfitability(
          AND ip.status = 'active'
          AND ip.effective_date <= $2::date
          AND ip.expiry_date >= $2::date`,
-      [operatingCompanyId, tripEnd.slice(0, 10) || new Date().toISOString().slice(0, 10)]
+      [operatingCompanyId, tripEnd.slice(0, 10) || companyBusinessDate()]
     );
     if (insRes.rows[0]) {
       const annualPremium = num(insRes.rows[0].total_premium_cents);

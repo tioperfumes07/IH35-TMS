@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import crypto from "node:crypto";
 import { releaseBankLineMatchesWhere } from "./bank-line-release.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -87,7 +88,7 @@ export async function postTransferGlOnClient(
     return { journal_entry_id: posted.journal_entry_id };
   }
   try {
-    const reversed = await reversePostedSourceTransactionInClientTx(client as never, source, { userId }, new Date().toISOString().slice(0, 10));
+    const reversed = await reversePostedSourceTransactionInClientTx(client as never, source, { userId }, companyBusinessDate());
     return { journal_entry_id: reversed.journal_entry_id };
   } catch (err) {
     if (err instanceof PostingEngineError && err.code === "SOURCE_NOT_FOUND") return { journal_entry_id: null };

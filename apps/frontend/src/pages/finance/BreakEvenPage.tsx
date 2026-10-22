@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -34,10 +35,10 @@ const fmtPerDay = (centsPerDay: number | null) =>
   centsPerDay == null ? "—" : `${fmtCents(centsPerDay)}/day`;
 
 function startOfYearIso(): string {
-  return `${new Date().getUTCFullYear()}-01-01`;
+  return `${companyToday().slice(0, 4)}-01-01`;
 }
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 type Tone = "neutral" | "good" | "bad";

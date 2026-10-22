@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import type { CatalogColumnConfig, CatalogRow, CatalogSortConfig } from "../../hooks/useCatalogQuery";
 import { Button } from "../Button";
@@ -110,7 +111,7 @@ export function CatalogTable({
         columns={parityColumns}
         loading={loading}
         emptyText={emptyText}
-        exportFilename={`${catalogName.replace(/\./g, "-")}-${new Date().toISOString().slice(0, 10)}.csv`}
+        exportFilename={`${catalogName.replace(/\./g, "-")}-${companyToday()}.csv`}
         initialPageSize={50}
         pageSizeOptions={[25, 50, 100]}
         sortKey={sortKey}

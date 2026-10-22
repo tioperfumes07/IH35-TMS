@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 /**
  * ROUND 360 (CC-2) — THE BANK FEED STATE MACHINE. Spec: docs/bus/00-CONTRACT-BANK-FEED-STATE-MACHINE-MATCH-UNMATCH-CATEGORIZE-UNDO.md
  *
@@ -112,7 +113,7 @@ export const RELEASE_CATEGORIZATION_SET_SQL = `
             updated_at = now()`;
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 /**

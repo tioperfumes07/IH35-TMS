@@ -1,3 +1,4 @@
+import { companyToday } from "../../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
@@ -237,7 +238,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
           emptyText="No entries match these filters"
           storageKey={`dispatch-catalog-${catalogKey}`}
           tableTestId="dispatch-catalog-list-table"
-          exportFilename={`dispatch-catalog-${catalogKey}-${new Date().toISOString().slice(0, 10)}.csv`}
+          exportFilename={`dispatch-catalog-${catalogKey}-${companyToday()}.csv`}
           // LST-F3510: keep API search above; hide ParityTable toolbar Search
           suppressToolbarSearch
           onRowClick={(row) => {

@@ -1,3 +1,4 @@
+import { companyToday } from "../../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — a reference catalog of exception reasons (code / name / order) — not a time series.
 import { useEffect, useMemo, useState } from "react";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
@@ -224,7 +225,7 @@ export function LoadExceptionReasonsListPage() {
           emptyText="No exception reasons match these filters"
           storageKey="load-exception-reasons"
           tableTestId="load-exception-reasons-table"
-          exportFilename={`load-exception-reasons-${new Date().toISOString().slice(0, 10)}`}
+          exportFilename={`load-exception-reasons-${companyToday()}`}
           onRowClick={(row) => {
             setConflictError(null);
             setActiveRow(row);

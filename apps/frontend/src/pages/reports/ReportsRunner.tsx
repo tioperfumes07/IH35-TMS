@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -43,7 +44,7 @@ function buildQuery(reportId: string, values: Record<string, unknown>) {
     return q;
   }
   if (reportId === "ar-aging") {
-    q.set("as_of_date", String(values.as_of ?? values.from ?? new Date().toISOString().slice(0, 10)));
+    q.set("as_of_date", String(values.as_of ?? values.from ?? companyToday()));
     return q;
   }
   if (reportId === "dispatch-margin") {

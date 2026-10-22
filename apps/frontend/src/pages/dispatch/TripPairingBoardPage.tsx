@@ -201,7 +201,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
               className="inline-flex items-center rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs text-[#1F2A44] hover:border-[#4B5563] hover:bg-[#E5E7EB]"
               aria-label={`Book Southbound return for ${t.unit_number ?? "unit"}`}
             >
-              + Find Southbound{t.return_city ? ` · empty in ${t.return_city}` : ""}{t.return_avail_date ? ` · avail ${new Date(t.return_avail_date).toLocaleDateString()}` : ""}
+              + Find Southbound{t.return_city ? ` · empty in ${t.return_city}` : ""}{t.return_avail_date ? ` · avail ${formatDateUS(t.return_avail_date)}` : ""}
             </button>
           </div>
         );
