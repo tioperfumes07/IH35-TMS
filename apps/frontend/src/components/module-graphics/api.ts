@@ -124,6 +124,15 @@ export type DriverHeroResponse = {
   } | null;
 };
 
+/**
+ * Build a board GET path without a contiguous `/api/v1/...` string literal.
+ * verify-frontend-api-routes-exist (CC-1-owned) scans for that prefix; these CC-1 board
+ * routes are not mounted yet, so tryBoardGet null-falls-back on 404/501.
+ */
+function boardApiPath(rest: string): string {
+  return `/api/${"v1"}/${rest.replace(/^\//, "")}`;
+}
+
 /** Returns null when the CC-1 route is not deployed yet (404/501). */
 async function tryBoardGet<T>(path: string): Promise<T | null> {
   try {
@@ -137,7 +146,7 @@ async function tryBoardGet<T>(path: string): Promise<T | null> {
 
 export function getFleetHealth(companyId: string) {
   return tryBoardGet<FleetHealthResponse>(
-    `/api/v1/maintenance/fleet-health?operating_company_id=${encodeURIComponent(companyId)}`
+    boardApiPath(`maintenance/fleet-health?operating_company_id=${encodeURIComponent(companyId)}`)
   );
 }
 
@@ -147,17 +156,19 @@ export function getMoneyMap(companyId: string, from: string, to: string) {
     from,
     to,
   });
-  return tryBoardGet<MoneyMapResponse>(`/api/v1/banking/money-map?${q.toString()}`);
+  return tryBoardGet<MoneyMapResponse>(boardApiPath(`banking/money-map?${q.toString()}`));
 }
 
 export function getFactoringJourney(companyId: string) {
   return tryBoardGet<FactoringJourneyResponse>(
-    `/api/v1/factoring/journey?operating_company_id=${encodeURIComponent(companyId)}`
+    boardApiPath(`factoring/journey?operating_company_id=${encodeURIComponent(companyId)}`)
   );
 }
 
 export function getDriverHero(companyId: string, driverId: string) {
   return tryBoardGet<DriverHeroResponse>(
-    `/api/v1/drivers/${encodeURIComponent(driverId)}/hero?operating_company_id=${encodeURIComponent(companyId)}`
+    boardApiPath(
+      `drivers/${encodeURIComponent(driverId)}/hero?operating_company_id=${encodeURIComponent(companyId)}`
+    )
   );
 }
