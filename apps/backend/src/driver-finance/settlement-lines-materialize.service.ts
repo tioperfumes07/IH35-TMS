@@ -70,11 +70,11 @@ type QueryClient = {
 };
 
 const REIMBURSEMENTS_SOURCE_TABLE = "driver_finance.driver_reimbursements";
-// This table has no distinct "extra pay" category — additional/bonus/layover pay is entered as a
-// driver_reimbursements row with reimbursement_type='other' (see scripts/seed-missing-usmca-loads.ts's
-// own reimbursement_rows.concat(additional_pay_rows) loop). Narrowly scoped to the 'other' bucket only
-// — a real toll/fuel/scale/parking/lumper reimbursement is NEVER reclassified as extra pay.
-const EXTRA_PAY_REASON_PATTERN = /additional pay|layover|bonus/i;
+// driver_reimbursements has no item_id column; settlement_lines_extra_pay_requires_item enforces
+// item_id IS NOT NULL on every 'extra_pay' line. Materializing extra_pay without item_id violates
+// the constraint on every new INSERT. All reimbursements from this table are therefore always
+// materialized as 'reimbursement' lines — the extra_pay type is reserved for lines originating
+// from the settlement-creator path, which requires an explicit item_id from the UI.
 
 export type DeductionPostingAccountResolution = {
   roleKey: string;
@@ -224,23 +224,18 @@ export async function materializeSettlementLines(
   for (const r of reimbRes.rows) {
     const amountCents = Math.round(Number(r.amount_cents ?? 0));
     if (amountCents <= 0) continue;
-    const isExtraPay = r.reimbursement_type === "other" && EXTRA_PAY_REASON_PATTERN.test(r.reason ?? "");
-    const lineType = isExtraPay ? "extra_pay" : "reimbursement";
-    // ROW 0 REIMBURSEMENT-PER-TYPE-GL (owner ruling 2026-09-10): extra_pay stays on
-    // driver_pay_expense (a distinct business rule, unrelated to reimbursement-type GL mapping); a
-    // real reimbursement resolves via the shared per-type resolver (fuel/toll/scale/parking/other
-    // each get their own owner-mapped account, lumper unchanged) instead of the flat generic role.
-    const postingAccountId = isExtraPay
-      ? await resolveRoleAccountOptional(client, input.operatingCompanyId, "driver_pay_expense")
-      : await resolveReimbursementExpenseAccount(client, input.operatingCompanyId, r.reimbursement_type);
+    // settlement_lines_extra_pay_requires_item: driver_reimbursements has no item_id column, so all
+    // rows from this table are always 'reimbursement', never 'extra_pay'. extra_pay is creator-only.
+    const lineType = "reimbursement";
+    const postingAccountId = await resolveReimbursementExpenseAccount(client, input.operatingCompanyId, r.reimbursement_type);
     // Diagnostic-only label for accountRoleAttempted/reason below — never used to resolve an
     // account, only to explain a null postingAccountId in the audit trail / MaterializedLine result.
-    const roleAttempted = isExtraPay ? "driver_pay_expense" : `reimbursement_expense (type=${r.reimbursement_type ?? "null"})`;
+    const roleAttempted = `reimbursement_expense (type=${r.reimbursement_type ?? "null"})`;
     const sourceApproved = r.status === "paid" || r.status === "settled";
     const approvalStatus: "pending" | "approved" = postingAccountId && sourceApproved ? "approved" : "pending";
 
     const dollars = amountCents / 100;
-    const description = `${lineType === "extra_pay" ? "Additional pay" : "Reimbursement"} — ${r.reimbursement_type ?? "expense"}${r.reason ? `: ${r.reason}` : ""}`.slice(0, 500);
+    const description = `Reimbursement — ${r.reimbursement_type ?? "expense"}${r.reason ? `: ${r.reason}` : ""}`.slice(0, 500);
     const lineRes = await client.query<{ id: string }>(
       `
         INSERT INTO driver_finance.settlement_lines (
