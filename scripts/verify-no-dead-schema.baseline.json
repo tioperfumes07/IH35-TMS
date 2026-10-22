@@ -9,7 +9,7 @@
   },
   "_recapture": "2026-07-21 \u2014 coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too \u2014 the prior revision discarded dollar-quoted bodies entirely.",
   "stale_literal_ok": "shrink-only debt register \u2014 count drains as schema is wired, recaptured 2026-07-21",
-  "count": 547,
+  "count": 552,
   "entries": [
     {
       "object": "_system.background_jobs.last_error_message",
@@ -132,6 +132,14 @@
       "migration": "202615380700_document_work_order_copies.sql"
     },
     {
+      "object": "accounting.expense_lines.ps_category_qbo_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0266_acct11_pse_enforce.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
       "object": "accounting.expense_lines.ps_item_qbo_id",
       "kind": "COLUMN",
       "verdict": "weak",
@@ -238,6 +246,30 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0178_p7_w2_accounting_entity_sync_columns.sql"
+    },
+    {
+      "object": "accounting.factoring_misdirected_payment_alerts.resolution_note",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202615980910_factoring_misdirected_payment_alerts.sql",
+      "reason": "Factoring misdirected-payment alert resolution field: lost its reader in 8c70f6753f. Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire the resolve path or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "accounting.factoring_misdirected_payment_alerts.resolved_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202615980910_factoring_misdirected_payment_alerts.sql",
+      "reason": "Factoring misdirected-payment alert resolution field: lost its reader in 8c70f6753f. Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire the resolve path or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "accounting.factoring_misdirected_payment_alerts.resolved_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202615980910_factoring_misdirected_payment_alerts.sql",
+      "reason": "Factoring misdirected-payment alert resolution field: lost its reader in 8c70f6753f. Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire the resolve path or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
     },
     {
       "object": "accounting.factoring_repurchase_due_events.state_changed_at",
@@ -594,30 +626,6 @@
       "migration": "202606281070_revenue_recognition_data_model.sql"
     },
     {
-      "object": "accounting.tax_document_batch.issued_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607130100_block17_24_tax_document_engine.sql"
-    },
-    {
-      "object": "accounting.tax_document_batch.issued_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202607130100_block17_24_tax_document_engine.sql"
-    },
-    {
-      "object": "accounting.tax_document_batch.reviewed_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607130100_block17_24_tax_document_engine.sql"
-    },
-    {
-      "object": "accounting.tax_document_batch.reviewed_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607130100_block17_24_tax_document_engine.sql"
-    },
-    {
       "object": "accounting.tax_document.email_message_id",
       "kind": "COLUMN",
       "verdict": "none",
@@ -666,6 +674,30 @@
       "migration": "202607130100_block17_24_tax_document_engine.sql"
     },
     {
+      "object": "accounting.tax_document_batch.issued_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document_batch.issued_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document_batch.reviewed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
+      "object": "accounting.tax_document_batch.reviewed_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202607130100_block17_24_tax_document_engine.sql"
+    },
+    {
       "object": "accounting.vendor_classifications.archive_reason",
       "kind": "COLUMN",
       "verdict": "weak",
@@ -676,6 +708,14 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0325_clear_default_classifications.sql"
+    },
+    {
+      "object": "accounting.vendor_credits.last_qbo_synced_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202610171400_vendor_credits_qbo_projection_key.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
     },
     {
       "object": "accounting.vendor_payment_methods.account_holder_name",
@@ -1164,6 +1204,14 @@
       "migration": "202615400850_catalogs_accounts_posts_to_financials_declared.sql"
     },
     {
+      "object": "catalogs.accounts.qbo_sync_error",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0375_qbo_chart_of_accounts_sync_metadata.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
       "object": "catalogs.blocked_feature_flags",
       "kind": "TABLE",
       "verdict": "none",
@@ -1546,6 +1594,41 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
+    },
+    {
+      "object": "driver_finance.settlement_contract_terms_config",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202607080000_settlement_contract_terms.sql",
+      "reason": "OWNER RULING (10-22, LEAD 443.236 / 443.248): \"for the moment there is no bonus\" \u2014 the automatic MPG / referral bonus reader was removed (#27178); the table is kept for later, never read today."
+    },
+    {
+      "object": "driver_finance.settlement_contract_terms_config.mpg_bonus_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607080000_settlement_contract_terms.sql",
+      "reason": "OWNER RULING (10-22, LEAD 443.236 / 443.248): \"for the moment there is no bonus\" \u2014 the automatic MPG / referral bonus reader was removed (#27178); the table is kept for later, never read today."
+    },
+    {
+      "object": "driver_finance.settlement_contract_terms_config.mpg_bonus_threshold",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607080000_settlement_contract_terms.sql",
+      "reason": "OWNER RULING (10-22, LEAD 443.236 / 443.248): \"for the moment there is no bonus\" \u2014 the automatic MPG / referral bonus reader was removed (#27178); the table is kept for later, never read today."
+    },
+    {
+      "object": "driver_finance.settlement_contract_terms_config.referral_min_days",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607080000_settlement_contract_terms.sql",
+      "reason": "OWNER RULING (10-22, LEAD 443.236 / 443.248): \"for the moment there is no bonus\" \u2014 the automatic MPG / referral bonus reader was removed (#27178); the table is kept for later, never read today."
+    },
+    {
+      "object": "driver_finance.settlement_contract_terms_config.referral_reward_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202607080000_settlement_contract_terms.sql",
+      "reason": "OWNER RULING (10-22, LEAD 443.236 / 443.248): \"for the moment there is no bonus\" \u2014 the automatic MPG / referral bonus reader was removed (#27178); the table is kept for later, never read today."
     },
     {
       "object": "driver_finance.settlement_line_item_splits",
@@ -2016,6 +2099,110 @@
       "migration": "202606080216_engine_fault_events.sql"
     },
     {
+      "object": "integrations.qbo_payroll_links",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_payroll_links.employee_count",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_payroll_links.gross_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_payroll_links.last_synced_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_payroll_links.net_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_payroll_links.pay_period_end",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_payroll_links.pay_period_start",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_payroll_links.qbo_payroll_run_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_payroll_links.qbo_payroll_run_name",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_payroll_links.sync_state",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0371_qbo_payroll_links.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_vendor_linkage_events.action",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0091_p5_d3_qbo_vendor_driver_asset_linkage.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_vendor_linkage_events.previous_qbo_class_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0091_p5_d3_qbo_vendor_driver_asset_linkage.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
+      "object": "integrations.qbo_vendor_linkage_events.previous_qbo_vendor_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0091_p5_d3_qbo_vendor_driver_asset_linkage.sql",
+      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
+      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
+    },
+    {
       "object": "integrations.samsara_addresses.deactivated_reason",
       "kind": "COLUMN",
       "verdict": "none",
@@ -2032,6 +2219,12 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0137_p8c_m_samsara_stub_foundation.sql"
+    },
+    {
+      "object": "maint.part.requires_position",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606122215_m1_positioned_parts_picker.sql"
     },
     {
       "object": "maint.part_position_assignment",
@@ -2055,12 +2248,6 @@
       "object": "maint.part_position_assignment.position_set_id",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "202606122215_m1_positioned_parts_picker.sql"
-    },
-    {
-      "object": "maint.part.requires_position",
-      "kind": "COLUMN",
-      "verdict": "none",
       "migration": "202606122215_m1_positioned_parts_picker.sql"
     },
     {
@@ -2568,6 +2755,30 @@
       "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql"
     },
     {
+      "object": "payroll.driver_settlement_line_items.auto_deduction_policy_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202606281000_auto_deduction_policies.sql"
+    },
+    {
+      "object": "payroll.driver_settlements.recover_override_by",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
+    },
+    {
+      "object": "payroll.driver_settlements.recover_override_cents",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
+    },
+    {
+      "object": "payroll.driver_settlements.recover_override_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
+    },
+    {
       "object": "payroll_integration.aggregate_cache",
       "kind": "TABLE",
       "verdict": "none",
@@ -2634,28 +2845,16 @@
       "migration": "202606281040_payroll_integration_cache.sql"
     },
     {
-      "object": "payroll.driver_settlement_line_items.auto_deduction_policy_id",
+      "object": "public.audit_log.change_data",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606080940_block26_partition_hot_tables.sql"
+    },
+    {
+      "object": "public.audit_log.changed_by",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "202606281000_auto_deduction_policies.sql"
-    },
-    {
-      "object": "payroll.driver_settlements.recover_override_by",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
-    },
-    {
-      "object": "payroll.driver_settlements.recover_override_cents",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
-    },
-    {
-      "object": "payroll.driver_settlements.recover_override_reason",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606131600_settlement_capped_recovery_flag_and_override.sql"
+      "migration": "202606080940_block26_partition_hot_tables.sql"
     },
     {
       "object": "public.audit_log_partitioned",
@@ -2689,18 +2888,6 @@
     },
     {
       "object": "public.audit_log_partitioned.table_name",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606080940_block26_partition_hot_tables.sql"
-    },
-    {
-      "object": "public.audit_log.change_data",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606080940_block26_partition_hot_tables.sql"
-    },
-    {
-      "object": "public.audit_log.changed_by",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202606080940_block26_partition_hot_tables.sql"
@@ -2826,18 +3013,6 @@
       "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
     },
     {
-      "object": "qbo_archive.import_batches.jorge_signed_off_at",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0079_p5_t6_qbo_forensic_snapshot.sql"
-    },
-    {
-      "object": "qbo_archive.import_batches.jorge_signed_off_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0079_p5_t6_qbo_forensic_snapshot.sql"
-    },
-    {
       "object": "qbo.bill_payment_mappings.mapped_at",
       "kind": "COLUMN",
       "verdict": "none",
@@ -2854,6 +3029,18 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0163_p6_t11199_qbo_sync_worker_retry_outbox.sql"
+    },
+    {
+      "object": "qbo_archive.import_batches.jorge_signed_off_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0079_p5_t6_qbo_forensic_snapshot.sql"
+    },
+    {
+      "object": "qbo_archive.import_batches.jorge_signed_off_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0079_p5_t6_qbo_forensic_snapshot.sql"
     },
     {
       "object": "reference.ifta_tax_rates.jurisdiction_name",
@@ -3144,6 +3331,12 @@
       "migration": "202606111055_w1b_tasks_module.sql"
     },
     {
+      "object": "tasks.task.completion_notes",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202606111055_w1b_tasks_module.sql"
+    },
+    {
       "object": "tasks.task_type_seed",
       "kind": "TABLE",
       "verdict": "none",
@@ -3154,12 +3347,6 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202606120001_tasks_planner_v3.sql"
-    },
-    {
-      "object": "tasks.task.completion_notes",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606111055_w1b_tasks_module.sql"
     },
     {
       "object": "telematics.vehicle_locations.source_operating_company_id",
@@ -3178,158 +3365,6 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "202606080244_usmca_ops_schema_grant.sql"
-    },
-    {
-      "object": "accounting.expense_lines.ps_category_qbo_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0266_acct11_pse_enforce.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "accounting.factoring_misdirected_payment_alerts.resolution_note",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202615980910_factoring_misdirected_payment_alerts.sql",
-      "reason": "Factoring misdirected-payment alert resolution field: lost its reader in 8c70f6753f. Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire the resolve path or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "accounting.factoring_misdirected_payment_alerts.resolved_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202615980910_factoring_misdirected_payment_alerts.sql",
-      "reason": "Factoring misdirected-payment alert resolution field: lost its reader in 8c70f6753f. Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire the resolve path or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "accounting.factoring_misdirected_payment_alerts.resolved_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202615980910_factoring_misdirected_payment_alerts.sql",
-      "reason": "Factoring misdirected-payment alert resolution field: lost its reader in 8c70f6753f. Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire the resolve path or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "accounting.vendor_credits.last_qbo_synced_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202610171400_vendor_credits_qbo_projection_key.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "catalogs.accounts.qbo_sync_error",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0375_qbo_chart_of_accounts_sync_metadata.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links",
-      "kind": "TABLE",
-      "verdict": "none",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links.employee_count",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links.gross_cents",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links.last_synced_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links.net_cents",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links.pay_period_end",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links.pay_period_start",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links.qbo_payroll_run_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links.qbo_payroll_run_name",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_payroll_links.sync_state",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0371_qbo_payroll_links.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_vendor_linkage_events.action",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0091_p5_d3_qbo_vendor_driver_asset_linkage.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_vendor_linkage_events.previous_qbo_class_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0091_p5_d3_qbo_vendor_driver_asset_linkage.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
-    },
-    {
-      "object": "integrations.qbo_vendor_linkage_events.previous_qbo_vendor_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0091_p5_d3_qbo_vendor_driver_asset_linkage.sql",
-      "reason": "QBO-era object: lost its last reader in the 2026-10-12 QBO removal (595f0687ec / 24ab16784a / ffafa3f696; QBO out of scope, USMCA-only). Kept, not dropped: the owner has not ordered removal (LEAD 15:30Z). Wire or drop by owner order, then delete this entry.",
-      "ruling": "LEAD 15:30Z 2026-10-17 heavy CI peel step 1220: baseline with reasons, shrink-only"
     }
   ],
   "measured_at": "2026-09-24T00:30:00Z",
