@@ -64,6 +64,6 @@ export async function stampFinalActiveDeliveryDeparture(
   );
   // Dynamic import: settlement-creator-deliver imports the transition engine, which imports this module.
   const { stampStopsFromTracking } = await import("../driver-finance/settlement-creator-deliver.js");
-  await stampStopsFromTracking(client as never, loadId, operatingCompanyId, {});
+  await stampStopsFromTracking(client as never, loadId, operatingCompanyId, {});  // a delivered load: its stops did happen
   return res.rowCount ?? 0;
 }
