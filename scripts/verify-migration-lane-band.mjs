@@ -90,6 +90,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // LEAD 443.214 follow-up (owner 2026-10-01 no-handoff): fuel_transactions card_unit_id / gps_unit_id FOREIGN KEYs.
+  // Claimed #(202616120700) in #27140 (top-level key) — exact-branch + exact-file.
+  [
+    "cc-2/443-214-unit-fks",
+    new Set(["db/migrations/202616120700_fuel_transactions_unit_fks.sql"]),
+  ],
   // Lead 443.220 (00:45Z; owner 2026-10-01 no-handoff): a booked load always has its driver bill — driver_bills status
   // awaiting_short_miles. Claimed #(202616110700) in #27131.
   [

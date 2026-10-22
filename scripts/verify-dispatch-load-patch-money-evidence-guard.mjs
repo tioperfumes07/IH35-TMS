@@ -38,8 +38,10 @@ if (!/FROM driver_finance\.driver_settlements[\s\S]*trip_closed_at IS NULL/.test
 if (!/settlement_model = 'load_bookended'/.test(svc)) fail("settlement guard must scope to settlement_model='load_bookended'");
 if (!/FROM accounting\.invoices[\s\S]*status IN \('sent', 'partial', 'paid', 'factored'\)/.test(svc))
   fail("must guard on an ISSUED (non-draft) invoice via source_load_id");
-if (!/FROM driver_finance\.driver_bills[\s\S]*status <> 'open'/.test(svc))
-  fail("must guard on a NON-OPEN driver bill");
+// LEAD 443.220: a bill still awaiting its short miles is as editable as an open one — the lock reads the one editable list
+// (EDITABLE_DRIVER_BILL_STATUSES: open, awaiting_short_miles); a bare 'open' is the same rule for the old shape.
+if (!/FROM driver_finance\.driver_bills[\s\S]*(status <> 'open'|status NOT IN \(\$\{EDITABLE_DRIVER_BILL_STATUS_SQL\}\))/.test(svc))
+  fail("must guard on a NON-OPEN (non-editable) driver bill");
 if (!/LoadEditLockedError/.test(svc)) fail("must throw LoadEditLockedError when locked");
 if (!/isLiveLoadNumberOnlyPatch/.test(svc))
   fail("must allow live_load_number-only linkage backfill to bypass money lock");
