@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { DRIVER_BILL_OUTSTANDING_STATUSES } from "../lib/document-status-vocabulary.js";
+import { COMPANY_TIME_ZONE } from "../lib/company-business-date.js";
 import { lineCategorizationRefusal } from "./line-categorization.js";
 import { AGING_BUCKET_IDS, agingWindowFromBucket } from "./aging/buckets.js";
 import fp from "fastify-plugin";
@@ -70,10 +71,16 @@ export const DRIVER_BILL_REGISTER_SQL = `SELECT db.id::text, db.bill_number, db.
             AND ($5::text[] IS NULL OR db.status = ANY($5::text[]))
             AND ($6::uuid IS NULL OR db.driver_id = $6::uuid)
             AND ($7::uuid IS NULL OR db.load_id = $7::uuid)
-            AND ($8::date IS NULL OR db.created_at::date >= $8::date)
-            AND ($9::date IS NULL OR db.created_at::date <= $9::date)
+            AND ($8::date IS NULL OR (db.created_at AT TIME ZONE '${COMPANY_TIME_ZONE}')::date >= $8::date)
+            AND ($9::date IS NULL OR (db.created_at AT TIME ZONE '${COMPANY_TIME_ZONE}')::date <= $9::date)
             AND ($10::text IS NULL OR db.bill_number ILIKE '%' || $10::text || '%' OR db.load_number ILIKE '%' || $10::text || '%'
                  OR concat_ws(' ', d.first_name, d.last_name) ILIKE '%' || $10::text || '%')
+            AND ($11::text IS NULL OR EXISTS (
+              SELECT 1 FROM mdata.vendors register_vendor
+               WHERE register_vendor.operating_company_id = db.operating_company_id
+                 AND register_vendor.driver_id = db.driver_id
+                 AND (register_vendor.id::text = $11::text OR register_vendor.qbo_vendor_id = $11::text)
+            ))
           ORDER BY db.created_at DESC, db.id DESC
           LIMIT $3 OFFSET $4`;
 
@@ -449,7 +456,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         DRIVER_BILL_REGISTER_SQL,
         [query.data.operating_company_id, query.data.status === "all" || query.data.status === "voided", query.data.limit, query.data.offset,
           driverBillStatusesForFilter(query.data.status), query.data.driver_id ?? null, query.data.load_id ?? null,
-          query.data.date_from ?? null, query.data.date_to ?? null, query.data.search?.trim() || null]
+          query.data.date_from ?? null, query.data.date_to ?? null, query.data.search?.trim() || null,
+          query.data.vendor_id ?? null]
       );
       return result.rows;
     });
