@@ -26,3 +26,23 @@ export function parseQueryBoolean(value: unknown): unknown {
 export function queryBoolean() {
   return z.preprocess(parseQueryBoolean, z.boolean());
 }
+
+/**
+ * LEAD 443.217 (catalog Excel import, excel-uploader.ts) — a spreadsheet cell. People type Yes / No / Y / N, Excel writes
+ * TRUE / FALSE, and an empty cell means "not given" (so .default(true) applies), never "inactive". Same strictness
+ * otherwise: an unrecognised word is a row error, not a guess.
+ */
+export function parseCellBoolean(value: unknown): unknown {
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    if (v === "") return undefined;
+    if (v === "yes" || v === "y") return true;
+    if (v === "no" || v === "n") return false;
+  }
+  return parseQueryBoolean(value);
+}
+
+/** An empty cell becomes `whenEmpty` (the column default) — the default sits inside the preprocess, after "" → absent. */
+export function cellBoolean(whenEmpty: boolean) {
+  return z.preprocess(parseCellBoolean, z.boolean().default(whenEmpty));
+}
