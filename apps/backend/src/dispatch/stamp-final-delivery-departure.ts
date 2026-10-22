@@ -62,8 +62,17 @@ export async function stampFinalActiveDeliveryDeparture(
     `,
     [loadId, operatingCompanyId, deliveredAt ?? null]
   );
+  await stampEarlierStopsOnDelivery(client, operatingCompanyId, loadId);
+  return res.rowCount ?? 0;
+}
+
+/**
+ * LEAD 443.230 / 443.234 — a DELIVERED load's earlier stops still unstamped are stamped from the truck's tracking (the
+ * stop-evidence engine) and settled. Shared by the office stamp above AND the geofence delivery path (departure_evidence
+ * 'fence', which skips the office departure stamp — 13691 kept its pickup 'pending'). A delivered load's stops did happen.
+ */
+export async function stampEarlierStopsOnDelivery(client: Queryable, operatingCompanyId: string, loadId: string): Promise<void> {
   // Dynamic import: settlement-creator-deliver imports the transition engine, which imports this module.
   const { stampStopsFromTracking } = await import("../driver-finance/settlement-creator-deliver.js");
-  await stampStopsFromTracking(client as never, loadId, operatingCompanyId, {});  // a delivered load: its stops did happen
-  return res.rowCount ?? 0;
+  await stampStopsFromTracking(client as never, loadId, operatingCompanyId, {});
 }

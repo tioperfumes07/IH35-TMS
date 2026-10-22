@@ -32,12 +32,19 @@ const OFFICE = "apps/backend/src/dispatch/stamp-final-delivery-departure.ts";
 export function officeFailures(officeSrc, src) {
   const out = [];
   const fn = officeSrc.slice(officeSrc.indexOf("export async function stampFinalActiveDeliveryDeparture("));
-  if (!/await stampStopsFromTracking\(client as never, loadId, operatingCompanyId, \{\}\);/.test(fn))
+  if (!/await stampEarlierStopsOnDelivery\(client, operatingCompanyId, loadId\);/.test(fn) || !/export async function stampEarlierStopsOnDelivery\([\s\S]*?await stampStopsFromTracking\(client as never, loadId, operatingCompanyId, \{\}\);/.test(officeSrc))
     out.push(`RULE 3 ${OFFICE}: office delivery no longer stamps the earlier stops from tracking (they stay 'pending')`);
   if (!/\(actual_arrival_at IS NOT NULL OR actual_departure_at IS NOT NULL\) AS stamped/.test(src) ||
       (src.match(/WHERE id = \$1::uuid AND actual_arrival_at IS NULL AND actual_departure_at IS NULL`/g) ?? []).length < 2)
     out.push(`RULE 1b ${DELIVER}: stampStopsFromTracking must leave a stop that already has a departure stamp untouched`);
   return out;
+}
+
+const TRANSITION = "apps/backend/src/dispatch/load-transition.service.ts";
+/** RULE 3b (443.234) — the fence delivery path stamps the earlier stops too. */
+export function fenceFailures(transitionSrc) {
+  return /else await stampEarlierStopsOnDelivery\(client as never, operatingCompanyId, loadId\);/.test(transitionSrc)
+    ? [] : [`RULE 3b ${TRANSITION}: a geofence-delivered load never stamps its earlier stops (13691 kept its pickup 'pending')`];
 }
 
 export function staticFailures(src) {
@@ -62,6 +69,7 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(imp
 if (isMain) {
   const src = readFileSync(resolve(ROOT, DELIVER), "utf8");
   const officeSrc = readFileSync(resolve(ROOT, OFFICE), "utf8");
+  const transitionSrc = readFileSync(resolve(ROOT, TRANSITION), "utf8");
   if (process.argv.includes("--selftest")) {
     const cases = [
       ["the shipped engine passes", staticFailures(src).length === 0],
@@ -69,6 +77,7 @@ if (isMain) {
       ["settling without the stamp condition fails", staticFailures(src.replace("AND actual_departure_at IS NOT NULL", "")).some((x) => x.startsWith("RULE 1"))],
       ["office delivery passes", officeFailures(officeSrc, src).length === 0],
       ["office delivery without the tracking stamp fails", officeFailures(officeSrc.replace("await stampStopsFromTracking(client as never, loadId, operatingCompanyId, {});", ""), src).some((x) => x.startsWith("RULE 3"))],
+      ["fence delivery without the earlier-stop stamp fails", fenceFailures(transitionSrc.replace("else await stampEarlierStopsOnDelivery(client as never, operatingCompanyId, loadId);", "")).length > 0],
       ["re-stamping an attested departure fails", officeFailures(officeSrc, src.replace("(actual_arrival_at IS NOT NULL OR actual_departure_at IS NOT NULL) AS stamped", "(actual_arrival_at IS NOT NULL) AS stamped")).some((x) => x.startsWith("RULE 1b"))],
       ["no pending stop passes", liveFailures([]).length === 0],
       ["a pending stop on an invoiced load fails", liveFailures([{ load_number: "1", load_status: "invoiced", sequence_number: 2, stop_type: "delivery" }]).some((x) => x.startsWith("RULE 2"))],
@@ -78,7 +87,7 @@ if (isMain) {
     console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
     process.exit(bad ? 1 : 0);
   }
-  const failures = [...staticFailures(src), ...officeFailures(officeSrc, src)];
+  const failures = [...staticFailures(src), ...officeFailures(officeSrc, src), ...fenceFailures(transitionSrc)];
   if (failures.length && !process.env.DATABASE_URL) {
     console.error(`${LABEL}: FAIL (static) —\n` + failures.map((f) => `  ${f}`).join("\n"));
     process.exit(1);
