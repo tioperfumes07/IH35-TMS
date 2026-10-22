@@ -14,7 +14,7 @@ import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 import { fromMdataStatus, isReverseTransition, toMdataStatus, validateLoadStatusTransition, validateLoadStatusWrite, validateLoadStopStatusWrite, type LoadStatusWriteKind } from "./load-state-machine.js";
-import { loadStatusRequiresDeliveryDepartureStamp, stampFinalActiveDeliveryDeparture } from "./stamp-final-delivery-departure.js";
+import { loadStatusRequiresDeliveryDepartureStamp, stampEarlierStopsOnDelivery, stampFinalActiveDeliveryDeparture } from "./stamp-final-delivery-departure.js";
 import { ensureDriverBillArtifactsForLoad, type DriverBillMintOutcome } from "./book-load.service.js";
 
 export type DispatchTransitionInput = {
@@ -187,6 +187,8 @@ export async function transitionDispatchLoadInClientTx(client: TransitionClient,
       loadId,
       input.delivered_at ?? null
     );
+    // LEAD 443.234 — the fence path stamps no departure, but the load's earlier stops still get their evidence.
+    else await stampEarlierStopsOnDelivery(client as never, operatingCompanyId, loadId);
 
     // ACCT-F277 — delivery cannot recognize freight revenue while silently carrying no driver
     // cost record. Re-enter the canonical idempotent pay path: an existing Book bill is a no-op;

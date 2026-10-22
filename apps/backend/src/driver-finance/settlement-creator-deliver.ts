@@ -78,6 +78,9 @@ export async function stampStopsFromTracking(
   loadId: string,
   operatingCompanyId: string,
   dates: { pickupDate?: string | null; deliveryDate?: string | null; stopDates?: Record<string, string> },
+  /** LEAD 443.234 — LIVE loads (not a settled document): stamp ONLY a tracked stop event, never the date-only fallback, and never
+   *  a stop whose day has not come (a date-only stamp on a live load would assert an arrival that may not have happened). */
+  opts: { trackedOnly?: boolean } = {},
 ): Promise<StopStamp[]> {
   const load = (
     await client.query<{ load_number: string; unit_id: string | null; company_id: string }>(
@@ -112,6 +115,10 @@ export async function stampStopsFromTracking(
     }
     if (!day) {
       out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: null, departure_at: null, note: "no date for this stop on the settlement — left unstamped" });
+      continue;
+    }
+    if (opts.trackedOnly && day > new Date().toISOString().slice(0, 10)) {
+      out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: null, departure_at: null, note: `stop day ${day} has not come — left unstamped` });
       continue;
     }
     let reason = "";
@@ -154,6 +161,8 @@ export async function stampStopsFromTracking(
         ...base, precision: "tracked", stop_event_id: pick.id, arrival_at: iso(pick.started_at), departure_at: iso(departed),
         note: pick.candidates > 1 ? `nearest of ${pick.candidates} stop events (${Math.round(pick.metres)} m)` : `stop event ${Math.round(pick.metres)} m from the stop`,
       });
+    } else if (opts.trackedOnly) {
+      out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: null, departure_at: null, note: `no tracked evidence — ${reason}; left unstamped (live load)` });
     } else {
       await client.query(
         `UPDATE mdata.load_stops
