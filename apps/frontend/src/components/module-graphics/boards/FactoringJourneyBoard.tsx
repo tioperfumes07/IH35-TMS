@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listFactoringPurchases } from "../../../api/factoring-purchases";
+import { EntityLink } from "../../shared/EntityLink";
 import { ClickableStat } from "../ClickableStat";
 import { ModBoardShell, ModSectionHead } from "../ModBoardShell";
 import { formatNumber, formatUsdCents } from "../format";
@@ -157,17 +157,19 @@ export function FactoringJourneyBoard({ companyId }: Props) {
             ];
             const gross = Math.max(p.gross_cents, 1);
             return (
-              <Link
+              <div
                 key={p.id}
-                to={`/factoring/purchases/${p.id}`}
-                className="block rounded-sm border border-[var(--mod-border)] bg-[var(--mod-wash)] px-2 py-1.5 no-underline text-inherit hover:border-[var(--mod-navy)]"
+                className="block rounded-sm border border-[var(--mod-border)] bg-[var(--mod-wash)] px-2 py-1.5 text-inherit hover:border-[var(--mod-navy)]"
                 data-mod-click-through="1"
                 data-testid={`factoring-journey-row-${p.display_id}`}
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-[family-name:var(--mod-font-cond)] text-[13px] font-semibold text-[var(--mod-navy)]">
-                    {p.display_id}
-                  </span>
+                  <EntityLink
+                    kind="factoring_purchase"
+                    id={p.id}
+                    label={p.display_id}
+                    className="font-[family-name:var(--mod-font-cond)] text-[13px] font-semibold text-[var(--mod-navy)] no-underline"
+                  />
                   <span className="text-[12px] text-[var(--mod-muted)]">
                     {p.purchase_date} · {formatNumber(p.invoice_count)} inv ·{" "}
                     {formatUsdCents(p.gross_cents)}
@@ -185,7 +187,7 @@ export function FactoringJourneyBoard({ companyId }: Props) {
                     />
                   ))}
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
