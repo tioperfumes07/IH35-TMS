@@ -6,7 +6,7 @@ export const AP_BILL_STATUSES = ["unpaid", "partially_paid", "paid", "void"] as 
 export const AP_BILL_LEGACY_STATUSES = ["open", "partial", "voided"] as const;
 export const AP_BILL_OUTSTANDING_STATUSES = ["open", "unpaid", "partial", "partially_paid"] as const;
 
-export const DRIVER_BILL_STATUSES = ["open", "approved", "paid", "void", "disputed"] as const;
-export const DRIVER_BILL_OUTSTANDING_STATUSES = ["open", "approved", "disputed"] as const;
+export const DRIVER_BILL_STATUSES = ["open", "approved", "paid", "void", "disputed", "awaiting_short_miles"] as const;
+export const DRIVER_BILL_OUTSTANDING_STATUSES = ["open", "approved", "disputed", "awaiting_short_miles"] as const;
 
 export const LOAD_STATUSES_WITHOUT_DRIVER_BILL = ["draft", "cancelled", "voided", "abandoned", "driver_walkoff", "driver_no_show"] as const;

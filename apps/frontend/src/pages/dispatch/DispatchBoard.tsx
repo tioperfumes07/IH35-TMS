@@ -2236,8 +2236,8 @@ export function DispatchBoard({
               // P1 (owner 2026-09-14) — "the hole" the ticket names: most loads are booked open and
               // get a driver seated LATER, right here. Refuse LOUDLY, never a silent no-op.
               const mint = (result as { driver_bill_mint?: { outcome?: string; reason?: string } } | null)?.driver_bill_mint;
-              if (mint?.outcome === "refused_no_shortest_miles") {
-                pushToast(mint.reason ?? "No driver bill was created — shortest miles are required.", "error");
+              if (mint?.outcome === "awaiting_short_miles") {
+                pushToast("Driver bill created — awaiting SHORT miles (AlwaysTrack L.Miles). Enter the short miles on the load and the bill is priced automatically.", "error");
               }
               // ROUND 203 F2 — real query keys (["dispatch","loads"] matched nothing).
               await queryClient.invalidateQueries({ queryKey: ["loads"] });

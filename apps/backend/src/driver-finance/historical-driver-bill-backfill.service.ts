@@ -42,6 +42,7 @@
 import { restampDriverBillUnitAndTrailer } from "./driver-bill-unit-trailer.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { driverBillNumberFromLoadNumber } from "./driver-bill-number.js";
+import { EDITABLE_DRIVER_BILL_STATUS_SQL } from "../lib/document-status-vocabulary.js";
 
 /**
  * The system actor every historical-backfill audit row is attributed to when no interactive user
@@ -206,8 +207,9 @@ export async function createHistoricalDriverBill(
               rate_empty_per_mile_cents = $7,
               loaded_pay_cents = $8,
               deadhead_pay_cents = $9,
-              notes = $10
-        WHERE id = $1::uuid AND status = 'open' AND voided_at IS NULL AND settled_in_settlement_id IS NULL`,
+              notes = $10,
+              status = 'open'
+        WHERE id = $1::uuid AND status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL}) AND voided_at IS NULL AND settled_in_settlement_id IS NULL`,
       [
         prior.id,
         input.gross_amount_cents,

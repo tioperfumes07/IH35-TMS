@@ -77,11 +77,13 @@ describe("createDriverBillArtifacts() — rate_per_mile_cents is never a blended
     await expect(createDriverBillArtifacts(client, baseInput(), load, "synthetic", [])).rejects.toThrow("driver_pay_plan_invalid");
     expect(client.inserted).toHaveLength(0);
   });
-  it("ordinary mileage pay still refuses missing short miles", async () => {
+  it("ordinary mileage pay without short miles is never priced — the bill is created awaiting short miles (443.220)", async () => {
     const client = fakeClient();
     const result = await createDriverBillArtifacts(client, baseInput(), { id: LOAD_ID, miles_practical: 482.5 }, "synthetic", []);
-    expect(result.outcome).toBe("refused_no_shortest_miles");
-    expect(client.inserted).toHaveLength(0);
+    expect(result.outcome).toBe("awaiting_short_miles");
+    expect(client.inserted).toHaveLength(1);
+    expect(client.inserted[0]!.sql).toContain("'awaiting_short_miles'");
+    expect(client.inserted[0]!.sql).toMatch(/VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, 0, NULL, NULL, NULL,/); // $0, no miles basis, no rate
   });
   it("refuses an inactive, foreign or unmapped flat-pay item before minting", async () => {
     const inner = fakeClient();

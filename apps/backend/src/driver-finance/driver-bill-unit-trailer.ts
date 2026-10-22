@@ -9,6 +9,7 @@
  * the bill is minted, so the mint-time stamp is completed there).
  */
 import { loadNonOwnedTrailerSql, sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
+import { EDITABLE_DRIVER_BILL_STATUS_SQL } from "../lib/document-status-vocabulary.js";
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rowCount: number | null }> };
 
@@ -24,7 +25,7 @@ export async function restampDriverBillUnitAndTrailer(
        FROM mdata.loads l
       WHERE b.load_id = l.id AND l.id = $1::uuid
         AND b.operating_company_id = $2::uuid AND l.operating_company_id = $2::uuid
-        AND b.voided_at IS NULL AND b.settled_in_settlement_id IS NULL AND b.status = 'open'
+        AND b.voided_at IS NULL AND b.settled_in_settlement_id IS NULL AND b.status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL})
         AND (b.unit_id IS DISTINCT FROM l.assigned_unit_id
           OR b.trailer_id IS DISTINCT FROM ${sameEntityLoadCompanyTrailerSql("l.id", "l.operating_company_id")}
           OR b.non_owned_trailer_id IS DISTINCT FROM ${loadNonOwnedTrailerSql("l.id", "l.operating_company_id")})`,

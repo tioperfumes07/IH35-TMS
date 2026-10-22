@@ -90,6 +90,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.220 (00:45Z; owner 2026-10-01 no-handoff): a booked load always has its driver bill — driver_bills status
+  // awaiting_short_miles. Claimed #(202616110700) in #27131.
+  [
+    "cc-2/443-220-awaiting-short-miles",
+    new Set(["db/migrations/202616110700_driver_bills_awaiting_short_miles.sql"]),
+  ],
   // Lead 443.214 (22:40Z, owner 10-21 5:09 PM CT "use samsara locations ... time should be in the reports"; owner 2026-10-01
   // no-handoff): fuel follows the truck — provider moment / station / GPS truck evidence columns. Claimed #(202616070700) in #27103.
   [

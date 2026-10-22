@@ -1,6 +1,7 @@
 import { stampDriverBillVoidedInClientTx } from "./driver-bill-void-state.service.js";
 import { restampDriverBillUnitAndTrailer } from "./driver-bill-unit-trailer.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { isEditableDriverBillStatus } from "../lib/document-status-vocabulary.js";
 /**
  * void-open-driver-bill.service.ts — SETL-TIEOUT-01 (owner order 2026-09-05, deadline 02:30Z).
  *
@@ -91,7 +92,7 @@ export async function correctOpenDriverBillMileage(
   );
   const bill = billRes.rows[0];
   if (!bill) throw new DriverBillVoidRefusedError(`no live (non-voided) driver_bills row exists for load ${input.loadId} — nothing to correct`);
-  if (bill.status !== "open") {
+  if (!isEditableDriverBillStatus(bill.status)) {
     throw new DriverBillVoidRefusedError(`driver_bills ${bill.id} has status='${bill.status}', not 'open' — refusing to correct a non-draft bill`);
   }
 

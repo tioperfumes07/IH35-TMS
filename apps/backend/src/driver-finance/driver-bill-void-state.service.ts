@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { EDITABLE_DRIVER_BILL_STATUS_SQL } from "../lib/document-status-vocabulary.js";
 
 type Client = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -16,7 +17,7 @@ export async function stampDriverBillVoidedInClientTx(client: Client, input: {
             voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid), updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid
         AND (status NOT IN ('void','voided') OR voided_at IS NULL)
-        AND ($5::boolean = false OR (status = 'open' AND voided_at IS NULL))
+        AND ($5::boolean = false OR (status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL}) AND voided_at IS NULL))
       RETURNING id::text`,
     [input.driverBillId, input.operatingCompanyId, input.reason, input.userId, input.openOnly === true],
   );
