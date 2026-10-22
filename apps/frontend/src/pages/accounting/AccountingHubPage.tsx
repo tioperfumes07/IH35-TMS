@@ -315,10 +315,14 @@ export function AccountingHubPage() {
   // isVoidInvoice/invoiceOpenCentsForDisplay helpers InvoicesListPage already uses. This KPI was the
   // one surface still summing the raw column unfiltered, live-overstating USMCA Open Invoices by
   // ~$32.9k (34 void rows, $34,873.57 shown vs the real $3,200.00 open across 3 proforma rows).
+  // 443.218 F4: use server KPIs (full set) when available; fall back to client-side filter on the page.
+  const invoiceServerKpi = invoicesQ.data?.kpi;
   const openInvoices = invoices.filter((invoice) => !isVoidInvoice(invoice) && invoiceOpenCentsForDisplay(invoice) > 0);
-  const openInvoicesCents = openInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
+  const openInvoicesCents = invoiceServerKpi != null ? invoiceServerKpi.open_amount_cents : openInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
   const overdueInvoices = openInvoices.filter((invoice) => invoice.due_date < companyToday());
-  const overdueInvoiceCents = overdueInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
+  const overdueInvoiceCents = invoiceServerKpi != null ? invoiceServerKpi.overdue_amount_cents : overdueInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
+  const openInvoicesCount = invoiceServerKpi?.open_count ?? openInvoices.length;
+  const overdueInvoicesCount = invoiceServerKpi?.overdue_count ?? overdueInvoices.length;
   const unmatchedItems = qboItems.filter((item) => item.sync_status === "failed" || item.sync_status === "blocked");
   const qboPending = Number(qboStatsQ.data?.pending ?? 0);
   const qboFailed = Number(qboStatsQ.data?.failed ?? 0);
@@ -477,10 +481,10 @@ export function AccountingHubPage() {
             : kpiCard("MTD Expenses", formatUsdCents(expensesMtdCents), `${billsMtd.length} bills · ${directExpensesMtd.length} expenses`, "warn")}
         {invoicesQ.isError
           ? kpiCard("Open Invoices", "—", "Error loading")
-          : kpiCard("Open Invoices", formatUsdCents(openInvoicesCents), `${openInvoices.length} open`)}
+          : kpiCard("Open Invoices", formatUsdCents(openInvoicesCents), `${openInvoicesCount} open`)}
         {invoicesQ.isError
           ? kpiCard("Overdue A/R", "—", "Error loading")
-          : kpiCard("Overdue A/R", formatUsdCents(overdueInvoiceCents), `${overdueInvoices.length} overdue`, overdueInvoices.length ? "danger" : "neutral")}
+          : kpiCard("Overdue A/R", formatUsdCents(overdueInvoiceCents), `${overdueInvoicesCount} overdue`, overdueInvoicesCount > 0 ? "danger" : "neutral")}
         {qboQueueQ.isError
           ? kpiCard("Unmatched", "—", "Error loading")
           : kpiCard("Unmatched", String(unmatchedItems.length), "failed / blocked queue")}

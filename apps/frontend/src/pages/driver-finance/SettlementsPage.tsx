@@ -178,9 +178,10 @@ export function SettlementsPage() {
   });
   // FAIL-SETL-KPI-PERIOD — KPI tiles must count the full entity-scoped list, not the payment_state-filtered
   // slice. Filtering the table must not shrink YTD / This Period / debt counts.
+  // 443.218 F2: pass driver_id so KPI is scoped to selected driver; include in query key.
   const kpiBaseQuery = useQuery({
-    queryKey: ["driver-finance", "settlements-kpi-base", companyId],
-    queryFn: () => listSettlements(companyId),
+    queryKey: ["driver-finance", "settlements-kpi-base", companyId, filterDriverId],
+    queryFn: () => listSettlements(companyId, { driver_id: filterDriverId ?? undefined }),
     enabled: Boolean(companyId),
   });
   const openBillsQuery = useQuery({
@@ -243,25 +244,29 @@ export function SettlementsPage() {
   // failure the ListErrorBanner (below) already knows about. Same for open_driver_bills against
   // openBillsQuery. "—" makes the failure visible on the tile itself, not just in a banner it sits
   // next to.
+  // 443.218 F2: read KPIs from server-side aggregates (full set, not capped page).
+  const serverKpi = kpiBaseQuery.data?.kpi;
   const kpis: Record<string, number | string> = {
-    total_unpaid: kpiBaseQuery.isError ? "—" : kpiSettlements.filter((s) => s.status !== "paid").length,
-    this_period: kpiBaseQuery.isError ? "—" : kpiSettlements.filter(isInThisPeriod).length,
+    total_unpaid: kpiBaseQuery.isError ? "—" : (serverKpi?.total_unpaid ?? kpiSettlements.filter((s) => s.status !== "paid").length),
+    this_period: kpiBaseQuery.isError ? "—" : (serverKpi?.this_period ?? kpiSettlements.filter(isInThisPeriod).length),
     drivers_with_debt: kpiBaseQuery.isError
       ? "—"
-      : kpiSettlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0).length,
-    pending_acks: kpiBaseQuery.isError ? "—" : kpiSettlements.filter((s) => s.has_pending_acks).length,
-    held_deductions: kpiBaseQuery.isError ? "—" : kpiSettlements.filter((s) => s.status === "held").length,
-    ytd_settlements: kpiBaseQuery.isError ? "—" : kpiSettlements.filter(isYtd).length,
+      : (serverKpi?.drivers_with_debt ?? kpiSettlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0).length),
+    pending_acks: kpiBaseQuery.isError ? "—" : (serverKpi?.pending_acks ?? kpiSettlements.filter((s) => s.has_pending_acks).length),
+    held_deductions: kpiBaseQuery.isError ? "—" : (serverKpi?.held_deductions ?? kpiSettlements.filter((s) => s.status === "held").length),
+    ytd_settlements: kpiBaseQuery.isError ? "—" : (serverKpi?.ytd_settlements ?? kpiSettlements.filter(isYtd).length),
     open_driver_bills: openBillsQuery.isError ? "—" : openBillsSummary.total_count,
   };
   // REG-005 — home KPI strip $ tile. net_pay is dollars (SettlementsTable renders $${net_pay.toFixed(2)}).
-  // Sum only the this-period, non-cancelled rows already fetched — no new query. "—" on load failure.
+  // 443.218 F2: use server-side driver_pay_this_period (full set) when available.
   const driverPayThisPeriod: string = kpiBaseQuery.isError
     ? "—"
-    : `$${kpiSettlements
-        .filter((s) => isInThisPeriod(s) && s.status !== "cancelled")
-        .reduce((sum, s) => sum + Number(s.net_pay ?? 0), 0)
-        .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    : serverKpi != null
+      ? `$${serverKpi.driver_pay_this_period.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : `$${kpiSettlements
+          .filter((s) => isInThisPeriod(s) && s.status !== "cancelled")
+          .reduce((sum, s) => sum + Number(s.net_pay ?? 0), 0)
+          .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const focusedSettlements = useMemo(() => {
     if (focusFilter === "debt") {
       return settlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0);
@@ -281,13 +286,14 @@ export function SettlementsPage() {
     else params.delete("focus");
     setSearchParams(params);
   };
+  // 443.218 F2: use server pipeline counts (full set) when available.
   const paymentPipeline = {
-    unpaid: kpiSettlements.filter((s) => (s.payment_state ?? "unpaid") === "unpaid").length,
-    queued: kpiSettlements.filter((s) => s.payment_state === "queued").length,
-    sent_to_bank: kpiSettlements.filter((s) => s.payment_state === "sent_to_bank").length,
-    cleared: kpiSettlements.filter((s) => s.payment_state === "cleared").length,
-    bounced: kpiSettlements.filter((s) => s.payment_state === "bounced").length,
-    manual_paid: kpiSettlements.filter((s) => s.payment_state === "manual_paid").length,
+    unpaid: serverKpi?.pipeline.unpaid ?? kpiSettlements.filter((s) => (s.payment_state ?? "unpaid") === "unpaid").length,
+    queued: serverKpi?.pipeline.queued ?? kpiSettlements.filter((s) => s.payment_state === "queued").length,
+    sent_to_bank: serverKpi?.pipeline.sent_to_bank ?? kpiSettlements.filter((s) => s.payment_state === "sent_to_bank").length,
+    cleared: serverKpi?.pipeline.cleared ?? kpiSettlements.filter((s) => s.payment_state === "cleared").length,
+    bounced: serverKpi?.pipeline.bounced ?? kpiSettlements.filter((s) => s.payment_state === "bounced").length,
+    manual_paid: serverKpi?.pipeline.manual_paid ?? kpiSettlements.filter((s) => s.payment_state === "manual_paid").length,
   };
 
   if (selectedSettlementId && activeTab === "settlements") {
