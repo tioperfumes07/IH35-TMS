@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "../../../hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Plus, BarChart2 } from "lucide-react";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -59,6 +60,7 @@ type Props = {
 };
 
 export function DailyPredictionTab({ operatingCompanyId }: Props) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [date, setDate] = useState<string>(todayIso());
   const [addLabel, setAddLabel] = useState("");
@@ -134,9 +136,13 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
 
   const net = data?.predicted_net_cents ?? 0;
   const netPositive = net >= 0;
+  const unknownAmountCount = data?.expense_items.filter(item => item.amount_known === false).length ?? 0;
 
   return (
     <div className="space-y-4">
+      {unknownAmountCount > 0 && (
+        <p role="status">{t("cashFlow.unknownDriverCosts", undefined, { count: unknownAmountCount })}</p>
+      )}
       {/* Date Navigator */}
       <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
         <button
@@ -384,7 +390,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                         )}
                       </div>
                       <span className="ml-4 shrink-0 font-semibold text-gray-900">
-                        {formatCents(item.amount_cents)}
+                        {item.amount_known === false ? "Awaiting short miles" : formatCents(item.amount_cents)}
                       </span>
                       {item.kind === "adjustment" && item.adjustment_id ? (
                         <button

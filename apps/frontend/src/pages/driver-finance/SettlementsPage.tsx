@@ -673,6 +673,7 @@ export function SettlementsPage() {
         loading={openBillsQuery.isPending}
         totalCount={openBillsSummary.total_count}
         totalGrossCents={openBillsSummary.total_gross_cents}
+        unknownAmountCount={openBillsQuery.data?.open_driver_bills?.unknown_amount_count ?? 0}
         items={openBillsSummary.items}
       />
 
@@ -831,7 +832,7 @@ function buildOpenDriverBillColumns(settlementReferences: Map<string, Settlement
     sortValue: (bill) => bill.gross_amount_cents,
     className: "text-right",
     render: (bill) => (
-      <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
+      <span className="font-semibold">{bill.amount_known === false ? "Awaiting short miles" : formatUsdCents(bill.gross_amount_cents)}</span>
     ),
   },
   ];
@@ -842,12 +843,14 @@ function OpenDriverBillsPanel({
   loading,
   totalCount,
   totalGrossCents,
+  unknownAmountCount,
   items,
 }: {
   companyId: string;
   loading: boolean;
   totalCount: number;
   totalGrossCents: number;
+  unknownAmountCount: number;
   items: OpenDriverBill[];
 }) {
   // Called unconditionally, before the loading early-return (rules of hooks).
@@ -862,7 +865,7 @@ function OpenDriverBillsPanel({
     );
   }
   return (
-    <DataPanel title={`Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}`} accentColor="#4B5563">
+    <DataPanel title={`Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}${unknownAmountCount ? ` known · ${unknownAmountCount} awaiting short miles` : ""}`} accentColor="#4B5563">
       {items.length === 0 ? (
         <p className="text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
       ) : (

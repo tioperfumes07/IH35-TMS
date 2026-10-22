@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "../../../hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -392,7 +393,7 @@ function exportRowsCsv(rows: RollingLedgerRow[]): void {
       r.counterparty,
       r.origin_date,
       r.due_date,
-      (r.amount_cents / 100).toFixed(2),
+      r.amount_known === false ? "UNKNOWN — awaiting short miles" : (r.amount_cents / 100).toFixed(2),
       String(r.days_overdue),
       r.status,
       r.reason_label ?? "",
@@ -436,7 +437,7 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
   return (
     <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs shadow-md" data-testid="rolling-ledger-adjust-popover">
       <div className="mb-2 text-xs font-bold uppercase tracking-wide text-[#6B7280]">
-        Adjust expectation · {row.document_label} · {row.counterparty} · {formatCents(row.amount_cents || 0)} due {fmtDateShort(row.due_date)}
+        Adjust expectation · {row.document_label} · {row.counterparty} · {row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents || 0)} due {fmtDateShort(row.due_date)}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
@@ -521,6 +522,7 @@ type Props = {
 };
 
 export function RollingLedgerTab({ operatingCompanyId }: Props) {
+  const { t } = useTranslation();
   const today = companyToday();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -728,7 +730,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       label: "Expected",
       className: "text-right",
       cellClass: "text-right font-mono font-medium",
-      render: (row) => <span className={row.amount_cents === 0 ? "text-[#6B7280]" : "text-[#1F2A44]"}>{formatCents(row.amount_cents)}</span>,
+      render: (row) => <span className={row.amount_cents === 0 ? "text-[#6B7280]" : "text-[#1F2A44]"}>{row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents)}</span>,
     },
     { key: "status", label: "Status", sortable: false, render: (row) => <StatusPill row={row} /> },
   ];
@@ -751,7 +753,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       label: "Amount",
       className: "text-right",
       cellClass: "text-right font-mono font-medium",
-      render: (row) => <span className={row.amount_cents === 0 ? "text-[#6B7280]" : "text-[#1F2A44]"}>{formatCents(row.amount_cents)}</span>,
+      render: (row) => <span className={row.amount_cents === 0 ? "text-[#6B7280]" : "text-[#1F2A44]"}>{row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents)}</span>,
     },
     { key: "status", label: "Status", sortable: false, render: (row) => <StatusPill row={row} /> },
     {
@@ -830,8 +832,12 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     },
   ];
 
+  const unknownAmountCount = data?.rows.filter(row => { return row.amount_known === false; }).length ?? 0;
   return (
     <div className="space-y-3" data-testid="cash-flow-rolling-ledger-tab">
+      {unknownAmountCount > 0 && (
+        <p role="status">{t("cashFlow.unknownDriverCosts", undefined, { count: unknownAmountCount })}</p>
+      )}
       {/* ROUND 16.7 CORRECTION — Banking's QBO-style filter bar, reused verbatim (same
       components/classes as BankingTransactionsDesignView.tsx): Filter by description (Combobox)
       → segmented All/Income/Expenses → From/To (always visible) + Presets → segmented

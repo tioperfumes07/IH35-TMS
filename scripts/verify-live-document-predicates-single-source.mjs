@@ -40,9 +40,14 @@ function contracts(at,overrides={}){
  const errors=[];
  const read=p=>Object.hasOwn(overrides,p)?overrides[p]:fs.existsSync(path.join(at,p))?fs.readFileSync(path.join(at,p),'utf8'):'';
  const predicates=read(predicatePath);
+ if(!predicates.includes('DRIVER_BILL_OUTSTANDING_STATUSES.map('))errors.push('open driver bills must use canonical outstanding status vocabulary');
  for(const name of ['liveSettlement','liveDriverBill','liveExpense','liveBill','openDriverBill'])if(!predicates.includes(`export function ${name}(`))errors.push(`missing shared ${name}`);
  const cash=read('apps/backend/src/cash-flow/cash-flow.service.ts');
- for(const name of ['liveSettlement','openDriverBill'])if(!cash.includes('${'+name+'('))errors.push(`cash flow does not execute ${name}`);
+ if(!cash.includes('${openDriverBill('))errors.push('cash flow does not execute openDriverBill');
+ const obligations=read('apps/backend/src/cash-flow/cash-flow-obligations.sql.ts');
+ if(!obligations.includes('liveSettlement(alias)'))errors.push('settlement obligations must use canonical liveness');
+ if((cash.match(/\$\{cashFlowSettlementEligibilitySql\("s"\)\}/g)??[]).length!==3)errors.push('daily strip and rolling settlement eligibility must share one source');
+ if((cash.match(/\$\{openBill\("b", BILL_OPEN_BALANCE_SQL\)\}/g)??[]).length!==3)errors.push('daily strip and rolling bills must use canonical remaining balance');
  const receipts=read('apps/backend/src/cash-flow/cash-flow-receipts.sql.ts');
  for(const name of ['loadCostsRevenueJoin','loadServiceMembershipSql'])if(!receipts.includes('${'+name+'('))errors.push(`receipt source does not execute ${name}`);
  if((cash.match(/\$\{cashFlowReceiptsSql\(/g)??[]).length!==5)errors.push('all five cash-flow receipt consumers must use the one source');
@@ -54,6 +59,11 @@ function contracts(at,overrides={}){
  const cashSql=(cash.match(/`[^`]*`/gs)??[]).join('\n');
  if(cash.includes('ACTIVE_LOAD_FILTER')||cashSql.includes('l.rate_total_cents'))errors.push('private cash-flow load/revenue definition');
  const kpi=read('apps/backend/src/driver-finance/driver-bills.routes.ts');
+ if(!kpi.includes('unknown_amount_count')||!kpi.includes('AS amount_known'))errors.push('driver-bill API must expose unknown amounts');
+ for(const p of ['apps/frontend/src/pages/driver-finance/SettlementsPage.tsx','apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx','apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx','apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx']){
+  const ui=read(p);
+  if(!ui.includes('amount_known === false')||!ui.includes('Awaiting short miles'))errors.push(`${p}: unpriced bills must not render as currency zero`);
+ }
  if((kpi.match(/\$\{openDriverBill\("db"\)\}/g)??[]).length<2)errors.push('KPI count and rows must share openDriverBill');
  for(const p of ['driver-finance/void-document-callees.service.ts','driver-finance/settlements-bulk.routes.ts','governance/void-cancel-executors.ts']){
   const source=read('apps/backend/src/'+p);
@@ -71,14 +81,22 @@ if(process.argv.includes('--selftest')){
  assert.equal(growth({},{x:1}).length,0);
  assert.ok(contracts('/nonexistent-443213-selftest').length>=10);
  const predicates=fs.readFileSync(path.join(ownRoot,predicatePath),'utf8');
+ assert.ok(contracts(ownRoot,{[predicatePath]:predicates.replace('DRIVER_BILL_OUTSTANDING_STATUSES.map(', '["open"].map(')}).includes('open driver bills must use canonical outstanding status vocabulary'));
  for(const name of ['liveSettlement','liveDriverBill','liveExpense','liveBill','openDriverBill']){
   assert.ok(contracts(ownRoot,{[predicatePath]:predicates.replace(`export function ${name}(`,`function removed_${name}(`)}).includes(`missing shared ${name}`));
  }
  const cashPath='apps/backend/src/cash-flow/cash-flow.service.ts';
  const cash=fs.readFileSync(path.join(ownRoot,cashPath),'utf8');
- for(const name of ['liveSettlement','openDriverBill']){
+ const panel='apps/frontend/src/pages/driver-finance/SettlementsPage.tsx';
+ assert.ok(contracts(ownRoot,{[panel]:fs.readFileSync(path.join(ownRoot,panel),'utf8').replaceAll('amount_known === false','amount_known === true')}).some(e=>e.includes('unpriced bills must not render as currency zero')));
+ for(const name of ['openDriverBill']){
   assert.ok(contracts(ownRoot,{[cashPath]:cash.replaceAll('${'+name+'(', '${removed_'+name+'(')}).includes(`cash flow does not execute ${name}`));
  }
+ assert.ok(contracts(ownRoot,{[cashPath]:cash.replace('${cashFlowSettlementEligibilitySql(', '${removedSettlement(')}).includes('daily strip and rolling settlement eligibility must share one source'));
+ assert.ok(contracts(ownRoot,{[cashPath]:cash.replace('${openBill("b", BILL_OPEN_BALANCE_SQL)}', 'TRUE')}).includes('daily strip and rolling bills must use canonical remaining balance'));
+ const obligationsPath='apps/backend/src/cash-flow/cash-flow-obligations.sql.ts';
+ const obligations=fs.readFileSync(path.join(ownRoot,obligationsPath),'utf8');
+ assert.ok(contracts(ownRoot,{[obligationsPath]:obligations.replace('liveSettlement(alias)','"TRUE"')}).includes('settlement obligations must use canonical liveness'));
  const receiptPath='apps/backend/src/cash-flow/cash-flow-receipts.sql.ts';
  const receipts=fs.readFileSync(path.join(ownRoot,receiptPath),'utf8');
  for(const name of ['loadCostsRevenueJoin','loadServiceMembershipSql']){
@@ -87,7 +105,7 @@ if(process.argv.includes('--selftest')){
  assert.ok(contracts(ownRoot,{[cashPath]:cash.replace('${cashFlowReceiptsSql(', '${removedReceipts(')}).includes('all five cash-flow receipt consumers must use the one source'));
  assert.ok(contracts(ownRoot,{[receiptPath]:receipts.replace('i.amount_open_cents::bigint','i.total_cents::bigint')}).includes('unpaid invoice receipts must survive driver settlement closure'));
  assert.ok(contracts(ownRoot,{[cashPath]:cash+'\n// canonicalLoadCostsOpenClause'}).includes('driver settlement closure must not hide unpaid customer receipts'));
- console.log('verify-live-document-predicates-single-source SELFTEST PASS 20/20');
+ console.log('verify-live-document-predicates-single-source SELFTEST PASS (including settlement eligibility, bill credits and liveness mutations)');
 }else if(arg('--seed-from')){
  if(fs.existsSync(baselinePath))throw Error('initial baseline already exists; may only shrink');
  const source=arg('--seed-from'),entries=inventory(source);
@@ -96,6 +114,7 @@ if(process.argv.includes('--selftest')){
 }else{
  const base=JSON.parse(fs.readFileSync(baselinePath,'utf8')),now=inventory(root);
  const errors=contracts(root);
+ console.log(`canonical consumer contract failures=${errors.length}`);
  for(const [key,n] of growth(now,base.entries))errors.push(`new inline debt ${key} (${n})`);
  if(process.argv.includes('--shrink')){
   if(growth(now,base.entries).length)throw Error('cannot grow baseline');

@@ -91,6 +91,9 @@
   "lists": {
     "title": "Listas"
   },
+  "cashFlow": {
+    "unknownDriverCosts": "Los totales proyectados incluyen solo importes conocidos. {{count}} factura(s) de conductor esperan las millas de ruta corta; sus costos no son cero."
+  },
   "reports": {
     "title": "Reportes"
   }

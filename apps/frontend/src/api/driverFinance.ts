@@ -63,6 +63,8 @@ export type SettlementPaymentEvent = {
 };
 
 export type OpenDriverBill = {
+  status?: string;
+  amount_known?: boolean;
   id: string;
   load_id: string | null;
   load_number: string | null;
@@ -78,6 +80,7 @@ export type OpenDriverBill = {
 
 export type OpenDriverBillsResponse = {
   open_driver_bills: {
+    unknown_amount_count?: number;
     total_count: number;
     total_gross_cents: number;
     items: OpenDriverBill[];
