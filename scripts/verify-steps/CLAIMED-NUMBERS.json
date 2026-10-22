@@ -16807,5 +16807,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1064
+  "total_claimed": 1064,
+  "18384": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-22",
+    "purpose": "verify-sortable-headers-reorder"
+  }
 }
