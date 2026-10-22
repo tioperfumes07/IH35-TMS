@@ -12,12 +12,12 @@ import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 import { unmatchBankTransactionById } from "../accounting/void.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { closeVoidedSettlementTripInClientTx } from "./driver-settlement-void-cascade.service.js";
+import { completeDriverSettlementVoidCascadeInClientTx } from "./driver-settlement-void-cascade.service.js";
 import { stampSettlementVoidedInClientTx } from "./settlement-void-state.service.js";
 
 const emptyPayloadSchema = z.object({}).default({});
 
-async function handleSettlementBulk(
+export async function handleSettlementBulk(
   ctx: BulkPerEntityContext<Record<string, unknown>>
 ): Promise<BulkPerEntityResult> {
   const { id, action, reason, operatingCompanyId, actorUserId, bulkCallId, client, actorRole } = ctx;
@@ -72,26 +72,24 @@ async function handleSettlementBulk(
       companyBusinessDate()
     );
 
-    // A line is switched off only by VOIDING it (voided_at is the void marker every reader, unique index
-    // and guard keys on). A bare is_active=false left 113 lines "off" but unvoided (Lead AUTH-072, 2026-09-26).
-    await client.query(
-      `UPDATE driver_finance.settlement_lines
-          SET is_active = false,
-              voided_at = COALESCE(voided_at, now()),
-              void_reason = COALESCE(void_reason, $3),
-              voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
-              updated_at = now()
-        WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
-          AND is_active IS DISTINCT FROM false`,
-      [id, operatingCompanyId, `settlement reversed (bulk): ${reason.trim()}`, actorUserId]
-    );
+    // LEAD 443.230 (CC-3) — the bulk reverse runs THE ONE settlement void cascade, exactly as reverseSettlementForVoid
+    // (POST /settlements/:id/reverse, Creator Edit) does: lines voided, OPEN driver bills + unpaid reimbursements released
+    // from the dead settlement, pending deductions released when nothing was reversed, trip closed. It used to void only
+    // the lines (its own copy of step 1) and close the trip, leaving every open bill / reimbursement still pointing at the
+    // cancelled settlement so the next settlement could never pick them up.
+    const cascade = await completeDriverSettlementVoidCascadeInClientTx(client as never, {
+      operatingCompanyId,
+      settlementId: id,
+      userId: actorUserId,
+      reason: `settlement reversed (bulk): ${reason.trim()}`,
+      glReversalResult: reversal.result,
+      voidChildren: false,
+    });
 
     await stampSettlementVoidedInClientTx(client as never, {
       settlementId: id, operatingCompanyId, userId: actorUserId, reason: reason.trim(),
     });
-    // LEAD 443.198 (ACCT-F347 root cause) — a reversed load_bookended settlement's trip is closed, so it is never left
-    // "trip open + live anchor" (guard 3069). The same helper the shared void cascade runs; lifecycle marker only.
-    const tripClosed = await closeVoidedSettlementTripInClientTx(client as never, { operatingCompanyId, settlementId: id });
+    const tripClosed = cascade.trip_closed;
 
     if (current.paid_via_bank_txn_id) {
       await unmatchBankTransactionById(client as never, operatingCompanyId, current.paid_via_bank_txn_id, {
@@ -118,6 +116,10 @@ async function handleSettlementBulk(
         gl_reversal_result: reversal.result,
         gl_run_id: reversal.run_id,
         trip_closed: tripClosed,
+        lines_voided: cascade.lines_voided.length,
+        driver_bills_released: cascade.driver_bills_released.length,
+        reimbursements_released: cascade.reimbursements_released.length,
+        deductions_released: cascade.deductions_released.length,
         via: "settlements-bulk.routes",
         bulk_call_id: bulkCallId,
       },
