@@ -7,6 +7,7 @@ import "../../design/design-tokens.css";
 import { ToastProvider } from "../../components/Toast";
 import { DispatchBoard, currentLoadPerUnit } from "./DispatchBoard";
 import { listOpenPreSettlementsByDriver } from "../../api/driverFinance";
+import { listDispatchInShopUnits } from "../../api/dispatch";
 
 vi.mock("../../api/dispatch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/dispatch")>();
@@ -371,13 +372,14 @@ describe("currentLoadPerUnit (REG-035 one current load per unit)", () => {
 // delivered_pending_docs/invoiced loads). The module-level mock above always returns exactly one
 // unit ("unit-1"); these two tests use that SAME id to construct the overlap case directly.
 describe("DispatchBoard — KANBAN-DUP-UNIT-2 List/Table Awaiting-assignment reconciliation", () => {
-  function renderBoard(loads: DispatchLoadRow[]) {
+  function renderBoard(loads: DispatchLoadRow[], selectedUnitId?: string) {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
       <QueryClientProvider client={qc}>
         <MemoryRouter>
           <ToastProvider>
             <DispatchBoard
+              selectedUnitId={selectedUnitId}
               loads={loads}
               totalCount={loads.length}
               limit={50}
@@ -401,6 +403,28 @@ describe("DispatchBoard — KANBAN-DUP-UNIT-2 List/Table Awaiting-assignment rec
     renderBoard([]);
     const header = await screen.findByTestId("dispatch-board-section-awaiting");
     expect(header).toHaveTextContent("1");
+  });
+
+  it("unit deep-link excludes unrelated idle trucks instead of showing the whole roster", async () => {
+    renderBoard([], "other-unit");
+    await screen.findByText(/No loads match your filters/);
+    expect(screen.queryByTestId("dispatch-board-section-awaiting")).not.toBeInTheDocument();
+  });
+
+  it("unit deep-link retains the selected idle truck", async () => {
+    renderBoard([], "unit-1");
+    const header = await screen.findByTestId("dispatch-board-section-awaiting");
+    expect(header).toHaveTextContent("1");
+  });
+  it("unit deep-link retains only its in-shop work order", async () => {
+    vi.mocked(listDispatchInShopUnits).mockResolvedValueOnce({ rows: ["shop-a", "shop-b"].map((id) => ({
+      unit_id: id, unit_number: id, work_order_id: `wo-${id}`, work_order_display_id: `WO-${id}`,
+      opened_at: "2026-10-01T12:00:00Z", expected_ready_at: null, shop_or_vendor: "Shop", days_down: 1, status: "open",
+    })) });
+    renderBoard([], "shop-a");
+    const header = await screen.findByTestId("dispatch-board-section-in_shop");
+    expect(header).toHaveTextContent("1");
+    expect(screen.queryByText("shop-b")).not.toBeInTheDocument();
   });
 
   it("a unit whose only load is delivered_pending_docs (outside listUnitsWithoutLoad's own exclusion set) does NOT also render in Awaiting assignment", async () => {

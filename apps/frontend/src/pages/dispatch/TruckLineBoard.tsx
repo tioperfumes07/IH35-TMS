@@ -20,6 +20,7 @@
  * for — never a second source of truth.
  */
 import { useMemo, useState } from "react";
+import { filterDispatchUnits } from "../../lib/dispatch-unit-filter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -990,10 +991,12 @@ function TruckLineTrack({
 
 export function TruckLineBoard({
   operatingCompanyId,
+  selectedUnitId,
   onLoadClick,
   onAssignDriver,
 }: {
   operatingCompanyId: string;
+  selectedUnitId?: string | null;
   onLoadClick: (loadId: string) => void;
   // V10 (ROUND 18.6) — THE AVAILABLE TRUCK's "Assign a load →" pill opens the REAL assignment flow
   // (the same BookLoadModal every other Dispatch surface uses, prefilled by driver AND unit — a
@@ -1057,7 +1060,10 @@ export function TruckLineBoard({
   const [stampError, setStampError] = useState<string | null>(null);
   const [otherError, setOtherError] = useState<string | null>(null);
 
-  const allGroups: TruckLineGroup[] = query.data?.groups ?? [];
+  const allGroups: TruckLineGroup[] = useMemo(
+    () => filterDispatchUnits(query.data?.groups ?? [], selectedUnitId, "unit_id"),
+    [query.data?.groups, selectedUnitId],
+  );
   const catalogReady = query.data?.catalog_ready ?? false;
   const reasons = reasonsQuery.data?.reasons ?? [];
 

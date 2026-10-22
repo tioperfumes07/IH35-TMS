@@ -1,5 +1,6 @@
 /** Linkage: mdata.loads · mdata.units · mdata.drivers · mdata.customers. Live=BLOCKED until Chrome on current healthz. */
 import { useMemo, useState } from "react";
+import { filterDispatchUnits } from "../../lib/dispatch-unit-filter";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { listOpenPreSettlementsByDriver } from "../../api/driverFinance";
@@ -53,6 +54,7 @@ type SortMode = "truck" | "date" | "load";
 type BoardView = "board" | "timeline";
 
 type Props = {
+  selectedUnitId?: string | null;
   loads: DispatchLoadRow[];
   operatingCompanyId: string;
   loading: boolean;
@@ -459,6 +461,7 @@ function readView(_deepLink?: boolean): BoardView {
 
 export function RoundTrips({
   loads,
+  selectedUnitId,
   operatingCompanyId,
   loading,
   listError,
@@ -489,7 +492,7 @@ export function RoundTrips({
     const built = buildUnitPairs(
       loads,
       preSettlementsQuery.data?.pre_settlements ?? [],
-      idleUnitsQuery.data?.units ?? []
+      filterDispatchUnits(idleUnitsQuery.data?.units ?? [], selectedUnitId)
     );
     const copy = [...built];
     copy.sort((a, b) => {
@@ -504,7 +507,7 @@ export function RoundTrips({
       return bt - at;
     });
     return copy;
-  }, [idleUnitsQuery.data?.units, loads, preSettlementsQuery.data?.pre_settlements, sort]);
+  }, [idleUnitsQuery.data?.units, loads, preSettlementsQuery.data?.pre_settlements, sort, selectedUnitId]);
 
   if (listError) {
     return (

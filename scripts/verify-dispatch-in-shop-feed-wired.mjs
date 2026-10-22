@@ -51,7 +51,10 @@ if (/const awaitingTruckCount\s*=\s*unassignedUnits\.length/.test(board)) {
 if (!board.includes("inShopUnitsQuery.isError")) {
   fail("DispatchBoard must branch on inShopUnitsQuery.isError for failed in-shop feed loads");
 }
-if (!/const inShopUnits = inShopUnitsQuery\.isError \? \[\] : \(inShopUnitsQuery\.data \?\? \[\]\)/.test(board)) {
+function suppressesStaleInShopRows(source) {
+  return source.includes('const inShopUnits = inShopUnitsQuery.isError ? [] : filterDispatchUnits(inShopUnitsQuery.data ?? [], selectedUnitId, "unit_id")');
+}
+if (!suppressesStaleInShopRows(board)) {
   fail("failed in-shop feed must suppress stale rows and section counts");
 }
 if (!board.includes("Couldn't load in-shop units")) {
@@ -66,7 +69,7 @@ if (selftest) {
     ),
     api.replace("/api/v1/maintenance/in-shop-units", "/api/v1/maintenance/fleet-table/rows"),
   ];
-  if (/const inShopUnits = inShopUnitsQuery\.isError \? \[\] :/.test(mutations[0])) {
+  if (suppressesStaleInShopRows(mutations[0])) {
     fail("selftest stale-row mutation escaped");
   }
   if (awaitingCountUsesRenderedRows(mutations[1])) {

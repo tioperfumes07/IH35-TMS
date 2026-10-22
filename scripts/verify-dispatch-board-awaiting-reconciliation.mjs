@@ -19,6 +19,9 @@
 import fs from "node:fs";
 
 const FILES = {
+  page: "apps/frontend/src/pages/Dispatch.tsx",
+  truckLine: "apps/frontend/src/pages/dispatch/TruckLineBoard.tsx",
+  roundTrips: "apps/frontend/src/pages/dispatch/RoundTrips.tsx",
   board: "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
   boardTest: "apps/frontend/src/pages/dispatch/DispatchBoard.test.tsx",
 };
@@ -26,6 +29,46 @@ const FILES = {
 const originals = Object.fromEntries(Object.entries(FILES).map(([k, f]) => [k, fs.readFileSync(f, "utf8")]));
 
 const contracts = [
+  [
+    "Round trips receives the URL unit filter",
+    (files) => Boolean(files.page.split("<RoundTrips")[1]?.split("onLoadClick")[0].includes("selectedUnitId={filters.unitId}")),
+    (files) => ({ ...files, page: files.page.replaceAll("selectedUnitId={filters.unitId}", "") }),
+  ],
+  [
+    "Round trips filters idle units before pairing",
+    (files) => files.roundTrips.includes('filterDispatchUnits(idleUnitsQuery.data?.units ?? [], selectedUnitId)'),
+    (files) => ({ ...files, roundTrips: files.roundTrips.replace('filterDispatchUnits(idleUnitsQuery.data?.units ?? [], selectedUnitId)', 'idleUnitsQuery.data?.units ?? []') }),
+  ],
+  [
+    "In-shop roster applies the selected unit_id",
+    (files) => files.board.includes('filterDispatchUnits(inShopUnitsQuery.data ?? [], selectedUnitId, "unit_id")'),
+    (files) => ({ ...files, board: files.board.replace('filterDispatchUnits(inShopUnitsQuery.data ?? [], selectedUnitId, "unit_id")', 'inShopUnitsQuery.data ?? []') }),
+  ],
+  [
+    "Truck Line receives the URL unit filter",
+    (files) => Boolean(files.page.split("<TruckLineBoard")[1]?.split("onLoadClick")[0].includes("selectedUnitId={filters.unitId}")),
+    (files) => ({ ...files, page: files.page.replaceAll("selectedUnitId={filters.unitId}", "") }),
+  ],
+  [
+    "Truck Line filters its roster before computing rows and costs",
+    (files) => files.truckLine.includes('filterDispatchUnits(query.data?.groups ?? [], selectedUnitId, "unit_id")'),
+    (files) => ({ ...files, truckLine: files.truckLine.replace('filterDispatchUnits(query.data?.groups ?? [], selectedUnitId, "unit_id")', 'query.data?.groups ?? []') }),
+  ],
+  [
+    "Kanban idle roster consumes the same selected-unit filter as the load population",
+    (files) => files.page.includes("filterDispatchUnits(awaitingTrucksQuery.data?.units ?? [], filters.unitId)"),
+    (files) => ({ ...files, page: files.page.replace("filterDispatchUnits(awaitingTrucksQuery.data?.units ?? [], filters.unitId)", "awaitingTrucksQuery.data?.units ?? []") }),
+  ],
+  [
+    "List/Table receives the selected unit from the URL filter",
+    (files) => Boolean(files.page.split("<DispatchBoard")[1]?.split("/>")[0].includes("selectedUnitId={filters.unitId}")),
+    (files) => ({ ...files, page: files.page.replaceAll("selectedUnitId={filters.unitId}", "") }),
+  ],
+  [
+    "List/Table idle roster applies the shared selected-unit filter",
+    (files) => files.board.includes("filterDispatchUnits(unitsWithoutLoadQuery.data?.units ?? [], selectedUnitId)"),
+    (files) => ({ ...files, board: files.board.replace("filterDispatchUnits(unitsWithoutLoadQuery.data?.units ?? [], selectedUnitId)", "unitsWithoutLoadQuery.data?.units ?? []") }),
+  ],
   [
     "DispatchBoard.tsx computes rowedUnitIds from bookedRows+billingRows BEFORE computing awaitingRows",
     (files) =>
@@ -58,14 +101,14 @@ const contracts = [
       /KANBAN-DUP-UNIT-2 List\/Table Awaiting-assignment reconciliation/.test(files.boardTest) &&
       /does NOT also render in Awaiting assignment/.test(files.boardTest) &&
       /expect\(header\)\.toHaveTextContent\("0"\)/.test(files.boardTest),
-    (files) => ({ ...files, boardTest: files.boardTest.replace('expect(header).toHaveTextContent("0")', "// REMOVED") }),
+    (files) => ({ ...files, boardTest: files.boardTest.replaceAll('expect(header).toHaveTextContent("0")', "// REMOVED") }),
   ],
   [
     "DispatchBoard.test.tsx's baseline test proves the mocked idle unit DOES render (1) absent overlap, guarding against a filter that drops everything",
     (files) =>
       /baseline: with no load referencing unit-1, it renders once in Awaiting assignment/.test(files.boardTest) &&
       /expect\(header\)\.toHaveTextContent\("1"\)/.test(files.boardTest),
-    (files) => ({ ...files, boardTest: files.boardTest.replace('expect(header).toHaveTextContent("1")', "// REMOVED") }),
+    (files) => ({ ...files, boardTest: files.boardTest.replaceAll('expect(header).toHaveTextContent("1")', "// REMOVED") }),
   ],
 ];
 
