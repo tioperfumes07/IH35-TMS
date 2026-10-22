@@ -43,6 +43,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
     enabled: Boolean(settlementId || loadId),
   });
   const close = useMutation({
+    meta: { loads: true },
     mutationFn: () => closeTour(q.data!.tour!.settlement_id, operatingCompanyId),
     onSuccess: async () => { pushToast("Tour closed — settlement is now frozen", "success"); setConfirming(false); await qc.invalidateQueries({ queryKey: ["tour-readout"] }); await qc.invalidateQueries({ queryKey: ["load-costs"] }); },
     onError: (e) => pushToast(userFacingApiError(e, "Could not close the tour."), "error"),

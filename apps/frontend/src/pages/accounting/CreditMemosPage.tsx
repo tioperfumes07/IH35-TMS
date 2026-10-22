@@ -148,6 +148,7 @@ export function CreditMemosPage() {
   });
 
   const createMut = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       createCreditMemo(companyId, {
         customer_id: createCustomerId as string,
@@ -170,6 +171,7 @@ export function CreditMemosPage() {
     onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
   });
   const applyMut = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       applyCreditMemo(companyId, selectedCreditMemoId!, [
         { invoice_id: applyInvoiceId as string, applied_cents: applyAmountCents as number },
@@ -188,6 +190,7 @@ export function CreditMemosPage() {
     onError: (err) => pushToast(err instanceof Error ? err.message : "Apply failed", "error"),
   });
   const voidMut = useMutation({
+    meta: { loads: true },
     mutationFn: (reason: string) => voidCreditMemo(companyId, selectedCreditMemoId!, reason),
     onSuccess: async () => {
       pushToast("Credit memo voided", "success");

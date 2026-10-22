@@ -66,6 +66,7 @@ function DecideModal({
   const [formError, setFormError] = useState<string | null>(null);
 
   const mutation = useMutation({
+    meta: { loads: true },
     mutationFn: () => {
       const trimmed = resolutionText.trim();
       if (trimmed.length < 10) {
@@ -180,6 +181,7 @@ export function DisputeQueuePage() {
   });
 
   const startReviewMut = useMutation({
+    meta: { loads: true },
     mutationFn: (row: SettlementDisputeQueueRow) => startDisputeReview(row.id, companyId),
     onSuccess: async () => {
       setActionError(null);

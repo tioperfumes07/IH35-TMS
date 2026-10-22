@@ -196,6 +196,7 @@ export function ReclassifyTransactionsPage() {
   });
 
   const applyMut = useMutation({
+    meta: { loads: true },
     mutationFn: () => applyReclassify({
       operating_company_id: companyId, posting_ids: Array.from(selected.keys()), reason,
       to_account_id: toAccount || null, to_class_id: toClass || null, to_location_id: toLocation || null,
@@ -210,6 +211,7 @@ export function ReclassifyTransactionsPage() {
     },
   });
   const undoMut = useMutation({
+    meta: { loads: true },
     mutationFn: (p: { batchId: string; reason: string }) => undoReclassifyBatch(companyId, p.batchId, p.reason),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["reclassify-lines"] }); void qc.invalidateQueries({ queryKey: ["reclassify-accounts"] }); void qc.invalidateQueries({ queryKey: ["reclassify-batches"] }); },
   });

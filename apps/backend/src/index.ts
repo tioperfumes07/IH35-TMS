@@ -468,6 +468,7 @@ import { registerLegalSignRoutes } from "./legal/sign.routes.js";
 import { registerLegalAttorneyReviewRoutes } from "./legal/attorney-review.routes.js";
 import { registerLegalMattersRoutes } from "./legal/matters.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
+import { startLoadChangeBus, stopLoadChangeBus } from "./realtime/load-change-bus.js";
 import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
 import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 import { initializeQboInboundSyncCron, stopQboInboundSyncCron } from "./cron/qbo-inbound-sync.cron.js";
@@ -702,6 +703,7 @@ async function shutdown(signal: string) {
   app.log.info({ signal }, "Shutdown signal received");
   try {
     await stopOutboxProcessor();
+    await stopLoadChangeBus();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop outbox processor cleanly");
   }
@@ -2126,6 +2128,10 @@ async function main() {
     if (!bootApiSmoke && process.env.ENABLE_OUTBOX_PROCESSOR !== "false") {
       startOutboxProcessor();
       app.log.info("Outbox processor started");
+    }
+    // LEAD 443.208R — the one load-change signal (LISTEN load_changed on the direct endpoint → SSE load.changed).
+    if (!bootApiSmoke && process.env.ENABLE_LOAD_CHANGE_BUS !== "false") {
+      startLoadChangeBus({ info: (o, m) => app.log.info(o as object, m), warn: (o, m) => app.log.warn(o as object, m) });
     }
     if (!bootApiSmoke) {
       setTimeout(() => {

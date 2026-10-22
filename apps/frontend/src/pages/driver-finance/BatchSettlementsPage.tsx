@@ -122,6 +122,7 @@ export function BatchSettlementsPage() {
   };
 
   const saveMut = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       const payloadRows = rows
         .map((r, index) => ({ r, index }))

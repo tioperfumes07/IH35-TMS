@@ -31,6 +31,7 @@ export function AbandonmentQueuePage() {
   });
 
   const approveMut = useMutation({
+    meta: { loads: true },
     mutationFn: (id: string) => approveAbandonmentChargeback(id, { operating_company_id: companyId }),
     onSuccess: () => {
       pushToast("Chargeback approved", "success");

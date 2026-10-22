@@ -101,6 +101,7 @@ export function QBOSyncDriftDashboard() {
   });
 
   const resolveMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { id: string; action: "accept_local" | "accept_qbo" | "manual_merge_recorded" }) =>
       resolveDrift(input.id, companyId, input.action),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["qbo-sync-drift-dashboard", companyId] }),

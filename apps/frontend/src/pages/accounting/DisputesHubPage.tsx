@@ -77,6 +77,7 @@ function DecideFaultModal({
   const [driverId, setDriverId] = useState<string | null>(dispute.driver_id);
 
   const mutation = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       decideDisputeFault(dispute.id, {
         operating_company_id: companyId,
@@ -207,6 +208,7 @@ function OpenDisputeModal({
   const disputedCents = invoicedCents - (expectedCents ?? 0);
 
   const mutation = useMutation({
+    meta: { loads: true },
     mutationFn: () => {
       if (!selectedInvoice) throw new Error("No invoice selected");
       return openInvoiceDispute(selectedInvoice.id, {

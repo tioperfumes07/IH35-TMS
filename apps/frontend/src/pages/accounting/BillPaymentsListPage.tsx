@@ -157,6 +157,7 @@ export function BillPaymentsListPage() {
   }, [selectedBillId, unpaidBillsForSelector]);
 
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: ({ paymentId, reason }: { paymentId: string; reason: string }) => voidVendorBillPayment(paymentId, companyId, reason),
     onSuccess: () => {
       pushToast("Bill payment voided", "success");

@@ -35,6 +35,7 @@ export function OnlineBankingMatchBanner({
   const queryClient = useQueryClient();
 
   const unmatchMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       unmatchBankTransaction({
         operating_company_id: companyId,

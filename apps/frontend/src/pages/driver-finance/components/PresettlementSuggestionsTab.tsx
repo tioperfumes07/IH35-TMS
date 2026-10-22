@@ -33,6 +33,7 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
   });
 
   const confirmMutation = useMutation({
+    meta: { loads: true },
     mutationFn: ({ id, action }: { id: string; action: "create_new" | "link_existing" | "reject" }) =>
       confirmPresettlementSuggestion(id, { operating_company_id: companyId, action }),
     onSuccess: async (result) => {

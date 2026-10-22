@@ -129,6 +129,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
   };
 
   const approveMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!selectedPending) return;
       return approvePendingEscrowDeduction(selectedPending.id, {
@@ -148,6 +149,7 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
   });
 
   const deferMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!selectedPending) return;
       return rejectPendingEscrowDeduction(selectedPending.id, {

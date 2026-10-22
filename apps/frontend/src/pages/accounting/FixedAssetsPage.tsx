@@ -121,6 +121,7 @@ function TrkBulkRegisterPanel({
   }, [parsed, pricesText]);
 
   const registerMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       registerTrkOwnedUnits({
         operating_company_id: trkCompanyId,

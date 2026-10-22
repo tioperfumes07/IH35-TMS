@@ -309,6 +309,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   // ── mutations ──────────────────────────────────────────────────────────────
 
   const addFactorMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () =>
       createFactor(operatingCompanyId, {
         name: addForm.name.trim(),
@@ -329,6 +330,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   });
 
   const markReadyMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!load) throw new Error("Load not loaded");
       const nextMeta: PacketMeta = {
@@ -351,6 +353,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   });
 
   const approveMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!load) throw new Error("Load not loaded");
       const nextMeta: PacketMeta = { ...meta, approved_at: new Date().toISOString() };

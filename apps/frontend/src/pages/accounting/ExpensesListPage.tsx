@@ -181,6 +181,7 @@ export function ExpensesListPage() {
   const [highlightedExpenseId, setHighlightedExpenseId] = useState<string | null>(deepLinkExpenseId);
 
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (reason: string) => {
       if (!voidTarget || !selectedCompanyId) return Promise.reject(new Error("Missing void target"));
       return voidExpense(voidTarget.id, selectedCompanyId, reason);

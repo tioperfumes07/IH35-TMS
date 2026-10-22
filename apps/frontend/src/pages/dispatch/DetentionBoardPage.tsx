@@ -71,6 +71,7 @@ function DetentionApprovalQueue({
   });
 
   const approveM = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { id: string; method: string }) =>
       approveDetentionRequest(input.id, {
         operating_company_id: companyId,
@@ -85,6 +86,7 @@ function DetentionApprovalQueue({
   });
 
   const rejectM = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { id: string }) =>
       rejectDetentionRequest(input.id, {
         operating_company_id: companyId,
@@ -189,18 +191,21 @@ function EventActions({
   // close/bridge/notify silently did nothing: no error, no explanation, the button just went
   // back to enabled with zero feedback.
   const closeM = useMutation({
+    meta: { loads: true },
     mutationFn: ({ eventId, companyId: submittedCompanyId }: DetentionAction) =>
       closeDetentionEvent(eventId, { operating_company_id: submittedCompanyId }),
     onSuccess: (_result, variables) => onAction(variables.companyId),
     onError: (err) => pushToast(userFacingApiError(err, "Could not stop the detention accrual"), "error"),
   });
   const bridgeM = useMutation({
+    meta: { loads: true },
     mutationFn: ({ eventId, companyId: submittedCompanyId }: DetentionAction) =>
       bridgeDetentionBilling(eventId, { operating_company_id: submittedCompanyId }),
     onSuccess: (_result, variables) => onAction(variables.companyId),
     onError: (err) => pushToast(userFacingApiError(err, "Could not bridge detention to billing"), "error"),
   });
   const notifyM = useMutation({
+    meta: { loads: true },
     mutationFn: ({ eventId, companyId: submittedCompanyId }: DetentionAction) =>
       notifyDetentionCustomer(eventId, { operating_company_id: submittedCompanyId }),
     onSuccess: (_result, variables) => onAction(variables.companyId),
@@ -271,6 +276,7 @@ export function DetentionBoardPage() {
 
   // DISP-F6326: see EventActions above — same file-wide gap.
   const syncM = useMutation({
+    meta: { loads: true },
     mutationFn: (submittedCompanyId: string) => syncDetentionFromArrivals(submittedCompanyId),
     onSuccess: (_result, submittedCompanyId) =>
       queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", submittedCompanyId] }),
