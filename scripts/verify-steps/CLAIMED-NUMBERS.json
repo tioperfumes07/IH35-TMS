@@ -14844,6 +14844,11 @@
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.244: verify-truck-one-in-motion-plus-advance (app gate + DB backstops refuse only a second load in motion; real-Postgres)"
   },
+  "18685": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.251 P0: verify-kanban-every-card-draggable (every Kanban truck/load card is a drag source with an outcome for every target; no inert card, no placeholder gap)"
+  },
   "18629": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-21",
@@ -16878,7 +16883,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1077,
+  "total_claimed": 1078,
   "18670": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-22",
