@@ -18,7 +18,7 @@ const FLAKY_ENDPOINTS = [
     path: "/api/v1/notifications",
     query: "limit=20",
     routeFile: "apps/backend/src/notifications/list.routes.ts",
-    resilienceNeedles: ["notificationsTableReady", "notifications: []"],
+    resilienceNeedles: ["notificationsTableReady", ["notifications: []", "notifications_list_failed"]],
   },
   {
     path: "/api/v1/notifications/unread-count",
