@@ -71,8 +71,12 @@ export function problems(src) {
 function selftest() {
   const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
   const good = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, read(rel)]));
-  const m = (k, from, to) => ({ ...good, [k]: good[k].replace(from, to) });
   const bad = [];
+  // 443.238 (CC-3): a plant whose text no longer exists in the source is a stale plant, not a pass — fail loudly.
+  const m = (k, from, to) => {
+    if (!good[k].includes(from)) { bad.push(`stale plant: ${k} no longer contains ${JSON.stringify(from).slice(0, 80)}`); return good; }
+    return { ...good, [k]: good[k].replace(from, to) };
+  };
   if (problems(good).length) bad.push(`real tree flagged: ${problems(good).join("; ")}`);
   if (!problems(m("svc", "      createdByUserId: actorUserId,\n      loadId,", "      createdByUserId: actorUserId,")).some((x) => /deductions must carry/.test(x))) bad.push("a settlement-only deduction passed");
   if (!problems(m("rule", "if (candidates.length === 1) return candidates[0]!;", "if (candidates.length >= 1) return candidates[0]!;")).some((x) => /exactly one/.test(x))) bad.push("first-load fuel attribution passed");
@@ -83,7 +87,7 @@ function selftest() {
   if (!problems(m("svc", "const rLoadId = await creatorLineLoadId(client, draft, { label: `Reimbursement", "const rLoadId = null && ({ label: `Reimbursement")).some((x) => /G5: a reimbursement/.test(x))) bad.push("a load-less reimbursement passed");
   if (!problems(m("svc", "if (!loadId) throw lineLoadNotFound(fill.label, typed);", "if (false) throw lineLoadNotFound(fill.label, typed);")).some((x) => /G5: a fuel fill/.test(x))) bad.push("a load-less fuel fill passed");
   if (!problems(m("svc", "const fillLoad = await creatorFillLoad(client, draft, {", "const fillLoad = await noRule(client, draft, {")).some((x) => /fuel with no load must be attributed/.test(x))) bad.push("a fuel fill off the one rule passed");
-  if (!problems(m("svc", "          item_id, quantity, rate_cents, unit_of_measure, load_id\n", "          item_id, quantity, rate_cents, unit_of_measure\n")).some((x) => /does not bind load_id/.test(x))) bad.push("a settlement_lines insert without load_id passed");
+  if (!problems(m("svc", "          item_id, quantity, rate_cents, unit_of_measure, load_id, posting_account_id\n", "          item_id, quantity, rate_cents, unit_of_measure, posting_account_id\n")).some((x) => /does not bind load_id/.test(x))) bad.push("a settlement_lines insert without load_id passed");
   if (!problems(m("routes", "unit_id: z.string().uuid(),", "unit_id: z.string().uuid().nullable().optional(),")).some((x) => /unit \(truck\)/.test(x))) bad.push("an optional unit passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
   console.log(`${LABEL} SELFTEST OK — 11/11 (real tree passes; settlement-only deduction, first-load fuel, separate admin fee, missing admission rule, oldest-customer fallback, preview without customer check, load-less reimbursement, load-less fuel, insert without load_id, optional unit each caught)`);
