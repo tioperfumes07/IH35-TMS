@@ -1,4 +1,4 @@
-import { companyToday } from "../../lib/businessDate";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -115,7 +115,7 @@ export function TransfersListPage() {
   const deepLinkTransferId = searchParams.get("transfer_id")?.trim() || "";
   const deepLinkGroupId = searchParams.get("group_id")?.trim() || "";
 
-  const [fromDate, setFromDate] = useState(new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString().slice(0, 10));
+  const [fromDate, setFromDate] = useState(() => addDaysIso(companyToday(), -30));
   const [toDate, setToDate] = useState(companyToday());
   // LEAD 443.156 item 1 — type is a set filter: multi-select (none picked = every type).
   const [types, setTypes] = useState<TransferType[]>([]);
