@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alignDocumentStops, documentMiles, stopDocumentPatch, type DocumentLoad, type DocumentStop } from "../settlement-document-load-facts.service.js";
+import { alignDocumentStops, documentAddressOf, documentMiles, documentStopPlan, stopDocumentPatch, type DocumentLoad, type DocumentStop } from "../settlement-document-load-facts.service.js";
 
 const doc = (o: Partial<DocumentLoad>): DocumentLoad => ({
   load_number: "1", settlement_no: 5800, stops: [], loaded_miles_doc: null, empty_miles_doc: null, practical_miles_doc: null, ...o,
@@ -48,5 +48,18 @@ describe("443.241 — aligning the document's stops to the load's", () => {
   });
   it("a misspelled document city still gives a city-only seed stop its ZIP (TERREL / Terrell)", () => {
     expect(stopDocumentPatch(tstop({ facility_name: "GH Crane 249", city: "Terrell" }), dstop({ city: "TERREL", zip: "75160" }), false).patch).toEqual({ postal_code: "75160" });
+  });
+});
+
+describe("LEAD 443.248 — the signed settlement is the address of record; a printed relay stop is added", () => {
+  it("the address of record is the printed company / city / state / ZIP + settlement number", () => {
+    expect(documentAddressOf(dstop({ company: " RUSH TOWN POULTRY ", city: "JONESTOWN", state: "PA", zip: "17038" }), 5784))
+      .toEqual({ settlement_no: 5784, company: "RUSH TOWN POULTRY", city: "JONESTOWN", state: "PA", zip: "17038" });
+  });
+  it("13576: the Love's Vinton relay + EBT Yard pickup are inserted between the load's pickup and its Lumberton delivery", () => {
+    const docStops = [dstop({ city: "Laredo" }), dstop({ type: "DELIVER", city: "VINTON" }), dstop({ city: "Laredo" }), dstop({ type: "DELIVER", city: "LUMBERTON" })];
+    expect(documentStopPlan(docStops, [0, 3])).toEqual([
+      { existingIndex: 0, docIndex: 0 }, { existingIndex: null, docIndex: 1 }, { existingIndex: null, docIndex: 2 }, { existingIndex: 1, docIndex: 3 },
+    ]);
   });
 });

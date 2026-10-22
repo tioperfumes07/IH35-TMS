@@ -41,6 +41,8 @@ export type StopsRecordStop = {
   longitude: number | null;
   geocode_precision: string | null;
   geocode_missing: boolean;
+  /** LEAD 443.248: the signed settlement's printed address of record (the stop's own address stays the geo). */
+  document_address: { settlement_no: number | null; company: string | null; city: string | null; state: string | null; zip: string | null } | null;
   appointment_window_type: string | null;
   appointment_start_at: string | null;
   appointment_end_at: string | null;
@@ -145,6 +147,7 @@ export async function registerLoadStopsRecordRoutes(app: FastifyInstance) {
           latitude: number | null;
           longitude: number | null;
           geocode_precision: string | null;
+          document_address: StopsRecordStop["document_address"];
           time_window_type: string | null;
           appointment_start_at: string | null;
           appointment_end_at: string | null;
@@ -174,6 +177,7 @@ export async function registerLoadStopsRecordRoutes(app: FastifyInstance) {
              ls.latitude,
              ls.longitude,
              ls.geocode_precision,
+             ls.document_address,
              ls.time_window_type,
              ls.appointment_start_at::text,
              ls.appointment_end_at::text,
@@ -329,6 +333,7 @@ export async function registerLoadStopsRecordRoutes(app: FastifyInstance) {
             longitude: stop.longitude,
             geocode_precision: stop.geocode_precision,
             geocode_missing: geocodeMissing,
+            document_address: stop.document_address ?? null,
             appointment_window_type: stop.time_window_type,
             appointment_start_at: stop.appointment_start_at,
             appointment_end_at: stop.appointment_end_at,

@@ -446,6 +446,8 @@ export type StopsRecordStop = {
   longitude: number | null;
   geocode_precision: string | null;
   geocode_missing: boolean;
+  /** LEAD 443.248: the signed settlement's printed address of record (the stop's own address stays the geo). */
+  document_address?: { settlement_no: number | null; company: string | null; city: string | null; state: string | null; zip: string | null } | null;
   appointment_window_type: string | null;
   appointment_start_at: string | null;
   appointment_end_at: string | null;
