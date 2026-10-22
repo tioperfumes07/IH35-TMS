@@ -43,84 +43,9 @@ type DbClient = {
 
 const SOURCE_TAG = "SETTLEMENT-CONTRACT-TERMS";
 
-// Locked contract defaults (owner-EDITABLE per entity via settlement_contract_terms_config).
-const DEFAULT_MPG_THRESHOLD = 7.0;
-const DEFAULT_MPG_BONUS_CENTS = 3500;
-const DEFAULT_REFERRAL_REWARD_CENTS = 20000;
-const DEFAULT_REFERRAL_MIN_DAYS = 30;
-
-export type ContractTermsConfig = {
-  mpgThreshold: number;
-  mpgBonusCents: number;
-  referralRewardCents: number;
-  referralMinDays: number;
-};
-
-// ── Pure boundary helpers (no DB) — the money-decision boundaries, unit-testable in every environment. ──
-
-/**
- * Trip MPG from miles + gallons, with an owner override. Returns sourceAbsent=true when the real fuel/miles
- * source is missing (no gallons OR no miles) and no override is given — the caller then FAILS LOUD (audit,
- * no bonus) rather than treating it as 0 mpg (which would silently deny an earned bonus).
- */
-export function computeMpg(
-  miles: number,
-  gallons: number,
-  override?: number | null
-): { mpg: number | null; sourceAbsent: boolean } {
-  const ov = override != null && Number.isFinite(Number(override)) ? Number(override) : null;
-  if (ov != null) return { mpg: ov, sourceAbsent: false };
-  if (!(miles > 0) || !(gallons > 0)) return { mpg: null, sourceAbsent: true };
-  return { mpg: miles / gallons, sourceAbsent: false };
-}
-
-/** MPG bonus qualifies only when STRICTLY greater than the threshold (exactly 7.0 => NO bonus). */
-export function mpgBonusQualifies(mpg: number | null, threshold: number): boolean {
-  if (mpg == null || !Number.isFinite(mpg)) return false;
-  return mpg > threshold;
-}
-
-/**
- * Referral eligible when the referred driver has worked >= minDays as of `asOf` (boundary: 29 days => NO,
- * 30 days => YES). Date-only comparison (hire_date is a DATE) — full days elapsed.
- */
-export function referralEligibleAsOf(hireDateISO: string | null, minDays: number, asOf: Date = new Date()): boolean {
-  if (!hireDateISO) return false;
-  const hire = new Date(`${hireDateISO.slice(0, 10)}T00:00:00.000Z`);
-  if (Number.isNaN(hire.getTime())) return false;
-  const asOfUtc = new Date(`${asOf.toISOString().slice(0, 10)}T00:00:00.000Z`);
-  const daysElapsed = Math.floor((asOfUtc.getTime() - hire.getTime()) / (24 * 60 * 60 * 1000));
-  return daysElapsed >= minDays;
-}
-
-/**
- * Resolve the per-entity contract-terms config, falling back to the locked contract defaults when no row
- * exists (so a fresh entity behaves per contract without a seed). Owner edits override per entity.
- */
-export async function resolveContractTermsConfig(client: DbClient, operatingCompanyId: string): Promise<ContractTermsConfig> {
-  const res = await client.query<{
-    mpg_bonus_threshold: string | number | null;
-    mpg_bonus_cents: string | number | null;
-    referral_reward_cents: string | number | null;
-    referral_min_days: string | number | null;
-  }>(
-    `
-      SELECT mpg_bonus_threshold, mpg_bonus_cents, referral_reward_cents, referral_min_days
-      FROM driver_finance.settlement_contract_terms_config
-      WHERE operating_company_id = $1::uuid
-      LIMIT 1
-    `,
-    [operatingCompanyId]
-  );
-  const row = res.rows[0];
-  return {
-    mpgThreshold: row?.mpg_bonus_threshold != null ? Number(row.mpg_bonus_threshold) : DEFAULT_MPG_THRESHOLD,
-    mpgBonusCents: row?.mpg_bonus_cents != null ? Math.round(Number(row.mpg_bonus_cents)) : DEFAULT_MPG_BONUS_CENTS,
-    referralRewardCents:
-      row?.referral_reward_cents != null ? Math.round(Number(row.referral_reward_cents)) : DEFAULT_REFERRAL_REWARD_CENTS,
-    referralMinDays: row?.referral_min_days != null ? Math.round(Number(row.referral_min_days)) : DEFAULT_REFERRAL_MIN_DAYS,
-  };
-}
+// LEAD 443.236 (owner 10-22 10:41 AM CT: "no you do not add automatically. for the moment there is not bonus") — the automatic
+// MPG / referral bonus is REMOVED: the engine never computes or adds a bonus line, and the bonus config is no longer read. A bonus
+// exists only when a user adds the line by hand with the pay items "Driver Pay – Fuel Mileage Bonus" / "Driver Pay – Referral Bonus".
 
 /**
  * Insert a provenance row (idempotent via uq_settlement_contract_lines_natural). Returns true when a NEW
@@ -133,7 +58,7 @@ async function recordContractLine(
     settlementId: string;
     driverId: string;
     loadId?: string | null;
-    lineKind: "mpg_bonus" | "referral_bonus" | "late_delivery_passthrough" | "fine_passthrough" | "reimbursement";
+    lineKind: "late_delivery_passthrough" | "fine_passthrough" | "reimbursement";
     direction: "pay" | "deduction";
     amountCents: number;
     sourceTable?: string | null;
@@ -192,254 +117,6 @@ async function backlinkContractLine(
     `,
     [contractLineId, patch.settlementLineId ?? null, patch.deductionId ?? null, operatingCompanyId]
   );
-}
-
-export type MpgBonusResult =
-  | { applied: true; mpg: number; miles: number; gallons: number; bonusCents: number; settlementLineId: string }
-  | { applied: false; reason: "already_applied" | "mpg_source_absent" | "below_threshold" | "bonus_pay_item_not_configured"; mpg: number | null; miles: number; gallons: number };
-
-/**
- * LEAD 443.232 (P0 GPS down) — every extra_pay settlement line must carry its pay item (settlement_lines_extra_pay_requires_item,
- * G2). The contract-terms bonuses (MPG, referral) inserted an itemless line, the check failed, and — inside a delivery's
- * settlement ping on the GPS positions tick — that aborted the whole fleet's position write for 9 h. No MPG / referral
- * bonus has ever been paid on prod (the line always failed). Which item pays a contract bonus is the OWNER's decision:
- * until a bonus pay item is configured, the bonus is SKIPPED BY NAME (audited) before anything is written — never an
- * itemless line, never a guessed item, and the settlement close continues.
- */
-export const CONTRACT_BONUS_PAY_ITEM_ID: string | null = null;
-async function skipBonusWithoutPayItem(
-  client: DbClient,
-  input: { operatingCompanyId: string; settlementId: string; driverId: string; actorUserId: string; bonus: "mpg_bonus" | "referral_bonus"; amountCents: number }
-): Promise<boolean> {
-  if (CONTRACT_BONUS_PAY_ITEM_ID) return false;
-  await appendCrudAudit(
-    client as never,
-    input.actorUserId,
-    "driver_finance.contract_bonus_skipped_no_pay_item",
-    {
-      resource_type: "driver_finance.driver_settlements", resource_id: input.settlementId, operating_company_id: input.operatingCompanyId,
-      driver_id: input.driverId, bonus: input.bonus, amount_cents: input.amountCents,
-      reason: "no pay item configured for contract bonuses (owner decision) — no line written",
-    },
-    "warning",
-    "LEAD-443-232"
-  );
-  return true;
-}
-
-/**
- * ITEM 1 — MPG fuel-efficiency bonus. Trip MPG = total loaded+empty miles of the settlement's loads /
- * total gallons purchased for those loads by this driver. Boundary: MPG must be STRICTLY > threshold
- * (exactly 7.0 => NO bonus). FAIL-LOUD, never silent-zero: if the MPG source is absent (no gallons or no
- * miles) and no override is passed, record an audit event and DO NOT pay — the owner supplies an
- * `mpgOverride` (owner-entered) to force the compute. Idempotent per settlement.
- */
-export async function computeSettlementMpgBonus(
-  client: DbClient,
-  input: {
-    settlementId: string;
-    driverId: string;
-    operatingCompanyId: string;
-    actorUserId: string;
-    config: ContractTermsConfig;
-    /** Owner-entered override MPG (used when the fuel/miles source is absent — fail-loud, not zero). */
-    mpgOverride?: number | null;
-  }
-): Promise<MpgBonusResult> {
-  // Miles: sum driver_bills.miles_basis for the settlement's earnings-line source bills.
-  const milesRes = await client.query<{ miles: string | number | null }>(
-    `
-      SELECT COALESCE(SUM(db.miles_basis), 0) AS miles
-      FROM driver_finance.settlement_lines sl
-      JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
-      WHERE sl.settlement_id = $1::uuid
-        AND sl.source_driver_bill_id IS NOT NULL
-        AND sl.line_type IN ('earnings', 'team_split_primary', 'team_split_secondary')
-    `,
-    [input.settlementId]
-  );
-  const miles = Math.max(0, Number(milesRes.rows[0]?.miles ?? 0));
-
-  // Gallons: sum fuel_transactions.gallons for those loads, this driver, non-archived.
-  const gallonsRes = await client.query<{ gallons: string | number | null }>(
-    `
-      SELECT COALESCE(SUM(ft.gallons), 0) AS gallons
-      FROM fuel.fuel_transactions ft
-      WHERE ft.operating_company_id = $1::uuid
-        AND ft.driver_id = $2::uuid
-        AND ft.archived_at IS NULL
-        AND ft.load_id IN (
-          SELECT db.load_id
-          FROM driver_finance.settlement_lines sl
-          JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
-          WHERE sl.settlement_id = $3::uuid
-            AND sl.source_driver_bill_id IS NOT NULL
-            AND db.load_id IS NOT NULL
-        )
-    `,
-    [input.operatingCompanyId, input.driverId, input.settlementId]
-  );
-  const gallons = Math.max(0, Number(gallonsRes.rows[0]?.gallons ?? 0));
-
-  const overrideMpg = input.mpgOverride != null && Number.isFinite(Number(input.mpgOverride)) ? Number(input.mpgOverride) : null;
-  const { mpg, sourceAbsent } = computeMpg(miles, gallons, overrideMpg);
-
-  if (sourceAbsent) {
-    // FAIL LOUD — surface the missing source; do NOT treat as 0 MPG (that would silently deny a bonus).
-    await appendCrudAudit(
-      client,
-      input.actorUserId,
-      "driver_finance.settlement.mpg_source_absent",
-      {
-        resource_type: "driver_finance.driver_settlements",
-        resource_id: input.settlementId,
-        operating_company_id: input.operatingCompanyId,
-        driver_id: input.driverId,
-        miles,
-        gallons,
-        note: "MPG bonus not computed — fuel/miles source absent; owner may supply an explicit MPG override.",
-      },
-      "warning",
-      SOURCE_TAG
-    );
-    return { applied: false, reason: "mpg_source_absent", mpg: null, miles, gallons };
-  }
-
-  // Boundary: STRICTLY greater than threshold. Exactly 7.0 => no bonus.
-  if (mpg == null || !mpgBonusQualifies(mpg, input.config.mpgThreshold)) {
-    return { applied: false, reason: "below_threshold", mpg, miles, gallons };
-  }
-
-  if (await skipBonusWithoutPayItem(client, {
-    operatingCompanyId: input.operatingCompanyId, settlementId: input.settlementId, driverId: input.driverId,
-    actorUserId: input.actorUserId, bonus: "mpg_bonus", amountCents: input.config.mpgBonusCents,
-  })) {
-    return { applied: false, reason: "bonus_pay_item_not_configured", mpg, miles, gallons };
-  }
-
-  // Idempotency ledger first (unique per settlement + kind).
-  const contractLineId = await recordContractLine(client, {
-    operatingCompanyId: input.operatingCompanyId,
-    settlementId: input.settlementId,
-    driverId: input.driverId,
-    lineKind: "mpg_bonus",
-    direction: "pay",
-    amountCents: input.config.mpgBonusCents,
-    sourceTable: "driver_finance.driver_settlements",
-    sourceId: input.settlementId,
-    computedBasis: { mpg, miles, gallons, threshold: input.config.mpgThreshold, override: overrideMpg != null },
-    actorUserId: input.actorUserId,
-  });
-  if (!contractLineId) {
-    return { applied: false, reason: "already_applied", mpg, miles, gallons };
-  }
-
-  const dollars = input.config.mpgBonusCents / 100;
-  const lineRes = await client.query<{ id: string }>(
-    `
-      INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
-      VALUES ($1::uuid, 'extra_pay', $2, $3)
-      RETURNING id::text
-    `,
-    [input.settlementId, `MPG fuel-efficiency bonus (${mpg.toFixed(2)} mpg)`, dollars]
-  );
-  const settlementLineId = lineRes.rows[0]?.id ? String(lineRes.rows[0].id) : "";
-  await backlinkContractLine(client, input.operatingCompanyId, contractLineId, { settlementLineId });
-
-  return { applied: true, mpg, miles, gallons, bonusCents: input.config.mpgBonusCents, settlementLineId };
-}
-
-export type ReferralBonusResult = { appliedCount: number; appliedCents: number; referredDriverIds: string[] };
-
-/**
- * ITEM 2 — Referral bonus. Pays the REFERRER (the driver being settled) $200 for each referred driver who
- * has worked >= referralMinDays (boundary: 29 days => NO, 30 days => YES), is still active, and has not yet
- * generated the reward. Idempotent via the referred driver's referral_reward_paid_at stamp. The bonus line
- * references the REFERRED driver (provenance + description).
- */
-export async function computeReferralBonuses(
-  client: DbClient,
-  input: {
-    settlementId: string;
-    referrerDriverId: string;
-    operatingCompanyId: string;
-    actorUserId: string;
-    config: ContractTermsConfig;
-  }
-): Promise<ReferralBonusResult> {
-  const referredRes = await client.query<{ id: string; first_name: string | null; last_name: string | null; hire_date: string | null }>(
-    `
-      SELECT d.id::text, d.first_name, d.last_name, d.hire_date::text
-      FROM mdata.drivers d
-      WHERE d.referred_by_driver_id = $1::uuid
-        AND d.operating_company_id = $2::uuid
-        AND d.referral_reward_paid_at IS NULL
-        AND lower(d.status::text) = 'active'
-        AND d.hire_date IS NOT NULL
-        AND d.hire_date <= (CURRENT_DATE - ($3::int * INTERVAL '1 day'))
-      ORDER BY d.hire_date ASC, d.id ASC
-      FOR UPDATE OF d
-    `,
-    [input.referrerDriverId, input.operatingCompanyId, input.config.referralMinDays]
-  );
-
-  const result: ReferralBonusResult = { appliedCount: 0, appliedCents: 0, referredDriverIds: [] };
-  const dollars = input.config.referralRewardCents / 100;
-
-  for (const referred of referredRes.rows) {
-    const referredId = String(referred.id);
-    // Defense-in-depth boundary re-check (the SQL already filters; this also guards a mocked/edge row):
-    // 29 days => skip, 30 days => pay.
-    if (!referralEligibleAsOf(referred.hire_date, input.config.referralMinDays)) continue;
-    if (await skipBonusWithoutPayItem(client, {
-      operatingCompanyId: input.operatingCompanyId, settlementId: input.settlementId, driverId: input.referrerDriverId,
-      actorUserId: input.actorUserId, bonus: "referral_bonus", amountCents: input.config.referralRewardCents,
-    })) continue;
-
-    const contractLineId = await recordContractLine(client, {
-      operatingCompanyId: input.operatingCompanyId,
-      settlementId: input.settlementId,
-      driverId: input.referrerDriverId,
-      lineKind: "referral_bonus",
-      direction: "pay",
-      amountCents: input.config.referralRewardCents,
-      sourceTable: "mdata.drivers",
-      sourceId: referredId,
-      referredDriverId: referredId,
-      computedBasis: { referred_hire_date: referred.hire_date, min_days: input.config.referralMinDays },
-      actorUserId: input.actorUserId,
-    });
-    if (!contractLineId) continue; // already recorded on this settlement
-
-    const referredName = `${referred.first_name ?? ""} ${referred.last_name ?? ""}`.trim() || referredId;
-    const lineRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
-        VALUES ($1::uuid, 'extra_pay', $2, $3)
-        RETURNING id::text
-      `,
-      [input.settlementId, `Referral bonus — ${referredName}`, dollars]
-    );
-    const settlementLineId = lineRes.rows[0]?.id ? String(lineRes.rows[0].id) : "";
-    await backlinkContractLine(client, input.operatingCompanyId, contractLineId, { settlementLineId });
-
-    // Idempotency stamp: pay this referral exactly once.
-    await client.query(
-      `
-        UPDATE mdata.drivers
-        SET referral_reward_paid_at = now(),
-            referral_reward_settlement_id = $2::uuid
-        WHERE id = $1::uuid AND operating_company_id = $3::uuid AND referral_reward_paid_at IS NULL
-      `,
-      [referredId, input.settlementId, input.operatingCompanyId]
-    );
-
-    result.appliedCount += 1;
-    result.appliedCents += input.config.referralRewardCents;
-    result.referredDriverIds.push(referredId);
-  }
-
-  return result;
 }
 
 export type PassthroughResult = { appliedCount: number; appliedCents: number };
@@ -758,16 +435,14 @@ export async function computeSettlementReimbursements(
 }
 
 export type ContractTermsSummary = {
-  mpg: MpgBonusResult;
-  referral: ReferralBonusResult;
   lateDelivery: PassthroughResult;
   fines: PassthroughResult;
   reimbursements: SettlementReimbursementResult;
 };
 
 /**
- * Orchestrator — compute ALL five hire-contract terms for a settlement, in order:
- * bonuses (raise gross) -> new deductions (picked up by the net-floor applier that runs next) ->
+ * Orchestrator — compute the hire-contract terms for a settlement (443.236: NO automatic bonus), in order:
+ * new deductions (picked up by the net-floor applier that runs next) ->
  * reimbursement pay-out lines. Each step is idempotent. Emits one audit event summarizing the batch.
  *
  * Called from the load-bookended close (settlements-load-bookended.service.ts), flag-gated by
@@ -781,26 +456,8 @@ export async function computeSettlementContractTerms(
     driverId: string;
     operatingCompanyId: string;
     actorUserId: string;
-    mpgOverride?: number | null;
   }
 ): Promise<ContractTermsSummary> {
-  const config = await resolveContractTermsConfig(client, input.operatingCompanyId);
-
-  const mpg = await computeSettlementMpgBonus(client, {
-    settlementId: input.settlementId,
-    driverId: input.driverId,
-    operatingCompanyId: input.operatingCompanyId,
-    actorUserId: input.actorUserId,
-    config,
-    mpgOverride: input.mpgOverride ?? null,
-  });
-  const referral = await computeReferralBonuses(client, {
-    settlementId: input.settlementId,
-    referrerDriverId: input.driverId,
-    operatingCompanyId: input.operatingCompanyId,
-    actorUserId: input.actorUserId,
-    config,
-  });
   const lateDelivery = await computeLateDeliveryPassthrough(client, {
     settlementId: input.settlementId,
     driverId: input.driverId,
@@ -829,10 +486,6 @@ export async function computeSettlementContractTerms(
       resource_id: input.settlementId,
       operating_company_id: input.operatingCompanyId,
       driver_id: input.driverId,
-      mpg_applied: mpg.applied,
-      mpg_bonus_cents: mpg.applied ? mpg.bonusCents : 0,
-      referral_count: referral.appliedCount,
-      referral_cents: referral.appliedCents,
       late_delivery_count: lateDelivery.appliedCount,
       late_delivery_cents: lateDelivery.appliedCents,
       fine_count: fines.appliedCount,
@@ -844,5 +497,5 @@ export async function computeSettlementContractTerms(
     SOURCE_TAG
   );
 
-  return { mpg, referral, lateDelivery, fines, reimbursements };
+  return { lateDelivery, fines, reimbursements };
 }

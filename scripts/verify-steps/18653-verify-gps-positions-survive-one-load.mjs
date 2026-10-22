@@ -10,8 +10,7 @@
  *   2. telematics/geofence-detector.service.ts walks a load's status inside withSavepoint, audited on failure;
  *   3. integrations/samsara/samsara-positions.service.ts runs each point's fence processing inside withSavepoint (both the
  *      locations and the stats paths) — one unit can never roll back the fleet's positions;
- *   4. driver-finance/settlement-contract-terms.service.ts never INSERTs an itemless extra_pay line: every bonus goes through
- *      skipBonusWithoutPayItem before its ledger row.
+ *   4. driver-finance/settlement-contract-terms.service.ts never computes or adds a bonus (443.236 owner: no automatic bonus).
  * --selftest plants each regression.
  */
 import { readFileSync } from "node:fs";
@@ -47,10 +46,10 @@ export function check(src = {}) {
   if (!/new TelematicsGpsCatchupHandler\(\)/.test(s.registry)) p.push(`${F.registry}: the GPS catch-up handler (telematics.gps_catchup) is not registered`);
   const bare = (s.positions.match(/await processGeofenceDetectionsForGpsPoint\(/g) ?? []).length;
   if (bare) p.push(`${F.positions}: ${bare} fence call(s) outside a savepoint`);
-  const inserts = s.terms.match(/INSERT INTO driver_finance\.settlement_lines \(settlement_id, line_type, description, amount\)\s*VALUES \(\$1::uuid, 'extra_pay'/g) ?? [];
-  const gates = s.terms.match(/await skipBonusWithoutPayItem\(client, \{/g) ?? [];
-  if (inserts.length > gates.length)
-    p.push(`${F.terms}: ${inserts.length} itemless extra_pay insert(s) but only ${gates.length} pay-item gate(s) — every bonus must pass skipBonusWithoutPayItem`);
+  // LEAD 443.236 (owner: "no you do not add automatically … there is not bonus") — the contract-terms engine never computes or
+  // adds a bonus: no MPG / referral bonus function, no bonus ledger kind, no bonus-config read.
+  for (const t of ["computeSettlementMpgBonus", "computeReferralBonuses", 'lineKind: "mpg_bonus"', 'lineKind: "referral_bonus"', "settlement_contract_terms_config"])
+    if (s.terms.includes(t)) p.push(`${F.terms}: automatic bonus is back (${t}) — a bonus exists only as a manual pay line`);
   return p;
 }
 
@@ -69,7 +68,8 @@ if (isMain && process.argv.includes("--selftest")) {
     ["stats point savepoint removed", { positions: base.positions.replace('"stats_fence_point",', '"x",') }],
     ["catch-up without its savepoint", { positions: base.positions.replace('"catchup_fence_point",', '"x",') }],
     ["catch-up handler unregistered", { registry: base.registry.replace("new TelematicsGpsCatchupHandler(),", "") }],
-    ["bonus without the pay-item gate", { terms: base.terms.replace("await skipBonusWithoutPayItem(client, {", "await somethingElse(client, {") }],
+    ["automatic MPG bonus back", { terms: base.terms + "\nexport async function computeSettlementMpgBonus() {}\n" }],
+    ["bonus config read back", { terms: base.terms + "\nconst q = `FROM driver_finance.settlement_contract_terms_config`;\n" }],
   ];
   for (const [n, src] of plants) {
     const k = Object.keys(src)[0];

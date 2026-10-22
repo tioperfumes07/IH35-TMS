@@ -48,6 +48,9 @@ const createBodySchema = z.object({
   default_income_account_id: z.string().uuid().optional(),
   default_expense_account_id: z.string().uuid().optional(),
   default_class_id: z.string().uuid().optional(),
+  /** LEAD 443.236 — an entity with enforce_line_categorization (USMCA) refuses an active item with no category
+   *  (trg_items_enforce_category_and_account); the create route could not set one, so every item create there failed. */
+  category_id: z.string().uuid().optional(),
   qbo_item_id: z.string().trim().max(100).optional(),
   taxable: z.boolean().default(false),
   notes: z.string().trim().max(2000).optional(),
@@ -61,7 +64,10 @@ const createBodySchema = z.object({
     // Scoped to the create route. The former QBO item clone path (qbo-sync/items-write-sql.ts, which
     // inserted QBO items with no local account mapping) was removed by ACCT-F4431380 — QuickBooks is a
     // read-only archive — so no QBO path writes catalogs.items any more.
-    if (INCOME_ACCOUNT_REQUIRED_TYPES.has(b.item_type) && !b.default_income_account_id) {
+    // LEAD 443.236: a PURCHASE-ONLY item (it names its expense account and no income account — a driver pay item used on a
+    // settlement line) is never sold to a customer, so it needs no income account. An item with neither account still fails.
+    const purchaseOnly = Boolean(b.default_expense_account_id) && !b.default_income_account_id;
+    if (INCOME_ACCOUNT_REQUIRED_TYPES.has(b.item_type) && !b.default_income_account_id && !purchaseOnly) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["default_income_account_id"],
@@ -201,9 +207,9 @@ export async function registerItemRoutes(app: FastifyInstance) {
               operating_company_id,
               item_name, item_code, item_type, description, unit_price_cents,
               default_income_account_id, default_expense_account_id, default_class_id,
-              qbo_item_id, taxable, notes, created_by_user_id, updated_by_user_id
+              qbo_item_id, taxable, notes, created_by_user_id, updated_by_user_id, category_id
             ) VALUES (
-              $13,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12
+              $13,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$14
             )
             RETURNING
               id, item_name, item_code, item_type, description, unit_price_cents,
@@ -225,6 +231,7 @@ export async function registerItemRoutes(app: FastifyInstance) {
             b.notes ?? null,
             authUser.uuid,
             operatingCompanyId,
+            b.category_id ?? null,
           ]
         );
         const row = res.rows[0];
