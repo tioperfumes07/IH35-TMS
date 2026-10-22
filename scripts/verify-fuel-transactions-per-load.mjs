@@ -199,12 +199,27 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
 /** 443.198 — the Creator's Relay rows come from the fill's own lines (pure: source texts in, problems out). */
 export const CREATOR_PATH = "apps/backend/src/driver-finance/settlement-creator.service.ts";
 export const RELAY_ROWS_ENGINE_PATH = "apps/backend/src/fuel/relay-fill-fuel-rows.ts";
+/** The body of the Creator's Relay branch `if (!reused && fuel.card === "relay" && relayFillId) { … }` (brace-matched), or null. */
+export function relayBranch(src) {
+  const head = 'if (!reused && fuel.card === "relay" && relayFillId) {';
+  const at = src.indexOf(head);
+  if (at < 0) return null;
+  let depth = 0;
+  for (let i = at + head.length - 1; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}" && --depth === 0) return src.slice(at, i + 1);
+  }
+  return null;
+}
+
 export function creatorRelayRowProblems(creatorSrc, engineSrc) {
   const p = [];
   if (!/import\s*\{[^}]*\bwriteRelayFillFuelRows\b[^}]*\}\s*from\s*"\.\.\/fuel\/relay-fill-fuel-rows\.js"/.test(creatorSrc)) {
     p.push("the Settlement Creator does not import writeRelayFillFuelRows (fuel/relay-fill-fuel-rows.ts)");
   }
-  if (!/if \(!reused && fuel\.card === "relay" && relayFillId\) \{[\s\S]{0,900}await writeRelayFillFuelRows\(/.test(creatorSrc)) {
+  // LEAD 443.232 c: the writer call must be INSIDE the Relay branch — matched by braces, not a 900-char window (the 443.215
+  // edit / repost adoption grew the branch past the window while the call stayed exactly where the rule wants it).
+  if (!/await writeRelayFillFuelRows\(/.test(relayBranch(creatorSrc) ?? "")) {
     p.push("the Settlement Creator's Relay path does not write the fill's rows through writeRelayFillFuelRows");
   }
   if (!/const inserted = reused \? \{ rows: \[\{ id: reused \}\] \} : relayRowId \? \{ rows: \[\{ id: relayRowId \}\] \} : await client\.query/.test(creatorSrc)) {
@@ -354,6 +369,8 @@ function selftest() {
     ["the real Creator + engine pass", creatorRelayRowProblems(realCreator, realEngine).length, 0],
     ["planted: Creator INSERTs the Relay row at the typed amount (origin/main shape) fails", creatorRelayRowProblems(oldCreator, realEngine).length > 0 ? 1 : 0, 1],
     ["planted: engine missing fails", creatorRelayRowProblems(realCreator, null).length > 0 ? 1 : 0, 1],
+    ["planted: the writer call moved OUT of the Relay branch fails (443.232 c)",
+      creatorRelayRowProblems(realCreator.replace("await writeRelayFillFuelRows(", "await writeRelayFillFuelRowsElsewhere("), realEngine).length > 0 ? 1 : 0, 1],
     ["planted: engine writes a typed amount, not the line fails",
       creatorRelayRowProblems(realCreator, (realEngine ?? "").replace(/p\.total_cents \/ 100/g, "typedCents / 100")).length > 0 ? 1 : 0, 1],
     ["planted: engine without the foot refusal fails",
