@@ -14,9 +14,6 @@
     "accounting/revenue-leakage.service.ts": {
       "count": 1
     },
-    "cash-flow/cash-flow.service.ts": {
-      "count": 1
-    },
     "customers/relationship-score/scorer.service.ts": {
       "count": 1
     },
@@ -65,9 +62,6 @@
     "mdata/loads.routes.ts": {
       "count": 3
     },
-    "reports/exception-queue.routes.ts": {
-      "count": 4
-    },
     "settlements/trip-link.engine.ts": {
       "count": 1
     },
@@ -75,9 +69,6 @@
       "count": 1
     },
     "telematics/fleet-location-hos.service.ts": {
-      "count": 1
-    },
-    "telematics/geofence-detector.service.ts": {
       "count": 1
     }
   },
