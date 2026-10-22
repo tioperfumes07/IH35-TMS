@@ -82,7 +82,11 @@ export function checkVoidClosesTrip(cascadeSrc, bulkSrc) {
   }
   const cascadeFn = cascade.match(/export async function completeDriverSettlementVoidCascadeInClientTx\([\s\S]*?\n\}/)?.[0] ?? "";
   if (!/closeVoidedSettlementTripInClientTx\(client/.test(cascadeFn)) broken.push("completeDriverSettlementVoidCascadeInClientTx no longer closes the trip");
-  if (!/closeVoidedSettlementTripInClientTx\(/.test(bulk)) broken.push(`${BULK}: bulk reverse no longer closes the trip`);
+  // The bulk route is accepted if it calls closeVoidedSettlementTripInClientTx directly, OR routes
+  // through completeDriverSettlementVoidCascadeInClientTx (check #1 above already proved that function
+  // calls closeVoidedSettlementTripInClientTx — same invariant, one level of indirection).
+  const bulkClosesTrip = /closeVoidedSettlementTripInClientTx\(/.test(bulk) || /completeDriverSettlementVoidCascadeInClientTx\(/.test(bulk);
+  if (!bulkClosesTrip) broken.push(`${BULK}: bulk reverse neither calls closeVoidedSettlementTripInClientTx nor routes through completeDriverSettlementVoidCascadeInClientTx — bookend trip remains open`);
   return broken;
 }
 

@@ -4258,6 +4258,16 @@ export async function voidBillInClientTx(
   );
   if (!updated.rows[0]?.id) throw new Error("bill_void_state_transition_failed");
 
+  // verify-void-cascades-to-every-child — bill_lines must carry voided_at in the same transaction.
+  await client.query(
+    `UPDATE accounting.bill_lines
+        SET voided_at = now()
+      WHERE bill_id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND voided_at IS NULL`,
+    [input.billId, input.operatingCompanyId]
+  );
+
   // ACCT-F5673 — never strand the source bank transaction (same client, atomic with the flip).
   await cascadeBillVoidToSourceBankTransactions(client, {
     operatingCompanyId: input.operatingCompanyId,
