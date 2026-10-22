@@ -236,7 +236,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
         <div className="flex flex-wrap gap-2" data-testid="fuel-assignment-mode-buttons">
           <button
             type="button"
-            className={`rounded-sm border px-3 text-xs font-semibold ${mode === "confirm" ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#E5E7EB] bg-white text-[#1F2A44]"}`}
+            className={`rounded-sm border px-3 text-xs font-semibold ${mode === "confirm" ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}
             style={{ height: 28 }}
             data-testid="fuel-assignment-mode-confirm"
             onClick={() => setMode("confirm")}
@@ -245,7 +245,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
           </button>
           <button
             type="button"
-            className={`rounded-sm border px-3 text-xs font-semibold ${mode === "pick" ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#E5E7EB] bg-white text-[#1F2A44]"}`}
+            className={`rounded-sm border px-3 text-xs font-semibold ${mode === "pick" ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}
             style={{ height: 28 }}
             data-testid="fuel-assignment-mode-pick"
             onClick={() => setMode("pick")}
@@ -254,7 +254,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
           </button>
           <button
             type="button"
-            className={`rounded-sm border px-3 text-xs font-semibold ${mode === "keep" ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#E5E7EB] bg-white text-[#1F2A44]"}`}
+            className={`rounded-sm border px-3 text-xs font-semibold ${mode === "keep" ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}
             style={{ height: 28 }}
             data-testid="fuel-assignment-mode-keep"
             onClick={() => setMode("keep")}
