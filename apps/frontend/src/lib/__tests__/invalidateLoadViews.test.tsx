@@ -6,6 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { isLoadViewQueryKey, invalidateLoadViews } from "../invalidateLoadViews";
 import { RealtimeBus, nextBackoffMs } from "../../hooks/useRealtimeBus";
 
+// LEAD 443.232 a: the bus opens only for a signed-in user (the app's ["auth","me"] query).
+const authState = vi.hoisted(() => ({ user: { id: "u1" } as unknown }));
+vi.mock("../../auth/useAuth", () => ({ useAuth: () => ({ user: authState.user }) }));
+
 type Listener = (ev: MessageEvent) => void;
 class FakeEventSource {
   static instances: FakeEventSource[] = [];
@@ -62,6 +66,17 @@ describe("invalidateLoadViews + realtime bus (443.208R)", () => {
     await act(async () => { vi.advanceTimersByTime(1000); });
     expect(FakeEventSource.instances).toHaveLength(2);
     expect(nextBackoffMs(16_000)).toBe(30_000);
+  });
+
+  it("443.232 a: a signed-out tab opens no stream (before: a 401 every 30 s, forever)", async () => {
+    vi.stubGlobal("EventSource", FakeEventSource);
+    authState.user = null;
+    try {
+      render(<QueryClientProvider client={new QueryClient()}><RealtimeBus /></QueryClientProvider>);
+      expect(FakeEventSource.instances).toHaveLength(0);
+    } finally {
+      authState.user = { id: "u1" };
+    }
   });
 
   it("the helper itself invalidates only load views", async () => {

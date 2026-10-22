@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { resolveApiUrl } from "../api/client";
 import { invalidateLoadViews, type LoadChangedPayload } from "../lib/invalidateLoadViews";
+import { useAuth } from "../auth/useAuth";
 
 /**
  * LEAD 443.208R — the app-wide realtime bus, mounted ONCE (main.tsx), not in the bell.
@@ -15,9 +16,12 @@ export function nextBackoffMs(prev: number): number {
   return Math.min(Math.max(1000, prev * 2), 30_000);
 }
 
-export function useRealtimeBus(): void {
+export function useRealtimeBus(enabled = true): void {
   const qc = useQueryClient();
   useEffect(() => {
+    // LEAD 443.232 a — a signed-out tab (login page, expired session) never opens the stream: before, it got a 401 every
+    // 30 s forever (the backoff cap), each one a server error.
+    if (!enabled) return;
     if (typeof window === "undefined" || typeof EventSource === "undefined") return;
     let es: EventSource | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -55,10 +59,12 @@ export function useRealtimeBus(): void {
       if (timer) clearTimeout(timer);
       es?.close();
     };
-  }, [qc]);
+  }, [qc, enabled]);
 }
 
+/** Mounted once (main.tsx); opens the stream only for a signed-in user (the same ["auth","me"] query the app runs). */
 export function RealtimeBus(): null {
-  useRealtimeBus();
+  const { user } = useAuth();
+  useRealtimeBus(Boolean(user));
   return null;
 }
