@@ -2722,5 +2722,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-22",
     "purpose": "CC-2 Lead 443.220: driver_bills status awaiting_short_miles — a booked load always has its driver bill (priced when short miles land)"
+  },
+  "202616120700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-2 443.214 follow-up: fuel.fuel_transactions card_unit_id / gps_unit_id FOREIGN KEY -> mdata.units (verify-orphan-fk-inventory red on main since #27116)"
   }
 }
