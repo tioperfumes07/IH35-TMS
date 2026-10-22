@@ -9143,6 +9143,7 @@
       "city",
       "country",
       "created_at",
+      "document_address",
       "facility_name",
       "gate_dock_text",
       "geocode_attempted_at",

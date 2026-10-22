@@ -7,8 +7,9 @@
  *         mdata.loads.miles_choice via setMilesChoice source 'document' (practical / short / empty — 443.240 lock), then the ONE
  *         geocode → location → real-address fence → Samsara pass (geocodeStopsWithClient reresolve). audit (appendCrudAudit).
  * NEVER: overwrites a stop that already carries a street or a GPS-verified point with the document's city / ZIP (the document
- *         prints no street; a different printed address is LISTED, never applied); creates or deletes a stop (a document whose
- *         stop shape differs from the load is listed); invents a value the document does not print; touches money.
+ *         prints no street; the printed address is kept as the stop's address of record in document_address — 443.248); deletes a
+ *         stop (a printed stop the load lacks is ADDED in its printed position — 443.248; a shape that cannot be aligned is listed);
+ *         invents a value the document does not print; touches money.
  * IDEMPOTENCY: every write is compare-and-set (a field already equal is left alone); setMilesChoice is skipped when the load
  *         already carries the document value; the geocode pass is idempotent (advisory locks + NOT EXISTS fence).
  * REVERSE: NOT-A-DOCUMENT — enrichment from the signed document; a stop is corrected through the stop editor.
@@ -46,6 +47,9 @@ export type ApplyDocumentResult = {
   legs_set: number;
   miles_set: Array<{ field: MilesField; old: number | null; new: number }>;
   listed: DocumentListed[];
+  /** 443.248: printed stops added to the load / stops whose address of record was (re)written. */
+  stops_added?: number;
+  records_set?: number;
   geocode: { stops_geocoded: number; locations_linked: number; geofences_created: number; street_from_place: number; failures: number } | null;
 };
 
@@ -74,6 +78,7 @@ type StopRow = {
   id: string; sequence_number: number; stop_type: string; facility_name: string | null; address_line1: string | null;
   city: string | null; state: string | null; postal_code: string | null; geocode_source: string | null; geocode_precision: string | null;
   leg_miles: string | null; location_id: string | null;
+  document_address?: Record<string, unknown> | null;
 };
 
 /** Pure: what the document may fill on one stop. Fills only what the stop lacks; a stop already at a street / GPS point whose
@@ -114,6 +119,56 @@ export function alignDocumentStops(stops: Array<{ stop_type: string; city: strin
   return out;
 }
 
+/** Pure: the signed settlement's printed address of record for one stop (LEAD 443.248). */
+export function documentAddressOf(d: DocumentStop, settlementNo: number) {
+  const clean = (v: unknown) => (String(v ?? "").trim() || null);
+  return { settlement_no: settlementNo, company: clean(d.company), city: clean(d.city), state: clean(d.state), zip: clean(d.zip) };
+}
+
+/** Pure: the final stop order — every printed (non-EMPTY) stop in document order; an existing load stop keeps its row. */
+export function documentStopPlan(docStops: DocumentStop[], aligned: number[]): Array<{ existingIndex: number | null; docIndex: number }> {
+  const byDoc = new Map(aligned.map((j, i) => [j, i]));
+  return docStops.map((_, j) => ({ existingIndex: byDoc.has(j) ? byDoc.get(j)! : null, docIndex: j }));
+}
+
+async function insertMissingDocumentStops(
+  client: DbClient,
+  a: { operatingCompanyId: string; actorUserId: string; loadId: string; loadNumber: string; settlementNo: number; stops: StopRow[]; docStops: DocumentStop[]; aligned: number[] }
+): Promise<number> {
+  const plan = documentStopPlan(a.docStops, a.aligned);
+  // (load_id, sequence_number) is UNIQUE and not deferrable: park the existing rows out of the way, then write the final order.
+  await client.query(
+    `UPDATE mdata.load_stops SET sequence_number = sequence_number + 1000, updated_at = now()
+      WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`, [a.loadId, a.operatingCompanyId]);
+  let added = 0;
+  for (let k = 0; k < plan.length; k++) {
+    const step = plan[k]!;
+    const seq = k + 1;
+    if (step.existingIndex != null) {
+      await client.query(`UPDATE mdata.load_stops SET sequence_number = $3, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [a.stops[step.existingIndex]!.id, a.operatingCompanyId, seq]);
+      continue;
+    }
+    const d = a.docStops[step.docIndex]!;
+    const ins = (await client.query<{ id: string }>(
+      `INSERT INTO mdata.load_stops (load_id, operating_company_id, sequence_number, stop_type, facility_name, city, state, postal_code, country,
+                                     scheduled_arrival_at, time_window_type, stop_notes, document_address)
+       VALUES ($1::uuid, $2::uuid, $3, $4::mdata.stop_type_enum, $5, $6, $7, $8, 'US', $9::timestamptz, 'appointment', $10, $11::jsonb)
+       RETURNING id::text`,
+      [a.loadId, a.operatingCompanyId, seq, TYPE[d.type], d.company?.trim() || null, d.city?.trim() || null, up(d.state) || null,
+        String(d.zip ?? "").trim().slice(0, 5) || null, d.date ? `${d.date}T12:00:00Z` : null,
+        `Printed on signed settlement ${a.settlementNo} (relay / yard stop) — added from the document (LEAD 443.248).`,
+        JSON.stringify(documentAddressOf(d, a.settlementNo))]
+    )).rows[0]!;
+    added += 1;
+    await appendCrudAudit(client as never, a.actorUserId, "dispatch.load_stop.added_from_settlement_document", {
+      resource_type: "mdata.load_stops", resource_id: ins.id, operating_company_id: a.operatingCompanyId, load_id: a.loadId,
+      load_number: a.loadNumber, settlement_no: a.settlementNo, sequence: seq, stop_type: TYPE[d.type], company: d.company, city: d.city, zip: d.zip, date: d.date,
+    }, "info", "443.248");
+  }
+  return added;
+}
+
 export async function applySettlementDocumentToLoad(
   client: DbClient,
   args: { operatingCompanyId: string; actorUserId: string; doc: DocumentLoad; geocode?: boolean }
@@ -132,29 +187,37 @@ export async function applySettlementDocumentToLoad(
   out.load_id = l.id;
 
   // ---- stops ----
-  const stops = (await client.query<StopRow>(
+  const readStops = async () => (await client.query<StopRow>(
     `SELECT id::text, sequence_number, stop_type::text, facility_name, address_line1, city, state, postal_code, geocode_source,
-            geocode_precision, leg_miles::text, location_id::text
+            geocode_precision, leg_miles::text, location_id::text, document_address
        FROM mdata.load_stops WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
       ORDER BY sequence_number`, [l.id, args.operatingCompanyId])).rows;
+  let stops = await readStops();
   const docStops = doc.stops.filter((s) => s.type !== "EMPTY");
-  const aligned = alignDocumentStops(stops, docStops);
-  const shapeOk = aligned != null;
-  const exact = docStops.length === stops.length;
+  let aligned = alignDocumentStops(stops, docStops);
   if (!aligned) {
     out.listed.push({ load_number: doc.load_number, reason: "stop_shape_differs", detail: {
       document: docStops.map((d) => `${d.type} ${d.company ?? ""} ${d.city ?? ""}`.trim()), load: stops.map((s) => `${s.stop_type} ${s.city ?? ""}`.trim()) } });
-  } else {
-    // A document stop the load does not carry (a relay / yard drop the booking never recorded) is listed — never invented here.
-    const used = new Set(aligned);
-    const extra = docStops.filter((_, j) => !used.has(j));
-    if (extra.length) out.listed.push({ load_number: doc.load_number, reason: "document_stop_not_on_load", detail: {
-      stops: extra.map((d) => `${d.type} ${d.company ?? ""}, ${d.city ?? ""} ${d.state ?? ""} ${d.zip ?? ""} ${d.date ?? ""}`.trim()) } });
+  } else if (aligned.length < docStops.length) {
+    // LEAD 443.248 (document-first): a stop the signed settlement prints and the load does not carry (13541 / 13576: the Love's
+    // Vinton relay) is ADDED in its printed position; the load's own stops keep their rows and are re-sequenced around it.
+    out.stops_added = await insertMissingDocumentStops(client, { operatingCompanyId: args.operatingCompanyId, actorUserId: args.actorUserId,
+      loadId: l.id, loadNumber: doc.load_number, settlementNo: doc.settlement_no, stops, docStops, aligned });
+    stops = await readStops();
+    aligned = alignDocumentStops(stops, docStops);
+  }
+  const shapeOk = aligned != null;
+  if (aligned) {
+    const exact = docStops.length === stops.length;
     for (let i = 0; i < stops.length; i++) {
       const s = stops[i]!;
-      const { patch, conflict } = stopDocumentPatch(s, docStops[aligned[i]!]!, i === 0, exact);
+      const d = docStops[aligned[i]!]!;
+      const { patch, conflict } = stopDocumentPatch(s, d, i === 0, exact);
+      // the signed settlement's printed address is the stop's address of record (443.248); the stop's own address / point stay the geo.
+      const record = documentAddressOf(d, doc.settlement_no);
+      const recordChanged = JSON.stringify(s.document_address ?? null) !== JSON.stringify(record);
       if (conflict) out.listed.push({ load_number: doc.load_number, reason: "printed_address_differs_load_kept", detail: conflict });
-      if (!Object.keys(patch).length) continue;
+      if (!Object.keys(patch).length && !recordChanged) continue;
       await client.query(
         `UPDATE mdata.load_stops
             SET facility_name = CASE WHEN nullif(trim(facility_name), '') IS NULL THEN coalesce($3, facility_name) ELSE facility_name END,
@@ -162,16 +225,19 @@ export async function applySettlementDocumentToLoad(
                 city          = CASE WHEN nullif(trim(city), '') IS NULL THEN coalesce($5, city) ELSE city END,
                 state         = CASE WHEN nullif(trim(city), '') IS NULL THEN coalesce($6, state) ELSE state END,
                 leg_miles     = coalesce($7::numeric, leg_miles),
+                document_address = $8::jsonb,
                 updated_at = now()
           WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-        [s.id, args.operatingCompanyId, patch.facility_name ?? null, patch.postal_code ?? null, patch.city ?? null, patch.state ?? null, patch.leg_miles ?? null]);
+        [s.id, args.operatingCompanyId, patch.facility_name ?? null, patch.postal_code ?? null, patch.city ?? null, patch.state ?? null,
+          patch.leg_miles ?? null, JSON.stringify(record)]);
       if (patch.leg_miles != null) out.legs_set += 1;
       if (patch.facility_name || patch.postal_code || patch.city) out.stops_filled += 1;
+      if (recordChanged) out.records_set = (out.records_set ?? 0) + 1;
       await appendCrudAudit(client as never, args.actorUserId, "dispatch.load_stop.settlement_document_applied", {
         resource_type: "mdata.load_stops", resource_id: s.id, operating_company_id: args.operatingCompanyId, load_id: l.id,
         load_number: doc.load_number, settlement_no: doc.settlement_no, sequence: s.sequence_number,
-        before: { facility_name: s.facility_name, postal_code: s.postal_code, city: s.city, state: s.state, leg_miles: num(s.leg_miles) },
-        applied: patch,
+        before: { facility_name: s.facility_name, postal_code: s.postal_code, city: s.city, state: s.state, leg_miles: num(s.leg_miles), document_address: s.document_address ?? null },
+        applied: { ...patch, document_address: record },
       }, "info", "443.241");
     }
   }

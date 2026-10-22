@@ -71,6 +71,14 @@ function locationText(stop: StopsRecordStop): string {
   return parts.length ? parts.join(", ") : DASH;
 }
 
+/** LEAD 443.248: the signed settlement's printed address of record, shown beside the stop's geo address. */
+function documentAddressText(stop: StopsRecordStop): string | null {
+  const d = stop.document_address;
+  if (!d) return null;
+  const parts = [d.company, d.city, [d.state, d.zip].filter(Boolean).join(" ")].filter((x) => x && String(x).trim());
+  return parts.length ? `Signed settlement${d.settlement_no ? ` ${d.settlement_no}` : ""}: ${parts.join(", ")}` : null;
+}
+
 // DSP-49 — "no appointment on file" gap, same definition as scripts/report-loads-missing-appointments.mjs:
 // the REAL field (appointment_start_at) on the first pickup and last delivery, not the scheduled_arrival_at
 // fallback appointmentText() displays. A load can carry a rough scheduled_arrival_at and still be missing the
@@ -204,6 +212,7 @@ function StopDetailPopup({ stop, onClose }: { stop: StopsRecordStop; onClose: ()
   const rows: Array<[string, string]> = [
     ["Type", stopTypeLabel(stop.stop_type)],
     ["Location", locationText(stop)],
+    ...(documentAddressText(stop) ? [["Address of record", documentAddressText(stop)!] as [string, string]] : []),
     ["Appointment", appointmentText(stop)],
     ["Arrived", fmtTs(stop.arrived_at)],
     ["Departed", fmtTs(stop.departed_at)],
@@ -316,7 +325,7 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
   const stopColumns: Array<ParityColumn<StopsRecordStop>> = [
     { key: "sequence", label: "#" },
     { key: "stop_type", label: "Type", render: (stop) => stopTypeLabel(stop.stop_type) },
-    { key: "location", label: "Location", render: (stop) => <>{locationText(stop)}{stop.geocode_missing ? <span className="ml-1 inline-flex rounded-sm bg-[#F6E3DF] px-1.5 py-0.5 text-xs font-medium text-[#93301F]">Geocode missing</span> : null}</> },
+    { key: "location", label: "Location", render: (stop) => <>{locationText(stop)}{documentAddressText(stop) ? <div className="text-xs text-[#4B5563]" data-testid="stop-document-address">{documentAddressText(stop)}</div> : null}{stop.geocode_missing ? <span className="ml-1 inline-flex rounded-sm bg-[#F6E3DF] px-1.5 py-0.5 text-xs font-medium text-[#93301F]">Geocode missing</span> : null}</> },
     { key: "appointment", label: "Appt window", render: appointmentText },
     { key: "arrived_at", label: "Arrived", render: (stop) => fmtTs(stop.arrived_at), cellClass: "tabular-nums" },
     { key: "departed_at", label: "Departed", render: (stop) => fmtTs(stop.departed_at), cellClass: "tabular-nums" },
