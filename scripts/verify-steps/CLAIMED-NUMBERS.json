@@ -14819,6 +14819,11 @@
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.237: verify-no-route-sends-after-401 (reply-already-sent guard installed before any route)"
   },
+  "18661": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.238 sweep A: verify-no-private-load-status-lists (register B5/C1 geofence current load, AUDIT2 F21 exception-queue no-tour)"
+  },
   "18629": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-21",
@@ -16852,5 +16857,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1072
+  "total_claimed": 1073
 }
