@@ -971,6 +971,7 @@ export function SettlementDetailPage() {
             items={(openBillsQuery.data?.open_driver_bills?.items ?? []) as OpenDriverBill[]}
             totalCount={openBillsQuery.data?.open_driver_bills?.total_count ?? 0}
             totalGrossCents={openBillsQuery.data?.open_driver_bills?.total_gross_cents ?? 0}
+            unknownAmountCount={openBillsQuery.data?.open_driver_bills?.unknown_amount_count ?? 0}
           />
         </div>
         <div className="space-y-2">
@@ -1423,12 +1424,14 @@ function OpenDriverBillsSection({
   items,
   totalCount,
   totalGrossCents,
+  unknownAmountCount,
 }: {
   loading: boolean;
   driverId: string | null;
   items: OpenDriverBill[];
   totalCount: number;
   totalGrossCents: number;
+  unknownAmountCount: number;
 }) {
   if (!driverId) return null;
   if (loading) {
@@ -1443,6 +1446,7 @@ function OpenDriverBillsSection({
     <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
       <h3 className="mb-1 text-xs font-semibold uppercase text-[#0F1219]">
         Open Driver Bills · {totalCount} · {formatUsdCents(totalGrossCents)}
+        {unknownAmountCount > 0 ? ` known · ${unknownAmountCount} awaiting short miles` : ""}
       </h3>
       {items.length === 0 ? (
         <p className="text-xs text-gray-500">No open driver bills for this driver — all pay is either settled or not yet booked.</p>
@@ -1451,7 +1455,7 @@ function OpenDriverBillsSection({
           {items.map((bill) => (
             <div key={bill.id} className="flex items-center justify-between text-xs">
               <EntityLink kind="load" id={bill.load_id ?? ""} label={entityLabel(bill.load_number, bill.load_id, "Load")} />
-              <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
+              <span className="font-semibold">{bill.amount_known === false ? "Awaiting short miles" : formatUsdCents(bill.gross_amount_cents)}</span>
             </div>
           ))}
         </div>

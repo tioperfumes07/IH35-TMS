@@ -1,6 +1,8 @@
 /** ROUND 443.213: one live-document vocabulary. Caller must bind company scope.
  * History/audit readers deliberately do not use live-only predicates.
  */
+import { DRIVER_BILL_OUTSTANDING_STATUSES } from "../lib/document-status-vocabulary.js";
+
 function sqlAlias(alias: string): string {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(alias)) throw new Error("invalid SQL alias");
   return alias;
@@ -74,5 +76,10 @@ export function driverBillHasActiveSettlement(alias: string): string {
  */
 export function openDriverBill(alias: string): string {
   const a = sqlAlias(alias);
-  return `(${liveDriverBill(a)} AND ${a}.status = 'open' AND NOT ${driverBillHasActiveSettlement(a)})`;
+  const statuses = DRIVER_BILL_OUTSTANDING_STATUSES.map(status => `'${status}'`).join(', ');
+  return `(${liveDriverBill(a)} AND ${a}.status IN (${statuses}) AND (NOT ${driverBillAmountKnown(a)} OR NOT ${driverBillHasActiveSettlement(a)}))`;
+}
+
+export function driverBillAmountKnown(alias: string): string {
+  return `(${sqlAlias(alias)}.status <> 'awaiting_short_miles')`;
 }

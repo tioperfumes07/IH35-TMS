@@ -42,8 +42,11 @@ import {
   DELIVERY_EVIDENCE_MDATA_STATUSES,
 } from "../dispatch/delivery-evidence-status.js";
 
-import { liveSettlement, liveExpense, liveBill, openDriverBill } from "../accounting/live-document-predicates.sql.js";
+import { liveExpense, liveBill, openDriverBill, driverBillAmountKnown } from "../accounting/live-document-predicates.sql.js";
 import { cashFlowReceiptsSql } from "./cash-flow-receipts.sql.js";
+import { cashFlowSettlementEligibilitySql } from "./cash-flow-obligations.sql.js";
+import { BILL_OPEN_BALANCE_SQL } from "../accounting/bills.service.js";
+import { openBill } from "../accounting/live-document-predicates.sql.js";
 import { loadServiceMembershipSql } from "../dispatch/load-service.js";
 import { loadCostsRevenueJoin } from "../accounting/load-costs-live-documents.sql.js";
 import { canonicalHappenedNotVoidedLoadClause } from "../dispatch/canonical-active-load-set.js";
@@ -64,6 +67,7 @@ export type IncomeLineItem = {
 };
 
 export type ExpenseLineItem = {
+  amount_known?: boolean;
   label: string;
   amount_cents: number;
   kind: "driver_pay" | "bill_due" | "adjustment";
@@ -249,24 +253,7 @@ export async function getDailyPrediction(
       LEFT JOIN mdata.drivers d ON d.id = s.driver_id
                              AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1::uuid
-        AND ${liveSettlement("s")}
-        AND COALESCE(s.net_pay, 0) > 0
-        AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
-        AND (
-          COALESCE(s.payment_state, 'unpaid') IN ('queued', 'sent_to_bank')
-          OR s.bank_settle_date IS NOT NULL
-          OR (
-            COALESCE(s.payment_state, 'unpaid') = 'unpaid'
-            -- CASH-FLOW-01 (owner order 2026-09-06, ROUND 14): 'closed' is the real terminal
-            -- close state written by settlements-load-bookended.service.ts (closeLoadBookendedSettlementForDriver
-            -- / stampTripClosedForBookendedSettlement, SET status = 'closed') -- omitted here meant
-            -- every closed-but-unpaid settlement (measured live: 8 of 8 status='closed' settlements,
-            -- net_pay total $13,252.98) silently dropped out of Expected Expenses. locked/final/
-            -- approved/posted are the OLDER settlement-engine terminal states this predicate
-            -- predates; 'closed' is the current one actually written today.
-            AND s.status IN ('locked', 'final', 'approved', 'posted', 'closed')
-          )
-        )
+        AND ${cashFlowSettlementEligibilitySql("s")}
         AND COALESCE(
           s.bank_settle_date,
           s.payment_sent_at::date,
@@ -325,14 +312,13 @@ export async function getDailyPrediction(
       b.id::text,
       COALESCE(v.vendor_name, 'Vendor') AS vendor_name,
       COALESCE(b.amount_cents, 0)::int AS amount_cents,
-      GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)::int AS remaining_balance_cents
+      ${BILL_OPEN_BALANCE_SQL}::bigint AS remaining_balance_cents
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id
                               AND v.operating_company_id = $1::uuid
     WHERE b.operating_company_id = $1::uuid
       AND b.due_date::date = $2::date
-      AND b.status <> 'paid'
-      AND ${notVoidedSql("b")}
+      AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
     ORDER BY v.vendor_name ASC NULLS LAST
     `,
     [operatingCompanyId, date]
@@ -341,7 +327,7 @@ export async function getDailyPrediction(
   for (const bill of billsRows.rows) {
     expenseItems.push({
       label: `Bill — ${bill.vendor_name}`,
-      amount_cents: bill.remaining_balance_cents,
+      amount_cents: Number(bill.remaining_balance_cents),
       kind: "bill_due",
       // LINK-F5187 (cash-flow:tab.daily_prediction) -- the real bill id was already selected
       // above; it was simply never carried into the response.
@@ -472,6 +458,7 @@ export async function getDailyPrediction(
       id: string;
       driver_name: string;
       amount_cents: number;
+      amount_known: boolean;
       load_id: string | null;
     }>(
       `
@@ -479,13 +466,14 @@ export async function getDailyPrediction(
         db.id::text,
         COALESCE(NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), ''), 'Driver') AS driver_name,
         COALESCE(db.gross_amount_cents, 0)::int AS amount_cents,
+        ${driverBillAmountKnown("db")} AS amount_known,
         db.load_id::text AS load_id
       FROM driver_finance.driver_bills db
       LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
       WHERE db.operating_company_id = $1::uuid
         AND ${openDriverBill("db")}
         ${dueCols ? "AND db.accrued_bill_id IS NULL" : ""}
-        AND COALESCE(db.gross_amount_cents, 0) > 0
+        AND (COALESCE(db.gross_amount_cents, 0) > 0 OR NOT ${driverBillAmountKnown("db")})
         AND ${driverBillCashDueDateSql({ hasDueColumns: dueCols, todayParam: "$2::date" })} = $2::date
       ORDER BY db.created_at ASC
       `,
@@ -494,7 +482,8 @@ export async function getDailyPrediction(
     for (const row of driverBillDueRows.rows) {
       expenseItems.push({
         label: `Driver Bill — ${row.driver_name}`,
-        amount_cents: row.amount_cents,
+        amount_cents: row.amount_known === false ? 0 : row.amount_cents,
+        amount_known: row.amount_known,
         kind: "driver_pay",
         load_id: row.load_id ?? undefined,
         settlement_id: row.id,
@@ -579,32 +568,18 @@ async function buildSevenDayStrip(
         COALESCE(${incomeSubquery}, 0)::int AS income_cents,
         (
           COALESCE((
-            SELECT SUM(GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0))
+            SELECT SUM(${BILL_OPEN_BALANCE_SQL})
             FROM accounting.bills b
             WHERE b.operating_company_id = $1::uuid
               AND b.due_date::date = $2::date
-              AND b.status <> 'paid'
-              AND ${notVoidedSql("b")}
+              AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
           ), 0)
           +
           COALESCE((
             SELECT SUM(ROUND(COALESCE(s.net_pay, 0) * 100)::bigint)
             FROM driver_finance.driver_settlements s
             WHERE s.operating_company_id = $1::uuid
-              AND ${liveSettlement("s")}
-              AND COALESCE(s.net_pay, 0) > 0
-              AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
-              AND (
-                COALESCE(s.payment_state, 'unpaid') IN ('queued', 'sent_to_bank')
-                OR s.bank_settle_date IS NOT NULL
-                OR (
-                  COALESCE(s.payment_state, 'unpaid') = 'unpaid'
-                  -- CASH-FLOW-01: same 'closed' fix as getDailyPrediction above -- kept in sync so
-                  -- the 7-day strip and the single-day prediction never disagree on which
-                  -- settlements are due.
-                  AND s.status IN ('locked', 'final', 'approved', 'posted', 'closed')
-                )
-              )
+              AND ${cashFlowSettlementEligibilitySql("s")}
               AND COALESCE(
                 s.bank_settle_date,
                 s.payment_sent_at::date,
@@ -855,6 +830,7 @@ export async function getActualVsProjected(
 export type RollingLedgerRowKind = "income" | "expense";
 
 export type RollingLedgerRow = {
+  amount_known?: boolean;
   row_kind: RollingLedgerRowKind;
   /** Human label, e.g. "Bill", "Driver pay", "Driver bill", "Expense — unmatched", "Loan payment",
    *  "Invoice", "Factor advance", "Factor reserve", "Load (not invoiced)". */
@@ -998,13 +974,12 @@ export async function getRollingLedgerRows(
       COALESCE(v.vendor_name, 'Vendor') AS vendor_name,
       b.bill_date::text AS bill_date,
       b.due_date::text AS due_date,
-      GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)::int AS remaining_cents
+      ${BILL_OPEN_BALANCE_SQL}::bigint AS remaining_cents
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id AND v.operating_company_id = $1::uuid
     WHERE b.operating_company_id = $1::uuid
-      AND ${notVoidedSql("b")}
+      AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
       AND b.due_date IS NOT NULL
-      AND GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0) > 0
     ORDER BY b.due_date ASC
     `,
     [operatingCompanyId]
@@ -1033,10 +1008,7 @@ export async function getRollingLedgerRows(
       FROM driver_finance.driver_settlements s
       LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1::uuid
-        AND ${liveSettlement("s")}
-        AND COALESCE(s.net_pay, 0) > 0
-        AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
-        AND s.status = 'closed'
+        AND ${cashFlowSettlementEligibilitySql("s")}
         AND COALESCE(s.bank_settle_date, s.payment_sent_at::date, s.payment_queued_at::date, s.period_end) IS NOT NULL
       ORDER BY due_date ASC
       `,
@@ -1068,6 +1040,7 @@ export async function getRollingLedgerRows(
       created_at: string;
       due_date: string;
       amount_cents: number;
+      amount_known: boolean;
     }>(
       `
       SELECT
@@ -1076,7 +1049,8 @@ export async function getRollingLedgerRows(
         COALESCE(NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), ''), 'Driver') AS driver_name,
         db.created_at::date::text AS created_at,
         ${driverBillCashDueDateSql({ hasDueColumns: dueCols })}::text AS due_date,
-        COALESCE(db.gross_amount_cents, 0)::int AS amount_cents
+        COALESCE(db.gross_amount_cents, 0)::int AS amount_cents,
+        ${driverBillAmountKnown("db")} AS amount_known
       FROM driver_finance.driver_bills db
       LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
       WHERE db.operating_company_id = $1::uuid
@@ -1091,7 +1065,7 @@ export async function getRollingLedgerRows(
         -- Now uses the same shared active-settlement predicate the register/list routes use.
         AND ${openDriverBill("db")}
         ${dueCols ? "AND db.accrued_bill_id IS NULL" : ""}
-        AND COALESCE(db.gross_amount_cents, 0) > 0
+        AND (COALESCE(db.gross_amount_cents, 0) > 0 OR NOT ${driverBillAmountKnown("db")})
       ORDER BY 5 ASC, db.created_at ASC
       `,
       dueCols ? [operatingCompanyId, today] : [operatingCompanyId]
@@ -1101,7 +1075,7 @@ export async function getRollingLedgerRows(
         operating_company_id: operatingCompanyId,
         error_stack: err instanceof Error ? err.stack : String(err),
       });
-      return { rows: [] as { id: string; bill_number: string | null; driver_name: string; created_at: string; due_date: string; amount_cents: number }[] };
+      return { rows: [] as { id: string; bill_number: string | null; driver_name: string; created_at: string; due_date: string; amount_cents: number; amount_known: boolean }[] };
     });
 
   // 4) accounting.expenses — posted, not voided, no matched bank line yet
@@ -1445,7 +1419,7 @@ export async function getRollingLedgerRows(
       counterparty: b.vendor_name,
       origin_date: b.bill_date ?? b.due_date,
       due_date: b.due_date,
-      amount_cents: b.remaining_cents,
+      amount_cents: Number(b.remaining_cents),
       days_overdue: daysOverdue,
       status: rowStatus(daysOverdue),
     });
@@ -1479,7 +1453,8 @@ export async function getRollingLedgerRows(
       counterparty: db_.driver_name,
       origin_date: db_.created_at,
       due_date: db_.due_date,
-      amount_cents: db_.amount_cents,
+      amount_cents: db_.amount_known === false ? 0 : db_.amount_cents,
+      amount_known: db_.amount_known,
       days_overdue: daysOverdue,
       status: rowStatus(daysOverdue),
     });

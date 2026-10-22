@@ -91,6 +91,9 @@
   "lists": {
     "title": "Lists"
   },
+  "cashFlow": {
+    "unknownDriverCosts": "Forecast totals include known amounts only. {{count}} driver bill(s) await short miles; their costs are not zero."
+  },
   "reports": {
     "title": "Reports"
   }

@@ -25,6 +25,7 @@ export type IncomeLineItem = {
 };
 
 export type ExpenseLineItem = {
+  amount_known?: boolean;
   label: string;
   amount_cents: number;
   kind: "driver_pay" | "bill_due" | "adjustment";
@@ -98,6 +99,7 @@ export type RollingLedgerDocumentKind =
   | "load";
 
 export type RollingLedgerRow = {
+  amount_known?: boolean;
   row_kind: RollingLedgerRowKind;
   type: string;
   document_kind: RollingLedgerDocumentKind;

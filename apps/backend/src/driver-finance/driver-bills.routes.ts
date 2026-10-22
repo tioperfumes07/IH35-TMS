@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { openDriverBill } from "../accounting/live-document-predicates.sql.js";
+import { openDriverBill, driverBillAmountKnown } from "../accounting/live-document-predicates.sql.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { canAccessDriverLoadBills } from "./driver-bills-access.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
@@ -435,7 +435,8 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
       queryValues.push(parsed.data.limit, parsed.data.offset);
 
       const countRes = await client.query(
-        `SELECT count(*)::int AS cnt, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS total_gross_cents
+        `SELECT count(*)::int AS cnt, COALESCE(SUM(db.gross_amount_cents) FILTER (WHERE ${driverBillAmountKnown("db")}), 0)::bigint AS total_gross_cents,
+                count(*) FILTER (WHERE NOT ${driverBillAmountKnown("db")})::int AS unknown_amount_count
          FROM driver_finance.driver_bills db
          WHERE db.operating_company_id = $1::uuid AND ${openDriverBill("db")} ${driverFilter}`,
         countValues
@@ -450,6 +451,8 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
             db.bill_number,
             db.driver_id,
             db.gross_amount_cents,
+            db.status,
+            ${driverBillAmountKnown("db")} AS amount_known,
             db.miles_basis,
             db.miles_basis_type,
             db.rate_per_mile_cents,
@@ -468,6 +471,7 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
         kind: "ok" as const,
         total_count: Number(countRes.rows[0]?.cnt ?? 0),
         total_gross_cents: Number(countRes.rows[0]?.total_gross_cents ?? 0),
+        unknown_amount_count: Number(countRes.rows[0]?.unknown_amount_count ?? 0),
         bills: billsRes.rows,
       };
     });
@@ -479,6 +483,7 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
       open_driver_bills: {
         total_count: payload.total_count,
         total_gross_cents: payload.total_gross_cents,
+        unknown_amount_count: payload.unknown_amount_count,
         items: payload.bills,
       },
     };
