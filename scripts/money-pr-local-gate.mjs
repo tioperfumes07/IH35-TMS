@@ -2411,6 +2411,13 @@ function isRound443235LiveMapBoardReadPath(f) {
   return false;
 }
 
+// GATE-SCOPE 443.235 — GRANT-only label-resolver migration cannot invent load-born postings.
+// db/migrations/ blanket armed tip RULE 2 stamp ambient (verify-every-load-born-posting-carries-its-load)
+// from a privilege GRANT that never posts. Exact-file domains for this migration still arm its own guard.
+function isRound443235GuardLabelGrantOnlyMigration(f) {
+  return f === "db/migrations/202616131600_grant_label_resolvers_to_guard_reader.sql";
+}
+
 // GATE-SCOPE-04 (LEAD, ROUND 389) — a COMMENT-ONLY diff cannot change a production row, so it cannot
 // arm a live-domain guard. Measured, not assumed: this reads the file's real diff and returns true
 // only when EVERY added and removed line is a comment or blank.
@@ -2739,6 +2746,11 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             (p === "apps/backend/src/dispatch/" || p === "apps/backend/src/") &&
             (isRound443231bAvailableUnitsReadPath(f) || isRound443235LiveMapBoardReadPath(f))
           ) {
+            return false;
+          }
+          // GATE-SCOPE 443.235: GRANT EXECUTE label-resolver migration is not a money writer —
+          // blanket db/migrations/ must not pull tip load-born posting stamp ambient into this PR.
+          if (p === "db/migrations/" && isRound443235GuardLabelGrantOnlyMigration(f)) {
             return false;
           }
           return true;
