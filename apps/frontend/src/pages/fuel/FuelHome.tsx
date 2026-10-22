@@ -7,6 +7,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { FuelFraudBadge } from "../../components/fuel/FuelFraudBadge";
 import { FuelKpiRow } from "./components/FuelKpiRow";
 import { RelayHistoryImport } from "./components/RelayHistoryImport";
+import { FuelByTruckBoard } from "../../components/module-graphics";
 
 type FraudSummary = {
   open_critical: number;
@@ -137,6 +138,8 @@ export function FuelHomePage() {
 
   return (
     <div className="space-y-3" data-testid="fuel-home-page">
+      {/* ROUND 443.248 — owner-approved Fuel-by-truck board (ADD only). */}
+      <FuelByTruckBoard companyId={companyId} />
       <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
       {dashboardQuery.isError ? (
         <ListErrorBanner onRetry={() => void dashboardQuery.refetch()} />

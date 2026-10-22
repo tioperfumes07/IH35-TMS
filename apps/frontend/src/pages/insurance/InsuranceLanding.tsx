@@ -4,6 +4,7 @@ import { getInsuranceSummary, type InsuranceDashboardSummary } from "../../api/i
 import { DrillKpiCard, formatKpiValue } from "../../components/layout/DrillKpiCard";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { InsuranceCoverageBoard } from "../../components/module-graphics";
 
 /**
  * C8: `to` is REQUIRED — every insurance KPI opens the list it counted (five of the six used to be
@@ -74,6 +75,9 @@ export function InsuranceLanding() {
         <h2 className="text-xs font-semibold text-[#0F1219]">Insurance Dashboard</h2>
         <p className="mt-1 text-xs text-[#4B5563]">Operational snapshot across policies, COI requests, claims, and lawsuits.</p>
       </header>
+
+      {/* ROUND 443.248 — owner-approved Insurance coverage board (ADD only). */}
+      <InsuranceCoverageBoard companyId={companyId} />
 
       {summaryQuery.isLoading ? <div className="text-xs text-[#6B7280]">Loading insurance dashboard...</div> : null}
 

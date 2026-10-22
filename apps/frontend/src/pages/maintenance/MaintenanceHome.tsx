@@ -24,6 +24,7 @@ import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/Ho
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { FleetHealthBoard } from "../../components/module-graphics";
 import { maintenancePartsStockQueryKey } from "../inventory/partsStockQueryKeys";
 import { ArrivingSoonPage } from "./ArrivingSoonPage";
 import { DriverReportsQueuePage } from "./DriverReportsQueuePage";
@@ -483,6 +484,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           data-testid="rm-status-board"
           data-maintenance-tab="rm_status_board"
         >
+          {/* ROUND 443.248 / 443.245 — owner-approved Fleet Health board (ADD only). */}
+          {companyId ? <FleetHealthBoard companyId={companyId} /> : null}
           <RMStatStrip kpis={kpis} />
           <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_180px]">
           <div className="min-w-0">

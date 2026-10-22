@@ -25,6 +25,7 @@ import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { SafetyKpiRow } from "./components/SafetyKpiRow";
 import { TrainingTable } from "./components/TrainingTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { DriverFilesBoard } from "../../components/module-graphics";
 
 const SAFETY_SUBNAV = [
   "Events",
@@ -103,6 +104,9 @@ export function SafetyHomePage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Safety" subtitle="Driver events, training, accidents, CSA" />
+
+      {/* ROUND 443.248 — owner-approved Safety / Driver files board (ADD only). */}
+      {companyId ? <DriverFilesBoard companyId={companyId} /> : null}
 
       <div className="overflow-x-auto rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white">
         <div className="flex min-w-max gap-4">

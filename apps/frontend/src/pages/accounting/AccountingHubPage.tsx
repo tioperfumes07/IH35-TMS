@@ -28,6 +28,7 @@ import { entityLabel } from "../../lib/entity-label";
 // helper's own header comment for the full contradiction history).
 import { describeQboSyncStatus } from "../../lib/qbo-sync-status";
 import { formatUsdCents } from "../../utils/qboFormat";
+import { AccountingControlBoard, UnexpectedExpensesBoard } from "../../components/module-graphics";
 
 type AmountRow = { key: string; left: ReactNode; right: string; muted?: string };
 type TabId =
@@ -510,6 +511,13 @@ export function AccountingHubPage() {
       }
     >
       {!companyId ? <p className="text-xs text-[#1F2A44]">Select an operating company.</p> : null}
+      {/* ROUND 443.248 — owner-approved Accounting + Unexpected Expenses boards (ADD only). */}
+      {companyId ? (
+        <div className="space-y-2">
+          <AccountingControlBoard companyId={companyId} />
+          <UnexpectedExpensesBoard companyId={companyId} />
+        </div>
+      ) : null}
       <div className="grid gap-2 lg:grid-cols-3">
         {homePanel("Settlements", settlementsRows, settlementsQ.isLoading ? "Loading…" : "No settlements found.", "/driver-finance/settlements", "View all")}
         {homePanel(

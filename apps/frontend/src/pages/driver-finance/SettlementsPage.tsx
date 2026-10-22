@@ -32,6 +32,7 @@ import { useToast } from "../../components/Toast";
 import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { SettlementCreatorDrawer } from "../settlements/SettlementCreatorDrawer";
 import { listSourceChangedSettlements, type SettlementCreatorDraft, type SourceChangedSettlement } from "../../api/settlementCreator";
+import { SettlementsPayBoard } from "../../components/module-graphics";
 
 /** LEAD 443.215 — one line per change of a settlement's printed source (same wording as the backend refusal). */
 function describeSourceDiffLines(d: SourceChangedSettlement["diff"]): string[] {
@@ -336,6 +337,9 @@ export function SettlementsPage() {
       />
 
       <SettlementCreatorDrawer open={creatorOpen} onClose={() => { setRepostDraft(null); closeCreator(); }} allowPost={true} initialDraft={repostDraft} />
+
+      {/* ROUND 443.248 — owner-approved Settlements pay board (ADD only). */}
+      {companyId ? <SettlementsPayBoard companyId={companyId} /> : null}
 
       {/* LEAD 443.215 — a settlement whose printed source changed after it was posted: the exact diff + Edit pre-filled. */}
       {(sourceChangedQuery.data?.settlements ?? []).length > 0 ? (

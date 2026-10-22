@@ -55,6 +55,7 @@ import { BankingNewMenu } from "./components/BankingNewMenu";
 import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
 import { MoneyKpiTile } from "../../components/money/MoneyKpiTile";
 import { BankingKpiPanel } from "../../components/banking/BankingKpiPanel";
+import { MoneyMapBoard } from "../../components/module-graphics";
 import { getFactoringKpis } from "../../api/factoring-kpis";
 import { getBankingLedgerKpis } from "../../api/banking-kpis";
 import { DriverEscrowSummaryCard } from "./components/DriverEscrowSummaryCard";
@@ -562,8 +563,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "accounts" ? (
         <>
+          {/* ROUND 443.248 / 443.246 — Money Map board (ADD). Old KPI panel kept in code, hidden. */}
+          {companyId ? <MoneyMapBoard companyId={companyId} /> : null}
           {/* ROUND 326.2 item 2 — banking KPIs from the bank feed + GL, each drilling to its rows. */}
-          {companyId ? <BankingKpiPanel companyId={companyId} /> : null}
+          <div className="hidden" aria-hidden="true" data-legacy-banking-kpi-panel="1">
+            {companyId ? <BankingKpiPanel companyId={companyId} /> : null}
+          </div>
           {/* C-65 — fixed side-dock; never in-flow (no layout shift). */}
           <BankingHomeAttentionStrip
             facts={{
@@ -939,32 +944,35 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </div>
             );
           })()}
-          <AccountTilesRow
-            tiles={sortedBankTiles}
-            selectedId={selectedId}
-            onSelect={(id) => {
-              const virtualPath = virtualTileRoute(sortedBankTiles.find((t) => t.id === id));
-              if (virtualPath) {
-                navigate(virtualPath);
-                return;
-              }
-              setSelectedAccountId(id);
-              navigate(`/banking/accounts/${id}`);
-            }}
-            onView={(id) => {
-              const virtualPath = virtualTileRoute(sortedBankTiles.find((t) => t.id === id));
-              if (virtualPath) {
-                navigate(virtualPath);
-                return;
-              }
-              setSelectedAccountId(id);
-              setTransactionsInitialFilter("all");
-              setActiveTab("transactions");
-              navigate(BANKING_TAB_PATH.transactions);
-            }}
-            onInspect={(id) => setInspectTileId(id)}
-            onManageAccounts={() => setManageOpen(true)}
-          />
+          {/* ROUND 443.246 — AccountTilesRow kept in code, hidden (Money Map replaces). */}
+          <div className="hidden" aria-hidden="true" data-legacy-account-tiles="1">
+            <AccountTilesRow
+              tiles={sortedBankTiles}
+              selectedId={selectedId}
+              onSelect={(id) => {
+                const virtualPath = virtualTileRoute(sortedBankTiles.find((t) => t.id === id));
+                if (virtualPath) {
+                  navigate(virtualPath);
+                  return;
+                }
+                setSelectedAccountId(id);
+                navigate(`/banking/accounts/${id}`);
+              }}
+              onView={(id) => {
+                const virtualPath = virtualTileRoute(sortedBankTiles.find((t) => t.id === id));
+                if (virtualPath) {
+                  navigate(virtualPath);
+                  return;
+                }
+                setSelectedAccountId(id);
+                setTransactionsInitialFilter("all");
+                setActiveTab("transactions");
+                navigate(BANKING_TAB_PATH.transactions);
+              }}
+              onInspect={(id) => setInspectTileId(id)}
+              onManageAccounts={() => setManageOpen(true)}
+            />
+          </div>
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr]">
             <div className="rounded-sm border border-gray-200 bg-white">
               <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">

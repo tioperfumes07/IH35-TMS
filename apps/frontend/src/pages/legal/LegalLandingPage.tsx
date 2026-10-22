@@ -9,6 +9,7 @@ import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
+import { LegalMattersBoard } from "../../components/module-graphics";
 
 export function LegalLandingPage() {
   const navigate = useNavigate();
@@ -70,6 +71,9 @@ export function LegalLandingPage() {
       />
 
       <LegalModuleTabs />
+
+      {/* ROUND 443.248 — owner-approved Legal matters board (ADD only). */}
+      {operatingCompanyId ? <LegalMattersBoard companyId={operatingCompanyId} /> : null}
 
       {templatesQuery.isError || contractsQuery.isError ? (
         <ListErrorBanner

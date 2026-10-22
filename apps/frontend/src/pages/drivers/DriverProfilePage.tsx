@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AddPayLineModal } from "../../components/driver-finance/AddPayLineModal";
 import { DriverOverviewBoard } from "../../components/boards/DriverOverviewBoard";
+import { DriverHeroBoard } from "../../components/module-graphics";
 import { Button } from "../../components/Button";
 import { SettlementDisputeList } from "./SettlementDisputeList";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -456,6 +457,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {companyId ? (
         <DriverOverviewBoard operatingCompanyId={companyId} driverId={id} hideChrome />
+      ) : null}
+
+      {/* ROUND 443.248 / 443.246 — Driver Hero board on Overview (ADD only). */}
+      {companyId && id && activeTab === "Overview" ? (
+        <DriverHeroBoard companyId={companyId} driverId={id} />
       ) : null}
 
       {/* C-11 — one horizontal KPI band below tabs (Overview only so other tabs keep one-screen density).

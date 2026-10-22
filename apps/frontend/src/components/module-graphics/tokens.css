@@ -1,0 +1,136 @@
+/* ROUND 443.248 — module-graphics board tokens (LEAD-MOD-DESIGN palette + fonts). */
+.mod-board {
+  --mod-navy: #14213d;
+  --mod-green: #1f8a4c;
+  --mod-red: #c0262d;
+  --mod-amber: #c76a0a;
+  --mod-blue: #2456c7;
+  --mod-wash: #e9edf2;
+  --mod-surface: #ffffff;
+  --mod-border: #e5e7eb;
+  --mod-muted: #6b7280;
+  --mod-ink: #0f1219;
+  --mod-font: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --mod-font-cond: "Barlow Semi Condensed", "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --mod-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  font-family: var(--mod-font);
+  color: var(--mod-ink);
+  background: var(--mod-surface);
+  border: 1px solid var(--mod-border);
+  border-radius: 2px;
+}
+
+.mod-board__eyebrow {
+  font-family: var(--mod-font-cond);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mod-muted);
+}
+
+.mod-board__title {
+  font-family: var(--mod-font-cond);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--mod-navy);
+  line-height: 1.2;
+}
+
+.mod-board__sub {
+  font-size: 12px;
+  color: var(--mod-muted);
+}
+
+.mod-board__kpi-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .mod-board__kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.mod-stat {
+  display: block;
+  min-width: 0;
+  border: 1px solid var(--mod-border);
+  border-radius: 2px;
+  background: var(--mod-wash);
+  padding: 8px 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.mod-stat:hover {
+  border-color: var(--mod-navy);
+  background: #e2eafb;
+}
+
+.mod-stat__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mod-muted);
+}
+
+.mod-stat__value {
+  font-family: var(--mod-mono);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mod-navy);
+  margin-top: 2px;
+}
+
+.mod-stat__hint {
+  font-size: 12px;
+  color: var(--mod-muted);
+  margin-top: 2px;
+}
+
+.mod-stat__open {
+  font-size: 12px;
+  color: var(--mod-blue);
+  margin-top: 4px;
+}
+
+.mod-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 0 6px;
+}
+
+.mod-section-head__title {
+  font-family: var(--mod-font-cond);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--mod-navy);
+}
+
+.mod-view-all {
+  font-size: 12px;
+  color: var(--mod-blue);
+  text-decoration: none;
+}
+
+.mod-view-all:hover {
+  text-decoration: underline;
+}
+
+.mod-empty {
+  border: 1px dashed var(--mod-border);
+  border-radius: 2px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--mod-muted);
+  background: #f7f8fa;
+}

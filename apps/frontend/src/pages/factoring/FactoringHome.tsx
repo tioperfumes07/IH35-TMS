@@ -62,6 +62,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { factorToProfileForm, profileFormToFactorPatch, rateToPctString, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
+import { FactoringJourneyBoard } from "../../components/module-graphics";
 import { SubmitToFactorTab } from "./SubmitToFactorTab";
 import { RepurchaseDuePanel } from "./RepurchaseDuePanel";
 import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
@@ -1069,6 +1070,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       />
 
       <DuplicateVendorsBanner companyId={companyId} />
+
+      {/* ROUND 443.248 / 443.246 — Factoring Journey board (ADD only). */}
+      {companyId ? <FactoringJourneyBoard companyId={companyId} /> : null}
 
       <div className="flex flex-wrap items-start gap-2" data-testid="factoring-home-overview-row">
         <div className="flex-1 min-w-0" data-testid="factoring-home-kpi-col">
@@ -2086,8 +2090,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {show("account_summary") ? (
         (() => {
           const latestMonth = latestMonthlyFeeSummary;
+          // ROUND 443.246 — Account Summary kept in code, hidden (Journey board replaces as header graphic).
           return (
-            <div className="space-y-3">
+            <div className="hidden space-y-3" aria-hidden="true" data-legacy-factoring-account-summary="1">
               {summaryQuery.isError ? (
                 <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
               ) : (
