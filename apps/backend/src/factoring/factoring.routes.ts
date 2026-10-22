@@ -315,9 +315,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
         params.push(dateTo);
         dateToFilter = `AND fa.submitted_at < ($${params.length}::date + interval '1 day')`;
       }
-      const res = await client.query(
+      const res = await client.query<{ total_count: string }>(
         `
             SELECT
+              COUNT(*) OVER () AS total_count,
               fa.id AS factoring_advance_id,
               fa.display_id,
               fa.status,
@@ -359,10 +360,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `,
         params
       );
-      return res.rows;
+      return { rows: res.rows, total: Number(res.rows[0]?.total_count ?? 0) };
     });
 
-    return { invoices: rows, total: rows.length };
+    return { invoices: rows.rows, total: rows.total };
   },
   );
 
@@ -619,9 +620,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           params.push(dateTo);
           dateToFilter = `AND p.payment_date < ($${params.length}::date + interval '1 day')`;
         }
-        const res = await client.query(
+        const res = await client.query<{ total_count: string }>(
           `
             SELECT
+              COUNT(*) OVER () AS total_count,
               p.id AS payment_id,
               p.display_id AS payment_display_id,
               p.payment_date,
@@ -666,10 +668,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `,
           params
         );
-        return res.rows;
+        return { rows: res.rows, total: Number(res.rows[0]?.total_count ?? 0) };
       });
 
-      return { receipts: rows, total: rows.length };
+      return { receipts: rows.rows, total: rows.total };
     }
   );
 
@@ -703,9 +705,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           params.push(dateTo);
           dateToFilter = `AND p.payment_date < ($${params.length}::date + interval '1 day')`;
         }
-        const res = await client.query(
+        const res = await client.query<{ total_count: string }>(
           `
             SELECT
+              COUNT(*) OVER () AS total_count,
               p.id AS payment_id,
               p.display_id AS payment_display_id,
               p.payment_date,
@@ -733,10 +736,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `,
           params
         );
-        return res.rows;
+        return { rows: res.rows, total: Number(res.rows[0]?.total_count ?? 0) };
       });
 
-      return { rows, total: rows.length };
+      return { rows: rows.rows, total: rows.total };
     }
   );
 
@@ -771,9 +774,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           params.push(dateTo);
           dateToFilter = `AND i.issue_date < ($${params.length}::date + interval '1 day')`;
         }
-        const res = await client.query(
+        const res = await client.query<{ total_count: string }>(
           `
             SELECT
+              COUNT(*) OVER () AS total_count,
               i.id AS invoice_id,
               i.display_id AS invoice_display_id,
               i.status AS invoice_status,
@@ -814,10 +818,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `,
           params
         );
-        return res.rows;
+        return { rows: res.rows, total: Number(res.rows[0]?.total_count ?? 0) };
       });
 
-      return { invoices: rows, total: rows.length };
+      return { invoices: rows.rows, total: rows.total };
     }
   );
 }

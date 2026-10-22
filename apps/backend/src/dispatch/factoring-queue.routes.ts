@@ -138,9 +138,11 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
         has_rate_conf: boolean;
         has_bol: boolean;
         has_pod: boolean;
+        total_count: string;
       }>(
         `
         SELECT
+          COUNT(*) OVER () AS total_count,
           l.id                          AS load_id,
           l.load_number,
           c.id                          AS customer_id,
@@ -215,6 +217,8 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
       const rawRows = res.rows;
       const hasMore = rawRows.length > limit;
       const pageRows = rawRows.slice(0, limit);
+      // 443.218: real total from COUNT(*) OVER (), not page length.
+      const totalCount = Number(rawRows[0]?.total_count ?? 0);
 
       const rows = pageRows
         .map((row) => {
@@ -249,7 +253,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
         })
         .filter((row) => !stageFilter || row.packet_stage === stageFilter);
 
-      return { rows, total: rows.length, has_more: hasMore };
+      return { rows, total: totalCount, has_more: hasMore };
     });
   });
 }
