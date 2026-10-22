@@ -455,6 +455,13 @@ async function readOriginalGlPostings(
             AND je.reversed_by_je_id IS NULL
             AND je.reverses_je_id IS NULL
         )
+        -- LEAD 443.232 — a reclassify reverses at the LINE level (reversal_of_line_id / reversed_by_line_id) and re-posts new
+        -- legs in its own entry, so a source's live entries also carry already-reversed original lines and the reclass's own
+        -- reversal lines. Only the LIVE ORIGINAL lines are reversed (the set still nets to the source's balance: the moved
+        -- legs replace the reversed ones). Before, a fuel receipt moved by the 443.214 GPS engine could not be voided
+        -- (23505 uq_jep_one_reversal_per_line / posting_line_is_already_a_reversal).
+        AND reversed_by_line_id IS NULL
+        AND reversal_of_line_id IS NULL
       ORDER BY line_sequence ASC
     `,
     [operatingCompanyId, entityId, entityType]
