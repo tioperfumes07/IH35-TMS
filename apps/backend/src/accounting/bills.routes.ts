@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { DRIVER_BILL_OUTSTANDING_STATUSES } from "../lib/document-status-vocabulary.js";
 import { lineCategorizationRefusal } from "./line-categorization.js";
 import { AGING_BUCKET_IDS, agingWindowFromBucket } from "./aging/buckets.js";
 import fp from "fastify-plugin";
@@ -43,6 +44,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 import { RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL } from "../driver-finance/settlement-resolution.sql.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 // Resolve the register's settlement through current source lines, not the unpopulated bill stamp.
 // Aggregate to one identity: repeated lines cannot duplicate bills; conflicting active identities
 // remain unknown rather than selecting an arbitrary settlement. Original settlement stamps stay
@@ -62,22 +64,41 @@ export const DRIVER_BILL_REGISTER_SQL = `SELECT db.id::text, db.bill_number, db.
            ${RESOLVE_ACTIVE_SETTLEMENT_LATERAL_SQL}
           WHERE db.operating_company_id = $1::uuid
             AND ($2::boolean OR (db.status <> 'void' AND db.voided_at IS NULL))
+            -- LEAD 443.219 G-VOCAB — the register's filters apply to driver bills too (status in the driver-bill vocabulary —
+            -- "Unpaid" = open / approved / disputed; driver, load, date window, search). Every bind is typed (null = no filter).
+            AND ($5::text[] IS NULL OR db.status = ANY($5::text[]))
+            AND ($6::uuid IS NULL OR db.driver_id = $6::uuid)
+            AND ($7::uuid IS NULL OR db.load_id = $7::uuid)
+            AND ($8::date IS NULL OR db.created_at::date >= $8::date)
+            AND ($9::date IS NULL OR db.created_at::date <= $9::date)
+            AND ($10::text IS NULL OR db.bill_number ILIKE '%' || $10::text || '%' OR db.load_number ILIKE '%' || $10::text || '%'
+                 OR concat_ws(' ', d.first_name, d.last_name) ILIKE '%' || $10::text || '%')
           ORDER BY db.created_at DESC, db.id DESC
           LIMIT $3 OFFSET $4`;
+
+/** LEAD 443.219 G-VOCAB — the register's status filter in the DRIVER-bill vocabulary (null = every status the base rule keeps). */
+export function driverBillStatusesForFilter(status: string | undefined): string[] | null {
+  if (!status || status === "all" || status === "active" || status === "posted") return null;
+  if (status === "unpaid" || status === "open") return [...DRIVER_BILL_OUTSTANDING_STATUSES];
+  if (status === "paid") return ["paid"];
+  if (status === "voided") return ["void"];
+  if (status === "partial") return [];
+  return null;
+}
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
 });
 
 const listVendorBalancesQuerySchema = companyQuerySchema.extend({
-  all: z.coerce.boolean().optional().default(false),
+  all: queryBoolean().optional().default(false),
   sort: z.enum(["balance_desc", "balance_asc", "vendor_asc"]).optional().default("balance_desc"),
 });
 
 const listBillsQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().trim().min(1).optional(),
-  include_balance: z.coerce.boolean().optional(),
-  has_balance: z.coerce.boolean().optional(),
+  include_balance: queryBoolean().optional(),
+  has_balance: queryBoolean().optional(),
   status: z.enum(["open", "partial", "paid", "voided", "unpaid", "active", "all", "posted"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -314,8 +335,9 @@ export async function registerBillsRoutes(app: FastifyInstance) {
 
     const listOptions = {
       status:
+        // LEAD 443.219 G-VOCAB — "Unpaid" = still owes money (unpaid + partially_paid), never open-only.
         query.data.status === "unpaid"
-          ? ("open" as const)
+          ? ("outstanding" as const)
           : query.data.status === "all"
             ? ("all" as const)
             : query.data.status,
@@ -421,7 +443,9 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     const driverRows = query.data.bill_type === "vendor_bill" ? [] : await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
       const result = await client.query(
         DRIVER_BILL_REGISTER_SQL,
-        [query.data.operating_company_id, query.data.status === "all" || query.data.status === "voided", query.data.limit, query.data.offset]
+        [query.data.operating_company_id, query.data.status === "all" || query.data.status === "voided", query.data.limit, query.data.offset,
+          driverBillStatusesForFilter(query.data.status), query.data.driver_id ?? null, query.data.load_id ?? null,
+          query.data.date_from ?? null, query.data.date_to ?? null, query.data.search?.trim() || null]
       );
       return result.rows;
     });

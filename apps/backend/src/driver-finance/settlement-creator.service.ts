@@ -1,3 +1,4 @@
+import { stampDriverBillVoidedInClientTx } from "./driver-bill-void-state.service.js";
 /**
  * ROUND 180 / R-186 — Settlement Creator orchestration.
  *
@@ -7,6 +8,7 @@
  * Spec: docs/bus/09-25-2026-Devin-A-ROUND-180-SETTLEMENT-CREATOR-COMPANY-AND-DRIVER.md
  */
 
+import { checkSettlementSourceOnClient, describeSourceDiff, storeSettlementSourceFingerprint } from "./settlement-source-fingerprint.js";
 import { recordHistoricalReassignQualification } from "../dispatch/driver-qualification.service.js";
 import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import { writeRelayFillFuelRows, RelayFillFuelRowsError } from "../fuel/relay-fill-fuel-rows.js";
@@ -31,7 +33,7 @@ import {
 import { allocateNextSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-roles/resolver.service.js";
 import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
-import { resolveCompanyDirectCreditAccount, postFuelExpenseOnClient, findPostedFuelReceipt, type FuelCategoryCode } from "../accounting/fuel-posting/poster.service.js";
+import { resolveCompanyDirectCreditAccount, postFuelExpenseOnClient, findPostedFuelReceipt, nextFuelPostingRevision, type FuelCategoryCode } from "../accounting/fuel-posting/poster.service.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents, creatorLoadedPayCents, creatorPayMiles } from "./settlement-creator-empty-pay.js";
 import { creatorAdditionalOnlyPay } from "./settlement-creator-pay-mode.js";
 import { resolveDriverPayItems } from "./settlement-creator-pay-item.js";
@@ -291,11 +293,11 @@ export async function restateOpenDriverBillToSignedPay(
     );
   }
   const reason = `443.167-R: restated to signed settlement ${input.settlementNo} pay ${dollarsFromCents(signed)} (was ${dollarsFromCents(Number(b.gross))})`;
-  await client.query(
-    `UPDATE driver_finance.driver_bills SET status = 'void', voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid, updated_at = now()
-      WHERE id = $1::uuid AND status = 'open'`,
-    [b.id, reason, input.actorUserId],
-  );
+  const stamped = await stampDriverBillVoidedInClientTx(client, {
+    driverBillId: b.id, operatingCompanyId: input.companyId,
+    reason, userId: input.actorUserId, openOnly: true,
+  });
+  if (!stamped) throw new SettlementCreatorError("driver_bill_not_restatable", "Driver bill changed while restating signed pay.");
   await client.query(
     `UPDATE driver_finance.settlement_lines SET is_active = false, voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid
       WHERE source_driver_bill_id = $1::uuid AND is_active = true`,
@@ -1231,9 +1233,13 @@ export async function postSettlementCreatorInClientTx(
       );
       if (existing.rows[0]) {
         if (!draft.edit_void_repost) {
+          // LEAD 443.215 — never two live settlements for one number, and never silent about WHY: compare this source with the
+          // one the live settlement was posted from (already posted vs source changed, with the exact line diff).
+          const v = await checkSettlementSourceOnClient(client as never, { operatingCompanyId: draft.operating_company_id, draft, actorUserId, record: false });
+          const detail = v.verdict === "source_changed" ? ` Source changed: repost needed — ${describeSourceDiff(v.diff).join("; ")}.` : v.verdict === "already_posted" ? " Already posted from this same source." : "";
           throw new SettlementCreatorError(
-            "settlement_exists",
-            `Settlement ${typedNo} already exists (${existing.rows[0].display_id}). Confirm Edit = void and repost to replace it.`,
+            v.verdict === "source_changed" ? "settlement_source_changed_repost_needed" : "settlement_exists",
+            `Settlement ${typedNo} already exists (${existing.rows[0].display_id}).${detail} Confirm Edit = void and repost to replace it.`,
           );
         }
         priorFuelIds = await voidPriorCreatorSettlementForEdit(
@@ -1557,6 +1563,24 @@ export async function postSettlementCreatorInClientTx(
     let relayRowId: string | null = null;
     if (!reused && fuel.card === "relay" && relayFillId) {
       let rows = relayRowsThisPost;
+      // LEAD 443.215 (5842 repost) — Edit = void and repost: the fill's records were written ONCE (writeRelayFillFuelRows, one
+      // row per product) and may have been re-attributed since the replaced post, so they are not in its posted fuel ids.
+      // The repost ADOPTS the fill's live rows instead of writing them again (the one-purchase rule refused it:
+      // "Fuel purchase 99337433 is already recorded"). Only on an Edit, only this fill's own live rows, re-stamped to this load.
+      if (!rows && draft.edit_void_repost) {
+        const existing = (await client.query<{ id: string; fuel_type: string }>(
+          `UPDATE fuel.fuel_transactions ft
+              SET load_id = $3::uuid, driver_id = COALESCE($4::uuid, ft.driver_id), unit_id = COALESCE($5::uuid, ft.unit_id), updated_at = now()
+            WHERE ft.operating_company_id = $1::uuid AND ft.relay_fuel_transaction_id = $2::uuid AND ft.voided_at IS NULL
+            RETURNING ft.id::text, ft.fuel_type`,
+          [draft.operating_company_id, relayFillId, loadId, fillLoad.driverId, fillLoad.unitId],
+        )).rows;
+        if (existing.length) {
+          rows = existing;
+          relayRowsByTxn.set(fuel.relay_transaction_id!, rows);
+          for (const r of rows) fuelTxnIds.push(r.id);
+        }
+      }
       if (!rows) {
         try {
           // The engine refuses a ticket product already recorded (provider-ID rule) before it writes any row.
@@ -1728,7 +1752,13 @@ export async function postSettlementCreatorInClientTx(
         );
         const txn = txnRow.rows[0];
         const primaryKind: FuelCategoryCode = txn?.fuel_type === "def" ? "def" : txn?.fuel_type === "reefer_diesel" ? "reefer" : "diesel";
+        // LEAD 443.215 — on an Edit the replaced settlement's void reversed this fill's posting; the repost posts it under the
+        // next correction revision (never refused for the reversed key, never two live postings: a standing one is returned).
+        const correctionRevision = draft.edit_void_repost
+          ? await nextFuelPostingRevision(client as never, { operating_company_id: draft.operating_company_id, fuel_event_id: relayFillId, posting_path: "company_direct" })
+          : 0;
         const fillPosted = await postFuelExpenseOnClient(client as never, {
+          correction_revision: correctionRevision || null,
           operating_company_id: draft.operating_company_id,
           actor_user_id: actorUserId,
           fuel_event_id: relayFillId,
@@ -2458,6 +2488,8 @@ export async function postSettlementCreatorInClientTx(
     if (closed.journal_entry_id) journalEntryIds.push(closed.journal_entry_id);
   }
 
+  // LEAD 443.215 — the settlement stores the printed source it was posted from; a later source is compared against it.
+  await storeSettlementSourceFingerprint(client as never, draft.operating_company_id, settlementId, draft);
   // Lead order 2026-10-11 — every expense of this post names its AlwaysTrack settlement (accounting.expenses.settlement_no).
   await stampCreatorExpenseSettlementNo(client as never, {
     operatingCompanyId: draft.operating_company_id, settlementId, settlementNo: sourceDocumentRef ?? displayId, expenseIds, actorUserId,

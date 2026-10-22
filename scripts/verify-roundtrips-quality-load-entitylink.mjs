@@ -101,7 +101,8 @@ function auditTimeline(src, legsSrc) {
   if (!/\[\.\.\.nb, \.\.\.tr, \.\.\.sb\]/.test(legsSrc)) {
     failures.push(`${LEGS}: orderedLegsForUnit must concatenate NB then TR then SB`);
   }
-  if (!/pairOutboundReturn/.test(legsSrc) || !/assigned_not_dispatched/.test(legsSrc)) {
+  // LEAD 443.206R (register B11) — the set is the shared DISPATCH_WORK_STATUSES (lib/load-status.ts), which carries assigned_not_dispatched.
+  if (!/pairOutboundReturn/.test(legsSrc) || !(/assigned_not_dispatched/.test(legsSrc) || /\[\.\.\.DISPATCH_WORK_STATUSES\]/.test(legsSrc))) {
     failures.push(`${LEGS}: pairOutboundReturn + assigned_not_dispatched must match trip-pairing ACTIVE_LOAD_STATUSES`);
   }
   if (!/rounded border border-gray-200 bg-white p-3/.test(legsSrc)) {

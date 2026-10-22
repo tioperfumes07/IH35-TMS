@@ -12,11 +12,16 @@ import { getTripPairingBoard } from "../trip-pairing-board.service.js";
 const CO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 describe("443.206 — one board set, one unit gate", () => {
-  it("the board set excludes deleted, voided and sample loads", () => {
+  it("443.206R — the board set is views.live_loads open_dispatch, read through the ONE load service", async () => {
     const sql = canonical.canonicalDispatchWorkWhereClause("l", "$1::uuid");
-    expect(sql).toContain("l.voided_at IS NULL");
-    expect(sql).toContain("l.is_sample_data IS NOT TRUE");
-    expect(sql).toContain("l.soft_deleted_at IS NULL");
+    expect(sql).toContain("FROM views.live_loads v");
+    expect(sql).toContain("v.live_state = 'open_dispatch'");
+    const view = await import("../live-loads-view.js");
+    const service = await import("../load-service.js");
+    // the older EXISTS helper is the same service read, not a second reader
+    expect(view.liveLoadsOpenDispatchExistsSql("x.id")).toContain(service.loadServiceIdInSql("x.id", "open_dispatch"));
+    // one driver projection: the full name, never the short label
+    expect(service.loadServiceDriverNameSql("l", "d")).toContain("CONCAT_WS(' ', d.first_name, d.last_name)");
   });
 
   it("THE unit gate is COALESCE(leased, owner) = company and in service", () => {

@@ -73,18 +73,22 @@ export function run(read = readSource) {
   if (!/await assertCompanyMembership\(authUser\.uuid, scopedCompanyId\)/.test(statusRoute)) {
     errors.push(`${ROUTE}: status PATCH must validate requested company membership`);
   }
-  if (!/operating_company_id = \$2::uuid/.test(statusRoute) || !/operating_company_id = \$3::uuid/.test(statusRoute)) {
+  // RE-PIN LEAD 443.211R: the status write is the one writer transitionLoadStatus, handed the exact requested company.
+  if (!/operating_company_id = \$2::uuid/.test(statusRoute) || !/transitionLoadStatus\(client as never, \{\s*operatingCompanyId: scopedCompanyId, loadId: parsedParams\.data\.id/.test(statusRoute)) {
     errors.push(`${ROUTE}: status SELECT and UPDATE must both bind exact requested company`);
   }
   const serviceStart = transitionServiceSrc.indexOf("export async function transitionDispatchLoadInClientTx(");
   const transitionService = serviceStart < 0 ? "" : transitionServiceSrc.slice(serviceStart);
-  const updateAt = transitionService.search(/const transitionUpdate = await client\.query</);
+  const updateAt = transitionService.search(/transitionRow = await transitionLoadStatus\(/);
   const firstSideEffectAt = transitionService.search(/ensureDriverBillArtifactsForLoad\s*\(/);
   if (
     !/return transitionDispatchLoadInClientTx\(client, authUser\.uuid, operatingCompanyId,/.test(dispatchTransitionRoute) ||
     // The UPDATE binds the exact company AND compare-and-sets the validated current status ($4),
     // and a zero-row result returns before any side effect (driver-bill mint below it).
-    !/const transitionUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,240}UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid\s+AND status::text = \$4\s+RETURNING id[\s\S]{0,180}if \(!transitionUpdate\.rows\[0\]\?\.id\) return \{ error: "status_changed" as const/.test(
+    // RE-PIN LEAD 443.211R: the write is the one writer transitionLoadStatus (company-scoped lock + compare-and-set on the
+    // status it read); this transition hands it the exact company and the validated current status, and a null result
+    // returns before any side effect (driver-bill mint below it).
+    !/transitionRow = await transitionLoadStatus\(client, \{\s*operatingCompanyId, loadId, to: mdataStatus,[\s\S]{0,80}expectFrom: current\.status,[\s\S]{0,400}if \(!transitionRow\) return \{ error: "status_changed" as const/.test(
       transitionService
     ) ||
     updateAt < 0 ||
@@ -123,10 +127,10 @@ function selftest() {
       .replaceAll('const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});', 'const parsedQuery = { success: true, data: {} };')
       .replaceAll('await assertCompanyMembership(authUser.uuid, scopedCompanyId);', '')
       .replaceAll("operating_company_id = $2::uuid", "operating_company_id IN (SELECT org.user_accessible_company_ids())")
-      .replaceAll("operating_company_id = $3::uuid", "operating_company_id IN (SELECT org.user_accessible_company_ids())");
+      .replaceAll("operatingCompanyId: scopedCompanyId, loadId", "operatingCompanyId: undefined as never, loadId");
   const brokenService = readSource(TRANSITION_SERVICE)
-      .replace("AND operating_company_id = $3::uuid", "AND operating_company_id IN (SELECT org.user_accessible_company_ids())")
-      .replace("if (!transitionUpdate.rows[0]?.id)", "if (false)");
+      .replace("operatingCompanyId, loadId, to: mdataStatus", "operatingCompanyId: undefined as never, loadId, to: mdataStatus")
+      .replace("if (!transitionRow)", "if (false)");
   const brokenDispatchRoute = readSource(DISPATCH_ROUTE)
       .replace("FROM events.event_log e", "FROM mdata.loads e")
       .replace("e.operating_company_id = $2::uuid", "e.operating_company_id IN (SELECT org.user_accessible_company_ids())")
@@ -145,8 +149,8 @@ function selftest() {
   const svc = readSource(TRANSITION_SERVICE);
   const route = readSource(DISPATCH_ROUTE);
   const single = [
-    [TRANSITION_SERVICE, svc.replace("AND operating_company_id = $3::uuid", "")],
-    [TRANSITION_SERVICE, svc.replace("if (!transitionUpdate.rows[0]?.id)", "if (false)")],
+    [TRANSITION_SERVICE, svc.replace("operatingCompanyId, loadId, to: mdataStatus", "loadId, to: mdataStatus")],
+    [TRANSITION_SERVICE, svc.replace("if (!transitionRow)", "if (false)")],
     [DISPATCH_ROUTE, route.replace("return transitionDispatchLoadInClientTx(client,", "return otherTransition(client,")],
   ];
   for (const [file, text] of single) {

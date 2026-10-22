@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const paths = {
   model: 'apps/backend/src/accounting/load-costs-live-documents.sql.ts',
+  predicates: 'apps/backend/src/accounting/live-document-predicates.sql.ts',
   route: 'apps/backend/src/accounting/load-costs-board.routes.ts',
   scope: 'apps/backend/src/dispatch/canonical-active-load-set.ts',
   page: 'apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx',
@@ -12,13 +13,16 @@ const paths = {
 const rules = [
   ['model','SUM(i.total_cents-i.tax_cents)','issued revenue excludes tax liability'],
   ['model','issued.document_count > 0','zero-dollar issued invoice is authoritative'],
-  ['model','SUM(cl.amount_cents)','booking revenue'],
-  ['model','cl.operating_company_id = ${load}.operating_company_id','company-scoped charges'],
+  ['model','SUM(lcl.amount_cents)','booking revenue (inner alias lcl — #27126: no caller alias can collide)'],
+  ['model','lcl.operating_company_id = ${load}.operating_company_id','company-scoped charges'],
   ['model','i.voided_at IS NULL','void invoice excluded'],
   ['model',"i.status NOT IN ('draft','proforma','void','voided')",'only issued invoice replaces booking'],
   ['model','COALESCE(el.load_id,e.load_id)','line expense attribution'],
-  ['model','e.voided_at IS NULL','void expense excluded'],
-  ['model','bl.voided_at IS NULL','void bill line excluded'],
+  ['model','${liveExpense("e")}','void expense excluded through canonical predicate'],
+  ['model','${liveBillLine("bl")}','void bill line excluded through canonical predicate'],
+  ['predicates','export function liveExpense(alias: string)','expense liveness defined once'],
+  ['predicates',"(${a}.status NOT IN ('void', 'voided') AND ${a}.voided_at IS NULL)",'status and timestamp both exclude void expenses'],
+  ['predicates','return `${sqlAlias(alias)}.voided_at IS NULL`;','bill line timestamp exclusion retained'],
   ['model','db.accrued_team_bill_id','team accrual not double counted'],
   ['model','db.accrued_bill_id','primary accrual not double counted'],
   ['route','WITH ${LOAD_COST_DOCUMENTS_CTE}','shared document costs mounted'],

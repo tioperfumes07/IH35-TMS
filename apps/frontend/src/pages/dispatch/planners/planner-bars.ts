@@ -18,7 +18,8 @@ export function barKind(tripType: string | null | undefined): PlannerBarKind {
 
 export function usePlannerLoads(operatingCompanyId: string, rangeStart: string, rangeEnd: string) {
   return useQuery({
-    queryKey: ["dispatch", "planners", "loads", operatingCompanyId, rangeStart, rangeEnd],
+    // LEAD 443.206 D1 — distinct from LoadsPlanner's week-events key (different row shape), same prefix.
+    queryKey: ["dispatch", "planners", "loads", "rows", operatingCompanyId, rangeStart, rangeEnd],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
       const [byPickup, byDelivery] = await Promise.all([

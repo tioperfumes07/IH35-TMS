@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DISPATCH_ACTIVE_LOAD_STATUSES } from "../dispatch/active-loads-count.js";
+import { canonicalBoardUnitGateSql, canonicalDispatchWorkWhereClause } from "../dispatch/canonical-active-load-set.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export type QueryableClient = {
@@ -1023,8 +1023,6 @@ export async function getFleetSchedule(
   client: QueryableClient,
   args: { operatingCompanyId: string; startDate: string; endDate: string }
 ) {
-  // DRIVERHUB-3: canonical active-load status set for "the driver's current tractor".
-  const activeStatusList = DISPATCH_ACTIVE_LOAD_STATUSES.map((s) => `'${s}'`).join(", ");
   const driversRes = await client.query(
     `
       SELECT
@@ -1045,8 +1043,10 @@ export async function getFleetSchedule(
           AND l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.assigned_unit_id IS NOT NULL
-          AND l.status::text IN (${activeStatusList})
-        ORDER BY l.created_at DESC
+          -- LEAD 23:45Z parity — the driver's current tractor comes from the load service's board set, current = earliest pickup.
+          AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+        ORDER BY (SELECT min(COALESCE(ps.scheduled_arrival_at, ps.appointment_start_at)) FROM mdata.load_stops ps
+                   WHERE ps.load_id = l.id AND ps.stop_type = 'pickup' AND ps.soft_deleted_at IS NULL) ASC NULLS LAST, l.load_number
         LIMIT 1
       ) al ON TRUE
       LEFT JOIN mdata.units u
@@ -1130,12 +1130,11 @@ export async function getFleetSchedule(
     `
       SELECT u.id::text AS unit_id, u.unit_number
       FROM mdata.units u
-      WHERE u.deactivated_at IS NULL
-        AND u.assigned_driver_id IS NULL
-        AND u.status = 'InService'::mdata.unit_status
-        -- Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and
-        -- its RLS is identity/role-scoped, so scope the vacant-unit picker by the owner/leased pair.
-        AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
+      -- LEAD 23:45Z parity (every working truck — T174, T156, T148 ... — listed as vacant): vacant = THE board unit gate and NO
+      -- board-set load on the truck (the load service). mdata.units.assigned_driver_id is NULL on every prod row, so the old
+      -- "assigned_driver_id IS NULL" test called every truck vacant.
+      WHERE ${canonicalBoardUnitGateSql("u", "$1::uuid")}
+        AND NOT EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.assigned_unit_id = u.id AND ${canonicalDispatchWorkWhereClause("bl", "$1::uuid")})
       ORDER BY u.unit_number, u.id
     `,
     [args.operatingCompanyId]

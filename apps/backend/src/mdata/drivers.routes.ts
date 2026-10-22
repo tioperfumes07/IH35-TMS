@@ -65,6 +65,7 @@ import {
 } from "../accounting/driver-vendor-link.service.js";
 import { getActiveDrivers } from "../integrations/samsara/active-driver-set/query.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const DRIVER_STATUS_VALUES = ["Active", "Probation", "Inactive", "Terminated", "OnLeave"] as const;
 export const driverStatusSchema = z.enum(DRIVER_STATUS_VALUES);
 
@@ -188,7 +189,7 @@ const listQuerySchema = z.object({
   status: listStatusSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
   operating_company_id: z.string().uuid().optional(),
-  include_system: z.coerce.boolean().optional().default(false),
+  include_system: queryBoolean().optional().default(false),
   // VOID-COLUMN LAW (2026-09-03) / WIZ-44 follow-up: the DEFAULT for this canonical list/picker
   // read is deactivated_at IS NULL — a merged/deactivated row must never be selectable through
   // ANY caller of this endpoint, not just the entityPickerRegistry.ts layer WIZ-44 already fixed.
@@ -196,7 +197,7 @@ const listQuerySchema = z.object({
   // for management (reactivate, view history) by passing this true — shaped like `include_system`
   // above (an explicit ask, never the default), but NOT role-gated: any role that can reach the
   // roster page already saw every status, unrestricted, before this change.
-  include_deactivated: z.coerce.boolean().optional().default(false),
+  include_deactivated: queryBoolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });

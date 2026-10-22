@@ -1,4 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { LoadStatusWriteRefusedError, transitionLoadStatus } from "../dispatch/load-transition.service.js";
+import { loadMissingDriverBillWhereSql } from "../lib/document-status-vocabulary.js";
+import { loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { z } from "zod";
 import { trailerChoiceSchema } from "../dispatch/load-trailer-choice.js";
 import { MDATA_STATUS_TRANSITIONS, fromMdataStatus, isReverseTransition } from "../dispatch/load-state-machine.js";
@@ -63,6 +66,7 @@ import {
 import type { PoolClient } from "pg";
 import { settleRevrecOnCancel } from "../accounting/revrec-delivery-posting/poster.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const loadStatusSchema = z.enum([
   "draft",
   "booked",
@@ -203,8 +207,8 @@ const listLoadsQuerySchema = z.object({
       .default("created_at:desc")
       .catch("created_at:desc")
   ),
-  include_progress: z.coerce.boolean().default(false),
-  include_live_eta: z.coerce.boolean().default(false),
+  include_progress: queryBoolean().default(false),
+  include_live_eta: queryBoolean().default(false),
   // LEAD 443.206 D10 — "picker": every real load that happened (load-picker-scope.ts), for the cross-module load picker.
   board_scope: z.enum(["live", "history", "picker"]).optional(),
   // ROUND-20.2 (RT-FULL-TOUR) — owner ruling: "DISPATCH OPEN-ONLY stands everywhere else. Round
@@ -212,13 +216,13 @@ const listLoadsQuerySchema = z.object({
   // behavior change to board_scope=live itself: every OTHER board_scope=live consumer (Kanban,
   // List, Trip Pairing) is unaffected unless it explicitly asks for this. Round Trips is the only
   // caller that passes it (apps/frontend/src/pages/Dispatch.tsx's roundTripsFullFetch gate).
-  include_open_tour_legs: z.coerce.boolean().default(false),
+  include_open_tour_legs: queryBoolean().default(false),
   // ROUND 24.2 (owner 2026-09-14): "a saved draft load must be findable from the Loads list" —
   // supersedes the OWNER-REQUEST-REGISTER row 13 "drafts never appear" line. When set, REPLACES the
   // normal status/board_scope filtering below with `status='draft' OR is_quicksave_draft=true` so a
   // draft is findable regardless of the live OPEN-ONLY exclusion and regardless of any status
   // already selected.
-  drafts_only: z.coerce.boolean().default(false),
+  drafts_only: queryBoolean().default(false),
 });
 
 const loadStatusTransitionBodySchema = z.object({
@@ -257,7 +261,7 @@ const createLoadBodySchema = z.object({
   // false default. Prod 2026-08-08: LUSMCAFREIGHT-20260808-0001..0004 plus two older ones were 0-for-6
   // tagged at INSERT while the "L-" path was 11-of-11. Untagged is not cosmetic — one Delivered step on
   // an untagged load fires revrec into REAL income.
-  is_sample_data: z.coerce.boolean().default(false),
+  is_sample_data: queryBoolean().default(false),
   pickup: z.object({
     location_id: z.string().uuid().optional(),
     address_line1: z.string().trim().max(300).optional(),
@@ -803,7 +807,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             c.customer_name AS customer_name,
             u.unit_number AS assigned_unit_number,
             tr.id AS trailer_id,
-            tr.equipment_number AS trailer_number,
+            -- LEAD 23:45Z parity — the one projection: the trailer follows the load's trailer choice (customer trailers too).
+            ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number,
             CASE
               WHEN d.id IS NULL THEN NULL
               ELSE CONCAT_WS(' ', d.first_name, d.last_name)
@@ -1237,21 +1242,17 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         };
       }
 
-      const updateRes = await client.query(
-        `
-          UPDATE mdata.loads
-          SET status = $2
-          WHERE id = $1
-            AND operating_company_id = $3::uuid
-            AND status::text = $4
-          RETURNING
-            id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-            assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-            dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
-        `,
-        [parsedParams.data.id, newStatus, scopedCompanyId, current.status]
-      );
-      const row = updateRes.rows[0] ?? null;
+      // LEAD 443.211R — the one writer (machine-validated, compare-and-set on the status read above).
+      let row: Record<string, any> | null; // eslint-disable-line @typescript-eslint/no-explicit-any -- the RETURNING * row of mdata.loads
+      try {
+        row = await transitionLoadStatus(client as never, {
+          operatingCompanyId: scopedCompanyId, loadId: parsedParams.data.id, to: newStatus, kind: "forward",
+          writer: "mdata-loads-patch-status", expectFrom: current.status,
+        });
+      } catch (err) {
+        if (err instanceof LoadStatusWriteRefusedError) return { error: "invalid_transition" as const, from_status: current.status, to_status: newStatus };
+        throw err;
+      }
       // Compare-and-set (CC-3 queue 2b): the status moved under us (GPS, driver app, another user) — refuse, never overwrite.
       if (!row) return { error: "status_changed" as const, from_status: current.status, to_status: newStatus };
 
@@ -1589,12 +1590,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               FROM mdata.loads l
               LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
                                         AND d.operating_company_id = l.operating_company_id
-              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
-               AND l.soft_deleted_at IS NULL
-               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
-               AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
-               AND db.id IS NULL
+               -- LEAD 443.219 G-VOCAB — THE missing-driver-bill predicate (no voided / exit / draft load; a void bill is no bill).
+               AND ${loadMissingDriverBillWhereSql("l")}
              ORDER BY l.is_sample_data ASC, l.load_number ASC
           `,
           [scopedCompanyId]
@@ -1628,12 +1626,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           `
             SELECT l.id::text, l.load_number
               FROM mdata.loads l
-              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
-               AND l.soft_deleted_at IS NULL
-               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
-               AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
-               AND db.id IS NULL
+               -- LEAD 443.219 G-VOCAB — THE missing-driver-bill predicate (no voided / exit / draft load; a void bill is no bill).
+               AND ${loadMissingDriverBillWhereSql("l")}
              ORDER BY l.load_number ASC
           `,
           [scopedCompanyId]

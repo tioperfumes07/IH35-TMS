@@ -5,12 +5,13 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   vendor_id: z.string().uuid().optional(),
   work_order_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
-  unit_linked_only: z.coerce.boolean().optional(),
+  unit_linked_only: queryBoolean().optional(),
   limit: z.coerce.number().int().min(1).max(300).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });

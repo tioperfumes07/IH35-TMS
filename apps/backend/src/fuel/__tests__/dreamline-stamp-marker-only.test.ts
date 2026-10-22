@@ -64,9 +64,12 @@ describe("Dreamline adoption stamp writes the marker only (443.197)", () => {
     expect(s.results[0]!.outcome).toBe("adopted");
     expect(s.results[0]!.difference_cents).toBe(55987 - 51408);
     expect(postings).toHaveLength(1); // Dr 2510 / Cr Fuel Card Discount stays as posted
-    expect(fuelUpdates).toHaveLength(1);
-    expect(fuelUpdates[0]!.sql).not.toMatch(AMOUNT_COLUMNS); // FAIL-OLD: main set gross_cost / discount_amount here
+    // 443.214: adoption also stamps the provider fill moment + station (stampStatementFillMoment) — a second UPDATE that,
+    // like the marker, never touches an amount column.
+    expect(fuelUpdates).toHaveLength(2);
+    for (const u of fuelUpdates) expect(u.sql).not.toMatch(AMOUNT_COLUMNS); // FAIL-OLD: main set gross_cost / discount_amount here
     expect(fuelUpdates[0]!.params).toEqual(["ft-R", "co", "dreamline_efs=42359:ULSD:1"]);
+    expect(fuelUpdates[1]!.sql).toMatch(/fill_moment_at/);
   });
 
   it("stamp: one UPDATE of notes, no amount column", async () => {

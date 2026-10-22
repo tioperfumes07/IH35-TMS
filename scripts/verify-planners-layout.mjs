@@ -47,20 +47,21 @@ const checks = [
     },
   ],
   [
-    "Loads Planner routes status through STATUS_LABEL, not a raw enum (L1)",
+    "Loads Planner routes status through loadStatusLabel, not a raw enum (L1)",
     (sources) => {
       const s = sources.get(LOADS_PLANNER_FILE) ?? "";
       // Must import STATUS_LABEL AND never assign a bare `load.status` straight to a status field
       // (both the list-view and grid-view status fields must go through the map).
-      if (!/import \{ STATUS_LABEL \} from "\.\.\/\.\.\/\.\.\/components\/dispatch\/constants";/.test(s)) return false;
+      // LEAD 443.206R (register C5) — the one label, lib/load-status.ts loadStatusLabel.
+      if (!/import \{ loadStatusLabel \} from "\.\.\/\.\.\/\.\.\/lib\/load-status";/.test(s)) return false;
       if (/status:\s*load\.status,/.test(s)) return false;
-      return /STATUS_LABEL\[load\.status as keyof typeof STATUS_LABEL\] \?\? load\.status/.test(s);
+      return /status: loadStatusLabel\(load\.status\)/.test(s);
     },
     (sources) => {
       const s = sources.get(LOADS_PLANNER_FILE) ?? "";
       sources.set(
         LOADS_PLANNER_FILE,
-        s.replaceAll("STATUS_LABEL[load.status as keyof typeof STATUS_LABEL] ?? load.status", "load.status")
+        s.replaceAll("loadStatusLabel(load.status)", "load.status")
       );
     },
   ],
@@ -93,4 +94,4 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-console.log("verify-planners-layout PASS — pg-col-name/pg-col-sec carry title attributes, Loads Planner status routes through STATUS_LABEL");
+console.log("verify-planners-layout PASS — pg-col-name/pg-col-sec carry title attributes, Loads Planner status routes through loadStatusLabel");

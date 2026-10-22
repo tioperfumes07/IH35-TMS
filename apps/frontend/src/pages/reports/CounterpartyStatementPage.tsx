@@ -248,7 +248,7 @@ export function CounterpartyStatementView({
   // Transaction history — loads for customers, expenses for vendors
   const loadsQuery = useQuery({
     queryKey: ["reports", "counterparty-statement", "loads", companyId, counterpartyId],
-    queryFn: () => listAllDispatchLoads({ operating_company_id: companyId, view: "home", status: [], customer: counterpartyId }),
+    queryFn: () => listAllDispatchLoads({ operating_company_id: companyId, view: "home", status: [], customer: counterpartyId, scope: "all" }),
     enabled: Boolean(companyId) && Boolean(counterpartyId) && kind === "customer",
     retry: false,
   });

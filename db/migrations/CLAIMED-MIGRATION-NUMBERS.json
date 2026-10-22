@@ -153,6 +153,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202616061200": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-10-21",
+      "purpose": "Codex (Cursor lane), Lead 443.213 replacement 23:20Z: settlement and driver-bill live-marker CHECK constraints; fork engine backfill proof before constraints, no production data update in migration"
+    },
     "202616030100": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-21",
@@ -2687,5 +2692,35 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
     "purpose": "443.209 (Lead 21:25Z, moved from Codex): unit overlap — same tour + prior leg delivered-by-schedule before this leg's pickup is not an overlap; tracks mdata.refuse_overlapping_unit_assignment in migrations; fresh-DB uq_loads_one_active_unit parity with prod"
+  },
+  "202616070100": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.206R item 3 (Lead 22:58Z, SURFACE-BREACH CC-1 line): CREATE OR REPLACE VIEW views.live_loads adding 'voided' (status) + voided_at IS NULL to the exclusion (register B2); explicit column list, security_invoker kept"
+  },
+  "202616090100": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-22",
+    "purpose": "443.215 extension (Lead 22:55Z): driver_finance.driver_settlements.source_fingerprint jsonb — the printed source (settlement no, printed date, TOTAL DUE, Net Revenue, normalized lines, line hash) a settlement was posted from; a later source is compared against it (source changed: repost needed)"
+  },
+  "202616060700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.208R (Lead 22:58Z): one load-change signal — AFTER INSERT/UPDATE/DELETE triggers pg_notify('load_changed', {company_id, load_ids, table, op}) on load and load-linked money tables"
+  },
+  "202616070700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.214 (Lead 22:40Z): fuel follows the truck at the pump — fuel.fuel_transactions provider fill moment + station coords + card_unit / gps_unit / distance / minutes / truck + load resolution reason"
+  },
+  "202616100100": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-22",
+    "purpose": "443.211R (Lead 22:58Z): mdata.load_status_edge_allowed(from, to, kind) — the SQL mirror of the one load status machine (load-state-machine.ts edges); accounting.revert_load_on_invoice_death validates its revert through it (CREATE OR REPLACE FUNCTION)"
+  },
+  "202616110700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-2 Lead 443.220: driver_bills status awaiting_short_miles — a booked load always has its driver bill (priced when short miles land)"
   }
 }

@@ -8,6 +8,7 @@ import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-po
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { enteredFuelRowHash, findLiveFuelByProviderTransactionId } from "./fuel-provider-reference.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 // A10 — GET list read-model for the frontend FuelTransactionsTable
 // (apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx), which takes a `rows: FuelTransactionRow[]`
 // prop (id, transaction_date, driver_name, gallons, amount_cents, station) but had no fetch hook / API
@@ -31,14 +32,14 @@ const listFuelTransactionsQuerySchema = z.object({
   // to list every fuel purchase from it — the reverse half of that link.
   vendor_id: z.string().uuid().optional(),
   /** G18 worklist: only transactions with NO load attributed. */
-  unlinked: z.coerce.boolean().optional(),
+  unlinked: queryBoolean().optional(),
   from: z.string().date().optional(),
   to: z.string().date().optional(),
   // R-102-B item 5 ("DEFAULT FILTERS") — this list showed voided fuel purchases mixed in with live
   // ones by default, with no way to hide them (fuel_transactions gained voided_at/void_reason via
   // R-102.1-A, but nothing above the column knew about it). Default false, matching every sibling
   // family's own "active hides voided" convention.
-  include_voided: z.coerce.boolean().optional().default(false),
+  include_voided: queryBoolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -222,6 +223,8 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           SELECT
             ft.id,
             ft.transaction_at,
+            ft.fill_moment_at,
+            ft.time_unknown,
             ft.purchased_at,
             ft.load_id,
             l.load_number,
@@ -288,6 +291,9 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           id: row.id,
           // FuelTransactionRow shape:
           transaction_date: row.transaction_at,
+          // LEAD 443.214 — the provider's real pump moment (Central) when known; time_unknown = only a typed date exists.
+          fill_moment_at: row.fill_moment_at ?? null,
+          time_unknown: row.time_unknown === true,
           driver_name: (row.driver_name as string | null) ?? "Unassigned",
           // gallons is nullable in the canonical table: imported/manual rows can carry a real
           // total cost before volume is known. Preserve that distinction for every mounted

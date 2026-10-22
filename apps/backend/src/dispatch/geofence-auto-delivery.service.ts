@@ -12,7 +12,7 @@
  * Writes only when AUTO_DELIVERY_FROM_GEOFENCE_APPLY=true (default OFF). The older GPS-drift auto-switch
  * (AUTO_STATUS_SWITCH_APPLY) is a different heuristic and stays OFF.
  */
-import { canonicalDispatchWorkStatusClause } from "./canonical-active-load-set.js";
+import { canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
 import { transitionDispatchLoadInClientTx, type TransitionClient } from "./load-transition.service.js";
 
 export const GEOFENCE_AUTO_DELIVERY_ACTOR = "00000000-0000-4000-8000-000000000001";
@@ -38,7 +38,8 @@ export async function listGeofenceDeliveredLoads(client: TransitionClient, opera
        ) d ON true
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL AND l.voided_at IS NULL AND COALESCE(l.is_sample_data, false) = false
-        AND ${canonicalDispatchWorkStatusClause("l")}
+        -- LEAD 443.206R: the board set (the load service), the same loads every board shows as working.
+        AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
         AND d.actual_departure_at IS NOT NULL
         AND d.actual_arrival_source = 'eld_geofence'
       ORDER BY d.actual_departure_at`,

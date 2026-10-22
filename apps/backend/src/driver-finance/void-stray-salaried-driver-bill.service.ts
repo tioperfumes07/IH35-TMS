@@ -1,3 +1,4 @@
+import { stampDriverBillVoidedInClientTx } from "./driver-bill-void-state.service.js";
 /**
  * void-stray-salaried-driver-bill.service.ts — LEAD RULING 443.44 Ask B (CC-3, 2026-10-11).
  *
@@ -73,14 +74,11 @@ export async function voidStraySalariedDriverBill(
   if (Number(links.gl_bills) > 0) throw new StraySalariedBillVoidRefusedError("bill is on an A/P-chain settlement run — not a stray bill");
   if (Number(links.postings) > 0) throw new StraySalariedBillVoidRefusedError("bill carries journal-entry postings — reverse through the ledger, not here");
 
-  const upd = await client.query<{ id: string }>(
-    `UPDATE driver_finance.driver_bills
-        SET status = 'void', voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid, updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $4::uuid AND status = 'open' AND voided_at IS NULL
-      RETURNING id::text`,
-    [input.driverBillId, reason, input.actorUserId, input.operatingCompanyId],
-  );
-  if (!upd.rows[0]) throw new StraySalariedBillVoidRefusedError("bill changed while voiding — nothing voided");
+  const stamped = await stampDriverBillVoidedInClientTx(client, {
+    driverBillId: input.driverBillId, operatingCompanyId: input.operatingCompanyId,
+    reason, userId: input.actorUserId, openOnly: true,
+  });
+  if (!stamped) throw new StraySalariedBillVoidRefusedError("bill changed while voiding — nothing voided");
 
   const result: VoidStraySalariedBillResult = {
     voided_bill_id: input.driverBillId,

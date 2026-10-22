@@ -78,9 +78,9 @@ const POSTER_PATH = "apps/backend/src/accounting/invoice-gl.service.ts";
  * This guard therefore FAILS on origin/main today, by design, and starts passing when the two
  * engine fixes land. It is wired into the gate in the same PR as those fixes, never before.
  */
+// LEAD 443.211R: invoices.routes.ts + loads-bulk.routes.ts left the list — their only `status = $n` was the LOAD status
+// write, now made by the one writer (dispatch/load-transition.service.ts transitionLoadStatus); ceiling 4 -> 2.
 const WRITERS_WITHOUT_POSTER = new Set([
-  "apps/backend/src/accounting/invoices.routes.ts",
-  "apps/backend/src/dispatch/loads-bulk.routes.ts",
   "apps/backend/src/factoring/batch.service.ts",
   "apps/backend/src/accounting/factoring-advances.routes.ts",
 ]);

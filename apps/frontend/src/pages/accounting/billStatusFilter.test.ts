@@ -112,4 +112,12 @@ describe("the server's narrowing is never re-applied, and the client's is exact"
   it("never narrows on an unrecognised value", () => {
     expect(vendorBillMatchesStatusFilter(vendorBill("open"), ["not_a_status"], false)).toBe(true);
   });
+
+  // LEAD 443.219 G-VOCAB — fails on origin/main: "Unpaid" hid partially paid A/P bills and approved driver bills.
+  it("Unpaid = still owes money: a partially paid vendor bill and an approved / disputed driver bill are unpaid", () => {
+    expect(vendorBillMatchesStatusFilter(vendorBill("partial"), ["unpaid", "voided"], false)).toBe(true);
+    expect(driverBillMatchesStatusFilter(driverBill("approved"), ["unpaid", "voided"], false)).toBe(true);
+    expect(driverBillMatchesStatusFilter(driverBill("disputed"), ["unpaid", "voided"], false)).toBe(true);
+    expect(driverBillMatchesStatusFilter(driverBill("paid"), ["unpaid", "voided"], false)).toBe(false);
+  });
 });

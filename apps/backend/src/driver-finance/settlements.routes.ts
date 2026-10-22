@@ -31,6 +31,7 @@ import {
   isPreCloseStatus,
 } from "./settlement-line-buckets.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const settlementStatusSchema = z.enum([
   "draft",
   "presettle",
@@ -49,7 +50,7 @@ const PAYMENT_STATES = ["unpaid", "queued", "sent_to_bank", "cleared", "bounced"
 /** 432-CUR #1 — payment_state is multi-select (?payment_state=a&payment_state=b); single still accepted. */
 const paymentStateListParam = statusListParam(PAYMENT_STATES);
 const listQuerySchema = z.object({
-  include_reversed: z.coerce.boolean().default(false),
+  include_reversed: queryBoolean().default(false),
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -149,7 +150,7 @@ async function hasSettlementSchema(client: any) {
   return Boolean((res.rows[0] as { ok?: boolean } | undefined)?.ok);
 }
 
-async function recomputeDebtSync(client: any, driverId: string) {
+export async function recomputeDebtSync(client: any, driverId: string) {
   // SAVEPOINT: missing/broken recompute_driver_debt must NOT abort the outer withCompany
   // transaction (Postgres 25P02). JS try/catch alone cannot recover an aborted txn.
   await client.query("SAVEPOINT recompute_debt_sync");
@@ -170,9 +171,20 @@ async function recomputeDebtSync(client: any, driverId: string) {
     } catch {
       /* nested rollback already failed — outer handler returns null below */
     }
-    void recomputeErr;
-    return null;
+    // LEAD 443.219 G-ERR (audit F-s1): a failed recompute is never a silent success — it is logged and handed to the
+    // caller as a named failure (the list rows carry debt_recompute_error; the lock refuses on it). It used to return null,
+    // so the list showed stale debt with no signal and the lock path read "not stale" and proceeded.
+    const message = recomputeErr instanceof Error ? recomputeErr.message : String(recomputeErr);
+    console.error({ err: recomputeErr, driver_id: driverId }, "driver_finance.recompute_driver_debt failed");
+    return { recompute_failed: true as const, error: message };
   }
+}
+
+/** LEAD 443.219 G-ERR — the named failure of recomputeDebtSync. */
+export function debtRecomputeError(debt: unknown): string | null {
+  return debt && typeof debt === "object" && (debt as { recompute_failed?: boolean }).recompute_failed === true
+    ? String((debt as { error?: unknown }).error ?? "recompute_driver_debt failed")
+    : null;
 }
 
 export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance) {
@@ -407,6 +419,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               : [],
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
+            debt_recompute_error: debtRecomputeError(debt),
             // LINK-F5187: debt.source_liabilities already carries the real driver_finance.driver_liabilities
             // ids behind live_debt_flag's dollar total (recompute_driver_debt's jsonb_agg) — every prior
             // reader of this endpoint (SettlementsTable's Debt Flag column, PreSettlementsPanel) discarded
@@ -607,6 +620,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
               : [],
             live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
+            debt_recompute_error: debtRecomputeError(debt),
             // LINK-F5187: same fix as the company-wide list above — thread the real liability ids
             // through instead of discarding them after the dollar total is computed.
             liability_ids: Array.isArray(debt?.source_liabilities)
@@ -885,7 +899,8 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       return {
         ...row,
         lines: linesRes.rows.map((l: Record<string, unknown>) => ({ ...l, description: l.line_item_name ?? l.description })),
-        debt_summary: debt,
+        debt_summary: debtRecomputeError(debt) ? null : debt,
+        debt_recompute_error: debtRecomputeError(debt),
         linked_bills: linkedBillsRes.rows,
         historical_attributions: await readHistoricalSettlementAttributions(client, companyId, params.data.id),
         matched_bank_transaction_id: matchedBank?.matched_bank_transaction_id ?? null,
@@ -1327,6 +1342,8 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       if (!current.acknowledged_at) return { blocked: true as const, reason: "acknowledgment_required" };
 
       const debt = await recomputeDebtSync(client, String(current.driver_id));
+      // LEAD 443.219 G-ERR — a failed debt recompute blocks the lock (it used to read "not stale" and lock).
+      if (debtRecomputeError(debt)) return { blocked: true as const, reason: "debt_recompute_failed" };
       const computedAt = debt?.computed_at ? new Date(String(debt.computed_at)).getTime() : 0;
       if (computedAt && Date.now() - computedAt > 5000) return { blocked: true as const, reason: "debt_stale_refresh_required" };
 

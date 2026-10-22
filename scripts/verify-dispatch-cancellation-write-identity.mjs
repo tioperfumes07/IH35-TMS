@@ -35,12 +35,14 @@ function verify(sources) {
   if (/row\.rows\[0\]\?\.id/.test(service)) {
     failures.push("cancelLoad must not consume an unchecked QueryResult identity");
   }
-  if (!/UPDATE mdata\.loads[\s\S]{0,300}?operating_company_id = \$2::uuid[\s\S]{0,100}?RETURNING id/.test(service)) {
+  // RE-PIN LEAD 443.211R: the load write is the one writer transitionLoadStatus (company-scoped lock + compare-and-set on the
+  // status it read, returns the row or null) — the cancellation passes the exact company, the load and the locked prior status.
+  if (!/const cancelledLoad = await transitionLoadStatus\(client as never, \{[\s\S]{0,120}?operatingCompanyId: args\.operating_company_id, loadId: args\.load_id, to: "cancelled"[\s\S]{0,120}?expectFrom: args\.prior_status/.test(service)) {
     failures.push("approved cancellation load transition must be company-scoped and return identity");
   }
   // RE-PIN 2026-09-06: cancelLoad delegates to cancelLoadInClientTx — the write-identity check
   // lives in the helper, not in the cancelLoad block itself. Check the full service source.
-  if (!/if \(!cancelledLoad\.rows\[0\]\?\.id\) throw new Error\("E_CANCELLATION_LOAD_WRITE_FAILED"\);/.test(service)) {
+  if (!/if \(!cancelledLoad\) throw new Error\("E_CANCELLATION_LOAD_WRITE_FAILED"\);/.test(service)) {
     failures.push("cancelLoad must reject a lost load transition");
   }
   if (!/UPDATE dispatch\.load_cancellations[\s\S]{0,260}?operating_company_id = \$3::uuid[\s\S]{0,100}?status = 'requested'[\s\S]{0,100}?RETURNING id, load_id, status/.test(coreBlock)) {
@@ -52,8 +54,8 @@ function verify(sources) {
       !/status === "cancelled"\) throw new Error\("E_CANCELLATION_LOAD_WRITE_FAILED"\)/.test(coreBlock)) {
     failures.push("approveCancellation must company-scope and CAS the active canonical load transition");
   }
-  if (!/const cancelledLoad = await client\.query<\{ id: string \}>\([\s\S]{0,350}?UPDATE mdata\.loads[\s\S]{0,260}?operating_company_id = \$2::uuid[\s\S]{0,60}?status::text = \$3[\s\S]{0,100}?RETURNING id/.test(finalizeBlock) ||
-      !/if \(!cancelledLoad\.rows\[0\]\?\.id\) throw new Error\("E_CANCELLATION_LOAD_WRITE_FAILED"\);/.test(finalizeBlock)) {
+  if (!/const cancelledLoad = await transitionLoadStatus\(client as never, \{[\s\S]{0,120}?operatingCompanyId: args\.operating_company_id, loadId: args\.load_id, to: "cancelled"[\s\S]{0,120}?expectFrom: args\.prior_status/.test(finalizeBlock) ||
+      !/if \(!cancelledLoad\) throw new Error\("E_CANCELLATION_LOAD_WRITE_FAILED"\);/.test(finalizeBlock)) {
     failures.push("approveCancellation must reject a lost canonical load transition");
   }
   // 443.113 AJK-10 — ONE finalization, no second copy.

@@ -5,11 +5,12 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const locationKindSchema = z.enum(["customer_site", "yard", "vendor_site", "custom", "dot_inspection_station"]);
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  is_active: z.coerce.boolean().optional(),
+  is_active: queryBoolean().optional(),
   location_kind: locationKindSchema.optional(),
 });
 

@@ -26,16 +26,17 @@ import {
   type BankingTileBalanceFields,
 } from "./internal-wallet-balance.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
 const accountsAllQuerySchema = companyQuerySchema.extend({
-  include_inactive: z.coerce.boolean().optional().default(false),
+  include_inactive: queryBoolean().optional().default(false),
   // BANK-ACCOUNT-HIDE: the visibility manager (Owner/Administrator) passes true to see + toggle hidden
   // rows; every other consumer of this endpoint defaults to false so a hidden account stays fully
   // excluded everywhere (dashboards, pickers, categorization, reconciliation).
-  include_hidden: z.coerce.boolean().optional().default(false),
+  include_hidden: queryBoolean().optional().default(false),
 });
 
 const accountIdParamsSchema = z.object({
@@ -50,7 +51,7 @@ const registerQuerySchema = z.object({
   // already-voided USMCA GO-11 fixture rows. Default false so the register keeps showing the real
   // population; explicitly asking for it (include_sample_data=true) reveals the quarantined rows —
   // nothing is ever deleted, they just don't show unless asked.
-  include_sample_data: z.coerce.boolean().default(false),
+  include_sample_data: queryBoolean().default(false),
 });
 
 const transactionIdParamsSchema = z.object({

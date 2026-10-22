@@ -1,9 +1,21 @@
 import { apiRequest } from "./client";
 
+export type ManualPullResult = {
+  created: number; source_count: number; issues: { id: string; reason: string }[];
+  before: { income_cents: number; expense_cents: number };
+  after: { income_cents: number; expense_cents: number };
+};
+export function pullManualTransactions(companyId: string, date: string) {
+  return apiRequest<ManualPullResult>("/api/v1/cash-flow/pull-transactions", {
+    method: "POST", body: { operating_company_id: companyId, date },
+  });
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type IncomeLineItem = {
-  load_id: string;
+  load_id: string | null;
+  invoice_id?: string | null;
   load_number: string;
   customer_id: string | null;
   customer_name: string;

@@ -46,7 +46,8 @@ import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countInTransitDispatchLoads } from "./active-loads-count.js";
-import { canonicalBoardRowClause, canonicalBoardUnitGateSql, canonicalDispatchWorkStatusClause, canonicalDispatchWorkWhereClause, countCanonicalDispatchWorkLoads } from "./canonical-active-load-set.js";
+import { canonicalBoardUnitGateSql, canonicalDispatchWorkStatusClause, canonicalDispatchWorkWhereClause, canonicalRealLoadRowClause, countCanonicalDispatchWorkLoads } from "./canonical-active-load-set.js";
+import { loadServiceDriverNameSql, loadServiceDriverShortLabelSql, loadServiceMembershipSql, loadServiceTrailerNumberSql } from "./load-service.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -151,6 +152,9 @@ const listDispatchLoadsQuerySchema = z.object({
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   search: z.string().trim().max(120).optional(),
   view: z.enum(["home", "loads"]).optional(),
+  // LEAD 443.206R — default = the board (the load service's open_dispatch set); scope=all is the explicit history read
+  // (every real load, any stage) for profiles' load lists, the customer transaction list and statements.
+  scope: z.enum(["board", "all"]).optional().default("board"),
 });
 
 const dispatchLoadIdParamsSchema = z.object({
@@ -1011,12 +1015,18 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const values: unknown[] = [query.operating_company_id];
     // LEAD 443.206 D13 — scope gate: never a voided / sample load, and with no explicit status the board set
     // (canonical dispatch work), never every load in the table.
-    const filters: string[] = [
-      `l.operating_company_id = $1::uuid`,
-      `l.soft_deleted_at IS NULL`,
-      `EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.id = l.id AND ${canonicalBoardRowClause("bl")})`,
-    ];
-    if (!query.status || query.status.length === 0) filters.push(canonicalDispatchWorkStatusClause("l"));
+    const filters: string[] = [`l.operating_company_id = $1::uuid`, `l.soft_deleted_at IS NULL`];
+    if (query.scope === "all") {
+      filters.push(`EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.id = l.id AND ${canonicalRealLoadRowClause("bl")})`);
+    } else {
+      // the board, read through the load service: no status = open_dispatch (dispatch work); an explicit status list narrows
+      // the STATUS half within the live set (open_dispatch + pre_settlement, e.g. delivered_pending_docs on Overview).
+      if (!query.status || query.status.length === 0) {
+        filters.push(`${canonicalDispatchWorkStatusClause("l")} AND ${loadServiceMembershipSql("l", "open_dispatch", "$1::uuid")}`);
+      } else {
+        filters.push(loadServiceMembershipSql("l", "live", "$1::uuid"));
+      }
+    }
     if (query.status && query.status.length > 0) {
       const mappedStatuses = query.status.map((status) => toMdataStatus(status));
       values.push(mappedStatuses);
@@ -1096,12 +1106,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- resolver already used by invoices.routes.ts and cancellations-report.routes.ts.
             COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
             u.unit_number,
-            tr.equipment_number AS trailer_number,
+            -- LEAD 23:45Z parity — the one projection: the trailer follows the load's trailer choice (customer trailers too).
+            ${loadServiceTrailerNumberSql("ml", "tr")} AS trailer_number,
             tr.equipment_type AS trailer_equipment_type,
-            COALESCE(
-              CASE WHEN d.id IS NULL THEN NULL ELSE CONCAT(LEFT(d.first_name, 1), '. ', d.last_name) END,
-              mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
-            ) AS driver_short_name,
+            ${loadServiceDriverShortLabelSql("l", "d")} AS driver_short_name,
+            -- LEAD 443.206R item 4 (C1): the full name, one projection — never overwritten by the short label.
+            ${loadServiceDriverNameSql("l", "d")} AS driver_full_name,
             mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id) AS assigned_primary_driver_name_resolved,
             COALESCE(uds.has_open_pm_due_wo, false) AS has_open_pm_due_wo,
             COALESCE(uds.is_dispatch_blocked, false) AS is_dispatch_blocked,
@@ -1217,13 +1227,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return {
       loads: payload.rows.map((row) => {
         const resolved = row.assigned_primary_driver_name_resolved ?? null;
-        const joinName = row.driver_short_name ?? row.assigned_primary_driver_name ?? null;
-        const driverLabel = joinName || resolved || null;
+        const shortLabel = row.driver_short_name || resolved || null;
+        // LEAD 443.206R item 4 (register C1): assigned_primary_driver_name is the FULL name (the one projection); the short
+        // "J. Smith" label stays its own field — it used to overwrite the full name on this endpoint only.
         return {
           ...row,
           dispatch_status: fromMdataStatus(String(row.status)),
-          driver_short_name: driverLabel,
-          assigned_primary_driver_name: driverLabel,
+          driver_short_name: shortLabel,
+          assigned_primary_driver_name: row.driver_full_name || resolved || null,
         };
       }),
       total_count: payload.total,
@@ -2058,7 +2069,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           `
             SELECT count(*)::int AS count
             FROM mdata.loads l
-            -- LEAD 443.206 D2 — the board set (not views.live_loads' money-gated bucket), narrowed to these statuses.
+            -- LEAD 443.206R — the board set (the load service via canonicalDispatchWorkWhereClause), narrowed to these statuses.
             WHERE ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
               AND l.status IN ('dispatched'::mdata.load_status_enum, 'in_transit'::mdata.load_status_enum)
           `,
@@ -2070,10 +2081,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         client.query<{ count: number }>(
           `
             SELECT count(*)::int AS count
-            FROM views.live_loads
-            WHERE operating_company_id = $1::uuid
-              AND live_state = 'pre_settlement'
-              AND status = 'delivered_pending_docs'::mdata.load_status_enum
+            FROM mdata.loads l
+            -- LEAD 443.206R: the load service's pre_settlement state, narrowed to this status.
+            WHERE l.operating_company_id = $1::uuid
+              AND ${loadServiceMembershipSql("l", "pre_settlement", "$1::uuid")}
+              AND l.status = 'delivered_pending_docs'::mdata.load_status_enum
           `,
           [operatingCompanyId]
         ),

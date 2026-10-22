@@ -67,6 +67,8 @@ export type PlannerWeekPayload = {
   week_end: string;
   drivers: PlannerDriverRow[];
   loads: PlannerLoadEvent[];
+  /** LEAD 443.206 D4 — board-set loads with no driver yet (shown as an "Unassigned" row). */
+  unassigned_loads: PlannerLoadEvent[];
 };
 
 function plannerWeekStart(input?: string): string {
@@ -150,7 +152,20 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
 
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
+    return loadPlannerWeekOnClient(client as never, operatingCompanyId, weekStart, weekEnd, weekStartIso, weekEndIso);
+  });
+}
 
+/** LEAD 23:45Z — the planner week's reads on one client (the live board guard executes them against prod, read-only). */
+export async function loadPlannerWeekOnClient(
+  client: Parameters<Parameters<typeof withCurrentUser>[1]>[0],
+  operatingCompanyId: string,
+  weekStart: string,
+  weekEnd: string,
+  weekStartIso: string,
+  weekEndIso: string,
+): Promise<PlannerWeekPayload> {
+  {
     const driversRes = await client.query(
       `
         SELECT
@@ -197,19 +212,19 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
           AND d.deactivated_at IS NULL
           AND d.archived_at IS NULL
           AND d.is_sample_data IS NOT TRUE
-          AND d.status = 'Active'::mdata.driver_status
           AND (
-            activity.last_dispatch_activity_at >= (now() - make_interval(days => ${PLANNER_ACTIVE_WINDOW_DAYS}))
-            -- ROUND 36.1: reads views.live_loads's open_dispatch bucket, structurally excluding a
-            -- load stuck at 'dispatched' but already settled/driver-billed (was a per-caller money
-            -- predicate in ROUND 35.1).
-            -- LEAD 443.206 D2 — the board set (canonical dispatch work), not views.live_loads' money-gated bucket.
-            OR EXISTS (
+            -- LEAD 23:45Z parity (13691 / 13697 showed no driver on the planner): a driver RUNNING a board-set load is on
+            -- the roster whatever his status (Probation drivers run loads) and whatever the load's board status — the
+            -- planner's loads are the whole board set, so its roster must cover every driver of it.
+            EXISTS (
               SELECT 1 FROM mdata.loads cl
               WHERE ${canonicalDispatchWorkWhereClause("cl", "$1::uuid")}
                 AND (cl.assigned_primary_driver_id = d.id OR cl.assigned_secondary_driver_id = d.id)
-                AND cl.status = ANY($2::mdata.load_status_enum[])
             )
+            -- otherwise: an Active driver with recent dispatch activity (the planner's idle roster, unchanged).
+            OR (d.status = 'Active'::mdata.driver_status
+                AND activity.last_dispatch_activity_at >= (now() - make_interval(days => ${PLANNER_ACTIVE_WINDOW_DAYS}))
+                AND $2::mdata.load_status_enum[] IS NOT NULL) -- keeps $2 bound + typed (an unreferenced bind is a 42P18 500)
           )
         ORDER BY d.last_name NULLS LAST, d.first_name NULLS LAST
       `,
@@ -314,7 +329,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
     const unassigned_loads: PlannerLoadEvent[] = loadsRes.rows.filter((row) => row.driver_id == null).map((row) => ({ ...toEvent(row), driver_id: "" }));
 
     return { week_start: weekStart, week_end: weekEnd, drivers, loads, unassigned_loads };
-  });
+  }
 }
 
 export async function reschedulePlannerLoad(

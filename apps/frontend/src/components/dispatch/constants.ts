@@ -1,41 +1,5 @@
 import type { LoadStatus } from "../../api/loads";
-
-export const DISPATCH_STATUS_GROUPS: Array<{
-  key: string;
-  title: string;
-  collapsedByDefault?: boolean;
-  statuses: LoadStatus[];
-}> = [
-  { key: "pending", title: "Pending Assignment", statuses: ["draft", "booked", "planned"] },
-  { key: "assigned", title: "Assigned", statuses: ["assigned", "dispatched"] },
-  { key: "in_transit", title: "In Transit", statuses: ["at_pickup", "in_transit", "at_delivery"] },
-  { key: "delivered", title: "Delivered", statuses: ["delivered"] },
-  { key: "completed", title: "Completed", statuses: ["invoiced", "paid", "closed"] },
-  { key: "cancelled", title: "Cancelled", statuses: ["cancelled", "abandoned"], collapsedByDefault: true },
-];
-
-export const STATUS_LABEL: Record<LoadStatus, string> = {
-  draft: "Draft",
-  booked: "Booked",
-  planned: "Planned",
-  unassigned: "Unassigned",
-  assigned: "Assigned",
-  assigned_not_dispatched: "Assigned (not dispatched)",
-  dispatched: "Dispatched",
-  at_pickup: "At Pickup",
-  in_transit: "In Transit",
-  at_delivery: "At Delivery",
-  delivered: "Delivered",
-  delivered_pending_docs: "Delivered (pending docs)",
-  completed_docs_received: "Docs received",
-  invoiced: "Invoiced",
-  paid: "Paid",
-  closed: "Closed",
-  cancelled: "Cancelled",
-  abandoned: "Abandoned",
-  driver_walkoff: "Driver walk-off",
-  driver_no_show: "Driver no-show",
-};
+// LEAD 443.206R — load status labels + status groups live in lib/load-status.ts (loadStatusLabel / LOAD_STATUS_GROUPS).
 
 // §7 palette: the load `flag_code` used to render as a color-emoji circle (green/blue/yellow/orange/
 // red/purple/black/white, via a FLAG_EMOJI_BY_CODE map) — forbidden on two counts: emoji in table/board
@@ -104,9 +68,4 @@ export function toRouteSummary(pickup?: string | null, delivery?: string | null)
 
 export function canDragLoad(status: LoadStatus) {
   return status !== "cancelled" && status !== "closed" && status !== "paid" && status !== "invoiced";
-}
-
-export function normalizeStatusToColumnKey(status: LoadStatus): string {
-  const group = DISPATCH_STATUS_GROUPS.find((entry) => entry.statuses.includes(status));
-  return group?.key ?? "pending";
 }

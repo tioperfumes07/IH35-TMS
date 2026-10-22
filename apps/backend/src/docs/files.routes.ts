@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { strictListQuery } from "../lib/strict-query.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -15,6 +16,7 @@ import {
   verifyObjectExists,
 } from "../storage/r2-client.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const SOURCE_TAG = "BT-2-DOCS-SCHEMA-AND-R2";
 const DEFAULT_UPLOAD_EXPIRES_SECONDS = 900;
 const DEFAULT_DOWNLOAD_EXPIRES_SECONDS = 300;
@@ -136,8 +138,8 @@ const listQuerySchema = z.object({
   ),
   entity_id: optionalQueryString().pipe(z.string().uuid().optional()),
   category: optionalQueryString().pipe(z.string().uuid().optional()),
-  include_deleted: z.coerce.boolean().optional(),
-  include_incomplete: z.coerce.boolean().optional(),
+  include_deleted: queryBoolean().optional(),
+  include_incomplete: queryBoolean().optional(),
   // Round 296 filter law: the All Documents library pages server-side, so every filter it offers runs HERE over the
   // whole library (it used to filter one 200-row page in the browser and count that page as the total).
   q: optionalQueryString().pipe(z.string().max(200).optional()),
@@ -147,6 +149,8 @@ const listQuerySchema = z.object({
   expires_within_days: z.coerce.number().int().min(0).max(3650).optional(),
   standalone: z.enum(["true", "false"]).optional(),
 });
+// LEAD 443.219 G-STRICT — unknown query params: 400 outside production, logged + stripped in production (one rule).
+const strictListQuerySchema = strictListQuery(listQuerySchema, "GET /api/v1/docs/files");
 
 const updateFileBodySchema = z
   .object({
@@ -598,7 +602,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     if (!user) return;
     if (!requireRole(reply, user.role, ["Owner", "Administrator", "Manager"])) return;
 
-    const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
+    const parsedQuery = strictListQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const query = parsedQuery.data;
 

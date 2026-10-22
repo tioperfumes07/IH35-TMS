@@ -1,7 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { strictListQuery } from "../../lib/strict-query.js";
 import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../shared.js";
 
+import { queryBoolean } from "../../lib/query-boolean.js";
 const CATEGORY_KIND_VALUES = [
   "fuel",
   "maintenance",
@@ -24,9 +26,11 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  include_inactive: z.coerce.boolean().optional().default(false),
+  include_inactive: queryBoolean().optional().default(false),
   category_kind: categoryKindSchema.optional(),
 });
+// LEAD 443.219 G-STRICT — unknown query params: 400 outside production, logged + stripped in production (one rule).
+const strictListQuerySchema = strictListQuery(listQuerySchema, "GET /api/v1/accounting/expense-category-map");
 
 const oneQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -131,7 +135,7 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/expense-category-map", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const parsed = listQuerySchema.safeParse(req.query ?? {});
+    const parsed = strictListQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client: DbClient) => {

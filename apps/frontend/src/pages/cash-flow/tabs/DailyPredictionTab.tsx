@@ -255,21 +255,27 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   to a link. Same pattern as ExpensesListPage.tsx (`navigate('/dispatch/loads/${id}')`). */}
               {data?.income_items.map((item) => (
                 <div
-                  key={`${item.basis}-${item.load_id}-${item.load_number}`}
+                  key={`${item.basis}-${item.invoice_id ?? item.load_id}-${item.load_number}`}
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate(`/dispatch/loads/${item.load_id}`)}
+                  onClick={() => {
+                    if (item.load_id) navigate(`/dispatch/loads/${item.load_id}`);
+                    else if (item.invoice_id) navigate(`/accounting/invoices/${item.invoice_id}`);
+                  }}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") navigate(`/dispatch/loads/${item.load_id}`);
+                    if (e.key === "Enter" || e.key === " ") {
+                      if (item.load_id) navigate(`/dispatch/loads/${item.load_id}`);
+                      else if (item.invoice_id) navigate(`/accounting/invoices/${item.invoice_id}`);
+                    }
                   }}
                   className="flex cursor-pointer items-start justify-between px-4 py-2.5 text-xs hover:bg-gray-50"
                 >
                   <div className="min-w-0 flex-1">
                     <EntityLinkOrTombstone
-                      kind="load"
-                      id={item.load_id}
-                      name={item.load_number}
-                      noun="Load"
+                      kind={item.load_id ? "load" : "invoice"}
+                      id={item.load_id ?? item.invoice_id}
+                      name={item.load_number ?? "Invoice"}
+                      noun={item.load_id ? "Load" : "Invoice"}
                       className="font-medium text-gray-900"
                       data-testid="cash-flow-predicted-load-link"
                       onClick={(event) => event.stopPropagation()}

@@ -1,6 +1,7 @@
 /**
  * GAP-56 / CAP-4 — Auto status switching when GPS movement diverges from driver-reported load status.
  */
+import { transitionLoadStatus } from "../../../dispatch/load-transition.service.js";
 import { appendCrudAudit } from "../../../audit/crud-audit.js";
 import { notifyDriverWebPush } from "../../../services/push-notification.service.js";
 import { validateLoadStopStatusWrite } from "../../../dispatch/load-state-machine.js";
@@ -452,17 +453,12 @@ export async function applyAutoSwitch(
     return { applied: false, skipped: "invalid_load_state" };
   }
 
-  const statusUpdate = await client.query<{ id: string }>(
-    `UPDATE mdata.loads
-     SET status = $2, updated_at = now()
-     WHERE id = $1::uuid
-       AND operating_company_id = $3::uuid
-       AND status::text = $4
-     RETURNING id`,
-    [loadUuid, newStatus, operatingCompanyId, current.status]
-  );
+  // LEAD 443.211R — the one writer (stop_micro edges), compare-and-set on the status this GPS decision read.
+  const statusUpdate = await transitionLoadStatus(client as never, {
+    operatingCompanyId, loadId: loadUuid, to: newStatus, kind: "stop_micro", writer: "samsara-auto-status", expectFrom: current.status,
+  });
   // Compare-and-set (CC-3 2b/6): a dispatcher, the driver app or bulk moved the load since this GPS decision — skip.
-  if (!statusUpdate.rows[0]?.id) return { applied: false, skipped: "status_changed" };
+  if (!statusUpdate) return { applied: false, skipped: "status_changed" };
 
   const eventRes = await client.query<{ uuid: string }>(
     `

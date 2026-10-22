@@ -90,6 +90,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.214 (22:40Z, owner 10-21 5:09 PM CT "use samsara locations ... time should be in the reports"; owner 2026-10-01
+  // no-handoff): fuel follows the truck — provider moment / station / GPS truck evidence columns. Claimed #(202616070700) in #27103.
+  [
+    "cc-2/443-214-fuel-follows-truck-2",
+    new Set(["db/migrations/202616070700_fuel_gps_truck_columns.sql"]),
+  ],
   // Lead 443.209 (21:25Z, moved from Codex chrome-only lane; owner 2026-10-01 no-handoff): unit overlap — same-tour
   // sequential leg; prod's untracked trigger tracked. Claimed #(202616050700) in #27089.
   [

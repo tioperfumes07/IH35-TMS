@@ -92,6 +92,7 @@ export function LoadsSection({ driverId, operatingCompanyId }: Props) {
         offset: 0,
         status: [],
         driver: driverId,
+        scope: "all", // LEAD 443.206R — a driver's loads, every stage (not the live board)
       }),
     enabled: Boolean(driverId && operatingCompanyId),
     staleTime: 60_000,

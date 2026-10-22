@@ -1,4 +1,5 @@
 import type { DispatchLoadRow } from "../../api/loads";
+import { DISPATCH_WORK_STATUSES } from "../../lib/load-status";
 
 export type TripKind = "NB" | "TR" | "SB";
 
@@ -32,17 +33,8 @@ export function orderedLegsForUnit(unitLoads: DispatchLoadRow[]): DispatchLoadRo
 /** TRUCKLINE-16 (Lead, 2026-09-30): must match apps/backend/src/dispatch/canonical-active-load-
  *  set.ts's DISPATCH_WORK_LOAD_STATUSES — one pairing engine, one canonical dispatch-work
  *  predicate shared with Truck Line, Load board tiles, List and Kanban. */
-export const RT_PAIRING_ACTIVE_STATUSES = [
-  "booked",
-  "planned",
-  "assigned",
-  "unassigned",
-  "assigned_not_dispatched",
-  "dispatched",
-  "at_pickup",
-  "in_transit",
-  "at_delivery",
-] as const;
+// LEAD 443.206R (register B11) — the one shared set, never a copied literal.
+export const RT_PAIRING_ACTIVE_STATUSES = [...DISPATCH_WORK_STATUSES] as const;
 
 /**
  * RT-TIMELINE-LIFECYCLE (owner ruling 2026-09-09) — SUPERSEDED 2026-09-11 ("DISPATCH OPEN-ONLY SCOPE"

@@ -8,6 +8,8 @@
  * NEVER: must never cancel without a reason of at least 20 characters, and never leave a live invoice or driver bill on a cancelled load
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
+import { stampDriverBillVoidedInClientTx } from "../driver-finance/driver-bill-void-state.service.js";
+import { transitionLoadStatus } from "./load-transition.service.js";
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -145,19 +147,13 @@ export async function finalizeLoadCancellationInClientTx(
   }
 ) {
   {
-    const cancelledLoad = await client.query<{ id: string }>(
-      `
-        UPDATE mdata.loads
-        SET status = 'cancelled'::mdata.load_status_enum,
-            updated_at = now()
-        WHERE id = $1
-          AND operating_company_id = $2::uuid
-          AND status::text = $3
-        RETURNING id
-      `,
-      [args.load_id, args.operating_company_id, args.prior_status]
-    );
-    if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
+    // LEAD 443.211R — through the one writer: X -> cancelled must be an edge of the one machine (a billed / closed load is
+    // not cancellable — its documents decide); compare-and-set on the status the caller locked.
+    const cancelledLoad = await transitionLoadStatus(client as never, {
+      operatingCompanyId: args.operating_company_id, loadId: args.load_id, to: "cancelled", kind: "forward",
+      writer: "cancellation", expectFrom: args.prior_status,
+    });
+    if (!cancelledLoad) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
     // ROUND 326: a cancelled load carries no recognized revenue — deleted, not reversed (owner law 2026-10-02).
     await settleRevrecOnCancel(client as never, args.operating_company_id, args.load_id, userId, args.revrec_memo);
   }
@@ -223,18 +219,10 @@ export async function finalizeLoadCancellationInClientTx(
     const voidedDriverBillIds: string[] = [];
     for (const bill of openDriverBillsRes.rows) {
       const driverBillVoidReason = `Load cancelled (${args.reason_code}) — driver bill voided by load cancellation cascade`;
-      await client.query(
-        `UPDATE driver_finance.driver_bills
-            SET status = 'void',
-                voided_at = COALESCE(voided_at, now()),
-                void_reason = COALESCE(void_reason, $3),
-                voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
-                updated_at = now()
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND status <> 'void'`,
-        [bill.id, args.operating_company_id, driverBillVoidReason, userId]
-      );
+      await stampDriverBillVoidedInClientTx(client, {
+        driverBillId: bill.id, operatingCompanyId: args.operating_company_id,
+        reason: driverBillVoidReason, userId,
+      });
       await appendCrudAudit(
         client,
         userId,

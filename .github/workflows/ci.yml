@@ -174,6 +174,7 @@ jobs:
             scripts/verify-factoring-purchase-owner-only.mjs \
             scripts/verify-usmca-fleet-fuel-tasks-neon-pv.mjs \
             scripts/verify-settlement-net-matches-signed-doc.mjs \
+            scripts/verify-usmca-live-document-state.mjs \
             scripts/verify-usmca-settlement-cutover.mjs \
             scripts/verify-expense-dedupe-never-keys-on-load-and-amount.mjs \
             scripts/verify-faro-invoice-lines-load-linkage.mjs \

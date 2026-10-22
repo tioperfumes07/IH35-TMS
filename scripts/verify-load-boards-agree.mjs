@@ -51,16 +51,33 @@ export const BOARD_FILES = {
   overview: "apps/backend/src/dispatch/active-loads-count.ts",
   canonical: "apps/backend/src/dispatch/canonical-active-load-set.ts",
   scenarios: "apps/backend/src/home/scenario-registry.ts",
+  service: "apps/backend/src/dispatch/load-service.ts",
+  unitAgg: "apps/backend/src/mdata/unit-aggregate.service.ts",
+  trailerAgg: "apps/backend/src/mdata/equipment-aggregate.service.ts",
+  driverAgg: "apps/backend/src/mdata/driver-aggregate.service.ts",
+  liveMap: "apps/backend/src/integrations/samsara/positions/live-position.service.ts",
+  driverHub: "apps/backend/src/mdata/canonical/driver-hub.service.ts",
+  homeWidgets: "apps/backend/src/home/home-widgets.routes.ts",
+  dispatcherHome: "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts",
 };
 export function staticFailures(src) {
   const f = [];
   const need = (k, re, msg) => { if (!re.test(src[k])) f.push(`${BOARD_FILES[k]}: ${msg}`); };
   const ban = (k, re, msg) => { if (re.test(src[k])) f.push(`${BOARD_FILES[k]}: ${msg}`); };
-  need("canonical", /\$\{canonicalDispatchWorkStatusClause\(alias\)\} AND \$\{alias\}\.operating_company_id = \$\{operatingCompanyIdParam\}\s*AND \$\{canonicalBoardRowClause\(alias\)\}/, "the board set must carry the row exclusions (deleted / voided / sample)");
+  // 443.206R — THE board set reads views.live_loads through the load service (owner law 09-28).
+  need("canonical", /\$\{canonicalDispatchWorkStatusClause\(alias\)\} AND \$\{alias\}\.operating_company_id = \$\{operatingCompanyIdParam\}\s*AND \$\{loadServiceMembershipSql\(alias, "open_dispatch", operatingCompanyIdParam\)\}/, "the board set must be the load service's open_dispatch state (views.live_loads), not a status list on mdata.loads");
+  need("canonical", /export function canonicalBoardRowClause\(alias: string\): string \{\s*return loadServiceMembershipSql\(alias, "open_dispatch"\);/, "the entity-scoped board clause must be the load service");
+  need("service", /FROM views\.live_loads v WHERE true/, "the load service reads views.live_loads");
   need("canonical", /COALESCE\(\$\{unitAlias\}\.currently_leased_to_company_id, \$\{unitAlias\}\.owner_company_id\) = \$\{operatingCompanyIdParam\}/, "THE unit gate is COALESCE(leased, owner) = company");
   need("list", /const existsSql = `\$\{canonicalDispatchWorkStatusClause\("l"\)\} AND \$\{canonicalBoardRowClause\("l"\)\}`/, "List / Kanban live scope = board status + row clause");
-  need("dispatchLoads", /if \(!query\.status \|\| query\.status\.length === 0\) filters\.push\(canonicalDispatchWorkStatusClause\("l"\)\)/, "GET /dispatch/loads with no status = the board set (D13)");
-  need("dispatchLoads", /canonicalBoardRowClause\("bl"\)/, "GET /dispatch/loads never returns a voided / sample load (D13)");
+  need("dispatchLoads", /filters\.push\(`\$\{canonicalDispatchWorkStatusClause\("l"\)\} AND \$\{loadServiceMembershipSql\("l", "open_dispatch", "\$1::uuid"\)\}`\)/, "GET /dispatch/loads default = the load service's board (D13)");
+  need("dispatchLoads", /scope: z\.enum\(\["board", "all"\]\)\.optional\(\)\.default\("board"\)/, "GET /dispatch/loads: scope=all is the explicit history read (D13)");
+  need("dispatchLoads", /canonicalRealLoadRowClause\("bl"\)/, "GET /dispatch/loads scope=all never returns a voided / sample load (D13)");
+  ban("dispatchLoads", /assigned_primary_driver_name: driverLabel/, "GET /dispatch/loads overwrites the full driver name with the short label (C1)");
+  for (const k of ["unitAgg", "trailerAgg", "driverAgg", "liveMap", "driverHub", "homeWidgets", "dispatcherHome"])
+    need(k, /\$\{loadServiceMembershipSql\(/, "reads its loads through the load service (443.206R item 1)");
+  for (const k of ["unitAgg", "trailerAgg", "driverAgg"])
+    ban(k, /NOT IN \('delivered', 'cancelled', 'void'/, "private current-load status list (register B5)");
   need("dispatchLoads", /AND \$\{canonicalDispatchWorkWhereClause\("l", "\$1::uuid"\)\}\s*-- The unit's DEFAULT driver/, "units-without-load: occupied = the board set (D6)");
   need("dispatchLoads", /WHERE \$\{canonicalBoardUnitGateSql\("u", "\$1::uuid"\)\}/, "units-without-load uses THE unit gate (D3)");
   ban("dispatchLoads", /FROM views\.live_loads\s+WHERE operating_company_id = \$1::uuid\s+AND live_state = 'open_dispatch'/, "a board tile reads views.live_loads open_dispatch (D2)");
@@ -80,7 +97,48 @@ export function staticFailures(src) {
   need("scenarios", /COALESCE\(hd\.merged_into_driver_id, h\.new_driver_id\) = l\.assigned_primary_driver_id/, "hop.assign compares a merged-away driver record, not its survivor");
   return f;
 }
-const readBoards = () => Object.fromEntries(Object.entries(BOARD_FILES).map(([k, rel]) => [k, readFileSync(new URL(`../${rel}`, import.meta.url), "utf8")]));
+// 443.206R — the load service is the ONLY reader of views.live_loads (owner law 09-28): any other backend file reading the view
+// in SQL (not a comment) is a second reader.
+import { readdirSync, statSync } from "node:fs";
+export function viewReadersOutsideService(files) {
+  const bad = [];
+  for (const [rel, src] of files) {
+    if (rel.endsWith("dispatch/load-service.ts")) continue;
+    src.split("\n").forEach((line, i) => {
+      const code = line.replace(/\/\/.*$/, "").replace(/--.*$/, "");
+      if (/^\s*\*/.test(line)) return;
+      if (/\bFROM\s+views\.live_loads\b|\bJOIN\s+views\.live_loads\b/.test(code)) bad.push(`${rel}:${i + 1}`);
+    });
+  }
+  return bad;
+}
+// LEAD 00:35Z parity re-run #2 — 13699's customer trailer L28591 showed on 8 surfaces but NULL on Load Costs + Loads report:
+// they kept their own trailer lateral. Any backend file that projects a load's trailer_number from assignment history must
+// project it through loadServiceTrailerNumberSql (customer / none / fleet). bills.service.ts is a BILL's equipment, not a load row.
+const TRAILER_PROJECTION_EXEMPT = ["dispatch/load-service.ts", "accounting/bills.service.ts"];
+export function trailerProjectionFailures(files) {
+  const bad = [];
+  for (const [rel, src] of files) {
+    if (TRAILER_PROJECTION_EXEMPT.some((e) => rel.endsWith(e))) continue;
+    const readsHistoryTrailer = /lah\.new_trailer_id|loadServiceTrailerLateralSql\(/.test(src);
+    if (readsHistoryTrailer && /AS trailer_number\b/.test(src) && !/\$\{loadServiceTrailerNumberSql\(/.test(src))
+      bad.push(`${rel}: projects trailer_number from assignment history without loadServiceTrailerNumberSql (a customer trailer shows null)`);
+  }
+  return bad;
+}
+function backendTsFiles() {
+  const out = [];
+  const walk = (d) => { for (const n of readdirSync(new URL(`../${d}`, import.meta.url))) {
+    const rel = `${d}/${n}`;
+    if (n === "node_modules" || n === "__tests__" || n.startsWith(".")) continue;
+    const st = statSync(new URL(`../${rel}`, import.meta.url));
+    if (st.isDirectory()) walk(rel); else if (rel.endsWith(".ts") && !rel.endsWith(".test.ts")) out.push([rel, readFileSync(new URL(`../${rel}`, import.meta.url), "utf8")]);
+  } };
+  walk("apps/backend/src");
+  return out;
+}
+const readOrEmpty = (rel) => { try { return readFileSync(new URL(`../${rel}`, import.meta.url), "utf8"); } catch { return ""; } };
+const readBoards = () => Object.fromEntries(Object.entries(BOARD_FILES).map(([k, rel]) => [k, readOrEmpty(rel)]));
 
 async function selftest() {
   const { canonicalActiveLoadWhereClause, currentTruckLineLoadSql, UNIT_IN_SERVICE_SQL, canonicalDispatchWorkStatusClause } =
@@ -96,13 +154,21 @@ async function selftest() {
   if (!dispatchWorkSql.includes("l.status IN")) failures.push("canonicalDispatchWorkStatusClause did not produce a status IN clause");
   if (dispatchWorkSql.includes("completed_docs_received")) failures.push("canonicalDispatchWorkStatusClause must never include completed_docs_received");
   const base = readBoards();
-  const baseStatic = staticFailures(base);
+  const baseStatic = [...staticFailures(base), ...viewReadersOutsideService(backendTsFiles()).map((x) => `second reader of views.live_loads: ${x}`)];
+  if (!viewReadersOutsideService([["apps/backend/src/dispatch/x.ts", "const q = `SELECT 1 FROM views.live_loads l`;"]]).length) failures.push('plant "second view reader" not caught');
+  const tp = trailerProjectionFailures(backendTsFiles());
+  if (tp.length) failures.push(`trailer projection baseline not clean: ${tp.join(" | ")}`);
+  if (!trailerProjectionFailures([["apps/backend/src/reports/x.ts", "LEFT JOIN LATERAL (SELECT eq.equipment_number AS trailer_number FROM dispatch.load_assignment_history lah JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id) tr ON true"]]).length)
+    failures.push('plant "own trailer lateral" not caught');
   if (baseStatic.length) failures.push(`static baseline not clean: ${baseStatic.join(" | ")}`);
   const plants = [
-    ["board set without row exclusions", "canonical", (x) => x.replace("AND ${canonicalBoardRowClause(alias)}`;", "`;")],
+    ["board set back to a status list on mdata.loads", "canonical", (x) => x.replace('AND ${loadServiceMembershipSql(alias, "open_dispatch", operatingCompanyIdParam)}`;', "`;")],
+    ["live map back to in_transit only", "liveMap", (x) => x.replace('${loadServiceMembershipSql("l", "open_dispatch", "$1::uuid")}', "l.status::text = 'in_transit'")],
+    ["profile current load back on a private list", "unitAgg", (x) => x + "\n// AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')"],
+    ["driver name overwritten by the short label", "dispatchLoads", (x) => x + "\nconst y = { assigned_primary_driver_name: driverLabel };"],
     ["unit gate back to the lease alone", "canonical", (x) => x.replace("COALESCE(${unitAlias}.currently_leased_to_company_id, ${unitAlias}.owner_company_id)", "${unitAlias}.currently_leased_to_company_id")],
     ["list without row clause", "list", (x) => x.replace('const existsSql = `${canonicalDispatchWorkStatusClause("l")} AND ${canonicalBoardRowClause("l")}`', 'const existsSql = canonicalDispatchWorkStatusClause("l")')],
-    ["GET /dispatch/loads unscoped", "dispatchLoads", (x) => x.replace('if (!query.status || query.status.length === 0) filters.push(canonicalDispatchWorkStatusClause("l"));', "")],
+    ["GET /dispatch/loads default not the service", "dispatchLoads", (x) => x.replace('filters.push(`${canonicalDispatchWorkStatusClause("l")} AND ${loadServiceMembershipSql("l", "open_dispatch", "$1::uuid")}`);', 'filters.push(canonicalDispatchWorkStatusClause("l"));')],
     ["tile back on views.live_loads", "dispatchLoads", (x) => x + "\nconst t = `FROM views.live_loads\n WHERE operating_company_id = $1::uuid\n AND live_state = 'open_dispatch'`;"],
     ["truck line gates loads on unit", "truckLine", (x) => x.replace('AND ${CURRENT_TRUCK_LINE_LOAD_SQL.replace(/\\bx\\./g, "l.")}', 'AND ${CURRENT_TRUCK_LINE_LOAD_SQL.replace(/\\bx\\./g, "l.")}\n          AND ${UNIT_IN_SERVICE_SQL}')],
     ["trip pairing last-leg status", "tripPairing", (x) => x.replace("status: legs[0]?.status", "status: legs[legs.length - 1]?.status")],
@@ -128,7 +194,7 @@ async function main() {
     await selftest();
     return;
   }
-  const sf = staticFailures(readBoards());
+  const sf = [...staticFailures(readBoards()), ...viewReadersOutsideService(backendTsFiles()).map((x) => `second reader of views.live_loads (the load service is the only reader): ${x}`), ...trailerProjectionFailures(backendTsFiles())];
   if (sf.length) {
     console.error(`${LABEL}: FAIL (static) —\n  - ${sf.join("\n  - ")}`);
     process.exitCode = 1;
@@ -225,13 +291,84 @@ async function main() {
     const assignedUnitBoardIds = new Set((await client.query(
       `SELECT l.id::text AS id FROM mdata.loads l WHERE l.id = ANY($1::uuid[]) AND l.assigned_unit_id IS NOT NULL`, [[...boardIds]])).rows.map((r) => r.id));
     const breakdown = await getOpenLoadsBreakdown(client, USMCA);
+    // 443.206R — the service itself, Driver Hub on-load, and Trip Pairing's driver = the one projection.
+    const { listLoadServiceIds } = await import("../apps/backend/src/dispatch/load-service.ts");
+    const serviceIds = new Set(await listLoadServiceIds(client, { operatingCompanyId: USMCA, state: "open_dispatch" }));
+    const { readDriverHub } = await import("../apps/backend/src/mdata/canonical/driver-hub.service.ts");
+    const { DISPATCH_ON_LOAD_STATUSES } = await import("../apps/backend/src/dispatch/active-loads-count.ts");
+    const hub = await readDriverHub(client, USMCA);
+    const hubOnLoad = new Set((Array.isArray(hub) ? hub : hub.rows ?? hub.drivers ?? []).filter((d) => d.on_load).map((d) => String(d.id)));
+    const onLoadDrivers = new Set((await client.query(
+      `SELECT DISTINCT x.d::text AS id FROM mdata.loads l, LATERAL (VALUES (l.assigned_primary_driver_id), (l.assigned_secondary_driver_id)) x(d)
+        WHERE l.id = ANY($1::uuid[]) AND x.d IS NOT NULL AND l.status::text = ANY($2::text[])`, [[...serviceIds], [...DISPATCH_ON_LOAD_STATUSES]])).rows.map((r) => r.id));
+    const { loadServiceDriverNameSql } = await import("../apps/backend/src/dispatch/load-service.ts");
+    const projected = new Map((await client.query(
+      `SELECT l.id::text AS id, ${loadServiceDriverNameSql("l", "d")} AS name FROM mdata.loads l
+         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id WHERE l.id = ANY($1::uuid[])`, [[...serviceIds]])).rows.map((r) => [r.id, r.name]));
     const onLoad = await countOnLoadDispatchLoads(client, USMCA);
     const onLoadRef = Number((await client.query(
       `SELECT count(*)::int n FROM mdata.loads l WHERE l.id = ANY($1::uuid[]) AND l.status IN ('dispatched','at_pickup','in_transit','at_delivery')`, [[...boardIds]])).rows[0].n);
 
     await client.query("ROLLBACK");
 
-    const realFailures = [];
+    // LEAD 23:45Z P0 — EXECUTE every repointed reader against real Postgres (a reader that cannot even run — Dispatcher Home's
+    // "could not determine data type of parameter $3" — is the worst disagreement of all).
+    const executed = [];
+    const OWNER_USER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
+    const tryRead = async (name, fn) => {
+      try { await client.query("BEGIN READ ONLY"); await client.query("SELECT set_config('app.bypass_rls','lucia',true)"); await fn(); executed.push(name); }
+      catch (e) { executeFailures.push(`${name} does not execute on prod: ${e.message}`); }
+      finally { await client.query("ROLLBACK").catch(() => {}); }
+    };
+    const executeFailures = [];
+    const { loadDispatcherHomeOnClient } = await import("../apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts");
+    await tryRead("Dispatcher Home", () => loadDispatcherHomeOnClient(client, OWNER_USER, USMCA));
+    await tryRead("Driver Hub", () => readDriverHub(client, USMCA));
+    await tryRead("Overview OPEN LOADS", () => getOpenLoadsBreakdown(client, USMCA));
+
+    // LEAD 23:45Z parity — the four disagreements the owner's harness found, measured on the REAL readers.
+    const parity = [];
+    const { loadPlannerWeekOnClient } = await import("../apps/backend/src/dispatch/planner.service.ts");
+    const { getFleetSchedule } = await import("../apps/backend/src/safety/driver-scheduler.service.ts");
+    const { getLivePositionsForActiveLoads } = await import("../apps/backend/src/integrations/samsara/positions/live-position.service.ts");
+    const { loadServiceTrailerNumberSql } = await import("../apps/backend/src/dispatch/load-service.ts");
+    const boardRows = (await (async () => { await client.query("BEGIN READ ONLY"); await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+      const r = (await client.query(`SELECT l.id::text id, l.load_number, l.assigned_primary_driver_id::text driver_id, l.assigned_unit_id::text unit_id, l.trailer_source,
+          ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number
+        FROM mdata.loads l LEFT JOIN LATERAL (SELECT eq.equipment_number FROM dispatch.load_assignment_history lah JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+          WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL ORDER BY lah.assigned_at DESC LIMIT 1) tr ON true
+        WHERE l.id = ANY($1::uuid[])`, [[...serviceIds]])).rows; await client.query("ROLLBACK"); return r; })());
+    const today = new Date().toISOString().slice(0, 10);
+    await tryRead("Planner week", async () => {
+      const wk = await loadPlannerWeekOnClient(client, USMCA, "2000-01-01", "2100-01-01", "2000-01-01T00:00:00Z", "2100-01-01T00:00:00Z");
+      const rosterIds = new Set(wk.drivers.map((d) => d.id));
+      for (const r of boardRows) if (r.driver_id && wk.loads.some((x) => x.id === r.id) && !rosterIds.has(r.driver_id)) parity.push(`Planner: load ${r.load_number}'s driver is not on the planner roster (driver shows null)`);
+    });
+    await tryRead("Fleet schedule (Driver Hub scheduler)", async () => {
+      const fs = await getFleetSchedule(client, { operatingCompanyId: USMCA, startDate: today, endDate: today });
+      const busy = new Set(boardRows.map((r) => r.unit_id).filter(Boolean));
+      for (const u of fs.vacant_units) if (busy.has(u.unit_id)) parity.push(`Driver Hub scheduler lists working truck ${u.unit_number} as vacant`);
+    });
+    await tryRead("Live map", async () => {
+      const pos = await getLivePositionsForActiveLoads(client, USMCA);
+      for (const p of pos) if (!("driver_id" in p)) { parity.push("Live map rows carry no driver"); break; }
+      for (const p of pos) { const b = boardRows.find((r) => r.id === p.load_uuid); if (b?.driver_id && p.driver_id !== b.driver_id) parity.push(`Live map driver for load ${b.load_number} ≠ the load's driver`); }
+    });
+    for (const r of boardRows) if (r.trailer_source === "customer" && !r.trailer_number) parity.push(`load ${r.load_number}: customer trailer missing from the board projection`);
+
+    const realFailures = [...executeFailures, ...parity];
+    const sDrift = [...[...serviceIds].filter((x) => !boardIds.has(x)), ...[...boardIds].filter((x) => !serviceIds.has(x))];
+    if (sDrift.length) realFailures.push(`load service open_dispatch ≠ board set: ${sDrift.length}`);
+    const hubMissing = [...onLoadDrivers].filter((x) => !hubOnLoad.has(x));
+    const hubExtra = [...hubOnLoad].filter((x) => !onLoadDrivers.has(x));
+    if (hubMissing.length || hubExtra.length)
+      realFailures.push(`Driver Hub on-load (real function) ≠ the service's on-load drivers: missing ${hubMissing.length}, extra ${hubExtra.length}`);
+    for (const t of tp.tours) {
+      const cur = t.legs[0];
+      if (!cur || !t.driver_name) continue;
+      const want = projected.get(cur.load_id);
+      if (want && want.trim() !== t.driver_name.trim()) realFailures.push(`Trip Pairing driver for ${t.unit_number} "${t.driver_name}" ≠ projection "${want}"`);
+    }
     const idDrift = [...[...tpIds].filter((x) => !assignedUnitBoardIds.has(x)), ...[...assignedUnitBoardIds].filter((x) => !tpIds.has(x))];
     if (idDrift.length) realFailures.push(`Trip Pairing (real function) disagrees with the board set's unit-assigned loads: ${idDrift.length}`);
     if (breakdown.total !== boardIds.size) realFailures.push(`Overview OPEN LOADS (real function) ${breakdown.total} ≠ board set ${boardIds.size}`);
@@ -266,7 +403,7 @@ async function main() {
     console.log(
       `${LABEL}: PASS — Load Costs agrees with the accounting canonical (${canonicalSet.size} loads); ` +
         `List/Kanban/Round Trips, Trip Pairing and Truck Line all agree with the dispatch-work canonical (${dispatchWorkSet.size} loads); ` +
-        `real functions: Trip Pairing ${tpIds.size} legs, Overview OPEN LOADS ${breakdown.total}, ON LOAD ${onLoad}.`
+        `executed ${executed.length} readers (${executed.join(", ")}); parity 0 (planner drivers, scheduler vacancy, live-map driver, customer trailers); real functions: load service ${serviceIds.size}, Trip Pairing ${tpIds.size} legs, Overview OPEN LOADS ${breakdown.total}, ON LOAD ${onLoad}, Driver Hub on-load ${hubOnLoad.size}.`
     );
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

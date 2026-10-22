@@ -1,3 +1,5 @@
+import { liveDriverBill, liveSettlement } from "./live-document-predicates.sql.js";
+import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -8,6 +10,7 @@ import { LOAD_COST_DOCUMENTS_CTE, loadCostsRevenueJoin } from "./load-costs-live
 import { wizardChargesLeftJoin } from "./load-wizard-charges.sql.js";
 import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 /** TAB-COMPLETION-STANDARD A — twelve hubs, both-way or explicit N/A. Silence is a defect. */
 export const LOAD_COSTS_HUB_LINKAGE = {
   1: { hub: "org.companies", via: "operating_company_id on loads, expenses, bills, driver_bills", reverse: "company-scoped lists" },
@@ -48,7 +51,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       ]).default("load"),
       sort_direction: z.enum(["asc", "desc"]).default("desc"),
       /** LOAD-COSTS-COMPLETE item (3): voided (cancelled) loads hidden by default. */
-      show_voided: z.coerce.boolean().default(false),
+      show_voided: queryBoolean().default(false),
     }).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
@@ -151,7 +154,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
+              AND ${liveDriverBill("db")}
               AND db.team_driver_id IS NULL
             ORDER BY db.load_id, db.created_at DESC
          -- SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11, verbatim: "remove and delete any
@@ -214,14 +217,14 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                JOIN driver_finance.settlement_lines sl ON sl.source_driver_bill_id = db.id
                JOIN driver_finance.driver_settlements legacy ON legacy.id = sl.settlement_id
                  AND legacy.operating_company_id = linked.operating_company_id
-                 AND legacy.voided_at IS NULL
+                 AND ${liveSettlement("legacy")}
                WHERE db.operating_company_id = linked.operating_company_id
-                 AND db.load_id = linked.id AND db.status <> 'void' AND db.voided_at IS NULL
+                 AND db.load_id = linked.id AND ${liveDriverBill("db")}
                ORDER BY db.created_at DESC, sl.id LIMIT 1
              ) bill_link ON linked.presettlement_link_id IS NULL
              JOIN driver_finance.driver_settlements ds
                ON ds.id = COALESCE(linked.presettlement_link_id, bill_link.settlement_id)
-              AND ds.operating_company_id = linked.operating_company_id AND ds.voided_at IS NULL
+              AND ds.operating_company_id = linked.operating_company_id AND ${liveSettlement("ds")}
             WHERE linked.operating_company_id = $1::uuid
          ), driver_pay_amounts AS (
            SELECT db.load_id,
@@ -231,7 +234,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
+              AND ${liveDriverBill("db")}
             GROUP BY db.load_id
          ), repair_documents AS (
            SELECT cd.load_id, cd.amount_cents
@@ -252,12 +255,12 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
+              AND ${liveDriverBill("db")}
             GROUP BY db.load_id
          )
          SELECT l.id::text AS load_id, l.load_number, l.status::text, COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id,l.operating_company_id)) AS customer_name,
                 mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id) AS driver_name,
-                u.unit_number, tr.equipment_number AS trailer_number, pickup.city AS pickup_city, delivery.city AS delivery_city,
+                u.unit_number, ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number, pickup.city AS pickup_city, delivery.city AS delivery_city,
                 pickup.scheduled_arrival_at::text AS pickup_date, delivery.scheduled_arrival_at::text AS scheduled_delivery_at,
                 delivery.actual_arrival_at::text AS actual_delivery_at, l.created_at::text,
                 revenue.revenue_cents::text AS revenue_cents, revenue.revenue_source,
@@ -307,15 +310,8 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            -- here (confirmed live: HTTP 500 on this exact endpoint); fixed to the same pattern
            -- already used by GET /api/v1/dispatch/loads (loads.routes.ts).
            LEFT JOIN mdata.units u ON u.id=l.assigned_unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id)=l.operating_company_id
-           LEFT JOIN LATERAL (
-             SELECT eq.equipment_number
-               FROM dispatch.load_assignment_history lah
-               JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
-                                      AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
-              WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL
-              ORDER BY lah.assigned_at DESC
-              LIMIT 1
-           ) tr ON true
+           -- LEAD 00:35Z parity re-run (13699 customer trailer L28591 null here): the load service's one trailer projection.
+           ${loadServiceTrailerLateralSql("l", "tr")}
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1) pickup ON true
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at,actual_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1) delivery ON true
           WHERE l.operating_company_id=$1::uuid

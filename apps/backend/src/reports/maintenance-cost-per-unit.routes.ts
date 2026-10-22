@@ -12,10 +12,11 @@ import {
   withCompanyScope,
 } from "./shared.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const periodQuerySchema = companyQuerySchema.extend({
   period_start: z.string().date(),
   period_end: z.string().date(),
-  include_roadservice: z.coerce.boolean().optional().default(true),
+  include_roadservice: queryBoolean().optional().default(true),
   basis: reportBasisSchema,
 });
 

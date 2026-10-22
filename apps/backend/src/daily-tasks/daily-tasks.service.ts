@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 export type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -24,7 +25,7 @@ export const listDailyTasksQuerySchema = z.object({
   team: z.string().trim().min(1).max(40).optional(),
   status: z.enum(TASK_STATUSES).optional(),
   date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  overdue: z.coerce.boolean().optional(),
+  overdue: queryBoolean().optional(),
 });
 
 export const taskIdParamsSchema = z.object({

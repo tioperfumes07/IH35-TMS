@@ -41,7 +41,10 @@ export async function registerNotificationStreamRoutes(app: FastifyInstance) {
     reply.raw.flushHeaders?.();
 
     let closed = false;
+    // LEAD 443.219 G-ERR (audit F23b): the cursor is the row's EXACT timestamp (Postgres text, microseconds) + its id. A JS
+    // Date keeps milliseconds only, so `created_at > $2` stayed true for the last row and it was re-sent every 5 s.
     let lastSeenAt = new Date().toISOString();
+    let lastSeenId = "00000000-0000-0000-0000-000000000000";
 
     const writeKeepalive = () => {
       if (closed) return;
@@ -55,29 +58,31 @@ export async function registerNotificationStreamRoutes(app: FastifyInstance) {
           if (!(await notificationsTableReady(client))) return [];
           const res = await client.query(
             `
-              SELECT id::text, type, severity, title, body, action_link, created_at
+              SELECT id::text, type, severity, title, body, action_link, created_at, created_at::text AS cursor_at
               FROM notifications.user_notifications
               WHERE user_id = $1::uuid
                 AND dismissed_at IS NULL
-                AND created_at > $2::timestamptz
-              ORDER BY created_at ASC
+                AND (created_at, id) > ($2::timestamptz, $3::uuid)
+              ORDER BY created_at ASC, id ASC
               LIMIT 20
             `,
-            [user.uuid, lastSeenAt]
+            [user.uuid, lastSeenAt, lastSeenId]
           );
           return res.rows;
         });
 
         for (const row of rows) {
           if (closed) break;
-          reply.raw.write(`data: ${JSON.stringify(row)}\n\n`);
+          const { cursor_at: cursorAt, ...payload } = row as Record<string, unknown> & { cursor_at?: string };
+          reply.raw.write(`data: ${JSON.stringify(payload)}\n\n`);
           // BUG (live, firing every 5s in prod): String(row.created_at) called Date.prototype.toString()
           // on the pg driver's native Date object for a timestamptz column — "Mon Sep 21 2026
           // 20:28:23 GMT+0000 (Coordinated Universal Time)" — which the NEXT poll then bound as
           // $2::timestamptz and Postgres rejected (22007), degrading this stream to keepalive-only.
           // new Date(...).toISOString() round-trips correctly whether pg handed back a Date object
           // (the normal case) or, defensively, an already-ISO string.
-          lastSeenAt = new Date(row.created_at as string | number | Date).toISOString();
+          lastSeenAt = cursorAt ?? new Date(row.created_at as string | number | Date).toISOString();
+          lastSeenId = String((row as { id?: unknown }).id ?? lastSeenId);
         }
         writeKeepalive();
       } catch (error) {

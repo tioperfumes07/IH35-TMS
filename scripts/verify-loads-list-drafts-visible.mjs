@@ -34,7 +34,7 @@ function failures(input = source) {
   const out = [];
 
   // 1. Backend drafts_only override + frontend pill wired to it.
-  if (!/drafts_only:\s*z\.coerce\.boolean\(\)\.default\(false\)/.test(input.backendRoutes)) out.push("backend drafts_only query param missing");
+  if (!/drafts_only:\s*queryBoolean\(\)\.default\(false\)/.test(input.backendRoutes)) out.push("backend drafts_only query param missing");
   if (!/if \(drafts_only\) \{[\s\S]{0,1200}l\.status = 'draft' OR l\.is_quicksave_draft = true/.test(input.backendRoutes)) out.push("backend drafts_only filter override missing");
   if (!/drafts_only\?:\s*boolean/.test(input.apiLoads)) out.push("frontend LoadsListFilters.drafts_only missing");
   if (!/filters\.drafts_only\)\s*query\.set\("drafts_only"/.test(input.apiCatalogLoads)) out.push("frontend listLoads does not send drafts_only");
@@ -47,7 +47,8 @@ function failures(input = source) {
   // 2. DRAFT badge, independent of status (checks is_quicksave_draft, not just status==='draft').
   if (!/is_quicksave_draft\?\?:\s*boolean/.test(input.apiLoads) && !/is_quicksave_draft\?:\s*boolean/.test(input.apiLoads)) out.push("DispatchLoadRow.is_quicksave_draft type missing");
   if (!/l\.is_quicksave_draft,/.test(input.backendRoutes)) out.push("backend list SELECT does not project is_quicksave_draft");
-  if (!/const isDraft = load\.status === "draft" \|\| load\.is_quicksave_draft === true/.test(input.dispatchBoard)) out.push("DispatchBoard isDraft predicate missing");
+  // LEAD 443.206R (register B9) — the predicate lives once in lib/load-status.ts isDraftLoad (status 'draft' OR quick-save draft).
+  if (!/const isDraft = isDraftLoad\(load\)/.test(input.dispatchBoard)) out.push("DispatchBoard isDraft predicate missing");
   if (!/data-testid=\{`dispatch-draft-badge-\$\{load\.id\}`\}/.test(input.dispatchBoard)) out.push("DispatchBoard DRAFT badge missing");
 
   // 3. Nav count badge fed by listQuicksaveDrafts.
@@ -58,7 +59,8 @@ function failures(input = source) {
   if (!/data-testid="dispatch-nav-drafts-badge"/.test(input.sidebar)) out.push("Sidebar.tsx nav drafts badge render missing");
 
   // 4. Row click on a draft opens the wizard (editLoadId), never the LoadDetailDrawer.
-  if (!/const isDraft = clicked \? clicked\.status === "draft" \|\| clicked\.is_quicksave_draft === true/.test(input.dispatchPage))
+  // LEAD 443.206R (register B9) — the one draft definition (lib/load-status.ts isDraftLoad).
+  if (!/const isDraft = clicked \? isDraftLoad\(clicked\) : false/.test(input.dispatchPage))
     out.push("Dispatch.tsx onRowClick draft detection missing");
   if (!/if \(isDraft\) \{\s*setEditLoadId\(id\);\s*openBookLoadModal\(\);\s*return;/.test(input.dispatchPage))
     out.push("Dispatch.tsx onRowClick does not route a draft to the wizard");
@@ -73,7 +75,7 @@ if (process.argv.includes("--selftest")) {
     { key: "apiCatalogLoads", from: 'if (filters.drafts_only) query.set("drafts_only", "true");', to: "", expect: "frontend listLoads does not send drafts_only" },
     { key: "apiLoads", from: "export { listLoads, listAllLoads };", to: "", expect: "frontend loads.ts must re-export listLoads from catalog-loads.ts (one listLoads)" },
     { key: "dispatchPage", from: 'data-testid="dispatch-drafts-pill"', to: 'data-testid="removed"', expect: "Dispatch.tsx Drafts pill missing" },
-    { key: "dispatchBoard", from: 'const isDraft = load.status === "draft" || load.is_quicksave_draft === true;', to: 'const isDraft = load.status === "draft";', expect: "DispatchBoard isDraft predicate missing" },
+    { key: "dispatchBoard", from: "const isDraft = isDraftLoad(load);", to: 'const isDraft = load.status === "draft";', expect: "DispatchBoard isDraft predicate missing" },
     { key: "sidebar", from: 'showDraftsBadge = meta.badgeKey === "dispatch_drafts" && draftsBadgeCount > 0', to: "showDraftsBadge = false", expect: "Sidebar.tsx showDraftsBadge predicate missing" },
     { key: "dispatchPage", from: "if (isDraft) {\n                setEditLoadId(id);\n                openBookLoadModal();\n                return;\n              }", to: "", expect: "Dispatch.tsx onRowClick does not route a draft to the wizard" },
   ];

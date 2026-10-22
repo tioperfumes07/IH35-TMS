@@ -16,6 +16,8 @@ function client(finalStopId: string) {
       if (/ORDER BY s\.sequence_number DESC LIMIT 1/.test(sql)) return { rows: [{ id: finalStopId }] };
       if (/UPDATE mdata\.load_stops/.test(sql)) return { rows: [{ id: "x" }] };
       if (/UPDATE mdata\.loads/.test(sql)) return { rows: [{ id: "load-1" }] };
+      // LEAD 443.211R — the one writer locks + reads the load's status before its compare-and-set.
+      if (/FROM mdata\.loads WHERE id = \$1::uuid AND operating_company_id = \$2::uuid FOR UPDATE/.test(sql)) return { rows: [{ status: "at_delivery" }] };
       return { rows: [] };
     },
   };
@@ -27,12 +29,12 @@ describe("stampStopDeparture — only the final delivery delivers (G11)", () => 
     const c = client("stop-final");
     await stampStopDeparture(c as never, { id: "stop-1", stop_type: "delivery", load_status: "at_delivery", operating_company_id: "co", status: "arrived" }, ctx);
     const up = c.calls.find((x) => /UPDATE mdata\.loads/.test(x.sql))!;
-    expect(up.values?.[1]).toBe("in_transit");
+    expect(up.values?.[2]).toBe("in_transit");
   });
   it("the final active delivery delivers the load", async () => {
     const c = client("stop-final");
     await stampStopDeparture(c as never, { id: "stop-final", stop_type: "delivery", load_status: "at_delivery", operating_company_id: "co", status: "arrived" }, ctx);
     const up = c.calls.find((x) => /UPDATE mdata\.loads/.test(x.sql))!;
-    expect(up.values?.[1]).toBe("delivered_pending_docs");
+    expect(up.values?.[2]).toBe("delivered_pending_docs");
   });
 });
