@@ -47,7 +47,9 @@ export const LOAD_CHANGED_COALESCE_MS = 250;
 export async function registerNotificationStreamRoutes(app: FastifyInstance) {
   app.get("/api/v1/notifications/stream", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
-    if (!user) return;
+    // LEAD 443.232 a: requireAuth already SENT the 401 — return the reply so Fastify does not send a second response
+    // (prod 10-22: every 30 s per signed-out tab, ERR_HTTP_HEADERS_SENT + FST_ERR_REP_ALREADY_SENT).
+    if (!user) return reply;
 
     applySseCorsHeaders(req, reply);
     reply.raw.setHeader("Content-Type", "text/event-stream");
