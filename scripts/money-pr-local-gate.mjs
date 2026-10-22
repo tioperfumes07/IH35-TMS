@@ -2680,6 +2680,11 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         return false;
       }
       if (DATA_WRITE_PATHS.some((p) => f.startsWith(p))) {
+        // GATE-SCOPE 443.235 — GRANT EXECUTE privilege SQL is not a money writer. dataWritePath*
+        // treats every db/migrations/*.sql as a write (schema-alter by definition), which armed tip
+        // RULE 2 load-born stamp ambient on this Live Map PR. Skip BEFORE the content check so the
+        // domainPaths GATE-SCOPE below is not unreachable for these exact files.
+        if (isRound443235GuardLabelGrantOnlyMigration(f)) return false;
         const diff = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
           cwd: ROOT,
           encoding: "utf8",

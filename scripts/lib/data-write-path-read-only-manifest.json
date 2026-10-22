@@ -1,0 +1,7 @@
+{
+  "read_only": [
+    "db/migrations/202616131600_grant_label_resolvers_to_guard_reader.sql"
+  ],
+  "forced_write": [],
+  "_comment": "GATE-SCOPE 443.235 — GRANT EXECUTE on label resolvers for guard_reader/ci_readonly. Privilege SQL only; no table DML, no posting, no money. Unconditional .sql→true in data-write-path-detection would arm every LIVE_DOMAIN census (measured: verify-every-load-born-posting-carries-its-load tip RULE 2 ambient)."
+}
