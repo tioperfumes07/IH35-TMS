@@ -240,6 +240,9 @@ export type SettlementCreatorDraft = {
   admin_fee_cents?: number | null;
   /** Driver PDF control total — Post disabled until draft net equals this (0 OK for dispatched-only seed). */
   pdf_driver_net_cents: number;
+  /** LEAD 443.215 — the printed source's date (YYYY-MM-DD) and Net Revenue, stored in the source fingerprint. */
+  source_printed_date?: string | null;
+  pdf_company_net_revenue_cents?: number | null;
   /** Company PDF EXPENSES control total. */
   pdf_company_expenses_cents: number;
   /**

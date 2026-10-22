@@ -1,3 +1,4 @@
+import { isLoadStatus, loadStatusLabel } from "../../../lib/load-status";
 /**
  * LV-DISPATCH-TOAST-LIES — the book-load success toast must report the status the SERVER returned,
  * never the one the click intended.
@@ -21,17 +22,16 @@
  * reviewer or an insurer reads.
  */
 
-/** Human label for the statuses this modal can actually produce. Unknown values are shown verbatim. */
-const STATUS_LABEL: Record<string, string> = {
-  draft: "saved as draft",
-  assigned_not_dispatched: "assigned, NOT dispatched",
-  dispatched: "dispatched",
-  unassigned: "unassigned",
-  in_transit: "in transit",
-  delivered_pending_docs: "delivered, pending docs",
-  completed_docs_received: "completed",
-  cancelled: "cancelled",
-};
+/**
+ * The toast's phrase for a status (LEAD 443.206R: one label source — lib/load-status.ts). Two phrases stay toast-specific:
+ * a draft "saved as draft", and assigned-but-not-dispatched spelled out in caps (the override-audit honesty rule above).
+ * An unknown value is shown verbatim.
+ */
+function toastStatusPhrase(status: string): string {
+  if (status === "draft") return "saved as draft";
+  if (status === "assigned_not_dispatched") return "assigned, NOT dispatched";
+  return isLoadStatus(status) ? loadStatusLabel(status).toLowerCase() : status;
+}
 
 /**
  * Build the success toast from what the server actually returned.
@@ -48,7 +48,7 @@ export function bookLoadToastMessage(saveMode: string, serverStatus: string | nu
 
   if (serverStatus === "dispatched") return "Load booked and dispatched";
 
-  const label = STATUS_LABEL[serverStatus] ?? serverStatus;
+  const label = toastStatusPhrase(serverStatus);
   return `Load booked — ${label}`;
 }
 

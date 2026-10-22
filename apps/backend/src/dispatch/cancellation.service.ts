@@ -9,6 +9,7 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import { stampDriverBillVoidedInClientTx } from "../driver-finance/driver-bill-void-state.service.js";
+import { transitionLoadStatus } from "./load-transition.service.js";
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -146,19 +147,13 @@ export async function finalizeLoadCancellationInClientTx(
   }
 ) {
   {
-    const cancelledLoad = await client.query<{ id: string }>(
-      `
-        UPDATE mdata.loads
-        SET status = 'cancelled'::mdata.load_status_enum,
-            updated_at = now()
-        WHERE id = $1
-          AND operating_company_id = $2::uuid
-          AND status::text = $3
-        RETURNING id
-      `,
-      [args.load_id, args.operating_company_id, args.prior_status]
-    );
-    if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
+    // LEAD 443.211R — through the one writer: X -> cancelled must be an edge of the one machine (a billed / closed load is
+    // not cancellable — its documents decide); compare-and-set on the status the caller locked.
+    const cancelledLoad = await transitionLoadStatus(client as never, {
+      operatingCompanyId: args.operating_company_id, loadId: args.load_id, to: "cancelled", kind: "forward",
+      writer: "cancellation", expectFrom: args.prior_status,
+    });
+    if (!cancelledLoad) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
     // ROUND 326: a cancelled load carries no recognized revenue — deleted, not reversed (owner law 2026-10-02).
     await settleRevrecOnCancel(client as never, args.operating_company_id, args.load_id, userId, args.revrec_memo);
   }

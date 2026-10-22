@@ -3,7 +3,8 @@ import { apiRequest } from "./client";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type IncomeLineItem = {
-  load_id: string;
+  load_id: string | null;
+  invoice_id?: string | null;
   load_number: string;
   customer_id: string | null;
   customer_name: string;

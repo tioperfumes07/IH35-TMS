@@ -32,7 +32,8 @@ import { TelematicsLinksPanel } from "../telematics/TelematicsLinksPanel";
 import { LoadStopsRecordTab } from "./LoadStopsRecordTab";
 import { LoadMilesRecommendations } from "../loads/MilesRecommendationsPanel";
 import { LoadAuditTab } from "./LoadAuditTab";
-import { STATUS_LABEL, formatMoneyCents } from "./constants";
+import { formatMoneyCents } from "./constants";
+import { loadStatusLabel } from "../../lib/load-status";
 import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
 import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail } from "../../pages/dispatch/LoadTemplateLibrary";
 import { AbandonmentReportModal } from "../../pages/loads/AbandonmentReportModal";
@@ -744,7 +745,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                     onTransition={(target) =>
                       void handleOfficeStatusTransition({
                         target: target as OfficeTransitionButton["target"],
-                        label: STATUS_LABEL[target] ?? String(target),
+                        label: loadStatusLabel(target),
                         testId: `load-detail-transition-${String(target).replace(/_/g, "-")}`,
                       })
                     }
@@ -905,7 +906,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                         label: "Status",
                         value: (
                           <span className="inline-flex flex-wrap items-center gap-1.5">
-                            {STATUS_LABEL[load.status]}
+                            {loadStatusLabel(load.status)}
                             {autoStatusSwitchQuery.isError ? (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#1F2A44]">
                                 Auto-status audit unavailable

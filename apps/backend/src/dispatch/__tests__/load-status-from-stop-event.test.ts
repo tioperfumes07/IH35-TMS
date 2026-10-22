@@ -14,10 +14,12 @@ describe("writeLoadStatusFromStopEventInClientTx", () => {
   it("moves dispatched → at_pickup with compare-and-set and an audit row", async () => {
     audit.mockClear();
     const calls: Array<{ sql: string; values?: unknown[] }> = [];
-    const client = { query: async (sql: string, values?: unknown[]) => { calls.push({ sql, values }); return { rows: [{ id: "l1" }] }; } };
+    // LEAD 443.211R — through the one writer: lock + read the status, then compare-and-set on it.
+    const client = { query: async (sql: string, values?: unknown[]) => { calls.push({ sql, values }); return { rows: [sql.includes("FOR UPDATE") ? { status: "dispatched" } : { id: "l1" }] }; } };
     const r = await writeLoadStatusFromStopEventInClientTx(client, { ...base, fromMdataStatus: "dispatched", toMdataStatus: "at_pickup" });
     expect(r).toEqual({ ok: true });
-    expect(calls[0]!.values).toEqual(["l1", "at_pickup", "co", "dispatched"]);
+    expect(calls[0]!.sql).toMatch(/FOR UPDATE/);
+    expect(calls[1]!.values).toEqual(["l1", "co", "at_pickup", "dispatched"]);
     expect(audit).toHaveBeenCalledWith(client, "a", "dispatch.load.status_from_stop_event", expect.objectContaining({ stop_id: "s1", from_status: "dispatched", to_status: "at_pickup" }), "info", "LEAD-443-184-STOP-STATUS");
   });
 

@@ -21,18 +21,23 @@ describe("syncLoadStatusToBillingInClientTx (R-205)", () => {
     const query = vi
       .fn()
       .mockResolvedValueOnce({ rows: [{ load_status: "invoiced", invoice_status: "sent", factoring_status: "advanced" }] })
+      .mockResolvedValueOnce({ rows: [{ status: "invoiced" }] })
       .mockResolvedValueOnce({ rows: [{ id: "load-1" }] });
     const result = await syncLoadStatusToBillingInClientTx({ query }, input);
     expect(result).toEqual({ changed: true, from: "invoiced", to: "closed" });
-    expect(String(query.mock.calls[1][0])).toMatch(/UPDATE mdata\.loads/);
-    expect(query.mock.calls[1][1]).toEqual(["load-1", "closed", "opco-1", "invoiced"]);
+    // LEAD 443.211R — the step goes through the one writer: lock + read, then compare-and-set on the status read.
+    expect(String(query.mock.calls[1][0])).toMatch(/FOR UPDATE/);
+    expect(String(query.mock.calls[2][0])).toMatch(/UPDATE mdata\.loads/);
+    expect(query.mock.calls[2][1]).toEqual(["load-1", "opco-1", "closed", "invoiced"]);
   });
 
   it("walks completed_docs_received -> invoiced -> closed for a funded invoice", async () => {
     const query = vi
       .fn()
       .mockResolvedValueOnce({ rows: [{ load_status: "completed_docs_received", invoice_status: "sent", factoring_status: "advanced" }] })
+      .mockResolvedValueOnce({ rows: [{ status: "completed_docs_received" }] })
       .mockResolvedValueOnce({ rows: [{ id: "load-1" }] })
+      .mockResolvedValueOnce({ rows: [{ status: "invoiced" }] })
       .mockResolvedValueOnce({ rows: [{ id: "load-1" }] });
     const result = await syncLoadStatusToBillingInClientTx({ query }, input);
     expect(result).toEqual({ changed: true, from: "completed_docs_received", to: "closed" });

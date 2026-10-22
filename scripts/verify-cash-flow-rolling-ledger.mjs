@@ -48,6 +48,7 @@ export const REQUIRES_LIVE_DB =
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-cash-flow-rolling-ledger";
 const BACKEND_FILE = "apps/backend/src/cash-flow/cash-flow.service.ts";
+const RECEIPTS_FILE = "apps/backend/src/cash-flow/cash-flow-receipts.sql.ts";
 const ROUTES_FILE = "apps/backend/src/cash-flow/cash-flow.routes.ts";
 const FRONTEND_FILE = "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx";
 // ACCT-F26303 (2026-09-13) — REG-031 extracted the KPI strip out of RollingLedgerTab.tsx into its
@@ -68,9 +69,7 @@ const REQUIRED_BACKEND_MARKERS = [
   ["FROM driver_finance.driver_bills db", "driver bills source missing"],
   ["FROM accounting.expenses e", "unmatched expenses source missing"],
   ["FROM finance.loan_amortization_rows lr", "loan amortization source missing"],
-  ["FROM accounting.invoices i", "invoices source missing"],
   ["FROM accounting.factoring_advances fa", "factoring advances/reserve source missing"],
-  ["FROM mdata.loads l", "delivered-not-invoiced loads source missing"],
   // carry-forward predicate (the literal owner rule, not a fixed window)
   ["row.due_date < dateStr", "carry-forward predicate (due_date < day, still open) missing"],
   // running cash from the live bank balance, never hardcoded
@@ -138,12 +137,18 @@ const REQUIRED_CRON_MARKERS = [
 
 export function check({
   backend = load(BACKEND_FILE),
+  receipts = load(RECEIPTS_FILE),
   routes = load(ROUTES_FILE),
   frontend = load(FRONTEND_FILE),
   kpiStrip = load(KPI_STRIP_FILE),
   cron = load(CRON_FILE),
 } = {}) {
   const f = [];
+  const rolling = backend.slice(backend.indexOf("export async function getRollingLedgerRows"));
+  if (!rolling.includes('${cashFlowReceiptsSql(true)}')) f.push("rolling ledger must consume shared receipts");
+  for (const source of ["FROM accounting.invoices i", "FROM mdata.loads l", 'loadServiceMembershipSql("l", "live", "$1::uuid")']) {
+    if (!receipts.includes(source)) f.push(`${RECEIPTS_FILE}: receipt source missing: ${source}`);
+  }
 
   for (const [marker, msg] of REQUIRED_BACKEND_MARKERS) {
     if (!backend.includes(marker)) f.push(`${BACKEND_FILE}: ${msg}`);
@@ -196,6 +201,7 @@ export function check({
 function selftest() {
   const good = {
     backend: load(BACKEND_FILE),
+    receipts: load(RECEIPTS_FILE),
     routes: load(ROUTES_FILE),
     frontend: load(FRONTEND_FILE),
     kpiStrip: load(KPI_STRIP_FILE),
@@ -208,6 +214,9 @@ function selftest() {
 
   let n = 0;
   const plants = [
+    { name: "shared receipt consumer removed", mutate: () => ({ ...good, backend: good.backend.replaceAll('${cashFlowReceiptsSql(true)}', '${missingReceipts(true)}') }) },
+    { name: "invoice receipt source removed", mutate: () => ({ ...good, receipts: good.receipts.replaceAll("FROM accounting.invoices i", "FROM missing.invoices i") }) },
+    { name: "unbilled load source removed", mutate: () => ({ ...good, receipts: good.receipts.replaceAll("FROM mdata.loads l", "FROM missing.loads l") }) },
     {
       name: "carry-forward predicate stripped",
       mutate: () => ({

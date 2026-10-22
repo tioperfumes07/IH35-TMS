@@ -22,4 +22,10 @@ describe("notification stream routes (AUDIT-FIX-9)", () => {
     expect(notificationsRoutes).toContain("registerNotificationStreamRoutes");
     expect(notificationsRoutes).not.toContain("./notification-stream.routes.js");
   });
+
+  it("LEAD 443.219 G-ERR — the cursor is the row's exact timestamp + id (a ms-truncated Date re-sent the last row every poll)", () => {
+    expect(streamRoutes).toContain("created_at::text AS cursor_at");
+    expect(streamRoutes).toContain("(created_at, id) > ($2::timestamptz, $3::uuid)");
+    expect(streamRoutes).toContain("ORDER BY created_at ASC, id ASC");
+  });
 });

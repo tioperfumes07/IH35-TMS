@@ -1,6 +1,7 @@
 // GO-20 slice A (docs/lockdown/GO-20-EIGHT-FEATURES.txt) — INTERFACE:
 //   GET  /api/v1/banking/drift-alerts          list, filterable by resolved
 //   POST /api/v1/banking/drift-alerts/:id/resolve   requires a note
+import { strictListQuery } from "../lib/strict-query.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -21,6 +22,8 @@ const listQuerySchema = companyQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
+// LEAD 443.219 G-STRICT — unknown query params: 400 outside production, logged + stripped in production (one rule).
+const strictListQuerySchema = strictListQuery(listQuerySchema, "GET /api/v1/banking/drift-alerts");
 
 const resolveBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -61,7 +64,7 @@ export async function registerBankingDriftAlertsRoutes(app: FastifyInstance) {
   app.get("/api/v1/banking/drift-alerts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = listQuerySchema.safeParse(req.query ?? {});
+    const query = strictListQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {

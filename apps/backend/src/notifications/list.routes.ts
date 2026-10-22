@@ -71,8 +71,9 @@ export async function registerNotificationListRoutes(app: FastifyInstance) {
       });
       return reply.send({ notifications: rows });
     } catch (error) {
-      req.log.warn({ err: error }, "notifications list degraded to empty");
-      return reply.send({ notifications: [] });
+      // LEAD 443.219 G-ERR (audit F23a): never a 2xx from a catch — a failed read is an error, not "no notifications".
+      req.log.error({ err: error }, "notifications list failed");
+      return reply.code(500).send({ error: "notifications_list_failed" });
     }
   });
 }

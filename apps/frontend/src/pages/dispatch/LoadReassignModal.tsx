@@ -48,7 +48,8 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
     onSuccess: async (_result, input) => {
       if (input.generation !== scopeGenerationRef.current || input.loadId !== loadId || input.operatingCompanyId !== operatingCompanyId) return;
       pushToast("Load reassigned", "success");
-      await qc.invalidateQueries({ queryKey: ["loads", "detail", input.loadId] });
+      // LEAD 443.206 — the real detail key is ["loads","detail",company,id] (api/loads.ts); the id-only key matched nothing.
+      await qc.invalidateQueries({ queryKey: ["loads", "detail", input.operatingCompanyId, input.loadId] });
       await qc.invalidateQueries({ queryKey: ["dispatch", "assignment-history", input.loadId] });
       await qc.invalidateQueries({ queryKey: ["loads", "list"] });
       onClose();
