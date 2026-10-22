@@ -14824,6 +14824,11 @@
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.238 sweep A: verify-no-private-load-status-lists (register B5/C1 geofence current load, AUDIT2 F21 exception-queue no-tour)"
   },
+  "18665": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.240: verify-load-miles-match-settlement-document (LIVE: every USMCA load on a signed settlement carries the document loaded / empty miles; the miles engine locks a document value)"
+  },
   "18629": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-21",
@@ -16857,5 +16862,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1073
+  "total_claimed": 1074
 }
