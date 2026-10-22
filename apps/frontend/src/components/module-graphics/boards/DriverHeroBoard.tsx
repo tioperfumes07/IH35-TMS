@@ -117,18 +117,18 @@ export function DriverHeroBoard({ companyId, driverId }: Props) {
             unitLabel={unitNumber ?? undefined}
           />
           <div className="min-w-0">
-            <div className="font-[family-name:var(--mod-font-cond)] text-[16px] font-semibold text-[var(--mod-navy)]">
+            <div className="font-[family-name:var(--mod-font-cond)] text-page-title font-semibold text-[var(--mod-navy)]">
               {unitNumber ? `Unit ${unitNumber}` : "No unit assigned"}
             </div>
-            <div className="text-[12px] text-[var(--mod-muted)]">
+            <div className="text-xs text-[var(--mod-muted)]">
               {[make, model].filter(Boolean).join(" ") || "Make/model —"}
             </div>
-            <div className="mt-1 font-[family-name:var(--mod-mono)] text-[14px] text-[var(--mod-navy)]">
+            <div className="mt-1 font-[family-name:var(--mod-mono)] text-xs text-[var(--mod-navy)]">
               {speed != null ? `${formatNumber(speed, 0)} mph` : "— mph"}
               {" · "}
               {[city, state].filter(Boolean).join(", ") || "Location —"}
             </div>
-            <div className="text-[11px] text-[var(--mod-muted)]">
+            <div className="text-section-header text-[var(--mod-muted)]">
               {captured ? `GPS ${captured}` : "GPS —"}
             </div>
           </div>
@@ -192,7 +192,7 @@ export function DriverHeroBoard({ companyId, driverId }: Props) {
 
       {hero?.loads?.in_motion || (hero?.loads?.booked_ahead?.length ?? 0) > 0 ? (
         <div className="rounded-sm border border-[var(--mod-border)] p-2" data-testid="driver-hero-loads">
-          <div className="text-[11px] font-bold uppercase text-[var(--mod-muted)]">Trip line</div>
+          <div className="text-section-header font-bold uppercase text-[var(--mod-muted)]">Trip line</div>
           {hero.loads?.in_motion ? (
             <Link
               className="mod-view-all block"
@@ -202,7 +202,7 @@ export function DriverHeroBoard({ companyId, driverId }: Props) {
               Now · load {hero.loads.in_motion.load_number}
             </Link>
           ) : (
-            <div className="text-[12px] text-[var(--mod-muted)]">Now · no in-motion load</div>
+            <div className="text-xs text-[var(--mod-muted)]">Now · no in-motion load</div>
           )}
           {(hero.loads?.booked_ahead ?? []).map((l) => (
             <Link
@@ -231,8 +231,8 @@ function DocCard({ label, value, to }: { label: string; value: string; to: strin
       className="rounded-sm border border-[var(--mod-border)] bg-[var(--mod-wash)] px-2 py-1.5 no-underline text-inherit hover:border-[var(--mod-navy)]"
       data-mod-click-through="1"
     >
-      <div className="text-[11px] font-bold uppercase text-[var(--mod-muted)]">{label}</div>
-      <div className="text-[12px] font-semibold text-[var(--mod-navy)]">{value}</div>
+      <div className="text-section-header font-bold uppercase text-[var(--mod-muted)]">{label}</div>
+      <div className="text-xs font-semibold text-[var(--mod-navy)]">{value}</div>
     </Link>
   );
 }

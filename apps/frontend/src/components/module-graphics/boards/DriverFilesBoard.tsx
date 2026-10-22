@@ -54,7 +54,7 @@ function CellChip({ cell: c }: { cell: FileCell }) {
   const color =
     c.state === "on_file" ? "#1F8A4C" : c.state === "check" ? "#C76A0A" : "#6B7280";
   return (
-    <span className="text-[11px] font-semibold uppercase" style={{ color }}>
+    <span className="text-section-header font-semibold uppercase" style={{ color }}>
       {c.state === "to_add" ? c.label : c.label}
     </span>
   );
@@ -150,9 +150,9 @@ export function DriverFilesBoard({ companyId }: Props) {
         <div className="mod-empty">No active drivers in the movement window yet.</div>
       ) : (
         <div className="overflow-x-auto" data-testid="driver-files-matrix">
-          <table className="w-full border-collapse text-[12px]">
+          <table className="w-full border-collapse text-xs">
             <thead>
-              <tr className="text-[11px] font-bold uppercase text-[#4B5563]">
+              <tr className="text-section-header font-bold uppercase text-[#4B5563]">
                 <th className="border-b border-[#E5E7EB] px-2 py-1 text-left">Driver</th>
                 <th className="border-b border-[#E5E7EB] px-2 py-1 text-center">CDL</th>
                 <th className="border-b border-[#E5E7EB] px-2 py-1 text-center">DOT medical</th>
@@ -177,7 +177,7 @@ export function DriverFilesBoard({ companyId }: Props) {
                       >
                         {name}
                       </Link>
-                      <div className="text-[11px] text-[#6B7280]">{files.onFileCount} of 6 on file</div>
+                      <div className="text-section-header text-[#6B7280]">{files.onFileCount} of 6 on file</div>
                     </td>
                     <td className="px-2 py-1.5 text-center">
                       <Link to={to} className="no-underline" data-mod-click-through="1" data-mod-click-to={to}>
@@ -204,7 +204,7 @@ export function DriverFilesBoard({ companyId }: Props) {
                         <CellChip cell={files.dq} />
                       </Link>
                     </td>
-                    <td className="px-2 py-1.5 text-center font-mono text-[12px] text-[#14213D]">
+                    <td className="px-2 py-1.5 text-center font-mono text-xs text-[#14213D]">
                       {files.onFileCount}/6
                     </td>
                   </tr>
@@ -212,7 +212,7 @@ export function DriverFilesBoard({ companyId }: Props) {
               })}
             </tbody>
           </table>
-          <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[#6B7280]">
+          <div className="mt-2 flex flex-wrap gap-3 text-section-header text-[#6B7280]">
             <span style={{ color: "#1F8A4C" }}>on file</span>
             <span>to add — not blocking</span>
             <span style={{ color: "#C76A0A" }}>double-check</span>

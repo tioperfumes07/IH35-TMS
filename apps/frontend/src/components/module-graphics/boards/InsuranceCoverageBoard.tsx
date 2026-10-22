@@ -120,19 +120,19 @@ export function InsuranceCoverageBoard({ companyId }: Props) {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="text-[11px] font-bold uppercase text-[#14213D]">{policyLabel(p)}</div>
-                    <div className="truncate text-[11px] text-[#6B7280]">
+                    <div className="text-section-header font-bold uppercase text-[#14213D]">{policyLabel(p)}</div>
+                    <div className="truncate text-section-header text-[#6B7280]">
                       {[p.carrier_name, p.policy_number].filter(Boolean).join(" · ") || "Policy"}
                     </div>
                   </div>
-                  <div className="shrink-0 font-mono text-[13px] font-semibold text-[#14213D]">
+                  <div className="shrink-0 font-mono text-xs font-semibold text-[#14213D]">
                     {formatUsdCents(p.total_premium_cents ?? 0)}
                   </div>
                 </div>
                 <div className="mt-1.5 h-2 overflow-hidden rounded-sm bg-[#E9EDF2]">
                   <div className="h-full bg-[#2456C7]" style={{ width: `${pct}%` }} />
                 </div>
-                <div className="mt-0.5 text-[11px] text-[#6B7280]">
+                <div className="mt-0.5 text-section-header text-[#6B7280]">
                   day {used} of {span}
                   {end ? ` · renew ${end}` : ""}
                 </div>
@@ -158,8 +158,8 @@ export function InsuranceCoverageBoard({ companyId }: Props) {
                 data-mod-click-through="1"
                 data-mod-click-to={to}
               >
-                <span className="text-[12px] text-[#14213D]">{policyLabel(p)}</span>
-                <span className="font-mono text-[12px] text-[#14213D]">
+                <span className="text-xs text-[#14213D]">{policyLabel(p)}</span>
+                <span className="font-mono text-xs text-[#14213D]">
                   {formatUsdCents(p.total_premium_cents ?? 0)} · {share.toFixed(1)}%
                 </span>
               </Link>

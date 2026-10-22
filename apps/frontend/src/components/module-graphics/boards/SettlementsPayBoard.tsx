@@ -144,7 +144,7 @@ export function SettlementsPayBoard({ companyId }: Props) {
                 data-mod-click-to={to}
                 title={`${start}: ${w.count} settlements`}
               >
-                <div className="font-mono text-[10px] font-semibold text-[#14213D]">
+                <div className="font-mono text-section-header font-semibold text-[#14213D]">
                   ${(w.net / 1000).toFixed(1)}k
                 </div>
                 <div
@@ -152,8 +152,8 @@ export function SettlementsPayBoard({ companyId }: Props) {
                   style={{ height: h }}
                   aria-hidden
                 />
-                <div className="text-[10px] font-bold uppercase text-[#6B7280]">{weekLabel(start)}</div>
-                <div className="text-[10px] text-[#6B7280]">
+                <div className="text-section-header font-bold uppercase text-[#6B7280]">{weekLabel(start)}</div>
+                <div className="text-section-header text-[#6B7280]">
                   {w.count} stl{w.open ? ` · ${w.open} open` : ""}
                 </div>
               </Link>
@@ -184,14 +184,14 @@ export function SettlementsPayBoard({ companyId }: Props) {
                 data-mod-click-to={to}
               >
                 <div className="min-w-0">
-                  <div className="truncate text-[12px] font-semibold text-[#14213D]">{s.driver_full_name}</div>
-                  <div className="truncate text-[11px] text-[#6B7280]">{loads}</div>
+                  <div className="truncate text-xs font-semibold text-[#14213D]">{s.driver_full_name}</div>
+                  <div className="truncate text-section-header text-[#6B7280]">{loads}</div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="font-mono text-[13px] font-semibold text-[#14213D]">
+                  <div className="font-mono text-xs font-semibold text-[#14213D]">
                     {formatUsdCents(Math.round(Number(s.net_pay ?? 0) * 100))}
                   </div>
-                  <div className="text-[11px] uppercase text-[#1F8A4C]">
+                  <div className="text-section-header uppercase text-[#1F8A4C]">
                     {s.payment_state === "cleared" || s.payment_state === "manual_paid" ? "paid" : s.payment_state ?? "open"}
                   </div>
                 </div>

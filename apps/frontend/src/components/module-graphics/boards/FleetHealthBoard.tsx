@@ -214,10 +214,10 @@ export function FleetHealthBoard({ companyId }: Props) {
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">
-                    <span className="font-[family-name:var(--mod-font-cond)] text-[14px] font-semibold text-[var(--mod-navy)]">
+                    <span className="font-[family-name:var(--mod-font-cond)] text-xs font-semibold text-[var(--mod-navy)]">
                       {r.unit_number}
                     </span>
-                    <span className="truncate text-[12px] text-[var(--mod-muted)]">
+                    <span className="truncate text-xs text-[var(--mod-muted)]">
                       {[r.year, r.make, r.model].filter(Boolean).join(" ")}
                     </span>
                   </div>
@@ -236,7 +236,7 @@ export function FleetHealthBoard({ companyId }: Props) {
                       }
                     />
                   </div>
-                  <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-[var(--mod-muted)]">
+                  <div className="mt-0.5 flex flex-wrap gap-x-3 text-section-header text-[var(--mod-muted)]">
                     <span>
                       {r.miles_left != null ? `${formatNumber(r.miles_left)} mi left` : "— mi left"}
                     </span>
@@ -245,7 +245,7 @@ export function FleetHealthBoard({ companyId }: Props) {
                   </div>
                 </div>
                 <span
-                  className="shrink-0 rounded-sm px-2 py-0.5 text-[11px] font-bold uppercase"
+                  className="shrink-0 rounded-sm px-2 py-0.5 text-section-header font-bold uppercase"
                   style={{
                     color: STATE_CAB[state],
                     background: "#fff",

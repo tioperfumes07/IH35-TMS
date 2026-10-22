@@ -194,19 +194,19 @@ export function UnexpectedExpensesBoard({ companyId }: Props) {
                 data-mod-click-to={to}
               >
                 <div className="min-w-0">
-                  <div className="text-[11px] font-bold uppercase text-[#6B7280]">
+                  <div className="text-section-header font-bold uppercase text-[#6B7280]">
                     {t.transaction_date.slice(5)}
                   </div>
-                  <div className="truncate text-[12px] font-semibold text-[#14213D]">
+                  <div className="truncate text-xs font-semibold text-[#14213D]">
                     {t.merchant_name || t.description || "Bank line"}
                   </div>
                   {isDupe ? (
-                    <div className="text-[11px] text-[#C76A0A]">possible duplicate</div>
+                    <div className="text-section-header text-[#C76A0A]">possible duplicate</div>
                   ) : (
-                    <div className="text-[11px] text-[#2456C7]">Link unit · work order</div>
+                    <div className="text-section-header text-[#2456C7]">Link unit · work order</div>
                   )}
                 </div>
-                <div className="shrink-0 font-mono text-[13px] font-semibold text-[#14213D]">
+                <div className="shrink-0 font-mono text-xs font-semibold text-[#14213D]">
                   {formatUsdCents(absOutCents(t))}
                 </div>
               </Link>
@@ -228,8 +228,8 @@ export function UnexpectedExpensesBoard({ companyId }: Props) {
               data-mod-click-through="1"
               data-mod-click-to={to}
             >
-              <span className="text-[12px] text-[#14213D]">{p.label}</span>
-              <span className="font-mono text-[12px] font-semibold text-[#14213D]">{formatUsdCents(cents)}</span>
+              <span className="text-xs text-[#14213D]">{p.label}</span>
+              <span className="font-mono text-xs font-semibold text-[#14213D]">{formatUsdCents(cents)}</span>
             </Link>
           );
         })}

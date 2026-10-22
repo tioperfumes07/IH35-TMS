@@ -137,9 +137,9 @@ export function AccountingControlBoard({ companyId }: Props) {
                 data-mod-click-through="1"
                 data-mod-click-to={`/reports/audit/period-close-history?period=${encodeURIComponent(p.period_start)}`}
               >
-                <div className="text-[11px] font-bold uppercase text-[#14213D]">{label}</div>
+                <div className="text-section-header font-bold uppercase text-[#14213D]">{label}</div>
                 <div
-                  className="mt-0.5 text-[11px] font-semibold uppercase"
+                  className="mt-0.5 text-section-header font-semibold uppercase"
                   style={{ color: closed ? "#1F8A4C" : "#C76A0A" }}
                 >
                   {closed ? "Closed" : "Not closed"}

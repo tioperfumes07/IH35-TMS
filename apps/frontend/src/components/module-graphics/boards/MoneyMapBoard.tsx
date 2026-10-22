@@ -117,12 +117,12 @@ export function MoneyMapBoard({ companyId }: Props) {
                 data-mod-click-through="1"
                 data-testid={`money-map-acct-${a.bank_account_id}`}
               >
-                <div className="font-[family-name:var(--mod-font-cond)] text-[13px] font-semibold text-[var(--mod-navy)]">
+                <div className="font-[family-name:var(--mod-font-cond)] text-xs font-semibold text-[var(--mod-navy)]">
                   {a.display_name}
                 </div>
-                <div className="mt-1 grid grid-cols-2 gap-1 text-[12px]">
+                <div className="mt-1 grid grid-cols-2 gap-1 text-xs">
                   <div>
-                    <div className="text-[11px] font-bold uppercase text-[var(--mod-muted)]">In</div>
+                    <div className="text-section-header font-bold uppercase text-[var(--mod-muted)]">In</div>
                     <div className="font-[family-name:var(--mod-mono)] text-[var(--mod-green)]">
                       {hasFlow ? formatUsdCents(a.in_cents) : "—"}
                     </div>
@@ -137,7 +137,7 @@ export function MoneyMapBoard({ companyId }: Props) {
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] font-bold uppercase text-[var(--mod-muted)]">Out</div>
+                    <div className="text-section-header font-bold uppercase text-[var(--mod-muted)]">Out</div>
                     <div className="font-[family-name:var(--mod-mono)] text-[var(--mod-red)]">
                       {hasFlow ? formatUsdCents(a.out_cents) : "—"}
                     </div>
@@ -149,7 +149,7 @@ export function MoneyMapBoard({ companyId }: Props) {
                     </div>
                   </div>
                 </div>
-                <div className="mt-1 text-[11px] text-[var(--mod-muted)]">
+                <div className="mt-1 text-section-header text-[var(--mod-muted)]">
                   {formatNumber(a.line_count)} lines · {formatNumber(a.pending_review_count)} to review
                 </div>
               </Link>

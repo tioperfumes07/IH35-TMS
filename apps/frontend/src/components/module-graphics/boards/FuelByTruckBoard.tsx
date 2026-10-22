@@ -187,16 +187,16 @@ export function FuelByTruckBoard({ companyId }: Props) {
               >
                 <TractorTopView bodyStyle={style} unitLabel={t.unitNumber} size={96} />
                 <div className="min-w-0 flex-1">
-                  <div className="font-[family-name:var(--mod-font-cond)] text-[15px] font-semibold text-[#14213D]">
+                  <div className="font-[family-name:var(--mod-font-cond)] text-xs font-semibold text-[#14213D]">
                     {t.unitNumber}
                   </div>
-                  <div className="truncate text-[11px] text-[#6B7280]">
+                  <div className="truncate text-section-header text-[#6B7280]">
                     {[t.make, t.model, t.year].filter(Boolean).join(" · ") || "Unit"}
                   </div>
-                  <div className="mt-0.5 font-mono text-[13px] font-semibold text-[#14213D]">
+                  <div className="mt-0.5 font-mono text-xs font-semibold text-[#14213D]">
                     {formatUsdCents(t.spendCents)}
                   </div>
-                  <div className="text-[11px] text-[#6B7280]">
+                  <div className="text-section-header text-[#6B7280]">
                     {formatNumber(t.gallons, 1)} gal
                     {avg != null ? ` · $${avg.toFixed(3)}/gal` : ""}
                     {` · ${t.loads.size} loads`}

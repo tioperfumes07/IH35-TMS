@@ -82,7 +82,7 @@
 
 .mod-stat__value {
   font-family: var(--mod-mono);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--mod-navy);
   margin-top: 2px;
@@ -110,7 +110,7 @@
 
 .mod-section-head__title {
   font-family: var(--mod-font-cond);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--mod-navy);

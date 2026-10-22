@@ -130,9 +130,9 @@ export function LegalMattersBoard({ companyId }: Props) {
             const rows = byStage.get(s.id) ?? [];
             return (
               <div key={s.id} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-1.5">
-                <div className="text-[11px] font-bold uppercase text-[#14213D]">{s.label}</div>
+                <div className="text-section-header font-bold uppercase text-[#14213D]">{s.label}</div>
                 {rows.length === 0 ? (
-                  <div className="mt-1 text-[11px] text-[#6B7280]">no real matter</div>
+                  <div className="mt-1 text-section-header text-[#6B7280]">no real matter</div>
                 ) : (
                   <div className="mt-1 space-y-1">
                     {rows.slice(0, 4).map((m) => {
@@ -143,7 +143,7 @@ export function LegalMattersBoard({ companyId }: Props) {
                         <Link
                           key={id}
                           to={to}
-                          className="block rounded-sm border border-[#E5E7EB] bg-white px-1.5 py-1 text-[11px] text-[#14213D] no-underline"
+                          className="block rounded-sm border border-[#E5E7EB] bg-white px-1.5 py-1 text-section-header text-[#14213D] no-underline"
                           data-mod-click-through="1"
                           data-mod-click-to={to}
                         >
@@ -170,7 +170,7 @@ export function LegalMattersBoard({ companyId }: Props) {
       )}
 
       <ModSectionHead title="Contracts pipeline" viewAllTo="/legal/contracts" />
-      <div className="flex flex-wrap gap-2 text-[12px]">
+      <div className="flex flex-wrap gap-2 text-xs">
         <Link to="/legal/contracts?status=draft" className="rounded-sm border border-[#E5E7EB] px-2 py-1 no-underline" data-mod-click-through="1" data-mod-click-to="/legal/contracts?status=draft">
           Draft · {draft}
         </Link>

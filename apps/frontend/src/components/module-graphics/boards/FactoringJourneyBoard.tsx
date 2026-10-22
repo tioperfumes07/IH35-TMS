@@ -127,10 +127,10 @@ export function FactoringJourneyBoard({ companyId }: Props) {
             key={s.step}
             className="rounded-sm border border-[var(--mod-border)] bg-[var(--mod-wash)] px-2 py-1.5"
           >
-            <div className="text-[11px] font-bold uppercase text-[var(--mod-muted)]">
+            <div className="text-section-header font-bold uppercase text-[var(--mod-muted)]">
               {s.step}. {s.label}
             </div>
-            <div className="font-[family-name:var(--mod-mono)] text-[14px] font-semibold text-[var(--mod-navy)]">
+            <div className="font-[family-name:var(--mod-mono)] text-xs font-semibold text-[var(--mod-navy)]">
               {s.value == null
                 ? "no data"
                 : s.step === 3
@@ -168,9 +168,9 @@ export function FactoringJourneyBoard({ companyId }: Props) {
                     kind="factoring_purchase"
                     id={p.id}
                     label={p.display_id}
-                    className="font-[family-name:var(--mod-font-cond)] text-[13px] font-semibold text-[var(--mod-navy)] no-underline"
+                    className="font-[family-name:var(--mod-font-cond)] text-xs font-semibold text-[var(--mod-navy)] no-underline"
                   />
-                  <span className="text-[12px] text-[var(--mod-muted)]">
+                  <span className="text-xs text-[var(--mod-muted)]">
                     {p.purchase_date} · {formatNumber(p.invoice_count)} inv ·{" "}
                     {formatUsdCents(p.gross_cents)}
                   </span>
