@@ -37,6 +37,15 @@ export function scanSource(source, file = 'board.tsx') {
   if (tree.parseDiagnostics.length) {
     return { values, problems: [`${file}: JSX parse failed; cannot verify click-through`] };
   }
+  const valueNames = new Set(VALUE_COMPONENTS);
+  for (const statement of tree.statements) {
+    const bindings = ts.isImportDeclaration(statement) ? statement.importClause?.namedBindings : null;
+    if (bindings && ts.isNamedImports(bindings)) {
+      for (const binding of bindings.elements) {
+        if (VALUE_COMPONENTS.has(binding.propertyName?.text ?? binding.name.text)) valueNames.add(binding.name.text);
+      }
+    }
+  }
   function resolve(node, depth = 0) {
     if (!node || depth > 8) return null;
     if (ts.isJsxExpression(node) || ts.isParenthesizedExpression(node)) return resolve(node.expression, depth + 1);
@@ -60,7 +69,7 @@ export function scanSource(source, file = 'board.tsx') {
     const opening = ts.isJsxElement(node) ? node.openingElement : node;
     const tag = opening.tagName.getText(tree);
     const attrs = new Map(opening.attributes.properties.filter(ts.isJsxAttribute).map(a => [a.name.getText(tree), a]));
-    const numericPrimitive = VALUE_COMPONENTS.has(tag);
+    const numericPrimitive = valueNames.has(tag);
     const explicitValue = attrs.has('data-graphic-value');
     const chart = ['polyline', 'Bar', 'Line', 'Pie', 'Area', 'Scatter'].includes(tag) ||
       (/^[A-Z]/.test(tag) && ['data', 'series', 'points'].some(key => attrs.has(key)));
@@ -91,7 +100,7 @@ export function scanSource(source, file = 'board.tsx') {
         const disabledExpr = disabledProp?.initializer;
         if (disabledProp && !(disabledExpr && ts.isJsxExpression(disabledExpr) &&
           disabledExpr.expression?.kind === ts.SyntaxKind.FalseKeyword)) disabled = true;
-        const dest = VALUE_COMPONENTS.has(name) ? p.get('href') :
+        const dest = valueNames.has(name) ? p.get('href') :
           name === 'Link' || name === 'NavLink' ? p.get('to') : name === 'a' ? p.get('href') : null;
         if (dest) { destination = resolve(dest.initializer); break; }
       }
@@ -145,6 +154,8 @@ export function selftest() {
     ['filtered aggregate is not ignored', '<span>{rows.filter(isOpen).length}</span>', true],
     ['numeric literal expression', '<span>{42}</span>', true],
     ['numeric text', '<span>$1,200.00</span>', true],
+    ['renamed import cannot evade', 'import {V3KpiTile as Metric} from "../V3Kit"; const x=<Metric value="1" />;', true],
+    ['renamed import valid scope', 'import {V3KpiTile as Metric} from "../V3Kit"; const x=<Metric value="1" href="/accounting/bills?status=open" />;', false],
   ];
   for (const [name, source, fails] of cases) {
     assert.equal(scanSource(source).problems.length > 0, fails, name);
