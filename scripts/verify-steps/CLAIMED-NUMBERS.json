@@ -14834,6 +14834,11 @@
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.241: verify-settled-load-stops-carry-the-document (LIVE: every stop of a USMCA load on a signed settlement carries the document facility / ZIP and a real-address location fence)"
   },
+  "18673": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.243: verify-nb-left-driver-does-not-occupy-presettlement (an NB moved back to draft / to another driver never blocks the driver's real next NB; Book Load keeps the stop facility_name)"
+  },
   "18629": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-21",
@@ -16867,7 +16872,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1075,
+  "total_claimed": 1076,
   "18670": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-22",
