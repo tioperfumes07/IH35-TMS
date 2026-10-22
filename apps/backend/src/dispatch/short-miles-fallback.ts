@@ -10,6 +10,7 @@
  * L.Miles arriving later replaces it through the same driver-bill engine (Edit Load) and re-prices.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { loadedMilesFor } from "./loaded-miles.js";
 import { computeShortestRouteMilesOrReason, type LatLng } from "../integrations/google/routes-api-client.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
@@ -106,15 +107,23 @@ export async function applyShortMilesFallback(
   input: { operatingCompanyId: string; loadId: string; actorUserId: string },
   r: { miles: number; source: ShortMilesSource; detail: string }
 ): Promise<boolean> {
+  // 443.233 (CC-3, verify-loaded-miles-derived red on main): loaded_miles is re-derived by the one rule (loadedMilesFor) from the
+  // new short and the load's practical, in the same write.
+  const practical = (await client.query<{ p: string | null }>(
+    `SELECT miles_practical::text AS p FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.loadId, input.operatingCompanyId]
+  )).rows[0]?.p ?? null;
+  const loaded = loadedMilesFor(r.miles, practical);
   const upd = await client.query<{ id: string }>(
     `UPDATE mdata.loads
         SET miles_shortest = $3,
+            loaded_miles = $7::numeric,
             miles_choice = COALESCE(miles_choice, '{}'::jsonb) || jsonb_build_object('short', jsonb_build_object(
               'value', $3::numeric, 'source', $4::text, 'reason', $5::text, 'chosen_at', now(), 'chosen_by', $6::text)),
             updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND COALESCE(miles_shortest, 0) = 0
       RETURNING id::text`,
-    [input.loadId, input.operatingCompanyId, r.miles, r.source, r.detail, input.actorUserId]
+    [input.loadId, input.operatingCompanyId, r.miles, r.source, r.detail, input.actorUserId, loaded]
   );
   if (!upd.rows[0]) return false;
   await appendCrudAudit(
