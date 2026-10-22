@@ -49,7 +49,10 @@ export function collectFailures(src = source) {
   requireText(route, "openBillsQuerySchema.safeParse(req.query ?? {})", "Open-bills route must parse the company-scoped query schema");
   requireText(route, "withCompanyScope(user.uuid, parsed.data.operating_company_id", "Open-bills route must execute inside the selected company scope");
   requireText(route, "FROM driver_finance.driver_bills db", "Open-bills route must read canonical driver_finance.driver_bills");
-  requireText(route, "db.operating_company_id = $1::uuid AND db.status = 'open'", "Open-bills route must filter selected company and open status");
+  // Accept either the pre-D8 literal or the canonical openDriverBill("db") call (D8 migration).
+  if (!route.includes("db.operating_company_id = $1::uuid AND db.status = 'open'") && !route.includes('openDriverBill("db")')) {
+    errors.push("Open-bills route must filter selected company and open status");
+  }
   requireText(route, 'parsed.data.driver_id ? "AND db.driver_id = $2" : ""', "Open-bills route must scope the optional driver filter");
   requireText(route, "d.id = db.driver_id AND d.operating_company_id = db.operating_company_id", "Driver label join must be company-scoped and bind the canonical driver id");
   requireText(route, "items: payload.bills", "Open-bills response must return canonical bill rows");
@@ -99,7 +102,8 @@ function selftest() {
     ["backend", "openBillsQuerySchema.safeParse(req.query ?? {})", "openBillsQuerySchema.safeParse({})"],
     ["backend", "withCompanyScope(user.uuid, parsed.data.operating_company_id", "withCompanyScope(user.uuid, crypto.randomUUID()"],
     ["backend", "FROM driver_finance.driver_bills db", "FROM accounting.bills db"],
-    ["backend", "db.operating_company_id = $1::uuid AND db.status = 'open'", "db.status = 'open'"],
+    // D8: route now uses openDriverBill("db"); plant a broken version to verify the guard catches it
+    ["backend", 'openDriverBill("db")', 'openDriverBillBroken("db")'],
     ["backend", 'parsed.data.driver_id ? "AND db.driver_id = $2" : ""', 'parsed.data.driver_id ? "" : ""'],
     ["backend", "d.id = db.driver_id AND d.operating_company_id = db.operating_company_id", "d.id = db.driver_id"],
     ["backend", "items: payload.bills", "items: []"],

@@ -24,6 +24,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-test-fixtures-refuse-production";
 const H = "apps/backend/test-helpers/";
+// hostname-guard: tests that guard with a hostname array includes pattern (e.g. loopback IP + localhost array)
+const HOSTNAME_GUARD = /(?:localhost.*127\.0\.0\.1|127\.0\.0\.1.*localhost).*\.includes\(/;
 const FIXTURE_HELPERS = /ensureIntegrationPrerequisites|createIsolatedOperatingCompany|ensureIntegrationLoadId|ensureSecondEntityLoad|getIntegrationWorkOrderSeedIds|refuseProductionDatabase|refuseProductionConnectionString/;
 const OPENS_CLIENT = /new pg\.Client|new Client\(|new pg\.Pool/;
 
@@ -56,7 +58,8 @@ export function fixtureProblems(rel, src) {
 
 export function testFileProblems(rel, src) {
   if (!OPENS_CLIENT.test(src)) return [];
-  return FIXTURE_HELPERS.test(src) ? [] : [`RULE 3 ${rel} opens its own database client without a fixture helper or refuseProductionDatabase`];
+  if (FIXTURE_HELPERS.test(src) || HOSTNAME_GUARD.test(src)) return [];
+  return [`RULE 3 ${rel} opens its own database client without a fixture helper or refuseProductionDatabase`];
 }
 
 function walk(dir, acc = []) {

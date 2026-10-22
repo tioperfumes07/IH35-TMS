@@ -852,9 +852,28 @@ export type PreSettlementDetail = {
   lines: PreSettlementLine[];
 };
 
-/** Board: bulk list of all open pre-settlements keyed by driver (Dispatch board, E11-D4).
- *  Renamed from listOpenPreSettlements to resolve the name collision with preSettlements.ts
- *  (443.210R one-predicate cleanup — that file's client-side-filtered version serves Drivers.tsx). */
+/** Drivers page: full open pre-settlement register (paginates the settlements list; client-side
+ *  filter strips closed/cancelled/paid/trip_closed/cleared). D4 canonical source — preSettlements.ts
+ *  deleted; this is the only copy. */
+export async function listOpenPreSettlements(companyId: string): Promise<SettlementListRow[]> {
+  const rows: SettlementListRow[] = [];
+  let offset = 0;
+  for (;;) {
+    const params = new URLSearchParams({ operating_company_id: companyId, limit: "200", offset: String(offset) });
+    const page = await apiRequest<{ settlements: SettlementListRow[]; total_count: number }>(
+      `/api/v1/driver-finance/settlements?${params.toString()}`,
+    );
+    rows.push(...page.settlements);
+    offset += page.settlements.length;
+    if (offset >= page.total_count) break;
+    if (page.settlements.length === 0) throw new Error("The settlement list is incomplete. Refresh to try again.");
+  }
+  return rows.filter((row) => !row.trip_closed_at &&
+    !["closed", "approved", "paid", "final", "cancelled", "canceled", "void", "voided"].includes(String(row.status).toLowerCase()) &&
+    !["cleared", "manual_paid"].includes(String(row.payment_state ?? "").toLowerCase()));
+}
+
+/** Board: bulk list of all open pre-settlements keyed by driver (Dispatch board, E11-D4). */
 export function listOpenPreSettlementsByDriver(companyId: string) {
   return apiRequest<{ pre_settlements: OpenPreSettlement[] }>(
     `/api/v1/driver-finance/pre-settlements/open-by-driver?${q(companyId)}`

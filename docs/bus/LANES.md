@@ -60,7 +60,7 @@ apps/backend/src/mdata/items.routes.ts
 apps/backend/src/accounting/qbo-master-read.routes.ts
 apps/backend/src/lists/names-master.routes.ts
 apps/backend/src/cash-advances/cash-advances.routes.ts
-apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts
+apps/backend/src/reports/**
 apps/backend/src/accounting/pse-mirror.service.ts
 apps/backend/src/accounting/__tests__/9c-native-master-data-reads.db.test.ts
 scripts/verify-steps/18437-verify-no-qbo-mirror-reads-in-money-paths.mjs

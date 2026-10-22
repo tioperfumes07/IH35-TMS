@@ -124,8 +124,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
               -- whose customer was later deactivated, even though the load and its dollar figures are
               -- entirely real. Falls back to the canonical same-company label resolver (already proven
               -- at scale by invoices/payments/transaction-register.routes.ts) instead of widening RLS.
-              COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, $1::uuid)) AS customer_name,
-              COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents
+              COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, $1::uuid)) AS customer_name
             FROM mdata.loads l
             LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                         AND c.operating_company_id = $1::uuid
@@ -163,7 +162,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
           LEFT JOIN tolls ON tolls.load_id = ls.id
           LEFT JOIN chargebacks ON chargebacks.load_id = ls.id
           ${loadCostRollupLateral("ls.id", "$1::uuid")}
-          ORDER BY ls.revenue_cents DESC
+          ORDER BY lc_revenue_cents DESC NULLS LAST
         `,
         [companyId, from, to]
       );
