@@ -8,10 +8,10 @@
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { describe, expect, it } from "vitest";
-import { buildPgClientConfig } from "../lib/pg-connection-options.js";
-import { refuseProductionConnectionString, refuseProductionDatabase } from "../../test-helpers/refuse-production.js";
-import { prepareCompanyForLoadInserts } from "../../test-helpers/db-fixture.js";
-import { loadCostRollupLateral } from "./load-cost-rollup.sql.js";
+import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
+import { prepareCompanyForLoadInserts } from "../../../test-helpers/db-fixture.js";
+import { loadCostRollupLateral } from "../load-cost-rollup.sql.js";
 
 describe.skipIf(process.env.GITHUB_ACTIONS !== "true")(
   "loadCostRollupLateral revenue = SUM(charge_lines) — P0B alias-fix regression lock (real PostgreSQL)",
