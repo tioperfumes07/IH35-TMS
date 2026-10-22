@@ -341,7 +341,7 @@ export function SettlementsPage() {
       {/* LEAD 443.215 — a settlement whose printed source changed after it was posted: the exact diff + Edit pre-filled. */}
       {(sourceChangedQuery.data?.settlements ?? []).length > 0 ? (
         <div className="rounded-[4px] border border-[#E5E7EB] bg-white" data-testid="settlements-source-changed">
-          <div className="border-b border-[#E5E7EB] px-3 py-2 text-[11px] font-bold uppercase text-[#4B5563]">
+          <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-bold uppercase text-[#4B5563]">
             Source changed — repost needed ({sourceChangedQuery.data!.settlements.length})
           </div>
           {sourceChangedQuery.data!.settlements.map((row) => (
