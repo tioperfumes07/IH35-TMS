@@ -77,7 +77,8 @@ function pullProblems(frontend, engine, snapshotWriter, routes) {
   if (/list(?:Bills|Expenses|Invoices|BillPayments)\(/.test(frontend)) problems.push("paged register is not a pull source");
   const sql=engine.split("export const MANUAL_PULL_SOURCES_SQL = `")[1]?.split("`;\n")[0] ?? "";
   if (!sql || /\b(?:LIMIT|OFFSET)\b/.test(sql)) problems.push("pull source must be uncapped");
-  for(const contract of ['${openBill("b", BILL_OPEN_BALANCE_SQL)}','${liveExpense("e")}','${openArInvoiceConditions("i").join(" AND ")}','bp.settlement_deduction_noncash IS NOT TRUE']) {
+  if (/i\.issue_date|b\.bill_date/.test(sql)) problems.push("all open documents required, including missing/future document dates");
+  for(const contract of ['${openBill("b", BILL_OPEN_BALANCE_SQL)}','${liveExpense("e")}','${liveBillPayment("bp")}','${openArInvoiceConditions("i").join(" AND ")}','bp.settlement_deduction_noncash IS NOT TRUE']) {
     if(!sql.includes(contract))problems.push(`missing source contract ${contract}`);
   }
   for(const alias of ["b","e","bp","i"])if(!sql.includes(`${alias}.operating_company_id=$1::uuid`))problems.push(`unscoped ${alias}`);
@@ -97,8 +98,10 @@ if (process.argv.includes("--selftest")) {
   const plants=[
     ["tab","return pullManualTransactions(operatingCompanyId, projectionDate)","return listInvoices(operatingCompanyId, {limit:100})"],
     ["pull","ORDER BY kind,id","ORDER BY kind,id LIMIT 100"],
+    ["pull","WHERE i.operating_company_id=$1::uuid","WHERE i.operating_company_id=$1::uuid AND i.issue_date <= $2::date"],
     ["pull",'${openBill("b", BILL_OPEN_BALANCE_SQL)}',"b.status='unpaid'"],
     ["pull",'${liveExpense("e")}',"TRUE"],
+    ["pull",'${liveBillPayment("bp")}',"TRUE"],
     ["pull",'${openArInvoiceConditions("i").join(" AND ")}',"TRUE"],
     ["pull","bp.settlement_deduction_noncash IS NOT TRUE","TRUE"],
     ["pull","pg_advisory_xact_lock","no_lock"],
