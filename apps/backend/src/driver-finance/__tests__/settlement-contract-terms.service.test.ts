@@ -6,23 +6,12 @@ vi.mock("../../audit/crud-audit.js", () => ({
 
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import {
-  computeMpg,
-  mpgBonusQualifies,
-  referralEligibleAsOf,
-  computeSettlementMpgBonus,
-  computeReferralBonuses,
   computeLateDeliveryPassthrough,
   computeDriverFinePassthrough,
   computeSettlementReimbursements,
-  type ContractTermsConfig,
+  computeSettlementContractTerms,
 } from "../settlement-contract-terms.service.js";
 
-const CONFIG: ContractTermsConfig = {
-  mpgThreshold: 7.0,
-  mpgBonusCents: 3500,
-  referralRewardCents: 20000,
-  referralMinDays: 30,
-};
 
 const OC = "0c000000-0000-0000-0000-000000000001";
 const DRIVER = "d1000000-0000-0000-0000-000000000001";
@@ -64,160 +53,15 @@ beforeEach(() => {
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
 // Pure boundary helpers
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
-describe("computeMpg / mpgBonusQualifies — MPG boundary", () => {
-  it("exactly 7.0 mpg does NOT qualify (strictly greater)", () => {
-    const { mpg, sourceAbsent } = computeMpg(700, 100);
-    expect(sourceAbsent).toBe(false);
-    expect(mpg).toBe(7.0);
-    expect(mpgBonusQualifies(mpg, 7.0)).toBe(false);
-  });
 
-  it("just above 7.0 qualifies", () => {
-    const { mpg } = computeMpg(701, 100);
-    expect(mpgBonusQualifies(mpg, 7.0)).toBe(true);
-  });
-
-  it("fails loud when the fuel/miles source is absent (no silent zero)", () => {
-    expect(computeMpg(700, 0).sourceAbsent).toBe(true);
-    expect(computeMpg(0, 100).sourceAbsent).toBe(true);
-    expect(computeMpg(0, 100).mpg).toBeNull();
-  });
-
-  it("owner override supplies MPG even when the source is absent", () => {
-    const { mpg, sourceAbsent } = computeMpg(0, 0, 8.5);
-    expect(sourceAbsent).toBe(false);
-    expect(mpg).toBe(8.5);
-    expect(mpgBonusQualifies(mpg, 7.0)).toBe(true);
-  });
-});
-
-describe("referralEligibleAsOf — 29 vs 30 days boundary", () => {
-  const asOf = new Date("2026-07-05T12:00:00.000Z");
-  it("29 days worked => NOT eligible", () => {
-    // hired 2026-06-06 => 29 days before 2026-07-05
-    expect(referralEligibleAsOf("2026-06-06", 30, asOf)).toBe(false);
-  });
-  it("30 days worked => eligible", () => {
-    // hired 2026-06-05 => 30 days before 2026-07-05
-    expect(referralEligibleAsOf("2026-06-05", 30, asOf)).toBe(true);
-  });
-  it("null hire date => not eligible", () => {
-    expect(referralEligibleAsOf(null, 30, asOf)).toBe(false);
-  });
-});
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
 // ITEM 1 — MPG bonus service flow
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
-describe("computeSettlementMpgBonus", () => {
-  const base = { settlementId: SETTLEMENT, driverId: DRIVER, operatingCompanyId: OC, actorUserId: USER, config: CONFIG };
-
-  it("MPG exactly 7.0 => no bonus, no extra_pay line", async () => {
-    const { client, calls } = makeClient([
-      { match: "SUM(db.miles_basis)", rows: [{ miles: 700 }] },
-      { match: "SUM(ft.gallons)", rows: [{ gallons: 100 }] },
-    ]);
-    const res = await computeSettlementMpgBonus(client, base);
-    expect(res.applied).toBe(false);
-    if (!res.applied) expect(res.reason).toBe("below_threshold");
-    expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
-  });
-
-  // LEAD 443.232 — no bonus pay item is configured (owner decision): a qualifying bonus is SKIPPED BY NAME, never an itemless
-  // extra_pay line (the check violation that aborted the GPS positions tick for 9 h). Fails on the old writer (it inserted).
-  it("MPG > 7.0 with no bonus pay item => skipped by name, nothing written", async () => {
-    const { client, calls } = makeClient([
-      { match: "SUM(db.miles_basis)", rows: [{ miles: 750 }] },
-      { match: "SUM(ft.gallons)", rows: [{ gallons: 100 }] },
-      { match: "INSERT INTO driver_finance.settlement_contract_lines", rows: [{ id: "c1" }] },
-      { match: "INSERT INTO driver_finance.settlement_lines", rows: [{ id: "sl1" }] },
-    ]);
-    const res = await computeSettlementMpgBonus(client, base);
-    expect(res.applied).toBe(false);
-    if (!res.applied) { expect(res.reason).toBe("bonus_pay_item_not_configured"); expect(res.mpg).toBeCloseTo(7.5, 5); }
-    expect(appendCrudAudit).toHaveBeenCalledWith(
-      expect.anything(), USER, "driver_finance.contract_bonus_skipped_no_pay_item", expect.any(Object), "warning", "LEAD-443-232"
-    );
-    // no ledger row, no itemless extra_pay line (settlement_lines_extra_pay_requires_item)
-    expect(insertsInto(calls, "driver_finance.settlement_contract_lines")).toHaveLength(0);
-    expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
-  });
-
-  it("source absent => fail-loud audit, no bonus", async () => {
-    const { client, calls } = makeClient([
-      { match: "SUM(db.miles_basis)", rows: [{ miles: 750 }] },
-      { match: "SUM(ft.gallons)", rows: [{ gallons: 0 }] },
-    ]);
-    const res = await computeSettlementMpgBonus(client, base);
-    expect(res.applied).toBe(false);
-    if (!res.applied) expect(res.reason).toBe("mpg_source_absent");
-    expect(appendCrudAudit).toHaveBeenCalledWith(
-      expect.anything(),
-      USER,
-      "driver_finance.settlement.mpg_source_absent",
-      expect.any(Object),
-      "warning",
-      expect.any(String)
-    );
-    expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
-  });
-
-  it("owner override forces compute when source absent (then skipped: no bonus pay item)", async () => {
-    const { client, calls } = makeClient([
-      { match: "SUM(db.miles_basis)", rows: [{ miles: 0 }] },
-      { match: "SUM(ft.gallons)", rows: [{ gallons: 0 }] },
-    ]);
-    const res = await computeSettlementMpgBonus(client, { ...base, mpgOverride: 9 });
-    expect(res.applied).toBe(false);
-    if (!res.applied) { expect(res.reason).toBe("bonus_pay_item_not_configured"); expect(res.mpg).toBe(9); }
-    expect(appendCrudAudit).toHaveBeenCalledWith(
-      expect.anything(), USER, "driver_finance.contract_bonus_skipped_no_pay_item", expect.any(Object), "warning", "LEAD-443-232"
-    );
-    // no ledger row, no itemless extra_pay line (settlement_lines_extra_pay_requires_item)
-    expect(insertsInto(calls, "driver_finance.settlement_contract_lines")).toHaveLength(0);
-    expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
-  });
-
-});
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
 // ITEM 2 — Referral bonus
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
-describe("computeReferralBonuses", () => {
-  const base = { settlementId: SETTLEMENT, referrerDriverId: DRIVER, operatingCompanyId: OC, actorUserId: USER, config: CONFIG };
-  const yesterdayIso = new Date(Date.now() - 40 * 24 * 3600 * 1000).toISOString().slice(0, 10); // 40 days ago
-
-  it("referred driver worked >= 30 days with no bonus pay item => skipped by name, not stamped", async () => {
-    const { client, calls } = makeClient([
-      { match: "referred_by_driver_id", rows: [{ id: "ref1", first_name: "Juan", last_name: "Perez", hire_date: yesterdayIso }] },
-    ]);
-    const res = await computeReferralBonuses(client, base);
-    expect(res.appliedCount).toBe(0);
-    expect(appendCrudAudit).toHaveBeenCalledWith(
-      expect.anything(), USER, "driver_finance.contract_bonus_skipped_no_pay_item", expect.any(Object), "warning", "LEAD-443-232"
-    );
-    // no ledger row, no itemless extra_pay line (settlement_lines_extra_pay_requires_item)
-    expect(insertsInto(calls, "driver_finance.settlement_contract_lines")).toHaveLength(0);
-    expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
-    expect(calls.some((c) => c.sql.includes("SET referral_reward_paid_at = now()"))).toBe(false);
-  });
-
-  it("referred driver at 29 days (edge row) => skipped by the day guard", async () => {
-    const day29 = new Date(Date.now() - 29 * 24 * 3600 * 1000).toISOString().slice(0, 10);
-    const { client, calls } = makeClient([
-      { match: "referred_by_driver_id", rows: [{ id: "ref1", first_name: "A", last_name: "B", hire_date: day29 }] },
-    ]);
-    const res = await computeReferralBonuses(client, base);
-    expect(res.appliedCount).toBe(0);
-    expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
-  });
-
-  it("no referrals => nothing", async () => {
-    const { client } = makeClient([{ match: "referred_by_driver_id", rows: [] }]);
-    const res = await computeReferralBonuses(client, base);
-    expect(res.appliedCount).toBe(0);
-  });
-});
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
 // ITEM 3 — Late-delivery pass-through
@@ -348,5 +192,22 @@ describe("computeSettlementReimbursements", () => {
     expect(lineInserts[0]!.sql).toContain("'reimbursement'"); // line_type is a SQL literal
     expect(lineInserts[0]!.values?.[2]).toBe(42); // dollars
     expect(calls.some((c) => c.sql.includes("SET status = 'settled'"))).toBe(true);
+  });
+});
+
+// LEAD 443.236 (owner 10-22: "no you do not add automatically. for the moment there is not bonus") — the settlement close
+// never computes or adds a bonus. Fails on the old engine: it read miles + gallons for the MPG bonus and audited the bonus.
+describe("443.236 — no automatic bonus", () => {
+  it("a settlement close with MPG well above 7.0 and an eligible referral writes NO bonus line and computes no bonus", async () => {
+    const { client, calls } = makeClient([
+      { match: "SUM(db.miles_basis)", rows: [{ miles: 900 }] },
+      { match: "SUM(ft.gallons)", rows: [{ gallons: 100 }] },
+      { match: "referred_by_driver_id", rows: [{ id: "ref1", first_name: "A", last_name: "B", hire_date: "2025-01-01" }] },
+    ]);
+    const r = await computeSettlementContractTerms(client, { settlementId: SETTLEMENT, driverId: DRIVER, operatingCompanyId: OC, actorUserId: USER });
+    expect(Object.keys(r).sort()).toEqual(["fines", "lateDelivery", "reimbursements"]);
+    expect(calls.some((c) => c.sql.includes("SUM(db.miles_basis)") || c.sql.includes("referred_by_driver_id") || c.sql.includes("settlement_contract_terms_config"))).toBe(false);
+    expect(calls.some((c) => c.sql.includes("INSERT INTO driver_finance.settlement_lines") && c.sql.includes("'extra_pay'"))).toBe(false);
+    expect(vi.mocked(appendCrudAudit).mock.calls.some((c) => String(c[2]).includes("bonus"))).toBe(false);
   });
 });
