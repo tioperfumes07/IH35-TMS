@@ -5,11 +5,14 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { VoidedRowBadge, voidedRowClassName } from "../../components/accounting/VoidedRowIndicator";
 import { companyToday } from "../../lib/businessDate";
 
 export type FuelTransactionRow = {
+  /** LEAD 443.214 — the provider's real pump moment (shown with its time); absent when only a typed date exists. */
+  fill_moment_at?: string | null;
+  time_unknown?: boolean;
   id: string;
   transaction_date: string;
   driver_name: string;
@@ -136,7 +139,8 @@ export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolba
           sortable: true,
           // verify-fuel-history-transaction-date-display.mjs requires this exact render shape
           // (LV-FUEL-HISTORY-RAW-ISO-DATETIME) — the void badge goes on Station instead, below.
-          render: (row) => formatDateUS(row.transaction_date) || "—",
+          // LEAD 443.214 (owner: "time should be in the reports"): the pump moment in Central when the provider gave one.
+          render: (row) => (row.fill_moment_at ? formatDateTimeUS(row.fill_moment_at) : formatDateUS(row.transaction_date)) || "—",
         },
         {
           key: "driver_name",

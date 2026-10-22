@@ -6,13 +6,14 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { TRACTOR_POSITIONS, TRAILER_POSITIONS, positionGroupForCode, POSITION_BY_CODE } from "./tire-positions.js";
+import { queryBoolean } from "../lib/query-boolean.js";
 export { TRACTOR_POSITIONS, TRAILER_POSITIONS, positionGroupForCode } from "./tire-positions.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   unit_id: z.string().uuid().optional(),
   equipment_id: z.string().uuid().optional(),
-  include_archived: z.coerce.boolean().optional().default(false),
+  include_archived: queryBoolean().optional().default(false),
   tire_record_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),

@@ -7,6 +7,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { FLEET_BRAND_SOURCES_SQL, fetchFleetBrands, normalizeBrandKey } from "./oem-parts.brand-match.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
@@ -18,9 +19,9 @@ async function withReferenceScope<T>(userId: string, fn: (client: Queryable) => 
 const listQuerySchema = z.object({
   brand: z.string().trim().optional(),
   category: z.string().trim().optional(),
-  fleet_only: z.coerce.boolean().optional(),
+  fleet_only: queryBoolean().optional(),
   q: z.string().trim().optional(),
-  include_archived: z.coerce.boolean().optional(),
+  include_archived: queryBoolean().optional(),
   operating_company_id: z.string().uuid().optional(),
 });
 

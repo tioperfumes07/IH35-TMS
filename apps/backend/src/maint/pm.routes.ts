@@ -6,10 +6,11 @@ import { evaluatePmDue } from "./pm-due.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { absentOdometerReason, loadPmOdometers, type PmOdometer } from "../maintenance/pm-current-odometer.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   asset_id: z.string().uuid().optional(),
-  include_not_due: z.coerce.boolean().optional().default(false),
+  include_not_due: queryBoolean().optional().default(false),
 });
 
 type Queryable = {

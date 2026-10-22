@@ -7,7 +7,8 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { ROSTER_RULES, runRosterIntegrityForTenant, type DbClient } from "./roster-integrity.service.js";
 
-const companyQuery = z.object({ operating_company_id: z.string().uuid(), include_closed: z.coerce.boolean().optional().default(false) });
+import { queryBoolean } from "../lib/query-boolean.js";
+const companyQuery = z.object({ operating_company_id: z.string().uuid(), include_closed: queryBoolean().optional().default(false) });
 const voidBody = z.object({ operating_company_id: z.string().uuid(), reason: z.string().trim().min(3).max(500) });
 const idParams = z.object({ id: z.string().uuid() });
 

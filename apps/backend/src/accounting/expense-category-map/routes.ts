@@ -3,6 +3,7 @@ import { strictListQuery } from "../../lib/strict-query.js";
 import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../shared.js";
 
+import { queryBoolean } from "../../lib/query-boolean.js";
 const CATEGORY_KIND_VALUES = [
   "fuel",
   "maintenance",
@@ -25,7 +26,7 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  include_inactive: z.coerce.boolean().optional().default(false),
+  include_inactive: queryBoolean().optional().default(false),
   category_kind: categoryKindSchema.optional(),
 });
 // LEAD 443.219 G-STRICT — unknown query params: 400 outside production, logged + stripped in production (one rule).

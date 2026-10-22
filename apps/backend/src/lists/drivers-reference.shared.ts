@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 export type DriversReferenceConfig = {
   urlSegment: string;
   tableName: string;
@@ -29,7 +30,7 @@ export function assertReferenceConfig(config: DriversReferenceConfig) {
 }
 
 export const listQuerySchema = z.object({
-  include_archived: z.coerce.boolean().optional(),
+  include_archived: queryBoolean().optional(),
   search: z.string().trim().optional(),
 });
 

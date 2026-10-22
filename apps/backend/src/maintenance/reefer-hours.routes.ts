@@ -8,6 +8,7 @@ import { parseSamsaraVehiclePayload } from "../mdata/unit-aggregate.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { LOG_SELECT, SPECS_SELECT, appendReeferHoursLogEntry, ensureReeferSpecs, evaluateReeferHoursPmSchedulesForCompany, fetchLatestHours, ingestReeferHoursFromSamsaraForCompany, mapReeferHoursLogRow, mapReeferSpecsRow } from "./reefer-hours.service.js";
 import type { DbClient } from "./reefer-hours.service.js";
+import { queryBoolean } from "../lib/query-boolean.js";
 export { appendReeferHoursLogEntry, evaluateReeferHoursPmDue, evaluateReeferHoursPmSchedulesForCompany, extractReeferEngineHours, hoursUntilReeferService, ingestReeferHoursFromSamsaraForCompany, mapReeferHoursLogRow, mapReeferSpecsRow, reeferHoursSourceLabel } from "./reefer-hours.service.js";
 export type { ReeferHoursPmEvaluation } from "./reefer-hours.service.js";
 
@@ -15,7 +16,7 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   equipment_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
-  include_archived: z.coerce.boolean().optional().default(false),
+  include_archived: queryBoolean().optional().default(false),
 });
 
 const logCreateSchema = z.object({

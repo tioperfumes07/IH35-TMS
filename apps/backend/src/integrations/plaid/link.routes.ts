@@ -13,6 +13,7 @@ import {
   type BankAccountBalanceFields,
 } from "../../banking/internal-wallet-balance.js";
 
+import { queryBoolean } from "../../lib/query-boolean.js";
 const ownerAdminRoles = new Set(["Owner", "Administrator"]);
 const ownerOnlyRoles = new Set(["Owner"]);
 
@@ -93,7 +94,7 @@ const companyTransactionsQuerySchema = z.object({
   sort: z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]).default("date_desc"),
   // GO-19-02 (docs/lockdown/GO-19-BUILD-QUEUE.md slice 02): owner-only reveal toggle, same as the
   // account register — default false keeps the 34 GO-11 fixture rows out of this list.
-  include_sample_data: z.coerce.boolean().default(false),
+  include_sample_data: queryBoolean().default(false),
 });
 
 const updateLinkBodySchema = z.object({

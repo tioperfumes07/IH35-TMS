@@ -27,7 +27,7 @@ describe("oem-parts archived filter contract", () => {
     const routesPath = path.resolve(here, "../../lists/oem-parts.routes.ts");
     const src = fs.readFileSync(routesPath, "utf8");
     expect(src).toMatch(/if \(!q\.include_archived\) where\.push\("archived_at IS NULL"\)/);
-    expect(src).toMatch(/include_archived: z\.coerce\.boolean\(\)\.optional\(\)/);
+    expect(src).toMatch(/include_archived: queryBoolean\(\)\.optional\(\)/); // LEAD 443.217: z.coerce.boolean() made "false" TRUE
   });
 });
 

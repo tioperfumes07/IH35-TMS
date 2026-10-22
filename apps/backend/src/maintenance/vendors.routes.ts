@@ -6,13 +6,14 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const VENDOR_CODE_REGEX = /^[A-Z][A-Z0-9-]+$/;
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   search: z.string().trim().optional(),
   mdata_vendor_id: z.string().uuid().optional(),
-  include_archived: z.coerce.boolean().optional().default(false),
+  include_archived: queryBoolean().optional().default(false),
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
