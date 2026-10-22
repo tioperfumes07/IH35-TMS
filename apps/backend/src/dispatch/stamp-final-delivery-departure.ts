@@ -7,6 +7,12 @@
  *
  * NEVER OVERWRITE an existing driver-captured departure.
  * actual_arrival_at is left NULL (office is not asserting arrival).
+ *
+ * LEAD 443.230 (CC-3) — the load's EARLIER stops (pickups, earlier drops) still unstamped are then stamped from the truck's
+ * own tracking through THE stop-evidence engine (driver-finance/settlement-creator-deliver.ts stampStopsFromTracking:
+ * the unit's stop event at the stop's coordinates on its date, else the date only — never an invented clock time) and
+ * settled to 'departed'. Before, an office-delivered load kept every earlier stop 'pending' (13687 / 13688 on 10-22,
+ * verify-delivered-load-stops-terminal RULE 2). A stop already carrying any stamp is never touched.
  */
 import { loadStatusRequiresDeliveryDepartureStamp } from "./delivery-evidence-status.js";
 
@@ -56,5 +62,8 @@ export async function stampFinalActiveDeliveryDeparture(
     `,
     [loadId, operatingCompanyId, deliveredAt ?? null]
   );
+  // Dynamic import: settlement-creator-deliver imports the transition engine, which imports this module.
+  const { stampStopsFromTracking } = await import("../driver-finance/settlement-creator-deliver.js");
+  await stampStopsFromTracking(client as never, loadId, operatingCompanyId, {});
   return res.rowCount ?? 0;
 }
