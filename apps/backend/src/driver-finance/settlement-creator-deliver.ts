@@ -9,6 +9,7 @@ import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.se
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 import { SettlementCreatorError } from "./settlement-creator-error.js";
 import { DEFAULT_DEPART_RADIUS_M } from "../integrations/samsara/geofences/state-machine/states.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { assertCanonicalSubset, DELIVERED_OR_LATER_STATUSES } from "../dispatch/canonical-active-load-set.js";
 
 /** ROUND 443.16 — how one stop of a load was stamped (listed in the post result). */
@@ -163,7 +164,7 @@ export async function stampStopsFromTracking(
       out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: null, departure_at: null, note: "no date for this stop on the settlement — left unstamped" });
       continue;
     }
-    if (opts.trackedOnly && day > new Date().toISOString().slice(0, 10)) {
+    if (opts.trackedOnly && day > companyBusinessDate()) {
       out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: null, departure_at: null, note: `stop day ${day} has not come — left unstamped` });
       continue;
     }
