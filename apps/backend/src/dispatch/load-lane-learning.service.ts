@@ -543,8 +543,19 @@ export async function learnLoadLanes(
   const dState = (dest.state ?? "").trim().toUpperCase();
   const seen = dest.at ?? origin.at ?? load.created_at.slice(0, 10);
 
+  // LEAD 443.233 (owner 10-22: "Laredo → Laredo yard moves are not lanes") — origin and destination in the same city/state is a
+  // yard move: never counted in lane_mileage or customer_lanes; audited once by name.
+  const yardMove = !!oCity && !!dCity && oCity.toLowerCase() === dCity.toLowerCase() && oState.toUpperCase() === dState.toUpperCase();
+  if (yardMove) {
+    await appendCrudAudit(client as never, args.actorUserId ?? (null as never), "dispatch.load.lane_excluded", {
+      resource_type: "mdata.loads", resource_id: args.loadId, load_id: args.loadId, operating_company_id: args.operatingCompanyId,
+      reason: "yard_move", lane: `${oCity}, ${oState} -> ${dCity}, ${dState}`,
+    }, "info", "LEAD-443-233");
+  }
+
   // ── lane_mileage ──
   if (!oCity || !oState || !dCity || !dState) out.lane_skip_reason = "origin_or_destination_city_state_missing";
+  else if (yardMove) out.lane_skip_reason = "yard_move";
   else if (practical == null) out.lane_skip_reason = "no_miles_on_load";
   else {
     const short = pos(load.miles_shortest);
@@ -633,6 +644,7 @@ export async function learnLoadLanes(
   const rate = pos(load.rate_total_cents);
   if (!load.customer_id) out.customer_lane_skip_reason = "no_customer";
   else if (!oCity || !oState || !dCity || !dState) out.customer_lane_skip_reason = "origin_or_destination_city_state_missing";
+  else if (yardMove) out.customer_lane_skip_reason = "yard_move";
   else {
     const existing = (
       await client.query<{ id: string; typical_miles: number | null }>(
