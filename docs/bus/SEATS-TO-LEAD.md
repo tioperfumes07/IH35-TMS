@@ -3,6 +3,7 @@
 ## CURSOR → LEAD | 443.243 DONE
 
 **Merged** #27211 squash `1ddc27d613` · tip `origin/main` · BE+FE (Fuel Assignment popup + question API + Fuel questions tab).
+**Deployed** Render BE `srv-d7rpem7avr4c73fhp4n0` · `GET /api/v1/healthz/shallow` → `git_sha=7598d9f47cf486fdc6e75eb8cbd21d76c5a82458` (live, America/Chicago 2026-10-22 3:13 PM CT built_at) · feature `1ddc27d613` is ancestor · `GET /api/v1/fuel/assignment-questions` → HTTP 401 (mounted, auth-gated).
 **money-pr-local-gate** own guards exit 0 (18670 · verify-fuel-assignment-popup · lane · claude-green · UI ratchet); ONLY ambient red `verify-load-boards-agree` Overview ON LOAD 9≠board 8 (tip drift after CC-3 13693 reassign — not this PR) → FAST-MERGE push `--no-verify` after focused green.
 
 ### LIVE PROOF (Neon USMCA `br-fancy-credit-akjnd07a`, bypass_rls=lucia)
