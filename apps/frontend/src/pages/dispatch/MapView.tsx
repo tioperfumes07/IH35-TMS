@@ -15,12 +15,19 @@ type MapPosition = {
   unit_uuid: string;
   load_number?: string | null;
   unit_number?: string | null;
+  /** LEAD 443.235 — API emits both; prefer either (same value from the load service). */
   driver_uuid?: string | null;
+  driver_id?: string | null;
+  driver_name?: string | null;
   lat: number;
   lng: number;
   speed_mph: number | null;
   stale: boolean;
 };
+
+function positionDriverId(p: MapPosition): string | null {
+  return p.driver_uuid ?? p.driver_id ?? null;
+}
 
 // ROUND 203 F19 — use apiRequest (shared error/telemetry), encode companyId, always render
 // position list when data exists (including when mapConfigured — was a dead path).
@@ -50,7 +57,7 @@ export function MapView() {
   const positions = query.data?.positions ?? [];
   const focused = positions.filter((p) => {
     if (focusLoadId && p.load_uuid === focusLoadId) return true;
-    if (focusDriverId && p.driver_uuid === focusDriverId) return true;
+    if (focusDriverId && positionDriverId(p) === focusDriverId) return true;
     if (focusUnitId && p.unit_uuid === focusUnitId) return true;
     return false;
   });
@@ -119,7 +126,9 @@ export function MapView() {
           className="rounded-sm border border-gray-200 bg-white divide-y divide-gray-100 text-xs"
           data-testid="dispatch-map-positions-list"
         >
-          {listRows.map((p) => (
+          {listRows.map((p) => {
+            const driverId = positionDriverId(p);
+            return (
             <li key={`${p.load_uuid}-${p.unit_uuid}`} className="flex flex-wrap gap-3 px-3 py-2 text-[#1F2A44]">
               <span>
                 Load{" "}
@@ -139,17 +148,31 @@ export function MapView() {
                   noun="Unit"
                 />
               </span>
+              {driverId ? (
+                <span data-testid="dispatch-map-driver">
+                  Driver{" "}
+                  <EntityLinkOrTombstone
+                    kind="driver"
+                    id={driverId}
+                    name={p.driver_name}
+                    noun="Driver"
+                  />
+                </span>
+              ) : (
+                <span data-testid="dispatch-map-driver-missing" className="text-[#4B5563]">Driver —</span>
+              )}
 
               <span>{p.speed_mph != null ? `${p.speed_mph} mph` : "—"}</span>
               {p.stale ? <span className="text-[#4B5563]">stale</span> : null}
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : null}
       {companyId && !query.isError && !query.isLoading && positions.length === 0 ? (
         <p className="text-xs text-[#1F2A44]" data-testid="dispatch-map-positions-honest-empty">
-          No in-transit loads with GPS for this company right now. Positions appear when Samsara reports an active
-          load with coordinates.
+          No live loads with GPS for this company right now. Positions appear when Samsara reports a dispatched /
+          at-pickup / in-transit / at-delivery load with coordinates.
         </p>
       ) : null}
     </div>

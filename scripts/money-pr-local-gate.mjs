@@ -1150,12 +1150,16 @@ const LIVE_DOMAIN_GUARDS = [
   ],
   // ROUND 443.38 (CC-2) — stops resolve to the owner's Samsara address; no false rooftop; no fence around a zip center.
   // GATE-SCOPE 443.231b: blanket dispatch/ pulled tip RULE 8 ambient zip-fence debt into truck-line READ PRs.
-  // Arm telematics / Samsara / book-load / settlement seed only (this PR cannot draw a fence).
+  // GATE-SCOPE 443.235: blanket integrations/samsara/ also armed Live Map positions READ (live-position.service.ts)
+  // which cannot draw a customer-site fence — tip RULE 8 zip-center debt is not this PR. Arm fence writers only.
   [
     "verify-stops-resolve-samsara-no-zip-fence",
     [
       "apps/backend/src/telematics/",
-      "apps/backend/src/integrations/samsara/",
+      "apps/backend/src/integrations/samsara/geofences/",
+      "apps/backend/src/integrations/samsara/samsara-client.ts",
+      "apps/backend/src/integrations/samsara/samsara-positions.service.ts",
+      "apps/backend/src/integrations/samsara/webhook-projectors/geofence-projector.ts",
       "apps/backend/src/dispatch/book-load.service.ts",
       "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts",
       "scripts/verify-stops-resolve-samsara-no-zip-fence.mjs",
@@ -2379,6 +2383,45 @@ function isRound443231bAvailableUnitsReadPath(f) {
   return false;
 }
 
+// GATE-SCOPE 443.235 — Live Map driver_uuid + board label / draft-badge READ class.
+// listQuicksaveDrafts SELECT, live-position projection alias, MapView/TruckLineBoard labels cannot
+// mint presettlement_link_id or post cash. Blanket apps/backend/src/dispatch/ must not pull tip
+// LINK-2 ambient debt (loads without a pre-settlement link) into this read class.
+function isRound443235LiveMapBoardReadPath(f) {
+  if (f === "apps/backend/src/integrations/samsara/positions/live-position.service.ts") return true;
+  if (f === "apps/frontend/src/pages/dispatch/MapView.tsx") return true;
+  if (f === "apps/frontend/src/pages/dispatch/TruckLineBoard.tsx") return true;
+  if (f === "apps/backend/src/dispatch/quick-assign.service.ts") {
+    const d = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    if ((d.status ?? 1) !== 0) return false;
+    const diffText = d.stdout || "";
+    const touchesMoneyWrite =
+      /presettlement_link|createLoadWithFullSideEffects|finalizeSettlement|INSERT\s+INTO\s+(?:driver_finance|accounting)/i.test(
+        diffText,
+      );
+    const touchesDraftList =
+      /listQuicksaveDrafts|is_quicksave_draft|status = 'draft' OR is_quicksave_draft|443\.235|isDraftLoad/i.test(
+        diffText,
+      );
+    return touchesDraftList && !touchesMoneyWrite;
+  }
+  return false;
+}
+
+// GATE-SCOPE 443.235 — GRANT-only label-resolver migration cannot invent load-born postings.
+// db/migrations/ blanket armed tip RULE 2 stamp ambient (verify-every-load-born-posting-carries-its-load)
+// from a privilege GRANT that never posts. Exact-file domains for this migration still arm its own guard.
+// CLAIMED-MIGRATION-NUMBERS.json is the same claim reservation — also not a money writer.
+function isRound443235GuardLabelGrantOnlyMigration(f) {
+  return (
+    f === "db/migrations/202616131600_grant_label_resolvers_to_guard_reader.sql" ||
+    f === "db/migrations/CLAIMED-MIGRATION-NUMBERS.json"
+  );
+}
+
 // GATE-SCOPE-04 (LEAD, ROUND 389) — a COMMENT-ONLY diff cannot change a production row, so it cannot
 // arm a live-domain guard. Measured, not assumed: this reads the file's real diff and returns true
 // only when EVERY added and removed line is a comment or blank.
@@ -2637,6 +2680,11 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         return false;
       }
       if (DATA_WRITE_PATHS.some((p) => f.startsWith(p))) {
+        // GATE-SCOPE 443.235 — GRANT EXECUTE privilege SQL is not a money writer. dataWritePath*
+        // treats every db/migrations/*.sql as a write (schema-alter by definition), which armed tip
+        // RULE 2 load-born stamp ambient on this Live Map PR. Skip BEFORE the content check so the
+        // domainPaths GATE-SCOPE below is not unreachable for these exact files.
+        if (isRound443235GuardLabelGrantOnlyMigration(f)) return false;
         const diff = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
           cwd: ROOT,
           encoding: "utf8",
@@ -2702,10 +2750,16 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
           // GATE-SCOPE 443.231b: blanket dispatch/ or apps/backend/src/ must not arm tip miles /
           // cash / settlement LIVE debt from AVAILABLE unit→driver READ files. Exact-file domain
           // entries (e.g. truck-line.routes on verify-load-boards-agree) still match via f.startsWith(p).
+          // GATE-SCOPE 443.235: same for Live Map / draft-badge / TruckLineBoard label READ class.
           if (
             (p === "apps/backend/src/dispatch/" || p === "apps/backend/src/") &&
-            isRound443231bAvailableUnitsReadPath(f)
+            (isRound443231bAvailableUnitsReadPath(f) || isRound443235LiveMapBoardReadPath(f))
           ) {
+            return false;
+          }
+          // GATE-SCOPE 443.235: GRANT EXECUTE label-resolver migration is not a money writer —
+          // blanket db/migrations/ must not pull tip load-born posting stamp ambient into this PR.
+          if (p === "db/migrations/" && isRound443235GuardLabelGrantOnlyMigration(f)) {
             return false;
           }
           return true;

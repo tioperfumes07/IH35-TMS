@@ -59,6 +59,8 @@ export const BOARD_FILES = {
   driverHub: "apps/backend/src/mdata/canonical/driver-hub.service.ts",
   homeWidgets: "apps/backend/src/home/home-widgets.routes.ts",
   dispatcherHome: "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts",
+  // LEAD 443.235 / B9 — sidebar draft badge uses this list; must match isDraftLoad.
+  drafts: "apps/backend/src/dispatch/quick-assign.service.ts",
 };
 export function staticFailures(src) {
   const f = [];
@@ -76,6 +78,12 @@ export function staticFailures(src) {
   ban("dispatchLoads", /assigned_primary_driver_name: driverLabel/, "GET /dispatch/loads overwrites the full driver name with the short label (C1)");
   for (const k of ["unitAgg", "trailerAgg", "driverAgg", "liveMap", "driverHub", "homeWidgets", "dispatcherHome"])
     need(k, /\$\{loadServiceMembershipSql\(/, "reads its loads through the load service (443.206R item 1)");
+  // LEAD 443.235 — Live Map must emit driver_uuid (harness / MapView) equal to the load-service driver_id.
+  need("liveMap", /driver_uuid:\s*driverId/, "Live Map rows must emit driver_uuid (same value as driver_id from the load service)");
+  need("liveMap", /loadServiceDriverNameSql\(/, "Live Map driver name comes from the load service helper");
+  // LEAD 443.235 / B9 — sidebar listQuicksaveDrafts = status draft OR is_quicksave_draft (same as isDraftLoad).
+  need("drafts", /status = 'draft' OR is_quicksave_draft = true/, "sidebar drafts must use ONE draft definition (isDraftLoad)");
+  ban("drafts", /AND is_quicksave_draft = true\s*\n\s*AND soft_deleted_at/, "sidebar drafts back to quicksave-only (B9 second definition)");
   for (const k of ["unitAgg", "trailerAgg", "driverAgg"])
     ban(k, /NOT IN \('delivered', 'cancelled', 'void'/, "private current-load status list (register B5)");
   need("dispatchLoads", /AND \$\{canonicalDispatchWorkWhereClause\("l", "\$1::uuid"\)\}\s*-- LEAD 443\.231b/, "units-without-load: occupied = the board set (D6)");
@@ -170,6 +178,8 @@ async function selftest() {
   const plants = [
     ["board set back to a status list on mdata.loads", "canonical", (x) => x.replace('AND ${loadServiceMembershipSql(alias, "open_dispatch", operatingCompanyIdParam)}`;', "`;")],
     ["live map back to in_transit only", "liveMap", (x) => x.replace('${loadServiceMembershipSql("l", "open_dispatch", "$1::uuid")}', "l.status::text = 'in_transit'")],
+    ["live map drops driver_uuid alias", "liveMap", (x) => x.replace(/driver_uuid:\s*driverId,?\n?/g, "")],
+    ["sidebar drafts back to quicksave-only", "drafts", (x) => x.replace("AND (status = 'draft' OR is_quicksave_draft = true)", "AND is_quicksave_draft = true")],
     ["profile current load back on a private list", "unitAgg", (x) => x + "\n// AND l.status::text NOT IN ('delivered', 'cancelled', 'void', 'completed', 'closed')"],
     ["driver name overwritten by the short label", "dispatchLoads", (x) => x + "\nconst y = { assigned_primary_driver_name: driverLabel };"],
     ["unit gate back to the lease alone", "canonical", (x) => x.replace("COALESCE(${unitAlias}.currently_leased_to_company_id, ${unitAlias}.owner_company_id)", "${unitAlias}.currently_leased_to_company_id")],
@@ -359,8 +369,13 @@ async function main() {
     });
     await tryRead("Live map", async () => {
       const pos = await getLivePositionsForActiveLoads(client, USMCA);
-      for (const p of pos) if (!("driver_id" in p)) { parity.push("Live map rows carry no driver"); break; }
-      for (const p of pos) { const b = boardRows.find((r) => r.id === p.load_uuid); if (b?.driver_id && p.driver_id !== b.driver_id) parity.push(`Live map driver for load ${b.load_number} ≠ the load's driver`); }
+      for (const p of pos) if (!("driver_id" in p) || !("driver_uuid" in p)) { parity.push("Live map rows carry no driver_id/driver_uuid"); break; }
+      for (const p of pos) {
+        if (p.driver_id !== p.driver_uuid) parity.push(`Live map driver_uuid ≠ driver_id for load ${p.load_uuid}`);
+        const b = boardRows.find((r) => r.id === p.load_uuid);
+        if (b?.driver_id && p.driver_id !== b.driver_id) parity.push(`Live map driver for load ${b.load_number} ≠ the load's driver`);
+        if (b?.driver_id && p.driver_uuid !== b.driver_id) parity.push(`Live map driver_uuid for load ${b.load_number} ≠ the load's driver`);
+      }
     });
     for (const r of boardRows) if (r.trailer_source === "customer" && !r.trailer_number) parity.push(`load ${r.load_number}: customer trailer missing from the board projection`);
 

@@ -611,13 +611,17 @@ export async function listQuicksaveDrafts(
       "SELECT set_config('app.operating_company_id', $1::text, true)",
       [operatingCompanyId],
     );
+    // LEAD 443.235 / register B9 — ONE draft definition (lib/load-status isDraftLoad): status='draft'
+    // OR is_quicksave_draft. The sidebar badge used to count quicksave-only and disagreed with the List pill.
     const rows = await client.query(
       `
-        SELECT id, load_number, assigned_primary_driver_id, assigned_unit_id, quicksave_pending_fields, updated_at
+        SELECT id, load_number, assigned_primary_driver_id, assigned_unit_id, quicksave_pending_fields, updated_at,
+               status, is_quicksave_draft
         FROM mdata.loads
         WHERE operating_company_id = $1::uuid
-          AND is_quicksave_draft = true
+          AND (status = 'draft' OR is_quicksave_draft = true)
           AND soft_deleted_at IS NULL
+          AND COALESCE(is_sample_data, false) IS NOT TRUE
         ORDER BY updated_at DESC
       `,
       [operatingCompanyId],
