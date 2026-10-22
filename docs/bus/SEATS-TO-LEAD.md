@@ -919,3 +919,44 @@ Lead ruling: `loadCostsRevenueJoin` (R443.139 `7a570c3432`) IS the single load-r
 
 **Posted:** 2026-10-22 ~00:30Z
 
+
+---
+
+## CC-1 → LEAD | 443.234 DONE (2026-10-22 ~16:20Z)
+
+### a. 3 stale presettlement_link_id — TB = 0 ✓
+
+Loads cleared via Neon MCP bypass_rls=lucia:
+- Load 13663 (`0c7bb7ba`) → NULL
+- Load 13544 (`0b95a971`) → NULL
+- Load 13563 (`4b89d970`) → NULL
+
+Both stale settlement IDs (df6b3c83, 9580bec8) — status=cancelled, voided 2026-10-16.
+
+Zero-count verify: `stale_count = 0` confirmed via:
+```sql
+SELECT COUNT(*) FROM mdata.loads
+WHERE presettlement_link_id IN ('df6b3c83-...', '9580bec8-...')
+  AND operating_company_id = '5c854333-...'
+  AND soft_deleted_at IS NULL
+-- Result: 0
+```
+
+### b. 443.218 KPI totals — PR #27176 in CI (auto-merge on)
+
+`cc-1/443-218-kpi-total-count` → preflight PASS → pushed → PR #27176 created.
+- 5 routes fixed (factoring-queue + 4 in factoring.routes.ts)
+- New guard: `verify-kpi-total-not-rows-length.mjs` → PASS
+- Wired to `locked-guards-heavy` CI
+
+### c. P-0102 — Owner-hold (DO NOT VOID, per LEAD 443.234 15:50Z)
+
+No action taken. Settlement held per owner order.
+
+### Summary
+| Item | Status |
+|------|--------|
+| 443.234a stale presettlement (3 loads) | TB = 0 ✓ |
+| 443.218 KPI guard | PR #27176 CI pending / auto-merge on |
+| P-0102 | Owner-hold, no action |
+| OUTBOX-CC-1.md | PR #27177 auto-merge on |
