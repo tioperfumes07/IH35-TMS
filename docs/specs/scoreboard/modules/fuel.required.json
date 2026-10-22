@@ -256,6 +256,20 @@
       ]
     },
     {
+      "id": "fuel.modal.assignment_popup",
+      "tab": "Modals",
+      "sub": "Modal: Fuel Assignment (truck + load)",
+      "route_hint": "surface://pages/fuel/components/FuelAssignmentPopup.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/fuel/components/FuelAssignmentPopup.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome",
+        "unit",
+        "load"
+      ]
+    },
+    {
       "id": "fuel.modal.create_fuel_transaction",
       "tab": "Modals",
       "sub": "Modal: Create Fuel Transaction",

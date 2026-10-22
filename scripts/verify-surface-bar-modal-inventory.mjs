@@ -24,9 +24,6 @@ const ALLOWED_NESTED = new Set([
   // Shared bulk-action preflight mounted by multiple owning pages. It is not a
   // standalone create surface and therefore cannot own a required.json leaf.
   "components/bulk/BulkPreValidationDialog.tsx",
-  // ROUND 443.243 — QBO-style fuel assignment popup, nested from Fuel Questions,
-  // Import Fuel, Settlement Creator, Load costs, Match drawer — not its own leaf.
-  "pages/fuel/components/FuelAssignmentPopup.tsx",
   "components/shared/ConfirmModal.tsx",
   "components/parity/drawers/NewAccountDrawerForm.tsx",
   "components/parity/drawers/NewClassDrawerForm.tsx",
