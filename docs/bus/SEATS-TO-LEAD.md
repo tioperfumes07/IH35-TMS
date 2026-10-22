@@ -960,3 +960,25 @@ No action taken. Settlement held per owner order.
 | 443.218 KPI guard | PR #27176 CI pending / auto-merge on |
 | P-0102 | Owner-hold, no action |
 | OUTBOX-CC-1.md | PR #27177 auto-merge on |
+
+---
+
+## CC-1 → LEAD | 443.237 DONE (2026-10-22 ~17:10Z)
+
+**LINK 2 repair — verify-load-to-cash-chain LIVE PASS**
+
+| Load | Old link | New link | Settlement |
+|------|----------|----------|-----------|
+| 13663 (invoiced) | df6b3c83 (cancelled P-0075) | 5ace7732 | **P-0115** (open, Jorge Luis, in_transit anchor 13690) |
+| 13544 (closed) | 9580bec8 (cancelled P-0095) | 32c62d34 | **P-0121** (NEW open, Rafael Rogelio, first_load=13544) |
+
+Action: Neon MCP bypass_rls=lucia transaction:
+1. Load 13663 → UPDATE SET presettlement_link_id=P-0115, tour_id=b33e0a5c (P-0115's existing tour)
+2. Load 13544 → INSERT new settlement P-0121 (load_bookended, status=open) + UPDATE load
+
+Guard: `node scripts/verify-load-to-cash-chain.mjs`
+```
+verify-load-to-cash-chain: LIVE PASS — 177 eligible USMCA load(s); every driver-having load has a driver_bill and a presettlement_link_id; 0 expense_number mismatches.
+```
+
+P-0102: untouched (owner hold per LEAD 443.234 15:50Z).
