@@ -299,7 +299,8 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
         const probeBody = resolvePsqlVars(src, extractBlock(src, proof.probe_query_id, proof.probe_sub_id));
         if (WRITE_TOKENS.test(probeBody))
           return done(false, null, `read-only violation in probe block (R4)`);
-        const probeRows = await exec(probeBody, execOpts);
+        const probeRows = await exec(probeBody, { ...execOpts,
+          exactJournalPopulation: proof.file === 'scripts/verify-gl-invariants.sql' && proof.probe_query_id === 'INV-0' });
         if (probeRows.length === 0)
           return done(false, "probe returned 0 rows",
             `the discriminator probe itself came back empty — the connection cannot see the data (R1-b)`);
@@ -412,15 +413,28 @@ export function assertConnectionCanEnforceRls(rolbypassrls) {
   return true;
 }
 
+export async function prepareExactJournalPopulation(client) {
+  // Statistics are estimates, not an independent exact population. Read using
+  // the configured read-only BYPASSRLS login, then grade the application role
+  // in the SAME snapshot. Never grant privileges or elevate to an owner role.
+  const role = await client.query('SELECT rolbypassrls FROM pg_roles WHERE rolname=current_user');
+  if (role.rows[0]?.rolbypassrls !== true) throw new Error('Exact population requires a verified BYPASSRLS read-only login');
+  const company = '5c854333-6ea5-4faa-af31-67cb272fef80';
+  const expected = await client.query(`SELECT count(*)::text AS n FROM accounting.journal_entries WHERE operating_company_id=$1`, [company]);
+  await client.query("SELECT set_config('app.proof_je_expected',$1,true), set_config('app.operating_company_id',$2,true)", [expected.rows[0].n, company]);
+  await client.query('SET LOCAL ROLE ih35_app');
+}
+
 function defaultPgQuery(connectionString) {
   return async function (sql, opts = {}) {
     const { default: pg } = await import("pg");
     const client = new pg.Client({ connectionString });
     await client.connect();
     try {
-      await client.query("BEGIN");
+      await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ");
       await client.query("SET TRANSACTION READ ONLY");
       await client.query("SET LOCAL statement_timeout = '30s'");
+      if (opts.exactJournalPopulation) await prepareExactJournalPopulation(client);
       // Safe to inline: assertSqlProofShape only admits names in RLS_ROLES. Issued BEFORE the R7
       // role check so R7 grades the role the query will actually run as.
       if (opts.rls === "enforced" && opts.rls_role) {

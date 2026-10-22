@@ -19,8 +19,8 @@ export const INVARIANTS_FILE = "scripts/verify-gl-invariants.sql";
 
 /**
  * je_control: accounting.journal_entries row count read through RLS, which must EQUAL
- * je_control_expected — the same table's live-tuple count derived at run time by an independent
- * read (the stats subsystem, which RLS does not filter) — and be non-zero.
+ * je_control_expected — an exact USMCA count using the verified read-only BYPASSRLS login,
+ * before switching to ih35_app in the same repeatable-read snapshot — and be non-zero.
  *
  * LEAD 443.187 (2026-10-17): this used to be the frozen literal { value: 2214 } (the count on
  * 2026-08-30). It rotted — prod read 4102 — and failed all five wrappers on the probe alone.
@@ -34,8 +34,8 @@ export const DISCRIMINATOR = { column: "je_control", equals_column: "je_control_
  *
  *   \echo '=== INV-0  CONTROL (discriminator: this connection can see the ledger) ==='
  *   SELECT count(*) AS je_control,
- *          pg_stat_get_live_tuples('accounting.journal_entries'::regclass) AS je_control_expected
- *   FROM accounting.journal_entries;
+ *          NULLIF(current_setting('app.proof_je_expected',true),'')::bigint AS je_control_expected
+ *   FROM accounting.journal_entries WHERE operating_company_id = :USMCA;
  *
  * Without it a zero-rows proof cannot tell a clean ledger from a blind read.
  */
