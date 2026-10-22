@@ -236,6 +236,10 @@ type Props = {
   prefillUnitId?: string | null;
   /** If the entry point already knows the driver for that unit, prefill it too. */
   prefillDriverId?: string | null;
+  /** LEAD 443.251 item 1b — a truck dropped on a Kanban lane: the unit's label for the header and that
+   *  lane's status. "assigned_not_dispatched" books without dispatching; nothing is written until Book. */
+  prefillUnitLabel?: string | null;
+  prefillLaneStatus?: "assigned_not_dispatched" | "dispatched" | null;
   /** REG-023(a) — Stops-tab Edit scrolls to stops; never a blank full-wizard hunt. */
   editFocus?: "full" | "stops";
 };
@@ -325,8 +329,11 @@ export function BookLoadModalV4({
   editLoadId,
   prefillUnitId,
   prefillDriverId,
+  prefillUnitLabel,
+  prefillLaneStatus,
   editFocus = "full",
 }: Props) {
+  const bookWithoutDispatch = !editLoadId && prefillLaneStatus === "assigned_not_dispatched";
   const auth = useAuth();
   const queryClient = useQueryClient();
   const isEditMode = Boolean(editLoadId);
@@ -1727,6 +1734,7 @@ export function BookLoadModalV4({
         };
         }),
         save_mode: saveMode,
+        book_without_dispatch: saveMode === "book_dispatch" && bookWithoutDispatch ? true : undefined,
         // ROUND 24.3 — the exact required fields this draft deferred (see draftPendingFields above),
         // so a resumed draft can flag precisely what's still missing instead of re-deriving it.
         quicksave_pending_fields: saveMode === "draft" ? draftPendingFields : undefined,
@@ -1963,7 +1971,15 @@ export function BookLoadModalV4({
                 ) : null}
               </div>
             ) : (
-              <div className="text-page-title font-bold">Book load</div>
+              <div className="flex items-center gap-1.5 text-page-title font-bold">
+                <span>Book load</span>
+                {prefillUnitLabel ? <span data-testid="book-load-header-unit">for {prefillUnitLabel}</span> : null}
+                {prefillLaneStatus ? (
+                  <span className="rounded-sm bg-white/10 px-1.5 text-xs font-semibold" data-testid="book-load-header-lane">
+                    → {prefillLaneStatus === "assigned_not_dispatched" ? "Assigned" : "Dispatched"}
+                  </span>
+                ) : null}
+              </div>
             )}
           </div>
           <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9AA6BA" }}>
@@ -3166,7 +3182,9 @@ export function BookLoadModalV4({
                       ? "Override & dispatch"
                       : repairBlockSubmitBlocked
                         ? "Resolve blocker to dispatch"
-                        : "Book + dispatch"
+                        : bookWithoutDispatch
+                          ? "Book to Assigned"
+                          : "Book + dispatch"
                 }
                 onSave={runPrimarySubmit}
                 onSaveAndClose={() => {
