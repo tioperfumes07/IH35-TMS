@@ -222,7 +222,12 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
     queryFn: () => listExpenses(operatingCompanyId, { driver_id: driverId, limit: 50 }).then((res) => res.rows),
     enabled,
   });
+  // 443.218 F2b: prefer the aggregate total_balance_cents from the COUNT+SUM query so the KPI
+  // reflects ALL matching bills, not only the first limit-50 page.
   const openBillTotalCents = useMemo(() => {
+    if (openBillsQuery.data?.total_balance_cents != null) {
+      return Number(openBillsQuery.data.total_balance_cents);
+    }
     const rows = openBillsQuery.data?.rows ?? [];
     return rows.reduce((sum, row) => {
       const bal =
@@ -231,7 +236,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           : Number(row.amount_cents ?? 0) - Number(row.paid_cents ?? 0);
       return sum + (Number.isFinite(bal) ? bal : 0);
     }, 0);
-  }, [openBillsQuery.data?.rows]);
+  }, [openBillsQuery.data]);
 
   const liabilities = liabilitiesQuery.data?.liabilities ?? [];
   const driverSettlements = useMemo(() => {
@@ -427,7 +432,12 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
                 {openBillsQuery.isError ? (
                   <span className="text-red-600">Error loading open bills</span>
                 ) : (
-                  `${(openBillsQuery.data?.rows ?? []).length} unpaid bill(s)`
+                  (() => {
+                    const total = openBillsQuery.data?.total;
+                    const shown = (openBillsQuery.data?.rows ?? []).length;
+                    if (total != null && total > shown) return `Showing ${shown} of ${total} unpaid bill(s)`;
+                    return `${total ?? shown} unpaid bill(s)`;
+                  })()
                 )}
               </div>
             </div>

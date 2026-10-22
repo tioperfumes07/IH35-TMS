@@ -1261,6 +1261,47 @@ export async function listBillsByVendor(
 }
 
 /**
+ * 443.218 F2b — aggregate COUNT + SUM(balance) for a vendor's bill set.  Mirrors the same
+ * WHERE predicates as listBillsByVendor so the count can never disagree with the list.
+ */
+export async function countBillsByVendor(
+  userId: string,
+  operatingCompanyId: string,
+  vendorId: string,
+  options: Pick<ListBillsOptions, "status" | "fromDate" | "toDate">
+): Promise<{ count: number; total_balance_cents: number }> {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const where: string[] = [
+      "b.operating_company_id = $1::uuid",
+      `COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetSql(1, 2)}`,
+    ];
+    const values: unknown[] = [operatingCompanyId, vendorId];
+    if (options.fromDate) {
+      values.push(options.fromDate);
+      where.push(`b.bill_date >= $${values.length}::date`);
+    }
+    if (options.toDate) {
+      values.push(options.toDate);
+      where.push(`b.bill_date <= $${values.length}::date`);
+    }
+    applyBillListStatusFilter(where, options.status);
+    const res = await client.query<{ count: string; total_balance_cents: string }>(
+      `SELECT COUNT(*)::int AS count,
+              COALESCE(SUM(${BILL_OPEN_BALANCE_SQL}), 0)::bigint AS total_balance_cents
+         FROM accounting.bills b
+        ${BILL_VENDOR_RESOLVE_JOIN_SQL}
+        WHERE ${where.join(" AND ")}`,
+      values
+    );
+    return {
+      count: Number(res.rows[0]?.count ?? 0),
+      total_balance_cents: Number(res.rows[0]?.total_balance_cents ?? 0),
+    };
+  });
+}
+
+/**
  * REVERSE-SECTIONS-SILENT-LIST-CAPS: shared WHERE-clause builder for the "all bills" (no vendor
  * identity) filter set, used by BOTH listAllBillsForCompany's row query and
  * countAllBillsForCompany's total query — extracted so the two can never drift apart (a filter
