@@ -195,6 +195,13 @@ describe("TruckLineBoard.sort (443.231)", () => {
     });
   });
 
+  it("unit deep-link hides other loaded and available trucks", async () => {
+    render(wrap(<TruckLineBoard operatingCompanyId="00000000-0000-4000-8000-0000000000bb" selectedUnitId="u-t20" onLoadClick={() => {}} onAssignDriver={() => {}} />));
+    await waitFor(() => expect(inTransitUnitOrder()).toEqual(["u-t20"]));
+    expect(screen.queryByTestId("truck-line-row-u-avail")).not.toBeInTheDocument();
+    expect(screen.queryByText("T99")).not.toBeInTheDocument();
+  });
+
   it("reorders single-leg groups by LOAD / TOUR / PU / DEL asc and desc; null PU last both ways", async () => {
     render(
       wrap(

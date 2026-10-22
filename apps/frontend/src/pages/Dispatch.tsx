@@ -32,6 +32,7 @@ import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 import { userFacingApiError } from "../lib/api-error-message";
 import { companyToday, addDaysIso } from "../lib/businessDate";
 import { isDraftLoad } from "../lib/load-status";
+import { filterDispatchUnits } from "../lib/dispatch-unit-filter";
 import { dispatchSecondaryTabFromPath } from "../router/route-manifest";
 
 type ViewMode = "overview" | "list" | "kanban" | "units" | "truck-line";
@@ -347,7 +348,10 @@ export function DispatchPage({
     enabled: Boolean(selectedCompanyId),
     staleTime: 30_000,
   });
-  const awaitingTrucks = awaitingTrucksQuery.data?.units ?? [];
+  const awaitingTrucks = useMemo(
+    () => filterDispatchUnits(awaitingTrucksQuery.data?.units ?? [], filters.unitId),
+    [awaitingTrucksQuery.data, filters.unitId],
+  );
   const activeGeofenceBreachVehicleIds = useMemo(() => {
     const ids = new Set<string>();
     for (const unitId of geofenceBreachesQuery.data?.active_vehicle_ids ?? []) ids.add(unitId);
@@ -637,6 +641,7 @@ export function DispatchPage({
       {subTab === "load_board" && showLoadBoard ? (
         view === "truck-line" ? (
           <TruckLineBoard
+            selectedUnitId={filters.unitId}
             operatingCompanyId={defaultCompanyIds[0] ?? ""}
             onLoadClick={(loadId) => navigate(`/dispatch/load-costs/${loadId}`)}
             onAssignDriver={(assignDriverId, assignUnitId) => {
@@ -647,6 +652,7 @@ export function DispatchPage({
           />
         ) : view === "units" ? (
           <RoundTrips
+            selectedUnitId={filters.unitId}
             loads={loads}
             operatingCompanyId={defaultCompanyIds[0] ?? ""}
             loading={loadsQuery.isLoading}
@@ -666,6 +672,7 @@ export function DispatchPage({
         ) : view === "list" ? (
           <SectionErrorBoundary name="Dispatch board">
           <DispatchBoard
+            selectedUnitId={filters.unitId}
             loads={loads}
             boardScope={boardScope}
             operatingCompanyId={defaultCompanyIds[0] ?? ""}

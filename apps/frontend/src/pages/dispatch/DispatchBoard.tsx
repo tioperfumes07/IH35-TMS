@@ -110,8 +110,10 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SelectCombobox } from "../../components/Combobox";
+import { filterDispatchUnits } from "../../lib/dispatch-unit-filter";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
+  selectedUnitId?: string | null;
   operatingCompanyId?: string;
   onBulkComplete?: () => void;
   /** LIVE = truck-centric sections (awaiting/booked/in shop). HISTORY = completed/cancelled loads only. */
@@ -570,6 +572,7 @@ function AssignmentBand({ title, children }: { title: string; children: ReactNod
 const bandTitle = (title: string, count: number) => `${title} · ${count}`;
 
 export function DispatchBoard({
+  selectedUnitId,
   operatingCompanyId,
   onBulkComplete,
   boardScope = "live",
@@ -684,7 +687,10 @@ export function DispatchBoard({
     enabled: Boolean(companyId) && !isHistoryBoard,
     staleTime: 30_000,
   });
-  const unassignedUnits = unitsWithoutLoadQuery.isError ? [] : (unitsWithoutLoadQuery.data?.units ?? []);
+  const unassignedUnits = useMemo(
+    () => unitsWithoutLoadQuery.isError ? [] : filterDispatchUnits(unitsWithoutLoadQuery.data?.units ?? [], selectedUnitId),
+    [unitsWithoutLoadQuery.isError, unitsWithoutLoadQuery.data, selectedUnitId],
+  );
   // ROUND 203 F17 — never collapse a failed query into an empty roster (Law §8).
 
   const inShopUnitsQuery = useQuery({
@@ -711,7 +717,7 @@ export function DispatchBoard({
   // On error the feed is EMPTY. The error state (section.key === "in_shop" && isError, below) is
   // what the user sees, and the Awaiting count — which subtracts in-shop units — recomputes from the
   // same empty list rather than from a stale one.
-  const inShopUnits = inShopUnitsQuery.isError ? [] : (inShopUnitsQuery.data ?? []);
+  const inShopUnits = inShopUnitsQuery.isError ? [] : filterDispatchUnits(inShopUnitsQuery.data ?? [], selectedUnitId, "unit_id");
   // ROUND 203 F17 — isError handled via ListErrorBanner/ListErrorState, not silent [].
   // DispatchInShopUnit's real key is unit_id (api/dispatch.ts) — .id never existed on this type;
   // this line only typechecked before because a prior tsc pass didn't reach it.
