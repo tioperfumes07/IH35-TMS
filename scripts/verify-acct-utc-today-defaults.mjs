@@ -49,9 +49,13 @@ function findViolationsInText(text, fileLabel = "fixture") {
 function findGlobalViolations(text, fileLabel = "fixture") {
   const nowUtc = /new\s+Date\s*\(\s*\)\s*\.\s*toISOString\(\)\s*\.\s*(?:slice\(\s*0\s*,\s*10\s*\)|split\(["']T["']\)\[0\])/;
   const dateOnlyParsing = /new\s+Date\s*\(\s*(?:["']\d{4}-\d{2}-\d{2}["']|[\w$.]+\.(?:due_date|return_avail_date))\s*\)/;
+  // A Date.now()-based relative range is still a business-day default. Match
+  // its line without attempting to parse nested constructor parentheses.
+  const relativeNowUtc = /Date\.now\(\)/;
+  const utcDay = /\.toISOString\(\)\.(?:slice\(\s*0\s*,\s*10\s*\)|split\(["']T["']\)\[0\])/;
   return text.split("\n").flatMap((line, i) => {
     if (/^\s*(?:\/\/|\*|\/\*)/.test(line)) return [];
-    return nowUtc.test(line) || dateOnlyParsing.test(line) ? [`${fileLabel}:${i + 1}: ${line.trim()}`] : [];
+    return nowUtc.test(line) || dateOnlyParsing.test(line) || (relativeNowUtc.test(line) && utcDay.test(line)) ? [`${fileLabel}:${i + 1}: ${line.trim()}`] : [];
   });
 }
 
@@ -103,10 +107,11 @@ function selftest() {
     'format(new Date(bill.due_date));',
     'format(new Date(t.return_avail_date));',
     'format(new Date("2026-10-21"));',
+    'const from = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);',
   ];
   for (const plant of badGlobal) if (findGlobalViolations(plant).length !== 1) throw Error(`missed mutation: ${plant}`);
   if (findGlobalViolations('formatDateUS(bill.due_date); companyToday(); new Date(Date.UTC(y,m,d));').length) throw Error('valid calendar handling refused');
-  console.log(`[${LABEL}] global selftest PASS (5 planted failures; valid calendar parts pass)`);
+  console.log(`[${LABEL}] global selftest PASS (${badGlobal.length} planted failures; valid calendar parts pass)`);
 }
 
 if (process.argv.includes("--selftest")) {

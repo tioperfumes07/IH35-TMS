@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { companyNow, companyToday, companyWallClockToIso } from "../businessDate";
+import { addDaysIso, companyNow, companyToday, companyWallClockToIso } from "../businessDate";
+
+describe("relative business-day windows", () => {
+  it("anchors both ends to Central at 01:30Z, including a DST-crossing window", () => {
+    const today = companyToday(new Date("2026-10-22T01:30:00Z"));
+    expect(today).toBe("2026-10-21");
+    expect(addDaysIso(today, -30)).toBe("2026-09-21");
+    expect(addDaysIso(today, 30)).toBe("2026-11-20");
+  });
+});
 
 describe("companyNow (America/Chicago datetime-local default)", () => {
   it("returns the Central-local date, not the UTC date, after the day has rolled in UTC", () => {

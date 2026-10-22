@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -369,7 +370,7 @@ export function DocsHomePage() {
           label="Expiring 30 Days"
           value={String(kpisQuery.data?.expiring_30_days ?? 0)}
           onClick={() => {
-            const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+            const in30 = addDaysIso(companyToday(), 30);
             setKpiFilter("none");
             setExpiresBefore(in30);
             setPage(1);
