@@ -12,6 +12,7 @@ describe("manual transaction pull", () => {
       Array.from({length:201},(_,i)=>source(`${kind}-${i}`,kind)));
     expect(planManualPull(rows,[]).create).toHaveLength(804);
     expect(MANUAL_PULL_SOURCES_SQL).not.toMatch(/\bLIMIT\b|\bOFFSET\b/);
+    expect(MANUAL_PULL_SOURCES_SQL).not.toMatch(/i\.issue_date|b\.bill_date/);
   });
   it("includes both partial bill spellings with live status/timestamp predicates", () => {
     expect(MANUAL_PULL_SOURCES_SQL).toContain("'partial','partially_paid'");
