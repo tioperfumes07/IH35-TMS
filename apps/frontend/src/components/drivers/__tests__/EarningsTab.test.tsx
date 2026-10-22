@@ -100,6 +100,7 @@ describe("EarningsTab", () => {
     vi.spyOn(autoDeductionHooks, "listAutoDeductionPolicies").mockResolvedValue({ rows: [] });
     vi.spyOn(mdataApi, "getDriverApVendor").mockResolvedValue({ vendor: null });
     vi.spyOn(accountingApi, "listVendorBills").mockResolvedValue({ rows: [] });
+    vi.spyOn(accountingApi, "listExpenses").mockResolvedValue({ rows: [] });
   });
 
   it("renders live debt and earnings summary", async () => {
@@ -167,6 +168,8 @@ describe("EarningsTab", () => {
       },
     });
     vi.mocked(accountingApi.listVendorBills).mockResolvedValue({
+      total: 1,
+      total_balance_cents: 50000,
       rows: [
         {
           id: "bill-1",
@@ -180,6 +183,29 @@ describe("EarningsTab", () => {
     expect(await screen.findByTestId("driver-earnings-ap-vendor-link")).toBeTruthy();
     expect(await screen.findByTestId("driver-earnings-ap-vendor-open-total")).toHaveTextContent("$500.00");
     expect(screen.getByTestId("driver-earnings-ap-vendor-open").getAttribute("href")).toBe("/vendors/v-ap-1");
+  });
+
+  it("uses the full AP aggregate, never the first page's balance", async () => {
+    vi.mocked(mdataApi.getDriverApVendor).mockResolvedValue({ vendor: {
+      id: "fixture-vendor", name: "Fixture driver", qbo_vendor_id: null, operating_company_id: companyId, driver_id: driverId,
+    } });
+    vi.mocked(accountingApi.listVendorBills).mockResolvedValue({
+      rows: [{ id: "fixture-bill", balance_cents: 100 } as accountingApi.VendorBill], total: 75, total_balance_cents: 7500,
+    });
+    render(wrap(<EarningsTab driverId={driverId} operatingCompanyId={companyId} />));
+    await waitFor(() => expect(screen.getByTestId("driver-earnings-ap-vendor-open-total")).toHaveTextContent("$75.00"));
+    expect(accountingApi.listVendorBills).toHaveBeenCalledWith(companyId, expect.objectContaining({ status: "unpaid" }));
+  });
+
+  it("does not invent an aggregate from a capped page when the server omits it", async () => {
+    vi.mocked(mdataApi.getDriverApVendor).mockResolvedValue({ vendor: {
+      id: "fixture-vendor", name: "Fixture driver", qbo_vendor_id: null, operating_company_id: companyId, driver_id: driverId,
+    } });
+    vi.mocked(accountingApi.listVendorBills).mockResolvedValue({
+      rows: [{ id: "fixture-bill", balance_cents: 100 } as accountingApi.VendorBill], total: 75,
+    });
+    render(wrap(<EarningsTab driverId={driverId} operatingCompanyId={companyId} />));
+    await waitFor(() => expect(screen.getByTestId("driver-earnings-ap-vendor-open-total")).toHaveTextContent("Unavailable"));
   });
 
   it("refresh triggers live debt recompute", async () => {

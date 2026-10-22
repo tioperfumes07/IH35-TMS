@@ -52,6 +52,15 @@ export function checkEarningsTabErrorState(src) {
   return problems;
 }
 
+export function checkCompleteApAggregate(src) {
+  const block = src.split("const openBillTotalCents = useMemo(() => {")[1]?.split("}, [openBillsQuery.data]);")[0] ?? "";
+  const problems = [];
+  if (!block.includes("total_balance_cents")) problems.push("open AP total must read the full server aggregate");
+  if (block.includes(".rows") || block.includes(".reduce(")) problems.push("open AP total must never sum the capped page as fallback");
+  if (!block.includes("return null") || !src.includes('openBillTotalCents == null') || !src.includes('"Unavailable"')) problems.push("missing AP aggregate must render Unavailable");
+  return problems;
+}
+
 if (process.argv.includes("--selftest")) {
   const failures = [];
 
@@ -78,6 +87,11 @@ if (process.argv.includes("--selftest")) {
   if (goodProblems.length !== 0) {
     failures.push(`the real fixed file was flagged: ${goodProblems.join("; ")}`);
   }
+  failures.push(...checkCompleteApAggregate(good));
+  const capped = good.replace("return null;", "return openBillsQuery.data.rows.reduce((sum, row) => sum + row.balance_cents, 0);");
+  if (checkCompleteApAggregate(capped).length === 0) failures.push("capped AP fallback mutation escaped");
+  const missingAggregate = good.replaceAll("total_balance_cents", "page_total_cents");
+  if (checkCompleteApAggregate(missingAggregate).length === 0) failures.push("missing full AP aggregate mutation escaped");
 
   // Partial regression: 6 of 7 queries get isError handling, one (driverExpensesQuery) is missed.
   const partial = good.replace(/driverExpensesQuery\.isError/g, "false /* dropped */");
@@ -99,7 +113,7 @@ if (process.argv.includes("--selftest")) {
 }
 
 const src = fs.readFileSync(FILE_PATH, "utf8");
-const problems = checkEarningsTabErrorState(src);
+const problems = [...checkEarningsTabErrorState(src), ...checkCompleteApAggregate(src)];
 if (problems.length) {
   console.error(`${LABEL} FAIL — ${problems.length} problem(s):`);
   for (const p of problems) console.error("  ✗ " + p);

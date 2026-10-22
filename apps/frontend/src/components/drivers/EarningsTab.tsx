@@ -222,20 +222,14 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
     queryFn: () => listExpenses(operatingCompanyId, { driver_id: driverId, limit: 50 }).then((res) => res.rows),
     enabled,
   });
-  // 443.218 F2b: prefer the aggregate total_balance_cents from the COUNT+SUM query so the KPI
-  // reflects ALL matching bills, not only the first limit-50 page.
+  // The KPI is exclusively the server's complete aggregate. A missing aggregate is
+  // unavailable, never a smaller number reconstructed from the capped detail page.
   const openBillTotalCents = useMemo(() => {
     if (openBillsQuery.data?.total_balance_cents != null) {
-      return Number(openBillsQuery.data.total_balance_cents);
+      const total = Number(openBillsQuery.data.total_balance_cents);
+      return Number.isFinite(total) ? total : null;
     }
-    const rows = openBillsQuery.data?.rows ?? [];
-    return rows.reduce((sum, row) => {
-      const bal =
-        row.balance_cents != null
-          ? Number(row.balance_cents)
-          : Number(row.amount_cents ?? 0) - Number(row.paid_cents ?? 0);
-      return sum + (Number.isFinite(bal) ? bal : 0);
-    }, 0);
+    return null;
   }, [openBillsQuery.data]);
 
   const liabilities = liabilitiesQuery.data?.liabilities ?? [];
@@ -426,7 +420,9 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
                   ? moneyOrError(true, 0)
                   : openBillsQuery.isPending
                     ? "…"
-                    : money(openBillTotalCents / 100)}
+                    : openBillTotalCents == null
+                      ? "Unavailable"
+                      : money(openBillTotalCents / 100)}
               </div>
               <div className="text-xs text-gray-500">
                 {openBillsQuery.isError ? (
