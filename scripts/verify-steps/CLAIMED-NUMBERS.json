@@ -14839,6 +14839,11 @@
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.243: verify-nb-left-driver-does-not-occupy-presettlement (an NB moved back to draft / to another driver never blocks the driver's real next NB; Book Load keeps the stop facility_name)"
   },
+  "18677": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.244: verify-truck-one-in-motion-plus-advance (app gate + DB backstops refuse only a second load in motion; real-Postgres)"
+  },
   "18629": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-21",
@@ -16872,7 +16877,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1076,
+  "total_claimed": 1077,
   "18670": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-22",

@@ -2742,5 +2742,10 @@
     "claimed_by": "Cursor",
     "claimed_at": "2026-10-22",
     "purpose": "443.243: fuel.fuel_assignment_questions \u2014 Fuel Assignment Question table + API for the confirmation popup"
+  },
+  "202616142000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.244 (owner 2:10 PM CT): a truck holds ONE load in motion plus advance bookings — the unit backstop triggers refuse only a second load in motion"
   }
 }
