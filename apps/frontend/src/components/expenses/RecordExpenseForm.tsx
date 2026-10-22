@@ -30,6 +30,11 @@ import {
   submitRecordExpense,
   type RecordExpenseFormValues,
 } from "./recordExpenseSubmit";
+import {
+  firstOpenFuelAssignmentQuestion,
+  type FuelAssignmentQuestion,
+} from "../../api/fuelAssignmentQuestions";
+import { FuelAssignmentPopup } from "../../pages/fuel/components/FuelAssignmentPopup";
 
 /** Vendor roster cap for the payee picker — must match listVendors limit below. */
 const RECORD_EXPENSE_VENDOR_LIST_CAP = 5000;
@@ -96,10 +101,12 @@ export function RecordExpenseForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
+  const [fuelAssignmentQuestion, setFuelAssignmentQuestion] = useState<FuelAssignmentQuestion | null>(null);
   // LV-G18-INERT-ON-EXPENSE-LINES: drives both the Load field's required asterisk and the no-load
   // reason field's visibility. See recordExpenseSubmit.ts's OVER_THE_ROAD_CATEGORY_RE for why this
   // exact taxonomy/regex, kept as the single source of truth so the two can never drift apart.
   const isOverTheRoadCategory = isOverTheRoadCategoryLabel(values.categoryLabel);
+  const isFuelCategory = /(?:fuel|diesel|\bdef\b)/i.test(values.categoryLabel);
 
   // Prefill unit from WO context without clobbering a user picker change.
   useEffect(() => {
@@ -274,6 +281,8 @@ export function RecordExpenseForm({
     setSubmitting(true);
     setError(null);
     try {
+      const savedLoadId = values.loadId;
+      const savedWasFuel = isFuelCategory;
       const created = await submitRecordExpense(operatingCompanyId, values, draftAttachmentEntityId, {
         workOrderId,
         unitId: defaultUnitId,
@@ -283,6 +292,13 @@ export function RecordExpenseForm({
       setValues(defaultUnitId ? { ...reset, unitId: defaultUnitId } : reset);
       setDraftAttachmentEntityId(crypto.randomUUID());
       onSubmitted?.(created?.expense_id ? { targetType: "expense", targetId: created.expense_id } : undefined);
+      // 443.243 — expense create with a fuel item opens the assignment popup when not 100% certain.
+      if (savedWasFuel) {
+        const q = await firstOpenFuelAssignmentQuestion(operatingCompanyId, {
+          loadId: savedLoadId || undefined,
+        });
+        if (q) setFuelAssignmentQuestion(q);
+      }
     } catch (submitError) {
       setError(String((submitError as Error).message || "Failed to record expense"));
     } finally {
@@ -725,6 +741,13 @@ export function RecordExpenseForm({
           </Button>
         </div>
       ) : null}
+      <FuelAssignmentPopup
+        open={Boolean(fuelAssignmentQuestion)}
+        operatingCompanyId={operatingCompanyId}
+        question={fuelAssignmentQuestion}
+        onClose={() => setFuelAssignmentQuestion(null)}
+        onAnswered={() => setFuelAssignmentQuestion(null)}
+      />
     </form>
   );
 }

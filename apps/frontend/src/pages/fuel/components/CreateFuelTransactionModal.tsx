@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFuelTransaction, type FuelType } from "../../../api/fuelPlanner";
+import { evaluateFuelAssignmentOrNull, type FuelAssignmentQuestion } from "../../../api/fuelAssignmentQuestions";
 import { suggestExpenseLoad } from "../../../api/maintenance";
 import { confirmUpload, requestUploadUrlFromFile } from "../../../api/docs";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { FuelAssignmentPopup } from "./FuelAssignmentPopup";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { NumberInput } from "../../../components/forms/NumberInput";
@@ -57,6 +59,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   const [sourceDocFile, setSourceDocFile] = useState<File | null>(null);
   const [suggestionPinned, setSuggestionPinned] = useState(false);
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  const [assignmentQuestion, setAssignmentQuestion] = useState<FuelAssignmentQuestion | null>(null);
   const lifecycleGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
@@ -170,7 +173,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     setSaving(true);
     try {
       const sourceDocId = await uploadSourceDoc();
-      await createFuelTransaction(operatingCompanyId, {
+      const created = await createFuelTransaction(operatingCompanyId, {
         transaction_at: transactionDate,
         driver_id: driverId || null,
         unit_id: unitId || null,
@@ -195,6 +198,15 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast("Fuel purchase recorded", "success");
       onCreated();
+      // LEAD 443.243 — open Fuel Assignment popup when the engine is not 100% certain.
+      const question = created?.id
+        ? await evaluateFuelAssignmentOrNull(operatingCompanyId, created.id)
+        : null;
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
+      if (question) {
+        setAssignmentQuestion(question);
+        return;
+      }
       completeClose();
     } catch (error) {
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
@@ -205,7 +217,8 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Create Fuel Purchase" variant="drawer" confirmDiscardOnClose isDirty={isDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
+    <>
+    <Modal open={open && !assignmentQuestion} onClose={handleClose} title="Create Fuel Purchase" variant="drawer" confirmDiscardOnClose isDirty={isDirty} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3 text-xs" data-testid="create-fuel-transaction-modal">
         <div className="block font-semibold text-gray-700">
           <label htmlFor="fuel-purchase-date">Purchase date *</label>
@@ -444,5 +457,20 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         </div>
       </div>
     </Modal>
+    <FuelAssignmentPopup
+      open={assignmentQuestion != null}
+      operatingCompanyId={operatingCompanyId}
+      question={assignmentQuestion}
+      onClose={() => {
+        setAssignmentQuestion(null);
+        completeClose();
+      }}
+      onAnswered={() => {
+        setAssignmentQuestion(null);
+        onCreated();
+        completeClose();
+      }}
+    />
+    </>
   );
 }

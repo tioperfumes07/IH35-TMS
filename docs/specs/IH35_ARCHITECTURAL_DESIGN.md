@@ -316,18 +316,19 @@ BOA Balance · IBC Balance · Factoring Available · Escrow Total · MTD Inflow 
 ### Top action button
 **+ Plan Fuel Route**
 
-### Sub-nav tabs (10 — locked design; canonical source `FUEL_SUBNAV` in `FUEL_TABS_CONFIG.ts`)
+### Sub-nav tabs (13 — locked design; canonical source `FUEL_SUBNAV` in `FUEL_TABS_CONFIG.ts`)
 
 | Tab | What it shows | Phase |
 |-----|---------------|-------|
-| **Active Plan** | Current route fuel plan with stop optimization | Phase 3 ✅ |
-| **Fuel Log** | Fuel transaction stream and review | Phase 3 shell |
-| **Loves Prices** | Excel upload from Loves portal · auto-categorize transactions | Phase 3 ✅ |
-| **Relay Transactions** | Relay transaction feed for reconciliation | Phase 3 shell |
-| **DEF** | DEF purchases and usage review | Phase 3 shell |
-| **Compliance Tracker** | Drivers with fuel/HOS compliance issues | Phase 3 ✅ |
-| **Fuel by Unit/Driver/State (IFTA)** | Per-state miles + gallons + tax | Phase 3 ✅ |
+| **Home** | Fuel module landing · KPI · quick-jump into the other Fuel tabs | Phase 3 ✅ |
+| **Planner** | Current route fuel plan with stop optimization (Active Plan) | Phase 3 ✅ |
+| **Relay inbox** | Relay transaction feed for reconciliation / review | Phase 3 shell |
 | **Settings** | Preferred fuel networks · Avoid states · HOS thresholds | Owner only |
+| **Expense mapping** | Fuel expense GL / category mapping | Phase 3 ✅ |
+| **History & savings** | Fuel log stream + savings vs plan | Phase 3 shell |
+| **Fuel questions** | Open Fuel Assignment Questions (LEAD 443.243) — uncertain fill→truck→load attributions; badge count; opens the Fuel Assignment popup (evidence table: fill date/time CT, station, gallons, amount, card truck/driver, GPS candidates, proposed answer + why; confirm / pick truck+load / keep on card truck with audited reason). Same list + badge also surfaces on Load Costs | Phase 3 ✅ (LEAD 443.243) |
+| **Loves prices** | Excel upload from Loves portal · auto-categorize transactions | Phase 3 ✅ |
+| **Compliance** | Drivers with fuel/HOS compliance issues · IFTA by unit/driver/state | Phase 3 ✅ |
 | **Integrity** | Per-transaction GPS verdict (E-22), fraud classification (E-21), and derived pump time/state (E-19/E-20), each with its "why" — read-only, computed on read | Phase 3 ✅ (ORDERS-2026-10-01) |
 | **Cards** | E-22 card -> truck (+ driver) registry over effective dates — assign/end/void a fuel card's truck, with reverse sections on the Unit and Driver profiles | Phase 3 ✅ (ORDERS-2026-10-01) |
 | **Relay — unmatched** | Relay fuel fills (integrations.relay_fuel_transactions, never becomes a fuel.fuel_transactions row) this company has not matched to a truck or driver yet, with Relay's own free-text unit/driver so a person can match them — reverse sections on the Unit and Driver profiles | Phase 3 ✅ (ORDERS-2026-10-01) |

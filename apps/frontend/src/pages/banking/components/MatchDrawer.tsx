@@ -33,6 +33,11 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { ApiError } from "../../../api/client";
 
 import { InfoPopover } from "../../../components/shared/InfoPopover";
+import {
+  firstOpenFuelAssignmentQuestion,
+  type FuelAssignmentQuestion,
+} from "../../../api/fuelAssignmentQuestions";
+import { FuelAssignmentPopup } from "../../fuel/components/FuelAssignmentPopup";
 // ROUND 206 Resolve (owner asked 4×): exact Confirm stays link-and-clear; variance Confirm is enabled
 // when a write-off / difference account is selected (posts via acceptMatchWithResolveDifference);
 // multi-select exact sum → acceptExactMultiDocumentMatch (one bank line → many documents).
@@ -41,6 +46,8 @@ import { InfoPopover } from "../../../components/shared/InfoPopover";
 // (payee/category/class/memo/amount). Variance Match still uses first row's category as
 // variance_account_id; full-bank resolve (no candidate) saves+commits the split draft.
 const VARIANCE_NEEDS_WRITEOFF = "Select a write-off / difference account to resolve this variance";
+
+const FUEL_MATCH_KINDS = new Set<BankMatchCandidateKind>(["relay_fuel", "expense"]);
 
 type ResolveDiffRow = {
   _key: string;
@@ -229,6 +236,8 @@ export function MatchDrawer({
   const [draftQ, setDraftQ] = useState("");
   const [categorizeVendorId, setCategorizeVendorId] = useState("");
   const [categorizeGlAccountId, setCategorizeGlAccountId] = useState("");
+  // LEAD 443.243 — Fuel Assignment popup after categorize / match of a fuel line.
+  const [fuelAssignmentQuestion, setFuelAssignmentQuestion] = useState<FuelAssignmentQuestion | null>(null);
   /** ROUND 206 Resolve — write-off / difference CoA for non-zero variance accept. */
   const [writeOffAccountId, setWriteOffAccountId] = useState("");
   /** B-3 §19c — expandable resolve-the-difference mini-grid (bank_transaction_splits). */
@@ -334,11 +343,23 @@ export function MatchDrawer({
       });
     },
     onMutate: (candidate) => setConfirmingId(candidate.ledger_entry_id),
-    onSuccess: async () => {
+    onSuccess: async (result, candidate) => {
       // R441-C1 — close on success so the owner knows the match landed; stay open on error.
       pushToast("Match confirmed — transaction cleared.", "success");
       await candidatesQuery.refetch();
       onAccepted?.();
+      if (
+        operatingCompanyId &&
+        (candidate.ledger_entry_kind === "relay_fuel" ||
+          (candidate.ledger_entry_kind === "expense" && /fuel|diesel|\bdef\b/i.test(String(candidate.memo ?? ""))))
+      ) {
+        const q = await firstOpenFuelAssignmentQuestion(operatingCompanyId);
+        if (q) {
+          setFuelAssignmentQuestion(q);
+          return;
+        }
+      }
+      void result;
       onClose();
     },
     onError: (error) => {
@@ -357,12 +378,19 @@ export function MatchDrawer({
           ledger_entry_id: c.ledger_entry_id,
         })),
       }),
-    onSuccess: async () => {
+    onSuccess: async (_result, entries) => {
       // R441-C1 — close on success; never close on error (onError below).
       pushToast("Multi-document match confirmed — bank line cleared.", "success");
       setSelectedIds(new Set());
       await candidatesQuery.refetch();
       onAccepted?.();
+      if (operatingCompanyId && entries.some((e) => FUEL_MATCH_KINDS.has(e.ledger_entry_kind) || /fuel|diesel|\bdef\b/i.test(String(e.memo ?? "")))) {
+        const q = await firstOpenFuelAssignmentQuestion(operatingCompanyId);
+        if (q) {
+          setFuelAssignmentQuestion(q);
+          return;
+        }
+      }
       onClose();
     },
     onError: (error) => {
@@ -377,11 +405,18 @@ export function MatchDrawer({
         gl_account_id: categorizeGlAccountId || undefined,
         vendor_id: categorizeVendorId || undefined,
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
       pushToast("Transaction categorized.", "success");
       setCategorizeVendorId("");
       setCategorizeGlAccountId("");
       onAccepted?.();
+      if (operatingCompanyId) {
+        const q = await firstOpenFuelAssignmentQuestion(operatingCompanyId);
+        if (q) {
+          setFuelAssignmentQuestion(q);
+          return;
+        }
+      }
       onClose();
     },
     onError: (error) => {
@@ -1165,10 +1200,35 @@ export function MatchDrawer({
         </div>
       </div>
   );
-  if (embedded) return open ? body : null;
+  const fuelPopup = (
+    <FuelAssignmentPopup
+      open={Boolean(fuelAssignmentQuestion)}
+      operatingCompanyId={operatingCompanyId}
+      question={fuelAssignmentQuestion}
+      onClose={() => {
+        setFuelAssignmentQuestion(null);
+        onClose();
+      }}
+      onAnswered={() => {
+        setFuelAssignmentQuestion(null);
+        onClose();
+      }}
+    />
+  );
+  if (embedded) {
+    return (
+      <>
+        {open ? body : null}
+        {fuelPopup}
+      </>
+    );
+  }
   return (
-    <ParityDrawer open={open} title="Find other matches" onClose={onClose}>
-      {body}
-    </ParityDrawer>
+    <>
+      <ParityDrawer open={open} title="Find other matches" onClose={onClose}>
+        {body}
+      </ParityDrawer>
+      {fuelPopup}
+    </>
   );
 }
