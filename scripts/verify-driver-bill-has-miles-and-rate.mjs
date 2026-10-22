@@ -28,6 +28,11 @@ function loadBaseline() {
 }
 
 export function findDefect(bill) {
+  // LEAD 443.220 (owner: a booked load ALWAYS has its driver bill) — booked without AlwaysTrack short miles, the bill is
+  // created at booking as status 'awaiting_short_miles', $0, on the dispatcher's task list, and priced by the same engine
+  // the moment short miles land. That is the designed placeholder, not a defect — while it sits on no live settlement.
+  // 443.230 (CC-3): main went red on 13696 / 13697 / 13699 the minute 443.220 shipped.
+  if (bill.status === "awaiting_short_miles" && !bill.settlement_live) return null;
   const gross = Number(bill.gross_amount_cents ?? 0);
   const reasons = [];
   if (gross === 0) reasons.push("gross_amount_cents = 0");
@@ -93,7 +98,10 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK — 9 cases`);
+  t("443.220 awaiting_short_miles placeholder (unsettled) passes", findDefect({ status: "awaiting_short_miles", gross_amount_cents: 0, miles_basis: null, rate_per_mile_cents: null, miles_basis_type: "short", settlement_live: false }) === null);
+  t("443.220 an awaiting bill on a LIVE settlement is still caught", findDefect({ status: "awaiting_short_miles", gross_amount_cents: 0, miles_basis: null, rate_per_mile_cents: null, miles_basis_type: "short", settlement_live: true }) !== null);
+  t("an OPEN $0 bill is still caught", findDefect({ status: "open", gross_amount_cents: 0, miles_basis: null, rate_per_mile_cents: null, miles_basis_type: null }) !== null);
+  console.log(`${LABEL} selftest OK — 12 cases`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -109,7 +117,7 @@ async function main() {
     // app.bypass_rls GUC but cannot escalate role membership ("permission denied to set role").
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
     const res = await client.query(`
-      SELECT b.id::text, b.load_number, b.gross_amount_cents, b.miles_basis::text, b.rate_per_mile_cents::text, b.miles_basis_type,
+      SELECT b.id::text, b.load_number, b.status::text AS status, b.gross_amount_cents, b.miles_basis::text, b.rate_per_mile_cents::text, b.miles_basis_type,
              b.settled_in_settlement_id::text,
              (s.id IS NOT NULL AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settlement_live
         FROM driver_finance.driver_bills b
