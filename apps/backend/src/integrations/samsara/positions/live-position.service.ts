@@ -19,8 +19,13 @@ export interface LivePositionRow {
   speed_mph: number | null;
   recorded_at: string;
   stale: boolean;
-  /** LEAD 23:45Z parity — the load's driver from the ONE row projection (was absent: null on every map row). */
+  /**
+   * LEAD 443.235 — the load's primary driver from the ONE load-service projection
+   * (assigned_primary_driver_id on the open_dispatch membership row). Never a private join.
+   * `driver_id` is the board-agree field; `driver_uuid` is the harness / MapView alias (same value).
+   */
   driver_id: string | null;
+  driver_uuid: string | null;
   driver_name: string | null;
 }
 
@@ -83,19 +88,24 @@ export async function getLivePositionsForActiveLoads(
     [operatingCompanyId]
   );
 
-  const rows: LivePositionRow[] = res.rows.map((r) => ({
-    load_uuid: r.load_uuid,
-    unit_uuid: r.unit_uuid,
-    load_number: r.load_number,
-    unit_number: r.unit_number,
-    lat: Number(r.lat),
-    lng: Number(r.lng),
-    speed_mph: r.speed_mph != null ? Number(r.speed_mph) : null,
-    recorded_at: r.recorded_at,
-    stale: isStale(r.recorded_at),
-    driver_id: r.driver_id ?? null,
-    driver_name: r.driver_name ?? null,
-  }));
+  const rows: LivePositionRow[] = res.rows.map((r) => {
+    const driverId = r.driver_id ?? null;
+    return {
+      load_uuid: r.load_uuid,
+      unit_uuid: r.unit_uuid,
+      load_number: r.load_number,
+      unit_number: r.unit_number,
+      lat: Number(r.lat),
+      lng: Number(r.lng),
+      speed_mph: r.speed_mph != null ? Number(r.speed_mph) : null,
+      recorded_at: r.recorded_at,
+      stale: isStale(r.recorded_at),
+      driver_id: driverId,
+      // LEAD 443.235 — owner Chrome harness reads driver_uuid; boards read driver_id. Same value.
+      driver_uuid: driverId,
+      driver_name: r.driver_name ?? null,
+    };
+  });
   cacheSet(cacheKey, rows);
   return rows;
 }
@@ -131,6 +141,7 @@ export async function getPositionForUnit(
     load_number: null,
     unit_number: null,
     driver_id: null,
+    driver_uuid: null,
     driver_name: null,
     lat: Number(r.lat),
     lng: Number(r.lng),

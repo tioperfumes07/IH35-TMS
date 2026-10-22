@@ -30,6 +30,7 @@ import { formatMoneyCents } from "../../components/dispatch/constants";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { LOCKED_BORDER, LOCKED_TEXT_SECONDARY } from "../../design/locked-baseline-tokens";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
+import { loadStatusLabel } from "../../lib/load-status";
 import {
   getTruckLine,
   listLoadExceptionReasons,
@@ -140,14 +141,10 @@ const FOLD_BREAKPOINT_PX = 860;
 const CAPTION_FOLD_BREAKPOINT_PX = 1180;
 const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #FFF)";
 
-/** ROUND 255 — in-place status dropdown options (load status, not exception station). */
-const LOAD_STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: "dispatched", label: "Dispatched" },
-  { value: "at_pickup", label: "At pickup" },
-  { value: "in_transit", label: "In transit" },
-  { value: "at_delivery", label: "At delivery" },
-  { value: "delivered", label: "Delivered" },
-];
+/** ROUND 255 — in-place status dropdown options (load status, not exception station). Labels from ONE map (C5). */
+const LOAD_STATUS_OPTIONS: { value: string; label: string }[] = (
+  ["dispatched", "at_pickup", "in_transit", "at_delivery", "delivered"] as const
+).map((value) => ({ value, label: loadStatusLabel(value) }));
 
 /** Drag targets along the transit line (owner: in transit → on time → at delivery → delivered). */
 const DRAG_STATUS_BY_V7: Record<number, string> = {
@@ -1728,7 +1725,7 @@ export function TruckLineBoard({
                               <button
                                 type="button"
                                 className="truck-line-v4-cap ml-1 rounded-sm px-1 text-[#6B7280] hover:bg-[#EEF2F6]"
-                                title={`Status: ${(r.load.status ?? "—").replace(/_/g, " ")} — click to change`}
+                                title={`Status: ${loadStatusLabel(r.load.status)} — click to change`}
                                 data-testid={`truck-line-status-trigger-${r.load.load_id}`}
                                 onClick={() => setStatusMenuLoadId(statusOpen ? null : r.load!.load_id)}
                               >
