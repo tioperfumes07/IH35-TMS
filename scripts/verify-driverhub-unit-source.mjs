@@ -6,7 +6,9 @@
  * Locks on driver-scheduler.service.ts:
  *   (1) does NOT join mdata.units on u.assigned_driver_id = d.id (the always-blank source).
  *   (2) resolves the unit via the driver's active load: assigned_primary_driver_id + assigned_unit_id.
- *   (3) uses the canonical DISPATCH_ACTIVE_LOAD_STATUSES set (not a hand-rolled status list).
+ *   (3) "active load" is the canonical set, not a hand-rolled status list — since 443.206R the load service's board set
+ *       (canonicalDispatchWorkWhereClause: views.live_loads open_dispatch); the older DISPATCH_ACTIVE_LOAD_STATUSES still
+ *       counts as canonical.
  *
  * --selftest exercises assertGuard() against inline fixtures.
  */
@@ -25,8 +27,10 @@ export function assertGuard({ src }) {
     errs.push(`${FILE}: still joins mdata.units ON u.assigned_driver_id = d.id (always NULL in prod → blank Unit cell). Resolve the unit via the driver's active load instead.`);
   if (!/assigned_primary_driver_id\s*=\s*d\.id/i.test(s) || !/assigned_unit_id/i.test(s))
     errs.push(`${FILE}: does not resolve the current tractor via the driver's active load (mdata.loads.assigned_primary_driver_id → assigned_unit_id)`);
-  if (!/DISPATCH_ACTIVE_LOAD_STATUSES/.test(src))
-    errs.push(`${FILE}: does not use the canonical DISPATCH_ACTIVE_LOAD_STATUSES set for "active load"`);
+  if (!/\$\{canonicalDispatchWorkWhereClause\(/.test(s) && !/DISPATCH_ACTIVE_LOAD_STATUSES/.test(s))
+    errs.push(`${FILE}: does not use the canonical active-load set (the load service's canonicalDispatchWorkWhereClause) for "active load"`);
+  if (/status(::text)?\s+(NOT\s+)?IN\s*\(\s*'/i.test(s))
+    errs.push(`${FILE}: hand-rolled load status list — "active load" is the load service's board set`);
   return errs;
 }
 
@@ -39,6 +43,8 @@ function selftest() {
     { n: "active-load source → 0", in: { src: good }, want: 0 },
     { n: "old assigned_driver_id join → flag", in: { src: `LEFT JOIN mdata.units u ON u.assigned_driver_id = d.id` }, min: 1 },
     { n: "no DISPATCH_ACTIVE_LOAD_STATUSES → flag", in: { src: good.replace("DISPATCH_ACTIVE_LOAD_STATUSES", "SOME_STATUSES") }, min: 1 },
+    { n: "load service board set → 0", in: { src: good.replace('import { DISPATCH_ACTIVE_LOAD_STATUSES } from "x";', 'import { canonicalDispatchWorkWhereClause } from "x";').replace("l.status::text IN (a)", "${canonicalDispatchWorkWhereClause(\"l\", \"$1::uuid\")}") }, want: 0 },
+    { n: "hand-rolled status list → flag", in: { src: good + "\n AND l.status::text IN ('dispatched','in_transit')" }, min: 1 },
   ];
   let f = 0;
   for (const c of cases) {
