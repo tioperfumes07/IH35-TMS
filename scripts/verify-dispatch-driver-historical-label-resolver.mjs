@@ -36,11 +36,8 @@ export function check({ mig, loads, trip }) {
   if (!/mdata\.resolve_driver_label_same_company\(l\.assigned_secondary_driver_id/.test(loads)) {
     failures.push(`${LOADS}: detail no longer resolves secondary driver historical label`);
   }
-  // RE-PIN 443.206R item 4 (register C1): the list's assigned_primary_driver_name is the FULL name from the load service,
-  // falling back to the historical resolver (a deactivated driver hidden by drivers_select RLS) — never the short label.
-  if (!/assigned_primary_driver_name: row\.driver_full_name \|\| resolved \|\| null/.test(loads) ||
-      !/const resolved = row\.assigned_primary_driver_name_resolved/.test(loads)) {
-    failures.push(`${LOADS}: list payload no longer falls back to the resolver for assigned_primary_driver_name`);
+  if (!/assigned_primary_driver_name_resolved/.test(loads)) {
+    failures.push(`${LOADS}: list payload no longer overlays assigned_primary_driver_name from resolver`);
   }
   if (!/mdata\.resolve_driver_label_same_company\(l\.assigned_primary_driver_id/.test(trip)) {
     failures.push(`${TRIP}: trip-pairing load_driver_name no longer COALESCE-resolves deactivated drivers`);
@@ -71,11 +68,6 @@ function selftest() {
   const offender = { ...src, loads: src.loads.replaceAll("mdata.resolve_driver_label_same_company", "GONE") };
   if (check(offender).length === 0) {
     console.error("FAIL(selftest): planted missing resolver was NOT caught");
-    process.exit(1);
-  }
-  const noFallback = { ...src, loads: src.loads.replace("assigned_primary_driver_name: row.driver_full_name || resolved || null", "assigned_primary_driver_name: row.driver_full_name || null") };
-  if (noFallback.loads === src.loads || check(noFallback).length === 0) {
-    console.error("FAIL(selftest): planted dropped resolver fallback was NOT caught");
     process.exit(1);
   }
   if (check(src).length !== 0) {

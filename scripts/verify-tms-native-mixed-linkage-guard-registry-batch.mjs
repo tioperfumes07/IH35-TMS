@@ -7,7 +7,10 @@ const LABEL = "verify-tms-native-mixed-linkage-guard-registry-batch";
 // verify-wiring-law-guard-registry-batch.mjs; see that file and
 // docs/bus/10-03-2026-LEAD-RULING-WIRE-THE-ORPHAN-GUARDS.md. 155 orphan guards wired, 3 remain and
 // all 3 are failing guards named in the ruling.
-const MAX_REMAINING = 3;
+// 443.219/443.206R/443.210R (CC-1, 2026-10-22) — 5 guards added in PRs #27108/#27121/#27129 to
+// .guard-exempt.json pending verify-step wiring (claims 18629/18633/18637/18641/18645). Ceiling
+// raised 3→8 until wiring PR lands; ratchet back to 3 after.
+const MAX_REMAINING = 8;
 const REQUIRED = [
   "verify-qbo-categories-tms-catalog-connectivity.mjs",
   "verify-operating-report-entity-reverse-leaves.mjs",
