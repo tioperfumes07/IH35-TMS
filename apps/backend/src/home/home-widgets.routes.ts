@@ -615,13 +615,14 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         const totalCents = byAccount.reduce((sum: number, row: { cents: number }) => sum + row.cents, 0);
 
         // F24: return the last completed bank reconciliation date so the FE "Last reconciled" cell renders.
-        const reconRes = await client.query<{ last_reconciled_at: string | null }>(
+        // 443.238 (CC-3): the client here is untyped — a type argument on its query() broke the backend typecheck on main.
+        const reconRes = (await client.query(
           `SELECT MAX(reconciled_at)::text AS last_reconciled_at
              FROM banking.reconciliation_sessions
             WHERE operating_company_id = $1::uuid
               AND reconciled_at IS NOT NULL`,
           [parsed.data.operating_company_id]
-        );
+        )) as { rows: Array<{ last_reconciled_at: string | null }> };
         const lastReconciledAt = reconRes.rows[0]?.last_reconciled_at ?? null;
 
         return { totalCents, byAccount, last_reconciled_at: lastReconciledAt };
