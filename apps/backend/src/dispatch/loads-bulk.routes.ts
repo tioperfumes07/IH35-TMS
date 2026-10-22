@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { LoadStatusWriteRefusedError, transitionLoadStatus } from "./load-transition.service.js";
 import { z } from "zod";
 import { buildPatchChanges } from "../audit/crud-audit.js";
 import { appendBulkCrudAudit, registerBulkRoute } from "../bulk/bulk-update.factory.js";
@@ -165,18 +166,17 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
       }
     }
 
-    const updateRes = await client.query(
-      `
-        UPDATE mdata.loads
-        SET status = $3::mdata.load_status_enum,
-            updated_at = now()
-        WHERE id = $1::uuid
-          AND operating_company_id = $2::uuid
-          AND status::text = $4
-        RETURNING *
-      `,
-      [id, operatingCompanyId, mdataStatus, String(oldRow.status)]
-    );
+    // LEAD 443.211R — the one writer (machine-validated, compare-and-set on the status read above).
+    let written: Record<string, unknown> | null;
+    try {
+      written = await transitionLoadStatus(client as never, {
+        operatingCompanyId, loadId: id, to: mdataStatus, kind: "forward", writer: "loads-bulk-set-status", expectFrom: String(oldRow.status),
+      });
+    } catch (err) {
+      if (err instanceof LoadStatusWriteRefusedError) return { ok: false, code: "E_STATE_INVALID", message: `Invalid transition from ${err.from} to ${err.to}` };
+      throw err;
+    }
+    const updateRes = { rows: written ? [written] : [] };
     if (updateRes.rows.length === 0) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Load status update failed" };
     }
@@ -342,18 +342,17 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
       };
     }
 
-    const updateRes = await client.query(
-      `
-        UPDATE mdata.loads
-        SET status = 'paid'::mdata.load_status_enum,
-            updated_at = now()
-        WHERE id = $1::uuid
-          AND operating_company_id = $2::uuid
-          AND status::text = $3
-        RETURNING *
-      `,
-      [id, operatingCompanyId, String(oldRow.status)]
-    );
+    // LEAD 443.211R — the one writer: X -> paid must be an edge of the one machine (the billing tail), compare-and-set.
+    let paidRow: Record<string, unknown> | null;
+    try {
+      paidRow = await transitionLoadStatus(client as never, {
+        operatingCompanyId, loadId: id, to: "paid", kind: "forward", writer: "loads-bulk-mark-paid", expectFrom: String(oldRow.status),
+      });
+    } catch (err) {
+      if (err instanceof LoadStatusWriteRefusedError) return { ok: false, code: "E_STATE_INVALID", message: `Cannot mark paid from ${err.from}` };
+      throw err;
+    }
+    const updateRes = { rows: paidRow ? [paidRow] : [] };
     if (updateRes.rows.length === 0) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Load mark paid failed" };
     }

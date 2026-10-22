@@ -5343,6 +5343,7 @@
       "reversed_by_user_id",
       "settlement_model",
       "source_document_ref",
+      "source_fingerprint",
       "status",
       "successor_settlement_id",
       "tour_id",

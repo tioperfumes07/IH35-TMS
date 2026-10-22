@@ -20,6 +20,16 @@ import { syncSettlementLoadsToBilling } from "../load-billing-lifecycle.service.
 
 const baseInput = { operatingCompanyId: "opco-1", actorUserId: "user-1" };
 
+// LEAD 443.211R — each step goes through the one writer (lock + read the status, then compare-and-set): answer both.
+function stepping(start: string) {
+  let cur = start;
+  return async (sql: string, values?: unknown[]) => {
+    if (sql.includes("FOR UPDATE")) return { rows: [{ status: cur }] };
+    cur = String(values?.[2]);
+    return { rows: [{ id: values?.[0], status: cur }] };
+  };
+}
+
 beforeEach(() => {
   queryMock.mockReset();
 });
@@ -47,7 +57,7 @@ describe("syncSettlementLoadsToBilling — ROUND 33.2 §1, fired after settlemen
     queryMock.mockResolvedValueOnce({
       rows: [{ load_status: "delivered", invoice_status: "sent", factoring_status: "not_factored" }],
     });
-    queryMock.mockResolvedValue({ rows: [{ id: "load-3", status: "invoiced" }] });
+    queryMock.mockImplementation(stepping("delivered"));
     const results = await syncSettlementLoadsToBilling({ ...baseInput, loadIds: ["load-3"] });
     expect(results[0]?.changed).toBe(true);
     expect(results[0]?.to).toBe("invoiced");
@@ -60,7 +70,7 @@ describe("syncSettlementLoadsToBilling — ROUND 33.2 §1, fired after settlemen
     // The forward-walk takes multiple UPDATE steps (delivered -> ... -> closed) — any number of
     // them succeed identically for this test; only the FIRST call (the SELECT above) matters for
     // resolving the target.
-    queryMock.mockResolvedValue({ rows: [{ id: "load-4", status: "closed" }] });
+    queryMock.mockImplementation(stepping("delivered"));
     const results = await syncSettlementLoadsToBilling({ ...baseInput, loadIds: ["load-4"] });
     expect(results[0]?.changed).toBe(true);
     expect(results[0]?.to).toBe("closed");
@@ -70,7 +80,7 @@ describe("syncSettlementLoadsToBilling — ROUND 33.2 §1, fired after settlemen
     queryMock
       .mockResolvedValueOnce({ rows: [{ load_status: "delivered", invoice_status: null, factoring_status: "not_factored" }] })
       .mockResolvedValueOnce({ rows: [{ load_status: "delivered", invoice_status: "sent", factoring_status: "not_factored" }] });
-    queryMock.mockResolvedValue({ rows: [{ id: "load-6", status: "invoiced" }] });
+    queryMock.mockImplementation(stepping("delivered"));
     const results = await syncSettlementLoadsToBilling({ ...baseInput, loadIds: ["load-5", "load-6"] });
     expect(results).toHaveLength(2);
     expect(results[0]?.reason).toBe("no_invoice");

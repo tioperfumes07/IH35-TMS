@@ -12,7 +12,7 @@ import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bo
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
-import { fromMdataStatus, isReverseTransition, toMdataStatus, validateLoadStatusTransition, validateLoadStopStatusWrite } from "./load-state-machine.js";
+import { fromMdataStatus, isReverseTransition, toMdataStatus, validateLoadStatusTransition, validateLoadStatusWrite, validateLoadStopStatusWrite, type LoadStatusWriteKind } from "./load-state-machine.js";
 import { loadStatusRequiresDeliveryDepartureStamp, stampFinalActiveDeliveryDeparture } from "./stamp-final-delivery-departure.js";
 import { ensureDriverBillArtifactsForLoad, type DriverBillMintOutcome } from "./book-load.service.js";
 
@@ -101,16 +101,17 @@ export async function transitionDispatchLoadInClientTx(client: TransitionClient,
   // Compare-and-set (CC-3 queue 2b): the row is locked above and the UPDATE only lands while the status is still the
   // one this transition validated — a concurrent writer (GPS auto-status, driver PWA stamp, bulk) can never be
   // overwritten by a stale decision.
-  const transitionUpdate = await client.query<{ id: string }>(
-    `UPDATE mdata.loads
-     SET status = $2
-     WHERE id = $1
-       AND operating_company_id = $3::uuid
-       AND status::text = $4
-     RETURNING id`,
-    [loadId, mdataStatus, operatingCompanyId, current.status]
-  );
-  if (!transitionUpdate.rows[0]?.id) return { error: "status_changed" as const, from: currentStatus, to: targetStatus };
+  // LEAD 443.211R — the one writer (validated against the one machine, compare-and-set on the status read above).
+  let transitionRow: Record<string, unknown> | null;
+  try {
+    transitionRow = await transitionLoadStatus(client, {
+      operatingCompanyId, loadId, to: mdataStatus, kind: "forward", writer: "dispatch-transition", expectFrom: current.status,
+    });
+  } catch (err) {
+    if (err instanceof LoadStatusWriteRefusedError) return { error: "invalid_transition" as const, from: currentStatus, to: targetStatus };
+    throw err;
+  }
+  if (!transitionRow) return { error: "status_changed" as const, from: currentStatus, to: targetStatus };
 
   // ZONE 1 REVERSE audit — record the undo with its reason so it is exactly as traceable as any
   // forward transition (the row-mutation trigger already captures who/when; this names WHY and
@@ -289,16 +290,12 @@ export async function writeLoadStatusFromStopEventInClientTx(
 ): Promise<{ ok: true } | { ok: false; error: "invalid_load_state"; from: string; to: string } | { ok: false; error: "load_transition_conflict" }> {
   const transition = validateLoadStopStatusWrite(input.fromMdataStatus, input.toMdataStatus);
   if (!transition.ok) return { ok: false, error: "invalid_load_state", from: transition.from, to: transition.to };
-  const upd = await client.query<{ id: string }>(
-    `UPDATE mdata.loads
-     SET status = $2
-     WHERE id = $1
-       AND operating_company_id = $3::uuid
-       AND status::text = $4
-     RETURNING id`,
-    [input.loadId, input.toMdataStatus, input.operatingCompanyId, input.fromMdataStatus]
-  );
-  if (!upd.rows[0]?.id) return { ok: false, error: "load_transition_conflict" };
+  // LEAD 443.211R — the one writer (stop_micro edges), compare-and-set on the status the caller read.
+  const written = await transitionLoadStatus(client, {
+    operatingCompanyId: input.operatingCompanyId, loadId: input.loadId, to: input.toMdataStatus, kind: "stop_micro",
+    writer: "stop-event", expectFrom: input.fromMdataStatus,
+  });
+  if (!written) return { ok: false, error: "load_transition_conflict" };
   if (input.fromMdataStatus !== input.toMdataStatus) {
     await appendCrudAudit(
       client,
@@ -318,4 +315,49 @@ export async function writeLoadStatusFromStopEventInClientTx(
     );
   }
   return { ok: true };
+}
+
+/**
+ * LEAD 443.211R (10-21 22:58Z) — THE ONE WRITER of mdata.loads.status. Locks the load, refuses unless the move is an edge of
+ * the one machine (validateLoadStatusWrite: forward / billing_reverse / cancel_restore / stop_micro), and writes it
+ * compare-and-set. Returns the updated row, or null when the load moved since (expectFrom no longer holds) or is gone.
+ * No caller writes `UPDATE mdata.loads SET status` itself (verify-one-load-status-machine.mjs).
+ */
+export class LoadStatusWriteRefusedError extends Error {
+  constructor(public readonly code: string, public readonly from: string, public readonly to: string) {
+    super(`load_status_write_refused:${code}`);
+  }
+}
+
+export async function transitionLoadStatus(
+  client: TransitionClient,
+  input: {
+    operatingCompanyId: string;
+    loadId: string;
+    to: string;
+    kind: LoadStatusWriteKind;
+    /** the writer's name, recorded on a refusal (e.g. "load-billing-lifecycle") */
+    writer: string;
+    /** compare-and-set: the status (or statuses) the writer decided on; null result when the load has moved since */
+    expectFrom?: string | readonly string[];
+    /** cancel_restore only — the status the load held when it was cancelled */
+    restoreFrom?: string | null;
+  },
+): Promise<Record<string, unknown> | null> {
+  const cur = (await client.query<{ status: string }>(
+    `SELECT status::text AS status FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
+    [input.loadId, input.operatingCompanyId],
+  )).rows[0];
+  if (!cur) return null;
+  const expect = input.expectFrom == null ? null : Array.isArray(input.expectFrom) ? input.expectFrom : [input.expectFrom];
+  if (expect && !expect.includes(cur.status)) return null;
+  const v = validateLoadStatusWrite(cur.status, input.to, input.kind, { restoreFrom: input.restoreFrom ?? null });
+  if (!v.ok) throw new LoadStatusWriteRefusedError(`${input.writer}:${v.reason}`, cur.status, input.to);
+  const upd = await client.query<Record<string, unknown>>(
+    `UPDATE mdata.loads SET status = $3::mdata.load_status_enum, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status::text = $4
+      RETURNING *`,
+    [input.loadId, input.operatingCompanyId, input.to, cur.status],
+  );
+  return upd.rows[0] ?? null;
 }
