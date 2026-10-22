@@ -12,6 +12,7 @@ import { registerOfficeLoginRoutes } from "./auth/office-login.routes.js";
 import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
+import { installReplyAlreadySentGuard } from "./auth/reply-already-sent-guard.js";
 import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
 import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.js";
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
@@ -670,6 +671,8 @@ const app = Fastify({ logger: true, trustProxy: [...CLOUDFLARE_IP_RANGES] });
 // Tolerate an empty application/json body on POST actions whose inputs are all in the URL/query (e.g.
 // categorization-rules/:id/apply-historical). Must run before routes are registered. See the helper.
 installEmptyJsonBodyParser(app);
+// LEAD 443.237 — must run before any route: an auth helper's 401 + a bare `return;` never sends twice.
+installReplyAlreadySentGuard(app);
 attachHttpErrorMonitor(app);
 let shuttingDown = false;
 
