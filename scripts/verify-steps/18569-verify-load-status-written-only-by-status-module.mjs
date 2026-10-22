@@ -24,7 +24,7 @@ export function check(src = {}) {
   const s = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, src[k] ?? read(rel)]));
   const p = [];
   const w = s.module.match(/export async function writeLoadStatusFromStopEventInClientTx\([\s\S]*?\n\}/)?.[0] ?? "";
-  if (!w || !/validateLoadStopStatusWrite\(input\.fromMdataStatus, input\.toMdataStatus\)/.test(w) || !/AND status::text = \$4/.test(w) || !/"dispatch\.load\.status_from_stop_event"/.test(w))
+  if (!w || !/validateLoadStopStatusWrite\(input\.fromMdataStatus, input\.toMdataStatus\)/.test(w) || !/transitionLoadStatus\(client, \{[\s\S]*?kind: "stop_micro",[\s\S]*?expectFrom: input\.fromMdataStatus/.test(w) || !/"dispatch\.load\.status_from_stop_event"/.test(w))
     p.push(`${F.module}: writeLoadStatusFromStopEventInClientTx must validate, compare-and-set and audit`);
   for (const k of ["stamp", "driver"]) {
     if (RAW.test(s[k])) p.push(`${F[k]}: writes mdata.loads.status itself — use writeLoadStatusFromStopEventInClientTx`);

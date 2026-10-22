@@ -1,3 +1,4 @@
+import { transitionLoadStatus } from "./load-transition.service.js";
 import type { PoolClient } from "pg";
 
 /**
@@ -45,12 +46,10 @@ export async function advanceDraftStatusIfCrewed(
   if (load.status !== "draft") return false;
   if (!load.assigned_primary_driver_id && !load.team_id) return false;
 
-  const advanced = await client.query(
-    `UPDATE mdata.loads
-        SET status = 'assigned_not_dispatched'::mdata.load_status_enum, updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status = 'draft'`,
-    [loadId, operatingCompanyId]
-  );
+  // LEAD 443.211R — through the one writer (draft -> assigned_not_dispatched is a machine edge), compare-and-set on draft.
+  const advanced = await transitionLoadStatus(client as never, {
+    operatingCompanyId, loadId, to: "assigned_not_dispatched", kind: "forward", writer: "draft-crew-status-advance", expectFrom: "draft",
+  });
   // Compare-and-set lost (another writer moved the load off draft in between): report what really happened.
-  return (advanced.rowCount ?? 0) === 1;
+  return advanced !== null;
 }

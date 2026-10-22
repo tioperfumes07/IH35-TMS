@@ -14,6 +14,7 @@
  * invoice or driver bill is that engine's job, reported in the result), invent a delivery date, or change a
  * delivered/invoiced/closed load's status.
  */
+import { transitionLoadStatus } from "./load-transition.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { DISPATCH_WORK_LOAD_STATUSES } from "./canonical-active-load-set.js";
 
@@ -45,11 +46,24 @@ export async function reverseLoadCancellationInClientTx(client: Db, actorUserId:
     throw new Error("E_NO_ACTIVE_CANCELLATION");
   }
   let restoreTo: string | null = null;
+  let restoreEvidence: string | null = null;
   if (before.status === "cancelled") {
     if (!input.restore_status || !(DISPATCH_WORK_LOAD_STATUSES as readonly string[]).includes(input.restore_status)) {
       throw new Error("E_RESTORE_STATUS_REQUIRED");
     }
+    // LEAD 443.211R — restore_status is validated: the load returns to the status it held when it was cancelled (the row
+    // history's last move INTO 'cancelled'), never to any status the caller names. A load cancelled before row history
+    // existed has no evidence — the dispatch-work check above stays its rule (recorded as operator-named).
+    const prior = (await client.query<{ old_status: string | null }>(
+      `SELECT old_data->>'status' AS old_status FROM audit.row_changes
+        WHERE schema_name = 'mdata' AND table_name = 'loads' AND row_pk = $1 AND new_data->>'status' = 'cancelled'
+          AND old_data->>'status' IS DISTINCT FROM 'cancelled'
+        ORDER BY changed_at DESC LIMIT 1`,
+      [input.load_id]
+    )).rows[0]?.old_status ?? null;
+    if (prior && prior !== input.restore_status) throw new Error(`E_RESTORE_STATUS_MUST_BE_${prior.toUpperCase()}`);
     restoreTo = input.restore_status;
+    restoreEvidence = prior ?? input.restore_status;
   }
 
   await client.query(
@@ -59,11 +73,11 @@ export async function reverseLoadCancellationInClientTx(client: Db, actorUserId:
     [before.cancellation_id, input.operating_company_id, actorUserId, input.reason.trim()]
   );
   if (restoreTo) {
-    await client.query(
-      `UPDATE mdata.loads SET status = $3::mdata.load_status_enum, updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status = 'cancelled'::mdata.load_status_enum`,
-      [input.load_id, input.operating_company_id, restoreTo]
-    );
+    // LEAD 443.211R — the one writer: a cancel_restore edge, back to the evidenced pre-cancel status only.
+    await transitionLoadStatus(client as never, {
+      operatingCompanyId: input.operating_company_id, loadId: input.load_id, to: restoreTo, kind: "cancel_restore",
+      writer: "cancellation-reversal", expectFrom: "cancelled", restoreFrom: restoreEvidence,
+    });
   }
   const after = (
     await client.query<{ status: string; canceled_at: string | null; canceled_by: string | null }>(

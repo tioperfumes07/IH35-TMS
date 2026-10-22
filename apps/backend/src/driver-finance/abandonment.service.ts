@@ -3,6 +3,7 @@
 // event via applyApprovedAbandonmentChargebacksToSettlement's settlement_lines insert below, which
 // is itself a settlement-scoped LINE item — the settlement HEADER posts the one aggregate balanced
 // JE at finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, C6).
+import { transitionLoadStatus } from "../dispatch/load-transition.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { milesTimesRateCents } from "./deadhead-rule.js";
 import { validateLoadStatusTransition } from "../dispatch/load-state-machine.js";
@@ -243,18 +244,11 @@ export async function recordLoadAbandonmentChargeback(
     other_recovery_cost_cents: input.other_recovery_cost_cents,
   });
 
-  await client.query(
-    `
-      UPDATE mdata.loads
-      SET status = 'abandoned',
-          updated_at = now()
-      WHERE id = $1
-        AND operating_company_id = $2::uuid
-        AND soft_deleted_at IS NULL
-        AND status::text = $3
-    `,
-    [input.loadId, input.operatingCompanyId, load.status]
-  );
+  // LEAD 443.211R — the one writer: -> abandoned must be an edge of the one machine (in transit / at delivery).
+  await transitionLoadStatus(client as never, {
+    operatingCompanyId: input.operatingCompanyId, loadId: input.loadId, to: "abandoned", kind: "forward",
+    writer: "abandonment", expectFrom: load.status,
+  });
 
   const insertRes = await client.query<Record<string, unknown>>(
     `
