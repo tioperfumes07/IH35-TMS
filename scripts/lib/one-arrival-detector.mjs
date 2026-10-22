@@ -40,12 +40,31 @@ export function backendSourcesNaming(pattern) {
 }
 
 /** Both poll paths run the fence detector on every persisted point and count the stops it stamped. */
+/** Every GPS path that persists points (the two polls + the 443.232 catch-up replay) — each must run the ONE detector. */
+export const POLL_PATH_FUNCTIONS = ["syncSamsaraVehicleLocations", "syncSamsaraVehicleStats", "catchUpSamsaraGpsWindow"];
+
+/** The body of `export async function <name>(` up to the next top-level function. */
+function functionBody(src, name) {
+  const start = src.indexOf(`export async function ${name}(`);
+  if (start < 0) return null;
+  const rest = src.slice(start + 1);
+  const next = rest.search(/\n(?:export )?(?:async )?function /);
+  return next < 0 ? src.slice(start) : src.slice(start, start + 1 + next);
+}
+
 export function checkPollPathCountsFenceArrivals(cron) {
   const problems = [];
-  const fenceCalls = (cron.match(/processGeofenceDetectionsForGpsPoint\(/g) ?? []).length;
-  const counted = (cron.match(/\.stop_arrivals_stamped\b/g) ?? []).length;
-  if (fenceCalls < 2) problems.push(`${PATHS.cron}: ${fenceCalls} fence-detector call(s); both poll paths (locations + stats) must run it.`);
-  if (counted < 2) problems.push(`${PATHS.cron}: arrivals_triggered must count stop_arrivals_stamped on both poll paths (found ${counted}).`);
+  // 443.232 (CC-3 P0) added the catch-up replay as a third poll path: a total count of ">= 2" let one path lose its call
+  // unseen (the selftest's "drop one fence call" survived) — each path is checked by name.
+  for (const fn of POLL_PATH_FUNCTIONS) {
+    const body = functionBody(cron, fn);
+    if (body === null) {
+      if (fn !== "catchUpSamsaraGpsWindow") problems.push(`${PATHS.cron}: poll path ${fn} not found.`);
+      continue;
+    }
+    if (!/processGeofenceDetectionsForGpsPoint\(/.test(body)) problems.push(`${PATHS.cron}: ${fn} does not run the fence detector on its points.`);
+    if (!/\.stop_arrivals_stamped\b/.test(body)) problems.push(`${PATHS.cron}: ${fn} does not count stop_arrivals_stamped into arrivals_triggered.`);
+  }
   if (/processArrivalDetectionsForGpsPoint|detectArrivalsForIngestedPoint/.test(cron)) problems.push(`${PATHS.cron}: still calls the retired 250 ft detector.`);
   return problems;
 }

@@ -223,6 +223,7 @@ export const TABLE_REGISTRY = {
   // LEAD 443.243 / migration 202616141200: confirmation queue when fill→truck/load is not 100% certain.
   "fuel.fuel_assignment_questions": { status: "NOT_TRANSACTIONAL", reason: "443.243 Fuel Assignment Question queue (evidence + proposed truck/load); money stays on fuel.fuel_transactions" },
   "fuel.fuel_card_overage_events": { status: "NOT_TRANSACTIONAL" },
+  "fuel.fuel_assignment_questions": { status: "NOT_TRANSACTIONAL", reason: "443.243 question engine: a pending owner/dispatcher decision about one fuel_transactions row (evidence + proposed truck/load); no amount of its own — answering moves the TIER1 fuel row through the one engine write" },
   "fuel.fuel_card_overage_policies": { status: "NOT_TRANSACTIONAL", reason: "config" },
   "fuel.fuel_planner_settings": { status: "NOT_TRANSACTIONAL", reason: "config" },
   // E-23 / 202615110000: on-read derived pump time + IFTA state; never writes fuel_transactions.
