@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
 import { COMPANY_TIME_ZONE } from "../lib/company-business-date.js";
 
@@ -242,8 +243,8 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
         mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id) AS driver_name,
         l.assigned_unit_id::text AS unit_id,
         u.unit_number,
-        tr.trailer_id,
-        tr.trailer_number,
+        CASE WHEN l.trailer_source IN ('customer', 'none') THEN NULL ELSE tr.id::text END AS trailer_id,
+        ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number,
         l.customer_po_number,
         l.customer_wo_number,
         p.origin_city,
@@ -264,17 +265,8 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
       FROM mdata.loads l
       LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = $1::uuid
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
-      LEFT JOIN LATERAL (
-        SELECT eq.id::text AS trailer_id, eq.equipment_number AS trailer_number
-        FROM dispatch.load_assignment_history lah
-        JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
-                               AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id
-        WHERE lah.load_id = l.id
-          AND lah.operating_company_id = l.operating_company_id
-          AND lah.new_trailer_id IS NOT NULL
-        ORDER BY lah.assigned_at DESC, lah.created_at DESC
-        LIMIT 1
-      ) tr ON true
+      -- LEAD 00:35Z parity re-run (13699 customer trailer null on the report): the load service's one trailer projection.
+      ${loadServiceTrailerLateralSql("l", "tr")}
       LEFT JOIN pickup p ON p.load_id = l.id
       LEFT JOIN delivery d ON d.load_id = l.id
       LEFT JOIN invoice_info inv ON inv.load_id = l.id

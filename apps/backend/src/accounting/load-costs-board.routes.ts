@@ -1,4 +1,5 @@
 import { liveDriverBill, liveSettlement } from "./live-document-predicates.sql.js";
+import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -258,7 +259,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
          )
          SELECT l.id::text AS load_id, l.load_number, l.status::text, COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id,l.operating_company_id)) AS customer_name,
                 mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id) AS driver_name,
-                u.unit_number, tr.equipment_number AS trailer_number, pickup.city AS pickup_city, delivery.city AS delivery_city,
+                u.unit_number, ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number, pickup.city AS pickup_city, delivery.city AS delivery_city,
                 pickup.scheduled_arrival_at::text AS pickup_date, delivery.scheduled_arrival_at::text AS scheduled_delivery_at,
                 delivery.actual_arrival_at::text AS actual_delivery_at, l.created_at::text,
                 revenue.revenue_cents::text AS revenue_cents, revenue.revenue_source,
@@ -308,15 +309,8 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            -- here (confirmed live: HTTP 500 on this exact endpoint); fixed to the same pattern
            -- already used by GET /api/v1/dispatch/loads (loads.routes.ts).
            LEFT JOIN mdata.units u ON u.id=l.assigned_unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id)=l.operating_company_id
-           LEFT JOIN LATERAL (
-             SELECT eq.equipment_number
-               FROM dispatch.load_assignment_history lah
-               JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
-                                      AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
-              WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL
-              ORDER BY lah.assigned_at DESC
-              LIMIT 1
-           ) tr ON true
+           -- LEAD 00:35Z parity re-run (13699 customer trailer L28591 null here): the load service's one trailer projection.
+           ${loadServiceTrailerLateralSql("l", "tr")}
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1) pickup ON true
            LEFT JOIN LATERAL (SELECT city,scheduled_arrival_at,actual_arrival_at FROM mdata.load_stops WHERE load_id=l.id AND stop_type='delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1) delivery ON true
           WHERE l.operating_company_id=$1::uuid

@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -180,7 +181,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
             (SELECT COALESCE(s1.actual_arrival_at, s1.appointment_start_at, s1.scheduled_arrival_at)::text FROM mdata.load_stops s1 WHERE s1.load_id = l.id AND s1.soft_deleted_at IS NULL ORDER BY s1.sequence_number ASC LIMIT 1) AS pickup_date,
             (SELECT COALESCE(s2.actual_arrival_at, s2.appointment_start_at, s2.scheduled_arrival_at)::text FROM mdata.load_stops s2 WHERE s2.load_id = l.id AND s2.soft_deleted_at IS NULL ORDER BY s2.sequence_number DESC LIMIT 1) AS delivery_date,
             u.id::text AS unit_id, u.unit_number,
-            tr.trailer_id, tr.trailer_number,
+            CASE WHEN l.trailer_source IN ('customer', 'none') THEN NULL ELSE tr.id::text END AS trailer_id, ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number,
             -- LAW-5 ONE-SOURCE (ROUND 173, 2026-09-25): these 3 hand-copied subqueries (the
             -- LAW-5-CROSS-SCREEN fix already made them numerically correct, bill_lines-scoped not
             -- whole-bill) duplicated apps/backend/src/accounting/load-cost-rollup.sql.ts's own
@@ -198,18 +199,9 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
        FROM legs l
        LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
-       -- mdata.loads has NO trailer_id column (confirmed live, load-costs-board.routes.ts's own
-       -- W-FIX-3b note) — the real trailer<->load link is dispatch.load_assignment_history.
-       -- new_trailer_id (mdata.equipment), most recent assignment, same pattern that route uses.
-       LEFT JOIN LATERAL (
-         SELECT eq.id::text AS trailer_id, eq.equipment_number AS trailer_number
-           FROM dispatch.load_assignment_history lah
-           JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
-                                  AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
-          WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL
-          ORDER BY lah.assigned_at DESC
-          LIMIT 1
-       ) tr ON true
+       -- LEAD 00:35Z parity re-run: the load service's one trailer projection (a customer trailer shows; trailer_id is the
+       -- fleet trailer only).
+       ${loadServiceTrailerLateralSql("l", "tr")}
        ${loadCostRollupLateral("l.id", "l.operating_company_id")}
       ORDER BY CASE l.trip_type::text WHEN 'NB' THEN 1 WHEN 'TR' THEN 2 WHEN 'SB' THEN 3 ELSE 4 END, l.created_at ASC`,
     [
