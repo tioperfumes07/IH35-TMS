@@ -68,7 +68,9 @@ export async function queryLiveNeonIdentity(client) {
  * An explicit isolatedLocalTestDatabase opt-in additionally permits the exact
  * loopback PG16 test database proved by the live connection (no Neon identity).
  * All existing callers retain the missing-GUC refusal.
- * @param {{label?: string, isolatedLocalTestDatabase?: string}} [opts]
+ * freshLoopbackMigration is restricted to the CI database or Round 443.234
+ * isolated test names; Docker requires an independently obtained system ID.
+ * @param {{label?: string, isolatedLocalTestDatabase?: string, freshLoopbackMigration?: {hostname:string,database:string,systemIdentifier?:string}}} [opts]
  * @returns {Promise<{branchId: string | null, projectId: string | null, isolatedLocalTestDatabase?: string}>}
  */
 export async function assertNotProduction(client, opts = {}) {
@@ -88,17 +90,31 @@ export async function assertNotProduction(client, opts = {}) {
     // Explicit PG16 test mode still proves identity from the OPEN connection.
     // Never infer safety from a localhost URL: that URL can be a production tunnel.
     const localTest = opts.isolatedLocalTestDatabase;
-    if (typeof localTest === 'string' && /^codex443232_[a-z0-9_]+_test$/.test(localTest)) {
+    const fresh = opts.freshLoopbackMigration;
+    const freshAllowed = fresh && ['localhost', '127.0.0.1', '::1', '[::1]'].includes(fresh.hostname)
+      && (fresh.database === 'ih35_verify' || /^codex443234_[a-z0-9_]+_test$/.test(fresh.database));
+    if ((typeof localTest === 'string' && /^codex443232_[a-z0-9_]+_test$/.test(localTest)) || freshAllowed) {
       const result = await client.query(`SELECT current_database() AS database,
         host(inet_server_addr()) AS address,
         current_setting('server_version_num')::int AS version,
         current_setting('neon.branch_id', true) AS neon_branch,
         current_setting('neon.project_id', true) AS neon_project`);
       const target = result.rows?.[0];
-      if (target?.database === localTest && ['127.0.0.1','::1'].includes(target.address)
+      const expectedDatabase = freshAllowed ? fresh.database : localTest;
+      // A published Docker port has a non-loopback server address. Prove the
+      // instance against the independently read service-container identity;
+      // neither CI=true nor a private IP is evidence of a safe database.
+      let containerMatches = false;
+      if (freshAllowed && fresh.database === 'ih35_verify'
+        && /^[0-9]+$/.test(fresh.systemIdentifier ?? '')) {
+        const control = await client.query('SELECT system_identifier::text AS id FROM pg_control_system()');
+        containerMatches = control.rows[0]?.id === fresh.systemIdentifier;
+      }
+      const localAddress = ['127.0.0.1','::1'].includes(target?.address) || containerMatches;
+      if (target?.database === expectedDatabase && localAddress
         && target.version >= 160000 && target.version < 170000
         && target.neon_branch === null && target.neon_project === null) {
-        return { branchId: null, projectId: null, isolatedLocalTestDatabase: localTest };
+        return { branchId: null, projectId: null, isolatedLocalTestDatabase: expectedDatabase };
       }
       throw new ProductionWriteRefusedError(`[${label}] REFUSED -- live connection is not the exact isolated PostgreSQL16 test database`);
     }

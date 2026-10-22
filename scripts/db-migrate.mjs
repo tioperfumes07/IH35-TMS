@@ -10,6 +10,8 @@ import {
 } from "./lib/migration-filename-validation.mjs";
 import { loadHeldSet, shouldSkipHeldOnProd } from "./lib/held-migrations.mjs";
 import { writeLedgerSnapshot } from "./db-ledger-snapshot.mjs";
+import { prepareFreshDbWexIssuer } from "./lib/fresh-db-wex-prerequisite.mjs";
+import { prepareFreshLiveLoadsView } from "./lib/fresh-db-live-loads-view.mjs";
 
 dotenv.config();
 
@@ -670,7 +672,11 @@ async function applyMigration(client, file, sql, checksum) {
   await client.query("BEGIN");
   try {
     await client.query(`SET LOCAL search_path = ${SEARCH_PATH};`);
+    const restoreView = await prepareFreshLiveLoadsView(client, {
+      file, hostname: RESOLVED_HOST, database: RESOLVED_DB,
+    });
     await client.query(sql);
+    if (restoreView) await restoreView();
     await client.query(
       `
         INSERT INTO ${CANONICAL_LEDGER_TABLE} (filename, checksum, duration_ms)
@@ -1025,6 +1031,7 @@ try {
     await ensureFreshDbTrgmInPublic(client, file);
     await ensureFreshDbPostingLoadId(client, file);
     await ensureFreshDbFuelTankTables(client, file);
+    await prepareFreshDbWexIssuer(client, { file, hostname: RESOLVED_HOST });
     const dataOnlyReason = freshDbProductionDataOnlySkip(file);
     if (dataOnlyReason) {
       console.log(
