@@ -132,7 +132,9 @@ export async function catchUpSamsaraGpsWindow(
   client: PgClient,
   operatingCompanyId: string,
   startIso: string,
-  endIso: string
+  endIso: string,
+  /** LEAD 443.234 — only these units (the ones on live loads); omitted = every mapped unit. */
+  onlyUnitIds?: readonly string[] | null
 ): Promise<{ fetched: number; inserted: number; arrivals_triggered: number; skipped_no_unit: number; errors: string[] }> {
   const errors: string[] = [];
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
@@ -141,7 +143,10 @@ export async function catchUpSamsaraGpsWindow(
     apiToken: resolveSamsaraApiToken(cfg as Record<string, unknown>),
     samsaraOrgId: cfg.samsara_org_id ? String(cfg.samsara_org_id) : null,
   });
-  const unitByVehicleId = await loadUnitIdBySamsaraVehicleId(client, operatingCompanyId);
+  const allUnits = await loadUnitIdBySamsaraVehicleId(client, operatingCompanyId);
+  const keep = onlyUnitIds && onlyUnitIds.length ? new Set(onlyUnitIds) : null;
+  const unitByVehicleId = new Map([...allUnits].filter(([, unit]) => !keep || keep.has(unit)));
+  if (unitByVehicleId.size === 0) return { fetched: 0, inserted: 0, arrivals_triggered: 0, skipped_no_unit: 0, errors };
   const fixes = await api.listGpsHistory([...unitByVehicleId.keys()], startIso, endIso);
   let inserted = 0;
   let skippedNoUnit = 0;
