@@ -108,7 +108,21 @@ export function unwiredVoidWriteTable(content) {
   return CASCADE_CALL_SIGNAL.test(content) ? null : flaggedTable;
 }
 
+// LEAD 443.230 (CC-3) — the settlement dead-state writer (stampSettlementVoidedInClientTx) runs AFTER the caller's unwind; it
+// releases no children itself. Every caller must therefore run THE ONE settlement void cascade in the same file
+// (completeDriverSettlementVoidCascadeInClientTx). The bulk reverse route did not: open driver bills / unpaid reimbursements
+// stayed linked to the cancelled settlement.
+const STAMP_WRITER = "apps/backend/src/driver-finance/settlement-void-state.service.ts";
+export function stampCallerWithoutCascade(content) {
+  const code = content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+  return /await\s+stampSettlementVoidedInClientTx\(/.test(code) && !/await\s+completeDriverSettlementVoidCascadeInClientTx\(/.test(code);
+}
+
 function selftest() {
+  const STAMP = "await stampSettlementVoidedInClientTx(client, { settlementId: id });";
+  if (!stampCallerWithoutCascade(STAMP)) { console.error("SELFTEST FAIL: stamp caller without the cascade not caught"); process.exit(1); }
+  if (stampCallerWithoutCascade("await completeDriverSettlementVoidCascadeInClientTx(client, {});\n" + STAMP)) { console.error("SELFTEST FAIL: stamp caller with the cascade flagged"); process.exit(1); }
+  if (!stampCallerWithoutCascade("// await completeDriverSettlementVoidCascadeInClientTx(client, {});\n" + STAMP)) { console.error("SELFTEST FAIL: commented-out cascade accepted"); process.exit(1); }
   const VOID_INVOICE = "await client.query(`UPDATE accounting.invoices SET status = 'void', voided_at = now() WHERE id = $1`, [id]);";
   const clean = [
     ["void write that cascades", VOID_INVOICE + "\nawait cascadeVoidChildren(client, { parent: 'invoice', id });"],
@@ -170,6 +184,15 @@ function main() {
   }
 
   const staleBaselineEntries = baseline.entries.filter((e) => !stillNeeded.has(e.file));
+  const stampCallers = files
+    .map((f) => [path.relative(REPO_ROOT, f), readFileSync(f, "utf8")])
+    .filter(([rel, c]) => rel !== STAMP_WRITER && stampCallerWithoutCascade(c))
+    .map(([rel]) => rel);
+  if (stampCallers.length > 0) {
+    console.error(`verify-no-caller-voids-without-cascade: ${stampCallers.length} caller(s) of stampSettlementVoidedInClientTx do not run the one settlement void cascade (completeDriverSettlementVoidCascadeInClientTx) — open driver bills / reimbursements stay linked to the dead settlement:`);
+    for (const f of stampCallers) console.error(`  - ${f}`);
+    process.exit(1);
+  }
 
   if (violations.length > 0) {
     console.error(`verify-no-caller-voids-without-cascade: ${violations.length} file(s) write a void signal to a registered parent table with NO cascadeVoidChildren( call in the same file, and are not in the baseline:`);

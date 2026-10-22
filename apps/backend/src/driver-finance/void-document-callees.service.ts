@@ -65,6 +65,10 @@ export type ReverseSettlementForVoidResult = {
   /** LEAD 443.193 — nothing_to_reverse only: pending deductions released from the cancelled settlement / linked ones left untouched. */
   deductionsReleased: string[];
   deductionsRetained: string[];
+  /** 443.210R — loads freed from presettlement_link_id (can join a new settlement). */
+  loadsReleased?: string[];
+  /** 443.210R — company settlements voided alongside (void-not-delete). */
+  companySettlementsVoided?: string[];
 };
 
 /**
@@ -181,6 +185,8 @@ export async function reverseSettlementForVoid(
       deductions_released: cascade.deductions_released,
       deductions_retained: cascade.deductions_retained,
       trip_closed: cascade.trip_closed,
+      loads_released: cascade.loads_released,
+      company_settlements_voided: cascade.company_settlements_voided,
       via: "voidDocument.reverseSettlementForVoid",
     },
     "warning",
@@ -198,6 +204,8 @@ export async function reverseSettlementForVoid(
     reimbursementsReleased: cascade.reimbursements_released,
     deductionsReleased: cascade.deductions_released,
     deductionsRetained: cascade.deductions_retained,
+    loadsReleased: cascade.loads_released,
+    companySettlementsVoided: cascade.company_settlements_voided,
   };
 }
 

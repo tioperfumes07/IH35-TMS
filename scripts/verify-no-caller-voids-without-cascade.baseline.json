@@ -2,9 +2,9 @@
   "_law": "shrink-only; every entry needs a reason; see verify-no-caller-voids-without-cascade.mjs header",
   "entries": [
     {
-      "file": "apps/backend/src/driver-finance/void-document-callees.service.ts",
+      "file": "apps/backend/src/driver-finance/settlement-void-state.service.ts",
       "table": "driver_finance.driver_settlements",
-      "reason": "reverseSettlementForVoid() flips driver_settlements to status='cancelled'+voided_at directly (R-102-B). Since LEAD 443.192 (2026-10-17) it runs the shared driver-settlement void cascade completeDriverSettlementVoidCascadeInClientTx (lines voided, open driver bills + unpaid reimbursements released) with voidChildren:false. Since LEAD 443.193 (2026-10-17) driver_settlement_deductions is no longer a CASCADE_CHILDREN entry on ANY path (a raw voided_at stamp forgave an uncollected deduction — 'why would I forgive the debt'); the cascade's step 5 releases the settlement's pending deductions through restoreSettlementDeductionsInClientTx when the GL had nothing to reverse, and the GL reversal restores them when it did. The remaining registered children are settlement_lines (voided by the cascade's own step 1) and dead-by-inheritance tables, so cascadeVoidChildren would stamp nothing more here. Kept in the baseline with this reason, not wired."
+      "reason": "MOVED (443.230, CC-3) with the write: ROUND 443.213 (#27107) made stampSettlementVoidedInClientTx the single settlement dead-state writer (status='cancelled'+voided_at). It runs AFTER the caller's financial unwind and every caller runs the shared settlement cascade first — void-document-callees.service.ts reverseSettlementForVoid and governance/void-cancel-executors.ts executeDriverSettlement call completeDriverSettlementVoidCascadeInClientTx (lines voided, open driver bills + unpaid reimbursements released); settlements-bulk.routes.ts bulk reverse goes through the same reverse path. The old entry (void-document-callees.service.ts) was stale: that file no longer writes the void signal. Same count (1) — shrink-only kept."
     }
   ],
   "measured_at": "2026-09-24T00:30:00Z",

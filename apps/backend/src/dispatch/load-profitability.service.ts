@@ -4,14 +4,10 @@ import type { PoolClient } from "pg";
 // inflate the active-unit-count denominator this per-load insurance allocation estimate divides by.
 import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
 // LAW 5 / R-151.3 (owner, 2026-09-23/24): "no surface computes margin on its own." The Kanban
-// badge's headline revenue/driver-pay/margin now READ the canonical per-load rollup instead of
-// re-deriving revenue from l.rate_total_cents and driver pay/net profit from this file's own
-// fuel+maintenance+insurance+factoring+accessorial formula (a genuinely different cost universe
-// than the accounting-ledger costs every other surface shows). fuel_cents/maintenance_cents/
-// insurance_alloc_cents/factoring_fee_cents/accessorial_deductions_cents remain as informational
-// operational-cost detail (a real, separate question this badge still answers) but no longer feed
-// net_profit_cents/margin_pct — those are the canonical margin_cents/costs_cents, unchanged by
-// this file's own math.
+// badge's headline revenue/driver-pay/margin READ the canonical per-load rollup instead of any
+// re-derived figure. 443.210R: rate_total_cents is NEVER used as revenue anywhere in this file.
+// fuel_cents/maintenance_cents/insurance_alloc_cents/factoring_fee_cents/accessorial_deductions_cents
+// remain as informational operational-cost detail but no longer feed net_profit_cents/margin_pct.
 import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
 
 export type LoadProfitabilitySnapshot = {
@@ -118,7 +114,6 @@ export async function computeLoadProfitability(
        l.load_number,
        l.status,
        l.customer_id::text AS customer_id,
-       COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents,
        COALESCE(l.miles_practical, 0) /* practical (billed) basis only -- ORDER-2026-09-04: never blended with shortest */::bigint AS miles,
        -- DISP-PHANTOM-CLASS: this read l.delivered_at, which DOES NOT EXIST on mdata.loads
        -- (verified on prod 2026-07-27: the table has created_at and updated_at, no delivered_at and
@@ -171,7 +166,7 @@ export async function computeLoadProfitability(
     [loadId, operatingCompanyId]
   );
   const rollup = rollupRes.rows[0];
-  const revenue = num(rollup?.lc_revenue_cents ?? base.revenue_cents);
+  const revenue = num(rollup?.lc_revenue_cents ?? 0);
   const canonicalDriverPayCents = num(rollup?.lc_driver_pay_cents);
   const canonicalMarginCents = num(rollup?.lc_margin_cents ?? revenue);
 
@@ -384,7 +379,7 @@ export async function computeTripProfitabilityReport(
                     ORDER BY l.load_number),
           '[]'::jsonb
         ) AS load_links,
-        COALESCE(SUM(l.rate_total_cents), 0)::bigint AS revenue_cents,
+        COALESCE(SUM(lcr.revenue_cents), 0)::bigint AS revenue_cents,
         COALESCE(SUM(l.miles_practical), 0)::numeric AS miles
       FROM settlement_loads sl
       JOIN mdata.loads l
@@ -392,6 +387,7 @@ export async function computeTripProfitabilityReport(
        AND l.operating_company_id = $1::uuid
        AND l.soft_deleted_at IS NULL
        AND l.is_sample_data = false
+      ${loadCostRollupLateral("l.id", "l.operating_company_id")}
       GROUP BY sl.settlement_id
     ),
     quick_pay AS (
