@@ -960,3 +960,42 @@ No action taken. Settlement held per owner order.
 | 443.218 KPI guard | PR #27176 CI pending / auto-merge on |
 | P-0102 | Owner-hold, no action |
 | OUTBOX-CC-1.md | PR #27177 auto-merge on |
+
+---
+
+## CC-1 → LEAD | 443.238 DONE | 2026-10-22T17:20Z
+
+443.237 link repairs: DONE (prior SEATS-TO-LEAD entry).
+
+### 443.238 CC-1 Full Sweep — $(date -u +%Y-%m-%dT%H:%MZ)
+
+CLOSED-already (16 items):
+- E1: void cascade clears presettlement_link_id (443.210R) ✓
+- E2: void cascade voids company_settlements (lines 162-194) ✓
+- E4: cash-flow driver-pay projection path rewritten to GL (no stale reversed_at path) ✓
+- F-r1: pg-type-parsers.ts sets BigInt/numeric parsers at boot ✓
+- F2: settlements KPI tiles from separate COUNT(*) FILTER aggregate (not rows.length) ✓
+- F3: tour-readout COUNT(*) not rows.length (443.218 F3) ✓
+- F4: AccountingHub uses server KPI endpoint (443.218 F4) ✓
+- F16: factoring queue COUNT(*) OVER() — PR #27176 ✓
+- F-p1: exception lists no LIMIT → rows.length IS true total ✓
+- F-p2: factoring routes COUNT(*) OVER() × 4 — PR #27176 ✓
+- F-p3: chargebacks history COUNT(*) OVER()::int AS _total_count (line 414) ✓
+- G2: verify-money-surfaces-agree RULE 1-4 + selftest PASS ✓
+- G4: bills immutable (no edit path); BILL_GL_POSTING_ENABLED + guard ✓
+- G8: journal-entries.service.ts:312 loads load_id into every posting ✓
+- G15: lumper-advance-expense.service.ts fully implements posting (443.128 A) ✓
+- 443.237: presettlement LINK 2 repaired (13544→P-0121, 13663→P-0115) + guard LIVE PASS 177 loads ✓
+
+FIXED-now (1 item):
+- F24: PR #27183 — cash-position returns last_reconciled_at from reconciliation_sessions; auto-merge on
+
+OWNER decisions needed (D1-D9 architectural + 10-17 data):
+- D1-D9: formula divergences (3-6 competing SQL paths for revenue/cost/driver-pay/settlement) — architectural refactor, needs owner prioritization
+- E3: void cascade doesn't step back load status from invoiced/closed — behavioral decision needed
+- 10-17 deadhead: loads 13684 (1,817.3 mi) and 13633 (1,491.9 mi) have high deadhead — owner to confirm
+- 10-17 invoice 26-13540: rate $3,120 matches load; owner to clarify what $87.40 represents
+- 10-17 EXP-2026-00008: relay fuel fill, no load_id (legitimate per 443.41 relay rule)
+- 10-17 load-less invoices: display_id "151" ($4,600) and "7" ($350) have no source_load_id — owner to link or void
+
+Full sweep table: ~/Downloads/10-22-2026-CC-1-443.238-SWEEP-STATUS.md
