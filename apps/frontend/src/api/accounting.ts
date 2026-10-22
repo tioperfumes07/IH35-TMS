@@ -863,7 +863,9 @@ export function listVendorBills(
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ rows: VendorBill[] }>(withCompany(`/api/v1/accounting/bills?${qs}`, operatingCompanyId));
+  return apiRequest<{ rows: VendorBill[]; total?: number; total_balance_cents?: number }>(
+    withCompany(`/api/v1/accounting/bills?${qs}`, operatingCompanyId)
+  );
 }
 
 /** All vendors when `vendor_id` omitted; supports balance columns from list API. */

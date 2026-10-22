@@ -10,6 +10,7 @@ import {
   BILL_LIST_SORT_SQL,
   BILL_PAYMENT_LIST_SORT_SQL,
   countAllBillsForCompany,
+  countBillsByVendor,
   createBill,
   getBillDetail,
   getBillPaymentDetail,
@@ -370,15 +371,18 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     });
     // REVERSE-SECTIONS-SILENT-LIST-CAPS: an honest total for the no-vendor-identity filter set —
     // exact same WHERE clause as listAllBillsForCompany, so it can never disagree with `rows`.
-    // vendor_id goes through listBillsByVendor (a separate, un-counted query path; no reverse-drill
-    // consumer passes vendor_id today) — total stays undefined there and the FE falls back to the
-    // honest "Showing the first N" disclosure rather than a false count.
-    const total = query.data.vendor_id
-      ? undefined
+    // 443.218 F2b: vendor_id path now also returns total + total_balance_cents from countBillsByVendor
+    // so EarningsTab KPI is an aggregate over ALL matching bills, not a sum of the capped page.
+    const vendorStats = query.data.vendor_id
+      ? await countBillsByVendor(String(user.uuid), query.data.operating_company_id, query.data.vendor_id, listOptions)
+      : null;
+    const total = vendorStats
+      ? vendorStats.count
       : await countAllBillsForCompany(String(user.uuid), query.data.operating_company_id, listOptions);
     return {
       rows,
       total,
+      total_balance_cents: vendorStats?.total_balance_cents,
       limit: query.data.limit,
       offset: query.data.offset,
       sort: query.data.sort && BILL_LIST_SORT_SQL[query.data.sort] ? query.data.sort : null,
