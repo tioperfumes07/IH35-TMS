@@ -523,10 +523,10 @@ export function VendorsPage() {
   }, [billsQuery.data?.rows, typeFilter, txnCategoryFilter]);
 
   const overdueCents = useMemo(() => {
-    const now = new Date();
+    const today = companyToday();
     return txRows.reduce((sum, bill) => {
-      const due = bill.due_date ? new Date(`${bill.due_date}T00:00:00`) : null;
-      const isOverdue = due != null && !Number.isNaN(due.getTime()) && due.getTime() < now.getTime();
+      const due = bill.due_date?.slice(0, 10);
+      const isOverdue = due != null && /^\d{4}-\d{2}-\d{2}$/.test(due) && due < today;
       const balance = Number(bill.balance_cents ?? Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
       return isOverdue ? sum + Math.max(balance, 0) : sum;
     }, 0);

@@ -311,6 +311,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     [effectiveOperatingCompanyId, load, pushToast, queryClient, refetchLoad, statusMutation]
   );
   const updateMutation = useMutation({
+    meta: { loads: true },
     mutationFn: ({ id, operatingCompanyId, body }: { id: string; operatingCompanyId: string; body: Record<string, unknown> }) =>
       updateLoad(id, operatingCompanyId, body),
     // DISP-F6320: every caller (dispatch flag select, factoring-package generate/email/mark-uploaded)
@@ -320,6 +321,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     onError: (err) => pushToast(userFacingApiError(err, "Update failed"), "error"),
   });
   const createInvoiceMutation = useMutation({
+    meta: { loads: true },
     mutationFn: ({ operatingCompanyId, loadId }: { operatingCompanyId: string; loadId: string }) =>
       createInvoiceFromLoad(operatingCompanyId, { load_id: loadId }),
     // DISP-F6320: "Create / View Invoice" awaited this with no try/catch and no onError — a failed
@@ -327,6 +329,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     onError: (err) => pushToast(userFacingApiError(err, "Create invoice failed"), "error"),
   });
   const distributeMutation = useMutation({
+    meta: { loads: true },
     mutationFn: ({ loadId, operatingCompanyId }: { loadId: string; operatingCompanyId: string }) =>
       distributeLoadInstructions(loadId, operatingCompanyId),
     onSuccess: () => pushToast("Driver instructions distributed", "success"),
@@ -393,6 +396,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   // success so the summary above reflects the new coordinates (and any geofence that could now
   // be created) without a full page reload.
   const geocodeStopsMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () => geocodeDispatchLoadStops(load!.id, load!.operating_company_id),
     onSuccess: (data) => {
       void geofenceStatusQuery.refetch();

@@ -74,9 +74,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
     }
     // Default order (before any column-header sort) matches the prior default: due date ascending.
     return [...rows].sort((a, b) => {
-      const da = a.due_date ? new Date(a.due_date).getTime() : Number.POSITIVE_INFINITY;
-      const db = b.due_date ? new Date(b.due_date).getTime() : Number.POSITIVE_INFINITY;
-      return da - db;
+      return (a.due_date || "9999-12-31").localeCompare(b.due_date || "9999-12-31");
     });
   }, [items, statusFilter, categoryFilter, filterText]);
 

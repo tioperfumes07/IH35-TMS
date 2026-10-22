@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -3538,14 +3539,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     await createEquipmentLoanAttribution(loanAction.loanId, {
                       operating_company_id: companyId,
                       load_id: loanActionLoadId.trim(),
-                      attribution_date: new Date().toISOString().slice(0, 10),
+                      attribution_date: companyToday(),
                       amount_cents: loanActionCents,
                     });
                     pushToast("Attribution recorded", "success");
                   } else {
                     await createEquipmentLoanPayment(loanAction.loanId, {
                       operating_company_id: companyId,
-                      paid_on: new Date().toISOString().slice(0, 10),
+                      paid_on: companyToday(),
                       amount_cents: loanActionCents,
                       principal_cents: loanActionCents,
                       interest_cents: 0,

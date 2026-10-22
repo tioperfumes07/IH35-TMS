@@ -16,7 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(process.argv.find(a => a.startsWith("--root="))?.slice(7) ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."));
 const LABEL = "verify-acct-utc-today-defaults";
 const SCAN_DIRS = [
   "apps/frontend/src/pages/accounting",
@@ -42,6 +42,17 @@ function findViolationsInText(text, fileLabel = "fixture") {
     }
   });
   return violations;
+}
+
+// Beyond the older accounting-specific ban, every FE business-day default must
+// use the company clock. Calendar arithmetic on explicit parts is not a "today".
+function findGlobalViolations(text, fileLabel = "fixture") {
+  const nowUtc = /new\s+Date\s*\(\s*\)\s*\.\s*toISOString\(\)\s*\.\s*(?:slice\(\s*0\s*,\s*10\s*\)|split\(["']T["']\)\[0\])/;
+  const dateOnlyParsing = /new\s+Date\s*\(\s*(?:["']\d{4}-\d{2}-\d{2}["']|[\w$.]+\.(?:due_date|return_avail_date))\s*\)/;
+  return text.split("\n").flatMap((line, i) => {
+    if (/^\s*(?:\/\/|\*|\/\*)/.test(line)) return [];
+    return nowUtc.test(line) || dateOnlyParsing.test(line) ? [`${fileLabel}:${i + 1}: ${line.trim()}`] : [];
+  });
 }
 
 function walk(dir) {
@@ -86,6 +97,16 @@ function selftest() {
   }
 
   console.log(`[${LABEL}] --selftest PASS (planted=${plantedHits.length} hits; good=0)`);
+  const badGlobal = [
+    'const date = new Date().toISOString().slice(0,10);',
+    'const date = new Date().toISOString().split("T")[0];',
+    'format(new Date(bill.due_date));',
+    'format(new Date(t.return_avail_date));',
+    'format(new Date("2026-10-21"));',
+  ];
+  for (const plant of badGlobal) if (findGlobalViolations(plant).length !== 1) throw Error(`missed mutation: ${plant}`);
+  if (findGlobalViolations('formatDateUS(bill.due_date); companyToday(); new Date(Date.UTC(y,m,d));').length) throw Error('valid calendar handling refused');
+  console.log(`[${LABEL}] global selftest PASS (5 planted failures; valid calendar parts pass)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -97,6 +118,10 @@ const violations = [];
 for (const rel of SCAN_DIRS.flatMap(walk)) {
   const text = fs.readFileSync(path.join(ROOT, rel), "utf8");
   violations.push(...findViolationsInText(text, rel));
+}
+for (const rel of walk("apps/frontend/src")) {
+  if (/\.(?:test|spec)\.[jt]sx?$/.test(rel) || rel.includes("/__tests__/")) continue;
+  violations.push(...findGlobalViolations(fs.readFileSync(path.join(ROOT, rel), "utf8"), rel));
 }
 
 if (violations.length > 0) {

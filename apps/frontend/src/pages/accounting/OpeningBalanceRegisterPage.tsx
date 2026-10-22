@@ -121,6 +121,7 @@ export function OpeningBalanceRegisterPage() {
     setBanner({ tone: "error", text: error instanceof Error ? error.message : "Request failed" });
 
   const patchLine = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { account_id: string; adjustment_cents: number }) =>
       patchOpeningBalanceLine({ operating_company_id: operatingCompanyId, ...input }),
     onSuccess: () => {
@@ -131,6 +132,7 @@ export function OpeningBalanceRegisterPage() {
   });
 
   const importFromQbo = useMutation({
+    meta: { loads: true },
     mutationFn: () => importOpeningBalancesFromQbo(operatingCompanyId),
     onSuccess: (result) => {
       setBanner({
@@ -145,6 +147,7 @@ export function OpeningBalanceRegisterPage() {
   });
 
   const importFromFixture = useMutation({
+    meta: { loads: true },
     mutationFn: () => importOpeningBalancesFromFixture(operatingCompanyId),
     onSuccess: (result) => {
       setBanner({
@@ -159,6 +162,7 @@ export function OpeningBalanceRegisterPage() {
   });
 
   const cloneAsIs = useMutation({
+    meta: { loads: true },
     mutationFn: () => cloneAsIsImportAndCommit(operatingCompanyId),
     onSuccess: (result) => {
       if (result.commit.committed) {
@@ -181,6 +185,7 @@ export function OpeningBalanceRegisterPage() {
   });
 
   const setFinality = useMutation({
+    meta: { loads: true },
     mutationFn: (is_final: boolean) =>
       setOpeningBalanceSourceFinality({ operating_company_id: operatingCompanyId, is_final }),
     onSuccess: () => {
@@ -191,6 +196,7 @@ export function OpeningBalanceRegisterPage() {
   });
 
   const commit = useMutation({
+    meta: { loads: true },
     mutationFn: () => commitOpeningBalanceRegister(operatingCompanyId),
     onSuccess: (result) => {
       setBanner({

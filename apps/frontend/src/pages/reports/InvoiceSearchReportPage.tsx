@@ -57,18 +57,17 @@ type InvoiceSearchFilters = { search: string; statusFilter: string; dateRange: s
 
 function dateRangeToFromTo(range: string): { from_date?: string; to_date?: string } {
   if (range === "all") return {};
-  const now = new Date();
-  const to = now.toISOString().slice(0, 10);
+  const to = companyToday();
   if (range === "last_30") {
-    const from = new Date(now.getTime() - 30 * 86_400_000).toISOString().slice(0, 10);
+    const from = addDaysIso(to, -30);
     return { from_date: from, to_date: to };
   }
   if (range === "last_90") {
-    const from = new Date(now.getTime() - 90 * 86_400_000).toISOString().slice(0, 10);
+    const from = addDaysIso(to, -90);
     return { from_date: from, to_date: to };
   }
   if (range === "this_year") {
-    const from = `${now.getFullYear()}-01-01`;
+    const from = `${to.slice(0, 4)}-01-01`;
     return { from_date: from, to_date: to };
   }
   return {};
@@ -290,3 +289,4 @@ export function InvoiceSearchReportPage() {
     </div>
   );
 }
+import { companyToday, addDaysIso } from "../../lib/businessDate";

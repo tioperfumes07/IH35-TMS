@@ -45,6 +45,7 @@ export function MonthClosePage() {
   });
 
   const closeMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       closeMonth(companyId, {
         period,
@@ -65,6 +66,7 @@ export function MonthClosePage() {
   });
 
   const ackMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (checklistItem: "ar_aging_review" | "ap_aging_review") =>
       acknowledgeMonthCloseChecklist(companyId, { period, checklist_item: checklistItem }),
     onSuccess: async () => {

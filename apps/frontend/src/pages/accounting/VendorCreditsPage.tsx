@@ -144,6 +144,7 @@ export function VendorCreditsPage() {
   });
 
   const createMut = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       createVendorCredit(companyId, {
         vendor_id: createVendorId as string,
@@ -165,6 +166,7 @@ export function VendorCreditsPage() {
     onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
   });
   const applyMut = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       applyVendorCredit(companyId, selectedCreditId!, [
         { bill_id: applyBillId as string, applied_cents: applyAmountCents as number },
@@ -183,6 +185,7 @@ export function VendorCreditsPage() {
     onError: (err) => pushToast(err instanceof Error ? err.message : "Apply failed", "error"),
   });
   const voidMut = useMutation({
+    meta: { loads: true },
     mutationFn: (reason: string) => voidVendorCredit(companyId, selectedCreditId!, reason),
     onSuccess: async () => {
       pushToast("Vendor credit voided", "success");

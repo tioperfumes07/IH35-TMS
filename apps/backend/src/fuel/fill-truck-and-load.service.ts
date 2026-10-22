@@ -249,10 +249,13 @@ export async function applyFillTruckAndLoad(
             station_lat = COALESCE(station_lat, $7::numeric), station_lng = COALESCE(station_lng, $8::numeric),
             gps_unit_id = $9::uuid, gps_distance_m = $10::int, gps_minutes_off = $11::int,
             truck_resolution = $12, load_resolution = $13, resolved_at = now(), updated_at = now()
-      WHERE id = $2::uuid AND operating_company_id = $1::uuid`,
+      -- 443.230: a Relay fill's rows (diesel + DEF lines) move together (carryFuelReceiptToLoad relay_fuel), so the evidence is
+      -- written on every row of the fill, not only the row the engine was called with.
+      WHERE operating_company_id = $1::uuid
+        AND (id = $2::uuid OR ($14::uuid IS NOT NULL AND relay_fuel_transaction_id = $14::uuid AND voided_at IS NULL))`,
     [input.companyId, input.fuelId, input.toUnitId, input.toLoadId, input.resolution.moment, input.resolution.moment_source,
      input.resolution.station_lat, input.resolution.station_lng, gps?.unit_id ?? null, gps?.distance_m ?? null, gps?.minutes_off ?? null,
-     input.resolution.truck_resolution, input.resolution.load_resolution]
+     input.resolution.truck_resolution, input.resolution.load_resolution, input.resolution.relay_id ?? null]
   );
   await appendCrudAudit(client as never, input.actorUserId, "fuel.fill_truck_and_load_resolved", {
     operating_company_id: input.companyId, fuel_id: input.fuelId, from_load_id: input.resolution.load_id, load_id: input.toLoadId,

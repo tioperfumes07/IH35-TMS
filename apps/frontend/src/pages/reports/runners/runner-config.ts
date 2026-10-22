@@ -1,3 +1,4 @@
+import { companyToday } from "../../../lib/businessDate";
 import type { EntityKind } from "../../../components/shared/EntityLink";
 
 export type RunnerColumn = {
@@ -74,7 +75,7 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
       { key: "bucket_91_plus_cents", label: "91+", align: "right", format: "currency", sortable: true },
       { key: "total_cents", label: "Total Open", align: "right", format: "currency", sortable: true },
     ],
-    csvFilename: () => `ar-aging-${new Date().toISOString().slice(0, 10)}.csv`,
+    csvFilename: () => `ar-aging-${companyToday()}.csv`,
   },
   "dispatch-margin": {
     id: "dispatch-margin",
@@ -213,7 +214,7 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
       { key: "threshold_status", label: "Status", align: "left", format: "text" },
       { key: "computed_at", label: "Computed At", align: "left", format: "date" },
     ],
-    csvFilename: () => `csa-fleet-score-${new Date().toISOString().slice(0, 10)}.csv`,
+    csvFilename: () => `csa-fleet-score-${companyToday()}.csv`,
   },
   "fleet-utilization": {
     id: "fleet-utilization",
@@ -225,7 +226,7 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
       { key: "total_units", label: "Available units", align: "right", format: "number" },
       { key: "percentage", label: "Utilization", align: "right", format: "percent" },
     ],
-    csvFilename: () => `fleet-utilization-${new Date().toISOString().slice(0, 10)}.csv`,
+    csvFilename: () => `fleet-utilization-${companyToday()}.csv`,
   },
 };
 

@@ -45,6 +45,7 @@ export function PaymentMethodPicker({ operatingCompanyId, value, onChange, disab
   const options: ComboboxOption[] = methods.map((m) => ({ value: m.id, label: m.name }));
 
   const createMut = useMutation({
+    meta: { loads: true },
     mutationFn: () => createPaymentMethod(operatingCompanyId, { name: name.trim(), gl_account_id: glAccountId }),
     onSuccess: (created) => {
       void qc.invalidateQueries({ queryKey: ["catalogs", "payment-methods", operatingCompanyId] });

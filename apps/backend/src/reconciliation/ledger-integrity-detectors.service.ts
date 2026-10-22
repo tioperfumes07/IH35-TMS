@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { randomUUID } from "node:crypto";
 import { logger } from "../observability/structured-logger.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
@@ -1047,7 +1048,7 @@ export async function checkTestNamedAccountForCompany(client: DbClient, operatin
 // subledger-gl-control-rec.service.ts) for the per-account GL read, per account, exactly the "reuse
 // it, do not rebuild it" instruction.
 export async function checkDriverCashAdvanceTieOutForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
-  const asOfDate = new Date().toISOString().slice(0, 10);
+  const asOfDate = companyBusinessDate();
   const accountsRes = await client.query<{ account_id: string }>(
     `
       SELECT DISTINCT coa_account_id AS account_id
@@ -1117,7 +1118,7 @@ const EXTENDED_TIE_OUT_ROLES = [
 ];
 
 export async function checkExtendedSubledgerTieOutForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
-  const asOfDate = new Date().toISOString().slice(0, 10);
+  const asOfDate = companyBusinessDate();
   for (const { role, ledger, needsAccountId } of EXTENDED_TIE_OUT_ROLES) {
     const controlAccountId = await resolveRoleAccountOptional(client as never, operatingCompanyId, role);
     const resourceScope: ResourceScope = { role, account_id: controlAccountId ?? "", account_number: "" };

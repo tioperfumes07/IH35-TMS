@@ -63,15 +63,15 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/account-register/toggle-cleared` | `apps/backend/src/accounting/account-register.routes.ts:101` | — | — | — |
 | create | `/api/v1/accounting/bank-deposits` | `apps/backend/src/accounting/bank-deposits.routes.ts:94` | — | — | — |
 | nested | `/api/v1/accounting/bill-payments/:id/post-gl` | `apps/backend/src/accounting/bill-payment-gl.routes.ts:20` | — | — | — |
-| nested | `/api/v1/accounting/bill-payments/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:951` | — | — | — |
-| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:614` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/allocate` | `apps/backend/src/accounting/bills.routes.ts:1050` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/pay` | `apps/backend/src/accounting/bills.routes.ts:720` | — | — | — |
+| nested | `/api/v1/accounting/bill-payments/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:955` | — | — | — |
+| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:618` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/allocate` | `apps/backend/src/accounting/bills.routes.ts:1054` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/pay` | `apps/backend/src/accounting/bills.routes.ts:724` | — | — | — |
 | nested | `/api/v1/accounting/bills/:id/post-gl` | `apps/backend/src/accounting/bill-gl-draft.routes.ts:103` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:865` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:869` | — | — | — |
 | create | `/api/v1/accounting/bills/draft-je-preview` | `apps/backend/src/accounting/bill-gl-draft.routes.ts:46` | — | — | — |
-| create | `/api/v1/accounting/bills/stamp-trailers-from-loads` | `apps/backend/src/accounting/bills.routes.ts:799` | — | — | — |
-| create | `/api/v1/accounting/bills/stamp-units-from-loads` | `apps/backend/src/accounting/bills.routes.ts:774` | — | — | — |
+| create | `/api/v1/accounting/bills/stamp-trailers-from-loads` | `apps/backend/src/accounting/bills.routes.ts:803` | — | — | — |
+| create | `/api/v1/accounting/bills/stamp-units-from-loads` | `apps/backend/src/accounting/bills.routes.ts:778` | — | — | — |
 | create | `/api/v1/accounting/broker-advances` | `apps/backend/src/accounting/broker-advances.routes.ts:38` | — | — | — |
 | nested | `/api/v1/accounting/broker-advances/:id/disburse-to-driver-bill` | `apps/backend/src/accounting/broker-advances.routes.ts:76` | — | — | — |
 | nested | `/api/v1/accounting/collections/:taskId/contact` | `apps/backend/src/accounting/collections.routes.ts:92` | — | — | — |
@@ -90,11 +90,11 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/fixed-assets/register-trk-units` | `apps/backend/src/accounting/fixed-assets.routes.ts:415` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-unit` | `apps/backend/src/accounting/fixed-assets.routes.ts:381` | — | — | — |
 | nested | `/api/v1/accounting/invoice-disputes/:id/fault` | `apps/backend/src/accounting/invoice-disputes.routes.ts:186` | — | — | — |
-| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:606` | — | — | — |
+| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:627` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/disputes` | `apps/backend/src/accounting/invoice-disputes.routes.ts:107` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/lines` | `apps/backend/src/accounting/invoice-lines.routes.ts:61` | — | — | — |
-| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1392` | — | — | — |
-| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:834` | — | — | — |
+| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1413` | — | — | — |
+| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:855` | — | — | — |
 | create | `/api/v1/accounting/journal-entries` | `apps/backend/src/accounting/journal-entries.routes.ts:110` | — | — | — |
 | create | `/api/v1/accounting/lease-posting/leases` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:101` | — | — | — |
 | nested | `/api/v1/accounting/lease-posting/leases/:lease_id/assets` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:143` | — | — | — |
@@ -446,12 +446,12 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/driver-finance/batch-settlements` | `apps/backend/src/driver-finance/batch-settlements.routes.ts:95` | — | — | — |
 | create | `/api/v1/driver-finance/cash-advance-requests` | `apps/backend/src/driver-finance/cash-advance-requests.routes.ts:314` | — | — | — |
 | nested | `/api/v1/driver-finance/cash-advance-requests/:id/deny` | `apps/backend/src/driver-finance/cash-advance-requests.routes.ts:421` | — | — | — |
-| nested | `/api/v1/driver-finance/driver-bills/:id/void-stray-salaried` | `apps/backend/src/driver-finance/driver-bills.routes.ts:487` | — | — | — |
+| nested | `/api/v1/driver-finance/driver-bills/:id/void-stray-salaried` | `apps/backend/src/driver-finance/driver-bills.routes.ts:492` | — | — | — |
 | nested | `/api/v1/driver-finance/drivers/:driverId/payment-methods` | `apps/backend/src/driver-finance/driver-payment-methods.routes.ts:82` | — | — | — |
 | create | `/api/v1/driver-finance/escrow-separations` | `apps/backend/src/driver-finance/escrow-separation.routes.ts:67` | — | — | — |
 | nested | `/api/v1/driver-finance/escrow/:driverId/forfeit` | `apps/backend/src/driver-finance/escrow-forfeit.routes.ts:46` | — | — | — |
 | nested | `/api/v1/driver-finance/pre-settlements/:id/add-load` | `apps/backend/src/driver-finance/pre-settlement.routes.ts:288` | — | — | — |
-| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts:609` | — | — | — |
+| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts:623` | — | — | — |
 | nested | `/api/v1/driver-finance/pre-settlements/:id/settle` | `apps/backend/src/driver-finance/pre-settlement.routes.ts:423` | — | — | — |
 | nested | `/api/v1/driver-finance/presettlement-suggestions/:id/confirm` | `apps/backend/src/dispatch/presettlement-link.routes.ts:71` | — | — | — |
 | nested | `/api/v1/driver-finance/settlement-creator/:settlementId/retry-after-commit` | `apps/backend/src/driver-finance/settlement-creator.routes.ts:475` | — | — | — |
@@ -461,11 +461,11 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver-finance/settlement-disputes/:id/disburse` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts:234` | — | — | — |
 | nested | `/api/v1/driver-finance/settlement-disputes/:id/withdraw` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts:257` | — | — | — |
 | create | `/api/v1/driver-finance/settlement-references` | `apps/backend/src/driver-finance/settlements.routes.ts:194` | — | — | — |
-| create | `/api/v1/driver-finance/settlements` | `apps/backend/src/driver-finance/settlements.routes.ts:1162` | — | — | — |
+| create | `/api/v1/driver-finance/settlements` | `apps/backend/src/driver-finance/settlements.routes.ts:1206` | — | — | — |
 | nested | `/api/v1/driver-finance/settlements/:id/close-trip` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts:147` | — | — | — |
-| nested | `/api/v1/driver-finance/settlements/:id/pay-lines` | `apps/backend/src/driver-finance/settlements.routes.ts:1288` | — | — | — |
+| nested | `/api/v1/driver-finance/settlements/:id/pay-lines` | `apps/backend/src/driver-finance/settlements.routes.ts:1332` | — | — | — |
 | nested | `/api/v1/driver-finance/settlements/:id/payrun-close` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts:104` | — | — | — |
-| nested | `/api/v1/driver-finance/settlements/:id/unlock` | `apps/backend/src/driver-finance/settlements.routes.ts:1626` | — | — | — |
+| nested | `/api/v1/driver-finance/settlements/:id/unlock` | `apps/backend/src/driver-finance/settlements.routes.ts:1670` | — | — | — |
 
 ### legal — 22 create-surface(s)
 
@@ -504,7 +504,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver/chat/messages/:id/receipt` | `apps/backend/src/chat/chat.routes.ts:237` | — | — | — |
 | nested | `/api/v1/driver/chat/threads/:id/messages` | `apps/backend/src/chat/chat.routes.ts:224` | — | — | — |
 | create | `/api/v1/driver/dvir` | `apps/backend/src/driver/dvir.routes.ts:19` | — | — | — |
-| create | `/api/v1/driver/fuel/upload-receipt` | `apps/backend/src/driver/fuel-receipt.routes.ts:63` | — | — | — |
+| create | `/api/v1/driver/fuel/upload-receipt` | `apps/backend/src/driver/fuel-receipt.routes.ts:64` | — | — | — |
 | nested | `/api/v1/driver/loads/:id/accept` | `apps/backend/src/driver/loads.routes.ts:375` | — | — | — |
 | nested | `/api/v1/driver/loads/:id/stops/:stopId/arrive` | `apps/backend/src/driver/loads.routes.ts:495` | — | — | — |
 | nested | `/api/v1/driver/loads/:id/stops/:stopId/depart` | `apps/backend/src/driver/loads.routes.ts:602` | — | — | — |
@@ -523,8 +523,8 @@ after creation; a GL/posting failure goes to CC-1.
 |---|---|---|---|---|---|
 | create | `/api/v1/factoring/batches` | `apps/backend/src/factoring/batch.routes.ts:60` | — | — | — |
 | create | `/api/v1/factoring/cash-reserve-reclass` | `apps/backend/src/factoring/cash-reserve-reclass.routes.ts:28` | — | — | — |
-| create | `/api/v1/factoring/factors` | `apps/backend/src/factoring/factor.routes.ts:180` | — | — | — |
-| nested | `/api/v1/factoring/factors/:id/letter-of-release` | `apps/backend/src/factoring/factor.routes.ts:372` | — | — | — |
+| create | `/api/v1/factoring/factors` | `apps/backend/src/factoring/factor.routes.ts:181` | — | — | — |
+| nested | `/api/v1/factoring/factors/:id/letter-of-release` | `apps/backend/src/factoring/factor.routes.ts:373` | — | — | — |
 | create | `/api/v1/factoring/faro-imports` | `apps/backend/src/data-infra/data-infra.routes.ts:179` | — | — | — |
 | nested | `/api/v1/factoring/faro-reserve-entries/:id/short-pay-resolution` | `apps/backend/src/factoring/faro-reserve-entries.routes.ts:55` | — | — | — |
 | create | `/api/v1/factoring/import/faro` | `apps/backend/src/factoring/faro-csv-import.routes.ts:26` | — | — | — |
@@ -646,7 +646,7 @@ after creation; a GL/posting failure goes to CC-1.
 |---|---|---|---|---|---|
 | nested | `/api/v1/customers/:customer_id/contacts` | `apps/backend/src/mdata/customer-detail-alias.routes.ts:22` | — | — | — |
 | nested | `/api/v1/customers/:customer_id/lanes` | `apps/backend/src/mdata/customer-detail-alias.routes.ts:43` | — | — | — |
-| nested | `/api/v1/customers/:customerId/factor` | `apps/backend/src/factoring/factor.routes.ts:410` | — | — | — |
+| nested | `/api/v1/customers/:customerId/factor` | `apps/backend/src/factoring/factor.routes.ts:411` | — | — | — |
 | nested | `/api/v1/customers/:id/flag-duplicate` | `apps/backend/src/mdata/reclassify.routes.ts:192` | — | — | — |
 | nested | `/api/v1/customers/:id/payments` | `apps/backend/src/accounting/customer-payments.routes.ts:160` | — | — | — |
 | nested | `/api/v1/customers/:id/portal-users` | `apps/backend/src/shipper-portal/portal-users-admin.routes.ts:70` | — | — | — |

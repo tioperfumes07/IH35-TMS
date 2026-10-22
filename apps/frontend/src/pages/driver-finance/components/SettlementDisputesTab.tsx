@@ -106,6 +106,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
   }
 
   const reviewMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (id: string) => markSettlementDisputeUnderReview(id, { operating_company_id: companyId }),
     onSuccess: async () => {
       pushToast("Dispute marked under review", "success");
@@ -115,6 +116,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
   });
 
   const resolveMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (id: string) =>
       resolveSettlementDispute(id, {
         operating_company_id: companyId,

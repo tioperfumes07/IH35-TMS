@@ -1,3 +1,4 @@
+import { companyToday, addDaysIso } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -42,10 +43,8 @@ const DEDUCTION_ORDER: (keyof SettlementDeductionBreakdown)[] = [
 const PIE_COLORS = [colors.success, colors.accent, colors.warning, colors.danger, colors.mutedText];
 
 function defaultRange() {
-  const end = new Date();
-  const start = new Date(end);
-  start.setUTCDate(start.getUTCDate() - 7);
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  const end = companyToday();
+  return { start: addDaysIso(end, -7), end };
 }
 
 function breakdownRows(b: SettlementDeductionBreakdown) {

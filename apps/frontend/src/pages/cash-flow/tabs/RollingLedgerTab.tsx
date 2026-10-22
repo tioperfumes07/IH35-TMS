@@ -11,7 +11,7 @@ import {
   type RollingLedgerDay,
   type CashFlowAdjustmentReason,
 } from "../../../api/cashFlow";
-import { addDaysIso, companyToday } from "../../../lib/businessDate";
+import { addDaysIso, companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 import { EntityLink, resolveEntityRoute } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -63,18 +63,15 @@ const PRESET_OPTIONS: { value: DatePreset; label: string }[] = [
 ];
 
 function presetRange(preset: DatePreset, today: string): { from: string; to: string } {
-  const base = new Date(today + "T00:00:00");
   if (preset === "7d") return { from: today, to: addDaysIso(today, 6) };
   if (preset === "14d") return { from: today, to: addDaysIso(today, 13) };
   if (preset === "30d") return { from: today, to: addDaysIso(today, 29) };
   if (preset === "this_month") {
-    const start = new Date(base.getFullYear(), base.getMonth(), 1);
-    const end = new Date(base.getFullYear(), base.getMonth() + 1, 0);
-    return { from: start.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10) };
+    const { start, end } = monthBoundsIso(today);
+    return { from: start, to: end };
   }
-  const start = new Date(base.getFullYear(), base.getMonth() + 1, 1);
-  const end = new Date(base.getFullYear(), base.getMonth() + 2, 0);
-  return { from: start.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10) };
+  const { start, end } = monthBoundsIso(addDaysIso(monthBoundsIso(today).end, 1));
+  return { from: start, to: end };
 }
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {

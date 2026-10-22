@@ -71,6 +71,7 @@ export function AccountingLeaseDetailPage() {
   const query = useQuery({ queryKey: ["leases", "detail", companyId, id], queryFn: () => leasesApi.get(companyId, id), enabled: Boolean(companyId && id) });
   const refresh = () => void qc.invalidateQueries({ queryKey: ["leases"] });
   const sign = useMutation({
+    meta: { loads: true },
     mutationFn: () => leasesApi.sign(companyId, id, companyWallClockToIso(`${signedAt}T12:00`)),
     onSuccess: (r) => {
       const refused = r.bills.flatMap((b) => b.refused);
@@ -81,17 +82,20 @@ export function AccountingLeaseDetailPage() {
     onError: (e) => setMsg(userFacingApiError(e, "Could not sign the lease.")),
   });
   const close = useMutation({
+    meta: { loads: true },
     mutationFn: () => leasesApi.close(companyId, id, String(closing?.on), String(closing?.reason)),
     onSuccess: () => { setClosing(null); setMsg("Lease closed."); refresh(); },
     onError: (e) => setMsg(userFacingApiError(e, "Could not close the lease.")),
   });
   const bills = useMutation({
+    meta: { loads: true },
     mutationFn: () => leasesApi.generateBills(companyId, undefined, id),
     onSuccess: (r) => { setMsg(`${r.created.length} bill(s) created, ${r.skipped_existing.length} already existed${r.refused.length ? `; refused: ${r.refused.map((x) => x.reason).join("; ")}` : ""}.`); refresh(); },
     onError: (e) => setMsg(userFacingApiError(e, "Could not generate bills.")),
   });
   const [buyout, setBuyout] = useState<{ on: string; price: number | null } | null>(null);
   const buy = useMutation({
+    meta: { loads: true },
     mutationFn: () => leasesApi.buyout(companyId, id, String(buyout?.on), buyout?.price ?? null),
     onSuccess: (r) => { setBuyout(null); setMsg(`Bought out. Purchase bill created for ${formatUsdCentsTable(r.price_cents)}; ${r.assets.length} asset(s) moved to owned fixed assets.`); refresh(); },
     onError: (e) => setMsg(userFacingApiError(e, "Could not buy out the lease.")),

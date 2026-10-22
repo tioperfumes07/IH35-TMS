@@ -89,6 +89,12 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
     byLoad.get(r.load_number).push(r);
   }
   const used = new Set();
+  const gpsMoved = [];
+  const printedReceipts = new Map();
+  for (const d of documents) for (const ln of d.fuel_purchases) {
+    const k = `${baseInvoice(ln.invoice)}|${ln.receipt_cents}`;
+    if (!printedReceipts.has(k)) printedReceipts.set(k, { load: String(ln.load_number), settlement: d.settlement_no });
+  }
   const purgedLeft = purged.map((p) => ({ ...p }));
   const perLoad = new Map();
   let expectedRows = 0;
@@ -152,6 +158,21 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
     }
     if (t) { t.liveN = (t.liveN || 0) + 1; t.liveC = (t.liveC || 0) + r.cents; }
     if (used.has(r.id)) continue;
+    // LEAD 443.214 / owner 10-21 5:31 PM CT ("the engine is the source of truth, not the hand-typed settlement"): a row the
+    // fuel engine moved by GPS / owner ruling (fuel_transactions.truck_resolution, audited fuel.fill_truck_and_load_resolved)
+    // whose receipt IS printed on a settlement document — under the truck's old load — is sourced by that line. Never a
+    // failure on its new load; listed for the owner's "Not on the settlement" review. Checked last, so it never takes a row a
+    // document line on its own load would match.
+    // The same holds for a moved row whose own source is a Creator posting or a Relay transaction (the sources an
+    // undocumented load already accepts below): moving it onto a documented load does not un-source it.
+    const engineMoved = r.truck_resolution && /^(gps|owner_ruling)/.test(String(r.truck_resolution));
+    const printed = printedReceipts.get(`${baseInvoice(r.ref)}|${r.cents}`);
+    if (engineMoved && (printed || creatorIds.has(r.id) || r.relay_id)) {
+      const how = printed ? `settlement ${printed.settlement} printed invoice ${r.ref} ${money(r.cents)} on load ${printed.load}` : `${r.relay_id ? "Relay" : "Creator"}-sourced invoice ${r.ref} ${money(r.cents)}, on no settlement document`;
+      gpsMoved.push({ id: r.id, now_on: r.load_number, printed_on: printed?.load ?? null, settlement: printed?.settlement ?? null, invoice: r.ref, cents: r.cents });
+      notes.push(`moved by the fuel engine (${String(r.truck_resolution).split(":")[0]}): ${how}; it is on load ${r.load_number} — "Not on the settlement" review`);
+      continue;
+    }
     if (t) {
       failures.push(`unsourced: load ${r.load_number} live row ${r.id.slice(0, 8)} invoice ${r.ref} ${money(r.cents)} ${r.date} is on no settlement document line`);
     } else if (!creatorIds.has(r.id) && !r.relay_id) {
@@ -172,7 +193,7 @@ export function compareFuel({ documents, corrections = [], documentDuplicates = 
     else if (rt.dead) failures.push(`relay: Relay transaction ${rid} is voided/inactive but ${money(sum)} of live fuel rows still point at it`);
     else if (rt.paid_cents !== sum) failures.push(`relay: Relay transaction ${rid} paid ${money(rt.paid_cents)} but its live fuel rows sum to ${money(sum)}`);
   }
-  return { failures, notes, expectedRows, loads: perLoad.size, loadsTied, relayTxns: relaySums.size, statementSourced };
+  return { failures, notes, expectedRows, loads: perLoad.size, loadsTied, relayTxns: relaySums.size, statementSourced, gpsMoved };
 }
 
 /** 443.198 — the Creator's Relay rows come from the fill's own lines (pure: source texts in, problems out). */
@@ -277,6 +298,20 @@ function selftest() {
       { documents: doc([L()]), live: [R({ id: "ssssssss-1", ref: "61620", cents: 2533 })], statementIds: new Set(["ssssssss-1"]) }, 1],
     ["an import batch that holds more rows than its event declares fails",
       { documents: doc([]), live: [], statementBatches: [{ event_id: "e1", at: "t", declared_lines: 75, rows: 76 }] }, 1],
+    // LEAD 443.214: a receipt the fuel engine moved by GPS off the load its settlement printed it on is sourced by that line.
+    ["a GPS-moved receipt printed on another load's settlement is sourced (no unsourced on its new load)",
+      { documents: doc([L(), L({ load_number: "200", invoice: "B2", receipt_cents: 7000 })]),
+        live: [R({ load_number: "200", truck_resolution: "gps" }), R({ id: "bbbbbbbb-2", load_number: "200", ref: "B2", cents: 7000 })] }, 0],
+    ["a GPS-moved Relay-sourced fill (on no document) moved onto a documented load is sourced",
+      { documents: doc([L({ load_number: "200", invoice: "B2", receipt_cents: 7000 })]),
+        live: [R({ load_number: "200", ref: "Z9", cents: 4100, truck_resolution: "gps", relay_id: "r9" }), R({ id: "bbbbbbbb-2", load_number: "200", ref: "B2", cents: 7000 })],
+        relayTotals: new Map([["r9", { paid_cents: 4100, dead: false }]]) }, 0],
+    ["a GPS-moved fill with no source at all is still unsourced",
+      { documents: doc([L({ load_number: "200", invoice: "B2", receipt_cents: 7000 })]),
+        live: [R({ load_number: "200", ref: "Z9", cents: 4100, truck_resolution: "gps" }), R({ id: "bbbbbbbb-2", load_number: "200", ref: "B2", cents: 7000 })] }, 1],
+    ["the same receipt moved by hand (no engine resolution) is still unsourced on its new load",
+      { documents: doc([L(), L({ load_number: "200", invoice: "B2", receipt_cents: 7000 })]),
+        live: [R({ load_number: "200" }), R({ id: "bbbbbbbb-2", load_number: "200", ref: "B2", cents: 7000 })] }, 1],
     ["a statement fill does not excuse a Relay sum that differs",
       { documents: doc([]), live: [R({ id: "ssssssss-1", load_number: "200", relay_id: "r1" })], statementIds: new Set(["ssssssss-1"]),
         relayTotals: new Map([["r1", { paid_cents: 4000, dead: false }]]) }, 1],
@@ -349,6 +384,13 @@ async function live() {
       `SELECT ft.id::text AS id, ft.transaction_reference AS ref, round(ft.total_cost * 100)::bigint AS cents,
               ft.transaction_at::date::text AS date, ft.fuel_type, ft.relay_fuel_transaction_id::text AS relay_id,
               ft.source, ft.notes, ft.created_at,
+              -- 443.214: a Relay fill's rows move together; the engine's resolution on any row of the fill is the fill's.
+              COALESCE(ft.truck_resolution,
+                       (SELECT max(sib.truck_resolution) FROM fuel.fuel_transactions sib
+                         WHERE ft.relay_fuel_transaction_id IS NOT NULL
+                           AND sib.relay_fuel_transaction_id = ft.relay_fuel_transaction_id
+                           AND sib.operating_company_id = ft.operating_company_id
+                           AND sib.truck_resolution IS NOT NULL)) AS truck_resolution,
               regexp_replace(l.load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number
          FROM fuel.fuel_transactions ft
          LEFT JOIN mdata.loads l ON l.id = ft.load_id
@@ -443,6 +485,10 @@ async function live() {
           WHERE ft.id = ANY($1::uuid[])
             AND je.status = 'posted'
             AND je.reversed_by_je_id IS NULL
+            -- LEAD 443.214: the rule is about the EXPENSE a fill is classified to (DEF never shares the diesel expense account).
+            -- A debit on a liability (the card payable) is the payable side of a reversal / reclass — e.g. the fuel engine's
+            -- carry of a moved receipt, or a void reversal — not an expense classification.
+            AND (a.account_type ILIKE '%expense%' OR a.account_type = 'CostOfGoodsSold')
           GROUP BY ft.fuel_type, a.id, a.account_number, a.account_name`,
         [[...defIds, ...dieselIds]]
       );

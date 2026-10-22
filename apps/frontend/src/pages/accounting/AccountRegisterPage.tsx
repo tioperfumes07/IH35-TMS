@@ -356,6 +356,7 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
   });
 
   const toggleClearedMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { posting_id: string; cleared: boolean }) =>
       toggleAccountRegisterCleared({
         operating_company_id: companyId,

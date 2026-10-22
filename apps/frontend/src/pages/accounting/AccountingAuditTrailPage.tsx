@@ -212,6 +212,7 @@ export function AccountingAuditTrailPage() {
   });
 
   const lineageMut = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { source_transaction_type: string; source_transaction_id: string }) =>
       getAccountingSourceLineage(companyId, input),
     onSuccess: (payload, vars) => {

@@ -99,6 +99,7 @@ export function RegisterInlineEditPanel({
   const locationDirty = location.trim() !== (row.location ?? "").trim();
 
   const saveMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       saveAccountRegisterInline({
         operating_company_id: companyId,
@@ -131,6 +132,7 @@ export function RegisterInlineEditPanel({
   });
 
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async (reason: string) => {
       const t = (row.source_transaction_type ?? "").toLowerCase();
       const id = row.source_transaction_id;

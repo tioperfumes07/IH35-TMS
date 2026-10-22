@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 // GO-20 slice A (docs/lockdown/GO-20-EIGHT-FEATURES.txt) — banking.reconciliation_drift_alerts.
 //
 // "A detector that runs after every reconciliation finalize and once nightly... It opens an alert
@@ -232,7 +233,7 @@ export async function detectLiveBalanceDrift(client: DbClient, operating_company
   );
   if (accountsRes.rows.length === 0) return { opened: 0, closed: 0 };
 
-  const asOfDate = new Date().toISOString().slice(0, 10);
+  const asOfDate = companyBusinessDate();
   const balancesRes = await client.query<{ account_id: string; closing_balance_cents: string | number | null; normal_balance: string | null }>(
     `SELECT account_id, closing_balance_cents, normal_balance::text AS normal_balance FROM accounting.fn_account_balances_as_of($1::uuid, $2::date, NULL)`,
     [operating_company_id, asOfDate]
@@ -281,7 +282,7 @@ export async function detectStaleFeedDrift(client: DbClient, operating_company_i
     [operating_company_id]
   );
   const stillOpenAccountIds: string[] = [];
-  const asOfDate = new Date().toISOString().slice(0, 10);
+  const asOfDate = companyBusinessDate();
   for (const acct of rows.rows) {
     stillOpenAccountIds.push(acct.id);
     await openOrRefreshAlert(client, {

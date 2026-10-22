@@ -77,12 +77,14 @@ function RowActions({
   // DISP-F6327: neither mutation had onError — no toast import anywhere in the file, no isError
   // check, fire-and-forget .mutate(). A rejected convert/reprocess silently did nothing.
   const convertM = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { itemId: string; companyId: string }) =>
       convertOcrIntakeToBookLoad(input.itemId, { operating_company_id: input.companyId }),
     onSuccess: (res, input) => onConvert(input.itemId, res.book_load_prefill, input.companyId),
     onError: (err) => pushToast(userFacingApiError(err, "Could not convert this OCR item to a load"), "error"),
   });
   const reprocessM = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { itemId: string; companyId: string }) =>
       reprocessOcrIntakeItem(input.itemId, input.companyId),
     onSuccess: (_data, input) => onReprocessed(input.companyId),

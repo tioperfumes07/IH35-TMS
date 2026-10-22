@@ -110,6 +110,7 @@ export function CoaRolesPage() {
   });
 
   const upsertMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (payload: { role: CoaRole; account_id: string }) => upsertCoaRole(companyId, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["coa-roles", companyId] });

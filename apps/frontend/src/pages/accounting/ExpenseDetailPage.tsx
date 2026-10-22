@@ -66,6 +66,7 @@ export function ExpenseDetailPage() {
   // being collected after the fact. On success the detail query is invalidated so `voided_at` (and the
   // resulting disabled button) reflect the server, not an optimistic guess.
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (reason: string) => voidExpense(id, selectedCompanyId!, reason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "expense", selectedCompanyId, id] });

@@ -1,3 +1,4 @@
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -35,10 +36,7 @@ function money(cents: number) {
 }
 
 function currentMonthRange() {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  return monthBoundsIso(companyToday());
 }
 
 function sortLines(lines: AccountingProfitLossLine[]) {

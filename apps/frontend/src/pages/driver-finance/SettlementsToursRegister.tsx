@@ -88,6 +88,7 @@ function PostTourAction({ row, companyId }: { row: TourListRow; companyId: strin
     enabled: confirming,
   });
   const post = useMutation({
+    meta: { loads: true },
     mutationFn: () => closeTour(row.settlement_id, companyId),
     onSuccess: async () => {
       pushToast(`Pre-settlement ${tourLabel(row)} posted — settlement is now frozen`, "success");

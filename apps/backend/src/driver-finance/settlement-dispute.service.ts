@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
@@ -95,7 +96,7 @@ export async function createCorrectiveJournalEntry(
   });
   if (!flagOn) return null;
   const accounts = await pickCorrectionAccounts(client, params.operatingCompanyId);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyBusinessDate();
   const je = await createJournalEntryOnClient(
     client,
     {
@@ -229,7 +230,7 @@ export async function disburseSettlementDisputeCorrection(
     const cashAccountId = pm.rows[0]?.gl_account_id as string | undefined;
     if (!cashAccountId) return { ok: false as const, code: 409, error: "payment_method_gl_account_missing" };
 
-    const entryDate = (input.posting_date ?? new Date().toISOString().slice(0, 10)).slice(0, 10);
+    const entryDate = (input.posting_date ?? companyBusinessDate()).slice(0, 10);
     const je = await createJournalEntryOnClient(
       client,
       {

@@ -88,6 +88,7 @@ export function RecurringBillCreate() {
   }, [coaQuery.data?.accounts, extraCoaOptions]);
 
   const createMutation = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       createRecurringBillTemplate(
         companyId,

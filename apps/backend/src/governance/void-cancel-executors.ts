@@ -244,7 +244,7 @@ const executeBill: EntityExecutor = async (ctx) => {
   let closedPeriod = false;
   if (gate === "reverse") {
     const bd = pre.rows[0].bill_date;
-    const originalDate = bd && bd.length >= 10 ? bd.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const originalDate = bd && bd.length >= 10 ? bd.slice(0, 10) : companyBusinessDate();
     const reversal = await postVoidReversal(
       client,
       { operatingCompanyId, entityType: "bill", entityId, originalDate, memo: `Void reversal of bill ${entityId}: ${reason}` },
@@ -312,7 +312,7 @@ const executeInvoice: EntityExecutor = async (ctx) => {
   let closedPeriod = false;
   if (gate === "reverse") {
     const idt = pre.rows[0].issue_date;
-    const originalDate = idt && idt.length >= 10 ? idt.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const originalDate = idt && idt.length >= 10 ? idt.slice(0, 10) : companyBusinessDate();
     const reversal = await postVoidReversal(
       client,
       { operatingCompanyId, entityType: "invoice", entityId, originalDate, memo: `Void reversal of invoice ${entityId}: ${reason}` },
@@ -457,7 +457,7 @@ const executeExpense: EntityExecutor = async (ctx) => {
   // receipt's 'fuel_event' entry), decided by reading; errors propagate.
   {
     const reversal = await reverseExpenseDocumentInClientTx(client as never, {
-      operatingCompanyId, expenseId: entityId, actorUserId: userId, currentBusinessDate: new Date().toISOString().slice(0, 10),
+      operatingCompanyId, expenseId: entityId, actorUserId: userId, currentBusinessDate: companyBusinessDate(),
       memo: `Void reversal of expense ${entityId}: ${reason}`, expenseReverser: "void",
     });
     reversingEntryRef = reversal.reversal_journal_entry_id;
@@ -615,7 +615,7 @@ const executeBillPayment: EntityExecutor = async (ctx) => {
   let closedPeriod = false;
   if (gate === "reverse") {
     const pd = pre.rows[0].payment_date;
-    const originalDate = pd && pd.length >= 10 ? pd.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const originalDate = pd && pd.length >= 10 ? pd.slice(0, 10) : companyBusinessDate();
     const reversal = await postVoidReversal(
       client,
       { operatingCompanyId, entityType: "bill_payment", entityId, originalDate, memo: `Void reversal of bill payment ${entityId}: ${reason}` },
@@ -682,7 +682,7 @@ const executeCustomerPayment: EntityExecutor = async (ctx) => {
   let closedPeriod = false;
   if (gate === "reverse") {
     const pd = pre.rows[0].payment_date;
-    const originalDate = pd && pd.length >= 10 ? pd.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const originalDate = pd && pd.length >= 10 ? pd.slice(0, 10) : companyBusinessDate();
     const reversal = await postVoidReversal(
       client,
       { operatingCompanyId, entityType: "customer_payment", entityId, originalDate, memo: `Void reversal of payment ${entityId}: ${reason}` },

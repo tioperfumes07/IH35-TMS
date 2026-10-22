@@ -1,3 +1,4 @@
+import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
 import { formatNumberTable } from "../../lib/money";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -37,12 +38,7 @@ function money(cents: number) {
 }
 
 function currentQuarterRange() {
-  const now = new Date();
-  const q = Math.floor(now.getUTCMonth() / 3);
-  const startMonth = q * 3;
-  const start = new Date(Date.UTC(now.getUTCFullYear(), startMonth, 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), startMonth + 3, 0));
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  return quarterBoundsIso(companyToday());
 }
 
 const FLAG_META: Record<MaintenanceCostFlag, { label: string }> = {

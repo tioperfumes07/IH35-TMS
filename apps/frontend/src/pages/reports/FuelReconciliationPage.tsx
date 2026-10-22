@@ -1,3 +1,4 @@
+import { companyToday, addDaysIso } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -34,10 +35,8 @@ function money(cents: number) {
 }
 
 function defaultRange() {
-  const end = new Date();
-  const start = new Date(end);
-  start.setUTCDate(start.getUTCDate() - 30);
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  const end = companyToday();
+  return { start: addDaysIso(end, -30), end };
 }
 
 const FLAG_META: Record<FuelReconciliationFlag, { label: string }> = {

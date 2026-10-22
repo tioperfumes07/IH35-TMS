@@ -12,7 +12,10 @@
 // `new Date("YYYY-MM-DD")` — that constructor parses as UTC midnight and, west of GMT, renders the
 // PREVIOUS day. Parsing the parts keeps the displayed day identical to the stored day (no TZ shift).
 
+import { companyToday } from "./businessDate";
+
 const ISO_DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+const WALL_CLOCK_DATE = /^(\d{4})-(\d{2})-(\d{2})[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/;
 
 function pad2(n: number): string {
   return String(n).padStart(2, "0");
@@ -23,8 +26,8 @@ function pad2(n: number): string {
  *
  * Accepts:
  *  - a bare ISO date "YYYY-MM-DD"                → formatted with no timezone shift
- *  - a full ISO timestamp "YYYY-MM-DDTHH:mm..."  → the calendar date portion is formatted
- *  - a Date object                               → its local calendar date is formatted
+ *  - a timestamp with an offset / Date object    → its America/Chicago calendar date
+ *  - a timezone-less wall-clock value            → its literal calendar date
  *
  * Returns "" for null / undefined / empty / unparseable input (so callers can render a blank cell
  * instead of "Invalid Date").
@@ -34,8 +37,8 @@ function calendarParts(value: unknown): { y: number; mo: number; d: number } | n
   if (typeof value !== "string" && typeof value !== "number" && !(value instanceof Date)) return null;
 
   if (typeof value === "string") {
-    // Bare or leading ISO date — format the calendar parts directly (no Date(), no TZ shift).
-    const m = ISO_DATE_ONLY.exec(value.length > 10 ? value.slice(0, 10) : value);
+    // Calendar dates and operator-entered wall clocks are NOT UTC instants.
+    const m = ISO_DATE_ONLY.exec(value) ?? WALL_CLOCK_DATE.exec(value);
     if (m) {
       return { y: Number(m[1]), mo: Number(m[2]), d: Number(m[3]) };
     }
@@ -43,7 +46,8 @@ function calendarParts(value: unknown): { y: number; mo: number; d: number } | n
 
   const dt = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(dt.getTime())) return null;
-  return { y: dt.getFullYear(), mo: dt.getMonth() + 1, d: dt.getDate() };
+  const [y, mo, d] = companyToday(dt).split("-").map(Number);
+  return { y, mo, d };
 }
 
 /**
@@ -52,8 +56,8 @@ function calendarParts(value: unknown): { y: number; mo: number; d: number } | n
  *
  * Accepts:
  *  - a bare ISO date "YYYY-MM-DD"                → formatted with no timezone shift
- *  - a full ISO timestamp "YYYY-MM-DDTHH:mm..."  → the calendar date portion is formatted
- *  - a Date object                               → its local calendar date is formatted
+ *  - a timestamp with an offset / Date object    → its America/Chicago calendar date
+ *  - a timezone-less wall-clock value            → its literal calendar date
  *
  * Returns "" for null / undefined / empty / unparseable input (so callers can render a blank cell
  * instead of "Invalid Date").
@@ -196,35 +200,11 @@ const MMM_DD_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "
  * Returns "" for null / undefined / empty / unparseable input.
  */
 export function mmmDd(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "";
-  if (typeof value !== "string" && typeof value !== "number" && !(value instanceof Date)) return "";
-
-  let ymd: string;
-  if (typeof value === "string") {
-    const m = ISO_DATE_ONLY.exec(value.length > 10 ? value.slice(0, 10) : value);
-    if (m) {
-      ymd = `${m[1]}-${m[2]}-${m[3]}`;
-    } else {
-      const dt = new Date(value);
-      if (Number.isNaN(dt.getTime())) return "";
-      ymd = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
-    }
-  } else if (value instanceof Date) {
-    if (Number.isNaN(value.getTime())) return "";
-    ymd = `${value.getFullYear()}-${pad2(value.getMonth() + 1)}-${pad2(value.getDate())}`;
-  } else {
-    const dt = new Date(value);
-    if (Number.isNaN(dt.getTime())) return "";
-    ymd = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
-  }
-
-  const parts = ymd.split("-");
-  if (parts.length !== 3) return "";
-  const mo = Number(parts[1]);
-  const d = parts[2];
-  const abbr = MMM_DD_MONTHS[mo - 1];
+  const parts = calendarParts(value);
+  if (!parts) return "";
+  const abbr = MMM_DD_MONTHS[parts.mo - 1];
   if (!abbr) return "";
-  return `${abbr}-${d}`;
+  return `${abbr}-${pad2(parts.d)}`;
 }
 
 /**

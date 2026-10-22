@@ -38,6 +38,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
   const scopeGenerationRef = useRef(0);
 
   const mut = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { loadId: string; operatingCompanyId: string; driverId: string; reasonCode: string; notes: string; generation: number }) =>
       postLoadReassign(input.loadId, {
         operating_company_id: input.operatingCompanyId,

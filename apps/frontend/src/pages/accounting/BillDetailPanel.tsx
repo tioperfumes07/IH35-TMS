@@ -56,7 +56,7 @@ export function BillDetailPanel({ bill }: Props) {
           { label: "Status", value: bill.status ?? "—" },
           { label: "Amount", value: formatUsd(amount) },
           { label: "Open balance", value: formatUsd(balance) },
-          { label: "Due date", value: bill.due_date ? new Date(bill.due_date).toLocaleDateString() : "—" },
+          { label: "Due date", value: formatDateUS(bill.due_date) || "—" },
           {
             label: "Journal entry",
             value: bill.journal_entry_id ? (

@@ -204,6 +204,7 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
   );
 
   const mutation = useMutation({
+    meta: { loads: true },
     mutationFn: () => createPrepaidExpense({
       operating_company_id: companyId,
       description: form.description.trim(),

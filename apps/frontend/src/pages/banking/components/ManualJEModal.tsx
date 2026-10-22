@@ -1,3 +1,4 @@
+import { companyToday } from "../../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createJournalEntry, listClassesForJe, listCoaAccountsForJe } from "../../../api/accounting";
@@ -32,7 +33,7 @@ type Props = {
 export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, prefill = null }: Props) {
   const { pushToast } = useToast();
   const [step, setStep] = useState<1 | 2>(1);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(companyToday());
   const [memo, setMemo] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [journalEntryTypeId, setJournalEntryTypeId] = useState<string | null>(null);
@@ -93,7 +94,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
 
   const reset = () => {
     setStep(1);
-    setDate(new Date().toISOString().slice(0, 10));
+    setDate(companyToday());
     setMemo("");
     setReferenceNumber("");
     setJournalEntryTypeId(null);

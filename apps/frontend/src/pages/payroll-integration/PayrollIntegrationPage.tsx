@@ -1,3 +1,4 @@
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 /**
  * CLOSURE-12 — PayrollIntegrationPage: labor dashboard over driver_finance settlements.
  * ACCT-F4431379 — driver pay comes ONLY from driver_finance; the QBO W-2 and benefits KPIs
@@ -19,10 +20,7 @@ function cents(n: number) {
 }
 
 function currentMonthRange() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
-  return { start, end };
+  return monthBoundsIso(companyToday());
 }
 
 export function PayrollIntegrationPage() {

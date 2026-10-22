@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 // C6-MONEY-JE-EXEMPT: the bank_transactions row inserted here carries status/plaid_category only —
 // no categorization_gl_account_id at insert. The real GL post happens later, once, when the row is
 // categorized via maybePostBankCategorizationToGl (banking/categorization.routes.ts) — verified
@@ -125,7 +126,7 @@ export async function registerDriverFuelReceiptRoutes(app: FastifyInstance) {
         const bankAccountId = acct.rows[0]?.id ?? null;
         if (!bankAccountId) throw new Error("no_bank_account");
 
-        const txnDate = new Date().toISOString().slice(0, 10);
+        const txnDate = companyBusinessDate();
         const amountCents = Math.round(parsed.data.amount * 100);
         const desc = `${parsed.data.station_name} — fuel receipt (driver ${driver.id.slice(0, 8)})`;
         const normalizedDescription = normalizeBankTransactionDescription(desc);
