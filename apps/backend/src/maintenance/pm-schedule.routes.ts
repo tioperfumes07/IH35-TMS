@@ -250,4 +250,73 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
     if (!result) return reply.code(404).send({ error: "pm_schedule_not_found" });
     return { work_order_id: result.id, display_id: result.display_id ?? null, created: result.created };
   });
+
+  /**
+   * 443.245 — "Start PM clock": set last_service_odometer (and optionally last_performed_at)
+   * on an existing pm_schedule. Audited. Owner enters actual last PM info by hand.
+   */
+  const setLastPmBody = z.object({
+    operating_company_id: realUuid,
+    last_service_odometer: z.number().int().min(0),
+    last_performed_at: z.string().datetime().optional(),
+    notes: z.string().trim().max(2000).optional(),
+  });
+
+  app.patch(
+    "/api/v1/maintenance/pm-schedule/:id/set-last-pm",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = authed(req, reply);
+      if (!user) return;
+      const params = idSchema.safeParse(req.params);
+      if (!params.success) return validationError(reply, params.error);
+      const body = setLastPmBody.safeParse(req.body);
+      if (!body.success) return validationError(reply, body.error);
+
+      await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+
+      const result = await withCompany(user.uuid, body.data.operating_company_id, async (client) => {
+        const existing = await client.query(
+          `SELECT id, unit_id, interval_value FROM maintenance.pm_schedules
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          [params.data.id, body.data.operating_company_id]
+        );
+        if (!existing.rows.length) return null;
+        const ps = existing.rows[0];
+
+        const nextDue = body.data.last_service_odometer + ps.interval_value;
+        const updated = await client.query(
+          `UPDATE maintenance.pm_schedules
+              SET last_service_odometer = $1,
+                  next_due_odometer = $2,
+                  last_performed_at = COALESCE($3::timestamptz, last_performed_at),
+                  notes = COALESCE($4, notes),
+                  updated_at = now()
+            WHERE id = $5::uuid AND operating_company_id = $6::uuid
+            RETURNING id::text, unit_id::text, label AS pm_type, interval_kind, interval_value,
+                      last_service_odometer, next_due_odometer, last_performed_at::text`,
+          [
+            body.data.last_service_odometer,
+            nextDue,
+            body.data.last_performed_at ?? null,
+            body.data.notes ?? null,
+            params.data.id,
+            body.data.operating_company_id,
+          ]
+        );
+        if (!updated.rows.length) return null;
+        await appendCrudAudit(client, user.uuid, "maintenance.pm_schedule.set_last_pm", {
+          resource_id: params.data.id,
+          unit_id: ps.unit_id,
+          operating_company_id: body.data.operating_company_id,
+          last_service_odometer: body.data.last_service_odometer,
+          next_due_odometer: nextDue,
+        });
+        return updated.rows[0];
+      });
+
+      if (!result) return reply.code(404).send({ error: "pm_schedule_not_found" });
+      return result;
+    }
+  );
 }
