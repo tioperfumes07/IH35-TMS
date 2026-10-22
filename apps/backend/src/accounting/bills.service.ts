@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { AP_BILL_OUTSTANDING_STATUSES, sqlList } from "../lib/document-status-vocabulary.js";
 import { agingWindowPredicate } from "./aging/buckets.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
@@ -199,7 +200,7 @@ type ListVendorBalancesOptions = {
   sort: "balance_desc" | "balance_asc" | "vendor_asc";
 };
 
-type BillListStatus = BillStatus | "unpaid" | "active" | "all" | "posted";
+type BillListStatus = BillStatus | "unpaid" | "outstanding" | "active" | "all" | "posted";
 
 /** FLT-02 — GL-posted bills only (owner req 2.7); mirrors Expenses status=posted. */
 const BILL_POSTED_GL_EXISTS_SQL = `
@@ -229,6 +230,8 @@ function applyBillListStatusFilter(where: string[], status: BillListStatus | und
     where.push("b.status NOT IN ('void', 'voided')");
     return;
   }
+  // LEAD 443.219 G-VOCAB — "outstanding" (the screen's "Unpaid") = every bill that still owes money, partially paid included.
+  if (status === "outstanding" || status === "unpaid") where.push(`b.status IN (${sqlList(AP_BILL_OUTSTANDING_STATUSES)})`);
   if (status === "open") where.push("b.status IN ('open','unpaid')");
   if (status === "partial") where.push("b.status IN ('partial','partially_paid')");
   if (status === "paid") where.push("b.status = 'paid'");

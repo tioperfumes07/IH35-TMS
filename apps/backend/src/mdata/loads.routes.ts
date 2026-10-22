@@ -1,4 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { LoadStatusWriteRefusedError, transitionLoadStatus } from "../dispatch/load-transition.service.js";
+import { loadMissingDriverBillWhereSql } from "../lib/document-status-vocabulary.js";
 import { loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { z } from "zod";
 import { trailerChoiceSchema } from "../dispatch/load-trailer-choice.js";
@@ -1239,21 +1241,17 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         };
       }
 
-      const updateRes = await client.query(
-        `
-          UPDATE mdata.loads
-          SET status = $2
-          WHERE id = $1
-            AND operating_company_id = $3::uuid
-            AND status::text = $4
-          RETURNING
-            id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-            assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-            dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
-        `,
-        [parsedParams.data.id, newStatus, scopedCompanyId, current.status]
-      );
-      const row = updateRes.rows[0] ?? null;
+      // LEAD 443.211R — the one writer (machine-validated, compare-and-set on the status read above).
+      let row: Record<string, any> | null; // eslint-disable-line @typescript-eslint/no-explicit-any -- the RETURNING * row of mdata.loads
+      try {
+        row = await transitionLoadStatus(client as never, {
+          operatingCompanyId: scopedCompanyId, loadId: parsedParams.data.id, to: newStatus, kind: "forward",
+          writer: "mdata-loads-patch-status", expectFrom: current.status,
+        });
+      } catch (err) {
+        if (err instanceof LoadStatusWriteRefusedError) return { error: "invalid_transition" as const, from_status: current.status, to_status: newStatus };
+        throw err;
+      }
       // Compare-and-set (CC-3 queue 2b): the status moved under us (GPS, driver app, another user) — refuse, never overwrite.
       if (!row) return { error: "status_changed" as const, from_status: current.status, to_status: newStatus };
 
@@ -1591,12 +1589,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               FROM mdata.loads l
               LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
                                         AND d.operating_company_id = l.operating_company_id
-              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
-               AND l.soft_deleted_at IS NULL
-               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
-               AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
-               AND db.id IS NULL
+               -- LEAD 443.219 G-VOCAB — THE missing-driver-bill predicate (no voided / exit / draft load; a void bill is no bill).
+               AND ${loadMissingDriverBillWhereSql("l")}
              ORDER BY l.is_sample_data ASC, l.load_number ASC
           `,
           [scopedCompanyId]
@@ -1630,12 +1625,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           `
             SELECT l.id::text, l.load_number
               FROM mdata.loads l
-              LEFT JOIN driver_finance.driver_bills db ON db.load_id = l.id
              WHERE l.operating_company_id = $1::uuid
-               AND l.soft_deleted_at IS NULL
-               AND l.status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
-               AND (l.assigned_primary_driver_id IS NOT NULL OR l.team_id IS NOT NULL)
-               AND db.id IS NULL
+               -- LEAD 443.219 G-VOCAB — THE missing-driver-bill predicate (no voided / exit / draft load; a void bill is no bill).
+               AND ${loadMissingDriverBillWhereSql("l")}
              ORDER BY l.load_number ASC
           `,
           [scopedCompanyId]

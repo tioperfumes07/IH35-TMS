@@ -1,4 +1,5 @@
 import type { DriverBillListRow, VendorBill } from "../../api/accounting";
+import { DRIVER_BILL_OUTSTANDING_STATUSES } from "@ih35/shared-types";
 
 /**
  * BILLS-STATUS-VOCAB-01 — the Bills register's status filter, expressed ONCE in the SAME
@@ -78,8 +79,10 @@ function vendorStatusPredicate(value: BillStatusFilterValue, bill: VendorBill): 
     // Register route maps the UI's "unpaid" to the server's "open" before querying
     // (bills.routes.ts:327), and the server's "open" is `b.status IN ('open','unpaid')`, which
     // canonicalises to "open".
+    // LEAD 443.219 G-VOCAB — "Unpaid" = still owes money: open AND partially paid (the server's "outstanding"); the
+    // 144 partially_paid A/P bills were hidden by the old open-only test.
     case "unpaid":
-      return bill.status === "open";
+      return bill.status === "open" || bill.status === "partial";
     case "partial":
       return bill.status === "partial";
     case "paid":
@@ -106,8 +109,10 @@ function vendorStatusPredicate(value: BillStatusFilterValue, bill: VendorBill): 
 function driverStatusPredicate(value: BillStatusFilterValue, bill: DriverBillListRow): boolean {
   const isVoid = bill.status === "void" || bill.status === "voided" || bill.voided_at != null;
   switch (value) {
+    // LEAD 443.219 G-VOCAB — a driver bill's vocabulary is the CHECK's: open / approved / paid / void / disputed. "Unpaid" =
+    // open, approved (a closed-but-unpaid settlement's bill — 173 live were hidden) or disputed.
     case "unpaid":
-      return !isVoid && bill.status === "open";
+      return !isVoid && (DRIVER_BILL_OUTSTANDING_STATUSES as readonly string[]).includes(String(bill.status));
     case "partial":
       return false;
     case "paid":

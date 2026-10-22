@@ -295,6 +295,10 @@ describe("mdata loads routes", () => {
       if (sql.includes("FROM catalogs.load_cancellation_reasons")) {
         return { rows: [{ reason_code: "DRIVER_WALKOFF", requires_owner_approval: true }] };
       }
+      // LEAD 443.211R — the one writer (transitionLoadStatus) locks + reads the status before its compare-and-set.
+      if (sql.includes("FROM mdata.loads") && sql.includes("FOR UPDATE")) {
+        return { rows: [{ status: "assigned" }] };
+      }
       if (sql.includes("UPDATE mdata.loads") && sql.includes("SET status")) {
         return {
           rows: [
