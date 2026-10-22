@@ -58,10 +58,13 @@ const num = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)
  *  (flat-rate pay prints legs only); practical = the company settlement's Line Haul miles. A value the document does not print
  *  stays null (never guessed). */
 export function documentMiles(doc: DocumentLoad): Record<MilesField, number | null> {
-  const printedAny = doc.loaded_miles_doc != null || (doc.loaded_miles_legs ?? null) != null;
+  // LEAD 443.243: a 0 is the extract's "not printed" (13680's company settlement prints no miles) — never a document value.
+  const printed = (v: unknown) => { const n = num(v); return n != null && n > 0 ? n : null; };
+  const short = printed(doc.loaded_miles_doc) ?? printed(doc.loaded_miles_legs);
+  const printedAny = short != null;
   return {
-    practical: num(doc.practical_miles_doc),
-    short: num(doc.loaded_miles_doc ?? doc.loaded_miles_legs ?? null),
+    practical: printed(doc.practical_miles_doc),
+    short,
     // An empty-miles line the document does not print is 0 FROM THE DOCUMENT (443.240) — but only when the document printed miles.
     empty: printedAny ? num(doc.empty_miles_doc ?? doc.empty_miles_legs ?? 0) : null,
   };

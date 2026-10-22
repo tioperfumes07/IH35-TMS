@@ -557,3 +557,15 @@ describe("NB-OPEN-TOUR-SPLIT", () => {
     expect(reopen).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("LEAD 443.243 — an NB that left the driver does not occupy the open pre-settlement", () => {
+  it("suggest: the NB-occupancy test counts only this driver's still-live NB (not a draft, not another driver's)", async () => {
+    const { client, calls } = makeClient({ openSettlement: { id: OPEN_SETTLEMENT_ID, display_id: "P-0112" } });
+    await suggestPresettlementLink(client as never, {
+      operating_company_id: OPCO, load_id: LOAD_ID, driver_id: DRIVER_ID, unit_id: null, trip_type: "NB", tour_id: TOUR_ID, actor_user_id: USER_ID,
+    });
+    const sql = calls.find((c) => c.sql.includes("AS has_other_nb"))!.sql;
+    expect(sql).toContain("nb.assigned_primary_driver_id IS NOT DISTINCT FROM driver_settlements.driver_id");
+    expect(sql).toContain("nb.status::text NOT IN ('cancelled', 'draft')");
+  });
+});

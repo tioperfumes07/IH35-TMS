@@ -177,7 +177,11 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
                    WHERE nb.operating_company_id = driver_settlements.operating_company_id
                      AND (nb.presettlement_link_id = driver_settlements.id OR nb.id = driver_settlements.first_load_id)
                      AND nb.id <> $5::uuid AND nb.trip_type = 'NB'
-                     AND nb.soft_deleted_at IS NULL AND nb.status::text <> 'cancelled') AS has_other_nb
+                     -- LEAD 443.243: an NB that has left this driver (moved back to draft/unassigned, or reassigned to
+                     -- another driver) no longer anchors the trip — the driver's real next NB joins the open pre-settlement
+                     -- instead of colliding with uq_driver_settlements_one_open_per_driver.
+                     AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM driver_settlements.driver_id
+                     AND nb.soft_deleted_at IS NULL AND nb.status::text NOT IN ('cancelled', 'draft')) AS has_other_nb
             FROM driver_finance.driver_settlements
            WHERE operating_company_id = $1::uuid
              AND driver_id = $2::uuid
@@ -566,7 +570,10 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
           AND (nb.presettlement_link_id = $2::uuid OR nb.id = (SELECT first_load_id
             FROM driver_finance.driver_settlements WHERE id = $2::uuid AND operating_company_id = $1::uuid))
           AND nb.id <> $3::uuid AND nb.trip_type = 'NB'
-          AND nb.soft_deleted_at IS NULL AND nb.status::text <> 'cancelled'
+          -- LEAD 443.243: same rule as suggestPresettlementLink — an NB that left this driver does not occupy the trip.
+          AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM (SELECT driver_id
+            FROM driver_finance.driver_settlements WHERE id = $2::uuid AND operating_company_id = $1::uuid)
+          AND nb.soft_deleted_at IS NULL AND nb.status::text NOT IN ('cancelled', 'draft')
       ) AS has_other_nb`, [input.operating_company_id, targetId, suggestion.load_id]);
       if (occupied.rows[0]?.has_other_nb) throw new PresettlementLinkError(
         "open_settlement_already_has_nb", "This open settlement already has an NB leg. Start a new tour.");

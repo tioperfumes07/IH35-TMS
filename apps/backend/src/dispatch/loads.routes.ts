@@ -361,6 +361,9 @@ const createDispatchLoadBodySchema = z.object({
         sequence_number: z.number().int().min(1),
         location_id: z.string().uuid().optional(),
         company_name: z.string().trim().max(200).optional(),
+        // LEAD 443.243: facility_name is the wired field (BookLoadStop.facility_name; company_name is only its fallback) —
+        // it was missing here, so zod stripped it and every API booking that sent it saved a stop with no facility.
+        facility_name: z.string().trim().max(200).optional(),
         // P0 BLANK-STOP-CITIES: city was `.optional()` here and unvalidated in the wizard, so the Book
         // path shipped loads whose pickup AND delivery stops had empty cities — proved on 2/2 stops of
         // L-20260808-0093 and 2/2 of L-20260808-0062. A cityless stop breaks routing, ETA and IFTA
