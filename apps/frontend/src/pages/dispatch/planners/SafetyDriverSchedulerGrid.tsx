@@ -91,7 +91,22 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
   }
   if (!query.data) return null;
 
-  const drivers = query.data.drivers ?? [];
+  // LEAD 443.249: every driver on a board load has a row — the scheduler roster missed drivers whose record it does not pair
+  // (13697 Angel Sosa / 13698 Leonel on another driver record), so their loads never showed. The load supplies the name + unit.
+  const rosterIds = new Set((query.data.drivers ?? []).map((dr) => String(dr.driver_id)));
+  const loadDrivers = new Map<string, (typeof query.data.drivers)[number]>();
+  for (const load of loadsQuery.data ?? []) {
+    const driverId = load.assigned_primary_driver_id ? String(load.assigned_primary_driver_id) : "";
+    if (!driverId || rosterIds.has(driverId) || loadDrivers.has(driverId)) continue;
+    loadDrivers.set(driverId, {
+      driver_id: driverId,
+      driver_name: load.assigned_primary_driver_name ?? null,
+      unit_id: load.assigned_unit_id ?? null,
+      unit_number: load.assigned_unit_number ?? null,
+      last_dispatch_activity_at: null,
+    } as (typeof query.data.drivers)[number]);
+  }
+  const drivers = [...(query.data.drivers ?? []), ...loadDrivers.values()];
 
   if (viewMode === "list") {
     const listRows: DriverListRow[] = drivers.map((dr) => {
