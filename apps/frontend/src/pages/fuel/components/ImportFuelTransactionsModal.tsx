@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { importFuelTransactions, importWexStatement } from "../../../api/fuelPlanner";
+import {
+  listFuelAssignmentQuestions,
+  type FuelAssignmentQuestion,
+} from "../../../api/fuelAssignmentQuestions";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import type { FuelTransactionImportResult, WexStatementImportResult, WexStatementOutcome } from "../../../api/fuelPlanner";
+import { FuelAssignmentPopup } from "./FuelAssignmentPopup";
 
 type ImportKind = "fleet" | "wex";
 
@@ -42,7 +47,21 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
   const [kind, setKind] = useState<ImportKind>("fleet");
   const [wexPlan, setWexPlan] = useState<WexStatementImportResult | null>(null);
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
+  const [assignmentQuestion, setAssignmentQuestion] = useState<FuelAssignmentQuestion | null>(null);
   const lifecycleGenerationRef = useRef(0);
+
+  const openFirstQuestion = async (): Promise<boolean> => {
+    try {
+      const listed = await listFuelAssignmentQuestions(operatingCompanyId, { status: "open", limit: 1 });
+      if (listed.rows[0]) {
+        setAssignmentQuestion(listed.rows[0]);
+        return true;
+      }
+    } catch {
+      /* list optional after import */
+    }
+    return false;
+  };
 
   const resetDraft = useCallback(() => {
     setFile(null);
@@ -88,7 +107,9 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
           "success"
         );
         onImported();
-        completeClose();
+        const opened = await openFirstQuestion();
+        if (lifecycleGenerationRef.current !== submissionGeneration) return;
+        if (!opened) completeClose();
       } catch (error) {
         if (lifecycleGenerationRef.current !== submissionGeneration) return;
         pushToast(userFacingApiError(error, "WEX statement import failed"), "error");
@@ -106,7 +127,9 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
         res.dead_letters > 0 ? "error" : "success"
       );
       onImported();
-      if (res.dead_letters === 0) completeClose();
+      const opened = await openFirstQuestion();
+      if (lifecycleGenerationRef.current !== submissionGeneration) return;
+      if (res.dead_letters === 0 && !opened) completeClose();
     } catch (error) {
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast(userFacingApiError(error, "Import failed"), "error");
@@ -116,7 +139,8 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Import Fuel Transactions" confirmDiscardOnClose isDirty={Boolean(file)} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
+    <>
+    <Modal open={open && !assignmentQuestion} onClose={handleClose} title="Import Fuel Transactions" confirmDiscardOnClose isDirty={Boolean(file)} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3 text-xs">
         <label className="flex items-center gap-2">
           <span className="font-semibold">File</span>
@@ -221,5 +245,20 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
         </div>
       </div>
     </Modal>
+    <FuelAssignmentPopup
+      open={assignmentQuestion != null}
+      operatingCompanyId={operatingCompanyId}
+      question={assignmentQuestion}
+      onClose={() => {
+        setAssignmentQuestion(null);
+        completeClose();
+      }}
+      onAnswered={() => {
+        setAssignmentQuestion(null);
+        onImported();
+        completeClose();
+      }}
+    />
+    </>
   );
 }

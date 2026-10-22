@@ -6,6 +6,7 @@ export const FUEL_SUBNAV = [
   { id: "settings", label: "Settings" },
   { id: "expense_mapping", label: "Expense mapping" },
   { id: "history", label: "History & savings" },
+  { id: "questions", label: "Fuel questions" },
   { id: "loves_prices", label: "Loves prices" },
   { id: "compliance", label: "Compliance" },
   { id: "integrity", label: "Integrity" },

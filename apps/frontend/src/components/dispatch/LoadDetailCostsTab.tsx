@@ -37,6 +37,11 @@ import { formatMoneyCents } from "./constants";
 import { formatDateUS } from "../../lib/formatDate";
 import { LoadUnitCostSplitPanel } from "./LoadUnitCostSplitPanel";
 import { SelectCombobox } from "../Combobox";
+import {
+  firstOpenFuelAssignmentQuestion,
+  type FuelAssignmentQuestion,
+} from "../../api/fuelAssignmentQuestions";
+import { FuelAssignmentPopup } from "../../pages/fuel/components/FuelAssignmentPopup";
 
 // LDT-1 (owner order 2026-09-05 23:00Z, CURSOR-LOAD-DETAIL-TABS-BUILD § LDT-1; built by Claude Lead
 // 2026-09-06 on the owner's "you build all loads and finish all related"): the Costs tab is the
@@ -139,6 +144,7 @@ const acctLabel = (number: string | null | undefined, name: string | null | unde
 export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: LoadDetail; canEdit: boolean; canEditReason?: string }) {
   const [drafts, setDrafts] = useState<Draft[]>([blankDraft()]);
   const [popup, setPopup] = useState<null | { title: string; body: ReactNode }>(null);
+  const [fuelAssignmentQuestion, setFuelAssignmentQuestion] = useState<FuelAssignmentQuestion | null>(null);
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const opco = load.operating_company_id;
@@ -265,6 +271,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
     mutationFn: async () => {
       const errors = new Map<string, string>();
       let saved = 0;
+      let savedFuelRelated = false;
       for (const [index, row] of drafts.entries()) {
         if (isPristine(row)) continue;
         const amountCents = Math.round(Number(row.amount) * 100);
@@ -274,10 +281,12 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
         try {
           if (row.kind === "expense") {
             await createExpense(opco, { category_account_id: row.categoryId, expense_category_code: row.categoryCode || undefined, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: row.paymentAccountId, vendor_uuid: row.vendorId, load_id: load.id, expense_number: number, vendor_document_number: row.vendorDocNo.trim() || undefined, memo: `Load cost · ${load.load_number}`, is_sample_data: false, attachment_draft_id: row.attachmentDraftId, is_reimbursable: row.isReimbursable });
+            if (bucketOf("expense", row.categoryName) === "fuel") savedFuelRelated = true;
           } else if (row.kind === "bill") {
             await createVendorBill(opco, { vendor_id: row.vendorId, bill_number: row.invoiceNo.trim(), display_id: number, bill_date: row.date, amount_cents: amountCents, coa_account_id: row.categoryId, driver_id: load.assigned_primary_driver_id ?? undefined, memo: `Load cost · ${load.load_number}`, is_sample_data: false, attachment_draft_id: row.attachmentDraftId, lines: [{ account_id: row.categoryId, amount_cents: amountCents, description: `Load cost · ${load.load_number}`, section: "A", load_id: load.id }] }, { idempotencyKey: generateIdempotencyKey() });
           } else if (row.kind === "fuel_advance") {
             await createExpense(opco, { category_account_id: fuelAccount!.id, expense_date: row.date, amount_cents: amountCents, payment_account_uuid: operatingBankAccount!.id, driver_id: load.assigned_primary_driver_id!, load_id: load.id, expense_number: number, vendor_document_number: row.vendorDocNo.trim() || undefined, memo: `Fuel advance · Load ${load.load_number}`, is_sample_data: false, attachment_draft_id: row.attachmentDraftId });
+            savedFuelRelated = true;
           } else {
             await createBrokerAdvance(opco, { load_id: load.id, customer_id: load.customer_id, category: row.advanceCategory as BrokerAdvanceCategory, instrument_type: row.instrumentType.trim(), instrument_reference: row.instrumentReference.trim(), amount_cents: amountCents, received_at: row.date, bank_account_id: row.paymentAccountId || null });
           }
@@ -286,8 +295,18 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
       }
       if (!errors.size && saved === 0) throw new Error("Nothing to save — fill in a card first.");
       if (errors.size) { setDrafts((rows) => rows.map((row) => (errors.has(row.id) ? { ...row, error: errors.get(row.id)! } : row))); throw new Error(`${errors.size} cost card${errors.size === 1 ? "" : "s"} need attention.`); }
+      return { savedFuelRelated };
     },
-    onSuccess: async () => { pushToast("Load costs saved", "success"); setDrafts([blankDraft()]); await queryClient.invalidateQueries({ queryKey: ["load-costs"] }); },
+    onSuccess: async (result) => {
+      pushToast("Load costs saved", "success");
+      setDrafts([blankDraft()]);
+      await queryClient.invalidateQueries({ queryKey: ["load-costs"] });
+      // 443.243 — when fuel / fuel-advance costs land on this load, open the assignment question if uncertain.
+      if (result?.savedFuelRelated) {
+        const q = await firstOpenFuelAssignmentQuestion(opco, { loadId: load.id });
+        if (q) setFuelAssignmentQuestion(q);
+      }
+    },
     onError: (error) => pushToast(userFacingApiError(error, "Could not save load costs."), "error"),
   });
 
@@ -479,6 +498,17 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
         <div className="ldt-modal-body">{popup.body}</div>
       </div>
     </div> : null}
+    <FuelAssignmentPopup
+      open={Boolean(fuelAssignmentQuestion)}
+      operatingCompanyId={opco}
+      question={fuelAssignmentQuestion}
+      onClose={() => setFuelAssignmentQuestion(null)}
+      onAnswered={() => {
+        setFuelAssignmentQuestion(null);
+        void queryClient.invalidateQueries({ queryKey: ["load-costs"] });
+        void queryClient.invalidateQueries({ queryKey: ["fuel-assignment-questions"] });
+      }}
+    />
   </div>;
 }
 

@@ -324,6 +324,7 @@ export const FUEL_TAB_PATH: Record<string, string> = {
   settings: "/fuel/settings",
   expense_mapping: "/fuel/expense-mapping",
   history: "/fuel/history",
+  questions: "/fuel/questions",
   loves_prices: "/fuel/loves-prices",
   compliance: "/fuel/compliance",
   integrity: "/fuel/integrity",

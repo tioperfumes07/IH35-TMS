@@ -35,6 +35,8 @@ import { FuelKpiRow } from "./components/FuelKpiRow";
 import { HosRulesBox } from "./components/HosRulesBox";
 import { ImportFuelTransactionsModal } from "./components/ImportFuelTransactionsModal";
 import { CreateFuelTransactionModal } from "./components/CreateFuelTransactionModal";
+import { FuelQuestionsPanel } from "./components/FuelQuestionsPanel";
+import { FuelQuestionsBadge } from "./components/FuelQuestionsBadge";
 import { RelayDepositReview } from "./components/RelayDepositReview";
 import { RouteDiagramSvg } from "./components/RouteDiagramSvg";
 import { SavingsPanel } from "./components/SavingsPanel";
@@ -365,6 +367,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         backHref="/fuel"
         actions={
           <div className="flex items-center gap-2">
+            {companyId ? <FuelQuestionsBadge operatingCompanyId={companyId} /> : null}
             {tab === "planner" ? (
               <>
                 {/* Trip planning is read from active dispatch routes (no manual create endpoint yet).
@@ -457,6 +460,12 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               Open expense category map →
             </Link>
           </section>
+        </div>
+      ) : null}
+
+      {tab === "questions" ? (
+        <div className="p-3" data-testid="fuel-questions-tab">
+          <FuelQuestionsPanel operatingCompanyId={companyId} />
         </div>
       ) : null}
 

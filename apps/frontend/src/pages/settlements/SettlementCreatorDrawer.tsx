@@ -45,6 +45,11 @@ import {
   type SettlementCreatorExpensePaymentSource,
   type SettlementCreatorFactorOption,
 } from "../../api/settlementCreator";
+import {
+  evaluateFuelAssignmentsFirstQuestion,
+  type FuelAssignmentQuestion,
+} from "../../api/fuelAssignmentQuestions";
+import { FuelAssignmentPopup } from "../fuel/components/FuelAssignmentPopup";
 import type { ReactNode } from "react";
 
 /**
@@ -1251,6 +1256,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
   }
 
   const [posted, setPosted] = useState<{ label: string; documentIds: string[] } | null>(null);
+  // LEAD 443.243 — open Fuel Assignment popup when Creator fuel lines are not 100% certain.
+  const [fuelAssignmentQuestion, setFuelAssignmentQuestion] = useState<FuelAssignmentQuestion | null>(null);
   // ROUND 443.7 b — what each stage of the post did; a failed after-commit stage can be retried here.
   const [postStages, setPostStages] = useState<{ settlementId: string; ok: boolean; stages: SettlementCreatorStages } | null>(null);
 
@@ -1283,6 +1290,10 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
       );
       // ROUND 363-CC2-D — stay open on the posted lines so a wrong account is reclassified here, not after a hunt.
       setPosted({ label: `Settlement ${res.source_document_ref || res.display_id} posted`, documentIds: [...(res.expense_ids ?? [])] });
+      if (companyId && (res.fuel_transaction_ids?.length ?? 0) > 0) {
+        const q = await evaluateFuelAssignmentsFirstQuestion(companyId, res.fuel_transaction_ids);
+        if (q) setFuelAssignmentQuestion(q);
+      }
     } catch (e) {
       const apiErr = e as { status?: number; data?: { error?: string; message?: string }; message?: string };
       // LEAD 443.215 — a changed source for an existing number ("source changed: repost needed") is the same Edit decision.
@@ -1308,6 +1319,10 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
         "success",
       );
       setPosted({ label: `Settlement ${res.source_document_ref || res.display_id} voided prior + reposted`, documentIds: [...(res.expense_ids ?? [])] });
+      if (companyId && (res.fuel_transaction_ids?.length ?? 0) > 0) {
+        const q = await evaluateFuelAssignmentsFirstQuestion(companyId, res.fuel_transaction_ids);
+        if (q) setFuelAssignmentQuestion(q);
+      }
     } catch (retryErr) {
       setError(String((retryErr as Error).message || "Void and repost failed"));
       throw retryErr;
@@ -3365,6 +3380,13 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
       danger
       onClose={() => setConfirmRepostOpen(false)}
       onConfirm={handleConfirmRepost}
+    />
+    <FuelAssignmentPopup
+      open={Boolean(fuelAssignmentQuestion)}
+      operatingCompanyId={companyId}
+      question={fuelAssignmentQuestion}
+      onClose={() => setFuelAssignmentQuestion(null)}
+      onAnswered={() => setFuelAssignmentQuestion(null)}
     />
     </>
   );
