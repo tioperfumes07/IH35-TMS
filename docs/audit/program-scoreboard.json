@@ -1,10 +1,10 @@
 {
-  "healthzSha": "d60f68d",
-  "generated_at": "2026-10-17T11:17:24.192Z",
+  "healthzSha": "ee2bf49",
+  "generated_at": "2026-10-22T03:05:16.608Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "d60f68d",
+    "deployedSha": "ee2bf49",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27000,
-      "title": "FINDING: ACCT-F4431972 LANE: FINANCIAL — Claude-3- 443.197 a load's factoring vendor falls back to the customer's factor on every create path; audited stamp from the load's live Faro advance; DRIVER_BILLS outcome excludes salaried 0-rate loads (Lead 17:45Z 1a + 1b)",
+      "number": 27142,
+      "title": "FINDING: N/A LANE: DOCS — CC-3- 443.230(a) re-pin verify-driverhub-unit-source to the load service's board set (red on main since the 443.206R scheduler change)",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 06:16 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27000",
-      "sha": "c0b3ca8043",
-      "committedAtIso": "2026-10-17T06:16:08-05:00"
+      "mergedAtCt": "10/21/2026, 10:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27142",
+      "sha": "7a24e7e830",
+      "committedAtIso": "2026-10-21T22:04:41-05:00"
     },
     {
-      "number": 26997,
-      "title": "FINDING: ACCT-F4431971 LANE: FINANCIAL — Claude-3- 443.197 void the 22 duplicate seed deductions + 14 orphan seed reimbursements (CC-1's uncommitted 443.144 seed ran twice); new audited reimbursement void writer (Lead 17:45Z item 4)",
+      "number": 27141,
+      "title": "CC-2- fix 2 main reds from my merges: fuel unit FKs (443.214) + money-evidence guard reads the 443.220 editable lock",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 06:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26997",
-      "sha": "d60f68df61",
-      "committedAtIso": "2026-10-17T06:12:11-05:00"
+      "mergedAtCt": "10/21/2026, 09:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27141",
+      "sha": "9a7762a35a",
+      "committedAtIso": "2026-10-21T21:56:48-05:00"
     },
     {
-      "number": 26985,
-      "title": "CC-2- heavy red 1436: recon Type-filter check follows the 443.156 multi-select set",
+      "number": 27140,
+      "title": "FINDING: N/A (CLAIM-RESERVE migration 202616120700 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 05:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26985",
-      "sha": "a2e70bf7cd",
-      "committedAtIso": "2026-10-17T05:55:29-05:00"
+      "mergedAtCt": "10/21/2026, 09:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27140",
+      "sha": "19383e3040",
+      "committedAtIso": "2026-10-21T21:55:15-05:00"
     },
     {
-      "number": 26996,
-      "title": "FINDING: ACCT-F4431963 LANE: FINANCIAL — Claude-3- 443.196 Dreamline repair APPLIED on prod (T164 DEF + T175 diesel doubles voided, 3 pairings re-adopted by the import engine, TB 0) — runner read-back checks a wrong marker on its WRONG receipt only",
+      "number": 27133,
+      "title": "FINDING: ACCT-F4432183 LANE: FINANCIAL — Claude-1- 443.218 F2b: Driver EarningsTab open-AP KPI from full aggregate",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 05:37 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26996",
-      "sha": "2319df32c2",
-      "committedAtIso": "2026-10-17T05:37:19-05:00"
+      "mergedAtCt": "10/21/2026, 09:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27133",
+      "sha": "ee2bf4901b",
+      "committedAtIso": "2026-10-21T21:51:21-05:00"
     },
     {
-      "number": 26984,
-      "title": "FINDING: LST-F2026101756 LANE: claude — heavy red 1332: the Home filings widget's detail line used text-slate-400 (house tokens only) and a sibling guard pinned that exact class — token restored, the pin follows the rule",
+      "number": 27045,
+      "title": "chore(deps): bump the production-dependencies group across 1 directory with 24 updates",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 05:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26984",
-      "sha": "5eb314cb41",
-      "committedAtIso": "2026-10-17T05:35:05-05:00"
+      "mergedAtCt": "10/21/2026, 09:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27045",
+      "sha": "1fada6dcdc",
+      "committedAtIso": "2026-10-21T21:15:48-05:00"
     },
     {
-      "number": 26974,
-      "title": "FINDING: ACCT-F2026101752 LANE: claude — heavy red 12327: the 443.172 Purchase Report rebuild dropped the real chargeback, Other Ref and the Sch Fee column — restored on the purchase-engine lines; the guard follows the engine shape",
+      "number": 27092,
+      "title": "chore(deps-dev): bump the npm_and_yarn group across 2 directories with 1 update",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 05:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26974",
-      "sha": "14c1b7f300",
-      "committedAtIso": "2026-10-17T05:34:58-05:00"
+      "mergedAtCt": "10/21/2026, 09:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27092",
+      "sha": "8c7b7817f4",
+      "committedAtIso": "2026-10-21T21:09:00-05:00"
     },
     {
-      "number": 26982,
-      "title": "FINDING: ACCT-F2026101754 LANE: claude — heavy red 12399: the apply service imported the payments HTTP route module to reach the one payment engine — engine moved byte-for-byte to payment-writer.service.ts",
+      "number": 27135,
+      "title": "chore(deps): bump the development-dependencies group across 1 directory with 9 updates",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 05:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26982",
-      "sha": "738621598c",
-      "committedAtIso": "2026-10-17T05:34:46-05:00"
+      "mergedAtCt": "10/21/2026, 08:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27135",
+      "sha": "5311274c94",
+      "committedAtIso": "2026-10-21T20:58:31-05:00"
     },
     {
-      "number": 26986,
-      "title": "FINDING: LST-F2026101783 LANE: claude — heavy red 1220: 19 dead-schema objects (18 QBO-era, 3 factoring alert resolution fields) baselined with reasons per LEAD 15:30Z; 12 now-wired entries drained",
+      "number": 27138,
+      "title": "FINDING: N/A LANE: DOCS — Claude-3- re-pin verify-load-costs-live-documents to the one rollup (#27108 board → lcr.* left it red on main for every seat's gate)",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 05:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26986",
-      "sha": "2aa4c8cc11",
-      "committedAtIso": "2026-10-17T05:34:17-05:00"
+      "mergedAtCt": "10/21/2026, 08:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27138",
+      "sha": "159324ece4",
+      "committedAtIso": "2026-10-21T20:56:44-05:00"
     },
     {
-      "number": 26995,
-      "title": "FINDING: ACCT-F4431962 LANE: FINANCIAL — Claude-3- 443.196 Dreamline: same-truck-first matcher across the whole statement + DB-sourced repair of the T164 DEF / T175 diesel doubles and 3 wrong pairings (Lead 16:35Z)",
+      "number": 27136,
+      "title": "CC-2- 443.220 a booked load always has its driver bill — awaiting_short_miles, priced in place when short miles land",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 05:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26995",
-      "sha": "5f5cadeb34",
-      "committedAtIso": "2026-10-17T05:33:43-05:00"
+      "mergedAtCt": "10/21/2026, 08:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27136",
+      "sha": "12899c3b22",
+      "committedAtIso": "2026-10-21T20:51:06-05:00"
     },
     {
-      "number": 26994,
-      "title": "FINDING: LST-F4431961 LANE: NON-FINANCIAL — Claude-3- 443.196 main red: driver-merged-record-and-dead-settlement-link.test asserted the pre-entity-scope SQL text (Lead 16:35Z first)",
+      "number": 27099,
+      "title": "chore(deps): bump @vitest/ui from 5.0.3 to 5.0.5",
       "state": "merged",
-      "mergedAtCt": "10/17/2026, 05:25 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/26994",
-      "sha": "ddb7f98006",
-      "committedAtIso": "2026-10-17T05:25:03-05:00"
+      "mergedAtCt": "10/21/2026, 08:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27099",
+      "sha": "f2fee1e55e",
+      "committedAtIso": "2026-10-21T20:36:50-05:00"
     }
   ]
 }
