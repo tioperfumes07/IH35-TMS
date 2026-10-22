@@ -18,7 +18,7 @@ describe("REG-010/011 distinct margin amount and percentage sort", () => {
       const response = await app.inject(`/api/v1/accounting/load-costs-board?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80&load_costs_sort=margin_pct&sort_direction=${direction}`);
       expect(response.statusCode).toBe(200);
       const sql = query.mock.calls[0]?.[0] as string;
-      expect(sql).toContain(`::numeric / NULLIF(revenue.revenue_cents, 0)) ${direction.toUpperCase()} NULLS LAST`);
+      expect(sql).toContain(`::numeric / NULLIF(lcr.revenue_cents, 0)) ${direction.toUpperCase()} NULLS LAST`);
       expect(query.mock.calls[0]?.[1]).toContain("5c854333-6ea5-4faa-af31-67cb272fef80");
     } finally { await app.close(); }
   });

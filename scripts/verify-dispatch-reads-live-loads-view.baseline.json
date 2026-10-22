@@ -1,6 +1,6 @@
 {
   "established": "2026-09-22",
-  "note": "ROUND 36.1 — shrink-only ratchet, seeded at the offender count remaining after fixing the reported-broken surfaces (Home tiles, Dispatch board ACTIVE LOADS/DELIVERED-PENDING-DOCS, At Risk, Late Arrivals, Truck Line, Planner roster, Trip Pairing). Each remaining file either mutates mdata.loads (not a list/board read) or is a genuinely out-of-scope internal computation (deadhead optimizer, OCR, BOL generation) not named by the owner complaint — never silently excused, tracked here to shrink.",
+  "note": "ROUND 36.1 \u2014 shrink-only ratchet, seeded at the offender count remaining after fixing the reported-broken surfaces (Home tiles, Dispatch board ACTIVE LOADS/DELIVERED-PENDING-DOCS, At Risk, Late Arrivals, Truck Line, Planner roster, Trip Pairing). Each remaining file either mutates mdata.loads (not a list/board read) or is a genuinely out-of-scope internal computation (deadhead optimizer, OCR, BOL generation) not named by the owner complaint \u2014 never silently excused, tracked here to shrink.",
   "files": {
     "dispatch/analytics/booking-gap.service.ts": {
       "count": 1
@@ -112,8 +112,11 @@
     },
     "dispatcher-board/role-views/dispatcher.service.ts": {
       "count": 1
+    },
+    "dispatch/unit-current-driver.ts": {
+      "count": 1
     }
   },
-  "measured_at": "2026-09-24T00:30:00Z",
+  "measured_at": "2026-10-22T22:00:00Z",
   "_comment": "measured_at backfilled 2026-09-24 (STALE-LITERAL-OK: baseline predates or lacks measured_at; backfilled to pass verify-no-stale-literals-in-guards)"
 }
