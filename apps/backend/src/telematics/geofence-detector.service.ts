@@ -10,7 +10,7 @@
  */
 import { processDotDwellForGeofenceEvent } from "./dot-dwell-detector.service.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
-import { assertCanonicalSubset } from "../dispatch/canonical-active-load-set.js";
+import { assertCanonicalSubset, canonicalDispatchWorkWhereClause } from "../dispatch/canonical-active-load-set.js";
 import { GEOFENCE_AUTO_DELIVERY_ACTOR } from "../dispatch/geofence-auto-delivery.service.js";
 import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
 import { fromMdataStatus, type DispatchStatus } from "../dispatch/load-state-machine.js";
@@ -179,11 +179,14 @@ async function resolveDriverIdForUnit(
     `
       SELECT COALESCE(l.assigned_primary_driver_id, l.assigned_secondary_driver_id)::text AS driver_id
       FROM mdata.loads l
-      WHERE l.operating_company_id = $1::uuid
-        AND l.assigned_unit_id = $2::uuid
-        AND l.soft_deleted_at IS NULL
-        AND l.status::text NOT IN ('delivered', 'cancelled')
-      ORDER BY l.updated_at DESC NULLS LAST, l.created_at DESC
+      WHERE l.assigned_unit_id = $2::uuid
+        -- LEAD 443.238 (register B5 / C1): the unit's current load is the load service's board set (one definition), never a
+        -- private NOT IN list (it let invoiced / closed / voided / abandoned / draft loads name the driver of a GPS point).
+        AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+      -- a truck holds its next load while running the current one: the current load = the earliest pickup
+      ORDER BY (SELECT min(COALESCE(s.actual_arrival_at, s.appointment_start_at, s.scheduled_arrival_at))
+                  FROM mdata.load_stops s WHERE s.load_id = l.id AND s.soft_deleted_at IS NULL) ASC NULLS LAST,
+               l.created_at ASC
       LIMIT 1
     `,
     [operatingCompanyId, unitId]
