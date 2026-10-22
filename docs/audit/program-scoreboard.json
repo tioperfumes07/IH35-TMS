@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2fed570",
-  "generated_at": "2026-10-21T22:21:27.514Z",
+  "healthzSha": "5b59999",
+  "generated_at": "2026-10-22T16:34:59.511Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2fed570",
+    "deployedSha": "5b59999",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27052,
-      "title": "chore(deps): bump qs from 6.15.3 to 6.16.1",
+      "number": 27181,
+      "title": "FINDING: N/A (CLAIM-RESERVE migration 202616130100 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 05:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27052",
-      "sha": "2fed570d05",
-      "committedAtIso": "2026-10-21T17:13:32-05:00"
+      "mergedAtCt": "10/22/2026, 11:31 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27181",
+      "sha": "d100a02db2",
+      "committedAtIso": "2026-10-22T11:31:12-05:00"
     },
     {
-      "number": 27043,
-      "title": "chore(ci): bump github/codeql-action from 4.38.3 to 4.39.0",
+      "number": 27180,
+      "title": "FINDING: SYS-F4432370 LANE: NON-FINANCIAL — CC-3- 443.237 no route sends after a 401: one shared reply guard (equipment-transfers / maintenance KPIs / samsara active-loads double-sent after every pod boot)",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 05:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27043",
-      "sha": "9966fb6356",
-      "committedAtIso": "2026-10-21T17:13:24-05:00"
+      "mergedAtCt": "10/22/2026, 11:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27180",
+      "sha": "5b59999cf3",
+      "committedAtIso": "2026-10-22T11:29:13-05:00"
     },
     {
-      "number": 27054,
-      "title": "chore(deps): bump fast-uri from 3.1.5 to 3.1.9",
+      "number": 27179,
+      "title": "FINDING: N/A (CLAIM-RESERVE 18657 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 05:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27054",
-      "sha": "da14dd662d",
-      "committedAtIso": "2026-10-21T17:13:01-05:00"
+      "mergedAtCt": "10/22/2026, 11:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27179",
+      "sha": "3e64f42f4c",
+      "committedAtIso": "2026-10-22T11:25:33-05:00"
     },
     {
-      "number": 27093,
-      "title": "CC-2- verify-lane-ownership: seat + lane for dependabot/* (manifests, lockfiles, workflows only)",
+      "number": 27178,
+      "title": "CC-3- 443.236 no automatic driver bonus; item create takes category + purchase-only pay items; I8 knows customer trailers",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 05:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27093",
-      "sha": "9dc5664505",
-      "committedAtIso": "2026-10-21T17:12:13-05:00"
+      "mergedAtCt": "10/22/2026, 10:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27178",
+      "sha": "672aa37848",
+      "committedAtIso": "2026-10-22T10:59:28-05:00"
     },
     {
-      "number": 27097,
-      "title": "FINDING: ACCT-F4432041 LANE: FINANCIAL — Claude-3- 23-receipt root cause closed: the 443.51 backfill now runs the printed-by engine (backfillRelayFillSettlementRefs); a re-run stamps 0 unprinted docs",
+      "number": 27177,
+      "title": "Claude-1- bus: CC-1 443.234 DONE — stale presettlement TB=0 + KPI PR #27176",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 05:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27097",
-      "sha": "ebffad7d2b",
-      "committedAtIso": "2026-10-21T17:09:44-05:00"
+      "mergedAtCt": "10/22/2026, 10:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27177",
+      "sha": "da19237af6",
+      "committedAtIso": "2026-10-22T15:50:45Z"
     },
     {
-      "number": 0,
-      "title": "FINDING: N/A (443.212 REPLY — D3 retract + Q4 correction + Q2/Q1 refinements) LANE: NON-FINANCIAL",
+      "number": 27176,
+      "title": "FINDING: ACCT-F443218-KPI-TOTAL LANE: FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 05:06 PM CT",
-      "url": "",
-      "sha": "bb0e3c62b7",
-      "committedAtIso": "2026-10-21T17:06:59-05:00"
+      "mergedAtCt": "10/22/2026, 10:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27176",
+      "sha": "49685473ba",
+      "committedAtIso": "2026-10-22T10:49:33-05:00"
     },
     {
-      "number": 27096,
-      "title": "FINDING: N/A LANE: CI-GUARDS — Claude-3- wire the #27085 orphan guard: verify-load-report-and-picker-scope fails closed without a DB + verify-step 18605 (main red for every PR)",
+      "number": 27175,
+      "title": "CC-3- 443.234 (2) live-load stop stamps from tracked evidence only; fence delivery stamps earlier stops",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 05:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27096",
-      "sha": "f2e78a7c9d",
-      "committedAtIso": "2026-10-21T17:05:46-05:00"
+      "mergedAtCt": "10/22/2026, 10:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27175",
+      "sha": "6a10420ab9",
+      "committedAtIso": "2026-10-22T10:44:40-05:00"
     },
     {
-      "number": 27095,
-      "title": "FINDING: N/A (CLAIM-RESERVE 18605 -- reservation-only commit, no code fix)",
+      "number": 27174,
+      "title": "FINDING: DSP-F4432341 LANE: DISPATCH — CC-3- 443.234 (1) GPS catch-up in 30-minute chunks for the live-load units (the full window outran the 5-minute outbox lease)",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 05:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27095",
-      "sha": "601042e1f0",
-      "committedAtIso": "2026-10-21T17:02:05-05:00"
+      "mergedAtCt": "10/22/2026, 10:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27174",
+      "sha": "ef5ed9b494",
+      "committedAtIso": "2026-10-22T10:35:36-05:00"
     },
     {
-      "number": 27091,
-      "title": "CC-2- 443.209 unit overlap: the same tour's sequential leg is not an overlap — one rule, app gate + deferred DB backstop",
+      "number": 27162,
+      "title": "Codex-443.232 exact USMCA proof discriminator",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 04:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27091",
-      "sha": "8e111c3f81",
-      "committedAtIso": "2026-10-21T16:57:38-05:00"
+      "mergedAtCt": "10/22/2026, 10:22 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27162",
+      "sha": "529d8e1f2c",
+      "committedAtIso": "2026-10-22T10:22:28-05:00"
     },
     {
-      "number": 27089,
-      "title": "FINDING: N/A (CLAIM-RESERVE 18603 + migration 202616050700 -- reservation-only commit, no code fix)",
+      "number": 27171,
+      "title": "FINDING: ACCT-F443232-CANCELLED-LEG-REVENUE LANE: FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "10/21/2026, 04:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27089",
-      "sha": "5fd4f08362",
-      "committedAtIso": "2026-10-21T16:40:04-05:00"
+      "mergedAtCt": "10/22/2026, 10:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27171",
+      "sha": "7279e77dc1",
+      "committedAtIso": "2026-10-22T10:21:03-05:00"
     }
   ]
 }
