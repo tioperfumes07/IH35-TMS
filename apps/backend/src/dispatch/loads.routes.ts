@@ -5,7 +5,7 @@ import { trailerChoiceSchema } from "./load-trailer-choice.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { bookLoad } from "./book-load.service.js";
+import { bookLoad, DriverBillRequiredAtBookingError } from "./book-load.service.js";
 import {
   dispatchStatusSchema,
   fromMdataStatus,
@@ -1810,6 +1810,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           message: error.message,
           details: { conflicting_load_id: error.conflictingLoadId, conflicting_load_number: error.conflictingLoadNumber },
         });
+      }
+      if (error instanceof DriverBillRequiredAtBookingError) {
+        return reply.code(422).send({ error: error.code, message: error.reason, details: { driver_bill_mint: error.outcome } });
       }
       const code = (error as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "dispatch_load_conflict" });

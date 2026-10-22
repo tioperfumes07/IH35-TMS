@@ -966,6 +966,28 @@ export class DriverBillReassignRefusedError extends Error {
   }
 }
 
+/**
+ * LEAD 443.216 (10-21 23:45Z / 10-22 00:35Z parity re-run) — 13697 and 13699 were booked with practical miles only: the
+ * mint gate refused the driver bill (refused_no_shortest_miles, owner law LEAD 443.192: per-mile pay is SHORT miles only)
+ * but the booking COMMITTED anyway, so a dispatched load ran with no driver bill and pay 0 on every screen. A live booking
+ * whose driver bill is refused now rolls back whole with the reason: no load is booked without its driver bill. The
+ * Settlement Creator (historical_backfill — a signed document that already ran) keeps recording it as an exception.
+ */
+export class DriverBillRequiredAtBookingError extends Error {
+  readonly code = "driver_bill_required_at_booking";
+  constructor(readonly reason: string, readonly outcome: string) {
+    super(`driver_bill_required_at_booking: ${reason}`);
+    this.name = "DriverBillRequiredAtBookingError";
+  }
+}
+
+/** LEAD 443.216 — throws DriverBillRequiredAtBookingError when a live booking's driver bill mint was refused. */
+export function assertDriverBillMintedAtBooking(source: LoadCreateSource, result: BookLoadResult): void {
+  if (source !== "live_feed" || result.kind !== "ok") return;
+  const mint = (result.row as { driver_bill_mint?: DriverBillMintOutcome | null } | undefined)?.driver_bill_mint;
+  if (mint?.outcome === "refused_no_shortest_miles") throw new DriverBillRequiredAtBookingError(mint.reason, mint.outcome);
+}
+
 export type DriverBillMintOutcome =
   | { outcome: "not_applicable" }
   | { outcome: "already_exists" }
@@ -1878,6 +1900,8 @@ export async function bookLoadOnClient(
   // live_feed (fail-closed). See createLoadWithFullSideEffects's own header.
   const source: LoadCreateSource = opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed";
   const result = await createLoadWithFullSideEffects(client, input, { source });
+  // LEAD 443.216 — every live booking mints its driver bill, or the booking does not happen (rolls back whole).
+  assertDriverBillMintedAtBooking(source, result);
   // LEAD 443.121 #2 — a fuel receipt posted before this load existed (deadhead / yard reason) whose fill time this load
   // covers is attached to it now: same JE, same document (fuel/fuel-receipt-repoint.service.ts). Never fails the booking.
   if (result.kind === "ok" && result.row?.id) {

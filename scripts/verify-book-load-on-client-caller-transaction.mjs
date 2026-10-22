@@ -61,6 +61,13 @@ export function check(src) {
       errors.push("bookLoadOnClient skips the shared input checks");
     if (!code.includes("setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id)")) errors.push("bookLoadOnClient skips setScopedCompanyContext");
     if (!code.includes("createLoadWithFullSideEffects(client, input, { source })")) errors.push("bookLoadOnClient does not book through createLoadWithFullSideEffects with its (fail-closed) source");
+    // LEAD 443.216 (CC-2): every live booking mints its driver bill or rolls back — the check runs inside the caller's
+    // transaction, right after the booking and before anything else (13697 / 13699 were booked with no driver bill).
+    const booked = code.indexOf("createLoadWithFullSideEffects(client, input, { source })");
+    const minted = code.indexOf("assertDriverBillMintedAtBooking(source, result)");
+    const repoint = code.indexOf("repointFuelReceiptsToLoad(");
+    if (minted < 0 || minted < booked || (repoint >= 0 && minted > repoint))
+      errors.push("bookLoadOnClient must call assertDriverBillMintedAtBooking(source, result) right after createLoadWithFullSideEffects (a live booking without its driver bill rolls back)");
   }
   const wrapper = functionBody(src, "export async function bookLoad(input: BookLoadInput)");
   if (wrapper == null) {
@@ -85,6 +92,13 @@ export function check(src) {
 }
 
 function selftest() {
+  // LEAD 443.216: the rule itself must still refuse — a gate that never throws would pass the call-site check above.
+  const svcSrc = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
+  const rule = functionBody(svcSrc, "export function assertDriverBillMintedAtBooking(");
+  if (!rule || !/refused_no_shortest_miles/.test(rule) || !/throw new DriverBillRequiredAtBookingError/.test(rule)) {
+    console.error("selftest: assertDriverBillMintedAtBooking must throw DriverBillRequiredAtBookingError on refused_no_shortest_miles");
+    process.exit(1);
+  }
   const good = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
   const plant = (from, to) => good.replace(from, to);
   const cases = [
@@ -96,6 +110,7 @@ function selftest() {
     ["second body back", good + "\nasync function bookLoadInTransaction() {}\n"],
     ["extra called elsewhere", good + "\nfunction x() { void geocodeStopsBackfill(\"a\", \"b\", \"c\"); }\n"],
     ["not exported", plant("export async function bookLoadOnClient(", "async function bookLoadOnClient(")],
+    ["booking without its driver bill commits (443.216)", plant("  assertDriverBillMintedAtBooking(source, result);\n", "")],
     ["source not fail-closed", plant('opts?.source === "historical_backfill" ? "historical_backfill" : "live_feed"', '(opts?.source ?? "historical_backfill")')],
   ];
   let ok = check(good).length === 0;

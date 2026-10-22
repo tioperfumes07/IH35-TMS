@@ -1843,6 +1843,14 @@ export function BookLoadModalV4({
           });
           return;
         }
+        if (error.status === 422 && code === "driver_bill_required_at_booking") {
+          // LEAD 443.216 — the booking rolled back whole: a per-mile driver is paid SHORT miles only, and no load is
+          // booked without its driver bill. Point at the short-miles field instead of a load booked with pay 0.
+          form.setError("miles_shortest", { type: "required", message: "Enter the load's short miles — the driver is paid on them" });
+          setSubmitErrorMessage(`${message} Not saved.`);
+          pushToast("Enter short miles before booking", "error");
+          return;
+        }
         if (error.status === 400 && code === "trip_type_required_when_driver_assigned") {
           // SET-01 at the API (Lead 2026-10-01): the backend refuses a driver-seated booking with no
           // trip type whatever client sent it; mirror the inline error the wizard's own gate shows.
