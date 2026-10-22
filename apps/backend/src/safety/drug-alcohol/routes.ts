@@ -23,11 +23,12 @@ import {
 } from "./program.service.js";
 import { bulkEnrollActiveDrivers, drawRandomPool, listDrawHistory } from "./random-pool.service.js";
 
+import { queryBoolean } from "../../lib/query-boolean.js";
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
 const companyQuery = z.object({
   operating_company_id: z.string().uuid(),
-  active_only: z.coerce.boolean().optional(),
+  active_only: queryBoolean().optional(),
 });
 
 const enrollSchema = z.object({

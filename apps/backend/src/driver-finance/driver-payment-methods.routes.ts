@@ -9,6 +9,7 @@ import {
   voidDriverPaymentMethod,
 } from "./driver-payment-methods.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const driverParamsSchema = z.object({ driverId: z.string().uuid() });
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -30,7 +31,7 @@ const createBodySchema = z
   });
 
 const listQuerySchema = companyQuerySchema.extend({
-  include_inactive: z.coerce.boolean().optional().default(false),
+  include_inactive: queryBoolean().optional().default(false),
 });
 const voidBodySchema = companyQuerySchema.extend({ reason: z.string().trim().min(3).max(500) });
 const defaultBodySchema = companyQuerySchema;

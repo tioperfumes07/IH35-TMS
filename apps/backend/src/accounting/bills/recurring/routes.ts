@@ -16,6 +16,7 @@ import {
 import { generateFromTemplate } from "./generator.service.js";
 import { DateTime } from "luxon";
 
+import { queryBoolean } from "../../../lib/query-boolean.js";
 const templateBodySchema = z.object({
   // FE (RecurringBillCreate.tsx) sends operating_company_id in the JSON body, not the query string.
   operating_company_id: z.string().uuid(),
@@ -46,8 +47,8 @@ const updateTemplateBodySchema = templateBodySchema.partial();
 const uuidParamsSchema = z.object({ uuid: z.string().uuid() });
 
 const listQuerySchema = companyQuerySchema.extend({
-  active_only: z.coerce.boolean().optional().default(false),
-  due_soon: z.coerce.boolean().optional().default(false),
+  active_only: queryBoolean().optional().default(false),
+  due_soon: queryBoolean().optional().default(false),
 });
 // LEAD 443.219 G-STRICT — unknown query params: 400 outside production, logged + stripped in production (one rule).
 const strictListQuerySchema = strictListQuery(listQuerySchema, "GET /api/v1/accounting/recurring-bill-templates");

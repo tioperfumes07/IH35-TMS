@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { computePmDueEngineForCompany, type PmDueEngineRow } from "./pm-due-engine.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 /**
  * The most urgent PM row per unit: a dated/overdue row beats an undated one, then fewest miles to due.
  * Rows E-15 refused (no baseline, ABSENT odometer, days interval) stay available for their reason.
@@ -42,8 +43,8 @@ const companyQuerySchema = z.object({
 
 const listQuerySchema = companyQuerySchema.extend({
   within_hours: z.coerce.number().int().min(1).max(168).default(48),
-  include_already_arrived: z.coerce.boolean().default(true),
-  include_non_yard_destination: z.coerce.boolean().default(true),
+  include_already_arrived: queryBoolean().default(true),
+  include_non_yard_destination: queryBoolean().default(true),
   severity_min: z.enum(["info", "warning", "severe"]).default("info"),
   limit: z.coerce.number().int().min(1).max(100).default(25),
   offset: z.coerce.number().int().min(0).default(0),

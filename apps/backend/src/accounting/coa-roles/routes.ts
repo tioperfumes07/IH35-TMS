@@ -7,12 +7,13 @@ import { COA_ROLE_VALUES } from "./resolver.service.js";
 import { computePostingFeatureReadiness, loadPostingFlagRequirements } from "./posting-flag-readiness.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 
+import { queryBoolean } from "../../lib/query-boolean.js";
 const roleSchema = z.enum(COA_ROLE_VALUES);
 
 const upsertBodySchema = z.object({
   role: roleSchema,
   account_id: z.string().uuid(),
-  is_active: z.coerce.boolean().default(true),
+  is_active: queryBoolean().default(true),
 });
 
 export async function registerCoaRolesRoutes(app: FastifyInstance) {

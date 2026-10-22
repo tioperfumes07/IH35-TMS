@@ -37,7 +37,7 @@ const BOUND_PIN_RE =
 const GUC_PIN_RE =
   /if\s*\(\s*active_company_only\s*\)\s*\{[^}]*current_setting\(\s*['"]app\.operating_company_id['"]/s;
 const GATE_RE = /if\s*\(\s*active_company_only\s*\)/;
-const FLAG_DECL_RE = /active_company_only:\s*z\.coerce\.boolean\(\)/;
+const FLAG_DECL_RE = /active_company_only:\s*queryBoolean\(\)/;
 const COUNTS_ROUTE_RE = /app\.get\(\s*["']\/api\/v1\/mdata\/(?:customers|vendors)\/counts["']/;
 
 /**
@@ -46,7 +46,7 @@ const COUNTS_ROUTE_RE = /app\.get\(\s*["']\/api\/v1\/mdata\/(?:customers|vendors
  */
 export function checkListScoped(text, label) {
   const failures = [];
-  if (!FLAG_DECL_RE.test(text)) failures.push(`${label}: missing opt-in flag declaration (active_company_only: z.coerce.boolean())`);
+  if (!FLAG_DECL_RE.test(text)) failures.push(`${label}: missing opt-in flag declaration (active_company_only: queryBoolean())`);
   if (!GATE_RE.test(text)) failures.push(`${label}: missing opt-in gate (if (active_company_only))`);
   if (!BOUND_PIN_RE.test(text)) {
     failures.push(
@@ -97,7 +97,7 @@ function run() {
 
 if (process.argv.includes("--selftest")) {
   const goodList = `
-    active_company_only: z.coerce.boolean().optional().default(false),
+    active_company_only: queryBoolean().optional().default(false),
     values.push(resolvedOperatingCompanyId);
     const companyScopeIdx = values.length;
     filters.push(\`operating_company_id = $\${companyScopeIdx}::uuid\`);
@@ -107,13 +107,13 @@ if (process.argv.includes("--selftest")) {
     app.get("/api/v1/mdata/customers/counts", RL_READ, customerCountsHandler);
   `;
   const gucPin = `
-    active_company_only: z.coerce.boolean().optional().default(false),
+    active_company_only: queryBoolean().optional().default(false),
     if (active_company_only) {
       filters.push(\`operating_company_id = current_setting('app.operating_company_id', true)::uuid\`);
     }
     app.get("/api/v1/mdata/customers/counts", RL_READ, h);
   `;
-  const missingPin = `active_company_only: z.coerce.boolean().optional().default(false); if (active_company_only) { /* forgot pin */ } app.get("/api/v1/mdata/customers/counts", h);`;
+  const missingPin = `active_company_only: queryBoolean().optional().default(false); if (active_company_only) { /* forgot pin */ } app.get("/api/v1/mdata/customers/counts", h);`;
   const missingFlag = `filters.push(\`operating_company_id = $\${companyScopeIdx}::uuid\`);`;
   const unitsGood = `WHERE c.id IN (SELECT org.user_accessible_company_ids())`;
   const unitsBad = `if (active_company_only) { pin }`;

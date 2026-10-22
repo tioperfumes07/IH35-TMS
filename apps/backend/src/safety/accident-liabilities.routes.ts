@@ -13,6 +13,7 @@ import {
   type DbClient,
 } from "./accident-liabilities.service.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
@@ -24,7 +25,7 @@ const idParamsSchema = z.object({
 const listQuerySchema = companyQuerySchema.extend({
   // Default true — the whole point of this surface is the owner's "awaiting your decision" queue.
   // awaiting_decision=false lists everything (decided/posted/closed included).
-  awaiting_decision: z.coerce.boolean().default(true),
+  awaiting_decision: queryBoolean().default(true),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });

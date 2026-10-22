@@ -40,6 +40,7 @@ import {
   updateUnitBodySchema,
 } from "./unit-update-schema.js";
 
+import { queryBoolean } from "../lib/query-boolean.js";
 export {
   unitStatusSchema,
   updateUnitBodySchema,
@@ -81,7 +82,7 @@ const listQuerySchema = z.object({
   operating_company_id: z.string().uuid().optional(),
   include: z.enum(["trailers"]).optional(),
   // Soft-delete visibility: include deactivated units so they can be viewed + reactivated.
-  include_inactive: z.coerce.boolean().optional().default(false),
+  include_inactive: queryBoolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
