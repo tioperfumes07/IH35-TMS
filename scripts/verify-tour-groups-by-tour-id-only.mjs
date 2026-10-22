@@ -46,9 +46,11 @@ function listTsFiles(dir) {
 // load into a settlement/tour bucket) for loads resolved by load_number/id lookup, WITHOUT the
 // same function ever checking the load's own tour_id before writing. This is the real anti-pattern
 // (settlement-creator.service.ts's original shape) — a static, source-text heuristic, not a parser.
+// LEAD 443.230 (CC-3): a RELEASE (presettlement_link_id = NULL — the settlement void cascade freeing its loads, #27137) links
+// no load into any tour, so it is not a membership assignment; any write of a non-NULL value still is.
 export function findViolations(relPath, src) {
   const violations = [];
-  const writesPresettlementLink = /UPDATE\s+mdata\.loads\s+SET[^;]*presettlement_link_id\s*=/is.test(src);
+  const writesPresettlementLink = /UPDATE\s+mdata\.loads\s+SET(?:(?!\bWHERE\b)[^;])*?\bpresettlement_link_id\s*=(?!\s*NULL\b)/is.test(src);
   if (!writesPresettlementLink) return violations;
 
   const checksTourId = /\btour_id\b/.test(src);
@@ -62,7 +64,7 @@ export function findViolations(relPath, src) {
 
   // A weaker but real check: the specific UPDATE statement's surrounding function must mention
   // tour_id somewhere before the write (a 60-line lookback window), not just anywhere in the file.
-  const idx = src.search(/UPDATE\s+mdata\.loads\s+SET[^;]*presettlement_link_id\s*=/is);
+  const idx = src.search(/UPDATE\s+mdata\.loads\s+SET(?:(?!\bWHERE\b)[^;])*?\bpresettlement_link_id\s*=(?!\s*NULL\b)/is);
   const windowStart = Math.max(0, idx - 4000);
   const window = src.slice(windowStart, idx);
   if (!/\btour_id\b/.test(window)) {
@@ -136,6 +138,10 @@ function selftest() {
     }
   `;
   checks.push(["file that writes the link with no tour_id anywhere -> RED", findViolations("x.ts", dirty).length >= 1]);
+
+  const release = `await client.query("UPDATE mdata.loads SET presettlement_link_id = NULL, updated_at = now() WHERE presettlement_link_id = $1::uuid", [id]);`;
+  checks.push(["file that only RELEASES the link (= NULL) -> clean", findViolations("x.ts", release).length === 0]);
+  checks.push(["release + a real link write with no tour_id -> RED", findViolations("x.ts", release + dirty).length >= 1]);
 
   const noWrite = `const x = 1;`;
   checks.push(["file that never writes the link at all -> clean (out of scope)", findViolations("x.ts", noWrite).length === 0]);

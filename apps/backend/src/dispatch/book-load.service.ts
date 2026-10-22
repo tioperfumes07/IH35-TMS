@@ -2071,6 +2071,18 @@ export async function fillDeadheadAtBooking(client: DbClient, input: BookLoadInp
       "warning",
       "LEAD-443-192-DEADHEAD-AT-BOOKING"
     );
+    // LEAD 443.230 (CC-3) — the usual refusal is "the first stop has no real point yet": the stops are geocoded only after
+    // this transaction commits (queueAfterBookExtras → geocodeStopsBackfill), and nothing measured the deadhead again, so
+    // 13695 / 13696 / 13697 / 13699 kept a NULL first-stop leg with both points located (verify-booked-loads-save-miles RULE 4).
+    // Queue THE re-learn engine in this same commit: its handler resolves the stops, then recomputes the module's legs and the
+    // first-stop deadhead (recomputeFirstStopDeadhead) — never a document leg, never a straight line.
+    await enqueueOutboxEvent(
+      client as never,
+      "dispatch.relearn_load_miles",
+      { aggregate_type: "mdata.loads", aggregate_id: loadId },
+      { operating_company_id: input.operating_company_id, load_id: loadId, actor_user_id: input.requestingUserUuid },
+      `dispatch.relearn_load_miles:${loadId}:book-load-deadhead`
+    );
   }
 }
 

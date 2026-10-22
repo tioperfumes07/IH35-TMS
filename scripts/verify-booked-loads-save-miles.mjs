@@ -58,6 +58,18 @@ export function staticFailures(bookSrc, moduleSrc) {
   return out;
 }
 
+/** RULE 8 (LEAD 443.230, CC-3) — a booking whose deadhead could not be filled (its stops are geocoded only after commit)
+ *  queues THE re-learn engine (dispatch.relearn_load_miles: resolve stops, then recomputeFirstStopDeadhead) in the same
+ *  commit. Before, 13695 / 13696 / 13697 / 13699 kept a NULL first-stop leg forever (RULE 4 live). */
+export function bookingRelearnFailures(bookSrc) {
+  const at = bookSrc.indexOf("export async function fillDeadheadAtBooking(");
+  const body = at < 0 ? "" : bookSrc.slice(at, bookSrc.indexOf("\n}\n", at) > 0 ? bookSrc.indexOf("\n}\n", at) : undefined);
+  const refused = body.slice(body.indexOf("if (reason) {"));
+  return /await enqueueOutboxEvent\(\s*client as never,\s*"dispatch\.relearn_load_miles",/.test(refused)
+    ? []
+    : ["RULE 8 book-load.service.ts fillDeadheadAtBooking: a deadhead it could not fill is never measured again — queue dispatch.relearn_load_miles"];
+}
+
 /** RULE 7 (443.124) — the GPS stop correction learns the corrected route's lane through the one engine. */
 export function routeCorrectionFailures(gpsSrc, moduleSrc) {
   const out = [];
@@ -162,6 +174,8 @@ if (isMain) {
       ["RULE 7 a GPS correction without the lane learn fails", routeCorrectionFailures(gpsOk.replace("routeCorrected: true", ""), modOk).some((x) => x.startsWith("RULE 7"))],
       ["RULE 7 no route snapshot before the move fails", routeCorrectionFailures(gpsOk.replace("const routeBefore = await loadRouteKey(client, input.loadId);", ""), modOk).some((x) => x.startsWith("RULE 7"))],
       ["RULE 7 an engine that refuses a corrected route fails", routeCorrectionFailures(gpsOk, modOk.replace("!args.routeCorrected && ", "")).some((x) => x.startsWith("RULE 7"))],
+      ["RULE 8 a refusal that queues the re-learn passes", bookingRelearnFailures('export async function fillDeadheadAtBooking(x) {\n  if (reason) {\n    await enqueueOutboxEvent(\n      client as never,\n      "dispatch.relearn_load_miles",\n  }\n}\n').length === 0],
+      ["RULE 8 a silent refusal fails", bookingRelearnFailures('export async function fillDeadheadAtBooking(x) {\n  if (reason) {\n    await appendCrudAudit(client);\n  }\n}\n').some((x) => x.startsWith("RULE 8"))],
       ["an untouched lane fails", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: false, lane: "A -> B" }]).some((x) => x.startsWith("RULE 3"))],
     ];
     for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
@@ -171,6 +185,7 @@ if (isMain) {
   }
 
   const failures = [
+    ...bookingRelearnFailures(readFileSync(resolve(ROOT, "apps/backend/src/dispatch/book-load.service.ts"), "utf8")),
     ...routeCorrectionFailures(
       readFileSync(resolve(ROOT, "apps/backend/src/telematics/stop-gps-verification.service.ts"), "utf8"),
       readFileSync(resolve(ROOT, "apps/backend/src/dispatch/load-lane-learning.service.ts"), "utf8")
