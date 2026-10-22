@@ -13,7 +13,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const F = { link: "apps/backend/src/dispatch/presettlement-link.service.ts", routes: "apps/backend/src/dispatch/loads.routes.ts", book: "apps/backend/src/dispatch/book-load.service.ts" };
+const F = { link: "apps/backend/src/dispatch/presettlement-link.service.ts", routes: "apps/backend/src/dispatch/loads.routes.ts", book: "apps/backend/src/dispatch/book-load.service.ts", stops: "apps/backend/src/mdata/loads.routes.ts" };
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
 export function check(src = {}) {
@@ -37,6 +37,13 @@ export function check(src = {}) {
   if (!/const reassignableOnOpenTrip =\s*identityChanged && existing\.editable_settlement_id != null/.test(s.book) ||
       !/if \(!isRecalculable && !reassignableOnOpenTrip\)/.test(s.book))
     p.push(`${F.book}: a bill on the driver's OPEN pre-settlement refuses the driver change again`);
+  // 443.243 (19:12Z): an NB with no tour joins the driver's existing open pre-settlement (one per driver).
+  if (!/const openTrip = input\.trip_type === "NB" && !input\.tour_id \?/.test(s.link) || !/suggestedSettlementId = openTrip\.id;/.test(s.link))
+    p.push(`${F.link}: an NB with no tour opens a second pre-settlement for a driver who already has an open one`);
+  // the stop editor scopes the session to the load's company before the UPDATE (FORCE RLS on load_stops).
+  const stopRoute = s.stops.slice(s.stops.indexOf('app.patch("/api/v1/mdata/loads/:id/stops/:stopId"'));
+  if (!/await setScopedCompanyContext\(client, authUser\.uuid, requestedCompanyId\)/.test(stopRoute.slice(0, 6000)))
+    p.push(`${F.stops}: the stop editor writes load_stops without scoping the session (RLS 42501)`);
   return p;
 }
 
@@ -52,6 +59,8 @@ if (isMain && process.argv.includes("--selftest")) {
     ["other-driver NB counted (confirm)", { link: base.link.replace("AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM (SELECT driver_id", "AND (SELECT driver_id") }],
     ["reassigned load stays on the old driver's settlement", { link: base.link.replace("return moveLoadToNewDriverPresettlementInClientTx(", "return null; void (") }],
     ["bill on open trip refuses reassignment", { book: base.book.replace("if (!isRecalculable && !reassignableOnOpenTrip)", "if (!isRecalculable)") }],
+    ["NB without tour opens a second pre-settlement", { link: base.link.replace("suggestedSettlementId = openTrip.id;", "suggestedSettlementId = null;") }],
+    ["stop editor unscoped", { stops: base.stops.replace("? await setScopedCompanyContext(client, authUser.uuid, requestedCompanyId)", "? requestedCompanyId") }],
     ["facility_name dropped", { routes: base.routes.replace(/\n\s*facility_name: z\.string\(\)\.trim\(\)\.max\(200\)\.optional\(\),/, "") }],
   ];
   for (const [n, src] of plants) {

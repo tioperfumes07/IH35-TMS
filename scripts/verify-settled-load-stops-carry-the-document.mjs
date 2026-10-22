@@ -21,6 +21,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settled-load-stops-carry-the-document";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const F = {
+  geocode: "apps/backend/src/telematics/stops-geocode-backfill.service.ts",
   engine: "apps/backend/src/dispatch/settlement-document-load-facts.service.ts",
   routes: "apps/backend/src/dispatch/settlement-document-load-facts.routes.ts",
   index: "apps/backend/src/index.ts",
@@ -40,6 +41,8 @@ export function staticFailures(s) {
     out.push(`RULE 3 ${F.engine}: the load's stops must go through the one geocode → location → fence → Samsara pass`);
   if (!/applySettlementDocumentToLoad\(/.test(s.routes) || !s.index.includes("await registerSettlementDocumentLoadFactsRoutes(app);"))
     out.push(`RULE 4 ${F.routes}: the engine must be reachable (route registered in index.ts)`);
+  if (!/const zipStamped = [^\n]*"manual_seed"/.test(s.geocode))
+    out.push(`RULE 3 ${F.geocode}: a 'manual_seed' city-only stop is never marked as tried — it stays un-fenced and un-listed`);
   return out;
 }
 
@@ -76,6 +79,7 @@ if (isMain) {
       ["RULE 1 printed address applied", staticFailures(plant("engine", 'reason: "printed_address_differs_load_kept"', 'reason: "x"')).some((x) => x.startsWith("RULE 1"))],
       ["RULE 2 miles written around the engine", staticFailures(plant("engine", "// ---- miles", "await client.query(`UPDATE mdata.loads SET miles_shortest = 1`);\n  // ---- miles")).some((x) => x.startsWith("RULE 2"))],
       ["RULE 3 geocode pass dropped", staticFailures(plant("engine", "{ reresolve: true }", "{}")).some((x) => x.startsWith("RULE 3"))],
+      ["RULE 3 manual_seed not treated as a city center", staticFailures(plant("geocode", ', "manual_seed"]', "]")).some((x) => x.startsWith("RULE 3"))],
       ["RULE 4 route not registered", staticFailures(plant("index", "await registerSettlementDocumentLoadFactsRoutes(app);", "")).some((x) => x.startsWith("RULE 4"))],
       ["RULE 5 seed stop with no facility fails", liveFailures([{ load_number: "13665", sequence_number: 1, missing_facility: true, missing_zip: true, missing_fence: true, google_no_result: false }]).some((x) => x.startsWith("RULE 5"))],
       ["RULE 6 Google no-result is listed, not failed", liveFailures([{ load_number: "1", sequence_number: 1, missing_facility: false, missing_zip: false, missing_fence: true, google_no_result: true }]).length === 0],
