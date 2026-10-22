@@ -14,6 +14,7 @@ import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { allocateSettlementDisplayId } from "../driver-finance/settlement-display-id.js";
 import { reopenSettlementForContinuationInClientTx } from "../driver-finance/settlement-continuation.service.js";
+import { reassignLoadToSettlementInClientTx } from "../driver-finance/settlement-load-reassignment.service.js";
 
 export type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -757,7 +758,9 @@ export async function linkLoadToPresettlementAfterAssignmentInClientTx(
   client: DbClient,
   input: LinkAfterAssignmentInput
 ): Promise<LinkAtBookingResult | null> {
-  if (input.presettlement_link_id_before) return null;
+  if (input.presettlement_link_id_before) {
+    return moveLoadToNewDriverPresettlementInClientTx(client, { ...input, from_settlement_id: input.presettlement_link_id_before });
+  }
 
   if (!input.trip_type) {
     // driver_id is always known here (a required input to this function) — unlike book-load's own
@@ -811,4 +814,54 @@ export async function linkLoadToPresettlementAfterAssignmentInClientTx(
     tour_id: tourId,
     actor_user_id: input.actor_user_id,
   });
+}
+
+/**
+ * LEAD 443.243 / 443.244 (owner 2026-10-22: 13693 moves from Leonel / T175 to Jorge Luis / T177 as T177's advance load; "an
+ * advance load joins the driver's open pre-settlement"). A load already linked to a pre-settlement whose driver is NOT the
+ * load's new driver used to stay on the old driver's settlement (this linker no-op'd) and its bill then refused the
+ * reassignment (driver_bill_reassign_refused) — a booked load could never change driver. Now: while the old pre-settlement is
+ * still open and unposted, the load (its lines, deductions, reimbursements, bill pointer and bookends) moves through THE move
+ * primitive (reassignLoadToSettlementInClientTx) to the new driver's open pre-settlement — one open pre-settlement per driver is
+ * his current trip. A posted / closed / voided old settlement is settled history: unchanged (null). A new driver with no open
+ * pre-settlement is refused with a readable error (open his trip first), never left on the old driver's settlement.
+ */
+export async function moveLoadToNewDriverPresettlementInClientTx(
+  client: DbClient,
+  input: LinkAfterAssignmentInput & { from_settlement_id: string }
+): Promise<LinkAtBookingResult | null> {
+  const from = (await client.query<{ id: string; driver_id: string | null; movable: boolean }>(
+    `SELECT s.id::text, s.driver_id::text,
+            (s.status = 'open' AND s.trip_closed_at IS NULL AND s.posted_at IS NULL AND s.voided_at IS NULL
+             AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_runs gr
+                              WHERE gr.operating_company_id = s.operating_company_id AND gr.settlement_id = s.id AND gr.status = 'posted')) AS movable
+       FROM driver_finance.driver_settlements s
+      WHERE s.id = $1::uuid AND s.operating_company_id = $2::uuid
+      FOR UPDATE OF s`,
+    [input.from_settlement_id, input.operating_company_id]
+  )).rows[0];
+  if (!from || from.driver_id === input.driver_id || !from.movable) return null;
+  const target = (await client.query<{ id: string }>(
+    `SELECT s.id::text FROM driver_finance.driver_settlements s
+      WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2::uuid AND s.status = 'open'
+        AND s.trip_closed_at IS NULL AND s.posted_at IS NULL AND s.voided_at IS NULL
+      ORDER BY s.created_at DESC LIMIT 1
+      FOR UPDATE OF s`,
+    [input.operating_company_id, input.driver_id]
+  )).rows[0];
+  if (!target) {
+    throw new PresettlementLinkError(
+      "new_driver_has_no_open_presettlement",
+      "The new driver has no open pre-settlement (trip) to take this load — open his trip first; the load stays with its current driver."
+    );
+  }
+  const moved = await reassignLoadToSettlementInClientTx(client as never, {
+    operating_company_id: input.operating_company_id, load_id: input.load_id, target_settlement_id: target.id,
+    actor_user_id: input.actor_user_id, reason: "driver reassigned — the load follows its new driver's open pre-settlement (443.243)",
+  });
+  await appendCrudAudit(client, input.actor_user_id, "driver_finance.presettlement.load_followed_new_driver", {
+    operating_company_id: input.operating_company_id, load_id: input.load_id, from_settlement_id: from.id, from_driver_id: from.driver_id,
+    to_settlement_id: target.id, to_driver_id: input.driver_id, result: moved.kind,
+  }, "info", "443.243");
+  return { suggestion_id: "", settlement_id: target.id, action: "link_existing" };
 }

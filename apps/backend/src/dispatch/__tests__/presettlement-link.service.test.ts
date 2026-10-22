@@ -7,6 +7,7 @@ import {
   confirmPresettlementLink,
   linkLoadToPresettlementAfterAssignmentInClientTx,
   linkLoadToPresettlementAtBookingInClientTx,
+  moveLoadToNewDriverPresettlementInClientTx,
   recordDeferredPresettlementSuggestion,
   suggestPresettlementLink,
 } from "../presettlement-link.service.js";
@@ -20,6 +21,8 @@ const SUGGESTION_ID = "55555555-5555-5555-5555-555555555555";
 const USER_ID = "66666666-6666-6666-6666-666666666666";
 const { reopen } = vi.hoisted(() => ({ reopen: vi.fn().mockResolvedValue(true) }));
 vi.mock("../../driver-finance/settlement-continuation.service.js", () => ({ reopenSettlementForContinuationInClientTx: reopen }));
+const { moveLoad } = vi.hoisted(() => ({ moveLoad: vi.fn().mockResolvedValue({ kind: "ok" }) }));
+vi.mock("../../driver-finance/settlement-load-reassignment.service.js", () => ({ reassignLoadToSettlementInClientTx: moveLoad }));
 
 function makeClient(overrides: { openSettlement?: { id: string; display_id: string } | null; suggestionStatus?: string; targetClosed?: boolean; closedContinuation?: boolean; suggestionTour?: string | null; hasOtherNb?: boolean; historicalContinuation?: boolean; suggestionTripType?: "NB" | "TR" | "SB"; currentTripType?: "NB" | "TR" | "SB"; currentDriver?: string } = {}) {
   const calls: { sql: string; values: unknown[] }[] = [];
@@ -567,5 +570,35 @@ describe("LEAD 443.243 — an NB that left the driver does not occupy the open p
     const sql = calls.find((c) => c.sql.includes("AS has_other_nb"))!.sql;
     expect(sql).toContain("nb.assigned_primary_driver_id IS NOT DISTINCT FROM driver_settlements.driver_id");
     expect(sql).toContain("nb.status::text NOT IN ('cancelled', 'draft')");
+  });
+});
+
+describe("LEAD 443.243 — a reassigned load follows its new driver's open pre-settlement", () => {
+  const NEW_DRIVER = "77777777-7777-7777-7777-777777777777";
+  const TARGET = "88888888-8888-8888-8888-888888888888";
+  const client = (from: { driver_id: string; movable: boolean } | null, target: string | null) => ({
+    query: vi.fn(async (sql: string) => {
+      if (sql.includes("AS movable")) return { rows: from ? [{ id: OPEN_SETTLEMENT_ID, ...from }] : [] };
+      if (sql.includes("ORDER BY s.created_at DESC LIMIT 1")) return { rows: target ? [{ id: TARGET }] : [] };
+      return { rows: [] };
+    }),
+  });
+  const input = { operating_company_id: OPCO, load_id: LOAD_ID, presettlement_link_id_before: OPEN_SETTLEMENT_ID, from_settlement_id: OPEN_SETTLEMENT_ID,
+    driver_id: NEW_DRIVER, unit_id: null, trip_type: "NB" as const, tour_id: null, actor_user_id: USER_ID };
+  it("moves the load (lines, bill pointer, bookends) to the new driver's open pre-settlement", async () => {
+    moveLoad.mockClear();
+    const r = await moveLoadToNewDriverPresettlementInClientTx(client({ driver_id: DRIVER_ID, movable: true }, TARGET) as never, input);
+    expect(moveLoad).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ load_id: LOAD_ID, target_settlement_id: TARGET }));
+    expect(r).toMatchObject({ settlement_id: TARGET, action: "link_existing" });
+  });
+  it("same driver, or a posted / closed old settlement: unchanged", async () => {
+    moveLoad.mockClear();
+    expect(await moveLoadToNewDriverPresettlementInClientTx(client({ driver_id: NEW_DRIVER, movable: true }, TARGET) as never, input)).toBeNull();
+    expect(await moveLoadToNewDriverPresettlementInClientTx(client({ driver_id: DRIVER_ID, movable: false }, TARGET) as never, input)).toBeNull();
+    expect(moveLoad).not.toHaveBeenCalled();
+  });
+  it("a new driver with no open pre-settlement is refused readably — never left on the old driver's", async () => {
+    await expect(moveLoadToNewDriverPresettlementInClientTx(client({ driver_id: DRIVER_ID, movable: true }, null) as never, input))
+      .rejects.toMatchObject({ code: "new_driver_has_no_open_presettlement" });
   });
 });
