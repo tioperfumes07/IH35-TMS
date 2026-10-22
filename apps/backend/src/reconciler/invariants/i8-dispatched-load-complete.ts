@@ -41,7 +41,10 @@ export const I8_SQL = `
          l.load_number,
          l.created_at::text AS created_at,
          (l.assigned_unit_id IS NOT NULL) AS has_unit,
-         (tr.new_trailer_id IS NOT NULL OR ti.id IS NOT NULL) AS has_trailer,
+         (tr.new_trailer_id IS NOT NULL OR ti.id IS NOT NULL
+          -- LEAD 443.236 (gate): a recorded CUSTOMER trailer (the load's trailer choice — load-service loadServiceTrailerNumberSql)
+          -- is a trailer too; 13699 carries customer trailer L28591 and was flagged "no trailer".
+          OR (l.trailer_source = 'customer' AND l.non_owned_trailer_id IS NOT NULL)) AS has_trailer,
          (l.assigned_primary_driver_id IS NOT NULL) AS has_driver,
          (nullif(btrim(coalesce(l.customer_wo_number, '')), '') IS NOT NULL
            OR nullif(btrim(coalesce(l.customer_po_number, '')), '') IS NOT NULL) AS has_customer_reference
