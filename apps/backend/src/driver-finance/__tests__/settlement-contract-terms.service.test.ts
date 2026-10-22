@@ -123,7 +123,9 @@ describe("computeSettlementMpgBonus", () => {
     expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
   });
 
-  it("MPG > 7.0 => $35 extra_pay line + provenance", async () => {
+  // LEAD 443.232 — no bonus pay item is configured (owner decision): a qualifying bonus is SKIPPED BY NAME, never an itemless
+  // extra_pay line (the check violation that aborted the GPS positions tick for 9 h). Fails on the old writer (it inserted).
+  it("MPG > 7.0 with no bonus pay item => skipped by name, nothing written", async () => {
     const { client, calls } = makeClient([
       { match: "SUM(db.miles_basis)", rows: [{ miles: 750 }] },
       { match: "SUM(ft.gallons)", rows: [{ gallons: 100 }] },
@@ -131,14 +133,14 @@ describe("computeSettlementMpgBonus", () => {
       { match: "INSERT INTO driver_finance.settlement_lines", rows: [{ id: "sl1" }] },
     ]);
     const res = await computeSettlementMpgBonus(client, base);
-    expect(res.applied).toBe(true);
-    if (res.applied) {
-      expect(res.bonusCents).toBe(3500);
-      expect(res.mpg).toBeCloseTo(7.5, 5);
-    }
-    const lineInserts = insertsInto(calls, "driver_finance.settlement_lines");
-    expect(lineInserts).toHaveLength(1);
-    expect(lineInserts[0]!.values?.[2]).toBe(35); // dollars
+    expect(res.applied).toBe(false);
+    if (!res.applied) { expect(res.reason).toBe("bonus_pay_item_not_configured"); expect(res.mpg).toBeCloseTo(7.5, 5); }
+    expect(appendCrudAudit).toHaveBeenCalledWith(
+      expect.anything(), USER, "driver_finance.contract_bonus_skipped_no_pay_item", expect.any(Object), "warning", "LEAD-443-232"
+    );
+    // no ledger row, no itemless extra_pay line (settlement_lines_extra_pay_requires_item)
+    expect(insertsInto(calls, "driver_finance.settlement_contract_lines")).toHaveLength(0);
+    expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
   });
 
   it("source absent => fail-loud audit, no bonus", async () => {
@@ -160,29 +162,22 @@ describe("computeSettlementMpgBonus", () => {
     expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
   });
 
-  it("owner override forces compute when source absent", async () => {
+  it("owner override forces compute when source absent (then skipped: no bonus pay item)", async () => {
     const { client, calls } = makeClient([
       { match: "SUM(db.miles_basis)", rows: [{ miles: 0 }] },
       { match: "SUM(ft.gallons)", rows: [{ gallons: 0 }] },
-      { match: "INSERT INTO driver_finance.settlement_contract_lines", rows: [{ id: "c1" }] },
-      { match: "INSERT INTO driver_finance.settlement_lines", rows: [{ id: "sl1" }] },
     ]);
     const res = await computeSettlementMpgBonus(client, { ...base, mpgOverride: 9 });
-    expect(res.applied).toBe(true);
-    expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(1);
-  });
-
-  it("idempotent — provenance conflict (no id) => no second line", async () => {
-    const { client, calls } = makeClient([
-      { match: "SUM(db.miles_basis)", rows: [{ miles: 750 }] },
-      { match: "SUM(ft.gallons)", rows: [{ gallons: 100 }] },
-      { match: "INSERT INTO driver_finance.settlement_contract_lines", rows: [] }, // ON CONFLICT DO NOTHING
-    ]);
-    const res = await computeSettlementMpgBonus(client, base);
     expect(res.applied).toBe(false);
-    if (!res.applied) expect(res.reason).toBe("already_applied");
+    if (!res.applied) { expect(res.reason).toBe("bonus_pay_item_not_configured"); expect(res.mpg).toBe(9); }
+    expect(appendCrudAudit).toHaveBeenCalledWith(
+      expect.anything(), USER, "driver_finance.contract_bonus_skipped_no_pay_item", expect.any(Object), "warning", "LEAD-443-232"
+    );
+    // no ledger row, no itemless extra_pay line (settlement_lines_extra_pay_requires_item)
+    expect(insertsInto(calls, "driver_finance.settlement_contract_lines")).toHaveLength(0);
     expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
   });
+
 });
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -192,20 +187,19 @@ describe("computeReferralBonuses", () => {
   const base = { settlementId: SETTLEMENT, referrerDriverId: DRIVER, operatingCompanyId: OC, actorUserId: USER, config: CONFIG };
   const yesterdayIso = new Date(Date.now() - 40 * 24 * 3600 * 1000).toISOString().slice(0, 10); // 40 days ago
 
-  it("referred driver worked >= 30 days => $200 line + stamp", async () => {
+  it("referred driver worked >= 30 days with no bonus pay item => skipped by name, not stamped", async () => {
     const { client, calls } = makeClient([
       { match: "referred_by_driver_id", rows: [{ id: "ref1", first_name: "Juan", last_name: "Perez", hire_date: yesterdayIso }] },
-      { match: "INSERT INTO driver_finance.settlement_contract_lines", rows: [{ id: "c1" }] },
-      { match: "INSERT INTO driver_finance.settlement_lines", rows: [{ id: "sl1" }] },
     ]);
     const res = await computeReferralBonuses(client, base);
-    expect(res.appliedCount).toBe(1);
-    expect(res.appliedCents).toBe(20000);
-    expect(res.referredDriverIds).toEqual(["ref1"]);
-    const lineInserts = insertsInto(calls, "driver_finance.settlement_lines");
-    expect(lineInserts[0]!.values?.[2]).toBe(200); // dollars
-    // idempotency stamp update
-    expect(calls.some((c) => c.sql.includes("SET referral_reward_paid_at = now()"))).toBe(true);
+    expect(res.appliedCount).toBe(0);
+    expect(appendCrudAudit).toHaveBeenCalledWith(
+      expect.anything(), USER, "driver_finance.contract_bonus_skipped_no_pay_item", expect.any(Object), "warning", "LEAD-443-232"
+    );
+    // no ledger row, no itemless extra_pay line (settlement_lines_extra_pay_requires_item)
+    expect(insertsInto(calls, "driver_finance.settlement_contract_lines")).toHaveLength(0);
+    expect(insertsInto(calls, "driver_finance.settlement_lines")).toHaveLength(0);
+    expect(calls.some((c) => c.sql.includes("SET referral_reward_paid_at = now()"))).toBe(false);
   });
 
   it("referred driver at 29 days (edge row) => skipped by the day guard", async () => {
