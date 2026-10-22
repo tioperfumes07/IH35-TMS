@@ -40,7 +40,9 @@ export function auditLoadColumn(sources, leaves) {
   // the same #9817-style disclosure).
   // Floor re-verified live 2026-10-05 (Devin, push-gate): merged seats added 3 more P10 load
   // leaves — live count 101, so removing the planted leaf must trip below it. Bumped 98 -> 101.
-  if (p10.length < 101) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
+  // 443.239-D9 (CC-1, 2026-10-22): dispatch.LoadStopsRecordTab added with `load` required —
+  // live P10 count 102. Bumped 101 -> 102.
+  if (p10.length < 102) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
   // LINK-F5169 classified the final blanket Required tail leaf-by-leaf, leaving 134 genuine load
   // leaves at the time. Floor lowered to 131 (2026-08-20, CC-3) to match #9817
   // FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION, a legitimate, documented honesty correction that
@@ -64,7 +66,8 @@ export function auditLoadColumn(sources, leaves) {
   // required set -- re-verified live count is 131 total / 98 P10. Bumped 130 -> 131.
   // Re-verified live 2026-10-05 (Devin, push-gate): merged seats added 3 more load leaves —
   // live count 134, so removing the planted leaf must trip below it. Bumped 131 -> 134.
-  if (leaves.length < 134) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  // 443.239-D9 (CC-1, 2026-10-22): dispatch.LoadStopsRecordTab new leaf — live 135. Bumped 134 -> 135.
+  if (leaves.length < 135) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
   for (const id of ["accounting.list", "accounting.submit", "accounting.detail"]) {
     if (leaves.some((leaf) => leaf.module === "factoring" && leaf.id === id)) failures.push(`factoring:${id} must not invent a per-advance load FK`);
   }

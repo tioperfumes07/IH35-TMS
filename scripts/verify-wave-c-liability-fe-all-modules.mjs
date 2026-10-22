@@ -22,7 +22,8 @@ const contracts = [
   ["apps/frontend/src/pages/safety/InternalFinesPage.tsx", /<EntityLink kind="liability"/],
   ["apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx", /<EntityLink kind="liability" id=\{entry\.linked_liability_id\}/],
   ["apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx", /<EntityLink kind="liability" id=\{item\.id\}/],
-  ["apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", /to: "\/liabilities"/],
+  // 443.258-B moved Settlements nav to settlementsSubnav.ts with /driver-finance/liabilities path
+  ["apps/frontend/src/pages/driver-finance/settlementsSubnav.ts", /to: "\/driver-finance\/liabilities"/],
   ["apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx", /Total Liabilities & Equity/],
   ["apps/frontend/src/pages/banking/RecordCCPaymentModal.tsx", /liabilityAccountId/],
 ];
