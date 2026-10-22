@@ -2414,8 +2414,12 @@ function isRound443235LiveMapBoardReadPath(f) {
 // GATE-SCOPE 443.235 — GRANT-only label-resolver migration cannot invent load-born postings.
 // db/migrations/ blanket armed tip RULE 2 stamp ambient (verify-every-load-born-posting-carries-its-load)
 // from a privilege GRANT that never posts. Exact-file domains for this migration still arm its own guard.
+// CLAIMED-MIGRATION-NUMBERS.json is the same claim reservation — also not a money writer.
 function isRound443235GuardLabelGrantOnlyMigration(f) {
-  return f === "db/migrations/202616131600_grant_label_resolvers_to_guard_reader.sql";
+  return (
+    f === "db/migrations/202616131600_grant_label_resolvers_to_guard_reader.sql" ||
+    f === "db/migrations/CLAIMED-MIGRATION-NUMBERS.json"
+  );
 }
 
 // GATE-SCOPE-04 (LEAD, ROUND 389) — a COMMENT-ONLY diff cannot change a production row, so it cannot
