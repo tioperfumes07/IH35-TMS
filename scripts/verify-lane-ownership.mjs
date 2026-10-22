@@ -102,6 +102,46 @@ export function classifyFiles(files, seat, sections) {
   return { violations, forbidden };
 }
 
+// ROUND 443.255 R3 — any seat may APPEND its own claims to CLAIMED-NUMBERS.json.
+// Rule: (a) no existing key may be deleted or modified; (b) every new key must carry
+// claimed_by = committing-seat (case-insensitive, hyphens stripped: "cc-1" ≡ "cc1").
+// The file is in LANES.md SHARED so classifyFiles never flags it; this check is the ONLY gate.
+export const CLAIM_REGISTRY_PATH = 'scripts/verify-steps/CLAIMED-NUMBERS.json';
+
+/**
+ * Pure: returns [] on pass, or a list of problem strings on fail.
+ * baseJson / headJson are the raw JSON strings (or parsed objects for testing).
+ */
+export function checkClaimRegistryAppendOnly(seat, baseJson, headJson) {
+  const norm = (s) => String(s ?? '').toLowerCase().replace(/-/g, '');
+  try {
+    const base = typeof baseJson === 'string' ? JSON.parse(baseJson) : baseJson;
+    const head = typeof headJson === 'string' ? JSON.parse(headJson) : headJson;
+    const problems = [];
+    // (a) no existing key deleted or modified (skip total_claimed counter)
+    for (const [k, bv] of Object.entries(base)) {
+      if (k === 'total_claimed') continue;
+      if (!(k in head)) { problems.push(`CLAIM_REGISTRY_DELETE: key "${k}" was removed — only additions allowed`); continue; }
+      if (JSON.stringify(head[k]) !== JSON.stringify(bv)) {
+        const owner = typeof head[k] === 'object' ? (head[k].claimed_by ?? 'cc-1') : 'cc-1';
+        if (norm(owner) !== norm(seat)) problems.push(`CLAIM_REGISTRY_MODIFY: key "${k}" (claimed by ${owner}) was modified by ${seat}`);
+        // allow owner to amend their OWN entry
+      }
+    }
+    // (b) new keys must carry claimed_by = this seat
+    for (const [k, hv] of Object.entries(head)) {
+      if (k === 'total_claimed') continue;
+      if (k in base) continue; // not new
+      const claimedBy = typeof hv === 'object' ? (hv.claimed_by ?? null) : null;
+      if (!claimedBy) { problems.push(`CLAIM_REGISTRY_NO_CLAIMED_BY: new key "${k}" has no claimed_by field`); continue; }
+      if (norm(claimedBy) !== norm(seat)) problems.push(`CLAIM_REGISTRY_WRONG_SEAT: new key "${k}" claims ${claimedBy} but committing seat is ${seat}`);
+    }
+    return problems;
+  } catch (e) {
+    return [`CLAIM_REGISTRY_PARSE_ERROR: ${e.message}`];
+  }
+}
+
 /**
  * LEAD 14:30Z — a violation is authorized when a SURFACE-BREACH-AUTHORIZED line in the branch's commit bodies names
  * the file's OWNING seat. A line naming another seat authorizes nothing. LEAD 14:50Z: an UNASSIGNED file (no LANES.md
@@ -166,6 +206,17 @@ if (process.argv.includes("--selftest")) {
   expect('a dependabot branch touching backend source still FAILS', botBackend.violations.length === 1);
   expect('a CC seat keeps its SHARED grant (apps/frontend/**)', classifyFiles(['apps/frontend/src/main.tsx'], 'CC-2', botSections).violations.length === 0);
   expect('the real LANES.md carries the DEPENDABOT lane', (parseLanes(readFileSync(LANES_FILE, 'utf8')).sections?.DEPENDABOT ?? []).includes('package*.json'));
+  // ROUND 443.255 R3 — claim registry append-only check selftests
+  const baseReg = { '18677': { claimed_by: 'cc-3', purpose: 'x' } };
+  expect('CODEX appending its own claim passes', checkClaimRegistryAppendOnly('CODEX', baseReg, { ...baseReg, '18693': { claimed_by: 'codex', purpose: 'y' } }).length === 0);
+  expect('CC-1 appending its own claim passes', checkClaimRegistryAppendOnly('CC-1', baseReg, { ...baseReg, '18681': { claimed_by: 'cc-1', purpose: 'y' } }).length === 0);
+  expect('seat amending its own entry passes', checkClaimRegistryAppendOnly('CC-3', baseReg, { '18677': { claimed_by: 'cc-3', purpose: 'updated' } }).length === 0);
+  expect('CC-1 modifying a CC-3 entry fails', checkClaimRegistryAppendOnly('CC-1', baseReg, { '18677': { claimed_by: 'cc-3', purpose: 'tampered' } }).some((p) => p.startsWith('CLAIM_REGISTRY_MODIFY')));
+  expect('any seat deleting an entry fails', checkClaimRegistryAppendOnly('CC-1', baseReg, {}).some((p) => p.startsWith('CLAIM_REGISTRY_DELETE')));
+  expect('new entry without claimed_by fails', checkClaimRegistryAppendOnly('CODEX', baseReg, { ...baseReg, '18693': 'bare-string' }).some((p) => p.startsWith('CLAIM_REGISTRY_NO_CLAIMED_BY')));
+  expect('new entry with wrong seat fails', checkClaimRegistryAppendOnly('CODEX', baseReg, { ...baseReg, '18693': { claimed_by: 'cc-1', purpose: 'y' } }).some((p) => p.startsWith('CLAIM_REGISTRY_WRONG_SEAT')));
+  expect('cc-1 vs CC-1 vs cc1 normalised correctly (own claim)', checkClaimRegistryAppendOnly('CC-1', baseReg, { ...baseReg, '18681': { claimed_by: 'cc1', purpose: 'y' } }).length === 0);
+  expect('real LANES.md SHARED contains CLAIMED-NUMBERS path', (parseLanes(readFileSync(LANES_FILE, 'utf8')).sections?.SHARED ?? []).includes(CLAIM_REGISTRY_PATH));
   // LEAD 14:30Z — SURFACE-BREACH-AUTHORIZED lines are the cross-lane authorization (one system with the surface guard).
   const withLine = authorizeViolations(cross.violations, 'FINDING: X\n\nSURFACE-BREACH-AUTHORIZED: CC-1 heavy CI peel (Lead ruling 13:45Z)');
   expect('cross-lane file + line naming its owner passes', withLine.unauthorized.length === 0 && withLine.authorized.length === 1);
@@ -188,8 +239,9 @@ const sections = parsed.sections;
 
 // ---- changed files ----------------------------------------------------------
 let files = [];
+let mergeBase = '';
 try {
-  const mergeBase = execSync(`git merge-base ${BASE} HEAD`, { encoding: 'utf8' }).trim();
+  mergeBase = execSync(`git merge-base ${BASE} HEAD`, { encoding: 'utf8' }).trim();
   files = execSync(`git diff --name-only ${mergeBase}..HEAD`, { encoding: 'utf8' })
     .split('\n').map((s) => s.trim()).filter(Boolean);
 } catch (e) {
@@ -260,6 +312,20 @@ if (cross) {
   if (!existsSync(p)) fail(`LANE_CROSS names "${cross}" but ${p} does not exist. A ruling you cannot open is not a ruling.`);
   crossOk = true;
   console.log(`  lane cross authorised by ${p}`);
+}
+
+// ---- claim registry append-only check (ROUND 443.255 R3) --------------------
+if (files.includes(CLAIM_REGISTRY_PATH)) {
+  try {
+    const baseText = execSync(`git show ${mergeBase}:${CLAIM_REGISTRY_PATH}`, { encoding: 'utf8' });
+    const headText = readFileSync(CLAIM_REGISTRY_PATH, 'utf8');
+    const problems = checkClaimRegistryAppendOnly(seat, baseText, headText);
+    if (problems.length) fail(`${CLAIM_REGISTRY_PATH}: append-only constraint violated:\n` + problems.map((p) => `    ${p}`).join('\n'));
+    console.log(`  claim-registry: CLAIMED-NUMBERS.json append check PASS (seat ${seat})`);
+  } catch (e) {
+    if (e.message.includes('append-only')) throw e; // re-throw our own fail
+    fail(`claim-registry: could not read base version of ${CLAIM_REGISTRY_PATH}: ${e.message}`);
+  }
 }
 
 // ---- verdict ----------------------------------------------------------------
