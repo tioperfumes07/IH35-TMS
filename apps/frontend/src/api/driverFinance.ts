@@ -146,6 +146,24 @@ function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
 
+export type SettlementListKpi = {
+  total_unpaid: number;
+  this_period: number;
+  drivers_with_debt: number;
+  pending_acks: number;
+  held_deductions: number;
+  ytd_settlements: number;
+  driver_pay_this_period: number;
+  pipeline: {
+    unpaid: number;
+    queued: number;
+    sent_to_bank: number;
+    cleared: number;
+    bounced: number;
+    manual_paid: number;
+  };
+};
+
 export function listSettlements(
   companyId: string,
   options: {
@@ -157,6 +175,7 @@ export function listSettlements(
       | "bounced"
       | "manual_paid"
       | Array<"unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid">;
+    driver_id?: string;
   } = {}
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId });
@@ -166,7 +185,8 @@ export function listSettlements(
   } else if (states) {
     params.set("payment_state", states);
   }
-  return apiRequest<{ settlements: SettlementListRow[]; total_count: number }>(`/api/v1/driver-finance/settlements?${params.toString()}`);
+  if (options.driver_id) params.set("driver_id", options.driver_id);
+  return apiRequest<{ settlements: SettlementListRow[]; total_count: number; kpi?: SettlementListKpi }>(`/api/v1/driver-finance/settlements?${params.toString()}`);
 }
 
 export function getSettlement(id: string, companyId: string) {

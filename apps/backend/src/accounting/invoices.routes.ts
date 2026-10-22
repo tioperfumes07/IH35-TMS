@@ -491,6 +491,26 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         [q.operating_company_id]
       );
       const voidedCount = Number(voidedCountRes.rows[0]?.n ?? 0);
+      // 443.218 F4: server-side KPI over the full set so AccountingHub Open Invoices / Overdue A/R
+      // are never computed from the capped page (first 100 of 233).
+      const kpiRes = await client.query(
+        `SELECT
+           COUNT(*) FILTER (WHERE i.voided_at IS NULL AND i.status NOT IN ('void','voided') AND i.amount_open_cents > 0) AS open_count,
+           COALESCE(SUM(i.amount_open_cents) FILTER (WHERE i.voided_at IS NULL AND i.status NOT IN ('void','voided') AND i.amount_open_cents > 0), 0) AS open_amount_cents,
+           COUNT(*) FILTER (WHERE i.voided_at IS NULL AND i.status NOT IN ('void','voided') AND i.amount_open_cents > 0 AND i.due_date < CURRENT_DATE) AS overdue_count,
+           COALESCE(SUM(i.amount_open_cents) FILTER (WHERE i.voided_at IS NULL AND i.status NOT IN ('void','voided') AND i.amount_open_cents > 0 AND i.due_date < CURRENT_DATE), 0) AS overdue_amount_cents
+         FROM accounting.invoices i
+         LEFT JOIN mdata.customers c ON c.id = i.customer_id AND c.operating_company_id = i.operating_company_id AND c.operating_company_id = $1::uuid
+         WHERE i.operating_company_id = $1::uuid ${extraSql}`,
+        values
+      );
+      const kr4 = kpiRes.rows[0] as Record<string, unknown> | undefined;
+      const invoiceKpi = {
+        open_count: Number(kr4?.open_count ?? 0),
+        open_amount_cents: Number(kr4?.open_amount_cents ?? 0),
+        overdue_count: Number(kr4?.overdue_count ?? 0),
+        overdue_amount_cents: Number(kr4?.overdue_amount_cents ?? 0),
+      };
       values.push(q.limit);
       const limitIdx = values.length;
       values.push(q.offset);
@@ -540,7 +560,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return { rows: res.rows, total, voidedCount };
+      return { rows: res.rows, total, voidedCount, invoiceKpi };
     });
     const invoices = listed.rows;
     const total = listed.total;
@@ -548,6 +568,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       invoices,
       total,
       voided_count: listed.voidedCount,
+      kpi: listed.invoiceKpi,
       limit: q.limit,
       offset: q.offset,
       has_more: q.offset + invoices.length < total,
