@@ -1,6 +1,6 @@
 {
  "date": "2026-10-22",
- "generated_at_iso": "2026-10-22T06:48:04.466Z",
+ "generated_at_iso": "2026-10-22T12:43:46.358Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27156,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-22T06:48:38Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27155,
    "title": "Cursor- docs(bus): 443.231b DONE — LIVE available-units parity on SEATS-TO-LEAD",
    "mergedAt": "2026-10-22T04:47:22Z",
@@ -17330,12 +17336,6 @@
    "title": "Claude-3- FINDING: ACCT-F443991 LANE: FINANCIAL -- 443.99 C: Creator Edit voids prior deductions; lease guard probe released",
    "mergedAt": "2026-10-12T10:01:29Z",
    "branch": "cc-3/443-99-c-fixes"
-  },
-  {
-   "number": 26529,
-   "title": "CC-2-443-99 class B: 18 stale UI/static guards re-anchored",
-   "mergedAt": "2026-10-12T09:44:27Z",
-   "branch": "cc-2/443-99-class-b"
   }
  ],
  "merged_pr_total": 3000,
