@@ -406,7 +406,9 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   };
 }
 
-const toursQuery = z.object({ operating_company_id: z.string().uuid(), state: z.enum(["open", "closed"]).default("open"), limit: z.coerce.number().int().min(1).max(200).default(60) });
+// 443.218 F3: default raised to 200 so money-footer totals cover the full set (82 closed tours on USMCA).
+// total_count from COUNT(*) (no LIMIT) fixes the badge — count: rows.length was wrong on a capped page.
+const toursQuery = z.object({ operating_company_id: z.string().uuid(), state: z.enum(["open", "closed"]).default("open"), limit: z.coerce.number().int().min(1).max(200).default(200) });
 
 export type TourListRow = {
   settlement_id: string; display_id: string | null;
@@ -451,7 +453,7 @@ export type TourListRow = {
  * LOADS, FROM THERE I AM GOING TO CLOSE THE LOAD"). The Load costs board's Pre-Settlement tab lists every OPEN tour,
  * the Settlement tab every CLOSED one, each row built from the SAME buildTourReadout — one read model, no second sum.
  */
-export async function listTours(client: Db, companyId: string, state: "open" | "closed", limit: number): Promise<TourListRow[]> {
+export async function listTours(client: Db, companyId: string, state: "open" | "closed", limit: number): Promise<{ rows: TourListRow[]; total_count: number }> {
   // SETL-REVERSED-HIDE (owner 2026-09-11, live-measured on USMCA prod): "in settlements i have 12 …
   // the numbers do not add up." The Settlement/Pre-Settlement register keyed CLOSED/OPEN purely off
   // `trip_closed_at`, with NO status filter — so a REVERSED settlement (status='cancelled',
@@ -461,12 +463,23 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
   // row is retained, never shown as a live settlement) — the same treatment `voided_at IS NULL`
   // already gives. is_sample_data is excluded per Rule 49 (sample never counts in a real list).
   // Measured BEFORE: closed 51 / open 12. AFTER: reversed+cancelled+sample drop out.
+  const stateFilter = state === "open" ? "s.trip_closed_at IS NULL" : "s.trip_closed_at IS NOT NULL";
+  // 443.218 F3: real COUNT(*) for the badge — rows.length was the capped page, not the full set.
+  const totalRes = await client.query<{ total: string }>(
+    `SELECT COUNT(*)::text AS total FROM driver_finance.driver_settlements s
+      WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL
+        AND s.reversed_at IS NULL AND s.status <> 'cancelled' AND s.is_sample_data IS NOT TRUE
+        AND (s.settlement_model = 'load_bookended' OR s.first_load_id IS NOT NULL)
+        AND ${stateFilter}`,
+    [companyId]
+  );
+  const total_count = Number(totalRes.rows[0]?.total ?? 0);
   const ids = await client.query<{ id: string }>(
     `SELECT s.id FROM driver_finance.driver_settlements s
       WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL
         AND s.reversed_at IS NULL AND s.status <> 'cancelled' AND s.is_sample_data IS NOT TRUE
         AND (s.settlement_model = 'load_bookended' OR s.first_load_id IS NOT NULL)
-        AND ${state === "open" ? "s.trip_closed_at IS NULL" : "s.trip_closed_at IS NOT NULL"}
+        AND ${stateFilter}
       ORDER BY ${state === "open" ? "s.trip_started_at DESC NULLS LAST, s.created_at DESC" : "s.trip_closed_at DESC"}
       LIMIT $2`,
     [companyId, limit]
@@ -512,7 +525,7 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
       company_settlement_display_id: r.company_settlement?.display_id ?? null,
     });
   }
-  return out;
+  return { rows: out, total_count };
 }
 
 export async function registerTourReadoutRoutes(app: FastifyInstance) {
@@ -521,8 +534,8 @@ export async function registerTourReadoutRoutes(app: FastifyInstance) {
   app.get("/api/v1/driver-finance/tours", RL, async (req, reply) => {
     const user = authed(req, reply); if (!user) return;
     const q = toursQuery.safeParse(req.query ?? {}); if (!q.success) return validationError(reply, q.error);
-    const { rows, voidedCount } = await withCompany(user.uuid, q.data.operating_company_id, async (client) => {
-      const rows = await listTours(client, q.data.operating_company_id, q.data.state, q.data.limit);
+    const { rows, total_count: tourTotalCount, voidedCount } = await withCompany(user.uuid, q.data.operating_company_id, async (client) => {
+      const { rows, total_count } = await listTours(client, q.data.operating_company_id, q.data.state, q.data.limit);
       // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
       // same class of defect as a badge that never renders"). listTours' own SETL-REVERSED-HIDE
       // WHERE clause permanently excludes cancelled/reversed/voided settlements from this register
@@ -540,9 +553,10 @@ export async function registerTourReadoutRoutes(app: FastifyInstance) {
             AND ${q.data.state === "open" ? "s.trip_closed_at IS NULL" : "s.trip_closed_at IS NOT NULL"}`,
         [q.data.operating_company_id]
       );
-      return { rows, voidedCount: Number(voidedRes.rows[0]?.n ?? 0) };
+      return { rows, total_count, voidedCount: Number(voidedRes.rows[0]?.n ?? 0) };
     });
-    return { state: q.data.state, count: rows.length, voided_count: voidedCount, rows };
+    // 443.218 F3: count is the real total (from COUNT(*)), not rows.length (the capped page).
+    return { state: q.data.state, count: tourTotalCount, voided_count: voidedCount, rows };
   });
 
   app.get("/api/v1/driver-finance/pre-settlements/:id/readout", RL, async (req, reply) => {

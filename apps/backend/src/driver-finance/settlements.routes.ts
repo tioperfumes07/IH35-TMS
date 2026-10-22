@@ -279,6 +279,32 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         `SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND ${where.join(" AND ")}`,
         values
       );
+      // 443.218 F2: KPI aggregates over ALL matching rows (no LIMIT) so tiles are never truncated.
+      // driver_pay_this_period uses stored net_pay (0 for pre-close open tours) — acceptable for
+      // KPI display; live accrual per-row is too expensive across the full set.
+      const kpiRes = await client.query(
+        `SELECT
+           COUNT(*) FILTER (WHERE s.status <> 'paid') AS total_unpaid,
+           COUNT(*) FILTER (WHERE s.period_end >= (CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::int * INTERVAL '1 day')) AS this_period,
+           COUNT(DISTINCT s.driver_id) FILTER (WHERE EXISTS (
+             SELECT 1 FROM driver_finance.driver_liabilities dl
+             WHERE dl.driver_id = s.driver_id AND dl.current_balance > 0
+           )) AS drivers_with_debt,
+           COUNT(*) FILTER (WHERE v.has_pending_acks = true) AS pending_acks,
+           COUNT(*) FILTER (WHERE s.status = 'held') AS held_deductions,
+           COUNT(*) FILTER (WHERE s.period_end >= DATE_TRUNC('year', CURRENT_DATE)) AS ytd_settlements,
+           COALESCE(SUM(s.net_pay) FILTER (WHERE s.period_end >= (CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::int * INTERVAL '1 day') AND s.status <> 'cancelled'), 0) AS driver_pay_this_period,
+           COUNT(*) FILTER (WHERE COALESCE(s.payment_state, 'unpaid') = 'unpaid') AS pipeline_unpaid,
+           COUNT(*) FILTER (WHERE s.payment_state = 'queued') AS pipeline_queued,
+           COUNT(*) FILTER (WHERE s.payment_state = 'sent_to_bank') AS pipeline_sent_to_bank,
+           COUNT(*) FILTER (WHERE s.payment_state = 'cleared') AS pipeline_cleared,
+           COUNT(*) FILTER (WHERE s.payment_state = 'bounced') AS pipeline_bounced,
+           COUNT(*) FILTER (WHERE s.payment_state = 'manual_paid') AS pipeline_manual_paid
+         FROM driver_finance.driver_settlements s
+         JOIN views.driver_settlement_with_debt v ON v.id = s.id
+         WHERE s.operating_company_id = $1::uuid AND ${where.join(" AND ")}`,
+        values
+      );
       values.push(q.limit, q.offset);
       const rowsRes = await client.query(
         `
@@ -430,9 +456,27 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           };
         })
       );
-      return { rows, total: Number((countRes.rows[0] as { cnt?: number } | undefined)?.cnt ?? 0) };
+      const kr = kpiRes.rows[0] as Record<string, unknown> | undefined;
+      const kpi = {
+        total_unpaid: Number(kr?.total_unpaid ?? 0),
+        this_period: Number(kr?.this_period ?? 0),
+        drivers_with_debt: Number(kr?.drivers_with_debt ?? 0),
+        pending_acks: Number(kr?.pending_acks ?? 0),
+        held_deductions: Number(kr?.held_deductions ?? 0),
+        ytd_settlements: Number(kr?.ytd_settlements ?? 0),
+        driver_pay_this_period: Number(kr?.driver_pay_this_period ?? 0),
+        pipeline: {
+          unpaid: Number(kr?.pipeline_unpaid ?? 0),
+          queued: Number(kr?.pipeline_queued ?? 0),
+          sent_to_bank: Number(kr?.pipeline_sent_to_bank ?? 0),
+          cleared: Number(kr?.pipeline_cleared ?? 0),
+          bounced: Number(kr?.pipeline_bounced ?? 0),
+          manual_paid: Number(kr?.pipeline_manual_paid ?? 0),
+        },
+      };
+      return { rows, total: Number((countRes.rows[0] as { cnt?: number } | undefined)?.cnt ?? 0), kpi };
     });
-    return { settlements: payload.rows, total_count: payload.total };
+    return { settlements: payload.rows, total_count: payload.total, kpi: payload.kpi };
   });
 
   // Reverse drill-through: list all historical settlements for a specific driver.

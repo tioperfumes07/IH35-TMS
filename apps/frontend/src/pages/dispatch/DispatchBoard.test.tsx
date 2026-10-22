@@ -6,7 +6,7 @@ import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
 import { ToastProvider } from "../../components/Toast";
 import { DispatchBoard, currentLoadPerUnit } from "./DispatchBoard";
-import { listOpenPreSettlements } from "../../api/driverFinance";
+import { listOpenPreSettlementsByDriver } from "../../api/driverFinance";
 
 vi.mock("../../api/dispatch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/dispatch")>();
@@ -34,7 +34,7 @@ vi.mock("../../api/driverFinance", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/driverFinance")>();
   return {
     ...actual,
-    listOpenPreSettlements: vi.fn().mockResolvedValue({ pre_settlements: [] }),
+    listOpenPreSettlementsByDriver: vi.fn().mockResolvedValue({ pre_settlements: [] }),
   };
 });
 
@@ -302,7 +302,7 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
   });
 
   it("does not disguise a failed pre-settlement linkage read as no open cycle", async () => {
-    vi.mocked(listOpenPreSettlements).mockRejectedValueOnce(new Error("pre-settlement unavailable"));
+    vi.mocked(listOpenPreSettlementsByDriver).mockRejectedValueOnce(new Error("pre-settlement unavailable"));
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>

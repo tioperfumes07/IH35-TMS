@@ -549,6 +549,9 @@ export function listInvoices(
     /** R-102-B item 5 — company-wide count of voided invoices, so the list can disclose what
      * "Active (hide voided)" is hiding: "{total} live, {voided_count} voided". */
     voided_count?: number;
+    /** 443.218 F4: server KPI aggregates over the full set — AccountingHub reads these instead of
+     *  filtering the capped page (first 100 of 233 invoices). */
+    kpi?: { open_count: number; open_amount_cents: number; overdue_count: number; overdue_amount_cents: number };
     limit?: number;
     offset?: number;
     has_more?: boolean;

@@ -11,8 +11,10 @@ export type PullSource = {
   party_ref_id: string | null; category: string;
 };
 
-/** Full document snapshot, not a paged register. This is NOT an additional GL or
- * bank-cash calculation: the manual worksheet retains its document snapshot semantics. */
+/** Full open-document snapshot, not a paged register. The chosen date is the
+ * forecast snapshot date; open bills/invoices must not disappear because their
+ * issue date is missing or future. Same-day expense/payment documents retain
+ * their transaction-day filter. This is not another GL or bank-cash calculator. */
 export const MANUAL_PULL_SOURCES_SQL = `
  SELECT 'bill'::text AS kind, b.id::text AS id, 'expense'::text AS direction,
         ${BILL_OPEN_BALANCE_SQL}::bigint AS amount_cents,
@@ -22,7 +24,7 @@ export const MANUAL_PULL_SOURCES_SQL = `
  FROM accounting.bills b
  LEFT JOIN mdata.vendors v ON v.id::text=COALESCE(b.mdata_vendor_id::text,b.vendor_uuid::text)
    AND v.operating_company_id=b.operating_company_id
- WHERE b.operating_company_id=$1::uuid AND b.bill_date <= $2::date
+ WHERE b.operating_company_id=$1::uuid
    AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
  UNION ALL
  SELECT 'expense',e.id::text,'expense',e.total_amount_cents::bigint,
@@ -50,7 +52,7 @@ export const MANUAL_PULL_SOURCES_SQL = `
         CASE WHEN c.id IS NOT NULL THEN 'customer' END,c.id::text,'Invoice (software)'
  FROM accounting.invoices i
  LEFT JOIN mdata.customers c ON c.id=i.customer_id AND c.operating_company_id=i.operating_company_id
- WHERE i.operating_company_id=$1::uuid AND i.issue_date <= $2::date
+ WHERE i.operating_company_id=$1::uuid
    AND ${openArInvoiceConditions("i").join(" AND ")}
  ORDER BY kind,id`;
 
