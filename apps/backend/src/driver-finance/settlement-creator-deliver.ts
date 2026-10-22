@@ -113,6 +113,52 @@ export async function stampStopsFromTracking(
       out.push({ ...base, precision: "already_stamped", stop_event_id: null, arrival_at: null, departure_at: null, note: "stop already carried an actual time — not overwritten" });
       continue;
     }
+    // LEAD 443.238 (owner 10-22) — a stop served by the local YARD SHUTTLE (dispatch.load_shuttle_legs): the evidence is the
+    // shuttle leg, not the line truck (which was never at the shipper). A leg tied to the shuttle unit's GPS stop event stamps
+    // that event's times (tracked); a leg resting on the owner's ruling stamps the leg's date (date_only, source manual) — the
+    // event is attested, its clock time is not invented. Applies in trackedOnly mode too: the leg IS the evidence.
+    const shuttle = (
+      await client.query<{ id: string; picked_up_at: string | null; dropped_at: string | null; stop_event_id: string | null; precision: string; evidence: string; started_at: string | null; ended_at: string | null }>(
+        `SELECT sl.id::text, sl.picked_up_at::text, sl.dropped_at::text, sl.stop_event_id::text, sl.precision, sl.evidence,
+                e.started_at::text, e.ended_at::text
+           FROM dispatch.load_shuttle_legs sl
+           LEFT JOIN telematics.unit_stop_events e ON e.id = sl.stop_event_id
+          WHERE sl.load_id = $1::uuid AND sl.from_stop_id = $2::uuid AND sl.voided_at IS NULL
+          LIMIT 1`,
+        [loadId, st.id],
+      )
+    ).rows[0];
+    if (shuttle) {
+      const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : String(v));
+      if (shuttle.precision === "tracked" && shuttle.started_at) {
+        const departed = shuttle.ended_at ?? shuttle.started_at;
+        await client.query(
+          `UPDATE mdata.load_stops
+              SET actual_arrival_at = $2::timestamptz, actual_departure_at = $3::timestamptz,
+                  actual_arrival_source = 'eld_geofence', actual_departure_source = 'eld_geofence',
+                  actual_stop_event_id = $4::uuid, actual_stamp_precision = 'tracked', updated_at = now()
+            WHERE id = $1::uuid AND actual_arrival_at IS NULL AND actual_departure_at IS NULL`,
+          [st.id, shuttle.started_at, departed, shuttle.stop_event_id],
+        );
+        out.push({ ...base, precision: "tracked", stop_event_id: shuttle.stop_event_id, arrival_at: iso(shuttle.started_at), departure_at: iso(departed), note: `local yard shuttle (leg ${shuttle.id}) GPS stop event` });
+      } else {
+        const legDay = (shuttle.picked_up_at ?? "").slice(0, 10) || day;
+        if (!legDay) {
+          out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: null, departure_at: null, note: `local yard shuttle (leg ${shuttle.id}) has no date — left unstamped` });
+          continue;
+        }
+        await client.query(
+          `UPDATE mdata.load_stops
+              SET actual_arrival_at = ($2::date)::timestamp AT TIME ZONE $3, actual_departure_at = ($2::date)::timestamp AT TIME ZONE $3,
+                  actual_arrival_source = 'manual', actual_departure_source = 'manual',
+                  actual_stop_event_id = NULL, actual_stamp_precision = 'date_only', updated_at = now()
+            WHERE id = $1::uuid AND actual_arrival_at IS NULL AND actual_departure_at IS NULL`,
+          [st.id, legDay, STOP_DAY_TIMEZONE],
+        );
+        out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: legDay, departure_at: legDay, note: `local yard shuttle (leg ${shuttle.id}, ${shuttle.evidence}) — date only` });
+      }
+      continue;
+    }
     if (!day) {
       out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: null, departure_at: null, note: "no date for this stop on the settlement — left unstamped" });
       continue;

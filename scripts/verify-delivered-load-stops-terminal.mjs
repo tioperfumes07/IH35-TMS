@@ -47,6 +47,19 @@ export function fenceFailures(transitionSrc) {
     ? [] : [`RULE 3b ${TRANSITION}: a geofence-delivered load never stamps its earlier stops (13691 kept its pickup 'pending')`];
 }
 
+const SHUTTLE = "apps/backend/src/dispatch/load-shuttle-leg.service.ts";
+/** RULE 4 (443.238, owner) — a pickup served by the local yard shuttle is stamped from the shuttle leg (the line truck was never at
+ *  the shipper); the shuttle writer never creates a pay line (the local driver is salaried weekly). */
+export function shuttleFailures(src, shuttleSrc) {
+  const out = [];
+  if (!/FROM dispatch\.load_shuttle_legs sl[\s\S]{0,300}sl\.from_stop_id = \$2::uuid AND sl\.voided_at IS NULL/.test(src))
+    out.push(`RULE 4 ${DELIVER}: stampStopsFromTracking never reads the stop's shuttle leg (a shuttled pickup stays unstamped)`);
+  if (!/export async function recordLoadShuttleLeg\(/.test(shuttleSrc) || !/await stampStopsFromTracking\(client as never, input\.loadId, input\.operatingCompanyId, \{\}, \{ trackedOnly: true \}\);/.test(shuttleSrc))
+    out.push(`RULE 4 ${SHUTTLE}: the shuttle writer must stamp the pickup through the stop-evidence engine`);
+  if (/settlement_lines|driver_bills/.test(shuttleSrc)) out.push(`RULE 4 ${SHUTTLE}: a shuttle leg never writes a pay line (local driver salaried weekly)`);
+  return out;
+}
+
 export function staticFailures(src) {
   const out = [];
   const stamp = src.slice(src.indexOf("export async function stampStopsFromTracking("));
@@ -70,6 +83,7 @@ if (isMain) {
   const src = readFileSync(resolve(ROOT, DELIVER), "utf8");
   const officeSrc = readFileSync(resolve(ROOT, OFFICE), "utf8");
   const transitionSrc = readFileSync(resolve(ROOT, TRANSITION), "utf8");
+  const shuttleSrc = readFileSync(resolve(ROOT, SHUTTLE), "utf8");
   if (process.argv.includes("--selftest")) {
     const cases = [
       ["the shipped engine passes", staticFailures(src).length === 0],
@@ -79,6 +93,9 @@ if (isMain) {
       ["office delivery without the tracking stamp fails", officeFailures(officeSrc.replace("await stampStopsFromTracking(client as never, loadId, operatingCompanyId, {});", ""), src).some((x) => x.startsWith("RULE 3"))],
       ["fence delivery without the earlier-stop stamp fails", fenceFailures(transitionSrc.replace("else await stampEarlierStopsOnDelivery(client as never, operatingCompanyId, loadId);", "")).length > 0],
       ["re-stamping an attested departure fails", officeFailures(officeSrc, src.replace("(actual_arrival_at IS NOT NULL OR actual_departure_at IS NOT NULL) AS stamped", "(actual_arrival_at IS NOT NULL) AS stamped")).some((x) => x.startsWith("RULE 1b"))],
+      ["shuttle wiring passes", shuttleFailures(src, shuttleSrc).length === 0],
+      ["engine ignoring the shuttle leg fails", shuttleFailures(src.replace("FROM dispatch.load_shuttle_legs sl", "FROM dispatch.x sl"), shuttleSrc).length > 0],
+      ["shuttle writing a pay line fails", shuttleFailures(src, shuttleSrc + "\nconst q = `INSERT INTO driver_finance.settlement_lines`;").length > 0],
       ["no pending stop passes", liveFailures([]).length === 0],
       ["a pending stop on an invoiced load fails", liveFailures([{ load_number: "1", load_status: "invoiced", sequence_number: 2, stop_type: "delivery" }]).some((x) => x.startsWith("RULE 2"))],
     ];
@@ -87,7 +104,7 @@ if (isMain) {
     console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
     process.exit(bad ? 1 : 0);
   }
-  const failures = [...staticFailures(src), ...officeFailures(officeSrc, src), ...fenceFailures(transitionSrc)];
+  const failures = [...staticFailures(src), ...officeFailures(officeSrc, src), ...fenceFailures(transitionSrc), ...shuttleFailures(src, shuttleSrc)];
   if (failures.length && !process.env.DATABASE_URL) {
     console.error(`${LABEL}: FAIL (static) —\n` + failures.map((f) => `  ${f}`).join("\n"));
     process.exit(1);

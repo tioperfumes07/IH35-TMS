@@ -132,6 +132,7 @@ import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.route
 import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
 import { registerTruckLineRoutes } from "./dispatch/truck-line/truck-line.routes.js";
 import { registerTruckLineStopStampRoutes } from "./dispatch/truck-line/stop-stamp.routes.js";
+import { registerLoadShuttleLegRoutes } from "./dispatch/load-shuttle-leg.routes.js";
 import { registerDriverDispatchEligibilityRoutes } from "./dispatch/driver-eligibility.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
@@ -1032,6 +1033,7 @@ async function main() {
   await registerDispatchArchTabsRoutes(app);
   await registerTruckLineRoutes(app);
   await registerTruckLineStopStampRoutes(app);
+  await registerLoadShuttleLegRoutes(app);
   // registerLoadExceptionReasonsRoutes (dispatch/truck-line/load-exception-reasons.routes.ts) removed
   // 2026-09-12: it was a temporary GET /api/v1/catalogs/load-exception-reasons shim that degraded
   // gracefully while catalogs.load_exception_reasons did not exist yet (see the file's own header

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   geocodeDispatchLoadStops,
+  getLoadShuttleLegs,
   getLoadStopsRecord,
   type StopsRecordLeg,
   type StopsRecordResponse,
@@ -244,6 +245,30 @@ function StopDetailPopup({ stop, onClose }: { stop: StopsRecordStop; onClose: ()
   );
 }
 
+/** LEAD 443.238 — the local yard shuttle (pickup → yard by a local truck); shown only when the load has one. */
+function LoadShuttleLegsPanel({ loadId, operatingCompanyId }: { loadId: string; operatingCompanyId: string }) {
+  const q = useQuery({
+    queryKey: ["load-shuttle-legs", loadId, operatingCompanyId],
+    queryFn: () => getLoadShuttleLegs(loadId, operatingCompanyId),
+  });
+  const legs = q.data?.shuttle_legs ?? [];
+  if (!legs.length) return null;
+  return (
+    <section className="rounded-[4px] border border-[#E5E7EB] bg-white" data-testid="load-shuttle-legs">
+      <div className="border-b border-[#E5E7EB] px-3 py-2 text-[11px] font-bold uppercase text-[#4B5563]">Local yard shuttle</div>
+      {legs.map((leg) => (
+        <div key={leg.id} className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 text-[12px] text-gray-800">
+          <span>{[leg.from_city, leg.from_state].filter(Boolean).join(", ") || "Pickup"} → {leg.dropped_at_place}</span>
+          <span>Truck: {leg.unit_number ?? (leg.candidate_unit_numbers?.length ? `one of ${leg.candidate_unit_numbers.join(", ")}` : "—")}</span>
+          <span>Driver: {leg.driver_name ?? "local driver"}</span>
+          <span>{leg.picked_up_at ? (leg.precision === "tracked" ? new Date(leg.picked_up_at).toLocaleString() : leg.picked_up_at.slice(0, 10)) : "—"}</span>
+          <span className="text-gray-500">{leg.evidence === "gps_stop_event" ? "GPS" : leg.evidence === "owner_ruling" ? "Owner ruling" : "Driver report"} · {leg.precision === "tracked" ? "tracked" : "date only"}</span>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: Props) {
   const queryClient = useQueryClient();
   const [openStop, setOpenStop] = useState<StopsRecordStop | null>(null);
@@ -394,6 +419,8 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
           not two one-line buttons hiding the data behind a pop-up. Every value is read from the planned stop record (planned),
           geofence events (actual), telematics odometer (real) and stop legs (miles). Nothing typed here. */}
       {data ? <StopsDesignCards data={data} /> : null}
+
+      <LoadShuttleLegsPanel loadId={loadId} operatingCompanyId={operatingCompanyId} />
 
       {openStop ? <StopDetailPopup stop={openStop} onClose={() => setOpenStop(null)} /> : null}
     </div>

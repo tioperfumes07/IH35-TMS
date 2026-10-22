@@ -505,6 +505,28 @@ export function getLoadStopsRecord(loadId: string, operatingCompanyId: string) {
   );
 }
 
+/** LEAD 443.238 — the load's local yard-shuttle legs (pickup → yard by a local truck / driver). */
+export type LoadShuttleLeg = {
+  id: string;
+  from_stop_id: string;
+  from_city: string | null;
+  from_state: string | null;
+  dropped_at_place: string;
+  unit_number: string | null;
+  candidate_unit_numbers: string[] | null;
+  driver_name: string | null;
+  picked_up_at: string | null;
+  dropped_at: string | null;
+  evidence: "gps_stop_event" | "owner_ruling" | "driver_report";
+  precision: "tracked" | "date_only";
+  note: string | null;
+};
+export function getLoadShuttleLegs(loadId: string, operatingCompanyId: string) {
+  return apiRequest<{ shuttle_legs: LoadShuttleLeg[] }>(
+    `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/shuttle-legs?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function getUnitDispatchStatus(unitId: string, operatingCompanyId: string) {
   return apiRequest<Record<string, unknown>>(
     `/api/v1/dispatch/units/${unitId}/dispatch-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
