@@ -108,10 +108,11 @@ function nullableNum(v: unknown): number | null {
 /** The scheduled date of the load's first pickup / last delivery stop (company business date) — the boards' field. */
 export function scheduledStopDateSql(stopType: "pickup" | "delivery", loadAlias = "l"): string {
   const order = stopType === "pickup" ? "ASC" : "DESC";
+  const stopLit = stopType === "pickup" ? "'pickup'" : "'delivery'";
   return `(SELECT (COALESCE(ls.scheduled_arrival_at, ls.appointment_start_at) AT TIME ZONE '${COMPANY_TIME_ZONE}')::date
          FROM mdata.load_stops ls
         WHERE ls.load_id = ${loadAlias}.id
-          AND ls.stop_type = '${stopType}'
+          AND ls.stop_type = ${stopLit}
           AND ls.soft_deleted_at IS NULL
         ORDER BY ls.sequence_number ${order}
         LIMIT 1)`;
