@@ -64,10 +64,20 @@ export function scanSource(source, file = 'board.tsx') {
     const explicitValue = attrs.has('data-graphic-value');
     const chart = ['polyline', 'Bar', 'Line', 'Pie', 'Area', 'Scatter'].includes(tag) ||
       (/^[A-Z]/.test(tag) && ['data', 'series', 'points'].some(key => attrs.has(key)));
+    function containsJsx(expression) {
+      let found = false;
+      function inspect(child) {
+        if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) found = true;
+        else ts.forEachChild(child, inspect);
+      }
+      inspect(expression);
+      return found;
+    }
     const valueExpressions = ts.isJsxElement(node) ? node.children.filter(ts.isJsxExpression).filter(n =>
-      n.expression && !/\.(?:map|filter)\(/.test(n.expression.getText(tree)) &&
-      /(?:amount|cents|count|total|balance|money|formatInt|formatMoney|\.length\b)/i.test(n.expression.getText(tree))) : [];
-    if (!numericPrimitive && !explicitValue && !chart && !valueExpressions.length) return;
+      n.expression && !containsJsx(n.expression) &&
+      (ts.isNumericLiteral(n.expression) || /(?:amount|cents|count|total|balance|money|formatInt|formatMoney|\.length\b)/i.test(n.expression.getText(tree)))) : [];
+    const numericText = ts.isJsxElement(node) && node.children.some(n => ts.isJsxText(n) && /^\$?-?[\d,.]+%?$/.test(n.text.trim()));
+    if (!numericPrimitive && !explicitValue && !chart && !numericText && !valueExpressions.length) return;
     values++;
     let owner = node;
     let destination;
@@ -131,6 +141,10 @@ export function selftest() {
     ['chart data cannot escape', '<Chart data={[{total:42}]} />', true],
     ['svg series cannot escape', '<polyline points={points} />', true],
     ['map container is not another value', '<>{rows.map(row => <Link to={`/dispatch/loads/${row.id}`}>{money(row.total)}</Link>)}</>', false],
+    ['bare mapped money is not ignored', '<span>{rows.map(row => money(row.total))}</span>', true],
+    ['filtered aggregate is not ignored', '<span>{rows.filter(isOpen).length}</span>', true],
+    ['numeric literal expression', '<span>{42}</span>', true],
+    ['numeric text', '<span>$1,200.00</span>', true],
   ];
   for (const [name, source, fails] of cases) {
     assert.equal(scanSource(source).problems.length > 0, fails, name);
