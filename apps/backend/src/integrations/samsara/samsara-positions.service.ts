@@ -14,6 +14,8 @@ import {
   ingestVehicleLocationEvent,
 } from "../../telematics/vehicle-locations.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../telematics/geofence-detector.service.js";
+import { withSavepoint } from "../../auth/db.js";
+const NO_FENCE_RESULT = { checked_geofences: 0, transitions_written: 0, stop_arrivals_stamped: 0 };
 import { parseCityState, SamsaraApiError, SamsaraClient } from "./samsara-client.js";
 import type { SamsaraVehicleStat } from "./samsara-client.js";
 import type { PgClient } from "./samsara.service.js";
@@ -187,14 +189,21 @@ export async function syncSamsaraVehicleLocations(
     });
     if (didInsert) {
       inserted += 1;
-      const fence = await processGeofenceDetectionsForGpsPoint(client as never, {
-        operating_company_id: operatingCompanyId,
-        unit_id: unitId,
-        latitude: location.latitude,
-        longitude: location.longitude,
-        occurred_at: location.captured_at,
-        source: "samsara_gps",
-      });
+      // LEAD 443.232 (P0) — one unit's fence side effects can never roll back the fleet's positions (own SAVEPOINT).
+      const fence = await withSavepoint(
+        client as never,
+        "positions_fence_point",
+        () => processGeofenceDetectionsForGpsPoint(client as never, {
+          operating_company_id: operatingCompanyId,
+          unit_id: unitId,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          occurred_at: location.captured_at,
+          source: "samsara_gps",
+        }),
+        NO_FENCE_RESULT,
+        (err) => errors.push(`fence:${unitId}:${String((err as Error)?.message ?? err)}`)
+      );
       arrivalsTriggered += fence.stop_arrivals_stamped;
     }
   }
@@ -439,14 +448,23 @@ export async function syncSamsaraVehicleStats(
       });
       if (didInsert) {
         positionsInserted += 1;
-        const fence = await processGeofenceDetectionsForGpsPoint(client as never, {
-          operating_company_id: operatingCompanyId,
-          unit_id: unitId,
-          latitude: stat.latitude,
-          longitude: stat.longitude,
-          occurred_at: stat.captured_at,
-          source: "samsara_gps",
-        });
+        // LEAD 443.232 (P0) — own SAVEPOINT per point (see syncSamsaraVehicleLocations).
+        const lat = stat.latitude;
+        const lng = stat.longitude;
+        const fence = await withSavepoint(
+          client as never,
+          "stats_fence_point",
+          () => processGeofenceDetectionsForGpsPoint(client as never, {
+            operating_company_id: operatingCompanyId,
+            unit_id: unitId,
+            latitude: lat,
+            longitude: lng,
+            occurred_at: stat.captured_at,
+            source: "samsara_gps",
+          }),
+          NO_FENCE_RESULT,
+          (err) => errors.push(`fence:${unitId}:${String((err as Error)?.message ?? err)}`)
+        );
         statsArrivalsTriggered += fence.stop_arrivals_stamped;
       }
     }

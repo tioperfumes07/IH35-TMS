@@ -7,6 +7,7 @@
  * auto-delivery engine. Behaviour is byte-for-byte the route's; only the inputs became parameters.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { withSavepoint } from "../auth/db.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
@@ -227,16 +228,22 @@ export async function transitionDispatchLoadInClientTx(client: TransitionClient,
     actorUserId: actorUserId,
   });
 
-  try {
-    await pingSettlementOnLoadEvent(client, {
+  // LEAD 443.232 (P0 GPS down 9 h) — the ping used to be caught with NO savepoint: its failed statement (13691's settlement
+  // close inserting an itemless extra_pay line → check violation) left the caller's transaction aborted, so the next
+  // statement (the spine event) threw 25P02 and the WHOLE positions tick rolled back — zero GPS for every unit. A ping
+  // failure now rolls back only the ping and is logged; the transition and the caller's transaction continue.
+  await withSavepoint(
+    client as never,
+    "dispatch_transition_settlement_ping",
+    () => pingSettlementOnLoadEvent(client, {
       loadId: loadId,
       operatingCompanyId,
       dispatchTargetStatus: targetStatus,
       actorUserId: actorUserId,
-    });
-  } catch (err) {
-    console.warn({ err }, "dispatch_load_settlement_ping_failed");
-  }
+    }),
+    undefined,
+    (err) => console.warn({ err, load_id: loadId }, "dispatch_load_settlement_ping_failed")
+  );
   await emitDispatchSpineEvent(client, {
     operating_company_id: operatingCompanyId,
     actor_user_id: actorUserId,

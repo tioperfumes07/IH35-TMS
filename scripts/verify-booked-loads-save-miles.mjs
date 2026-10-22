@@ -58,6 +58,16 @@ export function staticFailures(bookSrc, moduleSrc) {
   return out;
 }
 
+/** RULE 9 (LEAD 443.233) — the lane engine excludes a yard move (same origin / destination city) by name, from lane_mileage AND
+ *  customer_lanes. */
+export function yardMoveFailures(moduleSrc) {
+  const out = [];
+  if (!/else if \(yardMove\) out\.lane_skip_reason = "yard_move";/.test(moduleSrc)) out.push("RULE 9 load-lane-learning.service.ts counts a yard move (same-city lane) in lane_mileage");
+  if (!/else if \(yardMove\) out\.customer_lane_skip_reason = "yard_move";/.test(moduleSrc)) out.push("RULE 9 load-lane-learning.service.ts counts a yard move in customer_lanes");
+  if (!/"dispatch\.load\.lane_excluded"/.test(moduleSrc)) out.push("RULE 9 a yard-move exclusion must be audited (dispatch.load.lane_excluded)");
+  return out;
+}
+
 /** RULE 8 (LEAD 443.230, CC-3) — a booking whose deadhead could not be filled (its stops are geocoded only after commit)
  *  queues THE re-learn engine (dispatch.relearn_load_miles: resolve stops, then recomputeFirstStopDeadhead) in the same
  *  commit. Before, 13695 / 13696 / 13697 / 13699 kept a NULL first-stop leg forever (RULE 4 live). */
@@ -91,7 +101,8 @@ export function liveFailures(rows) {
   for (const r of rows) {
     if (Number(r.non_first_stops_without_leg) > 0)
       out.push(`RULE 2 load ${r.load_number}: ${r.non_first_stops_without_leg} stop(s) after the first lack leg_miles`);
-    if (!r.lane_touched) out.push(`RULE 3 load ${r.load_number}: lane ${r.lane} has no lane_mileage row touched since it was booked`);
+    // LEAD 443.233 (owner): a same-city move (yard move) is not a lane — the engine excludes it by name (dispatch.load.lane_excluded).
+    if (!r.lane_touched && !r.yard_move) out.push(`RULE 3 load ${r.load_number}: lane ${r.lane} has no lane_mileage row touched since it was booked`);
     if (r.first_stop_missing_deadhead)
       out.push(`RULE 4 load ${r.load_number}: first stop has no leg_miles but unit's previous load ${r.prior_load_number ?? "?"} exists — compute the deadhead`);
   }
@@ -123,6 +134,7 @@ const LIVE_SQL = `
   SELECT l.load_number, s.non_first_stops_without_leg, fp.prior_load_number,
          (fp.first_leg IS NULL AND fp.prior_load_number IS NOT NULL) AS first_stop_missing_deadhead,
          concat_ws(' -> ', s.o_city || ', ' || s.o_state, s.d_city || ', ' || s.d_state) AS lane,
+         (lower(s.o_city) = lower(s.d_city) AND lower(s.o_state) = lower(s.d_state)) AS yard_move,
          EXISTS (
            SELECT 1 FROM catalogs.lane_mileage lm
             WHERE lm.operating_company_id = $1::uuid AND lm.updated_at >= l.created_at
@@ -176,6 +188,9 @@ if (isMain) {
       ["RULE 7 an engine that refuses a corrected route fails", routeCorrectionFailures(gpsOk, modOk.replace("!args.routeCorrected && ", "")).some((x) => x.startsWith("RULE 7"))],
       ["RULE 8 a refusal that queues the re-learn passes", bookingRelearnFailures('export async function fillDeadheadAtBooking(x) {\n  if (reason) {\n    await enqueueOutboxEvent(\n      client as never,\n      "dispatch.relearn_load_miles",\n  }\n}\n').length === 0],
       ["RULE 8 a silent refusal fails", bookingRelearnFailures('export async function fillDeadheadAtBooking(x) {\n  if (reason) {\n    await appendCrudAudit(client);\n  }\n}\n').some((x) => x.startsWith("RULE 8"))],
+      ["RULE 9 a yard move (untouched) passes", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: false, yard_move: true, lane: "Laredo, TX -> Laredo, TX" }]).length === 0],
+      ["RULE 9 engine without the yard-move exclusion fails", yardMoveFailures("x").some((x) => x.startsWith("RULE 9"))],
+      ["RULE 9 engine with it passes", yardMoveFailures('else if (yardMove) out.lane_skip_reason = "yard_move";\nelse if (yardMove) out.customer_lane_skip_reason = "yard_move";\n"dispatch.load.lane_excluded"').length === 0],
       ["an untouched lane fails", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: false, lane: "A -> B" }]).some((x) => x.startsWith("RULE 3"))],
     ];
     for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
@@ -186,6 +201,7 @@ if (isMain) {
 
   const failures = [
     ...bookingRelearnFailures(readFileSync(resolve(ROOT, "apps/backend/src/dispatch/book-load.service.ts"), "utf8")),
+    ...yardMoveFailures(readFileSync(resolve(ROOT, "apps/backend/src/dispatch/load-lane-learning.service.ts"), "utf8")),
     ...routeCorrectionFailures(
       readFileSync(resolve(ROOT, "apps/backend/src/telematics/stop-gps-verification.service.ts"), "utf8"),
       readFileSync(resolve(ROOT, "apps/backend/src/dispatch/load-lane-learning.service.ts"), "utf8")
