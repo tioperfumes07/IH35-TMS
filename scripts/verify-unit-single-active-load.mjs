@@ -33,7 +33,7 @@ const MIGRATION_FILE = "db/migrations/202614042200_loads_one_active_unit_lock.sq
 //   active load per unit except the same tour's sequential leg (13688 -> 13694), the app gate's exact rule. The index is
 //   dropped there (it was already absent on prod, which ran an untracked date-window trigger instead).
 //   WHY: a unique index cannot express "the same tour's next leg"; it refused the legitimate 13694 on every fresh DB.
-const BACKSTOP_FILE = "db/migrations/202616050700_unit_overlap_trigger_tracked_same_tour_legs.sql";
+const BACKSTOP_FILE = "db/migrations/202616150100_truck_one_in_motion_plus_advance_bookings.sql"; // LEAD 443.244: in-motion set
 
 /** Parse the ACTIVE_UNIT_STATUSES string literals out of the guard source so the lockstep check is
  *  driven by the single source of truth, never a re-hardcoded copy that could itself drift. */
@@ -197,7 +197,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   // Planted regression: narrow the backstop status set (drop 'dispatched') — must trip the lockstep check.
-  const mutatedLockstep = live[BACKSTOP_FILE].replace("'assigned_not_dispatched','dispatched','at_pickup'", "'assigned_not_dispatched','at_pickup'");
+  const mutatedLockstep = live[BACKSTOP_FILE].replace("'dispatched','at_pickup','in_transit'", "'at_pickup','in_transit'");
   if (mutatedLockstep === live[BACKSTOP_FILE] || !audit({ ...live, [BACKSTOP_FILE]: mutatedLockstep }).some((f) => f.includes("out of lockstep"))) {
     console.error(`${LABEL} SELFTEST FAIL — planted backstop/ACTIVE_UNIT_STATUSES drift escaped`);
     process.exit(1);

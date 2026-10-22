@@ -20,14 +20,19 @@
  * per the owner's own framing of this exact class of report) and every draft/terminal/cancelled
  * status.
  */
+// LEAD 443.244 (owner 2026-10-22 2:10 PM CT: "remember we might book a load in advance"): a truck holds ONE load IN MOTION
+// plus any number of advance bookings (assigned / assigned_not_dispatched). Only a load in motion occupies the truck, so this
+// set is the in-motion set: an advance booking is never refused, and dispatching it while another load is still in motion
+// is (the DB backstop, migration 202616150100, applies the same set at COMMIT).
 export const ACTIVE_UNIT_STATUSES = [
-  "assigned",
-  "assigned_not_dispatched",
   "dispatched",
   "at_pickup",
   "in_transit",
   "at_delivery",
 ] as const;
+
+/** Advance bookings: held by the truck as its NEXT load(s), never a conflict while another load is in motion. */
+export const ADVANCE_UNIT_STATUSES = ["assigned", "assigned_not_dispatched"] as const;
 
 export class UnitAlreadyActiveOnLoadError extends Error {
   readonly code = "unit_already_active_on_load";
