@@ -97,3 +97,29 @@ describe("miles recommendations (443.55)", () => {
     expect(z!.fields.empty.historical_missing_reason).toBe("no empty-miles history for this lane");
   });
 });
+
+// LEAD 443.240 (owner 10-22: "read the company and driver settlements. you did not seed correctly") — MILES PRECEDENCE: the signed
+// settlement document first; a document value is LOCKED against lane history / Google / manual. Fails on the old engine (no
+// documentValue, and Google overwrote a document value — 13684's 466.7 empty miles became Google's 1,817.3).
+describe("443.240 — the signed settlement document wins", () => {
+  it("source 'document' with the settlement's value writes it and records it as the document value", async () => {
+    const { setMilesChoice } = await import("../miles-recommendations.service.js");
+    const d = db();
+    await setMilesChoice(d as never, { operatingCompanyId: CO, loadId: LOAD, field: "empty", source: "document", documentValue: 466.7, reason: "Driver Settlement 5849", actorUserId: ACTOR }, route as never);
+    expect(d.state.miles_deadhead).toBe("466.7");
+    expect(d.state.miles_choice!.empty).toMatchObject({ source: "document", value: 466.7, document_value: 466.7, reason: "Driver Settlement 5849" });
+  });
+
+  it("a document value is locked: Google / lane history / manual are refused", async () => {
+    const { setMilesChoice } = await import("../miles-recommendations.service.js");
+    const d = db({ choice: { short: { source: "document", value: 1510.4, document_value: 1510.4 } } });
+    await expect(setMilesChoice(d as never, { operatingCompanyId: CO, loadId: LOAD, field: "short", source: "google", actorUserId: ACTOR }, route as never)).rejects.toThrow("document_miles_locked_short");
+    await expect(setMilesChoice(d as never, { operatingCompanyId: CO, loadId: LOAD, field: "short", source: "historical", actorUserId: ACTOR }, route as never)).rejects.toThrow("document_miles_locked_short");
+    await expect(setMilesChoice(d as never, { operatingCompanyId: CO, loadId: LOAD, field: "short", source: "manual", manualValue: 1600, reason: "x", actorUserId: ACTOR }, route as never)).rejects.toThrow("document_miles_locked_short");
+  });
+
+  it("a documentValue only travels with source 'document'", async () => {
+    const { setMilesChoice } = await import("../miles-recommendations.service.js");
+    await expect(setMilesChoice(db() as never, { operatingCompanyId: CO, loadId: LOAD, field: "short", source: "google", documentValue: 100, actorUserId: ACTOR }, route as never)).rejects.toThrow("document_value_requires_source_document");
+  });
+});
