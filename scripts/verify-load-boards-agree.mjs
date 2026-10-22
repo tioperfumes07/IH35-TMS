@@ -64,6 +64,7 @@ export const BOARD_FILES = {
   // LEAD 443.249 — the Truck / Driver / Loads / Timeline planners (FE hook) and the load list reader they call.
   plannerBars: "apps/frontend/src/pages/dispatch/planners/planner-bars.ts",
   mdataLoads: "apps/backend/src/mdata/loads.routes.ts",
+  driverGrid: "apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx",
 };
 export function staticFailures(src) {
   const f = [];
@@ -115,6 +116,7 @@ export function staticFailures(src) {
   need("plannerBars", /const board = await listAllLoads\(\{ operating_company_id: \[operatingCompanyId\], board_scope: "live" \}\);/, "the planners read THE board set (board_scope live, no date filter)");
   need("plannerBars", /\.filter\(\(load\) => plannerLoadInRange\(load, rangeStart, rangeEnd\)\)/, "the planners keep the board loads whose span OVERLAPS the range");
   ban("plannerBars", /pickup_date_from|delivery_date_from/, "the planners filter by pickup / delivery date (a load spanning the range drops out)");
+  need("driverGrid", /const drivers = \[\.\.\.\(query\.data\.drivers \?\? \[\]\), \.\.\.loadDrivers\.values\(\)\];/, "every driver on a board load has a Driver Planner row (not only the scheduler roster)");
   need("mdataLoads", /SELECT city, COALESCE\(appointment_start_at, scheduled_arrival_at\) AS scheduled_arrival_at/, "the load list's stop time is appointment, then scheduled arrival");
   need("scenarios", /AND \(later\.new_driver_id IS NOT NULL OR later\.new_unit_id IS NOT NULL\)/, "hop.assign treats a trailer-only history row as a reassignment");
   need("scenarios", /COALESCE\(hd\.merged_into_driver_id, h\.new_driver_id\) = l\.assigned_primary_driver_id/, "hop.assign compares a merged-away driver record, not its survivor");
@@ -204,6 +206,7 @@ async function selftest() {
     ["available back to driver-centric CTE", "truckLine", (x) => x.replace("FROM mdata.units u", "FROM qualifying q")],
     ["planners back on date-filtered reads", "plannerBars", (x) => x.replace('board_scope: "live" });', 'board_scope: "live", pickup_date_from: rangeStart });')],
     ["planners drop the overlap rule", "plannerBars", (x) => x.replace(".filter((load) => plannerLoadInRange(load, rangeStart, rangeEnd))", "")],
+    ["driver planner back to the roster only", "driverGrid", (x) => x.replace("const drivers = [...(query.data.drivers ?? []), ...loadDrivers.values()];", "const drivers = query.data.drivers ?? [];")],
     ["load list stop time back to scheduled only", "mdataLoads", (x) => x.replaceAll("SELECT city, COALESCE(appointment_start_at, scheduled_arrival_at) AS scheduled_arrival_at", "SELECT city, scheduled_arrival_at")],
     ["units-without-load drops UNIT_IN_SERVICE_SQL", "dispatchLoads", (x) => x.replace("WHERE ${UNIT_IN_SERVICE_SQL}", "WHERE true")],
   ];
