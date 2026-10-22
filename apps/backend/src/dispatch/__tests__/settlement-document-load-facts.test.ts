@@ -17,6 +17,8 @@ describe("443.241 — the signed settlement document fills the load", () => {
   });
   it("a document that prints no miles (13680) sets nothing — never guessed", () => {
     expect(documentMiles(doc({}))).toEqual({ practical: null, short: null, empty: null });
+    // 443.243: the extract writes 0.0 for a practical the company settlement does not print (13680) — never locked as 0.
+    expect(documentMiles(doc({ practical_miles_doc: 0 }))).toEqual({ practical: null, short: null, empty: null });
   });
   it("a seed stop with only a city gets the document's facility and ZIP (the geocode pass then finds the street)", () => {
     const { patch, conflict } = stopDocumentPatch(tstop(), dstop({}), true);
