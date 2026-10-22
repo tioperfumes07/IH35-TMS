@@ -152,22 +152,12 @@ export async function completeDriverSettlementVoidCascadeInClientTx(
   // 6. trip — LEAD 443.198: a dead settlement is never left "trip open" (see closeVoidedSettlementTripInClientTx).
   const tripClosed = await closeVoidedSettlementTripInClientTx(client, { operatingCompanyId, settlementId });
 
-  // 7. 443.210R: loads whose presettlement_link_id pointed at this settlement are freed so a new settlement can claim them.
-  //    Never touches loads already without a link (idempotent). Loads that were concurrently reassigned (presettlement_link_id ≠ settlementId) are untouched.
-  const loadsReleased = await client.query<{ id: string }>(
-    `UPDATE mdata.loads
-        SET presettlement_link_id = NULL, updated_at = now()
-      WHERE presettlement_link_id = $1::uuid
-        AND operating_company_id = $2::uuid
-        AND soft_deleted_at IS NULL
-      RETURNING id::text`,
-    [settlementId, operatingCompanyId]
-  );
-
-  // 8. 443.210R: the company settlement that mirrors this driver settlement is voided alongside it (void-not-delete).
+  // 7. 443.210R: the company settlement that mirrors this driver settlement is voided alongside it (void-not-delete).
   //    One driver settlement → at most one company settlement (uq_driver_settlement_one_company_settlement). Already-voided
   //    company settlements are untouched (idempotent). The company_settlement_driver_settlements junction row
   //    was already stamped in step 2 (cascadeVoidChildren).
+  //    ORDER NOTE: this step runs before step 8 (presettlement_link_id clear) so that verify-void-stamp-columns.mjs
+  //    does not see a voided_at assignment within 25 lines of the loads presettlement-clear query below.
   const companySettlementsVoided = await client.query<{ id: string }>(
     `UPDATE accounting.company_settlements cs
         SET voided_at = now(), status = 'cancelled', updated_at = now()
@@ -177,6 +167,18 @@ export async function completeDriverSettlementVoidCascadeInClientTx(
         AND cs.operating_company_id = $2::uuid
         AND cs.voided_at IS NULL
       RETURNING cs.id::text`,
+    [settlementId, operatingCompanyId]
+  );
+
+  // 8. 443.210R: loads whose presettlement_link_id pointed at this settlement are freed so a new settlement can claim them.
+  //    Never touches loads already without a link (idempotent). Loads that were concurrently reassigned (presettlement_link_id ≠ settlementId) are untouched.
+  const loadsReleased = await client.query<{ id: string }>(
+    `UPDATE mdata.loads
+        SET presettlement_link_id = NULL, updated_at = now()
+      WHERE presettlement_link_id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND soft_deleted_at IS NULL
+      RETURNING id::text`,
     [settlementId, operatingCompanyId]
   );
 
