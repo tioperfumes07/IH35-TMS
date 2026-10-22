@@ -36,6 +36,7 @@ export const OPERATIONAL = new Set([
   "fuel/fuel-load-at-time.ts", // 443.126 fill-driver-at-time — OPERATIONAL fuel attribution (company-pinned)
   "dispatch/driver-pwa/tour-close.service.ts",
   "dispatch/trip-pairing-board.service.ts",
+  "dispatch/unit-current-driver.ts", // 443.231b — OPERATIONAL board current-driver (company-pinned)
   "safety/driver-scoring/scoring.service.ts",
   "mdata/unit-default-driver.routes.ts",
   "mdata/driver-default-truck.routes.ts",

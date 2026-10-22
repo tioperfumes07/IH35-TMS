@@ -46,8 +46,10 @@ import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countInTransitDispatchLoads } from "./active-loads-count.js";
-import { canonicalBoardUnitGateSql, canonicalDispatchWorkStatusClause, canonicalDispatchWorkWhereClause, canonicalRealLoadRowClause, countCanonicalDispatchWorkLoads } from "./canonical-active-load-set.js";
+import { canonicalDispatchWorkStatusClause, canonicalDispatchWorkWhereClause, canonicalRealLoadRowClause, countCanonicalDispatchWorkLoads } from "./canonical-active-load-set.js";
 import { loadServiceDriverNameSql, loadServiceDriverShortLabelSql, loadServiceMembershipSql, loadServiceTrailerNumberSql } from "./load-service.js";
+import { unitCurrentDriverSql } from "./unit-current-driver.js";
+import { UNIT_IN_SERVICE_SQL } from "./unit-in-service.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -66,7 +68,6 @@ import { resolveLaneMileage } from "./lane-mileage.service.js";
 import { resolvePointMileage } from "./mileage/mileage.service.js";
 import { OsrmProvider } from "./mileage/osrm.provider.js";
 import { computeChainDeadheadMiles } from "./deadhead/chain-deadhead.service.js";
-import { openWorkOrderPredicateSql } from "../maintenance/in-shop-condition.js";
 import { backfillStopCoordinatesForLoad } from "../telematics/stop-geocode-fallback.service.js";
 import { UnitAlreadyActiveOnLoadError } from "./unit-active-load-guard.js";
 
@@ -2171,17 +2172,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- delivered_pending_docs), the same loads every other board shows; at_pickup / at_delivery trucks were
             -- listed as awaiting before.
             AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
-          -- The unit's DEFAULT driver (mdata.units.assigned_driver_id), so awaiting-truck rows can
-          -- show Driver + HOS even with no load. (The old join used the load's driver, which is
-          -- null for an unloaded truck.)
-          LEFT JOIN mdata.drivers ud ON ud.id = u.assigned_driver_id
-                                     AND (ud.operating_company_id = $1::uuid OR EXISTS (
-                                       SELECT 1 FROM mdata.driver_company_authorizations awaiting_unit_driver_dca
-                                       WHERE awaiting_unit_driver_dca.driver_id = ud.id
-                                         AND awaiting_unit_driver_dca.company_id = $1::uuid
-                                         AND awaiting_unit_driver_dca.is_authorized = true
-                                         AND awaiting_unit_driver_dca.deactivated_at IS NULL
-                                     ))
+          -- LEAD 443.231b — same unit→driver derivation as Truck Line AVAILABLE (open VDA, else
+          -- last-delivered primary). Never mdata.units.assigned_driver_id (0% populated → every
+          -- Unassigned row showed "—" while Truck Line named drivers).
+          ${unitCurrentDriverSql("u", "$1::uuid")}
           -- A truck can retain its assigned trailer while awaiting the next load. The previous
           -- hardcoded NULL hid that real reverse relationship on every awaiting-truck row.
           LEFT JOIN LATERAL (
@@ -2231,22 +2225,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             ORDER BY g.captured_at DESC
             LIMIT 1
           ) loc ON (p.city IS NULL AND p.state IS NULL)
-          -- LEAD 443.206 D3/D4 — THE board unit gate (canonicalBoardUnitGateSql: leased to this company, else owned by it —
-          -- COALESCE, so a Transportation-owned truck leased to no one never counts for USMCA; in service; real), plus the
-          -- awaiting-only assignability extras (not flagged out of service, no open work order below).
-          WHERE ${canonicalBoardUnitGateSql("u", "$1::uuid")}
-            AND u.is_oos IS NOT TRUE
+          -- LEAD 443.231b — SAME free-unit gate as Truck Line AVAILABLE (UNIT_IN_SERVICE_SQL =
+          -- board unit gate + not OOS + no open WO). Both surfaces list the same units; driver =
+          -- unitCurrentDriverSql on both. A unit with no driver on file still appears (driver "—"/
+          -- "No driver on file") — never drop it from one list and keep it on the other.
+          WHERE ${UNIT_IN_SERVICE_SQL}
             AND l.id IS NULL
-            -- FLT-IN-SHOP-EXCLUSIVE: Awaiting and In shop are mutually exclusive at the API
-            -- contract, not merely filtered in one frontend. Use the exact predicate that
-            -- supplies /maintenance/fleet-table/rows so the two surfaces cannot drift.
-            AND NOT EXISTS (
-              SELECT 1
-              FROM maintenance.work_orders awaiting_wo
-              WHERE awaiting_wo.unit_id = u.id
-                AND awaiting_wo.operating_company_id = $1::uuid
-                AND ${openWorkOrderPredicateSql("awaiting_wo")}
-            )
           GROUP BY u.id, u.unit_number, tr.id, tr.equipment_number, ud.id, ud.first_name, ud.last_name,
             last_delivery.last_drop_at, last_delivery.load_id, last_delivery.load_number,
             p.city, p.state, p.formatted_location, p.lat, p.lng, p.captured_at,

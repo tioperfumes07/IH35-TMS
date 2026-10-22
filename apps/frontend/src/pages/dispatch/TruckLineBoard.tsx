@@ -618,8 +618,10 @@ function AvailableTruckTrack({
   const a = row.available;
   if (!a) return null;
   const driveLabel = fmtHoursMinutes(a.driving_minutes_remaining);
+  // 443.231b — key available chrome by unit (one row per truck); driver_id may be null.
+  const trackKey = row.unit_id ?? a.driver_id ?? "unknown";
   return (
-    <div className="relative h-[80px]" data-testid={`truck-line-available-track-${a.driver_id}`}>
+    <div className="relative h-[80px]" data-testid={`truck-line-available-track-${trackKey}`}>
       <div className="absolute" style={{ left: "0%", top: 2 }}>
         <YardDockSvg />
       </div>
@@ -646,7 +648,7 @@ function AvailableTruckTrack({
       <div
         className="truck-line-vehicle"
         style={{ left: "7%", top: 15 }}
-        data-testid={`truck-line-vehicle-available-${a.driver_id}`}
+        data-testid={`truck-line-vehicle-available-${trackKey}`}
         data-rolling="false"
       >
         <TractorTrailerSvg hasIssue={false} rolling={false} parked />
@@ -657,18 +659,36 @@ function AvailableTruckTrack({
           >
             Load me — {driveLabel} drive left
           </div>
-        ) : null}
+        ) : (
+          <div
+            className="truck-line-speech-bubble absolute whitespace-nowrap rounded-[13px] border-[1.5px] border-[#16A34A] bg-white px-2 py-1 font-semibold text-[#166534]"
+            style={{ bottom: 38, left: 0 }}
+          >
+            Load me
+          </div>
+        )}
       </div>
 
-      <button
-        type="button"
-        className="absolute rounded-[13px] bg-[#16A34A] px-3 font-semibold text-white"
-        style={{ right: 4, top: 18, height: 26, fontSize: 12 }}
-        onClick={() => onAssign(a.driver_id, row.unit_id)}
-        data-testid={`truck-line-assign-${a.driver_id}`}
-      >
-        Assign a load →
-      </button>
+      {a.driver_id ? (
+        <button
+          type="button"
+          className="absolute rounded-[13px] bg-[#16A34A] px-3 font-semibold text-white"
+          style={{ right: 4, top: 18, height: 26, fontSize: 12 }}
+          onClick={() => onAssign(a.driver_id as string, row.unit_id)}
+          data-testid={`truck-line-assign-${a.driver_id}`}
+        >
+          Assign a load →
+        </button>
+      ) : (
+        <span
+          className="absolute whitespace-nowrap text-[#6B7280]"
+          style={{ right: 4, top: 22, fontSize: 12 }}
+          data-testid={`truck-line-no-driver-${trackKey}`}
+          title="No driver on file for this unit"
+        >
+          No driver on file
+        </span>
+      )}
 
       <span className="truck-line-v4-sub absolute whitespace-nowrap text-[#6B7280]" style={{ top: 64, left: 0 }}>
         parked at {formatLocationLabel({ city: a.parked_city, state: a.parked_state })} · waiting on dispatch
@@ -1606,7 +1626,7 @@ export function TruckLineBoard({
                     // 4-digit document ("SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC ... never S-YYYY-NNNN").
                     // Anything else is a machine id leaking into a human column and renders as "—".
                     const tourSafe = tourNum && (/^P-\d+$/i.test(tourNum) || /^\d{4}$/.test(tourNum)) ? tourNum : null;
-                    const rowKey = `${g.section}-${g.unit_id}-${r.load?.load_id ?? r.available?.driver_id ?? legIndex}`;
+                    const rowKey = `${g.section}-${g.unit_id}-${r.load?.load_id ?? "available"}`;
                     const statusOpen = r.load?.load_id != null && statusMenuLoadId === r.load.load_id;
 
                     if (r.kind === "available" && r.available) {
@@ -1619,7 +1639,7 @@ export function TruckLineBoard({
                           data-unit-stripe={unitStripe}
                           data-unit-first={unitFirst ? "true" : "false"}
                           style={{ background: AVAILABLE_ROW_TINT, borderLeft: `3px solid ${rowSpineColor(null)}` }}
-                          data-testid={`truck-line-row-available-${a.driver_id}`}
+                          data-testid={`truck-line-row-available-${g.unit_id}`}
                           data-unit-id={g.unit_id}
                         >
                           <div className="truck-line-v4-unit-cell">
@@ -1638,8 +1658,8 @@ export function TruckLineBoard({
                           </div>
                           <div className="truck-line-v4-pu-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
                           <div className="truck-line-v4-del-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
-                          <div className="truck-line-v4-customer-row truck-line-v4-sub text-[#6B7280]" data-testid={`truck-line-customer-available-${a.driver_id}`}>—</div>
-                          <div className="truck-line-v4-transit-cell min-w-0" data-testid={`truck-line-track-available-${a.driver_id}`}>
+                          <div className="truck-line-v4-customer-row truck-line-v4-sub text-[#6B7280]" data-testid={`truck-line-customer-available-${g.unit_id}`}>—</div>
+                          <div className="truck-line-v4-transit-cell min-w-0" data-testid={`truck-line-track-available-${g.unit_id}`}>
                             <AvailableTruckTrack row={r} onAssign={onAssignDriver} />
                           </div>
                         </div>

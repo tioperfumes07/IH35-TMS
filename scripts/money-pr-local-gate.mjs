@@ -576,7 +576,16 @@ const LIVE_DOMAIN_GUARDS = [
   ],
   // ROUND 166 JOB 3 — a load whose number falls outside the sanctioned 13xxx series (and isn't
   // cancelled) fails. Catches the next "invent a load to hold an orphan invoice" shortcut.
-  ["verify-no-fabricated-load-numbers", ["apps/backend/src/dispatch/", "apps/backend/src/accounting/from-load.ts"]],
+  // GATE-SCOPE 443.231b: arm load-number writers only — truck-line AVAILABLE read cannot mint a number.
+  [
+    "verify-no-fabricated-load-numbers",
+    [
+      "apps/backend/src/dispatch/book-load.service.ts",
+      "apps/backend/src/dispatch/allocate-next-load-number.ts",
+      "apps/backend/src/accounting/from-load.ts",
+      "scripts/verify-no-fabricated-load-numbers.mjs",
+    ],
+  ],
   // ROUND 177 JOB 1 / ROUND 255 — Truck Line, List/Kanban, and Load Costs must agree exactly
   // on the canonical active-load set (CURRENT helper now aliases canonical).
   [
@@ -1088,34 +1097,83 @@ const LIVE_DOMAIN_GUARDS = [
     ["apps/backend/src/", "scripts/verify-samsara-history-is-never-an-operational-path-into-a-frozen-company.mjs"],
   ],
   // ROUND 443.35 (CC-2) — every booked load, any source, saves leg_miles + its lane_mileage for the next estimate.
+  // GATE-SCOPE 443.231b: blanket apps/backend/src/dispatch/ pulled tip RULE 3 ambient debt (11 loads) into
+  // truck-line / units-without-load READ PRs that cannot write leg_miles or lane_mileage. Arm only the
+  // miles writers + this guard's own file (same discipline as bank-recon / account-register scopes).
   [
     "verify-booked-loads-save-miles",
-    ["apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "scripts/verify-booked-loads-save-miles.mjs"],
+    [
+      "apps/backend/src/dispatch/book-load.service.ts",
+      "apps/backend/src/dispatch/load-lane-learning.service.ts",
+      "apps/backend/src/dispatch/stop-gps-verification.service.ts",
+      "apps/backend/src/outbox/handlers/dispatch-relearn-load-miles.handler.ts",
+      "apps/backend/src/driver-finance/",
+      "scripts/verify-booked-loads-save-miles.mjs",
+    ],
   ],
   // Lead 443.53 #2 (CC-2) — leg miles / first-stop deadhead from Google routing + lane averages; never a straight line.
+  // GATE-SCOPE 443.231b: same as booked-loads-save-miles — truck-line / units-without-load READ cannot write haversine miles.
   [
     "verify-no-haversine-leg-miles",
-    ["apps/backend/src/dispatch/", "scripts/verify-no-haversine-leg-miles.mjs"],
+    [
+      "apps/backend/src/dispatch/book-load.service.ts",
+      "apps/backend/src/dispatch/load-lane-learning.service.ts",
+      "apps/backend/src/dispatch/mileage/",
+      "apps/backend/src/dispatch/deadhead/",
+      "apps/backend/src/outbox/handlers/dispatch-relearn-load-miles.handler.ts",
+      "scripts/verify-no-haversine-leg-miles.mjs",
+    ],
   ],
   // Lead 443.55 (CC-2) — per miles field the chosen source + both recommendations + who/when; one point_mileage writer.
+  // GATE-SCOPE 443.231b: arm miles writers only (truck-line AVAILABLE read cannot stamp source).
   [
     "verify-load-miles-source-recorded",
-    ["apps/backend/src/dispatch/", "apps/backend/src/outbox/handlers/dispatch-relearn-load-miles.handler.ts", "scripts/verify-load-miles-source-recorded.mjs"],
+    [
+      "apps/backend/src/dispatch/book-load.service.ts",
+      "apps/backend/src/dispatch/load-lane-learning.service.ts",
+      "apps/backend/src/dispatch/mileage/",
+      "apps/backend/src/outbox/handlers/dispatch-relearn-load-miles.handler.ts",
+      "scripts/verify-load-miles-source-recorded.mjs",
+    ],
   ],
   // Lead 443.51 #3 (CC-2) — a load at delivered or later has no stop still 'pending'.
+  // GATE-SCOPE 443.231b: status / stop writers only — board available-unit reads cannot leave a stop pending.
   [
     "verify-delivered-load-stops-terminal",
-    ["apps/backend/src/driver-finance/", "apps/backend/src/dispatch/", "scripts/verify-delivered-load-stops-terminal.mjs"],
+    [
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/dispatch/book-load.service.ts",
+      "apps/backend/src/dispatch/update-load.service.ts",
+      "apps/backend/src/dispatch/stop-stamp.service.ts",
+      "scripts/verify-delivered-load-stops-terminal.mjs",
+    ],
   ],
   // ROUND 443.38 (CC-2) — stops resolve to the owner's Samsara address; no false rooftop; no fence around a zip center.
+  // GATE-SCOPE 443.231b: blanket dispatch/ pulled tip RULE 8 ambient zip-fence debt into truck-line READ PRs.
+  // Arm telematics / Samsara / book-load / settlement seed only (this PR cannot draw a fence).
   [
     "verify-stops-resolve-samsara-no-zip-fence",
-    ["apps/backend/src/telematics/", "apps/backend/src/integrations/samsara/", "apps/backend/src/dispatch/", "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts", "scripts/verify-stops-resolve-samsara-no-zip-fence.mjs"],
+    [
+      "apps/backend/src/telematics/",
+      "apps/backend/src/integrations/samsara/",
+      "apps/backend/src/dispatch/book-load.service.ts",
+      "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts",
+      "scripts/verify-stops-resolve-samsara-no-zip-fence.mjs",
+    ],
   ],
   // Lead 443.53 #1 (CC-2) — a booked stop with a facility + city gets Google's street in its city / state, or the recorded Google no-result.
+  // GATE-SCOPE 443.231b: drop loads.routes.ts — units-without-load driver rewrite cannot book/geocode a stop.
+  // book-load + telematics + FE book-load-stop-geocode remain the writers.
   [
     "verify-booked-stop-street-or-google-no-result",
-    ["apps/backend/src/telematics/", "apps/backend/src/integrations/google/", "apps/backend/src/cron/stop-resolution-sweep.cron.ts", "apps/backend/src/dispatch/book-load.service.ts", "apps/backend/src/dispatch/loads.routes.ts", "apps/frontend/src/pages/dispatch/components/book-load-stop-geocode.ts", "scripts/verify-booked-stop-street-or-google-no-result.mjs"],
+    [
+      "apps/backend/src/telematics/",
+      "apps/backend/src/integrations/google/",
+      "apps/backend/src/cron/stop-resolution-sweep.cron.ts",
+      "apps/backend/src/dispatch/book-load.service.ts",
+      "apps/frontend/src/pages/dispatch/components/book-load-stop-geocode.ts",
+      "scripts/verify-booked-stop-street-or-google-no-result.mjs",
+    ],
   ],
   // Lead 443.51 #5 (CC-2) — a Relay-fill expense document names the settlement that posted the fill.
   [
@@ -1239,9 +1297,14 @@ const LIVE_DOMAIN_GUARDS = [
   // ROUND 168 (P0, retraction) — Samsara was never the break; mdata.load_stops had no coordinates,
   // so the (healthy) geofence engine had nothing to compare a position against. Fails when any
   // dispatchable load has a stop with no lat/lng or a live geocode_failure_reason.
+  // GATE-SCOPE 443.231b: drop loads.routes.ts — units-without-load driver rewrite cannot geocode stops.
   [
     "verify-stops-are-geocoded",
-    ["apps/backend/src/telematics/stop-geocode-fallback.service.ts", "apps/backend/src/telematics/stops-geocode-backfill.service.ts", "apps/backend/src/dispatch/loads.routes.ts"],
+    [
+      "apps/backend/src/telematics/stop-geocode-fallback.service.ts",
+      "apps/backend/src/telematics/stops-geocode-backfill.service.ts",
+      "apps/backend/src/dispatch/book-load.service.ts",
+    ],
   ],
   // ROUND 168 JOB 2 — the permanent health check for the actual root cause: calls the same geocode
   // path a real stop uses against a known-good address, so "provider_unavailable" (nothing
@@ -1249,9 +1312,10 @@ const LIVE_DOMAIN_GUARDS = [
   // producing hundreds of uncoordinated stops again.
   // ROUND 173 JOB 2 — 8 named dispatchable-load stops had no street address, sourced one by one
   // from signed rate confirmations. Pins those 8 stop ids so none of them regresses to NULL.
+  // GATE-SCOPE 443.231b: drop loads.routes.ts (same units-without-load read class).
   [
     "verify-round173-8-stops-have-addresses",
-    ["apps/backend/src/dispatch/loads.routes.ts", "scripts/ops/2026-09-28-round173-job2-fill-8-stop-addresses.mjs"],
+    ["scripts/ops/2026-09-28-round173-job2-fill-8-stop-addresses.mjs", "scripts/verify-round173-8-stops-have-addresses.mjs"],
   ],
   [
     "verify-geocode-provider-is-reachable",
@@ -2283,6 +2347,38 @@ const changedForLiveDomains = changedForLiveDomainsEarly;
 const PURE_UNIT_TEST_RE = /(?:^|\/)__tests__\/|\.(?:test|spec)\.[cm]?tsx?$/;
 const isPureUnitTestPath = (f) => PURE_UNIT_TEST_RE.test(f) && !/\.db\.test\.[cm]?tsx?$/.test(f);
 
+// GATE-SCOPE 443.231b — Truck Line AVAILABLE / List Unassigned units unit→driver READ paths.
+// These files paint free trucks + name the current driver; they cannot invent load numbers, stamp
+// miles, draw zip fences, or post cash. Blanket apps/backend/src/dispatch/ (and apps/backend/src/)
+// must not pull tip ambient LIVE debt into this read class. Explicit domain entries (truck-line.routes
+// on verify-load-boards-agree / verify-truck-line-board-shows-canonical-active-set) still arm.
+const ROUND_443231B_AVAILABLE_UNITS_READ_FILES = new Set([
+  "apps/backend/src/dispatch/unit-current-driver.ts",
+  "apps/backend/src/dispatch/unit-in-service.ts",
+  "apps/backend/src/dispatch/truck-line/group-by-unit.ts",
+  "apps/backend/src/dispatch/truck-line/truck-line.routes.ts",
+]);
+function isRound443231bAvailableUnitsReadPath(f) {
+  if (ROUND_443231B_AVAILABLE_UNITS_READ_FILES.has(f)) return true;
+  if (f.startsWith("apps/backend/src/dispatch/truck-line/")) return true;
+  if (f === "apps/backend/src/dispatch/loads.routes.ts") {
+    const d = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    if ((d.status ?? 1) !== 0) return false; // cannot tell → do not claim read-only
+    const diffText = d.stdout || "";
+    const touchesStopOrBook =
+      /backfillStopCoordinates|bookLoad|geocode|leg_miles|lane_mileage|haversine|allocateNextLoadNumber|createLoadWithFullSideEffects/i.test(
+        diffText,
+      );
+    const touchesAvailableDriver =
+      /unitCurrentDriverSql|UNIT_IN_SERVICE_SQL|units-without-load|443\.231b/.test(diffText);
+    return touchesAvailableDriver && !touchesStopOrBook;
+  }
+  return false;
+}
+
 // GATE-SCOPE-04 (LEAD, ROUND 389) — a COMMENT-ONLY diff cannot change a production row, so it cannot
 // arm a live-domain guard. Measured, not assumed: this reads the file's real diff and returns true
 // only when EVERY added and removed line is a comment or blank.
@@ -2600,6 +2696,15 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
               f === "apps/backend/src/accounting/account-register.service.test.ts" ||
               f === "apps/backend/src/accounting/account-register.routes.ts" ||
               f === "apps/backend/src/accounting/account-register.guard.test.ts")
+          ) {
+            return false;
+          }
+          // GATE-SCOPE 443.231b: blanket dispatch/ or apps/backend/src/ must not arm tip miles /
+          // cash / settlement LIVE debt from AVAILABLE unit→driver READ files. Exact-file domain
+          // entries (e.g. truck-line.routes on verify-load-boards-agree) still match via f.startsWith(p).
+          if (
+            (p === "apps/backend/src/dispatch/" || p === "apps/backend/src/") &&
+            isRound443231bAvailableUnitsReadPath(f)
           ) {
             return false;
           }

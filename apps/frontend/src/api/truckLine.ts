@@ -58,7 +58,8 @@ export type TruckLineLoad = {
 };
 
 export type TruckLineAvailable = {
-  driver_id: string;
+  /** Null when the free unit has no open VDA and no last-delivered primary (443.231b). */
+  driver_id: string | null;
   driving_minutes_remaining: number | null;
   cycle_minutes_remaining: number | null;
   hos_polled_minutes_ago: number | null;

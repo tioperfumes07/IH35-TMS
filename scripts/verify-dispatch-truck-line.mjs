@@ -34,6 +34,7 @@ export function verify(files) {
   const {
     truckLineRoutes,
     unitsWithoutLoadRoutes,
+    unitInServiceSrc = "",
     stopStampRoutes,
     stopStampService,
     driverPwaRoutes,
@@ -45,18 +46,23 @@ export function verify(files) {
     dispatchTsx,
   } = files;
 
-  // (a) row count = in-service USMCA trucks under the SAME Kanban/units-without-load predicate.
-  // LEAD 443.206 D3: both read THE board unit gate (canonicalBoardUnitGateSql — COALESCE(leased, owner), in service,
-  // real, not sold / disposed; asserted in canonical-active-load-set.ts by verify-load-boards-agree) + the awaiting extras.
-  const sharedTokens = [
-    'canonicalBoardUnitGateSql("u", "$1::uuid")',
-    "u.is_oos IS NOT TRUE",
-  ];
-  for (const token of sharedTokens) {
-    if (!truckLineRoutes.includes(token)) problems.push(`(a) truck-line.routes.ts missing unit predicate token: ${token}`);
-    if (!unitsWithoutLoadRoutes.includes(token)) problems.push(`(a) units-without-load predicate itself changed, lost token: ${token} (re-sync truck-line.routes.ts if this moved)`);
+  // (a) 443.231b — free-unit gate is ONE export (unit-in-service.ts). Truck Line AVAILABLE and
+  // units-without-load both import UNIT_IN_SERVICE_SQL (board unit gate + not OOS + no open WO).
+  if (!unitInServiceSrc.includes('canonicalBoardUnitGateSql("u", "$1::uuid")')) {
+    problems.push("(a) unit-in-service.ts must build on canonicalBoardUnitGateSql (D3)");
   }
-  if (!truckLineRoutes.includes("openWorkOrderPredicateSql")) problems.push("(a) truck-line.routes.ts must reuse openWorkOrderPredicateSql, not a private in-shop check");
+  if (!unitInServiceSrc.includes("u.is_oos IS NOT TRUE")) {
+    problems.push("(a) unit-in-service.ts must exclude OOS units");
+  }
+  if (!unitInServiceSrc.includes("openWorkOrderPredicateSql")) {
+    problems.push("(a) unit-in-service.ts must reuse openWorkOrderPredicateSql, not a private in-shop check");
+  }
+  if (!/UNIT_IN_SERVICE_SQL/.test(truckLineRoutes)) {
+    problems.push("(a) truck-line.routes.ts must use UNIT_IN_SERVICE_SQL for AVAILABLE");
+  }
+  if (!/UNIT_IN_SERVICE_SQL/.test(unitsWithoutLoadRoutes)) {
+    problems.push("(a) units-without-load must use UNIT_IN_SERVICE_SQL (same free-unit set as Truck Line AVAILABLE)");
+  }
 
   // (b) station derivation is a pure function, unit-tested for the 9 states + multi-stop.
   if (!/export function deriveTruckLineStation/.test(stationTs)) problems.push("(b) station.ts must export a pure deriveTruckLineStation function");
@@ -213,9 +219,11 @@ export function verify(files) {
   if (helperSrc && /interval '48 hours'/.test(helperSrc)) {
     problems.push("(m) AUTH-061 48h hide must be retired from CURRENT helper (ROUND 255)");
   }
-  const currentSqlUses = (truckLineRoutes.match(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g) ?? []).length;
-  if (currentSqlUses < 2) {
-    problems.push(`(m) CURRENT_TRUCK_LINE_LOAD_SQL must be interpolated into busy_drivers unions (found ${currentSqlUses}, need >=2)`);
+  // 443.231b — AVAILABLE is unit-centric (no busy_drivers CTE). CURRENT still gates the loaded
+  // rows query (`.replace` form). Count any CURRENT_TRUCK_LINE_LOAD_SQL interpolation.
+  const currentSqlUses = (truckLineRoutes.match(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL(?:\.replace)?/g) ?? []).length;
+  if (currentSqlUses < 1) {
+    problems.push(`(m) CURRENT_TRUCK_LINE_LOAD_SQL must gate loaded Truck Line rows (found ${currentSqlUses})`);
   }
 
   // (n) ROUND 155.6 — columns + sections + empty state (delegate detail to the dedicated guard).
@@ -236,6 +244,7 @@ function loadFiles() {
   return {
     truckLineRoutes: read("apps/backend/src/dispatch/truck-line/truck-line.routes.ts"),
     unitsWithoutLoadRoutes: read("apps/backend/src/dispatch/loads.routes.ts"),
+    unitInServiceSrc: read("apps/backend/src/dispatch/unit-in-service.ts"),
     stopStampRoutes: read("apps/backend/src/dispatch/truck-line/stop-stamp.routes.ts"),
     stopStampService: read("apps/backend/src/dispatch/stop-stamp.service.ts"),
     driverPwaRoutes: read("apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts"),
@@ -262,7 +271,7 @@ function runSelftest() {
   }
 
   const cases = [
-    ["(a) unit predicate token removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace('canonicalBoardUnitGateSql("u", "$1::uuid")', "true") }],
+    ["(a) unit predicate token removed", { ...good, unitInServiceSrc: good.unitInServiceSrc.replace('canonicalBoardUnitGateSql("u", "$1::uuid")', "true") }],
     ["(c) new status writer planted in truck-line.routes.ts", { ...good, truckLineRoutes: good.truckLineRoutes + "\n-- UPDATE mdata.loads SET status = 'x'" }],
     ["(c) office route stopped using the shared stamp function", { ...good, stopStampRoutes: good.stopStampRoutes.replaceAll("stampStopArrival", "REMOVED").replaceAll("stampStopDeparture", "REMOVED") }],
     ["(d) error surfacing removed", { ...good, boardTsx: good.boardTsx.replaceAll("userFacingApiError", "REMOVED") }],
@@ -284,7 +293,7 @@ function runSelftest() {
     ["(l) onAssignDriver wiring removed", { ...good, boardTsx: good.boardTsx.replaceAll("onAssignDriver", "REMOVED") }],
     ["(l) available-row branch removed", { ...good, boardTsx: good.boardTsx.replaceAll('r.kind === "available"', "false") }],
     ["(m) CURRENT import removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/from ["'].*current-truck-line-load\.js["']/, 'from "./MISSING.js"') }],
-    ["(m) busy_drivers stopped using CURRENT predicate", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g, "TRUE /* REMOVED */") }],
+    ["(m) CURRENT predicate removed from loaded rows", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\.replace\([^)]*\)\}/g, "TRUE /* REMOVED */") }],
     ["(m) canonical alias removed from CURRENT helper", { ...good, /* helper mutated via board path unused — plant in truckLineRoutes comment only */ truckLineRoutes: good.truckLineRoutes, boardTsx: good.boardTsx }],
     ["(n) groupTruckLineByUnit removed", { ...good, truckLineRoutes: good.truckLineRoutes.replaceAll("groupTruckLineByUnit", "REMOVED") }],
     ["(n) empty state removed", { ...good, boardTsx: good.boardTsx.replaceAll("truck-line-empty", "REMOVED") }],
