@@ -4,9 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // booking transaction, under a SAVEPOINT; a refusal or an engine error never fails the booking and is never silent
 // (audited as dispatch.load.deadhead_not_filled with its reason).
 
-const h = vi.hoisted(() => ({ fill: vi.fn(), audit: vi.fn(async () => undefined) }));
+const h = vi.hoisted(() => ({ fill: vi.fn(), audit: vi.fn(async () => undefined), enqueue: vi.fn(async () => undefined) }));
 vi.mock("../mileage/miles-recommendations.service.js", () => ({ fillLoadDeadhead: h.fill }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: h.audit }));
+vi.mock("../../outbox/enqueue-outbox-event.js", () => ({ enqueueOutboxEvent: h.enqueue }));
 
 const { fillDeadheadAtBooking } = await import("../book-load.service.js");
 
@@ -22,7 +23,26 @@ function client() {
 }
 
 describe("fillDeadheadAtBooking (443.192)", () => {
-  beforeEach(() => { h.fill.mockReset(); h.audit.mockClear(); });
+  beforeEach(() => { h.fill.mockReset(); h.audit.mockClear(); h.enqueue.mockClear(); });
+
+  it("443.230 — a refusal queues THE re-learn engine in the booking's own commit (points located after commit → deadhead measured)", async () => {
+    h.fill.mockResolvedValue({ load_id: LOAD, load_number: "1", status: "not_filled", miles: null, method: null, reason: "the first stop has no real point yet" });
+    const c = client();
+    await fillDeadheadAtBooking(c as never, INPUT, LOAD);
+    expect(h.enqueue).toHaveBeenCalledTimes(1);
+    const [cl, event, agg, payload, key] = h.enqueue.mock.calls[0] as unknown as [unknown, string, Record<string, unknown>, Record<string, unknown>, string];
+    expect(cl).toBe(c);
+    expect(event).toBe("dispatch.relearn_load_miles");
+    expect(agg).toEqual({ aggregate_type: "mdata.loads", aggregate_id: LOAD });
+    expect(payload).toEqual({ operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80", load_id: LOAD, actor_user_id: "11111111-1111-4111-8111-111111111111" });
+    expect(key).toBe(`dispatch.relearn_load_miles:${LOAD}:book-load-deadhead`);
+  });
+
+  it("443.230 — a filled deadhead queues nothing", async () => {
+    h.fill.mockResolvedValue({ load_id: LOAD, load_number: "1", status: "filled", miles: 42, method: "google_practical_prev_stop", reason: null });
+    await fillDeadheadAtBooking(client() as never, INPUT, LOAD);
+    expect(h.enqueue).not.toHaveBeenCalled();
+  });
 
   it("calls the one deadhead engine for the booked load on the booking client, inside a savepoint", async () => {
     h.fill.mockResolvedValue({ load_id: LOAD, load_number: "1", status: "filled", miles: 42, method: "google_practical_prev_stop", reason: null });
