@@ -2737,5 +2737,10 @@
       "claimed_at": "2026-10-16",
       "purpose": "LEAD 443.151 (b): void-and-reissue frees an invoice number \u2014 invoices_display_id_check also accepts '<number>-V<n>' on a VOID invoice so the voided row keeps its record while its number is reissued (owner reconciliation 1-118)."
     }
+  },
+  "202616140700": {
+    "claimed_by": "Cursor",
+    "claimed_at": "2026-10-22",
+    "purpose": "443.243: fuel.fuel_assignment_questions \u2014 Fuel Assignment Question table + API for the confirmation popup"
   }
 }
