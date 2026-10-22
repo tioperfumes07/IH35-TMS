@@ -602,3 +602,19 @@ describe("LEAD 443.243 — a reassigned load follows its new driver's open pre-s
       .rejects.toMatchObject({ code: "new_driver_has_no_open_presettlement" });
   });
 });
+
+describe("LEAD 443.243 (19:12Z) — an NB with no tour joins the driver's existing open pre-settlement", () => {
+  it("suggests the open, NB-free pre-settlement (his current trip) instead of opening a second one", async () => {
+    const trip = { id: "99999999-9999-9999-9999-999999999999", display_id: "P-0112", tour_id: TOUR_ID };
+    const client = { query: vi.fn(async (sql: string) => {
+      if (sql.includes("ORDER BY s.created_at DESC LIMIT 1") && sql.includes("nb.trip_type = 'NB'")) return { rows: [trip] };
+      if (sql.includes("RETURNING id")) return { rows: [{ id: SUGGESTION_ID }] };
+      return { rows: [] };
+    }) };
+    const r = await suggestPresettlementLink(client as never, {
+      operating_company_id: OPCO, load_id: LOAD_ID, driver_id: DRIVER_ID, unit_id: null, trip_type: "NB", tour_id: null, actor_user_id: USER_ID,
+    });
+    expect(r.suggested_settlement_id).toBe(trip.id);
+    expect(r.suggested_reason).toContain("joins the driver's open pre-settlement P-0112");
+  });
+});

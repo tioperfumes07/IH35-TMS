@@ -2176,8 +2176,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
         // Entity scope (USMCA cross-entity leak fix): gate the whole stop mutation on the parent load
-        // belonging to the caller's operating company (load_stops has no own operating_company_id).
-        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        // belonging to the caller's operating company. LEAD 443.243: load_stops now carries its own operating_company_id
+        // under FORCE RLS, so the session must be scoped to the load's company before the UPDATE — without it every stop
+        // edit 500'd "new row violates row-level security policy" (42501). The company is the one the caller names
+        // (?operating_company_id=, membership-checked) or, failing that, the resolved default — never guessed per row.
+        const requestedCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "").trim();
+        const scopedCompanyId = requestedCompanyId
+          ? await setScopedCompanyContext(client, authUser.uuid, requestedCompanyId)
+          : await resolveOperatingCompanyId(client, authUser.uuid);
+        if (scopedCompanyId && !requestedCompanyId) await setScopedCompanyContext(client, authUser.uuid, scopedCompanyId);
         // TS2322 fix (2026-09-02 deploy-blocking build failure) — same shape as the POST stop-create
         // handler above: explicit guard, not an implicit DB-round-trip correlation.
         if (!scopedCompanyId) return null;

@@ -328,7 +328,9 @@ export async function geocodeStopsWithClient(
           }, "info", "443.53");
         }
       }
-      const zipStamped = !stop.geocode_source || ["picker", "zip_center", "city_center"].includes(stop.geocode_source);
+      // 443.241: the 10-16 manual seed stamped city-only stops 'manual_seed' — a city / ZIP center like the others, so the
+      // stop is honestly listed (Google's recorded "no result"), never left looking un-tried.
+      const zipStamped = !stop.geocode_source || ["picker", "zip_center", "city_center", "manual_seed"].includes(stop.geocode_source);
       if (!placeOutcome && !looksLikeStreet(stop.address_line1) && zipStamped) {
         // (d) no street, no Samsara address: the zip / city center, honestly labelled, and nothing drawn around it.
         let lat = stop.latitude, lng = stop.longitude, source = stop.postal_code ? "zip_center" : "city_center";

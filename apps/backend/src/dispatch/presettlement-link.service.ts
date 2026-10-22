@@ -155,7 +155,30 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
   let suggestedSettlementId: string | null = null;
   let reason: string;
 
-  if (input.trip_type === "NB" && !input.tour_id) {
+  // LEAD 443.243 (19:12Z): one open pre-settlement per driver is his current trip. An NB with no tour first joins the driver's
+  // EXISTING open, unposted pre-settlement when it holds no live NB of his (e.g. P-0112 after 13693 left Leonel) — a new one
+  // would collide with uq_driver_settlements_one_open_per_driver (the opaque 409 on Book Load 13698).
+  const openTrip = input.trip_type === "NB" && !input.tour_id ? (await client.query<{ id: string; display_id: string | null; tour_id: string | null }>(
+    `SELECT s.id::text, s.display_id, s.tour_id::text
+       FROM driver_finance.driver_settlements s
+      WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2::uuid AND s.status = 'open'
+        AND s.trip_closed_at IS NULL AND s.posted_at IS NULL AND s.voided_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_runs gr
+                         WHERE gr.operating_company_id = s.operating_company_id AND gr.settlement_id = s.id AND gr.status = 'posted')
+        AND NOT EXISTS (SELECT 1 FROM mdata.loads nb
+                         WHERE nb.operating_company_id = s.operating_company_id
+                           AND (nb.presettlement_link_id = s.id OR nb.id = s.first_load_id)
+                           AND nb.id <> $3::uuid AND nb.trip_type = 'NB'
+                           AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM s.driver_id
+                           AND nb.soft_deleted_at IS NULL AND nb.status::text NOT IN ('cancelled', 'draft'))
+      ORDER BY s.created_at DESC LIMIT 1`,
+    [input.operating_company_id, input.driver_id, input.load_id]
+  )).rows[0] ?? null : null;
+  if (openTrip) {
+    suggestionTourId = openTrip.tour_id ?? randomUUID();
+    suggestedSettlementId = openTrip.id;
+    reason = `NB leg joins the driver's open pre-settlement ${openTrip.display_id ?? openTrip.id} (one open pre-settlement per driver — his current trip).`;
+  } else if (input.trip_type === "NB" && !input.tour_id) {
     suggestionTourId = randomUUID();
     suggestedSettlementId = null;
     reason = "NB leg starts a new tour — recommend opening a new pre-settlement for this driver.";
