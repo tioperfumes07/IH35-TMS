@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import type { BatchInvoiceLite, BatchTotals, FactoringBatchStatus } from "./batch.shared.js";
 import { getFactorForCustomer } from "./factor.service.js";
 import { autoPostOverageOnSettle } from "./reserve.service.js";
@@ -156,7 +157,7 @@ export async function createDraftBatch(
     const factor = await getFactorForCustomer(
       tenantId,
       customerId,
-      String(invoice.factor_as_of_date ?? new Date().toISOString().slice(0, 10)),
+      String(invoice.factor_as_of_date ?? companyBusinessDate()),
       { client: deps.client }
     );
     customerResolution.set(customerId, {

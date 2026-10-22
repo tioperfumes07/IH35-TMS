@@ -1,3 +1,4 @@
+import { companyToday } from "../../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per catalog entry (code / name / order / status) — a reference list, not a time series.
 import { useEffect, useMemo, useState } from "react";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
@@ -62,7 +63,7 @@ function exportCancellationReasonsCsv(rows: LoadCancellationReason[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `load-cancellation-reasons-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `load-cancellation-reasons-${companyToday()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

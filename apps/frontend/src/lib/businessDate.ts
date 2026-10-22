@@ -115,6 +115,16 @@ export function monthBoundsIso(iso: string): { start: string; end: string } {
   return { start, end: `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}` };
 }
 
+/** Quarter boundaries derived from a company calendar day, never the host's UTC month. */
+export function quarterBoundsIso(iso: string): { start: string; end: string } {
+  const [year, month] = iso.split("-").map(Number);
+  const first = Math.floor((month - 1) / 3) * 3 + 1;
+  return {
+    start: `${year}-${String(first).padStart(2, "0")}-01`,
+    end: monthBoundsIso(`${year}-${String(first + 2).padStart(2, "0")}-01`).end,
+  };
+}
+
 const WALL_CLOCK_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/;
 
 /**

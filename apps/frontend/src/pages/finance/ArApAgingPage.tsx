@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -31,7 +32,7 @@ import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => companyToday();
 
 type Mode = "ar" | "ap";
 

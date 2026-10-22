@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 /**
  * R-186.2 — Settlement Creator half-page side panel.
  * ONE panel for BOTH Company + Driver AlwaysTrack settlements (USMCA only).
@@ -243,7 +244,7 @@ function nextSequentialLoadNumber(existing: LoadDraft[], peekBase: string): stri
 
 function emptyFuel(): FuelDraft {
   return {
-    date: new Date().toISOString().slice(0, 10),
+    date: companyToday(),
     gallons: 0,
     cpg_cents: 0,
     card: "relay",
@@ -258,7 +259,7 @@ function emptyFuel(): FuelDraft {
 
 function emptyCompExp(): ExpDraft {
   return {
-    date: new Date().toISOString().slice(0, 10),
+    date: companyToday(),
     item_name: "",
     item_id: null,
     amount_cents: 0,
@@ -278,7 +279,7 @@ function emptyCompExp(): ExpDraft {
 
 function emptyDrvReimb(): ExpDraft {
   return {
-    date: new Date().toISOString().slice(0, 10),
+    date: companyToday(),
     item_name: "",
     item_id: null,
     amount_cents: 0,
@@ -1044,7 +1045,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
   );
   // ROUND 363-CC2-D — the account picker on every line reads the Reclassify account tree (363-CC2-A rules: the whole
   // chart, both sides, zero balances included), so a line can post to an account nothing has posted to yet.
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyToday();
   const [showAccountNumbers] = useShowAccountNumbers();
   const accountTreeQuery = useQuery({
     queryKey: ["settlement-creator-account-tree", companyId],

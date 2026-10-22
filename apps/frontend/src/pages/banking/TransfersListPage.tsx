@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -115,7 +116,7 @@ export function TransfersListPage() {
   const deepLinkGroupId = searchParams.get("group_id")?.trim() || "";
 
   const [fromDate, setFromDate] = useState(new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString().slice(0, 10));
-  const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
+  const [toDate, setToDate] = useState(companyToday());
   // LEAD 443.156 item 1 — type is a set filter: multi-select (none picked = every type).
   const [types, setTypes] = useState<TransferType[]>([]);
   // U12 (owner UI register 2026-10-03) — status is a multi-select; default Active; none picked = every transfer.

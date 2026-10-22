@@ -1,3 +1,4 @@
+import { companyToday } from "../../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -61,7 +62,7 @@ function nextResolveKey() {
 function blankResolveRow(bankDate: string): ResolveDiffRow {
   return {
     _key: nextResolveKey(),
-    date: bankDate.slice(0, 10) || new Date().toISOString().slice(0, 10),
+    date: bankDate.slice(0, 10) || companyToday(),
     vendorId: "",
     glAccountId: "",
     unitId: "",

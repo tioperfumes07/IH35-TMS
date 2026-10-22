@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
 import { useMemo, useState } from "react";
@@ -88,7 +89,7 @@ function exportLocationsCsv(rows: LocationRow[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `locations-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `locations-${companyToday()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -352,7 +353,7 @@ export function LocationsListPage() {
           emptyText="No locations match these filters"
           storageKey="lists-locations"
           tableTestId="locations-list-table"
-          exportFilename={`locations-${new Date().toISOString().slice(0, 10)}.csv`}
+          exportFilename={`locations-${companyToday()}.csv`}
           suppressToolbarSearch
           onRowClick={(row) => setActiveRow(row)}
         />

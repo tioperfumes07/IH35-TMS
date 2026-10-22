@@ -1,3 +1,4 @@
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { AmountLink } from "../../components/shared/AmountLink";
 import { useSearchParams } from "react-router-dom";
@@ -53,14 +54,11 @@ function money(cents: number) {
 }
 
 function currentMonthRange() {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  return monthBoundsIso(companyToday());
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 function sortByCode<T extends { account_code: string }>(lines: T[]) {

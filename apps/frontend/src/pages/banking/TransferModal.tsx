@@ -14,7 +14,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/Combobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { companyToday } from "../../lib/businessDate";
+import { companyToday, addDaysIso } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { formatBankAccountPickerLabel, type BankAccountPickerRow } from "./transferAccountPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -41,9 +41,7 @@ function todayIsoDate() {
 }
 
 function minDateIso90DaysAgo() {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - 90);
-  return d.toISOString().slice(0, 10);
+  return addDaysIso(companyToday(), -90);
 }
 
 function centsFromAmount(value: number | null) {

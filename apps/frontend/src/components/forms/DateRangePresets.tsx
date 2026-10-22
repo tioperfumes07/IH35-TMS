@@ -1,3 +1,4 @@
+import { companyToday, addDaysIso, monthBoundsIso } from "../../lib/businessDate";
 import { DatePicker } from "./DatePicker";
 
 // FILTER-MULTI-01: the ONE date-range control every money list gets — From/To fields plus quick
@@ -13,26 +14,21 @@ export type DateRangePresetsProps = {
 };
 
 function isoDaysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
+  return addDaysIso(companyToday(), -days);
 }
 
 function isoToday(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 function isoStartOfMonth(monthsAgo = 0): string {
-  const d = new Date();
-  d.setDate(1);
-  d.setMonth(d.getMonth() - monthsAgo);
-  return d.toISOString().slice(0, 10);
+  let start = monthBoundsIso(companyToday()).start;
+  for (let month = 0; month < monthsAgo; month++) start = monthBoundsIso(addDaysIso(start, -1)).start;
+  return start;
 }
 
 function isoEndOfLastMonth(): string {
-  const d = new Date();
-  d.setDate(0); // day 0 of current month = last day of previous month
-  return d.toISOString().slice(0, 10);
+  return addDaysIso(monthBoundsIso(companyToday()).start, -1);
 }
 
 const PRESETS: { label: string; range: () => { from: string; to: string } }[] = [

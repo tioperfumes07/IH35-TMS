@@ -6,6 +6,7 @@ import {
   parseDateUS,
   maskTypedDateUS,
   DATE_PLACEHOLDER_US,
+  mmmDd,
 } from "./formatDate";
 
 describe("formatDateUS", () => {
@@ -19,10 +20,17 @@ describe("formatDateUS", () => {
   it("formats the date portion of a full ISO timestamp", () => {
     expect(formatDateUS("2026-07-03T18:30:00Z")).toBe("07/03/2026");
     expect(formatDateUS("2026-07-03T00:00:00")).toBe("07/03/2026");
+    expect(formatDateUS("2026-10-22 00:30:00")).toBe("10/22/2026");
   });
 
-  it("formats a Date object as its local calendar date", () => {
-    expect(formatDateUS(new Date(2026, 6, 3))).toBe("07/03/2026");
+  it("formats Date objects and offset timestamps in Central, independently of viewer timezone", () => {
+    expect(formatDateUS(new Date("2026-07-03T01:30:00Z"))).toBe("07/02/2026");
+    expect(formatDateUS("2026-10-22T01:30:00Z")).toBe("10/21/2026");
+    expect(formatDateUS("2026-10-22T03:30:00+02:00")).toBe("10/21/2026");
+    expect(formatDateUS("2026-01-01T01:30:00Z")).toBe("12/31/2025");
+    expect(formatDateQboList("2026-10-22T01:30:00Z")).toBe("10/21/26");
+    expect(mmmDd("2026-10-22T01:30:00Z")).toBe("OCT-21");
+    expect(mmmDd("2026-10-22")).toBe("OCT-22");
   });
 
   it("returns empty string for null / undefined / empty / unparseable", () => {

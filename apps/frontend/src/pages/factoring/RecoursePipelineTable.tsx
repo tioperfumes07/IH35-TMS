@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 import { visibleDocumentLabel } from "../../lib/entity-label";
 import { useMemo, type ReactNode } from "react";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -74,7 +75,7 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar, f
       return;
     }
     downloadCsv(
-      `factoring-recourse-pipeline-${new Date().toISOString().slice(0, 10)}.csv`,
+      `factoring-recourse-pipeline-${companyToday()}.csv`,
       ["Invoice", "Customer", "Invoice Amount", "Advance", "Reserve", "Fees", "Recourse Expiry", "Days Left"],
       selected.map((row) => [
         row.invoice_reference,

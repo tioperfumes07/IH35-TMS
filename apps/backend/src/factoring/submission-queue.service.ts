@@ -1,3 +1,4 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { getFactorForCustomer } from "./factor.service.js";
 
 type Queryable = {
@@ -196,7 +197,7 @@ export async function listSubmissionQueueInvoices(
     if (!hasRatecon) missing.push("Rate Confirmation");
     const customerId = row.customer_id ? String(row.customer_id) : null;
     const totalCents = toNumber(row.total_cents);
-    const asOfDate = row.issue_date ? String(row.issue_date) : new Date().toISOString().slice(0, 10);
+    const asOfDate = row.issue_date ? String(row.issue_date) : companyBusinessDate();
     const reserveRate = await resolveReserveRate(customerId, asOfDate);
     items.push({
       invoice_id: String(row.invoice_id),

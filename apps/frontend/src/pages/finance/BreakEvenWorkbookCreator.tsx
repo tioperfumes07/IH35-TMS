@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -54,7 +55,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [name, setName] = useState("Break-even analysis");
-  const [periodStart, setPeriodStart] = useState(() => new Date().toISOString().slice(0, 10));
+  const [periodStart, setPeriodStart] = useState(() => companyToday());
   const [miles, setMiles] = useState(String(liveMiles || ""));
   const [lines, setLines] = useState<LineTemplate[]>(() => DEFAULT_LINES.map((l) => ({ ...l })));
   const [newVehicle, setNewVehicle] = useState("");

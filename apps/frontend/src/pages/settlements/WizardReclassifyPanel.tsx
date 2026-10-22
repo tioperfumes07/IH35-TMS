@@ -1,3 +1,4 @@
+import { companyToday } from "../../lib/businessDate";
 // ROUND 363-CC2-D — Reclassify, reachable from inside the Settlement Creator, on the lines the owner just posted.
 //
 // Not a wizard-local copy of the logic: the lines come from findReclassifyLines (the Accounting > Reclassify register's
@@ -39,7 +40,7 @@ export function WizardReclassifyPanel({
   /** U17 — the Expenses list reuses this panel (same engine, same writer); it says its own first line. */
   intro?: string;
 }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyToday();
   // Owner ruling (Round 83): account numbers hidden unless the viewer's toggle is on.
   const [showAccountNumbers] = useShowAccountNumbers();
   const linesQ = useQuery({
