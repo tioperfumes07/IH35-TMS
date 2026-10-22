@@ -20,7 +20,7 @@ function assertFuelHistoryDate(src) {
   if (!/key:\s*["']transaction_date["']/.test(src)) {
     problems.push(`${FILE}: must keep transaction_date column`);
   }
-  if (!/render:\s*\(row\)\s*=>\s*formatDateUS\(row\.transaction_date\)/.test(src)) {
+  if (!/render:\s*\(row\)\s*=>\s*(?:\(row\.fill_moment_at \? formatDateTimeUS\(row\.fill_moment_at\) : )?formatDateUS\(row\.transaction_date\)/.test(src)) {
     problems.push(`${FILE}: transaction_date column must render via formatDateUS(row.transaction_date)`);
   }
   // bare ParityTable column with no render dumps ISO — forbid that shape for this key

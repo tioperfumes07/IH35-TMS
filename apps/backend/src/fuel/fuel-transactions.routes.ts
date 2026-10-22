@@ -223,6 +223,8 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           SELECT
             ft.id,
             ft.transaction_at,
+            ft.fill_moment_at,
+            ft.time_unknown,
             ft.purchased_at,
             ft.load_id,
             l.load_number,
@@ -289,6 +291,9 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           id: row.id,
           // FuelTransactionRow shape:
           transaction_date: row.transaction_at,
+          // LEAD 443.214 — the provider's real pump moment (Central) when known; time_unknown = only a typed date exists.
+          fill_moment_at: row.fill_moment_at ?? null,
+          time_unknown: row.time_unknown === true,
           driver_name: (row.driver_name as string | null) ?? "Unassigned",
           // gallons is nullable in the canonical table: imported/manual rows can carry a real
           // total cost before volume is known. Preserve that distinction for every mounted
