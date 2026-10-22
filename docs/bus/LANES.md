@@ -262,6 +262,9 @@ apps/backend/src/index.ts  (route registration only — declare which register*R
 feed-input/**             (parsed source-document truth data every seat reads against, not one seat's own)
 scripts/feed/**           (the parsers that produce feed-input/** — same shared-reference-data rationale)
 scripts/day_control.json  (verify-feed-day.mjs's CONTROL file, a mirror of scripts/feed/day_control.json above — same shared-reference-data rationale)
+# ROUND 443.255 R3 (CC-1, 2026-10-22): any seat may APPEND its own claim entries; the lane guard
+# enforces append-only + claimed_by = committing seat. No seat may edit another seat's entry.
+scripts/verify-steps/CLAIMED-NUMBERS.json
 
 ## FORBIDDEN TO EVERY SEAT
 Any write to: payroll.* · settlement.* · accounting.qbo_* · bank.* · maint.*

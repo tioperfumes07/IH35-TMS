@@ -16883,10 +16883,20 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1078,
+  "total_claimed": 1080,
   "18670": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-22",
     "purpose": "verify-fuel-assignment-popup"
+  },
+  "18693": {
+    "claimed_by": "codex",
+    "claimed_at": "2026-10-22",
+    "purpose": "CODEX 443.252 E: settlement click-through contract guard"
+  },
+  "18709": {
+    "claimed_by": "codex",
+    "claimed_at": "2026-10-22",
+    "purpose": "CODEX 443.252 E: settlement token selftest guard"
   }
 }
