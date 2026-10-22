@@ -9,6 +9,7 @@ import {
 } from "../../../api/fuelAssignmentQuestions";
 import { FuelAssignmentPopup } from "./FuelAssignmentPopup";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
@@ -102,9 +103,13 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
                   <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{r.station ?? "—"}</td>
                   <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{r.gallons ?? "—"}</td>
                   <td
-                    className={`border border-[#E5E7EB] px-2 py-1.5 text-xs whitespace-nowrap ${QBO_MONEY_CELL_CLASS}`}
+                    className={`border border-[#E5E7EB] px-2 py-1.5 text-xs shrink-0 whitespace-nowrap ${QBO_MONEY_CELL_CLASS}`}
                   >
-                    {money(r.amount_cents)}
+                    <EntityLink
+                      kind="fuel_transaction"
+                      id={r.fuel_transaction_id}
+                      label={money(r.amount_cents)}
+                    />
                   </td>
                   <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs font-semibold">
                     {r.card_unit_number ?? "—"}

@@ -12,6 +12,7 @@ import {
 } from "../../../api/fuelAssignmentQuestions";
 import { Modal } from "../../../components/Modal";
 import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
@@ -50,7 +51,7 @@ function CandidateRow({
         <input type="radio" checked={selected} onChange={onSelect} aria-label={`Truck ${c.unit_number}`} />
       </td>
       <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs font-semibold text-[#1F2A44]">
-        {c.unit_number}
+        <EntityLink kind="unit" id={c.unit_id} label={c.unit_number} />
       </td>
       <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs whitespace-nowrap">
         {c.distance_mi != null ? `${c.distance_mi} mi` : "—"}
@@ -63,7 +64,11 @@ function CandidateRow({
         {c.odometer != null ? `${c.odometer} mi` : "—"}
       </td>
       <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs font-semibold">
-        {c.load.load_number ?? "—"}
+        {c.load.load_id ? (
+          <EntityLink kind="load" id={c.load.load_id} label={c.load.load_number ?? "—"} />
+        ) : (
+          (c.load.load_number ?? "—")
+        )}
       </td>
       <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{c.load.settlement_ref ?? "—"}</td>
       <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{c.load.route ?? "—"}</td>

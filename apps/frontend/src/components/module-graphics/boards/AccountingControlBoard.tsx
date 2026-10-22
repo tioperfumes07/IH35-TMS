@@ -57,13 +57,13 @@ export function AccountingControlBoard({ companyId }: Props) {
   const arCents = arQ.data?.total_open_cents ?? null;
   const arInvoices = arQ.data?.total_open_invoices ?? null;
   const over60 =
-    arQ.data?.rows.reduce(
+    arQ.data?.rows?.reduce(
       (s, r) => s + (r.bucket_61_90_cents ?? 0) + (r.bucket_91_plus_cents ?? 0),
       0
     ) ?? null;
   // APAgingResponse is row-only — derive board totals from the live rows.
-  const apCents = apQ.data?.rows.reduce((s, r) => s + (r.total_open_cents ?? 0), 0) ?? null;
-  const apBills = apQ.data?.rows.reduce((s, r) => s + (r.open_bill_count ?? 0), 0) ?? null;
+  const apCents = apQ.data?.rows?.reduce((s, r) => s + (r.total_open_cents ?? 0), 0) ?? null;
+  const apBills = apQ.data?.rows?.reduce((s, r) => s + (r.open_bill_count ?? 0), 0) ?? null;
 
   return (
     <ModBoardShell

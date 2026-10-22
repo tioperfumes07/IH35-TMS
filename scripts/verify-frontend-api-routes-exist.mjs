@@ -46,6 +46,11 @@ const ALLOWLIST = [
   // but the transfer DIRECTION (in/out) must be derived correctly before posting — financial-aware,
   // deferred per the FE dev's note. Build behind the owner gate, not autonomously.
   "/api/v1/banking/transactions/:x/mark-transfer",
+  // ROUND 443.245 / 443.246 — CC-1 board endpoints (module-graphics tryBoardGet). FE falls back to
+  // composed list APIs / empty states until CC-1 mounts these. Remove when routes land on tip.
+  "/api/v1/banking/money-map",
+  "/api/v1/factoring/journey",
+  "/api/v1/maintenance/fleet-health",
   // NOTE (G10-H3 build): the two non-financial routes below were BUILT and removed from this list:
   //   /api/v1/dispatch/drivers/:x/eligibility  → dispatch/driver-eligibility.routes.ts
   //   /api/v1/maintenance/pre-flight-dvir/**   → maintenance/pre-flight-dvir.routes.ts
