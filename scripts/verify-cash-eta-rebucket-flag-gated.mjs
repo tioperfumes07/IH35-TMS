@@ -25,7 +25,18 @@ if (!helper.includes("predicted_delivery_date")) fail("helper must use predicted
 const svc = read("apps/backend/src/cash-flow/cash-flow.service.ts");
 if (!svc.includes("projectedCashDateSql")) fail("cash-flow service must use projectedCashDateSql");
 if (!/cashFollowsEta = false/.test(svc)) fail("re-bucket must default OFF (cashFollowsEta = false)");
-if (!/cashFollowsEta\s*\?/.test(svc)) fail("the income query must branch on cashFollowsEta (OFF path unchanged)");
+const receipts = read("apps/backend/src/cash-flow/cash-flow-receipts.sql.ts");
+const receiptContract = (service, source) =>
+  (service.match(/cashFlowReceiptsSql\(cashFollowsEta\)/g) ?? []).length === 3 &&
+  /const forecastDate = cashFollowsEta\s*\? projectedCashDateSql\([\s\S]*?: rawDeliveryDateSql\(/.test(source);
+if (process.argv.includes("--selftest")) {
+  if (!receiptContract(svc, receipts)) fail("selftest: current receipt contract failed");
+  if (receiptContract(svc.replace("cashFlowReceiptsSql(cashFollowsEta)", "cashFlowReceiptsSql(false)"), receipts)) fail("selftest: lost consumer flag escaped");
+  if (receiptContract(svc, receipts.replace("const forecastDate = cashFollowsEta", "const forecastDate = true"))) fail("selftest: unconditional ETA escaped");
+  if (receiptContract(svc, receipts.replace("rawDeliveryDateSql(\"fd.scheduled_arrival_at\")", "projectedCashDateSql({ deliveryScheduledExpr: \"fd.scheduled_arrival_at\" })"))) fail("selftest: changed OFF bucket escaped");
+  console.log("PASS receipt routing selftest: current + 3 negative mutations");
+}
+if (!receiptContract(svc, receipts)) fail("all three income consumers must pass the flag to the shared receipt engine, preserving raw-delivery OFF and projected-date ON buckets");
 
 // 3. Route gates on the master flag.
 const route = read("apps/backend/src/cash-flow/cash-flow.routes.ts");
