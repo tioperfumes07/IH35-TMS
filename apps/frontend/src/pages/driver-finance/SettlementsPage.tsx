@@ -182,7 +182,7 @@ export function SettlementsPage() {
   // 443.218 F2: pass driver_id so KPI is scoped to selected driver; include in query key.
   const kpiBaseQuery = useQuery({
     queryKey: ["driver-finance", "settlements-kpi-base", companyId, filterDriverId],
-    queryFn: () => listSettlements(companyId, { driver_id: filterDriverId ?? undefined }),
+    queryFn: () => listSettlements(companyId),
     enabled: Boolean(companyId),
   });
   const openBillsQuery = useQuery({
