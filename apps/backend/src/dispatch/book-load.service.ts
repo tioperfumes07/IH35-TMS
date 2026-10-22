@@ -18,6 +18,7 @@ import { applyTrailerChoice, resolveTrailerChoice, trailerChoiceShapeRefusal, ty
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
 import { applyShortMilesFallback, resolveShortMilesFallback } from "./short-miles-fallback.js";
 import { EDITABLE_DRIVER_BILL_STATUS_SQL, isEditableDriverBillStatus } from "../lib/document-status-vocabulary.js";
+import { recomputeSettlementHeader } from "../driver-finance/settlement-load-reassignment.service.js";
 import {
   appendSettlementLineFromDriverBillIfMissing,
   effectiveTeamPercentsFromRow,
@@ -1196,6 +1197,7 @@ export async function createDriverBillArtifacts(
     voided_at: string | null;
     settled_in_settlement_id: string | null;
     dead_settlement_id?: string | null;
+    editable_settlement_id?: string | null;
     driver_id: string | null;
     team_driver_id: string | null;
   }>(
@@ -1208,11 +1210,18 @@ export async function createDriverBillArtifacts(
             CASE WHEN settlement_live THEN settled_in_settlement_id::text END AS settled_in_settlement_id,
             CASE WHEN settled_in_settlement_id IS NOT NULL AND NOT settlement_live THEN settled_in_settlement_id::text END
               AS dead_settlement_id,
+            -- LEAD 443.243: an OPEN, unposted pre-settlement is the driver's current trip, not settled history.
+            CASE WHEN settlement_editable THEN settled_in_settlement_id::text END AS editable_settlement_id,
             driver_id::text, team_driver_id::text
        FROM (
          SELECT db.*,
                 EXISTS (SELECT 1 FROM driver_finance.driver_settlements s
-                         WHERE s.id = db.settled_in_settlement_id AND s.operating_company_id = db.operating_company_id AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settlement_live
+                         WHERE s.id = db.settled_in_settlement_id AND s.operating_company_id = db.operating_company_id AND s.voided_at IS NULL AND s.status <> 'cancelled') AS settlement_live,
+                EXISTS (SELECT 1 FROM driver_finance.driver_settlements s
+                         WHERE s.id = db.settled_in_settlement_id AND s.operating_company_id = db.operating_company_id
+                           AND s.status = 'open' AND s.trip_closed_at IS NULL AND s.posted_at IS NULL AND s.voided_at IS NULL
+                           AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_runs gr
+                                            WHERE gr.operating_company_id = s.operating_company_id AND gr.settlement_id = s.id AND gr.status = 'posted')) AS settlement_editable
            FROM driver_finance.driver_bills db
           WHERE db.operating_company_id = $1::uuid
             AND db.load_id = $2::uuid
@@ -1402,7 +1411,12 @@ export async function createDriverBillArtifacts(
     const toTeamDriverId = input.assigned_secondary_driver_id ?? null;
     const identityChanged =
       (existing.driver_id ?? null) !== toDriverId || (existing.team_driver_id ?? null) !== toTeamDriverId;
-    if (!isRecalculable) {
+    // LEAD 443.243: a driver change on a bill whose pre-settlement is still OPEN and unposted is a reassignment of the current
+    // trip (the load already followed its new driver's pre-settlement — moveLoadToNewDriverPresettlementInClientTx), not a
+    // rewrite of settled history. The bill keeps that pre-settlement; its header is recomputed below.
+    const reassignableOnOpenTrip =
+      identityChanged && existing.editable_settlement_id != null && isEditableDriverBillStatus(String(existing.status));
+    if (!isRecalculable && !reassignableOnOpenTrip) {
       if (identityChanged) {
         throw new DriverBillReassignRefusedError(
           existing.id,
@@ -1426,10 +1440,13 @@ export async function createDriverBillArtifacts(
       if (!identityChanged) return { outcome: "already_exists" };
       // The bill moves to the new driver; its money is not re-priced from an unpriced / $0 resolution.
       await client.query(
-        `UPDATE driver_finance.driver_bills SET driver_id = $2::uuid, team_driver_id = $3::uuid, settled_in_settlement_id = NULL
-          WHERE id = $1::uuid AND status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL}) AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $4::uuid)`,
-        [existing.id, toDriverId, toTeamDriverId, existing.dead_settlement_id ?? null]
+        `UPDATE driver_finance.driver_bills SET driver_id = $2::uuid, team_driver_id = $3::uuid,
+                settled_in_settlement_id = CASE WHEN settled_in_settlement_id = $5::uuid THEN settled_in_settlement_id END
+          WHERE id = $1::uuid AND status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL})
+            AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $4::uuid OR settled_in_settlement_id = $5::uuid)`,
+        [existing.id, toDriverId, toTeamDriverId, existing.dead_settlement_id ?? null, existing.editable_settlement_id ?? null]
       );
+      if (existing.editable_settlement_id) await recomputeSettlementHeader(client as never, existing.editable_settlement_id, input.operating_company_id);
       await auditDeadSettlementLinkReleased(client, input, existing, String(load.id));
       await appendCrudAudit(
         client,
@@ -1468,11 +1485,11 @@ export async function createDriverBillArtifacts(
                rate_empty_per_mile_cents = $10,
                loaded_pay_cents = $11,
                deadhead_pay_cents = $12,
-               settled_in_settlement_id = NULL,
+               settled_in_settlement_id = CASE WHEN settled_in_settlement_id = $14::uuid THEN settled_in_settlement_id END,
                status = 'open'
          WHERE id = $1::uuid
            AND status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL})
-           AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $13::uuid)
+           AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $13::uuid OR settled_in_settlement_id = $14::uuid)
       `,
       [
         existing.id,
@@ -1488,9 +1505,12 @@ export async function createDriverBillArtifacts(
         loadedPayCentsForBill,
         deadheadPayCentsForBill,
         existing.dead_settlement_id ?? null,
+        existing.editable_settlement_id ?? null,
       ]
     );
     await auditDeadSettlementLinkReleased(client, input, existing, String(load.id));
+    // LEAD 443.243: the bill stayed on its open pre-settlement (the driver's current trip) — its header follows the new price.
+    if (existing.editable_settlement_id) await recomputeSettlementHeader(client as never, existing.editable_settlement_id, input.operating_company_id);
     if (String(existing.status) === "awaiting_short_miles") {
       await appendCrudAudit(
         client,

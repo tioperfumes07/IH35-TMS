@@ -145,8 +145,10 @@ describe("443.192 (2) — a bill linked to a voided / cancelled settlement is se
     expect(u!.values[3]).toBe(85397); // 1897.7 practical mi x 45c, half-up (the one money rule)
     expect(u!.values[6]).toBe(45);
     expect(u!.values[12]).toBe(DEAD_SETTLEMENT);
-    expect(u!.sql.replace(/\s+/g, " ")).toContain("settled_in_settlement_id = NULL");
-    expect(u!.sql.replace(/\s+/g, " ")).toContain("(settled_in_settlement_id IS NULL OR settled_in_settlement_id = $13::uuid)");
+    // 443.243: the link is released unless it is the bill's OPEN pre-settlement ($14) — a dead settlement is never that.
+    expect(u!.sql.replace(/\s+/g, " ")).toContain("settled_in_settlement_id = CASE WHEN settled_in_settlement_id = $14::uuid THEN settled_in_settlement_id END");
+    expect(u!.values[13]).toBeNull();
+    expect(u!.sql.replace(/\s+/g, " ")).toContain("(settled_in_settlement_id IS NULL OR settled_in_settlement_id = $13::uuid OR settled_in_settlement_id = $14::uuid)");
     const released = audit.calls.find((a) => a.eventClass === "driver_finance.driver_bill.dead_settlement_link_released");
     expect(released?.payload).toMatchObject({ driver_bill_id: BILL_ID, released_settlement_id: DEAD_SETTLEMENT, load_id: LOAD_ID });
   });

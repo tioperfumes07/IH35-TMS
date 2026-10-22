@@ -13,7 +13,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const F = { link: "apps/backend/src/dispatch/presettlement-link.service.ts", routes: "apps/backend/src/dispatch/loads.routes.ts" };
+const F = { link: "apps/backend/src/dispatch/presettlement-link.service.ts", routes: "apps/backend/src/dispatch/loads.routes.ts", book: "apps/backend/src/dispatch/book-load.service.ts" };
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
 export function check(src = {}) {
@@ -29,6 +29,14 @@ export function check(src = {}) {
   });
   const stops = s.routes.slice(s.routes.indexOf("const createDispatchLoadBodySchema"), s.routes.indexOf("const updateDispatchLoadBodySchema"));
   if (!/facility_name: z\.string\(\)/.test(stops)) p.push(`${F.routes}: Book Load stop schema drops facility_name`);
+  // 443.243 (2): a reassigned load follows its new driver's open pre-settlement, and its bill may change driver on that open trip.
+  if (!/if \(input\.presettlement_link_id_before\) \{\s*return moveLoadToNewDriverPresettlementInClientTx\(/.test(s.link))
+    p.push(`${F.link}: a reassigned, already-linked load no longer follows its new driver's open pre-settlement`);
+  if (!/await reassignLoadToSettlementInClientTx\(client as never, \{/.test(s.link))
+    p.push(`${F.link}: the move must go through THE move primitive (reassignLoadToSettlementInClientTx)`);
+  if (!/const reassignableOnOpenTrip =\s*identityChanged && existing\.editable_settlement_id != null/.test(s.book) ||
+      !/if \(!isRecalculable && !reassignableOnOpenTrip\)/.test(s.book))
+    p.push(`${F.book}: a bill on the driver's OPEN pre-settlement refuses the driver change again`);
   return p;
 }
 
@@ -42,6 +50,8 @@ if (isMain && process.argv.includes("--selftest")) {
   const plants = [
     ["draft NB counted (suggest)", { link: base.link.replace("AND nb.soft_deleted_at IS NULL AND nb.status::text NOT IN ('cancelled', 'draft')) AS has_other_nb", "AND nb.soft_deleted_at IS NULL AND nb.status::text <> 'cancelled') AS has_other_nb") }],
     ["other-driver NB counted (confirm)", { link: base.link.replace("AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM (SELECT driver_id", "AND (SELECT driver_id") }],
+    ["reassigned load stays on the old driver's settlement", { link: base.link.replace("return moveLoadToNewDriverPresettlementInClientTx(", "return null; void (") }],
+    ["bill on open trip refuses reassignment", { book: base.book.replace("if (!isRecalculable && !reassignableOnOpenTrip)", "if (!isRecalculable)") }],
     ["facility_name dropped", { routes: base.routes.replace(/\n\s*facility_name: z\.string\(\)\.trim\(\)\.max\(200\)\.optional\(\),/, "") }],
   ];
   for (const [n, src] of plants) {
