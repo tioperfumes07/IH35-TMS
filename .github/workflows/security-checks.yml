@@ -77,7 +77,12 @@ jobs:
         run: npm ci
 
       - name: Apply migrations (RLS audit)
-        run: npm run db:migrate
+        env:
+          FRESH_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          export IH35_FRESH_DB_SYSTEM_IDENTIFIER="$(docker exec "$FRESH_POSTGRES_CONTAINER" psql -U verify -d ih35_verify -Atc 'SELECT system_identifier FROM pg_control_system()')"
+          test -n "$IH35_FRESH_DB_SYSTEM_IDENTIFIER"
+          npm run db:migrate
 
       - name: Build frontend bundles (secrets scan)
         run: npm run build:frontend
@@ -175,4 +180,3 @@ jobs:
           if [ "$DOC" = "true" ]; then echo "DOC-ONLY — security-audit heavy suspended"; exit 0; fi
           if [ "$HEAVY" = "success" ]; then exit 0; fi
           echo "Heavy security-audit failed: $HEAVY"; exit 1
-

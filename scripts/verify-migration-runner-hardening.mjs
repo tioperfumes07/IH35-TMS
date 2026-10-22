@@ -16,6 +16,8 @@ import {
   validateMigrationFilenames,
 } from "./lib/migration-filename-validation.mjs";
 import { prepareFreshDbWexIssuer, WEX_MIGRATION } from './lib/fresh-db-wex-prerequisite.mjs';
+import { assertNotProduction } from './lib/assert-not-production.mjs';
+import { prepareFreshLiveLoadsView, LIVE_LOADS_MIGRATION } from './lib/fresh-db-live-loads-view.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.resolve(__dirname, "..", "db", "migrations");
@@ -55,6 +57,37 @@ const TEST_CASES = [
 
 let passed = 0;
 let failed = 0;
+// Real assertion arms: known production, unidentified Docker and mismatched
+// independent container identities all refuse. Existing default stays closed.
+for (const [branch, address, expected, actual, allowed] of [
+  ['br-fancy-credit-akjnd07a','127.0.0.1',null,null,false],
+  [null,'172.18.0.2',null,'123',false],
+  [null,'172.18.0.2','123','456',false],
+  [null,'172.18.0.2','123','123',true],
+  [null,'127.0.0.1',null,null,true],
+]) {
+  const client = { query: async (sql) => ({rows: sql.includes('FROM pg_settings')
+    ? (branch ? [{name:'neon.branch_id',setting:branch}] : [])
+    : sql.includes('pg_control_system') ? [{id:actual}]
+    : [{database:'ih35_verify',address,version:160015,neon_branch:branch,neon_project:null}]}) };
+  let accepted = true;
+  try { await assertNotProduction(client,{freshLoopbackMigration:{hostname:'localhost',database:'ih35_verify',systemIdentifier:expected}}); }
+  catch { accepted = false; }
+  if (accepted === allowed) passed++; else failed++;
+}
+for (const hostname of ['production.neon.tech','remote.example']) {
+  const result = await prepareFreshLiveLoadsView({query:async()=>{throw new Error('must not query remote');}},
+    {file:LIVE_LOADS_MIGRATION,hostname,database:'ih35_verify'});
+  if(result === null) passed++; else failed++;
+}
+const viewSource = fs.readFileSync(new URL('./lib/fresh-db-live-loads-view.mjs',import.meta.url),'utf8');
+const viewSafe = s => s.includes('assertNotProduction(client') && s.includes('SET LOCAL row_security = off')
+  && s.includes('LOCK TABLE mdata.loads IN ACCESS EXCLUSIVE MODE')
+  && s.includes("population.rows[0]?.count !== '0'") && s.includes('views.live_loads RESTRICT');
+for (const marker of ['assertNotProduction(client','SET LOCAL row_security = off',
+  'LOCK TABLE mdata.loads IN ACCESS EXCLUSIVE MODE',"population.rows[0]?.count !== '0'",'views.live_loads RESTRICT']) {
+  if(viewSafe(viewSource) && !viewSafe(viewSource.replace(marker,'REMOVED'))) passed++; else failed++;
+}
 const wexSource=fs.readFileSync(new URL('./lib/fresh-db-wex-prerequisite.mjs',import.meta.url),'utf8');
 function wexSourceSafe(source) {
   return source.includes("file !== WEX_MIGRATION") && source.includes(".includes(hostname)) return")
