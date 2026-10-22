@@ -35,8 +35,10 @@ assertCanonicalSubset("DISPATCH_ACTIVE_LOAD_STATUSES", DISPATCH_ACTIVE_LOAD_STAT
 // views.live_loads's own open_dispatch/pre_settlement split: delivered_pending_docs lands in
 // pre_settlement, never open_dispatch — the view enforces this boundary structurally, this list
 // stays for documentation + for callers still narrowing status text client-side.
+// LEAD 443.244 (owner 2026-10-22: a truck holds one load IN MOTION plus advance bookings): "on load" is the load in motion.
+// An advance booking (assigned_not_dispatched behind the current load — 13693 behind 13690 on T177) is the truck's NEXT
+// load, not a second load it is on; counting it made Overview ON LOAD 10 vs the board's 9.
 export const DISPATCH_ON_LOAD_STATUSES = [
-  "assigned_not_dispatched",
   "dispatched",
   "at_pickup",
   "in_transit",
