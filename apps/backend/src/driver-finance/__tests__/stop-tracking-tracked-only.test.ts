@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { stampStopsFromTracking } from "../settlement-creator-deliver.js";
 
 /** LEAD 443.234 — on a LIVE load the stop-evidence engine stamps only a tracked stop event: no date-only fallback, no future day. */
@@ -21,6 +21,26 @@ function client(events: boolean) {
 }
 
 describe("443.234 — trackedOnly", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("443.238 refuses tomorrow's Central stop after UTC midnight without reading or stamping evidence", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-22T01:30:00Z"));
+    const c = client(true);
+    const out = await stampStopsFromTracking(c as never, "L", "c", { stopDates: { pu: "2026-10-22" } }, { trackedOnly: true });
+    expect(out.every((stop) => stop.note.includes("has not come"))).toBe(true);
+    expect(c.sql.some((s) => s.q.includes("FROM telematics.unit_stop_events"))).toBe(false);
+    expect(c.sql.some((s) => s.q.includes("SET actual_arrival_at"))).toBe(false);
+  });
+
+  it("443.238 permits today's Central stop after UTC midnight when tracked evidence exists", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-22T01:30:00Z"));
+    const c = client(true);
+    await stampStopsFromTracking(c as never, "L", "c", { stopDates: { pu: "2026-10-21" } }, { trackedOnly: true });
+    expect(c.sql.filter((s) => s.q.includes("actual_stamp_precision = 'tracked'"))).toHaveLength(1);
+  });
+
   it("no tracked event → nothing stamped (no date-only), future stop untouched", async () => {
     const c = client(false);
     const out = await stampStopsFromTracking(c as never, "L", "c", {}, { trackedOnly: true });
