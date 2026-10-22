@@ -112,6 +112,20 @@ export function viewReadersOutsideService(files) {
   }
   return bad;
 }
+// LEAD 00:35Z parity re-run #2 — 13699's customer trailer L28591 showed on 8 surfaces but NULL on Load Costs + Loads report:
+// they kept their own trailer lateral. Any backend file that projects a load's trailer_number from assignment history must
+// project it through loadServiceTrailerNumberSql (customer / none / fleet). bills.service.ts is a BILL's equipment, not a load row.
+const TRAILER_PROJECTION_EXEMPT = ["dispatch/load-service.ts", "accounting/bills.service.ts"];
+export function trailerProjectionFailures(files) {
+  const bad = [];
+  for (const [rel, src] of files) {
+    if (TRAILER_PROJECTION_EXEMPT.some((e) => rel.endsWith(e))) continue;
+    const readsHistoryTrailer = /lah\.new_trailer_id|loadServiceTrailerLateralSql\(/.test(src);
+    if (readsHistoryTrailer && /AS trailer_number\b/.test(src) && !/\$\{loadServiceTrailerNumberSql\(/.test(src))
+      bad.push(`${rel}: projects trailer_number from assignment history without loadServiceTrailerNumberSql (a customer trailer shows null)`);
+  }
+  return bad;
+}
 function backendTsFiles() {
   const out = [];
   const walk = (d) => { for (const n of readdirSync(new URL(`../${d}`, import.meta.url))) {
@@ -142,6 +156,10 @@ async function selftest() {
   const base = readBoards();
   const baseStatic = [...staticFailures(base), ...viewReadersOutsideService(backendTsFiles()).map((x) => `second reader of views.live_loads: ${x}`)];
   if (!viewReadersOutsideService([["apps/backend/src/dispatch/x.ts", "const q = `SELECT 1 FROM views.live_loads l`;"]]).length) failures.push('plant "second view reader" not caught');
+  const tp = trailerProjectionFailures(backendTsFiles());
+  if (tp.length) failures.push(`trailer projection baseline not clean: ${tp.join(" | ")}`);
+  if (!trailerProjectionFailures([["apps/backend/src/reports/x.ts", "LEFT JOIN LATERAL (SELECT eq.equipment_number AS trailer_number FROM dispatch.load_assignment_history lah JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id) tr ON true"]]).length)
+    failures.push('plant "own trailer lateral" not caught');
   if (baseStatic.length) failures.push(`static baseline not clean: ${baseStatic.join(" | ")}`);
   const plants = [
     ["board set back to a status list on mdata.loads", "canonical", (x) => x.replace('AND ${loadServiceMembershipSql(alias, "open_dispatch", operatingCompanyIdParam)}`;', "`;")],
@@ -176,7 +194,7 @@ async function main() {
     await selftest();
     return;
   }
-  const sf = [...staticFailures(readBoards()), ...viewReadersOutsideService(backendTsFiles()).map((x) => `second reader of views.live_loads (the load service is the only reader): ${x}`)];
+  const sf = [...staticFailures(readBoards()), ...viewReadersOutsideService(backendTsFiles()).map((x) => `second reader of views.live_loads (the load service is the only reader): ${x}`), ...trailerProjectionFailures(backendTsFiles())];
   if (sf.length) {
     console.error(`${LABEL}: FAIL (static) —\n  - ${sf.join("\n  - ")}`);
     process.exitCode = 1;
