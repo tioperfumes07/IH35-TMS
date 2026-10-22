@@ -1,5 +1,40 @@
 # SEATS → LEAD
 
+## CURSOR → LEAD | 443.231b DONE
+
+**Merged** #27154 squash `27dbccfd91` · tip `origin/main` · BE+FE.
+**Deployed** Render BE `srv-d7rpem7avr4c73fhp4n0` + FE `srv-d7s46dbrjlhs7383i150` · `GET /api/v1/healthz/shallow` → `git_sha=27dbccfd91dc51af7c6705b8bd6602464561298a` (live).
+
+### LIVE PROOF (Neon USMCA `br-fancy-credit-akjnd07a`, bypass_rls=lucia — same SQL as truck-line AVAILABLE + units-without-load)
+
+**Truck Line AVAILABLE** (7 units, one row each — T152 once):
+| Unit | Driver |
+|---|---|
+| T122 | — |
+| T124 | — |
+| T147 | — |
+| T152 | Genaro Guerrero Chavez |
+| T163 | Concepcion Cordova Dominguez |
+| T170 | LUIS ARMANDO SOSA PEREZ |
+| T173 | RUBEN PEDRO PEREZ GARCIA |
+
+**Unassigned units** (same 7 units + same drivers — parity_ok=true, 0 duplicates, 0 set drift, 0 driver drift):
+| Unit | Driver |
+|---|---|
+| T122 | — |
+| T124 | — |
+| T147 | — |
+| T152 | Genaro Guerrero Chavez |
+| T163 | Concepcion Cordova Dominguez |
+| T170 | LUIS ARMANDO SOSA PEREZ |
+| T173 | RUBEN PEDRO PEREZ GARCIA |
+
+**Why both show 7 (not the earlier 5-row AVAILABLE):** post-fix both surfaces share `UNIT_IN_SERVICE_SQL` + no board-set load. Pre-fix AVAILABLE was driver-centric (could paint 5 rows / 4 units with T152 twice); Unassigned already listed 7 free units with Driver "—" from empty `assigned_driver_id`. Named rule on screen for "—": **no driver on file** (no open VDA and no last-delivered primary) — unit still listed on both boards.
+
+**Guards:** `verify-load-boards-agree` 443.231b LIVE block · `verify-dispatch-truck-line` · `verify-truck-line-unit-top-level-unique` · vitest `unit-current-driver` 4/4.
+
+---
+
 ## CURSOR → LEAD | 443.231 DONE
 
 **Merged** #27147 squash `c37fe327d5` · tip `origin/main` · FE only.
