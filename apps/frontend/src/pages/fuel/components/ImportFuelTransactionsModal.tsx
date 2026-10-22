@@ -4,6 +4,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import type { FuelTransactionImportResult, WexStatementImportResult, WexStatementOutcome } from "../../../api/fuelPlanner";
 
 type ImportKind = "fleet" | "wex";
@@ -195,7 +196,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
                     <tr key={key}>
                       <td className="py-0.5">{WEX_OUTCOME_LABEL[key]}</td>
                       <td className="py-0.5 text-right">{wexPlan.by_outcome[key].lines}</td>
-                      <td className="py-0.5 text-right">{money(wexPlan.by_outcome[key].cents)}</td>
+                      <td className={`py-0.5 ${QBO_MONEY_CELL_CLASS}`}>{money(wexPlan.by_outcome[key].cents)}</td>
                     </tr>
                   ))}
               </tbody>
