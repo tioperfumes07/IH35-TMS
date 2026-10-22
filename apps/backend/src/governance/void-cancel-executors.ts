@@ -769,7 +769,7 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     const stampedAnything =
       reversal.result !== "nothing_to_reverse" || cascade.lines_voided.length > 0 || cascade.driver_bills_released.length > 0 ||
       cascade.reimbursements_released.length > 0 || cascade.deductions_released.length > 0 || cascade.children.some((c) => c.rowsStamped > 0) ||
-      cascade.trip_closed || voidState.changed;
+      cascade.trip_closed || cascade.loads_released.length > 0 || cascade.company_settlements_voided.length > 0 || voidState.changed;
     if (!stampedAnything && Number(priorAudit.rows[0]?.n ?? 0) > 0) return { kind: "already_done" };
     await appendCrudAudit(
       client,
@@ -789,6 +789,8 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
         deductions_released: cascade.deductions_released,
         deductions_retained: cascade.deductions_retained,
         trip_closed: cascade.trip_closed,
+        loads_released: cascade.loads_released,
+        company_settlements_voided: cascade.company_settlements_voided,
         via: "governance.void_cancel_requests",
       },
       "warning",
