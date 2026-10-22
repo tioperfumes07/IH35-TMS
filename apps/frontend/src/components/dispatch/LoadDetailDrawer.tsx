@@ -1898,12 +1898,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
               already_exists: "Driver bill already exists — nothing to remint",
               skipped_no_pay_rate: "Still no pay rate/miles — tracking $0 bill stays open to seed later",
               not_applicable: "No driver assigned to this load",
-              refused_no_shortest_miles:
-                "Shortest miles have not been captured for this load — enter shortest miles before a driver bill can be created",
+              awaiting_short_miles: "Driver bill created — awaiting SHORT miles (AlwaysTrack L.Miles). Enter the short miles on the load and the bill is priced automatically.",
             };
             pushToast(
               messages[outcome] ?? `Remint outcome: ${outcome}`,
-              outcome === "minted" ? "success" : outcome === "refused_no_shortest_miles" ? "error" : "info"
+              outcome === "minted" ? "success" : outcome === "awaiting_short_miles" ? "error" : "info"
             );
             refetchLoad();
             void queryClient.invalidateQueries({ queryKey: ["loads"] });

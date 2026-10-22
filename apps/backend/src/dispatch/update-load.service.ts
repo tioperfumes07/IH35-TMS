@@ -52,6 +52,7 @@ import {
 } from "./owner-lock-override-propagation.service.js";
 export { OwnerLockPropagationRefuseError };
 import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
+import { EDITABLE_DRIVER_BILL_STATUS_SQL } from "../lib/document-status-vocabulary.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -455,7 +456,7 @@ export async function detectLoadEditLock(
       FROM driver_finance.driver_bills b
       WHERE b.operating_company_id = $1::uuid
         AND b.load_id = $2::uuid
-        AND b.status <> 'open'
+        AND b.status NOT IN (${EDITABLE_DRIVER_BILL_STATUS_SQL})
       LIMIT 1
     `,
     [operatingCompanyId, loadId]

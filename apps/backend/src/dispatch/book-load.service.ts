@@ -16,6 +16,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { applyTrailerChoice, resolveTrailerChoice, trailerChoiceShapeRefusal, type ResolvedTrailerChoice, type TrailerChoice } from "./load-trailer-choice.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
+import { EDITABLE_DRIVER_BILL_STATUS_SQL, isEditableDriverBillStatus } from "../lib/document-status-vocabulary.js";
 import {
   appendSettlementLineFromDriverBillIfMissing,
   effectiveTeamPercentsFromRow,
@@ -783,10 +784,10 @@ async function resolveDriverBasePayCents(
       // practical are independent measures in the real data, not a shorter/longer pair. Locked by
       // scripts/verify-driver-pay-practical-fallback-locked.mjs.
       //
-      // OWNER LAW (LEAD 443.192, 12:35Z — supersedes the 2026-09-04 practical FALLBACK above and ROUND 155.12): "Per-mile
+      // OWNER LAW (LEAD 443.192, 12:35Z — supersedes the 2026-09-04 practical FALLBACK above and the old document-miles basis): "Per-mile
       // drivers are ALWAYS paid SHORT miles — never practical miles. Short miles is the fixed pay basis, not a per-load
-      // choice." Loaded pay = miles_shortest x the rate, ONLY. No shortest -> no card price (the bill stays unpriced and the
-      // mint gate below refuses a fresh one: driver_bill.refused_no_shortest_miles) — never practical, never a formula.
+      // choice." Loaded pay = miles_shortest x the rate, ONLY. No shortest -> no card price: the bill is created at
+      // awaiting_short_miles ($0, LEAD 443.220) and priced here once the short miles land — never practical, never a formula.
       // Measured 2026-10-17: 8 open bills priced at practical miles (13656 / 13680 at $853.97 / $217.13). Locked by
       // scripts/verify-driver-pay-practical-fallback-locked.mjs (inverted to lock THIS rule).
       const miles = Number(load.miles_shortest ?? Number.NaN);
@@ -915,19 +916,14 @@ async function resolveDriverBasePayCents(
 
 /**
  * MILES-ON-BOOK — which pay input is absent, in the operator's words. Never a column name: a
- * dispatcher can act on "miles", not on `miles_shortest IS NULL`.
+ * dispatcher can act on "short miles", not on `miles_shortest IS NULL`.
  *
- * ROUND 155.12 (Lead, 2026-09-28, correcting the P1/2026-09-14 gate): "The owner's AlwaysTrack
- * settlements PAID on the miles printed in the document. miles_shortest is not the pay basis and
- * never was." Document miles (practical, loaded off the settlement) IS the real pay basis —
- * miles_shortest is an optional variance check only, never the gate. Only missing when BOTH
- * miles_shortest AND miles_practical are absent; resolveDriverBasePayCents' own owner-locked
- * (2026-09-04, verify-driver-pay-practical-fallback-locked.mjs) practical-miles fallback is what
- * actually prices it once this gate lets the mint proceed.
+ * OWNER LAW (LEAD 443.192 / 443.220): per-mile drivers are ALWAYS paid SHORT miles (AlwaysTrack L.Miles), never practical —
+ * the only miles input pay can be missing is the short miles.
  */
 export function missingPayInputs(load: Record<string, unknown>): string[] {
   const missing: string[] = [];
-  if (!(Number(load.miles_shortest ?? 0) > 0) && !(Number(load.miles_practical ?? 0) > 0)) missing.push("miles (shortest or practical)");
+  if (!(Number(load.miles_shortest ?? 0) > 0)) missing.push("short miles (AlwaysTrack L.Miles)");
   return missing;
 }
 
@@ -979,7 +975,10 @@ export type DriverBillMintOutcome =
   // practical-miles fallback (2026-09-04, verify-driver-pay-practical-fallback-locked.mjs) is never
   // touched or reached for this case — that fallback stays exactly as ruled and guarded; this is a
   // stricter, additive gate placed in front of it, not a rewrite of it.
-  | { outcome: "refused_no_shortest_miles"; reason: string }
+  // LEAD 443.220 (owner 10-21 7:34 PM CT: "why no driver bill, it should be created automatically") — a per-mile load with no
+  // SHORT miles still gets its driver bill at booking: status awaiting_short_miles, $0, driver / unit / trailer / load linked,
+  // visible. The same engine prices THAT row when short miles land (Edit Load, Settlement Creator, AlwaysTrack import).
+  | { outcome: "awaiting_short_miles"; bill_number: string | null; reason: string }
   // Lead 443.36 #2: a salaried week (isSalariedZeroRateOverride) has NO per-load driver bill — recorded, never silent.
   | { outcome: "not_minted_salaried"; reason: string };
 
@@ -1008,6 +1007,165 @@ async function auditDeadSettlementLinkReleased(
     "info",
     "LEAD-443.192"
   );
+}
+
+/**
+ * LEAD 443.220 — the dispatcher's task list carries every bill awaiting short miles: one open dispatch task per load, assigned
+ * to the load's dispatcher (else the booking user). Under a SAVEPOINT — a task-module failure never fails the booking; it is
+ * audited instead (driver_finance.driver_bill.awaiting_task_not_created).
+ */
+async function queueAwaitingShortMilesTask(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: BookLoadInput,
+  load: Record<string, unknown>,
+  loadNumber: string
+): Promise<void> {
+  const title = `Enter SHORT miles (AlwaysTrack L.Miles) for load ${loadNumber} — its driver bill is awaiting them`;
+  try {
+    await client.query("SAVEPOINT awaiting_short_miles_task");
+    await client.query(
+      `SELECT set_config('app.operating_company_id', $1::text, true), set_config('app.current_operating_company_id', $1::text, true)`,
+      [input.operating_company_id]
+    );
+    await client.query(
+      `INSERT INTO tasks.task (operating_company_id, category, title, description, assigned_to_user_id, assigned_by_user_id,
+                               scheduled_date, priority, subject_type, subject_id)
+       SELECT $1::uuid, 'dispatch', $2, $3, COALESCE(l.dispatcher_user_id, $4::uuid), $4::uuid, CURRENT_DATE, 1, 'load', l.id
+         FROM mdata.loads l
+        WHERE l.id = $5::uuid AND l.operating_company_id = $1::uuid
+          AND NOT EXISTS (SELECT 1 FROM tasks.task t
+                           WHERE t.operating_company_id = $1::uuid AND t.subject_type = 'load' AND t.subject_id = l.id
+                             AND t.title = $2 AND t.is_active)`,
+      [input.operating_company_id, title, AWAITING_SHORT_MILES_REASON, input.requestingUserUuid, String(load.id)]
+    );
+    await client.query("RELEASE SAVEPOINT awaiting_short_miles_task");
+  } catch (err) {
+    await client.query("ROLLBACK TO SAVEPOINT awaiting_short_miles_task").catch(() => undefined);
+    await appendCrudAudit(
+      client,
+      input.requestingUserUuid,
+      "driver_finance.driver_bill.awaiting_task_not_created",
+      { load_id: String(load.id), load_number: loadNumber, operating_company_id: input.operating_company_id, error: String((err as Error)?.message ?? err) },
+      "warning",
+      "LEAD-443.220"
+    );
+  }
+}
+
+/** LEAD 443.220 — the one reason text an awaiting bill carries (audit payload, bill notes, Book Load response). */
+export const AWAITING_SHORT_MILES_REASON =
+  "Awaiting SHORT miles (AlwaysTrack L.Miles) — per-mile drivers are always paid short miles, never practical, never invented. Enter the load's short miles and this bill is priced automatically.";
+
+/**
+ * LEAD 443.220 — a per-mile load with no short miles: the driver bill is CREATED (never a silent refusal) at status
+ * awaiting_short_miles, $0, linked to the driver(s), the load and (restamp) the unit / trailer. An existing $0 editable bill
+ * becomes that bill — never a second one. createDriverBillArtifacts prices this same row (status -> open) once short miles land.
+ */
+async function mintDriverBillAwaitingShortMiles(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: BookLoadInput,
+  load: Record<string, unknown>,
+  loadNumber: string,
+  existing: { id: string; status: string; settled_in_settlement_id: string | null } | null
+): Promise<DriverBillMintOutcome> {
+  const resolvedLoadNumber = String(load.load_number ?? loadNumber);
+  const billNumber = driverBillNumberFromLoadNumber(resolvedLoadNumber);
+  const reason = AWAITING_SHORT_MILES_REASON;
+  const priorAwait = await client.query<{ exists: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM audit.audit_events
+        WHERE event_class = 'driver_finance.driver_bill.awaiting_short_miles'
+          AND payload->>'load_id' = $1 AND payload->>'operating_company_id' = $2
+     ) AS exists`,
+    [String(load.id), input.operating_company_id]
+  );
+  if (!priorAwait.rows[0]?.exists) {
+    await appendCrudAudit(
+      client,
+      input.requestingUserUuid,
+      "driver_finance.driver_bill.awaiting_short_miles",
+      {
+        load_id: String(load.id),
+        load_number: resolvedLoadNumber,
+        operating_company_id: input.operating_company_id,
+        driver_id: input.assigned_primary_driver_id ?? null,
+        team_id: input.team_id ?? null,
+        reason,
+      },
+      "warning",
+      "LEAD-443.220"
+    );
+  }
+  await queueAwaitingShortMilesTask(client, input, load, resolvedLoadNumber);
+
+  if (existing) {
+    if (existing.settled_in_settlement_id != null) return { outcome: "already_exists" };
+    const upd = await client.query<{ bill_number: string }>(
+      `UPDATE driver_finance.driver_bills
+          SET status = 'awaiting_short_miles',
+              driver_id = COALESCE($2::uuid, driver_id),
+              team_driver_id = CASE WHEN $2::uuid IS NULL THEN team_driver_id ELSE $3::uuid END,
+              notes = $4, updated_at = now()
+        WHERE load_id = $1::uuid AND operating_company_id = $5::uuid
+          AND status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL}) AND gross_amount_cents = 0
+          AND voided_at IS NULL AND settled_in_settlement_id IS NULL
+        RETURNING bill_number`,
+      [String(load.id), input.team_id ? null : input.assigned_primary_driver_id ?? null, input.assigned_secondary_driver_id ?? null,
+        `${reason} (load ${resolvedLoadNumber})`, input.operating_company_id]
+    );
+    await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operating_company_id, loadId: String(load.id) });
+    return { outcome: "awaiting_short_miles", bill_number: upd.rows[0]?.bill_number ?? null, reason };
+  }
+
+  const rows: Array<{ driverId: string; partnerId: string | null; billNo: string }> = [];
+  if (input.team_id) {
+    const team = (
+      await client.query<{ primary_driver_id: string; secondary_driver_id: string; is_active: boolean }>(
+        `SELECT primary_driver_id::text, secondary_driver_id::text, is_active
+           FROM mdata.driver_teams WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        [input.team_id, input.operating_company_id]
+      )
+    ).rows[0];
+    if (!team || team.is_active === false) return { outcome: "not_applicable" };
+    rows.push({ driverId: team.primary_driver_id, partnerId: team.secondary_driver_id, billNo: `${billNumber}-P` });
+    rows.push({ driverId: team.secondary_driver_id, partnerId: team.primary_driver_id, billNo: `${billNumber}-S` });
+  } else if (input.assigned_primary_driver_id) {
+    rows.push({ driverId: input.assigned_primary_driver_id, partnerId: input.assigned_secondary_driver_id ?? null, billNo: billNumber });
+  } else {
+    return { outcome: "not_applicable" };
+  }
+
+  let firstBillId: string | null = null;
+  for (const row of rows) {
+    const res = await client.query<{ id: string }>(
+      `INSERT INTO driver_finance.driver_bills (
+         operating_company_id, load_id, load_number, bill_number, driver_id, team_driver_id,
+         gross_amount_cents, miles_basis, miles_basis_type, rate_per_mile_cents, status, notes,
+         created_by_user_id, miles_deadhead, rate_empty_per_mile_cents, loaded_pay_cents, deadhead_pay_cents
+       ) VALUES ($1, $2, $3, $4, $5, $6, 0, NULL, NULL, NULL, 'awaiting_short_miles', $7, $8, NULL, NULL, 0, 0)
+       RETURNING id`,
+      [input.operating_company_id, load.id, resolvedLoadNumber, row.billNo, row.driverId, row.partnerId,
+        `${reason} (load ${resolvedLoadNumber})`, input.requestingUserUuid]
+    );
+    if (!firstBillId && res.rows[0]?.id) firstBillId = String(res.rows[0].id);
+  }
+  await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.operating_company_id, loadId: String(load.id) });
+  await appendCrudAudit(
+    client,
+    input.requestingUserUuid,
+    "dispatch.load.driver_bill_created",
+    {
+      load_uuid: load.id,
+      load_number: resolvedLoadNumber,
+      bill_id: firstBillId,
+      bill_display_id: billNumber,
+      team_id: input.team_id ?? null,
+      awaiting_short_miles: true,
+    },
+    "info",
+    "LEAD-443.220"
+  );
+  return { outcome: "awaiting_short_miles", bill_number: billNumber, reason };
 }
 
 export async function createDriverBillArtifacts(
@@ -1090,58 +1248,16 @@ export async function createDriverBillArtifacts(
     return { outcome: "not_minted_salaried", reason };
   }
 
-  // P1 (owner 2026-09-14) — "a driver_finance.driver_bills row may not be minted from a load with
-  // no miles captured at all." Checked BEFORE resolveDriverBasePayCents runs.
-  //
-  // ROUND 155.12 CORRECTION (Lead, 2026-09-28, superseding the 2026-09-14 gate's basis, not its
-  // existence): the 09-14 gate required miles_shortest specifically, on the premise that shortest
-  // miles were the pay basis. The owner's own AlwaysTrack settlement documents disprove that —
-  // drivers are PAID on document miles (practical/loaded), never miles_shortest; miles_shortest is
-  // an optional variance check, not the basis and never was. Requiring it as a hard gate meant a
-  // real, already-paid load could never mint a bill purely because a measure that was never the
-  // pay basis happened to be uncaptured. The gate now refuses only when NEITHER miles_shortest NOR
-  // miles_practical is captured — resolveDriverBasePayCents' own owner-locked (2026-09-04,
-  // verify-driver-pay-practical-fallback-locked.mjs) practical-miles fallback is exactly the
-  // correct pricing path once either is present; this gate no longer stands in front of it for the
-  // practical-only case. Historical loads already carrying a driver_bills row from before this gate
-  // landed are untouched (existing && already-open/$0 falls through to the existing-bill branches
-  // below, unchanged) — this refuses only a NEW mint attempt going forward. Never applies when an
-  // existing bill is already priced (gross > 0) — that is settled history, not a fresh mint.
-  const isFreshMintAttempt = !existing || (Number(existing.gross_amount_cents ?? 0) === 0 && String(existing.status) === "open");
-  // OWNER LAW (LEAD 443.192, 12:35Z): per-mile pay is SHORT miles only — the gate is miles_shortest again (the 09-14 rule),
-  // superseding ROUND 155.12's "shortest or practical". Practical miles are never a pay basis.
+  // P1 (owner 2026-09-14) + OWNER LAW (LEAD 443.192): a per-mile bill is priced on SHORT miles only. LEAD 443.220: without
+  // short miles the bill is still created — status awaiting_short_miles, $0 — never a silent refusal; it is priced in place
+  // when the short miles land. Never applies when an existing bill is already priced (gross > 0) — that is history.
+  const isFreshMintAttempt =
+    !existing || (Number(existing.gross_amount_cents ?? 0) === 0 && isEditableDriverBillStatus(String(existing.status)));
+  // OWNER LAW (LEAD 443.192, 12:35Z): per-mile pay is SHORT miles only — practical miles are never a pay basis.
   const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;
   const additionalOnly = additionalOnlyDriverPay(load);
   if (isFreshMintAttempt && !hasAnyRealMiles && !additionalOnly) {
-    const reason = "No SHORT miles have been captured for this load — per-mile drivers are always paid short miles, never practical, never invented. Enter the load's short miles before a driver bill can be priced.";
-    const priorRefusal = await client.query<{ exists: boolean }>(
-      `SELECT EXISTS (
-         SELECT 1
-           FROM audit.audit_events
-          WHERE event_class = 'driver_finance.driver_bill.refused_no_shortest_miles'
-            AND payload->>'load_id' = $1
-            AND payload->>'operating_company_id' = $2
-       ) AS exists`,
-      [String(load.id), input.operating_company_id]
-    );
-    if (!priorRefusal.rows[0]?.exists) {
-      await appendCrudAudit(
-        client,
-        input.requestingUserUuid,
-        "driver_finance.driver_bill.refused_no_shortest_miles",
-        {
-          load_id: String(load.id),
-          load_number: String(load.load_number ?? loadNumber),
-          operating_company_id: input.operating_company_id,
-          driver_id: primaryDriverForPay,
-          team_id: input.team_id ?? null,
-          reason,
-        },
-        "warning",
-        "P1-SHORT-MILES"
-      );
-    }
-    return { outcome: "refused_no_shortest_miles", reason };
+    return mintDriverBillAwaitingShortMiles(client, input, load, loadNumber, existing);
   }
 
   const extraPickupCount = stops.filter((s) => s.stop_type === "pickup").length > 1 ? stops.filter((s) => s.stop_type === "pickup").length - 1 : 0;
@@ -1263,7 +1379,7 @@ export async function createDriverBillArtifacts(
     // again, exactly like the void guard above. This does not change WHEN re-entry happens (still
     // only on booking/assignment/edit/delivery events that already call this function) — only
     // whether an already-priced-but-still-open bill is eligible to be recalculated when it does.
-    const isRecalculable = String(existing.status) === "open" && existing.settled_in_settlement_id == null;
+    const isRecalculable = isEditableDriverBillStatus(String(existing.status)) && existing.settled_in_settlement_id == null;
     // 443.113 AJK-01 — WHO the bill belongs to is compared as well as how much. Before, a reassignment from driver A to
     // driver B at the same pay hit `totalBillCents === existingGross` (or an unpriced / $0 bill) and returned
     // already_exists before driver_id was ever read, leaving A's bill on B's load.
@@ -1283,11 +1399,20 @@ export async function createDriverBillArtifacts(
       return { outcome: "already_exists" };
     }
     if (unpriced || totalBillCents <= 0) {
+      if (String(existing.status) === "awaiting_short_miles" && milesShort) {
+        // LEAD 443.220: the short miles landed but the card cannot price yet (no pay rate) — no longer awaiting short miles;
+        // it is the open $0 tracking bill the rate path already reports (skipped_no_pay_rate).
+        await client.query(
+          `UPDATE driver_finance.driver_bills SET status = 'open', updated_at = now()
+            WHERE id = $1::uuid AND status = 'awaiting_short_miles'`,
+          [existing.id]
+        );
+      }
       if (!identityChanged) return { outcome: "already_exists" };
       // The bill moves to the new driver; its money is not re-priced from an unpriced / $0 resolution.
       await client.query(
         `UPDATE driver_finance.driver_bills SET driver_id = $2::uuid, team_driver_id = $3::uuid, settled_in_settlement_id = NULL
-          WHERE id = $1::uuid AND status = 'open' AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $4::uuid)`,
+          WHERE id = $1::uuid AND status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL}) AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $4::uuid)`,
         [existing.id, toDriverId, toTeamDriverId, existing.dead_settlement_id ?? null]
       );
       await auditDeadSettlementLinkReleased(client, input, existing, String(load.id));
@@ -1328,9 +1453,10 @@ export async function createDriverBillArtifacts(
                rate_empty_per_mile_cents = $10,
                loaded_pay_cents = $11,
                deadhead_pay_cents = $12,
-               settled_in_settlement_id = NULL
+               settled_in_settlement_id = NULL,
+               status = 'open'
          WHERE id = $1::uuid
-           AND status = 'open'
+           AND status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL})
            AND (settled_in_settlement_id IS NULL OR settled_in_settlement_id = $13::uuid)
       `,
       [
@@ -1350,6 +1476,23 @@ export async function createDriverBillArtifacts(
       ]
     );
     await auditDeadSettlementLinkReleased(client, input, existing, String(load.id));
+    if (String(existing.status) === "awaiting_short_miles") {
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "driver_finance.driver_bill.priced_from_short_miles",
+        {
+          operating_company_id: input.operating_company_id,
+          driver_bill_id: existing.id,
+          load_id: String(load.id),
+          load_number: resolvedLoadNumber,
+          miles_shortest: milesShort,
+          gross_amount_cents: totalBillCents,
+        },
+        "info",
+        "LEAD-443.220"
+      );
+    }
     return mintOutcome(billNumber);
   }
   if (existing) return { outcome: "already_exists" };
@@ -1597,7 +1740,7 @@ export async function setAdditionalOnlyDriverPayForLoad(
   const frozen = (await client.query<{ id: string }>(
     `SELECT b.id::text FROM driver_finance.driver_bills b WHERE b.load_id = $1::uuid AND b.operating_company_id = $2::uuid
        AND b.voided_at IS NULL AND b.status <> 'void'
-       AND (b.status <> 'open' OR b.accrued_bill_id IS NOT NULL OR EXISTS (
+       AND (b.status NOT IN (${EDITABLE_DRIVER_BILL_STATUS_SQL}) OR b.accrued_bill_id IS NOT NULL OR EXISTS (
          SELECT 1 FROM driver_finance.driver_settlements s WHERE s.id = b.settled_in_settlement_id
            AND s.operating_company_id = b.operating_company_id AND s.voided_at IS NULL AND s.status <> 'cancelled'))`,
     [input.loadId, input.operatingCompanyId],
@@ -1748,14 +1891,13 @@ export async function assertClosedLoadHasPricedDriverBill(
   );
   const row = res.rows[0];
   if (!row || !row.bill_status) return { ok: true }; // no non-void bill at all — nothing to refuse
-  if (row.bill_status !== "open" || Number(row.gross_amount_cents ?? 0) !== 0) return { ok: true };
+  if (!isEditableDriverBillStatus(row.bill_status) || Number(row.gross_amount_cents ?? 0) !== 0) return { ok: true };
   if (row.team_id) return { ok: true }; // team-split pricing is out of this round's scope
 
   const missing: string[] = [];
   if (!row.has_active_rate) missing.push("a pay rate on file");
-  // ROUND 155.12: document miles (practical/loaded) is the real pay basis, miles_shortest an
-  // optional variance check only — same correction as missingPayInputs/createDriverBillArtifacts.
-  if (!(Number(row.miles_shortest ?? 0) > 0) && !(Number(row.miles_practical ?? 0) > 0)) missing.push("captured miles (shortest or practical)");
+  // OWNER LAW (LEAD 443.192 / 443.220): per-mile pay is SHORT miles only — the same rule as missingPayInputs.
+  if (!(Number(row.miles_shortest ?? 0) > 0)) missing.push("short miles (AlwaysTrack L.Miles)");
   if (missing.length === 0) return { ok: true }; // has both — the $0 is some other, unrelated reason
 
   const driverName =

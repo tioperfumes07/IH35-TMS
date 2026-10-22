@@ -123,12 +123,12 @@ describe("driver pay card = the card effective on the pickup date (ROUND 443.31)
   });
   // LEAD 443.192 (12:35Z) OWNER LAW: "Per-mile drivers are ALWAYS paid SHORT miles — never practical miles." Before: a load with
   // practical miles and no short miles was priced at practical (13656: 1897.7 x 45c = $853.97). Fails on the old engine.
-  it("443.192: practical miles only (no short miles) is never priced — refused by name, never practical x rate", async () => {
+  it("443.192 / 443.220: practical miles only (no short miles) is never priced — the bill waits for short miles, never practical x rate", async () => {
     audit.calls.length = 0;
     const practicalOnly = { ...load, miles_practical: 1897.7, miles_shortest: null };
     const c = fakeClient("2026-08-20", [{ effective_from: "2026-08-07", effective_to: null, is_active: true, rate_per_mile_cents: "45" }]);
     await createDriverBillArtifacts(c, input(), practicalOnly, "13498", stops);
     for (const v of c.inserted) expect(v.includes(85397)).toBe(false);
-    expect(audit.calls.some((a) => a.eventClass === "driver_finance.driver_bill.refused_no_shortest_miles")).toBe(true);
+    expect(audit.calls.some((a) => a.eventClass === "driver_finance.driver_bill.awaiting_short_miles")).toBe(true);
   });
 });

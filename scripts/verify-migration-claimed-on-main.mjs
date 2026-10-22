@@ -92,6 +92,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
       "db/migrations/202614390000_expense_lines_fleet_linkage.sql",
     ]),
   ],
+  // LEAD 443.220 (00:45Z; owner 2026-10-01 no-handoff): driver_bills status awaiting_short_miles. Claimed first on main in
+  // #27131 (0eef5c13de) as a top-level key, like the 443.209 / 443.214 claims — exact-branch + exact-file, same shape.
+  [
+    "cc-2/443-220-awaiting-short-miles",
+    new Set(["db/migrations/202616110700_driver_bills_awaiting_short_miles.sql"]),
+  ],
   // Owner order 2026-10-01 (docs/bus/2026-10-01-OWNER-ORDER-CC-2-NO-HANDOFF-BUILD-OWN-MIGRATIONS.md):
   // "fully complete and build their own engine, no handing off" -- CC-2's two engine migrations,
   // claimed first (#23641) under claimed_by cc-2. Same exact-branch + exact-file shape as above.

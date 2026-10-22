@@ -7,12 +7,12 @@ describe("443.219 — one status vocabulary per document type", () => {
   it("A/P outstanding includes partially paid; driver outstanding includes approved and disputed", async () => {
     const v = await import("../../lib/document-status-vocabulary.js");
     expect(v.AP_BILL_OUTSTANDING_STATUSES).toEqual(expect.arrayContaining(["unpaid", "partially_paid"]));
-    expect(v.DRIVER_BILL_OUTSTANDING_STATUSES).toEqual(["open", "approved", "disputed"]);
+    expect(v.DRIVER_BILL_OUTSTANDING_STATUSES).toEqual(["open", "approved", "disputed", "awaiting_short_miles"]);
   });
   it("the register's driver-bill status filter speaks the driver-bill vocabulary", async () => {
     const r = (await import("../bills.routes.js")) as Record<string, unknown>;
     const f = r.driverBillStatusesForFilter as (s?: string) => string[] | null;
-    expect(f("unpaid")).toEqual(["open", "approved", "disputed"]);
+    expect(f("unpaid")).toEqual(["open", "approved", "disputed", "awaiting_short_miles"]);
     expect(f("voided")).toEqual(["void"]);
     expect(f("all")).toBeNull();
   });
