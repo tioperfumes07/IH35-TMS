@@ -7,6 +7,7 @@ const paths = {
   model: 'apps/backend/src/accounting/load-costs-live-documents.sql.ts',
   predicates: 'apps/backend/src/accounting/live-document-predicates.sql.ts',
   route: 'apps/backend/src/accounting/load-costs-board.routes.ts',
+  rollup: 'apps/backend/src/accounting/load-cost-rollup.sql.ts',
   scope: 'apps/backend/src/dispatch/canonical-active-load-set.ts',
   page: 'apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx',
 };
@@ -26,9 +27,11 @@ const rules = [
   ['model','db.accrued_team_bill_id','team accrual not double counted'],
   ['model','db.accrued_bill_id','primary accrual not double counted'],
   ['route','WITH ${LOAD_COST_DOCUMENTS_CTE}','shared document costs mounted'],
-  ['route','${loadCostsRevenueJoin("l")}','shared revenue mounted'],
+  // 443.210R part 2 (#27108): the board reads revenue through the ONE rollup (lcr), which mounts the shared revenue join.
+  ['route','${loadCostRollupLateral("l.id", "l.operating_company_id")}','shared rollup (revenue) mounted on the board'],
+  ['rollup','${loadCostsRevenueJoin("cl", "rev")}','the rollup mounts the shared revenue join'],
   ['route','canonicalLoadCostsOpenClause("l", parsed.data.show_voided)','canonical current-cost scope mounted'],
-  ['route','NULLIF(revenue.revenue_cents, 0)','margin percentage uses document revenue'],
+  ['route','NULLIF(lcr.revenue_cents, 0)','margin percentage uses document revenue (the rollup)'],
   ['scope','export function canonicalLoadCostsOpenClause','named canonical cost scope'],
   ['scope',"AND ds.voided_at IS NULL AND ds.status='closed'",'actual closed settlement excluded'],
   ['scope','${alias}.is_sample_data IS NOT TRUE','sample loads excluded'],
