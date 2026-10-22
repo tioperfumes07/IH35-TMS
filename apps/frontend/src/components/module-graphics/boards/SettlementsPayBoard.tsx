@@ -62,7 +62,7 @@ export function SettlementsPayBoard({ companyId }: Props) {
       row.deductions += Number(s.deductions_total ?? 0);
       row.count += 1;
       if (s.payment_state === "unpaid" || s.payment_state === "queued" || !s.payment_state) {
-        if (s.status !== "voided" && s.status !== "paid") row.open += 1;
+        if (s.status !== "cancelled" && s.status !== "paid") row.open += 1;
       }
       map.set(key, row);
     }

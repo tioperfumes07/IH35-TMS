@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { getArAgingReport, getApAgingReport } from "../../../api/reports";
 import { getAccountingPeriods } from "../../../api/my-accountant";
 import { getBankingUncategorized } from "../../../api/banking";
-import { companyToday } from "../../../lib/companyToday";
+import { companyToday } from "../../../lib/businessDate";
 import { ClickableStat } from "../ClickableStat";
 import { ModBoardShell, ModSectionHead } from "../ModBoardShell";
 import { formatUsdCents } from "../format";

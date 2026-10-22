@@ -12,7 +12,7 @@ import { getDriverHero } from "../api";
 
 type Props = { companyId: string; driverId: string };
 
-function missing(label: string, value: string | null | undefined): string {
+function missing(value: string | null | undefined): string {
   if (value == null || value === "") return "Missing / not on file";
   return value;
 }
@@ -163,9 +163,9 @@ export function DriverHeroBoard({ companyId, driverId }: Props) {
       </div>
 
       <div className="grid gap-2 md:grid-cols-3" data-testid="driver-hero-docs">
-        <DocCard label="CDL expires" value={missing("CDL", cdl?.slice?.(0, 10) ?? cdl)} to={`/drivers/${driverId}?tab=documents`} />
-        <DocCard label="DOT medical" value={missing("Medical", medical?.slice?.(0, 10) ?? medical)} to={`/drivers/${driverId}?tab=documents`} />
-        <DocCard label="Visa" value={missing("Visa", visa?.slice?.(0, 10) ?? visa)} to={`/drivers/${driverId}?tab=documents`} />
+        <DocCard label="CDL expires" value={missing(cdl?.slice?.(0, 10) ?? cdl)} to={`/drivers/${driverId}?tab=documents`} />
+        <DocCard label="DOT medical" value={missing(medical?.slice?.(0, 10) ?? medical)} to={`/drivers/${driverId}?tab=documents`} />
+        <DocCard label="Visa" value={missing(visa?.slice?.(0, 10) ?? visa)} to={`/drivers/${driverId}?tab=documents`} />
         <DocCard
           label="DQ file"
           value={
@@ -176,7 +176,7 @@ export function DriverHeroBoard({ companyId, driverId }: Props) {
           }
           to={`/drivers/${driverId}?tab=documents`}
         />
-        <DocCard label="Emergency contact" value={missing("Emergency", emergency)} to={`/drivers/${driverId}?tab=documents`} />
+        <DocCard label="Emergency contact" value={missing(emergency)} to={`/drivers/${driverId}?tab=documents`} />
         <DocCard
           label="HOS shift / cycle"
           value={
@@ -193,7 +193,7 @@ export function DriverHeroBoard({ companyId, driverId }: Props) {
       {hero?.loads?.in_motion || (hero?.loads?.booked_ahead?.length ?? 0) > 0 ? (
         <div className="rounded-sm border border-[var(--mod-border)] p-2" data-testid="driver-hero-loads">
           <div className="text-section-header font-bold uppercase text-[var(--mod-muted)]">Trip line</div>
-          {hero.loads?.in_motion ? (
+          {hero?.loads?.in_motion ? (
             <Link
               className="mod-view-all block"
               to={`/dispatch/loads/${hero.loads.in_motion.load_id}`}
@@ -204,7 +204,7 @@ export function DriverHeroBoard({ companyId, driverId }: Props) {
           ) : (
             <div className="text-xs text-[var(--mod-muted)]">Now · no in-motion load</div>
           )}
-          {(hero.loads?.booked_ahead ?? []).map((l) => (
+          {(hero?.loads?.booked_ahead ?? []).map((l) => (
             <Link
               key={l.load_id}
               className="mod-view-all block"

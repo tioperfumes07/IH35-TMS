@@ -58,7 +58,7 @@ export function FuelByTruckBoard({ companyId }: Props) {
 
   const unitMeta = useMemo(() => {
     const map = new Map<string, { make?: string | null; model?: string | null; year?: number | null; number: string }>();
-    for (const u of unitsQ.data?.units ?? unitsQ.data?.rows ?? []) {
+    for (const u of unitsQ.data?.units ?? []) {
       const id = (u as { id?: string }).id;
       if (!id) continue;
       map.set(id, {

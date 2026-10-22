@@ -67,7 +67,7 @@ function CellChip({ cell: c }: { cell: FileCell }) {
 export function DriverFilesBoard({ companyId }: Props) {
   const activeQ = useQuery({
     queryKey: ["mod-graphics", "active-drivers", companyId],
-    queryFn: () => getActiveDriverSet(companyId, 15),
+    queryFn: () => getActiveDriverSet(companyId, 14),
     enabled: Boolean(companyId),
     retry: false,
   });

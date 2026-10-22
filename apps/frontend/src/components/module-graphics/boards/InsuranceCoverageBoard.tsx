@@ -18,7 +18,7 @@ function daysBetween(a: string, b: string): number {
 }
 
 function policyLabel(p: InsurancePolicy): string {
-  const t = String(p.coverage_type ?? p.policy_type ?? "Policy").replace(/_/g, " ");
+  const t = String(p.coverage_type_name ?? p.coverage_type ?? "Policy").replace(/_/g, " ");
   return t.toUpperCase();
 }
 
@@ -49,7 +49,7 @@ export function InsuranceCoverageBoard({ companyId }: Props) {
   const premium = active.reduce((s, p) => s + (p.total_premium_cents ?? 0), 0);
   const renewal = useMemo(() => {
     const ends = active
-      .map((p) => p.expiry_date || p.end_date)
+      .map((p) => p.expiry_date)
       .filter((d): d is string => Boolean(d))
       .sort();
     return ends[0] ?? null;
@@ -104,8 +104,8 @@ export function InsuranceCoverageBoard({ companyId }: Props) {
       ) : (
         <div className="space-y-2" data-testid="ins-board-timeline">
           {active.map((p) => {
-            const start = p.effective_date || p.start_date || today;
-            const end = p.expiry_date || p.end_date || today;
+            const start = p.effective_date || today;
+            const end = p.expiry_date || today;
             const span = Math.max(1, daysBetween(start, end));
             const used = Math.min(span, Math.max(0, daysBetween(start, today)));
             const pct = Math.round((used / span) * 100);
@@ -122,7 +122,7 @@ export function InsuranceCoverageBoard({ companyId }: Props) {
                   <div className="min-w-0">
                     <div className="text-section-header font-bold uppercase text-[#14213D]">{policyLabel(p)}</div>
                     <div className="truncate text-section-header text-[#6B7280]">
-                      {[p.carrier_name, p.policy_number].filter(Boolean).join(" · ") || "Policy"}
+                      {[p.insurer_name, p.policy_number].filter(Boolean).join(" · ") || "Policy"}
                     </div>
                   </div>
                   <div className="shrink-0 font-mono text-xs font-semibold text-[#14213D]">
