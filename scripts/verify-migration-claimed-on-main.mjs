@@ -97,6 +97,7 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
   [
     "cc-2/443-208r-load-changed-2",
     new Set(["db/migrations/202616060700_load_changed_notify.sql"]),
+  ],
   // LEAD 443.214 follow-up (owner 2026-10-01 no-handoff): fuel_transactions card_unit_id / gps_unit_id FOREIGN KEYs.
   // Claimed #(202616120700) in #27140 (top-level key) — exact-branch + exact-file.
   [
