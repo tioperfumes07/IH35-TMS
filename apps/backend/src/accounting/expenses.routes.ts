@@ -318,7 +318,7 @@ export async function queryExpensesList(
        AND wo.operating_company_id = e.operating_company_id
       LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
       WHERE ${where.join(" AND ")}
-      ORDER BY e.transaction_date DESC, e.created_at DESC
+      ORDER BY e.transaction_date DESC, e.created_at DESC, e.id DESC
       LIMIT $${limitIdx} OFFSET $${offsetIdx}
     `,
     values

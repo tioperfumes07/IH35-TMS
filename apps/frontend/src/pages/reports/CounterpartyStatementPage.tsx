@@ -8,7 +8,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCustomerStatementOfAccount, getVendorStatementOfAccount, type CounterpartyStatementLine, type CounterpartyStatementResponse } from "../../api/reports";
 import { listAllDispatchLoads, type DispatchLoad } from "../../api/dispatch";
-import { listExpenses, type ExpenseListRow } from "../../api/accounting";
+import { type ExpenseListRow } from "../../api/accounting";
+import { listExpensesForStatement } from "./statement-expenses";
 import { EntityLink, resolveEntityRoute } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 
@@ -252,8 +253,8 @@ export function CounterpartyStatementView({
   });
 
   const expensesQuery = useQuery({
-    queryKey: ["reports", "counterparty-statement", "expenses", companyId, counterpartyId],
-    queryFn: () => listExpenses(companyId, { vendor_uuid: counterpartyId }),
+    queryKey: ["reports", "counterparty-statement", "expenses", companyId, counterpartyId, appliedFilters.start, appliedFilters.end],
+    queryFn: () => listExpensesForStatement(companyId, counterpartyId, appliedFilters.start, appliedFilters.end),
     enabled: Boolean(companyId) && Boolean(counterpartyId) && kind === "vendor",
     retry: false,
   });
@@ -387,7 +388,10 @@ export function CounterpartyStatementView({
         </section>
       ) : null}
 
-      {kind === "vendor" && expensesQuery.data?.rows ? (
+      {kind === "vendor" && expensesQuery.isError ? (
+        <p role="alert">Expense history could not be loaded. Refresh to retry; no partial history is shown.</p>
+      ) : null}
+      {kind === "vendor" && !expensesQuery.isError && expensesQuery.data?.rows ? (
         <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="statement-expenses-history">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Expense history</h2>
           <ParityTable

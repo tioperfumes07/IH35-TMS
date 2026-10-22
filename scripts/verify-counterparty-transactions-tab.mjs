@@ -23,6 +23,19 @@ import fs from "node:fs";
 const CUSTOMERS_PAGE = "apps/frontend/src/pages/Customers.tsx";
 const VENDORS_PAGE = "apps/frontend/src/pages/Vendors.tsx";
 const STATEMENT_PAGE = "apps/frontend/src/pages/reports/CounterpartyStatementPage.tsx";
+const STATEMENT_EXPENSES = "apps/frontend/src/pages/reports/statement-expenses.ts";
+const EXPENSE_ROUTES = "apps/backend/src/accounting/expenses.routes.ts";
+
+function expenseHistoryErrors(page, helper) {
+  const errors = [];
+  if (!page.includes('"expenses", companyId, counterpartyId, appliedFilters.start, appliedFilters.end')) errors.push("expense query cache must include the statement period");
+  if (!page.includes("listExpensesForStatement(companyId, counterpartyId, appliedFilters.start, appliedFilters.end)")) errors.push("expense query must use the complete period reader");
+  for (const contract of ['vendor_uuid: vendorId', 'status: "active"', 'date_from: start', 'date_to: end', 'offset += limit', 'page.rows.length < limit']) {
+    if (!helper.includes(contract)) errors.push(`expense reader missing ${contract}`);
+  }
+  if (!page.includes("expensesQuery.isError")) errors.push("expense history failures must be visible");
+  return errors;
+}
 
 let failures = 0;
 
@@ -144,6 +157,23 @@ function checkStatement(src) {
 
 if (process.argv.includes("--selftest")) {
   const live = fs.readFileSync(STATEMENT_PAGE, "utf8");
+  const helper = fs.existsSync(STATEMENT_EXPENSES) ? fs.readFileSync(STATEMENT_EXPENSES, "utf8") : "";
+  const valid = expenseHistoryErrors(live, helper);
+  if (valid.length) { console.error(valid); process.exit(1); }
+  const plants = [
+    [live.replace('"expenses", companyId, counterpartyId, appliedFilters.start, appliedFilters.end', '"expenses", companyId, counterpartyId'), helper],
+    [live.replace('listExpensesForStatement(companyId, counterpartyId, appliedFilters.start, appliedFilters.end)', 'listExpenses(companyId, { vendor_uuid: counterpartyId })'), helper],
+    ...['vendor_uuid: vendorId', 'status: "active"', 'date_from: start', 'date_to: end', 'offset += limit', 'page.rows.length < limit'].map(contract => [live, helper.replace(contract, 'BROKEN')]),
+  ];
+  if (plants.some(([page, source]) => expenseHistoryErrors(page, source).length === 0)) {
+    console.error("statement expense contract mutation escaped"); process.exit(1);
+  }
+  console.log(`statement expense contract SELFTEST PASS — ${plants.length} mutations refused`);
+  const expenseRoutes = fs.readFileSync(EXPENSE_ROUTES, "utf8");
+  const stableOrder = "ORDER BY e.transaction_date DESC, e.created_at DESC, e.id DESC";
+  if (!expenseRoutes.includes(stableOrder) || expenseRoutes.replace(stableOrder, "ORDER BY e.transaction_date DESC, e.created_at DESC").includes(stableOrder)) {
+    console.error("stable expense pagination order selftest failed"); process.exit(1);
+  }
   if (live.includes("text-[11px]") || live.includes("#8A92AB") || live.includes("#334155")) {
     console.error("verify-counterparty-transactions-tab SELFTEST FAIL — live leftover tokens present");
     process.exit(1);
@@ -171,6 +201,9 @@ checkCustomers(customersSrc);
 checkVendors(vendorsSrc);
 checkShared(customersSrc, vendorsSrc);
 if (statementSrc) checkStatement(statementSrc);
+const expenseHelperSrc = fs.existsSync(STATEMENT_EXPENSES) ? fs.readFileSync(STATEMENT_EXPENSES, "utf8") : "";
+for (const error of expenseHistoryErrors(statementSrc, expenseHelperSrc)) fail(error);
+if (!fs.readFileSync(EXPENSE_ROUTES, "utf8").includes("ORDER BY e.transaction_date DESC, e.created_at DESC, e.id DESC")) fail("expense pagination needs a unique id tie breaker");
 
 if (failures > 0) {
   console.error(`\n[verify-counterparty-transactions-tab] FAIL — ${failures} issue(s):`);
