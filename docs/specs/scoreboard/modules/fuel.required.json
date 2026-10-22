@@ -245,6 +245,17 @@
       ]
     },
     {
+      "id": "fuel.modal.assignment_question",
+      "tab": "Modals",
+      "sub": "Modal: Fuel Assignment Question (443.243 \u2014 assign fill to driver/load)",
+      "route_hint": "surface://pages/fuel/components/FuelAssignmentPopup.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/fuel/components/FuelAssignmentPopup.tsx",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
       "id": "fuel.modal.import_fuel_transactions",
       "tab": "Modals",
       "sub": "Modal: Import Fuel Transactions",
@@ -284,7 +295,10 @@
       "surface_kind": "modal",
       "surface_path": "pages/fuel/card-overage/VoidOverageModal.tsx",
       "owned_surface_paths": [],
-      "required": ["connectivity", "qbo_chrome"]
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     },
     {
       "id": "fuel.modal.card_overage_exempt",
@@ -294,7 +308,10 @@
       "surface_kind": "modal",
       "surface_path": "pages/fuel/card-overage/ExemptOverageModal.tsx",
       "owned_surface_paths": [],
-      "required": ["connectivity", "qbo_chrome"]
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     },
     {
       "id": "fuel.modal.upload_loves_prices",
