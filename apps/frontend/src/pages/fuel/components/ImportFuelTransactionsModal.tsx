@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { importFuelTransactions, importWexStatement } from "../../../api/fuelPlanner";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import type { FuelTransactionImportResult, WexStatementImportResult, WexStatementOutcome } from "../../../api/fuelPlanner";
-import { QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 
 type ImportKind = "fleet" | "wex";
 
@@ -24,7 +24,6 @@ const WEX_OUTCOME_LABEL: Record<WexStatementOutcome, string> = {
   scale_imported: "Scale ticket — new expense",
 };
 
-const money = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 type Props = {
   open: boolean;
@@ -197,7 +196,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
                     <tr key={key}>
                       <td className="py-0.5">{WEX_OUTCOME_LABEL[key]}</td>
                       <td className="py-0.5 text-right">{wexPlan.by_outcome[key].lines}</td>
-                      <td className={`py-0.5 ${QBO_MONEY_CELL_CLASS}`}>{money(wexPlan.by_outcome[key].cents)}</td>
+                      <td className="py-0.5"><MoneyCell cents={wexPlan.by_outcome[key].cents} drill={{ none: "WEX import plan preview — amounts are estimates until the import runs" }} /></td>
                     </tr>
                   ))}
               </tbody>

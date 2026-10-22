@@ -29,7 +29,7 @@ const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
  */
 const SHRINK_ONLY_BASELINE = 0; // 2026-10-06 ROUND 433.2 batch 5: 23 -> 0. Every money cell opens its record / exact list, or is a MoneyCell { none } with a listed reason. Any new raw money cell fails.
 /** MoneyCell { none: reason } declarations on main (listed at run time). Unwired + declared may never grow. */
-const DECLARED_NO_DRILL = 33; // 2026-10-06 ROUND 433.2 batch 3: 55 -> 49 (dispatch load costs x3 -> load, driver hub activity -> its record, unit NBV -> fixed asset, lease allocation -> lease)
+const DECLARED_NO_DRILL = 34; // 2026-10-22 CC-1 443.210R: +1 WEX import plan preview cell (ImportFuelTransactionsModal.tsx) — no record yet until import runs
 
 function stripComments(src) {
   return String(src ?? "")
