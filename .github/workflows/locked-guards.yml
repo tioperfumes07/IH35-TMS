@@ -1483,6 +1483,10 @@ jobs:
       - name: verify:historical-settlement-attribution-schema
         run: node scripts/verify-historical-settlement-attribution-schema.mjs
 
+      # 443.218 F-KPI — list/KPI totals must come from COUNT(*) OVER (), never rows.length
+      - name: verify:kpi-total-not-rows-length
+        run: node scripts/verify-kpi-total-not-rows-length.mjs
+
   # Thin aggregator — required context `locked-guards / locked-guards` always reports.
   locked-guards:
     name: locked-guards
