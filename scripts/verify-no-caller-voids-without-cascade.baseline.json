@@ -4,7 +4,7 @@
     {
       "file": "apps/backend/src/driver-finance/settlement-void-state.service.ts",
       "table": "driver_finance.driver_settlements",
-      "reason": "MOVED (443.230, CC-3) with the write: ROUND 443.213 (#27107) made stampSettlementVoidedInClientTx the single settlement dead-state writer (status='cancelled'+voided_at). It runs AFTER the caller's financial unwind and every caller runs the shared settlement cascade first — void-document-callees.service.ts reverseSettlementForVoid and governance/void-cancel-executors.ts executeDriverSettlement call completeDriverSettlementVoidCascadeInClientTx (lines voided, open driver bills + unpaid reimbursements released); settlements-bulk.routes.ts bulk reverse goes through the same reverse path. The old entry (void-document-callees.service.ts) was stale: that file no longer writes the void signal. Same count (1) — shrink-only kept."
+      "reason": "stampSettlementVoidedInClientTx() is a stamp-only helper: it sets voided_at/reversed_at/status on driver_settlements after the caller has ALREADY run completeDriverSettlementVoidCascadeInClientTx. The cascade (lines voided, open bills/reimbursements released, loads freed, company settlement voided) always fires in the same transaction before this stamp function is reached. Intentionally no cascadeVoidChildren() here — the cascade already ran."
     }
   ],
   "measured_at": "2026-09-24T00:30:00Z",

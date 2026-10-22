@@ -14468,6 +14468,11 @@
     "claimed_at": "2026-10-21",
     "purpose": "verify-live-document-predicates-single-source"
   },
+  "18384": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-22",
+    "purpose": "verify-sortable-headers-reorder"
+  },
   "18385": {
     "claimed_at": "2026-10-10",
     "claimed_by": "cc-1",
@@ -14803,6 +14808,36 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-21",
     "purpose": "CC-3 LEAD 443.211R: verify-one-load-status-machine (no load status write outside the one writer; SQL mirror = TS machine)"
+  },
+  "18629": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.219 G-VOCAB: verify-document-status-vocabulary (guard added in #27108 without claim — wiring from .guard-exempt.json)"
+  },
+  "18633": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.206R: verify-fe-load-labels-and-status-sets (guard added in #27108 without claim — wiring from .guard-exempt.json)"
+  },
+  "18637": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.219 G-STRICT: verify-list-query-params-honoured (guard added in #27108 without claim — wiring from .guard-exempt.json)"
+  },
+  "18641": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.219 G-ERR: verify-no-silent-error-success (guard added in #27121 without claim — wiring from .guard-exempt.json)"
+  },
+  "18645": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.210R P0: verify-settlement-resolver-no-closed-at (guard added in #27108 without claim — wiring from .guard-exempt.json)"
+  },
+  "18649": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.210R G2: verify-money-surfaces-agree LIVE (new guard — all money surfaces agree on revenue for live data; TB 0)"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
@@ -16807,10 +16842,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1064,
-  "18384": {
-    "claimed_by": "cursor",
-    "claimed_at": "2026-10-22",
-    "purpose": "verify-sortable-headers-reorder"
-  }
+  "total_claimed": 1070
 }
