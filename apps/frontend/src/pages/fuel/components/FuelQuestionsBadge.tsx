@@ -36,7 +36,7 @@ export function FuelQuestionsBadge({
     >
       Fuel questions
       <span
-        className="inline-block min-w-[1.25rem] rounded-sm bg-[#14314F] px-1 text-center text-[11px] font-bold text-white"
+        className="inline-block min-w-[1.25rem] rounded-sm bg-[#14314F] px-1 text-center text-section-header font-bold text-white"
         data-testid="fuel-questions-badge-n"
       >
         {count}

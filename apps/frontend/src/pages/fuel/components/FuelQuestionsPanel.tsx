@@ -46,7 +46,7 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
   return (
     <div className="space-y-3" data-testid="fuel-questions-panel">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-[11px] font-bold uppercase text-[#4B5563]">
+        <h2 className="text-section-header font-bold uppercase text-[#4B5563]">
           Fuel questions
           <span
             className="ml-2 inline-block rounded-sm border border-[#C7D2DC] bg-[#EEF2F6] px-2 py-px font-bold text-[#1F2A44]"
@@ -85,7 +85,7 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
                 ].map((h) => (
                   <th
                     key={h || "act"}
-                    className="border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-center text-[11px] font-bold uppercase text-[#4B5563]"
+                    className="border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-center text-section-header font-bold uppercase text-[#4B5563]"
                   >
                     {h}
                   </th>

@@ -128,7 +128,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
   if (!question) return null;
 
   const th =
-    "border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-center text-[11px] font-bold uppercase text-[#4B5563]";
+    "border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-center text-section-header font-bold uppercase text-[#4B5563]";
 
   return (
     <Modal
@@ -151,29 +151,29 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
           data-testid="fuel-assignment-fill-summary"
         >
           <div>
-            <div className="text-[11px] font-bold uppercase text-[#4B5563]">Fill (Central)</div>
+            <div className="text-section-header font-bold uppercase text-[#4B5563]">Fill (Central)</div>
             <div className="mt-0.5 font-semibold">{question.fill_moment_ct ?? "—"}</div>
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase text-[#4B5563]">Station</div>
+            <div className="text-section-header font-bold uppercase text-[#4B5563]">Station</div>
             <div className="mt-0.5 font-semibold">{question.station?.trim() || "—"}</div>
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase text-[#4B5563]">Gallons / Amount</div>
+            <div className="text-section-header font-bold uppercase text-[#4B5563]">Gallons / Amount</div>
             <div className="mt-0.5 font-semibold">
               {question.gallons ?? "—"} gal · {money(question.amount_cents)}
             </div>
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase text-[#4B5563]">Card truck</div>
+            <div className="text-section-header font-bold uppercase text-[#4B5563]">Card truck</div>
             <div className="mt-0.5 font-semibold">{question.card_unit_number ?? "—"}</div>
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase text-[#4B5563]">Card driver</div>
+            <div className="text-section-header font-bold uppercase text-[#4B5563]">Card driver</div>
             <div className="mt-0.5 font-semibold">{question.card_driver_name ?? "—"}</div>
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase text-[#4B5563]">Resolution</div>
+            <div className="text-section-header font-bold uppercase text-[#4B5563]">Resolution</div>
             <div className="mt-0.5 font-semibold">
               {question.evidence?.truck_resolution ?? "—"} / {question.evidence?.load_resolution ?? "—"}
             </div>
@@ -185,7 +185,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
           data-testid="fuel-assignment-proposed"
           style={{ borderLeft: "3px solid #16A34A" }}
         >
-          <div className="text-[11px] font-bold uppercase text-[#4B5563]">Proposed answer</div>
+          <div className="text-section-header font-bold uppercase text-[#4B5563]">Proposed answer</div>
           <div className="mt-1 text-xs font-semibold">
             Truck {question.proposed_unit_number ?? "—"} · Load {question.proposed_load_number ?? "—"}
             {question.proposed_settlement_ref ? ` · Settlement ${question.proposed_settlement_ref}` : ""}
