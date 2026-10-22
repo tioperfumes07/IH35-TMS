@@ -14809,6 +14809,11 @@
     "claimed_at": "2026-10-21",
     "purpose": "CC-3 LEAD 443.211R: verify-one-load-status-machine (no load status write outside the one writer; SQL mirror = TS machine)"
   },
+  "18653": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.232 P0: verify-gps-positions-survive-one-load (fence walk / settlement ping / contract bonus can never abort the positions tick)"
+  },
   "18629": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-21",
@@ -16842,5 +16847,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1070
+  "total_claimed": 1071
 }
