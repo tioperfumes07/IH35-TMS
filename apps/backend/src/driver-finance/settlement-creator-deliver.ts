@@ -90,8 +90,9 @@ export async function stampStopsFromTracking(
   const stops = (
     await client.query<{ id: string; sequence_number: number; stop_type: string; latitude: string | null; longitude: string | null; sched_day: string | null; stamped: boolean }>(
       `SELECT id::text, sequence_number, stop_type::text, latitude::text, longitude::text,
-              to_char((scheduled_arrival_at AT TIME ZONE $2), 'YYYY-MM-DD') AS sched_day,
-              (actual_arrival_at IS NOT NULL) AS stamped
+              -- LEAD 443.230: a stop booked with an appointment but no scheduled arrival (Book Load) is dated by its appointment.
+              to_char((COALESCE(scheduled_arrival_at, appointment_start_at) AT TIME ZONE $2), 'YYYY-MM-DD') AS sched_day,
+              (actual_arrival_at IS NOT NULL OR actual_departure_at IS NOT NULL) AS stamped
          FROM mdata.load_stops WHERE load_id = $1::uuid AND soft_deleted_at IS NULL ORDER BY sequence_number`,
       [loadId, STOP_DAY_TIMEZONE],
     )
@@ -146,7 +147,7 @@ export async function stampStopsFromTracking(
             SET actual_arrival_at = $2::timestamptz, actual_departure_at = $3::timestamptz,
                 actual_arrival_source = 'eld_geofence', actual_departure_source = 'eld_geofence',
                 actual_stop_event_id = $4::uuid, actual_stamp_precision = 'tracked', updated_at = now()
-          WHERE id = $1::uuid AND actual_arrival_at IS NULL`,
+          WHERE id = $1::uuid AND actual_arrival_at IS NULL AND actual_departure_at IS NULL`,
         [st.id, pick.started_at, departed, pick.id],
       );
       out.push({
@@ -159,7 +160,7 @@ export async function stampStopsFromTracking(
             SET actual_arrival_at = ($2::date)::timestamp AT TIME ZONE $3, actual_departure_at = ($2::date)::timestamp AT TIME ZONE $3,
                 actual_arrival_source = 'manual', actual_departure_source = 'manual',
                 actual_stop_event_id = NULL, actual_stamp_precision = 'date_only', updated_at = now()
-          WHERE id = $1::uuid AND actual_arrival_at IS NULL`,
+          WHERE id = $1::uuid AND actual_arrival_at IS NULL AND actual_departure_at IS NULL`,
         [st.id, day, STOP_DAY_TIMEZONE],
       );
       out.push({ ...base, precision: "date_only", stop_event_id: null, arrival_at: day, departure_at: day, note: `date only — ${reason}` });
