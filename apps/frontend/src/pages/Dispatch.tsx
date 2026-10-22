@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { type LoadStatus, listAllLoads, listLoads, useUpdateLoadStatus } from "../api/loads";
-import { listSettlements, listOpenPreSettlements } from "../api/driverFinance";
+import { listSettlements, listOpenPreSettlementsByDriver } from "../api/driverFinance";
 import { OpenPreSettlementsPanel } from "../components/driver-finance/OpenPreSettlementsPanel";
 import { listGeofenceBreaches } from "../api/safetyGeofence";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -282,7 +282,7 @@ export function DispatchPage({
   // annotation; reused here as its own board section.
   const openPreSettlementsQuery = useQuery({
     queryKey: ["dispatch", "pre-settlements-open", defaultCompanyIds.join(",")],
-    queryFn: () => listOpenPreSettlements(defaultCompanyIds[0] ?? ""),
+    queryFn: () => listOpenPreSettlementsByDriver(defaultCompanyIds[0] ?? ""),
     // verify-pre-settlements-reverse-drill.mjs's "dispatch mounts pre-settlements subtab" check
     // extracts a fixed window starting at the FIRST literal `subTab === "pre_settlements"` and
     // looks for <PreSettlementsPanel inside it -- reordered (commutative, same semantics) so this

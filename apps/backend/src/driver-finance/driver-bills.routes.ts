@@ -177,13 +177,15 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
           LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
           LEFT JOIN driver_finance.driver_settlements ds
             ON ds.id = db.settled_in_settlement_id AND ds.operating_company_id = db.operating_company_id
-          WHERE db.operating_company_id = $1::uuid AND db.load_id = $2::uuid AND db.status <> 'void'
-          ORDER BY db.created_at DESC
-          LIMIT 1
+          WHERE db.operating_company_id = $1::uuid AND db.load_id = $2::uuid
+            AND db.status NOT IN ('void', 'voided') AND db.voided_at IS NULL
+          ORDER BY db.team_driver_id NULLS FIRST, db.created_at DESC
         `,
         [parsed.data.operating_company_id, params.data.loadId]
       );
+      // 443.210R: primary bill for mileage/rate detail; all_bills_gross_cents sums ALL live bills
       const bill = (billRes.rows[0] as BillRow | undefined) ?? null;
+      const allBillsGrossCents = (billRes.rows as BillRow[]).reduce((s, r) => s + Number(r.gross_amount_cents ?? 0), 0);
 
       // SET-RATE law: rate is derived from amount/miles on the SAME row — the identity holds by
       // construction, regardless of whether the bill's own stored rate_per_mile_cents column
@@ -280,6 +282,9 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
         kind: "ok" as const,
         driver_id: bill?.driver_id ?? null,
         driver_name: bill?.driver_name ?? null,
+        // 443.210R: all_bills_gross_cents is the SUM of every live driver bill on this load
+        all_bills_gross_cents: allBillsGrossCents,
+        bill_count: billRes.rows.length,
         bill: bill
           ? {
               id: bill.id,
