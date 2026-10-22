@@ -122,6 +122,70 @@ export async function loadUnitIdBySamsaraVehicleId(
  * nothing read its rows. arrivals_triggered counts the stops the fence detector stamped on this run.
  */
 
+/**
+ * LEAD 443.232 (P0 catch-up) — replay a window the positions tick lost (10-22 05:10Z → 14:50Z: every tick rolled back) through
+ * THE live path, in time order: each Samsara GPS fix is stored (ingestVehicleLocationEvent, idempotent on its raw id) and, when
+ * new, run through the fence detector in its own savepoint — the same stop stamps / status walks the live tick would have made.
+ * Never a hand UPDATE. Returns counts; failures are named per unit.
+ */
+export async function catchUpSamsaraGpsWindow(
+  client: PgClient,
+  operatingCompanyId: string,
+  startIso: string,
+  endIso: string
+): Promise<{ fetched: number; inserted: number; arrivals_triggered: number; skipped_no_unit: number; errors: string[] }> {
+  const errors: string[] = [];
+  const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
+  if (!cfg || !Boolean(cfg.is_enabled)) return { fetched: 0, inserted: 0, arrivals_triggered: 0, skipped_no_unit: 0, errors: ["samsara_not_enabled"] };
+  const api = new SamsaraClient({
+    apiToken: resolveSamsaraApiToken(cfg as Record<string, unknown>),
+    samsaraOrgId: cfg.samsara_org_id ? String(cfg.samsara_org_id) : null,
+  });
+  const unitByVehicleId = await loadUnitIdBySamsaraVehicleId(client, operatingCompanyId);
+  const fixes = await api.listGpsHistory([...unitByVehicleId.keys()], startIso, endIso);
+  let inserted = 0;
+  let skippedNoUnit = 0;
+  let arrivals = 0;
+  for (const fix of fixes) {
+    const unitId = unitByVehicleId.get(fix.id);
+    if (!unitId) { skippedNoUnit += 1; continue; }
+    const didInsert = await ingestVehicleLocationEvent(client as never, {
+      operating_company_id: operatingCompanyId,
+      unit_id: unitId,
+      samsara_vehicle_id: fix.id,
+      captured_at: fix.captured_at,
+      lat: fix.latitude,
+      lng: fix.longitude,
+      speed_mph: fix.speed_mph,
+      heading_deg: fix.heading_deg,
+      engine_state: deriveEngineState(fix.engine_on, fix.speed_mph),
+      raw_samsara_event_id: `catchup:gps:${fix.id}:${fix.captured_at}`,
+      payload: fix.raw,
+      odometer_mi: fix.odometer_mi ?? null,
+      ...parseCityState(fix.formatted_location ?? null),
+      formatted_location: fix.formatted_location ?? null,
+    });
+    if (!didInsert) continue;
+    inserted += 1;
+    const fence = await withSavepoint(
+      client as never,
+      "catchup_fence_point",
+      () => processGeofenceDetectionsForGpsPoint(client as never, {
+        operating_company_id: operatingCompanyId,
+        unit_id: unitId,
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+        occurred_at: fix.captured_at,
+        source: "samsara_gps",
+      }),
+      NO_FENCE_RESULT,
+      (err) => errors.push(`fence:${unitId}:${String((err as Error)?.message ?? err)}`)
+    );
+    arrivals += fence.stop_arrivals_stamped;
+  }
+  return { fetched: fixes.length, inserted, arrivals_triggered: arrivals, skipped_no_unit: skippedNoUnit, errors };
+}
+
 export async function syncSamsaraVehicleLocations(
   client: PgClient,
   operatingCompanyId: string

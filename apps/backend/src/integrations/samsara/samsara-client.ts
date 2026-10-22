@@ -877,6 +877,47 @@ export class SamsaraClient {
     return out;
   }
 
+  /**
+   * LEAD 443.232 (P0 catch-up) — every GPS fix Samsara recorded for these vehicles in [startIso, endIso]
+   * (GET /fleet/vehicles/stats/history?types=gps&decorations=obdOdometerMeters), parsed exactly like the live feed's fix
+   * (parseGpsFeedRow, one point at a time). Used to replay a window the positions tick lost, in time order.
+   */
+  async listGpsHistory(vehicleIds: string[], startIso: string, endIso: string): Promise<SamsaraVehicleLocation[]> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);
+    const out: SamsaraVehicleLocation[] = [];
+    let after: string | null = null;
+    for (let page = 0; page < 1000; page += 1) {
+      const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats/history`);
+      url.searchParams.set("types", "gps");
+      url.searchParams.set("decorations", "obdOdometerMeters");
+      url.searchParams.set("vehicleIds", vehicleIds.join(","));
+      url.searchParams.set("startTime", startIso);
+      url.searchParams.set("endTime", endIso);
+      if (after) url.searchParams.set("after", after);
+      let res: Response;
+      try {
+        res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }, 30_000));
+      } catch (error) {
+        throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+      }
+      const json = await readJsonResponse(res);
+      if (!res.ok) throw new SamsaraApiError(`samsara_gps_history_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+      for (const raw of Array.isArray(json.data) ? (json.data as unknown[]) : []) {
+        const v = asObject(raw);
+        if (!v || v.id == null) continue;
+        for (const point of Array.isArray(v.gps) ? (v.gps as unknown[]) : []) {
+          const fix = parseGpsFeedRow({ id: v.id, gps: [point] });
+          if (fix) out.push({ ...fix, raw: { id: v.id, gps: [point] } });
+        }
+      }
+      const { hasNextPage, cursor } = parsePagination(json);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out.sort((a, b) => a.captured_at.localeCompare(b.captured_at));
+  }
+
   async listFuelEnergyReports(kind: "vehicles" | "drivers", startIso: string, endIso: string): Promise<SamsaraFuelEnergyRow[]> {
     const token = this._token();
     if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);

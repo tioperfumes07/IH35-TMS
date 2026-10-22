@@ -24,6 +24,7 @@ const F = {
   fence: "apps/backend/src/telematics/geofence-detector.service.ts",
   positions: "apps/backend/src/integrations/samsara/samsara-positions.service.ts",
   terms: "apps/backend/src/driver-finance/settlement-contract-terms.service.ts",
+  registry: "apps/backend/src/outbox/handlers/registry.ts",
 };
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
@@ -40,6 +41,10 @@ export function check(src = {}) {
   for (const name of ["positions_fence_point", "stats_fence_point"])
     if (!new RegExp(`await withSavepoint\\(\\s*client as never,\\s*"${name}",\\s*\\(\\) => processGeofenceDetectionsForGpsPoint\\(`).test(s.positions))
       p.push(`${F.positions}: each point's fence processing must run inside withSavepoint ("${name}")`);
+  // 443.232 catch-up: the lost-window replay uses the same per-fix savepoint and is wired as an outbox handler.
+  if (!/export async function catchUpSamsaraGpsWindow\(/.test(s.positions) || !/"catchup_fence_point",/.test(s.positions))
+    p.push(`${F.positions}: catchUpSamsaraGpsWindow must replay each fix through the fence detector in its own savepoint`);
+  if (!/new TelematicsGpsCatchupHandler\(\)/.test(s.registry)) p.push(`${F.registry}: the GPS catch-up handler (telematics.gps_catchup) is not registered`);
   const bare = (s.positions.match(/await processGeofenceDetectionsForGpsPoint\(/g) ?? []).length;
   if (bare) p.push(`${F.positions}: ${bare} fence call(s) outside a savepoint`);
   const inserts = s.terms.match(/INSERT INTO driver_finance\.settlement_lines \(settlement_id, line_type, description, amount\)\s*VALUES \(\$1::uuid, 'extra_pay'/g) ?? [];
@@ -62,6 +67,8 @@ if (isMain && process.argv.includes("--selftest")) {
     ["fence walk failure not audited", { fence: base.fence.replace('"telematics.fence_status_walk_failed"', '"x"') }],
     ["positions point outside savepoint", { positions: base.positions + "\nawait processGeofenceDetectionsForGpsPoint(client, {});\n" }],
     ["stats point savepoint removed", { positions: base.positions.replace('"stats_fence_point",', '"x",') }],
+    ["catch-up without its savepoint", { positions: base.positions.replace('"catchup_fence_point",', '"x",') }],
+    ["catch-up handler unregistered", { registry: base.registry.replace("new TelematicsGpsCatchupHandler(),", "") }],
     ["bonus without the pay-item gate", { terms: base.terms.replace("await skipBonusWithoutPayItem(client, {", "await somethingElse(client, {") }],
   ];
   for (const [n, src] of plants) {
