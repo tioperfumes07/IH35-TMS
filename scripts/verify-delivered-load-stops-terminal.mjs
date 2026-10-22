@@ -26,6 +26,20 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 /** dispatch's delivered-and-later load statuses (settlement-creator-deliver.ts ALREADY_DELIVERED). */
 export const DELIVERED_OR_LATER = ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"];
 
+const OFFICE = "apps/backend/src/dispatch/stamp-final-delivery-departure.ts";
+/** LEAD 443.230 (CC-3) — RULE 3: office delivery (transition / bulk / mdata PATCH share this stamp) also stamps the earlier
+ *  stops from tracking; RULE 1b: the evidence engine never re-stamps a stop that already carries an (attested) departure. */
+export function officeFailures(officeSrc, src) {
+  const out = [];
+  const fn = officeSrc.slice(officeSrc.indexOf("export async function stampFinalActiveDeliveryDeparture("));
+  if (!/await stampStopsFromTracking\(client as never, loadId, operatingCompanyId, \{\}\);/.test(fn))
+    out.push(`RULE 3 ${OFFICE}: office delivery no longer stamps the earlier stops from tracking (they stay 'pending')`);
+  if (!/\(actual_arrival_at IS NOT NULL OR actual_departure_at IS NOT NULL\) AS stamped/.test(src) ||
+      (src.match(/WHERE id = \$1::uuid AND actual_arrival_at IS NULL AND actual_departure_at IS NULL`/g) ?? []).length < 2)
+    out.push(`RULE 1b ${DELIVER}: stampStopsFromTracking must leave a stop that already has a departure stamp untouched`);
+  return out;
+}
+
 export function staticFailures(src) {
   const out = [];
   const stamp = src.slice(src.indexOf("export async function stampStopsFromTracking("));
@@ -33,7 +47,8 @@ export function staticFailures(src) {
   const body = end > 0 ? stamp.slice(0, end) : stamp;
   if (!/await settleStampedStopStatuses\(client, loadId\);\s*return out;/.test(body))
     out.push(`RULE 1 ${DELIVER}: stampStopsFromTracking no longer settles the stops it stamped (status stays 'pending')`);
-  const settle = src.slice(src.indexOf("export async function settleStampedStopStatuses("));
+  const settleAll = src.slice(src.indexOf("export async function settleStampedStopStatuses("));
+  const settle = settleAll.slice(0, settleAll.indexOf("\n}\n") > 0 ? settleAll.indexOf("\n}\n") : undefined);
   if (!/status = 'departed'::mdata\.stop_status_enum/.test(settle) || !/actual_departure_at IS NOT NULL/.test(settle))
     out.push(`RULE 1 ${DELIVER}: settleStampedStopStatuses must move ONLY stops with a departure stamp to 'departed'`);
   return out;
@@ -46,11 +61,15 @@ export function liveFailures(rows) {
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const src = readFileSync(resolve(ROOT, DELIVER), "utf8");
+  const officeSrc = readFileSync(resolve(ROOT, OFFICE), "utf8");
   if (process.argv.includes("--selftest")) {
     const cases = [
       ["the shipped engine passes", staticFailures(src).length === 0],
       ["dropping the settle call fails", staticFailures(src.replace("await settleStampedStopStatuses(client, loadId);", "")).some((x) => x.startsWith("RULE 1"))],
       ["settling without the stamp condition fails", staticFailures(src.replace("AND actual_departure_at IS NOT NULL", "")).some((x) => x.startsWith("RULE 1"))],
+      ["office delivery passes", officeFailures(officeSrc, src).length === 0],
+      ["office delivery without the tracking stamp fails", officeFailures(officeSrc.replace("await stampStopsFromTracking(client as never, loadId, operatingCompanyId, {});", ""), src).some((x) => x.startsWith("RULE 3"))],
+      ["re-stamping an attested departure fails", officeFailures(officeSrc, src.replace("(actual_arrival_at IS NOT NULL OR actual_departure_at IS NOT NULL) AS stamped", "(actual_arrival_at IS NOT NULL) AS stamped")).some((x) => x.startsWith("RULE 1b"))],
       ["no pending stop passes", liveFailures([]).length === 0],
       ["a pending stop on an invoiced load fails", liveFailures([{ load_number: "1", load_status: "invoiced", sequence_number: 2, stop_type: "delivery" }]).some((x) => x.startsWith("RULE 2"))],
     ];
@@ -59,7 +78,11 @@ if (isMain) {
     console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
     process.exit(bad ? 1 : 0);
   }
-  const failures = staticFailures(src);
+  const failures = [...staticFailures(src), ...officeFailures(officeSrc, src)];
+  if (failures.length && !process.env.DATABASE_URL) {
+    console.error(`${LABEL}: FAIL (static) —\n` + failures.map((f) => `  ${f}`).join("\n"));
+    process.exit(1);
+  }
   if (!process.env.DATABASE_URL) {
     console.error(`${LABEL}: FAIL — DATABASE_URL not set (${REQUIRES_LIVE_DB})`);
     process.exit(1);
