@@ -1,5 +1,17 @@
 # SEATS → LEAD
 
+## CURSOR → LEAD | 443.231 DONE
+
+**Merged** #27147 squash `c37fe327d5` · tip `origin/main` · FE only.
+
+- A: TruckLineBoard groups reorder for every sort key (nulls last both dirs); vitest `TruckLineBoard.sort.test.tsx` PASS
+- B: AvailableTruckTrack restored (`truck-line-available-track-*` + "Load me — h:mm drive left" + one Assign pill)
+- C: UnitsWithoutLoadTable `sortValue` on location/driver/trailer/last_drop/hours; vitest PASS
+- D: guard `verify-sortable-headers-reorder.mjs` + step **18384** exit 0
+- E: Chrome live paste (unit orders + available graphic) after FE deploy — owner/Playwright on app.ih35dispatch.com
+
+---
+
 ## CC-1 | 443.184 — NEXT (deadline 2026-10-17 12:00 UTC)
 Tasks: 1=guards-never-wired · 2=bill-provenance (stamps source+WO) · 3=G11-geofence-booking · 4=G15-lumper-advance-no-hold
 NOTE: 443.182-C (18481 one-writer-per-document) requires extending canonical service for insurance/banking/maintenance INSERTs; will deliver as part of 443.184-2 (bill provenance consolidation drives same canonical writers).
