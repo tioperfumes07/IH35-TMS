@@ -1761,6 +1761,10 @@ export async function ensureDriverBillArtifactsForLoad(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: { loadId: string; operatingCompanyId: string; actorUserId: string }
 ): Promise<DriverBillMintOutcome> {
+  // LEAD 443.230 — driver_bills is RLS-isolated on app.operating_company_id. A caller that opened only withCurrentUser (the
+  // remint routes) read NO existing bill, so a second remint INSERTed a duplicate (prod 10-22 03:45Z: 13697 -> 23505
+  // uniq_driver_bills_operating_company_bill_number, rolled back). The engine scopes its own transaction to the load's company.
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
   // SETL-45-DRIVER-BILL-MINT-DROPS-PER-LOAD-RATE-OVERRIDE — this SELECT used to omit
   // driver_pay_rate_per_mile. resolveDriverBasePayCents() (below, via createDriverBillArtifacts)
   // reads load.driver_pay_rate_per_mile FIRST, before falling back to the driver-rate-card table
