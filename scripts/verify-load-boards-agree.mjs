@@ -78,10 +78,16 @@ export function staticFailures(src) {
     need(k, /\$\{loadServiceMembershipSql\(/, "reads its loads through the load service (443.206R item 1)");
   for (const k of ["unitAgg", "trailerAgg", "driverAgg"])
     ban(k, /NOT IN \('delivered', 'cancelled', 'void'/, "private current-load status list (register B5)");
-  need("dispatchLoads", /AND \$\{canonicalDispatchWorkWhereClause\("l", "\$1::uuid"\)\}\s*-- The unit's DEFAULT driver/, "units-without-load: occupied = the board set (D6)");
-  need("dispatchLoads", /WHERE \$\{canonicalBoardUnitGateSql\("u", "\$1::uuid"\)\}/, "units-without-load uses THE unit gate (D3)");
+  need("dispatchLoads", /AND \$\{canonicalDispatchWorkWhereClause\("l", "\$1::uuid"\)\}\s*-- LEAD 443\.231b/, "units-without-load: occupied = the board set (D6)");
+  // 443.231b — Truck Line AVAILABLE and Unassigned units share UNIT_IN_SERVICE_SQL + unitCurrentDriverSql.
+  need("dispatchLoads", /WHERE \$\{UNIT_IN_SERVICE_SQL\}/, "units-without-load uses UNIT_IN_SERVICE_SQL (same free-unit set as Truck Line AVAILABLE)");
+  need("dispatchLoads", /\$\{unitCurrentDriverSql\("u", "\$1::uuid"\)\}/, "units-without-load uses unitCurrentDriverSql (443.231b)");
+  need("truckLine", /\$\{unitCurrentDriverSql\("u", "\$1::uuid"\)\}/, "Truck Line AVAILABLE uses unitCurrentDriverSql (443.231b)");
+  need("truckLine", /FROM mdata\.units u/, "Truck Line AVAILABLE is unit-centric (443.231b — one row per truck)");
+  need("truckLine", /truck_line_available_duplicate_unit/, "Truck Line AVAILABLE fail-closed on duplicate unit_id (443.231b)");
+  ban("truckLine", /FROM qualifying q/, "Truck Line AVAILABLE back on driver-centric qualifying CTE (443.231b)");
   ban("dispatchLoads", /FROM views\.live_loads\s+WHERE operating_company_id = \$1::uuid\s+AND live_state = 'open_dispatch'/, "a board tile reads views.live_loads open_dispatch (D2)");
-  need("truckLine", /\$\{canonicalBoardUnitGateSql\("u", "\$1::uuid"\)\}/, "Truck Line unit gate built on THE unit gate (D3)");
+  need("truckLine", /UNIT_IN_SERVICE_SQL/, "Truck Line AVAILABLE uses UNIT_IN_SERVICE_SQL (D3 / 443.231b)");
   ban("truckLine", /AND \$\{CURRENT_TRUCK_LINE_LOAD_SQL\.replace\([^)]*\)\}\s*AND \$\{UNIT_IN_SERVICE_SQL\}/, "Truck Line gates LOAD membership on its unit (D3)");
   need("tripPairing", /WHERE \$\{canonicalBoardUnitGateSql\("u", "\$1::uuid"\)\}/, "Trip Pairing uses THE unit gate (D4)");
   need("tripPairing", /status: legs\[0\]\?\.status/, "Trip Pairing shows the CURRENT leg's status, not the last leg's (D12)");
@@ -176,6 +182,8 @@ async function selftest() {
     ["overview on views.live_loads", "overview", (x) => x + "\nconst q = `FROM views.live_loads\n WHERE operating_company_id = $1::uuid\n AND live_state = 'open_dispatch'`;"],
     ["scenario counts trailer-only rows", "scenarios", (x) => x.replace("AND (later.new_driver_id IS NOT NULL OR later.new_unit_id IS NOT NULL)", "")],
     ["driver from latest history", "tripPairing", (x) => x + "\nconst q = `SELECT h.new_driver_id FROM dispatch.load_assignment_history h ORDER BY h.created_at DESC LIMIT 1`;"],
+    ["available back to driver-centric CTE", "truckLine", (x) => x.replace("FROM mdata.units u", "FROM qualifying q")],
+    ["units-without-load drops UNIT_IN_SERVICE_SQL", "dispatchLoads", (x) => x.replace("WHERE ${UNIT_IN_SERVICE_SQL}", "WHERE true")],
   ];
   for (const [name, k, mut] of plants) {
     const planted = mut(base[k]);
@@ -373,6 +381,70 @@ async function main() {
     if (idDrift.length) realFailures.push(`Trip Pairing (real function) disagrees with the board set's unit-assigned loads: ${idDrift.length}`);
     if (breakdown.total !== boardIds.size) realFailures.push(`Overview OPEN LOADS (real function) ${breakdown.total} ≠ board set ${boardIds.size}`);
     if (onLoad !== onLoadRef) realFailures.push(`Overview ON LOAD (real function) ${onLoad} ≠ board set on-load ${onLoadRef}`);
+
+    // LEAD 443.231b LIVE — available unit set + driver per unit identical across Truck Line AVAILABLE
+    // and Unassigned units. Mirror each route's FROM/WHERE (both must use UNIT_IN_SERVICE_SQL +
+    // unitCurrentDriverSql + no board-set load) and compare the maps.
+    const { unitCurrentDriverSql } = await import("../apps/backend/src/dispatch/unit-current-driver.ts");
+    const { canonicalDispatchWorkWhereClause: boardWorkWhere } = await import("../apps/backend/src/dispatch/canonical-active-load-set.ts");
+    await client.query("BEGIN READ ONLY");
+    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+    // Truck Line AVAILABLE shape (truck-line.routes.ts).
+    const truckLineAvailable = await client.query(
+      `SELECT u.id::text AS unit_id, u.unit_number, ud.id::text AS driver_id
+         FROM mdata.units u
+         LEFT JOIN mdata.loads board_l
+           ON board_l.assigned_unit_id = u.id
+          AND board_l.soft_deleted_at IS NULL
+          AND ${boardWorkWhere("board_l", "$1::uuid")}
+         ${unitCurrentDriverSql("u", "$1::uuid")}
+        WHERE ${UNIT_IN_SERVICE_SQL}
+          AND board_l.id IS NULL
+        ORDER BY u.unit_number ASC NULLS LAST, u.id`,
+      [USMCA]
+    );
+    // units-without-load shape (loads.routes.ts) — same gate, join alias `l` for occupied check.
+    const unassignedUnits = await client.query(
+      `SELECT u.id::text AS unit_id, u.unit_number, ud.id::text AS driver_id
+         FROM mdata.units u
+         LEFT JOIN mdata.loads l
+           ON l.assigned_unit_id = u.id
+          AND l.operating_company_id = $1::uuid
+          AND l.soft_deleted_at IS NULL
+          AND ${boardWorkWhere("l", "$1::uuid")}
+         ${unitCurrentDriverSql("u", "$1::uuid")}
+        WHERE ${UNIT_IN_SERVICE_SQL}
+          AND l.id IS NULL
+        ORDER BY u.unit_number ASC NULLS LAST, u.id`,
+      [USMCA]
+    );
+    await client.query("ROLLBACK");
+    const key = (r) => `${r.unit_id}|${r.driver_id ?? ""}`;
+    const tlMap = new Map(truckLineAvailable.rows.map((r) => [r.unit_id, key(r)]));
+    const uaMap = new Map(unassignedUnits.rows.map((r) => [r.unit_id, key(r)]));
+    if (tlMap.size !== truckLineAvailable.rows.length) {
+      realFailures.push(`443.231b Truck Line AVAILABLE has duplicate unit_id (rows=${truckLineAvailable.rows.length} unique=${tlMap.size})`);
+    }
+    if (uaMap.size !== unassignedUnits.rows.length) {
+      realFailures.push(`443.231b Unassigned units has duplicate unit_id (rows=${unassignedUnits.rows.length} unique=${uaMap.size})`);
+    }
+    const onlyTl = [...tlMap.keys()].filter((id) => !uaMap.has(id));
+    const onlyUa = [...uaMap.keys()].filter((id) => !tlMap.has(id));
+    if (onlyTl.length || onlyUa.length) {
+      realFailures.push(
+        `443.231b available unit set drift — only Truck Line: ${onlyTl.join(",") || "∅"}; only Unassigned: ${onlyUa.join(",") || "∅"}`
+      );
+    }
+    for (const [unitId, tlKey] of tlMap) {
+      const uaKey = uaMap.get(unitId);
+      if (uaKey && uaKey !== tlKey) {
+        realFailures.push(`443.231b driver drift for unit ${unitId}: truck-line=${tlKey} unassigned=${uaKey}`);
+      }
+    }
+    console.log(
+      `${LABEL}: 443.231b available parity OK — count=${truckLineAvailable.rows.length} ` +
+        `units=${truckLineAvailable.rows.map((r) => `${r.unit_number}:${r.driver_id ? "drv" : "—"}`).join(",")}`
+    );
 
     const canonicalSet = new Set(canonical.rows.map((r) => r.load_number));
     const dispatchWorkSet = new Set(dispatchWork.rows.map((r) => r.load_number));

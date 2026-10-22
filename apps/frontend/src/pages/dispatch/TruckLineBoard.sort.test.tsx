@@ -252,10 +252,10 @@ describe("TruckLineBoard.sort (443.231)", () => {
         />,
       ),
     );
-    await waitFor(() => expect(screen.getByTestId("truck-line-available-track-drv-avail-1")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId("truck-line-available-track-u-avail")).toBeInTheDocument());
 
-    const track = screen.getByTestId("truck-line-available-track-drv-avail-1");
-    expect(within(track).getByTestId("truck-line-vehicle-available-drv-avail-1")).toBeInTheDocument();
+    const track = screen.getByTestId("truck-line-available-track-u-avail");
+    expect(within(track).getByTestId("truck-line-vehicle-available-u-avail")).toBeInTheDocument();
     expect(track.textContent).toMatch(/Load me — 11h 00m drive left/);
     expect(screen.queryByText(/no trip in progress/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/no load on this truck/i)).not.toBeInTheDocument();

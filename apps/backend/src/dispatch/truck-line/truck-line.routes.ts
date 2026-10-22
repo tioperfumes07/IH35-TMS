@@ -7,19 +7,25 @@
  * one unit (including a RETURN TRIP whose PU date equals the prior DEL date) stack as TWO
  * rows under that unit; do not de-duplicate.
  *
- * AVAILABLE rows: driver with fresh HOS, not on a canonical-active load, with a real unit.
+ * AVAILABLE rows (LEAD 443.231b): ONE row per free in-service unit (same unit set as
+ * GET /dispatch/units-without-load — UNIT_IN_SERVICE_SQL + no board-set load). Driver =
+ * unitCurrentDriverSql (open VDA, else last-delivered primary). Never two rows for one unit.
  *
  * READ-ONLY. No UPDATE/INSERT to mdata.loads here.
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, withCompanyScope } from "../../accounting/shared.js";
-import { openWorkOrderPredicateSql } from "../../maintenance/in-shop-condition.js";
 import { CURRENT_TRUCK_LINE_LOAD_SQL } from "../current-truck-line-load.js";
-import { canonicalBoardUnitGateSql } from "../canonical-active-load-set.js";
+import { canonicalDispatchWorkWhereClause } from "../canonical-active-load-set.js";
 import { assertCanonicalSubset, DISPATCH_WORK_LOAD_STATUSES } from "../canonical-active-load-set.js";
+import { unitCurrentDriverSql } from "../unit-current-driver.js";
+import { UNIT_IN_SERVICE_SQL } from "../unit-in-service.js";
 import { groupTruckLineByUnit } from "./group-by-unit.js";
 import { deriveTruckLineStation, STATION_KEYS, STATION_LABELS, type StampSource } from "./station.js";
+
+/** Re-export for verify-load-boards-agree + callers that imported from this routes file. */
+export { UNIT_IN_SERVICE_SQL };
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
@@ -72,14 +78,14 @@ type Row = {
 };
 
 type AvailableRow = {
-  driver_id: string;
+  driver_id: string | null;
   driver_first_name: string | null;
   driver_last_name: string | null;
   driving_minutes_remaining: number | null;
   cycle_minutes_remaining: number | null;
-  hos_polled_at: string;
-  unit_id: string | null;
-  unit_number: string | null;
+  hos_polled_at: string | null;
+  unit_id: string;
+  unit_number: string;
   last_closed_load_number: string | null;
   pos_city: string | null;
   pos_state: string | null;
@@ -118,20 +124,8 @@ export const PENDING_LOAD_STATUSES = DISPATCH_WORK_LOAD_STATUSES.filter(
 const LOC_STALE_MIN = 60;
 const HOS_STALE_MIN = 120;
 
-// Exported (ROUND 177 JOB 1) so verify-load-boards-agree.mjs can reuse this SAME fragment rather
-// than re-deriving its own "is this unit in service" copy that could drift from the real one.
-// LEAD 443.206 D3 — built on THE board unit gate (canonicalBoardUnitGateSql: COALESCE(leased, owner) = company) plus the
-// assignability extras (out-of-service flag, open work order). It gates the AVAILABLE (free truck) rows only; the loaded
-// rows show every board-set load whatever its unit (a loaded truck in the shop never vanishes from Truck Line alone).
-export const UNIT_IN_SERVICE_SQL = `
-  ${canonicalBoardUnitGateSql("u", "$1::uuid")}
-  AND u.is_oos IS NOT TRUE
-  AND NOT EXISTS (
-    SELECT 1 FROM maintenance.work_orders wo
-    WHERE wo.unit_id = u.id AND wo.operating_company_id = $1::uuid
-      AND ${openWorkOrderPredicateSql("wo")}
-  )
-`;
+// UNIT_IN_SERVICE_SQL lives in unit-in-service.ts (443.231b — shared with units-without-load).
+// It gates AVAILABLE rows only; loaded rows show every board-set load whatever its unit.
 
 export async function registerTruckLineRoutes(app: FastifyInstance) {
   app.get("/api/v1/dispatch/truck-line", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
@@ -234,64 +228,55 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         [operating_company_id]
       );
 
+      // LEAD 443.231b — unit-centric AVAILABLE (one row per unit_id). Same free-unit gate as
+      // units-without-load; driver = unitCurrentDriverSql (never assigned_driver_id, never one
+      // row per free HOS driver whose last truck happened to be this unit).
       const availableRes = await client.query(
         `
-        WITH busy_drivers AS (
-          SELECT DISTINCT assigned_primary_driver_id AS driver_id FROM mdata.loads x
-          WHERE x.operating_company_id = $1::uuid
-            AND x.soft_deleted_at IS NULL
-            AND ${CURRENT_TRUCK_LINE_LOAD_SQL}
-            AND x.assigned_primary_driver_id IS NOT NULL
-          UNION
-          SELECT DISTINCT assigned_secondary_driver_id FROM mdata.loads x
-          WHERE x.operating_company_id = $1::uuid
-            AND x.soft_deleted_at IS NULL
-            AND ${CURRENT_TRUCK_LINE_LOAD_SQL}
-            AND x.assigned_secondary_driver_id IS NOT NULL
-        ),
-        latest_hos AS (
+        WITH latest_hos AS (
           SELECT DISTINCT ON (driver_uuid) driver_uuid, driving_hours_remaining, cycle_hours_remaining, polled_at
           FROM samsara.hos_snapshots
           WHERE operating_company_id = $1::uuid
           ORDER BY driver_uuid, polled_at DESC
-        ),
-        qualifying AS (
-          SELECT d.id AS driver_id, d.first_name, d.last_name,
-                 h.driving_hours_remaining, h.cycle_hours_remaining, h.polled_at
-          FROM mdata.drivers d
-          JOIN latest_hos h ON h.driver_uuid = d.id
-          WHERE d.operating_company_id = $1::uuid
-            AND d.status = 'Active'
-            AND d.is_sample_data IS NOT TRUE
-            AND d.id NOT IN (SELECT driver_id FROM busy_drivers)
-            AND h.polled_at > now() - interval '${HOS_STALE_MIN} minutes'
         )
         SELECT
-          q.driver_id, q.first_name AS driver_first_name, q.last_name AS driver_last_name,
-          q.driving_hours_remaining::float8 AS driving_minutes_remaining,
-          q.cycle_hours_remaining::float8 AS cycle_minutes_remaining,
-          q.polled_at::text AS hos_polled_at,
-          recent.unit_id, recent_u.unit_number,
-          lastclosed.load_number AS last_closed_load_number,
-          p.city AS pos_city, p.state AS pos_state, p.captured_at::text AS pos_captured_at
-        FROM qualifying q
-        LEFT JOIN LATERAL (
-          SELECT assigned_unit_id AS unit_id FROM mdata.loads l
-          WHERE (l.assigned_primary_driver_id = q.driver_id OR l.assigned_secondary_driver_id = q.driver_id)
-            AND l.operating_company_id = $1::uuid
-          ORDER BY l.created_at DESC LIMIT 1
-        ) recent ON true
-        LEFT JOIN mdata.units recent_u ON recent_u.id = recent.unit_id
-        LEFT JOIN LATERAL (
-          SELECT load_number FROM mdata.loads l2
-          WHERE (l2.assigned_primary_driver_id = q.driver_id OR l2.assigned_secondary_driver_id = q.driver_id)
-            AND l2.operating_company_id = $1::uuid
-            AND l2.status IN ('delivered', 'delivered_pending_docs', 'completed_docs_received', 'invoiced', 'paid', 'closed')
-          ORDER BY l2.updated_at DESC LIMIT 1
-        ) lastclosed ON true
+          ud.id::text AS driver_id,
+          ud.first_name AS driver_first_name,
+          ud.last_name AS driver_last_name,
+          CASE
+            WHEN h.polled_at IS NOT NULL AND h.polled_at > now() - interval '${HOS_STALE_MIN} minutes'
+            THEN h.driving_hours_remaining::float8
+            ELSE NULL
+          END AS driving_minutes_remaining,
+          CASE
+            WHEN h.polled_at IS NOT NULL AND h.polled_at > now() - interval '${HOS_STALE_MIN} minutes'
+            THEN h.cycle_hours_remaining::float8
+            ELSE NULL
+          END AS cycle_minutes_remaining,
+          CASE
+            WHEN h.polled_at IS NOT NULL AND h.polled_at > now() - interval '${HOS_STALE_MIN} minutes'
+            THEN h.polled_at::text
+            ELSE NULL
+          END AS hos_polled_at,
+          u.id::text AS unit_id,
+          u.unit_number,
+          unit_last_drv.last_closed_load_number,
+          p.city AS pos_city,
+          p.state AS pos_state,
+          p.captured_at::text AS pos_captured_at
+        FROM mdata.units u
+        LEFT JOIN mdata.loads board_l
+          ON board_l.assigned_unit_id = u.id
+         AND board_l.soft_deleted_at IS NULL
+         AND ${canonicalDispatchWorkWhereClause("board_l", "$1::uuid")}
+        ${unitCurrentDriverSql("u", "$1::uuid")}
+        LEFT JOIN latest_hos h ON h.driver_uuid = ud.id
         LEFT JOIN telematics.vehicle_latest_position p
-          ON p.unit_id = recent.unit_id AND p.operating_company_id = $1::uuid
-        ORDER BY q.first_name, q.last_name
+          ON p.unit_id = u.id
+         AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
+        WHERE ${UNIT_IN_SERVICE_SQL}
+          AND board_l.id IS NULL
+        ORDER BY u.unit_number ASC NULLS LAST, u.id
         `,
         [operating_company_id]
       );
@@ -483,41 +468,41 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         };
       });
 
-    const availableBuilt = payload.availableRows
-      .filter((r) => r.unit_id != null && r.unit_number != null)
-      .map((r) => {
-        const polledMs = new Date(r.hos_polled_at).getTime();
-        const hosPolledMinutesAgo = Number.isNaN(polledMs) ? null : Math.max(0, Math.floor((now - polledMs) / 60000));
-        const row = {
-          kind: "available" as const,
-          unit_id: r.unit_id,
-          unit_number: r.unit_number,
-          tour_display_id: null as string | null,
-          load: null,
-          drivers: [{ id: r.driver_id, name: [r.driver_first_name, r.driver_last_name].filter(Boolean).join(" ") || null }],
-          station: null,
-          position: null,
-          next_appointment: null,
-          appointments: null,
-          available: {
-            driver_id: r.driver_id,
-            driving_minutes_remaining: r.driving_minutes_remaining,
-            cycle_minutes_remaining: r.cycle_minutes_remaining,
-            hos_polled_minutes_ago: hosPolledMinutesAgo,
-            last_closed_load_number: r.last_closed_load_number,
-            parked_city: r.pos_city,
-            parked_state: r.pos_state,
-          },
-        };
-        return { unit_id: r.unit_id as string, unit_number: r.unit_number as string, row };
-      });
+    const availableBuilt = payload.availableRows.map((r) => {
+      const polledMs = r.hos_polled_at ? new Date(r.hos_polled_at).getTime() : NaN;
+      const hosPolledMinutesAgo = Number.isNaN(polledMs) ? null : Math.max(0, Math.floor((now - polledMs) / 60000));
+      const driverName = [r.driver_first_name, r.driver_last_name].filter(Boolean).join(" ") || null;
+      const row = {
+        kind: "available" as const,
+        unit_id: r.unit_id,
+        unit_number: r.unit_number,
+        tour_display_id: null as string | null,
+        load: null,
+        drivers: r.driver_id ? [{ id: r.driver_id, name: driverName }] : [],
+        station: null,
+        position: null,
+        next_appointment: null,
+        appointments: null,
+        available: {
+          driver_id: r.driver_id,
+          driving_minutes_remaining: r.driving_minutes_remaining,
+          cycle_minutes_remaining: r.cycle_minutes_remaining,
+          hos_polled_minutes_ago: hosPolledMinutesAgo,
+          last_closed_load_number: r.last_closed_load_number,
+          parked_city: r.pos_city,
+          parked_state: r.pos_state,
+        },
+      };
+      return { unit_id: r.unit_id, unit_number: r.unit_number, row };
+    });
 
-    // Detect duplicate unit_ids in available rows (multiple free drivers on same last unit) and
-    // log server-side. groupTruckLineByUnit merges them; this log aids observability.
+    // LEAD 443.231b — fail closed if the available query ever emits two rows for one unit.
     const availableUnitCounts = new Map<string, number>();
     for (const a of availableBuilt) availableUnitCounts.set(a.unit_id, (availableUnitCounts.get(a.unit_id) ?? 0) + 1);
     for (const [unitId, count] of availableUnitCounts) {
-      if (count > 1) req.log.error({ unit_id: unitId, count }, "truck_line_available_duplicate_unit_merged");
+      if (count > 1) {
+        throw new Error(`truck_line_available_duplicate_unit:${unitId}:count=${count}`);
+      }
     }
 
     type LoadedBuilt = ReturnType<typeof buildLoadedRow>;

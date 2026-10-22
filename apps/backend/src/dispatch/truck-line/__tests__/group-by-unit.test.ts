@@ -75,10 +75,10 @@ describe("groupTruckLineByUnit", () => {
     expect(findDuplicateTopLevelUnitIds([{ unit_id: "a" }, { unit_id: "a" }])).toEqual(["a"]);
   });
 
-  // 443.207 — two free drivers whose last load was on the same unit must NOT 500 the board.
-  // On main (before fix) groupTruckLineByUnit threw truck_line_duplicate_top_level_unit;
-  // after fix it merges into ONE group with 2 legs.
-  it("merges two available rows with the same unit_id into one group with 2 legs (443.207)", () => {
+  // 443.207 / 443.231b — two available inputs for the same unit must NOT 500 the board and must
+  // NOT paint two rows. Keep ONE group with ONE leg (first wins). The available query itself is
+  // unit-centric and throws if it emits duplicates; this is defense in depth for the grouper.
+  it("keeps one available leg when two rows share a unit_id (443.231b — one row per truck)", () => {
     const groups = groupTruckLineByUnit(
       [],
       [
@@ -89,7 +89,8 @@ describe("groupTruckLineByUnit", () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].section).toBe("available");
     expect(groups[0].unit_id).toBe("t152");
-    expect(groups[0].legs).toHaveLength(2);
+    expect(groups[0].legs).toHaveLength(1);
+    expect((groups[0].legs[0] as { driver_id: string }).driver_id).toBe("d1");
     expect(findDuplicateTopLevelUnitIds(groups)).toEqual([]);
   });
 });
