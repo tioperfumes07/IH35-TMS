@@ -14829,6 +14829,11 @@
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.240: verify-load-miles-match-settlement-document (LIVE: every USMCA load on a signed settlement carries the document loaded / empty miles; the miles engine locks a document value)"
   },
+  "18669": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.241: verify-settled-load-stops-carry-the-document (LIVE: every stop of a USMCA load on a signed settlement carries the document facility / ZIP and a real-address location fence)"
+  },
   "18629": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-21",
@@ -16862,5 +16867,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1074
+  "total_claimed": 1075
 }
