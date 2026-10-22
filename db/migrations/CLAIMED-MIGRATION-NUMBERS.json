@@ -2757,5 +2757,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.244 (replaces 202616142000 \u2014 lane band HH 00-05): a truck holds ONE load in motion plus advance bookings \u2014 the unit backstop triggers refuse only a second load in motion"
+  },
+  "202616160100": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.248: FOREIGN KEY dispatch.load_shuttle_legs.stop_event_id -> telematics.unit_stop_events(id) (verify-orphan-fk-inventory)"
+  },
+  "202616160200": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.248: mdata.load_stops.document_address (the signed settlement's printed address of record, kept beside the GPS / geocoded address — 13536 / 13573 / 13660)"
   }
 }
