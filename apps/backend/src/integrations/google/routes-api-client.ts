@@ -111,3 +111,43 @@ export async function computeRouteReference(origin: LatLng, destination: LatLng)
   const r = await computeRouteReferenceOrReason(origin, destination);
   return r.miles == null ? null : (r as RouteReferenceResult);
 }
+
+/**
+ * LEAD 443.233 (owner 10-22 9:39 AM CT: "use historical data, or use shortest miles from google maps") — the SHORTEST driving
+ * distance for one leg: computeRoutes with alternatives, traffic-unaware, the shortest route's distance. Used only by the
+ * owner-ruled pay-miles fallback (dispatch/short-miles-fallback.ts) when a load has no AlwaysTrack L.Miles and no lane
+ * history. Never a straight line; a failure says why and is never a number.
+ */
+export async function computeShortestRouteMilesOrReason(origin: LatLng, destination: LatLng): Promise<RouteReferenceResult | RouteFailure> {
+  const cfg = loadConfig();
+  if (!cfg) return { miles: null, reason: "google_routes_not_configured" };
+  if (!isGoogleRoutesEnabled()) return { miles: null, reason: "google_routes_disabled" };
+  try {
+    const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": cfg.apiKey,
+        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration",
+      },
+      body: JSON.stringify({
+        origin: { location: { latLng: { latitude: origin.lat, longitude: origin.lng } } },
+        destination: { location: { latLng: { latitude: destination.lat, longitude: destination.lng } } },
+        travelMode: "DRIVE",
+        routingPreference: "TRAFFIC_UNAWARE",
+        computeAlternativeRoutes: true,
+      }),
+    });
+    if (!res.ok) return { miles: null, reason: `google_routes_http_${Number(res.status) || 0}` as const };
+    const data = (await res.json()) as ComputeRoutesResponse;
+    const routes = (data.routes ?? []).filter((r) => typeof r.distanceMeters === "number" && r.distanceMeters > 0);
+    if (routes.length === 0) return { miles: null, reason: "google_routes_no_route" };
+    const shortest = routes.reduce((a, b) => ((a.distanceMeters ?? Infinity) <= (b.distanceMeters ?? Infinity) ? a : b));
+    return {
+      miles: Math.round((shortest.distanceMeters! / METERS_PER_MILE) * 10) / 10,
+      minutes: Math.round(parseDurationSeconds(shortest.duration) / 60),
+    };
+  } catch {
+    return { miles: null, reason: "google_routes_fetch_failed" };
+  }
+}

@@ -62,6 +62,8 @@ function fakeClient(opts: { rateRow?: Record<string, unknown> | null; teamRow?: 
     if (/audit\.audit_events/.test(sql)) return { rows: [{ exists: false }] };
     // 443.110 G9 — the mint stamps the bill's truck / trailer from the load (restampDriverBillUnitAndTrailer); no-op here.
     if (/UPDATE driver_finance\.driver_bills b\s+SET unit_id/.test(sql)) return { rows: [], rowCount: 0 } as never;
+    // LEAD 443.233 owner miles rule (short-miles-fallback.ts): no practical, no lane, no history, no geocoded stops here.
+    if (/miles_practical::text AS p|AS o,|l\.miles_shortest::text AS m|latitude::text AS lat/.test(sql)) return { rows: [] };
     throw new Error(`fakeClient: unhandled query: ${sql}`);
   });
   return { query, inserted };

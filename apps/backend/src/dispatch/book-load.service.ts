@@ -16,6 +16,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { applyTrailerChoice, resolveTrailerChoice, trailerChoiceShapeRefusal, type ResolvedTrailerChoice, type TrailerChoice } from "./load-trailer-choice.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
+import { applyShortMilesFallback, resolveShortMilesFallback } from "./short-miles-fallback.js";
 import { EDITABLE_DRIVER_BILL_STATUS_SQL, isEditableDriverBillStatus } from "../lib/document-status-vocabulary.js";
 import {
   appendSettlementLineFromDriverBillIfMissing,
@@ -1066,11 +1067,13 @@ async function mintDriverBillAwaitingShortMiles(
   input: BookLoadInput,
   load: Record<string, unknown>,
   loadNumber: string,
-  existing: { id: string; status: string; settled_in_settlement_id: string | null } | null
+  existing: { id: string; status: string; settled_in_settlement_id: string | null } | null,
+  fallbackReason: string | null = null
 ): Promise<DriverBillMintOutcome> {
   const resolvedLoadNumber = String(load.load_number ?? loadNumber);
   const billNumber = driverBillNumberFromLoadNumber(resolvedLoadNumber);
-  const reason = AWAITING_SHORT_MILES_REASON;
+  // LEAD 443.233: the owner miles rule (lane history, Google shortest) was tried first; why it could not price is recorded.
+  const reason = fallbackReason ? `${AWAITING_SHORT_MILES_REASON} Miles rule: ${fallbackReason}.` : AWAITING_SHORT_MILES_REASON;
   const priorAwait = await client.query<{ exists: boolean }>(
     `SELECT EXISTS (
        SELECT 1 FROM audit.audit_events
@@ -1254,10 +1257,22 @@ export async function createDriverBillArtifacts(
   const isFreshMintAttempt =
     !existing || (Number(existing.gross_amount_cents ?? 0) === 0 && isEditableDriverBillStatus(String(existing.status)));
   // OWNER LAW (LEAD 443.192, 12:35Z): per-mile pay is SHORT miles only — practical miles are never a pay basis.
-  const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;
+  let hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0;
   const additionalOnly = additionalOnlyDriverPay(load);
+  // LEAD 443.233 OWNER MILES RULE: no AlwaysTrack L.Miles -> lane history, else Google shortest (dispatch/short-miles-fallback.ts),
+  // written on the load with its source + audited; the bill is then priced below. Awaiting only when BOTH fail (reason audited).
+  let fallbackReason: string | null = null;
+  if (isFreshMintAttempt && !hasAnyRealMiles && !additionalOnly && load.id) {
+    const fb = await resolveShortMilesFallback(client, { operatingCompanyId: input.operating_company_id, loadId: String(load.id) });
+    if (fb.miles != null && (await applyShortMilesFallback(client, { operatingCompanyId: input.operating_company_id, loadId: String(load.id), actorUserId: input.requestingUserUuid }, fb))) {
+      load.miles_shortest = fb.miles;
+      hasAnyRealMiles = true;
+    } else {
+      fallbackReason = fb.miles == null ? fb.reason : "the load already carries short miles";
+    }
+  }
   if (isFreshMintAttempt && !hasAnyRealMiles && !additionalOnly) {
-    return mintDriverBillAwaitingShortMiles(client, input, load, loadNumber, existing);
+    return mintDriverBillAwaitingShortMiles(client, input, load, loadNumber, existing, fallbackReason);
   }
 
   const extraPickupCount = stops.filter((s) => s.stop_type === "pickup").length > 1 ? stops.filter((s) => s.stop_type === "pickup").length - 1 : 0;
