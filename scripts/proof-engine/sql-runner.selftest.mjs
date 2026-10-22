@@ -7,8 +7,9 @@
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { makeSqlRunner, assertSqlProofShape, extractBlock, resolvePsqlVars, assertConnectionCanEnforceRls } from "./sql-runner.mjs";
+import { makeSqlRunner, assertSqlProofShape, extractBlock, resolvePsqlVars, assertConnectionCanEnforceRls, prepareExactJournalPopulation } from "./sql-runner.mjs";
 import fs from "node:fs";
+import { assertNotProduction } from '../lib/assert-not-production.mjs';
 
 const REPO = process.env.IH35_REPO || path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const FILE = "scripts/verify-gl-invariants.sql";
@@ -36,6 +37,23 @@ const runner = (rows) => {
 const blindRunner = (probeRows) => makeSqlRunner({ repoRoot: REPO, query: async () => probeRows });
 
 console.log("SQL RUNNER SELFTEST — each arm plants a defect and demands rejection\n");
+
+for (const canBypass of [true, false, undefined]) {
+  const calls = [];
+  const client = { query: async (sql, params) => {
+    calls.push({sql, params});
+    if (sql.includes('pg_roles')) return { rows: [{rolbypassrls:canBypass}] };
+    if (sql.includes('count(*)')) return { rows: [{n:'4478'}] };
+    return {rows:[]};
+  }};
+  try {
+    await prepareExactJournalPopulation(client);
+    t('exact population requires verified bypass capability '+canBypass, canBypass === true);
+    t('exact expectation is scoped, bound, and precedes application role',
+      calls[1].sql.includes('operating_company_id=$1') && calls[1].params[0] === '5c854333-6ea5-4faa-af31-67cb272fef80'
+      && calls[2].params[0] === '4478' && calls[3].sql === 'SET LOCAL ROLE ih35_app');
+  } catch (e) { t('unverified population role refused '+canBypass, canBypass !== true && /BYPASSRLS/.test(e.message)); }
+}
 
 // --- R3: inline SQL is forbidden
 try { assertSqlProofShape({ ...GOOD, query: "SELECT 1" }); t("R3 inline SQL is rejected", false, "accepted"); }
@@ -294,7 +312,7 @@ catch (e) { t("R7 accepts a confirmed non-bypass role", false, e.message); }
   const p0 = extractBlock(src3, "INV-0");
   const p0b = extractBlock(src3, "INV-0B");
   t("INV-0 returns je_control AND an independently-derived je_control_expected (no literal)",
-    /AS je_control\b/.test(p0) && /pg_stat_get_live_tuples\('accounting\.journal_entries'::regclass\)\s+AS je_control_expected/.test(p0), p0);
+    /AS je_control\b/.test(p0) && /current_setting\('app.proof_je_expected', true\)/.test(p0) && /WHERE operating_company_id/.test(p0), p0);
   t("INV-0B returns role_control AND the in-context role_control_expected",
     /AS role_control\b/.test(p0b) && /current_setting\('app\.operating_company_id'/.test(p0b) && /AS role_control_expected/.test(p0b), p0b);
 }
@@ -362,6 +380,29 @@ catch { t("R1-b a proof without a probe is rejected", true); }
   const b = resolvePsqlVars(src2, extractBlock(src2, "INV-10", "10c"));
   t("sub_id 10c isolates the duplicate-role query only",
     /dup_rows/.test(b) && !/pg_get_constraintdef/.test(b) && !/missing_in_opco/.test(b));
+}
+
+const localIdentity = {database:'codex443232_v3_probe_test', address:'127.0.0.1', version:160010, neon_branch:null, neon_project:null};
+for (const [label, row, shouldPass] of [
+  ['exact isolated PG16',localIdentity,true],
+  ['tunnel to remote address',{...localIdentity,address:'10.1.2.3'},false],
+  ['wrong database',{...localIdentity,database:'neondb'},false],
+  ['wrong major version',{...localIdentity,version:170001},false],
+  ['Neon GUC exposed',{...localIdentity,neon_branch:'br-fancy-credit-akjnd07a'},false],
+  ['empty identity',{},false],
+]) {
+  const client={query:async(sql)=>({rows:sql.includes('pg_settings')?[]:[row]})};
+  let accepted=false;
+  try {await assertNotProduction(client,{isolatedLocalTestDatabase:localIdentity.database});accepted=true;} catch {}
+  t(`test write safety ${label}`,accepted===shouldPass);
+}
+for (const [label, rows, options] of [
+  ['missing GUC without opt-in',[],{}],
+  ['production identity despite local opt-in',[{name:'neon.branch_id',setting:'br-fancy-credit-akjnd07a'}],{isolatedLocalTestDatabase:localIdentity.database}],
+]) {
+  let refused=false;
+  try {await assertNotProduction({query:async()=>({rows})},options);} catch {refused=true;}
+  t(`test write safety refuses ${label}`,refused);
 }
 
 console.log(`\nSELFTEST ${fail === 0 ? "PASS" : "FAIL"} ${pass}/${pass + fail}`);

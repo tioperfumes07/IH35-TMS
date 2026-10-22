@@ -17,19 +17,17 @@
 -- Any invariant whose pass condition is "zero rows" MUST be preceded by this probe.
 -- Zero rows from an RLS-scoped blind read is indistinguishable from zero rows from a
 -- clean ledger. Only a non-zero control read can tell them apart.
--- 443.187 (LEAD, 2026-10-17): the control's EXPECTATION is derived at run time, never a frozen
--- literal (2214, the 2026-08-30 count, rotted to 4102). je_control is read through RLS (the path
--- every proof uses); je_control_expected is the server's own live-tuple counter for the same
--- table, kept by the stats subsystem, which RLS does not filter. They must be equal and non-zero:
---   blind read (bypass GUC did not take, no company context) -> 0 vs N    -> FAIL
---   one-entity read (a stray app.operating_company_id)        -> 2314 vs N -> FAIL
---   empty / wrong database                                     -> 0 vs 0    -> FAIL (non-zero rule)
--- Measured exact on prod 2026-10-17: journal_entries 4102=4102, journal_entry_postings 9292=9292,
--- invoices 12201=12201, chart_of_accounts_roles 161=161 (after autovacuum/autoanalyze). If the
--- counter ever drifts it can only make the probe FAIL (disagree), never PASS a blind read.
+-- The expectation must be exact, non-zero, and independent of application RLS.
+-- A frozen literal rots; a pg_stat live-tuple estimate also drifts. Neither is a
+-- valid equality oracle. A blinded application read remains 0 vs N and fails.
+-- 443.232: approximate pg_stat counters drift after inserts/deletes. The runner
+-- supplies an EXACT USMCA count read as the verified read-only BYPASSRLS login,
+-- then switches to ih35_app in the SAME repeatable-read snapshot. Missing context
+-- remains NULL and fails closed; zero and unequal populations still fail.
 SELECT count(*) AS je_control,
-       pg_stat_get_live_tuples('accounting.journal_entries'::regclass) AS je_control_expected
-FROM accounting.journal_entries;
+       NULLIF(current_setting('app.proof_je_expected', true), '')::bigint AS je_control_expected
+FROM accounting.journal_entries
+WHERE operating_company_id = :'USMCA'::uuid;
 
 \echo '=== INV-0B  ENTITY-SCOPED CONTROL (discriminator: proves this connection can see role rows under ENFORCED RLS with a company context set) ==='
 -- packet 10-RLS-WILL-BREAK-THE-FIRST-RUN.txt, 2026-08-30, section 3: INV-0's own probe runs
