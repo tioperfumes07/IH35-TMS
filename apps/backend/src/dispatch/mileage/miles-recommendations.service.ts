@@ -309,7 +309,11 @@ export class MilesChoiceError extends Error {
  */
 export async function setMilesChoice(
   client: Queryable,
-  args: { operatingCompanyId: string; loadId: string; field: MilesField; source: MilesSource; manualValue?: number | null; reason?: string | null; actorUserId: string },
+  args: {
+    operatingCompanyId: string; loadId: string; field: MilesField; source: MilesSource; manualValue?: number | null; reason?: string | null; actorUserId: string;
+    /** LEAD 443.240 — the SIGNED SETTLEMENT document's value (driver side LOADED / EMPTY MILES); with source 'document'. */
+    documentValue?: number | null;
+  },
   route: RouteFn = computeRouteReference
 ): Promise<MilesRecommendations> {
   if (!MILES_FIELDS.includes(args.field)) throw new MilesChoiceError("miles_field_invalid");
@@ -322,11 +326,19 @@ export async function setMilesChoice(
   const columnValue = num(row[MILES_FIELD_COLUMN[args.field]]);
   // The document's value is remembered the first time any other source replaces it, so "document" can always be re-chosen.
   const documentValue = num(prior?.document_value) ?? (prior?.source == null || prior?.source === "document" ? columnValue : null);
+  // LEAD 443.240 (owner 10-22: "read the company and driver settlements") — MILES PRECEDENCE: (1) the signed settlement document →
+  // (2) AlwaysTrack L.Miles → (3) lane history → (4) Google shortest. A value the document recorded is LOCKED: lane history,
+  // Google and manual never overwrite it; only another document value replaces it.
+  const documentLocked = prior?.source === "document" && num(prior?.document_value) != null;
+  if (documentLocked && args.source !== "document")
+    throw new MilesChoiceError(`document_miles_locked_${args.field}`);
+  if (args.documentValue != null && (args.source !== "document" || !Number.isFinite(Number(args.documentValue)) || Number(args.documentValue) < 0))
+    throw new MilesChoiceError("document_value_requires_source_document");
 
   let value: number | null;
   if (args.source === "historical") value = rec.historical?.value ?? null;
   else if (args.source === "google") value = rec.google?.value ?? null;
-  else if (args.source === "document") value = documentValue;
+  else if (args.source === "document") value = args.documentValue != null ? round1(Number(args.documentValue)) : documentValue;
   else {
     const reason = String(args.reason ?? "").trim();
     if (!reason) throw new MilesChoiceError("manual_miles_requires_reason");
@@ -344,7 +356,7 @@ export async function setMilesChoice(
     source: args.source,
     historical: h,
     google: g,
-    document_value: documentValue,
+    document_value: args.documentValue != null ? round1(Number(args.documentValue)) : documentValue,
     reason: args.source === "manual" ? String(args.reason).trim() : args.reason?.trim() || null,
     flag_far_from_both: flagFarFromBoth,
     chosen_by: args.actorUserId,
@@ -490,7 +502,9 @@ export async function fillLoadDeadhead(
     `UPDATE mdata.loads
         SET miles_deadhead = $3::numeric, deadhead_miles_calculation_method = $4,
             miles_choice = coalesce(miles_choice, '{}'::jsonb) || jsonb_build_object('empty', $5::jsonb), updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND miles_deadhead IS NULL`,
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND miles_deadhead IS NULL
+        -- LEAD 443.240: an empty-miles value the signed settlement recorded is never replaced by the 443.86 estimate
+        AND NOT (COALESCE(miles_choice->'empty'->>'source', '') = 'document' AND miles_choice->'empty'->>'document_value' IS NOT NULL)`,
     [args.loadId, args.operatingCompanyId, miles, method, JSON.stringify(choice)]
   );
   await appendCrudAudit(client as never, args.actorUserId, "dispatch.load.deadhead_filled", {

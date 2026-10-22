@@ -122,6 +122,8 @@ export async function applyShortMilesFallback(
               'value', $3::numeric, 'source', $4::text, 'reason', $5::text, 'chosen_at', now(), 'chosen_by', $6::text)),
             updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND COALESCE(miles_shortest, 0) = 0
+        -- LEAD 443.240: the fallback (lane history / Google) never runs over a signed-settlement document value
+        AND NOT (COALESCE(miles_choice->'short'->>'source', '') = 'document' AND miles_choice->'short'->>'document_value' IS NOT NULL)
       RETURNING id::text`,
     [input.loadId, input.operatingCompanyId, r.miles, r.source, r.detail, input.actorUserId, loaded]
   );
