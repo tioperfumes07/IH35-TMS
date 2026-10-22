@@ -10,6 +10,9 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { isOperatorVisibleUnit } from "../../../lib/operator-fleet-visibility";
 import { usePlannerRange } from "./PlannerRangeContext";
+
+/** LEAD 443.244: a truck is IN USE by the load in motion (an advance booking is its next load, not a use). */
+const IN_MOTION_LOAD_STATUSES = new Set(["dispatched", "at_pickup", "in_transit", "at_delivery"]);
 import { widenPlannerRange } from "./planner-range";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
@@ -153,8 +156,17 @@ export function TruckPlanner() {
       }
     }
 
+    // LEAD 443.249: a truck carrying a board load IN MOTION is in use — whatever the driver scheduler's pairing says (T156 on
+    // 13697 and T175 on 13698 read "Available"). The load's driver fills a row the scheduler left without one.
+    for (const load of loadsQuery.data ?? []) {
+      const unitId = load.assigned_unit_id ? String(load.assigned_unit_id) : "";
+      const row = unitId ? rows.get(unitId) : undefined;
+      if (!row || row.status === "in-shop" || !IN_MOTION_LOAD_STATUSES.has(String(load.status))) continue;
+      rows.set(unitId, { ...row, status: "assigned", driverId: row.driverId ?? (load.assigned_primary_driver_id ?? null), driverName: row.driverName ?? (load.assigned_primary_driver_name ?? null) });
+    }
+
     return [...rows.values()].sort((a, b) => a.unitNumber.localeCompare(b.unitNumber));
-  }, [gridQuery.data, reservedQuery.data, unitsQuery.data]);
+  }, [gridQuery.data, reservedQuery.data, unitsQuery.data, loadsQuery.data]);
 
   // ROUND 20.6 K3 (owner-live 2026-09-12): "16 units render, the fleet is 31, 15 are missing with
   // no message saying why" -- the missing units are the ones PLANNER_UNIT_STATUSES / isOperatorVisibleUnit

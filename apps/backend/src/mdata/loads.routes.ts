@@ -755,7 +755,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                                        AND load_list_dca.is_authorized = true AND load_list_dca.deactivated_at IS NULL
                                    ))
           LEFT JOIN LATERAL (
-            SELECT city, scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
+            -- LEAD 443.249: the stop's time is its appointment, then its scheduled arrival (the load service's own rule) —
+            -- a load whose stops carry only an appointment (Book Load / Settlement Creator) had no pickup / delivery date
+            -- here, so every date filter (the Truck / Driver planners) dropped it.
+            SELECT city, COALESCE(appointment_start_at, scheduled_arrival_at) AS scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
             FROM mdata.load_stops
             WHERE load_id = l.id
               AND stop_type = 'pickup'
@@ -764,7 +767,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) sp ON true
           LEFT JOIN LATERAL (
-            SELECT city, scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
+            -- LEAD 443.249: the stop's time is its appointment, then its scheduled arrival (the load service's own rule) —
+            -- a load whose stops carry only an appointment (Book Load / Settlement Creator) had no pickup / delivery date
+            -- here, so every date filter (the Truck / Driver planners) dropped it.
+            SELECT city, COALESCE(appointment_start_at, scheduled_arrival_at) AS scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
             FROM mdata.load_stops
             WHERE load_id = l.id
               AND stop_type = 'delivery'
@@ -869,7 +875,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           JOIN catalogs.dispatch_flag_colors df ON df.id = l.dispatch_flag_color_id
                                                 AND df.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
-            SELECT city, scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
+            -- LEAD 443.249: the stop's time is its appointment, then its scheduled arrival (the load service's own rule) —
+            -- a load whose stops carry only an appointment (Book Load / Settlement Creator) had no pickup / delivery date
+            -- here, so every date filter (the Truck / Driver planners) dropped it.
+            SELECT city, COALESCE(appointment_start_at, scheduled_arrival_at) AS scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
             FROM mdata.load_stops
             WHERE load_id = l.id
               AND stop_type = 'pickup'
@@ -878,7 +887,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) sp ON true
           LEFT JOIN LATERAL (
-            SELECT city, scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
+            -- LEAD 443.249: the stop's time is its appointment, then its scheduled arrival (the load service's own rule) —
+            -- a load whose stops carry only an appointment (Book Load / Settlement Creator) had no pickup / delivery date
+            -- here, so every date filter (the Truck / Driver planners) dropped it.
+            SELECT city, COALESCE(appointment_start_at, scheduled_arrival_at) AS scheduled_arrival_at, time_window_type, appointment_start_at, appointment_end_at
             FROM mdata.load_stops
             WHERE load_id = l.id
               AND stop_type = 'delivery'
