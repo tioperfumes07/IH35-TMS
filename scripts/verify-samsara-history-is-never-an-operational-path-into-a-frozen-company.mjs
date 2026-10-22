@@ -169,6 +169,11 @@ if (isMain) {
     const real = readFileSync(join(ROOT, op), "utf8");
     const stripped = real.replace(/\$\{assignmentInCompanySql\("a"\)\}/g, "TRUE");
     cases.push(["stripping the pin from the real helper is caught", stripped !== real && fileProblems(op, stripped).some((x) => x.startsWith("RULE 1"))]);
+    // 443.248 real-file mutant: the fuel-question evidence read without its driver pin → caught
+    const fq = B + "fuel/fuel-assignment-question.service.ts";
+    const fqReal = readFileSync(join(ROOT, fq), "utf8");
+    const fqStripped = fqReal.replace("AND d.operating_company_id = $2::uuid", "");
+    cases.push(["the fuel-question Samsara driver read without its company pin is caught", fqStripped !== fqReal && fileProblems(fq, fqStripped).some((x) => x.startsWith("RULE 1"))]);
     for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
     const bad = cases.filter(([, ok]) => !ok).length;
     console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
