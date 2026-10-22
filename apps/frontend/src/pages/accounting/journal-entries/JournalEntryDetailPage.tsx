@@ -194,6 +194,7 @@ export function JournalEntryDetailPage() {
   // existed with an FE client wrapper -- this detail page never rendered a trigger for it, so the
   // only void surface was ManualJEListPage's row action, not "inside the transaction".
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (reason: string) => voidJournalEntry(id, selectedCompanyId!, reason),
     onSuccess: () => {
       pushToast("Journal entry voided", "success");

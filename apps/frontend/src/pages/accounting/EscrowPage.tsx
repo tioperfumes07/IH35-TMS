@@ -113,6 +113,7 @@ export function EscrowPage() {
   });
 
   const postingsQuery = useMutation({
+    meta: { loads: true },
     mutationFn: (escrowAccountId: string) => listEscrowPostings(companyId, escrowAccountId, 300),
     onError: (error) =>
       pushToast(userFacingApiError(error, "Failed to load escrow postings"), "error"),

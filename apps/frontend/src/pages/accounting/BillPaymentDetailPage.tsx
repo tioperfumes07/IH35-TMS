@@ -48,6 +48,7 @@ export function BillPaymentDetailPage() {
   // a trigger for it, so the only way to void a bill payment was BillsPage/BillPaymentsListPage's
   // list-row action, not "inside the transaction" (owner requirement 4.4).
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (reason: string) => voidVendorBillPayment(id, selectedCompanyId!, reason),
     onSuccess: () => {
       pushToast("Bill payment voided", "success");

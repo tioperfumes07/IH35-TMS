@@ -150,6 +150,7 @@ export function NotifyPreferencesPage() {
   });
 
   const saveM = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { companyId: string; customerId: string; patch: Partial<Omit<CustomerNotifyPreferences, "customer_id">> }) =>
       updateCustomerNotifyPreferences(input.customerId, { operating_company_id: input.companyId, ...input.patch }),
     onSuccess: (_data, input) => {
@@ -164,6 +165,7 @@ export function NotifyPreferencesPage() {
   });
 
   const syncM = useMutation({
+    meta: { loads: true },
     mutationFn: (submittedCompanyId: string) => syncCustomerNotify(submittedCompanyId),
     onSuccess: (_data, submittedCompanyId) => {
       queryClient.invalidateQueries({ queryKey: ["customer-notify-log", submittedCompanyId] });

@@ -72,6 +72,7 @@ export function AddPayLineModal(props: { open: boolean; onClose: () => void; ope
   }, [itemsQuery.data, itemId, selectedItem]);
 
   const save = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       addSettlementPayLine(chosen, {
         operating_company_id: props.operatingCompanyId,

@@ -66,6 +66,7 @@ export function SalesTaxPage() {
   });
 
   const createAgencyMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () =>
       createSalesTaxAgency({
         operating_company_id: companyId,
@@ -82,6 +83,7 @@ export function SalesTaxPage() {
   });
 
   const prepareReturnMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () =>
       prepareSalesTaxReturn({
         operating_company_id: companyId,

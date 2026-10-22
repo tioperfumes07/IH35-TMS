@@ -165,6 +165,7 @@ export function PostingLineagePage() {
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const lineageQuery = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { sourceType: string; sourceId: string }) =>
       getAccountingSourceLineage(companyId, {
         source_transaction_type: input.sourceType,

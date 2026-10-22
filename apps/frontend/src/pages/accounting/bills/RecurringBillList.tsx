@@ -50,6 +50,7 @@ export function RecurringBillList() {
   });
 
   const deactivateMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (uuid: string) => deactivateRecurringBillTemplate(uuid, companyId),
     onSuccess: () => {
       pushToast("Template deactivated", "success");
@@ -59,6 +60,7 @@ export function RecurringBillList() {
   });
 
   const generateNowMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (uuid: string) =>
       generateRecurringBillNow(uuid, companyId, `generate-${uuid}-${Date.now()}`),
     onSuccess: (result: { billUuid: string }) => {

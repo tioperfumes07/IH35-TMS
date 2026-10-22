@@ -79,6 +79,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
         }));
 
   const createMut = useMutation({
+    meta: { loads: true },
     mutationFn: () =>
       createNonOwnedTrailer(operatingCompanyId, {
         trailer_number: newTrailerNumber.trim(),

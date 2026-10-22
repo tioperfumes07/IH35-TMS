@@ -283,6 +283,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
   };
 
   const mut = useMutation({
+    meta: { loads: true },
     mutationFn: async (input: SaveStopsInput) => {
       if (input.body.stops.length < 2) throw new Error("need_two_stops");
       return replaceLoadStopsDispatch(input.loadId, input.body);

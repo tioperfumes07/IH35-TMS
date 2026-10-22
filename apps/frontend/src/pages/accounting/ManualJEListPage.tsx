@@ -203,6 +203,7 @@ export function ManualJEListPage() {
   const hasNextPage = allPageRows.length === PAGE_SIZE;
 
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: ({ id, reason }: { id: string; reason: string }) => voidJournalEntry(id, companyId, reason),
     onSuccess: () => {
       pushToast("Journal entry voided", "success");

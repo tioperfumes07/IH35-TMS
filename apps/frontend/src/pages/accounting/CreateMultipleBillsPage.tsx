@@ -196,6 +196,7 @@ export function CreateMultipleBillsPage() {
   );
 
   const createMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       const failed: Array<{ rowId: string; reason: string }> = [];
       const createdBillIds: string[] = [];

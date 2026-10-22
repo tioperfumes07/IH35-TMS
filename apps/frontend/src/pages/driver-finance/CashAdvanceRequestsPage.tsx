@@ -94,6 +94,7 @@ export function CashAdvanceRequestsPage() {
   const isOwnerOrAdmin = role === "Owner" || role === "Administrator";
 
   const createMut = useMutation({
+    meta: { loads: true },
     mutationFn: () => {
       const cents = newAmountCents ?? 0;
       return cashAdvanceRequestsOfficeApi.create(companyId, {
@@ -128,6 +129,7 @@ export function CashAdvanceRequestsPage() {
   });
 
   const approveMut = useMutation({
+    meta: { loads: true },
     mutationFn: async (row: CashAdvanceRequestRow) => {
       const id = String(row.id ?? "");
       const notes = approveNotesById[id]?.trim();
@@ -139,6 +141,7 @@ export function CashAdvanceRequestsPage() {
   });
 
   const denyMut = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!denyForId) throw new Error("missing");
       return cashAdvanceRequestsOfficeApi.deny(companyId, denyForId, { denial_reason: denyReason.trim() });
@@ -151,6 +154,7 @@ export function CashAdvanceRequestsPage() {
   });
 
   const escalateMut = useMutation({
+    meta: { loads: true },
     mutationFn: async (row: CashAdvanceRequestRow) => {
       const id = String(row.id ?? "");
       return cashAdvanceRequestsOfficeApi.escalate(companyId, id);

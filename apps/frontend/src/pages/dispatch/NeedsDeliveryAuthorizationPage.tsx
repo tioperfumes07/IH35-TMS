@@ -43,6 +43,7 @@ export function NeedsDeliveryAuthorizationPage() {
   const rows = queueQ.data?.rows ?? [];
 
   const authorizeM = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       if (!active || !companyId) throw new Error("no_load");
       if (!customerOk || !factorOk) throw new Error("both_authorizations_required");

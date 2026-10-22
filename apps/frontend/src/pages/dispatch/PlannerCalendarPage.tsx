@@ -139,6 +139,7 @@ export function PlannerCalendarPage() {
   });
 
   const rescheduleM = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { loadId: string; startAt: string; driverId: string; companyId: string; generation: number }) =>
       patchDispatchPlannerLoadStartAt(input.loadId, {
         operating_company_id: input.companyId,

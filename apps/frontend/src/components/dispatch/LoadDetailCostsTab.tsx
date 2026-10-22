@@ -261,6 +261,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   };
 
   const save = useMutation({
+    meta: { loads: true },
     mutationFn: async () => {
       const errors = new Map<string, string>();
       let saved = 0;

@@ -98,6 +98,7 @@ export function BillDetailPage() {
   // the Bill detail UI. Reuses the same executor/reversal logic backend voidBill() already enforces;
   // no new GL math here (Rule 13 — reuse the existing poster).
   const voidMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (reason: string) => voidVendorBill(id, selectedCompanyId!, reason),
     onSuccess: () => {
       pushToast("Bill voided", "success");

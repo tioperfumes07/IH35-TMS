@@ -38,6 +38,7 @@ function PodRowActions({
   // DISP-F6328: no toast import anywhere in the file, no isError check, fire-and-forget
   // .mutate(). A rejected Approve/Reject silently did nothing.
   const reviewMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (input: {
       companyId: string;
       documentId: string;

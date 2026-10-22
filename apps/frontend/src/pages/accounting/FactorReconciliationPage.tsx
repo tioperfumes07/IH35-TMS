@@ -54,6 +54,7 @@ export function FactorReconciliationPage() {
   });
 
   const importMutation = useMutation({
+    meta: { loads: true },
     mutationFn: async (payload: { factor_id: string; daily_import_id: string }) => {
       if (!selectedCompanyId) return;
       return importFactorReconciliationRun(selectedCompanyId, payload);

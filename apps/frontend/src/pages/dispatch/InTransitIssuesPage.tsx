@@ -129,6 +129,7 @@ export function InTransitIssuesPage() {
   });
 
   const createMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (input: {
       generation: number;
       companyId: string;
@@ -157,6 +158,7 @@ export function InTransitIssuesPage() {
   });
 
   const resolveMutation = useMutation({
+    meta: { loads: true },
     mutationFn: (input: { issueId: string; companyId: string }) =>
       resolveDispatchIntransitIssue(input.issueId, { operating_company_id: input.companyId }),
     onSuccess: (_resolved, input) =>
