@@ -5,7 +5,6 @@ import { Modal } from "../../../components/Modal";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import type { FuelTransactionImportResult, WexStatementImportResult, WexStatementOutcome } from "../../../api/fuelPlanner";
 
 type ImportKind = "fleet" | "wex";
