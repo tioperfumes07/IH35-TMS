@@ -9,6 +9,7 @@ import {
 } from "../../../api/fuelAssignmentQuestions";
 import { FuelAssignmentPopup } from "./FuelAssignmentPopup";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
@@ -100,7 +101,9 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
                   </td>
                   <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{r.station ?? "—"}</td>
                   <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{r.gallons ?? "—"}</td>
-                  <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs whitespace-nowrap">
+                  <td
+                    className={`border border-[#E5E7EB] px-2 py-1.5 text-xs whitespace-nowrap ${QBO_MONEY_CELL_CLASS}`}
+                  >
                     {money(r.amount_cents)}
                   </td>
                   <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs font-semibold">
