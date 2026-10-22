@@ -62,6 +62,8 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           key: "unit_number",
           label: "Unit",
           sortable: true,
+          // ParityTable compareSortValues uses localeCompare({ numeric: true }) — T9 before T10.
+          sortValue: (row) => row.unit_number ?? null,
           cellClass: "font-semibold",
           // stopPropagation: the row also has its own onRowClick (opens "book load for this unit");
           // the unit # link drills through to the unit's fleet profile instead.
@@ -73,6 +75,8 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           key: "trailer_number",
           label: "Trailer",
           sortable: true,
+          // ROUND 443.231 — sort by the DISPLAYED label, not a raw id / missing field.
+          sortValue: (row) => (row.trailer_number?.trim() ? row.trailer_number : null),
           render: (row) => (
             <EntityLinkOrTombstone
               kind="trailer"
@@ -87,6 +91,7 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           key: "driver_name",
           label: "Driver",
           sortable: true,
+          sortValue: (row) => (row.driver_name?.trim() ? row.driver_name : null),
           render: (row) => (
             <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" onClick={(e) => e.stopPropagation()} />
           ),
@@ -95,12 +100,25 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           key: "location",
           label: "Current Location",
           sortable: true,
+          // ROUND 443.231 — row.location is an OBJECT; without sortValue ParityTable String()s
+          // every value to "[object Object]" and the header is a no-op. Nulls last via ParityTable.
+          sortValue: (row) => {
+            const loc = row.location;
+            if (!loc) return null;
+            const place = [loc.city, loc.state].filter(Boolean).join(", ");
+            return place || loc.formatted || null;
+          },
           render: (row) => <LocationCell loc={row.location} />,
         },
         {
           key: "last_drop_at",
           label: "Last Drop · Status",
           sortable: true,
+          sortValue: (row) => {
+            if (!row.last_drop_at) return null;
+            const t = Date.parse(row.last_drop_at);
+            return Number.isNaN(t) ? null : t;
+          },
           render: (row) => (
             <>
               {row.last_drop_at ? new Date(row.last_drop_at).toLocaleString() : "No prior drop"} ·
@@ -114,6 +132,7 @@ export function UnitsWithoutLoadTable({ title = "Units without a load", rows, on
           sortable: true,
           kind: "number",
           cellClass: "text-right tabular-nums",
+          sortValue: (row) => row.hours_since_last_delivery,
           render: (row) => (
             <span className={idleClass(row.hours_since_last_delivery)}>{row.hours_since_last_delivery ?? "—"}</span>
           ),

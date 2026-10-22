@@ -239,7 +239,8 @@ export function TruckPlanner() {
             };
           });
           const columns: Array<ParityColumn<TruckListRow>> = [
-            { key: "unitNumber", label: "Unit Number", sortable: true },
+            // ROUND 443.231 — natural unit order (T9 before T10); other keys are plain strings.
+            { key: "unitNumber", label: "Unit Number", sortable: true, sortValue: (row) => row.unitNumber ?? null },
             { key: "driver", label: "Driver", sortable: true },
             { key: "currentLoad", label: "Current Load", sortable: true },
             { key: "status", label: "Status", sortable: true },

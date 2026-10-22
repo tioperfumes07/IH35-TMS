@@ -262,6 +262,33 @@ function fmtDuration(ms: number): string {
   return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
 }
 
+/** V10 ROUND 18.6 — HOS minutes → "11h 00m". Null stays null (never invent a drive time). */
+function fmtHoursMinutes(totalMinutes: number | null): string | null {
+  if (totalMinutes == null || Number.isNaN(totalMinutes)) return null;
+  const whole = Math.max(0, Math.round(totalMinutes));
+  const hours = Math.floor(whole / 60);
+  const minutes = whole % 60;
+  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+}
+
+/** Yard dock icon for THE AVAILABLE TRUCK ghost track (V10 ROUND 18.6). */
+function YardDockSvg() {
+  return (
+    <svg width="34" height="26" viewBox="0 0 34 26" aria-hidden="true">
+      <ellipse cx="17" cy="24.2" rx="13.6" ry="1.5" fill="#0F172A" opacity=".12" />
+      <path d="M2.3 10 17 2.6 31.7 10v1.7H2.3z" fill="#16A34A" />
+      <rect x="3.9" y="11.6" width="26.2" height="12.2" rx="1" fill="#F0FBF4" stroke="#86D2A3" strokeWidth=".8" />
+      <rect x="6.4" y="14.4" width="6" height="9.4" rx=".6" fill="#DCF3E4" stroke="#8FCDA8" strokeWidth=".6" />
+      <path d="M6.4 16.6h6M6.4 18.8h6M6.4 21h6" stroke="#A9DDBB" strokeWidth=".6" />
+      <rect x="14" y="14.4" width="6" height="9.4" rx=".6" fill="#DCF3E4" stroke="#8FCDA8" strokeWidth=".6" />
+      <path d="M14 16.6h6M14 18.8h6M14 21h6" stroke="#A9DDBB" strokeWidth=".6" />
+      <rect x="21.6" y="14.4" width="6" height="9.4" rx=".6" fill="#DCF3E4" stroke="#8FCDA8" strokeWidth=".6" />
+      <path d="M21.6 16.6h6M21.6 18.8h6M21.6 21h6" stroke="#A9DDBB" strokeWidth=".6" />
+      <rect x="3.9" y="23" width="26.2" height="1.3" fill="#6FAE84" />
+    </svg>
+  );
+}
+
 // ROUND 23.1 D3 (owner, 2026-09-13: "i see the city or county of the live signal, but i also need
 // it with the state") — ONE helper, every call site that prints a position (Live signal, Stale
 // signal, THE AVAILABLE TRUCK's parked-at line, a load stop's pickup/delivery city). Prefers
@@ -486,25 +513,56 @@ function naturalCompare(a: string, b: string): number {
 }
 
 
-function compareTruckLineRows(a: TruckLineRow, b: TruckLineRow, key: TruckLineSortKey): number {
+/** ROUND 443.231 — extract a comparable value for each sort key. `null` means "missing" and
+ * MUST sort last in BOTH directions (never flip with DESC). */
+function truckLineSortValue(row: TruckLineRow, key: TruckLineSortKey): string | number | null {
   switch (key) {
     case "truck":
-      return naturalCompare(a.unit_number ?? "", b.unit_number ?? "");
+      return row.unit_number?.trim() ? row.unit_number : null;
     case "load": {
-      const numOf = (n: string | null | undefined) => (n ? parseInt(n.replace(/\D/g, ""), 10) : NaN);
-      const la = a.load?.load_number != null && !Number.isNaN(numOf(a.load.load_number)) ? numOf(a.load.load_number) : Infinity;
-      const lb = b.load?.load_number != null && !Number.isNaN(numOf(b.load.load_number)) ? numOf(b.load.load_number) : Infinity;
-      return la - lb;
+      const n = row.load?.load_number;
+      if (!n) return null;
+      const digits = parseInt(n.replace(/\D/g, ""), 10);
+      return Number.isNaN(digits) ? null : digits;
     }
-    case "pu":
-      return (a.appointments?.pickup?.at ?? "").localeCompare(b.appointments?.pickup?.at ?? "");
-    case "del":
-      return (a.appointments?.delivery?.at ?? "").localeCompare(b.appointments?.delivery?.at ?? "");
+    case "pu": {
+      const at = row.appointments?.pickup?.at;
+      if (!at) return null;
+      const t = Date.parse(at);
+      return Number.isNaN(t) ? null : t;
+    }
+    case "del": {
+      const at = row.appointments?.delivery?.at;
+      if (!at) return null;
+      const t = Date.parse(at);
+      return Number.isNaN(t) ? null : t;
+    }
     case "tour":
-      return (a.tour_display_id ?? "").localeCompare(b.tour_display_id ?? "");
+      return row.tour_display_id?.trim() ? row.tour_display_id : null;
     default:
-      return 0;
+      return null;
   }
+}
+
+/** Nulls last in BOTH directions — ASC/DESC only flips the non-null comparison. */
+function compareTruckLineRows(a: TruckLineRow, b: TruckLineRow, key: TruckLineSortKey): number {
+  const av = truckLineSortValue(a, key);
+  const bv = truckLineSortValue(b, key);
+  const aNull = av == null || av === "";
+  const bNull = bv == null || bv === "";
+  if (aNull && bNull) return 0;
+  if (aNull) return 1;
+  if (bNull) return -1;
+  if (key === "truck" || key === "tour") {
+    return naturalCompare(String(av), String(bv));
+  }
+  if (typeof av === "number" && typeof bv === "number") return av - bv;
+  return naturalCompare(String(av), String(bv));
+}
+
+/** Representative leg for group-level sort: first leg after leg-sort (asc) / last (desc). */
+function groupSortRepresentative(g: TruckLineGroup, dir: TruckLineSortDir): TruckLineRow {
+  return dir === "desc" ? g.legs[g.legs.length - 1]! : g.legs[0]!;
 }
 
 /** ROUND 23.1 D5 — a real button per header, aria-sort set for screen readers AND for the guard
@@ -543,6 +601,81 @@ function TruckLineSortHeader({
 
 type StampPromptState = { row: TruckLineRow; label: string; kind: "arrival" | "departure" | "transition" } | null;
 type OtherPromptState = { row: TruckLineRow } | null;
+
+/**
+ * THE AVAILABLE TRUCK (V10 ROUND 18.6, restored 443.231) — parked tractor-trailer, ghost route,
+ * "Load me — {h:mm} drive left" bubble (only when driving_minutes_remaining is real), green
+ * "Assign a load →" pill wired to BookLoadModal. Never print "no load on this truck" / "no trip
+ * in progress". Exactly ONE assign control per row (testid truck-line-assign-{driver_id}).
+ */
+function AvailableTruckTrack({
+  row,
+  onAssign,
+}: {
+  row: TruckLineRow;
+  onAssign: (driverId: string, unitId: string | null) => void;
+}) {
+  const a = row.available;
+  if (!a) return null;
+  const driveLabel = fmtHoursMinutes(a.driving_minutes_remaining);
+  return (
+    <div className="relative h-[80px]" data-testid={`truck-line-available-track-${a.driver_id}`}>
+      <div className="absolute" style={{ left: "0%", top: 2 }}>
+        <YardDockSvg />
+      </div>
+
+      <div className="truck-line-ghost-rail absolute left-0 right-0 top-[41px] h-[3px]" />
+      {V7_STATIONS.map((st, i) => (
+        <div key={i} className="absolute" style={{ left: `${pct(i)}%`, top: 0 }}>
+          <div
+            className="truck-line-ghost-node absolute rounded-full"
+            style={{ top: 34, width: 17, height: 17, transform: "translateX(-50%)" }}
+          />
+          <span
+            className="truck-line-v4-cap absolute whitespace-nowrap"
+            style={{ top: 54, left: "50%", transform: "translateX(-50%)", color: "#AEB8C2" }}
+          >
+            <span className="truck-line-v4-cap-full">{st.name === "status" ? "Status" : st.name}</span>
+            <span className="truck-line-v4-cap-narrow">
+              {st.name === "status" ? "Status" : NARROW_STATION_CAPTIONS[st.name] ?? st.name}
+            </span>
+          </span>
+        </div>
+      ))}
+
+      <div
+        className="truck-line-vehicle"
+        style={{ left: "7%", top: 15 }}
+        data-testid={`truck-line-vehicle-available-${a.driver_id}`}
+        data-rolling="false"
+      >
+        <TractorTrailerSvg hasIssue={false} rolling={false} parked />
+        {driveLabel ? (
+          <div
+            className="truck-line-speech-bubble absolute whitespace-nowrap rounded-[13px] border-[1.5px] border-[#16A34A] bg-white px-2 py-1 font-semibold text-[#166534]"
+            style={{ bottom: 38, left: 0 }}
+          >
+            Load me — {driveLabel} drive left
+          </div>
+        ) : null}
+      </div>
+
+      <button
+        type="button"
+        className="absolute rounded-[13px] bg-[#16A34A] px-3 font-semibold text-white"
+        style={{ right: 4, top: 18, height: 26, fontSize: 12 }}
+        onClick={() => onAssign(a.driver_id, row.unit_id)}
+        data-testid={`truck-line-assign-${a.driver_id}`}
+      >
+        Assign a load →
+      </button>
+
+      <span className="truck-line-v4-sub absolute whitespace-nowrap text-[#6B7280]" style={{ top: 64, left: 0 }}>
+        parked at {formatLocationLabel({ city: a.parked_city, state: a.parked_state })} · waiting on dispatch
+      </span>
+    </div>
+  );
+}
 
 /** The 7-station line + the moving truck + dock icons + the status-station popover for one row —
  * a pure render of `row.station` (plus the LIVE POSITION RULE for the truck graphic), never its
@@ -970,24 +1103,51 @@ export function TruckLineBoard({
       .filter((g): g is TruckLineGroup => g != null);
   }, [searchedGroups, statusFilter]);
 
-  // Sort within each section; never merge sections or duplicate unit_ids across top-level groups.
+  // ROUND 443.231 — sort LEGS inside each group AND reorder GROUPS for every TruckLineSortKey.
+  // (Main 7a24e7e8 only reordered groups when sort.key === "truck"; almost every group has 1 leg
+  // so LOAD/TOUR/PU/DEL clicks moved the arrow but no row.) Sections stay TOUR → IN TRANSIT →
+  // AVAILABLE. Nulls last both directions. Tie-break: unit natural order, then original index.
   const groups = useMemo(() => {
     const sortGroupLegs = (g: TruckLineGroup): TruckLineGroup => {
       if (!sort) return g;
       const withIndex = g.legs.map((r, i) => ({ r, i }));
       withIndex.sort((a, b) => {
-        const cmp = compareTruckLineRows(a.r, b.r, sort.key) || a.i - b.i;
-        return sort.dir === "desc" ? -cmp : cmp;
+        // Nulls-last is inside compareTruckLineRows — do not flip those with DESC.
+        const av = truckLineSortValue(a.r, sort.key);
+        const bv = truckLineSortValue(b.r, sort.key);
+        const aNull = av == null || av === "";
+        const bNull = bv == null || bv === "";
+        if (aNull || bNull) return compareTruckLineRows(a.r, b.r, sort.key) || a.i - b.i;
+        const cmp = compareTruckLineRows(a.r, b.r, sort.key);
+        if (cmp !== 0) return sort.dir === "desc" ? -cmp : cmp;
+        return a.i - b.i;
       });
       return { ...g, legs: withIndex.map((x) => x.r) };
     };
     const bySection = SECTION_ORDER.map((section) => {
       const sectionGroups = statusFilteredGroups.filter((g) => g.section === section).map(sortGroupLegs);
-      if (!sort || sort.key !== "truck") return sectionGroups;
-      return [...sectionGroups].sort((a, b) => {
-        const cmp = naturalCompare(a.unit_number, b.unit_number);
-        return sort.dir === "desc" ? -cmp : cmp;
-      });
+      if (!sort) return sectionGroups;
+      return [...sectionGroups]
+        .map((g, i) => ({ g, i }))
+        .sort((a, b) => {
+          const rowA = groupSortRepresentative(a.g, sort.dir);
+          const rowB = groupSortRepresentative(b.g, sort.dir);
+          const av = truckLineSortValue(rowA, sort.key);
+          const bv = truckLineSortValue(rowB, sort.key);
+          const aNull = av == null || av === "";
+          const bNull = bv == null || bv === "";
+          if (aNull || bNull) {
+            return (
+              compareTruckLineRows(rowA, rowB, sort.key) ||
+              naturalCompare(a.g.unit_number, b.g.unit_number) ||
+              a.i - b.i
+            );
+          }
+          const cmp = compareTruckLineRows(rowA, rowB, sort.key);
+          if (cmp !== 0) return sort.dir === "desc" ? -cmp : cmp;
+          return naturalCompare(a.g.unit_number, b.g.unit_number) || a.i - b.i;
+        })
+        .map((x) => x.g);
     });
     return bySection.flat();
   }, [statusFilteredGroups, sort]);
@@ -1470,14 +1630,7 @@ export function TruckLineBoard({
                           </div>
                           <div className="truck-line-v4-tour-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
                           <div className="truck-line-v4-load-cell">
-                            <button
-                              type="button"
-                              className="truck-line-v4-sub font-semibold text-[#166534] underline"
-                              data-testid={`truck-line-assign-${a.driver_id}`}
-                              onClick={() => onAssignDriver(a.driver_id, r.unit_id)}
-                            >
-                              Assign a load →
-                            </button>
+                            {/* Assign control lives in AvailableTruckTrack (green pill) — one testid. */}
                             <div className="truck-line-v4-cap text-[#6B7280]">
                               {a.last_closed_load_number ? `Last load ${a.last_closed_load_number}` : "no load yet"}
                             </div>
@@ -1487,7 +1640,7 @@ export function TruckLineBoard({
                           <div className="truck-line-v4-del-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
                           <div className="truck-line-v4-customer-row truck-line-v4-sub text-[#6B7280]" data-testid={`truck-line-customer-available-${a.driver_id}`}>—</div>
                           <div className="truck-line-v4-transit-cell min-w-0" data-testid={`truck-line-track-available-${a.driver_id}`}>
-                            <span className="truck-line-v4-sub text-[#6B7280]">no trip in progress</span>
+                            <AvailableTruckTrack row={r} onAssign={onAssignDriver} />
                           </div>
                         </div>
                       );
