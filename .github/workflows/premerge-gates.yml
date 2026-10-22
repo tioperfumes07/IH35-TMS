@@ -19,6 +19,13 @@ on:
   push:
     branches: [main]
 
+# chromedriver is pulled only by unused @axe-core/cli (a11y uses Playwright + axe-core).
+# Its postinstall downloads ChromeDriver 152 from Google CDN and ECONNRESETs flake
+# typescript-strict-null (and any other npm ci) RED. Skip the binary download everywhere
+# this workflow installs — none of the three gates invoke chromedriver / axe CLI.
+env:
+  CHROMEDRIVER_SKIP_DOWNLOAD: "true"
+
 jobs:
   # Gate 1 — RLS operating-company-scope (static migration scan)
   # Triggered on any PR that adds or modifies .sql files under db/migrations/.
