@@ -387,6 +387,31 @@ async function ensureFreshDbPostingLoadId(client, file) {
   );
 }
 
+// ── FRESH-DB: the production read roles (CC-2, 2026-10-22) ─────────────────────────────────────────────────────────
+// ih35_guard_reader (the gate credential, AUTH-402) and ih35_ci_readonly exist on the production cluster but NO migration
+// creates them. 202616131600_grant_label_resolvers_to_guard_reader.sql GRANTs EXECUTE to both, so every database built from
+// source dies with 'role "ih35_guard_reader" does not exist' (CI 2026-10-22: build-typecheck(-heavy), security-audit-heavy
+// on every PR). 202616131600 is applied in production (17:46:36Z), so it cannot be edited, and the skip list is closed to new
+// entries (verify-data-repair-migrations-noop-when-absent). This creates the two roles as NOLOGIN placeholders — no
+// password, no login, no membership — so the GRANT runs as written. Non-prod only; skipped when the roles exist.
+const FRESH_DB_READ_ROLES_NEEDED_BY = "202616131600_grant_label_resolvers_to_guard_reader.sql";
+let freshDbReadRolesBootstrapped = false;
+async function ensureFreshDbReadRoles(client, file) {
+  if (TARGET_IS_PROD || freshDbReadRolesBootstrapped) return;
+  if (file < FRESH_DB_READ_ROLES_NEEDED_BY) return;
+  await client.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_guard_reader') THEN CREATE ROLE ih35_guard_reader NOLOGIN; END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_ci_readonly') THEN CREATE ROLE ih35_ci_readonly NOLOGIN; END IF;
+    END $$;
+  `);
+  freshDbReadRolesBootstrapped = true;
+  console.log(
+    `[db:migrate] fresh-DB bootstrap: production read roles ih35_guard_reader / ih35_ci_readonly present (NOLOGIN placeholders when absent) before ${file} (non-prod target only)`
+  );
+}
+
 // ── FRESH-DB: the four fuel tank tables (CC-3, ROUND 381.3, 2026-10-03) ──────────────────────────
 // fuel.tank_events, fuel.tank_state, fuel.load_fuel_cost and fuel.unit_mpg exist in production with RLS policies, but NO
 // migration in this repo creates them — they were made live. 202615340600_fuel_relay_worm_audit_force_rls.sql FORCEs RLS
@@ -1031,6 +1056,7 @@ try {
     await ensureFreshDbTrgmInPublic(client, file);
     await ensureFreshDbPostingLoadId(client, file);
     await ensureFreshDbFuelTankTables(client, file);
+    await ensureFreshDbReadRoles(client, file);
     await prepareFreshDbWexIssuer(client, { file, hostname: RESOLVED_HOST });
     const dataOnlyReason = freshDbProductionDataOnlySkip(file);
     if (dataOnlyReason) {
