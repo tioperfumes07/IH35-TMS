@@ -59,7 +59,8 @@ function checkSources({ editor, drawer, api, service, routes, editMapping = "" }
     assertWired("MultiStopEditor", editor, /onSuccess: async \(_result, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return;/);
     assertWired("MultiStopEditor", editor, /onError: \(err, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return;/);
     assertWired("MultiStopEditor", editor, /\["dispatch", "load-stops-refined", input\.loadId, input\.companyId\]/);
-    assertWired("MultiStopEditor", editor, /\["loads", "detail", input\.loadId\]/);
+    // LEAD 443.206R — the real detail key is ["loads","detail",company,id]; the id-only key matched nothing.
+    assertWired("MultiStopEditor", editor, /\["loads", "detail", input\.companyId, input\.loadId\]/);
     assertWired("MultiStopEditor", editor, /<fieldset[^>]*disabled=\{mut\.isPending\}[^>]*aria-busy=\{mut\.isPending\}/);
     assertWired("MultiStopEditor", editor, /useSortable\(\{ id: row\.key, disabled \}\)/);
   } catch (e) {

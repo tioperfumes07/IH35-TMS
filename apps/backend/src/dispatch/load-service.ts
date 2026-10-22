@@ -84,3 +84,18 @@ export function loadServiceTrailerLateralSql(loadAlias: string, trailerAlias: st
      ORDER BY lah.assigned_at DESC, lah.created_at DESC
      LIMIT 1) ${trailerAlias} ON true`;
 }
+
+/**
+ * LEAD 23:45Z parity (13699: customer trailer L28591 on load detail only, null on every board) — the board row's trailer
+ * NUMBER follows the load's recorded trailer choice: customer → the non-owned trailer's number; none → no trailer; company →
+ * the newest assignment-history fleet trailer (`fleetTrailerAlias`.equipment_number). History alone kept an old fleet trailer
+ * after a switch to a customer trailer (13689 still listed 10209).
+ */
+export function loadServiceTrailerNumberSql(loadRowAlias: string, fleetTrailerAlias: string): string {
+  // loadRowAlias: a mdata.loads row of the caller's own query (it carries trailer_source / non_owned_trailer_id).
+  return `CASE
+      WHEN ${loadRowAlias}.trailer_source = 'customer' THEN (SELECT nt.trailer_number FROM dispatch.non_owned_trailers nt
+                                                  WHERE nt.id = ${loadRowAlias}.non_owned_trailer_id AND nt.operating_company_id = ${loadRowAlias}.operating_company_id)
+      WHEN ${loadRowAlias}.trailer_source = 'none' THEN NULL
+      ELSE ${fleetTrailerAlias}.equipment_number END`;
+}

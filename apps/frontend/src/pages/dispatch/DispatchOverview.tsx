@@ -24,6 +24,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import "../../design/ih35-design-tokens.css";
 import "./dispatch-board.css";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
+import { DISPATCH_API_ROLLING_STATUSES, DISPATCH_API_TRUCK_COMMITTED_STATUSES, DISPATCH_WORK_STATUSES, loadStatusLabel } from "../../lib/load-status";
 
 type Props = {
   operatingCompanyId: string;
@@ -55,17 +56,8 @@ const PANEL_ROW_LIMIT = 6;
 // its own "Delivered — pending docs" tile drilling to /dispatch/factoring-queue. Frontend cannot
 // import the backend module directly — keep this list textually identical to
 // DISPATCH_WORK_LOAD_STATUSES if that ever changes.
-const ACTIVE_LOAD_DRILL_STATUSES = [
-  "booked",
-  "planned",
-  "assigned",
-  "unassigned",
-  "assigned_not_dispatched",
-  "dispatched",
-  "at_pickup",
-  "in_transit",
-  "at_delivery",
-] as const;
+// LEAD 443.206R (register B11) — the board's live set from lib/load-status.ts (no copied literal).
+const ACTIVE_LOAD_DRILL_STATUSES = DISPATCH_WORK_STATUSES;
 const ACTIVE_LOAD_DRILL_HREF = `/dispatch/loads?statuses=${ACTIVE_LOAD_DRILL_STATUSES.join(",")}`;
 // Delivered-but-not-closed loads: awaiting docs / factoring purchase. Drills into the factoring queue.
 const DELIVERED_DRILL_HREF = "/dispatch/factoring-queue";
@@ -294,7 +286,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         // this entity operates while still being a real bound, not "unlimited".
         limit: 200,
         offset: 0,
-        status: ["dispatched", "in_transit"],
+        status: [...DISPATCH_API_ROLLING_STATUSES],
       }),
     enabled,
     refetchInterval: 60_000,
@@ -306,7 +298,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
       listAllDispatchLoads({
         operating_company_id: operatingCompanyId,
         view: "home",
-        status: ["assigned_not_dispatched", "dispatched", "in_transit", "delivered_pending_docs"],
+        status: [...DISPATCH_API_TRUCK_COMMITTED_STATUSES],
       }),
     enabled,
     refetchInterval: 60_000,
@@ -546,7 +538,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
               cells: [
                 <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
                 <EntityLinkOrTombstone kind="driver" id={load.driver_id} name={load.driver_name} noun="Driver" />,
-                load.status.replace(/_/g, " "),
+                loadStatusLabel(load.status),
               ],
             }))}
         />

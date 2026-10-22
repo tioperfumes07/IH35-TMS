@@ -219,3 +219,58 @@ export function validateLoadStopStatusWrite(
   }
   return { ok: false, from, to };
 }
+
+/**
+ * LEAD 443.211R (10-21 22:58Z) — ONE STATUS MACHINE. Every write of mdata.loads.status goes through transitionLoadStatus
+ * (load-transition.service.ts), validated here. The machine's edges are:
+ *   forward          — MDATA_STATUS_TRANSITIONS above (dispatch lifecycle, reverse Zone-1 edges, exits, billing tail
+ *                      delivered* -> invoiced -> paid -> closed: BILLING_TAIL edges are part of this one table);
+ *   billing_reverse  — a document-derived status re-derived when its document dies (invoice void, settlement reverse):
+ *                      the load returns to the delivery-side status its documents support — never a blind step-back;
+ *   cancel_restore   — cancelled -> the status the load held when it was cancelled (the evidence the writer passes);
+ *   stop_micro       — at_pickup / at_delivery micro-states inside one lifecycle stage (driver PWA, GPS), same stage only.
+ * The SQL mirror mdata.load_status_edge_allowed (migration 202616100100) lists the SAME edges for the invoice-death trigger;
+ * verify-one-load-status-machine.mjs fails on any drift between the two.
+ */
+export type LoadStatusWriteKind = "forward" | "billing_reverse" | "cancel_restore" | "stop_micro";
+
+export const BILLING_REVERSE_EDGES: Readonly<Record<string, readonly string[]>> = {
+  invoiced: ["delivered", "delivered_pending_docs", "completed_docs_received"],
+  paid: ["invoiced", "delivered", "delivered_pending_docs", "completed_docs_received"],
+  closed: ["paid", "invoiced", "delivered", "delivered_pending_docs", "completed_docs_received"],
+};
+
+/** Statuses a cancelled load may be restored to (the dispatch lifecycle + delivery side, never a billing status). */
+export const CANCEL_RESTORE_TARGETS: readonly string[] = [
+  "draft", "booked", "planned", "unassigned", "assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit",
+  "at_delivery", "delivered", "delivered_pending_docs", "completed_docs_received",
+];
+
+/** Every machine edge as [from, to, kind] — the list the SQL mirror is generated from and checked against. */
+export function loadStatusMachineEdges(): Array<[string, string, Exclude<LoadStatusWriteKind, "stop_micro">]> {
+  const out: Array<[string, string, Exclude<LoadStatusWriteKind, "stop_micro">]> = [];
+  for (const [from, tos] of Object.entries(MDATA_STATUS_TRANSITIONS)) for (const to of tos) out.push([from, to, "forward"]);
+  for (const [from, tos] of Object.entries(BILLING_REVERSE_EDGES)) for (const to of tos) out.push([from, to, "billing_reverse"]);
+  for (const to of CANCEL_RESTORE_TARGETS) out.push(["cancelled", to, "cancel_restore"]);
+  return out;
+}
+
+export function validateLoadStatusWrite(
+  fromMdata: string,
+  toMdata: string,
+  kind: LoadStatusWriteKind,
+  evidence?: { restoreFrom?: string | null },
+): { ok: true } | { ok: false; reason: string } {
+  if (kind === "stop_micro") {
+    const v = validateLoadStopStatusWrite(fromMdata, toMdata);
+    return v.ok ? { ok: true } : { ok: false, reason: `stop_micro_not_allowed:${fromMdata}->${toMdata}` };
+  }
+  if (kind === "cancel_restore") {
+    if (fromMdata !== "cancelled") return { ok: false, reason: `cancel_restore_from_not_cancelled:${fromMdata}` };
+    if (!evidence?.restoreFrom) return { ok: false, reason: "cancel_restore_requires_the_pre_cancel_status" };
+    if (toMdata !== evidence.restoreFrom) return { ok: false, reason: `cancel_restore_must_return_to_${evidence.restoreFrom}` };
+    return CANCEL_RESTORE_TARGETS.includes(toMdata) ? { ok: true } : { ok: false, reason: `cancel_restore_target_not_allowed:${toMdata}` };
+  }
+  const table = kind === "billing_reverse" ? BILLING_REVERSE_EDGES : MDATA_STATUS_TRANSITIONS;
+  return (table[fromMdata] ?? []).includes(toMdata) ? { ok: true } : { ok: false, reason: `${kind}_edge_not_allowed:${fromMdata}->${toMdata}` };
+}

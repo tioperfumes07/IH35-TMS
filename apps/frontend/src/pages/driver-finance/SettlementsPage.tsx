@@ -31,6 +31,17 @@ import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
 import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { SettlementCreatorDrawer } from "../settlements/SettlementCreatorDrawer";
+import { listSourceChangedSettlements, type SettlementCreatorDraft, type SourceChangedSettlement } from "../../api/settlementCreator";
+
+/** LEAD 443.215 — one line per change of a settlement's printed source (same wording as the backend refusal). */
+function describeSourceDiffLines(d: SourceChangedSettlement["diff"]): string[] {
+  const money = (c: number) => (c / 100).toFixed(2);
+  return [
+    ...d.changed.map((c) => (c.field.endsWith("_cents") ? `${c.field.replace("_cents", "").replace("_", " ")}: ${money(Number(c.before))} → ${money(Number(c.after))}` : `${c.field}: ${String(c.before)} → ${String(c.after)}`)),
+    ...d.added.map((l) => `+ ${l.kind.replace("_", " ")}${l.load ? ` load ${l.load}` : ""}${l.text ? ` "${l.text}"` : ""} ${money(l.amount_cents)}`),
+    ...d.removed.map((l) => `− ${l.kind.replace("_", " ")}${l.load ? ` load ${l.load}` : ""}${l.text ? ` "${l.text}"` : ""} ${money(l.amount_cents)}`),
+  ];
+}
 
 type FocusFilter = "debt" | "pending_acks" | "held" | null;
 type PaymentStateValue =
@@ -94,6 +105,8 @@ export function SettlementsPage() {
   // R-186.2 — half-page Settlement Creator panel (Company + Driver). Opened from Settlements
   // and Topbar Create via ?creator=1 — never a full page.
   const creatorOpen = searchParams.get("creator") === "1";
+  // LEAD 443.215 — the new source the "source changed" Edit opens the Creator with.
+  const [repostDraft, setRepostDraft] = useState<SettlementCreatorDraft | null>(null);
   const closeCreator = () => {
     const next = new URLSearchParams(searchParams);
     next.delete("creator");
@@ -150,6 +163,11 @@ export function SettlementsPage() {
     );
   };
 
+  const sourceChangedQuery = useQuery({
+    queryKey: ["settlements", "source-changed", companyId],
+    queryFn: () => listSourceChangedSettlements(companyId),
+    enabled: Boolean(companyId),
+  });
   const listQuery = useQuery({
     queryKey: ["driver-finance", "settlements", companyId, paymentStates.slice().sort().join(",")],
     queryFn: () =>
@@ -311,7 +329,40 @@ export function SettlementsPage() {
         }
       />
 
-      <SettlementCreatorDrawer open={creatorOpen} onClose={closeCreator} allowPost={true} />
+      <SettlementCreatorDrawer open={creatorOpen} onClose={() => { setRepostDraft(null); closeCreator(); }} allowPost={true} initialDraft={repostDraft} />
+
+      {/* LEAD 443.215 — a settlement whose printed source changed after it was posted: the exact diff + Edit pre-filled. */}
+      {(sourceChangedQuery.data?.settlements ?? []).length > 0 ? (
+        <div className="rounded-[4px] border border-[#E5E7EB] bg-white" data-testid="settlements-source-changed">
+          <div className="border-b border-[#E5E7EB] px-3 py-2 text-[11px] font-bold uppercase text-[#4B5563]">
+            Source changed — repost needed ({sourceChangedQuery.data!.settlements.length})
+          </div>
+          {sourceChangedQuery.data!.settlements.map((row) => (
+            <div key={row.settlement_id} className="flex items-start justify-between gap-3 border-b border-[#E5E7EB] px-3 py-2 text-[12px] last:border-b-0">
+              <div className="space-y-0.5">
+                <div className="font-semibold">
+                  Settlement{" "}
+                  <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_no ? `${row.settlement_no} (${row.display_id})` : row.display_id, row.settlement_id, "Settlement")} />
+                  {" "}— posted {Number(row.net_pay).toFixed(2)}
+                  {row.new_total_due_cents != null ? `, new TOTAL DUE ${(row.new_total_due_cents / 100).toFixed(2)}` : ""}
+                </div>
+                {describeSourceDiffLines(row.diff).map((line) => (
+                  <div key={line} className="text-[#4B5563]">{line}</div>
+                ))}
+              </div>
+              <Button
+                size="sm"
+                variant="primary"
+                data-testid={`settlements-source-changed-edit-${row.settlement_id}`}
+                disabled={!row.new_draft}
+                onClick={() => { setRepostDraft(row.new_draft); openCreator(); }}
+              >
+                Edit = void and repost
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <NavyPageSubNav
         items={[

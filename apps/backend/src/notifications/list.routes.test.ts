@@ -82,4 +82,14 @@ describe("notification list routes (AUDIT-FIX-9)", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ notifications: [] });
   });
+
+  it("LEAD 443.219 G-ERR — an SQL error is a 500, never 200 { notifications: [] }", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("to_regclass('notifications.user_notifications')")) return { rows: [{ ok: true }] };
+      throw new Error("canceling statement due to statement timeout");
+    });
+    const res = await app.inject({ method: "GET", url: "/api/v1/notifications?limit=20" });
+    expect(res.statusCode).toBe(500);
+    expect(res.json()).toEqual({ error: "notifications_list_failed" });
+  });
 });

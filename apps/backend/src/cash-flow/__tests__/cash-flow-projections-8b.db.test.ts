@@ -103,6 +103,12 @@ describeIntegration("443.140 #8(b) cash-flow projections land on the right date 
               ($1::uuid, 2, 'delivery', $3::timestamptz, $3::timestamptz)`,
       [loadId, noonUtc(addBusinessDateDays(opts.deliveryIso, -2)), noonUtc(opts.deliveryIso)]
     );
+    await db.query(
+      `INSERT INTO dispatch.load_charge_lines
+        (operating_company_id, load_id, line_kind, charge_code, amount_cents, created_by_user_id)
+       VALUES ($1::uuid, $2::uuid, 'system', 'line_haul', $3, $4::uuid)`,
+      [company, loadId, opts.rateCents, TEST_OWNER_USER_ID],
+    );
     return loadId;
   }
 

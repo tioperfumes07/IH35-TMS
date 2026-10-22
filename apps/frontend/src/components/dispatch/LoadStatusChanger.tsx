@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LoadStatus } from "../../api/loads";
 import { getOfficeTransitionButtons, loadCanMarkInvoiced } from "@ih35/shared-types";
-import { STATUS_LABEL } from "./constants";
+import { loadStatusLabel } from "../../lib/load-status";
 
 // REG-054 (owner 2026-09-10, verbatim): "in all book loads and loads when opening or closing, in any
 // view, i need to have a change status button like quickbooks, you click on it and drop down ... and to
@@ -104,7 +104,7 @@ export function LoadStatusChanger({
         aria-expanded={open}
         title={interactive ? "Change load status" : "Status"}
       >
-        <span>{STATUS_LABEL[status] ?? status}</span>
+        <span>{loadStatusLabel(status)}</span>
         {interactive ? (
           <span aria-hidden className="text-xs leading-none">
             {pending ? "…" : "▾"}

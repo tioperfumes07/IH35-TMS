@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LoadStatus } from "../../api/loads";
 import { getOfficeTransitionButtons } from "@ih35/shared-types";
-import { STATUS_LABEL } from "./constants";
+import { loadStatusLabel } from "../../lib/load-status";
 
 // INLINE-STATUS-CHANGER (owner 2026-09-09, verbatim): "in all views in loadboard, there must be like
 // in quickbooks, a button to change status, with arrow drop down and select status in that button —
@@ -90,7 +90,7 @@ export function InlineStatusPicker({ loadId, status, disabled, pending, onSelect
         aria-expanded={open}
         title={interactive ? "Change load status" : "Status"}
       >
-        <span>{STATUS_LABEL[status]}</span>
+        <span>{loadStatusLabel(status)}</span>
         {interactive ? <span aria-hidden className="text-xs leading-none">{pending ? "…" : "▾"}</span> : null}
       </button>
       {open ? (
@@ -113,7 +113,7 @@ export function InlineStatusPicker({ loadId, status, disabled, pending, onSelect
                 onSelect(t.target as LoadStatus);
               }}
             >
-              {STATUS_LABEL[t.target as LoadStatus] ?? t.label}
+              {loadStatusLabel(t.target) || t.label}
             </button>
           ))}
         </div>

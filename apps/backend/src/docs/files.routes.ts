@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { strictListQuery } from "../lib/strict-query.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -148,6 +149,8 @@ const listQuerySchema = z.object({
   expires_within_days: z.coerce.number().int().min(0).max(3650).optional(),
   standalone: z.enum(["true", "false"]).optional(),
 });
+// LEAD 443.219 G-STRICT — unknown query params: 400 outside production, logged + stripped in production (one rule).
+const strictListQuerySchema = strictListQuery(listQuerySchema, "GET /api/v1/docs/files");
 
 const updateFileBodySchema = z
   .object({
@@ -599,7 +602,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     if (!user) return;
     if (!requireRole(reply, user.role, ["Owner", "Administrator", "Manager"])) return;
 
-    const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
+    const parsedQuery = strictListQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const query = parsedQuery.data;
 

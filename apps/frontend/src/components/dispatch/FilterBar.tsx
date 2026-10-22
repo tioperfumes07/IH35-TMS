@@ -11,13 +11,15 @@ import { Combobox } from "../Combobox";
 import { ListErrorState } from "../ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import type { LoadStatus } from "../../api/loads";
-import { STATUS_LABEL } from "./constants";
+import { loadStatusLabel } from "../../lib/load-status";
 
 export type DispatchFilterState = {
   companyIds: string[];
   statuses: LoadStatus[];
   customerId: string | null;
   driverId: string | null;
+  /** LEAD 443.206R (register B13) — TruckPlanner "Book" links /dispatch/loads?unit_id=; the board narrows to that unit. */
+  unitId?: string | null;
   dateMode: "pickup" | "delivery";
   dateFrom: string;
   dateTo: string;
@@ -167,7 +169,7 @@ export function FilterBar({
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Status</label>
             <Combobox
-              options={ALL_LOAD_STATUSES.map((status) => ({ value: status, label: STATUS_LABEL[status] }))}
+              options={ALL_LOAD_STATUSES.map((status) => ({ value: status, label: loadStatusLabel(status) }))}
               value={draft.statuses[0] ?? null}
               onChange={(nextStatus) => {
                 if (!nextStatus) {
@@ -279,7 +281,7 @@ export function FilterBar({
               onClick={() => staged.setDraft({ ...draft, statuses: draft.statuses.filter((item) => item !== status) })}
               className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50"
             >
-              Status: {STATUS_LABEL[status]} ×
+              Status: {loadStatusLabel(status)} ×
             </button>
           ))}
           {customerOption ? (

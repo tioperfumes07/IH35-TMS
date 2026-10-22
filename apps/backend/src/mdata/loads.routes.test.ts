@@ -210,7 +210,9 @@ describe("mdata loads routes", () => {
     const listCall = queryMock.mock.calls.find(([sql]) => String(sql).includes("tr.id AS trailer_id"));
     expect(listCall).toBeDefined();
     const sql = String(listCall?.[0]);
-    expect(sql).toContain("tr.equipment_number AS trailer_number");
+    // LEAD 23:45Z parity — the one projection: the fleet trailer from history, or the customer trailer when the load's choice is customer.
+    expect(sql).toContain("ELSE tr.equipment_number END");
+    expect(sql).toContain("WHEN l.trailer_source = 'customer' THEN (SELECT nt.trailer_number FROM dispatch.non_owned_trailers nt");
     expect(sql).toContain("FROM dispatch.load_assignment_history lah");
     expect(sql).toContain("AND lah.operating_company_id = l.operating_company_id");
     expect(sql).toContain("COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id");
@@ -292,6 +294,10 @@ describe("mdata loads routes", () => {
       }
       if (sql.includes("FROM catalogs.load_cancellation_reasons")) {
         return { rows: [{ reason_code: "DRIVER_WALKOFF", requires_owner_approval: true }] };
+      }
+      // LEAD 443.211R — the one writer (transitionLoadStatus) locks + reads the status before its compare-and-set.
+      if (sql.includes("FROM mdata.loads") && sql.includes("FOR UPDATE")) {
+        return { rows: [{ status: "assigned" }] };
       }
       if (sql.includes("UPDATE mdata.loads") && sql.includes("SET status")) {
         return {

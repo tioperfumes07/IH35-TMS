@@ -18,6 +18,7 @@
  * one-shot backfill can never double-apply. Void-not-delete is preserved: `closed` is a status, fully
  * reversible by an owner transition; nothing is deleted.
  */
+import { transitionLoadStatus } from "./load-transition.service.js";
 import { withCompanyScope } from "../accounting/db-scope.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { assertClosedLoadHasPricedDriverBill } from "./book-load.service.js";
@@ -123,18 +124,11 @@ async function walkForward(
       }
     }
 
-    const upd = await client.query(
-      `
-        UPDATE mdata.loads
-        SET status = $2::mdata.load_status_enum, updated_at = now()
-        WHERE id = $1::uuid
-          AND operating_company_id = $3::uuid
-          AND status = $4::mdata.load_status_enum
-        RETURNING id
-      `,
-      [loadId, stepTo, operatingCompanyId, status]
-    );
-    if (!upd.rows[0]) return { changed: steps > 0, from, to: status, reason: "status_moved_concurrently" };
+    // LEAD 443.211R — the billing tail is edges of the ONE machine; the one writer validates and compare-and-sets each step.
+    const upd = await transitionLoadStatus(client as never, {
+      operatingCompanyId, loadId, to: stepTo, kind: "forward", writer: "load-billing-lifecycle", expectFrom: status,
+    });
+    if (!upd) return { changed: steps > 0, from, to: status, reason: "status_moved_concurrently" };
     status = stepTo;
     steps += 1;
   }

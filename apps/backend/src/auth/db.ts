@@ -1,4 +1,5 @@
 import pg from "pg";
+import { registerPgTypeParsers } from "../lib/pg-type-parsers.js";
 import { buildPgPoolConfig } from "../lib/pg-connection-options.js";
 import {
   afterCommitMark,
@@ -42,6 +43,9 @@ function requireDatabaseUrl() {
   }
   return url;
 }
+
+// LEAD 443.219 — int8 arrives as a number (safe integers), never a string a `+` would concatenate (lib/pg-type-parsers.ts).
+registerPgTypeParsers();
 
 function buildPool(): pg.Pool {
   const client = new Pool(

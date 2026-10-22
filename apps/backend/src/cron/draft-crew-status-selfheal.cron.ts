@@ -8,6 +8,7 @@
  * REVERSE: NOT-A-DOCUMENT — a load status correction (draft to assigned_not_dispatched); the load itself is reversed by dispatch/cancellation.service.ts:cancelLoad
  * NEVER: must never advance a load that is not 'draft' or has no crew, live driver bill or proforma invoice, and never writes a money table
  */
+import { transitionLoadStatus } from "../dispatch/load-transition.service.js";
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
@@ -97,14 +98,12 @@ export async function runDraftCrewStatusSelfHealTick(
       totalScanned += candidates.rows.length;
 
       for (const load of candidates.rows) {
-        const advanced = await client.query<{ id: string }>(
-          `UPDATE mdata.loads
-              SET status = 'assigned_not_dispatched'::mdata.load_status_enum, updated_at = now()
-            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status = 'draft'
-            RETURNING id`,
-          [load.id, company.id]
-        );
-        if (advanced.rows[0]?.id) {
+        // LEAD 443.211R — through the one writer (machine edge draft -> assigned_not_dispatched), compare-and-set on draft.
+        const advanced = await transitionLoadStatus(client as never, {
+          operatingCompanyId: company.id, loadId: load.id, to: "assigned_not_dispatched", kind: "forward",
+          writer: "draft-crew-status-selfheal", expectFrom: "draft",
+        });
+        if (advanced) {
           totalAdvanced += 1;
           await appendCrudAudit(
             client,

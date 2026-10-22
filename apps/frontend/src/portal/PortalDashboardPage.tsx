@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
 import { ListErrorState } from "../components/ListErrorState";
 import { StatusBadge } from "../components/layout/StatusBadge";
+import { loadStatusLabel } from "../lib/load-status";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { EntityLink } from "../components/shared/EntityLink";
 
@@ -47,7 +48,7 @@ const COLUMNS: Array<ParityColumn<PortalLoadRow>> = [
     key: "status",
     label: "Status",
     sortable: true,
-    render: (load) => <span className="capitalize">{load.status.replace(/_/g, " ")}</span>,
+    render: (load) => <span>{loadStatusLabel(load.status)}</span>,
   },
   {
     key: "progress_status",

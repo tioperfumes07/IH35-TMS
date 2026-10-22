@@ -1,4 +1,6 @@
 import type { FastifyInstance } from "fastify";
+import { BILLING_REVERSE_EDGES } from "../dispatch/load-state-machine.js";
+import { transitionLoadStatus } from "../dispatch/load-transition.service.js";
 import { AGING_BUCKET_IDS, agingWindowFromBucket, agingWindowPredicate } from "./aging/buckets.js";
 import { openArInvoiceConditions } from "./aging/open-ar.js";
 import fp from "fastify-plugin";
@@ -1314,18 +1316,17 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           );
           const FORBIDDEN_REVERT_STATUSES = new Set(["paid", "closed", "cancelled"]);
           const historicalPrior = (historyRes.rows[0] as { old_status?: string | null } | undefined)?.old_status ?? null;
+          // LEAD 443.211R — the revert is a billing_reverse edge of the ONE machine: the history's prior status only when the
+          // machine allows invoiced -> it (a delivery-side status), else 'delivered'; written by the one writer.
           const revertStatus =
-            historicalPrior && !FORBIDDEN_REVERT_STATUSES.has(historicalPrior) ? historicalPrior : "delivered";
+            historicalPrior && !FORBIDDEN_REVERT_STATUSES.has(historicalPrior) && (BILLING_REVERSE_EDGES.invoiced ?? []).includes(historicalPrior)
+              ? historicalPrior
+              : "delivered";
 
-          await client.query(
-            `
-              UPDATE mdata.loads
-                 SET status = $3::mdata.load_status_enum,
-                     updated_at = now()
-               WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status = 'invoiced'
-            `,
-            [sourceLoadId, query.data.operating_company_id, revertStatus]
-          );
+          await transitionLoadStatus(client as never, {
+            operatingCompanyId: query.data.operating_company_id, loadId: sourceLoadId, to: revertStatus, kind: "billing_reverse",
+            writer: "invoice-void-revert", expectFrom: "invoiced",
+          });
           await appendCrudAudit(
             client,
             user.uuid,

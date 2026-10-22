@@ -1,154 +1,75 @@
 #!/usr/bin/env node
-/**
- * CASHFLOW-SEVEN-DAY-STRIP-INCOME-SQL-BROKEN — buildSevenDayStrip()'s incomeSubquery template
- * (both the cashFollowsEta true and false branches) had an extra, unmatched closing parenthesis at
- * the very end of the string. When embedded inside the outer `COALESCE(${incomeSubquery}, 0)::int`
- * wrapper, this produced Postgres error 42601 "syntax error at or near ')'" -- live-reproduced via
- * an authenticated fetch against GET /api/v1/cash-flow/daily-prediction before fixing: EVERY date
- * (13 consecutive days checked) 500'd with this exact error, taking down the entire Daily
- * Prediction cash-flow tab (including the newly-shipped Proforma / Pre-invoice feature, item 26).
- *
- * A second, related bug: the first term of the addition (`(subquery1) + COALESCE((subquery2), 0)`)
- * was not itself wrapped in COALESCE, so on any day with proforma-only income (no genuine
- * non-proforma load delivering) SQL's `NULL + x = NULL` silently zeroed the WHOLE sum even though
- * the real proforma amount was correctly computed by subquery2 -- Neon-confirmed: without this fix,
- * a real $1,000.00 proforma disappeared to $0 in the 7-day strip.
- *
- * Both re-verified directly against live Neon prod data (project tiny-field-89581227) before and
- * after the fix: the broken paren pattern reproduces the exact 42601; the fixed version returns the
- * correct $1,000.00 (100000 cents) for a real proforma-only day.
+/** Generate BOTH real receipt SQL branches inside the strip's actual aggregate.
+ * TypeScript transpilation is in-memory; never writes sources or database rows.
  */
 import fs from "node:fs";
-
+import path from "node:path";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const ts = require("typescript");
 const FILE = "apps/backend/src/cash-flow/cash-flow.service.ts";
-
-function stripComments(text) {
-  return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/.*$/gm, "$1");
-}
-
-function extractIncomeSubqueryBranches(source) {
-  const stripped = stripComments(source);
-  const start = stripped.indexOf("const incomeSubquery = cashFollowsEta");
-  if (start < 0) return null;
-  // The assignment ends at the first `;` that terminates the ternary (both branches are backtick
-  // template literals with no semicolons inside).
-  const end = stripped.indexOf(";", start);
-  if (end < 0) return null;
-  const block = stripped.slice(start, end);
-  // Split on the ternary's `:` that separates the two backtick branches. Both branches start with
-  // a backtick immediately after `?` / `:`.
-  const trueBranchMatch = block.match(/\?\s*`([\s\S]*?)`\s*\n\s*:/);
-  const falseBranchMatch = block.match(/:\s*`([\s\S]*?)`\s*;?\s*$/);
-  if (!trueBranchMatch || !falseBranchMatch) return null;
-  return { trueBranch: trueBranchMatch[1], falseBranch: falseBranchMatch[1] };
-}
-
-function auditBranch(label, text, failures) {
-  // No SQL string literal in this fragment contains a literal paren character ('delivery',
-  // 'cancelled', 'proforma', etc. do not), so a raw character count is a valid balance check here.
-  const opens = (text.match(/\(/g) || []).length;
-  const closes = (text.match(/\)/g) || []).length;
-  if (opens !== closes) {
-    failures.push(
-      `${FILE}: incomeSubquery ${label} branch has unbalanced parens (${opens} open vs ${closes} close) -- this is exactly the 42601 syntax-error class this guard exists to catch`
-    );
+const RECEIPTS = "apps/backend/src/cash-flow/cash-flow-receipts.sql.ts";
+function receiptFunction(receipts) {
+  const cache = new Map();
+  function load(file) {
+    file = path.resolve(file);
+    if (cache.has(file)) return cache.get(file).exports;
+    const source = file === path.resolve(RECEIPTS) ? receipts : fs.readFileSync(file, "utf8");
+    const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+    const module = { exports: {} };
+    cache.set(file, module);
+    const localRequire = spec => {
+      if (!spec.startsWith(".")) throw Error(`unexpected non-leaf dependency: ${spec}`);
+      return load(path.resolve(path.dirname(file), spec.replace(/\.js$/, ".ts")));
+    };
+    new Function("require", "module", "exports", compiled)(localRequire, module, module.exports);
+    return module.exports;
   }
-  const coalesceWraps = (text.match(/COALESCE\(\(/g) || []).length;
-  if (coalesceWraps < 2) {
-    failures.push(
-      `${FILE}: incomeSubquery ${label} branch must wrap BOTH addition terms in COALESCE((...), 0) -- found ${coalesceWraps}, need 2, or a NULL-only-income day silently zeroes the whole sum`
-    );
-  }
+  return load(RECEIPTS).cashFlowReceiptsSql;
 }
-
-function audit(source) {
-  const branches = extractIncomeSubqueryBranches(source);
-  if (!branches) return [`${FILE}: could not locate the incomeSubquery ternary assignment to audit -- guard needs updating`];
+function audit(source, receipts) {
   const failures = [];
-  auditBranch("cashFollowsEta=true", branches.trueBranch, failures);
-  auditBranch("cashFollowsEta=false", branches.falseBranch, failures);
+  const template = source.match(/const incomeSubquery\s*=\s*(`[^`]*`);/)?.[1];
+  if (!template || !template.includes("${cashFlowReceiptsSql(cashFollowsEta)}")) return ["strip must embed actual shared receipt SQL"];
+  if (!source.includes("COALESCE(${incomeSubquery}, 0)::int AS income_cents")) failures.push("strip outer income wrapper missing");
+  try {
+    const helper = receiptFunction(receipts);
+    for (const flag of [true, false]) {
+      const fragment = new Function("cashFlowReceiptsSql", "cashFollowsEta", `return ${template}`)(helper, flag);
+      if (!/^COALESCE\(\(SELECT SUM\(amount_cents\)/.test(fragment) || !/\),\s*0\)$/.test(fragment)) failures.push(`ETA=${flag}: aggregate must COALESCE SUM to zero`);
+      const sql = `SELECT COALESCE(${fragment}, 0)::int AS income_cents`;
+      if (sql.includes("${")) failures.push(`ETA=${flag}: unevaluated SQL templates`);
+      const tokens = sql.replace(/--[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/'(?:''|[^'])*'/g, "''");
+      let depth = 0;
+      for (const c of tokens) {
+        if (c === "(") depth++;
+        if (c === ")" && --depth < 0) { failures.push(`ETA=${flag}: premature closing parenthesis`); break; }
+      }
+      if (depth !== 0) failures.push(`ETA=${flag}: unbalanced SQL parentheses (${depth})`);
+      for (const stream of ["unbilled_receipts", "proforma_receipts", "invoice_receipts"]) {
+        if (!sql.includes(`SELECT * FROM ${stream}`)) failures.push(`ETA=${flag}: missing ${stream} aggregate source`);
+      }
+    }
+  } catch (error) { failures.push(`could not generate SQL: ${error.message}`); }
   return failures;
 }
-
-const source = fs.readFileSync(FILE, "utf8");
-const failures = audit(source);
-
-if (failures.length) {
-  console.error(`verify-cashflow-seven-day-strip-sql-balanced FAIL\n- ${failures.join("\n- ")}`);
-  process.exit(1);
-}
-
+const source = fs.readFileSync(FILE, "utf8"), receipts = fs.readFileSync(RECEIPTS, "utf8");
+const failures = audit(source, receipts);
+if (failures.length) throw Error(failures.join("\n"));
 if (process.argv.includes("--selftest")) {
-  const mutations = [
-    {
-      name: "reintroduce the extra trailing ) in the cashFollowsEta=true branch",
-      mutate: (t) =>
-        t.replace(
-          `              AND \${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
-            ORDER BY l.id, i.created_at DESC NULLS LAST
-          ) pf
-        ), 0)\`
-    : \`COALESCE((`,
-          `              AND \${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
-            ORDER BY l.id, i.created_at DESC NULLS LAST
-          ) pf
-        ), 0)
-        )\`
-    : \`COALESCE((`
-        ),
-    },
-    {
-      name: "reintroduce the extra trailing ) in the cashFollowsEta=false branch",
-      mutate: (t) =>
-        t.replace(
-          `              AND \${rawDeliveryDateSql("fd.scheduled_arrival_at")} = $2::date
-            ORDER BY l.id, i.created_at DESC NULLS LAST
-          ) pf
-        ), 0)\`;`,
-          `              AND \${rawDeliveryDateSql("fd.scheduled_arrival_at")} = $2::date
-            ORDER BY l.id, i.created_at DESC NULLS LAST
-          ) pf
-        ), 0)
-        )\`;`
-        ),
-    },
-    {
-      name: "remove the first-term COALESCE wrap in the cashFollowsEta=true branch (reintroduces NULL-swallow)",
-      mutate: (t) =>
-        t.replace(
-          `  const incomeSubquery = cashFollowsEta
-    ? \`COALESCE((
-          SELECT SUM(COALESCE(l.rate_total_cents, 0))`,
-          `  const incomeSubquery = cashFollowsEta
-    ? \`(
-          SELECT SUM(COALESCE(l.rate_total_cents, 0))`
-        ),
-    },
-    {
-      name: "remove the first-term COALESCE wrap in the cashFollowsEta=false branch (reintroduces NULL-swallow)",
-      mutate: (t) =>
-        t.replace(
-          `    : \`COALESCE((
-          SELECT SUM(COALESCE(l.rate_total_cents, 0))
-          FROM mdata.loads l
-          JOIN mdata.load_stops ls`,
-          `    : \`(
-          SELECT SUM(COALESCE(l.rate_total_cents, 0))
-          FROM mdata.loads l
-          JOIN mdata.load_stops ls`
-        ),
-    },
+  const plants = [
+    ["source", "= $2::date), 0)`;", "= $2::date), 0))`;"],
+    ["source", "COALESCE((SELECT SUM(amount_cents)", "((SELECT SUM(amount_cents)"],
+    ["receipts", 'projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })', 'projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" }) + ")"'],
+    ["receipts", 'rawDeliveryDateSql("fd.scheduled_arrival_at")', 'rawDeliveryDateSql("fd.scheduled_arrival_at") + ")"'],
+    ["receipts", "UNION ALL SELECT * FROM proforma_receipts", "UNION ALL SELECT * FROM unbilled_receipts"],
   ];
-  let caught = 0;
-  for (const { name, mutate } of mutations) {
-    const mutated = mutate(source);
-    if (mutated === source) throw new Error(`mutation "${name}" did not change source -- inert`);
-    if (audit(mutated).length === 0) throw new Error(`mutation escaped: "${name}" was not caught`);
-    caught += 1;
+  for (const [key, from, to] of plants) {
+    const values = { source, receipts };
+    if (!values[key].includes(from)) throw Error(`inert mutation: ${from}`);
+    values[key] = values[key].replace(from, to);
+    if (!audit(values.source, values.receipts).length) throw Error(`escaped mutation: ${from}`);
   }
-  console.log(`verify-cashflow-seven-day-strip-sql-balanced SELFTEST PASS — ${caught}/${mutations.length} mutations detected`);
+  console.log(`verify-cashflow-seven-day-strip-sql-balanced SELFTEST PASS ${plants.length}/${plants.length}`);
 }
-
-console.log(
-  "verify-cashflow-seven-day-strip-sql-balanced PASS — both incomeSubquery branches are paren-balanced and NULL-safe"
-);
+console.log("verify-cashflow-seven-day-strip-sql-balanced PASS — both generated SQL branches balanced and aggregate NULL-safe");

@@ -21,6 +21,17 @@ export function liveExpense(alias: string): string {
   return `(${a}.status NOT IN ('void', 'voided') AND ${a}.voided_at IS NULL)`;
 }
 
+export function liveInvoice(alias: string): string {
+  const a = sqlAlias(alias);
+  return `(${a}.status NOT IN ('void', 'voided') AND ${a}.voided_at IS NULL)`;
+}
+
+/** Issued documents supersede booking/proforma revenue, including paid invoices. */
+export function issuedInvoice(alias: string): string {
+  const a = sqlAlias(alias);
+  return `(${liveInvoice(a)} AND ${a}.status NOT IN ('draft', 'proforma'))`;
+}
+
 export function liveBill(alias: string): string {
   const a = sqlAlias(alias);
   return `(${a}.status NOT IN ('void', 'voided') AND ${a}.voided_at IS NULL AND ${a}.revoked_at IS NULL)`;

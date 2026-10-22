@@ -1,4 +1,4 @@
-import { loadServiceMembershipSql } from "../../../dispatch/load-service.js";
+import { loadServiceDriverNameSql, loadServiceMembershipSql } from "../../../dispatch/load-service.js";
 /**
  * GAP-55 — CAP-1 live GPS positions for active loads.
  */
@@ -19,6 +19,9 @@ export interface LivePositionRow {
   speed_mph: number | null;
   recorded_at: string;
   stale: boolean;
+  /** LEAD 23:45Z parity — the load's driver from the ONE row projection (was absent: null on every map row). */
+  driver_id: string | null;
+  driver_name: string | null;
 }
 
 export function cacheGet<T>(key: string): T | null {
@@ -54,11 +57,15 @@ export async function getLivePositionsForActiveLoads(
     lng: string;
     speed_mph: string | null;
     recorded_at: string;
+    driver_id: string | null;
+    driver_name: string | null;
   }>(
     `SELECT l.id::text AS load_uuid, u.id::text AS unit_uuid,
             l.load_number::text AS load_number, u.unit_number::text AS unit_number,
-            p.lat::text, p.lng::text, p.speed_mph::text, p.recorded_at::text
+            p.lat::text, p.lng::text, p.speed_mph::text, p.recorded_at::text,
+            l.assigned_primary_driver_id::text AS driver_id, ${loadServiceDriverNameSql("l", "dr")} AS driver_name
      FROM mdata.loads l
+     LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id
      JOIN mdata.units u ON u.id = l.assigned_unit_id
                         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
      LEFT JOIN LATERAL (
@@ -86,6 +93,8 @@ export async function getLivePositionsForActiveLoads(
     speed_mph: r.speed_mph != null ? Number(r.speed_mph) : null,
     recorded_at: r.recorded_at,
     stale: isStale(r.recorded_at),
+    driver_id: r.driver_id ?? null,
+    driver_name: r.driver_name ?? null,
   }));
   cacheSet(cacheKey, rows);
   return rows;
@@ -121,6 +130,8 @@ export async function getPositionForUnit(
     unit_uuid: r.unit_uuid,
     load_number: null,
     unit_number: null,
+    driver_id: null,
+    driver_name: null,
     lat: Number(r.lat),
     lng: Number(r.lng),
     speed_mph: r.speed_mph != null ? Number(r.speed_mph) : null,

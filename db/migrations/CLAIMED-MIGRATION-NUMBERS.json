@@ -2702,5 +2702,20 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-22",
     "purpose": "443.215 extension (Lead 22:55Z): driver_finance.driver_settlements.source_fingerprint jsonb — the printed source (settlement no, printed date, TOTAL DUE, Net Revenue, normalized lines, line hash) a settlement was posted from; a later source is compared against it (source changed: repost needed)"
+  },
+  "202616060700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.208R (Lead 22:58Z): one load-change signal — AFTER INSERT/UPDATE/DELETE triggers pg_notify('load_changed', {company_id, load_ids, table, op}) on load and load-linked money tables"
+  },
+  "202616070700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-21",
+    "purpose": "443.214 (Lead 22:40Z): fuel follows the truck at the pump — fuel.fuel_transactions provider fill moment + station coords + card_unit / gps_unit / distance / minutes / truck + load resolution reason"
+  },
+  "202616100100": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-22",
+    "purpose": "443.211R (Lead 22:58Z): mdata.load_status_edge_allowed(from, to, kind) — the SQL mirror of the one load status machine (load-state-machine.ts edges); accounting.revert_load_on_invoice_death validates its revert through it (CREATE OR REPLACE FUNCTION)"
   }
 }
