@@ -49,6 +49,18 @@ const CHECKS = [
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
     pattern: /data-settlement-close-v3-steps="1"[\s\S]*V3Panel|V3Panel[\s\S]*data-settlement-close-v3-steps="1"/,
   },
+  // ROUND 443.274-C Settlements-Close.dc.html — 2fr|1fr Driver on arrival | Result (getTourReadout legs).
+  {
+    name: "SettlementCloseArrivalPage 2fr|1fr board Driver on arrival + Result",
+    file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
+    pattern:
+      /data-settlement-close-v3-board="1"[\s\S]*Driver on arrival[\s\S]*Miles \(doc\)[\s\S]*Result|data-settlement-close-v3-board="1"[\s\S]*getTourReadout/,
+  },
+  {
+    name: "SettlementCloseArrivalPage board Miles (doc) from tour readout + bills",
+    file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
+    pattern: /milesDocForLeg[\s\S]*miles_basis[\s\S]*miles_practical|function milesDocForLeg/,
+  },
   // ROUND 443.274-C Settlements-PreSettlements.png — 6 KPI tiles + side-by-side Open | What closes.
   // Same listOpenPreSettlements / listSettlements KPI / getOpenDriverBills; chrome + board layout.
   {
