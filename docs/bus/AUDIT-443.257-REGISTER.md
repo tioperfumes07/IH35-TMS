@@ -45,6 +45,13 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | D031 | Driver Hub | Driver Scheduler | Driver cells | All-uppercase and inconsistent surname casing | N | pending: DOM | Full proper-case names | CC-1 / Cursor |
 | D032 | Driver Hub | Driver Scheduler | Assign Temp Cover | Five single-line inputs measured 38px high; pickers about 2,477px wide and dates about 1,203px | I | pending: screenshot timed out | 32px inputs and content-appropriate form widths | Cursor |
 
+| D033 | Maintenance | Home / Fleet Table | Money tiles | MTD Cost, Open $ and severe-repair total omit cents | M | inline: Maintenance Home | Currency always two decimal places | Cursor |
+| D034 | Maintenance | Create Work Order | Drawer inputs | Visible single-line inputs measured 38px; customer picker about 2,408px wide, open-date input about 766px | I | pending: measured DOM | 32px inputs; dates 150px; content-appropriate widths | Cursor |
+| D035 | Maintenance | Active WOs | Table headers | Load, Driver, Vendor, Bill, JE and Timing headers have no sorting button, unlike adjacent headers | T | pending: DOM | Sortable data columns | Cursor |
+| D036 | Safety | Hours & Fatigue | Driver roster | Mixed proper-case and all-uppercase driver names | N | pending: DOM | Full proper-case display with exceptions | CC-1 / Cursor |
+| D037 | Safety | Hours & Fatigue | Create HOS Violation | Seven visible inputs measured 38px high | I | pending: measured DOM | 32px single-line inputs | Cursor |
+| D038 | Compliance | Filings / Overview | Driver labels | Mixed proper-case and uppercase driver labels in populated tables | N | pending: DOM | Full proper-case display with exceptions | CC-1 / Cursor |
+
 ## Counts (observed defects, not application-wide totals)
 
 | Module | V | M | D | I | N | T | B | E | P | Total |
@@ -55,7 +62,10 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | Dispatch | 1 | 0 | 1 | 1 | 4 | 0 | 0 | 0 | 0 | 7 |
 | Tasks | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
 | Driver Hub | 0 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 3 |
-| Total | 1 | 1 | 4 | 4 | 7 | 2 | 9 | 1 | 3 | 32 |
+| Maintenance | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 3 |
+| Safety | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 2 |
+| Compliance | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
+| Total | 1 | 2 | 4 | 6 | 9 | 3 | 9 | 1 | 3 | 38 |
 
 ## Coverage ledger
 
@@ -65,9 +75,12 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 - Dispatch: Home + Book Load opened and closed without save. Load Costs landing inspected and screenshot captured; other views/subtabs/record drawers pending.
 - Tasks: Task Board, Calendar, My Tasks, Team Chat landing, Admin Report, Exceptions inspected. Create Task opened and cancelled; Exceptions detail tile clicked (no new panel). Remaining per-record, filters and secondary popups pending.
 - Driver Hub: Overview, Driver Scheduler, Assign Temp Cover inspected. The latter screenshot timed out; subsequent close/navigation did not execute. Leave Requests and Reporting pending.
-- Not yet inspected in this pass: Maintenance, Safety, Compliance, Driver Profile, Fleet, Insurance, Legal, Cash Flow, Accounting, Banking, Factoring, Finance Hub, Customers, Vendors, Inventory, 425C, Lists, Reports, Docs, Users, Help, Program, System.
+- 443.258-D batch 1 checkpoint (partial depth, NOT full module completion): Maintenance Home, Fleet Table, Active WOs, PM Due, Faults, Service/Location, Driver Reports, Road Service, Parts Inventory, Integrity Report, Settings visited. Create Work Order opened and closed. Some table snapshots were taken during loading; their final data and remaining subpanels are still unverified. No empty/loading state from those snapshots is called a defect.
+- Safety: Home and Hours & Fatigue visited; populated HOS roster inspected; Create HOS Violation opened, measured and closed. Other Safety groups and record drawers remain owed.
+- Compliance: all seven top-level tabs visited; populated Filings and Overview tables inspected; Create notification rule opened/closed; Required Documents populated Drivers table inspected and create-type inline form opened without submission. Other required-document entity tabs, driver-specific HOS detail and secondary panels remain owed.
+- Not yet inspected in this pass: Driver Profile, Fleet, Insurance, Legal, Cash Flow, Accounting, Banking, Factoring, Finance Hub, Customers, Vendors, Inventory, 425C, Lists, Reports, Docs, Users, Help, Program, System.
 - Transient Loading states that resolved were not counted as defects. Empty Fuel Card table explicitly says no cards assigned: not classified as unexplained emptiness.
 - Fuel Relay wallet link currently resolves to the current tab's path. Destination behavior not verified; held as a candidate, not counted.
 - No Book Load, draft save, money action, settings save, upload, or form submission performed.
 - Guard work remains separate: no V3 coverage bypass, no guard edits in this audit.
-- Browser inspection paused under the Chrome skill's failure stop rule: field measurement timed out once, then recovered by snapshot; later screenshot capture timed out on Assign Temp Cover. No repeated blind retries. Full coverage and durable screenshot paths are still owed; this register is an interim evidence delivery, not DONE.
+- 443.258-D supersedes the earlier timeout stop: waited and reloaded once, recovered, continued. Full coverage and durable screenshot paths remain owed; this register is an interim evidence delivery, not DONE. Clean-main gate failure was posted separately on SEATS-TO-LEAD with command, exit 1 and complete two-line output; no bypass.
