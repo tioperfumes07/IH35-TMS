@@ -16956,5 +16956,11 @@
     "band": "CC-1",
     "step_file": "18396-verify-vendor-bill-null-due-date-handled.mjs",
     "claimed": "2026-10-23"
+  },
+  "18400": {
+    "guard": "verify-driver-ap-not-in-vendor-row.mjs",
+    "band": "CC-1",
+    "step_file": "18400-verify-driver-ap-not-in-vendor-row.mjs",
+    "claimed": "2026-10-23"
   }
 }
