@@ -71,6 +71,19 @@ function analyze(reg, page) {
     errors.push("SettlementsPage leftover slate class");
   }
 
+  // ROUND 443.250 — Open / Closed V3 board chrome on SettlementsToursRegister (piggyback EVEN 3348).
+  // KPIs already live on Settlements home (data-settlements-v3-kpis); this register is the board delta.
+  if (!/import\s*\{[^}]*\bV3Panel\b[^}]*\}\s*from\s*["'][^"']*components\/v3\/V3Panel["']/.test(reg))
+    errors.push("SettlementsToursRegister must import V3Panel (ROUND 443.250 Open/Closed V3)");
+  if (!/data-settlements-tours-v3=["']1["']/.test(reg))
+    errors.push("SettlementsToursRegister must mark data-settlements-tours-v3 for the V3 Open/Closed boards");
+  if (!/Closed settlements/.test(reg) || !/Open tours · pre-settlements/.test(reg))
+    errors.push("SettlementsToursRegister V3Panel titles must match Closed / Open board labels");
+  if (!/Pre-Settlement \(Open\)/.test(reg) || !/Settlement \(Closed\)/.test(reg))
+    errors.push("tour pills must use board labels Pre-Settlement (Open) / Settlement (Closed)");
+  if (!/testId=["']settlements-tours-v3-panel["']/.test(reg) && !/testId=\{?"settlements-tours-v3-panel"?\}/.test(reg))
+    errors.push("SettlementsToursRegister must set testId=settlements-tours-v3-panel on V3Panel");
+
   return errors;
 }
 
@@ -96,6 +109,11 @@ if (process.argv.includes("--selftest")) {
     ["post no longer reuses close-tour endpoint", [reg.replace("closeTour(row.settlement_id, companyId)", "Promise.resolve({})"), page]],
     ["page leftover slate-500", [reg, page + '\n<DataPanel accentColor="#64748b">plant</DataPanel>\n']],
     ["page leftover slate class", [reg, page + '\n<label className="text-xs text-slate-600">plant</label>\n']],
+    ["drop V3Panel import", [reg.replace(/import\s*\{[^}]*\bV3Panel\b[^}]*\}\s*from\s*["'][^"']*components\/v3\/V3Panel["'];?/, ""), page]],
+    ["drop tours-v3 marker", [reg.replace(/data-settlements-tours-v3=["']1["']/, 'data-settlements-tours-legacy="1"'), page]],
+    ["drop Closed panel title", [reg.replace(/Closed settlements/g, "Closed list"), page]],
+    ["drop Open panel title", [reg.replace(/Open tours · pre-settlements/g, "Open list"), page]],
+    ["drop board pill labels", [reg.replace(/Pre-Settlement \(Open\)/g, "Open").replace(/Settlement \(Closed\)/g, "Closed"), page]],
   ];
   let caught = 0;
   for (const [label, [r, p]] of mutations) {

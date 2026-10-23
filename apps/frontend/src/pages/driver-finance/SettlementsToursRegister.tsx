@@ -17,6 +17,7 @@ import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
 import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
+import { V3Panel } from "../../components/v3/V3Panel";
 
 // ROUND 443.252 (owner 10-22 6:10 PM CT): Settlement/Tour column shows the number as a statement
 // link — AlwaysTrack doc when closed (5851…), else the P-series display_id (P-0115) while open.
@@ -75,7 +76,8 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
   { key: "origin_started", label: "PU date", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? mmmDd(r.origin_pickup_date) : ""), render: r => r.origin_pickup_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_pickup_date)}</span> : DASH },
   { key: "origin_delivered", label: "DEL date", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? mmmDd(r.origin_delivery_date) : ""), render: r => r.origin_delivery_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_delivery_date)}</span> : DASH },
   { key: "started", label: "Date started", testId: "setl-tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "When this tour/settlement opened (trip-start stamp) — see Date started for the original load's pickup", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
-  ...(state === "closed" ? [{ key: "closed", label: "Date ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
+  // ROUND 443.250 Closed board — column label "Ended" (was "Date ended").
+  ...(state === "closed" ? [{ key: "closed", label: "Ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
   { key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
   { key: "costs", label: "Costs", testId: "setl-tour-col-costs", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
   { key: "driver_pay", label: "Driver pay", testId: "setl-tour-col-driver-pay", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },
@@ -184,8 +186,22 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   useEffect(() => { if (openQ.data) setOpenCount(openQ.data.count); }, [openQ.data]);
   useEffect(() => { if (closedQ.data) setClosedCount(closedQ.data.count); }, [closedQ.data]);
 
+  // ROUND 443.250 — Open / Closed boards share Settlements home KPIs; this register is the board
+  // delta (V3Panel title + Pre-Settlement (Open) / Settlement (Closed) pills). Engines unchanged
+  // (listTours open|closed). Keep .ldt-btn pills (verify-settlements-list-button-height-uniform).
+  const panelTitle = state === "closed" ? "Closed settlements" : "Open tours · pre-settlements";
+  const panelSubtitle =
+    typeof activeQ.data?.voided_count === "number"
+      ? `${rows.length} live · ${activeQ.data.voided_count} voided/cancelled (not shown)`
+      : undefined;
+
   return (
-    <div className="space-y-2" data-testid="settlements-tours-view" data-surface="load-detail">
+    <div
+      className="space-y-2"
+      data-testid="settlements-tours-view"
+      data-surface="load-detail"
+      data-settlements-tours-v3="1"
+    >
       <div className="flex flex-wrap items-center gap-1" data-testid="settlements-tours-pills">
         {(["open", "closed"] as const).map(s => (
           <button
@@ -194,9 +210,9 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             data-testid={`settlements-tours-pill-${s}`}
             aria-pressed={state === s}
             onClick={() => setState(s)}
-            className={`ldt-btn ${state === s ? "p" : "g"} capitalize`}
+            className={`ldt-btn ${state === s ? "p" : "g"}`}
           >
-            {s === "open" ? "Open" : "Closed"}
+            {s === "open" ? "Pre-Settlement (Open)" : "Settlement (Closed)"}
             <span className={`ml-1 inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 text-section-header ${state === s ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`}>
               {(s === "open" ? openCount : closedCount) ?? "\u2014"}
             </span>
@@ -206,43 +222,48 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
       {/* R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides is the
           same class of defect as a badge that never renders"). This register permanently excludes
           cancelled/reversed/voided settlements (SETL-REVERSED-HIDE, an owner ruling this PR does
-          not change) with no toggle to see them — the honest disclosure this ruling still owes. */}
+          not change) with no toggle to see them — the honest disclosure this ruling still owes.
+          Voided count also surfaces on the V3Panel subtitle when known. */}
       {typeof activeQ.data?.voided_count === "number" ? (
         <p className="text-xs text-gray-500" data-testid="settlements-tours-voided-count">
           {rows.length} live, {activeQ.data.voided_count} voided/cancelled (not shown)
         </p>
       ) : null}
-      {activeQ.isError ? (
-        <ListErrorState status={0} message={activeQ.error instanceof Error ? activeQ.error.message : String(activeQ.error)} onRetry={() => void activeQ.refetch()} />
-      ) : (
-        <ParityTable
-          columns={TOUR_COLUMNS(state, companyId, rows)}
-          rows={rows}
-          rowKey={r => r.settlement_id}
-          loading={activeQ.isLoading}
-          emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
-          storageKey={`settlements-module-tours-${state}`}
-          exportFilename={`settlements-tours-${state}`}
-          tableTestId={`settlements-tours-table-${state}`}
-          enableColumnReorder
-          enableColumnResize
-          expandMode="single"
-          renderExpanded={r => (
-            <div className="p-3" data-testid={`settlements-tour-expand-${state}`}>
-              {state === "open"
-                ? <TourPreSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />
-                : <TourSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />}
-            </div>
-          )}
-          footerCells={{
-            tour: (v: TourListRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header" data-testid="settlements-tour-totals-label">Totals ({v.length})</span>,
-            revenue: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.revenue_cents, 0)),
-            costs: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.costs_cents, 0)),
-            driver_pay: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
-            margin: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.margin_cents, 0)),
-          }}
-        />
-      )}
+      <V3Panel title={panelTitle} subtitle={panelSubtitle} testId="settlements-tours-v3-panel">
+        {activeQ.isError ? (
+          <div className="p-3">
+            <ListErrorState status={0} message={activeQ.error instanceof Error ? activeQ.error.message : String(activeQ.error)} onRetry={() => void activeQ.refetch()} />
+          </div>
+        ) : (
+          <ParityTable
+            columns={TOUR_COLUMNS(state, companyId, rows)}
+            rows={rows}
+            rowKey={r => r.settlement_id}
+            loading={activeQ.isLoading}
+            emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
+            storageKey={`settlements-module-tours-${state}`}
+            exportFilename={`settlements-tours-${state}`}
+            tableTestId={`settlements-tours-table-${state}`}
+            enableColumnReorder
+            enableColumnResize
+            expandMode="single"
+            renderExpanded={r => (
+              <div className="p-3" data-testid={`settlements-tour-expand-${state}`}>
+                {state === "open"
+                  ? <TourPreSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />
+                  : <TourSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />}
+              </div>
+            )}
+            footerCells={{
+              tour: (v: TourListRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header" data-testid="settlements-tour-totals-label">Totals ({v.length})</span>,
+              revenue: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.revenue_cents, 0)),
+              costs: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.costs_cents, 0)),
+              driver_pay: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
+              margin: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.margin_cents, 0)),
+            }}
+          />
+        )}
+      </V3Panel>
     </div>
   );
 }
