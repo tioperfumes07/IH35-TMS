@@ -973,6 +973,7 @@ export async function getRollingLedgerRows(
     bill_date: string | null;
     due_date: string;
     remaining_cents: number;
+    bill_category: string;
   }>(
     `
     SELECT
@@ -981,7 +982,8 @@ export async function getRollingLedgerRows(
       COALESCE(v.vendor_name, 'Vendor') AS vendor_name,
       b.bill_date::text AS bill_date,
       COALESCE(b.due_date, b.bill_date, $2::date)::text AS due_date,
-      ${BILL_OPEN_BALANCE_SQL}::bigint AS remaining_cents
+      ${BILL_OPEN_BALANCE_SQL}::bigint AS remaining_cents,
+      b.bill_category
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id AND v.operating_company_id = $1::uuid
     WHERE b.operating_company_id = $1::uuid
@@ -1444,10 +1446,11 @@ export async function getRollingLedgerRows(
 
   for (const b of billRows.rows) {
     const daysOverdue = daysBetween(today, b.due_date);
+    const isDriverAp = b.bill_category === "driver";
     rows.push({
       row_kind: "expense",
-      type: "Bill",
-      document_kind: "bill",
+      type: isDriverAp ? "Driver Bill (AP)" : "Bill",
+      document_kind: isDriverAp ? "driver_bill" : "bill",
       document_id: b.id,
       document_label: b.display_id ?? b.id.slice(0, 8),
       counterparty: b.vendor_name,
