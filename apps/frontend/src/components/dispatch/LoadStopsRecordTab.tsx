@@ -11,6 +11,7 @@ import {
   type StopsRecordStop,
 } from "../../api/dispatch";
 import { Button } from "../Button";
+import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLoadDocuments } from "./tabs/useLoadDocuments";
 
@@ -261,6 +262,14 @@ function LoadShuttleLegsPanel({ loadId, operatingCompanyId }: { loadId: string; 
     queryFn: () => getLoadShuttleLegs(loadId, operatingCompanyId),
   });
   const legs = q.data?.shuttle_legs ?? [];
+  // LEAD 443.266-A item 3 — a failed read is NOT "no shuttle": say so and offer a retry (it used to vanish silently).
+  if (q.isError) {
+    return (
+      <div data-testid="load-shuttle-legs-error">
+        <ListErrorBanner message="Could not load this load's local yard shuttle." onRetry={() => void q.refetch()} />
+      </div>
+    );
+  }
   if (!legs.length) return null;
   return (
     <section className="rounded-[4px] border border-[#E5E7EB] bg-white" data-testid="load-shuttle-legs">
