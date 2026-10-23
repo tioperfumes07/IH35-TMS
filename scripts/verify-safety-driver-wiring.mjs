@@ -22,7 +22,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-safety-driver-wiring";
 
 const CHECKS = [
-  ["apps/frontend/src/pages/safety/tabs/DriverFilesTab.tsx", /<DriversListPage onOpenProfile=\{\(nextDriverId\) => setDriverId\(nextDriverId\)\} \/>/],
+  ["apps/frontend/src/pages/safety/tabs/DriverActivityTab.tsx", /<DriversListPage onOpenProfile=\{\(nextDriverId\) => setDriverId\(nextDriverId\)\} \/>/],
   ["apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx", /kind="driver"/],
   ["apps/frontend/src/pages/safety/TrainingRecordsPage.tsx", /kind="driver" id=\{id\}/],

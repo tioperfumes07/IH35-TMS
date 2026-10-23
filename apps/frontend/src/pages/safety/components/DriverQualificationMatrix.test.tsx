@@ -36,7 +36,7 @@ describe("driver qualification board uses the canonical roster", () => {
     vi.mocked(listAllDrivers).mockResolvedValue({ drivers: [driver("one", { dot_medical_expires_at: "2027-06-15" }), driver("two")], total: 2 });
     mount();
     await screen.findByRole("link", { name: "Example Two" });
-    fireEvent.click(screen.getByRole("button", { name: /DOT medical date on file/ }));
+    fireEvent.click(screen.getByRole("button", { name: /DOT medical on file/ }));
     expect(screen.queryByRole("link", { name: "Example Two" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Example One" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /View all active drivers/ }));
@@ -63,7 +63,7 @@ describe("driver qualification board uses the canonical roster", () => {
   it("discloses both fine sources and the exact alert count definition", async () => {
     vi.mocked(listAllDrivers).mockResolvedValue({ drivers: [], total: 0 });
     mount();
-    fireEvent.click(await screen.findByRole("button", { name: /Drivers with open fines/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Open fines/ }));
     expect(screen.getByRole("link", { name: /Civil fine register/ })).toHaveAttribute("href", "/safety/external-fines");
     expect(screen.getByRole("link", { name: /Internal fine register/ })).toHaveAttribute("href", "/safety/internal-fines");
     fireEvent.click(screen.getByRole("button", { name: /Critical integrity alerts/ }));

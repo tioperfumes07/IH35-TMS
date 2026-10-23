@@ -157,6 +157,10 @@ export const TABS = [
  */
 export const SAFETY_ALIAS_TABS: { groupId: string; tab: SafetyTab }[] = [
   {
+    groupId: "driver-files",
+    tab: { id: "driver-activity", label: "Driver Activity & Management", route: "/safety/driver-activity", badge: null },
+  },
+  {
     groupId: "compliance-monitoring",
     tab: { id: "cert-expiry", label: "Cert Expiry", route: "/safety/cert-expiry", badge: "new" },
   },

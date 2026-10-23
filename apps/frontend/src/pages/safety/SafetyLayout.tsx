@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useState } from "react";
 import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, matchPath, useLocation, useNavigate } from "react-router-dom";
 import { getLatestCsa, getSafetyKpis, getUserPreferences, patchUserPreferences } from "../../api/safety";
 import { AnomalyAlertBadge } from "../../components/safety/AnomalyAlertBadge";
 import { SAFETY_GROUPS, findSafetyTab, findSafetyTabByPath } from "../../components/safety/SAFETY_TABS_CONFIG";
@@ -52,6 +52,7 @@ export function SafetyLayout() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const isDriverFilesBoard = matchPath({ path: "/safety/driver-files", end: true }, location.pathname) !== null;
   const [filter, setFilter] = useState<SafetyDriverFilter>("active");
   const [activityWindow, setActivityWindow] = useState<SafetyActivityWindow>("7d");
   const [shownDrivers, setShownDrivers] = useState(0);
@@ -62,6 +63,7 @@ export function SafetyLayout() {
   const prefsQuery = useQuery({
     queryKey: ["user", "preferences"],
     queryFn: getUserPreferences,
+    enabled: !isDriverFilesBoard,
   });
   const prefsMutation = useMutation({
     mutationFn: (preferences: Record<string, unknown>) => patchUserPreferences(preferences),
@@ -75,12 +77,12 @@ export function SafetyLayout() {
   const kpisQuery = useQuery({
     queryKey: ["safety", "kpis", companyId],
     queryFn: () => getSafetyKpis(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !isDriverFilesBoard,
   });
   const csaQuery = useQuery({
     queryKey: ["safety", "csa", "latest", companyId],
     queryFn: () => getLatestCsa(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !isDriverFilesBoard,
   });
 
   useEffect(() => {
@@ -191,8 +193,7 @@ export function SafetyLayout() {
         ) : null}
 
         <SafetyGroupNav groups={SAFETY_GROUPS} activeTabId={activeTabId} />
-        <details key={activeTabId} open={activeTabId !== "driver-files"}>
-        <summary className={activeTabId === "driver-files" ? "cursor-pointer px-[22px] py-2 text-xs font-semibold" : "hidden"}>Activity filters and company safety summary</summary>
+        {!isDriverFilesBoard ? <>
         <SafetyDashboardFilter
           value={filter}
           onChange={contextValue.setFilter}
@@ -241,7 +242,7 @@ export function SafetyLayout() {
             client-state driver-detail view (DriverFilesTab's internal `driverId`) left that view
             stuck on screen under the new URL until a hard reload. NavLink's `to` prop is already
             the single source of truth for this navigation; no second imperative navigate() call. */}
-        </details>
+        </> : null}
         <div className="px-[22px] py-3">
           {/* SAFETY-DRIVER-FILES-DETAIL-STUCK-ON-NAV-AWAY: key on location.pathname forces React
               to re-mount the Outlet content on every navigation between sibling safety routes.
