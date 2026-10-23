@@ -16,8 +16,9 @@ import { listAllDispatchLoads, type DispatchLoad } from "../api/dispatch";
 import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
 import { companyToday, addDaysIso } from "../lib/businessDate";
 import { ApiError } from "../api/client";
-import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./accounting/InvoicesListPage";
+import { invoiceOpenCentsForDisplay, invoiceTotalCentsForAggregate, isVoidInvoice } from "./accounting/InvoicesListPage";
 import { createCustomer, getCustomerBillingSummary, getCustomerRosterCounts, listAllCustomers, listPaymentTermOptions, getCustomerFinanceRollup, type Customer, type CustomerBillingSummary, type CustomerFinanceRollup } from "../api/mdata";
+import { V3KpiTile } from "../components/v3/V3KpiTile";
 import {
   CustomerProfileForm,
   emptyCustomerProfileValues,
@@ -916,6 +917,41 @@ export function CustomersPage() {
     return map;
   }, [allInvoicesQuery.data?.invoices]);
 
+  // ROUND 443.250 V3 board (Customers.dc.html) — same live maps (roster counts +
+  // listAllInvoices has_balance + openByCustomerId). Chrome via V3KpiTile. "—" on invoice load fail.
+  const customerHomeKpis = useMemo(() => {
+    const invoicesUnavailable = allInvoicesQuery.isError;
+    let openInvoiceCount = 0;
+    let billedCents = 0;
+    for (const invoice of allInvoicesQuery.data?.invoices ?? []) {
+      if (isVoidInvoice(invoice)) continue;
+      const open = invoiceOpenCentsForDisplay(invoice);
+      if (open <= 0) continue;
+      openInvoiceCount += 1;
+      billedCents += invoiceTotalCentsForAggregate(invoice);
+    }
+    let arOpenCents = 0;
+    for (const cents of openByCustomerId.values()) arOpenCents += cents;
+    const collectedCents = Math.max(0, billedCents - arOpenCents);
+    return {
+      withTransactions: customerTabCounts.with_transactions,
+      inTheBook: customerTabCounts.all,
+      openInvoices: invoicesUnavailable ? null : openInvoiceCount,
+      billedCents: invoicesUnavailable ? null : billedCents,
+      arOpenCents: invoicesUnavailable ? null : arOpenCents,
+      collectedCents: invoicesUnavailable ? null : collectedCents,
+      customersWithOpen: invoicesUnavailable
+        ? null
+        : [...openByCustomerId.values()].filter((cents) => cents > 0).length,
+    };
+  }, [
+    allInvoicesQuery.isError,
+    allInvoicesQuery.data?.invoices,
+    openByCustomerId,
+    customerTabCounts.with_transactions,
+    customerTabCounts.all,
+  ]);
+
   // CC-3 V.1 roll-up columns: fetch customer-profitability for the current calendar year and
   // merge per-customer load_count / revenue_cents / last-load date into the roster rows by
   // customer_id. Customers not in the profitability result get null (rendered as "—").
@@ -1344,6 +1380,63 @@ export function CustomersPage() {
           onRetry={() => void allInvoicesQuery.refetch()}
         />
       ) : null}
+      {/* ROUND 443.250 V3 board (Customers.dc.html) — With transactions / In the book / Open invoices /
+          Billed / A/R open / Collected. Live roster counts + open-invoice rollup; chrome V3KpiTile. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="customers-home-kpi-strip"
+        data-customers-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="With transactions"
+          value={customerHomeKpis.withTransactions.toLocaleString("en-US")}
+          sub="customers with activity"
+          testId="customers-kpi-with-transactions"
+          onClick={() => setListTab("with_transactions")}
+        />
+        <V3KpiTile
+          label="In the book"
+          value={customerHomeKpis.inTheBook.toLocaleString("en-US")}
+          sub="full customer roster"
+          testId="customers-kpi-in-the-book"
+          onClick={() => setListTab("all")}
+        />
+        <V3KpiTile
+          label="Open invoices"
+          value={customerHomeKpis.openInvoices == null ? "—" : customerHomeKpis.openInvoices.toLocaleString("en-US")}
+          sub="sent/partial with balance"
+          testId="customers-kpi-open-invoices"
+          onClick={() => navigate("/accounting/invoices?has_balance=true")}
+        />
+        <V3KpiTile
+          label="Billed"
+          value={customerHomeKpis.billedCents == null ? "—" : fmtMoney(customerHomeKpis.billedCents)}
+          sub="open invoice totals"
+          testId="customers-kpi-billed"
+          onClick={() => navigate("/accounting/invoices?has_balance=true")}
+        />
+        <V3KpiTile
+          label="A/R open"
+          value={customerHomeKpis.arOpenCents == null ? "—" : fmtMoney(customerHomeKpis.arOpenCents)}
+          sub={
+            customerHomeKpis.customersWithOpen == null
+              ? "invoice open balance"
+              : `${customerHomeKpis.customersWithOpen.toLocaleString("en-US")} with open balance`
+          }
+          testId="customers-kpi-ar-open"
+          onClick={() => navigate("/accounting/invoices?has_balance=true")}
+        />
+        <V3KpiTile
+          label="Collected"
+          value={customerHomeKpis.collectedCents == null ? "—" : fmtMoney(customerHomeKpis.collectedCents)}
+          sub="billed minus open on balance rows"
+          tone={
+            customerHomeKpis.collectedCents != null && customerHomeKpis.collectedCents === 0 ? "red" : "ink"
+          }
+          testId="customers-kpi-collected"
+          onClick={() => navigate("/accounting/invoices?has_balance=true")}
+        />
+      </div>
       {viewMode === "list" ? (
         // ROUND 18.1 Item D (owner-directed re-measure against TAB-COMPLETION-STANDARD.md,
         // 2026-09-12): "List view" used to ALSO mount the master-detail rolodex sidebar's own

@@ -22,7 +22,15 @@ const REQUIRED = [
   },
   {
     file: "apps/frontend/src/pages/Customers.tsx",
-    markers: ['data-view-mode-toggle=\"customers\"|\"data-view-mode-toggle\": \"customers\"', "CustomersListView", "useViewModePref"],
+    // ROUND 443.250 Customers home V3 — V3KpiTile strip (With transactions / In the book /
+    // Open invoices / Billed / A/R open / Collected) marked data-customers-v3-kpis.
+    markers: [
+      'data-view-mode-toggle=\"customers\"|\"data-view-mode-toggle\": \"customers\"',
+      "CustomersListView",
+      "useViewModePref",
+      "V3KpiTile",
+      'data-customers-v3-kpis',
+    ],
   },
   {
     // Same two spellings the customers entry above already accepts. Vendors.tsx made the identical
@@ -56,7 +64,25 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`[verify-customers-vendors-have-list-view] SELFTEST PASS (${cases.length}/${cases.length})`);
+  // ROUND 443.250 — V3 strip markers must be required on Customers.tsx entry.
+  const customersEntry = REQUIRED.find((r) => r.file.endsWith("Customers.tsx"));
+  if (!customersEntry?.markers.includes("V3KpiTile") || !customersEntry.markers.includes("data-customers-v3-kpis")) {
+    console.error("[verify-customers-vendors-have-list-view] SELFTEST FAIL: Customers.tsx must require V3KpiTile + data-customers-v3-kpis");
+    process.exit(1);
+  }
+  const v3Good = 'import { V3KpiTile } from "../components/v3/V3KpiTile";\ndata-customers-v3-kpis="1"\nCustomersListView\nuseViewModePref\ndata-view-mode-toggle="customers"';
+  for (const m of customersEntry.markers) {
+    if (!hasMarker(v3Good, m)) {
+      console.error(`[verify-customers-vendors-have-list-view] SELFTEST FAIL: good fixture missing ${m}`);
+      process.exit(1);
+    }
+  }
+  const v3Bad = v3Good.replace(/V3KpiTile/g, "LegacyKpi").replace(/data-customers-v3-kpis/g, "data-customers-legacy");
+  if (hasMarker(v3Bad, "V3KpiTile") || hasMarker(v3Bad, "data-customers-v3-kpis")) {
+    console.error("[verify-customers-vendors-have-list-view] SELFTEST FAIL: V3 strip removal should fail markers");
+    process.exit(1);
+  }
+  console.log(`[verify-customers-vendors-have-list-view] SELFTEST PASS (${cases.length}/${cases.length} + V3)`);
   process.exit(0);
 }
 

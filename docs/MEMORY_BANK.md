@@ -226,8 +226,23 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   overage secondary strip via `V3KpiTile`; Relay import in `V3Panel`. Click-through navigate kept.
 - **Guard piggyback:** `verify-fuel-home-dashboard-wired.mjs` (step 1002 ≡2 EVEN Cursor) asserts
   V3KpiTile + data-fuel-v3-kpis + no DrillKpiCard. No new EVEN claim.
-- **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards (history/compliance/
-  planner/fraud detail as boards land) · design-system sweep · Chrome proof. Full DONE not claimed.
+- **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards · Customers/Vendors
+  boards · design-system sweep · Chrome proof. Full DONE not claimed.
+
+### Active Architectural Decisions — Customers home V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getCustomerRosterCounts` / with-transactions roster +
+  `listAllInvoices(has_balance:true)` + `openByCustomerId` (void-excluded via
+  `invoiceOpenCentsForDisplay` / ACCT-F5027). No new A/R endpoint.
+- **V3 board chrome:** six home KPIs via `V3KpiTile` + `data-customers-v3-kpis` — With transactions ·
+  In the book · Open invoices · Billed · A/R open · Collected. Collected = billed − open on the
+  open-balance invoice set (board note: $0 until Banking → Receive payment applies deposits).
+  "—" when invoices query errors. Click-through: roster KPIs set `listTab`; money KPIs → invoices
+  `has_balance=true`.
+- **Guard piggyback:** `verify-customers-vendors-have-list-view.mjs` (step 12346 ≡2 EVEN Cursor)
+  asserts V3KpiTile + data-customers-v3-kpis on Customers.tsx. No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards · Vendors home V3 ·
+  Driver Profile boards · design-system sweep · Chrome proof. Full DONE not claimed.
 
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
