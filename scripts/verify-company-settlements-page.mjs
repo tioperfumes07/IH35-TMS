@@ -84,6 +84,20 @@ function collectFailures({ pageSrc, manifestSrc, apiSrc, sidebarSrc }) {
     failures.push("page does not render a ParityTable");
   }
 
+  // 5b. ROUND 443.250 V3 board chrome — V3KpiTile strip + V3Panel (no DrillKpiCard)
+  if (!/\bV3KpiTile\b/.test(pageSrc)) {
+    failures.push("page does not render V3KpiTile (ROUND 443.250 Company V3 KPI strip)");
+  }
+  if (!/data-company-settlements-v3-kpis="1"/.test(pageSrc)) {
+    failures.push('page missing data-company-settlements-v3-kpis="1" marker');
+  }
+  if (!/\bV3Panel\b/.test(pageSrc)) {
+    failures.push("page does not wrap the list in V3Panel (ROUND 443.250 Company V3)");
+  }
+  if (/\bDrillKpiCard\b/.test(pageSrc)) {
+    failures.push("page still uses DrillKpiCard — Company V3 requires V3KpiTile");
+  }
+
   // 6. .ldt-* palette
   if (!/ldt-/.test(pageSrc)) {
     failures.push("page does not use the .ldt-* palette (styles/tokens-load-detail.css)");
@@ -151,6 +165,21 @@ function selftest() {
     {
       name: "sidebar Company Settlements repointed away from the real page",
       apply: (s) => ({ ...s, sidebarSrc: s.sidebarSrc.split(ROUTE_PATH).join("/reports/trip-profitability") }),
+    },
+    {
+      name: "V3KpiTile removed from page",
+      apply: (s) => ({ ...s, pageSrc: s.pageSrc.replace(/V3KpiTile/g, "LegacyKpi") }),
+    },
+    {
+      name: "data-company-settlements-v3-kpis marker removed",
+      apply: (s) => ({
+        ...s,
+        pageSrc: s.pageSrc.replace(/data-company-settlements-v3-kpis="1"/g, 'data-company-settlements-v3-kpis="0"'),
+      }),
+    },
+    {
+      name: "V3Panel removed from page",
+      apply: (s) => ({ ...s, pageSrc: s.pageSrc.replace(/V3Panel/g, "PlainPanel") }),
     },
   ];
 

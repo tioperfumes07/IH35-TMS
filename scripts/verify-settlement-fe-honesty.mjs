@@ -56,9 +56,11 @@ export function run(overrides = {}) {
   );
   assert(
     companyPage.includes('data-testid="company-settlements-kpi-strip"') &&
-      companyPage.includes("DrillKpiCard") &&
-      companyPage.includes("netRevenue"),
-    "CompanySettlementsPage must render the REG-005 home KPI strip (company-settlements-kpi-strip) with DrillKpiCard + a real Net Revenue tile",
+      companyPage.includes("V3KpiTile") &&
+      companyPage.includes('data-company-settlements-v3-kpis="1"') &&
+      companyPage.includes("netRevenue") &&
+      !companyPage.includes("DrillKpiCard"),
+    "CompanySettlementsPage must render the REG-005 home KPI strip (company-settlements-kpi-strip) with V3KpiTile + data-company-settlements-v3-kpis + a real Net Revenue tile (no DrillKpiCard)",
     errors
   );
 
@@ -125,6 +127,17 @@ function selftest() {
     )
   ) {
     throw new Error("planted settlements week chart panel removal not detected");
+  }
+  // ROUND 443.250 Company — dropping Company V3KpiTile / marker must fail.
+  if (!run({ [COMPANY_REL]: companyBackup.replace(/V3KpiTile/g, "LegacyKpi") }).some((e) => e.includes("V3KpiTile"))) {
+    throw new Error("planted Company V3KpiTile removal not detected");
+  }
+  if (
+    !run({
+      [COMPANY_REL]: companyBackup.replace('data-company-settlements-v3-kpis="1"', 'data-company-settlements-v3-kpis="0"'),
+    }).some((e) => e.includes("data-company-settlements-v3-kpis"))
+  ) {
+    throw new Error("planted Company data-company-settlements-v3-kpis removal not detected");
   }
   console.log(`[verify-settlement-fe-honesty] SELFTEST PASS — kpiBaseQuery + REG-005 driver/company strip + V3 chrome mutations detected`);
 }

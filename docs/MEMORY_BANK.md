@@ -339,7 +339,22 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   V3Panel + data-settlements-tours-v3 + board titles + pill labels. Height uniform guard still owns
   `.ldt-btn` pills. No new EVEN claim.
 - **Still open under 443.250:** Settlements sub-boards (Company/Close/PreSettlements/Statement) ·
-  Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+  Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof. Company Settlements V3
+  shipped (below). Full DONE not claimed.
+
+### Active Architectural Decisions — Settlements Company V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `listCompanySettlements` + `getCompanySettlementReport` waterfall /
+  itemized-by-load. Open/Closed presentation filters still derived from list rows (no new query).
+  Dash-never-zero retained for voided / null net revenue.
+- **V3 board chrome:** four KPIs via `V3KpiTile` + `data-company-settlements-v3-kpis` (Settlements ·
+  Open · Closed · Net Revenue) with click-through status filter; list wrapped in `V3Panel` titled
+  **Company settlements** / subtitle revenue · costs · driver pay · margin per period. No DrillKpiCard.
+- **Guard piggyback:** `verify-company-settlements-page.mjs` (step 10518 ≡2 EVEN Cursor) +
+  `verify-settlement-fe-honesty.mjs` (step 14837) assert V3KpiTile + marker + V3Panel + no DrillKpiCard.
+  `SURFACE-BREACH-AUTHORIZED: CC-1` for those guard files. No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards (Close/PreSettlements/Statement) · Fuel
+  sub-boards · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
 
 
 
