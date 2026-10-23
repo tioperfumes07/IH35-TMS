@@ -22,6 +22,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+export const ALLOW_OFFLINE_SKIP =
+  "mixed guard: the static arm (S1–S3, the engine rules) always runs with no credential and fails closed; only the live row " +
+  "arm needs the gate's read-only credential and says LIVE NOT RUN without it";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-delivered-load-has-final-departure";
 const FILES = {
