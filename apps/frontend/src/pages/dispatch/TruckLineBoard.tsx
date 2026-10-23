@@ -32,6 +32,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { LOCKED_BORDER, LOCKED_TEXT_SECONDARY } from "../../design/locked-baseline-tokens";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import { loadStatusLabel } from "../../lib/load-status";
+import { properPersonOrPlaceName } from "../../lib/properDisplayText";
 import {
   getTruckLine,
   listLoadExceptionReasons,
@@ -611,7 +612,7 @@ function AvailableTruckTrack({
   onAssign,
 }: {
   row: TruckLineRow;
-  onAssign: (driverId: string, unitId: string | null) => void;
+  onAssign: (driverId: string | null, unitId: string | null) => void;
 }) {
   const a = row.available;
   if (!a) return null;
@@ -626,7 +627,7 @@ function AvailableTruckTrack({
 
       <div className="truck-line-ghost-rail absolute left-0 right-0 top-[41px] h-[3px]" />
       {V7_STATIONS.map((st, i) => (
-        <div key={i} className="absolute" style={{ left: `${pct(i)}%`, top: 0 }}>
+        <div key={i} className="absolute" style={{ left: `${pct(i)}%`, top: 0, zIndex: 6 }}>
           <div
             className="truck-line-ghost-node absolute rounded-full"
             style={{ top: 34, width: 17, height: 17, transform: "translateX(-50%)" }}
@@ -667,26 +668,26 @@ function AvailableTruckTrack({
         )}
       </div>
 
-      {a.driver_id ? (
-        <button
-          type="button"
-          className="absolute rounded-[13px] bg-[#16A34A] px-3 font-semibold text-white"
-          style={{ right: 4, top: 18, height: 26, fontSize: 12 }}
-          onClick={() => onAssign(a.driver_id as string, row.unit_id)}
-          data-testid={`truck-line-assign-${a.driver_id}`}
-        >
-          Assign a load →
-        </button>
-      ) : (
-        <span
-          className="absolute whitespace-nowrap text-[#6B7280]"
-          style={{ right: 4, top: 22, fontSize: 12 }}
-          data-testid={`truck-line-no-driver-${trackKey}`}
-          title="No driver on file for this unit"
-        >
-          No driver on file
-        </span>
-      )}
+      {/* LEAD 443.257-A (owner 10-22): EVERY available truck gets "Assign a load →" — a truck with no
+          driver on the row (T122/T124/T147, measured) used to get a dead-end label and no button. The
+          wizard opens with the truck preset; the driver is the usual one when there is history (a
+          suggestion, editable), or empty to choose in the wizard. Nothing is written from this screen. */}
+      <button
+        type="button"
+        className="absolute rounded-[13px] bg-[#16A34A] px-3 font-semibold text-white"
+        style={{ right: 4, top: 18, height: 26, fontSize: 12 }}
+        onClick={() => onAssign(a.driver_id ?? null, row.unit_id)}
+        data-testid={`truck-line-assign-unit-${trackKey}`}
+      >
+        Assign a load →
+      </button>
+      <span
+        className="absolute whitespace-nowrap text-[#6B7280]"
+        style={{ right: 4, top: 46, fontSize: 12 }}
+        data-testid={`truck-line-assign-note-${trackKey}`}
+      >
+        {a.driver_id && row.drivers[0]?.name ? `usual: ${properPersonOrPlaceName(row.drivers[0].name)}` : "no driver yet — choose in the wizard"}
+      </span>
 
       <span className="truck-line-v4-sub absolute whitespace-nowrap text-[#6B7280]" style={{ top: 64, left: 0 }}>
         parked at {formatLocationLabel({ city: a.parked_city, state: a.parked_state })} · waiting on dispatch
@@ -1001,7 +1002,7 @@ export function TruckLineBoard({
   // V10 (ROUND 18.6) — THE AVAILABLE TRUCK's "Assign a load →" pill opens the REAL assignment flow
   // (the same BookLoadModal every other Dispatch surface uses, prefilled by driver AND unit — a
   // dead button fails this box, per the Lead's own spec).
-  onAssignDriver: (driverId: string, unitId: string | null) => void;
+  onAssignDriver: (driverId: string | null, unitId: string | null) => void;
 }) {
   const qc = useQueryClient();
   const query = useQuery({
