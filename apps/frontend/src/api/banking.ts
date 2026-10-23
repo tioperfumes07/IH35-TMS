@@ -476,6 +476,46 @@ export function getBankingKpis(companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/banking/dashboard/kpis?${q(companyId)}`);
 }
 
+/** ROUND 443.267 board 3 — GET /api/v1/banking/money-map (MTD in/out + lines + pending per account). */
+export type MoneyMapOutflowGroup = {
+  group: string;
+  cents: number;
+  count: number;
+};
+
+export type MoneyMapAccount = {
+  bank_account_id: string;
+  account_name: string;
+  account_nickname: string | null;
+  institution_name: string | null;
+  tile_kind: string;
+  last_feed_at: string | null;
+  in_cents: number | string;
+  out_cents: number | string;
+  line_count: number;
+  pending_review_count: number;
+  outflow_groups: MoneyMapOutflowGroup[] | null;
+  uncategorized_out_cents: number | string;
+  uncategorized_out_count: number;
+};
+
+export type MoneyMapResponse = {
+  accounts: MoneyMapAccount[];
+  totals: {
+    in_cents: number;
+    out_cents: number;
+    line_count: number;
+    pending_review_count: number;
+  };
+};
+
+export function getMoneyMap(companyId: string, from?: string, to?: string) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  return apiRequest<MoneyMapResponse>(`/api/v1/banking/money-map?${params.toString()}`);
+}
+
 // GO-20 slice A — banking.reconciliation_drift_alerts (docs/lockdown/GO-20-EIGHT-FEATURES.txt).
 export type DriftAlert = {
   id: string;

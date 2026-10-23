@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -32,6 +32,15 @@ vi.mock("./components/BankingReportsTabContent", () => ({ BankingReportsTabConte
 vi.mock("./components/BankingPlaidConnectionsPanel", () => ({
   BankingPlaidConnectionsPanel: () => <div data-testid="plaid-connections" />,
 }));
+vi.mock("../../components/factoring/FactoringReservesSharedPanel", () => ({
+  FactoringReservesSharedPanel: () => <div data-testid="factoring-reserves-shared-stub" />,
+}));
+vi.mock("../../api/factoring-kpis", () => ({
+  getFactoringKpis: vi.fn().mockResolvedValue({ kpis: [] }),
+}));
+vi.mock("../../api/banking-kpis", () => ({
+  getBankingLedgerKpis: vi.fn().mockResolvedValue({ kpis: [] }),
+}));
 
 vi.mock("../../api/banking", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/banking")>();
@@ -46,6 +55,12 @@ vi.mock("../../api/banking", async (importOriginal) => {
     startReconciliationSession: vi.fn(),
     getEscrowDriverBalances: vi.fn().mockResolvedValue({ drivers: [] }),
     getFactoringVirtual: vi.fn().mockResolvedValue({ companies: [] }),
+    getMoneyMap: vi.fn().mockResolvedValue({
+      accounts: [] as bankingApi.MoneyMapAccount[],
+      totals: { in_cents: 0, out_cents: 0, line_count: 0, pending_review_count: 0 },
+    }),
+    getDriftAlerts: vi.fn().mockResolvedValue({ rows: [], total_count: 0 }),
+    getPlaidCompanyTransactions: vi.fn().mockResolvedValue({ transactions: [] }),
     getQboSyncQueueStats: vi.fn().mockResolvedValue({
       pending: 0,
       in_flight: 0,
@@ -73,196 +88,149 @@ function wrap(ui: ReactElement) {
   );
 }
 
-describe("BankingHomePage accounts summary", () => {
-  it("removes categorize band and keeps uncategorized KPI navigation", async () => {
-    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
-      total_cash: 1000,
-      dip_operating: 200,
-      dip_payroll: 300,
-      total_uncategorized: 2,
-      factoring_reserve: 50,
-      driver_escrow: 20,
+function stubHomeQueries() {
+  vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
+    total_cash: 1000,
+    dip_operating: 200,
+    dip_payroll: 300,
+    total_uncategorized: 2,
+    factoring_reserve: 50,
+    driver_escrow: 20,
+  });
+  vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
+  vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({
+    transactions: [],
+    meta: { uncategorized_count: 2 },
+  });
+  vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
+  vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
+  vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
+}
+
+describe("BankingHomePage — 443.267 board Home", () => {
+  it("mounts board-faithful Home: KPIs + Accounts + Drift + Latest lines (not C-64 Uncategorized strip)", async () => {
+    stubHomeQueries();
+    vi.mocked(bankingApi.getMoneyMap).mockResolvedValue({
+      accounts: [
+        {
+          bank_account_id: "acct-1",
+          account_name: "Operating",
+          account_nickname: "Operating",
+          institution_name: "Bank",
+          tile_kind: "real",
+          last_feed_at: "2026-10-22T12:00:00.000Z",
+          in_cents: 125000,
+          out_cents: 45000,
+          line_count: 12,
+          pending_review_count: 2,
+          outflow_groups: null,
+          uncategorized_out_cents: 0,
+          uncategorized_out_count: 0,
+        },
+      ],
+      totals: { in_cents: 125000, out_cents: 45000, line_count: 12, pending_review_count: 2 },
     });
+
+    render(wrap(<BankingHomePage />));
+
+    expect(await screen.findByTestId("banking-home-board")).toBeInTheDocument();
+    expect(screen.getByTestId("banking-home-board-kpis")).toBeInTheDocument();
+    expect(screen.getByTestId("banking-kpi-money-in")).toBeInTheDocument();
+    expect(screen.getByTestId("banking-kpi-lines-to-review")).toBeInTheDocument();
+    expect(screen.getByText(/Reconciliation drift/i)).toBeInTheDocument();
+    expect(screen.getByText(/Latest lines/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nothing is matched automatically/i)).toBeInTheDocument();
+    expect(screen.queryByTestId("banking-kpi-uncategorized")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Categorize · 2 unmatched bank transactions/i)).not.toBeInTheDocument();
+  });
+
+  it("renders Money in from money-map cents (dollars on the tile)", async () => {
+    stubHomeQueries();
+    vi.mocked(bankingApi.getMoneyMap).mockResolvedValue({
+      accounts: [
+        {
+          bank_account_id: "acct-1",
+          account_name: "Operating",
+          account_nickname: "Operating",
+          institution_name: "Bank",
+          tile_kind: "real",
+          last_feed_at: null,
+          in_cents: 17393202,
+          out_cents: 0,
+          line_count: 1,
+          pending_review_count: 0,
+          outflow_groups: null,
+          uncategorized_out_cents: 0,
+          uncategorized_out_count: 0,
+        },
+      ],
+      totals: { in_cents: 17393202, out_cents: 0, line_count: 1, pending_review_count: 0 },
+    });
+
+    render(wrap(<BankingHomePage />));
+
+    const tile = await screen.findByTestId("banking-kpi-money-in");
+    await waitFor(() => {
+      expect(tile).toHaveTextContent(/\$173,932\.02/);
+    });
+    expect(tile).not.toHaveTextContent(/\$1,739\.32/);
+  });
+
+  it("lists money-map accounts on Home Accounts section", async () => {
+    stubHomeQueries();
     vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({
       tiles: [
         {
-          id: "tile-1",
+          id: "acct-3500",
           operating_company_id: "company-1",
-          display_name: "Operating Account",
-          account_type: "bank",
+          display_name: "Business Checking",
+          account_type: "depository",
           tag: "",
           tile_kind: "real",
-          current_balance: 1000,
-          uncategorized_count: 2,
+          current_balance: 5000,
+          uncategorized_count: 0,
           color_tag: "",
           is_relay: false,
           display_order: 1,
-          last_txn_date: "2026-05-18",
+          last_txn_date: "2026-10-22",
         },
       ],
     });
-    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({
-      transactions: [
-        {
-          id: "tx-1",
-          transaction_date: "2026-05-17T00:00:00.000Z",
-          description: "ONLINE PAYMENT - THANK YOU",
-          amount_cents: -4550,
-        },
-      ],
-      meta: { uncategorized_count: 2 },
-    });
-    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
-    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
-    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
-
-    render(wrap(<BankingHomePage />));
-
-    expect(await screen.findByText("Uncategorized")).toBeInTheDocument();
-    expect(screen.queryByText(/Categorize · 2 unmatched bank transactions/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Uncategorized/i })).toBeInTheDocument();
-    expect(screen.queryByText("2026-05-17T00:00:00.000Z")).not.toBeInTheDocument();
-    expect(screen.queryByText("ONLINE PAYMENT - THANK YOU")).not.toBeInTheDocument();
-  });
-
-  // BANK-F01 / AUDIT row 2 — Cash posting KPI renders API dollars and matches tile-scale balances.
-  // After #4011 the KPI payload is already dollars (authoritativeTotalCash / 100); do not expect cents.
-  it("renders the cash KPI in dollars from the API dollar payload", async () => {
-    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
-      // TRANSP prod authoritative total (2026-08-02): −17,393,202 cents → −173,932.02 dollars.
-      total_cash: -173932.02,
-      dip_operating: 0,
-      dip_payroll: 0,
-      total_uncategorized: 0,
-      factoring_reserve: 0,
-      driver_escrow: 0,
-    });
-    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
-    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
-    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
-    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
-    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
-
-    render(wrap(<BankingHomePage />));
-
-    expect(await screen.findByTitle("-$173,932.02")).toBeInTheDocument();
-    // Stale #3997 double-convert would show −$1,739.32; cents-as-dollars would show −$17,393,202.00.
-    expect(screen.queryByTitle("-$1,739.32")).not.toBeInTheDocument();
-    expect(screen.queryByTitle("-$17,393,202.00")).not.toBeInTheDocument();
-  });
-
-  it("shows real bank accounts from plaid feed when tile list is empty", async () => {
-    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
-      total_cash: 1000,
-      dip_operating: 0,
-      dip_payroll: 0,
-      total_uncategorized: 0,
-      factoring_reserve: 0,
-      driver_escrow: 0,
-    });
-    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
-    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
-    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
-    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
-    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({
+    vi.mocked(bankingApi.getMoneyMap).mockResolvedValue({
       accounts: [
         {
-          id: "acct-5007",
-          operating_company_id: "company-1",
-          institution_name: "Amex",
-          account_name: "Business Platinum Card",
-          account_mask: "5007",
-          account_type: "credit",
-          current_balance_cents: 123400,
-          available_balance_cents: 123400,
-          currency_code: "USD",
-          sync_status: "active",
-          is_active: true,
-          last_synced_at: null,
-        },
-        {
-          id: "acct-3500",
-          operating_company_id: "company-1",
-          institution_name: "Bank",
+          bank_account_id: "acct-3500",
           account_name: "Business Checking",
-          account_mask: "3500",
-          account_type: "depository",
-          current_balance_cents: 500000,
-          available_balance_cents: 500000,
-          currency_code: "USD",
-          sync_status: "active",
-          is_active: true,
-          last_synced_at: null,
+          account_nickname: "Business Checking",
+          institution_name: "Bank",
+          tile_kind: "real",
+          last_feed_at: "2026-10-22T12:00:00.000Z",
+          in_cents: 500000,
+          out_cents: 10000,
+          line_count: 8,
+          pending_review_count: 1,
+          outflow_groups: null,
+          uncategorized_out_cents: 0,
+          uncategorized_out_count: 0,
         },
       ],
+      totals: { in_cents: 500000, out_cents: 10000, line_count: 8, pending_review_count: 1 },
     });
 
     render(wrap(<BankingHomePage />));
 
-    expect(await screen.findByText("Business Platinum Card ••••5007")).toBeInTheDocument();
-    expect(screen.getByText("Business Checking ••••3500")).toBeInTheDocument();
+    expect(await screen.findByText("Business Checking")).toBeInTheDocument();
     expect(screen.queryByText("No accounts yet.")).not.toBeInTheDocument();
-  });
-
-  it("shows Driver escrow KPI with driver count (C-64 Home board)", async () => {
-    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
-      total_cash: 1000,
-      dip_operating: 200,
-      dip_payroll: 300,
-      total_uncategorized: 0,
-      factoring_reserve: 50,
-      driver_escrow: 20,
-      drivers_with_escrow_balance: 5,
-      active_drivers: 50,
-    });
-    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
-    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
-    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
-    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
-    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
-    vi.mocked(bankingApi.getEscrowDriverBalances).mockResolvedValue({ drivers: [] });
-    vi.mocked(bankingApi.getFactoringVirtual).mockResolvedValue({ companies: [] });
-    vi.mocked(bankingApi.getQboSyncQueueStats).mockResolvedValue({
-      pending: 0,
-      in_flight: 0,
-      synced: 0,
-      failed: 0,
-      blocked: 0,
-      average_sync_ms: 0,
-      last_successful_sync_at: null,
-    });
-
-    render(wrap(<BankingHomePage />));
-
-    expect(await screen.findByTestId("banking-kpi-driver-escrow")).toBeInTheDocument();
-    expect(screen.getByTestId("banking-kpi-driver-escrow")).toHaveTextContent(/driver/i);
-    expect(screen.queryByText("Active drivers")).not.toBeInTheDocument();
   });
 });
 
 describe("DISP-F6XXX — Record Deposit reaches Cash Deposit (undeposited funds -> bank)", () => {
   it('"+ Record Deposit" opens RecordTransferModal defaulted to cash_deposit', async () => {
-    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
-      total_cash: 0,
-      dip_operating: 0,
-      dip_payroll: 0,
-      total_uncategorized: 0,
-      factoring_reserve: 0,
-      driver_escrow: 0,
-      drivers_with_escrow_balance: 0,
-      active_drivers: 0,
-    });
-    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
-    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
-    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
-    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
-    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
+    stubHomeQueries();
 
     render(wrap(<BankingHomePage />));
 
     expect(screen.queryByTestId("record-transfer-modal-stub")).not.toBeInTheDocument();
-    // ROUND-20.8 B1 — "+ Record Deposit" now lives inside the "+ New" grouped menu, not a flat
-    // header button.
     await userEvent.click(await screen.findByTestId("banking-new-menu-trigger"));
     await userEvent.click(await screen.findByTestId("banking-new-menu-item-record-deposit"));
     const stub = await screen.findByTestId("record-transfer-modal-stub");
@@ -271,26 +239,8 @@ describe("DISP-F6XXX — Record Deposit reaches Cash Deposit (undeposited funds 
 });
 
 describe("BANK-F02 — Record Transfer trigger reachable from the + New menu", () => {
-  // verify-bank-record-transfer-trigger-wired.mjs — ROUND-20.8 B1/B2 folded the standalone
-  // "+ Record Transfer" button into this "+ New" grouped menu; the trigger must keep a stable,
-  // dedicated testid (not the generic banking-new-menu-item-<key> pattern) and must still open
-  // TransferModal from every Banking tab, not just Transactions.
   it("opens TransferModal via the dedicated banking-home-record-transfer trigger in the + New menu", async () => {
-    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
-      total_cash: 0,
-      dip_operating: 0,
-      dip_payroll: 0,
-      total_uncategorized: 0,
-      factoring_reserve: 0,
-      driver_escrow: 0,
-      drivers_with_escrow_balance: 0,
-      active_drivers: 0,
-    });
-    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
-    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
-    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
-    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
-    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
+    stubHomeQueries();
 
     render(wrap(<BankingHomePage />));
 
