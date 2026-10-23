@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const FILES = {
   landing: "apps/frontend/src/pages/insurance/InsuranceLanding.tsx",
+  board: "apps/frontend/src/pages/insurance/components/InsuranceHomeBoard.tsx",
   api: "apps/frontend/src/api/insurance.ts",
   route: "apps/backend/src/insurance/summary.routes.ts",
   index: "apps/backend/src/index.ts",
@@ -12,14 +13,23 @@ const FILES = {
   fleetSql: "apps/backend/src/insurance/fleet-covered.shared.ts",
 };
 const CHECKS = [
-  ["landing:summary-client", "landing", /getInsuranceSummary/],
+  // ROUND 443.267 — Landing mounts InsuranceHomeBoard (board-faithful Home).
+  ["landing:board-mount", "landing", /InsuranceHomeBoard/],
+  ["landing:summary-client", "board", /getInsuranceSummary/],
+  ["landing:kpi-active", "board", /Active policies/],
+  ["landing:kpi-premium", "board", /Annual premium/],
+  ["landing:kpi-renewal", "board", /Renewal/],
+  ["landing:kpi-claims", "board", /Open claims/],
+  ["landing:kpi-gaps", "board", /Coverage gaps/],
+  ["landing:policy-year", "board", /Policy year/],
+  ["landing:premium-by-coverage", "board", /Premium by coverage/],
   ["api:summary-path", "api", /\/api\/v1\/insurance\/summary/],
   ["route:registered-get", "route", /app\.get\("\/api\/v1\/insurance\/summary"/],
   ["index:route-mounted", "index", /registerInsuranceSummaryRoutes\(app\)/],
   ["fleet:api-client", "api", /getInsuranceFleetCovered/],
   ["fleet:registered-get", "route", /app\.get\("\/api\/v1\/insurance\/fleet-covered"/],
   ["fleet:route-mounted", "tab", /path="fleet-covered" element=\{<FleetCoveredPage/],
-  ["fleet:landing-drill", "landing", /to="\/safety\/insurance\/fleet-covered"/],
+  ["fleet:landing-drill", "board", /to="\/safety\/insurance\/fleet-covered"/],
   ["fleet:parity-table", "fleet", /<ParityTable/],
   ["fleet:stable-storage", "fleet", /storageKey="insurance-fleet-covered"/],
   ["fleet:tiv-source", "fleetSql", /MAX\(pu\.insured_value_cents\) FILTER \(WHERE p\.id IS NOT NULL\)/],
@@ -61,5 +71,5 @@ else {
     console.error(`verify-insurance-dashboard-routes-registered FAIL:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
     process.exit(1);
   }
-  console.log("verify-insurance-dashboard-routes-registered PASS — landing→API→GET route→server mount");
+  console.log("verify-insurance-dashboard-routes-registered PASS — landing→board→API→GET route→server mount");
 }

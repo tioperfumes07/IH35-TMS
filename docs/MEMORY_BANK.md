@@ -194,6 +194,21 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   → board) · `verify-factoring-outstanding-liability-honest-label` ·
   `verify-reserve-tracker-outstanding-liability-not-double-scaled` · `verify-fact-s01-home-surface`.
 
+### Active Architectural Decisions — Insurance home board (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Insurance.dc.html` (+ `.png`). Not a V3
+  reskin of the old DrillKpiCard Landing — `InsuranceLanding` mounts `InsuranceHomeBoard`: KPI
+  strip (Active policies / Annual premium / Renewal(+days) / Open claims / Coverage gaps) →
+  Policy year timeline + Premium by coverage → “Per truck per month fills from Fleet Covered.”
+  Lawsuits stay on the InsuranceTab nav (Rule 07); COI company-wide list still absent (sr-only
+  wave-a honesty string retained).
+- **Engines:** `getInsuranceSummary` · `listInsurancePolicies(status=active)` ·
+  `listInsuranceTypeCatalog`. Annual premium + Renewal(+days) derived from active policies (summary
+  lacks those fields). Coverage gaps = `summary.coverage_gap_count`. Policy/carrier names are
+  EntityLinks (`insurance_policy` · `vendor`). Dates MM/DD/YYYY; money `formatUsdCents`.
+- **Guard retargeted:** `verify-insurance-dashboard-routes-registered` — Landing mounts board;
+  board carries getInsuranceSummary + board KPI/section labels + Fleet Covered drill.
+
 ### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared
@@ -1200,9 +1215,9 @@ settlement deductions · $757.25 never hit the bank). Match engine = settlement-
 
 ## Next Immediate Milestones
 
-0. **ROUND 443.267 board order (Cursor):** Unexpected ✔ · Accounting home ✔ · Banking home (this PR) →
-   Factoring → Insurance → Legal → Reports → Reports-Viewer-TrialBalance → re-do CashFlow/Settlements/Fuel
-   to boards (not chrome-only). One PR per board; bus sha each merge.
+0. **ROUND 443.267 board order (Cursor):** Unexpected ✔ · Accounting ✔ · Banking ✔ · Factoring ✔ ·
+   Insurance home (this PR) → Legal → Reports → Reports-Viewer-TrialBalance → re-do
+   CashFlow/Settlements/Fuel to boards (not chrome-only). One PR per board; bus sha each merge.
 1. **Rebuild orchestration (17→21):** data-driven from the two signed-doc CSVs. Reverse mis-grouped
    S-136xx via the reversal engine → create the 8 missing driver bills at signed amounts → build 21
    fresh doc-settlements → add exact lines (pay, reimb, deduction, −$25 escrow/load, −$10 admin,
