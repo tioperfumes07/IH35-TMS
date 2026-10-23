@@ -533,6 +533,19 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** remaining Fuel tabs (Planner chrome / Settings / Loves) · Driver
   Profile · design-system sweep · Chrome proof. Full DONE not claimed.
 
+### Active Architectural Decisions — Fuel Settings V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getFuelPlannerSettings` / `updateFuelPlannerSettings` PATCH (company /
+  generation / body lifecycle). No recommendation math change.
+- **V3 board chrome (Settings tab):** identity `V3KpiTile` strip Max miles / shift · Off-highway ·
+  Backwards · Overfill % (`data-fuel-settings-v3-kpis`) from the **saved** settings row (not the
+  draft). `V3Panel` **Planner settings** (`fuel-settings-v3-panel`) wraps the editable form.
+- **Guard piggyback:** `verify-fuel-planner-settings-company-lifecycle.mjs` (step 16969 ≡1 CC-1) —
+  V3 markers + selftest mutations (lifecycle asserts retained). SURFACE-BREACH for CC-1 guard.
+  No new EVEN claim.
+- **Still open under 443.250:** remaining Fuel tabs (Planner chrome / Loves) · Driver Profile ·
+  design-system sweep · Chrome proof. Full DONE not claimed.
+
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
 - **Option 2 (owner):** backfill papers an RPL facility from existing bank categorizations via

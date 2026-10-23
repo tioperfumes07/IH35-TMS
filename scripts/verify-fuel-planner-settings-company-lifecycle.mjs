@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/**
+ * FUEL-F6654 — planner settings company/generation/body lifecycle.
+ * ROUND 443.250 — also asserts Settings V3 KPI strip + V3Panel (chrome only).
+ */
 /** @matrix-built {"modules":["fuel"],"cols":["connectivity"],"leaves":["settings"],"task":"FUEL-F6654-PLANNER-SETTINGS-COMPANY-LIFECYCLE","vertical":"column-wave"} */
 import fs from "node:fs";
 
@@ -19,6 +23,19 @@ function inspect(text, backend = backendSource) {
   need(/mutation\.mutate\(\{\s*companyId,\s*generation: lifecycleGenerationRef\.current,\s*body: \{[\s\S]*max_miles_per_shift:[\s\S]*max_off_highway_miles:[\s\S]*max_backwards_miles:[\s\S]*overfill_threshold_pct:[\s\S]*expensive_states: \[\.\.\.expensiveStates\]/.test(settingsBlock), "UI does not snapshot complete planner settings intent");
   need(/expensive_states: z\.array\([\s\S]{0,100}\)\.max\(50\)\.optional\(\)/.test(backend) && !/expensive_states:[^\n]*\.min\(1\)/.test(backend), "backend rejects an honestly cleared expensive-states list");
   need(/if \(body\.data\.expensive_states !== undefined\)/.test(backend), "backend does not distinguish an empty submitted list from an omitted field");
+  // ROUND 443.250 Settings V3 chrome
+  need(
+    settingsBlock.includes("data-fuel-settings-v3-kpis") && settingsBlock.includes("V3KpiTile"),
+    "PlannerSettingsForm: ROUND 443.250 must ship V3KpiTile strip (data-fuel-settings-v3-kpis)",
+  );
+  need(
+    settingsBlock.includes("fuel-settings-v3-panel") && settingsBlock.includes("V3Panel"),
+    "PlannerSettingsForm: ROUND 443.250 must wrap form in V3Panel (fuel-settings-v3-panel)",
+  );
+  need(
+    settingsBlock.includes("Max miles / shift") && settingsBlock.includes("Overfill %"),
+    "PlannerSettingsForm: V3 KPI strip must include Max miles / shift + Overfill %",
+  );
   return failures;
 }
 
@@ -41,7 +58,15 @@ if (process.argv.includes("--selftest")) {
   for (const [index, candidate] of backendMutations.entries()) {
     if (candidate === backendSource || inspect(source, candidate).length === 0) throw new Error(`backend mutation ${index + 1} escaped`);
   }
-  console.log(`verify-fuel-planner-settings-company-lifecycle selftest PASS — ${mutations.length + backendMutations.length}/${mutations.length + backendMutations.length} planted defects red`);
+  const v3Mutations = [
+    source.replace(/data-fuel-settings-v3-kpis/g, "data-fuel-settings-gone"),
+    source.replace(/fuel-settings-v3-panel/g, "fuel-settings-gone-panel"),
+  ];
+  for (const [index, candidate] of v3Mutations.entries()) {
+    if (candidate === source || inspect(candidate).length === 0) throw new Error(`V3 mutation ${index + 1} escaped`);
+  }
+  const planted = mutations.length + backendMutations.length + v3Mutations.length;
+  console.log(`verify-fuel-planner-settings-company-lifecycle selftest PASS — ${planted}/${planted} planted defects red`);
   process.exit(0);
 }
 

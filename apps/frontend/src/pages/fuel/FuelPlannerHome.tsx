@@ -938,48 +938,86 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
     numbers.some(([, v]) => !(Number(v) > 0)) || Number(overfillPct) > 100;
 
   return (
-    <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
-      <h3 className="text-xs font-semibold text-gray-900">Planner settings</h3>
-      <p className="mt-1 text-xs text-gray-500">Routing limits used when generating fuel-stop recommendations.</p>
-      <div className="mt-3 grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
-        {numbers.map(([label, value, setter]) => (
-          <label key={label} className="flex flex-col gap-1">
-            <span className="font-semibold text-gray-600">{label}</span>
-            <input
-              type="number"
-              min={1}
-              value={value}
-              onChange={(e) => setter(e.target.value)}
-              className="rounded-sm border border-gray-300 px-2 py-1"
-            />
-          </label>
-        ))}
-        <div className="flex flex-col gap-1 md:col-span-2">
-          <span className="font-semibold text-gray-600">Expensive states</span>
-          <ExpensiveStatesMultiselect companyId={companyId} value={expensiveStates} onChange={setExpensiveStates} />
+    <div className="space-y-3" data-testid="fuel-settings-panel">
+      {/* ROUND 443.250 Settings V3 — same saved getFuelPlannerSettings fields as pre-V3 form. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="fuel-settings-v3-kpi-strip"
+        data-fuel-settings-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="Max miles / shift"
+          value={String(settings.max_miles_per_shift ?? 720)}
+          sub="saved limit"
+          testId="fuel-settings-kpi-miles"
+        />
+        <V3KpiTile
+          label="Off-highway miles"
+          value={String(settings.max_off_highway_miles ?? 5)}
+          sub="saved limit"
+          testId="fuel-settings-kpi-offhighway"
+        />
+        <V3KpiTile
+          label="Backwards miles"
+          value={String(settings.max_backwards_miles ?? 5)}
+          sub="saved limit"
+          testId="fuel-settings-kpi-backwards"
+        />
+        <V3KpiTile
+          label="Overfill %"
+          value={String(settings.overfill_threshold_pct ?? 95)}
+          sub="saved threshold"
+          testId="fuel-settings-kpi-overfill"
+        />
+      </div>
+
+      <V3Panel
+        title="Planner settings"
+        subtitle="Routing limits used when generating fuel-stop recommendations"
+        testId="fuel-settings-v3-panel"
+      >
+        <div className="px-3 py-3 text-xs text-gray-700">
+          <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
+            {numbers.map(([label, value, setter]) => (
+              <label key={label} className="flex flex-col gap-1">
+                <span className="font-semibold text-gray-600">{label}</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={value}
+                  onChange={(e) => setter(e.target.value)}
+                  className="rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+            ))}
+            <div className="flex flex-col gap-1 md:col-span-2">
+              <span className="font-semibold text-gray-600">Expensive states</span>
+              <ExpensiveStatesMultiselect companyId={companyId} value={expensiveStates} onChange={setExpensiveStates} />
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              disabled={invalid || mutation.isPending}
+              onClick={() => mutation.mutate({
+                companyId,
+                generation: lifecycleGenerationRef.current,
+                body: {
+                  max_miles_per_shift: Number(maxMilesPerShift),
+                  max_off_highway_miles: Number(maxOffHighway),
+                  max_backwards_miles: Number(maxBackwards),
+                  overfill_threshold_pct: Number(overfillPct),
+                  expensive_states: [...expensiveStates],
+                },
+              })}
+              className="rounded-sm bg-[#0F1219] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {mutation.isPending ? "Saving…" : "Save settings"}
+            </button>
+            {invalid ? <span className="text-xs text-red-700">All limits must be &gt; 0; overfill % ≤ 100.</span> : null}
+          </div>
         </div>
-      </div>
-      <div className="mt-3 flex items-center gap-3">
-        <button
-          type="button"
-          disabled={invalid || mutation.isPending}
-          onClick={() => mutation.mutate({
-            companyId,
-            generation: lifecycleGenerationRef.current,
-            body: {
-              max_miles_per_shift: Number(maxMilesPerShift),
-              max_off_highway_miles: Number(maxOffHighway),
-              max_backwards_miles: Number(maxBackwards),
-              overfill_threshold_pct: Number(overfillPct),
-              expensive_states: [...expensiveStates],
-            },
-          })}
-          className="rounded-sm bg-[#0F1219] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
-        >
-          {mutation.isPending ? "Saving…" : "Save settings"}
-        </button>
-        {invalid ? <span className="text-xs text-red-700">All limits must be &gt; 0; overfill % ≤ 100.</span> : null}
-      </div>
-    </section>
+      </V3Panel>
+    </div>
   );
 }
