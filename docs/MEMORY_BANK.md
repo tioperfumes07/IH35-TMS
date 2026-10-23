@@ -356,6 +356,24 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** Settlements sub-boards (Close/PreSettlements/Statement) · Fuel
   sub-boards · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
 
+### Active Architectural Decisions — Settlements Close V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `listOpenPreSettlementsByDriver` · `getPreSettlementForDriver` ·
+  `closeSettlementPayRun` / `settleAndPay` · debt summary · PaymentMethodPicker · Draft JE preview.
+  Maker≠checker + CLOSE_ROLES gates unchanged. No GL / posting math change.
+- **V3 board chrome (Settlements-Close.dc.html):** Result strip via `V3KpiTile` +
+  `data-settlement-close-v3-kpis` (Open drivers · Gross · Deductions · Escrow · Advances recovered ·
+  Net to driver) — money from the same settlement/line totals already on the page; "—" until a
+  driver settlement is loaded. Presentation-only 7-step strip (`data-settlement-close-v3-steps`:
+  Driver → Loads & miles → Gross → Deductions → Escrow → Advances → Net & pay) highlights step 1
+  or 7; it does **not** rewrite Close into a multi-step wizard. Form wrapped in `V3Panel`
+  **Settlement close**.
+- **Guard piggyback:** `verify-settlements-qbo-chrome-surfaces.mjs` (step 3424 ≡0 EVEN Cursor)
+  asserts V3KpiTile marker + step strip + V3Panel. No new EVEN claim. `verify-settlement-close-posts-payrun`
+  (CC-1 ≡1) untouched.
+- **Still open under 443.250:** Settlements sub-boards (PreSettlements/Statement) · Fuel
+  sub-boards · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+
 
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
