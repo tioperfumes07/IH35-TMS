@@ -12,6 +12,8 @@
  *   R3  it reads the whole roster in one call (limit ≥ the roster; no silent 200 truncation per status);
  *   R4  labels go through formatPersonName (proper case — never ALL CAPS, never an id as a name);
  *   R5  (443.257-A item 3) Book Load ranks the list: usual driver of the truck, free drivers, then "On load ####".
+ *   R6  (443.266-A) entityLabel person-cases PEOPLE only (driver / user): "JUAN PEREZ" → "Juan Perez", while an
+ *       organization (customer / vendor / broker …) renders as entered — "ACME" stays "ACME".
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -42,6 +44,20 @@ export function audit(src) {
 }
 
 const src = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+const LABEL_FILE = "apps/frontend/src/lib/entity-label.ts";
+const labelSrc = fs.readFileSync(path.join(ROOT, LABEL_FILE), "utf8");
+/** R6 — evaluates the PERSON_NOUNS set literally: only driver / user may be person-cased. */
+export function casingFailures(l) {
+  const m = l.match(/const PERSON_NOUNS = new Set\(\[([^\]]*)\]\)/);
+  if (!m) return ["R6: entity-label.ts has no PERSON_NOUNS set (people-only casing)"];
+  const nouns = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort();
+  const f = [];
+  if (!nouns.includes("driver") || !nouns.includes("user")) f.push(`R6: driver / user names are not proper-cased ("JUAN PEREZ" must become "Juan Perez")`);
+  const orgs = nouns.filter((n) => !["driver", "user"].includes(n));
+  if (orgs.length) f.push(`R6: organization names are person-cased ("ACME" would become "Acme"): ${orgs.join(", ")}`);
+  if (!/if \(PERSON_NOUNS\.has\(String\(noun\)\.trim\(\)\.toLowerCase\(\)\)\) \{\s*return formatPersonName\(s\);/.test(l)) f.push("R6: entityLabel does not gate formatPersonName on PERSON_NOUNS");
+  return f;
+}
 const EQUIP = "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx";
 const equip = fs.readFileSync(path.join(ROOT, EQUIP), "utf8");
 export function rankingFailures(e) {
@@ -58,6 +74,8 @@ if (process.argv.includes("--selftest")) {
     ["a 200-row page FAILS", plant("          limit: 1000,", "          limit: 200,")],
     ["raw ALL-CAPS labels FAIL", plant("label: entityLabel(formatPersonName(", "label: entityLabel((")],
     ["an unranked Book Load driver list FAILS", rankingFailures(equip.replace("decorateOptions={decorateDriverOptions}", "")).length > 0],
+    ["org acronym person-cased (ACME → Acme) FAILS", casingFailures(labelSrc.replace('new Set(["driver", "user"])', 'new Set(["driver", "user", "customer"])')).length > 0],
+    ["driver ALL CAPS left as-is (JUAN PEREZ) FAILS", casingFailures(labelSrc.replace('new Set(["driver", "user"])', 'new Set(["user"])')).length > 0],
   ];
   let bad = 0;
   for (const [n, ok] of cases) {
@@ -68,10 +86,10 @@ if (process.argv.includes("--selftest")) {
   process.exit(bad ? 1 : 0);
 }
 
-const failures = [...audit(src), ...rankingFailures(equip)];
+const failures = [...audit(src), ...rankingFailures(equip), ...casingFailures(labelSrc)];
 if (failures.length) {
   console.error(`verify-book-load-driver-picker-lists-every-active-driver: FAIL — ${failures.length}`);
   for (const x of failures) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log("verify-book-load-driver-picker-lists-every-active-driver: OK — every recorded Active driver is selectable, proper case (R1–R4)");
+console.log("verify-book-load-driver-picker-lists-every-active-driver: OK — every recorded Active driver is selectable, proper case, people-only casing (R1–R6)");

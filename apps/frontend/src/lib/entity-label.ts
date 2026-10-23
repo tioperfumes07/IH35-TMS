@@ -40,18 +40,10 @@ const UUID_SHAPE_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Nouns whose resolved labels are people or companies — display via formatPersonName. */
-const PERSON_OR_ORG_NOUNS = new Set([
-  "driver",
-  "customer",
-  "vendor",
-  "user",
-  "broker",
-  "factor",
-  "carrier",
-  "contact",
-  "payee",
-  "employee",
-]);
+// LEAD 443.266-A — only PEOPLE are proper-cased (drivers and app users arrive ALL CAPS from Samsara / payroll).
+// Customer, vendor, broker, factor, carrier … are ORGANIZATIONS: their names render exactly as entered, so an
+// acronym like "ACME" or "USMCA" never becomes "Acme" / "Usmca" (0512ef14cd person-cased every kind).
+const PERSON_NOUNS = new Set(["driver", "user"]);
 
 /**
  * ACCT-F6284: a string that parses as a JSON object/array is internal data, never a display name.
@@ -81,7 +73,7 @@ export function entityLabel(
   if (name != null) {
     const s = String(name).trim();
     if (s !== "" && !UUID_SHAPE_RE.test(s) && !looksLikeSerializedJson(s)) {
-      if (PERSON_OR_ORG_NOUNS.has(String(noun).trim().toLowerCase())) {
+      if (PERSON_NOUNS.has(String(noun).trim().toLowerCase())) {
         return formatPersonName(s);
       }
       return s;
