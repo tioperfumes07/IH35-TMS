@@ -6,16 +6,20 @@
  * Engine unchanged: getEscrowDriverBalances + getEscrowDriverTimeline.
  */
 import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom"; // Link: register source → settlement/JE
+import { Link, useNavigate, useParams } from "react-router-dom"; // Link: register source → settlement/JE
 import { useQuery } from "@tanstack/react-query";
 import { getEscrowDriverBalances, getEscrowDriverTimeline } from "../../api/banking";
+import { getDriverEscrowTarget } from "../../api/driverFinance";
+import { Button } from "../../components/Button";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { formatUsdTable } from "../../lib/money";
+import { formatUsdCents, formatUsdTable } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
+import { addDaysIso } from "../../lib/businessDate";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
 import { V3 } from "../../design/v3-tokens";
 
@@ -45,9 +49,11 @@ function labelType(raw: string | null): string {
 }
 
 export function EscrowRegisterPage() {
+  const navigate = useNavigate();
   const { driverId = "" } = useParams<{ driverId: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const releaseEscrowHref = `/accounting/escrow?holder_id=${encodeURIComponent(driverId)}`;
 
   const balQ = useQuery({
     queryKey: ["escrow-register-bal", companyId, driverId],
@@ -63,7 +69,46 @@ export function EscrowRegisterPage() {
   const driver = (balQ.data?.drivers ?? []).find((d) => d.driver_id === driverId);
   const driverName = formatDisplayName(driver?.driver_name ?? "Driver");
   const held = Number(driver?.escrow_balance ?? 0);
+  const heldCents = Math.round(held * 100);
   const heldDisplay = balQ.isError ? "—" : formatUsdTable(held);
+
+  const targetQ = useQuery({
+    queryKey: ["escrow-register-target", companyId, driverId, heldCents],
+    queryFn: () => getDriverEscrowTarget(driverId, companyId, heldCents),
+    enabled: Boolean(companyId && driverId && !balQ.isError),
+  });
+
+  const lastSettlementAt = useMemo(() => {
+    const timeline = tlQ.data?.timeline ?? [];
+    let max = "";
+    for (const t of timeline) {
+      if (!t.settlement_id) continue;
+      const at = String(t.created_at ?? "");
+      if (at && at.localeCompare(max) > 0) max = at;
+    }
+    return max || null;
+  }, [tlQ.data?.timeline]);
+
+  const releaseEligibleDate = useMemo(() => {
+    if (!lastSettlementAt) return null;
+    const isoDay = lastSettlementAt.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDay)) return null;
+    return addDaysIso(isoDay, ESCROW_RELEASE_WINDOW_DAYS);
+  }, [lastSettlementAt]);
+
+  const targetDisplay = useMemo(() => {
+    if (targetQ.isError || balQ.isError) return "—";
+    if (targetQ.isPending) return "—";
+    const cents = targetQ.data?.escrow_target_cents;
+    if (cents == null) return "—";
+    return formatUsdCents(cents);
+  }, [targetQ.isError, targetQ.isPending, targetQ.data?.escrow_target_cents, balQ.isError]);
+
+  const releaseDisplay = useMemo(() => {
+    if (tlQ.isError || balQ.isError) return "—";
+    if (!releaseEligibleDate) return "—";
+    return formatDateUS(releaseEligibleDate) || "—";
+  }, [tlQ.isError, balQ.isError, releaseEligibleDate]);
 
   const rows: RegisterRow[] = useMemo(() => {
     const timeline = [...(tlQ.data?.timeline ?? [])].sort((a, b) =>
@@ -159,9 +204,48 @@ export function EscrowRegisterPage() {
 
   return (
     <SettlementsModuleShell showBack backLabel="Escrow" backTo="/driver-finance/escrow">
-      <div className="space-y-3 px-1" data-testid="escrow-register-page">
-        {/* ROUND 443.250 Settlements EscrowRegister V3 — Driver / Held / Target / Release.
-            Live getEscrowDriverBalances; Target/Release are board policy chrome (no schedule feed). */}
+      <div
+        className="space-y-3 px-1"
+        data-testid="escrow-register-page"
+        data-settlements-escrow-register-rebuild="1"
+      >
+        <PageHeader
+          title="Driver Settlements"
+          subtitle="List + detail settlement workflow"
+          breadcrumb={["Driver Finance", "Escrow", driverName]}
+          actions={
+            <Button
+              size="sm"
+              data-testid="settlements-escrow-register-creator"
+              onClick={() => navigate("/driver-finance/settlements?creator=1")}
+            >
+              + Settlement Creator
+            </Button>
+          }
+        />
+
+        <div className="flex items-center gap-2 flex-wrap text-xs">
+          <Link to="/driver-finance/escrow" className="font-semibold" style={{ color: V3.link }}>
+            ← Escrow
+          </Link>
+          <span className="flex-1" />
+          <Button size="sm" variant="secondary" type="button">
+            Filters ▾
+          </Button>
+          <Button size="sm" variant="secondary" type="button" data-testid="escrow-register-export">
+            Export
+          </Button>
+          <Button
+            size="sm"
+            type="button"
+            data-testid="escrow-register-release"
+            onClick={() => navigate(releaseEscrowHref)}
+          >
+            Release escrow
+          </Button>
+        </div>
+
+        {/* ROUND 443.282 — Target from getDriverEscrowTarget; Release = last settlement + window. */}
         <div
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
           data-testid="escrow-register-kpi-strip"
@@ -181,13 +265,13 @@ export function EscrowRegisterPage() {
           />
           <V3KpiTile
             label="Target"
-            value="—"
+            value={targetDisplay}
             sub="per pay-rate template"
             testId="escrow-register-kpi-target"
           />
           <V3KpiTile
             label="Release"
-            value="—"
+            value={releaseDisplay}
             sub={`${ESCROW_RELEASE_WINDOW_DAYS} days after last settlement`}
             testId="escrow-register-kpi-release"
           />
@@ -211,6 +295,11 @@ export function EscrowRegisterPage() {
             serverViewKey={`settlements-escrow-register-${driverId}`}
             tableTestId="escrow-register-table"
             gearButtonTestId="escrow-register-column-gear"
+            toolbar={
+              <Link to="/accounting/escrow" className="font-semibold text-xs" style={{ color: V3.link }}>
+                View all →
+              </Link>
+            }
           />
         )}
         <p className="text-xs" style={{ color: V3.muted }}>
