@@ -107,6 +107,15 @@ const REQUIRED_FRONTEND_MARKERS = [
   ["ExpenseRolloverMenu", "expense rows must get a plain Roll over ▾ reason menu, not the income popup"],
   ["StopTrackingButton", "expense rows must get a separate Stop action, not the income popup"],
   ["adjustingRow && adjustingRowIsIncome", "AdjustPopover must be gated to income rows only"],
+  // ROUND 443.250 — Rolling Ledger V3 board (same design system as Home / Projected).
+  ["V3Panel", "443.250 Rolling Ledger V3 must wrap registers in shared V3Panel"],
+  ["V3Segmented", "443.250 Rolling Ledger V3 day-grid Day|Week control missing"],
+  ["V3_EXPENSE_GROUPS", "443.250 expense priority groups must reuse V3_EXPENSE_GROUPS"],
+  ['testId="rolling-ledger-income-panel"', "443.250 income V3Panel testId missing"],
+  ['testId="rolling-ledger-expense-panel"', "443.250 expense V3Panel testId missing"],
+  ['testId="rolling-ledger-carried-income-panel"', "443.250 carried-income V3Panel testId missing"],
+  ['testId="rolling-ledger-day-grid-panel"', "443.250 day-grid V3Panel testId missing"],
+  ['testId="rolling-ledger-day-grain"', "443.250 Day|Week grain testId missing"],
 ];
 
 // KPI tile spec — ROUND 443.250 supersedes the Load-Costs #F4F7FA/#C7D2DC hex with the single
@@ -297,6 +306,13 @@ function selftest() {
       mutate: () => ({
         ...good,
         frontend: good.frontend.replaceAll("ParityTable", "StrippedRawTable"),
+      }),
+    },
+    {
+      name: "V3Panel stripped from the tab (443.250 Rolling Ledger V3 board)",
+      mutate: () => ({
+        ...good,
+        frontend: good.frontend.replaceAll("V3Panel", "StrippedPanel"),
       }),
     },
     {
