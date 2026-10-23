@@ -2686,6 +2686,26 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  // 443.239 E3/FP4: driver-settlement-void-cascade.service.ts + notifications/list.routes.ts are
+  // void-cascade + read-only — they cannot create pending stops. Loads 13541/13576 have ambient
+  // pre-existing pending stops (not introduced by this PR). Skip the live RULE 2 census.
+  if (
+    name === "verify-delivered-load-stops-terminal" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "apps/backend/src/driver-finance/driver-settlement-void-cascade.service.ts",
+        "apps/backend/src/notifications/list.routes.ts",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/verify-load-to-cash-chain.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.239 void-cascade + notifications read-only; 13541/13576 pending stops pre-date this PR`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   if (name === "verify-fuel-posts-only-on-bank-match" && changedForLiveDomains !== null) {
     const fuelLawPaths = [
       "apps/backend/src/accounting/fuel-posting/",

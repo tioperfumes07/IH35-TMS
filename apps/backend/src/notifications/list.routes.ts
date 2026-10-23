@@ -58,7 +58,8 @@ export async function registerNotificationListRoutes(app: FastifyInstance) {
         const res = await client.query(
           `
             SELECT id::text, type, severity, title, body, action_link, entity_type, entity_id::text,
-                   source_block, read_at, dismissed_at, created_at
+                   source_block, read_at, dismissed_at, created_at,
+                   COUNT(*) OVER () AS total_count
             FROM notifications.user_notifications
             WHERE ${filters.join(" AND ")}
             ORDER BY created_at DESC
@@ -69,7 +70,9 @@ export async function registerNotificationListRoutes(app: FastifyInstance) {
         );
         return res.rows;
       });
-      return reply.send({ notifications: rows });
+      const total = Number((rows as Array<Record<string, unknown>>)[0]?.total_count ?? 0);
+      const notifications = rows.map(({ total_count: _tc, ...r }: Record<string, unknown>) => r);
+      return reply.send({ notifications, total });
     } catch (error) {
       // LEAD 443.219 G-ERR (audit F23a): never a 2xx from a catch — a failed read is an error, not "no notifications".
       req.log.error({ err: error }, "notifications list failed");

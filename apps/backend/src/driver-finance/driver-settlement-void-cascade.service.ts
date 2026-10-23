@@ -6,6 +6,8 @@
 // reversal's own restore, already in both callers' graph via reverseSettlementBillPaymentInClientTx).
 import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
 import { restoreSettlementDeductionsInClientTx } from "../accounting/settlement-posting/settlement-posting.service.js";
+import { transitionLoadStatus } from "../dispatch/load-transition.service.js";
+import { BILLING_REVERSE_EDGES } from "../dispatch/load-state-machine.js";
 
 type CascadeClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -24,6 +26,8 @@ export type DriverSettlementVoidCascadeResult = {
   loads_released: string[];
   /** 443.210R — company settlement(s) voided alongside this driver settlement (void-not-delete). */
   company_settlements_voided: string[];
+  /** 443.239 E3 — loads whose billing-tail status was stepped back through BILLING_REVERSE_EDGES on settlement void. */
+  loads_status_reverted: Array<{ loadId: string; from: string; to: string }>;
 };
 
 /**
@@ -182,6 +186,61 @@ export async function completeDriverSettlementVoidCascadeInClientTx(
     [settlementId, operatingCompanyId]
   );
 
+  // 9. 443.239 E3 — step back each released load's billing-tail status (invoiced/paid/closed) through the
+  //    ONE status machine (BILLING_REVERSE_EDGES) to the delivery-side status it held before this settlement's
+  //    billing run moved it. Mirrors invoice-void's billing_reverse path (invoices.routes.ts:1347) exactly:
+  //    recover the prior status from the WORM audit trail, validate against BILLING_REVERSE_EDGES, call the
+  //    ONE transitionLoadStatus writer, and record an audit event per load.
+  const BILLING_REVERT_SOURCES = new Set(["invoiced", "paid", "closed"]);
+  const FORBIDDEN_REVERT = new Set(["paid", "closed", "cancelled"]);
+  const loadsStatusReverted: Array<{ loadId: string; from: string; to: string }> = [];
+  for (const row of loadsReleased.rows ?? []) {
+    const curRes = await client.query<{ status: string }>(
+      `SELECT status::text AS status FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [row.id, operatingCompanyId]
+    );
+    const cur = curRes.rows[0];
+    if (!cur || !BILLING_REVERT_SOURCES.has(cur.status)) continue;
+    const historyRes = await client.query<{ old_status: string }>(
+      `SELECT old_data->>'status' AS old_status
+         FROM audit.row_changes
+        WHERE schema_name = 'mdata' AND table_name = 'loads' AND row_pk = $1
+          AND new_data->>'status' = $2
+        ORDER BY changed_at DESC LIMIT 1`,
+      [row.id, cur.status]
+    );
+    const allowedTargets: readonly string[] = BILLING_REVERSE_EDGES[cur.status] ?? [];
+    const historicalPrior = historyRes.rows[0]?.old_status ?? null;
+    const revertTo =
+      historicalPrior && !FORBIDDEN_REVERT.has(historicalPrior) && allowedTargets.includes(historicalPrior)
+        ? historicalPrior
+        : (allowedTargets[0] ?? null);
+    if (!revertTo) continue;
+    const transitioned = await transitionLoadStatus(client, {
+      operatingCompanyId, loadId: row.id, to: revertTo, kind: "billing_reverse",
+      writer: "settlement-void-cascade-e3", expectFrom: cur.status,
+    });
+    if (!transitioned) continue;
+    await client.query(
+      `SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, 'CC-1-443.239-E3')`,
+      [
+        "mdata.loads.status_reverted_on_settlement_void",
+        "warning",
+        JSON.stringify({
+          resource_type: "mdata.loads",
+          resource_id: row.id,
+          operating_company_id: operatingCompanyId,
+          from_status: cur.status,
+          to_status: revertTo,
+          settlement_id: settlementId,
+          reason,
+        }),
+        userId,
+      ]
+    );
+    loadsStatusReverted.push({ loadId: row.id, from: cur.status, to: revertTo });
+  }
+
   return {
     lines_voided: (lines.rows ?? []).map((r) => r.id),
     driver_bills_released: (bills.rows ?? []).map((r) => r.id),
@@ -192,5 +251,6 @@ export async function completeDriverSettlementVoidCascadeInClientTx(
     trip_closed: tripClosed,
     loads_released: (loadsReleased.rows ?? []).map((r) => r.id),
     company_settlements_voided: (companySettlementsVoided.rows ?? []).map((r) => r.id),
+    loads_status_reverted: loadsStatusReverted,
   };
 }
