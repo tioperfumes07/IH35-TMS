@@ -302,9 +302,9 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guard piggyback:** `verify-cash-advances-tabs-url-sync.mjs` (step 990 ≡2 EVEN Cursor) asserts
   V3KpiTile + data-cash-advances-v3-kpis + board labels + total_outstanding / pending_approval /
   advances_on_file. No new EVEN claim.
-- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Close/
-  PreSettlements/Statement) · Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof.
-  Deductions V3 shipped (below). Full DONE not claimed.
+- **Still open under 443.250:** Settlements sub-boards (Company/Close/PreSettlements/Statement) ·
+  Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof. Deductions + Open/Closed
+  tours V3 shipped. Full DONE not claimed.
 
 
 ### Active Architectural Decisions — Settlements Deductions V3 (Cursor, ROUND 443.250, 2026-10-23)
@@ -321,9 +321,25 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guard piggyback:** `verify-drivers-deductions-tab-distinct.mjs` (step 1012 ≡0 EVEN Cursor)
   asserts V3KpiTile + data-settlements-deductions-v3-kpis + board labels + engines + isDeductionsBoard
   gate. No new EVEN claim.
-- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Close/
-  PreSettlements/Statement) · Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof.
-  Full DONE not claimed.
+- **Still open under 443.250:** Settlements sub-boards (Company/Close/PreSettlements/Statement) ·
+  Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof. Open/Closed tours V3
+  shipped (below). Full DONE not claimed.
+
+### Active Architectural Decisions — Settlements Open/Closed tours V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** `listTours(companyId, "open"|"closed")` via `api/tourReadout` — same readout
+  as Load-costs Pre-Settlement / Settlement tabs. Verify & Post still `closeTour` gated on
+  `can_close`. No new endpoint; no GL change.
+- **V3 board chrome:** Open/Closed boards reuse Settlements home KPI strip (`data-settlements-v3-kpis`).
+  Register delta on `SettlementsToursRegister.tsx`: `data-settlements-tours-v3` + `V3Panel` titled
+  **Closed settlements** / **Open tours · pre-settlements**; pills labeled **Pre-Settlement (Open)** /
+  **Settlement (Closed)** (still `.ldt-btn` for 28px clickable scale). Closed column label **Ended**.
+  ParityTable + expand tabs retained.
+- **Guard piggyback:** `verify-settlements-module-one-readout.mjs` (step 3348 ≡0 EVEN Cursor) asserts
+  V3Panel + data-settlements-tours-v3 + board titles + pill labels. Height uniform guard still owns
+  `.ldt-btn` pills. No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards (Company/Close/PreSettlements/Statement) ·
+  Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
 
 
 
