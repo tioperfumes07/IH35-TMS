@@ -1,6 +1,7 @@
 /**
  * LEAD 443.243 — "Fuel questions" list (Fuel module tab + Load Costs surface).
  * ROUND 443.258-B (D016 D017): ParityTable = gear column chooser + sortable headers.
+ * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). listFuelAssignmentQuestions unchanged.
  */
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +14,8 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { V3Panel } from "../../../components/v3/V3Panel";
 import { formatMoneyCents } from "../../../lib/formatMoney";
 import { formatDate } from "../../../lib/formatDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
@@ -25,6 +28,12 @@ type Props = {
 
 // CLS-SILENT-CAP: the list fetches one page; CappedListNotice says so (with the server total) when there are more.
 const FUEL_QUESTIONS_PAGE = 100;
+
+function kpiValue(n: number | undefined, loading: boolean): string {
+  if (loading) return "…";
+  if (n == null) return "—";
+  return String(n);
+}
 
 export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
   const queryClient = useQueryClient();
@@ -43,6 +52,7 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
   });
 
   const rows = listQuery.data?.rows ?? [];
+  const total = listQuery.data?.total ?? 0;
 
   const columns = useMemo<Array<ParityColumn<FuelAssignmentQuestion>>>(
     () => [
@@ -133,27 +143,59 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="fuel-questions-panel">
-      {listQuery.isError ? (
-        <ListErrorBanner message={userFacingApiError(listQuery.error, "Could not load fuel questions")} />
-      ) : null}
+      {/* ROUND 443.250 Fuel Questions V3 — Open / This page / Page size from listFuelAssignmentQuestions. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="fuel-questions-v3-kpi-strip"
+        data-fuel-questions-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="Open questions"
+          value={kpiValue(listQuery.isPending ? undefined : total, listQuery.isPending)}
+          sub={loadId ? "open for this load" : "fills not 100% certain"}
+          tone={total > 0 ? "red" : "green"}
+          testId="fuel-questions-kpi-open"
+        />
+        <V3KpiTile
+          label="This page"
+          value={kpiValue(listQuery.isPending ? undefined : rows.length, listQuery.isPending)}
+          sub="rows on this request"
+          testId="fuel-questions-kpi-page"
+        />
+        <V3KpiTile
+          label="Page size"
+          value={String(FUEL_QUESTIONS_PAGE)}
+          sub="rows per request"
+          testId="fuel-questions-kpi-page-size"
+        />
+      </div>
 
-      <ParityTable
+      <V3Panel
         title="Fuel questions"
-        rows={rows}
-        columns={columns}
-        rowKey={(r) => r.id}
-        loading={listQuery.isLoading}
-        storageKey="fuel-assignment-questions"
-        emptyText="No open fuel assignment questions. When a fill is not 100% certain, it appears here."
-        tableTestId="fuel-questions-table"
-        density="compact"
-      />
-      <CappedListNotice
-        shown={rows.length}
-        limit={FUEL_QUESTIONS_PAGE}
-        total={listQuery.data?.total}
-        hint="Answer these first — the rest appear as they clear."
-      />
+        subtitle="When a fill is not 100% certain, it lands here for truck + load attribution"
+        testId="fuel-questions-v3-panel"
+      >
+        {listQuery.isError ? (
+          <ListErrorBanner message={userFacingApiError(listQuery.error, "Could not load fuel questions")} />
+        ) : null}
+
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(r) => r.id}
+          loading={listQuery.isLoading}
+          storageKey="fuel-assignment-questions"
+          emptyText="No open fuel assignment questions. When a fill is not 100% certain, it appears here."
+          tableTestId="fuel-questions-table"
+          density="compact"
+        />
+        <CappedListNotice
+          shown={rows.length}
+          limit={FUEL_QUESTIONS_PAGE}
+          total={listQuery.data?.total}
+          hint="Answer these first — the rest appear as they clear."
+        />
+      </V3Panel>
 
       <FuelAssignmentPopup
         open={active != null}

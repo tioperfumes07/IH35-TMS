@@ -110,6 +110,16 @@ export function collectProblems(sources) {
       problems.push(`${FILES.panel}: must list open questions`);
     }
   }
+  // ROUND 443.250 — Fuel Questions V3 board chrome (piggyback; engine unchanged).
+  if (!/data-fuel-questions-v3-kpis/.test(panel) || !/V3KpiTile/.test(panel)) {
+    problems.push(`${FILES.panel}: ROUND 443.250 must ship V3KpiTile strip (data-fuel-questions-v3-kpis)`);
+  }
+  if (!/fuel-questions-v3-panel/.test(panel) || !/V3Panel/.test(panel)) {
+    problems.push(`${FILES.panel}: ROUND 443.250 must wrap list in V3Panel (fuel-questions-v3-panel)`);
+  }
+  if (!/Open questions/.test(sources.panel)) {
+    problems.push(`${FILES.panel}: V3 KPI strip must include Open questions`);
+  }
 
   if (!/FuelQuestionsBadge/.test(loadCosts)) {
     problems.push(`${FILES.loadCosts}: must mount FuelQuestionsBadge`);
@@ -194,6 +204,20 @@ if (SELFTEST) {
       apply: (s) => ({
         ...s,
         tabs: s.tabs.replace(/Fuel questions/g, "Missing questions"),
+      }),
+    },
+    {
+      name: "drops Fuel Questions V3 KPI strip",
+      apply: (s) => ({
+        ...s,
+        panel: s.panel.replace(/data-fuel-questions-v3-kpis/g, "data-fuel-questions-gone"),
+      }),
+    },
+    {
+      name: "drops Fuel Questions V3Panel",
+      apply: (s) => ({
+        ...s,
+        panel: s.panel.replace(/fuel-questions-v3-panel/g, "fuel-questions-gone-panel"),
       }),
     },
   ];
