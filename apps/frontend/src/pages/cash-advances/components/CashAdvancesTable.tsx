@@ -36,26 +36,34 @@ function labelEnum(raw: unknown, fallback = "—"): string {
     fuel_card: "Fuel card",
     zelle: "Zelle",
     venmo: "Venmo",
+    direct_bank_transfer: "Bank transfer",
+    comdata: "Comdata",
+    comchek: "Comchek",
+    in_person_check: "Check",
   };
   if (map[s.toLowerCase()]) return map[s.toLowerCase()];
   return s.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function statusPill(status: string) {
-  if (status === "pending_approval") return "bg-[#F7F8FA] text-[#1F2A44]";
-  if (status === "approved") return "bg-[#F7F8FA] text-[#1F2A44]";
-  if (status === "disbursed") return "bg-[#F7F8FA] text-[#1F2A44]";
-  if (status === "failed") return "bg-red-100 text-red-700";
-  if (status === "reversed") return "bg-gray-100 text-gray-700";
-  return "bg-gray-100 text-gray-700";
+function formatPaid(raw: unknown): string {
+  const s = String(raw ?? "").trim();
+  if (!s) return "—";
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return s.slice(0, 10);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+/**
+ * ROUND 443.274-C — board Advances columns
+ * (Advance · Driver · Paid · Method · Amount · Outstanding · Recover on).
+ * ParityTable + Mark Disbursed engine kept (drawer + Action).
+ */
 export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoading = false }: Props) {
   const columns = useMemo<ParityColumn<CashAdvanceRow>[]>(
     () => [
       {
         key: "display_id",
-        label: "Display ID",
+        label: "Advance",
         sortable: true,
         sortValue: (row) => String(row.display_id ?? row.id ?? ""),
         render: (row) => (
@@ -87,18 +95,11 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
         },
       },
       {
-        key: "amount",
-        label: "Amount",
+        key: "disbursed_at",
+        label: "Paid",
         sortable: true,
-        sortValue: (row) => Number(row.amount ?? 0),
-        render: (row) => formatUsdTable(Number(row.amount ?? 0)),
-      },
-      {
-        key: "purpose",
-        label: "Purpose",
-        sortable: true,
-        sortValue: (row) => labelEnum(row.purpose),
-        render: (row) => labelEnum(row.purpose),
+        sortValue: (row) => String(row.disbursed_at ?? row.created_at ?? ""),
+        render: (row) => formatPaid(row.disbursed_at ?? row.created_at),
       },
       {
         key: "disbursement_method",
@@ -108,30 +109,36 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
         render: (row) => labelEnum(row.disbursement_method),
       },
       {
-        key: "disbursement_status",
-        label: "Disbursement Status",
+        key: "amount",
+        label: "Amount",
         sortable: true,
-        sortValue: (row) => labelEnum(row.disbursement_status, "Pending approval"),
-        render: (row) => {
-          const status = String(row.disbursement_status ?? "pending_approval");
-          return (
-            <span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{labelEnum(status)}</span>
-          );
-        },
+        sortValue: (row) => Number(row.amount ?? 0),
+        render: (row) => formatUsdTable(Number(row.amount ?? 0)),
       },
       {
         key: "outstanding_balance",
         label: "Outstanding",
+        render: (row) => formatUsdTable(Number(row.outstanding_balance ?? 0)),
         sortable: true,
         sortValue: (row) => Number(row.outstanding_balance ?? 0),
-        render: (row) => formatUsdTable(Number(row.outstanding_balance ?? 0)),
       },
       {
-        key: "created_at",
-        label: "Created",
+        key: "recover_on",
+        label: "Recover on",
         sortable: true,
-        sortValue: (row) => String(row.created_at ?? ""),
-        render: (row) => String(row.created_at ?? "").slice(0, 10) || "—",
+        sortValue: (row) => String(row.load_display_id ?? row.load_id ?? ""),
+        render: (row) => {
+          const loadLabel = row.load_display_id != null ? String(row.load_display_id) : null;
+          if (!row.load_id && !loadLabel) return "—";
+          return (
+            <EntityLink
+              kind="load"
+              id={row.load_id ? String(row.load_id) : null}
+              label={entityLabel(loadLabel, row.load_id ? String(row.load_id) : null, "Load")}
+              onClick={(event) => event.stopPropagation()}
+            />
+          );
+        },
       },
       {
         key: "action",

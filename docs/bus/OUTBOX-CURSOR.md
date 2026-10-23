@@ -64,10 +64,17 @@ PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha m
 - GUARD: verify-settlements-qbo-chrome-surfaces (+4 Company asserts)
 - NEXT: 443.274-C Settlements-Deductions → CashAdvances → Escrow → EscrowRegister → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
 
-## 2026-10-23 America/Chicago · SETL-F443274-DEDUCTIONS Settlements-Deductions board SHIPPING
-- BRANCH: `cursor/443274-settlements-deductions-c89b` · tip base `e8a9f02bc7` (Company live)
-- DELTA: SettlementsDeductionsKpiRow → board KPIs (Deductions this week · Open liabilities · Drivers w/ debt · Scheduled) + 2-col By type (Escrow/Advances/Fines/Damages + Total) | Schedule (Driver·Type·Per settlement·Remaining·Next) + footnote + "+ New deduction"; engines listSettlements / listSettlementDeductions / getActiveLiabilities / getLiabilitiesKpis / listAutoDeductionPolicies; Damages separate from Fines
-- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0 · verify-drivers-deductions-tab-distinct PASS + --selftest PASS
+## 2026-10-23 America/Chicago · SETL-F443274-DEDUCTIONS Settlements-Deductions board DONE
+- PR: #27355 · squash `5444d6ccf3`
+- RENDER ih35-tms-web: **live** deploy id `dep-dbdt0u0473hc73bgqd9g` (commit 5444d6ccf3)
+- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0
 - GUARD: verify-drivers-deductions-tab-distinct (+board 2col / Escrow·Advances·Fines·Damages / New deduction asserts)
-- NEXT: PR → merge → live deploy id → Settlements-CashAdvances
+- NEXT: 443.274-C Settlements-CashAdvances → Escrow → EscrowRegister → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
+
+## 2026-10-23 America/Chicago · SETL-F443274-CASHADVANCES Settlements-CashAdvances board SHIPPING
+- BRANCH: `cursor/443274-settlements-cashadvances-c89b` · tip base `6b9b2dc0c1` (Deductions live)
+- DELTA: CashAdvancesKpiRow → board KPIs (Advances on file · Requests awaiting owner · Outstanding to recover · Recovered this period) + 1fr|2fr Requests|Advances panels + footnote; Requests cols Driver·Asked·Amount·Policy·Action; Advances cols Advance·Driver·Paid·Method·Amount·Outstanding·Recover on; engines getCashAdvancesKpis / listCashAdvances / cashAdvanceRequestsOfficeApi.listPending; ParityTable + NavyPageSubNav retained for guards
+- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0
+- GUARD: verify-cash-advances-tabs-url-sync --selftest PASS (8 + V3 KPI + 443.274-C board markers)
+- NEXT: tsc -b + money-pr-local-gate → PR → merge → live deploy id → Settlements-Escrow
 
