@@ -95,6 +95,27 @@ function analyze(reg, page) {
   if (!/Advances \(Zelle\)/.test(page) || !/Escrow/.test(page) || !/Fines/.test(page))
     errors.push("SettlementsPage deductions panel must split Escrow / Advances (Zelle) / Fines");
 
+  // ROUND 443.274-C — Settlements-Open board (Ready dots · Waiting on · Settlement label · no "Open" status word).
+  if (!/function ReadyDots\b/.test(reg) || !/data-testid="setl-tour-ready-dots"/.test(reg))
+    errors.push("SettlementsToursRegister must render ReadyDots (data-testid setl-tour-ready-dots) for Open Ready column");
+  if (!/label:\s*"Ready"/.test(reg) || !/testId:\s*"setl-tour-col-ready"/.test(reg))
+    errors.push('SettlementsToursRegister open view must keep Ready column (label "Ready", testId setl-tour-col-ready)');
+  if (!/label:\s*"Waiting on"/.test(reg) || !/testId:\s*"setl-tour-col-open-items"/.test(reg))
+    errors.push('SettlementsToursRegister open view must label Waiting on (testId setl-tour-col-open-items kept)');
+  if (!/function waitingOnReason\b/.test(reg) || !/close_blockers\[0\]/.test(reg))
+    errors.push("Waiting on must be this row's first close_blockers entry only (waitingOnReason)");
+  if (!/label:\s*"Settlement"/.test(reg) || /label:\s*"Settlement\/Tour"/.test(reg))
+    errors.push('SettlementsToursRegister Settlement column label must be "Settlement" (not Settlement/Tour)');
+  // Prefer P-series + refuse Open/PENDING/S-counter (measured board defect: Settlement showed "Open").
+  if (!reg.includes("/^P-\\d+/i"))
+    errors.push("tourLabel must accept P-series display_id (/^P-\\d+/i)");
+  if (!/toLowerCase\(\)\s*!==\s*"open"/.test(reg))
+    errors.push("tourLabel must refuse status-word Open");
+  if (!/settlements-open-board-footnote/.test(reg))
+    errors.push("SettlementsToursRegister open view must render settlements-open-board-footnote");
+  if (!/label:\s*"Practical mi"/.test(reg) || !/label:\s*"Real mi"/.test(reg))
+    errors.push('SettlementsToursRegister mile columns must use board labels "Practical mi" / "Real mi"');
+
   return errors;
 }
 
@@ -129,6 +150,11 @@ if (process.argv.includes("--selftest")) {
     ["drop deductions grain", [reg, page.replace(/id:\s*"deductions"/g, 'id: "net_x"')]],
     ["drop listSettlementDeductions", [reg, page.replace(/listSettlementDeductions/g, "listNope")]],
     ["drop Advances label", [reg, page.replace(/Advances \(Zelle\)/g, "Advances")]],
+    ["drop ReadyDots testid", [reg.replace(/setl-tour-ready-dots/g, "setl-tour-ready-gone"), page]],
+    ["drop Waiting on label", [reg.replace(/label:\s*"Waiting on"/g, 'label: "Open items"'), page]],
+    ["restore Settlement/Tour label", [reg.replace(/label:\s*"Settlement"/, 'label: "Settlement/Tour"'), page]],
+    ["drop open footnote", [reg.replace(/settlements-open-board-footnote/g, "settlements-open-legacy"), page]],
+    ["drop Practical mi label", [reg.replace(/label:\s*"Practical mi"/g, 'label: "Practical miles"'), page]],
   ];
   let caught = 0;
   for (const [label, [r, p]] of mutations) {
