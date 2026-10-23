@@ -431,7 +431,6 @@ const RecurringBillList = React.lazy(() => import("../pages/accounting/bills/Rec
 const RecurringBillCreate = React.lazy(() => import("../pages/accounting/bills/RecurringBillCreate").then((m) => ({ default: m.RecurringBillCreate })));
 const ExpenseCreatePage = React.lazy(() => import("../pages/accounting/ExpenseCreatePage").then((m) => ({ default: m.ExpenseCreatePage })));
 const ExpensesListPage = React.lazy(() => import("../pages/accounting/ExpensesListPage").then((m) => ({ default: m.ExpensesListPage })));
-const UnexpectedExpensesPage = React.lazy(() => import("../pages/accounting/UnexpectedExpensesPage").then((m) => ({ default: m.UnexpectedExpensesPage })));
 const ExpenseDetailPage = React.lazy(() => import("../pages/accounting/ExpenseDetailPage").then((m) => ({ default: m.ExpenseDetailPage })));
 const BillsPage = React.lazy(() => import("../pages/accounting/BillsPage").then((m) => ({ default: m.BillsPage })));
 const VendorBalancesPage = React.lazy(() => import("../pages/accounting/VendorBalancesPage").then((m) => ({ default: m.VendorBalancesPage })));
@@ -4884,14 +4883,6 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ExpenseCreatePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/accounting/unexpected"
-          element={
-            <ProtectedRoute>
-              <UnexpectedExpensesPage />
             </ProtectedRoute>
           }
         />

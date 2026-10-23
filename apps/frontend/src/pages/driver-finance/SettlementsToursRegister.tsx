@@ -17,7 +17,6 @@ import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
 import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
-import { DriverPhoto, UnitPhoto } from "../../components/v3/EntityPhoto";
 
 // ROUND 443.252 (owner 10-22 6:10 PM CT): Settlement/Tour column shows the number as a statement
 // link — AlwaysTrack doc when closed (5851…), else the P-series display_id (P-0115) while open.
@@ -49,16 +48,13 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
     cellClass: "whitespace-nowrap",
     sortValue: (r) => r.driver_name ?? "",
     render: (r) => (
-      <span className="inline-flex max-w-[220px] items-center gap-1.5">
-        <DriverPhoto name={formatDisplayName(r.driver_name)} size={24} />
-        <EntityLinkOrTombstone
-          kind="driver"
-          id={r.driver_id}
-          name={formatDisplayName(r.driver_name)}
-          noun="Driver"
-          className="block max-w-[180px] truncate"
-        />
-      </span>
+      <EntityLinkOrTombstone
+        kind="driver"
+        id={r.driver_id}
+        name={formatDisplayName(r.driver_name)}
+        noun="Driver"
+        className="block max-w-[200px] truncate"
+      />
     ),
   },
   {
@@ -66,16 +62,11 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
     label: "Unit",
     testId: "setl-tour-col-unit",
     sortable: true,
-    minWidth: 72,
-    maxWidth: 88,
+    minWidth: 56,
+    maxWidth: 64,
     className: "whitespace-nowrap",
     sortValue: (r) => r.unit_number ?? "",
-    render: (r) => (
-      <span className="inline-flex items-center gap-1">
-        <UnitPhoto unitLabel={r.unit_number} size={22} />
-        <EntityLinkOrTombstone kind="unit" id={r.unit_id} name={r.unit_number} noun="Unit" />
-      </span>
-    ),
+    render: (r) => <EntityLinkOrTombstone kind="unit" id={r.unit_id} name={r.unit_number} noun="Unit" />,
   },
   // NEW-10 (owner 2026-09-07): "date started" + "delivery date" of the ORIGINAL load that created the
   // (re)settlement. Distinct from the tour-level "Started" (trip-open) stamp below — these are the

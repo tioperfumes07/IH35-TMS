@@ -15,7 +15,6 @@ import { CreateAdvanceModal } from "./components/CreateAdvanceModal";
 import { MarkDisbursedModal } from "./components/MarkDisbursedModal";
 import { ListErrorState } from "../../components/ListErrorState";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
-import { SettlementsCashAdvancesV3 } from "../../components/v3";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -182,8 +181,6 @@ export function CashAdvancesHomePage() {
         onTabChange={(id) => setTab(id as CashAdvancesTab)}
         itemIds={SUBNAV.map(([, value]) => value)}
       />
-
-      {companyId ? <SettlementsCashAdvancesV3 companyId={companyId} /> : null}
 
       {kpisQuery.isError ? (
         <ListErrorState

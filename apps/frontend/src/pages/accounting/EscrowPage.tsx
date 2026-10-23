@@ -15,7 +15,6 @@ import { settlementsEscrowRegisterHref } from "../driver-finance/settlementsSubn
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
-import { SettlementsEscrowV3 } from "../../components/v3";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 
 type EscrowViewTab = "accounts" | "pending";
@@ -222,8 +221,6 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
 
   const body = (
       <div className="space-y-4 p-4" data-testid={settlementsMount ? "settlements-escrow-body" : "accounting-escrow-body"}>
-      {/* ROUND 443.252 — owner-approved Settlements Escrow V3 board (ADD above legacy register). */}
-      {companyId ? <SettlementsEscrowV3 companyId={companyId} /> : null}
       <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs w-fit">
         {(["accounts", "pending"] as const).map((tab) => (
           <button

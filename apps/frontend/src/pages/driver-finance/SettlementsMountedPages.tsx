@@ -11,7 +11,7 @@ import { SettlementsModuleShell } from "./SettlementsModuleShell";
 export function SettlementsDriversPage() {
   return (
     <SettlementsModuleShell>
-      <DriversPage initialSubnav="roster" hideModuleSubnav />
+      <DriversPage initialSubnav="roster" />
     </SettlementsModuleShell>
   );
 }
@@ -19,7 +19,7 @@ export function SettlementsDriversPage() {
 export function SettlementsProfilesPage() {
   return (
     <SettlementsModuleShell>
-      <DriversPage initialSubnav="profiles" hideModuleSubnav />
+      <DriversPage initialSubnav="profiles" />
     </SettlementsModuleShell>
   );
 }
@@ -27,7 +27,7 @@ export function SettlementsProfilesPage() {
 export function SettlementsPreSettlementsPage() {
   return (
     <SettlementsModuleShell>
-      <DriversPage initialSubnav="pre_settlements" hideModuleSubnav />
+      <DriversPage initialSubnav="pre_settlements" />
     </SettlementsModuleShell>
   );
 }
@@ -67,7 +67,7 @@ export function SettlementsEscrowPage() {
 export function SettlementsPayRateTemplatesPage() {
   return (
     <SettlementsModuleShell>
-      <DriversPage initialSubnav="pay_rate_templates" hideModuleSubnav />
+      <DriversPage initialSubnav="pay_rate_templates" />
     </SettlementsModuleShell>
   );
 }
@@ -75,7 +75,6 @@ export function SettlementsPayRateTemplatesPage() {
 export function SettlementsDeductionsPage() {
   return (
     <SettlementsModuleShell>
-      <DriversPage initialSubnav="deductions" hideModuleSubnav />
-    </SettlementsModuleShell>
+      <DriversPage initialSubnav="deductions" />    </SettlementsModuleShell>
   );
 }
