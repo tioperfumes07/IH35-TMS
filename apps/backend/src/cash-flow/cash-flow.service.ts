@@ -44,7 +44,7 @@ import {
 
 import { liveExpense, liveBill, openDriverBill, driverBillAmountKnown, notVoided } from "../accounting/live-document-predicates.sql.js";
 import { cashFlowReceiptsSql } from "./cash-flow-receipts.sql.js";
-import { cashFlowSettlementEligibilitySql } from "./cash-flow-obligations.sql.js";
+import { cashFlowSettlementEligibilitySql, driverApBillCarriedBySettlementSql } from "./cash-flow-obligations.sql.js";
 import { BILL_OPEN_BALANCE_SQL } from "../accounting/bills.service.js";
 import { openBill } from "../accounting/live-document-predicates.sql.js";
 import { loadServiceMembershipSql } from "../dispatch/load-service.js";
@@ -320,6 +320,7 @@ export async function getDailyPrediction(
     WHERE b.operating_company_id = $1::uuid
       AND b.due_date::date = $2::date
       AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
+      AND NOT ${driverApBillCarriedBySettlementSql("b")}
     ORDER BY v.vendor_name ASC NULLS LAST
     `,
     [operatingCompanyId, date]
@@ -574,6 +575,7 @@ async function buildSevenDayStrip(
             WHERE b.operating_company_id = $1::uuid
               AND b.due_date::date = $2::date
               AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
+              AND NOT ${driverApBillCarriedBySettlementSql("b")}
           ), 0)
           +
           COALESCE((
@@ -648,6 +650,7 @@ export async function getActualVsProjected(
     WHERE b.operating_company_id = $1::uuid
       AND b.due_date::date BETWEEN $2::date AND $3::date
       AND ${notVoidedSql("b")}
+      AND NOT ${driverApBillCarriedBySettlementSql("b")}
     GROUP BY b.due_date::date
     ORDER BY b.due_date::date
     `,
@@ -989,6 +992,8 @@ export async function getRollingLedgerRows(
     WHERE b.operating_company_id = $1::uuid
       AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
       AND b.bill_category IN ('vendor', 'driver')
+      -- LEAD 443.276: a driver A/P bill inside a closed settlement is carried by the settlement row (section 2).
+      AND NOT ${driverApBillCarriedBySettlementSql("b")}
     ORDER BY COALESCE(b.due_date, b.bill_date, $2::date) ASC
     `,
     [operatingCompanyId, today]
