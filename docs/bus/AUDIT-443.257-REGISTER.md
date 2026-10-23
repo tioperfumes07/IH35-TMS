@@ -84,6 +84,9 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | D061 | System | Transaction Health | Journal-entry and bill-payment labels | Raw UUIDs are visible display labels | N | pending: DOM | Human-readable display identifiers | Cursor |
 | D062 | System | Transaction Health | Wiring preview DR/CR | Currency values lack dollar signs | M | pending: DOM | Currency formatted $1,234.56 | Cursor |
 | D063 | Reports | Scheduled subscriptions | Add subscription timezone | Input measures 30.67px high | I | pending: measured DOM | Single-line inputs 32px | Cursor |
+| D064 | Accounting | Create Manual JE | Step 2 Lines | Header summary renders `Date: 2026-10-22`, while Step 1 correctly shows `10/22/2026` | D | inline: Manual JE Step 2 | Display dates consistently as MM/DD/YYYY | Cursor |
+| D065 | Accounting | Create Manual JE | Step 2 Lines | Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | V | inline: Manual JE Step 2 | Distinct aligned non-overlapping fields contained in the drawer | Cursor |
+| D066 | Banking | Home / Record Transfer | Drawer footer | Persistent alert stack renders above the open transfer drawer and obscures its bottom action area | V | inline: Record Transfer drawer | Alerts must not obscure drawer controls; close/cancel remains accessible | Cursor |
 
 ## Counts (observed defects, not application-wide totals)
 
@@ -117,6 +120,8 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | Total | 1 | 4 | 9 | 16 | 17 | 3 | 9 | 1 | 3 | 63 |
 
 ## Coverage ledger
+
+- Depth batch 10 (Accounting / Banking / Cash Flow, partial): Accounting Manual JE steps 1 and 2 opened then closed without save; Banking Inspect feedback and New menu inspected, Record Transfer drawer opened/closed without input or submission; Cash Flow Manual Daily Projections loaded and optional income fields expanded without creating lines, saving opening cash or pulling transactions. D064-D066 are observed UI defects, not financial reconciliation findings. Inline screenshots remain private. All other outstanding tabs and panels below remain owed.
 
 - Home: overview inspected, screenshot and timing captured; remaining drawers pending.
 - Fuel: Questions + Review, Cards + Assign drawer (cancelled), Expense mapping inspected. Other tabs and secondary drawers pending.
