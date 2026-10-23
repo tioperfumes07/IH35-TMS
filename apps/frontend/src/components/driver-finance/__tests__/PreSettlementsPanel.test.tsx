@@ -102,7 +102,8 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
     ] as SettlementListRow[];
 
     wrap(<PreSettlementsPanel rows={rows} loading={false} isError={false} />);
-    for (const header of ["Period Begin", "Period End", "Driver", "Load Number", "Settlement/Tour", "Loads so far", "Pay so far", "Status"]) {
+    // 443.274-C board columns first; Rule 07 keeps Period/Status as extras.
+    for (const header of ["Number", "Driver", "Unit", "Loads so far", "Pay so far", "Ready", "Waiting on", "Period Begin", "Period End", "Status"]) {
       expect(screen.getByRole("button", { name: new RegExp(`^${header}$`) })).toBeTruthy();
     }
 

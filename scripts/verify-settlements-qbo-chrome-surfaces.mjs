@@ -49,29 +49,30 @@ const CHECKS = [
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
     pattern: /data-settlement-close-v3-steps="1"[\s\S]*V3Panel|V3Panel[\s\S]*data-settlement-close-v3-steps="1"/,
   },
-  // ROUND 443.250 Settlements-PreSettlements.dc.html — V3 KPI strip + open panel + closes tour.
-  // Same listOpenPreSettlements / listSettlements KPI / getOpenDriverBills; chrome only.
+  // ROUND 443.274-C Settlements-PreSettlements.png — 6 KPI tiles + side-by-side Open | What closes.
+  // Same listOpenPreSettlements / listSettlements KPI / getOpenDriverBills; chrome + board layout.
   {
-    name: "SettlementsPreSettlementsKpiRow V3KpiTile strip",
+    name: "SettlementsPreSettlementsKpiRow V3KpiTile strip (6 board tiles)",
     file: "apps/frontend/src/pages/drivers/SettlementsPreSettlementsKpiRow.tsx",
     pattern:
-      /V3KpiTile[\s\S]*data-settlements-presettle-v3-kpis="1"|data-settlements-presettle-v3-kpis="1"[\s\S]*V3KpiTile/,
+      /data-settlements-presettle-v3-kpis="1"[\s\S]*Total unpaid[\s\S]*This period[\s\S]*Driver pay \(period\)[\s\S]*Drivers w\/ debt[\s\S]*YTD settlements[\s\S]*Open driver bills/,
   },
   {
-    name: "SettlementsPreSettlementsKpiRow What closes a tour V3Panel",
+    name: "SettlementsPreSettlementsClosesPanel What closes a tour V3Panel",
     file: "apps/frontend/src/pages/drivers/SettlementsPreSettlementsKpiRow.tsx",
-    pattern: /What closes a tour[\s\S]*V3Panel|V3Panel[\s\S]*What closes a tour/,
+    pattern: /What closes a tour[\s\S]*V3Panel|V3Panel[\s\S]*What closes a tour|SettlementsPreSettlementsClosesPanel/,
   },
   {
-    name: "PreSettlementsPanel V3Panel open list",
+    name: "PreSettlementsPanel V3Panel open list + board columns",
     file: "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
-    pattern: /V3Panel[\s\S]*data-settlements-presettle-v3-panel="1"|data-settlements-presettle-v3-panel="1"[\s\S]*V3Panel/,
+    pattern:
+      /data-settlements-presettle-v3-panel="1"[\s\S]*label: "Number"[\s\S]*label: "Loads so far"[\s\S]*label: "Pay so far"|label: "Number"[\s\S]*QBO_MONEY_CELL_CLASS[\s\S]*data-settlements-presettle-v3-panel="1"/,
   },
   {
-    name: "Drivers.tsx mounts SettlementsPreSettlementsKpiRow on pre_settlements",
+    name: "Drivers.tsx mounts PreSettlements side-by-side board layout",
     file: "apps/frontend/src/pages/Drivers.tsx",
     pattern:
-      /subnavTab === "pre_settlements"[\s\S]*SettlementsPreSettlementsKpiRow[\s\S]*PreSettlementsPanel/,
+      /subnavTab === "pre_settlements"[\s\S]*SettlementsPreSettlementsKpiRow[\s\S]*settlements-presettle-v3-panels[\s\S]*PreSettlementsPanel[\s\S]*SettlementsPreSettlementsClosesPanel/,
   },
   // ROUND 443.274-C Settlements-Statement.dc.html — V3 identity strip + 2×2 board panels.
   // Same getSettlement / tour readout / SettlementKpiGrid (SETL-DETAIL-01); chrome only.

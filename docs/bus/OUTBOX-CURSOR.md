@@ -39,9 +39,14 @@ PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha m
 - GUARD: verify-settlements-module-one-readout --selftest 30/30
 - NEXT: 443.274-C Settlements-Statement → PreSettlements → … → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
 
-## 2026-10-23 America/Chicago · SETL-F443274-STATEMENT Settlements-Statement board SHIPPING
-- BRANCH: `cursor/443274-settlements-statement-c89b` · tip base `a37a271255`
-- DELTA: identity strip Company settlement EntityLink · Status Closed · paid · SettlementStatementBoardPanels 2×2 (Earnings / Deductions·net / Company side-by-side / Linked records)
-- GUARD: verify-settlements-qbo-chrome-surfaces (Statement checks retargeted)
-- NEXT: tsc -b + money-pr-local-gate → PR → merge → live deploy id → Settlements-PreSettlements
+## 2026-10-23 America/Chicago · SETL-F443274-STATEMENT Settlements-Statement board DONE
+- MERGE: #27347 squash `c758d20ded…` · RENDER ih35-tms-web live `dep-dbds300u01pc73dselsg`
+- NEXT was PreSettlements (this row)
+
+## 2026-10-23 America/Chicago · SETL-F443274-PRESETTLE Settlements-PreSettlements board SHIPPING
+- BRANCH: `cursor/443274-settlements-presettle-c89b` · tip base `origin/main` (443.271 MERGED `0538eea583` — pause lifted)
+- DELTA: 6 KPI tiles (Total unpaid / This period / Driver pay (period)+trend / Drivers w/ debt / YTD / Open driver bills) · side-by-side Open pre-settlements + What closes a tour · board columns Number·Driver·Unit·Loads so far·Pay so far·Ready·Waiting on (Unit/Ready/Waiting = "—" — not on SettlementListRow; 443.269-A tour gate unchanged) · QBO_MONEY_CELL_CLASS on Pay so far
+- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0 · vitest PreSettlementsPanel 7/7 · verify-settlements-qbo-chrome-surfaces PASS
+- GUARD: verify-settlements-qbo-chrome-surfaces (PreSettle board asserts)
+- NEXT: merge → Render web live deploy id → Settlements-Close → Company → Deductions → CashAdvances → Escrow → EscrowRegister → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
 

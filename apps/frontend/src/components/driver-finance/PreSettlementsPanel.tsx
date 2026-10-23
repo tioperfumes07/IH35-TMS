@@ -8,6 +8,7 @@ import { V3 } from "../../design/v3-tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
+import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
 
 function formatMoney(value: number) {
   return formatUsd(value);
@@ -26,51 +27,54 @@ type Props = {
   title?: string;
   showTotal?: boolean;
   emptyText?: string;
+  onViewAll?: () => void;
 };
 
-function renderLoadLinks(settlement: SettlementListRow) {
-  const link = settlement.load_links?.[0];
-  if (link) {
-    return <EntityLink kind="load" id={link.id} label={entityLabel(link.label, link.id, "Load")} title="First linked load; open the settlement to see every load" />;
+function renderLoadPills(settlement: SettlementListRow) {
+  const links = settlement.load_links ?? [];
+  if (links.length === 0) {
+    // E11-D4 — "never blank": named gap, not a silent dash.
+    return <span className="text-xs italic text-[#4B5563]">No load assigned</span>;
   }
-  // E11-D4 (Lead ruling, 2026-09-23) — "never blank": a settlement ready for review/payment with
-  // no load link is a real, named state (e.g. a non-load-bookended settlement model), not an
-  // absence to render silently.
-  return <span className="text-xs italic text-[#4B5563]">No load assigned</span>;
-}
-
-function renderSettlementLinks(settlement: SettlementListRow) {
   return (
-    <span className="flex flex-col items-start gap-1">
-      <EntityLink
-        kind="settlement"
-        id={settlement.id}
-        label={settlementLabel(settlement)}
-      />
-
+    <span className="flex flex-wrap gap-1" data-testid="pre-settlement-load-pills">
+      {links.map((link) => (
+        <EntityLink
+          key={link.id}
+          kind="load"
+          id={link.id}
+          label={entityLabel(link.label, link.id, "Load")}
+          className="inline-flex items-center rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs text-[#1F2A44]"
+          title="Load on this open pre-settlement"
+        />
+      ))}
     </span>
   );
 }
 
-// COL-06: both endpoints were already on SettlementListRow and already rendered, just collapsed
-// under one ambiguous "Date" header instead of the canonical Settlement # / Period Begin / Period
-// End contract (components/dispatch/LoadDetailSettlementTab.tsx) -- split to match it.
-// ROUND 443.250 board also names Number / Loads so far / Pay so far — mapped onto Settlement/Tour,
-// Load count, Amount. Unit / Ready / Waiting on are NOT on SettlementListRow — not invented.
+function renderNumber(settlement: SettlementListRow) {
+  return (
+    <EntityLink
+      kind="settlement"
+      id={settlement.id}
+      label={settlementLabel(settlement)}
+    />
+  );
+}
+
+/**
+ * ROUND 443.274-C board columns (Settlements-PreSettlements.png):
+ * Number · Driver · Unit · Loads so far · Pay so far · Ready · Waiting on.
+ * Unit / Ready / Waiting on are NOT on SettlementListRow — render "—" (never invent).
+ * Rule 07 keeps Period Begin/End / Status / Liabilities as extra ParityTable columns.
+ */
 const preSettlementColumns: ParityColumn<SettlementListRow>[] = [
   {
-    key: "period_start",
-    label: "Period Begin",
+    key: "number",
+    label: "Number",
     sortable: true,
-    sortValue: (row) => row.period_start,
-    render: (row) => formatDateUS(row.period_start),
-  },
-  {
-    key: "period_end",
-    label: "Period End",
-    sortable: true,
-    sortValue: (row) => row.period_end,
-    render: (row) => formatDateUS(row.period_end),
+    sortValue: (row) => settlementLabel(row),
+    render: renderNumber,
   },
   {
     key: "driver",
@@ -87,47 +91,96 @@ const preSettlementColumns: ParityColumn<SettlementListRow>[] = [
     ),
   },
   {
-    key: "load_number",
-    label: "Load Number",
+    key: "unit",
+    label: "Unit",
     sortable: true,
-    sortValue: (row) => row.load_links?.[0]?.label ?? "",
-    render: renderLoadLinks,
+    sortValue: () => "",
+    render: () => (
+      <span className="text-[#6B7280]" title="Unit is not on the open pre-settlement list row — open the tour">
+        —
+      </span>
+    ),
   },
   {
-    key: "settlement_number",
-    label: "Settlement/Tour",
+    key: "loads_so_far",
+    label: "Loads so far",
     sortable: true,
-    sortValue: (row) => settlementLabel(row),
-    render: renderSettlementLinks,
-  },
-  {
-    key: "load_count", label: "Loads so far", sortable: true,
-    sortValue: row => row.load_count, render: row => row.load_count,
-  },
-  {
-    key: "liabilities", label: "Liabilities", sortable: true,
-    sortValue: row => row.liability_ids?.length ?? 0,
-    render: settlement => <span>      {(settlement.liability_ids ?? []).length > 0 ? (
-        <span className="flex flex-wrap gap-1">
-          {(settlement.liability_ids ?? []).map((id, index) => (
-            <EntityLink
-              key={id}
-              kind="liability"
-              id={id}
-              label={(settlement.liability_ids?.length ?? 0) > 1 ? `debt #${index + 1}` : "debt →"}
-              className="text-xs text-red-600 hover:underline"
-            />
-          ))}
-        </span>
-      ) : null}</span>,
+    sortValue: (row) => row.load_count,
+    render: renderLoadPills,
   },
   {
     key: "amount",
     label: "Pay so far",
     sortable: true,
     sortValue: (row) => Number(row.net_pay ?? 0),
-    className: "text-right tabular-nums",
-    render: (row) => formatMoney(Number(row.net_pay ?? 0)),
+    className: QBO_MONEY_CELL_CLASS,
+    render: (row) => <span className={QBO_MONEY_CELL_CLASS}>{formatMoney(Number(row.net_pay ?? 0))}</span>,
+  },
+  {
+    key: "ready",
+    label: "Ready",
+    sortable: true,
+    sortValue: () => "",
+    render: () => (
+      <span
+        className="text-[#6B7280]"
+        title="Ready checks live on the tour (443.269-A) — open the Number link"
+      >
+        —
+      </span>
+    ),
+  },
+  {
+    key: "waiting_on",
+    label: "Waiting on",
+    sortable: true,
+    sortValue: () => "",
+    render: () => (
+      <span
+        className="text-[#6B7280]"
+        title="Waiting-on text lives on the tour readiness panel — open the Number link"
+      >
+        —
+      </span>
+    ),
+  },
+  // Rule 07 — keep prior columns as extras (column chooser); board defaults are above.
+  {
+    key: "period_start",
+    label: "Period Begin",
+    sortable: true,
+    sortValue: (row) => row.period_start,
+    render: (row) => formatDateUS(row.period_start),
+  },
+  {
+    key: "period_end",
+    label: "Period End",
+    sortable: true,
+    sortValue: (row) => row.period_end,
+    render: (row) => formatDateUS(row.period_end),
+  },
+  {
+    key: "liabilities",
+    label: "Liabilities",
+    sortable: true,
+    sortValue: (row) => row.liability_ids?.length ?? 0,
+    render: (settlement) => (
+      <span>
+        {(settlement.liability_ids ?? []).length > 0 ? (
+          <span className="flex flex-wrap gap-1">
+            {(settlement.liability_ids ?? []).map((id, index) => (
+              <EntityLink
+                key={id}
+                kind="liability"
+                id={id}
+                label={(settlement.liability_ids?.length ?? 0) > 1 ? `debt #${index + 1}` : "debt →"}
+                className="text-xs text-red-600 hover:underline"
+              />
+            ))}
+          </span>
+        ) : null}
+      </span>
+    ),
   },
   {
     key: "status",
@@ -145,6 +198,7 @@ export function PreSettlementsPanel({
   title = "Open pre-settlements",
   showTotal = true,
   emptyText = "No payment-ready pre-settlements for this company.",
+  onViewAll,
 }: Props) {
   const total = rows.reduce((sum, row) => sum + Number(row.net_pay ?? 0), 0);
   const countLabel = loading || isError ? "—" : String(rows.length);
@@ -153,6 +207,7 @@ export function PreSettlementsPanel({
       title={`${title} · ${countLabel}`}
       subtitle="open tours · not closed · not paid"
       testId="pre-settlements-v3-panel"
+      onViewAll={onViewAll}
     >
       <div data-settlements-presettle-v3-panel="1">
       {loading ? <p className="px-2 py-2 text-xs text-gray-500">Loading pre-settlements…</p> : null}
@@ -163,7 +218,7 @@ export function PreSettlementsPanel({
       ) : null}
       {!loading && !isError && rows.length > 0 ? (
         <ParityTable
-          storageKey="pre-settlements-panel"
+          storageKey="pre-settlements-panel-v3-board"
           columns={preSettlementColumns}
           rows={rows}
           rowKey={(row) => row.id}
@@ -173,8 +228,8 @@ export function PreSettlementsPanel({
           footerCells={
             showTotal
               ? {
-                  period_start: <span className="font-semibold">Total payout this batch</span>,
-                  amount: <span className="font-semibold">{formatMoney(total)}</span>,
+                  loads_so_far: <span className="font-semibold">Total</span>,
+                  amount: <span className={`font-semibold ${QBO_MONEY_CELL_CLASS}`}>{formatMoney(total)}</span>,
                 }
               : undefined
           }
@@ -201,9 +256,16 @@ export function PreSettlementsPanel({
           }}
         >
           <span className="font-semibold">Total payout this batch</span>
-          <span className="font-semibold">{formatMoney(total)}</span>
+          <span className={`font-semibold ${QBO_MONEY_CELL_CLASS}`}>{formatMoney(total)}</span>
         </div>
       ) : null}
+      <p
+        className="px-3.5 py-2 text-xs text-[#6B7280]"
+        data-testid="pre-settlements-booked-ahead-note"
+        style={{ fontFamily: V3.font, borderTop: `1px solid ${V3.borderSoft}` }}
+      >
+        A booked-ahead load joins the driver&apos;s open pre-settlement (443.244).
+      </p>
       </div>
     </V3Panel>
   );
