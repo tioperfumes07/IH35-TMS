@@ -22,8 +22,8 @@ export type DispatchTransitionInput = {
   reason?: string | null;
   delivered_at?: string | null;
   /**
-   * LEAD 443.184 G11 — "fence": the move comes from a geofence ARRIVAL at the final delivery. The fence detector already
-   * stamped the stop's real arrival and will stamp its real departure when the truck leaves the fence, so the transition
+   * LEAD 443.184 G11 / 443.279 — "fence": the move comes from the geofence EXIT of the final delivery. The fence detector
+   * already stamped the stop's real departure (443.279: a fence delivery without it is refused), so the transition
    * must NOT attest a departure (it used to stamp departure = the arrival time, source 'manual', which then blocked the
    * real fence exit stamp — fill-null — and lost the dwell). Default: the office attests the departure, as before.
    */
@@ -98,6 +98,22 @@ export async function transitionDispatchLoadInClientTx(client: TransitionClient,
     if (missing) {
       return { error: "reefer_lumper_confirmation_required" as const };
     }
+  }
+  // LEAD 443.279 — ONE source of truth for "delivered": the final active delivery stop's departure. A fence-evidenced
+  // delivery attests nothing itself (no office departure stamp), so it may only land once the fence has stamped that
+  // departure; otherwise the load would sit delivered with no departure (driver pay basis 'projected', revenue unearned).
+  if (input.departure_evidence === "fence" && loadStatusRequiresDeliveryDepartureStamp(mdataStatus)) {
+    const departed = await client.query<{ ok: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1 FROM mdata.load_stops s
+          WHERE s.id = (SELECT s2.id FROM mdata.load_stops s2
+                         WHERE s2.load_id = $1::uuid AND s2.stop_type::text = 'delivery'
+                           AND COALESCE(s2.status::text, '') <> 'cancelled' AND s2.soft_deleted_at IS NULL
+                         ORDER BY s2.sequence_number DESC LIMIT 1)
+            AND s.actual_departure_at IS NOT NULL) AS ok`,
+      [loadId]
+    );
+    if (!departed.rows[0]?.ok) return { error: "final_stop_not_departed" as const, from: currentStatus, to: targetStatus };
   }
   // Compare-and-set (CC-3 queue 2b): the row is locked above and the UPDATE only lands while the status is still the
   // one this transition validated — a concurrent writer (GPS auto-status, driver PWA stamp, bulk) can never be

@@ -1,7 +1,8 @@
 /**
  * ENGINE: load-stop geofence sync (fence binding + arrival replay + stop stamp)
  * SCHEDULE: 4,19,34,49 * * * *
- * WRITES: geo.geofences, geo.geofence_events, mdata.load_stops actual_arrival_at / geocode, mdata.locations
+ * WRITES: geo.geofences, geo.geofence_events, mdata.load_stops actual_arrival_at / geocode, mdata.locations;
+ *         LEAD 443.279: final-delivery actual_departure_at of a delivered* load from its stored fence-exit fix (stop engine)
  * IDEMPOTENCY: ADVISORY LOCK per (load, stop) on fence binding (load-geofence-binding.service.ts) and per location on location + location-fence create (stops-geocode-backfill.service.ts); UNIQUE(operating_company_id, geofence_id, unit_id, event_kind, occurred_at, source) ON CONFLICT on event replay; SAME-STATEMENT WHERE actual_arrival_at IS NULL on the stop stamp; geocode columns are a DETERMINISTIC OVERWRITE
  * OVERLAP: second run binds no twin fence, replays 0 new events, stamps 0 stops (proven ROUND 329 on a throwaway branch: run 1 stamped 1, run 2 stamped 0)
  * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
@@ -18,6 +19,11 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { runLoadStopGeofenceSync } from "../telematics/load-stop-geofence-sync.service.js";
+import {
+  completeFinalDepartureFromFenceHistory,
+  listDeliveredWithoutFinalDeparture,
+  type FenceDepartureOutcome,
+} from "../telematics/fence-departure-from-history.service.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 import { USMCA_COMPANY_ID } from "../org/company-ids.js";
@@ -38,8 +44,33 @@ export function initializeLoadStopGeofenceSyncCron(app: FastifyInstance) {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA_COMPANY_ID]);
         return runLoadStopGeofenceSync(client as never, USMCA_COMPANY_ID);
       });
-      app.log.info({ operating_company_id: USMCA_COMPANY_ID, ...result }, `${CRON_NAME} complete`);
+      // LEAD 443.279 — delivered* loads whose final stop never got its departure: complete it from the stored fence-exit fix
+      // through the stop engine, ONE transaction per load (its revenue latch runs after its own COMMIT; one refusal never
+      // blocks the rest). No fix outside the fence = nothing written.
+      const departures = await completeDeliveredFinalDepartures();
+      app.log.info({ operating_company_id: USMCA_COMPANY_ID, ...result, final_departures: departures }, `${CRON_NAME} complete`);
     }, app.log);
   }, { timezone: "America/Chicago", maxRandomDelay: 20_000 });
   app.log.info(`${CRON_NAME} scheduled (4,19,34,49 * * * * America/Chicago)`);
+}
+
+export async function completeDeliveredFinalDepartures(operatingCompanyId = USMCA_COMPANY_ID): Promise<FenceDepartureOutcome[]> {
+  const rows = await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    return listDeliveredWithoutFinalDeparture(client as never, operatingCompanyId);
+  });
+  const out: FenceDepartureOutcome[] = [];
+  for (const row of rows) {
+    try {
+      out.push(
+        await withLuciaBypass(async (client) => {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+          return completeFinalDepartureFromFenceHistory(client as never, operatingCompanyId, row);
+        })
+      );
+    } catch (err) {
+      out.push({ load_number: row.load_number, outcome: "refused", detail: String((err as Error)?.message ?? err) });
+    }
+  }
+  return out;
 }

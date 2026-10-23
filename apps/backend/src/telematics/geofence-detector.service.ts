@@ -368,37 +368,40 @@ export async function processGeofenceDetectionsForGpsPoint(
           data: { kind: "arrival_prompt", stop_id: stamped.stop_id, unit_id: input.unit_id },
         });
       }
-      // G11 + AJK-03: final delivery ARRIVAL → delivered_pending_docs through the ONE transition engine
-      // (invoicing still waits on BOL/POD). Only when every other delivery stop already has arrival.
-      if (stamped.load_id && stamped.stop_type === "delivery") {
-        const finalDelivery = await client.query(
-          `
-            SELECT 1 FROM mdata.loads l
-             WHERE l.id = $1::uuid
-               AND l.operating_company_id = $2::uuid
-               AND l.soft_deleted_at IS NULL
-               AND l.voided_at IS NULL
-               AND NOT EXISTS (
-                 SELECT 1 FROM mdata.load_stops ls2
-                  WHERE ls2.load_id = l.id
-                    AND ls2.stop_type = 'delivery'
-                    AND ls2.soft_deleted_at IS NULL
-                    AND ls2.actual_arrival_at IS NULL
-                    AND ls2.id != $3::uuid
-               )
-             LIMIT 1
-          `,
-          [stamped.load_id, input.operating_company_id, stamped.stop_id]
+      // LEAD 443.279 — an ARRIVAL never delivers the load. The final delivery stop is complete only when the truck
+      // LEAVES it (actual_departure_at); delivering on arrival left 13691/13694/13696/13697 delivered with no departure, so
+      // driver pay never accrued, revenue never earned, and the stop fence was retired before the exit could be seen.
+    }
+    // LEAD 443.279 — the FINAL active delivery stop's DEPARTURE (stamped just above, same transaction) is what delivers the
+    // load: status is derived from the completed stop, never ahead of it. Only when every active delivery stop has left.
+    if (transition === "exited" && stamped?.load_id && stamped.stop_type === "delivery") {
+      const finalDeparted = await client.query(
+        `
+          SELECT 1 FROM mdata.loads l
+           WHERE l.id = $1::uuid
+             AND l.operating_company_id = $2::uuid
+             AND l.soft_deleted_at IS NULL
+             AND l.voided_at IS NULL
+             AND NOT EXISTS (
+               SELECT 1 FROM mdata.load_stops ls2
+                WHERE ls2.load_id = l.id
+                  AND ls2.stop_type = 'delivery'
+                  AND ls2.soft_deleted_at IS NULL
+                  AND COALESCE(ls2.status::text, '') <> 'cancelled'
+                  AND ls2.actual_departure_at IS NULL
+             )
+           LIMIT 1
+        `,
+        [stamped.load_id, input.operating_company_id]
+      );
+      if (finalDeparted.rows.length > 0) {
+        await walkLoadStatusFromFence(
+          client,
+          input.operating_company_id,
+          stamped.load_id,
+          "delivered_pending_docs",
+          input.occurred_at
         );
-        if (finalDelivery.rows.length > 0) {
-          await walkLoadStatusFromFence(
-            client,
-            input.operating_company_id,
-            stamped.load_id,
-            "delivered_pending_docs",
-            input.occurred_at
-          );
-        }
       }
     }
     // G11 + AJK-03: first pickup DEPARTURE → in_transit through the ONE transition engine.

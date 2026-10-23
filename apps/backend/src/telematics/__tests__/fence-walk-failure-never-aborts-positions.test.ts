@@ -24,7 +24,7 @@ function client() {
     sql,
     query: vi.fn(async (q: string) => {
       sql.push(q);
-      if (q.includes("FROM geo.geofences g") && !q.includes("UPDATE")) return { rows: [{ geofence_id: "11111111-1111-4111-8111-111111111111", vertices_json: square, last_event_kind: null }] };
+      if (q.includes("FROM geo.geofences g") && !q.includes("UPDATE")) return { rows: [{ geofence_id: "11111111-1111-4111-8111-111111111111", vertices_json: square, last_event_kind: "entered" }] };
       if (q.includes("INSERT INTO geo.geofence_events")) return { rows: [], rowCount: 1 };
       if (q.includes("UPDATE mdata.load_stops")) return { rows: [{ load_id: LOAD, stop_id: "33333333-3333-4333-8333-333333333333", booked_by_user_id: null, stop_type: "delivery", sequence_number: 2 }] };
       if (q.includes("NOT EXISTS")) return { rows: [{ "?column?": 1 }] }; // the final delivery
@@ -41,9 +41,10 @@ describe("443.232 — a failed fence status walk never escapes the point's proce
     const c = client();
     const r = await processGeofenceDetectionsForGpsPoint(c as never, {
       operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80", unit_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-      latitude: 42.55, longitude: -71.15, occurred_at: "2026-10-22T05:10:00.000Z", source: "samsara_gps",
+      // LEAD 443.279 — the walk to delivered runs on the final delivery's EXIT (point outside a fence last "entered").
+      latitude: 42.7, longitude: -71.15, occurred_at: "2026-10-22T05:10:00.000Z", source: "samsara_gps",
     });
-    expect(r.stop_arrivals_stamped).toBe(1);
+    expect(r.transitions_written).toBe(1);
     expect(c.sql).toContain("SAVEPOINT fence_status_walk");
     expect(c.sql).toContain("ROLLBACK TO SAVEPOINT fence_status_walk");
     expect(h.audit).toHaveBeenCalledWith(expect.anything(), "00000000-0000-4000-8000-000000000001", "telematics.fence_status_walk_failed",
