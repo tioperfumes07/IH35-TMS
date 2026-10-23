@@ -6,6 +6,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { V3Panel } from "../../../components/v3/V3Panel";
 
 const labels = { ok: "Healthy", soon: "PM soon", overdue: "PM overdue", shop: "In shop", none: "No PM clock" };
 const tones = { ok: "text-blue-900", soon: "text-amber-700", overdue: "text-red-800", shop: "text-slate-600", none: "text-slate-500" };
@@ -33,7 +34,7 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
   const [filter, setFilter] = useState("all");
   const health = useQuery({ queryKey: ["maintenance", "fleet-health", companyId], queryFn: () => readFleetHealth(companyId), enabled: Boolean(companyId), staleTime: 60_000, refetchInterval: 180_000 });
   const columns: ParityColumn<FleetHealthRow>[] = [
-    { key: "unit_number", label: "Unit", render: (row) => <div className="flex items-center gap-2"><FleetTruck row={row} /><div><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /><div className="text-xs text-slate-500">{[row.make, row.model, row.year].filter(Boolean).join(" · ")}</div></div></div> },
+    { key: "unit_number", label: "Unit", render: (row) => <div className="flex min-w-0 flex-col items-start gap-1"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /><FleetTruck row={row} /><div className="break-words text-xs text-slate-500">{[row.make, row.model, row.year].filter(Boolean).join(" · ")}</div></div> },
     { key: "odometer_mi", label: "Odometer", render: (row) => row.odometer_mi == null ? "Unavailable" : <EntityLink kind="unit" id={row.unit_id} label={`${Number(row.odometer_mi).toLocaleString("en-US")} mi`} /> },
     { key: "formatted_location", label: "Location", render: (row) => <div>{row.formatted_location || [row.telemetry_city, row.telemetry_state].filter(Boolean).join(", ") || "Location unavailable"}<div className="text-xs text-slate-500">{row.telemetry_at ? `Last reported ${formatDateTimeUS(row.telemetry_at)}` : "No telemetry timestamp"}</div></div> },
     { key: "pm_interval", label: "Road to next PM", render: (row) => row.pm_schedule_id
@@ -43,13 +44,9 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
     { key: "state", label: "Status", render: (row) => (row.odometer_mi == null || row.miles_left == null || !row.pm_interval) && !["shop", "none"].includes(row.state) ? "PM reading unavailable" : <span className="inline-flex items-center gap-2"><span aria-hidden="true" className={`h-2 w-2 rounded-full bg-current ${statusTones[row.state]}`} />{labels[row.state]}</span> },
   ];
   const rows = (health.data?.units ?? []).filter((row) => filter === "all" || (filter === "soon" && ["soon", "overdue"].includes(row.state)) || row.state === filter);
-  return <section className="min-w-0 rounded-sm border border-slate-200 bg-white" data-testid="maintenance-fleet-health-line">
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
-      <h2 className="text-xs font-bold">Fleet health line — road to the next PM</h2>
-      <div className="flex flex-wrap items-center gap-2">{[["all", health.data ? `All ${health.data.kpi.total}` : "All"], ["soon", "PM soon"], ["none", "No clock"]].map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className="rounded-sm border border-slate-200 px-2 py-1 text-xs aria-pressed:bg-slate-100">{label}</button>)}<Link className="text-xs" to="/maintenance/fleet-table">View all →</Link></div>
-    </div>
+  return <V3Panel title="Fleet health line — road to the next PM" testId="maintenance-fleet-health-line" footer="Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.">
+    <div className="flex flex-wrap items-center justify-end gap-2 px-3 py-2">{[["all", health.data ? `All ${health.data.kpi.total}` : "All"], ["soon", "PM soon"], ["none", "No clock"]].map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className="rounded-sm border border-slate-200 px-2 py-1 text-xs aria-pressed:bg-slate-100">{label}</button>)}<Link className="text-xs" to="/maintenance/fleet-table">View all →</Link></div>
     {health.isError ? <ListErrorState title="Couldn't load fleet health" status={0} message={health.error instanceof Error ? health.error.message : undefined} onRetry={() => void health.refetch()} />
       : <ParityTable rows={rows} columns={columns} rowKey={(row) => row.unit_id} loading={health.isPending} storageKey="maintenance-home-fleet-health" emptyText="No units match this filter." />}
-    <p className="border-t border-slate-200 px-3 py-2 text-xs text-slate-500">Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.</p>
-  </section>;
+  </V3Panel>;
 }

@@ -7,6 +7,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatDateUS } from "../../../lib/formatDate";
+import { V3Panel } from "../../../components/v3/V3Panel";
 
 type Props = {
   recent: WorkOrder[];
@@ -116,8 +117,7 @@ function Table({
   );
 
   return (
-    <div className="rounded-sm border border-gray-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600"><h3>{title}</h3><div className="flex flex-wrap items-center gap-2">{title === "Recent Work Orders" ? <Link to="/maintenance?create_wo=1">+ Create Work Order</Link> : null}<Link to={title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos"}>View all →</Link></div></div>
+    <V3Panel title={title} headerRight={<div className="flex flex-wrap items-center gap-2">{title === "Recent Work Orders" ? <Link to="/maintenance?create_wo=1">+ Create Work Order</Link> : null}<Link to={title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos"}>View all →</Link></div>}>
       <div>
         {totalCount > rows.length ? (
           <div className="border-b border-gray-100 px-2 py-1 text-xs text-[#6B7280]" data-testid="maintenance-recent-activity-range">
@@ -148,7 +148,7 @@ function Table({
           </div>
         ) : null}
       </div>
-    </div>
+    </V3Panel>
   );
 }
 

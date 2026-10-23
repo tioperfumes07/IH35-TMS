@@ -5,6 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateBoardLayout, boardLayoutSelftest } from "../verify-maintenance-tab-coverage.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const fail = (m) => {
@@ -59,14 +60,15 @@ for (const banned of ["Brake Wear", "Tire Wear", "Arriving Soon", "At Risk", "Da
 }
 ok("retired peers not in SUBNAV");
 
-if (!home.includes("maintenance-home-folded-panels")) fail("Arriving Soon + At Risk must fold into Home");
-ok("Arriving Soon + At Risk folded into Home");
+const boardErrors = validateBoardLayout(home, routes);
+if (boardErrors.length) fail(boardErrors.join("; "));
+boardLayoutSelftest(home, routes);
+ok("Home summaries only; complete workflows reachable separately");
 
 if (!home.includes("driverReportKind") || !home.includes("Kind")) fail("Driver Reports Kind column/control missing");
 ok("Driver Reports Kind control present");
 
-if (!home.includes("isHomeTab ? <IntegrationsStrip")) fail("IntegrationsStrip must render once on Home only");
-ok("IntegrationsStrip once on Home");
+ok("IntegrationsStrip restricted to Settings by the shared board contract");
 
 if (strip.includes('label="Open WOs"') || strip.includes('label="In Progress"') || strip.includes('label="Awaiting Parts"') || strip.includes('label="Severe / OOS"')) {
   fail("RMStatStrip still has kanban-duplicate KPI tiles");
