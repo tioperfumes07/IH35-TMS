@@ -1,10 +1,13 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getFuelDashboard, getLovesSyncStatus } from "../../api/fuelPlanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { FuelFraudBadge } from "../../components/fuel/FuelFraudBadge";
+import { V3 } from "../../design/v3-tokens";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { FuelKpiRow } from "./components/FuelKpiRow";
 import { RelayHistoryImport } from "./components/RelayHistoryImport";
 
@@ -18,6 +21,7 @@ async function fetchFraudSummary(companyId: string): Promise<FraudSummary> {
 }
 
 export function FuelFraudAlertsKpiCard() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -30,30 +34,25 @@ export function FuelFraudAlertsKpiCard() {
 
   const summaryLoaded = summaryQuery.data !== undefined;
   const openCritical = summaryQuery.data?.open_critical ?? 0;
-  const tone = openCritical > 0 ? "border-red-300 bg-red-50" : "border-gray-200 bg-white";
+  // GO-0027-HOME-F: a failed fetch must never render as "0 Open Fraud Alerts" -- matches
+  // the sibling FuelCardOverageKpiCard's own isError ? "—" : value contract.
+  const value = summaryQuery.isError ? "—" : summaryLoaded ? String(openCritical) : "…";
+  const sub = summaryQuery.isError
+    ? "Unable to load · CAP-11 fraud monitor"
+    : summaryLoaded
+      ? `${summaryQuery.data.open_total} total open · CAP-11 fraud monitor`
+      : "Loading… · CAP-11 fraud monitor";
 
   return (
-    <Link
-      to="/fuel/fraud-alerts"
-      className={`block rounded-sm border px-3 py-2 text-xs transition hover:shadow-xs ${tone}`}
-    >
-      <div className="flex items-center gap-1.5 text-xs uppercase text-gray-500">
-        Open Fraud Alerts
-        <FuelFraudBadge hasOpenCritical={openCritical > 0} />
-      </div>
-      <div className={`text-page-title font-semibold ${openCritical > 0 ? "text-red-700" : "text-gray-900"}`}>
-        {/* GO-0027-HOME-F: a failed fetch must never render as "0 Open Fraud Alerts" -- matches
-            the sibling FuelCardOverageKpiCard's own isError ? "—" : value contract. */}
-        {summaryQuery.isError ? "—" : summaryLoaded ? openCritical : "…"}
-      </div>
-      <div className="text-xs text-gray-600">
-        {summaryQuery.isError
-          ? "Unable to load"
-          : summaryLoaded
-            ? `${summaryQuery.data.open_total} total open`
-            : "Loading…"} · CAP-11 fraud monitor
-      </div>
-    </Link>
+    <V3KpiTile
+      label="Open Fraud Alerts"
+      value={value}
+      sub={sub}
+      spark={<FuelFraudBadge hasOpenCritical={openCritical > 0} />}
+      tone={openCritical > 0 ? "red" : "ink"}
+      testId="fuel-fraud-alerts-kpi"
+      onClick={() => navigate("/fuel/fraud-alerts")}
+    />
   );
 }
 
@@ -73,6 +72,7 @@ async function fetchOveragePending(companyId: string): Promise<OveragePendingSum
 
 /** BANK-F10 — reachable from Fuel Home (does not add a Fuel sub-nav tab). */
 export function FuelCardOverageKpiCard() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -86,30 +86,28 @@ export function FuelCardOverageKpiCard() {
 
   const pendingLoaded = pendingQuery.data !== undefined;
   const pending = pendingQuery.data?.total_count ?? 0;
-  // §7 palette — non-financial UI: slate only (no amber/emerald status classes).
-  const tone = pending > 0 ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-200 bg-white";
+  const value = pendingQuery.isError ? "—" : pendingLoaded ? String(pending) : "…";
+  const sub = pendingQuery.isError
+    ? "Unable to load · BANK-F10 approve-then-recover"
+    : pendingLoaded
+      ? "Pending review · BANK-F10 approve-then-recover"
+      : "Loading… · BANK-F10 approve-then-recover";
 
   return (
-    <Link
-      to="/fuel/card-overage"
-      className={`block rounded-sm border px-3 py-2 text-xs transition hover:shadow-xs ${tone}`}
-      data-testid="fuel-card-overage-kpi"
-    >
-      <div className="text-xs uppercase text-gray-500">Card overage queue</div>
-      <div className={`text-page-title font-semibold ${pending > 0 ? "text-[#0F1219]" : "text-gray-900"}`}>
-        {pendingQuery.isError ? "—" : pendingLoaded ? pending : "…"}
-      </div>
-      <div className="text-xs text-gray-600">
-        {pendingQuery.isError ? "Unable to load" : pendingLoaded ? "Pending review" : "Loading…"} · BANK-F10 approve-then-recover
-      </div>
-    </Link>
+    <V3KpiTile
+      label="Card overage queue"
+      value={value}
+      sub={sub}
+      testId="fuel-card-overage-kpi"
+      onClick={() => navigate("/fuel/card-overage")}
+    />
   );
 }
 
 /**
  * Fuel Home tab — wires live planner dashboard KPIs (f-01-fuel-home-stub).
  * Backend GET /api/v1/fuel/planner/dashboard already computes mtd_spend / fleet_mpg / etc.
- * Keeps fraud KPI + Relay import (additive-only).
+ * Keeps fraud KPI + Relay import (additive-only). ROUND 443.250: V3 board chrome.
  */
 export function FuelHomePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -129,14 +127,18 @@ export function FuelHomePage() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700" data-testid="fuel-home-page">
+      <div
+        className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
+        data-testid="fuel-home-page"
+        style={{ fontFamily: V3.font }}
+      >
         Select an operating company to view the fuel dashboard.
       </div>
     );
   }
 
   return (
-    <div className="space-y-3" data-testid="fuel-home-page">
+    <div className="space-y-3" data-testid="fuel-home-page" style={{ fontFamily: V3.font }}>
       <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
       {dashboardQuery.isError ? (
         <ListErrorBanner onRetry={() => void dashboardQuery.refetch()} />
@@ -144,13 +146,18 @@ export function FuelHomePage() {
       {lovesSyncQuery.isError ? (
         <ListErrorBanner message="Love's price sync status could not be loaded." onRetry={() => void lovesSyncQuery.refetch()} />
       ) : null}
-      <div className="grid max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 8, maxWidth: 640 }}
+        data-testid="fuel-home-secondary-kpis"
+      >
         <FuelFraudAlertsKpiCard />
         <FuelCardOverageKpiCard />
       </div>
-      <div className="max-w-md">
-        <RelayHistoryImport operatingCompanyId={companyId} />
-      </div>
+      <V3Panel title="Relay history import" subtitle="company-scoped CSV" testId="fuel-home-relay-import-panel">
+        <div style={{ padding: "10px 12px" }}>
+          <RelayHistoryImport operatingCompanyId={companyId} />
+        </div>
+      </V3Panel>
     </div>
   );
 }

@@ -213,8 +213,21 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   `data-settlements-v3-kpis` + week/deductions panel testIds. `SURFACE-BREACH-AUTHORIZED: CC-1`
   for that guard file. No new EVEN claim.
 - **Still open under 443.250:** Settlements sub-boards (Escrow/Closed/Open/Company/Deductions/
-  CashAdvances/Close/PreSettlements/Statement) · Fuel board · design-system sweep · Chrome proof.
-  Full DONE not claimed.
+  CashAdvances/Close/PreSettlements/Statement) · Fuel sub-boards · design-system sweep · Chrome proof.
+  Fuel home V3 shipped (this round). Full DONE not claimed.
+
+### Active Architectural Decisions — Fuel home V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getFuelDashboard` / `getLovesSyncStatus` planner dashboard KPIs +
+  fraud summary + card-overage pending count. Love's sync honesty retained (Never only when both
+  feeds resolve). Board labels Diesel spend / Gallons / Fills without load / by-truck wait on
+  CC-1 data by 10-24 — this slice restyles the live seven planner KPIs, not invented endpoints.
+- **V3 board chrome:** FuelKpiRow seven KPIs via `V3KpiTile` + `data-fuel-v3-kpis`; fraud + card
+  overage secondary strip via `V3KpiTile`; Relay import in `V3Panel`. Click-through navigate kept.
+- **Guard piggyback:** `verify-fuel-home-dashboard-wired.mjs` (step 1002 ≡2 EVEN Cursor) asserts
+  V3KpiTile + data-fuel-v3-kpis + no DrillKpiCard. No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards (history/compliance/
+  planner/fraud detail as boards land) · design-system sweep · Chrome proof. Full DONE not claimed.
 
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
