@@ -908,5 +908,30 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.248: mdata.load_stops.document_address (the signed settlement's printed address of record, kept beside the GPS / geocoded address \u2014 13536 / 13573 / 13660)"
+  },
+  "202616150700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-2 Lead 443.243: fuel attribution — fuel.settlement_fuel_purchases (rule 1 settlement first) + fuel.settlement_trip_windows (document trip window) + fuel.fuel_assignment_questions (create-if-absent in Cursor's 202616140700 shape + current_load_id / uncertainty_reasons + audit trigger)"
+  },
+  "202616160700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-2 Lead 443.241: ONE lane store — catalogs.lane_mileage gains median/count/last-load + shipper->receiver location-pair rows; catalogs.lane_mileage_observations (one per lane x load: document/history short, practical, empty miles)"
+  },
+  "202616170700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-2 Lead 443.247: ARM L (owner-listed DELETE only) for the seven safety / legal append-only trigger functions, so the owner-ordered permanent delete of test records runs through the one purge engine"
+  },
+  "202616180700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-2 Lead 443.252 B: driver & unit photos on docs.files (mdata.drivers.photo_file_id + mdata.driver_photo_proposals; mdata.unit_photos file_id / is_primary / work order, claim, incident links)"
+  },
+  "202616190700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-23",
+    "purpose": "CC-2 Lead 443.258.5 ruling 2 (writer shape B): accounting.expenses.is_credit — a card credit (QBO Credit Card Credit) posts Dr payment account / Cr category; the fuel-card statement discount becomes a document instead of a handwritten JE"
   }
 }
