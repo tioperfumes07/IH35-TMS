@@ -64,7 +64,9 @@ if (
 const routes = read("apps/backend/src/accounting/reefer-fuel-credit.routes.ts");
 if (!routes.includes('"/api/v1/accounting/reports/reefer-fuel-credit"') || !routes.includes("/gallons")) fails.push("reefer fuel credit routes missing");
 if (!/reports\/reefer-fuel-credit/.test(read("apps/frontend/src/routes/manifest.tsx"))) fails.push("reefer fuel credit page not routed");
-if (!/"reefer-fuel-credit", "Reefer fuel credit"/.test(read("apps/frontend/src/pages/reports/ReportsHome.tsx"))) fails.push("Reefer fuel credit missing from the Reports catalog");
+// 443.271 (CC-2): the 443.267 Reports board (ced0513327) moved the catalog into ReportsHomeBoard, mounted by ReportsHome.
+if (!/\["reefer-fuel-credit", "Reefer fuel credit"/.test(read("apps/frontend/src/pages/reports/components/ReportsHomeBoard.tsx")) ||
+    !/<ReportsHomeBoard\b/.test(read("apps/frontend/src/pages/reports/ReportsHome.tsx"))) fails.push("Reefer fuel credit missing from the Reports catalog");
 
 // ROUND 391.2 / 393.2 — reefer comes FROM THE FEED's product code, never inferred.
 const mig = read("db/migrations/202615400700_reefer_fuel_type_from_relay_product.sql");
