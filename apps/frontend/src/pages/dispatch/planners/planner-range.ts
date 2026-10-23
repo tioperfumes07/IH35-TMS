@@ -51,6 +51,47 @@ export function widenPlannerRange(range: PlannerRange, minYmd: string, maxYmd: s
   };
 }
 
+/** 0 = Sunday … 6 = Saturday (UTC weekday of a YYYY-MM-DD calendar day). */
+export function plannerWeekdayIndex(ymd: string): number {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+/** LEAD 443.251 item 5: only the selected weekdays are drawn — a hidden day is not an empty column, it is gone. */
+export function visiblePlannerDays(range: PlannerRange, hiddenWeekdays: readonly number[]): string[] {
+  const all = listPlannerDays(range);
+  if (hiddenWeekdays.length === 0) return all;
+  const shown = all.filter((d) => !hiddenWeekdays.includes(plannerWeekdayIndex(d)));
+  // Hiding every day of a range is never an empty board — fall back to the full range.
+  return shown.length > 0 ? shown : all;
+}
+
+export type PlannerPresetKey = "today" | "this_week" | "next_7" | "next_14";
+
+/** LEAD 443.251 item 4 presets (Filters popover): Today, This week (Mon–Sun), Next 7 days, 14 days. */
+export function plannerPresetRange(key: PlannerPresetKey, todayIso: string = companyToday()): PlannerRange {
+  if (key === "today") return { start: todayIso, end: todayIso };
+  if (key === "this_week") {
+    const back = (plannerWeekdayIndex(todayIso) + 6) % 7; // Monday-start week
+    const start = addDaysIso(todayIso, -back);
+    return { start, end: addDaysIso(start, 6) };
+  }
+  if (key === "next_7") return { start: todayIso, end: addDaysIso(todayIso, 6) };
+  return { start: todayIso, end: addDaysIso(todayIso, 13) };
+}
+
+const HIDDEN_WEEKDAYS_KEY = "ih35.planner.hiddenWeekdays";
+
+function readHiddenWeekdays(): number[] {
+  try {
+    const raw = localStorage.getItem(HIDDEN_WEEKDAYS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(parsed) ? parsed.filter((n): n is number => Number.isInteger(n) && n >= 0 && n <= 6) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLANNER_RANGE_DAYS) {
   const [range, setRangeState] = useState<PlannerRange>(() => buildPlannerRange(initialDays));
   const rangeLength = useMemo(() => {
@@ -69,6 +110,16 @@ export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLA
     if (next.start > next.end) return;
     setRangeState(next);
   };
-  const days = useMemo(() => listPlannerDays(range), [range.start, range.end]);
-  return { windowDays, setWindowDays, setRange, range, days };
+  const [hiddenWeekdays, setHiddenWeekdaysState] = useState<number[]>(readHiddenWeekdays);
+  const setHiddenWeekdays = (next: number[]) => {
+    const clean = [...new Set(next)].filter((n) => n >= 0 && n <= 6).sort();
+    setHiddenWeekdaysState(clean);
+    try {
+      localStorage.setItem(HIDDEN_WEEKDAYS_KEY, JSON.stringify(clean));
+    } catch {
+      /* private mode — the toggle still applies for this session */
+    }
+  };
+  const days = useMemo(() => visiblePlannerDays(range, hiddenWeekdays), [range, hiddenWeekdays]);
+  return { windowDays, setWindowDays, setRange, range, days, hiddenWeekdays, setHiddenWeekdays };
 }

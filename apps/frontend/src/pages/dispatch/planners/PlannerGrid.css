@@ -375,3 +375,12 @@
   font-size: clamp(11px, 0.85vw, 13px);
   color: var(--ink);
 }
+
+/* LEAD 443.251 item 5 — hour ticks at 06 / 12 / 18 inside every day column. */
+.planner-grid-canonical .pg-hour { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dotted var(--rule-day, #E5E7EB); opacity: 0.6; pointer-events: none; }
+/* LEAD 443.251 item 6 — drag the right edge of a frozen column to resize it. */
+.planner-grid-canonical .pg-col-resize-cell { position: relative; height: 100%; }
+.planner-grid-canonical .pg-col-resize { position: absolute; top: 0; right: -3px; bottom: 0; width: 6px; cursor: col-resize; z-index: 3; }
+.planner-grid-canonical .pg-col-resize:hover { background: #4B5563; opacity: 0.35; }
+/* LEAD 443.251 item 7 — "← started" / "continues →" inside a bar cut by the range. */
+.planner-grid-canonical .pg-bar-mark { font-size: 10px; font-weight: 600; opacity: 0.85; margin: 0 4px; white-space: nowrap; }

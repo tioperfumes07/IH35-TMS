@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import "./planner-design-tokens.css";
 import "./PlannerGrid.css";
+import { useResizableColumns } from "../../../components/planner/useResizableColumns";
+import { useOptionalPlannerRange } from "./PlannerRangeContext";
 import {
   formatPlannerDwell,
   isPlannerMonday,
@@ -101,13 +103,39 @@ export function ymdFromMs(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
-export function clampDayIndex(days: string[], ymd: string): number {
+export function clampDayIndex(days: string[], ymd: string, edge: "start" | "end" = "end"): number {
   const i = days.indexOf(ymd);
   if (i >= 0) return i;
   if (days.length === 0) return 0;
   if (ymd < days[0]) return 0;
-  return days.length - 1;
+  if (ymd > days[days.length - 1]) return days.length - 1;
+  // LEAD 443.251 item 5: `days` may skip hidden weekdays. A date inside the range that is not drawn
+  // snaps to the nearest DRAWN day on the bar's own side: a start moves forward, an end moves back.
+  if (edge === "start") {
+    const next = days.findIndex((d) => d > ymd);
+    return next < 0 ? days.length - 1 : next;
+  }
+  let prev = 0;
+  for (let k = 0; k < days.length; k += 1) if (days[k]! < ymd) prev = k;
+  return prev;
 }
+
+/** "10-16" style short date for the "← started" marker. */
+function shortMonthDay(ymd: string): string {
+  return `${ymd.slice(5, 7)}-${ymd.slice(8, 10)}`;
+}
+
+/** LEAD 443.251 item 6: the frozen left columns, resizable and persisted per user. */
+export const PLANNER_FROZEN_COLUMNS = [
+  { key: "name", header: "Name", minWidth: 90, maxWidth: 420, defaultWidth: 150 },
+  { key: "secondary", header: "Secondary", minWidth: 70, maxWidth: 360, defaultWidth: 120 },
+  { key: "unit", header: "Unit", minWidth: 44, maxWidth: 160, defaultWidth: 56 },
+  { key: "status", header: "Status", minWidth: 50, maxWidth: 200, defaultWidth: 64 },
+  { key: "action", header: "Action", minWidth: 56, maxWidth: 220, defaultWidth: 72 },
+];
+
+/** Hours drawn as ticks inside every day column (item 5). */
+export const PLANNER_HOUR_TICKS = [6, 12, 18] as const;
 
 export function dwellLabelFromMs(startMs: number, endMs: number): string {
   const raw = formatPlannerDwell(new Date(startMs).toISOString(), new Date(endMs).toISOString());
@@ -151,6 +179,9 @@ function TrackOverlays({ days, today, dayPx }: { days: string[]; today: string; 
         const left = i * dayPx;
         return (
           <span key={s}>
+            {PLANNER_HOUR_TICKS.map((h) => (
+              <div key={h} className="pg-hour" data-testid="planner-hour-tick" style={{ left: left + (dayPx * h) / 24 }} />
+            ))}
             {isPlannerWeekend(s) ? <div className="pg-wash" style={{ left, width: dayPx }} /> : null}
             {isPlannerMonthStart(s) ? (
               <div className="pg-mrule" style={{ left }} />
@@ -176,8 +207,14 @@ function frozenGridTemplate(
   hasSecondary: boolean,
   hasUnit: boolean,
   hasStatus: boolean,
-  hasAction: boolean
+  hasAction: boolean,
+  widths?: Record<string, number>
 ): string {
+  // LEAD 443.251 item 6: once the operator has sized the columns, they are fixed pixel widths.
+  if (widths) {
+    const px = (k: string) => `${Math.round(widths[k] ?? 0)}px`;
+    return [px("name"), ...(hasSecondary ? [px("secondary")] : []), ...(hasUnit ? [px("unit")] : []), ...(hasStatus ? [px("status")] : []), ...(hasAction ? [px("action")] : [])].join(" ");
+  }
   const cols = ["minmax(100px, 1fr)"];
   // ROUND 20.6 D2 (owner-live 2026-09-12): minmax(0, 1fr) let the Safety Profile link/timestamp
   // squeeze to a single visible letter ("S") whenever the frozen box was tight -- a 0 floor means
@@ -194,20 +231,23 @@ function FrozenName({
   row,
   hasStatusColumn,
   hasActionColumn,
+  widths,
 }: {
   row: PlannerGridRow;
   hasStatusColumn: boolean;
   hasActionColumn: boolean;
+  widths: Record<string, number>;
 }) {
   const template = frozenGridTemplate(
     row.secondary !== undefined,
     row.unit !== undefined,
     hasStatusColumn,
-    hasActionColumn
+    hasActionColumn,
+    widths
   );
   return (
     <div className="pg-name pg-name-cols" style={{ display: "grid", gridTemplateColumns: template }}>
-      <div className="pg-col-name" title={typeof row.name === "string" ? row.name : undefined}>
+      <div className="pg-col-name" title={typeof row.name === "string" ? row.name : row.sortKey}>
         <CellOrDash>{row.name}</CellOrDash>
       </div>
       {/* ROUND-20.7 (APP-WIDE AUTOFIT LAW) item 4 -- these columns share pg-col-name's own
@@ -247,6 +287,14 @@ export function PlannerGrid({
   const today = todayYmdAmericaChicago();
   const bands = plannerMonthBands(days);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // LEAD 443.251 item 6: left columns resizable by dragging their edge, persisted per user + planner.
+  const plannerCtx = useOptionalPlannerRange();
+  const { widths, startResize } = useResizableColumns(
+    `${plannerCtx?.storageScope ?? "anon"}:${testId ?? "planner"}`,
+    PLANNER_FROZEN_COLUMNS,
+  );
+  const hasSecondaryColumn = rows.some((r) => r.secondary !== undefined);
+  const hasUnitColumn = rows.some((r) => r.unit !== undefined);
   const [measuredWidth, setMeasuredWidth] = useState(0);
   const [edge, setEdge] = useState({ left: false, right: false });
   const [drag, setDrag] = useState<{ active: boolean; startX: number; startScroll: number } | null>(null);
@@ -254,6 +302,16 @@ export function PlannerGrid({
   const rangeEnd = days[days.length - 1];
   const hasActionColumn = actionLabel != null || rows.some((row) => row.action !== undefined);
   const hasStatusColumn = statusLabel != null || rows.some((row) => row.status !== undefined);
+  const shownColumns = PLANNER_FROZEN_COLUMNS.filter(
+    (c) =>
+      c.key === "name" ||
+      (c.key === "secondary" && hasSecondaryColumn) ||
+      (c.key === "unit" && hasUnitColumn) ||
+      (c.key === "status" && hasStatusColumn) ||
+      (c.key === "action" && hasActionColumn),
+  );
+  // The frozen block is exactly the sum of its columns, so resizing a column moves the day grid with it.
+  const frozenWidth = shownColumns.reduce((sum, c) => sum + (widths[c.key] ?? c.defaultWidth), 0) || frozenPx;
 
   // Planners lists, item 3 — sortable frozen columns. Only offered when the caller supplied the
   // plain-text key the column needs (sortKey for name, statusSortKey for status); a caller that
@@ -283,12 +341,14 @@ export function PlannerGrid({
     return [...sorted, ...withoutKey];
   }, [rows, sort]);
 
+  // LEAD 443.251 item 5: the drawn days share 100% of the grid width — no 120px cap leaving empty
+  // columns to the right. Below 44px per day the grid scrolls instead of crushing the bars.
   const dayPx = useMemo(() => {
     if (!measuredWidth || days.length === 0) return PLANNER_DAY_PX;
-    const available = Math.max(0, measuredWidth - frozenPx);
+    const available = Math.max(0, measuredWidth - frozenWidth);
     if (available <= 0) return PLANNER_DAY_PX;
-    return Math.max(44, Math.min(120, Math.floor(available / days.length)));
-  }, [measuredWidth, frozenPx, days.length]);
+    return Math.max(44, available / days.length);
+  }, [measuredWidth, frozenWidth, days.length]);
   const trackW = days.length * dayPx;
 
   const outside = useMemo(() => {
@@ -330,7 +390,7 @@ export function PlannerGrid({
       el.removeEventListener("scroll", onScroll);
       if (ro) ro.disconnect();
     };
-  }, [days, today, dayPx, rows.length, frozenPx]);
+  }, [days, today, dayPx, rows.length, frozenWidth]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const el = scrollRef.current;
@@ -358,7 +418,7 @@ export function PlannerGrid({
   const onMouseUp = () => setDrag(null);
 
   const vars = {
-    ["--frozen" as string]: `${frozenPx}px`,
+    ["--frozen" as string]: `${frozenWidth}px`,
     ["--day"]: `${dayPx}px`,
     ["--rowh"]: `${PLANNER_ROW_PX}px`,
     ...style,
@@ -404,12 +464,7 @@ export function PlannerGrid({
                 className="pg-frz pg-frz-cols"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: frozenGridTemplate(
-                    rows.some((r) => r.secondary !== undefined),
-                    rows.some((r) => r.unit !== undefined),
-                    hasStatusColumn,
-                    hasActionColumn
-                  ),
+                  gridTemplateColumns: frozenGridTemplate(hasSecondaryColumn, hasUnitColumn, hasStatusColumn, hasActionColumn, widths),
                 }}
               >
                 <span style={{ gridColumn: `1 / span ${1 + Number(rows.some((r) => r.secondary !== undefined)) + Number(rows.some((r) => r.unit !== undefined))}` }}>
@@ -459,7 +514,26 @@ export function PlannerGrid({
               ))}
             </div>
             <div className="pg-arow" data-testid="planner-axis-day-row">
-              <div className="pg-frz" />
+              <div
+                className="pg-frz pg-frz-cols"
+                style={{ display: "grid", gridTemplateColumns: frozenGridTemplate(hasSecondaryColumn, hasUnitColumn, hasStatusColumn, hasActionColumn, widths) }}
+              >
+                {shownColumns.map((c) => (
+                  <span key={c.key} className="pg-col-resize-cell">
+                    <span
+                      role="separator"
+                      aria-orientation="vertical"
+                      aria-label={`Resize ${c.header} column`}
+                      className="pg-col-resize"
+                      data-testid={`planner-col-resize-${c.key}`}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        startResize(c.key)(e);
+                      }}
+                    />
+                  </span>
+                ))}
+              </div>
               {days.map((s) => {
                 const mo = isPlannerMonthStart(s);
                 const wk = isPlannerMonday(s);
@@ -481,7 +555,7 @@ export function PlannerGrid({
           ) : (
             sortedRows.map((row) => (
               <div key={row.id} className={`pg-r${row.idle ? " idle" : ""}`}>
-                <FrozenName row={row} hasStatusColumn={hasStatusColumn} hasActionColumn={hasActionColumn} />
+                <FrozenName row={row} hasStatusColumn={hasStatusColumn} hasActionColumn={hasActionColumn} widths={widths} />
                 <div
                   className="pg-track"
                   data-testid="planner-grid-track"
@@ -494,8 +568,9 @@ export function PlannerGrid({
                 >
                   <TrackOverlays days={days} today={today} dayPx={dayPx} />
                   {(row.dwells ?? []).map((w) => {
-                    const a = clampDayIndex(days, w.startYmd);
-                    const b = clampDayIndex(days, w.endYmd);
+                    const a = clampDayIndex(days, w.startYmd, "start");
+                    const b = clampDayIndex(days, w.endYmd, "end");
+                    if (b < a) return null; // falls entirely on hidden days
                     return (
                       <div
                         key={w.id}
@@ -511,10 +586,16 @@ export function PlannerGrid({
                   {row.bars.map((bar) => {
                     const cl = Boolean(rangeStart && bar.startYmd < rangeStart);
                     const cr = Boolean(rangeEnd && bar.endYmd > rangeEnd);
-                    const a = clampDayIndex(days, bar.startYmd);
-                    const z = clampDayIndex(days, bar.endYmd);
+                    const a = clampDayIndex(days, bar.startYmd, "start");
+                    const z = clampDayIndex(days, bar.endYmd, "end");
+                    if (z < a) return null; // the whole bar falls on hidden days
                     const width = Math.max(24, (z - a + 1) * dayPx - 4);
-                    const shown = plannerBarLabelTier(bar.label, width);
+                    // LEAD 443.251 item 7: a bar cut by the range says so in words, not only a torn edge.
+                    const startedText = cl ? `← started ${shortMonthDay(bar.startYmd)}` : "";
+                    const continuesText = cr ? "continues →" : "";
+                    const markerPx = (startedText.length + continuesText.length) * CHAR_PX + (cl ? 8 : 0) + (cr ? 8 : 0);
+                    const shown = plannerBarLabelTier(bar.label, width - markerPx);
+                    const fullTitle = [startedText, bar.label, continuesText].filter(Boolean).join(" ");
                     const cls = `pg-bar ${bar.kind}${cl ? " cl" : ""}${cr ? " cr" : ""}`;
                     return (
                       <button
@@ -526,11 +607,13 @@ export function PlannerGrid({
                         data-rt-trip-type={bar.tripType}
                         data-rt-long-leg={bar.longLeg ? "1" : "0"}
                         style={{ left: a * dayPx + 2, width }}
-                        title={bar.label}
-                        aria-label={bar.label}
+                        title={fullTitle}
+                        aria-label={fullTitle}
                         onClick={bar.onClick}
                       >
+                        {cl ? <span className="pg-bar-mark" data-testid="planner-bar-started">{startedText}</span> : null}
                         {shown}
+                        {cr ? <span className="pg-bar-mark" data-testid="planner-bar-continues">{continuesText}</span> : null}
                       </button>
                     );
                   })}

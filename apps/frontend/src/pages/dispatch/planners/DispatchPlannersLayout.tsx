@@ -5,7 +5,8 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import "./planner-design-tokens.css";
 import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
-import { UniversalFilterBar, type FilterState } from "../../../components/planner/UniversalFilterBar";
+import { UniversalFilterBar, type FilterState, type PeriodPreset } from "../../../components/planner/UniversalFilterBar";
+import { DEFAULT_PLANNER_RANGE_DAYS, buildPlannerRange, plannerPresetRange, type PlannerPresetKey } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { companyToday } from "../../../lib/businessDate";
 
@@ -24,6 +25,82 @@ const TABS = [
  * including the first three data rows on every single tab visit. It must open closed and stay
  * closed until the operator asks for it.
  */
+// LEAD 443.251 item 4 (owner 10-22: "the range, should be in a filter format"): Today, This week,
+// Next 7 days, 14 days — computed from the COMPANY date (the shared bar's presets use the UTC date).
+const PLANNER_PRESET_KEYS: PeriodPreset[] = ["today", "this_week", "next_7", "next_14", "custom"];
+const WEEKDAY_TOGGLES: Array<{ index: number; label: string }> = [
+  { index: 1, label: "Mo" },
+  { index: 2, label: "Tu" },
+  { index: 3, label: "We" },
+  { index: 4, label: "Th" },
+  { index: 5, label: "Fr" },
+  { index: 6, label: "Sa" },
+  { index: 0, label: "Su" },
+];
+
+function shortDate(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+}
+
+/** LEAD 443.251 item 4 — "Show days" toggles, inside the Filters popover. */
+function PlannerShowDays() {
+  const { hiddenWeekdays, setHiddenWeekdays } = usePlannerRange();
+  return (
+    <div className="space-y-1.5" data-testid="planner-show-days">
+      <div className="text-xs font-semibold text-gray-600">Show days</div>
+      <div className="flex flex-wrap gap-1">
+        {WEEKDAY_TOGGLES.map((day) => {
+          const shown = !hiddenWeekdays.includes(day.index);
+          return (
+            <button
+              key={day.index}
+              type="button"
+              aria-pressed={shown}
+              data-testid={`planner-show-day-${day.label}`}
+              className={`h-7 w-8 rounded-sm border text-xs font-semibold ${shown ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-500 hover:bg-[var(--surface-hover)]"}`}
+              onClick={() =>
+                setHiddenWeekdays(shown ? [...hiddenWeekdays, day.index] : hiddenWeekdays.filter((d) => d !== day.index))
+              }
+            >
+              {day.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** LEAD 443.251 item 4 — active filters as removable chips under the bar. */
+function PlannerFilterChips() {
+  const { range, setRange, hiddenWeekdays, setHiddenWeekdays } = usePlannerRange();
+  const hiddenLabels = WEEKDAY_TOGGLES.filter((d) => hiddenWeekdays.includes(d.index)).map((d) => d.label);
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 text-xs" data-testid="planner-filter-chips">
+      <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-range">
+        {range.start === range.end ? shortDate(range.start) : `${shortDate(range.start)} – ${shortDate(range.end)}`}
+        <button
+          type="button"
+          aria-label="Reset the date range"
+          className="text-gray-500 hover:text-gray-900"
+          onClick={() => setRange(buildPlannerRange(DEFAULT_PLANNER_RANGE_DAYS))}
+        >
+          ×
+        </button>
+      </span>
+      {hiddenLabels.length > 0 ? (
+        <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-hidden-days">
+          Hidden: {hiddenLabels.join(", ")}
+          <button type="button" aria-label="Show every day" className="text-gray-500 hover:text-gray-900" onClick={() => setHiddenWeekdays([])}>
+            ×
+          </button>
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function PlannerControls() {
   const { range, setRange } = usePlannerRange();
   const [filters, setFilters] = useState<FilterState>({
@@ -41,14 +118,32 @@ function PlannerControls() {
   }, [range.end, range.start]);
 
   const applyFilters = (next: FilterState) => {
+    if (next.period !== "custom" && PLANNER_PRESET_KEYS.includes(next.period)) {
+      const preset = plannerPresetRange(next.period as PlannerPresetKey);
+      next = { ...next, from: preset.start, to: preset.end };
+    }
     setFilters(next);
     setRange({ start: next.from, end: next.to });
   };
 
+  // The range toolbar (7d / 14d / 30d / Custom) and the Show-days toggles live INSIDE the Filters
+  // popover now — no button row outside it (owner 10-22).
   return (
     <>
-      <UniversalFilterBar value={filters} onChange={applyFilters} defaultPeriod="custom" defaultOpen={false} />
-      <PlannerRangeToolbar />
+      <UniversalFilterBar
+        value={filters}
+        onChange={applyFilters}
+        defaultPeriod="custom"
+        defaultOpen={false}
+        presetKeys={PLANNER_PRESET_KEYS}
+        extra={
+          <>
+            <PlannerRangeToolbar />
+            <PlannerShowDays />
+          </>
+        }
+      />
+      <PlannerFilterChips />
     </>
   );
 }
