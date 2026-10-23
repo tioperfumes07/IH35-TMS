@@ -11,8 +11,10 @@
 //   1. A board-wide unit-row computation exists (computeAllUnits / allUnits).
 //   2. The row key is unit-derived (uses unitKey / assigned_unit_id / unit: prefix), not a column
 //      array index.
-//   3. The swim-lane column renders ALL unit rows (not just its own lane's loads).
-//   4. Empty placeholders are rendered for rows whose unit is not in this lane (data-kanban-swim-lane-empty).
+//   3. The swim-lane column renders its own cards FROM the board-wide rows (board sort order).
+//   4. LEAD 443.251 item 3 (owner-live 2026-10-22, "a large blank gap under card T152/13700 in
+//      Dispatched"): NO empty placeholder rows. The 09-11 alignment placeholders left a tall blank
+//      hole between two cards of the same lane (measured: 2 × 64 px under T152). Superseded.
 //   5. The old per-column KanbanDispatchColumn is NOT used for the main board render.
 //   6. handleDragEnd is untouched (not modified for layout).
 //   7. The row key attribute (data-kanban-swim-lane-row-key) is present on both card rows and empty rows.
@@ -98,28 +100,16 @@ export function audit(src) {
     /allUnits:\s*UnitRow\[\]/.test(src),
   );
   check(
-    "KanbanSwimLaneColumn maps over allUnits (not a column-local array)",
-    /allUnits\.map\(/.test(src)
-    // 67203a8fec (ROUND 20.3 swim-lane bloat, owner-live 2026-09-12): a column renders the CONTIGUOUS slice of the
-    // board-wide rows between its first and last own card — interior placeholders kept, so alignment still holds.
-    || (/const visibleUnits\s*=\s*firstOwnIndex === -1 \? \[\] : allUnits\.slice\(firstOwnIndex, lastOwnIndex \+ 1\)/.test(src) && /visibleUnits\.map\(/.test(src)),
+    "KanbanSwimLaneColumn draws its own cards from the board-wide rows (board sort order)",
+    /const visibleUnits\s*=\s*allUnits\.filter\(\(unit\)\s*=>\s*unit\.columnKey === column\.key\)/.test(src) && /visibleUnits\.map\(/.test(src),
   );
   check(
-    "Empty placeholder rendered when unit.columnKey !== column.key",
-    /unit\.columnKey\s*!==\s*column\.key/.test(src),
-  );
-  check(
-    "Empty placeholder has data-kanban-swim-lane-empty attribute",
-    /data-kanban-swim-lane-empty/.test(src),
+    "No empty placeholder rows (LEAD 443.251 item 3 — blank gap under T152)",
+    !/data-kanban-swim-lane-empty/.test(src) && !/unit\.columnKey\s*!==\s*column\.key/.test(src),
   );
   check(
     "Card rows carry data-kanban-swim-lane-row-key",
     /data-kanban-swim-lane-row-key=\{unit\.unitKey\}/.test(src),
-  );
-  check(
-    "Empty rows carry data-kanban-swim-lane-row-key",
-    /data-kanban-swim-lane-row-key=\{unit\.unitKey\}/.test(src)
-      && /data-kanban-swim-lane-empty/.test(src),
   );
   check(
     "Row min-height enforced via SWIM_LANE_ROW_MIN_HEIGHT",
@@ -198,16 +188,16 @@ export const SYNTHETIC_OK = [
   "const [boardSort, setBoardSort] = useState(null); function toggleKanbanColumnSort() { setBoardSort(null); }",
   "const handleDragEnd = async (event: DragEndEvent) => {};",
   "function KanbanSwimLaneColumn({ column, allUnits }: { column: Col; allUnits: UnitRow[] }) {",
-  "  return allUnits.map((unit) => unit.columnKey !== column.key",
-  "    ? <div key={`empty:${unit.unitKey}:${column.key}`} data-kanban-swim-lane-empty data-kanban-swim-lane-row-key={unit.unitKey} />",
-  "    : <div key={unit.unitKey} data-kanban-swim-lane-row-key={unit.unitKey} />);",
+  "  const visibleUnits = allUnits.filter((unit) => unit.columnKey === column.key);",
+  "  return visibleUnits.map((unit) => <div key={unit.unitKey} data-kanban-swim-lane-row-key={unit.unitKey} />);",
   "}",
   '<div data-testid="kanban-swim-lane-board"><KanbanSwimLaneColumn column={c} allUnits={allUnits} /></div>',
 ].join("\n");
 
-const SLICE_OK = SYNTHETIC_OK.replace(
-  "  return allUnits.map((unit) => unit.columnKey !== column.key",
-  "  const visibleUnits = firstOwnIndex === -1 ? [] : allUnits.slice(firstOwnIndex, lastOwnIndex + 1);\n  return visibleUnits.map((unit) => unit.columnKey !== column.key",
+// The 09-11/09-12 shape this guard used to require: a board-wide slice WITH empty placeholder rows.
+const PLACEHOLDER_SHAPE = SYNTHETIC_OK.replace(
+  "  return visibleUnits.map((unit) => <div key={unit.unitKey} data-kanban-swim-lane-row-key={unit.unitKey} />);",
+  "  return visibleUnits.map((unit) => unit.columnKey !== column.key ? <div data-kanban-swim-lane-empty /> : <div key={unit.unitKey} data-kanban-swim-lane-row-key={unit.unitKey} />);",
 );
 
 if (process.argv.includes("--selftest")) {
@@ -216,13 +206,12 @@ if (process.argv.includes("--selftest")) {
     ["a DispatchKanban holding every rule passes", audit(ok).failures.length === 0],
     ["a column-local index key fails", audit(ok + "\n<div key={i} />").failures.length > 0],
     ["rows not deduplicated board-wide fail", audit(ok.split("seenUnits").join("x")).failures.length > 0],
-    ["dropping the empty-row placeholder fails", audit(ok.split("data-kanban-swim-lane-empty").join("x")).failures.length > 0],
+    ["an empty placeholder row (the T152 gap) fails", audit(PLACEHOLDER_SHAPE).failures.length > 0],
     ["losing the per-unit row key fails", audit(ok.split("data-kanban-swim-lane-row-key={unit.unitKey}").join("x")).failures.length > 0],
     ["per-column sort instead of board sort fails", audit(ok.split("setBoardSort(").join("setColumnSort(")).failures.length > 0],
     // 443.187 — the current shapes pass, and a column-local filter in place of the board-wide slice still fails.
     ["the second-leg unit+load key passes", audit(ok.replace("const key = unitId ?? `load:${load.id}`;", "const key = unitId ? `unit:${unitId}:load:${load.id}` : `load:${load.id}`; rows.push({ unitKey: key });")).failures.length === 0],
-    ["the trimmed board-wide slice passes", audit(SLICE_OK).failures.length === 0],
-    ["a column-local filter instead of the board-wide slice fails", audit(SLICE_OK.replace("allUnits.slice(firstOwnIndex, lastOwnIndex + 1)", "allUnits.filter((u) => u.columnKey === column.key)")).failures.length > 0],
+    ["a lane drawn from a column-local array instead of the board-wide rows fails", audit(ok.replace("allUnits.filter((unit) => unit.columnKey === column.key)", "columnLoads")).failures.length > 0],
   ];
   for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, p]) => !p).length;
@@ -242,5 +231,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log("verify-dispatch-kanban-row-alignment: OK — row keys are unit-derived, rows computed board-wide, empty placeholders present");
+console.log("verify-dispatch-kanban-row-alignment: OK — row keys are unit-derived, rows computed board-wide, no blank placeholder rows");
 process.exit(0);

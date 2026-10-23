@@ -304,6 +304,8 @@ export type BookLoadInput = {
   charges: BookLoadCharge[];
   stops: BookLoadStop[];
   save_mode: "draft" | "book_dispatch";
+  /** LEAD 443.251 item 1b — Kanban "Assigned" lane preset: book, but land at assigned_not_dispatched. */
+  book_without_dispatch?: boolean;
   // ROUND 24.3 — field names save_mode="draft" deferred rather than blocked on; persisted into
   // quicksave_pending_fields (nested under a "pending_fields" key, see v3Metadata below). Ignored
   // unless save_mode === "draft".
@@ -3243,7 +3245,7 @@ export async function createLoadWithFullSideEffects(
     const statusForInsert =
       input.save_mode === "draft"
         ? "draft"
-        : input.save_mode === "book_dispatch" && hasCrew
+        : input.save_mode === "book_dispatch" && hasCrew && !input.book_without_dispatch
           ? "dispatched"
           : !hasCrew && input.status === "assigned_not_dispatched"
             ? "unassigned"

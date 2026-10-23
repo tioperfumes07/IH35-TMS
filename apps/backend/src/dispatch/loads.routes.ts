@@ -400,6 +400,10 @@ const createDispatchLoadBodySchema = z.object({
   // array-level ">=2" moved out of this `.array()` builder (was `.min(2)`) into the `.superRefine`
   // below, gated on save_mode !== "draft"; book_dispatch keeps the exact same requirement.
   save_mode: z.enum(["draft", "book_dispatch"]).default("book_dispatch"),
+  // LEAD 443.251 item 1b: a truck dragged onto the Kanban "Assigned" lane opens Book with that lane's
+  // status pre-set. Book still validates exactly like book_dispatch; only the landing status differs —
+  // the load stays assigned_not_dispatched (every other book side effect is unchanged).
+  book_without_dispatch: z.boolean().optional(),
   // ROUND 24.3 — required fields a draft deferred (mirrors the frontend's own draftPendingFields;
   // both independently know the same rules, but the frontend's list is the one actually PERSISTED —
   // this is not re-derived server-side to avoid a second, driftable copy of the same rule set).

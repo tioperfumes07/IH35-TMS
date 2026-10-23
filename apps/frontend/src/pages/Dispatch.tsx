@@ -12,7 +12,7 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
-import { DispatchKanban } from "../components/dispatch/DispatchKanban";
+import { DispatchKanban, type KanbanBookPreset } from "../components/dispatch/DispatchKanban";
 import { listUnitsWithoutLoad } from "../api/dispatch";
 import { FleetOosStrip } from "../components/dispatch/FleetOosStrip";
 import { DispatchBoard } from "./dispatch/DispatchBoard";
@@ -139,6 +139,7 @@ export function DispatchPage({
     setNewLoadOpen(false);
     setBookUnitId(null);
     setBookDriverId(null);
+    setBookLanePreset(null);
     setEditLoadId(null);
   }, []);
   // ROUND 24.2 (owner 2026-09-14) — a draft row's click resumes it in the wizard's EXISTING edit
@@ -149,6 +150,8 @@ export function DispatchPage({
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   // RT-BOOK-RETURN (owner 2026-09-09): Round Trips "+ Book return" also prefills the needy truck's driver.
   const [bookDriverId, setBookDriverId] = useState<string | null>(null);
+  // LEAD 443.251 item 1b — a truck dropped on a Kanban lane opens Book with that lane's status pre-set.
+  const [bookLanePreset, setBookLanePreset] = useState<KanbanBookPreset | null>(null);
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
   const onLoadDetailPath = Boolean(pathLoadId);
   const loadsRoute = loadsDeepLink || onLoadDetailPath || location.pathname === "/dispatch/loads";
@@ -741,9 +744,10 @@ export function DispatchPage({
               next.delete("load");
               setSearchParams(next);
             }}
-            onBookForUnit={(unitId) => {
+            onBookForUnit={(unitId, preset) => {
               setBookUnitId(unitId);
               setBookDriverId(null);
+              setBookLanePreset(preset ?? null);
               openBookLoadModal();
             }}
             onStatusDrop={async (id, nextStatus) => {
@@ -880,6 +884,8 @@ export function DispatchPage({
         operatingCompanyId={defaultCompanyIds[0] ?? ""}
         prefillUnitId={bookUnitId}
         prefillDriverId={bookDriverId}
+        prefillUnitLabel={bookLanePreset?.unitLabel ?? null}
+        prefillLaneStatus={bookLanePreset?.laneStatus ?? null}
         editLoadId={editLoadId}
         onClose={() => {
           dismissBookLoadModal();

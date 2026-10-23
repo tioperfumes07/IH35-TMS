@@ -19,6 +19,11 @@ import { stampTruckLineArrival, stampTruckLineDeparture } from "../../api/truckL
 import type { UnitsWithoutLoad } from "../../api/dispatch";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ConfirmModal } from "../shared/ConfirmModal";
+import { Modal } from "../Modal";
+import { Button } from "../Button";
+import { listUnits } from "../../api/mdata";
+import { markUnitBackInService, markUnitOos } from "../../api/maintenance";
+import { isOperatorVisibleUnit } from "../../lib/operator-fleet-visibility";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { classifyProfit, formatProfitCents, getLoadProfitability, profitBadgeClassName } from "../../lib/loadProfit";
 import { entityLabel } from "../../lib/entity-label";
@@ -74,7 +79,8 @@ type Props = {
   onLoadClick: (loadId: string) => void;
   // Awaiting-assignment cards are synthetic trucks (no load) — clicking one books a load FOR that truck
   // rather than opening a (non-existent) load drawer. Receives the bare unit id.
-  onBookForUnit?: (unitId: string) => void;
+  // LEAD 443.251 item 1b: a truck dropped on a lane passes that lane's status as the preset.
+  onBookForUnit?: (unitId: string, preset?: KanbanBookPreset) => void;
   /** May resolve with `{ driver_bill_mint }` from PATCH …/transition (MILES-ON-BOOK). */
   onStatusDrop: (loadId: string, nextStatus: LoadStatus) => Promise<unknown>;
   // DB-2: clicking a lane header navigates to the List view pre-filtered to that lane's statuses
@@ -96,6 +102,87 @@ type Props = {
  */
 export function isSyntheticKanbanCardId(id: string): boolean {
   return id.startsWith("unit:");
+}
+
+/** LEAD 443.251 item 1b — the status a lane pre-sets in "Book load for <unit>". */
+export type KanbanBookPreset = { laneStatus: "assigned_not_dispatched" | "dispatched"; unitLabel: string | null };
+
+/** Where a dragged truck card came from: the Awaiting-assignment lane or the Fleet out-of-service strip. */
+export type KanbanUnitOrigin = "awaiting" | "oos";
+
+/** The droppable id of the Fleet out-of-service strip. */
+export const KANBAN_OOS_DROP_ID = "oos_strip";
+
+export type KanbanUnitDropOutcome =
+  | { kind: "assign"; loadId: string }
+  | { kind: "book"; preset: KanbanBookPreset }
+  | { kind: "mark_oos" }
+  | { kind: "return_to_service" }
+  | { kind: "refuse"; message: string };
+
+/**
+ * LEAD 443.251 items 1–2 (owner, 30+ asks: "the units are still not dragable from one box to the next").
+ * A truck card is a real drag source with a real outcome for every target — never an inert card, never a
+ * silent drop:
+ *   load card               → assign (the existing assign engine, behind the confirm modal)
+ *   Assigned / Dispatched   → open "Book load for <unit>" with that lane's status pre-set (nothing written)
+ *   Fleet out of service    → mark the unit out of service (the audited maintenance writer)
+ *   OOS truck → Awaiting    → return it to service (the same audited writer's inverse)
+ * Every other target is refused with the reason, in words.
+ */
+export function resolveKanbanUnitDrop(input: {
+  origin: KanbanUnitOrigin;
+  unitNumber: string | null | undefined;
+  overId: string | null | undefined;
+  overData?: { type?: string; loadId?: string; unitId?: string } | null;
+  overLoad?: Pick<DispatchLoadRow, "id" | "load_number"> | null;
+}): KanbanUnitDropOutcome {
+  const unit = input.unitNumber || "This truck";
+  const overId = input.overId ? String(input.overId) : "";
+  if (!overId) {
+    return { kind: "refuse", message: `Drop ${unit} onto a load card, the Assigned or Dispatched lane, or Fleet out of service.` };
+  }
+  if (input.overData?.type === "unit-target") {
+    return { kind: "refuse", message: `${unit} can't be dropped on another truck — drop it on a load card to assign it.` };
+  }
+  if (input.overData?.type === "load" || overId.startsWith("droppable:load:")) {
+    if (input.origin === "oos") {
+      return { kind: "refuse", message: `${unit} is out of service — drag it back to Awaiting assignment before assigning a load.` };
+    }
+    const loadId = input.overLoad?.id ?? input.overData?.loadId ?? overId.replace("droppable:load:", "");
+    return { kind: "assign", loadId };
+  }
+  if (overId === KANBAN_OOS_DROP_ID) {
+    return input.origin === "oos"
+      ? { kind: "refuse", message: `${unit} is already out of service.` }
+      : { kind: "mark_oos" };
+  }
+  const laneKey = overId.replace("column:", "");
+  if (laneKey === "awaiting_assignment") {
+    return input.origin === "oos"
+      ? { kind: "return_to_service" }
+      : { kind: "refuse", message: `${unit} is already awaiting assignment.` };
+  }
+  if (input.origin === "oos") {
+    return { kind: "refuse", message: `${unit} is out of service — drag it back to Awaiting assignment first.` };
+  }
+  if (laneKey === "assigned") {
+    return { kind: "book", preset: { laneStatus: "assigned_not_dispatched", unitLabel: input.unitNumber ?? null } };
+  }
+  if (laneKey === "dispatched") {
+    return { kind: "book", preset: { laneStatus: "dispatched", unitLabel: input.unitNumber ?? null } };
+  }
+  if (laneKey === "drafts") {
+    return { kind: "refuse", message: "Drafts come only from Save draft — drop the truck on Assigned or Dispatched to book a load for it." };
+  }
+  const lane = KANBAN_STATUS_GROUPS.find((group) => group.key === laneKey);
+  if (!lane) {
+    return { kind: "refuse", message: `Drop ${unit} onto a load card, the Assigned or Dispatched lane, or Fleet out of service.` };
+  }
+  return {
+    kind: "refuse",
+    message: `A new load for ${unit} books into Assigned or Dispatched — ${lane.title} is reached by moving the load card after it is booked.`,
+  };
 }
 function truckToKanbanLoad(unit: UnitsWithoutLoad): DispatchLoadRow {
   return {
@@ -1138,11 +1225,24 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
     id: load.id,
     data: {
       type: "unit",
+      origin: "awaiting" satisfies KanbanUnitOrigin,
       unitId: load.assigned_unit_id,
       unitNumber: load.assigned_unit_number,
       driverName: load.assigned_primary_driver_name,
     },
   });
+  // LEAD 443.251 item 2: a LOAD card dropped onto this truck card = assign this truck to that load.
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `droppable:unit:${load.assigned_unit_id ?? load.id}`,
+    data: { type: "unit-target", unitId: load.assigned_unit_id, unitNumber: load.assigned_unit_number },
+  });
+  const setRefs = useCallback(
+    (node: HTMLDivElement | null) => {
+      setNodeRef(node);
+      setDropRef(node);
+    },
+    [setNodeRef, setDropRef],
+  );
   // ROUND 20.3 DRAG ACTIVATION — see KanbanDispatchCard's identical comment above. This card is
   // unconditionally draggable (no disabled flag), so touch-action is unconditional too.
   const transformStyle = {
@@ -1155,13 +1255,14 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
   // Exact Leaves home.kanban:unit|driver — unit/driver were plain labels despite IDs.
   return (
     <div
-      ref={setNodeRef}
+      ref={setRefs}
       style={transformStyle}
       {...attributes}
       {...listeners}
       role="button"
       tabIndex={0}
       data-testid={`awaiting-truck-card-${load.id}`}
+      data-kanban-unit-card="draggable"
       onClick={() => onBook(load.id)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -1169,9 +1270,11 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           onBook(load.id);
         }
       }}
-      className={`cursor-pointer select-none rounded-sm border border-gray-200 bg-white p-2 hover:border-[#E5E7EB] hover:bg-[#F7F8FA] ${
-        isDragging ? "opacity-60" : ""
-      } ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+      // LEAD 443.251: the pointer-cursor class sat beside `cursor-grab` and won the cascade, so the truck card
+      // never LOOKED draggable (computed cursor = pointer, measured on prod). One cursor class only.
+      className={`select-none rounded-sm border bg-white p-2 hover:bg-[#F7F8FA] ${
+        isOver ? "border-[#1F2A44] ring-1 ring-[#1F2A44]" : "border-gray-200 hover:border-[#E5E7EB]"
+      } ${isDragging ? "cursor-grabbing opacity-60" : "cursor-grab"}`}
     >
       {/* Owner ruling 2026-09-04: the vehicle number is the awaiting card's IDENTITY and must ALWAYS
           be fully visible. It used to share one flex row with the "+ Book load" button under min-w-0
@@ -1218,6 +1321,124 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
         + Book load
       </button>
     </div>
+  );
+}
+
+/** LEAD 443.251 item 1c — an out-of-service truck in the Fleet out-of-service strip. Drag it back to
+ *  Awaiting assignment to return it to service (the audited maintenance writer). */
+type KanbanOosUnit = { id: string; unit_number: string; oos_reason: string | null };
+
+function KanbanOosUnitChip({ unit }: { unit: KanbanOosUnit }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `oos-unit:${unit.id}`,
+    data: { type: "unit", origin: "oos" satisfies KanbanUnitOrigin, unitId: unit.id, unitNumber: unit.unit_number },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}), touchAction: "none" }}
+      {...attributes}
+      {...listeners}
+      className={`flex select-none items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs ${
+        isDragging ? "cursor-grabbing opacity-60" : "cursor-grab"
+      }`}
+      data-testid={`kanban-oos-unit-${unit.id}`}
+      data-kanban-unit-card="draggable"
+      title={unit.oos_reason ? `Out of service: ${unit.oos_reason}` : "Out of service"}
+    >
+      <EntityLinkOrTombstone
+        kind="unit"
+        id={unit.id}
+        name={unit.unit_number}
+        noun="Unit"
+        className="font-semibold text-gray-900"
+        data-testid="kanban-oos-unit-link"
+        onClick={(e) => e.stopPropagation()}
+      />
+      <span className="rounded-sm bg-red-100 px-1.5 text-xs font-semibold text-red-800">Out of service</span>
+    </div>
+  );
+}
+
+/** LEAD 443.251 item 1c — the Fleet out-of-service strip is a drop target (Awaiting ⇄ Fleet out of service). */
+// useDroppable must run inside <DndContext>, which DispatchKanban itself renders — hence this render prop.
+function KanbanOosDropZone({ children }: { children: (setNodeRef: (node: HTMLElement | null) => void, isOver: boolean) => React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: KANBAN_OOS_DROP_ID });
+  return <>{children(setNodeRef, isOver)}</>;
+}
+
+/** LEAD 443.251 item 1c — the reason the audited OOS writer requires (mark: ≥5 chars, return: ≥10). */
+function KanbanUnitAvailabilityModal({
+  pending,
+  onClose,
+  onConfirm,
+}: {
+  pending: { unitId: string; unitNumber: string; action: "mark_oos" | "return_to_service" } | null;
+  onClose: () => void;
+  onConfirm: (text: string) => Promise<void>;
+}) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    setText("");
+    setError(null);
+  }, [pending]);
+  const min = pending?.action === "return_to_service" ? 10 : 5;
+  const ok = text.trim().length >= min;
+  const close = () => {
+    if (!busy) onClose();
+  };
+  return (
+    <Modal
+      open={Boolean(pending)}
+      onClose={close}
+      title={pending?.action === "return_to_service" ? `Return ${pending.unitNumber} to service` : `Mark ${pending?.unitNumber ?? ""} out of service`}
+    >
+      <div className="space-y-3" data-testid="kanban-unit-availability-modal">
+        <label className="block text-xs font-semibold text-[#4B5563]">
+          {pending?.action === "return_to_service" ? "Review notes" : "Reason"} (at least {min} characters)
+          <textarea
+            className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
+            rows={3}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            data-testid="kanban-unit-availability-text"
+          />
+        </label>
+        {error ? (
+          <p className="text-xs text-red-800" role="alert" data-testid="kanban-unit-availability-error">
+            {error}
+          </p>
+        ) : null}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={close} disabled={busy}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            loading={busy}
+            disabled={!ok}
+            data-testid="kanban-unit-availability-confirm"
+            onClick={async () => {
+              setBusy(true);
+              setError(null);
+              try {
+                await onConfirm(text.trim());
+                onClose();
+              } catch (err) {
+                setError(userFacingApiError(err, "the server refused it and gave no reason"));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {pending?.action === "return_to_service" ? "Return to service" : "Mark out of service"}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -1616,14 +1837,11 @@ function KanbanSwimLaneColumn({
   // owns — interior placeholders between two of this column's own cards are kept, so cross-column row
   // alignment still holds for the units that matter to this column's own visible range. A column with
   // zero real cards renders none (falls through to the existing "(empty)" state below).
-  const firstOwnIndex = allUnits.findIndex((unit) => unit.columnKey === column.key);
-  const lastOwnIndex = (() => {
-    for (let i = allUnits.length - 1; i >= 0; i -= 1) {
-      if (allUnits[i]!.columnKey === column.key) return i;
-    }
-    return -1;
-  })();
-  const visibleUnits = firstOwnIndex === -1 ? [] : allUnits.slice(firstOwnIndex, lastOwnIndex + 1);
+  // LEAD 443.251 item 3 (owner-live 10-22: "a large blank gap under card T152/13700 in Dispatched").
+  // The trim above still kept INTERIOR placeholders — one empty row per unit whose card sits in another
+  // lane between two of this lane's own cards — so a lane with 2 cards far apart in the board sort showed
+  // a tall blank hole between them. A lane now draws only its own cards, top-packed, in board order.
+  const visibleUnits = allUnits.filter((unit) => unit.columnKey === column.key);
 
   return (
     <section
@@ -1685,18 +1903,6 @@ function KanbanSwimLaneColumn({
           </div>
         ) : null}
         {visibleUnits.map((unit) => {
-          if (unit.columnKey !== column.key) {
-            // Empty placeholder — same min-height as a card row so the same unit aligns across all lanes
-            return (
-              <div
-                key={`empty:${unit.unitKey}:${column.key}`}
-                style={{ minHeight: `${rowMinH}px` }}
-                data-testid={`kanban-swim-lane-empty-${column.key}-${unit.unitKey}`}
-                data-kanban-swim-lane-row-key={unit.unitKey}
-                data-kanban-swim-lane-empty="true"
-              />
-            );
-          }
           const load = unit.load;
           const breach = Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id));
           if (column.key === "awaiting_assignment") {
@@ -1796,8 +2002,48 @@ export function DispatchKanban({
     });
   }, []);
   const [pendingAssign, setPendingAssign] = useState<PendingKanbanAssign | null>(null);
+  const [pendingAvailability, setPendingAvailability] = useState<
+    { unitId: string; unitNumber: string; action: "mark_oos" | "return_to_service" } | null
+  >(null);
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  // LEAD 443.251 item 1c — the out-of-service trucks, read from the same unit roster (and cache key)
+  // the Fleet OOS tab uses, so an OOS truck is a real card that drags back to Awaiting assignment.
+  const oosUnitsQuery = useQuery({
+    queryKey: ["dispatch", "fleet-oos-units", operatingCompanyId],
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId, limit: 500 }),
+    enabled: Boolean(operatingCompanyId),
+    refetchInterval: 60_000,
+  });
+  const oosUnits = useMemo<KanbanOosUnit[]>(() => {
+    const rows = (oosUnitsQuery.data?.units ?? []) as Array<{
+      id?: string;
+      unit_number?: string | null;
+      is_oos?: boolean;
+      oos_reason?: string | null;
+      is_sample_data?: boolean | null;
+    }>;
+    return rows
+      .filter((unit) => unit.id && unit.is_oos === true && isOperatorVisibleUnit(unit))
+      .map((unit) => ({ id: String(unit.id), unit_number: String(unit.unit_number ?? ""), oos_reason: unit.oos_reason ?? null }))
+      .sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true, sensitivity: "base" }));
+  }, [oosUnitsQuery.data]);
+  const confirmUnitAvailability = async (text: string) => {
+    if (!pendingAvailability || !operatingCompanyId) throw new Error("No operating company in scope — refresh the board.");
+    const { unitId, unitNumber, action } = pendingAvailability;
+    if (action === "mark_oos") {
+      await markUnitOos(unitId, { operating_company_id: operatingCompanyId, reason: text });
+      pushToast(`${unitNumber} marked out of service.`, "success");
+    } else {
+      await markUnitBackInService(unitId, { operating_company_id: operatingCompanyId, review_notes: text });
+      pushToast(`${unitNumber} returned to service — back in Awaiting assignment.`, "success");
+    }
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["dispatch", "fleet-oos-units"] }),
+      queryClient.invalidateQueries({ queryKey: ["dispatch", "units-without-load"] }),
+      queryClient.invalidateQueries({ queryKey: ["loads"] }),
+    ]);
+  };
 
   const assignMutation = useMutation({
     meta: { loads: true },
@@ -1957,25 +2203,50 @@ export function DispatchKanban({
     clearDragUserSelect();
     const activeId = event.active.id;
     const overId = event.over?.id;
-    const activeData = (event.active.data.current ?? {}) as { type?: string; unitId?: string; unitNumber?: string | null };
-    const overData = (event.over?.data.current ?? {}) as { type?: string; loadId?: string };
+    const activeData = (event.active.data.current ?? {}) as {
+      type?: string;
+      origin?: KanbanUnitOrigin;
+      unitId?: string;
+      unitNumber?: string | null;
+    };
+    const overData = (event.over?.data.current ?? {}) as { type?: string; loadId?: string; unitId?: string; unitNumber?: string | null };
 
-    // BRD-12: dragging a truck card (unit) onto a load card assigns the unit to that load.
-    // This is intentionally surfaced as a confirmation modal — no silent reassignment on a stray drag.
+    // LEAD 443.251 items 1a–1c: a truck card has a real outcome for every target (resolveKanbanUnitDrop).
+    // Assign is still surfaced as a confirmation modal — no silent reassignment on a stray drag — and every
+    // refusal is a toast with the reason.
     if (activeData.type === "unit") {
-      if (overData.type === "load" && activeData.unitId && overData.loadId) {
-        const load = optimisticLoads.find((item) => item.id === overData.loadId);
-        if (load) {
-          setPendingAssign({
-            unitId: activeData.unitId,
-            unitNumber: activeData.unitNumber,
-            loadId: load.id,
-            loadNumber: load.load_number,
-          });
+      if (!activeData.unitId) {
+        pushToast("Could not identify that truck — refresh the board and try again.", "error");
+        return;
+      }
+      const overLoadId = overData.loadId ?? (overId ? String(overId).replace("droppable:load:", "") : "");
+      const overLoad = optimisticLoads.find((item) => item.id === overLoadId) ?? null;
+      const outcome = resolveKanbanUnitDrop({
+        origin: activeData.origin ?? "awaiting",
+        unitNumber: activeData.unitNumber,
+        overId: overId == null ? null : String(overId),
+        overData,
+        overLoad,
+      });
+      const unitNumber = activeData.unitNumber || activeData.unitId;
+      if (outcome.kind === "assign") {
+        const target = optimisticLoads.find((item) => item.id === outcome.loadId);
+        if (!target) {
+          pushToast("Could not find that load on the board — refresh and try again.", "error");
           return;
         }
+        setPendingAssign({ unitId: activeData.unitId, unitNumber: activeData.unitNumber, loadId: target.id, loadNumber: target.load_number });
+      } else if (outcome.kind === "book") {
+        if (!onBookForUnit) {
+          pushToast("Booking from the board is not available here — use + Book Load.", "error");
+          return;
+        }
+        onBookForUnit(activeData.unitId, outcome.preset);
+      } else if (outcome.kind === "mark_oos" || outcome.kind === "return_to_service") {
+        setPendingAvailability({ unitId: activeData.unitId, unitNumber, action: outcome.kind });
+      } else {
+        pushToast(outcome.message, "info");
       }
-      pushToast("Drop the truck onto a load card to assign it.", "info");
       return;
     }
 
@@ -1990,6 +2261,16 @@ export function DispatchKanban({
       return;
     }
     const loadId = String(activeId);
+    // LEAD 443.251 item 2: a load card dropped onto a truck card = assign that truck (same as 1a).
+    if (overData.type === "unit-target") {
+      const draggedLoad = optimisticLoads.find((item) => item.id === loadId);
+      if (!draggedLoad || !overData.unitId) {
+        pushToast("Could not identify that load or truck — refresh the board and try again.", "error");
+        return;
+      }
+      setPendingAssign({ unitId: overData.unitId, unitNumber: overData.unitNumber, loadId: draggedLoad.id, loadNumber: draggedLoad.load_number });
+      return;
+    }
     // REG-018 (owner-live): dnd-kit's pointerWithin collision detection resolves the DEEPEST
     // droppable under the pointer. Every card registers itself as a droppable (droppable:load:<id>)
     // INSIDE the column droppable (column:<key>). When a card is dropped onto a lane that already
@@ -2171,6 +2452,11 @@ export function DispatchKanban({
       onDragCancel={handleDragCancel}
     >
       <div className="relative" data-testid="dispatch-kanban-board">
+        <KanbanUnitAvailabilityModal
+          pending={pendingAvailability}
+          onClose={() => setPendingAvailability(null)}
+          onConfirm={confirmUnitAvailability}
+        />
         <ConfirmModal
           open={Boolean(pendingAssign)}
           title="Assign unit to load"
@@ -2230,8 +2516,11 @@ export function DispatchKanban({
         </div>
 
         {/* Part D — Fleet out-of-service strip, pinned at the bottom of the board. */}
+        <KanbanOosDropZone>
+        {(setOosDropRef, isOverOosStrip) => (
         <section
-          className="sticky bottom-0 mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2"
+          ref={setOosDropRef}
+          className={`sticky bottom-0 mt-2 rounded-sm border p-2 ${isOverOosStrip ? "border-[#1F2A44] bg-[#DCE7F3]" : "border-[#E5E7EB] bg-[#F7F8FA]"}`}
           data-testid="dispatch-kanban-oos-strip"
         >
           <header className="flex items-center justify-between gap-2">
@@ -2243,12 +2532,21 @@ export function DispatchKanban({
                 onToggleSort={toggleKanbanColumnSort}
               />
             </div>
-            <span className="rounded-sm bg-white px-2 py-0.5 text-xs font-bold text-[#4B5563]">{outOfServiceLoads.length}</span>
+            <span className="rounded-sm bg-white px-2 py-0.5 text-xs font-bold text-[#4B5563]">{oosUnits.length + outOfServiceLoads.length}</span>
           </header>
+          {oosUnits.length > 0 ? (
+            <div className="mt-1 flex flex-wrap gap-2" data-testid="kanban-oos-units">
+              {oosUnits.map((unit) => (
+                <KanbanOosUnitChip key={unit.id} unit={unit} />
+              ))}
+            </div>
+          ) : null}
           {outOfServiceLoads.length === 0 ? (
-            <p className="mt-1 text-xs italic text-[#4B5563]">
-              Full fleet out-of-service feed pending — no units flagged.
-            </p>
+            oosUnits.length === 0 ? (
+              <p className="mt-1 text-xs italic text-[#4B5563]">
+                No trucks out of service — drag a truck from Awaiting assignment here to mark it out of service.
+              </p>
+            ) : null
           ) : (
             <div className="mt-1 flex flex-wrap gap-2">
               {sortedOutOfServiceLoads.map((load) => (
@@ -2311,6 +2609,8 @@ export function DispatchKanban({
             </div>
           )}
         </section>
+        )}
+        </KanbanOosDropZone>
       </div>
     </DndContext>
   );

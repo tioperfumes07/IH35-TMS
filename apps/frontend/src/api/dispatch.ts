@@ -249,6 +249,8 @@ export type DispatchBookLoadPayload = {
     geocode_precision?: "rooftop" | "range" | "locality" | null;
   }>;
   save_mode: "draft" | "book_dispatch";
+  /** LEAD 443.251 item 1b — Kanban "Assigned" lane preset: book, land at assigned_not_dispatched. */
+  book_without_dispatch?: boolean;
   // ROUND 24.3 — required fields save_mode="draft" deferred rather than blocked on; persisted as
   // mdata.loads.quicksave_pending_fields, read back on resume. Ignored server-side unless save_mode
   // is "draft".

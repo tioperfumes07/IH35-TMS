@@ -297,10 +297,10 @@ describe("DispatchKanban — ROUND 20.3 drag activation + swim-lane bloat (owner
     expect(dispatchedBody.querySelector('[data-kanban-swim-lane-empty="true"]')).toBeNull();
   });
 
-  it("swim-lane alignment: an INTERIOR placeholder between two of a column's own cards is preserved (cross-column row alignment still holds where it matters)", () => {
+  it("LEAD 443.251 item 3: NO blank row between two of a column's own cards (the gap under T152/13700)", () => {
     // Two units both in "dispatched", with a third unit (a different column) sorted BETWEEN them by
-    // insertion order. The interior placeholder row keeps D1 and D2 at their true global row
-    // positions relative to each other; only the (nonexistent, here) leading/trailing runs are cut.
+    // insertion order. Fail-old: the 09-11 interior placeholder drew a blank 64px row between D1 and
+    // D2 — measured on prod 10-22 as 2 blank rows under T152 in Dispatched. A lane now top-packs.
     const loads = [
       mockLoad({ id: "load-d1", load_number: "13591", status: "dispatched", assigned_unit_id: "u-d1", assigned_unit_number: "T101" }),
       mockLoad({ id: "load-mid", load_number: "13592", status: "booked", assigned_unit_id: "u-mid", assigned_unit_number: "T102" }),
@@ -313,8 +313,8 @@ describe("DispatchKanban — ROUND 20.3 drag activation + swim-lane bloat (owner
     );
     const dispatchedBody = screen.getByTestId("kanban-swim-lane-body-dispatched");
     const rows = dispatchedBody.querySelectorAll("[data-kanban-swim-lane-row-key]");
-    expect(rows.length).toBe(3);
-    expect(dispatchedBody.querySelectorAll('[data-kanban-swim-lane-empty="true"]').length).toBe(1);
+    expect(rows.length).toBe(2);
+    expect(dispatchedBody.querySelectorAll('[data-kanban-swim-lane-empty="true"]').length).toBe(0);
     expect(screen.getByTestId("kanban-standard-card-13591")).toBeInTheDocument();
     expect(screen.getByTestId("kanban-standard-card-13593")).toBeInTheDocument();
   });
