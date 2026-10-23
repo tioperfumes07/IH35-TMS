@@ -103,8 +103,9 @@ export function tourLoadColumns(prefix: string, rows: readonly Pick<TourListRow,
   const maxLegs = rows.reduce((max, r) => Math.max(max, (r.legs ?? []).length), 0);
   const legColumns: ParityColumn<TourListRow>[] = Array.from({ length: maxLegs }, (_, i) => ({
     key: `leg_${i + 1}`,
-    label: `Leg ${i + 1}`,
-    headerTitle: i === 0 ? "Every load in this tour, one column per leg" : undefined,
+    // LEAD 443.269-A item 1 (owner live 10-23): the owner looks for "Load #" — one column per load on the tour, still.
+    label: i === 0 ? "Load #" : `Load # ${i + 1}`,
+    headerTitle: i === 0 ? "Every load in this tour, one column per load (in leg order)" : undefined,
     testId: `${prefix}-leg-${i + 1}`,
     sortable: true,
     alwaysVisible: i === 0,

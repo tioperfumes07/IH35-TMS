@@ -543,7 +543,7 @@ function TourRegister({ state, companyId, onCount }: { state: "open" | "closed";
     rowKey={r => r.row_key}
     loading={q.isLoading}
     emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
-    storageKey={`load-costs-tours-${state}-v2`}
+    storageKey={`load-costs-tours-${state}-v3`}
     exportFilename={`load-costs-tours-${state}`}
     tableTestId={`load-costs-tours-table-${state}`}
     enableColumnReorder

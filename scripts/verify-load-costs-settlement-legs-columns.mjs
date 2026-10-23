@@ -69,7 +69,8 @@ function analyze(src) {
   if (!/export function tourLoadColumns/.test(cell)) errors.push("shared tourLoadColumns is missing");
   if (!summary.includes('label: "Load count"')) errors.push('summary missing separate "Load count" column');
   if (!/key:\s*`leg_\$\{i \+ 1\}`/.test(summary)) errors.push('summary must generate one column per leg with a per-leg key (leg_${i+1})');
-  if (!/label:\s*`Leg \$\{i \+ 1\}`/.test(summary)) errors.push('summary must label each generated column "Leg N"');
+  // LEAD 443.269-A (owner live 10-23): the per-load columns are labelled "Load #", "Load # 2" … (still one per leg).
+  if (!/label:\s*i === 0 \? "Load #" : `Load # \$\{i \+ 1\}`/.test(summary)) errors.push('summary must label each generated column "Load #" / "Load # N"');
   if (!/reduce\(\(max, r\) => Math\.max\(max, \(r\.legs \?\? \[\]\)\.length\), 0\)/.test(summary)) {
     errors.push("summary must compute the leg-column count from the widest row's own legs.length, never a hard-coded number");
   }

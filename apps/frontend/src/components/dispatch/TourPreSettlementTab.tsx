@@ -1,7 +1,8 @@
 import { settlementLabel } from "../../lib/settlementNumber";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { TourMilesPanel } from "./TourMilesPanel";
 import { closeTour, getTourReadout, getTourReadoutForLoad, type TourReadout } from "../../api/tourReadout";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../Toast";
@@ -37,6 +38,8 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
   const { pushToast } = useToast();
   const [popup, setPopup] = useState<null | { title: string; body: ReactNode }>(null);
   const [confirming, setConfirming] = useState(false);
+  const navigate = useNavigate();
+  const readyRef = useRef<HTMLDivElement | null>(null);
   const q = useQuery({
     queryKey: ["tour-readout", settlementId ? "settlement" : "load", operatingCompanyId, settlementId ?? loadId],
     queryFn: () => (settlementId ? getTourReadout(settlementId, operatingCompanyId) : getTourReadoutForLoad(loadId!, operatingCompanyId)),
@@ -59,6 +62,32 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
   const thisLeg = r.legs.find((l) => l.is_this_load);
   const sb = r.legs.find((l) => l.trip_type === "SB");
   const okCount = r.ready.filter((x) => x.ok).length;
+  const allOk = r.ready.length > 0 && okCount === r.ready.length;
+  const activeLegs = r.legs.filter((l) => !l.is_cancelled);
+  const nbLeg = activeLegs.find((l) => l.trip_type === "NB") ?? activeLegs[0];
+  const lastLeg = activeLegs[activeLegs.length - 1];
+  const podLeg = activeLegs.find((l) => l.is_delivered && l.pod_count === 0) ?? activeLegs.find((l) => l.pod_count === 0) ?? lastLeg;
+  const payLeg = activeLegs.find((l) => l.driver_pay_cents <= 0) ?? lastLeg;
+  const loadUrl = (id: string | undefined, tab?: "Documents" | "Costs") => (id ? `/dispatch/loads/${encodeURIComponent(id)}${tab ? `?tab=${tab}` : ""}` : "/dispatch");
+  /** 443.269-A 3c — where every readiness row goes. */
+  const readyTarget = (key: string): { kind: string; title: string; go: () => void } => {
+    switch (key) {
+      case "has_nb":
+        return { kind: "nb-load", title: `Open the NB load ${nbLeg?.load_number ?? ""}`, go: () => navigate(loadUrl(nbLeg?.load_id)) };
+      case "sb_delivered":
+        return { kind: "truck-line-assign", title: `Assign / attach the SB return load (Truck Line, ${t.unit_number ?? "this truck"})`, go: () => navigate(`/dispatch?view=truck-line${t.unit_number ? `&q=${encodeURIComponent(t.unit_number)}` : ""}`) };
+      case "pods":
+        return { kind: "pod-documents", title: `POD documents for load ${podLeg?.load_number ?? ""} (view + upload)`, go: () => navigate(loadUrl(podLeg?.load_id, "Documents")) };
+      case "costs_complete":
+        return { kind: "tour-costs", title: "The costs on these loads (account · vendor · receipt)", go: () => setPopup({ title: "Costs on this tour", body: <CostsPop r={r} cur={currencyCode} /> }) };
+      case "driver_pay":
+        return { kind: "driver-bills", title: `Driver bills for the tour (load ${payLeg?.load_number ?? ""})`, go: () => navigate(loadUrl(payLeg?.load_id, "Costs")) };
+      case "real_miles":
+        return { kind: "miles-panel", title: "Our database miles, Google shortest + practical, real driven, and which one the bill uses", go: () => setPopup({ title: "Miles on this tour", body: <TourMilesPanel legs={r.legs} operatingCompanyId={operatingCompanyId} /> }) };
+      default:
+        return { kind: "tour", title: "Open the pre-settlement", go: () => navigate(`/driver-finance/settlements?settlement_id=${encodeURIComponent(t.settlement_id)}`) };
+    }
+  };
   const unpostedDraftExpenses = r.costs.filter(
     (c) =>
       c.kind === "expense" &&
@@ -107,7 +136,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
     <div className="ldt-grid2">
       {/* Costs on this tour */}
       <div className="ldt-card" data-testid="tour-costs">
-        <div className="ldt-ch"><span>Costs on this tour</span><button type="button" className="ldt-link ldt-open" onClick={() => setPopup({ title: "Costs on this tour", body: <CostsPop r={r} cur={currencyCode} /> })}>{r.costs.length} entries ↗</button></div>
+        <div className="ldt-ch"><span>Costs on this tour</span><button type="button" className="ldt-link ldt-open" data-testid="tour-entries-button" onClick={() => setPopup({ title: "Costs on this tour", body: <CostsPop r={r} cur={currencyCode} /> })}>{r.costs.length} entries ↗</button></div>
         <div className="ldt-rows">
           {r.costs.slice(0, 8).map((c) => <div key={`${c.kind}:${c.id}`} className="ldt-row"><span><span className="ldt-k">{c.number}</span> · {c.category ?? "no account"} · {c.vendor_name ?? "no vendor"}<span className="ldt-sub">load {c.load_number ?? DASH} · {c.kind} · {c.posting_status}{c.receipt_count ? ` · ${c.receipt_count} receipt${c.receipt_count === 1 ? "" : "s"}` : " · no receipt"}</span></span><span className="ldt-m">{money(c.amount_cents, currencyCode)}</span></div>)}
           {r.costs.length > 8 ? <div className="ldt-row"><span className="ldt-muted">… {r.costs.length - 8} more — open ↗</span><span /></div> : null}
@@ -116,17 +145,57 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
         </div>
       </div>
 
-      {/* Ready to close? + the Close button */}
-      <div className="ldt-card" data-testid="tour-ready">
-        <div className="ldt-ch"><span>Ready to close?</span><span className="ldt-open">{okCount} of {r.ready.length}</span></div>
-        <div className="ldt-rows">
-          {r.ready.map((x) => <div key={x.key} className="ldt-row" data-testid={`tour-ready-${x.key}`} data-ok={x.ok}><span>{x.label}</span><span className="ldt-m"><span className={`ldt-pill ${x.ok ? "ok" : x.hard ? "bad" : "warn"}`}>{x.ok ? (x.detail === "yes" ? "yes" : x.detail) : x.detail}</span></span></div>)}
+      {/* LEAD 443.269-A item 3 — Ready to close?: a compact 2-column list (label · value, 32px rows, panel = content
+          width). EVERY row goes somewhere (readyTarget). At N of N the Close button is ENABLED and opens Settlement Close
+          for this driver/tour; below that each failing row is the link to the screen that fixes it, and the header
+          jumps to the first failing check. */}
+      <div className="ldt-card w-fit max-w-full self-start" data-testid="tour-ready" ref={readyRef}>
+        <button
+          type="button"
+          className="ldt-ch w-full cursor-pointer text-left"
+          data-testid="tour-ready-header"
+          title={allOk ? "Every check passes" : "Jump to the first failing check"}
+          onClick={() => {
+            const first = readyRef.current?.querySelector<HTMLElement>('[data-ok="false"]');
+            first?.scrollIntoView({ block: "nearest" });
+            first?.focus();
+          }}
+        >
+          <span>Ready to close?</span>
+          <span className="ldt-open" data-testid="tour-ready-count">{okCount} of {r.ready.length}</span>
+        </button>
+        <div className="grid grid-cols-[max-content_max-content] gap-x-4 px-3 py-1" data-testid="tour-ready-list">
+          {r.ready.map((x) => {
+            const target = readyTarget(x.key);
+            return (
+              <button
+                key={x.key}
+                type="button"
+                className="col-span-2 grid h-8 grid-cols-subgrid items-center text-left text-xs hover:bg-[var(--ldt-paper)] focus:bg-[var(--ldt-paper)]"
+                data-testid={`tour-ready-${x.key}`}
+                data-ok={x.ok}
+                data-target={target.kind}
+                title={target.title}
+                onClick={target.go}
+              >
+                <span className="text-[var(--ldt-ink)] underline-offset-2 hover:underline">{x.label}</span>
+                <span><span className={`ldt-pill ${x.ok ? "ok" : x.hard ? "bad" : "warn"}`}>{x.ok ? (x.detail === "yes" ? "yes" : x.detail) : x.detail}</span></span>
+              </button>
+            );
+          })}
         </div>
         <div className="ldt-actions" style={{ padding: 10 }}>
           {t.is_open ? (
-            <button type="button" className={`ldt-btn ${r.can_close ? "p" : "g"}`} data-testid="tour-close-button" disabled={!r.can_close || close.isPending} title={r.can_close ? "Closes the tour — a human confirms on the next step" : r.close_blockers.join(" · ")} onClick={() => setConfirming(true)}>
-              Close tour → Settlement (human confirms)
-            </button>
+            <>
+              {/* 443.269-A 3b: enabled at N of N (all hard checks pass ⇒ can_close); the close engine still refuses
+                  server-side while blocked, and a human confirms the soft items by name. */}
+              <button type="button" className={`ldt-btn ${r.can_close ? "p" : "g"}`} data-testid="tour-close-button" disabled={!r.can_close || close.isPending} title={r.can_close ? "Closes the tour — a human confirms on the next step" : r.close_blockers.join(" · ")} onClick={() => setConfirming(true)}>
+                Close tour → Settlement (human confirms)
+              </button>
+              <Link className="ldt-link" data-testid="tour-open-settlement-close" to={`/driver-finance/settlement-close?driver_id=${encodeURIComponent(t.driver_id)}&settlement_id=${encodeURIComponent(t.settlement_id)}`}>
+                Open Settlement Close ↗
+              </Link>
+            </>
           ) : <span className="ldt-pill ok">Closed {t.trip_closed_at ? `· ${t.trip_closed_at.slice(0, 16).replace("T", " ")}` : ""} — see Settlement</span>}
           {!r.can_close && t.is_open ? <span className="ldt-bad-text" data-testid="tour-close-blockers">{r.close_blockers.join(" · ")}</span> : null}
         </div>
@@ -168,7 +237,14 @@ function LegPop({ leg, cur }: { leg: TourReadout["legs"][number]; cur: string })
 }
 
 function CostsPop({ r, cur }: { r: TourReadout; cur: string }) {
+  // LEAD 443.269-A item 2 — this list is READ-ONLY by design: a tour's entries are the costs posted on its loads
+  // (expenses / bills through their own engines), never a second writer here. Say so, and link to where each is made.
+  const legs = r.legs.filter((l) => !l.is_cancelled);
   return <div className="ldt-rows ldt-rows-4">
+    <div className="ldt-note" data-testid="tour-entries-readonly">
+      Entries are read-only here — a tour's costs are the expenses and bills on its loads. Add or fix one on the load:{" "}
+      {legs.map((l, i) => <span key={l.load_id}>{i ? " · " : ""}<Link className="ldt-link" data-testid="tour-entries-add-link" to={`/dispatch/loads/${encodeURIComponent(l.load_id)}?tab=Costs`}>+ Add on load {l.load_number}</Link></span>)}
+    </div>
     <div className="ldt-row head"><span>Number · vendor · category</span><span>Load</span><span>State</span><span className="ldt-m">Amount</span></div>
     {r.costs.map((c) => <div key={`${c.kind}:${c.id}`} className="ldt-row"><span><EntityLink kind={c.kind} id={c.id} label={c.number} /> · {c.vendor_name ?? "no vendor"} · {c.category ?? "no account"}</span><span className="ldt-k">{c.load_number ?? DASH}</span><span><span className={`ldt-pill ${c.receipt_count ? "ok" : "warn"}`}>{c.posting_status}{c.receipt_count ? "" : " · no receipt"}</span></span><span className="ldt-m">{money(c.amount_cents, cur)}</span></div>)}
     <div className="ldt-row tot"><span>{r.costs.length} entries</span><span /><span /><span className="ldt-m">{money(r.totals?.costs_cents ?? 0, cur)}</span></div>

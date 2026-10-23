@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["load","connectivity"],"leaves":["dispatch.panel.tour_miles"],"task":"LEAD-443.269-A-TOUR-MILES-PANEL","vertical":"class-sweep"} */
 /**
  * LEAD 443.265-A (owner-approved V3 boards 10-22-2026-LEAD-MOD-DESIGN-V3-Dispatch-BookLoad-{Modal,TripType,Spec};
  * live defects measured in Chrome 10-22 9:50 PM CT). Same fields, same order, same engines — layout only:
@@ -16,6 +17,13 @@
  *       Location / Address align at the top.
  *   R7  (Lead live 5:47 AM) columns A and B end level — A stretches and its last field (Special notes) fills
  *       the remaining height (no white block under it); "Upload Rate Con" is a one-line button.
+ *   R8  (LEAD 443.269-A, owner live 10-23 on Pre-Settlements) the tours register has a "Load #" column (one per load);
+ *       Ready to close? is a compact 2-column list whose EVERY row navigates (NB load · Truck Line assign · POD
+ *       documents · tour costs · driver bills · miles panel); "Close tour → Settlement" is ENABLED at N of N and opens
+ *       Settlement Close for this driver; the miles panel shows OUR database AND Google side by side; Entries says it
+ *       is read-only and links to where an entry is made.
+ *   R9  (443.269-A item 6) Drivers header: On Loads = drivers on dispatched/at-pickup/in-transit/at-delivery loads of
+ *       the one board set, by driver id; Available = Active minus on loads; both click through to a filtered roster.
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -32,6 +40,11 @@ const FILES = {
   stops: `${D}/BookLoadStopsSection.tsx`,
   service: "apps/backend/src/dispatch/lane-mileage.service.ts",
   ratecon: `${D}/book-load-v4/RateConUploadPanel.tsx`,
+  legs: "apps/frontend/src/components/dispatch/TourLegsCell.tsx",
+  tour: "apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx",
+  miles: "apps/frontend/src/components/dispatch/TourMilesPanel.tsx",
+  close: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
+  drivers: "apps/frontend/src/pages/Drivers.tsx",
 };
 
 export function audit(s) {
@@ -75,6 +88,21 @@ export function audit(s) {
   need("R6", /<div className="w-\[390px\] max-w-full shrink-0">\s*<SelectCombobox/.test(s.border), "the port-of-entry select shrinks to its content (not the 390px board width)");
   need("R6", /<StateSelect [^>]*className="w-full" compact \/>/.test(s.stops) && !/CELL_STATE/.test(s.stops), "the 64px State cell clips its value (box-in-box + clear button)");
   need("R6", /items-start gap-2 sm:grid-cols-\[1fr_1\.4fr\]/.test(s.stops), "Location / Address are bottom-aligned (Address sits lower than Location)");
+  // R8
+  need("R8", /label: i === 0 \? "Load #" : `Load # \$\{i \+ 1\}`/.test(s.legs), "the tours register has no Load # column");
+  need("R8", /data-testid="tour-close-button" disabled=\{!r\.can_close \|\| close\.isPending\}/.test(s.tour), "Close tour is not enabled at N of N (all hard checks ⇒ can_close)");
+  need("R8", /data-testid="tour-open-settlement-close" to=\{`\/driver-finance\/settlement-close\?driver_id=/.test(s.tour) && /closeSearchParams\.get\("driver_id"\)/.test(s.close), "the pre-settlement does not open Settlement Close for this driver");
+  for (const key of ["has_nb", "sb_delivered", "pods", "costs_complete", "driver_pay", "real_miles"]) {
+    need("R8", new RegExp(`case "${key}":\\s*return \\{ kind: "[a-z-]+", title: [\\s\\S]{0,200}?, go: \\(\\) => `).test(s.tour), `readiness row "${key}" does not go anywhere`);
+  }
+  need("R8", /onClick=\{target\.go\}/.test(s.tour) && /grid-cols-\[max-content_max-content\]/.test(s.tour), "readiness rows are not a compact clickable list");
+  need("R8", /data-testid=\{`tour-miles-db-\$\{field\}`\}/.test(s.miles) && /data-testid=\{`tour-miles-google-\$\{field\}`\}/.test(s.miles) && /useLoadMilesRecommendations\(/.test(s.miles), "the miles panel does not show our database AND Google from the one miles engine");
+  need("R8", /<SettlementCloseMiles settlementId=\{settlement\.id\}/.test(s.close) && /<TourMilesPanel legs=\{legs\}/.test(s.close), "Settlement Close does not show our database + Google miles (owner: miles everywhere)");
+  need("R8", /data-testid="tour-entries-readonly"/.test(s.tour) && /tour-entries-add-link/.test(s.tour), "Entries neither works nor says it is read-only with a link to where entries are made");
+  // R9
+  need("R9", /DRIVER_ON_LOAD_STATUSES = new Set\(\["dispatched", "at_pickup", "in_transit", "at_delivery"\]\)/.test(s.drivers) && /ids\.add\(String\(id\)\)/.test(s.drivers), "On Loads is not counted by driver id from dispatched / in-transit / at-stop loads");
+  need("R9", /d\.status === "Active" && !onLoadDriverIds\.has\(String\(d\.id\)\)/.test(s.drivers), "Available is not Active minus on loads");
+  need("R9", /to="\/drivers\/roster\?status=all&load_state=on"/.test(s.drivers) && /to="\/drivers\/roster\?status=active&load_state=free"/.test(s.drivers) && /loadStateFilter === "on"/.test(s.drivers), "On Loads / Available do not click through to a filtered roster");
   return f;
 }
 
@@ -104,6 +132,15 @@ if (process.argv.includes("--selftest")) {
     ["port select back in a shrinking wrapper FAILS", plant("border", '<div className="w-[390px] max-w-full shrink-0">', "<div>")],
     ["State without compact FAILS", plant("stops", 'className="w-full" compact />', 'className="w-full" />')],
     ["bottom-aligned Location / Address FAILS", plant("stops", "items-start gap-2 sm:grid-cols-[1fr_1.4fr]", "items-end gap-2 sm:grid-cols-[1fr_1.4fr]")],
+    ["no Load # column FAILS", plant("legs", 'label: i === 0 ? "Load #" : `Load # ${i + 1}`', "label: `Leg ${i + 1}`")],
+    ["Close disabled at N of N FAILS", plant("tour", 'data-testid="tour-close-button" disabled={!r.can_close || close.isPending}', 'data-testid="tour-close-button" disabled={true}')],
+    ["Settlement Close without the miles panel FAILS", plant("close", "<SettlementCloseMiles settlementId={settlement.id}", "<div data-x={settlement.id}")],
+    ["no way to Settlement Close FAILS", plant("tour", 'data-testid="tour-open-settlement-close"', 'data-testid="x"')],
+    ["a dead readiness row FAILS", plant("tour", 'case "pods":', 'case "pods_dead":')],
+    ["miles panel without Google FAILS", plant("miles", "data-testid={`tour-miles-google-${field}`}", "data-x")],
+    ["Entries silently read-only FAILS", plant("tour", 'data-testid="tour-entries-readonly"', "")],
+    ["On Loads by driver name FAILS", plant("drivers", "ids.add(String(id))", "ids.add(String(load.driver_short_name))")],
+    ["Available = all active FAILS", plant("drivers", 'd.status === "Active" && !onLoadDriverIds.has(String(d.id))', 'd.status === "Active"')],
     ["column A ending above column B FAILS", plant("modal", "grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[1.05fr_1fr]", "grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]")],
     ["white block under Special notes FAILS", plant("modal", 'flex min-h-[64px] flex-1 flex-col gap-0.5" data-testid="book-load-special-notes"', 'flex flex-col gap-0.5" data-testid="book-load-special-notes"')],
     ["wrapping Upload Rate Con FAILS", plant("ratecon", "items-center whitespace-nowrap", "items-center")],
@@ -123,4 +160,4 @@ if (failures.length) {
   for (const x of failures) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log("verify-book-load-v3-layout: OK — Load # helper under the box, Broker/Direct own cell, NB/TR/SB cards, miles source order + reference lanes, 32px stop rows, live-walk fixes, A/B level (R1–R7)");
+console.log("verify-book-load-v3-layout: OK — Load # helper under the box, Broker/Direct own cell, NB/TR/SB cards, miles source order + reference lanes, 32px stop rows, live-walk fixes, A/B level, Pre-Settlements close flow + Drivers KPIs (R1–R9)");
