@@ -113,6 +113,9 @@ export type EntityPickerProps = {
   /** Pass-through to Combobox's size — "sm" (h-7) for a dense wizard/form row; default "md" (h-9)
    * matches every existing list-toolbar-filter call site unchanged. See components/Combobox.tsx. */
   size?: "md" | "sm";
+  /** LEAD 443.257-A item 3 — the caller may rank / relabel the roster (e.g. "Usual on T163", "Free", "On load 13690").
+   *  Pure re-ordering + sublabels; it never adds or drops a value. */
+  decorateOptions?: (options: EntityPickerOption[]) => EntityPickerOption[];
 };
 
 export function EntityPicker({
@@ -136,6 +139,7 @@ export function EntityPicker({
   driverRoster = "active_only",
   equipmentKind,
   size,
+  decorateOptions,
 }: EntityPickerProps) {
   const config = getEntityPickerConfig(kind);
   const [createOpen, setCreateOpen] = useState(false);
@@ -270,8 +274,11 @@ export function EntityPicker({
         sublabel: "not in the current list",
       });
     }
-    return rows;
-  }, [rosterQuery.data, created, scopedValue, selectedOption, inScopeVinUnit, heldQuery.data]);
+    if (!decorateOptions) return rows;
+    const decorated = decorateOptions(rows);
+    // Never add or drop a value through the decorator — fall back to the roster as-is if it tried.
+    return decorated.length === rows.length && decorated.every((o) => rows.some((r) => r.value === o.value)) ? decorated : rows;
+  }, [rosterQuery.data, created, scopedValue, selectedOption, inScopeVinUnit, heldQuery.data, decorateOptions]);
 
   // A kind may refuse inline create for a stated reason (transactions and money documents do).
   // MOD-05: never offer create when the typed VIN already exists (cross-entity → warn; in-scope → select).

@@ -10,7 +10,8 @@
  *   R1  the picker never sends `status` to listDrivers (that is the movement-derived roster question);
  *   R2  it filters on the RECORDED status (Active, + Probation for money pickers);
  *   R3  it reads the whole roster in one call (limit ≥ the roster; no silent 200 truncation per status);
- *   R4  labels go through formatPersonName (proper case — never ALL CAPS, never an id as a name).
+ *   R4  labels go through formatPersonName (proper case — never ALL CAPS, never an id as a name);
+ *   R5  (443.257-A item 3) Book Load ranks the list: usual driver of the truck, free drivers, then "On load ####".
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -41,6 +42,12 @@ export function audit(src) {
 }
 
 const src = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+const EQUIP = "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx";
+const equip = fs.readFileSync(path.join(ROOT, EQUIP), "utf8");
+export function rankingFailures(e) {
+  return /decorateOptions=\{decorateDriverOptions\}/.test(e) && /rankDriverOptions\(options, driverRankingContext\)/.test(e)
+    ? [] : ["R5: Book Load does not rank the driver list (usual / free / on load)"];
+}
 
 if (process.argv.includes("--selftest")) {
   const base = audit(src).length;
@@ -50,6 +57,7 @@ if (process.argv.includes("--selftest")) {
     ["no recorded-status filter FAILS", plant("if (!statuses.includes(String((d as { status?: string | null }).status", "if (false && (String((d as { status?: string | null }).status")],
     ["a 200-row page FAILS", plant("          limit: 1000,", "          limit: 200,")],
     ["raw ALL-CAPS labels FAIL", plant("label: entityLabel(formatPersonName(", "label: entityLabel((")],
+    ["an unranked Book Load driver list FAILS", rankingFailures(equip.replace("decorateOptions={decorateDriverOptions}", "")).length > 0],
   ];
   let bad = 0;
   for (const [n, ok] of cases) {
@@ -60,7 +68,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(bad ? 1 : 0);
 }
 
-const failures = audit(src);
+const failures = [...audit(src), ...rankingFailures(equip)];
 if (failures.length) {
   console.error(`verify-book-load-driver-picker-lists-every-active-driver: FAIL — ${failures.length}`);
   for (const x of failures) console.error(`  ✗ ${x}`);
