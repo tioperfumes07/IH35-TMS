@@ -50,18 +50,17 @@ export function BorderCrossingCaptureField({ value, onSelect, error }: Props) {
   const mx = ports.filter((p) => p.country === "MX");
 
   return (
-    <div className="border-b border-gray-200 bg-[#FFF7ED] px-3 py-2" data-testid="book-load-border-crossing-capture">
-      <span className="text-xs font-bold uppercase tracking-[0.4px] text-gray-600">
-        Border crossing <span className="text-red-500">*</span>
+    // ROUND 443.265-A item 3 — rendered under the NB / SB trip cards (V3-Dispatch-BookLoad-TripType):
+    // "Border crossing — port of entry *", the select, and the one-line consequence beside it.
+    <div className="mt-2" data-testid="book-load-border-crossing-capture">
+      <span className="text-xs font-bold text-[#4B5563]">
+        Border crossing — port of entry <span className="text-red-500">*</span>
       </span>
-      <p className="mt-0.5 text-xs text-gray-600">
-        This is a cross-border load. Record the port of entry where the freight crosses — the crossing
-        stop and the Customs tab then appear on the load on their own.
-      </p>
+      <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
       <SelectCombobox
         data-testid="book-load-port-of-entry"
         aria-label="Border crossing port of entry"
-        className="mt-1 h-8 w-full max-w-md rounded-sm border border-gray-300 px-2 text-xs"
+        className="h-8 w-full max-w-[390px] rounded-sm border border-gray-300 px-2 text-xs"
         value={value}
         disabled={loading}
         onChange={(e) => {
@@ -90,6 +89,10 @@ export function BorderCrossingCaptureField({ value, onSelect, error }: Props) {
           </optgroup>
         ) : null}
       </SelectCombobox>
+        <span className="text-xs text-[#4B5563]">
+          Cross-border load. The crossing stop and the Customs tab then appear on the load on their own.
+        </span>
+      </div>
       {loadError ? (
         <p className="mt-1 text-xs text-red-600">Could not load ports of entry: {loadError}</p>
       ) : null}

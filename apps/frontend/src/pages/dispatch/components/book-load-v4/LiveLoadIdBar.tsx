@@ -136,9 +136,10 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
   }, [doPeek, operatingCompanyId]);
 
   return (
-    <div className="flex flex-wrap items-end gap-3" data-testid="book-load-live-load-id-bar">
-      {/* ROUND 443.257 — Load # 110×32 (was ~288×28) */}
-      <div className="w-[110px] min-w-[110px] max-w-[110px] text-left normal-case tracking-normal text-[#0F1219] [&_input]:h-8">
+    // ROUND 443.265-A item 1 — the 110px box with every helper line UNDER it (column, never beside it: the
+    // label's 160px min-width used to spill the hint across "Previewed — assigned on save").
+    <div className="flex w-full max-w-[220px] flex-col gap-0.5" data-testid="book-load-live-load-id-bar">
+      <div className="w-[110px] min-w-[110px] max-w-[110px] text-left normal-case tracking-normal text-[#0F1219] [&_input]:h-8 [&_label]:min-w-0">
         <QboDocumentNumberField
           label="Load #"
           value={manualNumber}
@@ -160,27 +161,25 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
           checkPath={awaitingFirstNumber ? undefined : "/api/v1/dispatch/loads/next-number"}
           fieldName="load"
           autoFocus={awaitingFirstNumber}
-          hint={
-            awaitingFirstNumber
-              ? "Click the white box and type the first number (example 13508)."
-              : "Next number, not reserved yet — type to use a different one."
-          }
+          hint=""
           data-testid="qbo-document-number-load"
         />
       </div>
       {awaitingFirstNumber ? (
-        <span className="pb-5 text-xs font-normal text-[#4B5563]">
-          First load for this company — type the Load # in the box. Later loads can stay blank.
+        <span className="text-xs font-normal leading-snug text-[#4B5563]">
+          First load for this company — click the box and type the Load # (example 13508). Later loads can stay blank.
         </span>
       ) : error ? (
-        <>
-          <span className="pb-5 text-xs text-red-700">Load number unavailable: {error}</span>
-          <button type="button" className="mb-5 rounded-sm border border-gray-300 px-2 py-1 text-xs" onClick={() => void doPeek()}>
+        <span className="text-xs leading-snug text-red-700">
+          Load number unavailable: {error}{" "}
+          <button type="button" className="font-semibold underline" onClick={() => void doPeek()}>
             Retry
           </button>
-        </>
+        </span>
       ) : (
-        <span className="pb-5 text-xs text-[#4B5563]">{preview ? "Previewed — assigned on save" : "Loading…"}</span>
+        <span className="text-xs leading-snug text-[#4B5563]" data-testid="book-load-live-load-id-status">
+          {preview ? "Previewed — assigned on save. Type to use a different number." : "Loading…"}
+        </span>
       )}
     </div>
   );

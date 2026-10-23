@@ -12,14 +12,29 @@
         ]
       },
       {
+        "name": "\u00a7C stop cityrow",
+        "container": "stop-cityrow",
+        "_note": "ROUND 443.265-A (V3 board): row 2 = City fills \u00b7 State 64 \u00b7 ZIP 88 \u00b7 Appointment date 150 \u00b7 Time \u00b7 Time window. Appointment date's label is a template literal (\" *\" when required), which the label scan does not read \u2014 same as the old siterow.",
+        "exact_labels": [
+          "City",
+          "State",
+          "Zip",
+          "Time",
+          "Time window"
+        ]
+      },
+      {
         "name": "\u00a7C stop siterow",
         "container": "stop-siterow",
         "exact_labels": [
           "Site contact",
           "Site phone",
           "Dock",
-          "Time"
-        ]
+          "Pickup type",
+          "Free time / lumper",
+          "Lumper amount ($)"
+        ],
+        "_note": "ROUND 443.265-A (owner-approved V3-Dispatch-BookLoad-Modal): row 3 = Site contact \u00b7 Site phone \u00b7 Dock \u00b7 Pickup type (pickup only) \u00b7 Free time \u00b7 Lumper amount; Time moved to row 2 (stop-cityrow)."
       }
     ]
   },

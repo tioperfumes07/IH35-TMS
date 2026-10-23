@@ -1,4 +1,4 @@
-import type { JSX } from "react";
+import type { CSSProperties, JSX } from "react";
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
@@ -31,14 +31,17 @@ const CELL = "h-8 w-full rounded-sm border border-gray-300 px-2 text-xs";
 const CELL_STATE = "h-8 w-full max-w-[64px] rounded-sm border border-gray-300 px-2 text-xs";
 const CELL_ZIP = "h-8 w-full max-w-[88px] rounded-sm border border-gray-300 px-2 text-xs";
 const CELL_APPT = "h-8 w-full max-w-[150px] rounded-sm border border-gray-300 px-2 text-xs";
-const CELL_NARROW = "h-8 w-full max-w-[7.5rem] rounded-sm border border-gray-300 px-2 text-xs";
-const CELL_PHONE = "h-8 w-full max-w-[8.5rem] rounded-sm border border-gray-300 px-2 text-xs";
-const CELL_DOCK = "h-8 w-full max-w-[6.5rem] rounded-sm border border-gray-300 px-2 text-xs";
+// 443.265-A — row 3 cells fill their grid column (the grid template sets the widths, as on the V3 board).
+const CELL_NARROW = CELL;
+const CELL_PHONE = CELL;
+const CELL_DOCK = CELL;
+/** The board date box for a stop: 150 × 32 (the shared DatePicker reads these tokens for box="field"). */
+const APPT_BOX_VARS = { "--ih-w-date": "150px", "--ih-h-field": "32px" } as CSSProperties;
 
-// Owner row order 2026-09-03 (pickup AND delivery):
-//   Row 1: Location · Address (wider) · City · State · Zip
-//   Row 2: Appointment date/time · Site contact · Site phone (smaller) · Dock (smaller)
-//   Row 3: Time window (smaller) · Pickup type (pickup only) · Free time / lumper · Lumper amount
+// V3-Dispatch-BookLoad-Modal row order (ROUND 443.265-A, pickup AND delivery):
+//   Row 1: Location · Address
+//   Row 2: City · State · Zip · Appointment date · Time · Time window
+//   Row 3: Site contact · Site phone · Dock · Pickup type (pickup only) · Free time / lumper · Lumper amount
 export function BookLoadStopsSection({
   operatingCompanyId = "",
   pickupTimeTypeOptions = [],
@@ -217,8 +220,10 @@ export function BookLoadStopsSection({
                     }
                   />
                 </div>
+                {/* ROUND 443.265-A item 5 (V3-Dispatch-BookLoad-Modal) — Row 2: City fills · State 64 · ZIP 88 ·
+                    Appointment date 150 (MM/DD/YYYY + calendar) · Time · Time window. */}
                 <div
-                  className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_64px_88px]"
+                  className="grid min-w-0 grid-cols-1 items-start gap-2 sm:grid-cols-3 lg:grid-cols-[minmax(0,1fr)_64px_88px_150px_104px_minmax(0,0.9fr)]"
                   data-testid={`stop-cityrow-${index}`}
                 >
                   <Field
@@ -247,15 +252,6 @@ export function BookLoadStopsSection({
                     label="Zip"
                     input={<input {...register(`stops.${index}.postal_code`)} className={CELL_ZIP} placeholder="ZIP" />}
                   />
-                </div>
-                <input type="hidden" {...register(`stops.${index}.latitude`)} />
-                <input type="hidden" {...register(`stops.${index}.longitude`)} />
-
-                {/* Row 2 — appointment + site */}
-                <div
-                  data-testid={`stop-siterow-${index}`}
-                  className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-3"
-                >
                   <Controller
                     control={control}
                     name={`stops.${index}.scheduled_arrival_at`}
@@ -289,13 +285,15 @@ export function BookLoadStopsSection({
                           <Field
                             label={`Appointment date${required ? " *" : ""}`}
                             input={
-                              <DatePicker
-                                box="field"
-                                data-testid={`stop-date-${index}`}
-                                value={d}
-                                onChange={(next) => combine(next, t)}
-                                className={CELL_APPT}
-                              />
+                              <div style={APPT_BOX_VARS} data-testid={`stop-date-box-${index}`}>
+                                <DatePicker
+                                  box="field"
+                                  data-testid={`stop-date-${index}`}
+                                  value={d}
+                                  onChange={(next) => combine(next, t)}
+                                  className={CELL_APPT}
+                                />
+                              </div>
                             }
                           />
                           <Field
@@ -319,17 +317,22 @@ export function BookLoadStopsSection({
                       );
                     }}
                   />
-                  <Field label="Site contact" input={<input {...register(`stops.${index}.site_contact_name`)} className={CELL} />} />
-                  <Field label="Site phone" input={<input {...register(`stops.${index}.site_contact_phone`)} className={CELL_PHONE} />} />
-                  <Field label="Dock" input={<input {...register(`stops.${index}.gate_dock_text`)} className={CELL_DOCK} />} />
-                </div>
-
-                {/* Row 3 — time window (smaller) + remaining stop economics */}
-                <div data-testid={`stop-timewindow-${index}`} className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2">
                   <Field
                     label="Time window"
                     input={<TimeWindowDropdown register={register} name={`stops.${index}.time_window_type`} />}
                   />
+                </div>
+                <input type="hidden" {...register(`stops.${index}.latitude`)} />
+                <input type="hidden" {...register(`stops.${index}.longitude`)} />
+
+                {/* Row 3 — Site contact · Site phone · Dock · Pickup type · Free time · Lumper amount. */}
+                <div
+                  data-testid={`stop-siterow-${index}`}
+                  className="grid min-w-0 grid-cols-1 items-start gap-2 sm:grid-cols-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)]"
+                >
+                  <Field label="Site contact" input={<input {...register(`stops.${index}.site_contact_name`)} className={CELL} />} />
+                  <Field label="Site phone" input={<input {...register(`stops.${index}.site_contact_phone`)} className={CELL_PHONE} />} />
+                  <Field label="Dock" input={<input {...register(`stops.${index}.gate_dock_text`)} className={CELL_DOCK} />} />
                   {isPickup ? (
                     <Controller
                       control={control}
@@ -369,7 +372,7 @@ export function BookLoadStopsSection({
                             valueCents={f.value || null}
                             onChangeCents={(c) => f.onChange(c ?? 0)}
                             ariaLabel="Lumper amount"
-                            className="w-full max-w-[7.5rem]"
+                            className="w-full"
                           />
                         )}
                       />

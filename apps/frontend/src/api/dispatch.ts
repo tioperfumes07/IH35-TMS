@@ -1796,6 +1796,31 @@ export function getLaneMileage(params: {
   return apiRequest<LaneMileageLookupResult>(`/api/v1/dispatch/lane-mileage?${u.toString()}`);
 }
 
+// ROUND 443.265-A item 4 — section C step 2 "Select from reference": lanes on file from the origin into
+// the destination state. Practical miles only (short is never offered from the catalog).
+export type LaneMileageReferenceRow = {
+  lane_id: string;
+  origin_city: string;
+  origin_state: string;
+  dest_city: string;
+  dest_state: string;
+  practical_miles: number;
+  runs: number;
+  confidence: string | null;
+};
+
+export function getLaneMileageReference(params: {
+  operating_company_id: string;
+  origin_city: string;
+  origin_state: string;
+  dest_state: string;
+}) {
+  const u = new URLSearchParams(params);
+  return apiRequest<{ lanes_on_file: number; lanes: LaneMileageReferenceRow[] }>(
+    `/api/v1/dispatch/lane-mileage/reference?${u.toString()}`
+  );
+}
+
 // WIZ-32 / WIZ-16 — the driver's profile rate card, read-only, for the Book Load "Driver pay rate /
 // mi" display. Never used to POST an override: the load stores no rate so booking resolves live from
 // the same table (driver_finance.driver_pay_rates). has_rate=false / null cents means blank on screen

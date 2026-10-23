@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDispatchLoad, createTrailerInterchange, distributeLoadInstructions, getLaneMileage, getChainDeadhead, getRouteMileage } from "../../../api/dispatch";
+import { createDispatchLoad, createTrailerInterchange, distributeLoadInstructions, getLaneMileage, getLaneMileageReference, getChainDeadhead, getRouteMileage } from "../../../api/dispatch";
 import { previewMilesRecommendations, valueForSource, type MilesChoicePayload } from "../../../api/milesRecommendations";
 import { MilesRecommendationsPanel } from "../../../components/loads/MilesRecommendationsPanel";
 import { resolveStopPlace } from "./book-load-city-state";
@@ -49,7 +49,7 @@ import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStop
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
 import type { LiveReservation } from "./book-load-v4/LiveLoadIdBar";
 import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
-import { MilesStrip } from "./book-load-v4/MilesStrip";
+import { laneCityLabel, MilesStrip } from "./book-load-v4/MilesStrip";
 import { MilesInvertAckDialog } from "./book-load-v4/MilesInvertAckDialog";
 import { milesUntrustworthyFlags } from "./book-load-v4/miles-invert";
 import { LoadSaveProofPanel } from "./book-load-v4/LoadSaveProofPanel";
@@ -292,6 +292,11 @@ const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 .blw-collapse-bar:hover{background:#F0F2F5}
 .blw-collapse-plus{width:16px;height:16px;border-radius:3px;background:#1F2A44;color:#FFF;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
 .blw-note{font-size:12px;color:#8A93A1}
+/* ROUND 443.265-A item 5 — every single-line input / select in the wizard is 32px (live: 28 / 31 / 17 mixed).
+   The date picker's inner text input sits inside its own 32px box, so it is excluded. */
+.blw-sec input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not(.dp-input),
+.blw-sec select{height:32px}
+[data-wizard-v5="on"] .blw-sec input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not(.dp-input){height:24px}
 /* Load Wizard V5 — compact density (visual only; gated by LOAD_WIZARD_V5). */
 [data-wizard-v5="on"] .blw-sec-hd{padding:4px 9px}
 [data-wizard-v5="on"] .blw-collapse-bar{padding:5px 9px}
@@ -809,6 +814,25 @@ export function BookLoadModalV4({
     enabled: Boolean(operatingCompanyId && originPlace.city && originPlace.state && destPlace.city && destPlace.state),
     staleTime: 30_000,
   });
+
+  // ROUND 443.265-A item 4 — step 2 "Select from reference": only when the exact lane is NOT in history.
+  const laneIsNew = laneMileageQuery.data?.match === "New lane";
+  const laneReferenceQuery = useQuery({
+    queryKey: ["book-load-lane-mileage-reference", operatingCompanyId, originPlace.city, originPlace.state, destPlace.state],
+    queryFn: () =>
+      getLaneMileageReference({
+        operating_company_id: operatingCompanyId,
+        origin_city: originPlace.city,
+        origin_state: originPlace.state,
+        dest_state: destPlace.state,
+      }),
+    enabled: Boolean(operatingCompanyId && originPlace.city && originPlace.state && destPlace.state && laneIsNew),
+    staleTime: 5 * 60_000,
+  });
+  const [referenceLaneId, setReferenceLaneId] = useState<string | null>(null);
+  useEffect(() => {
+    setReferenceLaneId(null);
+  }, [originPlace.city, originPlace.state, destPlace.city, destPlace.state]);
 
   const milesUntrustworthy = milesUntrustworthyFlags({
     practical: Number(milesPractical || 0),
@@ -2143,60 +2167,82 @@ export function BookLoadModalV4({
             </div>
           ) : null}
 
-          {/* A3 (render-A): Trip Type full-width banner between the subbar and the body. §7 navy ruling —
-              NB/TR/SB in the navy family (navy / slate / slate-dk), no blue/green/purple. 46px two-line
-              buttons (code over description) with directional icons; amber lifecycle note; TR/SB auto-join
-              the unit's tour (tour_id derived server-side). */}
-          <div className="border-b border-gray-200 bg-[#F8FAFC] px-3 py-2" data-testid="trip-type-banner">
-            <span className="text-[11px] font-bold uppercase tracking-[0.4px] text-gray-600">
-              Trip Type <span className="text-red-500">*</span>
+          {/* ROUND 443.265-A item 3 (V3-Dispatch-BookLoad-TripType): NB / TR / SB are three equal cards (icon tile +
+              code · name + one-line description). Under the cards: NB → Border crossing *, TR → the tour line,
+              SB → the tour line AND Border crossing *. §7 navy family only. TR/SB auto-join the unit's tour
+              (tour_id derived server-side). */}
+          <div className="border-b border-[#E5E7EB] bg-white px-4 py-3" data-testid="trip-type-banner">
+            <span className="text-[11px] font-bold text-[#4B5563]">
+              Trip type <span className="text-red-500">*</span>
             </span>
-            <div className="mt-1 flex flex-wrap gap-2">
+            <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Trip type">
               {([
-                ["NB", "▲", "Northbound", "Border → US interior", "#1F2A44"],
-                ["TR", "▶", "Triangulation", "US interior → US interior", "#64748B"],
-                ["SB", "▼", "Southbound", "US interior → Laredo border", "#334155"],
-              ] as const).map(([code, icon, label, desc, color]) => {
+                ["NB", "▲", "Northbound", "Cross-border load — record the port of entry"],
+                ["TR", "▶", "Triangulation", "Joins this unit's tour after its most recent Northbound leg"],
+                ["SB", "▼", "Southbound", "Joins the tour + cross-border port of entry"],
+              ] as const).map(([code, icon, label, desc]) => {
                 const active = watchedTripType === code;
                 return (
                   <button
                     key={code}
                     type="button"
+                    role="radio"
+                    aria-checked={active}
+                    data-testid={`trip-type-card-${code}`}
                     onClick={() => {
                       form.setValue("trip_type", code, { shouldDirty: true });
                       form.clearErrors("trip_type");
                     }}
-                    className="inline-flex h-8 shrink-0 items-center rounded-sm border px-2.5 text-left transition-colors"
-                    title={desc}
-                    style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#CBD5E1", color: "#1F2733" }}
+                    className={`flex min-w-0 items-center gap-2.5 rounded-sm border px-2.5 py-2 text-left transition-colors ${
+                      active ? "border-2 border-[#1F2A44] bg-[#EEF1F6]" : "border-[#E5E7EB] bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
+                    }`}
                   >
-                    <span className="whitespace-nowrap text-xs font-bold leading-tight">{icon} {code} · {label}</span>
+                    <span
+                      aria-hidden
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-xs ${
+                        active ? "bg-[#1F2A44] text-white" : "bg-[#F3F4F6] text-[#4B5563]"
+                      }`}
+                    >
+                      {icon}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-semibold text-[#0F1219]">
+                        {code} · {label}
+                      </span>
+                      <span className="block truncate text-[11px] text-[#4B5563]">{desc}</span>
+                    </span>
                   </button>
                 );
               })}
             </div>
             {form.formState.errors.trip_type ? (
               <p className="mt-1 text-[11px] text-red-600">{String(form.formState.errors.trip_type.message)}</p>
-            ) : watchedTripType === "TR" || watchedTripType === "SB" ? (
-              <p className="mt-1 text-[11px] text-gray-600">Part of this unit's tour — follows its most recent Northbound leg (joined automatically).</p>
+            ) : null}
+            {watchedTripType === "TR" || watchedTripType === "SB" ? (
+              <p
+                className="mt-2 flex items-center gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5 text-xs text-[#0F1219]"
+                data-testid="trip-type-tour-line"
+              >
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#1F2A44]" />
+                Part of this unit's tour — follows its most recent Northbound leg (joined automatically).
+              </p>
+            ) : null}
+            {/* WIZ border-capture: a cross-border (NB/SB) load must record where it crosses. Selecting a
+                port of entry here becomes a stop_type='border' stop on submit, so the Customs tab and
+                crossing tracking appear on the load on their own. Book (create) path only — Edit adds
+                customs stops via the Stops tab. Never weaken loadHasCrossBorder to force the tab. */}
+            {!isEditMode && isCrossBorderTripType(watchedTripType) ? (
+              <BorderCrossingCaptureField
+                value={form.watch("border_port_of_entry_id")}
+                error={form.formState.errors.border_port_of_entry_id ? String(form.formState.errors.border_port_of_entry_id.message) : null}
+                onSelect={(port) => {
+                  selectedBorderPortRef.current = port;
+                  form.setValue("border_port_of_entry_id", port?.id ?? "", { shouldDirty: true });
+                  if (port) form.clearErrors("border_port_of_entry_id");
+                }}
+              />
             ) : null}
           </div>
-
-          {/* WIZ border-capture: a cross-border (NB/SB) load must record where it crosses. Selecting a
-              port of entry here becomes a stop_type='border' stop on submit, so the Customs tab and
-              crossing tracking appear on the load on their own. Book (create) path only — Edit adds
-              customs stops via the Stops tab. Never weaken loadHasCrossBorder to force the tab. */}
-          {!isEditMode && isCrossBorderTripType(watchedTripType) ? (
-            <BorderCrossingCaptureField
-              value={form.watch("border_port_of_entry_id")}
-              error={form.formState.errors.border_port_of_entry_id ? String(form.formState.errors.border_port_of_entry_id.message) : null}
-              onSelect={(port) => {
-                selectedBorderPortRef.current = port;
-                form.setValue("border_port_of_entry_id", port?.id ?? "", { shouldDirty: true });
-                if (port) form.clearErrors("border_port_of_entry_id");
-              }}
-            />
-          ) : null}
 
           {gateBanner ? (
             <div
@@ -2289,7 +2335,7 @@ export function BookLoadModalV4({
           ) : null}
 
           <div className="space-y-3 bg-[#E9EBEF] px-4 py-3">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.05fr_1fr]">
+            <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]">
               <section className="blw-sec">
                 <div className="blw-sec-hd">
                   <span className="blw-sec-chip">A</span>
@@ -2305,6 +2351,9 @@ export function BookLoadModalV4({
                   </span>
                 </div>
                 <div className="space-y-2 p-3">
+                  {/* ROUND 443.265-A item 1 — Load # (110px, helper under it) and the rate-con upload share
+                      one row as on the V3 board; each sits in its own grid cell so nothing overlaps. */}
+                  <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[220px_minmax(0,1fr)]" data-testid="book-load-id-row">
                   {isEditMode ? null : (
                     <LiveLoadIdBar operatingCompanyId={operatingCompanyId} onReservationUpdate={onReservationUpdate} />
                   )}
@@ -2313,7 +2362,7 @@ export function BookLoadModalV4({
                       Both share the ONE extraction path and fill the same editable draft. */}
                   {!editLoadId ? (
                     <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-gray-600">Upload rate confirmation (auto-fills this load)</label>
+                      <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">Upload rate confirmation (auto-fills this load)</label>
                       <RateConUploadPanel
                         operatingCompanyId={operatingCompanyId}
                         onPrefill={(prefill, _response, uploadedFile) => {
@@ -2355,6 +2404,7 @@ export function BookLoadModalV4({
                       />
                     </div>
                   ) : null}
+                  </div>
 
                   {/* RATECON-2: the rate-con intake (drop OR click → real extraction) is the single OcrDropZone
                       block in §E (Documents). The duplicate button-panel affordance was removed here. */}
@@ -2427,13 +2477,15 @@ export function BookLoadModalV4({
                       autoComplete="off"
                       data-testid="book-load-live-load-number"
                     />
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+                  {/* ROUND 443.265-A item 2 — Broker/Direct gets its own content-sized cell (it overflowed a ¼ cell
+                      into Commodity); Commodity / Weight / Pieces share the rest. */}
+                  <div className="grid grid-cols-1 items-start gap-2 md:grid-cols-[max-content_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.8fr)]" data-testid="book-load-freight-row">
                     {/* Customer type + freight identity — belong in §A with the customer/charges.
                         Restored 2026-09-03 after an unauthorized move into §B. Pieces is on this
                         same row as Weight (v4 mockup + owner 2026-09-03). */}
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Broker / Direct
-                      <div className="mt-0.5 inline-flex h-8 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
+                      <div className="mt-0.5 flex h-8 w-max shrink-0 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
                         <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}>
                           <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
                           Broker
@@ -2827,8 +2879,27 @@ export function BookLoadModalV4({
                     form.setValue("miles_practical", lane.practical_miles, { shouldDirty: true, shouldValidate: true });
                     form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
                   }}
+                  referenceLanes={
+                    laneIsNew && laneReferenceQuery.data
+                      ? {
+                          lanesOnFile: laneReferenceQuery.data.lanes_on_file,
+                          originLabel: laneCityLabel(originPlace.city, originPlace.state),
+                          destLabel: laneCityLabel(destPlace.city, destPlace.state),
+                          lanes: laneReferenceQuery.data.lanes,
+                        }
+                      : null
+                  }
+                  referenceLaneId={referenceLaneId}
+                  onUseReferenceLane={(lane) => {
+                    // The dispatcher picked the nearest lane on file — operator-chosen, practical only.
+                    milesOperatorTouched.current = true;
+                    setReferenceLaneId(lane.lane_id);
+                    form.setValue("miles_practical", lane.practical_miles, { shouldDirty: true, shouldValidate: true });
+                    form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
+                  }}
                   onPracticalChange={(n) => {
                     milesOperatorTouched.current = true;
+                    setReferenceLaneId(null);
                     form.setValue("mileage_source", "Operator entered", { shouldDirty: true });
                     form.setValue("miles_practical", n, { shouldDirty: true, shouldValidate: true });
                   }}

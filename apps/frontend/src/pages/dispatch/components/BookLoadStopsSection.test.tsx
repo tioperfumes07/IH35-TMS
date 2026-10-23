@@ -66,27 +66,29 @@ describe("BookLoadStopsSection — owner stop row order 2026-09-03", () => {
     expect(screen.getByTestId("stop-card-0")).toBeInTheDocument();
     expect(screen.getByText("PICKUP")).toBeInTheDocument();
 
-    // Row 1: Location · Address · City · State · Zip
+    // ROUND 443.265-A (V3 board) — Row 1: Location · Address
     const locrow = screen.getByTestId("stop-locrow-0");
-    for (const label of ["Location", "Address", "City", "State", "Zip"]) {
+    for (const label of ["Location", "Address"]) {
       expect(
         within(locrow).getByText((_, el) => el?.tagName === "LABEL" && el.textContent === label),
       ).toBeInTheDocument();
     }
-    expect(within(locrow).queryByText("Date")).not.toBeInTheDocument();
     expect(within(locrow).queryByText("Appointment date")).not.toBeInTheDocument();
 
-    // Row 2: Appointment date/time · Site contact · Site phone · Dock
+    // Row 2: City · State · Zip · Appointment date · Time · Time window
+    const cityrow = screen.getByTestId("stop-cityrow-0");
+    for (const label of ["City", "State", "Zip", "Time", "Time window"]) {
+      expect(
+        within(cityrow).getByText((_, el) => el?.tagName === "LABEL" && el.textContent === label),
+      ).toBeInTheDocument();
+    }
+    expect(within(cityrow).getByText(/^Appointment date/)).toBeInTheDocument();
+
+    // Row 3: Site contact · Site phone · Dock · Pickup type · Free time · Lumper amount
     const siterow = screen.getByTestId("stop-siterow-0");
-    for (const label of ["Appointment date", "Time", "Site contact", "Site phone", "Dock"]) {
+    for (const label of ["Site contact", "Site phone", "Dock", "Free time / lumper", "Lumper amount ($)"]) {
       expect(within(siterow).getByText(label)).toBeInTheDocument();
     }
-
-    // Row 3: Time window (+ free time / lumper)
-    const timeWindowRow = screen.getByTestId("stop-timewindow-0");
-    expect(within(timeWindowRow).getByText("Time window")).toBeInTheDocument();
-    expect(within(timeWindowRow).getByText("Free time / lumper")).toBeInTheDocument();
-    expect(within(timeWindowRow).getByText("Lumper amount ($)")).toBeInTheDocument();
 
     for (const extra of ["Customer instructions", "Appointment start", "Appointment end", "Lumper paid by", "Lumper required", "Tarp stop", "Tarp count", "Instructions / directions"]) {
       expect(screen.queryByText(extra)).not.toBeInTheDocument();
