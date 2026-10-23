@@ -987,6 +987,7 @@ export async function getRollingLedgerRows(
     WHERE b.operating_company_id = $1::uuid
       AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
       AND b.due_date IS NOT NULL
+      AND b.bill_category = 'vendor'
     ORDER BY b.due_date ASC
     `,
     [operatingCompanyId]
@@ -1085,38 +1086,11 @@ export async function getRollingLedgerRows(
       return { rows: [] as { id: string; bill_number: string | null; driver_name: string; created_at: string; due_date: string; amount_cents: number; amount_known: boolean }[] };
     });
 
-  // 4) accounting.expenses — posted, not voided, no matched bank line yet
-  // (banking.bank_transactions.matched_expense_id — the real match column, checked live schema).
-  const expensesPromise = client.query<{
-    id: string;
-    expense_number: string | null;
-    vendor_name: string;
-    transaction_date: string;
-    amount_cents: number;
-  }>(
-    `
-    SELECT
-      e.id::text,
-      e.expense_number,
-      COALESCE(v.vendor_name, 'Expense') AS vendor_name,
-      ${expensePaymentDueDateSql({ transactionDateExpr: "e.transaction_date", paymentTermsAlias: "ept" })}::text AS transaction_date,
-      COALESCE(e.total_amount_cents, 0)::int AS amount_cents
-    FROM accounting.expenses e
-    LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = $1::uuid
-    LEFT JOIN catalogs.payment_terms ept ON ept.id = COALESCE(e.payment_term_id, v.payment_terms_id)
-                                        AND ept.operating_company_id = $1::uuid
-    WHERE e.operating_company_id = $1::uuid
-      AND e.status = 'posted'
-      AND ${liveExpense("e")}
-      AND COALESCE(e.total_amount_cents, 0) > 0
-      AND NOT EXISTS (
-        SELECT 1 FROM banking.bank_transactions bt
-        WHERE bt.matched_expense_id = e.id AND bt.voided_at IS NULL
-      )
-    ORDER BY 4 ASC
-    `,
-    [operatingCompanyId]
-  );
+  // 4) accounting.expenses — REMOVED: posted expenses are PAID cash/card at creation.
+  // They are historical cash outflows, not future AP obligations. Including them here
+  // would double-count cash already spent. The rolling ledger covers only open AP
+  // (bills, driver bills, settlements) plus projected future rows (fuel avg, loans).
+  // LEAD 443.265-E3 order: remove this source entirely.
 
   // 5) finance.loan_amortization_rows — unposted, where a real schedule exists. 0 rows for USMCA
   // today (live-checked) — this correctly renders nothing rather than fabricating a fake schedule.
@@ -1454,12 +1428,11 @@ export async function getRollingLedgerRows(
   // All 12 above are independent reads (each keyed only on operatingCompanyId/today) -- fire them
   // concurrently instead of paying sequential Neon round-trips, then process in the exact same
   // order the old sequential-await code did so row order/content is unchanged.
-  const [billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, relayTopupRows, fuelAvgResult] =
+  const [billRows, settlementRows, driverBillRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, relayTopupRows, fuelAvgResult] =
     await Promise.all([
       billsPromise,
       settlementsPromise,
       driverBillsPromise,
-      expensesPromise,
       loansPromise,
       invoicesPromise,
       advancesPromise,
@@ -1517,23 +1490,6 @@ export async function getRollingLedgerRows(
       due_date: db_.due_date,
       amount_cents: db_.amount_known === false ? 0 : db_.amount_cents,
       amount_known: db_.amount_known,
-      days_overdue: daysOverdue,
-      status: rowStatus(daysOverdue),
-    });
-  }
-
-  for (const e of expenseRows.rows) {
-    const daysOverdue = daysBetween(today, e.transaction_date);
-    rows.push({
-      row_kind: "expense",
-      type: "Expense — unmatched",
-      document_kind: "expense",
-      document_id: e.id,
-      document_label: e.expense_number ?? e.id.slice(0, 8),
-      counterparty: e.vendor_name,
-      origin_date: e.transaction_date,
-      due_date: e.transaction_date,
-      amount_cents: e.amount_cents,
       days_overdue: daysOverdue,
       status: rowStatus(daysOverdue),
     });
