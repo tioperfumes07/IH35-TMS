@@ -586,64 +586,57 @@ async function itemAccount(client: DbClient, companyId: string, itemName: string
 }
 
 /**
- * The card-discount pair for one adopted receipt (443.84 shape, sourced to the receipt's expense): positive = the card
- * charged LESS than the receipt (Dr 2510 / Cr Fuel Card Discount); negative = more (Dr Fuel Card Discount / Cr 2510).
- * Idempotent per statement line (posting idempotency keys).
+ * The card difference for one adopted receipt. LEAD 443.258.5 (writer shape B): never a handwritten journal entry.
+ *   positive = the card charged LESS than the receipt — a card CREDIT document through THE expense writer
+ *              (is_credit: Dr the card payable 2510 / Cr Fuel Card Discount -> 5000; QBO "Credit Card Credit");
+ *   negative = the card charged MORE — a cost, an ordinary expense document (Dr Fuel Card Discount / Cr 2510).
+ * Both carry the receipt's vendor, load, driver and unit and are numbered off the statement line, so a re-run is the
+ * same document (the writer refuses a second document with that vendor number).
  */
 export async function postStatementDifference(
   client: DbClient,
   input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string; rail?: FuelCardStatementRail }
 ): Promise<string | null> {
-  const rail = input.rail ?? DREAMLINE_STATEMENT_RAIL;
-  // LEAD (verify-costs-are-expenses-not-handwritten-jes): the card charged MORE than the receipt — a COST (Dr Fuel Card
-  // Discount / Cr 2510). A cost is an expense document, never a handwritten journal entry: it goes through THE expense
-  // writer (createExpenseInClientTx, same as the statement scale ticket), carrying the receipt's vendor, load, driver,
-  // unit and trailer, numbered off the statement line so a re-run is the same document.
   if (input.differenceCents < 0) return postStatementCostDifferenceAsExpense(client, input);
-  const prior = await client.query<{ je: string }>(
-    `SELECT journal_entry_uuid::text AS je FROM accounting.journal_entry_postings
-      WHERE operating_company_id = $1::uuid AND idempotency_key = ANY($2::text[]) LIMIT 1`,
-    [input.companyId, [`${rail.key}-statement:${input.companyId}:${input.marker}:debit`, `${rail.key}-statement:${input.companyId}:${input.marker}:credit`]]
-  );
-  if (prior.rows[0]) return null;
-  await ensureOpenPeriod(client as never, input.companyId, input.date);
-  const memo = `${rail.label} statement ${input.marker} — ${FUEL_CARD_DISCOUNT_ITEM}`;
-  const typeId = (await hasJournalEntryTypeColumn(client as never))
-    ? await resolveJournalEntryTypeId(client as never, { source: "auto", memo })
-    : null;
-  const je = await client.query<{ id: string }>(
-    `INSERT INTO accounting.journal_entries (operating_company_id, entry_date, memo, source, ${typeId ? "journal_entry_type_id," : ""}
-        created_by_user_id, created_at, updated_at, is_sample_data)
-     VALUES ($1::uuid, $2::date, $3, 'auto', ${typeId ? "$5::uuid," : ""} $4::uuid, now(), now(), false)
-     RETURNING id::text`,
-    typeId ? [input.companyId, input.date, memo, input.actor, typeId] : [input.companyId, input.date, memo, input.actor]
-  );
-  const jeId = je.rows[0]!.id;
-  const classId = (await client.query<{ class_id: string | null }>(
-    `SELECT p.class_id::text AS class_id FROM accounting.expenses e
-       JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = e.journal_entry_id AND p.debit_or_credit = 'debit'
-      WHERE e.id = $1::uuid AND p.class_id IS NOT NULL LIMIT 1`,
-    [input.expenseId]
-  )).rows[0]?.class_id ?? null;
-  const magnitude = Math.abs(input.differenceCents);
-  const payableSide = input.differenceCents > 0 ? "debit" : "credit";
-  const costSide = input.differenceCents > 0 ? "credit" : "debit";
-  let seq = 0;
-  for (const [account_id, side, role] of [
-    [input.payableId, payableSide, "card payable"],
-    [input.discountAccountId, costSide, "fuel cost"],
-  ] as const) {
-    seq += 1;
-    await insertPostingLineWithSpine(client as never, {
-      operating_company_id: input.companyId, journal_entry_uuid: jeId, line_sequence: seq, account_id,
-      debit_or_credit: side, amount_cents: magnitude,
-      description: `${FUEL_CARD_DISCOUNT_ITEM} — ${input.marker} (${role})`,
-      idempotency_key: `${rail.key}-statement:${input.companyId}:${input.marker}:${side}`,
-      source_transaction_type: "expense", source_transaction_id: input.expenseId, class_id: classId,
-      relationship_role: "fuel_card_discount",
-    });
-  }
-  return jeId;
+  return postStatementCardCreditAsExpense(client, input);
+}
+
+/** The card charged less than the receipt: a card-credit expense document (Dr 2510 / Cr Fuel Card Discount). */
+export async function postStatementCardCreditAsExpense(
+  client: DbClient,
+  input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string; rail?: FuelCardStatementRail }
+): Promise<string | null> {
+  const rail = input.rail ?? DREAMLINE_STATEMENT_RAIL;
+  const r = (await client.query<{ vendor: string | null; load_id: string | null; driver: string | null; unit_id: string | null }>(
+    `SELECT vendor_uuid::text AS vendor, load_id::text, driver_uuid::text AS driver, unit_id::text
+       FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.expenseId, input.companyId]
+  )).rows[0];
+  if (!r) throw new Error(`dreamline_receipt_expense_missing:${input.expenseId}`);
+  const cents = Math.abs(input.differenceCents);
+  if (cents === 0) return null;
+  const created = await createExpenseInClientTx(client, {
+    operating_company_id: input.companyId,
+    is_credit: true,
+    expense_date: input.date,
+    amount_cents: cents,
+    vendor_uuid: r.vendor,
+    payment_account_uuid: input.payableId,
+    category_account_id: input.discountAccountId,
+    item_id: input.discountItemId,
+    quantity: 1,
+    rate_cents: cents,
+    // the LOAD decides unit / driver / trailer (the writer's load attribution); a receipt with no load names its own
+    ...(r.load_id ? { load_id: r.load_id } : { ...(r.unit_id ? { unit_id: r.unit_id } : {}), ...(r.driver ? { driver_id: r.driver } : {}) }),
+    vendor_document_number: `${input.marker}-CARD-DISC`.slice(0, 120),
+    memo: `${rail.label} statement ${input.marker} — card discount ${cents} cents (${FUEL_CARD_DISCOUNT_ITEM}) on receipt ${input.expenseId}`,
+    is_company_expense: true,
+  } as never, input.actor);
+  const dup = created as { duplicateVendorDocumentNumber?: boolean; duplicateSubmission?: boolean };
+  if (dup.duplicateVendorDocumentNumber || dup.duplicateSubmission) return null;
+  const je = (created as { posted_journal_entry_id?: string | null }).posted_journal_entry_id ?? null;
+  if (!je) throw new Error(`dreamline_card_credit_not_posted:${input.marker}:${JSON.stringify(created).slice(0, 400)}`);
+  return je;
 }
 
 /** The card charged more than the receipt: an expense document (Dr Fuel Card Discount / Cr 2510) through the writer. */
@@ -669,9 +662,8 @@ export async function postStatementCostDifferenceAsExpense(
     item_id: input.discountItemId,
     quantity: 1,
     rate_cents: cents,
-    ...(r.unit_id ? { unit_id: r.unit_id } : {}),
-    ...(r.driver ? { driver_id: r.driver } : {}),
-    ...(r.load_id ? { load_id: r.load_id } : {}),
+    // the LOAD decides unit / driver / trailer (the writer's load attribution); a receipt with no load names its own
+    ...(r.load_id ? { load_id: r.load_id } : { ...(r.unit_id ? { unit_id: r.unit_id } : {}), ...(r.driver ? { driver_id: r.driver } : {}) }),
     // the trailer is the LOAD's (the writer's load attribution) — never the receipt's older stamp
     vendor_document_number: `${input.marker}-CARD-DIFF`.slice(0, 120),
     memo: `${rail.label} statement ${input.marker} — card charged ${cents} cents more than receipt (${FUEL_CARD_DISCOUNT_ITEM})`,

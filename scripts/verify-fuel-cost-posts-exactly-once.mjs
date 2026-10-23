@@ -136,6 +136,17 @@ export function fuelEntryIsAdopted({ entryId, postingSource, expenses }) {
  * as an independent posting; F refuses a "discount" larger than the receipt it discounts (a full posting in disguise).
  * The SQL below is the ONE predicate; the selftest holds it.
  */
+/** LEAD 443.258.5: the statement import never hand-writes a journal entry — its differences are expense documents. */
+export const STATEMENT_IMPORT_FILE = "apps/backend/src/fuel/dreamline-statement-import.service.ts";
+export function statementImportProblems(src) {
+  const p = [];
+  if (/INSERT\s+INTO\s+accounting\.journal_entries\b/i.test(src)) p.push(`${STATEMENT_IMPORT_FILE}: a raw INSERT INTO accounting.journal_entries (the statement difference must be an expense document)`);
+  if (/INSERT\s+INTO\s+accounting\.journal_entry_postings\b/i.test(src) || /insertPostingLineWithSpine\(/.test(src)) p.push(`${STATEMENT_IMPORT_FILE}: writes posting lines directly (the expense posting engine writes them)`);
+  const pos = (src.match(/export async function postStatementCardCreditAsExpense\([\s\S]*?\n}\n/) ?? [""])[0];
+  if (!/createExpenseInClientTx\(client, \{[\s\S]*?is_credit: true/.test(pos)) p.push(`${STATEMENT_IMPORT_FILE}: the card discount is not a card-credit expense document (is_credit) through the expense writer`);
+  return p;
+}
+
 export const CARD_DISCOUNT_FAMILY_SQL = `(
           je.id IN (SELECT cd_p.journal_entry_uuid FROM accounting.journal_entry_postings cd_p
                       JOIN accounting.transaction_source_links cd_l
@@ -425,6 +436,12 @@ function runSelftest() {
     ["the family predicate requires the fuel_card_discount tag", /relationship_role = 'fuel_card_discount'/.test(CARD_DISCOUNT_FAMILY_SQL) && !/relationship_role IN|relationship_role IS NOT NULL/.test(CARD_DISCOUNT_FAMILY_SQL)],
     ["the family predicate only adds void-reversals of tagged JEs", /OR je\.reverses_je_id IN \(SELECT cd_p\.journal_entry_uuid/.test(CARD_DISCOUNT_FAMILY_SQL)],
   ];
+  // LEAD 443.258.5 static plants on the statement import (real file).
+  const impPath = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..", STATEMENT_IMPORT_FILE);
+  const impSrc = fs.existsSync(impPath) ? fs.readFileSync(impPath, "utf8") : "";
+  cdFixtures.push(["the statement import is clean (card credit document, no handwritten JE)", impSrc !== "" && statementImportProblems(impSrc).length === 0]);
+  cdFixtures.push(["a handwritten statement JE is caught", statementImportProblems(impSrc + "\nawait c.query(`INSERT INTO accounting.journal_entries (x) VALUES (1)`);").length > 0]);
+  cdFixtures.push(["a card discount not issued as a card credit is caught", statementImportProblems(impSrc.replace("is_credit: true,", "")).length > 0]);
   const ownSrc = fs.readFileSync(new URL(import.meta.url), "utf8");
   const eSqlForFamily = (ownSrc.match(/\/\/ E: documents with 2\+ LIVE JEs[\s\S]*?HAVING count\(DISTINCT jep\.journal_entry_uuid\) > 1/) ?? [""])[0];
   cdFixtures.push(["E excludes the card-discount family by the one predicate", /AND NOT \$\{CARD_DISCOUNT_FAMILY_SQL\}/.test(eSqlForFamily)]);
@@ -543,7 +560,8 @@ async function measureLive(client) {
   // fuel_transaction-linked rows. This is what makes the two sides of the comparison describe the
   // same set of transactions instead of two different ones.
   const fuelTotalRes = await client.query(
-    `SELECT COALESCE(SUM(el.amount_cents), 0)::bigint AS total_cents
+    // LEAD 443.258.5: a card CREDIT document (is_credit — e.g. a fuel-card statement discount) reduces 5000.
+    `SELECT COALESCE(SUM(CASE WHEN COALESCE(to_jsonb(e) ->> 'is_credit', 'false')::boolean THEN -el.amount_cents ELSE el.amount_cents END), 0)::bigint AS total_cents
        FROM accounting.expenses e
        JOIN accounting.expense_lines el ON el.expense_id = e.id
        JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
@@ -672,6 +690,9 @@ async function runFull() {
     const staticResult = staticCheckAcceptPath(source);
     staticProblems = staticResult.problems;
   }
+  // LEAD 443.258.5: the statement import's differences are expense documents, never handwritten JEs.
+  const importPath = path.join(path.dirname(new URL(import.meta.url).pathname), "..", STATEMENT_IMPORT_FILE);
+  if (fs.existsSync(importPath)) staticProblems.push(...statementImportProblems(fs.readFileSync(importPath, "utf8")));
 
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   let live;
