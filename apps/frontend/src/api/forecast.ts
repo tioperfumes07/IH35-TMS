@@ -44,6 +44,8 @@ export type ForecastOpeningBalance = {
   operating_company_id: string;
   amount_cents: number;
   as_of_date: string | null;
+  /** Present only when an opening was actually saved (the GET returns a 0 placeholder otherwise). */
+  updated_at?: string | null;
 };
 
 export function listForecastEntries(

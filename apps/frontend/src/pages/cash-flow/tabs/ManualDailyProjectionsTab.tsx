@@ -21,8 +21,7 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { SelectCombobox } from "../../../components/Combobox";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { Link, useSearchParams } from "react-router-dom";
-import { getBankingTiles } from "../../../api/banking";
-import { pullManualTransactions } from "../../../api/cashFlow";
+import { getCashFlowOpeningCash, pullManualTransactions } from "../../../api/cashFlow";
 
 function fmtCents(c: number) {
   return formatUsdCents(c);
@@ -362,9 +361,12 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     queryFn: () => getForecastOpeningBalance(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
+  // LEAD 443.283: opening cash = the operating bank accounts only (BofA Plaid balance + Relay
+  // wallet internal ledger) — the same authoritative figure Cash Flow Home opens with. Banking
+  // tiles also carry card payables and the Faro factoring accounts, which are not cash.
   const banksQuery = useQuery({
-    queryKey: ["banking", "tiles", operatingCompanyId],
-    queryFn: () => getBankingTiles(operatingCompanyId),
+    queryKey: ["cash-flow", "opening-cash", operatingCompanyId],
+    queryFn: () => getCashFlowOpeningCash(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -410,19 +412,17 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     () => (projectionDate ? allEntries.filter((e) => String(e.entry_date).slice(0, 10) === projectionDate) : allEntries),
     [allEntries, projectionDate],
   );
-  const realBanks = useMemo(
-    () => (banksQuery.data?.tiles ?? []).filter((t) => String(t.tile_kind) === "real"),
-    [banksQuery.data?.tiles],
-  );
-  const bankTotalDollars = useMemo(
-    () => realBanks.reduce((sum, t) => sum + Number(t.current_balance ?? 0), 0),
-    [realBanks],
-  );
+  const realBanks = useMemo(() => banksQuery.data?.accounts ?? [], [banksQuery.data?.accounts]);
+  const bankTotalDollars = (banksQuery.data?.opening_cash_cents ?? 0) / 100;
   const income = useMemo(() => entries.filter((e) => e.direction === "income"), [entries]);
   const expense = useMemo(() => entries.filter((e) => e.direction === "expense"), [entries]);
   // Totals math is UNCHANGED (#1084 summing fix preserved).
   const { incomeCents: totalIncome, expenseCents: totalExpense, netCents: net } = computeProjectionTotals(entries);
-  const openingCents = toCents(openingQuery.data?.amount_cents);
+  // A saved opening (updated_at set) is the owner's override; otherwise open at the authoritative bank cash.
+  const hasSavedOpening = Boolean(openingQuery.data?.updated_at);
+  const openingCents = hasSavedOpening
+    ? toCents(openingQuery.data?.amount_cents)
+    : (banksQuery.data?.opening_cash_cents ?? toCents(openingQuery.data?.amount_cents));
   const projectedClosing = openingCents + net;
   const netPositive = net >= 0;
 
@@ -478,13 +478,13 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         {banksQuery.isError ? (
           <p className="text-red-600">Could not load banks.</p>
         ) : realBanks.length === 0 ? (
-          <p className="text-gray-500">No real bank tiles for this company yet.</p>
+          <p className="text-gray-500">No operating bank accounts for this company yet.</p>
         ) : (
           <ul className="space-y-1">
             {realBanks.map((bank) => (
               <li key={bank.id} className="flex justify-between gap-4">
                 <span>{bank.display_name}</span>
-                <span className="tabular-nums font-semibold">{formatUsd(Number(bank.current_balance ?? 0))}</span>
+                <span className="tabular-nums font-semibold">{formatUsd(Number(bank.cents ?? 0) / 100)}</span>
               </li>
             ))}
             {realBanks.length > 1 ? (

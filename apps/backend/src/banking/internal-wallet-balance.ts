@@ -375,3 +375,56 @@ export async function withInternalWalletTileBalances<T extends BankingTileBalanc
   });
 
 }
+
+/**
+ * LEAD 443.283 — the SAME authoritative operating cash as sumAuthoritativeDepositoryCashCents, broken
+ * out per account so every surface that lists "banks" (Cash Flow Manual tab) shows exactly the accounts
+ * and amounts that make up opening cash, and its total ties to it by construction.
+ * ROOT CAUSE it fixes: the Manual tab summed every "real" banking tile — card payables (Dreamline
+ * -$140,226.34, WEX +$29,156.88) and the Faro factoring/escrow virtual accounts ($175,650.00) — and
+ * called it "Total cash" ($102,867.17) while Cash Flow Home opened at $25,533.37.
+ */
+export type AuthoritativeCashAccount = { id: string; display_name: string; source: "plaid" | "internal_ledger"; cents: number };
+
+export async function listAuthoritativeDepositoryCashByAccount(
+  client: QueryClient,
+  operatingCompanyId: string,
+  opts: { hideFilterOnBankAccounts: string; hideFilterOnBaAlias: string }
+): Promise<{ accounts: AuthoritativeCashAccount[]; total_cents: number }> {
+  const plaid = await client.query<{ id: string; display_name: string | null; cents: string | number | null }>(
+    `
+      SELECT id::text, COALESCE(display_name, account_name) AS display_name, COALESCE(current_balance_cents, 0)::bigint AS cents
+      FROM banking.bank_accounts
+      WHERE operating_company_id = $1::uuid
+        AND account_class = 'depository'
+        AND is_active = true
+        AND deactivated_at IS NULL
+        AND plaid_item_id IS NOT NULL
+      ${opts.hideFilterOnBankAccounts}
+      ORDER BY display_order NULLS LAST, account_name
+    `,
+    [operatingCompanyId]
+  );
+  const internal = await client.query<{ id: string; display_name: string | null; cents: string | number | null }>(
+    `
+      SELECT ba.id::text, COALESCE(ba.display_name, ba.account_name) AS display_name,
+        COALESCE(SUM(CASE WHEN bt.is_credit THEN bt.amount_cents ELSE -bt.amount_cents END), 0)::bigint AS cents
+      FROM banking.bank_accounts ba
+      JOIN banking.bank_transactions bt ON bt.bank_account_id = ba.id AND bt.operating_company_id = $1::uuid AND bt.voided_at IS NULL
+      WHERE ba.operating_company_id = $1::uuid
+        AND ba.account_class = 'depository'
+        AND ba.is_active = true
+        AND ba.deactivated_at IS NULL
+        AND ba.plaid_item_id IS NULL
+      ${opts.hideFilterOnBaAlias}
+      GROUP BY ba.id, ba.display_name, ba.account_name, ba.display_order
+      ORDER BY ba.display_order NULLS LAST, ba.account_name
+    `,
+    [operatingCompanyId]
+  );
+  const accounts: AuthoritativeCashAccount[] = [
+    ...plaid.rows.map((r) => ({ id: r.id, display_name: r.display_name ?? "Bank account", source: "plaid" as const, cents: Number(r.cents ?? 0) })),
+    ...internal.rows.map((r) => ({ id: r.id, display_name: r.display_name ?? "Wallet", source: "internal_ledger" as const, cents: Number(r.cents ?? 0) })),
+  ];
+  return { accounts, total_cents: accounts.reduce((sum, a) => sum + a.cents, 0) };
+}
