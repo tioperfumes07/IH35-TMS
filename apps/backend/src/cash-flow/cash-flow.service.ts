@@ -1416,10 +1416,45 @@ export async function getRollingLedgerRows(
     return { rows: [] as { id: string; entry_date: string; label: string; amount_cents: number }[] };
   });
 
-  // All 11 above are independent reads (each keyed only on operatingCompanyId/today) -- fire them
+  // 443.264 — FUEL TRAILING AVERAGE: trailing 4 complete weeks from fuel.fuel_transactions.
+  // Projects 13 future weekly rows (due_date = Monday of each week). Card payable (2510) already
+  // covers the outstanding incurred fuel balance; this covers projected future weeks.
+  // Source table: fuel.fuel_transactions (operating_company_id, transaction_at, total_cost, voided_at).
+  const fuelAvgPromise = client.query<{ weekly_avg_cents: number }>(
+    `
+    WITH params AS (
+      SELECT
+        (DATE_TRUNC('week', now() AT TIME ZONE 'America/Chicago') AT TIME ZONE 'America/Chicago') AS cur_week_start_utc,
+        (DATE_TRUNC('week', now() AT TIME ZONE 'America/Chicago') AT TIME ZONE 'America/Chicago' - INTERVAL '4 weeks') AS four_weeks_ago_utc
+    ),
+    week_sums AS (
+      SELECT
+        DATE_TRUNC('week', ft.transaction_at AT TIME ZONE 'America/Chicago')::date AS week_start,
+        SUM(ft.total_cost) AS weekly_total
+      FROM fuel.fuel_transactions ft, params
+      WHERE ft.operating_company_id = $1::uuid
+        AND ft.voided_at IS NULL
+        AND ft.transaction_at >= params.four_weeks_ago_utc
+        AND ft.transaction_at < params.cur_week_start_utc
+      GROUP BY 1
+      ORDER BY 1 DESC
+    )
+    SELECT COALESCE(ROUND(AVG(weekly_total) * 100)::bigint, 0)::int AS weekly_avg_cents
+    FROM week_sums
+    `,
+    [operatingCompanyId]
+  ).catch((err) => {
+    logger.warn("cash-flow rolling-ledger: fuel_trailing_avg subquery failed", {
+      operating_company_id: operatingCompanyId,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+    return { rows: [{ weekly_avg_cents: 0 }] };
+  });
+
+  // All 12 above are independent reads (each keyed only on operatingCompanyId/today) -- fire them
   // concurrently instead of paying sequential Neon round-trips, then process in the exact same
   // order the old sequential-await code did so row order/content is unchanged.
-  const [billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, relayTopupRows] =
+  const [billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, relayTopupRows, fuelAvgResult] =
     await Promise.all([
       billsPromise,
       settlementsPromise,
@@ -1432,6 +1467,7 @@ export async function getRollingLedgerRows(
       notInvoicedPromise,
       cardPayable2510Promise,
       relayTopupPromise,
+      fuelAvgPromise,
     ]);
 
   for (const b of billRows.rows) {
@@ -1643,6 +1679,36 @@ export async function getRollingLedgerRows(
       days_overdue: daysOverdue,
       status: rowStatus(daysOverdue),
     });
+  }
+
+  // 443.264 — FUEL TRAILING AVERAGE projected rows (13 future weeks, due_date = Monday of each week).
+  // Source: fuel.fuel_transactions weekly avg over the last 4 complete weeks (Chicago time).
+  // Uses document_kind:"expense" with synthetic document_id "fuel-avg-YYYY-MM-DD" — not a real
+  // accounting.expenses row; applyRowAdjustments will find no matching adjustment and pass through.
+  const weeklyFuelCents = fuelAvgResult.rows[0]?.weekly_avg_cents ?? 0;
+  if (weeklyFuelCents > 0) {
+    const todayDate = new Date(today + "T00:00:00Z");
+    const dayOfWeek = todayDate.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const daysToNextMonday = dayOfWeek === 1 ? 7 : (dayOfWeek === 0 ? 1 : 8 - dayOfWeek);
+    for (let w = 0; w < 13; w++) {
+      const weekStart = new Date(todayDate);
+      weekStart.setUTCDate(todayDate.getUTCDate() + daysToNextMonday + w * 7);
+      const weekStartStr = weekStart.toISOString().slice(0, 10);
+      const daysOverdue = daysBetween(today, weekStartStr);
+      rows.push({
+        row_kind: "expense",
+        type: "Fuel (projected)",
+        document_kind: "expense",
+        document_id: `fuel-avg-${weekStartStr}`,
+        document_label: `Fuel est. wk ${weekStartStr}`,
+        counterparty: "Fuel (4-wk avg)",
+        origin_date: weekStartStr,
+        due_date: weekStartStr,
+        amount_cents: weeklyFuelCents,
+        days_overdue: daysOverdue,
+        status: rowStatus(daysOverdue),
+      });
+    }
   }
 
   return applyRowAdjustments(client, operatingCompanyId, rows, today);
