@@ -3,6 +3,8 @@
  * + settled deposit amount − fuel fills − fill fees − lumper = running balance, by Relay day. The 3.25% deposit fee is
  * shown beside it: it is charged to the funding card, never the wallet. Every number opens the documents behind it.
  * Read-only: GET /api/integrations/relay/wallet-roll-forward.
+ *
+ * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). getRelayWalletRollForward engine unchanged.
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -10,13 +12,20 @@ import { getRelayWalletRollForward, type RelayRollForwardDay, type RelayRollForw
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { DataPanel } from "../../../components/layout/DataPanel";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { V3Panel } from "../../../components/v3/V3Panel";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatMoneyCents } from "../../../components/dispatch/constants";
 
 type Bucket = "deposits" | "fills" | "lumper";
 const BUCKET_LABEL: Record<Bucket, string> = { deposits: "Deposits", fills: "Fuel fills (with fee)", lumper: "Lumper (with fee)" };
 const money = (c: number) => formatMoneyCents(c, "USD");
+
+function kpiMoney(cents: number | undefined, loading: boolean): string {
+  if (loading) return "…";
+  if (cents == null) return "—";
+  return money(cents);
+}
 
 export function RelayWalletRollForwardPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -72,42 +81,80 @@ export function RelayWalletRollForwardPage() {
 
   return (
     <div className="space-y-3" data-testid="relay-wallet-page">
-      <DataPanel
+      {/* ROUND 443.250 Relay Wallet V3 — same totals from getRelayWalletRollForward.totals. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="relay-wallet-v3-kpi-strip"
+        data-relay-wallet-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="Deposits"
+          value={kpiMoney(totals?.deposits_cents, query.isPending)}
+          sub="settled into wallet"
+          testId="relay-wallet-kpi-deposits"
+        />
+        <V3KpiTile
+          label="Fuel fills"
+          value={kpiMoney(totals?.fills_cents, query.isPending)}
+          sub="drawn from wallet"
+          testId="relay-wallet-kpi-fills"
+        />
+        <V3KpiTile
+          label="Fill fees"
+          value={kpiMoney(totals?.fill_fees_cents, query.isPending)}
+          sub="on fuel fills"
+          testId="relay-wallet-kpi-fill-fees"
+        />
+        <V3KpiTile
+          label="Lumper"
+          value={kpiMoney(totals?.lumper_cents, query.isPending)}
+          sub="with fee"
+          testId="relay-wallet-kpi-lumper"
+        />
+        <V3KpiTile
+          label="Balance"
+          value={kpiMoney(totals?.balance_cents, query.isPending)}
+          sub="deposits − fills − fees − lumper"
+          tone="ink"
+          testId="relay-wallet-kpi-balance"
+        />
+        <V3KpiTile
+          label="Deposit fees (card)"
+          value={kpiMoney(totals?.deposit_fees_cents, query.isPending)}
+          sub="charged to funding card"
+          tone="muted"
+          testId="relay-wallet-kpi-deposit-fees"
+        />
+      </div>
+      <V3Panel
         title="Relay wallet — roll-forward"
-        titleHint="Deposits − fuel fills − fill fees − lumper = balance, by Relay day. The 3.25% deposit fee is charged to the funding card, not the wallet."
+        subtitle="Deposits − fuel fills − fill fees − lumper = balance, by Relay day. The 3.25% deposit fee is charged to the funding card, not the wallet."
+        testId="relay-wallet-roll-forward-v3-panel"
       >
         {query.isError ? (
           <ListErrorBanner onRetry={() => void query.refetch()} message="The Relay wallet roll-forward could not be loaded." />
         ) : (
-          <>
-            {totals ? (
-              <div className="mb-2 flex flex-wrap gap-4 text-xs text-[#1F2A44]" data-testid="relay-wallet-totals">
-                <span>Deposits {money(totals.deposits_cents)}</span>
-                <span>Fuel fills {money(totals.fills_cents)}</span>
-                <span>Fill fees {money(totals.fill_fees_cents)}</span>
-                <span>Lumper {money(totals.lumper_cents)}</span>
-                <span className="font-semibold">Balance {money(totals.balance_cents)}</span>
-                <span>Deposit fees (card) {money(totals.deposit_fees_cents)}</span>
-              </div>
-            ) : null}
-            <ParityTable
-              rows={days}
-              columns={columns}
-              loading={query.isPending}
-              storageKey="fuel-relay-wallet-roll-forward"
-              emptyText="No Relay deposits or fills yet."
-              rowKey={(row) => row.day}
-            />
-          </>
+          <ParityTable
+            rows={days}
+            columns={columns}
+            loading={query.isPending}
+            storageKey="fuel-relay-wallet-roll-forward"
+            emptyText="No Relay deposits or fills yet."
+            rowKey={(row) => row.day}
+          />
         )}
-      </DataPanel>
+      </V3Panel>
       {open && openDay ? (
-        <DataPanel title={`${BUCKET_LABEL[open.bucket]} — ${formatDateUS(open.day)}`} titleHint="The documents behind this number">
-          <div className="mb-2">
+        <V3Panel
+          title={`${BUCKET_LABEL[open.bucket]} — ${formatDateUS(open.day)}`}
+          subtitle="The documents behind this number"
+          testId="relay-wallet-docs-v3-panel"
+          headerRight={
             <button type="button" className="rounded-sm border border-gray-300 px-2 py-1 text-xs" data-testid="relay-wallet-close" onClick={() => setOpen(null)}>
               Close
             </button>
-          </div>
+          }
+        >
           <ParityTable
             rows={openDay[open.bucket]}
             columns={docColumns}
@@ -116,7 +163,7 @@ export function RelayWalletRollForwardPage() {
             emptyText="No documents."
             rowKey={(d) => d.id}
           />
-        </DataPanel>
+        </V3Panel>
       ) : null}
     </div>
   );
