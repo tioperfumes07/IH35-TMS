@@ -1433,6 +1433,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       const filters: string[] = [EXCLUDE_ARCHIVED_DRIVERS_SQL];
       if (!include_deactivated) {
         filters.push("deactivated_at IS NULL");
+        // 443.260.3: a partially-merged driver (merged_into_driver_id set but deactivated_at
+        // not yet propagated from an earlier op) must never appear in any picker or roster.
+        // Defense-in-depth alongside the engine fix: merged_into always disqualifies.
+        filters.push("merged_into_driver_id IS NULL");
       }
       if (!include_system) {
         // Exclude system pseudo-users from human listings. They are required by referential integrity for system-

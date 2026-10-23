@@ -123,8 +123,10 @@ function nonEmpty(...parts: Array<string | null | undefined>): string {
  * every entity picker flows through — the registry — so no picker can hand back a merged/deactivated
  * id that fails save. The admin list endpoints are unaffected: they call the list APIs directly.
  */
-function isLive(row: { deactivated_at?: string | null }): boolean {
-  return row.deactivated_at == null;
+function isLive(row: { deactivated_at?: string | null; merged_into_driver_id?: string | null }): boolean {
+  // 443.260.3: a merged driver (merged_into_driver_id set) must never be selectable even if
+  // deactivated_at was not propagated by a partial earlier op.
+  return row.deactivated_at == null && row.merged_into_driver_id == null;
 }
 
 const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
