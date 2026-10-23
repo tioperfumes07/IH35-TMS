@@ -1,9 +1,20 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { PlannerGrid, plannerBarLabelTier } from "./PlannerGrid";
 
 describe("PlannerGrid", () => {
+  it("renders source details with separate row sizing and an actionable source bar", () => {
+    const open = vi.fn();
+    render(<PlannerGrid days={["2026-10-20", "2026-10-21"]} frozenLabel="Unit" rowPx={44}
+      testId="truck-v3-test" frozenColumns={[{ key: "name", header: "Unit", defaultWidth: 110 }]}
+      rows={[{ id: "fixture", name: "Unit fixture", bars: [{ id: "bar", label: "Load fixture", detail: "$1,234.56", kind: "nb", startYmd: "2026-10-20", endYmd: "2026-10-21", onClick: open }] }]} empty="none" />);
+    const bar = screen.getByRole("button", { name: "Load fixture $1,234.56" });
+    expect(bar).toHaveStyle({ height: "32px" });
+    fireEvent.click(bar);
+    expect(open).toHaveBeenCalledOnce();
+    cleanup();
+  });
   it("paints a single track with repeating day rules and labelled dwell, no Available cells", () => {
     render(
       <PlannerGrid
