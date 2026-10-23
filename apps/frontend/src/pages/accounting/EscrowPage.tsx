@@ -16,8 +16,12 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
 
 type EscrowViewTab = "accounts" | "pending";
+
+/** Owner board Settlements-Escrow.dc.html — policy chrome ("60 days after last settlement"), not a new engine. */
+const ESCROW_RELEASE_WINDOW_DAYS = 60;
 
 // GLB-05 — delegates to the canonical formatter (lib/money.ts) instead of reimplementing it. The
 // old body called toLocaleString(undefined, ...) — an unpinned locale that formats differently
@@ -131,6 +135,31 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
     [accountsQuery.data?.rows]
   );
 
+  // ROUND 443.250 Settlements Escrow V3 — same listEscrowAccounts rows already loaded for the table.
+  // Drivers holding = unique active driver holders with balance > 0; Total held = sum of active
+  // balances. Release window = board policy constant. Scheduled releases = "—" (no schedule feed).
+  const escrowHomeKpis = useMemo(() => {
+    if (accountsQuery.isError) {
+      return {
+        driversHolding: null as number | null,
+        totalHeldCents: null as number | null,
+        scheduledAvailable: false,
+      };
+    }
+    const active = accountRows.filter((row) => row.status === "active");
+    const holdingDriverIds = new Set(
+      active
+        .filter((row) => row.holder_type === "driver" && row.balance_cents > 0)
+        .map((row) => row.holder_id),
+    );
+    const totalHeldCents = active.reduce((sum, row) => sum + (row.balance_cents ?? 0), 0);
+    return {
+      driversHolding: holdingDriverIds.size,
+      totalHeldCents,
+      scheduledAvailable: false,
+    };
+  }, [accountRows, accountsQuery.isError]);
+
   // ACCT-SURF-09: deep-link from Settlements (?account_id= / ?holder_id=) so reverse drill lands on a row.
   useEffect(() => {
     if (!accountRows.length) return;
@@ -221,6 +250,48 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
 
   const body = (
       <div className="space-y-4 p-4" data-testid={settlementsMount ? "settlements-escrow-body" : "accounting-escrow-body"}>
+      {/* ROUND 443.250 Settlements Escrow V3 — board KPIs: Drivers holding escrow / Total held /
+          Release window / Scheduled releases. Live listEscrowAccounts; chrome via V3KpiTile. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="escrow-home-kpi-strip"
+        data-escrow-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="Drivers holding escrow"
+          value={
+            escrowHomeKpis.driversHolding == null
+              ? "—"
+              : escrowHomeKpis.driversHolding.toLocaleString("en-US")
+          }
+          sub="active bonds with a balance"
+          testId="escrow-kpi-drivers-holding"
+          onClick={() => setViewTab("accounts")}
+        />
+        <V3KpiTile
+          label="Total held"
+          value={
+            escrowHomeKpis.totalHeldCents == null ? "—" : money(escrowHomeKpis.totalHeldCents)
+          }
+          sub="active escrow balances"
+          testId="escrow-kpi-total-held"
+          onClick={() => setViewTab("accounts")}
+        />
+        <V3KpiTile
+          label="Release window"
+          value={`${ESCROW_RELEASE_WINDOW_DAYS} days`}
+          sub="after last settlement"
+          testId="escrow-kpi-release-window"
+        />
+        <V3KpiTile
+          label="Scheduled releases"
+          value={escrowHomeKpis.scheduledAvailable ? "0" : "—"}
+          sub="no release schedule on this list"
+          testId="escrow-kpi-scheduled-releases"
+          onClick={() => setViewTab("pending")}
+        />
+      </div>
+
       <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs w-fit">
         {(["accounts", "pending"] as const).map((tab) => (
           <button

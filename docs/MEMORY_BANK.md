@@ -255,6 +255,22 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guard piggyback:** `verify-customers-vendors-have-list-view.mjs` (step 12346 ≡2 EVEN Cursor)
   asserts V3KpiTile + data-vendors-v3-kpis on Vendors.tsx (+ customers markers retained). No new EVEN claim.
 - **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards · Driver Profile ·
+  design-system sweep · Chrome proof. Settlements Escrow V3 shipped (below). Full DONE not claimed.
+
+### Active Architectural Decisions — Settlements Escrow V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `listEscrowAccounts` already loaded for the Escrow accounts ParityTable.
+  No new escrow / release-schedule endpoint.
+- **V3 board chrome:** four KPIs via `V3KpiTile` + `data-escrow-v3-kpis` on `EscrowPage.tsx`
+  (Settlements mount `/driver-finance/escrow` + Accounting Escrow) — Drivers holding escrow
+  (unique active driver holders with balance > 0) · Total held (sum of active balances) ·
+  Release window (`ESCROW_RELEASE_WINDOW_DAYS = 60`, board policy chrome "after last settlement") ·
+  Scheduled releases = "—" (no schedule feed on this list; Pending Review click-through only).
+  "—" when accounts query errors. EntityLink / holder reverse-link contracts retained.
+- **Guard piggyback:** `verify-escrow-posting-entitylink-reverse.mjs` (step 1282 ≡2 EVEN Cursor)
+  asserts V3KpiTile + data-escrow-v3-kpis + board labels. No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Deductions/
+  CashAdvances/Close/PreSettlements/Statement/EscrowRegister) · Fuel sub-boards · Driver Profile ·
   design-system sweep · Chrome proof. Full DONE not claimed.
 
 
