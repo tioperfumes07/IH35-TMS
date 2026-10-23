@@ -37,8 +37,16 @@ const REQUIRED = [
     // shared-control migration (the toggle now ships its data attribute through `dataAttributes`,
     // Vendors.tsx:614) but this entry was never widened with it, so pass-7 AUDIT-FIX-3 went red on
     // main against a feature that is present and working. The guard was stale, not the page.
+    // ROUND 443.250 Vendors home V3 — V3KpiTile strip (With transactions / In the book /
+    // Open bills / Spend YTD) marked data-vendors-v3-kpis.
     file: "apps/frontend/src/pages/Vendors.tsx",
-    markers: ['data-view-mode-toggle=\"vendors\"|"data-view-mode-toggle": "vendors"', "VendorsListView", "useViewModePref"],
+    markers: [
+      'data-view-mode-toggle=\"vendors\"|"data-view-mode-toggle": "vendors"',
+      "VendorsListView",
+      "useViewModePref",
+      "V3KpiTile",
+      "data-vendors-v3-kpis",
+    ],
   },
   {
     file: "apps/frontend/src/hooks/useViewModePref.ts",
@@ -64,25 +72,48 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  // ROUND 443.250 — V3 strip markers must be required on Customers.tsx entry.
+  // ROUND 443.250 — V3 strip markers must be required on Customers.tsx + Vendors.tsx entries.
   const customersEntry = REQUIRED.find((r) => r.file.endsWith("Customers.tsx"));
   if (!customersEntry?.markers.includes("V3KpiTile") || !customersEntry.markers.includes("data-customers-v3-kpis")) {
     console.error("[verify-customers-vendors-have-list-view] SELFTEST FAIL: Customers.tsx must require V3KpiTile + data-customers-v3-kpis");
     process.exit(1);
   }
-  const v3Good = 'import { V3KpiTile } from "../components/v3/V3KpiTile";\ndata-customers-v3-kpis="1"\nCustomersListView\nuseViewModePref\ndata-view-mode-toggle="customers"';
+  const vendorsEntry = REQUIRED.find((r) => r.file.endsWith("Vendors.tsx"));
+  if (!vendorsEntry?.markers.includes("V3KpiTile") || !vendorsEntry.markers.includes("data-vendors-v3-kpis")) {
+    console.error("[verify-customers-vendors-have-list-view] SELFTEST FAIL: Vendors.tsx must require V3KpiTile + data-vendors-v3-kpis");
+    process.exit(1);
+  }
+  const v3GoodCustomers =
+    'import { V3KpiTile } from "../components/v3/V3KpiTile";\ndata-customers-v3-kpis="1"\nCustomersListView\nuseViewModePref\ndata-view-mode-toggle="customers"';
   for (const m of customersEntry.markers) {
-    if (!hasMarker(v3Good, m)) {
-      console.error(`[verify-customers-vendors-have-list-view] SELFTEST FAIL: good fixture missing ${m}`);
+    if (!hasMarker(v3GoodCustomers, m)) {
+      console.error(`[verify-customers-vendors-have-list-view] SELFTEST FAIL: customers good fixture missing ${m}`);
       process.exit(1);
     }
   }
-  const v3Bad = v3Good.replace(/V3KpiTile/g, "LegacyKpi").replace(/data-customers-v3-kpis/g, "data-customers-legacy");
-  if (hasMarker(v3Bad, "V3KpiTile") || hasMarker(v3Bad, "data-customers-v3-kpis")) {
-    console.error("[verify-customers-vendors-have-list-view] SELFTEST FAIL: V3 strip removal should fail markers");
+  const v3BadCustomers = v3GoodCustomers
+    .replace(/V3KpiTile/g, "LegacyKpi")
+    .replace(/data-customers-v3-kpis/g, "data-customers-legacy");
+  if (hasMarker(v3BadCustomers, "V3KpiTile") || hasMarker(v3BadCustomers, "data-customers-v3-kpis")) {
+    console.error("[verify-customers-vendors-have-list-view] SELFTEST FAIL: customers V3 strip removal should fail markers");
     process.exit(1);
   }
-  console.log(`[verify-customers-vendors-have-list-view] SELFTEST PASS (${cases.length}/${cases.length} + V3)`);
+  const v3GoodVendors =
+    'import { V3KpiTile } from "../components/v3/V3KpiTile";\ndata-vendors-v3-kpis="1"\nVendorsListView\nuseViewModePref\ndata-view-mode-toggle="vendors"';
+  for (const m of vendorsEntry.markers) {
+    if (!hasMarker(v3GoodVendors, m)) {
+      console.error(`[verify-customers-vendors-have-list-view] SELFTEST FAIL: vendors good fixture missing ${m}`);
+      process.exit(1);
+    }
+  }
+  const v3BadVendors = v3GoodVendors
+    .replace(/V3KpiTile/g, "LegacyKpi")
+    .replace(/data-vendors-v3-kpis/g, "data-vendors-legacy");
+  if (hasMarker(v3BadVendors, "V3KpiTile") || hasMarker(v3BadVendors, "data-vendors-v3-kpis")) {
+    console.error("[verify-customers-vendors-have-list-view] SELFTEST FAIL: vendors V3 strip removal should fail markers");
+    process.exit(1);
+  }
+  console.log(`[verify-customers-vendors-have-list-view] SELFTEST PASS (${cases.length}/${cases.length} + V3 customers + V3 vendors)`);
   process.exit(0);
 }
 
