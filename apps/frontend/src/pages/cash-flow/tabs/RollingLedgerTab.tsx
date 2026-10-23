@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "../../../hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +21,9 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
 import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { SelectCombobox } from "../../../components/Combobox";
+import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
+import { V3Panel } from "../../../components/v3/V3Panel";
+import { V3Segmented } from "../../../components/v3/V3Segmented";
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
 // every expected dollar carries its own due date and stays until paid/matched.
@@ -40,6 +43,10 @@ import { SelectCombobox } from "../../../components/Combobox";
 // rows; expense rows get a lightweight "Roll over ▾" reason menu + a separate "Stop" action, no
 // popup. The day-navigator card ("‹ Sun, Sep 6 · Today ›", 64px) and the split-screen layout are
 // restored/kept exactly as before this correction.
+//
+// ROUND 443.250 — Rolling Ledger V3 board: same engine (getRollingLedger), V3 tokens + V3Panel
+// chrome, carried past-due panels, Day/Week day-grid grain. ParityTable / adjust / filter
+// contracts unchanged (verify-cash-flow-rolling-ledger.mjs).
 
 const TYPE_OPTIONS = [
   { value: "Bill", label: "Bills" },
@@ -89,6 +96,41 @@ function fmtDateShort(iso: string): string {
 function fmtDate(iso: string): string {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
+
+function mondayOf(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const dow = dt.getUTCDay();
+  const delta = dow === 0 ? -6 : 1 - dow;
+  return addDaysIso(iso, delta);
+}
+
+/** Same priority buckets as Projected V3 (V3_EXPENSE_GROUPS). */
+function expenseGroupKey(row: RollingLedgerRow): (typeof V3_EXPENSE_GROUPS)[number] {
+  const t = `${row.type} ${row.document_kind} ${row.document_label}`.toLowerCase();
+  if (/loan|lease|amort|note|rent/.test(t)) return "finance & lease";
+  if (/driver|settlement|driver_bill/.test(t) || row.document_kind === "driver_bill" || row.document_kind === "settlement") {
+    return "driver bills";
+  }
+  if (/diesel|fuel|relay|card fill/.test(t)) return "diesel";
+  if (/maint|tire|parts|shop|work.?order/.test(t)) return "maintenance";
+  if (/insur/.test(t)) return "insurance";
+  return "other";
+}
+
+function expenseGroupLabel(key: (typeof V3_EXPENSE_GROUPS)[number], index: number): string {
+  const titles: Record<(typeof V3_EXPENSE_GROUPS)[number], string> = {
+    "finance & lease": "Finance & lease payments",
+    "driver bills": "Driver bills — due on load delivery",
+    diesel: "Diesel — card payments",
+    maintenance: "Maintenance",
+    insurance: "Insurance",
+    other: "Other",
+  };
+  return `${index + 1} · ${titles[key]}`;
+}
+
+type DayGrain = "day" | "week";
 
 const STATUS_LABEL: Record<RollingLedgerRow["status"], string> = {
   overdue: "Overdue",
@@ -140,19 +182,31 @@ function SegmentedControl<T extends string>({
   dataTestId?: string;
 }) {
   return (
-    <div className="inline-flex h-7 overflow-hidden rounded-sm border border-[#E5E7EB] bg-white text-xs" data-testid={dataTestId}>
-      {options.map((opt, i) => (
-        <button
-          key={opt.value}
-          type="button"
-          className={`flex h-7 items-center px-2.5 ${i !== 0 ? "border-l border-[#E5E7EB]" : ""} ${
-            value === opt.value ? "bg-[#1F2A44] text-white" : "text-[#4B5563]"
-          }`}
-          onClick={() => onChange(opt.value)}
-        >
-          {opt.label}
-        </button>
-      ))}
+    <div
+      className="inline-flex h-7 overflow-hidden rounded-sm text-xs"
+      style={{ border: `1px solid ${V3.border}`, background: V3.surface, fontFamily: V3.font }}
+      data-testid={dataTestId}
+    >
+      {options.map((opt, i) => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            className="flex h-7 items-center px-2.5"
+            style={{
+              borderLeft: i !== 0 ? `1px solid ${V3.border}` : undefined,
+              background: active ? V3.shell : "transparent",
+              color: active ? V3.onShell : V3.muted,
+              fontWeight: active ? 600 : 500,
+              fontFamily: V3.font,
+            }}
+            onClick={() => onChange(opt.value)}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -223,36 +277,49 @@ function TypeFilterDropdown({
 // Day navigator card (owner: "as you design the load costs" — 64px card, ‹ / date / Today / ›).
 // Restores the skeleton element that existed before this correction's toolbar rewrite.
 function DayNavigatorCard({ date, today, onChange }: { date: string; today: string; onChange: (next: string) => void }) {
+  const navBtn = {
+    display: "flex" as const,
+    height: 28,
+    width: 28,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    borderRadius: 2,
+    border: `1px solid ${V3.border}`,
+    background: V3.surface,
+    color: V3.muted,
+    cursor: "pointer" as const,
+  };
   return (
     <div
-      className="flex h-16 items-center justify-center gap-3 rounded-sm border border-[#E5E7EB] bg-white px-3"
+      className="flex h-16 items-center justify-center gap-3 rounded-sm px-3"
+      style={{ border: `1px solid ${V3.border}`, background: V3.surface, fontFamily: V3.font }}
       data-testid="rolling-ledger-day-navigator"
     >
-      <button
-        type="button"
-        onClick={() => onChange(addDaysIso(date, -1))}
-        className="flex h-7 w-7 items-center justify-center rounded-sm border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F7F8FA]"
-        aria-label="Previous day"
-      >
+      <button type="button" onClick={() => onChange(addDaysIso(date, -1))} style={navBtn} aria-label="Previous day">
         <ChevronLeft className="h-4 w-4" />
       </button>
-      <span className="text-xs font-semibold text-[#1F2A44]">
+      <span style={{ fontSize: 12, fontWeight: 700, color: V3.ink }}>
         {fmtDate(date)}
-        {date === today && <span className="ml-1.5 font-normal text-[#6B7280]">· Today</span>}
+        {date === today && <span style={{ marginLeft: 6, fontWeight: 400, color: V3.muted }}>· Today</span>}
       </span>
-      <button
-        type="button"
-        onClick={() => onChange(addDaysIso(date, 1))}
-        className="flex h-7 w-7 items-center justify-center rounded-sm border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F7F8FA]"
-        aria-label="Next day"
-      >
+      <button type="button" onClick={() => onChange(addDaysIso(date, 1))} style={navBtn} aria-label="Next day">
         <ChevronRight className="h-4 w-4" />
       </button>
       {date !== today && (
         <button
           type="button"
           onClick={() => onChange(today)}
-          className="ml-1 rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs text-[#6B7280] hover:bg-[#F7F8FA]"
+          style={{
+            marginLeft: 4,
+            borderRadius: 2,
+            border: `1px solid ${V3.border}`,
+            padding: "2px 8px",
+            fontSize: 12,
+            color: V3.muted,
+            background: V3.surface,
+            cursor: "pointer",
+            fontFamily: V3.font,
+          }}
         >
           Today
         </button>
@@ -552,6 +619,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   // day in DayNavigatorCard still overrides it exactly as before.
   const [selectedDate, setSelectedDate] = useState<string | null>(today);
   const [adjustingRowKey, setAdjustingRowKey] = useState<string | null>(null);
+  // ROUND 443.250 V3 board — Day grid Day|Week grain (same control as Projected).
+  const [dayGrain, setDayGrain] = useState<DayGrain>("day");
 
   const updateParams = (updates: Record<string, string | null>) => {
     const next = new URLSearchParams(searchParams);
@@ -636,16 +705,66 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     return options.slice(0, 200);
   }, [data]);
 
+  // V3 board: Income due on selected day vs Carried income (past due, not received).
   const incomeRows = useMemo(
-    () => allRows.filter((r) => r.row_kind === "income" && (!selectedDate || r.due_date === selectedDate)).sort((a, b) => (a.due_date < b.due_date ? -1 : 1)),
+    () =>
+      allRows
+        .filter((r) => r.row_kind === "income" && (!selectedDate || r.due_date === selectedDate))
+        .sort((a, b) => (a.due_date < b.due_date ? -1 : 1)),
     [allRows, selectedDate]
   );
-  const expenseRowsToday = useMemo(() => {
+  const incomeCarriedRows = useMemo(() => {
     const targetDate = selectedDate ?? today;
     return allRows
-      .filter((r) => r.row_kind === "expense" && r.due_date <= targetDate)
+      .filter((r) => r.row_kind === "income" && r.due_date < targetDate && !r.is_rollover_echo)
       .sort((a, b) => (a.due_date < b.due_date ? -1 : 1));
   }, [allRows, selectedDate, today]);
+  // V3 board: Expenses due that day vs Carried (past due) — split for board panels.
+  const expenseRowsDue = useMemo(() => {
+    const targetDate = selectedDate ?? today;
+    return allRows
+      .filter((r) => r.row_kind === "expense" && r.due_date === targetDate)
+      .sort((a, b) => (a.due_date < b.due_date ? -1 : 1));
+  }, [allRows, selectedDate, today]);
+  const expenseCarriedRows = useMemo(() => {
+    const targetDate = selectedDate ?? today;
+    return allRows
+      .filter((r) => r.row_kind === "expense" && r.due_date < targetDate && !r.is_rollover_echo)
+      .sort((a, b) => (a.due_date < b.due_date ? -1 : 1));
+  }, [allRows, selectedDate, today]);
+
+  const dayGridRows = useMemo(() => {
+    if (!data) return [] as RollingLedgerDay[];
+    const active = data.days.filter(
+      (d) =>
+        d.income_due_cents !== 0 ||
+        d.expenses_due_cents !== 0 ||
+        d.income_carry_over_cents !== 0 ||
+        d.expenses_carry_over_cents !== 0 ||
+        d.net_cents !== 0
+    );
+    if (dayGrain === "day") return active;
+    const byWeek = new Map<string, RollingLedgerDay>();
+    for (const day of active) {
+      const weekStart = mondayOf(day.date);
+      const cur = byWeek.get(weekStart);
+      if (!cur) {
+        byWeek.set(weekStart, { ...day, date: weekStart });
+        continue;
+      }
+      byWeek.set(weekStart, {
+        ...cur,
+        income_due_cents: cur.income_due_cents + day.income_due_cents,
+        expenses_due_cents: cur.expenses_due_cents + day.expenses_due_cents,
+        income_carry_over_cents: cur.income_carry_over_cents + day.income_carry_over_cents,
+        expenses_carry_over_cents: cur.expenses_carry_over_cents + day.expenses_carry_over_cents,
+        net_cents: cur.net_cents + day.net_cents,
+        // Keep the latest day's running cash as the week closing position.
+        running_cash_cents: day.running_cash_cents ?? cur.running_cash_cents,
+      });
+    }
+    return [...byWeek.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
+  }, [data, dayGrain]);
 
   const adjustingRow = useMemo(() => {
     if (!adjustingRowKey) return null;
@@ -833,17 +952,47 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   ];
 
   const unknownAmountCount = data?.rows.filter(row => { return row.amount_known === false; }).length ?? 0;
+  const selectedLabel = fmtDate(selectedDate ?? today);
+  const expensePriorityGroupBy = {
+    getKey: (row: RollingLedgerRow) => expenseGroupKey(row),
+    renderHeader: (key: string, rows: RollingLedgerRow[]) => {
+      const idx = (V3_EXPENSE_GROUPS as readonly string[]).indexOf(key);
+      const label = idx >= 0 ? expenseGroupLabel(V3_EXPENSE_GROUPS[idx], idx) : key;
+      return (
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: V3.muted }}>
+          {label} · {rows.length} · {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
+        </span>
+      );
+    },
+    orderedKeys: [...V3_EXPENSE_GROUPS],
+  };
+  const toolbarBtn: CSSProperties = {
+    display: "flex",
+    height: 28,
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 2,
+    border: `1px solid ${V3.border}`,
+    background: V3.surface,
+    padding: "0 8px",
+    fontSize: 12,
+    color: V3.muted,
+    fontFamily: V3.font,
+    cursor: "pointer",
+  };
+
   return (
-    <div className="space-y-3" data-testid="cash-flow-rolling-ledger-tab">
+    <div className="space-y-3" data-testid="cash-flow-rolling-ledger-tab" style={{ fontFamily: V3.font }}>
       {unknownAmountCount > 0 && (
         <p role="status">{t("cashFlow.unknownDriverCosts", undefined, { count: unknownAmountCount })}</p>
       )}
-      {/* ROUND 16.7 CORRECTION — Banking's QBO-style filter bar, reused verbatim (same
-      components/classes as BankingTransactionsDesignView.tsx): Filter by description (Combobox)
-      → segmented All/Income/Expenses → From/To (always visible) + Presets → segmented
-      By day/By type → All transaction types (dropdown-button) → Rolled over: show (dropdown-
-      button) → gear (ParityTable's own, per register) + Export. */}
-      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white p-2">
+      {/* ROUND 16.7 CORRECTION — Banking's QBO-style filter bar (SegmentedControl / Combobox /
+      TypeFilterDropdown / PRESET_OPTIONS). ROUND 443.250 paints it with V3 tokens. */}
+      <div
+        className="flex flex-wrap items-center gap-2 rounded-sm p-2"
+        style={{ border: `1px solid ${V3.border}`, background: V3.surface }}
+        data-testid="rolling-ledger-v3-filters"
+      >
         <div className="h-7 w-[242px]">
           <Combobox
             options={descriptionFilterOptions}
@@ -866,33 +1015,35 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           dataTestId="rolling-ledger-kind-filter"
         />
         <div className="flex h-7 items-center gap-1">
-          <label htmlFor="rolling-ledger-from" className="text-xs font-bold uppercase text-[#6B7280]">
+          <label htmlFor="rolling-ledger-from" className="text-xs font-bold uppercase" style={{ color: V3.muted }}>
             From
           </label>
           <DatePicker id="rolling-ledger-from" value={from} onChange={(v) => { setFrom(v); updateParams({ rl_from: v }); }} max={to} className="h-7 w-[128px]" data-testid="rolling-ledger-from" />
-          <label htmlFor="rolling-ledger-to" className="text-xs font-bold uppercase text-[#6B7280]">
+          <label htmlFor="rolling-ledger-to" className="text-xs font-bold uppercase" style={{ color: V3.muted }}>
             To
           </label>
           <DatePicker id="rolling-ledger-to" value={to} onChange={(v) => { setTo(v); updateParams({ rl_to: v }); }} min={from} className="h-7 w-[128px]" data-testid="rolling-ledger-to" />
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => setPresetMenuOpen((o) => !o)}
-              className="flex h-7 items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#4B5563] hover:bg-[#F7F8FA]"
-              data-testid="rolling-ledger-presets"
-            >
+            <button type="button" onClick={() => setPresetMenuOpen((o) => !o)} style={toolbarBtn} data-testid="rolling-ledger-presets">
               Presets <ChevronDown className="h-3 w-3" />
             </button>
             {presetMenuOpen && (
-              <div className="absolute left-0 top-full z-10 mt-1 w-40 bg-white p-1 shadow-md">
+              <div
+                className="absolute left-0 top-full z-10 mt-1 w-40 p-1 shadow-md"
+                style={{ background: V3.surface, border: `1px solid ${V3.border}`, borderRadius: 2 }}
+              >
                 {PRESET_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => applyPreset(opt.value)}
-                    className={`block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-[#F7F8FA] ${
-                      preset === opt.value ? "bg-[#F7F8FA] font-medium text-[#1F2A44]" : "text-[#4B5563]"
-                    }`}
+                    className="block w-full rounded-sm px-2 py-1 text-left text-xs"
+                    style={{
+                      background: preset === opt.value ? V3.headerBg : "transparent",
+                      color: preset === opt.value ? V3.ink : V3.muted,
+                      fontWeight: preset === opt.value ? 600 : 400,
+                      fontFamily: V3.font,
+                    }}
                   >
                     {opt.label}
                   </button>
@@ -918,7 +1069,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         <button
           type="button"
           onClick={() => updateParams({ rl_rolled: showRolledOver ? "hide" : null })}
-          className="flex h-7 items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#4B5563] hover:bg-[#F7F8FA]"
+          style={toolbarBtn}
           data-testid="rolling-ledger-rolled-toggle"
         >
           Rolled over: <b>{showRolledOver ? "show" : "hide"}</b>
@@ -929,57 +1080,54 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           type="button"
           onClick={() => exportRowsCsv(allRows)}
           disabled={allRows.length === 0}
-          className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-3 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA] disabled:opacity-50"
+          style={{ ...toolbarBtn, fontWeight: 600, opacity: allRows.length === 0 ? 0.5 : 1 }}
           data-testid="rolling-ledger-export"
         >
           Export
         </button>
       </div>
 
-      {/* Day navigator card — 64px, restores the skeleton element from before this correction. */}
       <DayNavigatorCard date={selectedDate ?? today} today={today} onChange={(next) => setSelectedDate(next)} />
 
-      {isLoading && <div className="rounded-sm border border-[#E5E7EB] bg-white p-6 text-center text-xs text-[#6B7280]">Loading…</div>}
+      {isLoading && (
+        <div className="rounded-sm p-6 text-center text-xs" style={{ border: `1px solid ${V3.border}`, background: V3.surface, color: V3.muted }}>
+          Loading…
+        </div>
+      )}
       {isError && (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-6 text-center text-xs text-[#4B5563]">
+        <div className="rounded-sm p-6 text-center text-xs" style={{ border: `1px solid ${V3.border}`, background: V3.headerBg, color: V3.muted }}>
           Failed to load the rolling ledger. Please try again.
         </div>
       )}
 
       {data && kpis && (
         <>
-          {/* KPI strip — extracted to CashFlowKpiStrip.tsx (REG-031) so the new Cash Flow Home
-          tab can show the SAME real KPI tiles without duplicating the markup. Output is
-          byte-identical to the previous inline block; only the JSX source moved. */}
           <CashFlowKpiStrip kpis={kpis} testId="rolling-ledger-kpi-strip" />
 
-          {/* Split layout: LEFT Expected Income 38% / RIGHT Expected Expenses 62% (owner
-          correction) — the segmented All/Income/Expenses filter widens one side to full width
-          without dropping the split ("SPLIT SCREEN LIKE WE CURRENTLY HAVE"). */}
           <div
             className={`grid grid-cols-1 gap-3 ${
               rowKindFilter === "all" ? "xl:grid-cols-[38fr_62fr]" : "xl:grid-cols-1"
             }`}
           >
             {rowKindFilter !== "expenses" && (
-              <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
-                <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
-                  <h2 className="inline text-xs font-bold uppercase tracking-wide text-[#4B5563]">Expected income</h2>
-                  <span className="ml-2 text-xs text-[#6B7280]">{incomeRows.length} rows</span>
-                </div>
+              <V3Panel
+                title={`Income · ${selectedLabel}`}
+                subtitle={`${incomeRows.length} item${incomeRows.length === 1 ? "" : "s"}`}
+                testId="rolling-ledger-income-panel"
+              >
                 <ParityTable
                   rows={incomeRows}
                   columns={incomeColumns}
                   rowKey={rowKeyOf}
                   storageKey="cash-flow-income"
-                  emptyText="No expected income in range."
+                  emptyText="No expected income for this day."
                   onRowClick={(row) => setAdjustingRowKey(adjustingRowKey === rowKeyOf(row) ? null : rowKeyOf(row))}
                   groupBy={
                     groupMode === "type"
                       ? {
                           getKey: (row) => row.type,
                           renderHeader: (key, rows) => (
-                            <span className="text-xs font-bold uppercase tracking-wide text-[#6B7280]">
+                            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: V3.muted }}>
                               {key} · {rows.length} · {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
                             </span>
                           ),
@@ -989,10 +1137,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                   }
                   data-testid="rolling-ledger-income-table"
                 />
-                {/* ROUND 16.7 CORRECTION — the multi-field AdjustPopover exists ONLY on Expected
-                Income rows ("THE ADJUST EXPECTATION ... WILL ONLY COME IN EXPECTED INCOME SIDE"). */}
                 {adjustingRow && adjustingRowIsIncome && (
-                  <div className="border-t border-[#E5E7EB] p-2">
+                  <div className="p-2" style={{ borderTop: `1px solid ${V3.border}` }}>
                     <AdjustPopover
                       row={adjustingRow}
                       reasons={reasons}
@@ -1005,62 +1151,93 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                     />
                   </div>
                 )}
-              </div>
+              </V3Panel>
             )}
 
             {rowKindFilter !== "income" && (
-              <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
-                <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
-                  <h2 className="inline text-xs font-bold uppercase tracking-wide text-[#4B5563]">
-                    Expected expenses{selectedDate ? ` · ${fmtDate(selectedDate)}` : ""}
-                  </h2>
-                  <span className="ml-2 text-xs text-[#6B7280]">{expenseRowsToday.length} rows</span>
-                </div>
+              <V3Panel
+                title={`Expenses · ${selectedLabel}`}
+                subtitle="payment priority order"
+                testId="rolling-ledger-expense-panel"
+              >
                 <ParityTable
-                  rows={expenseRowsToday}
+                  rows={expenseRowsDue}
                   columns={expenseColumns}
                   rowKey={rowKeyOf}
                   storageKey="cash-flow-expenses"
-                  emptyText="No expected expenses due or carried."
-                  groupBy={
-                    groupMode === "type"
-                      ? {
-                          getKey: (row) => row.type,
-                          renderHeader: (key, rows) => (
-                            <span className="text-xs font-bold uppercase tracking-wide text-[#6B7280]">
-                              {key} · {rows.length} · {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
-                            </span>
-                          ),
-                          orderedKeys: ["Bill", "Driver pay", "Driver bill", "Expense — unmatched", "Loan payment"],
-                        }
-                      : undefined
-                  }
+                  emptyText="No expected expenses due this day."
+                  groupBy={expensePriorityGroupBy}
                   data-testid="rolling-ledger-expense-table"
                 />
-                {/* No AdjustPopover on expense rows — the "Action" column's Roll over ▾ menu +
-                Stop button (rendered inline per row above) replace it entirely. */}
-              </div>
+              </V3Panel>
             )}
           </div>
 
-          {/* Day grid */}
-          <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
-            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
-              <h2 className="inline text-xs font-bold uppercase tracking-wide text-[#4B5563]">
-                Day grid · {fmtDateShort(from)} → {fmtDateShort(to)}
-              </h2>
-              <span className="ml-2 text-xs text-[#6B7280]">click a date → its rows above · carried = still-open older items</span>
-            </div>
+          {(rowKindFilter === "all" || rowKindFilter === "income") && (
+            <V3Panel
+              title="Carried income — past due, not received"
+              subtitle={`${incomeCarriedRows.length} item${incomeCarriedRows.length === 1 ? "" : "s"}`}
+              testId="rolling-ledger-carried-income-panel"
+            >
+              <ParityTable
+                rows={incomeCarriedRows}
+                columns={incomeColumns}
+                rowKey={rowKeyOf}
+                storageKey="cash-flow-income-carried"
+                emptyText="No carried income."
+                data-testid="rolling-ledger-carried-income-table"
+              />
+            </V3Panel>
+          )}
+
+          {(rowKindFilter === "all" || rowKindFilter === "expenses") && (
+            <V3Panel
+              title="Carried expenses — past due, not paid"
+              subtitle={`${expenseCarriedRows.length} item${expenseCarriedRows.length === 1 ? "" : "s"}`}
+              footer="Card fuel fills are not carried — the card payment is."
+              testId="rolling-ledger-carried-expense-panel"
+            >
+              <ParityTable
+                rows={expenseCarriedRows}
+                columns={expenseColumns}
+                rowKey={rowKeyOf}
+                storageKey="cash-flow-expenses-carried"
+                emptyText="No carried expenses."
+                groupBy={expensePriorityGroupBy}
+                data-testid="rolling-ledger-carried-expense-table"
+              />
+            </V3Panel>
+          )}
+
+          <V3Panel
+            title={`Day grid · ${fmtDateShort(from)} → ${fmtDateShort(to)}`}
+            subtitle={dayGrain === "day" ? "days with activity" : "weeks with activity"}
+            headerRight={
+              <V3Segmented
+                value={dayGrain}
+                options={[
+                  { id: "day", label: "Day" },
+                  { id: "week", label: "Week" },
+                ]}
+                onChange={setDayGrain}
+                testId="rolling-ledger-day-grain"
+              />
+            }
+            testId="rolling-ledger-day-grid-panel"
+          >
             <ParityTable
-              rows={data.days}
+              rows={dayGridRows}
               columns={dayGridColumns}
               rowKey={(day) => day.date}
               storageKey="cash-flow-day-grid"
-              rowClassName={(day) => `${day.date === today ? "bg-[#F7F8FA] font-medium" : ""} ${day.date === selectedDate ? "bg-[#F7F8FA]" : ""} ${day.date < today ? "text-[#6B7280]" : ""}`}
+              emptyText="No days with activity in this range."
+              rowClassName={(day) =>
+                `${day.date === today ? "font-medium" : ""} ${day.date === selectedDate ? "" : ""} ${day.date < today ? "opacity-80" : ""}`
+              }
               onRowClick={(day) => setSelectedDate(day.date === selectedDate ? null : day.date)}
               data-testid="rolling-ledger-day-grid"
             />
-          </div>
+          </V3Panel>
         </>
       )}
     </div>

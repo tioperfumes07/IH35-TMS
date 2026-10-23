@@ -150,9 +150,25 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   `lastDeliveryStopLateralSql` + `verify-projected-cash-date-equals-delivery` now
   `COALESCE(scheduled_arrival_at, appointment_start_at)` — same as dispatch planner. Live guard
   PASS: 1 factored open USMCA proforma, zero lag.
-- **Still open under 443.250:** remaining Cash Flow boards (Actual vs Projected, Rolling Ledger
-  polish, Manual), Settlements/Fuel V3 boards, design-system sweep, Chrome proof. Full DONE only
-  when all boards land.
+- **Still open under 443.250:** remaining Cash Flow boards (Actual vs Projected, Manual),
+  Settlements/Fuel V3 boards, design-system sweep, Chrome proof. Full DONE only when all boards
+  land. Rolling Ledger V3 shipped (see next entry).
+
+### Active Architectural Decisions — Cash Flow Rolling Ledger V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **One engine unchanged:** `RollingLedgerTab` still calls only `getRollingLedger` + adjustment
+  routes. ParityTable registers, AdjustPopover (income-only), ExpenseRolloverMenu / StopTracking,
+  PRESET_OPTIONS, TypeFilterDropdown, Combobox "Filter by description", SegmentedControl
+  All|Income|Expenses + By day|By type stay — `verify-cash-flow-rolling-ledger.mjs` contracts.
+- **V3 board chrome:** filter bar + DayNavigatorCard painted with `V3.*` tokens; Income / Expenses /
+  Carried income / Carried expenses / Day grid wrapped in `V3Panel`. Expenses + carried expenses
+  group by `V3_EXPENSE_GROUPS` (payment priority). Day grid Day|Week via `V3Segmented`
+  (`rolling-ledger-day-grain`); week rows aggregate Mon-start. Activity-only day filter.
+- **Split due vs carried:** income/expense due = `due_date === selectedDate`; carried =
+  `due_date < selectedDate` (not rollover echo). Matches board panels; prior mixed
+  `due_date <= day` expense list retired for display.
+- **Guard piggyback:** same `verify-cash-flow-rolling-ledger.mjs` — added V3Panel / V3Segmented /
+  V3_EXPENSE_GROUPS / panel testIds + selftest plant. No new EVEN claim.
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
