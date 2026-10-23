@@ -50,9 +50,17 @@ PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha m
 - GUARD: verify-settlements-qbo-chrome-surfaces (PreSettle board asserts)
 - NEXT: 443.274-C Settlements-Close → Company → Deductions → CashAdvances → Escrow → EscrowRegister → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
 
-## 2026-10-23 America/Chicago · SETL-F443274-CLOSE Settlements-Close board SHIPPING
-- BRANCH: `cursor/443274-settlements-close-c89b` · tip base `69773d2096` (PreSettlements live)
-- DELTA: board 2fr|1fr Driver on arrival loads table (Load·Lane·Delivered·Miles (doc)·Pay via getTourReadout + miles_basis) + Result panel (Gross/Deductions/Escrow/Advances/Net); keep closeSettlementPayRun / settleAndPay / PaymentMethodPicker / Rule 07
-- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` (typescript 6.0.3) EXIT 0 · `node scripts/verify-settlements-qbo-chrome-surfaces.mjs` PASS (+selftest) · money-pr-local-gate EXIT 0 (this commit)
-- NEXT: money-pr-local-gate EXIT 0 → PR → merge → live deploy id → Settlements-Company
+## 2026-10-23 America/Chicago · SETL-F443274-CLOSE Settlements-Close board DONE
+- MERGE: #27351 squash `c081694f31`
+- RENDER ih35-tms-web: **live** deploy id `dep-dbdsju3m8hqs73cunhe0` (commit c081694f31)
+- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0
+- GUARD: verify-settlements-qbo-chrome-surfaces (Close board asserts)
+- NEXT: 443.274-C Settlements-Company → Deductions → CashAdvances → Escrow → EscrowRegister → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
+
+## 2026-10-23 America/Chicago · SETL-F443274-COMPANY Settlements-Company board SHIPPING
+- BRANCH: `cursor/443274-settlements-company-c89b` · tip base `c081694f31` (Close live)
+- DELTA: board per-tour table via listTours("closed") — Company settlement · Driver settlement · Driver · Revenue · Costs · Driver pay · Margin · Margin %; "not opened" amber / "No number" red; V3KpiTile strip + V3Panel; waterfall kept for ?id= deep link
+- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0 · verify-settlements-qbo-chrome-surfaces PASS 27 · entity-link baseline −1 (adopted)
+- GUARD: verify-settlements-qbo-chrome-surfaces (+4 Company asserts)
+- NEXT: PR → merge → live deploy id → Settlements-Deductions
 
