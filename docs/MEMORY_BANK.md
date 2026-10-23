@@ -209,6 +209,22 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guard retargeted:** `verify-insurance-dashboard-routes-registered` — Landing mounts board;
   board carries getInsuranceSummary + board KPI/section labels + Fleet Covered drill.
 
+### Active Architectural Decisions — Legal home board (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Legal.dc.html` (+ `.png`). Not a V3
+  reskin of the old 4-KPI DrillKpiCard Landing — `LegalLandingPage` keeps PageHeader +
+  `LegalModuleTabs`, body mounts `LegalHomeBoard`: KPI strip (Active templates / Pending
+  signatures / Recently signed (30d) / Expiring contracts (60d) / Open matters) → Contract
+  pipeline + Matters & deadlines + Quick actions (board grid 1fr 1fr 220px).
+- **Engines:** `legalTemplatesApi.list` · `legalContractsApi.list` ·
+  `legalMattersApi.list(status=open)`. Pipeline stages Draft / Out for signature / Signed /
+  Voided from contract status; **Attorney review** has no contract status — count =
+  templates `pending_review` (attorney-review queue). Matter names are EntityLinks (`matter`).
+  Claimed vs reserve: `amount_claimed_against_us` dollars · `financial_reserve_cents` cents.
+  Dates MM/DD/YYYY.
+- **Guard piggyback:** `verify-operator-record-surface-connectivity` — Landing mounts board;
+  board file asserts KPI/pipeline/matters/quick-actions + three APIs (no new EVEN claim).
+
 ### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared
@@ -1216,7 +1232,7 @@ settlement deductions · $757.25 never hit the bank). Match engine = settlement-
 ## Next Immediate Milestones
 
 0. **ROUND 443.267 board order (Cursor):** Unexpected ✔ · Accounting ✔ · Banking ✔ · Factoring ✔ ·
-   Insurance home (this PR) → Legal → Reports → Reports-Viewer-TrialBalance → re-do
+   Insurance ✔ · Legal home (this PR) → Reports → Reports-Viewer-TrialBalance → re-do
    CashFlow/Settlements/Fuel to boards (not chrome-only). One PR per board; bus sha each merge.
 1. **Rebuild orchestration (17→21):** data-driven from the two signed-doc CSVs. Reverse mis-grouped
    S-136xx via the reversal engine → create the 8 missing driver bills at signed amounts → build 21
