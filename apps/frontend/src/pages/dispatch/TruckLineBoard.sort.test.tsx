@@ -71,8 +71,8 @@ function loadedRow(partial: {
 function availableRow(partial: {
   unit_id: string;
   unit_number: string;
-  driver_id: string;
-  driving_minutes_remaining: number | null;
+  driver_id: string | null;
+  driving_minutes_remaining?: number | null;
 }): TruckLineRow {
   return {
     kind: "available",
@@ -80,14 +80,14 @@ function availableRow(partial: {
     unit_number: partial.unit_number,
     tour_display_id: null,
     load: null,
-    drivers: [{ id: partial.driver_id, name: "Idle Driver" }],
+    drivers: partial.driver_id ? [{ id: partial.driver_id, name: "Idle Driver" }] : [],
     station: null,
     position: null,
     next_appointment: null,
     appointments: { pickup: null, delivery: null },
     available: {
       driver_id: partial.driver_id,
-      driving_minutes_remaining: partial.driving_minutes_remaining,
+      driving_minutes_remaining: partial.driving_minutes_remaining ?? null,
       cycle_minutes_remaining: null,
       hos_polled_minutes_ago: 5,
       last_closed_load_number: "9999",
@@ -162,6 +162,14 @@ function fixtureGroups(): TruckLineGroup[] {
           driving_minutes_remaining: 660,
         }),
       ],
+    },
+    // LEAD 443.257-A: a truck with no driver on the row (T122 / T124 / T147 measured live).
+    {
+      section: "available",
+      unit_id: "u-nodrv",
+      unit_number: "T122",
+      tour_display_id: null,
+      legs: [availableRow({ unit_id: "u-nodrv", unit_number: "T122", driver_id: null })],
     },
   ];
 }
@@ -268,9 +276,19 @@ describe("TruckLineBoard.sort (443.231)", () => {
     expect(screen.queryByText(/no load on this truck/i)).not.toBeInTheDocument();
 
     // Exactly one assign control
-    const assignBtns = screen.getAllByTestId("truck-line-assign-drv-avail-1");
+    const assignBtns = screen.getAllByTestId("truck-line-assign-unit-u-avail");
     expect(assignBtns).toHaveLength(1);
     fireEvent.click(assignBtns[0]!);
     expect(onAssign).toHaveBeenCalledWith("drv-avail-1", "u-avail");
+  });
+
+  it("LEAD 443.257-A: a truck with NO driver still gets 'Assign a load →' (fail-old: 'No driver on file' dead end)", async () => {
+    const onAssign = vi.fn();
+    render(wrap(<TruckLineBoard operatingCompanyId="5c854333-6ea5-4faa-af31-67cb272fef80" onLoadClick={() => {}} onAssignDriver={onAssign} />));
+    await waitFor(() => expect(screen.getByTestId("truck-line-available-track-u-nodrv")).toBeInTheDocument());
+    expect(screen.queryByText(/No driver on file/)).not.toBeInTheDocument();
+    expect(screen.getByTestId("truck-line-assign-note-u-nodrv")).toHaveTextContent("no driver yet — choose in the wizard");
+    fireEvent.click(screen.getByTestId("truck-line-assign-unit-u-nodrv"));
+    expect(onAssign).toHaveBeenCalledWith(null, "u-nodrv");
   });
 });
