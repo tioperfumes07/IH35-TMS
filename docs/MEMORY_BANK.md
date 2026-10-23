@@ -150,9 +150,8 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   `lastDeliveryStopLateralSql` + `verify-projected-cash-date-equals-delivery` now
   `COALESCE(scheduled_arrival_at, appointment_start_at)` — same as dispatch planner. Live guard
   PASS: 1 factored open USMCA proforma, zero lag.
-- **Still open under 443.250:** remaining Cash Flow boards (Actual vs Projected, Manual),
-  Settlements/Fuel V3 boards, design-system sweep, Chrome proof. Full DONE only when all boards
-  land. Rolling Ledger V3 shipped (see next entry).
+- **Still open under 443.250:** Manual Daily Projections V3, Settlements/Fuel boards,
+  design-system sweep, Chrome proof. Home / Projected / Rolling Ledger / Actual vs Projected V3 shipped.
 
 ### Active Architectural Decisions — Cash Flow Rolling Ledger V3 (Cursor, ROUND 443.250, 2026-10-23)
 
@@ -169,6 +168,20 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   `due_date <= day` expense list retired for display.
 - **Guard piggyback:** same `verify-cash-flow-rolling-ledger.mjs` — added V3Panel / V3Segmented /
   V3_EXPENSE_GROUPS / panel testIds + selftest plant. No new EVEN claim.
+
+### Active Architectural Decisions — Cash Flow Actual vs Projected V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** still `getActualVsProjected` only (read-only). ParityTable eight columns,
+  CollapsedListFilters staged From/To + Net variance, `actual_unavailable` / coverage banner,
+  companyToday/addDaysIso, formatUsdCents — all retained (`verify-actual-vs-projected-tab-uses-paritytable`,
+  `verify-cash-flow-avp-staged-filters`, `verify-cash-flow-avp-actuals-honest-unavailable`).
+- **V3 board chrome:** Income / Expense accuracy · Net variance · Days in range via `V3KpiTile`;
+  "Cumulative — projected vs actual" `V3Panel` with Cumulative|Daily `V3Segmented`; chart series
+  actual income / projected income / actual expenses from the same AVP lines (no second engine).
+- **Guard piggyback:** `verify-actual-vs-projected-tab-uses-paritytable.mjs` asserts V3 components +
+  testIds. No new EVEN claim.
+- **Still open under 443.250:** Manual Daily Projections V3, Settlements/Fuel boards, design-system
+  sweep, Chrome proof. Full DONE not claimed.
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 

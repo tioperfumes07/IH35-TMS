@@ -72,6 +72,26 @@ function assertMigrated(src) {
   if (src.includes("useMutation")) {
     errors.push(`${PAGE}: read-only report surface — must not add mutations`);
   }
+  // ROUND 443.250 — V3 board chrome (piggyback; no new EVEN claim).
+  for (const comp of ["V3KpiTile", "V3Panel", "V3Segmented"]) {
+    if (!src.includes(comp)) {
+      errors.push(`${PAGE}: ROUND 443.250 must mount ${comp}`);
+    }
+  }
+  for (const testId of [
+    "cash-flow-avp-v3-kpis",
+    "cash-flow-avp-chart-panel",
+    "cash-flow-avp-chart-grain",
+  ]) {
+    if (!src.includes(testId)) {
+      errors.push(`${PAGE}: missing V3 testId ${testId}`);
+    }
+  }
+  if (!src.includes('from "../../../design/v3-tokens"') && !src.includes('from "../../../design/v3-tokens.ts"')) {
+    if (!src.includes("v3-tokens")) {
+      errors.push(`${PAGE}: must import V3 from design/v3-tokens`);
+    }
+  }
   return errors;
 }
 
@@ -81,6 +101,10 @@ function selftest() {
     import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
     import { addDaysIso, companyToday } from "../../../lib/businessDate";
     import { formatUsdCents } from "../../../lib/money";
+    import { V3 } from "../../../design/v3-tokens";
+    import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+    import { V3Panel } from "../../../components/v3/V3Panel";
+    import { V3Segmented } from "../../../components/v3/V3Segmented";
     const COLUMNS = [
       { key: "date", label: "Date" },
       { key: "projected_income", label: "Projected Income" },
@@ -92,6 +116,10 @@ function selftest() {
       { key: "net", label: "Net" },
     ];
     <ListErrorState status={0} onRetry={() => {}} />
+    <div data-testid="cash-flow-avp-v3-kpis"><V3KpiTile label="Income accuracy" value="$1" /></div>
+    <V3Panel title="Cumulative" testId="cash-flow-avp-chart-panel">
+      <V3Segmented value="cumulative" onChange={() => {}} options={[]} testId="cash-flow-avp-chart-grain" />
+    </V3Panel>
     <ParityTable
       storageKey="cash-flow-avp"
       tableTestId="cash-flow-avp-table"
@@ -135,7 +163,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `OK ${LABEL}: ${PAGE} uses ParityTable; columns/formatting/business-date/error surface preserved; read-only.`,
+    `OK ${LABEL}: ${PAGE} uses ParityTable + ROUND 443.250 V3KpiTile/V3Panel/V3Segmented; columns/formatting/business-date/error surface preserved; read-only.`,
   );
 }
 
