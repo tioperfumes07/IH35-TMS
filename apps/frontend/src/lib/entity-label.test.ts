@@ -47,4 +47,12 @@ describe("entityLabel / visibleDocumentLabel — CLS-UUID-LABEL + ACCT-F6284 (se
   it("visibleDocumentLabel: a real document number renders as-is", () => {
     expect(visibleDocumentLabel("CHK-10234", "id-1", "Payment")).toBe("CHK-10234");
   });
+
+  it("443.266-A: proper-cases people only — driver / user names, never organization names", () => {
+    expect(entityLabel("JUAN PEREZ", "id-1", "Driver")).toBe("Juan Perez");
+    expect(entityLabel("MARIA LOPEZ", "id-1", "User")).toBe("Maria Lopez");
+    expect(entityLabel("ACME", "id-1", "Customer")).toBe("ACME");
+    expect(entityLabel("USMCA Freight Solutions Inc", "id-1", "Vendor")).toBe("USMCA Freight Solutions Inc");
+    expect(entityLabel("TQL", "id-1", "Broker")).toBe("TQL");
+  });
 });
