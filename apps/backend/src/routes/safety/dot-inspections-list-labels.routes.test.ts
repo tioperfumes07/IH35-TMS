@@ -106,7 +106,30 @@ describe("GET /api/v1/safety/dot-inspections joins human labels", () => {
 
     expect(response.statusCode).toBe(200);
     const listCall = mockQuery.mock.calls.find((call) => String(call[0]).includes("FROM safety.dot_inspections di"));
-    expect(String(listCall?.[0])).toContain("AND di.driver_id = $2");
-    expect(listCall?.[1]).toEqual([COMPANY, driverId]);
+    expect(String(listCall?.[0])).toContain("AND di.driver_id = ANY($2::uuid[])");
+    expect(listCall?.[1]).toEqual([COMPANY, [driverId]]);
+  });
+
+  it("binds all selected driver/unit IDs with OR within each field and AND across fields in count and page", async () => {
+    const drivers = ["22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333"];
+    const units = ["44444444-4444-4444-8444-444444444444", "55555555-5555-4555-8555-555555555555"];
+    const response = await app.inject({ method: "GET", url: `/api/v1/safety/dot-inspections?operating_company_id=${COMPANY}&driver_id=${drivers.join(",")}&unit_id=${units.join(",")}&limit=10&offset=20` });
+    expect(response.statusCode).toBe(200);
+    const calls = mockQuery.mock.calls.filter(call => String(call[0]).includes("FROM safety.dot_inspections di"));
+    expect(calls).toHaveLength(2);
+    for (const [sql, values] of calls) {
+      expect(sql).toContain("AND di.driver_id = ANY($2::uuid[])");
+      expect(sql).toContain("AND di.unit_id = ANY($3::uuid[])");
+      expect(sql).toContain("di.operating_company_id = $1::uuid");
+      expect(values.slice(0, 3)).toEqual([COMPANY, drivers, units]);
+    }
+    expect(calls[0][1]).toEqual([COMPANY, drivers, units]);
+    expect(calls[1][1]).toEqual([COMPANY, drivers, units, 10, 20]);
+  });
+
+  it.each(["not-a-uuid", "22222222-2222-4222-8222-222222222222,invalid", Array(101).fill("22222222-2222-4222-8222-222222222222").join(",")])("rejects malformed or oversized entity selections before querying: %s", async (driverFilter) => {
+    const response = await app.inject({ method: "GET", url: `/api/v1/safety/dot-inspections?operating_company_id=${COMPANY}&driver_id=${driverFilter}` });
+    expect(response.statusCode).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
   });
 });

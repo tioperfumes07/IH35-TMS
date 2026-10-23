@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import {
@@ -41,7 +42,7 @@ const listQuerySchema = operatingCompanyQuerySchema.extend({
   severity: z.string().trim().optional(),
   type: z.string().trim().optional(),
   related_driver_id: z.string().uuid().optional(),
-  unit_id: z.string().uuid().optional(),
+  unit_id: entityIdFilterSchema.optional(),
   equipment_id: z.string().uuid().optional(),
   insurance_claim_id: z.string().uuid().optional(),
   insurance_lawsuit_id: z.string().uuid().optional(),

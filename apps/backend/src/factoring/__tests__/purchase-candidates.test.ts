@@ -101,8 +101,8 @@ describe("candidate query shape", () => {
 
   it("adds customer / date / escaped search filters as parameters", () => {
     const { sql, values } = buildCandidateQuery(OCI, { customer_id: CUST, from: "2026-09-01", to: "2026-09-30", search: "50%_" });
-    expect(values).toEqual([OCI, CUST, "2026-09-01", "2026-09-30", "%50\\%\\_%"]);
-    expect(sql).toContain("i.customer_id = $2::uuid");
+    expect(values).toEqual([OCI, [CUST], "2026-09-01", "2026-09-30", "%50\\%\\_%"]);
+    expect(sql).toContain("i.customer_id = ANY($2::uuid[])");
     expect(sql).toContain("i.issue_date >= $3::date");
     expect(sql).toContain("i.issue_date <= $4::date");
     expect(sql).toContain("i.display_id ILIKE $5");

@@ -17,7 +17,8 @@ import {
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ActionButton } from "../../components/shared/ActionButton";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect, entityFilterIds } from "../../components/EntityMultiSelect";
+import { useDriverLabels } from "../../hooks/useDriverLabels";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
@@ -210,6 +211,8 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const effectiveUnitId = unitPickerId.trim() || deepLinkUnitId || undefined;
   const effectiveLoadId = loadPickerId.trim() || deepLinkLoadId || undefined;
   const effectiveTrailerId = trailerPickerId.trim() || deepLinkTrailerId || undefined;
+  const selectedDriverIds = useMemo(() => entityFilterIds(effectiveDriverId), [effectiveDriverId]);
+  const { byId: selectedDriverLabels } = useDriverLabels(companyId, selectedDriverIds);
 
   useEffect(() => {
     setTab(fuelTabFromPath(location.pathname) as FuelTabId);
@@ -432,16 +435,13 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
       />
       {effectiveDriverId ? (
         <p className="text-xs">
-          <EntityLink
+          {selectedDriverIds.map(id => <EntityLink
+            key={id}
             kind="driver"
-            id={effectiveDriverId}
-            label={entityLabel(
-              (savingsQuery.data?.top_driver as { driver_name?: string; driver_id?: string } | undefined)?.driver_name,
-              effectiveDriverId,
-              "Driver",
-            )}
+            id={id}
+            label={entityLabel(selectedDriverLabels.get(id), id, "Driver")}
             className="font-medium text-[#1F2A44] underline"
-          />
+          />)}
         </p>
       ) : null}
 
@@ -609,12 +609,11 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 />
                 <label className="text-xs text-[#4B5563]">
                   Driver
-                  <EntityPicker
+                  <EntityMultiSelect
                     kind="driver"
                     operatingCompanyId={companyId}
                     value={driverPickerId || null}
                     onChange={(next) => setHistoryDriverId(next ?? "")}
-                    allowCreate={false}
                     placeholder="All drivers"
                     className="mt-1"
                     dataTestId="fuel-history-filter-driver"
@@ -622,12 +621,11 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 </label>
                 <label className="text-xs text-[#4B5563]">
                   Unit
-                  <EntityPicker
+                  <EntityMultiSelect
                     kind="unit"
                     operatingCompanyId={companyId}
                     value={unitPickerId || null}
                     onChange={(next) => setHistoryUnitId(next ?? "")}
-                    allowCreate={false}
                     placeholder="All units"
                     className="mt-1"
                     dataTestId="fuel-history-filter-unit"
@@ -635,12 +633,11 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 </label>
                 <label className="text-xs text-[#4B5563]">
                   Load
-                  <EntityPicker
+                  <EntityMultiSelect
                     kind="load"
                     operatingCompanyId={companyId}
                     value={loadPickerId || null}
                     onChange={(next) => setHistoryLoadId(next ?? "")}
-                    allowCreate={false}
                     placeholder="All loads"
                     className="mt-1"
                     dataTestId="fuel-history-filter-load"
@@ -648,12 +645,11 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
                 </label>
                 <label className="text-xs text-[#4B5563]">
                   Trailer
-                  <EntityPicker
+                  <EntityMultiSelect
                     kind="trailer"
                     operatingCompanyId={companyId}
                     value={trailerPickerId || null}
                     onChange={(next) => setHistoryTrailerId(next ?? "")}
-                    allowCreate={false}
                     placeholder="All trailers"
                     className="mt-1"
                     dataTestId="fuel-history-filter-trailer"

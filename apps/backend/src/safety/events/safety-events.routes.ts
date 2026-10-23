@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
@@ -17,9 +18,9 @@ const listQuerySchema = companyQuerySchema.extend({
   // SAF-C01-REVERSE / FAIL-S1 reverse half: the load drawer needs to ask "which safety events are on
   // THIS load". The column and the join were already here — only the filter was missing, so the
   // reverse direction had no server-side question to ask and the load looked clean.
-  related_load_id: z.string().uuid().optional(),
-  subject_driver_id: z.string().uuid().optional(),
-  subject_unit_id: z.string().uuid().optional(),
+  related_load_id: entityIdFilterSchema.optional(),
+  subject_driver_id: entityIdFilterSchema.optional(),
+  subject_unit_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 
@@ -94,16 +95,16 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
         filters.push(`(e.title ILIKE $${values.length} OR COALESCE(e.description, '') ILIKE $${values.length})`);
       }
       if (query.data.related_load_id) {
-        values.push(query.data.related_load_id);
-        filters.push(`e.related_load_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(query.data.related_load_id));
+        filters.push(`e.related_load_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.subject_driver_id) {
-        values.push(query.data.subject_driver_id);
-        filters.push(`e.subject_driver_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(query.data.subject_driver_id));
+        filters.push(`e.subject_driver_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.subject_unit_id) {
-        values.push(query.data.subject_unit_id);
-        filters.push(`e.subject_unit_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(query.data.subject_unit_id));
+        filters.push(`e.subject_unit_id = ANY($${values.length}::uuid[])`);
       }
       values.push(query.data.limit);
       const limitParam = values.length;

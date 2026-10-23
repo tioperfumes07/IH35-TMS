@@ -1,10 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { MaintKpiDashboardPage } from "../MaintKpiDashboardPage";
-import { pickDate } from "../../../test-utils/pickDate";
+import * as mdataApi from "../../../api/mdata";
 
 const getMaintenanceKpiSummary = vi.fn();
 const getMaintenanceKpiDrilldown = vi.fn();
@@ -22,10 +22,6 @@ vi.mock("../../../api/maintenance", () => ({
 
 vi.mock("../../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
-}));
-
-vi.mock("../../../components/EntityPicker", () => ({
-  EntityPicker: ({ dataTestId }: { dataTestId?: string }) => <input data-testid={dataTestId} role="combobox" />,
 }));
 
 vi.mock("../../../contexts/CompanyContext", () => ({
@@ -65,6 +61,10 @@ function renderPage() {
 
 describe("MaintKpiDashboardPage (B35)", () => {
   beforeEach(() => {
+    vi.spyOn(mdataApi, "listUnits").mockResolvedValue({ total: 2, units: [
+      { id: "22222222-2222-4222-8222-222222222222", unit_number: "T-101" },
+      { id: "33333333-3333-4333-8333-333333333333", unit_number: "T-102" },
+    ] } as never);
     getMaintenanceKpiSummary.mockReset();
     getMaintenanceKpiDrilldown.mockReset();
     getMaintenanceKpiPmCompliance.mockReset();
@@ -111,7 +111,10 @@ describe("MaintKpiDashboardPage (B35)", () => {
     // — a button plus a calendar popover, with no editable input — so `clear()` threw
     // "clear() is only supported on editable elements" and the typing that followed never ran. Drive the real
     // control instead; the assertions below are about the KPI links, so the date is setup, not the subject.
-    pickDate(screen.getByTestId("maint-kpi-filter-start"));
+    fireEvent.click(within(screen.getByTestId("maint-kpi-filter-start")).getByRole("button"));
+    // Calendar is portaled to document.body, so day buttons are outside the field wrapper.
+    const calendar = screen.getByRole("dialog", { name: "Choose date" });
+    fireEvent.click(within(calendar).getAllByRole("button").find(button => button.textContent === "15")!);
     expect(screen.getByTestId("maint-kpi-link-pm-engine")).toHaveAttribute("href", "/maintenance/pm-auto-engine");
     expect(screen.getByTestId("maint-kpi-link-pm-schedule")).toHaveAttribute("href", "/maintenance/pm-schedule");
   });
@@ -120,7 +123,16 @@ describe("MaintKpiDashboardPage (B35)", () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(await screen.findByTestId("maint-kpi-filters-toggle"));
-    expect(screen.getByTestId("maint-kpi-filter-unit")).toHaveAttribute("role", "combobox");
+    const filter = screen.getByTestId("maint-kpi-filter-unit");
+    fireEvent.click(within(filter).getByRole("button"));
+    const list = within(filter).getByRole("group");
+    fireEvent.click(await within(list).findByRole("button", { name: /T-101/ }));
+    fireEvent.click(await within(list).findByRole("button", { name: /T-102/ }));
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    await waitFor(() => expect(getMaintenanceKpiSummary).toHaveBeenLastCalledWith(
+      "11111111-1111-4111-8111-111111111111", expect.any(String), expect.any(String),
+      "22222222-2222-4222-8222-222222222222,33333333-3333-4333-8333-333333333333",
+    ));
   });
 
   it("requests and displays the exact PM-compliance server range", async () => {

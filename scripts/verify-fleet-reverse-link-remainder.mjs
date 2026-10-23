@@ -49,6 +49,7 @@ function failures(s = {}) {
   const sf = s.self ?? self;
   const rs = s.retrySections ?? retrySections;
   const found = [
+    ['claims list bound arrays and company scope', ['unit_id','trailer_id'].every(field => routes.includes(`values.push(entityIdFilterValues(parsed.data.${field}))`)) && routes.includes('"operating_company_id = $1::uuid"')],
     ["unit document exact drill", u.includes('kind="document" id={row.file_id}')],
     ["default-driver reverse unit drill", da.includes('EntityLinkOrTombstone') && da.includes('id={def.unit_id == null ? null : String(def.unit_id)}') && da.includes('name={def.unit_number}')],
     ["trailer assignment unit drill", ta.includes('EntityLinkOrTombstone') && ta.includes('kind="unit"') && ta.includes('id={String(unit.unit_id)}') && ta.includes('name={unit.unit_number}')],
@@ -59,7 +60,7 @@ function failures(s = {}) {
     ["unit insurance reverse filter", /InsuranceClaimsReverseSection[\s\S]{0,180}filter=\{\{ unit_id: id \}\}/.test(up)],
     ["claims list forwards exact filter", cr.includes("insuranceClaimsApi.list({") && cr.includes("...filter")],
     ["claims drill uses canonical id and governed label", cr.includes('kind="claim"') && cr.includes("id={claim.id}") && cr.includes("entityLabel(claim.claim_number, claim.id, \"Claim\")")],
-    ["claims backend retains unit and trailer filters", routes.includes('filters.push(`unit_id = $${values.length}::uuid`)') && routes.includes('filters.push(`trailer_id = $${values.length}::uuid`)') && routes.includes('.replace(/^unit_id/, "assets.unit_id")') && routes.includes('.replace(/^trailer_id/, "c.trailer_id")')],
+    ["claims backend retains unit and trailer filters", routes.includes('filters.push(`unit_id = ANY($${values.length}::uuid[])`)') && routes.includes('filters.push(`trailer_id = ANY($${values.length}::uuid[])`)') && routes.includes('.replace(/^unit_id/, "assets.unit_id")') && routes.includes('.replace(/^trailer_id/, "c.trailer_id")')],
     ["trailer document exact drill", td.includes('EntityLinkOrTombstone kind="document"') && td.includes('id={d.file_id == null ? null : String(d.file_id)}') && td.includes('name={d.name}')],
     ["trailer governed profile label", tp.includes('const trailerLabel = entityLabel(equipment.equipment_number, id, "Trailer")') && !tp.includes("equipment.equipment_number ?? id")],
     ["trailer upload governed label", td.includes('entityName={entityLabel(equipmentNumber, equipmentId, "Trailer")}') && !td.includes("equipmentNumber ?? equipmentId")],
@@ -85,9 +86,12 @@ function failures(s = {}) {
 }
 
 if (process.argv.includes("--selftest")) {
+  if (failures().length) throw new Error(failures().join('; '));
   const parsed = JSON.parse(fleetMap);
   parsed.leaves.find((leaf) => leaf.id === "unit.profile.qbo_mapping").required.push("reverse_link");
   const checks = [
+    failures({claimRoutes:claimRoutes.replaceAll('values.push(entityIdFilterValues(parsed.data.unit_id))','values.push(parsed.data.unit_id)')}).includes('claims list bound arrays and company scope'),
+    failures({claimRoutes:claimRoutes.replaceAll('"operating_company_id = $1::uuid"','"TRUE"')}).includes('claims list bound arrays and company scope'),
     failures({ unitDocs: unitDocs.replace('kind="document" id={row.file_id}', 'kind="unit" id={row.file_id}') }).includes("unit document exact drill"),
     failures({ driverAssignment: driverAssignment.replace('name={def.unit_number}', 'name={def.unit_id}') }).includes("default-driver reverse unit drill"),
     failures({ trailerAssignment: trailerAssignment.replace('id={String(unit.unit_id)}', 'id={String(load.load_id)}') }).includes("trailer assignment unit drill"),

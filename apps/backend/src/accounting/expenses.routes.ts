@@ -4,6 +4,7 @@ import { EXPENSE_LOAD_MISMATCH_ERROR, type ExpenseLoadMismatch } from "./expense
 import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expense-bank-match-sql.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -53,16 +54,16 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   status: z.enum(["draft", "posted", "void", "active"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  load_id: z.string().uuid().optional(),
-  driver_id: z.string().uuid().optional(),
+  load_id: entityIdFilterSchema.optional(),
+  driver_id: entityIdFilterSchema.optional(),
   vendor_uuid: z.string().uuid().optional(),
   // EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING (CC-2 finding #6337) — trailer_id is a real, populated
   // column since rank 1 (PR #6316) and the create/detail paths already accept it (rank 4, PR #6322);
   // the list endpoint never did. Mirrors #6324's accident list filter exactly.
-  trailer_id: z.string().uuid().optional(),
+  trailer_id: entityIdFilterSchema.optional(),
   // ACCT-F5032 — unit_id is written on create and returned on detail, but list had no filter so
   // VehicleProfile could not mount ExpensesReverseSection (fuel already filters by unit_id).
-  unit_id: z.string().uuid().optional(),
+  unit_id: entityIdFilterSchema.optional(),
   // ACCT-F5033 — linked_work_order_uuid written on create; list filter required for WO reverse.
   work_order_id: z.string().uuid().optional(),
   // ACCT-F5034 — insurance_claim_id written on create; list filter for ClaimsTab ExpensesReverseSection.
@@ -174,24 +175,24 @@ export async function queryExpensesList(
     where.push(`e.transaction_date <= $${values.length}::date`);
   }
   if (filters.loadId) {
-    values.push(filters.loadId);
-    where.push(`e.load_id = $${values.length}::uuid`);
+    values.push(entityIdFilterValues(filters.loadId));
+    where.push(`e.load_id = ANY($${values.length}::uuid[])`);
   }
   if (filters.driverId) {
-    values.push(filters.driverId);
-    where.push(`e.driver_uuid = $${values.length}::uuid`);
+    values.push(entityIdFilterValues(filters.driverId));
+    where.push(`e.driver_uuid = ANY($${values.length}::uuid[])`);
   }
   if (filters.vendorUuid) {
     values.push(filters.vendorUuid);
     where.push(`e.vendor_uuid = $${values.length}::uuid`);
   }
   if (filters.trailerId) {
-    values.push(filters.trailerId);
-    where.push(`e.trailer_id = $${values.length}::uuid`);
+    values.push(entityIdFilterValues(filters.trailerId));
+    where.push(`e.trailer_id = ANY($${values.length}::uuid[])`);
   }
   if (filters.unitId) {
-    values.push(filters.unitId);
-    where.push(`e.unit_id = $${values.length}::uuid`);
+    values.push(entityIdFilterValues(filters.unitId));
+    where.push(`e.unit_id = ANY($${values.length}::uuid[])`);
   }
   if (filters.workOrderId) {
     values.push(filters.workOrderId);

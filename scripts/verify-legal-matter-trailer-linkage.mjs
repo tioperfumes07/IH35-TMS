@@ -30,6 +30,7 @@ const mutateLeaf = (text, id, mutate) => {
 
 function audit(s) {
   const failures = [];
+  if (!s.service.includes('values.push(entityIdFilterValues(args.unit_id))') || !s.service.includes('m.operating_company_id = $1::uuid')) failures.push('unit list array binding and company scope missing');
   if (!/data-testid="legal-matter-trailer-picker"[\s\S]{0,500}kind="trailer"/.test(s.form)) failures.push("create/edit form must expose canonical trailer picker");
   if (!/data-testid="legal-matter-trailer-picker"[\s\S]{0,500}allowCreate(?:\s|\/>)/.test(s.form)) failures.push("trailer picker must offer first-row canonical create");
   if (!/equipment_id:\s*optionalUuidOrNull\(form\.equipment_id\)/.test(s.form) || !/equipment_id:\s*matter\.equipment_id/.test(s.form)) failures.push("trailer FK must round-trip through form payload and reload");
@@ -44,7 +45,7 @@ function audit(s) {
   if (!/equipment_id\?: string/.test(s.api) || !/params\.equipment_id = filters\.equipment_id/.test(s.api)) failures.push("client must forward exact equipment reverse filter");
   if (!/\{ equipment_id: string;/.test(s.reverseSection)) failures.push("reverse component must accept trailer equipment key space");
   if (!/const id = m\.id == null \? null : String\(m\.id\)/.test(s.reverseSection) || !/EntityLinkOrTombstone[\s\S]{0,180}kind="matter"[\s\S]{0,180}id=\{id\}[\s\S]{0,180}name=\{m\.matter_number\}/.test(s.reverseSection)) failures.push("reverse rows must drill to canonical matter ids and human labels");
-  if (!/m\.unit_id = \$\$\{values\.length\}/.test(s.service) || !/m\.equipment_id = \$\$\{values\.length\}/.test(s.service)) failures.push("service must retain exact unit and trailer reverse filters");
+  if (!/m\.unit_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(s.service) || !/m\.equipment_id = \$\$\{values\.length\}/.test(s.service)) failures.push("service must retain exact unit and trailer reverse filters");
   let matrix;
   try { matrix = JSON.parse(s.matrix); } catch (error) { failures.push(`Fleet matrix parse: ${error.message}`); }
   for (const [id, route] of [["unit.profile.legal_reverse", "/fleet/units/:id"], ["trailer.profile.legal_reverse", "/fleet/trailers/:id"]]) {
@@ -61,7 +62,10 @@ function audit(s) {
 }
 
 if (process.argv.includes("--selftest")) {
+  if (audit(source).length) throw new Error(audit(source).join('; '));
   const mutations = [
+    ['unit binding','service',/values\.push\(entityIdFilterValues\(args\.unit_id\)\)/g,'REMOVED'],
+    ['list company','service',/m\.operating_company_id = \$1::uuid/g,'TRUE'],
     ["picker", "form", /kind="trailer"/, 'kind="unit"'],
     ["picker-create", "form", /(data-testid="legal-matter-trailer-picker"[\s\S]{0,500})allowCreate(?:\s|\/>)/, "$1allowCreate={false}\n"],
     ["payload", "form", /equipment_id:\s*optionalUuidOrNull\(form\.equipment_id\)/, "equipment_id: null"],

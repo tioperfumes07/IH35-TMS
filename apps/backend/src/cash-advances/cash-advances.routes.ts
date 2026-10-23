@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -25,7 +26,7 @@ const listQuerySchema = COMPANY_QUERY.extend({
   search: z.string().trim().optional(),
   // LAW OF THE LAND §9 (2026-07-22): driver profile reverse-link — "View all cash advances" from
   // DriverDetail.tsx / EarningsTab.tsx scopes this list to one driver.
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
 });
 
 const repaymentScheduleSchema = z.object({
@@ -136,12 +137,26 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
   app.get("/api/v1/cash-advances/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = COMPANY_QUERY.safeParse(req.query ?? {});
+    const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     // ROUND 443.250 — board "Advances on file" is COUNT(*) on the same context view (read-only;
     // not a new GL feed). Recovered-this-period stays FE "—" until a period total lands on the view.
     const row = await withCompanyScope(user.uuid, companyId, async (client) => {
+      if (query.data.driver_id) {
+        // Same aggregates as views.cash_advances_dashboard_kpis, over the selected full cohort.
+        const selected = await client.query(`SELECT $1::uuid AS operating_company_id,
+          COALESCE(SUM(outstanding_balance), 0) AS total_outstanding,
+          COALESCE(SUM(amount) FILTER (WHERE disbursed_at >= date_trunc('month', now())), 0) AS mtd_disbursed,
+          COUNT(*) FILTER (WHERE disbursement_status = 'pending_approval') AS pending_approval,
+          COALESCE(AVG(amount), 0) AS avg_per_advance,
+          COUNT(DISTINCT driver_id) FILTER (WHERE outstanding_balance > 0) AS drivers_with_active,
+          COUNT(*)::int AS advances_on_file
+          FROM views.cash_advances_with_context
+          WHERE operating_company_id = $1::uuid AND driver_id = ANY($2::uuid[])`,
+        [companyId, entityIdFilterValues(query.data.driver_id)]);
+        return selected.rows[0];
+      }
       const res = await client
         .query(
           `
@@ -212,8 +227,8 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
         where.push(`disbursement_status = $${values.length}`);
       }
       if (query.data.driver_id) {
-        values.push(query.data.driver_id);
-        where.push(`driver_id = $${values.length}`);
+        values.push(entityIdFilterValues(query.data.driver_id));
+        where.push(`driver_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.search) {
         values.push(`%${query.data.search}%`);

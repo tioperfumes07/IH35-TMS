@@ -63,7 +63,8 @@ function toLocal(iso: string | null): string | null {
 export async function getFleetLocationHosRows(
   client: DbClient,
   operatingCompanyId: string,
-  asOf: Date
+  asOf: Date,
+  unitIds?: string[]
 ): Promise<FleetLocationHosRow[]> {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
@@ -94,11 +95,12 @@ export async function getFleetLocationHosRows(
         ON p.unit_id = u.id
        AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
       WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+        AND ($2::uuid[] IS NULL OR u.id = ANY($2::uuid[]))
         AND u.deactivated_at IS NULL
         AND u.status::text = 'InService'
       ORDER BY u.unit_number ASC NULLS LAST
     `,
-    [operatingCompanyId]
+    [operatingCompanyId, unitIds ?? null]
   );
 
   // 2. Current driver per unit. PRIMARY source = Samsara's vehicle→driver assignment (the ELD login,

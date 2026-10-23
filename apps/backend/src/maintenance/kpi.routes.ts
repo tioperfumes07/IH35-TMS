@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -14,7 +15,7 @@ const kpiQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   period_start: z.string().date(),
   period_end: z.string().date(),
-  unit_id: z.string().uuid().optional(),
+  unit_id: entityIdFilterSchema.optional(),
 });
 const pmComplianceQuerySchema = kpiQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(25),
@@ -92,11 +93,11 @@ async function relationExists(client: { query: (sql: string, values?: unknown[])
 type KpiQuery = z.infer<typeof kpiQuerySchema>;
 
 function unitFilter(unitId: string | undefined, alias: string) {
-  return unitId ? ` AND ${alias}.unit_id = $4::uuid` : "";
+  return unitId ? ` AND ${alias}.unit_id = ANY($4::uuid[])` : "";
 }
 
 function unitParams(unitId: string | undefined) {
-  return unitId ? [unitId] : [];
+  return unitId ? [entityIdFilterValues(unitId)] : [];
 }
 
 export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
@@ -161,9 +162,9 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
             AND u.oos_since::date <= $3::date
             AND ${excludeDemoPhantomSql("u.unit_number")}
             AND ${excludeSampleDataSql("u.is_sample_data")}
-            ${unitId ? " AND u.id = $4::uuid" : ""}
+            ${unitId ? " AND u.id = ANY($4::uuid[])" : ""}
         `,
-        unitId ? [companyId, startDay, endDay, unitId] : [companyId, startDay, endDay]
+        unitId ? [companyId, startDay, endDay, entityIdFilterValues(unitId)] : [companyId, startDay, endDay]
       );
       const downtime_hours =
         Number(downtimeRes.rows[0]?.wo_downtime_hours ?? 0) + Number(oosRes.rows[0]?.oos_hours ?? 0);
@@ -182,7 +183,7 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
       );
       const failureCount = Number(repairRes.rows[0]?.failure_count ?? 0);
       const periodDays = Math.max(1, Math.round((new Date(`${endDay}T00:00:00Z`).getTime() - new Date(`${startDay}T00:00:00Z`).getTime()) / 86400000) + 1);
-      const operatingHours = periodDays * 24 * (unitId ? 1 : Math.max(1, await countActiveUnits(client, companyId)));
+      const operatingHours = periodDays * 24 * Math.max(1, await countActiveUnits(client, companyId, unitId));
       const mtbf_hours = computeMtbfHours(operatingHours, failureCount);
 
       const costRes = await client.query(
@@ -224,9 +225,9 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
           FROM maintenance.pm_schedules ps
           WHERE ps.operating_company_id = $1::uuid
             AND ps.is_active = true
-            ${unitId ? " AND ps.unit_id = $2::uuid" : ""}
+            ${unitId ? " AND ps.unit_id = ANY($2::uuid[])" : ""}
         `,
-        unitId ? [companyId, unitId] : [companyId]
+        unitId ? [companyId, entityIdFilterValues(unitId)] : [companyId]
       );
       const pmTotal = Number(pmRes.rows[0]?.total_schedules ?? 0);
       const pmCompliant = Number(pmRes.rows[0]?.compliant_schedules ?? 0);
@@ -321,7 +322,7 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
     const payload = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await relationExists(client, "maintenance.pm_schedules"))) return { rows: [], total_count: 0, pm_schedules_unavailable: true };
       const params: unknown[] = [companyId];
-      if (unitId) params.push(unitId);
+      if (unitId) params.push(entityIdFilterValues(unitId));
       params.push(limit, offset);
       const limitParam = params.length - 1;
       const offsetParam = params.length;
@@ -348,7 +349,7 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ps.operating_company_id
           WHERE ps.operating_company_id = $1::uuid
             AND ps.is_active = true
-            ${unitId ? " AND ps.unit_id = $2::uuid" : ""}
+            ${unitId ? " AND ps.unit_id = ANY($2::uuid[])" : ""}
           ORDER BY compliance_status DESC, u.unit_number ASC
           LIMIT $${limitParam}
           OFFSET $${offsetParam}
@@ -362,8 +363,8 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ps.operating_company_id
           WHERE ps.operating_company_id = $1::uuid
             AND ps.is_active = true
-            ${unitId ? " AND ps.unit_id = $2::uuid" : ""}`,
-        unitId ? [companyId, unitId] : [companyId]
+            ${unitId ? " AND ps.unit_id = ANY($2::uuid[])" : ""}`,
+        unitId ? [companyId, entityIdFilterValues(unitId)] : [companyId]
       );
       return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
@@ -450,13 +451,14 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
   });
 }
 
-async function countActiveUnits(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> }, companyId: string) {
+async function countActiveUnits(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> }, companyId: string, unitId?: string) {
   const res = await client.query(
     // ROUND 326 queue item 17 / M3: the one fleet roster (operating entity, power units only).
     `SELECT COUNT(*)::int AS c
        FROM mdata.units
-      WHERE ${fleetRosterSql("", "$1")}`,
-    [companyId]
+      WHERE ${fleetRosterSql("", "$1")}
+        ${unitId ? "AND id = ANY($2::uuid[])" : ""}`,
+    unitId ? [companyId, entityIdFilterValues(unitId)] : [companyId]
   );
   return Number(res.rows[0]?.c ?? 1);
 }

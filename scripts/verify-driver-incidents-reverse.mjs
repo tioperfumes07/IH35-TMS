@@ -18,8 +18,11 @@ const incidentRows = [
 
 function audit(s = files) {
   const failures = [];
+  if (!s.routes.includes('params.push(entityIdFilterValues(query.data.driver_id))')) failures.push('bound UUID-list values');
+  if (!s.routes.includes('i.operating_company_id = $1::uuid')) failures.push('company-scoped reverse rows');
+
   if (!/kind="driver"/.test(s.create) || !/driver_id: form\.driverId \|\| null/.test(s.create)) failures.push("driver picker payload");
-  if (!/driver_id: z\.string\(\)\.uuid\(\)\.optional/.test(s.routes) || !/i\.driver_id = \$\$\{params\.length\}/.test(s.routes)) failures.push("exact driver route filter");
+  if (!/driver_id: entityIdFilterSchema\.optional/.test(s.routes) || !/i\.driver_id = ANY\(\$\$\{params\.length\}::uuid\[\]\)/.test(s.routes)) failures.push("exact driver route filter");
   if (!/dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(s.routes)) failures.push("owned/authorized driver parent");
   if (!/label_dca\.company_id = i\.operating_company_id[\s\S]{0,160}label_dca\.is_authorized = true/.test(s.routes)) failures.push("authorized shared-driver label");
   if (!/if \(!result\.found\)\s*return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(s.routes)) failures.push("honest invalid driver parent");
@@ -30,11 +33,15 @@ function audit(s = files) {
 }
 
 if (process.argv.includes("--selftest")) {
+  if (audit().length) throw new Error('selftest baseline failed: '+audit().join('; '));
   const mutations = [
+["bound-list",{...files,routes:files.routes.replaceAll("params.push(entityIdFilterValues(query.data.driver_id))","params.push(query.data.driver_id)")}],
+["company-scope",{...files,routes:files.routes.replaceAll("i.operating_company_id = $1::uuid","TRUE")}],
+
     ["picker", { ...files, create: files.create.replaceAll('kind="driver"', 'kind="unit"') }],
     ["payload", { ...files, create: files.create.replaceAll("driver_id: form.driverId || null", "driver_id: null") }],
-    ["schema", { ...files, routes: files.routes.replace("driver_id: z.string", "wrong_id: z.string") }],
-    ["filter", { ...files, routes: files.routes.replace("i.driver_id = $${params.length}", "TRUE") }],
+    ["schema", { ...files, routes: files.routes.replace("driver_id: entityIdFilterSchema", "wrong_id: entityIdFilterSchema") }],
+    ["filter", { ...files, routes: files.routes.replace("i.driver_id = ANY($${params.length}::uuid[])", "TRUE") }],
     ["parent auth", { ...files, routes: files.routes.replace("dca.is_authorized = true", "TRUE") }],
     ["label auth", { ...files, routes: files.routes.replace("label_dca.is_authorized = true", "TRUE") }],
     ["parent 404", { ...files, routes: files.routes.replace(/if \(!result\.found\)\s*return reply\.code\(404\)/, "if (false) return reply.code(404)") }],

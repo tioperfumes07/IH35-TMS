@@ -17,6 +17,7 @@ import { DriverPickerWithCreate } from "../../../components/drivers/DriverPicker
 import { SelectCombobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { useListState } from "../../../components/list-state";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -630,12 +631,11 @@ export function ComplaintsTab() {
           <div className="relative flex flex-wrap items-end gap-2" data-testid="complaints-filters">
             <label className="text-xs text-[#4B5563]">
               Driver
-              <EntityPicker
+              <EntityMultiSelect
                 kind="driver"
                 operatingCompanyId={companyId}
                 value={draft.driverId || null}
                 onChange={(next) => setDriverFilter(next ?? "")}
-                allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1"
                 dataTestId="complaints-filter-driver"

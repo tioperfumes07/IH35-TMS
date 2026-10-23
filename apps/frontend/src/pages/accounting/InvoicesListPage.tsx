@@ -30,6 +30,7 @@ import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { StatusBadge } from "../../components/layout/StatusBadge";
@@ -188,25 +189,18 @@ export function InvoicesListPage() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  // FILTER-MULTI-01: Customer is now a real multi-select — array state, seeded from the single-
-  // value deep-link contract (?customer_id=) above; the URL keeps only the first selection for
-  // back/forward + reverse-link compatibility (a 2+ selection is a same-page-session refinement,
-  // not something an inbound deep link ever names more than one of).
-  const [customerFilter, setCustomerFilter] = useState<string[]>(() => (customerId ? [customerId] : []));
-  // U12 — back / forward to a different ?customer_id= re-reads it (the selection was seeded once and went stale). A 2+
-  // selection has no URL form, so an absent customer_id keeps it.
+  // Persist the entire customer selection in the URL; the server filters before count/pagination.
+  const [customerFilter, setCustomerFilter] = useState<string[]>(() => (customerId ? customerId.split(",") : []));
+  // Back/forward restores all selected customers, including an empty selection.
   useEffect(() => {
-    setCustomerFilter((prev) => {
-      if (customerId) return prev.length === 1 && prev[0] === customerId ? prev : [customerId];
-      return prev.length > 1 ? prev : prev.length === 0 ? prev : [];
-    });
+    setCustomerFilter(customerId ? customerId.split(",") : []);
   }, [customerId]);
   function setCustomerFilterAndUrl(next: string[]) {
     setCustomerFilter(next);
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
-        if (next.length === 1) params.set("customer_id", next[0]);
+        if (next.length) params.set("customer_id", next.join(","));
         else params.delete("customer_id");
         return params;
       },
@@ -347,10 +341,8 @@ export function InvoicesListPage() {
     setOpenModalType(createType);
   }, [createDeepLink, createType, selectedCompanyId]);
 
-  // FILTER-MULTI-01: listInvoices only ever accepted ONE customer_id value. Server-correct when
-  // exactly one is picked (identical to today); a 2+ selection fetches unnarrowed-on-customer + the
-  // client membership filter below does the real OR-of-several-values filtering.
-  const customerParam = customerFilter.length === 1 ? customerFilter[0] : undefined;
+  // OR within customers, AND with the remaining filters, entirely server-side.
+  const customerParam = customerFilter.length ? customerFilter.join(",") : undefined;
   const query = useQuery({
     queryKey: [
       "accounting",
@@ -393,7 +385,6 @@ export function InvoicesListPage() {
 
   const invoices = useMemo(() => {
     let all = query.data?.invoices ?? [];
-    if (customerFilter.length > 1) all = all.filter((row) => customerFilter.includes(row.customer_id ?? ""));
     // Client-side QBO pseudo-filter only for not_sent (no server contract).
     // with_balance / has_balance is server-filtered before LIMIT — do not re-slice a page.
     if (notSent) return all.filter((row) => row.status === "draft" || !row.sent_at);
@@ -628,12 +619,11 @@ export function InvoicesListPage() {
       >
         <label className="text-xs text-[#4B5563]">
           Load
-          <EntityPicker
+          <EntityMultiSelect
             kind="load"
             operatingCompanyId={selectedCompanyId ?? ""}
             value={deepLinkSourceLoadId || null}
             onChange={(next) => setSourceLoadFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All loads"
             className="mt-1"
             dataTestId="invoices-filter-load"

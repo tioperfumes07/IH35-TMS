@@ -1,3 +1,4 @@
+import { useTranslation } from "../../hooks/useTranslation";
 /**
  * RECLASSIFY TRANSACTIONS — QBO Tools → Reclassify clone (owner click-through, spec §24/24b/24c/24d).
  * LEFT: chart of accounts with the period activity per account (click = working set).
@@ -122,6 +123,7 @@ function buildTree(accounts: ReclassifyTreeAccount[], side: Side, includeInactiv
 }
 
 export function ReclassifyTransactionsPage() {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const isOwner = user?.role === "Owner";
@@ -318,7 +320,7 @@ export function ReclassifyTransactionsPage() {
                 <DatePicker value={toDate} onChange={setToDate} className="h-8" data-testid="reclassify-period-to" />
               </label>
             </div>
-            <input value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} placeholder="Filter accounts" className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-xs" data-testid="reclassify-account-filter" />
+            <input type="search" aria-label={t("common.search_account_tree", "Search account tree")} value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} placeholder="Search account tree" className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-xs" data-testid="reclassify-account-filter" />
             <label className="mt-1 flex items-center gap-1 text-xs text-[#4B5563]"><input type="checkbox" checked={showAccountNumbers} onChange={(e) => setShowAccountNumbers(e.target.checked)} /> Show account numbers</label>
             <label className="mt-1 flex items-center gap-1 text-xs text-[#4B5563]"><input type="checkbox" checked={includeInactive} onChange={(e) => setIncludeInactive(e.target.checked)} data-testid="reclassify-include-inactive" /> Include inactive accounts</label>
             <div className="mt-1 flex justify-between text-xs font-semibold uppercase text-gray-600"><span>Account</span><span>Balance {formatDateQboList(toDate)}</span></div>

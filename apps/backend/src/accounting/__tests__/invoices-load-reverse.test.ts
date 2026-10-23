@@ -16,10 +16,14 @@ const drawer = fs.readFileSync(
 
 // ACCT-F5039 — list already filters source_load_id; Overview reverse section was missing.
 describe("accounting/invoices ACCT-F5039-LOAD-INVOICE-REVERSE", () => {
-  it("GET list accepts optional source_load_id", () => {
-    expect(routes).toMatch(/source_load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/);
+  it("GET list accepts a validated source_load_id list without changing scalar detail routes", () => {
+    expect(routes).toMatch(/source_load_id:\s*entityIdFilterSchema\.optional\(\)/);
     expect(routes).toContain("if (q.source_load_id)");
-    expect(routes).toContain("i.source_load_id = $${values.length}::uuid");
+    expect(routes).toContain("values.push(entityIdFilterValues(q.source_load_id))");
+    expect(routes).toContain("i.source_load_id = ANY($${values.length}::uuid[])");
+    const detail = routes.slice(routes.indexOf('const loadIdParamSchema ='));
+    expect(detail).toContain('id: z.string().uuid()');
+    expect(detail).toContain('i.source_load_id = $2::uuid');
   });
 
   it("InvoicesReverseSection calls listInvoices with filter", () => {

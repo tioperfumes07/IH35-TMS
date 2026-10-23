@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -15,16 +16,16 @@ const companyQuerySchema = z.object({
 
 const listQuerySchema = companyQuerySchema.extend({
   incident_type: incidentTypeSchema,
-  driver_id: z.string().uuid().optional(),
-  unit_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  unit_id: entityIdFilterSchema.optional(),
   // SAF-F17: the trailer profile's reverse safety section. `safety.incidents.trailer_id` FKs to
   // mdata.equipment (trailers live in mdata.equipment, NOT mdata.units — migration
   // 202607031600_safety_incidents_trailer_fk_to_equipment.sql), and trailer interchanges are the
   // incident type that is ABOUT a trailer, so having no trailer filter made them unreachable
   // from the trailer they concern.
-  trailer_id: z.string().uuid().optional(),
+  trailer_id: entityIdFilterSchema.optional(),
   // SAF-C01 — load-detail reverse: filter in SQL (LIMIT capped — never client-filter past page).
-  load_id: z.string().uuid().optional(),
+  load_id: entityIdFilterSchema.optional(),
   claimant_customer_id: z.string().uuid().optional(),
   // YYYY-MM-DD inclusive bounds on incident_at (date portion).
   date_from: z
@@ -174,7 +175,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         const parent = await client.query(
           `SELECT 1
            FROM mdata.drivers d
-           WHERE d.id = $1::uuid
+           WHERE d.id = ANY($1::uuid[])
              AND d.archived_at IS NULL
              AND (
                d.operating_company_id = $2::uuid
@@ -186,24 +187,24 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
                    AND dca.deactivated_at IS NULL
                )
              )
-           LIMIT 1`,
-          [query.data.driver_id, query.data.operating_company_id]
+           `,
+          [entityIdFilterValues(query.data.driver_id), query.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false as const, rows: [] };
-        params.push(query.data.driver_id);
-        filters.push(`i.driver_id = $${params.length}`);
+        if (parent.rows.length !== entityIdFilterValues(query.data.driver_id!).length) return { found: false as const, rows: [] };
+        params.push(entityIdFilterValues(query.data.driver_id));
+        filters.push(`i.driver_id = ANY($${params.length}::uuid[])`);
       }
       if (query.data.unit_id) {
-        params.push(query.data.unit_id);
-        filters.push(`i.unit_id = $${params.length}`);
+        params.push(entityIdFilterValues(query.data.unit_id));
+        filters.push(`i.unit_id = ANY($${params.length}::uuid[])`);
       }
       if (query.data.trailer_id) {
-        params.push(query.data.trailer_id);
-        filters.push(`i.trailer_id = $${params.length}`);
+        params.push(entityIdFilterValues(query.data.trailer_id));
+        filters.push(`i.trailer_id = ANY($${params.length}::uuid[])`);
       }
       if (query.data.load_id) {
-        params.push(query.data.load_id);
-        filters.push(`i.load_id = $${params.length}`);
+        params.push(entityIdFilterValues(query.data.load_id));
+        filters.push(`i.load_id = ANY($${params.length}::uuid[])`);
       }
       if (query.data.claimant_customer_id) {
         params.push(query.data.claimant_customer_id);

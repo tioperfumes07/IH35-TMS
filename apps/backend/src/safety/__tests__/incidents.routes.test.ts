@@ -121,7 +121,7 @@ describe("safety incidents routes (A23-7)", () => {
     expect(seenSql).toContain("i.unit_id");
     expect(seenSql).toMatch(/incident_at/);
     expect(seenParams).toEqual(
-      expect.arrayContaining([COMPANY, "damage_report", DRIVER, UNIT, "2026-01-01", "2026-01-31"])
+      expect.arrayContaining([COMPANY, "damage_report", [DRIVER], [UNIT], "2026-01-01", "2026-01-31"])
     );
   });
 

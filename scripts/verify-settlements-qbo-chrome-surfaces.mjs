@@ -16,6 +16,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlements-qbo-chrome-surfaces";
@@ -185,10 +186,9 @@ const CHECKS = [
     pattern: /ParityTable[\s\S]*storageKey="driver-finance-settlements-list"/,
   },
   {
-    name: "SettlementsPage EntityPicker driver filter (allowCreate=false)",
+    name: "SettlementsPage scoped no-create EntityMultiSelect driver filter",
     file: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
-    pattern:
-      /kind="driver"[\s\S]*allowCreate=\{false\}[\s\S]*dataTestId="settlements-filter-driver"/,
+    filter: {kind:'driver',testId:'settlements-filter-driver'},
   },
   {
     name: "HoldDeductionModal DatePicker",
@@ -222,7 +222,8 @@ function runChecks(root = ROOT) {
       continue;
     }
     const src = fs.readFileSync(abs, "utf8");
-    if (!c.pattern.test(src)) fails.push(`${c.name}: pattern miss in ${c.file}`);
+    if (c.filter) fails.push(...multiSelectFilterProblems(src,{file:c.file,...c.filter}));
+    else if (!c.pattern.test(src)) fails.push(`${c.name}: pattern miss in ${c.file}`);
     if (c.forbiddenNear) {
       const scope = c.forbiddenNear.pattern.exec(src)?.[0] ?? src;
       if (c.forbiddenNear.forbid.test(scope)) {
@@ -234,6 +235,7 @@ function runChecks(root = ROOT) {
 }
 
 function selftest() {
+  selftestMultiSelectFilterContract();
   const live = runChecks();
   // GUARD-SELFTEST-LEAVES-UNTRACKED-DROPPINGS — this used to mkdtempSync inside the tracked
   // scripts/ tree; a killed/interrupted run left `scripts/.settlements-qbo-chrome-selftest-<rand>/`

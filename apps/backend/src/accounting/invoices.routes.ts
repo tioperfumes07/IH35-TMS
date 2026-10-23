@@ -5,6 +5,7 @@ import { AGING_BUCKET_IDS, agingWindowFromBucket, agingWindowPredicate } from ".
 import { openArInvoiceConditions } from "./aging/open-ar.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
@@ -33,9 +34,9 @@ const listQuerySchema = companyQuerySchema.extend({
   // U12 — multi-select: ?status=a&status=b (one value still accepted); "active" / "posted" are pseudo-statuses.
   status: z.union([z.string().trim(), z.array(z.string().trim())]).optional(),
   search: z.string().trim().optional(),
-  customer_id: z.string().uuid().optional(),
+  customer_id: entityIdFilterSchema.optional(),
   // WAVE-H2 reverse drill: load → invoices
-  source_load_id: z.string().uuid().optional(),
+  source_load_id: entityIdFilterSchema.optional(),
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   // Aging / open-AR drill: filter full entity set by open balance BEFORE LIMIT/OFFSET
@@ -410,12 +411,12 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       }
       if (statusOr.length) extraWhere.push(statusOr.length === 1 ? statusOr[0] : `(${statusOr.join(" OR ")})`);
       if (q.customer_id) {
-        values.push(q.customer_id);
-        extraWhere.push(`i.customer_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.customer_id));
+        extraWhere.push(`i.customer_id = ANY($${values.length}::uuid[])`);
       }
       if (q.source_load_id) {
-        values.push(q.source_load_id);
-        extraWhere.push(`i.source_load_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(q.source_load_id));
+        extraWhere.push(`i.source_load_id = ANY($${values.length}::uuid[])`);
       }
       if (q.search) {
         const clause = buildListSearchClause({

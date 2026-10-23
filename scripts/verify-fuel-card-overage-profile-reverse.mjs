@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fuel"],"cols":["reverse_link"],"leaves":["card_overage"],"task":"FUEL-F5898-CARD-OVERAGE-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 const read = (path) => fs.readFileSync(path, "utf8");
 const files = {
   routes: read("apps/backend/src/fuel/fuel-card-overage.routes.ts"),
@@ -20,12 +21,12 @@ function mutateCardLeaf(source, token, replacement) {
   return source.slice(0, start) + block.replace(token, replacement) + source.slice(end < 0 ? source.length : end);
 }
 function failures(s = files) { const found = [
-  ["company-scoped driver/unit/event filters", s.routes.includes("driver_id: z.string().uuid().optional()") && s.routes.includes("e.driver_id = $${values.length}::uuid") && s.routes.includes("e.unit_id = $${values.length}::uuid") && s.routes.includes("e.id = $${values.length}::uuid")],
+  ["company-scoped driver/unit/event filters", ['driver_id', 'unit_id'].every(field => s.routes.includes(`${field}: entityIdFilterSchema.optional()`) && s.routes.includes(`e.${field} = ANY($\${values.length}::uuid[])`) && s.routes.includes(`values.push(entityIdFilterValues(q.${field}))`)) && s.routes.includes('e.operating_company_id = $1::uuid') && s.routes.includes("e.id = $${values.length}::uuid")],
   ["profile-filtered canonical read", s.reverse.includes('listOverageEvents(operatingCompanyId, "all", filter)') && s.reverse.includes('queryKey: ["fuel-card-overage-reverse", operatingCompanyId, filter]')],
   ["driver and unit reverse mounts", s.driver.includes('filter={{ driver_id: id }}') && s.unit.includes('filter={{ unit_id: id }}')],
   ["exact event drill", s.reverse.includes('kind="fuel_card_overage_event"') && s.reverse.includes('id={event.id}') && s.queue.includes('searchParams.get("event_id")') && s.queue.includes("event_id: eventId")],
   ["queue preserves profile target", s.queue.includes('searchParams.get("driver_id")') && s.queue.includes('searchParams.get("unit_id")') && s.queue.includes("driver_id: effectiveDriverId") && s.queue.includes("unit_id: effectiveUnitId")],
-  ["queue EntityPicker filters", s.queue.includes('dataTestId="fuel-card-overage-filter-driver"') && s.queue.includes('dataTestId="fuel-card-overage-filter-unit"') && s.queue.includes("allowCreate={false}")],
+  ["queue EntityPicker filters", ['driver','unit'].every(kind => !multiSelectFilterProblems(s.queue, { file: 'apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx', kind, testId: `fuel-card-overage-filter-${kind}` }).length)],
   ["optional filters omit undefined UUID query values", s.queue.includes("for (const [key, value] of Object.entries(filters))") && s.queue.includes("if (value) params.set(key, value)") && !s.queue.includes("...filters,")],
   ["reverse list cap is disclosed", s.reverse.includes("const visibleEvents = events.slice(0, 5)") && s.reverse.includes("const totalCount = query.isError ? 0 : (query.data?.total_count ?? events.length)") && s.reverse.includes("totalCount > visibleEvents.length") && s.reverse.includes("Showing {visibleEvents.length} of {totalCount}. Open queue to view all.")],
   ["reverse GET failure has exact retry", s.reverse.includes("Couldn't load fuel card overages") && s.reverse.includes("onRetry={() => void query.refetch()}")],
@@ -42,8 +43,10 @@ function failures(s = files) { const found = [
   return found;
 }
 if (process.argv.includes("--selftest")) {
+  if (failures().length) throw new Error(failures().join('; '));
+  const shared = selftestMultiSelectFilterContract();
   const checks = [
-    failures({ ...files, routes: files.routes.replace("e.driver_id = $${values.length}::uuid", "TRUE") }).includes("company-scoped driver/unit/event filters"),
+    ...['e.driver_id = ANY($${values.length}::uuid[])', 'values.push(entityIdFilterValues(q.driver_id))', 'values.push(entityIdFilterValues(q.unit_id))', 'e.operating_company_id = $1::uuid'].map(token => failures({ ...files, routes: files.routes.replaceAll(token, 'REMOVED') }).includes('company-scoped driver/unit/event filters')),
     failures({ ...files, reverse: files.reverse.replace('listOverageEvents(operatingCompanyId, "all", filter)', 'listOverageEvents(operatingCompanyId, "all")') }).includes("profile-filtered canonical read"),
     failures({ ...files, unit: "" }).includes("driver and unit reverse mounts"),
     failures({ ...files, reverse: files.reverse.replace('kind="fuel_card_overage_event"', 'kind="unit"') }).includes("exact event drill"),
@@ -61,7 +64,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, feed: JSON.stringify({ entries: [{ guard: "scripts/verify-fuel-card-overage-profile-reverse.mjs" }] }) }).includes("manual feed duplicates exact ownership"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-fuel-card-overage-profile-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-fuel-card-overage-profile-reverse selftest PASS — 16/16 runtime/evidence mutations red"); process.exit(0);
+  console.log(`verify-fuel-card-overage-profile-reverse selftest PASS — ${checks.length} runtime/evidence mutations red + ${shared} shared plants`); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-fuel-card-overage-profile-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }

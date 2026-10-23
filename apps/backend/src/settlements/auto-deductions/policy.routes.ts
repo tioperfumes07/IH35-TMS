@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../../_helpers/entity-filter-list.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../../accounting/shared.js";
 
 /** catalogs.driver_deduction_types.code — validated by DB FK after SETL-PICK-01 migration. */
@@ -23,7 +24,7 @@ const patchPolicySchema = z.object({
 });
 
 const listQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
   status: statusSchema.optional(),
 });
 
@@ -44,8 +45,8 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
       const filters: string[] = ["p.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
       if (query.data.driver_id) {
-        values.push(query.data.driver_id);
-        filters.push(`p.driver_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(query.data.driver_id));
+        filters.push(`p.driver_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.status) {
         values.push(query.data.status);

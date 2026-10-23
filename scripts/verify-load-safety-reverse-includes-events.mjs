@@ -27,9 +27,9 @@ const CHECKS = [
   { name: "client accepts related-load FK", file: F.client, pattern: /export function listSafetyEventLog\([\s\S]{0,380}related_load_id\?: string/ },
   { name: "client sends selected company", file: F.client, pattern: /export function listSafetyEventLog\([\s\S]{0,650}new URLSearchParams\(\{ operating_company_id: companyId \}\)/ },
   { name: "client sends related-load FK", file: F.client, pattern: /export function listSafetyEventLog\([\s\S]{0,900}if \(params\.related_load_id\) qs\.set\("related_load_id", params\.related_load_id\)/ },
-  { name: "route validates related-load UUID", file: F.route, pattern: /const listQuerySchema = companyQuerySchema\.extend\(\{[\s\S]{0,500}related_load_id: z\.string\(\)\.uuid\(\)\.optional\(\)/ },
+  { name: "route validates related-load UUID", file: F.route, pattern: /const listQuerySchema = companyQuerySchema\.extend\(\{[\s\S]{0,500}related_load_id: entityIdFilterSchema\.optional\(\)/ },
   { name: "route starts with selected-company filter", file: F.route, pattern: /const values: unknown\[\] = \[query\.data\.operating_company_id\];\s+const filters = \["e\.operating_company_id = \$1::uuid"\]/ },
-  { name: "route applies exact related-load filter", file: F.route, pattern: /if \(query\.data\.related_load_id\) \{\s+values\.push\(query\.data\.related_load_id\);\s+filters\.push\(`e\.related_load_id = \$\$\{values\.length\}::uuid`\);\s+\}/ },
+  { name: "route applies exact related-load filter", file: F.route, pattern: /if \(query\.data\.related_load_id\) \{\s+values\.push\(entityIdFilterValues\(query\.data\.related_load_id\)\);\s+filters\.push\(`e\.related_load_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\);\s+\}/ },
   { name: "load human-label join is same-company", file: F.route, pattern: /app\.get\("\/api\/v1\/safety\/events-log"[\s\S]{0,6500}LEFT JOIN mdata\.loads l\s+ON l\.id = e\.related_load_id\s+AND l\.operating_company_id = e\.operating_company_id/ },
 ];
 

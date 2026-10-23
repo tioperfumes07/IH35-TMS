@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { companyQuerySchema, currentAuthUser, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -25,6 +26,7 @@ import {
 
 const arAgingQuerySchema = companyQuerySchema.extend({
   as_of_date: z.string().date().optional(),
+  customer_id: entityIdFilterSchema.optional(),
   basis: reportBasisSchema,
 });
 
@@ -87,7 +89,8 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const asOf = query.data.as_of_date ?? todayIsoDate();
-    const cacheKey = `${query.data.operating_company_id}:${asOf}:${query.data.basis}`;
+    const customerIds = query.data.customer_id ? entityIdFilterValues(query.data.customer_id) : null;
+    const cacheKey = `${query.data.operating_company_id}:${asOf}:${query.data.basis}:${query.data.customer_id ?? "all"}`;
     const cached = cache.get(cacheKey);
     if (cached) return cached;
 
@@ -108,9 +111,10 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
                 total_open_cents::bigint    AS total_open_cents
               FROM accounting.ar_aging_as_of($1::uuid, $2::date)
               WHERE total_open_cents > 0
+                AND ($3::uuid[] IS NULL OR customer_id = ANY($3::uuid[]))
               ORDER BY total_open_cents DESC, customer_name ASC
             `,
-            [query.data.operating_company_id, asOf]
+            [query.data.operating_company_id, asOf, customerIds]
           )
         : await client.query(
             // LIVE: canonical opco-scoped view (security_invoker; buckets computed at CURRENT_DATE).
@@ -128,9 +132,10 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
               FROM views.ar_aging
               WHERE operating_company_id = $1::uuid
                 AND total_open_cents > 0
+                AND ($2::uuid[] IS NULL OR customer_id = ANY($2::uuid[]))
               ORDER BY total_open_cents DESC, customer_name ASC
             `,
-            [query.data.operating_company_id]
+            [query.data.operating_company_id, customerIds]
           );
 
       const rawRows = res.rows as Array<Record<string, unknown>>;

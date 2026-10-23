@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["insurance"],"cols":["claim"],"leaves":["claims.list","claims.create"],"task":"INS-F7059-CLAIM-IDENTITY-VERTICAL","vertical":"column-wave"} */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 const read = (path) => fs.readFileSync(path, "utf8");
 const files = {
   summaryRoutes: read("apps/backend/src/insurance/summary.routes.ts"),
@@ -20,8 +21,8 @@ const files = {
 function failures(s = files) { return [
   ["claim list self drill uses canonical id and human label", s.claimPage.includes('kind="claim"') && s.claimPage.includes("id={claim.id}") && s.claimPage.includes('entityLabel(claim.claim_number, claim.id, "Claim")')],
   ["claim create returns persisted identity and refreshes list", s.claimCreator.includes("onCreated(claim.id, claim.claim_number)") && s.claimPage.includes('invalidateQueries({ queryKey: ["insurance-claims", companyId] })')],
-  ["coverage gap company/unit API filter", s.summaryRoutes.includes("coverageGapQuerySchema.safeParse") && s.summaryRoutes.includes("parsed.data.unit_id ?? null") && s.coverageSql.includes("$3::uuid IS NULL OR u.id = $3::uuid")],
-  ["unit profile exact coverage target", s.insuranceSummary.includes('kind="insurance_coverage_gaps"') && s.insuranceSummary.includes("id={unitId}") && s.coveragePage.includes('searchParams.get("unit_id")') && s.coveragePage.includes('dataTestId="coverage-gap-filter-unit"') && s.coveragePage.includes("allowCreate={false}")],
+  ["coverage gap company/unit API filter", s.summaryRoutes.includes("coverageGapQuerySchema.safeParse") && s.summaryRoutes.includes('unit_id: entityIdFilterSchema.optional()') && s.summaryRoutes.includes("parsed.data.unit_id ? entityIdFilterValues(parsed.data.unit_id) : null") && s.coverageSql.includes("$3::uuid[] IS NULL OR u.id = ANY($3::uuid[])") && s.coverageSql.includes('a.operating_company_id = $1::uuid')],
+  ["unit profile exact coverage target", s.insuranceSummary.includes('kind="insurance_coverage_gaps"') && s.insuranceSummary.includes("id={unitId}") && s.coveragePage.includes('searchParams.get("unit_id")') && !multiSelectFilterProblems(s.coveragePage,{file:'apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx',kind:'unit',testId:'coverage-gap-filter-unit'}).length],
   ["lawsuit driver/unit backend filters", s.lawsuitSchema.includes("driver_id: z.string().uuid().optional()") && s.lawsuitSchema.includes("unit_id: z.string().uuid().optional()") && s.lawsuitRoutes.includes("claim.driver_id = $${values.length}::uuid") && s.lawsuitRoutes.includes("asset.unit_id = $${values.length}::uuid")],
   ["driver and unit reverse consumers", s.driverProfile.includes('filter={{ driver_id: id }} contextLabel="this driver"') && s.unitProfile.includes('filter={{ unit_id: id }} contextLabel="this unit"')],
   ["exact lawsuit drill", s.lawsuitReverse.includes('<EntityLink kind="lawsuit" id={row.id}') && s.lawsuitReverse.includes("listInsuranceLawsuits({ operating_company_id: operatingCompanyId, ...filter })")],
@@ -33,10 +34,14 @@ function failures(s = files) { return [
   ["lawsuit links consume human labels", s.lawsuitPage.includes('kind="claim" id={lawsuit.claim_id} name={lawsuit.claim_number} noun="Claim"') && s.lawsuitPage.includes('kind="driver" id={lawsuit.driver_id} name={lawsuit.driver_name} noun="Driver"') && s.lawsuitPage.includes('kind="unit" id={lawsuit.unit_id} name={lawsuit.unit_number} noun="Unit"')],
 ].filter(([,ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
+  if (failures().length) throw new Error(failures().join('; '));
+  selftestMultiSelectFilterContract();
   const checks = [
     failures({...files, claimPage: files.claimPage.replace('id={claim.id}', 'id={null}')}).includes("claim list self drill uses canonical id and human label"),
     failures({...files, claimCreator: files.claimCreator.replace("onCreated(claim.id, claim.claim_number)", "onCreated()")}).includes("claim create returns persisted identity and refreshes list"),
-    failures({...files, coverageSql: files.coverageSql.replace("$3::uuid IS NULL OR u.id = $3::uuid", "TRUE")}).includes("coverage gap company/unit API filter"),
+    failures({...files, coverageSql: files.coverageSql.replace("$3::uuid[] IS NULL OR u.id = ANY($3::uuid[])", "TRUE")}).includes("coverage gap company/unit API filter"),
+    failures({...files, coverageSql: files.coverageSql.replaceAll("a.operating_company_id = $1::uuid", "TRUE")}).includes("coverage gap company/unit API filter"),
+    failures({...files, summaryRoutes: files.summaryRoutes.replaceAll("entityIdFilterValues(parsed.data.unit_id)", "parsed.data.unit_id")}).includes("coverage gap company/unit API filter"),
     failures({...files, insuranceSummary: files.insuranceSummary.replace('kind="insurance_coverage_gaps"', 'kind="unit"')}).includes("unit profile exact coverage target"),
     failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("claim.driver_id = $${values.length}::uuid", "TRUE")}).includes("lawsuit driver/unit backend filters"),
     failures({...files, driverProfile: ""}).includes("driver and unit reverse consumers"),
@@ -46,7 +51,7 @@ if (process.argv.includes("--selftest")) {
     failures({...files, lawsuitPage: files.lawsuitPage.replace("lawsuit.unit_number", "null")}).includes("lawsuit links consume human labels"),
   ];
   if (checks.some((ok)=>!ok)) { console.error(`verify-insurance-profile-reverse selftest FAIL — mutations ${checks.map((ok,i)=>ok?null:i+1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-insurance-profile-reverse selftest PASS — 10/10 claim/API/profile/target/label mutations red"); process.exit(0);
+  console.log(`verify-insurance-profile-reverse selftest PASS — ${checks.length}/${checks.length} claim/API/profile/target/label mutations red`); process.exit(0);
 }
 const missing=failures(); if(missing.length){console.error(`verify-insurance-profile-reverse FAIL — ${missing.join(", ")}`);process.exit(1)}
 console.log("verify-insurance-profile-reverse PASS — claim identity and coverage/lawsuit profiles return to exact canonical records");

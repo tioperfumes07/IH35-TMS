@@ -23,10 +23,10 @@ function fail(msg) {
 }
 
 const FILTERS = [
-  ["driver_id", "filters.push(`i.driver_id = $${params.length}`)"],
-  ["unit_id", "filters.push(`i.unit_id = $${params.length}`)"],
-  ["trailer_id", "filters.push(`i.trailer_id = $${params.length}`)"],
-  ["load_id", "filters.push(`i.load_id = $${params.length}`)"],
+  ["driver_id", "filters.push(`i.driver_id = ANY($${params.length}::uuid[])`)"],
+  ["unit_id", "filters.push(`i.unit_id = ANY($${params.length}::uuid[])`)"],
+  ["trailer_id", "filters.push(`i.trailer_id = ANY($${params.length}::uuid[])`)"],
+  ["load_id", "filters.push(`i.load_id = ANY($${params.length}::uuid[])`)"],
 ];
 
 function check(src) {
@@ -35,17 +35,32 @@ function check(src) {
     return;
   }
   for (const [name, needle] of FILTERS) {
+    if (!src.includes(`${name}: entityIdFilterSchema.optional()`) ||
+        !src.includes(`params.push(entityIdFilterValues(query.data.${name}))`)) {
+      fail(`${INCIDENTS_ROUTES}: ${name} must validate and bind every selected UUID.`);
+    }
     if (!src.includes(needle)) {
       fail(`${INCIDENTS_ROUTES}: ${name} query-param filter (reverse read into safety incidents) not found.`);
     }
+  }
+  if (!src.includes('i.operating_company_id = $1::uuid')) {
+    fail(`${INCIDENTS_ROUTES}: reverse rows must remain company scoped.`);
   }
 }
 
 function selftest() {
   const original = fs.readFileSync(INCIDENTS_ROUTES, "utf8");
+  check(original);
+  if (process.exitCode === 1) throw new Error('Selftest baseline failed');
   let probesProven = 0;
 
-  for (const [name, needle] of FILTERS) {
+  const plants = [
+    ...FILTERS,
+    ...FILTERS.map(([name]) => [`${name} schema`, `${name}: entityIdFilterSchema.optional()`]),
+    ...FILTERS.map(([name]) => [`${name} binding`, `params.push(entityIdFilterValues(query.data.${name}))`]),
+    ['company scope', 'i.operating_company_id = $1::uuid'],
+  ];
+  for (const [name, needle] of plants) {
     const mutated = original.replace(needle, `// ${name} filter removed`);
     if (mutated === original) {
       console.error(`SELFTEST SETUP FAILED: ${name} filter pattern not found to mutate.`);

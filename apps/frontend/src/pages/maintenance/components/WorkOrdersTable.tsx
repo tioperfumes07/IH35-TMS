@@ -4,7 +4,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { formatDateQboList } from "../../../lib/formatDate";
 import { Button } from "../../../components/Button";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
 import { useMemo, useState } from "react";
@@ -323,12 +323,11 @@ export function WorkOrdersTable({
             </fieldset>
             <div className="space-y-1 text-xs text-gray-600">
               <span>External vendor</span>
-              <EntityPicker
+              <EntityMultiSelect
                 kind="vendor"
                 operatingCompanyId={operatingCompanyId}
                 value={staged.draft.externalVendorFilter || null}
                 onChange={(next) => staged.setDraft({ ...staged.draft, externalVendorFilter: next ?? "" })}
-                allowCreate={false}
                 placeholder="All external vendors"
                 className="min-h-12 w-full sm:h-9 sm:min-h-0"
               />

@@ -1,17 +1,16 @@
 import type React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as mdataApi from "../../../api/mdata";
 import * as safetyApi from "../../../api/safety";
 import { MemoryRouter } from "react-router-dom";
 import { DrugAlcoholTab } from "../tabs/DrugAlcoholTab";
-import { pickCombo } from "../../../test-utils/pickCombo";
 import { ToastProvider } from "../../../components/Toast";
 
 /**
  * SAF-B24-residual: the "Selected:" driver preview must show the resolved driver name, not the raw uuid.
- * pickCombo drives the EntityPicker combobox (fireEvent-based — avoids userEvent.setup() break).
+ * Drives the shared multi-select filter; single-driver details stay separately scoped.
  */
 
 const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
@@ -61,13 +60,9 @@ describe("DrugAlcoholTab selected-driver label (SAF-B24-residual)", () => {
 
   it("shows the driver's resolved name in the 'Selected:' preview, not the raw uuid", async () => {
     render(wrap(<DrugAlcoholTab />));
-    const driverPicker = await screen.findByPlaceholderText("All drivers");
-    // EntityPicker's roster is a server-search query — open the listbox, then wait for it to
-    // resolve before picking (pickCombo's own open+pick is synchronous and would race the fetch).
-    fireEvent.focus(driverPicker);
-    fireEvent.click(driverPicker);
-    await screen.findByRole("option", { name: /Jordan Ruiz/ });
-    pickCombo(driverPicker, /Jordan Ruiz/);
+    const driverPicker = await screen.findByTestId("drug-alcohol-filter-driver");
+    fireEvent.click(within(driverPicker).getByRole("button"));
+    fireEvent.click(await within(driverPicker).findByRole("button", { name: /Jordan Ruiz/ }));
     // Labels resolve async via useDriverLabels → getDriverLabels; wait for map populate.
     await waitFor(() => expect(mdataApi.getDriverLabels).toHaveBeenCalled());
     const preview = await screen.findByText(/^Selected:/);
@@ -75,5 +70,21 @@ describe("DrugAlcoholTab selected-driver label (SAF-B24-residual)", () => {
       expect(preview.parentElement?.textContent).toContain("Jordan Ruiz");
     });
     expect(preview.parentElement?.textContent).not.toContain("driver-1");
+  });
+
+  it("sends every selected driver to history while disabling single-driver actions", async () => {
+    vi.mocked(mdataApi.listDrivers).mockResolvedValue({ total: 2, drivers: [
+      { id: "driver-1", first_name: "Jordan", last_name: "Ruiz", status: "Active" },
+      { id: "driver-2", first_name: "Alex", last_name: "Diaz", status: "Active" },
+    ] } as never);
+    render(wrap(<DrugAlcoholTab />));
+    const driverPicker = await screen.findByTestId("drug-alcohol-filter-driver");
+    fireEvent.click(within(driverPicker).getByRole("button"));
+    fireEvent.click(await within(driverPicker).findByRole("button", { name: /Jordan Ruiz/ }));
+    fireEvent.click(await within(driverPicker).findByRole("button", { name: /Alex Diaz/ }));
+    await waitFor(() => expect(safetyApi.listDrugProgramTests).toHaveBeenLastCalledWith(companyId, expect.objectContaining({ driver_id: "driver-1,driver-2" })));
+    expect((screen.getByRole("button", { name: "Save test" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByText(/^Selected:/)).toBeNull();
+    expect(vi.mocked(safetyApi.getDriverDrugProgramStatus).mock.calls.every(([id]) => !id.includes(","))).toBe(true);
   });
 });

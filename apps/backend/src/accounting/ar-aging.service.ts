@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { assignAgingBucket } from "./aging/buckets.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import {
@@ -50,6 +51,7 @@ export async function getArAgingReport(input: {
   userId: string;
   operating_company_id: string;
   as_of_date: string;
+  customer_id?: string;
 }): Promise<ArAgingReport> {
   return withCurrentUser(input.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
@@ -128,6 +130,7 @@ export async function getArAgingReport(input: {
           ON c.id = i.customer_id
           AND c.operating_company_id = i.operating_company_id
         WHERE i.operating_company_id = $1::uuid
+          AND ($3::uuid[] IS NULL OR i.customer_id = ANY($3::uuid[]))
           AND i.issue_date <= $2::date
           AND i.total_cents IS NOT NULL
           AND (i.voided_at IS NULL OR i.voided_at::date > $2::date)
@@ -161,7 +164,7 @@ export async function getArAgingReport(input: {
           , 0) > 0
         ORDER BY c.customer_name ASC, i.due_date ASC
       `,
-      [input.operating_company_id, effectiveAsOf]
+      [input.operating_company_id, effectiveAsOf, input.customer_id ? entityIdFilterValues(input.customer_id) : null]
     );
 
     const asOfTime = parseIsoDateOnly(effectiveAsOf);

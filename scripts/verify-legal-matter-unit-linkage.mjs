@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["legal","fleet"],"cols":["unit","connectivity","picker_law"],"leafRe":"^matters\\.(list|create|detail)$|^unit\\.profile\\.legal_reverse$","task":"THEATER-LEGAL-MATTER-UNIT-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 const LABEL = "verify-legal-matter-unit-linkage";
 const files = {
   service: "apps/backend/src/legal/matters.service.ts",
@@ -14,12 +15,14 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
   const failures = [];
+  failures.push(...multiSelectFilterProblems(s.list, { file: files.list, kind: 'unit', testId: 'legal-matters-filter-unit' }));
+  if (!s.service.includes('values.push(entityIdFilterValues(args.unit_id))') || !s.service.includes('m.operating_company_id = $1::uuid')) failures.push('bound unit list and company scope missing');
   if (!/data-testid="legal-matter-unit-picker"[\s\S]{0,500}kind="unit"/.test(s.form)) failures.push("matter form must expose canonical unit picker");
   if (!/unit_id:\s*optionalUuidOrNull\(form\.unit_id\)/.test(s.form)) failures.push("form must submit selected unit FK");
   if (!/FROM mdata\.units[\s\S]{0,200}COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid[\s\S]{0,100}deactivated_at IS NULL/.test(s.service)) failures.push("writer must validate active lease/owner-scoped unit");
   if ((s.service.match(/assertUnitInCompany\(client, input\.unit_id/g) ?? []).length < 2) failures.push("create and update must validate unit before write");
   if (!/unit_id,\s*\n\s*equipment_id/.test(s.service) || !/input\.unit_id \?\? null/.test(s.service)) failures.push("create must persist unit_id");
-  if (!/where\.push\(`m\.unit_id = \$\$\{values\.length\}`\)/.test(s.service)) failures.push("list must apply exact unit reverse predicate");
+  if (!/where\.push\(`m\.unit_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/.test(s.service)) failures.push("list must apply exact unit reverse predicate");
   if ((s.service.match(/u\.unit_number\s+AS unit_number/g) ?? []).length < 2 || (s.service.match(/LEFT JOIN mdata\.units\s+u\s+ON u\.id\s+= m\.unit_id/g) ?? []).length < 2) failures.push("list/detail payloads must resolve unit label");
   if (!/kind="unit"[\s\S]{0,160}matter\.unit_id[\s\S]{0,160}unit_number/.test(s.detail)) failures.push("matter detail must drill to canonical unit");
   if (!/LegalMattersReverseSection[\s\S]{0,220}filter=\{\{ unit_id: id \}\}/.test(s.profile)) failures.push("vehicle profile must mount exact matter reverse set");
@@ -28,7 +31,6 @@ function audit(s) {
   if (
     !/dataTestId="legal-matters-filter-unit"/.test(s.list) ||
     !/kind="unit"/.test(s.list) ||
-    !/allowCreate=\{false\}/.test(s.list) ||
     !/searchParams\.get\("unit_id"\)/.test(s.list)
   ) {
     failures.push("matters list must render EntityPicker unit filter (allowCreate=false) synced to ?unit_id=");
@@ -36,13 +38,17 @@ function audit(s) {
   return failures;
 }
 if (process.argv.includes("--selftest")) {
+  if (audit(source).length) throw new Error(audit(source).join('; '));
+  selftestMultiSelectFilterContract();
   const mutations = [
+    ['bound list','service',/values\.push\(entityIdFilterValues\(args\.unit_id\)\)/g,'values.push(args.unit_id)'],
+    ['list company','service',/m\.operating_company_id = \$1::uuid/g,'TRUE'],
     ["picker", "form", /kind="unit"/, 'kind="trailer"'],
     ["payload", "form", /unit_id:\s*optionalUuidOrNull\(form\.unit_id\)/, "unit_id: null"],
     ["scope", "service", /COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid/g, "TRUE"],
     ["active", "service", /deactivated_at IS NULL/g, "TRUE"],
     ["validate", "service", /assertUnitInCompany\(client, input\.unit_id/g, "skipUnitCheck(client, input.unit_id"],
-    ["filter", "service", /where\.push\(`m\.unit_id = \$\$\{values\.length\}`\)/, "where.push(`TRUE`)"],
+    ["filter", "service", /where\.push\(`m\.unit_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/, "where.push(`TRUE`)"],
     ["detail", "detail", /kind="unit"/, 'kind="driver"'],
     ["reverse", "profile", /(LegalMattersReverseSection[\s\S]{0,220})filter=\{\{ unit_id: id \}\}/, "$1filter={{ related_driver_id: id }}"],
     ["list-picker", "list", /dataTestId="legal-matters-filter-unit"/, 'dataTestId="broken-filter"'],

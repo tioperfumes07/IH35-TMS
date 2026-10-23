@@ -2,6 +2,7 @@
 /** @matrix-built {"modules":["safety"],"cols":["load","driver","connectivity","reverse_link","picker_law"],"leafRe":"^internal_fines\\.(list|create)$","task":"THEATER-INTERNAL-FINE-LOAD-LEAFRE","vertical":"column-wave"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["load","driver","connectivity","picker_law"],"leafRe":"^load\\.detail$","task":"THEATER-INTERNAL-FINE-LOAD-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 const L = "verify-internal-fine-load-reverse",
   c = fs.readFileSync(
     "apps/frontend/src/pages/safety/InternalFinesPage.tsx",
@@ -27,8 +28,10 @@ function audit(w, x, y, z) {
   )
     f.push("validated writer");
   if (
-    !/load_id: z\.string\(\)\.uuid\(\)\.optional/.test(x) ||
-    !/f\.related_load_id = \$\$\{values\.length\}/.test(x)
+    !/load_id: entityIdFilterSchema\.optional/.test(x) ||
+    !x.includes('f.related_load_id = ANY($${values.length}::uuid[])') ||
+    !x.includes('values.push(entityIdFilterValues(query.data.load_id))') ||
+    !x.includes('f.operating_company_id = $1::uuid')
   )
     f.push("exact scoped reverse");
   if (
@@ -58,9 +61,7 @@ function audit(w, x, y, z) {
   )
     f.push("internal fines list must honor load_id Open-queue URL filter");
   if (
-    !/dataTestId="internal-fines-filter-driver"/.test(w) ||
-    !/dataTestId="internal-fines-filter-load"/.test(w) ||
-    !/allowCreate=\{false\}/.test(w) ||
+    ['driver','load'].some(kind => multiSelectFilterProblems(w, {file: 'apps/frontend/src/pages/safety/InternalFinesPage.tsx', kind, testId: `internal-fines-filter-${kind}`}).length) ||
     !/setSearchParams/.test(w)
   )
     f.push("list reverse EntityPicker filters");
@@ -72,7 +73,10 @@ function audit(w, x, y, z) {
   return f;
 }
 if (process.argv.includes("--selftest")) {
+  if (audit(c,r,a,v).length) throw new Error(audit(c,r,a,v).join('; '));
+  const shared = selftestMultiSelectFilterContract();
   const m = [
+    ...['values.push(entityIdFilterValues(query.data.load_id))', 'f.operating_company_id = $1::uuid'].map(token => [token, c, r.replaceAll(token,'REMOVED'), a, v]),
     ["picker", c.replaceAll('kind="load"', 'kind="driver"'), r, a, v],
     [
       "payload",
@@ -95,7 +99,7 @@ if (process.argv.includes("--selftest")) {
       "schema",
       c,
       r.replaceAll(
-        "load_id: z.string().uuid().optional()",
+        "load_id: entityIdFilterSchema.optional()",
         "wrong_id: z.string()",
       ),
       a,
@@ -104,7 +108,7 @@ if (process.argv.includes("--selftest")) {
     [
       "sql",
       c,
-      r.replace("f.related_load_id = $${values.length}", "TRUE"),
+      r.replace("f.related_load_id = ANY($${values.length}::uuid[])", "TRUE"),
       a,
       v,
     ],
@@ -155,7 +159,7 @@ if (process.argv.includes("--selftest")) {
       console.error(`${L} SELFTEST FAIL — ${n}`);
       process.exit(1);
     }
-  console.log(`${L} SELFTEST PASS — ${m.length} mutations detected`);
+  console.log(`${L} SELFTEST PASS — ${m.length} mutations detected + ${shared} shared plants`);
   process.exit(0);
 }
 const f = audit(c, r, a, v);

@@ -102,7 +102,7 @@ export const COVERAGE_GAP_UNITS_SQL = `
     AND u.deactivated_at IS NULL
     AND ${excludeDemoPhantomSql("u.unit_number")}
     AND ${excludeSampleDataSql("u.is_sample_data")}
-    AND ($3::uuid IS NULL OR u.id = $3::uuid)
+    AND ($3::uuid[] IS NULL OR u.id = ANY($3::uuid[]))
   ORDER BY u.unit_number ASC
 `;
 
@@ -199,7 +199,7 @@ export const COVERAGE_GAP_UNITS_DETAIL_SQL = `
       AND u.deactivated_at IS NULL
       AND ${excludeDemoPhantomSql("u.unit_number")}
       AND ${excludeSampleDataSql("u.is_sample_data")}
-      AND ($2::uuid IS NULL OR u.id = $2::uuid)
+      AND ($2::uuid[] IS NULL OR u.id = ANY($2::uuid[]))
 
     UNION ALL
 
@@ -209,7 +209,7 @@ export const COVERAGE_GAP_UNITS_DETAIL_SQL = `
       AND a.asset_type IN ('dry_van', 'reefer', 'flatbed')
       AND a.status = 'active'
       AND ${excludeDemoPhantomSql("a.unit_code")}
-      AND ($2::uuid IS NULL OR a.id = $2::uuid)
+      AND ($2::uuid[] IS NULL OR a.id = ANY($2::uuid[]))
   )
   SELECT
     iu.unit_id::text            AS unit_id,

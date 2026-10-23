@@ -179,6 +179,8 @@ export function listSettlements(
       | "manual_paid"
       | Array<"unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid">;
     driver_id?: string;
+    limit?: number;
+    offset?: number;
   } = {}
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId });
@@ -189,7 +191,23 @@ export function listSettlements(
     params.set("payment_state", states);
   }
   if (options.driver_id) params.set("driver_id", options.driver_id);
+  if (options.limit != null) params.set("limit", String(options.limit));
+  if (options.offset != null) params.set("offset", String(options.offset));
   return apiRequest<{ settlements: SettlementListRow[]; total_count: number; kpi?: SettlementListKpi }>(`/api/v1/driver-finance/settlements?${params.toString()}`);
+}
+
+/** Board charts require the complete selected cohort, never the first server page. */
+export async function listAllSettlements(companyId: string, options: Parameters<typeof listSettlements>[1] = {}) {
+  const first = await listSettlements(companyId, { ...options, limit: 200, offset: 0 });
+  const settlements = [...first.settlements];
+  while (settlements.length < first.total_count) {
+    const page = await listSettlements(companyId, { ...options, limit: 200, offset: settlements.length });
+    if (page.total_count !== first.total_count || !page.settlements.length) throw new Error("Settlement cohort changed while loading; refresh to retry.");
+    settlements.push(...page.settlements);
+    if (new Set(settlements.map((row) => row.id)).size !== settlements.length) throw new Error("Settlement pagination repeated records; refresh to retry.");
+  }
+  if (settlements.length !== first.total_count) throw new Error("Settlement cohort count differs from the rows received.");
+  return { ...first, settlements };
 }
 
 export function getSettlement(id: string, companyId: string) {
@@ -591,16 +609,27 @@ export type SettlementDeductionListRow = {
 
 export function listSettlementDeductions(
   companyId: string,
-  filters?: { deduction_id?: string; driver_id?: string; status?: string; limit?: number }
+  filters?: { deduction_id?: string; driver_id?: string; status?: string; limit?: number; offset?: number }
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (filters?.deduction_id) params.set("deduction_id", filters.deduction_id);
   if (filters?.driver_id) params.set("driver_id", filters.driver_id);
   if (filters?.status) params.set("status", filters.status);
   if (filters?.limit != null) params.set("limit", String(filters.limit));
+  if (filters?.offset != null) params.set("offset", String(filters.offset));
   return apiRequest<{ deductions: SettlementDeductionListRow[] }>(
     `/api/v1/driver-finance/deductions?${params.toString()}`
   );
+}
+
+export async function listAllSettlementDeductions(companyId: string, filters: Parameters<typeof listSettlementDeductions>[1] = {}) {
+  const deductions: SettlementDeductionListRow[] = [];
+  for (;;) {
+    const page = await listSettlementDeductions(companyId, { ...filters, limit: 500, offset: deductions.length });
+    deductions.push(...page.deductions);
+    if (new Set(deductions.map((row) => row.id)).size !== deductions.length) throw new Error("Deduction pagination repeated records; refresh to retry.");
+    if (page.deductions.length < 500) return { deductions };
+  }
 }
 
 // SETL-DED-UI (owner item, deadline 05:30Z) — the deduction creator, typed kinds only (no 'other').

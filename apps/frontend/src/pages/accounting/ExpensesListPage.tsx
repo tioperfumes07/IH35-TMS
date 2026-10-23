@@ -11,7 +11,7 @@ import {
 } from "../../api/accounting";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { WizardReclassifyPanel } from "../settlements/WizardReclassifyPanel";
@@ -127,8 +127,7 @@ export function ExpensesListPage() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  // FILTER-MULTI-01: Load/Driver/Unit/Trailer stay single-value EntityPicker (search-as-you-type
-  // against the full fleet/roster) but are now immediate-apply, URL-synced directly — no staged
+  // Entity selections are CSV id sets sent to the server before pagination, URL-synced directly — no staged
   // draft/Apply/Cancel, matching every other filter on this page now.
   function setEntityFilterParam(key: "load_id" | "driver_id" | "unit_id" | "trailer_id", next: string) {
     setSearchParams(
@@ -486,12 +485,11 @@ export function ExpensesListPage() {
         />
         <label className="text-xs text-[#4B5563]">
           Load
-          <EntityPicker
+          <EntityMultiSelect
             kind="load"
             operatingCompanyId={companyId}
             value={deepLinkLoadId || null}
             onChange={(next) => setEntityFilterParam("load_id", next ?? "")}
-            allowCreate={false}
             placeholder="All loads"
             className="mt-1"
             dataTestId="expenses-filter-load"
@@ -499,12 +497,11 @@ export function ExpensesListPage() {
         </label>
         <label className="text-xs text-[#4B5563]">
           Driver
-          <EntityPicker
+          <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={deepLinkDriverId || null}
             onChange={(next) => setEntityFilterParam("driver_id", next ?? "")}
-            allowCreate={false}
             placeholder="All drivers"
             className="mt-1"
             dataTestId="expenses-filter-driver"
@@ -512,12 +509,11 @@ export function ExpensesListPage() {
         </label>
         <label className="text-xs text-[#4B5563]">
           Unit
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={deepLinkUnitId || null}
             onChange={(next) => setEntityFilterParam("unit_id", next ?? "")}
-            allowCreate={false}
             placeholder="All units"
             className="mt-1"
             dataTestId="expenses-filter-unit"
@@ -525,12 +521,11 @@ export function ExpensesListPage() {
         </label>
         <label className="text-xs text-[#4B5563]">
           Trailer
-          <EntityPicker
+          <EntityMultiSelect
             kind="trailer"
             operatingCompanyId={companyId}
             value={deepLinkTrailerId || null}
             onChange={(next) => setEntityFilterParam("trailer_id", next ?? "")}
-            allowCreate={false}
             placeholder="All trailers"
             className="mt-1"
             dataTestId="expenses-filter-trailer"

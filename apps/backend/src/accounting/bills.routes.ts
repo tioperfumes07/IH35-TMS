@@ -5,12 +5,14 @@ import { lineCategorizationRefusal } from "./line-categorization.js";
 import { AGING_BUCKET_IDS, agingWindowFromBucket } from "./aging/buckets.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { resolveAllocation } from "./allocation.js";
 import {
   BILL_LIST_SORT_SQL,
   BILL_PAYMENT_LIST_SORT_SQL,
   countAllBillsForCompany,
+  aggregateBillsForRegister,
   countBillsByVendor,
   createBill,
   getBillDetail,
@@ -70,7 +72,8 @@ export const DRIVER_BILL_REGISTER_SQL = `SELECT db.id::text, db.bill_number, db.
             -- "Unpaid" = open / approved / disputed; driver, load, date window, search). Every bind is typed (null = no filter).
             AND ($5::text[] IS NULL OR db.status = ANY($5::text[]))
             AND ($6::uuid IS NULL OR db.driver_id = $6::uuid)
-            AND ($7::uuid IS NULL OR db.load_id = $7::uuid)
+            AND ($7::uuid[] IS NULL OR db.load_id = ANY($7::uuid[]))
+            AND ($12::uuid[] IS NULL OR db.unit_id = ANY($12::uuid[]))
             AND ($8::date IS NULL OR (db.created_at AT TIME ZONE '${COMPANY_TIME_ZONE}')::date >= $8::date)
             AND ($9::date IS NULL OR (db.created_at AT TIME ZONE '${COMPANY_TIME_ZONE}')::date <= $9::date)
             AND ($10::text IS NULL OR db.bill_number ILIKE '%' || $10::text || '%' OR db.load_number ILIKE '%' || $10::text || '%'
@@ -83,6 +86,12 @@ export const DRIVER_BILL_REGISTER_SQL = `SELECT db.id::text, db.bill_number, db.
             ))
           ORDER BY db.created_at DESC, db.id DESC
           LIMIT $3 OFFSET $4`;
+
+// Reuse the exact register cohort, without pagination, for its full filtered totals.
+export const DRIVER_BILL_REGISTER_TOTAL_SQL = `WITH pagination_types AS (SELECT $3::integer AS page_size, $4::integer AS page_offset)
+  SELECT count(*)::int AS count,
+  COALESCE(sum(gross_amount_cents), 0)::bigint AS amount_cents
+  FROM (${DRIVER_BILL_REGISTER_SQL.replace("LIMIT $3 OFFSET $4", "")}) register_cohort`;
 
 /** LEAD 443.219 G-VOCAB — the register's status filter in the DRIVER-bill vocabulary (null = every status the base rule keeps). */
 export function driverBillStatusesForFilter(status: string | undefined): string[] | null {
@@ -132,9 +141,9 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   // LINK-F5171 — legal matter→bill reverse (create stamps legal_matter_id; list never filtered).
   legal_matter_id: z.string().uuid().optional(),
   // ACCT-F5036 — unit→bill reverse (create stamps unit_id; list never filtered).
-  unit_id: z.string().uuid().optional(),
+  unit_id: entityIdFilterSchema.optional(),
   // ACCT-F5037 — load→bill reverse via accounting.bill_lines.load_id (header has no load_id).
-  load_id: z.string().uuid().optional(),
+  load_id: entityIdFilterSchema.optional(),
   // ROUND 297 driver-profile audit — driver / trailer profile Bills panels sent these and the schema dropped them,
   // so a driver's Bills panel listed every bill in the company (with Pay buttons).
   driver_id: z.string().uuid().optional(),
@@ -151,7 +160,7 @@ const billRegisterQuerySchema = listBillsQuerySchema.extend({
 });
 
 const listBillPaymentsQuerySchema = companyQuerySchema.extend({
-  vendor_id: z.string().trim().min(1).optional(),
+  vendor_id: z.union([entityIdFilterSchema, z.string().trim().min(1).max(100).regex(/^[^,]+$/)]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   // HIDE-VOIDED-01 — default hide revoked; include_voided=true shows voided paper.
@@ -451,19 +460,17 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       limit: query.data.limit,
       offset: query.data.offset,
     });
-    const driverRows = query.data.bill_type === "vendor_bill" ? [] : await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
-      const result = await client.query(
-        DRIVER_BILL_REGISTER_SQL,
-        [query.data.operating_company_id, query.data.status === "all" || query.data.status === "voided", query.data.limit, query.data.offset,
-          driverBillStatusesForFilter(query.data.status), query.data.driver_id ?? null, query.data.load_id ?? null,
+    const driverResult = query.data.bill_type === "vendor_bill" ? { rows: [], totals: { count: 0, amount_cents: 0 } } : await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
+      const values = [query.data.operating_company_id, query.data.status === "all" || query.data.status === "voided", query.data.limit, query.data.offset,
+          driverBillStatusesForFilter(query.data.status), query.data.driver_id ?? null, query.data.load_id ? entityIdFilterValues(query.data.load_id) : null,
           query.data.date_from ?? null, query.data.date_to ?? null, query.data.search?.trim() || null,
-          query.data.vendor_id ?? null]
-      );
-      return result.rows;
+          query.data.vendor_id ?? null, query.data.unit_id ? entityIdFilterValues(query.data.unit_id) : null];
+      const result = await client.query(DRIVER_BILL_REGISTER_SQL, values);
+      const total = await client.query(DRIVER_BILL_REGISTER_TOTAL_SQL, values);
+      return { rows: result.rows, totals: { count: Number(total.rows[0]?.count ?? 0), amount_cents: Number(total.rows[0]?.amount_cents ?? 0) } };
     });
-
-    const vendorTotalCents = vendorRows.reduce((sum: number, row: { amount_cents?: number | string | null }) => sum + Number(row.amount_cents ?? 0), 0);
-    const driverTotalCents = driverRows.reduce((sum: number, row: { gross_amount_cents?: number | string | null }) => sum + Number(row.gross_amount_cents ?? 0), 0);
+    const driverRows = driverResult.rows;
+    const vendorTotals = query.data.bill_type === "driver_bill" ? { count: 0, amount_cents: 0 } : await aggregateBillsForRegister(String(user.uuid), query.data.operating_company_id, { ...listOptions, vendorId: query.data.vendor_id });
     // R-102-B item 5 — disclosed count: company-wide, both bill tables, independent of every
     // non-status filter (vendor/date/search/etc.) so it always states the true hidden count.
     const voidedCount = await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
@@ -487,8 +494,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         ...driverRows.map((bill: unknown) => ({ bill_type: "driver_bill" as const, bill })),
       ],
       totals: {
-        vendor_bill: { count: vendorRows.length, amount_cents: vendorTotalCents },
-        driver_bill: { count: driverRows.length, amount_cents: driverTotalCents },
+        vendor_bill: vendorTotals,
+        driver_bill: driverResult.totals,
       },
       voided_count: voidedCount,
     };

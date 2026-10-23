@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getPodDocuments, reviewPodDocument, type PodDocumentSummary } from "../../api/dispatch";
 import { LoadBolPanel } from "../../components/dispatch/LoadBolPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -185,14 +185,12 @@ export function PodReviewPage() {
         <label className="text-xs">
           Filter by load
           <div className="mt-1" data-testid="pod-load-filter">
-            <EntityPicker
+            <EntityMultiSelect
               kind="load"
               operatingCompanyId={companyId}
               value={staged.draft.loadId || null}
               onChange={(v) => staged.setDraft({ ...staged.draft, loadId: v ?? "" })}
-              enabled={Boolean(companyId)}
-              allowCreate={false}
-              allowClear
+              disabled={!companyId}
               placeholder="All loads"
             />
           </div>
@@ -219,7 +217,7 @@ export function PodReviewPage() {
     <div className="p-4" data-testid="dispatch-pod-review-page">
       <PageHeader title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
 
-      {loadId ? <LoadBolPanel loadId={loadId} companyId={companyId} /> : null}
+      {loadId && !loadId.includes(",") ? <LoadBolPanel loadId={loadId} companyId={companyId} /> : null}
 
       <div className="mt-4">
         {podsQuery.isError ? (

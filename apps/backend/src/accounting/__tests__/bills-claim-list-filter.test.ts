@@ -46,14 +46,14 @@ describe("accounting/bills ACCT-F5035-CLAIM-LIST-FILTER-REVERSE", () => {
 describe("accounting/bills ACCT-F5036-UNIT-LIST-FILTER-REVERSE", () => {
   it("GET list accepts optional unit_id", () => {
     expect(routes).toMatch(
-      /listBillsQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?unit_id: z\.string\(\)\.uuid\(\)\.optional\(\),/
+      /listBillsQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?unit_id: entityIdFilterSchema\.optional\(\),/
     );
   });
 
   it("passes unitId into listBills and filters b.unit_id", () => {
     expect(routes).toContain("unitId: query.data.unit_id");
     expect(service).toContain("if (options.unitId) {");
-    expect(service).toContain("where.push(`b.unit_id = $${values.length}::uuid`);");
+    expect(service).toContain("where.push(`b.unit_id = ANY($${values.length}::uuid[])`);");
     const hits = service.split("if (options.unitId) {").length - 1;
     expect(hits).toBeGreaterThanOrEqual(2);
   });
@@ -70,14 +70,14 @@ describe("accounting/bills ACCT-F5036-UNIT-LIST-FILTER-REVERSE", () => {
 describe("accounting/bills ACCT-F5037-LOAD-LINE-LIST-FILTER-REVERSE", () => {
   it("GET list accepts optional load_id", () => {
     expect(routes).toMatch(
-      /listBillsQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?load_id: z\.string\(\)\.uuid\(\)\.optional\(\),/
+      /listBillsQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?load_id: entityIdFilterSchema\.optional\(\),/
     );
   });
 
   it("passes loadId and filters via EXISTS on bill_lines.load_id", () => {
     expect(routes).toContain("loadId: query.data.load_id");
     expect(service).toContain("if (options.loadId) {");
-    expect(service).toContain("AND bl.load_id = $${values.length}::uuid");
+    expect(service).toContain("AND bl.load_id = ANY($${values.length}::uuid[])");
     const hits = service.split("if (options.loadId) {").length - 1;
     expect(hits).toBeGreaterThanOrEqual(2);
   });

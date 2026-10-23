@@ -7,6 +7,7 @@
 // tractors + mdata.equipment trailers) via the basis lines; the assessed tax feeds the accrual poster.
 
 import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { entityIdFilterValues } from "../../_helpers/entity-filter-list.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -128,14 +129,14 @@ export async function listRenditions(client: DbClient, operatingCompanyId: strin
   const res = await client.query<Rendition>(
     `${RENDITION_SELECT}
      WHERE r.operating_company_id = $1::uuid AND r.is_active
-       AND ($2::uuid IS NULL OR EXISTS (
+       AND ($2::uuid[] IS NULL OR EXISTS (
          SELECT 1
          FROM compliance.property_tax_rendition_lines l
          WHERE l.rendition_id = r.id AND l.operating_company_id = r.operating_company_id
-           AND l.unit_id = $2::uuid AND l.is_active
+           AND l.unit_id = ANY($2::uuid[]) AND l.is_active
        ))
      ORDER BY r.tax_year DESC, d.county`,
-    [operatingCompanyId, unitId ?? null]
+    [operatingCompanyId, unitId ? entityIdFilterValues(unitId) : null]
   );
   return res.rows.map(normalizeRendition);
 }

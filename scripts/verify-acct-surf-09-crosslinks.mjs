@@ -143,8 +143,10 @@ function contractErrors(src) {
   if (!src.settlementsPage.includes("/accounting/escrow")) {
     errors.push("VERIFY-4: SettlementsPage subnav must cross-link to /accounting/escrow");
   }
-  if (!src.settlementsPage.includes("listSettlements")) {
-    errors.push("VERIFY-3: SettlementsPage must load via listSettlements API");
+  if (!src.settlementsPage.includes("listAllSettlements(companyId,") ||
+      !src.settlementsApi.includes("await listSettlements(companyId, { ...options, limit: 200, offset: 0 })") ||
+      !src.settlementsApi.includes("await listSettlements(companyId, { ...options, limit: 200, offset: settlements.length })")) {
+    errors.push("VERIFY-3: SettlementsPage must use the company-scoped uncapped listSettlements API consumer");
   }
   // FAIL-SETL-KPI-PERIOD — This Period / YTD must not both equal settlements.length (list-length theater).
   if (/this_period:\s*settlements\.length/.test(src.settlementsPage) || /ytd_settlements:\s*settlements\.length/.test(src.settlementsPage)) {
@@ -232,11 +234,11 @@ function selftest() {
     // manual_paid payment-state filter (VERIFY-1) — both checked below but missing from this fixture
     // until now, so the selftest's own "good" baseline always failed regardless of real code.
     settlementsPage:
-      'to: "/accounting/escrow"\nlistSettlements\n"settlements-kpi-base"\nkpiSettlements\nmanual_paid\nytdYear\ngetFullYear\nthis_period: kpiSettlements.filter(isInThisPeriod).length\nytd_settlements: kpiSettlements.filter(isYtd).length',
+      'to: "/accounting/escrow"\nlistAllSettlements(companyId, {})\n"settlements-kpi-base"\nkpiSettlements\nmanual_paid\nytdYear\ngetFullYear\nthis_period: kpiSettlements.filter(isInThisPeriod).length\nytd_settlements: kpiSettlements.filter(isYtd).length',
     hubPage: '/accounting/factoring\n/driver-finance/settlements',
     accountRegister: "/driver-finance/settlements",
     factoringApi: "listFactoringAdvances /api/v1/accounting/factoring-advances\nlistEscrowAccounts /api/v1/accounting/escrow/accounts",
-    settlementsApi: "listSettlements /api/v1/driver-finance/settlements",
+    settlementsApi: "listSettlements /api/v1/driver-finance/settlements\nawait listSettlements(companyId, { ...options, limit: 200, offset: 0 })\nawait listSettlements(companyId, { ...options, limit: 200, offset: settlements.length })",
     factoringRoutes: "INSERT INTO accounting.factoring_advances",
     escrowService: "INSERT INTO accounting.escrow_accounts\nINSERT INTO accounting.escrow_postings",
     settlementsRoutes: "INSERT INTO driver_finance.driver_settlements",
@@ -264,6 +266,13 @@ function selftest() {
   if (!contractErrors(kpiTheater).some((e) => e.includes("This Period") || e.includes("YTD"))) {
     console.error(`${LABEL} --selftest FAIL KPI period theater not caught`);
     process.exit(1);
+  }
+  for (const [field, needle] of [
+    ["settlementsPage", "listAllSettlements(companyId,"],
+    ["settlementsApi", "...options, limit: 200, offset: settlements.length"],
+  ]) {
+    const broken = { ...good, [field]: good[field].replace(needle, "REMOVED") };
+    if (!contractErrors(broken).some(e => e.includes("uncapped"))) throw new Error(`uncapped read plant survived: ${field}`);
   }
   console.log(`${LABEL}: selftest PASS`);
 }

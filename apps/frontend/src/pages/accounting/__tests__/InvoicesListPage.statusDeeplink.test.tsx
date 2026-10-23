@@ -200,7 +200,7 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
     await waitFor(() => expect(accountingApi.listInvoices).toHaveBeenCalledWith(COMPANY_ID, expect.objectContaining({ status: ["sent"] })));
     const user = userEvent.setup();
     await user.click(statusTrigger());
-    await user.click(within(screen.getByRole("listbox")).getByRole("button", { name: "Partial" }));
+    await user.click(within(screen.getByRole("group")).getByRole("button", { name: "Partial" }));
     await waitFor(() => {
       const q = screen.getByTestId("location-search").textContent ?? "";
       expect(q).toContain("status=sent");
@@ -218,7 +218,7 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
     const user = userEvent.setup();
     await user.click(await screen.findByTestId("invoices-filter-with-balance"));
     await user.click(statusTrigger());
-    await user.click(within(screen.getByRole("listbox")).getByRole("button", { name: "Sent" }));
+    await user.click(within(screen.getByRole("group")).getByRole("button", { name: "Sent" }));
 
     await waitFor(() => {
       const q = screen.getByTestId("location-search").textContent ?? "";

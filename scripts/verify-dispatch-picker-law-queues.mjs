@@ -9,6 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-dispatch-picker-law-queues";
@@ -23,7 +24,6 @@ const CHECKS = [
       /dataTestId="intransit-issues-filter-driver"/,
       /dataTestId="intransit-issues-filter-load"/,
       /dataTestId="intransit-issues-filter-unit"/,
-      /allowCreate=\{false\}/,
       /setSearchParams/,
       /searchParams\.get\("driver_id"\)/,
     ],
@@ -42,11 +42,13 @@ function run(root = ROOT) {
       continue;
     }
     const src = fs.readFileSync(abs, "utf8");
+    const kinds = c.name === 'AssignmentHistoryPage' ? ['driver'] : c.name === 'PodReviewPage' ? ['load'] : c.name === 'InTransitIssuesPage' ? ['driver','load','unit'] : [];
+    for (const kind of kinds) fails.push(...multiSelectFilterProblems(src,{file:c.file,kind}));
     if (c.require) {
       for (const re of c.require) {
         if (!re.test(src)) fails.push(`${c.name}: missing ${re}`);
       }
-    } else if (!c.re.test(src)) {
+    } else if (!kinds.length && !c.re.test(src)) {
       fails.push(`${c.name}: no picker`);
     }
   }
@@ -54,6 +56,7 @@ function run(root = ROOT) {
 }
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const live = run();
   const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".dispatch-picker-selftest-"));
   try {

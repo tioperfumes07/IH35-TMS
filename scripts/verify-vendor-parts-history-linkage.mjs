@@ -18,7 +18,7 @@ function audit(s) {
   if (!/EXISTS \([\s\S]{0,160}FROM mdata\.vendors[\s\S]{0,160}deactivated_at IS NULL/.test(s.route)) failures.push("writer must validate active tenant vendor");
   if (!/FROM maintenance\.parts_inventory[\s\S]{0,100}operating_company_id = \$2::uuid/.test(s.route)) failures.push("writer must validate optional tenant part FK");
   if (!/linked_entity_not_in_operating_company/.test(s.route)) failures.push("invalid links must fail before insert");
-  if (!/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/pil\.vendor_id = \$\$\{values\.length\}::uuid/.test(s.route)) failures.push("list route must apply exact vendor predicate");
+  if (!/vendor_id:\s*entityIdFilterSchema\.optional\(\)/.test(s.route) || !/pil\.vendor_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(s.route) || !s.route.includes('values.push(entityIdFilterValues(query.data.vendor_id))')) failures.push("list route must apply exact validated vendor array predicate and binding");
   if (!/filters\?: \{ vendor_id\?: string; work_order_id\?: string; unit_id\?: string \}/.test(s.api) || !/query\.set\("vendor_id", filters\.vendor_id\)/.test(s.api)) failures.push("client must forward vendor reverse filter alongside WO/unit filters");
   // LEAD 443.99 class B (2026-10-12) — reverse page + range anchors.
   //   old rule: getPartsAssignmentsPage(operatingCompanyId, { vendor_id: vendorId }) and, when capped,
@@ -47,8 +47,10 @@ if (process.argv.includes("--selftest")) {
     ["vendor validation", "route", /deactivated_at IS NULL/, "TRUE"],
     ["part validation", "route", /FROM maintenance\.parts_inventory/, "FROM maintenance.parts_catalog"],
     ["reject", "route", /linked_entity_not_in_operating_company/, "invalid_link"],
-    ["schema", "route", /vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, ""],
-    ["filter", "route", /pil\.vendor_id = \$\$\{values\.length\}::uuid/, "TRUE"],
+    ["schema", "route", /vendor_id:\s*entityIdFilterSchema\.optional\(\)/, "vendor_id: z.string().optional()"],
+    ["filter", "route", /pil\.vendor_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/, "TRUE"],
+    ["binding", "route", /values\.push\(entityIdFilterValues\(query\.data\.vendor_id\)\)/, "values.push([])"],
+    ["two IDs truncated", "route", /values\.push\(entityIdFilterValues\(query\.data\.vendor_id\)\)/, "values.push(entityIdFilterValues(query.data.vendor_id).slice(0, 1))"],
     ["api", "api", /query\.set\("vendor_id", filters\.vendor_id\)/g, 'query.set("status", filters.vendor_id)'],
     ["reverse", "reverse", /getPartsAssignmentsPage\(operatingCompanyId, \{ vendor_id: vendorId,/, "getPartsAssignmentsPage(operatingCompanyId, {"],
     ["error", "reverse", /ListErrorBanner/g, "MissingError"],

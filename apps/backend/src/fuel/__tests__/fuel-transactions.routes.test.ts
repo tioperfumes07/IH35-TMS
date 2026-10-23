@@ -87,11 +87,11 @@ describe("fuel/fuel-transactions.routes RANK3-FUEL-OFFICE-POST-CREATE", () => {
 // PR #6319), but the GET list endpoint never did — mirrors #6324's accident list filter exactly.
 describe("fuel/fuel-transactions.routes EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING", () => {
   it("GET list accepts an optional trailer_id filter", () => {
-    expect(routes).toMatch(/listFuelTransactionsQuerySchema = z\.object\(\{[\s\S]*?trailer_id: z\.string\(\)\.uuid\(\)\.optional\(\),/);
+    expect(routes).toMatch(/listFuelTransactionsQuerySchema = z\.object\(\{[\s\S]*?trailer_id: entityIdFilterSchema\.optional\(\),/);
   });
 
   it("applies the trailer_id filter as a bound WHERE predicate", () => {
-    expect(routes).toContain("filters.push(`ft.trailer_id = $${values.length}`);");
+    expect(routes).toContain("filters.push(`ft.trailer_id = ANY($${values.length}::uuid[])`);");
   });
 
   it("joins mdata.equipment for a trailer_number display column, company-scoped like unit_id", () => {

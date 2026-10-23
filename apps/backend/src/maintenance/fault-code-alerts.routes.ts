@@ -20,16 +20,14 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { driverAtTimeWithLoadFallbackSql } from "./driver-attribution.js";
 import { faultDescriptionSql, faultProposalJoinSql } from "./fault-catalog-proposal.js";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 
 const querySchema = z
   .object({
     operating_company_id: z.string().uuid(),
-    unit_id: z.string().uuid().optional(),
-    driver_id: z.string().uuid().optional(),
+    unit_id: entityIdFilterSchema.optional(),
+    driver_id: entityIdFilterSchema.optional(),
     limit: z.coerce.number().int().min(1).max(200).default(50),
-  })
-  .refine((v) => Boolean(v.unit_id) !== Boolean(v.driver_id) || (!v.unit_id && !v.driver_id), {
-    message: "pass at most one of unit_id or driver_id",
   });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
@@ -52,12 +50,12 @@ export async function registerFaultCodeAlertsRoutes(app: FastifyInstance) {
       const conditions = ["h.operating_company_id = $1::uuid"];
       const values: unknown[] = [q.operating_company_id];
       if (q.unit_id) {
-        values.push(q.unit_id);
-        conditions.push(`h.unit_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(q.unit_id));
+        conditions.push(`h.unit_id = ANY($${values.length}::uuid[])`);
       }
       let driverFilterIdx: number | null = null;
       if (q.driver_id) {
-        values.push(q.driver_id);
+        values.push(entityIdFilterValues(q.driver_id));
         driverFilterIdx = values.length;
       }
       values.push(q.limit);
@@ -92,7 +90,7 @@ export async function registerFaultCodeAlertsRoutes(app: FastifyInstance) {
           ${faultProposalJoinSql("h")}
           LEFT JOIN mdata.drivers d ON d.id = driver_at_time.driver_id
           WHERE ${conditions.join(" AND ")}
-          ${driverFilterIdx ? `AND driver_at_time.driver_id = $${driverFilterIdx}::uuid` : ""}
+          ${driverFilterIdx ? `AND driver_at_time.driver_id = ANY($${driverFilterIdx}::uuid[])` : ""}
           ORDER BY h.occurred_at DESC
           LIMIT $${limitIdx}
         `,

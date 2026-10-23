@@ -16,6 +16,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -594,12 +595,11 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       >
         <label className="text-xs text-[#4B5563]">
           Driver
-          <EntityPicker
+          <EntityMultiSelect
             kind="driver"
             operatingCompanyId={operatingCompanyId}
             value={draft.driverId || null}
             onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
-            allowCreate={false}
             placeholder="All drivers"
             className="mt-1 block min-w-[10rem]"
             dataTestId={`${config.pageTestId}-filter-driver`}
@@ -607,12 +607,11 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         </label>
         <label className="text-xs text-[#4B5563]">
           Unit
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={operatingCompanyId}
             value={draft.unitId || null}
             onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
-            allowCreate={false}
             placeholder="All units"
             className="mt-1 block min-w-[8rem]"
             dataTestId={`${config.pageTestId}-filter-unit`}
@@ -620,12 +619,11 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         </label>
         <label className="text-xs text-[#4B5563]">
           Load
-          <EntityPicker
+          <EntityMultiSelect
             kind="load"
             operatingCompanyId={operatingCompanyId}
             value={draft.loadId || null}
             onChange={(next) => staged.setDraft((d) => ({ ...d, loadId: next ?? "" }))}
-            allowCreate={false}
             placeholder="All loads"
             className="mt-1 block min-w-[8rem]"
             dataTestId={`${config.pageTestId}-filter-load`}
@@ -633,12 +631,11 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         </label>
         <label className="text-xs text-[#4B5563]">
           Trailer
-          <EntityPicker
+          <EntityMultiSelect
             kind="trailer"
             operatingCompanyId={operatingCompanyId}
             value={draft.trailerId || null}
             onChange={(next) => staged.setDraft((d) => ({ ...d, trailerId: next ?? "" }))}
-            allowCreate={false}
             placeholder="All trailers"
             className="mt-1 block min-w-[8rem]"
             dataTestId={`${config.pageTestId}-filter-trailer`}

@@ -11,7 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 
@@ -138,12 +138,11 @@ export function DashcamViewerPage() {
       <div className="flex flex-wrap items-end gap-3" data-testid="dashcam-filters">
         <label className="text-xs text-[#4B5563]">
           Unit
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={staged.draft.unitId || null}
             onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
-            allowCreate={false}
             placeholder="All units"
             className="mt-1"
             dataTestId="dashcam-filter-unit"

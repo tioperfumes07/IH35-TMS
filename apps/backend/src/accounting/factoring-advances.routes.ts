@@ -3,6 +3,7 @@ import { BANKING_MATCH_OR_CATEGORIZE, FACTORING_RESERVE_ENGINE, LEGACY_FACTORING
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { listFactorReserveBalances, postFactoringFeeExpenseEvent } from "./factoring-fees-posting/poster.service.js";
@@ -41,7 +42,7 @@ const listQuerySchema = companyQuerySchema.extend({
   search: z.string().trim().optional(),
   // LINK-F5171/LINK-F5184: factoring:accounting.list reverse — a load can find its own advance
   // batch(es) via the invoice it was submitted through (accounting.invoices.factoring_advance_id).
-  load_id: z.string().uuid().optional(),
+  load_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
 });
 
@@ -283,15 +284,15 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         where.push(`(fa.display_id ILIKE $${idx} OR COALESCE(fa.submission_batch_ref, '') ILIKE $${idx})`);
       }
       if (q.load_id) {
-        values.push(q.load_id);
+        values.push(entityIdFilterValues(q.load_id));
         // Load -> its advances: through the invoice it was submitted on, OR directly when the factor bought the
         // load before it could be invoiced (source_load_id, migration 202615170800).
         where.push(
-          `(fa.source_load_id = $${values.length}::uuid OR EXISTS (
+          `(fa.source_load_id = ANY($${values.length}::uuid[]) OR EXISTS (
              SELECT 1 FROM accounting.invoices i
              WHERE i.factoring_advance_id = fa.id
                AND i.operating_company_id = fa.operating_company_id
-               AND i.source_load_id = $${values.length}::uuid
+               AND i.source_load_id = ANY($${values.length}::uuid[])
            ))`
         );
       }

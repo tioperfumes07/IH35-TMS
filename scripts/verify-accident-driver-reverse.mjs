@@ -35,14 +35,17 @@ const L = "verify-accident-driver-reverse",
   self = fs.readFileSync(GUARD, "utf8");
 function audit(w, x, y, z, m = matrix, fd = feed, sl = self) {
   const f = [];
+  if (!x.includes('values.push(entityIdFilterValues(query.data.driver_id))')) f.push('bound UUID-list values');
+  if (!x.includes('ar.operating_company_id = $1::uuid')) f.push('company-scoped reverse rows');
+
   const routeStart = x.indexOf('"/api/v1/safety/accidents"');
   const routeEnd = x.indexOf("app.get(", routeStart + 30);
   const accidentRoute = routeStart >= 0 ? x.slice(routeStart, routeEnd < 0 ? x.length : routeEnd) : "";
   if (!/kind="driver"/.test(w)) f.push("driver picker");
   if (!/driver_id: nullableUuid/.test(x)) f.push("driver FK writer");
   if (
-    !/driver_id: z\.string\(\)\.uuid\(\)\.optional/.test(x) ||
-    !/ar\.driver_id = \$\$\{values\.length\}/.test(x)
+    !/driver_id: entityIdFilterSchema\.optional/.test(x) ||
+    !/ar\.driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(x)
   )
     f.push("exact server driver filter");
   if (
@@ -127,7 +130,11 @@ function audit(w, x, y, z, m = matrix, fd = feed, sl = self) {
   return f;
 }
 if (process.argv.includes("--selftest")) {
+  if (audit(c,r,a,v).length) throw new Error('selftest baseline failed: '+audit(c,r,a,v).join('; '));
   const m = [
+["bound-list",c,r.replaceAll("values.push(entityIdFilterValues(query.data.driver_id))","values.push(query.data.driver_id)"),a,v],
+["company-scope",c,r.replaceAll("ar.operating_company_id = $1::uuid","TRUE"),a,v],
+
     ["picker", c.replace(/kind="driver"/g, 'kind="unit"'), r, a, v],
     [
       "writer",
@@ -140,7 +147,7 @@ if (process.argv.includes("--selftest")) {
       "schema",
       c,
       r.replaceAll(
-        "driver_id: z.string().uuid().optional",
+        "driver_id: entityIdFilterSchema.optional",
         "wrong_id: z.string().uuid().optional",
       ),
       a,
@@ -149,7 +156,7 @@ if (process.argv.includes("--selftest")) {
     [
       "sql",
       c,
-      r.replace(/ar\.driver_id = \$\$\{values\.length\}/, "TRUE"),
+      r.replace(/ar\.driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/, "TRUE"),
       a,
       v,
     ],
@@ -278,7 +285,7 @@ if (process.argv.includes("--selftest")) {
   });
   if (!audit(c, r, a, v, matrix, JSON.stringify(fj)).length)
     throw new Error("feed mutation survived");
-  console.log(`${L} SELFTEST PASS — 25 mutations detected`);
+  console.log(`${L} SELFTEST PASS — 27 mutations detected`);
   process.exit(0);
 }
 const f = audit(c, r, a, v);

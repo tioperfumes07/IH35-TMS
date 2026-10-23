@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { getHosDaily, getHosEvents, getHosDailyRoster } from "./hos-tracker.service.js";
@@ -17,6 +18,7 @@ const dailySchema = z.object({
 
 const rosterSchema = z.object({
   operating_company_id: z.string().uuid(),
+  driver_id: entityIdFilterSchema.optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
@@ -53,7 +55,7 @@ export async function registerHosTrackerRoutes(app: FastifyInstance) {
 
     const now = new Date();
     const roster = await withCurrentUser(user.uuid, (client) =>
-      getHosDailyRoster(client, q.data.operating_company_id, q.data.date, now)
+      getHosDailyRoster(client, q.data.operating_company_id, q.data.date, now, q.data.driver_id ? entityIdFilterValues(q.data.driver_id) : undefined)
     );
     return reply.send(roster);
   });

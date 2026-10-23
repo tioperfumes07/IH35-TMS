@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSubmissionQueue, submitFactoringQueueBatch, type SubmissionQueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -240,12 +240,11 @@ export function SubmissionQueue() {
       <div className="relative flex flex-wrap items-end gap-3" data-testid="factoring-submit-filters">
         <label className="text-xs text-[#4B5563]">
           Customer
-          <EntityPicker
+          <EntityMultiSelect
             kind="customer"
             operatingCompanyId={companyId}
             value={filterDraft.customerId || null}
             onChange={(next) => setCustomerFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All customers"
             className="mt-1"
             dataTestId="factoring-submit-filter-customer"
@@ -253,12 +252,11 @@ export function SubmissionQueue() {
         </label>
         <label className="text-xs text-[#4B5563]">
           Load
-          <EntityPicker
+          <EntityMultiSelect
             kind="load"
             operatingCompanyId={companyId}
             value={filterDraft.loadId || null}
             onChange={(next) => setLoadFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All loads"
             className="mt-1"
             dataTestId="factoring-submit-filter-load"

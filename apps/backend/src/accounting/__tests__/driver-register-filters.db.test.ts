@@ -29,7 +29,7 @@ describe.skipIf(!url)("driver register filters on PostgreSQL16", () => {
       CREATE TABLE mdata.drivers (id uuid, operating_company_id uuid, first_name text, last_name text, is_sample_data boolean);
       CREATE TABLE mdata.vendors (id uuid, operating_company_id uuid, driver_id uuid, qbo_vendor_id text, is_sample_data boolean);
       CREATE TABLE driver_finance.driver_bills (id uuid, operating_company_id uuid, bill_number text, driver_id uuid,
-        load_id uuid, load_number text, miles_basis numeric, rate_per_mile_cents int, miles_deadhead numeric,
+        load_id uuid, unit_id uuid, load_number text, miles_basis numeric, rate_per_mile_cents int, miles_deadhead numeric,
         rate_empty_per_mile_cents int, gross_amount_cents int, status text, settled_in_settlement_id uuid,
         voided_at timestamptz, created_at timestamptz, is_sample_data boolean);
       CREATE TABLE driver_finance.driver_settlements (id uuid, operating_company_id uuid, source_document_ref text, status text, voided_at timestamptz, reversed_at timestamptz);
@@ -42,7 +42,7 @@ describe.skipIf(!url)("driver register filters on PostgreSQL16", () => {
   });
   afterAll(async () => { if (client) { await client.query("ROLLBACK"); await client.end(); } });
   const read = (overrides: Record<number, unknown> = {}) => {
-    const binds: unknown[] = [company, false, 100, 0, ["approved"], null, null, null, null, null, null];
+    const binds: unknown[] = [company, false, 100, 0, ["approved"], null, null, null, null, null, null, null];
     for (const [i,v] of Object.entries(overrides)) binds[Number(i)-1] = v;
     const parameterCount = Math.max(...[...DRIVER_BILL_REGISTER_SQL.matchAll(/\$(\d+)/g)].map(m => Number(m[1])));
     return client.query(DRIVER_BILL_REGISTER_SQL, binds.slice(0, parameterCount));
@@ -57,7 +57,7 @@ describe.skipIf(!url)("driver register filters on PostgreSQL16", () => {
     expect((await read({8:"2026-10-22",9:"2026-10-22"})).rowCount).toBe(0);
   });
   it("preserves driver, load, status and search filters together", async () => {
-    expect((await read({6:driver,7:load,10:"BILL-1",11:vendor})).rowCount).toBe(1);
+    expect((await read({6:driver,7:[load],10:"BILL-1",11:vendor})).rowCount).toBe(1);
     expect((await read({5:["paid"]})).rowCount).toBe(0);
     expect((await read({6:driver2,11:vendor})).rowCount).toBe(0);
   });

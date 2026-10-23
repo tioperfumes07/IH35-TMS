@@ -17,8 +17,8 @@ const checks = [
   ["table", /mutationFn: \(input: \{ companyId: string; generation: number; draft: PurchaseForm \}\) =>[\s\S]{0,80}recordPartsPurchase\(input\.companyId, \{[\s\S]{0,180}part_description: input\.draft\.part_description[\s\S]{0,180}vendor_id: input\.draft\.vendor_id \|\| undefined/, "purchase submit binds the immutable selected-company snapshot and vendor FK"],
   ["table", /<EntityPicker[\s\S]{0,120}kind="vendor"[\s\S]{0,120}operatingCompanyId=\{companyId\}[\s\S]{0,120}value=\{form\.vendor_id \|\| null\}[\s\S]{0,160}onChange=\{\(next\) => setForm\(\(v\) => \(\{ \.\.\.v, vendor_id: next \?\? "" \}\)\)\}[\s\S]{0,180}allowCreate/, "purchase picker reads company and writes the canonical vendor id with Add-new"],
   ["table", /row\.vendor_id \? \([\s\S]{0,160}<EntityLink kind="vendor" id=\{row\.vendor_id\} label=\{entityLabel\(row\.vendor_name, row\.vendor_id, "Vendor"\)\}/, "inventory row drills its exact vendor id with a human label"],
-  ["routes", /const querySchema = z\.object\(\{[\s\S]{0,100}operating_company_id: z\.string\(\)\.uuid\(\)[\s\S]{0,100}vendor_id: z\.string\(\)\.uuid\(\)\.optional\(\)/, "reverse GET validates company and vendor UUIDs"],
-  ["routes", /withCompany\(user\.uuid, query\.data\.operating_company_id[\s\S]{0,120}const values: unknown\[\] = \[query\.data\.operating_company_id\][\s\S]{0,120}query\.data\.vendor_id \? "AND pi\.vendor_id = \$2::uuid"[\s\S]{0,100}values\.push\(query\.data\.vendor_id\)/, "inventory reverse read binds selected company and vendor filter"],
+  ["routes", /const querySchema = z\.object\(\{[\s\S]{0,100}operating_company_id: z\.string\(\)\.uuid\(\)[\s\S]{0,100}vendor_id: entityIdFilterSchema\.optional\(\)/, "reverse GET validates company and vendor UUIDs"],
+  ["routes", /withCompany\(user\.uuid, query\.data\.operating_company_id[\s\S]{0,120}const values: unknown\[\] = \[query\.data\.operating_company_id\][\s\S]{0,120}query\.data\.vendor_id \? "AND pi\.vendor_id = ANY\(\$2::uuid\[\]\)"[\s\S]{0,100}values\.push\(entityIdFilterValues\(query\.data\.vendor_id\)\)/, "inventory reverse read binds selected company and every vendor filter"],
   ["routes", /COALESCE\(v\.vendor_name, mdata\.resolve_vendor_label_same_company\(pi\.vendor_id, pi\.operating_company_id\)\) AS vendor_name[\s\S]{0,180}v\.id = pi\.vendor_id[\s\S]{0,100}v\.operating_company_id = pi\.operating_company_id[\s\S]{0,140}pi\.operating_company_id = \$1::uuid[\s\S]{0,80}\$\{vendorFilter\}/, "reverse SQL resolves historical vendor labels within the inventory row company"],
   ["routes", /const purchaseSchema = z\.object\(\{[\s\S]{0,700}vendor_id: z\.string\(\)\.uuid\(\)\.optional\(\)/, "purchase writer validates vendor UUID"],
   ["routes", /assertCompanyMembership\(userId, companyId\)[\s\S]{0,160}set_config\('app\.operating_company_id', \$1::text, true\)[\s\S]{0,60}\[companyId\]/, "parts inventory reads and writes establish selected-company scope"],
@@ -42,6 +42,11 @@ if (baseline.length) {
 }
 if (process.argv.includes("--selftest")) {
   let caught = 0;
+  for (const replacement of ['values.push([])', 'values.push(entityIdFilterValues(query.data.vendor_id).slice(0, 1))']) {
+    const mutant = { ...sources, routes: sources.routes.replace('values.push(entityIdFilterValues(query.data.vendor_id))', replacement) };
+    if (!failures(mutant).includes('inventory reverse read binds selected company and every vendor filter')) throw new Error('missing or truncated vendor binding escaped');
+    caught += 1;
+  }
   for (const [key, pattern, label] of checks) {
     const mutant = { ...sources, [key]: sources[key].replace(pattern, "/* planted defect */") };
     if (!failures(mutant).includes(label)) {
@@ -50,7 +55,7 @@ if (process.argv.includes("--selftest")) {
     }
     caught += 1;
   }
-  console.log(`${LABEL} SELFTEST PASS — ${caught}/${checks.length} production-source mutations rejected`);
+  console.log(`${LABEL} SELFTEST PASS — ${caught}/${checks.length + 2} production-source mutations rejected`);
   process.exit(0);
 }
 console.log(`${LABEL} PASS — ${checks.length} exact parts-inventory↔vendor create/reverse invariants`);

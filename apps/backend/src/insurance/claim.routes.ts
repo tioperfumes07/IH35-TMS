@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { withCurrentUser } from "../auth/db.js";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   claimIdParamsSchema,
@@ -285,16 +286,16 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         filters.push(`asset_id = $${values.length}::uuid`);
       }
       if (parsed.data.driver_id) {
-        values.push(parsed.data.driver_id);
-        filters.push(`driver_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(parsed.data.driver_id));
+        filters.push(`driver_id = ANY($${values.length}::uuid[])`);
       }
       if (parsed.data.unit_id) {
-        values.push(parsed.data.unit_id);
-        filters.push(`unit_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(parsed.data.unit_id));
+        filters.push(`unit_id = ANY($${values.length}::uuid[])`);
       }
       if (parsed.data.load_id) {
-        values.push(parsed.data.load_id);
-        filters.push(`load_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(parsed.data.load_id));
+        filters.push(`load_id = ANY($${values.length}::uuid[])`);
       }
       if (parsed.data.trailer_id) {
         // trailer_id only exists once held 202607730000 is applied. Filtering by a column that is
@@ -302,8 +303,8 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         // "claims for THIS trailer" question with every claim in the company. Return the honest
         // "not available yet" instead.
         if (!caps.economics) return { kind: "trailer_filter_unavailable" as const };
-        values.push(parsed.data.trailer_id);
-        filters.push(`trailer_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(parsed.data.trailer_id));
+        filters.push(`trailer_id = ANY($${values.length}::uuid[])`);
       }
       const scopedFilters = filters.map((f) =>
         f

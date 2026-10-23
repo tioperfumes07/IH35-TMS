@@ -46,6 +46,11 @@
     "stop_status": "Parada {{city}}, {{state}}"
   },
   "common": {
+    "batch_history_limit": "El historial está limitado a los últimos 200 lotes por cliente. {{count}} historiales de clientes seleccionados alcanzaron ese límite; este no es un total completo.",
+    "loading_options": "Cargando opciones…",
+    "select_shown": "Seleccionar mostrados",
+    "search_payee_names": "Buscar beneficiarios",
+    "search_account_tree": "Buscar en el árbol de cuentas",
     "app_name": "IH 35 Dispatch",
     "phone_login": "Acceso por telefono",
     "open_navigation_menu": "Abrir menu de navegacion",
@@ -71,6 +76,7 @@
     "title": "Panel"
   },
   "dispatch": {
+    "create_driver": "+ Crear conductor",
     "title": "Despacho"
   },
   "drivers": {

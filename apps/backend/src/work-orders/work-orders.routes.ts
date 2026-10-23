@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
 import { assertWorkOrderCostFinancialLink } from "../maintenance/work-order-financial-link.js";
@@ -90,8 +91,8 @@ const listQuerySchema = companyQuerySchema.extend({
   status: z.enum(["all", "open", "in_progress", "completed", "cancelled"]).default("all"),
   wo_billing_type: z.enum(["internal", "external"]).optional(),
   wo_service_class: woServiceClassSchema.optional(),
-  unit_id: z.string().uuid().optional(),
-  driver_id: z.string().uuid().optional(),
+  unit_id: entityIdFilterSchema.optional(),
+  driver_id: entityIdFilterSchema.optional(),
   search: z.string().trim().max(160).optional(),
   sort: z.enum([
     "created_asc",
@@ -316,12 +317,12 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         where.push(`w.wo_service_class = $${values.length}`);
       }
       if (q.unit_id) {
-        values.push(q.unit_id);
-        where.push(`w.unit_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.unit_id));
+        where.push(`w.unit_id = ANY($${values.length}::uuid[])`);
       }
       if (q.driver_id) {
-        values.push(q.driver_id);
-        where.push(`w.driver_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.driver_id));
+        where.push(`w.driver_id = ANY($${values.length}::uuid[])`);
       }
       if (q.search) {
         values.push(`%${q.search}%`);

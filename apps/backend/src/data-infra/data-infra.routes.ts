@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   createDriverVendorMerge,
@@ -21,8 +22,8 @@ const companyQuerySchema = z.object({
 // LINK-F5171/LINK-F5183: reverse_link -- factoring:home.vendor_merges. driver_id is a real FK;
 // vendor_id resolves through mdata.vendors.qbo_vendor_id (the merge rows store QBO ids, not FKs).
 const driverVendorMergesQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
-  vendor_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  vendor_id: entityIdFilterSchema.optional(),
 });
 
 const mergeBodySchema = z.object({
@@ -99,7 +100,7 @@ const loanListQuerySchema = z.object({
   // LINK-F5171/LINK-F5182: reverse_link -- factoring:home.equipment_loans, vendor side. The unit
   // side already filters by unit_id (unit-finance-linkage.service.ts); l.lender_vendor_id is the
   // same real FK on the vendor side, just never exposed as a query filter.
-  vendor_id: z.string().uuid().optional(),
+  vendor_id: entityIdFilterSchema.optional(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {

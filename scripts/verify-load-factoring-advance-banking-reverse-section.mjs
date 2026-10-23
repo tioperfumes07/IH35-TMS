@@ -26,6 +26,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ACCT_ROUTES = "apps/backend/src/accounting/factoring-advances.routes.ts";
@@ -76,10 +77,10 @@ export function assertLoadFactoringReverse(sources) {
     }
   }
 
-  if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(acctRoutes)) {
+  if (!/load_id:\s*entityIdFilterSchema\.optional\(\)/.test(acctRoutes)) {
     problems.push(`${ACCT_ROUTES}: listQuerySchema must accept optional load_id`);
   }
-  if (!/i\.factoring_advance_id = fa\.id[\s\S]{0,120}i\.source_load_id = \$/.test(acctRoutes)) {
+  if (!/i\.factoring_advance_id = fa\.id[\s\S]{0,120}i\.source_load_id = ANY\(/.test(acctRoutes) || !acctRoutes.includes('values.push(entityIdFilterValues(q.load_id))')) {
     problems.push(`${ACCT_ROUTES}: must filter by load_id server-side via an invoice EXISTS join`);
   }
   if (!/timelineQuerySchema = companyQuerySchema\.extend\(\{\s*load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(bankRoutes)) {
@@ -109,7 +110,7 @@ export function assertLoadFactoringReverse(sources) {
   if (!/setSearchParams/.test(listPage) || !/params\.set\("load_id"/.test(listPage)) {
     problems.push(`${LIST_PAGE}: must write load_id via setSearchParams (visible reverse filter)`);
   }
-  if (!/kind="load"/.test(listPage) || !/dataTestId="factoring-filter-load"/.test(listPage) || !/allowCreate=\{false\}/.test(listPage)) {
+  if (multiSelectFilterProblems(listPage,{file:LIST_PAGE,kind:'load',testId:'factoring-filter-load'}).length) {
     problems.push(`${LIST_PAGE}: must render Load EntityPicker allowCreate={false} dataTestId=factoring-filter-load`);
   }
   const paymentsPanel = src[PAYMENTS_PANEL];
@@ -129,19 +130,20 @@ export function assertLoadFactoringReverse(sources) {
 }
 
 function selftest() {
+  selftestMultiSelectFilterContract();
   const good = {
     [ACCT_ROUTES]: `
       const listQuerySchema = companyQuerySchema.extend({
-        load_id: z.string().uuid().optional(),
+        load_id: entityIdFilterSchema.optional(),
       });
       if (q.load_id) {
-        values.push(q.load_id);
+        values.push(entityIdFilterValues(q.load_id));
         where.push(
           \`EXISTS (
              SELECT 1 FROM accounting.invoices i
              WHERE i.factoring_advance_id = fa.id
                AND i.operating_company_id = fa.operating_company_id
-               AND i.source_load_id = $\${values.length}::uuid
+               AND i.source_load_id = ANY($\${values.length}::uuid[])
            )\`
         );
       }
@@ -190,7 +192,7 @@ function selftest() {
       listFactoringAdvances(selectedCompanyId!, {
         load_id: deepLinkLoadId ?? undefined,
       })
-      <EntityPicker kind="load" allowCreate={false} dataTestId="factoring-filter-load" onChange={(next) => patchLoadFilter(next ?? "")} />
+      import {EntityMultiSelect} from '../../components/EntityMultiSelect'; function Filter() { return <EntityMultiSelect kind="load" operatingCompanyId={companyId} value={selected} dataTestId="factoring-filter-load" onChange={(next) => patchLoadFilter(next ?? "")} />; }
     `,
     [BANKING_HOME]: `
       const [searchParams, setSearchParams] = useSearchParams();
@@ -232,8 +234,8 @@ function selftest() {
   }
 
   const mutations = [
-    { ...good, [ACCT_ROUTES]: good[ACCT_ROUTES].replace("load_id: z.string().uuid().optional(),\n      });", "});") },
-    { ...good, [ACCT_ROUTES]: good[ACCT_ROUTES].replace("i.source_load_id = $${values.length}::uuid", "true") },
+    { ...good, [ACCT_ROUTES]: good[ACCT_ROUTES].replace("load_id: entityIdFilterSchema.optional(),\n      });", "});") },
+    { ...good, [ACCT_ROUTES]: good[ACCT_ROUTES].replace("i.source_load_id = ANY($${values.length}::uuid[])", "true") },
     { ...good, [BANK_ROUTES]: good[BANK_ROUTES].replace("load_id: z.string().uuid().optional(),\n      });", "});") },
     { ...good, [BANK_ROUTES]: good[BANK_ROUTES].replace("i.source_load_id = $${values.length}::uuid", "true") },
     { ...good, [ACCT_API]: good[ACCT_API].replace("load_id?: string;\n        } = {}", "} = {}") },

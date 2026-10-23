@@ -31,6 +31,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CAR_SERVICE = "apps/backend/src/driver-finance/cash-advance-requests.service.ts";
@@ -110,10 +111,10 @@ export function assertSettlementsClusterReverse(sources) {
   }
 
   // -- cash_advances (new build) --
-  if (!/AND r\.driver_id = \$/.test(carService)) {
+  if (!carService.includes('AND r.driver_id = ANY($${args.length}::uuid[])') || !carService.includes('args.push(entityIdFilterValues(filter.driverId))')) {
     problems.push(`${CAR_SERVICE}: listPendingCashAdvanceRequests must filter by driver_id server-side when provided`);
   }
-  if (!/driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(carRoutes)) {
+  if (!/driver_id:\s*entityIdFilterSchema\.optional\(\)/.test(carRoutes)) {
     problems.push(`${CAR_ROUTES}: pendingQuerySchema must accept optional driver_id`);
   }
   if (!/driverId:\s*parsed\.data\.driver_id/.test(carRoutes)) {
@@ -130,7 +131,7 @@ export function assertSettlementsClusterReverse(sources) {
   }
   if (
     !/dataTestId="cash-advance-requests-filter-driver"/.test(carPage) ||
-    !/allowCreate=\{false\}/.test(carPage)
+    multiSelectFilterProblems(carPage,{file:CAR_PAGE,kind:'driver',testId:'cash-advance-requests-filter-driver'}).length
   ) {
     problems.push(`${CAR_PAGE}: must render EntityPicker driver filter (allowCreate=false)`);
   }
@@ -142,7 +143,7 @@ export function assertSettlementsClusterReverse(sources) {
   if (
     !/dataTestId="cash-advances-filter-driver"/.test(caHome) ||
     !/kind=["']driver["']/.test(caHome) ||
-    !/allowCreate=\{false\}/.test(caHome)
+    multiSelectFilterProblems(caHome,{file:CA_HOME,kind:'driver',testId:'cash-advances-filter-driver'}).length
   ) {
     problems.push(`${CA_HOME}: must render EntityPicker kind=driver filter (allowCreate=false)`);
   }
@@ -221,7 +222,7 @@ export function assertSettlementsClusterReverse(sources) {
   if (
     !/driverIdFilter\s*=\s*searchParams\.get\("driver_id"\)/.test(liabilitiesHome) ||
     !/dataTestId="liabilities-filter-driver"/.test(liabilitiesHome) ||
-    !/allowCreate=\{false\}/.test(liabilitiesHome)
+    multiSelectFilterProblems(liabilitiesHome,{file:LIABILITIES_HOME,kind:'driver',testId:'liabilities-filter-driver'}).length
   ) {
     problems.push(`${LIABILITIES_HOME}: must render EntityPicker kind=driver filter (allowCreate=false) and honor ?driver_id=`);
   }
@@ -234,18 +235,20 @@ export function assertSettlementsClusterReverse(sources) {
 }
 
 function selftest() {
+  selftestMultiSelectFilterContract();
   const good = {
     [SELF]: `/** @matrix-built {"modules":["settlements"],"cols":["reverse_link"],"leaves":["cash_advances","settlements.drawer.advance_detail","settlements.drawer.liability_detail","settlements.modal.mark_disbursed","settlements.modal.hold_deduction","settlements.modal.liability_breakdown","settlements.panel.pay_run_close"],"task":"SETL-F5832"} */`,
     [CAR_SERVICE]: `
       let where = \`r.operating_company_id = $1::uuid AND r.status IN ('pending', 'under_review')\`;
       if (filter.driverId) {
         args.push(filter.driverId);
-        where += \` AND r.driver_id = $\${args.length}::uuid\`;
+        args.push(entityIdFilterValues(filter.driverId));
+        where += \` AND r.driver_id = ANY($\${args.length}::uuid[])\`;
       }
     `,
     [CAR_ROUTES]: `
       const pendingQuerySchema = companyQuerySchema.extend({
-        driver_id: z.string().uuid().optional(),
+        driver_id: entityIdFilterSchema.optional(),
       });
       return listPendingCashAdvanceRequests(client, parsed.data.operating_company_id, {
         driverId: parsed.data.driver_id,
@@ -328,6 +331,10 @@ function selftest() {
     `,
     [MATRIX]: JSON.stringify({ leaves: CLAIMED_LEAVES.map((id) => ({ id, required: ["reverse_link"] })) }),
   };
+  for (const [file,id] of [[CAR_PAGE,'cash-advance-requests-filter-driver'],[CA_HOME,'cash-advances-filter-driver'],[LIABILITIES_HOME,'liabilities-filter-driver']]) {
+    good[file] = good[file].replace(`dataTestId="${id}"`, '');
+    good[file] += `\nimport {EntityMultiSelect} from '../../components/EntityMultiSelect'; function Filter() { return <EntityMultiSelect kind="driver" operatingCompanyId={companyId} value={selected} onChange={next => setSelected(next ?? '')} dataTestId="${id}" />; }`;
+  }
   const goodProblems = assertSettlementsClusterReverse(good);
   if (goodProblems.length) {
     console.error(`${LABEL} SELFTEST FAIL — known-good fixture flagged: ${goodProblems.join("; ")}`);
@@ -336,8 +343,8 @@ function selftest() {
 
   const mutations = [
     { ...good, [SELF]: "@matrix-built removed" },
-    { ...good, [CAR_SERVICE]: good[CAR_SERVICE].replace("where += ` AND r.driver_id = $${args.length}::uuid`;", "") },
-    { ...good, [CAR_ROUTES]: good[CAR_ROUTES].replace("driver_id: z.string().uuid().optional(),\n      });", "});") },
+    { ...good, [CAR_SERVICE]: good[CAR_SERVICE].replace("where += ` AND r.driver_id = ANY($${args.length}::uuid[])`;", "") },
+    { ...good, [CAR_ROUTES]: good[CAR_ROUTES].replace("driver_id: entityIdFilterSchema.optional(),\n      });", "});") },
     { ...good, [CAR_ROUTES]: good[CAR_ROUTES].replace("driverId: parsed.data.driver_id,", "") },
     { ...good, [CAR_API]: good[CAR_API].replace("driverId?: string", "") },
     { ...good, [CAR_PAGE]: good[CAR_PAGE].replace('searchParams.get("driver_id")', '""') },
@@ -382,18 +389,18 @@ function selftest() {
   }
   const productionPlants = [
     [SELF, /^\/\*\* @matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["cash_advances","settlements\.drawer\.advance_detail","settlements\.drawer\.liability_detail","settlements\.modal\.mark_disbursed","settlements\.modal\.hold_deduction","settlements\.modal\.liability_breakdown","settlements\.panel\.pay_run_close"\],"task":"SETL-F5832"\} \*\/$/m, "@matrix-built removed"],
-    [CAR_SERVICE, /AND r\.driver_id = \$/, "AND r.driver_id = NULLIF($"],
-    [CAR_ROUTES, /driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, "driver_id: z.never()"],
+    [CAR_SERVICE, /AND r\.driver_id = ANY\(/, "AND r.driver_id = NULLIF("],
+    [CAR_ROUTES, /driver_id:\s*entityIdFilterSchema\.optional\(\)/, "driver_id: z.never()"],
     [CAR_ROUTES, /driverId:\s*parsed\.data\.driver_id/, "driverId: undefined"],
     [CAR_API, /listPending\(operatingCompanyId: string, driverId\?: string\)/, "listPending(operatingCompanyId: string)"],
     [CAR_PAGE, /searchParams\.get\("driver_id"\)/, 'searchParams.get("x")'],
     [CAR_PAGE, /listPending\(companyId,\s*(deepLinkDriverId\s*\?\?\s*undefined|effectiveDriverId)\)/, "listPending(companyId)"],
     [CAR_PAGE, /dataTestId="cash-advance-requests-filter-driver"/, 'dataTestId="x"'],
-    [CAR_PAGE, /allowCreate=\{false\}/, "allowCreate"],
+    [CAR_PAGE, /<EntityMultiSelect/, "<EntityMultiSelect allowCreate"],
     [CA_HOME, /driverIdFilter\s*=\s*searchParams\.get\("driver_id"\)/, 'driverIdFilter = searchParams.get("x")'],
     [CA_HOME, /dataTestId="cash-advances-filter-driver"/, 'dataTestId="x"'],
     [CA_HOME, /kind=["']driver["']/, 'kind="vendor"'],
-    [CA_HOME, /allowCreate=\{false\}/, "allowCreate"],
+    [CA_HOME, /<EntityMultiSelect/, "<EntityMultiSelect allowCreate"],
     [CA_HOME, /onMarkDisbursed=\{\(\)\s*=>\s*setMarkDisbursedOpen\(true\)\}/, "onMarkDisbursed={undefined}"],
     [DRIVER_SECTION, /listPending\(operatingCompanyId,\s*driverId\)/, "listPending(operatingCompanyId)"],
     [DRIVER_SECTION, /listCashAdvances\(operatingCompanyId,\s*\{\s*driver_id:\s*driverId\s*\}\)/, "listCashAdvances(operatingCompanyId, {})"],
@@ -429,7 +436,7 @@ function selftest() {
     [LIABILITIES_HOME, /setDetailOpen\(true\)/g, "setDetailOpen(false)"],
     [LIABILITIES_HOME, /driverIdFilter\s*=\s*searchParams\.get\("driver_id"\)/, 'driverIdFilter = searchParams.get("x")'],
     [LIABILITIES_HOME, /dataTestId="liabilities-filter-driver"/, 'dataTestId="x"'],
-    [LIABILITIES_HOME, /allowCreate=\{false\}/, "allowCreate"],
+    [LIABILITIES_HOME, /<EntityMultiSelect/, "<EntityMultiSelect allowCreate"],
   ];
   for (const [i, [file, pattern, replacement]] of productionPlants.entries()) {
     const changed = live[file].replace(pattern, replacement);

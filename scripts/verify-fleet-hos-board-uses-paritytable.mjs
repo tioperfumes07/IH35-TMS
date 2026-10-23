@@ -57,7 +57,7 @@ function assertMigrated(src) {
   if (rowDrills < 2) {
     errors.push(`${PAGE}: must preserve live + offline row drill-through to fleet unit detail`);
   }
-  if (!/async function exportFleetHos\(\)[\s\S]*await downloadFleetLocationHosXlsx\(companyId\)[\s\S]*setExportError\(error instanceof Error \? error\.message : "Fleet HOS export failed"\)/.test(src)) {
+  if (!/async function exportFleetHos\(\)[\s\S]*await downloadFleetLocationHosXlsx\(companyId, applied\.unitId\.trim\(\) \|\| undefined\)[\s\S]*setExportError\(error instanceof Error \? error\.message : "Fleet HOS export failed"\)/.test(src)) {
     errors.push(`${PAGE}: Excel export must surface rejected downloads`);
   }
   if (!/disabled=\{exportPending\}[\s\S]*onClick=\{\(\) => void exportFleetHos\(\)\}/.test(src)) {
@@ -81,7 +81,7 @@ function selftest() {
       { label: "Drive Rem (11h)" }, { label: "Shift Rem (14h)" }, { label: "HOS" }, { label: "Map" },
     ];
     async function exportFleetHos() {
-      try { await downloadFleetLocationHosXlsx(companyId); }
+      try { await downloadFleetLocationHosXlsx(companyId, applied.unitId.trim() || undefined); }
       catch (error) { setExportError(error instanceof Error ? error.message : "Fleet HOS export failed"); }
     }
     Offline / stale (
@@ -124,6 +124,8 @@ function selftest() {
     ['tableTestId="compliance-fleet-hos-offline-table"', 'tableTestId="wrong-offline"', 'tableTestId="compliance-fleet-hos-offline-table"'],
     ["filterBar={", "toolbar={", "filterBar={"],
     ["downloadFleetLocationHosXlsx", "downloadWrongExport", "downloadFleetLocationHosXlsx"],
+    ["applied.unitId.trim()", "applied.unitId.split(',')[0].trim()", "surface rejected downloads"],
+    ["companyId, applied.unitId.trim() || undefined", "companyId", "surface rejected downloads"],
     ["Offline / stale (", "Offline (", "Offline / stale ("],
     ["onRowClick", "onOfflineRowClick", "live + offline row drill-through"],
     ['setExportError(error instanceof Error ? error.message : "Fleet HOS export failed")', "setExportError(undefined)", "surface rejected downloads"],

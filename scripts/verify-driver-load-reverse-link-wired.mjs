@@ -28,21 +28,23 @@ function fail(msg) {
 }
 
 function checkCashAdvances(src) {
+  if (!src.includes('values.push(entityIdFilterValues(query.data.driver_id))') || !src.includes('const where: string[] = ["operating_company_id = $1::uuid"]')) fail('cash advance driver array binding/company scope missing');
   if (!src.includes('app.get("/api/v1/cash-advances"')) {
     fail(`${CASH_ADVANCES_ROUTES}: GET /api/v1/cash-advances route not found.`);
     return;
   }
-  if (!/where\.push\(`driver_id = \$\$\{values\.length\}`\)/.test(src) && !src.includes("where.push(`driver_id = $${values.length}`)")) {
+  if (!/where\.push\(`driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/.test(src) && !src.includes("where.push(`driver_id = ANY($${values.length}::uuid[])`)")) {
     fail(`${CASH_ADVANCES_ROUTES}: driver_id query-param filter (driver -> cash advances reverse read) not found.`);
   }
 }
 
 function checkPod(src) {
+  if (!src.includes('values.push(entityIdFilterValues(query.data.load_id))') || !src.includes('p.operating_company_id = $1::uuid')) fail('POD load array binding/company scope missing');
   if (!src.includes('app.get("/api/v1/dispatch/pod-documents"')) {
     fail(`${POD_ROUTES}: GET /api/v1/dispatch/pod-documents route not found.`);
     return;
   }
-  if (!src.includes("filters.push(`p.load_id = $${values.length}::uuid`)")) {
+  if (!src.includes("filters.push(`p.load_id = ANY($${values.length}::uuid[])`)")) {
     fail(`${POD_ROUTES}: load_id query-param filter (load -> POD documents reverse read) not found.`);
   }
 }
@@ -62,10 +64,24 @@ function selftest() {
   const originalMatrix = fs.readFileSync(MATRIX, "utf8");
   const originalSelf = fs.readFileSync(SELF, "utf8");
   let probesProven = 0;
+  checkCashAdvances(originalCash); checkPod(originalPod);
+  if (process.exitCode === 1) throw new Error('selftest baseline failed');
+  for (const [original, check, token] of [
+    [originalCash, checkCashAdvances, 'values.push(entityIdFilterValues(query.data.driver_id))'],
+    [originalCash, checkCashAdvances, 'const where: string[] = ["operating_company_id = $1::uuid"]'],
+    [originalPod, checkPod, 'values.push(entityIdFilterValues(query.data.load_id))'],
+    [originalPod, checkPod, 'p.operating_company_id = $1::uuid'],
+  ]) {
+    const changed = original.replaceAll(token, 'REMOVED');
+    if (changed === original) throw new Error(`inert plant ${token}`);
+    check(changed);
+    if (process.exitCode !== 1) throw new Error(`escaped plant ${token}`);
+    process.exitCode = undefined; probesProven++;
+  }
 
   {
     const mutated = originalCash.replace(
-      "where.push(`driver_id = $${values.length}`)",
+      "where.push(`driver_id = ANY($${values.length}::uuid[])`)",
       "// driver_id filter removed"
     );
     if (mutated === originalCash) {
@@ -110,7 +126,7 @@ function selftest() {
 
   {
     const mutated = originalPod.replace(
-      "filters.push(`p.load_id = $${values.length}::uuid`)",
+      "filters.push(`p.load_id = ANY($${values.length}::uuid[])`)",
       "// load_id filter removed"
     );
     if (mutated === originalPod) {

@@ -52,7 +52,7 @@ function audit(src, api, route, matrix, self) {
   if (!/source_load_id\?: string;/.test(listInvoicesBody) || !/params\.source_load_id\) query\.set\("source_load_id", params\.source_load_id\)/.test(listInvoicesBody)) {
     failures.push(`${API}: listInvoices must accept and serialize source_load_id`);
   }
-  if (!/const listQuerySchema[\s\S]{0,500}source_load_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(route) || !/if \(q\.source_load_id\)[\s\S]{0,180}i\.source_load_id = \$\$\{values\.length\}::uuid/.test(route)) {
+  if (!/const listQuerySchema[\s\S]{0,500}source_load_id: entityIdFilterSchema\.optional\(\)/.test(route) || !route.includes('values.push(entityIdFilterValues(q.source_load_id))') || !route.includes('i.source_load_id = ANY($${values.length}::uuid[])') || !route.includes('i.operating_company_id = $1::uuid')) {
     failures.push(`${ROUTE}: invoice list must validate and filter source_load_id server-side`);
   }
   try {
@@ -88,7 +88,7 @@ if (process.argv.includes("--selftest")) {
     ["exact read", good, api, route, matrix, /source_load_id: loadId/, "customer_id: loadId"],
     ["exact id", good, api, route, matrix, /id=\{linkedInvoice\.id\}/, "id={loadId}"],
     ["api", good, api.replace("source_load_id?: string;", "source_load_missing?: string;"), route, matrix, /$^/, ""],
-    ["route", good, api, route.replace("source_load_id: z.string().uuid().optional(),", ""), matrix, /$^/, ""],
+    ...['source_load_id: entityIdFilterSchema.optional(),', 'values.push(entityIdFilterValues(q.source_load_id))', 'i.source_load_id = ANY($${values.length}::uuid[])', 'i.operating_company_id = $1::uuid'].map(token => [token, good, api, route.replaceAll(token, 'REMOVED'), matrix, /$^/, '']),
     ["matrix", good, api, route, matrix.replace('"id": "load.drawer.factoring"', '"id": "load.drawer.factoring.removed"'), /$^/, ""],
   ];
   for (const [name, target, nextApi, nextRoute, nextMatrix, pattern, replacement] of plants) {

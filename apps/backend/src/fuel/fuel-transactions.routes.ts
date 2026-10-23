@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -21,13 +22,13 @@ const listFuelTransactionsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   transaction_id: z.string().uuid().optional(),
-  driver_id: z.string().uuid().optional(),
-  unit_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  unit_id: entityIdFilterSchema.optional(),
   // EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING (CC-2 finding #6337) — trailer_id is a real, populated
   // column since rank 1 (PR #6316) and the create path already accepts it (rank 3, PR #6319); the
   // list endpoint never did. Mirrors #6324's accident list filter exactly.
-  trailer_id: z.string().uuid().optional(),
-  load_id: z.string().uuid().optional(),
+  trailer_id: entityIdFilterSchema.optional(),
+  load_id: entityIdFilterSchema.optional(),
   // Linkage law §6 (vendor row): a fuel purchase carries vendor_id, so the vendor page must be able
   // to list every fuel purchase from it — the reverse half of that link.
   vendor_id: z.string().uuid().optional(),
@@ -157,20 +158,20 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
         filters.push(`ft.id = $${values.length}::uuid`);
       }
       if (q.driver_id) {
-        values.push(q.driver_id);
-        filters.push(`ft.driver_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.driver_id));
+        filters.push(`ft.driver_id = ANY($${values.length}::uuid[])`);
       }
       if (q.unit_id) {
-        values.push(q.unit_id);
-        filters.push(`ft.unit_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.unit_id));
+        filters.push(`ft.unit_id = ANY($${values.length}::uuid[])`);
       }
       if (q.trailer_id) {
-        values.push(q.trailer_id);
-        filters.push(`ft.trailer_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.trailer_id));
+        filters.push(`ft.trailer_id = ANY($${values.length}::uuid[])`);
       }
       if (q.load_id) {
-        values.push(q.load_id);
-        filters.push(`ft.load_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.load_id));
+        filters.push(`ft.load_id = ANY($${values.length}::uuid[])`);
       }
       if (q.vendor_id) {
         values.push(q.vendor_id);

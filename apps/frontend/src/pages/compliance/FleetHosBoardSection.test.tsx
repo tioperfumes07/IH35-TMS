@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -13,17 +13,24 @@ import {
 import type { FleetLocationHosRow } from "../../api/reports";
 
 const getFleetLocationHos = vi.fn();
+const downloadFleetLocationHosXlsx = vi.fn();
 
 vi.mock("../../api/reports", () => ({
   getFleetLocationHos: (...args: unknown[]) => getFleetLocationHos(...args),
-  downloadFleetLocationHosXlsx: vi.fn(),
+  downloadFleetLocationHosXlsx: (...args: unknown[]) => downloadFleetLocationHosXlsx(...args),
 }));
 
-function renderSection() {
+// The shared adapter has its own checkbox tests; these assert the page's staged CSV/API contract.
+vi.mock("../../components/EntityMultiSelect", () => ({
+  EntityMultiSelect: ({ value, onChange, ariaLabel }: { value: string | null; onChange: (next: string | null) => void; ariaLabel?: string }) =>
+    <input aria-label={ariaLabel} value={value ?? ""} onChange={(event) => onChange(event.target.value || null)} />,
+}));
+
+function renderSection(initialEntry = "/") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <FleetHosBoardSection operatingCompanyId="11111111-1111-4111-8111-111111111111" />
       </MemoryRouter>
     </QueryClientProvider>
@@ -80,6 +87,33 @@ describe("Live Fleet freshness view-model (COMPLIANCE-1)", () => {
 });
 
 describe("FleetHosBoardSection", () => {
+  it("applies the complete staged CSV, cancels draft changes, and exports the applied selection", async () => {
+    getFleetLocationHos.mockReset().mockResolvedValue({ rows: [], count: 0, generated_at: "2026-10-23T12:00:00Z" });
+    downloadFleetLocationHosXlsx.mockClear();
+    const ids = ["22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333"].join(",");
+    renderSection();
+    await waitFor(() => expect(getFleetLocationHos).toHaveBeenCalledWith("11111111-1111-4111-8111-111111111111", undefined));
+    fireEvent.change(screen.getByLabelText("Filter by unit"), { target: { value: ids } });
+    expect(getFleetLocationHos).not.toHaveBeenCalledWith("11111111-1111-4111-8111-111111111111", ids);
+    fireEvent.click(screen.getByTestId("fleet-hos-filter-apply"));
+    await waitFor(() => expect(getFleetLocationHos).toHaveBeenCalledWith("11111111-1111-4111-8111-111111111111", ids));
+    fireEvent.change(screen.getByLabelText("Filter by unit"), { target: { value: ids.split(",")[0] } });
+    fireEvent.click(screen.getByTestId("fleet-hos-filter-cancel"));
+    expect(screen.getByLabelText("Filter by unit")).toHaveValue(ids);
+    fireEvent.click(screen.getByRole("button", { name: "Export (Excel)" }));
+    await waitFor(() => expect(downloadFleetLocationHosXlsx).toHaveBeenCalledWith("11111111-1111-4111-8111-111111111111", ids));
+    fireEvent.click(screen.getByTestId("fleet-hos-filter-reset"));
+    await waitFor(() => expect(screen.getByLabelText("Filter by unit")).toHaveValue(""));
+  });
+
+  it("retains every UUID from a multi-unit URL deep link", async () => {
+    getFleetLocationHos.mockReset().mockResolvedValue({ rows: [], count: 0, generated_at: "2026-10-23T12:00:00Z" });
+    const ids = "22222222-2222-4222-8222-222222222222,33333333-3333-4333-8333-333333333333";
+    renderSection(`/?${new URLSearchParams({ unit_id: ids })}`);
+    await waitFor(() => expect(getFleetLocationHos).toHaveBeenCalledWith("11111111-1111-4111-8111-111111111111", ids));
+    expect(screen.getByLabelText("Filter by unit")).toHaveValue(ids);
+  });
+
   it("surfaces query failures through retryable ListErrorState", async () => {
     getFleetLocationHos.mockRejectedValueOnce(new Error("Fleet HOS unavailable"));
 
@@ -127,7 +161,7 @@ describe("FleetHosBoardSection", () => {
     renderSection();
 
     // If .toFixed had been called on the string speed, the section would have thrown and this would never render.
-    expect(await screen.findByText("GERARDO URBINA")).toBeInTheDocument();
+    expect(await screen.findByText("Gerardo Urbina")).toBeInTheDocument();
     expect(screen.getByText("T139")).toBeInTheDocument();
     expect(screen.getByText("62")).toBeInTheDocument(); // speed_mph "62.0" -> num -> "62"
     expect(screen.getByText("295")).toBeInTheDocument(); // heading_deg "295.00" -> num -> "295"

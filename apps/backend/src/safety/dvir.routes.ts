@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { submitDvirBodySchema, submitDriverDvir } from "./dvir-submit.service.js";
@@ -10,11 +11,11 @@ const companyQuerySchema = z.object({
 });
 
 const listQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
-  unit_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  unit_id: entityIdFilterSchema.optional(),
   // SAF-F17: the trailer profile's reverse safety section. The column already existed on
   // safety.dvir_submissions; only the filter was missing, so a trailer's DVIRs were unreachable.
-  trailer_id: z.string().uuid().optional(),
+  trailer_id: entityIdFilterSchema.optional(),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
   search: z.string().trim().max(120).optional(),
@@ -61,7 +62,7 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
         const parent = await client.query(
           `SELECT 1
            FROM mdata.drivers d
-           WHERE d.id = $1::uuid
+           WHERE d.id = ANY($1::uuid[])
              AND d.archived_at IS NULL
              AND (
                d.operating_company_id = $2::uuid
@@ -73,25 +74,25 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
                    AND dca.deactivated_at IS NULL
                )
              )
-           LIMIT 1`,
-          [query.data.driver_id, query.data.operating_company_id]
+           `,
+          [entityIdFilterValues(query.data.driver_id), query.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
+        if (parent.rows.length !== entityIdFilterValues(query.data.driver_id!).length) return { found: false as const, rows: [], total_count: 0 };
       }
       const filters: string[] = ["ds.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
       let idx = 2;
       if (query.data.driver_id) {
-        filters.push(`ds.driver_id = $${idx++}`);
-        values.push(query.data.driver_id);
+        filters.push(`ds.driver_id = ANY($${idx++}::uuid[])`);
+        values.push(entityIdFilterValues(query.data.driver_id));
       }
       if (query.data.unit_id) {
-        filters.push(`ds.unit_id = $${idx++}`);
-        values.push(query.data.unit_id);
+        filters.push(`ds.unit_id = ANY($${idx++}::uuid[])`);
+        values.push(entityIdFilterValues(query.data.unit_id));
       }
       if (query.data.trailer_id) {
-        filters.push(`ds.trailer_id = $${idx++}`);
-        values.push(query.data.trailer_id);
+        filters.push(`ds.trailer_id = ANY($${idx++}::uuid[])`);
+        values.push(entityIdFilterValues(query.data.trailer_id));
       }
       if (query.data.from) {
         filters.push(`ds.submitted_at >= $${idx++}`);

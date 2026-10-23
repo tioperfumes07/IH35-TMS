@@ -38,7 +38,7 @@ describe("accounting/expenses.routes RANK4-EXPENSE-TRAILER-ID", () => {
 // queryExpensesList) never accepted or returned it — mirrors #6324's accident list filter exactly.
 describe("accounting/expenses.routes EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING", () => {
   it("GET list accepts an optional trailer_id filter", () => {
-    expect(routes).toMatch(/listExpensesQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?trailer_id: z\.string\(\)\.uuid\(\)\.optional\(\),/);
+    expect(routes).toMatch(/listExpensesQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?trailer_id: entityIdFilterSchema\.optional\(\),/);
   });
 
   it("ExpenseListFilters carries trailerId and the route passes q.trailer_id through", () => {
@@ -48,7 +48,7 @@ describe("accounting/expenses.routes EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING", 
 
   it("queryExpensesList applies the trailer_id filter as a bound WHERE predicate", () => {
     expect(routes).toContain("if (filters.trailerId) {");
-    expect(routes).toContain('where.push(`e.trailer_id = $${values.length}::uuid`);');
+    expect(routes).toContain('where.push(`e.trailer_id = ANY($${values.length}::uuid[])`);');
   });
 
   it("queryExpensesList joins mdata.equipment for a trailer_display_id, company-scoped like unit_id's join", () => {
@@ -68,7 +68,7 @@ describe("accounting/expenses.routes EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING", 
 // ACCT-F5032 — unit_id create/detail existed; list filter missing so VehicleProfile reverse could not mount.
 describe("accounting/expenses.routes ACCT-F5032-UNIT-LIST-FILTER", () => {
   it("GET list accepts an optional unit_id filter", () => {
-    expect(routes).toMatch(/listExpensesQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?unit_id: z\.string\(\)\.uuid\(\)\.optional\(\),/);
+    expect(routes).toMatch(/listExpensesQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?unit_id: entityIdFilterSchema\.optional\(\),/);
   });
 
   it("ExpenseListFilters carries unitId and the route passes q.unit_id through", () => {
@@ -78,7 +78,7 @@ describe("accounting/expenses.routes ACCT-F5032-UNIT-LIST-FILTER", () => {
 
   it("queryExpensesList applies the unit_id filter as a bound WHERE predicate", () => {
     expect(routes).toContain("if (filters.unitId) {");
-    expect(routes).toContain('where.push(`e.unit_id = $${values.length}::uuid`);');
+    expect(routes).toContain('where.push(`e.unit_id = ANY($${values.length}::uuid[])`);');
   });
 });
 

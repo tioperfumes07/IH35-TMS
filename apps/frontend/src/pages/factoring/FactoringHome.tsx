@@ -26,6 +26,7 @@ import {
   type FactoringUnappliedCashRow,
 } from "../../api/factoring";
 import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { useStagedListFilters } from "../../components/table";
 import {
   createDriverVendorMerge,
@@ -2624,12 +2625,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   <div className="flex flex-wrap items-end gap-3">
                     <label className="text-xs text-[#4B5563]">
                       Customer
-                      <EntityPicker
+                      <EntityMultiSelect
                         kind="customer"
                         operatingCompanyId={companyId}
                         value={filterDraft.customerId || null}
                         onChange={(next) => staged.setDraft((d) => ({ ...d, customerId: next ?? "" }))}
-                        allowCreate={false}
                         placeholder="All customers"
                         className="mt-1"
                         dataTestId="factoring-home-filter-customer"
@@ -2637,12 +2637,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     </label>
                     <label className="text-xs text-[#4B5563]">
                       Load
-                      <EntityPicker
+                      <EntityMultiSelect
                         kind="load"
                         operatingCompanyId={companyId}
                         value={filterDraft.loadId || null}
                         onChange={(next) => staged.setDraft((d) => ({ ...d, loadId: next ?? "" }))}
-                        allowCreate={false}
                         placeholder="All loads"
                         className="mt-1"
                         dataTestId="factoring-home-filter-load"
@@ -2733,12 +2732,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   >
                     <label className="text-xs text-[#4B5563]">
                       Customer
-                      <EntityPicker
+                      <EntityMultiSelect
                         kind="customer"
                         operatingCompanyId={companyId}
                         value={filterDraft.customerId || null}
                         onChange={(next) => staged.setDraft((d) => ({ ...d, customerId: next ?? "" }))}
-                        allowCreate={false}
                         placeholder="All customers"
                         className="mt-1"
                         dataTestId="factoring-home-chargebacks-filter-customer"
@@ -3179,12 +3177,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               >
                 <label className="text-xs text-[#4B5563]">
                   Lender vendor
-                  <EntityPicker
+                      <EntityMultiSelect
                     kind="vendor"
                     operatingCompanyId={companyId}
                     value={filterDraft.vendorId || null}
                     onChange={(next) => staged.setDraft((d) => ({ ...d, vendorId: next ?? "" }))}
-                    allowCreate={false}
                     placeholder="All lenders"
                     className="mt-1"
                     dataTestId="factoring-home-filter-vendor"
@@ -3382,12 +3379,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     <div className="flex flex-wrap items-end gap-3">
                       <label className="text-xs text-[#4B5563]">
                         Driver
-                        <EntityPicker
+                      <EntityMultiSelect
                           kind="driver"
                           operatingCompanyId={companyId}
                           value={filterDraft.driverId || null}
                           onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
-                          allowCreate={false}
                           placeholder="All drivers"
                           className="mt-1"
                           dataTestId="factoring-home-filter-driver"
@@ -3395,12 +3391,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       </label>
                       <label className="text-xs text-[#4B5563]">
                         Vendor
-                        <EntityPicker
+                        <EntityMultiSelect
                           kind="vendor"
                           operatingCompanyId={companyId}
                           value={filterDraft.vendorId || null}
                           onChange={(next) => staged.setDraft((d) => ({ ...d, vendorId: next ?? "" }))}
-                          allowCreate={false}
                           placeholder="All vendors"
                           className="mt-1"
                           dataTestId="factoring-home-merges-filter-vendor"

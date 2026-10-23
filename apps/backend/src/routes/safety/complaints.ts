@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
@@ -16,7 +17,7 @@ const companyQuerySchema = z.object({
 // the driver's own page must surface both, so one param matches either column.
 // Optional; absent = the existing company-wide list. The privacy gate is unchanged.
 const complaintsQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
   customer_id: z.string().uuid().optional(),
   user_id: z.string().uuid().optional(),
   // E-28 (owner order 2026-10-01): load -> complaints and unit -> complaints, the other half of the link.
@@ -144,9 +145,9 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       const values: unknown[] = [query.data.operating_company_id];
       const filters: string[] = [];
       if (query.data.driver_id) {
-        values.push(query.data.driver_id);
+        values.push(entityIdFilterValues(query.data.driver_id));
         // SAF-F16: filter in SQL so every ranged page is scoped to the requested driver.
-        filters.push(`(c.complainant_driver_id = $${values.length} OR c.respondent_driver_id = $${values.length})`);
+        filters.push(`(c.complainant_driver_id = ANY($${values.length}::uuid[]) OR c.respondent_driver_id = ANY($${values.length}::uuid[]))`);
       }
       if (query.data.customer_id) {
         values.push(query.data.customer_id);

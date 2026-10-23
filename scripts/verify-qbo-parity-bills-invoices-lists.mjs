@@ -61,7 +61,7 @@ export function check({ bills, invoices }) {
   if (/\blistCustomers\s*\(/.test(invoices))
     f.push(`${INVOICES}: Customer filter must not regress to the capped listCustomers roster`);
   if (!/customer_id:\s*customerId\s*\|\|\s*undefined/.test(invoices) &&
-      !(/const customerParam = customerFilter\.length === 1 \? customerFilter\[0\] : undefined/.test(invoices) && /customer_id:\s*customerParam/.test(invoices)))
+      !(/const customerParam = customerFilter\.length \? customerFilter\.join\(","\) : undefined/.test(invoices) && /customer_id:\s*customerParam/.test(invoices)))
     f.push(`${INVOICES}: Invoices list must wire customer_id (customerId) into listInvoices`);
   if (!/All customers/.test(invoices)) f.push(`${INVOICES}: Invoices list must have an "All customers" Customer filter option`);
   // BANK-F91078 — ORDERS chrome: InvoicesListPage uses locked tokens, not text-[11px].
@@ -113,6 +113,12 @@ if (process.argv.includes("--selftest")) {
   `;
 
   const checks = [
+    ["multi customer wire preserves two IDs and rejects dropped binding", (() => {
+      const multi = goodInvoices.replace('customer_id: customerId || undefined', 'customer_id: customerParam') + ' const customerParam = customerFilter.length ? customerFilter.join(",") : undefined;';
+      return check({ bills: goodBills, invoices: multi }).length === 0 &&
+        check({ bills: goodBills, invoices: multi.replace('customerFilter.join(",")', 'customerFilter[0]') }).length > 0 &&
+        check({ bills: goodBills, invoices: multi.replace('customer_id: customerParam', 'customer_id: undefined') }).length > 0;
+    })()],
     ["healthy bills + invoices pass", check({ bills: goodBills, invoices: goodInvoices }).length === 0],
     ["missing bills Due date column caught", check({ bills: goodBills.replace('label: "Due date"', 'label: "Nope"'), invoices: goodInvoices }).some((x) => x.includes("Due date"))],
     ["missing bills Overdue badge caught", check({ bills: goodBills.replace(">Overdue<", ">ok<").replace("function billDueStatus", "function nope"), invoices: goodInvoices }).some((x) => x.includes("Overdue badge"))],

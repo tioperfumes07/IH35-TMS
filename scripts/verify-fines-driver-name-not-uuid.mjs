@@ -18,6 +18,7 @@
  * @matrix-built leafRe:safety\\.fines\\.list|safety\\.external.fines
  */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -59,10 +60,10 @@ export function assertFinesDriverName(sources) {
   }
 
   // LST-F5163F: visible reverse filters (URL query alone is not reverse).
-  if (!/dataTestId="fines-filter-driver"/.test(page) || !/kind="driver"[\s\S]{0,200}allowCreate=\{false\}/.test(page)) {
+  if (multiSelectFilterProblems(page, { file: PAGE, kind: 'driver', testId: 'fines-filter-driver' }).length) {
     problems.push(`${PAGE}: missing EntityPicker kind=driver allowCreate=false filter (fines-filter-driver).`);
   }
-  if (!/dataTestId="fines-filter-unit"/.test(page) || !/kind="unit"[\s\S]{0,200}allowCreate=\{false\}/.test(page)) {
+  if (multiSelectFilterProblems(page, { file: PAGE, kind: 'unit', testId: 'fines-filter-unit' }).length) {
     problems.push(`${PAGE}: missing EntityPicker kind=unit allowCreate=false filter (fines-filter-unit).`);
   }
   if (!/label:\s*"Unit"/.test(page) || !/EntityLink[\s\S]{0,120}kind="unit"/.test(page)) {
@@ -84,6 +85,7 @@ export function assertFinesDriverName(sources) {
 }
 
 if (SELFTEST) {
+  selftestMultiSelectFilterContract();
   const live = { [ROUTE]: read(ROUTE), [PAGE]: read(PAGE), [DRAWER]: read(DRAWER) };
   const failures = [];
   const expectCaught = (name, mutated, needle) => {

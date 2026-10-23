@@ -8,7 +8,7 @@ import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWit
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useStagedListFilters } from "../../components/table";
@@ -306,12 +306,11 @@ export function CashAdvanceRequestsPage() {
         <div className="relative flex flex-wrap items-end gap-3" data-testid="cash-advance-requests-filters">
           <label className="text-xs text-[#4B5563]">
             Driver
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={companyId}
               value={filterDraft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All drivers"
               className="mt-1"
               dataTestId="cash-advance-requests-filter-driver"

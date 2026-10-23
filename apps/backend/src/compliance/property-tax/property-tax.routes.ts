@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
@@ -29,7 +30,7 @@ const companyQuery = z.object({ operating_company_id: z.string().uuid() });
 // literal string ":id" reaching the query). Matches the idParamSchema convention already used across
 // this codebase (vendor-category, vendor-credits, journal-entries, ...).
 const idParamSchema = z.object({ id: z.string().uuid() });
-const renditionListQuery = companyQuery.extend({ unit_id: z.string().uuid().optional() });
+const renditionListQuery = companyQuery.extend({ unit_id: entityIdFilterSchema.optional() });
 
 const createRenditionBody = z.object({
   operating_company_id: z.string().uuid(),

@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["safety"],"cols":["driver","connectivity","qbo_chrome"],"leaves":["drug_alcohol.list"],"task":"SAFETY-F6621-DRUG-POOL-CONFIRM-LIFECYCLE","vertical":"column-wave"} */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const source = fs.readFileSync("apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx", "utf8");
 
 function inspect(value) {
   const failures = [];
+  failures.push(...multiSelectFilterProblems(value, { file: 'apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx', kind: 'driver', testId: 'drug-alcohol-filter-driver' }));
   const checks = [
     [/actionGenerationRef = useRef\(0\)/, "missing action generation"],
     // UPL-04 (e425f051e4, #19134) wrapped the create with a source-document upload and spreads the
@@ -22,7 +24,6 @@ function inspect(value) {
     [/createTestMutation\.variables\?\.generation === actionGenerationRef\.current/, "stale test error can leak"],
     [/openRtdMutation\.variables\?\.generation === actionGenerationRef\.current/, "stale RTD-open error can leak"],
     [/advanceRtdMutation\.variables\?\.generation === actionGenerationRef\.current/, "stale RTD-advance error can leak"],
-    [/<EntityPicker[\s\S]*kind="driver"[\s\S]*operatingCompanyId=\{companyId\}/, "driver picker is not canonical/scoped"],
     [/<EntityLink[\s\S]*kind="driver"[\s\S]*id=\{effectiveDriverId\}/, "selected-driver reverse drill is missing"],
     [/pendingBulkEnroll, setPendingBulkEnroll/, "bulk enrollment does not retain a submitted snapshot"],
     [/setPendingBulkEnroll\(\{[\s\S]*companyId,[\s\S]*generation: actionGenerationRef\.current,[\s\S]*consortiumName: name,[\s\S]*activeDriverCount,/, "bulk confirmation snapshot is incomplete"],
@@ -38,6 +39,8 @@ function inspect(value) {
 }
 
 if (process.argv.includes("--selftest")) {
+  if (inspect(source).length) throw new Error(`baseline failed: ${inspect(source).join('; ')}`);
+  const filterPlants = selftestMultiSelectFilterContract();
   const mutations = [
     "actionGenerationRef = useRef(0)",
     "createDrugProgramTest(input.companyId, { ...input.payload",
@@ -53,7 +56,7 @@ if (process.argv.includes("--selftest")) {
     if (!source.includes(token)) throw new Error(`fixture missing ${token}`);
     if (inspect(source.split(token).join("REMOVED_BY_SELFTEST")).length === 0) throw new Error(`missed ${token}`);
   }
-  console.log(`verify-drug-alcohol-action-company-lifecycle --selftest PASS (${mutations.length}/${mutations.length})`);
+  console.log(`verify-drug-alcohol-action-company-lifecycle --selftest PASS (${mutations.length}/${mutations.length}; multi-select plants ${filterPlants})`);
 } else {
   const failures = inspect(source);
   if (failures.length) {

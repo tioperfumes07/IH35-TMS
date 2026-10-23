@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -8,9 +9,9 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { queryBoolean } from "../lib/query-boolean.js";
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
-  vendor_id: z.string().uuid().optional(),
+  vendor_id: entityIdFilterSchema.optional(),
   work_order_id: z.string().uuid().optional(),
-  unit_id: z.string().uuid().optional(),
+  unit_id: entityIdFilterSchema.optional(),
   unit_linked_only: queryBoolean().optional(),
   limit: z.coerce.number().int().min(1).max(300).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -65,16 +66,16 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
       const values: unknown[] = [query.data.operating_company_id];
       const filters = ["pil.operating_company_id = $1::uuid"];
       if (query.data.vendor_id) {
-        values.push(query.data.vendor_id);
-        filters.push(`pil.vendor_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(query.data.vendor_id));
+        filters.push(`pil.vendor_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.work_order_id) {
         values.push(query.data.work_order_id);
         filters.push(`pil.work_order_id = $${values.length}::uuid`);
       }
       if (query.data.unit_id) {
-        values.push(query.data.unit_id);
-        filters.push(`wo.unit_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(query.data.unit_id));
+        filters.push(`wo.unit_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.unit_linked_only) filters.push("wo.unit_id IS NOT NULL");
       const countRes = await client.query(

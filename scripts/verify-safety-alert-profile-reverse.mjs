@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leafRe":"^safety\\.(drawer|parity)\\.(company_violation_detail|integrity_alert_detail|anomaly_detail)$","task":"VERTICAL-REVERSE-LINK-SAFETY-ALERTS"} */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 const read = (path) => fs.readFileSync(path, "utf8");
 const files = {
   companyRoutes: read("apps/backend/src/safety/company-violations.routes.ts"),
@@ -35,11 +36,13 @@ const files = {
 };
 function failures(s = files) {
   return [
+    ['company violation validated list bindings', ['driver_id','unit_id'].every(field => s.companyRoutes.includes(`${field}: entityIdFilterSchema.optional()`) && s.companyRoutes.includes(`entityIdFilterValues(query.data.${field})`)) && s.companyRoutes.includes('cv.operating_company_id = $1::uuid')],
+    ['integrity validated list bindings', ['subject_driver_id','subject_unit_id','subject_vendor_id'].every(field => s.integrityRoutes.includes(`${field}: entityIdFilterSchema.optional()`)) && s.integrityRoutes.includes('values.push(entityIdFilterValues(query[column]))') && s.integrityRoutes.includes('ia.operating_company_id = $1::uuid')],
     [
       "company violation driver/unit reverse filters",
       s.companyRoutes.includes("companyViolationListQuerySchema.safeParse") &&
-        s.companyRoutes.includes("d.driver_id = $2::uuid") &&
-        s.companyRoutes.includes("u.unit_id = $3::uuid"),
+        s.companyRoutes.includes("d.driver_id = ANY($2::uuid[])") &&
+        s.companyRoutes.includes("u.unit_id = ANY($3::uuid[])"),
     ],
     [
       "integrity alert subject FK filters",
@@ -47,7 +50,7 @@ function failures(s = files) {
         'for (const column of ["subject_driver_id", "subject_unit_id", "subject_vendor_id"]',
       ) &&
         s.integrityRoutes.includes(
-          "filters.push(`ia.${column} = $${values.length}::uuid`)",
+          "filters.push(`ia.${column} = ANY($${values.length}::uuid[])`)",
         ),
     ],
     [
@@ -91,7 +94,7 @@ function failures(s = files) {
         s.integrityPage.includes(
           'dataTestId="integrity-alerts-filter-vendor"',
         ) &&
-        s.integrityPage.includes("allowCreate={false}"),
+        ['driver','unit','vendor'].every(kind => !multiSelectFilterProblems(s.integrityPage,{file:'apps/frontend/src/pages/safety/IntegrityAlertsPage.tsx',kind,testId:'integrity-alerts-filter-'+kind}).length),
     ],
     [
       "integrity alerts list Linked-to EntityLink column",
@@ -185,7 +188,7 @@ function failures(s = files) {
       "company violation list EntityPicker driver/unit filters",
       s.companyPage.includes('dataTestId="company-violations-filter-driver"') &&
         s.companyPage.includes('dataTestId="company-violations-filter-unit"') &&
-        s.companyPage.includes("allowCreate={false}"),
+        ['driver','unit'].every(kind => !multiSelectFilterProblems(s.companyPage,{file:'apps/frontend/src/pages/safety/CompanyViolationsPage.tsx',kind,testId:'company-violations-filter-'+kind}).length),
     ],
     [
       "company violation list Driver/Unit EntityLink columns",
@@ -270,7 +273,13 @@ function failures(s = files) {
     .map(([name]) => name);
 }
 if (process.argv.includes("--selftest")) {
+  if(failures().length)throw new Error(failures().join('; '));
+  selftestMultiSelectFilterContract();
   const checks = [
+    failures({...files,companyRoutes:files.companyRoutes.replaceAll('entityIdFilterValues(query.data.unit_id)','query.data.unit_id')}).includes('company violation validated list bindings'),
+    failures({...files,companyRoutes:files.companyRoutes.replaceAll('cv.operating_company_id = $1::uuid','TRUE')}).includes('company violation validated list bindings'),
+    failures({...files,integrityRoutes:files.integrityRoutes.replaceAll('values.push(entityIdFilterValues(query[column]))','values.push(query[column])')}).includes('integrity validated list bindings'),
+    failures({...files,integrityRoutes:files.integrityRoutes.replaceAll('ia.operating_company_id = $1::uuid','TRUE')}).includes('integrity validated list bindings'),
     failures({
       ...files,
       section: files.section.replace("const violations = failed ? [] :", "const violations ="),
@@ -278,7 +287,7 @@ if (process.argv.includes("--selftest")) {
     failures({
       ...files,
       companyRoutes: files.companyRoutes.replaceAll(
-        "d.driver_id = $2::uuid",
+        "d.driver_id = ANY($2::uuid[])",
         "TRUE",
       ),
     }).includes("company violation driver/unit reverse filters"),

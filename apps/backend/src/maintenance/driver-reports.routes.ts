@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import {
   companyQuerySchema,
   idParamSchema,
@@ -10,8 +11,8 @@ import { requireAuth } from "../auth/session-middleware.js";
 
 const listQuerySchema = companyQuerySchema.extend({
   status: z.enum(["submitted", "under_review", "resolved", "dismissed"]).optional(),
-  driver_id: z.string().uuid().optional(),
-  load_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  load_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -75,12 +76,12 @@ export async function registerMaintenanceDriverReportsRoutes(app: FastifyInstanc
         sql += ` AND r.status = $${values.length}`;
       }
       if (query.data.driver_id) {
-        values.push(query.data.driver_id);
-        sql += ` AND r.driver_id = $${values.length}::uuid`;
+        values.push(entityIdFilterValues(query.data.driver_id));
+        sql += ` AND r.driver_id = ANY($${values.length}::uuid[])`;
       }
       if (query.data.load_id) {
-        values.push(query.data.load_id);
-        sql += ` AND r.load_id = $${values.length}::uuid`;
+        values.push(entityIdFilterValues(query.data.load_id));
+        sql += ` AND r.load_id = ANY($${values.length}::uuid[])`;
       }
       const countSql = `SELECT count(*)::int AS total_count FROM (${sql}) scoped_reports`;
       const count = (await client.query(countSql, values)) as { rows: Array<{ total_count: number }> };

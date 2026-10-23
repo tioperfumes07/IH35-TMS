@@ -14,10 +14,12 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
   const failures = [];
+  if (!s.service.includes('values.push(entityIdFilterValues(filters.driver_id))')) failures.push('bound full driver list missing');
+  if (!s.service.includes('i.operating_company_id = $1::uuid')) failures.push('company scope missing');
   if (!/assigned_primary_driver_id/.test(s.service) || !/const driverId = body\.driver_id \?\? load\.assigned_primary_driver_id/.test(s.service)) failures.push("writer must derive driver FK from selected load assignment");
   if (!/if \(!driverId \|\| !unitId\) return \{ ok: false as const, error: "load_missing_assignment" \}/.test(s.service)) failures.push("writer must reject missing derived assignment");
-  if (!/issue_driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/driver_id:\s*query\.data\.issue_driver_id/.test(s.route)) failures.push("exact driver filter route contract missing");
-  if (!/filters:\s*\{[^}]*driver_id\?: string[^}]*\}\s*=\s*\{\}/.test(s.service) || !/i\.driver_id = \$\$\{values\.length\}::uuid/.test(s.service)) failures.push("exact server-side driver filter missing");
+  if (!/issue_driver_id:\s*entityIdFilterSchema\.optional\(\)/.test(s.route) || !/driver_id:\s*query\.data\.issue_driver_id/.test(s.route)) failures.push("exact driver filter route contract missing");
+  if (!/filters:\s*\{[^}]*driver_id\?: string[^}]*\}\s*=\s*\{\}/.test(s.service) || !/i\.driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(s.service)) failures.push("exact server-side driver filter missing");
   if (!/filters\.driver_id[\s\S]{0,120}q\.set\("issue_driver_id", filters\.driver_id\)/.test(s.api)) failures.push("frontend exact driver query parameter missing");
   if (!/listDispatchIntransitIssues\(operatingCompanyId, \{ driver_id: driverId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No in-transit issues linked to this driver/.test(s.reverse)) failures.push("honest driver reverse section missing");
   if (!/kind="load"/.test(s.reverse) || !/kind="unit"/.test(s.reverse)) failures.push("reverse rows must drill to load and unit");
@@ -26,12 +28,15 @@ function audit(s) {
   return failures;
 }
 if (process.argv.includes("--selftest")) {
+  if (audit(source).length) throw new Error('selftest baseline failed');
   const mutations = [
+    ['binding','service', /values\.push\(entityIdFilterValues\(filters\.driver_id\)\)/g, 'REMOVED'],
+    ['company','service', /i\.operating_company_id = \$1::uuid/g, 'TRUE'],
     ["derive", "service", /const driverId = body\.driver_id \?\? load\.assigned_primary_driver_id/, "const driverId = body.driver_id"],
     ["assignment", "service", /if \(!driverId \|\| !unitId\) return \{ ok: false as const, error: "load_missing_assignment" \}/, ""],
     ["route", "route", /driver_id:\s*query\.data\.issue_driver_id/, "driver_id: undefined"],
     ["filter-contract", "service", /filters:\s*\{ status\?: string; issue_id\?: string; load_id\?: string; driver_id\?: string; unit_id\?: string \}/, "filters: { status?: string; issue_id?: string; load_id?: string; unit_id?: string }"],
-    ["filter", "service", /i\.driver_id = \$\$\{values\.length\}::uuid/, "TRUE"],
+    ["filter", "service", /i\.driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/, "TRUE"],
     ["api", "api", /q\.set\("issue_driver_id", filters\.driver_id\)/, 'q.set("status", filters.driver_id)'],
     ["reverse", "reverse", /driver_id: driverId/, "driver_id: operatingCompanyId"],
     ["load-drill", "reverse", /kind="load"/, 'kind="driver"'],

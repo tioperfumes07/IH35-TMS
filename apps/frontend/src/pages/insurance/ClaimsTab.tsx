@@ -20,7 +20,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
@@ -523,12 +523,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           <div className="flex flex-wrap items-end gap-3" data-testid="insurance-claims-filters">
             <label className="text-xs text-[#4B5563]">
               Driver
-              <EntityPicker
+              <EntityMultiSelect
                 kind="driver"
                 operatingCompanyId={companyId}
                 value={stagedFilters.draft.driver || null}
                 onChange={(next) => stagedFilters.setDraft((draft) => ({ ...draft, driver: next ?? "" }))}
-                allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1"
                 dataTestId="insurance-claims-filter-driver"
@@ -536,12 +535,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             </label>
             <label className="text-xs text-[#4B5563]">
               Unit
-              <EntityPicker
+              <EntityMultiSelect
                 kind="unit"
                 operatingCompanyId={companyId}
                 value={stagedFilters.draft.unit || null}
                 onChange={(next) => stagedFilters.setDraft((draft) => ({ ...draft, unit: next ?? "" }))}
-                allowCreate={false}
                 placeholder="All units"
                 className="mt-1"
                 dataTestId="insurance-claims-filter-unit"
@@ -549,12 +547,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             </label>
             <label className="text-xs text-[#4B5563]">
               Load
-              <EntityPicker
+              <EntityMultiSelect
                 kind="load"
                 operatingCompanyId={companyId}
                 value={stagedFilters.draft.load || null}
                 onChange={(next) => stagedFilters.setDraft((draft) => ({ ...draft, load: next ?? "" }))}
-                allowCreate={false}
                 placeholder="All loads"
                 className="mt-1"
                 dataTestId="insurance-claims-filter-load"
@@ -562,12 +559,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             </label>
             <label className="text-xs text-[#4B5563]">
               Trailer
-              <EntityPicker
+              <EntityMultiSelect
                 kind="trailer"
                 operatingCompanyId={companyId}
                 value={stagedFilters.draft.trailer || null}
                 onChange={(next) => stagedFilters.setDraft((draft) => ({ ...draft, trailer: next ?? "" }))}
-                allowCreate={false}
                 placeholder="All trailers"
                 className="mt-1"
                 dataTestId="insurance-claims-trailer-filter"

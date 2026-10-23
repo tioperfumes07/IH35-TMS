@@ -40,7 +40,8 @@ export function check(text) {
     { name: "event_class mapping for driver_finance.deduction.created -> driver", re: /WHEN ae\.event_class = 'driver_finance\.deduction\.created' THEN 'driver'/ },
     { name: "event_class mapping for driver_finance.settlement.deductions_applied -> task", re: /WHEN ae\.event_class = 'driver_finance\.settlement\.deductions_applied' THEN 'task'/ },
     { name: "reuses driver_finance.driver_settlements source_table for the settlement task branch", re: /THEN 'driver_finance\.driver_settlements' ELSE NULL END AS source_table/ },
-    { name: "optional driver_id filter applies to the combined result (not just events.event_log)", re: /\$\{driverPos \? `WHERE c\.subject_id = \$\$\{driverPos\}::uuid` : ""\}/ },
+    { name: "optional driver_id filter applies to the combined result (not just events.event_log)", re: /\$\{driverPos \? `WHERE c\.subject_id = ANY\(\$\$\{driverPos\}::uuid\[\]\)` : ""\}/ },
+    { name: "driver filter binds every validated UUID", re: /values\.push\(entityIdFilterValues\(d\.driver_id\)\); driverPos = values\.length/ },
   ];
   for (const { name, re } of required) {
     if (!re.test(section)) failures.push(`${FILE} (deduction-trail route): missing ${name}`);
@@ -67,6 +68,10 @@ function run() {
 
 function selftest() {
   const text = fs.readFileSync(path.join(root, FILE), "utf8");
+  for (const replacement of ['values.push([])', 'values.push(entityIdFilterValues(d.driver_id).slice(0, 1))']) {
+    const mutant = text.replace('values.push(entityIdFilterValues(d.driver_id))', replacement);
+    if (mutant === text || !check(mutant).some(x => x.includes('every validated UUID'))) throw new Error('missing/truncated driver binding escaped');
+  }
   const offender = text.replace("FROM audit.audit_events ae\n        WHERE ae.event_class ILIKE ANY(ARRAY['%deduction%','%fine%','%accident_cost%','%chargeback%'])", "-- removed for selftest");
   if (offender === text) {
     console.error("FAIL(selftest): offender mutation did not change the source");

@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { AP_BILL_OUTSTANDING_STATUSES, sqlList } from "../lib/document-status-vocabulary.js";
 import { agingWindowPredicate } from "./aging/buckets.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -1106,8 +1107,8 @@ export async function listBillsByVendor(
       where.push(`b.legal_matter_id = $${values.length}::uuid`);
     }
     if (options.unitId) {
-      values.push(options.unitId);
-      where.push(`b.unit_id = $${values.length}::uuid`);
+      values.push(entityIdFilterValues(options.unitId));
+      where.push(`b.unit_id = ANY($${values.length}::uuid[])`);
     }
     if (options.driverId) {
       values.push(options.driverId);
@@ -1118,12 +1119,12 @@ export async function listBillsByVendor(
       where.push(`b.trailer_id = $${values.length}::uuid`);
     }
     if (options.loadId) {
-      values.push(options.loadId);
+      values.push(entityIdFilterValues(options.loadId));
       where.push(
         `EXISTS (
            SELECT 1 FROM accounting.bill_lines bl
             WHERE bl.bill_id = b.id
-              AND bl.load_id = $${values.length}::uuid
+              AND bl.load_id = ANY($${values.length}::uuid[])
          )`
       );
     }
@@ -1268,24 +1269,13 @@ export async function countBillsByVendor(
   userId: string,
   operatingCompanyId: string,
   vendorId: string,
-  options: Pick<ListBillsOptions, "status" | "fromDate" | "toDate">
+  options: Omit<ListBillsOptions, "limit" | "offset">
 ): Promise<{ count: number; total_balance_cents: number }> {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const where: string[] = [
-      "b.operating_company_id = $1::uuid",
-      `COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetSql(1, 2)}`,
-    ];
-    const values: unknown[] = [operatingCompanyId, vendorId];
-    if (options.fromDate) {
-      values.push(options.fromDate);
-      where.push(`b.bill_date >= $${values.length}::date`);
-    }
-    if (options.toDate) {
-      values.push(options.toDate);
-      where.push(`b.bill_date <= $${values.length}::date`);
-    }
-    applyBillListStatusFilter(where, options.status);
+    const { where, values } = buildAllBillsWhereClause(operatingCompanyId, options);
+    values.push(vendorId);
+    where.push(`COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetSql(1, values.length)}`);
     const res = await client.query<{ count: string; total_balance_cents: string }>(
       `SELECT COUNT(*)::int AS count,
               COALESCE(SUM(${BILL_OPEN_BALANCE_SQL}), 0)::bigint AS total_balance_cents
@@ -1354,8 +1344,8 @@ function buildAllBillsWhereClause(
     where.push(`b.legal_matter_id = $${values.length}::uuid`);
   }
   if (options.unitId) {
-    values.push(options.unitId);
-    where.push(`b.unit_id = $${values.length}::uuid`);
+    values.push(entityIdFilterValues(options.unitId));
+    where.push(`b.unit_id = ANY($${values.length}::uuid[])`);
   }
   if (options.driverId) {
     values.push(options.driverId);
@@ -1366,12 +1356,12 @@ function buildAllBillsWhereClause(
     where.push(`b.trailer_id = $${values.length}::uuid`);
   }
   if (options.loadId) {
-    values.push(options.loadId);
+    values.push(entityIdFilterValues(options.loadId));
     where.push(
       `EXISTS (
          SELECT 1 FROM accounting.bill_lines bl
           WHERE bl.bill_id = b.id
-            AND bl.load_id = $${values.length}::uuid
+            AND bl.load_id = ANY($${values.length}::uuid[])
        )`
     );
   }
@@ -1494,6 +1484,26 @@ export async function listAllBillsForCompany(
  * Postgres integration test — bills-reconciliation-status.db.test.ts — depends on listBills()
  * resolving to a plain array, so that contract is left untouched; this is purely additive).
  */
+export async function aggregateBillsForRegister(
+  userId: string,
+  operatingCompanyId: string,
+  options: Omit<ListBillsOptions, "limit" | "offset"> & { vendorId?: string }
+): Promise<{ count: number; amount_cents: number }> {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const { where, values } = buildAllBillsWhereClause(operatingCompanyId, options);
+    if (options.vendorId) {
+      values.push(options.vendorId);
+      where.push(`COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetSql(1, values.length)}`);
+    }
+    const result = await client.query(
+      `SELECT COUNT(*)::int AS count, COALESCE(SUM(b.amount_cents), 0)::bigint AS amount_cents
+       FROM accounting.bills b ${BILL_VENDOR_RESOLVE_JOIN_SQL}
+       WHERE ${where.join(" AND ")}`, values);
+    return { count: Number(result.rows[0]?.count ?? 0), amount_cents: Number(result.rows[0]?.amount_cents ?? 0) };
+  });
+}
+
 export async function countAllBillsForCompany(
   userId: string,
   operatingCompanyId: string,
@@ -2100,8 +2110,12 @@ export async function listBillPayments(
     }
     const values: unknown[] = [operatingCompanyId];
     if (options.vendorId) {
-      values.push(options.vendorId);
-      where.push(`bp.vendor_id = $${values.length}`);
+      values.push(options.vendorId.split(",").map((id) => id.trim()));
+      where.push(`(bp.vendor_id = ANY($${values.length}::text[]) OR EXISTS (
+        SELECT 1 FROM mdata.vendors selected_vendor
+        WHERE selected_vendor.operating_company_id = bp.operating_company_id
+          AND selected_vendor.id::text = ANY($${values.length}::text[])
+          AND selected_vendor.qbo_vendor_id = bp.vendor_id))`);
     }
     if (options.dateFrom) {
       values.push(options.dateFrom);

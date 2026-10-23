@@ -18,6 +18,7 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 
 function audit(s) {
   const failures = [];
+  for (const field of ['unitId','trailerId']) if (!s.route.includes(`values.push(entityIdFilterValues(filters.${field}))`)) failures.push(`bound ${field} array missing`);
   if (!/<ExpensesReverseSection[\s\S]*?filter=\{\{ unit_id: id \}\}/.test(s.unit)) failures.push("unit profile expense reverse mount missing");
   if (!/<ExpensesReverseSection[\s\S]*?filter=\{\{ trailer_id: id \}\}/.test(s.trailer)) failures.push("trailer profile expense reverse mount missing");
   if (!/listExpenses\(operatingCompanyId, \{ \.\.\.filter \}\)/.test(s.section)) failures.push("entity-scoped filtered expense query missing");
@@ -33,7 +34,7 @@ function audit(s) {
   if (!/expensesQ\.isLoading/.test(s.section) || !/expensesQ\.isError/.test(s.section) || !/No expenses linked to/.test(s.section)) failures.push("honest reverse states missing");
   if (!/unit_id\?: string/.test(s.api) || !/trailer_id\?: string/.test(s.api)) failures.push("typed unit/trailer list filters missing");
   if (!/if \(params\.unit_id\) query\.set\("unit_id", params\.unit_id\)/.test(s.api) || !/if \(params\.trailer_id\) query\.set\("trailer_id", params\.trailer_id\)/.test(s.api)) failures.push("unit/trailer query serialization missing");
-  if (!/where\.push\(`e\.unit_id = \$\$\{values\.length\}::uuid`\)/.test(s.route) || !/where\.push\(`e\.trailer_id = \$\$\{values\.length\}::uuid`\)/.test(s.route)) failures.push("backend unit/trailer predicates missing");
+  if (!/where\.push\(`e\.unit_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/.test(s.route) || !/where\.push\(`e\.trailer_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/.test(s.route)) failures.push("backend unit/trailer predicates missing");
   if (!/e\.operating_company_id = \$1::uuid/.test(s.route)) failures.push("backend entity scope missing");
   const manifest = JSON.parse(s.manifest);
   for (const id of ["unit.profile.expenses_reverse", "trailer.profile.expenses_reverse"]) {
@@ -51,6 +52,8 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
+    ['unit binding','route',/values\.push\(entityIdFilterValues\(filters\.unitId\)\)/g,'REMOVED'],
+    ['trailer binding','route',/values\.push\(entityIdFilterValues\(filters\.trailerId\)\)/g,'REMOVED'],
     ["unit-mount", "unit", /filter=\{\{ unit_id: id \}\}/g, "filter={{ missing_id: id }}"],
     ["trailer-mount", "trailer", /filter=\{\{ trailer_id: id \}\}/g, "filter={{ missing_id: id }}"],
     ["query", "section", /listExpenses\(operatingCompanyId, \{ \.\.\.filter \}\)/g, "listExpenses('', {})"],
@@ -59,7 +62,7 @@ if (process.argv.includes("--selftest")) {
     ["error-state", "section", /expensesQ\.isError/g, "false"],
     ["unit-param", "api", /query\.set\("unit_id", params\.unit_id\)/g, 'query.set("wrong", params.unit_id)'],
     ["trailer-param", "api", /query\.set\("trailer_id", params\.trailer_id\)/g, 'query.set("wrong", params.trailer_id)'],
-    ["route-unit", "route", /e\.unit_id = \$\$\{values\.length\}::uuid/g, "TRUE"],
+    ["route-unit", "route", /e\.unit_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/g, "TRUE"],
     ["entity-scope", "route", /e\.operating_company_id = \$1::uuid/g, "TRUE"],
     ["connectivity-header", "self", CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace("connectivity", "expense")],
     ["unit-required", "manifest", /("id": "unit\.profile\.expenses_reverse"[\s\S]{0,240})"connectivity"/, '$1"connectivity_MISSING"'],

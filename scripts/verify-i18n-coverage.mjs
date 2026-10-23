@@ -3,6 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+import assert from "node:assert/strict";
+const ts = createRequire(new URL("../apps/frontend/package.json", import.meta.url))("typescript");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -25,20 +28,26 @@ function normalizeText(value) {
 }
 
 function countHardcodedStrings(sourceText) {
-  const jsxTextRegex = />\s*([^<>{}\n][^<>{}]*[A-Za-z][^<>{}]*)\s*</g;
-  const attrTextRegex = /\b(?:title|aria-label|placeholder|label|alt)\s*=\s*"([^"]*[A-Za-z][^"]*)"/g;
   let count = 0;
-  let match = null;
-
-  while ((match = jsxTextRegex.exec(sourceText)) !== null) {
-    const text = normalizeText(match[1] ?? "");
-    if (text.length >= 2) count += 1;
+  const source = ts.createSourceFile("page.tsx", sourceText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  function walk(node) {
+    let text = "";
+    if (ts.isJsxText(node)) text = node.text;
+    if (ts.isJsxAttribute(node) && ["title", "aria-label", "placeholder", "label", "alt"].includes(node.name.getText(source)) && node.initializer && ts.isStringLiteral(node.initializer)) text = node.initializer.text;
+    if (normalizeText(text).length >= 2 && /[A-Za-z]/.test(text)) count++;
+    ts.forEachChild(node, walk);
   }
-  while ((match = attrTextRegex.exec(sourceText)) !== null) {
-    const text = normalizeText(match[1] ?? "");
-    if (text.length >= 2) count += 1;
-  }
+  walk(source);
   return count;
+}
+
+if (process.argv.includes("--selftest")) {
+  assert.equal(countHardcodedStrings('const [rows] = useState<Row[]>([]);\nconst [error] = useState<string>();'), 0);
+  assert.equal(countHardcodedStrings('const page = <button title="Name" aria-label="Open" placeholder="Search" label="Label" alt="Image">Create\n driver</button>;'), 6);
+  assert.equal(countHardcodedStrings('const page = <button>{t("create")}</button>; // <button>Not UI</button>'), 0);
+  for (const text of ['<button>Create Driver</button>', '<input placeholder="Search" />', "<input title='Search' />"]) assert.equal(countHardcodedStrings(text), 1);
+  console.log("verify-i18n-coverage selftest PASS — generic type/comment false positives rejected; JSX text and attributes detected");
+  process.exit(0);
 }
 
 function isTrackedFrontendSource(filePath) {

@@ -19,7 +19,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { QboDocumentNumberField } from "../../components/forms/QboDocumentNumberField";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -88,7 +88,7 @@ export function VendorCreditsPage() {
   const [applyBillId, setApplyBillId] = useState<string | null>(null);
   const [applyAmountCents, setApplyAmountCents] = useState<number | null>(null);
   const [voidOpen, setVoidOpen] = useState(false);
-  const [createVendorId, setCreateVendorId] = useState<string | null>(vendorFilter || null);
+  const [createVendorId, setCreateVendorId] = useState<string | null>(vendorFilter && !vendorFilter.includes(",") ? vendorFilter : null);
   // ROUND 373.4 — the account this credit posts to (required: the document posts at creation).
   const [createAccountId, setCreateAccountId] = useState<string | null>(null);
   const accountsQuery = useQuery({
@@ -263,12 +263,11 @@ export function VendorCreditsPage() {
         <div className="flex flex-wrap gap-2">
           <label className="text-xs text-[#4B5563]">
             Vendor
-            <EntityPicker
+            <EntityMultiSelect
               kind="vendor"
               operatingCompanyId={companyId}
               value={staged.draft.vendorId || null}
               onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next ?? "" })}
-              allowCreate={false}
               placeholder="All vendors"
               className="mt-1"
               dataTestId="vendor-credits-filter-vendor"
@@ -284,7 +283,7 @@ export function VendorCreditsPage() {
           />
         </div>
       </CollapsedListFilters>
-      {vendorFilter ? (
+      {vendorFilter && !vendorFilter.includes(",") ? (
         <span className="text-xs text-gray-600">
           Filtered to vendor{" "}
           <EntityLink kind="vendor" id={vendorFilter} label={entityLabel(filterVendorName, vendorFilter, "Vendor")} />
@@ -301,7 +300,7 @@ export function VendorCreditsPage() {
         canWrite ? (
           <Button
             onClick={() => {
-              setCreateVendorId(vendorFilter || null);
+              setCreateVendorId(vendorFilter && !vendorFilter.includes(",") ? vendorFilter : null);
               setCreateOpen(true);
             }}
           >

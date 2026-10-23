@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -19,7 +20,7 @@ const historyListQuerySchema = companyQuerySchema.extend({
 });
 
 const drugTestsListQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
   test_type: z.string().trim().min(1).optional(),
   result: z.string().trim().min(1).optional(),
   from: z.string().date().optional(),
@@ -165,7 +166,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
         values.push(value);
         filters.push(sql(values.length));
       };
-      addFilter(company.data.driver_id, (n) => `AND t.driver_id = $${n}::uuid`);
+      addFilter(company.data.driver_id ? entityIdFilterValues(company.data.driver_id) : undefined, (n) => `AND t.driver_id = ANY($${n}::uuid[])`);
       addFilter(company.data.test_type, (n) => `AND t.test_type = $${n}`);
       addFilter(company.data.result, (n) => `AND t.result = $${n}`);
       addFilter(company.data.from, (n) => `AND t.test_date >= $${n}::date`);

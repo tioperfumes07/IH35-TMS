@@ -1,4 +1,5 @@
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
@@ -307,8 +308,8 @@ export async function listDisputes(
       where.push(`d.status IN ('open', 'under_review')`);
     }
     if (input.driver_id) {
-      values.push(input.driver_id);
-      where.push(`d.driver_id = $${values.length}`);
+      values.push(entityIdFilterValues(input.driver_id));
+      where.push(`d.driver_id = ANY($${values.length}::uuid[])`);
     }
     const res = await client.query(
       `

@@ -2,6 +2,7 @@ import { LEGACY_FACTORING_WRITERS_RETIRED, sendRetiredFactoringWriter } from "./
 import type { FastifyInstance } from "fastify";
 import { requireFactoringPurchaseOwner } from "./owner-only-purchase.js";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { listSubmissionQueueInvoices, listWorkqueueInvoices } from "./submission-queue.service.js";
@@ -13,8 +14,8 @@ const companyQuerySchema = z.object({
 // LINK-F5171/LINK-F5181: reverse_link -- optional filters so a customer/load's own reverse section
 // can query its own submission-queue rows server-side.
 const submissionQueueQuerySchema = companyQuerySchema.extend({
-  customer_id: z.string().uuid().optional(),
-  load_id: z.string().uuid().optional(),
+  customer_id: entityIdFilterSchema.optional(),
+  load_id: entityIdFilterSchema.optional(),
 });
 
 export async function registerSubmissionQueueRoutes(app: FastifyInstance) {

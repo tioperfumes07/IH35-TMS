@@ -8,6 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from "./lib/entity-multiselect-filter-contract.mjs";
 
 const LABEL = "verify-fault-drafts-staged-filters";
 const TARGET = "apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx";
@@ -21,7 +22,7 @@ function assertPage(src) {
   if (!src.includes('data-testid="fault-drafts-filter-cancel"')) errors.push("must expose filter-cancel");
   if (!src.includes('data-testid="fault-drafts-filter-reset"')) errors.push("must expose filter-reset");
   if (!src.includes('dataTestId="fault-drafts-filter-unit"')) errors.push("must keep unit picker testid");
-  if (!/allowCreate=\{false\}/.test(src)) errors.push("must keep allowCreate={false}");
+  errors.push(...multiSelectFilterProblems(src, { file: TARGET, kind: "unit", testId: "fault-drafts-filter-unit" }));
   if (!/const deepLinkUnitId\s*=\s*searchParams\.get\("unit_id"\)/.test(src)) {
     errors.push('must keep deepLinkUnitId = searchParams.get("unit_id")');
   }
@@ -63,20 +64,18 @@ function selftest() {
     const [unitPickerId, setUnitPickerId] = useState("");
     const setUnitFilter = (unitId) => { setUnitPickerId(unitId); setSearchParams(...); };
   `;
-  const good = `
-    useStagedListFilters({ applied, empty: EMPTY_FILTERS, onApply })
-    const deepLinkUnitId = searchParams.get("unit_id");
-    const effectiveUnitId = applied.unitId.trim() || undefined;
-    const setUnitFilter = (unitId) => { staged.setDraft((d) => ({ ...d, unitId })); };
-    setSearchParams
-    allowCreate={false}
-    dataTestId="fault-drafts-filter-unit"
-    <button data-testid="fault-drafts-filter-apply" onClick={staged.apply}>Apply</button>
-    <button data-testid="fault-drafts-filter-cancel" onClick={staged.cancel}>Cancel</button>
-    <button data-testid="fault-drafts-filter-reset">Reset</button>
-    <ListErrorState title="Couldn't load fault-driven drafts" onRetry={() => void draftsQuery.refetch()} />
-    {!draftsQuery.isError ? <ParityTable /> : null}
-  `;
+  const good = production;
+  selftestMultiSelectFilterContract();
+  for (const [from, to] of [
+    ['kind="unit"', 'kind="unit" allowCreate'],
+    ['operatingCompanyId={companyId}', 'operatingCompanyId={""}'],
+    ['setUnitFilter(next ?? "")', 'setUnitFilter(next?.split(",")[0] ?? "")'],
+    ['onClick={staged.apply}', 'onClick={() => undefined}'],
+    ['onClick={staged.cancel}', 'onClick={() => undefined}'],
+  ]) {
+    if (!good.includes(from)) throw new Error(`selftest plant did not change source: ${from}`);
+    if (!assertPage(good.replaceAll(from, to)).length) throw new Error(`selftest plant survived: ${from}`);
+  }
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
     process.exit(1);

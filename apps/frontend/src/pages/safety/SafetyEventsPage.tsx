@@ -18,6 +18,7 @@ import { useSafetyUiContext } from "./SafetyLayout";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { suggestExpenseLoad } from "../../api/maintenance";
 import { LoadSuggestionReadError } from "../../components/shared/LoadSuggestionReadError";
 import { Button } from "../../components/Button";
@@ -510,29 +511,25 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           {/* SAF-F28: filters, not creators — allowCreate={false} (Idvr / Accidents law). */}
           <label className="text-xs text-[#4B5563]" aria-label="Filter by driver">
             Driver
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={operatingCompanyId}
               value={filterDraft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All drivers"
               className="mt-1 w-48"
-              dataField="safety-events-driver-filter"
               dataTestId="safety-events-driver-filter"
             />
           </label>
           <label className="text-xs text-[#4B5563]" aria-label="Filter by unit">
             Unit
-            <EntityPicker
+            <EntityMultiSelect
               kind="unit"
               operatingCompanyId={operatingCompanyId}
               value={filterDraft.unitId || null}
               onChange={(next) => setUnitFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All units"
               className="mt-1 w-40"
-              dataField="safety-events-unit-filter"
               dataTestId="safety-events-unit-filter"
             />
           </label>

@@ -4,6 +4,7 @@
  * GET /api/v1/reports/loads, canonical loadCostRollupLateral money columns, FE /reports/loads.
  */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -44,9 +45,7 @@ export function assertLoadsReportSurface(srcs) {
   if (!/data-testid="loads-report-page"/.test(srcs.page)) {
     fails.push("LoadsReportPage must render loads-report-page");
   }
-  if (!/ReferenceSelect/.test(srcs.page)) {
-    fails.push("LoadsReportPage must use ReferenceSelect for entity filters");
-  }
+  for (const kind of ['customer', 'driver', 'unit', 'trailer']) fails.push(...multiSelectFilterProblems(srcs.page, {file: FILES.page, kind}));
   if (!/footerCells/.test(srcs.page)) {
     fails.push("LoadsReportPage must render ParityTable footerCells totals row");
   }
@@ -80,6 +79,7 @@ export function assertLoadsReportSurface(srcs) {
 }
 
 async function selftest() {
+  selftestMultiSelectFilterContract();
   const srcs = Object.fromEntries(Object.entries(FILES).map(([k, v]) => [k, read(v)]));
   const fails = assertLoadsReportSurface(srcs);
   if (fails.length) {

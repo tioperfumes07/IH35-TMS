@@ -51,11 +51,11 @@ export function check({ customers, invoices }) {
   if (!/searchParams\.get\(\s*["']customer_id["']\s*\)/.test(invoices)) {
     f.push(`${INVOICES}: must seed customer filter from searchParams.get("customer_id")`);
   }
-  // FILTER-MULTI-01 (#22497): the deep-linked customer_id seeds the multi-select customerFilter, and a single
-  // selection narrows listInvoices via customerParam. Either shape is accepted; dropping the wiring still fails.
+  // 443.281: deep-linked CSV seeds the multi-select; every selected UUID reaches the list reader.
+  // Legacy scalar callers remain valid. Truncating the multi-select to its first ID fails.
   if (!/customer_id:\s*customerId\s*\|\|\s*undefined/.test(invoices) &&
-      !(/useState<string\[\]>\(\(\) => \(customerId \? \[customerId\] : \[\]\)\)/.test(invoices) &&
-        /const customerParam = customerFilter\.length === 1 \? customerFilter\[0\] : undefined/.test(invoices) &&
+      !(/useState<string\[\]>\(\(\) => \(customerId \? customerId\.split\(","\) : \[\]\)\)/.test(invoices) &&
+        /const customerParam = customerFilter\.length \? customerFilter\.join\(","\) : undefined/.test(invoices) &&
         /customer_id:\s*customerParam/.test(invoices))) {
     f.push(`${INVOICES}: must wire customer_id (customerId) into listInvoices`);
   }
@@ -87,6 +87,12 @@ if (process.argv.includes("--selftest")) {
   `;
 
   const checks = [
+    ["two customer IDs survive serialization", (() => {
+      const multi = goodInvoices.replace('listInvoices(id, { customer_id: customerId || undefined });', 'const [customerFilter] = useState<string[]>(() => (customerId ? customerId.split(",") : [])); const customerParam = customerFilter.length ? customerFilter.join(",") : undefined; listInvoices(id, { customer_id: customerParam });');
+      return check({ customers: goodCustomers, invoices: multi }).length === 0 &&
+        check({ customers: goodCustomers, invoices: multi.replace('customerFilter.join(",")', 'customerFilter[0]') }).length > 0 &&
+        check({ customers: goodCustomers, invoices: multi.replace('customer_id: customerParam', 'customer_id: undefined') }).length > 0;
+    })()],
     ["healthy emit + consume pass", check({ customers: goodCustomers, invoices: goodInvoices }).length === 0],
     [
       "missing Customers emit caught",

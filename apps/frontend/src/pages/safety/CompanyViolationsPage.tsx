@@ -4,7 +4,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCompanyViolations } from "../../api/safety";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -199,12 +199,11 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
             <div className="relative flex flex-wrap items-end gap-2" data-testid="company-violations-filters">
               <label className="text-xs text-[#4B5563]">
                 Driver
-                <EntityPicker
+                <EntityMultiSelect
                   kind="driver"
                   operatingCompanyId={operatingCompanyId}
                   value={draft.driverId || null}
                   onChange={(next) => setDriverFilter(next ?? "")}
-                  allowCreate={false}
                   placeholder="All drivers"
                   className="mt-1"
                   dataTestId="company-violations-filter-driver"
@@ -212,12 +211,11 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
               </label>
               <label className="text-xs text-[#4B5563]">
                 Unit
-                <EntityPicker
+                <EntityMultiSelect
                   kind="unit"
                   operatingCompanyId={operatingCompanyId}
                   value={draft.unitId || null}
                   onChange={(next) => setUnitFilter(next ?? "")}
-                  allowCreate={false}
                   placeholder="All units"
                   className="mt-1"
                   dataTestId="company-violations-filter-unit"

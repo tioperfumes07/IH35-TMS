@@ -55,6 +55,15 @@ const REQUIRED_READS = [
   { label: "incidents (damage / trailer interchange / cargo claim)", needle: "listSafetyIncidents(" },
 ];
 
+const MULTI_FILTER_CONTRACTS = [
+  [ACCIDENTS_ROUTE, 'ar', 'values', 'unit_id'],
+  [ACCIDENTS_ROUTE, 'ar', 'values', 'trailer_id'],
+  [DOT_ROUTE, 'di', 'values', 'unit_id'],
+  [DOT_ROUTE, 'di', 'values', 'trailer_id'],
+  [DVIR_ROUTE, 'ds', 'values', 'trailer_id'],
+  [INCIDENTS_ROUTE, 'i', 'params', 'trailer_id'],
+];
+
 export function assertAssetSafetyReverse(sources) {
   const src = {};
   for (const rel of FILES) src[rel] = stripComments(sources?.[rel] ?? read(rel));
@@ -101,13 +110,13 @@ export function assertAssetSafetyReverse(sources) {
   }
 
   // 3. Server-side SQL scoping on all four routes.
-  if (!/ar\.unit_id = \$/.test(src[ACCIDENTS_ROUTE])) {
+  if (!/ar\.unit_id = ANY\(\$/.test(src[ACCIDENTS_ROUTE])) {
     problems.push(`${ACCIDENTS_ROUTE}: GET accidents does not filter by unit in SQL — a client-side filter drops rows past LIMIT 500.`);
   }
-  if (!/unit_id = \$/.test(src[DOT_ROUTE]) || !/trailer_id = \$/.test(src[DOT_ROUTE])) {
+  if (!/unit_id = ANY\(\$/.test(src[DOT_ROUTE]) || !/trailer_id = ANY\(\$/.test(src[DOT_ROUTE])) {
     problems.push(`${DOT_ROUTE}: GET dot-inspections must filter by BOTH unit_id and trailer_id in SQL (the table carries both).`);
   }
-  if (!/ds\.trailer_id = \$/.test(src[DVIR_ROUTE])) {
+  if (!/ds\.trailer_id = ANY\(\$/.test(src[DVIR_ROUTE])) {
     problems.push(`${DVIR_ROUTE}: GET dvir has no trailer_id filter — a trailer's DVIRs stay unreachable.`);
   }
   if (!/dca\.company_id = \$2::uuid[\s\S]{0,160}dca\.is_authorized = true[\s\S]{0,160}dca\.deactivated_at IS NULL/.test(src[DVIR_ROUTE])) {
@@ -149,7 +158,7 @@ export function assertAssetSafetyReverse(sources) {
   if (!/data-testid="asset-safety-dvir-driver-link"/.test(src[SECTION])) {
     problems.push(`${SECTION}: DVIR driver drill must expose data-testid=asset-safety-dvir-driver-link for Live Leaves.`);
   }
-  if (!/i\.trailer_id = \$/.test(src[INCIDENTS_ROUTE])) {
+  if (!/i\.trailer_id = ANY\(\$/.test(src[INCIDENTS_ROUTE])) {
     problems.push(`${INCIDENTS_ROUTE}: GET incidents has no trailer_id filter — trailer interchanges stay unreachable from the trailer they concern.`);
   }
 
@@ -176,7 +185,7 @@ export function assertAssetSafetyReverse(sources) {
   if (/from "react-router-dom"/.test(src[SECTION]) || /to=\{to \?\? "#"\}/.test(src[SECTION]) || /<Link className="text-xs font-semibold text-slate-700 underline"/.test(src[SECTION])) {
     problems.push(`${SECTION}: SectionShell Open must be EntityLink-only — bare Link / to={to ?? "#"} fallback is forbidden.`);
   }
-  if (!/ar\.trailer_id = \$/.test(src[ACCIDENTS_ROUTE])) {
+  if (!/ar\.trailer_id = ANY\(\$/.test(src[ACCIDENTS_ROUTE])) {
     problems.push(`${ACCIDENTS_ROUTE}: GET accidents does not filter by trailer in SQL.`);
   }
 
@@ -204,6 +213,11 @@ export function assertAssetSafetyReverse(sources) {
   try { if (JSON.parse(src[FEED]).entries?.some((entry) => entry.guard === SELF)) problems.push("manual feed duplicates Fleet asset-safety ownership"); }
   catch (error) { problems.push(`feed parse: ${error.message}`); }
 
+
+  for (const [file, alias, binding, field] of MULTI_FILTER_CONTRACTS) {
+    if (!src[file].includes(field + ': entityIdFilterSchema.optional()') || !src[file].includes(binding + '.push(entityIdFilterValues(query.data.' + field + '))')) problems.push(file + ': missing validated bound multi-ID filter ' + field);
+    if (!src[file].includes(alias + '.operating_company_id = $1::uuid')) problems.push(file + ': missing company scope');
+  }
   return problems;
 }
 
@@ -227,6 +241,13 @@ if (SELFTEST) {
       failures.push(`${name}: NOT caught (expected "${needle}", got: ${problems.join(" | ") || "none"})`);
     }
   };
+
+  for (const [file, alias, binding, field] of MULTI_FILTER_CONTRACTS) {
+    const bound = binding + '.push(entityIdFilterValues(query.data.' + field + '))';
+    expectCaught(file + field + ' lost array binding', { ...live, [file]: live[file].replaceAll(bound, 'REMOVED') }, 'missing validated bound multi-ID filter');
+    const company = alias + '.operating_company_id = $1::uuid';
+    expectCaught(file + field + ' lost company scope', { ...live, [file]: live[file].replaceAll(company, 'TRUE') }, 'missing company scope');
+  }
 
   expectCaught(
     "record-type-dropped",
@@ -260,17 +281,17 @@ if (SELFTEST) {
   );
   expectCaught(
     "accidents-filter-removed",
-    { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.unit_id = \$\$\{values\.length\}/g, "") },
+    { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.unit_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/g, "") },
     "does not filter by unit in SQL"
   );
   expectCaught(
     "dot-trailer-filter-removed",
-    { ...live, [DOT_ROUTE]: live[DOT_ROUTE].replace(/AND di\.trailer_id = \$\$\{values\.length\}/g, "") },
+    { ...live, [DOT_ROUTE]: live[DOT_ROUTE].replace(/AND di\.trailer_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/g, "") },
     "must filter by BOTH unit_id and trailer_id"
   );
   expectCaught(
     "dvir-trailer-filter-removed",
-    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/ds\.trailer_id = \$\$\{idx\+\+\}/g, "TRUE") },
+    { ...live, [DVIR_ROUTE]: live[DVIR_ROUTE].replace(/ds\.trailer_id = ANY\(\$\$\{idx\+\+\}::uuid\[\]\)/g, "TRUE") },
     "has no trailer_id filter"
   );
   expectCaught(
@@ -337,7 +358,7 @@ if (SELFTEST) {
   );
   expectCaught(
     "incidents-trailer-filter-removed",
-    { ...live, [INCIDENTS_ROUTE]: live[INCIDENTS_ROUTE].replace(/i\.trailer_id = \$\$\{params\.length\}/g, "TRUE") },
+    { ...live, [INCIDENTS_ROUTE]: live[INCIDENTS_ROUTE].replace(/i\.trailer_id = ANY\(\$\$\{params\.length\}::uuid\[\]\)/g, "TRUE") },
     "trailer interchanges stay unreachable"
   );
   expectCaught(
@@ -397,7 +418,7 @@ if (SELFTEST) {
   );
   expectCaught(
     "accidents-trailer-server-filter-removed",
-    { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.trailer_id = \$\$\{values\.length\}/g, "") },
+    { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.trailer_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/g, "") },
     "does not filter by trailer"
   );
   expectCaught(
@@ -458,7 +479,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 30/30 runtime/evidence defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 42/42 runtime/evidence defects caught, live sources clean`);
   process.exit(0);
 }
 

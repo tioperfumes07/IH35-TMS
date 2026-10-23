@@ -481,8 +481,8 @@ export async function listPendingCashAdvanceRequests(
   const args: unknown[] = [operatingCompanyId];
   let where = `r.operating_company_id = $1::uuid AND r.status IN ('pending', 'under_review')`;
   if (filter.driverId) {
-    args.push(filter.driverId);
-    where += ` AND r.driver_id = $${args.length}::uuid`;
+    args.push(entityIdFilterValues(filter.driverId));
+    where += ` AND r.driver_id = ANY($${args.length}::uuid[])`;
   }
   const res = await client.query(
     `
@@ -1047,3 +1047,4 @@ export async function expireStaleCashAdvanceRequests(client: QueryableClient) {
 
   return res.rows;
 }
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";

@@ -8,7 +8,7 @@ import {
   type FleetLocationHosRow,
 } from "../../api/reports";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { formatClockTimeCT } from "../../lib/businessDate";
@@ -280,7 +280,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
     setExportError(null);
     setExportPending(true);
     try {
-      await downloadFleetLocationHosXlsx(companyId);
+      await downloadFleetLocationHosXlsx(companyId, applied.unitId.trim() || undefined);
     } catch (error) {
       setExportError(error instanceof Error ? error.message : "Fleet HOS export failed");
     } finally {
@@ -299,8 +299,8 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   const effectiveUnitId = applied.unitId.trim() || undefined;
 
   const query = useQuery({
-    queryKey: ["compliance", "fleet-location-hos", companyId],
-    queryFn: () => getFleetLocationHos(companyId),
+    queryKey: ["compliance", "fleet-location-hos", companyId, effectiveUnitId],
+    queryFn: () => getFleetLocationHos(companyId, effectiveUnitId),
     enabled: Boolean(companyId),
     refetchInterval: 5 * 60 * 1000, // live, every 5 min (CST/Laredo)
     staleTime: 60_000,
@@ -312,13 +312,8 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   // COMPLIANCE-1: default view = only units reporting within the freshness threshold; years/weeks-
   // stale (or never-reported) units are segregated into the collapsible group below.
   const { live: liveRows, offline: offlineRows } = useMemo(() => {
-    const partitioned = partitionFleetByFreshness(allRows);
-    if (!effectiveUnitId) return partitioned;
-    return {
-      live: partitioned.live.filter((row) => row.unit_id === effectiveUnitId),
-      offline: partitioned.offline.filter((row) => row.unit_id === effectiveUnitId),
-    };
-  }, [allRows, effectiveUnitId]);
+    return partitionFleetByFreshness(allRows);
+  }, [allRows]);
   useEffect(() => {
     if (effectiveUnitId && offlineRows.length > 0) setShowOffline(true);
   }, [offlineRows.length, effectiveUnitId]);
@@ -355,12 +350,11 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           filterBar={
             <div className="flex flex-wrap items-center gap-2" data-testid="fleet-hos-filters">
               <div className="min-w-[220px]" data-testid="fleet-hos-unit-filter">
-                <EntityPicker
+                <EntityMultiSelect
                   kind="unit"
                   operatingCompanyId={companyId}
                   value={filterDraft.unitId || null}
                   onChange={(next) => setUnitFilter(next ?? "")}
-                  allowCreate={false}
                   placeholder="All units"
                   ariaLabel="Filter by unit"
                   dataTestId="fleet-hos-filter-unit"

@@ -28,8 +28,11 @@ function audit(parts) {
   if (!/if \(params\.unit_id\) qs\.set\("unit_id"/.test(parts.api) || !/if \(params\.driver_id\) qs\.set\("driver_id"/.test(parts.api)) {
     failures.push("frontend API must serialize unit_id and driver_id");
   }
-  if (!/if \(q\.unit_id\)[\s\S]*w\.unit_id = \$\$\{values\.length\}/.test(parts.route)) failures.push("route must scope unit_id");
-  if (!/if \(q\.driver_id\)[\s\S]*w\.driver_id = \$\$\{values\.length\}/.test(parts.route)) failures.push("route must scope driver_id");
+  for (const field of ["unit_id", "driver_id"]) {
+    if (!parts.route.includes(`${field}: entityIdFilterSchema.optional()`)
+      || !parts.route.includes(`values.push(entityIdFilterValues(q.${field}))`)
+      || !parts.route.includes(`w.${field} = ANY($` + '${values.length}::uuid[])')) failures.push(`route must scope every ${field}`);
+  }
   if (!/operatorWorkOrderListSql\("w"\)/.test(parts.route)) failures.push("operator list visibility predicate must remain wired");
   if (!/where\.push\("w\.voided_at IS NULL"\)/.test(parts.route)) {
     failures.push("operator list rows and tab counts must exclude voided work orders");
@@ -98,6 +101,8 @@ if (process.argv.includes("--selftest")) {
     ...controls.map((id) => ["page", id, "removed-filter-control"]),
     ["page", "unit_id: unitId", "unit_id: undefined"],
     ["page", "driver_id: driverId", "driver_id: undefined"],
+    ["route", "values.push(entityIdFilterValues(q.driver_id))", "values.push([])"],
+    ["route", "values.push(entityIdFilterValues(q.unit_id))", "values.push([])"],
     ["route", "operatorWorkOrderListSql(\"w\")", "\"TRUE\""],
     ["route", "where.push(\"w.voided_at IS NULL\")", "where.push(\"TRUE\")"],
     ["page", "key: \"total_actual_cost\"", "key: \"total_estimated_cost\""],

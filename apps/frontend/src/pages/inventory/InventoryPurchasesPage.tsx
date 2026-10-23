@@ -7,7 +7,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { listPartsPurchases, voidPartsPurchase, type PartsPurchaseRow } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { entityLabel } from "../../lib/entity-label";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useQueryClient } from "@tanstack/react-query";
@@ -53,37 +53,20 @@ export function InventoryPurchasesPage() {
   });
 
   const purchasesQuery = useQuery({
-    queryKey: ["maintenance", "parts-purchases", companyId],
-    queryFn: () => listPartsPurchases(companyId),
+    queryKey: ["maintenance", "parts-purchases", companyId, vendorFilter],
+    queryFn: () => listPartsPurchases(companyId, { vendor_id: vendorFilter || undefined }),
     enabled: Boolean(companyId),
   });
 
   const rows = purchasesQuery.data ?? [];
   const activeRows = useMemo(() => rows.filter((row) => !row.voided_at), [rows]);
-  const vendorOptions = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          rows
-            .filter((row) => row.vendor_id)
-            .map((row) => [
-              row.vendor_id as string,
-              entityLabel(row.vendor_name, row.vendor_id as string, "Vendor"),
-            ]),
-        ),
-      )
-        .map(([value, label]) => ({ value, label }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [rows],
-  );
   const visibleRows = useMemo(() => {
     let next = rows;
-    if (vendorFilter) next = next.filter((row) => row.vendor_id === vendorFilter);
     if (statusFilter === "active") next = next.filter((row) => !row.voided_at);
     if (statusFilter === "voided") next = next.filter((row) => Boolean(row.voided_at));
     if (workOrderLinkedOnly) next = next.filter((row) => Boolean(row.work_order_id));
     return next;
-  }, [rows, statusFilter, vendorFilter, workOrderLinkedOnly]);
+  }, [rows, statusFilter, workOrderLinkedOnly]);
 
   async function handleVoidSubmit(reason: string) {
     if (!voidTarget) return;
@@ -233,19 +216,15 @@ export function InventoryPurchasesPage() {
                 <div className="grid gap-3 sm:grid-cols-3">
                   <label className="text-xs text-[#4B5563]">
                     Vendor
-                    <SelectCombobox
-                      value={stagedFilters.draft.vendorFilter}
-                      onChange={(event) =>
-                        stagedFilters.setDraft((current) => ({ ...current, vendorFilter: event.target.value }))
+                    <EntityMultiSelect
+                      kind="vendor"
+                      operatingCompanyId={companyId}
+                      value={stagedFilters.draft.vendorFilter || null}
+                      onChange={(value) =>
+                        stagedFilters.setDraft((current) => ({ ...current, vendorFilter: value ?? "" }))
                       }
-                    >
-                      <option value="">All vendors</option>
-                      {vendorOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectCombobox>
+                      placeholder="All vendors"
+                    />
                   </label>
                   <label className="text-xs text-[#4B5563]">
                     Status

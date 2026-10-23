@@ -2,7 +2,7 @@
  * E-40 — Maintenance FAULTS view (Round 306).
  * Consumes GET /api/v1/maintenance/fault-code-alerts (route live; rows arrive when E-10 ticks).
  * Notification deep-link: /maintenance/fault-code-alerts/:id
- * Unit reverse: ?unit_id= · Driver reverse: ?driver_id= (API admits at most one).
+ * Unit reverse: ?unit_id= · Driver reverse: ?driver_id= (CSV IDs; both filters intersect).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 
@@ -33,34 +33,21 @@ export function FaultCodeAlertsPage() {
 
   function patchListSearchParam(next: { unitId: string; driverId: string }) {
     const params = new URLSearchParams(searchParams);
-    // API: at most one of unit_id / driver_id.
-    if (next.unitId) {
-      params.set("unit_id", next.unitId);
-      params.delete("driver_id");
-    } else if (next.driverId) {
-      params.set("driver_id", next.driverId);
-      params.delete("unit_id");
-    } else {
-      params.delete("unit_id");
-      params.delete("driver_id");
-    }
+    if (next.unitId) params.set("unit_id", next.unitId); else params.delete("unit_id");
+    if (next.driverId) params.set("driver_id", next.driverId); else params.delete("driver_id");
     setSearchParams(params, { replace: true });
   }
 
   const [applied, setApplied] = useState(() => ({
     ...EMPTY_FILTERS,
-    unitId: unitIdFromUrl && !driverIdFromUrl ? unitIdFromUrl : "",
-    driverId: driverIdFromUrl && !unitIdFromUrl ? driverIdFromUrl : "",
+    unitId: unitIdFromUrl,
+    driverId: driverIdFromUrl,
   }));
   const staged = useStagedListFilters({
     applied,
     empty: EMPTY_FILTERS,
     onApply: (next) => {
-      // Prefer unit when both staged (API mutually exclusive).
-      const cleaned =
-        next.unitId.trim()
-          ? { unitId: next.unitId.trim(), driverId: "" }
-          : { unitId: "", driverId: next.driverId.trim() };
+      const cleaned = { unitId: next.unitId.trim(), driverId: next.driverId.trim() };
       setApplied(cleaned);
       patchListSearchParam(cleaned);
     },
@@ -69,8 +56,8 @@ export function FaultCodeAlertsPage() {
 
   useEffect(() => {
     setApplied({
-      unitId: unitIdFromUrl && !driverIdFromUrl ? unitIdFromUrl : "",
-      driverId: driverIdFromUrl && !unitIdFromUrl ? driverIdFromUrl : "",
+      unitId: unitIdFromUrl,
+      driverId: driverIdFromUrl,
     });
   }, [unitIdFromUrl, driverIdFromUrl]);
 
@@ -181,7 +168,7 @@ export function FaultCodeAlertsPage() {
       <div className="relative flex flex-wrap items-end gap-3" data-testid="fault-code-alerts-filters">
         <label className="text-xs text-[#6B7280]">
           Unit
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={filterDraft.unitId || null}
@@ -189,10 +176,8 @@ export function FaultCodeAlertsPage() {
               staged.setDraft((d) => ({
                 ...d,
                 unitId: next ?? "",
-                driverId: next ? "" : d.driverId,
               }))
             }
-            allowCreate={false}
             placeholder="All units"
             className="mt-1"
             dataTestId="fault-code-alerts-filter-unit"
@@ -200,7 +185,7 @@ export function FaultCodeAlertsPage() {
         </label>
         <label className="text-xs text-[#6B7280]">
           Driver
-          <EntityPicker
+          <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={filterDraft.driverId || null}
@@ -208,10 +193,8 @@ export function FaultCodeAlertsPage() {
               staged.setDraft((d) => ({
                 ...d,
                 driverId: next ?? "",
-                unitId: next ? "" : d.unitId,
               }))
             }
-            allowCreate={false}
             placeholder="All drivers"
             className="mt-1"
             dataTestId="fault-code-alerts-filter-driver"
@@ -261,23 +244,25 @@ export function FaultCodeAlertsPage() {
       {effectiveUnitId ? (
         <p className="text-xs text-[#6B7280]" data-testid="fault-code-alerts-unit-banner">
           Forward by unit ·{" "}
-          <EntityLinkOrTombstone
+          {effectiveUnitId.split(",").map(id => <EntityLinkOrTombstone
+            key={id}
             kind="unit"
-            id={effectiveUnitId}
-            name={rows.find((r) => r.unit_id === effectiveUnitId)?.unit_number}
+            id={id}
+            name={rows.find((r) => r.unit_id === id)?.unit_number}
             noun="Unit"
-          />
+          />)}
         </p>
       ) : null}
       {effectiveDriverId ? (
         <p className="text-xs text-[#6B7280]" data-testid="fault-code-alerts-driver-banner">
           Reverse by driver-at-the-time ·{" "}
-          <EntityLinkOrTombstone
+          {effectiveDriverId.split(",").map(id => <EntityLinkOrTombstone
+            key={id}
             kind="driver"
-            id={effectiveDriverId}
-            name={rows.find((r) => r.driver_id === effectiveDriverId)?.driver_label}
+            id={id}
+            name={rows.find((r) => r.driver_id === id)?.driver_label}
             noun="Driver"
-          />
+          />)}
         </p>
       ) : null}
 

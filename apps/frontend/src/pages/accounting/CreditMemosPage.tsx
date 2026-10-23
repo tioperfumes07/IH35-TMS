@@ -21,7 +21,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { QboDocumentNumberField } from "../../components/forms/QboDocumentNumberField";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -91,7 +91,7 @@ export function CreditMemosPage() {
   const [applyInvoiceId, setApplyInvoiceId] = useState<string | null>(null);
   const [applyAmountCents, setApplyAmountCents] = useState<number | null>(null);
   const [voidOpen, setVoidOpen] = useState(false);
-  const [createCustomerId, setCreateCustomerId] = useState<string | null>(customerFilter || null);
+  const [createCustomerId, setCreateCustomerId] = useState<string | null>(customerFilter && !customerFilter.includes(",") ? customerFilter : null);
   // ROUND 373.4 — the account this credit posts to (required: the document posts at creation).
   const [createAccountId, setCreateAccountId] = useState<string | null>(null);
   const accountsQuery = useQuery({
@@ -268,12 +268,11 @@ export function CreditMemosPage() {
         <div className="flex flex-wrap gap-2">
           <label className="text-xs text-[#4B5563]">
             Customer
-            <EntityPicker
+            <EntityMultiSelect
               kind="customer"
               operatingCompanyId={companyId}
               value={staged.draft.customerId || null}
               onChange={(next) => staged.setDraft({ ...staged.draft, customerId: next ?? "" })}
-              allowCreate={false}
               placeholder="All customers"
               className="mt-1"
               dataTestId="credit-memos-filter-customer"
@@ -289,7 +288,7 @@ export function CreditMemosPage() {
           />
         </div>
       </CollapsedListFilters>
-      {customerFilter ? (
+      {customerFilter && !customerFilter.includes(",") ? (
         <span className="text-xs text-gray-600">
           Filtered to customer{" "}
           <EntityLink kind="customer" id={customerFilter} label={entityLabel(filterCustomerName, customerFilter, "Customer")} />
@@ -306,7 +305,7 @@ export function CreditMemosPage() {
         canWrite ? (
           <Button
             onClick={() => {
-              setCreateCustomerId(customerFilter || null);
+              setCreateCustomerId(customerFilter && !customerFilter.includes(",") ? customerFilter : null);
               setCreateOpen(true);
             }}
           >

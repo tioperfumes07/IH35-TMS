@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosRosterDriver } from "../../api/hosTracker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { Button } from "../../components/Button";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
@@ -103,23 +103,20 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
   const effectiveDriverId = applied.driverId.trim() || undefined;
 
   const rosterQ = useQuery({
-    queryKey: ["compliance", "hos-roster", operatingCompanyId, selectedDate],
-    queryFn: () => getHosDailyRoster(operatingCompanyId, selectedDate),
+    queryKey: ["compliance", "hos-roster", operatingCompanyId, selectedDate, effectiveDriverId],
+    queryFn: () => getHosDailyRoster(operatingCompanyId, selectedDate, effectiveDriverId),
     enabled: Boolean(operatingCompanyId),
     refetchInterval: 5 * 60 * 1000,
     staleTime: 60_000,
   });
   const roster = rosterQ.data;
   useEffect(() => {
-    if (!effectiveDriverId || selectedDriver?.driver_id === effectiveDriverId) return;
+    // A multi-selection filters the roster; it must not pick an arbitrary driver drawer.
+    if (!effectiveDriverId || effectiveDriverId.includes(",") || selectedDriver?.driver_id === effectiveDriverId) return;
     const requested = roster?.drivers.find((driver) => driver.driver_id === effectiveDriverId);
     if (requested) setSelectedDriver(requested);
   }, [effectiveDriverId, roster?.drivers, selectedDriver?.driver_id]);
-  const filteredDrivers = useMemo(() => {
-    const all = roster?.drivers ?? [];
-    if (!effectiveDriverId) return all;
-    return all.filter((driver) => driver.driver_id === effectiveDriverId);
-  }, [roster?.drivers, effectiveDriverId]);
+  const filteredDrivers = roster?.drivers ?? [];
   const c = roster?.counts ?? { active: 0, on_duty: 0, driving: 0, low: 0, violation: 0, unavailable: 0 };
   const asOf = roster?.generated_at ? new Date(roster.generated_at).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit", hour12: false }) : null;
 
@@ -255,12 +252,11 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         <div className="relative max-w-sm space-y-2" data-testid="hos-tracker-filters">
           <label className="text-xs text-[#4B5563]">
             Driver
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={operatingCompanyId}
               value={filterDraft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All drivers"
               className="mt-1"
               dataTestId="hos-tracker-filter-driver"

@@ -65,15 +65,20 @@ export function assertFactoringRecourseChargebacksReverse(sources) {
     if (!entry?.required?.includes("reverse_link")) problems.push(`${REQUIRED}: ${leaf} must remain a Required reverse_link leaf`);
   }
 
-  if (!/recourseQuerySchema = companyQuerySchema\.extend\([\s\S]*?customer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+  if (!/recourseQuerySchema = companyQuerySchema\.extend\([\s\S]*?customer_id:\s*entityIdFilterSchema\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: recourseQuerySchema must accept optional customer_id`);
   }
-  if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+  if (!/load_id:\s*entityIdFilterSchema\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: recourseQuerySchema must accept optional load_id`);
   }
   if (!/chargebacksFeesQuerySchema = companyQuerySchema\.extend/.test(routes)) {
     problems.push(`${ROUTES}: must define chargebacksFeesQuerySchema with optional customer_id`);
   }
+  for (const [binding, sql] of [
+    ['params.push(entityIdFilterValues(customerId))', 'selected_invoice.customer_id = ANY($${params.length}::uuid[])'],
+    ['params.push(entityIdFilterValues(loadId))', 'selected_invoice.source_load_id = ANY($${params.length}::uuid[])'],
+    ['historyParams.push(entityIdFilterValues(customerId))', 'selected_invoice.customer_id = ANY($${historyParams.length}::uuid[])'],
+  ]) if (!routes.includes(binding) || !routes.includes(sql)) problems.push(`${ROUTES}: missing exact multi-ID binding: ${binding}`);
   if (!/searchParams\.get\("customer_id"\)/.test(home) || !/searchParams\.get\("load_id"\)/.test(home)) {
     problems.push(`${HOME}: must read customer_id and load_id from URL search params`);
   }
@@ -127,11 +132,11 @@ function selftest() {
   const good = {
     [ROUTES]: `
       const recourseQuerySchema = companyQuerySchema.extend({
-        customer_id: z.string().uuid().optional(),
-        load_id: z.string().uuid().optional(),
+        customer_id: entityIdFilterSchema.optional(),
+        load_id: entityIdFilterSchema.optional(),
       });
       const chargebacksFeesQuerySchema = companyQuerySchema.extend({
-        customer_id: z.string().uuid().optional(),
+        customer_id: entityIdFilterSchema.optional(),
       });
     `,
     [HOME]: `
@@ -166,6 +171,7 @@ function selftest() {
     [SELF]: `/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["home.recourse_pipeline","home.chargebacks_fees"],"task":"FACT-F5838-RECOURSE-CHARGEBACKS-REVERSE-EXACT-LEAVES"} */`,
     [REQUIRED]: `{"leaves":[{"id": "home.recourse_pipeline", "required": ["reverse_link"]},{"id": "home.chargebacks_fees", "required": ["reverse_link"]}]}`,
   };
+  good[ROUTES] += '\nparams.push(entityIdFilterValues(customerId)); selected_invoice.customer_id = ANY($' + '${params.length}::uuid[])\nparams.push(entityIdFilterValues(loadId)); selected_invoice.source_load_id = ANY($' + '${params.length}::uuid[])\nhistoryParams.push(entityIdFilterValues(customerId)); selected_invoice.customer_id = ANY($' + '${historyParams.length}::uuid[])';
   const goodProblems = assertFactoringRecourseChargebacksReverse(good);
   if (goodProblems.length) {
     console.error(`${LABEL} SELFTEST FAIL — known-good fixture flagged: ${goodProblems.join("; ")}`);
@@ -173,8 +179,10 @@ function selftest() {
   }
 
   const mutations = [
-    { ...good, [ROUTES]: good[ROUTES].replace("customer_id: z.string().uuid().optional(),\n        load_id: z.string().uuid().optional(),", "") },
-    { ...good, [ROUTES]: good[ROUTES].replace("load_id: z.string().uuid().optional(),\n      });\n      const chargebacksFeesQuerySchema", "});\n      const chargebacksFeesQuerySchema") },
+    { ...good, [ROUTES]: good[ROUTES].replace('params.push(entityIdFilterValues(loadId))', 'params.push([])') },
+    { ...good, [ROUTES]: good[ROUTES].replace('historyParams.push(entityIdFilterValues(customerId))', 'historyParams.push(entityIdFilterValues(customerId).slice(0, 1))') },
+    { ...good, [ROUTES]: good[ROUTES].replace("customer_id: entityIdFilterSchema.optional(),\n        load_id: entityIdFilterSchema.optional(),", "") },
+    { ...good, [ROUTES]: good[ROUTES].replace("load_id: entityIdFilterSchema.optional(),\n      });\n      const chargebacksFeesQuerySchema", "});\n      const chargebacksFeesQuerySchema") },
     { ...good, [ROUTES]: good[ROUTES].replace("const chargebacksFeesQuerySchema = companyQuerySchema.extend({", "const chargebacksFeesQuerySchema = z.object({") },
     { ...good, [HOME]: good[HOME].replace('searchParams.get("customer_id")', '""') },
     { ...good, [HOME]: good[HOME].replace(/setSearchParams/g, "setUrlParams") },

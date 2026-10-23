@@ -20,6 +20,7 @@
  *      to /dispatch/factoring-queue?customer_id=<id>; CustomerDetail.tsx mounts it.
  */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -56,16 +57,16 @@ export function assertFactoringDispatchQueueReverse(sources) {
     problems.push(`${REQUIRED}: dispatch.queue must remain a Required reverse_link leaf`);
   }
 
-  if (!/customer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+  if (!/customer_id:\s*entityIdFilterSchema\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: querySchema must accept optional customer_id`);
   }
-  if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+  if (!/load_id:\s*entityIdFilterSchema\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: querySchema must accept optional load_id`);
   }
-  if (!/customerFilter\s*=\s*`AND c\.id/.test(routes)) {
+  if (!routes.includes('filterParams.push(entityIdFilterValues(customerId))') || !/customerFilter\s*=\s*`AND c\.id = ANY\(\$\$\{filterParams\.length\}::uuid\[\]\)/.test(routes)) {
     problems.push(`${ROUTES}: SQL must filter by customer_id server-side when provided`);
   }
-  if (!/loadFilter\s*=\s*`AND l\.id/.test(routes)) {
+  if (!routes.includes('filterParams.push(entityIdFilterValues(loadId))') || !/loadFilter\s*=\s*`AND l\.id = ANY\(\$\$\{filterParams\.length\}::uuid\[\]\)/.test(routes)) {
     problems.push(`${ROUTES}: SQL must filter by load_id server-side when provided`);
   }
   if (!/searchParams\.get\("customer_id"\)/.test(queuePage) || !/searchParams\.get\("load_id"\)/.test(queuePage)) {
@@ -74,13 +75,7 @@ export function assertFactoringDispatchQueueReverse(sources) {
   if (!/params\.set\("customer_id"/.test(queuePage) || !/params\.set\("load_id"/.test(queuePage)) {
     problems.push(`${QUEUE_PAGE}: must forward customer_id/load_id to the API call`);
   }
-  if (
-    !/dataTestId="factoring-dispatch-filter-customer"/.test(queuePage) ||
-    !/dataTestId="factoring-dispatch-filter-load"/.test(queuePage) ||
-    !/allowCreate=\{false\}/.test(queuePage)
-  ) {
-    problems.push(`${QUEUE_PAGE}: must render EntityPicker customer+load filters (allowCreate=false)`);
-  }
+  for (const kind of ['customer', 'load']) problems.push(...multiSelectFilterProblems(queuePage, {file: QUEUE_PAGE, kind, testId: `factoring-dispatch-filter-${kind}`}));
   if (!/kind=["']factoring_queue_load["']/.test(factoringTab) || !/id=\{loadId\}/.test(factoringTab)) {
     problems.push(`${FACTORING_TAB}: must drill via EntityLink kind=factoring_queue_load id={loadId}`);
   }
@@ -106,16 +101,17 @@ export function assertFactoringDispatchQueueReverse(sources) {
 }
 
 function selftest() {
+  selftestMultiSelectFilterContract();
   const good = {
     [ROUTES]: `
       const querySchema = z.object({
-        customer_id: z.string().uuid().optional(),
-        load_id: z.string().uuid().optional(),
+        customer_id: entityIdFilterSchema.optional(),
+        load_id: entityIdFilterSchema.optional(),
       });
       let customerFilter = "";
-      if (customerId) { customerFilter = \`AND c.id = $\${filterParams.length}::uuid\`; }
+      if (customerId) { filterParams.push(entityIdFilterValues(customerId)); customerFilter = \`AND c.id = ANY($\${filterParams.length}::uuid[])\`; }
       let loadFilter = "";
-      if (loadId) { loadFilter = \`AND l.id = $\${filterParams.length}::uuid\`; }
+      if (loadId) { filterParams.push(entityIdFilterValues(loadId)); loadFilter = \`AND l.id = ANY($\${filterParams.length}::uuid[])\`; }
     `,
     [QUEUE_PAGE]: `setSearchParams
 
@@ -137,6 +133,7 @@ function selftest() {
     [SELF]: `/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["dispatch.queue"],"task":"FACT-F5837-DISPATCH-QUEUE-REVERSE-EXACT-LEAF"} */`,
     [REQUIRED]: `{"leaves":[{"id": "dispatch.queue", "required": ["customer", "load", "connectivity", "reverse_link"]}]}`,
   };
+  good[QUEUE_PAGE] = read(QUEUE_PAGE);
   const goodProblems = assertFactoringDispatchQueueReverse(good);
   if (goodProblems.length) {
     console.error(`${LABEL} SELFTEST FAIL — known-good fixture flagged: ${goodProblems.join("; ")}`);
@@ -144,10 +141,12 @@ function selftest() {
   }
 
   const mutations = [
-    { ...good, [ROUTES]: good[ROUTES].replace("customer_id: z.string().uuid().optional(),", "") },
-    { ...good, [ROUTES]: good[ROUTES].replace("load_id: z.string().uuid().optional(),", "") },
-    { ...good, [ROUTES]: good[ROUTES].replace('customerFilter = `AND c.id = $${filterParams.length}::uuid`;', "") },
-    { ...good, [ROUTES]: good[ROUTES].replace('loadFilter = `AND l.id = $${filterParams.length}::uuid`;', "") },
+    { ...good, [ROUTES]: good[ROUTES].replace("customer_id: entityIdFilterSchema.optional(),", "") },
+    { ...good, [ROUTES]: good[ROUTES].replace("load_id: entityIdFilterSchema.optional(),", "") },
+    { ...good, [ROUTES]: good[ROUTES].replace('filterParams.push(entityIdFilterValues(customerId))', 'filterParams.push([])') },
+    { ...good, [ROUTES]: good[ROUTES].replace('filterParams.push(entityIdFilterValues(loadId))', 'filterParams.push(entityIdFilterValues(loadId).slice(0, 1))') },
+    { ...good, [ROUTES]: good[ROUTES].replace('customerFilter = `AND c.id = ANY($${filterParams.length}::uuid[])`;', "") },
+    { ...good, [ROUTES]: good[ROUTES].replace('loadFilter = `AND l.id = ANY($${filterParams.length}::uuid[])`;', "") },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace(/setSearchParams/g, "setUrlParams") },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('searchParams.get("customer_id")', '""') },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('params.set("customer_id", effectiveCustomerId);', "") },

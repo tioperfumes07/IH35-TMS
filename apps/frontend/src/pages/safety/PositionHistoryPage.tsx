@@ -11,7 +11,7 @@ import { useSearchParams } from "react-router-dom";
 import { listPositionHistory, type PositionHistoryRecord } from "../../api/position-history";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
@@ -218,15 +218,13 @@ export default function PositionHistoryPage() {
             Unit:
           </label>
           {/* SAF-F14 / picker law: never a raw unit UUID text box — EntityPicker (filter, no +Create). */}
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={draft.unitId || null}
             onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
-            allowCreate={false}
             placeholder="All units"
             className="w-56"
-            dataField="position-history-unit-filter"
             dataTestId="position-history-unit-filter"
           />
         </div>

@@ -27,7 +27,7 @@ import {
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useExportAction } from "../../hooks/useExportAction";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 import { formatUsdCents } from "../../lib/money";
@@ -61,7 +61,13 @@ export function ARAgingPage() {
   const staged = useStagedListFilters({
     applied: appliedFilters,
     empty: emptyFilters,
-    onApply: setAppliedFilters,
+    onApply: (next) => {
+      setAppliedFilters(next);
+      const params = new URLSearchParams(searchParams);
+      if (next.customerId) params.set("customer_id", next.customerId);
+      else params.delete("customer_id");
+      setSearchParams(params, { replace: true });
+    },
   });
   const [reportSearch, setReportSearch] = useState("");
   const exportAction = useExportAction();
@@ -70,8 +76,8 @@ export function ARAgingPage() {
   }, [deepLinkCustomerId]);
 
   const query = useQuery({
-    queryKey: ["reports", "ar-aging", companyId, appliedFilters.asOfDate],
-    queryFn: () => getArAgingReport(companyId, appliedFilters.asOfDate),
+    queryKey: ["reports", "ar-aging", companyId, appliedFilters.asOfDate, appliedFilters.customerId],
+    queryFn: () => getArAgingReport(companyId, appliedFilters.asOfDate, appliedFilters.customerId || undefined),
     enabled: Boolean(companyId),
   });
 
@@ -93,7 +99,6 @@ export function ARAgingPage() {
     const q = reportSearch.toLowerCase();
     return rows
       .filter((r) => {
-        if (appliedFilters.customerId && r.customer_id !== appliedFilters.customerId) return false;
         if (r.total_open_cents < minCents) return false;
         if (appliedFilters.bucketFilter === "61+") {
           const late = r.bucket_61_90_cents + r.bucket_91_plus_cents;
@@ -103,7 +108,7 @@ export function ARAgingPage() {
         return true;
       })
       .map((r) => ({ ...r, bucket_0_30_cents: r.current_cents + r.bucket_1_30_cents }));
-  }, [rows, appliedFilters.customerId, appliedFilters.bucketFilter, minCents, reportSearch]);
+  }, [rows, appliedFilters.bucketFilter, minCents, reportSearch]);
 
   const columns = useMemo<ParityColumn<ARAgingRowWithBucket>[]>(
     () => [
@@ -318,6 +323,7 @@ export function ARAgingPage() {
                     exportArAging({
                       operating_company_id: companyId,
                       as_of_date: appliedFilters.asOfDate,
+                      customer_id: appliedFilters.customerId || undefined,
                       format: "pdf",
                     }),
                   "A/R aging export failed",
@@ -336,6 +342,7 @@ export function ARAgingPage() {
                     exportArAging({
                       operating_company_id: companyId,
                       as_of_date: appliedFilters.asOfDate,
+                      customer_id: appliedFilters.customerId || undefined,
                       format: "xlsx",
                     }),
                   "A/R aging export failed",
@@ -378,19 +385,14 @@ export function ARAgingPage() {
       >
         <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Customer</span>
-          <EntityPicker
+          <EntityMultiSelect
             kind="customer"
             operatingCompanyId={companyId}
             value={staged.draft.customerId || null}
             onChange={(next) => {
               const updated = next ?? "";
               staged.setDraft((p) => ({ ...p, customerId: updated }));
-              const params = new URLSearchParams(searchParams);
-              if (updated) params.set("customer_id", updated);
-              else params.delete("customer_id");
-              setSearchParams(params, { replace: true });
             }}
-            allowCreate={false}
             placeholder="All customers"
             dataTestId="ar-aging-filter-customer"
           />

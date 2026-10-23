@@ -35,7 +35,8 @@ function inspect(value, backend = backendSource) {
     [/const \[pendingOosCreate, setPendingOosCreate\] = useState<CreateInput \| null>\(null\)/, "OOS confirmation does not retain immutable create input"],
     [/if \(input\.payload\.outcome === "OOS"\) setPendingOosCreate\(input\);[\s\S]*else createMutation\.mutate\(input\)/, "OOS submit does not route the immutable input through confirmation"],
     [/<ConfirmModal[\s\S]*title="Create out-of-service inspection\?"[\s\S]*createMutation\.mutateAsync\(pendingOosCreate\)/, "OOS create does not use canonical confirmation chrome"],
-    [/setPendingOosCreate\(null\)[\s\S]*setForm\(emptyInspectionForm\(trailerIdFromUrl\)\)[\s\S]*\[companyId\]/, "company switch leaves pending OOS confirmation"],
+    [/setPendingOosCreate\(null\)[\s\S]*setForm\(emptyInspectionForm\(singleTrailerIdFromUrl\)\)[\s\S]*\[companyId\]/, "company switch leaves pending OOS confirmation"],
+    [/const singleTrailerIdFromUrl = trailerIdFromUrl\.includes\(","\) \? "" : trailerIdFromUrl/, "create form must never receive a multi-trailer filter"],
   ];
   for (const [pattern, message] of checks) {
     const matches = value.match(pattern);
@@ -56,7 +57,11 @@ function inspect(value, backend = backendSource) {
 }
 
 if (process.argv.includes("--selftest")) {
+  if (inspect(source).length) throw new Error(`baseline failed: ${inspect(source).join('; ')}`);
   const mutations = [
+    'const singleTrailerIdFromUrl = trailerIdFromUrl.includes(",") ? "" : trailerIdFromUrl',
+    'setPendingOosCreate(null)',
+    'setForm(emptyInspectionForm(singleTrailerIdFromUrl))',
     "companyGenerationRef = useRef(0)",
     "createDotInspection(input.companyId, {",
     "operating_company_id: input.companyId,",
@@ -83,7 +88,7 @@ if (process.argv.includes("--selftest")) {
     const mutatedBackend = backendSource.replace(createNeedle, `${createNeedle}\n      await client.query("${control}");`);
     if (mutatedBackend === backendSource || inspect(source, mutatedBackend).length === 0) throw new Error(`missed nested ${control} mutation`);
   }
-  console.log(`verify-dot-inspection-action-company-lifecycle --selftest PASS (${mutations.length + 7}/${mutations.length + 7})`);
+  console.log(`verify-dot-inspection-action-company-lifecycle --selftest PASS (${mutations.length + 10}/${mutations.length + 10})`);
 } else {
   const failures = inspect(source);
   if (failures.length) {

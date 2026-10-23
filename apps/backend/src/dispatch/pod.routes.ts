@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { requireDriverSession } from "../driver/auth.js";
@@ -14,7 +15,7 @@ const stopParamsSchema = z.object({ loadId: z.string().uuid(), stopId: z.string(
 const podIdParamsSchema = z.object({ id: z.string().uuid() });
 
 const podListQuerySchema = companyQuerySchema.extend({
-  load_id: z.string().uuid().optional(),
+  load_id: entityIdFilterSchema.optional(),
   status: z.enum(["pending_review", "approved", "rejected"]).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
 });
@@ -217,8 +218,8 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
       const values: unknown[] = [query.data.operating_company_id];
       const filters = ["p.archived_at IS NULL", "p.operating_company_id = $1::uuid"];
       if (query.data.load_id) {
-        values.push(query.data.load_id);
-        filters.push(`p.load_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(query.data.load_id));
+        filters.push(`p.load_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.status) {
         values.push(query.data.status);

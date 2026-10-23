@@ -40,8 +40,8 @@ export type CashAdvanceCreatePayload = {
   economic_routing?: CashAdvanceEconomicRouting;
 };
 
-export function getCashAdvancesKpis(companyId: string) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/cash-advances/dashboard/kpis?${q(companyId)}`);
+export function getCashAdvancesKpis(companyId: string, driverId?: string) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/cash-advances/dashboard/kpis?${q(companyId)}${driverId ? `&driver_id=${encodeURIComponent(driverId)}` : ""}`);
 }
 
 export function listCashAdvances(

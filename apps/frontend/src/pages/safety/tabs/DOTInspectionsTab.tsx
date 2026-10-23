@@ -14,6 +14,7 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -53,6 +54,7 @@ export function DOTInspectionsTab() {
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
+  const singleTrailerIdFromUrl = trailerIdFromUrl.includes(",") ? "" : trailerIdFromUrl;
   const outcomeFromUrl = searchParams.get("outcome")?.trim() ?? "";
 
   // LV-SAFETY-DOT-INSPECTIONS-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
@@ -110,10 +112,10 @@ export function DOTInspectionsTab() {
 
   // LST-F5163C: reverse ?trailer_id= also seeds create form when empty.
   useEffect(() => {
-    if (trailerIdFromUrl) {
-      setForm((prev) => (prev.trailer_id ? prev : { ...prev, trailer_id: trailerIdFromUrl }));
+    if (singleTrailerIdFromUrl) {
+      setForm((prev) => (prev.trailer_id ? prev : { ...prev, trailer_id: singleTrailerIdFromUrl }));
     }
-  }, [trailerIdFromUrl]);
+  }, [singleTrailerIdFromUrl]);
 
   const query = useQuery({
     queryKey: ["safety-v64", "dot-inspections", companyId, applied.driverId, applied.unitId, applied.trailerId, applied.outcome, page],
@@ -150,7 +152,7 @@ export function DOTInspectionsTab() {
     },
     onSuccess: async (_result, input) => {
       if (input.generation !== companyGenerationRef.current) return;
-      setForm((prev) => ({ ...prev, inspector_name: "", notes: "", csa_points: 0, trailer_id: trailerIdFromUrl || "" }));
+      setForm((prev) => ({ ...prev, inspector_name: "", notes: "", csa_points: 0, trailer_id: singleTrailerIdFromUrl || "" }));
       setEvidenceFile(null);
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "dot-inspections", input.companyId] });
     },
@@ -291,7 +293,7 @@ export function DOTInspectionsTab() {
     followUpMutation.reset();
     setPendingOosCreate(null);
     setVoidTargetId(null);
-    setForm(emptyInspectionForm(trailerIdFromUrl));
+    setForm(emptyInspectionForm(singleTrailerIdFromUrl));
     setEvidenceFile(null);
     setDwellPage(0);
   }, [companyId]);
@@ -310,12 +312,11 @@ export function DOTInspectionsTab() {
         <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Driver
           <div className="mt-1">
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={companyId}
               value={draft.driverId || null}
               onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
-              allowCreate={false}
               placeholder="All drivers"
               className="w-full"
               dataTestId="dot-inspections-filter-driver"
@@ -325,12 +326,11 @@ export function DOTInspectionsTab() {
         <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Unit
           <div className="mt-1">
-            <EntityPicker
+            <EntityMultiSelect
               kind="unit"
               operatingCompanyId={companyId}
               value={draft.unitId || null}
               onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
-              allowCreate={false}
               placeholder="All units"
               className="w-full"
               dataTestId="dot-inspections-filter-unit"
@@ -340,12 +340,11 @@ export function DOTInspectionsTab() {
         <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Trailer
           <div className="mt-1">
-            <EntityPicker
+            <EntityMultiSelect
               kind="trailer"
               operatingCompanyId={companyId}
               value={draft.trailerId || null}
               onChange={(next) => staged.setDraft((d) => ({ ...d, trailerId: next ?? "" }))}
-              allowCreate={false}
               placeholder="All trailers"
               className="w-full"
               dataTestId="dot-inspections-trailer-filter"

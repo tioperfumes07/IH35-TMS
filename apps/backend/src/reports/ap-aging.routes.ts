@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -25,6 +26,7 @@ import {
 
 const apAgingQuerySchema = companyQuerySchema.extend({
   as_of_date: z.string().date().optional(),
+  vendor_id: entityIdFilterSchema.optional(),
 });
 
 type ApAgingRow = {
@@ -91,7 +93,8 @@ export async function registerReportsApAgingRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const asOf = query.data.as_of_date ?? todayIsoDate();
-    const cacheKey = `${query.data.operating_company_id}:${asOf}`;
+    const vendorIds = query.data.vendor_id ? entityIdFilterValues(query.data.vendor_id) : null;
+    const cacheKey = `${query.data.operating_company_id}:${asOf}:${query.data.vendor_id ?? "all"}`;
     const cached = cache.get(cacheKey);
     if (cached) return cached;
 
@@ -112,9 +115,10 @@ export async function registerReportsApAgingRoutes(app: FastifyInstance) {
                 total_open_cents::bigint    AS total_open_cents
               FROM accounting.ap_aging_as_of($1::uuid, $2::date)
               WHERE total_open_cents > 0
+                AND ($3::text[] IS NULL OR vendor_id::text = ANY($3::text[]))
               ORDER BY total_open_cents DESC, vendor_name ASC
             `,
-            [query.data.operating_company_id, asOf]
+            [query.data.operating_company_id, asOf, vendorIds]
           )
         : await client.query(
             // LIVE: canonical opco-scoped view (security_invoker; buckets computed at CURRENT_DATE).
@@ -132,9 +136,10 @@ export async function registerReportsApAgingRoutes(app: FastifyInstance) {
               FROM views.ap_aging
               WHERE operating_company_id = $1::uuid
                 AND total_open_cents > 0
+                AND ($2::text[] IS NULL OR vendor_id::text = ANY($2::text[]))
               ORDER BY total_open_cents DESC, vendor_name ASC
             `,
-            [query.data.operating_company_id]
+            [query.data.operating_company_id, vendorIds]
           );
 
       const rawRows = res.rows as Array<Record<string, unknown>>;

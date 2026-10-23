@@ -17,6 +17,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-entitypicker-filter-allowcreate-ratchet";
 const FILTER_PAGES = [
@@ -28,13 +29,12 @@ export function collectProblems(root = ROOT) {
   const p = [];
   for (const rel of FILTER_PAGES) {
     const s = fs.readFileSync(path.join(root, rel), "utf8");
-    if (!/EntityPicker/.test(s) || !/allowCreate=\{false\}/.test(s)) {
-      p.push(`${rel}: filter EntityPicker must set allowCreate={false}`);
-    }
+    for (const kind of ['driver', 'unit']) p.push(...multiSelectFilterProblems(s, {file: rel, kind}).map(problem => `${rel}: ${problem}`));
   }
   return p;
 }
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   // Real mutation selftest (the prior version unconditionally printed OK with no assertion at
   // all): swap a real page's guaranteed-present allowCreate={false} for allowCreate={true} in a
   // throwaway copy and confirm collectProblems() flags it.
@@ -57,7 +57,7 @@ if (process.argv.includes("--selftest")) {
       const original = fs.readFileSync(target, "utf8");
       // collectProblems() only checks that at least ONE allowCreate={false} occurs anywhere in the
       // file, so every occurrence must be mutated for the plant to actually violate the invariant.
-      const mutated = original.replace(/allowCreate=\{false\}/g, "allowCreate={true}");
+      const mutated = original.replace(/<EntityMultiSelect/g, "<EntityMultiSelect allowCreate={true}");
       if (mutated === original) {
         failure = "mutation did not change the file (pattern drifted)";
       } else {

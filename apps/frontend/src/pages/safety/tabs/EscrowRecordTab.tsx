@@ -8,7 +8,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EscrowForfeitModal } from "../components/EscrowForfeitModal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
@@ -120,7 +120,7 @@ export function EscrowRecordTab() {
   const rows = useMemo(() => {
     if (!effectiveDriverId) return rowsAll;
     return rowsAll.filter(
-      (r) => String((r as { driver_id?: unknown }).driver_id ?? r.id) === effectiveDriverId
+      (r) => effectiveDriverId.split(",").includes(String((r as { driver_id?: unknown }).driver_id ?? r.id))
     );
   }, [rowsAll, effectiveDriverId]);
 
@@ -259,12 +259,11 @@ export function EscrowRecordTab() {
           <div className="relative flex flex-wrap items-end gap-2" data-testid="escrow-records-filters">
             <label className="text-xs text-[#4B5563]">
               Driver
-              <EntityPicker
+              <EntityMultiSelect
                 kind="driver"
                 operatingCompanyId={operatingCompanyId}
                 value={draft.driverId || null}
                 onChange={(next) => setDriverFilter(next ?? "")}
-                allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1"
                 dataTestId="escrow-records-filter-driver"

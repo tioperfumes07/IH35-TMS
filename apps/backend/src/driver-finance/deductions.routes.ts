@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -16,7 +17,7 @@ const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() })
 const listDeductionsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   deduction_id: z.string().uuid().optional(),
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
   status: z.string().trim().min(1).max(40).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
@@ -114,8 +115,8 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
           where.push(`d.id = $${values.length}::uuid`);
         }
         if (driver_id) {
-          values.push(driver_id);
-          where.push(`d.driver_id = $${values.length}`);
+          values.push(entityIdFilterValues(driver_id));
+          where.push(`d.driver_id = ANY($${values.length}::uuid[])`);
         }
         if (status) {
           values.push(status);
@@ -150,7 +151,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
               ON s.id = d.applied_to_settlement_id
              AND s.operating_company_id = d.operating_company_id
             WHERE ${where.join(" AND ")}
-            ORDER BY d.created_at DESC
+            ORDER BY d.created_at DESC, d.id DESC
             LIMIT $${values.length - 1} OFFSET $${values.length}
           `,
           values

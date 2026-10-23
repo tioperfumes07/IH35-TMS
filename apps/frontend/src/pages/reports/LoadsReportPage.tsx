@@ -3,15 +3,13 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { getLoadsReport, type LoadsReportDateField, type LoadsReportRow } from "../../api/reports";
-import { searchCustomersAutocomplete } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/EntityPicker";
-import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { SelectCombobox } from "../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -86,23 +84,6 @@ export function LoadsReportPage() {
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
-  const [customerSearch, setCustomerSearch] = useState("");
-
-  const customersQuery = useQuery({
-    queryKey: ["loads-report-customers", companyId, customerSearch],
-    queryFn: () => searchCustomersAutocomplete(companyId, customerSearch, { limit: 50 }),
-    enabled: Boolean(companyId),
-    staleTime: 15_000,
-  });
-
-  const customerOptions = useMemo(
-    () =>
-      (customersQuery.data ?? []).map((c) => ({
-        value: c.id,
-        label: entityLabel(c.display_name, c.id, "Customer"),
-      })),
-    [customersQuery.data]
-  );
 
   const query = useQuery({
     queryKey: ["reports", "loads", companyId, applied],
@@ -311,51 +292,44 @@ export function LoadsReportPage() {
         </label>
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Customer</span>
-          <ReferenceSelect
-            size="sm"
+          <EntityMultiSelect
+            kind="customer"
             value={staged.draft.customerId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, customerId: next ?? "" }))}
-            options={customerOptions}
-            createKind="customer"
             operatingCompanyId={companyId}
             placeholder="All customers"
-            loading={customersQuery.isLoading}
-            onSearch={setCustomerSearch}
             disabled={!companyId}
           />
         </label>
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Driver</span>
-          <EntityPicker
+          <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={staged.draft.driverId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, driverId: next ?? "" }))}
-            allowCreate={false}
             placeholder="All drivers"
             className="h-7 w-full text-xs"
           />
         </label>
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Unit</span>
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={staged.draft.unitId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, unitId: next ?? "" }))}
-            allowCreate={false}
             placeholder="All units"
             className="h-7 w-full text-xs"
           />
         </label>
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Trailer</span>
-          <EntityPicker
+          <EntityMultiSelect
             kind="trailer"
             operatingCompanyId={companyId}
             value={staged.draft.trailerId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, trailerId: next ?? "" }))}
-            allowCreate={false}
             placeholder="All trailers"
             className="h-7 w-full text-xs"
           />

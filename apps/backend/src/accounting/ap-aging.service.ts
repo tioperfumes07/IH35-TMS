@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { assignAgingBucket } from "./aging/buckets.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -379,6 +380,7 @@ export async function getApAgingReport(input: {
   userId: string;
   operating_company_id: string;
   as_of_date: string;
+  vendor_id?: string;
 }): Promise<ApAgingReport> {
   return withCurrentUser(input.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
@@ -388,9 +390,13 @@ export async function getApAgingReport(input: {
     // Future as_of: treat as today for open reconstruction (never invent future openness).
     const effectiveAsOf = input.as_of_date > today ? today : input.as_of_date;
 
-    const res = await client.query<ApAgingBillRowDb>(AP_AGING_OPEN_BILLS_SQL, [
+    const readSql = input.vendor_id
+      ? `SELECT * FROM (${AP_AGING_OPEN_BILLS_SQL}) aging WHERE aging.vendor_id = ANY($3::text[]) ORDER BY aging.vendor_name ASC, aging.due_date ASC NULLS LAST`
+      : AP_AGING_OPEN_BILLS_SQL;
+    const res = await client.query<ApAgingBillRowDb>(readSql, [
       input.operating_company_id,
       effectiveAsOf,
+      ...(input.vendor_id ? [entityIdFilterValues(input.vendor_id)] : []),
     ]);
 
     const byVendor = new Map<string, ApAgingVendorRow>();
@@ -517,7 +523,8 @@ export async function getApAgingReport(input: {
     }
 
     // Mirror open balance is a CURRENT snapshot — only comparable to TMS open when as_of is today.
-    const reconcileApplicable = !historical && effectiveAsOf === today;
+    // A selected vendor cohort is not comparable to the company-wide mirror snapshot.
+    const reconcileApplicable = !input.vendor_id && !historical && effectiveAsOf === today;
 
     const qboMirror = buildQboMirrorStatus({
       tablePresent: Boolean(meta?.table_present),

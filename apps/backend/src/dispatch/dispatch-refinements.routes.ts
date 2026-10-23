@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -339,7 +340,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
   app.get("/api/v1/load-templates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    const q = companyQ.extend({ customer_id: z.string().uuid().optional(), template_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
+    const q = companyQ.extend({ customer_id: entityIdFilterSchema.optional(), template_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
     if (!q.success) return sendZodValidation(reply, q.error);
     return listLoadTemplates(user.uuid, q.data.operating_company_id, { customer_id: q.data.customer_id, template_id: q.data.template_id });
   });

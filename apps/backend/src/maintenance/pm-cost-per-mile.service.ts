@@ -21,6 +21,7 @@
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -87,9 +88,9 @@ export async function computePmCostPerMile(
     `SELECT u.id::text, u.unit_number
        FROM mdata.units u
       WHERE ${fleetRosterSql("u", "$1")}
-        AND ($2::uuid IS NULL OR u.id = $2::uuid)
+        AND ($2::uuid[] IS NULL OR u.id = ANY($2::uuid[]))
       ORDER BY u.unit_number`,
-    [operatingCompanyId, unitId ?? null]
+    [operatingCompanyId, unitId ? entityIdFilterValues(unitId) : null]
   );
   const unitIds = units.rows.map((u) => u.id);
   const empty = { period: { from, to, timezone: "America/Chicago" as const }, units: [] as UnitCpmRow[], fleet: {} };

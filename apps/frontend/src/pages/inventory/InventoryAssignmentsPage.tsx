@@ -10,7 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 
 function formatMoney(value: number | null | undefined) {
   return `$${Number(value ?? 0).toFixed(2)}`;
@@ -204,7 +204,7 @@ export function InventoryAssignmentsPage() {
                 dataAttributes={{ "data-inventory-assignments-filter-toolbar": "collapsed" }}
               >
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="min-w-64 text-xs text-gray-700">Vendor<EntityPicker kind="vendor" operatingCompanyId={companyId} value={staged.draft.vendorId} onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next })} placeholder="All vendors" allowCreate={false} /></label>
+                  <label className="min-w-64 text-xs text-gray-700">Vendor<EntityMultiSelect kind="vendor" operatingCompanyId={companyId} value={staged.draft.vendorId} onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next })} placeholder="All vendors" /></label>
                   <label className="inline-flex items-center gap-2 text-xs text-gray-700">
                     <input
                       type="checkbox"

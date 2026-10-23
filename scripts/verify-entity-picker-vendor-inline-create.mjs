@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELFTEST = process.argv.includes("--selftest");
@@ -56,10 +57,9 @@ export function collectProblems({ picker, registry, files }) {
     problems.push("fuel create vendor picker must offer + Create");
   }
   for (const filterFile of ["BillPaymentsListPage.tsx", "WorkOrdersTable.tsx"]) {
-    const filter = tags.find(({ file }) => file.endsWith(filterFile));
-    if (!filter || !/allowCreate=\{false\}/.test(filter.tag)) {
-      problems.push(`${filterFile}: list filter must not create vendor master data`);
-    }
+    const filter = Object.entries(files).find(([file]) => file.endsWith(filterFile));
+    if (!filter) problems.push(`${filterFile}: list filter missing`);
+    else problems.push(...multiSelectFilterProblems(filter[1], {file: filter[0],kind: 'vendor'}).map(problem => `${filterFile}: ${problem}`));
   }
   return problems;
 }
@@ -85,6 +85,9 @@ function liveSources() {
 
 const sources = liveSources();
 if (SELFTEST) {
+  selftestMultiSelectFilterContract();
+  const baseline = collectProblems(sources);
+  if (baseline.length) { console.error('verify-entity-picker-vendor-inline-create SELFTEST baseline red', baseline); process.exit(1); }
   const mutations = [
     {
       ...sources,
@@ -96,7 +99,9 @@ if (SELFTEST) {
     { ...sources, picker: sources.picker.replace('kind === "vendor"', 'kind === "vendor_disabled"') },
     { ...sources, picker: sources.picker.replace("handleCreated(record.id, record.label)", "handleCreated(record.label)") },
     { ...sources, files: Object.fromEntries(Object.entries(sources.files).map(([file, source]) => [file, file.endsWith("CreateFuelTransactionModal.tsx") ? source.replace("allowCreate\n", "") : source])) },
-    { ...sources, files: Object.fromEntries(Object.entries(sources.files).map(([file, source]) => [file, file.endsWith("WorkOrdersTable.tsx") ? source.replace("allowCreate={false}\n", "") : source])) },
+    { ...sources, files: Object.fromEntries(Object.entries(sources.files).map(([file, source]) => [file, file.endsWith("WorkOrdersTable.tsx") ? source.replace("<EntityMultiSelect", "<EntityMultiSelect allowCreate") : source])) },
+    { ...sources, files: Object.fromEntries(Object.entries(sources.files).map(([file, source]) => [file, file.endsWith("BillPaymentsListPage.tsx") ? source.replace('const id = next ?? ""', 'const id = next?.split(",")[0] ?? ""') : source])) },
+    { ...sources, files: Object.fromEntries(Object.entries(sources.files).map(([file, source]) => [file, file.endsWith("BillPaymentsListPage.tsx") ? source.replace('setVendorId(id)', 'setVendorId("")') : source])) },
   ];
   const escaped = mutations
     .map((mutation, index) => ({ index: index + 1, problems: collectProblems(mutation) }))
@@ -113,4 +118,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`  - ${problem}`);
   process.exit(1);
 }
-console.log(`verify-entity-picker-vendor-inline-create PASS — ${vendorPickerTags(sources.files).length} vendor picker leaves classified${SELFTEST ? "; 5 mutations caught" : ""}`);
+console.log(`verify-entity-picker-vendor-inline-create PASS — ${vendorPickerTags(sources.files).length} vendor picker leaves classified${SELFTEST ? "; 7 mutations caught" : ""}`);

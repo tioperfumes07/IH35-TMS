@@ -6,7 +6,7 @@ import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useListState } from "../../components/list-state";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AdvanceDetailDrawer } from "./components/AdvanceDetailDrawer";
@@ -102,8 +102,8 @@ export function CashAdvancesHomePage() {
   }, [deepLinkAdvanceId]);
 
   const kpisQuery = useQuery({
-    queryKey: ["cash-advances", "kpis", companyId],
-    queryFn: () => getCashAdvancesKpis(companyId),
+    queryKey: ["cash-advances", "kpis", companyId, effectiveDriverId],
+    queryFn: () => getCashAdvancesKpis(companyId, effectiveDriverId),
     enabled: Boolean(companyId),
   });
 
@@ -145,12 +145,11 @@ export function CashAdvancesHomePage() {
       <div className="relative flex flex-wrap items-end gap-3" data-testid="cash-advances-filters">
         <label className="text-xs text-[#4B5563]">
           Driver
-          <EntityPicker
+          <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={filterDraft.driverId || null}
             onChange={(next) => setDriverFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All drivers"
             className="mt-1"
             dataTestId="cash-advances-filter-driver"

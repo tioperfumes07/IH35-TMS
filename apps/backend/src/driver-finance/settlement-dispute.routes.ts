@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
@@ -39,7 +40,7 @@ const createDisputeBodySchema = z.object({
 const listDisputeQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   status: z.enum(["open", "all"]).default("open"),
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
 });
 
 const operatingCompanyBodySchema = z.object({

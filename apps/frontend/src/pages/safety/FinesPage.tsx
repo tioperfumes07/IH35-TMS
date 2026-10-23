@@ -8,7 +8,7 @@ import { FineCreateModal } from "./components/FineCreateModal";
 import { FineDetailDrawer } from "./components/FineDetailDrawer";
 import { SelectCombobox } from "../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -330,12 +330,11 @@ export function FinesPage({ operatingCompanyId }: Props) {
             </SelectCombobox>
             <label className="text-xs text-[#4B5563]">
               Driver
-              <EntityPicker
+              <EntityMultiSelect
                 kind="driver"
                 operatingCompanyId={operatingCompanyId}
                 value={draft.driverId || null}
                 onChange={(next) => setDriverFilter(next ?? "")}
-                allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1"
                 dataTestId="fines-filter-driver"
@@ -343,12 +342,11 @@ export function FinesPage({ operatingCompanyId }: Props) {
             </label>
             <label className="text-xs text-[#4B5563]">
               Unit
-              <EntityPicker
+              <EntityMultiSelect
                 kind="unit"
                 operatingCompanyId={operatingCompanyId}
                 value={draft.unitId || null}
                 onChange={(next) => setUnitFilter(next ?? "")}
-                allowCreate={false}
                 placeholder="All units"
                 className="mt-1"
                 dataTestId="fines-filter-unit"

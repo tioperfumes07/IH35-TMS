@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useDriverLabels } from "../../../hooks/useDriverLabels";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";
@@ -136,7 +136,10 @@ export function DrugAlcoholTab() {
     setSearchParams(p, { replace: true });
   }
 
-  const effectiveDriverId = driverId || deepLinkDriverId;
+  const driverFilter = driverId || deepLinkDriverId;
+  const selectedDriverIds = useMemo(() => driverFilter.split(",").filter(Boolean), [driverFilter]);
+  // History accepts every selected driver; single-driver actions require exactly one selection.
+  const effectiveDriverId = selectedDriverIds.length === 1 ? selectedDriverIds[0] : "";
 
   const activeDriverTotalQ = useQuery({
     queryKey: ["drivers", "drug-ui-active-total", companyId],
@@ -147,13 +150,13 @@ export function DrugAlcoholTab() {
       ),
   });
 
-  const { byId: driverNameById } = useDriverLabels(companyId, [effectiveDriverId]);
+  const { byId: driverNameById } = useDriverLabels(companyId, selectedDriverIds);
 
   const testsQ = useQuery({
-    queryKey: ["safety", "drug-program", "tests", companyId, effectiveDriverId, appliedHistory, historyPage],
+    queryKey: ["safety", "drug-program", "tests", companyId, driverFilter, appliedHistory, historyPage],
     enabled: Boolean(companyId),
     queryFn: () => listDrugProgramTests(companyId, {
-      driver_id: effectiveDriverId || undefined,
+      driver_id: driverFilter || undefined,
       test_type: appliedHistory.type || undefined,
       result: appliedHistory.result || undefined,
       from: appliedHistory.from || undefined,
@@ -168,7 +171,7 @@ export function DrugAlcoholTab() {
   const [poolPage, setPoolPage] = useState(0);
   const [clearinghousePage, setClearinghousePage] = useState(0);
 
-  useEffect(() => setHistoryPage(1), [companyId, effectiveDriverId, appliedHistory]);
+  useEffect(() => setHistoryPage(1), [companyId, driverFilter, appliedHistory]);
 
   const poolQ = useQuery({
     queryKey: ["safety", "drug-program", "pool", companyId, poolPage],
@@ -309,12 +312,11 @@ export function DrugAlcoholTab() {
           <label className="block min-w-[240px] text-xs text-[#6B7280]">
             Driver
             <div className="mt-1">
-              <EntityPicker
+              <EntityMultiSelect
                 kind="driver"
                 operatingCompanyId={companyId}
-                value={effectiveDriverId || null}
+                value={driverFilter || null}
                 onChange={(next) => setDriverId(next ?? "")}
-                allowCreate={false}
                 placeholder="All drivers"
                 className="w-full"
                 dataTestId="drug-alcohol-filter-driver"

@@ -17,6 +17,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../../accounting/shared.js";
 import { createTeam, deactivateTeam, type TeamSplitMethod } from "../../mdata/driver-team.service.js";
@@ -46,7 +47,7 @@ const createConfigSchema = z
   });
 
 const listQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
   status: statusSchema.optional(),
 });
 
@@ -215,8 +216,8 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
       const filters: string[] = [];
       const values: unknown[] = [query.data.operating_company_id];
       if (query.data.driver_id) {
-        values.push(query.data.driver_id);
-        filters.push(`(t.primary_driver_id = $${values.length}::uuid OR t.secondary_driver_id = $${values.length}::uuid)`);
+        values.push(entityIdFilterValues(query.data.driver_id));
+        filters.push(`(t.primary_driver_id = ANY($${values.length}::uuid[]) OR t.secondary_driver_id = ANY($${values.length}::uuid[]))`);
       }
       if (query.data.status) {
         filters.push(STATUS_FILTER_SQL[query.data.status as "active" | "paused" | "ended"]);

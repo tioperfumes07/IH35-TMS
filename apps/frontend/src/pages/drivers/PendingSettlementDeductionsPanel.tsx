@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { listSettlementDeductions, type SettlementDeductionListRow } from "../../api/driverFinance";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -154,12 +154,11 @@ export function PendingSettlementDeductionsPanel() {
         <div className="relative mb-2 flex flex-wrap items-end gap-2 px-2" data-testid="settlement-deductions-filters">
           <label className="text-xs text-[#4B5563]">
             Driver
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={selectedCompanyId}
               value={filterDraft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All drivers"
               className="mt-1"
               dataTestId="settlement-deductions-filter-driver"

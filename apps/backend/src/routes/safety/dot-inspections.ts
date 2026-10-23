@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
@@ -14,9 +15,9 @@ const companyQuerySchema = z.object({
 
 // SAF-F17 — unit / trailer profile reverse view. Both optional; absent = company-wide list.
 const dotInspectionsListQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
-  unit_id: z.string().uuid().optional(),
-  trailer_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  unit_id: entityIdFilterSchema.optional(),
+  trailer_id: entityIdFilterSchema.optional(),
   outcome: z.enum(["PASS", "WARNING", "OOS"]).optional(),
   from: z.string().date().optional(),
   to: z.string().date().optional(),
@@ -135,16 +136,16 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
       const values: unknown[] = [query.data.operating_company_id];
       const filters: string[] = [];
       if (query.data.driver_id) {
-        values.push(query.data.driver_id);
-        filters.push(`AND di.driver_id = $${values.length}`);
+        values.push(entityIdFilterValues(query.data.driver_id));
+        filters.push(`AND di.driver_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.unit_id) {
-        values.push(query.data.unit_id);
-        filters.push(`AND di.unit_id = $${values.length}`);
+        values.push(entityIdFilterValues(query.data.unit_id));
+        filters.push(`AND di.unit_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.trailer_id) {
-        values.push(query.data.trailer_id);
-        filters.push(`AND di.trailer_id = $${values.length}`);
+        values.push(entityIdFilterValues(query.data.trailer_id));
+        filters.push(`AND di.trailer_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.outcome) {
         values.push(query.data.outcome);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { loadPropertyTaxItems } from "../filings-aggregate.service.js";
-import { upcomingPropertyTaxRenditionDeadline, renditionDueDate } from "./property-tax.service.js";
+import { upcomingPropertyTaxRenditionDeadline, renditionDueDate, listRenditions } from "./property-tax.service.js";
 
 // Mock DbClient returning fixed rows for the single rendition query loadPropertyTaxItems issues.
 function mockClient(rows: Array<Record<string, unknown>>) {
@@ -26,6 +26,18 @@ describe("property-tax rendition — statutory deadline (TX Tax Code §22.23, Ap
 });
 
 describe("property-tax rendition — filings-aggregate item mapping", () => {
+  it("binds multi-unit IDs through EXISTS so a rendition appears only once", async () => {
+    const ids = ["22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333"];
+    let seen: { sql: string; values?: unknown[] } | undefined;
+    const db = { query: async <R>(sql: string, values?: unknown[]) => {
+      seen = { sql, values };
+      return { rows: [] as R[] };
+    } };
+    await listRenditions(db, "11111111-1111-4111-8111-111111111111", ids.join(","));
+    expect(seen?.values).toEqual(["11111111-1111-4111-8111-111111111111", ids]);
+    expect(seen?.sql).toContain("OR EXISTS (");
+    expect(seen?.sql).toContain("l.unit_id = ANY($2::uuid[])");
+  });
   it("surfaces a not-yet-filed rendition with its effective due date + drill-through", async () => {
     const client = mockClient([
       { id: "r-1", tax_year: 2026, status: "draft", effective_due_date: "2026-04-15", cad_name: "Webb County Appraisal District" },

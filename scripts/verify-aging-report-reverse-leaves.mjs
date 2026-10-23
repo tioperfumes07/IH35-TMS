@@ -20,11 +20,11 @@ const sources = {
 // ACCT-F5471 migrated both pages' as-of staging onto useStagedListFilters — the applied query
 // param is now appliedFilters.asOfDate, not the older bespoke appliedAsOf variable. Accept either.
 const checks = [
-  ["ar", /getArAgingReport\(companyId, (?:appliedAsOf|appliedFilters\.asOfDate)\)/, "AR read is company-scoped"],
+  ["ar", /getArAgingReport\(companyId, appliedFilters\.asOfDate, appliedFilters\.customerId \|\| undefined\)/, "AR read is company-scoped and carries the full customer filter"],
   ["ar", /kind="customer"[\s\S]{0,160}?id=\{r\.customer_id\}/, "AR rows drill to customer"],
   ["ar", /arAgingInvoiceListHref\(r\.customer_id\)/, "AR rows drill to filtered invoices"],
   ["ar", /Couldn't load A\/R aging[\s\S]*query\.refetch\(\)/, "AR failures are retryable"],
-  ["ap", /getApAgingReport\(companyId, (?:appliedAsOf|appliedFilters\.asOfDate)\)/, "AP read is company-scoped"],
+  ["ap", /getApAgingReport\(companyId, appliedFilters\.asOfDate, appliedFilters\.vendorId \|\| undefined\)/, "AP read is company-scoped and carries the full vendor filter"],
   ["ap", /kind="vendor"[\s\S]{0,160}?id=\{r\.vendor_id\}/, "AP rows drill to vendor"],
   ["ap", /apAgingBillsListHref\(r\.vendor_id\)/, "AP rows drill to filtered bills"],
   ["ap", /Couldn't load A\/P aging[\s\S]*query\.refetch\(\)/, "AP failures are retryable"],
@@ -32,11 +32,17 @@ const checks = [
 const failures = (candidate) => checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label);
 const found = failures(sources);
 if (found.length) { console.error(`verify-aging-report-reverse-leaves: FAIL — ${found.join("; ")}`); process.exit(1); }
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
+  for (const [key, field] of [['ar', 'customerId'], ['ap', 'vendorId']]) {
+    for (const replacement of ['undefined', `appliedFilters.${field}.split(',')[0]`]) {
+      const mutant = { ...sources, [key]: sources[key].replace(`appliedFilters.${field} || undefined`, replacement) };
+      if (mutant[key] === sources[key] || !failures(mutant).length) throw new Error('missing/truncated aging filter escaped');
+    }
+  }
   for (const [key, pattern, label] of checks) {
     const mutant = { ...sources, [key]: sources[key].replace(new RegExp(pattern.source, `${pattern.flags}g`), "/* planted defect */") };
     if (!failures(mutant).includes(label)) { console.error(`verify-aging-report-reverse-leaves: SELF-TEST FAIL — ${label}`); process.exit(1); }
   }
-  console.log(`verify-aging-report-reverse-leaves: SELF-TEST PASS — ${checks.length} planted defects rejected`);
+  console.log(`verify-aging-report-reverse-leaves: SELF-TEST PASS — ${checks.length + 4} planted defects rejected`);
 }
 console.log(`verify-aging-report-reverse-leaves: PASS — ${checks.length} aging reverse invariants`);

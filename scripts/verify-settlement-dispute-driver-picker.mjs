@@ -10,6 +10,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-dispute-driver-picker";
 const MODAL = "apps/frontend/src/pages/drivers/SettlementDisputeModal.tsx";
@@ -67,15 +68,16 @@ export function collectProblems(root = ROOT) {
   else if (
     !/dataTestId="settlement-disputes-filter-driver"/.test(tab) ||
     !/kind="driver"/.test(tab) ||
-    !/allowCreate=\{false\}/.test(tab) ||
+    multiSelectFilterProblems(tab, {file: TAB, kind: 'driver', testId: 'settlement-disputes-filter-driver'}).length > 0 ||
     !/searchParams\.get\("driver_id"\)/.test(tab) ||
     !/setSearchParams/.test(tab)
   ) {
-    problems.push(`${TAB}: must render EntityPicker driver filter (allowCreate=false) synced to ?driver_id=`);
+    problems.push(`${TAB}: must render scoped no-create EntityMultiSelect driver filter synced to ?driver_id=`);
   }
   return problems;
 }
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const baseline = collectProblems();
   if (baseline.length) {
     console.error(LABEL, baseline);

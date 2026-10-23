@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -37,7 +38,7 @@ const listQuerySchema = companyQuerySchema.extend({
 
 // LINK-F5171/LINK-F5185: settlements:cash_advances reverse — driver-scoped pending queue filter.
 const pendingQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
 });
 
 const uuidParamsSchema = z.object({

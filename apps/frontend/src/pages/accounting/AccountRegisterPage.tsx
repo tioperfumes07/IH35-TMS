@@ -1,4 +1,5 @@
 import { formatDateUS } from "../../lib/formatDate";
+import { useTranslation } from "../../hooks/useTranslation";
 import { formatUsdCents } from "../../lib/money";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -251,6 +252,7 @@ function EmbeddedRegisterShell({ kpiStrip, children }: { kpiStrip?: ReactNode; c
 }
 
 export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAccountId?: string } = {}) {
+  const { t } = useTranslation();
   const embedded = Boolean(embeddedBankAccountId);
   const Shell = embedded ? EmbeddedRegisterShell : AccountingSubNavWrapper;
   const { selectedCompanyId } = useCompanyContext();
@@ -872,6 +874,8 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
               <label className="mb-2 flex flex-col gap-1 text-xs font-semibold text-gray-600" data-b1-filter-payee="1">
                 Payee
                 <input
+                  type="search"
+                  aria-label={t("common.search_payee_names", "Search payee names")}
                   value={payeeFilter}
                   onChange={(e) => setPayeeFilter(e.target.value)}
                   className={inputCls}

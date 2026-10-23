@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 
 export const INSURANCE_CLAIM_STATUSES = ["open", "investigating", "approved", "denied", "paid", "closed"] as const;
 export const INSURANCE_LAWSUIT_STATUSES = ["filed", "active", "settled", "dismissed", "judgment"] as const;
@@ -41,13 +42,13 @@ export const listClaimsQuerySchema = operatingCompanySchema.extend({
   status: z.enum(INSURANCE_CLAIM_STATUSES).optional(),
   asset_id: z.string().uuid().optional(),
   /** Reverse drill: insurance.claim.driver_id → mdata.drivers */
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
   /** Reverse drill via mdata.assets.unit_id (claim stores asset_id). */
-  unit_id: z.string().uuid().optional(),
+  unit_id: entityIdFilterSchema.optional(),
   /** Reverse drill: insurance.claim.load_id → mdata.loads (WIZARD-CLAIM-ECONOMICS-DEPTH slice 1). */
-  load_id: z.string().uuid().optional(),
+  load_id: entityIdFilterSchema.optional(),
   /** Reverse drill: mdata.equipment (trailer) -> insurance.claim.trailer_id (slice 2, 202607730000). */
-  trailer_id: z.string().uuid().optional(),
+  trailer_id: entityIdFilterSchema.optional(),
 });
 
 /** Forward graph FKs (prod-live via 202607410000) — link existing hubs only; never invent amounts. */

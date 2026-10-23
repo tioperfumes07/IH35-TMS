@@ -38,6 +38,18 @@ describe("E-15 CPM -- every figure names its basis, never divides by zero or mis
 
 describe("E-15 engine end to end (mocked db)", () => {
   const OPCO = "00000000-0000-4000-8000-0000000000aa";
+  it("binds all selected units in its scoped roster before computing costs", async () => {
+    const units = ["22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333"];
+    let calls = 0;
+    const client = { query: async <T>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> => {
+      calls++;
+      expect(sql).toContain("u.id = ANY($2::uuid[])");
+      expect(values).toEqual([OPCO, units]);
+      return { rows: [] };
+    } };
+    await computePmCostPerMile(client, OPCO, "2026-06-01", "2026-06-30", units.join(","));
+    expect(calls).toBe(1);
+  });
   it("real CPM from odometer anchors; practical and short shown beside it; cost from WO -> bills split parts/labor", async () => {
     const client = {
       query: async <T>(sql: string): Promise<{ rows: T[] }> => {

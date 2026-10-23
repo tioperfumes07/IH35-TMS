@@ -9,6 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-safety-picker-law-lists";
@@ -20,9 +21,7 @@ const CHECKS = [
     file: "apps/frontend/src/pages/safety/IdvrPage.tsx",
     // LST-F5188 — filter EntityPickers must sync URL.
     require: [
-      /EntityPicker/,
       /dataTestId="idvr-filter-driver"/,
-      /allowCreate=\{false\}/,
       /setSearchParams/,
       /searchParams\.get\("driver_id"\)/,
     ],
@@ -49,9 +48,7 @@ const CHECKS = [
     file: "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
     // LST-F5183 — reverse filter must be EntityPicker + URL sync (not DriverPickerWithCreate without URL write).
     require: [
-      /EntityPicker/,
       /kind="driver"/,
-      /allowCreate=\{false\}/,
       /dataTestId="drug-alcohol-filter-driver"/,
       /searchParams\.get\("driver_id"\)/,
       /setSearchParams/,
@@ -65,6 +62,7 @@ function run(root = ROOT) {
     const abs = path.join(root, c.file);
     if (!fs.existsSync(abs)) { fails.push(`${c.name}: missing`); continue; }
     const src = fs.readFileSync(abs, "utf8");
+    if (c.name === 'IdvrPage' || c.name === 'DrugAlcoholTab') fails.push(...multiSelectFilterProblems(src, {file: c.file, kind: 'driver', testId: c.name === 'IdvrPage' ? 'idvr-filter-driver' : 'drug-alcohol-filter-driver'}));
     if (c.require) {
       for (const re of c.require) {
         if (!re.test(src)) fails.push(`${c.name}: missing ${re}`);
@@ -73,7 +71,7 @@ function run(root = ROOT) {
       if ((c.name === "IdvrPage" || c.name === "DrugAlcoholTab") && /<DriverPickerWithCreate[\s>]/.test(src)) {
         fails.push(`${c.name}: must not use DriverPickerWithCreate on reverse filter`);
       }
-    } else if (!/EntityPicker|ReferenceSelect/.test(src)) {
+    } else if (!/EntityPicker|ReferenceSelect/.test(src) && multiSelectFilterProblems(src, {file: c.file, kind: 'driver'}).length) {
       fails.push(`${c.name}: no picker`);
     }
     if (Array.isArray(c.forbid)) {
@@ -86,6 +84,7 @@ function run(root = ROOT) {
 }
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const live = run();
   const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".safety-picker-selftest-"));
   try {

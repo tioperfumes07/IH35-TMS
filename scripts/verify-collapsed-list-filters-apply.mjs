@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "apps/frontend/src");
@@ -154,16 +155,13 @@ export function auditPortalOwnership(collapsedSource, runnerFiltersSource) {
     failures.push("CollapsedListFilters Escape must defer when a portal combobox listbox is open");
   }
   if (runnerFiltersSource) {
-    const pickers = [...runnerFiltersSource.matchAll(/<EntityPicker\b[\s\S]*?\/>/g)].map((m) => m[0]);
-    const unit = pickers.find((p) => /kind="unit"/.test(p));
-    const driver = pickers.find((p) => /kind="driver"/.test(p));
-    if (!unit || !/allowCreate=\{false\}/.test(unit)) failures.push("RunnerFilters unit EntityPicker must set allowCreate={false}");
-    if (!driver || !/allowCreate=\{false\}/.test(driver)) failures.push("RunnerFilters driver EntityPicker must set allowCreate={false}");
+    for (const kind of ['unit','driver']) failures.push(...multiSelectFilterProblems(runnerFiltersSource, {file: 'apps/frontend/src/pages/reports/runners/RunnerFilters.tsx', kind}));
   }
   return failures;
 }
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const fixture = {
     "pages/dispatch/Test.tsx": `<CollapsedListFilters activeFilterCount={1}>x</CollapsedListFilters>`,
     [ALLOWED_EXEMPT]: `<CollapsedListFilters applyLawExemptReason="QBO_SYNC_OUT_OF_SCOPE" activeFilterCount={1}>x</CollapsedListFilters>`,

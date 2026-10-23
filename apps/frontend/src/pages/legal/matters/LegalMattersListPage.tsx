@@ -5,7 +5,7 @@ import { legalMattersApi, type LegalMatterListRow } from "../../../api/legal-mat
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -273,12 +273,11 @@ export function LegalMattersListPage() {
             >
               <div className="flex flex-wrap gap-2" data-testid="legal-matters-entity-filters">
                 <div className="min-w-[14rem]">
-                  <EntityPicker
+                  <EntityMultiSelect
                     kind="unit"
                     operatingCompanyId={companyId}
                     value={staged.draft.unitId || null}
                     onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
-                    allowCreate={false}
                     placeholder="All units"
                     ariaLabel="Filter by unit"
                     dataTestId="legal-matters-filter-unit"

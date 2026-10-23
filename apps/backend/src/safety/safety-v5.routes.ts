@@ -5,6 +5,7 @@
 // (Supersedes the GO-23 C6 exemption "the real JE posts once, later, at settlement close".)
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -19,8 +20,8 @@ const companyQuerySchema = z.object({
 
 // SAF-F16 — driver-profile reverse view. Optional; absent = the existing company-wide list.
 const internalFinesQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
-  load_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  load_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -417,7 +418,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
         const parent = await client.query(
           `SELECT 1
            FROM mdata.drivers d
-           WHERE d.id = $1::uuid
+           WHERE d.id = ANY($1::uuid[])
              AND d.archived_at IS NULL
              AND (
                d.operating_company_id = $2::uuid
@@ -429,21 +430,21 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
                    AND dca.deactivated_at IS NULL
                )
              )
-           LIMIT 1`,
-          [query.data.driver_id, query.data.operating_company_id]
+           `,
+          [entityIdFilterValues(query.data.driver_id), query.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
+        if (parent.rows.length !== entityIdFilterValues(query.data.driver_id!).length) return { found: false as const, rows: [], total_count: 0 };
       }
       const values: unknown[] = [query.data.operating_company_id];
       let driverFilter = "";
       if (query.data.driver_id) {
-        values.push(query.data.driver_id);
-        driverFilter = `AND f.driver_id = $${values.length}`;
+        values.push(entityIdFilterValues(query.data.driver_id));
+        driverFilter = `AND f.driver_id = ANY($${values.length}::uuid[])`;
       }
       let loadFilter = "";
       if (query.data.load_id) {
-        values.push(query.data.load_id);
-        loadFilter = `AND f.related_load_id = $${values.length}`;
+        values.push(entityIdFilterValues(query.data.load_id));
+        loadFilter = `AND f.related_load_id = ANY($${values.length}::uuid[])`;
       }
       // CLS-UUID-LABEL: no driver join — InternalFinesPage's EntityLink rendered f.driver_id as a
       // raw full uuid with no label (same class as CLS-DOT-INSPECTIONS-UUID-LABEL). Mirrors the

@@ -5,6 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from "./lib/entity-multiselect-filter-contract.mjs";
 
 const ROOT = process.cwd();
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
@@ -66,7 +67,7 @@ const checks = [
   ["idle confirm route on backend", kpiRoutes.includes("/api/v1/maintenance/idle-events/needs-review") && kpiRoutes.includes("confirm-manual")],
   ["sparkline tiles", dashboard.includes("MiniSparkline")],
   ["date filters", dashboard.includes("maint-kpi-filter-start")],
-  ["searchable unit picker", /<EntityPicker[\s\S]*?kind="unit"[\s\S]*?allowCreate=\{false\}[\s\S]*?dataTestId="maint-kpi-filter-unit"/.test(dashboard)],
+  ["searchable unit picker", multiSelectFilterProblems(dashboard, { file: "apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx", kind: "unit", testId: "maint-kpi-filter-unit" }).length === 0],
   ["no native UUID unit select", !/<select[\s\S]*?value=\{unitId\}/.test(dashboard)],
   ["pm hub", dashboard.includes("maint-kpi-pm-hub")],
   ["retryable drilldown error", /drilldownQ\.isError[\s\S]*?<ListErrorState[\s\S]*?drilldownQ\.refetch\(\)/.test(dashboard)],
@@ -82,6 +83,9 @@ const checks = [
 for (const [name, ok] of checks) if (!ok) failures.push(name);
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
+  const filterPlant = dashboard.replace('dataTestId="maint-kpi-filter-unit"', 'allowCreate dataTestId="maint-kpi-filter-unit"');
+  if (filterPlant === dashboard || !multiSelectFilterProblems(filterPlant, { file: "apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx", kind: "unit", testId: "maint-kpi-filter-unit" }).length) throw new Error("filter creation plant survived");
   const mutations = [
     ["OOS leased scope", kpiRoutes.replace("WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)", "WHERE u.owner_company_id = $1::uuid")],
     // ROUND 326 item 17 (#24029): the denominator reads the one fleet roster — plant an owner-only scope in its place.

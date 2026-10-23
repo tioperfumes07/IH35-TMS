@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
@@ -7,8 +8,8 @@ import { assertCompanyMembership } from "../../_helpers/company-membership-guard
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  driver_id: z.string().uuid().optional(),
-  load_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  load_id: entityIdFilterSchema.optional(),
   from: z.string().optional(),
   to: z.string().optional(),
   source: z.enum(["samsara_auto", "manual_office", "dot_citation"]).optional(),
@@ -76,12 +77,12 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
       const values: unknown[] = [query.data.operating_company_id];
       const filters: string[] = ["operating_company_id = $1::uuid", "voided_at IS NULL"];
       if (query.data.driver_id) {
-        values.push(query.data.driver_id);
-        filters.push(`driver_id = $${values.length}`);
+        values.push(entityIdFilterValues(query.data.driver_id));
+        filters.push(`driver_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.load_id) {
-        values.push(query.data.load_id);
-        filters.push(`related_load_id = $${values.length}`);
+        values.push(entityIdFilterValues(query.data.load_id));
+        filters.push(`related_load_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.from) {
         values.push(query.data.from);

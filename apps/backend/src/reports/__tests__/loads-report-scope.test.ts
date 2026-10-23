@@ -17,6 +17,17 @@ function captureClient() {
 }
 
 describe("LEAD 443.206 — the loads report scope and date", () => {
+  it("binds complete multi-entity sets with AND across dimensions, including both driver roles", async () => {
+    const ids = ["22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333"];
+    const query = vi.fn().mockResolvedValue({ rows: [] });
+    await getLoadsReport({ query } as never, { operatingCompanyId: OPCO, from: "2026-10-01", to: "2026-10-31", dateField: "pickup", customerId: ids.join(","), driverId: ids.join(","), unitId: ids.join(","), trailerId: ids.join(",") });
+    const [sql, values] = query.mock.calls[0];
+    for (const field of ["l.customer_id", "l.assigned_primary_driver_id", "l.assigned_secondary_driver_id", "l.assigned_unit_id", "lah.new_trailer_id"]) {
+      expect(sql).toContain(`${field} = ANY(`);
+    }
+    expect(values.filter(Array.isArray)).toEqual([ids, ids, ids, ids]);
+    expect(sql).toContain(" AND ");
+  });
   it("excludes draft, cancelled, voided, deleted and sample loads and states its scope", async () => {
     const { client, sql } = captureClient();
     const out = await getLoadsReport(client as never, { operatingCompanyId: OPCO, from: "2026-10-01", to: "2026-10-31", dateField: "pickup" });

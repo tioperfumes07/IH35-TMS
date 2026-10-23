@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertFaroDailyImportProvenance } from "../factoring/faro-daily-import-provenance.js";
 
@@ -137,15 +138,15 @@ export async function listDriverVendorMerges(
     const values: unknown[] = [operatingCompanyId, limit];
     let driverFilter = "";
     if (filters.driverId) {
-      values.push(filters.driverId);
-      driverFilter = `AND m.driver_id = $${values.length}::uuid`;
+      values.push(entityIdFilterValues(filters.driverId));
+      driverFilter = `AND m.driver_id = ANY($${values.length}::uuid[])`;
     }
     // Server-side scoping (not client-side), same reasoning as every other reverse fix this
     // session: this list is capped at LIMIT 200/limit.
     let vendorFilter = "";
     if (filters.vendorId) {
-      values.push(filters.vendorId);
-      vendorFilter = `AND (fromv.id = $${values.length}::uuid OR tov.id = $${values.length}::uuid)`;
+      values.push(entityIdFilterValues(filters.vendorId));
+      vendorFilter = `AND (fromv.id = ANY($${values.length}::uuid[]) OR tov.id = ANY($${values.length}::uuid[]))`;
     }
     const res = await client.query(
       `
@@ -600,8 +601,8 @@ export async function listEquipmentLoans(userId: string, operatingCompanyId: str
     // Server-side scoping (not client-side), same reasoning as every other reverse fix this
     // session: this list is capped at LIMIT 300.
     if (vendorId) {
-      values.push(vendorId);
-      whereSql += ` AND l.lender_vendor_id = $${values.length}::uuid`;
+      values.push(entityIdFilterValues(vendorId));
+      whereSql += ` AND l.lender_vendor_id = ANY($${values.length}::uuid[])`;
     }
     const res = await client.query(
       `

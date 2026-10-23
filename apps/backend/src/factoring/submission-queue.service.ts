@@ -1,4 +1,5 @@
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { getFactorForCustomer } from "./factor.service.js";
 
 type Queryable = {
@@ -94,16 +95,16 @@ export async function listSubmissionQueueInvoices(
   // this already-capped result set (LIMIT 500).
   deps: { client: Queryable; customerId?: string; loadId?: string }
 ): Promise<SubmissionQueueItem[]> {
-  const filterParams: string[] = [operatingCompanyId];
+  const filterParams: Array<string | string[]> = [operatingCompanyId];
   let customerFilter = "";
   if (deps.customerId) {
-    filterParams.push(deps.customerId);
-    customerFilter = `AND i.customer_id = $${filterParams.length}::uuid`;
+    filterParams.push(entityIdFilterValues(deps.customerId));
+    customerFilter = `AND i.customer_id = ANY($${filterParams.length}::uuid[])`;
   }
   let loadFilter = "";
   if (deps.loadId) {
-    filterParams.push(deps.loadId);
-    loadFilter = `AND i.source_load_id = $${filterParams.length}::uuid`;
+    filterParams.push(entityIdFilterValues(deps.loadId));
+    loadFilter = `AND i.source_load_id = ANY($${filterParams.length}::uuid[])`;
   }
   const res = await deps.client.query<Record<string, unknown>>(
     `
