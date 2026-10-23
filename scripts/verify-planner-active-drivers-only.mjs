@@ -34,19 +34,43 @@ if (!fleetScheduleMatch) {
   }
 }
 
-// 2. getPlannerWeek — dispatch/planner.service.ts
+// 2. getPlannerWeek — dispatch/planner.service.ts. LEAD 443.266-A: getPlannerWeek is now a thin scope wrapper; the roster
+// SQL lives in loadPlannerWeekOnClient (the guard read the wrapper and went red on a refactor). Read the query function.
 const plannerService = read("apps/backend/src/dispatch/planner.service.ts");
-const plannerWeekMatch = plannerService.match(/export async function getPlannerWeek[\s\S]*?\n  \}\)/);
-if (!plannerWeekMatch) {
-  failures.push("planner.service.ts: getPlannerWeek function not found");
-} else {
-  const fn = plannerWeekMatch[0];
-  if (!fn.includes("d.deactivated_at IS NULL")) {
-    failures.push("getPlannerWeek: must filter d.deactivated_at IS NULL (active drivers only)");
+export function plannerWeekFailures(src) {
+  const out = [];
+  const wrapper = src.match(/export async function getPlannerWeek[\s\S]*?\n  \}\)/);
+  if (!wrapper) out.push("planner.service.ts: getPlannerWeek function not found");
+  const start = src.indexOf("async function loadPlannerWeekOnClient(");
+  const fn = start >= 0 ? src.slice(start, src.indexOf("\n}\n", start)) : "";
+  if (!fn) {
+    out.push("planner.service.ts: loadPlannerWeekOnClient (the planner roster query) not found");
+    return out;
   }
-  if (!fn.includes("d.status = 'Active'::mdata.driver_status")) {
-    failures.push("getPlannerWeek: must filter d.status = 'Active'::mdata.driver_status (active drivers only)");
+  if (wrapper && !/loadPlannerWeekOnClient\(/.test(wrapper[0])) out.push("getPlannerWeek: does not read through loadPlannerWeekOnClient");
+  if (!fn.includes("d.deactivated_at IS NULL")) out.push("getPlannerWeek: must filter d.deactivated_at IS NULL (active drivers only)");
+  if (!fn.includes("d.status = 'Active'::mdata.driver_status")) out.push("getPlannerWeek: must filter d.status = 'Active'::mdata.driver_status (active drivers only)");
+  return out;
+}
+failures.push(...plannerWeekFailures(plannerService));
+
+if (process.argv.includes("--selftest")) {
+  const plants = [
+    ["deactivated driver admitted", plannerService.replace("AND d.deactivated_at IS NULL\n          AND d.archived_at IS NULL", "AND d.archived_at IS NULL")],
+    ["inactive idle driver admitted", plannerService.replace("OR (d.status = 'Active'::mdata.driver_status", "OR (TRUE")],
+    ["roster query function renamed away", plannerService.replace("async function loadPlannerWeekOnClient(", "async function loadSomethingElse(")],
+  ];
+  let bad = 0;
+  for (const [label, mutated] of plants) {
+    const caught = mutated !== plannerService && plannerWeekFailures(mutated).length > 0;
+    console.log(`  ${caught ? "✓" : "✗"} ${label} FAILS`);
+    if (!caught) bad += 1;
   }
+  if (bad) {
+    console.error("verify-planner-active-drivers-only --selftest FAIL");
+    process.exit(1);
+  }
+  console.log(`verify-planner-active-drivers-only --selftest PASS (${plants.length}/${plants.length})`);
 }
 
 if (failures.length) {

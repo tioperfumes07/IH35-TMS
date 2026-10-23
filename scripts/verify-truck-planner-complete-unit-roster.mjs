@@ -34,8 +34,14 @@ function verify(s) {
     // excluding anything — the rule must be the grid's own `continue`, or removing the filter goes unnoticed.
     ["retired units excluded from planner master", /if \(!PLANNER_UNIT_STATUSES\.has\(String\(unit\.status \?\? ""\)\)\) continue;/.test(s.page)],
     ["scheduler rows require active drivers", /AND d\.status = 'Active'::mdata\.driver_status/.test(s.scheduler)],
-    ["scheduler vacant units require InService", /AND u\.assigned_driver_id IS NULL[\s\S]{0,100}AND u\.status = 'InService'::mdata\.unit_status/.test(s.scheduler)],
-    ["timeline rows require active drivers", /AND d\.archived_at IS NULL[\s\S]{0,100}AND d\.status = 'Active'::mdata\.driver_status/.test(s.planner)],
+    // LEAD 443.266-A: these two rules were literal SQL from 2026-08-29 (DSP-F7376). LEAD 23:45Z parity (#27117) moved both
+    // onto the ONE load service; the rules now assert that current required behaviour.
+    // Vacant = THE shared in-service gate (InService + not OOS + no open WO; same set as Truck Line AVAILABLE) and no
+    // board-set load on the truck.
+    ["scheduler vacant units require the shared in-service gate", /WHERE \$\{UNIT_IN_SERVICE_SQL\}\s*AND NOT EXISTS \(SELECT 1 FROM mdata\.loads bl WHERE bl\.assigned_unit_id = u\.id AND \$\{canonicalDispatchWorkWhereClause\("bl", "\$1::uuid"\)\}\)/.test(s.scheduler) && /import \{ UNIT_IN_SERVICE_SQL \} from "\.\.\/dispatch\/unit-in-service\.js"/.test(s.scheduler)],
+    // Timeline roster = not archived AND (running a board-set load — any status, Probation drivers run loads — OR an
+    // Active driver with recent dispatch activity). Never an inactive idle driver.
+    ["timeline rows require active drivers (or a driver running a board-set load)", /AND d\.archived_at IS NULL[\s\S]{0,1200}EXISTS \(\s*SELECT 1 FROM mdata\.loads cl\s*WHERE \$\{canonicalDispatchWorkWhereClause\("cl", "\$1::uuid"\)\}[\s\S]{0,600}OR \(d\.status = 'Active'::mdata\.driver_status\s*AND activity\.last_dispatch_activity_at >=/.test(s.planner)],
     ["timeline unit join excludes retired units", /LEFT JOIN mdata\.units u[\s\S]{0,300}u\.deactivated_at IS NULL[\s\S]{0,150}u\.status IN \('InService', 'OutOfService', 'InMaintenance'\)/.test(s.planner)],
   ];
   return checks.filter(([, ok]) => !ok).map(([label]) => label);
@@ -57,8 +63,10 @@ if (process.argv.includes("--selftest")) {
     ["OOS signal lost", { ...live, page: live.page.replace("Boolean(unit.is_oos)", "false") }],
     ["retired unit admitted", { ...live, page: live.page.replace("if (!PLANNER_UNIT_STATUSES.has(String(unit.status ?? \"\"))) continue;", "") }],
     ["inactive scheduler driver admitted", { ...live, scheduler: live.scheduler.replace("AND d.status = 'Active'::mdata.driver_status", "AND TRUE") }],
-    ["inactive vacant unit admitted", { ...live, scheduler: live.scheduler.replace("AND u.status = 'InService'::mdata.unit_status", "AND TRUE") }],
-    ["inactive timeline driver admitted", { ...live, planner: live.planner.replace("AND d.status = 'Active'::mdata.driver_status", "AND TRUE") }],
+    ["in-shop / OOS truck admitted as vacant", { ...live, scheduler: live.scheduler.replace("WHERE ${UNIT_IN_SERVICE_SQL}", "WHERE u.deactivated_at IS NULL") }],
+    ["truck on a board-set load admitted as vacant", { ...live, scheduler: live.scheduler.replace("AND NOT EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.assigned_unit_id = u.id", "AND EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.assigned_unit_id = u.id") }],
+    ["inactive idle timeline driver admitted", { ...live, planner: live.planner.replace("OR (d.status = 'Active'::mdata.driver_status", "OR (TRUE") }],
+    ["archived timeline driver admitted", { ...live, planner: live.planner.replace("AND d.archived_at IS NULL", "AND TRUE") }],
     ["retired timeline unit admitted", { ...live, planner: live.planner.replace("AND u.deactivated_at IS NULL", "AND TRUE") }],
   ];
   for (const [label, mutation] of mutations) {
