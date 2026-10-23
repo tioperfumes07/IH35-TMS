@@ -19,6 +19,7 @@ import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { withSavepoint } from "../auth/db.js";
 
 export type StopArrivalSource = "driver_app" | "eld_geofence" | "manual";
 
@@ -153,16 +154,21 @@ export async function stampStopDeparture(
     targetStatus: nextLoadStatus,
     actorUserId: ctx.actorUserId,
   });
-  try {
-    await pingSettlementOnLoadEvent(client, {
+  // LEAD 443.279b — the ping ran under a bare try/catch with NO savepoint: on 13694 its settlement-line insert hit
+  // uq_settlement_lines_no_duplicate_lines, the caught error left the transaction aborted (25P02), and the departure stamp
+  // itself rolled back. Same fix as the transition engine (443.232): a ping failure rolls back only the ping.
+  await withSavepoint(
+    client as never,
+    "stop_departure_settlement_ping",
+    async () => await pingSettlementOnLoadEvent(client, {
       loadId: ctx.loadId,
       operatingCompanyId: stop.operating_company_id,
       dispatchTargetStatus: nextLoadStatus,
       actorUserId: ctx.actorUserId,
-    });
-  } catch (err) {
-    console.warn({ err, load_id: ctx.loadId }, "stop_departure_settlement_ping_failed");
-  }
+    }),
+    undefined,
+    (err) => console.warn({ err, load_id: ctx.loadId }, "stop_departure_settlement_ping_failed")
+  );
 
   await appendCrudAudit(client, ctx.actorUserId, ctx.auditEvent, { load_id: ctx.loadId, stop_id: stop.id });
 

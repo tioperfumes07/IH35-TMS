@@ -24,14 +24,19 @@ const F = {
   positions: "apps/backend/src/integrations/samsara/samsara-positions.service.ts",
   terms: "apps/backend/src/driver-finance/settlement-contract-terms.service.ts",
   registry: "apps/backend/src/outbox/handlers/registry.ts",
+  stamp: "apps/backend/src/dispatch/stop-stamp.service.ts",
 };
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
 export function check(src = {}) {
   const s = Object.fromEntries(Object.entries(F).map(([k, rel]) => [k, src[k] ?? read(rel)]));
   const p = [];
-  if (!/await withSavepoint\(\s*client as never,\s*"dispatch_transition_settlement_ping",\s*\(\) => pingSettlementOnLoadEvent\(/.test(s.transition))
+  // 443.279b: `() => ping(` and `async () => await ping(` are the same savepoint (verify-delivery-latch-pings-settlement needs the awaited form).
+  if (!/await withSavepoint\(\s*client as never,\s*"dispatch_transition_settlement_ping",\s*(?:\/\/[^\n]*\n\s*)*(?:async )?\(\) => (?:await )?pingSettlementOnLoadEvent\(/.test(s.transition))
     p.push(`${F.transition}: the settlement ping must run inside withSavepoint (a bare catch leaves the caller's transaction aborted — 25P02)`);
+  // LEAD 443.279b — the stop engine's departure ping too (13694: a duplicate settlement line aborted the stamp's transaction).
+  if (!/await withSavepoint\(\s*client as never,\s*"stop_departure_settlement_ping",\s*async \(\) => await pingSettlementOnLoadEvent\(/.test(s.stamp))
+    p.push(`${F.stamp}: the stop-departure settlement ping must run inside withSavepoint (13694 — a caught ping error rolled the stamp back)`);
   if (/try \{\s*await pingSettlementOnLoadEvent\(/.test(s.transition))
     p.push(`${F.transition}: settlement ping is back in a bare try/catch`);
   if (!/await withSavepoint\(\s*client as never,\s*"fence_status_walk",\s*\(\) => walkLoadStatusFromFenceInSavepoint\(/.test(s.fence))
@@ -61,7 +66,8 @@ if (isMain && process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const plants = [
-    ["ping back in a bare try/catch", { transition: base.transition.replace(/await withSavepoint\(\s*client as never,\s*"dispatch_transition_settlement_ping",\s*\(\) => pingSettlementOnLoadEvent\(/, "try { await pingSettlementOnLoadEvent(") }],
+    ["ping back in a bare try/catch", { transition: base.transition.replace(/await withSavepoint\(\s*client as never,\s*"dispatch_transition_settlement_ping",\s*(?:\/\/[^\n]*\n\s*)*(?:async )?\(\) => (?:await )?pingSettlementOnLoadEvent\(/, "try { await pingSettlementOnLoadEvent(") }],
+    ["stop-departure ping back in a bare try/catch", { stamp: base.stamp.replace('"stop_departure_settlement_ping",', '"x",') }],
     ["fence walk without savepoint", { fence: base.fence.replace('"fence_status_walk",', '"x",') }],
     ["fence walk failure not audited", { fence: base.fence.replace('"telematics.fence_status_walk_failed"', '"x"') }],
     ["positions point outside savepoint", { positions: base.positions + "\nawait processGeofenceDetectionsForGpsPoint(client, {});\n" }],
