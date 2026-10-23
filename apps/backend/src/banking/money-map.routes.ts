@@ -58,9 +58,11 @@ export async function registerMoneyMapRoutes(app: FastifyInstance) {
           `
           WITH co AS (SELECT $1::uuid AS oc_id),
           accounts AS (
-            SELECT ba.id, ba.account_name, ba.account_nickname, ba.institution_name,
-                   ba.ledger_account_id, ba.is_active, ba.tile_kind,
-                   ba.last_feed_at::text AS last_feed_at
+            -- LEAD 443.267-A: banking.bank_accounts has no account_nickname / tile_kind / last_feed_at (42703 → 500).
+            -- Real columns: display_name (the nickname), last_synced_at (last feed). Every bank_accounts row is a REAL tile.
+            SELECT ba.id, ba.account_name, ba.display_name AS account_nickname, ba.institution_name,
+                   ba.ledger_account_id, ba.is_active, 'real'::text AS tile_kind,
+                   ba.last_synced_at::text AS last_feed_at
             FROM banking.bank_accounts ba, co
             WHERE ba.operating_company_id = co.oc_id
               AND ba.is_active = true
