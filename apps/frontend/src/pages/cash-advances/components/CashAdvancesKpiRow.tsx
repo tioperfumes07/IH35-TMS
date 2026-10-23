@@ -1,4 +1,6 @@
-import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
+import { useNavigate } from "react-router-dom";
+import { V3 } from "../../../design/v3-tokens";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { formatUsdTable } from "../../../lib/money";
 
 type Props = {
@@ -8,14 +10,11 @@ type Props = {
 };
 
 /**
- * C8 — the cash-advances KPI strip.
+ * C8 + ROUND 443.250 — Cash Advances KPI strip (Settlements-CashAdvances.dc.html).
  *
- * Was: five hand-rolled <div> tiles, all dead clicks, all money coerced with `Number(x ?? 0)` so a
- * failed KPI query showed `$0.00` outstanding — the most reassuring possible lie about driver debt.
- * Now every tile links to the tab holding its records (the page already reads `?tab=`), and an
- * absent figure renders "—". Same five labels, same order.
- *
- * ROUND 443.254 N8 — money uses formatUsdTable ($2,575.96 with thousands separators).
+ * Board labels: Advances on file · Requests awaiting owner · Outstanding to recover ·
+ * Recovered this period. Live getCashAdvancesKpis; Recovered = "—" (no period total on the
+ * dashboard KPI feed). Absent figure still renders "—".
  */
 
 /** Absent stays absent. */
@@ -25,41 +24,52 @@ function amount(kpis: Record<string, unknown> | undefined, key: string): number 
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 }
+
 const money = (n: number | null) => (n === null ? null : formatUsdTable(n));
+const display = (v: string | number | null) => (v === null || v === undefined ? "—" : String(v));
 
 export function CashAdvancesKpiRow({ kpis, basePath = "/cash-advances" }: Props) {
+  const navigate = useNavigate();
   const root = basePath.replace(/\/+$/, "") || "/cash-advances";
+  const onFile = amount(kpis, "advances_on_file");
+  const awaiting = amount(kpis, "pending_approval");
+  const outstanding = money(amount(kpis, "total_outstanding"));
+
   return (
-    <div className="grid gap-2 md:grid-cols-5">
-      <DrillKpiCard
-        size="md"
-        label="Total Outstanding"
-        value={money(amount(kpis, "total_outstanding"))}
-        to={`${root}?tab=outstanding`}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+        gap: 8,
+        fontFamily: V3.font,
+      }}
+      data-testid="cash-advances-kpi-strip"
+      data-cash-advances-v3-kpis="1"
+    >
+      <V3KpiTile
+        label="Advances on file"
+        value={display(onFile === null ? null : Math.round(onFile))}
+        testId="cash-advances-kpi-on-file"
+        onClick={() => navigate(root)}
       />
-      <DrillKpiCard
-        size="md"
-        label="MTD Disbursed"
-        value={money(amount(kpis, "mtd_disbursed"))}
-        to={root}
+      <V3KpiTile
+        label="Requests awaiting owner"
+        value={display(awaiting === null ? null : Math.round(awaiting))}
+        testId="cash-advances-kpi-awaiting"
+        onClick={() => navigate(`${root}?tab=pending_approval`)}
       />
-      <DrillKpiCard
-        size="md"
-        label="Pending Approval"
-        value={amount(kpis, "pending_approval")}
-        to={`${root}?tab=pending_approval`}
+      <V3KpiTile
+        label="Outstanding to recover"
+        value={display(outstanding)}
+        testId="cash-advances-kpi-outstanding"
+        onClick={() => navigate(`${root}?tab=outstanding`)}
       />
-      <DrillKpiCard
-        size="md"
-        label="Avg Per Advance"
-        value={money(amount(kpis, "avg_per_advance"))}
-        to={root}
-      />
-      <DrillKpiCard
-        size="md"
-        label="Drivers w/ Active Advance"
-        value={amount(kpis, "drivers_with_active")}
-        to={`${root}?tab=outstanding`}
+      <V3KpiTile
+        label="Recovered this period"
+        value="—"
+        sub="no period total on KPI feed"
+        testId="cash-advances-kpi-recovered"
+        onClick={() => navigate(`${root}?tab=paid_off`)}
       />
     </div>
   );

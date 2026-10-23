@@ -284,9 +284,28 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   "—" on Driver/Held when balances query errors. Source → settlement/JE links retained.
 - **Guard piggyback:** `verify-banking-escrow-settlement-linkage.mjs` (step 1322 ≡2 EVEN Cursor)
   asserts V3KpiTile + data-escrow-register-v3-kpis + board labels + release window. No new EVEN claim.
-- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Deductions/
-  CashAdvances/Close/PreSettlements/Statement) · Fuel sub-boards · Driver Profile ·
-  design-system sweep · Chrome proof. Full DONE not claimed.
+- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Deductions/Close/
+  PreSettlements/Statement) · Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof.
+  CashAdvances V3 shipped (below). Full DONE not claimed.
+
+
+### Active Architectural Decisions — Settlements CashAdvances V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getCashAdvancesKpis` / `views.cash_advances_dashboard_kpis` plus a
+  read-only `COUNT(*)` as `advances_on_file` from `views.cash_advances_with_context` (same company).
+  No new recovery/period endpoint; no GL change.
+- **V3 board chrome:** four KPIs via `V3KpiTile` + `data-cash-advances-v3-kpis` on
+  `CashAdvancesKpiRow.tsx` (Settlements mount `/driver-finance/cash-advances` + `/cash-advances`) —
+  Advances on file (count) · Requests awaiting owner (`pending_approval`) · Outstanding to recover
+  (`total_outstanding`) · Recovered this period = "—" (no period total on the KPI feed; paid_off
+  tab click-through only). "—" when a figure is absent.
+- **Guard piggyback:** `verify-cash-advances-tabs-url-sync.mjs` (step 990 ≡2 EVEN Cursor) asserts
+  V3KpiTile + data-cash-advances-v3-kpis + board labels + total_outstanding / pending_approval /
+  advances_on_file. No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Deductions/Close/
+  PreSettlements/Statement) · Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof.
+  Full DONE not claimed.
+
 
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
