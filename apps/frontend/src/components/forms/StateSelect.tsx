@@ -39,13 +39,15 @@ type Props = {
   value: string;
   onChange: (code: string) => void;
   country?: "US" | "MX";
+  /** 443.265-A — a narrow (64px) cell: show the code only ("TX") and no clear button; type to change. */
+  compact?: boolean;
   className?: string;
   disabled?: boolean;
   id?: string;
   placeholder?: string;
 };
 
-export function StateSelect({ value, onChange, country = "US", className = "", disabled, id, placeholder }: Props) {
+export function StateSelect({ value, onChange, country = "US", className = "", disabled, id, placeholder, compact = false }: Props) {
   const options = useMemo(() => {
     const list = STATES_BY_COUNTRY[country] ?? US_STATES;
     return list.map((o) => ({ value: o.code, label: `${o.code} — ${o.name}` }));
@@ -61,7 +63,8 @@ export function StateSelect({ value, onChange, country = "US", className = "", d
       onChange={(code) => onChange(code ?? "")}
       placeholder={placeholder || "State"}
       disabled={disabled}
-      allowClear={Boolean(value)}
+      allowClear={Boolean(value) && !compact}
+      displayLabel={compact ? (o) => o.value : undefined}
       filterMode="contains"
       clearCommittedOnEdit
       ariaLabel={placeholder || "State"}

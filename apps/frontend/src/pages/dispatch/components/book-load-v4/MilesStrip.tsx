@@ -180,7 +180,9 @@ export function MilesStrip({
       ) : null}
       {laneState === "new" ? (
         <p className="border-b border-[#E5E7EB] px-3 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-new">
-          New — no history. Type practical miles. Nothing is filled.
+          {chosenReference
+            ? "New — no history. Practical is from the reference lane you chose; you can still type over it."
+            : "New — no history. Type practical miles. Nothing is filled."}
         </p>
       ) : null}
       <div className="grid grid-cols-2 md:grid-cols-4">

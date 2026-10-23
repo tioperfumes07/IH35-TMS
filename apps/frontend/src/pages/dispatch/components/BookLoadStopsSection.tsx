@@ -28,7 +28,6 @@ type Props = {
 
 /** ROUND 443.257 Spec — every input 32px (h-8); State 64 · ZIP 88 · Appt date 150. */
 const CELL = "h-8 w-full rounded-sm border border-gray-300 px-2 text-xs";
-const CELL_STATE = "h-8 w-full max-w-[64px] rounded-sm border border-gray-300 px-2 text-xs";
 const CELL_ZIP = "h-8 w-full max-w-[88px] rounded-sm border border-gray-300 px-2 text-xs";
 const CELL_APPT = "h-8 w-full max-w-[150px] rounded-sm border border-gray-300 px-2 text-xs";
 // 443.265-A — row 3 cells fill their grid column (the grid template sets the widths, as on the V3 board).
@@ -150,7 +149,7 @@ export function BookLoadStopsSection({
                 {/* 443.257 — Location / Address one row 1fr / 1.4fr */}
                 <div
                   data-testid={`stop-locrow-${index}`}
-                  className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1.4fr]"
+                  className="grid min-w-0 grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_1.4fr]"
                 >
                   <Field
                     label="Location"
@@ -243,7 +242,7 @@ export function BookLoadStopsSection({
                         control={control}
                         name={`stops.${index}.state`}
                         render={({ field: f }) => (
-                          <StateSelect value={f.value ?? ""} onChange={f.onChange} placeholder="ST" className={CELL_STATE} />
+                          <StateSelect value={f.value ?? ""} onChange={f.onChange} placeholder="ST" className="w-full" compact />
                         )}
                       />
                     }

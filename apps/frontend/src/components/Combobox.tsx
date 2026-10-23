@@ -39,6 +39,9 @@ type ComboboxProps = {
   error?: string;
   disabled?: boolean;
   allowClear?: boolean;
+  /** Text shown in the closed box for the committed option (default: its label). Search still reads the
+   *  label — e.g. a 64px State cell shows "TX" while typing "Texas" still finds it (443.265-A). */
+  displayLabel?: (option: ComboboxOption) => string;
   allowAddNew?: { label: string; onAdd: (query: string) => void };
   /**
    * SAF-F31 — server-side type-ahead. Pickers that fetch a capped page (limit 200) silently hide
@@ -185,6 +188,7 @@ export function Combobox({
   error,
   disabled = false,
   allowClear = false,
+  displayLabel,
   allowAddNew,
   filterMode = "contains",
   dataField,
@@ -243,7 +247,11 @@ export function Combobox({
   // BANK-FILTER-BLUR-01: for a filter the typed text survives close, so it must stay VISIBLE too —
   // a filter that is still applied but shows an empty box is the same lie in the other direction.
   const displayValue =
-    (open || searchIsValue) && query.length > 0 ? query : selectedOption?.label ?? "";
+    (open || searchIsValue) && query.length > 0
+      ? query
+      : selectedOption
+        ? (displayLabel ? displayLabel(selectedOption) : selectedOption.label)
+        : "";
 
   // SAF-F31: tell the parent what was typed so it can refetch server-side. Effect (not inline in the
   // input handler) so a programmatic query reset also reaches the parent and cannot leave the picker

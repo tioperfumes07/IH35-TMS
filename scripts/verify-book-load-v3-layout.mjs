@@ -11,6 +11,11 @@
  *       offers short miles; Google practical / short / empty line UNDER each box.
  *   R5  Every wizard input 32px; stop row 2 = City fills · State 64 · ZIP 88 · Appointment date 150 ·
  *       Time · Time window; columns A/B top-aligned (no stretched white block under column A).
+ *   R6  (live walk 10-23 after #27294) the port-of-entry select is 390px (SelectCombobox's bare wrapper shrank it
+ *       to ~100px); the 64px State cell shows the code with no clear button and no box-in-box ("T ×");
+ *       Location / Address align at the top.
+ *   R7  (Lead live 5:47 AM) columns A and B end level — A stretches and its last field (Special notes) fills
+ *       the remaining height (no white block under it); "Upload Rate Con" is a one-line button.
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -26,6 +31,7 @@ const FILES = {
   strip: `${D}/book-load-v4/MilesStrip.tsx`,
   stops: `${D}/BookLoadStopsSection.tsx`,
   service: "apps/backend/src/dispatch/lane-mileage.service.ts",
+  ratecon: `${D}/book-load-v4/RateConUploadPanel.tsx`,
 };
 
 export function audit(s) {
@@ -61,7 +67,14 @@ export function audit(s) {
   need("R5", /\.blw-sec input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\):not\(\[type="hidden"\]\):not\(\[type="file"\]\):not\(\.dp-input\),\n\.blw-sec select\{height:32px\}/.test(s.modal), "wizard inputs are not 32px");
   need("R5", /lg:grid-cols-\[minmax\(0,1fr\)_64px_88px_150px_104px_minmax\(0,0\.9fr\)\]/.test(s.stops), "stop row 2 is not City · State 64 · ZIP 88 · Appt 150 · Time · Time window");
   need("R5", /"--ih-w-date": "150px", "--ih-h-field": "32px"/.test(s.stops) && /style=\{APPT_BOX_VARS\}/.test(s.stops), "the appointment date box is not 150 × 32");
-  need("R5", /grid grid-cols-1 items-start gap-3 lg:grid-cols-\[1\.05fr_1fr\]/.test(s.modal), "columns A/B stretch (white block under column A)");
+  // R7
+  need("R7", /grid grid-cols-1 items-stretch gap-3 lg:grid-cols-\[1\.05fr_1fr\]/.test(s.modal) && /blw-sec flex flex-col" data-testid="book-load-section-a"/.test(s.modal), "column A does not stretch to column B's height");
+  need("R7", /flex min-h-\[64px\] flex-1 flex-col gap-0\.5" data-testid="book-load-special-notes"/.test(s.modal), "column A leaves a white block under Special notes (the last field does not fill)");
+  need("R7", /inline-flex h-8 shrink-0 cursor-pointer items-center whitespace-nowrap/.test(s.ratecon), "Upload Rate Con wraps (not a one-line button)");
+  // R6
+  need("R6", /<div className="w-\[390px\] max-w-full shrink-0">\s*<SelectCombobox/.test(s.border), "the port-of-entry select shrinks to its content (not the 390px board width)");
+  need("R6", /<StateSelect [^>]*className="w-full" compact \/>/.test(s.stops) && !/CELL_STATE/.test(s.stops), "the 64px State cell clips its value (box-in-box + clear button)");
+  need("R6", /items-start gap-2 sm:grid-cols-\[1fr_1\.4fr\]/.test(s.stops), "Location / Address are bottom-aligned (Address sits lower than Location)");
   return f;
 }
 
@@ -88,7 +101,12 @@ if (process.argv.includes("--selftest")) {
     ["Google line moved below the strip FAILS", plant("strip", '<div className="grid grid-cols-2 md:grid-cols-4">', '<div className="grid grid-cols-2 md:grid-cols-4 x">')],
     ["28px inputs FAIL", plant("modal", ".blw-sec select{height:32px}", ".blw-sec select{height:28px}")],
     ["equal City / State / ZIP FAIL", plant("stops", "lg:grid-cols-[minmax(0,1fr)_64px_88px_150px_104px_minmax(0,0.9fr)]", "lg:grid-cols-6")],
-    ["stretched column A FAILS", plant("modal", "grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]", "grid grid-cols-1 gap-3 lg:grid-cols-[1.05fr_1fr]")],
+    ["port select back in a shrinking wrapper FAILS", plant("border", '<div className="w-[390px] max-w-full shrink-0">', "<div>")],
+    ["State without compact FAILS", plant("stops", 'className="w-full" compact />', 'className="w-full" />')],
+    ["bottom-aligned Location / Address FAILS", plant("stops", "items-start gap-2 sm:grid-cols-[1fr_1.4fr]", "items-end gap-2 sm:grid-cols-[1fr_1.4fr]")],
+    ["column A ending above column B FAILS", plant("modal", "grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[1.05fr_1fr]", "grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]")],
+    ["white block under Special notes FAILS", plant("modal", 'flex min-h-[64px] flex-1 flex-col gap-0.5" data-testid="book-load-special-notes"', 'flex flex-col gap-0.5" data-testid="book-load-special-notes"')],
+    ["wrapping Upload Rate Con FAILS", plant("ratecon", "items-center whitespace-nowrap", "items-center")],
   ];
   let bad = 0;
   for (const [n, ok] of cases) {
@@ -105,4 +123,4 @@ if (failures.length) {
   for (const x of failures) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log("verify-book-load-v3-layout: OK — Load # helper under the box, Broker/Direct own cell, NB/TR/SB cards, miles source order + reference lanes, 32px stop rows (R1–R5)");
+console.log("verify-book-load-v3-layout: OK — Load # helper under the box, Broker/Direct own cell, NB/TR/SB cards, miles source order + reference lanes, 32px stop rows, live-walk fixes, A/B level (R1–R7)");

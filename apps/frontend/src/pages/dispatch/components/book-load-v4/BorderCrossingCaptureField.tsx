@@ -57,38 +57,42 @@ export function BorderCrossingCaptureField({ value, onSelect, error }: Props) {
         Border crossing — port of entry <span className="text-red-500">*</span>
       </span>
       <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-      <SelectCombobox
-        data-testid="book-load-port-of-entry"
-        aria-label="Border crossing port of entry"
-        className="h-8 w-full max-w-[390px] rounded-sm border border-gray-300 px-2 text-xs"
-        value={value}
-        disabled={loading}
-        onChange={(e) => {
-          const id = e.target.value;
-          onSelect(ports.find((p) => p.id === id) ?? null);
-        }}
-      >
-        <option value="">{loading ? "Loading ports…" : "Select port of entry"}</option>
-        {us.length ? (
-          <optgroup label="United States">
-            {us.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-                {p.cbp_port_code ? ` (CBP ${p.cbp_port_code})` : ""}
-              </option>
-            ))}
-          </optgroup>
-        ) : null}
-        {mx.length ? (
-          <optgroup label="Mexico">
-            {mx.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </optgroup>
-        ) : null}
-      </SelectCombobox>
+      {/* SelectCombobox wraps itself in a bare <div>, which shrinks to content in this flex row —
+          the 390px (board) width belongs on this cell. */}
+      <div className="w-[390px] max-w-full shrink-0">
+        <SelectCombobox
+          data-testid="book-load-port-of-entry"
+          aria-label="Border crossing port of entry"
+          className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+          value={value}
+          disabled={loading}
+          onChange={(e) => {
+            const id = e.target.value;
+            onSelect(ports.find((p) => p.id === id) ?? null);
+          }}
+        >
+          <option value="">{loading ? "Loading ports…" : "Select port of entry"}</option>
+          {us.length ? (
+            <optgroup label="United States">
+              {us.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                  {p.cbp_port_code ? ` (CBP ${p.cbp_port_code})` : ""}
+                </option>
+              ))}
+            </optgroup>
+          ) : null}
+          {mx.length ? (
+            <optgroup label="Mexico">
+              {mx.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </optgroup>
+          ) : null}
+        </SelectCombobox>
+      </div>
         <span className="text-xs text-[#4B5563]">
           Cross-border load. The crossing stop and the Customs tab then appear on the load on their own.
         </span>
