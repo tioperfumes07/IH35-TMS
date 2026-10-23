@@ -121,10 +121,12 @@ if (process.argv.includes("--selftest")) {
     {
       key: "scope",
       source: "service",
-      from: "WHERE id = $1\n          AND operating_company_id = $2::uuid\n          AND status::text = $3",
-      to: "WHERE id = $1\n          AND true\n          AND status::text = $3",
+      // RE-PIN LEAD 443.211R (443.264): the load write moved into transitionLoadStatus — the company scope is its
+      // operatingCompanyId argument, so dropping it must fail the company-scoped transition check.
+      from: 'operatingCompanyId: args.operating_company_id, loadId: args.load_id, to: "cancelled"',
+      to: 'operatingCompanyId: "", loadId: args.load_id, to: "cancelled"',
     },
-    { key: "load", source: "service", from: 'if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");', to: "if (false) throw new Error();", replaceAll: true },
+    { key: "load", source: "service", from: 'if (!cancelledLoad) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");', to: "if (false) throw new Error();", replaceAll: true }, // RE-PIN 443.211R: transitionLoadStatus returns the row or null
     { key: "route", source: "routes", from: "return { status: 409, payload: errorPayload(code) };", to: "return { status: 500, payload: errorPayload(code) };" },
     { key: "kanban", source: "loads", from: "cancellationRecordId = cancellationRecord.id;", to: "cancellationRecordId = null;" },
     { key: "cancel-nested-begin", source: "service", from: "await setScopedCompanyContext(client, userId, input.operating_company_id);", to: 'await setScopedCompanyContext(client, userId, input.operating_company_id);\n    await client.query("BEGIN");' },
