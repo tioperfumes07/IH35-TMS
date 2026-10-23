@@ -9,6 +9,17 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 const require = createRequire(new URL("../apps/frontend/package.json", import.meta.url));
 const ts = require("typescript");
+const HOME_PANELS = ["MaintenancePmCountdownCards", "MaintEnginesStatusWidget", "MaintenanceAlertsCard", "InTransitTriageBand", "SevereAlertsBand"];
+export function validateHomePanel(name, text) {
+  const source = ts.createSourceFile(`${name}.tsx`, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let panels = 0;
+  function visit(node) {
+    if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) && node.tagName.getText(source) === "V3Panel") panels++;
+    ts.forEachChild(node, visit);
+  }
+  visit(source);
+  return panels ? [] : [`Home panel ${name} must mount the shared V3Panel`];
+}
 
 // 443.280: preserve capabilities on dedicated routes, not mounted below Home.
 export function validateBoardLayout(home, routes) {
@@ -191,6 +202,7 @@ function main() {
     }
   }
   failures.push(...validateBoardLayout(homeSrc, routeManifestSrc));
+  for (const name of HOME_PANELS) failures.push(...validateHomePanel(name, readIfExists(path.join(ROOT, `apps/frontend/src/pages/maintenance/components/${name}.tsx`))));
   if (!homeSrc.includes("DRIVER_REPORT_KIND_OPTIONS") && !homeSrc.includes("driverReportKind")) {
     failures.push("C-36: Driver Reports must expose Kind (damage / in-transit / DVIR)");
   }
@@ -261,6 +273,12 @@ export function boardLayoutSelftest(home, routes) {
   if (!validateBoardLayout(home, wrongRoute).length) throw new Error("plant escaped: arrivals misrouted to fleet");
   console.log("PASS plant: arrivals misrouted to fleet");
   console.log(`board-layout selftest ${plants.length + 2}/${plants.length + 2}`);
+  for (const name of HOME_PANELS) {
+    const original = readIfExists(path.join(ROOT, `apps/frontend/src/pages/maintenance/components/${name}.tsx`));
+    if (validateHomePanel(name, original).length) throw new Error(`clean panel rejected: ${name}`);
+    if (!validateHomePanel(name, original.replaceAll("V3Panel", "LegacyPanel")).length) throw new Error(`legacy panel plant escaped: ${name}`);
+  }
+  console.log("Home panel selftest 10/10 (five real panels + five legacy replacements)");
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main();

@@ -1,4 +1,5 @@
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { V3Panel } from "../../../components/v3/V3Panel";
 
 type Props = {
   alerts: Array<Record<string, unknown>>;
@@ -15,10 +16,7 @@ export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll }: 
   // (an older/dev backend) -- never silently prefer a truncated number once the real one exists.
   const trueTotal = totalEstimatedCostAll ?? visibleTotal;
   return (
-    <div className="rounded-sm border border-red-300 bg-red-50">
-      <div className="border-b border-red-200 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-red-700">
-        Severe Repair / Out of Service
-      </div>
+    <V3Panel title="Severe Repair / Out of Service">
       <div className="max-h-40 overflow-y-auto">
         {isTruncated ? (
           <div className="border-b border-red-100 px-2 py-1 text-xs text-red-700" data-testid="severe-alerts-range">
@@ -51,6 +49,6 @@ export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll }: 
       ) : (
         <div className="px-2 py-1 text-xs font-semibold text-red-700">Total: ${trueTotal.toLocaleString()}</div>
       )}
-    </div>
+    </V3Panel>
   );
 }

@@ -1,6 +1,7 @@
 import type { InTransitIssue } from "../../../api/maintenance";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { V3Panel } from "../../../components/v3/V3Panel";
 
 type Props = {
   issues: InTransitIssue[];
@@ -10,8 +11,7 @@ type Props = {
 
 export function InTransitTriageBand({ issues, totalCount, onTriage }: Props) {
   return (
-    <div className="rounded-sm border border-[#4B5563] bg-[#F7F8FA]">
-      <div className="border-b border-[#E5E7EB] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[#0F1219]">In-Transit Issues</div>
+    <V3Panel title="In-Transit Issues">
       <div className="max-h-40 overflow-y-auto">
         {totalCount > issues.length ? (
           <div className="border-b border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]" data-testid="in-transit-triage-band-range">
@@ -33,6 +33,6 @@ export function InTransitTriageBand({ issues, totalCount, onTriage }: Props) {
         ))}
         {issues.length === 0 ? <div className="px-2 py-2 text-xs text-[#1F2A44]">No in-transit issues in queue.</div> : null}
       </div>
-    </div>
+    </V3Panel>
   );
 }

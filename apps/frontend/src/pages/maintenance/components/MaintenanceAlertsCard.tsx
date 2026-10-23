@@ -11,6 +11,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { V3Panel } from "../../../components/v3/V3Panel";
 
 type Props = {
   operatingCompanyId: string;
@@ -102,11 +103,8 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
 
   if (compact) {
     return (
-      <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
-        <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">PM Alerts</span>
-          <span className="text-xs font-semibold" style={{ color: "#854F0B" }}>{openTotalCount} open</span>
-        </div>
+      <V3Panel title="PM Alerts" headerRight={<a className="text-xs font-semibold" href="#maintenance-open-pm-alerts">{openTotalCount} open</a>}>
+        <div id="maintenance-open-pm-alerts">
         {alerts.length === 0 ? (
           <div className="px-2 py-1.5 text-xs text-gray-400">No PM alerts</div>
         ) : (
@@ -130,7 +128,8 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
           ) : null}
           </div>
         )}
-      </section>
+        </div>
+      </V3Panel>
     );
   }
 
