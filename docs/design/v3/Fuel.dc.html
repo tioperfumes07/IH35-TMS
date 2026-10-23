@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fuel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F3EF}
+.n{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes growx{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}70%{box-shadow:0 0 0 7px rgba(21,128,61,0)}100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
+.ln{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.6s ease-out .2s forwards}
+.gb{transform-box:fill-box;transform-origin:bottom;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
+.gt{transform-box:fill-box;transform-origin:top;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
+.gx{transform-box:fill-box;transform-origin:left;animation:growx .9s cubic-bezier(.2,.8,.2,1) both}
+.fd{animation:fade .5s ease-out both}
+.live{width:7px;height:7px;border-radius:50%;background:#22C55E;display:inline-block;animation:pulse 2s infinite}
+tr:hover td{background:#F8FAFC}
+</style>
+</helmet>
+<div style="height:42px;background:#13233F;display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:#fff;font:600 12px Inter"><div style="display:flex;align-items:center;gap:8px"><span>IH 35 DISPATCH</span><span style="width:7px;height:7px;border-radius:50%;background:#22C55E"></span><span style="border:1px solid #fff;padding:2px 6px;font:600 11px Inter">USMCA Freight Solutions Inc</span></div><div style="display:flex;align-items:center;gap:8px;background:#0B1730;border-radius:6px;padding:4px 10px;font:500 11px Inter"><span class="live"></span>Samsara: connected · <span class="live"></span>Relay: connected</div><div style="display:flex;align-items:center;gap:10px;font:500 11px Inter"><span style="background:#16A34A;padding:5px 10px;border-radius:4px;font-weight:600">+ Create</span><span style="background:#F4F3EF;color:#111;padding:4px 30px 4px 8px;border-radius:2px">English</span><span>Thu, Oct 22, 2026, 5:34 PM</span><span>owner ▾</span></div></div><div style="display:flex;font-family:Inter,system-ui,sans-serif;color:#111827;background:#F4F3EF;min-height:900px"><div style="width:66px;background:#13233F;flex-shrink:0;padding-top:6px"><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>HOME</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>TASKS</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;background:rgba(255,255,255,.12);color:#fff;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>FUEL</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>DISPATCH</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>DRIVER HUB</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>MAINTENANCE</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>SAFETY</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>COMPLIANCE</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>DRIVER PROFILE</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>FLEET</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>INSURANCE</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>LEGAL</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>CASH FLOW</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>SETTLEMENTS</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>ACCOUNTING</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>BANKING</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>FACT</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>FINANCE HUB</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>CUSTOMERS</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>VENDORS</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>INVENTORY</span></div><div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;color:#C9D2E0;font:600 8.5px Inter;letter-spacing:.03em;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"></rect><path d="M5 7h6M5 10h4" stroke="currentColor" stroke-width="1.4"></path></svg><span>REPORTS</span></div></div><div style="flex:1;min-width:0;padding:12px 20px 30px"><div style="font-size:11px;color:#5B6576">Fuel</div><div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px;gap:12px;flex-wrap:wrap"><div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:11px;color:#5B6576">← Back</span><span style="font:700 18px Inter">Fuel</span><span style="font-size:11px;color:#5B6576">Fills, cards and attribution to loads</span></div><div style="display:flex;gap:12px;align-items:center;font:600 11px Inter"><span style="height:28px;padding:0 12px;display:inline-flex;align-items:center;border-radius:6px;font:600 12px Inter;background:#fff;color:#111827;border:1px solid #DDE1E7">Import fills</span><span style="height:28px;padding:0 12px;display:inline-flex;align-items:center;border-radius:6px;font:600 12px Inter;background:#13233F;color:#fff">+ Add fill</span></div></div><div style="background:#13233F;display:flex;gap:2px;padding:0 6px;margin-top:4px"><span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">Home</span><span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">Fills</span><span style="padding:8px 8px;font:600 11px Inter;color:#fff;background:rgba(255,255,255,.16);border-bottom:2px solid #fff">By truck</span><span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">Cards</span><span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">Questions</span><span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">Reconciliation</span><span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">Settings</span></div><div style="display:flex;flex-direction:column;gap:12px;margin-top:12px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"><div class="fd" style="background:#fff;border:1px solid #DDE1E7;border-radius:6px;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;min-width:0"><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font:600 10px Inter;letter-spacing:.06em;color:#5B6576;text-transform:uppercase">Diesel spend · Oct 1–22</span><span class="n" style="font:700 18px Inter;color:#111827">$76,349.13</span><span style="font-size:11px;color:#5B6576;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden">214 fills · 11 trucks</span></div></div><div class="fd" style="background:#fff;border:1px solid #DDE1E7;border-radius:6px;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;min-width:0"><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font:600 10px Inter;letter-spacing:.06em;color:#5B6576;text-transform:uppercase">Gallons</span><span class="n" style="font:700 18px Inter;color:#111827">13,897.7</span><span style="font-size:11px;color:#5B6576;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden"></span></div></div><div class="fd" style="background:#fff;border:1px solid #DDE1E7;border-radius:6px;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;min-width:0"><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font:600 10px Inter;letter-spacing:.06em;color:#5B6576;text-transform:uppercase">Avg $/gal</span><span class="n" style="font:700 18px Inter;color:#111827">$5.494</span><span style="font-size:11px;color:#5B6576;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden"></span></div></div><div class="fd" style="background:#fff;border:1px solid #DDE1E7;border-radius:6px;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;min-width:0"><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font:600 10px Inter;letter-spacing:.06em;color:#5B6576;text-transform:uppercase">Fills without a load</span><span class="n" style="font:700 18px Inter;color:#15803D">0</span><span style="font-size:11px;color:#5B6576;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden">of 214</span></div></div><div class="fd" style="background:#fff;border:1px solid #DDE1E7;border-radius:6px;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;min-width:0"><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font:600 10px Inter;letter-spacing:.06em;color:#5B6576;text-transform:uppercase">Open questions</span><span class="n" style="font:700 18px Inter;color:#111827">1</span><span style="font-size:11px;color:#5B6576;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden">attribution pop-up</span></div></div></div><div class="fd" style="background:#fff;border:1px solid #DDE1E7;border-radius:6px;display:flex;flex-direction:column;min-width:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #ECEEF2"><div style="display:flex;align-items:baseline;gap:8px"><span style="font:700 13px Inter">Diesel by truck</span><span style="font-size:11px;color:#5B6576"></span></div><span style="display:flex;gap:8px;align-items:center"><span style="display:inline-flex;background:#fff;border:1px solid #DDE1E7;border-radius:6px;padding:2px;gap:2px"><span style="padding:4px 10px;border-radius:4px;font:600 11px Inter;background:#13233F;color:#fff">Oct</span><span style="padding:4px 10px;border-radius:4px;font:600 11px Inter;color:#5B6576">Sep</span><span style="padding:4px 10px;border-radius:4px;font:600 11px Inter;color:#5B6576">YTD</span></span><span style="font:600 11px Inter;color:#1D4ED8">View all →</span></span></div><div style="padding:0;display:flex;flex-direction:column;gap:10px"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;font:600 11px Inter;color:#5B6576;padding:7px 12px;border-bottom:1px solid #DDE1E7;background:#F7F8FA"></th><th style="text-align:left;font:600 11px Inter;color:#5B6576;padding:7px 12px;border-bottom:1px solid #DDE1E7;background:#F7F8FA">Unit</th><th style="text-align:left;font:600 11px Inter;color:#5B6576;padding:7px 12px;border-bottom:1px solid #DDE1E7;background:#F7F8FA">Spend</th><th style="text-align:right;font:600 11px Inter;color:#5B6576;padding:7px 12px;border-bottom:1px solid #DDE1E7;background:#F7F8FA">$</th><th style="text-align:right;font:600 11px Inter;color:#5B6576;padding:7px 12px;border-bottom:1px solid #DDE1E7;background:#F7F8FA">Gallons</th><th style="text-align:right;font:600 11px Inter;color:#5B6576;padding:7px 12px;border-bottom:1px solid #DDE1E7;background:#F7F8FA">$/gal</th><th style="text-align:right;font:600 11px Inter;color:#5B6576;padding:7px 12px;border-bottom:1px solid #DDE1E7;background:#F7F8FA">Fills</th><th style="text-align:right;font:600 11px Inter;color:#5B6576;padding:7px 12px;border-bottom:1px solid #DDE1E7;background:#F7F8FA">Loads</th></tr></thead><tbody><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+
+
+<path d="M114 198h72l-6 24h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="28" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="28" rx="4" fill="#141B26"></rect>
+<path d="M120 222h60l-3 44c-1 8-7 12-14 12h-26c-7 0-13-4-14-12z" fill="#1E3A5F"></path>
+<rect x="129" y="276" width="42" height="7" rx="3" fill="#D3DBE5"></rect>
+<path d="M124 264h12M164 264h12" stroke="#FDE68A" stroke-width="4" stroke-linecap="round"></path>
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T173</b><div style="font-size:11px;color:#5B6576">Volvo Vnr</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:100.0%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">11,407.96</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">2,067.4</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.518</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">29</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+<path d="M116 200h68l-4 14h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="30" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="30" rx="4" fill="#141B26"></rect>
+<path d="M120 214h60l-3 64c-1 7-6 10-12 10h-30c-6 0-11-3-12-10z" fill="#1E3A5F"></path>
+<path d="M150 218v66" stroke="#FFFFFF" stroke-opacity=".25" stroke-width="2"></path>
+<rect x="128" y="286" width="44" height="7" rx="3" fill="#D3DBE5"></rect>
+<rect x="124" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect><rect x="166" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect>
+
+
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T168</b><div style="font-size:11px;color:#5B6576">Mack Anthem</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:74.9%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">8,545.47</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">1,565.0</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.460</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">26</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">6</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+<path d="M116 200h68l-4 14h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="30" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="30" rx="4" fill="#141B26"></rect>
+<path d="M120 214h60l-3 64c-1 7-6 10-12 10h-30c-6 0-11-3-12-10z" fill="#1E3A5F"></path>
+<path d="M150 218v66" stroke="#FFFFFF" stroke-opacity=".25" stroke-width="2"></path>
+<rect x="128" y="286" width="44" height="7" rx="3" fill="#D3DBE5"></rect>
+<rect x="124" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect><rect x="166" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect>
+
+
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T148</b><div style="font-size:11px;color:#5B6576">Mack Anthem</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:74.1%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">8,448.43</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">1,537.9</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.493</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">23</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">4</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+
+
+<path d="M114 198h72l-6 24h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="28" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="28" rx="4" fill="#141B26"></rect>
+<path d="M120 222h60l-3 44c-1 8-7 12-14 12h-26c-7 0-13-4-14-12z" fill="#1E3A5F"></path>
+<rect x="129" y="276" width="42" height="7" rx="3" fill="#D3DBE5"></rect>
+<path d="M124 264h12M164 264h12" stroke="#FDE68A" stroke-width="4" stroke-linecap="round"></path>
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T171</b><div style="font-size:11px;color:#5B6576">Volvo Vnr</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:69.3%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">7,903.63</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">1,420.0</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.566</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">21</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">4</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+<path d="M116 200h68l-4 14h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="30" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="30" rx="4" fill="#141B26"></rect>
+<path d="M120 214h60l-3 64c-1 7-6 10-12 10h-30c-6 0-11-3-12-10z" fill="#1E3A5F"></path>
+<path d="M150 218v66" stroke="#FFFFFF" stroke-opacity=".25" stroke-width="2"></path>
+<rect x="128" y="286" width="44" height="7" rx="3" fill="#D3DBE5"></rect>
+<rect x="124" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect><rect x="166" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect>
+
+
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T175</b><div style="font-size:11px;color:#5B6576">Peterbilt 579</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:68.2%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">7,778.19</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">1,420.2</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.477</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">24</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+<path d="M116 200h68l-4 14h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="30" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="30" rx="4" fill="#141B26"></rect>
+<path d="M120 214h60l-3 64c-1 7-6 10-12 10h-30c-6 0-11-3-12-10z" fill="#1E3A5F"></path>
+<path d="M150 218v66" stroke="#FFFFFF" stroke-opacity=".25" stroke-width="2"></path>
+<rect x="128" y="286" width="44" height="7" rx="3" fill="#D3DBE5"></rect>
+<rect x="124" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect><rect x="166" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect>
+
+
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T176</b><div style="font-size:11px;color:#5B6576">Peterbilt 579</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:65.3%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">7,444.86</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">1,369.8</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.435</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">19</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">4</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+
+
+<path d="M114 198h72l-6 24h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="28" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="28" rx="4" fill="#141B26"></rect>
+<path d="M120 222h60l-3 44c-1 8-7 12-14 12h-26c-7 0-13-4-14-12z" fill="#1E3A5F"></path>
+<rect x="129" y="276" width="42" height="7" rx="3" fill="#D3DBE5"></rect>
+<path d="M124 264h12M164 264h12" stroke="#FDE68A" stroke-width="4" stroke-linecap="round"></path>
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T174</b><div style="font-size:11px;color:#5B6576">Volvo Vnr</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:63.0%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">7,181.66</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">1,322.0</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.432</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">18</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">4</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+
+
+<path d="M114 198h72l-6 24h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="28" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="28" rx="4" fill="#141B26"></rect>
+<path d="M120 222h60l-3 44c-1 8-7 12-14 12h-26c-7 0-13-4-14-12z" fill="#1E3A5F"></path>
+<rect x="129" y="276" width="42" height="7" rx="3" fill="#D3DBE5"></rect>
+<path d="M124 264h12M164 264h12" stroke="#FDE68A" stroke-width="4" stroke-linecap="round"></path>
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T156</b><div style="font-size:11px;color:#5B6576">Volvo Vnl</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:61.1%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">6,968.41</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">1,258.6</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.537</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">20</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">4</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+
+
+<path d="M114 198h72l-6 24h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="28" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="28" rx="4" fill="#141B26"></rect>
+<path d="M120 222h60l-3 44c-1 8-7 12-14 12h-26c-7 0-13-4-14-12z" fill="#1E3A5F"></path>
+<rect x="129" y="276" width="42" height="7" rx="3" fill="#D3DBE5"></rect>
+<path d="M124 264h12M164 264h12" stroke="#FDE68A" stroke-width="4" stroke-linecap="round"></path>
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T170</b><div style="font-size:11px;color:#5B6576">Volvo Vnr</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:48.3%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">5,507.64</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">995.4</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.533</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">15</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">3</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+<path d="M116 200h68l-4 14h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="30" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="30" rx="4" fill="#141B26"></rect>
+<path d="M120 214h60l-3 64c-1 7-6 10-12 10h-30c-6 0-11-3-12-10z" fill="#1E3A5F"></path>
+<path d="M150 218v66" stroke="#FFFFFF" stroke-opacity=".25" stroke-width="2"></path>
+<rect x="128" y="286" width="44" height="7" rx="3" fill="#D3DBE5"></rect>
+<rect x="124" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect><rect x="166" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect>
+
+
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T164</b><div style="font-size:11px;color:#5B6576">Mack Anthem</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:30.7%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">3,502.42</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">640.6</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.467</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">14</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">3</td></tr><tr><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><svg width="84" height="32" viewBox="-14 96 314 128"><g transform="rotate(-90 150 160)"><g>
+
+<rect x="128" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect><rect x="165" y="18" width="7" height="186" rx="2" fill="#1B2533"></rect>
+<rect x="128" y="40" width="44" height="5" fill="#1B2533"></rect><rect x="128" y="82" width="44" height="5" fill="#1B2533"></rect>
+<rect x="100" y="28" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="28" width="28" height="28" rx="5" fill="#141B26"></rect>
+<rect x="100" y="70" width="28" height="28" rx="5" fill="#141B26"></rect><rect x="172" y="70" width="28" height="28" rx="5" fill="#141B26"></rect>
+<path d="M114 30v24M114 72v24M186 30v24M186 72v24" stroke="#3A4658" stroke-width="2"></path>
+<rect x="102" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect><rect x="176" y="18" width="22" height="6" rx="2" fill="#2C3A4E"></rect>
+<circle cx="150" cy="64" r="20" fill="#5D6B7D" stroke="#3A4658" stroke-width="3"></circle><path d="M150 44v14" stroke="#2C3A4E" stroke-width="5"></path>
+<rect x="96" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<rect x="188" y="150" width="16" height="48" rx="8" fill="#C9D2DC" stroke="#8C99AA" stroke-width="1.5"></rect>
+<path d="M98 160h12M98 186h12M190 160h12M190 186h12" stroke="#8C99AA" stroke-width="1.5"></path>
+<rect x="111" y="104" width="78" height="58" rx="12" fill="#1E3A5F"></rect>
+<rect x="119" y="110" width="62" height="40" rx="8" fill="#FFFFFF" opacity=".14"></rect>
+
+<rect x="113" y="160" width="74" height="40" rx="6" fill="#1E3A5F"></rect>
+<rect x="132" y="168" width="36" height="12" rx="3" fill="#FFFFFF" opacity=".2"></rect>
+<rect x="98" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect><rect x="187" y="198" width="15" height="7" rx="2" fill="#2C3A4E"></rect>
+
+<path d="M116 200h68l-4 14h-60z" fill="#A9C8E3"></path>
+<rect x="104" y="232" width="13" height="30" rx="4" fill="#141B26"></rect><rect x="183" y="232" width="13" height="30" rx="4" fill="#141B26"></rect>
+<path d="M120 214h60l-3 64c-1 7-6 10-12 10h-30c-6 0-11-3-12-10z" fill="#1E3A5F"></path>
+<path d="M150 218v66" stroke="#FFFFFF" stroke-opacity=".25" stroke-width="2"></path>
+<rect x="128" y="286" width="44" height="7" rx="3" fill="#D3DBE5"></rect>
+<rect x="124" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect><rect x="166" y="276" width="10" height="5" rx="2" fill="#FDE68A"></rect>
+
+
+
+</g></g></svg></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><b style="font-size:13px">T177</b><div style="font-size:11px;color:#5B6576">Peterbilt 579</div></td><td style="padding:5px 12px;border-bottom:1px solid #ECEEF2"><div style="width:260px;height:6px;background:#EEF0F3;border-radius:3px"><div class="gx" style="width:14.6%;height:6px;background:#1E3A5F;border-radius:3px"></div></div></td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-weight:600;font-size:12px">1,660.46</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">300.8</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5.520</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">5</td><td class="n" style="padding:5px 12px;border-bottom:1px solid #ECEEF2;text-align:right;font-size:12px">1</td></tr></tbody></table></div><div style="padding:8px 14px;border-top:1px solid #ECEEF2;font-size:11px;color:#5B6576">Attribution: signed settlement → its load · card truck keeps its fuel · no load → next load · not 100% sure → question with evidence.</div></div></div></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1456,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
