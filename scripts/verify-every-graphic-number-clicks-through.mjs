@@ -23,6 +23,14 @@ export function destinationProblem(value) {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return 'destination must be an internal route';
   const url = new URL(value, 'https://app.invalid');
   if (url.hash && !url.search) return 'anchor alone is not a record/filter destination';
+  // SettlementsPage consumes these record keys only on the company_driver view.
+  // A generic id, tab-only link, or a key on another tab is not a statement drill.
+  if (url.pathname === '/driver-finance/settlements') {
+    const statement = url.searchParams.get('tab') === 'company_driver';
+    const identity = ['settlement_id', 'company_settlement_id'].some(key =>
+      (url.searchParams.get(key) ?? '').trim() !== '');
+    return statement && identity ? null : 'settlement drill requires company_driver tab and a consumed settlement identity';
+  }
   const record = /\/(?:loads|drivers|units|customers|vendors|invoices|bills|settlements|work-orders|files)\/[^/]+$/.test(url.pathname);
   const filter = [...url.searchParams].some(([key, val]) => ROUTE_FILTERS.get(url.pathname)?.has(key) && val.trim() !== '');
   if (!record && !filter) return 'destination lacks record identity or population filter (tab/view alone is insufficient)';
@@ -156,6 +164,12 @@ export function selftest() {
     ['numeric text', '<span>$1,200.00</span>', true],
     ['renamed import cannot evade', 'import {V3KpiTile as Metric} from "../V3Kit"; const x=<Metric value="1" />;', true],
     ['renamed import valid scope', 'import {V3KpiTile as Metric} from "../V3Kit"; const x=<Metric value="1" href="/accounting/bills?status=open" />;', false],
+    ['settlement statement', '<V3Bar value="1" href="/driver-finance/settlements?tab=company_driver&settlement_id=abc" />', false],
+    ['company statement', '<V3Bar value="1" href="/driver-finance/settlements?tab=company_driver&company_settlement_id=abc" />', false],
+    ['settlement tab alone', '<V3Bar value="1" href="/driver-finance/settlements?tab=company_driver" />', true],
+    ['settlement generic id ignored', '<V3Bar value="1" href="/driver-finance/settlements?tab=company_driver&id=abc" />', true],
+    ['settlement wrong tab', '<V3Bar value="1" href="/driver-finance/settlements?tab=disputes&settlement_id=abc" />', true],
+    ['settlement empty id', '<V3Bar value="1" href="/driver-finance/settlements?tab=company_driver&settlement_id=" />', true],
   ];
   for (const [name, source, fails] of cases) {
     assert.equal(scanSource(source).problems.length > 0, fails, name);
