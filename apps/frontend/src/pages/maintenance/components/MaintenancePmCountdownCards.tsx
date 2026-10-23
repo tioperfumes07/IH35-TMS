@@ -1,5 +1,6 @@
 import type { MaintPmDueRow } from "../../../api/maintenance";
 import { Link } from "react-router-dom";
+import { V3Panel } from "../../../components/v3/V3Panel";
 import { formatMilesRemainingHonest } from "../../../lib/odometerHonesty";
 
 type Props = {
@@ -84,10 +85,9 @@ function pmCardMetrics(rows: MaintPmDueRow[], card: PmCardType) {
 export function MaintenancePmCountdownCards({ rows, loading = false, compact = false, board = false }: Props) {
   if (board) {
     const due = rows.filter((row) => row.is_due).length;
-    return <section className="rounded-sm border border-slate-200 bg-white px-3 py-2">
-      <div className="flex items-center justify-between gap-2"><h3 className="text-xs font-semibold uppercase">PM countdown</h3><Link to="/maintenance/pm-schedule" aria-label="PM countdown — view schedules" className="text-xs font-semibold">{loading ? "…" : due}</Link></div>
-      <Link to="/maintenance/pm-schedule" className="mt-1 block text-xs text-slate-500">{loading ? "Loading schedules…" : rows.length === 0 ? "Oil · tires · DOT · brake — no active schedule" : `${rows.length} schedules · ${due} due. Open countdowns →`}</Link>
-    </section>;
+    return <V3Panel title="PM countdown" headerRight={<Link to="/maintenance/pm-schedule" aria-label="PM countdown — view schedules" className="text-xs font-semibold">{loading ? "…" : due}</Link>}>
+      <Link to="/maintenance/pm-schedule" className="block p-3 text-xs text-slate-500">{loading ? "Loading schedules…" : rows.length === 0 ? "Oil · tires · DOT · brake — no active schedule" : `${rows.length} schedules · ${due} due. Open countdowns →`}</Link>
+    </V3Panel>;
   }
   if (compact) {
     return (

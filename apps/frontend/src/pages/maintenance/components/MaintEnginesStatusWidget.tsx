@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getEngineStatusBoard, type EngineStatusRow } from "../../../api/engine-status";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { V3Panel } from "../../../components/v3/V3Panel";
 
 function healthLabel(row: EngineStatusRow) {
   switch (row.health) {
@@ -56,16 +57,12 @@ export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }
   }
 
   return (
-    <section
-      className="rounded-sm border border-gray-200 bg-white p-2"
-      data-testid="maint-engines-status-widget"
-    >
-      <div className="mb-1 flex items-center justify-between gap-1">
-        <h3 className="text-xs font-bold uppercase tracking-wide text-gray-600">Engines</h3>
+    <V3Panel title="Engines" testId="maint-engines-status-widget" headerRight={
         <Link to="/system/engine-status" className="text-xs text-[#1F2A44] underline" data-testid="maint-engines-full-board-link">
           {compact ? (q.isLoading ? "…" : `${redCount} red`) : "Full board"}
         </Link>
-      </div>
+    }>
+      <div className="p-2">
       <p className={compact ? "sr-only" : "mb-1 text-xs text-[#4B5563]"} data-testid="maint-engines-red-count">
         {q.isLoading ? "…" : `${redCount} red · ${rows.length} maintenance`}
       </p>
@@ -95,6 +92,7 @@ export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }
           <li className="text-[#4B5563]">No maintenance engines in catalog.</li>
         ) : null}
       </ul>
-    </section>
+      </div>
+    </V3Panel>
   );
 }
