@@ -74,20 +74,22 @@ export function collectProblems(root = ROOT) {
   if (!/googleReferencePractical/.test(stripSrc)) {
     problems.push(`${MILES_STRIP}: must accept a googleReferencePractical prop and render it — reference miles must actually reach the wizard, not just exist in the backend`);
   }
-  const blockMatch = stripSrc.match(/\{googleReferencePractical \? \(([\s\S]*?)\) : null\}/);
-  if (!blockMatch) {
-    problems.push(`${MILES_STRIP}: googleReferencePractical must be rendered as a plain conditional block (never a form control)`);
+  // 443.271 (CC-2): since 443.258-B the strip renders the reference ALWAYS (even while loading) as read-only
+  // <p title="Google car routing … reference only"> lines, not one `{x ? (…) : null}` block. Every such line is judged.
+  const blocks = [...stripSrc.matchAll(/<p\b[^>]*title="(Google car routing[^"]*reference only[^"]*)"[^>]*>([\s\S]*?)<\/p>/g)]
+    .filter((m) => /googleReferencePractical/.test(m[2]));
+  if (!blocks.length) {
+    problems.push(`${MILES_STRIP}: googleReferencePractical must be rendered as a plain read-only line (never a form control)`);
   } else {
-    const block = blockMatch[1];
-    if (/<input|onChange|onPracticalChange|onShortestChange/.test(block)) {
-      problems.push(`${MILES_STRIP}: the Google reference line must be read-only — no <input>, onChange, or miles-mutating handler inside it`);
-    }
-    for (const field of FORBIDDEN_MONEY_FIELDS) {
-      if (block.includes(field)) {
-        problems.push(`${MILES_STRIP}: the Google reference render block must never reference "${field}"`);
+    for (const [, , block] of blocks) {
+      if (/<input|<select|<textarea|onChange|onPracticalChange|onShortestChange/.test(block)) {
+        problems.push(`${MILES_STRIP}: the Google reference line must be read-only — no <input>, onChange, or miles-mutating handler inside it`);
+      }
+      for (const field of FORBIDDEN_MONEY_FIELDS) {
+        if (block.includes(field)) problems.push(`${MILES_STRIP}: the Google reference render block must never reference "${field}"`);
       }
     }
-    if (!/title="Google car routing — reference only"/.test(block)) {
+    if (!blocks.some(([, title]) => title === "Google car routing — reference only")) {
       problems.push(`${MILES_STRIP}: the Google reference line must carry the hover label "Google car routing — reference only"`);
     }
   }

@@ -19,11 +19,49 @@ import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3Panel } from "../../components/v3/V3Panel";
 
-// ROUND 443.252 (owner 10-22 6:10 PM CT): Settlement/Tour column shows the number as a statement
-// link — AlwaysTrack doc when closed (5851…), else the P-series display_id (P-0115) while open.
-// Retired status-word labels ("Open") and PENDING-for-open are not used on this register.
-const tourLabel = (r: TourListRow) =>
-  settlementNumber(r) ?? r.display_id ?? (r.is_open ? "—" : "No number");
+// ROUND 443.252 / 443.274-C Settlements-Open board: Settlement column shows the number as a
+// statement link — AlwaysTrack doc when closed (5851…), else the P-series display_id (P-0115)
+// while open. Never a status word ("Open") and never the retired S-YYYY-NNNN counter.
+const tourLabel = (r: TourListRow) => {
+  const at = settlementNumber(r);
+  if (at) return at;
+  const did = (r.display_id ?? "").trim();
+  if (/^P-\d+/i.test(did)) return did;
+  // Refuse status words / retired S-counter so the board never re-renders "Open".
+  if (did && !/^S-\d{4}-\d+/i.test(did) && did.toLowerCase() !== "open" && did.toLowerCase() !== "pending") {
+    return did;
+  }
+  return r.is_open ? "—" : "No number";
+};
+
+/** ROUND 443.274-C — Ready = n/6 dots (board Settlements-Open Ready column). */
+function ReadyDots({ ok, total }: { ok: number; total: number }) {
+  const n = Math.max(0, total || 6);
+  const passed = Math.max(0, Math.min(ok, n));
+  return (
+    <span
+      className="inline-flex items-center gap-0.5"
+      title={`${passed}/${n} ready checks`}
+      data-testid="setl-tour-ready-dots"
+      aria-label={`${passed} of ${n} ready`}
+    >
+      {Array.from({ length: n }, (_, i) => (
+        <span
+          key={i}
+          className="inline-block h-2 w-2 rounded-sm"
+          style={{ background: i < passed ? "#14314F" : "#D1D5DB" }}
+          data-ready={i < passed ? "1" : "0"}
+        />
+      ))}
+      <span className="ml-1 tabular-nums text-section-header text-[#6B7280]">{passed}/{n}</span>
+    </span>
+  );
+}
+
+/** Waiting on = this row's first hard blocker only (never a global pasted reason). */
+function waitingOnReason(r: TourListRow): string {
+  return (r.close_blockers[0] ?? "").trim();
+}
 
 // SETL-MOD-01 (ROUND 9, owner "get to work on the real settlements module"): the SETTLEMENTS
 // module list reads the SAME readout as the Load-costs Pre-Settlement / Settlement tabs —
@@ -35,7 +73,7 @@ const fmt = (c: number) => formatUsdCents(c);
 const DASH = "\u2014";
 
 const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonly TourListRow[]): ParityColumn<TourListRow>[] => [
-  { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => tourLabel(r), render: r => <EntityLink kind="settlement" id={r.settlement_id} label={tourLabel(r)} className="ldt-link font-semibold" /> },
+  { key: "tour", label: "Settlement", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => tourLabel(r), render: r => <EntityLink kind="settlement" id={r.settlement_id} label={tourLabel(r)} className="ldt-link font-semibold" /> },
   // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement, same as
   // every other surface this rule is applied to — before Driver/Unit, not after.
   ...tourLoadColumns("setl-tour-col", rows),
@@ -85,24 +123,24 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
   // two clean, independently-sortable columns — money here, percentage in its own column below.
   { key: "margin", label: "Margin", testId: "setl-tour-col-margin", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}</span> },
   { key: "margin_pct", label: "Margin %", testId: "setl-tour-col-margin-pct", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 76, maxWidth: 100, sortValue: r => r.margin_pct ?? -Infinity, render: r => r.margin_pct == null ? DASH : <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>{r.margin_pct.toFixed(1)}%</span> },
-  { key: "miles_practical", label: "Practical miles", testId: "setl-tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_practical ?? -Infinity, render: r => r.miles_practical == null ? DASH : r.miles_practical.toLocaleString("en-US") },
-  { key: "miles_real", label: "Real miles", testId: "setl-tour-col-miles_real", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_real ?? -Infinity, render: r => r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US") },
+  { key: "miles_practical", label: "Practical mi", testId: "setl-tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_practical ?? -Infinity, render: r => r.miles_practical == null ? DASH : r.miles_practical.toLocaleString("en-US") },
+  { key: "miles_real", label: "Real mi", testId: "setl-tour-col-miles_real", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: r => r.miles_real ?? -Infinity, render: r => r.miles_real == null ? DASH : r.miles_real.toLocaleString("en-US") },
   ...(state === "open" ? [
+    // ROUND 443.274-C board: Ready = n/6 dots; Waiting on = this row's first hard blocker.
+    // Checks passed/required kept (Rule 07 — never delete) for export/gear; Ready + Waiting on are the board columns.
     { key: "ready_ok", label: "Checks passed", testId: "setl-tour-col-checks-passed", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => r.ready_ok } as ParityColumn<TourListRow>,
     { key: "ready_total", label: "Checks required", testId: "setl-tour-col-checks-required", sortable: true, sortValue: (r: TourListRow) => r.ready_total, render: (r: TourListRow) => r.ready_total } as ParityColumn<TourListRow>,
-    // ROUND 443.252: each open row shows its OWN first failing check — not every blocker stacked.
-    { key: "close_blockers", label: "Open items", testId: "setl-tour-col-open-items", sortable: true, sortValue: (r: TourListRow) => r.close_blockers[0] ?? "", render: (r: TourListRow) => r.close_blockers[0] ? <span title={r.close_blockers.join("\n")} data-testid="setl-tour-first-blocker">{r.close_blockers[0]}</span> : DASH } as ParityColumn<TourListRow>,
-  ] : []),
-  ...(state === "open"
-    ? [{ key: "ready", label: "Ready to close", testId: "setl-tour-col-ready", sortable: true, minWidth: 120, maxWidth: 200, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? "Ready" : "Not ready"}</span> } as ParityColumn<TourListRow>,
-       // SETL-POST (owner 2026-09-09, "the pre-settlement should be verified and click post … we are
-       // missing that button, and that pre-settlement turns to a settlement"): a row-level Post action
-       // right next to the verify pill so the operator never has to expand the tab to find it. It reuses
-       // the SAME close-tour endpoint (open→closed) and the SAME can_close verification — no new money
-       // path; it just surfaces the existing one on the list where the owner looks for it.
-       { key: "post", label: "Post", testId: "setl-tour-col-post", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => <PostTourAction row={r} companyId={companyId} /> } as ParityColumn<TourListRow>]
-    : [{ key: "net", label: "Driver net", testId: "setl-tour-col-driver-net", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : fmt(r.driver_net_cents) } as ParityColumn<TourListRow>,
-       { key: "company", label: "Company settlement", testId: "setl-tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn" data-testid="setl-tour-company-not-opened">not opened</span> } as ParityColumn<TourListRow>]),
+    { key: "ready", label: "Ready", testId: "setl-tour-col-ready", sortable: true, minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <ReadyDots ok={r.ready_ok} total={r.ready_total || 6} /> } as ParityColumn<TourListRow>,
+    { key: "close_blockers", label: "Waiting on", testId: "setl-tour-col-open-items", sortable: true, minWidth: 160, maxWidth: 280, sortValue: (r: TourListRow) => waitingOnReason(r), render: (r: TourListRow) => {
+      const reason = waitingOnReason(r);
+      return reason ? <span title={r.close_blockers.join("\n")} data-testid="setl-tour-first-blocker" className="block max-w-[260px] truncate text-left">{reason}</span> : DASH;
+    } } as ParityColumn<TourListRow>,
+    // SETL-POST — kept (Rule 07); board Open focuses Ready + Waiting on; Post stays for verify-and-post.
+    { key: "post", label: "Post", testId: "setl-tour-col-post", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => <PostTourAction row={r} companyId={companyId} /> } as ParityColumn<TourListRow>,
+  ] : [
+    { key: "net", label: "Driver net", testId: "setl-tour-col-driver-net", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : fmt(r.driver_net_cents) } as ParityColumn<TourListRow>,
+    { key: "company", label: "Company settlement", testId: "setl-tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn" data-testid="setl-tour-company-not-opened">not opened</span> } as ParityColumn<TourListRow>,
+  ]),
 ];
 
 /**
@@ -264,6 +302,13 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           />
         )}
       </V3Panel>
+      {state === "open" ? (
+        <p className="text-xs text-[#6B7280]" data-testid="settlements-open-board-footnote">
+          The Settlement column shows the P-number; click it to open the tour statement. Ready = 6 checks
+          (all loads delivered · documents · miles locked · fuel attributed · advances matched · deductions
+          confirmed). Waiting on = the one real reason, per row.
+        </p>
+      ) : null}
     </div>
   );
 }

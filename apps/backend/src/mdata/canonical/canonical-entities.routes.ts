@@ -7,6 +7,7 @@ import { z } from "zod";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { withCompanyScope } from "../../accounting/shared.js";
+import { withLuciaBypass } from "../../auth/db.js";
 import { readCustomerProfile } from "./customer-profile.service.js";
 import { readVendorProfile } from "./vendor-profile.service.js";
 import { readDriverProfile } from "./driver-profile.service.js";
@@ -18,6 +19,19 @@ import { readVariantCandidates } from "./variant-candidates.service.js";
 
 const kindSchema = z.enum(["customers", "vendors"]);
 const toKind = (k: "customers" | "vendors"): CanonicalKind => (k === "customers" ? "customer" : "vendor");
+
+/**
+ * LEAD 443.270-C (b): the canonical engine must see the ARCHIVED shells it exists to remove. mdata.customers' SELECT policy is
+ * "bypass OR deactivated_at IS NULL", so under withCompanyScope the engine's own FOR UPDATE read never found an archived
+ * duplicate (live 409 canonical_rows_not_found_in_company on GAMPAC). Plan / merge / reverse run in the engine scope: the
+ * caller is already proven Owner + member of the company, and every engine statement filters operating_company_id itself.
+ */
+function withCanonicalEngineScope<T>(userId: string, companyId: string, fn: (client: never) => Promise<T>): Promise<T> {
+  return withLuciaBypass(async (client) => {
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
+    return fn(client as never);
+  }, { actorUserId: userId });
+}
 
 export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
   // ROUND 326 item 1B — the customer profile surface: eight blocks, each a value or a named empty reason.
@@ -107,7 +121,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
     const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
     await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
-    return withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) => planCanonical(client, qy.data.operating_company_id, toKind(p.data.kind)));
+    return withCanonicalEngineScope(req.user!.uuid, qy.data.operating_company_id, (client) => planCanonical(client, qy.data.operating_company_id, toKind(p.data.kind)));
   });
 
   // ROUND 297 — variant duplicate candidates across ONE namespace (customers + vendors + Faro debtors), each pair with
@@ -132,7 +146,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
     if (!p.success || !b.success) return reply.code(400).send({ error: "validation_error" });
     await assertCompanyMembership(req.user!.uuid, b.data.operating_company_id);
     try {
-      return await withCompanyScope(req.user!.uuid, b.data.operating_company_id, (client) =>
+      return await withCanonicalEngineScope(req.user!.uuid, b.data.operating_company_id, (client) =>
         mergeIntoCanonical(client, b.data.operating_company_id, toKind(p.data.kind), {
           survivorId: b.data.survivor_id, duplicateId: b.data.duplicate_id, actorUserId: req.user!.uuid, authId: null, reason: b.data.reason,
           evidence: b.data.evidence,
@@ -144,6 +158,35 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
     }
   });
 
+  // LEAD 443.270-C (c): every same-name duplicate group of the company merged in ONE owner call. dry_run (default) returns
+  // the plan only. Each merge is its own transaction, alias and audit row (reversible one by one, like a single merge);
+  // a refused merge is reported and the rest continue. Returns groups before / after.
+  app.post("/api/v1/mdata/canonical/:kind/merge-all", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return reply;
+    if (req.user!.role !== "Owner") return reply.code(403).send({ error: "owner_only" });
+    const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
+    const b = z.object({ operating_company_id: z.string().uuid(), reason: z.string().trim().min(5), dry_run: z.boolean().default(true) }).safeParse(req.body ?? {});
+    if (!p.success || !b.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, b.data.operating_company_id);
+    const oc = b.data.operating_company_id, kind = toKind(p.data.kind), uid = req.user!.uuid;
+    const before = await withCanonicalEngineScope(uid, oc, (client) => planCanonical(client, oc, kind));
+    if (b.data.dry_run) return { dry_run: true, groups_before: before.groups.length, plan: before.groups };
+    const merged: unknown[] = [];
+    const refused: Array<{ survivor_id: string; duplicate_id: string; error: string }> = [];
+    for (const g of before.groups) {
+      for (const d of g.duplicates) {
+        try {
+          merged.push(await withCanonicalEngineScope(uid, oc, (client) =>
+            mergeIntoCanonical(client, oc, kind, { survivorId: g.survivor.id, duplicateId: d.id, actorUserId: uid, authId: null, reason: b.data.reason })));
+        } catch (e) {
+          refused.push({ survivor_id: g.survivor.id, duplicate_id: d.id, error: String((e as Error).message) });
+        }
+      }
+    }
+    const after = await withCanonicalEngineScope(uid, oc, (client) => planCanonical(client, oc, kind));
+    return { dry_run: false, groups_before: before.groups.length, groups_after: after.groups.length, merged, refused };
+  });
+
   app.post("/api/v1/mdata/canonical/:kind/aliases/:aliasId/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return reply;
     if (req.user!.role !== "Owner") return reply.code(403).send({ error: "owner_only" });
@@ -152,7 +195,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
     if (!p.success || !b.success) return reply.code(400).send({ error: "validation_error" });
     await assertCompanyMembership(req.user!.uuid, b.data.operating_company_id);
     try {
-      return await withCompanyScope(req.user!.uuid, b.data.operating_company_id, (client) =>
+      return await withCanonicalEngineScope(req.user!.uuid, b.data.operating_company_id, (client) =>
         reverseCanonicalMerge(client, b.data.operating_company_id, toKind(p.data.kind), p.data.aliasId, req.user!.uuid));
     } catch (e) {
       const m = String((e as Error).message);

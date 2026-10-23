@@ -84,7 +84,8 @@ export function audit(src) {
   if (!/data-testid="fuel-import-rejected-rows"/.test(src.importModal) || !/Showing \{result\.dead_letter_details\.length\} of \{result\.dead_letters\} rejected rows/.test(src.importModal) || !/Line \{detail\.line_number\}: \{detail\.reason\}/.test(src.importModal)) {
     failures.push(`${FILES.importModal}: must retain the modal and render exact rejected line/reason remediation details`);
   }
-  if (!/if \(res\.dead_letters === 0\) completeClose\(\)/.test(src.importModal)) {
+  // 443.271 (CC-2): 443.243 also keeps the modal open while a Fuel Assignment question popped (`&& !opened`).
+  if (!/if \(res\.dead_letters === 0(?: && !opened)?\) completeClose\(\)/.test(src.importModal)) {
     failures.push(`${FILES.importModal}: partial imports must remain open for correction and retry`);
   }
 
@@ -180,7 +181,7 @@ if (process.argv.includes("--selftest")) {
     { key: "importModal", from: 'res.dead_letters > 0 ? "error" : "success"', to: '"success"' },
     { key: "importModal", from: 'data-testid="fuel-import-rejected-rows"', to: 'data-testid="fuel-import-rejected-rows-removed"' },
     { key: "importModal", from: "Line {detail.line_number}: {detail.reason}", to: "Rejected row" },
-    { key: "importModal", from: "if (res.dead_letters === 0) completeClose()", to: "completeClose()" },
+    { key: "importModal", from: "if (res.dead_letters === 0 && !opened) completeClose()", to: "completeClose()" },
     { key: "uploadModal", from: "await uploadLovesPrices(operatingCompanyId", to: "await uploadLovesPrices(REMOVED" },
     { key: "lovesRoute", from: "ON CONFLICT (operating_company_id, effective_date, station_name, station_address)", to: "ON CONFLICT (effective_date, station_name, station_address)" },
     { key: "lovesRoute", from: "RETURNING (xmax = 0) AS inserted", to: "RETURNING false AS inserted" },

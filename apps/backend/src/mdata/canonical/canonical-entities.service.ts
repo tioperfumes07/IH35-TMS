@@ -150,7 +150,8 @@ export async function planCanonical(client: Db, oc: string, kind: CanonicalKind)
   }
   const groups: CanonicalGroup[] = [];
   for (const [key, list] of byKey) {
-    const ranked = [...list].sort((a, b) => b.refs - a.refs || Number(b.active) - Number(a.active) || b.filled - a.filled || a.created_at.localeCompare(b.created_at));
+    // LEAD 443.270-C (b): an archived / deactivated shell never survives — the live record does, then most references.
+    const ranked = [...list].sort((a, b) => Number(b.active) - Number(a.active) || b.refs - a.refs || b.filled - a.filled || a.created_at.localeCompare(b.created_at));
     groups.push({ key, survivor: ranked[0]!, duplicates: ranked.slice(1) });
   }
   return { groups, targets: targets.length };

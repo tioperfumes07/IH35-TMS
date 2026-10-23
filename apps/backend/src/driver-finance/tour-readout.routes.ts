@@ -352,8 +352,15 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     // soft, confirmable item wherever tours render, matching the owner's "visible ... confirm" ask.
     { key: "has_nb", label: "Tour has a confirmed NB leg", hard: false, ok: active.some((l) => l.trip_type === "NB"),
       detail: active.some((l) => l.trip_type === "NB") ? "yes" : "missing NB — confirm this tour's outbound leg" },
+    // ROUND 443.274-C (Settlements-Open board, measured defect 6:15 PM CT): Waiting on must be THIS
+    // row's reason. When NB/TR legs are still undelivered, say that — never the generic "no SB leg
+    // on this tour yet" that used to repeat on every open NB tour still in transit.
     { key: "sb_delivered", label: "SB load delivered at Laredo", hard: true, ok: sb.length > 0 && sb.every((l) => l.is_delivered) && undelivered.length === 0,
-      detail: sb.length === 0 ? "no SB leg on this tour yet — awaiting the return load" : undelivered.length ? `${undelivered.map((l) => `${l.trip_type ?? "leg"} ${l.load_number} ${l.status}`).join(", ")} not delivered` : "yes" },
+      detail: undelivered.length
+        ? `${undelivered.map((l) => `${l.trip_type ?? "leg"} ${l.load_number} ${l.status}`).join(", ")} not delivered`
+        : sb.length === 0
+          ? "no SB leg on this tour yet — awaiting the return load"
+          : "yes" },
     { key: "pods", label: "All PODs on file", hard: false, ok: deliveredLegs.length > 0 && podsHave === deliveredLegs.length, detail: `${podsHave} of ${deliveredLegs.length || active.length}` },
     { key: "costs_complete", label: "Every cost has account + vendor + receipt", hard: false, ok: costs.length > 0 && missingAccount === 0 && missingVendor === 0 && missingReceipt === 0,
       detail: costs.length === 0 ? "no costs recorded" : `account ${missingAccount === 0 ? "✔" : `${missingAccount} missing`} · vendor ${missingVendor === 0 ? "✔" : `${missingVendor} missing`} · receipt ${costs.length - missingReceipt} of ${costs.length}` },

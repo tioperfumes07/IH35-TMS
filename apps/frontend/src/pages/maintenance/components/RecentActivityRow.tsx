@@ -1,10 +1,12 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import type { WorkOrder } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type Props = {
   recent: WorkOrder[];
@@ -21,7 +23,7 @@ type Props = {
 };
 
 function money(value: unknown) {
-  return `$${Number(value ?? 0).toFixed(2)}`;
+  return value == null ? "Unavailable" : Number(value).toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
 function Table({
@@ -56,6 +58,9 @@ function Table({
         ),
       },
       { key: "source_type", label: "Source", sortable: true, render: (row) => row.source_type ?? "—" },
+      { key: "description", label: "Job", render: (row) => row.description || "—" },
+      { key: "closed_at", label: "Closed", sortable: true, render: (row) => formatDateUS(row.closed_at) || "—" },
+      { key: "duration_seconds", label: "Downtime", render: (row) => row.duration_seconds == null ? "Unavailable" : `${(row.duration_seconds / 3600).toLocaleString("en-US", { maximumFractionDigits: 1 })} h` },
       {
         key: "unit_number",
         label: "Unit",
@@ -89,13 +94,13 @@ function Table({
         key: "total_actual_cost",
         label: "Total Cost",
         numeric: true,
-        render: (row) => money((row as Record<string, unknown>).total_actual_cost),
+        render: (row) => <EntityLink kind="work_order" id={row.id} label={money((row as Record<string, unknown>).total_actual_cost)} onClick={(event) => { event.preventDefault(); onOpen(row.id); }} />,
       },
       {
         key: "opened_at",
-        label: "Created",
+        label: "Opened",
         sortable: true,
-        render: (row) => (row.opened_at ? new Date(row.opened_at).toLocaleString() : "—"),
+        render: (row) => formatDateUS(row.opened_at) || "—",
       },
       {
         key: "action",
@@ -112,7 +117,7 @@ function Table({
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white">
-      <div className="border-b border-gray-200 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-600">{title}</div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600"><h3>{title}</h3><div className="flex flex-wrap items-center gap-2">{title === "Recent Work Orders" ? <Link to="/maintenance?create_wo=1">+ Create Work Order</Link> : null}<Link to={title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos"}>View all →</Link></div></div>
       <div>
         {totalCount > rows.length ? (
           <div className="border-b border-gray-100 px-2 py-1 text-xs text-[#6B7280]" data-testid="maintenance-recent-activity-range">
@@ -122,7 +127,15 @@ function Table({
         <ParityTable
           title="Recent work order activity"
           rows={rows}
-          columns={columns}
+          columns={(() => {
+            const visible = title === "Recently Completed"
+              ? ["display_id", "unit_number", "closed_at", "total_actual_cost", "duration_seconds"]
+              : ["display_id", "unit_number", "opened_at", "description", "status"];
+            return [
+              ...visible.map((key) => columns.find((column) => column.key === key)!),
+              ...columns.filter((column) => !visible.includes(String(column.key))).map((column) => ({ ...column, defaultHidden: true })),
+            ];
+          })()}
           rowKey={(row) => row.id}
           loading={fetching && rows.length === 0}
           storageKey={storageKey}

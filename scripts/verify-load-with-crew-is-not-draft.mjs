@@ -61,7 +61,11 @@ function violations(files) {
     if (!helperSrc.includes("assigned_not_dispatched")) {
       errors.push("draft-crew-status-advance.ts: does not advance to 'assigned_not_dispatched'");
     }
-    if (/SET\s+status\s*=\s*'dispatched'/i.test(helperSrc)) {
+    // 443.271 (CC-2): since 443.211R the advance goes through THE status writer (transitionLoadStatus), not a raw SET.
+    if (!/transitionLoadStatus\([\s\S]{0,200}to: "assigned_not_dispatched"[\s\S]{0,120}expectFrom: "draft"/.test(helperSrc)) {
+      errors.push("draft-crew-status-advance.ts: must advance draft -> assigned_not_dispatched through transitionLoadStatus (expectFrom draft)");
+    }
+    if (/SET\s+status\s*=\s*'dispatched'/i.test(helperSrc) || /to:\s*"dispatched"/.test(helperSrc)) {
       errors.push("FORBIDDEN: draft-crew-status-advance.ts sets status='dispatched' -- it must only ever set assigned_not_dispatched");
     }
   }
@@ -126,7 +130,7 @@ if (process.argv.includes("--selftest")) {
     { ...base, [UPDATE_LOAD_PATH]: `${base[UPDATE_LOAD_PATH]}\n  add("status", "dispatched", "::mdata.load_status_enum");` },
     { ...base, [SHARED_HELPER_PATH]: undefined },
     { ...base, [SHARED_HELPER_PATH]: base[SHARED_HELPER_PATH].replaceAll("assigned_not_dispatched", "removed") },
-    { ...base, [SHARED_HELPER_PATH]: base[SHARED_HELPER_PATH].replace("SET status = 'assigned_not_dispatched'", "SET status = 'dispatched'") },
+    { ...base, [SHARED_HELPER_PATH]: base[SHARED_HELPER_PATH].replace('to: "assigned_not_dispatched"', 'to: "dispatched"') },
     { ...base, [ADDITIONAL_WRITE_PATHS[0]]: base[ADDITIONAL_WRITE_PATHS[0]].replaceAll("advanceDraftStatusIfCrewed", "removed") },
     { ...base, [ADDITIONAL_WRITE_PATHS[1]]: base[ADDITIONAL_WRITE_PATHS[1]].replaceAll("advanceDraftStatusIfCrewed", "removed") },
     { ...base, [ADDITIONAL_WRITE_PATHS[2]]: base[ADDITIONAL_WRITE_PATHS[2]].replaceAll("advanceDraftStatusIfCrewed", "removed") },

@@ -13,7 +13,25 @@ function assertNotIncludes(source, needle, message) {
   if (source.includes(needle)) throw new Error(message);
 }
 
+function assertKpiRowsCanGrow(source) {
+  if (/\b(?:maxHeight|height)\s*:/.test(source) || /\b(?:max-h|h)-\d/.test(source)) {
+    throw new Error("KpiStrip must not cap the height of responsive multi-row grids");
+  }
+  assertIncludes(source, "shrink-0", "KpiStrip must retain its full multi-row height in flex layouts");
+}
+
+function assertTableToolbarCanWrap(source) {
+  const title = source.match(/<h2\s+className="([^"]*)"\s+data-testid="parity-table-title"/)?.[1];
+  if (!title || title.includes("whitespace-nowrap") || !title.includes("break-words")) {
+    throw new Error("ParityTable title must wrap within narrow panels");
+  }
+  assertIncludes(source, '"min-w-0 max-w-full overflow-visible bg-white"', "Embedded table shell must shrink inside its panel");
+  assertIncludes(source, 'className="min-w-0 max-w-full overflow-x-auto"', "Table scrolling must remain inside its panel");
+}
+
 try {
+  const kpiStrip = read("apps/frontend/src/components/layout/KpiStrip.tsx");
+  assertKpiRowsCanGrow(kpiStrip);
   const indexCss = read("apps/frontend/src/index.css");
   assertIncludes(indexCss, "overflow-x: hidden;", "Global horizontal overflow protection missing");
   const tableFitContract = ':where(div, section, main, article):has(> table)';
@@ -28,6 +46,9 @@ try {
   // + that ParityTable still carries the fixed-layout contract — never weaken to "any table".
   assertIncludes(bankingTransactions, "ParityTable", "Banking Transactions register must use shared ParityTable");
   const parityTable = read("apps/frontend/src/components/parity/ParityTable.tsx");
+  assertTableToolbarCanWrap(parityTable);
+  assertIncludes(parityTable, "return labelFloor / Math.max(share, 0.000001)", "Proportional table floor must protect every header share");
+  assertIncludes(parityTable, "minWidth: Math.max(minWidthPx, proportionalMinTable)", "Caller minimum must not bypass header legibility floor");
   assertIncludes(parityTable, "table-fixed", "ParityTable must keep table-fixed (Banking Transactions fixed responsive layout)");
 
   // dispatch/components/LoadTable.tsx was deleted (orphan-triage batch 05) as a verified-dead
@@ -61,6 +82,28 @@ try {
   assertIncludes(dataTable, "table-fixed", "Shared DataTable must use fixed responsive layout");
 
   if (process.argv.includes("--selftest")) {
+    for (const needle of ["return labelFloor / Math.max(share, 0.000001)", "minWidth: Math.max(minWidthPx, proportionalMinTable)"]) {
+      let rejected = false;
+      try { assertIncludes(parityTable.replace(needle, "REMOVED"), needle, "missing header floor"); } catch { rejected = true; }
+      if (!rejected) throw new Error("selftest failed to reject header floor removal");
+    }
+    for (const planted of [
+      parityTable.replace("min-w-0 break-words text-section-header", "whitespace-nowrap text-section-header"),
+      parityTable.replace('"min-w-0 max-w-full overflow-visible bg-white"', '"overflow-visible bg-white"'),
+      parityTable.replace('className="min-w-0 max-w-full overflow-x-auto"', 'className="overflow-x-auto"'),
+    ]) {
+      let rejected = false;
+      try { assertTableToolbarCanWrap(planted); } catch { rejected = true; }
+      if (!rejected) throw new Error("selftest failed to reject table containment mutation");
+    }
+    for (const planted of [
+      kpiStrip.replace("gap: spacing.kpiCardGap", "gap: spacing.kpiCardGap, maxHeight: 90"),
+      kpiStrip.replace("shrink-0", ""),
+    ]) {
+      let rejected = false;
+      try { assertKpiRowsCanGrow(planted); } catch { rejected = true; }
+      if (!rejected) throw new Error("selftest failed to reject KPI row clipping mutation");
+    }
     const planted = indexCss.replace(tableFitContract, ":where(div):has(> .not-a-table)");
     let caught = false;
     try {

@@ -1,3 +1,4 @@
+import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -1068,6 +1069,19 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {activeFactor && profileEditForm && (
             <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
               <div className="flex flex-col gap-3 text-xs" data-testid="factoring-profile-edit-modal">
+                {/* LEAD 443.270-H: the saved factoring profile (vendor EntityLink, rates, contacts, remittance) sits above
+                    the edit form so the operator sees what is on file; its Edit focuses the form below. */}
+                {activeFactor ? (
+                  <div data-testid="factoring-profile-current">
+                    <FactoringProfilePanel
+                      variant="full"
+                      factor={activeFactor}
+                      vendorId={summary?.active_factor_id ?? null}
+                      saving={savingFactorProfile}
+                      onSave={() => document.querySelector<HTMLInputElement>('[data-testid="factoring-profile-edit-modal"] input')?.focus()}
+                    />
+                  </div>
+                ) : null}
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Canonical rates (%){" "}
                   <InfoPopover label="About where these rates are saved">
