@@ -68,6 +68,11 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | D049 | Customers | Directory | Customer display names | Mixed uppercase and proper-case customer labels | N | pending: DOM | Proper-case display honoring acronym exceptions | CC-1 / Cursor |
 | D050 | Inventory | Create part | Unit cost | Money input measures 28px high | I | pending: measured DOM | Single-line input 32px high | Cursor |
 
+| D051 | 425C | Profiles & Defaults | Company Name | Input measures 30.67px high | I | pending: measured DOM | Single-line input 32px | Cursor |
+| D052 | 425C | History | Filed timestamp | Month/day rendered without zero padding | D | pending: DOM | MM/DD/YYYY plus readable local time | Cursor |
+| D053 | Lists | Names Master | Name column | Mixed uppercase and proper-case customer names | N | pending: DOM | Proper-case display honoring exceptions | CC-1 / Cursor |
+| D054 | Reports | Custom report builder | Report name | Input measures 26.67px high and 1156.38px wide | I | pending: measured DOM | Single-line input 32px; content-appropriate width | Cursor |
+
 ## Counts (observed defects, not application-wide totals)
 
 | Module | V | M | D | I | N | T | B | E | P | Total |
@@ -90,7 +95,10 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | Factoring | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
 | Customers | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 2 |
 | Inventory | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
-| Total | 1 | 3 | 6 | 11 | 13 | 3 | 9 | 1 | 3 | 50 |
+| 425C | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
+| Lists | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
+| Reports | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
+| Total | 1 | 3 | 7 | 13 | 14 | 3 | 9 | 1 | 3 | 54 |
 
 ## Coverage ledger
 
@@ -107,7 +115,8 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 - 443.258-D batch 3 checkpoint (partial depth): Legal landing, Contracts table and Send Contract step 1 opened/closed without sending. Cash Flow all five top-level buttons visited; populated Auto and rolling-style Manual content inspected; comparison final rows and drill-through panels remain owed. Accounting landing inspected; submenu and document modals remain owed. No forecast pull, seed-library action, sending or financial action performed.
 - 443.258-D batch 4 checkpoint (landing depth only): Banking Home, Factoring Home populated table and Finance Hub landing inspected. No bank action, matching, resolution, submission or dismiss performed. Their tabs and panels remain owed. No defect observed on Finance Hub landing is not a module-wide pass.
 - 443.258-D batch 5 checkpoint (partial depth): Customers populated directory and Create Customer form inspected/closed; Vendors populated directory inspected; Inventory Parts & Stock and Create part drawer inspected/closed, Assignments navigation reached loading shell. Vendor details/create, Inventory assignments final state/purchase history and secondary panels remain owed. No records created.
-- Not yet inspected in this pass: 425C, Lists, Reports, Docs, Users, Help, Program, System.
+- 443.258-D batch 6 checkpoint (partial depth): 425C Profiles & Defaults and populated History inspected without changing records; Lists landing and Names Master populated table inspected; Reports landing and Custom Report Builder loaded fields inspected without saving. Catalog details, individual reports, schedules, 425C detail and secondary panels remain owed.
+- Not yet inspected in this pass: Docs, Users, Help, Program, System.
 - Transient Loading states that resolved were not counted as defects. Empty Fuel Card table explicitly says no cards assigned: not classified as unexplained emptiness.
 - Fuel Relay wallet link currently resolves to the current tab's path. Destination behavior not verified; held as a candidate, not counted.
 - No Book Load, draft save, money action, settings save, upload, or form submission performed.
