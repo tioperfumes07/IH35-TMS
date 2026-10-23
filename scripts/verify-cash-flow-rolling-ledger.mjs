@@ -109,15 +109,13 @@ const REQUIRED_FRONTEND_MARKERS = [
   ["adjustingRow && adjustingRowIsIncome", "AdjustPopover must be gated to income rows only"],
 ];
 
-// KPI tile spec (owner: "I WANT THE DESIGN AS YOU DESIGN THE LOAD COSTS" / STATE-AFTER-#21082
-// correction) — the exact Load-Costs reference tile, inline-styled like SettlementKpiGrid.tsx's
-// own Tile (never Tailwind bracket-notation, so the exact spec never trips the design-system
-// ratchet's raw-size count). Checked against KPI_STRIP_FILE, not FRONTEND_FILE, since REG-031
-// extracted this markup into its own component.
+// KPI tile spec — ROUND 443.250 supersedes the Load-Costs #F4F7FA/#C7D2DC hex with the single
+// V3 design-system palette (v3-tokens). Height 60px and inline styles stay (never Tailwind
+// bracket-notation — same ratchet reason as STATE-AFTER-#21082). Checked against KPI_STRIP_FILE.
 const REQUIRED_KPI_STRIP_MARKERS = [
-  ["height: 60,", "KPI tile must be 60px tall (the Load-Costs reference spec), not the rejected v2 44-48px tile"],
-  ['background: "#F4F7FA"', "KPI tile must use the Load-Costs reference background #F4F7FA"],
-  ['border: "1px solid #C7D2DC"', "KPI tile must use the Load-Costs reference border #C7D2DC"],
+  ["height: 60,", "KPI tile must be 60px tall (the Load-Costs / V3 reference height), not the rejected v2 44-48px tile"],
+  ["V3.headerBg", "KPI tile must use V3.headerBg (443.250 design system), not a per-page hex"],
+  ["V3.border", "KPI tile must use V3.border (443.250 design system), not a per-page hex"],
 ];
 
 const FORBIDDEN_FRONTEND_MARKERS = [
@@ -351,10 +349,10 @@ function selftest() {
       }),
     },
     {
-      name: "KPI tile background reverted off the Load-Costs reference spec",
+      name: "KPI tile background reverted off the V3 design-system token",
       mutate: () => ({
         ...good,
-        kpiStrip: good.kpiStrip.replace('background: "#F4F7FA"', 'background: "#FFFFFF"'),
+        kpiStrip: good.kpiStrip.replace("V3.headerBg", '"#FFFFFF"'),
       }),
     },
     {

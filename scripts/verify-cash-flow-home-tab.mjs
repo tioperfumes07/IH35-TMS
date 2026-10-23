@@ -16,6 +16,8 @@
 //      "tabs reachable from there," not a dead end.
 //   4. RollingLedgerTab.tsx reuses the SAME shared CashFlowKpiStrip component rather than a second,
 //      independently-drifting inline copy of the tile markup.
+//   5. ROUND 443.250 — Home also mounts the shared V3 design-system pieces (V3KpiTile / V3Panel /
+//      V3Segmented from components/v3 + v3-tokens) and the chart + 13-week table panels.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -50,6 +52,23 @@ export function auditSources({ pageSrc, homeSrc, kpiStripSrc, rollingLedgerSrc }
         failures.push(`${HOME_TAB_REL}: does not link to sibling tab "${tab}" -- Home must make every tab reachable from there`);
       }
     }
+    // 443.250 V3 board slice — shared design system + chart/table surfaces on Home.
+    if (!/from ["']\.\.\/\.\.\/\.\.\/design\/v3-tokens["']/.test(homeSrc) && !/from ["'][^"']*design\/v3-tokens["']/.test(homeSrc)) {
+      failures.push(`${HOME_TAB_REL}: missing v3-tokens import -- 443.250 requires the single design-system palette`);
+    }
+    for (const comp of ["V3KpiTile", "V3Panel", "V3Segmented"]) {
+      if (!new RegExp(`<${comp}\\b`).test(homeSrc)) {
+        failures.push(`${HOME_TAB_REL}: does not render <${comp}> -- 443.250 Cash Flow Home V3 board requires shared components/v3`);
+      }
+    }
+    for (const testId of ["cash-flow-home-v3-kpis", "cash-flow-home-chart-panel", "cash-flow-home-table-panel", "cash-flow-home-13w-table"]) {
+      if (!homeSrc.includes(testId)) {
+        failures.push(`${HOME_TAB_REL}: missing data-testid "${testId}" -- 443.250 Home V3 surfaces must stay measurable`);
+      }
+    }
+    if (!/getRollingLedger\b/.test(homeSrc)) {
+      failures.push(`${HOME_TAB_REL}: no longer calls getRollingLedger -- V3 Home numbers must stay on the live ledger endpoint`);
+    }
   }
 
   if (kpiStripSrc === null) {
@@ -82,14 +101,24 @@ const TABS = [
 <CashFlowHomeTab operatingCompanyId={x} />
 `;
   const goodHome = `
+import { V3 } from "../../../design/v3-tokens";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { V3Panel } from "../../../components/v3/V3Panel";
+import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
+import { getRollingLedger } from "../../../api/cashFlow";
 const TAB_CARDS = [
   { id: "daily_prediction" },
   { id: "actual_vs_projected" },
   { id: "rolling_ledger" },
   { id: "manual_daily_projections" },
 ];
+getRollingLedger(oci, today, end);
 <CashFlowKpiStrip kpis={kpis} />
+<div data-testid="cash-flow-home-v3-kpis"><V3KpiTile label="Opening" value="$1" /></div>
+<V3Panel title="Cash position" testId="cash-flow-home-chart-panel"><div /></V3Panel>
+<V3Panel title="13-week" testId="cash-flow-home-table-panel"><div data-testid="cash-flow-home-13w-table" /></V3Panel>
+<V3Segmented value="weekly" options={[]} onChange={() => {}} />
 `;
   const goodKpiStrip = "export function CashFlowKpiStrip() {}";
   const goodRollingLedger = 'import { CashFlowKpiStrip } from "./CashFlowKpiStrip";\n<CashFlowKpiStrip kpis={kpis} />';
@@ -122,7 +151,12 @@ const TAB_CARDS = [
     throw new Error("SELFTEST FAIL: RollingLedgerTab reverting to a duplicated inline KPI block went undetected");
   }
 
-  console.log("verify-cash-flow-home-tab: SELFTEST PASS (5/5)");
+  const homeNoV3 = goodHome.replace(/<V3KpiTile[\s\S]*?\/>/, "");
+  if (auditSources({ pageSrc: goodPage, homeSrc: homeNoV3, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger }).length === 0) {
+    throw new Error("SELFTEST FAIL: Home missing V3KpiTile went undetected");
+  }
+
+  console.log("verify-cash-flow-home-tab: SELFTEST PASS (6/6)");
   process.exit(0);
 }
 
@@ -138,4 +172,4 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log("verify-cash-flow-home-tab: OK — Cash Flow lands on Home first, Home shows a real KPI strip and links to every sibling tab, RollingLedgerTab shares the same KPI component");
+console.log("verify-cash-flow-home-tab: OK — Cash Flow lands on Home first, Home shows KPI strip + 443.250 V3 chart/table (shared components/v3), RollingLedgerTab shares the same KPI component");
