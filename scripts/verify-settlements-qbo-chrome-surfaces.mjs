@@ -49,6 +49,30 @@ const CHECKS = [
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
     pattern: /data-settlement-close-v3-steps="1"[\s\S]*V3Panel|V3Panel[\s\S]*data-settlement-close-v3-steps="1"/,
   },
+  // ROUND 443.250 Settlements-PreSettlements.dc.html — V3 KPI strip + open panel + closes tour.
+  // Same listOpenPreSettlements / listSettlements KPI / getOpenDriverBills; chrome only.
+  {
+    name: "SettlementsPreSettlementsKpiRow V3KpiTile strip",
+    file: "apps/frontend/src/pages/drivers/SettlementsPreSettlementsKpiRow.tsx",
+    pattern:
+      /V3KpiTile[\s\S]*data-settlements-presettle-v3-kpis="1"|data-settlements-presettle-v3-kpis="1"[\s\S]*V3KpiTile/,
+  },
+  {
+    name: "SettlementsPreSettlementsKpiRow What closes a tour V3Panel",
+    file: "apps/frontend/src/pages/drivers/SettlementsPreSettlementsKpiRow.tsx",
+    pattern: /What closes a tour[\s\S]*V3Panel|V3Panel[\s\S]*What closes a tour/,
+  },
+  {
+    name: "PreSettlementsPanel V3Panel open list",
+    file: "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
+    pattern: /V3Panel[\s\S]*data-settlements-presettle-v3-panel="1"|data-settlements-presettle-v3-panel="1"[\s\S]*V3Panel/,
+  },
+  {
+    name: "Drivers.tsx mounts SettlementsPreSettlementsKpiRow on pre_settlements",
+    file: "apps/frontend/src/pages/Drivers.tsx",
+    pattern:
+      /subnavTab === "pre_settlements"[\s\S]*SettlementsPreSettlementsKpiRow[\s\S]*PreSettlementsPanel/,
+  },
   {
     // ACCT-F5444: NOT kind="bill" — that was this check's original ask, and it is WRONG.
     // driver_finance.driver_bills is a different table from accounting.bills; kind="bill" drills

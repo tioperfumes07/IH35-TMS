@@ -2,10 +2,9 @@ import { settlementLabel } from "../../lib/settlementNumber";
 import type { SettlementListRow } from "../../api/driverFinance";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
-import { DataPanel } from "../layout/DataPanel";
-import { DataPanelRow } from "../layout/DataPanelRow";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
-import { colors } from "../../design/tokens";
+import { V3Panel } from "../v3/V3Panel";
+import { V3 } from "../../design/v3-tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
@@ -56,6 +55,8 @@ function renderSettlementLinks(settlement: SettlementListRow) {
 // COL-06: both endpoints were already on SettlementListRow and already rendered, just collapsed
 // under one ambiguous "Date" header instead of the canonical Settlement # / Period Begin / Period
 // End contract (components/dispatch/LoadDetailSettlementTab.tsx) -- split to match it.
+// ROUND 443.250 board also names Number / Loads so far / Pay so far — mapped onto Settlement/Tour,
+// Load count, Amount. Unit / Ready / Waiting on are NOT on SettlementListRow — not invented.
 const preSettlementColumns: ParityColumn<SettlementListRow>[] = [
   {
     key: "period_start",
@@ -100,7 +101,7 @@ const preSettlementColumns: ParityColumn<SettlementListRow>[] = [
     render: renderSettlementLinks,
   },
   {
-    key: "load_count", label: "Load count", sortable: true,
+    key: "load_count", label: "Loads so far", sortable: true,
     sortValue: row => row.load_count, render: row => row.load_count,
   },
   {
@@ -122,7 +123,7 @@ const preSettlementColumns: ParityColumn<SettlementListRow>[] = [
   },
   {
     key: "amount",
-    label: "Amount",
+    label: "Pay so far",
     sortable: true,
     sortValue: (row) => Number(row.net_pay ?? 0),
     className: "text-right tabular-nums",
@@ -137,10 +138,23 @@ const preSettlementColumns: ParityColumn<SettlementListRow>[] = [
   },
 ];
 
-export function PreSettlementsPanel({ rows, loading = false, isError = false, title = "Pre-settlements", showTotal = true, emptyText = "No payment-ready pre-settlements for this company." }: Props) {
+export function PreSettlementsPanel({
+  rows,
+  loading = false,
+  isError = false,
+  title = "Open pre-settlements",
+  showTotal = true,
+  emptyText = "No payment-ready pre-settlements for this company.",
+}: Props) {
   const total = rows.reduce((sum, row) => sum + Number(row.net_pay ?? 0), 0);
+  const countLabel = loading || isError ? "—" : String(rows.length);
   return (
-    <DataPanel title={`${title} · ${loading || isError ? "—" : rows.length} settlements`} accentColor={colors.accounting.strong}>
+    <V3Panel
+      title={`${title} · ${countLabel}`}
+      subtitle="open tours · not closed · not paid"
+      testId="pre-settlements-v3-panel"
+    >
+      <div data-settlements-presettle-v3-panel="1">
       {loading ? <p className="px-2 py-2 text-xs text-gray-500">Loading pre-settlements…</p> : null}
       {!loading && isError ? (
         <p className="px-2 py-2 text-xs text-red-700" data-testid="pre-settlements-error">
@@ -175,11 +189,22 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
         </p>
       ) : null}
       {!loading && !isError && showTotal && rows.length === 0 ? (
-        <DataPanelRow>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            padding: "8px 14px",
+            fontSize: 12,
+            fontFamily: V3.font,
+            color: V3.ink,
+            borderTop: `1px solid ${V3.borderSoft}`,
+          }}
+        >
           <span className="font-semibold">Total payout this batch</span>
           <span className="font-semibold">{formatMoney(total)}</span>
-        </DataPanelRow>
+        </div>
       ) : null}
-    </DataPanel>
+      </div>
+    </V3Panel>
   );
 }

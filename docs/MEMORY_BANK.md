@@ -371,8 +371,26 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guard piggyback:** `verify-settlements-qbo-chrome-surfaces.mjs` (step 3424 ≡0 EVEN Cursor)
   asserts V3KpiTile marker + step strip + V3Panel. No new EVEN claim. `verify-settlement-close-posts-payrun`
   (CC-1 ≡1) untouched.
-- **Still open under 443.250:** Settlements sub-boards (PreSettlements/Statement) · Fuel
+- **Still open under 443.250 (at Close ship):** Settlements sub-boards (PreSettlements/Statement) · Fuel
   sub-boards · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+
+### Active Architectural Decisions — Settlements PreSettlements V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `listOpenPreSettlements` (Drivers tab filter) · `listSettlements` KPI
+  aggregates · `getOpenDriverBills`. No GL / posting / Ready-Waiting invent. Unit / Ready /
+  Waiting on are **not** on `SettlementListRow` — board columns that lack engine fields stay off
+  the table (Loads so far = `load_count`, Pay so far = `net_pay`).
+- **V3 board chrome (Settlements-PreSettlements.dc.html):** `SettlementsPreSettlementsKpiRow`
+  mounts Total unpaid · Driver pay (period) · Open driver bills via `V3KpiTile` +
+  `data-settlements-presettle-v3-kpis` (same math as Settlements home). `V3Panel` **What closes a
+  tour** (static check/how rows from the board). `PreSettlementsPanel` wraps the open list in
+  `V3Panel` + `data-settlements-presettle-v3-panel` (title Open pre-settlements · N).
+- **Mount:** `Drivers.tsx` `subnavTab === "pre_settlements"` → KPI row then panel (Settlements
+  module path `/driver-finance/pre-settlements` via `SettlementsPreSettlementsPage`).
+- **Guard piggyback:** `verify-settlements-qbo-chrome-surfaces.mjs` (step 3424 ≡0 EVEN Cursor)
+  asserts KPI marker + What closes panel + V3Panel list + Drivers mount. No new EVEN claim.
+- **Still open under 443.250:** Settlements Statement · Fuel sub-boards · Driver Profile ·
+  design-system sweep · Chrome proof. Full DONE not claimed.
 
 
 
