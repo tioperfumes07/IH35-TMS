@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getRollingLedger, type RollingLedgerDay, type RollingLedgerResult } from "../../../api/cashFlow";
+import { getRollingLedger, type RollingLedgerResult } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 import { V3 } from "../../../design/v3-tokens";
@@ -24,6 +24,10 @@ type WeekBucket = {
   expenses_cents: number;
   net_cents: number;
   ending_cash_cents: number | null;
+  driver_bills_cents: number;
+  vendor_bills_cents: number;
+  insurance_cents: number;
+  finance_lease_cents: number;
 };
 
 function mondayOf(iso: string): string {
@@ -67,26 +71,72 @@ function computeHomeKpis(data: RollingLedgerResult, today: string): CashFlowKpis
   };
 }
 
-function buildWeekBuckets(days: RollingLedgerDay[], today: string, weekCount: number): WeekBucket[] {
+/** Classify an expense row into one of the 4 disbursement categories. */
+function expenseCategory(
+  document_kind: string,
+  counterparty: string
+): "driver_bills" | "finance_lease" | "insurance" | "vendor_bills" {
+  if (document_kind === "driver_bill" || document_kind === "settlement") return "driver_bills";
+  if (document_kind === "loan_amortization_row") return "finance_lease";
+  if (document_kind === "bill" && counterparty.toLowerCase().includes("insur")) return "insurance";
+  return "vendor_bills";
+}
+
+/**
+ * Build 13 weekly buckets from the rolling ledger result.
+ * AP-aging rule: overdue items (due_date < current Monday) land in the CURRENT week, not past weeks.
+ * Per-category breakdown is derived from data.rows; ending_cash uses data.days (unchanged).
+ */
+function buildWeekBuckets(data: RollingLedgerResult, today: string, weekCount: number): WeekBucket[] {
   const start = mondayOf(today);
-  const weeks: WeekBucket[] = [];
+  const windowEnd = addDaysIso(start, weekCount * 7 - 1);
+
+  const empty = (): Omit<WeekBucket, "weekStart" | "label"> => ({
+    income_cents: 0, expenses_cents: 0, net_cents: 0, ending_cash_cents: null,
+    driver_bills_cents: 0, vendor_bills_cents: 0, insurance_cents: 0, finance_lease_cents: 0,
+  });
+
+  const map = new Map<string, ReturnType<typeof empty>>();
+  const weekStarts: string[] = [];
   for (let i = 0; i < weekCount; i++) {
-    const weekStart = addDaysIso(start, i * 7);
-    const weekEnd = addDaysIso(weekStart, 6);
-    const inWeek = days.filter((d) => d.date >= weekStart && d.date <= weekEnd);
-    const income_cents = inWeek.reduce((s, d) => s + d.income_due_cents, 0);
-    const expenses_cents = inWeek.reduce((s, d) => s + d.expenses_due_cents, 0);
-    const lastWithCash = [...inWeek].reverse().find((d) => d.running_cash_cents !== null);
-    weeks.push({
-      weekStart,
-      label: weekLabel(weekStart),
-      income_cents,
-      expenses_cents,
-      net_cents: income_cents - expenses_cents,
-      ending_cash_cents: lastWithCash?.running_cash_cents ?? null,
-    });
+    const ws = addDaysIso(start, i * 7);
+    weekStarts.push(ws);
+    map.set(ws, empty());
   }
-  return weeks;
+
+  for (const row of data.rows) {
+    if (row.is_rollover_echo) continue;
+    // AP aging: clamp overdue due_date to current Monday
+    const effectiveDue = row.due_date < start ? start : row.due_date;
+    if (effectiveDue > windowEnd) continue;
+    const ws = mondayOf(effectiveDue);
+    const bucket = map.get(ws);
+    if (!bucket) continue;
+
+    if (row.row_kind === "income") {
+      bucket.income_cents += row.amount_cents;
+    } else {
+      bucket.expenses_cents += row.amount_cents;
+      const cat = expenseCategory(row.document_kind, row.counterparty);
+      if (cat === "driver_bills") bucket.driver_bills_cents += row.amount_cents;
+      else if (cat === "finance_lease") bucket.finance_lease_cents += row.amount_cents;
+      else if (cat === "insurance") bucket.insurance_cents += row.amount_cents;
+      else bucket.vendor_bills_cents += row.amount_cents;
+    }
+  }
+
+  // Ending balance from days grid (unchanged — uses real due_dates for the balance line)
+  const { days } = data;
+  for (const ws of weekStarts) {
+    const weekEnd = addDaysIso(ws, 6);
+    const inWeek = days.filter((d) => d.date >= ws && d.date <= weekEnd);
+    const lastWithCash = [...inWeek].reverse().find((d) => d.running_cash_cents !== null);
+    const bucket = map.get(ws)!;
+    bucket.ending_cash_cents = lastWithCash?.running_cash_cents ?? null;
+    bucket.net_cents = bucket.income_cents - bucket.expenses_cents;
+  }
+
+  return weekStarts.map((ws) => ({ weekStart: ws, label: weekLabel(ws), ...map.get(ws)! }));
 }
 
 function sparkPoints(values: number[], width: number, height: number): string {
@@ -323,6 +373,30 @@ function ThirteenWeekTable({
             </td>
           </tr>
           <tr>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Driver bills</td>
+            {weeks.map((w) => (
+              <td key={w.weekStart} style={td}>{cell(w.driver_bills_cents, totalExpense)}</td>
+            ))}
+          </tr>
+          <tr>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Vendor bills</td>
+            {weeks.map((w) => (
+              <td key={w.weekStart} style={td}>{cell(w.vendor_bills_cents, totalExpense)}</td>
+            ))}
+          </tr>
+          <tr>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Finance / lease</td>
+            {weeks.map((w) => (
+              <td key={w.weekStart} style={td}>{cell(w.finance_lease_cents, totalExpense)}</td>
+            ))}
+          </tr>
+          <tr>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Insurance</td>
+            {weeks.map((w) => (
+              <td key={w.weekStart} style={td}>{cell(w.insurance_cents, totalExpense)}</td>
+            ))}
+          </tr>
+          <tr>
             <td style={{ ...td, textAlign: "left" }}>
               <b>Total disbursements</b>
             </td>
@@ -401,7 +475,7 @@ export function CashFlowHomeTab({
   });
 
   const kpis = useMemo(() => (data ? computeHomeKpis(data, today) : null), [data, today]);
-  const weeks = useMemo(() => (data ? buildWeekBuckets(data.days, today, 13) : []), [data, today]);
+  const weeks = useMemo(() => (data ? buildWeekBuckets(data, today, 13) : []), [data, today]);
   const cards = TAB_CARDS.filter((c) => c.id !== "manual_daily_projections" || showManualProjections);
 
   const next4WeeksIn = useMemo(() => {
