@@ -2316,8 +2316,10 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       // ROUND 360 — declare HOW the line got here: it was LINKED to a document that already existed. The classifier
       // trigger keeps a declared kind; without it, a line that once carried a categorization account would be labelled
       // 'added' and Undo would remove a document this match never created. Same transaction as the clearing UPDATE.
+      // LEAD 443.279 (CC-2): and the line LEAVES For review on the column every queue / count / bulk action reads (status) —
+      // review_state alone left a matched Faro wire bulk-postable a second time.
       await client.query(
-        `UPDATE banking.bank_transactions SET resolution_kind = 'matched'
+        `UPDATE banking.bank_transactions SET resolution_kind = 'matched', status = 'categorized'
           WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
         [input.bank_transaction_id, input.operating_company_id]
       );
@@ -2326,6 +2328,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         `UPDATE banking.bank_transactions
             SET categorized_by_user_id = COALESCE(categorized_by_user_id, $3::uuid),
                 categorized_at = COALESCE(categorized_at, now()),
+                status = 'categorized',
                 updated_at = now()
           WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
         [input.bank_transaction_id, input.operating_company_id, input.actor_user_uuid]
@@ -2645,7 +2648,7 @@ export async function acceptExactMultiDocumentMatch(input: {
     } else if (matchedColumn) {
       const cleared = await client.query(
         `UPDATE banking.bank_transactions
-            SET review_state = 'matched', resolution_kind = 'matched',
+            SET review_state = 'matched', resolution_kind = 'matched', status = 'categorized',
                 reviewed_at = now(),
                 categorized_by_user_id = $4::uuid,
                 categorized_at = now(),
