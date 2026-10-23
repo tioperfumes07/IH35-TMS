@@ -55,14 +55,20 @@ function analyze(reg, page) {
   if (!/closeTour\(row\.settlement_id,\s*companyId\)/.test(reg))
     errors.push("PostTourAction does not call closeTour(row.settlement_id, companyId) — must reuse the existing endpoint, not a new money path");
 
-  // 6) Page mounts the register AS THE DEFAULT view.
+  // 6) 443.280-A — register mounts as own Open/Closed tabs (not under the home board).
   if (!/import\s*\{[^}]*\bSettlementsToursRegister\b[^}]*\}\s*from\s*["']\.\/SettlementsToursRegister["']/.test(page))
     errors.push("SettlementsPage does not import SettlementsToursRegister");
   if (!/<SettlementsToursRegister\b/.test(page))
     errors.push("SettlementsPage does not render SettlementsToursRegister");
-  // default view is tours: the ternary yields "tours" unless ?view=payments.
+  if (!/tabParam === "open"/.test(page) || !/tabParam === "closed"/.test(page))
+    errors.push("SettlementsPage activeTab must handle tab=open and tab=closed (443.280-A Open/Closed own tabs)");
+  if (!/activeTab === "open" \|\| activeTab === "closed"/.test(page) && !/activeTab === "open" \|\| activeTab === "closed"/.test(page))
+    errors.push("SettlementsPage must mount SettlementsToursRegister when activeTab is open or closed");
+  if (/settlements-view-toggle/.test(page))
+    errors.push("SettlementsPage must not layer Tours/Payments toggle under the home board (443.280-A)");
+  // Payments is its own tab; legacy ?view=payments still maps to payments (never deleted).
   if (!/["']payments["']\s*\?\s*["']payments["']\s*:\s*["']tours["']/.test(page))
-    errors.push("SettlementsPage default view is not 'tours' (must default to the tour readout, payments is the opt-in)");
+    errors.push("SettlementsPage must keep payments|tours view mapping (payments opt-in / own tab)");
 
   // BANK-F91507 leftover refuse — Open Driver Bills DataPanel accent (Tailwind slate-500, not house muted)
   if (page.includes("#64748b")) errors.push("SettlementsPage leftover off-scale muted #64748b");
@@ -152,6 +158,9 @@ if (process.argv.includes("--selftest")) {
     ["break detail link", [reg.replace(/settlements\?settlement_id=/g, "settlements?x="), page]],
     ["page default to payments", [reg, page.replace(/["']payments["']\s*\?\s*["']payments["']\s*:\s*["']tours["']/, '"payments" ? "tours" : "payments"')]],
     ["page drops register", [reg, page.replace(/<SettlementsToursRegister\b/g, "<Nope")]],
+    ["page drops open tab", [reg, page.replace(/tabParam === "open"/g, 'tabParam === "gone_open"')]],
+    ["page drops closed tab", [reg, page.replace(/tabParam === "closed"/g, 'tabParam === "gone_closed"')]],
+    ["page restores view toggle under home", [reg, page + '\n<div data-testid="settlements-view-toggle" />\n']],
     ["post action removed", [reg.replace(/<PostTourAction[^>]*\/>/, "null"), page]],
     ["post ungated (can_close bypassed)", [reg.replace("disabled={!row.can_close", "disabled={false && !row.can_close"), page]],
     ["post no longer reuses close-tour endpoint", [reg.replace("closeTour(row.settlement_id, companyId)", "Promise.resolve({})"), page]],

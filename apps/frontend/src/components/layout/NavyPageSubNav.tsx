@@ -22,6 +22,8 @@ export interface NavyPageSubNavItem {
   label: string;
   to: string;
   children?: readonly NavySubNavChild[];
+  /** Optional data-testid on the tab Link/button (ROUND 443.280-A Settlements Open/Closed/…). */
+  testId?: string;
   /** B6 (owner, 2026-09-12) — "a dot on any tab that contains data." Optional and additive: a
    *  consumer that never sets this renders exactly as before. White, not an amber/emerald/yellow/
    *  green status hue — §7 (verify-section7-palette-nonfinancial.mjs) reserves those colors for the
@@ -275,6 +277,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
               <button
                 key={id}
                 type="button"
+                data-testid={item.testId}
                 aria-current={active ? "page" : undefined}
                 className={tabClass(active)}
                 onClick={() => onTabChange(id)}
@@ -288,6 +291,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
             <Link
               key={item.to}
               to={item.to}
+              data-testid={item.testId}
               aria-current={activeTo === item.to ? "page" : undefined}
               className={tabClass(activeTo === item.to)}
             >
