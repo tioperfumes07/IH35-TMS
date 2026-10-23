@@ -1,0 +1,159 @@
+/**
+ * ROUND 443.267 board 8 — Trial balance viewer (board-faithful).
+ * Board: ~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Reports-Viewer-TrialBalance.dc.html
+ * Sections (order): KPI strip → N accounts panel (table) → Measured A/R note.
+ * Engines stay on TrialBalancePage (getTrialBalanceReport · AmountLink · ParityTable · export/print).
+ * Measured callout is the 443.248 finding text only — no invented AR reconcile math.
+ */
+import { useState, type CSSProperties, type ReactNode } from "react";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { V3Panel } from "../../../components/v3/V3Panel";
+import { V3 } from "../../../design/v3-tokens";
+import { formatUsdCents } from "../../../lib/money";
+
+export type TrialBalanceBoardSummary = {
+  grand_total_debits: number;
+  grand_total_credits: number;
+  balanced: boolean;
+};
+
+const chromeBtn: CSSProperties = {
+  height: 28,
+  padding: "0 12px",
+  display: "inline-flex",
+  alignItems: "center",
+  borderRadius: 2,
+  fontSize: 12,
+  fontWeight: 600,
+  fontFamily: V3.font,
+  background: V3.surface,
+  color: V3.ink,
+  border: `1px solid ${V3.border}`,
+  cursor: "pointer",
+};
+
+/** Board Measured note (443.248) — static finding, not a live AR engine. */
+const MEASURED_AR_NOTE =
+  "A/R in the ledger nets $134,413.00 while the invoice list shows $624,076.72 open — the subledger and GL do not tie by $489,663.72. Must reconcile before any AR report is trusted (assigned 443.248).";
+
+function money(cents: number) {
+  if (!cents) return "—";
+  return formatUsdCents(cents);
+}
+
+export function TrialBalanceBoard({
+  summary,
+  accountCount,
+  loading,
+  onCustomize,
+  children,
+}: {
+  summary: TrialBalanceBoardSummary | null | undefined;
+  accountCount: number;
+  loading?: boolean;
+  onCustomize?: () => void;
+  children: ReactNode;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }} data-testid="trial-balance-board">
+      {summary ? (
+        <div
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 8 }}
+          data-testid="trial-balance-kpi-strip"
+        >
+          <V3KpiTile
+            label="Grand total debits"
+            value={money(summary.grand_total_debits)}
+            testId="trial-balance-kpi-debits"
+          />
+          <V3KpiTile
+            label="Grand total credits"
+            value={money(summary.grand_total_credits)}
+            testId="trial-balance-kpi-credits"
+          />
+          <V3KpiTile
+            label="Balance check"
+            value={summary.balanced ? "Balanced" : "Out of balance"}
+            tone={summary.balanced ? "green" : "red"}
+            sub="debits = credits"
+            testId="trial-balance-kpi-balance"
+          />
+        </div>
+      ) : loading ? (
+        <div
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 8 }}
+          data-testid="trial-balance-kpi-strip"
+        >
+          <V3KpiTile label="Grand total debits" value="…" testId="trial-balance-kpi-debits" />
+          <V3KpiTile label="Grand total credits" value="…" testId="trial-balance-kpi-credits" />
+          <V3KpiTile label="Balance check" value="…" sub="debits = credits" testId="trial-balance-kpi-balance" />
+        </div>
+      ) : null}
+
+      <V3Panel
+        title={`${accountCount} account${accountCount === 1 ? "" : "s"}`}
+        testId="trial-balance-accounts-panel"
+        headerRight={
+          <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button
+              type="button"
+              style={chromeBtn}
+              onClick={() => setCollapsed((c) => !c)}
+              data-testid="trial-balance-collapse"
+            >
+              {collapsed ? "Expand" : "Collapse"}
+            </button>
+            <button
+              type="button"
+              style={chromeBtn}
+              onClick={() => onCustomize?.()}
+              data-testid="trial-balance-customize"
+            >
+              Customize
+            </button>
+          </span>
+        }
+        onViewAll={
+          collapsed
+            ? () => setCollapsed(false)
+            : () => {
+                document
+                  .querySelector('[data-testid="trial-balance-accounts-panel"]')
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+        }
+        footer="Each account opens its general-ledger lines; each line opens its source document."
+      >
+        {collapsed ? (
+          <p style={{ margin: 0, padding: "12px 14px", fontSize: 12, color: V3.muted }}>
+            Table collapsed — Expand or View all to show accounts.
+          </p>
+        ) : (
+          children
+        )}
+      </V3Panel>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "flex-start",
+          background: V3.surface,
+          border: `1px solid ${V3.border}`,
+          borderLeft: `3px solid ${V3.amber}`,
+          borderRadius: 2,
+          padding: "8px 12px",
+          fontSize: 12,
+          color: V3.ink,
+          fontFamily: V3.font,
+        }}
+        data-testid="trial-balance-measured-ar"
+      >
+        <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
+        <span>{MEASURED_AR_NOTE}</span>
+      </div>
+    </div>
+  );
+}

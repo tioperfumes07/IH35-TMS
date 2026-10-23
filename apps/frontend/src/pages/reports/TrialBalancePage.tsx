@@ -27,6 +27,7 @@ import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { useExportAction } from "../../hooks/useExportAction";
 
 import { formatUsdCents } from "../../lib/money";
+import { TrialBalanceBoard } from "./components/TrialBalanceBoard";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -34,6 +35,8 @@ function money(cents: number) {
   if (!cents) return "—";
   return formatUsdCents(cents);
 }
+
+const TB_GEAR_TEST_ID = "trial-balance-column-gear";
 
 const SYNTHETIC_ACCOUNT_IDS = new Set(["cash-basis-ar-row", "cash-basis-ap-row"]);
 
@@ -266,7 +269,7 @@ export function TrialBalancePage() {
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
-              Print this page
+              Print
             </Button>
             <Button
               size="sm"
@@ -340,55 +343,47 @@ export function TrialBalancePage() {
         />
       </ReportFilterBar>
 
-      {summary ? (
-        <div className="grid gap-2 md:grid-cols-3">
-          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-section-header font-semibold uppercase text-gray-500">Grand total debits</div>
-            <div className="text-page-title font-semibold">{money(summary.grand_total_debits)}</div>
-          </div>
-          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-section-header font-semibold uppercase text-gray-500">Grand total credits</div>
-            <div className="text-page-title font-semibold">{money(summary.grand_total_credits)}</div>
-          </div>
-          <div className={`rounded-sm border bg-white px-3 py-2 ${summary.balanced ? "border-emerald-200" : "border-rose-300"}`}>
-            <div className="text-section-header font-semibold uppercase text-gray-500">Balance check</div>
-            <div className={`text-page-title font-semibold ${summary.balanced ? "text-emerald-700" : "text-rose-700"}`}>
-              {summary.balanced ? "Balanced" : "Out of balance"}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <ParityTable
-        rows={rows}
-        columns={tbColumns}
-        rowKey={(row) => row.account_id}
+      <TrialBalanceBoard
+        summary={summary}
+        accountCount={rows.length}
         loading={query.isLoading}
-        storageKey="ih35.reports.trial-balance.accounts.v1"
-        emptyText="No rows"
-        // LEAD 443.181 — ParityTable owns the header clicks; the page keeps the sorted order (default
-        // account_code asc, same comparator as before) so the printed letter follows the screen.
-        sortKey={sortKey}
-        sortDirection={sortDir}
-        onSortChange={(key, direction) => {
-          setSortKey(key as SortKey);
-          setSortDir(direction);
+        onCustomize={() => {
+          const gear = document.querySelector<HTMLButtonElement>(`[data-testid="${TB_GEAR_TEST_ID}"]`);
+          gear?.click();
         }}
-        sortMode="external"
-        pageSize={ALL_PAGE_SIZE}
-        hidePager
-        suppressToolbarSearch
-        suppressToolbarRange
-        footerCells={
-          summary
-            ? {
-                account_name: "Grand total",
-                total_debits: <MoneyCell cents={summary.grand_total_debits} format={money} drill={{ amount: grandTotalLedger }} />,
-                total_credits: <MoneyCell cents={summary.grand_total_credits} format={money} drill={{ amount: grandTotalLedger }} />,
-              }
-            : undefined
-        }
-      />
+      >
+        <ParityTable
+          rows={rows}
+          columns={tbColumns}
+          rowKey={(row) => row.account_id}
+          loading={query.isLoading}
+          storageKey="ih35.reports.trial-balance.accounts.v1"
+          emptyText="No rows"
+          // LEAD 443.181 — ParityTable owns the header clicks; the page keeps the sorted order (default
+          // account_code asc, same comparator as before) so the printed letter follows the screen.
+          sortKey={sortKey}
+          sortDirection={sortDir}
+          onSortChange={(key, direction) => {
+            setSortKey(key as SortKey);
+            setSortDir(direction);
+          }}
+          sortMode="external"
+          pageSize={ALL_PAGE_SIZE}
+          hidePager
+          suppressToolbarSearch
+          suppressToolbarRange
+          gearButtonTestId={TB_GEAR_TEST_ID}
+          footerCells={
+            summary
+              ? {
+                  account_name: "Grand total",
+                  total_debits: <MoneyCell cents={summary.grand_total_debits} format={money} drill={{ amount: grandTotalLedger }} />,
+                  total_credits: <MoneyCell cents={summary.grand_total_credits} format={money} drill={{ amount: grandTotalLedger }} />,
+                }
+              : undefined
+          }
+        />
+      </TrialBalanceBoard>
     </div>
   );
 }
