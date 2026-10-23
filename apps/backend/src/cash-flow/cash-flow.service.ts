@@ -177,10 +177,11 @@ export function noLiveProformaInvoiceSql(loadAlias: string): string {
   )`;
 }
 
-/** Last delivery stop only — multi-drop must not multiply the invoice. */
+/** Last delivery stop only — multi-drop must not multiply the invoice.
+ *  COALESCE appointment_start_at when scheduled_arrival_at is null (Book Load dual-column). */
 export function lastDeliveryStopLateralSql(loadAlias: string): string {
   return `LEFT JOIN LATERAL (
-    SELECT scheduled_arrival_at
+    SELECT COALESCE(scheduled_arrival_at, appointment_start_at) AS scheduled_arrival_at
     FROM mdata.load_stops
     WHERE load_id = ${loadAlias}.id AND stop_type = 'delivery'
     ORDER BY sequence_number DESC

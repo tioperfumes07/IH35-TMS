@@ -145,6 +145,11 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   `kind="customer"` when id present; else `entityLabel(item.customer_name, null, "Customer")`.
 - **Guards (piggyback, no new EVEN claim):** `verify-cashflow-predicted-customer-entitylink.mjs`
   rewritten for ledger + V3 testids; outlook guard allows `data-testid` on the section root.
+- **Delivery date dual-column (measured load 13690):** Book Load often writes delivery into
+  `appointment_start_at` while `scheduled_arrival_at` stays null. Cash-flow receipts lateral +
+  `lastDeliveryStopLateralSql` + `verify-projected-cash-date-equals-delivery` now
+  `COALESCE(scheduled_arrival_at, appointment_start_at)` — same as dispatch planner. Live guard
+  PASS: 1 factored open USMCA proforma, zero lag.
 - **Still open under 443.250:** remaining Cash Flow boards (Actual vs Projected, Rolling Ledger
   polish, Manual), Settlements/Fuel V3 boards, design-system sweep, Chrome proof. Full DONE only
   when all boards land.
