@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InTransitIssue, MaintenancePartRow, WorkOrderType } from "../../api/maintenance";
 import {
@@ -49,7 +49,8 @@ import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { FleetHealthLine } from "./components/FleetHealthLine";
 import { InShopBoard } from "./components/InShopBoard";
-import { RMStatStrip } from "./components/RMStatStrip";
+import { MaintenanceHomeSummaryPanels } from "./components/MaintenanceHomeSummaryPanels";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { RoadServiceActivePanel } from "./components/RoadServiceActivePanel";
 import { RecentActivityRow } from "./components/RecentActivityRow";
 import { RoadServiceList } from "./RoadServiceList";
@@ -132,6 +133,7 @@ type Props = {
 
 export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -162,13 +164,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const locationFilter = searchParams.get("location") ?? "";
   const bucketFilter = searchParams.get("bucket") ?? "";
   const workOrderStatusFilter = searchParams.get("status") ?? "";
-  const expandedHomePanel = searchParams.get("home_panel") ?? "";
-  const toggleHomePanel = (panel: string) => setSearchParams((previous) => {
-    const next = new URLSearchParams(previous);
-    if (next.get("home_panel") === panel) next.delete("home_panel");
-    else next.set("home_panel", panel);
-    return next;
-  });
+  const showWorkflow = tab === "active_wos" && searchParams.get("view") === "workflow";
   const partInventoryId = searchParams.get("part_inventory_id")?.trim() ?? "";
   const driverReportId = searchParams.get("driver_report_id")?.trim() ?? "";
   const driverReportsDriverId = searchParams.get("driver_id")?.trim() ?? "";
@@ -246,7 +242,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const rmStatusQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "rm-status", companyId, rmStatusPage],
     queryFn: () => getMaintenanceRmStatus(companyId, { limit: rmStatusPageSize, offset: rmStatusPage * rmStatusPageSize }),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && (showWorkflow || tab === "road_service"),
   });
   useEffect(() => setRmStatusPage(0), [companyId]);
   const triageQuery = useQuery({
@@ -305,7 +301,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         driver_id: driverReportsDriverId || undefined,
         load_id: driverReportsLoadId || undefined,
       }),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && tab === "active_wos" && !showWorkflow,
   });
   const workOrderDetailQuery = useQuery({
     queryKey: ["maintenance", "work-order-detail", companyId, selectedWorkOrderId],
@@ -318,12 +314,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const partsInventoryRowsQuery = useQuery({
     queryKey: maintenancePartsStockQueryKey(companyId),
     queryFn: () => listPartsInventory(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && tab === "parts_inventory",
   });
   const partsInventoryKpisQuery = useQuery({
     queryKey: ["maintenance", "parts-inventory-kpis", companyId],
     queryFn: () => apiRequest<{ total_parts: number; low_stock_count: number; total_inventory_value: number }>(`/api/v1/maintenance/parts-inventory/kpis?operating_company_id=${encodeURIComponent(companyId)}`),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && tab === "parts_inventory",
   });
   const pmDueQuery = useQuery({
     // includeNotDue: this query feeds ONLY the PM Countdown cards (below), and a countdown is about
@@ -339,7 +335,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const partsReorderQuery = useQuery({
     queryKey: ["maintenance", "parts-reorder-flags", companyId],
     queryFn: () => listMaintenanceParts(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && tab === "parts_inventory",
     retry: false,
   });
   const statusMutation = useMutation({
@@ -429,9 +425,10 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         }
       />
 
-      <MaintenanceSubNav />
-
-      <NavyPageSubNav items={maintenancePrimarySubNavItems()} />
+      {isHomeTab ? <NavyPageSubNav items={[
+        { label: "Master Data", to: "/maintenance/vehicles", children: MAINTENANCE_MASTER_DATA_LINKS.map(item => ({ label: item.label, to: item.path })) },
+        ...maintenancePrimarySubNavItems(),
+      ]} /> : <><MaintenanceSubNav /><NavyPageSubNav items={maintenancePrimarySubNavItems()} /></>}
 
       {/* MAINT-F7528 — Home owns RMStatStrip (non-kanban tiles only, C-36). */}
       {!isHomeTab && tab !== "settings" ? (
@@ -455,8 +452,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} />
         )
       ) : null}
-      {/* C-36 — IntegrationsStrip renders ONCE, on Home only (was duplicating on every non-list tab). */}
-      {isHomeTab ? <IntegrationsStrip pendingQboCount={kpis.pending_qbo} /> : null}
+      {tab === "settings" ? <IntegrationsStrip pendingQboCount={kpis.pending_qbo} /> : null}
       {companyId && !isListTab && !isHomeTab && tab !== "settings" ? (
         <MaintenanceAlertsCard operatingCompanyId={companyId} />
       ) : null}
@@ -466,6 +462,27 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "active_wos" ? (
         <div data-testid="maintenance-active-wos-tab" data-maintenance-tab="active_wos">
+        <div className="mb-2 flex gap-3 text-xs"><Link to="/maintenance/active-wos">Work-order register</Link><Link to="/maintenance/active-wos?view=workflow">Work-order workflow</Link></div>
+        {showWorkflow ? (rmStatusQuery.isError ? (
+          <ListErrorState title="Couldn't load R&M status board" status={0} onRetry={() => void rmStatusQuery.refetch()} />
+        ) : (
+          <RMBucketsGrid
+          inHouse={rmStatusQuery.data?.in_house ?? []}
+          external={rmStatusQuery.data?.external ?? []}
+          roadside={rmStatusQuery.data?.roadside ?? []}
+          onCreateRoadside={() => { setCreateWoType("repair"); setPrefillFromIssue(null); setCreateWoOpen(true); }}
+          onOpen={setSelectedWorkOrderId}
+          statusActionPending={statusMutation.isPending}
+          onAdvanceStatus={(id, status) => {
+            if (statusMutation.isPending) return;
+            statusMutation.mutate({
+              id,
+              status,
+              companyId,
+              generation: statusGenerationRef.current,
+            });
+          }}
+        />)) : <>
         {workOrdersQuery.isError ? (
           <ListErrorState
             title="Couldn't load active work orders"
@@ -484,6 +501,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             onExternalVendorChange={setExternalVendorFilter}
           />
         )}
+        </>}
+        {showWorkflow && !rmStatusQuery.isError && (rmStatusQuery.data?.total_count ?? 0) > rmStatusPageSize ? <div className="flex items-center justify-between text-xs" data-testid="rm-status-server-range">
+          <span>{rmStatusPage * rmStatusPageSize + 1}–{Math.min((rmStatusPage + 1) * rmStatusPageSize, rmStatusQuery.data?.total_count ?? 0)} of {rmStatusQuery.data?.total_count ?? 0} open work orders</span>
+          <button type="button" disabled={rmStatusPage === 0 || rmStatusQuery.isFetching} onClick={() => setRmStatusPage(value => Math.max(0, value - 1))}>Previous</button>
+          <button type="button" disabled={(rmStatusPage + 1) * rmStatusPageSize >= (rmStatusQuery.data?.total_count ?? 0) || rmStatusQuery.isFetching} onClick={() => setRmStatusPage(value => value + 1)}>Next</button>
+        </div> : null}
         </div>
       ) : null}
 
@@ -494,52 +517,15 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           data-testid="rm-status-board"
           data-maintenance-tab="rm_status_board"
         >
-          <RMStatStrip kpis={kpis} />
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="maintenance-board-kpis">
+            <V3KpiTile label="PM Due Soon" value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.pm_due ?? "—")} onClick={() => navigate("/maintenance/pm-schedule")} />
+            <V3KpiTile label="Road Service" value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.road_service ?? "—")} onClick={() => navigate("/maintenance/road-service")} />
+            <V3KpiTile label="Parts Low-Stock" value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.parts_low_stock ?? "—")} onClick={() => navigate("/maintenance/parts-inventory")} />
+            <V3KpiTile label="MTD Cost" value={kpisQuery.isError || kpisQuery.isPending || kpis.mtd_repair_cost == null ? "Unavailable" : Number(kpis.mtd_repair_cost).toLocaleString("en-US", { style: "currency", currency: "USD" })} onClick={() => navigate("/maintenance/work-orders")} />
+          </div>
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_230px]">
           <div className="min-w-0">
             <FleetHealthLine companyId={companyId} />
-            <details className="mt-2">
-              <summary className="cursor-pointer text-xs">Work-order workflow</summary>
-            {rmStatusQuery.isError ? (
-              <ListErrorState
-                title="Couldn't load R&M status board"
-                status={0}
-                message={(rmStatusQuery.error as Error)?.message}
-                onRetry={() => void rmStatusQuery.refetch()}
-              />
-            ) : (
-              <RMBucketsGrid
-                inHouse={rmStatusQuery.data?.in_house ?? []}
-                external={rmStatusQuery.data?.external ?? []}
-                roadside={rmStatusQuery.data?.roadside ?? []}
-                onCreateRoadside={() => {
-                  setCreateWoType("repair");
-                  setPrefillFromIssue(null);
-                  setCreateWoOpen(true);
-                }}
-                onOpen={(id) => setSelectedWorkOrderId(id)}
-                statusActionPending={statusMutation.isPending}
-                onAdvanceStatus={(id, status) => {
-                  if (statusMutation.isPending) return;
-                  statusMutation.mutate({
-                    id,
-                    status,
-                    companyId,
-                    generation: statusGenerationRef.current,
-                  });
-                }}
-              />
-            )}
-            {!rmStatusQuery.isError && (rmStatusQuery.data?.total_count ?? 0) > rmStatusPageSize ? (
-              <div className="mt-2 flex items-center justify-between text-xs text-[#4B5563]" data-testid="rm-status-server-range">
-                <span>{rmStatusPage * rmStatusPageSize + 1}–{Math.min((rmStatusPage + 1) * rmStatusPageSize, rmStatusQuery.data?.total_count ?? 0)} of {rmStatusQuery.data?.total_count ?? 0} open work orders</span>
-                <div className="flex gap-2">
-                  <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={rmStatusPage === 0 || rmStatusQuery.isFetching} onClick={() => setRmStatusPage((value) => Math.max(0, value - 1))}>Previous</button>
-                  <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={(rmStatusPage + 1) * rmStatusPageSize >= (rmStatusQuery.data?.total_count ?? 0) || rmStatusQuery.isFetching} onClick={() => setRmStatusPage((value) => value + 1)}>Next</button>
-                </div>
-              </div>
-            ) : null}
-            </details>
           </div>
           <aside className="flex flex-col gap-2">
             {companyId ? (
@@ -556,18 +542,6 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             ) : null}
             {companyId ? <MaintEnginesStatusWidget operatingCompanyId={companyId} compact /> : null}
             {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} compact /> : null}
-            <details>
-              <summary className="cursor-pointer text-xs">Other maintenance monitors</summary>
-            {companyId ? (
-              <DtcAutoWorkOrdersCard operatingCompanyId={companyId} compact onOpen={(id) => setSelectedWorkOrderId(id)} />
-            ) : null}
-            {!rmStatusQuery.isError ? (
-              <RoadServiceActivePanel
-                roadside={rmStatusQuery.data?.roadside ?? []}
-                onOpen={(id) => setSelectedWorkOrderId(id)}
-              />
-            ) : null}
-            </details>
             {triageQuery.isError ? (
               <ListErrorState
                 title="Couldn't load in-transit triage queue"
@@ -598,17 +572,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             )}
           </aside>
           </div>
-          {/* C-36 — fold Arriving Soon + At Risk into Home (no peer tabs). */}
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="maintenance-home-folded-panels">
-            <div className={expandedHomePanel === "arriving_soon" ? "xl:col-span-2" : undefined} data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
-              <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-bold text-slate-700">Arriving soon — to the Laredo yard</h3><button type="button" className="text-xs" aria-expanded={expandedHomePanel === "arriving_soon"} onClick={() => toggleHomePanel("arriving_soon")}>{expandedHomePanel === "arriving_soon" ? "Show compact" : "View all →"}</button></div>
-              <ArrivingSoonPage key={`arriving-${expandedHomePanel === "arriving_soon" ? "full" : "compact"}`} operatingCompanyId={companyId} compact={expandedHomePanel !== "arriving_soon"} />
-            </div>
-            <div className={expandedHomePanel === "predictive_alerts" ? "xl:col-span-2" : undefined} data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
-              <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-bold text-slate-700">At risk — brakes &amp; tires</h3><button type="button" className="text-xs" aria-expanded={expandedHomePanel === "predictive_alerts"} onClick={() => toggleHomePanel("predictive_alerts")}>{expandedHomePanel === "predictive_alerts" ? "Show compact" : "View all →"}</button></div>
-              <PredictiveAlertsPage key={`predictive-${expandedHomePanel === "predictive_alerts" ? "full" : "compact"}`} compact={expandedHomePanel !== "predictive_alerts"} />
-            </div>
-          </div>
+          <MaintenanceHomeSummaryPanels companyId={companyId} />
         </div>
       ) : null}
 
@@ -628,7 +592,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       ) : null}
 
       {tab === "arriving_soon" ? (
-        <div data-testid="maintenance-arriving-soon-retired" data-maintenance-tab="arriving_soon">
+        <div data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
           <ArrivingSoonPage operatingCompanyId={companyId} />
         </div>
       ) : null}
@@ -715,6 +679,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "road_service" ? (
         <div data-testid="maintenance-road-service-tab" data-maintenance-tab="road_service">
+          {!rmStatusQuery.isError ? (
+            <RoadServiceActivePanel roadside={rmStatusQuery.data?.roadside ?? []} onOpen={setSelectedWorkOrderId} />
+          ) : <ListErrorState title="Couldn't load active roadside work orders" status={0} onRetry={() => void rmStatusQuery.refetch()} />}
           <RoadServiceList operatingCompanyId={companyId} />
         </div>
       ) : null}

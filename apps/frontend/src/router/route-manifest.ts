@@ -183,7 +183,9 @@ export function maintenanceTabFromPath(pathname: string): string | null {
   if (norm === "/maintenance") return null;
   // C-36 remaps — retired peer tabs fold into Home or Driver Reports Kind (paths kept, Rule 07).
   if (norm === "/maintenance/home" || norm === "/maintenance/rm-status-board") return "rm_status_board";
-  if (norm === "/maintenance/arriving-soon" || norm === "/maintenance/predictive-alerts") return "rm_status_board";
+  // 443.280: full workflows stay reachable outside the read-only Home summaries.
+  if (norm === "/maintenance/arriving-soon") return "arriving_soon";
+  if (norm === "/maintenance/predictive-alerts") return "predictive_alerts";
   if (norm === "/maintenance/brake-wear" || norm === "/maintenance/tire-wear") return "rm_status_board";
   if (norm === "/maintenance/severe-repairs") return "active_wos"; // Severe is the red kanban column, not a tab
   if (norm === "/maintenance/in-transit" || norm === "/maintenance/triage" || norm === "/maintenance/in-transit-issues") {
