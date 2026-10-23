@@ -370,6 +370,16 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   CashAdvances/Close/PreSettlements/Statement) · Fuel sub-boards · design-system sweep · Chrome proof.
   Fuel home V3 shipped (this round). Full DONE not claimed.
 
+
+### Active Architectural Decisions — Settlements Home board 443.267 (Cursor, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Settlements.dc.html`
+- **Home deltas (engines unchanged):** Week-of compact table from this-week `kpiSettlements` (Driver / Loads / Gross / Ded / Reimb / Net / Status + Pre-Settlement Open | Settlement Closed pills); deduction-type split Escrow / Advances (Zelle) / Fines via `listSettlementDeductions` (same engine as `/drivers/deductions`); week chart grain Net | Gross | **Deductions**.
+- **Reimb:** derived as `net − (gross − deductions)` when list row has no `reimbursements_total`.
+- **Guard:** `scripts/verify-settlements-module-one-readout.mjs` piggyback (no new EVEN claim) — Week-of panel + Deductions grain + listSettlementDeductions + Escrow/Advances/Fines labels.
+- **Rule 07:** Tours / Payments views kept.
+
+
 ### Active Architectural Decisions — Fuel home V3 (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Engine unchanged:** same `getFuelDashboard` / `getLovesSyncStatus` planner dashboard KPIs +

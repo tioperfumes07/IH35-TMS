@@ -84,6 +84,17 @@ function analyze(reg, page) {
   if (!/testId=["']settlements-tours-v3-panel["']/.test(reg) && !/testId=\{?"settlements-tours-v3-panel"?\}/.test(reg))
     errors.push("SettlementsToursRegister must set testId=settlements-tours-v3-panel on V3Panel");
 
+
+  // ROUND 443.267 — Settlements home board polish (Week-of table · deduction split · Deductions grain).
+  if (!/listSettlementDeductions/.test(page))
+    errors.push("SettlementsPage must call listSettlementDeductions for home deduction-type split (443.267)");
+  if (!/settlements-home-week-of-panel/.test(page))
+    errors.push("SettlementsPage must render Week-of panel (data-testid settlements-home-week-of-panel)");
+  if (!/id:\s*"deductions"/.test(page) && !/id:\s*'deductions'/.test(page))
+    errors.push("SettlementsPage week chart grain must include Deductions (board Net|Gross|Deductions)");
+  if (!/Advances \(Zelle\)/.test(page) || !/Escrow/.test(page) || !/Fines/.test(page))
+    errors.push("SettlementsPage deductions panel must split Escrow / Advances (Zelle) / Fines");
+
   return errors;
 }
 
@@ -114,6 +125,10 @@ if (process.argv.includes("--selftest")) {
     ["drop Closed panel title", [reg.replace(/Closed settlements/g, "Closed list"), page]],
     ["drop Open panel title", [reg.replace(/Open tours · pre-settlements/g, "Open list"), page]],
     ["drop board pill labels", [reg.replace(/Pre-Settlement \(Open\)/g, "Open").replace(/Settlement \(Closed\)/g, "Closed"), page]],
+    ["drop week-of panel", [reg, page.replace(/settlements-home-week-of-panel/g, "settlements-home-week-legacy")]],
+    ["drop deductions grain", [reg, page.replace(/id:\s*"deductions"/g, 'id: "net_x"')]],
+    ["drop listSettlementDeductions", [reg, page.replace(/listSettlementDeductions/g, "listNope")]],
+    ["drop Advances label", [reg, page.replace(/Advances \(Zelle\)/g, "Advances")]],
   ];
   let caught = 0;
   for (const [label, [r, p]] of mutations) {
