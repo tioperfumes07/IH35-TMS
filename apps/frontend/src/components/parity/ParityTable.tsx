@@ -1589,8 +1589,8 @@ export function ParityTable<T>({
   };
 
   const shellClass = embedded
-    ? "overflow-visible bg-white"
-    : "overflow-visible rounded-md border border-gray-200 bg-white";
+    ? "min-w-0 max-w-full overflow-visible bg-white"
+    : "min-w-0 max-w-full overflow-visible rounded-md border border-gray-200 bg-white";
 
   // Per-instance header re-theme (see headerBg/headerInk prop doc) -- falls back to the shared
   // token unchanged when the caller passes neither, so every existing consumer is byte-identical.
@@ -1602,8 +1602,8 @@ export function ParityTable<T>({
       {/* Canonical list toolbar: search + applied range filter + optional slot + gear. */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         {title ? (
-          <div className="flex shrink-0 items-center gap-1">
-            <h2 className="whitespace-nowrap text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
+          <div className="flex min-w-0 max-w-full items-center gap-1">
+            <h2 className="min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
               {title}
             </h2>
             {titleInfo}
@@ -1621,7 +1621,7 @@ export function ParityTable<T>({
           hideRange={suppressToolbarRange}
           className="min-w-0 flex-1"
         />
-        <div className="flex items-center gap-2 text-[11px] text-gray-600">
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-[11px] text-gray-600">
           {selectable && selected.size > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
               <span
@@ -1792,7 +1792,7 @@ export function ParityTable<T>({
         <div className="border-b border-gray-200 px-2 py-1.5">{filterBar}</div>
       ) : null}
 
-      <div className="overflow-x-auto">
+      <div className="min-w-0 max-w-full overflow-x-auto">
       {/* CENTER-EVERYTHING LAW (owner ruling 2026-09-04) — text-align is inherited, so this is the
           one place that flips every header/column that doesn't declare its own alignment. A column
           with an explicit text-right/text-left in its own className (money columns, etc.) still
