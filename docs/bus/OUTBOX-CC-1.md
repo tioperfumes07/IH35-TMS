@@ -2,6 +2,15 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-1-archive-2026-10-17.md](archive/OUTBOX-CC-1-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-10-23 ~09:55Z — CC-1 443.265-B SHIPPED
+
+**PR #27277 MERGED** → squash `446c9e12` — 443.264 cash-flow fuel trailing 4-wk avg on main.
+
+**PR #27286 MERGED** → squash `802fd8e9` — overdue bills AP-aging clamp + Driver/Vendor/Finance/Insurance sub-rows on main.
+- Root: buildWeekBuckets consumed days[].expenses_due_cents (overdue bills → carry_over → invisible). Fixed with AP-aging clamp on data.rows + expenseCategory() classifier.
+
+**PR #27287 MERGED** → squash `fc0a287e` — D074 truck-line Promise.all + units-without-load DISTINCT ON CTE on main.
+
 ## 2026-10-22 ~15:30Z — CC-1 443.232 UPDATE: PR #27168 MERGED + PR #27171 in CI
 
 **PR #27168 MERGED** → squash `acafc4f330` — void cascade fixes (b/c/d) are on main.
@@ -75,3 +84,19 @@ Settlement P-0102 ($379.73, USMCA, source_document_ref=5796, status=closed). No 
 - Insurance: covered under vendor bills (`accounting.bills`)
 
 **CC-2 note:** Do NOT edit `ManualDailyProjectionsTab.tsx` per lead 02:57 AM CT.
+
+## 2026-10-23 ~09:01Z — CC-1 443.264 PR OPEN + 443.265-B in progress
+
+**443.264 PR #27277 OPEN**: https://github.com/tioperfumes07/IH35-TMS/pull/27277
+- Guard 18681 type-fix (::text cast, 190/190 PASS)
+- Fuel trailing 4-wk avg projected rows (13 future Mondays in rolling ledger)
+- verify-rolling-ledger-queries-parallel updated for 12th query
+- Baseline: 17 pre-existing cash-flow guard failures added (all confirmed fail on origin/main)
+
+**OUTFLOWS (443.264 item 3)** — all in rolling ledger per lead order:
+- Finance/lease: finance.loan_amortization_rows (loansPromise — 0 rows USMCA, correct)
+- Driver bills: driver_finance.driver_bills due_date (driverBillsPromise — 145/145 backfilled)
+- Fuel: fuel.fuel_transactions trailing 4-wk avg (fuelAvgPromise — NEW)
+- Insurance/vendor bills: accounting.bills (billsPromise — already wired)
+
+**NEXT**: D074 truck-line 11.4s + units-without-load 4.8-8.8s → ≤2s. Starting now.
