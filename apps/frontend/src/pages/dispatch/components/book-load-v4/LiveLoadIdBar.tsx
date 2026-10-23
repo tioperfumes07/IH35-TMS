@@ -153,7 +153,8 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
     // ROUND 443.265-A item 1 — the 110px box with every helper line UNDER it (column, never beside it: the
     // label's 160px min-width used to spill the hint across "Previewed — assigned on save").
     <div className="flex w-full max-w-[220px] flex-col gap-0.5" data-testid="book-load-live-load-id-bar">
-      <div className="w-[110px] min-w-[110px] max-w-[110px] text-left normal-case tracking-normal text-[#0F1219] [&_input]:h-8 [&_label]:min-w-0">
+      {/* LEAD 443.280-C — Modal board: the number sits right-aligned in its 110px box (justify-content:flex-end). */}
+      <div className="w-[110px] min-w-[110px] max-w-[110px] text-left normal-case tracking-normal text-[#0F1219] [&_input]:h-8 [&_input]:text-right [&_label]:min-w-0">
         <QboDocumentNumberField
           label="Load #"
           value={manualNumber}

@@ -50,6 +50,26 @@ export function usePlannerLoads(operatingCompanyId: string, rangeStart: string, 
   });
 }
 
+/** LEAD 443.280-C — the bar's lane, from the load hub's first pickup / first delivery city ("Fort Morgan → Laredo"). */
+export function plannerBarLane(load: Pick<DispatchLoadRow, "first_pickup_city" | "first_delivery_city">): string {
+  return `${load.first_pickup_city || "Pickup unavailable"} → ${load.first_delivery_city || "Delivery unavailable"}`;
+}
+
+/** LEAD 443.280-C — "$3,000 · 1,075 mi · $2.79/mi": the load's rate, the load hub's practical miles, and rate per mile.
+ *  No practical miles = "— mi" and no $/mi (never a divide by a guess). */
+export function plannerBarMoneyDetail(load: Pick<DispatchLoadRow, "rate_total_cents" | "currency_code" | "miles_practical">): string {
+  const cents = Number(load.rate_total_cents ?? 0);
+  const whole = cents % 100 === 0;
+  const money =
+    load.currency_code === "USD"
+      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 }).format(cents / 100)
+      : `${load.currency_code} ${(cents / 100).toFixed(2)}`;
+  const miles = Number(load.miles_practical ?? 0);
+  if (!(miles > 0)) return `${money} · — mi`;
+  const perMile = `${load.currency_code === "USD" ? "$" : `${load.currency_code} `}${(cents / 100 / miles).toFixed(2)}/mi`;
+  return `${money} · ${Math.round(miles).toLocaleString("en-US")} mi · ${perMile}`;
+}
+
 export function groupPlannerBarsByKey(
   loads: DispatchLoadRow[],
   days: string[],

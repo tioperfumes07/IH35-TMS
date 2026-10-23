@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Truck } from "lucide-react";
-import { formatUsdCentsTable } from "../../../lib/money";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { useQuery } from "@tanstack/react-query";
@@ -21,7 +20,7 @@ const IN_MOTION_LOAD_STATUSES = new Set(["dispatched", "at_pickup", "in_transit"
 import { widenPlannerRange } from "./planner-range";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
-import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
+import { groupPlannerBarsByKey, plannerBarLane, plannerBarMoneyDetail, usePlannerLoads } from "./planner-bars";
 import { PlannerAction, PlannerActionDisabled } from "./PlannerRowActions";
 import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
 
@@ -207,9 +206,9 @@ export function TruckPlanner() {
     for (const bars of groups.values()) for (const bar of bars) {
       const load = byId.get(bar.loadId ?? "");
       if (!load) continue;
-      bar.label = `${load.load_number} · ${load.first_pickup_city || "Pickup unavailable"} → ${load.first_delivery_city || "Delivery unavailable"}`;
+      bar.label = `${load.load_number} · ${plannerBarLane(load)}`;
       bar.shortLabel = load.load_number;
-      bar.detail = load.currency_code === "USD" ? formatUsdCentsTable(load.rate_total_cents) : `${load.currency_code} ${Number(load.rate_total_cents / 100).toFixed(2)}`;
+      bar.detail = plannerBarMoneyDetail(load);
       bar.onClick = () => navigate(`/dispatch/loads/${encodeURIComponent(load.id)}`);
     }
     return groups;
