@@ -19,3 +19,8 @@ PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha m
 - PRE-MERGE: `cd apps/frontend && npx tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0
 - NEXT: 443.267 re-do CashFlow → Settlements → Fuel to boards (not chrome-only)
 
+## 2026-10-23 America/Chicago · CF-F443267-HOME Cash Flow Home board DONE
+- MERGE: #27330 squash `dc120aa6636030e2934272558c5dff2824e7e7a5`
+- RENDER ih35-tms-web: **live** deploy id `dep-dbdnheh42hec739e0mf0` (commit dc120aa663)
+- PRE-MERGE: `cd apps/frontend && npx tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0
+- NEXT: 443.267 Settlements Home board → Fuel boards
