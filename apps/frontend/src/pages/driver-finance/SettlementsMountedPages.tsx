@@ -1,5 +1,6 @@
 /**
  * ROUND 443.254 N1 — same live pages, mounted under /driver-finance/… with Settlements chrome.
+ * ROUND 443.280-A — Pre-Settlements + Deductions mount board bodies only (no DriversPage layer).
  */
 import { DriversPage } from "../Drivers";
 import { FeedGatePage } from "../feed-gate/FeedGatePage";
@@ -7,6 +8,8 @@ import { CashAdvancesHomePage } from "../cash-advances/CashAdvancesHome";
 import { LiabilitiesHomePage } from "../liabilities/LiabilitiesHome";
 import { EscrowPage } from "../accounting/EscrowPage";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
+import { SettlementsPreSettlementsBoard } from "./SettlementsPreSettlementsBoard";
+import { SettlementsDeductionsBoard } from "./SettlementsDeductionsBoard";
 
 export function SettlementsDriversPage() {
   return (
@@ -27,7 +30,7 @@ export function SettlementsProfilesPage() {
 export function SettlementsPreSettlementsPage() {
   return (
     <SettlementsModuleShell>
-      <DriversPage initialSubnav="pre_settlements" />
+      <SettlementsPreSettlementsBoard />
     </SettlementsModuleShell>
   );
 }
@@ -75,7 +78,7 @@ export function SettlementsPayRateTemplatesPage() {
 export function SettlementsDeductionsPage() {
   return (
     <SettlementsModuleShell>
-      <DriversPage initialSubnav="deductions" />
+      <SettlementsDeductionsBoard />
     </SettlementsModuleShell>
   );
 }

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { type LoadStatus, listAllLoads, listLoads, useUpdateLoadStatus } from "../api/loads";
-import { listSettlements, listOpenPreSettlementsByDriver } from "../api/driverFinance";
+import { listOpenPreSettlementsByDriver } from "../api/driverFinance";
+import { listTours } from "../api/tourReadout";
 import { OpenPreSettlementsPanel } from "../components/driver-finance/OpenPreSettlementsPanel";
 import { listGeofenceBreaches } from "../api/safetyGeofence";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -276,14 +277,13 @@ export function DispatchPage({
     refetchInterval: 60000,
   });
 
+  /** ROUND 443.280-A — Ready-for-review panel reads open tours (Unit / Ready / Waiting on live). */
   const preSettlementsQuery = useQuery({
-    queryKey: ["dispatch", "pre-settlements", defaultCompanyIds.join(",")],
-    queryFn: () => listSettlements(defaultCompanyIds[0] ?? ""),
-    enabled: Boolean(defaultCompanyIds[0]),
+    queryKey: ["dispatch", "pre-settlements-tours", defaultCompanyIds.join(",")],
+    queryFn: () => listTours(defaultCompanyIds[0] ?? "", "open"),
+    enabled: Boolean(defaultCompanyIds[0]) && subTab === "pre_settlements",
   });
-  // E11-D4 — the OPEN (still accumulating) cohort, a status ('open') the payment-ready query
-  // above never includes. Same read model DispatchBoard.tsx already fetches for its per-load
-  // annotation; reused here as its own board section.
+  // E11-D4 — the OPEN (still accumulating) cohort by driver. Same read model DispatchBoard uses.
   const openPreSettlementsQuery = useQuery({
     queryKey: ["dispatch", "pre-settlements-open", defaultCompanyIds.join(",")],
     queryFn: () => listOpenPreSettlementsByDriver(defaultCompanyIds[0] ?? ""),
@@ -811,9 +811,7 @@ export function DispatchPage({
               />
             ) : null}
             <PreSettlementsPanel
-              rows={(preSettlementsQuery.data?.settlements ?? []).filter((settlement) =>
-                ["presettle", "acked", "locked"].includes(String(settlement.status))
-              )}
+              rows={preSettlementsQuery.data?.rows ?? []}
               loading={preSettlementsQuery.isLoading}
               isError={preSettlementsQuery.isError}
               title="Ready for review/payment"

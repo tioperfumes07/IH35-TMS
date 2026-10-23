@@ -6,7 +6,7 @@ import { getEscrowDriverBalances } from "../api/banking";
 import { cashAdvanceRequestsOfficeApi } from "../api/cashAdvanceRequests";
 import { listAllDispatchLoads } from "../api/dispatch";
 import { listPendingEscrowDeductions, listSettlements } from "../api/driverFinance";
-import { listOpenPreSettlements } from "../api/driverFinance";
+import { listTours } from "../api/tourReadout";
 import { getActiveLiabilities } from "../api/liabilities";
 import { formatUsd, formatUsdCents } from "../lib/money";
 import {
@@ -459,15 +459,21 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     }).length;
   }, [allDrivers]);
   const preSettlementsQuery = useQuery({
-    queryKey: ["drivers", "open-pre-settlements", selectedCompanyId],
-    queryFn: () => listOpenPreSettlements(selectedCompanyId!),
+    queryKey: ["drivers", "open-tours-pre-settlements", selectedCompanyId],
+    queryFn: () => listTours(selectedCompanyId!, "open"),
     enabled: Boolean(selectedCompanyId) && subnavTab === "pre_settlements",
   });
+  /** Settlements Ready strip — open tours (same engine as PreSettlements board). */
+  const settlementsReadyToursQuery = useQuery({
+    queryKey: ["drivers", "open-tours-ready", selectedCompanyId],
+    queryFn: () => listTours(selectedCompanyId!, "open"),
+    enabled:
+      Boolean(selectedCompanyId) &&
+      (subnavTab === "home" || (subnavTab === "settlements" && !isDeductionsBoard)),
+  });
   const settlementsReadyRows = useMemo(() => {
-    return (settlementsQuery.data?.settlements ?? [])
-      .filter((settlement) => ["presettle", "acked", "locked"].includes(String(settlement.status)))
-      .slice(0, 8);
-  }, [settlementsQuery.data?.settlements]);
+    return (settlementsReadyToursQuery.data?.rows ?? []).slice(0, 8);
+  }, [settlementsReadyToursQuery.data?.rows]);
   const debtAlertRows = useMemo(() => {
     const aggregates = new Map<
       string,
@@ -878,7 +884,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 data-settlements-presettle-v3-layout="1"
               >
                 <PreSettlementsPanel
-                  rows={preSettlementsQuery.data ?? []}
+                  rows={preSettlementsQuery.data?.rows ?? []}
                   loading={preSettlementsQuery.isLoading}
                   isError={preSettlementsQuery.isError}
                   title="Open pre-settlements"
@@ -1034,7 +1040,12 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           ) : null}
           {subnavTab === "home" && searchParams.get("view") !== "board" ? (
             <div className="grid auto-rows-fr gap-3 md:grid-cols-2" data-testid="drivers-home-attention">
-              <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} isError={settlementsQuery.isError} title="Settlements Ready" />
+              <PreSettlementsPanel
+                rows={settlementsReadyRows}
+                loading={settlementsReadyToursQuery.isLoading}
+                isError={settlementsReadyToursQuery.isError}
+                title="Settlements Ready"
+              />
               <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
                 {/* DRV-MONEY-F6110 — same false-clean-bill-of-health defect as the cash_advances tab
                     above; debtDataError gates this panel too. */}
