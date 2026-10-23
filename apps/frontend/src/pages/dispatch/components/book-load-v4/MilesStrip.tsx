@@ -1,4 +1,5 @@
-import type { LaneMileageFillConfidence } from "../../../../api/dispatch";
+import type { LaneMileageFillConfidence, LaneMileageReferenceRow } from "../../../../api/dispatch";
+import { useTranslation } from "../../../../hooks/useTranslation";
 
 type Props = {
   practical?: number | null;
@@ -38,7 +39,19 @@ type Props = {
    *  a real engine label ("Route engine (osrm)") or an honest blank-reason ("Not available —
    *  osrm_not_configured"). undefined = not looked up yet (no coordinates on file). */
   shortestProvenance?: string;
+  /** ROUND 443.265-A item 4 — step 2 "Select from reference": lanes on file from the same origin into
+   *  the destination state (catalogs.lane_mileage). null = not looked up (exact lane found, or no stops yet). */
+  referenceLanes?: { lanesOnFile: number; originLabel: string; destLabel: string; lanes: LaneMileageReferenceRow[] } | null;
+  /** The reference lane the operator chose (its practical miles went into Practical). */
+  referenceLaneId?: string | null;
+  onUseReferenceLane?: { (lane: LaneMileageReferenceRow): void };
 };
+
+/** "LAREDO" → "Laredo" — catalogs.lane_mileage stores cities upper-case. */
+export function laneCityLabel(city: string, state: string): string {
+  const c = city.toLowerCase().replace(/(^|[\s-])([a-z])/g, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
+  return `${c}, ${state.toUpperCase()}`;
+}
 
 function numFromInput(raw: string): number | null {
   const t = raw.trim();
@@ -103,31 +116,76 @@ export function MilesStrip({
   googleReferencePractical = null,
   googleReferenceEmpty = null,
   shortestProvenance,
+  referenceLanes = null,
+  referenceLaneId = null,
+  onUseReferenceLane,
 }: Props) {
+  const { t } = useTranslation();
   // fillConfidence drives chrome; provenance is the operator sentence.
-  const cell = "flex flex-1 flex-col items-center justify-center border-r border-[#E5E7EB] px-2 py-2 text-center last:border-r-0";
+  // ROUND 443.265-A (V3-Dispatch-BookLoad-Modal §C): four equal cells, each box with its own caption and
+  // its Google reference line UNDER it; inputs left-aligned 32px; revenue per mile is the big read-only cell.
+  const cell = "flex min-w-0 flex-col gap-1 border-r border-[#E5E7EB] px-3 py-2 text-left last:border-r-0";
+  const label = "text-xs font-semibold text-[#4B5563]";
+  const caption = "text-xs font-normal text-[#6B7280]";
+  const googleLine = "text-xs font-normal text-[#1F2A44]";
   const editable = Boolean(onPracticalChange && onShortestChange);
   const laneState = newLane ? "new" : historyOffer ? "thin" : fillConfidence && fillConfidence !== "operator" ? "high" : null;
+  const chosenReference = referenceLanes?.lanes.find((l) => l.lane_id === referenceLaneId) ?? null;
+  // Step order is the owner's: 1 AlwaysTrack lane history → 2 Select from reference → 3 Type it.
+  const activeStep = chosenReference || (referenceLanes && referenceLanes.lanes.length > 0 && laneState === "new")
+    ? 2
+    : laneState === "high" || laneState === "thin"
+      ? 1
+      : fillConfidence === "operator" || laneState === "new"
+        ? 3
+        : 1;
+  const fmt1 = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const practicalCaption = chosenReference
+    ? `from reference: ${laneCityLabel(chosenReference.origin_city, chosenReference.origin_state).replace(/, [A-Z]+$/, "")} → ${laneCityLabel(chosenReference.dest_city, chosenReference.dest_state)}`
+    : "revenue per mile";
+  const laneText = (lane: LaneMileageReferenceRow) =>
+    `${laneCityLabel(lane.origin_city, lane.origin_state)} → ${laneCityLabel(lane.dest_city, lane.dest_state)}`;
   return (
     <div className="rounded-sm border border-[#E5E7EB] bg-white" data-testid="book-load-miles-strip">
+      <div
+        className="flex flex-wrap items-center gap-2 border-b border-[#E5E7EB] px-3 py-1.5 text-xs"
+        data-testid="book-load-mileage-source-steps"
+      >
+        <span className="font-semibold text-[#0F1219]">{t("bookLoad.miles.source", "Mileage source")}</span>
+        {(["AlwaysTrack lane history", "Select from reference", "Type it"] as const).map((name, i) => (
+          <span key={name} className="inline-flex items-center gap-2">
+            {i > 0 ? <span aria-hidden className="text-[#6B7280]">→</span> : null}
+            <span
+              data-testid={`book-load-mileage-step-${i + 1}`}
+              data-active={activeStep === i + 1 ? "true" : "false"}
+              className={`rounded-sm px-1.5 py-0.5 ${
+                activeStep === i + 1 ? "bg-[#EEF1F6] font-semibold text-[#1F2A44]" : "bg-[#F3F4F6] text-[#4B5563]"
+              }`}
+            >
+              {i + 1} · {name}
+            </span>
+          </span>
+        ))}
+        <span className="ml-auto text-[#6B7280]">{t("bookLoad.miles.googleAlways", "Google practical + short always shown under each box")}</span>
+      </div>
       {laneState === "high" ? (
-        <p className="border-b border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-high">
+        <p className="border-b border-[#E5E7EB] px-3 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-high">
           High — filled from history. Source shown under the boxes. You can still type over it.
         </p>
       ) : null}
       {laneState === "thin" ? (
-        <p className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-thin">
+        <p className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-thin">
           Thin — boxes stay empty. History (runs / median / spread) is below. Use only if you accept it.
         </p>
       ) : null}
       {laneState === "new" ? (
-        <p className="border-b border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-new">
+        <p className="border-b border-[#E5E7EB] px-3 py-1 text-xs text-[#1F2A44]" data-testid="book-load-miles-state-new">
           New — no history. Type practical miles. Nothing is filled.
         </p>
       ) : null}
-      <div className="flex text-xs font-semibold tracking-wide text-[#4B5563]">
+      <div className="grid grid-cols-2 md:grid-cols-4">
         <div className={cell}>
-          <label className="text-[#4B5563]" htmlFor="book-miles-practical">
+          <label className={label} htmlFor="book-miles-practical">
             Practical (long){practicalRequired ? " *" : ""}
           </label>
           {editable ? (
@@ -138,7 +196,7 @@ export function MilesStrip({
               min={0}
               step={0.1}
               required={practicalRequired}
-              className={`mt-1 h-8 w-full rounded-sm border px-1.5 font-mono text-xs ${
+              className={`h-8 w-full rounded-sm border px-2 text-right font-mono text-xs ${
                 practicalRequired ? "border-[#4B5563] font-semibold text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
               }`}
               value={inputValue(practical)}
@@ -147,10 +205,19 @@ export function MilesStrip({
           ) : (
             <div className="font-mono text-xs text-[#0F1219]">{formatMiles(practical)}</div>
           )}
-          <div className="text-xs font-normal text-[#6B7280]">revenue per mile</div>
+          <div className={caption} data-testid="book-load-practical-caption">
+            {practicalCaption}
+          </div>
+          {/* ROUND 443.258-B: Google practical ALWAYS under the box (even while loading / null).
+              Reference only — never copied into the mile inputs (LAW §2 / DSP-48). */}
+          <p className={googleLine} data-testid="book-load-google-reference-miles" title="Google car routing — reference only">
+            {googleReferencePractical
+              ? `Google practical ${fmt1(googleReferencePractical.miles)} mi · ${formatDuration(googleReferencePractical.minutes)}`
+              : "Google practical — not computed yet"}
+          </p>
         </div>
-        <div className={`${cell} bg-[#F7F8FA]`}>
-          <label className="text-[#4B5563]" htmlFor="book-miles-shortest">
+        <div className={cell}>
+          <label className={label} htmlFor="book-miles-shortest">
             Shortest{shortestRequired ? " *" : ""}
           </label>
           {editable ? (
@@ -161,7 +228,7 @@ export function MilesStrip({
               min={0}
               step={0.1}
               required={shortestRequired}
-              className={`mt-1 h-8 w-full rounded-sm border px-1.5 font-mono text-xs ${
+              className={`h-8 w-full rounded-sm border px-2 text-right font-mono text-xs ${
                 shortestRequired ? "border-[#4B5563] font-semibold text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
               }`}
               value={inputValue(shortest)}
@@ -170,10 +237,19 @@ export function MilesStrip({
           ) : (
             <div className="font-mono text-xs text-[#4B5563]">{formatMiles(shortest)}</div>
           )}
-          <div className="text-xs font-normal text-[#4B5563]">driver pay</div>
+          <div className={caption}>{t("bookLoad.miles.driverPay", "driver pay")}</div>
+          <p
+            className={googleLine}
+            data-testid="book-load-google-reference-short"
+            title="Google car routing (short reference) — reference only; driver pay uses Shortest above"
+          >
+            {googleReferencePractical
+              ? `Google short ${fmt1(googleReferencePractical.miles)} mi · ${formatDuration(googleReferencePractical.minutes)}`
+              : "Google short — not computed yet"}
+          </p>
         </div>
         <div className={cell}>
-          <label className="text-[#4B5563]" htmlFor="book-miles-deadhead">
+          <label className={label} htmlFor="book-miles-deadhead">
             Empty miles
           </label>
           {editable ? (
@@ -183,22 +259,82 @@ export function MilesStrip({
               type="number"
               min={0}
               step={0.1}
-              className="mt-1 h-8 w-full rounded-sm border border-[#E5E7EB] px-1.5 font-mono text-xs text-[#0F1219]"
+              className="h-8 w-full rounded-sm border border-[#E5E7EB] px-2 text-right font-mono text-xs text-[#0F1219]"
               value={inputValue(deadhead)}
               onChange={(e) => onDeadheadChange?.(numFromInput(e.target.value))}
             />
           ) : (
             <div className="font-mono text-xs text-[#0F1219]">{formatMiles(deadhead)}</div>
           )}
-          <div className="text-xs font-normal text-[#6B7280]">deadhead to pickup</div>
+          <div className={caption}>{t("bookLoad.miles.deadhead", "deadhead to pickup")}</div>
+          <p className={googleLine} data-testid="book-load-google-reference-empty" title="Google car routing, yard to pickup — reference only">
+            {googleReferenceEmpty
+              ? `Empty leg ref (yard → pickup) ${fmt1(googleReferenceEmpty.miles)} mi · ${formatDuration(googleReferenceEmpty.minutes)}`
+              : "Empty leg ref (yard → pickup) — not computed yet"}
+          </p>
         </div>
-        <div className={cell}>
-          <div className="text-[#4B5563]">Revenue per mile</div>
-          <div className="font-mono text-xs text-[#0F1219]">{!(ratePerMile <= 0) ? `$${ratePerMile.toFixed(3)}` : ""}</div>
+        <div className={`${cell} bg-[#F7F8FA]`}>
+          <div className={label}>Revenue per mile</div>
+          <div className="text-right font-mono text-xs font-semibold text-[#0F1219]" data-testid="book-load-revenue-per-mile">
+            {!(ratePerMile <= 0) ? `$${ratePerMile.toFixed(2)}` : "—"}
+          </div>
+          <div className={caption}>{practical != null && practical > 0 ? `on practical ${formatMiles(practical)}` : "on practical miles"}</div>
         </div>
       </div>
+      {referenceLanes && laneState === "new" ? (
+        <div className="border-t border-[#E5E7EB]" data-testid="book-load-miles-reference">
+          <p className="mx-3 my-2 border-l-2 border-[#B45309] bg-white px-2 py-1 text-xs text-[#0F1219]">
+            No lane {referenceLanes.originLabel} → {referenceLanes.destLabel} in AlwaysTrack history (
+            {referenceLanes.lanesOnFile.toLocaleString()} lanes on file).{" "}
+            {referenceLanes.lanes.length > 0
+              ? "Select from reference — lanes on file into the same state:"
+              : "No lane on file into that state — type the miles."}
+          </p>
+          {referenceLanes.lanes.length > 0 ? (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-y border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]">
+                  <th className="px-3 py-1 text-left font-semibold">{t("bookLoad.miles.ref.lane", "Lane on file (AlwaysTrack history)")}</th>
+                  <th className="px-3 py-1 text-right font-semibold">{t("bookLoad.miles.ref.practical", "Practical")}</th>
+                  <th className="px-3 py-1 text-right font-semibold">{t("bookLoad.miles.ref.short", "Short")}</th>
+                  <th className="px-3 py-1 text-right font-semibold">{t("bookLoad.miles.ref.trips", "Trips")}</th>
+                  <th className="px-3 py-1 text-left font-semibold">{t("bookLoad.miles.ref.confidence", "Confidence")}</th>
+                  <th className="px-3 py-1" />
+                </tr>
+              </thead>
+              <tbody>
+                {referenceLanes.lanes.map((lane) => {
+                  const chosen = lane.lane_id === referenceLaneId;
+                  return (
+                    <tr key={lane.lane_id} className="border-b border-[#E5E7EB] last:border-b-0" data-testid="book-load-miles-reference-row">
+                      <td className="px-3 py-1 text-[#0F1219]">{laneText(lane)}</td>
+                      <td data-quantity className="px-3 py-1 text-right font-mono tabular-nums">{fmt1(lane.practical_miles)}</td>
+                      {/* Short is never offered from the catalog (verify-miles-shortest-never-autofilled-from-catalog). */}
+                      <td className="px-3 py-1 text-right text-[#6B7280]">—</td>
+                      <td data-quantity className="px-3 py-1 text-right tabular-nums">{lane.runs}</td>
+                      <td className="px-3 py-1">{lane.confidence ?? "—"}</td>
+                      <td className="px-3 py-1 text-right">
+                        {onUseReferenceLane ? (
+                          <button
+                            type="button"
+                            data-testid="book-load-miles-reference-use"
+                            onClick={() => onUseReferenceLane(lane)}
+                            className="font-semibold text-[#1F2A44] hover:underline"
+                          >
+                            {chosen ? "Use ✓" : "Use"}
+                          </button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : null}
+        </div>
+      ) : null}
       {historyOffer ? (
-        <p className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]" data-testid="book-load-lane-history">
+        <p className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1 text-xs text-[#1F2A44]" data-testid="book-load-lane-history">
           Seen {historyOffer.runs} times · median {historyOffer.median.toLocaleString(undefined, { maximumFractionDigits: 1 })} mi
           {historyOffer.spread != null
             ? ` · spread ${historyOffer.spread.toLocaleString(undefined, { maximumFractionDigits: 1 })}`
@@ -215,14 +351,14 @@ export function MilesStrip({
           ) : null}
         </p>
       ) : null}
-      {newLane ? (
-        <p className="border-t border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]" data-testid="book-load-lane-new">
+      {newLane && !referenceLanes ? (
+        <p className="border-t border-[#E5E7EB] px-3 py-1 text-xs text-[#4B5563]" data-testid="book-load-lane-new">
           New lane — not in the history table. Type practical miles.
         </p>
       ) : null}
       {milesColumnInverted || reverseLaneShortDiff ? (
         <p
-          className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs font-semibold text-[#0F1219]"
+          className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1 text-xs font-semibold text-[#0F1219]"
           data-testid="book-load-miles-invert-flag"
         >
           {milesColumnInverted && reverseLaneShortDiff
@@ -241,41 +377,12 @@ export function MilesStrip({
       ) : null}
       {shortestProvenance ? (
         <p
-          className="border-t border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]"
+          className="border-t border-[#E5E7EB] px-3 py-1 text-xs text-[#4B5563]"
           data-testid="book-load-shortest-provenance"
         >
           Shortest: {shortestProvenance}
         </p>
       ) : null}
-      {/* ROUND 443.258-B: Google practical + short ALWAYS under the boxes (even while loading / null).
-          Reference only — never copied into the mile inputs (LAW §2 / DSP-48). */}
-      <p
-        className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
-        data-testid="book-load-google-reference-miles"
-        title="Google car routing — reference only"
-      >
-        {googleReferencePractical
-          ? `Google practical ${googleReferencePractical.miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi · ${formatDuration(googleReferencePractical.minutes)}`
-          : "Google practical — not computed yet"}
-      </p>
-      <p
-        className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
-        data-testid="book-load-google-reference-short"
-        title="Google car routing (short reference) — reference only; driver pay uses Shortest above"
-      >
-        {googleReferencePractical
-          ? `Google short ${googleReferencePractical.miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi · ${formatDuration(googleReferencePractical.minutes)}`
-          : "Google short — not computed yet"}
-      </p>
-      <p
-        className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
-        data-testid="book-load-google-reference-empty"
-        title="Google car routing, yard to pickup — reference only"
-      >
-        {googleReferenceEmpty
-          ? `Empty leg ref (yard → pickup) ${googleReferenceEmpty.miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi · ${formatDuration(googleReferenceEmpty.minutes)}`
-          : "Empty leg ref (yard → pickup) — not computed yet"}
-      </p>
     </div>
   );
 }

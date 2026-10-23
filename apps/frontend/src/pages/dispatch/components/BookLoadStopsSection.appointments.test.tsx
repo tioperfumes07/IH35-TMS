@@ -143,7 +143,7 @@ describe("BookLoadStopsSection — appointments required on the first pickup and
       fireEvent.blur(input);
     };
     typeDate("stop-date-0", "09/10/2026");
-    fireEvent.change(within(screen.getByTestId("stop-siterow-0")).getByLabelText("Stop time"), { target: { value: "08:00" } });
+    fireEvent.change(within(screen.getByTestId("stop-cityrow-0")).getByLabelText("Stop time"), { target: { value: "08:00" } });
     typeDate("stop-date-1", "09/11/2026");
 
     fireEvent.click(screen.getByRole("button", { name: "Book load" }));

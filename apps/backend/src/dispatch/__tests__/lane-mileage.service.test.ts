@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   fillConfidenceFromRow,
+  listLaneMileageReference,
   mileageSourceFromFill,
   provenanceFromRow,
   resolveLaneMileage,
@@ -223,5 +224,41 @@ describe("lane-mileage HTTP", () => {
     expect(src).toContain("lane_mileage_lookup_failed");
     expect(src).toContain("reply.code(503)");
     expect(src).not.toMatch(/lane_mileage_lookup_failed[\s\S]{0,500}match:\s*"New lane"/);
+  });
+});
+
+describe("listLaneMileageReference (ROUND 443.265-A — Select from reference)", () => {
+  const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80";
+  const lanes = [
+    { id: "a", origin_city: "LAREDO", origin_state: "TX", dest_city: "MORRIS", dest_state: "IL", practical_miles: "1298.9", n_practical: 12, confidence: "High" },
+    { id: "b", origin_city: "LAREDO", origin_state: "TX", dest_city: "CHICAGO", dest_state: "IL", practical_miles: "1353.7", n_practical: 123, confidence: "Thin" },
+  ];
+  const client = (seen: string[]) => ({
+    query: async (sql: string, values?: unknown[]) => {
+      seen.push(sql.replace(/\s+/g, " "));
+      if (sql.includes("count(*)")) return { rows: [{ n: "3452" }] };
+      expect(values).toEqual([OPCO, "Laredo", "TX", "IL"]);
+      return { rows: lanes };
+    },
+  });
+
+  it("lists lanes on file from the origin into the destination state, most trips first, practical only", async () => {
+    const seen: string[] = [];
+    const out = await listLaneMileageReference(client(seen) as never, OPCO, { origin_city: "Laredo", origin_state: "TX", dest_state: "IL" });
+    expect(out.lanes_on_file).toBe(3452);
+    expect(out.lanes.map((l) => [l.dest_city, l.practical_miles, l.runs])).toEqual([
+      ["CHICAGO", 1353.7, 123],
+      ["MORRIS", 1298.9, 12],
+    ]);
+    expect(out.lanes[0]).not.toHaveProperty("short_miles");
+    expect(seen[1]).toContain("operating_company_id = $1::uuid");
+    expect(seen[1]).toContain("lower(dest_state) = lower($4)");
+  });
+
+  it("does not query lanes without an origin and a destination state", async () => {
+    const seen: string[] = [];
+    const out = await listLaneMileageReference(client(seen) as never, OPCO, { origin_city: "", origin_state: "TX", dest_state: "IL" });
+    expect(out).toEqual({ lanes_on_file: 3452, lanes: [] });
+    expect(seen).toHaveLength(1);
   });
 });

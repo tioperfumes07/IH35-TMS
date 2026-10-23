@@ -64,7 +64,7 @@ import {
   type DriverBillMintOutcome,
 } from "./book-load.service.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
-import { resolveLaneMileage } from "./lane-mileage.service.js";
+import { listLaneMileageReference, resolveLaneMileage } from "./lane-mileage.service.js";
 import { resolvePointMileage } from "./mileage/mileage.service.js";
 import { OsrmProvider } from "./mileage/osrm.provider.js";
 import { computeChainDeadheadMiles } from "./deadhead/chain-deadhead.service.js";
@@ -638,6 +638,40 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       return reply.code(503).send({
         error: "lane_mileage_lookup_failed",
         message: "Could not load lane miles. Type them, or retry.",
+      });
+    }
+  });
+
+  // ROUND 443.265-A item 4 — Book Load section C step 2 "Select from reference": the lanes on file from
+  // the same origin into the destination state (read-only; practical miles only, never short).
+  app.get("/api/v1/dispatch/lane-mileage/reference", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const query = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        origin_city: z.string().trim().max(120).optional().default(""),
+        origin_state: z.string().trim().max(8).optional().default(""),
+        dest_state: z.string().trim().max(8).optional().default(""),
+      })
+      .safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    try {
+      return await withCompanyScope(authUser.uuid, query.data.operating_company_id, async (client) =>
+        listLaneMileageReference(client, query.data.operating_company_id, {
+          origin_city: query.data.origin_city,
+          origin_state: query.data.origin_state,
+          dest_state: query.data.dest_state,
+        })
+      );
+    } catch (err) {
+      req.log.warn({ err }, "lane_mileage_reference_failed");
+      return reply.code(503).send({
+        error: "lane_mileage_reference_failed",
+        message: "Could not load the lanes on file. Type the miles, or retry.",
       });
     }
   });

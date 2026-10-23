@@ -1,0 +1,108 @@
+#!/usr/bin/env node
+/**
+ * LEAD 443.265-A (owner-approved V3 boards 10-22-2026-LEAD-MOD-DESIGN-V3-Dispatch-BookLoad-{Modal,TripType,Spec};
+ * live defects measured in Chrome 10-22 9:50 PM CT). Same fields, same order, same engines — layout only:
+ *   R1  Load # is a 110px box with every helper line UNDER it (the label's 160px min-width spilled the hint
+ *       across "Previewed — assigned on save"); Load # and the rate-con upload sit in separate grid cells.
+ *   R2  Broker / Direct has its own content-sized grid cell (it overflowed a ¼ cell into Commodity).
+ *   R3  NB / TR / SB are three equal cards; NB shows Border crossing *, TR the tour line, SB both.
+ *   R4  Section C miles: source order 1 AlwaysTrack lane history → 2 Select from reference → 3 Type it;
+ *       the reference lists lanes on file into the same state (practical / trips / confidence) and never
+ *       offers short miles; Google practical / short / empty line UNDER each box.
+ *   R5  Every wizard input 32px; stop row 2 = City fills · State 64 · ZIP 88 · Appointment date 150 ·
+ *       Time · Time window; columns A/B top-aligned (no stretched white block under column A).
+ * --selftest plants each regression and requires a FAIL.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const D = "apps/frontend/src/pages/dispatch/components";
+const FILES = {
+  modal: `${D}/BookLoadModalV4.tsx`,
+  idBar: `${D}/book-load-v4/LiveLoadIdBar.tsx`,
+  border: `${D}/book-load-v4/BorderCrossingCaptureField.tsx`,
+  strip: `${D}/book-load-v4/MilesStrip.tsx`,
+  stops: `${D}/BookLoadStopsSection.tsx`,
+  service: "apps/backend/src/dispatch/lane-mileage.service.ts",
+};
+
+export function audit(s) {
+  const f = [];
+  const need = (rule, cond, msg) => {
+    if (!cond) f.push(`${rule}: ${msg}`);
+  };
+  // R1
+  need("R1", /flex w-full max-w-\[220px\] flex-col/.test(s.idBar), "the Load # bar is not a column (helper beside the box overlaps it)");
+  need("R1", /w-\[110px\] min-w-\[110px\] max-w-\[110px\][^"]*\[&_label\]:min-w-0/.test(s.idBar), "the 110px Load # box lets its label's min-width spill over the helper");
+  need("R1", /data-testid="book-load-id-row"/.test(s.modal) && /sm:grid-cols-\[220px_minmax\(0,1fr\)\]/.test(s.modal), "Load # and the rate-con upload are not separate grid cells");
+  // R2
+  need("R2", /md:grid-cols-\[max-content_minmax\(0,1\.4fr\)/.test(s.modal) && /data-testid="book-load-freight-row"/.test(s.modal), "Broker / Direct shares a ¼ cell with Commodity");
+  // R3
+  const banner = s.modal.slice(s.modal.indexOf('data-testid="trip-type-banner"'), s.modal.indexOf("{gateBanner ? ("));
+  need("R3", /grid grid-cols-1 gap-2 sm:grid-cols-3/.test(banner) && /trip-type-card-\$\{code\}/.test(banner), "NB / TR / SB are not three equal cards");
+  need("R3", /watchedTripType === "TR" \|\| watchedTripType === "SB" \?[\s\S]{0,200}trip-type-tour-line/.test(banner), "TR / SB do not show the tour line");
+  need("R3", /isCrossBorderTripType\(watchedTripType\) \?[\s\S]{0,40}<BorderCrossingCaptureField/.test(banner), "Border crossing is not rendered under the NB / SB cards");
+  need("R3", /Border crossing — port of entry/.test(s.border) && !/bg-\[#FFF7ED\]/.test(s.border), "Border crossing is not the board field (label + select + consequence line)");
+  // R4
+  need("R4", /\["AlwaysTrack lane history", "Select from reference", "Type it"\]/.test(s.strip), "the mileage source order is not AlwaysTrack → reference → type it");
+  need("R4", /data-testid="book-load-miles-reference-row"/.test(s.strip) && /onUseReferenceLane\(lane\)/.test(s.strip), "no Select-from-reference lanes");
+  need("R4", /export async function listLaneMileageReference\(/.test(s.service) && /lower\(dest_state\) = lower\(\$4\)/.test(s.service), "the reference does not read lanes on file into the same state");
+  const ref = s.service.slice(s.service.indexOf("export async function listLaneMileageReference("));
+  need("R4", !/short_miles/.test(ref), "the reference offers short miles from the catalog");
+  for (const id of ["book-load-google-reference-miles", "book-load-google-reference-short", "book-load-google-reference-empty"]) {
+    const at = s.strip.indexOf(`data-testid="${id}"`);
+    const grid = s.strip.indexOf('<div className="grid grid-cols-2 md:grid-cols-4">');
+    const gridEnd = s.strip.indexOf('{referenceLanes && laneState === "new"');
+    need("R4", at > grid && at < gridEnd && grid >= 0, `${id} is not under its box`);
+  }
+  // R5
+  need("R5", /\.blw-sec input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\):not\(\[type="hidden"\]\):not\(\[type="file"\]\):not\(\.dp-input\),\n\.blw-sec select\{height:32px\}/.test(s.modal), "wizard inputs are not 32px");
+  need("R5", /lg:grid-cols-\[minmax\(0,1fr\)_64px_88px_150px_104px_minmax\(0,0\.9fr\)\]/.test(s.stops), "stop row 2 is not City · State 64 · ZIP 88 · Appt 150 · Time · Time window");
+  need("R5", /"--ih-w-date": "150px", "--ih-h-field": "32px"/.test(s.stops) && /style=\{APPT_BOX_VARS\}/.test(s.stops), "the appointment date box is not 150 × 32");
+  need("R5", /grid grid-cols-1 items-start gap-3 lg:grid-cols-\[1\.05fr_1fr\]/.test(s.modal), "columns A/B stretch (white block under column A)");
+  return f;
+}
+
+function load() {
+  const out = {};
+  for (const [k, rel] of Object.entries(FILES)) out[k] = fs.readFileSync(path.join(ROOT, rel), "utf8");
+  return out;
+}
+
+if (process.argv.includes("--selftest")) {
+  const real = load();
+  const base = audit(real).length;
+  const plant = (key, from, to) => {
+    if (!real[key].includes(from)) return null;
+    return audit({ ...real, [key]: real[key].replace(from, to) }).length > base;
+  };
+  const cases = [
+    ["helper beside the Load # box FAILS", plant("idBar", "flex w-full max-w-[220px] flex-col", "flex flex-wrap items-end gap-3")],
+    ["Broker / Direct in a ¼ cell FAILS", plant("modal", "md:grid-cols-[max-content_minmax(0,1.4fr)", "md:grid-cols-4 x[")],
+    ["trip type as small buttons FAILS", plant("modal", "grid grid-cols-1 gap-2 sm:grid-cols-3", "mt-1 flex flex-wrap gap-2")],
+    ["border crossing outside the cards FAILS", plant("modal", "isCrossBorderTripType(watchedTripType) ? (\n              <BorderCrossingCaptureField", "false ? (\n              <BorderCrossingCaptureField")],
+    ["source order swapped FAILS", plant("strip", '["AlwaysTrack lane history", "Select from reference", "Type it"]', '["Type it", "AlwaysTrack lane history", "Select from reference"]')],
+    ["short miles offered from the catalog FAIL", plant("service", "id, origin_city, origin_state, dest_city, dest_state, practical_miles, n_practical, confidence", "id, origin_city, origin_state, dest_city, dest_state, practical_miles, short_miles, n_practical, confidence")],
+    ["Google line moved below the strip FAILS", plant("strip", '<div className="grid grid-cols-2 md:grid-cols-4">', '<div className="grid grid-cols-2 md:grid-cols-4 x">')],
+    ["28px inputs FAIL", plant("modal", ".blw-sec select{height:32px}", ".blw-sec select{height:28px}")],
+    ["equal City / State / ZIP FAIL", plant("stops", "lg:grid-cols-[minmax(0,1fr)_64px_88px_150px_104px_minmax(0,0.9fr)]", "lg:grid-cols-6")],
+    ["stretched column A FAILS", plant("modal", "grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]", "grid grid-cols-1 gap-3 lg:grid-cols-[1.05fr_1fr]")],
+  ];
+  let bad = 0;
+  for (const [n, ok] of cases) {
+    console.log(`  ${ok ? "✓" : "✗"} ${n}${ok === null ? " (plant anchor missing)" : ""}`);
+    if (!ok) bad += 1;
+  }
+  console.log(bad ? "verify-book-load-v3-layout --selftest FAIL" : `verify-book-load-v3-layout --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
+const failures = audit(load());
+if (failures.length) {
+  console.error(`verify-book-load-v3-layout: FAIL — ${failures.length}`);
+  for (const x of failures) console.error(`  ✗ ${x}`);
+  process.exit(1);
+}
+console.log("verify-book-load-v3-layout: OK — Load # helper under the box, Broker/Direct own cell, NB/TR/SB cards, miles source order + reference lanes, 32px stop rows (R1–R5)");

@@ -255,3 +255,78 @@ export async function resolveLaneMileage(
 
   return toResult(null, "New lane");
 }
+
+/**
+ * ROUND 443.265-A item 4 (V3-Dispatch-BookLoad-Modal, section C step 2 "Select from reference"): when the
+ * exact lane is not in AlwaysTrack history, list the lanes ON FILE from the same origin into the same
+ * destination STATE, so the dispatcher can pick the nearest one. Read-only; practical miles only — short
+ * miles are never offered from the catalog (verify-miles-shortest-never-autofilled-from-catalog).
+ */
+export type LaneMileageReferenceRow = {
+  lane_id: string;
+  origin_city: string;
+  origin_state: string;
+  dest_city: string;
+  dest_state: string;
+  practical_miles: number;
+  runs: number;
+  confidence: string | null;
+};
+
+export type LaneMileageReferenceResult = {
+  lanes_on_file: number;
+  lanes: LaneMileageReferenceRow[];
+};
+
+export async function listLaneMileageReference(
+  client: Queryable,
+  operatingCompanyId: string,
+  lookup: { origin_city: string; origin_state: string; dest_state: string },
+  limit = 12
+): Promise<LaneMileageReferenceResult> {
+  const total = await client.query<{ n: string }>(
+    `SELECT count(*)::text AS n FROM catalogs.lane_mileage WHERE operating_company_id = $1::uuid`,
+    [operatingCompanyId]
+  );
+  const lanesOnFile = Number(total.rows[0]?.n ?? 0);
+  const originCity = lookup.origin_city.trim();
+  const originState = lookup.origin_state.trim();
+  const destState = lookup.dest_state.trim();
+  if (!originCity || !originState || !destState) return { lanes_on_file: lanesOnFile, lanes: [] };
+  const rows = await client.query<{
+    id: string;
+    origin_city: string;
+    origin_state: string;
+    dest_city: string;
+    dest_state: string;
+    practical_miles: string | number;
+    n_practical: string | number | null;
+    confidence: string | null;
+  }>(
+    `SELECT DISTINCT ON (lower(dest_city))
+            id, origin_city, origin_state, dest_city, dest_state, practical_miles, n_practical, confidence
+       FROM catalogs.lane_mileage
+      WHERE operating_company_id = $1::uuid
+        AND lower(origin_city) = lower($2)
+        AND lower(origin_state) = lower($3)
+        AND lower(dest_state) = lower($4)
+        AND practical_miles IS NOT NULL
+        AND practical_miles > 0
+      ORDER BY lower(dest_city), n_practical DESC NULLS LAST`,
+    [operatingCompanyId, originCity, originState, destState]
+  );
+  const lanes = rows.rows
+    .map((r) => ({
+      lane_id: r.id,
+      origin_city: r.origin_city,
+      origin_state: r.origin_state,
+      dest_city: r.dest_city,
+      dest_state: r.dest_state,
+      practical_miles: Number(r.practical_miles),
+      runs: intOrZero(r.n_practical),
+      confidence: r.confidence,
+    }))
+    .sort((a, b) => b.runs - a.runs)
+    .slice(0, limit);
+  return { lanes_on_file: lanesOnFile, lanes };
+}
