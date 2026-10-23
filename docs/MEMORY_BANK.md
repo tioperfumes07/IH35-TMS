@@ -505,6 +505,20 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** remaining Fuel tabs (Planner chrome / Settings / Compliance /
   Loves / Relay inbox) · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
 
+### Active Architectural Decisions — Fuel Compliance V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getFuelComplianceSummary(companyId, complianceDriverId)` (active-route
+  driver FK). No GL / posting / recommendation math change.
+- **V3 board chrome (Compliance tab + planner embed):** identity `V3KpiTile` strip Fleet followed YTD ·
+  Driver followed YTD · Fleet tracked · Sent to driver (`data-fuel-compliance-v3-kpis`) from the same
+  summary fields. `V3Panel` **Compliance Tracker** (`fuel-compliance-v3-panel`) wraps the detail rows
+  (unavailable still discloses "Not available", never a false zero).
+- **Guard piggyback:** `verify-fuel-planner-active-driver-compliance.mjs` (step 16961 ≡1 CC-1) — V3
+  markers + selftest mutations (driver-binding asserts retained). SURFACE-BREACH for CC-1 guard.
+  No new EVEN claim.
+- **Still open under 443.250:** remaining Fuel tabs (Planner chrome / Settings / Loves / Relay inbox)
+  · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
 - **Option 2 (owner):** backfill papers an RPL facility from existing bank categorizations via
