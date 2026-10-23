@@ -72,8 +72,46 @@ function waitingOnReason(r: TourListRow): string {
 const fmt = (c: number) => formatUsdCents(c);
 const DASH = "\u2014";
 
+/** Closed board: "No number" is red when a closed row still lacks AlwaysTrack (443.252 measured). */
+function SettlementCell({ row }: { row: TourListRow }) {
+  const label = tourLabel(row);
+  const noNumber = label === "No number";
+  return (
+    <EntityLink
+      kind="settlement"
+      id={row.settlement_id}
+      label={label}
+      className={noNumber ? "font-bold text-[#B91C1C]" : "ldt-link font-semibold"}
+      data-testid={noNumber ? "setl-tour-no-number" : undefined}
+    />
+  );
+}
+
+/** Closed board: Company settlement opens its statement; else amber "not opened". */
+function CompanySettlementCell({ row }: { row: TourListRow }) {
+  const id = row.company_settlement_id;
+  const label = (row.company_settlement_display_id ?? "").trim() || "Company settlement";
+  if (id) {
+    return (
+      <EntityLink
+        kind="company_settlement"
+        id={id}
+        label={label}
+        className="ldt-link font-semibold"
+        data-testid="setl-tour-company-link"
+      />
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5" data-testid="setl-tour-company-not-opened">
+      <span className="inline-block h-1.5 w-1.5 rounded-sm bg-[#B45309]" aria-hidden />
+      <span className="text-[#B45309]">not opened</span>
+    </span>
+  );
+}
+
 const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonly TourListRow[]): ParityColumn<TourListRow>[] => [
-  { key: "tour", label: "Settlement", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => tourLabel(r), render: r => <EntityLink kind="settlement" id={r.settlement_id} label={tourLabel(r)} className="ldt-link font-semibold" /> },
+  { key: "tour", label: "Settlement", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => tourLabel(r), render: r => <SettlementCell row={r} /> },
   // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement, same as
   // every other surface this rule is applied to — before Driver/Unit, not after.
   ...tourLoadColumns("setl-tour-col", rows),
@@ -138,8 +176,9 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
     // SETL-POST — kept (Rule 07); board Open focuses Ready + Waiting on; Post stays for verify-and-post.
     { key: "post", label: "Post", testId: "setl-tour-col-post", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => <PostTourAction row={r} companyId={companyId} /> } as ParityColumn<TourListRow>,
   ] : [
-    { key: "net", label: "Driver net", testId: "setl-tour-col-driver-net", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : fmt(r.driver_net_cents) } as ParityColumn<TourListRow>,
-    { key: "company", label: "Company settlement", testId: "setl-tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn" data-testid="setl-tour-company-not-opened">not opened</span> } as ParityColumn<TourListRow>,
+    // ROUND 443.274-C Closed board — Driver net bold; Company settlement links its statement.
+    { key: "net", label: "Driver net", testId: "setl-tour-col-driver-net", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums font-bold", minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => r.driver_net_cents == null ? DASH : <span className="font-bold tabular-nums">{fmt(r.driver_net_cents)}</span> } as ParityColumn<TourListRow>,
+    { key: "company", label: "Company settlement", testId: "setl-tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => <CompanySettlementCell row={r} /> } as ParityColumn<TourListRow>,
   ]),
 ];
 
@@ -308,7 +347,11 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           (all loads delivered · documents · miles locked · fuel attributed · advances matched · deductions
           confirmed). Waiting on = the one real reason, per row.
         </p>
-      ) : null}
+      ) : (
+        <p className="text-xs text-[#6B7280]" data-testid="settlements-closed-board-footnote">
+          Settlement number and company settlement number both open their statements.
+        </p>
+      )}
     </div>
   );
 }
