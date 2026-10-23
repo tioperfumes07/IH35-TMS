@@ -36,7 +36,7 @@ const CHECKS = [
   },
   {
     name: "Driver files mounts drivers list + profile",
-    file: "apps/frontend/src/pages/safety/tabs/DriverFilesTab.tsx",
+    file: "apps/frontend/src/pages/safety/tabs/DriverActivityTab.tsx",
     pattern: /<DriversListPage[\s\S]*onOpenProfile/,
   },
   {
@@ -46,7 +46,7 @@ const CHECKS = [
   },
   {
     name: "Driver files links to training records",
-    file: "apps/frontend/src/pages/safety/tabs/DriverFilesTab.tsx",
+    file: "apps/frontend/src/pages/safety/tabs/DriverActivityTab.tsx",
     pattern: /to="\/safety\/training\/records"/,
   },
 ];

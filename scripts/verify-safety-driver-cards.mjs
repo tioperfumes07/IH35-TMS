@@ -29,7 +29,7 @@ function read(rel) {
 }
 
 const CARDS = "apps/frontend/src/components/safety/DriverSafetyCards.tsx";
-const TAB = "apps/frontend/src/pages/safety/tabs/DriverFilesTab.tsx";
+const TAB = "apps/frontend/src/pages/safety/tabs/DriverActivityTab.tsx";
 const FILTER = "apps/frontend/src/components/safety/SafetyDashboardFilter.tsx";
 const LAYOUT = "apps/frontend/src/pages/safety/SafetyLayout.tsx";
 

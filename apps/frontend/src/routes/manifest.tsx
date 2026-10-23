@@ -213,6 +213,7 @@ const BankAccountDetailPage = React.lazy(() => import("../pages/banking/BankAcco
 const BankAccountVisibilityPage = React.lazy(() => import("../pages/banking/BankAccountVisibilityPage").then((m) => ({ default: m.BankAccountVisibilityPage })));
 const CashGlSetupPage = React.lazy(() => import("../pages/banking/CashGlSetupPage").then((m) => ({ default: m.CashGlSetupPage })));
 import { SafetyLayout } from "../pages/safety/SafetyLayout";
+const DriverActivityTab = React.lazy(() => import("../pages/safety/tabs/DriverActivityTab").then((m) => ({ default: m.DriverActivityTab })));
 const EldAuditTrailViewer = React.lazy(() => import("../pages/safety/eld/EldAuditTrailViewer").then((m) => ({ default: m.EldAuditTrailViewer })));
 const DashcamViewerPage = React.lazy(() =>
   import("../pages/safety/DashcamViewerPage").then((m) => ({ default: m.DashcamViewerPage })),
@@ -2102,6 +2103,7 @@ export const ROUTES = React.Children.toArray(
               Absolute /safety/* path= strings caused dual-registration drift with sibling
               relative routes; URLs unchanged (/safety/home, /safety/idvr, …). */}
           <Route path="driver-files" element={<DriverFilesTab />} />
+          <Route path="driver-activity" element={<DriverActivityTab />} />
           <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
           <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
           <Route path="training/programs" element={<TrainingProgramsTab />} />

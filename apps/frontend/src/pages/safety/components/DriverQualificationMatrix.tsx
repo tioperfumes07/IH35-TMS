@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listAllDrivers } from "../../../api/mdata";
 import { getSafetyKpis } from "../../../api/safety";
-import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { V3Panel } from "../../../components/v3/V3Panel";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorState } from "../../../components/ListErrorState";
@@ -45,12 +46,12 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
   const ratio = (key: Cohort) => drivers ? `${drivers.filter((driver) => inCohort(driver, key)).length} of ${drivers.length}` : null;
   return <section className="min-w-0 space-y-3" aria-label="Driver qualification files">
     <div className="grid min-w-0 grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-      <DrillKpiCard label="Active drivers" value={drivers?.length} onClick={() => setCohort("all")} active={cohort === "all"} />
-      <DrillKpiCard label="DOT medical date on file" value={ratio("medical")} onClick={() => setCohort("medical")} active={cohort === "medical"} />
-      <DrillKpiCard label="Emergency contact" value={ratio("contact")} onClick={() => setCohort("contact")} active={cohort === "contact"} />
-      <DrillKpiCard label="CDL date on file" value={ratio("cdl")} onClick={() => setCohort("cdl")} active={cohort === "cdl"} />
-      <DrillKpiCard label="Drivers with open fines" value={kpis.isError ? null : countValue(kpis.data?.drivers_with_open_fines)} onClick={() => setSummarySource("fines")} hint="View both source registers" />
-      <DrillKpiCard label="Critical integrity alerts" value={kpis.isError ? null : countValue(kpis.data?.critical_integrity_alerts)} onClick={() => setSummarySource("alerts")} hint="View count definition and source" />
+      <V3KpiTile label="Active drivers" value={drivers ? String(drivers.length) : "—"} onClick={() => setCohort("all")} />
+      <V3KpiTile label="DOT medical on file" value={ratio("medical") ?? "—"} title="Recorded expiration date, not verified document completion" onClick={() => setCohort("medical")} />
+      <V3KpiTile label="Emergency contact" value={ratio("contact") ?? "—"} onClick={() => setCohort("contact")} />
+      <V3KpiTile label="CDL date on file" value={ratio("cdl") ?? "—"} onClick={() => setCohort("cdl")} />
+      <V3KpiTile label="Open fines" value={kpis.isError || countValue(kpis.data?.drivers_with_open_fines) == null ? "—" : `${kpis.data?.drivers_with_open_fines} drivers`} onClick={() => setSummarySource("fines")} title="View both fine source registers" />
+      <V3KpiTile label="Critical integrity alerts" value={kpis.isError || countValue(kpis.data?.critical_integrity_alerts) == null ? "—" : String(kpis.data?.critical_integrity_alerts)} tone="red" onClick={() => setSummarySource("alerts")} title="View count definition and source" />
     </div>
     {summarySource ? <aside className="rounded-sm border border-slate-200 bg-white p-3 text-xs" aria-label="Summary source registers">
       {summarySource === "fines" ? <>
@@ -63,13 +64,9 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
       <button className="mt-2 block underline" type="button" onClick={() => setSummarySource(null)}>Close source details</button>
     </aside> : null}
     {kpis.isError ? <p role="alert" className="text-xs text-slate-600">Safety summary unavailable. Open the source records or retry the page.</p> : null}
-    <div className="min-w-0 overflow-hidden rounded-sm border border-slate-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
-        <h3 className="text-xs font-bold uppercase text-slate-700">Driver qualification matrix</h3>
-        <button type="button" className="text-xs underline" onClick={() => setCohort("all")}>View all active drivers →</button>
-      </div>
+    <V3Panel title="Driver qualification matrix" viewAllLabel="View all active drivers →" onViewAll={() => setCohort("all")}
+      footer="Dates indicate recorded expirations, not verified document completion. Missing information can be added in the driver record. This read-only view does not block dispatch, booking, settlement or pay. DQ-file completion is not supplied by the roster; review the source records.">
       <ParityTable key={`${companyId}:${cohort}`} columns={columns} rows={(drivers ?? []).filter((driver) => inCohort(driver, cohort))} rowKey={(row) => row.id} loading={roster.isPending} />
-      <p className="border-t border-slate-200 px-3 py-2 text-xs text-slate-600">Dates indicate recorded expirations, not verified document completion. Missing information can be added in the driver record. This read-only view does not block dispatch, booking, settlement or pay. DQ-file completion is not supplied by the roster; review the source records.</p>
-    </div>
+    </V3Panel>
   </section>;
 }

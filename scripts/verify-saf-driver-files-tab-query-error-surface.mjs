@@ -8,7 +8,7 @@ import path from "node:path";
 import process from "node:process";
 
 const LABEL = "verify-saf-driver-files-tab-query-error-surface";
-const FILE = "apps/frontend/src/pages/safety/tabs/DriverFilesTab.tsx";
+const FILE = "apps/frontend/src/pages/safety/tabs/DriverActivityTab.tsx";
 const NEEDLES = [
   "ListErrorState",
   "trainingQuery.isError",
