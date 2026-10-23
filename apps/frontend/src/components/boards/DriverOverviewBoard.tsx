@@ -15,6 +15,7 @@ import { DriverSamsaraDuplicateBanner } from "../driver-profile/DriverSamsaraDup
 import { DriverEditForm } from "../../pages/drivers/DriverEditForm";
 import {
   DRIVER_PROFILE_MORE_TABS,
+  DRIVER_PROFILE_BOARD_LABELS,
   DRIVER_PROFILE_STRIP_TABS,
   driverProfileTabHref,
   parseDriverProfileTab,
@@ -71,7 +72,7 @@ function ProfileTabStrip({ driverId, activeTab }: { driverId: string; activeTab:
           to={driverProfileTabHref(driverId, label)}
           aria-current={activeTab === label ? "page" : undefined}
         >
-          {label}
+          {DRIVER_PROFILE_BOARD_LABELS[label] ?? label}
         </Link>
       ))}
       <div className="relative">
@@ -110,7 +111,7 @@ export function DriverOverviewBoard(props: {
   driverId: string;
   /** When true, the page owns the identity header. The tab strip still renders here. */
   hideChrome?: boolean;
-  /** V3 landing composition; retain the existing financial/history cards in a disclosure. */
+  /** V3 landing composition replaces the legacy overview; other workflows have their own tabs. */
   compactOverview?: ReactNode;
   children?: ReactNode;
 }) {
@@ -121,8 +122,14 @@ export function DriverOverviewBoard(props: {
   const q = useQuery({
     queryKey: ["driver-overview", props.operatingCompanyId, props.driverId],
     queryFn: () => apiRequest<Overview>(`/api/v1/mdata/boards/drivers/${props.driverId}/overview?operating_company_id=${props.operatingCompanyId}`),
-    enabled: activeTab !== "Edit",
+    enabled: activeTab !== "Edit" && !(activeTab === "Overview" && props.compactOverview != null),
   });
+  if (activeTab === "Overview" && props.compactOverview != null) {
+    return <div className="pb" data-testid="driver-overview-board" data-active-tab={activeTab}>
+      <ProfileTabStrip driverId={props.driverId} activeTab={activeTab} />
+      {props.compactOverview}
+    </div>;
+  }
   if (activeTab === "Edit") {
     return (
       <div className="pb" data-testid="driver-overview-board" data-active-tab="Edit">

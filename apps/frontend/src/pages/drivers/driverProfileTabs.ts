@@ -2,32 +2,40 @@
  * DRV-F420 / DRV-F416 / DRV-F421 — approved driver profile tabs
  * (10-05-2026-SPEC-DRIVER-PROFILE-FLEET.md + DriverDetail.dc.html).
  *
- * 12 named on the strip. 5 behind More. Edit is ?tab=edit on the same shell.
+ * 443.280 board tabs on the strip; prior workflows remain behind More. Edit stays on the same shell.
  * Parsed by one exported function shaped like parseDriverSubnav.
  */
 
 export const DRIVER_PROFILE_STRIP_TABS = [
   "Overview",
+  "QBO mapping",
+  "Operations",
+  "Pay & escrow",
+  "Equipment",
+  "Safety file",
+  "Documents",
+  "Audit history",
+  "ELD edits",
+  "Legal matters",
+  "Loads",
+] as const;
+
+export const DRIVER_PROFILE_MORE_TABS = [
   "Settlements",
   "Additional payments",
   "Cash advances",
-  "Pay & escrow",
-  "Loads",
   "Fuel",
   "Reports & damage",
   "Complaints",
   "Safety & accidents",
-  "Documents",
   "Driver disputes",
 ] as const;
 
-export const DRIVER_PROFILE_MORE_TABS = [
-  "Safety file",
-  "ELD edits",
-  "Legal matters",
-  "QBO mapping",
-  "Audit history",
-] as const;
+export const DRIVER_PROFILE_BOARD_LABELS: Record<string, string> = {
+  Overview: "Profile", "QBO mapping": "QBO Mapping", "Pay & escrow": "Earnings & Debt",
+  Equipment: "Equipment Assignments", Loads: "Load History", "Safety file": "Safety File",
+  "Audit history": "Audit History", "ELD edits": "ELD Edits", "Legal matters": "Legal Matters",
+};
 
 export const DRIVER_PROFILE_TABS = [
   ...DRIVER_PROFILE_STRIP_TABS,
@@ -41,6 +49,8 @@ export type DriverProfileTab = DriverProfileNamedTab | "Edit";
 
 export const DRIVER_PROFILE_TAB_QUERY: Record<DriverProfileTab, string> = {
   Overview: "overview",
+  Operations: "operations",
+  Equipment: "equipment",
   Settlements: "settlements",
   "Additional payments": "additional_payments",
   "Cash advances": "cash_advances",
@@ -77,7 +87,7 @@ const ALIASES: Record<string, DriverProfileTab> = {
   advances: "Cash advances",
   payesc: "Pay & escrow",
   escrow: "Pay & escrow",
-  operations: "Pay & escrow",
+  operations: "Operations",
   damage: "Reports & damage",
   reports: "Reports & damage",
   safety: "Safety & accidents",

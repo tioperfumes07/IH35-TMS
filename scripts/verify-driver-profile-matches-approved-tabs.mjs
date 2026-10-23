@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * DRV-F420 — surviving driver profile matches the approved 12 strip + 5 More tabs,
+ * 443.280 — driver profile matches the approved board strip + preserved More workflows,
  * name-click opens it, tab is URL-synced, and Drivers.tsx does not stack two
  * NavyPageSubNav rows with the same label. /edit redirects to ?tab=edit.
  *
@@ -15,25 +15,27 @@ const LABEL = "verify-driver-profile-matches-approved-tabs";
 
 const APPROVED_STRIP = [
   "Overview",
+  "QBO mapping",
+  "Operations",
+  "Pay & escrow",
+  "Equipment",
+  "Safety file",
+  "Documents",
+  "Audit history",
+  "ELD edits",
+  "Legal matters",
+  "Loads",
+];
+
+const APPROVED_MORE = [
   "Settlements",
   "Additional payments",
   "Cash advances",
-  "Pay & escrow",
-  "Loads",
   "Fuel",
   "Reports & damage",
   "Complaints",
   "Safety & accidents",
-  "Documents",
   "Driver disputes",
-];
-
-const APPROVED_MORE = [
-  "Safety file",
-  "ELD edits",
-  "Legal matters",
-  "QBO mapping",
-  "Audit history",
 ];
 
 const PATHS = {
@@ -131,7 +133,7 @@ function audit(files) {
 
 function selftest() {
   const good = {
-    tabs: `export const DRIVER_PROFILE_STRIP_TABS = [\n  "Overview",\n  "Settlements",\n  "Additional payments",\n  "Cash advances",\n  "Pay & escrow",\n  "Loads",\n  "Fuel",\n  "Reports & damage",\n  "Complaints",\n  "Safety & accidents",\n  "Documents",\n  "Driver disputes",\n] as const;\nexport const DRIVER_PROFILE_MORE_TABS = [\n  "Safety file",\n  "ELD edits",\n  "Legal matters",\n  "QBO mapping",\n  "Audit history",\n] as const;\nexport function parseDriverProfileTab(raw: string | null | URLSearchParams): DriverProfileTab { return "Overview"; }`,
+    tabs: `export const DRIVER_PROFILE_STRIP_TABS = [${APPROVED_STRIP.map(label => JSON.stringify(label) + ",").join(" ")}] as const;\nexport const DRIVER_PROFILE_MORE_TABS = [${APPROVED_MORE.map(label => JSON.stringify(label) + ",").join(" ")}] as const;\nexport function parseDriverProfileTab(raw: string | null | URLSearchParams): DriverProfileTab { return "Overview"; }`,
     profile: `const activeTab = parseDriverProfileTab(searchParams);\n`,
     board: `const activeTab = parseDriverProfileTab(searchParams);\nDRIVER_PROFILE_STRIP_TABS.map((label) => label);\nDRIVER_PROFILE_MORE_TABS.map((label) => label);`,
     roster: `onRowClick={(row) => navigate(\`/drivers/\${row.id}\`)}\n<NavyPageSubNav items={DRIVERS_SUBNAV.map((tab) => ({ label: tab.label, to: DRIVERS_SUBTAB_PATH[tab.id] }))} />\n<SegmentedControl testId="drivers-status-chips" />`,
@@ -151,6 +153,10 @@ function selftest() {
     manifest: `function DriverDetailRoute() { return <DriverDetailPage />; }`,
   };
   const badFails = audit(bad);
+  for (const label of [...APPROVED_STRIP, ...APPROVED_MORE]) {
+    const missingTab = { ...good, tabs: good.tabs.replace(JSON.stringify(label) + ",", "") };
+    if (!audit(missingTab).some(failure => failure.startsWith("RULE 1:"))) throw new Error(`Missing tab escaped: ${label}`);
+  }
   if (badFails.length < 4) {
     console.error(`${LABEL} SELFTEST FAIL — bad fixture not caught (${badFails.length} failures)`);
     process.exit(1);
@@ -170,5 +176,5 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — approved 12+5 tabs, name-click, URL-sync, one NavyPageSubNav, edit→?tab=edit`);
+console.log(`${LABEL}: OK — approved board tabs + preserved workflows, name-click, URL-sync, one NavyPageSubNav, edit→?tab=edit`);
 process.exit(0);

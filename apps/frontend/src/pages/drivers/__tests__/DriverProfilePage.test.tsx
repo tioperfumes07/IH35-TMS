@@ -176,8 +176,8 @@ describe("DriverProfilePage", () => {
     vi.spyOn(safetyApi, "listDriverQualificationItems").mockResolvedValue({ items: [] } as never);
   });
 
-  it("renders Overview sections under the tab strip (C-20)", async () => {
-    renderPage();
+  it("preserves the full operations workflow on its dedicated tab", async () => {
+    renderPage("/drivers/d-test-1?tab=operations");
     expect(await screen.findByTestId("dp-tab-overview")).toBeTruthy();
     expect(screen.getByTestId("driver-overview-board-stub")).toBeTruthy();
     expect(screen.getByTestId("driver-profile-kpi-strip")).toBeTruthy();
@@ -203,7 +203,15 @@ describe("DriverProfilePage", () => {
     expect(screen.getByTestId("dp-section-11-documents")).toBeTruthy();
   });
 
-  it("renders Overview scaffold for a sparse driver without console errors", async () => {
+  it("does not mount legacy operations or KPI sections on the profile landing", async () => {
+    renderPage();
+    expect(await screen.findByTestId("driver-overview-board-stub")).toBeTruthy();
+    expect(screen.queryByTestId("driver-profile-kpi-strip")).toBeNull();
+    expect(screen.queryByTestId("dp-tab-overview")).toBeNull();
+    expect(document.querySelector("details")).toBeNull();
+  });
+
+  it("renders Operations for a sparse driver without console errors", async () => {
     const sparseDriver = { id: "d-sparse", first_name: null, last_name: null, status: "Active" };
     const sparseAggregate = {
       driver: sparseDriver,
@@ -225,7 +233,7 @@ describe("DriverProfilePage", () => {
 
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
-      renderPage();
+      renderPage("/drivers/d-test-1?tab=operations");
       expect(await screen.findByTestId("dp-section-1-identity")).toBeTruthy();
       for (const id of [
         "dp-section-2-license",

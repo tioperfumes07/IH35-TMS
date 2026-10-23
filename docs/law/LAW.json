@@ -1,5 +1,12 @@
 [
   {
+    "id": "R443-280-BOARD-NO-LEGACY-LAYERS",
+    "title": "Approved Safety, Maintenance and Driver Profile boards replace legacy bodies; workflows remain on dedicated routes",
+    "source_file": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+    "guard": "scripts/verify-board-page-no-legacy-sections.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "R443-213-USMCA-LIVE-DOCUMENT-STATE",
     "title": "Every USMCA settlement and driver bill has consistent void status and timestamps; zero baseline",
     "source_file": "apps/backend/src/driver-finance/settlement-void-state.service.ts",
