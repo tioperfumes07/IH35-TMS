@@ -22,6 +22,7 @@ import { companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
 import { insuranceTypeLabel } from "../../../lib/insurance-type-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 import { formatUsdCents } from "../../../utils/qboFormat";
 
 const thStyle: CSSProperties = {
@@ -383,7 +384,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                           row.carrier
                         )}
                       </td>
-                      <td style={{ ...tdStyle, textAlign: "right" }} className="tabular-nums">
+                      <td className={QBO_MONEY_CELL_CLASS} style={{ ...tdStyle, textAlign: "right" }}>
                         {formatUsdCents(row.premiumCents)}
                       </td>
                       <td style={{ ...tdStyle, textAlign: "right" }} className="tabular-nums">
@@ -395,10 +396,10 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 {premiumRows.length > 0 ? (
                   <tr>
                     <td style={{ ...tdStyle, fontWeight: 700, borderBottom: "none" }}>Total</td>
-                    <td style={{ ...tdStyle, borderBottom: "none" }} />
+                    <td style={{ ...tdStyle, borderBottom: "none" }}>{""}</td>
                     <td
+                      className={QBO_MONEY_CELL_CLASS}
                       style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}
-                      className="tabular-nums"
                     >
                       {formatUsdCents(annualPremiumCents)}
                     </td>
