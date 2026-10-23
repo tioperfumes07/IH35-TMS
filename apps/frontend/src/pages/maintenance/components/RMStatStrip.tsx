@@ -23,7 +23,7 @@ function count(source: Record<string, unknown>, key: string): number | null {
 export function RMStatStrip({ kpis }: Props) {
   const k = kpis as Record<string, unknown>;
   const mtdCostRaw = count(k, "mtd_repair_cost") ?? count(k, "open_dollars");
-  const mtdCost = mtdCostRaw === null ? null : `$${mtdCostRaw.toLocaleString()}`;
+  const mtdCost = mtdCostRaw === null ? null : mtdCostRaw.toLocaleString("en-US", { style: "currency", currency: "USD" });
   const partsLowStock = count(k, "parts_low_stock");
 
   // C-36 — drop Open / In Progress / Awaiting Parts / Severe tiles: those four duplicate the

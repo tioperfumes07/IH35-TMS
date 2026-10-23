@@ -17,10 +17,11 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { formatDateUS } from "../../lib/formatDate";
 
 const ALERT_TYPE_LABEL: Record<string, string> = { brake_wear: "Brake wear", tire_tread: "Tire tread" };
 
-export function PredictiveAlertsPage() {
+export function PredictiveAlertsPage({ compact = false }: { compact?: boolean } = {}) {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
@@ -106,7 +107,7 @@ export function PredictiveAlertsPage() {
         key: "projected_failure_date",
         label: "Projected date",
         sortable: true,
-        render: (row) => new Date(row.projected_failure_date).toLocaleDateString(),
+        render: (row) => formatDateUS(row.projected_failure_date),
       },
       { key: "days_remaining", label: "Days left", sortable: true, render: (row) => row.days_remaining },
       {
@@ -163,10 +164,10 @@ export function PredictiveAlertsPage() {
 
   return (
     <div className="space-y-4" data-testid="maint-predictive-alerts-page">
-      <PageHeader
+      {!compact ? <PageHeader
         title="At Risk"
         subtitle="Brake and tire wear projections nearing their replacement threshold — catch it in the shop, not on the road."
-      />
+      /> : null}
       <div className="flex items-center justify-end" data-predictive-alerts-filter-toolbar="collapsed">
         <CollapsedListFilters
           activeFilterCount={stateFilter !== "open" ? 1 : 0}
@@ -202,10 +203,10 @@ export function PredictiveAlertsPage() {
         <ParityTable
           title="Predictive maintenance alerts"
           rows={rows}
-          columns={columns}
+          columns={compact ? columns.map((column) => ({ ...column, defaultHidden: !["unit_id", "alert_type", "current_measure", "projected_failure_date", "work_order_id", "actions"].includes(String(column.key)) })) : columns}
           rowKey={(row) => row.id}
           loading={q.isPending}
-          storageKey="maintenance-predictive-alerts"
+          storageKey={compact ? "maintenance-home-predictive-alerts" : "maintenance-predictive-alerts"}
           emptyText="No predictive alerts in this queue."
           exportFilename="predictive-alerts"
           tableTestId="maint-predictive-alerts-table"

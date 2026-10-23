@@ -47,6 +47,7 @@ import { MaintenanceAlertsCard } from "./components/MaintenanceAlertsCard";
 import { PartsInventoryTable } from "./components/PartsInventoryTable";
 import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
+import { FleetHealthLine } from "./components/FleetHealthLine";
 import { RMStatStrip } from "./components/RMStatStrip";
 import { RoadServiceActivePanel } from "./components/RoadServiceActivePanel";
 import { RecentActivityRow } from "./components/RecentActivityRow";
@@ -476,16 +477,18 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       ) : null}
 
       {tab === "rm_status_board" ? (
-        // Approved rm-status-board.html: board LEFT + a compact ~168-180px right sidebar with
-        // PM Countdown / PM Alerts / DTC / Road Service Active. Single-column stack on small screens.
+        // 443.267 V3: fleet health left; compact maintenance monitors on the right.
         <div
           className="space-y-2"
           data-testid="rm-status-board"
           data-maintenance-tab="rm_status_board"
         >
           <RMStatStrip kpis={kpis} />
-          <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_180px]">
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_230px]">
           <div className="min-w-0">
+            <FleetHealthLine companyId={companyId} />
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs">Work-order workflow</summary>
             {rmStatusQuery.isError ? (
               <ListErrorState
                 title="Couldn't load R&M status board"
@@ -525,6 +528,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 </div>
               </div>
             ) : null}
+            </details>
           </div>
           <aside className="flex flex-col gap-2">
             {companyId ? (
@@ -541,6 +545,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             ) : null}
             {companyId ? <MaintEnginesStatusWidget operatingCompanyId={companyId} /> : null}
             {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} compact /> : null}
+            <details>
+              <summary className="cursor-pointer text-xs">Other maintenance monitors</summary>
             {companyId ? (
               <DtcAutoWorkOrdersCard operatingCompanyId={companyId} compact onOpen={(id) => setSelectedWorkOrderId(id)} />
             ) : null}
@@ -550,6 +556,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 onOpen={(id) => setSelectedWorkOrderId(id)}
               />
             ) : null}
+            </details>
             {triageQuery.isError ? (
               <ListErrorState
                 title="Couldn't load in-transit triage queue"
@@ -583,12 +590,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           {/* C-36 — fold Arriving Soon + At Risk into Home (no peer tabs). */}
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="maintenance-home-folded-panels">
             <div data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
-              <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Arriving Soon</h3>
-              <ArrivingSoonPage operatingCompanyId={companyId} />
+              <h3 className="mb-1 text-xs font-bold text-slate-700">Arriving soon — to the Laredo yard</h3>
+              <ArrivingSoonPage operatingCompanyId={companyId} compact />
             </div>
             <div data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
-              <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">At Risk</h3>
-              <PredictiveAlertsPage />
+              <h3 className="mb-1 text-xs font-bold text-slate-700">At risk — brakes &amp; tires</h3>
+              <PredictiveAlertsPage compact />
             </div>
           </div>
         </div>

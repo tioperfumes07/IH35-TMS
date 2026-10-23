@@ -5,6 +5,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { formatDateUS } from "../../../lib/formatDate";
 
 type Props = {
   recent: WorkOrder[];
@@ -21,7 +22,7 @@ type Props = {
 };
 
 function money(value: unknown) {
-  return `$${Number(value ?? 0).toFixed(2)}`;
+  return value == null ? "Unavailable" : Number(value).toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
 function Table({
@@ -56,6 +57,9 @@ function Table({
         ),
       },
       { key: "source_type", label: "Source", sortable: true, render: (row) => row.source_type ?? "—" },
+      { key: "description", label: "Job", render: (row) => row.description || "—" },
+      { key: "closed_at", label: "Closed", sortable: true, render: (row) => formatDateUS(row.closed_at) || "—" },
+      { key: "duration_seconds", label: "Downtime", render: (row) => row.duration_seconds == null ? "Unavailable" : `${(row.duration_seconds / 3600).toLocaleString("en-US", { maximumFractionDigits: 1 })} h` },
       {
         key: "unit_number",
         label: "Unit",
@@ -93,9 +97,9 @@ function Table({
       },
       {
         key: "opened_at",
-        label: "Created",
+        label: "Opened",
         sortable: true,
-        render: (row) => (row.opened_at ? new Date(row.opened_at).toLocaleString() : "—"),
+        render: (row) => formatDateUS(row.opened_at) || "—",
       },
       {
         key: "action",
@@ -122,7 +126,15 @@ function Table({
         <ParityTable
           title="Recent work order activity"
           rows={rows}
-          columns={columns}
+          columns={(() => {
+            const visible = title === "Recently Completed"
+              ? ["display_id", "unit_number", "closed_at", "total_actual_cost", "duration_seconds"]
+              : ["display_id", "unit_number", "opened_at", "description", "status"];
+            return [
+              ...visible.map((key) => columns.find((column) => column.key === key)!),
+              ...columns.filter((column) => !visible.includes(String(column.key))).map((column) => ({ ...column, defaultHidden: true })),
+            ];
+          })()}
           rowKey={(row) => row.id}
           loading={fetching && rows.length === 0}
           storageKey={storageKey}
