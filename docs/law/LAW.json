@@ -1111,5 +1111,19 @@
     "source_file": "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts",
     "guard": "scripts/verify-revrec-latch-fires-on-bulk-invoice-issuance.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443252-GRAPHIC-DRILL-CONTRACT",
+    "title": "V3 numeric graphics including settlement boards declare consumed record/filter drill contracts; source verification is not live total parity",
+    "source_file": "AGENTS.md",
+    "guard": "scripts/verify-steps/18693-verify-every-graphic-number-clicks-through.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-443252-DESIGN-HEX-TOKENS",
+    "title": "V3 and changed frontend components contain no hex color literals outside the canonical token file",
+    "source_file": "AGENTS.md",
+    "guard": "scripts/verify-steps/18709-verify-design-tokens-only.mjs",
+    "type": "enforced"
   }
 ]
