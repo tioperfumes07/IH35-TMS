@@ -81,6 +81,11 @@ export async function repointAll(
   to: string
 ): Promise<RepointOutcome[]> {
   const out: RepointOutcome[] = [];
+  // Some child tables (e.g. accounting.expense_lines.driver_id) have a trigger that checks their parent
+  // (accounting.expenses.driver_uuid) must already point at the same value. When the catalog returns
+  // child before parent (alphabetical ORDER BY), the first pass hits check_violation (23514).
+  // Defer those refs and retry after all parent tables are updated.
+  const deferred: { ref: string; table: string; column: string; has: number }[] = [];
   for (const r of await discoverReferences(client, target)) {
     const ref = `${r.table}.${r.column}`;
     const has = Number((await client.query(`SELECT count(*)::int AS n FROM ${qi(r.table)} WHERE ${qi(r.column)} = $1::uuid`, [from])).rows[0]?.n ?? 0);
@@ -97,7 +102,25 @@ export async function repointAll(
       if (code === "23505") out.push({ ref, rows: has, status: "kept_on_survivor", reason: "the survivor already has its own row" });
       else if (code === "42501" || code === "P0001" || code === "55000" || /immutable|append.?only|not allowed|cannot (update|modify)|block|locked|closed period|worm/i.test(msg))
         out.push({ ref, rows: has, status: "history_kept", reason: msg.slice(0, 200) });
+      else if (code === "23514") deferred.push({ ref, table: r.table, column: r.column, has });
       else throw Object.assign(new Error("driver_merge_repoint_refused"), { details: [`${ref}: ${msg}`] });
+    }
+  }
+  // Retry pass: parent tables are now updated, so the child-table constraint should pass.
+  for (const d of deferred) {
+    await client.query("SAVEPOINT merge_ref");
+    try {
+      const res = await client.query(`UPDATE ${qi(d.table)} SET ${qi(d.column)} = $2::uuid WHERE ${qi(d.column)} = $1::uuid`, [from, to]);
+      await client.query("RELEASE SAVEPOINT merge_ref");
+      out.push({ ref: d.ref, rows: res.rowCount ?? d.has, status: "moved" });
+    } catch (e) {
+      await client.query("ROLLBACK TO SAVEPOINT merge_ref");
+      const code = String((e as { code?: string }).code ?? "");
+      const msg = String((e as Error).message ?? "");
+      if (code === "23505") out.push({ ref: d.ref, rows: d.has, status: "kept_on_survivor", reason: "the survivor already has its own row" });
+      else if (code === "23514" || code === "42501" || code === "P0001" || code === "55000" || /immutable|append.?only|not allowed|cannot (update|modify)|block|locked|closed period|worm/i.test(msg))
+        out.push({ ref: d.ref, rows: d.has, status: "history_kept", reason: msg.slice(0, 200) });
+      else throw Object.assign(new Error("driver_merge_repoint_refused"), { details: [`${d.ref}: ${msg}`] });
     }
   }
   return out;
