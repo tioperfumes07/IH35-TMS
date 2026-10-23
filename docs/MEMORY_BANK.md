@@ -238,6 +238,18 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guards (piggyback, no new EVEN):** `verify-reports-home-no-box-in-box` (board table +
   flat Management) · `verify-rpt-s01-s05-reports-home-ifta` (15+ rows across board+mgmt).
 
+### Active Architectural Decisions — Trial balance viewer board (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Reports-Viewer-TrialBalance.dc.html`.
+  `TrialBalancePage` keeps engines + `ReportFilterBar` + `BasisSelector` + `ParityTable` +
+  `AmountLink` + print/export; body mounts `TrialBalanceBoard`: V3 KPI (Grand total debits /
+  credits / Balance check + sub "debits = credits") → V3Panel "N accounts" (Collapse /
+  Customize → ParityTable gear / View all) wrapping the live table → Measured A/R callout
+  (443.248 finding text only — no invented AR reconcile math) + footer drill note.
+- **Engines:** `getTrialBalanceReport` · `exportTrialBalanceReport` · `printLetterHtml`.
+- **Guard (piggyback):** `verify-trial-balance-print-letter` asserts board mount + KPI sub +
+  Measured 443.248 + existing printLetterHtml contract.
+
 ### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared
@@ -1245,7 +1257,7 @@ settlement deductions · $757.25 never hit the bank). Match engine = settlement-
 ## Next Immediate Milestones
 
 0. **ROUND 443.267 board order (Cursor):** Unexpected ✔ · Accounting ✔ · Banking ✔ · Factoring ✔ ·
-   Insurance ✔ · Legal ✔ · Reports home (this PR) → Reports-Viewer-TrialBalance → re-do
+   Insurance ✔ · Legal ✔ · Reports home ✔ · Reports-Viewer-TrialBalance (this PR) → re-do
    CashFlow/Settlements/Fuel to boards (not chrome-only). One PR per board; bus sha each merge.
 1. **Rebuild orchestration (17→21):** data-driven from the two signed-doc CSVs. Reverse mis-grouped
    S-136xx via the reversal engine → create the 8 missing driver bills at signed amounts → build 21
