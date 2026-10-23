@@ -26,7 +26,16 @@ import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown"
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { FUEL_TAB_PATH, fuelTabFromPath } from "../../router/route-manifest";
-import { FUEL_SUBNAV, type FuelTabId } from "./FUEL_TABS_CONFIG";
+import {
+  FUEL_BOARD_SUBNAV,
+  FUEL_BOARD_SUBTITLE,
+  FUEL_OFF_BOARD_TAB_IDS,
+  FUEL_SUBNAV,
+  type FuelTabId,
+} from "./FUEL_TABS_CONFIG";
+import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
+import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
+import { FuelDieselByTruckPanel } from "./components/FuelDieselByTruckPanel";
 import { ActiveTripStrip } from "./components/ActiveTripStrip";
 import { AvoidStatesBanner } from "./components/AvoidStatesBanner";
 import { CompliancePanel } from "./components/CompliancePanel";
@@ -57,13 +66,11 @@ import { SimpleCombobox as Combobox } from "../../components/Combobox";
 
 export type { FuelTabId } from "./FUEL_TABS_CONFIG";
 
-const SUBNAV = FUEL_SUBNAV;
-
 type Props = {
   initialTab?: FuelTabId;
 };
 
-export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
+export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
@@ -348,7 +355,10 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     return firstDriver ? Number(firstDriver.pct_followed ?? 0) : null;
   }, [complianceQuery.data?.per_driver]);
 
-  const activeLabel = SUBNAV.find((item) => item.id === tab)?.label ?? "Fuel";
+  const offBoardLinks = FUEL_OFF_BOARD_TAB_IDS.map((id) => {
+    const meta = FUEL_SUBNAV.find((item) => item.id === id);
+    return { label: meta?.label ?? id, to: FUEL_TAB_PATH[id] };
+  });
 
   if (!companyId) {
     return (
@@ -365,11 +375,23 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     <div className="space-y-3">
       <PageHeader
         title="Fuel"
-        subtitle={activeLabel}
+        subtitle={FUEL_BOARD_SUBTITLE}
         backHref="/fuel"
         actions={
           <div className="flex items-center gap-2">
             {companyId ? <FuelQuestionsBadge operatingCompanyId={companyId} /> : null}
+            <ActionButton
+              data-testid="fuel-board-header-import-fills"
+              onClick={() => setImportOpen(true)}
+            >
+              Import fills
+            </ActionButton>
+            <ActionButton
+              data-testid="fuel-board-header-add-fill"
+              onClick={() => setCreateOpen(true)}
+            >
+              + Add fill
+            </ActionButton>
             {tab === "planner" ? (
               <>
                 {/* Trip planning is read from active dispatch routes (no manual create endpoint yet).
@@ -424,10 +446,19 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       ) : null}
 
       <NavyPageSubNav
-        items={SUBNAV.map((item) => ({ label: item.label, to: FUEL_TAB_PATH[item.id] }))}
+        items={FUEL_BOARD_SUBNAV.map((item) => ({ label: item.label, to: FUEL_TAB_PATH[item.id] }))}
       />
 
+      <RelatedModuleLinks testId="fuel-related-module-links" links={offBoardLinks} />
+
       {tab === "home" ? <FuelHomePage /> : null}
+
+      {tab === "by_truck" ? (
+        <div className="space-y-3" data-testid="fuel-by-truck-page">
+          <FuelBoardKpiStrip companyId={companyId} />
+          <FuelDieselByTruckPanel companyId={companyId} />
+        </div>
+      ) : null}
 
       {tab === "relay_inbox" ? (
         <div className="space-y-3">
