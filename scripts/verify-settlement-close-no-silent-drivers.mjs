@@ -2,6 +2,7 @@
 /**
  * SettlementCloseArrivalPage — no silent listDrivers(limit:500); names from open-by-driver join.
  * Cursor even claim: 2136.
+ * @matrix-built {"modules":["settlements"],"cols":["driver"],"leaves":["settlement_close"],"task":"LEAD-443.281-D"}
  */
 import fs from "node:fs";
 import os from "node:os";
@@ -36,7 +37,9 @@ export function collectProblems(root = ROOT) {
     problems.push(`${PAGE}: must use driver_name from open-by-driver payload`);
   }
   // ACCT-F5071 — by-driver detail must carry driver_name; FE must not UUID-fallback.
-  if (!/settlement\.driver_name/.test(pageCode)) {
+  // 443.281 (CC-2): the 443.274 Close board (c081694f31) reads it with optional chaining (settlement?.driver_name first in the
+  // board name chain, feeding the detail EntityLink) — same rule, the `?.` form accepted.
+  if (!/settlement\??\.driver_name/.test(pageCode)) {
     problems.push(`${PAGE}: detail EntityLink must prefer settlement.driver_name`);
   }
   if (/entityLabel\(\s*null\s*,\s*settlement\.driver_id/.test(pageCode)) {
@@ -81,6 +84,23 @@ const map = driverNameById
     }
   } finally {
     fs.rmSync(tmpStubRoot, { recursive: true, force: true });
+  }
+  // 443.281 (CC-2): targeted plant — the real page with the settlement driver name dropped from the board name chain FAILS.
+  const tmp2 = fs.mkdtempSync(path.join(os.tmpdir(), "settle-close-dn-"));
+  try {
+    const fe2 = path.join(tmp2, "apps/frontend/src/pages/driver-finance");
+    const be2 = path.join(tmp2, "apps/backend/src/driver-finance");
+    fs.mkdirSync(fe2, { recursive: true });
+    fs.mkdirSync(be2, { recursive: true });
+    const realPage = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+    fs.writeFileSync(path.join(fe2, "SettlementCloseArrivalPage.tsx"), realPage.replaceAll("settlement?.driver_name", "settlement?.unit_label").replaceAll("settlement.driver_name", "settlement.unit_label"));
+    fs.writeFileSync(path.join(be2, "pre-settlement.routes.ts"), fs.readFileSync(path.join(ROOT, ROUTE), "utf8"));
+    if (!collectProblems(tmp2).some((p) => p.includes("detail EntityLink must prefer settlement.driver_name"))) {
+      console.error(`${LABEL} SELFTEST FAIL: dropping settlement.driver_name was not caught`);
+      process.exit(1);
+    }
+  } finally {
+    fs.rmSync(tmp2, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {
