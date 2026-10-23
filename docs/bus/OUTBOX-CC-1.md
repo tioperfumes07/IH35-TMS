@@ -1,3 +1,14 @@
+## 2026-10-23 ~11:30Z — CC-1 443.265-E3 SHIPPED
+
+**PR #27310 MERGED** → squash `fb554db2` — 443.265-E3 cash flow source fix on main.
+
+Root causes fixed (2 source errors in getRollingLedgerRows):
+1. expensesPromise REMOVED — accounting.expenses status=posted = PAID cash/card at creation (944 USMCA rows, $353,241.23). Removed from Promise.all (11→10 queries), row loop deleted.
+2. billsPromise vendor-only — added AND b.bill_category='vendor'. Previously included driver bills ($125,693.97) causing vendor bills to show $126,437.22 instead of true vendor AP = $743.25 (3 rows).
+3. Guard updated — verify-rolling-ledger-queries-parallel: count 11→10, selftest PASS (3/3).
+
+After fix: vendor bills=$743.25 | driver bills=driver_finance.driver_bills only | Other=relay_topup only | Expenses=excluded (paid history).
+
 # OUTBOX-CC-1
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-1-archive-2026-10-17.md](archive/OUTBOX-CC-1-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
