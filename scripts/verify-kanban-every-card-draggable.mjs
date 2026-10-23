@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["unit","connectivity"],"leaves":["dispatch.modal.kanban_unit_availability"],"task":"LEAD-443.251-KANBAN-UNIT-AVAILABILITY","vertical":"class-sweep"} */
 /**
  * LEAD 443.251 P0 (owner, 2026-10-22 6:00 PM CT, verbatim): "in dispatch, in kanban, the units are still not dragable
  * from one box to the next, i have stated this over 30 times."

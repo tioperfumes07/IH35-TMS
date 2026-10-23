@@ -1172,6 +1172,18 @@
       ]
     },
     {
+      "id": "dispatch.modal.kanban_unit_availability",
+      "tab": "Modals",
+      "sub": "Modal: Kanban unit availability (mark out of service / back in service)",
+      "route_hint": "surface://components/dispatch/DispatchKanban.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/dispatch/DispatchKanban.tsx",
+      "required": [
+        "connectivity",
+        "unit"
+      ]
+    },
+    {
       "id": "dispatch.panel.dispatch_load_costs",
       "tab": "Panels",
       "sub": "Panel: Dispatch Load Costs",
