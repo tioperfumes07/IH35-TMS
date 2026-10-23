@@ -78,6 +78,8 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | D057 | Users | Master-detail | User labels | Repeated generic User labels and mixed name capitalization | N | pending: DOM | Resolved full names with proper-case display | CC-1 / Cursor |
 | D058 | Users | Create User | Name/email/role | Three visible inputs 38px high | I | pending: measured DOM | Single-line inputs 32px | Cursor |
 
+| D059 | Program | Scenario tracker | Certification timestamp | Raw database timestamp with fractional seconds and +00 timezone | D | pending: DOM | MM/DD/YYYY and readable local time | Cursor |
+
 ## Counts (observed defects, not application-wide totals)
 
 | Module | V | M | D | I | N | T | B | E | P | Total |
@@ -105,7 +107,8 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | Reports | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | Docs | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 2 |
 | Users | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 2 |
-| Total | 1 | 3 | 7 | 15 | 16 | 3 | 9 | 1 | 3 | 58 |
+| Program | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| Total | 1 | 3 | 8 | 15 | 16 | 3 | 9 | 1 | 3 | 59 |
 
 ## Coverage ledger
 
@@ -124,7 +127,8 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 - 443.258-D batch 5 checkpoint (partial depth): Customers populated directory and Create Customer form inspected/closed; Vendors populated directory inspected; Inventory Parts & Stock and Create part drawer inspected/closed, Assignments navigation reached loading shell. Vendor details/create, Inventory assignments final state/purchase history and secondary panels remain owed. No records created.
 - 443.258-D batch 6 checkpoint (partial depth): 425C Profiles & Defaults and populated History inspected without changing records; Lists landing and Names Master populated table inspected; Reports landing and Custom Report Builder loaded fields inspected without saving. Catalog details, individual reports, schedules, 425C detail and secondary panels remain owed.
 - 443.258-D batch 7 checkpoint (partial depth): Docs populated All Entities table and Upload Document dialog inspected/closed without file selection; Users populated master-detail landing and Create User dialog inspected/closed without invitation; Help landing inspected. Entity tabs, document previews, remaining user views/profiles and help articles remain owed. Chrome timeout recovered after waiting and one reload.
-- Not yet inspected in this pass: Program, System.
+- 443.258-D batch 8 checkpoint (two remaining modules, partial depth): Program scenario tracker visited with USMCA selected; System Overview and Software / Build inspected. The latter reports background_jobs.stale DOWN while other visible checks report OK; this is recorded as observed runtime health, not misclassified as a UI crash. Other Program destinations and System tabs remain owed.
+- Every visible sidebar module has now been visited at least once. This is NOT full module/tab/modal coverage; all outstanding deeper coverage above remains open, along with durable screenshots. No full-audit completion claim.
 - Transient Loading states that resolved were not counted as defects. Empty Fuel Card table explicitly says no cards assigned: not classified as unexplained emptiness.
 - Fuel Relay wallet link currently resolves to the current tab's path. Destination behavior not verified; held as a candidate, not counted.
 - No Book Load, draft save, money action, settings save, upload, or form submission performed.
