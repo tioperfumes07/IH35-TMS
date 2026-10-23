@@ -21,6 +21,8 @@ import type { PlannerViewMode } from "./PlannerViewToggle";
 void PlannerAxisHead;
 
 type SafetyDriverSchedulerGridProps = {
+  /** LEAD 443.251 item 5 — the visible (weekday-filtered) days from the shared planner range. */
+  days?: string[];
   operatingCompanyId: string;
   range: PlannerRange;
   testId?: string;
@@ -56,8 +58,9 @@ export function formatLastDispatchActivity(iso: string | null | undefined): stri
   return `${mm}/${dd}/${dt.getFullYear()} ${hh}:${min}`;
 }
 
-export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = "safety-driver-scheduler-grid", viewMode = "grid", onExpandRange }: SafetyDriverSchedulerGridProps) {
-  const days = useMemo(() => listPlannerDays(range), [range.start, range.end]);
+export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = "safety-driver-scheduler-grid", viewMode = "grid", onExpandRange, days: visibleDays }: SafetyDriverSchedulerGridProps) {
+  // LEAD 443.251 item 5: the planner passes only the days the operator chose to show.
+  const days = useMemo(() => visibleDays ?? listPlannerDays(range), [visibleDays, range.start, range.end]);
 
   const query = useQuery({
     queryKey: ["driver-scheduler", "grid", operatingCompanyId, range.start, range.end],

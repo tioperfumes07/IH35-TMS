@@ -57,13 +57,19 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
     wrap(<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>);
     expect(await screen.findByTestId("dispatch-planners-layout")).toBeTruthy();
     expect(await screen.findByTestId("dispatch-driver-planner-page")).toBeTruthy();
+    // LEAD 443.251 item 4: the range lives INSIDE the Filters popover — not a button row outside it.
+    expect(screen.queryByTestId("dispatch-planner-range-toolbar")).toBeNull();
+    await userEvent.click(screen.getByTestId("planner-filters-toggle"));
     expect(screen.getByTestId("dispatch-planner-range-toolbar")).toBeTruthy();
+    expect(screen.getByTestId("planner-show-days")).toBeTruthy();
+    expect(screen.getByTestId("planner-filter-chips")).toBeTruthy();
     expect(screen.getByRole("button", { name: "7d" }).className).toContain("bg-[var(--planner-active)]");
   });
 
   it("switches shared range to 7d", async () => {
     wrap(<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>);
     await screen.findByTestId("dispatch-driver-planner-grid");
+    await userEvent.click(screen.getByTestId("planner-filters-toggle"));
     const bar = screen.getByTestId("dispatch-planner-range-toolbar");
     await userEvent.click(within(bar).getByRole("button", { name: "7d" }));
     expect(within(bar).getByRole("button", { name: "7d" }).className).toContain("bg-[var(--planner-active)]");

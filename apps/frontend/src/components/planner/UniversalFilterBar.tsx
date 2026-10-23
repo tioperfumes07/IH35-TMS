@@ -5,11 +5,15 @@
  * shared CollapsedListFilters gold pattern (Dispatch FilterBar), not always-on chrome.
  */
 
+import type { ReactNode } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { CollapsedListFilters } from "../table/CollapsedListFilters";
 import { useStagedListFilters } from "../table/useStagedListFilters";
 
 export type PeriodPreset =
+  | "today"
+  | "next_7"
+  | "next_14"
   | "this_week"
   | "this_month"
   | "this_quarter"
@@ -45,6 +49,10 @@ interface UniversalFilterBarProps {
   defaultPeriod?: PeriodPreset;
   /** Open the filter panel on first render (K.9 pattern — 0 clicks to see controls). */
   defaultOpen?: boolean;
+  /** LEAD 443.251 item 4 — the presets this page offers (default: all). */
+  presetKeys?: PeriodPreset[];
+  /** LEAD 443.251 item 4 — page-specific controls rendered INSIDE the Filters popover. */
+  extra?: ReactNode;
 }
 
 function getPresetDates(preset: PeriodPreset): { from: string; to: string } {
@@ -52,6 +60,18 @@ function getPresetDates(preset: PeriodPreset): { from: string; to: string } {
   const fmt = (d: Date) => d.toISOString().split("T")[0];
 
   switch (preset) {
+    case "today":
+      return { from: fmt(today), to: fmt(today) };
+    case "next_7": {
+      const end = new Date(today);
+      end.setDate(today.getDate() + 6);
+      return { from: fmt(today), to: fmt(end) };
+    }
+    case "next_14": {
+      const end = new Date(today);
+      end.setDate(today.getDate() + 13);
+      return { from: fmt(today), to: fmt(end) };
+    }
     case "this_week": {
       const start = new Date(today);
       start.setDate(today.getDate() - today.getDay());
@@ -156,6 +176,9 @@ function getPresetDates(preset: PeriodPreset): { from: string; to: string } {
 }
 
 const PRESET_LABELS: Record<PeriodPreset, string> = {
+  today: "Today",
+  next_7: "Next 7 Days",
+  next_14: "14 Days",
   this_week: "This Week",
   this_month: "This Month",
   this_quarter: "This Quarter",
@@ -176,7 +199,10 @@ const PRESET_LABELS: Record<PeriodPreset, string> = {
   custom: "Custom",
 };
 
-export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod = "this_month", defaultOpen = false }: UniversalFilterBarProps) {
+// Pages that pass no presetKeys keep the list exactly as before (the three planner-only presets are opt-in).
+const DEFAULT_PRESET_KEYS = (Object.keys(PRESET_LABELS) as PeriodPreset[]).filter((k) => k !== "today" && k !== "next_7" && k !== "next_14");
+
+export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod = "this_month", defaultOpen = false, presetKeys = DEFAULT_PRESET_KEYS, extra }: UniversalFilterBarProps) {
   const initialDates = getPresetDates(defaultPeriod);
   const staged = useStagedListFilters({
     applied: value,
@@ -212,7 +238,7 @@ export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod
             Period <span className="font-normal text-gray-400">— currently {PRESET_LABELS[draft.period]}</span>
           </div>
           <div className="grid max-h-48 grid-cols-2 gap-1 overflow-y-auto sm:grid-cols-3">
-            {(Object.keys(PRESET_LABELS) as PeriodPreset[]).map((k) => (
+            {presetKeys.map((k) => (
               <button
                 key={k}
                 type="button"
@@ -246,6 +272,7 @@ export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod
             />
           </div>
         </div>
+        {extra}
       </CollapsedListFilters>
 
       {summaryText ? <div className="ml-auto text-xs text-gray-600">{summaryText}</div> : null}
