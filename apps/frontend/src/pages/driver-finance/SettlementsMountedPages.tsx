@@ -75,6 +75,7 @@ export function SettlementsPayRateTemplatesPage() {
 export function SettlementsDeductionsPage() {
   return (
     <SettlementsModuleShell>
-      <DriversPage initialSubnav="deductions" />    </SettlementsModuleShell>
+      <DriversPage initialSubnav="deductions" />
+    </SettlementsModuleShell>
   );
 }
