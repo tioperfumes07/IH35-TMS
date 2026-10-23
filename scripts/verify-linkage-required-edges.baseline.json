@@ -2,33 +2,33 @@
   "_doc": "BASELINE of pre-existing LINKAGE BREAKS and UNENFORCED MONEY POINTERS. DEBT REGISTER, not approval. NEW breaks fail the build. Wire an edge and DELETE its entry.",
   "_law": "CLAUDE.md 10a/10d Total Connectivity",
   "_captured": "2026-07-21",
-  "_scope": "SCHEMA REACHABILITY ONLY. It cannot prove rows are populated, that a poster runs, or that reverse drill-through exists in the UI. LAW 0: prod wins over migrations, and prod has diverged — a pass here is not a statement about prod's FK graph. Never cite this guard as proof the books are wired.",
-  "_corrected": "2026-07-21 review: (1) the unenforced-pointer detector was defined but NEVER CALLED while three real findings (settlement_lines.posting_account_id, fuel_transactions.vendor_id, accident_reports.driver_id) were removed in deference to it — it now runs and is baselined; (2) `if (have.size===0) continue` exempted zero-FK tables, the worst break, by construction — removed, which surfaced insurance.lawsuit driver+unit; (3) polymorphic gl/source satisfaction was a hardcoded table list — now derived from the linked_object_type / source_transaction_type literals that actually appear in backend source; (4) junction satisfaction accepted ANY table referencing both sides — now requires a genuine narrow link table; (5) dollar-quoted DO bodies were discarded, hiding maintenance.work_orders and safety.accident_reports entirely.",
+  "_scope": "SCHEMA REACHABILITY ONLY. It cannot prove rows are populated, that a poster runs, or that reverse drill-through exists in the UI. LAW 0: prod wins over migrations, and prod has diverged \u2014 a pass here is not a statement about prod's FK graph. Never cite this guard as proof the books are wired.",
+  "_corrected": "2026-07-21 review: (1) the unenforced-pointer detector was defined but NEVER CALLED while three real findings (settlement_lines.posting_account_id, fuel_transactions.vendor_id, accident_reports.driver_id) were removed in deference to it \u2014 it now runs and is baselined; (2) `if (have.size===0) continue` exempted zero-FK tables, the worst break, by construction \u2014 removed, which surfaced insurance.lawsuit driver+unit; (3) polymorphic gl/source satisfaction was a hardcoded table list \u2014 now derived from the linked_object_type / source_transaction_type literals that actually appear in backend source; (4) junction satisfaction accepted ANY table referencing both sides \u2014 now requires a genuine narrow link table; (5) dollar-quoted DO bodies were discarded, hiding maintenance.work_orders and safety.accident_reports entirely.",
   "count": 4,
   "entries": [
     {
       "table": "insurance.lawsuit",
       "edge": "money",
-      "reason": "WO-CLAIM-MONEY — lawsuit has no cost leg; cannot answer what a suit cost."
+      "reason": "WO-CLAIM-MONEY \u2014 lawsuit has no cost leg; cannot answer what a suit cost."
     },
     {
       "table": "fuel.fuel_transactions",
       "edge": "money",
-      "reason": "WO-FUEL-AP — fuel spend never reaches AP/GL (vendor_id exists but UNENFORCED, see pointer register)."
+      "reason": "WO-FUEL-AP \u2014 fuel spend never reaches AP/GL (vendor_id exists but UNENFORCED, see pointer register)."
     },
     {
       "table": "dispatch.load_cancellations",
       "edge": "ar",
-      "reason": "WO-TONU-AR — a billable cancellation cannot become a receivable. NOTE: owner-locked design is MANUAL billing (#3129 HOLD) — this edge enables billing, it must NOT auto-invoice on cancel."
+      "reason": "WO-TONU-AR \u2014 a billable cancellation cannot become a receivable. NOTE: owner-locked design is MANUAL billing (#3129 HOLD) \u2014 this edge enables billing, it must NOT auto-invoice on cancel."
     },
     {
       "table": "safety.accident_reports",
       "edge": "money",
-      "reason": "WO-CLAIM-MONEY — accident generates no cost record (driver_id exists but UNENFORCED, see pointer register)."
+      "reason": "WO-CLAIM-MONEY \u2014 accident generates no cost record (driver_id exists but UNENFORCED, see pointer register)."
     }
   ],
-  "unenforced_pointers_count": 49,
-  "_pointer_doc": "A money-critical uuid declared with NO FOREIGN KEY. It accepts any value and dangles when its target is removed: wired in a column list, not in the database. Fixing these is additive-migration work (ADD CONSTRAINT ... NOT VALID, then VALIDATE after an orphan sweep) and is FINANCIAL CLUSTER — owner-approved, never self-merged.",
+  "unenforced_pointers_count": 53,
+  "_pointer_doc": "A money-critical uuid declared with NO FOREIGN KEY. It accepts any value and dangles when its target is removed: wired in a column list, not in the database. Fixing these is additive-migration work (ADD CONSTRAINT ... NOT VALID, then VALIDATE after an orphan sweep) and is FINANCIAL CLUSTER \u2014 owner-approved, never self-merged.",
   "unenforced_pointers": [
     {
       "table": "accounting.bill_lines",
@@ -223,12 +223,32 @@
     {
       "table": "banking.bank_account_tieouts",
       "column": "ledger_account_id",
-      "reason": "Pre-existing on origin/main 1d731abdeb (measured 2026-10-05): column introduced by an existing migration without ADD CONSTRAINT and never registered here at merge time. Fix is additive-migration FK work (ADD CONSTRAINT ... NOT VALID + orphan sweep) in the owning financial lane — Devin-A cannot author migrations on this branch and the 10-05 build orders forbid migrations. Filed on the bus for the owning seat."
+      "reason": "Pre-existing on origin/main 1d731abdeb (measured 2026-10-05): column introduced by an existing migration without ADD CONSTRAINT and never registered here at merge time. Fix is additive-migration FK work (ADD CONSTRAINT ... NOT VALID + orphan sweep) in the owning financial lane \u2014 Devin-A cannot author migrations on this branch and the 10-05 build orders forbid migrations. Filed on the bus for the owning seat."
     },
     {
       "table": "driver_finance.deduction_recovery_links",
       "column": "driver_settlement_deduction_id",
-      "reason": "Pre-existing on origin/main 1d731abdeb (measured 2026-10-05): column introduced by an existing migration without ADD CONSTRAINT and never registered here at merge time. Fix is additive-migration FK work (ADD CONSTRAINT ... NOT VALID + orphan sweep) in the owning financial lane — Devin-A cannot author migrations on this branch and the 10-05 build orders forbid migrations. Filed on the bus for the owning seat."
+      "reason": "Pre-existing on origin/main 1d731abdeb (measured 2026-10-05): column introduced by an existing migration without ADD CONSTRAINT and never registered here at merge time. Fix is additive-migration FK work (ADD CONSTRAINT ... NOT VALID + orphan sweep) in the owning financial lane \u2014 Devin-A cannot author migrations on this branch and the 10-05 build orders forbid migrations. Filed on the bus for the owning seat."
+    },
+    {
+      "table": "fuel.fuel_assignment_questions",
+      "column": "answered_unit_id",
+      "reason": "Introduced by 443.243 migration without ADD CONSTRAINT. This is a proposal/answer tracking column (not a direct GL pointer). Fix is additive-migration FK work (claim-reserve PR) in the owning fuel lane. Filed on the bus."
+    },
+    {
+      "table": "fuel.fuel_assignment_questions",
+      "column": "card_driver_id",
+      "reason": "Introduced by 443.243 migration without ADD CONSTRAINT. Card-truck driver tracking column. Fix is additive-migration FK work (claim-reserve PR) in the owning fuel lane. Filed on the bus."
+    },
+    {
+      "table": "fuel.fuel_assignment_questions",
+      "column": "card_unit_id",
+      "reason": "Introduced by 443.243 migration without ADD CONSTRAINT. Card-truck unit tracking column. Fix is additive-migration FK work (claim-reserve PR) in the owning fuel lane. Filed on the bus."
+    },
+    {
+      "table": "fuel.fuel_assignment_questions",
+      "column": "proposed_unit_id",
+      "reason": "Introduced by 443.243 migration without ADD CONSTRAINT. GPS-proposed unit tracking column. Fix is additive-migration FK work (claim-reserve PR) in the owning fuel lane. Filed on the bus."
     }
   ],
   "measured_at": "2026-09-24T00:30:00Z",

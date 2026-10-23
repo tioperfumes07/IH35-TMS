@@ -1220,6 +1220,18 @@
         "load",
         "unit"
       ]
+    },
+    {
+      "id": "dispatch.panel.load_shuttle_legs",
+      "tab": "Panels",
+      "sub": "Panel: Load Shuttle Legs",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/LoadStopsRecordTab.tsx",
+      "required": [
+        "connectivity",
+        "load"
+      ],
+      "route_hint": "surface://components/dispatch/LoadStopsRecordTab.tsx"
     }
   ],
   "honesty_audit": {

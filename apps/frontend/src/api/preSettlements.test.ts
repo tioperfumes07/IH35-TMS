@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiRequest } from "./client";
-import { listOpenPreSettlements } from "./preSettlements";
+import { listOpenPreSettlements } from "./driverFinance";
 
 vi.mock("./client", () => ({ apiRequest: vi.fn() }));
 const request = vi.mocked(apiRequest);

@@ -108,20 +108,20 @@ async function loadWindowLabel(client: DbClient, loadId: string | null): Promise
               (SELECT concat_ws(', ', nullif(s.city,''), nullif(s.state,''))
                  FROM mdata.load_stops s
                 WHERE s.load_id = l.id AND s.stop_type::text = 'pickup' AND s.soft_deleted_at IS NULL
-                ORDER BY s.stop_sequence NULLS LAST, s.created_at LIMIT 1) AS pickup,
+                ORDER BY s.sequence_number NULLS LAST, s.created_at LIMIT 1) AS pickup,
               (SELECT concat_ws(', ', nullif(s.city,''), nullif(s.state,''))
                  FROM mdata.load_stops s
                 WHERE s.load_id = l.id AND s.stop_type::text IN ('delivery','drop') AND s.soft_deleted_at IS NULL
-                ORDER BY s.stop_sequence DESC NULLS LAST, s.created_at DESC LIMIT 1) AS delivery,
+                ORDER BY s.sequence_number DESC NULLS LAST, s.created_at DESC LIMIT 1) AS delivery,
               concat_ws(' → ',
                 (SELECT concat_ws(', ', nullif(s.city,''), nullif(s.state,''))
                    FROM mdata.load_stops s
                   WHERE s.load_id = l.id AND s.stop_type::text = 'pickup' AND s.soft_deleted_at IS NULL
-                  ORDER BY s.stop_sequence NULLS LAST LIMIT 1),
+                  ORDER BY s.sequence_number NULLS LAST LIMIT 1),
                 (SELECT concat_ws(', ', nullif(s.city,''), nullif(s.state,''))
                    FROM mdata.load_stops s
                   WHERE s.load_id = l.id AND s.stop_type::text IN ('delivery','drop') AND s.soft_deleted_at IS NULL
-                  ORDER BY s.stop_sequence DESC NULLS LAST LIMIT 1)
+                  ORDER BY s.sequence_number DESC NULLS LAST LIMIT 1)
               ) AS route
          FROM mdata.loads l WHERE l.id = $1::uuid`,
       [loadId]
@@ -148,7 +148,7 @@ async function enrichCandidate(
   if (moment) {
     const drv = (
       await client.query<{ name: string | null }>(
-        `SELECT COALESCE(nullif(trim(concat_ws(' ', d.first_name, d.last_name)), ''), d.display_name) AS name
+        `SELECT nullif(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS name
            FROM telematics.vehicle_driver_assignments vda
            JOIN mdata.drivers d ON d.id = vda.driver_id
           WHERE vda.unit_id = $1::uuid
@@ -220,7 +220,7 @@ async function fillMoney(client: DbClient, companyId: string, fuelId: string) {
       `SELECT f.gallons::text,
               round(COALESCE(f.total_cost, 0) * 100)::bigint::text AS amount_cents,
               f.driver_id::text,
-              COALESCE(nullif(trim(concat_ws(' ', d.first_name, d.last_name)), ''), d.display_name) AS driver_name
+              nullif(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name
          FROM fuel.fuel_transactions f
          LEFT JOIN mdata.drivers d ON d.id = f.driver_id
         WHERE f.id = $2::uuid AND f.operating_company_id = $1::uuid`,

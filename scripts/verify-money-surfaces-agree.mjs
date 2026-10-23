@@ -1,24 +1,25 @@
 #!/usr/bin/env node
 /**
- * LEAD 443.210R G2 (CC-1 claim 18649) — ONE MONEY READ MODEL: loadCostRollupLateral is the SINGLE
- * per-load cost/revenue source; all money surfaces agree.
+ * LEAD 443.210R G2 (CC-1 claim 18649) + 443.239 D1/D4/D9 — ONE MONEY READ MODEL.
+ * loadCostRollupLateral is the SINGLE per-load cost/revenue source; all money surfaces agree.
  *
  * STATIC (no DB):
- *   RULE 1 — The 4 declared money surfaces (Load Costs board, cost rollup, load profitability, tour
- *            board via load-profitability) all import loadCostRollupLateral from load-cost-rollup.sql.ts.
+ *   RULE 1 — All 9 declared money surfaces import loadCostRollupLateral from load-cost-rollup.sql.ts.
  *   RULE 2 — rate_total_cents is NEVER used as revenue on any of those surfaces.
- *   RULE 3 — The lateral inside loadCostRollupLateral uses alias `cl` (not `l`) — ACCT-F2026092587
- *            fix prevents alias shadowing when callers pass "l.id"/"l.operating_company_id".
+ *   RULE 3 — The lateral inside loadCostRollupLateral uses alias `cl` (not `l`) — ACCT-F2026092587.
+ *   RULE 5 — preSettlements.ts must NOT exist (D4: deleted in favour of driverFinance.ts one-copy).
+ *   RULE 6 — dispatch-margin.routes.ts must sort by lc_revenue_cents, not ls.revenue_cents (D1 fix).
  *
  * LIVE (fail-closed with DATABASE_URL, USMCA read-only):
  *   RULE 4 — For every live USMCA load with at least one issued invoice, the rollup revenue_cents
  *            equals the raw invoice total (sum(total_cents - tax_cents) over non-void, non-draft invoices).
- *            Any disagreement means the lateral is computing from the wrong alias or missing invoices.
  *
  * FAIL-OLD FIXTURE (--selftest):
- *   Plants alias `l` in the lateral head (the pre-ACCT-F2026092587 regression) and verifies RULE 3 catches it.
- *   Plants rate_total_cents in one surface file and verifies RULE 2 catches it.
- *   Plants a missing loadCostRollupLateral import and verifies RULE 1 catches it.
+ *   Plants alias `l` in the lateral head → verifies RULE 3 catches it.
+ *   Plants rate_total_cents in a surface file → verifies RULE 2 catches it.
+ *   Plants a missing loadCostRollupLateral import → verifies RULE 1 catches it.
+ *   Plants ls.revenue_cents ORDER BY in dispatch-margin → verifies RULE 6 catches it.
+ *   Plants preSettlements.ts file → verifies RULE 5 catches it.
  *
  * Self-test: node scripts/verify-money-surfaces-agree.mjs --selftest
  */
@@ -35,12 +36,21 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const ROLLUP_SQL_FILE = "apps/backend/src/accounting/load-cost-rollup.sql.ts";
 
-/** Files that must use loadCostRollupLateral for revenue (RULE 1 + RULE 2) */
+/** Files that must use loadCostRollupLateral for revenue/cost (RULE 1 + RULE 2) */
 const MONEY_SURFACES = [
   "apps/backend/src/accounting/load-costs-board.routes.ts",
   "apps/backend/src/accounting/load-cost-rollup.routes.ts",
   "apps/backend/src/dispatch/load-profitability.service.ts",
+  // D9 extension (443.239): every surface that shows revenue/cost/driver-pay
+  "apps/backend/src/reports/dispatch-margin.routes.ts",
+  "apps/backend/src/reports/loads-report.service.ts",
+  "apps/backend/src/reports/three-mile-cpm.service.ts",
+  "apps/backend/src/driver-finance/tour-readout.routes.ts",
+  "apps/backend/src/factoring/factoring.routes.ts",
 ];
+
+const PRESETTLEMENTS_FILE = "apps/frontend/src/api/preSettlements.ts";
+const DISPATCH_MARGIN_FILE = "apps/backend/src/reports/dispatch-margin.routes.ts";
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -83,6 +93,18 @@ export function checkStatic(files) {
     errors.push(`RULE3: ${ROLLUP_SQL_FILE}: lateral still uses inner alias 'l' — shadows the caller's 'l' load alias (ACCT-F2026092587)`);
   }
 
+  // RULE 5 (D4): preSettlements.ts must not exist — function moved to driverFinance.ts
+  const preSettlePath = path.join(ROOT, PRESETTLEMENTS_FILE);
+  if (files[PRESETTLEMENTS_FILE] !== null && (files[PRESETTLEMENTS_FILE] !== undefined || fs.existsSync(preSettlePath))) {
+    errors.push(`RULE5: ${PRESETTLEMENTS_FILE} still exists — delete it; listOpenPreSettlements now lives in driverFinance.ts (D4 unification)`);
+  }
+
+  // RULE 6 (D1): dispatch-margin must sort by lc_revenue_cents, not ls.revenue_cents
+  const marginSrc = files[DISPATCH_MARGIN_FILE] ?? read(DISPATCH_MARGIN_FILE);
+  if (/ORDER\s+BY\s+ls\.revenue_cents\b/.test(marginSrc)) {
+    errors.push(`RULE6: ${DISPATCH_MARGIN_FILE}: ORDER BY uses ls.revenue_cents (rate_total_cents) — must sort by lc_revenue_cents (D1 fix)`);
+  }
+
   return errors;
 }
 
@@ -92,8 +114,9 @@ const USMCA_CO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 async function checkLive() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
-    await client.query(`SET ROLE ih35_app`);
-    await client.query(`SET app.operating_company_id = '${USMCA_CO}'`);
+    await client.query("BEGIN");
+    await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
+    await client.query(`SET LOCAL app.operating_company_id = '${USMCA_CO}'`);
 
     // For loads where loadCostsRevenueJoin would pick the invoice path (is_invoiced=true),
     // verify the rollup's revenue_cents = SUM(i.total_cents - i.tax_cents) over live invoices.
@@ -142,6 +165,7 @@ async function checkLive() {
 
     const total = res.rows.length;
     const mismatches = errors.length;
+    await client.query("ROLLBACK");
     return { errors, total, mismatches };
   } finally {
     client.release();
@@ -171,14 +195,41 @@ async function main() {
       process.exit(1);
     }
 
+    // Plant RULE 2 regression in dispatch-margin: rate_total_cents as revenue_cents
+    const marginSrc = read(DISPATCH_MARGIN_FILE);
+    const plantedR2 = marginSrc.replace(
+      /COALESCE\(c\.customer_name[^\n]+\n/,
+      (m) => m + "              COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents\n"
+    );
+    const rule2Errors = checkStatic({ [DISPATCH_MARGIN_FILE]: plantedR2 });
+    if (!rule2Errors.some((e) => e.startsWith("RULE2:"))) {
+      console.error("SELFTEST FAIL: RULE 2 did not catch rate_total_cents regression in dispatch-margin");
+      process.exit(1);
+    }
+
+    // Plant RULE 6 regression: ls.revenue_cents in ORDER BY
+    const plantedR6 = marginSrc.replace(/ORDER BY lc_revenue_cents DESC NULLS LAST/, "ORDER BY ls.revenue_cents DESC");
+    const rule6Errors = checkStatic({ [DISPATCH_MARGIN_FILE]: plantedR6 });
+    if (!rule6Errors.some((e) => e.startsWith("RULE6:"))) {
+      console.error("SELFTEST FAIL: RULE 6 did not catch ls.revenue_cents ORDER BY regression");
+      process.exit(1);
+    }
+
+    // Plant RULE 5 regression: preSettlements.ts exists
+    const rule5Errors = checkStatic({ [PRESETTLEMENTS_FILE]: "// planted" });
+    if (!rule5Errors.some((e) => e.startsWith("RULE5:"))) {
+      console.error("SELFTEST FAIL: RULE 5 did not catch preSettlements.ts existence regression");
+      process.exit(1);
+    }
+
     // Verify baseline passes
-    const clean = checkStatic({});
+    const clean = checkStatic({ [PRESETTLEMENTS_FILE]: null });
     if (clean.length > 0) {
       console.error(`SELFTEST FAIL: baseline has errors:\n${clean.map((e) => `  ${e}`).join("\n")}`);
       process.exit(1);
     }
 
-    console.log(`${LABEL} --selftest PASS (3 plants caught: RULE1 missing rollup, RULE3 alias-l, RULE3 baseline clean)`);
+    console.log(`${LABEL} --selftest PASS (6 plants caught: RULE1 missing rollup, RULE2 rate-in-margin, RULE3 alias-l, RULE5 preSettlements-exists, RULE6 ls.revenue_cents-ORDER-BY, baseline clean)`);
     process.exit(0);
   }
 
@@ -194,7 +245,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`${LABEL} PASS — static: 3 rules clean; live: ${total} invoiced USMCA loads checked, ${mismatches} mismatches`);
+  console.log(`${LABEL} PASS — static: 6 rules clean (${MONEY_SURFACES.length} surfaces); live: ${total} invoiced USMCA loads checked, ${mismatches} mismatches`);
 }
 
 main().catch((err) => {

@@ -1929,7 +1929,7 @@ export function BookLoadModalV4({
         className={
           bookLoadPresentation === "side"
             ? "flex h-full max-h-[100dvh] w-[660px] max-w-[100vw] flex-col overflow-hidden border-l border-gray-200 bg-white shadow-2xl"
-            : "flex max-h-[min(95vh,calc(100dvh-2rem))] w-full max-w-[min(1120px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
+            : "flex max-h-[min(95vh,calc(100dvh-2rem))] w-full max-w-[min(1120px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-[var(--surface)] shadow-2xl"
         }
         // Owner 2026-07-04: let the dispatcher shrink/resize the wizard from the bottom-right corner so they
         // can keep the units / dispatch board visible behind it. Native `resize: both` grip; floors keep it
@@ -1976,7 +1976,7 @@ export function BookLoadModalV4({
             >
               <button
                 type="button"
-                className={`px-2 ${bookLoadPresentation === "side" ? "bg-white text-[#1F2A44]" : "text-white/90 hover:bg-white/10"}`}
+                className={`px-2 ${bookLoadPresentation === "side" ? "bg-white text-[#1F2A44]" : "text-white/90 hover:bg-[rgba(255,255,255,0.1)]"}`}
                 aria-pressed={bookLoadPresentation === "side"}
                 onClick={() => setPresentation("side")}
                 data-testid="book-load-presentation-side"
@@ -1985,7 +1985,7 @@ export function BookLoadModalV4({
               </button>
               <button
                 type="button"
-                className={`border-l border-white/30 px-2 ${bookLoadPresentation === "center" ? "bg-white text-[#1F2A44]" : "text-white/90 hover:bg-white/10"}`}
+                className={`border-l border-white/30 px-2 ${bookLoadPresentation === "center" ? "bg-white text-[#1F2A44]" : "text-white/90 hover:bg-[rgba(255,255,255,0.1)]"}`}
                 aria-pressed={bookLoadPresentation === "center"}
                 onClick={() => setPresentation("center")}
                 data-testid="book-load-presentation-center"

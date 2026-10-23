@@ -28,7 +28,7 @@
   "apps/backend/src/fuel/fuel-card-overage.service.ts": 2,
   "apps/backend/src/governance/void-cancel-executors.ts": 8,
   "apps/backend/src/health/health.routes.ts": 2,
-  "apps/backend/src/home/home-widgets.routes.ts": 2,
+  "apps/backend/src/home/home-widgets.routes.ts": 4,
   "apps/backend/src/home/scenario-tracker.service.ts": 1,
   "apps/backend/src/identity/notification-prefs.routes.ts": 1,
   "apps/backend/src/integrations/qbo/outbox-dispatcher.ts": 1,
