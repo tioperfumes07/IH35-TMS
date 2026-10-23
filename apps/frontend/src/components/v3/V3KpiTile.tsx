@@ -5,13 +5,14 @@
 import type { CSSProperties, ReactNode } from "react";
 import { V3, V3_KPI } from "../../design/v3-tokens";
 
-export type V3KpiTone = "ink" | "green" | "red" | "muted";
+export type V3KpiTone = "ink" | "green" | "red" | "muted" | "amber";
 
 const TONE: Record<V3KpiTone, string> = {
   ink: V3.ink,
   green: V3.green,
   red: V3.red,
   muted: V3.muted,
+  amber: V3.amber,
 };
 
 export function V3KpiTile({

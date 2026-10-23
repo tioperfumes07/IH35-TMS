@@ -11,6 +11,7 @@
  * 6. No pure ComingSoon shell pages in accounting directory
  * 7. QboAccountingSubNav.tsx deleted (was defined, never rendered)
  * 8. ExpenseCreatePage uses AccountingSubNavWrapper (was bare, no nav)
+ * 9. ROUND 443.267 — Unexpected page + /accounting/unexpected top-row after More
  */
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join, relative } from "path";
@@ -156,6 +157,47 @@ try {
   }
 } catch {
   fail("ExpenseCreatePage.tsx not found");
+}
+
+// ─── Check 9: ROUND 443.267 — Unexpected top-row leaf after More ─────────────
+// Board: 10-22-2026-LEAD-MOD-DESIGN-V3-Accounting-Unexpected — UNEXPECTED after MORE.
+{
+  const unexpectedPage = join(ACCOUNTING_DIR, "UnexpectedExpensesPage.tsx");
+  try {
+    readFileSync(unexpectedPage, "utf8");
+    pass("UnexpectedExpensesPage.tsx exists");
+  } catch {
+    fail("UnexpectedExpensesPage.tsx missing — board Accounting-Unexpected requires the page");
+  }
+
+  if (!manifestContent.includes('path: "/accounting/unexpected"')) {
+    fail('subnav-manifest missing path "/accounting/unexpected"');
+  } else {
+    pass('subnav-manifest registers /accounting/unexpected');
+  }
+
+  // Top-row order: … More, then Unexpected leaf (leafOf("/accounting/unexpected") after more).
+  const moreIdx = manifestContent.lastIndexOf("GROUP_LABELS.more");
+  const unexpectedLeafIdx = manifestContent.indexOf('leafOf("/accounting/unexpected")');
+  if (moreIdx < 0 || unexpectedLeafIdx < 0 || unexpectedLeafIdx < moreIdx) {
+    fail("Unexpected must be a top-row leaf after More in ACCOUNTING_SUB_NAV_ITEMS");
+  } else {
+    pass("Unexpected is top-row leaf after More");
+  }
+
+  const routesManifest = join(ROOT, "routes/manifest.tsx");
+  try {
+    const routes = readFileSync(routesManifest, "utf8");
+    if (!routes.includes('path="/accounting/unexpected"')) {
+      fail('routes/manifest.tsx missing Route path="/accounting/unexpected"');
+    } else if (!routes.includes("UnexpectedExpensesPage")) {
+      fail("routes/manifest.tsx missing UnexpectedExpensesPage lazy import");
+    } else {
+      pass("routes/manifest mounts /accounting/unexpected");
+    }
+  } catch {
+    fail("routes/manifest.tsx not readable");
+  }
 }
 
 // ─── Summary ─────────────────────────────────────────────────────────────────

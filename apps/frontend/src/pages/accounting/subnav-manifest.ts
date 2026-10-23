@@ -39,7 +39,9 @@ export type AccountingSubNavSection =
   | "maint_shop"
   | "reclassify"
   | "reports"
-  | "more";
+  | "more"
+  // ROUND 443.267 — top-row leaf after More (board Accounting-Unexpected).
+  | "unexpected";
 
 export type AccountingSubNavItem = {
   label: string;
@@ -62,6 +64,7 @@ export const GROUP_LABELS = {
   reclassify: "Reclassify",
   reports: "Reports",
   more: "More",
+  unexpected: "Unexpected",
 } as const satisfies Record<AccountingSubNavSection, string>;
 
 /**
@@ -107,6 +110,9 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   // U13 (owner): Accounting's Vendors and Customers tabs were pure <Navigate> redirects to /vendors and /customers —
   // removed from Accounting (the routes stay so old links still land).
   { label: "Reports", path: "/accounting/reports", section: "reports" },
+
+  // ROUND 443.267 — Unexpected expenses (top-row after More; board Accounting-Unexpected).
+  { label: "Unexpected", path: "/accounting/unexpected", section: "unexpected" },
 
   // Invoices ▾ — AR / receivables (ACCT-F5050 — promoted from More ▾)
   { label: "Invoices", path: "/accounting/invoices", section: "invoices" },
@@ -282,4 +288,6 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   leafOf("/accounting/reports"), // Reports
   // More stays chevron-only (no single default destination).
   { label: GROUP_LABELS.more, children: childrenOf("more") },
+  // ROUND 443.267 — UNEXPECTED after MORE (board Accounting-Unexpected).
+  leafOf("/accounting/unexpected"),
 ];
