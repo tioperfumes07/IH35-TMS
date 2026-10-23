@@ -219,7 +219,7 @@ export async function measure(client) {
       -- to_load_id on the leg that puts it on the new one; the undo entry the other way round). Every other posting is
       -- expected to carry what its source resolves to. Same strictness, read from the engine's own record.
       SELECT jep.id, jep.operating_company_id, jep.source_transaction_type, jep.source_transaction_id, jep.load_id, jep.created_at,
-             COALESCE(rc.expected_load, mv.moved_from_load, rp.pair_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id), sx.line_load, fx.doc_load) AS expected
+             COALESCE(rc.expected_load, mv.moved_from_load, sb.sibling_from_load, rp.pair_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id), sx.line_load, fx.doc_load) AS expected
         FROM accounting.journal_entry_postings jep
         -- 443.110 G8 (RULE 4): a factoring lifecycle event is sourced by its factoring advance and carries the advance's
         -- load; a Faro reserve entry tied to a Faro invoice carries that invoice's load. Same company, never a guess.
@@ -270,6 +270,22 @@ export async function measure(client) {
              AND jep.reversed_by_line_id IS NOT NULL
            LIMIT 1
         ) mv ON true
+        -- LEAD 443.260 (CC-2, 48 rows after the 443.243 fuel moves): the reclassify engine moves a document's COST line to
+        -- the new load (that line is read by mv / rc above); the same original entry's OTHER legs (e.g. the 2510 card-payable
+        -- payment leg) are not reclassified and stay on the load the entry was booked on — while the source document now
+        -- names the new load. Such a sibling is expected to carry the batch line's from_load, and only when that batch line
+        -- moved a posting of THIS entry for THIS document from exactly this posting's load to the load the source now names.
+        LEFT JOIN LATERAL (
+          SELECT bl.from_load_id AS sibling_from_load
+            FROM accounting.journal_entry_postings sib
+            JOIN accounting.reclassify_batch_lines bl ON bl.posting_id = sib.id AND bl.operating_company_id = jep.operating_company_id
+           WHERE sib.journal_entry_uuid = jep.journal_entry_uuid AND sib.id <> jep.id
+             AND sib.source_transaction_id = jep.source_transaction_id
+             AND bl.result = 'applied' AND bl.to_load_id IS NOT NULL AND bl.to_load_id IS DISTINCT FROM bl.from_load_id
+             AND bl.from_load_id = jep.load_id
+             AND bl.to_load_id = accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id)
+           LIMIT 1
+        ) sb ON true
         LEFT JOIN LATERAL (
           SELECT CASE
                    WHEN bl.reclass_journal_entry_id = jep.journal_entry_uuid
@@ -281,6 +297,10 @@ export async function measure(client) {
              AND (bl.reclass_journal_entry_id = jep.journal_entry_uuid OR bl.undo_journal_entry_id = jep.journal_entry_uuid)
              AND bl.source_transaction_id = jep.source_transaction_id
              AND bl.amount_cents = jep.amount_cents
+             -- LEAD 443.260 (CC-2): a load move reclassifies EVERY leg of the line (cost AND its card-payable leg), one batch
+             -- line each, same amount — the leg's own batch line is the one on its own account, not whichever comes first.
+             AND (bl.from_account_id = jep.account_id OR bl.to_account_id = jep.account_id)
+           ORDER BY (bl.from_account_id = jep.account_id AND bl.to_account_id = jep.account_id) DESC
            LIMIT 1
         ) rc ON true
        WHERE (jep.operating_company_id = $2::uuid OR jep.operating_company_id IS NULL))
