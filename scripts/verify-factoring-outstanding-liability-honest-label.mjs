@@ -43,16 +43,14 @@ export function run(root = process.cwd()) {
       mustInclude: ["outstanding_liability_balance: 0"],
     },
     {
-      file: "apps/frontend/src/pages/factoring/FactoringHome.tsx",
-      mustInclude: ["summary?.outstanding_liability_balance", "Outstanding Liability Balance"],
+      // ROUND 443.267 board 4 — Outstanding liability tile lives on FactoringHomeBoard.
+      file: "apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx",
+      mustInclude: ["summary?.outstanding_liability_balance", "Outstanding Liability Balance", "Outstanding liability"],
       mustNotInclude: [">Chargeback Balance<"],
     },
     // NEW-19 (2026-09-07): ReserveTracker.tsx's OWN "Outstanding Liability" tile was removed —
-    // it was a duplicate of FactoringHome.tsx's tile above (same summary query, rendered twice
-    // one screen apart). FactoringHome.tsx is the only remaining renderer of this figure on the
-    // Reserve Tracker tab (ReserveTracker.tsx mounts only inside FactoringHome.tsx), so the
-    // check above already covers it. See scripts/verify-dispatch-subnav-no-factoring.mjs-style
-    // reasoning: this guard now protects the ONE surviving surface instead of two.
+    // it was a duplicate of the Factoring home tile (same summary query). FactoringHomeBoard is
+    // the only remaining renderer of this figure on the Factoring home surface.
     {
       file: "apps/frontend/src/pages/banking/BankingHome.tsx",
       mustInclude: ["row.outstanding_liability_balance", "factoringOutstandingLiability"],
@@ -89,8 +87,8 @@ if (process.argv.includes("--selftest")) {
     "apps/backend/src/banking/factoring-virtual.routes.ts":
       "SELECT 1 AS outstanding_liability_balance\n",
     "apps/backend/src/factoring/factoring.routes.ts": "outstanding_liability_balance: 0,\n",
-    "apps/frontend/src/pages/factoring/FactoringHome.tsx":
-      "summary?.outstanding_liability_balance\nOutstanding Liability Balance\n",
+    "apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx":
+      "summary?.outstanding_liability_balance\nOutstanding Liability Balance\nOutstanding liability\n",
     "apps/frontend/src/pages/banking/BankingHome.tsx":
       "row.outstanding_liability_balance\nfactoringOutstandingLiability\n",
   };
@@ -109,17 +107,17 @@ if (process.argv.includes("--selftest")) {
   const failed = run(tmp);
   if (!failed.length) throw new Error("FAIL fail: mutation should have been caught");
 
-  // Mutate: revert FactoringHome.tsx label.
+  // Mutate: revert FactoringHomeBoard label.
   fs.writeFileSync(
     `${tmp}/apps/frontend/src/pages/banking/BankingHome.tsx`,
     files["apps/frontend/src/pages/banking/BankingHome.tsx"]
   );
   fs.writeFileSync(
-    `${tmp}/apps/frontend/src/pages/factoring/FactoringHome.tsx`,
+    `${tmp}/apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx`,
     ">Chargeback Balance<\n"
   );
   const failed2 = run(tmp);
-  if (!failed2.length) throw new Error("FAIL fail (FactoringHome mutation should have been caught)");
+  if (!failed2.length) throw new Error("FAIL fail (FactoringHomeBoard mutation should have been caught)");
 
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-factoring-outstanding-liability-honest-label --selftest OK");

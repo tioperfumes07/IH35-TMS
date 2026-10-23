@@ -176,6 +176,24 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   removed — drift lives on the Home board only.
 - **Guards:** `verify-banking-home-preview-parity.mjs` retargeted to board + cards still mounted.
 
+### Active Architectural Decisions — Factoring home board (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Factoring.dc.html` (+ `.png`). Not a V3
+  reskin of FAC-07 — Home mounts `FactoringHomeBoard` after the navy tabs + duplicate-vendor
+  banner: KPI strip (Outstanding liability / Advanced MTD / Repurchase deadline / Chargebacks &
+  fees / True cost) → Each purchase — net to bank vs kept by Faro + Terms on file → Measured
+  uncleared note. Chart net bars use `V3.shell`; kept bars use `V3.red` @ 0.7 opacity (board).
+- **Engines:** `getFactoringSummary` · `getFactoringChargebacksFees` ·
+  `getFactoringRecoursePipeline` · `listFactoringPurchases` · `listFactors`. True cost =
+  (MTD fee_cents + wire_fee_cents) / mtd_advanced. Invoice sub = recourse total; wires =
+  `mtd_advances_count`. Wire fee Term = mode of posted purchase wire fees (no Factor.wire_fee).
+- **FAC-07 supersession:** side-by-side DrillKpiCard + compact FactoringProfilePanel overview is
+  gone. Terms footer EntityLinks the factor vendor; Edit opens the same profile modal.
+  `FactoringKpiPanel` (r326) + `FactoringCashFlowPanel` (r315) stay mounted below the board.
+- **Guards retargeted:** `verify-factoring-layout-tabs-first` · `verify-money-kpi-strip` (FACTORING_HOME
+  → board) · `verify-factoring-outstanding-liability-honest-label` ·
+  `verify-reserve-tracker-outstanding-liability-not-double-scaled` · `verify-fact-s01-home-surface`.
+
 ### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared
