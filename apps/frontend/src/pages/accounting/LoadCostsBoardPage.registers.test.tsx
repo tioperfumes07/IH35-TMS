@@ -20,7 +20,12 @@ vi.mock("../../components/documents/ReceiptAttach", () => ({
 }));
 
 const apiRequestMock = vi.fn<(...args: any[]) => Promise<any>>();
-vi.mock("../../api/client", () => ({ apiRequest: (...args: unknown[]) => apiRequestMock(...args) }));
+// Keep the real ApiError: the embedded Fuel Questions panel's error banner checks `instanceof ApiError`, and a mock
+// without it threw inside FuelQuestionsPanel and unmounted the whole board (8 of 10 cases red on main).
+vi.mock("../../api/client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../api/client")>()),
+  apiRequest: (...args: unknown[]) => apiRequestMock(...args),
+}));
 
 const listBillsMock = vi.fn<(...args: any[]) => Promise<{ rows: any[] }>>(async () => ({ rows: [] }));
 const listDriverBillsMock = vi.fn<(...args: any[]) => Promise<{ total_count: number; driver_bills: any[] }>>(async () => ({ total_count: 0, driver_bills: [] }));
