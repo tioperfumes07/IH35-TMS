@@ -24,6 +24,9 @@
  *       is read-only and links to where an entry is made.
  *   R9  (443.269-A item 6) Drivers header: On Loads = drivers on dispatched/at-pickup/in-transit/at-delivery loads of
  *       the one board set, by driver id; Available = Active minus on loads; both click through to a filtered roster.
+ *   R10 (LEAD 443.280-C, Spec board "1,260 center or 760 side panel") Book Load center 1260px / side 760px, both clamped
+ *       to the viewport; the Load # number right-aligned in its 110px box (Modal board justify-content:flex-end).
+ *   R11 (443.280-C) Truck Planner bars: "<load #> · <lane>" and "$ · mi · $/mi" from the load (practical miles).
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -45,6 +48,8 @@ const FILES = {
   miles: "apps/frontend/src/components/dispatch/TourMilesPanel.tsx",
   close: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
   drivers: "apps/frontend/src/pages/Drivers.tsx",
+  planner: "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+  plannerBars: "apps/frontend/src/pages/dispatch/planners/planner-bars.ts",
 };
 
 export function audit(s) {
@@ -103,6 +108,12 @@ export function audit(s) {
   need("R9", /DRIVER_ON_LOAD_STATUSES = new Set\(\["dispatched", "at_pickup", "in_transit", "at_delivery"\]\)/.test(s.drivers) && /ids\.add\(String\(id\)\)/.test(s.drivers), "On Loads is not counted by driver id from dispatched / in-transit / at-stop loads");
   need("R9", /d\.status === "Active" && !onLoadDriverIds\.has\(String\(d\.id\)\)/.test(s.drivers), "Available is not Active minus on loads");
   need("R9", /to="\/drivers\/roster\?status=all&load_state=on"/.test(s.drivers) && /to="\/drivers\/roster\?status=active&load_state=free"/.test(s.drivers) && /loadStateFilter === "on"/.test(s.drivers), "On Loads / Available do not click through to a filtered roster");
+  // R10
+  need("R10", /max-w-\[min\(1260px,calc\(100vw-2rem\)\)\]/.test(s.modal) && /w-\[760px\] max-w-\[100vw\]/.test(s.modal) && /\{ width: "min\(760px, 100vw\)", minWidth: 440/.test(s.modal), "Book Load is not 1260 center / 760 side (Spec board), clamped to the viewport");
+  need("R10", /\[&_input\]:text-right/.test(s.idBar), "the Load # number is not right-aligned in its box");
+  // R11
+  need("R11", /bar\.label = `\$\{load\.load_number\} · \$\{plannerBarLane\(load\)\}`/.test(s.planner) && /bar\.detail = plannerBarMoneyDetail\(load\)/.test(s.planner), "Truck Planner bars do not carry the lane and $ · mi · $/mi");
+  need("R11", /load\.miles_practical/.test(s.plannerBars) && /\/mi`/.test(s.plannerBars) && /if \(!\(miles > 0\)\) return `\$\{money\} · — mi`/.test(s.plannerBars), "planner $/mi is not rate ÷ practical miles (or divides by a missing mile)");
   return f;
 }
 
@@ -144,6 +155,12 @@ if (process.argv.includes("--selftest")) {
     ["column A ending above column B FAILS", plant("modal", "grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[1.05fr_1fr]", "grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]")],
     ["white block under Special notes FAILS", plant("modal", 'flex min-h-[64px] flex-1 flex-col gap-0.5" data-testid="book-load-special-notes"', 'flex flex-col gap-0.5" data-testid="book-load-special-notes"')],
     ["wrapping Upload Rate Con FAILS", plant("ratecon", "items-center whitespace-nowrap", "items-center")],
+    ["the old 1120 center FAILS", plant("modal", "max-w-[min(1260px,calc(100vw-2rem))]", "max-w-[min(1120px,calc(100vw-2rem))]")],
+    ["the old 660 side panel FAILS", plant("modal", "w-[760px] max-w-[100vw]", "w-[660px] max-w-[100vw]")],
+    ["a left-aligned Load # FAILS", plant("idBar", "[&_input]:text-right", "[&_input]:text-left")],
+    ["planner bar without the lane FAILS", plant("planner", "bar.label = `${load.load_number} · ${plannerBarLane(load)}`", "bar.label = load.load_number")],
+    ["planner bar with only the $ FAILS", plant("planner", "bar.detail = plannerBarMoneyDetail(load)", "bar.detail = String(load.rate_total_cents)")],
+    ["$/mi dividing by a missing mile FAILS", plant("plannerBars", "if (!(miles > 0)) return `${money} · — mi`;", "")],
   ];
   let bad = 0;
   for (const [n, ok] of cases) {
@@ -160,4 +177,4 @@ if (failures.length) {
   for (const x of failures) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log("verify-book-load-v3-layout: OK — Load # helper under the box, Broker/Direct own cell, NB/TR/SB cards, miles source order + reference lanes, 32px stop rows, live-walk fixes, A/B level, Pre-Settlements close flow + Drivers KPIs (R1–R9)");
+console.log("verify-book-load-v3-layout: OK — 1260/760 widths, Load # right-aligned, planner lane + $/mi, Load # helper under the box, Broker/Direct own cell, NB/TR/SB cards, miles source order + reference lanes, 32px stop rows, live-walk fixes, A/B level, Pre-Settlements close flow + Drivers KPIs (R1–R9)");
