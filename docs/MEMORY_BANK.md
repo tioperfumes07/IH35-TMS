@@ -241,8 +241,21 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   `has_balance=true`.
 - **Guard piggyback:** `verify-customers-vendors-have-list-view.mjs` (step 12346 ≡2 EVEN Cursor)
   asserts V3KpiTile + data-customers-v3-kpis on Customers.tsx. No new EVEN claim.
-- **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards · Vendors home V3 ·
-  Driver Profile boards · design-system sweep · Chrome proof. Full DONE not claimed.
+- **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards · Driver Profile ·
+  design-system sweep · Chrome proof. Vendors home V3 shipped (below). Full DONE not claimed.
+
+### Active Architectural Decisions — Vendors home V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getVendorRosterCounts` / with-transactions roster +
+  `listVendorBalances(all:true)` (`openByVendorId`) + `getVendorRollups` (`spend_ytd_cents`).
+  No new A/P endpoint.
+- **V3 board chrome:** four home KPIs via `V3KpiTile` + `data-vendors-v3-kpis` — With transactions ·
+  In the book · Open bills · Spend YTD (owner board Vendors.dc.html). "—" when balances or rollups
+  query errors. Click-through: roster KPIs set `listTab`; Open bills → `/accounting/bills?status=unpaid`.
+- **Guard piggyback:** `verify-customers-vendors-have-list-view.mjs` (step 12346 ≡2 EVEN Cursor)
+  asserts V3KpiTile + data-vendors-v3-kpis on Vendors.tsx (+ customers markers retained). No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards · Driver Profile ·
+  design-system sweep · Chrome proof. Full DONE not claimed.
 
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)

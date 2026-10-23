@@ -39,6 +39,7 @@ import { EntityActivityFeed } from "../components/shared/EntityActivityFeed";
 import { getApAgingReport } from "../api/reports";
 import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../components/accounting/UnclearedDocumentsNote";
 import { companyToday } from "../lib/businessDate";
+import { V3KpiTile } from "../components/v3/V3KpiTile";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "statements" | "activity" | "notes";
 
@@ -495,6 +496,39 @@ export function VendorsPage() {
     return map;
   }, [balancesQuery.data?.rows]);
 
+  // ROUND 443.250 V3 board (Vendors.dc.html) — same live maps (roster counts +
+  // listVendorBalances + getVendorRollups). Chrome via V3KpiTile. "—" on balance/rollup fail.
+  const vendorHomeKpis = useMemo(() => {
+    const balancesUnavailable = balancesQuery.isError;
+    const rollupsUnavailable = vendorRollupsQuery.isError;
+    let openBillsCents = 0;
+    let vendorsWithOpen = 0;
+    for (const cents of openByVendorId.values()) {
+      if (cents > 0) {
+        openBillsCents += cents;
+        vendorsWithOpen += 1;
+      }
+    }
+    let spendYtdCents = 0;
+    for (const row of rollupByVendorId.values()) {
+      spendYtdCents += Number(row.spend_ytd_cents ?? 0);
+    }
+    return {
+      withTransactions: vendorTabCounts.with_transactions,
+      inTheBook: vendorTabCounts.all,
+      openBillsCents: balancesUnavailable ? null : openBillsCents,
+      vendorsWithOpen: balancesUnavailable ? null : vendorsWithOpen,
+      spendYtdCents: rollupsUnavailable ? null : spendYtdCents,
+    };
+  }, [
+    balancesQuery.isError,
+    vendorRollupsQuery.isError,
+    openByVendorId,
+    rollupByVendorId,
+    vendorTabCounts.with_transactions,
+    vendorTabCounts.all,
+  ]);
+
   const billsQuery = useQuery({
     queryKey: ["vendors", "transactions", companyId, selectedVendor?.id ?? "", statusFilter, dateFrom, dateTo],
     queryFn: () =>
@@ -805,6 +839,46 @@ export function VendorsPage() {
           </div>
         </div>
       ) : null}
+      {/* ROUND 443.250 V3 board (Vendors.dc.html) — With transactions / In the book / Open bills /
+          Spend YTD. Live roster counts + vendor-balances + vendor-rollups; chrome V3KpiTile. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="vendors-home-kpi-strip"
+        data-vendors-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="With transactions"
+          value={vendorHomeKpis.withTransactions.toLocaleString("en-US")}
+          sub="vendors with activity"
+          testId="vendors-kpi-with-transactions"
+          onClick={() => setListStatus("with_transactions")}
+        />
+        <V3KpiTile
+          label="In the book"
+          value={vendorHomeKpis.inTheBook.toLocaleString("en-US")}
+          sub="full vendor roster"
+          testId="vendors-kpi-in-the-book"
+          onClick={() => setListStatus("all")}
+        />
+        <V3KpiTile
+          label="Open bills"
+          value={vendorHomeKpis.openBillsCents == null ? "—" : fmtMoney(vendorHomeKpis.openBillsCents)}
+          sub={
+            vendorHomeKpis.vendorsWithOpen == null
+              ? "vendor open balance"
+              : `${vendorHomeKpis.vendorsWithOpen.toLocaleString("en-US")} with open balance`
+          }
+          testId="vendors-kpi-open-bills"
+          onClick={() => navigate("/accounting/bills?status=unpaid")}
+        />
+        <V3KpiTile
+          label="Spend YTD"
+          value={vendorHomeKpis.spendYtdCents == null ? "—" : fmtMoney(vendorHomeKpis.spendYtdCents)}
+          sub="purchases year to date"
+          testId="vendors-kpi-spend-ytd"
+          onClick={() => setListStatus("with_transactions")}
+        />
+      </div>
       {viewMode === "list" ? (
         // ROUND 18.1 Item D (owner-directed re-measure against TAB-COMPLETION-STANDARD.md,
         // 2026-09-12) -- same defect as Customers.tsx's identical pattern: "List view" also mounted
