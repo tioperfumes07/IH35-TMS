@@ -74,6 +74,8 @@ import { getCompanySettlementReport } from "../../api/accounting";
 import { SettlementLoadsSection } from "./components/SettlementLoadsSection";
 import { CompanyWaterfallSection } from "./components/CompanyWaterfallSection";
 import { SettlementNumberBox } from "./components/SettlementNumberBox";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3Panel } from "../../components/v3/V3Panel";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
   // OWNER-LIVE-DEFECT-2026-09-08 (Jorge, live walkthrough of S-13644): this filter excluded
@@ -623,6 +625,8 @@ export function SettlementDetailPage() {
         subtitle="Debt-alert invariant enforced"
         actions={
           <div className="flex gap-2">
+            {/* ROUND 443.250 Settlements-Statement.dc.html — board action labels; same print/PDF
+                endpoints. Open journal entry scrolls to MoneyProofTrail (JE links already there). */}
             <Button
               variant="secondary"
               size="sm"
@@ -632,7 +636,7 @@ export function SettlementDetailPage() {
                 )
               }
             >
-              Print
+              Print statement
             </Button>
             <Button
               variant="secondary"
@@ -643,7 +647,16 @@ export function SettlementDetailPage() {
                 )
               }
             >
-              View settlement PDF
+              Download PDF
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                document.getElementById("settlement-statement-money-proof")?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            >
+              Open journal entry
             </Button>
             {!settlementIsCancelled ? (
               settlementIsLocked ? (
@@ -706,6 +719,53 @@ export function SettlementDetailPage() {
           Team split lines detected (primary/co-driver)
         </div>
       ) : null}
+      {/* ROUND 443.250 Settlements-Statement.dc.html — identity strip (Settlement / Driver·Unit /
+          Tour / Status). Same getSettlement + tour readout fields; SETL-DETAIL-01 SettlementKpiGrid
+          (Revenue…Company margin) stays below unchanged. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="settlements-statement-v3-kpis"
+        data-settlements-statement-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="Settlement"
+          value={settlementDisplayId ?? "—"}
+          sub="Company settlement"
+          testId="settlement-statement-kpi-number"
+        />
+        <V3KpiTile
+          label="Driver · Unit"
+          value={String(settlement.driver_full_name ?? "—")}
+          sub={readout?.tour?.unit_number ? String(readout.tour.unit_number) : "—"}
+          testId="settlement-statement-kpi-driver-unit"
+        />
+        <V3KpiTile
+          label="Tour"
+          value={
+            settlement.period_start || settlement.period_end
+              ? `${formatDateUS(String(settlement.period_start ?? "")) || "—"} → ${formatDateUS(String(settlement.period_end ?? "")) || "—"}`
+              : "—"
+          }
+          sub={
+            readout && readout.legs.length > 0
+              ? readout.legs.map((leg) => `${leg.trip_type ?? ""} ${leg.load_number}`.trim()).join(" · ")
+              : "—"
+          }
+          testId="settlement-statement-kpi-tour"
+        />
+        <V3KpiTile
+          label="Status"
+          value={String(settlement.status ?? "—")}
+          sub={settlementIsPaid ? "paid" : paymentState}
+          testId="settlement-statement-kpi-status"
+        />
+      </div>
+      <V3Panel
+        title="Settlement statement"
+        subtitle="Earnings · deductions · company settlement · linked records"
+        testId="settlements-statement-v3-panel"
+      >
+        <div data-settlements-statement-v3-panel="1">
       {/* Server-assigned settlement identity, units and linked tour loads. */}
       <div className="ldt-card" data-testid="settlement-detail-identity-strip" style={{ padding: 10, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
         <SettlementNumberBox
@@ -785,7 +845,11 @@ export function SettlementDetailPage() {
       />
       {readout ? <SettlementLoadsSection legs={readout.legs} operatingCompanyId={companyId} /> : null}
       {readout ? <CompanyWaterfallSection readout={readout} report={companyReport} /> : null}
-      <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
+      <div id="settlement-statement-money-proof">
+        <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
+      </div>
+        </div>
+      </V3Panel>
       {showManualPaidDraftBanner ? (
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">
           Payment is recorded as <span className="font-semibold">manual_paid</span> but this settlement is not
