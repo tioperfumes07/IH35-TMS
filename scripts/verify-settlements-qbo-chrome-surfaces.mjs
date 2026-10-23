@@ -61,6 +61,30 @@ const CHECKS = [
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
     pattern: /milesDocForLeg[\s\S]*miles_basis[\s\S]*miles_practical|function milesDocForLeg/,
   },
+  // ROUND 443.274-C Settlements-Company.dc.html — per-tour table via listTours(closed).
+  // Same TourListRow engines (revenue/costs/driver_pay/margin); chrome + board columns.
+  {
+    name: "CompanySettlementsPage listTours closed board grain",
+    file: "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx",
+    pattern: /listTours\(companyId,\s*"closed"\)/,
+  },
+  {
+    name: "CompanySettlementsPage board columns Company·Driver settlement·Revenue·Margin %",
+    file: "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx",
+    pattern:
+      /label: "Company settlement"[\s\S]*label: "Driver settlement"[\s\S]*label: "Driver"[\s\S]*label: "Revenue"[\s\S]*label: "Costs"[\s\S]*label: "Driver pay"[\s\S]*label: "Margin"[\s\S]*label: "Margin %"/,
+  },
+  {
+    name: "CompanySettlementsPage not opened amber + No number red",
+    file: "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx",
+    pattern: /not opened[\s\S]*No number|No number[\s\S]*not opened/,
+  },
+  {
+    name: "CompanySettlementsPage V3Panel + QBO_MONEY_CELL_CLASS money columns",
+    file: "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx",
+    pattern:
+      /data-company-settlements-v3-panel="1"[\s\S]*QBO_MONEY_CELL_CLASS|QBO_MONEY_CELL_CLASS[\s\S]*data-company-settlements-v3-panel="1"/,
+  },
   // ROUND 443.274-C Settlements-PreSettlements.png — 6 KPI tiles + side-by-side Open | What closes.
   // Same listOpenPreSettlements / listSettlements KPI / getOpenDriverBills; chrome + board layout.
   {

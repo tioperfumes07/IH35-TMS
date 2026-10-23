@@ -1,22 +1,20 @@
-// L.6 — COMPANY SETTLEMENTS (read-only, owner task 2026-09-06).
-//
-// "One number over many loads": the list rolls a whole settlement period up to a single
-// net-revenue figure (a handful of driver settlements → one company settlement → one Net Revenue).
-// Selecting a row opens the 8-section waterfall (buildCompanySettlementReport): Gross Revenue →
-// driver pay + deductions → fuel → expenses → Net Revenue, tied to the cent by construction.
-//
-// Read-only: no create/void/edit here. Money uses the app cents formatter; a voided settlement's
-// net is a dash, never a fake $0.00 (law §8, dash-never-zero). Styling uses the .ldt-* palette
-// (styles/tokens-load-detail.css) matching the Load-detail Costs / Tour-settlement surfaces.
+// ROUND 443.274-C Settlements-Company.dc.html — per-tour table (closed tours):
+// Company settlement · Driver settlement · Driver · Revenue · Costs · Driver pay · Margin · Margin %.
+// Engines: listTours("closed") / TourListRow (same readout as Settlements Open/Closed).
+// "not opened" amber when company_settlement_id is null; "No number" red when AlwaysTrack missing.
+// Deep link ?id=<company_settlement_id> still opens the 8-section waterfall (unchanged engine).
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { V3Panel } from "../../components/v3/V3Panel";
+import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   listCompanySettlements,
@@ -24,13 +22,14 @@ import {
   companySettlementHtmlUrl,
   type CompanySettlementListRow,
 } from "../../api/accounting";
+import { listTours, type TourListRow } from "../../api/tourReadout";
 import { openPrintableDocument, openCanonicalDocument } from "../../lib/openPrintableDocument";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
+import { settlementNumber } from "../../lib/settlementNumber";
 import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
 import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 
-// Dash-never-zero (law §8): a null/void money value renders "—", never "$0.00".
 const DASH = "—";
 function money(cents: number | null | undefined): string {
   if (cents === null || cents === undefined) return DASH;
@@ -41,117 +40,221 @@ function date(value: string | null | undefined): string {
   return out || DASH;
 }
 
-function statusPillClass(row: CompanySettlementListRow): string {
-  if (row.voided_at) return "ldt-pill bad";
-  const s = (row.status || "").toLowerCase();
-  if (s === "closed" || s === "final" || s === "paid") return "ldt-pill ok";
-  return "ldt-pill warn";
+/** Driver settlement label — AlwaysTrack doc, else "No number" (closed board). */
+function driverSettlementLabel(r: TourListRow): string {
+  const at = settlementNumber(r);
+  if (at) return at;
+  return "No number";
 }
 
-function statusLabel(row: CompanySettlementListRow): string {
-  if (row.voided_at) return "Voided";
-  return row.status || "—";
+function DriverSettlementCell({ row }: { row: TourListRow }) {
+  const label = driverSettlementLabel(row);
+  const noNumber = label === "No number";
+  return (
+    <EntityLink
+      kind="settlement"
+      id={row.settlement_id}
+      label={label}
+      className={noNumber ? "font-bold text-[#B91C1C]" : "ldt-link font-semibold"}
+      data-testid={noNumber ? "company-setl-driver-no-number" : "company-setl-driver-link"}
+    />
+  );
 }
 
-// REG-005 — a settlement is "closed" when its status is a terminal state and it is not voided;
-// anything else non-voided is "open". Mirrors statusPillClass's ok-state list.
-function isClosedRow(row: CompanySettlementListRow): boolean {
-  if (row.voided_at) return false;
-  const s = (row.status || "").toLowerCase();
-  return s === "closed" || s === "final" || s === "paid";
-}
-function isOpenRow(row: CompanySettlementListRow): boolean {
-  return !row.voided_at && !isClosedRow(row);
+function CompanySettlementCell({ row }: { row: TourListRow }) {
+  const id = row.company_settlement_id;
+  const label = (row.company_settlement_display_id ?? "").trim() || "Company settlement";
+  if (id) {
+    return (
+      <EntityLink
+        kind="company_settlement"
+        id={id}
+        label={label}
+        className="ldt-link font-semibold"
+        data-testid="company-setl-company-link"
+      />
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5" data-testid="company-setl-company-not-opened">
+      <span className="inline-block h-1.5 w-1.5 rounded-sm bg-[#B45309]" aria-hidden />
+      <span className="text-[#B45309]">not opened</span>
+    </span>
+  );
 }
 
 export function CompanySettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [selected, setSelected] = useState<CompanySettlementListRow | null>(null);
-  // REG-005 — presentation-only status filter driven by the KPI strip (no new query).
-  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "closed">("all");
-  // ROUND 16.2 item 3 — EntityLink kind="company_settlement" (EntityLink.tsx) drills here via
-  // ?id=<company_settlement_id>. Auto-open that row's detail panel once the list loads, same
-  // pattern SettlementDetailPage uses for ?settlement_id.
   const [searchParams] = useSearchParams();
   const deepLinkId = searchParams.get("id");
 
-  const listQuery = useQuery({
+  // Board grain = closed tours (Settlements-Company.dc.html).
+  const toursQuery = useQuery({
+    queryKey: ["settlements-module", "company-settlements-board", "tours", "closed", companyId],
+    queryFn: () => listTours(companyId, "closed"),
+    enabled: Boolean(companyId),
+  });
+
+  // Waterfall deep-link / row open still uses company-settlement periods (same report engine).
+  const periodsQuery = useQuery({
     queryKey: ["accounting", "company-settlements", companyId],
     queryFn: () => listCompanySettlements(companyId),
     enabled: Boolean(companyId),
   });
 
-  const allRows = listQuery.data?.company_settlements ?? [];
-  // REG-005 KPI strip — real numbers from the already-fetched list, "—" on load failure, dash-never-zero
-  // for a net revenue with no live figure. No new query (lane boundary: presentation-layer only).
-  const openCount: number | string = listQuery.isError ? "—" : allRows.filter(isOpenRow).length;
-  const closedCount: number | string = listQuery.isError ? "—" : allRows.filter(isClosedRow).length;
-  const liveNet = allRows.filter((r) => !r.voided_at && r.net_revenue_cents !== null);
-  const netRevenue: string = listQuery.isError
-    ? "—"
-    : liveNet.length === 0
-      ? DASH
-      : formatUsdCents(liveNet.reduce((sum, r) => sum + Number(r.net_revenue_cents ?? 0), 0));
-  const rows =
-    statusFilter === "open"
-      ? allRows.filter(isOpenRow)
-      : statusFilter === "closed"
-        ? allRows.filter(isClosedRow)
-        : allRows;
+  const tourRows = toursQuery.data?.rows ?? [];
+  const periodRows = periodsQuery.data?.company_settlements ?? [];
+
+  const withCompany = tourRows.filter((r) => Boolean(r.company_settlement_id)).length;
+  const notOpened = tourRows.length - withCompany;
+  const totalMargin = tourRows.reduce((sum, r) => sum + r.margin_cents, 0);
 
   useEffect(() => {
     if (!deepLinkId || selected) return;
-    const match = rows.find((r) => r.id === deepLinkId);
+    const match = periodRows.find((r) => r.id === deepLinkId);
     if (match) setSelected(match);
-  }, [deepLinkId, rows, selected]);
+  }, [deepLinkId, periodRows, selected]);
 
-  const columns = useMemo<ParityColumn<CompanySettlementListRow>[]>(
+  const openWaterfallForTour = (r: TourListRow) => {
+    const id = r.company_settlement_id;
+    if (!id) return;
+    const match = periodRows.find((p) => p.id === id);
+    if (match) {
+      setSelected(match);
+      return;
+    }
+    // Period list may lag; open waterfall with tour-sourced identity.
+    setSelected({
+      id,
+      display_id: (r.company_settlement_display_id ?? "").trim() || id.slice(0, 8),
+      period_start: r.trip_started_at ?? "",
+      period_end: r.trip_closed_at ?? "",
+      status: "closed",
+      closed_at: r.trip_closed_at,
+      voided_at: null,
+      driver_settlement_count: 1,
+      net_revenue_cents: r.margin_cents,
+    });
+  };
+
+  const columns = useMemo<ParityColumn<TourListRow>[]>(
     () => [
       {
-        key: "display_id",
-        label: "Display ID",
-        className: "text-left",
-        sortValue: (r) => r.display_id,
-        render: (r) => <span className="ldt-mono">{r.display_id || DASH}</span>,
-        exportValue: (r) => r.display_id,
+        key: "company_settlement",
+        label: "Company settlement",
+        alwaysVisible: true,
+        testId: "company-setl-col-company",
+        sortable: true,
+        className: "whitespace-nowrap",
+        minWidth: 120,
+        sortValue: (r) =>
+          r.company_settlement_id
+            ? (r.company_settlement_display_id ?? r.company_settlement_id)
+            : "not opened",
+        render: (r) => <CompanySettlementCell row={r} />,
+        exportValue: (r) =>
+          r.company_settlement_id
+            ? (r.company_settlement_display_id ?? r.company_settlement_id)
+            : "not opened",
       },
       {
-        key: "period_start",
-        label: "Period Start",
-        sortValue: (r) => r.period_start,
-        render: (r) => date(r.period_start),
-        exportValue: (r) => date(r.period_start),
+        key: "driver_settlement",
+        label: "Driver settlement",
+        alwaysVisible: true,
+        testId: "company-setl-col-driver-settlement",
+        sortable: true,
+        className: "whitespace-nowrap",
+        minWidth: 120,
+        sortValue: (r) => driverSettlementLabel(r),
+        render: (r) => <DriverSettlementCell row={r} />,
+        exportValue: (r) => driverSettlementLabel(r),
       },
       {
-        key: "period_end",
-        label: "Period End",
-        sortValue: (r) => r.period_end,
-        render: (r) => date(r.period_end),
-        exportValue: (r) => date(r.period_end),
+        key: "driver",
+        label: "Driver",
+        testId: "company-setl-col-driver",
+        sortable: true,
+        minWidth: 140,
+        maxWidth: 220,
+        cellClass: "whitespace-nowrap",
+        sortValue: (r) => r.driver_name ?? "",
+        render: (r) => (
+          <EntityLinkOrTombstone
+            kind="driver"
+            id={r.driver_id}
+            name={formatDisplayName(r.driver_name)}
+            noun="Driver"
+            className="block max-w-[200px] truncate"
+          />
+        ),
       },
       {
-        key: "status",
-        label: "Status",
-        sortValue: (r) => statusLabel(r),
-        render: (r) => <span className={statusPillClass(r)}>{statusLabel(r)}</span>,
-        exportValue: (r) => statusLabel(r),
+        key: "revenue",
+        label: "Revenue",
+        testId: "company-setl-col-revenue",
+        sortable: true,
+        cellClass: QBO_MONEY_CELL_CLASS,
+        minWidth: 100,
+        sortValue: (r) => r.revenue_cents,
+        render: (r) => formatUsdCents(r.revenue_cents),
+        exportValue: (r) => formatUsdCents(r.revenue_cents),
       },
       {
-        key: "driver_settlement_count",
-        label: "Driver Settlements",
-        sortValue: (r) => r.driver_settlement_count,
-        render: (r) => r.driver_settlement_count,
-        exportValue: (r) => r.driver_settlement_count,
+        key: "costs",
+        label: "Costs",
+        testId: "company-setl-col-costs",
+        sortable: true,
+        cellClass: QBO_MONEY_CELL_CLASS,
+        minWidth: 100,
+        sortValue: (r) => r.costs_cents,
+        render: (r) => formatUsdCents(r.costs_cents),
+        exportValue: (r) => formatUsdCents(r.costs_cents),
       },
       {
-        key: "net_revenue_cents",
-        label: "Net Revenue",
-        className: "text-right",
-        cellClass: "text-right ldt-mono",
-        sortValue: (r) => (r.net_revenue_cents === null ? null : r.net_revenue_cents),
-        render: (r) => money(r.net_revenue_cents),
-        exportValue: (r) => (r.net_revenue_cents === null ? DASH : formatUsdCents(r.net_revenue_cents)),
+        key: "driver_pay",
+        label: "Driver pay",
+        testId: "company-setl-col-driver-pay",
+        sortable: true,
+        cellClass: QBO_MONEY_CELL_CLASS,
+        minWidth: 100,
+        sortValue: (r) => r.driver_pay_cents,
+        render: (r) => formatUsdCents(r.driver_pay_cents),
+        exportValue: (r) => formatUsdCents(r.driver_pay_cents),
+      },
+      {
+        key: "margin",
+        label: "Margin",
+        testId: "company-setl-col-margin",
+        sortable: true,
+        cellClass: QBO_MONEY_CELL_CLASS,
+        minWidth: 100,
+        sortValue: (r) => r.margin_cents,
+        render: (r) => (
+          <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>
+            {formatUsdCents(r.margin_cents)}
+          </span>
+        ),
+        exportValue: (r) => formatUsdCents(r.margin_cents),
+      },
+      {
+        key: "margin_pct",
+        label: "Margin %",
+        testId: "company-setl-col-margin-pct",
+        sortable: true,
+        cellClass: "whitespace-nowrap text-right tabular-nums",
+        minWidth: 76,
+        sortValue: (r) => r.margin_pct ?? -Infinity,
+        render: (r) =>
+          r.margin_pct == null ? (
+            DASH
+          ) : (
+            <span className={r.margin_pct < 0 ? "text-[#991B1B]" : undefined}>
+              {r.margin_pct.toFixed(1)}%
+            </span>
+          ),
+        exportValue: (r) => (r.margin_pct == null ? DASH : `${r.margin_pct.toFixed(1)}%`),
       },
     ],
     []
@@ -161,76 +264,90 @@ export function CompanySettlementsPage() {
     <div className="space-y-3">
       <PageHeader
         title="Company Settlements"
-        subtitle="One number over many loads — settlement periods rolled to net revenue"
+        subtitle="Revenue · costs · driver pay · margin per tour"
       />
 
       <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
 
-      {/* REG-005 + ROUND 443.250 V3 board (Settlements-Company.dc.html) — same live list math
-          (open/closed/net from listCompanySettlements); chrome via V3KpiTile. Open/Closed toggle the
-          presentation-only status filter; Settlements + Net Revenue clear it. "—" on load failure. */}
+      {/* ROUND 443.274-C — KPI strip from listTours(closed); board table is the tour grain. */}
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="company-settlements-kpi-strip"
         data-company-settlements-v3-kpis="1"
       >
         <V3KpiTile
-          label="Settlements"
-          value={listQuery.isError ? "—" : String(allRows.length)}
-          sub={statusFilter === "all" ? "filter on" : "all company settlement periods"}
+          label="Closed tours"
+          value={toursQuery.isError ? "—" : String(tourRows.length)}
+          sub="listTours closed"
           testId="company-settlements-kpi-total"
-          onClick={() => setStatusFilter("all")}
         />
         <V3KpiTile
-          label="Open"
-          value={String(openCount)}
-          sub={statusFilter === "open" ? "filter on" : "not yet closed / final / paid"}
-          testId="company-settlements-kpi-open"
-          onClick={() => setStatusFilter("open")}
+          label="With company settlement"
+          value={toursQuery.isError ? "—" : String(withCompany)}
+          sub="company_settlement_id set"
+          testId="company-settlements-kpi-with-company"
         />
         <V3KpiTile
-          label="Closed"
-          value={String(closedCount)}
-          sub={statusFilter === "closed" ? "filter on" : "closed / final / paid, not voided"}
-          testId="company-settlements-kpi-closed"
-          onClick={() => setStatusFilter("closed")}
+          label="Not opened"
+          value={toursQuery.isError ? "—" : String(notOpened)}
+          sub="amber · no company settlement yet"
+          testId="company-settlements-kpi-not-opened"
         />
         <V3KpiTile
-          label="Net Revenue"
-          value={netRevenue}
-          sub="sum of net across non-voided periods"
-          testId="company-settlements-kpi-net-revenue"
-          onClick={() => setStatusFilter("all")}
+          label="Total margin"
+          value={toursQuery.isError ? "—" : formatUsdCents(totalMargin)}
+          sub="sum of tour margin"
+          testId="company-settlements-kpi-margin"
         />
       </div>
 
-      {listQuery.isError ? (
+      {toursQuery.isError ? (
         <ListErrorBanner
           message="Failed to load company settlements."
-          onRetry={() => void listQuery.refetch()}
+          onRetry={() => void toursQuery.refetch()}
         />
       ) : null}
 
-      <V3Panel
-        title="Company settlements"
-        subtitle="Revenue · costs · driver pay · margin per period"
-        testId="company-settlements-list-panel"
-      >
-        <ParityTable
+      <div data-company-settlements-v3-panel="1">
+        <V3Panel
           title="Company settlements"
-          columns={columns}
-          rows={rows}
-          rowKey={(r) => r.id}
-          loading={listQuery.isPending && Boolean(companyId)}
-          onRowClick={(r) => setSelected(r)}
-          rowClassName={(r) => (selected?.id === r.id ? "bg-[#F7F8FA]" : "")}
-          emptyText={
-            companyId ? "No company settlements yet." : "Select a company to view its settlements."
-          }
-          storageKey="company-settlements-list"
-          exportFilename="company-settlements"
-        />
-      </V3Panel>
+          subtitle="Revenue · costs · driver pay · margin per tour"
+          testId="company-settlements-list-panel"
+        >
+          <ParityTable
+            title="Company settlements"
+            columns={columns}
+            rows={tourRows}
+            rowKey={(r) => r.settlement_id}
+            loading={toursQuery.isPending && Boolean(companyId)}
+            onRowClick={(r) => openWaterfallForTour(r)}
+            rowClassName={(r) =>
+              selected?.id && r.company_settlement_id === selected.id ? "bg-[#F7F8FA]" : ""
+            }
+            emptyText={
+              companyId
+                ? "No closed tours yet."
+                : "Select a company to view its company settlements."
+            }
+            storageKey="company-settlements-tour-board"
+            exportFilename="company-settlements-tours"
+            footerCells={{
+              company_settlement: (v) => (
+                <span
+                  className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header"
+                  data-testid="company-settlements-tour-totals-label"
+                >
+                  Totals ({v.length})
+                </span>
+              ),
+              revenue: (v) => formatUsdCents(v.reduce((n, r) => n + r.revenue_cents, 0)),
+              costs: (v) => formatUsdCents(v.reduce((n, r) => n + r.costs_cents, 0)),
+              driver_pay: (v) => formatUsdCents(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
+              margin: (v) => formatUsdCents(v.reduce((n, r) => n + r.margin_cents, 0)),
+            }}
+          />
+        </V3Panel>
+      </div>
 
       {selected ? (
         <CompanySettlementWaterfall
@@ -268,7 +385,6 @@ function CompanySettlementWaterfall({
           Company Settlement · {row.display_id} · {date(row.period_start)} – {date(row.period_end)}
         </span>
         <span className="ldt-actions">
-          {/* SET-30 — company settlement on the house template, same shell as the driver settlement letter. */}
           <button
             type="button"
             className="ldt-btn"
@@ -345,7 +461,6 @@ function CompanySettlementWaterfall({
 
           <div className="ldt-row big">
             <span>Net Revenue</span>
-            {/* Dash-never-zero — a voided settlement never shows a fabricated net. */}
             <span className="ldt-m">
               {isVoided ? DASH : money(report.sections.pl_rollup.net_revenue_cents)}
             </span>
@@ -363,12 +478,13 @@ function CompanySettlementWaterfall({
             </div>
           ) : null}
 
-          {/* ROUND 285.4.9 / #58 — three margins + downtime/fuel-consumed rollups (print PDF has full ledger). */}
           {report.sections.margins ? (
             <>
               <div className="ldt-row">
                 <span>Cash margin · fuel purchased</span>
-                <span className="ldt-m">{isVoided ? DASH : money(report.sections.margins.cash_margin_cents)}</span>
+                <span className="ldt-m">
+                  {isVoided ? DASH : money(report.sections.margins.cash_margin_cents)}
+                </span>
               </div>
               <div className="ldt-row">
                 <span>
@@ -377,7 +493,9 @@ function CompanySettlementWaterfall({
                     ? ` (${report.sections.fuel_consumed.total_gallons.toLocaleString()} gal)`
                     : ""}
                 </span>
-                <span className="ldt-m">{isVoided ? DASH : money(report.sections.margins.true_cost_margin_cents)}</span>
+                <span className="ldt-m">
+                  {isVoided ? DASH : money(report.sections.margins.true_cost_margin_cents)}
+                </span>
               </div>
               <div className="ldt-row">
                 <span>
@@ -386,15 +504,15 @@ function CompanySettlementWaterfall({
                     ? ` (${report.sections.downtime_ledger.events.length} event${report.sections.downtime_ledger.events.length === 1 ? "" : "s"})`
                     : ""}
                 </span>
-                <span className="ldt-m">{isVoided ? DASH : money(report.sections.margins.economic_margin_cents)}</span>
+                <span className="ldt-m">
+                  {isVoided ? DASH : money(report.sections.margins.economic_margin_cents)}
+                </span>
               </div>
             </>
           ) : null}
         </div>
       )}
 
-      {/* ROUND 16.19 — itemized per-load register UNDER the waterfall above (never replacing it —
-          the waterfall's Net Revenue stays the one audited figure). */}
       {report ? (
         <>
           <div className="ldt-ch" style={{ marginTop: 8 }}>
