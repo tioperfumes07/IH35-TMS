@@ -262,8 +262,8 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                   fontFamily: V3.font,
                 }}
               >
-                <span>{formatDateUS(yearWindow.start) || yearWindow.start.slice(0, 10)}</span>
-                <span>{formatDateUS(yearWindow.end) || yearWindow.end.slice(0, 10)}</span>
+                <span>{formatDateUS(yearWindow.start) || "—"}</span>
+                <span>{formatDateUS(yearWindow.end) || "—"}</span>
               </div>
               {activePolicies.map((p) => {
                 const span = Math.max(1, yearWindow.span);
