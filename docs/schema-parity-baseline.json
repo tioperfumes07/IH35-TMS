@@ -664,6 +664,7 @@
       "insurance_claim_id",
       "is_active",
       "is_company_expense",
+      "is_credit",
       "is_reimbursable",
       "is_sample_data",
       "journal_entry_id",
