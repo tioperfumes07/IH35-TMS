@@ -1705,9 +1705,11 @@ const SIBLINGS = [
     good: /entityLabel\(\s*invoice\.display_id\s*,\s*invoice\.id\s*,\s*"Invoice"\s*\)/,
   },
   {
+    // Lead 443.278 (2): Cursor's 443.267 hub (e5f553c67d) deleted the activity feed + bill-payment list these two
+    // entries pinned; the protection moves to the hub's remaining name render — open settlements by driver.
     rel: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
-    bad: /label: row\.display_id \|\| row\.customer_name|left: `\$\{item\.entity_type\} · \$\{item\.display_id\}`/,
-    good: /entityLabel\(\s*item\.display_id\s*,\s*item\.entity_id\s*,\s*"Record"\s*\)/,
+    bad: /name: row\.driver_name\?\.trim\(\) \|\| "Driver"|name: row\.driver_name\b(?!\s*,)/,
+    good: /name: entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id \?\? row\.settlement_id\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/MultiEntityAccountingPage.tsx",
@@ -1766,8 +1768,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
-    bad: /label: row\.reference_number \|\| row\.check_number \|\| row\.memo \|\| "Bill payment"/,
-    good: /entityLabel\(\s*row\.vendor_name \|\| row\.bill_number \|\| row\.reference_number \|\| row\.check_number \|\| row\.memo\s*,\s*row\.id\s*,\s*"Payment"\s*,?\s*\)/,
+    bad: /name=\{row\.driver_name\}|<span>\{row\.driver_name\}<\/span>/,
+    good: /kind="driver"\s+id=\{row\.driverId\}\s+name=\{row\.name\}/,
   },
   {
     rel: "apps/frontend/src/pages/VendorDetail.tsx",
@@ -2070,9 +2072,9 @@ ORDER BY w.opened_at DESC NULLS LAST`;
     },
     {
       rel: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
-      selector: (entry) => entry.good.source.includes("vendor_name") && entry.good.source.includes("bill_number"),
-      good: 'entityLabel(row.vendor_name || row.bill_number || row.reference_number || row.check_number || row.memo, row.id, "Payment",)',
-      bad: 'label: row.reference_number || row.check_number || row.memo || "Bill payment"',
+      selector: (entry) => entry.good.source.includes("row\\.driver_name") && entry.good.source.includes("settlement_id"),
+      good: 'name: entityLabel(row.driver_name, row.driver_id ?? row.settlement_id, "Driver"),',
+      bad: 'name: row.driver_name?.trim() || "Driver",',
     },
   ];
   for (const fixture of canonicalDocumentCases) {
