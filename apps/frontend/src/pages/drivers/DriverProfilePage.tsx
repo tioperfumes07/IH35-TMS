@@ -229,7 +229,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const [addTrainingOpen, setAddTrainingOpen] = useState(false);
   const [w8benOpen, setW8benOpen] = useState(false);
   const [addPayOpen, setAddPayOpen] = useState(false);
-  const [fullDetailsOpen, setFullDetailsOpen] = useState(false);
   const [dqfFocus, setDqfFocus] = useState<"all" | "present" | "missing" | "expired" | "expiry_alerts">("all");
   // DRV-F416 — tab is ?tab= parsed from the URL, not useState. Back restores the tab.
   const activeTab = parseDriverProfileTab(searchParams);
@@ -241,15 +240,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     setSearchParams(nextParams, { replace: false });
   };
   const focusDqf = (focus: typeof dqfFocus) => {
-    setFullDetailsOpen(true);
     setDqfFocus(focus);
-    if (activeTab !== "Overview") setActiveTab("Overview");
+    if (activeTab !== "Operations") setActiveTab("Operations");
     requestAnimationFrame(() => document.getElementById("driver-dqf-checklist")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 
   const focusIntegrity = () => {
-    setFullDetailsOpen(true);
-    if (activeTab !== "Overview") setActiveTab("Overview");
+    if (activeTab !== "Operations") setActiveTab("Operations");
     requestAnimationFrame(() =>
       document.getElementById("driver-integrity-profile")?.scrollIntoView({ behavior: "smooth", block: "start" })
     );
@@ -402,16 +399,16 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         backHref="/drivers/roster"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {!itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}
-            <StatusBadge status={driver.status} />
+            {activeTab !== "Overview" && !itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}
+            {activeTab !== "Overview" ? <StatusBadge status={driver.status} /> : null}
             <Button type="button" size="sm" variant="secondary" onClick={() => {
-              setActiveTab("Overview");
-              setFullDetailsOpen(true);
+              setActiveTab("Operations");
               requestAnimationFrame(() => document.querySelector('[data-testid="dp-section-5-hos"]')?.scrollIntoView({ behavior: "smooth", block: "start" }));
             }}>HOS detail</Button>
             <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}?tab=edit`)} data-testid="driver-profile-edit">
               Edit
             </Button>
+            {activeTab !== "Overview" ? <>
             {/* Rule 07 — the archived full record (Operations histories, earnings, load history) stays reachable. */}
             <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}/record`)} data-testid="driver-profile-full-record">
               Full record
@@ -459,6 +456,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 All drivers
               </Link>
             )}
+            </> : null}
           </div>
         }
       />
@@ -469,7 +467,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {/* C-11 — one horizontal KPI band below tabs (Overview only so other tabs keep one-screen density).
           443.99: the tab strip is DriverOverviewBoard's ProfileTabStrip (DRV-F420, #25517), so this band renders after it. */}
-      {activeTab === "Overview" ? (
+      {activeTab === "Operations" ? (
         itemsQ.isError ? (
           <ListErrorState
             title="Couldn't load DQF summary"
@@ -478,8 +476,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             onRetry={() => void itemsQ.refetch()}
           />
         ) : (
-          <details className="rounded-sm border border-gray-200 bg-white p-3">
-          <summary className="cursor-pointer text-xs font-semibold">Qualification checklist and integrity summary</summary>
+          <section className="rounded-sm border border-gray-200 bg-white p-3" aria-label="Qualification checklist and integrity summary">
           <div data-testid="driver-profile-kpi-strip">
             <KpiStrip>
               <KpiCard
@@ -547,13 +544,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               />
             </KpiStrip>
           </div>
-          </details>
+          </section>
         )
       ) : null}
 
-      {activeTab === "Overview" ? (
-        <details open={fullDetailsOpen} onToggle={(event) => setFullDetailsOpen(event.currentTarget.open)} className="rounded-sm border border-gray-200 bg-white p-3">
-        <summary className="cursor-pointer text-xs font-semibold">Full profile, credentials and activity</summary>
+      {activeTab === "Operations" ? (
+        <section className="rounded-sm border border-gray-200 bg-white p-3" aria-label="Full profile, credentials and activity">
         <div className="space-y-3" data-testid="dp-tab-overview">
           <div data-testid="dp-section-1-identity">
             <IdentityHeader
@@ -791,7 +787,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             </section>
           </div>
         </div>
-        </details>
+        </section>
       ) : null}
 
       {activeTab === "Settlements" ? (
@@ -1005,6 +1001,14 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <LegalMattersReverseSection operatingCompanyId={companyId} filter={{ related_driver_id: id }} contextLabel="this driver" />
           <InsuranceClaimsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
           <InsuranceLawsuitsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
+        </div>
+      ) : null}
+
+      {activeTab === "Equipment" ? (
+        <div className="space-y-3" data-testid="dp-tab-equipment">
+          <CurrentAssignmentSection assignment={aggregate.current_assignment} companyId={companyId} driverId={id} driverName={displayName} />
+          {companyId ? <DriverAssignmentHistorySection companyId={companyId} driverId={id} /> : null}
+          <DriverEquipmentTransfersReverseSection operatingCompanyId={companyId} driverId={id} />
         </div>
       ) : null}
 
