@@ -6,6 +6,26 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import assert from "node:assert/strict";
+
+function responsiveNavigationErrors(source) {
+  const nav = source.match(/<nav\s+aria-label="Section navigation"[\s\S]*?>/)?.[0] ?? "";
+  const classes = nav.match(/className="([^"]*)"/)?.[1]?.split(/\s+/) ?? [];
+  return [
+    ...(!classes.includes("min-h-9") ? ["nav must reserve its minimum height without capping scrollbar space"] : []),
+    ...(classes.some(c => /^h-/.test(c)) ? ["fixed nav height clips tabs when scrollbars are visible"] : []),
+    ...(!classes.includes("shrink-0") ? ["nav must not shrink beneath its contents"] : []),
+  ];
+}
+
+if (process.argv.includes("--selftest")) {
+  const good = fs.readFileSync("apps/frontend/src/components/layout/NavyPageSubNav.tsx", "utf8");
+  assert.equal(responsiveNavigationErrors(good).length, 0);
+  assert.ok(responsiveNavigationErrors(good.replace("min-h-9", "h-9")).length > 0);
+  assert.ok(responsiveNavigationErrors(good.replace("shrink-0", "")).length > 0);
+  console.log("verify-navy-page-subnav selftest: 3/3 passed (fixed-height and shrink plants rejected)");
+  process.exit(0);
+}
 
 const ROOT = process.cwd();
 const LABEL = "verify-navy-page-subnav";
@@ -25,6 +45,7 @@ const SETTLEMENTS = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx"
 
 const component = read(COMPONENT);
 const settlements = read(SETTLEMENTS);
+for (const error of responsiveNavigationErrors(component)) fail(error);
 
 // Locked visual tokens
 if (!component.includes("bg-[#14314F]")) fail("NavyPageSubNav missing locked token: bg-[#14314F]");
