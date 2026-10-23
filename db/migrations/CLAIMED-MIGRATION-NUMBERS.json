@@ -933,5 +933,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-23",
     "purpose": "CC-2 Lead 443.258.5 ruling 2 (writer shape B): accounting.expenses.is_credit — a card credit (QBO Credit Card Credit) posts Dr payment account / Cr category; the fuel-card statement discount becomes a document instead of a handwritten JE"
+  },
+  "202616210300": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-23",
+    "purpose": "CC-3 Lead 443.281-E: person names normalized at write — mdata.drivers BEFORE INSERT/UPDATE trigger proper-cases ALL-CAPS / all-lowercase first/last names (mixed case kept), and normalizes the existing ALL-CAPS rows through it"
   }
 }
