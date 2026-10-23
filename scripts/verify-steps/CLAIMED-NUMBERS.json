@@ -16918,5 +16918,20 @@
     "claimed_by": "codex",
     "claimed_at": "2026-10-22",
     "purpose": "CODEX 443.252 E: settlement token selftest guard"
+  },
+  "18671": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-2 LEAD 443.241: verify-one-lane-store (no engine computes lane miles outside catalogs.lane_mileage; every lane reader selects through laneStoreMilesSql)"
+  },
+  "18675": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-2 LEAD 443.243: verify-fuel-attribution-rule (settlement first; card truck keeps its fuel; next load; not 100% certain = a question, never a silent move off the card truck)"
+  },
+  "18679": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-2 LEAD 443.252 B: verify-photos-are-docs-files (every driver / unit photo is a validated docs.files image, never a raw URL; an ID document only proposes; one primary per unit)"
   }
 }
