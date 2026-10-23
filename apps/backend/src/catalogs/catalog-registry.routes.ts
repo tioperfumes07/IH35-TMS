@@ -96,6 +96,11 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
+/** Bind the company id only when the statement has a $1 placeholder (Postgres rejects unused bind values). */
+export function bindCompanyIfPlaceholder(sql: string, operatingCompanyId: string | null): unknown[] {
+  return /\$1\b/.test(sql) ? [operatingCompanyId] : [];
+}
+
 async function fetchCatalogStats(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
   code: string,
@@ -109,10 +114,11 @@ async function fetchCatalogStats(
     // (stats not available for this code) rather than inventing a count.
     return { item_count: 0, last_updated_at: null as string | null, stats_supported: false };
   }
-  // LISTS-F6704: EQUIPMENT_TYPES/DRIVER_LOAD_STATUSES SQL now has a $1 operating_company_id predicate;
-  // every other code's SQL has no placeholder, so the extra bound value is simply unused (harmless — the
-  // same pattern fetchPreviewItems already relies on below).
-  const res = await client.query(sql, [operatingCompanyId]);
+  // LISTS-F6704: EQUIPMENT_TYPES/DRIVER_LOAD_STATUSES SQL has a $1 operating_company_id predicate; the
+  // other codes' SQL has no placeholder. Postgres REJECTS an extra bind value ("bind message supplies 1
+  // parameters, but prepared statement requires 0") — that 500'd GET /catalogs/registry live — so bind
+  // only when the statement actually has $1.
+  const res = await client.query(sql, bindCompanyIfPlaceholder(sql, operatingCompanyId));
   return {
     item_count: Number(res.rows[0]?.item_count ?? 0),
     last_updated_at: (res.rows[0]?.last_updated_at as string | null) ?? null,
@@ -235,7 +241,7 @@ async function fetchPreviewItems(
     },
   };
   const queryDef = queries[code];
-  const res = await client.query(queryDef.sql, [operatingCompanyId]);
+  const res = await client.query(queryDef.sql, bindCompanyIfPlaceholder(queryDef.sql, operatingCompanyId));
   const rows = res.rows;
   const truncated = rows.length > 20;
   const sliced = rows.slice(0, 20).map((row) => queryDef.map(row));
