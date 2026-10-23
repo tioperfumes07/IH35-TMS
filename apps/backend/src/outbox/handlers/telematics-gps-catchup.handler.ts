@@ -11,7 +11,7 @@ import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./
 export const TELEMATICS_GPS_CATCHUP_EVENT = "telematics.gps_catchup" as const;
 
 export class TelematicsGpsCatchupHandler implements OutboxEventHandler {
-  eventType = TELEMATICS_GPS_CATCHUP_EVENT;
+  eventType = "telematics.gps_catchup" as const; // the literal (verify-outbox-handler-parity reads handler types literally) — same value as TELEMATICS_GPS_CATCHUP_EVENT
 
   canHandle() {
     return true;

@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Client } from 'pg';
 import { randomUUID } from 'node:crypto';
+import { refuseProductionConnectionString, refuseProductionDatabase } from '../../../test-helpers/refuse-production.js';
 import { repairReassignedPresettlementBoundaries, suggestPresettlementLink, confirmPresettlementLink } from '../presettlement-link.service.js';
 const { audit } = vi.hoisted(() => ({ audit: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('../../audit/crud-audit.js', () => ({ appendCrudAudit: audit }));
@@ -15,8 +16,10 @@ beforeAll(async () => {
   if (!url || !['localhost', '127.0.0.1', 'postgres'].includes(new URL(url).hostname)) {
     throw new Error('Requires loopback/CI PostgreSQL; never production');
   }
+  refuseProductionConnectionString(url); // LEAD 443.258.5 — before connecting (verify-test-fixtures-refuse-production RULE 3)
   admin = new Client({ connectionString: url });
   await admin.connect();
+  await refuseProductionDatabase(admin);
   await admin.query(`CREATE DATABASE "${database}"`);
   const isolated = new URL(url); isolated.pathname = `/${database}`;
   c = new Client({ connectionString: isolated.toString() });
