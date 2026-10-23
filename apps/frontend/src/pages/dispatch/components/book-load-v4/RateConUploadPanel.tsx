@@ -21,8 +21,8 @@ export function RateConUploadPanel({
 
   return (
     <div className="rounded border border-[#E5E7EB] p-3 text-xs">
-      <div className="flex items-center gap-2">
-        <label className="inline-flex cursor-pointer items-center rounded bg-[#F7F8FA] px-2 py-1 font-semibold text-[#1F2A44] hover:bg-[#E5E7EB]">
+      <div className="flex min-w-0 items-center gap-2">
+        <label className="inline-flex h-8 shrink-0 cursor-pointer items-center whitespace-nowrap rounded border border-[#E5E7EB] bg-[#F7F8FA] px-3 font-semibold text-[#1F2A44] hover:bg-[#E5E7EB]">
           {busy ? (phase === "uploading" ? "Uploading…" : "Reading rate con…") : "Upload Rate Con"}
           <input
             type="file"

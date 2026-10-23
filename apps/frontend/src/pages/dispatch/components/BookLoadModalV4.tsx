@@ -372,7 +372,6 @@ export function BookLoadModalV4({
   const [customerSearch, setCustomerSearch] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
-  const [showSpecialNotes, setShowSpecialNotes] = useState(false);
   // ROUND 443.257 — Side panel (660px) | Center (1120px); remember per browser.
   const [bookLoadPresentation, setBookLoadPresentation] = useState<"side" | "center">(() => {
     try {
@@ -580,7 +579,6 @@ export function BookLoadModalV4({
     setRepairOverrideReason("");
     setOverrideToken(null);
     setPendingCloseAfterAdvisory(false);
-    setShowSpecialNotes(false);
   }, [open, form]);
 
   useEffect(() => {
@@ -2335,8 +2333,10 @@ export function BookLoadModalV4({
           ) : null}
 
           <div className="space-y-3 bg-[#E9EBEF] px-4 py-3">
-            <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]">
-              <section className="blw-sec">
+            {/* 443.265-A (Lead 5:52 AM) — A and B end level: both columns stretch, and A's last field (Special notes)
+                grows into the remaining height instead of leaving a white block under it. */}
+            <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[1.05fr_1fr]" data-testid="book-load-ab-grid">
+              <section className="blw-sec flex flex-col" data-testid="book-load-section-a">
                 <div className="blw-sec-hd">
                   <span className="blw-sec-chip">A</span>
                   <span className="blw-sec-name">Customer · Invoice · Charges</span>
@@ -2350,7 +2350,7 @@ export function BookLoadModalV4({
                     ) : null}
                   </span>
                 </div>
-                <div className="space-y-2 p-3">
+                <div className="flex flex-1 flex-col space-y-2 p-3">
                   {/* ROUND 443.265-A item 1 — Load # (110px, helper under it) and the rate-con upload share
                       one row as on the V3 board; each sits in its own grid cell so nothing overlaps. */}
                   <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[220px_minmax(0,1fr)]" data-testid="book-load-id-row">
@@ -2788,18 +2788,15 @@ export function BookLoadModalV4({
                     Hazmat
                   </label>
 
-                  <div className={`blw-collapse ${showSpecialNotes ? "open" : ""}`}>
-                    <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowSpecialNotes((openState) => !openState)}>
-                      <span className="blw-collapse-plus">{showSpecialNotes ? "−" : "+"}</span>
-                      <span className="text-[11px] font-bold text-[#1F2733]">Special notes</span>
-                      <span className="ml-auto text-xs text-[#8A93A1]">optional — click to add</span>
-                    </button>
-                    {showSpecialNotes ? (
-                      <div className="border-t border-gray-200 p-3">
-                        <textarea {...form.register("notes")} rows={2} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" />
-                      </div>
-                    ) : null}
-                  </div>
+                  <label className="flex min-h-[64px] flex-1 flex-col gap-0.5" data-testid="book-load-special-notes">
+                    <span className="text-[11px] font-bold text-[#1F2733]">
+                      Special notes <span className="font-normal text-[#8A93A1]">optional</span>
+                    </span>
+                    <textarea
+                      {...form.register("notes")}
+                      className="min-h-[48px] w-full flex-1 resize-none rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                    />
+                  </label>
                 </div>
               </section>
 
