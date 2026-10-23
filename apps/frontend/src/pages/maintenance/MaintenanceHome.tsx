@@ -47,6 +47,7 @@ import { MaintenanceAlertsCard } from "./components/MaintenanceAlertsCard";
 import { PartsInventoryTable } from "./components/PartsInventoryTable";
 import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
+import { FleetHealthLine } from "./components/FleetHealthLine";
 import { RMStatStrip } from "./components/RMStatStrip";
 import { RoadServiceActivePanel } from "./components/RoadServiceActivePanel";
 import { RecentActivityRow } from "./components/RecentActivityRow";
@@ -159,6 +160,14 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const locationFilter = searchParams.get("location") ?? "";
   const bucketFilter = searchParams.get("bucket") ?? "";
+  const workOrderStatusFilter = searchParams.get("status") ?? "";
+  const expandedHomePanel = searchParams.get("home_panel") ?? "";
+  const toggleHomePanel = (panel: string) => setSearchParams((previous) => {
+    const next = new URLSearchParams(previous);
+    if (next.get("home_panel") === panel) next.delete("home_panel");
+    else next.set("home_panel", panel);
+    return next;
+  });
   const partInventoryId = searchParams.get("part_inventory_id")?.trim() ?? "";
   const driverReportId = searchParams.get("driver_report_id")?.trim() ?? "";
   const driverReportsDriverId = searchParams.get("driver_id")?.trim() ?? "";
@@ -281,6 +290,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       externalVendorFilter,
       locationFilter,
       bucketFilter,
+      workOrderStatusFilter,
       driverReportsDriverId,
       driverReportsLoadId,
     ],
@@ -290,6 +300,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         external_vendor_id: externalVendorFilter || undefined,
         location: locationFilter || undefined,
         bucket: bucketFilter || undefined,
+        status: workOrderStatusFilter || undefined,
         driver_id: driverReportsDriverId || undefined,
         load_id: driverReportsLoadId || undefined,
       }),
@@ -476,16 +487,18 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       ) : null}
 
       {tab === "rm_status_board" ? (
-        // Approved rm-status-board.html: board LEFT + a compact ~168-180px right sidebar with
-        // PM Countdown / PM Alerts / DTC / Road Service Active. Single-column stack on small screens.
+        // 443.267 V3: fleet health left; compact maintenance monitors on the right.
         <div
           className="space-y-2"
           data-testid="rm-status-board"
           data-maintenance-tab="rm_status_board"
         >
           <RMStatStrip kpis={kpis} />
-          <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_180px]">
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_230px]">
           <div className="min-w-0">
+            <FleetHealthLine companyId={companyId} />
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs">Work-order workflow</summary>
             {rmStatusQuery.isError ? (
               <ListErrorState
                 title="Couldn't load R&M status board"
@@ -525,6 +538,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 </div>
               </div>
             ) : null}
+            </details>
           </div>
           <aside className="flex flex-col gap-2">
             {companyId ? (
@@ -536,11 +550,13 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                   onRetry={() => void pmDueQuery.refetch()}
                 />
               ) : (
-                <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} compact />
+                <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} compact board />
               )
             ) : null}
-            {companyId ? <MaintEnginesStatusWidget operatingCompanyId={companyId} /> : null}
+            {companyId ? <MaintEnginesStatusWidget operatingCompanyId={companyId} compact /> : null}
             {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} compact /> : null}
+            <details>
+              <summary className="cursor-pointer text-xs">Other maintenance monitors</summary>
             {companyId ? (
               <DtcAutoWorkOrdersCard operatingCompanyId={companyId} compact onOpen={(id) => setSelectedWorkOrderId(id)} />
             ) : null}
@@ -550,6 +566,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 onOpen={(id) => setSelectedWorkOrderId(id)}
               />
             ) : null}
+            </details>
             {triageQuery.isError ? (
               <ListErrorState
                 title="Couldn't load in-transit triage queue"
@@ -582,13 +599,13 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           </div>
           {/* C-36 — fold Arriving Soon + At Risk into Home (no peer tabs). */}
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="maintenance-home-folded-panels">
-            <div data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
-              <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Arriving Soon</h3>
-              <ArrivingSoonPage operatingCompanyId={companyId} />
+            <div className={expandedHomePanel === "arriving_soon" ? "xl:col-span-2" : undefined} data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-bold text-slate-700">Arriving soon — to the Laredo yard</h3><button type="button" className="text-xs" aria-expanded={expandedHomePanel === "arriving_soon"} onClick={() => toggleHomePanel("arriving_soon")}>{expandedHomePanel === "arriving_soon" ? "Show compact" : "View all →"}</button></div>
+              <ArrivingSoonPage key={`arriving-${expandedHomePanel === "arriving_soon" ? "full" : "compact"}`} operatingCompanyId={companyId} compact={expandedHomePanel !== "arriving_soon"} />
             </div>
-            <div data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
-              <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">At Risk</h3>
-              <PredictiveAlertsPage />
+            <div className={expandedHomePanel === "predictive_alerts" ? "xl:col-span-2" : undefined} data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-bold text-slate-700">At risk — brakes &amp; tires</h3><button type="button" className="text-xs" aria-expanded={expandedHomePanel === "predictive_alerts"} onClick={() => toggleHomePanel("predictive_alerts")}>{expandedHomePanel === "predictive_alerts" ? "Show compact" : "View all →"}</button></div>
+              <PredictiveAlertsPage key={`predictive-${expandedHomePanel === "predictive_alerts" ? "full" : "compact"}`} compact={expandedHomePanel !== "predictive_alerts"} />
             </div>
           </div>
         </div>

@@ -9,9 +9,11 @@ import { ArrivingSoonFilterBar } from "./components/ArrivingSoonFilterBar";
 import { ArrivingSoonCard } from "./components/ArrivingSoonCard";
 import { ConvertIssueToWOModal } from "./components/ConvertIssueToWOModal";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type Props = {
   operatingCompanyId: string;
+  compact?: boolean;
 };
 
 // §7 severity styling — single red (severe), single amber (warning), slate (info).
@@ -32,7 +34,7 @@ function formatDest(card: ArrivingSoonCardType): string {
 function formatEta(card: ArrivingSoonCardType): string {
   if (card.already_arrived) return "Arrived";
   const h = card.hours_until_yard_arrival;
-  if (h == null) return card.predicted_yard_arrival_at ? new Date(card.predicted_yard_arrival_at).toLocaleString() : "—";
+  if (h == null) return card.predicted_yard_arrival_at ? formatDateTimeUS(card.predicted_yard_arrival_at) : "—";
   if (h <= 0) return "Due now";
   const hours = Math.floor(h);
   const mins = Math.round((h - hours) * 60);
@@ -40,7 +42,7 @@ function formatEta(card: ArrivingSoonCardType): string {
 }
 
 function formatReported(iso: string): string {
-  return new Date(iso).toLocaleString();
+  return formatDateTimeUS(iso);
 }
 
 // Preview parity (arriving-soon.html): split the old conflated "Issues" column into a plain-text
@@ -70,14 +72,14 @@ function severityTextClass(severity: string): string {
   return "text-gray-500";
 }
 
-export function ArrivingSoonPage({ operatingCompanyId }: Props) {
+export function ArrivingSoonPage({ operatingCompanyId, compact = false }: Props) {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const canConvert = ["Owner", "Administrator", "Manager", "Maintenance"].includes(String(auth.user?.role ?? ""));
   const [withinHours, setWithinHours] = useState(48);
   const [severityMin, setSeverityMin] = useState<"info" | "warning" | "severe">("info");
   const [includeAlreadyArrived, setIncludeAlreadyArrived] = useState(true);
-  const [includeNonYard, setIncludeNonYard] = useState(true);
+  const [includeNonYard, setIncludeNonYard] = useState(!compact);
   const [selectedCard, setSelectedCard] = useState<ArrivingSoonCardType | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 25;
@@ -152,7 +154,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       ),
     },
     { key: "hours_until_yard_arrival", label: "ETA", sortable: true, render: (card) => formatEta(card) },
-    { key: "final_dest_name", label: "Destination", render: (card) => formatDest(card) },
+    { key: "final_dest_name", label: compact ? "Arriving" : "Destination", render: (card) => <span>{formatDest(card)}{compact ? <> · <EntityLinkOrTombstone kind="load" id={card.load_id} name={card.load_display_id} noun="Load" /></> : null}</span> },
     {
       key: "open_issue",
       label: "Open Issue",
@@ -212,7 +214,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="maint-arriving-soon">
-      <ArrivingSoonFilterBar
+      {!compact ? <ArrivingSoonFilterBar
         withinHours={withinHours}
         severityMin={severityMin}
         includeAlreadyArrived={includeAlreadyArrived}
@@ -222,7 +224,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
         onSeverityMinChange={setSeverityMin}
         onIncludeAlreadyArrivedChange={setIncludeAlreadyArrived}
         onIncludeNonYardChange={setIncludeNonYard}
-      />
+      /> : <p className="text-xs text-slate-500">Yard arrivals with reported issues · next 48 hours. Complete arrivals and PM status are not supplied by this endpoint.</p>}
 
       {query.isError ? (
         <div
@@ -235,7 +237,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
         </div>
       ) : null}
 
-      {recentConversions.length > 0 ? (
+      {!compact && recentConversions.length > 0 ? (
         <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="maint-arriving-soon-recent-conversions">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Recently converted to work orders</div>
           <ul className="divide-y divide-[#E5E7EB]">
@@ -270,15 +272,15 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       ) : null}
 
       {/* Desktop/tablet: full parity table. Mobile: stacked cards (same data, no horizontal scroll). */}
-      <div className="hidden sm:block">
+      {!query.isError ? <div className="hidden sm:block">
         <ParityTable<ArrivingSoonCardType>
           title="Units arriving soon"
-          columns={columns}
+          columns={compact ? columns.map((column) => ({ ...column, defaultHidden: !["unit_number", "driver_name", "final_dest_name", "hours_until_yard_arrival"].includes(String(column.key)) })) : columns}
           rows={cards}
           rowKey={(card) => `${card.load_id}:${card.unit_id}`}
           loading={listLoading}
           emptyText="No units arriving with open issues for this entity — arrivals with shop-prep issues populate this queue as loads approach the yard."
-          storageKey="maint-arriving-soon"
+          storageKey={compact ? "maint-home-arriving-soon" : "maint-arriving-soon"}
           exportFilename="arriving-soon"
           rowActions={rowActions}
           renderExpanded={renderExpanded}
@@ -286,7 +288,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
           pageSizeOptions={[pageSize]}
           hidePager
         />
-      </div>
+      </div> : null}
 
       {!query.isError && Number(counts.total ?? 0) > 0 ? (
         <nav className="flex items-center justify-between text-xs text-[#4B5563]" aria-label="Arriving Soon pages" data-testid="maint-arriving-soon-pager">

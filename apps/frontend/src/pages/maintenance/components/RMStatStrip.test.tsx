@@ -50,6 +50,7 @@ describe("RMStatStrip", () => {
   it("gives all remaining tiles a drill destination", () => {
     const { container } = renderStrip(KPIS);
     expect(container.querySelectorAll("[data-kpi-drill]")).toHaveLength(LABELS.length);
+    expect(container.querySelectorAll(".board-kpi")).toHaveLength(LABELS.length);
     expect(screen.getByLabelText("Road Service — view records")).toHaveAttribute(
       "href",
       "/maintenance/road-service"
