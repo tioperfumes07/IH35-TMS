@@ -26,9 +26,16 @@ Deadline: 10-23 06:00 UTC. Fast-merge law.
 - `MilesStrip.test.tsx` — Google practical + short always visible (5/5 pass)
 - `verify-back-returns-to-module-parent.mjs` (from 254)
 
-## Live proof (fill after Chrome)
+## Live proof (measured America/Chicago 2026-10-22 21:38 CDT)
 
-- PR: (this PR)
-- sha tip: (after merge)
-- healthz: `GET https://ih35-tms.onrender.com/api/v1/healthz/shallow`
-- Screenshots: Book Load TripType + MilesStrip Google lines; Settlements tab bar; Fuel Questions gear; driver name proper case
+- PR: https://github.com/tioperfumes07/IH35-TMS/pull/27239 — MERGED squash
+- sha tip / deploy: `0512ef14cddbafa7de6eeabc2586d5fe152f25d0`
+- healthz shallow (live):
+  `{"ok":true,"version":"0512ef1","commit":"0512ef1","git_sha":"0512ef14cddbafa7de6eeabc2586d5fe152f25d0","built_at":"2026-10-23T02:36:32.774Z","git_branch":"main"}`
+- FE: `https://app.ih35dispatch.com/` HTTP 200 · asset `assets/index-BO4wDyFW.js`
+- FE bundle contains `formatPersonName` and `fuel-assignment-questions` (curl of index JS, counted)
+
+## Screenshots (Chrome)
+
+- Status: UNVERIFIED — this self-hosted agent session cannot capture authenticated Chrome pixels (`screencapture` display/window fail; no Claude-in-Chrome / Browser MCP; no login cookie env). Chrome did open to `https://app.ih35dispatch.com/home` (session present on machine).
+- Required surfaces still owed when seat has interactive Chrome: Book Load TripType + MilesStrip Google lines; Settlements tab bar; Fuel Questions gear; driver name proper case.
