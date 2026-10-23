@@ -23,10 +23,10 @@ import {
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { DataPanel } from "../../../components/layout/DataPanel";
-import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 import { StatusBadge } from "../../../components/layout/StatusBadge";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { V3Panel } from "../../../components/v3/V3Panel";
 import { formatDateTimeUS, formatDateUS } from "../../../lib/formatDate";
 import { formatUsdCentsTable, formatNumberTable } from "../../../lib/money";
 
@@ -205,14 +205,19 @@ export function FuelIntegrityPage() {
       {verdictsQuery.isError ? (
         <ListErrorBanner onRetry={() => void verdictsQuery.refetch()} message="Fuel integrity verdicts could not be loaded." />
       ) : (
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-6" data-testid="fuel-integrity-kpi-strip">
+        /* ROUND 443.250 Fuel Integrity V3 — same getFuelIntegrityVerdicts summary keys; DrillKpiCard → V3KpiTile. */
+        <div
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+          data-testid="fuel-integrity-kpi-strip"
+          data-fuel-integrity-v3-kpis="1"
+        >
           {verdictsQuery.isPending
             ? null
             : summaryEntries.map(([key, value]) => (
-                <DrillKpiCard
+                <V3KpiTile
                   key={key}
                   label={humanizeSummaryKey(key)}
-                  value={value}
+                  value={String(value)}
                   onClick={scrollTo(key.startsWith("relay_") ? relaySectionRef : cardSectionRef)}
                   testId={`fuel-integrity-kpi-${key}`}
                 />
@@ -221,7 +226,7 @@ export function FuelIntegrityPage() {
       )}
 
       <div ref={cardSectionRef}>
-        <DataPanel title="Card purchases">
+        <V3Panel title="Card purchases" testId="fuel-integrity-card-v3-panel">
           {verdictsQuery.isError ? (
             <ListErrorBanner onRetry={() => void verdictsQuery.refetch()} />
           ) : (
@@ -234,11 +239,11 @@ export function FuelIntegrityPage() {
               rowKey={(row) => row.fuel_transaction_id}
             />
           )}
-        </DataPanel>
+        </V3Panel>
       </div>
 
       <div ref={relaySectionRef}>
-        <DataPanel title="Relay fills — was the truck at the pump?">
+        <V3Panel title="Relay fills — was the truck at the pump?" testId="fuel-integrity-relay-v3-panel">
           {verdictsQuery.isError ? (
             <ListErrorBanner onRetry={() => void verdictsQuery.refetch()} />
           ) : (
@@ -251,13 +256,14 @@ export function FuelIntegrityPage() {
               rowKey={(row) => row.relay_fuel_transaction_id}
             />
           )}
-        </DataPanel>
+        </V3Panel>
       </div>
 
       <div ref={derivedSectionRef}>
-        <DataPanel
+        <V3Panel
           title="Derived pump time & state"
-          titleHint="Computed on read from GPS fuel-stop geofences — writes nothing"
+          subtitle="Computed on read from GPS fuel-stop geofences — writes nothing"
+          testId="fuel-integrity-derived-v3-panel"
         >
           {derivationsQuery.isError ? (
             <ListErrorBanner onRetry={() => void derivationsQuery.refetch()} message="Derived pump time/state could not be loaded." />
@@ -282,7 +288,7 @@ export function FuelIntegrityPage() {
               />
             </>
           )}
-        </DataPanel>
+        </V3Panel>
       </div>
     </div>
   );
