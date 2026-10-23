@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AddPayLineModal } from "../../components/driver-finance/AddPayLineModal";
 import { DriverOverviewBoard } from "../../components/boards/DriverOverviewBoard";
+import { DriverLiveOverview } from "../../components/driver-profile/DriverLiveOverview";
 import { Button } from "../../components/Button";
 import { SettlementDisputeList } from "./SettlementDisputeList";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -228,6 +229,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const [addTrainingOpen, setAddTrainingOpen] = useState(false);
   const [w8benOpen, setW8benOpen] = useState(false);
   const [addPayOpen, setAddPayOpen] = useState(false);
+  const [fullDetailsOpen, setFullDetailsOpen] = useState(false);
   const [dqfFocus, setDqfFocus] = useState<"all" | "present" | "missing" | "expired" | "expiry_alerts">("all");
   // DRV-F416 — tab is ?tab= parsed from the URL, not useState. Back restores the tab.
   const activeTab = parseDriverProfileTab(searchParams);
@@ -239,12 +241,14 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     setSearchParams(nextParams, { replace: false });
   };
   const focusDqf = (focus: typeof dqfFocus) => {
+    setFullDetailsOpen(true);
     setDqfFocus(focus);
     if (activeTab !== "Overview") setActiveTab("Overview");
     requestAnimationFrame(() => document.getElementById("driver-dqf-checklist")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 
   const focusIntegrity = () => {
+    setFullDetailsOpen(true);
     if (activeTab !== "Overview") setActiveTab("Overview");
     requestAnimationFrame(() =>
       document.getElementById("driver-integrity-profile")?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -400,6 +404,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <div className="flex flex-wrap items-center gap-2">
             {!itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}
             <StatusBadge status={driver.status} />
+            <Button type="button" size="sm" variant="secondary" onClick={() => {
+              setActiveTab("Overview");
+              setFullDetailsOpen(true);
+              requestAnimationFrame(() => document.querySelector('[data-testid="dp-section-5-hos"]')?.scrollIntoView({ behavior: "smooth", block: "start" }));
+            }}>HOS detail</Button>
             <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}?tab=edit`)} data-testid="driver-profile-edit">
               Edit
             </Button>
@@ -455,7 +464,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       />
 
       {companyId ? (
-        <DriverOverviewBoard operatingCompanyId={companyId} driverId={id} hideChrome />
+        <DriverOverviewBoard operatingCompanyId={companyId} driverId={id} hideChrome compactOverview={<DriverLiveOverview companyId={companyId} driverId={id} aggregate={aggregate} dqf={summary} dqfUnavailable={itemsQ.isError} onReviewDqf={() => focusDqf("all")} />} />
       ) : null}
 
       {/* C-11 — one horizontal KPI band below tabs (Overview only so other tabs keep one-screen density).
@@ -469,6 +478,8 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             onRetry={() => void itemsQ.refetch()}
           />
         ) : (
+          <details className="rounded-sm border border-gray-200 bg-white p-3">
+          <summary className="cursor-pointer text-xs font-semibold">Qualification checklist and integrity summary</summary>
           <div data-testid="driver-profile-kpi-strip">
             <KpiStrip>
               <KpiCard
@@ -536,10 +547,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               />
             </KpiStrip>
           </div>
+          </details>
         )
       ) : null}
 
       {activeTab === "Overview" ? (
+        <details open={fullDetailsOpen} onToggle={(event) => setFullDetailsOpen(event.currentTarget.open)} className="rounded-sm border border-gray-200 bg-white p-3">
+        <summary className="cursor-pointer text-xs font-semibold">Full profile, credentials and activity</summary>
         <div className="space-y-3" data-testid="dp-tab-overview">
           <div data-testid="dp-section-1-identity">
             <IdentityHeader
@@ -777,6 +791,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             </section>
           </div>
         </div>
+        </details>
       ) : null}
 
       {activeTab === "Settlements" ? (
