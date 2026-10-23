@@ -4,8 +4,12 @@ import { loadServiceMembershipSql } from "../dispatch/load-service.js";
 import { FACTORING_PATH_LOAD_MDATA_STATUSES } from "../dispatch/delivery-evidence-status.js";
 import { LATE_LOAD_KEEP_INVOICE_DUE_SQL, lateLoadInvoiceDueDateSql, projectedCashDateSql, rawDeliveryDateSql } from "./projected-cash-date.js";
 
+// Book Load / stop writers often land the appointment in appointment_start_at while
+// scheduled_arrival_at stays null (live USMCA load 13690). Dispatch already COALESCE's
+// both; cash-flow must too or factored proforma projections go anchor-less.
 const lastDelivery = `LEFT JOIN LATERAL (
-  SELECT scheduled_arrival_at FROM mdata.load_stops
+  SELECT COALESCE(scheduled_arrival_at, appointment_start_at) AS scheduled_arrival_at
+    FROM mdata.load_stops
    WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL
    ORDER BY sequence_number DESC LIMIT 1
 ) fd ON true`;

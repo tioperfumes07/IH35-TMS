@@ -117,6 +117,9 @@ export type RollingLedgerRow = {
   adjustment_id?: string;
   load_id?: string | null;
   load_number?: string | null;
+  /** LINK-F5171 — present on single-customer income rows from the rolling ledger. */
+  customer_id?: string | null;
+  customer_name?: string | null;
 };
 
 export type CashFlowAdjustmentReason = {

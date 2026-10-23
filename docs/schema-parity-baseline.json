@@ -12489,6 +12489,23 @@
       "unit_id_a",
       "unit_id_b"
     ],
+    "telematics.vehicle_latest_position_cache": [
+      "captured_at",
+      "city",
+      "engine_state",
+      "formatted_location",
+      "heading_deg",
+      "id",
+      "lat",
+      "lng",
+      "odometer_mi",
+      "operating_company_id",
+      "raw_samsara_event_id",
+      "samsara_vehicle_id",
+      "speed_mph",
+      "state",
+      "unit_id"
+    ],
     "telematics.vehicle_locations": [
       "captured_at",
       "city",

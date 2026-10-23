@@ -89,7 +89,9 @@ async function main() {
           JOIN mdata.loads l ON l.id = i.source_load_id AND l.operating_company_id = i.operating_company_id
           LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
-            SELECT scheduled_arrival_at
+            -- Book Load dual-column: appointment often lands in appointment_start_at only
+            -- (live 13690). Same COALESCE as cash-flow-receipts / dispatch planner.
+            SELECT COALESCE(scheduled_arrival_at, appointment_start_at) AS scheduled_arrival_at
               FROM mdata.load_stops
              WHERE load_id = l.id AND stop_type = 'delivery'
              ORDER BY sequence_number DESC

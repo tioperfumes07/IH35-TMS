@@ -15,7 +15,7 @@
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
 | **TOTAL POST endpoints** | 967 | |
-| UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
+| UI files with `+ Create`/`+ Book` | 194 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
 report a lie, so every endpoint lands in exactly one bucket and nothing is silently dropped.

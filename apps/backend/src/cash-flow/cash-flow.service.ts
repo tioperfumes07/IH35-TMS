@@ -177,10 +177,11 @@ export function noLiveProformaInvoiceSql(loadAlias: string): string {
   )`;
 }
 
-/** Last delivery stop only — multi-drop must not multiply the invoice. */
+/** Last delivery stop only — multi-drop must not multiply the invoice.
+ *  COALESCE appointment_start_at when scheduled_arrival_at is null (Book Load dual-column). */
 export function lastDeliveryStopLateralSql(loadAlias: string): string {
   return `LEFT JOIN LATERAL (
-    SELECT scheduled_arrival_at
+    SELECT COALESCE(scheduled_arrival_at, appointment_start_at) AS scheduled_arrival_at
     FROM mdata.load_stops
     WHERE load_id = ${loadAlias}.id AND stop_type = 'delivery'
     ORDER BY sequence_number DESC
@@ -871,6 +872,12 @@ export type RollingLedgerRow = {
    *  Factor advance/reserve can span or predate a load). */
   load_id?: string | null;
   load_number?: string | null;
+  /** LINK-F5171 — real mdata.customers id when this income row has a single customer (invoice /
+   *  load / 1:1 factor advance). Null when the row is multi-customer or non-customer payee.
+   *  Projected (Auto) V3 reads the ledger, so customer EntityLink must ride this field. */
+  customer_id?: string | null;
+  /** Display name paired with customer_id (same as counterparty for single-customer income). */
+  customer_name?: string | null;
 };
 
 export type RollingLedgerDay = {
@@ -1156,6 +1163,7 @@ export async function getRollingLedgerRows(
   const invoicesPromise = client.query<{
     id: string;
     display_id: string | null;
+    customer_id: string | null;
     customer_name: string;
     issue_date: string | null;
     due_date: string | null;
@@ -1163,7 +1171,7 @@ export async function getRollingLedgerRows(
     load_id: string | null;
     load_number: string | null;
   }>(
-    `SELECT i.id::text, i.display_id, receipts.customer_name, i.issue_date::text,
+    `SELECT i.id::text, i.display_id, receipts.customer_id, receipts.customer_name, i.issue_date::text,
       receipts.bucket_date::text AS due_date, receipts.amount_cents::bigint AS amount_open_cents,
       receipts.id AS load_id, receipts.load_number
      FROM (${cashFlowReceiptsSql(true)}) receipts
@@ -1186,6 +1194,7 @@ export async function getRollingLedgerRows(
   const advancesPromise = client.query<{
     id: string;
     display_id: string | null;
+    customer_id: string | null;
     customer_name: string | null;
     n_invoices: number;
     advanced_at: string;
@@ -1195,6 +1204,7 @@ export async function getRollingLedgerRows(
     SELECT
       fa.id::text,
       fa.display_id,
+      inv.customer_id,
       inv.customer_name,
       COALESCE(inv.n_invoices, 0)::int AS n_invoices,
       ${factoringCashDateSql("fa.advanced_at")}::text AS advanced_at,
@@ -1202,6 +1212,13 @@ export async function getRollingLedgerRows(
     FROM accounting.factoring_advances fa
     LEFT JOIN LATERAL (
       SELECT
+        (
+          SELECT i.customer_id::text
+          FROM accounting.invoices i
+          WHERE i.factoring_advance_id = fa.id
+          ORDER BY i.issue_date ASC, i.id ASC
+          LIMIT 1
+        ) AS customer_id,
         (
           SELECT c.customer_name
           FROM accounting.invoices i
@@ -1227,6 +1244,7 @@ export async function getRollingLedgerRows(
   const reservesPromise = client.query<{
     id: string;
     display_id: string | null;
+    customer_id: string | null;
     customer_name: string | null;
     n_invoices: number;
     collected_at: string;
@@ -1236,6 +1254,7 @@ export async function getRollingLedgerRows(
     SELECT
       fa.id::text,
       fa.display_id,
+      inv.customer_id,
       inv.customer_name,
       COALESCE(inv.n_invoices, 0)::int AS n_invoices,
       ${factoringCashDateSql("fa.collected_at")}::text AS collected_at,
@@ -1243,6 +1262,13 @@ export async function getRollingLedgerRows(
     FROM accounting.factoring_advances fa
     LEFT JOIN LATERAL (
       SELECT
+        (
+          SELECT i.customer_id::text
+          FROM accounting.invoices i
+          WHERE i.factoring_advance_id = fa.id
+          ORDER BY i.issue_date ASC, i.id ASC
+          LIMIT 1
+        ) AS customer_id,
         (
           SELECT c.customer_name
           FROM accounting.invoices i
@@ -1271,10 +1297,10 @@ export async function getRollingLedgerRows(
   // last delivery stop + customer's payment terms (COALESCE to 0 days when no terms are
   // configured — never a fabricated default).
   const notInvoicedPromise = client.query<{
-    id: string; load_number: string; customer_name: string; delivery_date: string | null;
+    id: string; load_number: string; customer_id: string | null; customer_name: string; delivery_date: string | null;
     due_date: string | null; rate_total_cents: number; invoice_id: string | null; basis: string;
   }>(
-    `SELECT id, load_number, customer_name, delivery_time::timestamptz::date::text AS delivery_date,
+    `SELECT id, load_number, customer_id, customer_name, delivery_time::timestamptz::date::text AS delivery_date,
       bucket_date::text AS due_date, amount_cents::bigint AS rate_total_cents, invoice_id, basis
      FROM (${cashFlowReceiptsSql(true)}) receipts
      WHERE (invoice_id IS NULL OR basis = 'Proforma') AND amount_cents > 0
@@ -1511,11 +1537,16 @@ export async function getRollingLedgerRows(
       status: rowStatus(daysOverdue),
       load_id: inv.load_id,
       load_number: inv.load_number,
+      customer_id: inv.customer_id,
+      customer_name: inv.customer_name,
     });
   }
 
   for (const a of advanceRows.rows) {
     const daysOverdue = daysBetween(today, a.advanced_at);
+    // Only attach customer_id when the advance is 1:1 with a single invoice/customer —
+    // multi-invoice batches keep the label ("+N more") but no single EntityLink target.
+    const singleCustomerId = a.n_invoices === 1 ? a.customer_id : null;
     rows.push({
       row_kind: "income",
       type: "Factor advance",
@@ -1528,11 +1559,14 @@ export async function getRollingLedgerRows(
       amount_cents: a.advance_amount_cents,
       days_overdue: daysOverdue,
       status: rowStatus(daysOverdue),
+      customer_id: singleCustomerId,
+      customer_name: a.customer_name,
     });
   }
 
   for (const r of reserveRows.rows) {
     const daysOverdue = daysBetween(today, r.collected_at);
+    const singleCustomerId = r.n_invoices === 1 ? r.customer_id : null;
     rows.push({
       row_kind: "income",
       type: "Factor reserve",
@@ -1545,6 +1579,8 @@ export async function getRollingLedgerRows(
       amount_cents: r.reserve_amount_cents,
       days_overdue: daysOverdue,
       status: rowStatus(daysOverdue),
+      customer_id: singleCustomerId,
+      customer_name: r.customer_name,
     });
   }
 
@@ -1568,6 +1604,8 @@ export async function getRollingLedgerRows(
       status: rowStatus(daysOverdue),
       load_id: l.id,
       load_number: l.load_number,
+      customer_id: l.customer_id,
+      customer_name: l.customer_name,
     });
   }
 
