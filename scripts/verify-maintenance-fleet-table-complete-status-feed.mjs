@@ -6,6 +6,13 @@ const dispatchApi = fs.readFileSync("apps/frontend/src/api/dispatch.ts", "utf8")
 const dispatchBoard = fs.readFileSync("apps/frontend/src/pages/dispatch/DispatchBoard.tsx", "utf8");
 const dispatchBackend = fs.readFileSync("apps/backend/src/dispatch/loads.routes.ts", "utf8");
 const condition = fs.readFileSync("apps/backend/src/maintenance/in-shop-condition.ts", "utf8");
+// 443.231b moved the awaiting feed's open-work-order exclusion into THE shared unit gate UNIT_IN_SERVICE_SQL
+// (unit-in-service.ts); LEAD 443.265-F (CC-2): read it where it lives and require the feed to mount it.
+const inServiceSource = fs.readFileSync("apps/backend/src/dispatch/unit-in-service.ts", "utf8");
+function awaitingExclusion(dispatchSrc, inService) {
+  if (/WHERE \$\{UNIT_IN_SERVICE_SQL\}/.test(dispatchSrc)) return { text: inService, alias: "wo" };
+  return { text: dispatchSrc, alias: "awaiting_wo" };
+}
 
 function routeSlice(source) {
   const start = source.indexOf('app.get("/api/v1/maintenance/fleet-table/rows"');
@@ -19,9 +26,11 @@ function inShopRouteSlice(source) {
   return start >= 0 && end > start ? source.slice(start, end) : "";
 }
 
-function problems(candidateBackend = backend, candidateFleet = fleetPage, candidateDispatch = dispatchApi, candidateDispatchBackend = dispatchBackend, candidateCondition = condition, candidateBoard = dispatchBoard) {
+function problems(candidateBackend = backend, candidateFleet = fleetPage, candidateDispatch = dispatchApi, candidateDispatchBackend = dispatchBackend, candidateCondition = condition, candidateBoard = dispatchBoard, candidateInService = inServiceSource) {
   const route = routeSlice(candidateBackend);
   const inShopRoute = inShopRouteSlice(candidateBackend);
+  const ex = awaitingExclusion(candidateDispatchBackend, candidateInService);
+  const a = ex.alias;
   const checks = [
     [inShopRoute.length > 0, "dedicated in-shop-only endpoint"],
     [inShopRoute.includes('openWorkOrderPredicateSql("wo")'), "in-shop endpoint uses canonical open-work-order predicate"],
@@ -47,8 +56,8 @@ function problems(candidateBackend = backend, candidateFleet = fleetPage, candid
     [candidateDispatch.includes("work_order_id") && candidateDispatch.includes("work_order_display_id") && candidateDispatch.includes("opened_at") && candidateDispatch.includes("expected_ready_at") && candidateDispatch.includes("shop_or_vendor") && candidateDispatch.includes("days_down"), "Dispatch in-shop API type preserves six-field contract"],
     [candidateBoard.includes('data-testid="dispatch-in-shop-details"') && candidateBoard.includes("Shop") && candidateBoard.includes("Opened") && candidateBoard.includes("ETA") && candidateBoard.includes("Days down"), "In-shop band renders Unit/WO/Shop/Opened/ETA/Days down"],
     [candidateCondition.includes("voided_at IS NULL") && candidateCondition.includes("status NOT IN ('complete', 'cancelled')"), "canonical open-work-order predicate"],
-    [candidateDispatchBackend.includes('openWorkOrderPredicateSql("awaiting_wo")'), "awaiting feed uses canonical open-work-order predicate"],
-    [/AND NOT EXISTS \([\s\S]{0,300}FROM maintenance\.work_orders awaiting_wo[\s\S]{0,260}awaiting_wo\.unit_id = u\.id[\s\S]{0,180}awaiting_wo\.operating_company_id = \$1::uuid/.test(candidateDispatchBackend), "awaiting feed excludes same-company open work orders"],
+    [ex.text.includes(`openWorkOrderPredicateSql("${a}")`), "awaiting feed uses canonical open-work-order predicate"],
+    [new RegExp(`AND NOT EXISTS \\([\\s\\S]{0,300}FROM maintenance\\.work_orders ${a}\\b[\\s\\S]{0,260}${a}\\.unit_id = u\\.id[\\s\\S]{0,180}${a}\\.operating_company_id = \\$1::uuid`).test(ex.text), "awaiting feed excludes same-company open work orders"],
   ];
   return checks.filter(([ok]) => !ok).map(([, label]) => label);
 }
@@ -68,9 +77,10 @@ if (process.argv.includes("--selftest")) {
   ];
   const extendedMutations = [
     ...mutations.map(([b, f, d]) => [b, f, d, dispatchBackend, condition]),
-    [backend, fleetPage, dispatchApi, dispatchBackend.replace('openWorkOrderPredicateSql("awaiting_wo")', "'TRUE'"), condition],
-    [backend, fleetPage, dispatchApi, dispatchBackend.replace("AND NOT EXISTS (", "AND EXISTS ("), condition],
-    [backend, fleetPage, dispatchApi, dispatchBackend.replace("awaiting_wo.operating_company_id = $1::uuid", "TRUE"), condition],
+    [backend, fleetPage, dispatchApi, dispatchBackend, condition, dispatchBoard, inServiceSource.replace('openWorkOrderPredicateSql("wo")', "'TRUE'")],
+    [backend, fleetPage, dispatchApi, dispatchBackend, condition, dispatchBoard, inServiceSource.replace("AND NOT EXISTS (", "AND EXISTS (")],
+    [backend, fleetPage, dispatchApi, dispatchBackend, condition, dispatchBoard, inServiceSource.replace("wo.operating_company_id = $1::uuid", "TRUE")],
+    [backend, fleetPage, dispatchApi, dispatchBackend.replace("WHERE ${UNIT_IN_SERVICE_SQL}", "WHERE true"), condition],
     [backend, fleetPage, dispatchApi, dispatchBackend, condition.replace("voided_at IS NULL", "TRUE")],
     [backend.replace('app.get("/api/v1/maintenance/in-shop-units"', 'app.get("/api/v1/maintenance/removed-in-shop-units"'), fleetPage, dispatchApi, dispatchBackend, condition],
     [backend.replaceAll('openWorkOrderPredicateSql("wo")', "'TRUE'"), fleetPage, dispatchApi, dispatchBackend, condition],
@@ -80,7 +90,12 @@ if (process.argv.includes("--selftest")) {
     [backend, fleetPage, dispatchApi.replace("days_down: number;", ""), dispatchBackend, condition, dispatchBoard],
     [backend, fleetPage, dispatchApi, dispatchBackend, condition, dispatchBoard.replace('data-testid="dispatch-in-shop-details"', 'data-testid="dispatch-in-shop-summary"')],
   );
-  const escaped = extendedMutations.filter(([b, f, d, db, c, board = dispatchBoard]) => problems(b, f, d, db, c, board).length === 0);
+  const real = problems();
+  if (real.length) throw new Error(`real tree not clean: ${real.join(", ")}`);
+  const base = [backend, fleetPage, dispatchApi, dispatchBackend, condition, dispatchBoard, inServiceSource];
+  const noop = extendedMutations.filter((m) => base.every((v, i) => (m[i] ?? v) === v));
+  if (noop.length) throw new Error(`${noop.length} planted defect(s) did not change the source`);
+  const escaped = extendedMutations.filter(([b, f, d, db = dispatchBackend, c = condition, board = dispatchBoard, inSvc = inServiceSource]) => problems(b, f, d, db, c, board, inSvc).length === 0);
   if (escaped.length) throw new Error(`${escaped.length} planted defect(s) escaped`);
   console.log(`verify-maintenance-fleet-table-complete-status-feed selftest PASS — ${extendedMutations.length}/${extendedMutations.length} planted defects red`);
   process.exit(0);

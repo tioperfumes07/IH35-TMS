@@ -43,11 +43,32 @@ function closedArrayBody(src) {
  * `in_transit` pair so we match the correct `l.status IN (...)` block; that block must NOT list
  * delivered_pending_docs.
  */
-export function awaitingActiveSetBody(src) {
-  const m = src.match(/l\.status\s+IN\s*\(([\s\S]*?)\)/);
-  if (!m) return null;
-  const body = m[1];
-  if (!/dispatched/.test(body) || !/in_transit/.test(body)) return null; // wrong block
+const CANONICAL = path.join(ROOT, "apps/backend/src/dispatch/canonical-active-load-set.ts");
+const canonicalDefault = fs.readFileSync(CANONICAL, "utf8");
+
+/** The units-without-load handler only (the file holds other `l.status IN (...)` / dispatch-work mounts). */
+function unitsWithoutLoadSlice(src) {
+  const i = src.indexOf('app.get("/api/v1/dispatch/units-without-load"');
+  if (i < 0) return "";
+  const j = src.indexOf("app.get(", i + 10);
+  return src.slice(i, j < 0 ? undefined : j);
+}
+
+/**
+ * The Awaiting feed's active-load status set. LEAD 443.206 D6: the handler mounts THE dispatch-work predicate
+ * (canonicalDispatchWorkWhereClause) whose status half is DISPATCH_WORK_LOAD_STATUSES — read that list. The legacy
+ * inline `l.status IN (...)` form inside the handler is still accepted. LEAD 443.265-F (CC-2): the old matcher took the
+ * first `l.status IN (...)` anywhere in loads.routes.ts, so it no longer read the Awaiting feed at all.
+ */
+export function awaitingActiveSetBody(src, canonical = canonicalDefault) {
+  const handler = unitsWithoutLoadSlice(src);
+  let body = null;
+  if (/\$\{canonicalDispatchWorkWhereClause\("l", "\$1::uuid"\)\}/.test(handler)) {
+    body = canonical.match(/export const DISPATCH_WORK_LOAD_STATUSES = \[([\s\S]*?)\]/)?.[1] ?? null;
+  } else {
+    body = handler.match(/l\.status\s+IN\s*\(([\s\S]*?)\)/)?.[1] ?? null;
+  }
+  if (!body || !/dispatched/.test(body) || !/in_transit/.test(body)) return null; // wrong block
   return body;
 }
 
@@ -57,7 +78,7 @@ function billingQueueSetBody(src) {
   return m ? m[1] : null;
 }
 
-export function check(mdataSrc, dispatchSrc, boardSrc) {
+export function check(mdataSrc, dispatchSrc, boardSrc, canonicalSrc = canonicalDefault) {
   const failures = [];
 
   // (a) delivered_pending_docs must be LIVE — i.e. NOT in the closed cohort.
@@ -68,7 +89,7 @@ export function check(mdataSrc, dispatchSrc, boardSrc) {
   }
 
   // (b) Awaiting active set must still EXCLUDE delivered_pending_docs — free truck shows once, no dup.
-  const awaiting = awaitingActiveSetBody(dispatchSrc);
+  const awaiting = awaitingActiveSetBody(dispatchSrc, canonicalSrc);
   if (awaiting == null) {
     failures.push("units-without-load active-load `l.status IN (...)` block not found (in-flight dispatched/in_transit anchor missing)");
   } else if (/delivered_pending_docs/.test(awaiting)) {
@@ -113,12 +134,16 @@ function runSelftest() {
   }
 
   // Negative 2: re-add delivered_pending_docs to the Awaiting active set -> truck-dup must be caught.
-  const dispatchMut = dispatchSrc.replace(
-    /('assigned_not_dispatched'::mdata\.load_status_enum,[\s\S]*?'in_transit'::mdata\.load_status_enum)(\s*\))/,
-    "$1,\n              'delivered_pending_docs'::mdata.load_status_enum$2"
-  );
-  if (dispatchMut === dispatchSrc || check(mdataSrc, dispatchMut, boardSrc).length === 0) {
+  const canonicalSrc = canonicalDefault;
+  const canonicalMut = canonicalSrc.replace(/(export const DISPATCH_WORK_LOAD_STATUSES = \[)/, '$1\n  "delivered_pending_docs",');
+  if (canonicalMut === canonicalSrc || check(mdataSrc, dispatchSrc, boardSrc, canonicalMut).length === 0) {
     console.error("SELFTEST negative FAIL — re-adding delivered_pending_docs to Awaiting active set was not caught");
+    process.exit(1);
+  }
+  const handler = unitsWithoutLoadSlice(dispatchSrc);
+  const unmounted = dispatchSrc.replace(handler, handler.replace('${canonicalDispatchWorkWhereClause("l", "$1::uuid")}', "true"));
+  if (unmounted === dispatchSrc || check(mdataSrc, unmounted, boardSrc, canonicalSrc).length === 0) {
+    console.error("SELFTEST negative FAIL — the Awaiting feed dropping the dispatch-work set was not caught");
     process.exit(1);
   }
 
