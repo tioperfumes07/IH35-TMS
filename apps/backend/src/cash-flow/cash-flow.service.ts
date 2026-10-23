@@ -980,17 +980,16 @@ export async function getRollingLedgerRows(
       b.display_id,
       COALESCE(v.vendor_name, 'Vendor') AS vendor_name,
       b.bill_date::text AS bill_date,
-      b.due_date::text AS due_date,
+      COALESCE(b.due_date, b.bill_date, $2::date)::text AS due_date,
       ${BILL_OPEN_BALANCE_SQL}::bigint AS remaining_cents
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id AND v.operating_company_id = $1::uuid
     WHERE b.operating_company_id = $1::uuid
       AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
-      AND b.due_date IS NOT NULL
-      AND b.bill_category = 'vendor'
-    ORDER BY b.due_date ASC
+      AND b.bill_category IN ('vendor', 'driver')
+    ORDER BY COALESCE(b.due_date, b.bill_date, $2::date) ASC
     `,
-    [operatingCompanyId]
+    [operatingCompanyId, today]
   );
 
   // 2) driver_finance.driver_settlements — closed and unpaid (same predicate as
@@ -1646,6 +1645,32 @@ export async function getRollingLedgerRows(
     const todayDate = new Date(today + "T00:00:00Z");
     const dayOfWeek = todayDate.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
     const daysToNextMonday = dayOfWeek === 1 ? 7 : (dayOfWeek === 0 ? 1 : 8 - dayOfWeek);
+
+    // Partial current-week row: project remaining days of the running week (Mon–Sun).
+    // Card payable (2510) covers incurred fuel already; this covers projected days from today
+    // through Sunday of the current week. Mon (isoDay=1) → 7 remaining, Sun (isoDay=7) → 1.
+    const isoDay = dayOfWeek === 0 ? 7 : dayOfWeek; // convert JS Sun=0 to ISO Sun=7
+    const remainingDaysInWeek = 8 - isoDay; // Mon=7, Tue=6, Wed=5, Thu=4, Fri=3, Sat=2, Sun=1
+    if (remainingDaysInWeek < 7) {
+      // Not Monday — there are already-elapsed days in this week covered by card payable
+      const partialFuelCents = Math.round(weeklyFuelCents * remainingDaysInWeek / 7);
+      if (partialFuelCents > 0) {
+        rows.push({
+          row_kind: "expense",
+          type: "Fuel (projected)",
+          document_kind: "expense",
+          document_id: `fuel-avg-partial-${today}`,
+          document_label: `Fuel est. ${today} (partial wk)`,
+          counterparty: "Fuel (4-wk avg)",
+          origin_date: today,
+          due_date: today,
+          amount_cents: partialFuelCents,
+          days_overdue: 0,
+          status: "current",
+        });
+      }
+    }
+
     for (let w = 0; w < 13; w++) {
       const weekStart = new Date(todayDate);
       weekStart.setUTCDate(todayDate.getUTCDate() + daysToNextMonday + w * 7);
