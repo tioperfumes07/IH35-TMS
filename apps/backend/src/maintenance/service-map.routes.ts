@@ -71,7 +71,7 @@ export async function registerServiceMapRoutes(app: FastifyInstance) {
             SELECT ps.id::text AS source_id,
                    'pm_schedule'  AS source,
                    ps.label       AS service_label,
-                   ps.last_performed_at::text AS last_service_at,
+                   ps.last_service_date::text AS last_service_at, -- 443.267-A: real column (was last_performed_at → 42703)
                    ps.last_service_odometer AS last_service_odo,
                    ps.next_due_odometer AS next_due_odo,
                    CASE
@@ -84,7 +84,7 @@ export async function registerServiceMapRoutes(app: FastifyInstance) {
             WHERE ps.unit_id = uid.unit_id
               AND ps.operating_company_id = co.oc_id
               AND ps.interval_kind = 'miles'
-            ORDER BY ps.updated_at DESC NULLS LAST
+            ORDER BY ps.last_service_date DESC NULLS LAST, ps.created_at DESC
             LIMIT 1
           ),
 
@@ -96,7 +96,7 @@ export async function registerServiceMapRoutes(app: FastifyInstance) {
                    ds.submitted_at::text AS last_service_at,
                    NULL::int     AS last_service_odo,
                    NULL::int     AS next_due_odo,
-                   CASE WHEN ds.defects_found = 0 THEN 'ok' ELSE 'attention' END AS state
+                   CASE WHEN ds.has_any_defect IS NOT TRUE THEN 'ok' ELSE 'attention' END AS state -- 443.267-A: real flag (was defects_found → 42703)
             FROM safety.dvir_submissions ds, uid
             WHERE ds.unit_id = uid.unit_id
             ORDER BY ds.submitted_at DESC NULLS LAST
@@ -144,7 +144,7 @@ export async function registerServiceMapRoutes(app: FastifyInstance) {
             SELECT wo.id::text AS source_id,
                    'work_order' AS source,
                    'Trailer brakes' AS service_label,
-                   wo.completed_at::text AS last_service_at,
+                   wo.work_completed_at::text AS last_service_at,
                    NULL::int AS last_service_odo,
                    NULL::int AS next_due_odo,
                    'ok' AS state
@@ -153,8 +153,9 @@ export async function registerServiceMapRoutes(app: FastifyInstance) {
             WHERE wo.unit_id = uid.unit_id
               AND wo.operating_company_id = co.oc_id
               AND wol.description ILIKE '%brake%'
-              AND wo.completed_at IS NOT NULL
-            ORDER BY wo.completed_at DESC NULLS LAST
+              -- LEAD 443.267-A: maintenance.work_orders has no completed_at (42703 → 500); the column is work_completed_at.
+              AND wo.work_completed_at IS NOT NULL
+            ORDER BY wo.work_completed_at DESC NULLS LAST
             LIMIT 1
           ),
 
@@ -181,7 +182,7 @@ export async function registerServiceMapRoutes(app: FastifyInstance) {
             SELECT ps.id::text AS source_id,
                    'pm_schedule' AS source,
                    ps.label AS service_label,
-                   ps.last_performed_at::text AS last_service_at,
+                   ps.last_service_date::text AS last_service_at, -- 443.267-A: real column (was last_performed_at → 42703)
                    NULL::int AS last_service_odo,
                    NULL::int AS next_due_odo,
                    'ok' AS state
@@ -189,7 +190,7 @@ export async function registerServiceMapRoutes(app: FastifyInstance) {
             WHERE ps.unit_id = uid.unit_id
               AND ps.operating_company_id = co.oc_id
               AND ps.label ILIKE '%reefer%'
-            ORDER BY ps.updated_at DESC NULLS LAST
+            ORDER BY ps.last_service_date DESC NULLS LAST, ps.created_at DESC
             LIMIT 1
           ),
 

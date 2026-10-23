@@ -81,7 +81,8 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             SELECT DISTINCT wo.unit_id
             FROM maintenance.work_orders wo, co
             WHERE wo.operating_company_id = co.oc_id
-              AND wo.reported_in_shop = true
+              -- LEAD 443.267-A: maintenance.work_orders has no reported_in_shop (42703 → 500). In shop = an OPEN work order —
+              -- the canonical predicate (same as /maintenance/in-shop-units and the dispatch UNIT_IN_SERVICE_SQL gate).
               AND ${openWorkOrderPredicateSql("wo")}
           ),
           state_map AS (
@@ -141,7 +142,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             SELECT
               wo.unit_id,
               COUNT(*)::int AS open_count,
-              bool_or(wo.reported_in_shop) AS in_shop,
+              true AS in_shop, -- every row here is an open work order = in shop (canonical predicate, see shop_units)
               (array_agg(wo.id::text ORDER BY wo.created_at DESC))[1] AS latest_wo_id,
               (array_agg(wo.display_id ORDER BY wo.created_at DESC))[1] AS latest_wo_display_id,
               (array_agg(wo.status::text ORDER BY wo.created_at DESC))[1] AS latest_wo_status
@@ -167,7 +168,9 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
                 WHEN (COALESCE(pm.next_due_odometer, pm.last_service_odometer + pm.pm_interval) - COALESCE(vlp.odometer_mi, pm.last_service_odometer))::numeric / ${PLAN_RATE_PER_DAY} <= 14 THEN 'soon'
                 ELSE 'ok'
               END AS state
-            FROM mdata.units u, co
+            -- 443.267-A: CROSS JOIN, not a comma — an explicit JOIN binds tighter than ",", so "u, co LEFT JOIN … u.id"
+            -- could not see u (42P01 → 500).
+            FROM mdata.units u CROSS JOIN co
             LEFT JOIN pm_best pm ON pm.unit_id = u.id
             LEFT JOIN telematics.vehicle_latest_position vlp
               ON vlp.unit_id = u.id AND vlp.operating_company_id = co.oc_id
@@ -233,7 +236,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             cl.load_number,
             cl.status AS load_status
 
-          FROM mdata.units u, co
+          FROM mdata.units u CROSS JOIN co -- 443.267-A: comma + JOIN = 42P01 (see unit_state)
           JOIN unit_state _state ON _state.unit_id = u.id
           LEFT JOIN pm_best pm ON pm.unit_id = u.id
           LEFT JOIN telematics.vehicle_latest_position vlp
@@ -270,7 +273,9 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
               WHEN 'ok'      THEN 4
               ELSE 5
             END,
-            COALESCE(miles_left, 999999) ASC,
+            -- 443.267-A: an output alias cannot sit inside an ORDER BY expression (42703 "miles_left"); same expression as miles_left.
+            COALESCE((COALESCE(pm.next_due_odometer, pm.last_service_odometer + pm.pm_interval)
+             - COALESCE(vlp.odometer_mi, pm.last_service_odometer))::int, 999999) ASC,
             u.unit_number
 
           LIMIT $2 OFFSET $3
