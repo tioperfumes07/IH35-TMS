@@ -464,6 +464,18 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** remaining Fuel tabs (Fills / By truck / Questions / …) · Driver
   Profile · design-system sweep · Chrome proof. Full DONE not claimed.
 
+### Active Architectural Decisions — Fuel Questions V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `listFuelAssignmentQuestions` (open status + page + total). No GL /
+  posting / assignment-answer math change. Popup answer path unchanged.
+- **V3 board chrome (Fuel questions tab + Load Costs mount):** identity `V3KpiTile` strip Open
+  questions · This page · Page size (`data-fuel-questions-v3-kpis`) from the same list response.
+  `V3Panel` **Fuel questions** (`fuel-questions-v3-panel`) wraps ParityTable + CappedListNotice.
+- **Guard piggyback:** `verify-fuel-assignment-popup.mjs` (step 18670 ≡2 EVEN Cursor) — V3 markers
+  + selftest mutations. No new EVEN claim.
+- **Still open under 443.250:** remaining Fuel tabs (Fills / By truck / Settings / …) · Driver
+  Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+
 
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
