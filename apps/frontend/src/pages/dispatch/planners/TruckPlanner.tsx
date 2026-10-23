@@ -86,7 +86,8 @@ export function TruckPlanner() {
         unitId,
         unitNumber,
         driverId: dr.driver_id ? String(dr.driver_id) : null,
-        driverName: dr.driver_name ? String(dr.driver_name) : null,
+        // Proper-cased once where the row is shaped (LEAD 443.251): every render site shows the same name.
+        driverName: dr.driver_name ? formatPersonName(String(dr.driver_name)) : null,
         status: "assigned",
       });
     }
@@ -163,7 +164,7 @@ export function TruckPlanner() {
       const unitId = load.assigned_unit_id ? String(load.assigned_unit_id) : "";
       const row = unitId ? rows.get(unitId) : undefined;
       if (!row || row.status === "in-shop" || !IN_MOTION_LOAD_STATUSES.has(String(load.status))) continue;
-      rows.set(unitId, { ...row, status: "assigned", driverId: row.driverId ?? (load.assigned_primary_driver_id ?? null), driverName: row.driverName ?? (load.assigned_primary_driver_name ?? null) });
+      rows.set(unitId, { ...row, status: "assigned", driverId: row.driverId ?? (load.assigned_primary_driver_id ?? null), driverName: row.driverName ?? (load.assigned_primary_driver_name ? formatPersonName(String(load.assigned_primary_driver_name)) : null) });
     }
 
     return [...rows.values()].sort((a, b) => a.unitNumber.localeCompare(b.unitNumber));
@@ -295,7 +296,7 @@ export function TruckPlanner() {
               statusSortKey: status,
               // LEAD 443.251 (live 10-22): the driver sat in the 56px unit slot and clipped ("GAYTAN").
               secondary: row.driverName ? (
-                <EntityLinkOrTombstone kind="driver" id={row.driverId} name={formatPersonName(row.driverName)} noun="Driver" />
+                <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
               ) : null,
               status,
               action: (
@@ -331,7 +332,7 @@ export function TruckPlanner() {
                 sortKey: row.unitNumber,
                 statusSortKey: "In Shop",
                 secondary: row.driverName ? (
-                  <EntityLinkOrTombstone kind="driver" id={row.driverId} name={formatPersonName(row.driverName)} noun="Driver" />
+                  <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
                 ) : null,
                 status: "In Shop",
                 action: (
