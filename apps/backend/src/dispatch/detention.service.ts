@@ -186,12 +186,23 @@ export async function listDetentionEventsForLoad(userId: string, operatingCompan
   });
 }
 
+// D074: throttle sync so the board read-path doesn't pay 3s+ on every request.
+// sync() runs at most once per company per 30s — stale by at most one poll cycle, which is
+// acceptable for an operational board that refreshes every few seconds anyway.
+const _lastSync = new Map<string, number>();
+const SYNC_TTL_MS = 30_000;
+
 export async function listDetentionBoard(
   userId: string,
   operatingCompanyId: string,
   filters: DispatchAlertQuery,
 ) {
-  await syncDetentionEventsFromStopArrivals(userId, operatingCompanyId);
+  const now = Date.now();
+  const last = _lastSync.get(operatingCompanyId) ?? 0;
+  if (now - last >= SYNC_TTL_MS) {
+    _lastSync.set(operatingCompanyId, now);
+    await syncDetentionEventsFromStopArrivals(userId, operatingCompanyId);
+  }
   return withCompany(userId, operatingCompanyId, async (client) => {
     const orderBy = dispatchAlertOrderBy(filters, {
       event_at: "de.started_at", load_number: "l.load_number", customer_name: "customer_name",
