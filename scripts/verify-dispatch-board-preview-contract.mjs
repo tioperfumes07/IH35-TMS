@@ -98,9 +98,9 @@ function problems(src) {
     issues.push('the "location" (Live loc) column must carry a 180px minWidth floor');
   }
 
-  // 8. Driver → initials, full name on hover (§37: "Driver → initials").
-  if (!/function driverInitials\(/.test(src)) {
-    issues.push("driverInitials() helper must exist");
+  // 8. Driver → FULL proper-case name (LEAD 443.254 N9 / 443.258-B D021, owner 10-22; supersedes §37 "initials").
+  if (/function driverInitials\(/.test(src) || !/const driverDisplay = rawName \? fullName : rawName;/.test(src)) {
+    issues.push("renderDriverCell must show the full proper-case name (entityLabel → formatPersonName), never initials");
   }
   if (!/title=\{fullName\}/.test(src)) {
     issues.push("renderDriverCell must wrap the cell in a title={fullName} hover");
@@ -134,7 +134,7 @@ function selftest() {
     src.replace(/stickyLeftCount=\{4\}\n/, ""), // only removes the first occurrence — still catches the drop
     src.replace(/columnLayout="auto"\n/, ""),
     src.replace('minWidth: column.key === "location" ? 180 : undefined,', ""),
-    src.replace("function driverInitials(", "function driverInitialsRenamed("),
+    src.replace("const driverDisplay = rawName ? fullName : rawName;", "const driverDisplay = rawName ? driverInitials(rawName) : rawName;"),
     src.replace("title={fullName}", "data-name={fullName}"),
     src.replace(/frameColor=\{colors\.tableColumnRule\}\n/, ""),
   ];

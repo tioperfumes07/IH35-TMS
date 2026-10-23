@@ -32,7 +32,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { LOCKED_BORDER, LOCKED_TEXT_SECONDARY } from "../../design/locked-baseline-tokens";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import { loadStatusLabel } from "../../lib/load-status";
-import { properPersonOrPlaceName } from "../../lib/properDisplayText";
+import { formatPersonName } from "../../lib/formatPersonName";
 import {
   getTruckLine,
   listLoadExceptionReasons,
@@ -686,7 +686,7 @@ function AvailableTruckTrack({
         style={{ right: 4, top: 46, fontSize: 12 }}
         data-testid={`truck-line-assign-note-${trackKey}`}
       >
-        {a.driver_id && row.drivers[0]?.name ? `usual: ${properPersonOrPlaceName(row.drivers[0].name)}` : "no driver yet — choose in the wizard"}
+        {a.driver_id && row.drivers[0]?.name ? `usual: ${formatPersonName(row.drivers[0].name)}` : "no driver yet — choose in the wizard"}
       </span>
 
       <span className="truck-line-v4-sub absolute whitespace-nowrap text-[#6B7280]" style={{ top: 64, left: 0 }}>
