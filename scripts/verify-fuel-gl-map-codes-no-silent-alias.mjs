@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * HOLD-FUEL-GL-EXPENSE-MAP-CODES — lock fail-closed fuel GL map vocabulary.
+ * ROUND 443.250 — also asserts Expense mapping V3 KPI strip + V3Panel (chrome only).
  *
  * Live root cause (Neon 2026-07-21): poster resolves category_code = diesel|def|reefer|oil|misc
  * but prod only had category_code='fuel'. Do NOT allow a silent alias to "fuel" (that would fake-post
@@ -24,7 +25,29 @@ const errors = [];
 const posterRel = "apps/backend/src/accounting/fuel-posting/poster.service.ts";
 const maybeRel = "apps/backend/src/accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts";
 const coverageRel = "apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx";
+const plannerRel = "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx";
 const holdRel = "docs/blocks/HOLD-FUEL-GL-EXPENSE-MAP-CODES-2026-07-21.md";
+
+/** ROUND 443.250 — Expense mapping tab V3 chrome (read-only coverage; no posting). */
+function assertFuelExpenseMapV3(coverageSrc, plannerSrc) {
+  const findings = [];
+  if (!/data-fuel-expense-map-v3-kpis/.test(coverageSrc) || !/V3KpiTile/.test(coverageSrc)) {
+    findings.push(`${coverageRel}: ROUND 443.250 must ship V3KpiTile strip (data-fuel-expense-map-v3-kpis)`);
+  }
+  if (!/fuel-expense-map-v3-panel/.test(coverageSrc) || !/V3Panel/.test(coverageSrc)) {
+    findings.push(`${coverageRel}: ROUND 443.250 must wrap coverage in V3Panel (fuel-expense-map-v3-panel)`);
+  }
+  if (!/Mapped/.test(coverageSrc) || !/Unmapped/.test(coverageSrc) || !/Categories/.test(coverageSrc)) {
+    findings.push(`${coverageRel}: Expense map V3 KPI strip must include Mapped + Unmapped + Categories`);
+  }
+  if (!/fuel-expense-map-open-v3-panel/.test(plannerSrc) || !/V3Panel/.test(plannerSrc)) {
+    findings.push(`${plannerRel}: ROUND 443.250 must wrap expense-map open link in V3Panel (fuel-expense-map-open-v3-panel)`);
+  }
+  if (!/expense_mapping/.test(plannerSrc) || !/FuelGlMappingCoverage/.test(plannerSrc)) {
+    findings.push(`${plannerRel}: expense_mapping tab must keep FuelGlMappingCoverage mount`);
+  }
+  return findings;
+}
 
 /** ACCT-F5024 — fail if unit/equipment class lookups use the non-existent opco column. */
 function assertFuelClassOwnerLeaseScope(posterSource, label = posterRel) {
@@ -88,7 +111,42 @@ function selftest() {
     console.error("verify-fuel-gl-map-codes-no-silent-alias --selftest FAIL leftover plant escaped", leftoverHits);
     process.exit(1);
   }
-  console.log("verify-fuel-gl-map-codes-no-silent-alias --selftest OK (ACCT-F5024 class scope + leftover plant)");
+
+  // ROUND 443.250 Expense mapping V3 plant
+  const coverageReal = fs.readFileSync(path.join(root, coverageRel), "utf8");
+  const plannerReal = fs.readFileSync(path.join(root, plannerRel), "utf8");
+  const v3Good = assertFuelExpenseMapV3(coverageReal, plannerReal);
+  if (v3Good.length !== 0) {
+    console.error("verify-fuel-gl-map-codes-no-silent-alias --selftest FAIL: live Expense map V3 not green", v3Good);
+    process.exit(1);
+  }
+  const v3Cases = [
+    {
+      name: "drops Expense map V3 KPI marker",
+      coverage: coverageReal.replace(/data-fuel-expense-map-v3-kpis/g, "data-fuel-expense-map-gone"),
+      planner: plannerReal,
+    },
+    {
+      name: "drops Expense map V3Panel",
+      coverage: coverageReal.replace(/fuel-expense-map-v3-panel/g, "fuel-expense-map-gone-panel"),
+      planner: plannerReal,
+    },
+    {
+      name: "drops open-link V3Panel",
+      coverage: coverageReal,
+      planner: plannerReal.replace(/fuel-expense-map-open-v3-panel/g, "fuel-expense-map-open-gone"),
+    },
+  ];
+  for (const c of v3Cases) {
+    const hits = assertFuelExpenseMapV3(c.coverage, c.planner);
+    if (hits.length === 0) {
+      console.error(`verify-fuel-gl-map-codes-no-silent-alias --selftest FAIL — ${c.name} should fail`);
+      process.exit(1);
+    }
+  }
+  console.log(
+    "verify-fuel-gl-map-codes-no-silent-alias --selftest OK (ACCT-F5024 class scope + leftover plant + Expense map V3)",
+  );
   process.exit(0);
 }
 
@@ -110,6 +168,7 @@ function read(rel) {
 const poster = read(posterRel);
 const maybe = read(maybeRel);
 const coverage = read(coverageRel);
+const planner = read(plannerRel);
 const hold = read(holdRel);
 
 if (poster) {
@@ -168,6 +227,9 @@ if (coverage) {
   // BANK-F91292 leftover refuse — FuelGlMappingCoverage.tsx page-scoped text token ratchet
   if (coverage.includes("text-[11px]")) errors.push(`${coverageRel}: leftover text-[11px]`);
   if (coverage.includes("#8A92AB") || coverage.includes("#334155")) errors.push(`${coverageRel}: leftover off-scale muted`);
+  for (const finding of assertFuelExpenseMapV3(coverage, planner)) {
+    errors.push(finding);
+  }
 }
 
 if (hold) {
