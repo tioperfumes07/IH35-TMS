@@ -389,8 +389,25 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   module path `/driver-finance/pre-settlements` via `SettlementsPreSettlementsPage`).
 - **Guard piggyback:** `verify-settlements-qbo-chrome-surfaces.mjs` (step 3424 ≡0 EVEN Cursor)
   asserts KPI marker + What closes panel + V3Panel list + Drivers mount. No new EVEN claim.
-- **Still open under 443.250:** Settlements Statement · Fuel sub-boards · Driver Profile ·
-  design-system sweep · Chrome proof. Full DONE not claimed.
+- **Still open under 443.250 (at PreSettlements ship):** Settlements Statement · Fuel
+  sub-boards · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+
+### Active Architectural Decisions — Settlements Statement V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getSettlement` · tour readout · `getCompanySettlementReport` ·
+  `SettlementKpiGrid` (SETL-DETAIL-01 6×93px Revenue…Company margin locked; not rewritten to
+  V3KpiTile so CC-1 verify-step 10517 stays green). No GL / posting change.
+- **V3 board chrome (Settlements-Statement.dc.html):** identity `V3KpiTile` strip Settlement ·
+  Driver · Unit · Tour · Status (`data-settlements-statement-v3-kpis`) from existing settlement +
+  readout fields. `V3Panel` **Settlement statement** wraps identity strip + header + KPI grid +
+  loads + company waterfall + money-proof (`data-settlements-statement-v3-panel`). Header actions
+  renamed to board labels: Print statement · Download PDF · Open journal entry (scrolls to
+  MoneyProofTrail JE links — no invented journal id).
+- **Guard piggyback:** `verify-settlements-qbo-chrome-surfaces.mjs` (step 3424 ≡0 EVEN Cursor).
+  No new EVEN claim. `verify-settlement-detail-kpi-grid` / `verify-settlement-detail-reference`
+  untouched.
+- **Still open under 443.250:** Fuel sub-boards · Driver Profile · design-system sweep · Chrome
+  proof. Full DONE not claimed.
 
 
 
