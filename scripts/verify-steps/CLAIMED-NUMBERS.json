@@ -16968,5 +16968,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1083
+  "total_claimed": 1083,
+  "18729": {
+    "claimed_by": "CODEX",
+    "claimed_at": "2026-10-23",
+    "purpose": "verify-board-page-no-legacy-sections"
+  }
 }
