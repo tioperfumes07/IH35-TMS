@@ -60,6 +60,10 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | D043 | Cash Flow | Projected / Rolling / Manual | Date labels and cells | Day labels and invoice/due cells omit year and use month names | D | pending: DOM | MM/DD/YYYY for business dates | Cursor |
 | D044 | Accounting | Home | Settlement / transaction links | Driver/vendor names still all-uppercase | N | pending: DOM | Proper-case full names with exceptions | CC-1 / Cursor |
 
+| D045 | Banking | Home | Drift alert as-of | Raw ISO timestamp rendered, including T and Z | D | pending: DOM | Local business date MM/DD/YYYY; readable time if needed | Cursor |
+| D046 | Banking | Home | Drift account label | Several alerts show only generic Account rather than the account display name | N | pending: DOM | Resolve full account display name | CC-1 / Cursor |
+| D047 | Factoring | Home | Ready-to-factor customers | All-uppercase customer names displayed | N | pending: DOM | Proper-case names honoring acronym exceptions | CC-1 / Cursor |
+
 ## Counts (observed defects, not application-wide totals)
 
 | Module | V | M | D | I | N | T | B | E | P | Total |
@@ -78,7 +82,9 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | Insurance | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | Cash Flow | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
 | Accounting | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
-| Total | 1 | 3 | 5 | 9 | 10 | 3 | 9 | 1 | 3 | 44 |
+| Banking | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 2 |
+| Factoring | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
+| Total | 1 | 3 | 6 | 9 | 12 | 3 | 9 | 1 | 3 | 47 |
 
 ## Coverage ledger
 
@@ -93,7 +99,8 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 - Compliance: all seven top-level tabs visited; populated Filings and Overview tables inspected; Create notification rule opened/closed; Required Documents populated Drivers table inspected and create-type inline form opened without submission. Other required-document entity tabs, driver-specific HOS detail and secondary panels remain owed.
 - 443.258-D batch 2 checkpoint (partial depth): Driver Profile Home, Profiles list/default profile and Create Driver identity step inspected. Fleet Home, populated Units table and Create Trailer drawer inspected. Insurance Landing, populated Policies table, create-policy first step and Claims table shell inspected. Create forms closed without submission. Remaining tabs, later wizard steps, record panels and final Claims data remain owed; no complete-module claim.
 - 443.258-D batch 3 checkpoint (partial depth): Legal landing, Contracts table and Send Contract step 1 opened/closed without sending. Cash Flow all five top-level buttons visited; populated Auto and rolling-style Manual content inspected; comparison final rows and drill-through panels remain owed. Accounting landing inspected; submenu and document modals remain owed. No forecast pull, seed-library action, sending or financial action performed.
-- Not yet inspected in this pass: Banking, Factoring, Finance Hub, Customers, Vendors, Inventory, 425C, Lists, Reports, Docs, Users, Help, Program, System.
+- 443.258-D batch 4 checkpoint (landing depth only): Banking Home, Factoring Home populated table and Finance Hub landing inspected. No bank action, matching, resolution, submission or dismiss performed. Their tabs and panels remain owed. No defect observed on Finance Hub landing is not a module-wide pass.
+- Not yet inspected in this pass: Customers, Vendors, Inventory, 425C, Lists, Reports, Docs, Users, Help, Program, System.
 - Transient Loading states that resolved were not counted as defects. Empty Fuel Card table explicitly says no cards assigned: not classified as unexplained emptiness.
 - Fuel Relay wallet link currently resolves to the current tab's path. Destination behavior not verified; held as a candidate, not counted.
 - No Book Load, draft save, money action, settings save, upload, or form submission performed.
