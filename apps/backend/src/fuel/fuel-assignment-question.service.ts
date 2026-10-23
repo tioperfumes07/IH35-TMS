@@ -68,11 +68,22 @@ export function normalizeCandidate(raw: unknown): FuelCandidateTruck {
   };
 }
 
-export function normalizeQuestionRow<T extends { evidence: unknown } | null | undefined>(row: T): T {
+/** One evidence shape on every read (443.258-A). The return type says so: candidates are always FuelCandidateTruck[]. */
+export type NormalizedEvidence = {
+  candidates: FuelCandidateTruck[];
+  truck_resolution: string;
+  load_resolution: string;
+  moment_source: string | null;
+  [k: string]: unknown;
+};
+export function normalizeQuestionRow<T extends { evidence: unknown }>(row: T): Omit<T, "evidence"> & { evidence: NormalizedEvidence };
+export function normalizeQuestionRow<T extends { evidence: unknown }>(row: T | null | undefined): (Omit<T, "evidence"> & { evidence: NormalizedEvidence }) | null | undefined;
+export function normalizeQuestionRow<T extends { evidence: unknown }>(row: T | null | undefined) {
   if (!row) return row;
   const ev = (row.evidence && typeof row.evidence === "object" ? row.evidence : {}) as Record<string, unknown>;
   const candidates = Array.isArray(ev.candidates) ? ev.candidates.map(normalizeCandidate) : [];
-  return { ...row, evidence: { ...ev, candidates, truck_resolution: String(ev.truck_resolution ?? ""), load_resolution: String(ev.load_resolution ?? ""), moment_source: (ev.moment_source as string | null) ?? null } };
+  const evidence: NormalizedEvidence = { ...ev, candidates, truck_resolution: String(ev.truck_resolution ?? ""), load_resolution: String(ev.load_resolution ?? ""), moment_source: (ev.moment_source as string | null) ?? null };
+  return { ...row, evidence };
 }
 
 export type FuelAssignmentQuestionRow = {

@@ -125,7 +125,7 @@ function selftest() {
     ["expense autoload mount", { expensePlugin: good.expensePlugin.replace("registerExpenseCategoryMapRoutes(app)", "registerExpenseCategoryMapRoutesMissing(app)") }],
     ["relay mount", { index: good.index.replace("registerRelayDepositReviewRoutes(app)", "registerRelayDepositReviewRoutesMissing(app)") }],
     ["verified state requires live SHA", { manifest: mutateManifest(good.manifest, "FUEL-S02", (item) => delete item.live_verified_sha) }],
-    ["verified state requires GUARD packet", { manifest: mutateManifest(good.manifest, "FUEL-S03", (item) => { item.evidence = item.evidence.replace("GUARD PACKET", "UNBOUND PACKET"); }) }],
+    ["verified state requires GUARD packet", { manifest: mutateManifest(good.manifest, "FUEL-S03", (item) => { item.evidence = item.evidence.replaceAll("GUARD PACKET", "UNBOUND PACKET"); }) }],
     ["artifact refresh", { httpRecheck: good.httpRecheck.replace("writeFileSync(OUT, text)", "") }],
     ["Love's membership", { lovesRoutes: good.lovesRoutes.replace("await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);", "// planted: membership removed") }],
   ];

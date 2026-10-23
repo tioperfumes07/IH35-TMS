@@ -6,7 +6,6 @@
     "apps/backend/src/accounting/amortization-posting/__tests__/prepaid-purchase-posting.db.test.ts::result::never",
     "apps/backend/src/auth/__tests__/office-login-enumeration-timing.test.ts::json::void & Promise<Response> & Chain",
     "apps/backend/src/auth/__tests__/office-login-enumeration-timing.test.ts::statusCode::void & Promise<Response> & Chain",
-    "apps/backend/src/dispatch/__tests__/g11-geofence-booking.db.test.ts::loadId::BookLoadResult",
     "apps/backend/src/driver-finance/__tests__/escrow-forfeit.routes.test.ts::json::void & Promise<Response> & Chain",
     "apps/backend/src/driver-finance/__tests__/escrow-forfeit.routes.test.ts::statusCode::void & Promise<Response> & Chain",
     "apps/backend/src/driver-finance/__tests__/settlement-payment-double-pay.test.ts::values::{ sql: string; }",

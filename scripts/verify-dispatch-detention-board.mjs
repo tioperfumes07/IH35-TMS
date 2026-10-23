@@ -71,7 +71,10 @@ function audit(overrides = new Map()) {
   if (!service.includes("pg_advisory_xact_lock") || !service.includes("dispatch.detention.customer-notify:")) {
     failures.push("customer threshold notification must serialize the external-send lifecycle per company event");
   }
-  if (!service.includes("FOR UPDATE OF de")) {
+  // 443.271 (CC-2): judged on CODE — the header comment also says "FOR UPDATE OF de", which made the lock check (and its
+  // plant) pass on the comment alone. The notify claim locks the detention row itself (FOR UPDATE OF de, not "de, l").
+  const serviceCode = service.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  if (!/FOR UPDATE OF de(?![\w,])/.test(serviceCode)) {
     failures.push("customer threshold notification must lock the canonical detention row before eligibility evaluation");
   }
   if (!service.includes("AND customer_notified_at IS NULL") || !service.includes("RETURNING customer_notified_at::text")) {
@@ -111,7 +114,7 @@ if (process.argv.includes("--selftest")) {
   const original = fs.readFileSync(paths.service, "utf8");
   const mutations = [
     ["advisory lifecycle lock", original.replace("pg_advisory_xact_lock", "pg_advisory_xact_unlock")],
-    ["canonical row lock", original.replace("FOR UPDATE OF de", "")],
+    ["canonical row lock", original.replace(/FOR UPDATE OF de(?![\w,])/g, "")],
     ["exact claim predicate", original.replace("AND customer_notified_at IS NULL", "AND customer_notified_at IS NOT NULL")],
     ["claim identity", original.replace("RETURNING customer_notified_at::text", "RETURNING id::text")],
   ];

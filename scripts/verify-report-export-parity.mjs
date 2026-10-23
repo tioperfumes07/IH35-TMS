@@ -31,6 +31,9 @@ const EXCLUDE_FILES = new Set([
   "ScheduledReportsBackendPendingBanner.tsx",
   // hubs / nav
   "ReportsHome.tsx",
+  // 443.267 board split: ReportsHomeBoard is the hub's body (a launcher table whose rows open the
+  // viewer, where export/print live) — same class as ReportsHome.tsx.
+  "ReportsHomeBoard.tsx",
   "ReportsHub.tsx",
   "ReportsSubNav.tsx",
   // modals
@@ -39,6 +42,9 @@ const EXCLUDE_FILES = new Set([
   "ScheduledReportsPanel.tsx",
   // subscription manager
   "SubscriptionManager.tsx",
+  // 443.267 board split: TrialBalanceBoard is a presentational child mounted BY TrialBalancePage.tsx,
+  // which owns getTrialBalanceReport + export + print (still scanned as a page below — not exempted).
+  "TrialBalanceBoard.tsx",
   // runner filters / table (shared components, not report pages)
   "RunnerFilters.tsx",
   "RunnerTable.tsx",
