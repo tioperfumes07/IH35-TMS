@@ -2149,6 +2149,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             WHERE l.operating_company_id = $1::uuid
               AND l.soft_deleted_at IS NULL
             ORDER BY l.assigned_unit_id, ls.actual_departure_at DESC
+          ),
+          -- D074 443.265-B: set-based loc (replaces per-unit LATERAL: N scans → 1)
+          last_city_per_unit AS (
+            SELECT DISTINCT ON (g.unit_id) g.unit_id, g.city, g.state, g.formatted_location
+            FROM telematics.vehicle_locations g
+            WHERE g.operating_company_id = $1::uuid
+              AND (g.city IS NOT NULL OR g.state IS NOT NULL)
+            ORDER BY g.unit_id, g.captured_at DESC
           )
           SELECT
             u.id,
@@ -2220,19 +2228,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           LEFT JOIN telematics.vehicle_latest_position p
             ON p.unit_id = u.id
             AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
-          -- REG-002b: coalesce city/state from the most recent vehicle_locations row that HAS them.
-          -- The locations poll inserts lat/lng with NO city/state; if it's the latest row, the view
-          -- shows no human-readable location. This LATERAL join finds the most recent row with
-          -- city/state and fills the gap — so the dispatch board always shows a city/state.
-          LEFT JOIN LATERAL (
-            SELECT g.city, g.state, g.formatted_location
-            FROM telematics.vehicle_locations g
-            WHERE g.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
-              AND g.unit_id = u.id
-              AND (g.city IS NOT NULL OR g.state IS NOT NULL)
-            ORDER BY g.captured_at DESC
-            LIMIT 1
-          ) loc ON (p.city IS NULL AND p.state IS NULL)
+          -- D074 443.265-B: replaced per-unit LATERAL with CTE join (last_city_per_unit above)
+          LEFT JOIN last_city_per_unit loc ON loc.unit_id = u.id
           -- LEAD 443.231b — SAME free-unit gate as Truck Line AVAILABLE (UNIT_IN_SERVICE_SQL =
           -- board unit gate + not OOS + no open WO). Both surfaces list the same units; driver =
           -- unitCurrentDriverSql on both. A unit with no driver on file still appears (driver "—"/

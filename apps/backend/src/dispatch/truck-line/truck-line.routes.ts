@@ -143,8 +143,10 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
       // Read path: the board still renders without the reasons catalog, but SAYS so (catalog_status in the response).
       const reasonsCatalogStatus: "ready" | "unavailable" = reasonsTableExists ? "ready" : "unavailable";
 
-      // One row per CURRENT load (not LIMIT 1 per unit) so tour legs can stack under one truck.
-      const res = await client.query(
+      // D074 443.265-B: fan-out 3 independent queries in parallel.
+      const [res, availableRes, pendingRes] = await Promise.all([
+        // One row per CURRENT load (not LIMIT 1 per unit) so tour legs can stack under one truck.
+        client.query(
         `
         SELECT
           u.id::text AS unit_id, u.unit_number,
@@ -226,17 +228,17 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         ORDER BY u.unit_number ASC, l.created_at ASC
         `,
         [operating_company_id]
-      );
-
-      // LEAD 443.231b — unit-centric AVAILABLE (one row per unit_id). Same free-unit gate as
-      // units-without-load; driver = unitCurrentDriverSql (never assigned_driver_id, never one
-      // row per free HOS driver whose last truck happened to be this unit).
-      const availableRes = await client.query(
+        ),
+        // LEAD 443.231b — unit-centric AVAILABLE (one row per unit_id). Same free-unit gate as
+        // units-without-load; driver = unitCurrentDriverSql (never assigned_driver_id, never one
+        // row per free HOS driver whose last truck happened to be this unit).
+        client.query(
         `
         WITH latest_hos AS (
           SELECT DISTINCT ON (driver_uuid) driver_uuid, driving_hours_remaining, cycle_hours_remaining, polled_at
           FROM samsara.hos_snapshots
           WHERE operating_company_id = $1::uuid
+            AND polled_at > now() - interval '24 hours'
           ORDER BY driver_uuid, polled_at DESC
         )
         SELECT
@@ -279,13 +281,12 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         ORDER BY u.unit_number ASC NULLS LAST, u.id
         `,
         [operating_company_id]
-      );
-
-      // T-04: the bottom-section feed. LEFT JOIN units (a booked load may not have one yet) and
-      // exclude any load that already qualifies for the top `rows` query (a pre-assigned,
-      // in-service unit) -- the NOT EXISTS below is UNIT_IN_SERVICE_SQL's own predicate, aliased,
-      // so the two lists can never disagree about which side a load is on.
-      const pendingRes = await client.query(
+        ),
+        // T-04: the bottom-section feed. LEFT JOIN units (a booked load may not have one yet) and
+        // exclude any load that already qualifies for the top `rows` query (a pre-assigned,
+        // in-service unit) -- the NOT EXISTS below is UNIT_IN_SERVICE_SQL's own predicate, aliased,
+        // so the two lists can never disagree about which side a load is on.
+        client.query(
         `
         SELECT
           l.id::text AS load_id, l.load_number, l.status::text AS raw_status, l.trip_type::text AS trip_type,
@@ -318,7 +319,8 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         ORDER BY l.created_at ASC
         `,
         [operating_company_id, ...PENDING_LOAD_STATUSES]
-      );
+        ),
+      ]);
 
       return {
         rows: res.rows as Row[],
