@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import { collectGetRoutes, injectGetSweepEnabled, runInjectGetSweepAndExit } from "./lib/inject-get-sweep.js";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
@@ -748,6 +749,8 @@ async function shutdown(signal: string) {
 }
 
 async function main() {
+  // LEAD 443.278 (3) — the no-5xx live guard's in-process sweep: collect every GET route as it registers (flag-gated).
+  if (injectGetSweepEnabled()) collectGetRoutes(app);
   initBackendSentry();
   await runStartupEnvironmentChecks();
   const envCheck = applyEnvStartupChecks(app.log);
@@ -1439,6 +1442,9 @@ async function main() {
   await registerBankOrphanBackfillRoutes(app);
   await registerPayrollAggregatedRoutes(app);
   await registerUsmcaActivationRoutes(app);
+
+  // LEAD 443.278 (3) — guard-only boot: every route is registered; inject the GET sweep and exit before listen()/workers.
+  if (injectGetSweepEnabled()) await runInjectGetSweepAndExit(app);
 
   // Render healthCheckPath cannot bind until listen(). Starting ~20 in-process workers BEFORE
   // listen starves the event loop: pre_deploy smoke dies ~86s AND rolling updates sit in
