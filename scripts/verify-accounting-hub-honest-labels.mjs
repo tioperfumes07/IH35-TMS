@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 /**
- * Static guard: AccountingHub must not use raw UUIDs/ISO dates as user-facing labels.
- * Specifically the unmatched QBO sync queue tile must render display_id, not entity_id.
+ * Static guard: AccountingHub board layout must not use raw UUIDs as labels,
+ * must keep QBO display_id on the queue API, and must not use text-[11px]
+ * (board uses V3 tokens / text-section-header).
+ *
+ * ROUND 443.267 — unmatched queue list left the hub (Unmatched is a KPI count only).
+ * display_id checks stay on the API/backend so Banking queue honesty is preserved.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -19,31 +23,32 @@ if (!/display_id:\s*string/.test(apiTypes)) {
 if (!/display_id/.test(backend)) {
   errors.push("Backend listSyncQueue does not return display_id");
 }
-// entityLabel(name, id, noun) accepts entity_id ONLY as its id fallback parameter — it prefers
-// `name` (display_id here) and, when that's missing, renders an honest "Record — not visible"
-// sentinel, NEVER the raw id itself (apps/frontend/src/lib/entity-label.ts). So
-// `entityLabel(item.display_id, item.entity_id, "Record")` is the correct, honest fix this guard
-// wants — not a regression. Only flag entity_id used OUTSIDE that safe helper call (e.g. rendered
-// bare as `{item.entity_id}` or as a raw string-interpolated label).
-const rawEntityIdUses = (hubPage.match(/item\.entity_id/g) ?? []).length;
-const safeEntityLabelUses = (hubPage.match(/entityLabel\([^)]*item\.display_id[^)]*item\.entity_id/g) ?? []).length;
-if (rawEntityIdUses > safeEntityLabelUses) {
-  errors.push("AccountingHubPage still renders raw entity_id for unmatched items");
+
+// Hub must not render raw entity_id anywhere.
+if (/\bitem\.entity_id\b/.test(hubPage) || /\.entity_id\b/.test(hubPage.replace(/entityLabel\([^)]*\)/g, ""))) {
+  // Only flag bare entity_id interpolations on the hub page itself.
+  if (/\{[^}]*entity_id[^}]*\}/.test(hubPage) || /`[^`]*\$\{[^}]*entity_id/.test(hubPage)) {
+    errors.push("AccountingHubPage still renders raw entity_id");
+  }
 }
-if (!/item\.display_id/.test(hubPage)) {
-  errors.push("AccountingHubPage does not use display_id for unmatched items");
-}
-// BANK-F91084 — ORDERS chrome: AccountingHub uses text-section-header, not text-[11px].
+
 if (hubPage.includes("text-[11px]")) {
-  errors.push("AccountingHubPage must not use text-[11px] — use text-section-header");
+  errors.push("AccountingHubPage must not use text-[11px] — use text-section-header or V3 tokens");
 }
 if (!hubPage.includes("text-section-header")) {
-  errors.push("AccountingHubPage KPI/section labels must use text-section-header");
+  errors.push("AccountingHubPage KPI/section labels must use text-section-header (class present for ratchet)");
+}
+
+// Board section titles must stay.
+for (const title of ["Receivables aging", "Cash pulse · operating account", "Settlements open"]) {
+  if (!hubPage.includes(title)) {
+    errors.push(`AccountingHubPage missing board section title: ${title}`);
+  }
 }
 
 if (errors.length > 0) {
   for (const e of errors) console.error("FAIL:", e);
   process.exit(1);
 }
-console.log("PASS: AccountingHub unmatched labels use display_id, not raw entity_id");
+console.log("PASS: AccountingHub board labels honest (no text-[11px]; board sections present; QBO display_id intact)");
 process.exit(0);
