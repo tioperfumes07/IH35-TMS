@@ -31,7 +31,7 @@ const APPROVAL_SERVICE = "apps/backend/src/settlements/approval.service.ts";
 const PAYMENT_ROUTES = "apps/backend/src/driver-finance/settlement-payment.routes.ts";
 const PAYMENT_SERVICE = "apps/backend/src/driver-finance/settlement-payment.service.ts";
 const FRONTEND_API = "apps/frontend/src/api/driverFinance.ts";
-const FRONTEND_PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const FRONTEND_PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 
 export function checkSources({ approvalRoutes, approvalService, paymentRoutes, paymentService, frontendApi, frontendPage }) {
   const problems = [];

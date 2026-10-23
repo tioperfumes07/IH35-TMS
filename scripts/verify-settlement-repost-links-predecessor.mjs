@@ -18,7 +18,7 @@ const F = {
   bills: "apps/backend/src/accounting/bills.service.ts",
   reverser: "apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.ts",
   header: "apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx",
-  page: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  page: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
 };
 
 export function problems(s) {

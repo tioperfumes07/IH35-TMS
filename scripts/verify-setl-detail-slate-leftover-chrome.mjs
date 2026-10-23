@@ -4,7 +4,7 @@
 import { readFileSync } from "node:fs";
 
 const TARGETS = [
-  "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   "apps/frontend/src/components/driver-finance/AddPayLineModal.tsx",
   "apps/frontend/src/components/driver-finance/OpenPreSettlementsPanel.tsx",
   "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",

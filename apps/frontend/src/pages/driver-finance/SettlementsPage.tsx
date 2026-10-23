@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementDetailPage } from "./SettlementDetailPage";
+import { SettlementStatementWorkflowPage } from "./SettlementStatementWorkflowPage";
 import { SettlementDisputesTab } from "./components/SettlementDisputesTab";
 import { PresettlementSuggestionsTab } from "./components/PresettlementSuggestionsTab";
 import { SettlementsTable } from "./components/SettlementsTable";
@@ -481,26 +482,13 @@ export function SettlementsPage() {
     manual_paid: serverKpi?.pipeline.manual_paid ?? kpiSettlements.filter((s) => s.payment_state === "manual_paid").length,
   };
 
+  // 443.280-A — board Statement replaces the body (no Detail View chrome bar).
+  // Finalize / payment / deductions / fuel fills live on ?workflow=1 (own route surface).
   if (selectedSettlementId && activeTab === "settlements") {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="text-xs font-semibold text-gray-700">Detail View</div>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              const next = new URLSearchParams(searchParams);
-              next.delete("settlement_id");
-              setSearchParams(next);
-            }}
-          >
-            Back to List
-          </Button>
-        </div>
-        <SettlementDetailPage />
-      </div>
-    );
+    if (searchParams.get("workflow") === "1") {
+      return <SettlementStatementWorkflowPage />;
+    }
+    return <SettlementDetailPage />;
   }
 
   return (

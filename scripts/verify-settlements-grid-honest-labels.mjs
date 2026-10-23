@@ -9,7 +9,7 @@ const LABEL = "verify-settlements-grid-honest-labels";
 const paths = {
   table: "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
   header: "apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx",
-  detail: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  detail: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   pre: "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
   earnings: "apps/frontend/src/components/drivers/EarningsTab.tsx",
   hub: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",

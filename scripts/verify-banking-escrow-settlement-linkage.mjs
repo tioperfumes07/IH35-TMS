@@ -25,7 +25,7 @@ export function run(root = process.cwd()) {
     "utf8"
   );
   const settlement = fs.readFileSync(
-    `${root}/apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx`,
+    `${root}/apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx`,
     "utf8"
   );
   const accountingEscrow = fs.existsSync(`${root}/apps/frontend/src/pages/accounting/EscrowPage.tsx`)
@@ -121,7 +121,7 @@ if (process.argv.includes("--selftest")) {
     `kind="settlement"\nbanking-escrow-settlement-link\n`
   );
   mk(
-    "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+    "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
     `onOpenEscrow\nnavigate(\`/accounting/escrow?holder_id=\${driverId}\`)\n`
   );
   mk(

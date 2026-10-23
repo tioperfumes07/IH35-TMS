@@ -9,7 +9,7 @@ const LABEL = "verify-cu09-forensic-settlement";
 const SELFTEST = process.argv.includes("--selftest");
 
 const FILES = [
-  "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   "apps/frontend/src/pages/forensic/ForensicReviewPage.tsx",
   "apps/frontend/src/pages/customers/CustomersListView.tsx",
   "apps/frontend/src/pages/Drivers.tsx",

@@ -24,7 +24,7 @@ const F = {
   table: "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
   disputes: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",
   header: "apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx",
-  detail: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  detail: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   payRun: "apps/frontend/src/pages/driver-finance/components/PayRunClosePanel.tsx",
   advance: "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx",
   liability: "apps/frontend/src/pages/liabilities/components/LiabilityDetailDrawer.tsx",

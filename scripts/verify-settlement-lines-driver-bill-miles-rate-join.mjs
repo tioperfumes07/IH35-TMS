@@ -37,7 +37,7 @@ export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2c)";
 
 const ROUTES_PATH = "apps/backend/src/driver-finance/settlements.routes.ts";
-const PAGE_PATH = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const PAGE_PATH = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const EARNINGS_PATH = "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx";
 const DEADHEAD_PATH = "apps/frontend/src/pages/driver-finance/components/DeadheadPaySection.tsx";
 

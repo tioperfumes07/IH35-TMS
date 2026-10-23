@@ -19,7 +19,7 @@
 import { readFileSync } from "node:fs";
 
 const panelPath = "apps/frontend/src/pages/driver-finance/components/PayRunClosePanel.tsx";
-const pagePath = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const pagePath = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 
 const source = { panel: readFileSync(panelPath, "utf8"), page: readFileSync(pagePath, "utf8") };
 

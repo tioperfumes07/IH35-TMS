@@ -1,32 +1,15 @@
+/**
+ * ROUND 443.280-A Settlements-Statement — board strip + 2×2 panels ONLY.
+ * Finalize / payment / deductions / dispute live on SettlementStatementWorkflowPage
+ * (`?settlement_id=&workflow=1`). JE opens /accounting/proof-trail/settlement/:id.
+ */
 import { settlementNumber } from "../../lib/settlementNumber";
-import { HistoricalSettlementAttributions, type HistoricalSettlementAttributionRow } from "../../components/driver-finance/HistoricalSettlementAttributions";
-import { entityLabel } from "../../lib/entity-label";
-import { formatDateUS } from "../../lib/formatDate";
-import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import {
-  acknowledgeSettlement,
-  approveSettlement,
-  finalizeSettlement,
-  openSettlementDispute,
-  getSettlementPaymentEvents,
-  getSettlement,
-  getOpenDriverBills,
-  markSettlementBounced,
-  markSettlementCleared,
-  markSettlementPaidManually,
-  markSettlementSent,
-  queueSettlementPayment,
-  reopenSettlementManualPaid,
-  resumeSettlementDeduction,
-  reverseSettlement,
-  unlockSettlement,
-  patchSettlementDisplayId,
-  type SettlementDisputeCategory,
-  type OpenDriverBill,
-} from "../../api/driverFinance";
-import { formatUsd, formatUsdCents } from "../../lib/money";
+import { getSettlement } from "../../api/driverFinance";
+import { getDriver } from "../../api/mdata";
+import { formatDateUS } from "../../lib/formatDate";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -35,82 +18,28 @@ import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBank
 import { PageHeader } from "../../components/layout/PageHeader";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
-import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
 import { BackButton } from "../../components/shared/BackButton";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
-import { previewTeamSettlementSplit } from "../../api/mdata";
-import { DebtBanner } from "./components/DebtBanner";
-import { DeadheadPaySection } from "./components/DeadheadPaySection";
-import { FuelPurchasesSection } from "./components/FuelPurchasesSection";
-import { DeductionsSection, type DeductionRow } from "./components/DeductionsSection";
-import { CreateSettlementDeductionDrawer } from "../drivers/components/CreateSettlementDeductionDrawer";
-import { EditSettlementDeductionDrawer } from "../drivers/components/EditSettlementDeductionDrawer";
-import { EarningsSection } from "./components/EarningsSection";
-import { EscrowVisualizer } from "./components/EscrowVisualizer";
-import { SETTLEMENT_DISPUTE_CATEGORY_OPTIONS } from "./settlementDisputeCategories";
-import { ExtraPaySection } from "./components/ExtraPaySection";
-import { FinalizeBlock } from "./components/FinalizeBlock";
-import { HoldDeductionModal } from "./components/HoldDeductionModal";
-import { LiabilityBreakdownModal } from "./components/LiabilityBreakdownModal";
-import { NetPaySummary } from "./components/NetPaySummary";
-import { SettlementKpiGrid } from "./components/SettlementKpiGrid";
-import { PendingAckNotice } from "./components/PendingAckNotice";
-import { ReimbursementsSection } from "./components/ReimbursementsSection";
-import { SettlementHeader } from "./components/SettlementHeader";
-import { useLiveDebt } from "./hooks/useLiveDebt";
-import { PayRunClosePanel } from "./components/PayRunClosePanel";
-import { CloseTripPanel } from "./components/CloseTripPanel";
-import { SelectCombobox } from "../../components/Combobox";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { ConfirmModal } from "../../components/shared/ConfirmModal";
-import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
-import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { getTourReadout } from "../../api/tourReadout";
 import { getCompanySettlementReport } from "../../api/accounting";
-import { SettlementLoadsSection } from "./components/SettlementLoadsSection";
-import { CompanyWaterfallSection } from "./components/CompanyWaterfallSection";
-import { SettlementNumberBox } from "./components/SettlementNumberBox";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { SettlementStatementBoardPanels } from "./components/SettlementStatementBoardPanels";
+import {
+  reverseSettlement,
+  unlockSettlement,
+} from "../../api/driverFinance";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
-function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
-  // OWNER-LIVE-DEFECT-2026-09-08 (Jorge, live walkthrough of S-13644): this filter excluded
-  // line_type='escrow_contribution' entirely — an escrow-contribution settlement line withholds
-  // real driver dollars ($25/load, same as any other deduction) but was invisible to both this
-  // table AND this page's own Net Pay Summary math, even though the settlement's stored,
-  // authoritative deductions_total column (driver_finance.driver_settlements.deductions_total)
-  // DOES include it. Live proof: S-13644's stored deductions_total is $469.99 — the nine
-  // line_type='deduction' rows sum to $444.99, and the missing $25.00 is exactly one
-  // line_type='escrow_contribution' row ("Load 13555 — Escrow Contribution") this filter dropped.
-  // Escrow withholding is economically a deduction from this period's pay, so it belongs in the
-  // same table the driver and owner read as "what was withheld."
-  return lines
-    .filter((line) => ["deduction", "escrow_contribution"].includes(String(line.line_type)))
-    .map((line) => ({
-      id: String(line.id),
-      description: String(line.description ?? "Deduction"),
-      // S.1b — line_date (COALESCE of created_at), load_number, deduction_type, and posting
-      // account fields from the driver_settlement_deductions + catalogs.accounts joins.
-      line_date: typeof line.line_date === "string" ? line.line_date : null,
-      load_number: typeof line.load_number === "string" ? line.load_number : null,
-      deduction_type: typeof line.deduction_type === "string" ? line.deduction_type : null,
-      posting_account_number: typeof line.posting_account_number === "string" ? line.posting_account_number : null,
-      posting_account_name: typeof line.posting_account_name === "string" ? line.posting_account_name : null,
-      balance_left: Number(line.balance_left ?? line.amount ?? 0),
-      this_period_amount: Number(line.amount ?? 0),
-      // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: is_held/held_by are now the REAL state joined
-      // from driver_finance.driver_settlement_deductions (settlements.routes.ts GET detail), not
-      // dead columns that never existed on settlement_lines and were always false/null before.
-      is_held: Boolean(line.deduction_is_held),
-      held_by_user: line.deduction_held_by_user_email ? String(line.deduction_held_by_user_email) : null,
-      held_by_user_id: line.deduction_held_by_user_id ? String(line.deduction_held_by_user_id) : null,
-      pending_ack: Boolean(line.pending_ack),
-      source_deduction_id: line.source_deduction_id ? String(line.source_deduction_id) : null,
-    }));
+function payBasisPlainEnglish(payBasis: string | null | undefined): string {
+  if (payBasis === "practical_miles") return "paid on practical miles";
+  if (payBasis === "short_miles") return "paid on short miles";
+  return payBasis ? `paid on ${String(payBasis).replace(/_/g, " ")}` : "—";
 }
 
 export function SettlementDetailPage() {
@@ -122,21 +51,6 @@ export function SettlementDetailPage() {
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const settlementId = searchParams.get("settlement_id");
-  const [ackChecked, setAckChecked] = useState(false);
-  const [liabilityOpen, setLiabilityOpen] = useState(false);
-  const [holdTarget, setHoldTarget] = useState<DeductionRow | null>(null);
-  const [addDeductionOpen, setAddDeductionOpen] = useState(false);
-  // SET-01 part 2 — the deduction line currently open for in-place edit (null = drawer closed).
-  const [editDeductionTarget, setEditDeductionTarget] = useState<DeductionRow | null>(null);
-  const [bankReference, setBankReference] = useState("");
-  const [bounceReason, setBounceReason] = useState("");
-  const [manualPaymentMethod, setManualPaymentMethod] = useState("check");
-  const [manualReference, setManualReference] = useState("");
-  const [reopenReason, setReopenReason] = useState("");
-  const [disputeCategory, setDisputeCategory] = useState("missing_pay");
-  const [disputeAmount, setDisputeAmount] = useState("");
-  const [disputeDescription, setDisputeDescription] = useState("");
-  const [pendingConfirm, setPendingConfirm] = useState<"mark_paid" | "reopen" | null>(null);
   const [reverseBusy, setReverseBusy] = useState(false);
   const [unlockBusy, setUnlockBusy] = useState(false);
   const [reverseReasonOpen, setReverseReasonOpen] = useState(false);
@@ -148,10 +62,6 @@ export function SettlementDetailPage() {
     enabled: Boolean(settlementId && companyId),
   });
 
-  // SETL-DETAIL-01 — SAME queryKey TourSettlementTab uses below (getTourReadout keyed by
-  // settlementId), so React Query dedupes this to one network request; feeds the header (tour legs
-  // NB→TR→SB with dates) and the new Revenue/Driver pay/Company margin KPI tiles from the one
-  // shared readout, never a second, independently-computed source of truth.
   const readoutQuery = useQuery({
     queryKey: ["tour-readout", "settlement", companyId, settlementId],
     queryFn: () => getTourReadout(settlementId!, companyId),
@@ -159,14 +69,6 @@ export function SettlementDetailPage() {
   });
   const readout = readoutQuery.data;
 
-  // COMPANY-WATERFALL-FUEL-EXPENSE-SPLIT (owner 2026-09-09, settlement redesign): the tour readout's
-  // company_settlement carries one combined `costs_cents` figure, which is why CompanyWaterfallSection
-  // used to render an honest "not yet split into Additional/Fuel/Company-expenses sub-lines" gap
-  // instead of real numbers. The split already exists -- company-settlement-report.service.ts (the
-  // SAME read model SettlementsCompanyDriverTab.tsx's itemized-by-load view already uses) computes
-  // fuel_purchases and expenses as separate totals. Fetching it here too (same company_settlement_id,
-  // deduped by React Query same as every other shared-readout query on this page) so the waterfall can
-  // render the real split instead of re-deriving or inventing one.
   const companySettlementId = readout?.company_settlement?.id ?? null;
   const companyReportQuery = useQuery({
     queryKey: ["company-settlement-report", companyId, companySettlementId],
@@ -175,89 +77,100 @@ export function SettlementDetailPage() {
   });
   const companyReport = companyReportQuery.data;
 
-  // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: completes the hold/resume pair now that hold
-  // actually persists real state (see HoldDeductionModal.tsx) — without this a held deduction had
-  // no UI path back to active.
-  const handleResumeDeduction = async (row: DeductionRow) => {
-    if (!row.source_deduction_id) return;
-    try {
-      await resumeSettlementDeduction(row.source_deduction_id, companyId);
-      pushToast("Deduction resumed", "success");
-      void queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-detail", settlementId, companyId] });
-    } catch {
-      pushToast("Failed to resume deduction", "error");
-    }
-  };
-  const paymentEventsQuery = useQuery({
-    queryKey: ["driver-finance", "settlement-payment-events", settlementId, companyId],
-    queryFn: () => getSettlementPaymentEvents(settlementId!, companyId),
-    enabled: Boolean(settlementId && companyId),
-  });
-
   const settlement = (detailQuery.data ?? {}) as Record<string, unknown>;
+  const driverId = settlement.driver_id ? String(settlement.driver_id) : null;
+  const driverQuery = useQuery({
+    queryKey: ["mdata", "driver", driverId, companyId],
+    queryFn: () => getDriver(driverId!, companyId),
+    enabled: Boolean(driverId && companyId),
+  });
+  const payBasisSub = payBasisPlainEnglish(
+    driverQuery.data?.pay_basis ?? (typeof settlement.pay_basis === "string" ? settlement.pay_basis : null)
+  );
+
   const paymentState = String(settlement.payment_state ?? "unpaid");
-  const approvalStatus = String(settlement.approval_status ?? "needs_review");
-  // ROUND 167 (owner, 2026-09-28): "Open" is retired as a settlement-number label -- a
-  // pre-settlement in flight (is_presettlement=true) reads "PENDING", never a status word.
   const settlementDisplayId =
     settlementNumber(settlement) ?? (settlement.is_presettlement === true ? "PENDING" : null);
   const companySettlementLabel = (() => {
     const t = String(readout?.company_settlement?.display_id ?? settlementDisplayId ?? "").trim();
     return t ? `Company settlement ${t}` : "Company settlement";
   })();
-  // R-102-B item 3 (owner, ROUND 112) — moved up from its original spot below so the gates that
-  // follow can reference it; isFinalSettlement/showFinalizeBlock/canApproveSettlement/canOpenDispute
-  // all previously checked ONLY isFinalSettlement (locked/final), never cancelled — a cancelled
-  // settlement is neither "final" nor "locked" by that check, so all four read as still-open.
   const settlementIsCancelled = String(settlement.status ?? "") === "cancelled";
-  const isFinalSettlement = String(settlement.status ?? "") === "locked" || String(settlement.status ?? "") === "final";
-  const showFinalizeBlock = !isFinalSettlement && !settlementIsCancelled;
-  const showManualPaidDraftBanner = paymentState === "manual_paid" && !isFinalSettlement;
-  const canApproveSettlement = (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant") && approvalStatus === "needs_review" && !isFinalSettlement && !settlementIsCancelled;
-  const canOpenDispute = (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Driver") && !settlementIsCancelled;
-  // SETL-NO-VOID-PATH-01 — matches void.service.ts's canVoid() exactly (Owner + Accountant only).
-  // Hardcoded fallback per VOID LAW item 6: PERMISSION_MODEL_ENFORCED is OFF today, so this stays the
-  // gate rather than leaving the control ungated in the gap; swap for a permission-key check when that
-  // flag flips on.
-  const canVoidSettlement = auth.user?.role === "Owner" || auth.user?.role === "Accountant";
-  // SET-13 REOPEN-DISABLED-NOT-HIDDEN (owner CONSOLIDATED 2026-09-06 18:30Z item 7) — the whole
-  // Reopen control used to be nested inside BOTH `paymentState === "manual_paid"` AND an
-  // Owner/Administrator role check, so it disappeared entirely rather than showing disabled with a
-  // reason. LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE: "a hard cannot-be-mutated with no
-  // authorized path is a DEFECT, not a safety feature" — the control must always render; only its
-  // enabled state and the stated reason change.
-  const canReopenRole = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
-  const reopenBlockedReason =
-    paymentState !== "manual_paid"
-      ? "Only available once this settlement is marked paid manually"
-      : !canReopenRole
-        ? "Requires Owner or Administrator role"
-        : null;
-  const canReopen = reopenBlockedReason === null;
   const settlementIsLocked = Boolean(settlement.locked_at) && !settlementIsCancelled;
   const settlementIsPaid = String(settlement.status ?? "") === "paid";
-  // R-102-B item 3 (owner, ROUND 112 — "NOTHING EDITABLE ON A VOIDED DOCUMENT"): settlementIsLocked
-  // deliberately EXCLUDES cancelled (it drives the Locked/Reverse button row at the bottom of this
-  // page, which already branches on settlementIsCancelled separately) — but every OTHER "is this
-  // still open for editing" gate on this page was built off settlementIsLocked alone, so a cancelled
-  // settlement read as "open": Add/Edit deduction, extra pay, reimbursements all stayed live-write.
-  // This is the single combined "no further writes" gate for everything BUT that one button row.
-  const settlementIsReadOnly = settlementIsLocked || settlementIsCancelled;
+  const canVoidSettlement = auth.user?.role === "Owner" || auth.user?.role === "Accountant";
+
+  const lines = (settlement.lines as Array<Record<string, unknown>> | undefined) ?? [];
+  const activeLines = useMemo(
+    () => lines.filter((line) => !line.voided_at && line.is_active !== false),
+    [lines]
+  );
+
+  const earnings = activeLines
+    .filter((line) => String(line.line_type) === "earnings")
+    .map((line) => ({
+      id: String(line.id),
+      load_id: typeof line.load_id === "string" ? line.load_id : null,
+      load_number: typeof line.load_number === "string" ? line.load_number : null,
+      origin_city: typeof line.origin_city === "string" ? line.origin_city : null,
+      origin_state: typeof line.origin_state === "string" ? line.origin_state : null,
+      dest_city: typeof line.dest_city === "string" ? line.dest_city : null,
+      dest_state: typeof line.dest_state === "string" ? line.dest_state : null,
+      miles: line.miles == null ? undefined : Number(line.miles),
+      rate: line.rate_cents == null ? undefined : Number(line.rate_cents) / 100,
+      amount: Number(line.amount ?? 0),
+    }));
+
+  const summary = useMemo(() => {
+    const earningsTotal = earnings.reduce((sum, row) => sum + row.amount, 0);
+    const deadheadTotal = activeLines
+      .filter((line) => String(line.line_type) === "deadhead_pay")
+      .reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
+    const extraTotal = activeLines
+      .filter((line) => String(line.line_type) === "extra_pay")
+      .reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
+    const reimbTotal = activeLines
+      .filter((line) => String(line.line_type) === "reimbursement")
+      .reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
+    const deductionTotal = activeLines
+      .filter((line) => ["deduction", "escrow_contribution"].includes(String(line.line_type)))
+      .reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
+    return { earningsTotal, deadheadTotal, extraTotal, reimbTotal, deductionTotal };
+  }, [activeLines, earnings]);
+
+  const driverNetCents = Math.round(
+    (summary.earningsTotal +
+      summary.deadheadTotal +
+      summary.extraTotal +
+      summary.reimbTotal -
+      summary.deductionTotal) *
+      100
+  );
 
   async function refreshSettlementViews() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["driver-finance"] }),
-      queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-detail", settlementId, companyId] }),
-      queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-payment-events", settlementId, companyId] }),
+      queryClient.invalidateQueries({
+        queryKey: ["driver-finance", "settlement-detail", settlementId, companyId],
+      }),
     ]);
   }
 
-  // SETL-NO-VOID-PATH-01 — reason prompt required, always (VOID LAW item 4). Captured through
-  // VoidReasonModal so the reason is validated, catalogued, and the Chrome extension event loop
-  // is not frozen by a native dialog.
-  function handleReverseSettlement() {
-    if (!settlementId || !companyId) return;
-    setReverseReasonOpen(true);
+  function openJournalEntry() {
+    if (!settlementId) return;
+    navigate(`/accounting/proof-trail/settlement/${encodeURIComponent(settlementId)}`);
+  }
+
+  function openWorkflow() {
+    if (!settlementId) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("settlement_id", settlementId);
+    next.set("workflow", "1");
+    navigate(`/driver-finance/settlements?${next.toString()}`);
+  }
+
+  function openFuelFills() {
+    openWorkflow();
   }
 
   async function submitReverseReason(reason: string) {
@@ -285,11 +198,6 @@ export function SettlementDetailPage() {
     }
   }
 
-  function handleUnlockSettlement() {
-    if (!settlementId || !companyId) return;
-    setUnlockReasonOpen(true);
-  }
-
   async function submitUnlockReason(reason: string) {
     if (!settlementId || !companyId) return;
     const trimmed = reason.trim();
@@ -310,259 +218,22 @@ export function SettlementDetailPage() {
     }
   }
 
-  const driverId = settlement.driver_id ? String(settlement.driver_id) : null;
-  const openBillsQuery = useQuery({
-    queryKey: ["driver-finance", "open-driver-bills", companyId, driverId],
-    queryFn: () => getOpenDriverBills(companyId, driverId ?? undefined),
-    enabled: Boolean(companyId && driverId),
-  });
-  const debt = useLiveDebt(driverId, companyId || null);
-  const lines = (settlement.lines as Array<Record<string, unknown>> | undefined) ?? [];
-  // OWNER-LIVE-DEFECT-2026-09-08 (Jorge, live walkthrough of S-13644): settlements.routes.ts's
-  // lines query (SELECT sl.* ... WHERE sl.settlement_id = $1) intentionally does NOT filter
-  // sl.voided_at/sl.is_active — the SQL comment above it says so, because "loads in cycle" (built
-  // from the raw `lines` array below) is a historical record and a voided line's load must not
-  // disappear from that history. But that same unfiltered `lines` array was also being fed
-  // straight into the MONEY math (earnings/deadhead/extra/reimbursements/deductions -> NetPaySummary
-  // and the KPI net-pay figure) with no voided-line exclusion at all. Live proof: settlement
-  // S-13644 (Alfonso Hidalgo Chavez) carries a voided (voided_at set, is_active=false) $581.58
-  // "Load 13506 — Loaded Miles" earnings line for a CANCELLED load — it was still being summed
-  // into Gross Pay, inflating the on-screen Net Pay Summary total by exactly $581.58 (queried live,
-  // Neon tiny-field-89581227/br-fancy-credit-akjnd07a, 2026-09-08). `activeLines` is the
-  // money-math-only view: `lines` (unfiltered, historical) stays the source for "loads in cycle"
-  // and the team-split gate below; every dollar total on this page must read from `activeLines`.
-  const activeLines = useMemo(
-    () => lines.filter((line) => !line.voided_at && line.is_active !== false),
-    [lines]
-  );
-  const hasEngineTeamSplitLines = useMemo(
-    () => lines.some((line) => ["team_split_primary", "team_split_secondary"].includes(String(line.line_type))),
-    [lines]
-  );
-  const settlementLoadId =
-    (typeof settlement.load_id === "string" ? settlement.load_id : null) ??
-    (typeof (lines[0] as Record<string, unknown> | undefined)?.load_id === "string"
-      ? String((lines[0] as Record<string, unknown>).load_id)
-      : null);
-
-  // LAW OF THE LAND §9 (2026-07-22): "Loads in cycle" reverse-link — distinct load ids carried
-  // directly on settlement_lines.load_id (Jorge LOCKED 2026-06-27 direct-trace column), not just the
-  // header's single settlementLoadId (a settlement may cover multiple loads for a driver's period).
-  // SETTLEMENT-DETAIL-SHOWS-RAW-UUID: carry the load NUMBER alongside the id. The line already has it
-  // (`line.load_number`), so the header no longer has to print a uuid fragment for a load it can name.
-  const settlementLoadIds = useMemo(() => {
-    const byId = new Map<string, string | null>();
-    for (const line of lines) {
-      const loadId = (line as Record<string, unknown>).load_id;
-      if (typeof loadId !== "string" || !loadId) continue;
-      const num = (line as Record<string, unknown>).load_number;
-      const number = typeof num === "string" && num ? num : null;
-      // First non-null number wins; a later line without one must not erase it.
-      if (!byId.has(loadId) || (byId.get(loadId) === null && number !== null)) byId.set(loadId, number);
-    }
-    // Open pre-settlements often have zero lines ("No lines yet") but still carry bookend FKs.
-    // Without these, SettlementHeader shows LOADS IN CYCLE "—" and reverse drill dies.
-    const bookends: Array<{ idKey: string; numKey: string }> = [
-      { idKey: "first_load_id", numKey: "first_load_number" },
-      { idKey: "last_load_id", numKey: "last_load_number" },
-    ];
-    for (const { idKey, numKey } of bookends) {
-      const loadId = settlement[idKey];
-      if (typeof loadId !== "string" || !loadId) continue;
-      const num = settlement[numKey];
-      const number = typeof num === "string" && num ? num : null;
-      if (!byId.has(loadId) || (byId.get(loadId) === null && number !== null)) byId.set(loadId, number);
-    }
-    return Array.from(byId, ([id, number]) => ({ id, number }));
-  }, [lines, settlement]);
-
-  const teamSplitQuery = useQuery({
-    queryKey: ["driver-finance", "team-settlement-split", settlementLoadId, companyId],
-    queryFn: () => previewTeamSettlementSplit(settlementLoadId!, companyId),
-    enabled: Boolean(settlementLoadId && companyId),
-  });
-
-  const earnings = activeLines.filter((line) => String(line.line_type) === "earnings").map((line) => ({
-    id: String(line.id),
-    // C5 — the load was carried on the line and then dropped here, which is why the Earnings
-    // "Load" column had nothing but the line id to show.
-    load_id: typeof line.load_id === "string" ? line.load_id : null,
-    load_number: typeof line.load_number === "string" ? line.load_number : null,
-    // S.1b — line_date (COALESCE of delivery-stop arrival), origin/dest city+state from load_stops.
-    line_date: typeof line.line_date === "string" ? line.line_date : null,
-    origin_city: typeof line.origin_city === "string" ? line.origin_city : null,
-    origin_state: typeof line.origin_state === "string" ? line.origin_state : null,
-    dest_city: typeof line.dest_city === "string" ? line.dest_city : null,
-    dest_state: typeof line.dest_state === "string" ? line.dest_state : null,
-    source_driver_bill_id:
-      typeof line.source_driver_bill_id === "string" ? line.source_driver_bill_id : null,
-    source_label:
-      typeof line.source_driver_bill_number === "string" && line.source_driver_bill_number
-        ? line.source_driver_bill_number
-        : typeof line.source_table === "string" && line.source_table
-          ? line.source_table.replace(/^driver_finance\./, "")
-          : null,
-    description: String(line.description ?? ""),
-    // SET-RATE (owner order 2026-09-05, LAW §8 "zero is a claim"): `?? 0` on miles/rate_cents used
-    // to turn a genuinely-unknown leg (no telematics/dispatch miles captured) into a rendered
-    // 0.0 / $0.0000 / $0.00 triple — indistinguishable from a real zero-mile, zero-rate line. Miles
-    // undefined here so EarningsSection's `line.miles != null` check renders "—", never a fake 0.
-    // rate_cents now comes from settlements.routes.ts's rate_basis join, derived FROM this same
-    // sl.amount — amount == miles * rate is a mathematical identity, not a hope (see that query's
-    // SET-RATE comment). Keep the raw quotient, format at render time (4-decimal dollars-per-mile).
-    miles: line.miles == null ? undefined : Number(line.miles),
-    rate: line.rate_cents == null ? undefined : Number(line.rate_cents) / 100,
-    rate_source: typeof line.rate_source === "string" ? line.rate_source : null,
-    amount: Number(line.amount ?? 0),
-  }));
-  // 25-task #12 — deadhead_pay is its own settlement_lines row (MILES SPEC), rendered as its own
-  // "Empty Miles" section, never folded into Earnings (which is the loaded-mile row).
-  const deadhead = activeLines.filter((line) => String(line.line_type) === "deadhead_pay").map((line) => ({
-    id: String(line.id),
-    load_id: typeof line.load_id === "string" ? line.load_id : null,
-    load_number: typeof line.load_number === "string" ? line.load_number : null,
-    // S.1b — line_date (COALESCE of delivery-stop arrival), origin/dest city+state from load_stops.
-    line_date: typeof line.line_date === "string" ? line.line_date : null,
-    origin_city: typeof line.origin_city === "string" ? line.origin_city : null,
-    origin_state: typeof line.origin_state === "string" ? line.origin_state : null,
-    dest_city: typeof line.dest_city === "string" ? line.dest_city : null,
-    dest_state: typeof line.dest_state === "string" ? line.dest_state : null,
-    source_driver_bill_id:
-      typeof line.source_driver_bill_id === "string" ? line.source_driver_bill_id : null,
-    source_label:
-      typeof line.source_driver_bill_number === "string" && line.source_driver_bill_number
-        ? line.source_driver_bill_number
-        : typeof line.source_table === "string" && line.source_table
-          ? line.source_table.replace(/^driver_finance\./, "")
-          : null,
-    description: String(line.description ?? ""),
-    // SET-RATE — same rate_basis join as Earnings above (its own CASE picks miles_deadhead/
-    // rate_empty_per_mile_cents for a deadhead_pay line); same "never fake a 0" fix.
-    miles: line.miles == null ? undefined : Number(line.miles),
-    rate: line.rate_cents == null ? undefined : Number(line.rate_cents) / 100,
-    rate_source: typeof line.rate_source === "string" ? line.rate_source : null,
-    amount: Number(line.amount ?? 0),
-  }));
-  const extra = activeLines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({
-    id: String(line.id),
-    // S.1b — load linkage, line_date, and approval_status for the Additional pay section.
-    load_id: typeof line.load_id === "string" ? line.load_id : null,
-    load_number: typeof line.load_number === "string" ? line.load_number : null,
-    line_date: typeof line.line_date === "string" ? line.line_date : null,
-    approval_status: typeof line.approval_status === "string" ? line.approval_status : null,
-    code: String(line.code ?? "EXTRA"),
-    description: String(line.description ?? ""),
-    amount: Number(line.amount ?? 0),
-  }));
-  const reimbursements = activeLines.filter((line) => String(line.line_type) === "reimbursement").map((line) => ({
-    id: String(line.id),
-    // S.1b — load linkage, line_date (COALESCE of posting_date), reimbursement_type/reason,
-    // vendor fields, and receipt_number from the driver_reimbursements join.
-    load_id: typeof line.load_id === "string" ? line.load_id : null,
-    load_number: typeof line.load_number === "string" ? line.load_number : null,
-    line_date: typeof line.line_date === "string" ? line.line_date : null,
-    description: String(line.description ?? ""),
-    reimbursement_type: typeof line.reimbursement_type === "string" ? line.reimbursement_type : null,
-    vendor_name: typeof line.vendor_name === "string" ? line.vendor_name : null,
-    vendor_invoice_number: typeof line.vendor_invoice_number === "string" ? line.vendor_invoice_number : null,
-    receipt_number: typeof line.receipt_number === "string" ? line.receipt_number : null,
-    amount: Number(line.amount ?? 0),
-  }));
-  const deductions = toDeductionRows(activeLines);
-
-  // SEQ-NUMBER (docs/design/reference/DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html): the
-  // reference design's "Number" column is a human line spine, `S-<settlement>-<n>`, incrementing
-  // across every line-item table on the page in render order (Earnings, Empty Miles, Additional Pay,
-  // Reimbursements, Deductions) -- "typed value wins, blank auto-assigns." ExtraPaySection,
-  // ReimbursementsSection, and DeductionsSection never implemented this and fell back to rendering
-  // the raw settlement_lines row uuid under "Number" instead -- meaningless to a reader, and the
-  // direct cause of the "current shit" complaint on this exact page (owner, 2026-09-09). Assign the
-  // spine here, once, in the same fixed order the sections already render in below, and thread it
-  // down as `seq_label` -- EarningsSection/DeadheadPaySection keep their own already-improved
-  // `source_label` (a real driver-bill number, better than an abstract spine number; C5) unchanged.
-  let seqCounter = 0;
-  const seqLabel = (): string => {
-    seqCounter += 1;
-    return settlementDisplayId ? `${settlementDisplayId}-${seqCounter}` : String(seqCounter);
-  };
-  const earningsSeq = earnings.map(() => seqLabel());
-  const deadheadSeq = deadhead.map(() => seqLabel());
-  const extraWithSeq = extra.map((row) => ({ ...row, seq_label: seqLabel() }));
-  const reimbursementsWithSeq = reimbursements.map((row) => ({ ...row, seq_label: seqLabel() }));
-  const deductionsWithSeq = deductions.map((row) => ({ ...row, seq_label: seqLabel() }));
-  void earningsSeq;
-  void deadheadSeq;
-
-  const summary = useMemo(() => {
-    const earningsTotal = earnings.reduce((sum, row) => sum + row.amount, 0);
-    const deadheadTotal = deadhead.reduce((sum, row) => sum + row.amount, 0);
-    const extraTotal = extra.reduce((sum, row) => sum + row.amount, 0);
-    const reimbTotal = reimbursements.reduce((sum, row) => sum + row.amount, 0);
-    // DD2 / NO-WINDOW — this excluded any pending_ack deduction from the total, so a real deduction the
-    // ledger already holds showed as $0 on screen. That is both a missing window over driver money and the
-    // `pending_acknowledgment` blocking pattern §9.5 forbids outright: the SIGNED HIRE CONTRACT authorizes
-    // settlement deductions, there is NO separate driver e-sign and no per-expense acknowledgment gate.
-    // Every deduction now counts toward the total; pending_ack stays as a DISCLOSURE (badge + its own
-    // subtotal below), which is the company-user sign-off control MUST 3.4.2(d)(e) actually requires.
-    const deductionTotal = deductions.reduce((sum, row) => sum + row.this_period_amount, 0);
-    const pendingAckTotal = deductions.reduce((sum, row) => sum + (row.pending_ack ? row.this_period_amount : 0), 0);
-    return { earningsTotal, deadheadTotal, extraTotal, reimbTotal, deductionTotal, pendingAckTotal };
-  }, [deadhead, deductions, earnings, extra, reimbursements]);
-
-  // L5 — KPI grid inputs, exact per docs/design/reference/DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html.
-  // Miles/rate come from the S.1 driver_bills join already mapped onto earnings/deadhead above; rate is the
-  // per-mile rate actually paid (first line with a non-zero rate — never a hardcoded default). Net = loaded +
-  // empty + additional + reimbursements − deductions (all cents), matching the reference's Net pay tile.
-  //
-  // SETL-KPI-CENTS-01 (found live via S-13648 Chrome proof, 2026-09-06): `earnings`/`deadhead`/`extra`/
-  // `reimbursements`/`deductions` rows carry DOLLAR amounts (same convention the legacy NetPaySummary
-  // widget below renders directly, no /100 math) — NOT cents, despite every other tile on this grid
-  // (revenueCents/driverPayCents/companyMarginCents) sourcing true cents from `readout.*_cents`. Feeding
-  // a dollar sum into a `...Cents`-typed prop that SettlementKpiGrid's Tile formats via `formatUsdCents`
-  // (÷100) silently shows the driver's money at 1% of its real value (e.g. $161.00 rendered "$1.61").
-  // Fix: convert to true cents here, at the single point this useMemo already centralizes those sums,
-  // so every consumer of `kpi.netPayCents` / `kpi.deductionBreakdown` gets a real cents value, matching
-  // the contract its own name and the JSDoc above already claimed ("all cents") but never delivered.
-  const kpi = useMemo(() => {
-    // SET-RATE — miles/rate are now `undefined` (not a fake 0) for a leg with no telematics miles
-    // captured; the KPI aggregate still sums only the known legs (an unknown leg contributes 0 to
-    // the total, same as before) without ever claiming a fabricated per-line 0.0/$0.0000.
-    const loadedMiles = earnings.reduce((s, r) => s + (r.miles ?? 0), 0);
-    const loadedRate = earnings.find((r) => (r.rate ?? 0) > 0)?.rate ?? 0;
-    const emptyMiles = deadhead.reduce((s, r) => s + (r.miles ?? 0), 0);
-    const emptyRate = deadhead.find((r) => (r.rate ?? 0) > 0)?.rate ?? loadedRate;
-    // this_period_amount is DOLLARS (see SETL-KPI-CENTS-01 above) — formatUsd, never formatUsdCents.
-    const deductionBreakdown = deductions
-      .map((d) => `${d.description} ${formatUsd(d.this_period_amount)}`)
-      .join(" · ");
-    const netPayDollars =
-      summary.earningsTotal + summary.deadheadTotal + summary.extraTotal + summary.reimbTotal - summary.deductionTotal;
-    const netPayCents = Math.round(netPayDollars * 100);
-    return { loadedMiles, loadedRate, emptyMiles, emptyRate, deductionBreakdown, netPayCents };
-  }, [earnings, deadhead, deductions, summary]);
-
   if (!settlementId) {
     return (
       <div className="space-y-3">
-        <PageHeader title="Settlement Detail" subtitle="Select a settlement from list view" />
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">No settlement selected.</div>
+        <PageHeader title="Settlement statement" subtitle="Select a settlement from the list" />
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-600">
+          No settlement selected.
+        </div>
       </div>
     );
   }
 
-  // DETAILQUERY-SILENT-FALSE-EMPTY: detailQuery drives every dollar figure on this page (lines,
-  // earnings, extra, reimbursements, deductions, totals) via `settlement = detailQuery.data ?? {}`
-  // — a failed fetch previously fell through to that `{}` fallback and rendered exactly like a
-  // genuine $0.00 settlement with no lines, indistinguishable from "nothing owed" (the same class
-  // already fixed for the smaller sibling paymentEventsQuery under
-  // LV-SETTLEMENT-DETAIL-CALLS-REFUSED-ROUTE / PR #4956). Fail fast here instead of threading
-  // isError through hundreds of lines of derived state — same early-return shape as the
-  // !settlementId guard above.
   if (detailQuery.isError) {
     return (
       <div className="space-y-3">
         <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
-        <PageHeader title="Settlement Detail" subtitle="Debt-alert invariant enforced" />
+        <PageHeader title="Settlement statement" />
         <ListErrorState
           title="Couldn't load this settlement"
           {...formatQueryErrorDetail(detailQuery.error)}
@@ -572,34 +243,30 @@ export function SettlementDetailPage() {
     );
   }
 
-  // SETL-SELECTION-BINDING (CASCADE-SELECTION-BINDING-SWEEP-2026-09-01, reopened after my own
-  // "tooling artifact" closure was overturned) — this page keys its primary record off a SEARCH
-  // PARAM (useSearchParams), not a route param, so a settlement_id change does NOT remount the
-  // component: react-query's cache is keyed correctly, but in the window between the URL changing
-  // and the NEW query resolving, `detailQuery.data` still holds the PREVIOUS settlement, and this
-  // page rendered it — a transient race, which is exactly why two clean manual reproduction passes
-  // did not disprove the defect. Live proof cited: picker S-20260830-0014 $144 rendered as detail
-  // S-20260831-0006 $264. Fail-safe here: render nothing (loading) rather than a record that does
-  // not match the id currently requested, for any layer above this that might still be mid-transition.
-  if (detailQuery.data && String((detailQuery.data as Record<string, unknown>).id ?? "") !== String(settlementId)) {
+  if (
+    detailQuery.data &&
+    String((detailQuery.data as Record<string, unknown>).id ?? "") !== String(settlementId)
+  ) {
     return (
       <div className="space-y-3">
         <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
-        <PageHeader title="Settlement Detail" subtitle="Loading…" />
+        <PageHeader title="Settlement statement" subtitle="Loading…" />
       </div>
     );
   }
 
   const matchedBankTransactionId =
-    typeof settlement.matched_bank_transaction_id === "string" ? settlement.matched_bank_transaction_id : null;
+    typeof settlement.matched_bank_transaction_id === "string"
+      ? settlement.matched_bank_transaction_id
+      : null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="settlement-detail-approved-design" data-surface="settlement-statement-board">
       <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
       <Breadcrumb
         items={[
           { label: "Driver Settlements", href: "/driver-finance/settlements" },
-          { label: "Settlement Detail" },
+          { label: "Statement" },
         ]}
       />
       {matchedBankTransactionId && companyId ? (
@@ -625,12 +292,10 @@ export function SettlementDetailPage() {
         />
       ) : null}
       <PageHeader
-        title={settlementDisplayId ? `Settlement ${settlementDisplayId}` : "Settlement Detail"}
-        subtitle="Debt-alert invariant enforced"
+        title={settlementDisplayId ? `Settlement ${settlementDisplayId}` : "Settlement statement"}
+        subtitle="Board statement — finalize and payment on Settlement workflow"
         actions={
-          <div className="flex gap-2">
-            {/* ROUND 443.250 Settlements-Statement.dc.html — board action labels; same print/PDF
-                endpoints. Open journal entry scrolls to MoneyProofTrail (JE links already there). */}
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"
               size="sm"
@@ -653,19 +318,21 @@ export function SettlementDetailPage() {
             >
               Download PDF
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                document.getElementById("settlement-statement-money-proof")?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
-            >
+            <Button variant="secondary" size="sm" onClick={openJournalEntry}>
               Open journal entry
+            </Button>
+            <Button variant="secondary" size="sm" onClick={openWorkflow} data-testid="settlement-open-workflow">
+              Settlement workflow
             </Button>
             {!settlementIsCancelled ? (
               settlementIsLocked ? (
                 canVoidSettlement ? (
-                  <Button variant="secondary" size="sm" disabled={unlockBusy} onClick={() => void handleUnlockSettlement()}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={unlockBusy}
+                    onClick={() => setUnlockReasonOpen(true)}
+                  >
                     {unlockBusy ? "Unlocking…" : "Unlock to reverse"}
                   </Button>
                 ) : (
@@ -678,13 +345,22 @@ export function SettlementDetailPage() {
                   variant="danger"
                   size="sm"
                   disabled={reverseBusy || settlementIsPaid}
-                  title={settlementIsPaid ? "Already paid out to the driver — cannot reverse via this path" : undefined}
-                  onClick={() => void handleReverseSettlement()}
+                  title={
+                    settlementIsPaid
+                      ? "Already paid out to the driver — cannot reverse via this path"
+                      : undefined
+                  }
+                  onClick={() => setReverseReasonOpen(true)}
                 >
                   {reverseBusy ? "Reversing…" : "Reverse settlement"}
                 </Button>
               ) : (
-                <Button variant="secondary" size="sm" disabled title="Reversing a settlement requires Owner or Accountant">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled
+                  title="Reversing a settlement requires Owner or Accountant"
+                >
                   Reverse settlement
                 </Button>
               )
@@ -692,40 +368,12 @@ export function SettlementDetailPage() {
           </div>
         }
       />
-      {/* R-102-B (owner, ROUND 102.2) — "above the fold, unmissable." This replaces the bespoke
-          "Reversed" block that used to sit below the KPI grid/loads/waterfall/proof-trail sections
-          (settlementIsCancelled block, now removed) with the shared VoidedBanner — §9.0.17, ONE
-          component. That old block was also silently broken: it read settlement.reversed_at /
-          settlement.reversal_reason, but views.driver_settlement_with_debt never exposed either
-          column (confirmed live), so the date/reason half of "Reversed on {date} — {reason}" rendered
-          blank on every one of the 21 live cancelled settlements. Fixed at the source in
-          settlements.routes.ts (the detail SELECT now pulls reversed_at/reversal_reason AND the
-          mirrored voided_at/void_reason/voided_by_user_id straight off driver_finance.driver_settlements). */}
       <VoidedBanner
         voidedAt={settlement.voided_at as string | null | undefined}
         voidReason={settlement.void_reason as string | null | undefined}
         voidedByUserId={settlement.voided_by_user_id as string | null | undefined}
         documentLabel="Settlement"
       />
-      {/* SETL-MOD-02 (owner ROUND 10, render § Settlement + DRIVER-SETTLEMENT-DETAIL-REFERENCE): the
-          Settlements-module detail leads with the APPROVED Settlement design — driver settlement card
-          (loaded × rate · empty × rate · gross · escrow · recoveries · net, 5% floor) and company
-          settlement card (revenue · costs · driver pay · factoring fee · margin with $/mi practical·real)
-          side by side, GL account on every line, PDF link, frozen note when closed. Same readout the
-          Load-costs board Settlement tab uses (TourSettlementTab keyed by settlementId), so the two
-          surfaces show one truth. The operational pay-pipeline / dispute / finalize controls below are
-          preserved (NEVER DELETE) as the workflow beneath the approved readout. */}
-      <div data-testid="settlement-detail-approved-design" data-surface="load-detail">
-        <TourSettlementTab settlementId={settlementId} operatingCompanyId={companyId} />
-      </div>
-      {hasEngineTeamSplitLines ? (
-        <div className="mb-3 inline-flex items-center rounded-full bg-[#F7F8FA] px-3 py-1 text-xs font-semibold text-[#1F2A44] ring-1 ring-[#9CA3AF]">
-          Team split lines detected (primary/co-driver)
-        </div>
-      ) : null}
-      {/* ROUND 443.274-C Settlements-Statement.dc.html — identity strip + 2×2 board panels.
-          Same getSettlement / tour readout / company-settlement report engines. Rule 07 keeps
-          TourSettlementTab (above), SettlementKpiGrid / loads / waterfall / MoneyProof (below). */}
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="settlements-statement-v3-kpis"
@@ -752,8 +400,8 @@ export function SettlementDetailPage() {
           value={String(settlement.driver_full_name ?? "—")}
           sub={
             readout?.tour?.unit_number
-              ? `${readout.tour.unit_number} · paid on short miles`
-              : "paid on short miles"
+              ? `${readout.tour.unit_number} · ${payBasisSub}`
+              : payBasisSub
           }
           testId="settlement-statement-kpi-driver-unit"
         />
@@ -799,711 +447,20 @@ export function SettlementDetailPage() {
           earnings={earnings}
           deductionTotalDollars={summary.deductionTotal}
           reimbursementTotalDollars={summary.reimbTotal}
-          driverNetCents={kpi.netPayCents}
+          driverNetCents={driverNetCents}
           readout={readout}
           companyReport={companyReport}
           matchedBankTransactionId={matchedBankTransactionId}
-          onOpenJournalEntry={() =>
-            document.getElementById("settlement-statement-money-proof")?.scrollIntoView({ behavior: "smooth", block: "start" })
-          }
+          onOpenJournalEntry={openJournalEntry}
+          onOpenFuelFills={openFuelFills}
         />
       ) : null}
-      {/* Server-assigned settlement identity, units and linked tour loads. */}
-      <div className="ldt-card" data-testid="settlement-detail-identity-strip" style={{ padding: 10, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
-        <SettlementNumberBox
-          displayId={settlementDisplayId}
-          sourceDocumentRef={typeof settlement.source_document_ref === "string" ? settlement.source_document_ref : null}
-          editable={!settlementIsReadOnly}
-          onSave={async (value) => {
-            if (!settlementId || !companyId) return;
-            await patchSettlementDisplayId(settlementId, companyId, value);
-            pushToast("Settlement number saved", "success");
-            await refreshSettlementViews();
-          }}
-        />
-        <div>
-          <div className="text-xs uppercase text-gray-500">Unit(s)</div>
-          <div className="text-xs font-semibold" data-testid="settlement-detail-unit">
-            {readout?.tour?.unit_number ?? "—"}
-          </div>
-        </div>
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <div className="text-xs uppercase text-gray-500">Tour legs</div>
-          <div className="flex flex-wrap gap-1" data-testid="settlement-detail-tour-legs">
-            {readout && readout.legs.length > 0 ? (
-              readout.legs.map((leg) => (
-                <span key={leg.load_id} className={`ldt-pill ${leg.is_cancelled ? "" : leg.trip_type === "SB" ? "ok" : leg.trip_type === "NB" ? "warn" : ""}`} title={`${leg.load_number} · ${leg.lane}`}>
-                  {leg.trip_type ?? "?"} {leg.load_number}
-                  {leg.pickup_date ? ` ${formatDateUS(leg.pickup_date)}` : ""}
-                  {leg.delivery_date ? `→${formatDateUS(leg.delivery_date)}` : ""}
-                </span>
-              ))
-            ) : (
-              <span className="ldt-muted">{"—"}</span>
-            )}
-          </div>
-        </div>
-      </div>
-      <SettlementHeader
-        settlementId={settlementId}
-        settlementDisplayId={settlementDisplayId}
-        driverId={driverId}
-        driverName={String(settlement.driver_full_name ?? "-")}
-        periodStart={String(settlement.period_start ?? "-")}
-        periodEnd={String(settlement.period_end ?? "-")}
-        status={String(settlement.status ?? "-")}
-        computedAt={debt.computedAt}
-        loadIds={settlementLoadIds}
-        predecessor={settlement.predecessor_settlement_id ? { id: String(settlement.predecessor_settlement_id), label: (settlement.predecessor_settlement_label as string | null) ?? null } : null}
-        successor={settlement.successor_settlement_id ? { id: String(settlement.successor_settlement_id), label: (settlement.successor_settlement_label as string | null) ?? null } : null}
-        onRefresh={() => void debt.refresh()}
-      />
-      {/* LAW-5-CROSS-SCREEN (2026-09-24): this grid used to always read readout.company_settlement
-          {revenue,margin}_cents -- TOUR-scoped despite the field name (tour-readout.routes.ts's
-          totals for this one settlement's own legs), while CompanyWaterfallSection a few tiles below
-          already switched to report.sections (company-settlement-scoped, the same COMPANY-WATERFALL-
-          FUEL-EXPENSE-SPLIT fix, 2026-09-09) once companyReport loads. Same page, same-named number,
-          two different populations -- exactly the LAW 5 defect. Now both read the identical
-          companyReport.sections values once loaded; falls back to the tour-scoped readout fields only
-          while companyReport hasn't loaded yet, same fallback shape CompanyWaterfallSection uses. */}
-      <SettlementKpiGrid
-        revenueCents={companyReport ? companyReport.sections.revenue.invoiced_cents : (readout?.company_settlement?.revenue_cents ?? 0)}
-        revenueSub={`${readout?.legs.length ?? 0} load${(readout?.legs.length ?? 0) === 1 ? "" : "s"}`}
-        driverPayCents={readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)}
-        driverPaySub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
-        reimbursementCents={Math.round(summary.reimbTotal * 100)}
-        reimbursementLines={reimbursements.length}
-        deductionCents={Math.round(summary.deductionTotal * 100)}
-        deductionBreakdown={kpi.deductionBreakdown}
-        netPayCents={kpi.netPayCents}
-        companyMarginCents={companyReport ? companyReport.sections.pl_rollup.net_revenue_cents : (readout?.company_settlement?.margin_cents ?? 0)}
-        companyMarginSub={
-          companyReport
-            ? (companyReport.sections.revenue.invoiced_cents
-                ? `${((companyReport.sections.pl_rollup.net_revenue_cents / companyReport.sections.revenue.invoiced_cents) * 100).toFixed(1)}%`
-                : "—")
-            : (readout?.totals?.margin_pct == null ? "—" : `${readout.totals.margin_pct.toFixed(1)}%`)
-        }
-      />
-      {readout ? <SettlementLoadsSection legs={readout.legs} operatingCompanyId={companyId} /> : null}
-      {readout ? <CompanyWaterfallSection readout={readout} report={companyReport} /> : null}
-      <div id="settlement-statement-money-proof">
-        <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
-      </div>
-      {showManualPaidDraftBanner ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">
-          Payment is recorded as <span className="font-semibold">manual_paid</span> but this settlement is not
-          finalized yet — finalize to lock the period before treating pay as complete on the books.
-        </div>
-      ) : null}
-      {canOpenDispute ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
-          <p className="mb-2 font-semibold text-[#1F2A44]">Open Dispute</p>
-          <div className="grid gap-2 md:grid-cols-3">
-            <SelectCombobox
-              value={disputeCategory}
-              onChange={(event) => setDisputeCategory(event.target.value)}
-              className="border-b border-[#E5E7EB] bg-white px-2 py-1"
-              data-testid="settlement-detail-dispute-category"
-            >
-              {/* SETL-PICK-03: same options module as SettlementDisputeModal (DB CHECK). */}
-              {SETTLEMENT_DISPUTE_CATEGORY_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectCombobox>
-            {/* M-1: dollars-mode QBO money entry; bridged so Math.round(disputeAmount*100) is byte-for-byte. */}
-            <MoneyInput
-              valueDollars={disputeAmount ? Number(disputeAmount) : null}
-              onChangeDollars={(d) => setDisputeAmount(d == null ? "" : String(d))}
-              ariaLabel="Disputed amount (USD, optional)"
-              placeholder="Disputed amount (USD, optional)"
-            />
-            <Button
-              size="sm"
-              onClick={() => {
-                if (!companyId || !settlement.driver_id) return;
-                const trimmed = disputeDescription.trim();
-                if (trimmed.length < 20) {
-                  pushToast("Dispute description must be at least 20 characters", "error");
-                  return;
-                }
-                void openSettlementDispute({
-                  operating_company_id: companyId,
-                  settlement_id: settlementId,
-                  driver_id: String(settlement.driver_id),
-                  dispute_category: disputeCategory as SettlementDisputeCategory,
-                  dispute_description: trimmed,
-                  disputed_amount_cents: disputeAmount.trim()
-                    ? Math.max(0, Math.round(Number(disputeAmount) * 100)) || undefined
-                    : undefined,
-                })
-                  .then(() => {
-                    pushToast("Dispute opened", "success");
-                    setDisputeDescription("");
-                    setDisputeAmount("");
-                  })
-                  .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"));
-              }}
-            >
-              Open Dispute
-            </Button>
-          </div>
-          <textarea
-            value={disputeDescription}
-            onChange={(event) => setDisputeDescription(event.target.value)}
-            className="mt-2 min-h-[80px] w-full rounded-sm border border-[#E5E7EB] bg-white px-2 py-1"
-            placeholder="Describe the settlement issue (minimum 20 characters)."
-          />
-        </div>
-      ) : null}
-
-      <DebtBanner
-        totalActiveDebt={debt.isStale ? "Refreshing..." : debt.debt?.total_active_debt ?? 0}
-        pendingAckCount={debt.debt?.pending_ack_count ?? 0}
-        pendingAckTotal={debt.debt?.pending_ack_total ?? 0}
-        proposedDeductions={summary.deductionTotal}
-        isRefreshing={debt.isStale}
-        onOpenBreakdown={() => setLiabilityOpen(true)}
-        onOpenEscrow={() => {
-          // ACCT-SURF-09: settlement → Accounting Escrow (canonical books surface), not toast/banking-only.
-          // Banking Driver Escrow remains reachable as a second hop from Accounting Escrow / Banking Home.
-          const q = new URLSearchParams();
-          if (driverId) q.set("holder_id", driverId);
-          navigate(`/accounting/escrow${q.toString() ? `?${q.toString()}` : ""}`);
-        }}
-      />
-      <PendingAckNotice pendingAckCount={debt.debt?.pending_ack_count ?? 0} />
-      {teamSplitQuery.data && Array.isArray((teamSplitQuery.data as Record<string, unknown>).splits) ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
-          <p className="mb-1 font-semibold text-[#1F2A44]">Team Split</p>
-          <div className="space-y-1">
-            {((teamSplitQuery.data as Record<string, unknown>).splits as Array<Record<string, unknown>>).map((split, index) => {
-              const driverId = typeof split.driver_id === "string" && split.driver_id ? split.driver_id : null;
-              const driverName = typeof split.driver_name === "string" ? split.driver_name : null;
-              return (
-                <div key={`${index}-${driverId ?? index}`} className="border-b border-[#E5E7EB] bg-white px-2 py-1">
-                  Driver{" "}
-                  {driverId ? (
-                    <EntityLink kind="driver" id={driverId} label={entityLabel(driverName, driverId, "Driver")} />
-                  ) : (
-                    entityLabel(driverName, driverId, "Driver")
-                  )}{" "}
-                  · Role {String(split.pay_role ?? "—")} ·
-                  Share {Number(split.share_pct ?? 0)}% ·
-                  Pay ${((Number(split.driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-2">
-          <EarningsSection lines={earnings} isOpen={!settlementIsReadOnly} operatingCompanyId={companyId} />
-          <DeadheadPaySection lines={deadhead} isOpen={!settlementIsReadOnly} operatingCompanyId={companyId} />
-          {/* ROUND 83 RULING 3 / owner "item lines on screen" law (2026-09-23) -- item lines carry
-              QTY x RATE = AMOUNT, never a flat amount alone. Company-paid fuel purchases the same
-              company-settlement-report read model already sourced (CompanyWaterfallSection's own
-              "Less · Fuel purchases" rollup, above) -- this is its itemized detail: one row per
-              real fuel.fuel_transactions purchase, diesel and DEF as separate items. */}
-          <FuelPurchasesSection rows={companyReport?.sections.fuel_purchases.rows ?? []} />
-          <ExtraPaySection lines={extraWithSeq} isOpen={!settlementIsReadOnly} operatingCompanyId={companyId} />
-          <ReimbursementsSection lines={reimbursementsWithSeq} isOpen={!settlementIsReadOnly} operatingCompanyId={companyId} />
-          <DeductionsSection
-            rows={deductionsWithSeq}
-            onHold={(row) => setHoldTarget(row)}
-            onResume={(row) => void handleResumeDeduction(row)}
-            isOpen={!settlementIsReadOnly}
-            onAdd={driverId ? () => setAddDeductionOpen(true) : undefined}
-            onEdit={(row) => setEditDeductionTarget(row)}
-            operatingCompanyId={companyId}
-          />
-          {driverId && companyId ? (
-            <CreateSettlementDeductionDrawer
-              open={addDeductionOpen}
-              operatingCompanyId={companyId}
-              presetDriverId={driverId}
-              presetDriverName={String(settlement.driver_full_name ?? "")}
-              onClose={() => setAddDeductionOpen(false)}
-              onCreated={() => void detailQuery.refetch()}
-            />
-          ) : null}
-          {companyId ? (
-            <EditSettlementDeductionDrawer
-              open={Boolean(editDeductionTarget)}
-              operatingCompanyId={companyId}
-              deductionId={editDeductionTarget?.source_deduction_id ?? null}
-              initialAmountUsd={editDeductionTarget ? Number(editDeductionTarget.this_period_amount) : null}
-              initialType={editDeductionTarget?.deduction_type ?? null}
-              initialReason={editDeductionTarget?.description ?? null}
-              loadNumber={editDeductionTarget?.load_number ?? null}
-              onClose={() => setEditDeductionTarget(null)}
-              onSaved={() => void detailQuery.refetch()}
-            />
-          ) : null}
-          <HistoricalSettlementAttributions rows={(settlement.historical_attributions ?? []) as HistoricalSettlementAttributionRow[]} />
-          {/* Settlement payout poster creates a real accounting.bills row + journal entry per
-              load this settlement pays out — drill-through into that posting. Empty when no
-              bills were posted yet (honest-empty, not fabricated). */}
-          {(settlement.linked_bills as Array<Record<string, unknown>> | undefined)?.length ? (
-            <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="settlement-linked-bills">
-              <h3 className="mb-1 text-xs font-semibold uppercase text-[#0F1219]">GL-Posted Bills</h3>
-              <div className="space-y-1">
-                {(settlement.linked_bills as Array<Record<string, unknown>>).map((row, idx) => (
-                  <div key={String(row.accounting_bill_id ?? idx)} className="flex items-center justify-between text-xs">
-                    <EntityLink
-                      kind="bill"
-                      id={row.accounting_bill_id ? String(row.accounting_bill_id) : null}
-                      label={entityLabel(row.load_number ? `Load ${row.load_number}` : null, row.accounting_bill_id ? String(row.accounting_bill_id) : null, "Bill")}
-                    />
-                    {row.bill_journal_entry_id ? (
-                      <EntityLink kind="journal_entry" id={String(row.bill_journal_entry_id)} label="Journal entry" />
-                    ) : (
-                      <span className="text-gray-400">not yet posted</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : null}
-          <OpenDriverBillsSection
-            loading={openBillsQuery.isPending}
-            driverId={driverId}
-            items={(openBillsQuery.data?.open_driver_bills?.items ?? []) as OpenDriverBill[]}
-            totalCount={openBillsQuery.data?.open_driver_bills?.total_count ?? 0}
-            totalGrossCents={openBillsQuery.data?.open_driver_bills?.total_gross_cents ?? 0}
-            unknownAmountCount={openBillsQuery.data?.open_driver_bills?.unknown_amount_count ?? 0}
-          />
-        </div>
-        <div className="space-y-2">
-          <NetPaySummary
-            earnings={summary.earningsTotal}
-            deadheadPay={summary.deadheadTotal}
-            extraPay={summary.extraTotal}
-            reimbursements={summary.reimbTotal}
-            deductions={summary.deductionTotal}
-            pendingAckDeductions={summary.pendingAckTotal}
-          />
-          <EscrowVisualizer
-            preClause={debt.debt?.escrow_pre_clause ?? 0}
-            postClause={debt.debt?.escrow_post_clause ?? 0}
-            onOpenTimeline={() => {
-              // ACCT-SURF-09: timeline opens Accounting Escrow for this driver — no toast dead-end.
-              const q = new URLSearchParams();
-              if (driverId) q.set("holder_id", driverId);
-              navigate(`/accounting/escrow${q.toString() ? `?${q.toString()}` : ""}`);
-            }}
-          />
-          {canApproveSettlement ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Approval</p>
-                <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">{approvalStatus}</span>
-              </div>
-              <p className="mb-2 text-xs text-gray-600">All line items must be reviewed before approving. This flips the settlement from Needs Review to Approved.</p>
-              <button
-                type="button"
-                className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
-                onClick={() => {
-                  if (!companyId) return;
-                  void approveSettlement(settlementId, companyId)
-                    .then(() => {
-                      pushToast("Settlement approved", "success");
-                      void refreshSettlementViews();
-                    })
-                    .catch((error) => pushToast(userFacingApiError(error, "Approve blocked — all lines must be reviewed first"), "error"));
-                }}
-              >
-                Approve Settlement
-              </button>
-            </div>
-          ) : null}
-          {showFinalizeBlock ? (
-            <FinalizeBlock
-              checked={ackChecked}
-              pendingAcks={(debt.debt?.pending_ack_count ?? 0) > 0 || Boolean(settlement.has_pending_acks)}
-              staleDebt={debt.isStale}
-              onCheckedChange={(checked) => {
-                setAckChecked(checked);
-                if (!checked || !companyId) return;
-                void acknowledgeSettlement(settlementId, companyId)
-                  .then(() => pushToast("Debt summary acknowledged", "success"))
-                  .catch(() => pushToast("Failed to acknowledge settlement", "error"));
-              }}
-              onSaveDraft={() => pushToast("Draft persistence is not available yet", "info")}
-              onFinalize={() => {
-                if (!companyId) return;
-                void finalizeSettlement(settlementId, companyId)
-                  .then(() => {
-                    pushToast("Settlement finalized", "success");
-                    void refreshSettlementViews();
-                  })
-                  .catch((error) => pushToast(userFacingApiError(error, "Finalize blocked"), "error"));
-              }}
-            />
-          ) : null}
-          {companyId ? (
-            <CloseTripPanel
-              settlementId={settlementId}
-              companyId={companyId}
-              userRole={auth.user?.role}
-              settlementModel={
-                typeof settlement.settlement_model === "string" ? settlement.settlement_model : null
-              }
-              tripClosedAt={
-                typeof settlement.trip_closed_at === "string" ? settlement.trip_closed_at : null
-              }
-              onClosed={() => void refreshSettlementViews()}
-              settlementIsCancelled={settlementIsCancelled}
-            />
-          ) : null}
-          {companyId ? (
-            <PayRunClosePanel
-              settlementId={settlementId}
-              companyId={companyId}
-              userRole={auth.user?.role}
-              settlementStatus={String(settlement.status ?? "")}
-              settlementDisplayId={settlementDisplayId}
-              settlementLoadIds={settlementLoadIds}
-              onPosted={() => void refreshSettlementViews()}
-            />
-          ) : null}
-          {isFinalSettlement ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</p>
-                <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{paymentState}</span>
-              </div>
-              <div className="space-y-2">
-                {paymentState === "unpaid" ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <input
-                        value={manualPaymentMethod}
-                        onChange={(event) => setManualPaymentMethod(event.target.value)}
-                        placeholder="Payment method (e.g. check)"
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                      />
-                      <input
-                        value={manualReference}
-                        onChange={(event) => setManualReference(event.target.value)}
-                        placeholder="Manual payment reference"
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                      />
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
-                      onClick={() => {
-                        if (!companyId) return;
-                        void queueSettlementPayment(settlementId, companyId)
-                          .then(() => {
-                            pushToast("Settlement payment queued", "success");
-                            void refreshSettlementViews();
-                          })
-                          .catch((error) => pushToast(userFacingApiError(error, "Queue failed"), "error"));
-                      }}
-                    >
-                      Queue Payment
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                      onClick={() => {
-                        if (!companyId) return;
-                        // ACCT-F5401: manual_paid is a terminal state — in-app confirm (not window.confirm)
-                        // so Live Chrome / Claude-in-Chrome does not freeze on a native JS dialog.
-                        setPendingConfirm("mark_paid");
-                      }}
-                    >
-                      Mark Paid Manually
-                    </button>
-                    </div>
-                  </div>
-                ) : null}
-
-                {paymentState === "queued" ? (
-                  <div className="space-y-2">
-                    <input
-                      value={bankReference}
-                      onChange={(event) => setBankReference(event.target.value)}
-                      placeholder="Bank reference"
-                      className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                    />
-                    <button
-                      type="button"
-                      className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
-                      onClick={() => {
-                        if (!companyId) return;
-                        void markSettlementSent(settlementId, companyId, bankReference || "manual-bank-reference")
-                          .then(() => {
-                            pushToast("Marked sent to bank", "success");
-                            void refreshSettlementViews();
-                          })
-                          .catch((error) => pushToast(userFacingApiError(error, "Mark sent failed"), "error"));
-                      }}
-                    >
-                      Mark Sent to Bank
-                    </button>
-                  </div>
-                ) : null}
-
-                {paymentState === "sent_to_bank" ? (
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
-                        onClick={() => {
-                          if (!companyId) return;
-                          void markSettlementCleared(settlementId, companyId)
-                            .then(() => {
-                              pushToast("Marked cleared", "success");
-                              void refreshSettlementViews();
-                            })
-                            .catch((error) => pushToast(userFacingApiError(error, "Mark cleared failed"), "error"));
-                        }}
-                      >
-                        Mark Cleared
-                      </button>
-                    </div>
-                    <input
-                      value={bounceReason}
-                      onChange={(event) => setBounceReason(event.target.value)}
-                      placeholder="Bounce reason"
-                      className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                    />
-                    <button
-                      type="button"
-                      className="rounded-sm border border-red-300 px-2 py-1 text-xs text-red-700"
-                      onClick={() => {
-                        if (!companyId) return;
-                        void markSettlementBounced(settlementId, companyId, bounceReason || "Bank return")
-                          .then(() => {
-                            pushToast("Marked bounced", "success");
-                            void refreshSettlementViews();
-                          })
-                          .catch((error) => pushToast(userFacingApiError(error, "Mark bounced failed"), "error"));
-                      }}
-                    >
-                      Mark Bounced
-                    </button>
-                  </div>
-                ) : null}
-
-                {paymentState === "bounced" ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <input
-                        value={manualPaymentMethod}
-                        onChange={(event) => setManualPaymentMethod(event.target.value)}
-                        placeholder="Payment method (e.g. check)"
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                      />
-                      <input
-                        value={manualReference}
-                        onChange={(event) => setManualReference(event.target.value)}
-                        placeholder="Manual payment reference"
-                        className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                      />
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
-                      onClick={() => {
-                        if (!companyId) return;
-                        void queueSettlementPayment(settlementId, companyId)
-                          .then(() => {
-                            pushToast("Retry queued", "success");
-                            void refreshSettlementViews();
-                          })
-                          .catch((error) => pushToast(userFacingApiError(error, "Retry failed"), "error"));
-                      }}
-                    >
-                      Retry
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                      onClick={() => {
-                        if (!companyId) return;
-                        // ACCT-F5401: manual_paid is a terminal state — in-app confirm (not window.confirm)
-                        // so Live Chrome / Claude-in-Chrome does not freeze on a native JS dialog.
-                        setPendingConfirm("mark_paid");
-                      }}
-                    >
-                      Mark Paid Manually
-                    </button>
-                    </div>
-                  </div>
-                ) : null}
-
-                {paymentState === "manual_paid" ? (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-600">
-                      Marked paid manually — no further bank pipeline actions unless bounced back to unpaid.
-                    </p>
-                  </div>
-                ) : null}
-
-                {paymentState === "cleared" ? (
-                  <p className="text-xs text-gray-600">Payment cleared through the bank pipeline.</p>
-                ) : null}
-
-                {/* SET-13 — always rendered (never hidden); disabled + a reason tooltip when not
-                    permitted right now, per LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE. UI-01
-                    PART 2 — flat inside the single "Payment Status" frame above, not a nested card
-                    (QBO/NetSuite style); the top border alone separates the correction sub-section
-                    without framing a second box. */}
-                <div className="space-y-1 border-t border-[#E5E7EB] pt-2" data-testid="settlement-reopen-block">
-                  <p className="text-xs text-[#1F2A44]">
-                    Marked paid in error? Reopen requires a written reason and is itself permanently
-                    audited — the original mark-paid record is never erased.
-                  </p>
-                  <input
-                    value={reopenReason}
-                    onChange={(event) => setReopenReason(event.target.value)}
-                    placeholder="Reason for reopening (required)"
-                    disabled={!canReopen}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:bg-gray-100 disabled:text-gray-400"
-                  />
-                  <button
-                    type="button"
-                    className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44] disabled:cursor-not-allowed disabled:text-gray-400"
-                    disabled={!canReopen || reopenReason.trim().length < 3}
-                    title={reopenBlockedReason ?? undefined}
-                    data-testid="settlement-reopen-button"
-                    onClick={() => {
-                      if (!companyId || !canReopen) return;
-                      const reason = reopenReason.trim();
-                      if (reason.length < 3) {
-                        pushToast("Reopen reason must be at least 3 characters", "error");
-                        return;
-                      }
-                      setPendingConfirm("reopen");
-                    }}
-                  >
-                    Reopen (correction)
-                  </button>
-                  {reopenBlockedReason ? (
-                    <p className="text-xs text-[#6B7280]" data-testid="settlement-reopen-blocked-reason">
-                      {reopenBlockedReason}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="space-y-1 border-t border-gray-100 pt-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Events</p>
-                  {(paymentEventsQuery.data?.events ?? []).map((event) => (
-                    <div key={event.id} className="border-t border-gray-100 px-2 py-1 text-xs">
-                      <p className="font-semibold text-gray-800">{event.event_type}</p>
-                      <p className="text-gray-500">{new Date(event.created_at).toLocaleString()}</p>
-                    </div>
-                  ))}
-                  {/* LV-SETTLEMENT-DETAIL-CALLS-REFUSED-ROUTE — this query had NO error branch, so a failed
-                      fetch left `data` undefined, fell into `length === 0`, and the panel asserted
-                      "No payment events yet." as FACT. On a settlement that is a money-adjacent surface
-                      telling whoever decides whether a driver was paid that no payments exist, when the
-                      truth is the data was never obtainable. The endpoint is on the deliberate-refusal
-                      registry ("settlement-payment moves money"), so today it always 404s — but the bug is
-                      the silent false negative, not the 404, and it would outlive any routing decision.
-                      An honest "couldn't load" is strictly safer than a confident wrong "none". */}
-                  {paymentEventsQuery.isError ? (
-                    <p className="text-xs text-red-600" data-testid="settlement-payment-events-error">
-                      Couldn't load payment events — this is not the same as “none”. Retry or check with
-                      accounting before concluding the driver was unpaid.
-                    </p>
-                  ) : paymentEventsQuery.isLoading ? (
-                    <p className="text-xs text-gray-500">Loading payment events…</p>
-                  ) : (paymentEventsQuery.data?.events ?? []).length === 0 ? (
-                    <p className="text-xs text-gray-500">No payment events yet.</p>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <LiabilityBreakdownModal
-        open={liabilityOpen}
-        settlementId={settlementId}
-        settlementDisplayId={settlementDisplayId}
-        liabilities={(debt.debt?.source_liabilities as Array<any> | undefined)?.map((item, idx) => ({
-          id: String(item.id ?? idx),
-          type: String(item.type ?? "Liability"),
-          source_description: String(item.source_description ?? item.description ?? "-"),
-          original: Number(item.original ?? 0),
-          paid: Number(item.paid ?? 0),
-          balance: Number(item.balance ?? 0),
-          schedule: String(item.schedule ?? "-"),
-          pending_ack: Boolean(item.pending_ack),
-        })) ?? []}
-        onClose={() => setLiabilityOpen(false)}
-      />
-
-      <HoldDeductionModal
-        open={Boolean(holdTarget)}
-        deduction={holdTarget}
-        operatingCompanyId={companyId}
-        settlementId={settlementId}
-        settlementDisplayId={settlementDisplayId}
-        onClose={() => setHoldTarget(null)}
-        onHeld={() => {
-          void queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-detail", settlementId, companyId] });
-        }}
-      />
-      <ConfirmModal
-        open={pendingConfirm === "mark_paid"}
-        title="Mark paid manually"
-        message={`Mark ${String(settlement.settlement_no ?? "this settlement")} paid manually via "${manualPaymentMethod || "(blank)"}"? This is a terminal payment status — reopening it afterward requires an Owner/Admin correction with a written reason.`}
-        confirmLabel="Mark paid"
-        danger
-        onClose={() => setPendingConfirm(null)}
-        onConfirm={async () => {
-          if (!companyId || !settlementId) return;
-          try {
-            await markSettlementPaidManually(settlementId, companyId, {
-              payment_method: manualPaymentMethod,
-              reference: manualReference || undefined,
-            });
-            pushToast("Marked paid manually", "success");
-            void refreshSettlementViews();
-          } catch (error) {
-            pushToast(userFacingApiError(error, "Mark manual failed"), "error");
-            throw error;
-          }
-        }}
-      />
-      <ConfirmModal
-        open={pendingConfirm === "reopen"}
-        title="Reopen settlement"
-        message={`Reopen this manual-paid settlement back to unpaid? Reason: "${reopenReason.trim()}"`}
-        confirmLabel="Reopen"
-        danger
-        onClose={() => setPendingConfirm(null)}
-        onConfirm={async () => {
-          if (!companyId || !settlementId) return;
-          try {
-            await reopenSettlementManualPaid(settlementId, companyId, reopenReason.trim());
-            pushToast("Settlement reopened to unpaid", "success");
-            setReopenReason("");
-            void refreshSettlementViews();
-          } catch (error) {
-            pushToast(userFacingApiError(error, "Reopen failed"), "error");
-            throw error;
-          }
-        }}
-      />
       <VoidReasonModal
         open={reverseReasonOpen}
         title="Reverse settlement"
-        entityRef={settlement?.source_document_ref ? `Settlement ${settlement.source_document_ref}` : undefined}
+        entityRef={
+          settlement?.source_document_ref ? `Settlement ${settlement.source_document_ref}` : undefined
+        }
         submitLabel="Reverse"
         postsReversingEntry={true}
         onClose={() => setReverseReasonOpen(false)}
@@ -1512,58 +469,14 @@ export function SettlementDetailPage() {
       <VoidReasonModal
         open={unlockReasonOpen}
         title="Unlock settlement"
-        entityRef={settlement?.source_document_ref ? `Settlement ${settlement.source_document_ref}` : undefined}
+        entityRef={
+          settlement?.source_document_ref ? `Settlement ${settlement.source_document_ref}` : undefined
+        }
         submitLabel="Unlock"
         postsReversingEntry={false}
         onClose={() => setUnlockReasonOpen(false)}
         onSubmit={submitUnlockReason}
       />
     </div>
-  );
-}
-
-function OpenDriverBillsSection({
-  loading,
-  driverId,
-  items,
-  totalCount,
-  totalGrossCents,
-  unknownAmountCount,
-}: {
-  loading: boolean;
-  driverId: string | null;
-  items: OpenDriverBill[];
-  totalCount: number;
-  totalGrossCents: number;
-  unknownAmountCount: number;
-}) {
-  if (!driverId) return null;
-  if (loading) {
-    return (
-      <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
-        <h3 className="mb-1 text-xs font-semibold uppercase text-[#0F1219]">Open Driver Bills</h3>
-        <p className="text-xs text-gray-500">Loading open driver bills…</p>
-      </section>
-    );
-  }
-  return (
-    <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
-      <h3 className="mb-1 text-xs font-semibold uppercase text-[#0F1219]">
-        Open Driver Bills · {totalCount} · {formatUsdCents(totalGrossCents)}
-        {unknownAmountCount > 0 ? ` known · ${unknownAmountCount} awaiting short miles` : ""}
-      </h3>
-      {items.length === 0 ? (
-        <p className="text-xs text-gray-500">No open driver bills for this driver — all pay is either settled or not yet booked.</p>
-      ) : (
-        <div className="space-y-1">
-          {items.map((bill) => (
-            <div key={bill.id} className="flex items-center justify-between text-xs">
-              <EntityLink kind="load" id={bill.load_id ?? ""} label={entityLabel(bill.load_number, bill.load_id, "Load")} />
-              <span className="font-semibold">{bill.amount_known === false ? "Awaiting short miles" : formatUsdCents(bill.gross_amount_cents)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
   );
 }

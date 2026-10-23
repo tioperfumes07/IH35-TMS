@@ -159,7 +159,7 @@ export const SIX_SURFACES = [
   // aggregate); loadCostRollupLateral is the legs query's load-level costs_cents/driver_pay_cents
   // source, replacing the old hand-copied ROUND(bl.amount * 100) formula.
   { name: "cost-list rows (pre-settlement/settlement)", file: "apps/backend/src/driver-finance/tour-readout.routes.ts", mustContain: [/bl_agg\.line_cents/, /loadCostRollupLateral/] },
-  { name: "settlement KPI grid", file: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx", mustContain: [/companyReport\.sections\.revenue\.invoiced_cents/, /companyReport\.sections\.pl_rollup\.net_revenue_cents/] },
+  { name: "settlement KPI grid", file: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx", mustContain: [/companyReport\.sections\.revenue\.invoiced_cents/, /companyReport\.sections\.pl_rollup\.net_revenue_cents/] },
   { name: "driver bill (R-166)", file: "apps/frontend/src/components/dispatch/LoadDetailDriverPayTab.tsx", mustContain: [/getLoadCostRollup/, /rollup\.data\.driver_pay_cents/] },
   // ROUND 173 pt 1/4 (Lead, 2026-09-25) — the owner's "5 load boards" (DispatchPage's ViewMode
   // type: Overview/List/Kanban/Round Trips/Truck Line). Kanban is covered by the existing
@@ -265,7 +265,7 @@ async function live() {
     // Static arm — permanent regression lock, runs regardless of live population size.
     const files = walk(BACKEND_SRC);
     const staticFailures = auditNoBillHeaderTotalAsLoadCost(files);
-    const kpiSrcPath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx");
+    const kpiSrcPath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
     if (fs.existsSync(kpiSrcPath)) {
       staticFailures.push(...auditKpiGridUsesCompanyScopedReport(fs.readFileSync(kpiSrcPath, "utf8")));
     }

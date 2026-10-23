@@ -11,7 +11,7 @@
 import { readFileSync } from "node:fs";
 
 const SECTION = "apps/frontend/src/pages/driver-finance/components/DeductionsSection.tsx";
-const PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const DRAWER = "apps/frontend/src/pages/drivers/components/CreateSettlementDeductionDrawer.tsx";
 const LABEL = "verify-settlement-add-deduction-wired";
 const fail = (m) => { console.error(`FAIL ${LABEL}: ${m}`); process.exit(1); };

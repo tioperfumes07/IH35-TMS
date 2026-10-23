@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-detail-bookend-loads-in-cycle";
 const ROUTES = path.join(ROOT, "apps/backend/src/driver-finance/settlements.routes.ts");
-const PAGE = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx");
+const PAGE = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
 
 function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);

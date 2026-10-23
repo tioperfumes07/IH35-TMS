@@ -33,7 +33,7 @@ const FILES = {
   deductionsRoutes: "apps/backend/src/driver-finance/deductions.routes.ts",
   modal: "apps/frontend/src/pages/driver-finance/components/HoldDeductionModal.tsx",
   section: "apps/frontend/src/pages/driver-finance/components/DeductionsSection.tsx",
-  detailPage: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  detailPage: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   migration: "db/migrations/202612550000_hold_deduction_real_target.sql",
 };
 

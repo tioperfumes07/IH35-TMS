@@ -22,7 +22,7 @@ const LABEL = "verify-settlement-payrun-fe-wired";
 
 const API = "apps/frontend/src/api/driverFinance.ts";
 const PANEL = "apps/frontend/src/pages/driver-finance/components/PayRunClosePanel.tsx";
-const DETAIL = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const DETAIL = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const ROUTES = "apps/backend/src/driver-finance/settlement-payrun-close.routes.ts";
 
 /** Pure checks — takes text so --selftest can inject fixtures. */

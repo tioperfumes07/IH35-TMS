@@ -16,7 +16,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-acct-surf-09-reverse-drill";
 
 const FILES = {
-  settlementDetail: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  settlementDetail: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   escrowPage: "apps/frontend/src/pages/accounting/EscrowPage.tsx",
   factoringDetail: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
   accountingApi: "apps/frontend/src/api/accounting.ts",

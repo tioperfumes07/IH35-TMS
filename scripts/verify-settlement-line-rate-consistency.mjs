@@ -37,7 +37,7 @@ export const REQUIRES_LIVE_DB =
 const LABEL = "verify-settlement-line-rate-consistency";
 const ROUTES_PATH = "apps/backend/src/driver-finance/settlements.routes.ts";
 const FE_FILES = [
-  "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx",
   "apps/frontend/src/pages/driver-finance/components/DeadheadPaySection.tsx",
 ];

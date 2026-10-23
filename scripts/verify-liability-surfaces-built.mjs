@@ -47,7 +47,7 @@ const MUST_KEEP = {
 
 const FILES = [
   "apps/frontend/src/pages/accounting/EscrowPage.tsx",
-  "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   "apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx",
 ];
 

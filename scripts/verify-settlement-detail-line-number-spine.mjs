@@ -15,7 +15,7 @@
 import fs from "node:fs";
 
 const LABEL = "verify-settlement-detail-line-number-spine";
-const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const EXTRA_PAY = "apps/frontend/src/pages/driver-finance/components/ExtraPaySection.tsx";
 const REIMBURSEMENTS = "apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx";
 const DEDUCTIONS = "apps/frontend/src/pages/driver-finance/components/DeductionsSection.tsx";
