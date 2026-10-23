@@ -450,6 +450,21 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   …) · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
 
 
+### Active Architectural Decisions — Fuel Relay Wallet V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getRelayWalletRollForward` (totals + day roll-forward + doc drill).
+  No GL / posting / wallet-balance math change.
+- **V3 board chrome (Relay wallet tab):** identity `V3KpiTile` strip Deposits · Fuel fills · Fill
+  fees · Lumper · Balance · Deposit fees (card) (`data-relay-wallet-v3-kpis`) from the same
+  `totals` object. `V3Panel` **Relay wallet — roll-forward** (`relay-wallet-roll-forward-v3-panel`)
+  + docs drill (`relay-wallet-docs-v3-panel`). DataPanel removed; totals text strip promoted to KPI
+  tiles.
+- **Guard piggyback:** `verify-fuel-home-dashboard-wired.mjs` (step 1002 ≡2 EVEN Cursor) —
+  `computeWalletFailures` + selftest. No new EVEN claim.
+- **Still open under 443.250:** remaining Fuel tabs (Fills / By truck / Questions / …) · Driver
+  Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+
+
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 

@@ -16,6 +16,7 @@ const PAGE = path.join(ROOT, "apps/frontend/src/pages/fuel/FuelHome.tsx");
 const KPI = path.join(ROOT, "apps/frontend/src/pages/fuel/components/FuelKpiRow.tsx");
 const CARDS = path.join(ROOT, "apps/frontend/src/pages/fuel/cards/FuelCardsPage.tsx");
 const UNMATCHED = path.join(ROOT, "apps/frontend/src/pages/fuel/relay-unmatched/RelayUnmatchedPage.tsx");
+const WALLET = path.join(ROOT, "apps/frontend/src/pages/fuel/relay-wallet/RelayWalletRollForwardPage.tsx");
 const PLANNER = path.join(ROOT, "apps/backend/src/fuel/planner.routes.ts");
 const LABEL = "verify-fuel-home-dashboard-wired";
 const SPEND_FAKE_ZERO_RE =
@@ -137,6 +138,41 @@ export function computeUnmatchedFailures(source) {
   return errors;
 }
 
+/** ROUND 443.250 Relay Wallet tab — V3 board chrome; getRelayWalletRollForward engine unchanged. */
+export function computeWalletFailures(source) {
+  const errors = [];
+  if (!/V3KpiTile/.test(source) || !/data-relay-wallet-v3-kpis/.test(source)) {
+    errors.push("RelayWalletRollForwardPage must render V3KpiTile strip with data-relay-wallet-v3-kpis");
+  }
+  if (
+    !/V3Panel/.test(source) ||
+    !/relay-wallet-roll-forward-v3-panel/.test(source) ||
+    !/relay-wallet-docs-v3-panel/.test(source)
+  ) {
+    errors.push("RelayWalletRollForwardPage must wrap roll-forward + docs drill in V3Panel");
+  }
+  if (/import\s*\{[^}]*\bDataPanel\b/.test(source) || /<\s*DataPanel\b/.test(source)) {
+    errors.push("RelayWalletRollForwardPage must not keep DataPanel after V3 restyle");
+  }
+  if (!/getRelayWalletRollForward/.test(source)) {
+    errors.push("RelayWalletRollForwardPage must keep getRelayWalletRollForward (engine unchanged)");
+  }
+  for (const label of [
+    "Deposits",
+    "Fuel fills",
+    "Fill fees",
+    "Lumper",
+    "Balance",
+    "Deposit fees (card)",
+    "Relay wallet — roll-forward",
+  ]) {
+    if (!source.includes(label)) {
+      errors.push(`RelayWalletRollForwardPage must keep board label "${label}"`);
+    }
+  }
+  return errors;
+}
+
 function selftest() {
   const plannerGood = `
       const spendRes = await client.query(\`SELECT COALESCE(sum(total_cost), 0)::numeric AS spend FROM fuel.fuel_transactions\`);
@@ -241,6 +277,24 @@ function selftest() {
     process.exit(1);
   }
   console.log("selftest ok — Relay Unmatched V3 chrome markers");
+  const walletGood = fs.readFileSync(WALLET, "utf8");
+  if (computeWalletFailures(walletGood).length) {
+    console.error("SELFTEST FAIL — shipped Relay Wallet V3 baseline is red", computeWalletFailures(walletGood));
+    process.exit(1);
+  }
+  const walletNoV3 = walletGood
+    .replace(/V3KpiTile/g, "LegacyKpi")
+    .replace(/data-relay-wallet-v3-kpis/g, "data-relay-wallet-legacy");
+  if (!computeWalletFailures(walletNoV3).some((e) => e.includes("data-relay-wallet-v3-kpis"))) {
+    console.error("SELFTEST FAIL — Relay Wallet V3KpiTile removal should fail");
+    process.exit(1);
+  }
+  const walletDataPanel = `${walletGood}\nimport { DataPanel } from "x";\n`;
+  if (!computeWalletFailures(walletDataPanel).some((e) => e.includes("DataPanel"))) {
+    console.error("SELFTEST FAIL — Relay Wallet DataPanel reintro should fail");
+    process.exit(1);
+  }
+  console.log("selftest ok — Relay Wallet V3 chrome markers");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";
@@ -291,12 +345,14 @@ function run() {
   const kpi = fs.readFileSync(KPI, "utf8");
   const cards = fs.readFileSync(CARDS, "utf8");
   const unmatched = fs.readFileSync(UNMATCHED, "utf8");
+  const wallet = fs.readFileSync(WALLET, "utf8");
   const failures = [
     ...computeFailures(source),
     ...computePlannerFailures(planner),
     ...computeKpiFailures(kpi),
     ...computeCardsFailures(cards),
     ...computeUnmatchedFailures(unmatched),
+    ...computeWalletFailures(wallet),
   ];
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);
@@ -304,7 +360,7 @@ function run() {
     process.exit(1);
   }
   console.log(
-    `[${LABEL}] OK — Fuel Home dashboard KPIs wired; Fuel Cards + Relay Unmatched V3 chrome; spend query fail-loud`,
+    `[${LABEL}] OK — Fuel Home dashboard KPIs wired; Fuel Cards + Relay Unmatched + Relay Wallet V3 chrome; spend query fail-loud`,
   );
 }
 
