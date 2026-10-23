@@ -15,7 +15,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   listCompanySettlements,
@@ -165,15 +166,42 @@ export function CompanySettlementsPage() {
 
       <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
 
-      {/* REG-005 (owner "FOR ALL MODULES, THEY SHOULD ALL HAVE THEIR KPIS IN THEIR HOME PAGES") — a
-          real-number KPI strip at the top of the Company Settlements home, above the table. Reuses the
-          shared DrillKpiCard (same tile as Maintenance); Open/Closed toggle the presentation-only status
-          filter on the list below (active + onClick), Total clears it, Net Revenue states its scope. */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-testid="company-settlements-kpi-strip">
-        <DrillKpiCard label="Settlements" value={listQuery.isError ? "—" : allRows.length} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} hint="All company settlement periods." testId="company-settlements-kpi-total" />
-        <DrillKpiCard label="Open" value={openCount} active={statusFilter === "open"} onClick={() => setStatusFilter("open")} hint="Not yet closed/final/paid." testId="company-settlements-kpi-open" />
-        <DrillKpiCard label="Closed" value={closedCount} active={statusFilter === "closed"} onClick={() => setStatusFilter("closed")} hint="Closed / final / paid, not voided." testId="company-settlements-kpi-closed" />
-        <DrillKpiCard label="Net Revenue" value={netRevenue} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} hint="Sum of net revenue across the non-voided settlements listed." testId="company-settlements-kpi-net-revenue" />
+      {/* REG-005 + ROUND 443.250 V3 board (Settlements-Company.dc.html) — same live list math
+          (open/closed/net from listCompanySettlements); chrome via V3KpiTile. Open/Closed toggle the
+          presentation-only status filter; Settlements + Net Revenue clear it. "—" on load failure. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="company-settlements-kpi-strip"
+        data-company-settlements-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="Settlements"
+          value={listQuery.isError ? "—" : String(allRows.length)}
+          sub={statusFilter === "all" ? "filter on" : "all company settlement periods"}
+          testId="company-settlements-kpi-total"
+          onClick={() => setStatusFilter("all")}
+        />
+        <V3KpiTile
+          label="Open"
+          value={String(openCount)}
+          sub={statusFilter === "open" ? "filter on" : "not yet closed / final / paid"}
+          testId="company-settlements-kpi-open"
+          onClick={() => setStatusFilter("open")}
+        />
+        <V3KpiTile
+          label="Closed"
+          value={String(closedCount)}
+          sub={statusFilter === "closed" ? "filter on" : "closed / final / paid, not voided"}
+          testId="company-settlements-kpi-closed"
+          onClick={() => setStatusFilter("closed")}
+        />
+        <V3KpiTile
+          label="Net Revenue"
+          value={netRevenue}
+          sub="sum of net across non-voided periods"
+          testId="company-settlements-kpi-net-revenue"
+          onClick={() => setStatusFilter("all")}
+        />
       </div>
 
       {listQuery.isError ? (
@@ -183,20 +211,26 @@ export function CompanySettlementsPage() {
         />
       ) : null}
 
-      <ParityTable
+      <V3Panel
         title="Company settlements"
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        loading={listQuery.isPending && Boolean(companyId)}
-        onRowClick={(r) => setSelected(r)}
-        rowClassName={(r) => (selected?.id === r.id ? "bg-[#F7F8FA]" : "")}
-        emptyText={
-          companyId ? "No company settlements yet." : "Select a company to view its settlements."
-        }
-        storageKey="company-settlements-list"
-        exportFilename="company-settlements"
-      />
+        subtitle="Revenue · costs · driver pay · margin per period"
+        testId="company-settlements-list-panel"
+      >
+        <ParityTable
+          title="Company settlements"
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          loading={listQuery.isPending && Boolean(companyId)}
+          onRowClick={(r) => setSelected(r)}
+          rowClassName={(r) => (selected?.id === r.id ? "bg-[#F7F8FA]" : "")}
+          emptyText={
+            companyId ? "No company settlements yet." : "Select a company to view its settlements."
+          }
+          storageKey="company-settlements-list"
+          exportFilename="company-settlements"
+        />
+      </V3Panel>
 
       {selected ? (
         <CompanySettlementWaterfall
