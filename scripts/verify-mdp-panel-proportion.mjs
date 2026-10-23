@@ -55,6 +55,28 @@ if (!/data-mdp-footer-total=\{direction\}[\s\S]{0,60}panelTotalCents/.test(tab))
   fail("panel footer total must display panelTotalCents (same source as KPI)");
 }
 
+// ROUND 443.250 — Manual Daily Projections V3 chrome (piggyback EVEN 4124; no new claim).
+// Board: 4 KPIs + Income/Expenses panels + expense payment-priority groups. No V3Segmented
+// (no Day|Week grain on this surface). Forecast math + MDP field contracts stay.
+for (const comp of ["V3KpiTile", "V3Panel", "V3_EXPENSE_GROUPS"]) {
+  if (!tab.includes(comp)) fail(`ROUND 443.250 must mount ${comp}`);
+}
+if (!/from ["'].*design\/v3-tokens/.test(tab) && !tab.includes("v3-tokens")) {
+  fail("ROUND 443.250 must import V3 from design/v3-tokens");
+}
+for (const testId of [
+  "cash-flow-mdp-v3-tab",
+  "cash-flow-mdp-v3-kpis",
+  "cash-flow-mdp-v3-toolbar",
+  "mdp-bank-balances",
+  "cash-flow-mdp-v3-${direction}-panel",
+]) {
+  if (!tab.includes(testId)) fail(`ROUND 443.250 missing V3 testId ${testId}`);
+}
+if (!/data-mdp-expense-group=/.test(tab)) {
+  fail("ROUND 443.250 expense panel must band rows by data-mdp-expense-group (V3_EXPENSE_GROUPS)");
+}
+
 // Pull/create must invalidate entries cache so both panels refresh together.
 if (!/invalidateQueries\(\{ queryKey: \["forecast", "entries"/.test(tab)) {
   fail("must invalidate forecast entries query after mutations");
@@ -68,6 +90,9 @@ function layoutProblems(src) {
   if (!/items-stretch/.test(src)) problems.push("missing items-stretch");
   if (!/panelTotalCents=\{totalIncome\}/.test(src)) problems.push("missing panelTotalCents wiring");
   if (!/data-mdp-kpi-row="true"/.test(src)) problems.push("missing kpi row marker");
+  if (!src.includes("V3KpiTile")) problems.push("missing V3KpiTile");
+  if (!src.includes("V3_EXPENSE_GROUPS")) problems.push("missing V3_EXPENSE_GROUPS");
+  if (!/data-mdp-expense-group=/.test(src)) problems.push("missing expense group bands");
   return problems;
 }
 
@@ -118,10 +143,13 @@ if (process.argv.includes("--selftest")) {
   const broken = tab
     .replace(/items-stretch/g, "")
     .replace(/panelTotalCents=\{totalIncome\}/g, "entries={income}")
-    .replace(/data-mdp-kpi-row="true"/g, "");
+    .replace(/data-mdp-kpi-row="true"/g, "")
+    .replace(/V3KpiTile/g, "LegacyKpi")
+    .replace(/V3_EXPENSE_GROUPS/g, "LEGACY_GROUPS")
+    .replace(/data-mdp-expense-group=/g, "data-mdp-legacy-group=");
   const planted = layoutProblems(broken);
-  if (planted.length < 3) {
-    console.error(`FAIL verify-mdp-panel-proportion SELFTEST: expected ≥3 planted problems, got ${planted.length}: ${planted.join("; ")}`);
+  if (planted.length < 5) {
+    console.error(`FAIL verify-mdp-panel-proportion SELFTEST: expected ≥5 planted problems, got ${planted.length}: ${planted.join("; ")}`);
     process.exit(1);
   }
   const live = layoutProblems(tab);
