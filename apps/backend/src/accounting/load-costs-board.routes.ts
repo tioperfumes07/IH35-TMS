@@ -6,7 +6,7 @@ import { z } from "zod";
 import { countUncategorizedTransactions } from "../banking/pending-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { canonicalLoadCostsOpenClause } from "../dispatch/canonical-active-load-set.js";
-import { LOAD_COST_DOCUMENTS_CTE } from "./load-costs-live-documents.sql.js";
+import { LOAD_COST_DOCUMENTS_CTE, loadCostsRevenueJoin } from "./load-costs-live-documents.sql.js";
 import { wizardChargesLeftJoin } from "./load-wizard-charges.sql.js";
 import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
@@ -62,7 +62,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       // appt(1) < On Time(2) < Late(3), so ascending server sort visually matches ascending column
       // click same as every other column.
       // 443.257-C: revenue_cents / driver_pay_cents come from set-based CTEs (not per-row lateral).
-      const marginSql = "(COALESCE(rev_cte.revenue_cents,0)-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dgp.driver_pay_cents,0))";
+      const marginSql = "(COALESCE(revenue.revenue_cents,0)-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dgp.driver_pay_cents,0))";
       const sortColumns = {
         ledger_cost: "l.load_number", // re-sorted by ledger_cost_cents after the ledger read
         load: "l.load_number",
@@ -71,7 +71,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         pu_date: "pickup.scheduled_arrival_at",
         del_date: "delivery.actual_arrival_at",
         status: "CASE WHEN delivery.actual_arrival_at IS NULL THEN 0 WHEN delivery.scheduled_arrival_at IS NULL THEN 1 WHEN delivery.actual_arrival_at <= delivery.scheduled_arrival_at THEN 2 ELSE 3 END",
-        revenue: "COALESCE(rev_cte.revenue_cents,0)",
+        revenue: "COALESCE(revenue.revenue_cents,0)",
         line_haul: "COALESCE(wiz.linehaul_cents,0)",
         fuel_surcharge: "COALESCE(wiz.fuel_surcharge_cents,0)",
         accessorials: "COALESCE(wiz.accessorial_cents,0)",
@@ -90,40 +90,12 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         deadhead_pay: "CASE WHEN COALESCE(dpa.has_deadhead_miles,false) THEN COALESCE(dpa.deadhead_pay_cents,0) END",
         gross: "COALESCE(dgp.driver_pay_cents,0)",
         margin: marginSql,
-        margin_pct: `(${marginSql}::numeric / NULLIF(COALESCE(rev_cte.revenue_cents,0), 0))`,
+        margin_pct: `(${marginSql}::numeric / NULLIF(COALESCE(revenue.revenue_cents,0), 0))`,
         settlement: "si.settlement_display_id",
       } as const;
       const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
       const result = await client.query(
         `WITH ${LOAD_COST_DOCUMENTS_CTE},
-         -- 443.257-C: set-based revenue (replaces per-row loadCostsRevenueJoin lateral: ~102 scans → 2)
-         invoice_rollup AS (
-           SELECT i.source_load_id AS load_id,
-                  COUNT(*)::int AS invoice_count,
-                  COALESCE(SUM(i.total_cents - i.tax_cents), 0)::bigint AS invoice_cents
-             FROM accounting.invoices i
-            WHERE i.operating_company_id = $1::uuid
-              AND ${notVoided("i")} AND i.source_load_id IS NOT NULL
-              AND i.status NOT IN ('draft','proforma','void','voided')
-            GROUP BY i.source_load_id
-         ),
-         charge_line_rollup AS (
-           SELECT lcl.load_id,
-                  COALESCE(SUM(lcl.amount_cents), 0)::bigint AS proforma_cents
-             FROM dispatch.load_charge_lines lcl
-            WHERE lcl.operating_company_id = $1::uuid
-              AND lcl.is_active IS NOT FALSE AND lcl.load_id IS NOT NULL
-            GROUP BY lcl.load_id
-         ),
-         rev_cte AS (
-           SELECT COALESCE(ir.load_id, clr.load_id) AS load_id,
-                  CASE WHEN COALESCE(ir.invoice_count,0) > 0 THEN ir.invoice_cents
-                       ELSE COALESCE(clr.proforma_cents,0) END AS revenue_cents,
-                  CASE WHEN COALESCE(ir.invoice_count,0) > 0 THEN 'invoice' ELSE 'proforma' END AS revenue_source,
-                  COALESCE(ir.invoice_count,0) > 0 AS is_invoiced
-             FROM invoice_rollup ir
-             FULL OUTER JOIN charge_line_rollup clr ON clr.load_id = ir.load_id
-         ),
          -- 443.257-C: set-based driver gross pay (replaces per-row subquery inside lateral)
          driver_gross_pay AS (
            SELECT db.load_id,
@@ -314,7 +286,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 u.unit_number, ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number, pickup.city AS pickup_city, delivery.city AS delivery_city,
                 pickup.scheduled_arrival_at::text AS pickup_date, delivery.scheduled_arrival_at::text AS scheduled_delivery_at,
                 delivery.actual_arrival_at::text AS actual_delivery_at, l.created_at::text,
-                COALESCE(rev_cte.revenue_cents, 0)::text AS revenue_cents, COALESCE(rev_cte.revenue_source, 'proforma') AS revenue_source,
+                COALESCE(revenue.revenue_cents, 0)::text AS revenue_cents, COALESCE(revenue.revenue_source, 'proforma') AS revenue_source,
                 -- ROUND 285.4.4 — Book Load wizard amounts (dispatch.load_charge_lines), not re-derived.
                 COALESCE(wiz.linehaul_cents, 0)::text AS line_haul_cents,
                 COALESCE(wiz.fuel_surcharge_cents, 0)::text AS fuel_surcharge_cents,
@@ -348,10 +320,9 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 dpd.rate_empty_cents::text AS rate_empty_cents,
                 COALESCE(dpa.loaded_pay_cents, 0)::text AS loaded_pay_cents,
                 CASE WHEN COALESCE(dpa.has_deadhead_miles, false) THEN COALESCE(dpa.deadhead_pay_cents, 0)::text ELSE NULL END AS deadhead_pay_cents,
-                COALESCE(si.settlement_display_id, NULL) AS settlement_display_id,
-                si.settlement_id::text AS settlement_id,
+                si.settlement_display_id, si.settlement_id,
                 COALESCE(si.is_resettlement, false) AS is_resettlement,
-                COALESCE(rev_cte.is_invoiced, false) AS is_invoiced,
+                revenue.is_invoiced,
                 -- 443.257-C fuel source: posted (source_fuel_transaction_id) + unposted fills
                 COALESCE(ff.fuel_fills_total_cents, 0)::text AS fuel_fills_total_cents,
                 COALESCE(ff.fuel_fills_count, 0)::int AS fuel_fills_count,
@@ -361,7 +332,10 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            LEFT JOIN expense_costs ec ON ec.load_id=l.id LEFT JOIN bill_costs bc ON bc.load_id=l.id LEFT JOIN repair_costs rm ON rm.load_id=l.id
            LEFT JOIN category_costs cb ON cb.load_id=l.id LEFT JOIN driver_pay_detail dpd ON dpd.load_id=l.id LEFT JOIN driver_pay_amounts dpa ON dpa.load_id=l.id
            LEFT JOIN settlement_info si ON si.load_id=l.id
-           LEFT JOIN rev_cte ON rev_cte.load_id=l.id
+           -- R443.139 (owner): revenue = loadCostsRevenueJoin, verbatim — the ONE shared join the rollup uses. Measured on prod
+           -- 10-23 (198 USMCA loads): 1.1 ms (two index scans per load); per-load revenue / source / is_invoiced identical
+           -- to 443.257-C's set-based copy (0 diff rows, $687,276.72 both) — the copy is gone, the speed is unchanged.
+           ${loadCostsRevenueJoin("l")}
            LEFT JOIN driver_gross_pay dgp ON dgp.load_id=l.id
            LEFT JOIN fuel_fills ff ON ff.load_id=l.id
            LEFT JOIN fuel_posted_by_txid fpost ON fpost.load_id=l.id

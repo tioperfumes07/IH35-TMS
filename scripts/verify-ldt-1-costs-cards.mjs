@@ -56,9 +56,17 @@ function auditWizardGeocode(wizardSrc, stripSrc) {
   if (!/TODO\(TEL-42\)/.test(wizardSrc)) errors.push("YARD_FALLBACK is missing its TODO(TEL-42) removal marker");
   if (!/googleReferencePractical=\{/.test(wizardSrc)) errors.push("BookLoadModalV4 does not pass googleReferencePractical to MilesStrip");
   if (!/googleReferenceEmpty=\{/.test(wizardSrc)) errors.push("BookLoadModalV4 does not pass googleReferenceEmpty (yard→pickup) to MilesStrip");
-  const emptyBlock = stripSrc.match(/\{googleReferenceEmpty \? \(([\s\S]*?)\) : null\}/);
-  if (!emptyBlock) errors.push("MilesStrip does not render googleReferenceEmpty as a plain read-only conditional block");
-  else if (/<input|onChange/.test(emptyBlock[1])) errors.push("MilesStrip Empty-leg reference must be read-only");
+  // 443.258-B (owner-approved): the Empty-leg reference line is ALWAYS shown — the value, or an honest "not computed yet" —
+  // and is read-only (LAW §2: grey, never editable, never copied into Empty miles). LEAD 443.264.3: the guard reads the
+  // element itself (its test id → </p>), not the retired hide-when-absent shape.
+  const refStart = stripSrc.indexOf('data-testid="book-load-google-reference-empty"');
+  const emptyBlock = refStart < 0 ? null : stripSrc.slice(refStart, stripSrc.indexOf("</p>", refStart));
+  if (!emptyBlock) errors.push("MilesStrip does not render the Empty-leg reference line (book-load-google-reference-empty)");
+  else {
+    if (!/\{googleReferenceEmpty\s*\?/.test(emptyBlock)) errors.push("MilesStrip Empty-leg reference line does not render googleReferenceEmpty");
+    if (!/not computed yet/.test(emptyBlock)) errors.push("MilesStrip Empty-leg reference line has no honest not-computed state");
+    if (/<input|<textarea|onChange|contentEditable/.test(emptyBlock)) errors.push("MilesStrip Empty-leg reference must be read-only");
+  }
   return errors;
 }
 
@@ -194,7 +202,9 @@ function main() {
       ["board expand loses the cards", mut(BOARD, "<LoadDetailCostsTab load={load.data} canEdit={true} />", "<span />")],
       ["board registers lose the receipt column", mut(BOARD, /receiptColumn\(companyId\)/g, "REGISTER_COLUMNS[0]")],
       ["wizard drops geocode call", mut(WIZARD, /geocodeRouteReference\(/g, "nope(")],
-      ["strip empty ref becomes editable", mut(MILES_STRIP, /(\{googleReferenceEmpty \? \()/, "$1<input onChange={()=>{}} />&&")],
+      ["strip empty ref becomes editable", mut(MILES_STRIP, /(data-testid="book-load-google-reference-empty"[\s\S]*?>)/, "$1<input onChange={()=>{}} />")],
+      ["strip empty ref line removed", mut(MILES_STRIP, 'data-testid="book-load-google-reference-empty"', 'data-testid="gone"')],
+      ["strip empty ref hides its not-computed state", mut(MILES_STRIP, '"Empty leg ref (yard → pickup) — not computed yet"', "null")],
       ["margin math broken", mut(TAB, "const margin = revenue - savedCosts - driverPay - draftTotal;", "const margin = revenue - savedCosts;")],
       ["hex colour planted", mut(TAB, 'className="ldt-body" data-testid="load-costs-tab-shell"', 'className="ldt-body" style={{ background: "#16A34A" }} data-testid="load-costs-tab-shell"')],
       ["receipt removed from ExpenseDetailPage", mut("apps/frontend/src/pages/accounting/ExpenseDetailPage.tsx", /<ReceiptAttach[\s\S]*?\/>/, "<span />")],
