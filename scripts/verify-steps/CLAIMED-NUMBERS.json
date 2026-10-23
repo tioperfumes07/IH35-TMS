@@ -14869,6 +14869,11 @@
     "claimed_at": "2026-10-23",
     "purpose": "CC-3 LEAD 443.265-A: verify-book-load-v3-layout (Load # helper under the box, Broker/Direct own cell, NB/TR/SB cards, miles source order + reference lanes, 32px stop rows)"
   },
+  "18713": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-10-23",
+    "purpose": "CC-3 LEAD 443.266-A item 3: verify-load-shuttle-legs-panel-wired (the Load drawer's shuttle-legs panel reads its own load's legs, entity-scoped, and shows a fetch error instead of hiding it)"
+  },
   "18629": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-21",
