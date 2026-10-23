@@ -76,6 +76,16 @@ export function computeKpiFailures(source) {
   if (!/dashboard === undefined \|\| lovesSyncStatus === undefined\) return null/.test(source)) {
     errors.push("FuelKpiRow must not assert Never until both authoritative sync feeds resolve");
   }
+  // ROUND 443.250 — V3 board chrome (Fuel.dc.html); engine unchanged
+  if (!/V3KpiTile/.test(source)) {
+    errors.push("FuelKpiRow must render V3KpiTile (ROUND 443.250 Fuel home V3)");
+  }
+  if (!/data-fuel-v3-kpis/.test(source)) {
+    errors.push("FuelKpiRow must mark data-fuel-v3-kpis for the V3 board strip");
+  }
+  if (/DrillKpiCard/.test(source)) {
+    errors.push("FuelKpiRow must not keep DrillKpiCard after V3 restyle");
+  }
   return errors;
 }
 
@@ -138,6 +148,17 @@ function selftest() {
     process.exit(1);
   }
   console.log("selftest ok — unresolved Love's sync cannot assert Never");
+  const v3Stripped = kpiSource.replace(/V3KpiTile/g, "LegacyKpi").replace(/data-fuel-v3-kpis/g, "data-fuel-legacy");
+  if (!computeKpiFailures(v3Stripped).some((e) => e.includes("V3KpiTile"))) {
+    console.error("SELFTEST FAIL — V3KpiTile removal should fail");
+    process.exit(1);
+  }
+  const drillBack = `${kpiSource}\nimport { DrillKpiCard } from "x";\n`;
+  if (!computeKpiFailures(drillBack).some((e) => e.includes("DrillKpiCard"))) {
+    console.error("SELFTEST FAIL — DrillKpiCard reintro should fail");
+    process.exit(1);
+  }
+  console.log("selftest ok — Fuel home V3 chrome markers");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";

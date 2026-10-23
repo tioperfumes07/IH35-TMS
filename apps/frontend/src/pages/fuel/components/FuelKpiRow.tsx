@@ -1,5 +1,7 @@
+import { useNavigate } from "react-router-dom";
 import type { FuelDashboard, LovesSyncStatus } from "../../../api/fuelPlanner";
-import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
+import { V3 } from "../../../design/v3-tokens";
+import { V3KpiTile, type V3KpiTone } from "../../../components/v3/V3KpiTile";
 
 type Props = {
   dashboard: FuelDashboard | undefined;
@@ -7,24 +9,19 @@ type Props = {
 };
 
 /**
- * C8 — the fuel KPI strip.
+ * C8 + ROUND 443.250 — Fuel Home KPI strip.
  *
- * Was: seven hand-rolled <div> tiles, all dead clicks, and every figure `Number(x ?? 0)` so a fuel
- * dashboard that failed to load reported `$0` spend and `0.0` fleet MPG. Now each tile opens the
- * list it summarises and an absent figure renders "—". Same seven labels, same order.
- *
- * The sync-freshness signal is preserved but moved onto the shared card's §7 tones (amber = stale /
- * never synced, red = sync error); the raw text-red-700 / text-green-700 classes the strip used are
- * outside the locked palette.
+ * Same seven metrics + Love's sync honesty as the pre-V3 strip. Chrome is V3KpiTile on
+ * v3-tokens; click-through via navigate. Absent figure still renders "—".
  */
 function lovesSyncTone(
   lovesSyncAt: string | null,
   status?: LovesSyncStatus["status"]
-): "default" | "critical" | "warning" {
-  if (status === "error") return "critical";
-  if (!lovesSyncAt) return "warning";
+): V3KpiTone {
+  if (status === "error") return "red";
+  if (!lovesSyncAt) return "muted";
   const ageHours = (Date.now() - new Date(lovesSyncAt).getTime()) / 3600000;
-  return ageHours > 2 || status === "stale" ? "warning" : "default";
+  return ageHours > 2 || status === "stale" ? "muted" : "ink";
 }
 
 function formatLovesSyncLabel(
@@ -45,6 +42,7 @@ function metric(raw: number | null | undefined): number | null {
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 }
+
 /**
  * toFixed() alone renders "$54409" — no thousands separator. Every other money figure in the product
  * is grouped ("$4,718" on Home, "−$168,722.50" on Cash Flow), so the fuel KPIs were the odd ones out
@@ -59,30 +57,67 @@ const fixed = (n: number | null, digits: number, prefix = "", suffix = "") =>
         maximumFractionDigits: digits,
       })}${suffix}`;
 
+const display = (v: string | null) => v ?? "—";
+
 export function FuelKpiRow({ dashboard, lovesSyncStatus }: Props) {
+  const navigate = useNavigate();
   const lovesSyncAt = lovesSyncStatus?.last_synced_at ?? dashboard?.loves_sync_at ?? null;
+  const activePlans = metric(dashboard?.active_plans);
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
-      <DrillKpiCard label="Active Plans" value={metric(dashboard?.active_plans)} to="/fuel/planner" />
-      <DrillKpiCard label="MTD Spend" value={fixed(metric(dashboard?.mtd_spend), 0, "$")} to="/fuel/history" />
-      <DrillKpiCard
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))",
+        gap: 8,
+        fontFamily: V3.font,
+      }}
+      data-testid="fuel-home-kpi-strip"
+      data-fuel-v3-kpis="1"
+    >
+      <V3KpiTile
+        label="Active Plans"
+        value={display(activePlans === null ? null : String(activePlans))}
+        testId="fuel-kpi-active-plans"
+        onClick={() => navigate("/fuel/planner")}
+      />
+      <V3KpiTile
+        label="MTD Spend"
+        value={display(fixed(metric(dashboard?.mtd_spend), 0, "$"))}
+        sub="diesel · month to date"
+        testId="fuel-kpi-mtd-spend"
+        onClick={() => navigate("/fuel/history")}
+      />
+      <V3KpiTile
         label="Avg $/gal"
-        value={fixed(metric(dashboard?.avg_price_per_gallon), 2, "$")}
-        to="/fuel/history"
+        value={display(fixed(metric(dashboard?.avg_price_per_gallon), 2, "$"))}
+        testId="fuel-kpi-avg-price"
+        onClick={() => navigate("/fuel/history")}
       />
-      <DrillKpiCard label="MTD Savings" value={fixed(metric(dashboard?.mtd_savings), 0, "$")} to="/fuel/planner" />
-      <DrillKpiCard
+      <V3KpiTile
+        label="MTD Savings"
+        value={display(fixed(metric(dashboard?.mtd_savings), 0, "$"))}
+        testId="fuel-kpi-mtd-savings"
+        onClick={() => navigate("/fuel/planner")}
+      />
+      <V3KpiTile
         label="Compliance %"
-        value={fixed(metric(dashboard?.compliance_pct), 1, "", "%")}
-        to="/fuel/compliance"
+        value={display(fixed(metric(dashboard?.compliance_pct), 1, "", "%"))}
+        testId="fuel-kpi-compliance"
+        onClick={() => navigate("/fuel/compliance")}
       />
-      <DrillKpiCard label="Fleet MPG" value={fixed(metric(dashboard?.fleet_mpg), 1)} to="/fuel/history" />
-      <DrillKpiCard
+      <V3KpiTile
+        label="Fleet MPG"
+        value={display(fixed(metric(dashboard?.fleet_mpg), 1))}
+        testId="fuel-kpi-fleet-mpg"
+        onClick={() => navigate("/fuel/history")}
+      />
+      <V3KpiTile
         label="Loves Sync"
-        value={formatLovesSyncLabel(dashboard, lovesSyncStatus)}
-        valueTone={lovesSyncTone(lovesSyncAt, lovesSyncStatus?.status)}
-        to="/fuel/loves-prices"
+        value={display(formatLovesSyncLabel(dashboard, lovesSyncStatus))}
+        tone={lovesSyncTone(lovesSyncAt, lovesSyncStatus?.status)}
+        testId="fuel-kpi-loves-sync"
+        onClick={() => navigate("/fuel/loves-prices")}
       />
     </div>
   );
