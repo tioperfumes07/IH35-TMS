@@ -26,6 +26,7 @@ type WeekBucket = {
   ending_cash_cents: number | null;
   driver_bills_cents: number;
   vendor_bills_cents: number;
+  diesel_cents: number;
   insurance_cents: number;
   finance_lease_cents: number;
 };
@@ -71,13 +72,15 @@ function computeHomeKpis(data: RollingLedgerResult, today: string): CashFlowKpis
   };
 }
 
-/** Classify an expense row into one of the 4 disbursement categories. */
+/** Classify an expense row into one of the 5 disbursement categories. */
 function expenseCategory(
   document_kind: string,
   counterparty: string
-): "driver_bills" | "finance_lease" | "insurance" | "vendor_bills" {
+): "driver_bills" | "finance_lease" | "diesel" | "insurance" | "vendor_bills" {
   if (document_kind === "driver_bill" || document_kind === "settlement") return "driver_bills";
   if (document_kind === "loan_amortization_row") return "finance_lease";
+  if (document_kind === "card_payable") return "diesel";
+  if (document_kind === "expense" && counterparty.toLowerCase().includes("fuel")) return "diesel";
   if (document_kind === "bill" && counterparty.toLowerCase().includes("insur")) return "insurance";
   return "vendor_bills";
 }
@@ -93,7 +96,7 @@ function buildWeekBuckets(data: RollingLedgerResult, today: string, weekCount: n
 
   const empty = (): Omit<WeekBucket, "weekStart" | "label"> => ({
     income_cents: 0, expenses_cents: 0, net_cents: 0, ending_cash_cents: null,
-    driver_bills_cents: 0, vendor_bills_cents: 0, insurance_cents: 0, finance_lease_cents: 0,
+    driver_bills_cents: 0, vendor_bills_cents: 0, diesel_cents: 0, insurance_cents: 0, finance_lease_cents: 0,
   });
 
   const map = new Map<string, ReturnType<typeof empty>>();
@@ -120,20 +123,20 @@ function buildWeekBuckets(data: RollingLedgerResult, today: string, weekCount: n
       const cat = expenseCategory(row.document_kind, row.counterparty);
       if (cat === "driver_bills") bucket.driver_bills_cents += row.amount_cents;
       else if (cat === "finance_lease") bucket.finance_lease_cents += row.amount_cents;
+      else if (cat === "diesel") bucket.diesel_cents += row.amount_cents;
       else if (cat === "insurance") bucket.insurance_cents += row.amount_cents;
       else bucket.vendor_bills_cents += row.amount_cents;
     }
   }
 
-  // Ending balance from days grid (unchanged — uses real due_dates for the balance line)
-  const { days } = data;
+  // Ending balance: recompute from rows so the table ties.
+  // ending[n] = ending[n-1] + net[n], starting from the live opening balance.
+  let running = data.opening_cash_cents ?? 0;
   for (const ws of weekStarts) {
-    const weekEnd = addDaysIso(ws, 6);
-    const inWeek = days.filter((d) => d.date >= ws && d.date <= weekEnd);
-    const lastWithCash = [...inWeek].reverse().find((d) => d.running_cash_cents !== null);
     const bucket = map.get(ws)!;
-    bucket.ending_cash_cents = lastWithCash?.running_cash_cents ?? null;
     bucket.net_cents = bucket.income_cents - bucket.expenses_cents;
+    running += bucket.net_cents;
+    bucket.ending_cash_cents = running;
   }
 
   return weekStarts.map((ws) => ({ weekStart: ws, label: weekLabel(ws), ...map.get(ws)! }));
@@ -373,27 +376,33 @@ function ThirteenWeekTable({
             </td>
           </tr>
           <tr>
-            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Driver bills</td>
-            {weeks.map((w) => (
-              <td key={w.weekStart} style={td}>{cell(w.driver_bills_cents, totalExpense)}</td>
-            ))}
-          </tr>
-          <tr>
-            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Vendor bills</td>
-            {weeks.map((w) => (
-              <td key={w.weekStart} style={td}>{cell(w.vendor_bills_cents, totalExpense)}</td>
-            ))}
-          </tr>
-          <tr>
             <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Finance / lease</td>
             {weeks.map((w) => (
               <td key={w.weekStart} style={td}>{cell(w.finance_lease_cents, totalExpense)}</td>
             ))}
           </tr>
           <tr>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Driver bills</td>
+            {weeks.map((w) => (
+              <td key={w.weekStart} style={td}>{cell(w.driver_bills_cents, totalExpense)}</td>
+            ))}
+          </tr>
+          <tr>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Diesel</td>
+            {weeks.map((w) => (
+              <td key={w.weekStart} style={td}>{cell(w.diesel_cents, totalExpense)}</td>
+            ))}
+          </tr>
+          <tr>
             <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Insurance</td>
             {weeks.map((w) => (
               <td key={w.weekStart} style={td}>{cell(w.insurance_cents, totalExpense)}</td>
+            ))}
+          </tr>
+          <tr>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Vendor bills</td>
+            {weeks.map((w) => (
+              <td key={w.weekStart} style={td}>{cell(w.vendor_bills_cents, totalExpense)}</td>
             ))}
           </tr>
           <tr>
