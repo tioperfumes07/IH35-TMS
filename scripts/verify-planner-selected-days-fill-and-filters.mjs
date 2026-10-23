@@ -62,7 +62,7 @@ export function audit(s) {
   need("R7", /days=\{days\}/.test(s.driver) && /visibleDays \?\?/.test(s.driverGrid), "the Driver planner draws every day regardless of Show days");
   // R8
   need("R8", /export function stackPlannerBars\(/.test(s.grid) && /stacked\.lane\.get\(bar\.id\)/.test(s.grid), "overlapping bars in one row are drawn on top of each other");
-  need("R8", /secondary: row\.driverName \?/.test(s.truck) && !/unit: row\.driverName \?/.test(s.truck) && /formatPersonName\(row\.driverName\)/.test(s.truck), "the truck planner squeezes the driver into the 56px unit column / not proper-cased");
+  need("R8", /secondary: row\.driverName \?/.test(s.truck) && !/unit: row\.driverName \?/.test(s.truck) && /driverName: dr\.driver_name \? formatPersonName\(String\(dr\.driver_name\)\) : null/.test(s.truck), "the truck planner squeezes the driver into the 56px unit column / not proper-cased");
   return f;
 }
 
@@ -89,6 +89,7 @@ if (process.argv.includes("--selftest")) {
     ["driver grid ignoring the visible days FAILS", plant("driver", "days={days}", "")],
     ["bars drawn without their stacked lane FAIL", plant("grid", "stacked.lane.get(bar.id)", "stackedLaneIgnored")],
     ["driver back in the unit slot FAILS", plant("truck", "secondary: row.driverName ?", "unit: row.driverName ?")],
+    ["raw ALL-CAPS truck-planner driver name FAILS", plant("truck", "driverName: dr.driver_name ? formatPersonName(String(dr.driver_name)) : null", "driverName: dr.driver_name ? String(dr.driver_name) : null")],
   ];
   let bad = 0;
   for (const [n, ok] of cases) {

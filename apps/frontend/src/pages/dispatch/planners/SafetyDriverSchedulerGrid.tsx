@@ -195,7 +195,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
         onExpandRange={onExpandRange ? (minYmd, maxYmd) => onExpandRange(widenPlannerRange(range, minYmd, maxYmd)) : undefined}
         rows={drivers.map((dr) => {
           const driverId = String(dr.driver_id);
-          const name = String(dr.driver_name ?? "");
+          const name = formatPersonName(String(dr.driver_name ?? ""));
           const unitId = dr.unit_id ? String(dr.unit_id) : null;
           const unit = dr.unit_number ? String(dr.unit_number) : null;
           const bars = loadBarsByDriver.get(driverId) ?? [];
@@ -204,7 +204,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
           const lastDispatchActivityAt = dr.last_dispatch_activity_at ? String(dr.last_dispatch_activity_at) : null;
           return {
             id: driverId,
-            name: <EntityLinkOrTombstone kind="driver" id={driverId} name={formatPersonName(name)} noun="Driver" />,
+            name: <EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver" />,
             // ROUND 16.19 (SAF-F33/L5171 idiom): the Safety Profile is a distinct drill-through
             // surface from kind="driver" (/drivers/:id vs /safety/driver-profiles/:id) — the owner's
             // "why is/isn't a driver active" ask needs both the link into Safety AND the raw
