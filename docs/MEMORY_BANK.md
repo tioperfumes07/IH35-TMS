@@ -423,6 +423,20 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   design-system sweep · Chrome proof. Full DONE not claimed.
 
 
+### Active Architectural Decisions — Fuel Integrity V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getFuelIntegrityVerdicts` · `getFuelTimeDerivations` (E-19..E-22
+  computed-on-read). No GL / posting / fraud-rule math change.
+- **V3 board chrome (Fuel Integrity tab):** identity `V3KpiTile` strip from existing summary keys
+  (`data-fuel-integrity-v3-kpis`); scroll-on-click kept. `V3Panel` **Card purchases** /
+  **Relay fills — was the truck at the pump?** / **Derived pump time & state**. DataPanel +
+  DrillKpiCard removed.
+- **Guard piggyback:** `verify-fuel-integ-receipt-relay-slate-leftover-chrome.mjs` (step 3684 ≡0
+  EVEN Cursor) — `computeIntegrityV3Failures` + selftest. No new EVEN claim.
+- **Still open under 443.250:** remaining Fuel tabs (Fills / By truck / Questions / Relay / …) ·
+  Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+
+
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
