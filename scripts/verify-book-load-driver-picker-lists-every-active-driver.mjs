@@ -1,0 +1,69 @@
+#!/usr/bin/env node
+/**
+ * LEAD 443.257-B (measured live 10-22 7:11 PM CT): the Book Load driver picker listed 11 drivers; five Active,
+ * non-sample USMCA drivers (Concepcion Cordova Dominguez, Genaro Guerrero Chavez, Vicente Santos Contreras,
+ * Pedro Abraham Lopez Collado, Rafael Rogelio Rivero Reynoso) were missing, so the Truck Line preset of
+ * Concepcion rendered her raw id. Root cause: the shared driver picker asked GET /mdata/drivers?status=Active,
+ * which is MOVEMENT-derived (Rule 49, drove in the last 15 days), not the driver's recorded status.
+ *
+ * Static guard over the ONE driver picker source (entityPickerRegistry.ts, kind "driver"):
+ *   R1  the picker never sends `status` to listDrivers (that is the movement-derived roster question);
+ *   R2  it filters on the RECORDED status (Active, + Probation for money pickers);
+ *   R3  it reads the whole roster in one call (limit ≥ the roster; no silent 200 truncation per status);
+ *   R4  labels go through formatPersonName (proper case — never ALL CAPS, never an id as a name).
+ * --selftest plants each regression and requires a FAIL.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const FILE = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
+
+function driverListBody(src) {
+  const start = src.indexOf("  driver: {");
+  if (start < 0) return "";
+  const end = src.indexOf("\n  trailer: {", start);
+  return src.slice(start, end < 0 ? undefined : end);
+}
+
+export function audit(src) {
+  const body = driverListBody(src);
+  if (!body) return ["driver picker entry not found"];
+  const f = [];
+  const call = body.match(/listDrivers\(\{[\s\S]*?\}\)/g) ?? [];
+  if (call.length === 0) f.push("R1: the driver picker no longer reads listDrivers");
+  if (call.some((c) => /\bstatus\b/.test(c))) f.push("R1: the picker sends `status` — GET /mdata/drivers?status=Active is movement-derived and drops idle Active drivers");
+  if (!/statuses\.includes\(String\(\(d as \{ status\?: string \| null \}\)\.status/.test(body)) f.push("R2: the picker does not filter on the recorded driver status");
+  if (!call.some((c) => /limit:\s*1000/.test(c))) f.push("R3: the picker does not read the whole roster in one call");
+  if (!/label: entityLabel\(formatPersonName\(/.test(body)) f.push("R4: driver labels are not proper-cased through formatPersonName");
+  return f;
+}
+
+const src = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+
+if (process.argv.includes("--selftest")) {
+  const base = audit(src).length;
+  const plant = (from, to) => (src.includes(from) ? audit(src.replace(from, to)).length > base : null);
+  const cases = [
+    ["status=Active sent to the movement roster FAILS", plant("          limit: 1000,", "          status: \"Active\",\n          limit: 1000,")],
+    ["no recorded-status filter FAILS", plant("if (!statuses.includes(String((d as { status?: string | null }).status", "if (false && (String((d as { status?: string | null }).status")],
+    ["a 200-row page FAILS", plant("          limit: 1000,", "          limit: 200,")],
+    ["raw ALL-CAPS labels FAIL", plant("label: entityLabel(formatPersonName(", "label: entityLabel((")],
+  ];
+  let bad = 0;
+  for (const [n, ok] of cases) {
+    console.log(`  ${ok ? "✓" : "✗"} ${n}${ok === null ? " (plant anchor missing)" : ""}`);
+    if (!ok) bad += 1;
+  }
+  console.log(bad ? "verify-book-load-driver-picker-lists-every-active-driver --selftest FAIL" : `verify-book-load-driver-picker-lists-every-active-driver --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
+const failures = audit(src);
+if (failures.length) {
+  console.error(`verify-book-load-driver-picker-lists-every-active-driver: FAIL — ${failures.length}`);
+  for (const x of failures) console.error(`  ✗ ${x}`);
+  process.exit(1);
+}
+console.log("verify-book-load-driver-picker-lists-every-active-driver: OK — every recorded Active driver is selectable, proper case (R1–R4)");

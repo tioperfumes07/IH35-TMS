@@ -44,6 +44,7 @@ import { listInsuranceClaims, listInsuranceLawsuits, listInsurancePolicies } fro
 import { listFactoringAdvances } from "../../api/accounting";
 import { legalMattersApi } from "../../api/legal-matters";
 import { entityLabel } from "../../lib/entity-label";
+import { formatPersonName } from "../../lib/formatPersonName";
 
 export type EntityPickerKind =
   | "driver"
@@ -172,28 +173,35 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
       // (owner-locked); Active-only hid fresh SAMPLE drivers and only offered duplicate +Create.
       const search = opts?.search || undefined;
       const moneyRoster = opts?.driverRoster === "active_or_probation";
-      const statuses = moneyRoster ? (["Active", "Probation"] as const) : (["Active"] as const);
-      const pages = await Promise.all(
-        statuses.map((status) =>
-          listDrivers({
-            operating_company_id: operatingCompanyId,
-            status,
-            limit: 200,
-            search,
-          })
-        )
-      );
+      const statuses: readonly string[] = moneyRoster ? ["Active", "Probation"] : ["Active"];
+      // LEAD 443.257-B (measured 10-22: the Book Load picker listed 11 drivers; Concepcion Cordova
+      // Dominguez, Genaro Guerrero Chavez, Vicente Santos Contreras, Pedro Abraham Lopez Collado and
+      // Rafael Rogelio Rivero Reynoso — all Active, non-sample — were missing, so a Truck Line preset
+      // of Concepcion rendered her raw id). ROOT CAUSE: `status=Active` on GET /mdata/drivers is
+      // MOVEMENT-derived (Rule 49: drove in the last 15 days), a roster-display question. A picker
+      // that chooses who drives a load asks for the driver's RECORDED status. One roster read (the
+      // route already excludes deactivated, archived, pseudo and sample drivers), filtered here on
+      // the stored status.
+      const pages = [
+        await listDrivers({
+          operating_company_id: operatingCompanyId,
+          limit: 1000,
+          search,
+        }),
+      ];
       const seen = new Set<string>();
       const out: EntityPickerOption[] = [];
       for (const res of pages) {
         for (const d of res.drivers ?? []) {
           if (seen.has(d.id)) continue;
+          if (!statuses.includes(String((d as { status?: string | null }).status ?? ""))) continue;
           // WIZ-44: never offer a merged/deactivated driver — its id fails the form's re-resolve.
           if (!isLive(d)) continue;
           seen.add(d.id);
           out.push({
             value: d.id,
-            label: entityLabel(nonEmpty(d.first_name, d.last_name), d.id, "Driver"),
+            // Owner ruling: names in proper case everywhere ("HUGO GAYTAN" → "Hugo Gaytan").
+            label: entityLabel(formatPersonName(nonEmpty(d.first_name, d.last_name)), d.id, "Driver"),
             // Row 425: same-name active drivers can be distinct Samsara identities. Never coin-toss
             // between identical labels and never merge them from name alone; expose stable operator
             // context on every shared driver picker instead.
