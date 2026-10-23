@@ -91,6 +91,9 @@ const REQUIRED = [
   "verify-wave-c-liability-insurance-legal.mjs",
   "verify-settlement-creator-books-with-po-and-real-stop-state.mjs",
   "verify-unselected-boxes-are-not-pure-white.mjs",
+  "verify-driver-bill-due-date-projected-delivery.mjs",
+  "verify-merged-driver-never-active-or-listed.mjs",
+  "verify-vendor-bill-null-due-date-handled.mjs",
 ];
 
 function failures(classification) {

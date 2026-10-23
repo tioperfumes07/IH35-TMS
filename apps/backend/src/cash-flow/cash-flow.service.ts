@@ -42,7 +42,7 @@ import {
   DELIVERY_EVIDENCE_MDATA_STATUSES,
 } from "../dispatch/delivery-evidence-status.js";
 
-import { liveExpense, liveBill, openDriverBill, driverBillAmountKnown } from "../accounting/live-document-predicates.sql.js";
+import { liveExpense, liveBill, openDriverBill, driverBillAmountKnown, notVoided } from "../accounting/live-document-predicates.sql.js";
 import { cashFlowReceiptsSql } from "./cash-flow-receipts.sql.js";
 import { cashFlowSettlementEligibilitySql } from "./cash-flow-obligations.sql.js";
 import { BILL_OPEN_BALANCE_SQL } from "../accounting/bills.service.js";
@@ -1406,7 +1406,7 @@ export async function getRollingLedgerRows(
         SUM(ft.total_cost) AS weekly_total
       FROM fuel.fuel_transactions ft, params
       WHERE ft.operating_company_id = $1::uuid
-        AND ft.voided_at IS NULL
+        AND ${notVoided("ft")}
         AND ft.transaction_at >= params.four_weeks_ago_utc
         AND ft.transaction_at < params.cur_week_start_utc
       GROUP BY 1

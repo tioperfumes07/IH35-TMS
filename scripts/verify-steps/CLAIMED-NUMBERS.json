@@ -16938,5 +16938,23 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-22",
     "purpose": "CC-2 LEAD 443.252 B: verify-photos-are-docs-files (every driver / unit photo is a validated docs.files image, never a raw URL; an ID document only proposes; one primary per unit)"
+  },
+  "18388": {
+    "guard": "verify-driver-bill-due-date-projected-delivery.mjs",
+    "band": "CC-1",
+    "step_file": "18388-verify-driver-bill-due-date-projected-delivery.mjs",
+    "claimed": "2026-10-23"
+  },
+  "18392": {
+    "guard": "verify-merged-driver-never-active-or-listed.mjs",
+    "band": "CC-1",
+    "step_file": "18392-verify-merged-driver-never-active-or-listed.mjs",
+    "claimed": "2026-10-23"
+  },
+  "18396": {
+    "guard": "verify-vendor-bill-null-due-date-handled.mjs",
+    "band": "CC-1",
+    "step_file": "18396-verify-vendor-bill-null-due-date-handled.mjs",
+    "claimed": "2026-10-23"
   }
 }
