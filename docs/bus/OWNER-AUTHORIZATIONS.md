@@ -8026,3 +8026,10 @@ action: OWNER_AUTH_ID=AUTH-454 DATABASE_URL=<prod owner> node --import tsx scrip
 rehearsal: REHEARSAL_PENDING (fork first)
 expires_at: 2026-10-24T04:20:00Z
 status: OPEN
+## AUTH-456
+issued_at: 2026-10-23T06:32:00.000Z
+scope: driver_finance.driver_bills.due_date + due_date_basis ONLY — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). No GL, no money move, no other column.
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-22-cc1-443249-backfill-driver-bill-due-dates.ts AUTH-456
+issued_by: Owner rule 2026-10-22 17:30 CT — "all driver bills due date is the date of the load delivery." LEAD 443.264 06:30 UTC authorizes execution. Backfill stamps NULL due_date from load delivery stop (same function as trigger trg_driver_bill_due_date_at_mint). Bills with no linked load are listed, not stamped.
+expires_at: 2026-10-23T10:00:00.000Z
+status: OPEN
