@@ -20,6 +20,11 @@
  *   RULE 7 — auto-geofence.service.ts skips (never fences / never pushes to Samsara) a stop with no street address.
  * LIVE (443.41):
  *   RULE 8 — no ACTIVE auto_dispatch customer_site fence created at/after AUTO_FENCE_CUTOFF whose label has no street.
+ *            LEAD 443.267 (CC-2): the E-25 per-stop fences (load-stop-geofence-geometry.ts loadStopFenceLabel,
+ *            "load-<id>-stop-<n>", the one arrival path since 10-21) carry a synthetic label, so the label test can never see a
+ *            street on them (13 live false positives, each centered on its own street-address stop). They are judged by THEIR
+ *            STOP instead: the stop must exist with a street, not be a zip / city-center geocode, and carry a precision the
+ *            binder fences (loadStopFenceRadiusMeters). Every other label keeps the street-label test.
  * LIVE (443.49 #4, owner 2026-10-11 "we need the real address geo fences"):
  *   RULE 9 — no ACTIVE fence the TMS drew from a stop (source auto_dispatch; imported Samsara / Love's / city fences carry their
  *            own real coordinates) whose center is a zip / city center: it hangs on a location with no street, or on a
@@ -42,6 +47,8 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 export const CUTOFF = "2026-10-11T06:30:00Z";
 // RULE 8 counts fences drawn after the 443.41 fix is live; the ones before it are retired under AUTH-413.
 export const AUTO_FENCE_CUTOFF = "2026-10-11T08:00:00Z";
+// E-25 per-stop fence label (load-stop-geofence-geometry.ts loadStopFenceLabel); group 1 = the load id.
+export const LOAD_STOP_LABEL_RE = "^load-([0-9a-f-]{36})-stop-[0-9]+$";
 
 export function staticFailures(src) {
   const out = [];
@@ -95,9 +102,18 @@ async function measure(url) {
           AND lower(coalesce(s.geocode_precision,'')) = 'rooftop'
           AND coalesce(s.address_line1,'') !~* '^\\s*([0-9]+[A-Za-z]?|one|two|three|four|five|six|seven|eight|nine|ten)\\s+\\S'`, [USMCA, CUTOFF])).rows;
     const autoZipFences = (await client.query(
-      `SELECT id::text, label FROM geo.geofences
-        WHERE operating_company_id = $1::uuid AND is_active AND source = 'auto_dispatch' AND location_kind = 'customer_site'
-          AND created_at >= $2::timestamptz AND coalesce(label,'') !~* '^\\s*([0-9]+[A-Za-z]?|one|two|three|four|five|six|seven|eight|nine|ten)\\s+\\S'`, [USMCA, AUTO_FENCE_CUTOFF])).rows;
+      `SELECT g.id::text, g.label FROM geo.geofences g
+         LEFT JOIN mdata.load_stops s
+           ON g.label ~ $3 AND s.load_id::text = substring(g.label from $3) AND s.sequence_number::text = substring(g.label from '-stop-([0-9]+)$')
+          AND s.soft_deleted_at IS NULL
+        WHERE g.operating_company_id = $1::uuid AND g.is_active AND g.source = 'auto_dispatch' AND g.location_kind = 'customer_site'
+          AND g.created_at >= $2::timestamptz
+          AND CASE WHEN g.label ~ $3
+                   THEN s.id IS NULL OR nullif(trim(s.address_line1), '') IS NULL
+                        OR coalesce(s.geocode_source::text, '') IN ('zip_center', 'city_center')
+                        OR lower(coalesce(s.geocode_precision, '')) NOT IN ('rooftop', 'range', 'range_interpolated', 'geometric_center', 'approximate')
+                   ELSE coalesce(g.label,'') !~* '^\\s*([0-9]+[A-Za-z]?|one|two|three|four|five|six|seven|eight|nine|ten)\\s+\\S'
+              END`, [USMCA, AUTO_FENCE_CUTOFF, LOAD_STOP_LABEL_RE])).rows;
     const zipCenterFences = (await client.query(
       `SELECT g.id::text, g.label FROM geo.geofences g
          LEFT JOIN mdata.locations lo ON lo.id = g.location_ref_id
