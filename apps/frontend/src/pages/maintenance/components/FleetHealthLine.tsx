@@ -11,9 +11,9 @@ const labels = { ok: "Healthy", soon: "PM soon", overdue: "PM overdue", shop: "I
 const tones = { ok: "text-blue-900", soon: "text-amber-700", overdue: "text-red-800", shop: "text-slate-600", none: "text-slate-500" };
 const statusTones = { ...tones, ok: "text-green-600" };
 
-function FleetTruck({ row }: { row: FleetHealthRow }) {
-  return <svg aria-hidden="true" viewBox="-14 96 314 128" className={`h-9 w-23 shrink-0 ${tones[row.state]}`}>
-    <g transform="rotate(-90 150 160)">
+export function FleetTruck({ row, vertical = false }: { row: Pick<FleetHealthRow, "state" | "body_style">; vertical?: boolean }) {
+  return <svg aria-hidden="true" viewBox={vertical ? "60 0 180 300" : "-14 96 314 128"} className={`${vertical ? "h-full w-full" : "h-9 w-23 shrink-0"} ${tones[row.state]}`}>
+    <g transform={vertical ? undefined : "rotate(-90 150 160)"}>
       <g className="fill-slate-800"><rect x="128" y="18" width="7" height="186" rx="2" /><rect x="165" y="18" width="7" height="186" rx="2" /><rect x="128" y="40" width="44" height="5" /><rect x="128" y="82" width="44" height="5" /></g>
       <g className="fill-slate-900"><rect x="100" y="28" width="28" height="28" rx="5" /><rect x="172" y="28" width="28" height="28" rx="5" /><rect x="100" y="70" width="28" height="28" rx="5" /><rect x="172" y="70" width="28" height="28" rx="5" /><rect x="104" y="232" width="13" height="30" rx="4" /><rect x="183" y="232" width="13" height="30" rx="4" /></g>
       <path d="M114 30v24M114 72v24M186 30v24M186 72v24" className="stroke-slate-600" strokeWidth="2" />

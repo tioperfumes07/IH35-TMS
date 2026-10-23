@@ -48,6 +48,7 @@ import { PartsInventoryTable } from "./components/PartsInventoryTable";
 import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { FleetHealthLine } from "./components/FleetHealthLine";
+import { InShopBoard } from "./components/InShopBoard";
 import { RMStatStrip } from "./components/RMStatStrip";
 import { RoadServiceActivePanel } from "./components/RoadServiceActivePanel";
 import { RecentActivityRow } from "./components/RecentActivityRow";
@@ -613,7 +614,10 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "fleet_table" ? (
         <div data-testid="maintenance-fleet-table-tab" data-maintenance-tab="fleet_table">
-          <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns />
+          {["in-shop", "InMaintenance", "in-maintenance"].includes(searchParams.get("status") ?? "") ? <>
+            <InShopBoard companyId={companyId} />
+            <details className="mt-3"><summary className="cursor-pointer text-xs">Fleet table and filters</summary><FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns /></details>
+          </> : <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns />}
         </div>
       ) : null}
 
