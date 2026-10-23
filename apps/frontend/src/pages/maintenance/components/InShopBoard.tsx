@@ -34,7 +34,7 @@ export function InShopBoard({ companyId }: { companyId: string }) {
           return <article key={row.work_order_id} className="flex min-w-0 flex-col gap-2 rounded-sm border border-slate-200 bg-white p-3">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <EntityLink kind="unit" id={row.unit_id} label={row.unit_number} />
-              <span className="inline-flex items-center gap-1"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${waiting ? "bg-amber-600" : "bg-blue-700"}`} />{statusLabels[row.status] ?? row.status.replaceAll("_", " ")}</span>
+              <span className="inline-flex items-center gap-1"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${waiting ? "bg-slate-500" : "bg-blue-700"}`} />{statusLabels[row.status] ?? row.status.replaceAll("_", " ")}</span>
             </div>
             <div className="h-44 rounded-sm bg-slate-100 p-2"><FleetTruck vertical row={{ state: waiting ? "soon" : "ok" }} /></div>
             <EntityLink kind="work_order" id={row.work_order_id} label={row.work_order_display_id || "Open work order"} />
@@ -47,6 +47,6 @@ export function InShopBoard({ companyId }: { companyId: string }) {
           </article>;
         })}
       </div>}
-    <p className="rounded-sm border border-slate-200 border-l-2 border-l-amber-600 bg-white px-3 py-2 text-xs text-slate-600">This view uses the live in-shop work-order source. Bay capacity, assignment and progress are not exposed by that source; no sample bays or completion percentages are shown.</p>
+    <p className="rounded-sm border border-slate-200 border-l-2 border-l-slate-600 bg-white px-3 py-2 text-xs text-slate-600">This view uses the live in-shop work-order source. Bay capacity, assignment and progress are not exposed by that source; no sample bays or completion percentages are shown.</p>
   </section>;
 }
