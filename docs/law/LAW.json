@@ -1132,5 +1132,12 @@
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-delivered-load-has-final-departure.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443281-PERSON-NAMES-AT-WRITE",
+    "title": "Driver person names are proper-cased at write (mdata.drivers trigger, same rules as formatPersonName); no USMCA driver stores ALL-CAPS",
+    "source_file": "AGENTS.md",
+    "guard": "scripts/verify-person-names-normalized-at-write.mjs",
+    "type": "enforced"
   }
 ]
