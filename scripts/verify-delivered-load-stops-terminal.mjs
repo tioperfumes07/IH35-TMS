@@ -52,7 +52,7 @@ const SHUTTLE = "apps/backend/src/dispatch/load-shuttle-leg.service.ts";
  *  the shipper); the shuttle writer never creates a pay line (the local driver is salaried weekly). */
 export function shuttleFailures(src, shuttleSrc) {
   const out = [];
-  if (!/FROM dispatch\.load_shuttle_legs sl[\s\S]{0,300}sl\.from_stop_id = \$2::uuid AND sl\.voided_at IS NULL/.test(src))
+  if (!/FROM dispatch\.load_shuttle_legs sl[\s\S]{0,300}sl\.from_stop_id = \$2::uuid AND (?:sl\.voided_at IS NULL|\$\{notVoided\("sl"\)\})/.test(src))
     out.push(`RULE 4 ${DELIVER}: stampStopsFromTracking never reads the stop's shuttle leg (a shuttled pickup stays unstamped)`);
   if (!/export async function recordLoadShuttleLeg\(/.test(shuttleSrc) || !/await stampStopsFromTracking\(client as never, input\.loadId, input\.operatingCompanyId, \{\}, \{ trackedOnly: true \}\);/.test(shuttleSrc))
     out.push(`RULE 4 ${SHUTTLE}: the shuttle writer must stamp the pickup through the stop-evidence engine`);
