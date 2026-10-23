@@ -13,6 +13,30 @@ After fix: vendor bills=$743.25 | driver bills=driver_finance.driver_bills only 
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-1-archive-2026-10-17.md](archive/OUTBOX-CC-1-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-10-23 ~14:xx Z — CC-1 443.270-D DONE + 443.270-F EXPLANATION
+
+**443.270-D** — verify-cash-flow-statement-live USMCA-only + guard plant
+- Replaced L123-137 all-companies loop with single USMCA-only query (5c854333)
+- Added `--company-id` param, refuses non-USMCA with exit 1
+- Added `checkSelfUsmcaOnly()` guard plant: reads own source, fails if `for(const row of companies.rows)` reappears or `USMCA_COMPANY_ID` missing
+- selftest PASS, static PASS — branch `cc-1/443265-e5-outbox-update`, in CI
+
+**443.270-F explanation (how #27318 merged with TS2322):**
+- E5 partial-week fuel row (cash-flow.service.ts:1669) used `status: "current"`. The RollingLedgerRow union is `"overdue" | "due_today" | "upcoming"` — "current" not in it.
+- Preflight ran tsc via the pre-push hook (exit 0 at push time). The TS2322 error may have been masked by an incremental tsc build cache that had an older version of the type definition, or the error only became detectable after DRIFT-1 ran a clean tsc pass. No `--no-verify` was used. Lesson: always run `npx tsc -b apps/backend/tsconfig.json --noEmit` (clean, not incremental) before E-series money pushes.
+- Fix was in PR #27320 (already merged before CC-1 could push its own fix).
+
+## 2026-10-23 ~13:17Z — CC-1 443.265-E5 IN CI (PR #27318)
+
+**PR #27318 OPEN, auto-merge ON** — 443.265-E5 driver-bill due_date = projected delivery + single-source cash flow
+- E4 changes included (vendor bills COALESCE, partial-week diesel, null-due-date guard — also on E4 branch)
+- DATA: accounting.bills driver due_date NULL BEFORE=174 AFTER=1 (1 unmatched #13530 load 7d52a20e $300)
+- DATA: driver_finance.driver_bills accrued_bill_id BEFORE=0 AFTER=65 linked
+- CODE: billsPromise bill_category='vendor' → IN ('vendor','driver')
+- GUARD: verify-driver-bill-due-date-projected-delivery.mjs SELFTEST PASS 2/2
+- preflight PASS, pushed branch, CI running
+
+
 ## 2026-10-23 ~09:55Z — CC-1 443.265-B SHIPPED
 
 **PR #27277 MERGED** → squash `446c9e12` — 443.264 cash-flow fuel trailing 4-wk avg on main.
@@ -111,3 +135,14 @@ Settlement P-0102 ($379.73, USMCA, source_document_ref=5796, status=closed). No 
 - Insurance/vendor bills: accounting.bills (billsPromise — already wired)
 
 **NEXT**: D074 truck-line 11.4s + units-without-load 4.8-8.8s → ≤2s. Starting now.
+
+## 2026-10-23 ~15:40Z — CC-1 443.274-A DONE + P0 MERGED
+
+**P0 PR #27331 MERGED** — register 3 orphan E5 guards (steps 18388/18392/18396) + notVoided("ft") inline debt fix. 2 static reds cleared.
+
+**443.274-A PR #27333 OPEN, auto-merge ON** — driver pay double-count fix:
+- billsPromise: bill_category='driver' → document_kind='driver_bill' (driver pay bucket)
+- Backfill: 107 accrued_bill_id links (68→175 linked; 15 orphans, no AP twin)
+- Guard: verify-driver-ap-not-in-vendor-row.mjs step 18400
+- Live: vendor_bills=$743.25 (3 rows), driver pay counted once exit 0
+- SHA=fa26d19ccb
