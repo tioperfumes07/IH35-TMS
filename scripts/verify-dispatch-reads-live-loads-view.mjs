@@ -75,6 +75,12 @@ const ALLOWLIST = new Map([
   ["dispatch/load-trailer-choice.ts", "443.107 trailer choice: Book/Edit Load reads ONE load by id (its customer) to record the trailer it is saving. Single-record mutation, not a list/board read."],
   ["dispatch/load-trailer-expense-document.service.ts", "443.109 trailer from expense documents: Owner backfill over HISTORICAL loads (settled included) with no trailer. Not a list/board read."],
   ["dispatch/load-trailer-gps-match.service.ts", "443.107 #2 GPS trailer match: Owner backfill over HISTORICAL loads (settled included) with no trailer. Not a list/board read."],
+  // LEAD 443.260-B (2026-10-23) — same class as 443.99 class B: single-record / historical ENGINES, never a board. views.live_loads
+  // hides settled loads by design, so reading it would silently skip exactly the loads these engines exist for.
+  ["dispatch/settlement-document-load-facts.service.ts", "443.240/241/248 signed-settlement document engine: reads ONE load by load_number — the document exists only for SETTLED loads, which views.live_loads excludes. Single-record engine, not a list/board read."],
+  ["dispatch/short-miles-fallback.ts", "443.220/240 short-miles fallback: reads ONE load by id (and its own lane history) to fill a missing short-miles value — settled loads included. Single-record engine, not a list/board read."],
+  ["dispatch/unit-current-driver.ts", "443.231b unit current driver: a unit's LAST DELIVERED load names its usual driver — delivered/settled loads are exactly what it reads, which views.live_loads excludes. Lookup SQL fragment, not a list/board read."],
+  ["dispatch/presettlement-link.service.ts", "SET-01 / 443.243 pre-settlement link engine: links ONE load to its driver's trip and reads that driver's other trip loads (settled ones included) — views.live_loads would drop the settled legs of an open trip. Single-record engine, not a list/board read."],
 ]);
 
 function loadBaseline() {

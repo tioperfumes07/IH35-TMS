@@ -1,3 +1,4 @@
+import { statusNotCancelled } from "../accounting/live-document-predicates.sql.js";
 import { readHistoricalSettlementAttributions, assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { allocateSettlementDisplayId } from "./settlement-display-id.js";
 // C6-MONEY-JE-EXEMPT: driver_finance.settlement_lines rows here are settlement-scoped LINE items,
@@ -293,7 +294,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
            COUNT(*) FILTER (WHERE v.has_pending_acks = true) AS pending_acks,
            COUNT(*) FILTER (WHERE s.status = 'held') AS held_deductions,
            COUNT(*) FILTER (WHERE s.period_end >= DATE_TRUNC('year', CURRENT_DATE)) AS ytd_settlements,
-           COALESCE(SUM(s.net_pay) FILTER (WHERE s.period_end >= (CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::int * INTERVAL '1 day') AND s.status <> 'cancelled'), 0) AS driver_pay_this_period,
+           COALESCE(SUM(s.net_pay) FILTER (WHERE s.period_end >= (CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::int * INTERVAL '1 day') AND ${statusNotCancelled("s")}), 0) AS driver_pay_this_period,
            COUNT(*) FILTER (WHERE COALESCE(s.payment_state, 'unpaid') = 'unpaid') AS pipeline_unpaid,
            COUNT(*) FILTER (WHERE s.payment_state = 'queued') AS pipeline_queued,
            COUNT(*) FILTER (WHERE s.payment_state = 'sent_to_bank') AS pipeline_sent_to_bank,

@@ -4,6 +4,7 @@
  * seeder (each load is delivered right after it is booked, so the same truck can take the next load of the tour —
  * bookLoad refuses a unit still active on an undelivered load) and the post.
  */
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 import type { DbClient } from "../dispatch/presettlement-link.service.js";
 import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
@@ -124,7 +125,7 @@ export async function stampStopsFromTracking(
                 e.started_at::text, e.ended_at::text
            FROM dispatch.load_shuttle_legs sl
            LEFT JOIN telematics.unit_stop_events e ON e.id = sl.stop_event_id
-          WHERE sl.load_id = $1::uuid AND sl.from_stop_id = $2::uuid AND sl.voided_at IS NULL
+          WHERE sl.load_id = $1::uuid AND sl.from_stop_id = $2::uuid AND ${notVoided("sl")}
           LIMIT 1`,
         [loadId, st.id],
       )

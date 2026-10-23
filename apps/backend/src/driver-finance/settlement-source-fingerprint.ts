@@ -11,6 +11,7 @@
  * A settlement posted before fingerprints existed is compared on its live lines (TOTAL DUE + every non-mileage line by load +
  * amount) — basis "live_lines".
  */
+import { notVoided, statusNotCancelled } from "../accounting/live-document-predicates.sql.js";
 import { createHash } from "node:crypto";
 import { openOrGetIntakeOnClient } from "./feed-gate/feed-gate.service.js";
 import type { SettlementCreatorDraft } from "./settlement-creator.types.js";
@@ -136,7 +137,7 @@ export async function checkSettlementSourceOnClient(
   const no = String(input.draft.settlement_no ?? "").trim();
   const live = (await client.query<{ id: string; display_id: string; source_fingerprint: SourceFingerprint | null }>(
     `SELECT id::text, display_id, source_fingerprint FROM driver_finance.driver_settlements
-      WHERE operating_company_id = $1::uuid AND source_document_ref = $2 AND voided_at IS NULL AND status <> 'cancelled'
+      WHERE operating_company_id = $1::uuid AND source_document_ref = $2 AND ${notVoided()} AND ${statusNotCancelled()}
       ORDER BY created_at DESC LIMIT 1`,
     [input.operatingCompanyId, no])).rows[0];
   if (!no || !live) return { verdict: "new", settlement_no: no };

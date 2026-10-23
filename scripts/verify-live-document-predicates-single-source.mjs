@@ -15,6 +15,8 @@ const predicatePath='apps/backend/src/accounting/live-document-predicates.sql.ts
 const stateWriters=new Set([
  'apps/backend/src/driver-finance/settlement-void-state.service.ts',
  'apps/backend/src/driver-finance/driver-bill-void-state.service.ts',
+ // LEAD 443.260-B: the driver-settlement void cascade STAMPS the linked company settlement voided/cancelled — a state writer.
+ 'apps/backend/src/driver-finance/driver-settlement-void-cascade.service.ts',
 ]);
 const moneyLiteral=line=>/\b(?:voided_at|reversed_at)\s+IS\s+(?:NOT\s+)?NULL/i.test(line)||/\bstatus\s*(?:<>|!=|=|NOT\s+IN|IN)\s*\(?\s*'(?:void|voided|cancelled)'/i.test(line);
 function files(dir){return fs.existsSync(dir)?fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(path.join(dir,e.name)):[path.join(dir,e.name)]):[];}

@@ -1,3 +1,4 @@
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 import { stampDriverBillVoidedInClientTx } from "./driver-bill-void-state.service.js";
 /**
  * ROUND 180 / R-186 — Settlement Creator orchestration.
@@ -1572,7 +1573,7 @@ export async function postSettlementCreatorInClientTx(
         const existing = (await client.query<{ id: string; fuel_type: string }>(
           `UPDATE fuel.fuel_transactions ft
               SET load_id = $3::uuid, driver_id = COALESCE($4::uuid, ft.driver_id), unit_id = COALESCE($5::uuid, ft.unit_id), updated_at = now()
-            WHERE ft.operating_company_id = $1::uuid AND ft.relay_fuel_transaction_id = $2::uuid AND ft.voided_at IS NULL
+            WHERE ft.operating_company_id = $1::uuid AND ft.relay_fuel_transaction_id = $2::uuid AND ${notVoided("ft")}
             RETURNING ft.id::text, ft.fuel_type`,
           [draft.operating_company_id, relayFillId, loadId, fillLoad.driverId, fillLoad.unitId],
         )).rows;

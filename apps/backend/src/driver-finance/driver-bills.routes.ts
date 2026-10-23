@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { openDriverBill, driverBillAmountKnown } from "../accounting/live-document-predicates.sql.js";
+import { driverBillAmountKnown, liveDriverBill, openDriverBill } from "../accounting/live-document-predicates.sql.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { canAccessDriverLoadBills } from "./driver-bills-access.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
@@ -178,7 +178,7 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
           LEFT JOIN driver_finance.driver_settlements ds
             ON ds.id = db.settled_in_settlement_id AND ds.operating_company_id = db.operating_company_id
           WHERE db.operating_company_id = $1::uuid AND db.load_id = $2::uuid
-            AND db.status NOT IN ('void', 'voided') AND db.voided_at IS NULL
+            AND ${liveDriverBill("db")}
           ORDER BY db.team_driver_id NULLS FIRST, db.created_at DESC
         `,
         [parsed.data.operating_company_id, params.data.loadId]

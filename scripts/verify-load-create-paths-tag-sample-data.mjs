@@ -133,7 +133,8 @@ function assert(files) {
   }
 
   // The route must be able to RECEIVE the flag, or the column is written but never true.
-  if (!/is_sample_data:\s*z\./.test(route)) {
+  // 443.260-B: queryBoolean() (a z.preprocess around z.boolean that also takes "true"/"false") accepts the flag too.
+  if (!/is_sample_data:\s*(z\.|queryBoolean\()/.test(route)) {
     problems.push(`${ROUTE}: createLoadBodySchema must accept is_sample_data, or the column can never be set true`);
   }
 

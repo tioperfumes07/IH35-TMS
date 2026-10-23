@@ -1,3 +1,4 @@
+import { canonicalBookedNotCancelledLoadClause, canonicalNotCancelledLoadClause } from "./canonical-active-load-set.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 // GO-22 pre-settlement (owner direct instruction 2026-09-02), superseded by SET-01 (owner ruling
 // 2026-09-03/09-04, settled): "The instant a load is CREATED it joins a pre-settlement. Not at
@@ -80,7 +81,7 @@ export async function repairReassignedPresettlementBoundaries(client: DbClient, 
       ), boundaries AS (
         SELECT array_agg(l.id ORDER BY l.created_at, l.id) AS ids FROM mdata.loads l
         WHERE l.operating_company_id = $2::uuid AND l.presettlement_link_id = $1::uuid
-          AND l.soft_deleted_at IS NULL AND l.voided_at IS NULL AND l.status::text <> 'cancelled'
+          AND l.soft_deleted_at IS NULL AND l.voided_at IS NULL AND ${canonicalNotCancelledLoadClause("l")}
       )
       UPDATE driver_finance.driver_settlements s
       SET first_load_id = b.ids[1], last_load_id = b.ids[array_length(b.ids, 1)], updated_at = now()
@@ -120,7 +121,7 @@ export async function findOpenPresettlementTourForUnit(
         WHERE l.operating_company_id = s.operating_company_id
           AND l.assigned_unit_id = $3::uuid AND l.tour_id = s.tour_id
           AND (l.presettlement_link_id = s.id OR l.id = s.first_load_id)
-          AND l.soft_deleted_at IS NULL AND l.status::text <> 'cancelled'
+          AND l.soft_deleted_at IS NULL AND ${canonicalNotCancelledLoadClause("l")}
       )
     ORDER BY s.created_at DESC, s.id
     LIMIT 1
@@ -170,7 +171,7 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
                            AND (nb.presettlement_link_id = s.id OR nb.id = s.first_load_id)
                            AND nb.id <> $3::uuid AND nb.trip_type = 'NB'
                            AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM s.driver_id
-                           AND nb.soft_deleted_at IS NULL AND nb.status::text NOT IN ('cancelled', 'draft'))
+                           AND nb.soft_deleted_at IS NULL AND ${canonicalBookedNotCancelledLoadClause("nb")})
       ORDER BY s.created_at DESC LIMIT 1`,
     [input.operating_company_id, input.driver_id, input.load_id]
   )).rows[0] ?? null : null;
@@ -205,7 +206,7 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
                      -- another driver) no longer anchors the trip — the driver's real next NB joins the open pre-settlement
                      -- instead of colliding with uq_driver_settlements_one_open_per_driver.
                      AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM driver_settlements.driver_id
-                     AND nb.soft_deleted_at IS NULL AND nb.status::text NOT IN ('cancelled', 'draft')) AS has_other_nb
+                     AND nb.soft_deleted_at IS NULL AND ${canonicalBookedNotCancelledLoadClause("nb")}) AS has_other_nb
             FROM driver_finance.driver_settlements
            WHERE operating_company_id = $1::uuid
              AND driver_id = $2::uuid
@@ -225,7 +226,7 @@ export async function suggestPresettlementLink(client: DbClient, input: SuggestI
                  AND l.tour_id = driver_settlements.tour_id
                  AND l.assigned_unit_id = $4::uuid
                  AND (l.presettlement_link_id = driver_settlements.id OR l.id = driver_settlements.first_load_id)
-                 AND l.soft_deleted_at IS NULL AND l.status::text <> 'cancelled'
+                 AND l.soft_deleted_at IS NULL AND ${canonicalNotCancelledLoadClause("l")}
              ))
            ORDER BY (status = 'open' AND trip_closed_at IS NULL) DESC, created_at DESC
            LIMIT 1
@@ -577,7 +578,7 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
            WHERE l.operating_company_id = driver_settlements.operating_company_id
              AND l.tour_id = driver_settlements.tour_id AND l.assigned_unit_id = $5::uuid
              AND (l.presettlement_link_id = driver_settlements.id OR l.id = driver_settlements.first_load_id)
-             AND l.soft_deleted_at IS NULL AND l.status::text <> 'cancelled')) FOR UPDATE`,
+             AND l.soft_deleted_at IS NULL AND ${canonicalNotCancelledLoadClause("l")})) FOR UPDATE`,
       [targetId, input.operating_company_id, suggestion.driver_id, suggestion.tour_id, suggestion.unit_id ?? null, Boolean(input.override_settlement_id)]
     );
     if (!targetRes.rows[0]) {
@@ -597,7 +598,7 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
           -- LEAD 443.243: same rule as suggestPresettlementLink — an NB that left this driver does not occupy the trip.
           AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM (SELECT driver_id
             FROM driver_finance.driver_settlements WHERE id = $2::uuid AND operating_company_id = $1::uuid)
-          AND nb.soft_deleted_at IS NULL AND nb.status::text NOT IN ('cancelled', 'draft')
+          AND nb.soft_deleted_at IS NULL AND ${canonicalBookedNotCancelledLoadClause("nb")}
       ) AS has_other_nb`, [input.operating_company_id, targetId, suggestion.load_id]);
       if (occupied.rows[0]?.has_other_nb) throw new PresettlementLinkError(
         "open_settlement_already_has_nb", "This open settlement already has an NB leg. Start a new tour.");
@@ -813,7 +814,7 @@ export async function linkLoadToPresettlementAfterAssignmentInClientTx(
           WHERE l.operating_company_id = driver_settlements.operating_company_id
             AND l.tour_id = driver_settlements.tour_id AND l.assigned_unit_id = $4::uuid
             AND (l.presettlement_link_id = driver_settlements.id OR l.id = driver_settlements.first_load_id)
-            AND l.soft_deleted_at IS NULL AND l.status::text <> 'cancelled') LIMIT 1
+            AND l.soft_deleted_at IS NULL AND ${canonicalNotCancelledLoadClause("l")}) LIMIT 1
     `, [input.operating_company_id, input.driver_id, tourId, input.unit_id]) : { rows: [] };
     if (!existingTour.rows.length) {
       const inheritedTour = await findOpenPresettlementTourForUnit(client, {

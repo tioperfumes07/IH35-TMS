@@ -2,6 +2,7 @@
  * ROUND 180 / R-186 — Settlement Creator routes.
  * POST preview + POST commit. USMCA + Owner/Admin/Accountant only. No Book Load.
  */
+import { notVoided, statusNotCancelled } from "../accounting/live-document-predicates.sql.js";
 import { checkSettlementSourceOnClient, describeSourceDiff } from "./settlement-source-fingerprint.js";
 import { FeedGateError } from "./feed-gate/feed-gate.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -325,9 +326,9 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
                 (c.measured->>'new_total_due_cents')::bigint AS new_total_due_cents
            FROM driver_finance.driver_settlements s
            JOIN driver_finance.feed_intakes fi ON fi.subject_id = s.id AND fi.operating_company_id = s.operating_company_id
-            AND fi.feed_kind = 'settlement' AND fi.voided_at IS NULL
+            AND fi.feed_kind = 'settlement' AND ${notVoided("fi")}
            JOIN driver_finance.feed_intake_checks c ON c.intake_id = fi.id AND c.check_group = 'source' AND c.check_key = 'source_unchanged'
-          WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL AND s.status <> 'cancelled'
+          WHERE s.operating_company_id = $1::uuid AND ${notVoided("s")} AND ${statusNotCancelled("s")}
           ORDER BY s.id, c.measured_at DESC`,
         [co])).rows.filter((r: Record<string, unknown>) => r.status === "fail");
     });

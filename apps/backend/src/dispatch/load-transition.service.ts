@@ -237,7 +237,8 @@ export async function transitionDispatchLoadInClientTx(client: TransitionClient,
   await withSavepoint(
     client as never,
     "dispatch_transition_settlement_ping",
-    () => pingSettlementOnLoadEvent(client, {
+    // 443.260-B: awaited explicitly inside the savepoint (same call, same order) — verify-delivery-latch-pings-settlement.
+    async () => await pingSettlementOnLoadEvent(client, {
       loadId: loadId,
       operatingCompanyId,
       dispatchTargetStatus: targetStatus,
