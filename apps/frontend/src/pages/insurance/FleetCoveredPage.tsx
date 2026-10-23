@@ -17,7 +17,7 @@ function policyCell(row: InsuranceFleetCoveredUnit, type: InsuranceCoverageType)
   if (row.vehicle_type === "trailer" && type === "auto_liability") return <span className="inline-flex rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#4B5563]">N/A</span>;
   const coverage = row.coverages.find((item) => item.coverage_type === type);
   if (!coverage) return <span className="inline-flex rounded-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-800">MISSING</span>;
-  return <Link className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-800 underline" to={`/safety/insurance/policies/${coverage.policy_id}`}>{coverage.policy_number} · {coverage.expiry_date}</Link>;
+  return <Link className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-800 underline" to={`/insurance/policies/${coverage.policy_id}`}>{coverage.policy_number} · {coverage.expiry_date}</Link>;
 }
 
 export function FleetCoveredPage() {

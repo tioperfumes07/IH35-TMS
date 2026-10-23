@@ -317,7 +317,7 @@ const DEFAULT_LINK_CLASSNAME =
  * "transfer" → /banking/transfers?transfer_id= (TransfersListPage highlights row)
  * "work_order" → /maintenance/work-orders/:id
  * "bill" → /accounting/bills/:id · "expense" → /accounting/expenses/:id · "matter" → /legal/matters/:id
- * "lawsuit" → /safety/insurance/lawsuits?lawsuit_id= (LawsuitsTab selects+highlights the row)
+ * "lawsuit" → /insurance/lawsuits?lawsuit_id= (LawsuitsTab selects+highlights the row)
  * "bank_transaction" → /banking/transactions?txn_id= (BankingHome expands row)
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
@@ -425,9 +425,9 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "bank_transaction":
       return `/banking/transactions?txn_id=${id}`;
     case "claim":
-      return `/safety/insurance/claims?claim_id=${id}`;
+      return `/insurance/claims?claim_id=${id}`;
     case "lawsuit":
-      return `/safety/insurance/lawsuits?lawsuit_id=${id}`;
+      return `/insurance/lawsuits?lawsuit_id=${id}`;
     case "matter":
       return `/legal/matters/${id}`;
     case "account":
@@ -442,7 +442,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "fixed_asset":
       return `/accounting/fixed-assets?asset_id=${id}`;
     case "insurance_policy":
-      return `/safety/insurance/policies/${id}`;
+      return `/insurance/policies/${id}`;
     case "dvir":
       return `/safety/idvr/${id}`;
     case "maintenance_inspection":
@@ -550,7 +550,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "audit_event":
       return `/audit/trail?audit_event_id=${id}`;
     case "insurance_coverage_gaps":
-      return `/safety/insurance/coverage-gaps?unit_id=${id}`;
+      return `/insurance/coverage-gaps?unit_id=${id}`;
     case "property_tax_unit":
       return `/compliance/property-tax?unit_id=${id}`;
     case "fault_drafts_unit":
@@ -610,7 +610,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "safety_events_load":
       return `/safety/safety-events?related_load_id=${id}`;
     case "insurance_policies_vendor":
-      return `/safety/insurance/policies?vendor_id=${id}`;
+      return `/insurance/policies?vendor_id=${id}`;
     case "severe_repairs_unit":
       return `/maintenance/severe-repairs?unit_id=${id}`;
     case "driver_scheduler_driver":
@@ -696,13 +696,13 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "legal_matters_vendor":
       return `/legal/matters?vendor_id=${id}`;
     case "insurance_claims_driver":
-      return `/safety/insurance/claims?driver_id=${id}`;
+      return `/insurance/claims?driver_id=${id}`;
     case "insurance_claims_unit":
-      return `/safety/insurance/claims?unit_id=${id}`;
+      return `/insurance/claims?unit_id=${id}`;
     case "insurance_claims_load":
-      return `/safety/insurance/claims?load_id=${id}`;
+      return `/insurance/claims?load_id=${id}`;
     case "insurance_claims_trailer":
-      return `/safety/insurance/claims?trailer_id=${id}`;
+      return `/insurance/claims?trailer_id=${id}`;
     case "active_wos_driver":
       return `/maintenance/active-wos?driver_id=${id}`;
     case "active_wos_load":

@@ -38,7 +38,7 @@ describe("InsuranceClaimsReverseSection", () => {
     renderSection();
     await screen.findByText("Insurance Claims");
     fireEvent.click(screen.getByTestId("insurance-claims-reverse-section"));
-    expect(navigateMock).toHaveBeenCalledWith("/safety/insurance/claims?driver_id=driver-1");
+    expect(navigateMock).toHaveBeenCalledWith("/insurance/claims?driver_id=driver-1");
   });
 
   it("DRV-12: clicking the Open Claims link does not ALSO fire the card's own navigate", async () => {

@@ -20,7 +20,7 @@ const strip = (t) =>
     .replace(/(^|\s)\/\/.*$/gm, "$1");
 
 const MODULE_PREFIXES = [
-  "/safety/insurance",
+  "/insurance",
   "/driver-finance",
   "/driver-hub",
   "/work-orders",
@@ -136,7 +136,7 @@ function fileModulePrefix(file) {
     help: "/help",
     docs: "/docs",
     eld: "/eld",
-    insurance: "/safety/insurance",
+    insurance: "/insurance",
     "work-orders": "/work-orders",
     "driver-hub": "/driver-hub",
     "cash-advances": "/cash-advances",

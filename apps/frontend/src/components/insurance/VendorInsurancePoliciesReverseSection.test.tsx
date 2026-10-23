@@ -11,7 +11,7 @@ describe("VendorInsurancePoliciesReverseSection", () => {
   it("queries the exact vendor FK and drills to policy detail", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(<QueryClientProvider client={client}><MemoryRouter><VendorInsurancePoliciesReverseSection operatingCompanyId="usmca" vendorId="vendor-1" /></MemoryRouter></QueryClientProvider>);
-    expect(await screen.findByRole("link", { name: "POL-100" })).toHaveAttribute("href", "/safety/insurance/policies/policy-1");
+    expect(await screen.findByRole("link", { name: "POL-100" })).toHaveAttribute("href", "/insurance/policies/policy-1");
     expect(listInsurancePolicies).toHaveBeenCalledWith({ operating_company_id: "usmca", vendor_id: "vendor-1" });
   });
 });

@@ -104,9 +104,9 @@ function wrap(ui: ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/safety/insurance/policies/${policyId}`]}>
+      <MemoryRouter initialEntries={[`/insurance/policies/${policyId}`]}>
         <Routes>
-          <Route path="/safety/insurance/policies/:policyId" element={ui} />
+          <Route path="/insurance/policies/:policyId" element={ui} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -122,13 +122,13 @@ describe("PolicyDetail claims/lawsuits reverse chrome (C-16)", () => {
   it("renders the claim number as a real EntityLink to the claim, not plain text", async () => {
     render(wrap(<PolicyDetail />));
     const link = await screen.findByRole("link", { name: "CLM-0042" });
-    expect(link.getAttribute("href")).toBe(`/safety/insurance/claims?claim_id=${claimId}`);
+    expect(link.getAttribute("href")).toBe(`/insurance/claims?claim_id=${claimId}`);
   });
 
   it("renders the lawsuit case number as a real EntityLink to the lawsuit, not plain text", async () => {
     render(wrap(<PolicyDetail />));
     const link = await screen.findByRole("link", { name: "CASE-9001" });
-    expect(link.getAttribute("href")).toBe(`/safety/insurance/lawsuits?lawsuit_id=${lawsuitId}`);
+    expect(link.getAttribute("href")).toBe(`/insurance/lawsuits?lawsuit_id=${lawsuitId}`);
     expect(insuranceApiMocks.listInsuranceLawsuits).toHaveBeenCalledWith({
       operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
       policy_id: policyId,

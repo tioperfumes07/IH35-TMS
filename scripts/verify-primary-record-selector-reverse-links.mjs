@@ -80,8 +80,8 @@ function check(sources) {
   const required = [
     ["dispatchMatrix", "planning.loads", ["load", "connectivity", "reverse_link"], "/dispatch/planners/loads"],
     ["dispatchMatrix", "planning.timeline", ["load", "connectivity", "reverse_link"], "/dispatch/planners/timeline"],
-    ["insuranceMatrix", "claims.list", ["connectivity", "reverse_link"], "/safety/insurance/claims"],
-    ["insuranceMatrix", "lawsuits.list", ["connectivity", "reverse_link"], "/safety/insurance/lawsuits"],
+    ["insuranceMatrix", "claims.list", ["connectivity", "reverse_link"], "/insurance/claims"],
+    ["insuranceMatrix", "lawsuits.list", ["connectivity", "reverse_link"], "/insurance/lawsuits"],
     ["maintenanceMatrix", "home.rm_status_board", ["work_order", "connectivity", "reverse_link"], "/maintenance?tab=rm_status_board"],
     ["maintenanceMatrix", "home.recent_activity", ["work_order", "connectivity", "reverse_link"], "/maintenance"],
   ];

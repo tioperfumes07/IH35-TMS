@@ -33,7 +33,7 @@ function audit(sources) {
     .map(([name]) => name);
   let matrix;
   try { matrix = JSON.parse(sources.matrix); } catch (error) { failures.push(`Insurance matrix parse: ${error.message}`); }
-  for (const [id, route] of [["policies.detail", "/safety/insurance/policies/:id"], ["coverage_gaps", "/safety/insurance/coverage-gaps"]]) {
+  for (const [id, route] of [["policies.detail", "/insurance/policies/:id"], ["coverage_gaps", "/insurance/coverage-gaps"]]) {
     const leaf = matrix?.leaves?.find((candidate) => candidate.id === id);
     if (!leaf?.required?.includes("reverse_link")) failures.push(`${id} must require reverse_link`);
     if (leaf?.route_hint !== route) failures.push(`${id} must name mounted route ${route}`);
@@ -58,7 +58,7 @@ if (process.argv.includes("--selftest")) {
     if (audit(mutated).includes(name)) caught += 1;
     else throw new Error(`selftest failed to catch: ${name}`);
   }
-  for (const [id, route] of [["policies.detail", "/safety/insurance/policies/:id"], ["coverage_gaps", "/safety/insurance/coverage-gaps"]]) {
+  for (const [id, route] of [["policies.detail", "/insurance/policies/:id"], ["coverage_gaps", "/insurance/coverage-gaps"]]) {
     const idToken = `"id": "${id}"`, start = original.matrix.indexOf(idToken), end = original.matrix.indexOf("\n    {", start + idToken.length), block = original.matrix.slice(start, end < 0 ? original.matrix.length : end);
     for (const [token, replacement] of [[idToken, `"id": "${id}.broken"`], ['"reverse_link"', '"reverse_link_broken"'], [`"route_hint": "${route}"`, '"route_hint": "broken"']]) {
       const changed = original.matrix.slice(0, start) + block.replace(token, replacement) + original.matrix.slice(end < 0 ? original.matrix.length : end);

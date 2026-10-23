@@ -53,9 +53,9 @@ function wrap(ui: ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/safety/insurance/policies/00000000-0000-4000-8000-000000000123"]}>
+      <MemoryRouter initialEntries={["/insurance/policies/00000000-0000-4000-8000-000000000123"]}>
         <Routes>
-          <Route path="/safety/insurance/policies/:policyId" element={ui} />
+          <Route path="/insurance/policies/:policyId" element={ui} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -131,7 +131,7 @@ describe("PolicyDetail edit and archive", () => {
         "00000000-0000-4000-8000-000000000123",
         "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
       );
-      expect(mockNavigate).toHaveBeenCalledWith("/safety/insurance/policies");
+      expect(mockNavigate).toHaveBeenCalledWith("/insurance/policies");
     });
 
     confirmSpy.mockRestore();

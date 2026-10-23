@@ -585,6 +585,9 @@ const LegalMatterNewPage = React.lazy(() => import("../pages/legal/matters/Legal
 const LegalMatterDetailPage = React.lazy(() => import("../pages/legal/matters/LegalMatterDetailPage").then((m) => ({ default: m.LegalMatterDetailPage })));
 const LegalReportsLandingPage = React.lazy(() => import("../pages/legal/reports/LegalReportsLandingPage").then((m) => ({ default: m.LegalReportsLandingPage })));
 const LegalDeadlineAlertsPage = React.lazy(() => import("../pages/legal/alerts/LegalDeadlineAlertsPage").then((m) => ({ default: m.LegalDeadlineAlertsPage })));
+const InsuranceModuleShell = React.lazy(() =>
+  import("../pages/insurance/InsuranceModuleShell").then((m) => ({ default: m.InsuranceModuleShell })),
+);
 const DriverSchedulerGridPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverSchedulerGridPage").then((m) => ({ default: m.DriverSchedulerGridPage })));
 const DriverSchedulerRequestInboxPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage").then((m) => ({ default: m.DriverSchedulerRequestInboxPage })));
 const DriverSchedulerRequestDetailPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage").then((m) => ({ default: m.DriverSchedulerRequestDetailPage })));
@@ -4186,6 +4189,14 @@ export const ROUTES = React.Children.toArray(
         <Route path="/reports/audit/void-reversal" element={<OwnerAdminRoute><AuditVoidReversalPage /></OwnerAdminRoute>} />
         <Route path="/reports/audit/period-close-history" element={<OwnerAdminRoute><AuditPeriodCloseHistoryPage /></OwnerAdminRoute>} />
         <Route
+          path="/insurance/*"
+          element={
+            <ProtectedRoute>
+              <InsuranceModuleShell />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/legal"
           element={
             <OwnerAdminRoute>
@@ -5380,6 +5391,5 @@ export const ROUTES = React.Children.toArray(
         <Route path="/dispatch/build-trip" element={<ProtectedRoute><Navigate to="/dispatch/trip-pairing" replace /></ProtectedRoute>} />
         <Route path="/api/*" element={<ApiDocumentPassthrough />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-        <Route path="/insurance" element={<Navigate to="/safety/insurance" replace />} />
   </>
 ) as React.ReactElement[];

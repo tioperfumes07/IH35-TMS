@@ -566,7 +566,7 @@
     },
     {
       "path": "/insurance",
-      "reason": "Redirect alias /insurance \u2192 /safety/insurance; sidebar deep-link compat (GAP-86)"
+      "reason": "Canonical Insurance module shell at /insurance (443.282); legacy /safety/insurance redirects here"
     },
     {
       "path": "/driver-hub",
