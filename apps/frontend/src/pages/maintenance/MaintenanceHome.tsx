@@ -160,6 +160,14 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const locationFilter = searchParams.get("location") ?? "";
   const bucketFilter = searchParams.get("bucket") ?? "";
+  const workOrderStatusFilter = searchParams.get("status") ?? "";
+  const expandedHomePanel = searchParams.get("home_panel") ?? "";
+  const toggleHomePanel = (panel: string) => setSearchParams((previous) => {
+    const next = new URLSearchParams(previous);
+    if (next.get("home_panel") === panel) next.delete("home_panel");
+    else next.set("home_panel", panel);
+    return next;
+  });
   const partInventoryId = searchParams.get("part_inventory_id")?.trim() ?? "";
   const driverReportId = searchParams.get("driver_report_id")?.trim() ?? "";
   const driverReportsDriverId = searchParams.get("driver_id")?.trim() ?? "";
@@ -282,6 +290,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       externalVendorFilter,
       locationFilter,
       bucketFilter,
+      workOrderStatusFilter,
       driverReportsDriverId,
       driverReportsLoadId,
     ],
@@ -291,6 +300,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         external_vendor_id: externalVendorFilter || undefined,
         location: locationFilter || undefined,
         bucket: bucketFilter || undefined,
+        status: workOrderStatusFilter || undefined,
         driver_id: driverReportsDriverId || undefined,
         load_id: driverReportsLoadId || undefined,
       }),
@@ -540,10 +550,10 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                   onRetry={() => void pmDueQuery.refetch()}
                 />
               ) : (
-                <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} compact />
+                <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} compact board />
               )
             ) : null}
-            {companyId ? <MaintEnginesStatusWidget operatingCompanyId={companyId} /> : null}
+            {companyId ? <MaintEnginesStatusWidget operatingCompanyId={companyId} compact /> : null}
             {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} compact /> : null}
             <details>
               <summary className="cursor-pointer text-xs">Other maintenance monitors</summary>
@@ -589,13 +599,13 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           </div>
           {/* C-36 — fold Arriving Soon + At Risk into Home (no peer tabs). */}
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="maintenance-home-folded-panels">
-            <div data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
-              <h3 className="mb-1 text-xs font-bold text-slate-700">Arriving soon — to the Laredo yard</h3>
-              <ArrivingSoonPage operatingCompanyId={companyId} compact />
+            <div className={expandedHomePanel === "arriving_soon" ? "xl:col-span-2" : undefined} data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-bold text-slate-700">Arriving soon — to the Laredo yard</h3><button type="button" className="text-xs" aria-expanded={expandedHomePanel === "arriving_soon"} onClick={() => toggleHomePanel("arriving_soon")}>{expandedHomePanel === "arriving_soon" ? "Show compact" : "View all →"}</button></div>
+              <ArrivingSoonPage operatingCompanyId={companyId} compact={expandedHomePanel !== "arriving_soon"} />
             </div>
-            <div data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
-              <h3 className="mb-1 text-xs font-bold text-slate-700">At risk — brakes &amp; tires</h3>
-              <PredictiveAlertsPage compact />
+            <div className={expandedHomePanel === "predictive_alerts" ? "xl:col-span-2" : undefined} data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-bold text-slate-700">At risk — brakes &amp; tires</h3><button type="button" className="text-xs" aria-expanded={expandedHomePanel === "predictive_alerts"} onClick={() => toggleHomePanel("predictive_alerts")}>{expandedHomePanel === "predictive_alerts" ? "Show compact" : "View all →"}</button></div>
+              <PredictiveAlertsPage compact={expandedHomePanel !== "predictive_alerts"} />
             </div>
           </div>
         </div>

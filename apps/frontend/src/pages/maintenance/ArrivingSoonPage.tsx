@@ -154,7 +154,7 @@ export function ArrivingSoonPage({ operatingCompanyId, compact = false }: Props)
       ),
     },
     { key: "hours_until_yard_arrival", label: "ETA", sortable: true, render: (card) => formatEta(card) },
-    { key: "final_dest_name", label: "Destination", render: (card) => formatDest(card) },
+    { key: "final_dest_name", label: compact ? "Arriving" : "Destination", render: (card) => <span>{formatDest(card)}{compact ? <> · <EntityLinkOrTombstone kind="load" id={card.load_id} name={card.load_display_id} noun="Load" /></> : null}</span> },
     {
       key: "open_issue",
       label: "Open Issue",
@@ -272,7 +272,7 @@ export function ArrivingSoonPage({ operatingCompanyId, compact = false }: Props)
       ) : null}
 
       {/* Desktop/tablet: full parity table. Mobile: stacked cards (same data, no horizontal scroll). */}
-      <div className="hidden sm:block">
+      {!query.isError ? <div className="hidden sm:block">
         <ParityTable<ArrivingSoonCardType>
           title="Units arriving soon"
           columns={compact ? columns.map((column) => ({ ...column, defaultHidden: !["unit_number", "driver_name", "final_dest_name", "hours_until_yard_arrival"].includes(String(column.key)) })) : columns}
@@ -288,7 +288,7 @@ export function ArrivingSoonPage({ operatingCompanyId, compact = false }: Props)
           pageSizeOptions={[pageSize]}
           hidePager
         />
-      </div>
+      </div> : null}
 
       {!query.isError && Number(counts.total ?? 0) > 0 ? (
         <nav className="flex items-center justify-between text-xs text-[#4B5563]" aria-label="Arriving Soon pages" data-testid="maint-arriving-soon-pager">

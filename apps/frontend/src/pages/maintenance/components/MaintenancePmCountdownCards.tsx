@@ -1,4 +1,5 @@
 import type { MaintPmDueRow } from "../../../api/maintenance";
+import { Link } from "react-router-dom";
 import { formatMilesRemainingHonest } from "../../../lib/odometerHonesty";
 
 type Props = {
@@ -6,6 +7,7 @@ type Props = {
   loading?: boolean;
   /** Opt-in narrow-sidebar layout: single column, smaller text, no card chrome. Default false. */
   compact?: boolean;
+  board?: boolean;
 };
 
 type PmCardType = {
@@ -79,7 +81,14 @@ function pmCardMetrics(rows: MaintPmDueRow[], card: PmCardType) {
   return { dueCount, overdueCount, nextRow };
 }
 
-export function MaintenancePmCountdownCards({ rows, loading = false, compact = false }: Props) {
+export function MaintenancePmCountdownCards({ rows, loading = false, compact = false, board = false }: Props) {
+  if (board) {
+    const due = rows.filter((row) => row.is_due).length;
+    return <section className="rounded-sm border border-slate-200 bg-white px-3 py-2">
+      <div className="flex items-center justify-between gap-2"><h3 className="text-xs font-semibold uppercase">PM countdown</h3><Link to="/maintenance/pm-schedule" aria-label="PM countdown — view schedules" className="text-xs font-semibold">{loading ? "…" : due}</Link></div>
+      <Link to="/maintenance/pm-schedule" className="mt-1 block text-xs text-slate-500">{loading ? "Loading schedules…" : rows.length === 0 ? "Oil · tires · DOT · brake — no active schedule" : `${rows.length} schedules · ${due} due. Open countdowns →`}</Link>
+    </section>;
+  }
   if (compact) {
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">

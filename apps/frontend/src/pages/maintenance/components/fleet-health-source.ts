@@ -6,6 +6,7 @@ export type FleetHealthRow = {
   telemetry_city: string | null; telemetry_state: string | null; speed_mph: number | null;
   pm_schedule_id: string | null; pm_interval: number | null; miles_left: number | null;
   state: "ok" | "soon" | "overdue" | "shop" | "none";
+  body_style?: "classic" | "sloped" | "aero";
 };
 type HealthResponse = { units: FleetHealthRow[]; kpi: { total: number } };
 

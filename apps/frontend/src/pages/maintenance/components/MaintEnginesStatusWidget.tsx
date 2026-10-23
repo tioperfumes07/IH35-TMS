@@ -27,9 +27,10 @@ function healthLabel(row: EngineStatusRow) {
 
 type Props = {
   operatingCompanyId: string;
+  compact?: boolean;
 };
 
-export function MaintEnginesStatusWidget({ operatingCompanyId }: Props) {
+export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }: Props) {
   const q = useQuery({
     queryKey: ["system", "engine-status", "maint-widget", operatingCompanyId],
     queryFn: () => getEngineStatusBoard(operatingCompanyId),
@@ -62,29 +63,30 @@ export function MaintEnginesStatusWidget({ operatingCompanyId }: Props) {
       <div className="mb-1 flex items-center justify-between gap-1">
         <h3 className="text-xs font-bold uppercase tracking-wide text-gray-600">Engines</h3>
         <Link to="/system/engine-status" className="text-xs text-[#1F2A44] underline" data-testid="maint-engines-full-board-link">
-          Full board
+          {compact ? (q.isLoading ? "…" : `${redCount} red`) : "Full board"}
         </Link>
       </div>
-      <p className="mb-1 text-xs text-[#4B5563]" data-testid="maint-engines-red-count">
+      <p className={compact ? "sr-only" : "mb-1 text-xs text-[#4B5563]"} data-testid="maint-engines-red-count">
         {q.isLoading ? "…" : `${redCount} red · ${rows.length} maintenance`}
       </p>
-      <ul className="max-h-48 space-y-1 overflow-y-auto text-xs">
+      <ul className={compact ? "flex flex-wrap gap-x-2 gap-y-1 text-xs" : "max-h-48 space-y-1 overflow-y-auto text-xs"}>
         {rows.map((row) => (
           <li
             key={row.id}
-            className="flex items-center justify-between gap-1 border-b border-gray-100 py-0.5 last:border-0"
+            className={compact ? "inline-flex items-center gap-1" : "flex items-center justify-between gap-1 border-b border-gray-100 py-0.5 last:border-0"}
             data-testid={`maint-engine-row-${row.id}`}
             data-health={row.health}
             title={row.health_reason}
           >
             <Link
               to={`/system/engine-status#${row.id}`}
+              aria-label={`${row.id} ${row.name} — ${healthLabel(row)}`}
               className="min-w-0 truncate text-[#0F1219] underline-offset-2 hover:underline"
               data-testid={`maint-engine-link-${row.id}`}
             >
-              {row.id} {row.name}
+              {row.id} {!compact ? row.name : healthLabel(row)}
             </Link>
-            <span className={row.health === "red" ? "shrink-0 font-semibold text-[#0F1219]" : "shrink-0 text-[#4B5563]"}>
+            <span className={compact ? "sr-only" : row.health === "red" ? "shrink-0 font-semibold text-[#0F1219]" : "shrink-0 text-[#4B5563]"}>
               {healthLabel(row)}
             </span>
           </li>

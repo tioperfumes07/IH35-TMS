@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import type { WorkOrder } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { entityLabel } from "../../../lib/entity-label";
@@ -93,7 +94,7 @@ function Table({
         key: "total_actual_cost",
         label: "Total Cost",
         numeric: true,
-        render: (row) => money((row as Record<string, unknown>).total_actual_cost),
+        render: (row) => <EntityLink kind="work_order" id={row.id} label={money((row as Record<string, unknown>).total_actual_cost)} onClick={(event) => { event.preventDefault(); onOpen(row.id); }} />,
       },
       {
         key: "opened_at",
@@ -116,7 +117,7 @@ function Table({
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white">
-      <div className="border-b border-gray-200 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-600">{title}</div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600"><h3>{title}</h3><div className="flex flex-wrap items-center gap-2">{title === "Recent Work Orders" ? <Link to="/maintenance?create_wo=1">+ Create Work Order</Link> : null}<Link to={title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos"}>View all →</Link></div></div>
       <div>
         {totalCount > rows.length ? (
           <div className="border-b border-gray-100 px-2 py-1 text-xs text-[#6B7280]" data-testid="maintenance-recent-activity-range">
