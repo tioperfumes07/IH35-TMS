@@ -221,6 +221,7 @@ import { registerDamageContinuityRoutes } from "./safety/damage-continuity/conti
 import { registerUserLocalePreferenceRoutes } from "./users/preferences/locale.routes.js";
 import { registerUtilizationRoutes } from "./utilization/utilization.routes.js";
 import { registerFuelTransactionImportRoutes } from "./fuel/fuel-transaction-import.routes.js";
+import { registerOwnerDataRepairRoutes } from "./accounting/owner-data-repair.routes.js";
 import { registerFuelTransactionsRoutes } from "./fuel/fuel-transactions.routes.js";
 import { registerFuelGeofenceRecommendationsRoutes } from "./fuel/fuel-geofence-recommendations.routes.js";
 import { registerFuelGlReflushRoutes } from "./fuel/fuel-gl-reflush.routes.js";
@@ -1174,6 +1175,8 @@ async function main() {
   await registerUserLocalePreferenceRoutes(app);
   await registerUtilizationRoutes(app);
   await registerFuelTransactionImportRoutes(app);
+  // LEAD 443.260.5 (b) — owner-only production data repairs (AUTH-453 B card credits, AUTH-454 settlement headers)
+  await registerOwnerDataRepairRoutes(app);
   await registerFuelTransactionsRoutes(app);
   // B-25 — read-only geofence-based recommendation surface for manual fuel entry (never writes)
   await registerFuelGeofenceRecommendationsRoutes(app);

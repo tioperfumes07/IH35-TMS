@@ -27,11 +27,16 @@ beforeAll(async () => {
   await c.query(`CREATE SCHEMA driver_finance; CREATE SCHEMA mdata;
     CREATE TABLE driver_finance.driver_settlements (id uuid PRIMARY KEY, operating_company_id uuid, driver_id uuid,
       tour_id uuid, status text, trip_closed_at timestamptz, voided_at timestamptz, posted_at timestamptz,
-      first_load_id uuid, last_load_id uuid, updated_at timestamptz, display_id text, created_at timestamptz DEFAULT now());
+      first_load_id uuid, last_load_id uuid, first_load_number text, last_load_number text, updated_at timestamptz, display_id text, created_at timestamptz DEFAULT now());
     CREATE TABLE driver_finance.driver_settlement_gl_runs (settlement_id uuid, operating_company_id uuid, status text);
     CREATE TABLE mdata.loads (id uuid PRIMARY KEY, operating_company_id uuid, presettlement_link_id uuid,
       soft_deleted_at timestamptz, voided_at timestamptz, status text, created_at timestamptz,
-      assigned_unit_id uuid, assigned_primary_driver_id uuid, trip_type text, tour_id uuid, updated_at timestamptz);
+      assigned_unit_id uuid, assigned_primary_driver_id uuid, trip_type text, tour_id uuid, updated_at timestamptz, load_number text);
+    CREATE TABLE mdata.load_stops (load_id uuid, actual_arrival_at timestamptz, appointment_start_at timestamptz,
+      scheduled_arrival_at timestamptz, soft_deleted_at timestamptz);
+    CREATE TABLE driver_finance.driver_bills (id uuid PRIMARY KEY, operating_company_id uuid, load_id uuid);
+    CREATE TABLE driver_finance.settlement_lines (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), settlement_id uuid,
+      operating_company_id uuid, load_id uuid, source_driver_bill_id uuid, is_active boolean DEFAULT true, voided_at timestamptz);
     CREATE TABLE driver_finance.presettlement_link_suggestions (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), operating_company_id uuid, load_id uuid, driver_id uuid,
       unit_id uuid, trip_type text, tour_id uuid, suggested_settlement_id uuid, suggested_reason text,

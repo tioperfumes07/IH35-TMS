@@ -41,6 +41,7 @@
 // the existing, canonical aggregateSettlementTotals() on both settlements afterward -- this file
 // authors zero dollar math of its own.
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { rederiveSettlementBoundariesInClientTx } from "./settlement-boundaries.service.js";
 import { allocateSettlementDisplayId } from "./settlement-display-id.js";
 import { setSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import { aggregateSettlementTotals } from "./settlements-load-bookended.service.js";
@@ -311,21 +312,19 @@ export async function reassignLoadToSettlementInClientTx(
   );
   const movedBills = billsRes.rowCount ?? 0;
 
-  // 6. THE BOOKEND GAP FIX (see file header) -- clear the source settlement's first/last_load_id
-  // if either one names the load that just moved, so aggregateSettlementTotals's COALESCE-only-
-  // fills-NULL bookend backfill can honestly re-derive them from whatever loads remain.
+  // 6. THE BOOKEND GAP FIX, LEAD 443.260.4 (CC-2): both settlements' boundaries are re-derived from their own lines by
+  // THE one engine (settlement-boundaries.service.ts). NULLing a boundary that named the moved load and leaving the
+  // COALESCE-only rollup to refill it let the pre-settlement link stamp the joining load as "first".
   if (fromSettlementId) {
-    await client.query(
-      `UPDATE driver_finance.driver_settlements
-          SET first_load_id = CASE WHEN first_load_id = $2::uuid THEN NULL ELSE first_load_id END,
-              first_load_number = CASE WHEN first_load_id = $2::uuid THEN NULL ELSE first_load_number END,
-              last_load_id = CASE WHEN last_load_id = $2::uuid THEN NULL ELSE last_load_id END,
-              last_load_number = CASE WHEN last_load_id = $2::uuid THEN NULL ELSE last_load_number END,
-              updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
-      [fromSettlementId, input.load_id, input.operating_company_id]
-    );
+    await rederiveSettlementBoundariesInClientTx(client, {
+      operatingCompanyId: input.operating_company_id, settlementId: fromSettlementId, actorUserId: input.actor_user_id,
+      reason: "load reassigned away", clearWhenNoLoads: true,
+    }, (eventClass, payload) => appendCrudAudit(client, input.actor_user_id, eventClass, payload, "info", "443.260.4"));
   }
+  await rederiveSettlementBoundariesInClientTx(client, {
+    operatingCompanyId: input.operating_company_id, settlementId: input.target_settlement_id, actorUserId: input.actor_user_id,
+    reason: "load reassigned in",
+  }, (eventClass, payload) => appendCrudAudit(client, input.actor_user_id, eventClass, payload, "info", "443.260.4"));
 
   // 7. recompute headers -- see recomputeSettlementHeader's own header comment for why this is
   // NOT a blind call to aggregateSettlementTotals.

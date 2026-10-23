@@ -30,6 +30,11 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
   const client = {
     query: vi.fn(async (sql: string, values: unknown[] = []) => {
       calls.push({ sql, values });
+      // LEAD 443.260.5 (c) (CC-2): confirm re-derives the settlement's first/last load through THE boundary engine
+      // (settlement-boundaries.service.ts), which locks and reads the header first.
+      if (sql.includes("SELECT first_load_id::text, last_load_id::text, first_load_number::text, last_load_number::text")) {
+        return { rows: [{ first_load_id: null, last_load_id: null, first_load_number: null, last_load_number: null }] };
+      }
       if (sql.includes("SELECT l.id::text, l.trip_type, l.assigned_primary_driver_id")) return { rows: [{
         id: LOAD_ID, trip_type: overrides.currentTripType ?? pending?.[4] ?? overrides.suggestionTripType ?? "TR",
         driver_id: overrides.currentDriver ?? DRIVER_ID, unit_id: pending?.[3] ?? null,
