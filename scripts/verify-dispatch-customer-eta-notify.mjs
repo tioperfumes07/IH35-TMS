@@ -230,9 +230,10 @@ function main() {
       [
         "drop conflict refusal",
         "service",
+        // 443.271 (CC-2): the first "DO NOTHING" in the file is the header comment; plant the SQL clause itself.
         sources.service.replace(
-          "DO NOTHING",
-          "DO UPDATE SET updated_at = now()",
+          /DO NOTHING(\s*RETURNING id::text)/,
+          "DO UPDATE SET updated_at = now()$1",
         ),
       ],
       [
