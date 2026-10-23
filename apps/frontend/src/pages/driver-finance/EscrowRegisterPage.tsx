@@ -77,10 +77,12 @@ export function EscrowRegisterPage() {
       const isOut = typ === "release" || typ === "forfeiture" || amt < 0;
       const abs = Math.abs(amt);
       run += isOut ? -abs : abs;
+      // A uuid fragment is never a label (verify-no-uuid-label-rendering): the source names its kind + date; the link
+      // (sourceHref) still opens the exact settlement / journal entry.
       const settLabel = t.settlement_id
-        ? `Settlement ${t.settlement_id.slice(0, 8)}`
+        ? `Settlement · ${formatDateUS(t.created_at) || "posted"}`
         : t.journal_entry_id
-          ? `Journal ${formatDateUS(t.journal_entry_date) || t.journal_entry_id.slice(0, 8)}`
+          ? `Journal · ${formatDateUS(t.journal_entry_date) || formatDateUS(t.created_at) || "entry"}`
           : t.memo || "Escrow entry";
       built.push({
         id: t.id,
