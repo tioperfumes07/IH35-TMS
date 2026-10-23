@@ -96,5 +96,8 @@
   },
   "reports": {
     "title": "Reportes"
+  },
+  "fuel": {
+    "no_load_at_pump": "Sin carga al momento de cargar combustible"
   }
 }

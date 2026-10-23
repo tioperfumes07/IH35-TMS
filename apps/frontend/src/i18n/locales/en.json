@@ -96,5 +96,8 @@
   },
   "reports": {
     "title": "Reports"
+  },
+  "fuel": {
+    "no_load_at_pump": "No load at pump time"
   }
 }

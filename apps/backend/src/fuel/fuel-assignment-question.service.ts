@@ -31,8 +31,49 @@ export type FuelCandidateTruck = {
   distance_mi: number | null;
   samsara_driver: string | null;
   odometer: number | null;
-  load: FuelCandidateLoad;
+  /** LEAD 443.258-A: ALWAYS present — the truck's load at the pump moment, or null when it had none. Never omitted. */
+  load: FuelCandidateLoad | null;
 };
+
+/**
+ * LEAD 443.258-A (P0 crash D001: "Cannot read properties of undefined (reading 'load_number')"). Every candidate the API
+ * returns carries `load` — an object or null — whatever shape the stored evidence row has. A question row written with
+ * the flat legacy shape (load_number / unit_number / gps_* on the candidate, no `load` key) is mapped here on READ, so
+ * every reader (list, get, answer, upsert) hands the popup one shape.
+ */
+export function normalizeCandidate(raw: unknown): FuelCandidateTruck {
+  const c = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const str = (v: unknown) => (v == null || v === "" ? null : String(v));
+  const num = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
+  let load: FuelCandidateLoad | null = null;
+  const nested = c.load;
+  if (nested && typeof nested === "object") {
+    const l = nested as Record<string, unknown>;
+    load = l.load_id || l.load_number
+      ? { load_id: str(l.load_id), load_number: str(l.load_number), settlement_ref: str(l.settlement_ref), pickup: str(l.pickup), delivery: str(l.delivery), route: str(l.route) }
+      : null;
+  } else if (c.load_id || c.load_number) {
+    load = { load_id: str(c.load_id), load_number: str(c.load_number), settlement_ref: str(c.settlement_ref), pickup: null, delivery: null, route: str(c.route) };
+  }
+  const distanceM = num(c.distance_m);
+  return {
+    unit_id: str(c.unit_id) ?? "",
+    unit_number: str(c.unit_number) ?? "—",
+    distance_m: distanceM,
+    minutes_off: num(c.minutes_off ?? c.gps_minutes_off),
+    distance_mi: num(c.distance_mi ?? c.gps_distance_mi) ?? (distanceM != null ? Math.round((distanceM / 1609.344) * 100) / 100 : null),
+    samsara_driver: str(c.samsara_driver),
+    odometer: num(c.odometer),
+    load,
+  };
+}
+
+export function normalizeQuestionRow<T extends { evidence: unknown } | null | undefined>(row: T): T {
+  if (!row) return row;
+  const ev = (row.evidence && typeof row.evidence === "object" ? row.evidence : {}) as Record<string, unknown>;
+  const candidates = Array.isArray(ev.candidates) ? ev.candidates.map(normalizeCandidate) : [];
+  return { ...row, evidence: { ...ev, candidates, truck_resolution: String(ev.truck_resolution ?? ""), load_resolution: String(ev.load_resolution ?? ""), moment_source: (ev.moment_source as string | null) ?? null } };
+}
 
 export type FuelAssignmentQuestionRow = {
   id: string;
@@ -183,7 +224,8 @@ async function enrichCandidate(
     });
     loadId = load?.load_id ?? null;
   }
-  const load = await loadWindowLabel(client, loadId);
+  // 443.258-A: no load at the pump moment -> load: null (never an empty object, never omitted)
+  const load = loadId ? await loadWindowLabel(client, loadId) : null;
   return {
     unit_id: c.unit_id,
     unit_number: c.unit_number,
@@ -354,7 +396,7 @@ export async function upsertFuelAssignmentQuestion(
     "info",
     "LEAD-443.243"
   );
-  return row;
+  return normalizeQuestionRow(row);
 }
 
 /** Resolve fill → certain assign OR open a question. */
@@ -464,7 +506,7 @@ export async function listFuelAssignmentQuestions(
       values
     )
   ).rows;
-  return { rows, total };
+  return { rows: rows.map((r) => normalizeQuestionRow(r)), total };
 }
 
 export async function countOpenFuelAssignmentQuestions(client: DbClient, companyId: string): Promise<number> {
@@ -484,7 +526,7 @@ export async function getFuelAssignmentQuestion(
 ): Promise<FuelAssignmentQuestionRow | null> {
   const { rows } = await listFuelAssignmentQuestions(client, { companyId, status: "all", limit: 1 });
   void rows;
-  return (
+  const row = (
     await client.query<FuelAssignmentQuestionRow>(
       `SELECT q.id::text, q.operating_company_id::text, q.fuel_transaction_id::text, q.status,
               q.fill_moment_at::text, q.fill_moment_ct, q.station, q.gallons::text, q.amount_cents::text,
@@ -497,7 +539,8 @@ export async function getFuelAssignmentQuestion(
         WHERE q.operating_company_id = $1::uuid AND q.id = $2::uuid`,
       [companyId, id]
     )
-  ).rows[0] ?? null;
+  ).rows[0];
+  return row ? normalizeQuestionRow(row) : null;
 }
 
 export type AnswerKind = "confirm_proposed" | "pick_other" | "keep_card_truck";
@@ -610,5 +653,5 @@ export async function answerFuelAssignmentQuestion(
     "info",
     "LEAD-443.243"
   );
-  return { question: updated, outcome };
+  return { question: normalizeQuestionRow(updated), outcome };
 }
