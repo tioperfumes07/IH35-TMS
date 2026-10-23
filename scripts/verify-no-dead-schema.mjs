@@ -125,6 +125,10 @@ export function splitDefinitions(body) {
 export function extractSchema(sqlFiles) {
   const tables = new Map();
   const columns = new Map();
+  // LEAD 443.282: views are readers too. A table that code reaches only THROUGH a view (D074's
+  // telematics.vehicle_latest_position_cache behind the telematics.vehicle_latest_position view that
+  // every position API reads) is wired, not dead. view name -> Set(source tables); last definition wins.
+  const views = new Map();
   const dropped = new Set();
   const droppedTables = new Set();
   const QUALIFIED = /^[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*$/i;
@@ -162,6 +166,20 @@ export function extractSchema(sqlFiles) {
       }
     }
 
+    // Textual order matters: "DROP VIEW x; CREATE VIEW x AS ..." must leave x defined.
+    for (const m of sql.matchAll(
+      /CREATE(?:\s+OR\s+REPLACE)?(?:\s+MATERIALIZED)?\s+VIEW(?:\s+IF NOT EXISTS)?\s+([A-Za-z_][\w.]*)[\s\S]*?\bAS\b([\s\S]*?);|DROP (?:MATERIALIZED )?VIEW(?:\s+IF EXISTS)?\s+([A-Za-z_][\w.]*)/gi
+    )) {
+      if (m[3]) {
+        if (QUALIFIED.test(m[3])) views.delete(m[3]);
+        continue;
+      }
+      if (!QUALIFIED.test(m[1])) continue;
+      const sources = new Set();
+      for (const f of m[2].matchAll(/\b(?:FROM|JOIN)\s+([A-Za-z_][\w]*\.[A-Za-z_][\w]*)/gi)) sources.add(f[1]);
+      views.set(m[1], sources);
+    }
+
     for (const m of sql.matchAll(/DROP TABLE(?:\s+IF EXISTS)?\s+([A-Za-z_][\w.]*)/gi)) {
       if (QUALIFIED.test(m[1])) droppedTables.add(m[1]);
     }
@@ -173,7 +191,7 @@ export function extractSchema(sqlFiles) {
     tables.delete(t);
     for (const k of [...columns.keys()]) if (k.startsWith(`${t}.`)) columns.delete(k);
   }
-  return { tables, columns };
+  return { tables, columns, views };
 }
 
 function walk(dir, out = []) {
@@ -222,17 +240,30 @@ export function referenceKind(ident, index, contextFiles) {
   return "none";
 }
 
-export function analyze({ tables, columns }, index) {
+export function analyze({ tables, columns, views = new Map() }, index) {
   const contextCache = new Map();
-  const ctxFor = (t) => {
+  const directCtx = (t) => {
     if (!contextCache.has(t)) contextCache.set(t, filesTouchingTable(index, t));
     return contextCache.get(t);
+  };
+  // A view counts as a reader of its source table only when code actually reads the view.
+  const readViewsOf = new Map();
+  for (const [view, sources] of views) {
+    if (referenceKind(view.split(".").pop(), index, directCtx(view)) !== "strong") continue;
+    for (const src of sources) {
+      if (!readViewsOf.has(src)) readViewsOf.set(src, []);
+      readViewsOf.get(src).push(view);
+    }
+  }
+  const ctxFor = (t) => {
+    const viaViews = (readViewsOf.get(t) ?? []).flatMap((v) => directCtx(v));
+    return viaViews.length ? [...new Set([...directCtx(t), ...viaViews])] : directCtx(t);
   };
   const findings = [];
 
   for (const [table, migration] of tables) {
     const short = table.split(".").pop();
-    const kind = referenceKind(short, index, ctxFor(table));
+    const kind = (readViewsOf.get(table) ?? []).length > 0 ? "strong" : referenceKind(short, index, ctxFor(table));
     if (kind !== "strong") findings.push({ object: table, kind: "TABLE", verdict: kind, migration });
   }
   for (const [key, { table, column, migration }] of columns) {
@@ -350,6 +381,22 @@ function selftest() {
   const suppressionContext = filesTouchingTable(suppressionReader, "notifications.suppression_rules");
   if (referenceKind("reason", suppressionReader, suppressionContext) !== "strong") failures.push("suppression reason reader not recognized");
   if (referenceKind("auto_suppressed", suppressionReader, suppressionContext) !== "strong") failures.push("suppression provenance reader not recognized");
+
+  // VIEW-READER LOCK (LEAD 443.282): a table read only through a view that code reads is wired; the same
+  // table behind a view nobody reads is still dead.
+  const viewSchema = extractSchema([{ name: "0002_view.sql", sql: `CREATE TABLE t.pos_cache (
+              unit_ref uuid,
+              odometer_mi numeric
+            );
+            DROP VIEW IF EXISTS t.pos_latest;
+            CREATE VIEW t.pos_latest AS SELECT unit_ref, odometer_mi FROM t.pos_cache;` }]);
+  if (!viewSchema.views.get("t.pos_latest")?.has("t.pos_cache")) failures.push("view source table not extracted");
+  const viewReader = [{ path: "appsbackendsrcpositionsts", text: "SELECT unit_ref, odometer_mi FROM t.pos_latest", tokens: new Set(["select", "unitref", "odometermi", "from", "t", "poslatest"]) }];
+  const viaView = analyze(viewSchema, viewReader);
+  if (viaView.some((f) => f.object.startsWith("t.pos_cache"))) failures.push("table read through a read view reported dead");
+  const noViewReader = [{ path: "appsbackendsrcotherts", text: "const y = 1;", tokens: new Set(["const", "y"]) }];
+  const unread = analyze(viewSchema, noViewReader);
+  if (!unread.some((f) => f.object === "t.pos_cache")) failures.push("table behind an UNREAD view passed as wired");
 
   if (failures.length) {
     console.error("verify-no-dead-schema SELFTEST FAILED:");
