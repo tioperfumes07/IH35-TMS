@@ -378,6 +378,8 @@ import { registerLoadRealDrivenMilesRoutes } from "./telematics/load-real-driven
 import { registerThreeMileCpmRoutes } from "./reports/three-mile-cpm.service.js";
 import { registerOdometerManualRoutes } from "./telematics/odometer-manual.routes.js";
 import { registerFaultCodeAlertsRoutes } from "./maintenance/fault-code-alerts.routes.js";
+import { registerFleetHealthRoutes } from "./maintenance/fleet-health.routes.js";
+import { registerServiceMapRoutes } from "./maintenance/service-map.routes.js";
 import { registerDrivenMilesLegsRoutes } from "./telematics/driven-miles-legs.routes.js";
 import { registerIftaMilesRoutes } from "./telematics/ifta-miles.routes.js";
 import { registerTelematicsLinkageRoutes } from "./telematics/telematics-linkage.routes.js";
@@ -1328,6 +1330,8 @@ async function main() {
   await registerMaintenancePmAutoEngineRoutes(app);
   await registerOdometerManualRoutes(app);
   await registerFaultCodeAlertsRoutes(app);
+  await registerFleetHealthRoutes(app);
+  await registerServiceMapRoutes(app);
   await registerDrivenMilesLegsRoutes(app);
   await registerIftaMilesRoutes(app);
   await registerTelematicsLinkageRoutes(app);
