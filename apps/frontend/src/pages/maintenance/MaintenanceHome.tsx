@@ -601,11 +601,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="maintenance-home-folded-panels">
             <div className={expandedHomePanel === "arriving_soon" ? "xl:col-span-2" : undefined} data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
               <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-bold text-slate-700">Arriving soon — to the Laredo yard</h3><button type="button" className="text-xs" aria-expanded={expandedHomePanel === "arriving_soon"} onClick={() => toggleHomePanel("arriving_soon")}>{expandedHomePanel === "arriving_soon" ? "Show compact" : "View all →"}</button></div>
-              <ArrivingSoonPage operatingCompanyId={companyId} compact={expandedHomePanel !== "arriving_soon"} />
+              <ArrivingSoonPage key={`arriving-${expandedHomePanel === "arriving_soon" ? "full" : "compact"}`} operatingCompanyId={companyId} compact={expandedHomePanel !== "arriving_soon"} />
             </div>
             <div className={expandedHomePanel === "predictive_alerts" ? "xl:col-span-2" : undefined} data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
               <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="text-xs font-bold text-slate-700">At risk — brakes &amp; tires</h3><button type="button" className="text-xs" aria-expanded={expandedHomePanel === "predictive_alerts"} onClick={() => toggleHomePanel("predictive_alerts")}>{expandedHomePanel === "predictive_alerts" ? "Show compact" : "View all →"}</button></div>
-              <PredictiveAlertsPage compact={expandedHomePanel !== "predictive_alerts"} />
+              <PredictiveAlertsPage key={`predictive-${expandedHomePanel === "predictive_alerts" ? "full" : "compact"}`} compact={expandedHomePanel !== "predictive_alerts"} />
             </div>
           </div>
         </div>
