@@ -89,7 +89,15 @@ export async function stampStopArrival(
 export async function stampStopDeparture(
   client: DbClient,
   stop: LockedStopRow & { status: string },
-  ctx: { loadId: string; actorUserId: string; source: StopArrivalSource; auditEvent: string }
+  ctx: {
+    loadId: string;
+    actorUserId: string;
+    source: StopArrivalSource;
+    auditEvent: string;
+    /** LEAD 443.279 — the evidence time of the departure (a stored GPS fix leaving the stop's fence). Absent = now()
+     *  (a live tap). Never a guessed time: callers pass only an observed telematics/POD timestamp. */
+    at?: string | null;
+  }
 ): Promise<StampResult<{ proforma_invoice: unknown }> | { ok: false; error: "invalid_stop_state" }> {
   if (!["arrived", "loaded", "unloaded"].includes(stop.status)) return { ok: false, error: "invalid_stop_state" };
 
@@ -112,7 +120,7 @@ export async function stampStopDeparture(
   const departureUpdate = await client.query<{ id: string }>(
     `
       UPDATE mdata.load_stops
-      SET actual_departure_at = now(),
+      SET actual_departure_at = COALESCE($4::timestamptz, now()),
           actual_departure_source = $3,
           status = 'departed'
       WHERE id = $1
@@ -120,7 +128,7 @@ export async function stampStopDeparture(
         AND actual_departure_at IS NULL
       RETURNING id
     `,
-    [stop.id, ctx.loadId, ctx.source]
+    [stop.id, ctx.loadId, ctx.source, ctx.at ?? null]
   );
   if (!departureUpdate.rows[0]?.id) return { ok: false, error: "departure_already_recorded" };
 

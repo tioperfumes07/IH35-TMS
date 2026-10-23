@@ -1339,6 +1339,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-dispatched-load-has-stop-stamps",
     ["apps/backend/src/dispatch/stop-stamp.service.ts", "apps/backend/src/telematics/geofence-detector.service.ts", "apps/backend/src/cron/samsara-positions-cron.ts"],
   ],
+  // LEAD 443.279 — delivered* only through the final stop's departure (fence detector exit, transition refusal, history repair).
+  [
+    "verify-delivered-load-has-final-departure",
+    ["apps/backend/src/telematics/geofence-detector.service.ts", "apps/backend/src/dispatch/load-transition.service.ts", "apps/backend/src/dispatch/stop-stamp.service.ts", "apps/backend/src/telematics/fence-departure-from-history.service.ts", "apps/backend/src/cron/load-stop-geofence-sync.cron.ts"],
+  ],
   // ROUND 155.12 (Lead, 2026-09-28) — canonicalActiveLoadNotFinishedByMoneyCte treated an OPEN,
   // unsettled driver bill (raised AT DISPATCH) as "finished money", silently dropping every
   // freshly-dispatched load off every board. Live check: no load whose only money artifact is an

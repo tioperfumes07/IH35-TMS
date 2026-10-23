@@ -1125,5 +1125,12 @@
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-steps/18709-verify-design-tokens-only.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443279-DELIVERED-NEEDS-FINAL-DEPARTURE",
+    "title": "A load reaches delivered* only through its final active delivery stop's departure; delivered* with no final departure fails",
+    "source_file": "AGENTS.md",
+    "guard": "scripts/verify-delivered-load-has-final-departure.mjs",
+    "type": "enforced"
   }
 ]
