@@ -43,10 +43,16 @@ PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha m
 - MERGE: #27347 squash `c758d20ded…` · RENDER ih35-tms-web live `dep-dbds300u01pc73dselsg`
 - NEXT was PreSettlements (this row)
 
-## 2026-10-23 America/Chicago · SETL-F443274-PRESETTLE Settlements-PreSettlements board SHIPPING
-- BRANCH: `cursor/443274-settlements-presettle-c89b` · tip base `origin/main` (443.271 MERGED `0538eea583` — pause lifted)
-- DELTA: 6 KPI tiles (Total unpaid / This period / Driver pay (period)+trend / Drivers w/ debt / YTD / Open driver bills) · side-by-side Open pre-settlements + What closes a tour · board columns Number·Driver·Unit·Loads so far·Pay so far·Ready·Waiting on (Unit/Ready/Waiting = "—" — not on SettlementListRow; 443.269-A tour gate unchanged) · QBO_MONEY_CELL_CLASS on Pay so far
-- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0 · vitest PreSettlementsPanel 7/7 · verify-settlements-qbo-chrome-surfaces PASS
+## 2026-10-23 America/Chicago · SETL-F443274-PRESETTLE Settlements-PreSettlements board DONE
+- MERGE: #27349 squash `69773d209646b6d168eec9b2b787fe538351b7e6`
+- RENDER ih35-tms-web: **live** deploy id `dep-dbdsak61egvs73f7pvgg` (commit 69773d2096)
+- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0 · vitest PreSettlementsPanel 7/7
 - GUARD: verify-settlements-qbo-chrome-surfaces (PreSettle board asserts)
-- NEXT: merge → Render web live deploy id → Settlements-Close → Company → Deductions → CashAdvances → Escrow → EscrowRegister → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
+- NEXT: 443.274-C Settlements-Close → Company → Deductions → CashAdvances → Escrow → EscrowRegister → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
+
+## 2026-10-23 America/Chicago · SETL-F443274-CLOSE Settlements-Close board SHIPPING
+- BRANCH: `cursor/443274-settlements-close-c89b` · tip base `69773d2096` (PreSettlements live)
+- DELTA: board 2fr|1fr Driver on arrival loads table (Load·Lane·Delivered·Miles (doc)·Pay via getTourReadout + miles_basis) + Result panel (Gross/Deductions/Escrow/Advances/Net); keep closeSettlementPayRun / settleAndPay / PaymentMethodPicker / Rule 07
+- PRE-MERGE: `cd apps/frontend && ./node_modules/.bin/tsc -b` (typescript 6.0.3) EXIT 0 · `node scripts/verify-settlements-qbo-chrome-surfaces.mjs` PASS (+selftest) · money-pr-local-gate EXIT 0 (this commit)
+- NEXT: money-pr-local-gate EXIT 0 → PR → merge → live deploy id → Settlements-Company
 

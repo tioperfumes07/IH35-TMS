@@ -1,5 +1,5 @@
 import { TourMilesPanel } from "../../components/dispatch/TourMilesPanel";
-import { getTourReadout } from "../../api/tourReadout";
+import { getTourReadout, type TourLeg } from "../../api/tourReadout";
 import { entityLabel } from "../../lib/entity-label";
 import { useSearchParams } from "react-router-dom";
 import { settlementLabel } from "../../lib/settlementNumber";
@@ -29,10 +29,21 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { V3 } from "../../design/v3-tokens";
-import { formatUsd } from "../../lib/money";
+import { formatUsd, QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
+
+/** Board Miles (doc) — driver-bill miles_basis when present, else practical; never invent. */
+function milesDocForLeg(
+  leg: TourLeg,
+  bills: Array<{ load_id: string; miles_basis: number | null }> | undefined,
+): string {
+  const bill = (bills ?? []).find((b) => b.load_id === leg.load_id);
+  const n = bill?.miles_basis ?? leg.miles_practical;
+  if (n == null || !Number.isFinite(Number(n))) return "—";
+  return Number(n).toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 0 });
+}
 
 /** Board chrome only (ROUND 443.250 Settlements-Close.dc.html) — not a multi-step engine. */
 const CLOSE_BOARD_STEPS = [
@@ -156,6 +167,15 @@ export function SettlementCloseArrivalPage() {
     queryKey: ["driver-finance", "pre-settlements", "by-driver", companyId, selectedDriverId],
     queryFn: () => getPreSettlementForDriver(String(selectedDriverId), companyId),
     enabled: Boolean(companyId) && Boolean(selectedDriverId),
+  });
+
+  const settlementIdForReadout = detailQuery.data?.settlement?.id ?? null;
+  // ROUND 443.274-C board — Load·Lane·Delivered·Miles (doc)·Pay from the same tour readout
+  // SettlementCloseMiles already used (LDT-5 one engine). Chrome only; no new math.
+  const tourReadoutQuery = useQuery({
+    queryKey: ["tour-readout", "settlement-close-board", companyId, settlementIdForReadout],
+    queryFn: () => getTourReadout(String(settlementIdForReadout), companyId),
+    enabled: Boolean(companyId) && Boolean(settlementIdForReadout),
   });
 
   const debtQuery = useQuery({
@@ -314,9 +334,32 @@ export function SettlementCloseArrivalPage() {
 
   const openDriverCount = openQuery.data?.pre_settlements?.length ?? 0;
   const moneyOrDash = (n: number) => (settlement ? formatUsd(n) : "—");
-  // Presentation highlight only: Driver until a settlement is loaded; Net & pay once the live
-  // composition (gross→net) is on screen. Does not gate Close or change posting.
-  const activeStep = settlement ? 7 : 1;
+  // Presentation highlight only (board Settlements-Close.dc.html shows STEP 3 Gross when the
+  // loads table + Result are on screen). Does not gate Close or change posting.
+  const activeStep = settlement ? 3 : 1;
+
+  const tourLegs = tourReadoutQuery.data?.legs ?? [];
+  const tourBills = tourReadoutQuery.data?.driver_settlement?.driver_bills;
+  const unitLabel =
+    tourReadoutQuery.data?.tour?.unit_number?.trim() ||
+    tourLegs.find((l) => l.unit_number)?.unit_number?.trim() ||
+    null;
+  const driverBoardName = entityLabel(
+    settlement?.driver_name?.trim() ||
+      (openQuery.data?.pre_settlements ?? []).find((r) => r.driver_id === settlement?.driver_id)?.driver_name?.trim() ||
+      tourReadoutQuery.data?.tour?.driver_name?.trim() ||
+      null,
+    settlement?.driver_id,
+    "Driver",
+  );
+  const settlementBoardNum = settlement ? settlementLabel(settlement) : "—";
+  const grossMilesDoc = tourLegs.reduce((sum, leg) => {
+    const bill = (tourBills ?? []).find((b) => b.load_id === leg.load_id);
+    const n = bill?.miles_basis ?? leg.miles_practical;
+    return sum + (n != null && Number.isFinite(Number(n)) ? Number(n) : 0);
+  }, 0);
+  const grossPayFromLegs = tourLegs.reduce((sum, leg) => sum + Number(leg.driver_pay_cents ?? 0) / 100, 0);
+  const boardGrossPay = settlement ? gross || earnings || grossPayFromLegs : 0;
 
   return (
     <div className="space-y-3" data-settlement-close-v3="1">
@@ -404,11 +447,7 @@ export function SettlementCloseArrivalPage() {
       {!companyId ? (
         <p className="text-xs text-gray-600">Select an operating company first.</p>
       ) : (
-        <V3Panel
-          title="Settlement close"
-          subtitle="Driver arrival · gross · deductions · escrow · advances · net & pay"
-          testId="settlement-close-panel"
-        >
+        <div className="space-y-3" data-testid="settlement-close-panel">
           <label className="block max-w-xl">
             <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
               Driver with an open pre-settlement (on arrival)
@@ -439,26 +478,188 @@ export function SettlementCloseArrivalPage() {
           {selectedDriverId && detailQuery.isError ? <p className="text-xs text-red-600">No active pre-settlement found for this driver.</p> : null}
 
           {settlement ? (
-            <div className="mt-4 space-y-4 border-t border-gray-200 pt-4">
+            <>
+              {/* ROUND 443.274-C Settlements-Close.dc.html — 2fr|1fr Driver on arrival | Result */}
+              <div
+                style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, alignItems: "start" }}
+                data-settlement-close-v3-board="1"
+                data-testid="settlement-close-v3-board"
+              >
+                <V3Panel
+                  title={`Driver on arrival · ${driverBoardName}${unitLabel ? ` · ${unitLabel}` : ""} · ${settlementBoardNum}`}
+                  testId="settlement-close-arrival-panel"
+                >
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-xs" data-testid="settlement-close-loads-table">
+                      <thead>
+                        <tr style={{ background: V3.page }}>
+                          {["Load", "Lane", "Delivered", "Miles (doc)", "Pay"].map((h) => (
+                            <th
+                              key={h}
+                              className="whitespace-nowrap px-3 py-1.5 text-left font-semibold uppercase tracking-wide text-[#4B5563]"
+                              style={{
+                                fontSize: 11,
+                                borderBottom: `1px solid ${V3.border}`,
+                                textAlign: h === "Miles (doc)" || h === "Pay" ? "right" : "left",
+                              }}
+                            >
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tourReadoutQuery.isLoading ? (
+                          <tr>
+                            <td colSpan={5} className="px-3 py-2 text-gray-500">
+                              Loading loads…
+                            </td>
+                          </tr>
+                        ) : null}
+                        {tourReadoutQuery.isError ? (
+                          <tr>
+                            <td colSpan={5} className="px-3 py-2 text-red-600">
+                              Could not load tour legs.{" "}
+                              <button type="button" className="underline" onClick={() => void tourReadoutQuery.refetch()}>
+                                Retry
+                              </button>
+                            </td>
+                          </tr>
+                        ) : null}
+                        {!tourReadoutQuery.isLoading && !tourReadoutQuery.isError && tourLegs.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-3 py-2 text-gray-500">
+                              No loads on this open tour.
+                            </td>
+                          </tr>
+                        ) : null}
+                        {tourLegs.map((leg) => (
+                          <tr key={leg.load_id}>
+                            <td className="whitespace-nowrap px-3 py-1.5" style={{ borderBottom: `1px solid ${V3.borderSoft}` }}>
+                              <EntityLink
+                                kind="load"
+                                id={leg.load_id}
+                                label={entityLabel(leg.load_number, leg.load_id, "Load")}
+                              />
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-1.5" style={{ borderBottom: `1px solid ${V3.borderSoft}` }}>
+                              {leg.lane?.trim() || "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-1.5" style={{ borderBottom: `1px solid ${V3.borderSoft}` }}>
+                              {formatDateUS(leg.delivery_date)}
+                            </td>
+                            <td
+                              className={`${QBO_MONEY_CELL_CLASS} whitespace-nowrap px-3 py-1.5`}
+                              style={{ borderBottom: `1px solid ${V3.borderSoft}`, textAlign: "right" }}
+                            >
+                              {milesDocForLeg(leg, tourBills)}
+                            </td>
+                            <td
+                              className={`${QBO_MONEY_CELL_CLASS} whitespace-nowrap px-3 py-1.5`}
+                              style={{ borderBottom: `1px solid ${V3.borderSoft}`, textAlign: "right" }}
+                            >
+                              {formatUsd(Number(leg.driver_pay_cents ?? 0) / 100)}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr style={{ background: V3.page }}>
+                          <td className="px-3 py-2 font-bold" style={{ borderTop: `1px solid ${V3.border}` }}>
+                            Gross
+                          </td>
+                          <td style={{ borderTop: `1px solid ${V3.border}` }} />
+                          <td style={{ borderTop: `1px solid ${V3.border}` }} />
+                          <td
+                            className={`${QBO_MONEY_CELL_CLASS} px-3 py-2 font-bold`}
+                            style={{ borderTop: `1px solid ${V3.border}`, textAlign: "right" }}
+                          >
+                            {grossMilesDoc > 0
+                              ? grossMilesDoc.toLocaleString("en-US", { maximumFractionDigits: 1 })
+                              : "—"}
+                          </td>
+                          <td
+                            className={`${QBO_MONEY_CELL_CLASS} px-3 py-2 font-bold`}
+                            style={{ borderTop: `1px solid ${V3.border}`, textAlign: "right" }}
+                          >
+                            {formatUsd(boardGrossPay)}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </V3Panel>
+
+                <V3Panel title="Result" testId="settlement-close-result-panel">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <Button type="button" variant="secondary" onClick={() => setSelectedDriverId(null)}>
+                      Back
+                    </Button>
+                    <span
+                      className="inline-flex h-7 items-center rounded-sm px-3 text-xs font-semibold text-white"
+                      style={{ background: V3.shell }}
+                      data-testid="settlement-close-next-deductions"
+                    >
+                      Next: Deductions
+                    </span>
+                  </div>
+                  <table className="w-full border-collapse text-xs" data-testid="settlement-close-result-table">
+                    <thead>
+                      <tr style={{ background: V3.page }}>
+                        <th
+                          className="px-3 py-1.5 text-left font-semibold uppercase tracking-wide text-[#4B5563]"
+                          style={{ fontSize: 11, borderBottom: `1px solid ${V3.border}` }}
+                        >
+                          Line
+                        </th>
+                        <th
+                          className="px-3 py-1.5 text-right font-semibold uppercase tracking-wide text-[#4B5563]"
+                          style={{ fontSize: 11, borderBottom: `1px solid ${V3.border}` }}
+                        >
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(
+                        [
+                          ["Gross", boardGrossPay],
+                          ["Deductions", Math.abs(otherDeductionsTotal)],
+                          ["Escrow", Math.abs(escrowContributionThisSettlement)],
+                          ["Advances recovered", Math.abs(advanceRecoveryTotal)],
+                          ["Net to driver", netPay],
+                        ] as const
+                      ).map(([label, amount]) => (
+                        <tr key={label}>
+                          <td className="px-3 py-1.5" style={{ borderBottom: `1px solid ${V3.borderSoft}` }}>
+                            {label}
+                          </td>
+                          <td
+                            className={`${QBO_MONEY_CELL_CLASS} px-3 py-1.5`}
+                            style={{ borderBottom: `1px solid ${V3.borderSoft}`, textAlign: "right" }}
+                          >
+                            {formatUsd(amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </V3Panel>
+              </div>
+
+              <V3Panel
+                title="Settlement close"
+                subtitle="Driver arrival · gross · deductions · escrow · advances · net & pay"
+                testId="settlement-close-detail-panel"
+              >
+              <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="text-xs font-semibold text-gray-900">
-                    <EntityLink
-                      kind="driver"
-                      id={settlement.driver_id}
-                      label={entityLabel(
-                        settlement.driver_name?.trim() ||
-                          (openQuery.data?.pre_settlements ?? []).find((r) => r.driver_id === settlement.driver_id)?.driver_name?.trim() ||
-                          null,
-                        settlement.driver_id,
-                        "Driver",
-                      )}
-                    />{" "}
+                    <EntityLink kind="driver" id={settlement.driver_id} label={driverBoardName} />{" "}
                     —{" "}
                     <EntityLink
                       kind="settlement"
                       id={settlement.id}
-                      label={settlementLabel(settlement)}
+                      label={settlementBoardNum}
                     />
                   </div>
                   <div className="text-xs text-gray-600">
@@ -660,8 +861,10 @@ export function SettlementCloseArrivalPage() {
                 </Button>
               </div>
             </div>
+              </V3Panel>
+            </>
           ) : null}
-        </V3Panel>
+        </div>
       )}
       <CreateDriverModal
         open={driverCreateOpen}
