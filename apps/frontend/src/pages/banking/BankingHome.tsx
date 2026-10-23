@@ -26,11 +26,9 @@ import { useAuth } from "../../auth/useAuth";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { AccountTilesRow } from "./components/AccountTilesRow";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
-import { DriftAlertsPanel } from "./components/DriftAlertsPanel";
 import { getQboConnectionStatus } from "../../api/forensic";
 import { ManualJEModal } from "../accounting/ManualJEModal";
-import { BankingHomeAttentionStrip } from "./components/BankingHomeAttentionStrip";
-import { BankingHomeConnectionErrorStrip } from "./components/BankingHomeConnectionErrorStrip";
+import { BankingHomeBoard } from "./components/BankingHomeBoard";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
@@ -53,15 +51,10 @@ import { formatUsd, formatNumber } from "../../utils/qboFormat";
 import { entityLabel } from "../../lib/entity-label";
 import { BankingNewMenu } from "./components/BankingNewMenu";
 import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
-import { MoneyKpiTile } from "../../components/money/MoneyKpiTile";
-import { BankingKpiPanel } from "../../components/banking/BankingKpiPanel";
 import { getFactoringKpis } from "../../api/factoring-kpis";
 import { getBankingLedgerKpis } from "../../api/banking-kpis";
 import { DriverEscrowSummaryCard } from "./components/DriverEscrowSummaryCard";
 import { NotApplicable } from "../../components/money/NotApplicable";
-import { WhereTheMoneyIsRail, type MoneyRailRow } from "./components/WhereTheMoneyIsRail";
-import { NeedsCategorizingQueue, type NeedsCategorizingRow } from "./components/NeedsCategorizingQueue";
-import { BankingReconHomeCard } from "./components/BankingReconHomeCard";
 import { FactoringSummaryCard } from "./components/FactoringSummaryCard";
 import { FactoringReservesSharedPanel } from "../../components/factoring/FactoringReservesSharedPanel";
 import { SelectCombobox } from "../../components/Combobox";
@@ -213,12 +206,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryFn: () => getFactoringVirtual(companyId),
     enabled: Boolean(companyId),
   });
-  // BANK-F01 / AUDIT row 2 — Cash posting KPI must match the per-account tile sum in dollars.
-  // GET /api/v1/banking/dashboard/kpis sets total_cash = sumAuthoritativeDepositoryCashCents() / 100
-  // (dollars for UI; same authoritative total as cash-flow opening_cash_cents). Do NOT divide again
-  // here — #3997 converted cents at the selector; #4011 moved conversion to the API, and a second
-  // /100 made TRANSP render ~$1,739 instead of ~−$173,932 (100× deflation vs tile sum).
-  const cashPosting = Number(kpiQuery.data?.total_cash ?? 0);
   const uncategorizedCount = Number(kpiQuery.data?.total_uncategorized ?? 0);
   const factoringVirtualSummary = useMemo(() => {
     const companies = factoringVirtualQuery.data?.companies ?? [];
@@ -279,7 +266,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     return (cents("escrow_reserve_balance") + cents("cash_reserve_balance")) / 100;
   }, [factoringKpiQuery.data?.kpis]);
   const factoringOutstandingLiability = factoringVirtualSummary.outstandingLiability;
-  const escrowFeed = Number(kpiQuery.data?.driver_escrow ?? 0);
   const sortedBankTiles = useMemo(
     () =>
       [...tiles]
@@ -296,19 +282,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const realBankTiles = useMemo(
     () => sortedBankTiles.filter((t) => String(t.tile_kind) === "real"),
     [sortedBankTiles],
-  );
-  /**
-   * The accounts "Cash on hand" actually sums: the cash-bearing classes. Credit cards are excluded
-   * on purpose — a card balance is a liability. Kept beside realBankTiles so the sub-label can state
-   * the real denominator instead of implying every account is in the figure.
-   */
-  const cashBankTiles = useMemo(
-    () =>
-      realBankTiles.filter((t) => {
-        const cls = String((t as { account_class?: unknown }).account_class ?? "").toLowerCase();
-        return cls !== "credit_card" && cls !== "credit";
-      }),
-    [realBankTiles],
   );
   // ROUND-20.8 B7 — "Recon accts" used to read the count of currently-OPEN reconciliation sessions,
   // not accounts that have ever actually been reconciled — a live 0 there read as neutral gray next
@@ -550,336 +523,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           to: BANKING_TAB_PATH[tab.id],
         }))}
       />
-      {/* GO-20 slice A — "Blocks the highest-value card on the owner home page after 425C." Shown
-          regardless of the active sub-tab, same as the highest-priority attention surface should be. */}
-      <DriftAlertsPanel companyId={companyId} />
       {kpiQuery.isError || tilesQuery.isError || uncategorizedQuery.isError ? <ListErrorBanner onRetry={() => void uncategorizedQuery.refetch()} /> : null}
-      {/* ROUND-20.8 B9 — this "Plaid sync status" + bare "Connect via PlaidLink" pair used to render
-          here UNCONDITIONALLY (every tab), on top of BankingPlaidConnectionsPanel appearing again
-          on Accounts/Plaid Connections/Settings — the same fact rendered up to 3x on one page.
-          BankingPlaidConnectionsPanel is now the ONE canonical panel (it grew its own
-          + Connect bank/credit card/other buttons, see that file) — this duplicate pair is deleted. */}
+      {/* ROUND-20.8 B9 — Plaid sync status pair deleted; BankingPlaidConnectionsPanel is canonical. */}
 
+      {/* ROUND 443.267 board 3 — Banking Home sections/order match the approved board (not a V3 reskin).
+          Drift alerts live inside the Home board (not a global strip above every tab). */}
       {activeTab === "accounts" ? (
-        <>
-          {/* ROUND 326.2 item 2 — banking KPIs from the bank feed + GL, each drilling to its rows. */}
-          {companyId ? <BankingKpiPanel companyId={companyId} /> : null}
-          {/* C-65 — fixed side-dock; never in-flow (no layout shift). */}
-          <BankingHomeAttentionStrip
-            facts={{
-              uncategorizedCount,
-              transactionCount: syncTransactionCount,
-              reconciledAccountsCount,
-              totalBankAccounts: totalBankAccountsForRecon,
-              unboundCashGlCount: (allAccountsQuery.data?.accounts ?? []).filter((a) => !a.ledger_account_id).length,
-              qboConnected: qboConnectionQuery.data?.connected ?? false,
-              escrowBalanceCents: Math.round(Number(kpiQuery.data?.driver_escrow ?? 0) * 100),
-              escrowDriverCount: (escrowBalancesQuery.data?.drivers ?? []).filter(
-                (d) => Number(d.escrow_balance ?? 0) !== 0
-              ).length,
-              unmatchedAged7d: Number(unmatched7dQuery.data?.unmatched_7d ?? 0),
-              unmatched7dAlertOpen: Boolean(unmatched7dQuery.data?.unmatched_7d_alert_open),
-            }}
-            onCategorize={() => {
-              setTransactionsInitialFilter("uncategorized");
-              navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
-            }}
-            onReconcile={openStartReconciliation}
-            onCashGl={() => navigate("/banking/cash-gl-setup")}
-            onDriverEscrow={() => {
-              setActiveTab("driver_escrow");
-              navigate(BANKING_TAB_PATH.driver_escrow);
-            }}
-          />
-
-          {/* B-3 §16 — per-account feed connection errors; never silently stale. */}
-          <BankingHomeConnectionErrorStrip
-            accounts={plaidAccountsQuery.data?.accounts ?? []}
-            onFixNow={() => navigate(BANKING_TAB_PATH.plaid_connections)}
-            onDisconnect={() => navigate(BANKING_TAB_PATH.plaid_connections)}
-            onRequest={(row) => {
-              pushToast(
-                `Request sent for ${row.label} (${row.syncStatus}). An Owner can Fix now or Disconnect on Plaid Connections.`,
-                "info",
-              );
-              navigate(BANKING_TAB_PATH.plaid_connections);
-            }}
-          />
-
-          {/* C-64 — 6 KPI tiles across (never stacked bars). */}
-          <div
-            className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6"
-            data-c64-home-kpis="1"
-          >
-            {(() => {
-              const unboundCashGl = (allAccountsQuery.data?.accounts ?? []).filter((a) => !a.ledger_account_id).length;
-              const uncatTone = uncategorizedCount === 0 ? "good" : "warn";
-              const reconTone =
-                totalBankAccountsForRecon === 0
-                  ? "neutral"
-                  : reconciledAccountsCount === 0
-                    ? "bad"
-                    : reconciledAccountsCount === totalBankAccountsForRecon
-                      ? "good"
-                      : "warn";
-              const cashGlTone = unboundCashGl === 0 ? "good" : "bad";
-              return (
-                <>
-                  <MoneyKpiTile
-                    label="Uncategorized"
-                    value={String(uncategorizedCount)}
-                    tone={uncatTone}
-                    sub={`${uncategorizedCount} of ${syncTransactionCount} transactions`}
-                    onClick={() => {
-                      setTransactionsInitialFilter("uncategorized");
-                      navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
-                    }}
-                    data-testid="banking-kpi-uncategorized"
-                  />
-                  <MoneyKpiTile
-                    label="Reconciled"
-                    value={
-                      totalBankAccountsForRecon > 0
-                        ? `${reconciledAccountsCount} of ${totalBankAccountsForRecon}`
-                        : "—"
-                    }
-                    tone={reconTone}
-                    sub={
-                      totalBankAccountsForRecon === 0
-                        ? "no bank accounts yet"
-                        : "accounts ever reconciled"
-                    }
-                    onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
-                    data-testid="banking-kpi-recon-accounts"
-                  />
-                  {/*
-                    OWNER DEFECT, 2026-10-02, measured live on /banking.
-                    The tile read "Cash on hand -$20,573.72" with the sub-label "8 real bank
-                    account(s)". The FIGURE is right and the LABEL was false: total_cash is
-                    sumAuthoritativeDepositoryCashCents() — the DEPOSITORY/cash accounts only — which
-                    on that screen was USMCA FREIGHT $12,152.73 + Relay Fuel Wallet -$32,726.45 =
-                    -$20,573.72. The Dreamline Diesel Card at -$140,226.34 is excluded because it is
-                    a credit card, and excluding a card from "cash on hand" is CORRECT accounting: a
-                    card balance is a liability, not cash. But claiming the number covers all 8
-                    accounts made a correct figure look unreconcilable against the account list right
-                    below it. Say what it actually counts.
-
-                    It is also the BANK FEED figure, while "Cash position" above it is the BOOK/GL
-                    figure. Those two legitimately differ by exactly the reconciliation gap
-                    ($140,241.38 on USMCA FREIGHT the day this was measured: book $152,394.11 vs feed
-                    $12,152.73). Nothing on the screen said so, so the owner saw three cash numbers
-                    and no stated relationship between them. Both tiles now name their basis.
-                  */}
-                  <MoneyKpiTile
-                    label="Cash on hand (bank feed)"
-                    value={formatUsd(cashPosting)}
-                    tone="neutral"
-                    sub={`${cashBankTiles.length} of ${realBankTiles.length} account(s) — cash only; credit cards are a liability, not cash`}
-                    onClick={() => navigate(BANKING_TAB_PATH.bank_accounts)}
-                    data-testid="banking-kpi-cash-on-hand"
-                  />
-                  <MoneyKpiTile
-                    label="Cash GL unbound"
-                    value={String(unboundCashGl)}
-                    tone={cashGlTone}
-                    sub={unboundCashGl === 0 ? "all accounts mapped" : "cannot post until mapped"}
-                    action={
-                      unboundCashGl > 0
-                        ? { label: "Map Cash GL", onClick: () => navigate("/banking/cash-gl-setup") }
-                        : undefined
-                    }
-                    onClick={() => navigate("/banking/cash-gl-setup")}
-                    data-testid="banking-kpi-cash-gl-unbound"
-                  />
-                  <MoneyKpiTile
-                    label="Factoring reserve"
-                    value={factoringKpiQuery.isError ? "Unavailable" : factoringReserve == null ? "…" : formatUsd(factoringReserve)}
-                    tone={factoringKpiQuery.isError ? "bad" : "good"}
-                    // VOCABULARY LAW: the factor's holdback is the contract's SECURITY RESERVE, an
-                    // asset. "Escrow" means DRIVER escrow only — a 2100-series liability with no Faro
-                    // role. "Escrow Reserve" is Faro's own label on its statement, carried for
-                    // tie-out, never a GL or UI name. See the 2026-10-02 vocabulary ruling.
-                    sub="Security reserve + cash reserve (Faro)"
-                    onClick={() => navigate("/factoring/reserve-tracker")}
-                    data-testid="banking-kpi-factoring-reserve"
-                  />
-                  <MoneyKpiTile
-                    label="Driver escrow"
-                    value={formatUsd(escrowFeed)}
-                    tone="good"
-                    sub={`${Number(kpiQuery.data?.drivers_with_escrow_balance ?? 0)} driver(s) · liability`}
-                    onClick={() => navigate(BANKING_TAB_PATH.driver_escrow)}
-                    data-testid="banking-kpi-driver-escrow"
-                  />
-                </>
-              );
-            })()}
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.6fr_1fr]">
-            <WhereTheMoneyIsRail
-              realRows={
-                realBankTiles.length > 0
-                  ? realBankTiles.map(
-                      (t): MoneyRailRow => ({
-                        id: t.id,
-                        name: t.display_name,
-                        kind: t.account_type || t.tag || "Bank",
-                        balance: Number(t.current_balance ?? 0),
-                        uncategorizedCount: Number(t.uncategorized_count ?? 0),
-                        tileKind: "real",
-                      }),
-                    )
-                  : bankAccountsPanelRows.map(
-                      (r): MoneyRailRow => ({
-                        id: r.id,
-                        name: r.displayName,
-                        kind: "Bank",
-                        balance: r.balance,
-                        uncategorizedCount: 0,
-                        tileKind: "real",
-                      }),
-                    )
-              }
-              virtualRows={virtualBankTiles.map(
-                (t): MoneyRailRow => ({
-                  id: t.id,
-                  name: t.display_name,
-                  kind: t.tag || t.account_type || "Virtual",
-                  balance: Number(t.current_balance ?? 0),
-                  uncategorizedCount: Number(t.uncategorized_count ?? 0),
-                  tileKind: "virtual",
-                }),
-              )}
-              formatMoney={(n) => formatUsd(n)}
-              onView={(id) => {
-                const tile = sortedBankTiles.find((t) => t.id === id);
-                const virtualPath = virtualTileRoute(tile);
-                if (virtualPath) {
-                  navigate(virtualPath);
-                  return;
-                }
-                setSelectedAccountId(id);
-                navigate(`/banking/accounts/${id}`);
-              }}
-              onInspect={(id) => setInspectTileId(id)}
-            />
-            <div className="space-y-3">
-              {/* ROUND 315 / Lead B7 — same FactoringReservesSharedPanel as Factoring → Reserve.
-                  FactoringSummaryCard kept (Rule 07 + verify-banking-factoring-liability-built) as
-                  the compact KPI strip above the shared ledger panel. */}
-              <FactoringSummaryCard
-                reserve={factoringReserve}
-                outstandingLiability={factoringOutstandingLiability}
-                lastAdvanceAt={factoringVirtualSummary.lastAdvanceAt}
-                mtd={factoringMtd}
-              />
-              <DriverEscrowSummaryCard
-                held={escrowMtd.held}
-                contributions={escrowMtd.contributions}
-                deductions={escrowMtd.deductions}
-                failed={escrowMtd.failed}
-              />
-              {companyId ? (
-                <FactoringReservesSharedPanel companyId={companyId} host="banking" />
-              ) : null}
-              <BankingReconHomeCard
-                reconciledAccountsCount={reconciledAccountsCount}
-                totalBankAccounts={totalBankAccountsForRecon}
-                differenceCents={
-                  reconciliationSessionsQuery.data?.open_sessions?.[0]?.variance_cents ?? null
-                }
-                onStart={openStartReconciliation}
-              />
-            </div>
-          </div>
-
-          {inspectTileId ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="bank-account-inspect-panel">
-              {(() => {
-                const tile = sortedBankTiles.find((t) => t.id === inspectTileId);
-                const plaid = (plaidAccountsQuery.data?.accounts ?? []).find((a) => a.id === inspectTileId);
-                return (
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-1 text-xs text-gray-800">
-                      <p className="font-semibold text-gray-900">{tile?.display_name ?? "Account"}</p>
-                      <p className="text-xs text-gray-600">
-                        Type: {tile?.account_type ?? plaid?.account_type ?? <NotApplicable reason="no_source" />}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Balance: $
-                        {Number(tile?.current_balance ?? (plaid?.current_balance_cents ?? 0) / 100).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Uncategorized: {Number(tile?.uncategorized_count ?? 0) || "—"}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="h-[34px] rounded-sm border border-gray-300 px-2 text-xs"
-                        onClick={() => {
-                          const virtualPath = virtualTileRoute(tile);
-                          if (virtualPath) {
-                            navigate(virtualPath);
-                            setInspectTileId(null);
-                            return;
-                          }
-                          setSelectedAccountId(inspectTileId);
-                          setActiveTab("transactions");
-                          navigate(BANKING_TAB_PATH.transactions);
-                          setInspectTileId(null);
-                        }}
-                      >
-                        View
-                      </button>
-                      <button
-                        type="button"
-                        className="h-[34px] rounded-sm border border-gray-300 px-2 text-xs"
-                        onClick={() => setInspectTileId(null)}
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          ) : null}
-
-          <NeedsCategorizingQueue
-            companyId={companyId}
-            rows={(uncategorizedQuery.data?.transactions ?? []).slice(0, 8).map((raw): NeedsCategorizingRow => {
-              const r = raw as Record<string, unknown>;
-              const amountCents = Number(
-                r.amount_cents ?? (Number(r.amount ?? 0) * 100),
-              );
-              return {
-                id: String(r.id ?? ""),
-                date: (r.transaction_date as string | null) ?? (r.date as string | null) ?? null,
-                description: String(r.description ?? r.name ?? r.memo ?? ""),
-                suggestedAccount:
-                  (r.suggested_account_name as string | null) ??
-                  (r.suggested_gl_account_name as string | null) ??
-                  null,
-                suggestedAccountId:
-                  (r.suggested_account_id as string | null) ??
-                  (r.suggested_gl_account_id as string | null) ??
-                  null,
-                unit: (r.unit_number as string | null) ?? (r.unit_name as string | null) ?? null,
-                amountCents,
-              };
-            })}
-            onChange={(row) => {
-              setTransactionsInitialFilter("uncategorized");
-              navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized&txn_id=${row.id}`);
-            }}
-            onAccepted={() => {
-              void queryClient.invalidateQueries({ queryKey: ["banking", "uncategorized", companyId] });
-              void queryClient.invalidateQueries({ queryKey: ["banking", "kpis", companyId] });
-            }}
-          />
-        </>
+        companyId ? <BankingHomeBoard companyId={companyId} /> : null
       ) : null}
 
       {activeTab === "bank_accounts" ? (
@@ -965,6 +615,24 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             onInspect={(id) => setInspectTileId(id)}
             onManageAccounts={() => setManageOpen(true)}
           />
+          {/* ROUND 443.267 — Factoring / Driver Escrow cards stay on Accounts (Rule 07 +
+              verify-banking-factoring-liability-built). Owner board Home is board-faithful KPIs +
+              Accounts + Drift + Latest lines only; these virtual banks are not a Home reskin. */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <FactoringSummaryCard
+              reserve={factoringReserve}
+              outstandingLiability={factoringOutstandingLiability}
+              lastAdvanceAt={factoringVirtualSummary.lastAdvanceAt}
+              mtd={factoringMtd}
+            />
+            <DriverEscrowSummaryCard
+              held={escrowMtd.held}
+              contributions={escrowMtd.contributions}
+              deductions={escrowMtd.deductions}
+              failed={escrowMtd.failed}
+            />
+          </div>
+          {companyId ? <FactoringReservesSharedPanel companyId={companyId} host="banking" /> : null}
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr]">
             <div className="rounded-sm border border-gray-200 bg-white">
               <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
@@ -1029,49 +697,75 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 Show disconnected history
               </label>
             </div>
-            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]">
-              <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">
-                <Link to="/factoring" className="hover:underline">
-                  Factoring · virtual bank
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
+              <p className="font-semibold uppercase tracking-wide text-[#4B5563]">Factoring · virtual bank</p>
+              <p className="mt-1 text-[#6B7280]">
+                Reserves held and MTD lines are on the Factoring summary card above (one engine). Open Factoring for
+                chargebacks, fees, and the reserve tracker.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Link to="/factoring" className="underline">
+                  Factoring
                 </Link>
-                <span className="text-xs">Open</span>
-              </div>
-              <div className="space-y-1 px-3 py-2 text-xs">
-                <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
-                  <span>Reserves held</span>
-                  <span className="tabular-nums">{factoringReserve == null ? "—" : formatUsd(factoringReserve)}</span>
+                <Link to="/factoring/reserve-tracker" className="underline">
+                  Reserve tracker
                 </Link>
-                <div className="flex justify-between">
-                  <span>Advances funded MTD</span>
-                  <span title="No advances_funded_mtd on factoring-virtual API — open Factoring module">
-                    — (see Factoring module)
-                  </span>
-                </div>
-                <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
-                  <span>Outstanding liability</span>
-                  <span className="text-red-700">{formatUsd(factoringOutstandingLiability)}</span>
-                </Link>
-                <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
-                  <span>+30 aging fees</span>
-                  <span
-                    className="text-[#1F2A44]"
-                    title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees"
-                  >
-                    — (see Chargebacks & Fees)
-                  </span>
-                </Link>
-                <div className="pt-1 text-xs text-gray-500">
-                  Last advance:{" "}
-                  {factoringVirtualSummary.lastAdvanceAt ? (
-                    String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10)
-                  ) : (
-                    <NotApplicable reason="not_applicable" />
-                  )}
-                </div>
-                {factoringTile ? <div className="text-xs text-[#1F2A44]">{factoringTile.display_name}</div> : null}
+                {factoringTile ? <span className="text-[#6B7280]">{factoringTile.display_name}</span> : null}
               </div>
             </div>
           </div>
+          {inspectTileId ? (
+            <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="bank-account-inspect-panel">
+              {(() => {
+                const tile = sortedBankTiles.find((t) => t.id === inspectTileId);
+                const plaid = (plaidAccountsQuery.data?.accounts ?? []).find((a) => a.id === inspectTileId);
+                return (
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1 text-xs text-gray-800">
+                      <p className="font-semibold text-gray-900">{tile?.display_name ?? "Account"}</p>
+                      <p className="text-xs text-gray-600">
+                        Type: {tile?.account_type ?? plaid?.account_type ?? <NotApplicable reason="no_source" />}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Balance: $
+                        {Number(tile?.current_balance ?? (plaid?.current_balance_cents ?? 0) / 100).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Uncategorized: {Number(tile?.uncategorized_count ?? 0) || "—"}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="h-[34px] rounded-sm border border-gray-300 px-2 text-xs"
+                        onClick={() => {
+                          const virtualPath = virtualTileRoute(tile);
+                          if (virtualPath) {
+                            navigate(virtualPath);
+                            setInspectTileId(null);
+                            return;
+                          }
+                          setSelectedAccountId(inspectTileId);
+                          setActiveTab("transactions");
+                          navigate(BANKING_TAB_PATH.transactions);
+                          setInspectTileId(null);
+                        }}
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        className="h-[34px] rounded-sm border border-gray-300 px-2 text-xs"
+                        onClick={() => setInspectTileId(null)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
           <BankingPlaidConnectionsPanel companyId={companyId} />
         </div>
       ) : null}

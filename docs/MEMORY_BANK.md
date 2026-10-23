@@ -157,6 +157,25 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   layout; `verify-accounting-hub-honest-labels.mjs` asserts board section titles + no `text-[11px]`;
   open-invoices-void guard unchanged.
 
+### Active Architectural Decisions — Banking home board (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Banking.dc.html` (no PNG in Downloads).
+  Not a V3 reskin of C-64 — Home (`/banking`, tab `accounts`) is `BankingHomeBoard`: KPI strip
+  (Money in · Month / Money out · Month / Lines to review with operating·Relay split / Drift
+  alerts) → Accounts (Account|Type|Lines|Feed) → Reconciliation drift — bank vs book → Latest
+  lines + footer "Nothing is matched automatically — a person links each line."
+- **Engines:** `getMoneyMap` (FE client added; BE `GET /api/v1/banking/money-map`) for in/out/
+  pending; operating = non-Relay accounts (Relay via tile `is_relay_wallet` /
+  `system_purpose=relay_fuel_wallet`); `getDriftAlerts` for drift table; `getPlaidCompanyTransactions`
+  limit 5 for Latest lines; virtual Faro/escrow tiles from `getBankingTiles` (No feed).
+- **Linked to:** EntityLinks when matched; else CTA → Transactions `?txn_id=`. Dates MM/DD/YYYY;
+  money `$1,234.56` via `formatUsdCents` / `QBO_MONEY_CELL_CLASS`.
+- **Accounts tab keeps** FactoringSummaryCard + DriverEscrowSummaryCard + FactoringReservesSharedPanel
+  (Rule 07 / `verify-banking-factoring-liability-built`) + inspect panel
+  `virtualTileRoute(tile)` (`verify-banking-home-virtual-tile-routing`). Global `DriftAlertsPanel`
+  removed — drift lives on the Home board only.
+- **Guards:** `verify-banking-home-preview-parity.mjs` retargeted to board + cards still mounted.
+
 ### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared
@@ -1163,6 +1182,9 @@ settlement deductions · $757.25 never hit the bank). Match engine = settlement-
 
 ## Next Immediate Milestones
 
+0. **ROUND 443.267 board order (Cursor):** Unexpected ✔ · Accounting home ✔ · Banking home (this PR) →
+   Factoring → Insurance → Legal → Reports → Reports-Viewer-TrialBalance → re-do CashFlow/Settlements/Fuel
+   to boards (not chrome-only). One PR per board; bus sha each merge.
 1. **Rebuild orchestration (17→21):** data-driven from the two signed-doc CSVs. Reverse mis-grouped
    S-136xx via the reversal engine → create the 8 missing driver bills at signed amounts → build 21
    fresh doc-settlements → add exact lines (pay, reimb, deduction, −$25 escrow/load, −$10 admin,
