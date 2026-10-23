@@ -1,10 +1,10 @@
 {
-  "healthzSha": "a71317d",
-  "generated_at": "2026-10-23T07:45:43.719Z",
+  "healthzSha": "5a724fe",
+  "generated_at": "2026-10-23T08:07:38.565Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "a71317d",
+    "deployedSha": "5a724fe",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27268,
+      "title": "FINDING: ROUND 443.250 Customers home still had no V3 KPI strip after Fuel/Settlements/Cash Flow shipped on v3-tokens; open A/R + roster counts already live.",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 03:01 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27268",
+      "sha": "5a724fec62",
+      "committedAtIso": "2026-10-23T03:01:50-05:00"
+    },
+    {
+      "number": 27267,
+      "title": "Cursor- 443.250 Fuel home V3 board chrome (V3KpiTile strip + fraud/overage + Relay panel)",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 02:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27267",
+      "sha": "17780c7e63",
+      "committedAtIso": "2026-10-23T02:49:16-05:00"
+    },
+    {
       "number": 27266,
       "title": "FINDING: ROUND 443.250 Settlements home still rendered DrillKpiCard strip after Cash Flow five tabs shipped on v3-tokens; board KPIs/week chart/deductions panel missing V3 chrome.",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27259",
       "sha": "d44dcfd3d1",
       "committedAtIso": "2026-10-23T01:36:48-05:00"
-    },
-    {
-      "number": 27258,
-      "title": "FINDING: ACCT-F443257-C LANE: FINANCIAL — 443.257-C fuel_fills CTE: total_amount_cents → ROUND(total_cost*100) (column does not exist, board 500)",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 01:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27258",
-      "sha": "ed1e002a54",
-      "committedAtIso": "2026-10-23T01:24:54-05:00"
-    },
-    {
-      "number": 27257,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — 443.263-B fix 3 static reds: work_order_parts→lines, load_driver_assignments→direct, status loaded→in_transit",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 01:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27257",
-      "sha": "3f1ef41dca",
-      "committedAtIso": "2026-10-23T01:24:47-05:00"
     }
   ]
 }

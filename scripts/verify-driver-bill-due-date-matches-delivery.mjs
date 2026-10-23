@@ -34,10 +34,10 @@ try {
       (
         SELECT
           CASE WHEN s.actual_departure_at IS NOT NULL
-               THEN (s.actual_departure_at AT TIME ZONE 'America/Chicago')::date
+               THEN (s.actual_departure_at AT TIME ZONE 'America/Chicago')::date::text
                ELSE (COALESCE(GREATEST(s.appointment_start_at, s.scheduled_arrival_at),
                               s.appointment_end_at, s.scheduled_departure_at)
-                    AT TIME ZONE 'America/Chicago')::date
+                    AT TIME ZONE 'America/Chicago')::date::text
           END
           FROM mdata.load_stops s
          WHERE s.load_id = b.load_id

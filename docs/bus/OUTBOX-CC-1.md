@@ -45,3 +45,33 @@ Branch `cc-1/443-218-kpi-total-count` → PR #27176 (preflight PASS, CI running)
 ### P-0102 — OWNER HOLD (DO NOT VOID per LEAD 443.234 15:50Z)
 
 Settlement P-0102 ($379.73, USMCA, source_document_ref=5796, status=closed). No action.
+
+## 2026-10-23 ~07:58Z — CC-1 443.264 STATUS: push in flight (pre-push hook running)
+
+**Branch:** `cc-1/443264-cash-flow-fuel-trailing-avg`  
+**Commits:** 4 commits on top of `49e681d3c3` (origin/main)
+
+### Item 1 (backfill) — DONE (prior PR #27263 merged)
+- 145/145 driver bills stamped `due_date = load delivery date`
+- guard 18681 PASS 190/190 (::text cast fix landed in current PR)
+- bill 13688 data patch (AUTH-456)
+
+### Item 2 (guard 18681 type-fix) — IN CURRENT PR
+- `verify-driver-bill-due-date-matches-delivery.mjs`: `::text` on both CASE branches in delivery date subquery
+
+### Item 3 (projection engine fuel trailing avg) — IN CURRENT PR
+- `cash-flow.service.ts getRollingLedgerRows()`: 12th Promise.all query — `fuelAvgPromise`
+- Source: `fuel.fuel_transactions` trailing 4-wk avg (Chicago-tz week truncation)
+- Projects 13 future Monday-aligned weekly rows as `expense / "Fuel (projected)"`
+- `verify-rolling-ledger-queries-parallel.mjs` updated for 12th entry (selftest PASS)
+- `program-scoreboard.json` regenerated (was 81 commits stale, max 80)
+
+**Push in flight** (verify-static pre-push hook, ~78% at 07:58Z). PR to follow.
+
+**Existing rolling ledger sources (already covered BEFORE this PR):**
+- Open driver bills by due_date: `driver_finance.driver_bills` (188 bills, now all have due_dates)
+- Open vendor bills by due_date: `accounting.bills`
+- Finance/lease payments: `finance.loan_amortization_rows` (0 rows for USMCA today)
+- Insurance: covered under vendor bills (`accounting.bills`)
+
+**CC-2 note:** Do NOT edit `ManualDailyProjectionsTab.tsx` per lead 02:57 AM CT.

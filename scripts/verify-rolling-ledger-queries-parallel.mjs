@@ -45,6 +45,7 @@ const PROMISE_VARS = [
   "notInvoicedPromise",
   "cardPayable2510Promise",
   "relayTopupPromise",
+  "fuelAvgPromise",
 ];
 
 export function analyze(src) {
@@ -109,8 +110,8 @@ function selftest() {
 
   // Mutation 1: revert to sequential awaits (drop the Promise.all fan-out entirely).
   const noPromiseAll = real.replace(
-    /const \[billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, relayTopupRows\] =\s*\n\s*await Promise\.all\(\[[\s\S]*?\]\);/,
-    "const billRows = await billsPromise; const settlementRows = await settlementsPromise; const driverBillRows = await driverBillsPromise; const expenseRows = await expensesPromise; const loanRows = await loansPromise; const invoiceRows = await invoicesPromise; const advanceRows = await advancesPromise; const reserveRows = await reservesPromise; const notInvoicedRows = await notInvoicedPromise; const cardPayable2510Rows = await cardPayable2510Promise; const relayTopupRows = await relayTopupPromise;"
+    /const \[billRows, settlementRows, driverBillRows, expenseRows, loanRows, invoiceRows, advanceRows, reserveRows, notInvoicedRows, cardPayable2510Rows, relayTopupRows, fuelAvgResult\] =\s*\n\s*await Promise\.all\(\[[\s\S]*?\]\);/,
+    "const billRows = await billsPromise; const settlementRows = await settlementsPromise; const driverBillRows = await driverBillsPromise; const expenseRows = await expensesPromise; const loanRows = await loansPromise; const invoiceRows = await invoicesPromise; const advanceRows = await advancesPromise; const reserveRows = await reservesPromise; const notInvoicedRows = await notInvoicedPromise; const cardPayable2510Rows = await cardPayable2510Promise; const relayTopupRows = await relayTopupPromise; const fuelAvgResult = await fuelAvgPromise;"
   );
   if (noPromiseAll === real) {
     console.error(`${LABEL} SELFTEST SETUP FAILED: Promise.all anchor not found`);
