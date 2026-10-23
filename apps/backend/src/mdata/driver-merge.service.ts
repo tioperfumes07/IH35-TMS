@@ -238,9 +238,10 @@ export async function previewDriverMerge(
   const m = await driverRow(client, args.companyId, args.mergedId);
   if (!s || !m) throw new Error("driver_merge_driver_not_found");
   if (s.merged_into) blockers.push("The surviving profile was itself merged into another driver — merge into that one instead.");
-  // Lead 443.45: an earlier merge (the 09-28 SQL procedure) left a profile pointing at its survivor but still Active, with
-  // references and a duplicate advance link on it. `resume` lets THIS engine finish exactly that pair (never re-target it).
-  if (m.merged_into && !(args.resume && m.merged_into === s.id)) blockers.push("This profile is already merged.");
+  // 443.260.3: auto-resume when merged_into already points at the intended survivor (partial merge
+  // from an earlier op — 09-28 SQL procedure or a prior engine run that set the FK but not status).
+  // Any other non-null merged_into (pointing at a DIFFERENT driver) is still blocked.
+  if (m.merged_into && m.merged_into !== s.id) blockers.push("This profile is already merged into a different driver — re-target the survivor instead.");
   const loads = async (id: string) => Number((await client.query(LOAD_SQL, [id, args.companyId])).rows[0]?.n ?? 0);
   const sLoads = await loads(s.id);
   const mLoads = await loads(m.id);
