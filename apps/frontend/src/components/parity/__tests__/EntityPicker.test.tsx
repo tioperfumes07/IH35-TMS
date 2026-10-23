@@ -109,8 +109,10 @@ describe("EntityPicker (C1 picker law)", () => {
     listLoads.mockReset();
     listDrivers.mockResolvedValue({
       drivers: [
-        { id: "drv-1", first_name: "Jane", last_name: "Driver" },
-        { id: "drv-2", first_name: "Mecor", last_name: "Lopez" },
+        { id: "drv-1", first_name: "Jane", last_name: "Driver", status: "Active" },
+        { id: "drv-2", first_name: "Mecor", last_name: "Lopez", status: "Active" },
+        // LEAD 443.257-B: a recorded-Inactive driver is never offered.
+        { id: "drv-3", first_name: "Gone", last_name: "Former", status: "Inactive" },
       ],
     });
     listLoads.mockResolvedValue({
@@ -132,13 +134,13 @@ describe("EntityPicker (C1 picker law)", () => {
     getCustomerDetail.mockResolvedValue({ customer: { id: "cust-1", deactivated_at: null } });
   });
 
-  it("reads the canonical roster company-scoped", async () => {
+  it("reads the canonical roster company-scoped — by RECORDED status, never the movement-derived status=Active (LEAD 443.257-B)", async () => {
     wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
     await waitFor(() =>
-      expect(listDrivers).toHaveBeenCalledWith(
-        expect.objectContaining({ operating_company_id: COMPANY, status: "Active", limit: 200 })
-      )
+      expect(listDrivers).toHaveBeenCalledWith(expect.objectContaining({ operating_company_id: COMPANY, limit: 1000 }))
     );
+    // Fail-old: the picker used to send status: "Active" (Rule 49 movement roster) and drop idle Active drivers.
+    expect(listDrivers.mock.calls.every(([arg]) => !("status" in (arg as object)) || (arg as { status?: unknown }).status === undefined)).toBe(true);
   });
 
   it("SAF-B29: typing sends search to the server and is part of the query path", async () => {
