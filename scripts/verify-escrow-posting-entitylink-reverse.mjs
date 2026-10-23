@@ -60,6 +60,27 @@ export function assertEscrowPostingEntitylinkReverse() {
   if (!/source_label/.test(service) || !/driver_finance\.driver_settlements/.test(service)) {
     errors.push("escrow/service listEscrowPostings must JOIN settlements/bills/advances for source_label");
   }
+  // ROUND 443.250 Settlements Escrow V3 — V3KpiTile strip on EscrowPage (Drivers holding /
+  // Total held / Release window / Scheduled releases) marked data-escrow-v3-kpis.
+  if (!escrow.includes("V3KpiTile")) {
+    errors.push(`${ESCROW_PAGE}: must render V3KpiTile (ROUND 443.250 Settlements Escrow V3)`);
+  }
+  if (!escrow.includes("data-escrow-v3-kpis")) {
+    errors.push(`${ESCROW_PAGE}: must mark data-escrow-v3-kpis for the V3 board strip`);
+  }
+  for (const label of [
+    "Drivers holding escrow",
+    "Total held",
+    "Release window",
+    "Scheduled releases",
+  ]) {
+    if (!escrow.includes(label)) {
+      errors.push(`${ESCROW_PAGE}: V3 strip must include board label "${label}"`);
+    }
+  }
+  if (!escrow.includes("ESCROW_RELEASE_WINDOW_DAYS") && !escrow.includes("60 days")) {
+    errors.push(`${ESCROW_PAGE}: Release window must show the board 60-day policy chrome`);
+  }
   return errors;
 }
 
@@ -69,7 +90,16 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAILED:\n  ${errors.join("\n  ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  // Plant: strip V3 markers from an in-memory copy — must clear both V3 contracts.
+  const good = fs.readFileSync(path.join(ROOT, ESCROW_PAGE), "utf8");
+  const stripped = good
+    .replace(/V3KpiTile/g, "LegacyKpi")
+    .replace(/data-escrow-v3-kpis/g, "data-escrow-legacy");
+  if (stripped.includes("V3KpiTile") || stripped.includes("data-escrow-v3-kpis")) {
+    console.error(`${LABEL} SELFTEST FAIL: V3 strip removal should clear V3KpiTile + data-escrow-v3-kpis`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS (entitylink + V3 escrow strip)`);
 }
 
 if (process.argv.includes("--selftest")) {
