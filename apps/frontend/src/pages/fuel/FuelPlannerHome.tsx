@@ -48,6 +48,8 @@ import { FuelIntegrityPage } from "./integrity/FuelIntegrityPage";
 import { FuelCardsPage } from "./cards/FuelCardsPage";
 import { RelayUnmatchedPage } from "./relay-unmatched/RelayUnmatchedPage";
 import { RelayWalletRollForwardPage } from "./relay-wallet/RelayWalletRollForwardPage";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -470,7 +472,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       ) : null}
 
       {tab === "history" ? (
-        <div className="space-y-2">
+        <div className="space-y-3" data-testid="fuel-history-tab">
           <TripPlanSummaryBanner route={detail ?? activeRoute} />
           {savingsQuery.isError ? (
             <div data-testid="fuel-history-savings-error">
@@ -486,18 +488,54 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               topDriverAmount={(savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? null}
             />
           )}
-          <section className="rounded-sm border border-gray-200 bg-white p-4">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-xs font-semibold text-gray-900">Fuel Transactions</h3>
-              <div className="flex items-center gap-2">
+          {/* ROUND 443.250 History & savings V3 — Transactions / This page / Page size / Voided from getFuelTransactions. */}
+          <div
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+            data-testid="fuel-history-v3-kpi-strip"
+            data-fuel-history-v3-kpis="1"
+          >
+            <V3KpiTile
+              label="Transactions"
+              value={fuelTransactionsQuery.isPending ? "…" : String(fuelHistoryTotal)}
+              sub="in current filters"
+              testId="fuel-history-kpi-total"
+            />
+            <V3KpiTile
+              label="This page"
+              value={
+                fuelTransactionsQuery.isPending
+                  ? "…"
+                  : String((fuelTransactionsQuery.data?.transactions ?? []).length)
+              }
+              sub={`page ${fuelHistoryPage} of ${fuelHistoryPageCount}`}
+              testId="fuel-history-kpi-page"
+            />
+            <V3KpiTile
+              label="Page size"
+              value={String(fuelHistoryPageSize)}
+              sub="rows per request"
+              testId="fuel-history-kpi-page-size"
+            />
+            <V3KpiTile
+              label="Voided"
+              value={fuelTransactionsQuery.isPending ? "…" : String(fuelHistoryVoidedCount)}
+              sub={includeVoidedFuel ? "included in list" : "hidden by default"}
+              tone={fuelHistoryVoidedCount > 0 ? "muted" : "ink"}
+              testId="fuel-history-kpi-voided"
+            />
+          </div>
+          <V3Panel
+            title="Fuel transactions"
+            subtitle="Fleet-card imports and office-keyed fuel purchases (manual create stamps unit / trailer / load)"
+            testId="fuel-history-v3-panel"
+            headerRight={
+              <span className="flex items-center gap-2">
                 <ActionButton onClick={() => setCreateOpen(true)}>+ Create</ActionButton>
                 <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
-              </div>
-            </div>
-            <p className="mt-2 text-xs text-gray-600">
-              Fleet-card imports and office-keyed fuel purchases (manual create stamps unit / trailer / load).
-            </p>
-            <div className="mt-3" data-testid="fuel-history-filters">
+              </span>
+            }
+          >
+            <div className="p-3" data-testid="fuel-history-filters">
               <MoneyListToolbar
                 search={historySearch}
                 onSearchChange={setHistorySearch}
@@ -574,6 +612,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                 </label>
               </MoneyListToolbar>
             </div>
+            <div className="px-3 pb-3">
             {/* R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides
                 is the same class of defect as a badge that never renders"). Voided fuel purchases
                 hide by default; Show MultiSelect "Include voided" turns them on. */}
@@ -638,7 +677,8 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                 </>
               )}
             </div>
-          </section>
+            </div>
+          </V3Panel>
         </div>
       ) : null}
 
