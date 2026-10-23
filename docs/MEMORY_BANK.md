@@ -476,7 +476,20 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** remaining Fuel tabs (Fills / By truck / Settings / …) · Driver
   Profile · design-system sweep · Chrome proof. Full DONE not claimed.
 
+### Active Architectural Decisions — Fuel History & savings V3 (Cursor, ROUND 443.250, 2026-10-23)
 
+- **Engine unchanged:** same `getFuelTransactions` (page + total_count + voided_count) and
+  `getFuelSavingsSummary`. No GL / posting / import / create math change.
+- **V3 board chrome (History & savings tab):** identity `V3KpiTile` strip Transactions · This page ·
+  Page size · Voided (`data-fuel-history-v3-kpis`) from the transactions list response. `V3Panel`
+  **Fuel transactions** (`fuel-history-v3-panel`) wraps filters + `FuelTransactionsTable` + pager.
+  `SavingsPanel` → `V3KpiTile` strip Fleet/Driver/Lost/Highest saver (`data-fuel-savings-v3-kpis`)
+  + `V3Panel` detail (`fuel-savings-v3-panel`) — same summary fields as the pre-V3 rows.
+- **Guard piggyback:** `verify-fuel-history-transaction-date-display.mjs` (step 3754 ≡2 EVEN
+  Cursor) — V3 markers + selftest mutations (date format assert retained). No new EVEN claim.
+- **Still open under 443.250:** remaining Fuel tabs (Planner chrome / Settings / Compliance /
+  Loves / Expense mapping / Relay inbox) · Driver Profile · design-system sweep · Chrome proof.
+  Full DONE not claimed.
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
