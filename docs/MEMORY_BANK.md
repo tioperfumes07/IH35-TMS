@@ -150,8 +150,8 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   `lastDeliveryStopLateralSql` + `verify-projected-cash-date-equals-delivery` now
   `COALESCE(scheduled_arrival_at, appointment_start_at)` — same as dispatch planner. Live guard
   PASS: 1 factored open USMCA proforma, zero lag.
-- **Still open under 443.250:** Manual Daily Projections V3, Settlements/Fuel boards,
-  design-system sweep, Chrome proof. Home / Projected / Rolling Ledger / Actual vs Projected V3 shipped.
+- **Still open under 443.250:** Settlements/Fuel boards, design-system sweep, Chrome proof.
+  Home / Projected / Rolling Ledger / Actual vs Projected / Manual Daily Projections V3 shipped.
 
 ### Active Architectural Decisions — Cash Flow Rolling Ledger V3 (Cursor, ROUND 443.250, 2026-10-23)
 
@@ -180,8 +180,26 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   actual income / projected income / actual expenses from the same AVP lines (no second engine).
 - **Guard piggyback:** `verify-actual-vs-projected-tab-uses-paritytable.mjs` asserts V3 components +
   testIds. No new EVEN claim.
-- **Still open under 443.250:** Manual Daily Projections V3, Settlements/Fuel boards, design-system
-  sweep, Chrome proof. Full DONE not claimed.
+- **Still open under 443.250:** Settlements/Fuel boards, design-system sweep, Chrome proof.
+  Manual Daily Projections V3 shipped (below). Full DONE not claimed.
+
+### Active Architectural Decisions — Cash Flow Manual Daily Projections V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** still `listForecastEntries` / create/update/delete + opening balance +
+  `pullManualTransactions` + `computeProjectionTotals`. Single `projectionDate`, MDP column
+  contracts, `data-mdp-*` markers, `min-h-[5.5rem]` KPIs, `h-full min-h-[24rem]` panels,
+  pull invalidate onSuccess+onError — all retained (`verify-mdp-panel-proportion` /
+  `verify-mdp-fields` / `verify-mdp-single-row` / `verify-manual-projection-sum`).
+- **V3 board chrome:** toolbar + 4 KPIs (Bank balances · Expected income · Expected expenses ·
+  Predicted net) via `V3KpiTile` wrappers that keep MDP height/markers; Opening cash & banks
+  `V3Panel` (`mdp-bank-balances`); Income/Expenses equal-height panels painted with `V3.*`;
+  expenses banded by `V3_EXPENSE_GROUPS` payment priority (`data-mdp-expense-group`). No
+  `V3Segmented` (no Day|Week grain on this surface). Measured callout uses `V3.amber` border
+  token (not Tailwind amber classes — proportion guard forbids those).
+- **Guard piggyback:** `verify-mdp-panel-proportion.mjs` (EVEN 4124) asserts V3KpiTile / V3Panel /
+  V3_EXPENSE_GROUPS + V3 testIds + expense-group bands; selftest plant ≥5. No new EVEN claim.
+- **Still open under 443.250:** Settlements/Fuel boards, design-system sweep, Chrome proof.
+  Full DONE not claimed.
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
