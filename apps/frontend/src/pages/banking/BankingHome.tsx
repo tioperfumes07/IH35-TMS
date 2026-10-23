@@ -9,9 +9,6 @@ import {
   getBankingUncategorized,
   getPlaidBankAccounts,
   getQboSyncQueueStats,
-  getReconciliationSessions,
-  getEscrowDriverBalances,
-  getCategorizationRulesStats,
   createPettyCashAccount,
   reorderBankAccounts,
 } from "../../api/banking";
@@ -164,11 +161,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryFn: () => getPlaidBankAccounts(companyId),
     enabled: Boolean(companyId),
   });
-  const reconciliationSessionsQuery = useQuery({
-    queryKey: ["banking", "reconciliation-sessions", companyId],
-    queryFn: () => getReconciliationSessions(companyId),
-    enabled: Boolean(companyId),
-  });
   // QBO sync-queue stats power the top SyncStatusStrip's "Last sync" + "Pending QBO sync" fields —
   // those are genuinely about the sync queue. FIX-3: they must NOT feed the "Transactions" count (that
   // metric now comes from kpiQuery.data.total_transactions, the real banking.bank_transactions total —
@@ -190,17 +182,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryFn: () => getBankingUncategorized(companyId, { limit: 8 }),
     enabled: Boolean(companyId),
   });
-  const unmatched7dQuery = useQuery({
-    queryKey: ["banking", "categorization-rules-stats", companyId],
-    queryFn: () => getCategorizationRulesStats(companyId),
-    enabled: Boolean(companyId),
-  });
   // C-51 — Driver Escrow liability pool headcount for Home attention strip.
-  const escrowBalancesQuery = useQuery({
-    queryKey: ["banking", "escrow-balances", companyId, "home-attention"],
-    queryFn: () => getEscrowDriverBalances(companyId),
-    enabled: Boolean(companyId),
-  });
   const factoringVirtualQuery = useQuery({
     queryKey: ["banking", "factoring-virtual", companyId],
     queryFn: () => getFactoringVirtual(companyId),
@@ -288,11 +270,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   // to a healthy figure. The honest metric: of the real bank accounts this company has, how many
   // have at least one COMPLETED session ever? (completed_sessions carries bank_account_id already —
   // no new backend surface.)
-  const reconciledAccountIds = useMemo(
-    () => new Set((reconciliationSessionsQuery.data?.completed_sessions ?? []).map((s) => s.bank_account_id)),
-    [reconciliationSessionsQuery.data?.completed_sessions],
-  );
-  const reconciledAccountsCount = reconciledAccountIds.size;
   const virtualBankTiles = useMemo(
     () => sortedBankTiles.filter((t) => String(t.tile_kind) === "virtual"),
     [sortedBankTiles],
@@ -344,7 +321,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       balance: Number(account.current_balance_cents ?? 0) / 100,
     }));
   }, [plaidAccountsQuery.data?.accounts, sortedBankTiles]);
-  const totalBankAccountsForRecon = bankAccountsPanelRows.length;
   const factoringTile = sortedBankTiles.find(
     (t) =>
       String(t.tile_kind) === "virtual" &&
