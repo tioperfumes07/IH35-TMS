@@ -15,12 +15,16 @@ import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatMoneyCents } from "../../../lib/formatMoney";
 import { formatDate } from "../../../lib/formatDate";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type Props = {
   operatingCompanyId: string;
   /** Optional load filter (Load Costs drawer / board). */
   loadId?: string;
 };
+
+// CLS-SILENT-CAP: the list fetches one page; CappedListNotice says so (with the server total) when there are more.
+const FUEL_QUESTIONS_PAGE = 100;
 
 export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
   const queryClient = useQueryClient();
@@ -32,7 +36,7 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
       listFuelAssignmentQuestions(operatingCompanyId, {
         status: "open",
         loadId,
-        limit: 100,
+        limit: FUEL_QUESTIONS_PAGE,
       }),
     enabled: Boolean(operatingCompanyId),
     refetchInterval: 60_000,
@@ -143,6 +147,12 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
         emptyText="No open fuel assignment questions. When a fill is not 100% certain, it appears here."
         tableTestId="fuel-questions-table"
         density="compact"
+      />
+      <CappedListNotice
+        shown={rows.length}
+        limit={FUEL_QUESTIONS_PAGE}
+        total={listQuery.data?.total}
+        hint="Answer these first — the rest appear as they clear."
       />
 
       <FuelAssignmentPopup

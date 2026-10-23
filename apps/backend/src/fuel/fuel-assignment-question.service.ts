@@ -100,11 +100,11 @@ async function loadWindowLabel(client: DbClient, loadId: string | null): Promise
       route: string | null;
     }>(
       `SELECT l.load_number::text,
-              (SELECT ds.source_document_ref
+              -- LEAD 443.258.5: driver_finance.driver_settlement_loads does not exist (verify-phantom-relations); a load's
+              -- settlement is mdata.loads.presettlement_link_id. The signed number when there is one, else the tour's P-number.
+              (SELECT COALESCE(ds.source_document_ref, ds.display_id)
                  FROM driver_finance.driver_settlements ds
-                 JOIN driver_finance.driver_settlement_loads dsl ON dsl.settlement_id = ds.id
-                WHERE dsl.load_id = l.id AND ds.voided_at IS NULL
-                ORDER BY ds.created_at DESC NULLS LAST LIMIT 1) AS settlement_ref,
+                WHERE ds.id = l.presettlement_link_id AND ds.voided_at IS NULL) AS settlement_ref,
               (SELECT concat_ws(', ', nullif(s.city,''), nullif(s.state,''))
                  FROM mdata.load_stops s
                 WHERE s.load_id = l.id AND s.stop_type::text = 'pickup' AND s.soft_deleted_at IS NULL

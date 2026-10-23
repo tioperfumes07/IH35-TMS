@@ -21,6 +21,7 @@ import pg from "pg";
 import dotenv from "dotenv";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
@@ -48,6 +49,9 @@ const pool = new pg.Pool({
 });
 
 const client = await pool.connect();
+// LEAD 443.258.5 (verify-ops-scripts-assert-not-production): a real run proves its target is the intended production
+// branch BEFORE any write; a dry run writes nothing (ROLLBACK) and may read any target.
+if (!DRY_RUN) await assertIsIntendedProduction(client as never, { label: "443.249 backfill driver-bill due dates" });
 try {
   // Use bypass so we can read all bills regardless of RLS.
   // SET LOCAL requires an explicit transaction — withLuciaBypass() pattern for ops scripts.

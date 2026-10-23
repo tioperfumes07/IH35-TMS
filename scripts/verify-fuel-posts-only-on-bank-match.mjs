@@ -63,6 +63,7 @@ const DOOR = "db/migrations/202615410950_relay_wallet_consumed_only_by_relay_fil
 const FILLPOST = "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts";
 const UNMATCH = "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts";
 const CREATOR = "apps/backend/src/driver-finance/settlement-creator.service.ts";
+const PREDICATES = "apps/backend/src/accounting/live-document-predicates.sql.ts";
 // LEAD 443.121 #1 — ONE fuel receipt identity (migration + every writer asks first).
 const RECEIPT_MIG = "db/migrations/202615850910_fuel_receipt_one_posting_identity.sql";
 // LEAD 443.133 A — a Relay fill links ONLY to a row paid by the Relay card; a row on another rail is a cross-rail candidate.
@@ -216,7 +217,13 @@ export function check(files) {
     problems.push(`${POSTER}: nextFuelPostingRevision (first revision whose batch is not reversed) is missing (443.215)`);
   if (!/const correctionRevision = draft\.edit_void_repost\s*\?\s*await nextFuelPostingRevision\(/.test(cr) || !/correction_revision: correctionRevision \|\| null,/.test(cr))
     problems.push(`${CREATOR}: an Edit repost of a Relay fill does not post under the next correction revision (443.215)`);
-  if (!/if \(!rows && draft\.edit_void_repost\) \{/.test(cr) || !/WHERE ft\.operating_company_id = \$1::uuid AND ft\.relay_fuel_transaction_id = \$2::uuid AND ft\.voided_at IS NULL/.test(cr))
+  // 443.264.2: the live-row predicate may be the canonical helper (LEAD 443.260-B single source) — accepted ONLY while
+  // notVoided(alias) itself still emits `<alias>.voided_at IS NULL`; a helper that drifted would adopt voided rows.
+  const pred = files[PREDICATES] ?? "";
+  const helperIsNotVoided = /export function notVoided\(alias\?: string\): string \{\s*return alias \? `\$\{sqlAlias\(alias\)\}\.voided_at IS NULL` : "voided_at IS NULL";/.test(pred);
+  const liveRowPredicate = /WHERE ft\.operating_company_id = \$1::uuid AND ft\.relay_fuel_transaction_id = \$2::uuid AND (?:ft\.voided_at IS NULL|\$\{notVoided\("ft"\)\})/.exec(cr);
+  const liveRowOk = Boolean(liveRowPredicate) && (!liveRowPredicate[0].includes("notVoided") || helperIsNotVoided);
+  if (!/if \(!rows && draft\.edit_void_repost\) \{/.test(cr) || !liveRowOk)
     problems.push(`${CREATOR}: an Edit repost does not adopt the Relay fill's live rows (it would write the fill twice) (443.215)`);
   // 9 (LEAD 443.133 A) — the linker pairs only Relay-card rows; the Relay fill poster refuses a fill that pairs with a row on
   // another rail (the same purchase may already be posted there — booking it again would double the fuel).
@@ -360,6 +367,8 @@ if (process.argv.includes("--selftest")) {
     ["creator relay document mints its own entry", { ...real, [CREATOR]: real[CREATOR].replace("journal_entry_id: fillPosted.journal_entry_id,", "journal_entry_id: null as never,") }],
     ["edit repost without correction revision", { ...real, [CREATOR]: real[CREATOR].replace("correction_revision: correctionRevision || null,", "") }],
     ["edit repost writes the fill twice", { ...real, [CREATOR]: real[CREATOR].replace("if (!rows && draft.edit_void_repost) {", "if (false) {") }],
+    ["edit repost adopts voided rows (the live-row predicate dropped)", { ...real, [CREATOR]: real[CREATOR].replace(/AND \$\{notVoided\("ft"\)\}|AND ft\.voided_at IS NULL(?=\n\s*RETURNING ft\.id::text, ft\.fuel_type)/, "") }],
+    ["notVoided helper drifted (no longer voided_at IS NULL)", { ...real, ["apps/backend/src/accounting/live-document-predicates.sql.ts"]: (real["apps/backend/src/accounting/live-document-predicates.sql.ts"] ?? "").replace("`${sqlAlias(alias)}.voided_at IS NULL`", "`${sqlAlias(alias)}.id IS NOT NULL`") }],
     ["revision helper hands back a reversed key", { ...real, [POSTER]: real[POSTER].replace('if (state.kind !== "reversed") return rev;', "return rev;") }],
   ];
   const missed = cases.filter(([, files]) => check(files).length === 0).map(([n]) => n);

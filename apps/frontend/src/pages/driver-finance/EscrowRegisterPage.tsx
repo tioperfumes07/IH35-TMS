@@ -2,6 +2,7 @@
  * ROUND 443.254 N5 — Driver Escrow Register (V3-Settlements-EscrowRegister).
  * Dated lines · source settlement/JE · running balance. Not the driver profile.
  */
+import type React from "react";
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom"; // Link: register source → settlement/JE
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +15,7 @@ import { formatUsdTable } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
 import { V3 } from "../../design/v3-tokens";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type RegisterRow = {
   id: string;
@@ -151,7 +153,7 @@ export function EscrowRegisterPage() {
     <SettlementsModuleShell showBack backLabel="Escrow" backTo="/driver-finance/escrow">
       <div className="space-y-3 px-1" data-testid="escrow-register-page">
         <div className="grid gap-2 md:grid-cols-4">
-          <Kpi label="Driver" value={driverName} sub="active bond" />
+          <Kpi label="Driver" value={driverId ? <EntityLink kind="driver" id={driverId} label={driverName} /> : driverName} sub="active bond" />
           <Kpi label="Held" value={formatUsdTable(held)} />
           <Kpi label="Target" value="—" sub="per pay-rate template" />
           <Kpi label="Release" value="—" sub="60 days after last settlement" />
@@ -185,7 +187,7 @@ export function EscrowRegisterPage() {
   );
 }
 
-function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function Kpi({ label, value, sub }: { label: string; value: React.ReactNode; sub?: string }) {
   return (
     <div
       className="flex flex-col gap-1 rounded-sm border px-3 py-2"

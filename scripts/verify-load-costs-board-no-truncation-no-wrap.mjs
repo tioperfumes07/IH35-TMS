@@ -28,10 +28,16 @@ function auditBoard(src) {
   // (never $0.00) when nothing of that kind was recorded. fmtDash must exist and be used for all five.
   if (!/const fmtDash =\s*\(c: number\)\s*=>\s*\(c \? fmt\(c\)\s*:\s*DASH\)/.test(src))
     f.push(`${BOARD}: fmtDash must render a dash for zero (c ? fmt(c) : DASH)`);
-  for (const cents of ["late_fee_cents", "lumper_cents", "fuel_cents", "repairs_maintenance_cents", "other_cost_cents"]) {
+  for (const cents of ["late_fee_cents", "lumper_cents", "repairs_maintenance_cents", "other_cost_cents"]) {
     if (!new RegExp(`render: r => fmtDash\\(Number\\(r\\.${cents}\\)\\)`).test(src))
       f.push(`${BOARD}: cost column ${cents} must render via fmtDash (dash-not-zero)`);
   }
+  // 443.257-C / LEAD 443.264.3: the Fuel cell shows every fill (posted + unposted, fuel_fills_total_cents) with a
+  // "Not posted" line — and still a DASH, never $0.00, when the load has no fill: the zero branch is fmtDash.
+  const fuelCell = src.slice(src.indexOf('key: "fuel", label: "Fuel"'), src.indexOf('key: "repairs_maintenance"'));
+  if (!/const total = Number\(r\.fuel_fills_total_cents \?\? 0\);/.test(fuelCell)
+      || !/if \(total === 0\) return fmtDash\(Number\(r\.fuel_cents\)\);/.test(fuelCell))
+    f.push(`${BOARD}: cost column fuel must show the fills total and render a dash for zero (if (total === 0) return fmtDash(...))`);
   // Defect 6: money/mileage columns nowrap.
   if (!/const NUM\s*=\s*"[^"]*whitespace-nowrap[^"]*"/.test(src))
     f.push(`${BOARD}: the numeric column class (NUM) must include whitespace-nowrap`);
@@ -96,6 +102,10 @@ function main() {
     if (auditBoard(m2).length === 0) { console.error("SELFTEST FAIL: removing Booked branch did not trip"); process.exit(1); }
     const m4 = boardSrc.replace(/render: r => fmtDash\(Number\(r\.late_fee_cents\)\)/, "render: r => fmt(Number(r.late_fee_cents))");
     if (auditBoard(m4).length === 0) { console.error("SELFTEST FAIL: reverting a cost cell to fmt (zero) did not trip"); process.exit(1); }
+    const m9 = boardSrc.replace("if (total === 0) return fmtDash(Number(r.fuel_cents));", "if (total === 0) return fmt(Number(r.fuel_cents));");
+    if (m9 === boardSrc || auditBoard(m9).length === 0) { console.error("SELFTEST FAIL: a fuel cell showing $0.00 for no fill did not trip"); process.exit(1); }
+    const m10 = boardSrc.replace("const total = Number(r.fuel_fills_total_cents ?? 0);", "const total = 0;");
+    if (m10 === boardSrc || auditBoard(m10).length === 0) { console.error("SELFTEST FAIL: a fuel cell that ignores the fills did not trip"); process.exit(1); }
     const m3 = boardSrc.replace(/data-testid=\{`load-costs-pill-\$\{id\}`\}([^\n]*)rounded-sm/, "data-testid={`load-costs-pill-${id}`}$1rounded-full");
     if (auditBoard(m3).length === 0) { console.error("SELFTEST FAIL: rounded-full pill did not trip"); process.exit(1); }
     const m5 = boardSrc.replace(/minWidthPx=\{1660\}/, "");

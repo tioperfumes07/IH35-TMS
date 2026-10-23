@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import pg from "pg";
 import { DRIVER_BILL_REGISTER_SQL } from "../bills.routes.js";
+import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 
 // A disposable, empty loopback PG16 database only. No application/prod credentials.
 const url = process.env.DRIVER_REGISTER_TEST_DATABASE_URL;
@@ -15,8 +16,10 @@ describe.skipIf(!url)("driver register filters on PostgreSQL16", () => {
   beforeAll(async () => {
     const target = new URL(url!);
     if (!["127.0.0.1", "localhost", "[::1]"].includes(target.hostname) || !target.pathname.startsWith("/codex443238_register")) throw Error("isolated test database required");
+    refuseProductionConnectionString(url); // LEAD 443.258.5 — before connecting (verify-test-fixtures-refuse-production RULE 3)
     client = new pg.Client({ connectionString: url });
     await client.connect();
+    await refuseProductionDatabase(client);
     const identity = (await client.query("SELECT current_database() db, current_setting('server_version_num')::int version, host(inet_server_addr()) address")).rows[0];
     if (!identity.db.startsWith("codex443238_register") || identity.version < 160000 || identity.version >= 170000 || !["127.0.0.1", "::1"].includes(identity.address)) throw Error("PG16 loopback identity required");
     if ((await client.query("SELECT 1 FROM pg_namespace WHERE nspname IN ('mdata','driver_finance')")).rowCount) throw Error("database must be empty");

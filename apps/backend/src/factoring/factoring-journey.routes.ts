@@ -6,7 +6,7 @@
  * Steps shown per the 443.246 lead spec:
  *   1 = Invoice submitted (purchase_date)
  *   2 = Advance sent (wire_date)
- *   6 = Escrow released (factoring_reserve_entries, release type)
+ *   6 = Escrow released (faro_reserve_entries escrow_to_cash, via the purchase's live lines)
  *
  * 443.218 rule: all numbers from SQL aggregates.
  */
@@ -70,21 +70,27 @@ export async function registerFactoringJourneyRoutes(app: FastifyInstance) {
             /* step 2: advance sent = wire_date present */
             fp.wire_date IS NOT NULL AS step2_done,
             fp.wire_date::text AS step2_at,
-            /* step 6: escrow released — any non-voided release entry for this purchase */
+            /* step 6: escrow released — Faro moved this purchase's escrow to cash. The reserve register is
+               accounting.faro_reserve_entries (there is no factoring_reserve_entries table — 443.264.1): it
+               names the Faro invoice, not the purchase, so it reaches the purchase through the purchase's own live
+               lines (the same join factoring-spine-links / purchased-gross use). A release is the escrow
+               register's escrow_to_cash leg; reserve entries are never voided (corrections post as new rows). */
             EXISTS (
-              SELECT 1 FROM accounting.factoring_reserve_entries fre
-               WHERE fre.factoring_purchase_id = fp.id
-                 AND fre.entry_type = 'release'
-                 AND fre.voided_at IS NULL
+              SELECT 1 FROM accounting.faro_reserve_entries fre
+                JOIN accounting.factoring_purchase_lines fpl
+                  ON fpl.operating_company_id = fre.operating_company_id
+                 AND fpl.faro_invoice_number = fre.faro_invoice_number AND fpl.voided_at IS NULL
+               WHERE fpl.purchase_id = fp.id AND fre.operating_company_id = fp.operating_company_id
+                 AND fre.register = 'escrow' AND fre.entry_kind = 'escrow_to_cash'
             ) AS step6_done,
             (
-              SELECT fre.entry_date::text
-                FROM accounting.factoring_reserve_entries fre
-               WHERE fre.factoring_purchase_id = fp.id
-                 AND fre.entry_type = 'release'
-                 AND fre.voided_at IS NULL
-               ORDER BY fre.entry_date DESC
-               LIMIT 1
+              SELECT max(fre.entry_date)::text
+                FROM accounting.faro_reserve_entries fre
+                JOIN accounting.factoring_purchase_lines fpl
+                  ON fpl.operating_company_id = fre.operating_company_id
+                 AND fpl.faro_invoice_number = fre.faro_invoice_number AND fpl.voided_at IS NULL
+               WHERE fpl.purchase_id = fp.id AND fre.operating_company_id = fp.operating_company_id
+                 AND fre.register = 'escrow' AND fre.entry_kind = 'escrow_to_cash'
             ) AS step6_at
           FROM accounting.factoring_purchases fp
           WHERE fp.operating_company_id = $1::uuid

@@ -102,11 +102,6 @@ const ACCEPT_PATH_FILE = path.join(ROOT, "apps/backend/src/accounting/bank-recon
 // gap (everything else present) is reported but never fails; it is the same accepted shape as the
 // original 7 baseline, now 34 (7 original + 27 AUTH-157 backfilled-to-trailer-only).
 const KNOWN_NULL_LINKAGE_COUNT = 0;
-// Shrink-only ratchets for pre-existing C/E failures measured on origin/main 2026-10-22
-// (same values on main and on cc-1/443-239-d1-d9-formula-unification — NOT introduced by D1D9).
-// Filed on the bus for the owning financial lane to clear. Ratchet: fails only if count GROWS.
-const KNOWN_FUEL_5000_DISCREPANCY_ABS_CENTS = 1074465; // |$314,866.47 - $304,121.82|
-const KNOWN_DOUBLE_POSTED_COUNT = 241;
 
 /**
  * Lead 443.42 #4 (2026-10-11, accepted as CC-2 proposed): a live fuel_event posting is ADOPTED — not an orphan — when
@@ -132,6 +127,26 @@ export function fuelEntryIsAdopted({ entryId, postingSource, expenses }) {
 }
 
 /**
+ * LEAD 443.258.3 (CC-2) — THE CARD-DISCOUNT FAMILY. A fuel-card statement prints the card's discount per purchase
+ * (Disc PPU x Qty); the import posts that difference against the adopted receipt (443.84 / 443.142: Dr 2510 / Cr
+ * "Fuel Card Discount" item -> 5000, every posting tagged transaction_source_links.relationship_role = 'fuel_card_discount')
+ * and a re-import voids the earlier one by a void-reversal JE (reverses_je_id). That family is the statement DIFFERENCE,
+ * not a second posting of the receipt: measured 10-23, 315 tagged JEs + 74 reversals = 241 effective discounts, net 5000
+ * -$10,744.65 = exactly GL 5000 - (expense lines + driver-bill lines). C counts it as its own term; E does not count it
+ * as an independent posting; F refuses a "discount" larger than the receipt it discounts (a full posting in disguise).
+ * The SQL below is the ONE predicate; the selftest holds it.
+ */
+export const CARD_DISCOUNT_FAMILY_SQL = `(
+          je.id IN (SELECT cd_p.journal_entry_uuid FROM accounting.journal_entry_postings cd_p
+                      JOIN accounting.transaction_source_links cd_l
+                        ON cd_l.journal_entry_posting_id = cd_p.id AND cd_l.relationship_role = 'fuel_card_discount'
+                     WHERE cd_p.operating_company_id = $1::uuid)
+          OR je.reverses_je_id IN (SELECT cd_p.journal_entry_uuid FROM accounting.journal_entry_postings cd_p
+                      JOIN accounting.transaction_source_links cd_l
+                        ON cd_l.journal_entry_posting_id = cd_p.id AND cd_l.relationship_role = 'fuel_card_discount'
+                     WHERE cd_p.operating_company_id = $1::uuid))`;
+
+/**
  * Classify the fuel-cost-posts-once state. Pure function — exported for selftest.
  */
 export function classifyFuelPostsOnce(input) {
@@ -142,7 +157,9 @@ export function classifyFuelPostsOnce(input) {
   // Lead 443.42 #4: a driver bill's fuel line (e.g. the $10.00 settlement fuel reimbursement) posts to 5000 through the
   // bill's own JE — it is on the GL side, so it is counted on the document side too. Nothing else is added.
   const driverBillFuelLineCents = Number(input.driverBillFuelLineCents ?? 0);
-  const fuelExpenseTotalCents = expenseLineCents + driverBillFuelLineCents;
+  // LEAD 443.258.3: + the card-discount family's net on 5000 (negative = discounts) — its own term, never folded silently.
+  const cardDiscountNetCents = Number(input.cardDiscountNetCents ?? 0);
+  const fuelExpenseTotalCents = expenseLineCents + driverBillFuelLineCents + cardDiscountNetCents;
 
   const problems = [];
   const checks = [];
@@ -171,17 +188,16 @@ export function classifyFuelPostsOnce(input) {
     problems.push(`DUPLICATE_FUEL_POINTER: ${duplicateFuelPointers} fuel transaction(s) pointed at by multiple expenses. A shared pointer is a double-count.`);
   }
 
-  // C. 5000 Fuel & Diesel net = its own expense-line total (shrink-only ratchet; baseline from origin/main 2026-10-22)
-  const cDiscrepancyAbs = Math.abs(fuel5000NetCents - fuelExpenseTotalCents);
+  // C. 5000 Fuel & Diesel net = its own expense-line total (same population, not a narrower one)
   checks.push({
     id: "C",
     name: "FUEL_5000_EQUALS_OWN_LINE_TOTAL",
-    expected: `$${(fuelExpenseTotalCents / 100).toFixed(2)} (account 5000 expense lines + driver-bill fuel lines)`,
+    expected: `$${(fuelExpenseTotalCents / 100).toFixed(2)} (account 5000 expense lines + driver-bill fuel lines + card-discount family $${(cardDiscountNetCents / 100).toFixed(2)})`,
     live: `$${(fuel5000NetCents / 100).toFixed(2)} (5000 Fuel & Diesel GL net)`,
-    pass: cDiscrepancyAbs <= KNOWN_FUEL_5000_DISCREPANCY_ABS_CENTS,
+    pass: fuel5000NetCents === fuelExpenseTotalCents,
   });
-  if (cDiscrepancyAbs > KNOWN_FUEL_5000_DISCREPANCY_ABS_CENTS) {
-    problems.push(`FUEL_5000_MISMATCH: 5000 Fuel & Diesel net $${(fuel5000NetCents / 100).toFixed(2)} != its own posted expense-line + driver-bill fuel-line total $${(fuelExpenseTotalCents / 100).toFixed(2)}. Difference: $${((fuel5000NetCents - fuelExpenseTotalCents) / 100).toFixed(2)} — GREW past ratchet baseline of $${(KNOWN_FUEL_5000_DISCREPANCY_ABS_CENTS / 100).toFixed(2)}.`);
+  if (fuel5000NetCents !== fuelExpenseTotalCents) {
+    problems.push(`FUEL_5000_MISMATCH: 5000 Fuel & Diesel net $${(fuel5000NetCents / 100).toFixed(2)} != its own posted expense-line + driver-bill fuel-line total + card-discount family $${(fuelExpenseTotalCents / 100).toFixed(2)}. Difference: $${((fuel5000NetCents - fuelExpenseTotalCents) / 100).toFixed(2)}.`);
   }
 
   // D. Inherited linkage — shrink-only ratchet (trailer_id is often genuinely unknown)
@@ -196,16 +212,29 @@ export function classifyFuelPostsOnce(input) {
     problems.push(`FUEL_EXPENSE_MISSING_LINKAGE: ${expensesWithNullLinkage} fuel expense(s) missing load_id, driver_uuid, unit_id, or vendor_uuid (trailer_id excluded — see check D's own history) — GREW past the ratchet baseline of ${KNOWN_NULL_LINKAGE_COUNT}.`);
   }
 
-  // E. No documents with 2+ LIVE JEs — shrink-only ratchet; baseline from origin/main 2026-10-22
+  // E. No documents with 2+ LIVE JEs (a reversed+live void/reinstate pair is NOT a violation)
   checks.push({
     id: "E",
     name: "NO_DOUBLE_LIVE_POSTED_DOCS",
-    expected: `<= ${KNOWN_DOUBLE_POSTED_COUNT} documents with 2+ LIVE JEs (ratchet, shrink-only)`,
+    expected: "0 documents with 2+ LIVE JEs",
     live: `${docsDoublePosted} document(s) with 2+ LIVE JEs`,
-    pass: docsDoublePosted <= KNOWN_DOUBLE_POSTED_COUNT,
+    pass: docsDoublePosted === 0,
   });
-  if (docsDoublePosted > KNOWN_DOUBLE_POSTED_COUNT) {
-    problems.push(`DOUBLE_POSTED_DOCUMENT: ${docsDoublePosted} document(s) carrying two independent LIVE journal entries at once — GREW past ratchet baseline of ${KNOWN_DOUBLE_POSTED_COUNT}. Accepting a match must NEVER post again.`);
+  if (docsDoublePosted > 0) {
+    problems.push(`DOUBLE_POSTED_DOCUMENT: ${docsDoublePosted} document(s) carrying two independent LIVE journal entries at once. Accepting a match must NEVER post again.`);
+  }
+
+  // F. (443.258.3) a card-discount JE is a DIFFERENCE: never larger than the receipt it discounts.
+  const oversized = Number(input.cardDiscountsExceedingReceipt ?? 0);
+  checks.push({
+    id: "F",
+    name: "CARD_DISCOUNT_WITHIN_RECEIPT",
+    expected: "0 card-discount JEs larger than their receipt's own 5000 lines",
+    live: `${oversized} oversized card-discount JE(s)`,
+    pass: oversized === 0,
+  });
+  if (oversized > 0) {
+    problems.push(`CARD_DISCOUNT_EXCEEDS_RECEIPT: ${oversized} JE(s) tagged fuel_card_discount move more on 5000 than their receipt's own 5000 lines — a full posting cannot hide as a discount.`);
   }
 
   return { checks, problems, allPass: problems.length === 0 };
@@ -319,7 +348,7 @@ function runSelftest() {
     fail += 1;
   } else pass += 1;
 
-  const redC = classifyFuelPostsOnce({ ...baseInput, fuel5000NetCents: 0, fuelExpenseTotalCents: 2500000 }); // diff 2,500,000 > ratchet 1,074,465
+  const redC = classifyFuelPostsOnce({ ...baseInput, fuel5000NetCents: 0, fuelExpenseTotalCents: 50000 });
   if (redC.allPass || redC.checks.find((c) => c.id === "C").pass) {
     console.error(`${LABEL} --selftest FAIL — RED C: expected check C FAIL`);
     fail += 1;
@@ -346,12 +375,12 @@ function runSelftest() {
     console.error(`${LABEL} --selftest FAIL — GREEN C (driver-bill fuel lines on both sides): expected PASS`);
     fail += 1;
   } else pass += 1;
-  const redCBill = classifyFuelPostsOnce({ ...baseInput, fuel5000NetCents: 2054701, fuelExpenseTotalCents: 50000, driverBillFuelLineCents: 4700 }); // diff 2,000,001 > ratchet
+  const redCBill = classifyFuelPostsOnce({ ...baseInput, fuel5000NetCents: 54701, fuelExpenseTotalCents: 50000, driverBillFuelLineCents: 4700 });
   if (redCBill.checks.find((c) => c.id === "C").pass) {
     console.error(`${LABEL} --selftest FAIL — RED C (a cent not covered by any document): expected FAIL`);
     fail += 1;
   } else pass += 1;
-  const redCBillNotPosted = classifyFuelPostsOnce({ ...baseInput, fuel5000NetCents: 50000, fuelExpenseTotalCents: 2050000, driverBillFuelLineCents: 4700 }); // diff 2,004,700 > ratchet
+  const redCBillNotPosted = classifyFuelPostsOnce({ ...baseInput, fuel5000NetCents: 50000, fuelExpenseTotalCents: 50000, driverBillFuelLineCents: 4700 });
   if (redCBillNotPosted.checks.find((c) => c.id === "C").pass) {
     console.error(`${LABEL} --selftest FAIL — RED C (driver-bill fuel line with no GL behind it): expected FAIL`);
     fail += 1;
@@ -379,11 +408,32 @@ function runSelftest() {
     fail += 1;
   } else pass += 1;
 
-  const redE = classifyFuelPostsOnce({ ...baseInput, docsDoublePosted: KNOWN_DOUBLE_POSTED_COUNT + 1 }); // must exceed ratchet to fail
+  const redE = classifyFuelPostsOnce({ ...baseInput, docsDoublePosted: 3 });
   if (redE.allPass || redE.checks.find((c) => c.id === "E").pass) {
     console.error(`${LABEL} --selftest FAIL — RED E: expected check E FAIL`);
     fail += 1;
   } else pass += 1;
+
+  // LEAD 443.258.3 — the card-discount family: C counts it as its own term; F refuses an oversized "discount";
+  // the predicate is exactly "tagged fuel_card_discount, or the void-reversal of such a JE".
+  const withDisc = { ...baseInput, fuel5000NetCents: 48925, cardDiscountNetCents: -1075 };
+  const cdFixtures = [
+    ["C passes when GL = lines + card-discount family", classifyFuelPostsOnce(withDisc).checks.find((c) => c.id === "C").pass === true],
+    ["C fails when the discount is not a recorded family member", classifyFuelPostsOnce({ ...withDisc, cardDiscountNetCents: 0 }).checks.find((c) => c.id === "C").pass === false],
+    ["F fails when a tagged discount exceeds its receipt", classifyFuelPostsOnce({ ...baseInput, cardDiscountsExceedingReceipt: 1 }).checks.find((c) => c.id === "F").pass === false],
+    ["an untagged second full posting still fails E", classifyFuelPostsOnce({ ...baseInput, docsDoublePosted: 1 }).checks.find((c) => c.id === "E").pass === false],
+    ["the family predicate requires the fuel_card_discount tag", /relationship_role = 'fuel_card_discount'/.test(CARD_DISCOUNT_FAMILY_SQL) && !/relationship_role IN|relationship_role IS NOT NULL/.test(CARD_DISCOUNT_FAMILY_SQL)],
+    ["the family predicate only adds void-reversals of tagged JEs", /OR je\.reverses_je_id IN \(SELECT cd_p\.journal_entry_uuid/.test(CARD_DISCOUNT_FAMILY_SQL)],
+  ];
+  const ownSrc = fs.readFileSync(new URL(import.meta.url), "utf8");
+  const eSqlForFamily = (ownSrc.match(/\/\/ E: documents with 2\+ LIVE JEs[\s\S]*?HAVING count\(DISTINCT jep\.journal_entry_uuid\) > 1/) ?? [""])[0];
+  cdFixtures.push(["E excludes the card-discount family by the one predicate", /AND NOT \$\{CARD_DISCOUNT_FAMILY_SQL\}/.test(eSqlForFamily)]);
+  for (const [name, ok] of cdFixtures) {
+    if (!ok) {
+      console.error(`${LABEL} --selftest FAIL — ${name}`);
+      fail += 1;
+    } else pass += 1;
+  }
 
   if (fail > 0) {
     process.exitCode = 1;
@@ -459,6 +509,32 @@ async function measureLive(client) {
           SELECT 1 FROM driver_finance.settlement_line_item_splits g2
            WHERE g2.operating_company_id = $1::uuid AND g2.adjusting_journal_entry_id = je.id
         )`,
+    [USMCA_COMPANY_ID],
+  );
+
+  // C (443.258.3): the card-discount family's net on 5000, same JE population as the GL side.
+  const cardDiscountRes = await client.query(
+    `SELECT COALESCE(SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END), 0)::bigint AS net_cents
+       FROM accounting.journal_entry_postings jep
+       JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+       JOIN catalogs.accounts a ON a.id = jep.account_id
+      WHERE je.operating_company_id = $1::uuid AND je.voided_at IS NULL
+        AND a.operating_company_id = $1::uuid AND a.account_number = '5000'
+        AND ${CARD_DISCOUNT_FAMILY_SQL}`,
+    [USMCA_COMPANY_ID],
+  );
+  // F (443.258.3): a tagged discount JE whose 5000 magnitude exceeds its receipt expense's own 5000 lines.
+  const oversizedDiscountRes = await client.query(
+    `SELECT count(*)::int AS cnt FROM (
+       SELECT jep.journal_entry_uuid, jep.source_transaction_id, SUM(jep.amount_cents) AS amt
+         FROM accounting.journal_entry_postings jep
+         JOIN accounting.transaction_source_links l ON l.journal_entry_posting_id = jep.id AND l.relationship_role = 'fuel_card_discount'
+         JOIN catalogs.accounts a ON a.id = jep.account_id AND a.account_number = '5000'
+        WHERE jep.operating_company_id = $1::uuid AND jep.source_transaction_type = 'expense'
+        GROUP BY 1, 2) d
+      WHERE d.amt > COALESCE((SELECT SUM(el.amount_cents) FROM accounting.expense_lines el
+                                JOIN catalogs.accounts ea ON ea.id = el.expense_account_uuid
+                               WHERE el.expense_id::text = d.source_transaction_id), 0)`,
     [USMCA_COMPANY_ID],
   );
 
@@ -538,6 +614,8 @@ async function measureLive(client) {
           AND je.reversed_by_je_id IS NULL
           AND je.reverses_je_id IS NULL
           AND je.status = 'posted'
+          -- LEAD 443.258.3: the statement card-discount family is the statement DIFFERENCE, not a second posting
+          AND NOT ${CARD_DISCOUNT_FAMILY_SQL}
           -- CC-2 2026-10-04: a reclassification entry does not post the document again — it moves amounts the document
           -- already posted between accounts / loads, and the reclassify engine records it line by line. Excluded only
           -- when a reclassify_batch_lines row names THIS entry for THIS document; any other second live JE still counts.
@@ -570,6 +648,8 @@ async function measureLive(client) {
     fuel5000NetCents: Number(fuel5000Res.rows[0].net_cents),
     fuelExpenseTotalCents: Number(fuelTotalRes.rows[0].total_cents),
     driverBillFuelLineCents: Number(driverBillFuelRes.rows[0].total_cents),
+    cardDiscountNetCents: Number(cardDiscountRes.rows[0].net_cents),
+    cardDiscountsExceedingReceipt: oversizedDiscountRes.rows[0].cnt,
     expensesWithNullLinkage: nullLinkRes.rows[0].cnt,
     trailerOnlyGapCount: trailerOnlyRes.rows[0].cnt,
     expensesWithNullLinkageDetails: linkageDetails.join(", "),
