@@ -1351,12 +1351,13 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
     expense_number: string | null;
     qbo_purchase_id: string | null;
     class_id: string | null;
+    is_credit: boolean | null;
   }>(
     `
       SELECT id::text, status::text, posting_status::text, transaction_date::text,
              total_amount_cents::bigint, payment_account_uuid::text, vendor_uuid::text, memo, expense_number,
-             qbo_purchase_id::text, class_id::text
-      FROM accounting.expenses
+             qbo_purchase_id::text, class_id::text, COALESCE(to_jsonb(e) ->> 'is_credit', 'false')::boolean AS is_credit
+      FROM accounting.expenses e
       WHERE operating_company_id = $1::uuid AND id::text = $2
       LIMIT 1
       FOR UPDATE
@@ -1483,20 +1484,27 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
   // text), so the memo itself no longer needs to carry an identifier for display to work — an honest
   // "Expense" with no id is strictly better than a raw UUID nobody can read.
   const label = exp.expense_number ? `Expense ${exp.expense_number}` : "Expense";
+  const lines: PostingLineDraft[] = [
+    ...debitLines,
+    {
+      account_id: creditAccount,
+      debit_or_credit: "credit",
+      amount_cents: totalDebit,
+      description: `${label} ${creditRole === "expense_ap" ? "AP" : "payment"}`,
+      source_transaction_line_id: null,
+      relationship_role: creditRole,
+    },
+  ];
+  // LEAD 443.258.5 (writer shape B): a card CREDIT (QBO Purchase Credit=true — e.g. a fuel-card statement discount) is
+  // the same document with the sides flipped: Dr the payment account (the card) / Cr the category. Nothing else differs.
+  if (exp.is_credit === true) {
+    for (const l of lines) l.debit_or_credit = l.debit_or_credit === "debit" ? "credit" : "debit";
+    lines[lines.length - 1].relationship_role = "expense_card_credit";
+  }
   return {
     postingDate: exp.transaction_date,
-    memo: `${label} posting`,
-    lines: [
-      ...debitLines,
-      {
-        account_id: creditAccount,
-        debit_or_credit: "credit",
-        amount_cents: totalDebit,
-        description: `${label} ${creditRole === "expense_ap" ? "AP" : "payment"}`,
-        source_transaction_line_id: null,
-        relationship_role: creditRole,
-      },
-    ],
+    memo: exp.is_credit === true ? `${label} card credit posting` : `${label} posting`,
+    lines,
     accountResolutionTrace,
   };
 }

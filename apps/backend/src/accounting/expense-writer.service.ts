@@ -502,6 +502,8 @@ export async function insertUnattributedAlert(client: any, operatingCompanyId: s
 export const FIXED_COST_CATEGORY_CODES = new Set(["INSURANCE"]);
 
 export const createExpenseBodySchema = z.object({
+  /** LEAD 443.258.5: a card CREDIT (QBO Purchase Credit=true) — posts Dr payment account / Cr category. Default money out. */
+  is_credit: z.boolean().optional(),
   operating_company_id: z.string().uuid(),
   // Draft id used by UploadZone for create-time receipts; reconciled onto the real expense id in the
   // same txn (Option B — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
@@ -911,6 +913,12 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
   if (hasExpenseNumber && operatorExpenseNumber) {
     columns.push(`expense_number`);
     values.push(operatorExpenseNumber);
+  }
+
+  // LEAD 443.258.5: a card credit document (Credit Card Credit) — only ever set explicitly by its caller.
+  if (body.is_credit === true && (await columnExists(client, "accounting", "expenses", "is_credit"))) {
+    columns.push(`is_credit`);
+    values.push(true);
   }
 
   // Explicit load_id from caller — do not silently drop (WAVE-H2 CLS-LINKAGE-ONEWAY).

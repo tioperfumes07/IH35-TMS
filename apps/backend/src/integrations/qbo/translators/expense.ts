@@ -9,6 +9,10 @@ export function buildQboExpensePurchasePayload(input: {
   expenseAccountQboId: string;
   qbo_purchase_id?: string | null;
   qbo_sync_token?: string | null;
+  /** LEAD 443.258.5: a card credit (fuel-card statement discount) — QBO "Credit Card Credit" (Purchase, Credit=true). */
+  isCredit?: boolean;
+  /** The card account (e.g. 2510) the credit lands on — Purchase.AccountRef. */
+  paymentAccountQboId?: string | null;
 }): Record<string, unknown> {
   const detail = omitNullish({
     AccountRef: { value: input.expenseAccountQboId },
@@ -23,7 +27,9 @@ export function buildQboExpensePurchasePayload(input: {
 
   const base = omitNullish({
     TxnDate: input.txnDate.slice(0, 10),
-    PaymentType: "Cash",
+    ...(input.isCredit
+      ? { PaymentType: "CreditCard", Credit: true, ...(input.paymentAccountQboId ? { AccountRef: { value: input.paymentAccountQboId } } : {}) }
+      : { PaymentType: "Cash" }),
     PrivateNote: input.memo ?? "Expense",
     ...(input.vendorQboId ? { EntityRef: { value: input.vendorQboId, type: "Vendor" } } : {}),
     Line: [line],
