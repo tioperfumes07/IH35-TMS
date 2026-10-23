@@ -89,7 +89,8 @@ contains("apps/frontend/src/pages/fuel/FuelHome.tsx", fuelHome, [
 function fuelHomeHonestyFailures(source) {
   const found = [];
   if (!/summaryLoaded = summaryQuery\.data !== undefined/.test(source)) found.push("fraud summary does not distinguish unresolved from true zero");
-  if (!/summaryLoaded \? openCritical : "…"/.test(source)) found.push("fraud KPI loading state can paint zero");
+  // 443.250 V3KpiTile takes a string value: `String(openCritical)` is the same contract — the count only once loaded.
+  if (!/summaryLoaded \? (?:String\()?openCritical\)? : "…"/.test(source)) found.push("fraud KPI loading state can paint zero");
   return found;
 }
 for (const message of fuelHomeHonestyFailures(fuelHome)) fail(`apps/frontend/src/pages/fuel/FuelHome.tsx: ${message}`);
@@ -142,7 +143,7 @@ if (process.argv.includes("--selftest")) {
   }
   const homeMutants = [
     fuelHome.replace("summaryLoaded = summaryQuery.data !== undefined", "summaryLoaded = true"),
-    fuelHome.replace('summaryLoaded ? openCritical : "…"', "openCritical"),
+    fuelHome.replace(/summaryLoaded \? (String\()?openCritical(\))? : "…"/, "$1openCritical$2"),
   ];
   for (const mutant of homeMutants) {
     if (mutant === fuelHome || fuelHomeHonestyFailures(mutant).length === 0) {
