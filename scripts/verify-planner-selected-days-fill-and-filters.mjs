@@ -11,7 +11,9 @@
  *   R4  the day width fills the grid (no 120px cap); hidden-day bar edges snap by side; hour ticks 6/12/18;
  *   R5  the frozen columns are resizable (useResizableColumns) and persisted per user (storageScope);
  *   R6  a bar cut by the range says "← started" / "continues →";
- *   R7  the Driver planner passes the visible days into its grid.
+ *   R7  the Driver planner passes the visible days into its grid;
+ *   R8  overlapping bars in one row stack into sub-lanes (13690 under 13693 on T177, live 10-22) and the truck
+ *       planner shows the driver in the wide secondary column, proper-cased.
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -27,6 +29,7 @@ const FILES = {
   grid: `${DIR}/PlannerGrid.tsx`,
   driver: `${DIR}/DriverPlanner.tsx`,
   driverGrid: `${DIR}/SafetyDriverSchedulerGrid.tsx`,
+  truck: `${DIR}/TruckPlanner.tsx`,
   bar: "apps/frontend/src/components/planner/UniversalFilterBar.tsx",
 };
 
@@ -57,6 +60,9 @@ export function audit(s) {
   need("R6", /← started/.test(s.grid) && /continues →/.test(s.grid), "a bar cut by the range does not say started / continues");
   // R7
   need("R7", /days=\{days\}/.test(s.driver) && /visibleDays \?\?/.test(s.driverGrid), "the Driver planner draws every day regardless of Show days");
+  // R8
+  need("R8", /export function stackPlannerBars\(/.test(s.grid) && /stacked\.lane\.get\(bar\.id\)/.test(s.grid), "overlapping bars in one row are drawn on top of each other");
+  need("R8", /secondary: row\.driverName \?/.test(s.truck) && !/unit: row\.driverName \?/.test(s.truck) && /formatPersonName\(row\.driverName\)/.test(s.truck), "the truck planner squeezes the driver into the 56px unit column / not proper-cased");
   return f;
 }
 
@@ -81,6 +87,8 @@ if (process.argv.includes("--selftest")) {
     ["fixed (non-resizable) columns FAIL", plant("grid", "useResizableColumns(", "useFixedColumns(")],
     ["no continues marker FAILS", plant("grid", '"continues →"', '""')],
     ["driver grid ignoring the visible days FAILS", plant("driver", "days={days}", "")],
+    ["bars drawn without their stacked lane FAIL", plant("grid", "stacked.lane.get(bar.id)", "stackedLaneIgnored")],
+    ["driver back in the unit slot FAILS", plant("truck", "secondary: row.driverName ?", "unit: row.driverName ?")],
   ];
   let bad = 0;
   for (const [n, ok] of cases) {
@@ -97,4 +105,4 @@ if (failures.length) {
   for (const x of failures) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log("verify-planner-selected-days-fill-and-filters: OK — range in Filters, selected days fill the grid, resizable persisted columns, started/continues markers (R1–R7)");
+console.log("verify-planner-selected-days-fill-and-filters: OK — range in Filters, selected days fill the grid, resizable persisted columns, started/continues markers, stacked bars (R1–R8)");

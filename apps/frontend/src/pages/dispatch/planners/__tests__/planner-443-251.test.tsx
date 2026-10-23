@@ -67,3 +67,19 @@ describe("PlannerGrid — continues / started markers, hour ticks, resizable col
     expect(document.querySelector(".pg-col-name")?.getAttribute("title")).toBe("Jorge Luis Infante Corona");
   });
 });
+
+describe("PlannerGrid — two loads on one truck at once are both visible (item 8)", () => {
+  it("stacks overlapping bars into separate lanes (fail-old: 13690 drawn under 13693 on T177)", async () => {
+    const { stackPlannerBars } = await import("../PlannerGrid");
+    const days = ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24"];
+    const bars = [
+      { id: "13693", label: "13693", startYmd: "2026-10-19", endYmd: "2026-10-22", kind: "nb" as const },
+      { id: "13690", label: "13690", startYmd: "2026-10-22", endYmd: "2026-10-24", kind: "nb" as const },
+      { id: "x", label: "x", startYmd: "2026-10-23", endYmd: "2026-10-24", kind: "nb" as const },
+    ];
+    const out = stackPlannerBars(days, bars);
+    expect(out.lanes).toBe(2);
+    expect(out.lane.get("13693")).not.toBe(out.lane.get("13690"));
+    expect(out.lane.get("x")).toBe(out.lane.get("13693")); // reuses the freed lane
+  });
+});
