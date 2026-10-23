@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getRollingLedger, type RollingLedgerResult } from "../../../api/cashFlow";
+import { getActualVsProjected, getRollingLedger, type ActualVsProjectedResult, type RollingLedgerResult } from "../../../api/cashFlow";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 import { V3 } from "../../../design/v3-tokens";
@@ -35,6 +35,54 @@ type WeekBucket = {
   finance_lease_cents: number;
   other_cents: number;
 };
+
+/**
+ * LEAD 443.273 — 4 ACTUAL week buckets (Mon..Sun) from the Actual vs Projected engine's bank-cleared actual_cents.
+ * Ending cash walks BACK from today's opening cash (the balance at the start of this week), so the actual bars join
+ * the forecast line without a jump. Exported for the unit test.
+ */
+export function buildActualWeekBuckets(
+  avp: ActualVsProjectedResult,
+  firstMonday: string,
+  openingCents: number | null,
+): WeekBucket[] {
+  const weeks: WeekBucket[] = [];
+  for (let i = 0; i < 4; i += 1) {
+    const weekStart = addDaysIso(firstMonday, i * 7);
+    const weekEnd = addDaysIso(weekStart, 6);
+    let income = 0;
+    let expenses = 0;
+    for (const line of avp.lines) {
+      if (line.date < weekStart || line.date > weekEnd) continue;
+      if (line.category === "income") income += Number(line.actual_cents ?? 0);
+      else if (line.category === "expenses") expenses += Number(line.actual_cents ?? 0);
+    }
+    weeks.push({
+      weekStart,
+      label: `${weekStart.slice(5, 7)}-${weekStart.slice(8, 10)}`,
+      income_cents: income,
+      invoice_cents: income,
+      runrate_income_cents: 0,
+      expenses_cents: expenses,
+      net_cents: income - expenses,
+      ending_cash_cents: null,
+      driver_bills_cents: 0,
+      vendor_bills_cents: 0,
+      diesel_cents: 0,
+      insurance_cents: 0,
+      finance_lease_cents: 0,
+      other_cents: expenses,
+    });
+  }
+  if (openingCents !== null) {
+    let ending = openingCents;
+    for (let i = weeks.length - 1; i >= 0; i -= 1) {
+      weeks[i].ending_cash_cents = ending;
+      ending -= weeks[i].net_cents;
+    }
+  }
+  return weeks;
+}
 
 function mondayOf(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -546,13 +594,27 @@ export function CashFlowHomeTab({
       .reduce((s, d) => s + d.income_due_cents, 0);
   }, [data, today]);
 
-  const weeklyRunRate = useMemo(() => {
-    // Board: "last 4 full weeks" — weeks whose Sunday is strictly before company today.
-    const completed = weeks.filter((w) => addDaysIso(w.weekStart, 6) < today);
-    const src = completed.slice(-4);
-    if (src.length === 0) return 0;
-    return Math.round(src.reduce((s, w) => s + w.net_cents, 0) / src.length);
-  }, [weeks, today]);
+  // LEAD 443.273 — the board's "4 weeks actual" and "Weekly run-rate · last 4 full weeks" are CLEARED cash, not
+  // forecast. The rolling ledger starts at today, so it has no completed weeks: the old run-rate averaged an empty
+  // list and showed "$0.00 flat" live (10-23), and the chart had no ACTUAL bars. Source = the Actual vs Projected
+  // engine (bank-cleared actual_cents per day), the same one the Actual vs Projected tab shows.
+  const actualFrom = useMemo(() => addDaysIso(todayMonday, -28), [todayMonday]);
+  const actualTo = useMemo(() => addDaysIso(todayMonday, -1), [todayMonday]);
+  const actualsQuery = useQuery({
+    queryKey: ["cash-flow-home-actual-weeks", operatingCompanyId, actualFrom, actualTo],
+    queryFn: () => getActualVsProjected(operatingCompanyId, actualFrom, actualTo),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const actualWeeks = useMemo(
+    () => (actualsQuery.data ? buildActualWeekBuckets(actualsQuery.data, actualFrom, data?.opening_cash_cents ?? null) : []),
+    [actualsQuery.data, actualFrom, data?.opening_cash_cents],
+  );
+
+  /** Average net of the last 4 full ACTUAL weeks; null until the actuals load (shown as "—", never a fake 0). */
+  const weeklyRunRate = useMemo<number | null>(() => {
+    if (actualWeeks.length === 0) return null;
+    return Math.round(actualWeeks.reduce((s, w) => s + w.net_cents, 0) / actualWeeks.length);
+  }, [actualWeeks]);
 
   /** Conservative = committed documents only (invoices + AP/driver/lease bills). Same engine rows, filtered view. */
   const displayWeeks = useMemo(() => {
@@ -595,7 +657,7 @@ export function CashFlowHomeTab({
   }, [weeks]);
 
   const incomeSpark = useMemo(() => sparkPoints(weeks.slice(0, 4).map((w) => w.income_cents), 96, 26), [weeks]);
-  const runRateSpark = useMemo(() => sparkPoints(weeks.slice(0, 4).map((w) => w.net_cents), 96, 26), [weeks]);
+  const runRateSpark = useMemo(() => sparkPoints(actualWeeks.map((w) => w.net_cents), 96, 26), [actualWeeks]);
 
   const todayIncomeCount = useMemo(() => {
     if (!data) return 0;
@@ -679,14 +741,18 @@ export function CashFlowHomeTab({
           />
           <V3KpiTile
             label="Weekly run-rate"
-            value={formatCashFlowCents(weeklyRunRate, { sign: true })}
-            tone={weeklyRunRate < 0 ? "red" : weeklyRunRate > 0 ? "green" : "ink"}
+            value={weeklyRunRate === null ? "—" : formatCashFlowCents(weeklyRunRate, { sign: true })}
+            tone={weeklyRunRate === null ? "ink" : weeklyRunRate < 0 ? "red" : weeklyRunRate > 0 ? "green" : "ink"}
             sub={
               <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <span style={{ fontWeight: 600, color: weeklyRunRate < 0 ? V3.red : V3.green }}>
-                  {weeklyRunRate < 0 ? "▼ out > in" : weeklyRunRate > 0 ? "▲ in > out" : "flat"}
-                </span>
-                <span>last 4 full weeks</span>
+                {weeklyRunRate === null ? (
+                  <span>{actualsQuery.isError ? "actuals unavailable" : "loading actuals"}</span>
+                ) : (
+                  <span style={{ fontWeight: 600, color: weeklyRunRate < 0 ? V3.red : V3.green }}>
+                    {weeklyRunRate < 0 ? "▼ out > in" : weeklyRunRate > 0 ? "▲ in > out" : "flat"}
+                  </span>
+                )}
+                <span>last 4 full weeks (cleared)</span>
               </span>
             }
             spark={
@@ -751,7 +817,7 @@ export function CashFlowHomeTab({
           <CashPositionChart
             weeks={
               chartGrain === "weekly"
-                ? displayWeeksWithBalance
+                ? [...actualWeeks, ...displayWeeksWithBalance]
                 : displayWeeksWithBalance.filter((_, i) => i % 4 === 0)
             }
             openingCents={data?.opening_cash_cents ?? null}
