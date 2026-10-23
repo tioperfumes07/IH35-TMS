@@ -127,12 +127,14 @@ if (process.argv.includes("--selftest")) {
   const live = assertCandidatesCoverAllDocuments(good);
   if (live.length) failures.push(`live: ${live.join(" | ")}`);
 
+  // 443.279 (CC-2): each plant removes EVERY read of its source (the candidate body now reads expenses in more than one
+  // place, so removing only the first left the plant inert).
   // 1..4 — THE RETIRED RULE, applied one source at a time. Each of these is exactly what the old
   // settlement-born-only guard would have demanded, and each one hides real work from the owner.
-  expect("expenses-removed", good.replace(/FROM accounting\.expenses\b/i, "FROM accounting.nothing_e"), "accounting.expenses");
-  expect("bills-removed", good.replace(/FROM accounting\.bills\b/i, "FROM accounting.nothing_b"), "accounting.bills");
-  expect("bill-payments-removed", good.replace(/FROM accounting\.bill_payments\b/i, "FROM accounting.nothing_bp"), "accounting.bill_payments");
-  expect("ar-payments-removed", good.replace(/FROM accounting\.payments\b/i, "FROM accounting.nothing_p"), "accounting.payments");
+  expect("expenses-removed", good.replace(/FROM accounting\.expenses\b/gi, "FROM accounting.nothing_e"), "accounting.expenses");
+  expect("bills-removed", good.replace(/FROM accounting\.bills\b/gi, "FROM accounting.nothing_b"), "accounting.bills");
+  expect("bill-payments-removed", good.replace(/FROM accounting\.bill_payments\b/gi, "FROM accounting.nothing_bp"), "accounting.bill_payments");
+  expect("ar-payments-removed", good.replace(/FROM accounting\.payments\b/gi, "FROM accounting.nothing_p"), "accounting.payments");
   // 5 — company scoping dropped.
   expect("unscoped", good.replace(/operating_company_id/g, "xx_col"), "never unscoped");
   // 6 — the function itself removed.
