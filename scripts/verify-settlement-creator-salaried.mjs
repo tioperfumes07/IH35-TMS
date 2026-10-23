@@ -20,7 +20,7 @@ const F = { seed: D + "settlement-creator-seed-loads.ts", svc: D + "settlement-c
 export function problems(s) {
   const p = [];
   if (!/draft\.salaried\s*\?\s*\{ driver_pay_rate_per_mile: 0, driver_pay_rate_override_reason: SALARIED_OVERRIDE_REASON \}/.test(s.seed) || !/SALARIED_OVERRIDE_REASON = "Local driver — weekly salary/.test(s.seed)) p.push("a salaried draft is not booked with the 0-rate 'Local driver — weekly salary' override");
-  if (!/if \(!draft\.salaried && payMiles != null && loadedCents != null\) \{/.test(s.svc)) p.push("a salaried load still writes a per-load pay line");
+  if (!/if \(!draft\.salaried &&(?:\s*load\.driver_pay_mode !== ['"]additional_pay_only['"]\s*&&)?\s*payMiles != null && loadedCents != null\) \{/.test(s.svc)) p.push("a salaried load still writes a per-load pay line");
   if (!/if \(postsThroughClose && salariedZero\) \{/.test(s.svc)) p.push("a $0 salaried settlement is sent to the pay run");
   if (!/salaried: z\.boolean\(\)/.test(s.routes) || !/confirmed_zero_fuel_purchases: z\.boolean\(\)/.test(s.routes)) p.push("the route drops salaried / confirmed_zero_fuel_purchases");
   if (s.gate.split(MARK).length - 1 < 4) p.push("the feed gate does not recognise salaried loads (driver bill / settlement loads / posted_to_ledger)");
@@ -35,7 +35,7 @@ const read = () => Object.fromEntries(Object.entries(F).map(([k, r]) => [k, fs.r
 function selftest() {
   const g = read(); const bad = [];
   if (problems(g).length) bad.push(`real tree flagged: ${problems(g).join("; ")}`);
-  const plants = [["seed", (x) => x.replace("draft.salaried\n      ? {", "false\n      ? {")], ["svc", (x) => x.replace("if (!draft.salaried && payMiles != null", "if (payMiles != null")], ["svc", (x) => x.replace("if (postsThroughClose && salariedZero) {", "if (false) {")], ["routes", (x) => x.replace("salaried: z.boolean()", "salariedx: z.boolean()")], ["close", (x) => x.replaceAll("~* '^(salaried|local driver — weekly salary)'", "ILIKE 'x%'")], ["book", (x) => x.replace("driver_pay_rate_override_reason, miles_deadhead", "miles_deadhead")]];
+  const plants = [["seed", (x) => x.replace("draft.salaried\n      ? {", "false\n      ? {")], ["svc", (x) => x.replace('if (!draft.salaried && load.driver_pay_mode !== "additional_pay_only" && payMiles != null', "if (payMiles != null")], ["svc", (x) => x.replace("if (postsThroughClose && salariedZero) {", "if (false) {")], ["routes", (x) => x.replace("salaried: z.boolean()", "salariedx: z.boolean()")], ["close", (x) => x.replaceAll("~* '^(salaried|local driver — weekly salary)'", "ILIKE 'x%'")], ["book", (x) => x.replace("driver_pay_rate_override_reason, miles_deadhead", "miles_deadhead")]];
   for (const [k, f] of plants) { const pl = f(g[k]); if (pl === g[k]) bad.push(`plant on ${k} did not apply`); else if (!problems({ ...g, [k]: pl }).length) bad.push(`plant on ${k} passed`); }
   if (bad.length) { console.error(`${LABEL} selftest FAIL\n- ${bad.join("\n- ")}`); process.exit(1); }
   console.log(`${LABEL} selftest PASS (${plants.length} plants caught)`);
