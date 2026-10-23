@@ -20,13 +20,27 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { V3 } from "../../design/v3-tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
+
+/** Board chrome only (ROUND 443.250 Settlements-Close.dc.html) — not a multi-step engine. */
+const CLOSE_BOARD_STEPS = [
+  { n: 1, label: "Driver" },
+  { n: 2, label: "Loads & miles" },
+  { n: 3, label: "Gross" },
+  { n: 4, label: "Deductions" },
+  { n: 5, label: "Escrow" },
+  { n: 6, label: "Advances" },
+  { n: 7, label: "Net & pay" },
+] as const;
 
 type DraftJeRow = { id: string; account: string; debit: string; credit: string };
 
@@ -293,16 +307,103 @@ export function SettlementCloseArrivalPage() {
     [],
   );
 
+  const openDriverCount = openQuery.data?.pre_settlements?.length ?? 0;
+  const moneyOrDash = (n: number) => (settlement ? formatUsd(n) : "—");
+  // Presentation highlight only: Driver until a settlement is loaded; Net & pay once the live
+  // composition (gross→net) is on screen. Does not gate Close or change posting.
+  const activeStep = settlement ? 7 : 1;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3" data-settlement-close-v3="1">
       <PageHeader title="Settlement Close — Driver Arrival" subtitle="Close ONE driver's settlement on arrival: gross, deductions, escrow, advances, net" />
 
       <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
 
+      {/* ROUND 443.250 V3 board (Settlements-Close.dc.html) — Result strip + 7-step chrome.
+          Money values are the same settlement / line totals already computed for Close; Open
+          drivers counts listOpenPreSettlementsByDriver. No new query math. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 8 }}
+        data-testid="settlement-close-v3-kpis"
+        data-settlement-close-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="Open drivers"
+          value={openQuery.isError ? "—" : String(openDriverCount)}
+          sub="open pre-settlements on arrival"
+          testId="settlement-close-kpi-open-drivers"
+        />
+        <V3KpiTile
+          label="Gross"
+          value={moneyOrDash(gross || earnings)}
+          sub="settlement gross / earnings"
+          testId="settlement-close-kpi-gross"
+        />
+        <V3KpiTile
+          label="Deductions"
+          value={moneyOrDash(Math.abs(otherDeductionsTotal))}
+          sub="other deductions total"
+          testId="settlement-close-kpi-deductions"
+        />
+        <V3KpiTile
+          label="Escrow"
+          value={moneyOrDash(Math.abs(escrowContributionThisSettlement))}
+          sub="contribution this settlement"
+          testId="settlement-close-kpi-escrow"
+        />
+        <V3KpiTile
+          label="Advances recovered"
+          value={moneyOrDash(Math.abs(advanceRecoveryTotal))}
+          sub="advance recovery lines"
+          testId="settlement-close-kpi-advances"
+        />
+        <V3KpiTile
+          label="Net to driver"
+          value={moneyOrDash(netPay)}
+          sub="settlement net pay"
+          testId="settlement-close-kpi-net"
+        />
+      </div>
+
+      <div
+        data-testid="settlement-close-v3-steps"
+        data-settlement-close-v3-steps="1"
+        style={{
+          display: "flex",
+          border: `1px solid ${V3.border}`,
+          borderRadius: 2,
+          background: V3.surface,
+          overflow: "hidden",
+        }}
+      >
+        {CLOSE_BOARD_STEPS.map((step, idx) => {
+          const on = step.n === activeStep;
+          return (
+            <div
+              key={step.n}
+              style={{
+                flex: 1,
+                padding: "10px 12px",
+                borderRight: idx < CLOSE_BOARD_STEPS.length - 1 ? `1px solid ${V3.borderSoft}` : undefined,
+                background: on ? V3.shell : V3.surface,
+                color: on ? V3.onShell : V3.ink,
+              }}
+            >
+              <div style={{ font: `600 10px ${V3.font}`, opacity: 0.7 }}>STEP {step.n}</div>
+              <div style={{ font: `700 12px ${V3.font}` }}>{step.label}</div>
+            </div>
+          );
+        })}
+      </div>
+
       {!companyId ? (
         <p className="text-xs text-gray-600">Select an operating company first.</p>
       ) : (
-        <>
+        <V3Panel
+          title="Settlement close"
+          subtitle="Driver arrival · gross · deductions · escrow · advances · net & pay"
+          testId="settlement-close-panel"
+        >
           <label className="block max-w-xl">
             <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
               Driver with an open pre-settlement (on arrival)
@@ -333,7 +434,7 @@ export function SettlementCloseArrivalPage() {
           {selectedDriverId && detailQuery.isError ? <p className="text-xs text-red-600">No active pre-settlement found for this driver.</p> : null}
 
           {settlement ? (
-            <div className="space-y-4 border-t border-gray-200 pt-4">
+            <div className="mt-4 space-y-4 border-t border-gray-200 pt-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="text-xs font-semibold text-gray-900">
@@ -551,7 +652,7 @@ export function SettlementCloseArrivalPage() {
               </div>
             </div>
           ) : null}
-        </>
+        </V3Panel>
       )}
       <CreateDriverModal
         open={driverCreateOpen}

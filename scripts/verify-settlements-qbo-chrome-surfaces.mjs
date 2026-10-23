@@ -37,6 +37,18 @@ const CHECKS = [
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
     pattern: /\+ Create driver/,
   },
+  // ROUND 443.250 Settlements-Close.dc.html — V3 Result strip + step chrome + panel.
+  // Same closeSettlementPayRun / settleAndPay / line totals; chrome only.
+  {
+    name: "SettlementCloseArrivalPage V3KpiTile Result strip",
+    file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
+    pattern: /V3KpiTile[\s\S]*data-settlement-close-v3-kpis="1"|data-settlement-close-v3-kpis="1"[\s\S]*V3KpiTile/,
+  },
+  {
+    name: "SettlementCloseArrivalPage V3 step strip + V3Panel",
+    file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
+    pattern: /data-settlement-close-v3-steps="1"[\s\S]*V3Panel|V3Panel[\s\S]*data-settlement-close-v3-steps="1"/,
+  },
   {
     // ACCT-F5444: NOT kind="bill" — that was this check's original ask, and it is WRONG.
     // driver_finance.driver_bills is a different table from accounting.bills; kind="bill" drills
