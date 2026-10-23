@@ -178,8 +178,8 @@ export function SettlementsPage() {
   const [weekChartGrain, setWeekChartGrain] = useState<"net" | "gross" | "deductions">("net");
   /** ROUND 443.267 — Week-of panel Open/Closed filter (board Settlements.dc.html). */
   const [weekOfPill, setWeekOfPill] = useState<"open" | "closed">("open");
-  // ROUND 16.3 — the owner asked for a Company & Driver side-by-side view and a Company settlements
-  // register alongside the existing Driver settlements register + Disputes.
+  // ROUND 16.3 + 443.280-A — Company & Driver / Disputes / Needs Review / Open / Closed / Payments
+  // are own SETTLEMENTS_SUBNAV tabs (not a Button row under the home board).
   const tabParam = searchParams.get("tab");
   const activeTab =
     tabParam === "disputes"
@@ -190,14 +190,17 @@ export function SettlementsPage() {
           ? "company_settlements"
           : tabParam === "needs_review"
             ? "needs_review"
-            : "settlements";
+            : tabParam === "open"
+              ? "open"
+              : tabParam === "closed"
+                ? "closed"
+                : tabParam === "payments" || searchParams.get("view") === "payments"
+                  ? "payments"
+                  : "settlements";
   // Drill target from the Company settlements register → the side-by-side (resolves to a driver settlement).
   const companySettlementParam = searchParams.get("company_settlement_id");
-  // SETL-MOD-01 — the Settlements list defaults to the tour readout (one row per tour, the SAME
-  // GET /api/v1/driver-finance/tours the Load-costs Pre-Settlement/Settlement tabs read). The prior
-  // payment-centric per-settlement table is preserved under ?view=payments (never deleted — it owns
-  // the payment pipeline + bulk void).
-  const settlementsView = searchParams.get("view") === "payments" ? "payments" : "tours";
+  // 443.280-A — Payments is its own tab (?tab=payments or legacy ?view=payments). Home is board-only.
+  // Capability kept: payment pipeline + bulk void still mount on the Payments tab (never deleted).
   const selectedSettlementId = searchParams.get("settlement_id");
   // R-186.2 — half-page Settlement Creator panel (Company + Driver). Opened from Settlements
   // and Topbar Create via ?creator=1 — never a full page.
@@ -545,77 +548,8 @@ export function SettlementsPage() {
 
       {/* ROUND 443.254 N1 — every tab stays under /driver-finance/… */}
       {/* VERIFY-4 (acct-surf-09): Escrow leaf is SETTLEMENTS_SUBNAV → /driver-finance/escrow; Accounting mirror remains /accounting/escrow. */}
+      {/* 443.280-A — Open / Closed / Payments / Company & Driver / Disputes / Needs Review live on SETTLEMENTS_SUBNAV (no Button row under the home board). */}
       <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
-
-      <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          variant={activeTab === "company_driver" ? "primary" : "secondary"}
-          data-testid="tab-company-driver"
-          onClick={() => {
-            const next = new URLSearchParams(searchParams);
-            next.set("tab", "company_driver");
-            next.delete("company_settlement_id");
-            setSearchParams(next);
-          }}
-        >
-          Company &amp; Driver
-        </Button>
-        <Button
-          size="sm"
-          variant={activeTab === "settlements" ? "primary" : "secondary"}
-          onClick={() => {
-            const next = new URLSearchParams(searchParams);
-            next.delete("tab");
-            next.delete("settlement_id");
-            next.delete("company_settlement_id");
-            setSearchParams(next);
-          }}
-        >
-          Driver settlements
-        </Button>
-        <Button
-          size="sm"
-          variant={activeTab === "company_settlements" ? "primary" : "secondary"}
-          data-testid="tab-company-settlements"
-          onClick={() => {
-            const next = new URLSearchParams(searchParams);
-            next.set("tab", "company_settlements");
-            next.delete("settlement_id");
-            next.delete("company_settlement_id");
-            setSearchParams(next);
-          }}
-        >
-          Company settlements
-        </Button>
-        <Button
-          size="sm"
-          variant={activeTab === "disputes" ? "primary" : "secondary"}
-          onClick={() => {
-            const next = new URLSearchParams(searchParams);
-            next.set("tab", "disputes");
-            next.delete("settlement_id");
-            next.delete("company_settlement_id");
-            setSearchParams(next);
-          }}
-        >
-          Settlement Disputes
-        </Button>
-        <Button
-          size="sm"
-          variant={activeTab === "needs_review" ? "primary" : "secondary"}
-          data-testid="tab-needs-review"
-          onClick={() => {
-            const next = new URLSearchParams(searchParams);
-            next.set("tab", "needs_review");
-            next.delete("settlement_id");
-            next.delete("company_settlement_id");
-            setSearchParams(next);
-          }}
-        >
-          Needs Review
-        </Button>
-      </div>
 
       {activeTab === "company_driver" ? (
         <SettlementsCompanyDriverTab
@@ -660,7 +594,7 @@ export function SettlementsPage() {
           value={String(kpis.total_unpaid)}
           sub="settlements not yet paid"
           testId="settlements-kpi-total-unpaid"
-          onClick={() => navigate("/driver-finance/settlements?view=payments&payment_state=unpaid")}
+          onClick={() => navigate("/driver-finance/settlements?tab=payments&payment_state=unpaid")}
         />
         <V3KpiTile
           label="This period"
@@ -684,7 +618,7 @@ export function SettlementsPage() {
             )
           }
           testId="settlements-kpi-driver-pay"
-          onClick={() => navigate("/driver-finance/settlements?view=payments")}
+          onClick={() => navigate("/driver-finance/settlements?tab=payments")}
         />
         <V3KpiTile
           label="Drivers w/ debt"
@@ -692,7 +626,7 @@ export function SettlementsPage() {
           sub={focusFilter === "debt" ? "filter on" : "live debt balance"}
           tone={typeof kpis.drivers_with_debt === "number" && kpis.drivers_with_debt > 0 ? "red" : "ink"}
           testId="settlements-kpi-debt"
-          onClick={() => navigate("/driver-finance/settlements?view=payments&focus=debt")}
+          onClick={() => navigate("/driver-finance/settlements?tab=payments&focus=debt")}
         />
         <V3KpiTile
           label="YTD settlements"
@@ -706,7 +640,7 @@ export function SettlementsPage() {
           value={String(kpis.open_driver_bills)}
           sub="unsettled driver pay"
           testId="settlements-kpi-open-bills"
-          onClick={() => navigate("/driver-finance/settlements?view=payments")}
+          onClick={() => navigate("/driver-finance/settlements?tab=payments")}
         />
       </div>
 
@@ -718,7 +652,7 @@ export function SettlementsPage() {
           <V3Panel
             title="Net driver pay by week"
             subtitle={`${weekBuckets.length} weeks · not cancelled · not sample`}
-            onViewAll={() => navigate("/driver-finance/settlements?view=payments")}
+            onViewAll={() => navigate("/driver-finance/settlements?tab=payments")}
             headerRight={
               <V3Segmented
                 value={weekChartGrain}
@@ -787,7 +721,7 @@ export function SettlementsPage() {
           <V3Panel
             title={`Deductions this week · ${formatSettlementsUsd(deductionsThisWeek)}`}
             subtitle="Split by type from settlement deduction lines"
-            onViewAll={() => navigate("/drivers/deductions")}
+            onViewAll={() => navigate("/driver-finance/deductions")}
             testId="settlements-home-deductions-panel"
           >
             <div style={{ padding: "10px 14px" }} data-testid="settlements-home-deductions-body">
@@ -854,7 +788,7 @@ export function SettlementsPage() {
         <V3Panel
           title={`Week of ${formatWeekOfTitle(new Date(thisWeekBucket.weekStartMs))}`}
           subtitle={`This week · ${thisWeekSettlements.length} with pay`}
-          onViewAll={() => navigate("/driver-finance/settlements?view=payments")}
+          onViewAll={() => navigate(`/driver-finance/settlements?tab=${weekOfPill === "closed" ? "closed" : "open"}`)}
           headerRight={
             <V3Segmented
               value={weekOfPill}
@@ -957,27 +891,10 @@ export function SettlementsPage() {
           </div>
         </V3Panel>
       ) : null}
-
-      <div className="flex items-center gap-2" data-testid="settlements-view-toggle">
-        <V3Segmented
-          value={settlementsView}
-          onChange={(next) => {
-            const params = new URLSearchParams(searchParams);
-            if (next === "tours") params.delete("view");
-            else params.set("view", "payments");
-            params.delete("settlement_id");
-            setSearchParams(params);
-          }}
-          options={[
-            { id: "tours", label: "Tours" },
-            { id: "payments", label: "Payments" },
-          ]}
-          testId="settlements-view-segmented"
-        />
-      </div>
-      {settlementsView === "tours" ? (
+        </>
+      ) : activeTab === "open" || activeTab === "closed" ? (
         <SettlementsToursRegister companyId={companyId} />
-      ) : (
+      ) : activeTab === "payments" ? (
         <>
       <MoneyListToolbar
         search={search}
@@ -1203,13 +1120,11 @@ export function SettlementsPage() {
         resolveRowHref={(id) => `/driver-finance/settlements?settlement_id=${encodeURIComponent(id)}`}
       />
         </>
-      )}
-        </>
       ) : activeTab === "needs_review" ? (
         <PresettlementSuggestionsTab companyId={companyId} />
-      ) : (
+      ) : activeTab === "disputes" ? (
         <SettlementDisputesTab companyId={companyId} />
-      )}
+      ) : null}
     </div>
   );
 }
