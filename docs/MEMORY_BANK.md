@@ -127,7 +127,8 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   week-bucketed). No board sample cents. Expense run-rate line breakdown deferred (no CC-1
   endpoints — totals only).
 - **Guard:** extended `scripts/verify-cash-flow-home-tab.mjs` (piggyback; no new EVEN claim). Asserts
-  V3 imports/components/testids + `getRollingLedger`.
+  V3 imports/components/testids + `getRollingLedger`. `verify-cash-flow-rolling-ledger.mjs` KPI-strip
+  markers updated Load-Costs `#F4F7FA`/`#C7D2DC` → `V3.headerBg`/`V3.border` (same shared strip).
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
