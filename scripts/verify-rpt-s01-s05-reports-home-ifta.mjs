@@ -103,14 +103,14 @@ function main() {
     const boardBackup = fs.readFileSync(boardPath, "utf8");
     const homeBackup = fs.readFileSync(homePath, "utf8");
     try {
-      fs.writeFileSync(boardPath, boardBackup.replace(/Accounting \+ financial reports/g, ""), "utf8");
+      fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup.replace(/Accounting \+ financial reports/g, ""), "utf8");
       const planted = run(tmpRoot);
       if (planted.length === 0) {
         console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: planted missing section did not fail");
         process.exit(1);
       }
-      fs.writeFileSync(boardPath, boardBackup, "utf8");
-      fs.writeFileSync(homePath, homeBackup.replace("Branded financial compilations", "QBO-standard branded compilations"), "utf8");
+      fs.writeFileSync(path.join(tmpRoot, BOARD), boardBackup, "utf8");
+      fs.writeFileSync(path.join(tmpRoot, FILE), homeBackup.replace("Branded financial compilations", "QBO-standard branded compilations"), "utf8");
       const qboCopyPlanted = run(tmpRoot);
       if (!qboCopyPlanted.some((failure) => failure.includes("must not claim a QBO standard"))) {
         console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: planted QBO copy did not fail");
