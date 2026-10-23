@@ -159,6 +159,37 @@ const CashAdvanceRequestsPage = React.lazy(() => import("../pages/driver-finance
 const CompanySettlementsPage = React.lazy(() => import("../pages/driver-finance/CompanySettlementsPage").then((m) => ({ default: m.CompanySettlementsPage })));
 const SettlementCloseArrivalPage = React.lazy(() => import("../pages/driver-finance/SettlementCloseArrivalPage").then((m) => ({ default: m.SettlementCloseArrivalPage })));
 const OwnerApprovalPortalPage = React.lazy(() => import("../pages/driver-finance/OwnerApprovalPortalPage").then((m) => ({ default: m.OwnerApprovalPortalPage })));
+/** ROUND 443.254 N1 — Settlements-module mounts of shared pages (sidebar stays SETTLEMENTS). */
+const SettlementsDriversPage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsDriversPage })),
+);
+const SettlementsProfilesPage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsProfilesPage })),
+);
+const SettlementsPreSettlementsPage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsPreSettlementsPage })),
+);
+const SettlementsFeedGatePage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsFeedGatePage })),
+);
+const SettlementsCashAdvancesPage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsCashAdvancesPage })),
+);
+const SettlementsLiabilitiesPage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsLiabilitiesPage })),
+);
+const SettlementsEscrowPage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsEscrowPage })),
+);
+const SettlementsPayRateTemplatesPage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsPayRateTemplatesPage })),
+);
+const SettlementsDeductionsPage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementsMountedPages").then((m) => ({ default: m.SettlementsDeductionsPage })),
+);
+const EscrowRegisterPage = React.lazy(() =>
+  import("../pages/driver-finance/EscrowRegisterPage").then((m) => ({ default: m.EscrowRegisterPage })),
+);
 import { PortalLayout } from "../portal/PortalLayout";
 const PortalLoginPage = React.lazy(() => import("../portal/PortalLoginPage").then((m) => ({ default: m.PortalLoginPage })));
 const PortalDashboardPage = React.lazy(() => import("../portal/PortalDashboardPage").then((m) => ({ default: m.PortalDashboardPage })));
@@ -400,6 +431,7 @@ const RecurringBillList = React.lazy(() => import("../pages/accounting/bills/Rec
 const RecurringBillCreate = React.lazy(() => import("../pages/accounting/bills/RecurringBillCreate").then((m) => ({ default: m.RecurringBillCreate })));
 const ExpenseCreatePage = React.lazy(() => import("../pages/accounting/ExpenseCreatePage").then((m) => ({ default: m.ExpenseCreatePage })));
 const ExpensesListPage = React.lazy(() => import("../pages/accounting/ExpensesListPage").then((m) => ({ default: m.ExpensesListPage })));
+const UnexpectedExpensesPage = React.lazy(() => import("../pages/accounting/UnexpectedExpensesPage").then((m) => ({ default: m.UnexpectedExpensesPage })));
 const ExpenseDetailPage = React.lazy(() => import("../pages/accounting/ExpenseDetailPage").then((m) => ({ default: m.ExpenseDetailPage })));
 const BillsPage = React.lazy(() => import("../pages/accounting/BillsPage").then((m) => ({ default: m.BillsPage })));
 const VendorBalancesPage = React.lazy(() => import("../pages/accounting/VendorBalancesPage").then((m) => ({ default: m.VendorBalancesPage })));
@@ -2847,6 +2879,17 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* ROUND 443.254 N1/N5 — every Settlements tab + escrow register under /driver-finance/… */}
+        <Route path="/driver-finance/drivers" element={<ProtectedRoute><SettlementsDriversPage /></ProtectedRoute>} />
+        <Route path="/driver-finance/profiles" element={<ProtectedRoute><SettlementsProfilesPage /></ProtectedRoute>} />
+        <Route path="/driver-finance/pre-settlements" element={<ProtectedRoute><SettlementsPreSettlementsPage /></ProtectedRoute>} />
+        <Route path="/driver-finance/feed-gate" element={<ProtectedRoute><SettlementsFeedGatePage /></ProtectedRoute>} />
+        <Route path="/driver-finance/cash-advances" element={<ProtectedRoute><SettlementsCashAdvancesPage /></ProtectedRoute>} />
+        <Route path="/driver-finance/liabilities" element={<ProtectedRoute><SettlementsLiabilitiesPage /></ProtectedRoute>} />
+        <Route path="/driver-finance/escrow" element={<ProtectedRoute><SettlementsEscrowPage /></ProtectedRoute>} />
+        <Route path="/driver-finance/escrow/:driverId" element={<ProtectedRoute><EscrowRegisterPage /></ProtectedRoute>} />
+        <Route path="/driver-finance/pay-rate-templates" element={<ProtectedRoute><SettlementsPayRateTemplatesPage /></ProtectedRoute>} />
+        <Route path="/driver-finance/deductions" element={<ProtectedRoute><SettlementsDeductionsPage /></ProtectedRoute>} />
         <Route
           path="/425c"
           element={
@@ -4841,6 +4884,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ExpenseCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/unexpected"
+          element={
+            <ProtectedRoute>
+              <UnexpectedExpensesPage />
             </ProtectedRoute>
           }
         />

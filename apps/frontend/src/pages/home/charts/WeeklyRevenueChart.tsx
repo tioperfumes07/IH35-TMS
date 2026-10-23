@@ -4,6 +4,7 @@ import { fetchHomeWeeklyRevenue } from "../../../api/home";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { formatUsdFromCents } from "../HomeKpiCard";
+import { formatDate } from "../../../lib/formatDate";
 
 const LINE_COLOR = "var(--green, #1A7A3C)";
 
@@ -33,9 +34,11 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
     return <ListErrorState title="Couldn't load weekly revenue" status={status} message={message} onRetry={() => void query.refetch()} />;
   }
 
+  // ROUND 443.258-B (D004): axis MM/DD; tooltip MM/DD/YYYY (was DD/MM without year).
   const data = (query.data ?? []).map((row) => ({
     ...row,
-    label: row.date.replace(/^\d{4}-(\d{2})-(\d{2})$/, "$2/$1"),
+    label: row.date.replace(/^\d{4}-(\d{2})-(\d{2})$/, "$1/$2"),
+    labelFull: formatDate(row.date) || row.date,
     revenue_dollars: row.revenue_cents / 100,
   }));
 
@@ -68,7 +71,10 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
           />
           <Tooltip
             formatter={(value) => [formatUsdFromCents(Math.round(Number(value) * 100)), "Invoice basis"]}
-            labelFormatter={(l) => `Day ${l}`}
+            labelFormatter={(_l, payload) => {
+              const full = (payload?.[0]?.payload as { labelFull?: string } | undefined)?.labelFull;
+              return full ? `Day ${full}` : `Day ${_l}`;
+            }}
           />
           <Line type="monotone" dataKey="revenue_dollars" stroke={LINE_COLOR} strokeWidth={2} dot={{ r: 3 }} name="Invoice basis" />
         </LineChart>

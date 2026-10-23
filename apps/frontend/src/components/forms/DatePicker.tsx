@@ -239,7 +239,8 @@ export function DatePicker({
 
   const dateInputValue = editingDate ? dateDraft : value ? formatDateUS(value) : "";
   const years = yearRange(viewY, min, max);
-  const heightClass = box ? "" : buttonHeight || "h-9";
+  // ROUND 443.258-B (D018 D028 D032) — single-line inputs = 32px (h-8) everywhere.
+  const heightClass = box ? "" : buttonHeight || "h-8";
   const boxStyle = box
     ? {
         height: box === "field" ? "var(--ih-h-field)" : "var(--ih-h-control)",

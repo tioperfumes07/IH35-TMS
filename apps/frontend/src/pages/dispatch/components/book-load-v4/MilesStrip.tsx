@@ -138,7 +138,7 @@ export function MilesStrip({
               min={0}
               step={0.1}
               required={practicalRequired}
-              className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-xs ${
+              className={`mt-1 h-8 w-full rounded-sm border px-1.5 font-mono text-xs ${
                 practicalRequired ? "border-[#4B5563] font-semibold text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
               }`}
               value={inputValue(practical)}
@@ -161,7 +161,7 @@ export function MilesStrip({
               min={0}
               step={0.1}
               required={shortestRequired}
-              className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-xs ${
+              className={`mt-1 h-8 w-full rounded-sm border px-1.5 font-mono text-xs ${
                 shortestRequired ? "border-[#4B5563] font-semibold text-[#0F1219]" : "border-[#E5E7EB] text-[#0F1219]"
               }`}
               value={inputValue(shortest)}
@@ -183,7 +183,7 @@ export function MilesStrip({
               type="number"
               min={0}
               step={0.1}
-              className="mt-1 w-full max-w-[7rem] rounded-sm border border-[#E5E7EB] px-1.5 py-1 font-mono text-xs text-[#0F1219]"
+              className="mt-1 h-8 w-full rounded-sm border border-[#E5E7EB] px-1.5 font-mono text-xs text-[#0F1219]"
               value={inputValue(deadhead)}
               onChange={(e) => onDeadheadChange?.(numFromInput(e.target.value))}
             />
@@ -247,27 +247,35 @@ export function MilesStrip({
           Shortest: {shortestProvenance}
         </p>
       ) : null}
-      {googleReferencePractical ? (
-        <p
-          className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
-          data-testid="book-load-google-reference-miles"
-          title="Google car routing — reference only"
-        >
-          Google ref {googleReferencePractical.miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi ·{" "}
-          {formatDuration(googleReferencePractical.minutes)}
-        </p>
-      ) : null}
-      {googleReferenceEmpty ? (
-        <p
-          className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
-          data-testid="book-load-google-reference-empty"
-          title="Google car routing, yard to pickup — reference only"
-        >
-          Empty leg ref (yard → pickup){" "}
-          {googleReferenceEmpty.miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi ·{" "}
-          {formatDuration(googleReferenceEmpty.minutes)}
-        </p>
-      ) : null}
+      {/* ROUND 443.258-B: Google practical + short ALWAYS under the boxes (even while loading / null).
+          Reference only — never copied into the mile inputs (LAW §2 / DSP-48). */}
+      <p
+        className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
+        data-testid="book-load-google-reference-miles"
+        title="Google car routing — reference only"
+      >
+        {googleReferencePractical
+          ? `Google practical ${googleReferencePractical.miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi · ${formatDuration(googleReferencePractical.minutes)}`
+          : "Google practical — not computed yet"}
+      </p>
+      <p
+        className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
+        data-testid="book-load-google-reference-short"
+        title="Google car routing (short reference) — reference only; driver pay uses Shortest above"
+      >
+        {googleReferencePractical
+          ? `Google short ${googleReferencePractical.miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi · ${formatDuration(googleReferencePractical.minutes)}`
+          : "Google short — not computed yet"}
+      </p>
+      <p
+        className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#6B7280]"
+        data-testid="book-load-google-reference-empty"
+        title="Google car routing, yard to pickup — reference only"
+      >
+        {googleReferenceEmpty
+          ? `Empty leg ref (yard → pickup) ${googleReferenceEmpty.miles.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi · ${formatDuration(googleReferenceEmpty.minutes)}`
+          : "Empty leg ref (yard → pickup) — not computed yet"}
+      </p>
     </div>
   );
 }

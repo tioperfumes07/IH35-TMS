@@ -25,6 +25,8 @@ import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { SettlementsTabShellV3 } from "../../components/v3";
+import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 
 type BatchRow = {
   key: string;
@@ -208,18 +210,19 @@ export function BatchSettlementsPage() {
     });
   };
 
-  const navItems = [
-    { label: "Settlements", to: "/driver-finance/settlements" },
-    { label: "Batch Settlements", to: "/driver-finance/settlements/batch" },
-    { label: "Company Settlements", to: "/driver-finance/company-settlements" },
-    { label: "Settlement Close", to: "/driver-finance/settlement-close" },
-    { label: "Pre-Settlements", to: "/drivers/pre-settlements" },
-  ];
-
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-[#F7F8FA]" data-page="batch-settlements" data-b5-batch-settlements="1">
-      <NavyPageSubNav items={navItems} />
+      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
       <div className="mx-auto w-full max-w-[1400px] space-y-4 p-4">
+        {/* ROUND 443.252 — Batch Settlements V3 shell (same pattern as Open/Closed). */}
+        {companyId ? (
+          <SettlementsTabShellV3
+            companyId={companyId}
+            title="Batch Settlements"
+            href="/driver-finance/settlements/batch"
+            testId="v3-settlements-batch"
+          />
+        ) : null}
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <h1 className="flex items-center gap-1 text-page-title font-semibold text-[#0F1219]">

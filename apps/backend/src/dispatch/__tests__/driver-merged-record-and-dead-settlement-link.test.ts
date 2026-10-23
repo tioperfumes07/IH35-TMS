@@ -63,7 +63,8 @@ describe("443.192 (1) — a merged driver record can never be a load's driver", 
 
   it("an unmerged inactive driver still returns an (overridable) block, not a throw — the credential path is unchanged", async () => {
     const block = await assertDriverQualifiedForLoad(credClient(cred({})), { driverId: MERGED, operatingCompanyId: OPCO, isHazmat: false });
-    expect(block?.reasons).toEqual(["driver_status_inactive", "cdl_missing", "medical_card_missing"]);
+    // ROUND 443.257 — missing CDL / medical dates are never qualification blockers (reminders only).
+    expect(block?.reasons).toEqual(["driver_status_inactive"]);
   });
 
   it("the historical-backfill reassignment (record-and-proceed) cannot pass a merged record either", async () => {

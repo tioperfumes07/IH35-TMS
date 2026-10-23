@@ -4,6 +4,8 @@ import { KpiCard } from "../../components/layout/KpiCard";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import type { HomeFactoringBalance } from "../../api/home";
+import { formatMoneyCents } from "../../lib/formatMoney";
+import { formatDate } from "../../lib/formatDate";
 
 type Props = {
   label: string;
@@ -63,15 +65,15 @@ export function HomeKpiCard({ label, number, accent, isLoading, isError, error, 
   );
 }
 
+/** ROUND 443.258-B (D002) — always two decimals via shared formatMoney. */
 export function formatUsdFromCents(cents: number): string {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
+  return formatMoneyCents(cents);
 }
 
+/** ROUND 443.258-B (D004) — MM/DD/YYYY. */
 export function formatShortDate(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return formatDate(iso) || "—";
 }
 
 /** 363-CUR-A — Factoring Balance KPI names unmatched Faro advances beside the GL liability. */

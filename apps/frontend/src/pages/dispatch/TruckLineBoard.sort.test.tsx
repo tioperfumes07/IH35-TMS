@@ -275,11 +275,12 @@ describe("TruckLineBoard.sort (443.231)", () => {
     expect(screen.queryByText(/no trip in progress/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/no load on this truck/i)).not.toBeInTheDocument();
 
-    // Exactly one assign control
+// Exactly one assign control
     const assignBtns = screen.getAllByTestId("truck-line-assign-unit-u-avail");
     expect(assignBtns).toHaveLength(1);
     fireEvent.click(assignBtns[0]!);
-    expect(onAssign).toHaveBeenCalledWith("drv-avail-1", "u-avail");
+    expect(onAssign).toHaveBeenCalledWith(null, "u-avail");
+    expect(screen.getByTestId("truck-line-assign-note-u-avail").textContent).toMatch(/usual:/i);
   });
 
   it("LEAD 443.257-A: a truck with NO driver still gets 'Assign a load →' (fail-old: 'No driver on file' dead end)", async () => {

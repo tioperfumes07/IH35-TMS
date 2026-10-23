@@ -9,16 +9,8 @@ import { entityLabel } from "../../lib/entity-label";
 import { companyToday } from "../../lib/businessDate";
 import { readDispatchAlertTier, readDispatchBoardDefaultSort } from "../../lib/dispatch-local-settings";
 
-// DESIGN-CONTRACT (owner 13:29Z, inventory #37): "Driver → initials; full name hover" — the board's
-// Driver column is dense enough (33 columns) that a full name truncates; initials read at a glance,
-// the title attribute keeps the full name one hover away. Two-word names -> first+last initial;
-// one-word (or empty) names fall back to the first two characters / an em dash.
-function driverInitials(name: string | null | undefined): string {
-  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "—";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
+// ROUND 443.258-B (D021): never initials — full proper-case names (formatPersonName via entityLabel).
+// Supersedes DESIGN-CONTRACT inventory #37 initials-on-board for this round.
 
 // Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
 // also trigger the row's onRowClick (which opens the load drawer). Falls back to plain text when no id.
@@ -1097,14 +1089,9 @@ export function DispatchBoard({
   const renderDriverCell = (load: DispatchLoadRow) => {
     const rawName = load.assigned_primary_driver_name;
     const fullName = entityLabel(rawName, load.assigned_primary_driver_id, "Driver");
-    // DESIGN-CONTRACT (owner 13:29Z, #37): initials on the board, full name one hover away.
-    // Only substitute initials when a real name resolved — an unresolved/tombstone driver (id
-    // present, name null) must keep passing the RAW name through so
-    // EntityLinkOrTombstone's own isUnresolvedEntityTombstone check still fires; swapping in a
-    // non-null initials placeholder there would silently defeat that check.
-    const driverDisplay = rawName ? driverInitials(rawName) : rawName;
-    // `display:contents` (via the "contents" class) so the wrapping span carries the title
-    // tooltip without inserting a layout box around the cell's existing content/click handlers.
+    // ROUND 443.258-B (D021): full proper-case name on the board (never initials).
+    // Unresolved/tombstone drivers still pass RAW name so isUnresolvedEntityTombstone fires.
+    const driverDisplay = rawName ? fullName : rawName;
     return (
       <span title={fullName} className="contents">
         {inlineQuicksaveEnabled && companyId ? (

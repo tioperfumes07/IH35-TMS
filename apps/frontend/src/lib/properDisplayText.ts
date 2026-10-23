@@ -1,4 +1,5 @@
 import { humanizeEnumLabel } from "./humanizeEnumLabel";
+import { formatPersonName } from "./formatPersonName";
 
 /** Combobox / filter labels: no snake_case, first letter capitalized. */
 export function properEnumOrFilterLabel(value: unknown): string {
@@ -7,18 +8,8 @@ export function properEnumOrFilterLabel(value: unknown): string {
 
 /**
  * Title-case a person/place/company string for create + list display.
- * Leaves ALL-CAPS tokens (TX, IH35) and existing mixed names mostly intact.
+ * ROUND 443.258-B — delegates to the shared formatPersonName() (exceptions in one file).
  */
 export function properPersonOrPlaceName(value: unknown): string {
-  const raw = String(value ?? "").trim();
-  if (!raw) return "";
-  if (raw === raw.toUpperCase() && raw.length <= 6) return raw;
-  return raw
-    .split(/(\s+)/)
-    .map((part) => {
-      if (!part.trim()) return part;
-      if (part === part.toUpperCase() && part.length <= 5) return part;
-      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-    })
-    .join("");
+  return formatPersonName(value == null ? "" : String(value));
 }

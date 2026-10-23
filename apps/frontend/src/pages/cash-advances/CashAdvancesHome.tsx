@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashAdvanceDetail, getCashAdvancesKpis, listCashAdvances } from "../../api/cashAdvances";
 import { Button } from "../../components/Button";
@@ -15,6 +15,7 @@ import { CreateAdvanceModal } from "./components/CreateAdvanceModal";
 import { MarkDisbursedModal } from "./components/MarkDisbursedModal";
 import { ListErrorState } from "../../components/ListErrorState";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { SettlementsCashAdvancesV3 } from "../../components/v3";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -39,7 +40,12 @@ export function CashAdvancesHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 443.254 N1 — Settlements mount keeps KPI drills under /driver-finance/cash-advances.
+  const basePath = pathname.startsWith("/driver-finance/cash-advances")
+    ? "/driver-finance/cash-advances"
+    : "/cash-advances";
   // LAW OF THE LAND §9 (2026-07-22): EntityLink kind="cash_advance" → /cash-advances?advance_id=
   // and the driver-profile reverse link → /cash-advances?driver_id= (settlement/liability parity).
   // BANK-F5164 — visible EntityPicker (URL-only banner is not reverse chrome).
@@ -177,6 +183,8 @@ export function CashAdvancesHomePage() {
         itemIds={SUBNAV.map(([, value]) => value)}
       />
 
+      {companyId ? <SettlementsCashAdvancesV3 companyId={companyId} /> : null}
+
       {kpisQuery.isError ? (
         <ListErrorState
           title="Couldn't load cash advance totals"
@@ -185,7 +193,7 @@ export function CashAdvancesHomePage() {
           onRetry={() => void kpisQuery.refetch()}
         />
       ) : (
-        <CashAdvancesKpiRow kpis={kpisQuery.data} />
+        <CashAdvancesKpiRow kpis={kpisQuery.data} basePath={basePath} />
       )}
 
       {listQuery.isError ? (

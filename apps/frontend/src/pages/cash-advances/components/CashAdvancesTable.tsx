@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatUsdTable } from "../../../lib/money";
+import { formatDisplayName } from "../../../components/v3/formatDisplayName";
 
 type CashAdvanceRow = Record<string, unknown>;
 
@@ -12,6 +14,32 @@ type Props = {
   /** SETL-S02 — show spinner while parent useListState is loading. */
   isLoading?: boolean;
 };
+
+/** ROUND 443.254 N8 — readable labels instead of raw enums. */
+function labelEnum(raw: unknown, fallback = "—"): string {
+  const s = String(raw ?? "").trim();
+  if (!s) return fallback;
+  const map: Record<string, string> = {
+    pending_approval: "Pending approval",
+    approved: "Approved",
+    disbursed: "Disbursed",
+    failed: "Failed",
+    reversed: "Reversed",
+    outstanding: "Outstanding",
+    paid_off: "Paid off",
+    other: "Other",
+    historical_backfill: "Historical backfill",
+    cash: "Cash",
+    check: "Check",
+    ach: "ACH",
+    wire: "Wire",
+    fuel_card: "Fuel card",
+    zelle: "Zelle",
+    venmo: "Venmo",
+  };
+  if (map[s.toLowerCase()]) return map[s.toLowerCase()];
+  return s.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 function statusPill(status: string) {
   if (status === "pending_approval") return "bg-[#F7F8FA] text-[#1F2A44]";
@@ -28,6 +56,8 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
       {
         key: "display_id",
         label: "Display ID",
+        sortable: true,
+        sortValue: (row) => String(row.display_id ?? row.id ?? ""),
         render: (row) => (
           <EntityLink
             kind="cash_advance"
@@ -40,53 +70,67 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
       {
         key: "driver_id",
         label: "Driver",
-        render: (row) => (
-          <EntityLink
-            kind="driver"
-            id={row.driver_id ? String(row.driver_id) : null}
-            label={entityLabel(
-              row.driver_full_name ? String(row.driver_full_name) : null,
-              row.driver_id ? String(row.driver_id) : null,
-              "Driver",
-            )}
-            onClick={(event) => event.stopPropagation()}
-          />
-        ),
+        sortable: true,
+        sortValue: (row) => formatDisplayName(String(row.driver_full_name ?? "")),
+        render: (row) => {
+          const name = formatDisplayName(
+            row.driver_full_name ? String(row.driver_full_name) : null,
+          );
+          return (
+            <EntityLink
+              kind="driver"
+              id={row.driver_id ? String(row.driver_id) : null}
+              label={entityLabel(name || null, row.driver_id ? String(row.driver_id) : null, "Driver")}
+              onClick={(event) => event.stopPropagation()}
+            />
+          );
+        },
       },
       {
         key: "amount",
         label: "Amount",
         sortable: true,
-        render: (row) => `$${Number(row.amount ?? 0).toFixed(2)}`,
+        sortValue: (row) => Number(row.amount ?? 0),
+        render: (row) => formatUsdTable(Number(row.amount ?? 0)),
       },
       {
         key: "purpose",
         label: "Purpose",
-        render: (row) => String(row.purpose ?? "—"),
+        sortable: true,
+        sortValue: (row) => labelEnum(row.purpose),
+        render: (row) => labelEnum(row.purpose),
       },
       {
         key: "disbursement_method",
         label: "Method",
-        render: (row) => String(row.disbursement_method ?? "—"),
+        sortable: true,
+        sortValue: (row) => labelEnum(row.disbursement_method),
+        render: (row) => labelEnum(row.disbursement_method),
       },
       {
         key: "disbursement_status",
         label: "Disbursement Status",
+        sortable: true,
+        sortValue: (row) => labelEnum(row.disbursement_status, "Pending approval"),
         render: (row) => {
           const status = String(row.disbursement_status ?? "pending_approval");
-          return <span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{status}</span>;
+          return (
+            <span className={`rounded-full px-2 py-0.5 ${statusPill(status)}`}>{labelEnum(status)}</span>
+          );
         },
       },
       {
         key: "outstanding_balance",
         label: "Outstanding",
         sortable: true,
-        render: (row) => `$${Number(row.outstanding_balance ?? 0).toFixed(2)}`,
+        sortValue: (row) => Number(row.outstanding_balance ?? 0),
+        render: (row) => formatUsdTable(Number(row.outstanding_balance ?? 0)),
       },
       {
         key: "created_at",
         label: "Created",
         sortable: true,
+        sortValue: (row) => String(row.created_at ?? ""),
         render: (row) => String(row.created_at ?? "").slice(0, 10) || "—",
       },
       {
@@ -125,6 +169,7 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
         storageKey="cash-advances-roster"
         exportFilename="cash-advances"
         tableTestId="cash-advances-table"
+        gearButtonTestId="cash-advances-column-gear"
       />
     </div>
   );

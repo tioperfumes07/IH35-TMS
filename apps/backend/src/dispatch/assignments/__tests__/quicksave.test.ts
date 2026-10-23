@@ -164,7 +164,7 @@ describe("DISP-2 quicksave reassignDriver applies the shared driver-qualificatio
     expect(log.some((s) => /^\s*ROLLBACK\s*$/.test(s))).toBe(true);
   });
 
-  it("BLOCKS a missing-medical-card driver", async () => {
+  it("does NOT block a missing-medical-card driver (443.257 reminder only)", async () => {
     const log: QueryLog = [];
     const client = makeClient({ ...QUALIFIED, med_missing: true, med_expiry_date: null }, log);
     withCurrentUserMock.mockImplementation(withTransactionMock(client));
@@ -172,8 +172,8 @@ describe("DISP-2 quicksave reassignDriver applies the shared driver-qualificatio
     const { reassignDriver } = await import("../quicksave.service.js");
     await expect(
       reassignDriver(USER, { operating_company_id: OPCO, load_uuid: LOAD, driver_uuid: DRIVER })
-    ).rejects.toMatchObject({ code: "E_DRIVER_NOT_QUALIFIED", block: { reasons: ["medical_card_missing"] } });
-    expect(log.some((s) => s.includes("UPDATE mdata.loads"))).toBe(false);
+    ).resolves.toBeDefined();
+    expect(log.some((s) => s.includes("UPDATE mdata.loads"))).toBe(true);
   });
 
   it("BLOCKS a hazmat-unqualified driver on a hazmat load", async () => {

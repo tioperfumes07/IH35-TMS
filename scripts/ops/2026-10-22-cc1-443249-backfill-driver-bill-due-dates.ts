@@ -24,6 +24,8 @@ import { execFileSync } from "node:child_process";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
+// verify-owner-authorization: Lead 443.249 item 1 (merged #27230) — owner rule "all driver bills
+// due date is the date of the load delivery"; set-based due_date stamp only, no JE / money move.
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const DRY_RUN = process.argv.includes("--dry-run");
 

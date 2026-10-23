@@ -26,10 +26,14 @@ type Props = {
   setValue?: UseFormSetValue<any>;
 };
 
-const CELL = "h-7 w-full rounded-sm border border-gray-300 px-2 text-xs";
-const CELL_NARROW = "h-7 w-full max-w-[7.5rem] rounded-sm border border-gray-300 px-2 text-xs";
-const CELL_PHONE = "h-7 w-full max-w-[8.5rem] rounded-sm border border-gray-300 px-2 text-xs";
-const CELL_DOCK = "h-7 w-full max-w-[6.5rem] rounded-sm border border-gray-300 px-2 text-xs";
+/** ROUND 443.257 Spec — every input 32px (h-8); State 64 · ZIP 88 · Appt date 150. */
+const CELL = "h-8 w-full rounded-sm border border-gray-300 px-2 text-xs";
+const CELL_STATE = "h-8 w-full max-w-[64px] rounded-sm border border-gray-300 px-2 text-xs";
+const CELL_ZIP = "h-8 w-full max-w-[88px] rounded-sm border border-gray-300 px-2 text-xs";
+const CELL_APPT = "h-8 w-full max-w-[150px] rounded-sm border border-gray-300 px-2 text-xs";
+const CELL_NARROW = "h-8 w-full max-w-[7.5rem] rounded-sm border border-gray-300 px-2 text-xs";
+const CELL_PHONE = "h-8 w-full max-w-[8.5rem] rounded-sm border border-gray-300 px-2 text-xs";
+const CELL_DOCK = "h-8 w-full max-w-[6.5rem] rounded-sm border border-gray-300 px-2 text-xs";
 
 // Owner row order 2026-09-03 (pickup AND delivery):
 //   Row 1: Location · Address (wider) · City · State · Zip
@@ -140,9 +144,10 @@ export function BookLoadStopsSection({
                 <input type="hidden" {...register(`stops.${index}.country`)} />
 
                 {/* Row 1 — address details */}
+                {/* 443.257 — Location / Address one row 1fr / 1.4fr */}
                 <div
                   data-testid={`stop-locrow-${index}`}
-                  className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2"
+                  className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_1.4fr]"
                 >
                   <Field
                     label="Location"
@@ -212,7 +217,10 @@ export function BookLoadStopsSection({
                     }
                   />
                 </div>
-                <div className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-3" data-testid={`stop-cityrow-${index}`}>
+                <div
+                  className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-[1fr_64px_88px]"
+                  data-testid={`stop-cityrow-${index}`}
+                >
                   <Field
                     label="City"
                     input={
@@ -229,11 +237,16 @@ export function BookLoadStopsSection({
                       <Controller
                         control={control}
                         name={`stops.${index}.state`}
-                        render={({ field: f }) => <StateSelect value={f.value ?? ""} onChange={f.onChange} placeholder="State" />}
+                        render={({ field: f }) => (
+                          <StateSelect value={f.value ?? ""} onChange={f.onChange} placeholder="ST" className={CELL_STATE} />
+                        )}
                       />
                     }
                   />
-                  <Field label="Zip" input={<input {...register(`stops.${index}.postal_code`)} className={CELL} placeholder="ZIP" />} />
+                  <Field
+                    label="Zip"
+                    input={<input {...register(`stops.${index}.postal_code`)} className={CELL_ZIP} placeholder="ZIP" />}
+                  />
                 </div>
                 <input type="hidden" {...register(`stops.${index}.latitude`)} />
                 <input type="hidden" {...register(`stops.${index}.longitude`)} />
@@ -275,9 +288,28 @@ export function BookLoadStopsSection({
                         <>
                           <Field
                             label={`Appointment date${required ? " *" : ""}`}
-                            input={<DatePicker box="field" data-testid={`stop-date-${index}`} value={d} onChange={(next) => combine(next, t)} className={CELL} />}
+                            input={
+                              <DatePicker
+                                box="field"
+                                data-testid={`stop-date-${index}`}
+                                value={d}
+                                onChange={(next) => combine(next, t)}
+                                className={CELL_APPT}
+                              />
+                            }
                           />
-                          <Field label="Time" input={<TimePicker id={`stop-time-${index}`} value={t} onChange={(tv) => combine(d, tv)} className={CELL} ariaLabel="Stop time" />} />
+                          <Field
+                            label="Time"
+                            input={
+                              <TimePicker
+                                id={`stop-time-${index}`}
+                                value={t}
+                                onChange={(tv) => combine(d, tv)}
+                                className={CELL}
+                                ariaLabel="Stop time"
+                              />
+                            }
+                          />
                           {fieldState.error ? (
                             <p className="col-span-full text-xs font-semibold text-[#DC2626]" data-testid={`stop-appointment-error-${index}`}>
                               {fieldState.error.message}

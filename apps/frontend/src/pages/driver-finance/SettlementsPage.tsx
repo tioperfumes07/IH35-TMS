@@ -32,6 +32,12 @@ import { useToast } from "../../components/Toast";
 import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { SettlementCreatorDrawer } from "../settlements/SettlementCreatorDrawer";
 import { listSourceChangedSettlements, type SettlementCreatorDraft, type SourceChangedSettlement } from "../../api/settlementCreator";
+import {
+  SettlementsCompanyV3,
+  SettlementsModuleV3,
+  SettlementsTabShellV3,
+} from "../../components/v3";
+import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 
 /** LEAD 443.215 — one line per change of a settlement's printed source (same wording as the backend refusal). */
 function describeSourceDiffLines(d: SourceChangedSettlement["diff"]): string[] {
@@ -370,24 +376,8 @@ export function SettlementsPage() {
         </div>
       ) : null}
 
-      <NavyPageSubNav
-        items={[
-          { label: "Drivers",           to: "/drivers" },
-          { label: "Profiles",           to: "/drivers/profiles" },
-          { label: "Pre-Settlements",    to: "/drivers/pre-settlements" },
-          { label: "Settlements",        to: "/driver-finance/settlements" },
-          { label: "Batch Settlements",  to: "/driver-finance/settlements/batch" },
-          { label: "Feed Gate",          to: "/feed-gate" },
-          { label: "Company Settlements", to: "/driver-finance/company-settlements" },
-          { label: "Settlement Close",   to: "/driver-finance/settlement-close" },
-          { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },
-          { label: "Cash Advances",      to: "/cash-advances" },
-          { label: "Liabilities",        to: "/liabilities" },
-          { label: "Escrow",             to: "/accounting/escrow" },
-          { label: "Pay Rate Templates", to: "/drivers/pay-rate-templates" },
-          { label: "Deductions",         to: "/drivers/deductions" },
-        ]}
-      />
+      {/* ROUND 443.254 N1 — every tab stays under /driver-finance/… */}
+      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
 
       <div className="flex items-center gap-2">
         <Button
@@ -460,32 +450,45 @@ export function SettlementsPage() {
       </div>
 
       {activeTab === "company_driver" ? (
-        <SettlementsCompanyDriverTab
-          companyId={companyId}
-          settlementId={selectedSettlementId}
-          companySettlementId={companySettlementParam}
-          onSelectSettlement={(id) => {
-            const next = new URLSearchParams(searchParams);
-            next.set("tab", "company_driver");
-            next.delete("company_settlement_id");
-            if (id) next.set("settlement_id", id);
-            else next.delete("settlement_id");
-            setSearchParams(next);
-          }}
-        />
+        <>
+          {companyId ? (
+            <SettlementsTabShellV3
+              companyId={companyId}
+              title="Company & Driver"
+              href="/driver-finance/settlements?tab=company_driver"
+              testId="v3-settlements-company-driver"
+            />
+          ) : null}
+          <SettlementsCompanyDriverTab
+            companyId={companyId}
+            settlementId={selectedSettlementId}
+            companySettlementId={companySettlementParam}
+            onSelectSettlement={(id) => {
+              const next = new URLSearchParams(searchParams);
+              next.set("tab", "company_driver");
+              next.delete("company_settlement_id");
+              if (id) next.set("settlement_id", id);
+              else next.delete("settlement_id");
+              setSearchParams(next);
+            }}
+          />
+        </>
       ) : null}
 
       {activeTab === "company_settlements" ? (
-        <CompanySettlementsRegisterTab
-          companyId={companyId}
-          onOpen={(csId) => {
-            const next = new URLSearchParams(searchParams);
-            next.set("tab", "company_driver");
-            next.delete("settlement_id");
-            next.set("company_settlement_id", csId);
-            setSearchParams(next);
-          }}
-        />
+        <>
+          {companyId ? <SettlementsCompanyV3 companyId={companyId} /> : null}
+          <CompanySettlementsRegisterTab
+            companyId={companyId}
+            onOpen={(csId) => {
+              const next = new URLSearchParams(searchParams);
+              next.set("tab", "company_driver");
+              next.delete("settlement_id");
+              next.set("company_settlement_id", csId);
+              setSearchParams(next);
+            }}
+          />
+        </>
       ) : null}
 
       {activeTab === "settlements" ? (
@@ -495,6 +498,8 @@ export function SettlementsPage() {
           BOTH the Tours (default) and Payments sub-views. Reuses the shared DrillKpiCard (same tile as
           Maintenance's strip); every figure is derived from data already fetched (kpiBaseQuery +
           openBills), never a placeholder, "—" on load failure. */}
+      {/* ROUND 443.252 — owner-approved Settlements Open/Closed V3 board (ADD above legacy KPIs). */}
+      {companyId ? <SettlementsModuleV3 companyId={companyId} /> : null}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6" data-testid="settlements-home-kpi-strip">
         <DrillKpiCard label="Total Unpaid" value={kpis.total_unpaid} to="/driver-finance/settlements?view=payments&payment_state=unpaid" hint="Settlements not yet paid." testId="settlements-kpi-total-unpaid" />
         <DrillKpiCard label="This Period" value={kpis.this_period} to="/driver-finance/settlements" hint="Period end on/after this week's start." testId="settlements-kpi-this-period" />
@@ -760,9 +765,29 @@ export function SettlementsPage() {
       )}
         </>
       ) : activeTab === "needs_review" ? (
-        <PresettlementSuggestionsTab companyId={companyId} />
+        <>
+          {companyId ? (
+            <SettlementsTabShellV3
+              companyId={companyId}
+              title="Needs Review"
+              href="/driver-finance/settlements?tab=needs_review"
+              testId="v3-settlements-needs-review"
+            />
+          ) : null}
+          <PresettlementSuggestionsTab companyId={companyId} />
+        </>
       ) : (
-        <SettlementDisputesTab companyId={companyId} />
+        <>
+          {companyId ? (
+            <SettlementsTabShellV3
+              companyId={companyId}
+              title="Settlement Disputes"
+              href="/driver-finance/settlements?tab=disputes"
+              testId="v3-settlements-disputes"
+            />
+          ) : null}
+          <SettlementDisputesTab companyId={companyId} />
+        </>
       )}
     </div>
   );

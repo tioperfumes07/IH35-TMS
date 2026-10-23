@@ -27,6 +27,7 @@ import { openPrintableDocument, openCanonicalDocument } from "../../lib/openPrin
 import { formatUsdCents } from "../../lib/money";
 import { mmmDd } from "../../lib/formatDate";
 import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
+import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 
 // Dash-never-zero (law §8): a null/void money value renders "—", never "$0.00".
 const DASH = "—";
@@ -162,16 +163,7 @@ export function CompanySettlementsPage() {
         subtitle="One number over many loads — settlement periods rolled to net revenue"
       />
 
-      <NavyPageSubNav
-        items={[
-          { label: "Settlements", to: "/driver-finance/settlements" },
-          { label: "Company Settlements", to: "/driver-finance/company-settlements" },
-          { label: "Settlement Close", to: "/driver-finance/settlement-close" },
-          { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },
-          { label: "Cash Advances", to: "/cash-advances" },
-          { label: "Escrow", to: "/accounting/escrow" },
-        ]}
-      />
+      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
 
       {/* REG-005 (owner "FOR ALL MODULES, THEY SHOULD ALL HAVE THEIR KPIS IN THEIR HOME PAGES") — a
           real-number KPI strip at the top of the Company Settlements home, above the table. Reuses the

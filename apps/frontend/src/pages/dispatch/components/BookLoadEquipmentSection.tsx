@@ -17,7 +17,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
 import { InterchangeTrailerPicker } from "./book-load-v4/InterchangeTrailerPicker";
 import { buildTrailerChoice, TRAILER_CHOICE_REQUIRED_MESSAGE, type TrailerSource } from "./book-load-v4/trailerChoice";
-import { getDriverPayCard, type NonOwnedTrailer } from "../../../api/dispatch";
+import type { NonOwnedTrailer } from "../../../api/dispatch";
 
 type Props = {
   register: UseFormRegister<any>;
@@ -117,23 +117,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     queryFn: () => listDriverTeams(String(operatingCompanyId)),
     enabled: Boolean(operatingCompanyId),
   });
-  // WIZ-32 / WIZ-16 — resolve the selected driver's per-mile rate for the read-only "Driver pay rate
-  // / mi" display, from the SAME table settlement pays on (driver_finance.driver_pay_rates, via
-  // /dispatch/driver-pay-card). The load stores no override, so the caption "resolves automatically
-  // from the driver's profile rate card" is literally true. Only enabled once a driver is chosen.
-  const driverPayCardQuery = useQuery({
-    queryKey: ["book-load-driver-pay-card", operatingCompanyId, primaryDriverId],
-    queryFn: () => getDriverPayCard({ operating_company_id: String(operatingCompanyId), driver_id: primaryDriverId }),
-    enabled: Boolean(operatingCompanyId && primaryDriverId),
-    staleTime: 30_000,
-  });
-  const driverPayCard = driverPayCardQuery.data;
-  // Honest display: a per-mile RATE only exists for a per_mile_pay basis. A per_load_pay driver has
-  // no per-mile rate (blank, not 0); no rate row at all is also blank (unknown), never a fabricated 0.
-  const resolvedDriverRatePerMile =
-    driverPayCard && driverPayCard.has_rate && driverPayCard.basis_type === "per_mile_pay" && driverPayCard.rate_per_mile_cents && driverPayCard.rate_per_mile_cents > 0
-      ? (driverPayCard.rate_per_mile_cents / 100).toFixed(2)
-      : "";
+  // ROUND 443.258-B (D024): NO driver pay rate in Book Load — rate resolves at settlement, not here.
   const trailerEquipmentQuery = useQuery({
     queryKey: ["book-load-trailer-equipment", operatingCompanyId],
     queryFn: async () => {
@@ -203,7 +187,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                 setValue?.("assigned_unit_id", next ?? "", { shouldDirty: true });
               }}
               onSelectedOptionResolved={setUnitOption}
-              className="h-7 w-full text-xs"
+              className="h-8 w-full text-xs"
               placeholder={operatingCompanyId ? "Select truck unit" : "Select company first"}
               dataField="assigned_unit_id"
               disabled={!operatingCompanyId}
@@ -218,7 +202,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               {/* LEAD 443.107 item 3 (owner, 2026-10-12): the trailer choice is REQUIRED — Company trailer (equipment list),
                   Customer trailer (its number), Interchange (GO-23 A1 non-owned trailer) or No trailer (bobtail / power only).
                   Exactly one; switching clears the others. */}
-              <div className="inline-flex h-7 w-fit shrink-0 overflow-hidden whitespace-nowrap rounded-sm border border-gray-300 bg-white text-xs font-semibold leading-none" data-testid="trailer-source-toggle" role="radiogroup" aria-label="Trailer">
+              <div className="inline-flex h-8 w-fit shrink-0 overflow-hidden whitespace-nowrap rounded-sm border border-gray-300 bg-white text-xs font-semibold leading-none" data-testid="trailer-source-toggle" role="radiogroup" aria-label="Trailer">
                 {([
                   ["owned", "Company", "Company trailer from the equipment list"],
                   ["customer", "Customer", "Customer / shipper trailer — type its number"],
@@ -262,13 +246,13 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                     setValue?.("assigned_trailer_unit_id", next ?? "", { shouldDirty: true });
                   }}
                   onSelectedOptionResolved={setTrailerOption}
-                  className="h-7 w-full text-xs"
+                  className="h-8 w-full text-xs"
                   placeholder={operatingCompanyId ? "Select trailer unit" : "Select company first"}
                   dataField="assigned_trailer_unit_id"
                   disabled={!operatingCompanyId}
                 />
               ) : trailerSource === "none" ? (
-                <p className="h-7 text-xs leading-7 text-[#4B5563]" data-testid="trailer-none-note">No trailer — bobtail / power only</p>
+                <p className="h-8 text-xs leading-7 text-[#4B5563]" data-testid="trailer-none-note">No trailer — bobtail / power only</p>
               ) : trailerSource === "customer" ? (
                 <input
                   id="book-load-customer-trailer-number"
@@ -280,7 +264,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                   aria-label="Customer trailer number"
                   data-field="customer_trailer_number"
                   data-testid="customer-trailer-number"
-                  className="h-7 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
+                  className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs"
                 />
               ) : (
                 <InterchangeTrailerPicker
@@ -354,7 +338,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           label="Driver"
           input={
             <DriverPickerWithCreate
-              size="sm"
               operatingCompanyId={operatingCompanyId ?? ""}
               value={primaryDriverId || null}
               onChange={(next, option) => {
@@ -362,10 +345,10 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                 setValue?.("assigned_primary_driver_id", next ?? "", { shouldDirty: true });
               }}
               onSelectedOptionResolved={setPrimaryDriverOption}
-              className="h-7 w-full text-xs"
+              className="h-8 w-full text-xs"
               placeholder="Select driver"
               dataField="assigned_primary_driver_id"
-              // FAIL-CA1: driver create defaults to Probation — Active-only hid SAMPLE Cascade-1612 class.
+              // FAIL-CA1 + 443.257: Active/Probation HR roster (hr_status via registry), overlay full width.
               driverRoster="active_or_probation"
               // BookLoadModalV4 is a centered portal modal (not ParityDrawer) → default shell="modal".
             />
@@ -375,7 +358,6 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           label="Team driver"
           input={
             <DriverPickerWithCreate
-              size="sm"
               operatingCompanyId={operatingCompanyId ?? ""}
               value={secondaryDriverId || null}
               onChange={(next, option) => {
@@ -383,7 +365,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                 setValue?.("assigned_secondary_driver_id", next ?? "", { shouldDirty: true });
               }}
               onSelectedOptionResolved={setSecondaryDriverOption}
-              className="h-7 w-full text-xs"
+              className="h-8 w-full text-xs"
               placeholder="Solo load (optional)"
               dataField="assigned_secondary_driver_id"
               driverRoster="active_or_probation"
@@ -428,7 +410,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         <Field
           label="Assignment mode"
           input={
-            <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
+            <div className="inline-flex h-8 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
               <label className={`flex cursor-pointer items-center px-3 ${assignmentMode === "solo" ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}>
                 <input type="radio" value="solo" className="hidden" {...register("assignment_mode")} />
                 Solo
@@ -445,7 +427,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           input={
             <SelectCombobox
               {...register("team_id")}
-              className="h-7 min-w-[240px] text-xs"
+              className="h-8 min-w-[240px] text-xs"
               disabled={teamsQuery.isLoading || teamsQuery.isError}
             >
               <option value="">
@@ -463,33 +445,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {teamsQuery.isError ? (
         <ListErrorState status={0} message="Driver teams unavailable." onRetry={() => void teamsQuery.refetch()} />
       ) : null}
-      {/* WIZ-32 / WIZ-16: a 0 in this box is a claim that the rate is zero. The field is display-only
-          and READ-ONLY: blank when no driver (or no per-mile rate card), and the driver's resolved
-          per-mile rate once one is selected — read from the same table settlement pays on. The load
-          stores no override (booking resolves the rate live), so this control carries NO hidden
-          register input: the form value comes from defaultValues and the submit omits a 0. The label
-          is associated (htmlFor/id) with the single VISIBLE read-only input, so any label-target — a
-          screen reader, getByLabelText, or an orch DOM probe — resolves to value=""/readOnly=true, never
-          to a hidden "0". A hidden register field used to sit first under this label and read as a 0. */}
-      <div className="flex flex-wrap items-end gap-3">
-        <Field
-          htmlFor="book-load-driver-pay-rate-per-mile"
-          label="Driver pay rate / mi"
-          hint="Resolves automatically from the driver's profile rate card — read-only."
-          input={
-            <input
-              id="book-load-driver-pay-rate-per-mile"
-              type="text"
-              readOnly
-              value={resolvedDriverRatePerMile}
-              placeholder={primaryDriverId && driverPayCardQuery.isLoading ? "…" : ""}
-              data-testid="driver-pay-rate-per-mile"
-              aria-readonly="true"
-              className="h-7 w-[5.5rem] rounded-sm border border-gray-300 bg-[#F7F8FA] px-2 text-right text-xs tabular-nums"
-            />
-          }
-        />
-      </div>
+      {/* ROUND 443.258-B: Driver pay rate / mi removed from Book Load (settlement owns the rate). */}
       {/* RENDER-A-v2 §B REEFER PANEL (amber, "Refrigerated") — reefer trailer only. "Temperature type"
           (Frozen/Fresh) is asked FIRST, THEN "Reefer temperature (°F)" (the single setpoint reefer_temp_f).
           temperature_type persists via migration 202606231600 (W-FIX-1). Reefer mode + Pre-cool removed. */}
@@ -498,7 +454,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           <Field
             label="Temperature type"
             input={
-              <div data-testid="temperature-type-segmented" className="flex h-7 overflow-hidden rounded-sm border border-gray-300 text-xs">
+              <div data-testid="temperature-type-segmented" className="flex h-8 overflow-hidden rounded-sm border border-gray-300 text-xs">
                 {/* register keeps the value in form state; the buttons drive it via setValue (segmented control,
                     RENDER-A-v2). Asked FIRST, before "Reefer temperature (°F)". */}
                 <input type="hidden" {...register("temperature_type")} />
@@ -523,7 +479,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           />
           <Field
             label="Reefer temperature (°F)"
-            input={<input data-testid="reefer-temp-field" type="number" step="0.1" {...register("reefer_temp_f", { valueAsNumber: true })} className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />}
+            input={<input data-testid="reefer-temp-field" type="number" step="0.1" {...register("reefer_temp_f", { valueAsNumber: true })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />}
           />
         </div>
       ) : null}
@@ -536,7 +492,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           <Field
             label="Who pays the lumper?"
             input={
-              <div data-testid="lumper-payer-segmented" className="flex h-7 overflow-hidden rounded-sm border border-gray-300 text-xs">
+              <div data-testid="lumper-payer-segmented" className="flex h-8 overflow-hidden rounded-sm border border-gray-300 text-xs">
                 <input type="hidden" {...register("lumper_payer")} />
                 {([
                   { value: "broker", label: "Broker" },
@@ -561,7 +517,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           <Field
             label="Will the customer be invoiced?"
             input={
-              <div data-testid="lumper-invoice-customer-segmented" className="flex h-7 overflow-hidden rounded-sm border border-gray-300 text-xs">
+              <div data-testid="lumper-invoice-customer-segmented" className="flex h-8 overflow-hidden rounded-sm border border-gray-300 text-xs">
                 <input type="hidden" {...register("lumper_will_invoice_customer")} />
                 {([
                   { value: true, label: "Yes" },
@@ -586,7 +542,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           <Field
             label="Late-arrival penalty applies?"
             input={
-              <div data-testid="lumper-late-penalty-segmented" className="flex h-7 overflow-hidden rounded-sm border border-gray-300 text-xs">
+              <div data-testid="lumper-late-penalty-segmented" className="flex h-8 overflow-hidden rounded-sm border border-gray-300 text-xs">
                 <input type="hidden" {...register("lumper_late_penalty_applies")} />
                 {([
                   { value: true, label: "Yes" },
@@ -620,19 +576,19 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           <Field
             label="Tarp required?"
             input={
-              <label className="flex h-7 items-center gap-2 text-xs">
+              <label className="flex h-8 items-center gap-2 text-xs">
                 <input type="checkbox" {...register("requires_tarps")} className="h-3.5 w-3.5" /> Required
               </label>
             }
           />
           <Field
             label="Tarp qty"
-            input={<input data-testid="tarp-qty-field" type="number" min={0} step={1} disabled={!tarpRequired} {...register("tarp_qty", { valueAsNumber: true })} className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-gray-100" />}
+            input={<input data-testid="tarp-qty-field" type="number" min={0} step={1} disabled={!tarpRequired} {...register("tarp_qty", { valueAsNumber: true })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-gray-100" />}
           />
           <Field
             label="Tarp size"
             input={
-              <SelectCombobox {...register("tarp_size")} disabled={!tarpRequired} className="h-7 w-full text-xs disabled:bg-gray-100">
+              <SelectCombobox {...register("tarp_size")} disabled={!tarpRequired} className="h-8 w-full text-xs disabled:bg-gray-100">
                 <option value="">—</option>
                 <option value="4ft">4'</option>
                 <option value="6ft">6'</option>

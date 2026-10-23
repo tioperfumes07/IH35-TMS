@@ -69,6 +69,12 @@ export function formatDateUS(value: unknown): string {
 }
 
 /**
+ * ROUND 443.258-B (D004 D025 D029 D030) — canonical display date = MM/DD/YYYY.
+ * Charts may use MM/DD on axis ticks only when the tooltip shows MM/DD/YYYY.
+ */
+export const formatDate = formatDateUS;
+
+/**
  * D47 — QuickBooks transaction-list date: `M/D/YY` (e.g. 9/14/26).
  * Use on roster / ParityTable date columns. Banking lists keep `formatDateUS` (MM/DD/YYYY).
  */

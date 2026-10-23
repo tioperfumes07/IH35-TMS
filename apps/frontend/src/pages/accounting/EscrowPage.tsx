@@ -11,9 +11,12 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EscrowDeductionsPendingTab } from "../driver-finance/EscrowDeductionsPendingTab";
+import { settlementsEscrowRegisterHref } from "../driver-finance/settlementsSubnav";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
+import { SettlementsEscrowV3 } from "../../components/v3";
+import { formatDisplayName } from "../../components/v3/formatDisplayName";
 
 type EscrowViewTab = "accounts" | "pending";
 
@@ -88,7 +91,12 @@ function EscrowPostingSourceLink({ row }: { row: EscrowPosting }) {
   );
 }
 
-export function EscrowPage() {
+type EscrowPageProps = {
+  /** ROUND 443.254 N1 — mounted under /driver-finance/escrow (Settlements chrome owns the shell). */
+  settlementsMount?: boolean;
+};
+
+export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -149,11 +157,16 @@ export function EscrowPage() {
         sortValue: (row) => row.holder_label ?? "",
         render: (row) =>
           row.holder_type === "driver" ? (
-            <EntityLink
-              kind="driver"
-              id={row.holder_id}
-              label={entityLabel(row.holder_label ?? null, row.holder_id, escrowHolderNoun(row.holder_type))}
-            />
+            // ROUND 443.254 N5 — driver name opens Escrow Register, not the profile.
+            <Link
+              to={settlementsEscrowRegisterHref(row.holder_id)}
+              className="underline"
+              data-testid="escrow-driver-register-link"
+            >
+              {formatDisplayName(
+                entityLabel(row.holder_label ?? null, row.holder_id, escrowHolderNoun(row.holder_type)),
+              )}
+            </Link>
           ) : row.holder_type === "vendor" ? (
             <EntityLink
               kind="vendor"
@@ -207,37 +220,10 @@ export function EscrowPage() {
     [],
   );
 
-  return (
-    <AccountingSubNavWrapper
-      title="Escrow"
-      subtitle="Escrow accounts and posting history"
-      actions={
-          <div className="flex flex-wrap gap-2 text-xs">
-            <Link
-              to="/driver-finance/settlements"
-              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
-              data-testid="escrow-settlements-cross-link"
-            >
-              Settlements
-            </Link>
-            <Link
-              to="/accounting/factoring"
-              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
-              data-testid="escrow-factoring-cross-link"
-            >
-              Factoring
-            </Link>
-            <Link
-              to="/banking/driver-escrow"
-              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
-              data-testid="escrow-banking-virtual-bank-link"
-            >
-              Banking · Driver Escrow
-            </Link>
-          </div>
-        }
-    >
-      <div className="space-y-4 p-4">
+  const body = (
+      <div className="space-y-4 p-4" data-testid={settlementsMount ? "settlements-escrow-body" : "accounting-escrow-body"}>
+      {/* ROUND 443.252 — owner-approved Settlements Escrow V3 board (ADD above legacy register). */}
+      {companyId ? <SettlementsEscrowV3 companyId={companyId} /> : null}
       <div className="flex items-center gap-1 rounded-sm border border-gray-300 p-0.5 text-xs w-fit">
         {(["accounts", "pending"] as const).map((tab) => (
           <button
@@ -303,6 +289,41 @@ export function EscrowPage() {
         </>
       ) : null}
       </div>
+  );
+
+  if (settlementsMount) return body;
+
+  return (
+    <AccountingSubNavWrapper
+      title="Escrow"
+      subtitle="Escrow accounts and posting history"
+      actions={
+          <div className="flex flex-wrap gap-2 text-xs">
+            <Link
+              to="/driver-finance/settlements"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
+              data-testid="escrow-settlements-cross-link"
+            >
+              Settlements
+            </Link>
+            <Link
+              to="/accounting/factoring"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
+              data-testid="escrow-factoring-cross-link"
+            >
+              Factoring
+            </Link>
+            <Link
+              to="/banking/driver-escrow"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
+              data-testid="escrow-banking-virtual-bank-link"
+            >
+              Banking · Driver Escrow
+            </Link>
+          </div>
+        }
+    >
+      {body}
     </AccountingSubNavWrapper>
   );
 }
