@@ -41,6 +41,15 @@ export function auditRoute(src) {
 export function auditHome(src) {
   const errors = [];
   const body = stripComments(src);
+  // 443.267 (77d25d7fcd) — the owner-approved Banking board retired the Home "Cash on hand" tile; Home no longer
+  // reads total_cash at all. The cents/dollars rule still applies to ANY Home surface that renders total_cash:
+  // when nothing reads it there is nothing to mis-scale (route + cash-flow parity checks below still run).
+  if (!/total_cash/.test(body)) {
+    if (/formatUsdCents\s*\(\s*cashPosting\s*\)/.test(body)) {
+      errors.push(`${HOME}: formatUsdCents(cashPosting) renders dollars as cents (100× deflation).`);
+    }
+    return errors;
+  }
   if (!/formatUsd\s*\(/.test(body)) {
     errors.push(`${HOME}: Cash posting KPI must use formatUsd from lib/money (API dollars, not cents).`);
   }
@@ -125,6 +134,11 @@ function selftest() {
     <div>Cash posting</div><div>{formatUsdCents(cashPosting)}</div>
   `;
   if (auditHome(goodHome).length !== 0) failures.push("good home fixture wrongly flagged");
+  // 443.267 board: Home without a cash tile is clean; a stray formatUsdCents(cashPosting) is still caught.
+  const retiredTile = `import { formatUsd } from "../../lib/money"; <BankingHomeBoard companyId={id} />`;
+  if (auditHome(retiredTile).length !== 0) failures.push("retired-tile board home wrongly flagged");
+  const strayCents = `const cashPosting = 1; <div>{formatUsdCents(cashPosting)}</div>`;
+  if (auditHome(strayCents).length === 0) failures.push("stray formatUsdCents(cashPosting) on a tile-less home NOT caught");
   if (auditHome(doubleConvert).length === 0) failures.push("frontend double /100 NOT caught");
   if (auditHome(centsAsDollars).length === 0) failures.push("formatUsdCents(cashPosting) NOT caught");
 
