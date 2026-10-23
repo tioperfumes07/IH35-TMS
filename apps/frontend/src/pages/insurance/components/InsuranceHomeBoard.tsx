@@ -157,9 +157,9 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
   const loading = summaryQuery.isLoading || policiesQuery.isLoading;
   const errored = summaryQuery.isError || policiesQuery.isError;
   const errorMsg = summaryQuery.isError
-    ? userFacingApiError(summaryQuery.error)
+    ? userFacingApiError(summaryQuery.error, "Could not load the insurance summary.")
     : policiesQuery.isError
-      ? userFacingApiError(policiesQuery.error)
+      ? userFacingApiError(policiesQuery.error, "Could not load the insurance policies.")
       : null;
 
   const activeCount =
@@ -383,7 +383,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                           row.carrier
                         )}
                       </td>
-                      <td style={{ ...tdStyle, textAlign: "right" }} className="tabular-nums">
+                      <td style={{ ...tdStyle, textAlign: "right" }} className="text-right tabular-nums">
                         {formatUsdCents(row.premiumCents)}
                       </td>
                       <td style={{ ...tdStyle, textAlign: "right" }} className="tabular-nums">
@@ -395,10 +395,10 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 {premiumRows.length > 0 ? (
                   <tr>
                     <td style={{ ...tdStyle, fontWeight: 700, borderBottom: "none" }}>Total</td>
-                    <td style={{ ...tdStyle, borderBottom: "none" }} />
+                    <td style={{ ...tdStyle, borderBottom: "none" }}></td>
                     <td
                       style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}
-                      className="tabular-nums"
+                      className="text-right tabular-nums"
                     >
                       {formatUsdCents(annualPremiumCents)}
                     </td>
