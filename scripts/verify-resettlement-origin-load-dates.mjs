@@ -59,22 +59,19 @@ function analyze(src) {
     errors.push("frontend TourListRow (api/tourReadout.ts) must declare origin_load_number / origin_pickup_date / origin_delivery_date");
   }
 
-  // 5. the register renders BOTH columns off the origin dates via mmmDd.
-  // Labels renamed from the original "Date started"/"Delivery date" to "Original load pickup"/
-  // "Original load delivery" so they read distinctly from the TOUR-level "Date started" column
-  // (trip_started_at, a different concept — when the tour/settlement itself opened) that sits a
-  // few columns over in this same register. TestIds/data source are unchanged; only the label text
-  // moved, and this guard's checks were never updated to match.
-  if (!/setl-tour-col-origin-started/.test(setl)) errors.push('register must render the "Original load pickup" column (testId setl-tour-col-origin-started)');
-  if (!/setl-tour-col-origin-delivered/.test(setl)) errors.push('register must render the "Original load delivery" column (testId setl-tour-col-origin-delivered)');
-  if (!/label:\s*"Original load pickup"/.test(setl)) errors.push('register origin-pickup column must carry the owner label "Original load pickup"');
-  if (!/label:\s*"Original load delivery"/.test(setl)) errors.push('register origin-delivery column must carry the owner label "Original load delivery"');
-  if (!/r\.origin_pickup_date\s*\?\s*<span[\s\S]{0,120}?mmmDd\(r\.origin_pickup_date\)/.test(setl)) {
-    errors.push('register "Date started" cell must render mmmDd(origin_pickup_date)');
-  }
-  if (!/r\.origin_delivery_date\s*\?\s*<span[\s\S]{0,120}?mmmDd\(r\.origin_delivery_date\)/.test(setl)) {
-    errors.push('register "Delivery date" cell must render mmmDd(origin_delivery_date)');
-  }
+  // 5. the register renders BOTH columns off the ORIGINAL load's dates, and each date drills to that load.
+  // Lead 443.278 (1): the owner-approved board labels win — "PU date" / "DEL date" (0512ef14cd), with the
+  // header tooltip naming the ORIGINAL load so they never read as the tour-level "Date started". The meaning
+  // is pinned, not the wording: origin dates shown via mmmDd, and the cell is an EntityLink to the origin load.
+  if (!/setl-tour-col-origin-started/.test(setl)) errors.push('register must render the origin pickup column (testId setl-tour-col-origin-started)');
+  if (!/setl-tour-col-origin-delivered/.test(setl)) errors.push('register must render the origin delivery column (testId setl-tour-col-origin-delivered)');
+  if (!/key:\s*"origin_started",\s*label:\s*"PU date"[^\n]*headerTitle:\s*"Pickup date of the ORIGINAL load/.test(setl)) errors.push('origin pickup column must carry the board label "PU date" with the ORIGINAL-load header title');
+  if (!/key:\s*"origin_delivered",\s*label:\s*"DEL date"[^\n]*headerTitle:\s*"Delivery date of the ORIGINAL load/.test(setl)) errors.push('origin delivery column must carry the board label "DEL date" with the ORIGINAL-load header title');
+  if (!/render:\s*r\s*=>\s*<OriginDateCell row=\{r\} date=\{r\.origin_pickup_date\} \/>/.test(setl)) errors.push("origin pickup cell must render OriginDateCell(origin_pickup_date)");
+  if (!/render:\s*r\s*=>\s*<OriginDateCell row=\{r\} date=\{r\.origin_delivery_date\} \/>/.test(setl)) errors.push("origin delivery cell must render OriginDateCell(origin_delivery_date)");
+  const cell = setl.slice(setl.indexOf("function OriginDateCell("), setl.indexOf("function SettlementCell("));
+  if (!/l\.load_number === row\.origin_load_number\)\?\.load_id/.test(cell)) errors.push("OriginDateCell must resolve the ORIGINAL load id from the leg whose load_number is the origin");
+  if (!/<EntityLink\s+kind="load"\s+id=\{originId\}\s+label=\{mmmDd\(date\)\}/.test(cell)) errors.push("OriginDateCell must drill to the ORIGINAL load (EntityLink kind=load, label mmmDd(date))");
 
   return errors;
 }
@@ -106,10 +103,14 @@ if (process.argv.includes("--selftest")) {
     ["frontend drops origin type", withField("feapi", (s) => s.replace(/origin_load_number: string \| null; origin_pickup_date: string \| null; origin_delivery_date: string \| null;/g, ""))],
     ["register drops started testId", withField("setl", (s) => s.replace(/setl-tour-col-origin-started/g, "gone-started"))],
     ["register drops delivered testId", withField("setl", (s) => s.replace(/setl-tour-col-origin-delivered/g, "gone-delivered"))],
-    ["register drops Original load pickup label", withField("setl", (s) => s.replace(/label: "Original load pickup"/g, 'label: "X"'))],
-    ["register drops Original load delivery label", withField("setl", (s) => s.replace(/label: "Original load delivery"/g, 'label: "X"'))],
-    ["register drops pickup mmmDd render", withField("setl", (s) => s.replace(/mmmDd\(r\.origin_pickup_date\)/g, '"x"'))],
-    ["register drops delivery mmmDd render", withField("setl", (s) => s.replace(/mmmDd\(r\.origin_delivery_date\)/g, '"x"'))],
+    ["register drops PU date board label", withField("setl", (s) => s.replace(/label: "PU date"/g, 'label: "X"'))],
+    ["register drops DEL date board label", withField("setl", (s) => s.replace(/label: "DEL date"/g, 'label: "X"'))],
+    ["header title stops naming the ORIGINAL load", withField("setl", (s) => s.replace(/Pickup date of the ORIGINAL load/g, "Pickup date"))],
+    ["pickup cell stops rendering the origin date", withField("setl", (s) => s.replace(/date=\{r\.origin_pickup_date\}/g, "date={r.trip_started_at}"))],
+    ["delivery cell stops rendering the origin date", withField("setl", (s) => s.replace(/date=\{r\.origin_delivery_date\}/g, "date={r.trip_closed_at}"))],
+    ["origin date no longer drills to the origin load", withField("setl", (s) => s.replace(/<EntityLink\s+kind="load"\s+id=\{originId\}/g, '<span data-kind="load" data-id={originId}'))],
+    ["origin id resolved from the wrong leg", withField("setl", (s) => s.replace(/l\.load_number === row\.origin_load_number\)\?\.load_id/g, "true)?.load_id"))],
+    ["register drops mmmDd date label", withField("setl", (s) => s.replace(/label=\{mmmDd\(date\)\}/g, "label={date}"))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {

@@ -33,6 +33,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3, V3_TABLE } from "../../design/v3-tokens";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { describeQboSyncStatus } from "../../lib/qbo-sync-status";
+import { entityLabel } from "../../lib/entity-label";
 import { QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { formatUsdCents } from "../../utils/qboFormat";
 
@@ -484,7 +485,8 @@ export function AccountingHubPage() {
       } else {
         byDriver.set(key, {
           driverId: row.driver_id,
-          name: row.driver_name?.trim() || "Driver",
+          // Lead 443.278 (2): a uuid-shaped / blank driver_name never renders as the label.
+          name: entityLabel(row.driver_name, row.driver_id ?? row.settlement_id, "Driver"),
           cents: add,
         });
       }

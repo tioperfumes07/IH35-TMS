@@ -73,6 +73,24 @@ const fmt = (c: number) => formatUsdCents(c);
 const DASH = "\u2014";
 
 /** Closed board: "No number" is red when a closed row still lacks AlwaysTrack (443.252 measured). */
+/** Lead 443.278 (1): the ORIGINAL load's dates drill to that load. Its id is the live leg whose
+ *  load_number is the origin; a cancelled origin (not a live leg) renders the date as plain text. */
+function OriginDateCell({ row, date }: { row: TourListRow; date: string | null }) {
+  if (!date) return <>{DASH}</>;
+  const originId = row.origin_load_number ? row.legs.find((l) => l.load_number === row.origin_load_number)?.load_id ?? null : null;
+  if (!originId) return <span title={row.origin_load_number ? `Load ${row.origin_load_number}` : undefined}>{mmmDd(date)}</span>;
+  return (
+    <EntityLink
+      kind="load"
+      id={originId}
+      label={mmmDd(date)}
+      className="ldt-link"
+      title={`Original load ${row.origin_load_number}`}
+      data-testid="setl-tour-origin-load-link"
+    />
+  );
+}
+
 function SettlementCell({ row }: { row: TourListRow }) {
   const label = tourLabel(row);
   const noNumber = label === "No number";
@@ -149,8 +167,8 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
   // (re)settlement. Distinct from the tour-level "Started" (trip-open) stamp below — these are the
   // original load's own first-pickup / last-delivery stop dates, tooltip-tagged with its load number.
   // ROUND 443.254 N7 — PU date and DEL date as separate sortable columns (V3 Open/Closed).
-  { key: "origin_started", label: "PU date", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? mmmDd(r.origin_pickup_date) : ""), render: r => r.origin_pickup_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_pickup_date)}</span> : DASH },
-  { key: "origin_delivered", label: "DEL date", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? mmmDd(r.origin_delivery_date) : ""), render: r => r.origin_delivery_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_delivery_date)}</span> : DASH },
+  { key: "origin_started", label: "PU date", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? mmmDd(r.origin_pickup_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_pickup_date} /> },
+  { key: "origin_delivered", label: "DEL date", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? mmmDd(r.origin_delivery_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_delivery_date} /> },
   { key: "started", label: "Date started", testId: "setl-tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "When this tour/settlement opened (trip-start stamp) — see Date started for the original load's pickup", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
   // ROUND 443.250 Closed board — column label "Ended" (was "Date ended").
   ...(state === "closed" ? [{ key: "closed", label: "Ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
