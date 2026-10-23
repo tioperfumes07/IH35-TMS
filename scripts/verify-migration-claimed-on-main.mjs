@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// MATRIX-BUILT-OPTIONAL — process guard (migration claim-before-write law), not a surface wiring guard; claims no Built credit.
 /**
  * MIGRATION CLAIM REGISTRY ENFORCEMENT (MIGRATION-NUMBER-RACE-IS-INTRA-LANE).
  *
@@ -51,6 +52,12 @@ function branchLane(branch) {
 }
 
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // Lead 443.258.5 ruling 2 (writer shape B): accounting.expenses.is_credit — a card credit (QBO Credit Card Credit).
+  // Claimed #(202616190700) on main first — exact-branch + exact-file.
+  [
+    "cc-2/443-260-4-migration-is-credit",
+    new Set(["db/migrations/202616190700_expense_card_credit.sql"]),
+  ],
   [
     "codex/tel-39-driver-mirror",
     new Set(["db/migrations/202613772200_samsara_driver_activation_status.sql"]),
