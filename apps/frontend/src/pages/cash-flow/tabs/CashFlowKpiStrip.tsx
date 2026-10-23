@@ -1,12 +1,8 @@
 import { formatUsdCents } from "../../../lib/money";
+import { V3 } from "../../../design/v3-tokens";
 
-// REG-031 (Cash Flow Home page) — extracted verbatim from RollingLedgerTab.tsx's own KPI strip
-// (STATE-AFTER-#21082 correction: 60px tall, bg #F4F7FA, 1px #C7D2DC border, radius 2px, padding
-// 4px 8px, label 11px uppercase letter-spacing .275px muted, value 11px/600 ink -- inline-styled
-// like SettlementKpiGrid.tsx's own Tile so the exact pixel spec never trips
-// verify-ui-design-system-ratchet's raw-size count) so the Home tab can show the SAME real KPI
-// tile strip without duplicating the markup. RollingLedgerTab now imports this component instead
-// of its own inline block -- output is byte-identical, only the JSX source moved.
+// REG-031 (Cash Flow Home page) — extracted from RollingLedgerTab.tsx's KPI strip.
+// ROUND 443.250: restyled onto the single V3 token palette (no per-page hex).
 export type CashFlowKpis = {
   opening: number | null;
   incomeToday: number;
@@ -54,14 +50,15 @@ export function CashFlowKpiStrip({ kpis, testId = "cash-flow-kpi-strip" }: { kpi
           style={{
             height: 60,
             boxSizing: "border-box",
-            background: "#F4F7FA",
-            border: "1px solid #C7D2DC",
+            background: V3.headerBg,
+            border: `1px solid ${V3.border}`,
             borderRadius: 2,
             padding: "4px 8px",
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
+            fontFamily: V3.font,
           }}
         >
           <div
@@ -70,7 +67,7 @@ export function CashFlowKpiStrip({ kpis, testId = "cash-flow-kpi-strip" }: { kpi
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: ".275px",
-              color: "#4B5563",
+              color: V3.muted,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -84,7 +81,7 @@ export function CashFlowKpiStrip({ kpis, testId = "cash-flow-kpi-strip" }: { kpi
               fontWeight: 600,
               fontVariantNumeric: "tabular-nums",
               whiteSpace: "nowrap",
-              color: tile.bad ? "#111827" : tile.ok ? "#4B5563" : tile.zero ? "#9CA3AF" : "#111827",
+              color: tile.bad ? V3.ink : tile.ok ? V3.muted : tile.zero ? V3.slate : V3.ink,
             }}
           >
             {tile.value === null ? "—" : formatCashFlowCents(tile.value, { sign: tile.sign })}

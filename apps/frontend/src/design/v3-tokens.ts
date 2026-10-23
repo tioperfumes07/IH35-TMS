@@ -5,20 +5,30 @@
 export const V3 = {
   shell: "#13233F",
   data: "#1E3A5F",
+  /** Mid navy for receipt bars / data fills on charts (board V3). */
+  dataMid: "#3E5C86",
   slate: "#94A3B8",
   slateLt: "#CBD5E1",
   ink: "#111827",
   muted: "#5B6576",
+  /** Softer muted for run-rate / estimate cells. */
+  mutedSoft: "#8B94A3",
   border: "#DDE1E7",
   borderSoft: "#ECEEF2",
   page: "#F4F3EF",
   surface: "#FFFFFF",
   headerBg: "#F7F8FA",
+  /** Group-row / section band inside tables. */
+  band: "#F3F5F8",
+  chartBand: "#F8FAFC",
+  chartGrid: "#EEF0F3",
   green: "#15803D",
   red: "#B91C1C",
   amber: "#B45309",
   link: "#1D4ED8",
   live: "#22C55E",
+  /** Text on shell / navy controls. */
+  onShell: "#FFFFFF",
   font: "Inter, ui-sans-serif, system-ui, sans-serif",
 } as const;
 

@@ -112,6 +112,23 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared
+  design-system leaf components other V3 tabs reuse. Remaining Cash Flow / Settlements / Fuel boards
+  and full design-system sweep stay open under the same hard stop (10-26 18:00Z).
+- **Tokens:** `apps/frontend/src/design/v3-tokens.ts` is the only palette. Extended for the board:
+  `dataMid`, `mutedSoft`, `band`, `chartBand`, `chartGrid`, `onShell`. Hex outside tokens stays
+  forbidden by `verify-design-tokens-only.mjs` on `components/v3` + changed FE.
+- **Shared components:** `apps/frontend/src/components/v3/{V3KpiTile,V3Panel,V3Segmented,index}.ts(x)`.
+  Square edges = **2px** (house law), not the board’s 6px mock radius.
+- **Home data:** `CashFlowHomeTab` keeps REG-031 `<CashFlowKpiStrip>` + sibling tab links; adds V3 KPI
+  row + 4-week/13-week chart + 13-week table. Numbers only from `getRollingLedger` (98-day window,
+  week-bucketed). No board sample cents. Expense run-rate line breakdown deferred (no CC-1
+  endpoints — totals only).
+- **Guard:** extended `scripts/verify-cash-flow-home-tab.mjs` (piggyback; no new EVEN claim). Asserts
+  V3 imports/components/testids + `getRollingLedger`.
+
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
 - **Option 2 (owner):** backfill papers an RPL facility from existing bank categorizations via
