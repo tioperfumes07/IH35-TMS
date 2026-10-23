@@ -6,6 +6,8 @@ export type FleetHealthRow = {
   telemetry_city: string | null; telemetry_state: string | null; speed_mph: number | null;
   pm_schedule_id: string | null; pm_interval: number | null; miles_left: number | null;
   state: "ok" | "soon" | "overdue" | "shop" | "none";
+  /** LEAD 443.281 row 108 — the unit has a miles PM clock but no last-PM odometer / next-due on file (never guessed). */
+  pm_baseline_absent?: boolean;
   body_style?: "classic" | "sloped" | "aero";
 };
 type HealthResponse = { units: FleetHealthRow[]; kpi: { total: number } };

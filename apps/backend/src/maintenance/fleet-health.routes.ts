@@ -21,6 +21,11 @@ import {
   unitCurrentDriverJoinSql,
 } from "../dispatch/unit-current-driver.js";
 
+/** LEAD 443.281 row 108 — SQL twin of pm-auto-engine pmScheduleBaselineAbsentReason (miles): no next-due and no real
+ *  last-PM odometer (NULL or the <= 1 placeholder) = no baseline. The clock cannot be evaluated; it is never 'ok'. */
+const PM_BASELINE_ABSENT_SQL = (a: string) =>
+  `(${a}.next_due_odometer IS NULL AND COALESCE(${a}.last_service_odometer, 0) <= 1)`;
+
 const PM_INTERVAL = 25_000;
 const PLAN_RATE_PER_DAY = 400; // 12 000/mo
 
@@ -66,6 +71,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             SELECT DISTINCT ON (ps.unit_id)
               ps.unit_id,
               ps.last_service_odometer,
+              ps.next_due_odometer,
               ps.interval_value
             FROM maintenance.pm_schedules ps, co
             WHERE ps.operating_company_id = co.oc_id
@@ -91,6 +97,9 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
               CASE
                 WHEN su.unit_id IS NOT NULL THEN 'shop'
                 WHEN pm.unit_id IS NULL THEN 'none'
+                -- LEAD 443.281 row 108: a miles clock with no last-PM odometer and no next-due is ABSENT (pm-auto-engine
+                -- pmScheduleBaselineAbsentReason) — no evaluable clock, never 'ok'.
+                WHEN ${PM_BASELINE_ABSENT_SQL("pm")} THEN 'none'
                 WHEN COALESCE(tele.odometer_mi, pm.last_service_odometer) - pm.last_service_odometer >= pm.interval_value THEN 'overdue'
                 WHEN (pm.last_service_odometer + pm.interval_value - COALESCE(tele.odometer_mi, pm.last_service_odometer))::numeric / ${PLAN_RATE_PER_DAY} <= 14 THEN 'soon'
                 ELSE 'ok'
@@ -164,6 +173,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
               CASE
                 WHEN ow.in_shop = true THEN 'shop'
                 WHEN pm.unit_id IS NULL THEN 'none'
+                WHEN ${PM_BASELINE_ABSENT_SQL("pm")} THEN 'none'
                 WHEN (COALESCE(vlp.odometer_mi, pm.last_service_odometer) - pm.last_service_odometer) >= pm.pm_interval THEN 'overdue'
                 WHEN (COALESCE(pm.next_due_odometer, pm.last_service_odometer + pm.pm_interval) - COALESCE(vlp.odometer_mi, pm.last_service_odometer))::numeric / ${PLAN_RATE_PER_DAY} <= 14 THEN 'soon'
                 ELSE 'ok'
@@ -204,6 +214,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             pm.pm_label,
             pm.pm_interval,
             pm.last_service_odometer,
+            (pm.unit_id IS NOT NULL AND ${PM_BASELINE_ABSENT_SQL("pm")}) AS pm_baseline_absent,
             pm.next_due_odometer,
             /* miles_left & days_left from SQL */
             (COALESCE(pm.next_due_odometer, pm.last_service_odometer + pm.pm_interval)

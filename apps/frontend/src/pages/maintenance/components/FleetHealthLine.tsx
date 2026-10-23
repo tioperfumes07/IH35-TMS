@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { readFleetHealth, type FleetHealthRow } from "./fleet-health-source";
@@ -31,8 +32,18 @@ export function FleetTruck({ row, vertical = false }: { row: Pick<FleetHealthRow
 }
 
 export function FleetHealthLine({ companyId }: { companyId: string }) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState("all");
   const health = useQuery({ queryKey: ["maintenance", "fleet-health", companyId], queryFn: () => readFleetHealth(companyId), enabled: Boolean(companyId), staleTime: 60_000, refetchInterval: 180_000 });
+  // LEAD 443.281 row 108: say WHAT is missing — a clock with no last-PM odometer (the truck's reading is there) vs no odometer.
+  const statusCell = (row: FleetHealthRow) => {
+    if (row.pm_baseline_absent && row.pm_schedule_id && row.state !== "shop") {
+      return <Link to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`} data-testid="fleet-health-no-last-pm">{t("maintenance.fleetHealth.noLastPm")}</Link>;
+    }
+    if (row.odometer_mi == null && !["shop", "none"].includes(row.state)) return t("maintenance.fleetHealth.odometerUnavailable");
+    if ((row.miles_left == null || !row.pm_interval) && !["shop", "none"].includes(row.state)) return t("maintenance.fleetHealth.pmReadingUnavailable");
+    return <span className="inline-flex items-center gap-2"><span aria-hidden="true" className={`h-2 w-2 rounded-full bg-current ${statusTones[row.state]}`} />{labels[row.state]}</span>;
+  };
   const columns: ParityColumn<FleetHealthRow>[] = [
     { key: "unit_number", label: "Unit", render: (row) => <div className="flex min-w-0 flex-col items-start gap-1"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /><FleetTruck row={row} /><div className="break-words text-xs text-slate-500">{[row.make, row.model, row.year].filter(Boolean).join(" · ")}</div></div> },
     { key: "odometer_mi", label: "Odometer", render: (row) => row.odometer_mi == null ? "Unavailable" : <EntityLink kind="unit" id={row.unit_id} label={`${Number(row.odometer_mi).toLocaleString("en-US")} mi`} /> },
@@ -41,7 +52,7 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
       ? <Link to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`} aria-label={`${row.unit_number}: PM schedule`}>{row.pm_interval && row.miles_left != null && row.odometer_mi != null ? <span className={`relative block ${tones[row.state]}`}><progress className="h-2 w-full" style={{ accentColor: "currentColor" }} max={row.pm_interval} value={Math.max(0, Math.min(row.pm_interval, row.pm_interval - row.miles_left))} /><span aria-hidden="true" className="absolute left-[80%] top-0 h-3 border-l border-slate-400" /></span> : "PM reading unavailable"}</Link>
       : <Link to={`/maintenance/pm-schedule?unit_id=${encodeURIComponent(row.unit_id)}&create=1`}>Start PM clock →</Link> },
     { key: "miles_left", label: "Miles", render: (row) => row.miles_left == null || row.odometer_mi == null || !row.pm_schedule_id ? "—" : <Link to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`}>{Math.abs(row.miles_left).toLocaleString("en-US")} {row.miles_left < 0 ? "over" : "to go"}</Link> },
-    { key: "state", label: "Status", render: (row) => (row.odometer_mi == null || row.miles_left == null || !row.pm_interval) && !["shop", "none"].includes(row.state) ? "PM reading unavailable" : <span className="inline-flex items-center gap-2"><span aria-hidden="true" className={`h-2 w-2 rounded-full bg-current ${statusTones[row.state]}`} />{labels[row.state]}</span> },
+    { key: "state", label: "Status", render: (row) => statusCell(row) },
   ];
   const rows = (health.data?.units ?? []).filter((row) => filter === "all" || (filter === "soon" && ["soon", "overdue"].includes(row.state)) || row.state === filter);
   return <V3Panel title="Fleet health line — road to the next PM" testId="maintenance-fleet-health-line" footer="Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.">

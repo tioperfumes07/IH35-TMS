@@ -1139,5 +1139,12 @@
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-person-names-normalized-at-write.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443281-FLEET-HEALTH-NO-FALSE-OK",
+    "title": "A PM clock with no last-PM odometer and no next-due is 'none' on Fleet health (never counted OK); the page names the missing fact",
+    "source_file": "AGENTS.md",
+    "guard": "scripts/verify-fleet-health-no-false-ok.mjs",
+    "type": "enforced"
   }
 ]
