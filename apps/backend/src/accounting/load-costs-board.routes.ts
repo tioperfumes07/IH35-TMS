@@ -137,7 +137,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
          -- 443.257-C: fuel fills from fuel.fuel_transactions (all fills, incl. unposted)
          fuel_fills AS (
            SELECT ft.load_id,
-                  COALESCE(SUM(ft.total_amount_cents), 0)::bigint AS fuel_fills_total_cents,
+                  ROUND(COALESCE(SUM(ft.total_cost), 0) * 100)::bigint AS fuel_fills_total_cents,
                   COUNT(*)::int AS fuel_fills_count
              FROM fuel.fuel_transactions ft
             WHERE ft.operating_company_id = $1::uuid
