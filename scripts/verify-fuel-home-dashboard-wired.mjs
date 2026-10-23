@@ -15,6 +15,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/fuel/FuelHome.tsx");
 const KPI = path.join(ROOT, "apps/frontend/src/pages/fuel/components/FuelKpiRow.tsx");
 const CARDS = path.join(ROOT, "apps/frontend/src/pages/fuel/cards/FuelCardsPage.tsx");
+const UNMATCHED = path.join(ROOT, "apps/frontend/src/pages/fuel/relay-unmatched/RelayUnmatchedPage.tsx");
 const PLANNER = path.join(ROOT, "apps/backend/src/fuel/planner.routes.ts");
 const LABEL = "verify-fuel-home-dashboard-wired";
 const SPEND_FAKE_ZERO_RE =
@@ -113,6 +114,29 @@ export function computeCardsFailures(source) {
   return errors;
 }
 
+/** ROUND 443.250 Relay Unmatched tab — V3 board chrome; listRelayFills engine unchanged. */
+export function computeUnmatchedFailures(source) {
+  const errors = [];
+  if (!/V3KpiTile/.test(source) || !/data-relay-unmatched-v3-kpis/.test(source)) {
+    errors.push("RelayUnmatchedPage must render V3KpiTile strip with data-relay-unmatched-v3-kpis");
+  }
+  if (!/V3Panel/.test(source) || !/relay-unmatched-v3-panel/.test(source)) {
+    errors.push("RelayUnmatchedPage must wrap the unmatched table in V3Panel (relay-unmatched-v3-panel)");
+  }
+  if (/import\s*\{[^}]*\bDataPanel\b/.test(source) || /<\s*DataPanel\b/.test(source)) {
+    errors.push("RelayUnmatchedPage must not keep DataPanel after V3 restyle");
+  }
+  if (!/listRelayFills/.test(source) || !/unmatched:\s*true/.test(source)) {
+    errors.push("RelayUnmatchedPage must keep listRelayFills({ unmatched: true }) (engine unchanged)");
+  }
+  for (const label of ["Unmatched", "This page", "Page size", "Relay fills — unmatched"]) {
+    if (!source.includes(label)) {
+      errors.push(`RelayUnmatchedPage must keep board label "${label}"`);
+    }
+  }
+  return errors;
+}
+
 function selftest() {
   const plannerGood = `
       const spendRes = await client.query(\`SELECT COALESCE(sum(total_cost), 0)::numeric AS spend FROM fuel.fuel_transactions\`);
@@ -199,6 +223,24 @@ function selftest() {
     process.exit(1);
   }
   console.log("selftest ok — Fuel Cards V3 chrome markers");
+  const unmatchedGood = fs.readFileSync(UNMATCHED, "utf8");
+  if (computeUnmatchedFailures(unmatchedGood).length) {
+    console.error("SELFTEST FAIL — shipped Relay Unmatched V3 baseline is red", computeUnmatchedFailures(unmatchedGood));
+    process.exit(1);
+  }
+  const unmatchedNoV3 = unmatchedGood
+    .replace(/V3KpiTile/g, "LegacyKpi")
+    .replace(/data-relay-unmatched-v3-kpis/g, "data-relay-unmatched-legacy");
+  if (!computeUnmatchedFailures(unmatchedNoV3).some((e) => e.includes("data-relay-unmatched-v3-kpis"))) {
+    console.error("SELFTEST FAIL — Relay Unmatched V3KpiTile removal should fail");
+    process.exit(1);
+  }
+  const unmatchedDataPanel = `${unmatchedGood}\nimport { DataPanel } from "x";\n`;
+  if (!computeUnmatchedFailures(unmatchedDataPanel).some((e) => e.includes("DataPanel"))) {
+    console.error("SELFTEST FAIL — Relay Unmatched DataPanel reintro should fail");
+    process.exit(1);
+  }
+  console.log("selftest ok — Relay Unmatched V3 chrome markers");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";
@@ -248,18 +290,22 @@ function run() {
   const planner = fs.readFileSync(PLANNER, "utf8");
   const kpi = fs.readFileSync(KPI, "utf8");
   const cards = fs.readFileSync(CARDS, "utf8");
+  const unmatched = fs.readFileSync(UNMATCHED, "utf8");
   const failures = [
     ...computeFailures(source),
     ...computePlannerFailures(planner),
     ...computeKpiFailures(kpi),
     ...computeCardsFailures(cards),
+    ...computeUnmatchedFailures(unmatched),
   ];
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] OK — Fuel Home dashboard KPIs wired; Fuel Cards V3 chrome; spend query fail-loud`);
+  console.log(
+    `[${LABEL}] OK — Fuel Home dashboard KPIs wired; Fuel Cards + Relay Unmatched V3 chrome; spend query fail-loud`,
+  );
 }
 
 if (process.argv.includes("--selftest")) selftest();

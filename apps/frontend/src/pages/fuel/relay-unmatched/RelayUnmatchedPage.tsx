@@ -3,6 +3,8 @@
  * Cards/Integrity tabs were added as standalone sub-pages (FuelCardsPage.tsx / FuelIntegrityPage.tsx):
  * GET /api/v1/fuel/relay-fills?unmatched=true, the risk window of Relay fills no truck or driver has
  * been matched to yet, with Relay's own free-text driver/unit so a person can match them by hand.
+ *
+ * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). listRelayFills engine unchanged.
  */
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -10,13 +12,20 @@ import { listRelayFills } from "../../../api/relay-fills";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { DataPanel } from "../../../components/layout/DataPanel";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { V3Panel } from "../../../components/v3/V3Panel";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatMoneyCents } from "../../../components/dispatch/constants";
 import type { RelayFillRow } from "../../../api/relay-fills";
 
 const PAGE_SIZE = 50;
+
+function kpiValue(n: number | undefined, loading: boolean): string {
+  if (loading) return "…";
+  if (n == null) return "—";
+  return String(n);
+}
 
 export function RelayUnmatchedPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -31,6 +40,7 @@ export function RelayUnmatchedPage() {
 
   const rows = query.data?.rows ?? [];
   const totalCount = query.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const columns: ParityColumn<RelayFillRow>[] = [
     { key: "relay_created_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.relay_created_at) },
@@ -85,9 +95,31 @@ export function RelayUnmatchedPage() {
 
   return (
     <div className="space-y-3" data-testid="relay-unmatched-page">
-      <DataPanel
+      {/* ROUND 443.250 Relay Unmatched V3 — Unmatched / This page / Page size from listRelayFills. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="relay-unmatched-v3-kpi-strip"
+        data-relay-unmatched-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="Unmatched"
+          value={kpiValue(query.isPending ? undefined : totalCount, query.isPending)}
+          sub="fills needing a truck or driver"
+          tone={totalCount > 0 ? "red" : "green"}
+          testId="relay-unmatched-kpi-total"
+        />
+        <V3KpiTile
+          label="This page"
+          value={kpiValue(query.isPending ? undefined : rows.length, query.isPending)}
+          sub={`page ${page} of ${pageCount}`}
+          testId="relay-unmatched-kpi-page"
+        />
+        <V3KpiTile label="Page size" value={String(PAGE_SIZE)} sub="rows per request" testId="relay-unmatched-kpi-page-size" />
+      </div>
+      <V3Panel
         title="Relay fills — unmatched"
-        titleHint="Relay fuel fills this company has not matched to a truck or driver yet, with Relay's own free-text unit/driver to match by hand"
+        subtitle="Relay fuel fills this company has not matched to a truck or driver yet, with Relay's own free-text unit/driver to match by hand"
+        testId="relay-unmatched-v3-panel"
       >
         {query.isError ? (
           <ListErrorBanner onRetry={() => void query.refetch()} message="Unmatched Relay fills could not be loaded." />
@@ -104,7 +136,7 @@ export function RelayUnmatchedPage() {
         {totalCount > PAGE_SIZE ? (
           <div className="mt-2 flex items-center justify-between text-xs text-gray-600" data-testid="relay-unmatched-pager">
             <span>
-              Page {page} of {Math.max(1, Math.ceil(totalCount / PAGE_SIZE))} ({totalCount} total)
+              Page {page} of {pageCount} ({totalCount} total)
             </span>
             <div className="flex gap-2">
               <button
@@ -126,7 +158,7 @@ export function RelayUnmatchedPage() {
             </div>
           </div>
         ) : null}
-      </DataPanel>
+      </V3Panel>
     </div>
   );
 }
