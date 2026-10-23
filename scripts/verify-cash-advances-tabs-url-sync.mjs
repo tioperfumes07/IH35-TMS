@@ -37,7 +37,7 @@ function failures(source) {
   return errors;
 }
 
-/** ROUND 443.250 Settlements CashAdvances V3 board chrome. */
+/** ROUND 443.250 + 443.274-C Settlements CashAdvances V3 board chrome. */
 function kpiV3Failures(source) {
   const errors = [];
   if (!source.includes("V3KpiTile")) {
@@ -64,6 +64,27 @@ function kpiV3Failures(source) {
   }
   if (!source.includes('amount(kpis, "advances_on_file")')) {
     errors.push('CashAdvancesKpiRow must read advances_on_file (Advances on file count)');
+  }
+  // ROUND 443.274-C — board body 1fr|2fr Requests | Advances + footnote.
+  if (!source.includes("V3Panel")) {
+    errors.push("CashAdvancesKpiRow must render V3Panel for Requests|Advances (443.274-C)");
+  }
+  if (!source.includes('data-settlements-cash-advances-board-1fr-2fr')) {
+    errors.push("CashAdvancesKpiRow must mark data-settlements-cash-advances-board-1fr-2fr");
+  }
+  if (!source.includes('gridTemplateColumns: "1fr 2fr"')) {
+    errors.push('CashAdvancesKpiRow board body must use gridTemplateColumns "1fr 2fr"');
+  }
+  if (!source.includes("No requests waiting")) {
+    errors.push("CashAdvancesKpiRow Requests empty must say No requests waiting");
+  }
+  if (!source.includes("Each advance links to its bank line (Zelle) and to the tour that recovers it.")) {
+    errors.push("CashAdvancesKpiRow must keep the board Advances footnote");
+  }
+  for (const col of ["Asked", "Policy", "Recover on", "Paid"]) {
+    if (!source.includes(col)) {
+      errors.push(`CashAdvancesKpiRow board must include column "${col}"`);
+    }
   }
   return errors;
 }
@@ -99,7 +120,10 @@ if (process.argv.includes("--selftest")) {
   }
   const goodKpi = `
     import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+    import { V3Panel } from "../../../components/v3/V3Panel";
     data-cash-advances-v3-kpis="1"
+    data-settlements-cash-advances-board-1fr-2fr="1"
+    gridTemplateColumns: "1fr 2fr"
     <V3KpiTile label="Advances on file" value="12" />
     <V3KpiTile label="Requests awaiting owner" value="0" />
     <V3KpiTile label="Outstanding to recover" value="$0.00" />
@@ -107,6 +131,12 @@ if (process.argv.includes("--selftest")) {
     amount(kpis, "total_outstanding")
     amount(kpis, "pending_approval")
     amount(kpis, "advances_on_file")
+    No requests waiting
+    Asked
+    Policy
+    Recover on
+    Paid
+    Each advance links to its bank line (Zelle) and to the tour that recovers it.
   `;
   if (kpiV3Failures(goodKpi).length) {
     throw new Error(`${LABEL}: good KPI fixture failed: ${kpiV3Failures(goodKpi).join("; ")}`);
@@ -115,5 +145,9 @@ if (process.argv.includes("--selftest")) {
   if (!kpiV3Failures(v3Stripped).some((e) => e.includes("V3KpiTile"))) {
     throw new Error(`${LABEL}: V3KpiTile removal should fail`);
   }
-  console.log(`${LABEL}: selftest PASS (${mutations.length} tab mutations + V3 KPI markers caught)`);
+  const boardStripped = goodKpi.replace(/1fr 2fr/g, "1fr 1fr").replace(/data-settlements-cash-advances-board-1fr-2fr/g, "data-x");
+  if (!kpiV3Failures(boardStripped).some((e) => e.includes("1fr 2fr") || e.includes("board-1fr-2fr"))) {
+    throw new Error(`${LABEL}: board 1fr|2fr removal should fail`);
+  }
+  console.log(`${LABEL}: selftest PASS (${mutations.length} tab mutations + V3 KPI + 443.274-C board markers caught)`);
 } else run();

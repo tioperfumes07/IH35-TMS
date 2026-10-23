@@ -110,6 +110,8 @@ export function DriverOverviewBoard(props: {
   driverId: string;
   /** When true, the page owns the identity header. The tab strip still renders here. */
   hideChrome?: boolean;
+  /** V3 landing composition; retain the existing financial/history cards in a disclosure. */
+  compactOverview?: ReactNode;
   children?: ReactNode;
 }) {
   const [addPayOpen, setAddPayOpen] = useState(false);
@@ -191,6 +193,10 @@ export function DriverOverviewBoard(props: {
       {activeTab !== "Overview" ? (
         <div className="dd-body">{props.children}</div>
       ) : (
+      <>
+      {props.compactOverview}
+      <details open={!props.compactOverview}>
+      <summary className={props.compactOverview ? "cursor-pointer px-3 py-2 text-xs font-semibold" : "hidden"}>Settlement history, pay terms and performance</summary>
       <div className="dd-body">
         <div className="dd-kpis" data-testid="driver-overview-kpis">
           {tiles.map((k) => {
@@ -441,6 +447,8 @@ export function DriverOverviewBoard(props: {
         </div>
         {props.children}
       </div>
+      </details>
+      </>
       )}
       <AddPayLineModal open={addPayOpen} onClose={() => setAddPayOpen(false)} operatingCompanyId={props.operatingCompanyId} driverId={props.driverId} driverName={o.driver.name} />
     </div>

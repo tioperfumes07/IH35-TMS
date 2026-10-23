@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashAdvanceDetail, getCashAdvancesKpis, listCashAdvances } from "../../api/cashAdvances";
+import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useListState } from "../../components/list-state";
@@ -106,6 +107,13 @@ export function CashAdvancesHomePage() {
     enabled: Boolean(companyId),
   });
 
+  // ROUND 443.274-C — board Requests panel (pending office queue; same engine as reverse section).
+  const requestsQuery = useQuery({
+    queryKey: ["cash-advance-requests", "pending-board", companyId, effectiveDriverId ?? ""],
+    queryFn: () => cashAdvanceRequestsOfficeApi.listPending(companyId, effectiveDriverId),
+    enabled: Boolean(companyId),
+  });
+
   const listQuery = useQuery({
     queryKey: ["cash-advances", "list", companyId, tab, effectiveDriverId],
     queryFn: () => listCashAdvances(companyId, { view: tab, driver_id: effectiveDriverId }),
@@ -191,7 +199,20 @@ export function CashAdvancesHomePage() {
           onRetry={() => void kpisQuery.refetch()}
         />
       ) : (
-        <CashAdvancesKpiRow kpis={kpisQuery.data} basePath={basePath} />
+        <CashAdvancesKpiRow
+          kpis={kpisQuery.data}
+          basePath={basePath}
+          requestRows={requestsQuery.data?.requests ?? []}
+          requestsLoading={requestsQuery.isLoading}
+          requestsFailed={requestsQuery.isError}
+          advanceRows={rows}
+          advancesLoading={listState.isLoading}
+          advancesFailed={listQuery.isError}
+          onOpenAdvance={(row) => {
+            setSelectedId(String(row.id));
+            setDetailOpen(true);
+          }}
+        />
       )}
 
       {listQuery.isError ? (
