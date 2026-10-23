@@ -31,11 +31,11 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
     const date = (row: Driver, value: string | null) => record(row, value ? formatDateUS(value) : "Add date");
     return [
       { key: "first_name", label: "Driver", render: (row) => record(row, formatPersonName(`${row.first_name} ${row.last_name}`)), sortValue: (row) => `${row.first_name} ${row.last_name}`, exportValue: (row) => formatPersonName(`${row.first_name} ${row.last_name}`) },
-      { key: "cdl_expires_at", label: "CDL", render: (row) => date(row, row.cdl_expires_at) },
-      { key: "dot_medical_expires_at", label: "DOT medical", render: (row) => date(row, row.dot_medical_expires_at) },
-      { key: "visa_expires_at", label: "B-1 visa", render: (row) => date(row, row.has_b1_visa || /^b[- ]?1$/i.test(row.visa_type ?? "") ? row.visa_expires_at || row.b1_visa_expires_date : null) },
-      { key: "emergency_contact_name", label: "Emergency contact", render: (row) => record(row, hasContact(row) ? "On file" : "Add contact") },
-      { key: "samsara_driver_id", label: "Samsara", render: (row) => record(row, row.samsara_driver_id ? "Linked" : "Link driver") },
+      { key: "cdl_expires_at", label: "CDL", sortable: true, sortValue: (row) => row.cdl_expires_at ?? "", render: (row) => date(row, row.cdl_expires_at) },
+      { key: "dot_medical_expires_at", label: "DOT medical", sortable: true, sortValue: (row) => row.dot_medical_expires_at ?? "", render: (row) => date(row, row.dot_medical_expires_at) },
+      { key: "visa_expires_at", label: "B-1 visa", sortable: true, sortValue: (row) => row.visa_expires_at ?? "", render: (row) => date(row, row.has_b1_visa || /^b[- ]?1$/i.test(row.visa_type ?? "") ? row.visa_expires_at || row.b1_visa_expires_date : null) },
+      { key: "emergency_contact_name", label: "Emergency contact", sortable: true, sortValue: (row) => (hasContact(row) ? "On file" : "Add contact"), render: (row) => record(row, hasContact(row) ? "On file" : "Add contact") },
+      { key: "samsara_driver_id", label: "Samsara", sortable: true, sortValue: (row) => (row.samsara_driver_id ? "Linked" : "Link driver"), render: (row) => record(row, row.samsara_driver_id ? "Linked" : "Link driver") },
       { key: "dq_file", label: "DQ file", render: (row) => record(row, "Review records"), sortable: false, exportValue: () => "Status not supplied by roster" },
     ];
   }, []);
