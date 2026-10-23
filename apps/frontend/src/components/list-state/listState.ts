@@ -30,7 +30,9 @@ export type ListQueryStatus = {
  */
 export function resolveListState(status: ListQueryStatus, isEmpty: boolean): ListState {
   if (status.isError) return "error";
-  if (status.isPending) return "loading";
+  // react-query v5: disabled queries stay isPending with fetchStatus idle (isFetching false).
+  // Treating isPending alone as loading stuck Cash Advances (and any enabled:false list) forever.
+  if (status.isPending && status.isFetching) return "loading";
   // Zero rows while a fetch is still in flight is NOT settled — keep showing loading
   // rather than flashing an empty state that a moment later fills with data.
   if (isEmpty && status.isFetching) return "loading";
