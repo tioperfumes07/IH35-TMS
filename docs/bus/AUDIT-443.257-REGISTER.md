@@ -80,6 +80,11 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 
 | D059 | Program | Scenario tracker | Certification timestamp | Raw database timestamp with fractional seconds and +00 timezone | D | pending: DOM | MM/DD/YYYY and readable local time | Cursor |
 
+| D060 | System | Transaction Health | Generated/document dates | Month-name timestamps instead of MM/DD/YYYY | D | pending: DOM | MM/DD/YYYY with readable CT time | Cursor |
+| D061 | System | Transaction Health | Journal-entry and bill-payment labels | Raw UUIDs are visible display labels | N | pending: DOM | Human-readable display identifiers | Cursor |
+| D062 | System | Transaction Health | Wiring preview DR/CR | Currency values lack dollar signs | M | pending: DOM | Currency formatted $1,234.56 | Cursor |
+| D063 | Reports | Scheduled subscriptions | Add subscription timezone | Input measures 30.67px high | I | pending: measured DOM | Single-line inputs 32px | Cursor |
+
 ## Counts (observed defects, not application-wide totals)
 
 | Module | V | M | D | I | N | T | B | E | P | Total |
@@ -104,11 +109,12 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | Inventory | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | 425C | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 2 |
 | Lists | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
-| Reports | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
+| Reports | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 2 |
 | Docs | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 2 |
 | Users | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 2 |
 | Program | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| Total | 1 | 3 | 8 | 15 | 16 | 3 | 9 | 1 | 3 | 59 |
+| System | 0 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 3 |
+| Total | 1 | 4 | 9 | 16 | 17 | 3 | 9 | 1 | 3 | 63 |
 
 ## Coverage ledger
 
@@ -128,6 +134,7 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 - 443.258-D batch 6 checkpoint (partial depth): 425C Profiles & Defaults and populated History inspected without changing records; Lists landing and Names Master populated table inspected; Reports landing and Custom Report Builder loaded fields inspected without saving. Catalog details, individual reports, schedules, 425C detail and secondary panels remain owed.
 - 443.258-D batch 7 checkpoint (partial depth): Docs populated All Entities table and Upload Document dialog inspected/closed without file selection; Users populated master-detail landing and Create User dialog inspected/closed without invitation; Help landing inspected. Entity tabs, document previews, remaining user views/profiles and help articles remain owed. Chrome timeout recovered after waiting and one reload.
 - 443.258-D batch 8 checkpoint (two remaining modules, partial depth): Program scenario tracker visited with USMCA selected; System Overview and Software / Build inspected. The latter reports background_jobs.stale DOWN while other visible checks report OK; this is recorded as observed runtime health, not misclassified as a UI crash. Other Program destinations and System tabs remain owed.
+- Depth batch 9 (System/Help/Reports): System Transaction Health scope controls inspected first, USMCA selected and TRANSP/TRK unchecked before reading document content. Initial last-selected-company uncheck was refused; selecting USMCA first resolved it. No frozen-company records inspected. Help Booking checklist opened, Back verified to /help, Filters opened/cancelled. Reports Scheduled Subscriptions and Add subscription form inspected/cancelled; no schedule saved or delivery triggered. Subscription page explicitly says delivery worker is unimplemented; this runtime text is not independent proof of backend implementation status. Remaining destinations/dialogs still owed.
 - Every visible sidebar module has now been visited at least once. This is NOT full module/tab/modal coverage; all outstanding deeper coverage above remains open, along with durable screenshots. No full-audit completion claim.
 - Transient Loading states that resolved were not counted as defects. Empty Fuel Card table explicitly says no cards assigned: not classified as unexplained emptiness.
 - Fuel Relay wallet link currently resolves to the current tab's path. Destination behavior not verified; held as a candidate, not counted.
