@@ -23,7 +23,7 @@ import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Panel } from "../../../components/v3/V3Panel";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
-import { entityLabel } from "../../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { BANKING_TAB_PATH } from "../../../router/route-manifest";
@@ -165,7 +165,7 @@ function LinkedToCell({
         key="bill"
         kind="bill"
         id={tx.matched_bill_id}
-        label={entityLabel(tx.matched_bill_number, tx.matched_bill_id, "Bill")}
+        label={visibleDocumentLabel(tx.matched_bill_number, tx.matched_bill_id, "Bill")}
       />,
     );
   }
