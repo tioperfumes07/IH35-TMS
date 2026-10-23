@@ -151,7 +151,7 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   `COALESCE(scheduled_arrival_at, appointment_start_at)` — same as dispatch planner. Live guard
   PASS: 1 factored open USMCA proforma, zero lag.
 - **Still open under 443.250:** Settlements/Fuel boards, design-system sweep, Chrome proof.
-  Home / Projected / Rolling Ledger / Actual vs Projected / Manual Daily Projections V3 shipped.
+  Cash Flow five tabs + Settlements home V3 shipped (Settlements sub-boards / Fuel still open).
 
 ### Active Architectural Decisions — Cash Flow Rolling Ledger V3 (Cursor, ROUND 443.250, 2026-10-23)
 
@@ -198,8 +198,24 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   token (not Tailwind amber classes — proportion guard forbids those).
 - **Guard piggyback:** `verify-mdp-panel-proportion.mjs` (EVEN 4124) asserts V3KpiTile / V3Panel /
   V3_EXPENSE_GROUPS + V3 testIds + expense-group bands; selftest plant ≥5. No new EVEN claim.
-- **Still open under 443.250:** Settlements/Fuel boards, design-system sweep, Chrome proof.
+- **Still open under 443.250 (after Manual):** Settlements sub-boards / Fuel, design-system sweep, Chrome proof.
+  Settlements home V3 shipped (below). Full DONE not claimed.
+
+### Active Architectural Decisions — Settlements home V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `listSettlements` kpiBaseQuery (unfiltered) + `getOpenDriverBills` +
+  server `kpi` aggregates. Tours default / payments opt-in / ParityTable tours register retained.
+- **V3 board chrome:** 6 home KPIs via `V3KpiTile` (Total unpaid · This period · Driver pay (period)
+  · Drivers w/ debt · YTD settlements · Open driver bills) with click-through; Net driver pay by
+  week + Deductions this week panels from the same `kpiSettlements` rows (Sunday week buckets);
+  Tours|Payments `V3Segmented`. No second forecast/settlement engine.
+- **Guard piggyback:** `verify-settlement-fe-honesty.mjs` (step 14837) asserts V3KpiTile +
+  `data-settlements-v3-kpis` + week/deductions panel testIds. `SURFACE-BREACH-AUTHORIZED: CC-1`
+  for that guard file. No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards (Escrow/Closed/Open/Company/Deductions/
+  CashAdvances/Close/PreSettlements/Statement) · Fuel board · design-system sweep · Chrome proof.
   Full DONE not claimed.
+
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
