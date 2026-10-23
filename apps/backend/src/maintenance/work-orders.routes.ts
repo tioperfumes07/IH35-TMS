@@ -740,7 +740,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                         FROM accounting.journal_entry_postings p
                        WHERE p.operating_company_id = b.operating_company_id
                          AND p.source_transaction_type = 'bill'
-                         AND p.source_transaction_id = b.id
+                         AND p.source_transaction_id = b.id::text -- 443.268-A: source_transaction_id is TEXT (was "text = uuid" → 500 on the WO list)
                        ORDER BY p.journal_entry_uuid
                        LIMIT 1
                     ) AS journal_entry_id
