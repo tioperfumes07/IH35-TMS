@@ -8,10 +8,10 @@
  * Systems (indices match UI pin order):
  *  0  engine_pm    — PM-A oil/engine  (WO / pm_schedule)
  *  1  cab_dvir     — Cab DVIR         (safety.dvir_submissions)
- *  2  steer_tires  — Steer tires      (WO / work_order_parts position_code)
- *  3  drive_axles  — Drive axles      (WO / work_order_parts)
+ *  2  steer_tires  — Steer tires      (WO / work_order_lines part_location_codes)
+ *  3  drive_axles  — Drive axles      (WO / work_order_lines)
  *  4  trailer_brakes — Trailer brakes (WO)
- *  5  trailer_tires  — Trailer tires  (WO / work_order_parts)
+ *  5  trailer_tires  — Trailer tires  (WO / work_order_lines)
  *  6  reefer         — Reefer unit    (pm_schedule label / WO)
  *  7  annual_dot     — Annual DOT     (maintenance.inspections type=annual_dot)
  */
@@ -105,38 +105,38 @@ export async function registerServiceMapRoutes(app: FastifyInstance) {
 
           /* 2–5 · tires + brakes — latest WO containing a part at those positions */
           steer_tires AS (
-            SELECT wop.work_order_id::text AS source_id,
+            SELECT wol.work_order_uuid::text AS source_id,
                    'work_order' AS source,
-                   wop.part_label AS service_label,
-                   wo.completed_at::text AS last_service_at,
+                   wol.description AS service_label,
+                   wo.work_completed_at::text AS last_service_at,
                    NULL::int AS last_service_odo,
                    NULL::int AS next_due_odo,
                    'ok' AS state
-            FROM maintenance.work_order_parts wop
-            JOIN maintenance.work_orders wo ON wo.id = wop.work_order_id, co, uid
-            WHERE wop.unit_id = uid.unit_id
+            FROM maintenance.work_order_lines wol
+            JOIN maintenance.work_orders wo ON wo.id = wol.work_order_uuid, co, uid
+            WHERE wo.unit_id = uid.unit_id
               AND wo.operating_company_id = co.oc_id
-              AND (wop.position_code ILIKE '%steer%' OR wop.part_label ILIKE '%steer%tire%' OR wop.part_label ILIKE '%front%tire%')
-              AND wo.completed_at IS NOT NULL
-            ORDER BY wo.completed_at DESC NULLS LAST
+              AND (wol.part_location_codes::text ILIKE '%steer%' OR wol.description ILIKE '%steer%tire%' OR wol.description ILIKE '%front%tire%')
+              AND wo.work_completed_at IS NOT NULL
+            ORDER BY wo.work_completed_at DESC NULLS LAST
             LIMIT 1
           ),
 
           drive_axles AS (
-            SELECT wop.work_order_id::text AS source_id,
+            SELECT wol.work_order_uuid::text AS source_id,
                    'work_order' AS source,
-                   wop.part_label AS service_label,
-                   wo.completed_at::text AS last_service_at,
+                   wol.description AS service_label,
+                   wo.work_completed_at::text AS last_service_at,
                    NULL::int AS last_service_odo,
                    NULL::int AS next_due_odo,
                    'ok' AS state
-            FROM maintenance.work_order_parts wop
-            JOIN maintenance.work_orders wo ON wo.id = wop.work_order_id, co, uid
-            WHERE wop.unit_id = uid.unit_id
+            FROM maintenance.work_order_lines wol
+            JOIN maintenance.work_orders wo ON wo.id = wol.work_order_uuid, co, uid
+            WHERE wo.unit_id = uid.unit_id
               AND wo.operating_company_id = co.oc_id
-              AND (wop.position_code ILIKE '%drive%' OR wop.part_label ILIKE '%drive%tire%' OR wop.part_label ILIKE '%axle%')
-              AND wo.completed_at IS NOT NULL
-            ORDER BY wo.completed_at DESC NULLS LAST
+              AND (wol.part_location_codes::text ILIKE '%drive%' OR wol.description ILIKE '%drive%tire%' OR wol.description ILIKE '%axle%')
+              AND wo.work_completed_at IS NOT NULL
+            ORDER BY wo.work_completed_at DESC NULLS LAST
             LIMIT 1
           ),
 
@@ -159,20 +159,20 @@ export async function registerServiceMapRoutes(app: FastifyInstance) {
           ),
 
           trailer_tires AS (
-            SELECT wop.work_order_id::text AS source_id,
+            SELECT wol.work_order_uuid::text AS source_id,
                    'work_order' AS source,
-                   wop.part_label AS service_label,
-                   wo.completed_at::text AS last_service_at,
+                   wol.description AS service_label,
+                   wo.work_completed_at::text AS last_service_at,
                    NULL::int AS last_service_odo,
                    NULL::int AS next_due_odo,
                    'ok' AS state
-            FROM maintenance.work_order_parts wop
-            JOIN maintenance.work_orders wo ON wo.id = wop.work_order_id, co, uid
-            WHERE wop.unit_id = uid.unit_id
+            FROM maintenance.work_order_lines wol
+            JOIN maintenance.work_orders wo ON wo.id = wol.work_order_uuid, co, uid
+            WHERE wo.unit_id = uid.unit_id
               AND wo.operating_company_id = co.oc_id
-              AND (wop.position_code ILIKE '%trailer%' OR wop.part_label ILIKE '%trailer%tire%')
-              AND wo.completed_at IS NOT NULL
-            ORDER BY wo.completed_at DESC NULLS LAST
+              AND (wol.part_location_codes::text ILIKE '%trailer%' OR wol.description ILIKE '%trailer%tire%')
+              AND wo.work_completed_at IS NOT NULL
+            ORDER BY wo.work_completed_at DESC NULLS LAST
             LIMIT 1
           ),
 
