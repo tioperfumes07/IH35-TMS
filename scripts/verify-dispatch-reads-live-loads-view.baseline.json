@@ -109,9 +109,6 @@
     },
     "dispatcher-board/role-views/dispatcher.service.ts": {
       "count": 1
-    },
-    "dispatch/unit-current-driver.ts": {
-      "count": 1
     }
   },
   "measured_at": "2026-10-22T22:00:00Z",
