@@ -7996,3 +7996,33 @@ consumed_at: 2026-10-14T00:50:00Z
 consumed_by: Cursor (DEGH-02 / AUTH-450)
 row_counts: prod — 4 expense documents created (EXP-2026-00068..00071) adopting the 4 live bank_categorization JEs; 2 items created (Office Supplies — Checks @ 6210-00-001, QuickBooks Online @ 6500-00-001); rows_written=4; already_existed=0; single transaction; 10.852s
 proof_query: USMCA bank_categorization expense JEs with matched_expense_id NULL → 0 (Neon br-fancy-credit-akjnd07a, bypass_rls=lucia, 2026-10-14)
+
+## AUTH-453
+issued_at: 2026-10-23T03:20:00Z
+issued_by: Lead 443.258.6 + 443.260.2 GO (B PROD RUN: "GO IN BATCHES OF 25 — NOT ONE 40-MINUTE TRANSACTION … Each batch = ONE transaction: void-engine reversal + card-credit doc for each of its documents, then in the same tx assert per-account net change $0.00 on 5000 and 2510 and TB 0 → COMMIT, else ROLLBACK and stop. Idempotent on <marker>-CARD-DISC"), on 443.258.5 ruling 2 (writer shape B). Recorded by CC-2 so the runner's verify-owner-authorization gate can trace the order
+owner_quotes: "REMEMBER FIND THE ROOTCAUSES AND CREATE PERMANENT SOLUTION AND FIX. ALWAYS FIX ENGINES, NEVER DEFER." (owner 2026-10-22 8:25 PM CT) · "fix" (owner 2026-10-22 9:55 PM CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — EXACTLY the live, un-reversed "Dreamline statement <marker> — Fuel Card Discount" journal entries tagged fuel_card_discount (241 on 10-23, $10,744.65): each voided through reverseJournalEntryNoFlip (void engine, audit row) and re-issued in the same transaction as its document through the expense writer — a card-credit expense (is_credit, Dr 2510 / Cr Fuel Card Discount -> 5000, number <marker>-CARD-DISC, QBO Credit Card Credit) carrying the receipt's vendor and load. Batches of 25, each one transaction refusing (ROLLBACK and stop) unless the net change on 5000 and on 2510 is exactly $0.00 and TB 0. Refuses when accounting.expenses.is_credit is missing. No DELETE. TRANSPORTATION / TRUCKING never referenced.
+action: OWNER_AUTH_ID=AUTH-453 DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-23-cc2-443-258-5-statement-discounts-to-card-credits.mts --apply (after 202616190700 is deployed)
+rehearsal: (1) br-quiet-mountain-akkws8jf (prod fork 02:24Z, 202616190700 applied) single-transaction COMMITTED: 241 voided + 241 card credits $10,744.65, 5000 / 2510 net $0.00, TB 0, 0 left; verify-fuel-cost-posts-exactly-once PASS. (2) br-flat-rain-akjpi4rg BATCHED (the prod shape) COMMITTED: 10 batches (9 x 25 + 16), each 5000 $0.00 / 2510 $0.00 / TB 0; totals 241 docs = $10,744.65, 0 statement JEs left, TB 0 across 8,045 postings; rerun = 0 batches (idempotent); verify-fuel-cost-posts-exactly-once PASS (C $304,121.82 = $304,121.82, E 0, F 0)
+expires_at: 2026-10-24T03:20:00Z
+status: OPEN
+
+## AUTH-455
+issued_at: 2026-10-23T04:20:00Z
+issued_by: Lead 443.260.2 GO ("Docs-only PR: the authorization records … incl. the one-off apply of B's single-column ADDITIVE migration" → "a) apply the migration on prod (additive only; paste \\d of the column)"). Recorded by CC-2
+owner_quotes: "REMEMBER FIND THE ROOTCAUSES AND CREATE PERMANENT SOLUTION AND FIX. ALWAYS FIX ENGINES, NEVER DEFER." (owner 2026-10-22 8:25 PM CT) · "fix" (owner 2026-10-22 9:55 PM CT)
+scope: USMCA production database — EXACTLY migration db/migrations/202616190700_expense_card_credit.sql: ALTER TABLE accounting.expenses ADD COLUMN IF NOT EXISTS is_credit boolean NOT NULL DEFAULT false + its COMMENT. Additive, idempotent, no data change (every existing row is false). Applied by THE migration runner (both ledgers written by insertLedgerRow), from branch cc-2/443-258-5-b-card-credit whose pending non-held set against prod is exactly this one file (the 10 other unapplied files are all in db/migrations/.held-migrations.json and are skipped by the runner).
+action: ALLOW_PROD_MIGRATE=1 DATABASE_DIRECT_URL= DATABASE_URL=<prod owner> node scripts/db-migrate.mjs   (from cc-2/443-258-5-b-card-credit)
+rehearsal: br-quiet-mountain-akkws8jf + br-flat-rain-akjpi4rg (prod forks): migration applied, column present, B batches ran on it (241 docs, 5000 / 2510 $0.00, TB 0)
+expires_at: 2026-10-24T04:20:00Z
+status: OPEN
+
+## AUTH-454
+issued_at: 2026-10-23T04:20:00Z
+issued_by: Lead 443.260.2 GO ("settlement headers: ENGINE fix = first_load_id / last_load_id re-derived from the settlement's own lines (min / max by stop time) … data: the 5 closed settlements (P-0108 first) fork first, metadata only, then prod; paste before/after per settlement"). Recorded by CC-2
+owner_quotes: "REMEMBER FIND THE ROOTCAUSES AND CREATE PERMANENT SOLUTION AND FIX. ALWAYS FIX ENGINES, NEVER DEFER." (owner 2026-10-22 8:25 PM CT) · "fix" (owner 2026-10-22 9:55 PM CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — EXACTLY the closed driver_finance.driver_settlements whose header first_load_id = last_load_id while their live lines name 2+ loads (5 on 10-23: P-0105, P-0107, P-0108, P-0109 + 1): first_load_id / last_load_id (and the load-number columns) re-derived through the one boundary engine from the settlement's own live lines (earliest / latest by stop time), one audit row each. Metadata only — no amount, status, line, GL or posting change.
+action: OWNER_AUTH_ID=AUTH-454 DATABASE_URL=<prod owner> node --import tsx scripts/ops/2026-10-23-cc2-443-260-rederive-settlement-headers.mts --apply
+rehearsal: REHEARSAL_PENDING (fork first)
+expires_at: 2026-10-24T04:20:00Z
+status: OPEN
