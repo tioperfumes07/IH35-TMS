@@ -11,6 +11,7 @@ import { FleetTruck } from "../../pages/maintenance/components/FleetHealthLine";
 import { formatDateUS, formatDateTimeUS } from "../../lib/formatDate";
 import { formatUsdTable, formatUsdCentsTable } from "../../lib/money";
 import { driverProfileTabHref } from "../../pages/drivers/driverProfileTabs";
+import { settlementLabel } from "../../lib/settlementNumber";
 import type { DriverProfileAggregate } from "../../pages/drivers/DriverProfilePage";
 import type { DqfComplianceSummary } from "../../lib/driverDqf";
 
@@ -64,7 +65,7 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2 text-xs font-semibold"><h3>Open pre-settlement</h3><Link to={driverProfileTabHref(driverId, "Settlements")}>View all →</Link></div>
         <div className="space-y-2 p-3 text-xs">
           {pay.isError ? <ListErrorState title="Couldn't load open pre-settlement" status={0} onRetry={() => void pay.refetch()} /> : pay.isPending ? <p>Loading open pre-settlement…</p> : settlement ? <>
-            <EntityLink kind="settlement" id={settlement.id} label={settlement.display_id || settlement.source_document_ref || "Open pre-settlement"} />
+            <EntityLink kind="settlement" id={settlement.id} label={settlementLabel(settlement)} />
             <div className="text-lg font-semibold"><EntityLink kind="settlement" id={settlement.id} label={`${formatUsdTable(settlement.gross_pay)} gross`} /></div>
             <p><EntityLink kind="settlement" id={settlement.id} label={`${formatUsdTable(settlement.deductions_total)} deductions · ${formatUsdTable(settlement.net_pay)} net`} /></p>
             <p>{date(settlement.period_start)} – {date(settlement.period_end)}</p>

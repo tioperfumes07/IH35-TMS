@@ -44,6 +44,8 @@ describe("Driver live overview reuses source documents", () => {
     mount();
     expect(await screen.findByRole("link", { name: "$1,234.56 gross" })).toHaveAttribute("href", expect.stringContaining("settlement-fixture"));
     expect(screen.getByRole("link", { name: "$12.34 deductions · $1,223.22 net" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "PENDING" })).toBeInTheDocument();
+    expect(screen.queryByText("P-fixture")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Load fixture" })).toHaveAttribute("href", "/dispatch/loads/load-fixture");
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
