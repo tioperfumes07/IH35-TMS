@@ -14,17 +14,30 @@
  *   3. Lists any bills whose load has no delivery stop (cannot be stamped) for the Lead.
  *   4. Reports before / after counts.
  *
- * Run: npx tsx scripts/ops/2026-10-22-cc1-443249-backfill-driver-bill-due-dates.ts
- * DRY RUN (no writes): add --dry-run flag.
+ * Run: npx tsx scripts/ops/2026-10-22-cc1-443249-backfill-driver-bill-due-dates.ts <AUTH-id>
+ * DRY RUN (no writes): add --dry-run flag (no AUTH id needed).
  */
 import pg from "pg";
 import dotenv from "dotenv";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const DRY_RUN = process.argv.includes("--dry-run");
+
+// verify-no-unauthorized-production-write: a scripts/ops writer to a financial table must prove the
+// owner's authorization BEFORE it writes. A dry run writes nothing and needs none; a real run takes
+// the AUTH id as its first non-flag argument and fails closed without it.
+if (!DRY_RUN) {
+  const auth = process.argv.slice(2).find((a) => !a.startsWith("--"));
+  if (!auth) {
+    console.error("Refusing to write: pass the owner AUTH id (or --dry-run).");
+    process.exit(1);
+  }
+  execFileSync("node", [path.resolve(process.cwd(), "scripts/verify-owner-authorization.mjs"), auth], { stdio: "inherit" });
+}
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
