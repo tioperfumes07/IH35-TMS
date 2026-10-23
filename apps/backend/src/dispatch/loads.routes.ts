@@ -2129,6 +2129,23 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
       const res = await client.query(
         `
+          -- 443.257-C: set-based last-delivery (replaces per-unit LATERAL: ~N scans → 2)
+          WITH last_delivery_per_unit AS (
+            SELECT DISTINCT ON (l.assigned_unit_id)
+              l.id              AS load_id,
+              l.load_number,
+              l.assigned_unit_id,
+              ls.actual_departure_at AS last_drop_at
+            FROM mdata.loads l
+            JOIN mdata.load_stops ls
+              ON ls.load_id = l.id
+             AND ls.stop_type = 'delivery'
+             AND ls.soft_deleted_at IS NULL
+             AND ls.actual_departure_at IS NOT NULL
+            WHERE l.operating_company_id = $1::uuid
+              AND l.soft_deleted_at IS NULL
+            ORDER BY l.assigned_unit_id, ls.actual_departure_at DESC
+          )
           SELECT
             u.id,
             u.unit_number,
@@ -2194,24 +2211,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- cannot be derived through the active-load alias. The old MAX(actual_departure_at) did exactly that and
           -- made every available unit's last_drop_at null forever. Derive the last completed delivery
           -- independently from the unit's historical loads instead.
-          LEFT JOIN LATERAL (
-            -- REG-038: was SELECT MAX(actual_departure_at) AS last_drop_at (an aggregate with no
-            -- GROUP BY on the delivered_load/delivery_stop columns, so it could only ever return the
-            -- timestamp -- never WHICH load produced it). ORDER BY ... DESC LIMIT 1 returns the single
-            -- most-recent delivery's own row instead, so load_id/load_number ride along for free.
-            SELECT delivered_load.id AS load_id, delivered_load.load_number, delivery_stop.actual_departure_at AS last_drop_at
-              FROM mdata.loads delivered_load
-              JOIN mdata.load_stops delivery_stop
-                ON delivery_stop.load_id = delivered_load.id
-               AND delivery_stop.stop_type = 'delivery'
-               AND delivery_stop.soft_deleted_at IS NULL
-             WHERE delivered_load.assigned_unit_id = u.id
-               AND delivered_load.operating_company_id = $1::uuid
-               AND delivered_load.soft_deleted_at IS NULL
-               AND delivery_stop.actual_departure_at IS NOT NULL
-             ORDER BY delivery_stop.actual_departure_at DESC
-             LIMIT 1
-          ) last_delivery ON true
+          -- 443.257-C: CTE join replaces per-unit LATERAL (see last_delivery_per_unit above)
+          LEFT JOIN last_delivery_per_unit last_delivery ON last_delivery.assigned_unit_id = u.id
           LEFT JOIN telematics.vehicle_latest_position p
             ON p.unit_id = u.id
             AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)

@@ -69,6 +69,12 @@ type BoardRow = {
   /** Issued invoice supplies revenue, independently of open cost collection. */
   is_invoiced: boolean;
   is_resettlement?: boolean;
+  /** 443.257-C: fuel fills from fuel.fuel_transactions (non-voided, load-linked). */
+  fuel_fills_total_cents: string;
+  fuel_fills_count: number;
+  fuel_posted_cents: string;
+  /** fuel_fills_total_cents - fuel_posted_cents (fill amount not yet on an expense) */
+  fuel_unposted_cents: string;
 };
 const fmt = (c: number) => formatUsdCents(c);
 /** Honesty rule (owner order 2026-09-04): Empty Miles / Deadhead Pay render BLANK, never zero, when
@@ -756,7 +762,20 @@ export function LoadCostsBoardPage() {
     { key: "layover", label: "Layover", testId: "col-layover", sortable: true, className: NUM, sortValue: r => Number(r.layover_cents), render: r => fmtDash(Number(r.layover_cents)) },
     { key: "late_fee", label: "Late Fee", testId: "col-late-fee", sortable: true, className: NUM, sortValue: r => Number(r.late_fee_cents), render: r => fmtDash(Number(r.late_fee_cents)) },
     { key: "lumper", label: "Lumper", testId: "col-lumper", sortable: true, className: NUM, sortValue: r => Number(r.lumper_cents), render: r => fmtDash(Number(r.lumper_cents)) },
-    { key: "fuel", label: "Fuel", testId: "col-fuel", sortable: true, className: NUM, sortValue: r => Number(r.fuel_cents), render: r => fmtDash(Number(r.fuel_cents)) },
+    { key: "fuel", label: "Fuel", testId: "col-fuel", sortable: true, className: NUM,
+      sortValue: r => Number(r.fuel_fills_total_cents ?? r.fuel_cents),
+      render: r => {
+        const total = Number(r.fuel_fills_total_cents ?? 0);
+        const unposted = Number(r.fuel_unposted_cents ?? 0);
+        if (total === 0) return fmtDash(Number(r.fuel_cents));
+        return (
+          <span>
+            {fmt(total)}
+            {unposted > 0 && <span className="block text-xs" style={{ color: "#D97706" }}>Not posted {fmt(unposted)}</span>}
+          </span>
+        );
+      }
+    },
     { key: "repairs_maintenance", label: "R&M Exp", testId: "col-repairs-maintenance", sortable: true, className: NUM, sortValue: r => Number(r.repairs_maintenance_cents), render: r => fmtDash(Number(r.repairs_maintenance_cents)) },
     // U3 (owner): "current cost FROM THE LEDGER". The document columns sum expenses / bills / driver bills; this is the
     // ledger's own number for the load. When they disagree the cell says so — a cost on a document that never posted,
