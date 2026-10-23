@@ -64,6 +64,10 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | D046 | Banking | Home | Drift account label | Several alerts show only generic Account rather than the account display name | N | pending: DOM | Resolve full account display name | CC-1 / Cursor |
 | D047 | Factoring | Home | Ready-to-factor customers | All-uppercase customer names displayed | N | pending: DOM | Proper-case names honoring acronym exceptions | CC-1 / Cursor |
 
+| D048 | Customers | Create Customer | Billing address | State and ZIP each measure 38px high and 209.33px wide | I | pending: measured DOM | 32px high; state 64px and ZIP 88px wide | Cursor |
+| D049 | Customers | Directory | Customer display names | Mixed uppercase and proper-case customer labels | N | pending: DOM | Proper-case display honoring acronym exceptions | CC-1 / Cursor |
+| D050 | Inventory | Create part | Unit cost | Money input measures 28px high | I | pending: measured DOM | Single-line input 32px high | Cursor |
+
 ## Counts (observed defects, not application-wide totals)
 
 | Module | V | M | D | I | N | T | B | E | P | Total |
@@ -84,7 +88,9 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | Accounting | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
 | Banking | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 2 |
 | Factoring | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
-| Total | 1 | 3 | 6 | 9 | 12 | 3 | 9 | 1 | 3 | 47 |
+| Customers | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 2 |
+| Inventory | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
+| Total | 1 | 3 | 6 | 11 | 13 | 3 | 9 | 1 | 3 | 50 |
 
 ## Coverage ledger
 
@@ -100,7 +106,8 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 - 443.258-D batch 2 checkpoint (partial depth): Driver Profile Home, Profiles list/default profile and Create Driver identity step inspected. Fleet Home, populated Units table and Create Trailer drawer inspected. Insurance Landing, populated Policies table, create-policy first step and Claims table shell inspected. Create forms closed without submission. Remaining tabs, later wizard steps, record panels and final Claims data remain owed; no complete-module claim.
 - 443.258-D batch 3 checkpoint (partial depth): Legal landing, Contracts table and Send Contract step 1 opened/closed without sending. Cash Flow all five top-level buttons visited; populated Auto and rolling-style Manual content inspected; comparison final rows and drill-through panels remain owed. Accounting landing inspected; submenu and document modals remain owed. No forecast pull, seed-library action, sending or financial action performed.
 - 443.258-D batch 4 checkpoint (landing depth only): Banking Home, Factoring Home populated table and Finance Hub landing inspected. No bank action, matching, resolution, submission or dismiss performed. Their tabs and panels remain owed. No defect observed on Finance Hub landing is not a module-wide pass.
-- Not yet inspected in this pass: Customers, Vendors, Inventory, 425C, Lists, Reports, Docs, Users, Help, Program, System.
+- 443.258-D batch 5 checkpoint (partial depth): Customers populated directory and Create Customer form inspected/closed; Vendors populated directory inspected; Inventory Parts & Stock and Create part drawer inspected/closed, Assignments navigation reached loading shell. Vendor details/create, Inventory assignments final state/purchase history and secondary panels remain owed. No records created.
+- Not yet inspected in this pass: 425C, Lists, Reports, Docs, Users, Help, Program, System.
 - Transient Loading states that resolved were not counted as defects. Empty Fuel Card table explicitly says no cards assigned: not classified as unexplained emptiness.
 - Fuel Relay wallet link currently resolves to the current tab's path. Destination behavior not verified; held as a candidate, not counted.
 - No Book Load, draft save, money action, settings save, upload, or form submission performed.
