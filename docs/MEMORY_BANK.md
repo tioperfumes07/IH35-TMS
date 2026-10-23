@@ -1785,3 +1785,12 @@ Owner: Add/+ under last load / under next fuel row — not a side rail (side + �
 - **Advances:** FE sends `load_number`; BE `resolveLoadIdByNumber` then `createDriverCashAdvanceCore` (bill payment / loan overflow inside core).
 - **Fuel Location:** capped-list helper text removed from `FuelStopLocationPicker`.
 - **Guard:** `scripts/verify-settlement-creator-ux-f442.mjs` RULE 7d–7g + selftest bad count 23.
+
+## Active Architectural Decisions — Truck Line On-time status Combobox (Cursor, 443.256, 2026-10-22)
+
+Owner (verbatim): clicking "On time" on Truck Line must be a dropdown filter. The station popover was a hand-built `<div>` reason list (no search/keyboard).
+
+- **One control:** house `components/Combobox` (`dataTestId=truck-line-reason-combobox`), same component as the top Status filter. Label `Status — {unit} · {load}`.
+- **Options:** `On time — no exception` first (`TRUCK_LINE_ON_TIME_VALUE` → `resolveTruckLineException`); then `listLoadExceptionReasons` unchanged. Non-`other` reasons still confirm on pick (`recordTruckLineException`); `other` still needs note + Save.
+- **Forbidden:** `truck-line-reason-list` mapped clickable `<div>` rows. Guard D6 on `scripts/verify-truck-line-board.mjs` + vitest `TruckLineBoard.statusCombobox.test.tsx`.
+- **D1 re-anchor:** available rows are unit-keyed SQL + `truck_line_available_duplicate_unit` fail-closed (old `.filter(unit_id != null)` retired).

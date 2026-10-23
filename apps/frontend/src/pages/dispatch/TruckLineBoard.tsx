@@ -131,6 +131,9 @@ const TRUCK_LINE_STATUS_FILTERS: ReadonlyArray<{ value: TruckLineStatusFilter; l
   { value: "available", label: "Available" },
 ];
 
+/** ROUND 443.256 — sentinel in the On-time station Combobox; picking it calls resolveTruckLineException. */
+const TRUCK_LINE_ON_TIME_VALUE = "__on_time_no_exception__";
+
 const GRID_TEMPLATE_COLUMNS =
   // Owner, 09-30: "what part of I want the transit line to be more visible". PRE-SETTLEMENT is gone
   // from the TOUR header and DISPATCHED is gone from the LOAD cell, so neither column has to be
@@ -729,7 +732,7 @@ function TruckLineTrack({
   onPickReason: (id: string) => void;
   onNoteChange: (note: string) => void;
   onConfirmException: () => void;
-  onClearException: () => void;
+  onClearException: () => void | Promise<void>;
   /** ROUND 255 — drag truck along the line to change status (in transit → at delivery → delivered). */
   onDragStatus: (row: TruckLineRow, newStatus: string) => void;
 }) {
@@ -825,42 +828,47 @@ function TruckLineTrack({
 
               {isOtherOpen ? (
                 <div
-                  className="absolute z-50 rounded-md border border-[#E5E7EB] bg-white text-xs shadow-lg"
-                  style={{ bottom: 78, left: "50%", transform: "translateX(-50%)", width: "min(260px,64vw)" }}
+                  className="absolute z-50 rounded-sm border border-[#E5E7EB] bg-white text-xs shadow-lg"
+                  style={{ bottom: 78, left: "50%", transform: "translateX(-50%)", width: "min(280px,72vw)" }}
                   data-testid={`truck-line-status-popover-${row.unit_id}`}
                 >
+                  {/* ROUND 443.256 — house <Combobox> (type-to-filter), never a hand-built reason <div> list. */}
                   <div className="flex h-[26px] items-center justify-between bg-[rgb(228,234,241)] px-2 font-semibold text-[#1F2A44]">
-                    <span className="truck-line-v4-cap">{row.unit_number} · {row.load?.load_number} · Exception</span>
-                    <button type="button" onClick={onCloseOther}>✕</button>
+                    <span className="truck-line-v4-cap" data-testid="truck-line-status-popover-label">
+                      Status — {row.unit_number} · {row.load?.load_number}
+                    </span>
+                    <button type="button" onClick={onCloseOther} aria-label="Close status">✕</button>
                   </div>
-                  <div className="max-h-[220px] overflow-y-auto p-1.5" data-testid="truck-line-reason-list">
-                    {reasons.length === 0 ? (
-                      <div className="px-2 py-1.5 text-[#6B7280]">No reasons published yet.</div>
-                    ) : (
-                      reasons.map((r) => (
-                        <div
-                          key={r.id}
-                          onClick={() => onPickReason(r.id)}
-                          data-testid={`truck-line-reason-${r.code}`}
-                          className={`cursor-pointer rounded px-2 py-1.5 ${otherReasonId === r.id ? "bg-[#FEF2F2] font-semibold" : ""}`}
-                        >
-                          {r.name}
-                        </div>
-                      ))
-                    )}
-                    <div
-                      onClick={onClearException}
-                      data-testid="truck-line-reason-clear"
-                      className="mt-1 cursor-pointer border-t border-[#E5E7EB] px-2 py-1.5 font-semibold"
-                      style={{ color: ON_TIME_GREEN }}
-                    >
-                      ✓ No exception — on time
-                    </div>
+                  <div className="p-1.5" data-testid="truck-line-reason-combobox-wrap">
+                    <Combobox
+                      options={[
+                        { value: TRUCK_LINE_ON_TIME_VALUE, label: "On time — no exception" },
+                        ...reasons.map((r) => ({
+                          value: r.id,
+                          label: r.name,
+                          sublabel: r.code,
+                        })),
+                      ]}
+                      value={otherReasonId}
+                      onChange={(v) => {
+                        if (v === null || v === TRUCK_LINE_ON_TIME_VALUE) {
+                          void onClearException();
+                          return;
+                        }
+                        onPickReason(v);
+                      }}
+                      size="sm"
+                      placeholder="Search status…"
+                      ariaLabel={`Status — ${row.unit_number} · ${row.load?.load_number ?? ""}`}
+                      dataTestId="truck-line-reason-combobox"
+                      clearCommittedOnEdit
+                      allowClear={false}
+                    />
                   </div>
-                  {otherReasonId ? (
+                  {otherReasonId && reasons.find((r) => r.id === otherReasonId)?.code === "other" ? (
                     <div className="flex items-center justify-between border-t border-[#E5E7EB] p-1.5">
                       <input
-                        className="h-6 flex-1 rounded border border-[#E5E7EB] px-1.5"
+                        className="h-8 flex-1 rounded-sm border border-[#E5E7EB] px-1.5"
                         placeholder="Note…"
                         value={otherNote}
                         onChange={(e) => onNoteChange(e.target.value)}
@@ -869,7 +877,7 @@ function TruckLineTrack({
                       <button
                         type="button"
                         disabled={otherBusy}
-                        className="ml-1.5 h-6 rounded bg-[#14314F] px-2 text-white disabled:opacity-60"
+                        className="ml-1.5 h-8 rounded-sm bg-[#14314F] px-2 text-white disabled:opacity-60"
                         data-testid="truck-line-other-confirm"
                         onClick={onConfirmException}
                       >

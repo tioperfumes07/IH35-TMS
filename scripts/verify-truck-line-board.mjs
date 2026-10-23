@@ -24,9 +24,14 @@ function analyze(src) {
   const { routes, board, api } = src;
   const errors = [];
 
-  // D1 — THIS IS A UNIT BOARD.
-  if (!/\.filter\(\(r\) => r\.unit_id != null && r\.unit_number != null\)/.test(routes)) {
-    errors.push("D1: truck-line.routes.ts must filter availableRows to unit_id/unit_number != null in the row builder");
+  // D1 — THIS IS A UNIT BOARD. (443.231b+: available rows are unit-keyed in SQL + fail-closed on
+  // duplicate unit_id — the old `.filter((r) => r.unit_id != null…)` was retired when available
+  // moved to a units JOIN that cannot emit a null unit.)
+  if (!/truck_line_available_duplicate_unit/.test(routes)) {
+    errors.push("D1: truck-line.routes.ts must fail closed on duplicate available unit_id (truck_line_available_duplicate_unit)");
+  }
+  if (!/const availableBuilt = payload\.availableRows\.map/.test(routes)) {
+    errors.push("D1: available rows must be built from availableRows (unit JOIN), not a driver-without-unit list");
   }
   if (/no unit assigned/.test(board)) {
     errors.push('D1: TruckLineBoard.tsx must never render the retired "no unit assigned" string — an available row always has a real unit');
@@ -114,6 +119,24 @@ function analyze(src) {
     errors.push("D5: sorting must happen client-side over rows already in hand (a stable sort with an original-index tiebreak), never a second query");
   }
 
+  // D6 — ROUND 443.256: On-time station uses house <Combobox> (type-to-filter), never a hand-built
+  // reason <div> list. "On time — no exception" is first option; write path stays record/resolve.
+  if (!/dataTestId="truck-line-reason-combobox"/.test(board) && !/data-testid="truck-line-reason-combobox"/.test(board)) {
+    errors.push('D6: On-time station must render house Combobox with dataTestId="truck-line-reason-combobox"');
+  }
+  if (!/On time — no exception/.test(board) || !/TRUCK_LINE_ON_TIME_VALUE/.test(board)) {
+    errors.push('D6: Combobox options must start with "On time — no exception" via TRUCK_LINE_ON_TIME_VALUE');
+  }
+  if (/data-testid="truck-line-reason-list"/.test(board)) {
+    errors.push("D6: hand-built truck-line-reason-list must be gone — Combobox is the only reason picker");
+  }
+  if (/truck-line-reason-\$\{r\.code\}/.test(board) || /onClick=\{\(\) => onPickReason\(r\.id\)\}/.test(board)) {
+    errors.push("D6: must not map reasons to clickable <div> rows — that is the hand-built popover the owner rejected");
+  }
+  if (!/from "\.\.\/\.\.\/components\/Combobox"/.test(board) && !/from '\.\.\/\.\.\/components\/Combobox'/.test(board)) {
+    errors.push("D6: TruckLineBoard must import components/Combobox (one picker component, GO-26)");
+  }
+
   return errors;
 }
 
@@ -137,7 +160,8 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["D1 backend filter removed", withField(base, "routes", (s) => s.replace(".filter((r) => r.unit_id != null && r.unit_number != null)\n      ", ""))],
+    ["D1 duplicate-unit fail-closed removed", withField(base, "routes", (s) => s.replace(/truck_line_available_duplicate_unit/g, "truck_line_avail_dup_GONE"))],
+    ["D1 availableBuilt map removed", withField(base, "routes", (s) => s.replace("const availableBuilt = payload.availableRows.map", "const availableBuilt = [].map"))],
     ["D1 retired string reintroduced", withField(base, "board", (s) => s.replace("available truck", "no unit assigned"))],
     ["D2a formatStaleAge threshold removed", withField(base, "board", (s) => s.replace("staleMinutes <= 60", "false"))],
     ["D2a formatStaleAge stops using fmtDuration", withField(base, "board", (s) => s.replace("fmtDuration(staleMinutes * 60_000)", "String(staleMinutes)"))],
@@ -155,6 +179,9 @@ if (process.argv.includes("--selftest")) {
     ["D5 a sortKey column dropped", withField(base, "board", (s) => s.replace('sortKey="del"', 'sortKey="gone"'))],
     ["D5 three-state cycle broken (no default restore)", withField(base, "board", (s) => s.replace('if (prev.dir === "asc") return { key, dir: "desc" };\n      return null;', 'if (prev.dir === "asc") return { key, dir: "desc" };\n      return { key, dir: "asc" };'))],
     ["D5 sort triggers a refetch", withField(base, "board", (s) => s.replace("const cycleSort = (key: TruckLineSortKey) => {", "const cycleSort = (key: TruckLineSortKey) => {\n    void query.refetch();"))],
+    ["D6 Combobox testid removed", withField(base, "board", (s) => s.replace(/dataTestId="truck-line-reason-combobox"/g, 'dataTestId="truck-line-reason-GONE"'))],
+    ["D6 On time option removed", withField(base, "board", (s) => s.replace("On time — no exception", "Clear exception"))],
+    ["D6 hand-built reason list reintroduced", withField(base, "board", (s) => s.replace('data-testid="truck-line-reason-combobox-wrap"', 'data-testid="truck-line-reason-list"'))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {
@@ -172,4 +199,4 @@ if (failures.length) {
   failures.forEach((f) => console.error(`- ${f}`));
   process.exit(1);
 }
-console.log("PASS verify-truck-line-board — D1 unit-only rows, D2 stale age+location honest, D3 state on every position label, D4 both appointment lines, D5 sortable headers with aria-sort + three-state cycle");
+console.log("PASS verify-truck-line-board — D1–D5 prior + D6 On-time Combobox (443.256)");
