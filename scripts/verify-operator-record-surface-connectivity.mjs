@@ -19,6 +19,7 @@ const FILES = {
   inventoryPurchases: "apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx",
   legalTabs: "apps/frontend/src/pages/legal/LegalModuleTabs.tsx",
   legalLanding: "apps/frontend/src/pages/legal/LegalLandingPage.tsx",
+  legalBoard: "apps/frontend/src/pages/legal/components/LegalHomeBoard.tsx",
   legalTemplates: "apps/frontend/src/pages/legal/templates/LegalTemplatesListPage.tsx",
   legalTemplateDetail: "apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx",
   legalPolicies: "apps/frontend/src/pages/legal/LegalPoliciesPage.tsx",
@@ -103,6 +104,24 @@ export function verify(source) {
 
   for (const [id, route] of [["contracts", "/legal/contracts"], ["templates", "/legal/templates"], ["policies", "/legal/policies"], ["attorney-review", "/legal/attorney-review"], ["reports", "/legal/reports"]]) need("legalTabs", `{ id: "${id}", label:`, `legal tab ${id} must remain visible`), need("legalTabs", `to: "${route}"`, `legal tab ${id} must retain its destination`);
   for (const [key, token] of [["legalLanding", '<LegalModuleTabs'], ["legalTemplates", '<LegalModuleTabs'], ["legalTemplateDetail", 'data-testid="legal-template-detail-page"'], ["legalPolicies", '<LegalModuleTabs'], ["legalAttorney", '<LegalModuleTabs'], ["legalReports", '<LegalModuleTabs']]) need(key, token, `${key} must remain connected to legal navigation`);
+  // ROUND 443.267 — Legal Landing mounts LegalHomeBoard (board-faithful Home).
+  need("legalLanding", "LegalHomeBoard", "legal landing must mount LegalHomeBoard");
+  for (const token of [
+    "LegalHomeBoard",
+    'data-testid="legal-home-board"',
+    'data-testid="legal-home-kpi-strip"',
+    'testId="legal-home-contract-pipeline"',
+    'testId="legal-home-matters-deadlines"',
+    'testId="legal-home-quick-actions"',
+    "Active templates",
+    "Open matters",
+    "Contract pipeline",
+    "Matters & deadlines",
+    "Quick actions",
+    "legalMattersApi",
+    "legalContractsApi",
+    "legalTemplatesApi",
+  ]) need("legalBoard", token, `legal home board must retain ${token}`);
   for (const route of ["/legal", "/legal/contracts", "/legal/templates", "/legal/templates/:id", "/legal/policies", "/legal/attorney-review", "/legal/reports"]) need("routes", `path="${route}"`, `legal route ${route} must remain mounted`);
 
   need("maintDamage", "MaintenanceDamageRegisterTab", "maintenance damage intake must remain implemented");
