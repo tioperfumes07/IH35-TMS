@@ -33,10 +33,10 @@ describe("REG-010/011 canonical settlement identity and one datum per column", (
     const row = { settlement_id: "s1", leg_count: 2, legs: [{load_id:"l1", load_number:"13508", trip_type:"NB"},{load_id:"l2",load_number:"13509",trip_type:"SB"}] } as TourListRow;
     render(<MemoryRouter><ParityTable rows={[row]} rowKey={r=>r.settlement_id} columns={tourLoadColumns("proof", [row])} /></MemoryRouter>);
     // Two legs -> two generated columns, each with its own header and its own cell.
-    expect(screen.getByRole("columnheader", {name:/^Leg 1\b/i})).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", {name:/^Leg 2\b/i})).toBeInTheDocument();
-    expect(screen.queryByRole("columnheader", {name:/^Leg 3\b/i})).not.toBeInTheDocument();
-    const leg1Cell = screen.getByRole("columnheader", {name:/^Leg 1\b/i}).closest("table")!;
+    expect(screen.getByRole("columnheader", {name:/^Load #(?!\s*\d)/i})).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", {name:/^Load # 2\b/i})).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", {name:/^Load # 3\b/i})).not.toBeInTheDocument();
+    const leg1Cell = screen.getByRole("columnheader", {name:/^Load #(?!\s*\d)/i}).closest("table")!;
     expect(within(leg1Cell).getByText(/13508/)).toBeInTheDocument();
     expect(within(leg1Cell).getByText(/13509/)).toBeInTheDocument();
     // Load count stays its own, separately-sortable column.
@@ -52,7 +52,7 @@ describe("REG-010/011 canonical settlement identity and one datum per column", (
       {load_id:"l4", load_number:"13511", trip_type:"SB"},
     ] } as TourListRow;
     render(<MemoryRouter><ParityTable rows={[oneLeg, threeLegs]} rowKey={r=>r.settlement_id} columns={tourLoadColumns("proof2", [oneLeg, threeLegs])} /></MemoryRouter>);
-    expect(screen.getByRole("columnheader", {name:/^Leg 3\b/i})).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", {name:/^Load # 3\b/i})).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", {name:/^Leg 4\b/i})).not.toBeInTheDocument();
   });
 });

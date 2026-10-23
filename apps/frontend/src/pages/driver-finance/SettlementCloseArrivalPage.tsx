@@ -1,4 +1,7 @@
+import { TourMilesPanel } from "../../components/dispatch/TourMilesPanel";
+import { getTourReadout } from "../../api/tourReadout";
 import { entityLabel } from "../../lib/entity-label";
+import { useSearchParams } from "react-router-dom";
 import { settlementLabel } from "../../lib/settlementNumber";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -116,7 +119,9 @@ export function SettlementCloseArrivalPage() {
   const currentUserId = String(user?.uuid ?? "");
   const canClose = CLOSE_ROLES.has(role);
 
-  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  // LEAD 443.269-A 3b: "Close tour → Settlement" on a pre-settlement opens this page for THAT driver (?driver_id=).
+  const [closeSearchParams] = useSearchParams();
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(() => closeSearchParams.get("driver_id"));
   const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
   const [paymentMethodGlAccountId, setPaymentMethodGlAccountId] = useState<string | null>(null);
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
@@ -479,6 +484,10 @@ export function SettlementCloseArrivalPage() {
                 </div>
               </div>
 
+              {/* LEAD 443.269-A item 5 (owner: miles everywhere) — the tour's miles from OUR database (lane history) and
+                  Google shortest / practical, real driven, and which one the bill uses: the same panel as Pre-Settlement. */}
+              <SettlementCloseMiles settlementId={settlement.id} operatingCompanyId={companyId} />
+
               {/* Gross / earnings */}
               <div className="border-t border-gray-100 pt-2">
                 <div className="flex items-center justify-between text-xs">
@@ -663,6 +672,33 @@ export function SettlementCloseArrivalPage() {
           setDriverCreateOpen(false);
         }}
       />
+    </div>
+  );
+}
+
+/** 443.269-A item 5 — the settlement's tour legs (one readout) → the shared miles panel. Reads only. */
+function SettlementCloseMiles({ settlementId, operatingCompanyId }: { settlementId: string; operatingCompanyId: string }) {
+  const readout = useQuery({
+    queryKey: ["tour-readout", "settlement", operatingCompanyId, settlementId],
+    queryFn: () => getTourReadout(settlementId, operatingCompanyId),
+    enabled: Boolean(settlementId && operatingCompanyId),
+  });
+  if (readout.isError) {
+    return (
+      <div className="border-t border-gray-100 pt-2 text-xs text-red-700" data-testid="settlement-close-miles-error">
+        Could not load this settlement&apos;s miles.{" "}
+        <button type="button" className="underline" onClick={() => void readout.refetch()}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+  const legs = readout.data?.legs ?? [];
+  if (!legs.length) return null;
+  return (
+    <div className="border-t border-gray-100 pt-2" data-testid="settlement-close-miles">
+      <div className="mb-1 text-xs font-semibold text-gray-900">Miles — our database · Google · real driven</div>
+      <TourMilesPanel legs={legs} operatingCompanyId={operatingCompanyId} />
     </div>
   );
 }

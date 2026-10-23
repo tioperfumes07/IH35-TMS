@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["drivers"],"cols":["driver","connectivity"],"leaves":["home"],"task":"P40-DRIVERS-HUB-TILES-DRIVER-LINK","vertical":"class-sweep"} */
 /**
  * Guard for P40 (WIRING-PLAN-50-TASKS-LOCKED.md) — Drivers page "hub tiles" wired to canonical
  * driver_id paths.
@@ -94,7 +95,11 @@ export function assertGuard({ dispatchApi, driversPage }) {
   if (!/samsaraHealthQuery\.isError[\s\S]*samsaraHealthQuery\.refetch\(\)/.test(page)) {
     errs.push(`${DRIVERS_PAGE}: failed Samsara health GET must expose exact recovery`);
   }
-  if (!/dispatchLoadsQuery\.isError \? null : Math\.max/.test(page) || !/availableCount == null \? "—"/.test(page)) {
+  // LEAD 443.269-A item 6: availability is now counted by driver id (onLoadDriverIds), which is null when the dispatch
+  // feed failed (or has not loaded) — same rule, no fabricated count: either form must keep the null-on-error path.
+  const legacyNull = /dispatchLoadsQuery\.isError \? null : Math\.max/.test(page);
+  const byIdNull = /if \(!dispatchLoadsQuery\.data \|\| dispatchLoadsQuery\.isError\) return null;/.test(page) && /onLoadDriverIds == null \? null :/.test(page);
+  if (!(legacyNull || byIdNull) || !/availableCount == null \? "—"/.test(page)) {
     errs.push(`${DRIVERS_PAGE}: failed dispatch feed must not publish a fabricated availability count`);
   }
 

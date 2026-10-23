@@ -241,7 +241,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             rowKey={r => r.settlement_id}
             loading={activeQ.isLoading}
             emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
-            storageKey={`settlements-module-tours-${state}`}
+            storageKey={`settlements-module-tours-${state}-v3`}
             exportFilename={`settlements-tours-${state}`}
             tableTestId={`settlements-tours-table-${state}`}
             enableColumnReorder
