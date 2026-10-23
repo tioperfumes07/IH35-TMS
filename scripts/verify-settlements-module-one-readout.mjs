@@ -116,6 +116,22 @@ function analyze(reg, page) {
   if (!/label:\s*"Practical mi"/.test(reg) || !/label:\s*"Real mi"/.test(reg))
     errors.push('SettlementsToursRegister mile columns must use board labels "Practical mi" / "Real mi"');
 
+  // ROUND 443.274-C — Settlements-Closed board (No number · Driver net bold · Company settlement link · footnote).
+  if (!/function SettlementCell\b/.test(reg) || !/setl-tour-no-number/.test(reg))
+    errors.push("SettlementsToursRegister must render SettlementCell with setl-tour-no-number for closed No number rows");
+  if (!/function CompanySettlementCell\b/.test(reg) || !/kind=["']company_settlement["']/.test(reg))
+    errors.push("SettlementsToursRegister must link Company settlement via EntityLink kind=company_settlement");
+  if (!/setl-tour-company-not-opened/.test(reg) || !/not opened/.test(reg))
+    errors.push('Closed Company settlement must keep "not opened" (setl-tour-company-not-opened) when no company settlement');
+  if (!/label:\s*"Driver net"/.test(reg) || !/font-bold/.test(reg))
+    errors.push("Closed Driver net column must be bold (font-bold)");
+  if (!/settlements-closed-board-footnote/.test(reg))
+    errors.push("SettlementsToursRegister closed view must render settlements-closed-board-footnote");
+  if (!/Settlement number and company settlement number both open their statements/.test(reg))
+    errors.push("Closed footnote must state both numbers open their statements");
+  if (!/company_settlement_id/.test(reg))
+    errors.push("SettlementsToursRegister must read company_settlement_id for the Company settlement link");
+
   return errors;
 }
 
@@ -155,6 +171,10 @@ if (process.argv.includes("--selftest")) {
     ["restore Settlement/Tour label", [reg.replace(/label:\s*"Settlement"/, 'label: "Settlement/Tour"'), page]],
     ["drop open footnote", [reg.replace(/settlements-open-board-footnote/g, "settlements-open-legacy"), page]],
     ["drop Practical mi label", [reg.replace(/label:\s*"Practical mi"/g, 'label: "Practical miles"'), page]],
+    ["drop SettlementCell / No number", [reg.replace(/function SettlementCell\b/g, "function SettlementCellGone").replace(/setl-tour-no-number/g, "setl-tour-no-num-gone"), page]],
+    ["drop CompanySettlementCell link", [reg.replace(/kind=["']company_settlement["']/g, 'kind="settlement"'), page]],
+    ["drop closed footnote", [reg.replace(/settlements-closed-board-footnote/g, "settlements-closed-legacy"), page]],
+    ["drop Driver net bold", [reg.replace(/font-bold/g, "font-normal"), page]],
   ];
   let caught = 0;
   for (const [label, [r, p]] of mutations) {

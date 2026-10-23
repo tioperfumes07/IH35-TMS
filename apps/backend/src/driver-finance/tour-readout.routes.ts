@@ -457,7 +457,10 @@ export type TourListRow = {
   origin_load_number: string | null; origin_pickup_date: string | null; origin_delivery_date: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number; miles_real: number | null; ready_ok: number; ready_total: number; can_close: boolean; close_blockers: string[];
-  driver_net_cents: number | null; company_settlement_display_id: string | null;
+  driver_net_cents: number | null;
+  /** ROUND 443.274-C Closed board — Company settlement column links the statement when opened. */
+  company_settlement_id: string | null;
+  company_settlement_display_id: string | null;
 };
 
 /**
@@ -534,6 +537,7 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
       miles_practical: r.totals?.miles_practical ?? 0, miles_real: r.totals?.miles_real ?? null,
       ready_ok: r.ready.filter((x) => x.ok).length, ready_total: r.ready.length, can_close: r.can_close, close_blockers: r.close_blockers,
       driver_net_cents: r.driver_settlement ? r.driver_settlement.net_cents : null,
+      company_settlement_id: r.company_settlement?.id ?? null,
       company_settlement_display_id: r.company_settlement?.display_id ?? null,
     });
   }
