@@ -48,6 +48,9 @@ export async function registerSettlementDocumentLoadFactsRoutes(app: FastifyInst
         results.push(await withCompanyScope(user.uuid, b.data.operating_company_id, (client) =>
           applySettlementDocumentToLoad(client as never, { operatingCompanyId: b.data.operating_company_id, actorUserId: user.uuid, doc, geocode: b.data.geocode })));
       } catch (err) {
+        // Each document runs in its own transaction (withCompanyScope), so one refusal never poisons the others; it is
+        // logged and returned per load, never swallowed (verify-no-swallowed-db-error-in-transaction, 443.260-B).
+        req.log.error({ err, load_number: doc.load_number }, "settlement-document apply failed for one load");
         failed.push({ load_number: doc.load_number, error: String((err as { message?: unknown })?.message ?? err).slice(0, 200) });
       }
     }

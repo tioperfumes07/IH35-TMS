@@ -8,6 +8,17 @@ function sqlAlias(alias: string): string {
   return alias;
 }
 
+/** LEAD 443.260-B: a row carries no void stamp (tables with a void timestamp but no document status vocabulary, or a reader
+ *  that deliberately checks only the stamp). No alias = the bare column (single-table statements). */
+export function notVoided(alias?: string): string {
+  return alias ? `${sqlAlias(alias)}.voided_at IS NULL` : "voided_at IS NULL";
+}
+
+/** LEAD 443.260-B: the document's status is not 'cancelled' (exact; liveSettlement is the full liveness test). */
+export function statusNotCancelled(alias?: string): string {
+  return alias ? `${sqlAlias(alias)}.status <> 'cancelled'` : "status <> 'cancelled'";
+}
+
 export function liveSettlement(alias: string): string {
   const a = sqlAlias(alias);
   return `(${a}.status NOT IN ('cancelled', 'void', 'voided') AND ${a}.voided_at IS NULL AND ${a}.reversed_at IS NULL)`;

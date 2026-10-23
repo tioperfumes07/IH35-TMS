@@ -14,6 +14,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { openWorkOrderPredicateSql } from "./in-shop-condition.js";
+import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
 import {
   unitOpenVdaDriverLateralSql,
   unitLastDeliveredDriverLateralSql,
@@ -252,7 +253,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             WHERE l.assigned_unit_id = u.id
               AND l.operating_company_id = $1::uuid
               AND l.soft_deleted_at IS NULL
-              AND l.status::text NOT IN ('delivered','delivered_pending_docs','completed_docs_received','invoiced','paid','closed','cancelled','void')
+              AND ${canonicalDispatchWorkStatusClause("l")}
             ORDER BY l.updated_at DESC NULLS LAST
             LIMIT 1
           ) cl ON true

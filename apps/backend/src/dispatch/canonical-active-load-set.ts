@@ -367,6 +367,14 @@ export function canonicalNotCancelledLoadClause(alias = "l"): string {
 }
 
 /**
+ * BOOKED AND NOT CANCELLED — a load that really exists as booked work: not cancelled and not an unfinished draft (a draft
+ * never occupies a driver's trip; 443.243). Not an active-load set — a settled load passes.
+ */
+export function canonicalBookedNotCancelledLoadClause(alias = "l"): string {
+  return `${alias}.status::text NOT IN ('cancelled', 'draft')`;
+}
+
+/**
  * HAPPENED AND NOT VOIDED — every load except a cancelled or a voided one, whatever stage it reached (settled included).
  * The miles engines (443.55) learn from a unit's previous real load; a voided load's status is 'voided' and nothing ties
  * that status to voided_at at the table, so both are excluded by status here. 'cancelled' and 'voided' are the only two

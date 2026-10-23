@@ -15,6 +15,8 @@
  * REVERSE: NOT-A-DOCUMENT — enrichment from the signed document; a stop is corrected through the stop editor.
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { stampStopsFromTracking } from "../driver-finance/settlement-creator-deliver.js";
+import { DELIVERED_OR_LATER_STATUSES } from "./canonical-active-load-set.js";
 import { setMilesChoice, type MilesField } from "./mileage/miles-recommendations.service.js";
 import { geocodeStopsWithClient, looksLikeStreet } from "../telematics/stops-geocode-backfill.service.js";
 
@@ -50,6 +52,8 @@ export type ApplyDocumentResult = {
   /** 443.248: printed stops added to the load / stops whose address of record was (re)written. */
   stops_added?: number;
   records_set?: number;
+  /** stops stamped through the one stamping engine because the load is already delivered (or later). */
+  stops_stamped?: number;
   geocode: { stops_geocoded: number; locations_linked: number; geofences_created: number; street_from_place: number; failures: number } | null;
 };
 
@@ -175,8 +179,8 @@ export async function applySettlementDocumentToLoad(
 ): Promise<ApplyDocumentResult> {
   const { doc } = args;
   const out: ApplyDocumentResult = { load_number: doc.load_number, load_id: null, stops_filled: 0, legs_set: 0, miles_set: [], listed: [], geocode: null };
-  const load = (await client.query<{ id: string; miles_practical: string | null; miles_shortest: string | null; miles_deadhead: string | null; choice: Record<string, { source?: string; document_value?: unknown }> | null }>(
-    `SELECT id::text, miles_practical::text, miles_shortest::text, miles_deadhead::text, miles_choice AS choice
+  const load = (await client.query<{ id: string; status: string; miles_practical: string | null; miles_shortest: string | null; miles_deadhead: string | null; choice: Record<string, { source?: string; document_value?: unknown }> | null }>(
+    `SELECT id::text, status::text AS status, miles_practical::text, miles_shortest::text, miles_deadhead::text, miles_choice AS choice
        FROM mdata.loads WHERE operating_company_id = $1::uuid AND load_number = $2 AND voided_at IS NULL AND soft_deleted_at IS NULL`,
     [args.operatingCompanyId, doc.load_number])).rows;
   if (load.length !== 1) {
@@ -239,6 +243,19 @@ export async function applySettlementDocumentToLoad(
         before: { facility_name: s.facility_name, postal_code: s.postal_code, city: s.city, state: s.state, leg_miles: num(s.leg_miles), document_address: s.document_address ?? null },
         applied: { ...patch, document_address: record },
       }, "info", "443.241");
+    }
+    // verify-delivered-load-stops-terminal RULE 2 (red after 443.248 added the Love's Vinton relay to 13541 / 13576 as 'pending'):
+    // a load that is already delivered (or later) cannot keep a stop that never happened. The signed settlement attests every
+    // printed stop, so the stops go through the ONE stamping engine (GPS stop event first, the printed date otherwise), which
+    // settles them to 'departed'. Stamped stops are never overwritten.
+    if ((DELIVERED_OR_LATER_STATUSES as readonly string[]).includes(l.status)) {
+      const stopDates: Record<string, string> = {};
+      for (let i = 0; i < stops.length; i++) {
+        const day = docStops[aligned[i]!]?.date;
+        if (day) stopDates[stops[i]!.id] = day;
+      }
+      const stamped = await stampStopsFromTracking(client, l.id, args.operatingCompanyId, { stopDates });
+      out.stops_stamped = stamped.filter((x) => x.precision !== "already_stamped" && x.arrival_at != null).length;
     }
   }
 

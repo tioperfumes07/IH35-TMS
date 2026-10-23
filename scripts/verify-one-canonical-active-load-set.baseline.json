@@ -26,9 +26,6 @@
     "dispatch/loads.routes.ts": {
       "count": 2
     },
-    "dispatch/presettlement-link.service.ts": {
-      "count": 6
-    },
     "dispatch/truck-line/station.ts": {
       "count": 1
     },

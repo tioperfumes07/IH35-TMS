@@ -1,4 +1,4 @@
-import { liveDriverBill, liveSettlement } from "./live-document-predicates.sql.js";
+import { liveDriverBill, liveExpense, liveSettlement, notVoided } from "./live-document-predicates.sql.js";
 import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
@@ -103,7 +103,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                   COALESCE(SUM(i.total_cents - i.tax_cents), 0)::bigint AS invoice_cents
              FROM accounting.invoices i
             WHERE i.operating_company_id = $1::uuid
-              AND i.voided_at IS NULL AND i.source_load_id IS NOT NULL
+              AND ${notVoided("i")} AND i.source_load_id IS NOT NULL
               AND i.status NOT IN ('draft','proforma','void','voided')
             GROUP BY i.source_load_id
          ),
@@ -131,7 +131,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM driver_finance.driver_bills db
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
-              AND db.status NOT IN ('void','voided') AND db.voided_at IS NULL
+              AND ${liveDriverBill("db")}
             GROUP BY db.load_id
          ),
          -- 443.257-C: fuel fills from fuel.fuel_transactions (all fills, incl. unposted)
@@ -141,7 +141,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                   COUNT(*)::int AS fuel_fills_count
              FROM fuel.fuel_transactions ft
             WHERE ft.operating_company_id = $1::uuid
-              AND ft.voided_at IS NULL AND ft.load_id IS NOT NULL
+              AND ${notVoided("ft")} AND ft.load_id IS NOT NULL
             GROUP BY ft.load_id
          ),
          fuel_posted_by_txid AS (
@@ -150,7 +150,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
              FROM accounting.expenses e
             WHERE e.operating_company_id = $1::uuid
               AND e.source_fuel_transaction_id IS NOT NULL AND e.load_id IS NOT NULL
-              AND e.status NOT IN ('void','voided') AND e.voided_at IS NULL
+              AND ${liveExpense("e")}
             GROUP BY e.load_id
          ),
          expense_costs AS (
@@ -342,7 +342,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 -- LEAD 443.220: the load's driver bill exists but waits for its SHORT miles ($0 until entered) — the board flags it.
                 EXISTS (SELECT 1 FROM driver_finance.driver_bills awb
                          WHERE awb.load_id = l.id AND awb.operating_company_id = l.operating_company_id
-                           AND awb.status = 'awaiting_short_miles' AND awb.voided_at IS NULL) AS driver_bill_awaiting_short_miles,
+                           AND awb.status = 'awaiting_short_miles' AND ${notVoided("awb")}) AS driver_bill_awaiting_short_miles,
                 dpd.rate_loaded_cents::text AS rate_loaded_cents,
                 dpd.empty_miles::text AS empty_miles,
                 dpd.rate_empty_cents::text AS rate_empty_cents,

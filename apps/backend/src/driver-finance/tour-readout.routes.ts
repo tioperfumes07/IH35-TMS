@@ -1,3 +1,4 @@
+import { liveSettlement } from "../accounting/live-document-predicates.sql.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { z } from "zod";
@@ -471,8 +472,8 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
   // 443.218 F3: real COUNT(*) for the badge — rows.length was the capped page, not the full set.
   const totalRes = await client.query<{ total: string }>(
     `SELECT COUNT(*)::text AS total FROM driver_finance.driver_settlements s
-      WHERE s.operating_company_id = $1::uuid AND s.voided_at IS NULL
-        AND s.reversed_at IS NULL AND s.status <> 'cancelled' AND s.is_sample_data IS NOT TRUE
+      WHERE s.operating_company_id = $1::uuid AND ${liveSettlement("s")}
+        AND s.is_sample_data IS NOT TRUE
         AND (s.settlement_model = 'load_bookended' OR s.first_load_id IS NOT NULL)
         AND ${stateFilter}`,
     [companyId]

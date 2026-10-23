@@ -66,6 +66,12 @@ function listTsFiles(dir) {
  * Returns a list of violation reasons for one file's source text, or [] if clean.
  * Pure w.r.t. the filesystem read — testable directly against a string.
  */
+/** Named status lists that are NOT active-set definitions (Lead 443.260-B ruling). Name → reason. */
+export const NOT_AN_ACTIVE_SET = {
+  CANCEL_RESTORE_TARGETS: "restore targets, not an active-set definition (load-state-machine.ts)",
+  LOAD_STATUSES_WITHOUT_DRIVER_BILL: "exits / voids / drafts that never carry a driver bill — an exclusion list, not an active-set definition (document-status-vocabulary.ts)",
+};
+
 export function findViolations(relPath, src) {
   if (relPath === CANONICAL_FILE) return [];
   const violations = [];
@@ -148,6 +154,9 @@ export function findViolations(relPath, src) {
   const arrayRe = /=\s*\[\s*((?:"[a-z_]+"|'[a-z_]+'|\s|,|\/\/[^\n]*\n)+)\]/g;
   let m;
   while ((m = arrayRe.exec(src))) {
+    // Lead ruling 443.260-B: a NAMED list that is not an active-set definition is exempt by its exact name (reason below).
+    const declared = (src.slice(Math.max(0, m.index - 160), m.index).match(/(?:const|let)\s+([A-Z_][A-Z0-9_]*)\s*(?::[^=\n]*)?$/) || [])[1];
+    if (declared && NOT_AN_ACTIVE_SET[declared]) continue;
     const literals = (m[1].match(/["']([a-z_]+)["']/g) || []).map((s) => s.slice(1, -1));
     const statusLiterals = literals.filter((l) => LOAD_STATUS_TOKENS.includes(l));
     if (statusLiterals.length >= 3 && !src.includes("assertCanonicalSubset")) {
@@ -277,6 +286,10 @@ function selftest() {
   checks.push(["dirty file (inline status gate on mdata.loads) -> RED, at least 1 violation", findViolations("accounting/dirty-inline.ts", dirtyInlineSrc).length >= 1]);
 
   checks.push(["canonical module itself is exempt", findViolations(CANONICAL_FILE, dirtyInlineSrc).length === 0]);
+  // 443.260-B: the named restore list is exempt; the SAME literals under any other name still fail.
+  const restoreSrc = `export const CANCEL_RESTORE_TARGETS: readonly string[] = ["draft", "booked", "dispatched", "in_transit", "delivered"];`;
+  checks.push(["the named restore list (CANCEL_RESTORE_TARGETS) is exempt", findViolations("dispatch/x.ts", restoreSrc).length === 0]);
+  checks.push(["a real inline active set under another name still FAILS", findViolations("dispatch/x.ts", restoreSrc.replace("CANCEL_RESTORE_TARGETS", "MY_ACTIVE_STATUSES")).length >= 1]);
 
   const statusOnlySrc = `
     import { canonicalActiveLoadStatusClause } from "./canonical-active-load-set.js";

@@ -39,6 +39,7 @@
  * split-brain defect this codebase has already paid for more than once.
  */
 
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 import { restampDriverBillUnitAndTrailer } from "./driver-bill-unit-trailer.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { driverBillNumberFromLoadNumber } from "./driver-bill-number.js";
@@ -209,7 +210,7 @@ export async function createHistoricalDriverBill(
               deadhead_pay_cents = $9,
               notes = $10,
               status = 'open'
-        WHERE id = $1::uuid AND status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL}) AND voided_at IS NULL AND settled_in_settlement_id IS NULL`,
+        WHERE id = $1::uuid AND status IN (${EDITABLE_DRIVER_BILL_STATUS_SQL}) AND ${notVoided()} AND settled_in_settlement_id IS NULL`,
       [
         prior.id,
         input.gross_amount_cents,

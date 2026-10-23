@@ -46,6 +46,10 @@ export function staticFailures(s) {
     out.push(`RULE 1 ${F.engine}: the signed settlement's printed address is no longer kept as the stop's address of record`);
   if (!/out\.stops_added = await insertMissingDocumentStops\(/.test(s.engine))
     out.push(`RULE 1 ${F.engine}: a printed stop the load lacks (relay) is no longer added`);
+  // verify-delivered-load-stops-terminal RULE 2 (red after 443.248): a delivered load's document stops go through the one
+  // stamping engine, so an added relay stop is never left 'pending'.
+  if (!/includes\(l\.status\)\) \{[\s\S]{0,400}await stampStopsFromTracking\(client, l\.id, args\.operatingCompanyId, \{ stopDates \}\)/.test(s.engine))
+    out.push(`RULE 5 ${F.engine}: a delivered load's document stops are not stamped through stampStopsFromTracking — an added stop stays 'pending'`);
   if (!/const zipStamped = [^\n]*"manual_seed"/.test(s.geocode))
     out.push(`RULE 3 ${F.geocode}: a 'manual_seed' city-only stop is never marked as tried — it stays un-fenced and un-listed`);
   return out;
@@ -87,6 +91,7 @@ if (isMain) {
       ["RULE 3 manual_seed not treated as a city center", staticFailures(plant("geocode", ', "manual_seed"]', "]")).some((x) => x.startsWith("RULE 3"))],
       ["RULE 1 address of record dropped", staticFailures(plant("engine", "document_address = $8::jsonb,", "")).some((x) => x.startsWith("RULE 1"))],
       ["RULE 1 relay stop no longer added", staticFailures(plant("engine", "out.stops_added = await insertMissingDocumentStops(", "void (")).some((x) => x.startsWith("RULE 1"))],
+      ["RULE 5 delivered-load stops not stamped", staticFailures(plant("engine", "await stampStopsFromTracking(client, l.id, args.operatingCompanyId, { stopDates })", "void stopDates")).some((x) => x.startsWith("RULE 5"))],
       ["RULE 4 route not registered", staticFailures(plant("index", "await registerSettlementDocumentLoadFactsRoutes(app);", "")).some((x) => x.startsWith("RULE 4"))],
       ["RULE 5 seed stop with no facility fails", liveFailures([{ load_number: "13665", sequence_number: 1, missing_facility: true, missing_zip: true, missing_fence: true, google_no_result: false }]).some((x) => x.startsWith("RULE 5"))],
       ["RULE 6 Google no-result is listed, not failed", liveFailures([{ load_number: "1", sequence_number: 1, missing_facility: false, missing_zip: false, missing_fence: true, google_no_result: true }]).length === 0],

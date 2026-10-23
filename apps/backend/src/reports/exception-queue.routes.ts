@@ -1,3 +1,4 @@
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { loadMissingDriverBillWhereSql } from "../lib/document-status-vocabulary.js";
 import { canonicalHappenedNotVoidedLoadClause } from "../dispatch/canonical-active-load-set.js";
@@ -65,7 +66,7 @@ export async function registerExceptionQueueRoutes(app: FastifyInstance) {
              WHERE l.operating_company_id = $1::uuid
                AND l.soft_deleted_at IS NULL
                -- LEAD 443.238 (AUDIT2 F21): a load needs a tour only if it happened — cancelled AND voided loads never do.
-               AND ${canonicalHappenedNotVoidedLoadClause("l")} AND l.voided_at IS NULL
+               AND ${canonicalHappenedNotVoidedLoadClause("l")} AND ${notVoided("l")}
                AND l.presettlement_link_id IS NULL
           `,
           [parsed.data.operating_company_id]
@@ -179,7 +180,7 @@ export async function registerExceptionQueueRoutes(app: FastifyInstance) {
              WHERE l.operating_company_id = $1::uuid
                AND l.soft_deleted_at IS NULL
                -- LEAD 443.238 (AUDIT2 F21): a load needs a tour only if it happened — cancelled AND voided loads never do.
-               AND ${canonicalHappenedNotVoidedLoadClause("l")} AND l.voided_at IS NULL
+               AND ${canonicalHappenedNotVoidedLoadClause("l")} AND ${notVoided("l")}
                AND l.presettlement_link_id IS NULL
              ORDER BY l.load_number ASC
           `,
