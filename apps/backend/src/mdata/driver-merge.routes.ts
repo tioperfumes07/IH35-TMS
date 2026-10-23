@@ -2,6 +2,8 @@
 // GET  /api/v1/drivers/duplicate-candidates — profiles that look like the same person (same name / CDL one char apart)
 // GET  /api/v1/drivers/:id/merge-preview?merged_id= — what the merge would move, and any blocker
 // POST /api/v1/drivers/:id/merge { merged_id, override_reason? } — Owner only; one transaction (driver-merge.service)
+// POST /api/v1/drivers/merge-all { dry_run } — Owner only (LEAD 443.270-C c): every SAME-NAME candidate pair, one engine run
+//      each; a near-CDL pair is listed for a single merge, never batch-merged.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withLuciaBypass } from "../auth/db.js";
@@ -24,8 +26,8 @@ async function scoped<T>(userId: string, companyId: string, fn: (c: never) => Pr
   await assertCompanyMembership(userId, companyId);
   return withLuciaBypass(
     async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1::uuid, true)", [companyId]);
-      await client.query("SELECT set_config('app.current_user_id', $1::uuid, true)", [userId]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
+      await client.query("SELECT set_config('app.current_user_id', $1::text, true)", [userId]);
       return fn(client as never);
     },
     { actorUserId: userId }
@@ -63,6 +65,39 @@ export async function registerDriverMergeRoutes(app: FastifyInstance) {
       if ((e as Error).message === "driver_merge_driver_not_found") return reply.code(404).send({ error: "driver_merge_driver_not_found" });
       throw e;
     }
+  });
+
+  app.post("/api/v1/drivers/merge-all", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return reply;
+    if (String(user.role) !== "Owner") return reply.code(403).send({ error: "owner_only" });
+    const b = companyQuery.extend({ dry_run: z.boolean().default(true) }).safeParse(req.body ?? {});
+    if (!b.success) return reply.code(400).send({ error: "invalid_request" });
+    const oc = b.data.operating_company_id;
+    await assertCompanyMembership(user.uuid, oc);
+    type Pair = { survivor: { id: string }; merged: Array<{ id: string }>; why: string[] };
+    const before = (await scoped(user.uuid, oc, (c) => listDuplicateDriverCandidates(c, oc))) as unknown as Pair[];
+    const sameName = before.filter((p) => p.why.includes("same name"));
+    const listedOnly = before.filter((p) => !p.why.includes("same name"));
+    if (b.data.dry_run) return { dry_run: true, pairs_before: before.length, batch: sameName, single_merge_only: listedOnly };
+    const { createJournalEntryOnClient } = await import("../accounting/journal-entries.service.js");
+    const { recordEscrowPostingOnly } = await import("../accounting/escrow/service.js");
+    const merged: unknown[] = [];
+    const refused: Array<{ survivor_id: string; merged_id: string; error: string; details?: string[] }> = [];
+    for (const p of sameName) {
+      for (const m of p.merged) {
+        try {
+          merged.push(await scoped(user.uuid, oc, (c) => executeDriverMerge(c,
+            { companyId: oc, survivorId: p.survivor.id, mergedId: m.id, actorUserId: user.uuid, actorRole: String(user.role), overrideReason: null },
+            { createJournalEntryOnClient: createJournalEntryOnClient as never, recordEscrowPostingOnly: recordEscrowPostingOnly as never })));
+        } catch (e) {
+          const err = e as Error & { details?: string[] };
+          refused.push({ survivor_id: p.survivor.id, merged_id: m.id, error: err.message, details: err.details });
+        }
+      }
+    }
+    const after = (await scoped(user.uuid, oc, (c) => listDuplicateDriverCandidates(c, oc))) as unknown as Pair[];
+    return { dry_run: false, pairs_before: before.length, pairs_after: after.length, merged, refused, single_merge_only: listedOnly };
   });
 
   app.post("/api/v1/drivers/:id/merge", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {

@@ -121,6 +121,19 @@ export async function getMigrationLedgerSnapshot(client: pg.PoolClient, repoRoot
   };
 }
 
+/**
+ * HELD migrations are deliberately unledgered on prod (the db:migrate runner HELD-SKIPs them; the owner hand-applies
+ * on a Neon branch): they are "pending", not drift. LEAD 443.268-B: ONE split for the boot guard and the health route
+ * — the route used to count the 10 held files as missing and answer 503 on a healthy prod.
+ */
+export function splitHeldPending(missingInDB: string[], repoRoot: string): { missing: string[]; heldPending: string[] } {
+  const heldSet = loadHeldMigrationSet(repoRoot);
+  return {
+    missing: missingInDB.filter((name) => !heldSet.has(name)),
+    heldPending: missingInDB.filter((name) => heldSet.has(name)),
+  };
+}
+
 export async function assertMigrationDriftBootGuard(opts: {
   repoRoot: string;
   client: pg.PoolClient;
@@ -135,9 +148,7 @@ export async function assertMigrationDriftBootGuard(opts: {
   // HELD-SKIPs them; the owner hand-applies on a Neon branch). They are "pending",
   // not drift — excluding them keeps this boot guard from refusing boot on a deploy
   // that carries an unrun held migration, while still catching missing NORMAL ones.
-  const heldSet = loadHeldMigrationSet(opts.repoRoot);
-  const heldPending = drift.missingInDB.filter((name) => heldSet.has(name));
-  const missingInDB = drift.missingInDB.filter((name) => !heldSet.has(name));
+  const { missing: missingInDB, heldPending } = splitHeldPending(drift.missingInDB, opts.repoRoot);
 
   if (heldPending.length > 0) {
     opts.logError(
