@@ -88,7 +88,15 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | D065 | Accounting | Create Manual JE | Step 2 Lines | Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | V | inline: Manual JE Step 2 | Distinct aligned non-overlapping fields contained in the drawer | Cursor |
 | D066 | Banking | Home / Record Transfer | Drawer footer | Persistent alert stack renders above the open transfer drawer and obscures its bottom action area | V | inline: Record Transfer drawer | Alerts must not obscure drawer controls; close/cancel remains accessible | Cursor |
 
-## Counts (observed defects, not application-wide totals)
+| D067 | Accounting | Bills / Bill detail | Payments on this bill | Two linked payments render as `Payment — not visible` rather than distinct display identifiers | N | observed Chrome AX | Readable distinct payment identifiers; no UUID fallback | Cursor |
+| D068 | Accounting | Bill detail | Journal Entity column | Five journal rows show raw UUID entity labels | N | observed Chrome AX | Resolve human-readable entity names | Cursor |
+| D069 | Accounting | Reclassify | Account balance heading | Date displays `10/23/26` while date filters use `10/23/2026` | D | observed Chrome AX | MM/DD/YYYY consistently | Cursor |
+| D070 | Banking | Categorize / Match | Candidate dates | Loaded candidate list displays YYYY-MM-DD dates while transaction header uses MM/DD/YYYY | D | observed Chrome AX | MM/DD/YYYY consistently | Cursor |
+| D071 | Banking | Categorize / Match | Candidate payee labels | Candidate names mix ALL CAPS and proper case | N | observed Chrome AX | Full names in proper case, respecting approved exceptions | Cursor |
+| D072 | Banking | Relay card | Wallet balance tile | Five-digit currency omits thousands separator | M | observed Chrome AX | Currency formatted $1,234.56 | Cursor |
+| D073 | Cash Flow | Projected Auto | Expected Expenses driver labels | Driver Bill labels mix ALL CAPS and proper case | N | observed Chrome AX | Full names in proper case, respecting approved exceptions | Cursor |
+
+## Counts (observed defects, not application-wide totals; table below through D063, later depth rows not yet rolled up)
 
 | Module | V | M | D | I | N | T | B | E | P | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -120,6 +128,8 @@ Crash reproduced: `/fuel/questions` → Review → whole-app error boundary. Con
 | Total | 1 | 4 | 9 | 16 | 17 | 3 | 9 | 1 | 3 | 63 |
 
 ## Coverage ledger
+
+- 443.261.1 depth batch 11 (partial depth): Accounting Bills register, expanded payment rows, bill detail/journal/proof trail, Expenses register, Reclassify, Period Close landing and Reports link inspected. Banking Reconciliation landing, Categorize/Match drawer opened and closed without posting, Dreamline populated worklist and Relay card visited. Cash Flow Home, populated Projected, Actual vs Projected with filters opened/cancelled, Rolling Ledger and Manual inspected. Manual navigation recovered after one reload; not called a persistent defect. D067-D073 are display observations, not accounting errors. Full Accounting submenus, additional drawers and per-record depth remain open; no full-module completion claim. No financial action, settings save, transaction pull or form submission.
 
 - Depth batch 10 (Accounting / Banking / Cash Flow, partial): Accounting Manual JE steps 1 and 2 opened then closed without save; Banking Inspect feedback and New menu inspected, Record Transfer drawer opened/closed without input or submission; Cash Flow Manual Daily Projections loaded and optional income fields expanded without creating lines, saving opening cash or pulling transactions. D064-D066 are observed UI defects, not financial reconciliation findings. Inline screenshots remain private. All other outstanding tabs and panels below remain owed.
 
