@@ -314,6 +314,9 @@ import { registerFaroReserveEntryRoutes } from "./factoring/faro-reserve-entries
 import { registerCashReserveReclassRoutes } from "./factoring/cash-reserve-reclass.routes.js";
 import { registerFactoredInvoiceLockRoutes } from "./factoring/factored-invoice-lock.routes.js";
 import { registerBankingKpiRoutes } from "./banking/banking-kpi.routes.js";
+import { registerMoneyMapRoutes } from "./banking/money-map.routes.js";
+import { registerFactoringJourneyRoutes } from "./factoring/factoring-journey.routes.js";
+import { registerDriverHeroRoutes } from "./drivers/driver-hero.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
 import { registerReserveRoutes } from "./factoring/reserve.routes.js";
 import { registerFaroCsvImportRoutes } from "./factoring/faro-csv-import.routes.js";
@@ -1016,6 +1019,7 @@ async function main() {
   await registerTripPairingBoardRoutes(app);
   await registerDriverCommunicationsRoutes(app);
   await registerDriverAdvancesRoutes(app);
+  await registerDriverHeroRoutes(app);
   await registerMaintenancePartsMasterRoutes(app);
   await registerMaintenanceServicesCatalogRoutes(app);
   await registerMaintenanceCatalogRoutes(app);
@@ -1231,6 +1235,7 @@ async function main() {
   // ACCT-LINK-06 — apply-historical + rules CRUD (was orphan HELD; owner live-ops 2026-07-30).
   await registerCategorizationRulesRoutes(app);
   await registerBankingRoutes(app);
+  await registerMoneyMapRoutes(app);
   await registerBankingDriftAlertsRoutes(app);
   await registerTrailerInterchangeRoutes(app);
   await registerPresettlementLinkRoutes(app);
@@ -1255,6 +1260,7 @@ async function main() {
   await registerBankingLinkSuggestionActionsRoutes(app);
   await registerReconRoutes(app);
   await registerFactoringRoutes(app);
+  await registerFactoringJourneyRoutes(app);
   await registerFactoringBatchRoutes(app);
   await registerFactoringPurchaseRoutes(app);
   await registerFactoringKpiRoutes(app);

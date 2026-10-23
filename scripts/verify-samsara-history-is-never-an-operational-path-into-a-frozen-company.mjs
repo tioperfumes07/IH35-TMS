@@ -74,7 +74,8 @@ export const HISTORY = new Map([
   ["assignments/quicksave.routes.ts", "operator writes a pairing (writer, not a resolver)"],
   ["drivers/drivers-bulk.routes.ts", "bulk driver admin (writer, not a resolver)"],
   ["jobs/vehicle-driver-pairing-worker.ts", "pairing worker (writer)"],
-  ["fuel/fuel-assignment-question.service.ts", "443.243 driver-at-fill-moment enrichment — reads historical assignment for candidate truck display, not current-operational resolution; unit_id is company-scoped from the caller's RLS-gated GPS match"],
+  // 443.246 (CC-1): driver-hero endpoint reads current unit assignment for the hero card (display history)
+  ["drivers/driver-hero.routes.ts", "driver-hero API — current unit chip (display history, read-only)"],
 ].map(([f, why]) => [B + f, why]));
 
 const PIN_RE = [
