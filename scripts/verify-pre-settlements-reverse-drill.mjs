@@ -47,14 +47,20 @@ const CHECKS = [
   { name: "exact detail/close reverse Built annotation", file: F.self, pattern: /^ \* @matrix-built \{"modules":\["settlements"\],"cols":\["reverse_link"\],"leaves":\["settlements\.detail","settlement_close"\],"task":"SETL-F5835"\}$/m },
   { name: "exact dispatch pre-settlement reverse Built annotation", file: F.self, pattern: /^ \* @matrix-built \{"modules":\["dispatch"\],"cols":\["reverse_link"\],"leaves":\["load\.drawer\.pre_settlement","dispatch\.panel\.pre_settlement"\],"task":"DISP-F5868-PRE-SETTLEMENT-REVERSE-EXACT-LEAVES","vertical":"column-wave"\}$/m },
   { name: "settlement detail selected-company read", file: F.detail, pattern: /queryKey: \["driver-finance", "settlement-detail", settlementId, companyId\][\s\S]{0,160}getSettlement\(settlementId!, companyId\)[\s\S]{0,100}enabled: Boolean\(settlementId && companyId\)/ },
-  { name: "settlement detail route-param mount", file: F.settlementsPage, pattern: /selectedSettlementId = searchParams\.get\("settlement_id"\)[\s\S]{0,10000}selectedSettlementId && activeTab === "settlements"[\s\S]{0,1500}<SettlementDetailPage \/>/ },
+  // LEAD 443.266-B (CC-2): the page grew past a 10,000-char window between the param read and the mount (the real
+  // mount never moved), so the one check is split into the two facts it asserts: the selection IS the route param, and
+  // that selection mounts the detail page.
+  { name: "settlement detail route-param read", file: F.settlementsPage, pattern: /const selectedSettlementId = searchParams\.get\("settlement_id"\);/ },
+  { name: "settlement detail route-param mount", file: F.settlementsPage, pattern: /if \(selectedSettlementId && activeTab === "settlements"\) \{[\s\S]{0,1500}<SettlementDetailPage \/>/ },
   // Round 92/94 (CC-2) — confirmed already false on origin/main, unrelated to this PR (this file
   // is untouched here): ACCT-F20260911 (owner ruling 2026-09-11) replaced the raw week_ending
   // label with row.settlement_display_id -- the AlwaysTrack document number is the only number a
   // person ever sees, never the period-end date. Same real settlement drill, corrected label.
   { name: "driver profile exact settlement return", file: F.driverSettlements, pattern: /kind="settlement"\s+id=\{row\.settlement_id\}[\s\S]{0,220}entityLabel\(row\.settlement_display_id, row\.settlement_id, "Settlement"\)/ },
   { name: "settlement close route mounted", file: F.manifest, pattern: /path="\/driver-finance\/settlement-close"[\s\S]{0,180}<SettlementCloseArrivalPage \/>/ },
-  { name: "settlement close company-scoped list", file: F.close, pattern: /listOpenPreSettlements\(companyId\)[\s\S]{0,100}enabled: Boolean\(companyId\)/ },
+  // LEAD 443.266-B (CC-2): since 443.210R (d1a0c33ea6) the close picker reads THE board's open-by-driver list
+  // (listOpenPreSettlementsByDriver — the same company-scoped endpoint the Dispatch board counts), keyed by driver.
+  { name: "settlement close company-scoped list", file: F.close, pattern: /queryFn: \(\) => listOpenPreSettlementsByDriver\(companyId\),\s*enabled: Boolean\(companyId\)/ },
   { name: "settlement close company-driver detail", file: F.close, pattern: /getPreSettlementForDriver\(String\(selectedDriverId\), companyId\)[\s\S]{0,100}enabled: Boolean\(companyId\) && Boolean\(selectedDriverId\)/ },
   // Round 92/94 (CC-2) — confirmed already false on origin/main, unrelated to this PR: the raw
   // entityLabel(display_id,...) call was replaced by the shared settlementLabel() helper

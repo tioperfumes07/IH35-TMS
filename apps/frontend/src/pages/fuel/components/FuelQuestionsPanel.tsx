@@ -19,6 +19,8 @@ import { V3Panel } from "../../../components/v3/V3Panel";
 import { formatMoneyCents } from "../../../lib/formatMoney";
 import { formatDate } from "../../../lib/formatDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -69,7 +71,9 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
         label: "Station",
         sortable: true,
         sortValue: (r) => r.station ?? "",
-        render: (r) => r.station ?? "—",
+        render: (r) => (
+          <EntityLink kind="fuel_transaction" id={r.fuel_transaction_id} label={r.station?.trim() || "Fuel fill"} onClick={(e) => e.stopPropagation()} />
+        ),
       },
       {
         key: "gallons",
@@ -94,21 +98,41 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
         label: "Card truck",
         sortable: true,
         sortValue: (r) => r.card_unit_number ?? "",
-        render: (r) => <span className="font-semibold">{r.card_unit_number ?? "—"}</span>,
+        // LEAD 443.266-B: every truck / load / fill on the question drills to its record (fuel.panel.fuel_questions
+        // connectivity); a cell without an id renders its text, never a fabricated link.
+        render: (r) => (
+          <span className="font-semibold">
+            {r.card_unit_id ? (
+              <EntityLink kind="unit" id={r.card_unit_id} label={entityLabel(r.card_unit_number, r.card_unit_id, "Unit")} onClick={(e) => e.stopPropagation()} />
+            ) : (r.card_unit_number ?? "—")}
+          </span>
+        ),
       },
       {
         key: "proposed_unit_number",
         label: "Proposed truck",
         sortable: true,
         sortValue: (r) => r.proposed_unit_number ?? "",
-        render: (r) => r.proposed_unit_number ?? "—",
+        render: (r) => (
+          <span>
+            {r.proposed_unit_id ? (
+              <EntityLink kind="unit" id={r.proposed_unit_id} label={entityLabel(r.proposed_unit_number, r.proposed_unit_id, "Unit")} onClick={(e) => e.stopPropagation()} />
+            ) : (r.proposed_unit_number ?? "—")}
+          </span>
+        ),
       },
       {
         key: "proposed_load_number",
         label: "Proposed load",
         sortable: true,
         sortValue: (r) => r.proposed_load_number ?? "",
-        render: (r) => <span className="font-semibold">{r.proposed_load_number ?? "—"}</span>,
+        render: (r) => (
+          <span className="font-semibold">
+            {r.proposed_load_id ? (
+              <EntityLink kind="load" id={r.proposed_load_id} label={entityLabel(r.proposed_load_number, r.proposed_load_id, "Load")} onClick={(e) => e.stopPropagation()} />
+            ) : (r.proposed_load_number ?? "—")}
+          </span>
+        ),
       },
       {
         key: "proposed_settlement_ref",

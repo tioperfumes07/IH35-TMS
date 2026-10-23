@@ -18,7 +18,8 @@ export type FuelCandidateTruck = {
   distance_mi: number | null;
   samsara_driver: string | null;
   odometer: number | null;
-  load: FuelCandidateLoad;
+  /** 443.258-A: null when the truck had no load at the pump moment (never omitted by the API). */
+  load: FuelCandidateLoad | null;
 };
 
 export type FuelAssignmentQuestion = {

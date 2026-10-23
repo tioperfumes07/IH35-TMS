@@ -3,6 +3,9 @@
  * LEAD 443.243 — Fuel Assignment popup (Cursor UI) is wired wherever fuel is
  * created/attached to a load, plus Fuel questions badge/list. Fail-old selftest.
  * Cursor EVEN claim: 18670.
+ * LEAD 443.266-B (CC-2): both fuel question surfaces drill every truck / load / driver / fill they name to its record,
+ * and a candidate with no load at the pump moment renders instead of throwing (the prod c5a43b1d flat-evidence crash).
+ * @matrix-built {"modules":["fuel"],"cols":["connectivity"],"leaves":["fuel.modal.assignment_question","fuel.panel.fuel_questions"],"task":"LEAD-443.266-B"}
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -121,6 +124,35 @@ export function collectProblems(sources) {
     problems.push(`${FILES.panel}: V3 KPI strip must include Open questions`);
   }
 
+  // LEAD 443.266-B — connectivity: id-bearing cells are EntityLinks (text only when the id is absent).
+  for (const [re, what] of [
+    [/kind="unit" id=\{r\.card_unit_id\}/, "card truck → unit"],
+    [/kind="unit" id=\{r\.proposed_unit_id\}/, "proposed truck → unit"],
+    [/kind="load" id=\{r\.proposed_load_id\}/, "proposed load → load"],
+    [/kind="fuel_transaction" id=\{r\.fuel_transaction_id\}/, "fill → fuel transaction"],
+  ]) if (!re.test(panel)) problems.push(`${FILES.panel}: ${what} must be an EntityLink`);
+  for (const [re, what] of [
+    [/kind="unit" id=\{question\.card_unit_id\}/, "card truck → unit"],
+    [/kind="driver" id=\{question\.card_driver_id\}/, "card driver → driver"],
+    [/kind="unit" id=\{question\.proposed_unit_id\}/, "proposed truck → unit"],
+    [/kind="load" id=\{question\.proposed_load_id\}/, "proposed load → load"],
+    [/kind="fuel_transaction" id=\{question\.fuel_transaction_id\}/, "fill → fuel transaction"],
+    [/kind="unit" id=\{c\.unit_id\}/, "candidate truck → unit"],
+    [/kind="load" id=\{c\.load\.load_id\}/, "candidate load → load"],
+  ]) if (!re.test(popup)) problems.push(`${FILES.popup}: ${what} must be an EntityLink`);
+  // A candidate with no load at the pump moment (load: null — the stored flat shape normalizes to it) never throws:
+  // every c.load.<field> read sits inside the {c.load ? ... : "No load at pump time"} branch.
+  {
+    const guardAt = popup.indexOf("{c.load ? (");
+    const elseAt = popup.indexOf("No load at pump time");
+    const reads = [...popup.matchAll(/c\.load\.\w+/g)].map((m) => m.index);
+    if (guardAt < 0 || elseAt < 0 || reads.some((i) => i < guardAt || i > elseAt)) {
+      problems.push(`${FILES.popup}: a candidate with load: null must render "No load at pump time" — every c.load.<field> read must sit inside the c.load guard`);
+    }
+  }
+  if (!/load: FuelCandidateLoad \| null/.test(api)) problems.push(`${FILES.api}: FuelCandidateTruck.load must be nullable`);
+  if (!/export function normalizeQuestionRow/.test(service)) problems.push(`${FILES.service}: stored evidence must be normalized to one candidate shape on read`);
+
   if (!/FuelQuestionsBadge/.test(loadCosts)) {
     problems.push(`${FILES.loadCosts}: must mount FuelQuestionsBadge`);
   }
@@ -178,6 +210,30 @@ if (SELFTEST) {
 
   const mutations = [
     {
+      name: "443.266-B: an unguarded c.load read (the c5a43b1d null-load crash)",
+      apply: (s) => ({ ...s, popup: s.popup.replace("      onClick={onSelect}", "      onClick={onSelect} title={c.load.load_number}") }),
+    },
+    {
+      name: "443.266-B: the null-load branch removed",
+      apply: (s) => ({ ...s, popup: s.popup.replace("No load at pump time", "—") }),
+    },
+    {
+      name: "443.266-B: panel proposed load back to plain text",
+      apply: (s) => ({ ...s, panel: s.panel.replace('kind="load" id={r.proposed_load_id}', 'kind="load" id={null}') }),
+    },
+    {
+      name: "443.266-B: panel card truck back to plain text",
+      apply: (s) => ({ ...s, panel: s.panel.replace('kind="unit" id={r.card_unit_id}', 'kind="unit" id={null}') }),
+    },
+    {
+      name: "443.266-B: popup card driver back to plain text",
+      apply: (s) => ({ ...s, popup: s.popup.replace('kind="driver" id={question.card_driver_id}', 'kind="driver" id={null}') }),
+    },
+    {
+      name: "443.266-B: candidate load nullable type reverted",
+      apply: (s) => ({ ...s, api: s.api.replace("load: FuelCandidateLoad | null", "load: FuelCandidateLoad") }),
+    },
+    {
       name: "drops FuelAssignmentPopup from LoadDetailCostsTab",
       apply: (s) => ({ ...s, loadDrawer: s.loadDrawer.replace(/FuelAssignmentPopup/g, "MissingPopup") }),
     },
@@ -224,6 +280,10 @@ if (SELFTEST) {
   let allCaught = true;
   for (const m of mutations) {
     const mutated = m.apply(good);
+    if (Object.keys(mutated).every((k) => mutated[k] === good[k])) {
+      console.error(`${LABEL} SELFTEST FAIL — plant did not apply: ${m.name}`);
+      process.exit(1);
+    }
     if (collectProblems(mutated).length === 0) {
       console.error(`${LABEL} SELFTEST FAIL — NOT CAUGHT: ${m.name}`);
       allCaught = false;

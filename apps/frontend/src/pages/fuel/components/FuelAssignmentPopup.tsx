@@ -16,6 +16,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { useTranslation } from "../../../hooks/useTranslation";
 
 type Props = {
   open: boolean;
@@ -41,6 +42,7 @@ function CandidateRow({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <tr
       data-testid={`fuel-assignment-candidate-${c.unit_id}`}
@@ -53,7 +55,9 @@ function CandidateRow({
       </td>
       <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs font-semibold text-[#1F2A44]">
         {/* Drill-through to the truck / load (443.264.1, verify-record-naming); the row click still selects. */}
-        <EntityLink kind="unit" id={c.unit_id} label={entityLabel(c.unit_number, c.unit_id, "Unit")} onClick={(e) => e.stopPropagation()} />
+        {c.unit_id ? (
+          <EntityLink kind="unit" id={c.unit_id} label={entityLabel(c.unit_number, c.unit_id, "Unit")} onClick={(e) => e.stopPropagation()} />
+        ) : (c.unit_number ?? "—")}
       </td>
       <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs whitespace-nowrap">
         {c.distance_mi != null ? `${c.distance_mi} mi` : "—"}
@@ -65,13 +69,26 @@ function CandidateRow({
       <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs whitespace-nowrap">
         {c.odometer != null ? `${c.odometer} mi` : "—"}
       </td>
-      <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs font-semibold">
-        {c.load.load_id ? (
-          <EntityLink kind="load" id={c.load.load_id} label={entityLabel(c.load.load_number, c.load.load_id, "Load")} onClick={(e) => e.stopPropagation()} />
-        ) : (c.load.load_number ?? "—")}
-      </td>
-      <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{c.load.settlement_ref ?? "—"}</td>
-      <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{c.load.route ?? "—"}</td>
+      {/* 443.258-A: a truck with no load at the pump moment renders, it never throws */}
+      {c.load ? (
+        <>
+          <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs font-semibold">
+            {c.load.load_id ? (
+              <EntityLink kind="load" id={c.load.load_id} label={entityLabel(c.load.load_number, c.load.load_id, "Load")} onClick={(e) => e.stopPropagation()} />
+            ) : (c.load.load_number ?? "—")}
+          </td>
+          <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{c.load.settlement_ref ?? "—"}</td>
+          <td className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs">{c.load.route ?? "—"}</td>
+        </>
+      ) : (
+        <td
+          colSpan={3}
+          className="border border-[#E5E7EB] px-2 py-1.5 text-center text-xs text-[#6B7280]"
+          data-testid={`fuel-assignment-candidate-no-load-${c.unit_id}`}
+        >
+          {t("fuel.no_load_at_pump", "No load at pump time")}
+        </td>
+      )}
     </tr>
   );
 }
@@ -161,7 +178,9 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
           </div>
           <div>
             <div className="text-section-header font-bold uppercase text-[#4B5563]">Station</div>
-            <div className="mt-0.5 font-semibold">{question.station?.trim() || "—"}</div>
+            <div className="mt-0.5 font-semibold">
+              <EntityLink kind="fuel_transaction" id={question.fuel_transaction_id} label={question.station?.trim() || "Fuel fill"} />
+            </div>
           </div>
           <div>
             <div className="text-section-header font-bold uppercase text-[#4B5563]">Gallons / Amount</div>
@@ -171,11 +190,19 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
           </div>
           <div>
             <div className="text-section-header font-bold uppercase text-[#4B5563]">Card truck</div>
-            <div className="mt-0.5 font-semibold">{question.card_unit_number ?? "—"}</div>
+            <div className="mt-0.5 font-semibold">
+              {question.card_unit_id ? (
+                <EntityLink kind="unit" id={question.card_unit_id} label={entityLabel(question.card_unit_number, question.card_unit_id, "Unit")} />
+              ) : (question.card_unit_number ?? "—")}
+            </div>
           </div>
           <div>
             <div className="text-section-header font-bold uppercase text-[#4B5563]">Card driver</div>
-            <div className="mt-0.5 font-semibold">{question.card_driver_name ?? "—"}</div>
+            <div className="mt-0.5 font-semibold">
+              {question.card_driver_id ? (
+                <EntityLink kind="driver" id={question.card_driver_id} label={entityLabel(question.card_driver_name, question.card_driver_id, "Driver")} />
+              ) : (question.card_driver_name ?? "—")}
+            </div>
           </div>
           <div>
             <div className="text-section-header font-bold uppercase text-[#4B5563]">Resolution</div>
@@ -192,7 +219,14 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
         >
           <div className="text-section-header font-bold uppercase text-[#4B5563]">Proposed answer</div>
           <div className="mt-1 text-xs font-semibold">
-            Truck {question.proposed_unit_number ?? "—"} · Load {question.proposed_load_number ?? "—"}
+            Truck{" "}
+            {question.proposed_unit_id ? (
+              <EntityLink kind="unit" id={question.proposed_unit_id} label={entityLabel(question.proposed_unit_number, question.proposed_unit_id, "Unit")} />
+            ) : (question.proposed_unit_number ?? "—")}
+            {" · Load "}
+            {question.proposed_load_id ? (
+              <EntityLink kind="load" id={question.proposed_load_id} label={entityLabel(question.proposed_load_number, question.proposed_load_id, "Load")} />
+            ) : (question.proposed_load_number ?? "—")}
             {question.proposed_settlement_ref ? ` · Settlement ${question.proposed_settlement_ref}` : ""}
           </div>
           <p className="mt-1 text-[#4B5563]">{question.proposed_why ?? "—"}</p>
@@ -228,7 +262,8 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
                     selected={pickUnitId === c.unit_id}
                     onSelect={() => {
                       setPickUnitId(c.unit_id);
-                      if (c.load.load_id) setPickLoadId(c.load.load_id);
+                      // no load at the pump moment: pick the truck, choose the load in the picker below
+                      setPickLoadId(c.load?.load_id ?? "");
                       setMode("pick");
                     }}
                   />
