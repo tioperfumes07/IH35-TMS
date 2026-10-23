@@ -52,8 +52,9 @@ const CHECKS = [
   ["apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx", /kind="driver" id=\{u\.driver_id\}/],
   ["apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx", /EntityLinkOrTombstone kind="driver" id=\{issue\.driver_id\} name=\{issue\.driver_name\} noun="Driver"/],
   ["apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx", /kind="driver" id=\{driver\.id\}/],
-  ["apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx", /EntityLinkOrTombstone kind="driver" id=\{driverId\} name=\{name\} noun="Driver"/],
-  ["apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx", /EntityLinkOrTombstone kind="driver" id=\{row\.driverId\} name=\{row\.driverName\} noun="Driver"/],
+  // 443.251 item 8 (3296405dee): the displayed name goes through formatPersonName (owner name format) — same driver id link.
+  ["apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx", /EntityLinkOrTombstone kind="driver" id=\{driverId\} name=\{(?:formatPersonName\()?name\)?\} noun="Driver"/],
+  ["apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx", /EntityLinkOrTombstone kind="driver" id=\{row\.driverId\} name=\{(?:formatPersonName\()?row\.driverName\)?\} noun="Driver"/],
   ["apps/backend/src/dispatch/loads.routes.ts", /\$\{unitCurrentDriverSql\("u", "\$1::uuid"\)\}/],
   ["apps/backend/src/dispatch/unit-current-driver.ts", /FROM mdata\.driver_company_authorizations unit_current_driver_dca[\s\S]{0,180}unit_current_driver_dca\.driver_id = ud\.id[\s\S]{0,140}unit_current_driver_dca\.company_id = \$\{companyParam\}[\s\S]{0,140}unit_current_driver_dca\.is_authorized = true[\s\S]{0,140}unit_current_driver_dca\.deactivated_at IS NULL/],
   ["apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx", /kind="driver" id=\{driver\.id\}/],

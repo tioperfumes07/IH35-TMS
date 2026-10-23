@@ -10,8 +10,20 @@ const LEGS = "apps/frontend/src/pages/dispatch/roundTripsLegs.ts";
 const TIMELINE = "apps/frontend/src/pages/dispatch/RoundTripsTimeline.tsx";
 const DISPATCH = "apps/frontend/src/pages/Dispatch.tsx";
 const ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
+// 443.231b: units-without-load mounts THE shared unit gate UNIT_IN_SERVICE_SQL (unit-in-service.ts), which mounts
+// canonicalBoardUnitGateSql (canonical-active-load-set.ts). LEAD 443.206 D3/D4 made that gate THE board scope:
+// leased to this company, else owned by it — COALESCE(lease, owner) = company, never owner OR lease (a unit leased
+// out counts only for the lessee). LEAD 443.265-F (CC-2): read the gate where it lives.
+const IN_SERVICE = "apps/backend/src/dispatch/unit-in-service.ts";
+const CANONICAL = "apps/backend/src/dispatch/canonical-active-load-set.ts";
+const inServiceDefault = readFileSync(IN_SERVICE, "utf8");
+const canonicalDefault = readFileSync(CANONICAL, "utf8");
+function boardGateBody(canonical) {
+  const i = canonical.indexOf("export function canonicalBoardUnitGateSql(");
+  return i < 0 ? "" : canonical.slice(i, canonical.indexOf("\n}\n", i));
+}
 
-function check(legs, timeline, dispatch, routes) {
+function check(legs, timeline, dispatch, routes, inService = inServiceDefault, canonical = canonicalDefault) {
   const errors = [];
   if (!/"booked"/.test(legs) || !/"planned"/.test(legs) || !/"unassigned"/.test(legs)) {
     errors.push("RT_TIMELINE_STATUSES must include booked, planned, unassigned (future + current legs)");
@@ -63,13 +75,21 @@ function check(legs, timeline, dispatch, routes) {
   if (!/GROUP BY[\s\S]{0,400}loc\.city[\s\S]{0,80}loc\.state[\s\S]{0,80}loc\.formatted_location/.test(routes)) {
     errors.push("units-without-load GROUP BY must include loc.city/state/formatted_location (COALESCE(p, loc) 500s without them)");
   }
-  if (!/u\.currently_leased_to_company_id = \$1::uuid/.test(routes)) {
-    errors.push("units-without-load must scope units by currently_leased_to_company_id (Rule 49), not owner");
+  const mountsShared = /WHERE \$\{UNIT_IN_SERVICE_SQL\}/.test(routes) && /\$\{canonicalBoardUnitGateSql\("u", "\$1::uuid"\)\}/.test(inService);
+  const gate = mountsShared ? `${inService}\n${boardGateBody(canonical)}` : routes;
+  if (!mountsShared && !/u\.currently_leased_to_company_id = \$1::uuid/.test(routes)) {
+    errors.push("units-without-load must mount THE board unit gate (UNIT_IN_SERVICE_SQL → canonicalBoardUnitGateSql) or scope by the lessee (Rule 49)");
   }
-  if (/u\.owner_company_id = \$1 OR u\.currently_leased_to_company_id = \$1/.test(routes)) {
-    errors.push("units-without-load must not use owner OR lease (Rule 49 — lease only)");
+  if (mountsShared && !/COALESCE\(\$\{unitAlias\}\.currently_leased_to_company_id, \$\{unitAlias\}\.owner_company_id\) = \$\{operatingCompanyIdParam\}/.test(gate)) {
+    errors.push("the board unit gate must scope a unit to its lessee, else its owner (COALESCE(lease, owner) — LEAD 443.206 D3/D4, Rule 49)");
   }
-  if (!/u\.is_sample_data IS NOT TRUE/.test(routes) || !/u\.sold_date IS NULL/.test(routes) || !/u\.is_oos IS NOT TRUE/.test(routes)) {
+  if (/\bu\.owner_company_id = \$1(::uuid)? OR u\.currently_leased_to_company_id = \$1/.test(routes) || /owner_company_id = \$\{operatingCompanyIdParam\} OR/.test(gate)) {
+    errors.push("units-without-load must not use owner OR lease (Rule 49 — a leased-out unit counts only for the lessee)");
+  }
+  const sample = mountsShared ? /\$\{unitAlias\}\.is_sample_data IS NOT TRUE/.test(gate) : /u\.is_sample_data IS NOT TRUE/.test(routes);
+  const sold = mountsShared ? /\$\{unitAlias\}\.sold_date IS NULL/.test(gate) : /u\.sold_date IS NULL/.test(routes);
+  const oos = /u\.is_oos IS NOT TRUE/.test(mountsShared ? inService : routes);
+  if (!sample || !sold || !oos) {
     errors.push("units-without-load must exclude sample / sold / OOS units (Rule 49)");
   }
   return errors;
@@ -104,13 +124,19 @@ function selftest() {
     console.error("SELFTEST FAIL — loc GROUP BY mutation not caught");
     process.exit(1);
   }
-  const badLease = routes.replace(
-    "AND u.currently_leased_to_company_id = $1::uuid",
-    "AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)",
-  );
-  if (check(legs, timeline, dispatch, badLease).length === 0) {
-    console.error("SELFTEST FAIL — owner-OR-lease mutation not caught");
-    process.exit(1);
+  const canonical = canonicalDefault, inService = inServiceDefault;
+  const gatePlants = [
+    ["owner-OR-lease in the board gate", [routes, inService, canonical.replace("COALESCE(${unitAlias}.currently_leased_to_company_id, ${unitAlias}.owner_company_id) = ${operatingCompanyIdParam}", "(${unitAlias}.owner_company_id = ${operatingCompanyIdParam} OR ${unitAlias}.currently_leased_to_company_id = ${operatingCompanyIdParam})")]],
+    ["sample units admitted", [routes, inService, canonical.replace("${unitAlias}.is_sample_data IS NOT TRUE AND ", "")]],
+    ["sold units admitted", [routes, inService, canonical.replace("${unitAlias}.sold_date IS NULL AND ", "")]],
+    ["OOS units admitted", [routes, inService.replace("AND u.is_oos IS NOT TRUE", ""), canonical]],
+    ["the route stops mounting the gate", [routes.replace("WHERE ${UNIT_IN_SERVICE_SQL}", "WHERE true"), inService, canonical]],
+  ];
+  for (const [name, [r, i, c]] of gatePlants) {
+    if ((r === routes && i === inService && c === canonical) || check(legs, timeline, dispatch, r, i, c).length === 0) {
+      console.error(`SELFTEST FAIL — unit-gate mutation not caught (or did not apply): ${name}`);
+      process.exit(1);
+    }
   }
   console.log("PASS verify-reg037-roundtrips-timeline-window --selftest");
 }

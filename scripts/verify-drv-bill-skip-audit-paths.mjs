@@ -191,8 +191,9 @@ function selftest() {
   {
     const real = fs.readFileSync(path.join(root, UPDATE_LOAD_SERVICE), "utf8");
     const mutated = real.replace(
-      /const driverBillMint = await ensureDriverBillArtifactsForLoad\(client, \{[\s\S]*?\}\);/,
-      "const driverBillMint = null; // ensureDriverBillArtifactsForLoad(client, {...}) removed"
+      // 443.220 (12899c3b22) made the binding `let` (the mint is re-read after pricing) — match either declaration.
+      /(?:const|let) driverBillMint = await ensureDriverBillArtifactsForLoad\(client, \{[\s\S]*?\}\);/,
+      "let driverBillMint = null; // ensureDriverBillArtifactsForLoad(client, {...}) removed"
     );
     if (mutated === real) {
       console.error("  selftest FAIL: mutation #3 did not change the source (regex drifted)");

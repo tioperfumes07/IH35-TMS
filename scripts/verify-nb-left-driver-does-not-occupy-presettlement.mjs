@@ -13,7 +13,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const F = { link: "apps/backend/src/dispatch/presettlement-link.service.ts", routes: "apps/backend/src/dispatch/loads.routes.ts", book: "apps/backend/src/dispatch/book-load.service.ts", stops: "apps/backend/src/mdata/loads.routes.ts" };
+const F = { link: "apps/backend/src/dispatch/presettlement-link.service.ts", routes: "apps/backend/src/dispatch/loads.routes.ts", book: "apps/backend/src/dispatch/book-load.service.ts", stops: "apps/backend/src/mdata/loads.routes.ts", canonical: "apps/backend/src/dispatch/canonical-active-load-set.ts" };
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
 export function check(src = {}) {
@@ -24,7 +24,11 @@ export function check(src = {}) {
   blocks.forEach((b, i) => {
     if (!/nb\.assigned_primary_driver_id IS NOT DISTINCT FROM/.test(b))
       p.push(`${F.link}: NB-occupancy check #${i + 1} counts an NB that moved to another driver`);
-    if (!/nb\.status::text NOT IN \('cancelled', 'draft'\)/.test(b))
+    // 443.260-B single-source predicates: the clause may be canonicalBookedNotCancelledLoadClause("nb") — accepted ONLY
+    // while that helper itself still excludes draft AND cancelled (LEAD 443.265-F, CC-2).
+    const helperExcludesDraft = /export function canonicalBookedNotCancelledLoadClause\(alias = "l"\): string \{\s*return `\$\{alias\}\.status::text NOT IN \('cancelled', 'draft'\)`;/.test(s.canonical);
+    const excludesDraft = /nb\.status::text NOT IN \('cancelled', 'draft'\)/.test(b) || (helperExcludesDraft && /\$\{canonicalBookedNotCancelledLoadClause\("nb"\)\}/.test(b));
+    if (!excludesDraft)
       p.push(`${F.link}: NB-occupancy check #${i + 1} counts an NB that went back to draft`);
   });
   const stops = s.routes.slice(s.routes.indexOf("const createDispatchLoadBodySchema"), s.routes.indexOf("const updateDispatchLoadBodySchema"));
@@ -55,7 +59,8 @@ if (isMain && process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const plants = [
-    ["draft NB counted (suggest)", { link: base.link.replace("AND nb.soft_deleted_at IS NULL AND nb.status::text NOT IN ('cancelled', 'draft')) AS has_other_nb", "AND nb.soft_deleted_at IS NULL AND nb.status::text <> 'cancelled') AS has_other_nb") }],
+    ["draft NB counted (suggest)", { link: base.link.replace('AND nb.soft_deleted_at IS NULL AND ${canonicalBookedNotCancelledLoadClause("nb")}) AS has_other_nb', 'AND nb.soft_deleted_at IS NULL AND ${canonicalNotCancelledLoadClause("nb")}) AS has_other_nb') }],
+    ["the booked-not-cancelled helper stops excluding draft", { canonical: base.canonical.replace("return `${alias}.status::text NOT IN ('cancelled', 'draft')`;", "return `${alias}.status::text <> 'cancelled'`;") }],
     ["other-driver NB counted (confirm)", { link: base.link.replace("AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM (SELECT driver_id", "AND (SELECT driver_id") }],
     ["reassigned load stays on the old driver's settlement", { link: base.link.replace("return moveLoadToNewDriverPresettlementInClientTx(", "return null; void (") }],
     ["bill on open trip refuses reassignment", { book: base.book.replace("if (!isRecalculable && !reassignableOnOpenTrip)", "if (!isRecalculable)") }],
