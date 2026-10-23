@@ -12,6 +12,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Button } from "../../../components/Button";
+import { DriverQualificationMatrix } from "../components/DriverQualificationMatrix";
 
 export function DriverFilesTab() {
   const [driverId, setDriverId] = useState<string | null>(null);
@@ -41,11 +42,14 @@ export function DriverFilesTab() {
   }, [clearDriverCounts]);
 
   return (
-    <div className="rounded-sm border border-gray-200 bg-white p-4">
+    <div className="min-w-0 space-y-3">
       {driverId ? (
         <DriverProfilePage driverId={driverId} onBack={() => setDriverId(null)} />
       ) : (
         <>
+          <DriverQualificationMatrix key={companyId} companyId={companyId} />
+          <details className="rounded-sm border border-gray-200 bg-white p-3">
+          <summary className="cursor-pointer text-xs font-semibold">Safety activity and driver management</summary>
           <DriverSafetyCards
             companyId={companyId}
             filter={filter}
@@ -54,6 +58,9 @@ export function DriverFilesTab() {
             onOpenProfile={(nextDriverId) => setDriverId(nextDriverId)}
           />
           <DriversListPage onOpenProfile={(nextDriverId) => setDriverId(nextDriverId)} />
+          </details>
+          <details className="rounded-sm border border-gray-200 bg-white p-3">
+          <summary className="cursor-pointer text-xs font-semibold">Training completions and programs</summary>
           <div className="mt-4 space-y-2" data-testid="driver-files-training-section">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-xs font-semibold text-[#0F1219]">Training Completions</h3>
@@ -84,6 +91,7 @@ export function DriverFilesTab() {
               <Button size="sm" variant="secondary" disabled={trainingPage >= trainingPageCount || trainingQuery.isFetching} onClick={() => setTrainingPage((current) => Math.min(trainingPageCount, current + 1))}>Next training</Button>
             </div> : null}
           </div>
+          </details>
         </>
       )}
     </div>

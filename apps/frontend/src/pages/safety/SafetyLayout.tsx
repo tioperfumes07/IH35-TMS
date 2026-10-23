@@ -190,6 +190,9 @@ export function SafetyLayout() {
           </p>
         ) : null}
 
+        <SafetyGroupNav groups={SAFETY_GROUPS} activeTabId={activeTabId} />
+        <details key={activeTabId} open={activeTabId !== "driver-files"}>
+        <summary className={activeTabId === "driver-files" ? "cursor-pointer px-[22px] py-2 text-xs font-semibold" : "hidden"}>Activity filters and company safety summary</summary>
         <SafetyDashboardFilter
           value={filter}
           onChange={contextValue.setFilter}
@@ -238,7 +241,7 @@ export function SafetyLayout() {
             client-state driver-detail view (DriverFilesTab's internal `driverId`) left that view
             stuck on screen under the new URL until a hard reload. NavLink's `to` prop is already
             the single source of truth for this navigation; no second imperative navigate() call. */}
-        <SafetyGroupNav groups={SAFETY_GROUPS} activeTabId={activeTabId} />
+        </details>
         <div className="px-[22px] py-3">
           {/* SAFETY-DRIVER-FILES-DETAIL-STUCK-ON-NAV-AWAY: key on location.pathname forces React
               to re-mount the Outlet content on every navigation between sibling safety routes.
