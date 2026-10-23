@@ -47,6 +47,8 @@ try {
   assertIncludes(bankingTransactions, "ParityTable", "Banking Transactions register must use shared ParityTable");
   const parityTable = read("apps/frontend/src/components/parity/ParityTable.tsx");
   assertTableToolbarCanWrap(parityTable);
+  assertIncludes(parityTable, "return labelFloor / Math.max(share, 0.000001)", "Proportional table floor must protect every header share");
+  assertIncludes(parityTable, "minWidth: Math.max(minWidthPx, proportionalMinTable)", "Caller minimum must not bypass header legibility floor");
   assertIncludes(parityTable, "table-fixed", "ParityTable must keep table-fixed (Banking Transactions fixed responsive layout)");
 
   // dispatch/components/LoadTable.tsx was deleted (orphan-triage batch 05) as a verified-dead
@@ -80,6 +82,11 @@ try {
   assertIncludes(dataTable, "table-fixed", "Shared DataTable must use fixed responsive layout");
 
   if (process.argv.includes("--selftest")) {
+    for (const needle of ["return labelFloor / Math.max(share, 0.000001)", "minWidth: Math.max(minWidthPx, proportionalMinTable)"]) {
+      let rejected = false;
+      try { assertIncludes(parityTable.replace(needle, "REMOVED"), needle, "missing header floor"); } catch { rejected = true; }
+      if (!rejected) throw new Error("selftest failed to reject header floor removal");
+    }
     for (const planted of [
       parityTable.replace("min-w-0 break-words text-section-header", "whitespace-nowrap text-section-header"),
       parityTable.replace('"min-w-0 max-w-full overflow-visible bg-white"', '"overflow-visible bg-white"'),
