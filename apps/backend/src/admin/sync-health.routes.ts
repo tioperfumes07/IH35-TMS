@@ -39,7 +39,7 @@ export async function registerAdminSyncHealthRoutes(app: FastifyInstance) {
         `
           SELECT
             qc.realm_id::text AS realm_id,
-            c.display_name AS operating_company_name,
+            COALESCE(c.short_name, c.legal_name) AS operating_company_name,
             qc.operating_company_id::text AS operating_company_id,
             qc.access_token_expires_at::text AS token_expires_at,
             qc.revoked_at::text AS token_revoked_at,
@@ -134,7 +134,7 @@ export async function registerAdminSyncHealthRoutes(app: FastifyInstance) {
         `
           SELECT
             p.operating_company_id::text AS operating_company_id,
-            c.display_name AS operating_company_name,
+            COALESCE(c.short_name, c.legal_name) AS operating_company_name,
             p.period_end::text AS period_end,
             p.fiscal_year::int AS fiscal_year
           FROM accounting.periods p
