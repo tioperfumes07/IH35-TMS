@@ -461,6 +461,8 @@ export type TourListRow = {
   /** ROUND 443.274-C Closed board — Company settlement column links the statement when opened. */
   company_settlement_id: string | null;
   company_settlement_display_id: string | null;
+  /** 443.282 Company Settlements board dedupe — one row per tour_id, not per settlement row. */
+  tour_id: string | null;
 };
 
 /**
@@ -539,6 +541,7 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
       driver_net_cents: r.driver_settlement ? r.driver_settlement.net_cents : null,
       company_settlement_id: r.company_settlement?.id ?? null,
       company_settlement_display_id: r.company_settlement?.display_id ?? null,
+      tour_id: r.tour.tour_id,
     });
   }
   return { rows: out, total_count };
