@@ -1,8 +1,10 @@
 /**
  * ROUND 443.254 N5 — Driver Escrow Register (V3-Settlements-EscrowRegister).
  * Dated lines · source settlement/JE · running balance. Not the driver profile.
+ *
+ * ROUND 443.250 — V3 KPI strip (Driver / Held / Target / Release) via V3KpiTile.
+ * Engine unchanged: getEscrowDriverBalances + getEscrowDriverTimeline.
  */
-import type React from "react";
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom"; // Link: register source → settlement/JE
 import { useQuery } from "@tanstack/react-query";
@@ -11,11 +13,14 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatUsdTable } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
 import { V3 } from "../../design/v3-tokens";
-import { EntityLink } from "../../components/shared/EntityLink";
+
+/** Owner board Settlements-EscrowRegister.dc.html — policy chrome, not a new engine. */
+const ESCROW_RELEASE_WINDOW_DAYS = 60;
 
 type RegisterRow = {
   id: string;
@@ -58,6 +63,7 @@ export function EscrowRegisterPage() {
   const driver = (balQ.data?.drivers ?? []).find((d) => d.driver_id === driverId);
   const driverName = formatDisplayName(driver?.driver_name ?? "Driver");
   const held = Number(driver?.escrow_balance ?? 0);
+  const heldDisplay = balQ.isError ? "—" : formatUsdTable(held);
 
   const rows: RegisterRow[] = useMemo(() => {
     const timeline = [...(tlQ.data?.timeline ?? [])].sort((a, b) =>
@@ -152,11 +158,37 @@ export function EscrowRegisterPage() {
   return (
     <SettlementsModuleShell showBack backLabel="Escrow" backTo="/driver-finance/escrow">
       <div className="space-y-3 px-1" data-testid="escrow-register-page">
-        <div className="grid gap-2 md:grid-cols-4">
-          <Kpi label="Driver" value={driverId ? <EntityLink kind="driver" id={driverId} label={driverName} /> : driverName} sub="active bond" />
-          <Kpi label="Held" value={formatUsdTable(held)} />
-          <Kpi label="Target" value="—" sub="per pay-rate template" />
-          <Kpi label="Release" value="—" sub="60 days after last settlement" />
+        {/* ROUND 443.250 Settlements EscrowRegister V3 — Driver / Held / Target / Release.
+            Live getEscrowDriverBalances; Target/Release are board policy chrome (no schedule feed). */}
+        <div
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+          data-testid="escrow-register-kpi-strip"
+          data-escrow-register-v3-kpis="1"
+        >
+          <V3KpiTile
+            label="Driver"
+            value={balQ.isError ? "—" : driverName}
+            sub="active bond"
+            testId="escrow-register-kpi-driver"
+          />
+          <V3KpiTile
+            label="Held"
+            value={heldDisplay}
+            sub="current escrow balance"
+            testId="escrow-register-kpi-held"
+          />
+          <V3KpiTile
+            label="Target"
+            value="—"
+            sub="per pay-rate template"
+            testId="escrow-register-kpi-target"
+          />
+          <V3KpiTile
+            label="Release"
+            value="—"
+            sub={`${ESCROW_RELEASE_WINDOW_DAYS} days after last settlement`}
+            testId="escrow-register-kpi-release"
+          />
         </div>
         {tlQ.isError ? (
           <ListErrorState
@@ -184,26 +216,5 @@ export function EscrowRegisterPage() {
         </p>
       </div>
     </SettlementsModuleShell>
-  );
-}
-
-function Kpi({ label, value, sub }: { label: string; value: React.ReactNode; sub?: string }) {
-  return (
-    <div
-      className="flex flex-col gap-1 rounded-sm border px-3 py-2"
-      style={{ background: V3.surface, borderColor: V3.border }}
-    >
-      <span className="text-section-header font-semibold uppercase tracking-wide" style={{ color: V3.muted }}>
-        {label}
-      </span>
-      <span className="text-xs font-bold tabular-nums" style={{ color: V3.ink }}>
-        {value}
-      </span>
-      {sub ? (
-        <span className="text-xs" style={{ color: V3.muted }}>
-          {sub}
-        </span>
-      ) : null}
-    </div>
   );
 }

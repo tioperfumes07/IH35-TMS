@@ -270,7 +270,22 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guard piggyback:** `verify-escrow-posting-entitylink-reverse.mjs` (step 1282 ≡2 EVEN Cursor)
   asserts V3KpiTile + data-escrow-v3-kpis + board labels. No new EVEN claim.
 - **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Deductions/
-  CashAdvances/Close/PreSettlements/Statement/EscrowRegister) · Fuel sub-boards · Driver Profile ·
+  CashAdvances/Close/PreSettlements/Statement) · Fuel sub-boards · Driver Profile ·
+  design-system sweep · Chrome proof. EscrowRegister V3 shipped (below). Full DONE not claimed.
+
+### Active Architectural Decisions — Settlements EscrowRegister V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getEscrowDriverBalances` + `getEscrowDriverTimeline` already used for
+  the register ParityTable. No new escrow / target / release-schedule endpoint.
+- **V3 board chrome:** four KPIs via `V3KpiTile` + `data-escrow-register-v3-kpis` on
+  `EscrowRegisterPage.tsx` (`/driver-finance/escrow/:driverId`) — Driver (active bond) · Held
+  (current balance) · Target = "—" (per pay-rate template; no template feed on this page) ·
+  Release = "—" with `ESCROW_RELEASE_WINDOW_DAYS = 60` sub ("60 days after last settlement").
+  "—" on Driver/Held when balances query errors. Source → settlement/JE links retained.
+- **Guard piggyback:** `verify-banking-escrow-settlement-linkage.mjs` (step 1322 ≡2 EVEN Cursor)
+  asserts V3KpiTile + data-escrow-register-v3-kpis + board labels + release window. No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Deductions/
+  CashAdvances/Close/PreSettlements/Statement) · Fuel sub-boards · Driver Profile ·
   design-system sweep · Chrome proof. Full DONE not claimed.
 
 
