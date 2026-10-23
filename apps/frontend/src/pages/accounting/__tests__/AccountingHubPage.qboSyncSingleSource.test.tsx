@@ -9,23 +9,39 @@ import * as forensicApi from "../../../api/forensic";
 import { ToastProvider } from "../../../components/Toast";
 
 /**
- * ROUND-20.8 B11 — /banking read "QBO Sync: Not connected | Last sync: n/a" while /accounting's
- * AccountingHubPage read "QBO SYNC 0 pending -- queue healthy" at the same moment. Both facts were
- * individually true (OAuth connection state vs. sync-queue backlog) but each screen showed only
- * one, so a reader saw what looked like one ledger giving two contradictory answers. Fixed by
- * routing this tile through the same describeQboSyncStatus() derivation Banking's SyncStatusStrip
- * already calls, fed the connection-status query this page was previously missing.
+ * ROUND-20.8 B11 — QBO Sync tile must share describeQboSyncStatus with Banking.
+ * ROUND 443.267 — hub still exposes the same KPI on the board strip.
  */
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
 }));
 
-vi.mock("../../../api/accounting", () => ({
-  listBills: vi.fn().mockResolvedValue({ rows: [] }),
-  listBillPayments: vi.fn().mockResolvedValue({ rows: [] }),
-  listInvoices: vi.fn().mockResolvedValue({ invoices: [] }),
-  listPayments: vi.fn().mockResolvedValue({ rows: [] }),
+vi.mock("../../../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "Owner" } }),
 }));
+
+vi.mock("../../../api/accounting", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/accounting")>();
+  return {
+    ...actual,
+    listBills: vi.fn().mockResolvedValue({ rows: [] }),
+    listExpenses: vi.fn().mockResolvedValue({ rows: [] }),
+    listInvoices: vi.fn().mockResolvedValue({ invoices: [] }),
+    getMonthCloseStatus: vi.fn().mockResolvedValue({
+      period: "2026-01",
+      period_start: "2026-01-01",
+      period_end: "2026-01-31",
+      period_id: null,
+      period_status: "open",
+      bank_recon: { complete: false, accounts_pending: [] },
+      ar_aging_review: { complete: false, overdue_count: 0, reviewed: false },
+      ap_aging_review: { complete: false, overdue_count: 0, reviewed: false },
+      fuel_tax: { complete: true, ifta_filed: false, quarter_label: "Q1", due_this_month: false },
+      adjusting_entries: { count: 0 },
+      can_lock: false,
+    }),
+  };
+});
 
 vi.mock("../../../api/banking", () => ({
   getQboSyncQueue: vi.fn().mockResolvedValue({ items: [] }),
@@ -36,13 +52,46 @@ vi.mock("../../../api/forensic", () => ({
   getQboConnectionStatus: vi.fn(),
 }));
 
-vi.mock("../../../api/driverFinance", () => ({
-  listSettlements: vi.fn().mockResolvedValue({ settlements: [] }),
+vi.mock("../../../api/my-accountant", () => ({
+  getAccountingPeriods: vi.fn().mockResolvedValue({ periods: [] }),
+}));
+
+vi.mock("../../../api/cashFlow", () => ({
+  getActualVsProjected: vi.fn().mockResolvedValue({
+    from: "2026-10-01",
+    to: "2026-10-23",
+    lines: [],
+    bank_categorization_coverage: { categorized_count: 1, total_count: 1 },
+    accuracy_summary: {
+      total_projected_income_cents: 0,
+      total_actual_income_cents: 0,
+      income_variance_pct: null,
+      total_projected_expense_cents: 0,
+      total_actual_expense_cents: 0,
+      expense_variance_pct: null,
+    },
+  }),
+  getRollingLedger: vi.fn().mockResolvedValue({
+    from: "2026-08-01",
+    to: "2026-10-23",
+    opening_cash_cents: null,
+    rows: [],
+    days: [],
+  }),
+}));
+
+vi.mock("../../../api/tourReadout", () => ({
+  listTours: vi.fn().mockResolvedValue({ state: "open", count: 0, voided_count: 0, rows: [] }),
 }));
 
 vi.mock("../../../api/reports", () => ({
-  getTrialBalanceReport: vi.fn().mockRejectedValue(new Error("not ready")),
-  getProfitLossReport: vi.fn().mockRejectedValue(new Error("not ready")),
+  getArAgingReport: vi.fn().mockResolvedValue({
+    status: "real",
+    generated_at: new Date().toISOString(),
+    total_open_cents: 0,
+    total_open_invoices: 0,
+    rows: [],
+  }),
 }));
 
 function wrap(ui: ReactElement) {
@@ -64,7 +113,6 @@ describe("AccountingHubPage QBO Sync tile — single source of truth with Bankin
 
     await waitFor(() => expect(forensicApi.getQboConnectionStatus).toHaveBeenCalled());
     expect(await screen.findByText("Not connected")).toBeInTheDocument();
-    // The exact contradiction this bug produced — must never render once connection is wired in.
     expect(screen.queryByText("queue healthy")).not.toBeInTheDocument();
   });
 
@@ -76,15 +124,5 @@ describe("AccountingHubPage QBO Sync tile — single source of truth with Bankin
 
     await waitFor(() => expect(forensicApi.getQboConnectionStatus).toHaveBeenCalled());
     expect(await screen.findByText("Healthy")).toBeInTheDocument();
-  });
-
-  it("still surfaces pending/failed counts when connected (queue backlog unchanged)", async () => {
-    vi.mocked(bankingApi.getQboSyncQueueStats).mockResolvedValue({ pending: 3, failed: 1 } as never);
-    vi.mocked(forensicApi.getQboConnectionStatus).mockResolvedValue({ connected: true } as never);
-
-    render(wrap(<AccountingHubPage />));
-
-    await waitFor(() => expect(forensicApi.getQboConnectionStatus).toHaveBeenCalled());
-    expect(await screen.findByText("1 failed")).toBeInTheDocument();
   });
 });

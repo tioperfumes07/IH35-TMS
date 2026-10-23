@@ -1,35 +1,41 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+/**
+ * ROUND 443.267 board 2 — Accounting home.
+ * Board: 10-22-2026-LEAD-MOD-DESIGN-V3-Accounting.dc.html
+ * Sections (order): KPI strip → 2026 close calendar → Receivables aging · Cash pulse · Settlements open.
+ * Engines only — no mock/sample rows. Find Tx / TB / P&L panels removed (not on board).
+ */
+import { useMemo, useState, type CSSProperties } from "react";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./InvoicesListPage";
 import { ManualJEModal } from "./ManualJEModal";
 import {
+  getMonthCloseStatus,
   listBills,
-  listBillPayments,
   listExpenses,
   listInvoices,
-  listPayments,
+  type MonthCloseStatus,
   type VendorBill,
 } from "../../api/accounting";
 import { getQboSyncQueue, getQboSyncQueueStats } from "../../api/banking";
-import { listSettlements } from "../../api/driverFinance";
+import { getActualVsProjected, getRollingLedger } from "../../api/cashFlow";
 import { getQboConnectionStatus } from "../../api/forensic";
-import { getProfitLossReport, getTrialBalanceReport } from "../../api/reports";
+import { getAccountingPeriods } from "../../api/my-accountant";
+import { getArAgingReport } from "../../api/reports";
+import { listTours } from "../../api/tourReadout";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
-import { useCompanyContext } from "../../contexts/CompanyContext";
-import { companyToday, monthBoundsIso } from "../../lib/businessDate";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { entityLabel } from "../../lib/entity-label";
-// ROUND-20.8 B11 — single derivation shared with Banking's own SyncStatusStrip so /accounting and
-// /banking can never show two different QBO-sync verdicts at the same moment again (see the
-// helper's own header comment for the full contradiction history).
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3Panel } from "../../components/v3/V3Panel";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { V3, V3_TABLE } from "../../design/v3-tokens";
+import { addDaysIso, companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { describeQboSyncStatus } from "../../lib/qbo-sync-status";
+import { QBO_MONEY_CELL_CLASS } from "../../lib/money";
 import { formatUsdCents } from "../../utils/qboFormat";
 
-type AmountRow = { key: string; left: ReactNode; right: string; muted?: string };
 type TabId =
   | "home"
   | "bills"
@@ -57,16 +63,12 @@ export const TABS: Array<{ id: TabId; label: string; to?: string }> = [
   { id: "unmatched-needs-review", label: "Unmatched / Needs Review", to: "/banking/qbo-sync-queue" },
   { id: "factoring", label: "Factoring", to: "/accounting/factoring" },
   { id: "journal-entries", label: "Journal Entries", to: "/accounting/journal-entries" },
-  // U15 (owner, 2026-10-04) — Reclassify promoted out of "More ▾" into the Accounting tab row.
   { id: "reclassify", label: "Reclassify", to: "/accounting/reclassify" },
   { id: "reports", label: "Reports", to: "/reports" },
 ];
 
 /**
- * #3a — per-tab summary-card subtitle. The card title updates per tab but the subtitle was a
- * single hardcoded "Bills paid MTD · Avg DSO" line on every tab. This makes the subtitle reactive
- * to the active tab: AP/AR tabs surface the relevant live metric, others get a domain hint.
- * Exhaustive over TabId (no default) so a new tab fails typecheck until it gets a subtitle.
+ * #3a — per-tab summary-card subtitle (kept for AccountingHubPage.subtitle.test.ts).
  */
 export function accountingTabSubtitle(
   tabId: TabId,
@@ -104,21 +106,34 @@ export function accountingTabSubtitle(
   }
 }
 
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+const MONTH_UPPER = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"] as const;
+
+const thStyle: CSSProperties = {
+  textAlign: "left",
+  fontSize: V3_TABLE.headerPx,
+  fontWeight: 600,
+  color: V3.muted,
+  padding: `${V3_TABLE.rowPadY}px 12px`,
+  borderBottom: `1px solid ${V3.border}`,
+  background: V3.headerBg,
+  whiteSpace: "nowrap",
+  fontFamily: V3.font,
+};
+
+const tdStyle: CSSProperties = {
+  textAlign: "left",
+  padding: `${V3_TABLE.rowPadY}px 12px`,
+  borderBottom: `1px solid ${V3.borderSoft}`,
+  fontSize: V3_TABLE.fontPx,
+  whiteSpace: "nowrap",
+  color: V3.ink,
+  fontFamily: V3.font,
+  fontVariantNumeric: "tabular-nums",
+};
+
 function monthStartIso() {
   return monthBoundsIso(companyToday()).start;
-}
-
-function currentQuarterRange() {
-  const today = companyToday();
-  const [y, m] = today.split("-").map(Number);
-  const q = Math.floor((m - 1) / 3);
-  const startMonth = q * 3 + 1;
-  const endMonth = startMonth + 2;
-  const endDay = new Date(Date.UTC(y, endMonth, 0)).getUTCDate();
-  return {
-    start: `${y}-${String(startMonth).padStart(2, "0")}-01`,
-    end: `${y}-${String(endMonth).padStart(2, "0")}-${String(endDay).padStart(2, "0")}`,
-  };
 }
 
 function isIsoOnOrAfter(left: string | null | undefined, right: string) {
@@ -132,56 +147,62 @@ function amountOrBalanceCents(row: VendorBill) {
   return Number(row.amount_cents) - Number(row.paid_cents ?? 0);
 }
 
-function relativeRetry(nextAttemptAt: string | null | undefined) {
-  if (!nextAttemptAt) return "—";
-  const deltaMs = new Date(nextAttemptAt).getTime() - Date.now();
-  const minutes = Math.max(1, Math.round(Math.abs(deltaMs) / 60000));
-  return `retry ${minutes}m`;
+function formatPlainAmount(cents: number): string {
+  return (cents / 100).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
-function kpiCard(label: string, value: string, sublabel: string, tone: "neutral" | "warn" | "danger" = "neutral") {
-  const toneClass =
-    tone === "danger"
-      ? "border-l-4 border-l-red-500"
-      : tone === "warn"
-        ? "border-l-4 border-l-[#6B7280]"
-        : "border-l-4 border-l-[#6B7280]";
-  return (
-    <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
-      <p className="text-section-header font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="text-page-title font-semibold text-gray-900">{value}</p>
-      <p className="text-xs text-gray-500">{sublabel}</p>
-    </div>
-  );
+function sharePct(part: number, total: number): string {
+  if (total <= 0 || part <= 0) return "—";
+  return `${((part / total) * 100).toFixed(1)}%`;
 }
 
-function homePanel(title: string, rows: AmountRow[], empty: string, actionHref?: string, actionLabel?: string) {
+function periodKey(year: number, month1: number): string {
+  return `${year}-${String(month1).padStart(2, "0")}`;
+}
+
+/** Four board marks: bank rec · AR tie-out · AP tie-out · TB = 0 & lock. */
+function monthMarks(status: MonthCloseStatus | undefined, periodClosed: boolean): boolean[] {
+  if (periodClosed) return [true, true, true, true];
+  if (!status) return [false, false, false, false];
+  return [
+    Boolean(status.bank_recon?.complete),
+    Boolean(status.ar_aging_review?.complete),
+    Boolean(status.ap_aging_review?.complete),
+    Boolean(status.can_lock),
+  ];
+}
+
+function WeeklySpark({ points }: { points: number[] }) {
+  if (points.length === 0) {
+    return <svg width={200} height={40} viewBox="0 0 200 40" aria-hidden />;
+  }
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const span = max - min || 1;
+  const w = 200;
+  const h = 40;
+  const pad = 2;
+  const coords = points
+    .map((v, i) => {
+      const x = points.length === 1 ? w / 2 : (i / (points.length - 1)) * w;
+      const y = pad + (1 - (v - min) / span) * (h - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
   return (
-    <section className="rounded-sm border border-gray-200 bg-white">
-      <header className="flex items-center justify-between border-b border-gray-200 px-3 py-1.5">
-        <h3 className="text-section-header font-bold uppercase tracking-wide text-gray-700">{title}</h3>
-        {actionHref && actionLabel ? (
-          <Link to={actionHref} className="text-xs font-semibold text-[#1F2A44] hover:underline">
-            {actionLabel}
-          </Link>
-        ) : null}
-      </header>
-      {rows.length ? (
-        <ul>
-          {rows.map((row) => (
-            <li key={row.key} className="flex items-start justify-between border-b border-gray-100 px-3 py-1.5 text-xs last:border-b-0">
-              <span className="truncate text-gray-800">{row.left}</span>
-              <span className="text-right">
-                <span className={`tabular-nums ${row.muted ? "text-gray-500" : "text-gray-900"}`}>{row.right}</span>
-                {row.muted ? <span className="ml-2 text-xs text-gray-500">{row.muted}</span> : null}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="px-3 py-4 text-xs text-gray-500">{empty}</p>
-      )}
-    </section>
+    <svg width={200} height={40} viewBox="0 0 200 40" aria-hidden>
+      <polyline
+        points={coords}
+        fill="none"
+        stroke={V3.data}
+        strokeWidth={1.6}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -190,31 +211,29 @@ export function AccountingHubPage() {
   const companyId = selectedCompanyId ?? "";
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [manualJeOpen, setManualJeOpen] = useState(false);
-  const mtdStart = monthStartIso();
-  const monthRange = useMemo(() => monthBoundsIso(companyToday()), []);
-  const quarterRange = useMemo(() => currentQuarterRange(), []);
 
-  const [billsQ, billPaymentsQ, paymentsQ, settlementsQ, invoicesQ, qboStatsQ, qboConnectionQ, qboQueueQ, trialBalanceQ, profitLossQ, expensesQ] = useQueries({
+  const today = companyToday();
+  const mtdStart = monthStartIso();
+  const [yearStr, monthStr] = today.split("-");
+  const year = Number(yearStr);
+  const monthNow = Number(monthStr);
+  const dayNow = Number(today.slice(8, 10));
+
+  const pastMonthKeys = useMemo(() => {
+    const keys: string[] = [];
+    for (let m = 1; m <= monthNow; m++) keys.push(periodKey(year, m));
+    return keys;
+  }, [year, monthNow]);
+
+  const sparkFrom = addDaysIso(today, -83);
+
+  const [billsQ, invoicesQ, qboStatsQ, qboConnectionQ, qboQueueQ, expensesQ] = useQueries({
     queries: [
       {
         queryKey: ["accounting-proto", "bills", companyId],
         queryFn: () => listBills(companyId, { include_balance: true, limit: 500 }),
-        enabled: Boolean(companyId),
-      },
-      {
-        queryKey: ["accounting-proto", "bill-payments", companyId],
-        queryFn: () => listBillPayments(companyId, { limit: 500 }),
-        enabled: Boolean(companyId),
-      },
-      {
-        queryKey: ["accounting-proto", "payments", companyId],
-        queryFn: () => listPayments(companyId, { limit: 500 }),
-        enabled: Boolean(companyId),
-      },
-      {
-        queryKey: ["accounting-proto", "settlements", companyId],
-        queryFn: () => listSettlements(companyId),
         enabled: Boolean(companyId),
       },
       {
@@ -228,9 +247,6 @@ export function AccountingHubPage() {
         enabled: Boolean(companyId),
       },
       {
-        // ROUND-20.8 B11 — the OAuth connection half Banking's SyncStatusStrip already fetches;
-        // this page previously only had the queue-backlog half, so it could read "0 pending — queue
-        // healthy" while Banking read "Not connected" at the exact same moment.
         queryKey: ["accounting-proto", "qbo-connection", companyId],
         queryFn: () => getQboConnectionStatus(companyId),
         enabled: Boolean(companyId),
@@ -241,33 +257,6 @@ export function AccountingHubPage() {
         enabled: Boolean(companyId),
       },
       {
-        queryKey: ["accounting-hub", "trial-balance", companyId, quarterRange.start, quarterRange.end],
-        queryFn: () =>
-          getTrialBalanceReport({
-            operating_company_id: companyId,
-            from_date: quarterRange.start,
-            to_date: quarterRange.end,
-            basis: "accrual",
-          }),
-        enabled: Boolean(companyId),
-        retry: false,
-      },
-      {
-        queryKey: ["accounting-hub", "profit-loss", companyId, monthRange.start, monthRange.end],
-        queryFn: () =>
-          getProfitLossReport({
-            operating_company_id: companyId,
-            from_date: monthRange.start,
-            to_date: monthRange.end,
-            basis: "accrual",
-          }),
-        enabled: Boolean(companyId),
-        retry: false,
-      },
-      {
-        // HUB-MTD-EXPENSES (owner 2026-09-06 05:0xZ, Accounting home showed MTD EXPENSES $0.00 · 0 bills while Neon held
-        // 207 direct expenses): the KPI read BILLS only. Direct expenses (accounting.expenses, the whole USMCA cost base
-        // today) are month-to-date expenses too. GET /api/v1/expenses caps limit at 200 → paged by offset.
         queryKey: ["accounting-proto", "expenses-mtd", companyId, mtdStart],
         queryFn: async () => {
           const rows: Awaited<ReturnType<typeof listExpenses>>["rows"] = [];
@@ -285,10 +274,47 @@ export function AccountingHubPage() {
     ],
   });
 
+  const periodsQ = useQuery({
+    queryKey: ["accounting-hub", "periods", companyId],
+    queryFn: () => getAccountingPeriods(companyId),
+    enabled: Boolean(companyId),
+  });
+
+  const arAgingQ = useQuery({
+    queryKey: ["accounting-hub", "ar-aging", companyId, today],
+    queryFn: () => getArAgingReport(companyId, today),
+    enabled: Boolean(companyId),
+  });
+
+  const avpQ = useQuery({
+    queryKey: ["accounting-hub", "avp-mtd", companyId, mtdStart, today],
+    queryFn: () => getActualVsProjected(companyId, mtdStart, today),
+    enabled: Boolean(companyId),
+  });
+
+  const rollingQ = useQuery({
+    queryKey: ["accounting-hub", "rolling-spark", companyId, sparkFrom, today],
+    queryFn: () => getRollingLedger(companyId, sparkFrom, today),
+    enabled: Boolean(companyId),
+  });
+
+  const toursOpenQ = useQuery({
+    queryKey: ["accounting-hub", "tours-open", companyId],
+    queryFn: () => listTours(companyId, "open"),
+    enabled: Boolean(companyId),
+  });
+
+  const monthCloseQueries = useQueries({
+    queries: pastMonthKeys.map((period) => ({
+      queryKey: ["accounting-hub", "month-close", companyId, period],
+      queryFn: () => getMonthCloseStatus(companyId, period),
+      enabled: Boolean(companyId),
+      retry: false,
+      staleTime: 60_000,
+    })),
+  });
+
   const bills = billsQ.data?.rows ?? [];
-  const billPayments = billPaymentsQ.data?.rows ?? [];
-  const receivePayments = paymentsQ.data?.rows ?? [];
-  const settlements = settlementsQ.data?.settlements ?? [];
   const invoices = invoicesQ.data?.invoices ?? [];
   const qboItems = qboQueueQ.data?.items ?? [];
 
@@ -303,195 +329,245 @@ export function AccountingHubPage() {
   const billsMtd = useMemo(() => bills.filter((bill) => isIsoOnOrAfter(bill.bill_date, mtdStart)), [bills, mtdStart]);
   const openBillsAmountCents = openBills.reduce((sum, bill) => sum + amountOrBalanceCents(bill), 0);
   const directExpensesMtd = useMemo(
-    () => (expensesQ.data ?? []).filter((x) => x.status !== "void" && x.status !== "draft" && isIsoOnOrAfter(x.transaction_date, mtdStart)),
+    () =>
+      (expensesQ.data ?? []).filter(
+        (x) => x.status !== "void" && x.status !== "draft" && isIsoOnOrAfter(x.transaction_date, mtdStart)
+      ),
     [expensesQ.data, mtdStart]
   );
   const expensesMtdCents =
     billsMtd.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0) +
     directExpensesMtd.reduce((sum, x) => sum + Number(x.total_amount_cents ?? 0), 0);
-  // ACCT-F200 / LV-AR-OPEN-INCLUDES-VOIDED (ACCT-F5027) — amount_open_cents is a STORED GENERATED
-  // column that legitimately stays nonzero on a voided invoice (voiding changes validity, not face
-  // value); every open-A/R read path MUST exclude voided rows instead, via the same
-  // isVoidInvoice/invoiceOpenCentsForDisplay helpers InvoicesListPage already uses. This KPI was the
-  // one surface still summing the raw column unfiltered, live-overstating USMCA Open Invoices by
-  // ~$32.9k (34 void rows, $34,873.57 shown vs the real $3,200.00 open across 3 proforma rows).
-  // 443.218 F4: use server KPIs (full set) when available; fall back to client-side filter on the page.
+
   const invoiceServerKpi = invoicesQ.data?.kpi;
   const openInvoices = invoices.filter((invoice) => !isVoidInvoice(invoice) && invoiceOpenCentsForDisplay(invoice) > 0);
-  const openInvoicesCents = invoiceServerKpi != null ? invoiceServerKpi.open_amount_cents : openInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
-  const overdueInvoices = openInvoices.filter((invoice) => invoice.due_date < companyToday());
-  const overdueInvoiceCents = invoiceServerKpi != null ? invoiceServerKpi.overdue_amount_cents : overdueInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
+  const openInvoicesCents =
+    invoiceServerKpi != null
+      ? invoiceServerKpi.open_amount_cents
+      : openInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
+  const overdueInvoices = openInvoices.filter((invoice) => invoice.due_date < today);
+  const overdueInvoiceCents =
+    invoiceServerKpi != null
+      ? invoiceServerKpi.overdue_amount_cents
+      : overdueInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
   const openInvoicesCount = invoiceServerKpi?.open_count ?? openInvoices.length;
   const overdueInvoicesCount = invoiceServerKpi?.overdue_count ?? overdueInvoices.length;
+
   const unmatchedItems = qboItems.filter((item) => item.sync_status === "failed" || item.sync_status === "blocked");
   const qboPending = Number(qboStatsQ.data?.pending ?? 0);
   const qboFailed = Number(qboStatsQ.data?.failed ?? 0);
-  // ROUND-20.8 B11 — same derivation Banking's SyncStatusStrip calls, fed the connection half this
-  // page was missing, so the two screens can never disagree again.
   const qboSyncSummary = describeQboSyncStatus({
     connected: qboConnectionQ.data?.connected ?? false,
     pending: qboPending,
     failed: qboFailed,
   });
-  // kpiCard only has neutral/warn/danger (no "good" state) — every other tile on this page maps its
-  // own OK case to "neutral", so "good" collapses the same way here rather than inventing a 4th tone.
-  const qboSyncTone: "neutral" | "warn" | "danger" =
-    qboSyncSummary.tone === "bad" ? "danger" : qboSyncSummary.tone === "warn" ? "warn" : "neutral";
+  const qboTone =
+    qboSyncSummary.tone === "bad" ? "red" : qboSyncSummary.tone === "warn" ? "amber" : ("ink" as const);
 
-  const settlementsRows: AmountRow[] = settlements
-    .slice(0, 5)
-    .map((row) => ({
-      key: row.id,
-      left: row.driver_id
-        ? <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_full_name} noun="Driver" className="truncate" />
-        : (row.driver_full_name || "Settlement"),
-      right: formatUsdCents(Number(row.net_pay ?? 0)),
-      muted: row.status,
-    }));
+  const closedByPeriod = useMemo(() => {
+    const map = new Map<string, boolean>();
+    for (const p of periodsQ.data?.periods ?? []) {
+      const start = p.period_start?.slice(0, 7);
+      if (!start) continue;
+      const closed = String(p.status ?? "").toLowerCase() === "closed" || Boolean(p.closed_at);
+      map.set(start, closed);
+    }
+    return map;
+  }, [periodsQ.data]);
 
-  const findTransactionsRows: AmountRow[] = useMemo(() => {
-    const items: Array<{ key: string; left: ReactNode; date: string; amountCents: number; type: string }> = [];
-    for (const row of billPayments.slice(0, 12)) {
-      const label = entityLabel(
-        row.vendor_name || row.bill_number || row.reference_number || row.check_number || row.memo,
-        row.id,
-        "Payment",
-      );
-      items.push({
-        key: `bp-${row.id}`,
-        left: row.mdata_vendor_id
-          ? <EntityLink kind="vendor" id={row.mdata_vendor_id} label={label} className="truncate" />
-          : label,
-        date: row.payment_date,
-        amountCents: Number(row.amount_cents ?? 0),
-        type: "Bill payment",
-      });
+  const pastMonthsInYear = monthNow - 1; // Jan..(monthNow-1) are "past" for the board count
+  const closedPastCount = useMemo(() => {
+    let n = 0;
+    for (let m = 1; m < monthNow; m++) {
+      if (closedByPeriod.get(periodKey(year, m))) n += 1;
     }
-    for (const row of receivePayments.slice(0, 12)) {
-      const paymentLabel = entityLabel(row.display_id || row.customer_name, row.id, "Payment");
-      items.push({
-        key: `rp-${row.id}`,
-        left: row.customer_id
-          ? <EntityLink kind="customer" id={row.customer_id} label={paymentLabel} className="truncate" />
-          : paymentLabel,
-        date: row.payment_date,
-        amountCents: Number(row.amount_cents ?? 0),
-        type: "Receive payment",
-      });
-    }
-    return items
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 5)
-      .map((item) => ({
-        key: item.key,
-        left: item.left,
-        right: formatUsdCents(item.amountCents),
-        muted: item.type,
-      }));
-  }, [billPayments, receivePayments]);
+    return n;
+  }, [closedByPeriod, year, monthNow]);
 
-  const unmatchedRows: AmountRow[] = unmatchedItems.slice(0, 5).map((item) => ({
-    key: item.id,
-    left: `${item.entity_type} · ${entityLabel(item.display_id, item.entity_id, "Record")}`,
-    right: item.sync_status,
-    muted: relativeRetry(item.next_attempt_at),
-  }));
+  const closeCells = useMemo(() => {
+    return MONTH_SHORT.map((label, idx) => {
+      const m = idx + 1;
+      const key = periodKey(year, m);
+      const isFuture = m > monthNow;
+      const isClosed = closedByPeriod.get(key) === true;
+      const statusIdx = pastMonthKeys.indexOf(key);
+      const status = statusIdx >= 0 ? monthCloseQueries[statusIdx]?.data : undefined;
+      const marks = isFuture ? [false, false, false, false] : monthMarks(status, isClosed);
+      let statusLabel: string;
+      let statusColor: string;
+      if (isFuture) {
+        statusLabel = "—";
+        statusColor = V3.muted;
+      } else if (isClosed) {
+        statusLabel = "closed";
+        statusColor = V3.green;
+      } else {
+        statusLabel = "open";
+        statusColor = m < monthNow ? V3.amber : V3.muted;
+      }
+      return { label, key, statusLabel, statusColor, marks, isFuture };
+    });
+  }, [year, monthNow, closedByPeriod, pastMonthKeys, monthCloseQueries]);
 
-  const trialBalanceRows: AmountRow[] = useMemo(() => {
-    if (trialBalanceQ.isError) {
-      return [
-        {
-          key: "tb-stub",
-          left: "Ledger snapshot",
-          right: "Unavailable",
-          muted: "service unavailable",
-        },
-      ];
+  /** Aging buckets from AR engine row cents. Invoice counts: dominant-bucket attribution (engine has no per-bucket invoice count). */
+  const agingBuckets = useMemo(() => {
+    const rows = arAgingQ.data?.rows ?? [];
+    let notDue = 0;
+    let d1 = 0;
+    let d31 = 0;
+    let d61 = 0;
+    let invNotDue = 0;
+    let inv1 = 0;
+    let inv31 = 0;
+    let inv61 = 0;
+    for (const row of rows) {
+      const a0 = Number(row.current_cents ?? 0);
+      const a1 = Number(row.bucket_1_30_cents ?? 0);
+      const a31 = Number(row.bucket_31_60_cents ?? 0);
+      const a61 = Number(row.bucket_61_90_cents ?? 0) + Number(row.bucket_91_plus_cents ?? 0);
+      notDue += a0;
+      d1 += a1;
+      d31 += a31;
+      d61 += a61;
+      const inv = Number(row.open_invoice_count ?? 0);
+      const max = Math.max(a0, a1, a31, a61);
+      if (max <= 0 || inv <= 0) continue;
+      if (a0 === max) invNotDue += inv;
+      else if (a1 === max) inv1 += inv;
+      else if (a31 === max) inv31 += inv;
+      else inv61 += inv;
     }
-    if (trialBalanceQ.isLoading || !trialBalanceQ.data) {
-      return [{ key: "tb-loading", left: "Ledger snapshot", right: "Loading…" }];
-    }
-    const { summary, rows } = trialBalanceQ.data;
-    return [
-      {
-        key: "tb-debits",
-        left: "Grand debits",
-        right: formatUsdCents(summary.grand_total_debits),
-      },
-      {
-        key: "tb-credits",
-        left: "Grand credits",
-        right: formatUsdCents(summary.grand_total_credits),
-      },
-      {
-        key: "tb-balanced",
-        left: "Balance check",
-        right: summary.balanced ? "Balanced" : "Out of balance",
-        muted: `${rows.length} accounts`,
-      },
-    ];
-  }, [trialBalanceQ.data, trialBalanceQ.isError, trialBalanceQ.isLoading]);
+    const totalAmt = notDue + d1 + d31 + d61;
+    const totalInv = arAgingQ.data?.total_open_invoices ?? invNotDue + inv1 + inv31 + inv61;
+    return {
+      rows: [
+        { key: "not-due", label: "Not due", invoices: invNotDue, amountCents: notDue, color: V3.data },
+        { key: "1-30", label: "1–30", invoices: inv1, amountCents: d1, color: V3.slate },
+        { key: "31-60", label: "31–60", invoices: inv31, amountCents: d31, color: V3.red },
+        { key: "61+", label: "61+", invoices: inv61, amountCents: d61, color: V3.amber },
+      ],
+      totalAmt,
+      totalInv,
+    };
+  }, [arAgingQ.data]);
 
-  const profitLossRows: AmountRow[] = useMemo(() => {
-    if (profitLossQ.isError) {
-      return [
-        {
-          key: "pl-stub",
-          left: "P&L snapshot",
-          right: "Unavailable",
-          muted: "service unavailable",
-        },
-      ];
+  const cashIn = Number(avpQ.data?.accuracy_summary?.total_actual_income_cents ?? 0);
+  const cashOut = Number(avpQ.data?.accuracy_summary?.total_actual_expense_cents ?? 0);
+  const cashNet = cashIn - cashOut;
+  const avpUnavailable = Boolean(
+    avpQ.data?.lines?.some((l) => l.category === "income" && l.actual_unavailable)
+  );
+
+  const weeklyNets = useMemo(() => {
+    const days = rollingQ.data?.days ?? [];
+    if (days.length === 0) return [] as number[];
+    // 12 week buckets ending at `today`, oldest → newest.
+    const buckets: number[] = Array.from({ length: 12 }, () => 0);
+    for (const day of days) {
+      const daysAgo = Math.max(0, Math.floor((Date.parse(`${today}T12:00:00`) - Date.parse(`${day.date}T12:00:00`)) / 86_400_000));
+      const weekIdxFromEnd = Math.min(11, Math.floor(daysAgo / 7));
+      const idx = 11 - weekIdxFromEnd;
+      buckets[idx] += Number(day.net_cents ?? 0);
     }
-    if (profitLossQ.isLoading || !profitLossQ.data) {
-      return [{ key: "pl-loading", left: "P&L snapshot", right: "Loading…" }];
+    return buckets;
+  }, [rollingQ.data, today]);
+
+  const settlementsOpen = useMemo(() => {
+    const rows = toursOpenQ.data?.rows ?? [];
+    const byDriver = new Map<string, { driverId: string | null; name: string; cents: number }>();
+    for (const row of rows) {
+      const key = row.driver_id ?? row.driver_name ?? row.settlement_id;
+      const prev = byDriver.get(key);
+      const add = Number(row.driver_net_cents ?? 0);
+      if (prev) {
+        prev.cents += add;
+      } else {
+        byDriver.set(key, {
+          driverId: row.driver_id,
+          name: row.driver_name?.trim() || "Driver",
+          cents: add,
+        });
+      }
     }
-    const report = profitLossQ.data;
-    return [
-      {
-        key: "pl-revenue",
-        left: "Revenue",
-        right: formatUsdCents(report.revenue.total),
-      },
-      {
-        key: "pl-gross",
-        left: "Gross profit",
-        right: formatUsdCents(report.gross_profit),
-      },
-      {
-        key: "pl-net",
-        left: "Net income",
-        right: formatUsdCents(report.net_income),
-        muted: report.net_income < 0 ? "loss" : "profit",
-      },
-    ];
-  }, [profitLossQ.data, profitLossQ.isError, profitLossQ.isLoading]);
+    return [...byDriver.values()].sort((a, b) => b.cents - a.cents).slice(0, 12);
+  }, [toursOpenQ.data]);
+
+  const inLabel = `IN · ${MONTH_UPPER[monthNow - 1]} 1–${dayNow}`;
 
   const kpiStrip = (
-    <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
-        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-HUB — hub strip used billsQ.data?.rows ?? [] / invoicesQ.data
-            without isError, so a failed bills/invoices/QBO fetch still painted $0.00 / 0 open. */}
-        {billsQ.isError
-          ? kpiCard("Open Bills", "—", "Error loading")
-          : kpiCard("Open Bills", formatUsdCents(openBillsAmountCents), `${openBills.length} open`, openBills.length ? "danger" : "neutral")}
-        {billsQ.isError
-          ? kpiCard("MTD Expenses", "—", "Error loading")
-          : expensesQ.isError
-            ? kpiCard("MTD Expenses", "—", "Error loading expenses")
-            : kpiCard("MTD Expenses", formatUsdCents(expensesMtdCents), `${billsMtd.length} bills · ${directExpensesMtd.length} expenses`, "warn")}
-        {invoicesQ.isError
-          ? kpiCard("Open Invoices", "—", "Error loading")
-          : kpiCard("Open Invoices", formatUsdCents(openInvoicesCents), `${openInvoicesCount} open`)}
-        {invoicesQ.isError
-          ? kpiCard("Overdue A/R", "—", "Error loading")
-          : kpiCard("Overdue A/R", formatUsdCents(overdueInvoiceCents), `${overdueInvoicesCount} overdue`, overdueInvoicesCount > 0 ? "danger" : "neutral")}
-        {qboQueueQ.isError
-          ? kpiCard("Unmatched", "—", "Error loading")
-          : kpiCard("Unmatched", String(unmatchedItems.length), "failed / blocked queue")}
-        {qboStatsQ.isError || qboConnectionQ.isError
-          ? kpiCard("QBO Sync", "—", "Error loading")
-          : kpiCard("QBO Sync", qboSyncSummary.label, qboSyncSummary.sub, qboSyncTone)}
-      </div>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+        gap: 8,
+      }}
+      data-testid="accounting-hub-kpi-strip"
+      className="text-section-header"
+    >
+      {billsQ.isError ? (
+        <V3KpiTile label="Open bills" value="—" sub="Error loading" />
+      ) : (
+        <V3KpiTile
+          label="Open bills"
+          value={formatUsdCents(openBillsAmountCents)}
+          sub={`${openBills.length} unpaid`}
+          tone={openBills.length ? "red" : "ink"}
+          testId="acct-hub-kpi-open-bills"
+        />
+      )}
+      {billsQ.isError || expensesQ.isError ? (
+        <V3KpiTile label="MTD expenses" value="—" sub="Error loading" />
+      ) : (
+        <V3KpiTile
+          label="MTD expenses"
+          value={formatUsdCents(expensesMtdCents)}
+          sub="bills + expenses"
+          testId="acct-hub-kpi-mtd-expenses"
+        />
+      )}
+      {invoicesQ.isError ? (
+        <V3KpiTile label="Open invoices" value="—" sub="Error loading" />
+      ) : (
+        <V3KpiTile
+          label="Open invoices"
+          value={formatUsdCents(openInvoicesCents)}
+          sub={`${openInvoicesCount} open`}
+          testId="acct-hub-kpi-open-invoices"
+        />
+      )}
+      {invoicesQ.isError ? (
+        <V3KpiTile label="Overdue A/R" value="—" sub="Error loading" />
+      ) : (
+        <V3KpiTile
+          label="Overdue A/R"
+          value={formatUsdCents(overdueInvoiceCents)}
+          sub={`${overdueInvoicesCount} overdue`}
+          tone={overdueInvoicesCount > 0 ? "amber" : "ink"}
+          testId="acct-hub-kpi-overdue"
+        />
+      )}
+      {qboQueueQ.isError ? (
+        <V3KpiTile label="Unmatched" value="—" sub="Error loading" />
+      ) : (
+        <V3KpiTile
+          label="Unmatched"
+          value={String(unmatchedItems.length)}
+          sub="failed / blocked queue"
+          testId="acct-hub-kpi-unmatched"
+        />
+      )}
+      {qboStatsQ.isError || qboConnectionQ.isError ? (
+        <V3KpiTile label="QBO sync" value="—" sub="Error loading" />
+      ) : (
+        <V3KpiTile
+          label="QBO sync"
+          value={qboSyncSummary.label}
+          sub={qboSyncSummary.sub}
+          tone={qboTone}
+          testId="acct-hub-kpi-qbo"
+        />
+      )}
+    </div>
   );
 
   return (
@@ -500,51 +576,243 @@ export function AccountingHubPage() {
       subtitle="Bills, expenses, invoices, settlements & transaction review"
       kpiStrip={kpiStrip}
       createControl={
-        // Access follows the existing accounting role gate (canAccessAccounting: Owner /
-        // Administrator / Accountant) — the same bar as every other create surface in this module.
-        // No amount threshold: owner ruling 2026-07-22, "remove threshold".
-        // CTL-04: createControl replaces module "+ Create ▾" so hub has exactly one create control.
         <Button size="sm" onClick={() => setManualJeOpen(true)} disabled={!companyId}>
           + Create Manual JE
         </Button>
       }
     >
-      {!companyId ? <p className="text-xs text-[#1F2A44]">Select an operating company.</p> : null}
-      <div className="grid gap-2 lg:grid-cols-3">
-        {homePanel("Settlements", settlementsRows, settlementsQ.isLoading ? "Loading…" : "No settlements found.", "/driver-finance/settlements", "View all")}
-        {homePanel(
-          "Find Transactions",
-          findTransactionsRows,
-          billPaymentsQ.isLoading || paymentsQ.isLoading ? "Loading…" : "No transactions found.",
-          "/accounting/payments",
-          "Open payments"
-        )}
-        {homePanel(
-          "Unmatched / Needs Review",
-          unmatchedRows,
-          qboQueueQ.isLoading ? "Loading…" : "No unmatched queue items.",
-          "/banking/qbo-sync-queue",
-          "Open queue"
-        )}
-        {homePanel(
-          "TRIAL BALANCE",
-          trialBalanceRows,
-          trialBalanceQ.isError
-            ? "Trial balance snapshot is temporarily unavailable."
-            : `Quarter-to-date ${quarterRange.start} → ${quarterRange.end}.`,
-          "/reports/trial-balance",
-          "Open trial balance"
-        )}
-        {homePanel(
-          "PROFIT & LOSS",
-          profitLossRows,
-          profitLossQ.isError
-            ? "P&L snapshot is temporarily unavailable."
-            : `Month-to-date ${monthRange.start} → ${monthRange.end}.`,
-          "/reports/profit-loss",
-          "Open profit & loss"
-        )}
+      {!companyId ? <p style={{ fontSize: 12, color: V3.ink }}>Select an operating company.</p> : null}
+
+      <div
+        style={{ display: "flex", flexDirection: "column", gap: 12, fontFamily: V3.font }}
+        data-testid="accounting-hub-board"
+      >
+        <V3Panel
+          title={`${year} close — ${closedPastCount} of ${Math.max(0, pastMonthsInYear)} past months closed`}
+          onViewAll={() => navigate("/accounting/month-close")}
+          testId="accounting-hub-close-calendar"
+        >
+          <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(12, 1fr)",
+                gap: 4,
+              }}
+            >
+              {closeCells.map((cell) => (
+                <div
+                  key={cell.key}
+                  style={{
+                    border: `1px solid ${V3.border}`,
+                    borderRadius: 2,
+                    padding: 6,
+                    background: V3.surface,
+                  }}
+                  data-testid={`acct-hub-month-${cell.key}`}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 700, color: V3.ink }}>{cell.label}</div>
+                  <div style={{ fontSize: 10, color: cell.statusColor }}>{cell.statusLabel}</div>
+                  <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
+                    {cell.marks.map((on, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          flex: 1,
+                          height: 3,
+                          background: on ? V3.green : V3.chartGrid,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: 11, color: V3.muted, margin: 0 }}>
+              4 marks per month: bank rec · AR tie-out · AP tie-out · TB = 0 & lock.
+            </p>
+          </div>
+        </V3Panel>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.2fr 1.2fr 1fr",
+            gap: 12,
+            alignItems: "start",
+          }}
+        >
+          <V3Panel
+            title="Receivables aging"
+            onViewAll={() => navigate("/reports/ar-aging")}
+            testId="accounting-hub-receivables-aging"
+          >
+            <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {arAgingQ.isError ? (
+                <p style={{ fontSize: 12, color: V3.red, margin: 0 }}>Could not load A/R aging.</p>
+              ) : (
+                <>
+                  <div style={{ display: "flex", height: 10, borderRadius: 5, overflow: "hidden" }}>
+                    {agingBuckets.rows.map((b) =>
+                      b.amountCents > 0 ? (
+                        <div key={b.key} style={{ flex: b.amountCents, background: b.color }} title={b.label} />
+                      ) : null
+                    )}
+                    {agingBuckets.totalAmt <= 0 ? (
+                      <div style={{ flex: 1, background: V3.chartGrid }} />
+                    ) : null}
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr>
+                          <th style={thStyle}>Bucket</th>
+                          <th style={{ ...thStyle, textAlign: "right" }}>Invoices</th>
+                          <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
+                          <th style={{ ...thStyle, textAlign: "right" }}>Share</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {agingBuckets.rows.map((b) => (
+                          <tr key={b.key}>
+                            <td style={tdStyle}>{b.label}</td>
+                            <td style={{ ...tdStyle, textAlign: "right" }}>
+                              {arAgingQ.isLoading ? "…" : b.invoices || ""}
+                            </td>
+                            <td style={{ ...tdStyle, textAlign: "right" }}>
+                              {arAgingQ.isLoading ? "…" : formatPlainAmount(b.amountCents)}
+                            </td>
+                            <td style={{ ...tdStyle, textAlign: "right" }}>
+                              {arAgingQ.isLoading ? "…" : sharePct(b.amountCents, agingBuckets.totalAmt)}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr>
+                          <td style={{ ...tdStyle, fontWeight: 700, borderBottom: "none" }}>Total</td>
+                          <td style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}>
+                            {arAgingQ.isLoading ? "…" : agingBuckets.totalInv}
+                          </td>
+                          <td style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}>
+                            {arAgingQ.isLoading ? "…" : formatPlainAmount(agingBuckets.totalAmt)}
+                          </td>
+                          <td style={{ ...tdStyle, textAlign: "right", borderBottom: "none" }}></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          </V3Panel>
+
+          <V3Panel
+            title="Cash pulse · operating account"
+            onViewAll={() => navigate("/cash-flow")}
+            testId="accounting-hub-cash-pulse"
+          >
+            <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {avpQ.isError ? (
+                <p style={{ fontSize: 12, color: V3.red, margin: 0 }}>Could not load cash pulse.</p>
+              ) : (
+                <>
+                  <div style={{ display: "flex", gap: 18, alignItems: "flex-end" }}>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted }}>{inLabel}</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: V3.ink, fontVariantNumeric: "tabular-nums" }}>
+                        {avpQ.isLoading || avpUnavailable ? "—" : formatUsdCents(cashIn)}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted }}>OUT</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: V3.ink, fontVariantNumeric: "tabular-nums" }}>
+                        {avpQ.isLoading || avpUnavailable ? "—" : formatUsdCents(cashOut)}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted }}>NET</div>
+                      <div
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: cashNet < 0 ? V3.red : V3.ink,
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {avpQ.isLoading || avpUnavailable
+                          ? "—"
+                          : `${cashNet < 0 ? "−" : ""}${formatUsdCents(Math.abs(cashNet))}`}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1 }} />
+                    <WeeklySpark points={weeklyNets} />
+                  </div>
+                  <div style={{ fontSize: 11, color: V3.muted }}>Weekly net, 12 weeks — opens Cash flow.</div>
+                </>
+              )}
+            </div>
+          </V3Panel>
+
+          <V3Panel
+            title="Settlements open"
+            onViewAll={() => navigate("/driver-finance/settlements?state=open")}
+            testId="accounting-hub-settlements-open"
+          >
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={thStyle}>Driver</th>
+                    <th style={{ ...thStyle, textAlign: "right" }}>Open</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {toursOpenQ.isLoading ? (
+                    <tr>
+                      <td colSpan={2} style={{ ...tdStyle, color: V3.muted }}>
+                        Loading…
+                      </td>
+                    </tr>
+                  ) : toursOpenQ.isError ? (
+                    <tr>
+                      <td colSpan={2} style={{ ...tdStyle, color: V3.red }}>
+                        Could not load open settlements.
+                      </td>
+                    </tr>
+                  ) : settlementsOpen.length === 0 ? (
+                    <tr>
+                      <td colSpan={2} style={{ ...tdStyle, color: V3.muted }}>
+                        No open settlements.
+                      </td>
+                    </tr>
+                  ) : (
+                    settlementsOpen.map((row) => (
+                      <tr key={`${row.driverId ?? "x"}-${row.name}`}>
+                        <td style={tdStyle}>
+                          {row.driverId ? (
+                            <EntityLinkOrTombstone
+                              kind="driver"
+                              id={row.driverId}
+                              name={row.name}
+                              noun="Driver"
+                              className="truncate"
+                            />
+                          ) : (
+                            <span>{row.name}</span>
+                          )}
+                        </td>
+                        <td className={QBO_MONEY_CELL_CLASS} style={tdStyle}>
+                          {formatUsdCents(row.cents)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </V3Panel>
+        </div>
       </div>
+
       {companyId && user?.role === "Owner" ? (
         <ManualJEModal
           open={manualJeOpen}
@@ -553,8 +821,7 @@ export function AccountingHubPage() {
           onSaved={() => {
             setManualJeOpen(false);
             void queryClient.invalidateQueries({ queryKey: ["journal-entries", companyId] });
-            void queryClient.invalidateQueries({ queryKey: ["accounting-hub", "trial-balance", companyId] });
-            void queryClient.invalidateQueries({ queryKey: ["accounting-hub", "profit-loss", companyId] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting-hub", companyId] });
           }}
         />
       ) : null}

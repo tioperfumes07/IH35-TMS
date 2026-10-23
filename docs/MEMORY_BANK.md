@@ -134,6 +134,29 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Next boards (same round, one PR each):** Accounting → Banking → Factoring → Insurance → Legal →
   Reports → Reports-Viewer-TrialBalance → then re-do CashFlow / Settlements / Fuel to boards.
 
+### Active Architectural Decisions — Accounting home board (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Accounting.dc.html` (no PNG in Downloads).
+  Not a V3 reskin — sections/order match the board: KPI strip → This year close calendar →
+  Receivables aging · Cash pulse · Settlements open. Removed Find Transactions / TB / P&L hub panels
+  (those stay on their own routes).
+- **KPIs (engines):** Open bills + MTD expenses (`listBills` / `listExpenses`); Open invoices
+  void-safe (`listInvoices` + `isVoidInvoice` / `invoiceOpenCentsForDisplay`); Overdue A/R from
+  `getArAgingReport` 1–30+ buckets; Unmatched = pending bank categorization count; QBO sync =
+  `getQboSyncQueueStats` (read-only — no write-back).
+- **Close calendar:** Jan–Dec tiles; marks bank_recon / ar_aging_review / ap_aging_review /
+  can_lock from `getMonthCloseStatus` for months ≤ current; closed periods all-green; future "—".
+- **Cash pulse:** AVP MTD IN/OUT/NET (`getActualVsProjected` accuracy_summary) + 12-week spark
+  from `getRollingLedger` weekly nets.
+- **Settlements open:** `listTours(open)` rolled up by driver; `driver_net_cents` + EntityLink /
+  EntityLinkOrTombstone on driver name. View all → `/driver-finance/settlements?state=open`.
+- **Aging invoice counts:** engine returns cents per bucket, not invoice counts. Hub attributes
+  each invoice's open cents to its dominant aging bucket for the count column (Amount/Share stay
+  engine cents). Posted on bus if owner wants a true per-bucket invoice count engine field.
+- **Guards:** `verify-accounting-hub-find-transactions-vendor-name.mjs` (14901) now asserts board
+  layout; `verify-accounting-hub-honest-labels.mjs` asserts board section titles + no `text-[11px]`;
+  open-invoices-void guard unchanged.
+
 ### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared
@@ -912,6 +935,13 @@ engines (vs owner approx 632). Full rows: `artifacts/engine-audit-632/` + report
   stamp class). Unmatch of JE-less match clears the flag with nothing to reverse.
 
 ## Known Quirks & Blockers
+
+### ROUND 443.267 — AR aging bucket invoice counts (Cursor, 2026-10-23)
+
+`getArAgingReport` returns cents per bucket, not invoice counts. Accounting hub board shows
+"N invoices" per bucket — hub attributes each open invoice to its dominant aging bucket for the
+count only; Amount/Share stay engine cents. Bus note if owner wants a real per-bucket count on the
+engine. Do not invent a second aging math path.
 
 ### ROUND 202 — bank-feed orphan-match false red (Cursor, 2026-09-28)
 

@@ -1,13 +1,12 @@
 #!/usr/bin/env node
-// ACCOUNTING-HUB-FIND-TRANSACTIONS-BILL-PAYMENT-LABEL-IGNORES-AVAILABLE-VENDOR-NAME — guard
-//
-// AccountingHubPage.tsx's "FIND TRANSACTIONS" widget built its bill-payment row label from only
-// reference_number/check_number/memo -- three optional free-text fields that are commonly blank on
-// routine payments -- rendering "Payment — not visible" even though the backend's listBillPayments()
-// already resolves and returns vendor_name + bill_number on every row (the same API response
-// BillPaymentsListPage.tsx already correctly consumes for its own Vendor column). This guard fails if
-// the widget's label formula stops preferring vendor_name/bill_number before the free-text fallbacks.
-
+/**
+ * ROUND 443.267 board 2 — Accounting home must match the approved board layout.
+ * Replaces the retired FIND TRANSACTIONS vendor-name guard (that panel is not on the board).
+ *
+ * Asserts AccountingHubPage.tsx wires the board sections + engines:
+ *   KPI strip · 2026 close calendar · Receivables aging · Cash pulse · Settlements open
+ * and does not resurrect Find Transactions / Trial Balance / P&L hub panels.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -26,13 +25,37 @@ function stripComments(text) {
 export function check(text) {
   const failures = [];
   const body = stripComments(text);
-  const labelCallRe =
-    /(?:label:\s*|const\s+label\s*=\s*)entityLabel\(\s*row\.vendor_name\s*\|\|\s*row\.bill_number\s*\|\|\s*row\.reference_number\s*\|\|\s*row\.check_number\s*\|\|\s*row\.memo\s*,\s*row\.id\s*,\s*"Payment"\s*,?\s*\)/;
-  if (!labelCallRe.test(body)) {
-    failures.push(
-      `${FILE} "FIND TRANSACTIONS" bill-payment label no longer prefers row.vendor_name/row.bill_number before the reference_number/check_number/memo fallbacks`,
-    );
+
+  const required = [
+    ["Receivables aging", /Receivables aging/],
+    ["Cash pulse · operating account", /Cash pulse · operating account/],
+    ["Settlements open", /Settlements open/],
+    ["close calendar title", /close — .* past months closed/],
+    ["getArAgingReport", /getArAgingReport/],
+    ["getActualVsProjected", /getActualVsProjected/],
+    ["listTours", /listTours\(/],
+    ["getAccountingPeriods", /getAccountingPeriods/],
+    ["getMonthCloseStatus", /getMonthCloseStatus/],
+    ["isVoidInvoice open invoices", /isVoidInvoice/],
+    ["invoiceOpenCentsForDisplay", /invoiceOpenCentsForDisplay/],
+  ];
+  for (const [label, re] of required) {
+    if (!re.test(body)) {
+      failures.push(`${FILE} missing board requirement: ${label}`);
+    }
   }
+
+  const forbidden = [
+    ["Find Transactions panel title", /homePanel\(\s*["']Find Transactions["']/],
+    ["TRIAL BALANCE hub panel", /homePanel\(\s*["']TRIAL BALANCE["']/],
+    ["PROFIT & LOSS hub panel", /homePanel\(\s*["']PROFIT & LOSS["']/],
+  ];
+  for (const [label, re] of forbidden) {
+    if (re.test(body)) {
+      failures.push(`${FILE} still contains retired hub chrome: ${label}`);
+    }
+  }
+
   return failures;
 }
 
@@ -40,26 +63,25 @@ function run() {
   const text = fs.readFileSync(path.join(root, FILE), "utf8");
   const failures = check(text);
   if (failures.length > 0) {
-    console.error("FAIL: accounting-hub-find-transactions-vendor-name");
+    console.error("FAIL: accounting-hub-board-layout (443.267)");
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log("PASS: Accounting Hub 'FIND TRANSACTIONS' bill-payment rows prefer the already-resolved vendor_name/bill_number over blank free-text fields");
+  console.log(
+    "PASS: Accounting Hub board layout — close calendar · Receivables aging · Cash pulse · Settlements open (engines wired)"
+  );
 }
 
 function selftest() {
   const text = fs.readFileSync(path.join(root, FILE), "utf8");
-  const offender = text.replace(
-    /const label = entityLabel\(\s*row\.vendor_name \|\| row\.bill_number \|\| row\.reference_number \|\| row\.check_number \|\| row\.memo,\s*row\.id,\s*"Payment",\s*\)/,
-    'entityLabel(row.reference_number || row.check_number || row.memo, row.id, "Payment")',
-  );
+  const offender = text.replace(/Receivables aging/g, "AR widget");
   if (offender === text) {
     console.error("FAIL(selftest): offender mutation did not change the source — pattern out of sync");
     process.exit(1);
   }
   const failures = check(offender);
   if (failures.length === 0) {
-    console.error("FAIL(selftest): planted offender (reverted to free-text-only label) was NOT caught");
+    console.error("FAIL(selftest): planted offender (removed Receivables aging) was NOT caught");
     process.exit(1);
   }
   console.log("PASS(selftest): planted regression correctly caught; baseline clean");
