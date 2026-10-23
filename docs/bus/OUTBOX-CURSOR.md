@@ -32,9 +32,16 @@ PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha m
 - GUARD: verify-settlements-module-one-readout --selftest 26/26 (Open slice)
 - NEXT: 443.274-C Settlements-Closed → Statement → … → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
 
-## 2026-10-23 America/Chicago · SETL-F443274-CLOSED Settlements-Closed board SHIPPING
-- BRANCH: `cursor/443274-settlements-closed-c89b` · tip base `7ec02ee5e2`
-- DELTA: SettlementCell No number `#B91C1C` bold · CompanySettlementCell EntityLink company_settlement · Driver net bold · closed footnote · BE/FE `company_settlement_id`
-- GUARD: verify-settlements-module-one-readout --selftest 30/30 · FE tsc -b EXIT 0
-- NEXT: money-pr-local-gate → PR → merge → live deploy id → Settlements-Statement
+## 2026-10-23 America/Chicago · SETL-F443274-CLOSED Settlements-Closed board DONE
+- MERGE: #27341 squash `92ce5bf70dfc464838a9d6dc5cdf7d48ae179229`
+- RENDER ih35-tms-web: deploy id `dep-dbdrqkei0phs73benkh0` went **live** (Closed sha); tip now `dep-dbdrrhok84hc73eb8kj0` live (Lead CF Home a37a271255; Closed code remains on main)
+- PRE-MERGE: `cd apps/frontend && npx tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0
+- GUARD: verify-settlements-module-one-readout --selftest 30/30
+- NEXT: 443.274-C Settlements-Statement → PreSettlements → … → Fuel → Cash Flow tabs (never CashFlowHomeTab.tsx)
+
+## 2026-10-23 America/Chicago · SETL-F443274-STATEMENT Settlements-Statement board SHIPPING
+- BRANCH: `cursor/443274-settlements-statement-c89b` · tip base `a37a271255`
+- DELTA: identity strip Company settlement EntityLink · Status Closed · paid · SettlementStatementBoardPanels 2×2 (Earnings / Deductions·net / Company side-by-side / Linked records)
+- GUARD: verify-settlements-qbo-chrome-surfaces (Statement checks retargeted)
+- NEXT: tsc -b + money-pr-local-gate → PR → merge → live deploy id → Settlements-PreSettlements
 

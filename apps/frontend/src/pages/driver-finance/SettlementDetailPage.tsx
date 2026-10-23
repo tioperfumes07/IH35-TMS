@@ -75,7 +75,7 @@ import { SettlementLoadsSection } from "./components/SettlementLoadsSection";
 import { CompanyWaterfallSection } from "./components/CompanyWaterfallSection";
 import { SettlementNumberBox } from "./components/SettlementNumberBox";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
+import { SettlementStatementBoardPanels } from "./components/SettlementStatementBoardPanels";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
   // OWNER-LIVE-DEFECT-2026-09-08 (Jorge, live walkthrough of S-13644): this filter excluded
@@ -201,6 +201,10 @@ export function SettlementDetailPage() {
   // pre-settlement in flight (is_presettlement=true) reads "PENDING", never a status word.
   const settlementDisplayId =
     settlementNumber(settlement) ?? (settlement.is_presettlement === true ? "PENDING" : null);
+  const companySettlementLabel = (() => {
+    const t = String(readout?.company_settlement?.display_id ?? settlementDisplayId ?? "").trim();
+    return t ? `Company settlement ${t}` : "Company settlement";
+  })();
   // R-102-B item 3 (owner, ROUND 112) — moved up from its original spot below so the gates that
   // follow can reference it; isFinalSettlement/showFinalizeBlock/canApproveSettlement/canOpenDispute
   // all previously checked ONLY isFinalSettlement (locked/final), never cancelled — a cancelled
@@ -719,9 +723,9 @@ export function SettlementDetailPage() {
           Team split lines detected (primary/co-driver)
         </div>
       ) : null}
-      {/* ROUND 443.250 Settlements-Statement.dc.html — identity strip (Settlement / Driver·Unit /
-          Tour / Status). Same getSettlement + tour readout fields; SETL-DETAIL-01 SettlementKpiGrid
-          (Revenue…Company margin) stays below unchanged. */}
+      {/* ROUND 443.274-C Settlements-Statement.dc.html — identity strip + 2×2 board panels.
+          Same getSettlement / tour readout / company-settlement report engines. Rule 07 keeps
+          TourSettlementTab (above), SettlementKpiGrid / loads / waterfall / MoneyProof (below). */}
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="settlements-statement-v3-kpis"
@@ -730,13 +734,27 @@ export function SettlementDetailPage() {
         <V3KpiTile
           label="Settlement"
           value={settlementDisplayId ?? "—"}
-          sub="Company settlement"
+          sub={
+            companySettlementId ? (
+              <EntityLink
+                kind="company_settlement"
+                id={companySettlementId}
+                label={companySettlementLabel}
+              />
+            ) : (
+              "Company settlement"
+            )
+          }
           testId="settlement-statement-kpi-number"
         />
         <V3KpiTile
           label="Driver · Unit"
           value={String(settlement.driver_full_name ?? "—")}
-          sub={readout?.tour?.unit_number ? String(readout.tour.unit_number) : "—"}
+          sub={
+            readout?.tour?.unit_number
+              ? `${readout.tour.unit_number} · paid on short miles`
+              : "paid on short miles"
+          }
           testId="settlement-statement-kpi-driver-unit"
         />
         <V3KpiTile
@@ -755,17 +773,41 @@ export function SettlementDetailPage() {
         />
         <V3KpiTile
           label="Status"
-          value={String(settlement.status ?? "—")}
-          sub={settlementIsPaid ? "paid" : paymentState}
+          value={
+            settlementIsCancelled
+              ? "Voided"
+              : settlementIsPaid
+                ? "Closed · paid"
+                : String(settlement.status ?? "—")
+          }
+          tone={settlementIsCancelled ? "red" : settlementIsPaid ? "green" : "ink"}
+          sub={
+            settlementIsCancelled
+              ? "Reversal on file"
+              : settlementIsPaid
+                ? "Signed PDF on file"
+                : paymentState
+          }
           testId="settlement-statement-kpi-status"
         />
       </div>
-      <V3Panel
-        title="Settlement statement"
-        subtitle="Earnings · deductions · company settlement · linked records"
-        testId="settlements-statement-v3-panel"
-      >
-        <div data-settlements-statement-v3-panel="1">
+      {settlementId && companyId ? (
+        <SettlementStatementBoardPanels
+          settlementId={settlementId}
+          companyId={companyId}
+          settlementDisplayId={settlementDisplayId}
+          earnings={earnings}
+          deductionTotalDollars={summary.deductionTotal}
+          reimbursementTotalDollars={summary.reimbTotal}
+          driverNetCents={kpi.netPayCents}
+          readout={readout}
+          companyReport={companyReport}
+          matchedBankTransactionId={matchedBankTransactionId}
+          onOpenJournalEntry={() =>
+            document.getElementById("settlement-statement-money-proof")?.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+        />
+      ) : null}
       {/* Server-assigned settlement identity, units and linked tour loads. */}
       <div className="ldt-card" data-testid="settlement-detail-identity-strip" style={{ padding: 10, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
         <SettlementNumberBox
@@ -848,8 +890,6 @@ export function SettlementDetailPage() {
       <div id="settlement-statement-money-proof">
         <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
       </div>
-        </div>
-      </V3Panel>
       {showManualPaidDraftBanner ? (
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">
           Payment is recorded as <span className="font-semibold">manual_paid</span> but this settlement is not
