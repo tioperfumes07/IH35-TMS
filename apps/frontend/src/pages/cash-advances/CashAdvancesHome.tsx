@@ -41,6 +41,7 @@ export function CashAdvancesHomePage() {
   const companyId = selectedCompanyId ?? "";
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 443.250 — KPI strip chrome lives in CashAdvancesKpiRow (V3 board Settlements-CashAdvances).
   // ROUND 443.254 N1 — Settlements mount keeps KPI drills under /driver-finance/cash-advances.
   const basePath = pathname.startsWith("/driver-finance/cash-advances")
     ? "/driver-finance/cash-advances"

@@ -139,18 +139,48 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     const query = COMPANY_QUERY.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
+    // ROUND 443.250 — board "Advances on file" is COUNT(*) on the same context view (read-only;
+    // not a new GL feed). Recovered-this-period stays FE "—" until a period total lands on the view.
     const row = await withCompanyScope(user.uuid, companyId, async (client) => {
       const res = await client
         .query(
           `
-            SELECT *
-            FROM views.cash_advances_dashboard_kpis
-            WHERE operating_company_id = $1::uuid
+            SELECT
+              k.operating_company_id,
+              k.total_outstanding,
+              k.mtd_disbursed,
+              k.pending_approval,
+              k.avg_per_advance,
+              k.drivers_with_active,
+              (
+                SELECT COUNT(*)::int
+                FROM views.cash_advances_with_context c
+                WHERE c.operating_company_id = $1::uuid
+              ) AS advances_on_file
+            FROM views.cash_advances_dashboard_kpis k
+            WHERE k.operating_company_id = $1::uuid
             LIMIT 1
           `,
           [companyId]
         );
-      return res.rows[0] ?? null;
+      if (res.rows[0]) return res.rows[0];
+      const countRes = await client.query(
+        `
+          SELECT COUNT(*)::int AS advances_on_file
+          FROM views.cash_advances_with_context
+          WHERE operating_company_id = $1::uuid
+        `,
+        [companyId]
+      );
+      return {
+        operating_company_id: companyId,
+        total_outstanding: 0,
+        mtd_disbursed: 0,
+        pending_approval: 0,
+        avg_per_advance: 0,
+        drivers_with_active: 0,
+        advances_on_file: Number(countRes.rows[0]?.advances_on_file ?? 0),
+      };
     });
     return (
       row ?? {
@@ -160,6 +190,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
         pending_approval: 0,
         avg_per_advance: 0,
         drivers_with_active: 0,
+        advances_on_file: 0,
       }
     );
   });
