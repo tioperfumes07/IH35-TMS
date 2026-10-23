@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatPersonName } from "../../../lib/formatPersonName";
 import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { listUnitsWithoutLoad } from "../../../api/dispatch";
@@ -292,8 +293,9 @@ export function TruckPlanner() {
               // Planners lists, item 3 — plain-text keys for the sortable frozen columns.
               sortKey: row.unitNumber,
               statusSortKey: status,
-              unit: row.driverName ? (
-                <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
+              // LEAD 443.251 (live 10-22): the driver sat in the 56px unit slot and clipped ("GAYTAN").
+              secondary: row.driverName ? (
+                <EntityLinkOrTombstone kind="driver" id={row.driverId} name={formatPersonName(row.driverName)} noun="Driver" />
               ) : null,
               status,
               action: (
@@ -328,8 +330,8 @@ export function TruckPlanner() {
                 name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
                 sortKey: row.unitNumber,
                 statusSortKey: "In Shop",
-                unit: row.driverName ? (
-                  <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
+                secondary: row.driverName ? (
+                  <EntityLinkOrTombstone kind="driver" id={row.driverId} name={formatPersonName(row.driverName)} noun="Driver" />
                 ) : null,
                 status: "In Shop",
                 action: (

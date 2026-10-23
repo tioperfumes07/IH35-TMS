@@ -128,11 +128,34 @@ function shortMonthDay(ymd: string): string {
 /** LEAD 443.251 item 6: the frozen left columns, resizable and persisted per user. */
 export const PLANNER_FROZEN_COLUMNS = [
   { key: "name", header: "Name", minWidth: 90, maxWidth: 420, defaultWidth: 150 },
-  { key: "secondary", header: "Secondary", minWidth: 70, maxWidth: 360, defaultWidth: 120 },
+  { key: "secondary", header: "Secondary", minWidth: 70, maxWidth: 360, defaultWidth: 170 },
   { key: "unit", header: "Unit", minWidth: 44, maxWidth: 160, defaultWidth: 56 },
   { key: "status", header: "Status", minWidth: 50, maxWidth: 200, defaultWidth: 64 },
   { key: "action", header: "Action", minWidth: 56, maxWidth: 220, defaultWidth: 72 },
 ];
+
+/**
+ * LEAD 443.251 item 8 (live 10-22): two loads on one truck at once (13690 in transit + 13693 booked
+ * ahead on T177) were drawn on the same line, so the second bar hid the first. Overlapping bars in a
+ * row get their own sub-lane; the row grows to fit. Returns the lane per bar id and the lane count.
+ */
+export function stackPlannerBars(days: string[], bars: PlannerGridBar[]): { lane: Map<string, number>; lanes: number } {
+  const lane = new Map<string, number>();
+  const laneEnds: number[] = [];
+  const spans = bars
+    .map((b) => ({ id: b.id, a: clampDayIndex(days, b.startYmd, "start"), z: clampDayIndex(days, b.endYmd, "end") }))
+    .filter((x) => x.z >= x.a)
+    .sort((x, y) => x.a - y.a || x.z - y.z);
+  for (const sp of spans) {
+    let k = laneEnds.findIndex((end) => end < sp.a);
+    if (k < 0) {
+      k = laneEnds.length;
+      laneEnds.push(sp.z);
+    } else laneEnds[k] = sp.z;
+    lane.set(sp.id, k);
+  }
+  return { lane, lanes: Math.max(1, laneEnds.length) };
+}
 
 /** Hours drawn as ticks inside every day column (item 5). */
 export const PLANNER_HOUR_TICKS = [6, 12, 18] as const;
@@ -554,7 +577,12 @@ export function PlannerGrid({
             <div className="pg-empty">{empty}</div>
           ) : (
             sortedRows.map((row) => (
-              <div key={row.id} className={`pg-r${row.idle ? " idle" : ""}`}>
+              <div
+                key={row.id}
+                className={`pg-r${row.idle ? " idle" : ""}`}
+                style={{ ["--rowh" as string]: `${stackPlannerBars(days, row.bars).lanes * PLANNER_ROW_PX}px` } as CSSProperties}
+                data-planner-lanes={stackPlannerBars(days, row.bars).lanes}
+              >
                 <FrozenName row={row} hasStatusColumn={hasStatusColumn} hasActionColumn={hasActionColumn} widths={widths} />
                 <div
                   className="pg-track"
@@ -583,7 +611,7 @@ export function PlannerGrid({
                       </div>
                     );
                   })}
-                  {row.bars.map((bar) => {
+                  {(() => { const stacked = stackPlannerBars(days, row.bars); return row.bars.map((bar) => {
                     const cl = Boolean(rangeStart && bar.startYmd < rangeStart);
                     const cr = Boolean(rangeEnd && bar.endYmd > rangeEnd);
                     const a = clampDayIndex(days, bar.startYmd, "start");
@@ -606,7 +634,7 @@ export function PlannerGrid({
                         data-load-id={bar.loadId ?? bar.id}
                         data-rt-trip-type={bar.tripType}
                         data-rt-long-leg={bar.longLeg ? "1" : "0"}
-                        style={{ left: a * dayPx + 2, width }}
+                        style={{ left: a * dayPx + 2, width, top: (stacked.lane.get(bar.id) ?? 0) * PLANNER_ROW_PX + 6 }}
                         title={fullTitle}
                         aria-label={fullTitle}
                         onClick={bar.onClick}
@@ -616,7 +644,7 @@ export function PlannerGrid({
                         {cr ? <span className="pg-bar-mark" data-testid="planner-bar-continues">{continuesText}</span> : null}
                       </button>
                     );
-                  })}
+                  }); })()}
                 </div>
               </div>
             ))

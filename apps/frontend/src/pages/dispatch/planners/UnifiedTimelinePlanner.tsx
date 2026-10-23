@@ -1,3 +1,4 @@
+import { formatPersonName } from "../../../lib/formatPersonName";
 import "./planner-design-tokens.css";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -209,7 +210,7 @@ export function UnifiedTimelinePlanner() {
       return {
         id: driver.id,
         idle,
-        name: <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />,
+        name: <EntityLink kind="driver" id={driver.id} label={entityLabel(formatPersonName(driver.name), driver.id, "Driver")} />,
         secondary: sorted[0] ? <LoadCustomerLink load={sorted[0]} /> : null,
         unit: (
           <span data-testid={`timeline-util-${driver.id}`}>
