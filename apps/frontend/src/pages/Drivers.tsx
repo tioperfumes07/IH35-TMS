@@ -56,7 +56,10 @@ import { DriverSchedulerRequestInboxPage } from "./safety/driver-scheduler/Drive
 import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
 import { PendingSettlementDeductionsPanel } from "./drivers/PendingSettlementDeductionsPanel";
 import { SettlementsDeductionsKpiRow } from "./drivers/SettlementsDeductionsKpiRow";
-import { SettlementsPreSettlementsKpiRow } from "./drivers/SettlementsPreSettlementsKpiRow";
+import {
+  SettlementsPreSettlementsClosesPanel,
+  SettlementsPreSettlementsKpiRow,
+} from "./drivers/SettlementsPreSettlementsKpiRow";
 import { TeamSplitConfigPanel } from "./drivers/TeamSplitConfig";
 import { PayRateTemplatesListPage } from "./lists/driver/PayRateTemplatesListPage";
 import {
@@ -868,13 +871,34 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                     : "/drivers/pre-settlements"
                 }
               />
-              <PreSettlementsPanel
-                rows={preSettlementsQuery.data ?? []}
-                loading={preSettlementsQuery.isLoading}
-                isError={preSettlementsQuery.isError}
-                title="Open pre-settlements"
-                emptyText="No open pre-settlements for this company."
-              />
+              {/* 443.274-C board: Open pre-settlements | What closes a tour (side-by-side). */}
+              <div
+                style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr)", gap: 8 }}
+                data-testid="settlements-presettle-v3-panels"
+                data-settlements-presettle-v3-layout="1"
+              >
+                <PreSettlementsPanel
+                  rows={preSettlementsQuery.data ?? []}
+                  loading={preSettlementsQuery.isLoading}
+                  isError={preSettlementsQuery.isError}
+                  title="Open pre-settlements"
+                  emptyText="No open pre-settlements for this company."
+                  onViewAll={() =>
+                    navigate(
+                      location.pathname.startsWith("/driver-finance")
+                        ? "/driver-finance/settlements"
+                        : "/drivers/settlements",
+                    )
+                  }
+                />
+                <SettlementsPreSettlementsClosesPanel
+                  basePath={
+                    location.pathname.startsWith("/driver-finance")
+                      ? "/driver-finance/pre-settlements"
+                      : "/drivers/pre-settlements"
+                  }
+                />
+              </div>
             </div>
           ) : null}
           {subnavTab === "cash_advances" ? (
