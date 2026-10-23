@@ -22,12 +22,13 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
-import { DataPanel } from "../../../components/layout/DataPanel";
 import { StatusBadge } from "../../../components/layout/StatusBadge";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { AssignFuelCardDrawer } from "../../../components/fuel/AssignFuelCardDrawer";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { V3Panel } from "../../../components/v3/V3Panel";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyWallClockToIso, companyToday } from "../../../lib/businessDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -38,6 +39,20 @@ function statusBadge(row: FuelCardAssignment): { variant: "crit" | "positive" | 
   if (row.voided_at) return { variant: "crit", label: "Voided" };
   if (row.effective_to && new Date(row.effective_to).getTime() <= Date.now()) return { variant: "neutral", label: "Ended" };
   return { variant: "positive", label: "Active" };
+}
+
+/** ROUND 443.250 — identity counts from listFuelCardAssignments (engine unchanged). */
+function assignmentKpis(rows: FuelCardAssignment[]): { active: number; ended: number; voided: number; total: number } {
+  let active = 0;
+  let ended = 0;
+  let voided = 0;
+  for (const row of rows) {
+    const s = statusBadge(row).label;
+    if (s === "Active") active += 1;
+    else if (s === "Ended") ended += 1;
+    else voided += 1;
+  }
+  return { active, ended, voided, total: rows.length };
 }
 
 function EndCardDrawer({
@@ -253,7 +268,11 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
     { key: "active_card_count", label: "Cards", sortable: true, render: (row) => String(row.active_card_count) },
   ];
   return (
-    <DataPanel title="Card issuers" titleHint="The vendor that issues each fuel card type — shown on every card below">
+    <V3Panel
+      title="Card issuers"
+      subtitle="The vendor that issues each fuel card type — shown on every card below"
+      testId="fuel-cards-issuers-v3-panel"
+    >
       {error ? (
         <div className="mb-2 rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800" role="alert" data-testid="fuel-card-issuer-error">
           {error}
@@ -271,7 +290,7 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
           rowKey={(row) => row.id}
         />
       )}
-    </DataPanel>
+    </V3Panel>
   );
 }
 
@@ -374,10 +393,36 @@ export function FuelCardsPage() {
     );
   }
 
+  const rows = query.data?.rows ?? [];
+  const kpis = assignmentKpis(rows);
+  const kpiValue = (n: number) => (query.isPending ? "…" : query.isError ? "—" : String(n));
+
   return (
     <div className="space-y-3" data-testid="fuel-cards-page">
+      {/* ROUND 443.250 Fuel Cards V3 — Active / Ended / Voided / Assignments from listFuelCardAssignments. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="fuel-cards-v3-kpi-strip"
+        data-fuel-cards-v3-kpis="1"
+      >
+        <V3KpiTile label="Active" value={kpiValue(kpis.active)} sub="current assignment" testId="fuel-cards-kpi-active" />
+        <V3KpiTile label="Ended" value={kpiValue(kpis.ended)} sub="past effective to" testId="fuel-cards-kpi-ended" />
+        <V3KpiTile label="Voided" value={kpiValue(kpis.voided)} sub={includeVoided ? "in this list" : "show voided to count"} testId="fuel-cards-kpi-voided" />
+        <V3KpiTile label="Assignments" value={kpiValue(kpis.total)} sub="rows in filter" testId="fuel-cards-kpi-assignments" />
+      </div>
       <CardIssuersPanel companyId={companyId} canWrite={canWrite} onChanged={invalidate} />
-      <DataPanel title="Fuel card -> truck registry" titleHint="Every fuel card and the truck (and optional driver) it currently fuels, over effective dates">
+      <V3Panel
+        title="Fuel card -> truck registry"
+        subtitle="Every fuel card and the truck (and optional driver) it currently fuels, over effective dates"
+        testId="fuel-cards-registry-v3-panel"
+        headerRight={
+          canWrite ? (
+            <ActionButton onClick={() => setAssignOpen(true)} data-testid="fuel-cards-assign-open">
+              + Assign card
+            </ActionButton>
+          ) : undefined
+        }
+      >
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1 text-xs text-gray-600" data-testid="fuel-cards-show-voided">
@@ -398,18 +443,13 @@ export function FuelCardsPage() {
               </span>
             ) : null}
           </div>
-          {canWrite ? (
-            <ActionButton onClick={() => setAssignOpen(true)} data-testid="fuel-cards-assign-open">
-              + Assign card
-            </ActionButton>
-          ) : null}
         </div>
         {query.isError ? (
           <ListErrorBanner onRetry={() => void query.refetch()} message="Fuel card assignments could not be loaded." />
         ) : (
           <ParityTable
             title="Fuel card assignments"
-            rows={query.data?.rows ?? []}
+            rows={rows}
             columns={columns}
             loading={query.isPending}
             storageKey="fuel-card-assignments"
@@ -417,7 +457,7 @@ export function FuelCardsPage() {
             rowKey={(row) => row.id}
           />
         )}
-      </DataPanel>
+      </V3Panel>
 
       <AssignFuelCardDrawer
         open={assignOpen}

@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/fuel/FuelHome.tsx");
 const KPI = path.join(ROOT, "apps/frontend/src/pages/fuel/components/FuelKpiRow.tsx");
+const CARDS = path.join(ROOT, "apps/frontend/src/pages/fuel/cards/FuelCardsPage.tsx");
 const PLANNER = path.join(ROOT, "apps/backend/src/fuel/planner.routes.ts");
 const LABEL = "verify-fuel-home-dashboard-wired";
 const SPEND_FAKE_ZERO_RE =
@@ -89,6 +90,29 @@ export function computeKpiFailures(source) {
   return errors;
 }
 
+/** ROUND 443.250 Fuel Cards tab — V3 board chrome; listFuelCardAssignments engine unchanged. */
+export function computeCardsFailures(source) {
+  const errors = [];
+  if (!/V3KpiTile/.test(source) || !/data-fuel-cards-v3-kpis/.test(source)) {
+    errors.push("FuelCardsPage must render V3KpiTile strip with data-fuel-cards-v3-kpis");
+  }
+  if (!/V3Panel/.test(source) || !/fuel-cards-registry-v3-panel/.test(source) || !/fuel-cards-issuers-v3-panel/.test(source)) {
+    errors.push("FuelCardsPage must wrap Card issuers + Fuel card -> truck registry in V3Panel");
+  }
+  if (/DataPanel/.test(source)) {
+    errors.push("FuelCardsPage must not keep DataPanel after V3 restyle");
+  }
+  if (!/listFuelCardAssignments/.test(source)) {
+    errors.push("FuelCardsPage must keep listFuelCardAssignments (engine unchanged)");
+  }
+  for (const label of ["Active", "Ended", "Voided", "Assignments", "Card issuers", "Fuel card -> truck registry", "+ Assign card", "Show voided"]) {
+    if (!source.includes(label)) {
+      errors.push(`FuelCardsPage must keep board label "${label}"`);
+    }
+  }
+  return errors;
+}
+
 function selftest() {
   const plannerGood = `
       const spendRes = await client.query(\`SELECT COALESCE(sum(total_cost), 0)::numeric AS spend FROM fuel.fuel_transactions\`);
@@ -159,6 +183,22 @@ function selftest() {
     process.exit(1);
   }
   console.log("selftest ok — Fuel home V3 chrome markers");
+  const cardsGood = fs.readFileSync(CARDS, "utf8");
+  if (computeCardsFailures(cardsGood).length) {
+    console.error("SELFTEST FAIL — shipped Fuel Cards V3 baseline is red", computeCardsFailures(cardsGood));
+    process.exit(1);
+  }
+  const cardsNoV3 = cardsGood.replace(/V3KpiTile/g, "LegacyKpi").replace(/data-fuel-cards-v3-kpis/g, "data-fuel-cards-legacy");
+  if (!computeCardsFailures(cardsNoV3).some((e) => e.includes("data-fuel-cards-v3-kpis"))) {
+    console.error("SELFTEST FAIL — Fuel Cards V3KpiTile removal should fail");
+    process.exit(1);
+  }
+  const cardsDataPanel = `${cardsGood}\nimport { DataPanel } from "x";\n`;
+  if (!computeCardsFailures(cardsDataPanel).some((e) => e.includes("DataPanel"))) {
+    console.error("SELFTEST FAIL — DataPanel reintro should fail");
+    process.exit(1);
+  }
+  console.log("selftest ok — Fuel Cards V3 chrome markers");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";
@@ -207,13 +247,19 @@ function run() {
   const source = fs.readFileSync(PAGE, "utf8");
   const planner = fs.readFileSync(PLANNER, "utf8");
   const kpi = fs.readFileSync(KPI, "utf8");
-  const failures = [...computeFailures(source), ...computePlannerFailures(planner), ...computeKpiFailures(kpi)];
+  const cards = fs.readFileSync(CARDS, "utf8");
+  const failures = [
+    ...computeFailures(source),
+    ...computePlannerFailures(planner),
+    ...computeKpiFailures(kpi),
+    ...computeCardsFailures(cards),
+  ];
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] OK — Fuel Home dashboard KPIs wired; spend query fail-loud`);
+  console.log(`[${LABEL}] OK — Fuel Home dashboard KPIs wired; Fuel Cards V3 chrome; spend query fail-loud`);
 }
 
 if (process.argv.includes("--selftest")) selftest();

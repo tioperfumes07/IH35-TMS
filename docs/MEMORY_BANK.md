@@ -409,6 +409,19 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** Fuel sub-boards · Driver Profile · design-system sweep · Chrome
   proof. Full DONE not claimed.
 
+### Active Architectural Decisions — Fuel Cards V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `listFuelCardAssignments` · issuer registry · AssignFuelCardDrawer /
+  EndCardDrawer. No GL / posting / fuel-transaction math change.
+- **V3 board chrome (Fuel.dc.html Cards tab):** identity `V3KpiTile` strip Active · Ended · Voided ·
+  Assignments (`data-fuel-cards-v3-kpis`) counted from the same assignment rows + statusBadge.
+  `V3Panel` **Card issuers** (`fuel-cards-issuers-v3-panel`) + **Fuel card -> truck registry**
+  (`fuel-cards-registry-v3-panel`); `+ Assign card` moves to panel `headerRight`. DataPanel removed.
+- **Guard piggyback:** `verify-fuel-home-dashboard-wired.mjs` (step 1002 ≡2 EVEN Cursor) —
+  `computeCardsFailures` + selftest. No new EVEN claim.
+- **Still open under 443.250:** remaining Fuel tabs (Fills / By truck / …) · Driver Profile ·
+  design-system sweep · Chrome proof. Full DONE not claimed.
+
 
 
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
