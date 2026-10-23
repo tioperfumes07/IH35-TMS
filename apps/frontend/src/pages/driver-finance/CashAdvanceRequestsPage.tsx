@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -15,6 +16,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
+import { formatDisplayName } from "../../components/v3/formatDisplayName";
+import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -200,7 +203,7 @@ export function CashAdvanceRequestsPage() {
         key: "driver_id",
         label: "Driver",
         render: (row) => {
-          const v = String(row.driver_name ?? "");
+          const v = formatDisplayName(String(row.driver_name ?? ""));
           const driverId = String(row.driver_id ?? "");
           return (
             <EntityLink
@@ -284,6 +287,7 @@ export function CashAdvanceRequestsPage() {
 
   return (
     <div className="space-y-4">
+      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
       <PageHeader
         title="Cash advance requests"
         subtitle={

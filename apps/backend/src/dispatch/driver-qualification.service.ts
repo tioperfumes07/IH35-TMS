@@ -536,10 +536,10 @@ export async function assertDriverQualifiedForLoad(
   if (dr.is_deactivated) reasons.push("driver_deactivated");
   if (dr.is_archived) reasons.push("driver_archived");
   if (dr.is_status_inactive) reasons.push("driver_status_inactive");
-  if (dr.cdl_missing) reasons.push("cdl_missing");
-  else if (dr.cdl_expired) reasons.push("cdl_expired");
-  if (dr.med_missing) reasons.push("medical_card_missing");
-  else if (dr.med_expired) reasons.push("medical_card_expired");
+  // ROUND 443.257 — missing CDL / medical dates are pre-dispatch reminders only (never book blockers).
+  // Expired credentials still block.
+  if (!dr.cdl_missing && dr.cdl_expired) reasons.push("cdl_expired");
+  if (!dr.med_missing && dr.med_expired) reasons.push("medical_card_expired");
   if (isHazmat && dr.hazmat_blocked) reasons.push("hazmat_endorsement_missing");
   if (daBlock) {
     reasons.push(daBlock.violation_kind === "positive" ? "drug_alcohol_positive" : "drug_alcohol_refusal");

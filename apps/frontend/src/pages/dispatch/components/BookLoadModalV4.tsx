@@ -361,6 +361,22 @@ export function BookLoadModalV4({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
   const [showSpecialNotes, setShowSpecialNotes] = useState(false);
+  // ROUND 443.257 — Side panel (660px) | Center (1120px); remember per browser.
+  const [bookLoadPresentation, setBookLoadPresentation] = useState<"side" | "center">(() => {
+    try {
+      return localStorage.getItem("ih35.bookLoad.presentation") === "side" ? "side" : "center";
+    } catch {
+      return "center";
+    }
+  });
+  const setPresentation = useCallback((next: "side" | "center") => {
+    setBookLoadPresentation(next);
+    try {
+      localStorage.setItem("ih35.bookLoad.presentation", next);
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }, []);
   const [saveProof, setSaveProof] = useState<LoadSaveProof | null>(null);
   const [saveProofCreated, setSaveProofCreated] = useState<{ id: string; label?: string } | null>(null);
   const [saveAck, setSaveAck] = useState<{ id: string; loadNumber: string; summary: string } | null>(null);
@@ -1896,20 +1912,34 @@ export function BookLoadModalV4({
       // CANCEL-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER bug (z-[215], "above every other z-[N] tier including
       // the highest drawer") — this hand-rolled portal never got the same treatment. z-[216] keeps it
       // unambiguously topmost even alongside a Modal.tsx-based dialog.
-      className="fixed inset-0 z-[1002] flex items-start justify-center overflow-y-auto px-4 py-6"
+      className={
+        bookLoadPresentation === "side"
+          ? "fixed inset-0 z-[1002] flex items-stretch justify-end overflow-y-auto"
+          : "fixed inset-0 z-[1002] flex items-start justify-center overflow-y-auto px-4 py-6"
+      }
       data-ih35-blocking-modal="true"
+      data-testid="book-load-presentation-shell"
+      data-presentation={bookLoadPresentation}
       style={{ background: "rgba(15, 19, 32, 0.6)" }}
       onMouseDown={attemptBookLoadClose}
     >
       <div
         ref={panelRef}
         data-wizard-v5={wizardV5 ? "on" : undefined}
-        className="flex max-h-[min(95vh,calc(100dvh-2rem))] w-full max-w-[min(1260px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
+        className={
+          bookLoadPresentation === "side"
+            ? "flex h-full max-h-[100dvh] w-[660px] max-w-[100vw] flex-col overflow-hidden border-l border-gray-200 bg-white shadow-2xl"
+            : "flex max-h-[min(95vh,calc(100dvh-2rem))] w-full max-w-[min(1120px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
+        }
         // Owner 2026-07-04: let the dispatcher shrink/resize the wizard from the bottom-right corner so they
         // can keep the units / dispatch board visible behind it. Native `resize: both` grip; floors keep it
         // usable; the max-w/max-h classes cap the top end. The flex-col body already scrolls, so content
-        // stays reachable at any size.
-        style={{ width: "100%", resize: "both", minWidth: "440px", minHeight: "340px" }}
+        // stays reachable at any size. ROUND 443.257: Center = 1120px; Side panel = 660px drawer.
+        style={
+          bookLoadPresentation === "side"
+            ? { width: 660, minWidth: 440, minHeight: "100%" }
+            : { width: "100%", resize: "both", minWidth: "440px", minHeight: "340px" }
+        }
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#1F2A44" }}>
@@ -1938,6 +1968,31 @@ export function BookLoadModalV4({
           </div>
           <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9AA6BA" }}>
             <span>{headerTime}</span>
+            <div
+              className="inline-flex h-7 overflow-hidden rounded-sm border border-white/30 font-semibold"
+              role="group"
+              aria-label="Book load layout"
+              data-testid="book-load-presentation-toggle"
+            >
+              <button
+                type="button"
+                className={`px-2 ${bookLoadPresentation === "side" ? "bg-white text-[#1F2A44]" : "text-white/90 hover:bg-white/10"}`}
+                aria-pressed={bookLoadPresentation === "side"}
+                onClick={() => setPresentation("side")}
+                data-testid="book-load-presentation-side"
+              >
+                Side panel
+              </button>
+              <button
+                type="button"
+                className={`border-l border-white/30 px-2 ${bookLoadPresentation === "center" ? "bg-white text-[#1F2A44]" : "text-white/90 hover:bg-white/10"}`}
+                aria-pressed={bookLoadPresentation === "center"}
+                onClick={() => setPresentation("center")}
+                data-testid="book-load-presentation-center"
+              >
+                Center
+              </button>
+            </div>
             <ModalCloseButton
               title={isEditMode ? "Edit load" : "Book load"}
               onClose={attemptBookLoadClose}
@@ -2095,7 +2150,7 @@ export function BookLoadModalV4({
                       form.setValue("trip_type", code, { shouldDirty: true });
                       form.clearErrors("trip_type");
                     }}
-                    className="inline-flex h-7 shrink-0 items-center rounded-sm border px-2.5 text-left transition-colors"
+                    className="inline-flex h-8 shrink-0 items-center rounded-sm border px-2.5 text-left transition-colors"
                     title={desc}
                     style={active ? { backgroundColor: color, borderColor: color, color: "white" } : { borderColor: "#CBD5E1", color: "#1F2733" }}
                   >
@@ -2339,11 +2394,11 @@ export function BookLoadModalV4({
                     </label>
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Customer WO #
-                      <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                      <input {...form.register("customer_wo_number")} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Pickup #
-                      <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                      <input {...form.register("pickup_number")} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
                   </div>
                     <input
@@ -2362,7 +2417,7 @@ export function BookLoadModalV4({
                         same row as Weight (v4 mockup + owner 2026-09-03). */}
                     <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Broker / Direct
-                      <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
+                      <div className="mt-0.5 inline-flex h-8 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
                         <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}>
                           <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
                           Broker
@@ -2418,7 +2473,7 @@ export function BookLoadModalV4({
                       <input
                         {...form.register("pieces")}
                         data-testid="book-load-pieces"
-                        className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                        className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
                       />
                     </label>
                   </div>
@@ -2432,7 +2487,7 @@ export function BookLoadModalV4({
                             {...form.register("historical_import_driver_id")}
                             data-testid="book-load-historical-inactive-driver-id"
                             placeholder="Historical import only — inactive driver record ID"
-                            className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
+                            className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
                           />
                         </label>
                         <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
@@ -2465,7 +2520,7 @@ export function BookLoadModalV4({
                             {...form.register("historical_import_reason")}
                             data-testid="book-load-historical-import-reason"
                             placeholder="Why an inactive driver belongs on this historical load"
-                            className="mt-1 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
+                            className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
                           />
                           <span className="mt-0.5 block normal-case tracking-normal text-gray-400">
                             Owner-only. This does not reactivate the driver or widen the live dispatch picker.
@@ -2598,7 +2653,7 @@ export function BookLoadModalV4({
                             </div>
                             <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                               Lumper paid by
-                              <SelectCombobox {...form.register(`stops.${i}.lumper_paid_by`)} className="mt-0.5 h-7 w-full text-xs">
+                              <SelectCombobox {...form.register(`stops.${i}.lumper_paid_by`)} className="mt-0.5 h-8 w-full text-xs">
                                 <option value="carrier">Carrier</option>
                                 <option value="shipper">Shipper</option>
                                 <option value="broker">Broker</option>

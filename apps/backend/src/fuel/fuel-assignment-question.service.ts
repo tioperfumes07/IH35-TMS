@@ -152,10 +152,11 @@ async function enrichCandidate(
            FROM telematics.vehicle_driver_assignments vda
            JOIN mdata.drivers d ON d.id = vda.driver_id
           WHERE vda.unit_id = $1::uuid
-            AND vda.started_at <= $2::timestamptz
-            AND (vda.ended_at IS NULL OR vda.ended_at >= $2::timestamptz)
+            AND d.operating_company_id = $2::uuid
+            AND vda.started_at <= $3::timestamptz
+            AND (vda.ended_at IS NULL OR vda.ended_at >= $3::timestamptz)
           ORDER BY vda.started_at DESC NULLS LAST LIMIT 1`,
-        [c.unit_id, moment]
+        [c.unit_id, companyId, moment]
       )
     ).rows[0];
     samsara = drv?.name ?? null;

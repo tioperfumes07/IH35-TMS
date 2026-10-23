@@ -198,6 +198,12 @@ const listQuerySchema = z.object({
   // above (an explicit ask, never the default), but NOT role-gated: any role that can reach the
   // roster page already saw every status, unrestricted, before this change.
   include_deactivated: queryBoolean().optional().default(false),
+  // ROUND 443.257 — Rule 49 default for status=Active is movement (Samsara). Book Load / assign
+  // pickers pass hr_status so every Active (HR) + Probation non-sample driver is listed by name
+  // (measured: movement dropped Concepcion Cordova Dominguez and 4 peers → raw UUID in the wizard).
+  active_definition: z.enum(["movement", "hr_status"]).optional().default("movement"),
+  // Optional picker enrichment: usual truck / last load / open load for Book Load row labels.
+  enrich_picker: queryBoolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -1388,7 +1394,17 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, operating_company_id, include_system, include_deactivated } = parsedQuery.data;
+    const {
+      limit,
+      offset,
+      status,
+      search,
+      operating_company_id,
+      include_system,
+      include_deactivated,
+      active_definition,
+      enrich_picker,
+    } = parsedQuery.data;
     if (include_system && !isOwnerOrAdmin(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
@@ -1396,7 +1412,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       resolveOperatingCompanyId(client, authUser.uuid, operating_company_id),
     );
     if (!scopedCompanyId) return { drivers: [], total: 0 };
-    const movementActiveDriverIds = status === "Active"
+    // Rule 49: status=Active defaults to movement. hr_status keeps the stored HR flag for pickers.
+    const useMovementActive = status === "Active" && active_definition !== "hr_status";
+    const movementActiveDriverIds = useMovementActive
       ? (await withLuciaBypass((client) => getActiveDrivers(client, scopedCompanyId, 15, 15))).active_driver_uuids
       : null;
     // include_deactivated is NOT role-gated: the driver roster (any authenticated role can reach
@@ -1429,9 +1447,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       // selectable in real dispatch/scheduling flows. is_sample_data is NOT NULL DEFAULT false, so
       // `IS NOT TRUE` is a total, index-friendly predicate — same pattern as units.routes.ts.
       filters.push("is_sample_data IS NOT TRUE");
-      // Rule 49: "Active" is movement-derived, not the stale HR status flag. Other explicit
-      // roster segments retain their stored-status semantics.
-      if (status && status !== "Active") {
+      // Rule 49: "Active" is movement-derived by default. active_definition=hr_status uses the
+      // stored HR status (Book Load / assign pickers — ROUND 443.257). Other statuses always use
+      // the stored flag.
+      if (status && (status !== "Active" || active_definition === "hr_status")) {
         values.push(status);
         filters.push(`status = $${values.length}`);
       }
@@ -1464,7 +1483,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
       const ociIdx = values.length;
-      if (status === "Active") {
+      if (useMovementActive) {
         values.push(movementActiveDriverIds ?? []);
         filters.push(`mdata.drivers.id = ANY($${values.length}::uuid[])`);
       }
@@ -1485,6 +1504,40 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       );
       values.push(limit);
       values.push(offset);
+      // ROUND 443.257 — Book Load picker rows: usual truck · last load · Free / On load ####.
+      // loads has voided_at (not is_voided) and no delivery_actual_at — order by updated/created.
+      const pickerEnrichSelect = enrich_picker
+        ? `,
+            (SELECT u.unit_number
+               FROM mdata.loads l
+               JOIN mdata.units u ON u.id = l.assigned_unit_id
+              WHERE l.assigned_primary_driver_id = mdata.drivers.id
+                AND l.operating_company_id = $${ociIdx}::uuid
+                AND l.soft_deleted_at IS NULL
+                AND l.voided_at IS NULL
+              ORDER BY COALESCE(l.updated_at, l.created_at) DESC NULLS LAST
+              LIMIT 1) AS picker_usual_unit_number,
+            (SELECT l.load_number
+               FROM mdata.loads l
+              WHERE l.assigned_primary_driver_id = mdata.drivers.id
+                AND l.operating_company_id = $${ociIdx}::uuid
+                AND l.soft_deleted_at IS NULL
+                AND l.voided_at IS NULL
+              ORDER BY COALESCE(l.updated_at, l.created_at) DESC NULLS LAST
+              LIMIT 1) AS picker_last_load_number,
+            (SELECT l.load_number
+               FROM mdata.loads l
+              WHERE l.assigned_primary_driver_id = mdata.drivers.id
+                AND l.operating_company_id = $${ociIdx}::uuid
+                AND l.soft_deleted_at IS NULL
+                AND l.voided_at IS NULL
+                AND l.status::text IN ('booked','dispatched','in_transit','at_pickup','at_delivery','loaded')
+              ORDER BY l.created_at DESC NULLS LAST
+              LIMIT 1) AS picker_open_load_number`
+        : `,
+            NULL::text AS picker_usual_unit_number,
+            NULL::text AS picker_last_load_number,
+            NULL::text AS picker_open_load_number`;
       const res = await client.query(
         `
           SELECT
@@ -1514,6 +1567,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
              FROM identity.users updater
              WHERE updater.id = mdata.drivers.updated_by_user_id
              LIMIT 1) AS updated_by_user_label
+            ${pickerEnrichSelect}
           FROM mdata.drivers
           WHERE (operating_company_id = $${ociIdx}::uuid OR EXISTS (
             SELECT 1 FROM mdata.driver_company_authorizations canonical_list_dca

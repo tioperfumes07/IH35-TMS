@@ -1,8 +1,6 @@
 // LEAD 443.204 (owner 2026-10-21 15:27 CT: "for the current drivers, it cannot block, we do have the files in person").
-// Measured 10-21: Book Load 13687 refused 422 E_DRIVER_NOT_QUALIFIED medical_card_missing (JOSE ANTONIO VICENTE MARTINEZ);
-// none of the 7 drivers on 13687–13695 has a medical card in the app. A driver stamped dq_file_on_paper_since (migration
-// 202616040700, every driver existing then) is recorded, never blocked, on the paperwork reasons; a recorded violation
-// still blocks; a driver created after the stamp (NULL) keeps the full gate.
+// ROUND 443.257 — missing CDL / medical dates are reminders only (never book blockers). Expired still blocks
+// unless waived by dq_file_on_paper_since. HOS / inactive / D&A still use the paper-file / full gate rules.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { audit } = vi.hoisted(() => ({ audit: vi.fn(async () => undefined) }));
@@ -25,23 +23,19 @@ const clientFor = (row: Record<string, unknown>, hos = false) => ({
 });
 const args = { driverId: "drv-1", operatingCompanyId: "oci", isHazmat: false, actorUserId: "owner", loadNumber: "13687", via: "book_load" };
 
-describe("443.204 — a current driver's paper DQ file never blocks", () => {
+describe("443.204 / 443.257 — missing dates never block; paper file waives expired/HOS", () => {
   beforeEach(() => audit.mockClear());
 
-  it("medical card missing on a paper-file driver: not blocked, recorded", async () => {
+  it("medical card missing alone: not a book blocker (reminder path)", async () => {
     expect(await assertDriverQualifiedForLoad(clientFor(cred({})), args)).toBeNull();
-    expect(audit).toHaveBeenCalledTimes(1);
-    const [, actor, event, payload] = audit.mock.calls[0] as unknown as [unknown, string, string, Record<string, unknown>];
-    expect(actor).toBe("owner");
-    expect(event).toBe("dispatch.driver_dq_file_on_paper");
-    expect(payload).toMatchObject({ waived_reasons: ["medical_card_missing"], load_number: "13687", note: "DQ file held on paper (owner 10-21)" });
+    expect(audit).not.toHaveBeenCalled();
   });
 
-  it("CDL missing + medical missing + HOS violation on a paper-file driver: not blocked", async () => {
+  it("CDL missing + medical missing + HOS on a paper-file driver: HOS waived, not blocked", async () => {
     const block = await assertDriverQualifiedForLoad(clientFor(cred({ cdl_missing: true, cdl_expires_at: null }), true), args);
     expect(block).toBeNull();
     expect((audit.mock.calls[0] as unknown as [unknown, string, string, { waived_reasons: string[] }])[3].waived_reasons)
-      .toEqual(["cdl_missing", "medical_card_missing", "hos_violation"]);
+      .toEqual(["hos_violation"]);
   });
 
   it("a recorded violation still blocks a paper-file driver", async () => {
@@ -49,9 +43,9 @@ describe("443.204 — a current driver's paper DQ file never blocks", () => {
     expect(block?.reasons).toEqual(["driver_status_inactive"]);
   });
 
-  it("a driver created after the stamp (NULL) keeps the full gate", async () => {
+  it("a driver created after the stamp (NULL) still does not block on missing medical alone", async () => {
     const block = await assertDriverQualifiedForLoad(clientFor(cred({ dq_file_on_paper_since: null })), args);
-    expect(block?.reasons).toEqual(["medical_card_missing"]);
+    expect(block).toBeNull();
     expect(audit).not.toHaveBeenCalled();
   });
 

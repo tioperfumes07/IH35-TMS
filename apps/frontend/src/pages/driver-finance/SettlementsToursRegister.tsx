@@ -2,13 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { settlementNumber } from "../../lib/settlementNumber";
-
-// SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC (owner 2026-09-11/12): the register shows the AlwaysTrack 4-digit
-// document number and nothing else. An OPEN tour has no document yet ("Open"); a CLOSED tour that was
-// never given one reads "No number" — honest, never the retired S-YYYY-NNNN counter, never a bare dash
-// the owner cannot act on. The number is allocated at tour close by the P1 numbering work.
-const tourLabel = (r: TourListRow) => settlementNumber(r) ?? (r.is_open ? "Open" : "No number");
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -21,6 +16,13 @@ import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlemen
 import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
 import { formatUsdCents } from "../../lib/money";
+import { formatDisplayName } from "../../components/v3/formatDisplayName";
+
+// ROUND 443.252 (owner 10-22 6:10 PM CT): Settlement/Tour column shows the number as a statement
+// link — AlwaysTrack doc when closed (5851…), else the P-series display_id (P-0115) while open.
+// Retired status-word labels ("Open") and PENDING-for-open are not used on this register.
+const tourLabel = (r: TourListRow) =>
+  settlementNumber(r) ?? r.display_id ?? (r.is_open ? "—" : "No number");
 
 // SETL-MOD-01 (ROUND 9, owner "get to work on the real settlements module"): the SETTLEMENTS
 // module list reads the SAME readout as the Load-costs Pre-Settlement / Settlement tabs —
@@ -36,13 +38,42 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
   // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement, same as
   // every other surface this rule is applied to — before Driver/Unit, not after.
   ...tourLoadColumns("setl-tour-col", rows),
-  { key: "driver", label: "Driver", testId: "setl-tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <EntityLinkOrTombstone kind="driver" id={r.driver_id} name={r.driver_name} noun="Driver" className="block max-w-[200px] truncate" /> },
-  { key: "unit", label: "Unit", testId: "setl-tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => <EntityLinkOrTombstone kind="unit" id={r.unit_id} name={r.unit_number} noun="Unit" /> },
+  {
+    key: "driver",
+    label: "Driver",
+    testId: "setl-tour-col-driver",
+    sortable: true,
+    minWidth: 140,
+    maxWidth: 220,
+    cellClass: "whitespace-nowrap",
+    sortValue: (r) => r.driver_name ?? "",
+    render: (r) => (
+      <EntityLinkOrTombstone
+        kind="driver"
+        id={r.driver_id}
+        name={formatDisplayName(r.driver_name)}
+        noun="Driver"
+        className="block max-w-[200px] truncate"
+      />
+    ),
+  },
+  {
+    key: "unit",
+    label: "Unit",
+    testId: "setl-tour-col-unit",
+    sortable: true,
+    minWidth: 56,
+    maxWidth: 64,
+    className: "whitespace-nowrap",
+    sortValue: (r) => r.unit_number ?? "",
+    render: (r) => <EntityLinkOrTombstone kind="unit" id={r.unit_id} name={r.unit_number} noun="Unit" />,
+  },
   // NEW-10 (owner 2026-09-07): "date started" + "delivery date" of the ORIGINAL load that created the
   // (re)settlement. Distinct from the tour-level "Started" (trip-open) stamp below — these are the
   // original load's own first-pickup / last-delivery stop dates, tooltip-tagged with its load number.
-  { key: "origin_started", label: "Original load pickup", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "First pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? mmmDd(r.origin_pickup_date) : ""), render: r => r.origin_pickup_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_pickup_date)}</span> : DASH },
-  { key: "origin_delivered", label: "Original load delivery", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? mmmDd(r.origin_delivery_date) : ""), render: r => r.origin_delivery_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_delivery_date)}</span> : DASH },
+  // ROUND 443.254 N7 — PU date and DEL date as separate sortable columns (V3 Open/Closed).
+  { key: "origin_started", label: "PU date", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? mmmDd(r.origin_pickup_date) : ""), render: r => r.origin_pickup_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_pickup_date)}</span> : DASH },
+  { key: "origin_delivered", label: "DEL date", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? mmmDd(r.origin_delivery_date) : ""), render: r => r.origin_delivery_date ? <span title={r.origin_load_number ? `Load ${r.origin_load_number}` : undefined}>{mmmDd(r.origin_delivery_date)}</span> : DASH },
   { key: "started", label: "Date started", testId: "setl-tour-col-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "When this tour/settlement opened (trip-start stamp) — see Date started for the original load's pickup", sortValue: r => r.trip_started_at ?? "", render: r => r.trip_started_at ? mmmDd(r.trip_started_at) : DASH },
   ...(state === "closed" ? [{ key: "closed", label: "Date ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH } as ParityColumn<TourListRow>] : []),
   { key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
@@ -57,7 +88,8 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
   ...(state === "open" ? [
     { key: "ready_ok", label: "Checks passed", testId: "setl-tour-col-checks-passed", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => r.ready_ok } as ParityColumn<TourListRow>,
     { key: "ready_total", label: "Checks required", testId: "setl-tour-col-checks-required", sortable: true, sortValue: (r: TourListRow) => r.ready_total, render: (r: TourListRow) => r.ready_total } as ParityColumn<TourListRow>,
-    { key: "close_blockers", label: "Open items", testId: "setl-tour-col-open-items", sortable: true, sortValue: (r: TourListRow) => r.close_blockers.join(", "), render: (r: TourListRow) => r.close_blockers.length ? <span className="flex flex-col">{r.close_blockers.map(item => <span key={item}>{item}</span>)}</span> : DASH } as ParityColumn<TourListRow>,
+    // ROUND 443.252: each open row shows its OWN first failing check — not every blocker stacked.
+    { key: "close_blockers", label: "Open items", testId: "setl-tour-col-open-items", sortable: true, sortValue: (r: TourListRow) => r.close_blockers[0] ?? "", render: (r: TourListRow) => r.close_blockers[0] ? <span title={r.close_blockers.join("\n")} data-testid="setl-tour-first-blocker">{r.close_blockers[0]}</span> : DASH } as ParityColumn<TourListRow>,
   ] : []),
   ...(state === "open"
     ? [{ key: "ready", label: "Ready to close", testId: "setl-tour-col-ready", sortable: true, minWidth: 120, maxWidth: 200, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <span className={`ldt-pill ${r.can_close ? "ok" : r.ready_ok === 0 ? "bad" : "warn"}`} title={r.close_blockers.join("\n")}>{r.can_close ? "Ready" : "Not ready"}</span> } as ParityColumn<TourListRow>,
@@ -134,7 +166,15 @@ function PostTourAction({ row, companyId }: { row: TourListRow; companyId: strin
 }
 
 export function SettlementsToursRegister({ companyId }: { companyId: string }) {
-  const [state, setState] = useState<"open" | "closed">("open");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabHint = searchParams.get("tour_state") ?? searchParams.get("tab");
+  const state: "open" | "closed" = tabHint === "closed" ? "closed" : "open";
+  const setState = (next: "open" | "closed") => {
+    const params = new URLSearchParams(searchParams);
+    params.set("tour_state", next);
+    if (params.get("tab") === "open" || params.get("tab") === "closed") params.delete("tab");
+    setSearchParams(params, { replace: true });
+  };
   const openQ = useQuery({ queryKey: ["settlements-module", "tours", "open", companyId], queryFn: () => listTours(companyId, "open"), enabled: Boolean(companyId) });
   const closedQ = useQuery({ queryKey: ["settlements-module", "tours", "closed", companyId], queryFn: () => listTours(companyId, "closed"), enabled: Boolean(companyId) });
   const activeQ = state === "open" ? openQ : closedQ;
@@ -156,7 +196,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             onClick={() => setState(s)}
             className={`ldt-btn ${state === s ? "p" : "g"} capitalize`}
           >
-            {s === "open" ? "Pre-Settlement (open)" : "Settlement (closed)"}
+            {s === "open" ? "Open" : "Closed"}
             <span className={`ml-1 inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 text-section-header ${state === s ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`}>
               {(s === "open" ? openCount : closedCount) ?? "\u2014"}
             </span>

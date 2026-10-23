@@ -260,8 +260,15 @@ export function EntityPicker({
     // A value that is not in the roster (an archived driver still referenced by an old record, a
     // load outside the 200-row page) must stay VISIBLE and selected rather than silently blanking
     // the field — a picker that drops the value it was handed is worse than the text box it replaced.
+    // ROUND 443.257 — never render a raw UUID as the selected label (root of "Driver — not visible"
+    // when the preset id was outside the movement-Active list). Honest sentence until roster resolves.
     if (scopedValue && heldQuery.data !== false && !rows.some((r) => r.value === scopedValue)) {
-      rows.unshift({ value: scopedValue, label: scopedValue, sublabel: "not in the current list" });
+      const kindNoun = kind === "driver" ? "Driver" : kind.charAt(0).toUpperCase() + kind.slice(1);
+      rows.unshift({
+        value: scopedValue,
+        label: `${kindNoun} — not visible`,
+        sublabel: "not in the current list",
+      });
     }
     return rows;
   }, [rosterQuery.data, created, scopedValue, selectedOption, inScopeVinUnit, heldQuery.data]);

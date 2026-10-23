@@ -86,7 +86,10 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
           {visibleMetas.map((meta) => {
             const forceReportsActive = meta.id === "reports" && location.pathname.startsWith("/reports/");
             const forceAccountingActive = meta.id === "accounting" && location.pathname.startsWith("/accounting");
-            const forceActive = forceReportsActive || forceAccountingActive;
+            // ROUND 443.254 N1 — every /driver-finance/… leaf keeps SETTLEMENTS lit (not Drivers/Accounting).
+            const forceSettlementsActive =
+              meta.id === "settlements" && location.pathname.startsWith("/driver-finance");
+            const forceActive = forceReportsActive || forceAccountingActive || forceSettlementsActive;
             const showMaintBadge = meta.badgeKey === "maintenance_severe" && severeBadgeCount > 0;
             const showDraftsBadge = meta.badgeKey === "dispatch_drafts" && draftsBadgeCount > 0;
             return (

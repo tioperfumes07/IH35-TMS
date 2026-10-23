@@ -44,7 +44,8 @@ export function EntityLinkOrTombstone({
       </span>
     );
   }
-  const label = linkLabel ?? (name != null ? String(name).trim() : "");
+  // ROUND 443.258-B — resolved links also go through entityLabel so person/org names get formatPersonName.
+  const label = linkLabel ?? entityLabel(name, trimmedId, noun);
   return (
     <EntityLink
       kind={kind}

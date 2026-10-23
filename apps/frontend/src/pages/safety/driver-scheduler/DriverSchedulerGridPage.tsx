@@ -14,7 +14,7 @@ import { Modal } from "../../../components/Modal";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { formatDateUS } from "../../../lib/formatDate";
+import { formatDate } from "../../../lib/formatDate";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useSearchParams } from "react-router-dom";
@@ -219,7 +219,7 @@ export function DriverSchedulerGridPage() {
       sortable: true,
       sortValue: (a) => a.start_date ?? "",
       cellClass: "text-gray-600",
-      render: (a) => `${formatDateUS(a.start_date)}–${formatDateUS(a.end_date)}`,
+      render: (a) => `${formatDate(a.start_date)}–${formatDate(a.end_date)}`,
     },
     {
       key: "notes",
@@ -472,6 +472,7 @@ export function DriverSchedulerGridPage() {
               <div className="mt-1">
                 <DatePicker
                   id="driver-cover-start-date"
+                  className="h-8"
                   value={tempCoverForm.startDate}
                   onChange={(startDate) => setTempCoverForm((f) => ({ ...f, startDate, endDate: f.endDate < startDate ? startDate : f.endDate }))}
                 />
@@ -482,6 +483,7 @@ export function DriverSchedulerGridPage() {
               <div className="mt-1">
                 <DatePicker
                   id="driver-cover-end-date"
+                  className="h-8"
                   value={tempCoverForm.endDate}
                   min={tempCoverForm.startDate}
                   onChange={(endDate) => setTempCoverForm((f) => ({ ...f, endDate }))}

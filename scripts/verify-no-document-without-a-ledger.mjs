@@ -31,7 +31,8 @@
 const GAP_RATCHET = {
   "accounting.expenses": 0,
   "accounting.bill_payments": 32,
-  "accounting.invoices": 26,
+  // 2026-10-22 Neon measure (443.258-B ship): live unposted invoices = 1 (was 26). Shrink-only.
+  "accounting.invoices": 1,
   "fuel.fuel_transactions": 0,
   // 2026-10-22 Neon br-fancy-credit-akjnd07a bypass_rls=lucia USMCA (Cursor Lead 443.258-B):
   // driver_bills load 13691 (ddd8e222, $354.51, settled_in set, load delivered_pending_docs,

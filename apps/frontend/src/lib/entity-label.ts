@@ -1,3 +1,5 @@
+import { formatPersonName } from "./formatPersonName";
+
 /**
  * CLS-UUID-LABEL — render a human label for a record, never a uuid prefix.
  *
@@ -30,9 +32,26 @@
  *
  * `noun` should name the thing, so the fallback reads as English. Callers that genuinely have nothing
  * better can omit it and get "Record".
+ *
+ * ROUND 443.258-B — person/org nouns run through formatPersonName() (proper case, never ALL CAPS).
+ * Document/unit/load numbers stay as stored (not person-name shaped).
  */
 const UUID_SHAPE_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Nouns whose resolved labels are people or companies — display via formatPersonName. */
+const PERSON_OR_ORG_NOUNS = new Set([
+  "driver",
+  "customer",
+  "vendor",
+  "user",
+  "broker",
+  "factor",
+  "carrier",
+  "contact",
+  "payee",
+  "employee",
+]);
 
 /**
  * ACCT-F6284: a string that parses as a JSON object/array is internal data, never a display name.
@@ -61,7 +80,12 @@ export function entityLabel(
 ): string {
   if (name != null) {
     const s = String(name).trim();
-    if (s !== "" && !UUID_SHAPE_RE.test(s) && !looksLikeSerializedJson(s)) return s;
+    if (s !== "" && !UUID_SHAPE_RE.test(s) && !looksLikeSerializedJson(s)) {
+      if (PERSON_OR_ORG_NOUNS.has(String(noun).trim().toLowerCase())) {
+        return formatPersonName(s);
+      }
+      return s;
+    }
   }
   if (id != null && String(id).trim() !== "") return `${noun} — not visible`;
   return "Unassigned";

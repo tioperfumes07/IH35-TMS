@@ -20,15 +20,15 @@ export const paritySizing = {
   drawerWidthWidePx: 700,
   /** Centered modal card width (New Customer etc.). */
   modalCardWidthPx: 760,
-  /** Compact form field height inside drawers (QBO ~36–40px). */
-  fieldHeightPx: 38,
+  /** ROUND 443.258-B (D018 D028 D032) — single-line inputs = 32px everywhere. */
+  fieldHeightPx: 32,
   /** Shared chrome inset — matches px-4 / py-3 on Modal + ParityDrawer. */
   chromePadXPx: 16,
   chromePadYPx: 12,
 } as const;
 
 /** Tailwind field height token — prefer this over ad-hoc h-10/h-12 in chrome shells. */
-export const PARITY_FIELD_HEIGHT_CLASS = "h-[38px] min-h-[38px]";
+export const PARITY_FIELD_HEIGHT_CLASS = "h-8 min-h-8";
 
 /** Tailwind width classes: full-bleed on mobile, bounded on desktop. */
 export const PARITY_DRAWER_WIDTH = "w-full sm:w-[576px]";

@@ -32,6 +32,7 @@ import { useToast } from "../../components/Toast";
 import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { SettlementCreatorDrawer } from "../settlements/SettlementCreatorDrawer";
 import { listSourceChangedSettlements, type SettlementCreatorDraft, type SourceChangedSettlement } from "../../api/settlementCreator";
+import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 
 /** LEAD 443.215 — one line per change of a settlement's printed source (same wording as the backend refusal). */
 function describeSourceDiffLines(d: SourceChangedSettlement["diff"]): string[] {
@@ -370,24 +371,8 @@ export function SettlementsPage() {
         </div>
       ) : null}
 
-      <NavyPageSubNav
-        items={[
-          { label: "Drivers",           to: "/drivers" },
-          { label: "Profiles",           to: "/drivers/profiles" },
-          { label: "Pre-Settlements",    to: "/drivers/pre-settlements" },
-          { label: "Settlements",        to: "/driver-finance/settlements" },
-          { label: "Batch Settlements",  to: "/driver-finance/settlements/batch" },
-          { label: "Feed Gate",          to: "/feed-gate" },
-          { label: "Company Settlements", to: "/driver-finance/company-settlements" },
-          { label: "Settlement Close",   to: "/driver-finance/settlement-close" },
-          { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },
-          { label: "Cash Advances",      to: "/cash-advances" },
-          { label: "Liabilities",        to: "/liabilities" },
-          { label: "Escrow",             to: "/accounting/escrow" },
-          { label: "Pay Rate Templates", to: "/drivers/pay-rate-templates" },
-          { label: "Deductions",         to: "/drivers/deductions" },
-        ]}
-      />
+      {/* ROUND 443.254 N1 — every tab stays under /driver-finance/… */}
+      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
 
       <div className="flex items-center gap-2">
         <Button

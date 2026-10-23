@@ -10,6 +10,10 @@ export type ListDriversParams = {
   include_deactivated?: boolean;
   limit?: number;
   offset?: number;
+  /** Rule 49 default is movement; Book Load / assign pickers use hr_status (443.257). */
+  active_definition?: "movement" | "hr_status";
+  /** Attach usual truck / last load / open load for picker sublabels (443.257). */
+  enrich_picker?: boolean;
 };
 
 export function listDrivers(params: ListDriversParams) {
@@ -24,6 +28,8 @@ export function listDrivers(params: ListDriversParams) {
   if (params.include_deactivated) query.set("include_deactivated", "true");
   if (params.limit != null) query.set("limit", String(params.limit));
   if (params.offset != null) query.set("offset", String(params.offset));
+  if (params.active_definition) query.set("active_definition", params.active_definition);
+  if (params.enrich_picker) query.set("enrich_picker", "true");
   const qs = query.toString();
   return apiRequest<{ drivers: Driver[]; total?: number }>(`/api/v1/mdata/drivers${qs ? `?${qs}` : ""}`).then((payload) => ({
     drivers: params.include_system ? payload.drivers : filterHumanDrivers(payload.drivers),

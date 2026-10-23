@@ -151,6 +151,10 @@ export type Driver = {
   created_by_user_id: string;
   updated_by_user_id: string;
   updated_by_user_label: string | null;
+  /** ROUND 443.257 — Book Load picker enrich (enrich_picker=true). */
+  picker_usual_unit_number?: string | null;
+  picker_last_load_number?: string | null;
+  picker_open_load_number?: string | null;
 };
 
 export type CreateDriverInput = {

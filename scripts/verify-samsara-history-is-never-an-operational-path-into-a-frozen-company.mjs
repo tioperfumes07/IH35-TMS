@@ -34,6 +34,7 @@ export const OPERATIONAL = new Set([
   "maintenance/integrity-findings-attribution.service.ts",
   "integrations/fuel/fraud-detector/rules.service.ts",
   "fuel/fuel-load-at-time.ts", // 443.126 fill-driver-at-time — OPERATIONAL fuel attribution (company-pinned)
+  "fuel/fuel-assignment-question.service.ts", // 443.258 Fuel Questions candidate enrich — OPERATIONAL (driver OCI-pinned)
   "dispatch/driver-pwa/tour-close.service.ts",
   "dispatch/trip-pairing-board.service.ts",
   "dispatch/unit-current-driver.ts", // 443.231b — OPERATIONAL board current-driver (company-pinned)

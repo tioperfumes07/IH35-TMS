@@ -137,7 +137,8 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
 
   return (
     <div className="flex flex-wrap items-end gap-3" data-testid="book-load-live-load-id-bar">
-      <div className="min-w-[14rem] max-w-[18rem] text-left normal-case tracking-normal text-[#0F1219]">
+      {/* ROUND 443.257 — Load # 110×32 (was ~288×28) */}
+      <div className="w-[110px] min-w-[110px] max-w-[110px] text-left normal-case tracking-normal text-[#0F1219] [&_input]:h-8">
         <QboDocumentNumberField
           label="Load #"
           value={manualNumber}

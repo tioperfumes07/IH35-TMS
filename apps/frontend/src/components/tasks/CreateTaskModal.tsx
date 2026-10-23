@@ -206,7 +206,8 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
   );
 
   const labelCls = "block text-xs font-semibold uppercase tracking-wide text-gray-600";
-  const inputCls = "mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-800 focus:border-[#E5E7EB] focus:outline-hidden";
+  // ROUND 443.258-B (D018) — single-line inputs = 32px (h-8).
+  const inputCls = "mt-1 h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-xs text-gray-800 focus:border-[#E5E7EB] focus:outline-hidden";
 
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title="Create task" modalKind="create-task" sizePreset="md">
@@ -401,7 +402,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
           <label className={labelCls} htmlFor="create-task-desc">Description</label>
           <textarea
             id="create-task-desc"
-            className={`${inputCls} h-20 resize-y`}
+            className="mt-1 h-20 w-full resize-y rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-800 focus:border-[#E5E7EB] focus:outline-hidden"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional detail / notes"

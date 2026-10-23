@@ -668,7 +668,7 @@ function AvailableTruckTrack({
         )}
       </div>
 
-      {/* LEAD 443.257-A (owner 10-22): EVERY available truck gets "Assign a load →" — a truck with no
+{/* LEAD 443.257-A (owner 10-22): EVERY available truck gets "Assign a load →" — a truck with no
           driver on the row (T122/T124/T147, measured) used to get a dead-end label and no button. The
           wizard opens with the truck preset; the driver is the usual one when there is history (a
           suggestion, editable), or empty to choose in the wizard. Nothing is written from this screen. */}

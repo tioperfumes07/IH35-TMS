@@ -80,12 +80,12 @@ async function checkDriverCdl(
   const items: ValidationItem[] = [];
 
   if (row.cdl_expires_at === null) {
-    // Safety hard-stop: a CDL is a DOT requirement to operate a CMV. No expiry on
-    // file = unverifiable qualification → BLOCK (was previously only a warning).
+    // ROUND 443.257 owner ruling: missing driver dates = reminder only, never a blocker.
+    // Expired CDL below stays severity "block".
     items.push({
       rule_id: "WF-CDL-MISSING",
-      severity: "block",
-      message: `${driverName}: No CDL expiry date on file — CDL is a DOT requirement for dispatch.`,
+      severity: "warn",
+      message: `${driverName}: No CDL expiry date on file — reminder only (not a dispatch blocker).`,
       evidence: { driver_id: driverUuid },
     });
     return items;
@@ -160,14 +160,13 @@ async function checkDriverMedicalCard(
   const driverName = row.full_name ?? [row.first_name, row.last_name].filter(Boolean).join(" ") ?? "Driver";
 
   if (row.expiry_date === null) {
-    // Safety hard-stop: no DOT medical card on file (neither a safety.medical_cards
-    // row nor mdata.drivers.dot_medical_expires_at) = unverifiable medical
-    // qualification → BLOCK (was previously silently dropped as []).
+    // ROUND 443.257 owner ruling: missing driver dates = reminder only, never a blocker.
+    // Expired medical card below stays severity "block".
     return [
       {
         rule_id: "WF-MED-CARD-MISSING",
-        severity: "block",
-        message: `${driverName}: No DOT medical card on file — required for dispatch.`,
+        severity: "warn",
+        message: `${driverName}: No DOT medical card on file — reminder only (not a dispatch blocker).`,
         evidence: { driver_id: driverUuid },
       },
     ];

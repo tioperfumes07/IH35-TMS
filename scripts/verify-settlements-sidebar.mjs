@@ -58,5 +58,40 @@ try {
   fail(`verify-sidebar-contract failed: ${e.stderr?.toString() ?? e.message}`);
 }
 
+// ROUND 443.254 / 443.258-B — Settlements module tabs stay under /driver-finance/…
+const subnav = read("apps/frontend/src/pages/driver-finance/settlementsSubnav.ts");
+if (!subnav.includes("export const SETTLEMENTS_SUBNAV")) fail("settlementsSubnav missing SETTLEMENTS_SUBNAV");
+else pass("SETTLEMENTS_SUBNAV exported");
+const offModule = [...subnav.matchAll(/to:\s*"([^"]+)"/g)]
+  .map((m) => m[1])
+  .filter((to) => !to.startsWith("/driver-finance/"));
+if (offModule.length) fail(`SETTLEMENTS_SUBNAV leaves Settlements module: ${offModule.join(", ")}`);
+else pass("every SETTLEMENTS_SUBNAV.to stays under /driver-finance/");
+
+const settlementsPage = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+if (!settlementsPage.includes("SETTLEMENTS_SUBNAV")) fail("SettlementsPage must mount SETTLEMENTS_SUBNAV");
+else pass("SettlementsPage mounts SETTLEMENTS_SUBNAV");
+
+// Compile law: never import the missing components/v3 barrel (formatDisplayName.ts path OK).
+const { readdirSync } = fs;
+function walkTs(dir, out = []) {
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, ent.name);
+    if (ent.isDirectory()) {
+      if (ent.name === "node_modules" || ent.name === "dist") continue;
+      walkTs(p, out);
+    } else if (/\.(tsx?|jsx?)$/.test(ent.name)) out.push(p);
+  }
+  return out;
+}
+const barrelRe = /from\s+["'][^"']*\/components\/v3["']/;
+const phantom = [];
+for (const abs of walkTs(path.join(ROOT, "apps/frontend/src"))) {
+  const src = fs.readFileSync(abs, "utf8");
+  if (barrelRe.test(src)) phantom.push(path.relative(ROOT, abs));
+}
+if (phantom.length) fail(`phantom components/v3 barrel import(s): ${phantom.join(", ")}`);
+else pass("no FE import of missing components/v3 barrel");
+
 if (failed) { console.error("\n[verify-settlements-sidebar] FAILED"); process.exit(1); }
 console.log("\n[verify-settlements-sidebar] ALL CHECKS PASSED");

@@ -2572,10 +2572,20 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     }
   }
   // GATE-SCOPE ROUND 443.29-B — relay_deposit bank match cannot create fuel_event JE tip debt.
+  // GATE-SCOPE ROUND 443.258-B — Fuel Questions candidate enrich (fuel-assignment-question.service.ts)
+  // only pins the VDA driver OCI read; it cannot create fuel_event JE tip debt. Ambient tip
+  // FUEL_5000_MISMATCH / DOUBLE_POSTED_DOCUMENT (241) must not block a non-posting enrich PR.
   if (name === "verify-fuel-cost-posts-exactly-once" && changedForLiveDomains !== null) {
+    const fuelBackendTouches = changedForLiveDomains.filter((f) =>
+      f.startsWith("apps/backend/src/fuel/"),
+    );
+    const fuelEnrichOnly =
+      fuelBackendTouches.length > 0 &&
+      fuelBackendTouches.every((f) => f === "apps/backend/src/fuel/fuel-assignment-question.service.ts");
     const touchesFuelCostLaw = changedForLiveDomains.some(
       (f) =>
-        f.startsWith("apps/backend/src/fuel/") ||
+        (f.startsWith("apps/backend/src/fuel/") &&
+          f !== "apps/backend/src/fuel/fuel-assignment-question.service.ts") ||
         f.startsWith("apps/backend/src/accounting/fuel-posting/") ||
         f === rel ||
         f.startsWith("scripts/verify-fuel-cost-posts-exactly-once"),
@@ -2598,7 +2608,13 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       }
       return true;
     });
-    if (!touchesFuelCostLaw && !touchesNonBankReconAccounting) {
+    if (fuelEnrichOnly && !touchesFuelCostLaw && !touchesNonBankReconAccounting) {
+      const msg = `${rel} — fuel-assignment-question enrich-only (ROUND 443.258-B VDA OCI pin; not a fuel poster)`;
+      console.log(`[${LABEL}] SKIP ${msg}`);
+      skippedLiveChecks.push(msg);
+      continue;
+    }
+    if (!touchesFuelCostLaw && !touchesNonBankReconAccounting && fuelBackendTouches.length === 0) {
       const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
       console.log(`[${LABEL}] SKIP ${msg}`);
       skippedLiveChecks.push(msg);

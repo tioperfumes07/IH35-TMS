@@ -26,6 +26,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 
 type DraftJeRow = { id: string; account: string; debit: string; credit: string };
 
@@ -296,15 +297,7 @@ export function SettlementCloseArrivalPage() {
     <div className="space-y-4">
       <PageHeader title="Settlement Close — Driver Arrival" subtitle="Close ONE driver's settlement on arrival: gross, deductions, escrow, advances, net" />
 
-      <NavyPageSubNav
-        items={[
-          { label: "Pre-Settlements", to: "/drivers/pre-settlements" },
-          { label: "Settlements", to: "/driver-finance/settlements" },
-          { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },
-          { label: "Settlement Close", to: "/driver-finance/settlement-close" },
-          { label: "Escrow", to: "/accounting/escrow" },
-        ]}
-      />
+      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
 
       {!companyId ? (
         <p className="text-xs text-gray-600">Select an operating company first.</p>
