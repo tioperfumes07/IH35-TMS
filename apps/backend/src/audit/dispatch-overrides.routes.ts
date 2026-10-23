@@ -44,9 +44,10 @@ export async function registerDispatchOverrideAuditRoutes(app: FastifyInstance) 
     const query = parsed.data;
 
     const rows = await withCompanyScope(authUser.uuid, query.operating_company_id, async (client) => {
+      // $1 is ONE text[] of event classes (the old code passed them as two scalar params,
+      // so Postgres saw 3 bind values for 2 placeholders and the route 500'd).
       const values: unknown[] = [
-        "dispatch.unit_block_overridden_by_owner",
-        "dispatch.hos_override_by_manager",
+        ["dispatch.unit_block_overridden_by_owner", "dispatch.hos_override_by_manager"],
         query.operating_company_id,
       ];
       const filters: string[] = [

@@ -25,8 +25,8 @@ export function verify(source) {
   const failures = [];
   const need = (key, text, message) => { if (!source[key].includes(text)) failures.push(message); };
   need("banking", "navigate(BANKING_TAB_PATH.reconciliation)", "banking reconciliation queue must stay mounted");
-  need("banking", 'navigate("/factoring/reserve-tracker")', "banking factoring workflow must drill to reserves");
-  need("banking", "navigate(BANKING_TAB_PATH.driver_escrow)", "banking driver escrow workflow must stay mounted");
+  need("banking", 'to="/factoring/reserve-tracker"', "banking factoring workflow must drill to reserves");
+  need("banking", 'setActiveTab("driver_escrow")', "banking driver escrow workflow must stay mounted");
   need("submit", 'kind="invoice"', "factoring submission queue must drill to invoices");
   need("submit", 'kind="customer"', "factoring submission queue must drill to customers");
   need("wizard", 'kind="invoice"', "factoring batch wizard must drill to selected invoices");
@@ -56,8 +56,8 @@ if (failures.length) {
 if (process.argv.includes("--self-test")) {
   const mutations = [
     ["banking", "navigate(BANKING_TAB_PATH.reconciliation)", "navigate('/banking')"],
-    ["banking", 'navigate("/factoring/reserve-tracker")', "navigate('/factoring')"],
-    ["banking", "navigate(BANKING_TAB_PATH.driver_escrow)", "navigate('/banking')"],
+    ["banking", 'to="/factoring/reserve-tracker"', 'to="/factoring"'],
+    ["banking", 'setActiveTab("driver_escrow")', 'setActiveTab("transactions")'],
     ["submit", 'kind="invoice"', 'kind="load"'],
     ["submit", 'kind="customer"', 'kind="vendor"'],
     ["wizard", 'kind="invoice"', 'kind="load"'],

@@ -42,7 +42,7 @@ import {
   DELIVERY_EVIDENCE_MDATA_STATUSES,
 } from "../dispatch/delivery-evidence-status.js";
 
-import { liveExpense, liveBill, openDriverBill, driverBillAmountKnown } from "../accounting/live-document-predicates.sql.js";
+import { liveExpense, liveBill, openDriverBill, driverBillAmountKnown, notVoided } from "../accounting/live-document-predicates.sql.js";
 import { cashFlowReceiptsSql } from "./cash-flow-receipts.sql.js";
 import { cashFlowSettlementEligibilitySql } from "./cash-flow-obligations.sql.js";
 import { BILL_OPEN_BALANCE_SQL } from "../accounting/bills.service.js";
@@ -973,6 +973,7 @@ export async function getRollingLedgerRows(
     bill_date: string | null;
     due_date: string;
     remaining_cents: number;
+    bill_category: string;
   }>(
     `
     SELECT
@@ -981,7 +982,8 @@ export async function getRollingLedgerRows(
       COALESCE(v.vendor_name, 'Vendor') AS vendor_name,
       b.bill_date::text AS bill_date,
       COALESCE(b.due_date, b.bill_date, $2::date)::text AS due_date,
-      ${BILL_OPEN_BALANCE_SQL}::bigint AS remaining_cents
+      ${BILL_OPEN_BALANCE_SQL}::bigint AS remaining_cents,
+      b.bill_category
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id AND v.operating_company_id = $1::uuid
     WHERE b.operating_company_id = $1::uuid
@@ -1406,7 +1408,7 @@ export async function getRollingLedgerRows(
         SUM(ft.total_cost) AS weekly_total
       FROM fuel.fuel_transactions ft, params
       WHERE ft.operating_company_id = $1::uuid
-        AND ft.voided_at IS NULL
+        AND ${notVoided("ft")}
         AND ft.transaction_at >= params.four_weeks_ago_utc
         AND ft.transaction_at < params.cur_week_start_utc
       GROUP BY 1
@@ -1444,10 +1446,11 @@ export async function getRollingLedgerRows(
 
   for (const b of billRows.rows) {
     const daysOverdue = daysBetween(today, b.due_date);
+    const isDriverAp = b.bill_category === "driver";
     rows.push({
       row_kind: "expense",
-      type: "Bill",
-      document_kind: "bill",
+      type: isDriverAp ? "Driver Bill (AP)" : "Bill",
+      document_kind: isDriverAp ? "driver_bill" : "bill",
       document_id: b.id,
       document_label: b.display_id ?? b.id.slice(0, 8),
       counterparty: b.vendor_name,

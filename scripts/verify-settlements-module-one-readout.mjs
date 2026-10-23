@@ -84,6 +84,54 @@ function analyze(reg, page) {
   if (!/testId=["']settlements-tours-v3-panel["']/.test(reg) && !/testId=\{?"settlements-tours-v3-panel"?\}/.test(reg))
     errors.push("SettlementsToursRegister must set testId=settlements-tours-v3-panel on V3Panel");
 
+
+  // ROUND 443.267 — Settlements home board polish (Week-of table · deduction split · Deductions grain).
+  if (!/listSettlementDeductions/.test(page))
+    errors.push("SettlementsPage must call listSettlementDeductions for home deduction-type split (443.267)");
+  if (!/settlements-home-week-of-panel/.test(page))
+    errors.push("SettlementsPage must render Week-of panel (data-testid settlements-home-week-of-panel)");
+  if (!/id:\s*"deductions"/.test(page) && !/id:\s*'deductions'/.test(page))
+    errors.push("SettlementsPage week chart grain must include Deductions (board Net|Gross|Deductions)");
+  if (!/Advances \(Zelle\)/.test(page) || !/Escrow/.test(page) || !/Fines/.test(page))
+    errors.push("SettlementsPage deductions panel must split Escrow / Advances (Zelle) / Fines");
+
+  // ROUND 443.274-C — Settlements-Open board (Ready dots · Waiting on · Settlement label · no "Open" status word).
+  if (!/function ReadyDots\b/.test(reg) || !/data-testid="setl-tour-ready-dots"/.test(reg))
+    errors.push("SettlementsToursRegister must render ReadyDots (data-testid setl-tour-ready-dots) for Open Ready column");
+  if (!/label:\s*"Ready"/.test(reg) || !/testId:\s*"setl-tour-col-ready"/.test(reg))
+    errors.push('SettlementsToursRegister open view must keep Ready column (label "Ready", testId setl-tour-col-ready)');
+  if (!/label:\s*"Waiting on"/.test(reg) || !/testId:\s*"setl-tour-col-open-items"/.test(reg))
+    errors.push('SettlementsToursRegister open view must label Waiting on (testId setl-tour-col-open-items kept)');
+  if (!/function waitingOnReason\b/.test(reg) || !/close_blockers\[0\]/.test(reg))
+    errors.push("Waiting on must be this row's first close_blockers entry only (waitingOnReason)");
+  if (!/label:\s*"Settlement"/.test(reg) || /label:\s*"Settlement\/Tour"/.test(reg))
+    errors.push('SettlementsToursRegister Settlement column label must be "Settlement" (not Settlement/Tour)');
+  // Prefer P-series + refuse Open/PENDING/S-counter (measured board defect: Settlement showed "Open").
+  if (!reg.includes("/^P-\\d+/i"))
+    errors.push("tourLabel must accept P-series display_id (/^P-\\d+/i)");
+  if (!/toLowerCase\(\)\s*!==\s*"open"/.test(reg))
+    errors.push("tourLabel must refuse status-word Open");
+  if (!/settlements-open-board-footnote/.test(reg))
+    errors.push("SettlementsToursRegister open view must render settlements-open-board-footnote");
+  if (!/label:\s*"Practical mi"/.test(reg) || !/label:\s*"Real mi"/.test(reg))
+    errors.push('SettlementsToursRegister mile columns must use board labels "Practical mi" / "Real mi"');
+
+  // ROUND 443.274-C — Settlements-Closed board (No number · Driver net bold · Company settlement link · footnote).
+  if (!/function SettlementCell\b/.test(reg) || !/setl-tour-no-number/.test(reg))
+    errors.push("SettlementsToursRegister must render SettlementCell with setl-tour-no-number for closed No number rows");
+  if (!/function CompanySettlementCell\b/.test(reg) || !/kind=["']company_settlement["']/.test(reg))
+    errors.push("SettlementsToursRegister must link Company settlement via EntityLink kind=company_settlement");
+  if (!/setl-tour-company-not-opened/.test(reg) || !/not opened/.test(reg))
+    errors.push('Closed Company settlement must keep "not opened" (setl-tour-company-not-opened) when no company settlement');
+  if (!/label:\s*"Driver net"/.test(reg) || !/font-bold/.test(reg))
+    errors.push("Closed Driver net column must be bold (font-bold)");
+  if (!/settlements-closed-board-footnote/.test(reg))
+    errors.push("SettlementsToursRegister closed view must render settlements-closed-board-footnote");
+  if (!/Settlement number and company settlement number both open their statements/.test(reg))
+    errors.push("Closed footnote must state both numbers open their statements");
+  if (!/company_settlement_id/.test(reg))
+    errors.push("SettlementsToursRegister must read company_settlement_id for the Company settlement link");
+
   return errors;
 }
 
@@ -114,6 +162,19 @@ if (process.argv.includes("--selftest")) {
     ["drop Closed panel title", [reg.replace(/Closed settlements/g, "Closed list"), page]],
     ["drop Open panel title", [reg.replace(/Open tours · pre-settlements/g, "Open list"), page]],
     ["drop board pill labels", [reg.replace(/Pre-Settlement \(Open\)/g, "Open").replace(/Settlement \(Closed\)/g, "Closed"), page]],
+    ["drop week-of panel", [reg, page.replace(/settlements-home-week-of-panel/g, "settlements-home-week-legacy")]],
+    ["drop deductions grain", [reg, page.replace(/id:\s*"deductions"/g, 'id: "net_x"')]],
+    ["drop listSettlementDeductions", [reg, page.replace(/listSettlementDeductions/g, "listNope")]],
+    ["drop Advances label", [reg, page.replace(/Advances \(Zelle\)/g, "Advances")]],
+    ["drop ReadyDots testid", [reg.replace(/setl-tour-ready-dots/g, "setl-tour-ready-gone"), page]],
+    ["drop Waiting on label", [reg.replace(/label:\s*"Waiting on"/g, 'label: "Open items"'), page]],
+    ["restore Settlement/Tour label", [reg.replace(/label:\s*"Settlement"/, 'label: "Settlement/Tour"'), page]],
+    ["drop open footnote", [reg.replace(/settlements-open-board-footnote/g, "settlements-open-legacy"), page]],
+    ["drop Practical mi label", [reg.replace(/label:\s*"Practical mi"/g, 'label: "Practical miles"'), page]],
+    ["drop SettlementCell / No number", [reg.replace(/function SettlementCell\b/g, "function SettlementCellGone").replace(/setl-tour-no-number/g, "setl-tour-no-num-gone"), page]],
+    ["drop CompanySettlementCell link", [reg.replace(/kind=["']company_settlement["']/g, 'kind="settlement"'), page]],
+    ["drop closed footnote", [reg.replace(/settlements-closed-board-footnote/g, "settlements-closed-legacy"), page]],
+    ["drop Driver net bold", [reg.replace(/font-bold/g, "font-normal"), page]],
   ];
   let caught = 0;
   for (const [label, [r, p]] of mutations) {

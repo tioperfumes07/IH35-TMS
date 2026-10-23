@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { assertMigrationDriftBootGuard, findMigrationDrift } from "./migration-status.js";
+import { assertMigrationDriftBootGuard, findMigrationDrift, splitHeldPending } from "./migration-status.js";
 
 function tmpRepoWithMigrations(filenames: string[], heldFiles: string[] = []) {
   const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-mig-"));
@@ -162,5 +162,15 @@ describe("migration-status", () => {
     await expect(
       assertMigrationDriftBootGuard({ repoRoot, client: { query } as never, logError })
     ).rejects.toThrow("[boot] migration drift detected: missing in DB: 0002_b.sql");
+  });
+});
+
+// LEAD 443.268-B: the health route answered 503 on a healthy prod because it counted the 10 HELD files as missing.
+describe("splitHeldPending (one split for the boot guard and /admin/health/migrations)", () => {
+  const repoRoot = path.resolve(__dirname, "../../../..");
+  it("a HELD file is pending, a normal missing file is drift", () => {
+    const r = splitHeldPending(["202615210000_lease_to_own_lessee_asc842.sql", "209912310000_not_held_example.sql"], repoRoot);
+    expect(r.heldPending).toEqual(["202615210000_lease_to_own_lessee_asc842.sql"]);
+    expect(r.missing).toEqual(["209912310000_not_held_example.sql"]);
   });
 });

@@ -34,6 +34,7 @@ import { DeactivateFactorConfirmModal } from "../../components/factoring/Deactiv
 import { entityLabel } from "../../lib/entity-label";
 import { useListState } from "../../components/list-state";
 import { companyToday } from "../../lib/businessDate";
+import { FactoringProfilePanel } from "./FactoringProfilePanel";
 
 function formatPct(value: number) {
   return `${(Number(value || 0) * 100).toFixed(2)}%`;
@@ -468,6 +469,11 @@ export function FactorAdmin() {
             ) : (
               <div className="text-red-600">Not configured — invoices for assigned customers will be blocked until NOA fields are set.</div>
             )}
+          </div>
+
+          {/* Factor profile — compact read-only summary */}
+          <div className="border-t border-gray-100 p-2">
+            <FactoringProfilePanel factor={selectedFactor} variant="compact" onSave={() => { void queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] }); }} />
           </div>
 
           {/* LOR history */}

@@ -10,12 +10,12 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 358 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 283 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| **create** (collection POST) | 359 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **nested create** (child POST) | 284 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 967 | |
-| UI files with `+ Create`/`+ Book` | 194 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
+| **TOTAL POST endpoints** | 969 | |
+| UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
 report a lie, so every endpoint lands in exactly one bucket and nothing is silently dropped.
@@ -209,10 +209,11 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/safety/v5/complaints` | `apps/backend/src/safety/safety-v5.routes.ts:684` | — | — | — |
 | create | `/api/v1/safety/v5/dot-inspections` | `apps/backend/src/safety/safety-v5.routes.ts:129` | — | — | — |
 
-### mdata — 54 create-surface(s)
+### mdata — 55 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
+| nested | `/api/v1/mdata/canonical/:kind/merge-all` | `apps/backend/src/mdata/canonical/canonical-entities.routes.ts:164` | — | — | — |
 | create | `/api/v1/mdata/customers` | `apps/backend/src/mdata/customers.routes.ts:762` | — | — | — |
 | nested | `/api/v1/mdata/customers/:customer_id/lanes` | `apps/backend/src/mdata/customer-lanes.routes.ts:98` | — | — | — |
 | nested | `/api/v1/mdata/customers/:customer_id/quality-events` | `apps/backend/src/mdata/customer-quality-events.routes.ts:238` | — | — | — |
@@ -429,7 +430,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/catalogs/payment-methods` | `apps/backend/src/driver-finance/payment-methods-catalog.routes.ts:61` | — | — | — |
 | create | `/api/v1/catalogs/payment-terms` | `apps/backend/src/catalogs/payment-terms.routes.ts:143` | — | — | — |
 | create | `/api/v1/catalogs/posting-templates` | `apps/backend/src/catalogs/posting-templates.routes.ts:155` | — | — | — |
-| create | `/api/v1/catalogs/registry` | `apps/backend/src/catalogs/catalog-registry.routes.ts:346` | — | — | — |
+| create | `/api/v1/catalogs/registry` | `apps/backend/src/catalogs/catalog-registry.routes.ts:352` | — | — | — |
 | create | `/api/v1/catalogs/safety/cargo-claim-reasons` | `apps/backend/src/catalogs/safety/cargo-claim-reasons.routes.ts:117` | — | — | — |
 | create | `/api/v1/catalogs/safety/civil-fine-types` | `apps/backend/src/catalogs/safety/civil-fine-types.routes.ts:116` | — | — | — |
 | create | `/api/v1/catalogs/safety/company-violation-types` | `apps/backend/src/catalogs/safety/company-violation-types.routes.ts:108` | — | — | — |
@@ -452,7 +453,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/driver-finance/escrow-separations` | `apps/backend/src/driver-finance/escrow-separation.routes.ts:67` | — | — | — |
 | nested | `/api/v1/driver-finance/escrow/:driverId/forfeit` | `apps/backend/src/driver-finance/escrow-forfeit.routes.ts:46` | — | — | — |
 | nested | `/api/v1/driver-finance/pre-settlements/:id/add-load` | `apps/backend/src/driver-finance/pre-settlement.routes.ts:288` | — | — | — |
-| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts:628` | — | — | — |
+| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts:635` | — | — | — |
 | nested | `/api/v1/driver-finance/pre-settlements/:id/settle` | `apps/backend/src/driver-finance/pre-settlement.routes.ts:423` | — | — | — |
 | nested | `/api/v1/driver-finance/presettlement-suggestions/:id/confirm` | `apps/backend/src/dispatch/presettlement-link.routes.ts:71` | — | — | — |
 | nested | `/api/v1/driver-finance/settlement-creator/:settlementId/retry-after-commit` | `apps/backend/src/driver-finance/settlement-creator.routes.ts:476` | — | — | — |
@@ -721,7 +722,7 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/telematics/geofences` | `apps/backend/src/telematics/geofences.routes.ts:228` | — | — | — |
+| create | `/api/v1/telematics/geofences` | `apps/backend/src/telematics/geofences.routes.ts:246` | — | — | — |
 | create | `/api/v1/telematics/odometer-readings` | `apps/backend/src/telematics/odometer-manual.routes.ts:57` | — | — | — |
 | create | `/api/v1/telematics/stops/geocode-backfill` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:13` | — | — | — |
 | create | `/api/v1/telematics/stops/push-fences` | `apps/backend/src/telematics/stops-geocode-backfill.routes.ts:64` | — | — | — |
@@ -854,6 +855,13 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/driver-alerts` | `apps/backend/src/driveralert/driveralert.routes.ts:15` | — | — | — |
 | nested | `/api/v1/driver-alerts/:id/re-alarm` | `apps/backend/src/driveralert/driveralert.routes.ts:141` | — | — | — |
 
+### drivers — 2 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/drivers/document-alerts/evaluate` | `apps/backend/src/drivers/document-alerts.routes.ts:113` | — | — | — |
+| create | `/api/v1/drivers/merge-all` | `apps/backend/src/mdata/driver-merge.routes.ts:70` | — | — | — |
+
 ### email — 2 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -983,12 +991,6 @@ after creation; a GL/posting failure goes to CC-1.
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
 | create | `/api/v1/driver-teams` | `apps/backend/src/mdata/driver-team-split.routes.ts:87` | — | — | — |
-
-### drivers — 1 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/drivers/document-alerts/evaluate` | `apps/backend/src/drivers/document-alerts.routes.ts:113` | — | — | — |
 
 ### feed — 1 create-surface(s)
 

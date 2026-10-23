@@ -44,6 +44,7 @@ type CreateDraft = {
   pm_type: string;
   interval_kind: IntervalKind;
   interval_value: string;
+  last_service_odometer: string;
 };
 
 const EMPTY_DRAFT: CreateDraft = {
@@ -51,11 +52,14 @@ const EMPTY_DRAFT: CreateDraft = {
   pm_type: "oil",
   interval_kind: "miles",
   interval_value: "10000",
+  last_service_odometer: "",
 };
 
 export function PmSchedulePage() {
   const [searchParams] = useSearchParams();
   const highlightedScheduleId = searchParams.get("schedule_id")?.trim() || "";
+  const requestedUnitId = searchParams.get("unit_id")?.trim() || "";
+  const createRequested = searchParams.get("create") === "1";
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
@@ -64,6 +68,7 @@ export function PmSchedulePage() {
   const [draft, setDraft] = useState<CreateDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
   const actionGenerationRef = useRef(0);
+  const createIntentCompanyRef = useRef<string | null>(null);
 
   const listQ = useQuery({
     queryKey: ["maintenance", "pm-schedule", companyId],
@@ -78,6 +83,7 @@ export function PmSchedulePage() {
       pm_type: string;
       interval_kind: IntervalKind;
       interval_value: number;
+      last_service_odometer?: number;
       generation: number;
     }) => createMaintenancePmSchedule(body),
     onSuccess: async (_result, input) => {
@@ -86,6 +92,7 @@ export function PmSchedulePage() {
       setDraft(EMPTY_DRAFT);
       setFormError(null);
       await qc.invalidateQueries({ queryKey: ["maintenance", "pm-schedule", input.operating_company_id] });
+      await qc.invalidateQueries({ queryKey: ["maintenance", "fleet-health", input.operating_company_id] });
     },
     onError: (err: unknown, input) => {
       if (input.generation !== actionGenerationRef.current) return;
@@ -115,6 +122,15 @@ export function PmSchedulePage() {
     setDraft(EMPTY_DRAFT);
     setFormError(null);
   }, [companyId]);
+
+  useEffect(() => {
+    if (companyId && createRequested && requestedUnitId) {
+      if (createIntentCompanyRef.current && createIntentCompanyRef.current !== companyId) return;
+      createIntentCompanyRef.current = companyId;
+      setDraft({ ...EMPTY_DRAFT, unit_id: requestedUnitId });
+      setFormOpen(true);
+    }
+  }, [companyId, createRequested, requestedUnitId]);
 
   const rows = listQ.data?.rows ?? [];
 
@@ -177,6 +193,12 @@ export function PmSchedulePage() {
       return;
     }
 
+    const baseline = draft.last_service_odometer.trim();
+    if (draft.interval_kind === "miles" && (!baseline || !Number.isSafeInteger(Number(baseline)) || Number(baseline) < 0)) {
+      setFormError("Enter the odometer reading at the last completed PM to start the mileage clock.");
+      return;
+    }
+
     setFormError(null);
     createM.mutate({
       operating_company_id: companyId,
@@ -184,6 +206,7 @@ export function PmSchedulePage() {
       pm_type: pmType,
       interval_kind: draft.interval_kind,
       interval_value: intervalValue,
+      ...(draft.interval_kind === "miles" ? { last_service_odometer: Number(baseline) } : {}),
       generation: actionGenerationRef.current,
     });
   }
@@ -303,6 +326,24 @@ export function PmSchedulePage() {
               />
             </label>
           </div>
+
+          {draft.interval_kind === "miles" ? (
+            <label className="block">
+              <span className="text-xs text-gray-600">Odometer at last completed PM (miles)</span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                required
+                className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
+                value={draft.last_service_odometer}
+                onChange={(e) => setDraft((d) => ({ ...d, last_service_odometer: e.target.value }))}
+                data-testid="pm-schedule-last-service-odometer"
+                aria-describedby="pm-baseline-help"
+              />
+              <span id="pm-baseline-help" className="text-xs text-gray-500">Use the service record, not today's odometer. The existing PM engine calculates the next due reading.</span>
+            </label>
+          ) : null}
 
           {formError ? <p className="text-xs text-red-600">{formError}</p> : null}
 

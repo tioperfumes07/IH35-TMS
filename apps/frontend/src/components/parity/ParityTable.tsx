@@ -591,12 +591,12 @@ function measureTextWidth(text: string, fontPx: number): number {
  * than the "LATE FEE" that actually renders) and a `letterSpacing:0.3` per character canvas
  * `measureText` has no concept of. All three together under-measured just enough to clip "Late
  * Fee"/"Lumper"/"Fuel"/"R&M Exp" on the Load Costs board — confirmed live, owner screenshot. */
-function measureHeaderLabelWidth(label: string, fontPx: number): number {
+function measureHeaderLabelWidth(label: string, fontPx: number, weight: number = 700, letterSpacingPx: number = 0.3): number {
   const ctx = getMeasureCanvasCtx();
   const upper = label.toUpperCase();
-  if (!ctx) return upper.length * fontPx * 0.65;
-  ctx.font = `700 ${fontPx}px sans-serif`;
-  return ctx.measureText(upper).width + upper.length * 0.3;
+  if (!ctx) return upper.length * (fontPx * 0.65 + letterSpacingPx);
+  ctx.font = `${weight} ${fontPx}px sans-serif`;
+  return ctx.measureText(upper).width + upper.length * letterSpacingPx;
 }
 
 function cellTextForMeasurement<T>(column: ParityColumn<T>, row: T): string {
@@ -1161,8 +1161,22 @@ export function ParityTable<T>({
   const proportionalTotal = proportional
     ? visibleColumns.filter((c) => !isFigureColumn(c)).reduce((sum, c) => sum + (widthFor(c) ?? 120), 0)
     : 0;
+  const renderedHeaderFontPx = board ? BOARD_LABEL.fontSize : Math.max(typography.panelHeader ?? 11, d.font + 1);
+  const headerLabelFloor = (c: ParityColumn<T>) => Math.max(
+    MIN_COL_WIDTH_PX, c.minWidth ?? 0,
+    measureHeaderLabelWidth(c.label, renderedHeaderFontPx, headerWeight ?? (board ? BOARD_LABEL.fontWeight : 700), board ? renderedHeaderFontPx * 0.09 : 0.3) + AUTO_FIT_CHROME_PX,
+  );
   const proportionalMinTable = proportional
-    ? figurePx + visibleColumns.filter((c) => !isFigureColumn(c)).length * MIN_COL_WIDTH_PX + (selectable ? TABLE_SELECT_COLUMN_PX : 0) + (renderExpanded ? 32 : 0)
+    ? Math.ceil(Math.max(
+        figurePx + visibleColumns.filter((c) => !isFigureColumn(c)).reduce((sum, c) => sum + headerLabelFloor(c), 0),
+        ...visibleColumns.filter((c) => !isFigureColumn(c)).map((c) => {
+          const labelFloor = headerLabelFloor(c);
+          // A total-width floor alone does not protect a small percentage share.
+          // Reserve enough table width for EVERY text header at its actual share.
+          const share = Number((((widthFor(c) ?? 120) / (proportionalTotal + figurePx)) * 100).toFixed(4)) / 100;
+          return labelFloor / Math.max(share, 0.000001);
+        }),
+      )) + (selectable ? TABLE_SELECT_COLUMN_PX : 0) + (renderExpanded ? 32 : 0)
     : 0;
   const cssWidthFor = (w: number | undefined, column?: ParityColumn<T>): string | number | undefined =>
     !w
@@ -1589,8 +1603,8 @@ export function ParityTable<T>({
   };
 
   const shellClass = embedded
-    ? "overflow-visible bg-white"
-    : "overflow-visible rounded-md border border-gray-200 bg-white";
+    ? "min-w-0 max-w-full overflow-visible bg-white"
+    : "min-w-0 max-w-full overflow-visible rounded-md border border-gray-200 bg-white";
 
   // Per-instance header re-theme (see headerBg/headerInk prop doc) -- falls back to the shared
   // token unchanged when the caller passes neither, so every existing consumer is byte-identical.
@@ -1602,8 +1616,8 @@ export function ParityTable<T>({
       {/* Canonical list toolbar: search + applied range filter + optional slot + gear. */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         {title ? (
-          <div className="flex shrink-0 items-center gap-1">
-            <h2 className="whitespace-nowrap text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
+          <div className="flex min-w-0 max-w-full items-center gap-1">
+            <h2 className="min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
               {title}
             </h2>
             {titleInfo}
@@ -1621,7 +1635,7 @@ export function ParityTable<T>({
           hideRange={suppressToolbarRange}
           className="min-w-0 flex-1"
         />
-        <div className="flex items-center gap-2 text-[11px] text-gray-600">
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-[11px] text-gray-600">
           {selectable && selected.size > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
               <span
@@ -1792,7 +1806,7 @@ export function ParityTable<T>({
         <div className="border-b border-gray-200 px-2 py-1.5">{filterBar}</div>
       ) : null}
 
-      <div className="overflow-x-auto">
+      <div className="min-w-0 max-w-full overflow-x-auto">
       {/* CENTER-EVERYTHING LAW (owner ruling 2026-09-04) — text-align is inherited, so this is the
           one place that flips every header/column that doesn't declare its own alignment. A column
           with an explicit text-right/text-left in its own className (money columns, etc.) still
@@ -1802,7 +1816,7 @@ export function ParityTable<T>({
           money / number cell aligns its digits even when its column key escapes PARITY_NUMERIC_KEY. */}
       <table
         className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} ${board ? "text-left" : "text-center"} tabular-nums`}
-        style={{ fontSize: d.font, ...(board ? { fontSize: 12.5, fontFamily: "var(--ih-font)", color: "var(--ih-ink)" } : {}), ...(minWidthPx ? { minWidth: minWidthPx } : proportionalMinTable ? { minWidth: proportionalMinTable } : {}) }}
+        style={{ fontSize: d.font, ...(board ? { fontSize: 12.5, fontFamily: "var(--ih-font)", color: "var(--ih-ink)" } : {}), ...(minWidthPx ? { minWidth: Math.max(minWidthPx, proportionalMinTable) } : proportionalMinTable ? { minWidth: proportionalMinTable } : {}) }}
         data-table-appearance={appearance}
       >
         <thead

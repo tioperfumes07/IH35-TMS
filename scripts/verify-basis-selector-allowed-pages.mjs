@@ -8,7 +8,9 @@ const allowedImportPages = new Set([
   "apps/frontend/src/pages/reports/BalanceSheetPage.tsx",
   "apps/frontend/src/pages/reports/TrialBalancePage.tsx",
   "apps/frontend/src/pages/reports/ProfitLossPage.tsx",
-  "apps/frontend/src/pages/reports/ReportsHome.tsx",
+  // 443.271 (CC-2): the 443.267 Reports board (ced0513327) moved Reports home's basis selector into its board,
+  // ReportsHomeBoard — same page (ReportsHome mounts it), not a new surface.
+  "apps/frontend/src/pages/reports/components/ReportsHomeBoard.tsx",
   // FIN-19 read-only statements page (flag FINANCE_STATEMENTS_UI_ENABLED, OFF):
   // basis legitimately feeds the P&L/BS/TB queries here. Landed after this
   // allowlist was written and was only ever flagged because this guard never

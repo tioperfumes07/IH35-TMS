@@ -79,6 +79,8 @@ import { userFacingApiError } from "../lib/api-error-message";
 export { DRIVERS_MODULE_NAV_PATHS };
 
 const DRIVER_LIST_STATUS_IDS = DRIVERS_LIST_STATUS_TABS.map((tab) => tab.id);
+/** 443.269-A item 6 — load statuses that put a driver "on a load" (dispatched through at delivery). */
+const DRIVER_ON_LOAD_STATUSES = new Set(["dispatched", "at_pickup", "in_transit", "at_delivery"]);
 
 function driverMatchesListSegment(status: string, segment: DriversListStatusId): boolean {
   if (segment === "all") return true;
@@ -419,9 +421,32 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       terminated: allDrivers.filter((d) => d.status === "Terminated").length,
     };
   }, [allDrivers]);
+  // LEAD 443.269-A item 6 — "on a load" = a driver (primary or team) on a DISPATCHED / at-pickup / in-transit /
+  // at-delivery load of the ONE board set (dispatchLoadsQuery = the load service's canonical scope). By driver id —
+  // the old distinct-driver_short_name count read 0 while the query was pending, and AVAILABLE became "all active".
+  // null until the board set is loaded (rendered "—", never a fake 0).
+  const onLoadDriverIds = useMemo<Set<string> | null>(() => {
+    if (!dispatchLoadsQuery.data || dispatchLoadsQuery.isError) return null;
+    const ids = new Set<string>();
+    for (const load of dispatchLoadsQuery.data.loads ?? []) {
+      const st = String(load.status ?? load.dispatch_status ?? "");
+      if (!DRIVER_ON_LOAD_STATUSES.has(st)) continue;
+      const secondary = (load as { assigned_secondary_driver_id?: string | null }).assigned_secondary_driver_id;
+      for (const id of [load.assigned_primary_driver_id, secondary]) if (id) ids.add(String(id));
+    }
+    return ids;
+  }, [dispatchLoadsQuery.data, dispatchLoadsQuery.isError]);
+  // ?load_state=on|free — the On Loads / Available KPI click-through (filtered roster).
+  const loadStateFilter = searchParams.get("load_state");
   const driversRowsFiltered = useMemo(
-    () => allDrivers.filter((d) => driverMatchesListSegment(d.status, driverListStatus)),
-    [allDrivers, driverListStatus]
+    () =>
+      allDrivers.filter((d) => {
+        if (!driverMatchesListSegment(d.status, driverListStatus)) return false;
+        if (loadStateFilter === "on") return Boolean(onLoadDriverIds?.has(String(d.id)));
+        if (loadStateFilter === "free") return onLoadDriverIds != null && !onLoadDriverIds.has(String(d.id));
+        return true;
+      }),
+    [allDrivers, driverListStatus, loadStateFilter, onLoadDriverIds]
   );
   const newDriversInLast3Days = useMemo(() => {
     const threshold = Date.now() - 3 * 24 * 60 * 60 * 1000;
@@ -543,13 +568,11 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   }, [allDrivers]);
   const activeCount = useMemo(() => allDrivers.filter((driver) => driver.status === "Active").length, [allDrivers]);
   const onLeaveCount = useMemo(() => allDrivers.filter((driver) => driver.status === "OnLeave").length, [allDrivers]);
-  const onLoadsCount = useMemo(() => {
-    const names = new Set((dispatchLoadsQuery.data?.loads ?? []).map((load) => String(load.driver_short_name ?? "").trim()).filter(Boolean));
-    return names.size;
-  }, [dispatchLoadsQuery.data?.loads]);
+  const onLoadsCount = onLoadDriverIds == null ? null : onLoadDriverIds.size;
+  // AVAILABLE = Active drivers who are not on a load (443.269-A item 6).
   const availableCount = useMemo(
-    () => dispatchLoadsQuery.isError ? null : Math.max(activeCount - onLoadsCount - onLeaveCount, 0),
-    [activeCount, dispatchLoadsQuery.isError, onLoadsCount, onLeaveCount]
+    () => (onLoadDriverIds == null ? null : allDrivers.filter((d) => d.status === "Active" && !onLoadDriverIds.has(String(d.id))).length),
+    [allDrivers, onLoadDriverIds]
   );
   // NO-WINDOW / FAIL-S2 — this counted an ALLOWLIST of three statuses (presettle/acked/locked), so any
   // settlement in a status outside that list vanished from the KPI. It is not hypothetical: live settlements
@@ -630,8 +653,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         {/* KPI drill-through: Active/On Leave = roster status; On Loads = Dispatch board.
             Available has no dedicated segment yet — Active is the closest honest destination (not silent dead). */}
         <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} to="/drivers/roster?status=active" />
-        <KpiCard label="On Loads" number={String(onLoadsCount)} accent={colors.dispatch.strong} to="/dispatch?view=loads" />
-        <KpiCard label="Available" number={availableCount == null ? "—" : String(availableCount)} accent={colors.info.strong} to="/drivers/roster?status=active" />
+        <KpiCard label="On Loads" number={onLoadsCount == null ? "—" : String(onLoadsCount)} accent={colors.dispatch.strong} to="/drivers/roster?status=all&load_state=on" />
+        <KpiCard label="Available" number={availableCount == null ? "—" : String(availableCount)} accent={colors.info.strong} to="/drivers/roster?status=active&load_state=free" />
         <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} to="/drivers/roster?status=on_leave" />
         <KpiCard label="Settle Due" number={settleDueCount == null ? "—" : String(settleDueCount)} accent={colors.accounting.strong} to="/drivers/settlements" />
         <KpiCard label="Drivers Owe" number={totalDriversOwe == null ? "—" : formatMoney(totalDriversOwe)} accent={colors.crit.strong} to="/drivers/cash-advances" />

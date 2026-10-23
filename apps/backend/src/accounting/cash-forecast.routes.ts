@@ -7,6 +7,7 @@ import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking
 import { lastDeliveryStopLateralSql, proformaRemainingCentsSql } from "../cash-flow/cash-flow.service.js";
 import { projectedCashDateSql } from "../cash-flow/projected-cash-date.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { loadCostsRevenueJoin } from "./load-costs-live-documents.sql.js";
 import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 
 const forecastQuerySchema = companyQuerySchema.extend({
@@ -217,6 +218,7 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
             JOIN mdata.loads l
               ON l.id = i.source_load_id
              AND l.operating_company_id = i.operating_company_id
+            ${loadCostsRevenueJoin("l")}
             LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                        AND c.operating_company_id = l.operating_company_id
             LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id

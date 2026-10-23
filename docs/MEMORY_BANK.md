@@ -238,6 +238,35 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guards (piggyback, no new EVEN):** `verify-reports-home-no-box-in-box` (board table +
   flat Management) · `verify-rpt-s01-s05-reports-home-ifta` (15+ rows across board+mgmt).
 
+### Active Architectural Decisions — Trial balance viewer board (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Reports-Viewer-TrialBalance.dc.html`.
+  `TrialBalancePage` keeps engines + `ReportFilterBar` + `BasisSelector` + `ParityTable` +
+  `AmountLink` + print/export; body mounts `TrialBalanceBoard`: V3 KPI (Grand total debits /
+  credits / Balance check + sub "debits = credits") → V3Panel "N accounts" (Collapse /
+  Customize → ParityTable gear / View all) wrapping the live table → Measured A/R callout
+  (443.248 finding text only — no invented AR reconcile math) + footer drill note.
+- **Engines:** `getTrialBalanceReport` · `exportTrialBalanceReport` · `printLetterHtml`.
+- **Guard (piggyback):** `verify-trial-balance-print-letter` asserts board mount + KPI sub +
+  Measured 443.248 + existing printLetterHtml contract.
+
+
+### Active Architectural Decisions — Cash Flow Home board (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Board-faithful Home (not chrome-only):** V3 KPI row only on Home — Opening cash / This week
+  income / This week expenses / 4-week net / Weekly run-rate / Lowest week. `<CashFlowKpiStrip>`
+  stays on Rolling Ledger (REG-031 shared component); Home does not remount it.
+- **Chart:** title "Cash position — 4 weeks actual · 13 weeks forecast"; ACTUAL/FORECAST bands;
+  Base|Conservative `V3Segmented`. Conservative = committed-doc filter (invoices + finance/lease +
+  driver pay + vendor bills) on the same `getRollingLedger` rows — no invented GL math.
+- **13-week table rows (board):** Customer invoices due · Run-rate top-up · Finance & lease ·
+  Driver pay (run-rate) · Diesel (run-rate) · Vendor bills due · Other operating. Income split uses
+  week-bucket `invoice_cents` / residual; weekly run-rate = last 4 completed weeks.
+- **Engine:** numbers only from `getRollingLedger` (same as 443.250). Rule 07 keeps sibling tab
+  cards (Projected / AVP / Rolling Ledger / Manual).
+- **Guard (piggyback):** `scripts/verify-cash-flow-home-tab.mjs` retargeted — Home requires
+  "Opening cash" + `cash-flow-home-v3-kpis`; strip assert remains on RollingLedgerTab only.
+
 ### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared
@@ -248,10 +277,9 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   forbidden by `verify-design-tokens-only.mjs` on `components/v3` + changed FE.
 - **Shared components:** `apps/frontend/src/components/v3/{V3KpiTile,V3Panel,V3Segmented,index}.ts(x)`.
   Square edges = **2px** (house law), not the board’s 6px mock radius.
-- **Home data:** `CashFlowHomeTab` keeps REG-031 `<CashFlowKpiStrip>` + sibling tab links; adds V3 KPI
-  row + 4-week/13-week chart + 13-week table. Numbers only from `getRollingLedger` (98-day window,
-  week-bucketed). No board sample cents. Expense run-rate line breakdown deferred (no CC-1
-  endpoints — totals only).
+- **Home data (superseded by 443.267 board entry above):** sibling tab links + V3 KPI row +
+  chart/13-week table from `getRollingLedger`. `<CashFlowKpiStrip>` is Rolling Ledger only as of
+  443.267 — do not remount it on Home.
 - **Guard:** extended `scripts/verify-cash-flow-home-tab.mjs` (piggyback; no new EVEN claim). Asserts
   V3 imports/components/testids + `getRollingLedger`. `verify-cash-flow-rolling-ledger.mjs` KPI-strip
   markers updated Load-Costs `#F4F7FA`/`#C7D2DC` → `V3.headerBg`/`V3.border` (same shared strip).
@@ -341,6 +369,16 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** Settlements sub-boards (Escrow/Closed/Open/Company/Deductions/
   CashAdvances/Close/PreSettlements/Statement) · Fuel sub-boards · design-system sweep · Chrome proof.
   Fuel home V3 shipped (this round). Full DONE not claimed.
+
+
+### Active Architectural Decisions — Settlements Home board 443.267 (Cursor, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Settlements.dc.html`
+- **Home deltas (engines unchanged):** Week-of compact table from this-week `kpiSettlements` (Driver / Loads / Gross / Ded / Reimb / Net / Status + Pre-Settlement Open | Settlement Closed pills); deduction-type split Escrow / Advances (Zelle) / Fines via `listSettlementDeductions` (same engine as `/drivers/deductions`); week chart grain Net | Gross | **Deductions**.
+- **Reimb:** derived as `net − (gross − deductions)` when list row has no `reimbursements_total`.
+- **Guard:** `scripts/verify-settlements-module-one-readout.mjs` piggyback (no new EVEN claim) — Week-of panel + Deductions grain + listSettlementDeductions + Escrow/Advances/Fines labels.
+- **Rule 07:** Tours / Payments views kept.
+
 
 ### Active Architectural Decisions — Fuel home V3 (Cursor, ROUND 443.250, 2026-10-23)
 
@@ -1245,8 +1283,8 @@ settlement deductions · $757.25 never hit the bank). Match engine = settlement-
 ## Next Immediate Milestones
 
 0. **ROUND 443.267 board order (Cursor):** Unexpected ✔ · Accounting ✔ · Banking ✔ · Factoring ✔ ·
-   Insurance ✔ · Legal ✔ · Reports home (this PR) → Reports-Viewer-TrialBalance → re-do
-   CashFlow/Settlements/Fuel to boards (not chrome-only). One PR per board; bus sha each merge.
+   Insurance ✔ · Legal ✔ · Reports home ✔ · Reports-Viewer-TrialBalance ✔ · CashFlow Home (this PR)
+   → Settlements → Fuel to boards (not chrome-only). One PR per board; bus sha each merge.
 1. **Rebuild orchestration (17→21):** data-driven from the two signed-doc CSVs. Reverse mis-grouped
    S-136xx via the reversal engine → create the 8 missing driver bills at signed amounts → build 21
    fresh doc-settlements → add exact lines (pay, reimb, deduction, −$25 escrow/load, −$10 admin,

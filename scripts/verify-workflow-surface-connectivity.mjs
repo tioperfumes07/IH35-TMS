@@ -47,7 +47,9 @@ const LEAVES = {
   factoring: [
     ["factoring.modal.deactivate_factor_confirm", "components/factoring/DeactivateFactorConfirmModal.tsx"],
     ["factoring.modal.reserve_dashboard_add_factor", "pages/factoring/ReserveDashboardAddFactorModal.tsx"],
-    ["factoring.panel.factoring_profile", "pages/factoring/FactoringProfilePanel.tsx"],
+    // 443.271 (CC-2): 443.267 (eec561741a) superseded the compact FactoringProfilePanel with the board's "Terms on file"
+    // (Edit Terms opens the same profile modal) — the leaf's surface is the board now.
+    ["factoring.panel.factoring_profile", "pages/factoring/components/FactoringHomeBoard.tsx"],
     ["factoring.wizard.batch", "pages/factoring/BatchWizard.tsx"],
     ["factoring.parity.driver_autocomplete", "components/factoring/DriverAutocomplete.tsx"],
   ],

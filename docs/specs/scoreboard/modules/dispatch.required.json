@@ -1244,6 +1244,18 @@
         "load"
       ],
       "route_hint": "surface://components/dispatch/LoadStopsRecordTab.tsx"
+    },
+    {
+      "id": "dispatch.panel.tour_miles",
+      "tab": "Panels",
+      "sub": "Panel: Tour miles (our database \u00b7 Google \u00b7 real driven \u00b7 bill uses)",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/TourMilesPanel.tsx",
+      "required": [
+        "connectivity",
+        "load"
+      ],
+      "route_hint": "surface://components/dispatch/TourMilesPanel.tsx"
     }
   ],
   "honesty_audit": {

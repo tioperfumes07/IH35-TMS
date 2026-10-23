@@ -103,7 +103,10 @@ export type TourListRow = {
   origin_load_number: string | null; origin_pickup_date: string | null; origin_delivery_date: string | null;
   revenue_cents: number; costs_cents: number; driver_pay_cents: number; margin_cents: number; margin_pct: number | null;
   miles_practical: number; miles_real: number | null; ready_ok: number; ready_total: number; can_close: boolean; close_blockers: string[];
-  driver_net_cents: number | null; company_settlement_display_id: string | null;
+  driver_net_cents: number | null;
+  /** ROUND 443.274-C Closed board — link target for Company settlement statement. */
+  company_settlement_id: string | null;
+  company_settlement_display_id: string | null;
 };
 export function listTours(operatingCompanyId: string, state: "open" | "closed") {
   // R-102-B item 5 — voided_count discloses how many cancelled/reversed/voided settlements in this
