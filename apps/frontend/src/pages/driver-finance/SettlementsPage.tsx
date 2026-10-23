@@ -1,7 +1,7 @@
 import { settlementLabel } from "../../lib/settlementNumber";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { listSettlements, getOpenDriverBills, type OpenDriverBill, type SettlementListRow, type SettlementReference } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -20,7 +20,10 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { V3 } from "../../design/v3-tokens";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3Panel } from "../../components/v3/V3Panel";
+import { V3Segmented } from "../../components/v3/V3Segmented";
 import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
@@ -33,6 +36,52 @@ import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { SettlementCreatorDrawer } from "../settlements/SettlementCreatorDrawer";
 import { listSourceChangedSettlements, type SettlementCreatorDraft, type SourceChangedSettlement } from "../../api/settlementCreator";
 import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
+
+/** ROUND 443.250 — week buckets for Settlements home "Net driver pay by week" (Sunday start, matches This Period KPI). */
+type SettlementsWeekBucket = { weekStartMs: number; label: string; net: number; gross: number; deductions: number };
+
+function startOfWeekSunday(d: Date): Date {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - x.getDay());
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function weekBucketLabel(d: Date): string {
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${m}-${day}`;
+}
+
+function buildSettlementsWeekBuckets(rows: SettlementListRow[], weekCount: number, now: Date): SettlementsWeekBucket[] {
+  const thisWeek = startOfWeekSunday(now);
+  const buckets: SettlementsWeekBucket[] = [];
+  for (let i = weekCount - 1; i >= 0; i--) {
+    const start = new Date(thisWeek);
+    start.setDate(start.getDate() - i * 7);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    let net = 0;
+    let gross = 0;
+    let deductions = 0;
+    for (const s of rows) {
+      if (s.status === "cancelled") continue;
+      const pe = new Date(s.period_end);
+      if (Number.isNaN(pe.getTime())) continue;
+      if (pe.getTime() >= start.getTime() && pe.getTime() < end.getTime()) {
+        net += Number(s.net_pay ?? 0);
+        gross += Number(s.gross_pay ?? 0);
+        deductions += Number(s.deductions_total ?? 0);
+      }
+    }
+    buckets.push({ weekStartMs: start.getTime(), label: weekBucketLabel(start), net, gross, deductions });
+  }
+  return buckets;
+}
+
+function formatSettlementsUsd(dollars: number): string {
+  return `$${dollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 /** LEAD 443.215 — one line per change of a settlement's printed source (same wording as the backend refusal). */
 function describeSourceDiffLines(d: SourceChangedSettlement["diff"]): string[] {
@@ -76,12 +125,15 @@ function parseFocus(raw: string | null): FocusFilter {
 export function SettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const bulk = useEntityBulkAction();
   const [reverseOpen, setReverseOpen] = useState(false);
   const [pendingReverseIds, setPendingReverseIds] = useState<string[]>([]);
   const [pendingReverseLabels, setPendingReverseLabels] = useState<Record<string, string>>({});
+  /** ROUND 443.250 — Net | Gross grain on the home week chart (board Settlements.dc.html). */
+  const [weekChartGrain, setWeekChartGrain] = useState<"net" | "gross">("net");
   // ROUND 16.3 — the owner asked for a Company & Driver side-by-side view and a Company settlements
   // register alongside the existing Driver settlements register + Disputes.
   const tabParam = searchParams.get("tab");
@@ -268,6 +320,29 @@ export function SettlementsPage() {
           .filter((s) => isInThisPeriod(s) && s.status !== "cancelled")
           .reduce((sum, s) => sum + Number(s.net_pay ?? 0), 0)
           .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  // ROUND 443.250 — home week chart + deductions panel from the SAME kpiSettlements rows (no second engine).
+  const weekBuckets = useMemo(
+    () => (kpiBaseQuery.isError ? [] : buildSettlementsWeekBuckets(kpiSettlements, 11, now)),
+    // now is calendar-day stable for the render; kpiSettlements identity tracks the query.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- periodStartOfWeek / now rebuilt each render from Date
+    [kpiBaseQuery.isError, kpiSettlements],
+  );
+  const thisWeekBucket = weekBuckets.length ? weekBuckets[weekBuckets.length - 1] : null;
+  const lastWeekBucket = weekBuckets.length > 1 ? weekBuckets[weekBuckets.length - 2] : null;
+  const driverPayVsLastWeek = (() => {
+    if (!thisWeekBucket || !lastWeekBucket) return null;
+    const delta = thisWeekBucket.net - lastWeekBucket.net;
+    if (delta === 0) return { label: "flat vs last wk", tone: "muted" as const };
+    if (delta > 0) return { label: `▲ vs last wk`, tone: "green" as const };
+    return { label: `▼ vs last wk`, tone: "red" as const };
+  })();
+  const deductionsThisWeek = thisWeekBucket?.deductions ?? 0;
+  const weekChartMax = Math.max(
+    1,
+    ...weekBuckets.map((w) => (weekChartGrain === "net" ? w.net : w.gross)),
+  );
+
   const focusedSettlements = useMemo(() => {
     if (focusFilter === "debt") {
       return settlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0);
@@ -372,6 +447,7 @@ export function SettlementsPage() {
       ) : null}
 
       {/* ROUND 443.254 N1 — every tab stays under /driver-finance/… */}
+      {/* VERIFY-4 (acct-surf-09): Escrow leaf is SETTLEMENTS_SUBNAV → /driver-finance/escrow; Accounting mirror remains /accounting/escrow. */}
       <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
 
       <div className="flex items-center gap-2">
@@ -475,44 +551,200 @@ export function SettlementsPage() {
 
       {activeTab === "settlements" ? (
         <>
-      {/* REG-005 (owner "FOR ALL MODULES, THEY SHOULD ALL HAVE THEIR KPIS IN THEIR HOME PAGES") — a
-          real-number KPI strip at the TOP of the Driver Settlements home, above the table, visible in
-          BOTH the Tours (default) and Payments sub-views. Reuses the shared DrillKpiCard (same tile as
-          Maintenance's strip); every figure is derived from data already fetched (kpiBaseQuery +
-          openBills), never a placeholder, "—" on load failure. */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6" data-testid="settlements-home-kpi-strip">
-        <DrillKpiCard label="Total Unpaid" value={kpis.total_unpaid} to="/driver-finance/settlements?view=payments&payment_state=unpaid" hint="Settlements not yet paid." testId="settlements-kpi-total-unpaid" />
-        <DrillKpiCard label="This Period" value={kpis.this_period} to="/driver-finance/settlements" hint="Period end on/after this week's start." testId="settlements-kpi-this-period" />
-        <DrillKpiCard label="Driver Pay (Period)" value={driverPayThisPeriod} to="/driver-finance/settlements?view=payments" hint="Sum of net pay on this-period settlements." testId="settlements-kpi-driver-pay" />
-        <DrillKpiCard label="Drivers w/ Debt" value={kpis.drivers_with_debt} active={focusFilter === "debt"} to="/driver-finance/settlements?view=payments&focus=debt" hint="Settlements with a live debt balance." testId="settlements-kpi-debt" />
-        <DrillKpiCard label="YTD Settlements" value={kpis.ytd_settlements} to="/driver-finance/settlements" hint="Period end in the current calendar year." testId="settlements-kpi-ytd" />
-        <DrillKpiCard label="Open Driver Bills" value={kpis.open_driver_bills} to="/driver-finance/settlements?view=payments" hint="Unsettled driver pay — opens the open-bills panel." testId="settlements-kpi-open-bills" />
+      {/* REG-005 + ROUND 443.250 V3 board (Settlements.dc.html) — same live KPI math (kpiBaseQuery +
+          openBills); chrome via V3KpiTile. Click-through preserved. "—" on load failure. */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="settlements-home-kpi-strip"
+        data-settlements-v3-kpis="1"
+      >
+        <V3KpiTile
+          label="Total unpaid"
+          value={String(kpis.total_unpaid)}
+          sub="settlements not yet paid"
+          testId="settlements-kpi-total-unpaid"
+          onClick={() => navigate("/driver-finance/settlements?view=payments&payment_state=unpaid")}
+        />
+        <V3KpiTile
+          label="This period"
+          value={String(kpis.this_period)}
+          sub="period end ≥ this week"
+          testId="settlements-kpi-this-period"
+          onClick={() => navigate("/driver-finance/settlements")}
+        />
+        <V3KpiTile
+          label="Driver pay (period)"
+          value={driverPayThisPeriod}
+          sub={
+            driverPayVsLastWeek ? (
+              <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <span style={{ fontWeight: 600, color: driverPayVsLastWeek.tone === "green" ? V3.green : driverPayVsLastWeek.tone === "red" ? V3.red : V3.muted }}>
+                  {driverPayVsLastWeek.label}
+                </span>
+              </span>
+            ) : (
+              "sum of net pay this period"
+            )
+          }
+          testId="settlements-kpi-driver-pay"
+          onClick={() => navigate("/driver-finance/settlements?view=payments")}
+        />
+        <V3KpiTile
+          label="Drivers w/ debt"
+          value={String(kpis.drivers_with_debt)}
+          sub={focusFilter === "debt" ? "filter on" : "live debt balance"}
+          tone={typeof kpis.drivers_with_debt === "number" && kpis.drivers_with_debt > 0 ? "red" : "ink"}
+          testId="settlements-kpi-debt"
+          onClick={() => navigate("/driver-finance/settlements?view=payments&focus=debt")}
+        />
+        <V3KpiTile
+          label="YTD settlements"
+          value={String(kpis.ytd_settlements)}
+          sub={`${ytdYear} calendar year`}
+          testId="settlements-kpi-ytd"
+          onClick={() => navigate("/driver-finance/settlements")}
+        />
+        <V3KpiTile
+          label="Open driver bills"
+          value={String(kpis.open_driver_bills)}
+          sub="unsettled driver pay"
+          testId="settlements-kpi-open-bills"
+          onClick={() => navigate("/driver-finance/settlements?view=payments")}
+        />
       </div>
+
+      {weekBuckets.length > 0 ? (
+        <div
+          style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr)", gap: 8 }}
+          data-testid="settlements-home-v3-panels"
+        >
+          <V3Panel
+            title="Net driver pay by week"
+            subtitle={`${weekBuckets.length} weeks · not cancelled · not sample`}
+            onViewAll={() => navigate("/driver-finance/settlements?view=payments")}
+            headerRight={
+              <V3Segmented
+                value={weekChartGrain}
+                onChange={setWeekChartGrain}
+                options={[
+                  { id: "net", label: "Net" },
+                  { id: "gross", label: "Gross" },
+                ]}
+                testId="settlements-home-week-grain"
+              />
+            }
+            testId="settlements-home-week-chart-panel"
+          >
+            <div style={{ padding: "12px 14px 8px" }}>
+              <svg
+                width="100%"
+                height={160}
+                viewBox={`0 0 ${weekBuckets.length * 48} 160`}
+                preserveAspectRatio="none"
+                role="img"
+                aria-label="Net driver pay by week"
+                data-testid="settlements-home-week-chart"
+              >
+                {[0, 0.25, 0.5, 0.75, 1].map((t) => {
+                  const y = 12 + (1 - t) * 110;
+                  return (
+                    <line key={t} x1={0} x2={weekBuckets.length * 48} y1={y} y2={y} stroke={V3.chartGrid} strokeWidth={1} />
+                  );
+                })}
+                {weekBuckets.map((w, i) => {
+                  const value = weekChartGrain === "net" ? w.net : w.gross;
+                  const h = Math.max(2, (Math.abs(value) / weekChartMax) * 110);
+                  const x = i * 48 + 12;
+                  const y = 122 - h;
+                  return (
+                    <g key={w.weekStartMs}>
+                      <rect
+                        className="setl-v3-grow"
+                        x={x}
+                        y={y}
+                        width={24}
+                        height={h}
+                        rx={1}
+                        fill={value < 0 ? V3.red : V3.data}
+                        style={{ transformOrigin: `${x + 12}px 122px` } as CSSProperties}
+                      />
+                      <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 10, fill: V3.muted, fontFamily: V3.font }}>
+                        {w.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+              <style>{`
+                @keyframes setl-v3-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+                .setl-v3-grow { transform-box: fill-box; transform-origin: bottom; animation: setl-v3-grow .9s cubic-bezier(.2,.8,.2,1) both; }
+              `}</style>
+              <div style={{ fontSize: 11, color: V3.muted, marginTop: 4 }}>
+                Bar → that week&apos;s settlements (period end in week). Max {formatSettlementsUsd(weekChartMax)}.
+              </div>
+            </div>
+          </V3Panel>
+
+          <V3Panel
+            title={`Deductions this week · ${formatSettlementsUsd(deductionsThisWeek)}`}
+            subtitle="from settlement deduction totals"
+            testId="settlements-home-deductions-panel"
+          >
+            <div style={{ padding: "10px 14px" }} data-testid="settlements-home-deductions-body">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr auto",
+                  gap: 8,
+                  fontSize: 12,
+                  color: V3.ink,
+                  fontFamily: V3.font,
+                  padding: "6px 0",
+                  borderBottom: `1px solid ${V3.borderSoft}`,
+                }}
+              >
+                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>Type</span>
+                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>Amount</span>
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr auto",
+                  gap: 8,
+                  fontSize: 12,
+                  color: V3.ink,
+                  fontFamily: V3.font,
+                  padding: "8px 0",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                <span>All deductions</span>
+                <span>{formatSettlementsUsd(deductionsThisWeek)}</span>
+              </div>
+              <div style={{ fontSize: 11, color: V3.muted, marginTop: 8 }}>
+                Split by type comes from settlement deduction lines when opened on a settlement.
+              </div>
+            </div>
+          </V3Panel>
+        </div>
+      ) : null}
+
       <div className="flex items-center gap-2" data-testid="settlements-view-toggle">
-        <Button
-          size="sm"
-          variant={settlementsView === "tours" ? "primary" : "secondary"}
-          onClick={() => {
-            const next = new URLSearchParams(searchParams);
-            next.delete("view");
-            next.delete("settlement_id");
-            setSearchParams(next);
+        <V3Segmented
+          value={settlementsView}
+          onChange={(next) => {
+            const params = new URLSearchParams(searchParams);
+            if (next === "tours") params.delete("view");
+            else params.set("view", "payments");
+            params.delete("settlement_id");
+            setSearchParams(params);
           }}
-        >
-          Tours
-        </Button>
-        <Button
-          size="sm"
-          variant={settlementsView === "payments" ? "primary" : "secondary"}
-          onClick={() => {
-            const next = new URLSearchParams(searchParams);
-            next.set("view", "payments");
-            next.delete("settlement_id");
-            setSearchParams(next);
-          }}
-        >
-          Payments
-        </Button>
+          options={[
+            { id: "tours", label: "Tours" },
+            { id: "payments", label: "Payments" },
+          ]}
+          testId="settlements-view-segmented"
+        />
       </div>
       {settlementsView === "tours" ? (
         <SettlementsToursRegister companyId={companyId} />

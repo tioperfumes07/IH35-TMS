@@ -42,13 +42,16 @@ export function run(overrides = {}) {
     errors
   );
 
-  // REG-005 — both settlement home pages must render a real-number KPI strip at the top, using the
-  // shared DrillKpiCard (not a locally-invented tile), derived from data already fetched.
+  // REG-005 — Settlements home KPI strip at the top, derived from data already fetched.
+  // ROUND 443.250 — chrome is V3KpiTile (shared v3-tokens), not a locally-invented tile.
   assert(
     page.includes('data-testid="settlements-home-kpi-strip"') &&
-      page.includes("DrillKpiCard") &&
-      page.includes("driverPayThisPeriod"),
-    "SettlementsPage must render the REG-005 home KPI strip (settlements-home-kpi-strip) with DrillKpiCard + a real Driver Pay (Period) $ tile",
+      page.includes("V3KpiTile") &&
+      page.includes("driverPayThisPeriod") &&
+      page.includes('data-settlements-v3-kpis="1"') &&
+      page.includes("settlements-home-week-chart-panel") &&
+      page.includes("settlements-home-deductions-panel"),
+    "SettlementsPage must render the REG-005 home KPI strip (settlements-home-kpi-strip) with V3KpiTile + Driver Pay (Period) + V3 week/deductions panels",
     errors
   );
   assert(
@@ -111,7 +114,19 @@ function selftest() {
   if (!run({ [COMPANY_REL]: companyBackup.replace('data-testid="company-settlements-kpi-strip"', 'data-testid="x"') }).some((e) => e.includes("company-settlements-kpi-strip"))) {
     throw new Error("planted company-settlements KPI strip removal not detected");
   }
-  console.log(`[verify-settlement-fe-honesty] SELFTEST PASS — kpiBaseQuery + REG-005 driver/company strip mutations detected`);
+
+  // ROUND 443.250 — dropping V3 chrome / week panel must fail.
+  if (!run({ [PAGE_REL]: backup.replace(/V3KpiTile/g, "LegacyKpi") }).some((e) => e.includes("V3KpiTile"))) {
+    throw new Error("planted V3KpiTile removal not detected");
+  }
+  if (
+    !run({ [PAGE_REL]: backup.replace("settlements-home-week-chart-panel", "x") }).some((e) =>
+      e.includes("week/deductions"),
+    )
+  ) {
+    throw new Error("planted settlements week chart panel removal not detected");
+  }
+  console.log(`[verify-settlement-fe-honesty] SELFTEST PASS — kpiBaseQuery + REG-005 driver/company strip + V3 chrome mutations detected`);
 }
 
 function main() {
