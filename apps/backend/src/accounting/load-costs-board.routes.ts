@@ -96,11 +96,15 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       const sortSql = `${sortColumns[parsed.data.load_costs_sort]} ${parsed.data.sort_direction.toUpperCase()} NULLS LAST, l.load_number ASC`;
       const result = await client.query(
         `WITH ${LOAD_COST_DOCUMENTS_CTE},
-         -- 443.257-C: set-based driver gross pay (replaces per-row subquery inside lateral)
+         -- 443.257-C/443.278: set-based driver pay — uses settled AP bill amount when available
+         -- (authoritative obligation after settlement close); falls back to gross estimate.
          driver_gross_pay AS (
            SELECT db.load_id,
-                  COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
+                  COALESCE(SUM(COALESCE(apb.amount_cents, db.gross_amount_cents)), 0)::bigint AS driver_pay_cents
              FROM driver_finance.driver_bills db
+             LEFT JOIN accounting.bills apb
+               ON apb.id = db.accrued_bill_id
+              AND apb.voided_at IS NULL
             WHERE db.operating_company_id = $1::uuid
               AND db.load_id IS NOT NULL
               AND ${liveDriverBill("db")}

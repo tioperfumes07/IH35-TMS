@@ -9,8 +9,92 @@
   },
   "_recapture": "2026-07-21 \u2014 coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too \u2014 the prior revision discarded dollar-quoted bodies entirely.",
   "stale_literal_ok": "shrink-only debt register \u2014 count drains as schema is wired, recaptured 2026-07-21",
-  "count": 552,
+  "count": 564,
   "entries": [
+    {
+      "object": "telematics.vehicle_latest_position_cache",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: intentionally accessed only through the telematics.vehicle_latest_position VIEW (same migration drops the old view and re-creates it SELECT * FROM this cache); guard cannot follow view indirection"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.captured_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard substring-matches 'captured_at' elsewhere but never in a file directly touching the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.city",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; 'city' matches many files but none directly reference the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.engine_state",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard sees no direct reference to the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.formatted_location",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard sees no direct reference to the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.heading_deg",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard sees no direct reference to the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.odometer_mi",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard sees no direct reference to the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.raw_samsara_event_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard sees no direct reference to the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.samsara_vehicle_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard sees no direct reference to the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.speed_mph",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard sees no direct reference to the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.state",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard sees no direct reference to the cache table"
+    },
+    {
+      "object": "telematics.vehicle_latest_position_cache.unit_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202616200100_vehicle_latest_position_cache.sql",
+      "reason": "D074: read via the vehicle_latest_position view; guard sees no direct reference to the cache table"
+    },
     {
       "object": "_system.background_jobs.last_error_message",
       "kind": "COLUMN",
