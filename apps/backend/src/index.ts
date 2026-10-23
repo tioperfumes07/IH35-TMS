@@ -13,6 +13,7 @@ import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { installReplyAlreadySentGuard } from "./auth/reply-already-sent-guard.js";
+import { installZodValidationErrorHandler } from "./lib/zod-error-handler.js";
 import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
 import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.js";
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
@@ -681,6 +682,8 @@ const app = Fastify({ logger: true, trustProxy: [...CLOUDFLARE_IP_RANGES] });
 installEmptyJsonBodyParser(app);
 // LEAD 443.237 — must run before any route: an auth helper's 401 + a bare `return;` never sends twice.
 installReplyAlreadySentGuard(app);
+// LEAD 443.271 — a ZodError from schema.parse(req.*) is the caller's 400, never a 500.
+installZodValidationErrorHandler(app);
 attachHttpErrorMonitor(app);
 let shuttingDown = false;
 

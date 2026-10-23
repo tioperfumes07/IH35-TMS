@@ -87,7 +87,9 @@ export async function listUndepositedReceipts(operatingCompanyId: string, userId
       WHERE p.operating_company_id = $1::uuid
         AND p.voided_at IS NULL
         AND COALESCE(p.is_sample_data, false) IS NOT TRUE
-        AND p.deposited_to_account_id = $2::uuid
+        -- accounting.payments.deposited_to_account_id is TEXT on prod; comparing it to $2::uuid raised
+        -- "operator does not exist: text = uuid" and 500'd GET /bank-deposits/undeposited (LEAD 443.271).
+        AND p.deposited_to_account_id = $2::text
         AND NOT EXISTS (
           SELECT 1 FROM accounting.deposit_lines dl
           JOIN accounting.deposits d ON d.id = dl.deposit_id

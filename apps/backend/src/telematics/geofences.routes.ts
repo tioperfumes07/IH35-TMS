@@ -1,3 +1,4 @@
+import { normalizeVertices } from "./geofence.js";
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
@@ -70,17 +71,12 @@ type GeofenceRow = {
   updated_by_user_uuid: string | null;
 };
 
-function parseVertices(raw: unknown): LatLngVertex[] {
-  if (!Array.isArray(raw)) return [];
-  const out: LatLngVertex[] = [];
-  for (const entry of raw) {
-    if (!entry || typeof entry !== "object") continue;
-    const value = entry as { lat?: unknown; lng?: unknown };
-    if (typeof value.lat === "number" && Number.isFinite(value.lat) && typeof value.lng === "number" && Number.isFinite(value.lng)) {
-      out.push({ lat: value.lat, lng: value.lng });
-    }
-  }
-  return out;
+// LEAD 443.271 — ONE vertex reader. 345 USMCA fences are stored as GeoJSON-order [lng, lat] pairs; this route
+// had its own object-only parser, found 0 vertices, threw "stored geofence polygon is invalid" and 500'd the
+// whole list. The canonical normalizeVertices (telematics/geofence.ts, already used by the breach detector and
+// tour close) reads both shapes — the route now uses it.
+export function parseVertices(raw: unknown): LatLngVertex[] {
+  return normalizeVertices(raw);
 }
 
 function verticesFromPolygonGeoJson(polygon: PolygonGeoJson): LatLngVertex[] {
@@ -114,6 +110,25 @@ function polygonGeoJsonFromVertices(raw: unknown): PolygonGeoJson {
   const ring = vertices.map((v) => [v.lng, v.lat]);
   ring.push([vertices[0].lng, vertices[0].lat]);
   return { type: "Polygon", coordinates: [ring] };
+}
+
+/** Split rows into renderable fences and invalid stored polygons (reported, not dropped silently). */
+export function splitValidGeofenceRows(rows: GeofenceRow[]) {
+  const geofences: Array<ReturnType<typeof mapGeofenceRow>> = [];
+  const invalid: Array<{ id: string; label: string | null; vertex_count: number; reason: string }> = [];
+  for (const row of rows) {
+    try {
+      geofences.push(mapGeofenceRow(row));
+    } catch (err) {
+      invalid.push({
+        id: row.id,
+        label: row.label ?? null,
+        vertex_count: parseVertices(row.vertices_json).length,
+        reason: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+  return { geofences, invalid };
 }
 
 function mapGeofenceRow(row: GeofenceRow) {
@@ -219,10 +234,13 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
         `,
         params
       );
-      return res.rows.map(mapGeofenceRow);
+      return splitValidGeofenceRows(res.rows);
     });
 
-    return { geofences: data };
+    // LEAD 443.271 — one bad stored polygon used to throw inside .map() and 500 the WHOLE list
+    // (live 10-23: "stored geofence polygon is invalid"). Valid fences render; each invalid one is
+    // REPORTED by id/label/vertex count so it can be repaired through the geofence engine — never hidden.
+    return { geofences: data.geofences, invalid_geofences: data.invalid };
   });
 
   app.post("/api/v1/telematics/geofences", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
