@@ -157,9 +157,9 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
   const loading = summaryQuery.isLoading || policiesQuery.isLoading;
   const errored = summaryQuery.isError || policiesQuery.isError;
   const errorMsg = summaryQuery.isError
-    ? userFacingApiError(summaryQuery.error)
+    ? userFacingApiError(summaryQuery.error, "Failed to load insurance summary.")
     : policiesQuery.isError
-      ? userFacingApiError(policiesQuery.error)
+      ? userFacingApiError(policiesQuery.error, "Failed to load insurance policies.")
       : null;
 
   const activeCount =
