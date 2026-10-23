@@ -491,6 +491,20 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   Loves / Expense mapping / Relay inbox) · Driver Profile · design-system sweep · Chrome proof.
   Full DONE not claimed.
 
+### Active Architectural Decisions — Fuel Expense mapping V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `listExpenseCategoryMappings(companyId, { category_kind: "fuel" })`
+  read-only coverage. No GL / posting / map-write math change. Canonical codes stay
+  diesel|def|reefer|oil|misc (lockstep with poster `FUEL_CATEGORY_CODES`).
+- **V3 board chrome (Expense mapping tab):** identity `V3KpiTile` strip Mapped · Unmapped ·
+  Categories (`data-fuel-expense-map-v3-kpis`) from the same coverage set. `V3Panel` **Fuel to GL
+  mapping coverage** (`fuel-expense-map-v3-panel`) wraps badges + warning. Planner open-link
+  section → `V3Panel` (`fuel-expense-map-open-v3-panel`) → Accounting expense-category-map.
+- **Guard piggyback:** `verify-fuel-gl-map-codes-no-silent-alias.mjs` (step 1222 ≡2 EVEN Cursor) —
+  V3 markers + selftest mutations (vocabulary / class-scope asserts retained). No new EVEN claim.
+- **Still open under 443.250:** remaining Fuel tabs (Planner chrome / Settings / Compliance /
+  Loves / Relay inbox) · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
 - **Option 2 (owner):** backfill papers an RPL facility from existing bank categorizations via

@@ -452,16 +452,28 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       ) : null}
 
       {tab === "expense_mapping" ? (
-        <div className="space-y-2">
+        <div className="space-y-3" data-testid="fuel-expense-mapping-tab">
           {/* FUEL-2: read-only coverage check surfaces unmapped fuel categories (verify-only, no posting). */}
           <FuelGlMappingCoverage companyId={companyId} />
-          <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
-            <h3 className="text-xs font-semibold text-gray-900">Expense mapping</h3>
-            <p className="mt-2 text-xs text-gray-600">Map fuel card spend to GL expense categories for posting.</p>
-            <Link to="/accounting/settings/expense-category-map" className="mt-3 inline-block text-xs font-semibold text-[#1F2A44] underline">
-              Open expense category map →
-            </Link>
-          </section>
+          {/* ROUND 443.250 Expense mapping V3 — same Accounting expense-category-map deep link. */}
+          <V3Panel
+            title="Expense mapping"
+            subtitle="Map fuel card spend to GL expense categories for posting"
+            testId="fuel-expense-map-open-v3-panel"
+          >
+            <div className="px-3 py-3 text-xs text-gray-700">
+              <p className="text-xs text-gray-600">
+                Coverage above is read-only. Create or edit fuel category → account rows in Accounting.
+              </p>
+              <Link
+                to="/accounting/settings/expense-category-map"
+                className="mt-3 inline-block text-xs font-semibold text-[#1F2A44] underline"
+                data-testid="fuel-expense-map-open-link"
+              >
+                Open expense category map →
+              </Link>
+            </div>
+          </V3Panel>
         </div>
       ) : null}
 
