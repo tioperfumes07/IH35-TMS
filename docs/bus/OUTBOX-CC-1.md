@@ -13,6 +13,17 @@ After fix: vendor bills=$743.25 | driver bills=driver_finance.driver_bills only 
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-1-archive-2026-10-17.md](archive/OUTBOX-CC-1-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-10-23 ~13:17Z — CC-1 443.265-E5 IN CI (PR #27318)
+
+**PR #27318 OPEN, auto-merge ON** — 443.265-E5 driver-bill due_date = projected delivery + single-source cash flow
+- E4 changes included (vendor bills COALESCE, partial-week diesel, null-due-date guard — also on E4 branch)
+- DATA: accounting.bills driver due_date NULL BEFORE=174 AFTER=1 (1 unmatched #13530 load 7d52a20e $300)
+- DATA: driver_finance.driver_bills accrued_bill_id BEFORE=0 AFTER=65 linked
+- CODE: billsPromise bill_category='vendor' → IN ('vendor','driver')
+- GUARD: verify-driver-bill-due-date-projected-delivery.mjs SELFTEST PASS 2/2
+- preflight PASS, pushed branch, CI running
+
+
 ## 2026-10-23 ~09:55Z — CC-1 443.265-B SHIPPED
 
 **PR #27277 MERGED** → squash `446c9e12` — 443.264 cash-flow fuel trailing 4-wk avg on main.
