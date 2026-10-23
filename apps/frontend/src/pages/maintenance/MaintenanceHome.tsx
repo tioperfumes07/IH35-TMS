@@ -165,6 +165,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const bucketFilter = searchParams.get("bucket") ?? "";
   const workOrderStatusFilter = searchParams.get("status") ?? "";
   const showWorkflow = tab === "active_wos" && searchParams.get("view") === "workflow";
+  const isInShopBoard = tab === "fleet_table" && ["in-shop", "InMaintenance", "in-maintenance"].includes(searchParams.get("status") ?? "");
   const partInventoryId = searchParams.get("part_inventory_id")?.trim() ?? "";
   const driverReportId = searchParams.get("driver_report_id")?.trim() ?? "";
   const driverReportsDriverId = searchParams.get("driver_id")?.trim() ?? "";
@@ -237,7 +238,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "kpis", companyId],
     queryFn: () => getMaintenanceKpis(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !isInShopBoard,
   });
   const rmStatusQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "rm-status", companyId, rmStatusPage],
@@ -248,7 +249,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const triageQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "triage", companyId],
     queryFn: () => getMaintenanceInTransitQueue(companyId, { limit: 50, offset: 0 }),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !isInShopBoard,
   });
   useEffect(() => {
     if (triageQuery.isError) setTriageIssue(null);
@@ -266,7 +267,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const severeAlertsQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "severe-alerts", companyId],
     queryFn: () => getMaintenanceSevereAlerts(companyId),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !isInShopBoard,
   });
   const recentQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "recent", companyId, recentWoPage, completedWoPage],
@@ -275,7 +276,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       recent_offset: recentWoPage * activityPageSize,
       completed_offset: completedWoPage * activityPageSize,
     }),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !isInShopBoard,
   });
   useEffect(() => { setRecentWoPage(0); setCompletedWoPage(0); }, [companyId]);
   const workOrdersQuery = useQuery({
@@ -329,7 +330,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     // due-only fetch of the same company.
     queryKey: ["maintenance", "maint-pm-due", companyId, "include-not-due"],
     queryFn: () => listMaintPmDue(companyId, { includeNotDue: true }),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && !isInShopBoard,
     retry: false,
   });
   const partsReorderQuery = useQuery({
@@ -425,13 +426,13 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         }
       />
 
-      {isHomeTab ? <NavyPageSubNav items={[
+      {isHomeTab || isInShopBoard ? <NavyPageSubNav items={[
         { label: "Master Data", to: "/maintenance/vehicles", children: MAINTENANCE_MASTER_DATA_LINKS.map(item => ({ label: item.label, to: item.path })) },
         ...maintenancePrimarySubNavItems(),
       ]} /> : <><MaintenanceSubNav /><NavyPageSubNav items={maintenancePrimarySubNavItems()} /></>}
 
       {/* MAINT-F7528 — Home owns RMStatStrip (non-kanban tiles only, C-36). */}
-      {!isHomeTab && tab !== "settings" ? (
+      {!isHomeTab && !isInShopBoard && tab !== "settings" ? (
         <MaintKpiRows
           kpis={kpis}
           isError={kpisQuery.isError}
@@ -578,9 +579,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "fleet_table" ? (
         <div data-testid="maintenance-fleet-table-tab" data-maintenance-tab="fleet_table">
-          {["in-shop", "InMaintenance", "in-maintenance"].includes(searchParams.get("status") ?? "") ? <>
+          {isInShopBoard ? <>
             <InShopBoard companyId={companyId} />
-            <details className="mt-3"><summary className="cursor-pointer text-xs">Fleet table and filters</summary><FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns /></details>
           </> : <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns />}
         </div>
       ) : null}
@@ -789,7 +789,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "settings" ? <MaintenanceSettingsPage operatingCompanyId={companyId} /> : null}
 
-      {recentQuery.isError ? (
+      {!isInShopBoard && (recentQuery.isError ? (
         <ListErrorState
           title="Couldn't load recent maintenance activity"
           status={0}
@@ -810,7 +810,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         onCompletedPageChange={setCompletedWoPage}
         onOpen={(id) => setSelectedWorkOrderId(id)}
       />
-      )}
+      ))}
 
       <TriageModal
         open={Boolean(triageIssue)}

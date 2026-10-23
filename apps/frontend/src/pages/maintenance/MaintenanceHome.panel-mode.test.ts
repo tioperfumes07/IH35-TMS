@@ -39,4 +39,27 @@ describe("Maintenance Home board/workflow isolation", () => {
     expect(sourceText).toMatch(/statusMutation\.mutate\(\{\s*id,\s*status,\s*companyId,\s*generation: statusGenerationRef\.current,/);
     expect(sourceText).toContain('enabled: Boolean(companyId) && (showWorkflow || tab === "road_service")');
   });
+  it("In Shop never mounts the full fleet register or recent activity beneath the board", () => {
+    let shop: ts.ConditionalExpression | undefined;
+    function visit(node: ts.Node) {
+      if (ts.isConditionalExpression(node) && node.condition.getText(source) === "isInShopBoard") shop = node;
+      ts.forEachChild(node, visit);
+    }
+    visit(source);
+    expect(shop).toBeDefined();
+    expect(shop!.whenTrue.getText(source)).toContain("InShopBoard");
+    expect(shop!.whenTrue.getText(source)).not.toMatch(/FleetTablePage|<details/);
+    expect(shop!.whenFalse.getText(source)).toContain("FleetTablePage");
+    expect(sourceText).toContain('!isHomeTab && !isInShopBoard && tab !== "settings"');
+    expect(sourceText).toContain("!isInShopBoard && (recentQuery.isError");
+    for (const name of ["kpisQuery", "triageQuery", "severeAlertsQuery", "recentQuery", "pmDueQuery"]) {
+      let query: ts.VariableDeclaration | undefined;
+      function find(node: ts.Node) {
+        if (ts.isVariableDeclaration(node) && node.name.getText(source) === name) query = node;
+        ts.forEachChild(node, find);
+      }
+      find(source);
+      expect(query?.getText(source)).toContain("enabled: Boolean(companyId) && !isInShopBoard");
+    }
+  });
 });
