@@ -1,3 +1,7 @@
+/**
+ * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). getRelayDeposits engine unchanged.
+ * DISPLAY only — separates money funded INTO Relay by its funding card.
+ */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,6 +16,8 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { V3Panel } from "../../../components/v3/V3Panel";
 
 const usd = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -19,6 +25,12 @@ const CLASS_LABEL: Record<RelayDepositClassification, string> = {
   company: "Company-funded",
   unclassified: "Unclassified (needs owner review)",
   canceled: "Canceled pre-auth (not money)",
+};
+
+const CLASS_KPI_LABEL: Record<RelayDepositClassification, string> = {
+  company: "Company-funded",
+  unclassified: "Unclassified",
+  canceled: "Canceled pre-auth",
 };
 
 /**
@@ -194,128 +206,149 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
   }
 
   return (
-    <div className="space-y-3">
-      <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-600">
-        <h3 className="text-xs font-semibold text-gray-900">Relay deposit funding</h3>
-        <p className="mt-1">
-          Money funded INTO the Relay wallet (separate from fuel pumped and from bank payments to Relay).{" "}
+    <div className="space-y-3" data-testid="fuel-relay-inbox-panel">
+      {/* ROUND 443.250 Relay inbox V3 — same getRelayDeposits summary classifications. */}
+      <V3Panel
+        title="Relay deposit funding"
+        subtitle="Money funded INTO the Relay wallet (separate from fuel pumped and from bank payments to Relay)"
+        testId="fuel-relay-inbox-intro-v3-panel"
+      >
+        <div className="px-3 py-2 text-xs text-[#4B5563]">
+          Each deposit is classified by its funding card. Company-funded deposits reconcile to the bank; unclassified cards
+          need you to identify them.{" "}
           <InfoPopover label="About Relay deposit funding">
             Each deposit is classified by its funding card. Company-funded deposits reconcile to the bank; unclassified cards
             need you to identify them.
           </InfoPopover>
-        </p>
-      </section>
+        </div>
+      </V3Panel>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="fuel-relay-inbox-v3-kpi-strip"
+        data-fuel-relay-inbox-v3-kpis="1"
+      >
         {(["company", "unclassified", "canceled"] as RelayDepositClassification[]).map((cls) => (
-          <div key={cls} className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="text-xs font-semibold text-gray-600">{CLASS_LABEL[cls]}</div>
-            <div className="mt-1 text-page-title font-semibold text-gray-900">{cls === "canceled" ? "—" : usd(settledFor(cls))}</div>
-            <div className="text-xs text-gray-500">{countFor(cls)} deposit(s)</div>
-          </div>
+          <V3KpiTile
+            key={cls}
+            label={CLASS_KPI_LABEL[cls]}
+            value={cls === "canceled" ? "—" : usd(settledFor(cls))}
+            sub={`${countFor(cls)} deposit(s)`}
+            tone={cls === "unclassified" && countFor(cls) > 0 ? "red" : "ink"}
+            testId={`fuel-relay-inbox-kpi-${cls}`}
+          />
         ))}
       </div>
 
       {/* FUEL-F3550: always mount ParityTable (Search+Range+gear) for owner review queue. */}
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold text-gray-900">Owner review — unidentified funding cards</h3>
-        <p className="text-xs text-gray-600">
-          These cards funded Relay but are not in the company-card set.{" "}
-          <InfoPopover label="About unidentified funding cards">
+      <V3Panel
+        title="Owner review — unidentified funding cards"
+        subtitle="Cards that funded Relay but are not in the company-card set"
+        testId="fuel-relay-inbox-unclassified-v3-panel"
+      >
+        <div className="space-y-2 px-3 py-2">
+          <p className="text-xs text-[#4B5563]">
             Identify each: if it is a company card, add it below (its deposits reclassify to company). If it is personal, it
-            will be booked separately as a loan/capital contribution (a separate, disabled step — not here).
-          </InfoPopover>
-        </p>
-        <ParityTable<RelayDepositByCardRow>
-          columns={unclassifiedColumns}
-          rows={unclassifiedCards}
-          rowKey={(c) => c.funding_card_last4 ?? "none"}
-          loading={depositsQuery.isLoading}
-          emptyText="No unidentified funding cards — all deposits are company-classified or canceled."
-          storageKey="relay-deposit-unclassified-cards"
-          exportFilename="relay-deposit-unclassified-cards"
-          tableTestId="relay-deposit-unclassified-table"
-        />
-      </section>
+            will be booked separately as a loan/capital contribution (a separate, disabled step — not here).{" "}
+            <InfoPopover label="About unidentified funding cards">
+              Identify each: if it is a company card, add it below (its deposits reclassify to company). If it is personal, it
+              will be booked separately as a loan/capital contribution (a separate, disabled step — not here).
+            </InfoPopover>
+          </p>
+          <ParityTable<RelayDepositByCardRow>
+            columns={unclassifiedColumns}
+            rows={unclassifiedCards}
+            rowKey={(c) => c.funding_card_last4 ?? "none"}
+            loading={depositsQuery.isLoading}
+            emptyText="No unidentified funding cards — all deposits are company-classified or canceled."
+            storageKey="relay-deposit-unclassified-cards"
+            exportFilename="relay-deposit-unclassified-cards"
+            tableTestId="relay-deposit-unclassified-table"
+          />
+        </div>
+      </V3Panel>
 
-      <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold text-gray-900">Company card set</h3>
-        <p className="mt-1 text-xs text-gray-600">
-          Cards confirmed to belong to the operating company. Deposits funded by these reconcile to the bank.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {(cardsQuery.data?.cards ?? [])
-            .filter((c) => c.is_active)
-            .map((c) => (
-              <span key={c.id} className="inline-flex items-center gap-2 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs">
-                <span className="font-mono">•••• {c.card_last4}</span>
-                {c.label ? <span className="text-gray-500">{c.label}</span> : null}
-                <button
-                  type="button"
-                  className="text-[#6B7280] hover:text-red-600 disabled:opacity-50"
-                  title="Remove from company set"
-                  disabled={deactivateMutation.isPending}
-                  onClick={() => deactivateMutation.mutate({
-                    companyId,
-                    card: c.card_last4,
-                    generation: lifecycleGenerationRef.current,
-                  })}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          {companyCards.size === 0 ? <span className="text-xs text-gray-500">No company cards set.</span> : null}
+      <V3Panel
+        title="Company card set"
+        subtitle="Cards confirmed to belong to the operating company. Deposits funded by these reconcile to the bank."
+        testId="fuel-relay-inbox-cards-v3-panel"
+      >
+        <div className="px-3 py-3">
+          <div className="flex flex-wrap gap-2">
+            {(cardsQuery.data?.cards ?? [])
+              .filter((c) => c.is_active)
+              .map((c) => (
+                <span key={c.id} className="inline-flex items-center gap-2 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs">
+                  <span className="font-mono">•••• {c.card_last4}</span>
+                  {c.label ? <span className="text-gray-500">{c.label}</span> : null}
+                  <button
+                    type="button"
+                    className="text-[#6B7280] hover:text-red-600 disabled:opacity-50"
+                    title="Remove from company set"
+                    disabled={deactivateMutation.isPending}
+                    onClick={() => deactivateMutation.mutate({
+                      companyId,
+                      card: c.card_last4,
+                      generation: lifecycleGenerationRef.current,
+                    })}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            {companyCards.size === 0 ? <span className="text-xs text-gray-500">No company cards set.</span> : null}
+          </div>
+          <div className="mt-3 flex flex-wrap items-end gap-2 text-xs">
+            <label className="flex flex-col gap-1">
+              <span className="font-semibold text-gray-600">Card last 4</span>
+              <input
+                value={newCard}
+                onChange={(e) => setNewCard(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                placeholder="1234"
+                className="w-24 rounded-sm border border-gray-300 px-2 py-1 font-mono"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="font-semibold text-gray-600">Label (optional)</span>
+              <input
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                placeholder="Amex Platinum"
+                className="w-48 rounded-sm border border-gray-300 px-2 py-1"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={newCard.length !== 4 || addCardMutation.isPending}
+              onClick={() => addCardMutation.mutate({
+                companyId,
+                card: newCard,
+                label: newLabel || undefined,
+                generation: lifecycleGenerationRef.current,
+              })}
+              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 font-semibold text-white disabled:opacity-50"
+            >
+              + Add company card
+            </button>
+          </div>
         </div>
-        <div className="mt-3 flex flex-wrap items-end gap-2 text-xs">
-          <label className="flex flex-col gap-1">
-            <span className="font-semibold text-gray-600">Card last 4</span>
-            <input
-              value={newCard}
-              onChange={(e) => setNewCard(e.target.value.replace(/\D/g, "").slice(0, 4))}
-              placeholder="1234"
-              className="w-24 rounded-sm border border-gray-300 px-2 py-1 font-mono"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="font-semibold text-gray-600">Label (optional)</span>
-            <input
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              placeholder="Amex Platinum"
-              className="w-48 rounded-sm border border-gray-300 px-2 py-1"
-            />
-          </label>
-          <button
-            type="button"
-            disabled={newCard.length !== 4 || addCardMutation.isPending}
-            onClick={() => addCardMutation.mutate({
-              companyId,
-              card: newCard,
-              label: newLabel || undefined,
-              generation: lifecycleGenerationRef.current,
-            })}
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 font-semibold text-white disabled:opacity-50"
-          >
-            + Add company card
-          </button>
-        </div>
-      </section>
+      </V3Panel>
 
       {/* FUEL-F3550: always mount ParityTable for full deposit list. */}
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold text-gray-900">All deposits</h3>
-        <ParityTable<RelayDepositRow>
-          columns={depositColumns}
-          rows={deposits}
-          rowKey={(d) => d.id}
-          loading={depositsQuery.isLoading}
-          emptyText="No Relay deposits imported yet."
-          storageKey="relay-deposit-all"
-          exportFilename="relay-deposits"
-          tableTestId="relay-deposit-all-table"
-        />
-      </section>
+      <V3Panel title="All deposits" testId="fuel-relay-inbox-all-v3-panel">
+        <div className="px-3 py-2">
+          <ParityTable<RelayDepositRow>
+            columns={depositColumns}
+            rows={deposits}
+            rowKey={(d) => d.id}
+            loading={depositsQuery.isLoading}
+            emptyText="No Relay deposits imported yet."
+            storageKey="relay-deposit-all"
+            exportFilename="relay-deposits"
+            tableTestId="relay-deposit-all-table"
+          />
+        </div>
+      </V3Panel>
     </div>
   );
 }

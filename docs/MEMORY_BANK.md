@@ -519,6 +519,20 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Still open under 443.250:** remaining Fuel tabs (Planner chrome / Settings / Loves / Relay inbox)
   · Driver Profile · design-system sweep · Chrome proof. Full DONE not claimed.
 
+### Active Architectural Decisions — Fuel Relay inbox V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** same `getRelayDeposits` / `getRelayCompanyCards` / `putRelayCompanyCard`
+  (DISPLAY-only funding review; nothing posts). Classification summary keys unchanged
+  (company | unclassified | canceled).
+- **V3 board chrome (Relay inbox tab):** identity `V3KpiTile` strip Company-funded · Unclassified ·
+  Canceled pre-auth (`data-fuel-relay-inbox-v3-kpis`) from the same summary. `V3Panel`s wrap intro
+  (`fuel-relay-inbox-intro-v3-panel`), unclassified queue, company card set, and all deposits.
+  ParityTable storageKeys + tableTestIds retained (FUEL-F3550).
+- **Guard piggyback:** `verify-relay-deposit-review-parity-surface-bar.mjs` (step 3550 ≡2 EVEN Cursor)
+  — V3 markers + selftest mutations (ParityTable / raw-table asserts retained). No new EVEN claim.
+- **Still open under 443.250:** remaining Fuel tabs (Planner chrome / Settings / Loves) · Driver
+  Profile · design-system sweep · Chrome proof. Full DONE not claimed.
+
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
 - **Option 2 (owner):** backfill papers an RPL facility from existing bank categorizations via
