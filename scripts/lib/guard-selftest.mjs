@@ -65,7 +65,23 @@ export function withTmpFixture(files = {}, dirs = [], fn) {
  * and clean up.
  */
 export function runGuardInFixture(scriptAbsPath, files = {}, dirs = [], env = {}) {
-  return withTmpFixture(files, dirs, (tmp) => runGuard(scriptAbsPath, { cwd: tmp, env }));
+  return withTmpFixture(files, dirs, (tmp) => spawnSync(process.execPath, [scriptAbsPath], {
+    cwd: tmp,
+    encoding: "utf8",
+    env: { ...fixtureEnv(process.env), ...env },
+  }));
+}
+
+/**
+ * 443.264 (CC-2): a fixture must NOT inherit the caller's git context. Inside a git hook run from a linked worktree, git
+ * exports GIT_DIR (and GIT_WORK_TREE / GIT_INDEX_FILE …) to the hook — a guard spawned in a bare temp dir then still
+ * resolves the REAL repository (e.g. `git grep` reads the real tree and reports green), so every "bare fixture fails
+ * closed" case failed in pre-push while passing at rest. Strip every repository-locating GIT_* variable.
+ */
+export function fixtureEnv(base) {
+  const out = { ...base };
+  for (const k of ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY", "GIT_PREFIX", "GIT_CEILING_DIRECTORIES"]) delete out[k];
+  return out;
 }
 
 /** Print per-case lines + "<label> --selftest N/N" and exit non-zero unless every case passed. */
