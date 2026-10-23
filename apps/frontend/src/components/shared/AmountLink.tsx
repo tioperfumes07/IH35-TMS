@@ -134,6 +134,18 @@ export type AmountFilter =
       /** ACCT-F411 — see the bills target: the bucket NAME(s), resolved server side. */
       agingBucket?: AgingBucketId | readonly AgingBucketId[] | null;
       agingAsOf?: string | null;
+    }
+  /**
+   * LEAD 443.264.4 — a hand-entered Cash Flow projection figure: the Manual Daily Projections rows the figure sums.
+   * The tab filters by the projection DATE, so date is required (a total is that day's rows); direction narrows to
+   * one panel, group to one expense bucket (V3_EXPENSE_GROUPS key), entryId to the one line a row amount is.
+   */
+  | {
+      target: "cash_flow_manual";
+      date: string;
+      direction?: "income" | "expense" | null;
+      group?: string | null;
+      entryId?: string | null;
     };
 
 function qs(
@@ -221,6 +233,15 @@ export function resolveAmountRoute(filter: AmountFilter | null | undefined): str
         ["not_sent", filter.notSent ? "true" : null],
         ["aging_bucket", filter.agingBucket],
         ["as_of", filter.agingAsOf],
+      ])}`;
+    case "cash_flow_manual":
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filter.date ?? "")) return null;
+      return `/cash-flow${qs([
+        ["tab", "manual_daily_projections"],
+        ["date", filter.date],
+        ["direction", filter.direction],
+        ["group", filter.group],
+        ["entry_id", filter.entryId],
       ])}`;
     default:
       return null;

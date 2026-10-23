@@ -1,5 +1,5 @@
 import { companyToday } from "../../../lib/businessDate";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   listForecastEntries,
@@ -18,6 +18,7 @@ import { toCents, computeProjectionTotals } from "./manualProjectionMath";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { AmountLink } from "../../../components/shared/AmountLink";
 import { SelectCombobox } from "../../../components/Combobox";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { Link, useSearchParams } from "react-router-dom";
@@ -168,6 +169,8 @@ function ProjectionPanel({
   const accentColor = direction === "income" ? V3.ink : V3.red;
   const columns = MDP_COLUMNS[direction];
   const expenseGroups = direction === "expense" ? groupExpenseEntries(entries) : null;
+  // LEAD 443.264.4: the panel total drills to exactly this panel's rows for the projection date.
+  const panelDrill = { target: "cash_flow_manual", date: projectionDate, direction } as const;
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -259,7 +262,7 @@ function ProjectionPanel({
           ) : cellValue(e, c.key)}
         </span>
       ))}
-      <span className="w-24 shrink-0 text-right font-semibold tabular-nums" style={{ color: accentColor }}>{fmtCents(toCents(e.amount_cents))}</span>
+      <span className="w-24 shrink-0 text-right font-semibold tabular-nums" style={{ color: accentColor }}><AmountLink filter={{ target: "cash_flow_manual", date: String(e.entry_date).slice(0, 10), direction: e.direction, entryId: e.id }}>{fmtCents(toCents(e.amount_cents))}</AmountLink></span>
       <span className="flex w-16 shrink-0 justify-end gap-2">
         <button type="button" className="hover:underline" style={{ color: V3.muted }} onClick={() => editRow(e)}>Edit</button>
         <button type="button" className="hover:underline" style={{ color: V3.red }} onClick={() => deleteMutation.mutate(e.id)}>Del</button>
@@ -311,7 +314,9 @@ function ProjectionPanel({
                       {group.label}
                     </span>
                     <span className="w-24 shrink-0 text-right text-xs font-bold tabular-nums" style={{ color: V3.ink }}>
-                      {fmtCents(group.rows.reduce((s, r) => s + toCents(r.amount_cents), 0))}
+                      <AmountLink filter={{ target: "cash_flow_manual", date: projectionDate, direction: "expense", group: group.key }}>
+                        {fmtCents(group.rows.reduce((s, r) => s + toCents(r.amount_cents), 0))}
+                      </AmountLink>
                     </span>
                     <span className="w-16 shrink-0" />
                   </div>
@@ -327,7 +332,7 @@ function ProjectionPanel({
             <span className="flex-1 text-right uppercase tracking-wide" style={{ color: V3.muted }}>
               {direction === "income" ? "Total income" : "Total expenses"}
             </span>
-            <span className="w-24 shrink-0 text-right tabular-nums" style={{ color: accentColor }} data-mdp-footer-total={direction}>{fmtCents(panelTotalCents)}</span>
+            <span className="w-24 shrink-0 text-right tabular-nums" style={{ color: accentColor }} data-mdp-footer-total={direction}><AmountLink filter={panelDrill}>{fmtCents(panelTotalCents)}</AmountLink></span>
             <span className="w-16 shrink-0" />
           </div>
         </div>
@@ -450,10 +455,21 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     ref_kind: refKind,
     ref_external_id: refExternalId,
   };
-  const hasReverseFilter = Object.values(reverseFilter).some(Boolean);
+  // LEAD 443.264.4 — the money-cell drill (AmountLink target cash_flow_manual): ?date=, ?direction=, ?group= narrow the
+  // tab to exactly the rows the clicked figure summed (the same date / direction / expense-group the totals use).
+  const dateParam = searchParams.get("date");
+  const drillDate = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : null;
+  const directionParam = searchParams.get("direction");
+  const drillDirection = directionParam === "income" || directionParam === "expense" ? directionParam : null;
+  const groupParam = searchParams.get("group");
+  const drillGroup = groupParam && (V3_EXPENSE_GROUPS as readonly string[]).includes(groupParam) ? groupParam : null;
+  const hasReverseFilter = Object.values(reverseFilter).some(Boolean) || Boolean(drillDirection || drillGroup);
   // MDP-SINGLE-ROW: ONE projection date (daily projections — one day per entry), not a From/To
   // range. It is the default entry_date for new rows on both panels.
-  const [projectionDate, setProjectionDate] = useState(() => companyToday());
+  const [projectionDate, setProjectionDate] = useState(() => drillDate ?? companyToday());
+  useEffect(() => {
+    if (drillDate) setProjectionDate(drillDate);
+  }, [drillDate]);
   const [openingDraft, setOpeningDraft] = useState<number | null>(null);
   const [pullError, setPullError] = useState<string | null>(null);
 
@@ -512,8 +528,11 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     return [...dates].sort().reverse();
   }, [allEntries]);
   const entries = useMemo(
-    () => (projectionDate ? allEntries.filter((e) => String(e.entry_date).slice(0, 10) === projectionDate) : allEntries),
-    [allEntries, projectionDate],
+    () =>
+      (projectionDate ? allEntries.filter((e) => String(e.entry_date).slice(0, 10) === projectionDate) : allEntries)
+        .filter((e) => !drillDirection || e.direction === drillDirection)
+        .filter((e) => !drillGroup || (e.direction === "expense" && expenseGroupKey(e) === drillGroup)),
+    [allEntries, projectionDate, drillDirection, drillGroup],
   );
   const realBanks = useMemo(
     () => (banksQuery.data?.tiles ?? []).filter((t) => String(t.tile_kind) === "real"),
