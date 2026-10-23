@@ -37,7 +37,8 @@ const BILLS_PAGE = "apps/frontend/src/pages/accounting/BillsPage.tsx";
 const SETTLEMENTS_PAGE = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
 const INVOICES_PAGE = "apps/frontend/src/pages/accounting/InvoicesListPage.tsx";
 const EXPENSES_PAGE = "apps/frontend/src/pages/accounting/ExpensesListPage.tsx";
-const FACTORING_HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
+// ROUND 443.267 board 4 — home KPI strip lives on FactoringHomeBoard (not DrillKpiCard in FactoringHome).
+const FACTORING_HOME = "apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx";
 const MAINT_HOME = "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx";
 const MAINT_KPI_ROWS = "apps/frontend/src/pages/maintenance/components/MaintKpiRows.tsx";
 const SERVICE_LOCATION = "apps/frontend/src/pages/maintenance/ServiceLocationPage.tsx";
@@ -75,7 +76,9 @@ function checkSettlementsPage(src) {
     fail(`${SETTLEMENTS_PAGE}: kpis object is no longer typed number | string — the "—" fallback was likely reverted.`);
     return;
   }
-  const kpisBlock = src.slice(kpisIdx, kpisIdx + 900);
+  // 443.250 V3 Settlements home lengthened the kpis object (multiline drivers_with_debt) — 900 chars
+  // no longer reaches open_driver_bills. Keep the whole object in-window.
+  const kpisBlock = src.slice(kpisIdx, kpisIdx + 1800);
   if (!kpisBlock.includes('kpiBaseQuery.isError ? "—"')) {
     fail(`${SETTLEMENTS_PAGE}: kpis fields no longer branch on kpiBaseQuery.isError — settlement KPI counts will silently zero on a failed fetch.`);
   }
@@ -151,30 +154,25 @@ function checkAccountingHub(src) {
     fail(`${ACCOUNTING_HUB}: kpiStrip not found — did the hub KPI strip move?`);
     return;
   }
-  const block = src.slice(start, start + 2200);
+  const block = src.slice(start, start + 3200);
   if (!block.includes("billsQ.isError")) {
     fail(`${ACCOUNTING_HUB}: kpiStrip does not branch on billsQ.isError — Open Bills/MTD tiles will show $0.00 on a failed bills fetch.`);
   }
   if (!block.includes("invoicesQ.isError")) {
     fail(`${ACCOUNTING_HUB}: kpiStrip does not branch on invoicesQ.isError — Open Invoices/Overdue A/R will show $0.00 on a failed invoices fetch.`);
   }
-  if (!/kpiCard\(\s*"Open Bills"\s*,\s*"—"/.test(block)) {
-    fail(`${ACCOUNTING_HUB}: no "—" fallback for Open Bills on billsQ.isError.`);
+  // ROUND 443.267 Accounting board — kpiCard() retired; V3KpiTile value="—" on isError.
+  if (!/billsQ\.isError \? \(\s*<V3KpiTile label="Open bills" value="—"/.test(block)) {
+    fail(`${ACCOUNTING_HUB}: no "—" fallback for Open bills on billsQ.isError.`);
   }
-  if (!/kpiCard\(\s*"Open Invoices"\s*,\s*"—"/.test(block)) {
-    fail(`${ACCOUNTING_HUB}: no "—" fallback for Open Invoices on invoicesQ.isError.`);
+  if (!/invoicesQ\.isError \? \(\s*<V3KpiTile label="Open invoices" value="—"/.test(block)) {
+    fail(`${ACCOUNTING_HUB}: no "—" fallback for Open invoices on invoicesQ.isError.`);
   }
 }
 
 // LEAD 443.99 class B (2026-10-12) — FactoringHome KPI strip.
-//   old rule: the row's Reserve Balance tile reads summaryQuery.isError ? "—" : fmtCurrency(summary?.reserve_balance).
-//   new rule: every DrillKpiCard value in factoring-home-kpi-row that formats money is guarded by its own
-//             query's isError (`<query>.isError ? null : …` — DrillKpiCard renders null as "—", or the legacy
-//             `? "—" :` form); the Outstanding Liability tile must be summaryQuery-guarded; no money tile may
-//             format without a guard.
-//   why: ACCT-F9329 / ROUND 326.2 (bfda280a34) rebuilt the strip on one book-reserve engine — the Reserve
-//        Balance tile is gone and the tiles pass null for the card's own "—". Stricter: every money tile is
-//        now checked, not one named tile.
+//   ROUND 443.267 board 4: FactoringHomeBoard V3KpiTile strip. Every money / true-cost value must
+//   branch on its query's isError → "—" (never a fabricated $0.00 / 0.00% on a failed fetch).
 function checkFactoringHome(src) {
   if (!src.includes('data-testid="factoring-home-kpi-row"')) {
     fail(`${FACTORING_HOME}: factoring-home-kpi-row not found — did the summary KPI strip move?`);
@@ -182,19 +180,21 @@ function checkFactoringHome(src) {
   }
   const start = src.indexOf('data-testid="factoring-home-kpi-row"');
   const endMarker = src.indexOf('data-testid="factoring-home-liability-cleared"', start);
-  const block = src.slice(start, endMarker > start ? endMarker : start + 4000);
+  const block = src.slice(start, endMarker > start ? endMarker : start + 6000);
   if (!block.includes("summaryQuery.isError")) {
-    fail(`${FACTORING_HOME}: KPI row does not branch on summaryQuery.isError — reserve/chargeback tiles will show fabricated currency on a failed fetch.`);
+    fail(`${FACTORING_HOME}: KPI row does not branch on summaryQuery.isError — liability/advanced tiles will show fabricated currency on a failed fetch.`);
   }
-  const values = [...block.matchAll(/<DrillKpiCard[\s\S]*?value=\{([\s\S]*?)\}\s*\n/g)].map((m) => m[1]);
-  const guarded = (v) => /^\s*\w+\.isError\s*\?\s*(?:null|"—")\s*:/.test(v);
-  for (const v of values) {
-    if (/fmtCurrency\(/.test(v) && !guarded(v)) {
-      fail(`${FACTORING_HOME}: money KPI tile formats without an isError guard: value={${v.trim()}}`);
-    }
+  if (!/summaryQuery\.isError\s*\?\s*"—"\s*:\s*fmtMoneyDollars\(summary\?\.outstanding_liability_balance\)/.test(block)) {
+    fail(`${FACTORING_HOME}: Outstanding liability tile missing summaryQuery.isError ? "—" : fmtMoneyDollars(...) branch.`);
   }
-  if (!/summaryQuery\.isError\s*\?\s*(?:null|"—")\s*:\s*fmtCurrency\(summary\?\.outstanding_liability_balance\)/.test(block)) {
-    fail(`${FACTORING_HOME}: Outstanding Liability tile missing summaryQuery.isError ? null : fmtCurrency(...) branch.`);
+  if (!/summaryQuery\.isError\s*\?\s*"—"\s*:\s*fmtMoneyDollars\(summary\?\.mtd_advanced_total\)/.test(block)) {
+    fail(`${FACTORING_HOME}: Advanced MTD tile missing summaryQuery.isError ? "—" : fmtMoneyDollars(...) branch.`);
+  }
+  if (!/feesQuery\.isError\s*\?\s*"—"\s*:\s*fmtMoneyDollars\(chargebacksFees\)/.test(block)) {
+    fail(`${FACTORING_HOME}: Chargebacks & fees tile missing feesQuery.isError ? "—" : fmtMoneyDollars(...) branch.`);
+  }
+  if (!/summaryQuery\.isError\s*\|\|\s*purchasesQuery\.isError/.test(block)) {
+    fail(`${FACTORING_HOME}: True cost tile must guard on summaryQuery.isError || purchasesQuery.isError.`);
   }
 }
 
@@ -370,18 +370,15 @@ function selftest() {
     probesProven++;
   }
 
-  // Mutation 5: FactoringHome KPI row loses summaryQuery.isError branches.
+  // Mutation 5: FactoringHomeBoard KPI strip loses summaryQuery.isError branches.
   {
     const original = fs.readFileSync(FACTORING_HOME, "utf8");
     const mutated = original
-      .replace(/summaryQuery\.isError \? "—" : \(summary\?\.active_factor_name \?\? "Not configured"\)/g, 'summary?.active_factor_name ?? "Not configured"')
-      .replace(/summaryQuery\.isError \? "—" : fmtCurrency\(summary\?\.reserve_balance\)/g, "fmtCurrency(summary?.reserve_balance)")
-      .replace(/summaryQuery\.isError \? "—" : fmtCurrency\(summary\?\.chargeback_balance\)/g, "fmtCurrency(summary?.chargeback_balance)")
-      .replace(/summaryQuery\.isError \? "—" : Number\(summary\?\.recourse_days \?\? 95\)/g, "Number(summary?.recourse_days ?? 95)")
-      // 443.99 — the current strip's null-guarded form.
-      .replace(/value=\{summaryQuery\.isError \? null : /g, "value={");
+      .replace(/summaryQuery\.isError \? "—" : fmtMoneyDollars\(summary\?\.outstanding_liability_balance\)/g, "fmtMoneyDollars(summary?.outstanding_liability_balance)")
+      .replace(/summaryQuery\.isError \? "—" : fmtMoneyDollars\(summary\?\.mtd_advanced_total\)/g, "fmtMoneyDollars(summary?.mtd_advanced_total)")
+      .replace(/feesQuery\.isError \? "—" : fmtMoneyDollars\(chargebacksFees\)/g, "fmtMoneyDollars(chargebacksFees)");
     if (mutated === original) {
-      console.error("SELFTEST SETUP FAILED: FactoringHome summaryQuery.isError patterns not found.");
+      console.error("SELFTEST SETUP FAILED: FactoringHomeBoard summaryQuery.isError patterns not found.");
       process.exitCode = 1;
       return;
     }
@@ -393,7 +390,7 @@ function selftest() {
       process.exitCode = undefined;
     }
     if (!caught) {
-      console.error("SELFTEST INERT: dropping FactoringHome summaryQuery.isError was not caught.");
+      console.error("SELFTEST INERT: dropping FactoringHomeBoard summaryQuery.isError was not caught.");
       process.exitCode = 1;
       return;
     }

@@ -61,11 +61,11 @@ import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { factorToProfileForm, profileFormToFactorPatch, rateToPctString, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
-import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { SubmitToFactorTab } from "./SubmitToFactorTab";
 import { RepurchaseDuePanel } from "./RepurchaseDuePanel";
 import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
 import { FactoringCashFlowPanel } from "./FactoringCashFlowPanel";
+import { FactoringHomeBoard } from "./components/FactoringHomeBoard";
 import { FactoringKpiPanel } from "../../components/factoring/FactoringKpiPanel";
 import { getFactoringKpis } from "../../api/factoring-kpis";
 import { FactoringReservesSharedPanel } from "../../components/factoring/FactoringReservesSharedPanel";
@@ -85,7 +85,6 @@ import { apiRequest } from "../../api/client";
 import { FACTORING_SECTION_PARENT, FACTORING_TAB_PATH, FARO_TABS, factoringTabFromPath } from "../../router/route-manifest";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
-import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import type { NaReason } from "../../design/money-design-system";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
@@ -918,37 +917,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   );
   const canDeactivate = user?.role === "Owner";
 
-  // ROUND 21.0 item 5a (real KPI thresholds, CC-2 ROUND 20.8 Part A tokens — DrillKpiCard's
-  // existing valueTone, never a new palette): the recourse agreement's real window is 96 days.
-  /**
-   * CONTRACT, not a guess. Faro Factoring Agreement, definitions carried in ~/Desktop/CPA ANSWERS.docx:
-   *   "Repurchase Deadline: 95 calendar days from the Purchase Date" —
-   *   "The date by which Seller shall cause a Purchased Account to become a Repurchased Account."
-   * It was hard-coded here as 96, a number that appears NOWHERE in the agreement, and the screen
-   * therefore read "Recourse days 95 · Recourse limit: 96d" — two different deadlines, one of them
-   * invented, on the owner's own factoring dashboard.
-   *
-   * It is also not a "recourse" date. Day 95 is OUR obligation to repurchase, not the day Faro takes
-   * money out of our reserve — the contract contains no day-95 reserve deduction at all. The rest of
-   * the contract clock, for anything built on this: Repurchase Term 30 calendar days, Grace Period 5,
-   * Default Interest 0.067% per day compounded daily from day 36, Security Reserve 1.5% of Net Amount.
-   * Faro may accelerate the Deadline on an uncured default after 5 business days' written notice, so
-   * this is the DEFAULT deadline and never a constant to post against.
-   */
-  const FACTORING_RECOURSE_LIMIT_DAYS = 95;
-  const FACTORING_RECOURSE_WARN_MARGIN_DAYS = 6;
-  const recourseDaysRaw = summaryQuery.isError ? null : Number(summary?.recourse_days ?? 95);
-  const recourseDaysTone: "default" | "critical" | "warning" =
-    recourseDaysRaw == null
-      ? "default"
-      : recourseDaysRaw >= FACTORING_RECOURSE_LIMIT_DAYS
-        ? "critical"
-        : recourseDaysRaw >= FACTORING_RECOURSE_LIMIT_DAYS - FACTORING_RECOURSE_WARN_MARGIN_DAYS
-          ? "warning"
-          : "default";
-  const chargebacksTone: "default" | "critical" =
-    !feesQuery.isError && Number(latestMonthlyFeeSummary?.chargeback_total ?? 0) !== 0 ? "critical" : "default";
-
   if (!companyId) {
     // FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT (owner mega-report 2026-09-09): a cold/direct
     // navigation into this page (fresh tab, bookmark, hard refresh -- not an in-app click) races
@@ -1070,91 +1038,22 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
       <DuplicateVendorsBanner companyId={companyId} />
 
-      <div className="flex flex-wrap items-start gap-2" data-testid="factoring-home-overview-row">
-        <div className="flex-1 min-w-0" data-testid="factoring-home-kpi-col">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-home-kpi-row">
-            <DrillKpiCard
-              size="md"
-              testId="factoring-kpi-active-factor"
-              label="Active factor"
-              value={summaryQuery.isError ? null : (summary?.active_factor_name ?? null)}
-              to={FACTORING_TAB_PATH.statements_settings}
-            />
-            {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: this is Advance +
-                Reserve still owed to the factor (outstanding_liability_signed_cents), not a real
-                chargeback figure — honest label locked by verify-factoring-outstanding-liability-honest-label.
-                ROUND 21.0 item 5a: the owner's spec asked for a 30-day sparkline here (CC-2 ROUND
-                20.8 Part A money design system) — honestly NOT built this pass. This schema has no
-                daily point-in-time snapshot for outstanding liability (same constraint documented
-                on the Account Summary tab's own info popover, not a new one invented here); a
-                sparkline would have to fabricate the missing days. Flagged, not guessed. */}
-            <DrillKpiCard
-              size="md"
-              testId="factoring-kpi-outstanding-liability"
-              label="Outstanding Liability Balance"
-              value={summaryQuery.isError ? null : fmtCurrency(summary?.outstanding_liability_balance)}
-              to={FACTORING_TAB_PATH.recourse_pipeline}
-            />
-            <DrillKpiCard
-              size="md"
-              testId="factoring-kpi-advanced-mtd"
-              label="Advanced MTD"
-              value={summaryQuery.isError ? null : fmtCurrency(summary?.mtd_advanced_total)}
-              to="/accounting/factoring"
-            />
-            {/* ROUND 21.0 item 5a real thresholds (CC-2 ROUND 20.8 Part A tokens — DrillKpiCard's
-                existing valueTone, no new palette): the factoring agreement's real recourse window
-                is FACTORING_RECOURSE_LIMIT_DAYS days; "warning" once a receivable is within
-                FACTORING_RECOURSE_LIMIT_DAYS - FACTORING_RECOURSE_WARN_MARGIN_DAYS of it, "critical"
-                at or past it. */}
-            <DrillKpiCard
-              size="md"
-              testId="factoring-kpi-recourse-days"
-              label="Repurchase deadline"
-              value={summaryQuery.isError ? null : recourseDaysRaw}
-              valueTone={recourseDaysTone}
-              to={FACTORING_TAB_PATH.recourse_pipeline}
-            />
-            <DrillKpiCard
-              size="md"
-              testId="factoring-kpi-chargebacks"
-              label="Chargebacks & fees"
-              value={feesQuery.isError ? null : fmtCurrency(latestMonthlyFeeSummary?.chargeback_total ?? 0)}
-              valueTone={chargebacksTone}
-              to={FACTORING_TAB_PATH.chargebacks_fees}
-            />
-          </div>
-          {/* ROUND 435 — the cleared / not-cleared declaration of the Outstanding Liability Balance is a sentence, so it
-              lives under the strip, not inside the tile (a tile is a name and a number). */}
-          {summaryQuery.isError ? null : (
-            <div className="mt-1 text-xs text-gray-600" data-testid="factoring-home-liability-cleared">
-              Outstanding Liability Balance cleared {fmtCurrency((summary?.cleared_open_cents ?? 0) / 100)}. Applied
-              factoring advances that have not been matched or categorized in Banking are named not cleared.
-              <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0" data-testid="factoring-home-profile-col">
-          {activeFactor ? (
-            <FactoringProfilePanel
-              variant="compact"
-              vendorId={summary?.active_factor_id ?? null}
-              factor={activeFactor}
-              saving={savingFactorProfile}
-              onSave={() => {
-                setProfileEditForm(factorToProfileForm(activeFactor));
-                setProfileEditOpen(true);
-              }}
-            />
-          ) : (
-            <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-xs text-gray-500" data-testid="factoring-profile-empty">
-              {summary?.active_factor_profile_id || summary?.active_factor_name || summary?.active_factor_id
-                ? "Active factor row is still loading…"
-                : "No factor configured. Activate a factor to manage its profile."}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* ROUND 443.267 board 4 — Factoring Home board-faithful (KPI → purchase net vs kept → Terms → Measured).
+          FAC-07 side-by-side compact profile is superseded by the approved board; Edit Terms opens the
+          same profile modal. FactoringKpiPanel + FactoringCashFlowPanel stay mounted (r315 / r326). */}
+      {companyId ? (
+        <FactoringHomeBoard
+          companyId={companyId}
+          onEditTerms={
+            activeFactor
+              ? () => {
+                  setProfileEditForm(factorToProfileForm(activeFactor));
+                  setProfileEditOpen(true);
+                }
+              : undefined
+          }
+        />
+      ) : null}
 
       {/* ROUND 326.2 item 1 — Factoring KPI engine (ledger-computed, every tile drills to its rows). */}
       {companyId ? <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} /> : null}

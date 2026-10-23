@@ -1,95 +1,98 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["factoring"],"cols":["layout"],"leafRe":"FactoringHome.*overview-row","task":"FAC-07-LAYOUT-TABS-FIRST"} */
+/** @matrix-built {"modules":["factoring"],"cols":["layout"],"leafRe":"FactoringHomeBoard|FactoringHome.*NavyPageSubNav","task":"FAC-07-LAYOUT-TABS-FIRST"} */
 /**
- * verify-factoring-layout-tabs-first — FAC-07 (owner 2026-09-06 22:3xZ verbatim:
- * "THE FACTORING PROFILE OCCUPIES THE ENTIRE SCREEN … TABS ROW SHOULD BE ON TOP").
+ * verify-factoring-layout-tabs-first — ROUND 443.267 board 4 retarget.
  *
- * MEASURED live: FactoringHome.tsx rendered the full 15-field FactoringProfilePanel (1610×278) and
- * the 4-tile KPI grid BEFORE <NavyPageSubNav> at :689, so the navy tab strip sat below the fold.
+ * FAC-07 (owner 2026-09-06) locked tabs-first so the factor profile could not push the navy strip
+ * below the fold. The approved board (10-22-2026-LEAD-MOD-DESIGN-V3-Factoring) supersedes the
+ * FAC-07 side-by-side DrillKpiCard + compact FactoringProfilePanel overview: Home is now
+ * FactoringHomeBoard (KPI strip → Each purchase net vs kept → Terms on file → Measured note).
  *
- * END STATE this STATIC, fail-closed guard pins (against the source on tip):
- *   1. ORDER — the navy tab strip (<NavyPageSubNav>) renders FIRST, before the overview row, the
- *      KPI column, the profile column, and the duplicate-vendor banner (same shape as Banking Home).
- *   2. The duplicate-vendor banner sits BELOW the tabs but ABOVE the overview row.
- *   3. LAYOUT — a 12-col overview row: KPI column left 7/12 (lg:col-span-7), factor profile right
- *      5/12 (lg:col-span-5).
- *   4. KPI tiles use the shared DrillKpiCard (Load-Costs tile: kpiTileBg/kpiTileBorder, 11px) — the
- *      five factoring KPIs (ROUND 435: six until the duplicate reserve tile went), each with a real drill target.
- *   5. The right column renders FactoringProfilePanel in its COMPACT variant, and that variant is a
- *      ≤220px card (maxHeight:220 when collapsed) with an EntityLink to the vendor.
+ * This guard STILL pins tabs-first order, and pins the board mount + board sections/engines.
+ * Compact FactoringProfilePanel stays implemented (Edit Terms opens the profile modal) but is
+ * no longer required on the Home overview row.
  *
  * --selftest mutates each load-bearing fact and requires each mutation to FAIL; clean sources pass.
  */
 import fs from "node:fs";
 
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
-const PANEL = "apps/frontend/src/pages/factoring/FactoringProfilePanel.tsx";
+const BOARD = "apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx";
 
-// ROUND 435 (Lead, owner "no KPI twice"): factoring-kpi-reserve-balance removed — the escrow and cash reserve balances are
-// the page-level factoring KPI strip's own tiles and the total is the Reserve tab's shared reserve panel tile.
 const KPI_TEST_IDS = [
-  "factoring-kpi-active-factor",
   "factoring-kpi-outstanding-liability",
   "factoring-kpi-advanced-mtd",
   "factoring-kpi-recourse-days",
   "factoring-kpi-chargebacks",
+  "factoring-kpi-true-cost",
 ];
 
 function analyze(src) {
-  const { home, panel } = src;
+  const { home, board } = src;
   const errors = [];
 
-  // 1 + 2. ORDER: tabs first, banner below tabs, both above the overview row.
+  if (!board) {
+    errors.push(`${BOARD}: missing — 443.267 board-faithful Factoring Home`);
+    return errors;
+  }
+
+  // ORDER: tabs first, banner below tabs, board below banner.
   const subnavIdx = home.indexOf("<NavyPageSubNav");
   const bannerIdx = home.indexOf("<DuplicateVendorsBanner");
-  const overviewIdx = home.indexOf('data-testid="factoring-home-overview-row"');
-  const profileColIdx = home.indexOf('data-testid="factoring-home-profile-col"');
+  const boardIdx = home.indexOf("<FactoringHomeBoard");
   if (subnavIdx < 0) errors.push("FactoringHome must render <NavyPageSubNav> (the navy tab strip)");
-  if (overviewIdx < 0) errors.push("FactoringHome must render the factoring-home-overview-row (KPI + profile)");
-  if (subnavIdx < 0 || overviewIdx < 0 || subnavIdx > overviewIdx) {
-    errors.push("FAC-07: <NavyPageSubNav> tab strip must render BEFORE the overview row (tabs on top)");
+  if (boardIdx < 0) errors.push("FactoringHome must mount <FactoringHomeBoard> (443.267 board 4)");
+  if (subnavIdx < 0 || boardIdx < 0 || subnavIdx > boardIdx) {
+    errors.push("FAC-07: <NavyPageSubNav> tab strip must render BEFORE FactoringHomeBoard (tabs on top)");
   }
-  if (subnavIdx < 0 || profileColIdx < 0 || subnavIdx > profileColIdx) {
-    errors.push("FAC-07: the factor profile column must render AFTER the tab strip (profile no longer on top)");
-  }
-  if (bannerIdx < 0 || subnavIdx < 0 || bannerIdx < subnavIdx || bannerIdx > overviewIdx) {
-    errors.push("FAC-07: the duplicate-vendor banner must sit below the tabs and above the overview row");
+  if (bannerIdx < 0 || subnavIdx < 0 || bannerIdx < subnavIdx || bannerIdx > boardIdx) {
+    errors.push("FAC-07: the duplicate-vendor banner must sit below the tabs and above FactoringHomeBoard");
   }
 
-  // 3. LAYOUT — KPI column left, profile column right. Accepts either the original
-  //    lg:col-span-7/5 grid or the REG-042 flex-1 auto-sizing layout.
-  if (!/lg:col-span-7"\s+data-testid="factoring-home-kpi-col"/.test(home) &&
-      !/flex-1[^"]*"\s+data-testid="factoring-home-kpi-col"/.test(home)) {
-    errors.push("FAC-07: KPI column must be lg:col-span-7 or flex-1 (left column)");
+  // Board sections + engines (approved board).
+  if (!/data-testid="factoring-home-board"/.test(board)) {
+    errors.push(`${BOARD}: board root test id missing`);
   }
-  if (!/lg:col-span-5"\s+data-testid="factoring-home-profile-col"/.test(home) &&
-      !/flex-1[^"]*"\s+data-testid="factoring-home-profile-col"/.test(home)) {
-    errors.push("FAC-07: profile column must be lg:col-span-5 or flex-1 (right column)");
+  if (!/data-testid="factoring-home-kpi-row"/.test(board)) {
+    errors.push(`${BOARD}: KPI strip test id missing`);
   }
-
-  // 4. shared DrillKpiCard tiles.
-  if (!/import\s*\{\s*DrillKpiCard\s*\}/.test(home)) {
-    errors.push("FAC-07: KPI tiles must use the shared DrillKpiCard (import missing)");
+  if (!/Outstanding liability/.test(board)) {
+    errors.push(`${BOARD}: KPI strip must label Outstanding liability`);
+  }
+  if (!/Outstanding Liability Balance/.test(board)) {
+    errors.push(`${BOARD}: must retain the honest Outstanding Liability Balance wording`);
+  }
+  if (!/True cost/.test(board)) {
+    errors.push(`${BOARD}: KPI strip must include True cost`);
+  }
+  if (!/Each purchase — net to bank vs kept by Faro/.test(board)) {
+    errors.push(`${BOARD}: must render the purchase net-vs-kept panel`);
+  }
+  if (!/Terms on file/.test(board)) {
+    errors.push(`${BOARD}: must render Terms on file`);
+  }
+  if (!/data-testid="factoring-home-measured-note"/.test(board)) {
+    errors.push(`${BOARD}: must render the Measured uncleared note`);
+  }
+  if (!/getFactoringSummary/.test(board)) {
+    errors.push(`${BOARD}: KPIs must use getFactoringSummary`);
+  }
+  if (!/listFactoringPurchases/.test(board)) {
+    errors.push(`${BOARD}: purchase chart / true cost must use listFactoringPurchases`);
+  }
+  if (!/EntityLink/.test(board) || !/kind="vendor"/.test(board)) {
+    errors.push(`${BOARD}: Terms footer must EntityLink the factor vendor`);
   }
   for (const id of KPI_TEST_IDS) {
-    if (!home.includes(`testId="${id}"`)) errors.push(`FAC-07: KPI tile ${id} is missing`);
-  }
-  if (!/variant="compact"/.test(home)) {
-    errors.push("FAC-07: the right column must render FactoringProfilePanel variant=\"compact\"");
+    if (!board.includes(`testId="${id}"`)) errors.push(`${BOARD}: KPI tile ${id} is missing`);
   }
 
-  // 5. compact panel ≤220px + vendor EntityLink.
-  if (!/variant\s*===\s*"compact"/.test(panel)) {
-    errors.push("FAC-07: FactoringProfilePanel must implement a compact variant branch");
+  // r315 / r326 keepers still mounted on home.
+  if (!/<FactoringCashFlowPanel/.test(home)) {
+    errors.push("FactoringHome must keep FactoringCashFlowPanel mounted (r315)");
   }
-  if (!/data-factoring-profile-compact/.test(panel)) {
-    errors.push("FAC-07: the compact card must carry data-factoring-profile-compact");
-  }
-  if (!/maxHeight:\s*220/.test(panel)) {
-    errors.push("FAC-07: the compact card must cap collapsed height at maxHeight:220");
-  }
-  if (!/kind="vendor"/.test(panel) || !/EntityLink/.test(panel)) {
-    errors.push("FAC-07: the compact card must link the factor to its vendor via EntityLink kind=vendor");
+  if (!/<FactoringKpiPanel/.test(home)) {
+    errors.push("FactoringHome must keep FactoringKpiPanel mounted (r326)");
   }
 
   return errors;
@@ -97,7 +100,7 @@ function analyze(src) {
 
 const base = {
   home: fs.readFileSync(HOME, "utf8"),
-  panel: fs.readFileSync(PANEL, "utf8"),
+  board: fs.existsSync(BOARD) ? fs.readFileSync(BOARD, "utf8") : "",
 };
 
 function withField(field, transform) {
@@ -112,24 +115,22 @@ if (process.argv.includes("--selftest")) {
   }
   const mutations = [
     ["home drops tab strip", withField("home", (s) => s.replace(/<NavyPageSubNav/g, "<GoneNav"))],
-    ["home moves tabs after overview", withField("home", (s) => {
-      // Delete the tabs-first strip so the only NavyPageSubNav would be gone → order check fails.
-      return s.replace(/<NavyPageSubNav[\s\S]*?\/>\n/, "");
-    })],
+    ["home drops board", withField("home", (s) => s.replace(/<FactoringHomeBoard/g, "<GoneBoard"))],
+    ["home moves tabs after board", withField("home", (s) => s.replace(/<NavyPageSubNav[\s\S]*?\/>\n/, ""))],
     ["home drops duplicate-vendor banner", withField("home", (s) => s.replace(/<DuplicateVendorsBanner/g, "<GoneBanner"))],
-    ["home KPI col not left", withField("home", (s) => s.replace(/lg:col-span-7"/g, 'lg:col-span-4"').replace(/flex-1 min-w-0"\s+data-testid="factoring-home-kpi-col"/g, 'flex-none min-w-0" data-testid="factoring-home-kpi-col"'))],
-    ["home profile col not right", withField("home", (s) => s.replace(/lg:col-span-5"/g, 'lg:col-span-8"').replace(/flex-1 min-w-0"\s+data-testid="factoring-home-profile-col"/g, 'flex-none min-w-0" data-testid="factoring-home-profile-col"'))],
-    ["home drops DrillKpiCard import", withField("home", (s) => s.replace(/import\s*\{\s*DrillKpiCard\s*\}/g, "import { GoneCard }"))],
-    ["home drops a KPI tile", withField("home", (s) => s.replace(/testId="factoring-kpi-advanced-mtd"/g, 'testId="gone"'))],
-    ["home drops compact variant use", withField("home", (s) => s.replace(/variant="compact"/g, 'variant="full"'))],
-    ["panel drops compact branch", withField("panel", (s) => s.replace(/variant\s*===\s*"compact"/g, 'variant === "gone"'))],
-    ["panel drops compact marker", withField("panel", (s) => s.replace(/data-factoring-profile-compact/g, "data-gone"))],
-    ["panel drops 220 cap", withField("panel", (s) => s.replace(/maxHeight:\s*220/g, "maxHeight: 999"))],
-    ["panel drops vendor EntityLink", withField("panel", (s) => s.replace(/kind="vendor"/g, 'kind="none"'))],
+    ["board drops KPI strip", withField("board", (s) => s.replace(/data-testid="factoring-home-kpi-row"/g, 'data-testid="gone"'))],
+    ["board drops True cost", withField("board", (s) => s.replace(/True cost/g, "Gone cost"))],
+    ["board drops purchase panel", withField("board", (s) => s.replace(/Each purchase — net to bank vs kept by Faro/g, "Gone"))],
+    ["board drops Terms", withField("board", (s) => s.replace(/Terms on file/g, "Gone"))],
+    ["board drops summary engine", withField("board", (s) => s.replace(/getFactoringSummary/g, "getGone"))],
+    ["home drops cash-flow panel", withField("home", (s) => s.replace(/<FactoringCashFlowPanel/g, "<GoneCash"))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {
-    if (analyze(mutated).length > 0) { caught += 1; continue; }
+    if (analyze(mutated).length > 0) {
+      caught += 1;
+      continue;
+    }
     console.error(`SELFTEST FAIL — mutation escaped: ${label}`);
     process.exit(1);
   }
@@ -143,4 +144,4 @@ if (failures.length) {
   failures.forEach((f) => console.error(`- ${f}`));
   process.exit(1);
 }
-console.log("PASS verify-factoring-layout-tabs-first");
+console.log("PASS verify-factoring-layout-tabs-first — tabs-first + FactoringHomeBoard (443.267 board 4)");
