@@ -7,7 +7,7 @@ import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Panel } from "../../../components/v3/V3Panel";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
-import { CashFlowKpiStrip, formatCashFlowCents, type CashFlowKpis } from "./CashFlowKpiStrip";
+import { formatCashFlowCents, type CashFlowKpis } from "./CashFlowKpiStrip";
 import type { CashFlowTabId } from "../CashFlowPage";
 
 // REG-031 — Cash Flow lands on Home with a real KPI strip + links into sibling tabs.
@@ -21,6 +21,10 @@ type WeekBucket = {
   weekStart: string;
   label: string;
   income_cents: number;
+  /** Committed A/R — invoice / load / factoring advance (board: Customer invoices due). */
+  invoice_cents: number;
+  /** Residual income not on a committed invoice (board: Run-rate top-up). */
+  runrate_income_cents: number;
   expenses_cents: number;
   net_cents: number;
   ending_cash_cents: number | null;
@@ -97,7 +101,8 @@ function buildWeekBuckets(data: RollingLedgerResult, today: string, weekCount: n
   const windowEnd = addDaysIso(start, weekCount * 7 - 1);
 
   const empty = (): Omit<WeekBucket, "weekStart" | "label"> => ({
-    income_cents: 0, expenses_cents: 0, net_cents: 0, ending_cash_cents: null,
+    income_cents: 0, invoice_cents: 0, runrate_income_cents: 0,
+    expenses_cents: 0, net_cents: 0, ending_cash_cents: null,
     driver_bills_cents: 0, vendor_bills_cents: 0, diesel_cents: 0, insurance_cents: 0, finance_lease_cents: 0, other_cents: 0,
   });
 
@@ -120,6 +125,12 @@ function buildWeekBuckets(data: RollingLedgerResult, today: string, weekCount: n
 
     if (row.row_kind === "income") {
       bucket.income_cents += row.amount_cents;
+      const committed =
+        row.document_kind === "invoice" ||
+        row.document_kind === "load" ||
+        row.document_kind === "factoring_advance";
+      if (committed) bucket.invoice_cents += row.amount_cents;
+      else bucket.runrate_income_cents += row.amount_cents;
     } else {
       bucket.expenses_cents += row.amount_cents;
       const cat = expenseCategory(row.document_kind, row.counterparty);
@@ -172,7 +183,16 @@ const TAB_CARDS: TabLinkCard[] = [
   { id: "manual_daily_projections", label: "Manual Daily Projections", description: "Hand-entered daily projections, when enabled." },
 ];
 
-function CashPositionChart({ weeks, openingCents }: { weeks: WeekBucket[]; openingCents: number | null }) {
+function CashPositionChart({
+  weeks,
+  openingCents,
+  todayMonday,
+}: {
+  weeks: WeekBucket[];
+  openingCents: number | null;
+  /** Monday of company today — weeks before this are ACTUAL; rest FORECAST (board band). */
+  todayMonday: string;
+}) {
   const W = 1300;
   const H = 330;
   const left = 64;
@@ -241,9 +261,23 @@ function CashPositionChart({ weeks, openingCents }: { weeks: WeekBucket[]; openi
             </g>
           );
         })}
-        <text x={left + 6} y={top + 12} fontFamily={V3.font} fontSize={10} fontWeight={600} fill={V3.data}>
-          FORECAST · {weeks.length} WEEKS
-        </text>
+        {(() => {
+          const actualN = weeks.filter((w) => w.weekStart < todayMonday).length;
+          const forecastN = weeks.length - actualN;
+          const labels: { text: string; x: number }[] = [];
+          if (actualN > 0) {
+            labels.push({ text: "ACTUAL", x: left + 6 });
+          }
+          if (forecastN > 0) {
+            const fx = left + (actualN / Math.max(weeks.length, 1)) * plotW + 6;
+            labels.push({ text: `FORECAST · ${forecastN} WEEKS`, x: Math.min(fx, right - 140) });
+          }
+          return labels.map((L) => (
+            <text key={L.text} x={L.x} y={top + 12} fontFamily={V3.font} fontSize={10} fontWeight={600} fill={V3.data}>
+              {L.text}
+            </text>
+          ));
+        })()}
         {weeks.map((w, i) => {
           const cx = left + slot * i + slot / 2;
           const inH = scale(w.income_cents);
@@ -364,6 +398,18 @@ function ThirteenWeekTable({
             </td>
           </tr>
           <tr>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Customer invoices due</td>
+            {weeks.map((w) => (
+              <td key={w.weekStart} style={td}>{cell(w.invoice_cents, totalIncome)}</td>
+            ))}
+          </tr>
+          <tr>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Run-rate top-up</td>
+            {weeks.map((w) => (
+              <td key={w.weekStart} style={td}>{cell(w.runrate_income_cents, totalIncome)}</td>
+            ))}
+          </tr>
+          <tr>
             <td style={{ ...td, textAlign: "left" }}>
               <b>Total receipts</b>
             </td>
@@ -379,39 +425,33 @@ function ThirteenWeekTable({
             </td>
           </tr>
           <tr>
-            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Finance / lease</td>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Finance & lease payments</td>
             {weeks.map((w) => (
               <td key={w.weekStart} style={td}>{cell(w.finance_lease_cents, totalExpense)}</td>
             ))}
           </tr>
           <tr>
-            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Driver bills</td>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Driver pay (run-rate)</td>
             {weeks.map((w) => (
               <td key={w.weekStart} style={td}>{cell(w.driver_bills_cents, totalExpense)}</td>
             ))}
           </tr>
           <tr>
-            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Diesel</td>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Diesel (run-rate)</td>
             {weeks.map((w) => (
               <td key={w.weekStart} style={td}>{cell(w.diesel_cents, totalExpense)}</td>
             ))}
           </tr>
           <tr>
-            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Insurance</td>
-            {weeks.map((w) => (
-              <td key={w.weekStart} style={td}>{cell(w.insurance_cents, totalExpense)}</td>
-            ))}
-          </tr>
-          <tr>
-            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Vendor bills</td>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Vendor bills due</td>
             {weeks.map((w) => (
               <td key={w.weekStart} style={td}>{cell(w.vendor_bills_cents, totalExpense)}</td>
             ))}
           </tr>
           <tr>
-            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Other</td>
+            <td style={{ ...td, textAlign: "left", paddingLeft: 20 }}>Other operating (run-rate)</td>
             {weeks.map((w) => (
-              <td key={w.weekStart} style={td}>{cell(w.other_cents, totalExpense)}</td>
+              <td key={w.weekStart} style={td}>{cell(w.other_cents + w.insurance_cents, totalExpense)}</td>
             ))}
           </tr>
           <tr>
@@ -484,7 +524,9 @@ export function CashFlowHomeTab({
   const today = companyToday();
   const windowEnd = useMemo(() => addDaysIso(today, HOME_WINDOW_DAYS), [today]);
   const [chartGrain, setChartGrain] = useState<"weekly" | "monthly">("weekly");
+  const [scenario, setScenario] = useState<"base" | "conservative">("base");
   const [tableUnit, setTableUnit] = useState<"dollars" | "pct">("dollars");
+  const todayMonday = useMemo(() => mondayOf(today), [today]);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["cash-flow-home-kpis", operatingCompanyId, today, windowEnd],
@@ -505,11 +547,41 @@ export function CashFlowHomeTab({
   }, [data, today]);
 
   const weeklyRunRate = useMemo(() => {
-    if (weeks.length === 0) return 0;
-    const withActivity = weeks.filter((w) => w.income_cents !== 0 || w.expenses_cents !== 0);
-    const src = withActivity.length ? withActivity : weeks;
+    // Board: "last 4 full weeks" — weeks whose Sunday is strictly before company today.
+    const completed = weeks.filter((w) => addDaysIso(w.weekStart, 6) < today);
+    const src = completed.slice(-4);
+    if (src.length === 0) return 0;
     return Math.round(src.reduce((s, w) => s + w.net_cents, 0) / src.length);
-  }, [weeks]);
+  }, [weeks, today]);
+
+  /** Conservative = committed documents only (invoices + AP/driver/lease bills). Same engine rows, filtered view. */
+  const displayWeeks = useMemo(() => {
+    if (scenario === "base") return weeks;
+    return weeks.map((w) => {
+      const income = w.invoice_cents;
+      const expenses = w.finance_lease_cents + w.driver_bills_cents + w.vendor_bills_cents;
+      return {
+        ...w,
+        income_cents: income,
+        runrate_income_cents: 0,
+        expenses_cents: expenses,
+        diesel_cents: 0,
+        insurance_cents: 0,
+        other_cents: 0,
+        net_cents: income - expenses,
+        // ending balance recomputed below for chart continuity
+      };
+    });
+  }, [weeks, scenario]);
+
+  const displayWeeksWithBalance = useMemo(() => {
+    if (scenario === "base") return displayWeeks;
+    let running = data?.opening_cash_cents ?? 0;
+    return displayWeeks.map((w) => {
+      running += w.net_cents;
+      return { ...w, ending_cash_cents: running };
+    });
+  }, [displayWeeks, scenario, data?.opening_cash_cents]);
 
   const lowest = useMemo(() => {
     let min: { cents: number; label: string } | null = null;
@@ -555,9 +627,7 @@ export function CashFlowHomeTab({
         </div>
       )}
 
-      {/* REG-031: keep shared strip so Rolling Ledger + Home stay one KPI component. */}
-      {kpis && <CashFlowKpiStrip kpis={kpis} testId="cash-flow-home-kpi-strip" />}
-
+      {/* 443.267 board: Home shows the 6 board V3 KPIs only. CashFlowKpiStrip stays on Rolling Ledger (REG-031 shared component). */}
       {kpis && (
         <div
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 8 }}
@@ -616,7 +686,7 @@ export function CashFlowHomeTab({
                 <span style={{ fontWeight: 600, color: weeklyRunRate < 0 ? V3.red : V3.green }}>
                   {weeklyRunRate < 0 ? "▼ out > in" : weeklyRunRate > 0 ? "▲ in > out" : "flat"}
                 </span>
-                <span>forecast weeks</span>
+                <span>last 4 full weeks</span>
               </span>
             }
             spark={
@@ -649,32 +719,48 @@ export function CashFlowHomeTab({
         </div>
       )}
 
-      {weeks.length > 0 && (
+      {displayWeeksWithBalance.length > 0 && (
         <V3Panel
-          title="Cash position — forecast weeks"
+          title="Cash position — 4 weeks actual · 13 weeks forecast"
           subtitle="from live rolling ledger"
           onViewAll={() => onNavigateToTab("rolling_ledger")}
           headerRight={
-            <V3Segmented
-              value={chartGrain}
-              onChange={setChartGrain}
-              options={[
-                { id: "weekly", label: "Weekly" },
-                { id: "monthly", label: "Monthly" },
-              ]}
-              testId="cash-flow-home-chart-grain"
-            />
+            <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+              <V3Segmented
+                value={chartGrain}
+                onChange={setChartGrain}
+                options={[
+                  { id: "weekly", label: "Weekly" },
+                  { id: "monthly", label: "Monthly" },
+                ]}
+                testId="cash-flow-home-chart-grain"
+              />
+              <V3Segmented
+                value={scenario}
+                onChange={setScenario}
+                options={[
+                  { id: "base", label: "Base" },
+                  { id: "conservative", label: "Conservative" },
+                ]}
+                testId="cash-flow-home-scenario"
+              />
+            </span>
           }
           testId="cash-flow-home-chart-panel"
         >
           <CashPositionChart
-            weeks={chartGrain === "weekly" ? weeks : weeks.filter((_, i) => i % 4 === 0)}
+            weeks={
+              chartGrain === "weekly"
+                ? displayWeeksWithBalance
+                : displayWeeksWithBalance.filter((_, i) => i % 4 === 0)
+            }
             openingCents={data?.opening_cash_cents ?? null}
+            todayMonday={todayMonday}
           />
         </V3Panel>
       )}
 
-      {weeks.length > 0 && (
+      {displayWeeksWithBalance.length > 0 && (
         <V3Panel
           title="13-week cash flow"
           onViewAll={() => onNavigateToTab("rolling_ledger")}
@@ -689,10 +775,14 @@ export function CashFlowHomeTab({
               testId="cash-flow-home-table-unit"
             />
           }
-          footer="Black = committed documents from the rolling ledger · every total opens the ledger."
+          footer={
+            scenario === "conservative"
+              ? "Conservative = committed invoices + finance/lease + driver pay + vendor bills only (live rolling ledger)."
+              : "Black = committed documents from the rolling ledger · every total opens the ledger."
+          }
           testId="cash-flow-home-table-panel"
         >
-          <ThirteenWeekTable weeks={weeks} unit={tableUnit} />
+          <ThirteenWeekTable weeks={displayWeeksWithBalance} unit={tableUnit} />
         </V3Panel>
       )}
 

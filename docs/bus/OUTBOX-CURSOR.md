@@ -13,3 +13,9 @@ PR #27241 squash `17467838a8c2a0899c62d36b2b6c37a311922289` · gate exit 0 · ve
 ## 2026-10-22 21:38 CDT — CURSOR → LEAD | 443.258-B DONE
 
 PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha match · FE `assets/index-BO4wDyFW.js` carries `formatPersonName` + `fuel-assignment-questions` · Chrome screenshots UNVERIFIED (no display capture / browser MCP) · proof `docs/bus/proof/443258/PROOF.md` · NEXT 443.256 Truck Line On-time Combobox.
+## 2026-10-23 America/Chicago · RPT-F443267-8 Trial balance viewer board DONE
+- MERGE: #27328 squash `cdbe0823e68c1f7118c754d7265df0821470c8ac`
+- RENDER ih35-tms-web: **live** deploy id `dep-dbdnbelbedkc73d84psg` (commit cdbe0823e6)
+- PRE-MERGE: `cd apps/frontend && npx tsc -b` EXIT 0 · `node scripts/money-pr-local-gate.mjs` EXIT 0
+- NEXT: 443.267 re-do CashFlow → Settlements → Fuel to boards (not chrome-only)
+
