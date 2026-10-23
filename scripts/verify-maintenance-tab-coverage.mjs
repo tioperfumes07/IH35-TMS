@@ -5,6 +5,61 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+const require = createRequire(new URL("../apps/frontend/package.json", import.meta.url));
+const ts = require("typescript");
+
+// 443.280: preserve capabilities on dedicated routes, not mounted below Home.
+export function validateBoardLayout(home, routes) {
+  const errors = [];
+  const source = ts.createSourceFile("MaintenanceHome.tsx", home, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const boards = [];
+  const strips = [];
+  function visit(node) {
+    if (ts.isConditionalExpression(node) && node.condition.getText(source) === 'tab === "rm_status_board"') boards.push(node.whenTrue);
+    if ((ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) && node.tagName.getText(source) === "IntegrationsStrip") strips.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(source);
+  if (boards.length !== 1) errors.push("Home must have exactly one board body");
+  for (const board of boards) {
+    const body = board.getText(source);
+    for (const name of ["IntegrationsStrip", "RMBucketsGrid", "RMStatStrip", "ArrivingSoonPage", "PredictiveAlertsPage", "DtcAutoWorkOrdersCard", "RoadServiceActivePanel", "details"]) {
+      if (new RegExp(`<${name}\\b`).test(body)) errors.push(`Home mounts legacy ${name}`);
+    }
+    for (const name of ["MaintenanceHomeSummaryPanels", "FleetHealthLine", "V3KpiTile"]) if (!body.includes(`<${name}`)) errors.push(`Home missing ${name}`);
+  }
+  if (strips.length !== 1) errors.push("IntegrationsStrip must remain reachable once in Settings");
+  for (const strip of strips) {
+    let parent = strip.parent;
+    while (parent && !ts.isConditionalExpression(parent)) parent = parent.parent;
+    if (!parent || parent.condition.getText(source) !== 'tab === "settings"' || !parent.whenTrue.getText(source).includes("<IntegrationsStrip")) errors.push("IntegrationsStrip must mount only in Settings");
+  }
+  for (const [tab, component] of [["arriving_soon", "ArrivingSoonPage"], ["predictive_alerts", "PredictiveAlertsPage"]]) {
+    let reachable = false;
+    function find(node) {
+      if (ts.isConditionalExpression(node) && node.condition.getText(source) === `tab === "${tab}"` && node.whenTrue.getText(source).includes(`<${component}`)) reachable = true;
+      ts.forEachChild(node, find);
+    }
+    find(source);
+    if (!reachable) errors.push(`${component} must remain on its own route`);
+  }
+  if (!home.includes('/maintenance/active-wos?view=workflow') || !home.includes('<RMBucketsGrid')) errors.push("Active WOs workflow must remain reachable");
+  if (!home.includes('const showWorkflow = tab === "active_wos" && searchParams.get("view") === "workflow"')) errors.push("Workflow selection must derive from its route and view");
+  let workflowMount = false;
+  function findWorkflow(node) {
+    if (ts.isConditionalExpression(node) && node.condition.getText(source) === "showWorkflow" && node.whenTrue.getText(source).includes("<RMBucketsGrid")) workflowMount = true;
+    ts.forEachChild(node, findWorkflow);
+  }
+  findWorkflow(source);
+  if (!workflowMount) errors.push("Selected workflow must mount RMBucketsGrid");
+  for (const [url, tab] of [["arriving-soon", "arriving_soon"], ["predictive-alerts", "predictive_alerts"]]) {
+    if (!routes.includes(`if (norm === "/maintenance/${url}") return "${tab}";`)) errors.push(`${url} must resolve to ${tab}`);
+  }
+  if (/norm === "\/maintenance\/(?:arriving-soon|predictive-alerts)"[\s\S]{0,100}return "rm_status_board"/.test(routes)) errors.push("Summary View all must not remap back to Home");
+  return errors;
+}
 
 const ROOT = process.env.VERIFY_MAINT_TAB_COVERAGE_ROOT ?? process.cwd();
 const manifestPath =
@@ -135,14 +190,9 @@ function main() {
       failures.push(`missing_MAINTENANCE_TAB_PATH:${id}`);
     }
   }
-  if (!homeSrc.includes("IntegrationsStrip") || !homeSrc.includes("isHomeTab ? <IntegrationsStrip")) {
-    failures.push("C-36: IntegrationsStrip must render once on Home only");
-  }
+  failures.push(...validateBoardLayout(homeSrc, routeManifestSrc));
   if (!homeSrc.includes("DRIVER_REPORT_KIND_OPTIONS") && !homeSrc.includes("driverReportKind")) {
     failures.push("C-36: Driver Reports must expose Kind (damage / in-transit / DVIR)");
-  }
-  if (!homeSrc.includes("maintenance-home-folded-panels")) {
-    failures.push("C-36: Arriving Soon + At Risk must fold into Home");
   }
 
   if (!manifestSource.includes('path="/maintenance/dvir"')) {
@@ -191,4 +241,28 @@ function main() {
   console.log("verify:maintenance-tab-coverage OK");
 }
 
-main();
+export function boardLayoutSelftest(home, routes) {
+  const plants = [
+    ["embedded arrivals", home.replace("<MaintenanceHomeSummaryPanels", "<ArrivingSoonPage")],
+    ["embedded risk", home.replace("<MaintenanceHomeSummaryPanels", "<PredictiveAlertsPage")],
+    ["collapsed workflow", home.replace("<MaintenanceHomeSummaryPanels", "<details><RMBucketsGrid /></details><MaintenanceHomeSummaryPanels")],
+    ["integrations restored to Home", home.replace('tab === "settings" ? <IntegrationsStrip', 'isHomeTab ? <IntegrationsStrip')],
+    ["arrivals route removed", home.replace('tab === "arriving_soon"', 'tab === "removed"')],
+    ["workflow link removed", home.replaceAll('/maintenance/active-wos?view=workflow', '/removed')],
+    ["workflow disabled", home.replace('const showWorkflow = tab === "active_wos" && searchParams.get("view") === "workflow"', 'const showWorkflow = false')],
+    ["workflow never mounted", home.replace('{showWorkflow ? (rmStatusQuery.isError', '{false ? (rmStatusQuery.isError')],
+  ];
+  if (validateBoardLayout(home, routes).length) throw new Error("selftest clean fixture is not clean");
+  for (const [label, mutated] of plants) {
+    if (!validateBoardLayout(mutated, routes).length) throw new Error(`plant escaped: ${label}`);
+    console.log(`PASS plant: ${label}`);
+  }
+  const wrongRoute = routes.replace('if (norm === "/maintenance/arriving-soon") return "arriving_soon";', 'if (norm === "/maintenance/arriving-soon") return "fleet_table";');
+  if (!validateBoardLayout(home, wrongRoute).length) throw new Error("plant escaped: arrivals misrouted to fleet");
+  console.log("PASS plant: arrivals misrouted to fleet");
+  console.log(`board-layout selftest ${plants.length + 2}/${plants.length + 2}`);
+}
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+  if (process.argv.includes("--selftest")) boardLayoutSelftest(readIfExists(path.join(ROOT, "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx")), readIfExists(path.join(ROOT, "apps/frontend/src/router/route-manifest.ts")));
+}

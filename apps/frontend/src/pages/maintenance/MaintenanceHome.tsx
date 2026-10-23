@@ -698,7 +698,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         </div>
       ) : null}
 
-      {tab === "predictive_alerts" && !isHomeTab ? (
+      {tab === "predictive_alerts" ? (
         <div data-testid="maintenance-predictive-alerts-retired" data-maintenance-tab="predictive_alerts">
           <PredictiveAlertsPage />
         </div>
