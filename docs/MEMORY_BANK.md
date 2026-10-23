@@ -225,6 +225,19 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guard piggyback:** `verify-operator-record-surface-connectivity` — Landing mounts board;
   board file asserts KPI/pipeline/matters/quick-actions + three APIs (no new EVEN claim).
 
+### Active Architectural Decisions — Reports home board (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Board:** `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Reports.dc.html`. Not a button-grid
+  reskin — `ReportsHome` keeps CategoryHoverNav + Management + FrequentlyRun + Scheduled
+  (Rule 07), body mounts `ReportsHomeBoard`: V3 KPI strip (Available reports / Custom
+  schedules / Run last 7 days / IFTA due) → Accounting + financial **table** columns
+  ☆|Report|What it shows|Basis|Open in viewer|Export (board primary 9 rows; View all
+  expands Rule-07 extras).
+- **Engines:** `getKpiSummary` · `getIftaStatus` · `PHASE_6_REPORT_HREFS` · `BasisSelector`.
+  Run → / PDF · XLSX open the live viewer (export stays on the report page — QBO pattern).
+- **Guards (piggyback, no new EVEN):** `verify-reports-home-no-box-in-box` (board table +
+  flat Management) · `verify-rpt-s01-s05-reports-home-ifta` (15+ rows across board+mgmt).
+
 ### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared
@@ -1232,7 +1245,7 @@ settlement deductions · $757.25 never hit the bank). Match engine = settlement-
 ## Next Immediate Milestones
 
 0. **ROUND 443.267 board order (Cursor):** Unexpected ✔ · Accounting ✔ · Banking ✔ · Factoring ✔ ·
-   Insurance ✔ · Legal home (this PR) → Reports → Reports-Viewer-TrialBalance → re-do
+   Insurance ✔ · Legal ✔ · Reports home (this PR) → Reports-Viewer-TrialBalance → re-do
    CashFlow/Settlements/Fuel to boards (not chrome-only). One PR per board; bus sha each merge.
 1. **Rebuild orchestration (17→21):** data-driven from the two signed-doc CSVs. Reverse mis-grouped
    S-136xx via the reversal engine → create the 8 missing driver bills at signed amounts → build 21
