@@ -8,6 +8,7 @@ const pending = { isPending: true, isError: false, isFetching: true };
 const success = { isPending: false, isError: false, isFetching: false };
 const errored = { isPending: false, isError: true, isFetching: false };
 const refetching = { isPending: false, isError: false, isFetching: true };
+const disabled = { isPending: true, isError: false, isFetching: false };
 
 describe("resolveListState — the four states", () => {
   it("returns loading while the query is pending (no data yet)", () => {
@@ -27,6 +28,13 @@ describe("resolveListState — the four states", () => {
 
   it("returns data on a settled query with rows", () => {
     expect(resolveListState(success, false)).toBe("data");
+  });
+});
+
+describe("resolveListState — disabled query (SETL-F443282)", () => {
+  it("does not read a disabled pending query as loading", () => {
+    expect(resolveListState(disabled, true)).toBe("empty");
+    expect(resolveListState(disabled, false)).toBe("data");
   });
 });
 

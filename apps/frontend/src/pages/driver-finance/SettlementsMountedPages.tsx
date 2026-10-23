@@ -4,7 +4,7 @@
  */
 import { DriversPage } from "../Drivers";
 import { FeedGatePage } from "../feed-gate/FeedGatePage";
-import { CashAdvancesHomePage } from "../cash-advances/CashAdvancesHome";
+import { SettlementsCashAdvancesBoard } from "./SettlementsCashAdvancesBoard";
 import { LiabilitiesHomePage } from "../liabilities/LiabilitiesHome";
 import { EscrowPage } from "../accounting/EscrowPage";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
@@ -46,7 +46,7 @@ export function SettlementsFeedGatePage() {
 export function SettlementsCashAdvancesPage() {
   return (
     <SettlementsModuleShell>
-      <CashAdvancesHomePage />
+      <SettlementsCashAdvancesBoard />
     </SettlementsModuleShell>
   );
 }
