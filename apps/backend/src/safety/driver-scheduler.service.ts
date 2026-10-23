@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { canonicalBoardUnitGateSql, canonicalDispatchWorkWhereClause } from "../dispatch/canonical-active-load-set.js";
+import { canonicalDispatchWorkWhereClause } from "../dispatch/canonical-active-load-set.js";
+import { UNIT_IN_SERVICE_SQL } from "../dispatch/unit-in-service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export type QueryableClient = {
@@ -1133,7 +1134,10 @@ export async function getFleetSchedule(
       -- LEAD 23:45Z parity (every working truck — T174, T156, T148 ... — listed as vacant): vacant = THE board unit gate and NO
       -- board-set load on the truck (the load service). mdata.units.assigned_driver_id is NULL on every prod row, so the old
       -- "assigned_driver_id IS NULL" test called every truck vacant.
-      WHERE ${canonicalBoardUnitGateSql("u", "$1::uuid")}
+      -- LEAD 443.266-A: in service = THE shared unit gate UNIT_IN_SERVICE_SQL (board gate: InService, not sold/disposed/
+      -- sample; + not OOS + no open work order) — the same set as Truck Line AVAILABLE and /dispatch/units-without-load.
+      -- A truck in the shop or out of service is not "vacant".
+      WHERE ${UNIT_IN_SERVICE_SQL}
         AND NOT EXISTS (SELECT 1 FROM mdata.loads bl WHERE bl.assigned_unit_id = u.id AND ${canonicalDispatchWorkWhereClause("bl", "$1::uuid")})
       ORDER BY u.unit_number, u.id
     `,
