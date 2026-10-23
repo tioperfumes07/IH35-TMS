@@ -1,7 +1,7 @@
 // LEAD 443.258-A (P0 D001): every candidate the question API returns carries `load` (object or null) — including the
 // prod question c5a43b1d whose stored evidence has the flat legacy shape (load_number on the candidate, no `load`).
 import { describe, expect, it } from "vitest";
-import { normalizeCandidate, normalizeQuestionRow } from "../fuel-assignment-question.service.js";
+import { normalizeCandidate, normalizeQuestionRow, type FuelCandidateTruck } from "../fuel-assignment-question.service.js";
 
 const prodFlat = {
   evidence: {
@@ -13,7 +13,8 @@ const prodFlat = {
 
 describe("fuel question evidence normalization (443.258-A)", () => {
   it("maps the stored flat shape to a load object", () => {
-    const row = normalizeQuestionRow(prodFlat);
+    // normalizeQuestionRow<T> is typed as T (the stored shape); read its candidates as the normalized type it returns.
+    const row = normalizeQuestionRow(prodFlat) as unknown as { evidence: { candidates: FuelCandidateTruck[] } };
     expect(row.evidence.candidates[0].load).toEqual({ load_id: null, load_number: "13689", settlement_ref: null, pickup: null, delivery: null, route: null });
     expect(row.evidence.candidates[0]).toHaveProperty("load");
   });

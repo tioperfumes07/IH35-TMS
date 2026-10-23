@@ -821,17 +821,17 @@ export function SettlementsPage() {
               </div>
               {(
                 [
-                  { key: "escrow" as const, label: "Escrow" },
-                  { key: "advances" as const, label: "Advances (Zelle)" },
-                  { key: "fines" as const, label: "Fines" },
+                  { id: "escrow" as const, label: "Escrow" },
+                  { id: "advances" as const, label: "Advances (Zelle)" },
+                  { id: "fines" as const, label: "Fines" },
                 ] as const
               ).map((row) => {
-                const bucket = deductionSplitThisWeek[row.key];
+                const bucket = deductionSplitThisWeek[row.id];
                 const has = bucket.amount > 0 || bucket.drivers.size > 0;
                 return (
                   <div
-                    key={row.key}
-                    data-testid={`settlements-home-deduction-${row.key}`}
+                    key={row.id}
+                    data-testid={`settlements-home-deduction-${row.id}`}
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr auto auto",
