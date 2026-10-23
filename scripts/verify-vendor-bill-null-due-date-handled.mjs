@@ -43,9 +43,9 @@ function selftest() {
     process.exit(1);
   }
 
-  // Mutation: reintroduce the bad filter
+  // Mutation: reintroduce the bad filter (anchor works with both = 'vendor' and IN ('vendor','driver'))
   const withBadFilter = real.replace(
-    /AND b\.bill_category = 'vendor'/,
+    /AND b\.bill_category (= 'vendor'|IN \('vendor',\s*'driver'\))/,
     "AND b.due_date IS NOT NULL\n      AND b.bill_category = 'vendor'"
   );
   if (withBadFilter === real) {

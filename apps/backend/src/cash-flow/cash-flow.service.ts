@@ -986,7 +986,7 @@ export async function getRollingLedgerRows(
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id AND v.operating_company_id = $1::uuid
     WHERE b.operating_company_id = $1::uuid
       AND ${openBill("b", BILL_OPEN_BALANCE_SQL)}
-      AND b.bill_category = 'vendor'
+      AND b.bill_category IN ('vendor', 'driver')
     ORDER BY COALESCE(b.due_date, b.bill_date, $2::date) ASC
     `,
     [operatingCompanyId, today]
