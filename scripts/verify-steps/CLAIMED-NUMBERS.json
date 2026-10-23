@@ -14849,6 +14849,21 @@
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.251 P0: verify-kanban-every-card-draggable (every Kanban truck/load card is a drag source with an outcome for every target; no inert card, no placeholder gap)"
   },
+  "18689": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.251 items 4-7: verify-planner-selected-days-fill-and-filters (range in the Filters popover, only selected days drawn at full width, resizable persisted columns, continues/started markers)"
+  },
+  "18697": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.257-A: verify-truck-line-every-available-truck-assignable (no driver-gated Assign button on Truck Line)"
+  },
+  "18701": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-10-22",
+    "purpose": "CC-3 LEAD 443.257-B: verify-book-load-driver-picker-lists-every-active-driver (no raw id as a driver name; every Active non-sample driver selectable)"
+  },
   "18629": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-21",
@@ -16883,7 +16898,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1080,
+  "total_claimed": 1083,
   "18670": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-22",
