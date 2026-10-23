@@ -1,7 +1,10 @@
-import { useEffect, useState, type JSX } from "react";
+import { useCallback, useEffect, useMemo, useState, type JSX } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listDriverTeams } from "../../../api/mdata";
+import { listAllLoads } from "../../../api/loads";
+import { listUnitsWithoutLoad } from "../../../api/dispatch";
+import { driverLoadsFromBoard, rankDriverOptions } from "./book-load-v4/driverPickerRanking";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -64,6 +67,36 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   const [primaryDriverOption, setPrimaryDriverOption] = useState<EntityPickerOption | null>(null);
   const [secondaryDriverOption, setSecondaryDriverOption] = useState<EntityPickerOption | null>(null);
   const [unitOption, setUnitOption] = useState<EntityPickerOption | null>(null);
+  // LEAD 443.257-A item 3 — rank the driver list: usual driver of this truck, then free drivers, then "On load ####".
+  // Both reads are the ONE load service / the shared free-unit roster (same data as Truck Line and the Kanban).
+  const boardLoadsQuery = useQuery({
+    queryKey: ["book-load-driver-ranking-board", operatingCompanyId],
+    queryFn: () => listAllLoads({ operating_company_id: [String(operatingCompanyId)], board_scope: "live" }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const freeUnitsQuery = useQuery({
+    queryKey: ["dispatch", "units-without-load", operatingCompanyId],
+    queryFn: () => listUnitsWithoutLoad(String(operatingCompanyId)),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const driverRankingContext = useMemo(() => {
+    const board = boardLoadsQuery.data?.loads ?? [];
+    const onLoadByDriver = driverLoadsFromBoard(board);
+    // usual = the driver on this truck's current load, else the truck's last delivered driver (units-without-load).
+    const current = assignedUnitId ? board.find((l) => l.assigned_unit_id === assignedUnitId && l.assigned_primary_driver_id) : undefined;
+    const free = assignedUnitId ? freeUnitsQuery.data?.units?.find((u) => u.id === assignedUnitId) : undefined;
+    return {
+      usualDriverId: current?.assigned_primary_driver_id ?? free?.driver_id ?? null,
+      unitLabel: unitOption?.label ?? current?.assigned_unit_number ?? free?.unit_number ?? null,
+      onLoadByDriver,
+    };
+  }, [boardLoadsQuery.data, freeUnitsQuery.data, assignedUnitId, unitOption?.label]);
+  const decorateDriverOptions = useCallback(
+    (options: EntityPickerOption[]) => rankDriverOptions(options, driverRankingContext),
+    [driverRankingContext],
+  );
   const [trailerOption, setTrailerOption] = useState<EntityPickerOption | null>(null);
   // GO-23 A1 — trailer source: our own fleet OR an interchange (non-owned) trailer, never both.
   // trailer_source defaults to "owned" so every existing load's behavior is unchanged.
@@ -348,6 +381,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               className="h-8 w-full text-xs"
               placeholder="Select driver"
               dataField="assigned_primary_driver_id"
+              decorateOptions={decorateDriverOptions}
               // FAIL-CA1 + 443.257: Active/Probation HR roster (hr_status via registry), overlay full width.
               driverRoster="active_or_probation"
               // BookLoadModalV4 is a centered portal modal (not ParityDrawer) → default shell="modal".
