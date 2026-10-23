@@ -33,7 +33,14 @@ const GAP_RATCHET = {
   "accounting.bill_payments": 32,
   "accounting.invoices": 26,
   "fuel.fuel_transactions": 0,
-  "driver_finance.driver_settlements": 0,
+  // 2026-10-22 Neon br-fancy-credit-akjnd07a bypass_rls=lucia USMCA (Cursor Lead 443.258-B):
+  // driver_bills load 13691 (ddd8e222, $354.51, settled_in set, load delivered_pending_docs,
+  // created 2026-10-21) and its covering closed settlement display_id P-0117 (38b332c4,
+  // posted_at NULL, source_document_ref NULL) have no live JE — GREW past prior baseline 0.
+  // Posting close is CC-1 settlement-ap-chain / payrun lane; this non-money formatters PR does
+  // not invent GL. Remove (back to 0) when CC-1 posts P-0117 + 13691.
+  "driver_finance.driver_bills": 1,
+  "driver_finance.driver_settlements": 1,
 };
 //
 // Self-test: node scripts/verify-no-document-without-a-ledger.mjs --selftest

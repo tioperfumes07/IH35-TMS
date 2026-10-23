@@ -5,53 +5,92 @@
       "id": "active-loads",
       "label": "Active loads",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
-      "required_tokens": ["dashboardQ.data?.on_load", "ACTIVE_LOAD_DRILL_HREF", "to={ACTIVE_LOAD_DRILL_HREF}"]
+      "required_tokens": [
+        "dashboardQ.data?.on_load",
+        "ACTIVE_LOAD_DRILL_HREF",
+        "to={ACTIVE_LOAD_DRILL_HREF}"
+      ]
     },
     {
       "id": "delivered-pending-docs",
-      "label": "Delivered — pending docs",
+      "label": "Delivered \u2014 pending docs",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
-      "required_tokens": ["dashboardQ.data?.delivered", "DELIVERED_DRILL_HREF", "to={DELIVERED_DRILL_HREF}"]
+      "required_tokens": [
+        "dashboardQ.data?.delivered",
+        "DELIVERED_DRILL_HREF",
+        "to={DELIVERED_DRILL_HREF}"
+      ]
     },
     {
       "id": "at-risk-late",
       "label": "At-risk / late",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
-      "required_tokens": ["atRiskLateTotal", "to=\"/dispatch/at-risk\""]
+      "required_tokens": [
+        "atRiskLateTotal",
+        "to=\"/dispatch/at-risk\""
+      ]
     },
     {
       "id": "detention",
       "label": "Detention",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
-      "required_tokens": ["detentionQ.data?.count", "detentionQ.data.active_count", "to=\"/dispatch/detention\""]
+      "required_tokens": [
+        "detentionQ.data?.count",
+        "detentionQ.data.active_count",
+        "to=\"/dispatch/detention\""
+      ]
     },
     {
       "id": "units-available",
       "label": "Units available",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
-      "required_tokens": ["unitsAvailable", "to=\"/dispatch#unassigned-units\"", "id=\"unassigned-units\""]
+      "required_tokens": [
+        "unitsAvailable",
+        "to=\"/dispatch#unassigned-units\"",
+        "id=\"unassigned-units\""
+      ]
     },
     {
       "id": "units-needing-return",
       "label": "Units needing return",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
       "source": "apps/backend/src/dispatch/loads.routes.ts",
-      "required_tokens": ["to=\"/dispatch#units-needing-return\"", "data-testid=\"dispatch-units-needing-return-panel\""],
-      "source_tokens": ["last_delivery.last_drop_at", "LEFT JOIN LATERAL (", "delivery_stop.stop_type = 'delivery'", "delivered_load.operating_company_id = $1::uuid", "delivery_stop.actual_departure_at IS NOT NULL"]
+      "required_tokens": [
+        "to=\"/dispatch#units-needing-return\"",
+        "data-testid=\"dispatch-units-needing-return-panel\""
+      ],
+      "source_tokens": [
+        "last_delivery.last_drop_at",
+        "last_delivery_per_unit AS (",
+        "ls.stop_type = 'delivery'",
+        "DISTINCT ON (l.assigned_unit_id)",
+        "ls.actual_departure_at IS NOT NULL"
+      ]
     },
     {
       "id": "round-trip-exposure",
       "label": "Round-trip exposure",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
-      "required_tokens": ["to=\"/dispatch#round-trip-exposure\"", "data-testid=\"dispatch-round-trip-exposure-panel\"", "exposureLoads.length"]
+      "required_tokens": [
+        "to=\"/dispatch#round-trip-exposure\"",
+        "data-testid=\"dispatch-round-trip-exposure-panel\"",
+        "exposureLoads.length"
+      ]
     },
     {
       "id": "days-since-last-delivery",
       "label": "Days since last delivery",
       "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
       "source": "apps/backend/src/dispatch/loads.routes.ts",
-      "required_tokens": ["to=\"/dispatch#days-since-last-delivery\"", "data-testid=\"dispatch-days-since-last-delivery-panel\"", "maxDaysIdle"],
-      "source_tokens": ["last_delivery.load_id AS last_delivered_load_id", "last_delivery.load_number AS last_delivered_load_number"]
+      "required_tokens": [
+        "to=\"/dispatch#days-since-last-delivery\"",
+        "data-testid=\"dispatch-days-since-last-delivery-panel\"",
+        "maxDaysIdle"
+      ],
+      "source_tokens": [
+        "last_delivery.load_id AS last_delivered_load_id",
+        "last_delivery.load_number AS last_delivered_load_number"
+      ]
     }
   ]
 }

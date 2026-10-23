@@ -27,11 +27,13 @@ const rules = [
   ['model','db.accrued_team_bill_id','team accrual not double counted'],
   ['model','db.accrued_bill_id','primary accrual not double counted'],
   ['route','WITH ${LOAD_COST_DOCUMENTS_CTE}','shared document costs mounted'],
-  // 443.210R part 2 (#27108): the board reads revenue through the ONE rollup (lcr), which mounts the shared revenue join.
-  ['route','${loadCostRollupLateral("l.id", "l.operating_company_id")}','shared rollup (revenue) mounted on the board'],
+  // 443.257-C (#27231): board revenue replaced per-row loadCostRollupLateral with set-based CTEs.
+  ['route','invoice_rollup AS','set-based invoice rollup CTE mounted on the board'],
+  ['route','charge_line_rollup AS','set-based charge-line rollup CTE mounted on the board'],
+  ['route','rev_cte AS','revenue CTE (rev_cte) mounted on the board'],
   ['rollup','${loadCostsRevenueJoin("cl", "rev")}','the rollup mounts the shared revenue join'],
   ['route','canonicalLoadCostsOpenClause("l", parsed.data.show_voided)','canonical current-cost scope mounted'],
-  ['route','NULLIF(lcr.revenue_cents, 0)','margin percentage uses document revenue (the rollup)'],
+  ['route','NULLIF(COALESCE(rev_cte.revenue_cents,0), 0)','margin percentage uses document revenue (rev_cte)'],
   ['scope','export function canonicalLoadCostsOpenClause','named canonical cost scope'],
   ['scope',"AND ds.voided_at IS NULL AND ds.status='closed'",'actual closed settlement excluded'],
   ['scope','${alias}.is_sample_data IS NOT TRUE','sample loads excluded'],

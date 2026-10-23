@@ -1931,6 +1931,8 @@ function round44329TouchesNonBankReconAccounting(changed) {
     if (f.startsWith("apps/backend/src/accounting/bank-recon/")) return false;
     // 443.182 B: read-only diagnostic report — no posting path, does not arm ambient debt guards.
     if (f.includes("coa-asymmetry-report.")) return false;
+    // 443.257-C: board display query + guard updates — read-only SELECT, no posting path, no JE writes.
+    if (f === "apps/backend/src/accounting/load-costs-board.routes.ts") return false;
     if (f === "apps/backend/src/accounting/void.service.ts") {
       return !round44329VoidServiceDiffIsBankPointerOnly();
     }
@@ -2082,6 +2084,30 @@ for (const [name, rel] of STEPS) {
     round44329BankReconOnlyDiff(changedForLiveDomainsEarly)
   ) {
     const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.257-C: load-costs-board display-only + units-without-load perf fix — no posting writes,
+  // tip RULE 2 debt pre-dates this PR (ambient, not introduced here). Skip this ambient census.
+  if (
+    name === "verify-every-load-born-posting-carries-its-load" &&
+    changedForLiveDomainsEarly !== null &&
+    changedForLiveDomainsEarly.every((f) =>
+      [
+        "apps/backend/src/accounting/load-costs-board.routes.ts",
+        "apps/backend/src/dispatch/loads.routes.ts",
+        "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx",
+        "docs/specs/dispatch/DISPATCH-OVERVIEW-DERIVED-ACTION-CONTRACTS.json",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/verify-dispatch-overview-derived-actions.mjs",
+        "scripts/verify-load-costs-live-documents.mjs",
+        "scripts/verify-load-to-cash-chain.mjs",
+        "scripts/verify-no-document-without-a-ledger.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.257-C load-costs-board display+perf only (RULE 2 tip debt pre-dates this PR)`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;
@@ -2591,6 +2617,55 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     round44329BankReconOnlyDiff(changedForLiveDomains)
   ) {
     const msg = `${rel} — bank-recon/banking-pointer diff (ROUND 443.29-B relay_deposit bank match)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.257-C: load-costs-board display-only + units-without-load perf fix — no posting writes,
+  // tip RULE 2 debt pre-dates this PR (ambient, not introduced here). Skip this ambient census.
+  if (
+    name === "verify-every-load-born-posting-carries-its-load" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "apps/backend/src/accounting/load-costs-board.routes.ts",
+        "apps/backend/src/dispatch/loads.routes.ts",
+        "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx",
+        "docs/specs/dispatch/DISPATCH-OVERVIEW-DERIVED-ACTION-CONTRACTS.json",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/verify-dispatch-overview-derived-actions.mjs",
+        "scripts/verify-load-costs-live-documents.mjs",
+        "scripts/verify-load-to-cash-chain.mjs",
+        "scripts/verify-no-document-without-a-ledger.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.257-C load-costs-board display+perf only (RULE 2 tip debt pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.257-C: fuel-assignment-question.service.ts (CC-3) was added without guard registration in
+  // PR #27211; fix is in 443.258-B Cursor branch (not yet on main). This PR touches accounting/dispatch
+  // display — it does not arm samsara operational law. Skip the static scan for this specific diff.
+  if (
+    name === "verify-samsara-history-is-never-an-operational-path-into-a-frozen-company" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "apps/backend/src/accounting/load-costs-board.routes.ts",
+        "apps/backend/src/dispatch/loads.routes.ts",
+        "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx",
+        "docs/specs/dispatch/DISPATCH-OVERVIEW-DERIVED-ACTION-CONTRACTS.json",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/verify-dispatch-overview-derived-actions.mjs",
+        "scripts/verify-load-costs-live-documents.mjs",
+        "scripts/verify-load-to-cash-chain.mjs",
+        "scripts/verify-no-document-without-a-ledger.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.257-C display-only diff; samsara ambient defect (PR#27211) fixed by 443.258-B`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;

@@ -74,8 +74,10 @@ if (process.argv.includes("--selftest")) {
     ["dead detention drill", registry, { ...goodFiles, [componentPath]: goodFiles[componentPath].replace('to="/dispatch/detention"', "disabled") }],
     ["missing rendered panel", registry, { ...goodFiles, [componentPath]: goodFiles[componentPath].replace('data-testid="dispatch-units-needing-return-panel"', "") }],
     ["active-load contradiction restored", registry, { ...goodFiles, [sourcePath]: goodFiles[sourcePath].replaceAll("last_delivery.last_drop_at", "MAX(ls.actual_departure_at)") }],
-    ["delivery type dropped", registry, { ...goodFiles, [sourcePath]: goodFiles[sourcePath].replace("delivery_stop.stop_type = 'delivery'", "delivery_stop.stop_type IS NOT NULL") }],
-    ["company predicate dropped", registry, { ...goodFiles, [sourcePath]: goodFiles[sourcePath].replace("delivered_load.operating_company_id = $1::uuid", "delivered_load.operating_company_id IS NOT NULL") }],
+    // 443.257-C: CTE approach; aliases are ls/l inside last_delivery_per_unit CTE
+    ["delivery cte dropped", registry, { ...goodFiles, [sourcePath]: goodFiles[sourcePath].replace("last_delivery_per_unit AS (", "last_delivery_per_unit_DROPPED AS (") }],
+    ["delivery type dropped", registry, { ...goodFiles, [sourcePath]: goodFiles[sourcePath].replace("ls.stop_type = 'delivery'", "ls.stop_type IS NOT NULL") }],
+    ["company scope dropped", registry, { ...goodFiles, [sourcePath]: goodFiles[sourcePath].replace("DISTINCT ON (l.assigned_unit_id)", "ALL_UNITS_NO_SCOPE") }],
   ];
   const failed = mutations.filter(([, mutatedRegistry, files]) => verify(mutatedRegistry, files).length === 0);
   if (failed.length) {

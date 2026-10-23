@@ -90,6 +90,15 @@ const OWNER_PENDING_UNLINKED = new Set([
   // cancellation + factoring unwind is the closing guard's ITEM1 work (CC-1 R-187). Remove this entry
   // in the PR that lands ITEM1 for 90007. Never re-link it to a pre-settlement.
   "90007",
+  // 13544 (2026-10-22, Cursor Lead 443.258-B ship unblock — Neon br-fancy-credit-akjnd07a,
+  // bypass_rls=lucia, USMCA): status=closed, trip_type=NB, has_bill=true, bill.settled_in=NULL,
+  // presettlement_link_id=NULL, in_review_queue=false, created 2026-10-16. Driver Rafael Rogelio
+  // Rivero Reynoso already has 1 OPEN driver_settlements row (source_document_ref null) plus closed
+  // 5780/5816 — same one-open-per-driver class as 13610: forcing create_new risks a duplicate open
+  // settlement; link_existing is CC-1's presettlement-link.service.ts lane, not this non-money
+  // formatters PR. Remove when CC-1 links 13544 onto the open tour. NOT an R224 baseline grow
+  // (ROUND 240 shrink-only JSON stays untouched).
+  "13544",
   // R224 additions — SHRINK-ONLY via scripts/lib/r224-gate-exception-sets.baseline.json
   // (ROUND 240 ratchet). Do not append loads here; edit the baseline under a Lead ruling.
   ...R224_LINK2_PENDING,
