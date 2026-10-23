@@ -457,6 +457,9 @@ const AccountingAuditTrailPage = React.lazy(() => import("../pages/accounting/Ac
 const PostingLineagePage = React.lazy(() => import("../pages/accounting/PostingLineagePage").then((m) => ({ default: m.PostingLineagePage })));
 const MonthClosePage = React.lazy(() => import("../pages/accounting/MonthClosePage").then((m) => ({ default: m.MonthClosePage })));
 const EscrowPage = React.lazy(() => import("../pages/accounting/EscrowPage").then((m) => ({ default: m.EscrowPage })));
+const UnexpectedExpensesPage = React.lazy(() =>
+  import("../pages/accounting/UnexpectedExpensesPage").then((m) => ({ default: m.UnexpectedExpensesPage })),
+);
 const CashForecastPage = React.lazy(() => import("../pages/accounting/CashForecastPage").then((m) => ({ default: m.CashForecastPage })));
 const PeriodComparisonPage = React.lazy(() => import("../pages/accounting/PeriodComparisonPage").then((m) => ({ default: m.PeriodComparisonPage })));
 const QBOSyncDriftDashboard = React.lazy(() => import("../pages/accounting/QBOSyncDriftDashboard").then((m) => ({ default: m.QBOSyncDriftDashboard })));
@@ -4685,6 +4688,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <EscrowPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/unexpected"
+          element={
+            <ProtectedRoute>
+              <UnexpectedExpensesPage />
             </ProtectedRoute>
           }
         />

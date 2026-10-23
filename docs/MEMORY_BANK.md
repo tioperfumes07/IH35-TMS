@@ -112,6 +112,28 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — Accounting Unexpected (Cursor, ROUND 443.267, 2026-10-23)
+
+- **Hard stop (owner):** STOP chrome-only V3 reskins. A page is DONE only when live matches its
+  board (sections/order/columns/filters/tabs/drawers/buttons/labels/spacing). Boards:
+  `~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-<Name>.dc.html` (+ `.png`).
+- **This slice:** Accounting › Unexpected — tab did not exist live. Built board-faithful page +
+  route + read API. Top-row leaf **Unexpected** after **More** (`/accounting/unexpected`).
+- **Engine:** `GET /api/v1/accounting/unexpected-expenses` → `unexpected-expenses.service.ts`.
+  Candidates = USMCA `banking.bank_transactions` pending debits (`is_credit=false` +
+  `pendingCategorizationPredicate`) whose payee/description matches shop / tires / tow / fine /
+  lumper / medical. Excludes Love's / Relay fuel / Mateo wash. Duplicate flag = same payee+amount
+  within 3 calendar days (incl. same day) — distinct from Banking For-review same-day identity.
+- **Payee:** `parseBankDescription` + `resolveDescribedPayee`. Truncated BofA "SOUTH TX TRUCK CE"
+  classifies as shop (`truck\s+ce\b` / `south\s+tx\s+truck`).
+- **UI:** KPI strip (Month so far / Possible duplicates amber `#B45309` / Linked to a truck /
+  Tows·fines) + Candidates table + By kind. Link → `/banking?txn_id=`. EntityLink on vendor / unit / WO.
+  No mock/sample rows. Autoload via `default fp` on `unexpected-expenses.routes.ts`.
+- **Guard:** `scripts/verify-accounting-nav.mjs` Check 9 (piggyback 14905) — page exists, subnav
+  path, top-row after More, route mounted.
+- **Next boards (same round, one PR each):** Accounting → Banking → Factoring → Insurance → Legal →
+  Reports → Reports-Viewer-TrialBalance → then re-do CashFlow / Settlements / Fuel to boards.
+
 ### Active Architectural Decisions — Cash Flow Home V3 + shared v3 components (Cursor, ROUND 443.250, 2026-10-23)
 
 - **Scope slice (not full 443.250 DONE):** first approved board — Cash Flow Home — plus the shared

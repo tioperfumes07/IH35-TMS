@@ -1933,6 +1933,14 @@ function round44329TouchesNonBankReconAccounting(changed) {
     if (f.includes("coa-asymmetry-report.")) return false;
     // 443.257-C: board display query + guard updates — read-only SELECT, no posting path, no JE writes.
     if (f === "apps/backend/src/accounting/load-costs-board.routes.ts") return false;
+    // 443.267: Unexpected expenses — classify + report on pending bank debits; no JE / posting writes.
+    if (
+      f === "apps/backend/src/accounting/unexpected-expenses.service.ts" ||
+      f === "apps/backend/src/accounting/unexpected-expenses.service.test.ts" ||
+      f === "apps/backend/src/accounting/unexpected-expenses.routes.ts"
+    ) {
+      return false;
+    }
     if (f === "apps/backend/src/accounting/void.service.ts") {
       return !round44329VoidServiceDiffIsBankPointerOnly();
     }
@@ -2854,7 +2862,12 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
               f === "apps/backend/src/accounting/account-register.service.ts" ||
               f === "apps/backend/src/accounting/account-register.service.test.ts" ||
               f === "apps/backend/src/accounting/account-register.routes.ts" ||
-              f === "apps/backend/src/accounting/account-register.guard.test.ts")
+              f === "apps/backend/src/accounting/account-register.guard.test.ts" ||
+              // GATE-SCOPE 443.267: Unexpected expenses classify+report — read-only pending bank
+              // debit surface; cannot invent load-born posting stamps. Tip RULE 2 ambient stays CC-1.
+              f === "apps/backend/src/accounting/unexpected-expenses.service.ts" ||
+              f === "apps/backend/src/accounting/unexpected-expenses.service.test.ts" ||
+              f === "apps/backend/src/accounting/unexpected-expenses.routes.ts")
           ) {
             return false;
           }
