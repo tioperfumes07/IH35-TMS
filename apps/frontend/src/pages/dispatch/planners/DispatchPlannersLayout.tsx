@@ -239,13 +239,13 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
           subtitle="Driver leave, truck availability, and load timeline — shared date range"
           actions={<PlannerExportButtons />}
         />
-        <nav className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1 text-xs">
+        <nav aria-label="Dispatch planner views" className="flex min-w-0 gap-1 overflow-x-auto rounded-sm bg-[var(--planner-active)] p-1 text-xs">
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}
               to={tab.to}
               className={({ isActive }: { isActive: boolean }) =>
-                `flex h-7 items-center rounded-sm px-3 text-xs font-medium ${isActive ? "bg-[var(--planner-active)] text-white" : "text-gray-700 hover:bg-gray-100"}`
+                `flex h-7 shrink-0 items-center rounded-sm px-3 text-xs font-medium text-white ${isActive ? "bg-white/20" : "hover:bg-white/10"}`
               }
             >
               {tab.label}

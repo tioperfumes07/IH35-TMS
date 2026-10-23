@@ -1,4 +1,8 @@
 import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Truck } from "lucide-react";
+import { formatUsdCentsTable } from "../../../lib/money";
+import { formatDateUS } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
@@ -42,6 +46,8 @@ type TruckRow = {
 
 type TruckListRow = {
   unitId: string;
+  driverId: string | null;
+  loadId: string | null;
   unitNumber: string;
   driver: string;
   currentLoad: string;
@@ -50,6 +56,7 @@ type TruckListRow = {
 };
 
 export function TruckPlanner() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { range, days, setRange } = usePlannerRange();
@@ -193,10 +200,20 @@ export function TruckPlanner() {
   const isError = gridQuery.isError || unitsQuery.isError || reservedQuery.isError || loadsQuery.isError;
   const firstError = gridQuery.error ?? unitsQuery.error ?? reservedQuery.error ?? loadsQuery.error;
 
-  const loadBarsByUnit = useMemo(
-    () => groupPlannerBarsByKey(loadsQuery.data ?? [], days, (l) => l.assigned_unit_id),
-    [loadsQuery.data, days],
-  );
+  const loadBarsByUnit = useMemo(() => {
+    const loads = loadsQuery.data ?? [];
+    const byId = new Map(loads.map((load) => [load.id, load]));
+    const groups = groupPlannerBarsByKey(loads, days, (l) => l.assigned_unit_id);
+    for (const bars of groups.values()) for (const bar of bars) {
+      const load = byId.get(bar.loadId ?? "");
+      if (!load) continue;
+      bar.label = `${load.load_number} · ${load.first_pickup_city || "Pickup unavailable"} → ${load.first_delivery_city || "Delivery unavailable"}`;
+      bar.shortLabel = load.load_number;
+      bar.detail = load.currency_code === "USD" ? formatUsdCentsTable(load.rate_total_cents) : `${load.currency_code} ${Number(load.rate_total_cents / 100).toFixed(2)}`;
+      bar.onClick = () => navigate(`/dispatch/loads/${encodeURIComponent(load.id)}`);
+    }
+    return groups;
+  }, [loadsQuery.data, days, navigate]);
 
   if (!operatingCompanyId) {
     return (
@@ -210,7 +227,8 @@ export function TruckPlanner() {
   }
 
   return (
-    <div data-testid="dispatch-truck-planner-page" className="space-y-2">
+    <div data-testid="dispatch-truck-planner-page" className="min-w-0 space-y-2 rounded-sm border border-slate-200 bg-white p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-xs font-bold">Truck planner — {days.length} selected days</h2><Link to="/dispatch/loads" className="text-xs">View all loads →</Link></div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {!isLoading && !isError && excludedUnitCount > 0 ? (
           <span className="text-xs text-[#6B7280]" data-testid="dispatch-truck-planner-excluded-count">
@@ -245,18 +263,23 @@ export function TruckPlanner() {
               row.status === "in-shop" ? "In Shop" : "Reserved";
             return {
               unitId: row.unitId,
+              driverId: row.driverId,
+              loadId: bars[0]?.loadId ?? null,
               unitNumber: row.unitNumber,
               driver: row.driverName ?? "—",
               currentLoad: bars.length > 0 ? bars[0].label : "—",
               status: statusLabel,
-              nextAvailable: bars.length > 0 ? String(bars[0].endYmd) : "—",
+              nextAvailable: bars.length > 0 ? formatDateUS(bars[0].endYmd) : "—",
             };
           });
           const columns: Array<ParityColumn<TruckListRow>> = [
             // ROUND 443.231 — natural unit order (T9 before T10); other keys are plain strings.
-            { key: "unitNumber", label: "Unit Number", sortable: true, sortValue: (row) => row.unitNumber ?? null },
-            { key: "driver", label: "Driver", sortable: true },
-            { key: "currentLoad", label: "Current Load", sortable: true },
+            { key: "unitNumber", label: "Unit Number", sortable: true, sortValue: (row) => row.unitNumber ?? null,
+              render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /> },
+            { key: "driver", label: "Driver", sortable: true,
+              render: (row) => row.driverId ? <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driver} noun="Driver" /> : row.driver },
+            { key: "currentLoad", label: "Current Load", sortable: true,
+              render: (row) => row.loadId ? <Link className="underline" to={`/dispatch/loads/${encodeURIComponent(row.loadId)}`}>{row.currentLoad}</Link> : row.currentLoad },
             { key: "status", label: "Status", sortable: true },
             { key: "nextAvailable", label: "Next Available", sortable: true },
           ];
@@ -278,6 +301,14 @@ export function TruckPlanner() {
       {!isLoading && !isError && viewMode === "grid" ? (
         <PlannerGrid
           days={days}
+          testId="truck-planner-v3"
+          rowPx={44}
+          frozenColumns={[
+            { key: "name", header: "Unit", minWidth: 110, maxWidth: 240, defaultWidth: 110 },
+            { key: "secondary", header: "Driver", minWidth: 170, maxWidth: 420, defaultWidth: 240 },
+            { key: "status", header: "Status", minWidth: 64, maxWidth: 160, defaultWidth: 64 },
+            { key: "action", header: "Action", minWidth: 56, maxWidth: 120, defaultWidth: 56 },
+          ]}
           frozenLabel="Unit"
           frozenPx={320}
           statusLabel="Status"
@@ -290,7 +321,7 @@ export function TruckPlanner() {
               return {
               id: row.unitId,
               idle: row.status === "available",
-              name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
+              name: <span className="flex min-w-0 items-center gap-1"><Truck className="h-5 w-8 shrink-0 text-slate-600" aria-hidden="true" /><EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /></span>,
               // Planners lists, item 3 — plain-text keys for the sortable frozen columns.
               sortKey: row.unitNumber,
               statusSortKey: status,
@@ -319,6 +350,7 @@ export function TruckPlanner() {
         <div className="mt-3">
           <PlannerGrid
             days={days}
+            rowPx={44}
             frozenLabel="In shop"
             frozenPx={320}
             statusLabel="Status"

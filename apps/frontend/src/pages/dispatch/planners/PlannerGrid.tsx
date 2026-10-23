@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import "./planner-design-tokens.css";
 import "./PlannerGrid.css";
-import { useResizableColumns } from "../../../components/planner/useResizableColumns";
+import { useResizableColumns, type ColumnDef } from "../../../components/planner/useResizableColumns";
 import { useOptionalPlannerRange } from "./PlannerRangeContext";
 import {
   formatPlannerDwell,
@@ -40,6 +40,8 @@ export type PlannerGridBar = {
   id: string;
   loadId?: string;
   label: string;
+  detail?: string;
+  shortLabel?: string;
   startYmd: string;
   endYmd: string;
   kind: PlannerBarKind;
@@ -76,6 +78,8 @@ export type PlannerGridRow = {
 };
 
 type Props = {
+  frozenColumns?: ColumnDef[];
+  rowPx?: number;
   days: string[];
   frozenLabel: string;
   actionLabel?: string;
@@ -306,6 +310,8 @@ export function PlannerGrid({
   style,
   onExpandRange,
   showAxisHeader = true,
+  frozenColumns = PLANNER_FROZEN_COLUMNS,
+  rowPx = PLANNER_ROW_PX,
 }: Props) {
   const today = todayYmdAmericaChicago();
   const bands = plannerMonthBands(days);
@@ -314,7 +320,7 @@ export function PlannerGrid({
   const plannerCtx = useOptionalPlannerRange();
   const { widths, startResize } = useResizableColumns(
     `${plannerCtx?.storageScope ?? "anon"}:${testId ?? "planner"}`,
-    PLANNER_FROZEN_COLUMNS,
+    frozenColumns,
   );
   const hasSecondaryColumn = rows.some((r) => r.secondary !== undefined);
   const hasUnitColumn = rows.some((r) => r.unit !== undefined);
@@ -325,7 +331,7 @@ export function PlannerGrid({
   const rangeEnd = days[days.length - 1];
   const hasActionColumn = actionLabel != null || rows.some((row) => row.action !== undefined);
   const hasStatusColumn = statusLabel != null || rows.some((row) => row.status !== undefined);
-  const shownColumns = PLANNER_FROZEN_COLUMNS.filter(
+  const shownColumns = frozenColumns.filter(
     (c) =>
       c.key === "name" ||
       (c.key === "secondary" && hasSecondaryColumn) ||
@@ -443,7 +449,7 @@ export function PlannerGrid({
   const vars = {
     ["--frozen" as string]: `${frozenWidth}px`,
     ["--day"]: `${dayPx}px`,
-    ["--rowh"]: `${PLANNER_ROW_PX}px`,
+    ["--rowh"]: `${rowPx}px`,
     ...style,
   } as CSSProperties;
 
@@ -580,7 +586,7 @@ export function PlannerGrid({
               <div
                 key={row.id}
                 className={`pg-r${row.idle ? " idle" : ""}`}
-                style={{ ["--rowh" as string]: `${stackPlannerBars(days, row.bars).lanes * PLANNER_ROW_PX}px` } as CSSProperties}
+                style={{ ["--rowh" as string]: `${stackPlannerBars(days, row.bars).lanes * rowPx}px` } as CSSProperties}
                 data-planner-lanes={stackPlannerBars(days, row.bars).lanes}
               >
                 <FrozenName row={row} hasStatusColumn={hasStatusColumn} hasActionColumn={hasActionColumn} widths={widths} />
@@ -622,8 +628,8 @@ export function PlannerGrid({
                     const startedText = cl ? `← started ${shortMonthDay(bar.startYmd)}` : "";
                     const continuesText = cr ? "continues →" : "";
                     const markerPx = (startedText.length + continuesText.length) * CHAR_PX + (cl ? 8 : 0) + (cr ? 8 : 0);
-                    const shown = plannerBarLabelTier(bar.label, width - markerPx);
-                    const fullTitle = [startedText, bar.label, continuesText].filter(Boolean).join(" ");
+                    const shown = plannerBarLabelTier(bar.label, width - markerPx) || (bar.shortLabel ? plannerBarLabelTier(bar.shortLabel, width - markerPx) : "");
+                    const fullTitle = [startedText, bar.label, bar.detail, continuesText].filter(Boolean).join(" ");
                     const cls = `pg-bar ${bar.kind}${cl ? " cl" : ""}${cr ? " cr" : ""}`;
                     return (
                       <button
@@ -634,13 +640,13 @@ export function PlannerGrid({
                         data-load-id={bar.loadId ?? bar.id}
                         data-rt-trip-type={bar.tripType}
                         data-rt-long-leg={bar.longLeg ? "1" : "0"}
-                        style={{ left: a * dayPx + 2, width, top: (stacked.lane.get(bar.id) ?? 0) * PLANNER_ROW_PX + 6 }}
+                        style={{ left: a * dayPx + 2, width, top: (stacked.lane.get(bar.id) ?? 0) * rowPx + 6, ...(bar.detail ? { height: rowPx - 12 } : {}) }}
                         title={fullTitle}
                         aria-label={fullTitle}
                         onClick={bar.onClick}
                       >
                         {cl ? <span className="pg-bar-mark" data-testid="planner-bar-started">{startedText}</span> : null}
-                        {shown}
+                        <span className={`min-w-0 truncate${bar.detail ? " leading-4" : ""}`}>{shown}{bar.detail ? <span className="block truncate text-xs font-normal leading-4">{bar.detail}</span> : null}</span>
                         {cr ? <span className="pg-bar-mark" data-testid="planner-bar-continues">{continuesText}</span> : null}
                       </button>
                     );
