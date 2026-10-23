@@ -302,7 +302,26 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Guard piggyback:** `verify-cash-advances-tabs-url-sync.mjs` (step 990 ≡2 EVEN Cursor) asserts
   V3KpiTile + data-cash-advances-v3-kpis + board labels + total_outstanding / pending_approval /
   advances_on_file. No new EVEN claim.
-- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Deductions/Close/
+- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Close/
+  PreSettlements/Statement) · Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof.
+  Deductions V3 shipped (below). Full DONE not claimed.
+
+
+### Active Architectural Decisions — Settlements Deductions V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **Engine unchanged:** `listSettlements` Sunday-week `deductions_total` sum (same bucket as
+  Settlements home) · `getActiveLiabilities` row count · `getLiabilitiesKpis.drivers_with_debt` ·
+  `listAutoDeductionPolicies({ status: "active" })` count. No new endpoint; no GL change.
+- **V3 board chrome:** four KPIs via `V3KpiTile` + `data-settlements-deductions-v3-kpis` on
+  `SettlementsDeductionsKpiRow.tsx`, mounted from `Drivers.tsx` when `isDeductionsBoard` (pathname
+  `/deductions` or `SettlementsDeductionsPage` `initialSubnav="deductions"`) — Deductions this week ·
+  Open liabilities · Drivers w/ debt · Scheduled deductions. Plus `By type · this week` V3Panel
+  (honest All deductions rollup; type split still opens on a settlement). Pending + AutoDeduction
+  panels retained (Schedule). "—" when a figure is absent / query errors.
+- **Guard piggyback:** `verify-drivers-deductions-tab-distinct.mjs` (step 1012 ≡0 EVEN Cursor)
+  asserts V3KpiTile + data-settlements-deductions-v3-kpis + board labels + engines + isDeductionsBoard
+  gate. No new EVEN claim.
+- **Still open under 443.250:** Settlements sub-boards (Closed/Open/Company/Close/
   PreSettlements/Statement) · Fuel sub-boards · Driver Profile · design-system sweep · Chrome proof.
   Full DONE not claimed.
 

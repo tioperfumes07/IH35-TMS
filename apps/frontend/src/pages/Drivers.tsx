@@ -55,6 +55,7 @@ import { useViewModePref } from "../hooks/useViewModePref";
 import { DriverSchedulerRequestInboxPage } from "./safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
 import { PendingSettlementDeductionsPanel } from "./drivers/PendingSettlementDeductionsPanel";
+import { SettlementsDeductionsKpiRow } from "./drivers/SettlementsDeductionsKpiRow";
 import { TeamSplitConfigPanel } from "./drivers/TeamSplitConfig";
 import { PayRateTemplatesListPage } from "./lists/driver/PayRateTemplatesListPage";
 import {
@@ -236,6 +237,12 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     if (raw === "drivers") return "roster" as const;
     return raw as DriversSubnavId | DriversExtendedSubtabId;
   }, [initialSubnav, location.pathname]);
+  /** ROUND 443.250 — Settlements-Deductions board (pathname or SettlementsDeductionsPage initialSubnav). */
+  const isDeductionsBoard =
+    initialSubnav === "deductions" ||
+    initialSubnav === "auto_deductions" ||
+    location.pathname.includes("/deductions") ||
+    location.pathname.includes("/auto-deductions");
   // C-02 / C-17 — Drivers Profiles share the same master-detail default + pref hook as Customers/Vendors.
   const { viewMode: profilesViewMode, setViewMode: setProfilesViewMode } = useViewModePref("drivers", "master-detail");
   const [selectedDriverId, setSelectedDriverId] = useState("");
@@ -795,22 +802,34 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           {/* FAIL-S2: Settlements ≠ Pre-settlements. C-33 — Deductions are a sub-ledger UNDER Settlements. */}
           {subnavTab === "settlements" ? (
             <div className="space-y-2" data-testid="drivers-settlements-canonical-redirect-hint">
-              <DataPanel title="Settlements">
-                <DataPanelRow>
-                  <span className="text-xs text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
-                  <Link
-                    to="/driver-finance/settlements"
-                    className="text-xs text-[#1F2A44] underline"
-                    data-testid="drivers-settlements-link"
-                  >
-                    View all settlements →
-                  </Link>
-                </DataPanelRow>
-              </DataPanel>
+              {!isDeductionsBoard ? (
+                <DataPanel title="Settlements">
+                  <DataPanelRow>
+                    <span className="text-xs text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
+                    <Link
+                      to="/driver-finance/settlements"
+                      className="text-xs text-[#1F2A44] underline"
+                      data-testid="drivers-settlements-link"
+                    >
+                      View all settlements →
+                    </Link>
+                  </DataPanelRow>
+                </DataPanel>
+              ) : null}
               <div data-testid="drivers-deductions-panel">
-                <p className="px-1 text-xs text-gray-600">
-                  Deductions adjust settlement lines — they have no life without a settlement behind them.
-                </p>
+                {isDeductionsBoard ? (
+                  <SettlementsDeductionsKpiRow
+                    basePath={
+                      location.pathname.startsWith("/driver-finance")
+                        ? "/driver-finance/deductions"
+                        : "/drivers/deductions"
+                    }
+                  />
+                ) : (
+                  <p className="px-1 text-xs text-gray-600">
+                    Deductions adjust settlement lines — they have no life without a settlement behind them.
+                  </p>
+                )}
                 <PendingSettlementDeductionsPanel />
                 <AutoDeductionPoliciesPanel />
               </div>
