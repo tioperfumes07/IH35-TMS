@@ -19,7 +19,7 @@ export function run(overrides = {}) {
   const read = (rel) => overrides[rel] ?? readDisk(rel);
   const page = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
   const companyPage = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
-  const detail = read("apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx");
+  const detail = read("apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
   const header = read("apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx");
   const vendor = read("apps/frontend/src/components/vendors/VendorCreateModal.tsx");
 

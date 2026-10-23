@@ -127,7 +127,7 @@ for (const [mod, leafCols] of Object.entries(MUST_KEEP)) {
 }
 
 const detail = fs.readFileSync(
-  path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx"),
+  path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx"),
   "utf8",
 );
 // CLS-WAVE-C-MATRIX-GL-JE-LIABILITY-STALE fix: settlements.detail is now MUST_KEEP gl_je/ap_bill

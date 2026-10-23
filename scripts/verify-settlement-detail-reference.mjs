@@ -17,7 +17,7 @@
 //   6. every new section drills to its source via EntityLink (never a bare id/uuid).
 import { readFileSync } from "node:fs";
 
-const PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const NUMBER_BOX = "apps/frontend/src/pages/driver-finance/components/SettlementNumberBox.tsx";
 const LOADS_SECTION = "apps/frontend/src/pages/driver-finance/components/SettlementLoadsSection.tsx";
 const WATERFALL_SECTION = "apps/frontend/src/pages/driver-finance/components/CompanyWaterfallSection.tsx";

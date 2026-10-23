@@ -32,7 +32,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-manual-paid-reopen-confirmed";
-const FE_REL = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const FE_REL = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const SVC_REL = "apps/backend/src/driver-finance/settlement-payment.service.ts";
 const ROUTES_REL = "apps/backend/src/driver-finance/settlement-payment.routes.ts";
 const MIGRATION_REL = "db/migrations/202612740000_settlement_manual_paid_reopen_correction.sql";

@@ -26,7 +26,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELFTEST = process.argv.includes("--selftest");
 const LABEL = "verify-settlement-payment-events-honest";
-const PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const API = "apps/frontend/src/api/driverFinance.ts";
 
 const PAY_MUTATIONS = [

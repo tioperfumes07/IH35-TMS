@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-dispute-driver-picker";
 const MODAL = "apps/frontend/src/pages/drivers/SettlementDisputeModal.tsx";
-const DETAIL = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const DETAIL = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const TAB = "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx";
 const SHARED = "apps/frontend/src/pages/driver-finance/settlementDisputeCategories.ts";
 function readRel(root, rel) {

@@ -17,7 +17,7 @@
 import fs from "node:fs";
 
 const LABEL = "verify-company-waterfall-fuel-expense-split";
-const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const WATERFALL = "apps/frontend/src/pages/driver-finance/components/CompanyWaterfallSection.tsx";
 
 export function detailPageFetchesAndPassesReport(src) {

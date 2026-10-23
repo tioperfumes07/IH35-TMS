@@ -18,7 +18,7 @@ const PATHS = {
   updateLoad: path.join(ROOT, "apps/backend/src/dispatch/update-load.service.ts"),
   loadsRoutes: path.join(ROOT, "apps/backend/src/dispatch/loads.routes.ts"),
   closeTripPanel: path.join(ROOT, "apps/frontend/src/pages/driver-finance/components/CloseTripPanel.tsx"),
-  settlementDetail: path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx"),
+  settlementDetail: path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx"),
   driverFinanceApi: path.join(ROOT, "apps/frontend/src/api/driverFinance.ts"),
 };
 

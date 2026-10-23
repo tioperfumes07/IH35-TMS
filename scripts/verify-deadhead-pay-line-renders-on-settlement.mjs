@@ -14,7 +14,7 @@
  */
 import { readFileSync } from "node:fs";
 
-const PAGE_PATH = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const PAGE_PATH = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const SUMMARY_PATH = "apps/frontend/src/pages/driver-finance/components/NetPaySummary.tsx";
 const SECTION_PATH = "apps/frontend/src/pages/driver-finance/components/DeadheadPaySection.tsx";
 

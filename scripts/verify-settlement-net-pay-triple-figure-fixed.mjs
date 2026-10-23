@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-net-pay-triple-figure-fixed";
-const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const TOUR_TAB = "apps/frontend/src/components/dispatch/TourSettlementTab.tsx";
 
 function assertDetailPage(src) {

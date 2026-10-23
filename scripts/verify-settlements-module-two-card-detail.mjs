@@ -1,31 +1,44 @@
 #!/usr/bin/env node
-// SETL-MOD-02 guard (owner ROUND 10). The Settlements-module DETAIL (?settlement_id=) must BE the
-// approved Settlement design (docs/design/reference/LOAD-DETAIL-TABS-RENDERS-2026-09-05.html § Settlement
-// + DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html): a driver settlement card and a company
-// settlement card side by side, using ONLY the .ldt-card / .ldt-ch / .ldt-rows classes from
-// styles/tokens-load-detail.css (no local <style>, no Tailwind card re-styling), a GL account on every
-// settlement line, a PDF link, and a frozen note when the tour is closed. It reuses TourSettlementTab
-// by settlementId (the SAME readout the Load-costs board Settlement tab uses), so the two surfaces show
-// one truth.
+// SETL-MOD-02 + 443.280-A: Statement board is SettlementStatementBoardPanels (strip + 2×2).
+// TourSettlementTab two-card readout moved to SettlementStatementWorkflowPage (?workflow=1).
+// TourSettlementTab itself still carries the approved driver/company card tokens.
 //
 // --selftest mutates each load-bearing fact and requires each mutation to FAIL; the real sources pass.
 import fs from "node:fs";
 
 const DETAIL = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const WORKFLOW = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const TAB = "apps/frontend/src/components/dispatch/TourSettlementTab.tsx";
+const PANELS = "apps/frontend/src/pages/driver-finance/components/SettlementStatementBoardPanels.tsx";
 
-function analyze(detail, tab) {
+function analyze(detail, workflow, tab, panels) {
   const errors = [];
 
-  // 1) The detail page mounts the approved design via TourSettlementTab keyed by settlementId.
-  if (!/import\s*\{[^}]*\bTourSettlementTab\b[^}]*\}\s*from\s*["'][^"']*dispatch\/TourSettlementTab["']/.test(detail))
-    errors.push("SettlementDetailPage does not import TourSettlementTab (must reuse the SAME readout as the board)");
-  if (!/<TourSettlementTab\b[^>]*settlementId=\{settlementId\}/.test(detail))
-    errors.push("SettlementDetailPage does not render <TourSettlementTab settlementId={settlementId} …>");
+  // 1) Statement board mounts approved design via SettlementStatementBoardPanels (not TourSettlementTab).
+  if (!/SettlementStatementBoardPanels/.test(detail))
+    errors.push("SettlementDetailPage does not mount SettlementStatementBoardPanels (443.280-A board body)");
   if (!/settlement-detail-approved-design/.test(detail))
     errors.push("SettlementDetailPage lacks the approved-design wrapper (data-testid=settlement-detail-approved-design)");
+  if (/TourSettlementTab/.test(detail))
+    errors.push("SettlementDetailPage must not mount TourSettlementTab (moved to workflow — 443.280-A)");
 
-  // 2) The approved design = driver card + company card SIDE BY SIDE, .ldt-* classes only.
+  // 2) Workflow keeps TourSettlementTab keyed by settlementId (capability moved off the board).
+  if (!/import\s*\{[^}]*\bTourSettlementTab\b[^}]*\}\s*from\s*["'][^"']*dispatch\/TourSettlementTab["']/.test(workflow))
+    errors.push("SettlementStatementWorkflowPage does not import TourSettlementTab");
+  if (!/<TourSettlementTab\b[^>]*settlementId=\{settlementId\}/.test(workflow))
+    errors.push("SettlementStatementWorkflowPage does not render <TourSettlementTab settlementId={settlementId} …>");
+
+  // 3) Board panels = earnings / deductions / company / linked (2×2).
+  if (!/Earnings — by load/.test(panels))
+    errors.push("SettlementStatementBoardPanels missing Earnings panel title");
+  if (!/Deductions · reimbursements · net/.test(panels))
+    errors.push("SettlementStatementBoardPanels missing Deductions panel title");
+  if (!/side by side/.test(panels))
+    errors.push("SettlementStatementBoardPanels company panel missing side-by-side title");
+  if (!/Linked records/.test(panels))
+    errors.push("SettlementStatementBoardPanels missing Linked records panel");
+
+  // 4) TourSettlementTab card tokens unchanged (Load-costs Settlement tab + workflow).
   if (!/data-testid="driver-settlement-card"/.test(tab))
     errors.push("TourSettlementTab lacks the driver settlement card");
   if (!/data-testid="company-settlement-card"/.test(tab))
@@ -35,17 +48,14 @@ function analyze(detail, tab) {
   for (const cls of ["ldt-card", "ldt-ch", "ldt-rows"]) {
     if (!new RegExp(`\\b${cls}\\b`).test(tab)) errors.push(`TourSettlementTab does not use the ${cls} token class`);
   }
-  // Palette LAW: the approved cards carry no local <style> block and no raw hex card styling.
   if (/<style\b/.test(tab)) errors.push("TourSettlementTab injects a local <style> (palette must come from tokens-load-detail.css only)");
 
-  // 3) Driver card money spine: loaded × rate, empty × rate, gross, escrow, recoveries, net (5% floor).
   if (!/Loaded\b/.test(tab) || !/Empty\b/.test(tab)) errors.push("driver card missing Loaded/Empty line labels");
   if (!/data-testid="driver-gross"/.test(tab)) errors.push("driver card missing Gross line");
   if (!/Escrow/.test(tab)) errors.push("driver card missing Escrow line");
   if (!/Recoveries/.test(tab)) errors.push("driver card missing Recoveries line");
   if (!/5% floor/.test(tab) || !/data-testid="driver-net"/.test(tab)) errors.push("driver card missing Net pay · 5% floor line");
 
-  // 4) Company card money spine: revenue, costs, driver pay, factoring, margin with $/mi practical AND real.
   if (!/Revenue/.test(tab)) errors.push("company card missing Revenue line");
   if (!/Costs/.test(tab)) errors.push("company card missing Costs line");
   if (!/Driver pay/.test(tab)) errors.push("company card missing Driver pay line");
@@ -53,7 +63,6 @@ function analyze(detail, tab) {
   if (!/data-testid="company-margin"/.test(tab) || !/practical/.test(tab) || !/real/.test(tab))
     errors.push("company card missing Margin with $/mi practical AND real");
 
-  // 5) GL account on every settlement line, PDF link, frozen note when closed.
   if (!/account_label/.test(tab) || !/no account/.test(tab))
     errors.push("TourSettlementTab does not surface the GL account on each line (account_label / 'no account')");
   if (!/data-testid="settlement-pdf-link"/.test(tab)) errors.push("TourSettlementTab lacks the Settlement PDF link");
@@ -64,30 +73,28 @@ function analyze(detail, tab) {
 }
 
 const detail = fs.readFileSync(DETAIL, "utf8");
+const workflow = fs.readFileSync(WORKFLOW, "utf8");
 const tab = fs.readFileSync(TAB, "utf8");
+const panels = fs.readFileSync(PANELS, "utf8");
 
 if (process.argv.includes("--selftest")) {
-  const clean = analyze(detail, tab);
+  const clean = analyze(detail, workflow, tab, panels);
   if (clean.length) {
     console.error(`SELFTEST FAIL — clean source rejected:\n- ${clean.join("\n- ")}`);
     process.exit(1);
   }
   const mutations = [
-    ["drop TourSettlementTab import", [detail.replace(/import\s*\{[^}]*\bTourSettlementTab\b[^}]*\}\s*from\s*["'][^"']*dispatch\/TourSettlementTab["'];?/, ""), tab]],
-    ["unmount approved design", [detail.replace(/<TourSettlementTab\b[^>]*settlementId=\{settlementId\}[^>]*\/>/, "<Nope />"), tab]],
-    ["remove approved wrapper testid", [detail.replace(/settlement-detail-approved-design/g, "x-removed"), tab]],
-    ["drop company card", [detail, tab.replace(/data-testid="company-settlement-card"/g, "data-testid=\"x\"")]],
-    ["drop ldt-grid2 side-by-side", [detail, tab.replace(/ldt-grid2/g, "x-grid")]],
-    ["inject local style block", [detail, tab.replace("return <div", "return <div><style>{`.x{}`}</style>").replace(/;\s*}\s*$/, "; }")]],
-    ["drop GL account on lines", [detail, tab.replace(/account_label/g, "x_label").replace(/no account/g, "x")]],
-    ["drop PDF link", [detail, tab.replace(/data-testid="settlement-pdf-link"/g, "data-testid=\"x\"")]],
-    ["drop frozen note", [detail, tab.replace(/reversing entry/g, "an edit")]],
-    ["drop 5% floor net", [detail, tab.replace(/5% floor/g, "").replace(/data-testid="driver-net"/g, "data-testid=\"x\"")]],
-    ["drop margin practical/real", [detail, tab.replace(/data-testid="company-margin"/g, "data-testid=\"x\"")]],
+    ["drop board panels mount", [detail.replace(/SettlementStatementBoardPanels/g, "Nope"), workflow, tab, panels]],
+    ["unmount approved wrapper", [detail.replace(/settlement-detail-approved-design/g, "x-removed"), workflow, tab, panels]],
+    ["sneak TourSettlementTab onto board", [detail + '\nimport { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";\n', workflow, tab, panels]],
+    ["drop workflow TourSettlementTab", [detail, workflow.replace(/<TourSettlementTab\b[^>]*settlementId=\{settlementId\}[^>]*\/>/, "<Nope />"), tab, panels]],
+    ["drop company card", [detail, workflow, tab.replace(/data-testid="company-settlement-card"/g, 'data-testid="x"'), panels]],
+    ["drop ldt-grid2", [detail, workflow, tab.replace(/ldt-grid2/g, "x-grid"), panels]],
+    ["drop earnings panel title", [detail, workflow, tab, panels.replace(/Earnings — by load/g, "X")]],
   ];
   let caught = 0;
-  for (const [label, [d, t]] of mutations) {
-    if (analyze(d, t).length > 0) { caught += 1; continue; }
+  for (const [label, args] of mutations) {
+    if (analyze(...args).length > 0) { caught += 1; continue; }
     console.error(`SELFTEST FAIL — mutation escaped: ${label}`);
     process.exit(1);
   }
@@ -95,7 +102,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const failures = analyze(detail, tab);
+const failures = analyze(detail, workflow, tab, panels);
 if (failures.length) {
   console.error("FAIL verify-settlements-module-two-card-detail");
   failures.forEach((f) => console.error(`- ${f}`));

@@ -29,7 +29,7 @@ const CHECKS = [
   },
   {
     name: "frontend: SettlementDetailPage renders the GL-Posted Bills section",
-    file: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+    file: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
     pattern: /settlement-linked-bills/,
   },
 ];
@@ -52,7 +52,7 @@ export function checkAll(readFile) {
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
     "apps/backend/src/driver-finance/settlements.routes.ts": "SELECT accounting_bill_id::text\n FROM driver_finance.driver_settlement_gl_bills\n WHERE settlement_id = $1",
-    "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx": 'data-testid="settlement-linked-bills"',
+    "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx": 'data-testid="settlement-linked-bills"',
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
   if (goodFailures.length) {

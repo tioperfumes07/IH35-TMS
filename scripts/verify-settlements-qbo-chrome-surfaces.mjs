@@ -190,8 +190,8 @@ const CHECKS = [
     pattern: /DatePicker/,
   },
   {
-    name: "SettlementDetailPage MoneyInput",
-    file: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+    name: "SettlementStatementWorkflowPage MoneyInput",
+    file: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
     pattern: /MoneyInput/,
   },
   {

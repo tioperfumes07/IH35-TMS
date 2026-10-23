@@ -188,7 +188,7 @@ const SIBLINGS = [
     good: /entityLabel\(\s*row\.asset_unit_code\s*,\s*row\.asset_id\s*,\s*"Unit"\s*\)/,
   },
   {
-    rel: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+    rel: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
     bad: /bill\.load_number\s*\?\?\s*bill\.load_id/,
     good: /entityLabel\(\s*bill\.load_number\s*,\s*bill\.load_id\s*,\s*"Load"\s*\)/,
   },

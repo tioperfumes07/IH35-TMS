@@ -12,7 +12,7 @@ import { readFileSync } from "node:fs";
 const SERVICE = "apps/backend/src/driver-finance/edit-settlement-deduction.service.ts";
 const ROUTES = "apps/backend/src/driver-finance/deductions.routes.ts";
 const SECTION = "apps/frontend/src/pages/driver-finance/components/DeductionsSection.tsx";
-const PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const DRAWER = "apps/frontend/src/pages/drivers/components/EditSettlementDeductionDrawer.tsx";
 const LABEL = "verify-settlement-edit-deduction-wired";
 const fail = (m) => { console.error(`FAIL ${LABEL}: ${m}`); process.exit(1); };

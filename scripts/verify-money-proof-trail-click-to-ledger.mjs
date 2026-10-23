@@ -21,7 +21,7 @@ const mounts = {
   bill_payment: "apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx",
   credit_memo: "apps/frontend/src/pages/accounting/CreditMemosPage.tsx",
   vendor_credit: "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
-  settlement: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  settlement: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   load: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
   driver_bill: "apps/frontend/src/components/dispatch/LoadDetailDriverPayTab.tsx",
 };

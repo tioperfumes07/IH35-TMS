@@ -15,7 +15,7 @@
 //   node scripts/verify-settlement-reopen-disabled-not-hidden.mjs --selftest
 import { readFileSync } from "node:fs";
 
-const PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const LABEL = "verify-settlement-reopen-disabled-not-hidden";
 const fail = (m) => { console.error(`FAIL ${LABEL}: ${m}`); process.exit(1); };
 

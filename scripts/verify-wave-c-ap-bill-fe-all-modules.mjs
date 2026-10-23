@@ -44,7 +44,7 @@ const contracts = [
   ["apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx", /<EntityLink[\s\S]{0,40}kind="bill"[\s\S]{0,40}id=\{tx\.matched_bill_id\}/],
   ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /kind="bill"/],
   ["apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx", /<EntityLink kind="bill" id=\{row\.id\}/],
-  ["apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx", /kind="bill"[\s\S]*accounting_bill_id/],
+  ["apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx", /kind="bill"[\s\S]*accounting_bill_id/],
   ["apps/frontend/src/pages/accounting/VendorBillCreatePage.tsx", /title="Create vendor bill"/],
   ["apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx", /<EntityLink[\s\S]*kind="bill"[\s\S]*id=\{payment\.bill_id\}/],
 ];

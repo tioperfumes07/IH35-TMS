@@ -17,7 +17,7 @@
  */
 import fs from "node:fs";
 
-const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const EARNINGS = "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx";
 const DEADHEAD = "apps/frontend/src/pages/driver-finance/components/DeadheadPaySection.tsx";
 const EXTRA_PAY = "apps/frontend/src/pages/driver-finance/components/ExtraPaySection.tsx";

@@ -21,7 +21,7 @@
 import { readFileSync } from "node:fs";
 
 const GRID = "apps/frontend/src/pages/driver-finance/components/SettlementKpiGrid.tsx";
-const PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const fail = (m) => { console.error(`FAIL verify-settlement-detail-kpi-grid: ${m}`); process.exit(1); };
 
 const LABELS = ["Revenue", "Driver pay", "Reimbursements", "Deductions", "Net pay", "Company margin"];

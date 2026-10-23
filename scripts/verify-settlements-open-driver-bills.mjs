@@ -11,7 +11,7 @@ const paths = {
   backend: "apps/backend/src/driver-finance/driver-bills.routes.ts",
   api: "apps/frontend/src/api/driverFinance.ts",
   list: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
-  detail: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  detail: "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   self: "scripts/verify-settlements-open-driver-bills.mjs",
   matrix: "docs/specs/scoreboard/modules/settlements.required.json",
 };

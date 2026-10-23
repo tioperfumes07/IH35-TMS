@@ -95,7 +95,7 @@ requireMatch(
   "SettlementHeader must accept + render a loadIds prop instead of a hardcoded \"-\""
 );
 requireMatch(
-  "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+  "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx",
   /settlementLoadIds/,
   "SettlementDetailPage must compute distinct settlementLoadIds from settlement lines"
 );

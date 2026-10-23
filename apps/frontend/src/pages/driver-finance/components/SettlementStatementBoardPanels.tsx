@@ -100,6 +100,7 @@ export function SettlementStatementBoardPanels({
   companyReport,
   matchedBankTransactionId,
   onOpenJournalEntry,
+  onOpenFuelFills,
 }: {
   settlementId: string;
   companyId: string;
@@ -112,6 +113,8 @@ export function SettlementStatementBoardPanels({
   companyReport: CompanySettlementReport | undefined;
   matchedBankTransactionId: string | null;
   onOpenJournalEntry: () => void;
+  /** 443.280-A — fuel fills live on Settlement workflow, not under the board. */
+  onOpenFuelFills?: () => void;
 }) {
   const grossMiles = earnings.reduce((s, r) => s + (r.miles ?? 0), 0);
   const grossPayDollars = earnings.reduce((s, r) => s + r.amount, 0);
@@ -315,11 +318,15 @@ export function SettlementStatementBoardPanels({
                   <LinkCell>
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        if (onOpenFuelFills) {
+                          onOpenFuelFills();
+                          return;
+                        }
                         document
                           .querySelector("[data-testid='fuel-purchases-section'], #settlement-statement-fuel")
-                          ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                      }
+                          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
                       style={{
                         background: "none",
                         border: "none",
