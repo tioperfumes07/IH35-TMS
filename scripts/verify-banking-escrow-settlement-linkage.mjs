@@ -99,6 +99,9 @@ export function run(root = process.cwd()) {
     if (!registerPage.includes("getEscrowDriverBalances") || !registerPage.includes("getEscrowDriverTimeline")) {
       failures.push(`${registerPageRel}: must keep getEscrowDriverBalances + getEscrowDriverTimeline (engine unchanged)`);
     }
+    if (!registerPage.includes('data-settlements-escrow-register-rebuild="1"')) {
+      failures.push(`${registerPageRel}: ROUND 443.282 must mark data-settlements-escrow-register-rebuild="1"`);
+    }
   }
 
   return failures;
