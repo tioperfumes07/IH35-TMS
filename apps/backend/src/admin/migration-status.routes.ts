@@ -8,6 +8,7 @@ import {
   findMigrationDrift,
   getMigrationLedgerSnapshot,
   listExpectedMigrations,
+  splitHeldPending,
 } from "../lib/migration-status.js";
 
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
@@ -34,10 +35,13 @@ export async function registerMigrationStatusRoutes(app: FastifyInstance) {
       const expected = await listExpectedMigrations(repoRoot);
       const snapshot = await getMigrationLedgerSnapshot(client, repoRoot);
 
+      const { missing, heldPending } = splitHeldPending(drift.missingInDB, repoRoot);
       const payload = {
         applied: snapshot.canonicalApplied,
         expected,
-        missingInDB: drift.missingInDB,
+        // A missing NORMAL migration is drift (503). A HELD one is expected pending and listed on its own.
+        missingInDB: missing,
+        heldPending,
         extraInDB: drift.extraInDB,
         mirrorApplied: snapshot.mirrorApplied,
         ledgerDivergence: {
@@ -47,10 +51,10 @@ export async function registerMigrationStatusRoutes(app: FastifyInstance) {
         checksumMismatches: snapshot.checksumMismatches,
         canonicalLedger: "_system._schema_migrations",
         mirrorLedger: "ih35_migrations.applied_migrations",
-        ok: drift.missingInDB.length === 0,
+        ok: missing.length === 0,
       };
 
-      if (drift.missingInDB.length > 0) {
+      if (missing.length > 0) {
         return reply.code(503).send(payload);
       }
       return reply.code(200).send(payload);

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 /**
+ * MATRIX-BUILT-OPTIONAL — engine-invariant guard (reference discovery, repoint proof, Owner gate per merge route); no Required
+ *   matrix leaf exists for the driver-merge engine, so it claims no Built credit (443.270-C, CC-2).
  * GUARD (owner 2026-10-06): duplicate driver profiles merge IN THE APP through ONE engine — one driver-vendor profile per
  * person, many Samsara users allowed — and the engine can never drift back to a hand-written table list.
  *
@@ -52,7 +54,17 @@ export function problems(src) {
   if (!/planRepoint\(client, "mdata\.drivers"/.test(pv) || /repointAll\(/.test(pv)) p.push("the merge preview must plan with planRepoint (read-only), never run repointAll");
   if (/\bUPDATE\s+\S+\s+SET\b|\bINSERT\s+INTO\b|\bDELETE\s+FROM\b/i.test(plan) || /SAVEPOINT/.test(plan) || /dryRun/.test(s)) p.push("planRepoint must be SELECTs only (no UPDATE / INSERT / DELETE / savepoint dry run)");
   if (!/SET LOCAL transaction_read_only = on[\s\S]{0,200}previewDriverMerge\(/.test(src.routes)) p.push("GET merge-preview must run the preview in a READ ONLY transaction");
-  if (!/String\(user\.role\) !== "Owner"/.test(src.routes) || !/\/api\/v1\/drivers\/:id\/merge"/.test(src.routes)) p.push("POST /drivers/:id/merge must be Owner-only");
+  // 443.270-C (CC-2): two merge routes now (single + merge-all) — EACH handler carries its own Owner gate, so a gate
+  // removed from either one fails (one gate anywhere in the file no longer stands in for both).
+  const handler = (path) => {
+    const at = src.routes.indexOf(`app.post("${path}"`);
+    if (at < 0) return "";
+    const next = src.routes.indexOf("app.post(", at + 1);
+    return src.routes.slice(at, next < 0 ? undefined : next);
+  };
+  for (const path of ["/api/v1/drivers/:id/merge", "/api/v1/drivers/merge-all"]) {
+    if (!/String\(user\.role\) !== "Owner"/.test(handler(path))) p.push(`POST ${path.replace("/api/v1", "")} must be Owner-only`);
+  }
   if (!/registerDriverMergeRoutes\(app\)/.test(src.drivers)) p.push("merge routes are not registered");
   if (!/driverMergeApi\.preview\(/.test(src.page) || !/driverMergeApi\.merge\(/.test(src.page)) p.push("the duplicates page must preview before it merges");
   if (!/"\/drivers\/duplicates"/.test(src.manifest) || !/to="\/drivers\/duplicates"/.test(src.list)) p.push("the duplicates page must be routed and linked from Drivers");
