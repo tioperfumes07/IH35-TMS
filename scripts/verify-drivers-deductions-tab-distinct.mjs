@@ -102,6 +102,27 @@ export function computeKpiV3Failures(source) {
   if (!source.includes("By type · this week")) {
     errors.push('SettlementsDeductionsKpiRow must render By type · this week panel');
   }
+  // ROUND 443.274-C — board Settlements-Deductions.dc.html body.
+  if (!source.includes("data-settlements-deductions-board-2col")) {
+    errors.push("SettlementsDeductionsKpiRow must mark data-settlements-deductions-board-2col (By type | Schedule)");
+  }
+  if (!source.includes("Schedule")) {
+    errors.push("SettlementsDeductionsKpiRow must render Schedule panel");
+  }
+  for (const typeLabel of ["Escrow", "Advances", "Fines", "Damages"]) {
+    if (!source.includes(typeLabel)) {
+      errors.push(`SettlementsDeductionsKpiRow By type must include board row "${typeLabel}"`);
+    }
+  }
+  if (!source.includes("listSettlementDeductions")) {
+    errors.push("SettlementsDeductionsKpiRow must keep listSettlementDeductions (By type engine)");
+  }
+  if (!source.includes("+ New deduction")) {
+    errors.push('SettlementsDeductionsKpiRow Schedule must expose "+ New deduction"');
+  }
+  if (!source.includes("Every deduction links to its liability")) {
+    errors.push("SettlementsDeductionsKpiRow Schedule must keep board footnote about liability/settlement/JE links");
+  }
   return errors;
 }
 
@@ -154,6 +175,13 @@ function selftest() {
       <V3KpiTile label="Scheduled deductions" value="1" />
     </div>
     <span>By type · this week</span>
+    <div data-settlements-deductions-board-2col="1">
+      <span>Escrow</span><span>Advances</span><span>Fines</span><span>Damages</span>
+      <span>Schedule</span>
+      <button>+ New deduction</button>
+      <span>Every deduction links to its liability, settlement line and journal entry.</span>
+    </div>
+    import { listSettlementDeductions } from "../../api/driverFinance";
   `;
   if (computeKpiV3Failures(goodKpi).length) {
     ok = false;
@@ -169,6 +197,13 @@ function selftest() {
     console.error("SELFTEST FAIL — V3 strip removal should fail kpiV3Failures");
   } else {
     console.log("selftest ok — deductions v3 kpi mutation");
+  }
+  const noSchedule = goodKpi.replace(/Schedule/g, "Policies").replace(/data-settlements-deductions-board-2col/g, "data-legacy");
+  if (!computeKpiV3Failures(noSchedule).length) {
+    ok = false;
+    console.error("SELFTEST FAIL — Schedule/2col removal should fail kpiV3Failures");
+  } else {
+    console.log("selftest ok — deductions board 2col mutation");
   }
   if (!ok) process.exit(1);
   console.log(`${LABEL} --selftest OK`);
