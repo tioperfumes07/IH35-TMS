@@ -36,6 +36,12 @@ function assertSource() {
   if (!board.includes("debits = credits")) fail("TrialBalanceBoard Balance check must sub 'debits = credits'");
   if (!board.includes("trial-balance-measured-ar")) fail("TrialBalanceBoard must surface Measured A/R note");
   if (!board.includes("443.248")) fail("Measured note must cite 443.248 (no invented AR math)");
+  // 443.282 — no hardcoded A/R dollar theater; live 1100 note helper required.
+  if (board.includes("$134,413") || board.includes("$624,076") || board.includes("$489,663")) {
+    fail("TrialBalanceBoard must not hardcode Measured A/R dollar amounts (443.282)");
+  }
+  if (!board.includes("trialBalanceMeasuredArNote")) fail("TrialBalanceBoard must export trialBalanceMeasuredArNote");
+  if (!page.includes("measuredArNote")) fail("TrialBalancePage must pass measuredArNote from live 1100");
 }
 
 function selftest() {

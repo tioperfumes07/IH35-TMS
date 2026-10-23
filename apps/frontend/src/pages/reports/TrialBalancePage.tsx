@@ -27,7 +27,7 @@ import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { useExportAction } from "../../hooks/useExportAction";
 
 import { formatUsdCents } from "../../lib/money";
-import { TrialBalanceBoard } from "./components/TrialBalanceBoard";
+import { TrialBalanceBoard, trialBalanceMeasuredArNote } from "./components/TrialBalanceBoard";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -129,6 +129,15 @@ export function TrialBalancePage() {
   }, [query.data?.rows, sortDir, sortKey, reportSearch, applied.basis]);
 
   const summary = query.data?.summary;
+
+  // 443.282 — Measured A/R note from live 1100 on this TB (never hardcoded dollars).
+  const measuredArNote = useMemo(() => {
+    if (query.isLoading) return trialBalanceMeasuredArNote(null);
+    const ar = (query.data?.rows ?? []).find(
+      (row) => row.account_code === "1100" || row.account_name.toLowerCase().includes("accounts receivable"),
+    );
+    return trialBalanceMeasuredArNote(ar ? ar.net_balance : null);
+  }, [query.isLoading, query.data?.rows]);
 
   // LEAD 443.181 — the account name + every amount keep their register AmountLink (the row opens the account
   // ledger). LST-F405 — canDrill already excludes SYNTHETIC_ACCOUNT_IDS, so the synthetic cash-basis AR/AP rows
@@ -347,6 +356,7 @@ export function TrialBalancePage() {
         summary={summary}
         accountCount={rows.length}
         loading={query.isLoading}
+        measuredArNote={measuredArNote}
         onCustomize={() => {
           const gear = document.querySelector<HTMLButtonElement>(`[data-testid="${TB_GEAR_TEST_ID}"]`);
           gear?.click();
