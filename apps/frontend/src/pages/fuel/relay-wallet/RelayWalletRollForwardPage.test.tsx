@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as relayApi from "../../../api/relay";
@@ -36,10 +36,19 @@ describe("RelayWalletRollForwardPage (443.29 c)", () => {
   it("shows the totals that tie to the owner's file", async () => {
     vi.spyOn(relayApi, "getRelayWalletRollForward").mockResolvedValue(data);
     renderPage();
-    const totals = await screen.findByTestId("relay-wallet-totals");
-    expect(totals.textContent).toContain("121,100.00");
-    expect(totals.textContent).toContain("117,370.99");
-    expect(totals.textContent).toContain("2,951.01");
+    // LEAD 443.266-C (CC-2): the totals render as the V3 KPI strip since 443.250 (5c3b4b32d8 removed the
+    // relay-wallet-totals block, same totals object). Every tile is checked against the owner's file, to the cent
+    // (Relay-All-Transactions-2026-10-10.csv: 121,100.00 / 3,935.76 / 117,370.99 / 513.00 / 265.00 / balance 2,951.01).
+    const tile = (id: string) => screen.getByTestId(`relay-wallet-kpi-${id}`).textContent ?? "";
+    await waitFor(() => expect(tile("deposits")).toContain("121,100.00"));
+    expect(tile("deposit-fees")).toContain("3,935.76");
+    expect(tile("fills")).toContain("117,370.99");
+    expect(tile("fill-fees")).toContain("513.00");
+    expect(tile("lumper")).toContain("265.00");
+    expect(tile("balance")).toContain("2,951.01");
+    // The balance tile is the roll-forward identity: deposits − fills − fill fees − lumper (the deposit fee is the card's).
+    const t = data.totals;
+    expect(t.deposits_cents - t.fills_cents - t.fill_fees_cents - t.lumper_cents).toBe(t.balance_cents);
   });
   it("a deposit number opens the deposits behind it", async () => {
     vi.spyOn(relayApi, "getRelayWalletRollForward").mockResolvedValue(data);
