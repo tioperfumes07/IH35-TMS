@@ -2172,7 +2172,12 @@ export function DispatchKanban({
   // the activation threshold before that native gesture has a chance to start. delay:0 keeps clicks
   // (which rely on distance, not time) working exactly as KANBAN-CLICK-DEAD fixed them.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4, tolerance: 5, delay: 0 } }),
+    // LEAD 443.251 (owner: "the units are still not dragable … over 30 times"): `delay: 0` + `tolerance: 5` made dnd-kit
+    // run a DELAY constraint (any `delay` key does), whose 0 ms timer races the first pointermove — Chrome runs input before
+    // timers, so a quick first move of more than 5 px cancelled the drag before it activated (reproduced on prod 10-23: a
+    // fast 20 px first move never activates; small steps after a pause do). A pure DISTANCE constraint has no timer: a press
+    // stays a click and the first 4 px of movement starts the drag, however fast.
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor)
   );
 

@@ -85,9 +85,9 @@ const contracts = [
       ),
   ],
   [
-    "PointerSensor activationConstraint distance is 4 (lowered from 8, ROUND 20.3)",
-    (s) => /useSensor\(PointerSensor, \{ activationConstraint: \{ distance: 4, tolerance: 5, delay: 0 \} \}\)/.test(s),
-    (s) => s.replace("activationConstraint: { distance: 4, tolerance: 5, delay: 0 }", "activationConstraint: { distance: 8 }"),
+    "PointerSensor activationConstraint is a pure distance of 4 — no delay timer (LEAD 443.251: a delay constraint cancelled quick first moves)",
+    (s) => /useSensor\(PointerSensor, \{ activationConstraint: \{ distance: 4 \} \}\)/.test(s),
+    (s) => s.replace("activationConstraint: { distance: 4 }", "activationConstraint: { distance: 4, tolerance: 5, delay: 0 }"),
   ],
   [
     "DndContext wires onDragStart (forces body userSelect:none for the drag's duration)",
