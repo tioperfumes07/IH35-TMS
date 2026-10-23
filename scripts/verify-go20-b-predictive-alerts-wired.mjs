@@ -93,7 +93,9 @@ const CHECKS = [
   {
     name: "MaintenanceHome: At Risk section folded inline into Home (C-36)",
     file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    pattern: /data-testid="maintenance-predictive-alerts-tab"[\s\S]{0,200}At Risk[\s\S]{0,200}PredictiveAlertsPage/,
+    // 443.281 (CC-2): the Maintenance V3 board (52754dfedb) labels it "At risk — brakes & tires" with a View-all toggle in the
+    // same header — same folded panel, same PredictiveAlertsPage; label match is case-insensitive, window widened.
+    pattern: /data-testid="maintenance-predictive-alerts-tab"[\s\S]{0,300}At risk[\s\S]{0,600}<PredictiveAlertsPage/i,
   },
   {
     name: "MaintenanceHome: renders PredictiveAlertsPage for the tab (retired nav path)",
