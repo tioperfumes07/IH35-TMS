@@ -1666,7 +1666,7 @@ export async function getRollingLedgerRows(
           due_date: today,
           amount_cents: partialFuelCents,
           days_overdue: 0,
-          status: "current",
+          status: rowStatus(0), // was the literal "current" (not a CashFlowRow status) → backend tsc red on main; days_overdue 0 = due today
         });
       }
     }
