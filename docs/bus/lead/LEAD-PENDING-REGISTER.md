@@ -18,9 +18,9 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 12 | A | Fuel | Fuel Questions Review crash (load_number undefined) | CC-2 | 443.258 | MERGED-UNVERIFIED | bf7dadd3 |
 | 13 | A | Process | Fast-merge law (4-min) + ruling 443.261 | ALL | 443.255/261 | DONE-LIVE | docs/bus/FAST-MERGE-4MIN-LAW.md |
 | 14 | A | Dispatch | Stops 13541 s3 / 13576 s2,s3 completed via engine | LEAD | 443.248 | DONE-LIVE | docs 5796/5804 |
-| 15 | A | Settlements | Pre-Settlements: Load #, Entries, Ready-to-close, Close, clickable, responsive, miles DB+Google | CC-3/CURSOR | 443.269-A | PARTIAL | c3167b77 |
+| 15 | A | Settlements | Pre-Settlements: Load #, Entries, Ready-to-close, Close, clickable, responsive, miles DB+Google | CC-3/CURSOR | 443.269-A | MERGED-UNVERIFIED | #27364 d6e9d60b 5:07 PM |
 | 16 | A | Settlements | A miles change at settlement re-prices the bills everywhere | CC-2 | 443.269-B | OPEN |  |
-| 17 | A | Repo | Everything in the repo: 36 boards + PNGs + Lead register + rounds | LEAD | 443.270 | IN PROGRESS | push270.log |
+| 17 | A | Repo | Everything in the repo: 36 boards + PNGs + Lead register + rounds | LEAD | 443.270 | DONE-LIVE | #27365 ee5b7359 |
 | 18 | A | Design | Every board implemented exactly (no layering) | CURSOR/CODEX/CC-3 | 443.280 | OPEN |  |
 | 19 | A | Data | One canonical source per entity across all views of the same type | CC-3 | 443.270-B | BLOCKED |  |
 | 20 | A | Data | Merge all duplicate customers / vendors / drivers | LEAD/CC-2 | 443.270-C | DONE-LIVE | merge-all 10-23 3:20 PM |
@@ -30,10 +30,10 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 24 | A | Process | Lead codes, not only coordinates | LEAD |  | DONE-LIVE | ea1591f5 a37a2712 a9f01fab |
 | 25 | A | Cash Flow | Driver pay counted twice (settlement + per-load A/P inside it) | LEAD | 443.276 | DONE-LIVE | #27353 a9f01fab, dep-dbdsrbaqqsrs73d7g1m0 |
 | 26 | A | Data | Find real root causes of loads/settlements data issues | LEAD | 443.279 | DONE-LIVE | journal 4:35 PM |
-| 27 | A | Data | Delete USMCA test records (18 legal matters, 5 policies, 7 claims, 1 accident…) | CC-2 | 443.247 | OPEN |  |
+| 27 | A | Data | Delete USMCA test records (18 legal matters, 5 policies, 7 claims, 1 accident…) | CC-2 | 443.247 | BLOCKED | CC-2 fork: purge cascade casts int child ids to uuid; accidents trigger refuses DELETE -> CC-2 fixing (443.281-F) |
 | 28 | A | Reports | Load History tab + Settlement (driver/company), Loads, Customers, Vendors reports | CURSOR + CC-1 | 443.281 | OPEN |  |
 | 29 | A | All | LAW 5:08 PM: every selector is multi-select (units, loads, settlements, trucks, trailers, drivers, customers, vendors…) everywhere | CODEX (guard) + CURSOR (pages) | 443.281 | OPEN |  |
-| 30 | A | All | Baseline screenshots of every page before the rebuild | LEAD | 443.281 | DONE-LIVE | docs/design/baseline-2026-10-23/ |
+| 30 | A | All | Baseline screenshots of every page before the rebuild | LEAD | 443.281 | DONE-LIVE | #27369 9932b495 |
 | 31 | B | Cash Flow | Cash Flow › Home — board verdict PARTIAL | CURSOR | 443.280 | PARTIAL |  |
 | 32 | B | Cash Flow | Cash Flow › Projected (Auto) — board verdict PARTIAL | CURSOR | 443.280 | PARTIAL |  |
 | 33 | B | Cash Flow | Cash Flow › Actual vs Projected — board verdict PARTIAL | CURSOR | 443.280 | PARTIAL |  |
@@ -50,22 +50,22 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 44 | B | Settlements | Settlements › Home — board verdict LAYERED | CURSOR | 443.280 | OPEN |  |
 | 45 | B | Settlements | Settlements › Open — board verdict PARTIAL | CURSOR | 443.280 | PARTIAL |  |
 | 46 | B | Settlements | Settlements › Closed — board verdict PARTIAL | CURSOR | 443.280 | PARTIAL |  |
-| 47 | B | Settlements | Settlements › Statement — board verdict LAYERED | CURSOR | 443.280 | OPEN |  |
-| 48 | B | Settlements | Settlements › Pre-Settlements — board verdict LAYERED | CURSOR | 443.280 | OPEN |  |
+| 47 | B | Settlements | Settlements › Statement — board verdict LAYERED | CURSOR | 443.280 | MERGED-UNVERIFIED | #27368 0c5f5376 Cursor 5:26 PM |
+| 48 | B | Settlements | Settlements › Pre-Settlements — board verdict LAYERED | CURSOR | 443.280 | MERGED-UNVERIFIED | #27364 d6e9d60b 5:07 PM |
 | 49 | B | Settlements | Settlements › Close — board verdict LAYERED | CURSOR | 443.280 | OPEN |  |
-| 50 | B | Settlements | Settlements › Company — board verdict REBUILT | CURSOR | 443.280 | PARTIAL |  |
-| 51 | B | Settlements | Settlements › Deductions — board verdict CHROME-ONLY | CURSOR | 443.280 | OPEN |  |
-| 52 | B | Settlements | Settlements › Cash Advances — board verdict CHROME-ONLY | CURSOR | 443.280 | OPEN |  |
+| 50 | B | Settlements | Settlements › Company — board verdict REBUILT | CURSOR | 443.280 | PARTIAL | #27354 e8a9f02b; duplicate rows still live |
+| 51 | B | Settlements | Settlements › Deductions — board verdict CHROME-ONLY | CURSOR | 443.280 | MERGED-UNVERIFIED | #27355 / #27364; live 5:37 PM: by-type rows still "—" while total $470.00 |
+| 52 | B | Settlements | Settlements › Cash Advances — board verdict CHROME-ONLY | CURSOR | 443.280 | MERGED-UNVERIFIED | #27358 eb08254d; live 5:38 PM page stuck "Loading…" |
 | 53 | B | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | CURSOR | 443.280 | OPEN |  |
 | 54 | B | Settlements | Settlements › Escrow Register — board verdict PARTIAL | CURSOR | 443.280 | PARTIAL |  |
 | 55 | B | Fuel | Fuel › Home — board verdict CHROME-ONLY | CURSOR | 443.280 | OPEN |  |
 | 56 | B | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | CURSOR | 443.280 | OPEN |  |
-| 57 | B | Safety | Safety › Driver Files — board verdict LAYERED | CODEX | 443.280 | OPEN |  |
+| 57 | B | Safety | Safety › Driver Files — board verdict LAYERED | CODEX | 443.280 | DONE-LIVE | #27367 40daa907; live 5:37 PM board only |
 | 58 | B | Maintenance | Maintenance › Home — board verdict PARTIAL | CODEX | 443.280 | PARTIAL |  |
 | 59 | B | Maintenance | Maintenance › In Shop — board verdict LAYERED | CODEX | 443.280 | OPEN |  |
-| 60 | B | Driver Profile | Driver Profile › Board — board verdict NOT STARTED | CODEX | 443.280 | OPEN |  |
-| 61 | B | Dispatch | Dispatch › Truck Planner — board verdict PARTIAL | CC-3 | 443.280 | PARTIAL |  |
-| 62 | B | Dispatch | Dispatch › Book Load modal/side/spec — board verdict PARTIAL | CC-3 | 443.280 | PARTIAL |  |
+| 60 | B | Driver Profile | Driver Profile › Board — board verdict NOT STARTED | CODEX | 443.280 | PARTIAL | #27357 80270997; live 5:38 PM same layout, ~15 s load, "No current truck assignment" while on T156 |
+| 61 | B | Dispatch | Dispatch › Truck Planner — board verdict PARTIAL | CC-3 | 443.280 | MERGED-UNVERIFIED | 4ff9f272 bars lane + $/mi; #27359 |
+| 62 | B | Dispatch | Dispatch › Book Load modal/side/spec — board verdict PARTIAL | CC-3 | 443.280 | MERGED-UNVERIFIED | 4ff9f272 1260/760, Load # right |
 | 63 | B | Dispatch | Dispatch › Book Load trip types — board verdict REBUILT | CC-3 | 443.280 | DONE-LIVE |  |
 | 64 | B | Insurance | Insurance › Home — board verdict REBUILT | CURSOR | 443.280 | PARTIAL |  |
 | 65 | B | Legal | Legal › Home — board verdict REBUILT | CURSOR | 443.280 | DONE-LIVE |  |
@@ -77,7 +77,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 71 | C | Reports/Dispatch | Reports › Vendor report (spend, open bills, category, 1099) | CURSOR (UI) + CC-1 (report APIs) | 443.281 | OPEN |  |
 | 72 | C | Reports/Dispatch | Reports home: add the 5 reports to the catalog; remove unrouted duplicates LoadHistoryPage.tsx / LoadsReportPage.tsx by replacing them with the board pages | CURSOR (UI) + CC-1 (report APIs) | 443.281 | OPEN |  |
 | 73 | E | Driver pay | 3 delivered loads never accrued to A/P: 13663, 13687, 13688 ($2,056.34) | CC-1 | 443.279 | OPEN |  |
-| 74 | E | Dispatch | 4 loads delivered_pending_docs with no final-stop actual departure: 13691, 13694, 13696, 13697 | CC-3 | 443.279 | OPEN |  |
+| 74 | E | Dispatch | 4 loads delivered_pending_docs with no final-stop actual departure: 13691, 13694, 13696, 13697 | CC-3 | 443.279 | MERGED-UNVERIFIED | #27360 528fd12c delivered only via final stop + history repair; 358b7c12 |
 | 75 | E | Settlements | Settlement load-cost totals 25-50% below recount; P-0119/P-0113 $0 costs; GPS real miles 4,855 vs 1,110 | CC-1 | 443.278 | OPEN |  |
 | 76 | E | Settlements | 0 of 85 closed settlements marked paid ($127,897.75) | CC-2 + OWNER | 443.281 | OPEN |  |
 | 77 | E | A/R | 0 customer payments / Faro purchases applied: all $621,076.72 open incl. 57 advanced invoices | CC-2 + OWNER | 443.279 | OPEN |  |
@@ -91,7 +91,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 85 | E | Vendors | All 30 vendors have no category | CC-1 | 443.281 | OPEN |  |
 | 86 | E | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | 443.281 | OPEN |  |
 | 87 | E | Telematics | verify-no-dead-schema: telematics.vehicle_latest_position_cache has no reader | CC-1 | 443.278 | OPEN |  |
-| 88 | E | Live gate | No-5xx live GET guard | CC-3 | 443.268-A | DONE-LIVE |  |
+| 88 | E | Live gate | No-5xx live GET guard | CC-3 | 443.268-A | DONE-LIVE | #27346 + be076e3d fastify.inject |
 | 89 | F | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 | CC-1 | 443.281 | OPEN |  |
 | 90 | F | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 | CC-1 | 443.281 | OPEN |  |
 | 91 | F | Cash Flow | Actual vs Projected: Actual income $0.00 every day 10-16..10-23 while BofA received deposits (Faro wire +$10,629.09 10-22) | CC-1 | 443.281 | OPEN |  |
@@ -106,7 +106,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 100 | F | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-2 | 443.281 | OPEN |  |
 | 101 | F | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | 443.281 | OPEN |  |
 | 102 | F | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | CURSOR | 443.281 | OPEN |  |
-| 103 | F | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | CURSOR | 443.281 | OPEN |  |
+| 103 | F | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | CURSOR | 443.281 | PARTIAL | #27354 e8a9f02b; duplicate rows still live |
 | 104 | F | Fuel | Cards: 0 card assignments; Relay issuer blank | CC-2 | 443.281 | OPEN |  |
 | 105 | F | Fuel | Relay unmatched 257 fills (truck matched, driver never matched) | CC-2 | 443.281 | OPEN |  |
 | 106 | F | Fuel | History & savings / Compliance: every value "Not available"; Loves prices never synced | CC-2 | 443.281 | OPEN |  |
@@ -117,8 +117,8 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 111 | F | Insurance | Insurance page renders inside the Safety header/tab shell | CURSOR | 443.281 | OPEN |  |
 | 112 | F | Legal | Open matters 0 on page while legal.matters holds 18 rows (test records) | CC-2 | 443.281 | OPEN |  |
 | 113 | G | Guards | verify-stops-are-geocoded red (13699) — live-data exception for CC-2 migration | CC-2/CC-3 | 443.278/280/281 | OPEN |  |
-| 114 | G | Guards | verify-resettlement-origin-load-dates — guard retarget to board labels | CC-3 | 443.278/280/281 | OPEN |  |
-| 115 | G | Guards | verify-entity-label-rejects-uuid-shaped-name — restore protection in accounting hub | CC-3 | 443.278/280/281 | OPEN |  |
+| 114 | G | Guards | verify-resettlement-origin-load-dates — guard retarget to board labels | CC-3 | 443.278/280/281 | MERGED-UNVERIFIED | #27356 6b9b2dc0 |
+| 115 | G | Guards | verify-entity-label-rejects-uuid-shaped-name — restore protection in accounting hub | CC-3 | 443.278/280/281 | MERGED-UNVERIFIED | #27356 6b9b2dc0 |
 | 116 | G | Guards | verify-board-page-no-legacy-sections (new) — stops layering | CODEX | 443.278/280/281 | OPEN |  |
 | 117 | G | Guards | verify-entity-filters-multi-select (new) — fails on single-select entity filters | CODEX | 443.278/280/281 | OPEN |  |
 | 118 | H | Fuel › Questions › Review | D001: Clicking Review throws undefined `load_number` in FuelAssignmentPopup; whole-app crash | CC-2 | 443.257-D | MERGED-UNVERIFIED | bf7dadd3 |
