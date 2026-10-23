@@ -95,11 +95,10 @@ export async function registerDriverHeroRoutes(app: FastifyInstance) {
         /* Loads in-motion + booked-ahead */
         const loadCountRes = await client.query<{ in_motion: number; booked_ahead: number }>(
           `SELECT
-             COUNT(*) FILTER (WHERE l.status IN ('in_transit','loaded')) ::int AS in_motion,
-             COUNT(*) FILTER (WHERE l.status IN ('scheduled','pending_pickup'))::int AS booked_ahead
+             COUNT(*) FILTER (WHERE l.status IN ('in_transit')) ::int AS in_motion,
+             COUNT(*) FILTER (WHERE l.status IN ('assigned_not_dispatched','dispatched'))::int AS booked_ahead
            FROM mdata.loads l
-           JOIN mdata.load_driver_assignments lda ON lda.load_id = l.id
-          WHERE lda.driver_id = $1::uuid
+          WHERE (l.assigned_primary_driver_id = $1::uuid OR l.assigned_secondary_driver_id = $1::uuid)
             AND l.operating_company_id = $2::uuid
             AND l.voided_at IS NULL`,
           [params.data.id, query.data.operating_company_id]
