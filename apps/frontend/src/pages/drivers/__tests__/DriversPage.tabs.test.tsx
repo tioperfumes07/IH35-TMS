@@ -57,6 +57,8 @@ vi.mock("../../../api/mdata", () => ({
 vi.mock("../../../api/driverFinance", () => ({
   listSettlements: vi.fn().mockResolvedValue({ settlements: [] }),
   listPendingEscrowDeductions: vi.fn().mockResolvedValue({ deductions: [] }),
+  listOpenPreSettlements: vi.fn().mockResolvedValue([]),
+  getOpenDriverBills: vi.fn().mockResolvedValue({ open_driver_bills: { total_count: 0, total_gross_cents: 0, items: [] } }),
 }));
 vi.mock("../../../api/banking", () => ({
   getEscrowDriverBalances: vi.fn().mockResolvedValue({ drivers: [] }),

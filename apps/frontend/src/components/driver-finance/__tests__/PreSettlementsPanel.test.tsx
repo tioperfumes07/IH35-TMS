@@ -35,7 +35,7 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
 
   it("does not invent a zero settlement count or payout while loading", () => {
     wrap(<PreSettlementsPanel rows={[]} loading showTotal />);
-    expect(screen.getByText("Pre-settlements · — settlements")).toBeTruthy();
+    expect(screen.getByText("Open pre-settlements · —")).toBeTruthy();
     expect(screen.queryByText("Total payout this batch")).toBeNull();
     expect(screen.queryByTestId("dispatch-pre-settlements-honest-empty")).toBeNull();
   });
@@ -102,7 +102,7 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
     ] as SettlementListRow[];
 
     wrap(<PreSettlementsPanel rows={rows} loading={false} isError={false} />);
-    for (const header of ["Period Begin", "Period End", "Driver", "Load Number", "Settlement/Tour", "Amount", "Status"]) {
+    for (const header of ["Period Begin", "Period End", "Driver", "Load Number", "Settlement/Tour", "Loads so far", "Pay so far", "Status"]) {
       expect(screen.getByRole("button", { name: new RegExp(`^${header}$`) })).toBeTruthy();
     }
 

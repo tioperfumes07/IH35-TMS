@@ -56,6 +56,7 @@ import { DriverSchedulerRequestInboxPage } from "./safety/driver-scheduler/Drive
 import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
 import { PendingSettlementDeductionsPanel } from "./drivers/PendingSettlementDeductionsPanel";
 import { SettlementsDeductionsKpiRow } from "./drivers/SettlementsDeductionsKpiRow";
+import { SettlementsPreSettlementsKpiRow } from "./drivers/SettlementsPreSettlementsKpiRow";
 import { TeamSplitConfigPanel } from "./drivers/TeamSplitConfig";
 import { PayRateTemplatesListPage } from "./lists/driver/PayRateTemplatesListPage";
 import {
@@ -836,7 +837,22 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             </div>
           ) : null}
           {subnavTab === "pre_settlements" ? (
-            <PreSettlementsPanel rows={preSettlementsQuery.data ?? []} loading={preSettlementsQuery.isLoading} isError={preSettlementsQuery.isError} title="Pre-settlements" emptyText="No open pre-settlements for this company." />
+            <div className="space-y-3" data-testid="drivers-pre-settlements-panel">
+              <SettlementsPreSettlementsKpiRow
+                basePath={
+                  location.pathname.startsWith("/driver-finance")
+                    ? "/driver-finance/pre-settlements"
+                    : "/drivers/pre-settlements"
+                }
+              />
+              <PreSettlementsPanel
+                rows={preSettlementsQuery.data ?? []}
+                loading={preSettlementsQuery.isLoading}
+                isError={preSettlementsQuery.isError}
+                title="Open pre-settlements"
+                emptyText="No open pre-settlements for this company."
+              />
+            </div>
           ) : null}
           {subnavTab === "cash_advances" ? (
             <div className="space-y-2" data-testid="drivers-cash-advances-debt-alert">
