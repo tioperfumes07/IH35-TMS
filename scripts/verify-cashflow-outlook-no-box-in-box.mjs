@@ -43,7 +43,8 @@ export function collectProblems(section) {
     problems.push(`${TARGET}: missing 7-Day Outlook strip`);
     return problems;
   }
-  if (!/<section className="overflow-hidden rounded-lg border border-gray-200 bg-white">/.test(section)) {
+  // className may share the opening tag with data-testid (443.250 Projected V3 measurable surface).
+  if (!/<section\b[^>]*className="overflow-hidden rounded-lg border border-gray-200 bg-white"/.test(section)) {
     problems.push(`${TARGET}: 7-Day Outlook root must be a single overflow-hidden section frame`);
   }
   const nestedRounded = section.match(NESTED_TILE_RE) ?? [];

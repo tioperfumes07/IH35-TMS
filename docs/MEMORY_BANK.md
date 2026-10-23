@@ -130,6 +130,25 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   V3 imports/components/testids + `getRollingLedger`. `verify-cash-flow-rolling-ledger.mjs` KPI-strip
   markers updated Load-Costs `#F4F7FA`/`#C7D2DC` → `V3.headerBg`/`V3.border` (same shared strip).
 
+### Active Architectural Decisions — Cash Flow Projected (Auto) V3 (Cursor, ROUND 443.250, 2026-10-23)
+
+- **One engine:** `DailyPredictionTab` (tab id `daily_prediction` / label Projected (Auto)) reads
+  **only** `getRollingLedger` — same list + day totals as Home / Rolling Ledger. Dual
+  `getDailyPrediction` KPI/$ totals on this tab are retired (board measured $10.6k vs $49.7k drift).
+  `getDailyPrediction` remains for other consumers; Projected UI does not call it.
+- **V3 chrome:** Day/Week `V3Segmented`, formula strip OPENING + (INCOME−EXPENSES) = PROJECTED
+  CLOSING, flat 7-Day Outlook section + `divide-x` (ORPH-004; selected cell = `V3.shell`), Income|
+  Expenses `V3Panel`s with priority expense groups from `V3_EXPENSE_GROUPS`. Manual adjustment
+  create/archive testids retained (`cash-flow-adjustment-*`).
+- **LINK-F5171 on ledger:** `RollingLedgerRow` now carries optional `customer_id` / `customer_name`
+  from receipts (invoice + load-not-invoiced) and 1:1 factor advances. FE EntityLink
+  `kind="customer"` when id present; else `entityLabel(item.customer_name, null, "Customer")`.
+- **Guards (piggyback, no new EVEN claim):** `verify-cashflow-predicted-customer-entitylink.mjs`
+  rewritten for ledger + V3 testids; outlook guard allows `data-testid` on the section root.
+- **Still open under 443.250:** remaining Cash Flow boards (Actual vs Projected, Rolling Ledger
+  polish, Manual), Settlements/Fuel V3 boards, design-system sweep, Chrome proof. Full DONE only
+  when all boards land.
+
 ### Active Architectural Decisions — Related-party loan Option 2 Scentsx + paid_direct export (Cursor, ROUND 443.22-2e/2f, 2026-10-11)
 
 - **Option 2 (owner):** backfill papers an RPL facility from existing bank categorizations via

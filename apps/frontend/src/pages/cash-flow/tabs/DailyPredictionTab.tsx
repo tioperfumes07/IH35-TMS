@@ -1,38 +1,59 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "../../../hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Plus, BarChart2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import {
-  getDailyPrediction,
+  getRollingLedger,
   addCashFlowAdjustment,
   archiveCashFlowAdjustment,
-  type DailyPredictionResult,
-  type SevenDayEntry,
+  type RollingLedgerRow,
+  type RollingLedgerDay,
+  type RollingLedgerResult,
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday, localDateFromIso } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { V3, V3_EXPENSE_GROUPS, V3_TABLE } from "../../../design/v3-tokens";
+import { V3Panel } from "../../../components/v3/V3Panel";
+import { V3Segmented } from "../../../components/v3/V3Segmented";
 
-function fmtDate(iso: string): string {
-  return localDateFromIso(iso).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
+// ROUND 443.250 — Projected (Auto) V3 board. ONE engine: getRollingLedger (same as Home /
+// Rolling Ledger). Day/Week grain, formula strip, 7-day outlook, Income|Expenses panels.
+// Manual projection adjustments stay (create + archive Remove). Square edges = 2px.
 
-// CASHFLOW-1: "today" must be the company business date (America/Chicago), NOT the UTC date —
-// after ~7 PM Central UTC is already tomorrow, so the cash-position page was fetching tomorrow's
-// prediction and hiding today's real expected revenue. See lib/businessDate.
+type Grain = "day" | "week";
+
+type Props = {
+  operatingCompanyId: string;
+};
+
 function todayIso(): string {
   return companyToday();
 }
 
-function addDays(iso: string, delta: number): string {
+function mondayOf(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const dow = dt.getUTCDay();
+  const delta = dow === 0 ? -6 : 1 - dow;
   return addDaysIso(iso, delta);
+}
+
+function fmtLongDate(iso: string): string {
+  return localDateFromIso(iso).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function fmtChipDate(iso: string): string {
+  const d = localDateFromIso(iso);
+  const wd = d.toLocaleDateString("en-US", { weekday: "short" });
+  const md = d.toLocaleDateString("en-US", { month: "numeric", day: "numeric" }).replace("/", "-");
+  return `${wd} ${md}`;
 }
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
@@ -43,37 +64,119 @@ function formatCents(cents: number, opts?: { sign?: boolean }): string {
   return cents < 0 ? `−${dollars}` : dollars;
 }
 
-// DEFECT (punchlist #194): the 7-Day Outlook strip has 7 fixed columns in a narrow card; a full
-// "$1,234.56" figure overflows/wraps at that width. Abbreviate to whole-dollar "$1.2k" here (the
-// strip is a directional glance, not a source-of-truth figure — the exact amount is still available
-// via the day's own KPI row and the title tooltip below).
-function formatCompactUsd(cents: number): string {
-  const dollars = Math.abs(cents) / 100;
-  const sign = cents < 0 ? "−" : cents > 0 ? "+" : "";
-  if (dollars >= 10000) return `${sign}$${Math.round(dollars / 1000)}k`;
-  if (dollars >= 1000) return `${sign}$${(dollars / 1000).toFixed(1)}k`;
-  return `${sign}$${Math.round(dollars)}`;
+function formatCompactNet(cents: number): string {
+  if (cents === 0) return "—";
+  const dollars = Math.round(Math.abs(cents) / 100);
+  const sign = cents < 0 ? "−" : "+";
+  return `${sign}${dollars.toLocaleString("en-US")}`;
 }
 
-type Props = {
-  operatingCompanyId: string;
+function incomeGroupLabel(row: RollingLedgerRow): string {
+  if (row.document_kind === "invoice" || row.type === "Invoice") return "Invoices";
+  if (row.document_kind === "load" || /load/i.test(row.type)) {
+    return "Delivered / in-motion loads (not invoiced yet)";
+  }
+  if (row.document_kind === "factoring_advance") return "Factoring advances";
+  return "Other income";
+}
+
+function expenseGroupKey(row: RollingLedgerRow): (typeof V3_EXPENSE_GROUPS)[number] {
+  const t = `${row.type} ${row.document_kind} ${row.document_label}`.toLowerCase();
+  if (/loan|lease|amort|note|rent/.test(t)) return "finance & lease";
+  if (/driver|settlement|driver_bill/.test(t) || row.document_kind === "driver_bill" || row.document_kind === "settlement") {
+    return "driver bills";
+  }
+  if (/diesel|fuel|relay|card fill/.test(t)) return "diesel";
+  if (/maint|tire|parts|shop|work.?order/.test(t)) return "maintenance";
+  if (/insur/.test(t)) return "insurance";
+  return "other";
+}
+
+function expenseGroupTitle(key: (typeof V3_EXPENSE_GROUPS)[number], index: number): string {
+  const titles: Record<(typeof V3_EXPENSE_GROUPS)[number], string> = {
+    "finance & lease": "Finance & lease payments",
+    "driver bills": "Driver bills — due on load delivery date",
+    diesel: "Diesel — card fills & card payments",
+    maintenance: "Maintenance — shop, tires, parts",
+    insurance: "Insurance",
+    other: "Dispatch, tolls & other",
+  };
+  return `${index + 1} · ${titles[key]}`;
+}
+
+function emptyExpenseHint(key: (typeof V3_EXPENSE_GROUPS)[number]): string {
+  const hints: Record<(typeof V3_EXPENSE_GROUPS)[number], string> = {
+    "finance & lease": "No loan or lease schedules in the system for this day — add them to project truck notes and rents.",
+    "driver bills": "No driver bills due this day.",
+    diesel: "No fills posted yet for this day.",
+    maintenance: "Nothing due this day.",
+    insurance: "Installment schedule not loaded for this day.",
+    other: "Nothing due this day.",
+  };
+  return hints[key];
+}
+
+function rowsForRange(rows: RollingLedgerRow[], from: string, to: string): RollingLedgerRow[] {
+  return rows.filter((r) => r.due_date >= from && r.due_date <= to && !r.is_rollover_echo);
+}
+
+function dayTotals(days: RollingLedgerDay[], from: string, to: string) {
+  const inRange = days.filter((d) => d.date >= from && d.date <= to);
+  return {
+    income: inRange.reduce((s, d) => s + d.income_due_cents, 0),
+    expenses: inRange.reduce((s, d) => s + d.expenses_due_cents, 0),
+    net: inRange.reduce((s, d) => s + d.net_cents, 0),
+    closing: [...inRange].reverse().find((d) => d.running_cash_cents !== null)?.running_cash_cents ?? null,
+  };
+}
+
+function openingForSelection(data: RollingLedgerResult, from: string): number | null {
+  const day = data.days.find((d) => d.date === from);
+  if (!day || data.opening_cash_cents === null) return data.opening_cash_cents;
+  // Reconstruct opening = running − net for that day when running is known.
+  if (day.running_cash_cents !== null) return day.running_cash_cents - day.net_cents;
+  return data.opening_cash_cents;
+}
+
+const thStyle: CSSProperties = {
+  textAlign: "left",
+  fontSize: V3_TABLE.headerPx,
+  fontWeight: 600,
+  color: V3.muted,
+  padding: `${V3_TABLE.rowPadY}px 12px`,
+  borderBottom: `1px solid ${V3.border}`,
+  background: V3.headerBg,
+  whiteSpace: "nowrap",
+  fontFamily: V3.font,
+};
+
+const tdStyle: CSSProperties = {
+  textAlign: "left",
+  padding: `${V3_TABLE.rowPadY}px 12px`,
+  borderBottom: `1px solid ${V3.borderSoft}`,
+  fontSize: V3_TABLE.fontPx,
+  whiteSpace: "nowrap",
+  color: V3.ink,
+  fontFamily: V3.font,
 };
 
 export function DailyPredictionTab({ operatingCompanyId }: Props) {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [date, setDate] = useState<string>(todayIso());
+  const [grain, setGrain] = useState<Grain>("day");
   const [addLabel, setAddLabel] = useState("");
   const [addAmount, setAddAmount] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
-  const queryKey = ["cash-flow-daily", operatingCompanyId, date];
+  const windowFrom = useMemo(() => date, [date]);
+  const windowTo = useMemo(() => addDaysIso(date, 13), [date]);
+  const queryKey = ["cash-flow-projected-ledger", operatingCompanyId, windowFrom, windowTo];
 
-  const { data, isLoading, isError } = useQuery<DailyPredictionResult>({
+  const { data, isLoading, isError } = useQuery<RollingLedgerResult>({
     queryKey,
-    queryFn: () => getDailyPrediction(operatingCompanyId, date),
+    queryFn: () => getRollingLedger(operatingCompanyId, windowFrom, windowTo),
     enabled: !!operatingCompanyId,
   });
 
@@ -96,7 +199,6 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     },
   });
 
-  // CASHFLOW-ADJUSTMENT-NO-VOID-PATH: the create flow had no way to undo a mistaken entry.
   const archiveMutation = useMutation({
     mutationFn: (adjustmentId: string) => archiveCashFlowAdjustment(adjustmentId, operatingCompanyId),
     onSuccess: () => {
@@ -121,7 +223,10 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     if (!adjustmentReady) {
       const trimLabel = addLabel.trim();
       const parsedCents = Math.round(parseFloat(addAmount.replace(/[^0-9.-]/g, "")) * 100);
-      if (!trimLabel) { setAddError("Label is required."); return; }
+      if (!trimLabel) {
+        setAddError("Label is required.");
+        return;
+      }
       if (!Number.isFinite(parsedCents) || parsedCents === 0) {
         setAddError("Enter a valid nonzero dollar amount.");
         return;
@@ -134,294 +239,376 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     mutation.mutate({ label: trimLabel, amount_cents: parsedCents });
   }, [addLabel, addAmount, adjustmentReady, mutation]);
 
-  const net = data?.predicted_net_cents ?? 0;
-  const netPositive = net >= 0;
-  const unknownAmountCount = data?.expense_items.filter(item => item.amount_known === false).length ?? 0;
+  const rangeFrom = grain === "week" ? mondayOf(date) : date;
+  const rangeTo = grain === "week" ? addDaysIso(rangeFrom, 6) : date;
+
+  const totals = useMemo(() => {
+    if (!data) return { income: 0, expenses: 0, net: 0, closing: null as number | null };
+    return dayTotals(data.days, rangeFrom, rangeTo);
+  }, [data, rangeFrom, rangeTo]);
+
+  const opening = useMemo(() => (data ? openingForSelection(data, rangeFrom) : null), [data, rangeFrom]);
+  const projectedClosing =
+    opening !== null ? opening + totals.net : totals.closing;
+
+  const incomeRows = useMemo(
+    () => (data ? rowsForRange(data.rows, rangeFrom, rangeTo).filter((r) => r.row_kind === "income") : []),
+    [data, rangeFrom, rangeTo],
+  );
+  const expenseRows = useMemo(
+    () => (data ? rowsForRange(data.rows, rangeFrom, rangeTo).filter((r) => r.row_kind === "expense") : []),
+    [data, rangeFrom, rangeTo],
+  );
+
+  const incomeGroups = useMemo(() => {
+    const map = new Map<string, RollingLedgerRow[]>();
+    for (const row of incomeRows) {
+      const g = incomeGroupLabel(row);
+      const list = map.get(g) ?? [];
+      list.push(row);
+      map.set(g, list);
+    }
+    return [...map.entries()];
+  }, [incomeRows]);
+
+  const expenseGroups = useMemo(() => {
+    return V3_EXPENSE_GROUPS.map((key) => ({
+      key,
+      rows: expenseRows.filter((r) => expenseGroupKey(r) === key),
+    }));
+  }, [expenseRows]);
+
+  const sevenDays = useMemo(() => {
+    if (!data) return [] as RollingLedgerDay[];
+    const out: RollingLedgerDay[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDaysIso(date, i);
+      out.push(
+        data.days.find((x) => x.date === d) ?? {
+          date: d,
+          income_due_cents: 0,
+          expenses_due_cents: 0,
+          income_carry_over_cents: 0,
+          expenses_carry_over_cents: 0,
+          net_cents: 0,
+          running_cash_cents: null,
+        },
+      );
+    }
+    return out;
+  }, [data, date]);
+
+  const unknownAmountCount = expenseRows.filter((r) => r.amount_known === false).length;
+  const netPositive = totals.net >= 0;
+
+  const goPrev = () => setDate((d) => addDaysIso(d, grain === "week" ? -7 : -1));
+  const goNext = () => setDate((d) => addDaysIso(d, grain === "week" ? 7 : 1));
+
+  const navLabel =
+    grain === "week"
+      ? `${fmtLongDate(rangeFrom)} – ${fmtLongDate(rangeTo)}`
+      : `${fmtLongDate(date)}${date === todayIso() ? " · Today" : ""}`;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3" data-testid="cash-flow-projected-v3" style={{ fontFamily: V3.font }}>
       {unknownAmountCount > 0 && (
-        <p role="status">{t("cashFlow.unknownDriverCosts", undefined, { count: unknownAmountCount })}</p>
+        <p role="status" style={{ fontSize: 12, color: V3.muted }}>
+          {unknownAmountCount} expense line{unknownAmountCount === 1 ? "" : "s"} awaiting short miles.
+        </p>
       )}
-      {/* Date Navigator */}
-      <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
-        <button
-          type="button"
-          onClick={() => setDate((d) => addDays(d, -1))}
-          className="flex size-8 items-center justify-center rounded-sm hover:bg-gray-100"
-          aria-label="Previous day"
-        >
-          <ChevronLeft className="h-4 w-4 text-gray-600" />
-        </button>
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="text-xs font-semibold text-gray-900">{fmtDate(date)}</span>
+
+      {/* Date + Day/Week */}
+      <div
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}
+        data-testid="cash-flow-projected-nav"
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            type="button"
+            onClick={goPrev}
+            className="flex size-8 items-center justify-center rounded-sm"
+            style={{ border: `1px solid ${V3.border}`, background: V3.surface }}
+            aria-label={grain === "week" ? "Previous week" : "Previous day"}
+          >
+            <ChevronLeft className="h-4 w-4" style={{ color: V3.muted }} />
+          </button>
+          <span style={{ fontSize: 14, fontWeight: 700, color: V3.ink }}>{navLabel}</span>
+          <button
+            type="button"
+            onClick={goNext}
+            className="flex size-8 items-center justify-center rounded-sm"
+            style={{ border: `1px solid ${V3.border}`, background: V3.surface }}
+            aria-label={grain === "week" ? "Next week" : "Next day"}
+          >
+            <ChevronRight className="h-4 w-4" style={{ color: V3.muted }} />
+          </button>
           {date !== todayIso() && (
             <button
               type="button"
               onClick={() => setDate(todayIso())}
-              className="text-xs text-[#4B5563] hover:underline"
+              style={{ fontSize: 11, color: V3.link, background: "none", border: "none", cursor: "pointer" }}
             >
               Back to today
             </button>
           )}
-          {date === todayIso() && (
-            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#4B5563]">Today</span>
-          )}
         </div>
-        <button
-          type="button"
-          onClick={() => setDate((d) => addDays(d, 1))}
-          className="flex size-8 items-center justify-center rounded-sm hover:bg-gray-100"
-          aria-label="Next day"
-        >
-          <ChevronRight className="h-4 w-4 text-gray-600" />
-        </button>
+        <V3Segmented
+          value={grain}
+          options={[
+            { id: "day", label: "Day" },
+            { id: "week", label: "Week" },
+          ]}
+          onChange={setGrain}
+          testId="cash-flow-projected-grain"
+        />
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Expected Income</p>
-          <p className="mt-1 text-page-title font-bold text-gray-900">
-            {isLoading ? "—" : formatCents(data?.income_subtotal_cents ?? 0)}
-          </p>
+      {/* Formula strip: OPENING + (INCOME − EXPENSES) = PROJECTED CLOSING */}
+      <div
+        data-testid="cash-flow-projected-formula"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr auto 1fr auto 1fr",
+          alignItems: "center",
+          gap: 12,
+          background: V3.surface,
+          border: `1px solid ${V3.border}`,
+          borderRadius: 2,
+          padding: "12px 16px",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>OPENING CASH</div>
+          <div className="n" style={{ fontSize: 18, fontWeight: 700, color: V3.ink }}>
+            {isLoading ? "—" : opening === null ? "—" : formatCents(opening)}
+          </div>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Expected Expenses</p>
-          <p className="mt-1 text-page-title font-bold text-gray-900">
-            {isLoading ? "—" : formatCents(data?.expense_subtotal_cents ?? 0)}
-          </p>
+        <span style={{ color: V3.mutedSoft }}>+</span>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>INCOME − EXPENSES</div>
+          <div
+            className="n"
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: isLoading ? V3.ink : netPositive ? V3.green : V3.red,
+            }}
+          >
+            {isLoading ? "—" : formatCents(totals.net, { sign: true })}
+          </div>
         </div>
-        {/* PUNCHLIST #71: card background is neutral (§7 palette lock — emerald/red backgrounds are
-            reserved off-palette); the sign-based color stays on the icon + amount TEXT only. */}
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Predicted Net</p>
-          <div className="mt-1 flex items-center gap-1">
-            {netPositive ? (
-              <TrendingUp className="h-5 w-5 text-[#6B7280]" />
-            ) : (
-              <TrendingDown className="h-5 w-5 text-red-600" />
-            )}
-            <p className={`text-page-title font-bold ${netPositive ? "text-[#4B5563]" : "text-red-700"}`}>
-              {isLoading ? "—" : formatCents(net, { sign: true })}
-            </p>
+        <span style={{ color: V3.mutedSoft }}>=</span>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>PROJECTED CLOSING</div>
+          <div
+            className="n"
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: projectedClosing !== null && projectedClosing < 0 ? V3.red : V3.ink,
+            }}
+          >
+            {isLoading || projectedClosing === null ? "—" : formatCents(projectedClosing)}
           </div>
         </div>
       </div>
-
-      {/* Opening / Closing Balance */}
-      {!isLoading && data && (data.opening_cash_cents !== null || data.projected_closing_cash_cents !== null) && (
-        <div className="flex gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs">
-          <span className="text-gray-600">
-            Opening cash:{" "}
-            <strong className="text-gray-900">
-              {data.opening_cash_cents !== null ? formatCents(data.opening_cash_cents) : "—"}
-            </strong>
-          </span>
-          <span className="text-gray-400">→</span>
-          <span className="text-gray-600">
-            Projected closing:{" "}
-            <strong className={data.projected_closing_cash_cents !== null && data.projected_closing_cash_cents < 0 ? "text-red-700" : "text-gray-900"}>
-              {data.projected_closing_cash_cents !== null ? formatCents(data.projected_closing_cash_cents) : "—"}
-            </strong>
-          </span>
-        </div>
-      )}
 
       {isError && (
-        <div className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          Failed to load prediction. Check your connection and try again.
+        <div
+          className="rounded-sm px-4 py-3 text-xs"
+          style={{ border: `1px solid ${V3.border}`, background: V3.headerBg, color: V3.red }}
+          role="alert"
+        >
+          Failed to load projection. Check your connection and try again.
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Income Panel */}
-        <div className="rounded-lg border border-gray-200 bg-white">
-          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h3 className="text-xs font-semibold text-gray-900">Expected Income</h3>
-            <span className="text-xs font-bold text-gray-700">
-              {isLoading ? "—" : formatCents(data?.income_subtotal_cents ?? 0)}
-            </span>
+      {/* 7-Day Outlook — flat section + divide-x (ORPH-004). Selected cell uses shell navy. */}
+      <section
+        className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+        data-testid="cash-flow-projected-outlook"
+      >
+        <div className="border-b border-gray-100 bg-gray-50 px-4 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">7-Day Outlook</p>
+        </div>
+        <div className="overflow-x-auto">
+          <div className="grid min-w-[420px] grid-cols-7 divide-x divide-gray-100">
+            {sevenDays.map((entry) => {
+              const isSelected = entry.date === date;
+              const isToday = entry.date === todayIso();
+              const pos = entry.net_cents >= 0;
+              return (
+                <button
+                  key={entry.date}
+                  type="button"
+                  onClick={() => setDate(entry.date)}
+                  title={`${pos ? "+" : ""}${formatUsdCents(entry.net_cents)}`}
+                  className="flex flex-col items-center py-2 transition-colors"
+                  style={{
+                    background: isSelected ? V3.shell : isToday ? V3.headerBg : V3.surface,
+                    color: isSelected ? V3.onShell : V3.ink,
+                  }}
+                >
+                  <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>{fmtChipDate(entry.date)}</span>
+                  <span
+                    className="n"
+                    style={{
+                      marginTop: 2,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: isSelected ? V3.onShell : entry.net_cents === 0 ? V3.mutedSoft : pos ? V3.ink : V3.red,
+                    }}
+                  >
+                    {isLoading ? "—" : formatCompactNet(entry.net_cents)}
+                  </span>
+                  <span style={{ fontSize: 10, opacity: 0.75 }}>net</span>
+                </button>
+              );
+            })}
           </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {/* Income */}
+        <V3Panel
+          title="Income"
+          subtitle={`${incomeRows.length} item${incomeRows.length === 1 ? "" : "s"}`}
+          onViewAll={() => navigate("/cash-flow?tab=rolling_ledger")}
+          testId="cash-flow-projected-income-panel"
+        >
           {isLoading ? (
             <div className="space-y-2 p-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[32px] animate-pulse rounded-sm bg-gray-100" />
+                <div key={i} className="h-[32px] animate-pulse rounded-sm" style={{ background: V3.headerBg }} />
               ))}
             </div>
-          ) : data?.income_items.length === 0 ? (
-            <div className="flex flex-col items-center py-8 text-center">
-              <BarChart2 className="mb-2 size-8 text-gray-300" />
-              <p className="text-xs text-gray-500">No deliveries scheduled for this day.</p>
-            </div>
+          ) : incomeRows.length === 0 ? (
+            <p style={{ padding: 16, fontSize: 12, color: V3.muted }}>No income due for this {grain}.</p>
           ) : (
-            <div className="divide-y divide-gray-50">
-              {/* DEFECT: rows showed the load number/customer as inert text with no way to drill
-                  into the load — the load_id is already returned by the API, it just wasn't wired
-                  to a link. Same pattern as ExpensesListPage.tsx (`navigate('/dispatch/loads/${id}')`). */}
-              {data?.income_items.map((item) => (
-                <div
-                  key={`${item.basis}-${item.invoice_id ?? item.load_id}-${item.load_number}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => {
-                    if (item.load_id) navigate(`/dispatch/loads/${item.load_id}`);
-                    else if (item.invoice_id) navigate(`/accounting/invoices/${item.invoice_id}`);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      if (item.load_id) navigate(`/dispatch/loads/${item.load_id}`);
-                      else if (item.invoice_id) navigate(`/accounting/invoices/${item.invoice_id}`);
-                    }
-                  }}
-                  className="flex cursor-pointer items-start justify-between px-4 py-2.5 text-xs hover:bg-gray-50"
-                >
-                  <div className="min-w-0 flex-1">
-                    <EntityLinkOrTombstone
-                      kind={item.load_id ? "load" : "invoice"}
-                      id={item.load_id ?? item.invoice_id}
-                      name={item.load_number ?? "Invoice"}
-                      noun={item.load_id ? "Load" : "Invoice"}
-                      className="font-medium text-gray-900"
-                      data-testid="cash-flow-predicted-load-link"
-                      onClick={(event) => event.stopPropagation()}
-                    />
-                    {item.customer_id ? (
-                      <EntityLinkOrTombstone
-                        kind="customer"
-                        id={item.customer_id}
-                        name={item.customer_name}
-                        noun="Customer"
-                        className="ml-2 text-gray-600 hover:underline"
-                        data-testid="cash-flow-predicted-customer-link"
-                        onClick={(event) => event.stopPropagation()}
-                      />
-                    ) : (
-                      <span className="ml-2 text-gray-600">{entityLabel(item.customer_name, null, "Customer")}</span>
-                    )}
-                    {item.delivery_time && (
-                      <span className="ml-2 text-xs text-gray-400">
-                        {new Date(item.delivery_time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                      </span>
-                    )}
-                    <span className="ml-2 inline-flex rounded-full bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-medium text-[#4B5563]">
-                      {item.basis === "Proforma" ? "Proforma / Pre-invoice" : item.basis}
-                    </span>
-                  </div>
-                  <span className="ml-4 shrink-0 font-semibold text-gray-900">
-                    {formatCents(item.amount_cents)}
-                  </span>
-                </div>
-              ))}
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={thStyle}>Customer</th>
+                    <th style={thStyle}>Type</th>
+                    <th style={thStyle}>Load</th>
+                    <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {incomeGroups.map(([group, rows]) => {
+                    const groupTotal = rows.reduce((s, r) => s + r.amount_cents, 0);
+                    return (
+                      <IncomeGroupRows key={group} group={group} rows={rows} groupTotal={groupTotal} />
+                    );
+                  })}
+                  <tr>
+                    <td colSpan={3} style={{ ...tdStyle, fontWeight: 700, background: V3.headerBg, borderTop: `1px solid ${V3.border}` }}>
+                      Total income
+                    </td>
+                    <td
+                      className="n"
+                      style={{
+                        ...tdStyle,
+                        textAlign: "right",
+                        fontWeight: 700,
+                        background: V3.headerBg,
+                        borderTop: `1px solid ${V3.border}`,
+                      }}
+                    >
+                      {formatCents(totals.income)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           )}
-        </div>
+        </V3Panel>
 
-        {/* Expenses Panel */}
-        <div className="rounded-lg border border-gray-200 bg-white">
-          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h3 className="text-xs font-semibold text-gray-900">Expected Expenses</h3>
-            <span className="text-xs font-bold text-gray-700">
-              {isLoading ? "—" : formatCents(data?.expense_subtotal_cents ?? 0)}
-            </span>
-          </div>
+        {/* Expenses */}
+        <V3Panel
+          title="Expenses"
+          subtitle="in payment priority order"
+          onViewAll={() => navigate("/cash-flow?tab=rolling_ledger")}
+          testId="cash-flow-projected-expense-panel"
+        >
           {isLoading ? (
             <div className="space-y-2 p-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[32px] animate-pulse rounded-sm bg-gray-100" />
+                <div key={i} className="h-[32px] animate-pulse rounded-sm" style={{ background: V3.headerBg }} />
               ))}
             </div>
           ) : (
             <>
-              {data?.expense_items.length === 0 && (
-                <div className="flex flex-col items-center py-6 text-center">
-                  <Minus className="mb-2 size-8 text-gray-300" />
-                  <p className="text-xs text-gray-500">No expenses for this day yet.</p>
-                </div>
-              )}
-              {(data?.expense_items.length ?? 0) > 0 && (
-                <div className="divide-y divide-gray-50">
-                  {data?.expense_items.map((item, idx) => (
-                    <div key={item.adjustment_id ?? item.load_id ?? idx} className="flex items-start justify-between px-4 py-2.5 text-xs">
-                      <div className="min-w-0 flex-1">
-                        {/* PUNCHLIST #70: 'Bill Due' pill recolored off-palette orange -> slate. */}
-                        <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium mr-2 ${
-                          item.kind === "driver_pay"
-                            ? "bg-[#F7F8FA] text-[#4B5563]"
-                            : item.kind === "bill_due"
-                            ? "bg-[#F7F8FA] text-[#4B5563]"
-                            : "bg-gray-100 text-gray-600"
-                        }`}>
-                          {item.kind === "driver_pay" ? "Driver Pay" : item.kind === "bill_due" ? "Bill Due" : "Manual"}
-                        </span>
-                        {item.load_id ? (
-                          <EntityLinkOrTombstone
-                            kind="load"
-                            id={item.load_id}
-                            name={item.label}
-                            noun="Load"
-                            className="text-gray-700 hover:underline"
-                            data-testid="cash-flow-predicted-expense-load-link"
-                          />
-                        ) : item.settlement_id ? (
-                          // LINK-F5187 (cash-flow:tab.daily_prediction) -- driver-pay rows without
-                          // a first_load_id still have a real settlement to drill into.
-                          <EntityLinkOrTombstone
-                            kind="settlement"
-                            id={item.settlement_id}
-                            name={item.label}
-                            noun="Settlement"
-                            className="text-gray-700 hover:underline"
-                            data-testid="cash-flow-predicted-expense-settlement-link"
-                          />
-                        ) : item.bill_id ? (
-                          // LINK-F5187 (cash-flow:tab.daily_prediction) -- bill_due rows have a
-                          // real accounting.bills id.
-                          <EntityLinkOrTombstone
-                            kind="bill"
-                            id={item.bill_id}
-                            name={item.label}
-                            noun="Bill"
-                            className="text-gray-700 hover:underline"
-                            data-testid="cash-flow-predicted-expense-bill-link"
-                          />
-                        ) : (
-                          <span className="text-gray-700">{item.label}</span>
-                        )}
-                      </div>
-                      <span className="ml-4 shrink-0 font-semibold text-gray-900">
-                        {item.amount_known === false ? "Awaiting short miles" : formatCents(item.amount_cents)}
-                      </span>
-                      {item.kind === "adjustment" && item.adjustment_id ? (
-                        <button
-                          type="button"
-                          className="ml-3 shrink-0 text-xs text-gray-500 underline hover:text-gray-700 disabled:opacity-50"
-                          disabled={archiveMutation.isPending}
-                          onClick={() => {
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Payee</th>
+                      <th style={thStyle}>Load / doc</th>
+                      <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expenseGroups.map(({ key, rows }, idx) => {
+                      const groupTotal = rows.reduce((s, r) => s + r.amount_cents, 0);
+                      return (
+                        <ExpenseGroupRows
+                          key={key}
+                          title={expenseGroupTitle(key, idx)}
+                          hint={emptyExpenseHint(key)}
+                          rows={rows}
+                          groupTotal={groupTotal}
+                          archivePending={archiveMutation.isPending}
+                          onArchiveClick={(item) => {
                             setArchiveError(null);
                             archiveMutation.mutate(item.adjustment_id!);
                           }}
-                          data-testid="cash-flow-adjustment-remove"
-                        >
-                          Remove
-                        </button>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              )}
+                        />
+                      );
+                    })}
+                    <tr>
+                      <td colSpan={2} style={{ ...tdStyle, fontWeight: 700, background: V3.headerBg, borderTop: `1px solid ${V3.border}` }}>
+                        Total expenses
+                      </td>
+                      <td
+                        className="n"
+                        style={{
+                          ...tdStyle,
+                          textAlign: "right",
+                          fontWeight: 700,
+                          background: V3.headerBg,
+                          borderTop: `1px solid ${V3.border}`,
+                        }}
+                      >
+                        {formatCents(totals.expenses)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
               {archiveError ? (
-                <p className="px-4 pt-2 text-xs text-red-600" data-testid="cash-flow-adjustment-archive-error" role="alert">
+                <p
+                  className="px-4 pt-2 text-xs"
+                  style={{ color: V3.red }}
+                  data-testid="cash-flow-adjustment-archive-error"
+                  role="alert"
+                >
                   {archiveError}
                 </p>
               ) : null}
 
-              {/* Projection-only cash-flow adjustment (does NOT create accounting bill/expense). */}
-              <div className="border-t border-dashed border-gray-200 px-4 py-3" data-testid="cash-flow-adjustment-create">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <div
+                className="border-t border-dashed px-4 py-3"
+                style={{ borderColor: V3.border }}
+                data-testid="cash-flow-adjustment-create"
+              >
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: V3.muted }}>
                   Add cash-flow adjustment
                 </p>
-                <p className="mb-2 text-xs text-gray-500">
+                <p className="mb-2 text-xs" style={{ color: V3.muted }}>
                   Projection only — does not create an accounting bill or expense.
                 </p>
                 <div className="flex gap-2">
@@ -430,86 +617,233 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     placeholder="Label (e.g. Fuel surcharge)"
                     value={addLabel}
                     onChange={(e) => setAddLabel(e.target.value)}
-                    className="flex-1 rounded-sm border border-gray-200 px-2 py-1.5 text-xs focus:border-[#E5E7EB] focus:outline-hidden"
+                    className="flex-1 rounded-sm border px-2 py-1.5 text-xs focus:outline-hidden"
+                    style={{ borderColor: V3.border }}
                   />
-                  {/* M-1: dollars-mode; seam Math.round(parseFloat(addAmount...)*100)=amount_cents byte-for-byte. */}
                   <MoneyInput
                     valueDollars={addAmount ? Number(addAmount.replace(/[^0-9.-]/g, "")) || null : null}
                     onChangeDollars={(d) => setAddAmount(d == null ? "" : String(d))}
                     ariaLabel="Projection amount (USD)"
                     className="w-24"
                   />
-                  {/* CLS-CHROME-LAW-8: icon-+ plus text "Add" reads as the forbidden "+ Add"
-                      pattern — relabeled to "Create" (adjustment-line-add pattern, same class as
-                      InvoiceDetailPage's "+ Create Line"). */}
                   <button
                     type="button"
                     onClick={handleAddSubmit}
                     disabled={!adjustmentReady}
                     data-testid="cash-flow-adjustment-add"
-                    className="flex items-center gap-1 rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#263452] disabled:opacity-50"
+                    className="flex items-center gap-1 rounded-sm px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
+                    style={{ background: V3.shell, color: V3.onShell }}
                   >
                     <Plus className="h-3 w-3" />
                     Create
                   </button>
                 </div>
-                {addError && <p className="mt-1 text-xs text-red-600">{addError}</p>}
+                {addError && (
+                  <p className="mt-1 text-xs" style={{ color: V3.red }}>
+                    {addError}
+                  </p>
+                )}
               </div>
             </>
           )}
-        </div>
+        </V3Panel>
       </div>
 
-      {/* Predicted Net Bar — PUNCHLIST #71: neutral background, sign-color kept on the amount text only. */}
-      {!isLoading && data && (
-        <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-4">
-          <span className="text-xs font-semibold text-gray-700">Predicted net cash flow for {fmtDate(date)}</span>
-          <span className={`text-page-title font-bold ${netPositive ? "text-[#4B5563]" : "text-red-700"}`}>
-            {formatCents(net, { sign: true })}
-          </span>
-        </div>
-      )}
-
-      {/* 7-Day Predicted-Net Strip — ORPH-004 / AUD-F016: single outer section frame with flat
-          divide-x day cells (no nested rounded-lg tiles inside the bordered card). PUNCHLIST #194:
-          compact whole-dollar format + horizontal scroll so wide values never clip. */}
-      {!isLoading && (data?.seven_day_strip?.length ?? 0) > 0 && (
-        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 bg-gray-50 px-4 py-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">7-Day Outlook</p>
-          </div>
-          <div className="overflow-x-auto">
-            <div className="grid min-w-[420px] grid-cols-7 divide-x divide-gray-100">
-              {data?.seven_day_strip.map((entry: SevenDayEntry) => {
-                const isToday = entry.date === todayIso();
-                const isSelected = entry.date === date;
-                const pos = entry.predicted_net_cents >= 0;
-                return (
-                  <button
-                    key={entry.date}
-                    type="button"
-                    onClick={() => setDate(entry.date)}
-                    title={`${pos ? "+" : ""}${formatUsdCents(entry.predicted_net_cents)}`}
-                    className={`flex flex-col items-center py-2 transition-colors ${
-                      isSelected ? "bg-[#F7F8FA]" : isToday ? "bg-gray-50" : "hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className="text-xs text-gray-500">
-                      {localDateFromIso(entry.date).toLocaleDateString("en-US", { weekday: "short" })}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {localDateFromIso(entry.date).toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
-                    </span>
-                    <span className={`mt-1 text-xs font-bold ${pos ? "text-[#6B7280]" : "text-red-600"}`}>
-                      {formatCompactUsd(entry.predicted_net_cents)}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* One-engine measured note (board amber callout) */}
+      <div
+        data-testid="cash-flow-projected-one-engine-note"
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "flex-start",
+          background: V3.surface,
+          border: `1px solid ${V3.border}`,
+          borderLeft: `3px solid ${V3.amber}`,
+          borderRadius: 2,
+          padding: "8px 12px",
+          fontSize: 12,
+          color: V3.ink,
+        }}
+      >
+        <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
+        <span>
+          Income and expenses on this tab read the same rolling-ledger list as Home and Rolling Ledger
+          (one engine). Driver bills are due on the load delivery date.
+        </span>
+      </div>
     </div>
+  );
+}
+
+function IncomeGroupRows({
+  group,
+  rows,
+  groupTotal,
+}: {
+  group: string;
+  rows: RollingLedgerRow[];
+  groupTotal: number;
+}) {
+  return (
+    <>
+      <tr>
+        <td
+          colSpan={3}
+          style={{
+            ...tdStyle,
+            background: V3.band,
+            fontWeight: 700,
+            fontSize: 11,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+          }}
+        >
+          {group}
+        </td>
+        <td className="n" style={{ ...tdStyle, background: V3.band, fontWeight: 700, textAlign: "right" }}>
+          {formatCents(groupTotal)}
+        </td>
+      </tr>
+      {rows.map((item) => {
+        // customer_name rides the ledger row (same string as counterparty for single-customer income).
+        const customerName = item.customer_name ?? item.counterparty;
+        const typeLabel =
+          item.document_kind === "load" || /load/i.test(item.type)
+            ? "Load · not invoiced"
+            : item.type || item.document_kind;
+        return (
+          <tr key={`${item.document_kind}-${item.document_id}-${item.due_date}`}>
+            <td style={tdStyle}>
+              {item.customer_id ? (
+                <EntityLinkOrTombstone
+                  kind="customer"
+                  id={item.customer_id}
+                  name={customerName}
+                  noun="Customer"
+                  className="font-medium"
+                  data-testid="cash-flow-predicted-customer-link"
+                />
+              ) : (
+                <span data-testid="cash-flow-predicted-customer-link">
+                  {entityLabel(item.customer_name, null, "Customer")}
+                </span>
+              )}
+            </td>
+            <td style={tdStyle}>{typeLabel}</td>
+            <td style={tdStyle}>
+              <EntityLinkOrTombstone
+                kind={item.load_id ? "load" : "invoice"}
+                id={item.load_id ?? item.document_id}
+                name={item.load_number ?? item.document_label}
+                noun={item.load_id ? "Load" : "Invoice"}
+                className="font-medium"
+                data-testid="cash-flow-predicted-load-link"
+              />
+            </td>
+            <td className="n" style={{ ...tdStyle, textAlign: "right", fontWeight: 600 }}>
+              {formatCents(item.amount_cents)}
+            </td>
+          </tr>
+        );
+      })}
+    </>
+  );
+}
+
+function ExpenseGroupRows({
+  title,
+  hint,
+  rows,
+  groupTotal,
+  archivePending,
+  onArchiveClick,
+}: {
+  title: string;
+  hint: string;
+  rows: RollingLedgerRow[];
+  groupTotal: number;
+  archivePending: boolean;
+  onArchiveClick: (item: RollingLedgerRow) => void;
+}) {
+  return (
+    <>
+      <tr>
+        <td
+          colSpan={2}
+          style={{
+            ...tdStyle,
+            background: V3.band,
+            fontWeight: 700,
+            fontSize: 11,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+          }}
+        >
+          {title}
+        </td>
+        <td className="n" style={{ ...tdStyle, background: V3.band, fontWeight: 700, textAlign: "right" }}>
+          {formatCents(groupTotal)}
+        </td>
+      </tr>
+      {rows.length === 0 ? (
+        <tr>
+          <td colSpan={3} style={{ ...tdStyle, color: V3.mutedSoft }}>
+            {hint}
+          </td>
+        </tr>
+      ) : (
+        rows.map((item) => (
+          <tr key={`${item.document_kind}-${item.document_id}-${item.due_date}`}>
+            <td style={tdStyle}>
+              <span>{entityLabel(item.counterparty, null, "Payee")}</span>
+            </td>
+            <td style={tdStyle}>
+              {item.load_id ? (
+                <EntityLinkOrTombstone
+                  kind="load"
+                  id={item.load_id}
+                  name={item.load_number ?? item.document_label}
+                  noun="Load"
+                  data-testid="cash-flow-predicted-expense-load-link"
+                />
+              ) : item.document_kind === "settlement" || item.document_kind === "driver_bill" ? (
+                <EntityLinkOrTombstone
+                  kind="settlement"
+                  id={item.document_id}
+                  name={item.document_label}
+                  noun="Settlement"
+                  data-testid="cash-flow-predicted-expense-settlement-link"
+                />
+              ) : item.document_kind === "bill" ? (
+                <EntityLinkOrTombstone
+                  kind="bill"
+                  id={item.document_id}
+                  name={item.document_label}
+                  noun="Bill"
+                  data-testid="cash-flow-predicted-expense-bill-link"
+                />
+              ) : (
+                <span>{item.document_label}</span>
+              )}
+              {item.adjustment_id ? (
+                <button
+                  type="button"
+                  className="ml-3 shrink-0 text-xs underline disabled:opacity-50"
+                  style={{ color: V3.muted }}
+                  disabled={archivePending}
+                  onClick={() => onArchiveClick(item)}
+                  data-testid="cash-flow-adjustment-remove"
+                >
+                  Remove
+                </button>
+              ) : null}
+            </td>
+            <td className="n" style={{ ...tdStyle, textAlign: "right", fontWeight: 600 }}>
+              {item.amount_known === false ? "Awaiting short miles" : formatCents(item.amount_cents)}
+            </td>
+          </tr>
+        ))
+      )}
+    </>
   );
 }
