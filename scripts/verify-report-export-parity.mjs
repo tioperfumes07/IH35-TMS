@@ -19,7 +19,7 @@
  */
 
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
-import { basename, join, relative, dirname, resolve } from "node:path";
+import { join, relative, dirname, resolve } from "node:path";
 
 const REPORTS_DIR = new URL("../apps/frontend/src/pages/reports", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1");
 
@@ -153,66 +153,14 @@ function checkDelegation(content, file) {
   return null;
 }
 
-/**
- * 443.270-H: a file under a `components/` directory is a piece of a page, not a page. It takes its
- * importing page's classification: the body of an excluded hub is a hub (skipped); a piece of a page
- * that has export + print is covered by that page. A component no report page imports is still judged
- * as a page (an orphan board is never silently passed).
- */
-function allReportTsx(dir) {
-  const out = [];
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) out.push(...allReportTsx(full));
-    else if (entry.endsWith(".tsx")) out.push(full);
-  }
-  return out;
-}
-
-export function componentCoverage(file, sources) {
-  if (!/[\\/]components[\\/]/.test(file)) return null;
-  const stem = basename(file, ".tsx");
-  const importers = [];
-  for (const [other, text] of sources) {
-    if (other === file) continue;
-    const re = new RegExp(`from\\s+["'][^"']*/${stem}["']`);
-    if (re.test(text)) importers.push([other, text]);
-  }
-  if (importers.length === 0) return null;
-  if (importers.every(([other]) => EXCLUDE_FILES.has(basename(other)))) return { exportOk: true, printOk: true, why: "hub body" };
-  const covering = importers.find(([other, text]) => !EXCLUDE_FILES.has(basename(other)) && hasCsvExport(text) && hasPrint(text));
-  return covering ? { exportOk: true, printOk: true, why: `covered by ${basename(covering[0])}` } : null;
-}
-
-if (process.argv.includes("--selftest")) {
-  const page = "/r/TrialBalancePage.tsx";
-  const board = "/r/components/TrialBalanceBoard.tsx";
-  const hub = "/r/ReportsHome.tsx";
-  const hubBody = "/r/components/ReportsHomeBoard.tsx";
-  const covered = `import { TrialBalanceBoard } from "./components/TrialBalanceBoard";\nexportFilename="tb.csv" <button>Print</button>`;
-  const cases = [
-    ["a board inside a page with export + print passes", componentCoverage(board, [[page, covered]]) !== null],
-    ["a board inside a page WITHOUT print FAILS", componentCoverage(board, [[page, covered.replace(">Print<", ">Go<")]]) === null],
-    ["an orphan board (no importer) FAILS", componentCoverage(board, []) === null],
-    ["the body of an excluded hub passes", componentCoverage(hubBody, [[hub, `import { ReportsHomeBoard } from "./components/ReportsHomeBoard";`]]) !== null],
-    ["a non-component page is never excused", componentCoverage(page, [[hub, `from "./TrialBalancePage"`]]) === null],
-  ];
-  let bad = 0;
-  for (const [n, ok] of cases) { console.log(`  ${ok ? "✓" : "✗"} ${n}`); if (!ok) bad += 1; }
-  console.log(bad ? "verify-report-export-parity --selftest FAIL" : `verify-report-export-parity --selftest PASS (${cases.length}/${cases.length})`);
-  process.exit(bad ? 1 : 0);
-}
-
 // ── Main ──
 
 const files = walkDir(REPORTS_DIR);
 const missing = [];
-const ALL_SOURCES = allReportTsx(REPORTS_DIR).map((f) => [f, readFileSync(f, "utf-8")]);
 
 for (const file of files) {
   const content = readFileSync(file, "utf-8");
   if (!isDataBearingReportPage(content)) continue;
-  if (componentCoverage(file, ALL_SOURCES)) continue;
 
   let exportOk = hasCsvExport(content);
   let printOk = hasPrint(content);
