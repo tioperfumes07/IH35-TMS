@@ -23,7 +23,6 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { V3Panel } from "../../components/v3/V3Panel";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -45,7 +44,7 @@ function milesDocForLeg(
   return Number(n).toLocaleString("en-US", { maximumFractionDigits: 1, minimumFractionDigits: 0 });
 }
 
-/** Board chrome only (ROUND 443.250 Settlements-Close.dc.html) — not a multi-step engine. */
+/** ROUND 443.280-A — working 7-step close (board Settlements-Close.png). Steps clickable; Back/Next advance. */
 const CLOSE_BOARD_STEPS = [
   { n: 1, label: "Driver" },
   { n: 2, label: "Loads & miles" },
@@ -56,7 +55,22 @@ const CLOSE_BOARD_STEPS = [
   { n: 7, label: "Net & pay" },
 ] as const;
 
+type CloseWizardStep = (typeof CLOSE_BOARD_STEPS)[number]["n"];
+
 type DraftJeRow = { id: string; account: string; debit: string; credit: string };
+
+type LoadBoardRow = {
+  id: string;
+  load_id: string;
+  load_number: string | null;
+  lane: string;
+  delivered: string;
+  miles_doc: string;
+  pay: number;
+  is_gross?: boolean;
+};
+
+type LineBoardRow = { id: string; description: string; amount: number };
 
 // Owner-locked driver-bond/escrow cap (Phase 3 Settlement Pay-Run spec). This is the total escrow
 // balance ceiling shown as a progress indicator on the close screen — NOT a GL posting rule; the
@@ -120,6 +134,11 @@ function sumLines(lines: PreSettlementLine[], types: Set<string>): number {
   return lines.filter((l) => types.has(l.line_type)).reduce((sum, l) => sum + Number(l.amount ?? 0), 0);
 }
 
+function nextStepLabel(step: CloseWizardStep): string {
+  const next = CLOSE_BOARD_STEPS.find((s) => s.n === step + 1);
+  return next ? `Next: ${next.label}` : "Next";
+}
+
 export function SettlementCloseArrivalPage() {
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
@@ -136,6 +155,8 @@ export function SettlementCloseArrivalPage() {
   const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
   const [paymentMethodGlAccountId, setPaymentMethodGlAccountId] = useState<string | null>(null);
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
+  // ROUND 443.280-A — real wizard state (was hardcoded activeStep = settlement ? 3 : 1).
+  const [wizardStep, setWizardStep] = useState<CloseWizardStep>(1);
 
   const openQuery = useQuery({
     queryKey: ["driver-finance", "pre-settlements", "open-by-driver", companyId],
@@ -227,6 +248,7 @@ export function SettlementCloseArrivalPage() {
         pushToast("Settlement closed and driver notified", "success");
       }
       setSelectedDriverId(null);
+      setWizardStep(1);
       void qc.invalidateQueries({ queryKey: ["driver-finance", "pre-settlements"] });
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Close failed", "error"),
@@ -247,7 +269,7 @@ export function SettlementCloseArrivalPage() {
   const netPay = Number(settlement?.net_pay ?? 0);
 
   // Escrow cap indicator: current total escrow balance (pre + post clause, from the shared debt
-  // summary) vs the $2,000 owner-locked cap. "$X to cap" = headroom remaining BEFORE this
+  // summary) vs the $2,500 owner-locked cap. "$X to cap" = headroom remaining BEFORE this
   // settlement's contribution is added; the closing escrow_contribution line above shows what
   // this settlement adds toward it.
   const currentEscrowTotal = Number(debtQuery.data?.escrow_pre_clause ?? 0) + Number(debtQuery.data?.escrow_post_clause ?? 0);
@@ -332,12 +354,6 @@ export function SettlementCloseArrivalPage() {
     [],
   );
 
-  const openDriverCount = openQuery.data?.pre_settlements?.length ?? 0;
-  const moneyOrDash = (n: number) => (settlement ? formatUsd(n) : "—");
-  // Presentation highlight only (board Settlements-Close.dc.html shows STEP 3 Gross when the
-  // loads table + Result are on screen). Does not gate Close or change posting.
-  const activeStep = settlement ? 3 : 1;
-
   const tourLegs = tourReadoutQuery.data?.legs ?? [];
   const tourBills = tourReadoutQuery.data?.driver_settlement?.driver_bills;
   const unitLabel =
@@ -361,57 +377,387 @@ export function SettlementCloseArrivalPage() {
   const grossPayFromLegs = tourLegs.reduce((sum, leg) => sum + Number(leg.driver_pay_cents ?? 0) / 100, 0);
   const boardGrossPay = settlement ? gross || earnings || grossPayFromLegs : 0;
 
+  const loadBoardRows = useMemo<LoadBoardRow[]>(() => {
+    const rows: LoadBoardRow[] = tourLegs.map((leg) => ({
+      id: leg.load_id,
+      load_id: leg.load_id,
+      load_number: leg.load_number,
+      lane: leg.lane?.trim() || "—",
+      delivered: formatDateUS(leg.delivery_date),
+      miles_doc: milesDocForLeg(leg, tourBills),
+      pay: Number(leg.driver_pay_cents ?? 0) / 100,
+    }));
+    if (settlement && (tourLegs.length > 0 || boardGrossPay !== 0)) {
+      rows.push({
+        id: "__gross__",
+        load_id: "",
+        load_number: null,
+        lane: "",
+        delivered: "",
+        miles_doc:
+          grossMilesDoc > 0
+            ? grossMilesDoc.toLocaleString("en-US", { maximumFractionDigits: 1 })
+            : "—",
+        pay: boardGrossPay,
+        is_gross: true,
+      });
+    }
+    return rows;
+  }, [tourLegs, tourBills, settlement, boardGrossPay, grossMilesDoc]);
+
+  const loadBoardColumns = useMemo<ParityColumn<LoadBoardRow>[]>(
+    () => [
+      {
+        key: "load",
+        label: "Load",
+        render: (row) =>
+          row.is_gross ? (
+            <span className="font-bold">Gross</span>
+          ) : (
+            <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
+          ),
+      },
+      { key: "lane", label: "Lane", render: (row) => (row.is_gross ? "" : row.lane) },
+      { key: "delivered", label: "Delivered", render: (row) => (row.is_gross ? "" : row.delivered) },
+      {
+        key: "miles",
+        label: "Miles (doc)",
+        render: (row) => (
+          <span className={`${QBO_MONEY_CELL_CLASS} ${row.is_gross ? "font-bold" : ""}`}>{row.miles_doc}</span>
+        ),
+      },
+      {
+        key: "pay",
+        label: "Pay",
+        render: (row) => (
+          <span className={`${QBO_MONEY_CELL_CLASS} ${row.is_gross ? "font-bold" : ""}`}>{formatUsd(row.pay)}</span>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const deductionRows = useMemo<LineBoardRow[]>(
+    () =>
+      otherDeductions.map((l) => ({
+        id: l.id,
+        description: l.description || "Deduction",
+        amount: Math.abs(Number(l.amount ?? 0)),
+      })),
+    [otherDeductions],
+  );
+  const escrowRows = useMemo<LineBoardRow[]>(
+    () =>
+      escrowLines.map((l) => ({
+        id: l.id,
+        description: l.description || "Escrow contribution",
+        amount: Math.abs(Number(l.amount ?? 0)),
+      })),
+    [escrowLines],
+  );
+  const advanceRows = useMemo<LineBoardRow[]>(
+    () =>
+      advanceRecoveryLines.map((l) => ({
+        id: l.id,
+        description: l.description || "Advance recovery",
+        amount: Math.abs(Number(l.amount ?? 0)),
+      })),
+    [advanceRecoveryLines],
+  );
+
+  const lineColumns = useMemo<ParityColumn<LineBoardRow>[]>(
+    () => [
+      { key: "description", label: "Description", render: (row) => row.description },
+      {
+        key: "amount",
+        label: "Amount",
+        render: (row) => <span className={QBO_MONEY_CELL_CLASS}>-{formatUsd(row.amount)}</span>,
+      },
+    ],
+    [],
+  );
+
+  const resultLines = [
+    ["Gross", boardGrossPay],
+    ["Deductions", Math.abs(otherDeductionsTotal)],
+    ["Escrow", Math.abs(escrowContributionThisSettlement)],
+    ["Advances recovered", Math.abs(advanceRecoveryTotal)],
+    ["Net to driver", netPay],
+  ] as const;
+
+  const goBack = () => {
+    if (wizardStep > 1) {
+      setWizardStep((s) => (s - 1) as CloseWizardStep);
+      return;
+    }
+    setSelectedDriverId(null);
+    setWizardStep(1);
+  };
+
+  const goNext = () => {
+    if (wizardStep < 7) setWizardStep((s) => (s + 1) as CloseWizardStep);
+  };
+
+  const selectDriver = (id: string | null) => {
+    setSelectedDriverId(id);
+    setWizardStep(1);
+    setPaymentMethodId(null);
+    setPaymentMethodGlAccountId(null);
+  };
+
+  const arrivalTitle = settlement
+    ? `Driver on arrival · ${driverBoardName}${unitLabel ? ` · ${unitLabel}` : ""} · ${settlementBoardNum}`
+    : "Driver on arrival";
+
+  const stepPanel = (() => {
+    if (!settlement) {
+      return (
+        <V3Panel title={arrivalTitle} testId="settlement-close-arrival-panel">
+          <p className="text-xs text-gray-600">Select a driver with an open pre-settlement to begin close.</p>
+        </V3Panel>
+      );
+    }
+
+    if (wizardStep === 1) {
+      return (
+        <V3Panel title={arrivalTitle} testId="settlement-close-arrival-panel">
+          <div className="space-y-2 text-xs">
+            <div className="font-semibold text-gray-900">
+              <EntityLink kind="driver" id={settlement.driver_id} label={driverBoardName} />
+              {" — "}
+              <EntityLink kind="settlement" id={settlement.id} label={settlementBoardNum} />
+            </div>
+            <div className="text-gray-600">
+              <EntityLink
+                kind="load"
+                id={settlement.first_load_id ?? ""}
+                label={entityLabel(settlement.first_load_number, settlement.first_load_id, "Load")}
+              />{" "}
+              →{" "}
+              <EntityLink
+                kind="load"
+                id={settlement.last_load_id ?? ""}
+                label={entityLabel(settlement.last_load_number, settlement.last_load_id, "Load")}
+              />{" "}
+              · status: {settlement.status}
+            </div>
+            <div className="text-gray-500">
+              Period: {formatDateUS(settlement.period_start)} – {formatDateUS(settlement.period_end)}
+            </div>
+            {unitLabel ? <div className="text-gray-600">Unit: {unitLabel}</div> : null}
+          </div>
+        </V3Panel>
+      );
+    }
+
+    if (wizardStep === 2 || wizardStep === 3) {
+      return (
+        <V3Panel title={arrivalTitle} testId="settlement-close-arrival-panel">
+          {tourReadoutQuery.isError ? (
+            <p className="mb-2 text-xs text-red-600">
+              Could not load tour legs.{" "}
+              <button type="button" className="underline" onClick={() => void tourReadoutQuery.refetch()}>
+                Retry
+              </button>
+            </p>
+          ) : null}
+          <ParityTable<LoadBoardRow>
+            title={wizardStep === 3 ? "Gross — loads on arrival" : "Loads & miles"}
+            columns={loadBoardColumns}
+            rows={loadBoardRows}
+            rowKey={(row) => row.id}
+            loading={tourReadoutQuery.isLoading}
+            emptyText="No loads on this open tour."
+            storageKey="settlement-close-loads-board"
+            exportFilename="settlement-close-loads"
+            tableTestId="settlement-close-loads-table"
+          />
+          {wizardStep === 2 ? (
+            <SettlementCloseMiles settlementId={settlement.id} operatingCompanyId={companyId} />
+          ) : null}
+        </V3Panel>
+      );
+    }
+
+    if (wizardStep === 4) {
+      return (
+        <V3Panel title="Deductions" testId="settlement-close-arrival-panel">
+          <ParityTable<LineBoardRow>
+            title="Other deductions"
+            columns={lineColumns}
+            rows={deductionRows}
+            rowKey={(row) => row.id}
+            loading={false}
+            emptyText="No deductions on this settlement."
+            storageKey="settlement-close-deductions"
+            exportFilename="settlement-close-deductions"
+            tableTestId="settlement-close-deductions-table"
+          />
+          <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2 text-xs text-gray-600">
+            <span>Deductions total</span>
+            <span className={QBO_MONEY_CELL_CLASS}>-{formatUsd(Math.abs(otherDeductionsTotal))}</span>
+          </div>
+        </V3Panel>
+      );
+    }
+
+    if (wizardStep === 5) {
+      return (
+        <V3Panel title="Escrow" testId="settlement-close-arrival-panel">
+          <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <span>Escrow contribution</span>
+            <span>Cap {formatUsd(ESCROW_CAP_DOLLARS)}</span>
+          </div>
+          <ParityTable<LineBoardRow>
+            title="Escrow this settlement"
+            columns={lineColumns}
+            rows={escrowRows}
+            rowKey={(row) => row.id}
+            loading={false}
+            emptyText="No escrow contribution on this settlement."
+            storageKey="settlement-close-escrow"
+            exportFilename="settlement-close-escrow"
+            tableTestId="settlement-close-escrow-table"
+          />
+          <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
+            <span>Contribution this settlement</span>
+            <span className={QBO_MONEY_CELL_CLASS}>{formatUsd(escrowContributionThisSettlement)}</span>
+          </div>
+          <div className="mt-2">
+            <div className="h-2 w-full rounded-sm bg-gray-200">
+              <div className="h-2 rounded-sm bg-[#4B5563]" style={{ width: `${escrowCapPct}%` }} />
+            </div>
+            <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
+              <span>Current escrow balance: {formatUsd(currentEscrowTotal)}</span>
+              <span className={escrowToCap === 0 ? "font-semibold text-[#1F2A44]" : ""}>
+                {escrowToCap === 0 ? "At cap" : `${formatUsd(escrowToCap)} to cap`}
+              </span>
+            </div>
+          </div>
+          {((debtQuery.data?.source_liabilities as Array<{ id?: unknown; type?: unknown }> | undefined) ?? []).length >
+          0 ? (
+            <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-gray-100 pt-1 text-xs text-gray-600">
+              <span>Open liabilities:</span>
+              {(debtQuery.data?.source_liabilities as Array<{ id?: unknown; type?: unknown }>).map((liability, idx) => {
+                const id = String(liability.id ?? "");
+                if (!id) return null;
+                return (
+                  <EntityLink
+                    key={id}
+                    kind="liability"
+                    id={id}
+                    label={entityLabel(String(liability.type ?? "Liability"), id, `#${idx + 1}`)}
+                    className="text-red-600 hover:underline"
+                  />
+                );
+              })}
+            </div>
+          ) : null}
+        </V3Panel>
+      );
+    }
+
+    if (wizardStep === 6) {
+      return (
+        <V3Panel title="Advances" testId="settlement-close-arrival-panel">
+          <ParityTable<LineBoardRow>
+            title="Advance recoveries"
+            columns={lineColumns}
+            rows={advanceRows}
+            rowKey={(row) => row.id}
+            loading={false}
+            emptyText="No advance recovery on this settlement."
+            storageKey="settlement-close-advances"
+            exportFilename="settlement-close-advances"
+            tableTestId="settlement-close-advances-table"
+          />
+          <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
+            <span>Total active debt (all liabilities)</span>
+            <span className={QBO_MONEY_CELL_CLASS}>{formatUsd(debtQuery.data?.total_active_debt ?? 0)}</span>
+          </div>
+        </V3Panel>
+      );
+    }
+
+    // Step 7 — Net & pay (PaymentMethodPicker + draft JE + Close). Board lacks a second form under
+    // the stepper; this is the only close action surface.
+    return (
+      <V3Panel title="Net & pay" testId="settlement-close-arrival-panel">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-900">
+            <span>NET PAY</span>
+            <span className={QBO_MONEY_CELL_CLASS}>{formatUsd(netPay)}</span>
+          </div>
+          {reimbursements !== 0 ? (
+            <div className="flex items-center justify-between text-xs text-gray-700">
+              <span>Reimbursements</span>
+              <span className={QBO_MONEY_CELL_CLASS}>{formatUsd(reimbursements)}</span>
+            </div>
+          ) : null}
+          <div>
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment method</div>
+            <div className="max-w-sm">
+              <PaymentMethodPicker
+                operatingCompanyId={companyId}
+                value={paymentMethodId}
+                onChange={(id, glAccountId) => {
+                  setPaymentMethodId(id);
+                  setPaymentMethodGlAccountId(glAccountId);
+                }}
+              />
+            </div>
+          </div>
+          <ParityTable<DraftJeRow>
+            title="Draft JE preview — not posted"
+            titleInfo={
+              <InfoPopover label="About the draft JE preview">
+                <span className="block">
+                  Preview only — computed client-side from this settlement&apos;s lines for review before Close. Actual GL
+                  posting reuses the existing settlement posting path (behind SETTLEMENT_GL_POSTING_ENABLED).
+                </span>
+              </InfoPopover>
+            }
+            columns={draftJeColumns}
+            rows={draftJeRows}
+            rowKey={(row) => row.id}
+            loading={false}
+            emptyText="No draft JE lines for this settlement."
+            storageKey="settlement-close-draft-je"
+            exportFilename="settlement-close-draft-je"
+            tableTestId="settlement-close-draft-je-table"
+          />
+          <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
+            {!canClose ? <span className="text-xs text-gray-500">Your role cannot close settlements.</span> : null}
+            {isMaker ? (
+              <span className="text-xs text-[#1F2A44]">
+                You opened this settlement — a different approver must close it (maker ≠ checker).
+              </span>
+            ) : null}
+            <Button
+              disabled={!canSubmitClose || closeMut.isPending}
+              loading={closeMut.isPending}
+              onClick={() => closeMut.mutate()}
+              title={isMaker ? "Maker ≠ checker — a different user must close this settlement." : undefined}
+              data-testid="settlement-close-submit"
+            >
+              Close settlement
+            </Button>
+          </div>
+        </div>
+      </V3Panel>
+    );
+  })();
+
   return (
     <div className="space-y-3" data-settlement-close-v3="1">
-      <PageHeader title="Settlement Close — Driver Arrival" subtitle="Close ONE driver's settlement on arrival: gross, deductions, escrow, advances, net" />
+      <PageHeader
+        title="Settlement Close — Driver Arrival"
+        subtitle="Close ONE driver's settlement on arrival: gross, deductions, escrow, advances, net"
+      />
 
       <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
 
-      {/* ROUND 443.250 V3 board (Settlements-Close.dc.html) — Result strip + 7-step chrome.
-          Money values are the same settlement / line totals already computed for Close; Open
-          drivers counts listOpenPreSettlementsByDriver. No new query math. */}
-      <div
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 8 }}
-        data-testid="settlement-close-v3-kpis"
-        data-settlement-close-v3-kpis="1"
-      >
-        <V3KpiTile
-          label="Open drivers"
-          value={openQuery.isError ? "—" : String(openDriverCount)}
-          sub="open pre-settlements on arrival"
-          testId="settlement-close-kpi-open-drivers"
-        />
-        <V3KpiTile
-          label="Gross"
-          value={moneyOrDash(gross || earnings)}
-          sub="settlement gross / earnings"
-          testId="settlement-close-kpi-gross"
-        />
-        <V3KpiTile
-          label="Deductions"
-          value={moneyOrDash(Math.abs(otherDeductionsTotal))}
-          sub="other deductions total"
-          testId="settlement-close-kpi-deductions"
-        />
-        <V3KpiTile
-          label="Escrow"
-          value={moneyOrDash(Math.abs(escrowContributionThisSettlement))}
-          sub="contribution this settlement"
-          testId="settlement-close-kpi-escrow"
-        />
-        <V3KpiTile
-          label="Advances recovered"
-          value={moneyOrDash(Math.abs(advanceRecoveryTotal))}
-          sub="advance recovery lines"
-          testId="settlement-close-kpi-advances"
-        />
-        <V3KpiTile
-          label="Net to driver"
-          value={moneyOrDash(netPay)}
-          sub="settlement net pay"
-          testId="settlement-close-kpi-net"
-        />
-      </div>
+      {/* ROUND 443.280-A — board has no 6-tile KPI strip; Result panel carries the live totals. */}
 
       <div
         data-testid="settlement-close-v3-steps"
@@ -425,21 +771,30 @@ export function SettlementCloseArrivalPage() {
         }}
       >
         {CLOSE_BOARD_STEPS.map((step, idx) => {
-          const on = step.n === activeStep;
+          const on = step.n === wizardStep;
+          const reachable = Boolean(settlement) || step.n === 1;
           return (
-            <div
+            <button
               key={step.n}
+              type="button"
+              disabled={!reachable}
+              onClick={() => reachable && setWizardStep(step.n)}
+              data-testid={`settlement-close-step-${step.n}`}
+              data-active={on ? "1" : "0"}
               style={{
                 flex: 1,
                 padding: "10px 12px",
                 borderRight: idx < CLOSE_BOARD_STEPS.length - 1 ? `1px solid ${V3.borderSoft}` : undefined,
                 background: on ? V3.shell : V3.surface,
                 color: on ? V3.onShell : V3.ink,
+                textAlign: "left",
+                cursor: reachable ? "pointer" : "not-allowed",
+                opacity: reachable ? 1 : 0.5,
               }}
             >
               <div style={{ font: `600 10px ${V3.font}`, opacity: 0.7 }}>STEP {step.n}</div>
               <div style={{ font: `700 12px ${V3.font}` }}>{step.label}</div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -453,8 +808,8 @@ export function SettlementCloseArrivalPage() {
               Driver with an open pre-settlement (on arrival)
               <InfoPopover label="About the driver picker">
                 <span className="block">
-                  Open pre-settlements only (names from open-by-driver join). Nested +Create driver stays
-                  wired for picker law; a new driver appears here after their first pre-settlement exists.
+                  Open pre-settlements only (names from open-by-driver join). Nested +Create driver stays wired for
+                  picker law; a new driver appears here after their first pre-settlement exists.
                 </span>
               </InfoPopover>
             </span>
@@ -462,7 +817,7 @@ export function SettlementCloseArrivalPage() {
               <Combobox
                 options={openOptions}
                 value={selectedDriverId}
-                onChange={setSelectedDriverId}
+                onChange={selectDriver}
                 placeholder="Select driver with open pre-settlement"
                 loading={openQuery.isLoading}
                 allowClear
@@ -475,395 +830,67 @@ export function SettlementCloseArrivalPage() {
           </label>
 
           {selectedDriverId && detailQuery.isLoading ? <p className="text-xs text-gray-600">Loading settlement…</p> : null}
-          {selectedDriverId && detailQuery.isError ? <p className="text-xs text-red-600">No active pre-settlement found for this driver.</p> : null}
-
-          {settlement ? (
-            <>
-              {/* ROUND 443.274-C Settlements-Close.dc.html — 2fr|1fr Driver on arrival | Result */}
-              <div
-                style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, alignItems: "start" }}
-                data-settlement-close-v3-board="1"
-                data-testid="settlement-close-v3-board"
-              >
-                <V3Panel
-                  title={`Driver on arrival · ${driverBoardName}${unitLabel ? ` · ${unitLabel}` : ""} · ${settlementBoardNum}`}
-                  testId="settlement-close-arrival-panel"
-                >
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-xs" data-testid="settlement-close-loads-table">
-                      <thead>
-                        <tr style={{ background: V3.page }}>
-                          {["Load", "Lane", "Delivered", "Miles (doc)", "Pay"].map((h) => (
-                            <th
-                              key={h}
-                              className="whitespace-nowrap px-3 py-1.5 text-left font-semibold uppercase tracking-wide text-[#4B5563]"
-                              style={{
-                                fontSize: 11,
-                                borderBottom: `1px solid ${V3.border}`,
-                                textAlign: h === "Miles (doc)" || h === "Pay" ? "right" : "left",
-                              }}
-                            >
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tourReadoutQuery.isLoading ? (
-                          <tr>
-                            <td colSpan={5} className="px-3 py-2 text-gray-500">
-                              Loading loads…
-                            </td>
-                          </tr>
-                        ) : null}
-                        {tourReadoutQuery.isError ? (
-                          <tr>
-                            <td colSpan={5} className="px-3 py-2 text-red-600">
-                              Could not load tour legs.{" "}
-                              <button type="button" className="underline" onClick={() => void tourReadoutQuery.refetch()}>
-                                Retry
-                              </button>
-                            </td>
-                          </tr>
-                        ) : null}
-                        {!tourReadoutQuery.isLoading && !tourReadoutQuery.isError && tourLegs.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="px-3 py-2 text-gray-500">
-                              No loads on this open tour.
-                            </td>
-                          </tr>
-                        ) : null}
-                        {tourLegs.map((leg) => (
-                          <tr key={leg.load_id}>
-                            <td className="whitespace-nowrap px-3 py-1.5" style={{ borderBottom: `1px solid ${V3.borderSoft}` }}>
-                              <EntityLink
-                                kind="load"
-                                id={leg.load_id}
-                                label={entityLabel(leg.load_number, leg.load_id, "Load")}
-                              />
-                            </td>
-                            <td className="whitespace-nowrap px-3 py-1.5" style={{ borderBottom: `1px solid ${V3.borderSoft}` }}>
-                              {leg.lane?.trim() || "—"}
-                            </td>
-                            <td className="whitespace-nowrap px-3 py-1.5" style={{ borderBottom: `1px solid ${V3.borderSoft}` }}>
-                              {formatDateUS(leg.delivery_date)}
-                            </td>
-                            <td
-                              className={`${QBO_MONEY_CELL_CLASS} whitespace-nowrap px-3 py-1.5`}
-                              style={{ borderBottom: `1px solid ${V3.borderSoft}`, textAlign: "right" }}
-                            >
-                              {milesDocForLeg(leg, tourBills)}
-                            </td>
-                            <td
-                              className={`${QBO_MONEY_CELL_CLASS} whitespace-nowrap px-3 py-1.5`}
-                              style={{ borderBottom: `1px solid ${V3.borderSoft}`, textAlign: "right" }}
-                            >
-                              {formatUsd(Number(leg.driver_pay_cents ?? 0) / 100)}
-                            </td>
-                          </tr>
-                        ))}
-                        <tr style={{ background: V3.page }}>
-                          <td className="px-3 py-2 font-bold" style={{ borderTop: `1px solid ${V3.border}` }}>
-                            Gross
-                          </td>
-                          <td style={{ borderTop: `1px solid ${V3.border}` }} />
-                          <td style={{ borderTop: `1px solid ${V3.border}` }} />
-                          <td
-                            className={`${QBO_MONEY_CELL_CLASS} px-3 py-2 font-bold`}
-                            style={{ borderTop: `1px solid ${V3.border}`, textAlign: "right" }}
-                          >
-                            {grossMilesDoc > 0
-                              ? grossMilesDoc.toLocaleString("en-US", { maximumFractionDigits: 1 })
-                              : "—"}
-                          </td>
-                          <td
-                            className={`${QBO_MONEY_CELL_CLASS} px-3 py-2 font-bold`}
-                            style={{ borderTop: `1px solid ${V3.border}`, textAlign: "right" }}
-                          >
-                            {formatUsd(boardGrossPay)}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </V3Panel>
-
-                <V3Panel title="Result" testId="settlement-close-result-panel">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <Button type="button" variant="secondary" onClick={() => setSelectedDriverId(null)}>
-                      Back
-                    </Button>
-                    <span
-                      className="inline-flex h-7 items-center rounded-sm px-3 text-xs font-semibold text-white"
-                      style={{ background: V3.shell }}
-                      data-testid="settlement-close-next-deductions"
-                    >
-                      Next: Deductions
-                    </span>
-                  </div>
-                  <table className="w-full border-collapse text-xs" data-testid="settlement-close-result-table">
-                    <thead>
-                      <tr style={{ background: V3.page }}>
-                        <th
-                          className="px-3 py-1.5 text-left font-semibold uppercase tracking-wide text-[#4B5563]"
-                          style={{ fontSize: 11, borderBottom: `1px solid ${V3.border}` }}
-                        >
-                          Line
-                        </th>
-                        <th
-                          className="px-3 py-1.5 text-right font-semibold uppercase tracking-wide text-[#4B5563]"
-                          style={{ fontSize: 11, borderBottom: `1px solid ${V3.border}` }}
-                        >
-                          Amount
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(
-                        [
-                          ["Gross", boardGrossPay],
-                          ["Deductions", Math.abs(otherDeductionsTotal)],
-                          ["Escrow", Math.abs(escrowContributionThisSettlement)],
-                          ["Advances recovered", Math.abs(advanceRecoveryTotal)],
-                          ["Net to driver", netPay],
-                        ] as const
-                      ).map(([label, amount]) => (
-                        <tr key={label}>
-                          <td className="px-3 py-1.5" style={{ borderBottom: `1px solid ${V3.borderSoft}` }}>
-                            {label}
-                          </td>
-                          <td
-                            className={`${QBO_MONEY_CELL_CLASS} px-3 py-1.5`}
-                            style={{ borderBottom: `1px solid ${V3.borderSoft}`, textAlign: "right" }}
-                          >
-                            {formatUsd(amount)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </V3Panel>
-              </div>
-
-              <V3Panel
-                title="Settlement close"
-                subtitle="Driver arrival · gross · deductions · escrow · advances · net & pay"
-                testId="settlement-close-detail-panel"
-              >
-              <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <div className="text-xs font-semibold text-gray-900">
-                    <EntityLink kind="driver" id={settlement.driver_id} label={driverBoardName} />{" "}
-                    —{" "}
-                    <EntityLink
-                      kind="settlement"
-                      id={settlement.id}
-                      label={settlementBoardNum}
-                    />
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    <EntityLink
-                      kind="load"
-                      id={settlement.first_load_id ?? ""}
-                      label={entityLabel(settlement.first_load_number, settlement.first_load_id, "Load")}
-                    />{" "}
-                    →{" "}
-                    <EntityLink
-                      kind="load"
-                      id={settlement.last_load_id ?? ""}
-                      label={entityLabel(settlement.last_load_number, settlement.last_load_id, "Load")}
-                    />{" "}
-                    · status: {settlement.status}
-                  </div>
-                  {/* COL-06: period_start/period_end were already on this detail payload
-                      (pre-settlement.routes.ts by-driver already selects both) -- just never
-                      rendered on the close/arrival detail. */}
-                  <div className="text-xs text-gray-500">
-                    Period: {formatDateUS(settlement.period_start)} – {formatDateUS(settlement.period_end)}
-                  </div>
-                </div>
-              </div>
-
-              {/* LEAD 443.269-A item 5 (owner: miles everywhere) — the tour's miles from OUR database (lane history) and
-                  Google shortest / practical, real driven, and which one the bill uses: the same panel as Pre-Settlement. */}
-              <SettlementCloseMiles settlementId={settlement.id} operatingCompanyId={companyId} />
-
-              {/* Gross / earnings */}
-              <div className="border-t border-gray-100 pt-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-gray-900">Gross pay</span>
-                  <span className="font-semibold text-gray-900">{formatUsd(gross || earnings)}</span>
-                </div>
-              </div>
-
-              {/* Deductions */}
-              <div className="border-t border-gray-100 pt-2">
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Deductions</div>
-                {otherDeductions.length === 0 ? (
-                  <p className="text-xs text-gray-500">No deductions on this settlement.</p>
-                ) : (
-                  otherDeductions.map((l) => (
-                    <div key={l.id} className="flex items-center justify-between text-xs text-gray-700">
-                      <span>{l.description}</span>
-                      <span>-{formatUsd(Math.abs(l.amount))}</span>
-                    </div>
-                  ))
-                )}
-                <div className="mt-1 flex items-center justify-between border-t border-gray-100 pt-1 text-xs text-gray-600">
-                  <span>Deductions total</span>
-                  <span>-{formatUsd(Math.abs(otherDeductionsTotal))}</span>
-                </div>
-              </div>
-
-              {/* Escrow contribution + cap indicator */}
-              <div className="border-t border-gray-100 pt-2">
-                <div className="mb-1 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <span>Escrow contribution</span>
-                  <span>Cap {formatUsd(ESCROW_CAP_DOLLARS)}</span>
-                </div>
-                {escrowLines.length === 0 ? (
-                  <p className="text-xs text-gray-500">No escrow contribution on this settlement.</p>
-                ) : (
-                  escrowLines.map((l) => (
-                    <div key={l.id} className="flex items-center justify-between text-xs text-gray-700">
-                      <span>{l.description}</span>
-                      <span>-{formatUsd(Math.abs(l.amount))}</span>
-                    </div>
-                  ))
-                )}
-                <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
-                  <span>Contribution this settlement</span>
-                  <span>{formatUsd(escrowContributionThisSettlement)}</span>
-                </div>
-                <div className="mt-2">
-                  <div className="h-2 w-full rounded-sm bg-gray-200">
-                    <div className="h-2 rounded-sm bg-[#4B5563]" style={{ width: `${escrowCapPct}%` }} />
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
-                    <span>Current escrow balance: {formatUsd(currentEscrowTotal)}</span>
-                    <span className={escrowToCap === 0 ? "font-semibold text-[#1F2A44]" : ""}>
-                      {escrowToCap === 0 ? "At cap" : `${formatUsd(escrowToCap)} to cap`}
-                    </span>
-                  </div>
-                </div>
-                {/* LINK-F5187: debtQuery already fetches the driver's real open driver_finance.driver_liabilities
-                    rows (source_liabilities) to compute currentEscrowTotal above -- they were discarded after
-                    the sum, leaving no way to drill from this close screen to what the escrow balance is made of. */}
-                {((debtQuery.data?.source_liabilities as Array<{ id?: unknown; type?: unknown; current_balance?: unknown }> | undefined) ?? []).length > 0 ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-gray-100 pt-1 text-xs text-gray-600">
-                    <span>Open liabilities:</span>
-                    {(debtQuery.data?.source_liabilities as Array<{ id?: unknown; type?: unknown; current_balance?: unknown }>).map((liability, idx) => {
-                      const id = String(liability.id ?? "");
-                      if (!id) return null;
-                      return (
-                        <EntityLink
-                          key={id}
-                          kind="liability"
-                          id={id}
-                          label={entityLabel(String(liability.type ?? "Liability"), id, `#${idx + 1}`)}
-                          className="text-red-600 hover:underline"
-                        />
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </div>
-
-              {/* Advance recoveries */}
-              <div className="border-t border-gray-100 pt-2">
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Advance recoveries</div>
-                {advanceRecoveryLines.length === 0 ? (
-                  <p className="text-xs text-gray-500">No advance recovery on this settlement.</p>
-                ) : (
-                  advanceRecoveryLines.map((l) => (
-                    <div key={l.id} className="flex items-center justify-between text-xs text-gray-700">
-                      <span>{l.description}</span>
-                      <span>-{formatUsd(Math.abs(l.amount))}</span>
-                    </div>
-                  ))
-                )}
-                <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
-                  <span>Total active debt (all liabilities)</span>
-                  <span>{formatUsd(debtQuery.data?.total_active_debt ?? 0)}</span>
-                </div>
-              </div>
-
-              {/* Reimbursements */}
-              {reimbursements !== 0 ? (
-                <div className="border-t border-gray-100 pt-2">
-                  <div className="flex items-center justify-between text-xs text-gray-700">
-                    <span>Reimbursements</span>
-                    <span>{formatUsd(reimbursements)}</span>
-                  </div>
-                </div>
-              ) : null}
-
-              {/* NET */}
-              <div className="border-t border-gray-200 pt-2">
-                <div className="flex items-center justify-between text-xs font-semibold text-gray-900">
-                  <span>NET PAY</span>
-                  <span>{formatUsd(netPay)}</span>
-                </div>
-              </div>
-
-              {/* Payment method */}
-              <div className="border-t border-gray-100 pt-2">
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment method</div>
-                <div className="max-w-sm">
-                  <PaymentMethodPicker
-                    operatingCompanyId={companyId}
-                    value={paymentMethodId}
-                    onChange={(id, glAccountId) => {
-                      setPaymentMethodId(id);
-                      setPaymentMethodGlAccountId(glAccountId);
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Draft JE preview — SETL-F3552: ParityTable owns Search+Range+gear (raw HTML table skipped surface bar). */}
-              <div className="border-t border-gray-100 pt-2">
-                <ParityTable<DraftJeRow>
-                  title="Draft JE preview — not posted"
-                  titleInfo={
-                    <InfoPopover label="About the draft JE preview">
-                      <span className="block">
-                        Preview only — computed client-side from this settlement&apos;s lines for review before Close. Actual GL
-                        posting reuses the existing settlement posting path (behind SETTLEMENT_GL_POSTING_ENABLED).
-                      </span>
-                    </InfoPopover>
-                  }
-                  columns={draftJeColumns}
-                  rows={draftJeRows}
-                  rowKey={(row) => row.id}
-                  loading={false}
-                  emptyText="No draft JE lines for this settlement."
-                  storageKey="settlement-close-draft-je"
-                  exportFilename="settlement-close-draft-je"
-                  tableTestId="settlement-close-draft-je-table"
-                />
-              </div>
-
-              {/* Close action */}
-              <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
-                {!canClose ? <span className="text-xs text-gray-500">Your role cannot close settlements.</span> : null}
-                {isMaker ? (
-                  <span className="text-xs text-[#1F2A44]">You opened this settlement — a different approver must close it (maker ≠ checker).</span>
-                ) : null}
-                <Button
-                  disabled={!canSubmitClose || closeMut.isPending}
-                  loading={closeMut.isPending}
-                  onClick={() => closeMut.mutate()}
-                  title={isMaker ? "Maker ≠ checker — a different user must close this settlement." : undefined}
-                >
-                  Close settlement
-                </Button>
-              </div>
-            </div>
-              </V3Panel>
-            </>
+          {selectedDriverId && detailQuery.isError ? (
+            <p className="text-xs text-red-600">No active pre-settlement found for this driver.</p>
           ) : null}
+
+          {/* ROUND 443.280-A board — 2fr|1fr step body | Result. No layered form under the board. */}
+          <div
+            style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, alignItems: "start" }}
+            data-settlement-close-v3-board="1"
+            data-testid="settlement-close-v3-board"
+          >
+            {stepPanel}
+
+            <V3Panel title="Result" testId="settlement-close-result-panel">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <Button type="button" variant="secondary" onClick={goBack} data-testid="settlement-close-back">
+                  Back
+                </Button>
+                {wizardStep < 7 ? (
+                  <Button
+                    type="button"
+                    onClick={goNext}
+                    disabled={!settlement}
+                    data-testid="settlement-close-next"
+                  >
+                    {nextStepLabel(wizardStep)}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    disabled={!canSubmitClose || closeMut.isPending}
+                    loading={closeMut.isPending}
+                    onClick={() => closeMut.mutate()}
+                    data-testid="settlement-close-next-close"
+                  >
+                    Close settlement
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-0" data-testid="settlement-close-result-table">
+                <div
+                  className="grid grid-cols-2 gap-2 px-3 py-1.5 text-section-header font-semibold uppercase tracking-wide text-[#4B5563]"
+                  style={{ background: V3.page, borderBottom: `1px solid ${V3.border}` }}
+                >
+                  <span>Line</span>
+                  <span className="text-right">Amount</span>
+                </div>
+                {resultLines.map(([label, amount]) => (
+                  <div
+                    key={label}
+                    className="grid grid-cols-2 gap-2 px-3 py-1.5 text-xs"
+                    style={{ borderBottom: `1px solid ${V3.borderSoft}` }}
+                  >
+                    <span>{label}</span>
+                    <span className={`${QBO_MONEY_CELL_CLASS} text-right`}>
+                      {settlement ? formatUsd(amount) : "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </V3Panel>
+          </div>
         </div>
       )}
       <CreateDriverModal
@@ -871,7 +898,7 @@ export function SettlementCloseArrivalPage() {
         companyId={companyId}
         onClose={() => setDriverCreateOpen(false)}
         onCreated={(createdId) => {
-          setSelectedDriverId(createdId);
+          selectDriver(createdId);
           setDriverCreateOpen(false);
         }}
       />

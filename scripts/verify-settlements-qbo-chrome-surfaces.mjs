@@ -37,15 +37,21 @@ const CHECKS = [
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
     pattern: /\+ Create driver/,
   },
-  // ROUND 443.250 Settlements-Close.dc.html — V3 Result strip + step chrome + panel.
-  // Same closeSettlementPayRun / settleAndPay / line totals; chrome only.
+  // ROUND 443.280-A Settlements-Close.png — working 7-step wizard (no 6-tile KPI strip).
+  // Same closeSettlementPayRun / settleAndPay / line totals; board REPLACES body.
   {
-    name: "SettlementCloseArrivalPage V3KpiTile Result strip",
+    name: "SettlementCloseArrivalPage wizardStep + clickable steps + working Next",
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
-    pattern: /V3KpiTile[\s\S]*data-settlement-close-v3-kpis="1"|data-settlement-close-v3-kpis="1"[\s\S]*V3KpiTile/,
+    pattern:
+      /useState<CloseWizardStep>[\s\S]*data-settlement-close-v3-steps="1"[\s\S]*settlement-close-step-[\s\S]*settlement-close-next|wizardStep[\s\S]*setWizardStep[\s\S]*data-settlement-close-v3-steps="1"[\s\S]*settlement-close-next/,
+    forbiddenNear: {
+      pattern: /export function SettlementCloseArrivalPage[\s\S]*/,
+      forbid: /data-settlement-close-v3-kpis|V3KpiTile/,
+      message: "443.280-A: Close board has no 6-tile KPI strip (V3KpiTile / data-settlement-close-v3-kpis forbidden)",
+    },
   },
   {
-    name: "SettlementCloseArrivalPage V3 step strip + V3Panel",
+    name: "SettlementCloseArrivalPage V3 step strip + V3Panel board",
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
     pattern: /data-settlement-close-v3-steps="1"[\s\S]*V3Panel|V3Panel[\s\S]*data-settlement-close-v3-steps="1"/,
   },
