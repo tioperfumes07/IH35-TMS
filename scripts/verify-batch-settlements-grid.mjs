@@ -19,6 +19,9 @@ const FILES = {
   api: "apps/frontend/src/api/batchSettlements.ts",
   manifest: "apps/frontend/src/routes/manifest.tsx",
   settlementsPage: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+  // 443.271 (CC-2): the Settlements subnav moved to ONE config rendered by SettlementsModuleShell (0512ef14cd / 443.250).
+  subnav: "apps/frontend/src/pages/driver-finance/settlementsSubnav.ts",
+  shell: "apps/frontend/src/pages/driver-finance/SettlementsModuleShell.tsx",
   creator: "apps/backend/src/driver-finance/settlement-creator.service.ts",
 };
 
@@ -58,8 +61,9 @@ export function assertBatchSettlements(srcs) {
   if (!/path=\"\/driver-finance\/settlements\/batch\"/.test(srcs.manifest) || !/BatchSettlementsPage/.test(srcs.manifest)) {
     fails.push("manifest must mount BatchSettlementsPage at /driver-finance/settlements/batch");
   }
-  if (!/settlements\/batch/.test(srcs.settlementsPage)) {
-    fails.push("SettlementsPage subnav must link Batch Settlements");
+  if (!/\{ label: "Batch Settlements", to: "\/driver-finance\/settlements\/batch"/.test(srcs.subnav) ||
+      !/<NavyPageSubNav items=\{\[\.\.\.SETTLEMENTS_SUBNAV\]\}/.test(srcs.shell)) {
+    fails.push("Settlements subnav must link Batch Settlements");
   }
   if (!/export async function postSettlementCreatorInClientTx/.test(srcs.creator)) {
     fails.push("canonical settlement creator must remain the post path");
@@ -86,6 +90,12 @@ function main() {
     const planted = assertBatchSettlements({ ...srcs, page: `${srcs.page} text-[11px] #8A92AB` });
     if (!planted.some((f) => f.includes("leftover"))) {
       console.error(`${LABEL} FAIL: planted leftover tokens not detected`);
+      process.exit(1);
+    }
+    // 443.271: the subnav link is planted away in the ONE subnav config -> FAIL.
+    const unlinked = assertBatchSettlements({ ...srcs, subnav: srcs.subnav.replace('label: "Batch Settlements"', 'label: "Batch (gone)"') });
+    if (unlinked === null || !unlinked.some((f) => f.includes("subnav must link Batch Settlements"))) {
+      console.error(`${LABEL} FAIL: planted missing Batch Settlements subnav link not detected`);
       process.exit(1);
     }
     console.log(`${LABEL} OK --selftest`);

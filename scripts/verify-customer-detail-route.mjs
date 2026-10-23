@@ -33,7 +33,10 @@ function evaluate(sources) {
   if (!/FROM mdata\.get_customer_same_company\(\$1::uuid, \$2::uuid\) c\s+LIMIT 1/.test(block)) {
     failures.push("mdata customer detail must resolve the row through get_customer_same_company(id, selected company)");
   }
-  if (!/\[parsedParams\.data\.id, resolvedOperatingCompanyId\]/.test(block)) {
+  // 443.271 (CC-2): the block carries several resolver reads with the same bind list, so "the bind appears somewhere"
+  // let one swapped bind escape. EVERY get_customer_same_company read binds (id, selected company), and there is >= 1.
+  const resolverBinds = [...block.matchAll(/get_customer_same_company\(\$1::uuid, \$2::uuid\)(?: c)?\s+LIMIT 1\s*`?,\s*\[([^\]]*)\]/g)].map((m) => m[1].trim());
+  if (!resolverBinds.length || resolverBinds.some((b) => b !== "parsedParams.data.id, resolvedOperatingCompanyId")) {
     failures.push("mdata customer detail must bind id and resolved selected-company scope in that order");
   }
   if (!block.includes("mdata.customers.detail_viewed")) failures.push("mdata customer detail route must audit detail_viewed reads");

@@ -465,10 +465,10 @@
     {
       "id": "factoring.panel.factoring_profile",
       "tab": "Panels",
-      "sub": "Panel: Factoring Profile",
-      "route_hint": "surface://pages/factoring/FactoringProfilePanel.tsx",
+      "sub": "Panel: Factoring Profile (443.267 board: Terms on file + Edit Terms profile modal)",
+      "route_hint": "surface://pages/factoring/components/FactoringHomeBoard.tsx",
       "surface_kind": "panel",
-      "surface_path": "pages/factoring/FactoringProfilePanel.tsx",
+      "surface_path": "pages/factoring/components/FactoringHomeBoard.tsx",
       "required": [
         "connectivity"
       ]
