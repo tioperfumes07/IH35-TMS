@@ -8062,3 +8062,23 @@ action: OWNER_AUTH_ID=AUTH-451 DATABASE_URL=<prod> node --import tsx scripts/ops
 rehearsal: (10-23, CC-2 443.297 row 27) prod fork br-shy-lake-akubtbll, 202616170700 applied by the real runner in prod mode (+ integer-id cascade branch): 364 listed = 364 present = 364 deleted = 364 audit rows, 0 unlisted, TB 0 / 7,113 before and after, FORK COMMITTED; rerun 0 present / 0 deleted (idempotent). EARLIER: fresh prod fork br-flat-rain-akjpi4rg (23:56Z, 202616170700 applied, COMMITTED): 363 listed present, 364 deleted, 364 audit.record_deletions rows, 0 left; TB 0 across 7081 postings before and after; legal.matters 0, insurance.policy = 437539 / 437540 / CIMD-2026-0720, claim 0, lawsuit 0, accidents 0, dot_inspections 0, contract_instances 0, harsh_events 12; corrections read back; rerun refuses (corrections no longer in their measured state). Earlier fork br-frosty-breeze-akkws8jf: prod-vs-fork counts on 684 USMCA tables differed only on the listed tables
 expires_at: 2026-10-24T21:30:00Z
 status: OPEN
+
+## AUTH-461
+issued_at: 2026-10-24T15:26:00Z
+issued_by: Lead 443.310 (~/Downloads/10-24-2026-CC1-443.310-Duplicate-Settlements-Delete-And-Engine-Fix.md). Recorded by Lead so the runner's verify-owner-authorization gate can trace the order
+owner_quotes: "Then if they are duplicates they are completely deleted yes I follow your recommendation fix the engine" (owner 2026-10-24 10:26 AM CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the 3 duplicate driver settlements P-0123 / P-0124 / P-0125 (duplicates of the real P-0113 / P-0117 / P-0119, which are KEPT; P-0067 Rafael KEPT). Through accounting._purge_rows_cascade + _system.purge_authorized_rows. No GL row touched.
+action: OWNER_AUTH_ID=AUTH-461 DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-24-cc1-delete-duplicate-settlements-443310.mts --apply
+result: COMMITTED 2026-10-24 17:10:10Z — audit.record_deletions AUTH-461: driver_finance.driver_settlements 3; banking counts unchanged before/after
+expires_at: 2026-10-24T17:10:10Z
+status: CONSUMED
+
+## AUTH-462
+issued_at: 2026-10-24T17:16:00Z
+issued_by: Lead 443.319. Recorded by Lead so the runner's verify-owner-authorization gate can trace the order
+owner_quotes: "test recrods shuold be deleted permanently" (owner 2026-10-22 3:36 PM CT); "an account taht has a negative or positive number must always be visible ... only when there is no balance can it be not visible ... why are those escrows 0 dollars. it does not matter, just fix." (owner 2026-10-24 12:16 PM CT)
+scope: USMCA ONLY — the 11 accounting.escrow_accounts rows whose driver holder no longer exists (coder TEST drivers removed before the audited purge engine): balance $0, 0 escrow_postings, 0 driver_escrow_separations. The script refuses any account with a balance, a posting or a separation. Through accounting._purge_rows_cascade + _system.purge_authorized_rows. No GL row touched.
+action: OWNER_AUTH_ID=AUTH-462 DATABASE_URL=<prod> node --import tsx scripts/ops/2026-10-24-lead-443319-delete-orphan-test-escrow-accounts.mts --apply
+result: COMMITTED 2026-10-24 17:19:26Z — audit.record_deletions AUTH-462: accounting.escrow_accounts 11; 0 orphan escrow accounts left; USMCA 34 escrow accounts
+expires_at: 2026-10-24T17:19:26Z
+status: CONSUMED
