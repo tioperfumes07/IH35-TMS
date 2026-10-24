@@ -4014,8 +4014,8 @@ export function BankingTransactionsDesignView({
           })()}
         </div>
       </Modal>
-      {/* HELD financial-actions wiring — reuses the orphaned MatchDrawer (getMatchCandidates +
-      acceptBankReconMatch, already gated) instead of inventing a second match/accept flow. */}
+      {/* HELD financial-actions wiring — reuses MatchDrawer (canonical bank matcher, 443.163;
+      getMatchCandidates + acceptBankReconMatch, already gated) instead of a second flow. */}
       <PrintOrientationDialog
         open={printDialogOpen}
         title="Print bank transactions"

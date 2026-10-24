@@ -8,5 +8,10 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-banking-matchdrawer-uses-paritydrawer.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-banking-matchdrawer-uses-paritydrawer.mjs"]);
+    ctx.run("node", [
+      "scripts/verify-banking-designview-matchdrawer-canonical-comment.mjs",
+      "--selftest",
+    ]);
+    ctx.run("node", ["scripts/verify-banking-designview-matchdrawer-canonical-comment.mjs"]);
   },
 };
