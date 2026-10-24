@@ -80,8 +80,14 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
          GROUP BY bl.load_id
       ) bc ON bc.load_id = cl.id
       LEFT JOIN (
-        SELECT db.load_id, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
+        -- 443.278: use the settled AP bill amount when available (authoritative obligation);
+        -- fall back to driver_bills.gross for loads not yet settled/accrued.
+        SELECT db.load_id,
+               COALESCE(SUM(COALESCE(apb.amount_cents, db.gross_amount_cents)), 0)::bigint AS driver_pay_cents
           FROM driver_finance.driver_bills db
+          LEFT JOIN accounting.bills apb
+            ON apb.id = db.accrued_bill_id
+           AND apb.voided_at IS NULL
          WHERE db.load_id IS NOT NULL
            AND ${liveDriverBill("db")}
          GROUP BY db.load_id

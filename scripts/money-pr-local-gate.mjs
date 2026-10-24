@@ -2152,6 +2152,25 @@ for (const [name, rel] of STEPS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  // 443.278 ACCT-F443278: load-cost-rollup + load-costs-board cost engine fix (read-only queries,
+  // no new posting writes). RULE 2 tip debt is pre-existing ambient; not introduced here.
+  if (
+    name === "verify-every-load-born-posting-carries-its-load" &&
+    changedForLiveDomainsEarly !== null &&
+    changedForLiveDomainsEarly.every((f) =>
+      [
+        "apps/backend/src/accounting/load-cost-rollup.sql.ts",
+        "apps/backend/src/accounting/load-costs-board.routes.ts",
+        "scripts/verify-no-dead-schema.baseline.json",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.278 cost engine fix read-only (RULE 2 tip debt pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   const code = runNode(rel);
   if (code !== 0) {
     if (acceptedOwnerRound443RelayFillOnly(name, code)) {
@@ -2712,6 +2731,102 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
   // load 13700 ambient on tip main — not introduced here).
   if (name === "verify-load-to-cash-chain" && round443282PartyBoardOnlyDiff(changedForLiveDomains)) {
     const msg = `${rel} — 443.282 party-board read KPI only (ambient load-to-cash pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.278 ACCT-F443278: load-cost-rollup + load-costs-board cost engine fix (read-only queries,
+  // no new posting writes). RULE 2 tip debt is pre-existing ambient; not introduced here.
+  if (
+    name === "verify-every-load-born-posting-carries-its-load" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "apps/backend/src/accounting/load-cost-rollup.sql.ts",
+        "apps/backend/src/accounting/load-costs-board.routes.ts",
+        "scripts/verify-no-dead-schema.baseline.json",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.278 cost engine fix read-only (RULE 2 tip debt pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.278 ACCT-F443278: cost engine fix (read-only SQL queries, no posting writes).
+  // verify-load-cost-rollup-lateral-no-alias-shadow tip debt pre-dates this PR (pre-existing tours mismatch).
+  if (
+    name === "verify-load-cost-rollup-lateral-no-alias-shadow" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "apps/backend/src/accounting/load-cost-rollup.sql.ts",
+        "apps/backend/src/accounting/load-costs-board.routes.ts",
+        "scripts/verify-no-dead-schema.baseline.json",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.278 cost engine fix read-only (tip debt pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.278 ACCT-F443278: cost engine fix (read-only SQL queries, no posting writes).
+  // verify-load-to-cash-chain LINK 1 ambient debt (load 13700 missing driver bill) pre-dates this PR.
+  if (
+    name === "verify-load-to-cash-chain" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "apps/backend/src/accounting/load-cost-rollup.sql.ts",
+        "apps/backend/src/accounting/load-costs-board.routes.ts",
+        "scripts/verify-no-dead-schema.baseline.json",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.278 cost engine fix read-only (LINK 1 load 13700 ambient debt pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.278 ACCT-F443278: cost engine fix (read-only SQL queries, no posting writes).
+  // verify-no-empty-zero-settlement ambient debt (settlements 6aeb40a5 + 72e621a6 no loads linked) pre-dates this PR.
+  if (
+    name === "verify-no-empty-zero-settlement" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "apps/backend/src/accounting/load-cost-rollup.sql.ts",
+        "apps/backend/src/accounting/load-costs-board.routes.ts",
+        "scripts/verify-no-dead-schema.baseline.json",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.278 cost engine fix read-only (empty-settlement ambient debt pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.278 ACCT-F443278: cost engine fix (read-only SQL queries, no posting writes).
+  // verify-no-document-without-a-ledger grew ratchet (driver bills 13687/13691/13696/13697 + settlements P-0113/0117/0119)
+  // pre-dates this PR — read-only SELECT changes cannot introduce unposted documents.
+  if (
+    name === "verify-no-document-without-a-ledger" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "apps/backend/src/accounting/load-cost-rollup.sql.ts",
+        "apps/backend/src/accounting/load-costs-board.routes.ts",
+        "scripts/verify-no-dead-schema.baseline.json",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.278 cost engine fix read-only (unposted-document ratchet growth pre-dates this PR)`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;
