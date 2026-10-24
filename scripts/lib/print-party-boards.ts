@@ -25,7 +25,7 @@ try {
   const top = hub.rows.find((r) => r.status === "Active") ?? null;
   const overview = top ? await readDriverOverview(c as never, oc!, top.id) : null;
   await c.query("ROLLBACK");
-  process.stdout.write(JSON.stringify({ customers: { kpis: cust.kpis, chips: cust.chips, rows: cust.rows.length }, vendors: { kpis: vend.kpis, chips: vend.chips, rows: vend.rows.length }, drivers: { kpis: hub.kpis, chips: hub.chips, rows: hub.rows.length }, overview: overview ? { driver_id: top!.id, tiles: overview.tiles, settlements: overview.settlements.length, additional: overview.additional.length } : null }));
+  process.stdout.write(JSON.stringify({ customers: { kpis: cust.kpis, chips: cust.chips, rows: cust.rows.length }, vendors: { kpis: vend.kpis, chips: vend.chips, rows: vend.rows.length, pays_through_spend_cents: vend.pays_through.reduce((s, p) => s + p.spend_cents, 0) }, drivers: { kpis: hub.kpis, chips: hub.chips, rows: hub.rows.length }, overview: overview ? { driver_id: top!.id, tiles: overview.tiles, settlements: overview.settlements.length, additional: overview.additional.length } : null }));
 } finally {
   await c.end();
 }
