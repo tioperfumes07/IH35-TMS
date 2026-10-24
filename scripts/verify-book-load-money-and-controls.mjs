@@ -96,8 +96,10 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (!/className="h-7 w-full max-w-\[11rem\] text-xs"/.test(timeWindow)) {
     errors.push("Time window dropdown must be h-7 and width-capped");
   }
-  if (!/driver-pay-rate-per-mile[\s\S]{0,220}h-7 w-\[5\.5rem\][\s\S]{0,80}text-right[\s\S]{0,40}tabular-nums/.test(equipment)) {
-    errors.push("Driver pay rate must be h-7, narrow, right-aligned, tabular-nums");
+  // 443.258-B: driver_pay_rate_per_mile removed from Book Load — settlement owns the rate.
+  // Assert ABSENCE so a re-registration without the settlement owner fix is caught.
+  if (/register\("driver_pay_rate_per_mile"\)/.test(equipment)) {
+    errors.push("443.258-B: driver_pay_rate_per_mile must not be registered in Book Load (settlement owns the rate)");
   }
   const tripBannerStart = wizard.indexOf('data-testid="trip-type-banner"');
   const tripBanner = tripBannerStart >= 0 ? wizard.slice(tripBannerStart, tripBannerStart + 1800) : "";
@@ -153,7 +155,7 @@ if (process.argv.includes("--selftest")) {
     [lib.replace("sum + Number(row.amount_cents || 0)", "sum + Math.max(0, Number(row.amount_cents || 0))"), editor, wizard, equipment, timeWindow, moneyInput, numberInput],
     [lib, editor.replace("amount_cents: c ?? 0", "amount_cents: Math.max(0, c ?? 0)"), wizard, equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replaceAll("Invoice total", "Section total"), equipment, timeWindow, moneyInput, numberInput],
-    [lib, editor, wizard.replace("inline-flex h-7 shrink-0", "flex h-[46px] flex-1"), equipment, timeWindow, moneyInput, numberInput],
+    [lib, editor, wizard.replace("inline-flex h-7 overflow-hidden", "flex h-[46px] overflow-hidden"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('linehaulFuelError("linehaul"', 'linehaulFuelErrorDISABLED("linehaul"'), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('form.setError("linehaul_cents"', 'form.setErrorDISABLED("linehaul_cents"'), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard, equipment, timeWindow, moneyInput.replace("h-7 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs tabular-nums", "w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs"), numberInput],
@@ -162,7 +164,7 @@ if (process.argv.includes("--selftest")) {
     [lib, editor, wizard, equipment, timeWindow, moneyInput.replace("Incomplete typed states", "TYPED"), numberInput],
     [lib, editor.replace("accessorial-amounts-column-total", "accessorial-subtotal-only"), wizard, equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard, equipment, timeWindow.replace("h-7 w-full max-w-[11rem] text-xs", "h-8 w-full text-sm"), moneyInput, numberInput],
-    [lib, editor, wizard, equipment.replace("h-7 w-[5.5rem]", "h-7 w-full"), timeWindow, moneyInput, numberInput],
+    [lib, editor, wizard, equipment + '\n// mutation: {...register("driver_pay_rate_per_mile")}', timeWindow, moneyInput, numberInput],
   ];
   let caught = 0;
   for (const [index, args] of mutations.entries()) {

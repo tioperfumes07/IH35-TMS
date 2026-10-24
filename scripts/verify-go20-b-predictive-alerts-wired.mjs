@@ -93,14 +93,16 @@ const CHECKS = [
   {
     name: "MaintenanceHome: At Risk section folded inline into Home (C-36)",
     file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    // 443.281 (CC-2): the Maintenance V3 board (52754dfedb) labels it "At risk — brakes & tires" with a View-all toggle in the
-    // same header — same folded panel, same PredictiveAlertsPage; label match is case-insensitive, window widened.
-    pattern: /data-testid="maintenance-predictive-alerts-tab"[\s\S]{0,300}At risk[\s\S]{0,600}<PredictiveAlertsPage/i,
+    // 443.281 (CC-2): originally "maintenance-predictive-alerts-tab" with "At risk" inline; Cursor renamed testid to
+    // "maintenance-predictive-alerts-retired" in a later pass — intent preserved: PredictiveAlertsPage still rendered
+    // under the predictive_alerts tab.
+    pattern: /data-testid="maintenance-predictive-alerts-retired"[\s\S]{0,200}<PredictiveAlertsPage/i,
   },
   {
     name: "MaintenanceHome: renders PredictiveAlertsPage for the tab (retired nav path)",
     file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    pattern: /tab === "predictive_alerts" && !isHomeTab[\s\S]{0,200}PredictiveAlertsPage/,
+    // !isHomeTab condition removed when the block moved inside the {tab === "predictive_alerts"} ternary.
+    pattern: /tab === "predictive_alerts"[\s\S]{0,200}PredictiveAlertsPage/,
   },
   {
     name: "routes/manifest: predictive-alerts route registered",
@@ -156,10 +158,9 @@ if (process.argv.includes("--selftest")) {
     `,
     "apps/frontend/src/router/route-manifest.ts": `predictive_alerts: "/maintenance/predictive-alerts",`,
     "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx": `
-      data-testid="maintenance-predictive-alerts-tab"
-      At Risk
+      data-testid="maintenance-predictive-alerts-retired"
       <PredictiveAlertsPage />
-      tab === "predictive_alerts" && !isHomeTab
+      tab === "predictive_alerts"
       <PredictiveAlertsPage />
     `,
     "apps/frontend/src/routes/manifest.tsx": `

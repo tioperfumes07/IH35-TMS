@@ -17,7 +17,9 @@
  */
 import fs from "node:fs";
 
-const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
+const WORKFLOW_PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
+const STATEMENT_TAB_PAGE = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx";
+const LINE_MAPS = "apps/frontend/src/pages/driver-finance/settlementDetailLineMaps.ts";
 const EARNINGS = "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx";
 const DEADHEAD = "apps/frontend/src/pages/driver-finance/components/DeadheadPaySection.tsx";
 const EXTRA_PAY = "apps/frontend/src/pages/driver-finance/components/ExtraPaySection.tsx";
@@ -92,14 +94,25 @@ checkFile(DEDUCTIONS, "DeductionsSection", [
   { pattern: /isOpen/, description: "isOpen prop not found (lock at Close)" },
 ]);
 
-// SettlementDetailPage passes isOpen + S.1b fields
-checkFile(DETAIL_PAGE, "SettlementDetailPage", [
+// Workflow passes isOpen + S.1b fields via shared line maps
+checkFile(WORKFLOW_PAGE, "SettlementStatementWorkflowPage", [
   { pattern: /isOpen=\{!(?:settlementIsLocked|settlementIsReadOnly)\}/, description: "isOpen prop not passed to sections" },
+  { pattern: /buildSettlementLineViews/, description: "buildSettlementLineViews not used for section rows" },
+]);
+
+checkFile(LINE_MAPS, "settlementDetailLineMaps", [
   { pattern: /origin_city/, description: "origin_city not mapped from API response" },
   { pattern: /dest_city/, description: "dest_city not mapped from API response" },
   { pattern: /line_date/, description: "line_date not mapped from API response" },
   { pattern: /posting_account_number/, description: "posting_account_number not mapped from API response" },
   { pattern: /reimbursement_type/, description: "reimbursement_type not mapped from API response" },
+]);
+
+// Statement tab (443.293-A): read-only eight-section document
+checkFile(STATEMENT_TAB_PAGE, "SettlementDetailPage Statement tab", [
+  { pattern: /SettlementDocumentBody/, description: "SettlementDocumentBody not mounted on Statement tab" },
+  { pattern: /buildSettlementLineViews/, description: "buildSettlementLineViews not used on Statement tab" },
+  { pattern: /isOpen=\{false\}/, description: "Statement tab document must be read-only (isOpen={false})" },
 ]);
 
 if (failures > 0) {
