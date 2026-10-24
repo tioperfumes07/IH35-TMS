@@ -48,10 +48,27 @@ const DISPATCH_OVERVIEW = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx
 const ACCOUNTING_HUB = "apps/frontend/src/pages/accounting/AccountingHubPage.tsx";
 const PAYMENTS_PAGE = "apps/frontend/src/pages/accounting/PaymentsListPage.tsx";
 const BILL_PAYMENTS_PAGE = "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx";
+const RECURRING_BILL_LIST = "apps/frontend/src/pages/accounting/bills/RecurringBillList.tsx";
 
 function fail(msg) {
   console.error(`FAIL verify-money-kpi-strip-no-fake-zero-on-error: ${msg}`);
   process.exitCode = 1;
+}
+
+function checkRecurringBillList(src) {
+  if (!src.includes("kpiStrip={")) {
+    fail(`${RECURRING_BILL_LIST}: kpiStrip prop not found — did the KPI strip move?`);
+    return;
+  }
+  const kpiStripStart = src.indexOf("kpiStrip={");
+  const kpiStripBlock = src.slice(kpiStripStart, kpiStripStart + 1600);
+  if (!kpiStripBlock.includes("templatesQuery.isError")) {
+    fail(`${RECURRING_BILL_LIST}: kpiStrip block does not branch on templatesQuery.isError — KPI tiles will show fabricated zeros on a failed fetch.`);
+    return;
+  }
+  if (!/recurringKpiCard\(\s*"Active Templates"\s*,\s*"—"/.test(kpiStripBlock)) {
+    fail(`${RECURRING_BILL_LIST}: no "—" fallback tile found for the templatesQuery.isError branch.`);
+  }
 }
 
 function checkBillsPage(src) {
@@ -677,6 +694,7 @@ if (process.argv.includes("--selftest")) {
   selftest();
 } else {
   checkBillsPage(fs.readFileSync(BILLS_PAGE, "utf8"));
+  checkRecurringBillList(fs.readFileSync(RECURRING_BILL_LIST, "utf8"));
   checkSettlementsPage(fs.readFileSync(SETTLEMENTS_PAGE, "utf8"));
   checkInvoicesPage(fs.readFileSync(INVOICES_PAGE, "utf8"));
   checkExpensesPage(fs.readFileSync(EXPENSES_PAGE, "utf8"));

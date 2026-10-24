@@ -17,14 +17,33 @@ function stripComments(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/.*$/gm, "$1");
 }
 
+function listHasModuleBreadcrumb(src) {
+  const legacy =
+    /<Link to="\/accounting"[^>]*>\s*Accounting\s*<\/Link>/.test(src) &&
+    /<Link to="\/accounting\/bills"[^>]*>\s*Bills\s*<\/Link>/.test(src);
+  const viaSubNav =
+    /AccountingSubNavWrapper/.test(src) &&
+    /title="Recurring Bills"/.test(src) &&
+    /label:\s*"Bills"[\s\S]*href:\s*"\/accounting\/bills"/.test(src);
+  return legacy || viaSubNav;
+}
+
 function audit(listSrc, createSrc) {
   const failures = [];
   const list = stripComments(listSrc);
   const create = stripComments(createSrc);
-  for (const [file, src] of [[FILE, list], [CREATE, create]]) {
+  if (!listHasModuleBreadcrumb(list)) {
+    failures.push(
+      `${FILE}: breadcrumb must start at Accounting and link Bills (inline <Link> crumbs or AccountingSubNavWrapper + crumbs + title)`,
+    );
+  }
+  for (const [file, src] of [[CREATE, create]]) {
     if (!/<Link to="\/accounting"[^>]*>\s*Accounting\s*<\/Link>/.test(src)) failures.push(`${file}: breadcrumb must start at the Accounting home`);
     if (!/<Link to="\/accounting\/bills"[^>]*>\s*Bills\s*<\/Link>/.test(src)) failures.push(`${file}: breadcrumb must link the Bills parent`);
     if (/hasInAppHistory|navigate\(-1\)|history\.back\(/.test(src)) failures.push(`${file}: must not go back through browser history (U18)`);
+  }
+  if (/hasInAppHistory|navigate\(-1\)|history\.back\(/.test(list)) {
+    failures.push(`${FILE}: must not go back through browser history (U18)`);
   }
   if (!/<Link to="\/accounting\/bills\/recurring"[^>]*>\s*Recurring Bills\s*<\/Link>/.test(create)) {
     failures.push(`${CREATE}: breadcrumb must link the Recurring Bills parent`);
@@ -46,9 +65,18 @@ if (failures.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    { name: "list loses the Accounting crumb", list: (t) => t.replace(/<Link to="\/accounting" /, '<Link to="/home" ') },
+    {
+      name: "list loses the Accounting crumb",
+      list: (t) =>
+        t.includes("AccountingSubNavWrapper")
+          ? t.replace('title="Recurring Bills"', 'title="Recurring Bills X"')
+          : t.replace(/<Link to="\/accounting" /, '<Link to="/home" '),
+    },
     { name: "create goes back through history", create: (t) => t.replace('const goBack = () => navigate("/accounting/bills/recurring");', "const goBack = () => navigate(-1);") },
-    { name: "list goes back through history", list: (t) => t.replace("</Link>", "</Link><button onClick={() => navigate(-1)}>Back</button>") },
+    {
+      name: "list goes back through history",
+      list: (t) => `${t}\n<button onClick={() => navigate(-1)}>Back</button>`,
+    },
   ];
   let caught = 0;
   for (const m of mutations) {
