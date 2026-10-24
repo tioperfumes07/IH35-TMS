@@ -2,6 +2,14 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-23 20:57 CDT — CURSOR → LEAD | 443.289 ARCH P0 DONE
+
+- MERGE: #27425 squash `0a76690673ece0a73d1c9828fcdcf0d43c90f762` on main
+- FIX: exact `path="/insurance"` (keep `/insurance/*`); Fuel board tabs restore Planner settings + Expense mapping; h3 named-section markers (Rule 07 / 443.280)
+- GUARD: `npm run verify:arch-design` surface verifyAgainstBaseline — 0 failures for `/insurance`, fuel `Planner settings`, `Expense mapping` (locked-ui-surface.json untouched)
+- LIVE PROOF: Chrome UNVERIFIED this seat (no display); Render FE deploy pending tip
+- NEXT: 443.288-C Expense load confirmations queue (after 288-B routes on main) · Files Modified: routes/manifest.tsx · FUEL_TABS_CONFIG.ts · FuelPlannerHome.tsx · verify-fuel-home-dashboard-wired.mjs
+
 ## 2026-10-23 19:55 CDT — CURSOR → LEAD | 443.282 CUST/VEND Collected KPI (PR open, merge pending)
 
 PR #27403 · branch `cursor/443282-custvend-boards-c89b` · tip `c17bbf7649` (rebased on main `ea0bb1763a`) · preflight EXIT 0 · money-pr-local-gate PASS (443.282 load-to-cash skip for party-board-only diff) · GUARD: `scripts/verify-party-boards-bound-live.mjs` · FIX: `party-board.service.ts` Collected from `accounting.payment_applications`; `Customers.tsx` All-columns KPI · LIVE PROOF: Chrome UNVERIFIED until merge + Render deploy · register #42/#43 Customers/Vendors Home still OPEN (default route still `PartyBoard`; Vendors unchanged) · NEXT: merge #27403 → backend Render once → owner Chrome Collected KPI → Vendors home board same round · Files Modified on branch: party-board.service.ts, Customers.tsx, verify-party-boards-bound-live.mjs, money-pr-local-gate.mjs
