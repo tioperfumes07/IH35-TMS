@@ -466,6 +466,10 @@ export type EscrowDriverTimelineRow = {
   journal_entry_id?: string | null;
   journal_entry_date?: string | null;
   journal_entry_memo?: string | null;
+  /** ROW 215: per-load expansion — null for non-settlement postings or legacy settlement rows with no lines. */
+  load_id?: string | null;
+  load_number?: string | null;
+  load_date?: string | null;
 };
 
 function q(companyId: string) {
