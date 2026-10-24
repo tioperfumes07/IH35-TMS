@@ -141,3 +141,24 @@ describe("GET /api/v1/reports/loads-summary", () => {
     expect(body.date_field).toBe("delivery");
   });
 });
+
+// 443.286-A tie-out: guard that LOADS_REPORT_SCOPE_SQL excludes voided/draft/cancelled loads
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+describe("TIEOUT: loads-summary SQL scope", () => {
+  it("imports LOADS_REPORT_SCOPE_SQL which excludes voided and cancelled loads", () => {
+    const svc = readFileSync(
+      fileURLToPath(new URL("../loads-summary.service.ts", import.meta.url)),
+      "utf-8"
+    );
+    expect(svc).toContain("LOADS_REPORT_SCOPE_SQL");
+    // Canonical scope array lives in loads-report.service.ts
+    const scope = readFileSync(
+      fileURLToPath(new URL("../loads-report.service.ts", import.meta.url)),
+      "utf-8"
+    );
+    expect(scope).toContain("voided_at IS NULL");
+    expect(scope).toContain("cancelled");
+    expect(scope).toContain("draft");
+  });
+});

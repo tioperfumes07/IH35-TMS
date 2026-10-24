@@ -54,6 +54,8 @@ export async function getVendorReport(
   const filters: string[] = [
     `b.operating_company_id = $1::uuid`,
     `b.voided_at IS NULL`,
+    // status exclusion matches fin20-aging canonical pattern — ties to GL 2000 $126,443.92
+    `b.status NOT IN ('void', 'voided', 'draft')`,
     `b.bill_date BETWEEN $2::date AND $3::date`,
   ];
 
