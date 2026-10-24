@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { withCurrentUser } from "../auth/db.js";
-import { closeSettlementPayRun, SettlementPayRunError } from "./settlement-payrun-close.service.js";
+import { closeSettlementPayRun, postLoadBookendedSettlementGlAfterClose, SettlementPayRunError } from "./settlement-payrun-close.service.js";
 import { stampTripClosedForBookendedSettlement } from "./settlements-load-bookended.service.js";
 import { EscrowResolverError } from "./escrow-resolver.service.js";
 
