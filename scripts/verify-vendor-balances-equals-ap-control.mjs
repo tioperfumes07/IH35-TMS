@@ -85,7 +85,16 @@ try {
                        (SELECT DISTINCT r.driver_vendor_id::text FROM driver_finance.driver_settlement_gl_runs r
                          WHERE p.source_transaction_type = 'driver_settlement'
                            AND r.settlement_id::text = p.source_transaction_id::text
-                           AND r.operating_company_id = p.operating_company_id)) vendor_id,
+                           AND r.operating_company_id = p.operating_company_id),
+                       -- 443.328 ENG-39: bill_payment legs (Dr A/P, entity_type='driver') are attributed via the
+                       -- payment's bill → bill.vendor_id. The AP chain posts net-pay bill payments with entity_type
+                       -- 'driver' rather than 'vendor'; they cannot be repointed but are attributed here through
+                       -- the bill they pay down.
+                       (SELECT COALESCE(NULLIF(b.vendor_id, ''), NULLIF(b.vendor_uuid, ''))
+                          FROM accounting.bill_payments bp
+                          JOIN accounting.bills b ON b.id = bp.bill_id
+                         WHERE p.source_transaction_type = 'bill_payment'
+                           AND bp.id::text = p.source_transaction_id)) vendor_id,
               sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END)::bigint gl_cents
          FROM accounting.journal_entry_postings p
         WHERE p.account_id = $1::uuid AND p.operating_company_id = $2::uuid GROUP BY 1),
