@@ -8,6 +8,22 @@ import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { openCanonicalDocument } from "../../../lib/openPrintableDocument";
 
+const L = {
+  panelTitle: "Linked records",
+  panelFooter: "Every link opens its record and comes back here (two-way).",
+  colRecord: "Record",
+  colLink: "Link",
+  rowLoads: "Loads",
+  rowFuel: "Fuel fills on this tour",
+  rowAdvances: "Advances recovered",
+  rowBank: "Bank payment",
+  rowBankLabel: "Bank line →",
+  rowJE: "Journal entry",
+  rowJELabel: "JE →",
+  rowSigned: "Signed document",
+  rowSignedPdf: "Statement PDF →",
+};
+
 const th: CSSProperties = {
   textAlign: "left",
   fontSize: V3_TABLE.headerPx,
@@ -65,20 +81,20 @@ export function SettlementStatementLinkedRecordsPanel({
 
   return (
     <V3Panel
-      title="Linked records"
+      title={L.panelTitle}
       testId="settlement-statement-panel-linked"
-      footer="Every link opens its record and comes back here (two-way)."
+      footer={L.panelFooter}
     >
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr>
-            <th style={th}>Record</th>
-            <th style={th}>Link</th>
+            <th style={th}>{L.colRecord}</th>
+            <th style={th}>{L.colLink}</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td style={td}>Loads</td>
+            <td style={td}>{L.rowLoads}</td>
             <td style={{ ...td, whiteSpace: "normal" }}>
               {legs.length === 0 ? (
                 "—"
@@ -99,7 +115,7 @@ export function SettlementStatementLinkedRecordsPanel({
             </td>
           </tr>
           <tr>
-            <td style={td}>Fuel fills on this tour</td>
+            <td style={td}>{L.rowFuel}</td>
             <td style={td}>
               {fuelFillCount > 0 ? (
                 <LinkCell>
@@ -125,7 +141,7 @@ export function SettlementStatementLinkedRecordsPanel({
                       fontSize: V3_TABLE.fontPx,
                     }}
                   >
-                    {fuelFillCount} fill{fuelFillCount === 1 ? "" : "s"} →
+                    {`${fuelFillCount} fill${fuelFillCount === 1 ? "" : "s"} →`}
                   </button>
                 </LinkCell>
               ) : (
@@ -134,23 +150,23 @@ export function SettlementStatementLinkedRecordsPanel({
             </td>
           </tr>
           <tr>
-            <td style={td}>Advances recovered</td>
+            <td style={td}>{L.rowAdvances}</td>
             <td style={tdRight} className={QBO_MONEY_CELL_CLASS}>
               {recoveriesCents > 0 ? formatUsdCents(recoveriesCents) : "—"}
             </td>
           </tr>
           <tr>
-            <td style={td}>Bank payment</td>
+            <td style={td}>{L.rowBank}</td>
             <td style={td}>
               {matchedBankTransactionId ? (
-                <EntityLink kind="bank_transaction" id={matchedBankTransactionId} label="Bank line →" />
+                <EntityLink kind="bank_transaction" id={matchedBankTransactionId} label={L.rowBankLabel} />
               ) : (
                 "—"
               )}
             </td>
           </tr>
           <tr>
-            <td style={td}>Journal entry</td>
+            <td style={td}>{L.rowJE}</td>
             <td style={td}>
               <LinkCell>
                 <button
@@ -167,13 +183,13 @@ export function SettlementStatementLinkedRecordsPanel({
                     fontSize: V3_TABLE.fontPx,
                   }}
                 >
-                  JE →
+                  {L.rowJELabel}
                 </button>
               </LinkCell>
             </td>
           </tr>
           <tr>
-            <td style={{ ...td, borderBottom: "none" }}>Signed document</td>
+            <td style={{ ...td, borderBottom: "none" }}>{L.rowSigned}</td>
             <td style={{ ...td, borderBottom: "none" }}>
               {hasSignedPdf ? (
                 <LinkCell>
@@ -196,7 +212,7 @@ export function SettlementStatementLinkedRecordsPanel({
                       fontSize: V3_TABLE.fontPx,
                     }}
                   >
-                    {settlementDisplayId ? `${settlementDisplayId}.pdf →` : "Statement PDF →"}
+                    {settlementDisplayId ? `${settlementDisplayId}.pdf →` : L.rowSignedPdf}
                   </button>
                 </LinkCell>
               ) : (
