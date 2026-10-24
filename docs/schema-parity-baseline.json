@@ -676,6 +676,7 @@
       "merchant_address",
       "non_owned_trailer_id",
       "operating_company_id",
+      "parent_expense_id",
       "payee_customer_uuid",
       "payee_kind",
       "payment_account_uuid",
@@ -713,8 +714,7 @@
       "vendor_uuid",
       "void_reason",
       "voided_at",
-      "voided_by_user_id",
-      "parent_expense_id"
+      "voided_by_user_id"
     ],
     "accounting.expenses_review_queue": [
       "amount_cents",

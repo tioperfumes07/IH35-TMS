@@ -91,6 +91,7 @@ import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellation-reasons.routes.js";
 import { registerLoadExceptionReasonRoutes } from "./catalogs/load-exception-reasons.routes.js";
 import { registerVoidCancelReasonRoutes } from "./catalogs/void-cancel-reasons.routes.js";
+import { registerOverrideReasonRoutes } from "./catalogs/override-reasons.routes.js";
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerDispatchCatalogRoutes } from "./catalogs/dispatch/index.js";
 import { registerFactoringQueueRoutes } from "./dispatch/factoring-queue.routes.js";
@@ -1007,6 +1008,7 @@ async function main() {
   await registerLoadCancellationReasonRoutes(app);
   await registerLoadExceptionReasonRoutes(app);
   await registerVoidCancelReasonRoutes(app);
+  await registerOverrideReasonRoutes(app);
   await registerDispatchFlagColorRoutes(app);
   // ─── Safety catalog routes (T11.21.2A) ───
   await registerSafetyCatalogRoutes(app);
