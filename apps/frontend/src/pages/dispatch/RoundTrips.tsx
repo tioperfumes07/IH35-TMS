@@ -19,6 +19,8 @@ import { RoundTripsTimeline, defaultTimelineRange } from "./RoundTripsTimeline";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import { SelectCombobox } from "../../components/Combobox";
 import { loadStatusLabel } from "../../lib/load-status";
+import { lastDeliveredLoadId } from "../../lib/closeSettlementHref";
+import { CloseSettlementLink } from "../../components/dispatch/CloseSettlementLink";
 
 const SORT_KEY = "ih35.roundTrips.sort";
 const VIEW_KEY = "ih35.roundTrips.view";
@@ -244,11 +246,14 @@ function TripCard({
   tag,
   operatingCompanyId,
   onClick,
+  closeSettlement,
 }: {
   load: DispatchLoadRow;
   tag?: string;
   operatingCompanyId: string;
   onClick: (loadId: string) => void;
+  /** Set only when this load is the tour's last delivered leg. */
+  closeSettlement?: { driverId: string; settlementId?: string | null } | null;
 }) {
   return (
     <div
@@ -305,6 +310,15 @@ function TripCard({
         {formatMoneyCents(load.rate_total_cents, load.currency_code)}
       </div>
       <TripCardCostRow loadId={load.id} operatingCompanyId={operatingCompanyId} currencyCode={load.currency_code} />
+      {closeSettlement?.driverId ? (
+        <div className="mt-1.5">
+          <CloseSettlementLink
+            driverId={closeSettlement.driverId}
+            settlementId={closeSettlement.settlementId}
+            testId="dispatch-load-close-settlement"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -509,6 +523,14 @@ export function RoundTrips({
     return copy;
   }, [idleUnitsQuery.data?.units, loads, preSettlementsQuery.data?.pre_settlements, sort, selectedUnitId]);
 
+  const openSettlementByDriver = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const row of preSettlementsQuery.data?.pre_settlements ?? []) {
+      if (row.driver_id && row.settlement_id) map.set(row.driver_id, row.settlement_id);
+    }
+    return map;
+  }, [preSettlementsQuery.data?.pre_settlements]);
+
   if (listError) {
     return (
       <ListErrorState
@@ -636,6 +658,8 @@ export function RoundTrips({
             const cells = legs.length ? legs : [null];
             const hasSb = legs.some((load) => resolvedTripType(load, chrono.indexOf(load), chrono) === "SB");
             const deliveredCount = legs.filter((load) => DELIVERED_OR_BEYOND_STATUSES.has(load.status)).length;
+            const lastDeliveredId = lastDeliveredLoadId(legs.map((load) => ({ load_id: load.id, status: load.status })));
+            const tourSettlementId = pair.driverId ? openSettlementByDriver.get(pair.driverId) ?? null : null;
             // ROUND-20.2 border-left law: the tour card stays the standing navy #14314F until every
             // leg has delivered AND an SB actually exists (a tour with only NB/TR delivered but no
             // SB booked yet is not "done" — it still needs its return leg before it can close).
@@ -691,6 +715,13 @@ export function RoundTrips({
                   {legs.length > 0 ? (
                     <TourHeaderMoney legs={legs} deliveredCount={deliveredCount} operatingCompanyId={operatingCompanyId} />
                   ) : null}
+                  {pair.driverId && legs.length > 0 ? (
+                    <CloseSettlementLink
+                      driverId={pair.driverId}
+                      settlementId={tourSettlementId}
+                      testId="dispatch-tour-close-settlement"
+                    />
+                  ) : null}
                 </div>
                 <div className="flex min-w-max gap-0 p-2">
                   {cells.map((load, idx) => (
@@ -710,6 +741,17 @@ export function RoundTrips({
                                 : "NB"
                           }
                           onClick={onLoadClick}
+                          closeSettlement={
+                            load.id === lastDeliveredId
+                              ? {
+                                  driverId: load.assigned_primary_driver_id ?? pair.driverId ?? "",
+                                  settlementId:
+                                    (load.assigned_primary_driver_id
+                                      ? openSettlementByDriver.get(load.assigned_primary_driver_id)
+                                      : null) ?? tourSettlementId,
+                                }
+                              : null
+                          }
                         />
                       ) : pair.needsReturn ? (
                         <NeedsReturnCard unitId={pair.unitId} driverId={pair.driverId} onBookReturn={onBookReturn} />

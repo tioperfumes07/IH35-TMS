@@ -26,6 +26,8 @@ import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
 import { TourPreSettlementTab } from "./TourPreSettlementTab";
 import { getTourReadoutForLoad } from "../../api/tourReadout";
+import { lastDeliveredLoadId } from "../../lib/closeSettlementHref";
+import { CloseSettlementLink } from "./CloseSettlementLink";
 import { TourSettlementTab } from "./TourSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
 import { TelematicsLinksPanel } from "../telematics/TelematicsLinksPanel";
@@ -252,6 +254,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   const dispatchLoadQuery = useDispatchLoad(loadId, operatingCompanyId);
   const mdataLoadQuery = useLoad(loadId, operatingCompanyId);
   const load = (dispatchLoadQuery.data ?? mdataLoadQuery.data) as LoadDetail | undefined;
+  // ROUND 443.293-B — the load shows Close settlement only when it is the open tour's last delivered leg.
+  const lastDeliveredOnTourId = lastDeliveredLoadId(tourChip.data?.legs ?? []);
+  const showLoadCloseSettlement = Boolean(
+    load && headerTour?.is_open && headerTour.driver_id && load.id === lastDeliveredOnTourId,
+  );
   const loadQueryIsLoading =
     !load && (mdataLoadQuery.isLoading || Boolean(operatingCompanyId && dispatchLoadQuery.isLoading));
   const loadQueryIsError =
@@ -782,6 +789,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                   into one clearly-labeled control" they collapse to ONE in-place "Record expense" here
                   (stays on the load — best UX). The full-page creator (/accounting/expenses/new) is NOT
                   removed — it remains reachable from Accounting, so no creator surface is lost (Rule 07). */}
+              {showLoadCloseSettlement && headerTour?.driver_id ? (
+                <CloseSettlementLink
+                  driverId={headerTour.driver_id}
+                  settlementId={headerTour.settlement_id}
+                  testId="load-detail-close-settlement"
+                />
+              ) : null}
               <Button
                 type="button"
                 variant="secondary"
