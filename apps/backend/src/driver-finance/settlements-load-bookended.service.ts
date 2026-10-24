@@ -225,7 +225,7 @@ export async function openLoadBookendedSettlement(
   // needing to open a NEW settlement here (loads joining an already-open settlement never hit
   // this line at all, which is why some loads silently succeeded and others didn't). new Date(...)
   // normalizes correctly whether tripStartedAt arrives as a Date object or an ISO string.
-  const periodDate = companyBusinessDate(new Date(tripStartedAt));
+  const periodDate = new Date(tripStartedAt).toISOString().slice(0, 10);
 
   // OWNER-NUMBERING-RULE (2026-09-08 permanent ruling): settlement display_id must be generated
   // by driver_finance.next_settlement_display_id (S-YYYY-NNNN sequence), NEVER derived from the
