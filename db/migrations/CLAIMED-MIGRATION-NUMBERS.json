@@ -969,5 +969,10 @@
     "claimed_by": "LEAD",
     "claimed_at": "2026-10-24",
     "purpose": "LEAD 443.319: refuse deleting an mdata.drivers / mdata.vendors row while an accounting.escrow_accounts row still points at it (11 orphan escrow accounts measured 10-24)"
+  },
+  "202616240300": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "LEAD 443.339: uq_driver_settlements_one_open_per_driver counts only settlements open FOR NEW LOADS (status 'open' AND trip_closed_at IS NULL) \u2014 a trip-closed settlement waiting on its after-commit post no longer blocks the driver's next settlement"
   }
 }
