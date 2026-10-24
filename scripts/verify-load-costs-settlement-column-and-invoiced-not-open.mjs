@@ -19,8 +19,9 @@ const rules=[
  ['page','key: "settlement", label: "Settlement/Tour", testId: "col-settlement"'],
  ['page','settlement_display_id: string | null;'],
  ['page','settlement_id: string | null;'],
- ['route','${loadCostsRevenueJoin("l")}'],
- ['route','revenue.is_invoiced'],
+ // ENG-52 (2026-10-24): board now mounts loadCostRollupLateral (verify-money-surfaces-agree RULE1)
+ ['route','${loadCostRollupLateral("l.id", "l.operating_company_id")}'],
+ ['route','lcr.is_invoiced'],
  ['model',"i.status NOT IN ('draft','proforma','void','voided')"],
  ['page','is_invoiced: boolean;'],
  ['page','const isClosed = (r: BoardRow) => CLOSED.includes(r.status);'],
