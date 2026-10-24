@@ -117,6 +117,7 @@ export function CompanySettlementsPage() {
   const withCompany = tourRows.filter((r) => Boolean(r.company_settlement_id)).length;
   const notOpened = tourRows.length - withCompany;
   const totalMargin = tourRows.reduce((sum, r) => sum + r.margin_cents, 0);
+  const netRevenue = tourRows.reduce((sum, r) => sum + r.revenue_cents, 0);
 
   useEffect(() => {
     if (!deepLinkId || selected) return;
@@ -305,6 +306,12 @@ export function CompanySettlementsPage() {
           value={toursQuery.isError ? "—" : formatUsdCents(totalMargin)}
           sub="sum of tour margin"
           testId="company-settlements-kpi-margin"
+        />
+        <V3KpiTile
+          label="Net Revenue"
+          value={toursQuery.isError ? "—" : formatUsdCents(netRevenue)}
+          sub="sum of tour revenue"
+          testId="company-settlements-kpi-net-revenue"
         />
       </div>
 
