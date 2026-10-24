@@ -1212,5 +1212,12 @@
     "verify_step": 18757,
     "added": "2026-10-24",
     "seat": "CC-1"
+  },
+  {
+    "id": "ROW-216-BILL-PAYMENTS-LIST-EXCLUDES-DEDUCTIONS",
+    "title": "Bill Payments list (listBillPayments) excludes settlement deductions (settlement_deduction_noncash IS NOT TRUE); per-bill drill-through keeps them",
+    "source_file": "apps/backend/src/accounting/bills.service.ts",
+    "guard": "scripts/verify-bill-payments-list-excludes-deductions.mjs",
+    "type": "enforced"
   }
 ]
