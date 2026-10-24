@@ -34,12 +34,13 @@ const GAP_RATCHET = {
   // 2026-10-22 Neon measure (443.258-B ship): live unposted invoices = 1 (was 26). Shrink-only.
   "accounting.invoices": 1,
   "fuel.fuel_transactions": 0,
-  // 2026-10-22 Neon br-fancy-credit-akjnd07a bypass_rls=lucia USMCA (Cursor Lead 443.258-B):
-  // driver_bills load 13691 (ddd8e222, $354.51, settled_in set, load delivered_pending_docs,
-  // created 2026-10-21) and its covering closed settlement display_id P-0117 (38b332c4,
-  // posted_at NULL, source_document_ref NULL) have no live JE — GREW past prior baseline 0.
-  // Posting close is CC-1 settlement-ap-chain / payrun lane; this non-money formatters PR does
-  // not invent GL. Remove (back to 0) when CC-1 posts P-0117 + 13691.
+  // 2026-10-24 (CC-1 443.322 ENG-01): P-0113/P-0117/P-0119 — 3 load-bookended settlements
+  // with status=closed, posted_at=NULL, 0 JE postings. Root cause: settlement-payrun-close.routes.ts
+  // close-trip endpoint called stampTripClosedForBookendedSettlement but never called
+  // postLoadBookendedSettlementGlAfterClose. Code fixed in this PR. DB trigger added (migration
+  // 202616230800) for non-load-bookended models. Ops script to post the 3 settlements:
+  //   scripts/ops/2026-10-24-cc1-post-unposted-settlements-eng01.mts --apply
+  // Lower both ratchets to 0 AFTER ops script confirms all 3 settlements posted on prod.
   "driver_finance.driver_bills": 1,
   "driver_finance.driver_settlements": 1,
 };
