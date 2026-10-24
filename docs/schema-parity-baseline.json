@@ -3622,6 +3622,22 @@
       "name",
       "region"
     ],
+    "catalogs.override_reasons": [
+      "contexts",
+      "created_at",
+      "created_by_user_id",
+      "deactivated_at",
+      "id",
+      "is_active",
+      "label_en",
+      "label_es",
+      "operating_company_id",
+      "reason_code",
+      "role_only",
+      "sort_order",
+      "system_seeded",
+      "updated_at"
+    ],
     "catalogs.parts": [
       "applies_to_unit_class",
       "created_at",
