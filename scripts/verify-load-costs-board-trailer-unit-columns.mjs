@@ -50,8 +50,8 @@ const src = fs.readFileSync(FILE, "utf8");
 if (process.argv.includes("--selftest")) {
   const mutations = [
     src.replace(
-      /LEFT JOIN LATERAL \(\s*SELECT eq\.equipment_number[\s\S]*?\) tr ON true/,
-      "LEFT JOIN mdata.equipment tr ON tr.id=l.trailer_id AND tr.operating_company_id=l.operating_company_id",
+      /\$\{loadServiceTrailerNumberSql\("l",\s*"tr"\)\}\s+AS\s+trailer_number/,
+      "l.trailer_id AS trailer_number",
     ),
     src.replace(
       "COALESCE(u.currently_leased_to_company_id, u.owner_company_id)=l.operating_company_id",
