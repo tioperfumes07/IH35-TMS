@@ -147,6 +147,17 @@ function contractErrors(src) {
     errors.push("VERIFY-3: createPayment must not write RETIRE schemas");
   }
 
+  // 443.293-C — V3 board grammar: kpiStrip on AccountingSubNavWrapper (not filterBar money theater).
+  if (!src.list.includes("kpiStrip") || !src.list.includes("payments-kpi-strip")) {
+    errors.push("443.293-C: PaymentsListPage must pass kpiStrip (payments-kpi-strip)");
+  }
+  if (/Total:\s*\{query\.isError/.test(src.list) || /<span>Total:/.test(src.list)) {
+    errors.push("443.293-C: PaymentsListPage must not keep filterBar Total/Open/Variance money theater after kpiStrip promote");
+  }
+  if (/\bCollapsedListFilters\b/.test(src.list) || !/\bMoneyListToolbar\b/.test(src.list)) {
+    errors.push("443.293-C: PaymentsListPage must use MoneyListToolbar (no CollapsedListFilters)");
+  }
+
   if (!src.list.includes('kind="customer"')) {
     errors.push("VERIFY-4: PaymentsListPage must EntityLink customer");
   }
@@ -170,7 +181,7 @@ function selftest() {
     // Must include ACCOUNTING_SUB_NAV_ITEMS + top-row leafOf (NAV-RECEIVE-PAYMENT-01).
     subnav:
       'export const ACCOUNTING_SUB_NAV_ITEMS = [\n  leafOf("/accounting"),\n  leafOf("/accounting/payments"),\n];\n/accounting/payments\n',
-    list: 'RecordPaymentModal\nkind="customer"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\n',
+    list: 'RecordPaymentModal\nkind="customer"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nkpiStrip\npayments-kpi-strip\nMoneyListToolbar\n',
     detail: 'kind="customer"\nkind="invoice"\nkind="account"\n',
     modal: [
       "ParityDrawer",
@@ -204,10 +215,26 @@ function selftest() {
   }
   const noCustomerLink = {
     ...good,
-    list: 'RecordPaymentModal\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\n',
+    list: 'RecordPaymentModal\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nkpiStrip\npayments-kpi-strip\nMoneyListToolbar\n',
   };
   if (!contractErrors(noCustomerLink).some((e) => e.includes("PaymentsListPage must EntityLink customer"))) {
     console.error(`${LABEL} --selftest FAIL missing customer EntityLink on list not caught`);
+    process.exit(1);
+  }
+  const noKpiStrip = {
+    ...good,
+    list: 'RecordPaymentModal\nkind="customer"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nMoneyListToolbar\n',
+  };
+  if (!contractErrors(noKpiStrip).some((e) => e.includes("kpiStrip"))) {
+    console.error(`${LABEL} --selftest FAIL missing kpiStrip not caught`);
+    process.exit(1);
+  }
+  const filterBarTheater = {
+    ...good,
+    list: 'RecordPaymentModal\nkind="customer"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nkpiStrip\npayments-kpi-strip\nMoneyListToolbar\n<span>Total: {query.isError ? "—" : money(totals.total)}</span>\n',
+  };
+  if (!contractErrors(filterBarTheater).some((e) => e.includes("filterBar Total"))) {
+    console.error(`${LABEL} --selftest FAIL filterBar money theater not caught`);
     process.exit(1);
   }
   // Engine shape (heavy CI peel): the route delegates; the INSERT lives in the engine.

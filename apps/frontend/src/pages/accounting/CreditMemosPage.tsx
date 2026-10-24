@@ -27,7 +27,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { SelectCombobox } from "../../components/Combobox";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useToast } from "../../components/Toast";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { useAuth } from "../../auth/useAuth";
@@ -35,6 +35,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 // ACCT-F5606 — AR mirror of VendorCreditsPage.tsx's proven AP shape.
 
@@ -76,15 +77,9 @@ export function CreditMemosPage() {
   // voided' off on fresh load"). This page had NO default-hide at all — the empty-string state
   // meant "all statuses," mixing voided credit memos into a fresh load with no way to hide them.
   // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); default Active.
+  // FILTER-MULTI-01 — live apply (no staged Apply/Cancel popover).
   const [statusFilter, setStatusFilter] = useState<Array<CreditMemoStatus | "active">>(["active"]);
-  const staged = useStagedListFilters({
-    applied: { statusFilter, customerId: customerFilter },
-    empty: { statusFilter: ["active"] as Array<CreditMemoStatus | "active">, customerId: "" },
-    onApply: (next) => {
-      setStatusFilter(next.statusFilter);
-      setCustomerFilter(next.customerId);
-    },
-  });
+  const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedCreditMemoId, setSelectedCreditMemoId] = useState<string | null>(deepLinkCreditMemoId);
   const [applyOpen, setApplyOpen] = useState(false);
@@ -262,37 +257,96 @@ export function CreditMemosPage() {
     return (creditMemosQuery.data?.credit_memos ?? []).find((c) => c.customer_id === customerFilter)?.customer_name ?? null;
   }, [customerOptions, creditMemosQuery.data?.credit_memos, customerFilter]);
 
+  const memoRows = useMemo(() => {
+    const all = creditMemosQuery.data?.credit_memos ?? [];
+    const q = search.trim().toLowerCase();
+    if (!q) return all;
+    return all.filter((row) => {
+      const hay = [
+        row.display_id,
+        row.customer_name,
+        row.customer_id,
+        row.status,
+        String(row.amount_cents ?? ""),
+        String(row.amount_unapplied_cents ?? ""),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [creditMemosQuery.data?.credit_memos, search]);
+
+  const memoKpis = useMemo(() => {
+    return memoRows.reduce(
+      (acc, row) => {
+        acc.total += Number(row.amount_cents ?? 0) || 0;
+        acc.unapplied += Number(row.amount_unapplied_cents ?? 0) || 0;
+        if ((Number(row.amount_unapplied_cents ?? 0) || 0) > 0) acc.openCount += 1;
+        return acc;
+      },
+      { total: 0, unapplied: 0, openCount: 0 },
+    );
+  }, [memoRows]);
+
+  const creditMemosActiveFilterCount =
+    (statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (customerFilter ? 1 : 0);
+
   const filterBar = (
-    <div className="flex flex-wrap items-end gap-3" data-credit-memos-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={(statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (customerFilter ? 1 : 0)} testIdPrefix="credit-memos" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
-        <div className="flex flex-wrap gap-2">
-          <label className="text-xs text-[#4B5563]">
-            Customer
-            <EntityMultiSelect
-              kind="customer"
-              operatingCompanyId={companyId}
-              value={staged.draft.customerId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, customerId: next ?? "" })}
-              placeholder="All customers"
-              className="mt-1"
-              dataTestId="credit-memos-filter-customer"
-            />
-          </label>
-          <MultiSelectDropdown
-            label="Status"
-            options={statusOptions({ "active": "Active (hide voided)", "draft": "Draft", "issued": "Issued", "applied": "Applied", "voided": "Voided" })}
-            selected={staged.draft.statusFilter}
-            onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next as Array<CreditMemoStatus | "active"> })}
-            allLabel="All statuses (include voided)"
-            data-testid="credit-memos-status-filter"
+    <div className="space-y-2 w-full" data-credit-memos-filter-toolbar="visible">
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search memo # · customer · status"
+        searchTestId="credit-memos-search-input"
+        onClearAll={() => {
+          setSearch("");
+          setStatusFilter(["active"]);
+          setCustomerFilter("");
+        }}
+        activeFilterCount={creditMemosActiveFilterCount}
+        testIdPrefix="credit-memos"
+      >
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Customer
+          <EntityMultiSelect
+            kind="customer"
+            operatingCompanyId={companyId}
+            value={customerFilter || null}
+            onChange={(next) => setCustomerFilter(next ?? "")}
+            placeholder="All customers"
+            dataTestId="credit-memos-filter-customer"
           />
-        </div>
-      </CollapsedListFilters>
+        </label>
+        <MultiSelectDropdown
+          label="Status"
+          options={statusOptions({
+            active: "Active (hide voided)",
+            draft: "Draft",
+            issued: "Issued",
+            applied: "Applied",
+            voided: "Voided",
+          })}
+          selected={statusFilter}
+          onChange={(next) => setStatusFilter(next as Array<CreditMemoStatus | "active">)}
+          allLabel="All statuses (include voided)"
+          data-testid="credit-memos-status-filter"
+        />
+      </MoneyListToolbar>
       {customerFilter && !customerFilter.includes(",") ? (
         <span className="text-xs text-gray-600">
           Filtered to customer{" "}
           <EntityLink kind="customer" id={customerFilter} label={entityLabel(filterCustomerName, customerFilter, "Customer")} />
         </span>
+      ) : null}
+      {/* R-102-B item 5 — voided-hidden notice stays under the toolbar, not as a fake money KPI. */}
+      {statusFilter.length === 1 &&
+      statusFilter[0] === "active" &&
+      typeof creditMemosQuery.data?.voided_count === "number" &&
+      creditMemosQuery.data.voided_count > 0 ? (
+        <p className="text-xs text-gray-500" data-testid="credit-memos-voided-count">
+          {memoRows.length} live, {creditMemosQuery.data.voided_count} voided (hidden)
+        </p>
       ) : null}
     </div>
   );
@@ -313,6 +367,35 @@ export function CreditMemosPage() {
           </Button>
         ) : null
       }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="credit-memos-kpi-strip">
+          {creditMemosQuery.isError ? (
+            <>
+              {moneyListKpiCard("Total", "—", "Error loading")}
+              {moneyListKpiCard("Unapplied", "—", "Error loading")}
+              {moneyListKpiCard("Open memos", "—", "Error loading")}
+              {moneyListKpiCard("Rows", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Total", money(memoKpis.total), `${memoRows.length} memos`)}
+              {moneyListKpiCard(
+                "Unapplied",
+                money(memoKpis.unapplied),
+                "Still available",
+                memoKpis.unapplied > 0 ? "warn" : "neutral",
+              )}
+              {moneyListKpiCard(
+                "Open memos",
+                String(memoKpis.openCount),
+                "Unapplied balance > 0",
+                memoKpis.openCount > 0 ? "warn" : "neutral",
+              )}
+              {moneyListKpiCard("Rows", String(memoRows.length), "On this page")}
+            </>
+          )}
+        </div>
+      }
     >
       {creditMemosQuery.isError ? (
         <ListErrorState
@@ -322,26 +405,19 @@ export function CreditMemosPage() {
           onRetry={() => void creditMemosQuery.refetch()}
         />
       ) : (
-        <>
-          {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as
-              a badge that never renders." Company-wide, independent of every non-status filter. */}
-          {statusFilter.length === 1 && statusFilter[0] === "active" && typeof creditMemosQuery.data?.voided_count === "number" && creditMemosQuery.data.voided_count > 0 ? (
-            <p className="text-xs text-gray-500" data-testid="credit-memos-voided-count">
-              {(creditMemosQuery.data?.credit_memos ?? []).length} live, {creditMemosQuery.data.voided_count} voided (hidden)
-            </p>
-          ) : null}
-        <ParityTable title="Credit memos"
-          rows={creditMemosQuery.data?.credit_memos ?? []}
+        <ParityTable
+          title="Credit memos"
+          rows={memoRows}
           columns={columns}
           rowKey={(row) => row.id}
           loading={creditMemosQuery.isLoading}
           filterBar={filterBar}
+          suppressToolbarSearch
           storageKey="accounting-credit-memos"
           tableTestId="credit-memos-table"
           emptyText="No credit memos found."
           onRowClick={(row) => setSelectedCreditMemoId(row.id)}
         />
-        </>
       )}
 
       {/* CHROME-12: money creator -> ParityDrawer side panel (never a centered Modal), matching

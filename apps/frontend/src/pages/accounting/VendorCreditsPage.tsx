@@ -25,7 +25,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { SelectCombobox } from "../../components/Combobox";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useToast } from "../../components/Toast";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { useAuth } from "../../auth/useAuth";
@@ -33,6 +33,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 const WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -73,15 +74,9 @@ export function VendorCreditsPage() {
   // voided' off on fresh load"). Same fix as the sibling CreditMemosPage — this page had NO
   // default-hide at all before this.
   // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); default Active.
+  // FILTER-MULTI-01 — live apply (no staged Apply/Cancel popover).
   const [statusFilter, setStatusFilter] = useState<Array<VendorCreditStatus | "active">>(["active"]);
-  const staged = useStagedListFilters({
-    applied: { statusFilter, vendorId: vendorFilter },
-    empty: { statusFilter: ["active"] as Array<VendorCreditStatus | "active">, vendorId: "" },
-    onApply: (next) => {
-      setStatusFilter(next.statusFilter);
-      setVendorFilter(next.vendorId);
-    },
-  });
+  const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedCreditId, setSelectedCreditId] = useState<string | null>(deepLinkCreditId);
   const [applyOpen, setApplyOpen] = useState(false);
@@ -257,37 +252,90 @@ export function VendorCreditsPage() {
     return (creditsQuery.data?.credits ?? []).find((c) => c.vendor_id === vendorFilter)?.vendor_name ?? null;
   }, [vendorOptions, creditsQuery.data?.credits, vendorFilter]);
 
+  const creditRows = useMemo(() => {
+    const all = creditsQuery.data?.credits ?? [];
+    const q = search.trim().toLowerCase();
+    if (!q) return all;
+    return all.filter((row) => {
+      const hay = [
+        row.display_id,
+        row.vendor_name,
+        row.vendor_id,
+        row.status,
+        String(row.amount_cents ?? ""),
+        String(row.amount_unapplied_cents ?? ""),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [creditsQuery.data?.credits, search]);
+
+  const creditKpis = useMemo(() => {
+    return creditRows.reduce(
+      (acc, row) => {
+        acc.total += Number(row.amount_cents ?? 0) || 0;
+        acc.unapplied += Number(row.amount_unapplied_cents ?? 0) || 0;
+        if ((Number(row.amount_unapplied_cents ?? 0) || 0) > 0) acc.openCount += 1;
+        return acc;
+      },
+      { total: 0, unapplied: 0, openCount: 0 },
+    );
+  }, [creditRows]);
+
+  const vendorCreditsActiveFilterCount =
+    (statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (vendorFilter ? 1 : 0);
+
   const filterBar = (
-    <div className="flex flex-wrap items-end gap-3" data-vendor-credits-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={(statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
-        <div className="flex flex-wrap gap-2">
-          <label className="text-xs text-[#4B5563]">
-            Vendor
-            <EntityMultiSelect
-              kind="vendor"
-              operatingCompanyId={companyId}
-              value={staged.draft.vendorId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next ?? "" })}
-              placeholder="All vendors"
-              className="mt-1"
-              dataTestId="vendor-credits-filter-vendor"
-            />
-          </label>
-          <MultiSelectDropdown
-            label="Status"
-            options={statusOptions({ "active": "Active (hide voided)", "open": "Open", "applied": "Applied", "voided": "Voided" })}
-            selected={staged.draft.statusFilter}
-            onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next as Array<VendorCreditStatus | "active"> })}
-            allLabel="All statuses (include voided)"
-            data-testid="vendor-credits-status-filter"
+    <div className="space-y-2 w-full" data-vendor-credits-filter-toolbar="visible">
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search credit # · vendor · status"
+        searchTestId="vendor-credits-search-input"
+        onClearAll={() => {
+          setSearch("");
+          setStatusFilter(["active"]);
+          setVendorFilter("");
+        }}
+        activeFilterCount={vendorCreditsActiveFilterCount}
+        testIdPrefix="vendor-credits"
+      >
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Vendor
+          <EntityMultiSelect
+            kind="vendor"
+            operatingCompanyId={companyId}
+            value={vendorFilter || null}
+            onChange={(next) => setVendorFilter(next ?? "")}
+            placeholder="All vendors"
+            dataTestId="vendor-credits-filter-vendor"
           />
-        </div>
-      </CollapsedListFilters>
+        </label>
+        <MultiSelectDropdown
+          label="Status"
+          options={statusOptions({ active: "Active (hide voided)", open: "Open", applied: "Applied", voided: "Voided" })}
+          selected={statusFilter}
+          onChange={(next) => setStatusFilter(next as Array<VendorCreditStatus | "active">)}
+          allLabel="All statuses (include voided)"
+          data-testid="vendor-credits-status-filter"
+        />
+      </MoneyListToolbar>
       {vendorFilter && !vendorFilter.includes(",") ? (
         <span className="text-xs text-gray-600">
           Filtered to vendor{" "}
           <EntityLink kind="vendor" id={vendorFilter} label={entityLabel(filterVendorName, vendorFilter, "Vendor")} />
         </span>
+      ) : null}
+      {/* R-102-B item 5 — voided-hidden notice stays under the toolbar, not as a fake money KPI. */}
+      {statusFilter.length === 1 &&
+      statusFilter[0] === "active" &&
+      typeof creditsQuery.data?.voided_count === "number" &&
+      creditsQuery.data.voided_count > 0 ? (
+        <p className="text-xs text-gray-500" data-testid="vendor-credits-voided-count">
+          {creditRows.length} live, {creditsQuery.data.voided_count} voided (hidden)
+        </p>
       ) : null}
     </div>
   );
@@ -308,6 +356,35 @@ export function VendorCreditsPage() {
           </Button>
         ) : null
       }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="vendor-credits-kpi-strip">
+          {creditsQuery.isError ? (
+            <>
+              {moneyListKpiCard("Total", "—", "Error loading")}
+              {moneyListKpiCard("Unapplied", "—", "Error loading")}
+              {moneyListKpiCard("Open credits", "—", "Error loading")}
+              {moneyListKpiCard("Rows", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Total", money(creditKpis.total), `${creditRows.length} credits`)}
+              {moneyListKpiCard(
+                "Unapplied",
+                money(creditKpis.unapplied),
+                "Still available",
+                creditKpis.unapplied > 0 ? "warn" : "neutral",
+              )}
+              {moneyListKpiCard(
+                "Open credits",
+                String(creditKpis.openCount),
+                "Unapplied balance > 0",
+                creditKpis.openCount > 0 ? "warn" : "neutral",
+              )}
+              {moneyListKpiCard("Rows", String(creditRows.length), "On this page")}
+            </>
+          )}
+        </div>
+      }
     >
       {creditsQuery.isError ? (
         <ListErrorState
@@ -317,26 +394,19 @@ export function VendorCreditsPage() {
           onRetry={() => void creditsQuery.refetch()}
         />
       ) : (
-        <>
-          {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as
-              a badge that never renders." Company-wide, independent of every non-status filter. */}
-          {statusFilter.length === 1 && statusFilter[0] === "active" && typeof creditsQuery.data?.voided_count === "number" && creditsQuery.data.voided_count > 0 ? (
-            <p className="text-xs text-gray-500" data-testid="vendor-credits-voided-count">
-              {(creditsQuery.data?.credits ?? []).length} live, {creditsQuery.data.voided_count} voided (hidden)
-            </p>
-          ) : null}
-        <ParityTable title="Vendor credits"
-          rows={creditsQuery.data?.credits ?? []}
+        <ParityTable
+          title="Vendor credits"
+          rows={creditRows}
           columns={columns}
           rowKey={(row) => row.id}
           loading={creditsQuery.isLoading}
           filterBar={filterBar}
+          suppressToolbarSearch
           storageKey="accounting-vendor-credits"
           tableTestId="vendor-credits-table"
           emptyText="No vendor credits found."
           onRowClick={(row) => setSelectedCreditId(row.id)}
         />
-        </>
       )}
 
       {/* CHROME-12: money creator -> ParityDrawer side panel (never a centered Modal). A centered
