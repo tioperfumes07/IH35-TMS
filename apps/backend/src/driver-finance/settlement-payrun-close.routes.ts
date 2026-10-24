@@ -178,6 +178,19 @@ export function registerSettlementPayRunCloseRoutes(app: FastifyInstance) {
       const code = result.reason === "not_found" ? 404 : 422;
       return reply.code(code).send({ error: `trip_close_${result.reason}`, stamped: false, reason: result.reason });
     }
+
+    // ENG-01 (443.322) — ROUND 137's two-step design: stampTripClosedForBookendedSettlement stamps
+    // status='closed'/trip_closed_at and returns; this route was the one path that NEVER followed up
+    // with the GL posting. The tour-readout route and driver-pwa/tour-close route both call
+    // postLoadBookendedSettlementGlAfterClose after their stamp; this route now does the same.
+    // Fail-soft by design (same as the other two callers): a posting failure does not undo the trip
+    // close. The guard verify-no-document-without-a-ledger catches any settlement whose posting fails.
+    void postLoadBookendedSettlementGlAfterClose({
+      operatingCompanyId: b.data.operating_company_id,
+      settlementId: p.data.id,
+      actorUserId: user.uuid,
+    });
+
     return { stamped: true, trip_closed_at: result.trip_closed_at, anchor_load_id: result.anchor_load_id };
   });
 }

@@ -1014,6 +1014,7 @@
     "verify:settlement-escrow-cap": "node scripts/verify-settlement-escrow-cap.mjs",
     "verify:cash-advance-maker-checker": "node scripts/verify-cash-advance-maker-checker.mjs",
     "verify:settlement-payrun-gl-flag-gate": "node scripts/verify-settlement-payrun-gl-flag-gate.mjs",
+    "verify:settlement-close-must-post-gl": "node scripts/verify-settlement-close-must-post-gl.mjs",
     "verify:payment-methods-catalog": "node scripts/verify-payment-methods-catalog.mjs",
     "verify:driverhub-unit-source": "node scripts/verify-driverhub-unit-source.mjs",
     "verify:open-wo-shared-predicate": "node scripts/verify-open-wo-shared-predicate.mjs",

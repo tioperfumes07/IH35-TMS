@@ -225,6 +225,12 @@ jobs:
       - name: verify:settlement-payrun-gl-flag-gate
         run: npm run verify:settlement-payrun-gl-flag-gate
 
+      - name: verify:settlement-close-must-post-gl --selftest
+        run: node scripts/verify-settlement-close-must-post-gl.mjs --selftest
+
+      - name: verify:settlement-close-must-post-gl
+        run: npm run verify:settlement-close-must-post-gl
+
       - name: verify:payment-methods-catalog --selftest
         run: node scripts/verify-payment-methods-catalog.mjs --selftest
 

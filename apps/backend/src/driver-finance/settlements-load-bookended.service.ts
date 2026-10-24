@@ -968,7 +968,9 @@ export async function stampTripClosedForBookendedSettlement(
           period_end = ($2::timestamptz AT TIME ZONE 'America/Chicago')::date,
           last_load_id = COALESCE(last_load_id, $3::uuid),
           last_load_number = COALESCE(last_load_number, $4),
-          status = CASE WHEN status = 'open' THEN 'closed' ELSE status END,
+          -- ENG-01 (443.322): status stays 'open' here; closeSettlementPayRun sets it to 'closed'
+          -- only when it stamps posted_at — enforced by trigger tg_settlement_close_requires_posting.
+          status = status,
           updated_at = now()
       WHERE id = $1::uuid
     `,

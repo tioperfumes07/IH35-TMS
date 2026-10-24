@@ -669,7 +669,15 @@ export async function closeSettlementPayRun(
     // Queue item 10 (G-05): every line carries its account, category and catalog item before the close reads them.
     // A preview writes nothing (categorizing changes no amount, so the preview's numbers are the same).
     if (input.previewOnly !== true) await categorizeSettlementLines(client as never, { settlementId, operatingCompanyId: opco });
-    if (settlement.locked_at == null && !POSTABLE_STATUSES.has(settlement.status)) {
+    // ENG-01 (443.322): a load_bookended settlement whose trip is closed (trip_closed_at IS NOT NULL)
+    // but status is still 'open' (status was not yet flipped to 'closed' because the trigger now
+    // refuses closed-without-posted_at) is postable here; the UPDATE below will set status='closed'
+    // together with posted_at in the same statement, satisfying the trigger.
+    const tripClosedOpen =
+      settlement.settlement_model === "load_bookended" &&
+      settlement.status === "open" &&
+      settlement.trip_closed_at != null;
+    if (settlement.locked_at == null && !POSTABLE_STATUSES.has(settlement.status) && !tripClosedOpen) {
       throw new SettlementPayRunError(
         "SETTLEMENT_NOT_POSTABLE",
         `Settlement ${settlement.display_id ?? settlement.id} is not finalized/locked (status=${settlement.status})`
@@ -1423,12 +1431,17 @@ export async function closeSettlementPayRun(
     // path still read posted_at IS NULL forever. COALESCE guards a re-entrant call (the idempotency
     // claim above already prevents a double-post; this only protects against overwriting a real
     // timestamp if this branch is ever reached twice for the same run).
+    // ENG-01 (443.322): status='closed' is set here, in the same UPDATE that stamps posted_at,
+    // satisfying migration 202616230800's trigger for non-load-bookended models. For load_bookended
+    // settlements this close is the second step after stampTripClosedForBookendedSettlement (which
+    // no longer sets status='closed' itself — it leaves status='open'); this UPDATE flips it atomically.
     await client.query(
       // ROUND 443 (prod-fork e2e): record HOW the net was paid — nothing ever wrote pay_method, so the feed gate's
       // settlement.header_complete failed every closed settlement. Owner ROUND 326: net pay is a bill payment from a
       // real bank — the chosen payment method's bank, else the operating bank; no method chosen is not a refusal.
       `UPDATE driver_finance.driver_settlements
           SET posted_at = COALESCE(posted_at, now()), posted_by_user_id = COALESCE(posted_by_user_id, $3::uuid),
+              status = CASE WHEN status = 'open' THEN 'closed' ELSE status END,
               pay_method = COALESCE(pay_method, $4)
         WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
       [settlementId, opco, actor.userId, input.leaveNetOpen ? (netCents > 0 ? "open_ap_unpaid" : "no_net_pay") : paymentMethod?.name ?? (netCents > 0 ? "bank_bill_payment" : "no_net_pay")]

@@ -913,12 +913,12 @@
   "202616150700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-2 Lead 443.243: fuel attribution — fuel.settlement_fuel_purchases (rule 1 settlement first) + fuel.settlement_trip_windows (document trip window) + fuel.fuel_assignment_questions (create-if-absent in Cursor's 202616140700 shape + current_load_id / uncertainty_reasons + audit trigger)"
+    "purpose": "CC-2 Lead 443.243: fuel attribution \u2014 fuel.settlement_fuel_purchases (rule 1 settlement first) + fuel.settlement_trip_windows (document trip window) + fuel.fuel_assignment_questions (create-if-absent in Cursor's 202616140700 shape + current_load_id / uncertainty_reasons + audit trigger)"
   },
   "202616160700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-2 Lead 443.241: ONE lane store — catalogs.lane_mileage gains median/count/last-load + shipper->receiver location-pair rows; catalogs.lane_mileage_observations (one per lane x load: document/history short, practical, empty miles)"
+    "purpose": "CC-2 Lead 443.241: ONE lane store \u2014 catalogs.lane_mileage gains median/count/last-load + shipper->receiver location-pair rows; catalogs.lane_mileage_observations (one per lane x load: document/history short, practical, empty miles)"
   },
   "202616170700": {
     "claimed_by": "CC-2",
@@ -933,17 +933,17 @@
   "202616190700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-23",
-    "purpose": "CC-2 Lead 443.258.5 ruling 2 (writer shape B): accounting.expenses.is_credit — a card credit (QBO Credit Card Credit) posts Dr payment account / Cr category; the fuel-card statement discount becomes a document instead of a handwritten JE"
+    "purpose": "CC-2 Lead 443.258.5 ruling 2 (writer shape B): accounting.expenses.is_credit \u2014 a card credit (QBO Credit Card Credit) posts Dr payment account / Cr category; the fuel-card statement discount becomes a document instead of a handwritten JE"
   },
   "202616210300": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-23",
-    "purpose": "CC-3 Lead 443.281-E: person names normalized at write — mdata.drivers BEFORE INSERT/UPDATE trigger proper-cases ALL-CAPS / all-lowercase first/last names (mixed case kept), and normalizes the existing ALL-CAPS rows through it"
+    "purpose": "CC-3 Lead 443.281-E: person names normalized at write \u2014 mdata.drivers BEFORE INSERT/UPDATE trigger proper-cases ALL-CAPS / all-lowercase first/last names (mixed case kept), and normalizes the existing ALL-CAPS rows through it"
   },
   "202616220700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-23",
-    "purpose": "CC-2 OWNER RULING 443.288-A: accounting.expenses.parent_expense_id (same-company FK) + transaction_source_links role statement_card_difference_of — a statement card credit / card difference is linked to its receipt and always moves with it; idempotent link backfill by statement marker"
+    "purpose": "CC-2 OWNER RULING 443.288-A: accounting.expenses.parent_expense_id (same-company FK) + transaction_source_links role statement_card_difference_of \u2014 a statement card credit / card difference is linked to its receipt and always moves with it; idempotent link backfill by statement marker"
   },
   "202616230300": {
     "claimed_by": "CC-3",
@@ -958,6 +958,11 @@
   "202616240100": {
     "claimed_by": "LEAD",
     "claimed_at": "2026-10-24",
-    "purpose": "LEAD 443.301 register row 59: maintenance.work_orders bay_number / bay_assigned_at / bay_released_at + one occupied bay per company per bay number (partial unique) + maintenance_settings.shop_bay_count (default 4) — Maintenance In Shop bay board"
+    "purpose": "LEAD 443.301 register row 59: maintenance.work_orders bay_number / bay_assigned_at / bay_released_at + one occupied bay per company per bay number (partial unique) + maintenance_settings.shop_bay_count (default 4) \u2014 Maintenance In Shop bay board"
+  },
+  "202616230800": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-24",
+    "purpose": "ENG-01 (443.322): settlement non-load-bookended close requires posting trigger \u2014 driver_finance.tg_settlement_non_bookended_close_requires_posting"
   }
 }

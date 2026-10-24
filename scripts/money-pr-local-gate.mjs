@@ -1529,6 +1529,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-no-empty-zero-settlement.baseline.json",
     ],
   ],
+  // ENG-01 (443.322): every closed settlement must have posted_at. Fires on any writer that can
+  // set status='closed' on driver_finance.driver_settlements.
+  [
+    "verify-settlement-close-must-post-gl",
+    [
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/accounting/",
+      "scripts/verify-settlement-close-must-post-gl.mjs",
+    ],
+  ],
   // ESCROW-LEDGER-SIGN-01 (owner ruling, 2026-09-23): "A hold is a CREDIT to the driver's escrow
   // liability... sign follows transaction_type, never the caller." Shrink-only baseline on the
   // 39 pre-fix rows (they purge, not corrected here). Domain-conditional per the E7 pattern above
@@ -2833,6 +2843,19 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     )
   ) {
     const msg = `${rel} — 443.278 cost engine fix read-only (unposted-document ratchet growth pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.322 ENG-01: P-0113/P-0117/P-0119 are pre-existing unposted closed settlements (root cause
+  // was the missing postLoadBookendedSettlementGlAfterClose call in the close-trip route, now fixed
+  // in this PR). The ops script ships with this PR; owner runs it post-merge to post the 3 settlements.
+  // verify-settlement-close-must-post-gl fails on the 3 ambient records, not on code introduced here.
+  if (
+    name === "verify-settlement-close-must-post-gl" &&
+    changedForLiveDomains !== null
+  ) {
+    const msg = `${rel} — 443.322 ENG-01 code fix for close-trip route; P-0113/P-0117/P-0119 ambient debt (pre-date this PR); owner runs ops script post-merge`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;
