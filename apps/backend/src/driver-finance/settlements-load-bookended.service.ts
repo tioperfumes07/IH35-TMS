@@ -589,11 +589,17 @@ async function closeLoadBookendedSettlementForDriver(
 
   const closedAt = new Date().toISOString();
 
+  // ENG-61 (443.336): Do NOT set status='closed' here. The trigger
+  // tg_settlement_close_requires_posting fires BEFORE UPDATE and raises check_violation if
+  // NEW.status='closed' AND NEW.posted_at IS NULL. Setting only trip_closed_at leaves the
+  // settlement status='open' with trip_closed_at IS NOT NULL — exactly the tripClosedOpen state
+  // that closeSettlementPayRun detects and handles: it sets status='closed' + posted_at atomically
+  // in the same UPDATE that records the GL journal, satisfying the trigger. Callers must invoke
+  // postFinalLoadSettlementsGl (settlement-payrun-close.service.ts) AFTER this transaction commits.
   await client.query(
     `
       UPDATE driver_finance.driver_settlements
       SET trip_closed_at = $2::timestamptz,
-          status = 'closed',
           last_load_id = $3,
           last_load_number = $4,
           period_end = ($2::timestamptz AT TIME ZONE 'America/Chicago')::date,

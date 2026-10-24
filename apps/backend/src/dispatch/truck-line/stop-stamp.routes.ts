@@ -19,6 +19,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, withCompanyScope } from "../../accounting/shared.js";
 import { stampStopArrival, stampStopDeparture, type LockedStopRow } from "../stop-stamp.service.js";
+import { postFinalLoadSettlementsGl } from "../../driver-finance/settlement-payrun-close.service.js";
 
 const paramsSchema = z.object({ loadId: z.string().uuid(), stopId: z.string().uuid() });
 const bodySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -106,6 +107,10 @@ export async function registerTruckLineStopStampRoutes(app: FastifyInstance) {
         if (result.error === "not_found") return reply.code(404).send({ error: "stop_not_found" });
         return errorReply(reply, result);
       }
+      // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
+      postFinalLoadSettlementsGl({ loadId: params.data.loadId, actorUserId: user.uuid }).catch((err) =>
+        console.warn({ err, load_id: params.data.loadId }, "truck_line_stop_final_settlement_gl_post_failed")
+      );
       return reply.code(200).send({ ok: true, proforma_invoice: result.proforma_invoice });
     }
   );

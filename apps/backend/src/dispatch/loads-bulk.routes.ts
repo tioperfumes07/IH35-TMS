@@ -19,6 +19,8 @@ import {
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 // ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
+// ENG-61 — GL post for load_bookended settlements after trip-close transaction commits.
+import { postFinalLoadSettlementsGl } from "../driver-finance/settlement-payrun-close.service.js";
 import { cancelLoadInClientTx } from "./cancellation.service.js";
 import { assertClosedLoadHasPricedDriverBill, ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
@@ -393,5 +395,15 @@ export async function registerLoadsBulkRoutes(app: FastifyInstance) {
       cancel: cancelPayloadSchema,
     },
     perEntityHandler: handleLoadBulk,
+    // ENG-61: after the batch transaction commits, post GL for any load_bookended settlements
+    // whose trip_closed_at was just set (no-op for non-delivery loads — the function queries first).
+    onAfterBatchCommit: ({ ids, action, actorUserId }) => {
+      if (action !== "set_status") return;
+      for (const id of ids) {
+        postFinalLoadSettlementsGl({ loadId: id, actorUserId }).catch((err) =>
+          console.warn({ err, load_id: id }, "bulk_load_final_settlement_gl_post_failed")
+        );
+      }
+    },
   });
 }

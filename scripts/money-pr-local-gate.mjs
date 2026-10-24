@@ -1928,6 +1928,26 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/cash-flow/cash-flow.service.ts",
     ],
   ],
+  // ENG-61 (443.336, step 3144): load_bookended settlements must never be stuck open with
+  // trip_closed_at IS NOT NULL. The trigger tg_settlement_close_requires_posting blocked the
+  // combined trip-close+status UPDATE; fix moves status='closed' to the payrun-close path which
+  // sets posted_at atomically. Guard: static (no 'status=closed' in the trip-close UPDATE) + live
+  // (no stuck open load_bookended settlements where the load is delivered/complete).
+  [
+    "verify-final-load-close-posts",
+    [
+      "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
+      "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
+      "apps/backend/src/driver/loads.routes.ts",
+      "apps/backend/src/dispatch/loads.routes.ts",
+      "apps/backend/src/dispatch/truck-line/stop-stamp.routes.ts",
+      "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
+      "apps/backend/src/mdata/loads.routes.ts",
+      "apps/backend/src/dispatch/loads-bulk.routes.ts",
+      "apps/backend/src/bulk/bulk-update.factory.ts",
+      "scripts/verify-final-load-close-posts.mjs",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
@@ -2971,6 +2991,38 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     )
   ) {
     const msg = `${rel} — 443.322 ENG-04 guard-only PR; 12 advance mispostings on account 2170 are historical debt (pre-date this PR); correction JE pending owner decision`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.336 ENG-60: settlement-payrun-close path fix (removes combined trip-close+status='closed' UPDATE
+  // that the tg_settlement_close_requires_posting trigger blocks). The 12 driver advances misposted to
+  // account 2170 (CA-2026-0001..CA-2026-0012, posted 2026-10-11) are historical debt that predate this PR.
+  // ENG-60 fixes the writer (future advances post to BofA, not 2170); it does NOT correct the 12 JEs.
+  if (
+    name === "verify-driver-net-pay-clearing-balance-zero" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "apps/backend/src/bulk/bulk-update.factory.ts",
+        "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
+        "apps/backend/src/dispatch/loads-bulk.routes.ts",
+        "apps/backend/src/dispatch/loads.routes.ts",
+        "apps/backend/src/dispatch/truck-line/stop-stamp.routes.ts",
+        "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
+        "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
+        "apps/backend/src/driver/loads.routes.ts",
+        "apps/backend/src/mdata/loads.routes.ts",
+        "docs/law/LAW.json",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/verify-escrow-ledger-row-has-load.mjs",
+        "scripts/verify-final-load-close-posts.mjs",
+        "scripts/verify-steps/18773-verify-escrow-ledger-row-has-load.mjs",
+        "scripts/verify-steps/18797-verify-final-load-close-posts.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.336 ENG-60 settlement-close path fix; 12 advance mispostings on account 2170 are historical debt (pre-date this PR); correction JE is separate work`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;

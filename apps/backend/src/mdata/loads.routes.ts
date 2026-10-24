@@ -11,6 +11,7 @@ import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js"
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { postFinalLoadSettlementsGl } from "../driver-finance/settlement-payrun-close.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
@@ -1460,6 +1461,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if ("no_change" in result && result.no_change) {
       return { ok: true, status: result.status };
     }
+    // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
+    postFinalLoadSettlementsGl({ loadId: parsedParams.data.id, actorUserId: authUser.uuid }).catch((err) =>
+      console.warn({ err, load_id: parsedParams.data.id }, "mdata_load_final_settlement_gl_post_failed")
+    );
     return result.row;
   });
 

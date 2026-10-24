@@ -9,6 +9,8 @@ import { writeLoadStatusFromStopEventInClientTx } from "../dispatch/load-transit
 import { requireDriverSession } from "./auth.js";
 // ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
+// ENG-61 — GL post for load_bookended settlements after trip-close transaction commits.
+import { postFinalLoadSettlementsGl } from "../driver-finance/settlement-payrun-close.service.js";
 
 type LoadLifecycleStage =
   | "pre_trip"
@@ -759,6 +761,10 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         return reply.code(409).send({ error: updated.error });
       return reply.code(403).send({ error: "forbidden" });
     }
+    // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
+    postFinalLoadSettlementsGl({ loadId: params.data.id, actorUserId: req.user!.uuid }).catch((err) =>
+      console.warn({ err, load_id: params.data.id }, "driver_load_final_settlement_gl_post_failed")
+    );
     return updated;
   });
 }

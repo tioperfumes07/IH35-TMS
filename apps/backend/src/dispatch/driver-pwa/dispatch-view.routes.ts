@@ -15,6 +15,8 @@ import { requireDriverSession } from "../../driver/auth.js";
 import { stampStopArrival, stampStopDeparture } from "../stop-stamp.service.js";
 // ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
 import { pingSettlementOnLoadEvent } from "../../driver-finance/settlements-load-bookended.service.js";
+// ENG-61 — GL post for load_bookended settlements after trip-close transaction commits.
+import { postFinalLoadSettlementsGl } from "../../driver-finance/settlement-payrun-close.service.js";
 
 type StopType = "pickup" | "delivery" | "fuel" | "break";
 type StopStatus = "pending" | "arrived" | "loading" | "loaded" | "departed";
@@ -463,6 +465,10 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
         return reply.code(409).send({ error: updated.error });
       return reply.code(403).send({ error: "forbidden" });
     }
+    // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
+    postFinalLoadSettlementsGl({ loadId: params.data.uuid, actorUserId: req.user!.uuid }).catch((err) =>
+      console.warn({ err, load_id: params.data.uuid }, "driver_pwa_stop_final_settlement_gl_post_failed")
+    );
     return updated;
   });
 

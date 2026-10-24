@@ -59,6 +59,7 @@ import { evaluateDriverDrugAlcoholStatus } from "./driver-qualification.service.
 import type { PoolClient } from "pg";
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 import { transitionDispatchLoadInClientTx } from "./load-transition.service.js";
+import { postFinalLoadSettlementsGl } from "../driver-finance/settlement-payrun-close.service.js";
 import {
   ensureDriverBillArtifactsForLoad,
   type DriverBillMintOutcome,
@@ -2090,6 +2091,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         message: from && to ? describeInvalidTransition(from, to) : "This status change is not allowed from the load's current state.",
       });
     }
+    // ENG-61: post GL for any load_bookended settlement whose trip_closed_at was just set; fail-soft.
+    postFinalLoadSettlementsGl({ loadId: params.data.id, actorUserId: authUser.uuid }).catch((err) =>
+      console.warn({ err, load_id: params.data.id }, "dispatch_transition_final_settlement_gl_post_failed")
+    );
     return result;
   });
 

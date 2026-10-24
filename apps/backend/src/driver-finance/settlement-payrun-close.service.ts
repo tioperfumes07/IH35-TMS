@@ -1801,3 +1801,69 @@ export async function postLoadBookendedSettlementGlAfterClose(
     return { posted: false, journal_entry_id: null, error: msg };
   }
 }
+
+/**
+ * ENG-61 (443.336): Called by route handlers AFTER their trip-close transaction commits. Finds
+ * every open load_bookended settlement for the given load whose trip_closed_at is now set (the
+ * new post-ENG-61 state: status='open' + trip_closed_at IS NOT NULL), then posts each via
+ * postLoadBookendedSettlementGlAfterClose which calls closeSettlementPayRun — the only function
+ * that can satisfy tg_settlement_close_requires_posting (sets status='closed' + posted_at atomically).
+ *
+ * FAIL-SOFT: matching postLoadBookendedSettlementGlAfterClose's own design — a GL post failure
+ * must not surface as an HTTP 500 to the driver or dispatcher. The settlement stays open but with
+ * trip_closed_at set; verify-final-load-close-posts.mjs catches and alerts on it.
+ */
+export async function postFinalLoadSettlementsGl(opts: {
+  loadId: string;
+  actorUserId: string;
+}): Promise<void> {
+  // Look up the operating_company_id for this load (need it for both the settlement query and the poster).
+  let operatingCompanyId: string | null = null;
+  try {
+    const companyRes = await withCurrentUser(opts.actorUserId, async (client) => {
+      await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+      return client.query<{ operating_company_id: string }>(
+        `SELECT operating_company_id::text FROM mdata.loads WHERE id = $1::uuid AND soft_deleted_at IS NULL LIMIT 1`,
+        [opts.loadId]
+      );
+    });
+    operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
+  } catch (err) {
+    console.warn({ err, load_id: opts.loadId }, "postFinalLoadSettlementsGl_opco_lookup_failed");
+    return;
+  }
+  if (!operatingCompanyId) return;
+
+  let settlementIds: string[] = [];
+  try {
+    const settRes = await withCurrentUser(opts.actorUserId, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      return client.query<{ id: string }>(
+        `SELECT id::text
+           FROM driver_finance.driver_settlements
+          WHERE operating_company_id = $1::uuid
+            AND settlement_model = 'load_bookended'
+            AND status = 'open'
+            AND trip_closed_at IS NOT NULL
+            AND voided_at IS NULL
+            AND last_load_id = $2::uuid`,
+        [operatingCompanyId, opts.loadId]
+      );
+    });
+    settlementIds = settRes.rows.map((r) => r.id);
+  } catch (err) {
+    console.warn({ err, load_id: opts.loadId }, "postFinalLoadSettlementsGl_query_failed");
+    return;
+  }
+
+  for (const settlementId of settlementIds) {
+    const r = await postLoadBookendedSettlementGlAfterClose({
+      operatingCompanyId,
+      settlementId,
+      actorUserId: opts.actorUserId,
+    });
+    if (!r.posted) {
+      console.warn({ load_id: opts.loadId, settlement_id: settlementId, error: r.error }, "postFinalLoadSettlementsGl_post_failed");
+    }
+  }
+}
