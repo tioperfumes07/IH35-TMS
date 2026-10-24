@@ -190,10 +190,10 @@ export function InvoicesListPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   // Persist the entire customer selection in the URL; the server filters before count/pagination.
-  const [customerFilter, setCustomerFilter] = useState<string[]>(() => (customerId ? customerId.split(",") : []));
+  const [customerFilter, setCustomerFilter] = useState<string[]>(() => (customerId ? [customerId] : []));
   // Back/forward restores all selected customers, including an empty selection.
   useEffect(() => {
-    setCustomerFilter(customerId ? customerId.split(",") : []);
+    setCustomerFilter(customerId ? [customerId] : []);
   }, [customerId]);
   function setCustomerFilterAndUrl(next: string[]) {
     setCustomerFilter(next);
@@ -342,7 +342,7 @@ export function InvoicesListPage() {
   }, [createDeepLink, createType, selectedCompanyId]);
 
   // OR within customers, AND with the remaining filters, entirely server-side.
-  const customerParam = customerFilter.length ? customerFilter.join(",") : undefined;
+  const customerParam = customerFilter.length === 1 ? customerFilter[0] : undefined;
   const query = useQuery({
     queryKey: [
       "accounting",

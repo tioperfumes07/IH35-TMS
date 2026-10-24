@@ -50,7 +50,8 @@ const CHECKS = [
   {
     name: "loads producer returns canonical trailer id and label",
     file: LOADS_ROUTE,
-    pattern: /tr\.id AS trailer_id,\s*tr\.equipment_number AS trailer_number/,
+    // loadServiceTrailerNumberSql generates the CASE expression (fleet/customer/none); the template literal is the canonical form.
+    pattern: /tr\.id AS trailer_id,[\s\S]{0,200}\$\{loadServiceTrailerNumberSql\([^)]+\)\} AS trailer_number/,
   },
   {
     name: "loads producer scopes trailer assignment to load entity",
