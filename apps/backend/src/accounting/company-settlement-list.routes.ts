@@ -8,15 +8,15 @@
  * a user picks one to open the detail report.
  *
  * CANONICAL-CHECK: reads accounting.company_settlements directly for the header row (status, period,
- * display_id) and REUSES buildCompanySettlementReport() per row for net_revenue_cents — never a
- * second, competing waterfall calculation. At USMCA's current scale (a handful of company
- * settlements) this is cheap; if the row count grows materially, a summary column can be
- * materialized later without changing this route's shape.
+ * display_id) and reads net_revenue_cents from computeCompanySettlementNetRevenueCents() — the
+ * report engine's own section-6 net (same line-type lists, same sources, same rounding), computed for
+ * every row in ONE query. LEAD 443.320 (row 103): building the full 10-section report per row cost
+ * 14 queries × 81 rows (~121 s measured 10-24); parity with the report is proven to the cent.
  */
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
-import { buildCompanySettlementReport } from "./company-settlement-report.service.js";
+import { computeCompanySettlementNetRevenueCents } from "./company-settlement-report.service.js";
 
 type CompanySettlementListRow = {
   id: string;
@@ -64,18 +64,15 @@ async function listCompanySettlements(client: DbClient, operatingCompanyId: stri
     [operatingCompanyId]
   );
 
+  // Voided settlements carry no meaningful waterfall (never re-derive money for a reversed
+  // document) — a dash on the list, never a fake $0.00 (law §8).
+  const netByCs = await computeCompanySettlementNetRevenueCents(client, {
+    companySettlementIds: headerRes.rows.filter((h) => !h.voided_at).map((h) => h.id),
+    operatingCompanyId,
+  });
   const rows: CompanySettlementListRow[] = [];
   for (const header of headerRes.rows) {
-    let netRevenueCents: number | null = null;
-    // Voided settlements carry no meaningful waterfall (never re-derive money for a reversed
-    // document) — a dash on the list, never a fake $0.00 (law §8).
-    if (!header.voided_at) {
-      const report = await buildCompanySettlementReport(client, {
-        companySettlementId: header.id,
-        operatingCompanyId,
-      });
-      netRevenueCents = report?.sections.pl_rollup.net_revenue_cents ?? null;
-    }
+    const netRevenueCents: number | null = header.voided_at ? null : (netByCs.get(header.id) ?? null);
     rows.push({
       id: header.id,
       display_id: header.display_id,
