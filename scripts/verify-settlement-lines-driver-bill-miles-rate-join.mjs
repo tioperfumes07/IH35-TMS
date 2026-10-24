@@ -38,6 +38,7 @@ export const REQUIRES_LIVE_DB =
 
 const ROUTES_PATH = "apps/backend/src/driver-finance/settlements.routes.ts";
 const PAGE_PATH = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
+const LINE_MAPS_PATH = "apps/frontend/src/pages/driver-finance/settlementDetailLineMaps.ts";
 const EARNINGS_PATH = "apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx";
 const DEADHEAD_PATH = "apps/frontend/src/pages/driver-finance/components/DeadheadPaySection.tsx";
 
@@ -48,6 +49,7 @@ function load(path) {
 export function collectFailures({
   routes = load(ROUTES_PATH),
   page = load(PAGE_PATH),
+  lineMaps = load(LINE_MAPS_PATH),
   earnings = load(EARNINGS_PATH),
   deadhead = load(DEADHEAD_PATH),
 } = {}) {
@@ -70,22 +72,30 @@ export function collectFailures({
     failures.push(`${ROUTES_PATH} settlement-detail lines query does not select pay_cents from driver_bills (loaded_pay_cents/deadhead_pay_cents) keyed by line_type`);
   }
 
-  // Frontend: rate must be derived from rate_cents (the backend never sends a bare "rate" dollar
-  // field). SET-RATE (LAW §8 "zero is a claim") retired the `?? 0` coercion on both miles and
-  // rate_cents -- an unknown leg must map to undefined (renders "—"), never a fabricated 0.
-  const rateReadCount = (page.match(/rate:\s*line\.rate_cents\s*==\s*null\s*\?\s*undefined\s*:\s*Number\(line\.rate_cents\)\s*\/\s*100/g) ?? []).length;
+  // Frontend: SET-RATE line views live in settlementDetailLineMaps.ts (443.293-A shared by workflow +
+  // Statement detail). Workflow must consume the shared builder — no duplicated inline maps.
+  if (!/buildSettlementLineViews/.test(page) || !/from\s+["']\.\/settlementDetailLineMaps["']/.test(page)) {
+    failures.push(`${PAGE_PATH} must import buildSettlementLineViews from ${LINE_MAPS_PATH} (443.293-A shared line maps)`);
+  }
+
+  // rate must be derived from rate_cents (the backend never sends a bare "rate" dollar field).
+  // SET-RATE (LAW §8 "zero is a claim") retired the `?? 0` coercion on both miles and rate_cents.
+  const ratePattern =
+    /rate:\s*line\.rate_cents\s*==\s*null\s*\?\s*undefined\s*:\s*Number\(line\.rate_cents\)\s*\/\s*100/g;
+  const rateReadCount = (lineMaps.match(ratePattern) ?? []).length;
   if (rateReadCount < 2) {
-    failures.push(`${PAGE_PATH} does not derive earnings/deadhead rate from line.rate_cents / 100 without a fake-zero fallback (found ${rateReadCount}, need 2)`);
+    failures.push(`${LINE_MAPS_PATH} does not derive earnings/deadhead rate from line.rate_cents / 100 without a fake-zero fallback (found ${rateReadCount}, need 2)`);
   }
-  if (/Number\(line\.rate_cents\s*\?\?\s*0\)/.test(page)) {
-    failures.push(`${PAGE_PATH} coerces an unknown rate_cents to a fake 0 via \`?? 0\` -- SET-RATE (LAW §8) requires undefined -> "—" instead`);
+  if (/Number\(line\.rate_cents\s*\?\?\s*0\)/.test(lineMaps)) {
+    failures.push(`${LINE_MAPS_PATH} coerces an unknown rate_cents to a fake 0 via \`?? 0\` -- SET-RATE (LAW §8) requires undefined -> "—" instead`);
   }
-  const milesReadCount = (page.match(/miles:\s*line\.miles\s*==\s*null\s*\?\s*undefined\s*:\s*Number\(line\.miles\)/g) ?? []).length;
+  const milesPattern = /miles:\s*line\.miles\s*==\s*null\s*\?\s*undefined\s*:\s*Number\(line\.miles\)/g;
+  const milesReadCount = (lineMaps.match(milesPattern) ?? []).length;
   if (milesReadCount < 2) {
-    failures.push(`${PAGE_PATH} does not read line.miles into both the earnings and deadhead line maps without a fake-zero fallback (found ${milesReadCount}, need 2)`);
+    failures.push(`${LINE_MAPS_PATH} does not read line.miles into both the earnings and deadhead line maps without a fake-zero fallback (found ${milesReadCount}, need 2)`);
   }
-  if (/Number\(line\.miles\s*\?\?\s*0\)/.test(page)) {
-    failures.push(`${PAGE_PATH} coerces an unknown miles to a fake 0 via \`?? 0\` -- SET-RATE (LAW §8) requires undefined -> "—" instead`);
+  if (/Number\(line\.miles\s*\?\?\s*0\)/.test(lineMaps)) {
+    failures.push(`${LINE_MAPS_PATH} coerces an unknown miles to a fake 0 via \`?? 0\` -- SET-RATE (LAW §8) requires undefined -> "—" instead`);
   }
 
   // Rendering: miles 1-decimal + thousands separator, rate 4-decimal dollars-per-mile, per the
@@ -114,6 +124,7 @@ if (process.argv.includes("--selftest")) {
   }
   const routes = load(ROUTES_PATH);
   const page = load(PAGE_PATH);
+  const lineMaps = load(LINE_MAPS_PATH);
   const earnings = load(EARNINGS_PATH);
   const mutations = [
     [
@@ -136,7 +147,7 @@ if (process.argv.includes("--selftest")) {
     [
       "frontend reintroduces the fake-zero rate coercion (SET-RATE LAW §8 regression)",
       {
-        page: page.replaceAll(
+        lineMaps: lineMaps.replaceAll(
           "rate: line.rate_cents == null ? undefined : Number(line.rate_cents) / 100,",
           "rate: Number(line.rate_cents ?? 0) / 100,"
         ),
@@ -145,7 +156,7 @@ if (process.argv.includes("--selftest")) {
     [
       "frontend reintroduces the fake-zero miles coercion (SET-RATE LAW §8 regression)",
       {
-        page: page.replaceAll(
+        lineMaps: lineMaps.replaceAll(
           "miles: line.miles == null ? undefined : Number(line.miles),",
           "miles: Number(line.miles ?? 0),"
         ),
@@ -161,10 +172,20 @@ if (process.argv.includes("--selftest")) {
     const args = {
       routes: patch.routes ?? routes,
       page: patch.page ?? page,
+      lineMaps: patch.lineMaps ?? lineMaps,
       earnings: patch.earnings ?? earnings,
       deadhead: patch.deadhead ?? load(DEADHEAD_PATH),
     };
-    if (args.routes === routes && args.page === page && args.earnings === earnings && patch.routes === undefined && patch.page === undefined && patch.earnings === undefined) {
+    if (
+      args.routes === routes &&
+      args.page === page &&
+      args.lineMaps === lineMaps &&
+      args.earnings === earnings &&
+      patch.routes === undefined &&
+      patch.page === undefined &&
+      patch.lineMaps === undefined &&
+      patch.earnings === undefined
+    ) {
       escaped.push(`${name} (plant target not found — source drifted)`);
       continue;
     }

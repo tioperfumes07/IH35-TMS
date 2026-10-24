@@ -74,42 +74,7 @@ import { getCompanySettlementReport } from "../../api/accounting";
 import { SettlementLoadsSection } from "./components/SettlementLoadsSection";
 import { CompanyWaterfallSection } from "./components/CompanyWaterfallSection";
 import { SettlementNumberBox } from "./components/SettlementNumberBox";
-
-function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
-  // OWNER-LIVE-DEFECT-2026-09-08 (Jorge, live walkthrough of S-13644): this filter excluded
-  // line_type='escrow_contribution' entirely — an escrow-contribution settlement line withholds
-  // real driver dollars ($25/load, same as any other deduction) but was invisible to both this
-  // table AND this page's own Net Pay Summary math, even though the settlement's stored,
-  // authoritative deductions_total column (driver_finance.driver_settlements.deductions_total)
-  // DOES include it. Live proof: S-13644's stored deductions_total is $469.99 — the nine
-  // line_type='deduction' rows sum to $444.99, and the missing $25.00 is exactly one
-  // line_type='escrow_contribution' row ("Load 13555 — Escrow Contribution") this filter dropped.
-  // Escrow withholding is economically a deduction from this period's pay, so it belongs in the
-  // same table the driver and owner read as "what was withheld."
-  return lines
-    .filter((line) => ["deduction", "escrow_contribution"].includes(String(line.line_type)))
-    .map((line) => ({
-      id: String(line.id),
-      description: String(line.description ?? "Deduction"),
-      // S.1b — line_date (COALESCE of created_at), load_number, deduction_type, and posting
-      // account fields from the driver_settlement_deductions + catalogs.accounts joins.
-      line_date: typeof line.line_date === "string" ? line.line_date : null,
-      load_number: typeof line.load_number === "string" ? line.load_number : null,
-      deduction_type: typeof line.deduction_type === "string" ? line.deduction_type : null,
-      posting_account_number: typeof line.posting_account_number === "string" ? line.posting_account_number : null,
-      posting_account_name: typeof line.posting_account_name === "string" ? line.posting_account_name : null,
-      balance_left: Number(line.balance_left ?? line.amount ?? 0),
-      this_period_amount: Number(line.amount ?? 0),
-      // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: is_held/held_by are now the REAL state joined
-      // from driver_finance.driver_settlement_deductions (settlements.routes.ts GET detail), not
-      // dead columns that never existed on settlement_lines and were always false/null before.
-      is_held: Boolean(line.deduction_is_held),
-      held_by_user: line.deduction_held_by_user_email ? String(line.deduction_held_by_user_email) : null,
-      held_by_user_id: line.deduction_held_by_user_id ? String(line.deduction_held_by_user_id) : null,
-      pending_ack: Boolean(line.pending_ack),
-      source_deduction_id: line.source_deduction_id ? String(line.source_deduction_id) : null,
-    }));
-}
+import { buildSettlementLineViews } from "./settlementDetailLineMaps";
 
 export function SettlementStatementWorkflowPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -376,132 +341,29 @@ export function SettlementStatementWorkflowPage() {
     enabled: Boolean(settlementLoadId && companyId),
   });
 
-  const earnings = activeLines.filter((line) => String(line.line_type) === "earnings").map((line) => ({
-    id: String(line.id),
-    // C5 — the load was carried on the line and then dropped here, which is why the Earnings
-    // "Load" column had nothing but the line id to show.
-    load_id: typeof line.load_id === "string" ? line.load_id : null,
-    load_number: typeof line.load_number === "string" ? line.load_number : null,
-    // S.1b — line_date (COALESCE of delivery-stop arrival), origin/dest city+state from load_stops.
-    line_date: typeof line.line_date === "string" ? line.line_date : null,
-    origin_city: typeof line.origin_city === "string" ? line.origin_city : null,
-    origin_state: typeof line.origin_state === "string" ? line.origin_state : null,
-    dest_city: typeof line.dest_city === "string" ? line.dest_city : null,
-    dest_state: typeof line.dest_state === "string" ? line.dest_state : null,
-    source_driver_bill_id:
-      typeof line.source_driver_bill_id === "string" ? line.source_driver_bill_id : null,
-    source_label:
-      typeof line.source_driver_bill_number === "string" && line.source_driver_bill_number
-        ? line.source_driver_bill_number
-        : typeof line.source_table === "string" && line.source_table
-          ? line.source_table.replace(/^driver_finance\./, "")
-          : null,
-    description: String(line.description ?? ""),
-    // SET-RATE (owner order 2026-09-05, LAW §8 "zero is a claim"): `?? 0` on miles/rate_cents used
-    // to turn a genuinely-unknown leg (no telematics/dispatch miles captured) into a rendered
-    // 0.0 / $0.0000 / $0.00 triple — indistinguishable from a real zero-mile, zero-rate line. Miles
-    // undefined here so EarningsSection's `line.miles != null` check renders "—", never a fake 0.
-    // rate_cents now comes from settlements.routes.ts's rate_basis join, derived FROM this same
-    // sl.amount — amount == miles * rate is a mathematical identity, not a hope (see that query's
-    // SET-RATE comment). Keep the raw quotient, format at render time (4-decimal dollars-per-mile).
-    miles: line.miles == null ? undefined : Number(line.miles),
-    rate: line.rate_cents == null ? undefined : Number(line.rate_cents) / 100,
-    rate_source: typeof line.rate_source === "string" ? line.rate_source : null,
-    amount: Number(line.amount ?? 0),
-  }));
-  // 25-task #12 — deadhead_pay is its own settlement_lines row (MILES SPEC), rendered as its own
-  // "Empty Miles" section, never folded into Earnings (which is the loaded-mile row).
-  const deadhead = activeLines.filter((line) => String(line.line_type) === "deadhead_pay").map((line) => ({
-    id: String(line.id),
-    load_id: typeof line.load_id === "string" ? line.load_id : null,
-    load_number: typeof line.load_number === "string" ? line.load_number : null,
-    // S.1b — line_date (COALESCE of delivery-stop arrival), origin/dest city+state from load_stops.
-    line_date: typeof line.line_date === "string" ? line.line_date : null,
-    origin_city: typeof line.origin_city === "string" ? line.origin_city : null,
-    origin_state: typeof line.origin_state === "string" ? line.origin_state : null,
-    dest_city: typeof line.dest_city === "string" ? line.dest_city : null,
-    dest_state: typeof line.dest_state === "string" ? line.dest_state : null,
-    source_driver_bill_id:
-      typeof line.source_driver_bill_id === "string" ? line.source_driver_bill_id : null,
-    source_label:
-      typeof line.source_driver_bill_number === "string" && line.source_driver_bill_number
-        ? line.source_driver_bill_number
-        : typeof line.source_table === "string" && line.source_table
-          ? line.source_table.replace(/^driver_finance\./, "")
-          : null,
-    description: String(line.description ?? ""),
-    // SET-RATE — same rate_basis join as Earnings above (its own CASE picks miles_deadhead/
-    // rate_empty_per_mile_cents for a deadhead_pay line); same "never fake a 0" fix.
-    miles: line.miles == null ? undefined : Number(line.miles),
-    rate: line.rate_cents == null ? undefined : Number(line.rate_cents) / 100,
-    rate_source: typeof line.rate_source === "string" ? line.rate_source : null,
-    amount: Number(line.amount ?? 0),
-  }));
-  const extra = activeLines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({
-    id: String(line.id),
-    // S.1b — load linkage, line_date, and approval_status for the Additional pay section.
-    load_id: typeof line.load_id === "string" ? line.load_id : null,
-    load_number: typeof line.load_number === "string" ? line.load_number : null,
-    line_date: typeof line.line_date === "string" ? line.line_date : null,
-    approval_status: typeof line.approval_status === "string" ? line.approval_status : null,
-    code: String(line.code ?? "EXTRA"),
-    description: String(line.description ?? ""),
-    amount: Number(line.amount ?? 0),
-  }));
-  const reimbursements = activeLines.filter((line) => String(line.line_type) === "reimbursement").map((line) => ({
-    id: String(line.id),
-    // S.1b — load linkage, line_date (COALESCE of posting_date), reimbursement_type/reason,
-    // vendor fields, and receipt_number from the driver_reimbursements join.
-    load_id: typeof line.load_id === "string" ? line.load_id : null,
-    load_number: typeof line.load_number === "string" ? line.load_number : null,
-    line_date: typeof line.line_date === "string" ? line.line_date : null,
-    description: String(line.description ?? ""),
-    reimbursement_type: typeof line.reimbursement_type === "string" ? line.reimbursement_type : null,
-    vendor_name: typeof line.vendor_name === "string" ? line.vendor_name : null,
-    vendor_invoice_number: typeof line.vendor_invoice_number === "string" ? line.vendor_invoice_number : null,
-    receipt_number: typeof line.receipt_number === "string" ? line.receipt_number : null,
-    amount: Number(line.amount ?? 0),
-  }));
-  const deductions = toDeductionRows(activeLines);
-
-  // SEQ-NUMBER (docs/design/reference/DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html): the
-  // reference design's "Number" column is a human line spine, `S-<settlement>-<n>`, incrementing
-  // across every line-item table on the page in render order (Earnings, Empty Miles, Additional Pay,
-  // Reimbursements, Deductions) -- "typed value wins, blank auto-assigns." ExtraPaySection,
-  // ReimbursementsSection, and DeductionsSection never implemented this and fell back to rendering
-  // the raw settlement_lines row uuid under "Number" instead -- meaningless to a reader, and the
-  // direct cause of the "current shit" complaint on this exact page (owner, 2026-09-09). Assign the
-  // spine here, once, in the same fixed order the sections already render in below, and thread it
-  // down as `seq_label` -- EarningsSection/DeadheadPaySection keep their own already-improved
-  // `source_label` (a real driver-bill number, better than an abstract spine number; C5) unchanged.
-  let seqCounter = 0;
-  const seqLabel = (): string => {
-    seqCounter += 1;
-    return settlementDisplayId ? `${settlementDisplayId}-${seqCounter}` : String(seqCounter);
-  };
-  const earningsSeq = earnings.map(() => seqLabel());
-  const deadheadSeq = deadhead.map(() => seqLabel());
-  const extraWithSeq = extra.map((row) => ({ ...row, seq_label: seqLabel() }));
-  const reimbursementsWithSeq = reimbursements.map((row) => ({ ...row, seq_label: seqLabel() }));
-  const deductionsWithSeq = deductions.map((row) => ({ ...row, seq_label: seqLabel() }));
-  void earningsSeq;
-  void deadheadSeq;
+  const { earnings, deadhead, extraWithSeq, reimbursementsWithSeq, deductionsWithSeq } = useMemo(
+    () => buildSettlementLineViews(activeLines, settlementDisplayId),
+    [activeLines, settlementDisplayId]
+  );
 
   const summary = useMemo(() => {
     const earningsTotal = earnings.reduce((sum, row) => sum + row.amount, 0);
     const deadheadTotal = deadhead.reduce((sum, row) => sum + row.amount, 0);
-    const extraTotal = extra.reduce((sum, row) => sum + row.amount, 0);
-    const reimbTotal = reimbursements.reduce((sum, row) => sum + row.amount, 0);
+    const extraTotal = extraWithSeq.reduce((sum, row) => sum + row.amount, 0);
+    const reimbTotal = reimbursementsWithSeq.reduce((sum, row) => sum + row.amount, 0);
     // DD2 / NO-WINDOW — this excluded any pending_ack deduction from the total, so a real deduction the
     // ledger already holds showed as $0 on screen. That is both a missing window over driver money and the
     // `pending_acknowledgment` blocking pattern §9.5 forbids outright: the SIGNED HIRE CONTRACT authorizes
     // settlement deductions, there is NO separate driver e-sign and no per-expense acknowledgment gate.
     // Every deduction now counts toward the total; pending_ack stays as a DISCLOSURE (badge + its own
     // subtotal below), which is the company-user sign-off control MUST 3.4.2(d)(e) actually requires.
-    const deductionTotal = deductions.reduce((sum, row) => sum + row.this_period_amount, 0);
-    const pendingAckTotal = deductions.reduce((sum, row) => sum + (row.pending_ack ? row.this_period_amount : 0), 0);
+    const deductionTotal = deductionsWithSeq.reduce((sum, row) => sum + row.this_period_amount, 0);
+    const pendingAckTotal = deductionsWithSeq.reduce(
+      (sum, row) => sum + (row.pending_ack ? row.this_period_amount : 0),
+      0
+    );
     return { earningsTotal, deadheadTotal, extraTotal, reimbTotal, deductionTotal, pendingAckTotal };
-  }, [deadhead, deductions, earnings, extra, reimbursements]);
+  }, [deadhead, deductionsWithSeq, earnings, extraWithSeq, reimbursementsWithSeq]);
 
   // L5 — KPI grid inputs, exact per docs/design/reference/DRIVER-SETTLEMENT-DETAIL-REFERENCE-2026-09-05.html.
   // Miles/rate come from the S.1 driver_bills join already mapped onto earnings/deadhead above; rate is the
@@ -526,14 +388,14 @@ export function SettlementStatementWorkflowPage() {
     const emptyMiles = deadhead.reduce((s, r) => s + (r.miles ?? 0), 0);
     const emptyRate = deadhead.find((r) => (r.rate ?? 0) > 0)?.rate ?? loadedRate;
     // this_period_amount is DOLLARS (see SETL-KPI-CENTS-01 above) — formatUsd, never formatUsdCents.
-    const deductionBreakdown = deductions
+    const deductionBreakdown = deductionsWithSeq
       .map((d) => `${d.description} ${formatUsd(d.this_period_amount)}`)
       .join(" · ");
     const netPayDollars =
       summary.earningsTotal + summary.deadheadTotal + summary.extraTotal + summary.reimbTotal - summary.deductionTotal;
     const netPayCents = Math.round(netPayDollars * 100);
     return { loadedMiles, loadedRate, emptyMiles, emptyRate, deductionBreakdown, netPayCents };
-  }, [earnings, deadhead, deductions, summary]);
+  }, [earnings, deadhead, deductionsWithSeq, summary]);
 
   if (!settlementId) {
     return (
@@ -793,7 +655,7 @@ export function SettlementStatementWorkflowPage() {
         driverPayCents={readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)}
         driverPaySub={`${kpi.loadedMiles.toLocaleString("en-US", { maximumFractionDigits: 0 })} mi loaded`}
         reimbursementCents={Math.round(summary.reimbTotal * 100)}
-        reimbursementLines={reimbursements.length}
+        reimbursementLines={reimbursementsWithSeq.length}
         deductionCents={Math.round(summary.deductionTotal * 100)}
         deductionBreakdown={kpi.deductionBreakdown}
         netPayCents={kpi.netPayCents}

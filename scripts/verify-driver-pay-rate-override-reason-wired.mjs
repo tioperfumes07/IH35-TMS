@@ -86,16 +86,20 @@ const CHECKS = [
   {
     label: "BookLoadEquipmentSection: a typed rate has a registered reason input, or the rate is read-only and unregistered",
     file: FILES.equipmentSection,
+    // 443.258-B: field fully absent — no registered rate = no silent discard, invariant satisfied.
     test: (src) =>
       /register\("driver_pay_rate_override_reason"\)/.test(src) ||
       (!/register\("driver_pay_rate_per_mile"/.test(src) &&
-        /id="book-load-driver-pay-rate-per-mile"[\s\S]{0,200}readOnly/.test(src)),
-    // planted regression for this link: an editable, registered rate with no reason input
+        (!/id="book-load-driver-pay-rate-per-mile"/.test(src) ||
+         /id="book-load-driver-pay-rate-per-mile"[\s\S]{0,200}readOnly/.test(src))),
+    // planted regression: add back a registered editable rate without a reason input
     plant: (src) =>
-      src.replace(/register\("driver_pay_rate_override_reason"\)/g, "").replace(
-        /id="book-load-driver-pay-rate-per-mile"/,
-        'id="book-load-driver-pay-rate-per-mile" {...register("driver_pay_rate_per_mile")}',
-      ).replace(/(id="book-load-driver-pay-rate-per-mile"[\s\S]{0,200}?)readOnly/, "$1"),
+      src.includes('id="book-load-driver-pay-rate-per-mile"')
+        ? src.replace(/register\("driver_pay_rate_override_reason"\)/g, "").replace(
+            /id="book-load-driver-pay-rate-per-mile"/,
+            'id="book-load-driver-pay-rate-per-mile" {...register("driver_pay_rate_per_mile")}',
+          ).replace(/(id="book-load-driver-pay-rate-per-mile"[\s\S]{0,200}?)readOnly/, "$1")
+        : src + '\n/* mutation-443258b */ <input id="book-load-driver-pay-rate-per-mile" {...register("driver_pay_rate_per_mile")} />',
   },
 ];
 

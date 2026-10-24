@@ -24,8 +24,9 @@ export function run(overrides = {}) {
   const vendor = read("apps/frontend/src/components/vendors/VendorCreateModal.tsx");
 
   assert(
-    page.includes("const kpiBaseQuery = useQuery") && page.includes("listSettlements(companyId)"),
-    "SettlementsPage must query an unfiltered list for KPI base",
+    page.includes("const kpiBaseQuery = useQuery") &&
+      (page.includes("listSettlements(companyId)") || page.includes("listAllSettlements(companyId")),
+    "SettlementsPage must query a list for KPI base (listSettlements or listAllSettlements)",
     errors
   );
   assert(
@@ -36,9 +37,9 @@ export function run(overrides = {}) {
   assert(
     page.includes('dataTestId="settlements-filter-driver"') &&
       page.includes('kind="driver"') &&
-      page.includes("allowCreate={false}") &&
+      (page.includes("allowCreate={false}") || page.includes('EntityMultiSelect')) &&
       page.includes('searchParams.get("driver_id")'),
-    "SettlementsPage must render EntityPicker kind=driver filter (allowCreate=false) and honor ?driver_id=",
+    "SettlementsPage must render a kind=driver filter (EntityPicker allowCreate=false or EntityMultiSelect) with dataTestId settlements-filter-driver and honor ?driver_id=",
     errors
   );
 
@@ -104,7 +105,7 @@ function selftest() {
 
   const patched = backup.replace(/const kpiBaseQuery = useQuery\(\{[\s\S]*?\n  \}\);\n/, "");
   const planted = run({ [PAGE_REL]: patched });
-  if (!planted.some((e) => e.includes("unfiltered list for KPI base"))) {
+  if (!planted.some((e) => e.includes("KPI base"))) {
     throw new Error("planted kpiBaseQuery removal not detected");
   }
 

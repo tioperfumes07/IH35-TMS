@@ -16,17 +16,21 @@ import fs from "node:fs";
 
 const LABEL = "verify-settlement-detail-line-number-spine";
 const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
+// seqLabel / seqCounter may have been extracted into a sibling helper file (refactor).
+const LINE_MAPS = "apps/frontend/src/pages/driver-finance/settlementDetailLineMaps.ts";
 const EXTRA_PAY = "apps/frontend/src/pages/driver-finance/components/ExtraPaySection.tsx";
 const REIMBURSEMENTS = "apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx";
 const DEDUCTIONS = "apps/frontend/src/pages/driver-finance/components/DeductionsSection.tsx";
 
-export function detailPageComputesAndThreadsSpine(src) {
+export function detailPageComputesAndThreadsSpine(detailSrc, lineMapsSource) {
+  // seqLabel/seqCounter may live inline in the detail page OR in the extracted helper.
+  const spineSource = detailSrc + (lineMapsSource ?? "");
   return (
-    /const seqLabel = \(\): string => \{/.test(src) &&
-    /seqCounter \+= 1/.test(src) &&
-    /<ExtraPaySection lines=\{extraWithSeq\}/.test(src) &&
-    /<ReimbursementsSection lines=\{reimbursementsWithSeq\}/.test(src) &&
-    /rows=\{deductionsWithSeq\}/.test(src)
+    /const seqLabel = \(\): string => \{/.test(spineSource) &&
+    /seqCounter \+= 1/.test(spineSource) &&
+    /<ExtraPaySection lines=\{extraWithSeq\}/.test(detailSrc) &&
+    /<ReimbursementsSection lines=\{reimbursementsWithSeq\}/.test(detailSrc) &&
+    /rows=\{deductionsWithSeq\}/.test(detailSrc)
   );
 }
 
@@ -38,7 +42,7 @@ export function sectionRendersSpineNotRawId(src) {
 
 function violations(files) {
   const errors = [];
-  if (!detailPageComputesAndThreadsSpine(files.detailPage)) {
+  if (!detailPageComputesAndThreadsSpine(files.detailPage, files.lineMaps)) {
     errors.push("SettlementDetailPage.tsx no longer computes the seq_label spine and threads it to ExtraPaySection/ReimbursementsSection/DeductionsSection");
   }
   if (!sectionRendersSpineNotRawId(files.extraPay)) errors.push("ExtraPaySection.tsx's Number column no longer prefers seq_label over the raw row id");
@@ -53,8 +57,10 @@ function check(files) {
 }
 
 function loadFiles() {
+  const lineMapsPath = LINE_MAPS;
   return {
     detailPage: fs.readFileSync(DETAIL_PAGE, "utf8"),
+    lineMaps: fs.existsSync(lineMapsPath) ? fs.readFileSync(lineMapsPath, "utf8") : "",
     extraPay: fs.readFileSync(EXTRA_PAY, "utf8"),
     reimbursements: fs.readFileSync(REIMBURSEMENTS, "utf8"),
     deductions: fs.readFileSync(DEDUCTIONS, "utf8"),

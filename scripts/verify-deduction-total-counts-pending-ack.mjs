@@ -34,7 +34,8 @@ function assert(files) {
     );
   }
   // The disclosure must survive: pending_ack keeps its own subtotal.
-  if (!/pendingAckTotal = deductions\.reduce/.test(src)) {
+  // deductionsWithSeq is the refactored name (buildSettlementLineViews extracts the seq spine).
+  if (!/pendingAckTotal = deductions(?:WithSeq)?\.reduce/.test(src)) {
     problems.push(`${PAGE}: pendingAckTotal must remain — pending_ack is a disclosure, not a deletion`);
   }
   return problems;
@@ -47,12 +48,12 @@ if (SELFTEST) {
   const reverted = {
     ...files,
     [PAGE]: files[PAGE].replace(
-      "const deductionTotal = deductions.reduce((sum, row) => sum + row.this_period_amount, 0);",
+      /const deductionTotal = deductions(?:WithSeq)?\.reduce\(\(sum, row\) => sum \+ row\.this_period_amount, 0\);/,
       "const deductionTotal = deductions.reduce((sum, row) => sum + (row.pending_ack ? 0 : row.this_period_amount), 0);",
     ),
   };
   checks.push(["pending_ack zeroed again", assert(reverted).some((p) => /must NOT zero out/.test(p))]);
-  const noDisclosure = { ...files, [PAGE]: files[PAGE].replace(/const pendingAckTotal = deductions\.reduce/, "const unusedTotal = deductions.reduce") };
+  const noDisclosure = { ...files, [PAGE]: files[PAGE].replace(/const pendingAckTotal = deductions(?:WithSeq)?\.reduce/, "const unusedTotal = deductionsWithSeq.reduce") };
   checks.push(["disclosure removed", assert(noDisclosure).some((p) => /must remain/.test(p))]);
   const failed = checks.filter(([, c]) => !c).map(([n]) => n);
   if (failed.length) { console.error(`${LABEL} SELFTEST FAIL — not caught: ${failed.join(", ")}`); process.exit(1); }

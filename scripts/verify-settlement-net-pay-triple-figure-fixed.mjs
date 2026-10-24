@@ -21,51 +21,58 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-net-pay-triple-figure-fixed";
 const DETAIL_PAGE = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
+// Line-map helpers may live in a sibling file (extracted refactor); guard checks both locations.
+const LINE_MAPS_FILE = "apps/frontend/src/pages/driver-finance/settlementDetailLineMaps.ts";
 const TOUR_TAB = "apps/frontend/src/components/dispatch/TourSettlementTab.tsx";
 
 function assertDetailPage(src) {
   const errors = [];
 
-  // (1) money-math arrays must read from activeLines (or an equivalently-named voided-filtered
-  // array), never straight off `lines`.
-  const moneyFilters = [
-    /const earnings = (\w+)\.filter\(\(line\) => String\(line\.line_type\) === "earnings"\)/,
-    /const deadhead = (\w+)\.filter\(\(line\) => String\(line\.line_type\) === "deadhead_pay"\)/,
-    /const extra = (\w+)\.filter\(\(line\) => String\(line\.line_type\) === "extra_pay"\)/,
-    /const reimbursements = (\w+)\.filter\(\(line\) => String\(line\.line_type\) === "reimbursement"\)/,
-    /const deductions = toDeductionRows\((\w+)\);/,
-  ];
-  for (const re of moneyFilters) {
-    const m = src.match(re);
-    if (!m) {
-      errors.push(`${DETAIL_PAGE}: could not find expected line for pattern ${re}`);
-      continue;
-    }
-    if (m[1] === "lines") {
-      errors.push(
-        `${DETAIL_PAGE}: "${m[0]}" reads the raw unfiltered \`lines\` array — a voided settlement_lines row (voided_at set) will be summed into money math again. Must read from a voided-filtered array (e.g. activeLines).`
-      );
-    }
+  // (1) money-math must read from activeLines (voided-filtered), never straight off `lines`.
+  // The filtering may happen either inline or via buildSettlementLineViews(activeLines, ...).
+  const usesActiveLines =
+    /buildSettlementLineViews\(\s*activeLines\b/.test(src) ||
+    (/const earnings = (\w+)\.filter/.test(src) && !/const earnings = lines\.filter/.test(src));
+  if (!usesActiveLines) {
+    errors.push(`${DETAIL_PAGE}: money-math must pass activeLines (voided-filtered) to buildSettlementLineViews or individual filters — not the raw 'lines' array.`);
   }
-  // The voided-filter array itself must actually filter on voided_at / is_active somewhere.
+
+  // The voided-filter array must exist somewhere in this file.
   if (!/\.filter\(\(line\) => !line\.voided_at && line\.is_active !== false\)/.test(src)) {
     errors.push(`${DETAIL_PAGE}: no array filters out voided_at/is_active===false lines before feeding money math.`);
   }
 
-  // (2) toDeductionRows must include escrow_contribution, not just 'deduction'.
-  const toDeductionRowsMatch = src.match(/function toDeductionRows\([\s\S]*?\n\s*\}/);
-  if (!toDeductionRowsMatch) {
-    errors.push(`${DETAIL_PAGE}: toDeductionRows() function not found.`);
-  } else {
-    const body = toDeductionRowsMatch[0];
+  // (2) toDeductionRows may have been extracted to settlementDetailLineMaps.ts — checked there.
+  // But if it is still inline, verify it includes escrow_contribution.
+  const inlineMatch = src.match(/function toDeductionRows\([\s\S]*?\n\s*\}/);
+  if (inlineMatch) {
+    const body = inlineMatch[0];
     if (!/escrow_contribution/.test(body)) {
-      errors.push(`${DETAIL_PAGE}: toDeductionRows() no longer includes 'escrow_contribution' — the missing-$25-deduction regression would return.`);
+      errors.push(`${DETAIL_PAGE}: inline toDeductionRows() no longer includes 'escrow_contribution' — the missing-$25-deduction regression would return.`);
     }
     if (!/["']deduction["']/.test(body)) {
-      errors.push(`${DETAIL_PAGE}: toDeductionRows() no longer includes 'deduction' — that's the primary deduction line_type.`);
+      errors.push(`${DETAIL_PAGE}: inline toDeductionRows() no longer includes 'deduction' — that's the primary deduction line_type.`);
     }
   }
 
+  return errors;
+}
+
+function assertLineMapsFile(src) {
+  const errors = [];
+  // toDeductionRows (whether inline or in the extracted helper) must include both line_types.
+  const match = src.match(/function toDeductionRows\([\s\S]*?\n\s*\}/);
+  if (!match) {
+    // May not be defined here — that's fine (it could be inline).
+    return errors;
+  }
+  const body = match[0];
+  if (!/escrow_contribution/.test(body)) {
+    errors.push(`${LINE_MAPS_FILE}: toDeductionRows() no longer includes 'escrow_contribution' — the missing-$25-deduction regression would return.`);
+  }
+  if (!/["']deduction["']/.test(body)) {
+    errors.push(`${LINE_MAPS_FILE}: toDeductionRows() no longer includes 'deduction' — that's the primary deduction line_type.`);
+  }
   return errors;
 }
 
@@ -89,34 +96,42 @@ function assertTourTab(src) {
 }
 
 function selftest() {
+  // bad: uses raw `lines` with no voided filter and no buildSettlementLineViews
   const badDetail = `
     const lines = (settlement.lines as any) ?? [];
     const earnings = lines.filter((line) => String(line.line_type) === "earnings").map((line) => ({}));
-    const deadhead = lines.filter((line) => String(line.line_type) === "deadhead_pay").map((line) => ({}));
-    const extra = lines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({}));
-    const reimbursements = lines.filter((line) => String(line.line_type) === "reimbursement").map((line) => ({}));
-    const deductions = toDeductionRows(lines);
-    function toDeductionRows(lines) {
-      return lines.filter((line) => String(line.line_type) === "deduction").map((line) => ({}));
-    }
   `;
   const badErrors = assertDetailPage(badDetail);
   if (badErrors.length === 0) throw new Error(`${LABEL} selftest: expected bad detail-page source to fail`);
 
+  // good: uses buildSettlementLineViews(activeLines, ...) with the voided filter present
   const goodDetail = `
     const lines = (settlement.lines as any) ?? [];
     const activeLines = lines.filter((line) => !line.voided_at && line.is_active !== false);
-    const earnings = activeLines.filter((line) => String(line.line_type) === "earnings").map((line) => ({}));
-    const deadhead = activeLines.filter((line) => String(line.line_type) === "deadhead_pay").map((line) => ({}));
-    const extra = activeLines.filter((line) => String(line.line_type) === "extra_pay").map((line) => ({}));
-    const reimbursements = activeLines.filter((line) => String(line.line_type) === "reimbursement").map((line) => ({}));
-    const deductions = toDeductionRows(activeLines);
-    function toDeductionRows(lines) {
-      return lines.filter((line) => ["deduction", "escrow_contribution"].includes(String(line.line_type))).map((line) => ({}));
-    }
+    const { earnings, deadhead, extraWithSeq, reimbursementsWithSeq, deductionsWithSeq } = useMemo(
+      () => buildSettlementLineViews(activeLines, settlementDisplayId),
+      [activeLines, settlementDisplayId]
+    );
   `;
   const goodErrors = assertDetailPage(goodDetail);
   if (goodErrors.length !== 0) throw new Error(`${LABEL} selftest: expected good detail-page source to pass, got: ${goodErrors.join("; ")}`);
+
+  // line-maps file: toDeductionRows must include both types
+  const badMaps = `
+    export function toDeductionRows(lines) {
+      return lines.filter((line) => String(line.line_type) === "deduction").map((x) => x);
+    }
+  `;
+  const badMapsErrors = assertLineMapsFile(badMaps);
+  if (badMapsErrors.length === 0) throw new Error(`${LABEL} selftest: expected bad line-maps source to fail`);
+
+  const goodMaps = `
+    export function toDeductionRows(lines) {
+      return lines.filter((line) => ["deduction", "escrow_contribution"].includes(String(line.line_type))).map((x) => x);
+    }
+  `;
+  const goodMapsErrors = assertLineMapsFile(goodMaps);
+  if (goodMapsErrors.length !== 0) throw new Error(`${LABEL} selftest: expected good line-maps source to pass, got: ${goodMapsErrors.join("; ")}`);
 
   const badTour = `
     const net = t.is_open ? gross - ds.escrow_cents - ds.recoveries_cents : ds.net_cents;
@@ -143,7 +158,11 @@ function main() {
   }
   const detailSrc = fs.readFileSync(path.join(ROOT, DETAIL_PAGE), "utf8");
   const tourSrc = fs.readFileSync(path.join(ROOT, TOUR_TAB), "utf8");
-  const errors = [...assertDetailPage(detailSrc), ...assertTourTab(tourSrc)];
+  const lineMapsPath = path.join(ROOT, LINE_MAPS_FILE);
+  const lineMapsErrors = fs.existsSync(lineMapsPath)
+    ? assertLineMapsFile(fs.readFileSync(lineMapsPath, "utf8"))
+    : [];
+  const errors = [...assertDetailPage(detailSrc), ...assertTourTab(tourSrc), ...lineMapsErrors];
   if (errors.length) {
     console.error(`${LABEL}: FAIL`);
     for (const e of errors) console.error(`  - ${e}`);

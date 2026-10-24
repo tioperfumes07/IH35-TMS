@@ -132,21 +132,21 @@ const CHECKS = [
       /data-settlements-statement-v3-kpis="1"[\s\S]*kind="company_settlement"|kind="company_settlement"[\s\S]*data-settlements-statement-v3-kpis="1"/,
   },
   {
-    name: "SettlementDetailPage board action labels + SettlementStatementBoardPanels mount",
+    name: "SettlementDetailPage board action labels + SettlementDocumentBody mount (443.293-A)",
     file: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
     pattern:
-      /Print statement[\s\S]*Download PDF[\s\S]*Open journal entry[\s\S]*SettlementStatementBoardPanels/,
+      /Print statement[\s\S]*Download PDF[\s\S]*Open journal entry[\s\S]*SettlementDocumentBody/,
   },
   {
-    name: "SettlementStatementBoardPanels 4 V3Panel titles + data attr",
-    file: "apps/frontend/src/pages/driver-finance/components/SettlementStatementBoardPanels.tsx",
+    name: "SettlementDocumentBody eight-section document + linked records panel",
+    file: "apps/frontend/src/pages/driver-finance/components/SettlementDocumentBody.tsx",
     pattern:
-      /data-settlements-statement-v3-panel="1"[\s\S]*Earnings — by load[\s\S]*Deductions · reimbursements · net[\s\S]*companyPanelTitle[\s\S]*Linked records/,
+      /settlement-document-eight-sections[\s\S]*SettlementLoadsSection[\s\S]*FuelPurchasesSection[\s\S]*EarningsSection[\s\S]*SettlementStatementLinkedRecordsPanel/,
   },
   {
-    name: "SettlementStatementBoardPanels company panel title includes side by side",
-    file: "apps/frontend/src/pages/driver-finance/components/SettlementStatementBoardPanels.tsx",
-    pattern: /side by side/,
+    name: "SettlementStatementLinkedRecordsPanel title Linked records",
+    file: "apps/frontend/src/pages/driver-finance/components/SettlementStatementLinkedRecordsPanel.tsx",
+    pattern: /Linked records/,
   },
   {
     // ACCT-F5444: NOT kind="bill" — that was this check's original ask, and it is WRONG.

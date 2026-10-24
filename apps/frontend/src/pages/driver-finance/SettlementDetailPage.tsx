@@ -1,6 +1,6 @@
 /**
- * ROUND 443.280-A Settlements-Statement — board strip + 2×2 panels ONLY.
- * Finalize / payment / deductions / dispute live on SettlementStatementWorkflowPage
+ * ROUND 443.293-A — Statement tab = full settlement document (eight sections + linked records).
+ * Finalize / payment / interactive deductions live on SettlementStatementWorkflowPage
  * (`?settlement_id=&workflow=1`). JE opens /accounting/proof-trail/settlement/:id.
  */
 import { settlementNumber } from "../../lib/settlementNumber";
@@ -28,7 +28,8 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { getTourReadout } from "../../api/tourReadout";
 import { getCompanySettlementReport } from "../../api/accounting";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { SettlementStatementBoardPanels } from "./components/SettlementStatementBoardPanels";
+import { SettlementDocumentBody } from "./components/SettlementDocumentBody";
+import { buildSettlementLineViews } from "./settlementDetailLineMaps";
 import {
   reverseSettlement,
   unlockSettlement,
@@ -107,45 +108,9 @@ export function SettlementDetailPage() {
     [lines]
   );
 
-  const earnings = activeLines
-    .filter((line) => String(line.line_type) === "earnings")
-    .map((line) => ({
-      id: String(line.id),
-      load_id: typeof line.load_id === "string" ? line.load_id : null,
-      load_number: typeof line.load_number === "string" ? line.load_number : null,
-      origin_city: typeof line.origin_city === "string" ? line.origin_city : null,
-      origin_state: typeof line.origin_state === "string" ? line.origin_state : null,
-      dest_city: typeof line.dest_city === "string" ? line.dest_city : null,
-      dest_state: typeof line.dest_state === "string" ? line.dest_state : null,
-      miles: line.miles == null ? undefined : Number(line.miles),
-      rate: line.rate_cents == null ? undefined : Number(line.rate_cents) / 100,
-      amount: Number(line.amount ?? 0),
-    }));
-
-  const summary = useMemo(() => {
-    const earningsTotal = earnings.reduce((sum, row) => sum + row.amount, 0);
-    const deadheadTotal = activeLines
-      .filter((line) => String(line.line_type) === "deadhead_pay")
-      .reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
-    const extraTotal = activeLines
-      .filter((line) => String(line.line_type) === "extra_pay")
-      .reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
-    const reimbTotal = activeLines
-      .filter((line) => String(line.line_type) === "reimbursement")
-      .reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
-    const deductionTotal = activeLines
-      .filter((line) => ["deduction", "escrow_contribution"].includes(String(line.line_type)))
-      .reduce((sum, line) => sum + Number(line.amount ?? 0), 0);
-    return { earningsTotal, deadheadTotal, extraTotal, reimbTotal, deductionTotal };
-  }, [activeLines, earnings]);
-
-  const driverNetCents = Math.round(
-    (summary.earningsTotal +
-      summary.deadheadTotal +
-      summary.extraTotal +
-      summary.reimbTotal -
-      summary.deductionTotal) *
-      100
+  const { earnings, deadhead, extraWithSeq, reimbursementsWithSeq, deductionsWithSeq } = useMemo(
+    () => buildSettlementLineViews(activeLines, settlementDisplayId),
+    [activeLines, settlementDisplayId]
   );
 
   async function refreshSettlementViews() {
@@ -450,16 +415,18 @@ export function SettlementDetailPage() {
         />
       </div>
       {settlementId && companyId ? (
-        <SettlementStatementBoardPanels
+        <SettlementDocumentBody
+          operatingCompanyId={companyId}
           settlementId={settlementId}
-          companyId={companyId}
           settlementDisplayId={settlementDisplayId}
-          earnings={earnings}
-          deductionTotalDollars={summary.deductionTotal}
-          reimbursementTotalDollars={summary.reimbTotal}
-          driverNetCents={driverNetCents}
           readout={readout}
           companyReport={companyReport}
+          earnings={earnings}
+          deadhead={deadhead}
+          extraWithSeq={extraWithSeq}
+          reimbursementsWithSeq={reimbursementsWithSeq}
+          deductionsWithSeq={deductionsWithSeq}
+          isOpen={false}
           matchedBankTransactionId={matchedBankTransactionId}
           onOpenJournalEntry={openJournalEntry}
           onOpenFuelFills={openFuelFills}
