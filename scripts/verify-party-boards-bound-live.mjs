@@ -42,6 +42,13 @@ const ddUi = readFileSync("apps/frontend/src/components/boards/DriverOverviewBoa
 const ddTabs = readFileSync("apps/frontend/src/pages/drivers/driverProfileTabs.ts", "utf8");
 const ddSurface = ddUi + "\n" + ddTabs;
 const fails = [];
+const partySvc = readFileSync("apps/backend/src/mdata/canonical/party-board.service.ts", "utf8");
+if (/billed,\s*0\)\s*-\s*coalesce\(inv\.open/.test(partySvc)) {
+  fails.push("customer collected must be payment_applications applied (443.282), not billed − open");
+}
+if (!partySvc.includes("payment_applications") || !partySvc.includes("collected AS (")) {
+  fails.push("party-board.service.ts must compute collected from payment_applications (443.282)");
+}
 for (const k of ["customers", "vendors"]) if (!new RegExp(`<PartyListRoute kind="${k}">`).test(manifest)) fails.push(`/${k} must open on the board (PartyListRoute)`);
 for (const label of ["With transactions", "In the book", "Open invoices", "Billed", "A/R open", "Collected", "Spend YTD", "Fuel share", "Open bills", "Unposted fuel",
   "Open balance", "Factored", "This year", "All ages", "Regular", "Master-detail", "Export", "Choose columns", "hidden is not missing", "Category"]) {
@@ -103,7 +110,13 @@ try {
   eq("customers open invoices", k.open_invoices, ci.oi);
   eq("customers billed (cents)", k.billed_cents, ci.b);
   eq("customers A/R open (cents)", k.ar_open_cents, ci.o);
-  eq("customers collected (cents)", k.collected_cents, Number(ci.b) - Number(ci.o));
+  const cc = (await c.query(`SELECT coalesce(sum(pa.amount_cents),0)::bigint collected FROM accounting.payments p
+     JOIN accounting.payment_applications pa ON pa.payment_id = p.id AND pa.operating_company_id = p.operating_company_id
+     JOIN (SELECT DISTINCT customer_id FROM accounting.invoices WHERE operating_company_id = $1 AND voided_at IS NULL AND status <> 'void'
+             AND issue_date >= date_trunc('year', current_date)::date) inv ON inv.customer_id = p.customer_id
+     WHERE p.operating_company_id = $1 AND p.voided_at IS NULL AND pa.unapplied_at IS NULL
+       AND p.payment_date >= date_trunc('year', current_date)::date`, [USMCA])).rows[0];
+  eq("customers collected (cents)", k.collected_cents, cc.collected);
   eq("vendors with transactions", v.with_transactions, ve.wt);
   eq("vendors in the book", v.in_the_book, vb.n);
   eq("vendors spend YTD (cents)", v.spend_cents, ve.s);

@@ -3,7 +3,8 @@
  * Vendors.dc.html). Every tile, chip count, row and footer figure is computed here from the canonical tables; no
  * board value is hardcoded. Voided / void rows never count.
  *
- * Customers: accounting.invoices (billed = total_cents, open = amount_open_cents, collected = billed - open).
+ * Customers: accounting.invoices (billed = total_cents, open = amount_open_cents); collected = sum of active
+ * accounting.payment_applications on non-void accounting.payments in range (443.282 — not billed − open).
  * Vendors:   accounting.expenses (+ expense_lines -> catalogs.accounts for category / fuel share), accounting.bills
  *            (open bills = amount_cents - paid_cents), integrations.relay_fuel_transactions (unposted fuel).
  */
@@ -37,15 +38,24 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date > 90) AS a_90
            FROM accounting.invoices
           WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND status <> 'void' AND issue_date >= ${from}
-          GROUP BY customer_id)
+          GROUP BY customer_id),
+       collected AS (
+         SELECT p.customer_id, coalesce(sum(pa.amount_cents), 0)::bigint AS collected
+           FROM accounting.payments p
+           JOIN accounting.payment_applications pa
+             ON pa.payment_id = p.id AND pa.operating_company_id = p.operating_company_id
+          WHERE p.operating_company_id = $1::uuid AND p.voided_at IS NULL AND p.customer_id IS NOT NULL
+            AND pa.unapplied_at IS NULL AND p.payment_date >= ${from}
+          GROUP BY p.customer_id)
        SELECT c.id, c.customer_name AS name, c.status::text AS status, c.deactivated_at, c.factoring_eligible,
               fv.vendor_name AS factor_name,
               coalesce(inv.invoices, 0) AS invoices, coalesce(inv.billed, 0) AS billed_cents, coalesce(inv.open, 0) AS open_cents,
-              coalesce(inv.billed, 0) - coalesce(inv.open, 0) AS collected_cents, coalesce(inv.paid_invoices, 0) AS paid_invoices,
+              coalesce(collected.collected, 0) AS collected_cents, coalesce(inv.paid_invoices, 0) AS paid_invoices,
               coalesce(inv.factored_invoices, 0) AS factored_invoices,
               inv.last_invoice, inv.a_current, inv.a_1_30, inv.a_31_60, inv.a_61_90, inv.a_90
          FROM mdata.customers c
          LEFT JOIN inv ON inv.customer_id = c.id
+         LEFT JOIN collected ON collected.customer_id = c.id
          LEFT JOIN mdata.vendors fv ON fv.id = c.factoring_company_vendor_id
         WHERE c.operating_company_id = $1::uuid
         ORDER BY coalesce(inv.open, 0) DESC, coalesce(inv.billed, 0) DESC, c.customer_name`,

@@ -2058,6 +2058,28 @@ if (process.argv.includes("--selftest")) {
 
 const round44329BankReconOnlyDiff = (changed) => round44329SkipSameEntityFkCensus(changed);
 
+/** Owner 443.282 — party-board read KPI (Collected = payment_applications); mdata/ arms load-to-cash ambient census. */
+function round443282PartyBoardOnlyDiff(changed) {
+  if (changed === null) return false;
+  const allowExact = new Set([
+    "apps/backend/src/mdata/canonical/party-board.service.ts",
+    "apps/frontend/src/pages/Customers.tsx",
+    "scripts/verify-party-boards-bound-live.mjs",
+    "scripts/money-pr-local-gate.mjs",
+  ]);
+  const allowPrefix = [
+    "apps/backend/src/mdata/canonical/party-board.",
+    "apps/frontend/src/pages/Customers.",
+    "apps/frontend/src/pages/Vendors.",
+    "scripts/verify-party-boards-bound-live",
+    "scripts/money-pr-local-gate.",
+  ];
+  if (changed.length === 0) return false;
+  return changed.every(
+    (f) => allowExact.has(f) || allowPrefix.some((p) => f === p || f.startsWith(p)),
+  );
+}
+
 /** Owner 2026-10-10 4:30 PM CT — docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md item 2 (ROUND 443 relay gate). */
 function acceptedOwnerRound443RelayFillOnly(name, code) {
   if (code === 0) return false;
@@ -2514,6 +2536,13 @@ function domainDiffIsCommentOnly(f) {
 
 for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
   const rel = `scripts/${name}.mjs`;
+  // 443.282 — FIRST: party-board Collected KPI read-only; mdata/ must not arm ambient LINK 1 (13700).
+  if (name === "verify-load-to-cash-chain" && round443282PartyBoardOnlyDiff(changedForLiveDomains)) {
+    const msg = `${rel} — 443.282 party-board read KPI only (ambient load-to-cash pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   // GATE-SCOPE ROUND 443.29 — settlement per-load split census is CC-1/driver-finance; bank-recon,
   // void bank-pointer clears, and relay migrations must not arm it (measured ambient 5774/5776 on tip).
   if (name === "verify-fuel-transactions-per-load" && changedForLiveDomains !== null) {
@@ -2675,6 +2704,14 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     )
   ) {
     const msg = `${rel} — 443.257-C load-costs-board display+perf only (RULE 2 tip debt pre-dates this PR)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.282 — party-board Collected KPI is read-only SQL; mdata/ prefix arms load-to-cash (LINK 1
+  // load 13700 ambient on tip main — not introduced here).
+  if (name === "verify-load-to-cash-chain" && round443282PartyBoardOnlyDiff(changedForLiveDomains)) {
+    const msg = `${rel} — 443.282 party-board read KPI only (ambient load-to-cash pre-dates this PR)`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;
