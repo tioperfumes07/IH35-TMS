@@ -6,6 +6,9 @@
  * R's own line (card gross == receipt): B must ADOPT R (marker stamped on R) — on main B fell through to the import path.
  */
 import { describe, expect, it, vi } from "vitest";
+// OWNER RULING 443.288-A: the child document is linked to its receipt through THE family link (asserted below).
+const family = vi.hoisted(() => ({ linkExpenseChildToParentInClientTx: vi.fn(async () => undefined) }));
+vi.mock("../../accounting/reclassify/reclassify.service.js", async (importOriginal) => ({ ...(await importOriginal<object>()), ...family }));
 
 vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: vi.fn(async () => true) }));
 vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({
@@ -19,7 +22,9 @@ vi.mock("../../accounting/bank-recon/match.service.js", () => ({ FUEL_CARD_DISCO
 vi.mock("../../accounting/bank-recon/bank-match-fuel-post.service.js", () => ({ postFuelFillOnReceipt: vi.fn() }));
 vi.mock("../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js", () => ({ FUEL_POSTS_ON_RECEIPT_FLAG_KEY: "FUEL_POSTS_ON_RECEIPT_ENABLED" }));
 vi.mock("../../accounting/expense-gl-posting-flag.js", () => ({ EXPENSE_GL_POSTING_FLAG_KEY: "EXPENSE_GL_POSTING_ENABLED" }));
-vi.mock("../../accounting/expense-writer.service.js", () => ({ createExpenseInClientTx: vi.fn(), postExpenseDocumentInClientTx: vi.fn() }));
+// LEAD 443.258.5 (writer shape B): the card difference is an expense DOCUMENT through THE expense writer, not a JE.
+const writer = vi.hoisted(() => ({ createExpenseInClientTx: vi.fn(async () => ({ expense_id: "e-diff", posted_journal_entry_id: "je-diff" })), postExpenseDocumentInClientTx: vi.fn() }));
+vi.mock("../../accounting/expense-writer.service.js", () => writer);
 vi.mock("../fuel-load-at-time.js", () => ({ resolveFuelLoadAtTime: vi.fn(async () => null), resolveFillDriverAtTime: vi.fn(async () => null) }));
 vi.mock("../fuel-provider-reference.js", () => ({ findLiveFuelByProviderTransactionId: vi.fn(async () => null) }));
 
@@ -45,6 +50,10 @@ function fakeClient() {
     if (sql.includes("e.source_fuel_transaction_id::text AS fuel_transaction_id")) {
       return { rows: [{ expense_id: "exp-R", expense_number: "13555-1", d: "2026-08-20", unit_number: "T164", fuel_type: "diesel",
         accts: ["5000"], cents: "72680", rail: "card", fuel_transaction_id: "ft-R", notes: null }] };
+    }
+    // the difference writer reads its receipt (vendor / load / number) before writing the child document
+    if (sql.includes("FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid")) {
+      return { rows: [{ vendor: "v-loves", load_id: "l-1", driver: null, unit_id: null, trailer_id: null, expense_number: "RCPT-1", expense_date: "2026-08-26" }] };
     }
     if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-diff" }] };
     if (sql.includes("UPDATE fuel.fuel_transactions") && sql.includes("concat_ws")) {

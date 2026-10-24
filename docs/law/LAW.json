@@ -1167,5 +1167,12 @@
     "source_file": "apps/backend/src/driver-finance/driver-pay-restate.service.ts",
     "guard": "scripts/verify-miles-reprice-follows-everywhere.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443288A-EXPENSE-FAMILY-MOVES-WITH-RECEIPT",
+    "title": "A statement card credit / card difference is linked to its receipt (parent_expense_id + spine role statement_card_difference_of) and always moves load with it through ONE family move in the reclassify engine; it never has its own load decision",
+    "source_file": "apps/backend/src/accounting/reclassify/reclassify.service.ts",
+    "guard": "scripts/verify-expense-family-moves-with-receipt.mjs",
+    "type": "enforced"
   }
 ]

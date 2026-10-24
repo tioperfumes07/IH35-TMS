@@ -32,7 +32,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { linkExpenseToLoadInClientTx, reserveLoadSpineExpenseNumber } from "../accounting/expense-writer.service.js";
 import { stampReceiptDocumentSettlementRef } from "./fuel-expense-document.service.js";
 import { resolveFuelLoadAtTime } from "./fuel-load-at-time.js";
-import { applyReclassifyOnClient } from "../accounting/reclassify/reclassify.service.js";
+import { applyReclassifyOnClient, moveExpenseFamilyToLoad } from "../accounting/reclassify/reclassify.service.js";
 import { sameEntityLoadCompanyTrailerSql } from "../accounting/load-trailer.sql.js";
 
 type DbClient = {
@@ -192,6 +192,11 @@ export async function attachFuelReceiptToLoad(
       operating_company_id: opco,
       expense_id: doc.id,
       actor_user_uuid: input.actorUserId,
+    });
+    // OWNER RULING 443.288-A: the receipt's linked children (statement card credit / card difference) come with it.
+    await moveExpenseFamilyToLoad(client as never, {
+      operatingCompanyId: opco, actorUserId: input.actorUserId, parentExpenseIds: [doc.id], toLoadId: loadId,
+      reason: "fuel receipt attached to the load covering its fill time — its statement card difference follows (443.288-A)",
     });
   }
   await appendCrudAudit(

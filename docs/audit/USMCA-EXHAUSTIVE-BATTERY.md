@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 361 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 362 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 284 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 971 | |
+| **TOTAL POST endpoints** | 972 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -54,7 +54,7 @@ blocking the wire — per the owner's standing instruction.
 expected downstream effect (balanced JE, both-way link) — that is CC-3's verification, handed over
 after creation; a GL/posting failure goes to CC-1.
 
-### accounting — 77 create-surface(s)
+### accounting — 78 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -81,7 +81,8 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/escrow/deposit` | `apps/backend/src/accounting/escrow/routes.ts:119` | — | — | — |
 | create | `/api/v1/accounting/escrow/open` | `apps/backend/src/accounting/escrow/routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/expense-category-map` | `apps/backend/src/accounting/expense-category-map/routes.ts:226` | — | — | — |
-| create | `/api/v1/accounting/expenses/link-loads` | `apps/backend/src/accounting/expenses.routes.ts:424` | — | — | — |
+| create | `/api/v1/accounting/expense-families/align-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts:101` | — | — | — |
+| create | `/api/v1/accounting/expenses/link-loads` | `apps/backend/src/accounting/expenses.routes.ts:425` | — | — | — |
 | create | `/api/v1/accounting/factoring-advances` | `apps/backend/src/accounting/factoring-advances.routes.ts:419` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/advance` | `apps/backend/src/accounting/factoring-advances.routes.ts:752` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/recourse-return` | `apps/backend/src/accounting/factoring-advances.routes.ts:1108` | — | — | — |
@@ -453,7 +454,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/driver-finance/escrow-separations` | `apps/backend/src/driver-finance/escrow-separation.routes.ts:67` | — | — | — |
 | nested | `/api/v1/driver-finance/escrow/:driverId/forfeit` | `apps/backend/src/driver-finance/escrow-forfeit.routes.ts:46` | — | — | — |
 | nested | `/api/v1/driver-finance/pre-settlements/:id/add-load` | `apps/backend/src/driver-finance/pre-settlement.routes.ts:288` | — | — | — |
-| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts:639` | — | — | — |
+| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts:643` | — | — | — |
 | nested | `/api/v1/driver-finance/pre-settlements/:id/settle` | `apps/backend/src/driver-finance/pre-settlement.routes.ts:423` | — | — | — |
 | nested | `/api/v1/driver-finance/presettlement-suggestions/:id/confirm` | `apps/backend/src/dispatch/presettlement-link.routes.ts:71` | — | — | — |
 | nested | `/api/v1/driver-finance/settlement-creator/:settlementId/retry-after-commit` | `apps/backend/src/driver-finance/settlement-creator.routes.ts:476` | — | — | — |
@@ -468,7 +469,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver-finance/settlements/:id/pay-lines` | `apps/backend/src/driver-finance/settlements.routes.ts:1333` | — | — | — |
 | nested | `/api/v1/driver-finance/settlements/:id/payrun-close` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts:104` | — | — | — |
 | nested | `/api/v1/driver-finance/settlements/:id/unlock` | `apps/backend/src/driver-finance/settlements.routes.ts:1671` | — | — | — |
-| create | `/api/v1/driver-finance/settlements/header-boundaries-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts:78` | — | — | — |
+| create | `/api/v1/driver-finance/settlements/header-boundaries-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts:81` | — | — | — |
 
 ### legal — 22 create-surface(s)
 
@@ -538,7 +539,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/fuel/receipts/repoint-to-loads` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:18` | — | — | — |
 | create | `/api/v1/fuel/relay-duplicates/void-later` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:64` | — | — | — |
 | create | `/api/v1/fuel/relay-links/undo-cross-rail` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:41` | — | — | — |
-| create | `/api/v1/fuel/statement-discounts/card-credit-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts:49` | — | — | — |
+| create | `/api/v1/fuel/statement-discounts/card-credit-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts:52` | — | — | — |
 | create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts:356` | — | — | — |
 | create | `/api/v1/fuel/wex/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts:257` | — | — | — |
 
@@ -694,11 +695,11 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:628` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:1360` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/correct` | `apps/backend/src/accounting/expenses.routes.ts:1315` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:779` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1078` | — | — | — |
+| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:629` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/change-payment-source` | `apps/backend/src/accounting/expenses.routes.ts:1366` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/correct` | `apps/backend/src/accounting/expenses.routes.ts:1321` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:780` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1084` | — | — | — |
 
 ### ifta — 5 create-surface(s)
 
