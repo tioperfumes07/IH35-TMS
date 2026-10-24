@@ -53,6 +53,8 @@ const STEPS = [
   // asserted AT CLOSE/SEND TIME by source-wiring, not swept up later by a one-shot. Pure static
   // text check, no DB.
   ["verify-settlement-close-advances-load-status", "scripts/verify-settlement-close-advances-load-status.mjs"],
+  // ROUND 443.292-A — finalize route must assign AlwaysTrack settlement number before locking.
+  ["verify-settlement-finalize-assigns-source-doc-ref", "scripts/verify-settlement-finalize-assigns-source-doc-ref.mjs"],
   ["verify-settlement-pay-line-item-account", "scripts/verify-settlement-pay-line-item-account.mjs"],
   // ROUND 203/205 (owner, 2026-09-28) — "white background, wrong contrast... tokens for surface/
   // border/text." TruckLineBoard.tsx had drifted off the LOCKED GLOBAL-TYPE-SIZE-BASELINE.md

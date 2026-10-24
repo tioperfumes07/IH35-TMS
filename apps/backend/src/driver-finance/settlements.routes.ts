@@ -24,6 +24,7 @@ import { loadIdsForSettlement } from "../accounting/tour-open-gate.service.js";
 import { postHeldDocumentsForClosedTour } from "../accounting/tour-close-posting.service.js";
 import { reverseSettlementForVoid, SettlementVoidBlockedError } from "./void-document-callees.service.js";
 import { syncSettlementLoadsToBilling } from "../dispatch/load-billing-lifecycle.service.js";
+import { allocateNextSettlementSourceDocumentRef, setSettlementSourceDocumentRef, type Queryable } from "./settlement-source-document-ref.service.js";
 import { addSettlementPayLineInClientTx, PAY_LINE_KINDS, SettlementPayLineError } from "./settlement-pay-line.service.js";
 import {
   settlementEarningsSumSql,
@@ -1391,6 +1392,20 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       if (debtRecomputeError(debt)) return { blocked: true as const, reason: "debt_recompute_failed" };
       const computedAt = debt?.computed_at ? new Date(String(debt.computed_at)).getTime() : 0;
       if (computedAt && Date.now() - computedAt > 5000) return { blocked: true as const, reason: "debt_stale_refresh_required" };
+
+      // ROUND 443.292-A — same as settlement-payrun-close.service.ts:657. The finalize path
+      // (BT-3-DRIVER-FINANCE-REBUILD) is the only other terminal close; it was missing the
+      // assignment, leaving settlements closed via this route without a settlement number.
+      if (!current.source_document_ref) {
+        const nextRef = await allocateNextSettlementSourceDocumentRef(client as unknown as Queryable, companyId);
+        const refResult = await setSettlementSourceDocumentRef(client as unknown as Queryable, {
+          operatingCompanyId: companyId,
+          settlementId: params.data.id,
+          sourceDocumentRef: nextRef,
+          actorUserId: user.uuid,
+        });
+        if (!refResult) return { blocked: true as const, reason: "settlement_number_assign_failed" };
+      }
 
       const updateRes = await client.query(
         `UPDATE driver_finance.driver_settlements SET status = 'locked', locked_at = now() WHERE id = $1 RETURNING *`,
