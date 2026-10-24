@@ -30,6 +30,9 @@ const PAGE = path.join(ROOT, "apps", "frontend", "src", "pages", "driver-finance
 const MANIFEST = path.join(ROOT, "apps", "frontend", "src", "routes", "manifest.tsx");
 const API = path.join(ROOT, "apps", "frontend", "src", "api", "accounting.ts");
 const SIDEBAR = path.join(ROOT, "apps", "frontend", "src", "components", "layout", "sidebar-config.ts");
+const DEDUPE_LIB = path.join(ROOT, "apps", "frontend", "src", "lib", "companySettlementsTourBoard.ts");
+const TOUR_API = path.join(ROOT, "apps", "frontend", "src", "api", "tourReadout.ts");
+const TOUR_ROUTES = path.join(ROOT, "apps", "backend", "src", "driver-finance", "tour-readout.routes.ts");
 
 const ROUTE_PATH = "/driver-finance/company-settlements";
 
@@ -37,7 +40,7 @@ const ROUTE_PATH = "/driver-finance/company-settlements";
  * Pure checker over source strings so --selftest can run it on mutated copies without touching disk.
  * Returns an array of human-readable failures (empty = clean).
  */
-function collectFailures({ pageSrc, manifestSrc, apiSrc, sidebarSrc }) {
+function collectFailures({ pageSrc, manifestSrc, apiSrc, sidebarSrc, dedupeLibSrc, tourApiSrc, tourRoutesSrc }) {
   const failures = [];
 
   if (pageSrc == null) {
@@ -82,6 +85,23 @@ function collectFailures({ pageSrc, manifestSrc, apiSrc, sidebarSrc }) {
   // 5. ParityTable
   if (!/\bParityTable\b/.test(pageSrc)) {
     failures.push("page does not render a ParityTable");
+  }
+
+  // 5a. 443.282 — one row per tour on the Company Settlements board (not raw listTours settlement grain).
+  if (!dedupeLibSrc || !/export function dedupeCompanySettlementsTourBoardRows\b/.test(dedupeLibSrc)) {
+    failures.push("missing dedupeCompanySettlementsTourBoardRows in lib/companySettlementsTourBoard.ts");
+  }
+  if (!/dedupeCompanySettlementsTourBoardRows/.test(pageSrc)) {
+    failures.push("page does not dedupe listTours rows before rendering the board");
+  }
+  if (!/companySettlementsBoardRowKey/.test(pageSrc)) {
+    failures.push("page ParityTable rowKey must use companySettlementsBoardRowKey (tour grain)");
+  }
+  if (tourApiSrc && !/tour_id:\s*string \| null/.test(tourApiSrc)) {
+    failures.push("api/tourReadout TourListRow missing tour_id (board dedupe key)");
+  }
+  if (tourRoutesSrc && !/tour_id:\s*r\.tour\.tour_id/.test(tourRoutesSrc)) {
+    failures.push("tour-readout.routes listTours must project tour_id onto TourListRow");
   }
 
   // 5b. ROUND 443.250 V3 board chrome — V3KpiTile strip + V3Panel (no DrillKpiCard)
@@ -131,7 +151,15 @@ function read(file) {
 }
 
 function loadSources() {
-  return { pageSrc: read(PAGE), manifestSrc: read(MANIFEST), apiSrc: read(API), sidebarSrc: read(SIDEBAR) };
+  return {
+    pageSrc: read(PAGE),
+    manifestSrc: read(MANIFEST),
+    apiSrc: read(API),
+    sidebarSrc: read(SIDEBAR),
+    dedupeLibSrc: read(DEDUPE_LIB),
+    tourApiSrc: read(TOUR_API),
+    tourRoutesSrc: read(TOUR_ROUTES),
+  };
 }
 
 function selftest() {
@@ -180,6 +208,13 @@ function selftest() {
     {
       name: "V3Panel removed from page",
       apply: (s) => ({ ...s, pageSrc: s.pageSrc.replace(/V3Panel/g, "PlainPanel") }),
+    },
+    {
+      name: "tour dedupe removed from page",
+      apply: (s) => ({
+        ...s,
+        pageSrc: s.pageSrc.replace(/dedupeCompanySettlementsTourBoardRows/g, "identityRows"),
+      }),
     },
   ];
 

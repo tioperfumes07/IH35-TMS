@@ -26,18 +26,24 @@ import fs from "node:fs";
 
 const COMP = "apps/frontend/src/pages/driver-finance/SettlementsCompanyDriverTab.tsx";
 const PAGE = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
+const SUBNAV = "apps/frontend/src/pages/driver-finance/settlementsSubnav.ts";
 
 function analyze(src) {
-  const { comp, page } = src;
+  const { comp, page, subnav } = src;
   const errors = [];
 
   // 1. Both new tabs exist and are wired in SettlementsPage.
+  // 443.280-A — Company & Driver / Company Settlements are SETTLEMENTS_SUBNAV tabs (not a Button row under home).
   if (!/export function SettlementsCompanyDriverTab\b/.test(comp)) errors.push("SettlementsCompanyDriverTab must be exported");
   if (!/export function CompanySettlementsRegisterTab\b/.test(comp)) errors.push("CompanySettlementsRegisterTab (register) must be exported");
   if (!/<SettlementsCompanyDriverTab\b/.test(page)) errors.push("SettlementsPage must render <SettlementsCompanyDriverTab>");
   if (!/<CompanySettlementsRegisterTab\b/.test(page)) errors.push("SettlementsPage must render <CompanySettlementsRegisterTab>");
-  if (!/data-testid="tab-company-driver"/.test(page)) errors.push('SettlementsPage must have the "Company & Driver" tab button (data-testid tab-company-driver)');
-  if (!/data-testid="tab-company-settlements"/.test(page)) errors.push('SettlementsPage must have the "Company settlements" tab button (data-testid tab-company-settlements)');
+  if (!/testId:\s*["']tab-company-driver["']/.test(subnav))
+    errors.push('SETTLEMENTS_SUBNAV must set testId tab-company-driver on Company & Driver');
+  if (!/testId:\s*["']tab-company-settlements["']/.test(subnav))
+    errors.push('SETTLEMENTS_SUBNAV must set testId tab-company-settlements on Company Settlements');
+  if (!/tab=company_driver/.test(subnav))
+    errors.push('SETTLEMENTS_SUBNAV must link Company & Driver via ?tab=company_driver');
   if (!/tabParam === "company_driver"/.test(page)) errors.push('SettlementsPage activeTab must handle "company_driver"');
   if (!/tabParam === "company_settlements"/.test(page)) errors.push('SettlementsPage activeTab must handle "company_settlements"');
 
@@ -65,6 +71,7 @@ function analyze(src) {
 const base = {
   comp: fs.readFileSync(COMP, "utf8"),
   page: fs.readFileSync(PAGE, "utf8"),
+  subnav: fs.readFileSync(SUBNAV, "utf8"),
 };
 
 function withField(field, transform) {
@@ -92,8 +99,9 @@ if (process.argv.includes("--selftest")) {
     ["comp adds window.print", withField("comp", (s) => s.replace(/openPrintableDocument\(/, "window.print(); openPrintableDocument("))],
     ["page drops SettlementsCompanyDriverTab render", withField("page", (s) => s.replace(/<SettlementsCompanyDriverTab\b/g, "<GoneTab"))],
     ["page drops register render", withField("page", (s) => s.replace(/<CompanySettlementsRegisterTab\b/g, "<GoneTab"))],
-    ["page drops company-driver tab button", withField("page", (s) => s.replace(/data-testid="tab-company-driver"/g, 'data-testid="gone"'))],
-    ["page drops company-settlements tab button", withField("page", (s) => s.replace(/data-testid="tab-company-settlements"/g, 'data-testid="gone"'))],
+    ["subnav drops company-driver testId", withField("subnav", (s) => s.replace(/testId:\s*["']tab-company-driver["']/g, 'testId: "gone"'))],
+    ["subnav drops company-settlements testId", withField("subnav", (s) => s.replace(/testId:\s*["']tab-company-settlements["']/g, 'testId: "gone"'))],
+    ["subnav drops company_driver link", withField("subnav", (s) => s.replace(/tab=company_driver/g, "tab=gone"))],
     ["page drops company_driver activeTab", withField("page", (s) => s.replace(/tabParam === "company_driver"/g, 'tabParam === "gone"'))],
     ["page drops company_settlements activeTab", withField("page", (s) => s.replace(/tabParam === "company_settlements"/g, 'tabParam === "gone"'))],
   ];

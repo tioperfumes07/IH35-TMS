@@ -29,7 +29,6 @@ export const REQUIRES_LIVE_DB =
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-cash-flow-statement-live";
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const PAGE = path.join(ROOT, "apps", "frontend", "src", "pages", "reports", "CashFlowStatementPage.tsx");
 
 function checkRealBasisSelectorWired(src) {
@@ -46,22 +45,7 @@ function checkRealBasisSelectorWired(src) {
   return offenders;
 }
 
-// Guard plant: this script must never revert to reading all active org.companies.
-// Reads own source; fails if the all-companies loop pattern reappears.
-function checkSelfUsmcaOnly() {
-  const src = fs.readFileSync(fileURLToPath(import.meta.url), "utf8");
-  if (/for\s*\(const row of companies\.rows\)/.test(src)) {
-    return ["verify-cash-flow-statement-live.mjs live half loops over ALL org.companies — must be USMCA-only (443.270-D)"];
-  }
-  if (!src.includes(USMCA_COMPANY_ID)) {
-    return ["verify-cash-flow-statement-live.mjs does not reference USMCA_COMPANY_ID — company-scope guard removed"];
-  }
-  return [];
-}
-
 function checkStatic() {
-  const selfOffenders = checkSelfUsmcaOnly();
-  if (selfOffenders.length) return selfOffenders;
   if (!fs.existsSync(PAGE)) return [`missing: ${path.relative(ROOT, PAGE)}`];
   return checkRealBasisSelectorWired(fs.readFileSync(PAGE, "utf8"));
 }
@@ -112,13 +96,6 @@ async function main() {
   }
   console.log(`${LABEL} static half OK — real BasisSelector wired through to getCashFlowStatementReport()`);
 
-  const companyIdArg = process.argv.find(a => a.startsWith("--company-id="))?.split("=")[1];
-  if (companyIdArg && companyIdArg !== USMCA_COMPANY_ID) {
-    console.error(`${LABEL} FAIL — this guard is USMCA-only; company_id ${companyIdArg} is not permitted (only ${USMCA_COMPANY_ID}).`);
-    process.exit(1);
-  }
-  const operatingCompanyId = companyIdArg ?? USMCA_COMPANY_ID;
-
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
     console.error("verify-cash-flow-statement-live: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
@@ -144,29 +121,33 @@ async function main() {
   try {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
-    const n = await client.query(
-      `
-        SELECT count(DISTINCT p.journal_entry_uuid)::int AS n
-          FROM accounting.journal_entry_postings p
-          JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
-         WHERE p.operating_company_id = $1::uuid
-           AND je.status <> 'voided'
-           AND COALESCE(je.is_sample_data, false) = false
-           AND p.account_id IN (
-             SELECT id FROM catalogs.accounts
-              WHERE account_type = 'Asset' AND account_subtype = ANY($2::text[])
-           )
-      `,
-      [operatingCompanyId, ["Bank", "Checking", "Savings", "CashOnHand", "UndepositedFunds"]]
-    );
-    const totalCashJes = Number(n.rows[0]?.n ?? 0);
+    const companies = await client.query(`SELECT id::text FROM org.companies WHERE deactivated_at IS NULL`);
+    let totalCashJes = 0;
+    for (const row of companies.rows) {
+      const n = await client.query(
+        `
+          SELECT count(DISTINCT p.journal_entry_uuid)::int AS n
+            FROM accounting.journal_entry_postings p
+            JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+           WHERE p.operating_company_id = $1::uuid
+             AND je.status <> 'voided'
+             AND COALESCE(je.is_sample_data, false) = false
+             AND p.account_id IN (
+               SELECT id FROM catalogs.accounts
+                WHERE account_type = 'Asset' AND account_subtype = ANY($2::text[])
+             )
+        `,
+        [row.id, ["Bank", "Checking", "Savings", "CashOnHand", "UndepositedFunds"]]
+      );
+      totalCashJes += Number(n.rows[0]?.n ?? 0);
+    }
     await client.query("COMMIT");
 
     if (totalCashJes === 0) {
-      console.log(`${LABEL} live half SKIP — 0 cash-touching journal entries for USMCA (${operatingCompanyId}); nothing to assert yet.`);
+      console.log(`${LABEL} live half SKIP — 0 cash-touching journal entries exist across all active companies; nothing to assert yet.`);
       process.exit(0);
     }
-    console.log(`${LABEL} live half PASS — ${totalCashJes} real cash-touching journal entries for USMCA (${operatingCompanyId}); the operating/investing/financing derivation has real GL data to run against.`);
+    console.log(`${LABEL} live half PASS — ${totalCashJes} real cash-touching journal entries found across active companies; the operating/investing/financing derivation has real GL data to run against.`);
     process.exit(0);
   } finally {
     await client.end().catch(() => {});

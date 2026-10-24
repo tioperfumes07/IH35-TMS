@@ -1,5 +1,7 @@
+import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { InsuranceHomeBoard } from "./components/InsuranceHomeBoard";
+import { InsuranceModuleTabs } from "./InsuranceModuleTabs";
 
 /**
  * ROUND 443.267 — board-faithful Landing mounts InsuranceHomeBoard.
@@ -20,6 +22,12 @@ export function InsuranceLanding() {
 
   return (
     <div className="min-w-0 space-y-3 overflow-x-hidden">
+      <PageHeader
+        breadcrumb={["Insurance", "Landing"]}
+        title="Insurance"
+        subtitle="Policies, fleet coverage, claims, and lawsuits"
+      />
+      <InsuranceModuleTabs />
       <InsuranceHomeBoard companyId={companyId} />
       {/* wave-a + C8 honesty: no company-wide COI list — customer's COI tab only. */}
       <p className="sr-only">

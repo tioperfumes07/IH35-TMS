@@ -44,6 +44,7 @@ import {
 
 import { liveExpense, liveBill, openDriverBill, driverBillAmountKnown, notVoided } from "../accounting/live-document-predicates.sql.js";
 import { cashFlowReceiptsSql } from "./cash-flow-receipts.sql.js";
+import { operatingBankActualsByDaySql, operatingBankFeedCountSql } from "./cash-flow-bank-actuals.sql.js";
 import { cashFlowSettlementEligibilitySql, driverApBillCarriedBySettlementSql } from "./cash-flow-obligations.sql.js";
 import { BILL_OPEN_BALANCE_SQL } from "../accounting/bills.service.js";
 import { openBill } from "../accounting/live-document-predicates.sql.js";
@@ -624,19 +625,13 @@ export async function getActualVsProjected(
     [operatingCompanyId, from, to]
   );
 
-  // Actual income: payments received in range
-  const actIncomeRows = await client.query<{ payment_date: string; actual_income_cents: number }>(
-    `
-    SELECT
-      p.payment_date::date::text AS payment_date,
-      SUM(p.amount_cents)::int AS actual_income_cents
-    FROM accounting.payments p
-    WHERE p.operating_company_id = $1::uuid
-      AND p.payment_date::date BETWEEN $2::date AND $3::date
-      AND p.voided_at IS NULL
-    GROUP BY p.payment_date::date
-    ORDER BY p.payment_date::date
-    `,
+  // LEAD 443.282: ACTUAL income / expenses = what cleared the operating bank (same account set as
+  // opening cash). The old source (accounting.payments / accounting.bill_payments = A/R and A/P
+  // APPLICATIONS) read $0 income on every day while the bank received $216,532.56 in October.
+  const avpHideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
+  const avpHideBa = bankAccountHiddenFilterSql(avpHideOn, "ba");
+  const bankActualRows = await client.query<{ actual_date: string; actual_income_cents: number | string; actual_expense_cents: number | string }>(
+    operatingBankActualsByDaySql(avpHideBa),
     [operatingCompanyId, from, to]
   );
 
@@ -653,22 +648,6 @@ export async function getActualVsProjected(
       AND NOT ${driverApBillCarriedBySettlementSql("b")}
     GROUP BY b.due_date::date
     ORDER BY b.due_date::date
-    `,
-    [operatingCompanyId, from, to]
-  );
-
-  // Actual expenses: bill payments posted in range
-  const actExpRows = await client.query<{ payment_date: string; actual_expense_cents: number }>(
-    `
-    SELECT
-      bp.payment_date::date::text AS payment_date,
-      SUM(COALESCE(bp.amount_cents, 0))::int AS actual_expense_cents
-    FROM accounting.bill_payments bp
-    WHERE bp.operating_company_id = $1::uuid
-      AND bp.payment_date::date BETWEEN $2::date AND $3::date
-      AND ${notVoidedSql("bp")}
-    GROUP BY bp.payment_date::date
-    ORDER BY bp.payment_date::date
     `,
     [operatingCompanyId, from, to]
   );
@@ -709,13 +688,15 @@ export async function getActualVsProjected(
   }
 
   const actIncomeMap = new Map<string, number>();
-  for (const r of actIncomeRows.rows) actIncomeMap.set(r.payment_date, r.actual_income_cents);
+  const actExpMap = new Map<string, number>();
+  for (const r of bankActualRows.rows) {
+    actIncomeMap.set(r.actual_date, Number(r.actual_income_cents));
+    actExpMap.set(r.actual_date, Number(r.actual_expense_cents));
+  }
 
   const projExpMap = new Map<string, number>();
   for (const r of projExpRows.rows) projExpMap.set(r.due_date, r.projected_expense_cents);
 
-  const actExpMap = new Map<string, number>();
-  for (const r of actExpRows.rows) actExpMap.set(r.payment_date, r.actual_expense_cents);
 
   // Enumerate all dates in range
   const allDates = new Set<string>([
@@ -796,7 +777,12 @@ export async function getActualVsProjected(
     categorized_count: Number(coverageRes.rows[0]?.categorized_count ?? 0),
     total_count: Number(coverageRes.rows[0]?.total_count ?? 0),
   };
-  if (bankCategorizationCoverage.categorized_count === 0) {
+  // LEAD 443.282: actuals are read from the operating bank feed, so they are "unavailable" only when
+  // there is no linked operating account to read — categorization coverage no longer gates them
+  // (a bank line is real cash whether or not anyone has categorized it yet). The coverage figure is
+  // still returned for the categorization banner.
+  const feedRes = await client.query<{ n: number | string }>(operatingBankFeedCountSql(avpHideBa), [operatingCompanyId]);
+  if (Number(feedRes.rows[0]?.n ?? 0) === 0) {
     for (const line of lines) {
       if (line.category === "income" || line.category === "expenses") line.actual_unavailable = true;
     }
@@ -1161,7 +1147,9 @@ export async function getRollingLedgerRows(
   );
 
   // 2) accounting.factoring_advances — advanced but the wire hasn't matched a bank line yet
-  // (banking.bank_transactions.matched_advance_id), and separately, collected but the reserve
+  // (banking.bank_transactions.matched_factoring_advance_id — LEAD 443.282: matched_advance_id is the DRIVER
+  // advance pointer and never names a factoring advance, so every Faro advance used to stay "expected
+  // income" forever, even after its wire was matched), and separately, collected but the reserve
   // hasn't been released yet (released_at IS NULL).
   // CASH-FLOW-ROLLING-LEDGER-4-FIXES (owner 2026-09-07) fix 1: this row's "Customer · No." column
   // must show the real underlying CUSTOMER, not the factoring company (vendor_name was always
@@ -1214,7 +1202,7 @@ export async function getRollingLedgerRows(
       AND COALESCE(fa.advance_amount_cents, 0) > 0
       AND NOT EXISTS (
         SELECT 1 FROM banking.bank_transactions bt
-        WHERE bt.matched_advance_id = fa.id AND bt.voided_at IS NULL
+        WHERE bt.matched_factoring_advance_id = fa.id AND bt.voided_at IS NULL
       )
     ORDER BY fa.advanced_at ASC
     `,

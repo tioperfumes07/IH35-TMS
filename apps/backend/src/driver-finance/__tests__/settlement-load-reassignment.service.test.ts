@@ -68,7 +68,10 @@ function makeMockClient(opts: { loadFromSettlement?: string | null; targetExists
       if (sql.includes("UPDATE driver_finance.driver_settlement_deductions")) return { rows: [] as T[], rowCount: rowCounts.driver_settlement_deductions };
       if (sql.includes("UPDATE driver_finance.driver_reimbursements")) return { rows: [] as T[], rowCount: rowCounts.driver_reimbursements };
       if (sql.includes("UPDATE driver_finance.driver_bills")) return { rows: [] as T[], rowCount: rowCounts.driver_bills };
-      if (sql.includes("UPDATE driver_finance.driver_settlements") && sql.includes("first_load_id = CASE")) return { rows: [] as T[], rowCount: 1 };
+      if (sql.includes("FOR UPDATE") && sql.includes("first_load_id::text")) {
+        // the boundary engine's header lock: the moved load is the source settlement's only boundary.
+        return { rows: [{ first_load_id: IDS.load, last_load_id: IDS.load, first_load_number: "5786", last_load_number: "5786" }] as T[], rowCount: 1 };
+      }
       if (sql.includes("INSERT INTO driver_finance.driver_settlements")) return { rows: [{ id: IDS.to }] as T[], rowCount: 1 };
       return { rows: [] as T[], rowCount: 0 };
     },
@@ -104,7 +107,7 @@ describe("reassignLoadToSettlementInClientTx", () => {
     expect(vi.mocked(aggregateSettlementTotals)).toHaveBeenCalledWith(client, IDS.to, IDS.company);
   });
 
-  it("clears the source settlement's bookend columns when the moved load was its first/last load (the aggregateSettlementTotals COALESCE gap)", async () => {
+  it("re-derives the source settlement's boundaries through the one engine — cleared when its last load moved away", async () => {
     const { client, calls } = makeMockClient();
     await reassignLoadToSettlementInClientTx(client, {
       operating_company_id: IDS.company,
@@ -113,9 +116,11 @@ describe("reassignLoadToSettlementInClientTx", () => {
       actor_user_id: IDS.actor,
       reason: "test move",
     });
-    const bookendClear = calls.find((c) => c.sql.includes("first_load_id = CASE"));
-    expect(bookendClear).toBeDefined();
-    expect(bookendClear!.sql).toMatch(/last_load_id = CASE/);
+    const rederive = calls.filter((c) => c.sql.includes("SET first_load_id = $3::uuid, last_load_id = $4::uuid"));
+    // the target derives no load in this mock and is not cleared (no clearWhenNoLoads) — only the source is written.
+    expect(rederive.map((c) => c.values?.[0])).toEqual([IDS.from]);
+    expect(rederive[0]!.values?.slice(2)).toEqual([null, null, null, null]);
+    expect(calls.some((c) => c.sql.includes("first_load_id = CASE"))).toBe(false);
   });
 
   it("is a no-op guard when the load is already on the target settlement", async () => {
@@ -160,7 +165,7 @@ describe("reassignLoadToSettlementInClientTx", () => {
       expect(result.moved_deductions).toBe(0);
       expect(result.moved_reimbursements).toBe(0);
     }
-    expect(calls.some((c) => c.sql.includes("first_load_id = CASE"))).toBe(false);
+    expect(calls.some((c) => c.sql.includes("FOR UPDATE") && c.values?.[0] === null)).toBe(false);
     expect(vi.mocked(aggregateSettlementTotals)).toHaveBeenCalledWith(client, IDS.to, IDS.company);
     expect(vi.mocked(aggregateSettlementTotals)).not.toHaveBeenCalledWith(client, null, IDS.company);
   });

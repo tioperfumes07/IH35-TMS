@@ -199,7 +199,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           testId="insurance-kpi-active-policies"
           label="Active policies"
           value={loading && activeCount == null ? "…" : dash(activeCount)}
-          onClick={() => navigate("/safety/insurance/policies")}
+          onClick={() => navigate("/insurance/policies")}
         />
         <V3KpiTile
           testId="insurance-kpi-annual-premium"
@@ -211,7 +211,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 ? formatUsdCents(annualPremiumCents)
                 : "—"
           }
-          onClick={() => navigate("/safety/insurance/policies")}
+          onClick={() => navigate("/insurance/policies")}
         />
         <V3KpiTile
           testId="insurance-kpi-renewal"
@@ -224,13 +224,13 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 : "—"
           }
           sub={renewal ? `${renewal.days} days` : undefined}
-          onClick={() => navigate("/safety/insurance/policies")}
+          onClick={() => navigate("/insurance/policies")}
         />
         <V3KpiTile
           testId="insurance-kpi-open-claims"
           label="Open claims"
           value={loading && openClaims == null ? "…" : dash(openClaims)}
-          onClick={() => navigate("/safety/insurance/claims")}
+          onClick={() => navigate("/insurance/claims")}
         />
         <V3KpiTile
           testId="insurance-kpi-coverage-gaps"
@@ -238,7 +238,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           value={loading && gapCount == null ? "…" : dash(gapCount)}
           sub="units without a policy"
           tone={gapCount != null && gapCount > 0 ? "red" : "ink"}
-          onClick={() => navigate("/safety/insurance/coverage-gaps")}
+          onClick={() => navigate("/insurance/coverage-gaps")}
         />
       </div>
 
@@ -248,7 +248,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
       >
         <V3Panel
           title="Policy year"
-          onViewAll={() => navigate("/safety/insurance/policies")}
+          onViewAll={() => navigate("/insurance/policies")}
           testId="insurance-home-policy-year"
         >
           {yearWindow ? (
@@ -347,7 +347,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
 
         <V3Panel
           title="Premium by coverage"
-          onViewAll={() => navigate("/safety/insurance/policies")}
+          onViewAll={() => navigate("/insurance/policies")}
           testId="insurance-home-premium-by-coverage"
         >
           <div style={{ overflowX: "auto", padding: "0 0 4px" }}>
@@ -419,7 +419,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
 
       <p style={{ fontSize: 11, color: V3.muted, fontFamily: V3.font, margin: 0 }}>
         Per truck per month fills from{" "}
-        <Link to="/safety/insurance/fleet-covered" style={{ color: V3.link, fontWeight: 600 }}>
+        <Link to="/insurance/fleet-covered" style={{ color: V3.link, fontWeight: 600 }}>
           Fleet Covered
         </Link>
         .

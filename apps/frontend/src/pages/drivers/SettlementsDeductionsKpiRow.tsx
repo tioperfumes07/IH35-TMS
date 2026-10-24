@@ -284,18 +284,19 @@ export function SettlementsDeductionsKpiRow({ basePath = "/driver-finance/deduct
               <tbody>
                 {TYPE_ROWS.map((row) => {
                   const bucket = byType[row.id];
-                  const has = !byTypeFailed && (bucket.amount > 0 || bucket.drivers.size > 0);
+                  // 443.282 — loaded zeros show $0.00 / 0, not "—" (em-dash is error/unload only).
+                  const loaded = !byTypeFailed;
                   return (
                     <tr key={row.id} data-testid={`settlements-deductions-by-type-${row.id}`}>
                       <td style={tdStyle}>{row.label}</td>
-                      <td style={{ ...tdStyle, textAlign: "right", color: has ? V3.ink : V3.muted }}>
-                        {byTypeFailed ? "—" : has ? bucket.drivers.size : "—"}
+                      <td style={{ ...tdStyle, textAlign: "right", color: loaded ? V3.ink : V3.muted }}>
+                        {loaded ? bucket.drivers.size : "—"}
                       </td>
                       <td
-                        style={{ ...tdStyle, textAlign: "right", color: has ? V3.ink : V3.muted }}
-                        className={has ? QBO_MONEY_CELL_CLASS : undefined}
+                        style={{ ...tdStyle, textAlign: "right", color: loaded ? V3.ink : V3.muted }}
+                        className={loaded ? QBO_MONEY_CELL_CLASS : undefined}
                       >
-                        {byTypeFailed ? "—" : has ? formatUsdTable(bucket.amount) : "—"}
+                        {loaded ? formatUsdTable(bucket.amount) : "—"}
                       </td>
                     </tr>
                   );

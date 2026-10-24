@@ -952,7 +952,8 @@ export async function buildAccountingOutboundPayload(
       }>(
         `
           SELECT transaction_date::text, total_amount_cents::text, memo,
-                 vendor_uuid::text, payment_account_uuid::text
+                 vendor_uuid::text, payment_account_uuid::text,
+                 COALESCE(to_jsonb(accounting.expenses) ->> 'is_credit', 'false')::boolean AS is_credit
           FROM accounting.expenses
           WHERE id = $1::uuid AND operating_company_id = $2::uuid
           FOR UPDATE
@@ -1001,12 +1002,17 @@ export async function buildAccountingOutboundPayload(
       if (!expenseAccount) throw new Error("expense_account_qbo_unresolved");
 
       const total = Number(e.total_amount_cents) / 100;
+      const isCredit = (e as { is_credit?: boolean }).is_credit === true;
       const body = buildQboExpensePurchasePayload({
         txnDate: e.transaction_date,
         totalAmount: total,
         memo: e.memo,
         vendorQboId: vendorQbo,
         expenseAccountQboId: expenseAccount,
+        // LEAD 443.258.5: a card credit syncs as QBO "Credit Card Credit" on its card account, never a VendorCredit.
+        ...(isCredit
+          ? { isCredit: true, paymentAccountQboId: e.payment_account_uuid ? await resolveAccountQboId(client, oc, e.payment_account_uuid) : null }
+          : {}),
       });
       return {
         entityPath: "purchase",

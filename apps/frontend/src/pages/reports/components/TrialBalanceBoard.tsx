@@ -3,7 +3,7 @@
  * Board: ~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Reports-Viewer-TrialBalance.dc.html
  * Sections (order): KPI strip → N accounts panel (table) → Measured A/R note.
  * Engines stay on TrialBalancePage (getTrialBalanceReport · AmountLink · ParityTable · export/print).
- * Measured callout is the 443.248 finding text only — no invented AR reconcile math.
+ * 443.282: Measured callout uses live account 1100 from this TB — no hardcoded A/R dollars (443.248).
  */
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
@@ -32,13 +32,17 @@ const chromeBtn: CSSProperties = {
   cursor: "pointer",
 };
 
-/** Board Measured note (443.248) — static finding, not a live AR engine. */
-const MEASURED_AR_NOTE =
-  "A/R in the ledger nets $134,413.00 while the invoice list shows $624,076.72 open — the subledger and GL do not tie by $489,663.72. Must reconcile before any AR report is trusted (assigned 443.248).";
-
 function money(cents: number) {
   if (!cents) return "—";
   return formatUsdCents(cents);
+}
+
+/** Live 1100 note for Measured callout — no static dollar invent (443.248 / 443.282). */
+export function trialBalanceMeasuredArNote(arNetCents: number | null | undefined): string {
+  if (arNetCents == null) {
+    return "Account 1100 (A/R) is not on this trial balance for the selected period — reconcile the subledger before trusting any AR report (assigned 443.248).";
+  }
+  return `Account 1100 (A/R) nets ${formatUsdCents(arNetCents)} on this trial balance — reconcile the invoice subledger before trusting any AR report (assigned 443.248).`;
 }
 
 export function TrialBalanceBoard({
@@ -46,12 +50,15 @@ export function TrialBalanceBoard({
   accountCount,
   loading,
   onCustomize,
+  measuredArNote,
   children,
 }: {
   summary: TrialBalanceBoardSummary | null | undefined;
   accountCount: number;
   loading?: boolean;
   onCustomize?: () => void;
+  /** Live 1100 note from TrialBalancePage — never a hardcoded dollar string. */
+  measuredArNote?: string | null;
   children: ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -135,25 +142,27 @@ export function TrialBalanceBoard({
         )}
       </V3Panel>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "flex-start",
-          background: V3.surface,
-          border: `1px solid ${V3.border}`,
-          borderLeft: `3px solid ${V3.amber}`,
-          borderRadius: 2,
-          padding: "8px 12px",
-          fontSize: 12,
-          color: V3.ink,
-          fontFamily: V3.font,
-        }}
-        data-testid="trial-balance-measured-ar"
-      >
-        <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
-        <span>{MEASURED_AR_NOTE}</span>
-      </div>
+      {measuredArNote ? (
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "flex-start",
+            background: V3.surface,
+            border: `1px solid ${V3.border}`,
+            borderLeft: `3px solid ${V3.amber}`,
+            borderRadius: 2,
+            padding: "8px 12px",
+            fontSize: 12,
+            color: V3.ink,
+            fontFamily: V3.font,
+          }}
+          data-testid="trial-balance-measured-ar"
+        >
+          <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
+          <span>{measuredArNote}</span>
+        </div>
+      ) : null}
     </div>
   );
 }

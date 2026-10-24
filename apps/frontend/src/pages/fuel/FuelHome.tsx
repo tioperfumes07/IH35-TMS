@@ -9,6 +9,8 @@ import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { V3Panel } from "../../components/v3/V3Panel";
 import { FuelKpiRow } from "./components/FuelKpiRow";
+import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
+import { FuelDieselByTruckPanel } from "./components/FuelDieselByTruckPanel";
 import { RelayHistoryImport } from "./components/RelayHistoryImport";
 
 type FraudSummary = {
@@ -139,6 +141,8 @@ export function FuelHomePage() {
 
   return (
     <div className="space-y-3" data-testid="fuel-home-page" style={{ fontFamily: V3.font }}>
+      <FuelBoardKpiStrip companyId={companyId} />
+      <FuelDieselByTruckPanel companyId={companyId} maxRows={5} viewAllHref="/fuel/by-truck" />
       <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
       {dashboardQuery.isError ? (
         <ListErrorBanner onRetry={() => void dashboardQuery.refetch()} />

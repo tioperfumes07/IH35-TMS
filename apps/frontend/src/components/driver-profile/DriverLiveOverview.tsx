@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { V3Panel } from "../v3/V3Panel";
 import { getUnit } from "../../api/mdata";
 import { listAllDispatchLoads, type DispatchLoad } from "../../api/dispatch";
 import { getPreSettlementForDriver } from "../../api/driverFinance";
@@ -22,6 +23,7 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
   companyId: string; driverId: string; aggregate: DriverProfileAggregate; dqf: DqfComplianceSummary; dqfUnavailable: boolean;
   onReviewDqf: () => void;
 }) {
+  const navigate = useNavigate();
   const assignment = aggregate.current_assignment.currently_driving_truck as Record<string, unknown> | null;
   const currentLoad = aggregate.current_assignment.current_load as Record<string, unknown> | null;
   const unitId = text(assignment?.unit_id);
@@ -50,9 +52,8 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
   ];
   return <section aria-label="Driver live overview" className="min-w-0 space-y-3 py-3">
     <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-      <section className="min-w-0 rounded-sm border border-slate-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2 text-xs font-semibold">
-          {unitId ? <EntityLink kind="unit" id={unitId} label={text(assignment?.unit_number) || "Assigned unit"} /> : <span>No current truck assignment</span>}
+      <V3Panel title="Live unit" headerRight={unitId ? <EntityLink kind="unit" id={unitId} label={text(assignment?.unit_number) || "Assigned unit"} /> : <span>No current truck assignment</span>}>
+        <div className="flex flex-wrap items-center gap-2 px-3 pt-2 text-xs">
           <span>{unit.isError ? "Unit details unavailable" : [unit.data?.make, unit.data?.model, unit.data?.year].map(text).filter(Boolean).join(" · ")}</span>
         </div>
         <div className="space-y-2 p-3">
@@ -60,9 +61,8 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
           <p className="text-xs text-slate-600">{position ? `Last reported ${formatDateTimeUS(position.captured_at)} · heading ${position.heading_deg == null ? "unavailable" : `${position.heading_deg}°`}` : positions.isError ? "Position source unavailable." : positions.isFetching ? "Loading last reported position…" : "No position reported for this assignment."}</p>
           {position ? <p className="text-xs text-slate-600">Location: {Number.isFinite(position.lat) && Number.isFinite(position.lng) ? `${position.lat.toFixed(5)}, ${position.lng.toFixed(5)}` : "Unavailable"}. Speed is the last reported value, not a current movement assertion.</p> : null}
         </div>
-      </section>
-      <section className="min-w-0 rounded-sm border border-slate-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2 text-xs font-semibold"><h3>Open pre-settlement</h3><Link to={driverProfileTabHref(driverId, "Settlements")}>View all →</Link></div>
+      </V3Panel>
+      <V3Panel title="Open pre-settlement" onViewAll={() => navigate(driverProfileTabHref(driverId, "Settlements"))}>
         <div className="space-y-2 p-3 text-xs">
           {pay.isError ? <ListErrorState title="Couldn't load open pre-settlement" status={0} onRetry={() => void pay.refetch()} /> : pay.isPending ? <p>Loading open pre-settlement…</p> : settlement ? <>
             <EntityLink kind="settlement" id={settlement.id} label={settlementLabel(settlement)} />
@@ -72,21 +72,19 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
             <div className="flex flex-wrap gap-2">{pay.data?.legs.map((leg) => <EntityLink key={leg.load_id} kind="load" id={leg.load_id} label={leg.load_number} />)}</div>
           </> : <p>No open pre-settlement for this driver.</p>}
         </div>
-      </section>
+      </V3Panel>
     </div>
     <div className="grid min-w-0 items-start gap-3 xl:grid-cols-2">
-      <section className="min-w-0 overflow-hidden rounded-sm border border-slate-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2 text-xs font-semibold"><h3>Trip — current and assigned</h3><Link to={driverProfileTabHref(driverId, "Loads")}>View all →</Link></div>
+      <V3Panel title="Trip — current and assigned" onViewAll={() => navigate(driverProfileTabHref(driverId, "Loads"))}>
         {trips.isError ? <ListErrorState title="Couldn't load assigned trips" status={0} onRetry={() => void trips.refetch()} /> : <ParityTable columns={tripColumns} rows={trips.data?.loads ?? []} rowKey={(row) => row.id} loading={trips.isPending} emptyText="No live assigned loads." />}
-      </section>
-      <section className="min-w-0 overflow-hidden rounded-sm border border-slate-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2 text-xs font-semibold"><h3>Documents</h3><Link to={driverProfileTabHref(driverId, "Documents")}>View all →</Link></div>
+      </V3Panel>
+      <V3Panel title="Documents" onViewAll={() => navigate(driverProfileTabHref(driverId, "Documents"))}>
         <ParityTable rows={documents} rowKey={(row) => row.id} columns={[
           { key: "label", label: "Document", render: (row) => row.id === "dqf" ? <button type="button" className="underline" onClick={onReviewDqf}>{row.label}</button> : <Link to={row.to}>{row.label}</Link> },
           { key: "expires", label: "Expires" }, { key: "state", label: "State", render: (row) => row.id === "dqf" ? <button type="button" className="underline" onClick={onReviewDqf}>{row.state}</button> : <Link to={row.to}>{row.state}</Link> },
         ]} />
         <p className="border-t border-slate-200 px-3 py-2 text-xs text-slate-600">Recorded dates do not certify validity. Missing information is reviewed in the source file; this display never blocks dispatch, booking, settlement or pay.</p>
-      </section>
+      </V3Panel>
     </div>
   </section>;
 }

@@ -326,12 +326,14 @@ export const FUEL_TAB_PATH: Record<string, string> = {
   settings: "/fuel/settings",
   expense_mapping: "/fuel/expense-mapping",
   history: "/fuel/history",
+  by_truck: "/fuel/by-truck",
   questions: "/fuel/questions",
   loves_prices: "/fuel/loves-prices",
   compliance: "/fuel/compliance",
   integrity: "/fuel/integrity",
   cards: "/fuel/cards",
   relay_unmatched: "/fuel/relay-unmatched",
+  relay_wallet: "/fuel/relay-wallet",
 };
 
 export function fuelTabFromPath(pathname: string): string {
@@ -341,5 +343,5 @@ export function fuelTabFromPath(pathname: string): string {
   for (const [id, routePath] of Object.entries(FUEL_TAB_PATH)) {
     if (routePath === norm) return id;
   }
-  return "planner";
+  return "home";
 }

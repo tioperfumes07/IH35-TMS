@@ -27,7 +27,7 @@ describe("InsuranceSummarySection linked policy reverse", () => {
 
     expect(screen.getByRole("link", { name: "POL-888" })).toHaveAttribute(
       "href",
-      "/safety/insurance/policies/00000000-0000-4000-8000-000000000888",
+      "/insurance/policies/00000000-0000-4000-8000-000000000888",
     );
     expect(screen.getByText("AL ON")).toBeInTheDocument();
     expect(screen.getByTestId("vp-insurance-document-evidence")).toHaveTextContent("NOT EVIDENCED");

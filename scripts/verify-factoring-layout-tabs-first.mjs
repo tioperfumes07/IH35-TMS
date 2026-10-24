@@ -8,6 +8,9 @@
  * FAC-07 side-by-side DrillKpiCard + compact FactoringProfilePanel overview: Home is now
  * FactoringHomeBoard (KPI strip → Each purchase net vs kept → Terms on file → Measured note).
  *
+ * ROUND 443.282: FactoringHomeBoard uses board-exact FactoringBoardCard (V3Panel off on purchase
+ * + Terms); Measured note amber left rail (#B45309); money via fmtMoneyDollars / formatUsdCents only.
+ *
  * This guard STILL pins tabs-first order, and pins the board mount + board sections/engines.
  * Compact FactoringProfilePanel stays implemented (Edit Terms opens the profile modal) but is
  * no longer required on the Home overview row.
@@ -87,6 +90,20 @@ function analyze(src) {
     if (!board.includes(`testId="${id}"`)) errors.push(`${BOARD}: KPI tile ${id} is missing`);
   }
 
+  // 443.282 board-exact chrome (panels off).
+  if (/\bimport\b[^;]*\bV3Panel\b/.test(board) || /<V3Panel[\s>]/.test(board)) {
+    errors.push(`${BOARD}: ROUND 443.282 — V3Panel must not wrap Factoring home board sections`);
+  }
+  if (!/function FactoringBoardCard/.test(board)) {
+    errors.push(`${BOARD}: ROUND 443.282 — must use FactoringBoardCard for purchase + Terms`);
+  }
+  if (!/#B45309/.test(board) || !/borderLeft:\s*"3px solid #B45309"/.test(board)) {
+    errors.push(`${BOARD}: ROUND 443.282 — Measured note must use board amber left border (#B45309)`);
+  }
+  if (!/fmtMoneyDollars/.test(board) || !/formatUsdCents/.test(board)) {
+    errors.push(`${BOARD}: ROUND 443.282 — money must format via fmtMoneyDollars / formatUsdCents`);
+  }
+
   // r315 / r326 keepers still mounted on home.
   if (!/<FactoringCashFlowPanel/.test(home)) {
     errors.push("FactoringHome must keep FactoringCashFlowPanel mounted (r315)");
@@ -124,6 +141,8 @@ if (process.argv.includes("--selftest")) {
     ["board drops Terms", withField("board", (s) => s.replace(/Terms on file/g, "Gone"))],
     ["board drops summary engine", withField("board", (s) => s.replace(/getFactoringSummary/g, "getGone"))],
     ["home drops cash-flow panel", withField("home", (s) => s.replace(/<FactoringCashFlowPanel/g, "<GoneCash"))],
+    ["board reintroduces V3Panel", withField("board", (s) => s.replace(/<FactoringBoardCard/g, "<V3Panel"))],
+    ["board drops measured amber rail", withField("board", (s) => s.replace(/borderLeft:\s*"3px solid #B45309"/g, 'borderLeft: "0"'))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {
@@ -144,4 +163,4 @@ if (failures.length) {
   failures.forEach((f) => console.error(`- ${f}`));
   process.exit(1);
 }
-console.log("PASS verify-factoring-layout-tabs-first — tabs-first + FactoringHomeBoard (443.267 board 4)");
+console.log("PASS verify-factoring-layout-tabs-first — tabs-first + FactoringHomeBoard (443.267 / 443.282 board-exact)");

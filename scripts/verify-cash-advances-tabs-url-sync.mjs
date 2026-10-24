@@ -14,6 +14,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-cash-advances-tabs-url-sync";
 const PAGE = "apps/frontend/src/pages/cash-advances/CashAdvancesHome.tsx";
 const KPI_ROW = "apps/frontend/src/pages/cash-advances/components/CashAdvancesKpiRow.tsx";
+const MOUNTED = "apps/frontend/src/pages/driver-finance/SettlementsMountedPages.tsx";
+const SETTLEMENTS_BOARD = "apps/frontend/src/pages/driver-finance/SettlementsCashAdvancesBoard.tsx";
 
 function failures(source) {
   const errors = [];
@@ -89,6 +91,27 @@ function kpiV3Failures(source) {
   return errors;
 }
 
+/** ROUND 443.282 — Settlements mount replaces body; no CashAdvancesHome layer. */
+function settlementsBoardFailures(mountedSource, boardSource) {
+  const errors = [];
+  if (!mountedSource.includes("SettlementsCashAdvancesBoard")) {
+    errors.push("SettlementsMountedPages must mount SettlementsCashAdvancesBoard");
+  }
+  if (mountedSource.includes("CashAdvancesHomePage")) {
+    errors.push("SettlementsMountedPages must not mount CashAdvancesHomePage under Settlements shell");
+  }
+  if (!boardSource.includes("data-settlements-cash-advances-rebuild")) {
+    errors.push("SettlementsCashAdvancesBoard must mark data-settlements-cash-advances-rebuild");
+  }
+  if (!boardSource.includes("CashAdvancesKpiRow")) {
+    errors.push("SettlementsCashAdvancesBoard must render CashAdvancesKpiRow (board body only)");
+  }
+  if (boardSource.includes("NavyPageSubNav") || boardSource.includes("CashAdvancesTable")) {
+    errors.push("SettlementsCashAdvancesBoard must not include legacy subnav or ParityTable roster");
+  }
+  return errors;
+}
+
 function run() {
   const source = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const errors = failures(source);
@@ -96,6 +119,10 @@ function run() {
   const kpiSource = fs.readFileSync(path.join(ROOT, KPI_ROW), "utf8");
   const kpiErrors = kpiV3Failures(kpiSource);
   if (kpiErrors.length) throw new Error(`${LABEL}: ${kpiErrors.join("; ")} in ${KPI_ROW}`);
+  const mountedSource = fs.readFileSync(path.join(ROOT, MOUNTED), "utf8");
+  const boardSource = fs.readFileSync(path.join(ROOT, SETTLEMENTS_BOARD), "utf8");
+  const boardErrors = settlementsBoardFailures(mountedSource, boardSource);
+  if (boardErrors.length) throw new Error(`${LABEL}: ${boardErrors.join("; ")} (443.282)`);
   console.log(`${LABEL}: PASS`);
 }
 

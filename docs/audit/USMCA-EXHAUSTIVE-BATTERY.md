@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 359 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 361 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 284 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 253 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 969 | |
+| **TOTAL POST endpoints** | 971 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -441,7 +441,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/catalogs/wo-cancellation-reasons` | `apps/backend/src/catalogs/wo-cancellation-reasons.routes.ts:94` | — | — | — |
 | create | `/api/v1/catalogs/workflow-requests` | `apps/backend/src/catalogs/workflow-routes.ts:276` | — | — | — |
 
-### driver-finance — 23 create-surface(s)
+### driver-finance — 24 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -468,6 +468,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver-finance/settlements/:id/pay-lines` | `apps/backend/src/driver-finance/settlements.routes.ts:1333` | — | — | — |
 | nested | `/api/v1/driver-finance/settlements/:id/payrun-close` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts:104` | — | — | — |
 | nested | `/api/v1/driver-finance/settlements/:id/unlock` | `apps/backend/src/driver-finance/settlements.routes.ts:1671` | — | — | — |
+| create | `/api/v1/driver-finance/settlements/header-boundaries-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts:78` | — | — | — |
 
 ### legal — 22 create-surface(s)
 
@@ -519,7 +520,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver/settlements/:settlementId/dispute` | `apps/backend/src/driver/settlement-disputes-p6.routes.ts:38` | — | — | — |
 | nested | `/api/v1/driver/status-suggestions/:id/respond` | `apps/backend/src/driver/status-suggestions.routes.ts:73` | — | — | — |
 
-### fuel — 16 create-surface(s)
+### fuel — 17 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -537,6 +538,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/fuel/receipts/repoint-to-loads` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:18` | — | — | — |
 | create | `/api/v1/fuel/relay-duplicates/void-later` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:64` | — | — | — |
 | create | `/api/v1/fuel/relay-links/undo-cross-rail` | `apps/backend/src/fuel/fuel-receipt-repoint.routes.ts:41` | — | — | — |
+| create | `/api/v1/fuel/statement-discounts/card-credit-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts:49` | — | — | — |
 | create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts:356` | — | — | — |
 | create | `/api/v1/fuel/wex/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts:257` | — | — | — |
 

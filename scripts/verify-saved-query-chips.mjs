@@ -34,7 +34,7 @@ const CHIPS = [
   {
     name: "Insurance schedule",
     testId: "saved-query-chip-insurance-schedule",
-    to: "/safety/insurance/policies",
+    to: "/insurance/policies",
     valueRe: /value=\{insuranceSummaryQuery\.data\?\.summary\.policies_expiring_30d\}/,
   },
   {

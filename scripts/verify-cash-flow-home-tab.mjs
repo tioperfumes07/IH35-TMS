@@ -11,13 +11,13 @@
 //   1. CashFlowPage.tsx's default-tab fallback is "home", not "daily_prediction".
 //   2. "home" is a real, first-position tab in both the type union and the TABS array (not just a
 //      silent fallback with no visible entry point back to it).
-//   3. CashFlowHomeTab.tsx exists, renders board V3 KPIs (Opening cash + cash-flow-home-v3-kpis),
-//      and links into every sibling tab (daily_prediction / actual_vs_projected / rolling_ledger /
-//      manual_daily_projections) -- "tabs reachable from there," not a dead end.
+//   3. CashFlowHomeTab.tsx exists, renders the shared KPI strip, and links into every sibling tab
+//      (daily_prediction / actual_vs_projected / rolling_ledger / manual_daily_projections) --
+//      "tabs reachable from there," not a dead end.
 //   4. RollingLedgerTab.tsx reuses the SAME shared CashFlowKpiStrip component rather than a second,
-//      independently-drifting inline copy of the tile markup. (443.267: strip stays on Rolling
-//      Ledger only — Home uses the board V3 KPI row, not a duplicate strip.)
-//   5. ROUND 443.250/443.267 — Home mounts V3KpiTile / V3Panel / V3Segmented + chart + 13-week table.
+//      independently-drifting inline copy of the tile markup.
+//   5. ROUND 443.250 — Home also mounts the shared V3 design-system pieces (V3KpiTile / V3Panel /
+//      V3Segmented from components/v3 + v3-tokens) and the chart + 13-week table panels.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -44,13 +44,8 @@ export function auditSources({ pageSrc, homeSrc, kpiStripSrc, rollingLedgerSrc }
   if (homeSrc === null) {
     failures.push(`${HOME_TAB_REL}: missing`);
   } else {
-    // 443.267 board: Home KPI strip = V3 board tiles (Opening cash), not <CashFlowKpiStrip>.
-    // CashFlowKpiStrip remains required on RollingLedgerTab (asserted below).
-    if (!/label=["']Opening cash["']/.test(homeSrc) && !/Opening cash/.test(homeSrc)) {
-      failures.push(`${HOME_TAB_REL}: missing board KPI "Opening cash" -- 443.267 Cash Flow Home board requires the V3 KPI row`);
-    }
-    if (!homeSrc.includes("cash-flow-home-v3-kpis")) {
-      failures.push(`${HOME_TAB_REL}: missing data-testid "cash-flow-home-v3-kpis" -- board KPI strip must stay measurable`);
+    if (!/<CashFlowKpiStrip\b/.test(homeSrc)) {
+      failures.push(`${HOME_TAB_REL}: does not render <CashFlowKpiStrip> -- REG-022 requires a real KPI tile strip on the landing surface`);
     }
     for (const tab of SIBLING_TABS) {
       if (!homeSrc.includes(`"${tab}"`)) {
@@ -110,6 +105,7 @@ import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Panel } from "../../../components/v3/V3Panel";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
+import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
 import { getRollingLedger } from "../../../api/cashFlow";
 const TAB_CARDS = [
   { id: "daily_prediction" },
@@ -118,7 +114,8 @@ const TAB_CARDS = [
   { id: "manual_daily_projections" },
 ];
 getRollingLedger(oci, today, end);
-<div data-testid="cash-flow-home-v3-kpis"><V3KpiTile label="Opening cash" value="$1" /></div>
+<CashFlowKpiStrip kpis={kpis} />
+<div data-testid="cash-flow-home-v3-kpis"><V3KpiTile label="Opening" value="$1" /></div>
 <V3Panel title="Cash position" testId="cash-flow-home-chart-panel"><div /></V3Panel>
 <V3Panel title="13-week" testId="cash-flow-home-table-panel"><div data-testid="cash-flow-home-13w-table" /></V3Panel>
 <V3Segmented value="weekly" options={[]} onChange={() => {}} />
@@ -139,9 +136,9 @@ getRollingLedger(oci, today, end);
     throw new Error("SELFTEST FAIL: missing Home tab-list entry went undetected");
   }
 
-  const homeNoKpi = goodHome.replace('label="Opening cash"', 'label="Opening"').replace('data-testid="cash-flow-home-v3-kpis"', 'data-testid="cash-flow-home-other"');
+  const homeNoKpi = goodHome.replace("<CashFlowKpiStrip kpis={kpis} />", "");
   if (auditSources({ pageSrc: goodPage, homeSrc: homeNoKpi, kpiStripSrc: goodKpiStrip, rollingLedgerSrc: goodRollingLedger }).length === 0) {
-    throw new Error("SELFTEST FAIL: Home tab missing board Opening cash / cash-flow-home-v3-kpis went undetected");
+    throw new Error("SELFTEST FAIL: Home tab missing the KPI strip went undetected");
   }
 
   const homeMissingLink = goodHome.replace('{ id: "rolling_ledger" },\n', "");
@@ -175,4 +172,4 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log("verify-cash-flow-home-tab: OK — Cash Flow lands on Home first, Home shows board V3 KPIs (Opening cash) + chart/table, RollingLedgerTab shares CashFlowKpiStrip");
+console.log("verify-cash-flow-home-tab: OK — Cash Flow lands on Home first, Home shows KPI strip + 443.250 V3 chart/table (shared components/v3), RollingLedgerTab shares the same KPI component");

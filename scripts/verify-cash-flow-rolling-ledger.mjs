@@ -462,7 +462,7 @@ if (process.argv.includes("--selftest")) {
         "factoring advances (advanced, unmatched wire)",
         `SELECT count(*)::int AS n FROM accounting.factoring_advances fa
          WHERE fa.operating_company_id = $1::uuid AND fa.advanced_at IS NOT NULL AND COALESCE(fa.advance_amount_cents,0) > 0
-           AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions bt WHERE bt.matched_advance_id = fa.id AND bt.voided_at IS NULL)`,
+           AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions bt WHERE bt.matched_factoring_advance_id = fa.id AND bt.voided_at IS NULL)`,
       ],
     ];
 

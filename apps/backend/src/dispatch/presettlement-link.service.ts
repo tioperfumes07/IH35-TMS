@@ -15,6 +15,7 @@ import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { allocateSettlementDisplayId } from "../driver-finance/settlement-display-id.js";
 import { reopenSettlementForContinuationInClientTx } from "../driver-finance/settlement-continuation.service.js";
+import { rederiveSettlementBoundariesInClientTx } from "../driver-finance/settlement-boundaries.service.js";
 import { reassignLoadToSettlementInClientTx } from "../driver-finance/settlement-load-reassignment.service.js";
 
 export type DbClient = {
@@ -68,28 +69,20 @@ export async function repairReassignedPresettlementBoundaries(client: DbClient, 
     ORDER BY s.id FOR UPDATE OF s`, [input.operating_company_id, input.driver_id, input.tour_id]);
   for (const header of headers.rows) {
     // Separate statement after the lock: a concurrent confirmation cannot leave a stale snapshot.
-    const repaired = await client.query<{ old_first: string | null; old_last: string | null; first_load_id: string | null; last_load_id: string | null }>(`
-      WITH stale AS (
-        SELECT s.id, s.first_load_id AS old_first, s.last_load_id AS old_last
-        FROM driver_finance.driver_settlements s
-        WHERE s.id = $1::uuid AND s.operating_company_id = $2::uuid
-          AND EXISTS (SELECT 1 FROM mdata.loads l
-            JOIN driver_finance.driver_settlements other ON other.id = l.presettlement_link_id
-              AND other.operating_company_id = l.operating_company_id AND other.voided_at IS NULL
-            WHERE l.operating_company_id = s.operating_company_id
-              AND l.id IN (s.first_load_id, s.last_load_id) AND other.id <> s.id)
-      ), boundaries AS (
-        SELECT array_agg(l.id ORDER BY l.created_at, l.id) AS ids FROM mdata.loads l
-        WHERE l.operating_company_id = $2::uuid AND l.presettlement_link_id = $1::uuid
-          AND l.soft_deleted_at IS NULL AND l.voided_at IS NULL AND ${canonicalNotCancelledLoadClause("l")}
-      )
-      UPDATE driver_finance.driver_settlements s
-      SET first_load_id = b.ids[1], last_load_id = b.ids[array_length(b.ids, 1)], updated_at = now()
-      FROM stale old, boundaries b WHERE s.id = old.id AND s.operating_company_id = $2::uuid
-      RETURNING old.old_first, old.old_last, s.first_load_id, s.last_load_id`, [header.id, input.operating_company_id]);
-    if (repaired.rows.length) await appendCrudAudit(client, input.actor_user_id,
-      'driver_finance.presettlement.boundaries_rederived',
-      { settlement_id: header.id, operating_company_id: input.operating_company_id, ...repaired.rows[0] }, 'info', '443.200-C');
+    const stale = await client.query(`SELECT 1 FROM driver_finance.driver_settlements s
+      WHERE s.id = $1::uuid AND s.operating_company_id = $2::uuid
+        AND EXISTS (SELECT 1 FROM mdata.loads l
+          JOIN driver_finance.driver_settlements other ON other.id = l.presettlement_link_id
+            AND other.operating_company_id = l.operating_company_id AND other.voided_at IS NULL
+          WHERE l.operating_company_id = s.operating_company_id
+            AND l.id IN (s.first_load_id, s.last_load_id) AND other.id <> s.id)`, [header.id, input.operating_company_id]);
+    if (!stale.rows.length) continue;
+    // LEAD 443.260.4 (CC-2): THE one boundary engine — ids AND numbers together, from the settlement's own loads.
+    // This used to rewrite the ids alone (by load creation), leaving first/last_load_number naming other loads.
+    await rederiveSettlementBoundariesInClientTx(client, {
+      operatingCompanyId: input.operating_company_id, settlementId: header.id, actorUserId: input.actor_user_id,
+      reason: "boundary load reassigned to another settlement", clearWhenNoLoads: true,
+    }, (eventClass, payload) => appendCrudAudit(client, input.actor_user_id, eventClass, payload, 'info', '443.260.4'));
   }
 }
 
@@ -623,11 +616,6 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
         "REG-040 resettlement continuation: same settlement after audited reversal", input.suggestion_id, input.operating_company_id,
       ]);
     }
-    await client.query(
-      `UPDATE driver_finance.driver_settlements SET first_load_id = COALESCE(first_load_id, $1::uuid),
-        last_load_id = $1::uuid, updated_at = now() WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
-      [suggestion.load_id, settlementId, input.operating_company_id]
-    );
   }
 
   await client.query(`UPDATE mdata.loads SET presettlement_link_id = $1::uuid, tour_id = $3::uuid, updated_at = now()
@@ -637,6 +625,13 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
     suggestion.tour_id,
     input.operating_company_id,
   ]);
+  // LEAD 443.260.4 (CC-2): the header boundaries are re-derived from the settlement's own loads by THE one engine —
+  // never first_load_id = COALESCE(first_load_id, <joining load>) / last_load_id = <joining load>, which made the
+  // newest load "first" on 5 settlements.
+  await rederiveSettlementBoundariesInClientTx(client, {
+    operatingCompanyId: input.operating_company_id, settlementId, actorUserId: input.actor_user_id,
+    reason: "presettlement link confirmed",
+  }, (eventClass, payload) => appendCrudAudit(client, input.actor_user_id, eventClass, payload, "info", "443.260.4"));
 
   await client.query(
     `

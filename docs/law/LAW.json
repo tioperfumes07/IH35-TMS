@@ -1146,5 +1146,12 @@
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-fleet-health-no-false-ok.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "R443-280-BOARD-NO-LEGACY-LAYERS",
+    "title": "Approved Safety, Maintenance and Driver Profile boards replace legacy bodies; workflows remain on dedicated routes",
+    "source_file": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+    "guard": "scripts/verify-board-page-no-legacy-sections.mjs",
+    "type": "enforced"
   }
 ]

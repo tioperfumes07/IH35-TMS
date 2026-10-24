@@ -28,7 +28,7 @@ if (!/<PageHeader[\s>]/.test(detail)) {
 
 if (!/backHref=["']\/safety\/insurance\/policies["']/.test(detail)) {
   failures.push(
-    `${detailPath}: PageHeader must set backHref="/safety/insurance/policies" so ← returns to the policies list.`
+    `${detailPath}: PageHeader must set backHref="/insurance/policies" so ← returns to the policies list.`
   );
 }
 

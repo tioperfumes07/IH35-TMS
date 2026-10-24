@@ -1,11 +1,11 @@
 /**
- * ROUND 443.267 board 4 — Factoring Home (board-faithful).
- * Board: ~/Downloads/10-22-2026-LEAD-MOD-DESIGN-V3-Factoring.dc.html
+ * ROUND 443.267 / 443.282 — Factoring Home (board-exact, V3Panel off on main sections).
+ * Board: docs/design/v3/Factoring.dc.html
  * Sections (order): KPI strip → Each purchase (net vs kept) + Terms on file → Measured note.
  * Engines: getFactoringSummary · getFactoringChargebacksFees · getFactoringRecoursePipeline ·
  *          listFactoringPurchases · listFactors.
  */
-import { useMemo, type CSSProperties } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
@@ -19,7 +19,6 @@ import { listFactoringPurchases, type FactoringPurchaseListRow } from "../../../
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { rateToPctString } from "../../../lib/factorProfile";
@@ -46,6 +45,89 @@ const tdStyle: CSSProperties = {
   padding: `${V3_TABLE.rowPadY}px 12px`,
   borderBottom: `1px solid ${V3.borderSoft}`,
   verticalAlign: "middle",
+};
+
+/** Board card chrome (Factoring.dc.html) — not V3Panel (443.282 panels off). */
+const BOARD_CARD_BORDER = "#DDE1E7";
+
+function FactoringBoardCard({
+  title,
+  testId,
+  onViewAll,
+  headerRight,
+  children,
+  footer,
+}: {
+  title: string;
+  testId: string;
+  onViewAll?: () => void;
+  headerRight?: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
+  return (
+    <section
+      data-testid={testId}
+      style={{
+        background: V3.surface,
+        border: `1px solid ${BOARD_CARD_BORDER}`,
+        borderRadius: 6,
+        display: "flex",
+        flexDirection: "column",
+        minWidth: 0,
+        fontFamily: V3.font,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 14px",
+          borderBottom: "1px solid #ECEEF2",
+        }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink }}>{title}</span>
+        <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+          {headerRight}
+          {onViewAll ? (
+            <button
+              type="button"
+              onClick={onViewAll}
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: V3.link,
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                fontFamily: V3.font,
+              }}
+            >
+              View all →
+            </button>
+          ) : null}
+        </span>
+      </div>
+      <div style={{ minWidth: 0 }}>{children}</div>
+      {footer != null ? footer : null}
+    </section>
+  );
+}
+
+const measuredNoteStyle: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  alignItems: "flex-start",
+  padding: "8px 12px",
+  fontSize: 12,
+  color: V3.ink,
+  background: V3.surface,
+  border: `1px solid ${BOARD_CARD_BORDER}`,
+  borderLeft: "3px solid #B45309",
+  borderRadius: 6,
 };
 
 function cents(v: number | string | null | undefined): number {
@@ -360,19 +442,21 @@ export function FactoringHomeBoard({
         style={{ alignItems: "start" }}
         data-testid="factoring-home-board-main"
       >
-        <V3Panel
+        <FactoringBoardCard
           title="Each purchase — net to bank vs kept by Faro"
           onViewAll={() => navigate(FACTORING_TAB_PATH.purchase_report)}
           testId="factoring-home-purchase-panel"
         >
           {chartPurchasesQuery.isError ? (
-            <div style={{ padding: 12, fontSize: 12, color: V3.muted }}>Could not load purchases.</div>
+            <div style={{ padding: "12px 14px", fontSize: 12, color: V3.muted }}>Could not load purchases.</div>
           ) : (
-            <PurchaseNetChart purchases={chartPurchasesQuery.data?.purchases ?? []} />
+            <div style={{ padding: "12px 14px" }}>
+              <PurchaseNetChart purchases={chartPurchasesQuery.data?.purchases ?? []} />
+            </div>
           )}
-        </V3Panel>
+        </FactoringBoardCard>
 
-        <V3Panel
+        <FactoringBoardCard
           title="Terms on file"
           onViewAll={() => navigate(FACTORING_TAB_PATH.statements_settings)}
           headerRight={
@@ -390,7 +474,7 @@ export function FactoringHomeBoard({
           testId="factoring-home-terms-panel"
           footer={
             activeFactor ? (
-              <div style={{ padding: "8px 12px", fontSize: 12, color: V3.ink, borderTop: `1px solid ${V3.borderSoft}` }}>
+              <div style={{ padding: "8px 14px", fontSize: 11, color: V3.muted, borderTop: "1px solid #ECEEF2" }}>
                 {summary?.active_factor_id ? (
                   <EntityLink kind="vendor" id={summary.active_factor_id} label={activeFactor.name} />
                 ) : (
@@ -398,7 +482,7 @@ export function FactoringHomeBoard({
                 )}
               </div>
             ) : (
-              <div style={{ padding: "8px 12px", fontSize: 12, color: V3.muted }} data-testid="factoring-profile-empty">
+              <div style={{ padding: "8px 14px", fontSize: 12, color: V3.muted }} data-testid="factoring-profile-empty">
                 No factor configured. Activate a factor to manage its profile.
               </div>
             )
@@ -422,51 +506,24 @@ export function FactoringHomeBoard({
               </tbody>
             </table>
           </div>
-        </V3Panel>
+        </FactoringBoardCard>
       </div>
 
       {!summaryQuery.isError && (unclearedCents > 0 || (summary?.uncleared_documents?.length ?? 0) > 0) ? (
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "flex-start",
-            padding: "10px 12px",
-            fontSize: 12,
-            color: V3.ink,
-            background: V3.surface,
-            border: `1px solid ${V3.border}`,
-            borderRadius: 2,
-          }}
-          data-testid="factoring-home-measured-note"
-        >
-          <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
+        <div style={measuredNoteStyle} data-testid="factoring-home-measured-note">
+          <b style={{ color: "#B45309", whiteSpace: "nowrap" }}>Measured</b>
           <span>
-            {unclearedWireCount} wire{unclearedWireCount === 1 ? "" : "s"} · {formatUsdCents(unclearedCents)} &quot;not
-            cleared&quot;: the advances are not linked to their bank deposits in Banking yet.
+            {unclearedWireCount} wire{unclearedWireCount === 1 ? "" : "s"} · {formatUsdCents(unclearedCents)}{" "}
+            &quot;not cleared&quot;: the advances are not linked to their bank deposits in Banking yet.
           </span>
         </div>
       ) : !summaryQuery.isError && summary ? (
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "flex-start",
-            padding: "10px 12px",
-            fontSize: 12,
-            color: V3.ink,
-            background: V3.surface,
-            border: `1px solid ${V3.border}`,
-            borderRadius: 2,
-          }}
-          data-testid="factoring-home-measured-note"
-        >
-          <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
+        <div style={measuredNoteStyle} data-testid="factoring-home-measured-note">
+          <b style={{ color: "#B45309", whiteSpace: "nowrap" }}>Measured</b>
           <span>
             {Number(summary.mtd_advances_count ?? 0)} wire
-            {Number(summary.mtd_advances_count ?? 0) === 1 ? "" : "s"} ·{" "}
-            {fmtMoneyDollars(summary.mtd_advanced_total)} &quot;not cleared&quot;: the advances are not linked to their
-            bank deposits in Banking yet.
+            {Number(summary.mtd_advances_count ?? 0) === 1 ? "" : "s"} · {fmtMoneyDollars(summary.mtd_advanced_total)}{" "}
+            &quot;not cleared&quot;: the advances are not linked to their bank deposits in Banking yet.
           </span>
         </div>
       ) : null}

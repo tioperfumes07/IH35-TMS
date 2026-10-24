@@ -4,9 +4,9 @@
  * VERTICAL-WIRING-LAW-2026-08-12. Leaves: home, tab.daily_prediction, tab.actual_vs_projected.
  *
  * All three already real, never tagged @matrix-built. cash-flow.service.ts's
- * getDailyPrediction (home / tab.daily_prediction) and getActualVsProjected
- * (tab.actual_vs_projected) both aggregate real, already-posted money rows from
- * accounting.bills, accounting.payments, and accounting.bill_payments — the same tables
+ * getDailyPrediction (home / tab.daily_prediction) aggregates real money rows from accounting.bills;
+ * getActualVsProjected (tab.actual_vs_projected) projects from the same documents and reads ACTUALS
+ * from the operating bank (banking.bank_transactions, LEAD 443.282) — the same tables
  * whose journal_entry_id linkage was already verified real in
  * WAVE-C-gl_je-accounting-core-leaves (PR #6235). This is aggregate reporting (SUM by date),
  * not a per-row EntityLink, but the underlying dollars are real posted GL-adjacent
@@ -45,15 +45,17 @@ const NO_GL_JE_LEAF_IDS = [
 const NO_LIABILITY_LEAF_IDS = ["tab.manual_daily_projections", "create.manual_projection"];
 
 const CHECKS = [
+  // LEAD 443.282: Actual vs Projected actuals are what cleared the operating bank (the board labels
+  // them "Actual income (bank)"), not A/R / A/P application rows (0 applied payments read $0 income).
   {
-    name: "cash-flow.service.ts getActualVsProjected sums real accounting.payments",
+    name: "cash-flow.service.ts getActualVsProjected reads actuals from the operating bank",
     file: "apps/backend/src/cash-flow/cash-flow.service.ts",
-    pattern: /FROM accounting\.payments p/,
+    pattern: /operatingBankActualsByDaySql\(/,
   },
   {
-    name: "cash-flow.service.ts getActualVsProjected sums real accounting.bill_payments",
-    file: "apps/backend/src/cash-flow/cash-flow.service.ts",
-    pattern: /FROM accounting\.bill_payments bp/,
+    name: "cash-flow-bank-actuals.sql.ts sums real banking.bank_transactions on the operating account set",
+    file: "apps/backend/src/cash-flow/cash-flow-bank-actuals.sql.ts",
+    pattern: /^(?=[\s\S]*FROM banking\.bank_transactions bt)(?=[\s\S]*account_class = 'depository')/,
   },
   {
     name: "cash-flow.service.ts (daily prediction path) sums real accounting.bills",
@@ -90,7 +92,9 @@ export function checkAll(readFile) {
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
     "apps/backend/src/cash-flow/cash-flow.service.ts":
-      "FROM accounting.payments p ... FROM accounting.bill_payments bp ... FROM accounting.bills b",
+      "operatingBankActualsByDaySql(avpHideBa) ... FROM accounting.bills b",
+    "apps/backend/src/cash-flow/cash-flow-bank-actuals.sql.ts":
+      "FROM banking.bank_transactions bt JOIN banking.bank_accounts ba WHERE (ba.account_class = 'depository'",
     "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx": "row.amount_cents",
     "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx": "getActualVsProjected(operatingCompanyId, from, to)",
   };

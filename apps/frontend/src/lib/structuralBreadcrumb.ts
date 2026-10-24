@@ -23,7 +23,7 @@ type ModuleDef = {
  * common module roots that are not top-level sidebar ids (driver-finance, work-orders).
  */
 const MODULES: readonly ModuleDef[] = [
-  { prefix: "/safety/insurance", label: "Insurance", home: "/safety/insurance" },
+  { prefix: "/insurance", label: "Insurance", home: "/insurance" },
   { prefix: "/driver-finance", label: "Settlements", home: "/driver-finance/settlements" },
   { prefix: "/driver-hub", label: "Driver Hub", home: "/driver-hub" },
   { prefix: "/work-orders", label: "Work Orders", home: "/work-orders" },

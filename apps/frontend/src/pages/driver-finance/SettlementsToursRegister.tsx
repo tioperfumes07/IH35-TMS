@@ -264,12 +264,16 @@ function PostTourAction({ row, companyId }: { row: TourListRow; companyId: strin
 
 export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabHint = searchParams.get("tour_state") ?? searchParams.get("tab");
+  // 443.280-A — Open / Closed are own Settlements tabs (?tab=open|closed). Prefer tab over legacy tour_state.
+  const tabHint =
+    searchParams.get("tab") === "open" || searchParams.get("tab") === "closed"
+      ? searchParams.get("tab")
+      : (searchParams.get("tour_state") ?? searchParams.get("tab"));
   const state: "open" | "closed" = tabHint === "closed" ? "closed" : "open";
   const setState = (next: "open" | "closed") => {
     const params = new URLSearchParams(searchParams);
-    params.set("tour_state", next);
-    if (params.get("tab") === "open" || params.get("tab") === "closed") params.delete("tab");
+    params.set("tab", next);
+    params.delete("tour_state");
     setSearchParams(params, { replace: true });
   };
   const openQ = useQuery({ queryKey: ["settlements-module", "tours", "open", companyId], queryFn: () => listTours(companyId, "open"), enabled: Boolean(companyId) });

@@ -132,12 +132,12 @@ describe("DriverProfilePage", () => {
     expect(formatPhoneAsTyped("5555550100")).toBe("(555) 555-0100");
   });
 
-  it("renders tab strip before KPIs and Overview DQF sections (C-11/C-20)", async () => {
+  it("preserves the DQF workflow on Operations, outside the landing board", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
         <ToastProvider>
-          <MemoryRouter initialEntries={["/drivers/d1"]}>
+          <MemoryRouter initialEntries={["/drivers/d1?tab=operations"]}>
             <Routes>
               <Route path="/drivers/:id" element={<DriverProfilePage />} />
             </Routes>

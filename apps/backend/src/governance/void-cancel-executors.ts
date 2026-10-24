@@ -756,6 +756,8 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     glReversalResult: reversal.result,
   });
 
+  // R-102-B: UPDATE driver_finance.driver_settlements — dual reversed_at↔voided_at markers written
+  // additively (COALESCE) via settlement-void-state.service.ts:39 (stampSettlementVoidedInClientTx).
   const voidState = await stampSettlementVoidedInClientTx(client, {
     operatingCompanyId, settlementId: entityId, userId, reason,
   });

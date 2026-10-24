@@ -107,6 +107,8 @@ export type TourListRow = {
   /** ROUND 443.274-C Closed board — link target for Company settlement statement. */
   company_settlement_id: string | null;
   company_settlement_display_id: string | null;
+  /** 443.282 — Company Settlements board dedupe key (one row per tour). */
+  tour_id: string | null;
 };
 export function listTours(operatingCompanyId: string, state: "open" | "closed") {
   // R-102-B item 5 — voided_count discloses how many cancelled/reversed/voided settlements in this
