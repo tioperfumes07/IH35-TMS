@@ -76,6 +76,16 @@ if (process.argv.includes("--selftest")) {
 const fails = [...entryPointGaps(), ...rewriteGaps()];
 // ROUND 384.1 + ROUND 386 (Lead) — resolve through the sanctioned gate credential (not env alone),
 // and refuse to connect when nothing resolves. An unset connection string makes pg dial localhost:5432.
+// ROUND 386 (Lead) — this guard read ONLY the two env vars. Run by hand, or by any entry point that
+// did not inject one, both were unset, `handed` was undefined, and `new pg.Client(undefined)` fell
+// through to libpq's own defaults — host localhost, port 5432. On a machine with a local Postgres
+// listening (measured: 127.0.0.1:5432 open on this one) the guard did not fail closed: it dialled
+// the LOCAL database and died with "The server does not support SSL connections", a confusing
+// environment error standing in for the real one. On a machine where that local server DID speak
+// SSL it would have been worse — the guard would have passed, having verified a developer's laptop
+// database instead of production. That is the exact "fake green" this file exists to prevent, so it
+// now resolves through the one sanctioned resolver (ROUND 363/370) and refuses to connect at all
+// when nothing resolves. "No database = FAIL" — the rule in this file's own header.
 const raw = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL || resolveGateReadonlyDbUrl();
 if (!raw) {
   console.error(
