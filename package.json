@@ -1147,7 +1147,8 @@
     "verify:no-seat-instruction-overrides-owner-void": "node scripts/verify-no-seat-instruction-overrides-owner-void.mjs",
     "verify:no-unmanifested-prod-financial-fixtures": "node scripts/verify-no-unmanifested-prod-financial-fixtures.mjs",
     "verify:driver-net-pay-clearing-balance-zero": "node scripts/verify-driver-net-pay-clearing-balance-zero.mjs",
-    "verify:settlement-posted-withholdings-equal-deductions-total": "node scripts/verify-settlement-posted-withholdings-equal-deductions-total.mjs"
+    "verify:settlement-posted-withholdings-equal-deductions-total": "node scripts/verify-settlement-posted-withholdings-equal-deductions-total.mjs",
+    "verify:settlement-deduction-lines-have-deduction-rows": "node scripts/verify-settlement-deduction-lines-have-deduction-rows.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",

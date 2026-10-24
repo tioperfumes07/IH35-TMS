@@ -1582,6 +1582,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-steps/18781-verify-settlement-posted-withholdings-equal-deductions-total.mjs",
     ],
   ],
+  // ENG-01c (443.322, step 18789): settlement_lines deduction rows must have DSD rows.
+  [
+    "verify-settlement-deduction-lines-have-deduction-rows",
+    [
+      "apps/backend/src/driver-finance/settlements.routes.ts",
+      "apps/backend/src/driver-finance/settlements-mvp.routes.ts",
+      "scripts/verify-settlement-deduction-lines-have-deduction-rows.mjs",
+      "scripts/verify-steps/18789-verify-settlement-deduction-lines-have-deduction-rows.mjs",
+    ],
+  ],
   // ESCROW-LEDGER-SIGN-01 (owner ruling, 2026-09-23): "A hold is a CREDIT to the driver's escrow
   // liability... sign follows transaction_type, never the caller." Shrink-only baseline on the
   // 39 pre-fix rows (they purge, not corrected here). Domain-conditional per the E7 pattern above
