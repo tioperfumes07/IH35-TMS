@@ -21,7 +21,12 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 function findings(s) {
   const failures = [];
   for (const key of Object.keys(files).filter((key) => key !== "severeRepair")) {
-    if (!/companyToday\(\)/.test(s[key])) failures.push(`${key} export must use companyToday`);
+    // LEAD 443.309 — the EXPORT FILENAME line itself must carry the company business date. "companyToday() anywhere in the
+    // file" let a file with other uses (Dispatch.tsx has 3) drop it from the filename and still pass (selftest mutation 9).
+    const downloadLines = s[key].split("\n").filter((l) => /\.download\s*=/.test(l));
+    if (!downloadLines.length || !downloadLines.every((l) => /companyToday\(\)/.test(l))) {
+      failures.push(`${key} export must use companyToday`);
+    }
     if (/download\s*=.*new Date\(\)\.toISOString\(\)/.test(s[key])) failures.push(`${key} export retains UTC filename`);
   }
   if ((s.severeRepair.match(/companyBusinessDate\(\)/g) ?? []).length < 2) {
@@ -37,18 +42,18 @@ const failures = findings(source);
 if (process.argv.includes("--selftest")) {
   if (failures.length) throw new Error(`baseline failed: ${failures.join("; ")}`);
   const mutations = [
-    { ...source, customers: source.customers.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, driverProfiles: source.driverProfiles.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, driverDqf: source.driverDqf.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, workOrders: source.workOrders.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, safetyEvents: source.safetyEvents.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, safetyEventsTable: source.safetyEventsTable.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, dispatchBoard: source.dispatchBoard.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, tripPairing: source.tripPairing.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, dispatch: source.dispatch.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, vendors: source.vendors.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, users: source.users.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
-    { ...source, fuel: source.fuel.replace("companyToday()", 'new Date().toISOString().slice(0, 10)') },
+    { ...source, customers: source.customers.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, driverProfiles: source.driverProfiles.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, driverDqf: source.driverDqf.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, workOrders: source.workOrders.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, safetyEvents: source.safetyEvents.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, safetyEventsTable: source.safetyEventsTable.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, dispatchBoard: source.dispatchBoard.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, tripPairing: source.tripPairing.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, dispatch: source.dispatch.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, vendors: source.vendors.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, users: source.users.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
+    { ...source, fuel: source.fuel.replace(/(\.download\s*=[^\n]*?)companyToday\(\)/, "$1new Date().toISOString().slice(0, 10)") },
     { ...source, severeRepair: source.severeRepair.replaceAll("companyBusinessDate()", 'new Date().toISOString().slice(0, 10)') },
   ];
   mutations.forEach((mutation, index) => {
