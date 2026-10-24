@@ -1,4 +1,4 @@
-# IH35-TMS — Lead pending register (USMCA) · 10-23-2026 8:15 PM CT
+# IH35-TMS — Lead pending register (USMCA) · 10-23-2026 9:20 PM CT
 
 Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live proof.
 
@@ -204,10 +204,24 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 198 | H | Customers › Per-Customer P&L › Classification labels | D079: Visible tags read high_margin and past_due | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 199 | H | Coverage | Codex audit coverage is partial depth — remaining tabs, drawers and record pages of every module still to audit | CODEX | 443.281 | OPEN |  |
 | 200 | F | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | 443.285 | IN PROGRESS | 9ef89188 issuedInvoice on all 4 KPI aggregates; test 3/3, tsc 0; push waits on main reds |
-| 201 | E | Platform | 443.284 main static reds from 10-23 board merges block every push (7:40 PM: 2 fixed, 5 red) | CC-2/CC-3 | 443.284 | IN PROGRESS | CC-2: dashboard-connectivity, sweep-pre-list, test-provider; CC-3: partial-optional-chain, unselected-boxes |
+| 201 | E | Platform | 443.284 main static reds from 10-23 board merges block every push (7:40 PM: 2 fixed, 5 red) | CC-2/CC-3 | 443.284 | IN PROGRESS | 9:00 PM main: 4 of 6 green; left verify-settlement-sweep-pre-list, verify-no-internal-payload-in-notes (CC-2) |
 | 202 | E | Fuel | verify-no-internal-payload-in-notes red: dreamline-statement-import memo interpolates input.expenseId (afd3fd334e) | CC-2 | 443.284 | OPEN | exit 1 on main 1c118712 |
-| 203 | F | Linkage | Linkage gate red (verify-every-load-born-posting-carries-its-load) blocks every money push | LEAD | 443.287 | IN PROGRESS | fork br-bitter-lab: AUTH-454 COMMITTED 5 settlements TB 0, postings 7091=7091; AUTH-453 running |
+| 203 | F | Linkage | Linkage gate red (verify-every-load-born-posting-carries-its-load) blocks every money push | LEAD | 443.287 | IN PROGRESS | AUTH-454 COMMITTED on prod (5 headers, TB 0, 7091=7091); AUTH-453 running on prod (owner OK 8:42 PM); fork: uncapped guard exit 0 |
 | 204 | F | Fuel | Statement card discount / difference is a separate expense with NO link to its receipt; copies the load once, never follows a move | CC-2 | 443.288-A | OPEN | owner ruling 443.288 10-23 7:59 PM |
 | 205 | A | Expenses | OWNER: every expense-to-load assignment confirmed by dispatcher or closer — always | CC-2 | 443.288-B | OPEN | docs/bus/lead/OWNER-RULING-443.288-...md |
 | 206 | A | Dispatch / Settlements | Expense load confirmations queue (Dispatch + Settlements Close), multi-select, bulk confirm | Cursor | 443.288-C | OPEN | after 443.288-B route |
 | 207 | E | Guards | Guards for 443.288 (child follows parent, no machine-final load, close refuses proposed, family moves) | Codex | 443.288-D | OPEN |  |
+| 208 | E | Platform | Main CI red at verify:arch-design (/insurance, Fuel Planner settings + Expense mapping) | LEAD | 443.289 | DONE | #27422 b1192f1e; plants red; CI re-run pending |
+| 209 | E | Guards | 107 main static reds outside baseline split by seat | ALL | 443.290 | IN PROGRESS | #27407 list; CC-1 #27413/#27416/#27417; Lead 4 Cash Flow in 443.283c |
+| 210 | E | Platform | 6,266 guard scripts (488 live, ~5,700 source-text, 316 slate-color copies) | Codex | 443.291 | OPEN | after Codex filters PR |
+| 211 | F | Cash Flow | Actual vs Projected + Manual reverted to pre-board code by #27390 | LEAD | 443.283c | IN PROGRESS | 162429bd guards + 7/7 tests; push after linkage green |
+| 212 | A | Settlements | Settlement number: P-number shown; real series not assigned by our system | CC-1 | 443.292-A | OPEN |  |
+| 213 | A | Settlements | Tour dates wrong (P-0114 10/20→10/20; real 10/16→10/23) | CC-1 | 443.292-B | OPEN |  |
+| 214 | A | Settlements | Settlements tab week list: closed show Open; duplicate empty driver rows | CC-1 | 443.292-C | OPEN |  |
+| 215 | A | Settlements | Escrow register: all same date/source, no load numbers; escrow is per load | CC-1 | 443.292-D | OPEN |  |
+| 216 | A | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | 443.292-E | OPEN |  |
+| 217 | A | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | 443.292-F | OPEN |  |
+| 218 | A | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | 443.293-A | OPEN |  |
+| 219 | A | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | 443.293-B | OPEN |  |
+| 220 | A | Accounting | Inspect every Accounting tab; only Bills first tab is right | Cursor | 443.293-C | OPEN |  |
+| 221 | A | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing | CC-3 | 443.294 | OPEN |  |
