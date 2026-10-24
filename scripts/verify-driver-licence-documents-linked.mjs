@@ -236,6 +236,17 @@ try {
     console.error(`${LABEL}: FAIL — ${n} Active USMCA driver(s) with is_sample_data=true (quarantine-law violation, driver_control=${control.rows[0].n})`);
     process.exit(1);
   }
+  // OWNER WAIVER 10-24-2026 10:24 AM CT (verbatim): "I will Update Eduardo and all drivers data later, bypass permissions for
+  // now." The guard still MEASURES and names every driver missing licence data on every run; it reports WAIVED instead of
+  // failing until the owner updates the drivers. Delete this block to re-arm. The sample-data check above is NOT waived.
+  const OWNER_WAIVER_DRIVER_LICENCE_DATA = true;
+  if (problems.length > 0 && OWNER_WAIVER_DRIVER_LICENCE_DATA) {
+    console.warn(
+      `${LABEL}: WAIVED (owner 10-24-2026, driver data to be updated) — NOT A PASS — ${problems.length} Active driver(s) on an active load missing cdl_number/cdl_expires_at/linked licence doc: ` +
+        problems.map((r) => `${r.first_name} ${r.last_name}`).join(", ")
+    );
+    process.exit(0);
+  }
   if (problems.length > 0) {
     console.error(
       `${LABEL}: FAIL — ${problems.length} Active driver(s) on a dispatched/in_transit/assigned_not_dispatched load missing cdl_number/cdl_expires_at/linked licence doc: ` +
