@@ -228,15 +228,11 @@ jobs:
       - name: verify:settlement-close-must-post-gl --selftest
         run: node scripts/verify-settlement-close-must-post-gl.mjs --selftest
 
-      - name: verify:settlement-close-must-post-gl
-        run: npm run verify:settlement-close-must-post-gl
-
       - name: verify:load-driver-pay-equals-driver-bill-gross --selftest
         run: node scripts/verify-load-driver-pay-equals-driver-bill-gross.mjs --selftest
 
       - name: verify:load-driver-pay-equals-driver-bill-gross
         run: node scripts/verify-load-driver-pay-equals-driver-bill-gross.mjs
-
       - name: verify:payment-methods-catalog --selftest
         run: node scripts/verify-payment-methods-catalog.mjs --selftest
 

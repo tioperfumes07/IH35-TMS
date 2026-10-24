@@ -1226,5 +1226,12 @@
     "source_file": "apps/backend/src/driver-finance/settlement-payrun-close.routes.ts",
     "guard": "scripts/verify-settlement-close-must-post-gl.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443322-ENG03-ESCROW-LEDGER-MUST-HAVE-LOAD",
+    "title": "Every driver_finance.escrow_ledger row must carry a load_id tracing the escrow movement to its originating load",
+    "source_file": "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
+    "guard": "scripts/verify-steps/18773-verify-escrow-ledger-row-has-load.mjs",
+    "type": "enforced"
   }
 ]
