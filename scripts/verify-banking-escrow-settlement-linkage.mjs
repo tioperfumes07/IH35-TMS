@@ -136,6 +136,8 @@ if (process.argv.includes("--selftest")) {
     `import { V3KpiTile } from "../../components/v3/V3KpiTile";\n` +
       `const ESCROW_RELEASE_WINDOW_DAYS = 60;\n` +
       `data-escrow-register-v3-kpis="1"\n` +
+      // 443.290: the ROUND 443.282 board marker the guard requires (#27387) — the fixture never carried it.
+      `data-settlements-escrow-register-rebuild="1"\n` +
       `<V3KpiTile label="Driver" value="x" />\n` +
       `<V3KpiTile label="Held" value="x" />\n` +
       `<V3KpiTile label="Target" value="—" />\n` +
@@ -165,6 +167,19 @@ if (process.argv.includes("--selftest")) {
     `getEscrowDriverBalances\ngetEscrowDriverTimeline\n`,
   );
   if (!run(tmp).length) throw new Error("EscrowRegister V3 strip mutation escaped");
+  // 443.290 — the full V3 register WITHOUT the ROUND 443.282 rebuild marker must FAIL by name.
+  mk(
+    "apps/frontend/src/pages/driver-finance/EscrowRegisterPage.tsx",
+    `import { V3KpiTile } from "../../components/v3/V3KpiTile";\n` +
+      `const ESCROW_RELEASE_WINDOW_DAYS = 60;\n` +
+      `data-escrow-register-v3-kpis="1"\n` +
+      `<V3KpiTile label="Driver" value="x" />\n` +
+      `<V3KpiTile label="Held" value="x" />\n` +
+      `<V3KpiTile label="Target" value="—" />\n` +
+      `<V3KpiTile label="Release" value="—" />\n` +
+      `getEscrowDriverBalances\ngetEscrowDriverTimeline\n`,
+  );
+  if (!run(tmp).some((f) => f.includes("data-settlements-escrow-register-rebuild"))) throw new Error("443.282 rebuild-marker mutation escaped");
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-banking-escrow-settlement-linkage --selftest OK");
 } else {
