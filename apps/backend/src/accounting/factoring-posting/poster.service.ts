@@ -294,6 +294,8 @@ type AdvanceRow = {
   advanced_at: string | null;
   collected_at: string | null;
   released_at: string | null;
+  /** 443.346 — actual BofA wire from Faro; NULL = full advance_amount_cents (default) */
+  bank_wire_cents: number | null;
 };
 
 async function loadAdvance(client: DbClient, operatingCompanyId: string, factoringAdvanceId: string): Promise<AdvanceRow | null> {
@@ -311,7 +313,8 @@ async function loadAdvance(client: DbClient, operatingCompanyId: string, factori
         submitted_at::text,
         advanced_at::text,
         collected_at::text,
-        released_at::text
+        released_at::text,
+        bank_wire_cents::int         AS bank_wire_cents
       FROM accounting.factoring_advances
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
@@ -847,16 +850,16 @@ export type PostFactoringAdvanceInput = {
 };
 
 function fundingExpectedLegs(opts: {
-  cash: number;
-  reserve: number;
+  bankWire: number;
+  reserveTotal: number;
   fee: number;
   ach: number;
   cashRsv: number;
   liability: number;
 }): ExpectedLifecycleLeg[] {
   const legs: ExpectedLifecycleLeg[] = [];
-  if (opts.cash > 0) legs.push({ role: "cash_clearing", debit_or_credit: "debit", amount_cents: opts.cash });
-  if (opts.reserve > 0) legs.push({ role: "factor_reserve_held", debit_or_credit: "debit", amount_cents: opts.reserve });
+  if (opts.bankWire > 0) legs.push({ role: "cash_clearing", debit_or_credit: "debit", amount_cents: opts.bankWire });
+  if (opts.reserveTotal > 0) legs.push({ role: "factor_reserve_held", debit_or_credit: "debit", amount_cents: opts.reserveTotal });
   if (opts.fee > 0) legs.push({ role: "factor_fee_expense", debit_or_credit: "debit", amount_cents: opts.fee });
   // FACT-05 — ACH/wire is a transaction cost, not the Faro financing fee.
   if (opts.ach > 0) legs.push({ role: "factor_wire_fee", debit_or_credit: "debit", amount_cents: opts.ach });
@@ -943,9 +946,14 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
         `factoring_funding_figures_invalid: liability=${liability} reserve=${reserve} fee=${fee} ach=${ach} cash_rsv=${cashRsv} => cash=${cash}`
       );
     }
+    // bank_wire_cents: actual BofA wire from Faro. When less than cash, Faro held the difference
+    // (CCG payment reserve); that gap posts to factor_reserve_held (1230) not cash_clearing (1090).
+    const bankWire = advance.bank_wire_cents !== null ? advance.bank_wire_cents : cash;
+    const factorHeld = cash - bankWire;
+    const reserveTotal = reserve + factorHeld;
 
     const memo = `Factoring funding ${advance.display_id}`;
-    const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, cashRsv, liability });
+    const expectedLegs = fundingExpectedLegs({ bankWire, reserveTotal, fee, ach, cashRsv, liability });
     const eventKey = "funding";
     const keyJe = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
@@ -994,8 +1002,8 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
     const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
 
     const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
-    if (cash > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: cash, description: `${memo} — cash advanced` });
-    if (reserve > 0) postings.push({ account_id: reserveAccountId, debit_or_credit: "debit", amount_cents: reserve, description: `${memo} — reserve held (due-from-factor)` });
+    if (bankWire > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: bankWire, description: `${memo} — cash advanced (BofA wire)` });
+    if (reserveTotal > 0) postings.push({ account_id: reserveAccountId, debit_or_credit: "debit", amount_cents: reserveTotal, description: `${memo} — reserve held (due-from-factor)` });
     if (fee > 0) postings.push({ account_id: feeAccountId, debit_or_credit: "debit", amount_cents: fee, description: `${memo} — factoring fee (interest & financing)` });
     // FACT-05 — ACH/wire fee on factor_wire_fee (BC-Ach & Wire Fees), distinct from factor_fee_expense.
     if (ach > 0) {
@@ -1351,9 +1359,12 @@ export async function postFactoringAdvanceEventInClientTx(
         `factoring_funding_figures_invalid: liability=${liability} reserve=${reserve} fee=${fee} ach=${ach} cash_rsv=${cashRsv} => cash=${cash}`
       );
     }
+    const bankWire = advance.bank_wire_cents !== null ? advance.bank_wire_cents : cash;
+    const factorHeld = cash - bankWire;
+    const reserveTotal = reserve + factorHeld;
 
     const memo = `Factoring funding ${advance.display_id}`;
-    const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, cashRsv, liability });
+    const expectedLegs = fundingExpectedLegs({ bankWire, reserveTotal, fee, ach, cashRsv, liability });
     const eventKey = "funding";
     const keyJe = await findLiveLifecyclePostingKeyJe(client, {
       operating_company_id: input.operating_company_id,
@@ -1402,8 +1413,8 @@ export async function postFactoringAdvanceEventInClientTx(
     const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
 
     const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
-    if (cash > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: cash, description: `${memo} — cash advanced` });
-    if (reserve > 0) postings.push({ account_id: reserveAccountId, debit_or_credit: "debit", amount_cents: reserve, description: `${memo} — reserve held (due-from-factor)` });
+    if (bankWire > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: bankWire, description: `${memo} — cash advanced (BofA wire)` });
+    if (reserveTotal > 0) postings.push({ account_id: reserveAccountId, debit_or_credit: "debit", amount_cents: reserveTotal, description: `${memo} — reserve held (due-from-factor)` });
     if (fee > 0) postings.push({ account_id: feeAccountId, debit_or_credit: "debit", amount_cents: fee, description: `${memo} — factoring fee (interest & financing)` });
     if (ach > 0) {
       if (!wireFeeAccountId) {
