@@ -35,7 +35,7 @@ describe("Modal variant=\"drawer\" (C7 create surface chrome)", () => {
     render(wrap(<Modal open onClose={() => {}} title="Void this row?">body</Modal>));
     const el = panel("Void this row?");
     expect(el.dataset.modalVariant).toBe("center");
-    expect(el.className).toContain("rounded-lg");
+    expect(el.className).toContain("rounded-sm");
     expect(el.className).not.toContain("sm:w-[480px]");
     expect(el.parentElement?.className).toContain("items-center");
   });

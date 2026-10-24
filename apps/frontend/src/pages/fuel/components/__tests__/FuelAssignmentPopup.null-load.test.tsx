@@ -42,7 +42,7 @@ describe("FuelAssignmentPopup — candidate with no load at the pump (443.258-A)
       </MemoryRouter>
     );
     expect(screen.getByTestId("fuel-assignment-candidate-no-load-u-173").textContent).toBe("No load at pump time");
-    expect(screen.getByText("13689")).toBeTruthy();
+    expect(screen.getAllByText("13689").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByTestId("fuel-assignment-candidate-u-173"));
     expect(screen.getByTestId("fuel-assignment-candidate-no-load-u-173")).toBeTruthy();
   });

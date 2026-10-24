@@ -205,6 +205,30 @@ if (headerBgMatch[1].toUpperCase() === "#14314F" || headerTextMatch[1].toUpperCa
   process.exit(1);
 }
 
+// 443.295 — one popup standard. A Modal that names no size is md (720). Width is never 85% of the window.
+{
+  const prefs = fs.readFileSync(path.join(SRC, "lib/modal-size-prefs.ts"), "utf8");
+  const modal = fs.readFileSync(path.join(SRC, "components/Modal.tsx"), "utf8");
+  const fuel = fs.readFileSync(path.join(SRC, "pages/fuel/components/FuelAssignmentPopup.tsx"), "utf8");
+  const missing = ["sm: 480", "md: 720", "lg: 960", "xl: 1280"].filter((line) => !prefs.includes(line));
+  if (missing.length) {
+    console.error(`${LABEL}: FAIL — popup width caps missing ${missing.join(", ")}`);
+    process.exit(1);
+  }
+  if (/0\.85/.test(modal)) {
+    console.error(`${LABEL}: FAIL — Modal still sizes from 85% of the window`);
+    process.exit(1);
+  }
+  if (!modal.includes('sizePreset ?? (wide ? "lg" : "md")') || !modal.includes("h-11") || !modal.includes("fontSize: 14") || !modal.includes("max-h-[85vh]") || !modal.includes("h-[52px]") || !modal.includes("function ModalSection")) {
+    console.error(`${LABEL}: FAIL — Modal shell dropped the 443.295 header, 85vh body, footer, or section`);
+    process.exit(1);
+  }
+  if (!fuel.includes('sizePreset="md"') || /<textarea/.test(fuel) || !fuel.includes("<ModalSection") || !fuel.includes("Engine notes")) {
+    console.error(`${LABEL}: FAIL — Fuel assignment popup is not the medium 720 design`);
+    process.exit(1);
+  }
+}
+
 const measured = measure();
 if (argv.includes("--worklist")) {
   const rows = [...measured.off_per_file.entries()]

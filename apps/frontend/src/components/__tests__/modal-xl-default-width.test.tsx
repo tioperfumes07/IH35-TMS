@@ -24,19 +24,35 @@ describe("xl modal default width (U7)", () => {
       </QueryClientProvider>,
     );
   }
+  const panel = () => Array.from(document.querySelectorAll<HTMLElement>("[style]")).find((el) => /px$/.test(el.style.width));
   const panelWidth = () => {
-    const sized = Array.from(document.querySelectorAll<HTMLElement>("[style]")).find((el) => /px$/.test(el.style.width) && /px$/.test(el.style.height));
+    const sized = panel();
     return sized ? parseFloat(sized.style.width) : NaN;
   };
 
   it("opens no wider than 1,280 px on a wide screen when nothing is saved", async () => {
     open();
-    await waitFor(() => expect(panelWidth()).toBeGreaterThan(0));
-    expect(panelWidth()).toBeLessThanOrEqual(1280);
+    await waitFor(() => expect(panelWidth()).toBe(1280));
+    expect(panel()?.style.height ?? "").toBe("");
   });
 
   it("a size the user saved by resizing still wins", async () => {
     open({ w: 1700, h: 900 });
     await waitFor(() => expect(panelWidth()).toBe(1700));
+    expect(panel()?.style.height).toBe("900px");
+  });
+
+  it("a modal that names no size is medium (720), never 85% of the window", () => {
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 2400 });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <Modal open onClose={() => undefined} title="Plain">body</Modal>
+      </QueryClientProvider>,
+    );
+    const dialog = document.querySelector("[data-modal-standard='1']");
+    expect(dialog?.getAttribute("data-modal-size")).toBe("md");
+    expect(dialog?.className).toContain("max-w-[min(720px,calc(100vw-2rem))]");
+    expect(dialog?.className ?? "").not.toMatch(/85vw|w-\[85%/);
   });
 });

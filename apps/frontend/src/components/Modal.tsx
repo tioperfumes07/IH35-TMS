@@ -3,9 +3,9 @@ import type { CSSProperties, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getUserPreferences } from "../api/safety";
-import { colors, typography } from "../design/tokens";
+import { colors } from "../design/tokens";
 import { useEscapeKey } from "../hooks/useEscapeKey";
-import { MODAL_MAX_DEFAULT_W, MODAL_MIN_BY_PRESET, readModalSizeFromPrefs, persistModalSize, type ModalSizePreset } from "../lib/modal-size-prefs";
+import { MODAL_MAX_DEFAULT_W, MODAL_MIN_BY_PRESET, MODAL_WIDTH_CLASS, readModalSizeFromPrefs, persistModalSize, type ModalSizePreset } from "../lib/modal-size-prefs";
 import { ConfirmDiscardDialog } from "./dialogs/ConfirmDiscardDialog";
 import { ModalCloseButton } from "./ModalCloseButton";
 import { PARITY_CREATE_DRAWER_WIDTH } from "./parity/sizing";
@@ -27,8 +27,11 @@ type ModalProps = {
   sizePreset?: ModalSizePreset;
   /** Enable bottom-right resize grip (requires `modalKind` + `sizePreset`). */
   resizable?: boolean;
-  /** Opt-in wide layout (~1140px) for two-column form modals (e.g. Create Work Order render-v5). */
+  /** Two-column forms. With no sizePreset this is lg (960). A named preset wins. */
   wide?: boolean;
+  /** 52px footer: note on the left, actions on the right. */
+  footer?: ReactNode;
+  footerNote?: ReactNode;
   /**
    * NAV-BACK-NESTED-CREATE — optional explicit back handler. On `variant="drawer"`, a ← affordance
    * always appears (ParityDrawer parity); when omitted it uses the same confirm-aware close as ✕.
@@ -66,13 +69,15 @@ export function Modal({
   sizePreset,
   resizable = false,
   wide = false,
+  footer,
+  footerNote,
   onBack,
   variant = "center",
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
-  const boxRef = useRef<{ w: number; h: number } | null>(null);
+  const [box, setBox] = useState<{ w: number; h: number | null } | null>(null);
+  const boxRef = useRef<{ w: number; h: number | null } | null>(null);
   const failedSizeRef = useRef<{ w: number; h: number } | null>(null);
   const [sizeSaveError, setSizeSaveError] = useState(false);
 
@@ -82,7 +87,8 @@ export function Modal({
   const useCustomSize = Boolean(modalKind && sizePreset) && !isDrawer;
   // Unchanged for the centered card (the `|| true` predates C7); the fixed-width drawer opts out.
   const resizeEnabled = (resizable || true) && !isDrawer;
-  const minBox = sizePreset ? MODAL_MIN_BY_PRESET[sizePreset] : { w: 320, h: 240 };
+  const effectivePreset: ModalSizePreset = sizePreset ?? (wide ? "lg" : "md");
+  const minBox = MODAL_MIN_BY_PRESET[effectivePreset];
 
   const prefsQuery = useQuery({
     queryKey: ["user", "preferences"],
@@ -115,6 +121,7 @@ export function Modal({
   useEffect(() => {
     if (!open || !resizeEnabled) {
       setBox(null);
+      boxRef.current = null;
       return;
     }
     if (!useCustomSize || !modalKind || !sizePreset) {
@@ -122,15 +129,20 @@ export function Modal({
       boxRef.current = null;
       return;
     }
+    // A drag already wrote a height. A late preference response must not replace
+    // that box — the save-failure path retries the exact dragged dimensions.
+    if (boxRef.current?.h != null) return;
     const stored = readModalSizeFromPrefs(prefsQuery.data?.preferences as Record<string, unknown> | undefined, modalKind);
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const min = MODAL_MIN_BY_PRESET[sizePreset];
-    const fallbackW = Math.min(Math.max(vw * 0.85, min.w), vw * 0.92, MODAL_MAX_DEFAULT_W[sizePreset] ?? Number.POSITIVE_INFINITY);
-    const fallbackH = Math.min(Math.max(vh * 0.72, min.h), vh * 0.92);
-    const w = Math.max(min.w, Math.min(stored?.w ?? fallbackW, vw * 0.95));
-    const h = Math.max(min.h, Math.min(stored?.h ?? fallbackH, vh * 0.95));
-    const next = { w, h };
+    const cap = MODAL_MAX_DEFAULT_W[sizePreset];
+    const next = stored
+      ? {
+          w: Math.max(min.w, Math.min(stored.w, vw * 0.95)),
+          h: Math.max(min.h, Math.min(stored.h, vh * 0.95)),
+        }
+      : { w: Math.min(cap, vw * 0.95), h: null as number | null };
     setBox(next);
     boxRef.current = next;
   }, [open, resizeEnabled, useCustomSize, modalKind, sizePreset, prefsQuery.data]);
@@ -199,7 +211,12 @@ export function Modal({
   }, [open]);
 
   const panelStyle: CSSProperties | undefined = box
-    ? { width: box.w, height: box.h, maxWidth: "min(95vw, calc(100vw - 2rem))", maxHeight: "min(95vh, calc(100dvh - 2rem))" }
+    ? {
+        width: box.w,
+        ...(box.h != null ? { height: box.h } : {}),
+        maxWidth: "min(95vw, calc(100vw - 2rem))",
+        maxHeight: box.h != null ? "min(95vh, calc(100dvh - 2rem))" : "min(85vh, calc(100dvh - 2rem))",
+      }
     : undefined;
 
   if (!open) return null;
@@ -240,12 +257,8 @@ export function Modal({
           className={
             isDrawer
               ? `relative flex h-full max-h-full flex-col border-l border-gray-200 bg-white shadow-xl ${PARITY_CREATE_DRAWER_WIDTH}`
-              : `relative flex flex-col rounded-lg bg-white shadow-xl ${
-                  box
-                    ? "overflow-hidden"
-                    : wide
-                      ? "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(72rem,calc(100vw-2rem))]"
-                      : "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))]"
+              : `relative flex max-h-[85vh] flex-col rounded-sm bg-white shadow-xl ${
+                  box ? "overflow-hidden" : `w-full ${MODAL_WIDTH_CLASS[effectivePreset]}`
                 }`
           }
           style={isDrawer ? undefined : panelStyle}
@@ -253,11 +266,13 @@ export function Modal({
           aria-modal="true"
           aria-label={title}
           data-modal-variant={variant}
+          data-modal-standard="1"
+          data-modal-size={isDrawer ? "drawer" : effectivePreset}
           data-proportion-chrome="qbo-compact"
           onMouseDown={(event) => event.stopPropagation()}
         >
           <div
-            className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3"
+            className="flex h-11 shrink-0 items-center justify-between border-b border-gray-200 px-4"
             data-proportion-chrome-header=""
           >
             <div className="flex min-w-0 items-center gap-2">
@@ -273,8 +288,8 @@ export function Modal({
                 </button>
               ) : null}
               <h2
-                className="min-w-0 truncate uppercase"
-                style={{ fontSize: typography.panelHeader, color: colors.bodyText, letterSpacing: typography.tightUpper }}
+                className="min-w-0 truncate font-semibold"
+                style={{ fontSize: 14, color: colors.bodyText }}
               >
                 {title}
               </h2>
@@ -308,31 +323,34 @@ export function Modal({
             </div>
           ) : null}
           <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-3">{children}</div>
+          {footer != null || footerNote != null ? (
+            <div
+              className="flex h-[52px] shrink-0 items-center justify-between gap-3 border-t border-[#E5E7EB] px-4"
+              data-modal-footer="1"
+            >
+              <div className="min-w-0 truncate text-xs text-[#6B7280]">{footerNote}</div>
+              <div className="flex shrink-0 items-center gap-2">{footer}</div>
+            </div>
+          ) : null}
           {resizeEnabled ? (
             <ResizeHandle
               onPointerDrag={(dx, dy) => {
-                setBox((prev) => {
-                  const base =
-                    prev ??
-                    (() => {
-                      const rect = panelRef.current?.getBoundingClientRect();
-                      if (!rect) return { w: 672, h: 420 };
-                      return { w: rect.width, h: rect.height };
-                    })();
-                  const vw = window.innerWidth;
-                  const vh = window.innerHeight;
-                  const nextW = Math.max(minBox.w, Math.min(base.w + dx, vw * 0.95));
-                  const nextH = Math.max(minBox.h, Math.min(base.h + dy, vh * 0.95));
-                  const next = { w: nextW, h: nextH };
-                  boxRef.current = next;
-                  return next;
-                });
+                const rect = panelRef.current?.getBoundingClientRect();
+                const prev = boxRef.current;
+                const baseW = prev?.w ?? rect?.width ?? MODAL_MAX_DEFAULT_W[effectivePreset];
+                const baseH = prev?.h ?? (rect && rect.height > 0 ? rect.height : minBox.h);
+                const next = {
+                  w: Math.max(minBox.w, Math.min(baseW + dx, window.innerWidth * 0.95)),
+                  h: Math.max(minBox.h, Math.min(baseH + dy, window.innerHeight * 0.95)),
+                };
+                boxRef.current = next;
+                setBox(next);
               }}
               onPointerDone={() => {
                 if (!useCustomSize || !modalKind) return;
                 const b = boxRef.current;
-                if (!b) return;
-                void saveModalSize(b);
+                if (!b || b.h == null) return;
+                void saveModalSize({ w: b.w, h: b.h });
               }}
             />
           ) : null}
@@ -345,5 +363,26 @@ export function Modal({
       />
     </>,
     document.body
+  );
+}
+
+/** 443.295 section band: 11px uppercase gray, optional source on the right. */
+export function ModalSection({
+  title,
+  source,
+  children,
+}: {
+  title: string;
+  source?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-sm border border-[#E5E7EB]" data-modal-section={title}>
+      <div className="flex items-center justify-between gap-2 border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
+        <h3 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{title}</h3>
+        {source != null ? <span className="text-section-header font-semibold normal-case tracking-normal text-[#6B7280]">{source}</span> : null}
+      </div>
+      {children}
+    </section>
   );
 }

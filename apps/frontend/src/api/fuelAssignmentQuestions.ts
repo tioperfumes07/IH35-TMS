@@ -18,6 +18,9 @@ export type FuelCandidateTruck = {
   distance_mi: number | null;
   samsara_driver: string | null;
   odometer: number | null;
+  /** 443.296 — present when the engine sends them. Absent fields render as an em dash. */
+  at_station?: string | null;
+  odometer_at_fill?: number | null;
   /** 443.258-A: null when the truck had no load at the pump moment (never omitted by the API). */
   load: FuelCandidateLoad | null;
 };

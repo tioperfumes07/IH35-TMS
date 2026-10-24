@@ -3,10 +3,22 @@ import { getUserPreferences, patchUserPreferences } from "../api/safety";
 export type ModalSizePreset = "sm" | "md" | "lg" | "xl";
 
 /** Minimum dimensions (px) per preset — resize cannot shrink below these. */
-/** U7 (owner, 2026-10-03): "Create Check is out of proportion — a modal, QBO size". The default width was 85% of the
- *  window — about 2,040 px on a 2,400 px screen, a check form stretched past any proportion. A preset may cap its
- *  default width (a size the user saved by resizing still wins). xl = 1,280 px, QBO's check / bill form proportion. */
-export const MODAL_MAX_DEFAULT_W: Partial<Record<string, number>> = { xl: 1280 };
+/** 443.295 (owner 2026-10-23): no popup is 85% of the window. Caps are the size.
+ *  A modal that names no preset is md. A size the user saved by resizing still wins. */
+export const MODAL_MAX_DEFAULT_W: Record<ModalSizePreset, number> = {
+  sm: 480,
+  md: 720,
+  lg: 960,
+  xl: 1280,
+};
+
+/** Tailwind max-width for a centered modal that has not been resized. */
+export const MODAL_WIDTH_CLASS: Record<ModalSizePreset, string> = {
+  sm: "max-w-[min(480px,calc(100vw-2rem))]",
+  md: "max-w-[min(720px,calc(100vw-2rem))]",
+  lg: "max-w-[min(960px,calc(100vw-2rem))]",
+  xl: "max-w-[min(1280px,calc(100vw-2rem))]",
+};
 
 export const MODAL_MIN_BY_PRESET: Record<ModalSizePreset, { w: number; h: number }> = {
   sm: { w: 320, h: 240 },

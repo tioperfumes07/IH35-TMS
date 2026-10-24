@@ -92,7 +92,7 @@ export function collectProblems(sources) {
       problems.push(`${FILES.popup}: missing mode button ${mode}`);
     }
   }
-  if (!/Confirm proposed/.test(sources.popup) || !/Pick another truck \+ load/.test(sources.popup) || !/Keep on card truck/.test(sources.popup)) {
+  if (!/Confirm proposed/.test(sources.popup) || !/Choose another truck and load/.test(sources.popup) || !/Keep on card truck/.test(sources.popup)) {
     problems.push(`${FILES.popup}: must label confirm / pick / keep buttons`);
   }
   if (!/keep_card_truck/.test(popup) || !/reason/.test(popup)) {
