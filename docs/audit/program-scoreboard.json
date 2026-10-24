@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c7ab16a",
-  "generated_at": "2026-10-24T02:30:44.812Z",
+  "healthzSha": "7fa3e63",
+  "generated_at": "2026-10-24T02:55:41.517Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c7ab16a",
+    "deployedSha": "7fa3e63",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,87 @@
   },
   "recentActivity": [
     {
+      "number": 27374,
+      "title": "Claude-1-443.278: settlement load-cost engine fix",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 09:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27374",
+      "sha": "7fa3e63f63",
+      "committedAtIso": "2026-10-23T21:47:32-05:00"
+    },
+    {
+      "number": 27443,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — LEAD 443.297: code-complete mode — register seats reassigned (CC-1 38, CC-2 25, CC-3 22, Cursor 77, Codex 27), rows 222-224, and all 10-23 coder boxes",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 09:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27443",
+      "sha": "cc123db8cb",
+      "committedAtIso": "2026-10-23T21:45:15-05:00"
+    },
+    {
+      "number": 27442,
+      "title": "Claude-1- 443.292-F2 restore live arm verify-no-empty-zero-settlement",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 09:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27442",
+      "sha": "7ac16709fd",
+      "committedAtIso": "2026-10-23T21:44:53-05:00"
+    },
+    {
+      "number": 27441,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — LEAD 443.294 step 4a (factoring): documents override = <OverrideButton context=\"factoring\"> + recordOverride; no typed reason",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 09:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27441",
+      "sha": "14964991eb",
+      "committedAtIso": "2026-10-23T21:44:12-05:00"
+    },
+    {
+      "number": 27440,
+      "title": "FINDING: N/A LANE: DOCS — CC-2 claim migration 202616230700 (OWNER RULING 443.288-B expense load confirmation)",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 09:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27440",
+      "sha": "be4cfc02bc",
+      "committedAtIso": "2026-10-23T21:41:36-05:00"
+    },
+    {
+      "number": 27439,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — LEAD 443.295: Fuel assignment popup redesign + app popup standard (design board)",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 09:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27439",
+      "sha": "ca92a83028",
+      "committedAtIso": "2026-10-23T21:41:20-05:00"
+    },
+    {
+      "number": 27438,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — LEAD 443.294 step 3: <OverrideButton context> — Owner/Accountant confirm only; everyone else a context-filtered reason list; nothing to type",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 09:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27438",
+      "sha": "d21fc35cf3",
+      "committedAtIso": "2026-10-23T21:37:09-05:00"
+    },
+    {
+      "number": 27437,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — CC-2- 443.290 banking: 3 main static reds — guards follow the 443.267 Banking board, the 443.243 fuel question in the Match drawer and the 443.282 Escrow register, each with failing plants",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 09:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27437",
+      "sha": "df105d81bf",
+      "committedAtIso": "2026-10-23T21:35:42-05:00"
+    },
+    {
+      "number": 27436,
+      "title": "Claude-3- 443.294 step 2 recordOverride engine (catalog code or Owner/Accountant confirm, no free text, audited)",
+      "state": "merged",
+      "mergedAtCt": "10/23/2026, 09:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27436",
+      "sha": "5e4a628da0",
+      "committedAtIso": "2026-10-23T21:32:51-05:00"
+    },
+    {
       "number": 27435,
       "title": "FINDING: LST-F4432941 LANE: NON-FINANCIAL — LEAD 443.294 step 1b: Override Reasons managed in Lists (routes + screen, same grammar as Void/Cancel Reasons)",
       "state": "merged",
@@ -2130,87 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27435",
       "sha": "e581cd3968",
       "committedAtIso": "2026-10-23T21:27:08-05:00"
-    },
-    {
-      "number": 27434,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — CC-2- 443.290 fuel: 5 main static reds — an import's rejected rows no longer vanish behind the assignment question; 4 guards follow the 443.243 / 443.250 boards with plants",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27434",
-      "sha": "c7ab16a547",
-      "committedAtIso": "2026-10-23T21:26:14-05:00"
-    },
-    {
-      "number": 27433,
-      "title": "Claude-3- 443.294 step 1 catalogs.override_reasons (one catalog, FORCE RLS, in-use seed) + claim guard list form",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27433",
-      "sha": "dfe9d016ab",
-      "committedAtIso": "2026-10-23T21:18:48-05:00"
-    },
-    {
-      "number": 27432,
-      "title": "FINDING: ACCT-F4432881 LANE: claude — CC-2- OWNER RULING 443.288-A a statement card difference is linked to its receipt and always moves load with it (ONE family move in the reclassify engine) + AUTH-457 align route",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27432",
-      "sha": "5892782b30",
-      "committedAtIso": "2026-10-23T21:17:26-05:00"
-    },
-    {
-      "number": 27431,
-      "title": "FINDING: N/A LANE: DOCS — CC-3 claim migration 202616230300 (Lead 443.294 override reasons catalog)",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:07 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27431",
-      "sha": "0c70ec1667",
-      "committedAtIso": "2026-10-23T21:07:13-05:00"
-    },
-    {
-      "number": 27427,
-      "title": "FINDING: BUS-443289 — OUTBOX missing squash SHA for ARCH-443289 main CI clear",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27427",
-      "sha": "2f29d1d5d0",
-      "committedAtIso": "2026-10-23T21:05:18-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Claude-1- 443.292-A+F ops scripts: backfill settlement numbers + void empty settlements",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:04 PM CT",
-      "url": "",
-      "sha": "db0fa21a7b",
-      "committedAtIso": "2026-10-23T21:04:04-05:00"
-    },
-    {
-      "number": 27429,
-      "title": "Claude-3- 443.290 roster/safety guard reds: stale plants + ruled on-load set (4 guards)",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27429",
-      "sha": "2ed05a0210",
-      "committedAtIso": "2026-10-23T21:03:28-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Claude-1- 443.292-A+F settlement number at close + empty-settlement guard",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:01 PM CT",
-      "url": "",
-      "sha": "eb1108417e",
-      "committedAtIso": "2026-10-23T21:01:51-05:00"
-    },
-    {
-      "number": 27425,
-      "title": "FINDING: ARCH-443289 — verify:arch-design red on main (/insurance + Fuel Planner settings + Expense mapping)",
-      "state": "merged",
-      "mergedAtCt": "10/23/2026, 08:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27425",
-      "sha": "0a76690673",
-      "committedAtIso": "2026-10-23T20:57:15-05:00"
     }
   ]
 }

@@ -15,10 +15,15 @@ import {
 } from "../../api/driverFinance";
 import { getCoaAccounts } from "../../api/banking";
 import { ApiError } from "../../api/client";
+import {
+  ExpenseLoadConfirmEngineUnavailableError,
+  listExpenseLoadConfirmations,
+} from "../../api/expenseLoadConfirmations";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
+import { ExpenseLoadConfirmationsBoard } from "../../components/expenses/ExpenseLoadConfirmationsBoard";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
@@ -199,6 +204,25 @@ export function SettlementCloseArrivalPage() {
     enabled: Boolean(companyId) && Boolean(settlementIdForReadout),
   });
 
+  // 443.288-C — settlement cannot close while any expense on its loads is proposed (ruling §3).
+  const loadConfirmQ = useQuery({
+    queryKey: ["expense-load-confirmations", "close-gate", companyId, settlementIdForReadout],
+    queryFn: () =>
+      listExpenseLoadConfirmations(companyId, {
+        status: "proposed",
+        settlement_id: String(settlementIdForReadout),
+        limit: 500,
+      }),
+    enabled: Boolean(companyId) && Boolean(settlementIdForReadout),
+    retry: false,
+  });
+  const loadConfirmEngineUnavailable =
+    loadConfirmQ.error instanceof ExpenseLoadConfirmEngineUnavailableError;
+  const proposedExpenseLoadCount = loadConfirmQ.data?.rows?.length ?? 0;
+  const loadConfirmBlocksClose =
+    Boolean(settlementIdForReadout) &&
+    (loadConfirmQ.isLoading || loadConfirmEngineUnavailable || proposedExpenseLoadCount > 0);
+
   const debtQuery = useQuery({
     queryKey: ["driver-finance", "debt-summary", companyId, selectedDriverId],
     queryFn: () => getDebtSummary(String(selectedDriverId), companyId),
@@ -219,6 +243,14 @@ export function SettlementCloseArrivalPage() {
     meta: { loads: true },
     mutationFn: async () => {
       const settlementId = String(detailQuery.data?.settlement?.id);
+      // Fail closed — closer must confirm proposed expense loads first (443.288 ruling §3).
+      if (loadConfirmBlocksClose) {
+        throw new Error(
+          loadConfirmEngineUnavailable
+            ? "Expense load confirm engine is not deployed yet (443.288-B). Close is blocked."
+            : `Confirm ${proposedExpenseLoadCount} proposed expense load${proposedExpenseLoadCount === 1 ? "" : "s"} before close.`,
+        );
+      }
       await settleAndPay(settlementId, companyId);
       // Additive only: unchanged behavior when no payment method is picked (canSubmitClose never
       // required one). When one IS picked, actually post the GL entry through the same poster
@@ -283,7 +315,11 @@ export function SettlementCloseArrivalPage() {
   const isMaker = Boolean(makerId) && makerId === currentUserId;
 
   const canSubmitClose =
-    canClose && !isMaker && Boolean(settlement) && ["closed", "open"].includes(String(settlement?.status ?? ""));
+    canClose &&
+    !isMaker &&
+    Boolean(settlement) &&
+    ["closed", "open"].includes(String(settlement?.status ?? "")) &&
+    !loadConfirmBlocksClose;
 
   const draftJeRows = useMemo<DraftJeRow[]>(() => {
     if (!settlement) return [];
@@ -891,6 +927,44 @@ export function SettlementCloseArrivalPage() {
               </div>
             </V3Panel>
           </div>
+
+          {settlement ? (
+            <div
+              data-testid="settlement-close-expense-load-confirmations"
+              data-blocks-close={loadConfirmBlocksClose ? "1" : "0"}
+              style={{
+                border: `1px solid ${loadConfirmBlocksClose ? "#DC2626" : V3.border}`,
+                borderRadius: 2,
+                background: V3.surface,
+                padding: 12,
+              }}
+            >
+              <p className="mb-2 text-xs text-[#4B5563]">
+                Blocking before close — confirm every proposed expense-to-load assignment on this
+                settlement&apos;s loads. Empty means confirmed.
+              </p>
+              {loadConfirmEngineUnavailable ? (
+                <p className="text-xs text-red-700" data-testid="settlement-close-load-confirm-engine-missing">
+                  Confirm engine not on this deploy yet (443.288-B). Close stays blocked until the
+                  engine is live — empty is not confirmed while the engine is missing.
+                </p>
+              ) : null}
+              {!loadConfirmEngineUnavailable ? (
+                <ExpenseLoadConfirmationsBoard
+                  operatingCompanyId={companyId}
+                  settlementId={settlement.id}
+                  defaultStatus="proposed"
+                  compact
+                  testId="settlement-close-expense-load-confirmations-board"
+                  onQueueChanged={() => {
+                    void qc.invalidateQueries({
+                      queryKey: ["expense-load-confirmations", "close-gate", companyId, settlement.id],
+                    });
+                  }}
+                />
+              ) : null}
+            </div>
+          ) : null}
         </div>
       )}
       <CreateDriverModal

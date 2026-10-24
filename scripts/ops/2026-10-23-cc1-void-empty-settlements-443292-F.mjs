@@ -3,6 +3,9 @@
 // with 0 lines, $0.00. The close engine now refuses empty shells; these two must be voided.
 // Guard: verify-no-empty-zero-settlement. TB must be 0 before and after (no GL postings exist).
 // DRY_RUN=1 rolls back. Run in close order (P-0123 first, then P-0124).
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { appendCrudAudit } from "../../apps/backend/src/audit/crud-audit.js";
 
@@ -12,6 +15,20 @@ const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 const DISPLAY_IDS = ["P-0123", "P-0124"];
 const VOID_REASON = "443.292-F: closed 10-23-2026 with 0 settlement lines and $0.00 — empty shell voided per engine enforcement";
 const DRY = process.env.DRY_RUN === "1";
+
+// ROUND 133 P0 — every scripts/ops/ financial writer must call verify-owner-authorization.mjs
+// before a live write. DRY_RUN=1 skips the gate so measurement still works without AUTH.
+{
+  const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+  if (!DRY) {
+    const authId = process.env.OWNER_AUTH_ID;
+    if (!authId) {
+      console.error("OWNER_AUTH_ID required when DRY_RUN!=1 (ROUND 133 P0)");
+      process.exit(1);
+    }
+    execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), authId], { stdio: "inherit" });
+  }
+}
 
 class Rollback extends Error {}
 

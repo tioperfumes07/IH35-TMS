@@ -57,6 +57,10 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
     badgeKey: "assignments",
   },
   { label: "At-Risk", href: "/dispatch/at-risk", badgeKey: "at_risk" },
+  {
+    label: "Expense load confirmations",
+    href: "/dispatch/expense-load-confirmations",
+  },
   { label: "Detention", href: "/dispatch/detention", badgeKey: "detention" },
   { label: "Border", href: "/dispatch/border-crossing" },
   { label: "Late", href: "/dispatch/alerts/late-arrivals", badgeKey: "late" },
@@ -150,6 +154,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch/load-costs": "Load costs",
   "/dispatch/assignment-history": "Assignments",
   "/dispatch/at-risk": "At-Risk",
+  "/dispatch/expense-load-confirmations": "Expense load confirmations",
   "/dispatch/detention": "Detention",
   "/dispatch/border-crossing": "Border",
   "/dispatch/border-crossing/history": "Border",
@@ -225,6 +230,8 @@ export function dispatchSubNavActiveHref(
   if (pathname.startsWith("/dispatch/assignment-history"))
     return "/dispatch/assignment-history";
   if (pathname.startsWith("/dispatch/at-risk")) return "/dispatch/at-risk";
+  if (pathname.startsWith("/dispatch/expense-load-confirmations"))
+    return "/dispatch/expense-load-confirmations";
   if (pathname.startsWith("/dispatch/detention")) return "/dispatch/detention";
   if (pathname.startsWith("/dispatch/border-crossing"))
     return "/dispatch/border-crossing";

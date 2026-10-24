@@ -142,6 +142,11 @@ const NeedsDeliveryAuthorizationPage = React.lazy(() =>
     default: m.NeedsDeliveryAuthorizationPage,
   })),
 );
+const ExpenseLoadConfirmationsPage = React.lazy(() =>
+  import("../pages/dispatch/ExpenseLoadConfirmationsPage").then((m) => ({
+    default: m.ExpenseLoadConfirmationsPage,
+  })),
+);
 const DispatchSettingsPage = React.lazy(() => import("../pages/dispatch/DispatchSettingsPage").then((m) => ({ default: m.DispatchSettingsPage })));
 const BorderCrossingWizardPage = React.lazy(() => import("../pages/dispatch/BorderCrossingWizardPage").then((m) => ({ default: m.BorderCrossingWizardPage })));
 const BorderCrossingHistoryPage = React.lazy(() => import("../pages/dispatch/BorderCrossingHistoryPage").then((m) => ({ default: m.BorderCrossingHistoryPage })));
@@ -1526,6 +1531,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <NeedsDeliveryAuthorizationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/expense-load-confirmations"
+          element={
+            <ProtectedRoute>
+              <ExpenseLoadConfirmationsPage />
             </ProtectedRoute>
           }
         />
