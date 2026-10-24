@@ -1,4 +1,4 @@
-# IH35-TMS — Lead pending register (USMCA) · 10-23-2026 10:15 PM CT · CODE-COMPLETE MODE · deadline 10-24 10:00 AM CT
+# IH35-TMS — Lead pending register (USMCA) · 10-23-2026 11:10 PM CT · CODE-COMPLETE MODE · deadline 10-24 10:00 AM CT
 
 Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live proof.
 
@@ -34,11 +34,11 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 28 | A | Reports | Load History tab + Settlement (driver/company), Loads, Customers, Vendors reports | Cursor | 443.281 | OPEN |  |
 | 29 | A | All | LAW 5:08 PM: every selector is multi-select (units, loads, settlements, trucks, trailers, drivers, customers, vendors…) everywhere | Codex | 443.281 | OPEN |  |
 | 30 | A | All | Baseline screenshots of every page before the rebuild | LEAD | 443.281 | DONE-LIVE | #27369 9932b495 |
-| 31 | B | Cash Flow | Cash Flow › Home — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |
-| 32 | B | Cash Flow | Cash Flow › Projected (Auto) — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |
-| 33 | B | Cash Flow | Cash Flow › Actual vs Projected — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |
-| 34 | B | Cash Flow | Cash Flow › Rolling Ledger — board verdict LAYERED | Cursor | 443.280 | OPEN |  |
-| 35 | B | Cash Flow | Cash Flow › Manual — board verdict LAYERED | Cursor | 443.280 | OPEN |  |
+| 31 | B | Cash Flow | Cash Flow › Home — board verdict PARTIAL | Cursor | 443.280 | CODED | #27453 (Home unchanged = board) |
+| 32 | B | Cash Flow | Cash Flow › Projected (Auto) — board verdict PARTIAL | Cursor | 443.280 | CODED | #27453 |
+| 33 | B | Cash Flow | Cash Flow › Actual vs Projected — board verdict PARTIAL | Cursor | 443.280 | CODED | #27453 AvP board restored |
+| 34 | B | Cash Flow | Cash Flow › Rolling Ledger — board verdict LAYERED | Cursor | 443.280 | CODED | #27453 |
+| 35 | B | Cash Flow | Cash Flow › Manual — board verdict LAYERED | Cursor | 443.280 | CODED | #27453 Manual board + opening cash |
 | 36 | B | Accounting | Accounting › Home — board verdict REBUILT | CURSOR | 443.280 | DONE-LIVE |  |
 | 37 | B | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
 | 38 | B | Banking | Banking › Home — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
@@ -101,7 +101,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 95 | F | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | 443.281 | OPEN |  |
 | 96 | F | Accounting | QBO sync "Not connected" | OWNER | 443.281 | OPEN |  |
 | 97 | F | Banking | Reconciliation drift: BofA bank $1,808.13 vs book -$88,433.89 (diff $90,242.02); Relay Fuel Wallet listed twice | CC-2 | 443.281 | OPEN |  |
-| 98 | F | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | 443.281 | OPEN |  |
+| 98 | F | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | 443.281 | CODED | CC-1 7349992008 formatting; True-cost denominator with CC-1 |
 | 99 | F | Unexpected | Possible duplicates 0 while bank lines repeat (460.01 on 10-03 and 10-05; 155.86 twice on 10-07) | CC-2 | 443.281 | OPEN |  |
 | 100 | F | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | 443.281 | OPEN |  |
 | 101 | F | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | 443.281 | OPEN |  |
@@ -203,10 +203,10 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 197 | H | Maintenance › Road Service / Create Roadside WO › Ticket # and Location inputs | D078: Two single-line dialog text inputs measure 38 CSS px high | Codex | 443.257-D | OPEN | not re-verified since audit |
 | 198 | H | Customers › Per-Customer P&L › Classification labels | D079: Visible tags read high_margin and past_due | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 199 | H | Coverage | Codex audit coverage is partial depth — remaining tabs, drawers and record pages of every module still to audit | Codex | 443.281 | OPEN |  |
-| 200 | F | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | 443.285 | IN PROGRESS | 9ef89188 issuedInvoice on all 4 KPI aggregates; test 3/3, tsc 0; push waits on main reds |
+| 200 | F | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | 443.285 | CODED | #27452 eef79722 |
 | 201 | E | Platform | 443.284 main static reds from 10-23 board merges block every push (7:40 PM: 2 fixed, 5 red) | CC-2 | 443.284 | IN PROGRESS | 9:00 PM main: 4 of 6 green; left verify-settlement-sweep-pre-list, verify-no-internal-payload-in-notes (CC-2) |
 | 202 | E | Fuel | verify-no-internal-payload-in-notes red: dreamline-statement-import memo interpolates input.expenseId (afd3fd334e) | CC-2 | 443.284 | OPEN | exit 1 on main 1c118712 |
-| 203 | F | Linkage | Linkage gate red (verify-every-load-born-posting-carries-its-load) blocks every money push | LEAD | 443.287 | IN PROGRESS | AUTH-454 COMMITTED on prod (5 headers, TB 0, 7091=7091); AUTH-453 running on prod (owner OK 8:42 PM); fork: uncapped guard exit 0 |
+| 203 | F | Linkage | Linkage gate red (verify-every-load-born-posting-carries-its-load) blocks every money push | LEAD | 443.287 | PAUSED | AUTH-454 done; AUTH-453 198/241 on prod — owner: resume after all rows coded |
 | 204 | F | Fuel | Statement card discount / difference is a separate expense with NO link to its receipt; copies the load once, never follows a move | CC-2 | 443.288-A | OPEN | owner ruling 443.288 10-23 7:59 PM |
 | 205 | A | Expenses | OWNER: every expense-to-load assignment confirmed by dispatcher or closer — always | CC-2 | 443.288-B | OPEN | docs/bus/lead/OWNER-RULING-443.288-...md |
 | 206 | A | Dispatch / Settlements | Expense load confirmations queue (Dispatch + Settlements Close), multi-select, bulk confirm | Cursor | 443.288-C | OPEN | after 443.288-B route |
@@ -214,7 +214,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 208 | E | Platform | Main CI red at verify:arch-design (/insurance, Fuel Planner settings + Expense mapping) | LEAD | 443.289 | DONE | #27422 b1192f1e; plants red; CI re-run pending |
 | 209 | E | Guards | 107 main static reds outside baseline split by seat | Cursor | 443.290 | IN PROGRESS | #27407 list; CC-1 #27413/#27416/#27417; Lead 4 Cash Flow in 443.283c |
 | 210 | E | Platform | 6,266 guard scripts (488 live, ~5,700 source-text, 316 slate-color copies) | Codex | 443.291 | OPEN | after Codex filters PR |
-| 211 | F | Cash Flow | Actual vs Projected + Manual reverted to pre-board code by #27390 | LEAD | 443.283c | IN PROGRESS | 162429bd guards + 7/7 tests; push after linkage green |
+| 211 | F | Cash Flow | Actual vs Projected + Manual reverted to pre-board code by #27390 | LEAD | 443.283c | CODED | #27453 d86e35ce |
 | 212 | A | Settlements | Settlement number: P-number shown; real series not assigned by our system | CC-1 | 443.292-A | OPEN |  |
 | 213 | A | Settlements | Tour dates wrong (P-0114 10/20→10/20; real 10/16→10/23) | CC-1 | 443.292-B | OPEN |  |
 | 214 | A | Settlements | Settlements tab week list: closed show Open; duplicate empty driver rows | CC-1 | 443.292-C | OPEN |  |
