@@ -938,5 +938,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-23",
     "purpose": "CC-3 Lead 443.281-E: person names normalized at write — mdata.drivers BEFORE INSERT/UPDATE trigger proper-cases ALL-CAPS / all-lowercase first/last names (mixed case kept), and normalizes the existing ALL-CAPS rows through it"
+  },
+  "202616220700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-23",
+    "purpose": "CC-2 OWNER RULING 443.288-A: accounting.expenses.parent_expense_id (same-company FK) + transaction_source_links role statement_card_difference_of — a statement card credit / card difference is linked to its receipt and always moves with it; idempotent link backfill by statement marker"
   }
 }
