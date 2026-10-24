@@ -12,6 +12,13 @@ vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
 }));
 
+vi.mock("./useAccountingNavKpis", () => ({
+  useAccountingNavKpis: () => ({
+    bills: { count: 0, openAmountCents: 0 },
+    invoices: { count: 0, openAmountCents: 0 },
+  }),
+}));
+
 vi.mock("../../api/mdata", () => ({
   listVendors: vi.fn().mockResolvedValue({
     vendors: [{ id: "ven-1", name: "Acme Repair", vendor_type: "Repair", notes: null, operating_company_id: "co-1", deactivated_at: null }],
@@ -154,7 +161,7 @@ describe("CreateMultipleBillsPage", () => {
     await waitFor(() => expect(screen.getByRole("option", { name: "Acme Repair" })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByLabelText("Bill no.")).toHaveValue(""));
     await waitFor(() =>
-      expect(screen.getByTestId("multi-bills-number-hint")).toHaveTextContent("Next unused is BILL-2026-00001")
+      expect(screen.getByTestId("multi-bills-kpi-strip")).toHaveTextContent("Next mint BILL-2026-00001")
     );
 
     await user.selectOptions(screen.getByLabelText("Select vendor…"), "ven-1");

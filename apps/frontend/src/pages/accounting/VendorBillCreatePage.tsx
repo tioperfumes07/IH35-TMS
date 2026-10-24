@@ -10,6 +10,19 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { useAccountingNavKpis } from "./useAccountingNavKpis";
+import { formatUsdCents } from "../../lib/money";
+import { Button } from "../../components/Button";
+
+function vendorCreateKpiCard(label: string, value: string, sublabel: string) {
+  return (
+    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 border-l-4 border-l-[#E5E7EB]">
+      <p className="text-section-header font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+      <p className="text-page-title font-semibold text-gray-900">{value}</p>
+      <p className="text-xs text-gray-500">{sublabel}</p>
+    </div>
+  );
+}
 
 /**
  * Create vendor bill route (`/accounting/bills/vendor`).
@@ -33,16 +46,32 @@ export function VendorBillCreatePage() {
   const submitInFlight = useRef(false);
   // One key for this drawer session so GAP-IDEMP-KEYS middleware returns the cached bill.
   const idempotencyKeyRef = useRef(generateIdempotencyKey());
+  const navKpis = useAccountingNavKpis(companyId);
 
   return (
-    <AccountingSubNavWrapper title="Bills" subtitle="Create vendor bill">
+    <AccountingSubNavWrapper
+      title="Create vendor bill"
+      subtitle="Vendor bill in the side panel — same fields as QuickBooks bill entry"
+      crumbs={[{ label: "Bills", href: "/accounting/bills" }]}
+      createControl={
+        <Button type="button" size="sm" variant="secondary" data-testid="vendor-bill-create-back" onClick={() => navigate("/accounting/bills")}>
+          Back to bills
+        </Button>
+      }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="vendor-bill-create-kpi-strip">
+          {vendorCreateKpiCard(
+            "Open bills",
+            navKpis.bills.count > 0 ? formatUsdCents(navKpis.bills.openAmountCents) : "—",
+            navKpis.bills.count > 0 ? `${navKpis.bills.count} open` : "No open balance",
+          )}
+          {vendorCreateKpiCard("New bill", "Draft", loadId ? `Load ${loadNumber ?? loadId}` : "Not saved yet")}
+          {vendorCreateKpiCard("Panel", "Open", "Close drawer to return to bills")}
+          {vendorCreateKpiCard("Session", companyId ? "Ready" : "—", companyId ? "Operating company selected" : "Select company in header")}
+        </div>
+      }
+    >
       {!companyId ? <div className="text-xs text-red-600">Select an operating company in the shell header.</div> : null}
-      <p className="text-xs text-gray-600">
-        Creating a vendor bill in the side panel.{" "}
-        <button type="button" className="text-[#1F2A44] underline" onClick={() => navigate("/accounting/bills")}>
-          Open bills list
-        </button>
-      </p>
       <ParityDrawer
         open
         title="Create vendor bill"
