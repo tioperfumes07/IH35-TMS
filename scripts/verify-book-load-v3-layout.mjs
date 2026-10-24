@@ -47,6 +47,9 @@ const FILES = {
   tour: "apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx",
   miles: "apps/frontend/src/components/dispatch/TourMilesPanel.tsx",
   close: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
+  drawer: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+  preSettle: "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
+  openPre: "apps/frontend/src/components/driver-finance/OpenPreSettlementsPanel.tsx",
   drivers: "apps/frontend/src/pages/Drivers.tsx",
   planner: "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
   plannerBars: "apps/frontend/src/pages/dispatch/planners/planner-bars.ts",
@@ -96,7 +99,10 @@ export function audit(s) {
   // R8
   need("R8", /label: i === 0 \? "Load #" : `Load # \$\{i \+ 1\}`/.test(s.legs), "the tours register has no Load # column");
   need("R8", /data-testid="tour-close-button" disabled=\{!r\.can_close \|\| close\.isPending\}/.test(s.tour), "Close tour is not enabled at N of N (all hard checks ⇒ can_close)");
-  need("R8", /data-testid="tour-open-settlement-close" to=\{`\/driver-finance\/settlement-close\?driver_id=/.test(s.tour) && /closeSearchParams\.get\("driver_id"\)/.test(s.close), "the pre-settlement does not open Settlement Close for this driver");
+  // 443.293-B — labeled "Close settlement"; opens the ONE Settlement Close wizard (driver_id prefilled).
+  need("R8", /data-testid="tour-open-settlement-close"[\s\S]{0,400}Close settlement/.test(s.tour) && /closeSearchParams\.get\("driver_id"\)/.test(s.close), "the pre-settlement does not open Settlement Close for this driver");
+  need("R8", /data-testid="load-detail-close-settlement"/.test(s.drawer) && /isLastDeliveredLoadOnOpenTour/.test(s.drawer) && /Close settlement/.test(s.drawer), "last delivered load on an open tour has no Close settlement button");
+  need("R8", /data-testid="pre-settle-close-settlement"/.test(s.preSettle) && /data-testid="open-pre-settle-close-settlement"/.test(s.openPre), "Dispatch pre-settlement boards have no Close settlement CTA");
   for (const key of ["has_nb", "sb_delivered", "pods", "costs_complete", "driver_pay", "real_miles"]) {
     need("R8", new RegExp(`case "${key}":\\s*return \\{ kind: "[a-z-]+", title: [\\s\\S]{0,200}?, go: \\(\\) => `).test(s.tour), `readiness row "${key}" does not go anywhere`);
   }
@@ -147,6 +153,9 @@ if (process.argv.includes("--selftest")) {
     ["Close disabled at N of N FAILS", plant("tour", 'data-testid="tour-close-button" disabled={!r.can_close || close.isPending}', 'data-testid="tour-close-button" disabled={true}')],
     ["Settlement Close without the miles panel FAILS", plant("close", "<SettlementCloseMiles settlementId={settlement.id}", "<div data-x={settlement.id}")],
     ["no way to Settlement Close FAILS", plant("tour", 'data-testid="tour-open-settlement-close"', 'data-testid="x"')],
+    ["Close settlement relabeled away FAILS", plant("tour", "Close settlement", "Open Settlement Close ↗")],
+    ["last-delivered Close settlement removed FAILS", plant("drawer", 'data-testid="load-detail-close-settlement"', 'data-testid="x"')],
+    ["pre-settle Close settlement removed FAILS", plant("preSettle", 'data-testid="pre-settle-close-settlement"', 'data-testid="x"')],
     ["a dead readiness row FAILS", plant("tour", 'case "pods":', 'case "pods_dead":')],
     ["miles panel without Google FAILS", plant("miles", "data-testid={`tour-miles-google-${field}`}", "data-x")],
     ["Entries silently read-only FAILS", plant("tour", 'data-testid="tour-entries-readonly"', "")],

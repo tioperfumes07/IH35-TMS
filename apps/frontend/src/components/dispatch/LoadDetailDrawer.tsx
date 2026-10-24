@@ -223,6 +223,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   // REG-032 (owner 2026-09-09): the tour's own settlement number rides beside the load number at the
   // top. Captured as a const so the click handler narrows without re-reading the query.
   const headerTour = tourChip.data?.tour ?? null;
+  // 443.293-B — "Close settlement" on the tour's last delivered load opens the same 7-step wizard.
+  const isLastDeliveredLoadOnOpenTour = useMemo(() => {
+    if (!headerTour?.is_open || !loadId) return false;
+    const delivered = (tourChip.data?.legs ?? []).filter((leg) => leg.is_delivered && !leg.is_cancelled);
+    if (delivered.length === 0) return false;
+    return delivered[delivered.length - 1]?.load_id === loadId;
+  }, [headerTour?.is_open, loadId, tourChip.data?.legs]);
   useEffect(() => {
     if (isOpen) setActiveTab(initialTab);
   }, [initialTab, isOpen, loadId]);
@@ -775,6 +782,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
               ) : null}
             </div>
             <div className="flex items-center gap-2">
+              {/* 443.293-B — last delivered load on an open tour: same Settlement Close wizard as the
+                  Pre-Settlement tab / Settlements › Settlement Close queue (one engine). */}
+              {isLastDeliveredLoadOnOpenTour && headerTour ? (
+                <Link
+                  to={`/driver-finance/settlement-close?driver_id=${encodeURIComponent(headerTour.driver_id)}&settlement_id=${encodeURIComponent(headerTour.settlement_id)}`}
+                  className="inline-flex h-7 items-center rounded-sm bg-[#14314F] px-2 text-xs font-semibold text-white hover:opacity-90"
+                  data-testid="load-detail-close-settlement"
+                  title="Opens the same 7-step Settlement Close wizard for this driver's open tour"
+                >
+                  Close settlement
+                </Link>
+              ) : null}
               {/* REG-033 (owner 2026-09-09 "WHAT IS THE DIFFERENCE?"): "Add expense" and "Record
                   expense" were two controls that opened the IDENTICAL load-scoped RecordExpenseForm —
                   the link navigated away to the full-page ExpenseCreatePage, the button opened the same

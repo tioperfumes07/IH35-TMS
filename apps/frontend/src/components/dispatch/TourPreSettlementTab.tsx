@@ -187,14 +187,21 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
         <div className="ldt-actions" style={{ padding: 10 }}>
           {t.is_open ? (
             <>
+              {/* 443.293-B — ONE close wizard (SettlementCloseArrivalPage). Primary CTA on the Dispatch
+                  tour / Pre-Settlement tab. Tour-close below stays a separate engine (freeze tour). */}
+              <Link
+                className="ldt-btn p"
+                data-testid="tour-open-settlement-close"
+                to={`/driver-finance/settlement-close?driver_id=${encodeURIComponent(t.driver_id)}&settlement_id=${encodeURIComponent(t.settlement_id)}`}
+                title="Opens the same 7-step Settlement Close wizard for this driver's open tour"
+              >
+                Close settlement
+              </Link>
               {/* 443.269-A 3b: enabled at N of N (all hard checks pass ⇒ can_close); the close engine still refuses
                   server-side while blocked, and a human confirms the soft items by name. */}
-              <button type="button" className={`ldt-btn ${r.can_close ? "p" : "g"}`} data-testid="tour-close-button" disabled={!r.can_close || close.isPending} title={r.can_close ? "Closes the tour — a human confirms on the next step" : r.close_blockers.join(" · ")} onClick={() => setConfirming(true)}>
+              <button type="button" className="ldt-btn g" data-testid="tour-close-button" disabled={!r.can_close || close.isPending} title={r.can_close ? "Closes the tour — a human confirms on the next step" : r.close_blockers.join(" · ")} onClick={() => setConfirming(true)}>
                 Close tour → Settlement (human confirms)
               </button>
-              <Link className="ldt-link" data-testid="tour-open-settlement-close" to={`/driver-finance/settlement-close?driver_id=${encodeURIComponent(t.driver_id)}&settlement_id=${encodeURIComponent(t.settlement_id)}`}>
-                Open Settlement Close ↗
-              </Link>
             </>
           ) : <span className="ldt-pill ok">Closed {t.trip_closed_at ? `· ${t.trip_closed_at.slice(0, 16).replace("T", " ")}` : ""} — see Settlement</span>}
           {!r.can_close && t.is_open ? <span className="ldt-bad-text" data-testid="tour-close-blockers">{r.close_blockers.join(" · ")}</span> : null}
