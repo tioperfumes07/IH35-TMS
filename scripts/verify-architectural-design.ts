@@ -165,7 +165,9 @@ const NAMED_SECTION_SOURCES: NamedSectionSource[] = [
   {
     module: "fuel",
     file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
-    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<h3[^>]*>\s*([^<]+?)\s*<\/h3>/g],
+    // LEAD 443.289: ROUND 443.250 rebuilt "Planner settings" and "Expense mapping" as <V3Panel title="…"> — a named
+    // section on the V3 board is its panel title, so the panel title counts like an <h3>.
+    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<h3[^>]*>\s*([^<]+?)\s*<\/h3>/g, /<V3Panel\b[^>]*?\btitle="([^"]+)"/g],
   },
   {
     module: "drivers",
@@ -334,10 +336,24 @@ function extractRoutesFromApp(): string[] {
     ? readRequired(ROUTES_MANIFEST_PATH)
     : "";
   const content = `${appContent}\n${manifestContent}`;
-  return unique([
+  return withSplatBases(unique([
     ...extractRoutesFromContent(content),
     ...expandSafetyRelativeRoutes(manifestContent),
-  ]).sort();
+  ])).sort();
+}
+
+/**
+ * LEAD 443.289: a splat route "/x/*" serves "/x" itself (React Router v6 matches the bare path), so it provides "/x".
+ * #27400 replaced <Route path="/insurance" element={<Navigate …/>}> with the Insurance module at "/insurance/*"; the
+ * URL still opens, but the literal-only reader reported "/insurance" missing. Only absolute splats count; "*" alone
+ * (the catch-all) provides nothing.
+ */
+export function withSplatBases(routes: string[]): string[] {
+  const out = new Set(routes);
+  for (const r of routes) {
+    if (r.startsWith("/") && r.endsWith("/*") && r.length > 2) out.add(r.slice(0, -2));
+  }
+  return Array.from(out);
 }
 
 function extractSidebarItemIds(): string[] {
