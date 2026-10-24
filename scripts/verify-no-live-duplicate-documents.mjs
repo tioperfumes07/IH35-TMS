@@ -62,28 +62,31 @@ const main = async () => {
       await client.query("ROLLBACK");
       return 1;
     }
-    // ENG-10 (2026-10-24): partition on load_id so that a card-discount or fuel purchase recorded
-    // on two different loads (different provider receipts) does not collide.  A true duplicate is
-    // the same vendor + date + amount + same load appearing twice — that still fires.
+    // ENG-10 (2026-10-24 rev2): key on provider reference — COALESCE(source_fuel_transaction_id,
+    // vendor_document_number).  The same (vendor, provider_ref) pair on ANY two rows is a duplicate,
+    // regardless of which load they are attached to.  Rows without a provider reference are excluded:
+    // vendor+date+amount alone is not a verdict (two real fills happen same day, same amount).
+    // Card discounts: keyed on (provider_ref, load_id) per LEAD 443.323 — the load is part of their
+    // uniqueness key because the same discount code may appear on different loads legitimately.
     const r = await client.query(
       `SELECT COALESCE(v.vendor_name, '(no vendor)') AS party,
-              x.transaction_date::date AS d,
-              x.total_amount_cents AS amt,
-              x.load_id,
+              COALESCE(x.source_fuel_transaction_id::text, x.vendor_document_number) AS provider_ref,
+              count(DISTINCT x.load_id)::int AS distinct_loads,
               count(*)::int AS n,
               string_agg(x.expense_number, ' | ' ORDER BY x.expense_number) AS ids
          FROM accounting.expenses x
          LEFT JOIN mdata.vendors v ON v.id = x.vendor_uuid
         WHERE x.operating_company_id = $1 AND x.voided_at IS NULL
-        GROUP BY 1, 2, 3, 4
+          AND COALESCE(x.source_fuel_transaction_id::text, x.vendor_document_number) IS NOT NULL
+        GROUP BY 1, 2
        HAVING count(*) > 1
-        ORDER BY count(*) DESC, 3 DESC`,
+        ORDER BY count(*) DESC, 2`,
       [USMCA]
     );
     groups = r.rows.length;
     for (const x of r.rows) {
       rows += x.n;
-      detail.push(`${x.party} · ${x.d.toISOString().slice(0, 10)} · ${(Number(x.amt) / 100).toFixed(2)} · x${x.n} · load=${x.load_id ?? "null"} · ${x.ids}`);
+      detail.push(`${x.party} · ref=${x.provider_ref} · loads=${x.distinct_loads} · x${x.n} · ${x.ids}`);
     }
     await client.query("ROLLBACK");
   } finally {
