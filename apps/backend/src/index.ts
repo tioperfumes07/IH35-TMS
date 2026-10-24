@@ -571,6 +571,7 @@ import { initializeRelayFuelIngestCron } from "./integrations/relay-payments/rel
 import { initializePlaidDailySyncCron } from "./cron/plaid-daily-sync.js";
 import { initializePlaidDailyRefreshCron } from "./integrations/plaid/daily-refresh.cron.js";
 import { initializeDriverSettlementAutoPayCron } from "./driver-finance/auto-pay.cron.js";
+import { initializeDriverPayAccrualSweepCron } from "./accounting/driver-pay-accrual-sweep.cron.js";
 import { registerQboSyncEventLogRoutes } from "./qbo/sync-event-log.routes.js";
 import { default as registerLedgerHealthRoutes } from "./system/ledger-health.routes.js";
 import { registerTransactionHealthRoutes } from "./system/transaction-health.routes.js";
@@ -1755,6 +1756,13 @@ async function main() {
       app.log.info("[STARTUP] driver-settlement-auto-pay-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] driver-settlement-auto-pay-cron failed");
+    }
+
+    try {
+      initializeDriverPayAccrualSweepCron(app);
+      app.log.info("[STARTUP] driver-pay-accrual-sweep-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] driver-pay-accrual-sweep-cron failed");
     }
 
     try {
