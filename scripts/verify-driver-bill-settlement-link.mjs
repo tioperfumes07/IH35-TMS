@@ -66,10 +66,20 @@ const KNOWN_UNLINKED_EXCLUSIONS = [
 export function activeExcludedIds(now = new Date(), list = KNOWN_UNLINKED_EXCLUSIONS) {
   return list.filter((r) => now.getTime() < new Date(r.expires_at).getTime()).map((r) => r.id);
 }
-/** Pure — the rule of this guard (same predicate as the badRes SQL): a live bill is a violation only when its
- *  settled_in_settlement_id is NULL, its load's linked settlement has CLOSED, and it is not an active exclusion. */
+/** Pure — the rule of this guard: a live bill is a violation only when its settled_in_settlement_id is NULL,
+ *  its load's linked settlement has CLOSED, the settlement has a source_document_ref (real AT number — not
+ *  still awaiting AlwaysTrack), and it is not an active exclusion.
+ *
+ *  443.310: a closed settlement with source_document_ref IS NULL is legitimate while AlwaysTrack has not yet
+ *  issued the settlement number — NOT a violation. Still a violation for voided/cancelled settlements
+ *  (source_document_ref NULL or not) which should never carry live bills. */
 export function isViolation(row, excludeIds) {
-  return row.settled_in_settlement_id == null && row.settlement_status === "closed" && !excludeIds.includes(row.id);
+  if (row.settled_in_settlement_id != null) return false;
+  if (row.settlement_status !== "closed") return false;
+  if (excludeIds.includes(row.id)) return false;
+  // Exempt if awaiting AlwaysTrack (source_document_ref not yet assigned)
+  if (row.source_document_ref == null) return false;
+  return true;
 }
 
 const LABEL = "verify-driver-bill-settlement-link";
@@ -96,7 +106,9 @@ async function live() {
 
     const excludeIds = activeExcludedIds();
     const badRes = await client.query(
-      `SELECT db.id, db.load_number, ds.display_id AS settlement_display_id, db.settled_in_settlement_id, ds.status AS settlement_status FROM driver_finance.driver_bills db
+      `SELECT db.id, db.load_number, ds.display_id AS settlement_display_id, db.settled_in_settlement_id,
+              ds.status AS settlement_status, ds.source_document_ref
+         FROM driver_finance.driver_bills db
          JOIN mdata.loads l ON l.id = db.load_id AND l.operating_company_id = db.operating_company_id
          JOIN driver_finance.driver_settlements ds ON ds.id = l.presettlement_link_id
         WHERE db.operating_company_id = $1::uuid AND db.voided_at IS NULL
@@ -147,10 +159,13 @@ async function live() {
 if (process.argv.includes("--selftest")) {
   const ex = [{ id: "x1", expires_at: "2026-10-05T00:00:00.000Z" }];
   const cases = [
-    ["an unlinked bill on a CLOSED settlement is a violation", isViolation({ id: "b", settled_in_settlement_id: null, settlement_status: "closed" }, [])],
-    ["an unlinked bill on an OPEN settlement is expected", !isViolation({ id: "b", settled_in_settlement_id: null, settlement_status: "open" }, [])],
-    ["a linked bill on a CLOSED settlement passes", !isViolation({ id: "b", settled_in_settlement_id: "s", settlement_status: "closed" }, [])],
-    ["an active named exclusion is not counted", !isViolation({ id: "x1", settled_in_settlement_id: null, settlement_status: "closed" }, ["x1"])],
+    // 443.310: closed + real AT number = violation (bill must be settled)
+    ["an unlinked bill on a CLOSED settlement with AT number is a violation", isViolation({ id: "b", settled_in_settlement_id: null, settlement_status: "closed", source_document_ref: "5842" }, [])],
+    // 443.310: closed + NULL source_document_ref = NOT a violation (awaiting AlwaysTrack)
+    ["an unlinked bill on a CLOSED settlement with NULL AT ref is NOT a violation (awaiting AlwaysTrack)", !isViolation({ id: "b", settled_in_settlement_id: null, settlement_status: "closed", source_document_ref: null }, [])],
+    ["an unlinked bill on an OPEN settlement is expected", !isViolation({ id: "b", settled_in_settlement_id: null, settlement_status: "open", source_document_ref: null }, [])],
+    ["a linked bill on a CLOSED settlement passes", !isViolation({ id: "b", settled_in_settlement_id: "s", settlement_status: "closed", source_document_ref: "5842" }, [])],
+    ["an active named exclusion is not counted", !isViolation({ id: "x1", settled_in_settlement_id: null, settlement_status: "closed", source_document_ref: "5842" }, ["x1"])],
     ["an exclusion is active before its expiry", activeExcludedIds(new Date("2026-10-04T00:00:00Z"), ex).includes("x1")],
     ["an exclusion lapses at its expiry", activeExcludedIds(new Date("2026-10-05T00:00:00Z"), ex).length === 0],
   ];

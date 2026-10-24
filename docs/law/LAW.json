@@ -1195,5 +1195,12 @@
     "source_file": "apps/backend/src/factoring/collection-apply.service.ts",
     "guard": "scripts/verify-factoring-collection-closes-invoice.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443310-NO-DUPLICATE-SETTLEMENT-SETTLED-LOAD",
+    "title": "Tour-close re-fire on an already-settled load is a no-op (settlement.reopen_refused_load_already_settled audit); never opens a second settlement for a load that already has settlement_lines on a non-voided settlement",
+    "source_file": "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
+    "guard": "scripts/verify-no-duplicate-settlement-for-settled-load.mjs",
+    "type": "enforced"
   }
 ]
