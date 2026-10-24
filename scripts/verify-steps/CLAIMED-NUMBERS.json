@@ -15004,6 +15004,11 @@
     "claimed_at": "2026-10-24",
     "purpose": "verify-bank-match-combinations (LEAD 443.304)"
   },
+  "18753": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-bill-payments-list-excludes-deductions (ROW-216)"
+  },
   "18757": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-24",
@@ -17018,5 +17023,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1089
+  "total_claimed": 1090
 }
