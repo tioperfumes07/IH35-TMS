@@ -7,7 +7,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { AccountingBoardKpiStrip } from "./AccountingBoardKpiStrip";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { formatUsdCents } from "../../lib/money";
 import { ManualJEModal } from "./ManualJEModal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -201,6 +203,15 @@ export function ManualJEListPage() {
     });
   }, [allPageRows, search]);
   const hasNextPage = allPageRows.length === PAGE_SIZE;
+  const jeTotals = useMemo(() => {
+    let debits = 0;
+    let credits = 0;
+    for (const entry of pageRows) {
+      debits += Number(entry.debit_total_cents) || 0;
+      credits += Number(entry.credit_total_cents) || 0;
+    }
+    return { debits, credits };
+  }, [pageRows]);
 
   const voidMutation = useMutation({
     meta: { loads: true },
@@ -360,17 +371,45 @@ export function ManualJEListPage() {
     <AccountingSubNavWrapper
       title="Manual Journal Entries"
       subtitle="Filter, review, and void posted entries"
+      kpiStrip={
+        <AccountingBoardKpiStrip
+          testId="manual-je-board-kpis"
+          tiles={[
+            {
+              label: "Debits",
+              value: <>Debits: {entriesQuery.isError ? "—" : formatUsdCents(jeTotals.debits)}</>,
+              sub: entriesQuery.isError
+                ? "Error loading"
+                : search.trim()
+                  ? `${pageRows.length} matching on this page`
+                  : hasNextPage
+                    ? "this page (200 per page)"
+                    : "this page",
+            },
+            {
+              label: "Credits",
+              value: <>Credits: {entriesQuery.isError ? "—" : formatUsdCents(jeTotals.credits)}</>,
+              sub: "credit totals on the same rows",
+            },
+            {
+              label: "Rows",
+              value: entriesQuery.isError ? "—" : String(pageRows.length),
+              sub:
+                statusFilter.length === 1 && statusFilter[0] === "posted" && typeof entriesQuery.data?.voided_count === "number" && entriesQuery.data.voided_count > 0 ? (
+                  <span data-testid="manual-je-voided-count">
+                    {allPageRows.length} live, {entriesQuery.data.voided_count} voided (hidden)
+                  </span>
+                ) : (
+                  "loaded page"
+                ),
+            },
+          ]}
+        />
+      }
       createControl={<Button onClick={() => setCreateOpen(true)} disabled={!companyId}>+ Create</Button>}
     >
       {/* 0243-g8-5: a query error must surface a retryable banner, not a blank grid / forever spinner. */}
       {entriesQuery.isError ? <ListErrorBanner onRetry={() => void entriesQuery.refetch()} /> : null}
-      {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a
-          badge that never renders." Company-wide, independent of every non-status filter. */}
-      {statusFilter.length === 1 && statusFilter[0] === "posted" && typeof entriesQuery.data?.voided_count === "number" && entriesQuery.data.voided_count > 0 ? (
-        <p className="text-xs text-gray-500" data-testid="manual-je-voided-count">
-          {allPageRows.length} live, {entriesQuery.data.voided_count} voided (hidden)
-        </p>
-      ) : null}
       <ParityTable title="Manual journal entries"
         columns={columns}
         rows={pageRows}

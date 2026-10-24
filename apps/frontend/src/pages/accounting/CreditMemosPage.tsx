@@ -33,6 +33,7 @@ import { CappedListNotice } from "../../components/CappedListNotice";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { AccountingBoardKpiStrip } from "./AccountingBoardKpiStrip";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 
@@ -262,6 +263,17 @@ export function CreditMemosPage() {
     return (creditMemosQuery.data?.credit_memos ?? []).find((c) => c.customer_id === customerFilter)?.customer_name ?? null;
   }, [customerOptions, creditMemosQuery.data?.credit_memos, customerFilter]);
 
+  const creditMemos = creditMemosQuery.data?.credit_memos ?? [];
+  const creditMemoTotals = useMemo(() => {
+    let amount = 0;
+    let unapplied = 0;
+    for (const row of creditMemos) {
+      amount += Number(row.amount_cents) || 0;
+      unapplied += Number(row.amount_unapplied_cents) || 0;
+    }
+    return { amount, unapplied };
+  }, [creditMemos]);
+
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3" data-credit-memos-filter-toolbar="collapsed">
       <CollapsedListFilters activeFilterCount={(statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (customerFilter ? 1 : 0)} testIdPrefix="credit-memos" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
@@ -302,6 +314,40 @@ export function CreditMemosPage() {
     <AccountingSubNavWrapper
       title="Credit memos"
       subtitle="Issued credit memos reduce A/R when applied to invoices (data-only until GL flags advance)"
+      kpiStrip={
+        <AccountingBoardKpiStrip
+          testId="credit-memos-board-kpis"
+          tiles={[
+            {
+              label: "Amount",
+              value: <>Amount: {creditMemosQuery.isError ? "—" : money(creditMemoTotals.amount)}</>,
+              sub: creditMemosQuery.isError
+                ? "Error loading"
+                : creditMemos.length >= 500
+                  ? `${creditMemos.length} loaded (list is capped)`
+                  : `${creditMemos.length} loaded rows`,
+            },
+            {
+              label: "Unapplied",
+              value: <>Unapplied: {creditMemosQuery.isError ? "—" : money(creditMemoTotals.unapplied)}</>,
+              sub: "unapplied on the loaded rows",
+              tone: !creditMemosQuery.isError && creditMemoTotals.unapplied > 0 ? "warn" : "neutral",
+            },
+            {
+              label: "Rows",
+              value: creditMemosQuery.isError ? "—" : String(creditMemos.length),
+              sub:
+                statusFilter.length === 1 && statusFilter[0] === "active" && typeof creditMemosQuery.data?.voided_count === "number" && creditMemosQuery.data.voided_count > 0 ? (
+                  <span data-testid="credit-memos-voided-count">
+                    {creditMemos.length} live, {creditMemosQuery.data.voided_count} voided (hidden)
+                  </span>
+                ) : (
+                  "loaded rows"
+                ),
+            },
+          ]}
+        />
+      }
       createControl={
         canWrite ? (
           <Button
@@ -323,16 +369,8 @@ export function CreditMemosPage() {
           onRetry={() => void creditMemosQuery.refetch()}
         />
       ) : (
-        <>
-          {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as
-              a badge that never renders." Company-wide, independent of every non-status filter. */}
-          {statusFilter.length === 1 && statusFilter[0] === "active" && typeof creditMemosQuery.data?.voided_count === "number" && creditMemosQuery.data.voided_count > 0 ? (
-            <p className="text-xs text-gray-500" data-testid="credit-memos-voided-count">
-              {(creditMemosQuery.data?.credit_memos ?? []).length} live, {creditMemosQuery.data.voided_count} voided (hidden)
-            </p>
-          ) : null}
         <ParityTable title="Credit memos"
-          rows={creditMemosQuery.data?.credit_memos ?? []}
+          rows={creditMemos}
           columns={columns}
           rowKey={(row) => row.id}
           loading={creditMemosQuery.isLoading}
@@ -342,7 +380,6 @@ export function CreditMemosPage() {
           emptyText="No credit memos found."
           onRowClick={(row) => setSelectedCreditMemoId(row.id)}
         />
-        </>
       )}
 
       {/* CHROME-12: money creator -> ParityDrawer side panel (never a centered Modal), matching

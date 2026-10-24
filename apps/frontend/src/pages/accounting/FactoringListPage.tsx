@@ -8,6 +8,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SubmitFactoringModal } from "./SubmitFactoringModal";
+import { AccountingBoardKpiStrip } from "./AccountingBoardKpiStrip";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -123,9 +124,60 @@ export function FactoringListPage() {
     [],
   );
 
+  const factoringTotals = useMemo(() => {
+    let invoice = 0;
+    let advance = 0;
+    let reserve = 0;
+    for (const row of rows) {
+      invoice += Number(row.invoice_total_cents) || 0;
+      advance += Number(row.advance_amount_cents) || 0;
+      reserve += Number(row.reserve_amount_cents) || 0;
+    }
+    return { invoice, advance, reserve };
+  }, [rows]);
+
+  const factoringBoardKpis = (
+    <AccountingBoardKpiStrip
+      testId="factoring-board-kpis"
+      tiles={[
+        {
+          label: "Invoice total",
+          value: <>Invoice total: {query.isError ? "—" : money(factoringTotals.invoice)}</>,
+          sub: query.isError
+            ? "Error loading"
+            : rows.length >= 100
+              ? `${rows.length} loaded (list is capped)`
+              : `${rows.length} loaded rows`,
+        },
+        {
+          label: "Advanced",
+          value: <>Advanced: {query.isError ? "—" : money(factoringTotals.advance)}</>,
+          sub: "advance on the loaded rows",
+        },
+        {
+          label: "Reserve",
+          value: <>Reserve: {query.isError ? "—" : money(factoringTotals.reserve)}</>,
+          sub: "reserve on the loaded rows",
+        },
+        {
+          label: "Rows",
+          value: query.isError ? "—" : String(rows.length),
+          sub:
+            !query.isError && status.length === 1 && status[0] === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
+              <span data-testid="factoring-voided-count">
+                {rows.length} live, {query.data.voided_count} voided (hidden)
+              </span>
+            ) : (
+              "loaded rows"
+            ),
+        },
+      ]}
+    />
+  );
+
   if (query.isError) {
     return (
-      <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>+ Submit to Factor</Button>}>
+      <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" kpiStrip={factoringBoardKpis} actions={<Button onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>+ Submit to Factor</Button>}>
         <ListErrorState
           title="Couldn't load factoring advances"
           status={0}
@@ -187,17 +239,9 @@ export function FactoringListPage() {
   );
 
   return (
-    <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>+ Submit to Factor</Button>}>
+    <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" kpiStrip={factoringBoardKpis} actions={<Button onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>+ Submit to Factor</Button>}>
 
       {filterBar}
-
-      {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a
-          badge that never renders." Company-wide, independent of every non-status filter. */}
-      {status.length === 1 && status[0] === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
-        <p className="text-xs text-gray-500" data-testid="factoring-voided-count">
-          {rows.length} live, {query.data.voided_count} voided (hidden)
-        </p>
-      ) : null}
 
       <ParityTable title="Factoring advances"
         columns={columns}

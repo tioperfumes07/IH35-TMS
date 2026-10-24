@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listAllChecks, type AllChecksRow } from "../../../api/checks";
+import { AccountingBoardKpiStrip } from "../AccountingBoardKpiStrip";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
@@ -69,6 +70,12 @@ export function CheckListPage() {
     );
   }, [all, kinds, statuses, banks, search]);
 
+  const checkTotals = useMemo(() => {
+    let amount = 0;
+    for (const row of rows) amount += Number(row.amount_cents) || 0;
+    return amount;
+  }, [rows]);
+
   const columns: Array<ParityColumn<AllChecksRow>> = [
     {
       key: "check_number", label: "Check #", sortable: true, sortValue: (r) => Number(r.check_number ?? 0),
@@ -90,6 +97,25 @@ export function CheckListPage() {
     <AccountingSubNavWrapper
       title="Checks"
       subtitle="Every check written — expenses, bill payments and driver settlements"
+      kpiStrip={
+        <AccountingBoardKpiStrip
+          testId="checks-board-kpis"
+          tiles={[
+            {
+              label: "Amount",
+              value: <>Amount: {!companyId || query.isError ? "—" : formatUsdCents(checkTotals)}</>,
+              sub: !companyId || query.isError
+                ? "Error loading"
+                : `${rows.length} of ${all.length}${all.length >= 2000 ? " (list is capped)" : ""}`,
+            },
+            {
+              label: "Rows",
+              value: !companyId || query.isError ? "—" : String(rows.length),
+              sub: "checks on this list",
+            },
+          ]}
+        />
+      }
       createControl={
         <div className="flex items-center gap-2">
           <Link to="/accounting/checks/print">

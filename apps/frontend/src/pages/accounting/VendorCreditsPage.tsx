@@ -31,6 +31,7 @@ import { CappedListNotice } from "../../components/CappedListNotice";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { AccountingBoardKpiStrip } from "./AccountingBoardKpiStrip";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrailPanel";
 
@@ -257,6 +258,17 @@ export function VendorCreditsPage() {
     return (creditsQuery.data?.credits ?? []).find((c) => c.vendor_id === vendorFilter)?.vendor_name ?? null;
   }, [vendorOptions, creditsQuery.data?.credits, vendorFilter]);
 
+  const vendorCredits = creditsQuery.data?.credits ?? [];
+  const creditTotals = useMemo(() => {
+    let amount = 0;
+    let unapplied = 0;
+    for (const row of vendorCredits) {
+      amount += Number(row.amount_cents) || 0;
+      unapplied += Number(row.amount_unapplied_cents) || 0;
+    }
+    return { amount, unapplied };
+  }, [vendorCredits]);
+
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3" data-vendor-credits-filter-toolbar="collapsed">
       <CollapsedListFilters activeFilterCount={(statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
@@ -297,6 +309,40 @@ export function VendorCreditsPage() {
     <AccountingSubNavWrapper
       title="Vendor credits"
       subtitle="Open vendor credits reduce A/P when applied to bills (data-only until GL flags advance)"
+      kpiStrip={
+        <AccountingBoardKpiStrip
+          testId="vendor-credits-board-kpis"
+          tiles={[
+            {
+              label: "Amount",
+              value: <>Amount: {creditsQuery.isError ? "—" : money(creditTotals.amount)}</>,
+              sub: creditsQuery.isError
+                ? "Error loading"
+                : vendorCredits.length >= 500
+                  ? `${vendorCredits.length} loaded (list is capped)`
+                  : `${vendorCredits.length} loaded rows`,
+            },
+            {
+              label: "Unapplied",
+              value: <>Unapplied: {creditsQuery.isError ? "—" : money(creditTotals.unapplied)}</>,
+              sub: "unapplied on the loaded rows",
+              tone: !creditsQuery.isError && creditTotals.unapplied > 0 ? "warn" : "neutral",
+            },
+            {
+              label: "Rows",
+              value: creditsQuery.isError ? "—" : String(vendorCredits.length),
+              sub:
+                statusFilter.length === 1 && statusFilter[0] === "active" && typeof creditsQuery.data?.voided_count === "number" && creditsQuery.data.voided_count > 0 ? (
+                  <span data-testid="vendor-credits-voided-count">
+                    {vendorCredits.length} live, {creditsQuery.data.voided_count} voided (hidden)
+                  </span>
+                ) : (
+                  "loaded rows"
+                ),
+            },
+          ]}
+        />
+      }
       createControl={
         canWrite ? (
           <Button
@@ -318,16 +364,8 @@ export function VendorCreditsPage() {
           onRetry={() => void creditsQuery.refetch()}
         />
       ) : (
-        <>
-          {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as
-              a badge that never renders." Company-wide, independent of every non-status filter. */}
-          {statusFilter.length === 1 && statusFilter[0] === "active" && typeof creditsQuery.data?.voided_count === "number" && creditsQuery.data.voided_count > 0 ? (
-            <p className="text-xs text-gray-500" data-testid="vendor-credits-voided-count">
-              {(creditsQuery.data?.credits ?? []).length} live, {creditsQuery.data.voided_count} voided (hidden)
-            </p>
-          ) : null}
         <ParityTable title="Vendor credits"
-          rows={creditsQuery.data?.credits ?? []}
+          rows={vendorCredits}
           columns={columns}
           rowKey={(row) => row.id}
           loading={creditsQuery.isLoading}
@@ -337,7 +375,6 @@ export function VendorCreditsPage() {
           emptyText="No vendor credits found."
           onRowClick={(row) => setSelectedCreditId(row.id)}
         />
-        </>
       )}
 
       {/* CHROME-12: money creator -> ParityDrawer side panel (never a centered Modal). A centered

@@ -48,6 +48,11 @@ const DISPATCH_OVERVIEW = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx
 const ACCOUNTING_HUB = "apps/frontend/src/pages/accounting/AccountingHubPage.tsx";
 const PAYMENTS_PAGE = "apps/frontend/src/pages/accounting/PaymentsListPage.tsx";
 const BILL_PAYMENTS_PAGE = "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx";
+const CREDIT_MEMOS_PAGE = "apps/frontend/src/pages/accounting/CreditMemosPage.tsx";
+const VENDOR_CREDITS_PAGE = "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx";
+const CHECKS_PAGE = "apps/frontend/src/pages/accounting/checks/CheckListPage.tsx";
+const MANUAL_JE_PAGE = "apps/frontend/src/pages/accounting/ManualJEListPage.tsx";
+const FACTORING_LIST_PAGE = "apps/frontend/src/pages/accounting/FactoringListPage.tsx";
 
 function fail(msg) {
   console.error(`FAIL verify-money-kpi-strip-no-fake-zero-on-error: ${msg}`);
@@ -157,6 +162,60 @@ function checkBillPaymentsPage(src) {
   }
   if (!/paymentsQuery\.isError \? "—" : money\(totals\)/.test(src)) {
     fail(`${BILL_PAYMENTS_PAGE}: Total rows amount no longer branches on paymentsQuery.isError — will show $0.00 on a failed fetch.`);
+  }
+}
+
+function checkCreditMemosPage(src) {
+  if (!requireBoardKpis(src, CREDIT_MEMOS_PAGE)) return;
+  if (!/Amount:\s*\{creditMemosQuery\.isError \? "—" : money\(creditMemoTotals\.amount\)\}/.test(src)) {
+    fail(`${CREDIT_MEMOS_PAGE}: Amount no longer branches on creditMemosQuery.isError — will show $0.00 on a failed fetch.`);
+  }
+  if (!/Unapplied:\s*\{creditMemosQuery\.isError \? "—" : money\(creditMemoTotals\.unapplied\)\}/.test(src)) {
+    fail(`${CREDIT_MEMOS_PAGE}: Unapplied no longer branches on creditMemosQuery.isError.`);
+  }
+}
+
+function checkVendorCreditsPage(src) {
+  if (!requireBoardKpis(src, VENDOR_CREDITS_PAGE)) return;
+  if (!/Amount:\s*\{creditsQuery\.isError \? "—" : money\(creditTotals\.amount\)\}/.test(src)) {
+    fail(`${VENDOR_CREDITS_PAGE}: Amount no longer branches on creditsQuery.isError — will show $0.00 on a failed fetch.`);
+  }
+  if (!/Unapplied:\s*\{creditsQuery\.isError \? "—" : money\(creditTotals\.unapplied\)\}/.test(src)) {
+    fail(`${VENDOR_CREDITS_PAGE}: Unapplied no longer branches on creditsQuery.isError.`);
+  }
+}
+
+function checkChecksPage(src) {
+  if (!requireBoardKpis(src, CHECKS_PAGE)) return;
+  if (!/Amount:\s*\{!companyId \|\| query\.isError \? "—" : formatUsdCents\(checkTotals\)\}/.test(src)) {
+    fail(`${CHECKS_PAGE}: Amount no longer branches on query.isError — will show $0.00 on a failed fetch.`);
+  }
+}
+
+function checkManualJePage(src) {
+  if (!requireBoardKpis(src, MANUAL_JE_PAGE)) return;
+  if (!/Debits:\s*\{entriesQuery\.isError \? "—" : formatUsdCents\(jeTotals\.debits\)\}/.test(src)) {
+    fail(`${MANUAL_JE_PAGE}: Debits no longer branch on entriesQuery.isError — will show $0.00 on a failed fetch.`);
+  }
+  if (!/Credits:\s*\{entriesQuery\.isError \? "—" : formatUsdCents\(jeTotals\.credits\)\}/.test(src)) {
+    fail(`${MANUAL_JE_PAGE}: Credits no longer branch on entriesQuery.isError.`);
+  }
+}
+
+function checkFactoringListPage(src) {
+  if (!requireBoardKpis(src, FACTORING_LIST_PAGE)) return;
+  const mounts = src.match(/kpiStrip=\{factoringBoardKpis\}/g) ?? [];
+  if (mounts.length < 2) {
+    fail(`${FACTORING_LIST_PAGE}: the error return and the loaded return must both mount factoringBoardKpis.`);
+  }
+  if (!/Invoice total:\s*\{query\.isError \? "—" : money\(factoringTotals\.invoice\)\}/.test(src)) {
+    fail(`${FACTORING_LIST_PAGE}: Invoice total no longer branches on query.isError — will show $0.00 on a failed fetch.`);
+  }
+  if (!/Advanced:\s*\{query\.isError \? "—" : money\(factoringTotals\.advance\)\}/.test(src)) {
+    fail(`${FACTORING_LIST_PAGE}: Advanced no longer branches on query.isError.`);
+  }
+  if (!/Reserve:\s*\{query\.isError \? "—" : money\(factoringTotals\.reserve\)\}/.test(src)) {
+    fail(`${FACTORING_LIST_PAGE}: Reserve no longer branches on query.isError.`);
   }
 }
 
@@ -682,6 +741,138 @@ function selftest() {
     probesProven++;
   }
 
+  // Mutation: CreditMemosPage drops the Amount isError branch.
+  {
+    const original = fs.readFileSync(CREDIT_MEMOS_PAGE, "utf8");
+    const mutated = original.replace(
+      'Amount: {creditMemosQuery.isError ? "—" : money(creditMemoTotals.amount)}',
+      "Amount: {money(creditMemoTotals.amount)}"
+    );
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: CreditMemosPage Amount isError pattern not found.");
+      process.exitCode = 1;
+      return;
+    }
+    let caught = false;
+    try {
+      checkCreditMemosPage(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping CreditMemosPage creditMemosQuery.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation: VendorCreditsPage drops the Amount isError branch.
+  {
+    const original = fs.readFileSync(VENDOR_CREDITS_PAGE, "utf8");
+    const mutated = original.replace(
+      'Amount: {creditsQuery.isError ? "—" : money(creditTotals.amount)}',
+      "Amount: {money(creditTotals.amount)}"
+    );
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: VendorCreditsPage Amount isError pattern not found.");
+      process.exitCode = 1;
+      return;
+    }
+    let caught = false;
+    try {
+      checkVendorCreditsPage(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping VendorCreditsPage creditsQuery.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation: CheckListPage drops the Amount isError branch.
+  {
+    const original = fs.readFileSync(CHECKS_PAGE, "utf8");
+    const mutated = original.replace(
+      'Amount: {!companyId || query.isError ? "—" : formatUsdCents(checkTotals)}',
+      "Amount: {formatUsdCents(checkTotals)}"
+    );
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: CheckListPage Amount isError pattern not found.");
+      process.exitCode = 1;
+      return;
+    }
+    let caught = false;
+    try {
+      checkChecksPage(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping CheckListPage query.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation: ManualJEListPage drops the Debits isError branch.
+  {
+    const original = fs.readFileSync(MANUAL_JE_PAGE, "utf8");
+    const mutated = original.replace(
+      'Debits: {entriesQuery.isError ? "—" : formatUsdCents(jeTotals.debits)}',
+      "Debits: {formatUsdCents(jeTotals.debits)}"
+    );
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: ManualJEListPage Debits isError pattern not found.");
+      process.exitCode = 1;
+      return;
+    }
+    let caught = false;
+    try {
+      checkManualJePage(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping ManualJEListPage entriesQuery.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation: FactoringListPage error return drops the shared strip.
+  {
+    const original = fs.readFileSync(FACTORING_LIST_PAGE, "utf8");
+    const mutated = original.replace("kpiStrip={factoringBoardKpis}", "");
+    if (mutated === original || (mutated.match(/kpiStrip=\{factoringBoardKpis\}/g) ?? []).length !== 1) {
+      console.error("SELFTEST SETUP FAILED: FactoringListPage dual kpiStrip mount not found.");
+      process.exitCode = 1;
+      return;
+    }
+    let caught = false;
+    try {
+      checkFactoringListPage(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping one FactoringListPage kpiStrip mount was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
   console.log(`PASS verify-money-kpi-strip-no-fake-zero-on-error --selftest (mutation probes proven non-inert: ${probesProven})`);
 }
 
@@ -698,6 +889,11 @@ if (process.argv.includes("--selftest")) {
   checkExpensesPage(fs.readFileSync(EXPENSES_PAGE, "utf8"));
   checkPaymentsPage(fs.readFileSync(PAYMENTS_PAGE, "utf8"));
   checkBillPaymentsPage(fs.readFileSync(BILL_PAYMENTS_PAGE, "utf8"));
+  checkCreditMemosPage(fs.readFileSync(CREDIT_MEMOS_PAGE, "utf8"));
+  checkVendorCreditsPage(fs.readFileSync(VENDOR_CREDITS_PAGE, "utf8"));
+  checkChecksPage(fs.readFileSync(CHECKS_PAGE, "utf8"));
+  checkManualJePage(fs.readFileSync(MANUAL_JE_PAGE, "utf8"));
+  checkFactoringListPage(fs.readFileSync(FACTORING_LIST_PAGE, "utf8"));
   checkAccountingHub(fs.readFileSync(ACCOUNTING_HUB, "utf8"));
   checkFactoringHome(fs.readFileSync(FACTORING_HOME, "utf8"));
   checkMaintenanceHome(fs.readFileSync(MAINT_HOME, "utf8"), fs.readFileSync(MAINT_KPI_ROWS, "utf8"));
