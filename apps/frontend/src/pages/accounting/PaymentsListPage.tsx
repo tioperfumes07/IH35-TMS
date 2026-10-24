@@ -19,12 +19,13 @@ import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 import { formatUsdCents } from "../../lib/money";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -87,12 +88,12 @@ export function PaymentsListPage() {
   // (?sort=&dir=) so it survives reload / is shareable, same as Bills / Expenses.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   // U12 (owner UI register 2026-10-03) — status is a multi-select; default Active; none picked = every payment.
+  // FILTER-MULTI-01 — live apply (no staged Apply/Cancel popover).
   const [status, setStatus] = useState<Array<"active" | "voided">>(["active"]);
   const [method, setMethod] = useState<"" | PaymentMethod | "factoring">("");
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const staged = useStagedListFilters({ applied: { status, method, dateFrom, dateTo }, empty: { status: ["active"] as Array<"active" | "voided">, method: "" as const, dateFrom: "", dateTo: "" }, onApply: (next) => { setStatus(next.status); setMethod(next.method); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
   // ACCT-F5055 — Topbar Create→Receive payment uses ?create=1 (Bills/Expenses/Invoices parity).
   const recordOpen = searchParams.get("create") === "1";
   function setRecordOpen(next: boolean) {
@@ -267,63 +268,53 @@ export function PaymentsListPage() {
     (status.length === 1 && status[0] === "active" ? 0 : 1) + (method ? 1 : 0) + (dateFrom || dateTo ? 1 : 0);
 
   const filterBar = (
-    <div className="space-y-2 w-full">
-      <CollapsedListFilters
+    <div className="space-y-2 w-full" data-payments-filter-toolbar="visible">
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Payment # or customer"
+        searchTestId="payments-search-input"
+        onClearAll={() => {
+          setSearch("");
+          setStatus(["active"]);
+          setMethod("");
+          setDateFrom("");
+          setDateTo("");
+        }}
         activeFilterCount={paymentsActiveFilterCount}
-        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="payments"
-        dataAttributes={{ "data-payments-filter-toolbar": "collapsed" }}
-        searchSlot={
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Payment # or customer"
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
-            aria-label="Search payments"
-          />
-        }
       >
-        <div className="grid gap-2 md:grid-cols-4">
-          <MultiSelectDropdown
-            label="Status"
-            options={statusOptions({ "active": "Active", "voided": "Voided" })}
-            selected={staged.draft.status}
-            onChange={(next) => staged.setDraft({ ...staged.draft, status: next as Array<"active" | "voided"> })}
-            allLabel="All"
-            data-testid="payments-status-filter"
-          />
-
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Method
-            <SelectCombobox value={staged.draft.method} onChange={(event) => staged.setDraft({ ...staged.draft, method: event.target.value as "" | PaymentMethod | "factoring" })} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-              {METHOD_OPTIONS.map((option) => (
-                <option key={option.label} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectCombobox>
-          </label>
-
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            From
-            <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            To
-            <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9" />
-          </label>
-        </div>
-      </CollapsedListFilters>
-
-      <div className="flex items-center gap-3 text-xs text-gray-600">
-        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-PAYMENTS — Amount/Applied/Unapplied used to render
-            money(totals.*) with no isError awareness next to ListErrorBanner (ACCT-F5038). */}
-        <span>Total: {query.isError ? "—" : money(totals.total)}</span>
-        <span>Open: {query.isError ? "—" : money(totals.open)}</span>
-        <span className={totals.variance !== 0 ? "font-semibold text-red-700" : ""}>
-          Variance: {query.isError ? "—" : money(totals.variance)}
-        </span>
-      </div>
+        <MultiSelectDropdown
+          label="Status"
+          options={statusOptions({ active: "Active", voided: "Voided" })}
+          selected={status}
+          onChange={(next) => setStatus(next as Array<"active" | "voided">)}
+          allLabel="All"
+          data-testid="payments-status-filter"
+        />
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Method
+          <SelectCombobox
+            value={method}
+            onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")}
+            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
+          >
+            {METHOD_OPTIONS.map((option) => (
+              <option key={option.label} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          From
+          <DatePicker value={dateFrom} onChange={setDateFrom} className="h-9" />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          To
+          <DatePicker value={dateTo} onChange={setDateTo} className="h-9" />
+        </label>
+      </MoneyListToolbar>
     </div>
   );
 
@@ -333,6 +324,35 @@ export function PaymentsListPage() {
       subtitle="Customer payment recording and application"
       actions={<Button variant="secondary" onClick={() => navigate("/accounting/invoices")}>Invoices</Button>}
       createControl={<Button onClick={() => setRecordOpen(true)}>+ Record Payment</Button>}
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="payments-kpi-strip">
+          {query.isError ? (
+            <>
+              {moneyListKpiCard("Total", "—", "Error loading")}
+              {moneyListKpiCard("Open", "—", "Error loading")}
+              {moneyListKpiCard("Variance", "—", "Error loading")}
+              {moneyListKpiCard("Rows", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Total", money(totals.total), `${rows.length} payments`)}
+              {moneyListKpiCard(
+                "Open",
+                money(totals.open),
+                "Unapplied balance",
+                totals.open > 0 ? "warn" : "neutral",
+              )}
+              {moneyListKpiCard(
+                "Variance",
+                money(totals.variance),
+                totals.variance !== 0 ? "Does not tie" : "Tied",
+                totals.variance !== 0 ? "danger" : "neutral",
+              )}
+              {moneyListKpiCard("Rows", String(rows.length), "On this page")}
+            </>
+          )}
+        </div>
+      }
     >
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
