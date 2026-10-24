@@ -137,6 +137,49 @@ function flatten(o) {
   };
 }
 
+
+// FIELD-SIZE-32 (register rows 153/156/158/159/160/197, Lead order "one shared size, not per page"):
+// the single-line field is 32px (h-8) everywhere. The ONE shared rule lives in
+// styles/proportion-chrome.css (applied by Modal + ParityDrawer); the six screens below must not
+// re-introduce a per-page 36/38/40/48px input height. Fixed-rule, not a ratchet count.
+const FIELD_CSS = path.join(SRC, "styles", "proportion-chrome.css");
+const FIELD_SCREENS = [
+  "pages/maintenance/components/CreateWorkOrderModal.tsx",
+  "pages/maintenance/components/CreateWOSectionIdentification.tsx",
+  "pages/maintenance/components/CreateWOSectionRenderV5Header.tsx",
+  "pages/safety/components/HosViolationCreateModal.tsx",
+  "components/drivers/CreateDriverModal.tsx",
+  "components/fleet/CreateTrailerModal.tsx",
+  "components/insurance/PolicyCreateWizard.tsx",
+  "pages/maintenance/RoadServiceTicketModal.tsx",
+];
+const FORBIDDEN_FIELD_HEIGHT = /(?<![\w-])(?:h-\[(?:3[3-9]|4\d)px\]|h-(?:9|10|11|12)|min-h-(?:9|10|11|12)|min-h-\[(?:3[3-9]|4\d)px\]|py-(?:2|2\.5|3))(?![\w.-])/;
+/** Returns messages for every <input> (not hidden/checkbox/radio/file) or input-class constant carrying a non-32px height. */
+export function fieldHeightViolations(label, src) {
+  const out = [];
+  const blocks = src.match(/<input\b[\s\S]*?(?:\/>|>)/g) || [];
+  for (const b of blocks) {
+    if (/type=["'](?:hidden|checkbox|radio|file)["']/.test(b)) continue;
+    const m = b.match(FORBIDDEN_FIELD_HEIGHT);
+    if (m) out.push(`${label}: <input> carries ${m[0]} (single-line fields are h-8 / 32px)`);
+  }
+  for (const line of src.split("\n")) {
+    if (/\b(?:inputClass|FLD|INPUT|inputCls)\s*=\s*["'`]/.test(line) && FORBIDDEN_FIELD_HEIGHT.test(line)) {
+      out.push(`${label}: field class constant carries ${line.match(FORBIDDEN_FIELD_HEIGHT)[0]}`);
+    }
+  }
+  return out;
+}
+export function fieldCssViolations(css) {
+  return /input:not\(\[type="checkbox"\]\)[^{]*\{[^}]*\bheight:\s*var\(--ih35-field-height\)[^}]*\bmax-height:\s*var\(--ih35-field-height\)/.test(css) && /--ih35-field-height:\s*32px/.test(css)
+    ? [] : ["proportion-chrome.css lost the shared 32px single-line field rule (height + max-height = --ih35-field-height: 32px)"];
+}
+function fieldSizeCheck() {
+  const out = fieldCssViolations(fs.readFileSync(FIELD_CSS, "utf8"));
+  for (const f of FIELD_SCREENS) out.push(...fieldHeightViolations(f, fs.readFileSync(path.join(SRC, f), "utf8")));
+  return out;
+}
+
 function selftest() {
   const probe = { off_locked_scale_sizes: 3, files_off_locked_scale: 1,
     off_locked_scale_semantic_classes: 4, files_off_locked_scale_semantic: 2,
@@ -172,6 +215,14 @@ function selftest() {
     console.error(`${LABEL}: SELFTEST FAIL — live tokens.ts still has the retired navy/white table header (bg=${bg}, text=${text})`);
     process.exit(1);
   }
+  const plantedA = fieldHeightViolations("plant", '<input className="h-[38px] w-full" />');
+  const plantedB = fieldHeightViolations("plant", 'const inputClass = "min-h-12 w-full";');
+  const plantedC = fieldCssViolations(".x { min-height: 32px; }");
+  const cleanA = fieldHeightViolations("clean", '<input type="hidden" className="py-2" /><input className="h-8 w-full" />');
+  if (plantedA.length !== 1 || plantedB.length !== 1 || plantedC.length !== 1 || cleanA.length !== 0) {
+    console.error(`${LABEL}: SELFTEST FAIL — FIELD-SIZE-32 rule does not fail its plants / pass clean (${plantedA.length},${plantedB.length},${plantedC.length},${cleanA.length})`);
+    process.exit(1);
+  }
   console.log(`${LABEL}: SELFTEST PASS`);
   process.exit(0);
 }
@@ -202,6 +253,13 @@ if (!headerBgMatch || !headerTextMatch) {
 }
 if (headerBgMatch[1].toUpperCase() === "#14314F" || headerTextMatch[1].toUpperCase() === "#FFFFFF") {
   console.error(`${LABEL}: FAIL — navy/white table header reintroduced (tableHeaderBg=${headerBgMatch[1]}, tableHeaderText=${headerTextMatch[1]}); retired by owner ruling 2026-09-04, navy stays on the rail/topbar/printed docs only`);
+  process.exit(1);
+}
+
+const fieldBad = fieldSizeCheck();
+if (fieldBad.length) {
+  console.error(`${LABEL}: FAIL — single-line field size drifted off the shared 32px (GLOBAL-TYPE-SIZE-BASELINE)`);
+  for (const v of fieldBad) console.error(`  ${v}`);
   process.exit(1);
 }
 
