@@ -288,13 +288,20 @@ export async function restateOpenDriverBillToSignedPay(
        FROM driver_finance.driver_bills b WHERE b.id = $1::uuid`,
     [b.id],
   )).rows[0]!;
-  if (!isEditableDriverBillStatus(state.status) || state.settled || state.accrued) {
+  // LEAD 443.269-B: an ACCRUED bill is restatable through THE restate engine (reverse its A/P bill, re-accrue the -R
+  // bill below) — before, it was refused ("restate it first") with no restate path in existence.
+  if (!isEditableDriverBillStatus(state.status) || state.settled) {
     throw new SettlementCreatorError(
       "driver_bill_not_restatable",
-      `Load ${input.loadNumber}: its driver bill (${dollarsFromCents(Number(b.gross))}) differs from the signed pay ${dollarsFromCents(signed)} and is ${state.settled ? "already settled" : state.accrued ? "accrued at delivery" : state.status} — restate it first.`,
+      `Load ${input.loadNumber}: its driver bill (${dollarsFromCents(Number(b.gross))}) differs from the signed pay ${dollarsFromCents(signed)} and is ${state.settled ? "already settled — the difference goes on the next settlement as an adjustment" : state.status}.`,
     );
   }
   const reason = `443.167-R: restated to signed settlement ${input.settlementNo} pay ${dollarsFromCents(signed)} (was ${dollarsFromCents(Number(b.gross))})`;
+  const { releaseDriverPayAccrualInClientTx, reaccrueDriverPayInClientTx } = await import("./driver-pay-restate.service.js");
+  const { accrueDriverPayAtDeliveryInClientTx } = await import("./driver-pay-delivery-accrual.service.js");
+  const release = state.accrued
+    ? await releaseDriverPayAccrualInClientTx(client as never, { operatingCompanyId: input.companyId, driverBillId: b.id, actorUserId: input.actorUserId, reason })
+    : { driver_bill_id: b.id, released: [] };
   const stamped = await stampDriverBillVoidedInClientTx(client, {
     driverBillId: b.id, operatingCompanyId: input.companyId,
     reason, userId: input.actorUserId, openOnly: true,
@@ -316,6 +323,14 @@ export async function restateOpenDriverBillToSignedPay(
   );
   const { restampDriverBillUnitAndTrailer } = await import("./driver-bill-unit-trailer.js");
   await restampDriverBillUnitAndTrailer(client as never, { operatingCompanyId: input.companyId, loadId: input.loadId });
+  if (release.released.length) {
+    const rBill = (await client.query<{ id: string }>(
+      `SELECT id::text FROM driver_finance.driver_bills WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND bill_number = $3 AND ${notVoided()}`,
+      [input.companyId, input.loadId, `${input.loadNumber}-R`],
+    )).rows[0];
+    if (!rBill) throw new SettlementCreatorError("driver_bill_not_restatable", "Restated driver bill not found for re-accrual.");
+    await reaccrueDriverPayInClientTx(client as never, { operatingCompanyId: input.companyId, loadId: input.loadId, actorUserId: input.actorUserId, release, reason, driverBillId: rBill.id, accrue: accrueDriverPayAtDeliveryInClientTx });
+  }
 }
 
 /**

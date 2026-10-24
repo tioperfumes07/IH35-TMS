@@ -24,6 +24,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolvePayComponentItem } from "./pay-component-items.js";
 import { resolveTeamSplitForLoad } from "../settlements/team-splits/apply.js";
 import { sameEntityLoadUnitSql } from "../accounting/load-unit.sql.js";
+import { liveSettlement } from "../accounting/live-document-predicates.sql.js";
 import { additionalOnlyDriverPay, additionalOnlyPayItems } from "../dispatch/book-load.service.js";
 
 export class DriverPayAccrualError extends Error {
@@ -61,11 +62,24 @@ export function teamShareCents(grossCents: number, driverRatio: number): { drive
   return { driverCents, teamDriverCents: grossCents - driverCents };
 }
 
+/** Accrued once, never on a bill that sits on any settlement. */
+const UNACCRUED_UNSETTLED_SQL = "db.settled_in_settlement_id IS NULL AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL";
+/** LEAD 443.269-B restate only: THAT one bill, unaccrued, on an OPEN pre-settlement nobody has closed, posted or voided. */
+const RESTATE_ON_OPEN_PRESETTLEMENT_SQL = `db.id = $3::uuid AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL AND EXISTS (
+                SELECT 1 FROM driver_finance.driver_settlements s
+                 WHERE s.id = db.settled_in_settlement_id AND s.operating_company_id = db.operating_company_id
+                   AND s.status = 'open' AND s.trip_closed_at IS NULL AND s.posted_at IS NULL AND ${liveSettlement("s")})`;
+
 export async function accrueDriverPayAtDeliveryInClientTx(
   client: pg.PoolClient,
-  input: { operatingCompanyId: string; loadId: string; actorUserId: string }
+  input: {
+    operatingCompanyId: string; loadId: string; actorUserId: string;
+    /** LEAD 443.269-B: the restate engine re-accrues THIS bill even while it sits on an OPEN, unposted pre-settlement. */
+    restateDriverBillId?: string;
+  }
 ): Promise<DriverPayAccrualOutcome> {
   const opco = input.operatingCompanyId;
+  const restate = Boolean(input.restateDriverBillId);
   const due = (
     await client.query<{ due_date: string | null; basis: string | null }>(
       `SELECT d.due_date::text, d.basis FROM driver_finance.load_driver_pay_due($1::uuid) d`,
@@ -86,11 +100,11 @@ export async function accrueDriverPayAtDeliveryInClientTx(
          JOIN mdata.loads l ON l.id = db.load_id AND l.operating_company_id = db.operating_company_id
         WHERE db.operating_company_id = $1::uuid AND db.load_id = $2::uuid
           AND db.voided_at IS NULL AND db.status <> 'void'
-          AND db.settled_in_settlement_id IS NULL AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL
+          AND (${restate ? `(${UNACCRUED_UNSETTLED_SQL}) OR (${RESTATE_ON_OPEN_PRESETTLEMENT_SQL})` : UNACCRUED_UNSETTLED_SQL})
           AND COALESCE(db.gross_amount_cents, 0) > 0
         ORDER BY db.created_at, db.id
         FOR UPDATE OF db`,
-      [opco, input.loadId]
+      restate ? [opco, input.loadId, input.restateDriverBillId] : [opco, input.loadId]
     )
   ).rows;
   const out: DriverPayAccrualOutcome = { load_id: input.loadId, delivery_date: deliveryDate, accrued: [], skipped: [] };
@@ -177,7 +191,9 @@ export async function accrueDriverPayAtDeliveryInClientTx(
     const team = posted.find((x) => x.column === "accrued_team_bill_id")?.billId ?? null;
     const stamped = await client.query(
       `UPDATE driver_finance.driver_bills SET accrued_bill_id = $3::uuid, accrued_team_bill_id = $5::uuid, due_date = $4::date, due_date_basis = 'delivered'
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL AND settled_in_settlement_id IS NULL`,
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid${restate && b.id === input.restateDriverBillId
+          ? " AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL"
+          : " AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL AND settled_in_settlement_id IS NULL"}`,
       [b.id, opco, primary, deliveryDate, team]
     );
     if (stamped.rowCount !== 1) throw new DriverPayAccrualError("ACCRUAL_RACED", `Driver bill for load ${b.load_number} changed while its pay was accrued`, { driver_bill_id: b.id });

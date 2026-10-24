@@ -6,5 +6,8 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-driver-pay-recognized-at-delivery.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-driver-pay-recognized-at-delivery.mjs"]);
+    // LEAD 443.269-B: a miles re-price restates the recognized pay everywhere (bill, A/P + GL, open pre-settlement).
+    await ctx.run("node", ["scripts/verify-miles-reprice-follows-everywhere.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-miles-reprice-follows-everywhere.mjs"]);
   },
 };

@@ -1160,5 +1160,12 @@
     "source_file": "AGENTS.md",
     "guard": "scripts/verify-hos-latest-clocks-per-driver-probe.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443269-MILES-REPRICE-EVERYWHERE",
+    "title": "A miles change re-prices the driver bill everywhere: driver bill, accrued A/P bill + JE by reversal and repost, open pre-settlement lines and header, cash flow; settled or paid pay is never rewritten",
+    "source_file": "apps/backend/src/driver-finance/driver-pay-restate.service.ts",
+    "guard": "scripts/verify-miles-reprice-follows-everywhere.mjs",
+    "type": "enforced"
   }
 ]
