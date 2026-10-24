@@ -61,7 +61,7 @@ export async function getVendorReport(
 
   if (query.vendorId) {
     values.push(query.vendorId);
-    filters.push(`b.vendor_id = $${values.length}::uuid`);
+    filters.push(`b.vendor_id = $${values.length}::text`); // accounting.bills.vendor_id is text
   }
 
   const limitIdx = values.length + 1;
@@ -74,7 +74,7 @@ export async function getVendorReport(
         b.vendor_id::text AS vendor_id,
         COALESCE(v.vendor_name, 'Unknown') AS vendor_name,
         COUNT(DISTINCT b.id)::int AS bill_count,
-        COALESCE(SUM(b.total_amount_cents), 0)::bigint AS total_billed_cents,
+        COALESCE(SUM(b.amount_cents), 0)::bigint AS total_billed_cents,
         -- total paid: sum of bill_payments for this vendor's bills in the period
         COALESCE((
           SELECT SUM(bp.amount_cents)
@@ -87,13 +87,12 @@ export async function getVendorReport(
             AND bp.operating_company_id = $1::uuid
             AND bp.voided_at IS NULL
         ), 0)::bigint AS total_paid_cents,
-        -- outstanding AP = bills not yet paid (no paid_at or remaining balance)
-        COALESCE(SUM(
-          CASE WHEN b.paid_at IS NULL THEN b.total_amount_cents ELSE 0 END
-        ), 0)::bigint AS outstanding_ap_cents,
+        -- outstanding AP = each bill's remaining balance (amount_cents - paid_cents; accounting.bills has no paid_at /
+        -- total_amount_cents — 443.290: those names raised 42703 and the report 500ed)
+        COALESCE(SUM(GREATEST(b.amount_cents - COALESCE(b.paid_cents, 0), 0)), 0)::bigint AS outstanding_ap_cents,
         COUNT(*) OVER () AS _total_count
       FROM accounting.bills b
-      LEFT JOIN mdata.vendors v ON v.id = b.vendor_id
+      LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id -- 443.290: uuid side cast (bills.vendor_id is text)
         AND v.operating_company_id = $1::uuid
       WHERE ${filters.join("\n        AND ")}
       GROUP BY b.vendor_id, v.vendor_name
