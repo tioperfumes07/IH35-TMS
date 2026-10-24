@@ -1261,5 +1261,12 @@
     "source_file": "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
     "guard": "scripts/verify-close-creates-company-settlement.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-24-ENG61-FINAL-LOAD-CLOSE-POSTS-GL",
+    "title": "A load_bookended settlement whose trip is closed (trip_closed_at IS NOT NULL, status='open') must never remain stuck: postFinalLoadSettlementsGl fires after every load status update path and triggers the payrun-close GL posting atomically (posted_at + status='closed' in one UPDATE that satisfies the trigger)",
+    "source_file": "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
+    "guard": "scripts/verify-final-load-close-posts.mjs",
+    "type": "enforced"
   }
 ]

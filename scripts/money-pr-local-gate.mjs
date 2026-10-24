@@ -1928,6 +1928,26 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/cash-flow/cash-flow.service.ts",
     ],
   ],
+  // ENG-61 (443.336, step 3144): load_bookended settlements must never be stuck open with
+  // trip_closed_at IS NOT NULL. The trigger tg_settlement_close_requires_posting blocked the
+  // combined trip-close+status UPDATE; fix moves status='closed' to the payrun-close path which
+  // sets posted_at atomically. Guard: static (no 'status=closed' in the trip-close UPDATE) + live
+  // (no stuck open load_bookended settlements where the load is delivered/complete).
+  [
+    "verify-final-load-close-posts",
+    [
+      "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
+      "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
+      "apps/backend/src/driver/loads.routes.ts",
+      "apps/backend/src/dispatch/loads.routes.ts",
+      "apps/backend/src/dispatch/truck-line/stop-stamp.routes.ts",
+      "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
+      "apps/backend/src/mdata/loads.routes.ts",
+      "apps/backend/src/dispatch/loads-bulk.routes.ts",
+      "apps/backend/src/bulk/bulk-update.factory.ts",
+      "scripts/verify-final-load-close-posts.mjs",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {

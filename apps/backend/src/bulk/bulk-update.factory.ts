@@ -121,6 +121,8 @@ export type RegisterBulkRouteOptions<TPayload> = {
   ) => { ok: true } | { ok: false; code: string; message: string };
   actionMap: Record<string, z.ZodType<TPayload>>;
   perEntityHandler: (ctx: BulkPerEntityContext<TPayload>) => Promise<BulkPerEntityResult>;
+  /** Called AFTER the batch transaction commits. Use for fire-and-forget post-commit side effects. */
+  onAfterBatchCommit?: (opts: { ids: string[]; action: string; operatingCompanyId: string; actorUserId: string }) => void;
 };
 
 export async function appendBulkCrudAudit(
@@ -357,6 +359,12 @@ export function registerBulkRoute<TPayload>(options: RegisterBulkRouteOptions<TP
           );
         });
 
+        // Fire post-commit hook for any caller that needs it (e.g. ENG-61 GL posting).
+        if (options.onAfterBatchCommit) {
+          try {
+            options.onAfterBatchCommit({ ids, action, operatingCompanyId, actorUserId: authUser.uuid });
+          } catch (_) { /* hook must never crash the route */ }
+        }
         const body: BulkUpdateResponse = {
           requested: ids.length,
           succeeded: response.succeeded,
