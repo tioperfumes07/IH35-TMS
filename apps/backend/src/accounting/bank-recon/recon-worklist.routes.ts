@@ -255,6 +255,11 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
           const v = (req.body as { difference_account_id?: unknown } | null)?.difference_account_id;
           return typeof v === "string" && /^[0-9a-f-]{36}$/i.test(v) ? v : null;
         })(),
+        // LEAD 443.305 — the rest of the line as a loan document from / repayment to a related party.
+        difference_as_loan: (() => {
+          const v = (req.body as { difference_as_loan?: { party_account_id?: unknown } } | null)?.difference_as_loan?.party_account_id;
+          return typeof v === "string" && /^[0-9a-f-]{36}$/i.test(v) ? { party_account_id: v } : null;
+        })(),
       });
       return { ok: true, result };
     } catch (error) {

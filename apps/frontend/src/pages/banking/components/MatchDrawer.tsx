@@ -14,6 +14,8 @@ import {
   type BankMatchCandidateKind,
 } from "../../../api/banking";
 import { listVendors } from "../../../api/mdata";
+import { listPartyAccounts } from "../../../api/related-party-loans";
+import { useTranslation } from "../../../hooks/useTranslation";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
@@ -220,8 +222,11 @@ export function MatchDrawer({
   onAccepted,
   embedded = false,
 }: Props) {
+  const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // LEAD 443.305 — related party ("Due to / from" account) for the rest of a multi-document match as a loan document.
+  const [restAsLoanPartyAccountId, setRestAsLoanPartyAccountId] = useState("");
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   /** undefined = default cascade; 2 = user clicked Search 7 days (only when no bank date ±90d seed). */
   const [windowStep, setWindowStep] = useState<1 | 2 | undefined>(undefined);
@@ -378,8 +383,12 @@ export function MatchDrawer({
           ledger_entry_id: c.ledger_entry_id,
         })),
         // LEAD 443.304 — the difference (bank − selected sum) posts to the chosen difference account; exact sends none.
-        difference_account_id:
-          entries.reduce((sum, c) => sum + Number(c.amount_cents ?? 0), 0) === bankAmountCents ? null : effectiveWriteOffId || null,
+        // LEAD 443.305 — or, when a related party is chosen, the rest is a LOAN DOCUMENT (from / repayment to that party).
+        ...(entries.reduce((sum, c) => sum + Number(c.amount_cents ?? 0), 0) === bankAmountCents
+          ? { difference_account_id: null }
+          : restAsLoanAccountId
+            ? { difference_as_loan: { party_account_id: restAsLoanAccountId } }
+            : { difference_account_id: effectiveWriteOffId || null }),
       }),
     onSuccess: async (_result, entries) => {
       // R441-C1 — close on success; never close on error (onError below).
@@ -461,9 +470,24 @@ export function MatchDrawer({
   const resolveCategoryId =
     resolveRows.find((r) => r.glAccountId && Number(r.amountCents) > 0)?.glAccountId ?? "";
   const effectiveWriteOffId = writeOffAccountId || resolveCategoryId;
-  // LEAD 443.304 — a multi-document match confirms when exact, OR with a difference account chosen (Resolve difference).
+  // LEAD 443.305 — "a purchase and a loan in the same wire": the rest of the line can be a loan from / repayment to a party.
+  const restCents = bankAmountCents - multiSumCents;
+  // One purchase + a loan is the owner's own example, so ONE checked document is enough for the loan rest.
+  const restAsLoanAllowed = multiSelected.length >= 1 && multiSumCents > 0 && restCents > 0;
+  const partiesQuery = useQuery({
+    queryKey: ["match-drawer-related-parties", operatingCompanyId],
+    queryFn: ({ signal }) => listPartyAccounts(operatingCompanyId, signal),
+    enabled: Boolean(operatingCompanyId) && restAsLoanAllowed,
+    staleTime: 60_000,
+  });
+  const restAsLoanAccountId = restAsLoanAllowed ? restAsLoanPartyAccountId : "";
+  // LEAD 443.304 — a multi-document match confirms when exact, OR with a difference account chosen (Resolve difference),
+  // OR (443.305) with a related party chosen for the rest as a loan.
   const multiCanConfirm =
-    multiSelected.length >= 2 && bankAmountCents > 0 && (multiExact || (multiSumCents > 0 && Boolean(effectiveWriteOffId)));
+    bankAmountCents > 0 &&
+    multiSumCents > 0 &&
+    ((multiSelected.length >= 2 && (multiExact || Boolean(restAsLoanAccountId) || Boolean(effectiveWriteOffId))) ||
+      (multiSelected.length === 1 && Boolean(restAsLoanAccountId)));
   const resolveBalanced = Math.abs(differenceCents) === 0 && resolvedCents > 0;
   const fullBankResolveOnly =
     selectedAmountCents === 0 &&
@@ -879,7 +903,7 @@ export function MatchDrawer({
           </div>
         ) : null}
 
-        {multiSelected.length >= 2 ? (
+        {multiSelected.length >= 2 || restAsLoanAllowed ? (
           <div
             className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5"
             data-testid="match-drawer-multi-bar"
@@ -889,9 +913,15 @@ export function MatchDrawer({
               {bankAmountCents > 0 ? ` / bank ${formatMoneyCents(bankAmountCents)}` : ""}
               {multiExact
                 ? " · exact"
+                : restAsLoanAccountId
+                  ? ` · rest ${formatMoneyCents(restCents)} becomes a loan document (${
+                      partiesQuery.data?.parties.find((p) => p.account_id === restAsLoanAccountId)?.party_name ?? "party"
+                    })`
                 : effectiveWriteOffId
                   ? ` · difference ${formatMoneyCents(bankAmountCents - multiSumCents)} posts to the selected difference account`
-                  : " · not exact — choose a difference account above to resolve"}
+                  : multiSelected.length === 1
+                    ? " · choose the related party below for the rest"
+                    : " · not exact — choose a difference account above, or the related party below"}
             </p>
             <button
               type="button"
@@ -904,8 +934,26 @@ export function MatchDrawer({
               disabled={!multiCanConfirm || multiConfirmMutation.isPending}
               onClick={() => multiCanConfirm && multiConfirmMutation.mutate(multiSelected)}
             >
-              {multiConfirmMutation.isPending ? "Confirming…" : "Confirm multi-document match"}
+              {multiConfirmMutation.isPending ? "Confirming…" : multiSelected.length === 1 ? "Confirm match + loan" : "Confirm multi-document match"}
             </button>
+            {restAsLoanAllowed ? (
+              <label className="flex w-full items-center gap-2 text-xs text-[#1F2A44]" data-testid="match-multi-rest-as-loan">
+                <span title={t("banking.matchDrawer.restLoan.tip", "Money in = loan from the party; money out = repayment to the party (the bank line decides).")}>{t("banking.matchDrawer.restLoan.label", "Rest {{amount}} as a related-party loan with", { amount: formatMoneyCents(restCents) })}</span>
+                <select
+                  className="rounded-sm border border-[#E5E7EB] bg-white px-1 py-0.5 text-xs"
+                  value={restAsLoanPartyAccountId}
+                  onChange={(e) => setRestAsLoanPartyAccountId(e.target.value)}
+                  data-testid="match-multi-rest-as-loan-party"
+                >
+                  <option value="">{t("banking.matchDrawer.restLoan.none", "— not a loan (use the difference account) —")}</option>
+                  {(partiesQuery.data?.parties ?? []).map((p) => (
+                    <option key={p.account_id} value={p.account_id}>
+                      {p.party_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
           </div>
         ) : null}
 
