@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { formatPersonName } from "../../lib/formatPersonName";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -292,7 +293,7 @@ export function TasksChatPage() {
                       return (
                         <div key={c.id} className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="tasks-chat-comment">
                           <div className="flex items-baseline justify-between">
-                            <span className="text-xs font-semibold text-[#1F2A44]">{c.author_name ?? c.author_email ?? "Unknown"}</span>
+                            <span className="text-xs font-semibold text-[#1F2A44]">{c.author_name ? formatPersonName(c.author_name) : (c.author_email ?? "Unknown")}</span>
                             <span className="text-xs text-[#6B7280]">{formatCompanyTime(c.created_at)}</span>
                           </div>
                           <div className="mt-1 whitespace-pre-wrap text-xs text-[#4B5563]">{renderBody(c.body, mentionNames)}</div>

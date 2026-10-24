@@ -45,8 +45,12 @@ export function checkCreateWo(text) {
   if (!/import\s*\{\s*properPersonOrPlaceName\s*\}\s*from\s*"\.\.\/\.\.\/\.\.\/lib\/properDisplayText"/.test(text)) {
     problems.push("CreateWorkOrderModal: properPersonOrPlaceName is not imported.");
   }
-  if (!/shop_name:\s*values\.shop_name\?\.trim\(\)\s*\?\s*properPersonOrPlaceName\(values\.shop_name\)\s*:\s*undefined/.test(text)) {
-    problems.push("CreateWorkOrderModal: shop_name is not wrapped in properPersonOrPlaceName().");
+  // ROW 5 (register): the shop is an ORGANISATION -- its name keeps the casing typed ("ACME Tire" never becomes "Acme Tire").
+  if (/shop_name:[^\n]*properPersonOrPlaceName/.test(text)) {
+    problems.push("CreateWorkOrderModal: shop_name (an organisation) must NOT be proper-cased -- org casing is kept.");
+  }
+  if (!/shop_name:\s*values\.shop_name\?\.trim\(\)\s*\?\s*values\.shop_name\.trim\(\)\s*:\s*undefined/.test(text)) {
+    problems.push("CreateWorkOrderModal: shop_name is not submitted trimmed and as typed.");
   }
   if (!/shop_address:\s*values\.shop_address\?\.trim\(\)\s*\?\s*properPersonOrPlaceName\(values\.shop_address\)\s*:\s*undefined/.test(text)) {
     problems.push("CreateWorkOrderModal: shop_address is not wrapped in properPersonOrPlaceName().");
@@ -111,14 +115,14 @@ function selftest() {
     failures.push(`offender-2 (raw location) NOT caught: ${p2.join(" | ") || "none"}`);
   }
 
-  // Offender 3: CreateWorkOrderModal reverts shop_name to raw.
+  // Offender 3: CreateWorkOrderModal proper-cases the shop (org) name.
   const woOffender1 = createWoReal.replace(
-    "shop_name: values.shop_name?.trim() ? properPersonOrPlaceName(values.shop_name) : undefined,",
-    "shop_name: values.shop_name || undefined,"
+    "shop_name: values.shop_name?.trim() ? values.shop_name.trim() : undefined,",
+    "shop_name: values.shop_name?.trim() ? properPersonOrPlaceName(values.shop_name) : undefined,"
   );
   const p3 = checkCreateWo(woOffender1);
   if (!p3.some((m) => m.includes("shop_name"))) {
-    failures.push(`offender-3 (raw shop_name) NOT caught: ${p3.join(" | ") || "none"}`);
+    failures.push(`offender-3 (proper-cased org shop_name) NOT caught: ${p3.join(" | ") || "none"}`);
   }
 
   // Offender 4: CreateWorkOrderModal reverts shop_address to raw.

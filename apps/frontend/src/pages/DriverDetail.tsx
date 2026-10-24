@@ -1,4 +1,5 @@
 import { entityLabel } from "../lib/entity-label";
+import { formatPersonName } from "../lib/formatPersonName";
 import { formatPhoneAsTyped, formatPhoneDisplay } from "../lib/formatPhoneAsTyped";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
@@ -939,11 +940,11 @@ export function DriverDetailPage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        title={`${driver.first_name} ${driver.last_name}`}
+        title={formatPersonName(`${driver.first_name} ${driver.last_name}`)}
         backHref="/drivers"
         breadcrumb={[
           { label: "Drivers", href: "/drivers" },
-          { label: `${driver.first_name} ${driver.last_name}` },
+          { label: formatPersonName(`${driver.first_name} ${driver.last_name}`) },
         ]}
         subtitle={driver.status}
         actions={
@@ -1051,7 +1052,7 @@ export function DriverDetailPage() {
             <FlatFieldGrid
               columns={4}
               fields={[
-                { label: "Driver name", value: `${driver.first_name} ${driver.last_name}`.trim() || "—" },
+                { label: "Driver name", value: formatPersonName(`${driver.first_name} ${driver.last_name}`).trim() || "—" },
                 { label: "Status", value: driver.status ?? "—" },
                 { label: "CDL", value: [driver.cdl_class, driver.cdl_state].filter(Boolean).join(" / ") || "—" },
                 { label: "Phone", value: driver.phone ?? "—" },
@@ -1580,7 +1581,7 @@ export function DriverDetailPage() {
             open={w8benOpen}
             driverId={id}
             companyId={companyId}
-            driverName={`${driver.first_name} ${driver.last_name}`}
+            driverName={formatPersonName(`${driver.first_name} ${driver.last_name}`)}
             onClose={() => setW8benOpen(false)}
             onCreated={() => void queryClient.invalidateQueries({ queryKey: ["driver-w8ben-summary", id, companyId] })}
           />
@@ -1886,7 +1887,7 @@ export function DriverDetailPage() {
       {activeTab === "Documents" ? (
         canViewDocuments ? (
           <ErrorBoundary>
-            <DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} operatingCompanyId={driver.operating_company_id ?? companyId} />
+            <DocumentsTab entityType="driver" entityId={driver.id} entityName={formatPersonName(`${driver.first_name} ${driver.last_name}`)} operatingCompanyId={driver.operating_company_id ?? companyId} />
           </ErrorBoundary>
         ) : (
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
@@ -2307,7 +2308,7 @@ export function DriverDetailPage() {
       <Modal
         open={rateModalOpen}
         onClose={() => setRateModalOpen(false)}
-        title={`${driver.first_name} ${driver.last_name} - ${selectedEquipmentName} - ${selectedLineItemName}`}
+        title={`${formatPersonName(`${driver.first_name} ${driver.last_name}`)} - ${selectedEquipmentName} - ${selectedLineItemName}`}
       >
         <form
           className="space-y-3"

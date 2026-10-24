@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { formatPersonName } from "../lib/formatPersonName";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ListErrorState } from "../components/ListErrorState";
@@ -175,8 +176,8 @@ function CustomerDetailsTab({
           <DetailRow
             label="Main contact"
             value={
-              <span title={customer.main_contact_name ?? undefined} className="single-line-name">
-                {dash(customer.main_contact_name)}
+              <span title={customer.main_contact_name ? formatPersonName(customer.main_contact_name) : undefined} className="single-line-name">
+                {customer.main_contact_name ? formatPersonName(customer.main_contact_name) : dash(customer.main_contact_name)}
               </span>
             }
           />

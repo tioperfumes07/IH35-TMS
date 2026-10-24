@@ -1,4 +1,5 @@
 import { settlementLabel } from "../../lib/settlementNumber";
+import { formatPersonName } from "../../lib/formatPersonName";
 import { useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -215,7 +216,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
       <div className="ldt-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="ldt-modal-head"><span className="ldt-modal-title">Close tour {settlementLabel(t)} → Settlement</span><button type="button" className="ldt-btn g" onClick={() => setConfirming(false)} aria-label="Close">×</button></div>
         <div className="ldt-modal-body">
-          <p>This closes the tour for <b>{t.driver_name ?? "the driver"}</b>: the driver settlement freezes with {r.legs.length} leg{r.legs.length === 1 ? "" : "s"} ({r.legs.map((l) => l.load_number).join(", ")}), earnings and escrow lines are written, and the company settlement for the period is closed alongside. Nothing posts to the general ledger here — posting happens at pay-run close.</p>
+          <p>This closes the tour for <b>{t.driver_name ? formatPersonName(t.driver_name) : "the driver"}</b>: the driver settlement freezes with {r.legs.length} leg{r.legs.length === 1 ? "" : "s"} ({r.legs.map((l) => l.load_number).join(", ")}), earnings and escrow lines are written, and the company settlement for the period is closed alongside. Nothing posts to the general ledger here — posting happens at pay-run close.</p>
           {r.soft_warnings.length ? <div className="ldt-note warn"><b>You are confirming these open items by name:</b><ul style={{ margin: "6px 0 0 16px" }}>{r.soft_warnings.map((w) => <li key={w}>{w}</li>)}</ul></div> : <div className="ldt-note">Every readiness item is satisfied.</div>}
           <div className="ldt-actions">
             <button type="button" className="ldt-btn p" data-testid="tour-close-confirm-button" disabled={close.isPending} onClick={() => close.mutate()}>{close.isPending ? "Closing…" : "Yes — close the tour"}</button>

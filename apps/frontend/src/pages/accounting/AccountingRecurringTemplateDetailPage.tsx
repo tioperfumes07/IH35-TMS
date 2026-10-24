@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatPersonName } from "../../lib/formatPersonName";
 import { Link, useParams } from "react-router-dom";
 import { getAccountingRecurringTemplate } from "../../api/accountingRecurringTemplate";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -45,7 +46,7 @@ export function AccountingRecurringTemplateDetailPage() {
           <div><span className="text-[#6B7280]">Next run</span><p>{formatDateTimeUS(row.next_run_at)}</p></div>
           <div><span className="text-[#6B7280]">Last run</span><p>{row.last_run_at ? formatDateTimeUS(row.last_run_at) : "Not run yet"}</p></div>
           <div><span className="text-[#6B7280]">Runs</span><p>{row.run_count}</p></div>
-          <div><span className="text-[#6B7280]">Created by</span><p>{row.created_by_name || "System"}</p></div>
+          <div><span className="text-[#6B7280]">Created by</span><p>{row.created_by_name ? formatPersonName(row.created_by_name) : "System"}</p></div>
         </section>
         <section className="rounded-sm border border-[#E5E7EB] bg-white p-4"><h2 className="mb-3 text-xs font-semibold">Template fields</h2>
           {fields.length ? <dl className="grid gap-3 text-xs md:grid-cols-2">{fields.map(([key, value]) => <div key={key}><dt className="text-[#6B7280]">{label(key)}</dt><dd className="break-words font-medium">{String(value)}</dd></div>)}</dl> : <p className="text-xs text-[#6B7280]">No scalar template fields.</p>}

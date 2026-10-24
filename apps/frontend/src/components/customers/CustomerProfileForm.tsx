@@ -255,7 +255,7 @@ export function validateCustomerProfileForCreate(
 }
 
 export function profileValuesToCreatePayload(v: CustomerProfileFormValues, operatingCompanyId: string): CreateCustomerInput {
-  const name = properPersonOrPlaceName(v.name.trim());
+  const name = v.name.trim(); // ORG name: kept exactly as typed ("ACME" never becomes "Acme")
   const email = trimOrUndef(v.email);
   const arEmail = trimOrUndef(v.ar_email) ?? email;
   const apEmail = trimOrUndef(v.ap_email) ?? email;
@@ -300,7 +300,7 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     factoring_notes: trimOrUndef(v.factoring_notes),
     notes: trimOrUndef(v.notes),
     operating_company_id: operatingCompanyId,
-    print_on_invoice_name: properOrUndef(v.print_on_invoice_name),
+    print_on_invoice_name: trimOrUndef(v.print_on_invoice_name),
     cc_email: trimOrUndef(v.cc_email),
     bcc_email: trimOrUndef(v.bcc_email),
     shipping_same_as_billing: v.shipping_same_as_billing,
@@ -319,7 +319,7 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
 }
 
 export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): UpdateCustomerInput {
-  const name = properPersonOrPlaceName(v.name.trim());
+  const name = v.name.trim(); // ORG name: kept exactly as typed
   return {
     name,
     customer_code: trimOrNull(v.customer_code),
@@ -360,7 +360,7 @@ export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): Upda
     factoring_notes: trimOrNull(v.factoring_notes),
     notes: trimOrNull(v.notes),
     status: v.status,
-    print_on_invoice_name: properOrNull(v.print_on_invoice_name),
+    print_on_invoice_name: trimOrNull(v.print_on_invoice_name),
     cc_email: trimOrNull(v.cc_email),
     bcc_email: trimOrNull(v.bcc_email),
     shipping_same_as_billing: v.shipping_same_as_billing,

@@ -1,6 +1,7 @@
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
 import { useEffect, useState } from "react";
+import { formatPersonName } from "../../lib/formatPersonName";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   geocodeDispatchLoadStops,
@@ -278,7 +279,7 @@ function LoadShuttleLegsPanel({ loadId, operatingCompanyId }: { loadId: string; 
         <div key={leg.id} className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 text-[12px] text-gray-800">
           <span>{[leg.from_city, leg.from_state].filter(Boolean).join(", ") || "Pickup"} → {leg.dropped_at_place}</span>
           <span>Truck: {leg.unit_number ?? (leg.candidate_unit_numbers?.length ? `one of ${leg.candidate_unit_numbers.join(", ")}` : "—")}</span>
-          <span>Driver: {leg.driver_name ?? "local driver"}</span>
+          <span>Driver: {leg.driver_name ? formatPersonName(leg.driver_name) : "local driver"}</span>
           <span>{leg.picked_up_at ? (leg.precision === "tracked" ? new Date(leg.picked_up_at).toLocaleString() : leg.picked_up_at.slice(0, 10)) : "—"}</span>
           <span className="text-gray-500">{leg.evidence === "gps_stop_event" ? "GPS" : leg.evidence === "owner_ruling" ? "Owner ruling" : "Driver report"} · {leg.precision === "tracked" ? "tracked" : "date only"}</span>
         </div>
