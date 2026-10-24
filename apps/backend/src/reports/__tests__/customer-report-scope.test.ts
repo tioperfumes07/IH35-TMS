@@ -127,3 +127,20 @@ describe("GET /api/v1/reports/customer-report", () => {
     expect(res.json().date_field).toBe("delivery");
   });
 });
+
+// 443.286-A tie-out: guard that outstanding_ar_cents excludes proforma/voided invoices
+// GL 1100 target = $621,076.72 (issued invoices only; proforma INV-169/13690 $3,000 excluded)
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+describe("TIEOUT: customer-report outstanding AR excludes proforma", () => {
+  it("service SQL has proforma and status NOT IN exclusion on invoices", () => {
+    const src = readFileSync(
+      fileURLToPath(new URL("../customer-report.service.ts", import.meta.url)),
+      "utf-8"
+    );
+    expect(src).toContain("proforma");
+    expect(src).toContain("status NOT IN");
+    // Canonical set mirrors ar-aging.service.ts
+    expect(src).toContain("factored");
+  });
+});

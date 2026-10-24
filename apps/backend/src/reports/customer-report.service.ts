@@ -90,11 +90,13 @@ export async function getCustomerReport(
         COALESCE(SUM(lcr.driver_pay_cents), 0)::bigint AS driver_pay_cents,
         COALESCE(SUM(lcr.fuel_cents), 0)::bigint AS fuel_cents,
         COALESCE(SUM(lcr.margin_cents), 0)::bigint AS margin_cents,
-        -- invoice count for the load set
+        -- invoice count for the load set (issued only — proforma/draft/void excluded)
         COUNT(DISTINCT inv.id)::int AS invoice_count,
-        -- outstanding AR = invoices not yet fully paid
+        -- outstanding AR = issued invoices not yet paid; proforma/void/draft/factored excluded
+        -- to match GL 1100 ($621,076.72 per 443.286 tie-out)
         COALESCE(SUM(
           CASE WHEN inv.id IS NOT NULL AND inv.voided_at IS NULL AND inv.paid_at IS NULL
+            AND inv.status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
             THEN COALESCE(inv.total_amount_cents, 0)
           ELSE 0 END
         ), 0)::bigint AS outstanding_ar_cents,
@@ -104,6 +106,7 @@ export async function getCustomerReport(
       LEFT JOIN accounting.invoices inv ON inv.load_id = l.id
         AND inv.operating_company_id = $1::uuid
         AND inv.voided_at IS NULL
+        AND inv.status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
       ${loadCostRollupLateral("l.id", "$1::uuid")}
       WHERE ${filters.join("\n        AND ")}
       GROUP BY l.customer_id, c.customer_name

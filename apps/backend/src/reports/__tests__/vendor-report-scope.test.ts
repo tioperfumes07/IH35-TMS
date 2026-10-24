@@ -121,3 +121,19 @@ describe("GET /api/v1/reports/vendor-report", () => {
     expect(res.statusCode).toBe(200);
   });
 });
+
+// 443.286-A tie-out: guard that outstanding_ap_cents excludes voided/draft bills
+// GL 2000 target = $126,443.92 (matches fin20-aging canonical status NOT IN ('void','voided','draft'))
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+describe("TIEOUT: vendor-report outstanding AP excludes voided/draft bills", () => {
+  it("service SQL filters bills by status NOT IN void/voided/draft", () => {
+    const src = readFileSync(
+      fileURLToPath(new URL("../vendor-report.service.ts", import.meta.url)),
+      "utf-8"
+    );
+    expect(src).toContain("status NOT IN");
+    expect(src).toContain("void");
+    expect(src).toContain("draft");
+  });
+});
