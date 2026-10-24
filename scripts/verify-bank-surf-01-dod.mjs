@@ -85,12 +85,16 @@ function contractErrors(src) {
     "getFactoringVirtual",
     "getBankingTiles",
     "factoringReserve",
-    "escrowFeed",
     "driver_escrow",
   ]) {
     if (!src.home.includes(needle)) {
       errors.push(`NEVER-DELETE: BankingHome Accounts tab must reference ${needle}`);
     }
+  }
+  // LEAD 443.316: 443.267 (77d25d7fcd) moved the driver-escrow figure to the banking KPI engine (escrowMtd: held /
+  // contributions / deductions). The escrow figure must stay on Home under either name; deleting it is still the failure.
+  if (!/\bescrowFeed\b/.test(src.home) && !/\bescrowMtd\.held\b/.test(src.home)) {
+    errors.push("NEVER-DELETE: BankingHome Accounts tab must reference escrowFeed");
   }
 
   if (!src.tiles.includes("export function AccountTilesRow")) {
