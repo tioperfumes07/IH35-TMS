@@ -77,7 +77,12 @@
     "title": "Drivers"
   },
   "maintenance": {
-    "title": "Maintenance"
+    "title": "Maintenance",
+    "fleetHealth": {
+      "noLastPm": "No last PM on file — enter it",
+      "odometerUnavailable": "Odometer unavailable",
+      "pmReadingUnavailable": "PM reading unavailable"
+    }
   },
   "accounting": {
     "title": "Accounting"

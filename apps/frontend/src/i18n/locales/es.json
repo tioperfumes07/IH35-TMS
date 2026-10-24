@@ -77,7 +77,12 @@
     "title": "Conductores"
   },
   "maintenance": {
-    "title": "Mantenimiento"
+    "title": "Mantenimiento",
+    "fleetHealth": {
+      "noLastPm": "Sin último PM registrado — captúrelo",
+      "odometerUnavailable": "Odómetro no disponible",
+      "pmReadingUnavailable": "Lectura de PM no disponible"
+    }
   },
   "accounting": {
     "title": "Contabilidad"
