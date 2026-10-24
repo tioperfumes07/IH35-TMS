@@ -56,9 +56,9 @@ function selftest() {
   const tbPath = path.join(process.cwd(), CONSUMERS[0]);
   const original = fs.readFileSync(tbPath, "utf8");
   try {
-    const bad = original.replace(
-      /\{formatAccountTypeLabel\(row\.account_type\)\}/,
-      '{row.account_type || "—"}',
+    const bad = original.replaceAll(
+      "formatAccountTypeLabel(row.account_type)",
+      'row.account_type || "—"',
     );
     if (bad === original) fail("selftest could not plant raw TrialBalance account_type");
     fs.writeFileSync(tbPath, bad);

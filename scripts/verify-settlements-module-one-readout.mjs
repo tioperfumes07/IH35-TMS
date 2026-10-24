@@ -67,7 +67,7 @@ function analyze(reg, page) {
   if (/settlements-view-toggle/.test(page))
     errors.push("SettlementsPage must not layer Tours/Payments toggle under the home board (443.280-A)");
   // Payments is its own tab; legacy ?view=payments still maps to payments (never deleted).
-  if (!/["']payments["']\s*\?\s*["']payments["']\s*:\s*["']tours["']/.test(page))
+  if (!/["']payments["']\s*\?\s*["']payments["']\s*:\s*["'](?:tours|settlements)["']/.test(page))
     errors.push("SettlementsPage must keep payments|tours view mapping (payments opt-in / own tab)");
 
   // BANK-F91507 leftover refuse — Open Driver Bills DataPanel accent (Tailwind slate-500, not house muted)
@@ -156,7 +156,7 @@ if (process.argv.includes("--selftest")) {
     ["remove closed-tour tab", [reg.replace(/<TourSettlementTab\b/g, "<Nope"), page]],
     ["remove pills", [reg.replace(/settlements-tours-pill-/g, "x-removed-"), page]],
     ["break detail link", [reg.replace(/settlements\?settlement_id=/g, "settlements?x="), page]],
-    ["page default to payments", [reg, page.replace(/["']payments["']\s*\?\s*["']payments["']\s*:\s*["']tours["']/, '"payments" ? "tours" : "payments"')]],
+    ["page default to payments", [reg, page.replace(/["']payments["']\s*\?\s*["']payments["']\s*:\s*["'](?:tours|settlements)["']/, '"payments" ? "tours" : "payments"')]],
     ["page drops register", [reg, page.replace(/<SettlementsToursRegister\b/g, "<Nope")]],
     ["page drops open tab", [reg, page.replace(/tabParam === "open"/g, 'tabParam === "gone_open"')]],
     ["page drops closed tab", [reg, page.replace(/tabParam === "closed"/g, 'tabParam === "gone_closed"')]],

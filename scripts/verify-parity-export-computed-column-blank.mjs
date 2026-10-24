@@ -33,7 +33,7 @@ export function check(files) {
   if (!/exportValue\?:\s*\(row: T\) => string \| number \| null \| undefined/.test(files[PARITY_TABLE_FILE])) {
     failures.push(`${PARITY_TABLE_FILE} ParityColumn no longer declares exportValue`);
   }
-  if (!/c\.exportValue \? c\.exportValue\(row\) : \(row as Record<string, unknown>\)\[String\(c\.key\)\]/.test(files[PARITY_TABLE_FILE])) {
+  if (!/esc\(c\.exportValue \? c\.exportValue\(row\) : \(row as Record<string, unknown>\)\[String\(c\.key\)\]\)/.test(files[PARITY_TABLE_FILE])) {
     failures.push(`${PARITY_TABLE_FILE} exportCsv no longer prefers exportValue over the raw row lookup`);
   }
 

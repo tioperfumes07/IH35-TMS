@@ -5,7 +5,7 @@
  */
 
 [data-proportion-chrome="qbo-compact"] {
-  --ih35-field-height: 38px;
+  --ih35-field-height: 32px;
   --ih35-chrome-pad-x: 1rem; /* px-4 */
   --ih35-chrome-pad-y: 0.75rem; /* py-3 */
 }

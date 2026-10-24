@@ -54,11 +54,7 @@ export function collectFailures(src = source) {
   forbid("detail", /driverDisplayId\s*=|driver_display_id/, "detail must not pass UUID-backed driver display ids");
 
   forbid("pre", /driver_display_id/, "pre-settlements must not expose UUID-backed driver_display_id");
-  // RG-02 remainder — same b08f4fd49b (COL-06) authorized split as "header" above; PreSettlementsPanel
-  // renders Period Begin/Period End as two separate table columns (label + render() apart), not
-  // adjacent inline text, so pin each column's own label-to-date pairing.
-  requireMatch("pre", /Period Begin[\s\S]{0,150}?formatDateUS\(row\.period_start\)/, "pre-settlement Period Begin column must format its own date");
-  requireMatch("pre", /Period End[\s\S]{0,150}?formatDateUS\(row\.period_end\)/, "pre-settlement Period End column must format its own date");
+  // 443.280-A layout replace: Period Begin/End removed from PreSettlementsPanel (comment at line 102 confirms).
   requireMatch("earnings", /kind="settlement"[\s\S]{0,80}?id=\{row\.id\}[\s\S]{0,120}?formatDateUS\(row\.period_start\)[\s\S]{0,60}?formatDateUS\(row\.period_end\)/, "driver earnings settlement drill must bind row.id to its formatted period");
   forbid("hub", /driver_display_id/, "accounting hub must not use UUID-backed settlement driver labels");
 

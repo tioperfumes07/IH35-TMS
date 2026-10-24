@@ -35,7 +35,7 @@ function run() {
   for (const m of [
     "CLS-PROPORTION-CHROME",
     'data-proportion-chrome="qbo-compact"',
-    "--ih35-field-height: 38px",
+    "--ih35-field-height: 32px",
     "--ih35-chrome-pad-x: 1rem",
     "--ih35-chrome-pad-y: 0.75rem",
   ]) {
@@ -43,7 +43,7 @@ function run() {
   }
 
   const sizing = read(FILES.sizing);
-  if (!sizing.includes("fieldHeightPx: 38")) errors.push("sizing.ts must keep fieldHeightPx: 38");
+  if (!sizing.includes("fieldHeightPx: 32")) errors.push("sizing.ts must keep fieldHeightPx: 32");
   if (!sizing.includes("PARITY_FIELD_HEIGHT_CLASS")) errors.push("sizing.ts must export PARITY_FIELD_HEIGHT_CLASS");
   if (!sizing.includes("chromePadXPx: 16") || !sizing.includes("chromePadYPx: 12")) {
     errors.push("sizing.ts must export chromePadXPx/chromePadYPx matching px-4/py-3");
@@ -75,7 +75,7 @@ function run() {
     process.exit(1);
   }
   console.log(
-    "verify-proportion-chrome-modal-drawer-density OK — Modal+ParityDrawer qbo-compact density + 38px field token",
+    "verify-proportion-chrome-modal-drawer-density OK — Modal+ParityDrawer qbo-compact density + 32px field token",
   );
 }
 
@@ -83,7 +83,7 @@ function selftest() {
   const target = path.join(ROOT, FILES.css);
   const bak = fs.readFileSync(target, "utf8");
   try {
-    fs.writeFileSync(target, bak.replace(/38px/g, "99px"));
+    fs.writeFileSync(target, bak.replace(/32px/g, "99px"));
     const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
       cwd: ROOT,
       encoding: "utf8",
