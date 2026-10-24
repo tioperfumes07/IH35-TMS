@@ -449,7 +449,7 @@ export function PlannerGrid({
   const vars = {
     ["--frozen" as string]: `${frozenWidth}px`,
     ["--day"]: `${dayPx}px`,
-    ["--rowh"]: `${rowPx}px`,
+    ["--rowh"]: `${PLANNER_ROW_PX}px`,
     ...style,
   } as CSSProperties;
 
@@ -582,12 +582,14 @@ export function PlannerGrid({
           {sortedRows.length === 0 ? (
             <div className="pg-empty">{empty}</div>
           ) : (
-            sortedRows.map((row) => (
+            sortedRows.map((row) => {
+              const stacked = stackPlannerBars(days, row.bars);
+              return (
               <div
                 key={row.id}
                 className={`pg-r${row.idle ? " idle" : ""}`}
-                style={{ ["--rowh" as string]: `${stackPlannerBars(days, row.bars).lanes * rowPx}px` } as CSSProperties}
-                data-planner-lanes={stackPlannerBars(days, row.bars).lanes}
+                style={{ ["--rowh" as string]: `${stacked.lanes * rowPx}px` } as CSSProperties}
+                data-planner-lanes={stacked.lanes}
               >
                 <FrozenName row={row} hasStatusColumn={hasStatusColumn} hasActionColumn={hasActionColumn} widths={widths} />
                 <div
@@ -617,7 +619,7 @@ export function PlannerGrid({
                       </div>
                     );
                   })}
-                  {(() => { const stacked = stackPlannerBars(days, row.bars); return row.bars.map((bar) => {
+                  {row.bars.map((bar) => {
                     const cl = Boolean(rangeStart && bar.startYmd < rangeStart);
                     const cr = Boolean(rangeEnd && bar.endYmd > rangeEnd);
                     const a = clampDayIndex(days, bar.startYmd, "start");
@@ -650,10 +652,11 @@ export function PlannerGrid({
                         {cr ? <span className="pg-bar-mark" data-testid="planner-bar-continues">{continuesText}</span> : null}
                       </button>
                     );
-                  }); })()}
+                  })}
                 </div>
               </div>
-            ))
+            );
+            })
           )}
         </div>
       </div>
