@@ -1,3 +1,4 @@
+// SURFACE-BREACH-AUTHORIZED: CC-1 verify-party-boards-bound-live + lib/print-party-boards (row 43 vendors board rebuild)
 /**
  * ROUND 443.280 — Vendors home, REBUILT to the V3 board (10-22-2026-LEAD-MOD-DESIGN-V3-Vendors.dc.html):
  * six KPI tiles, "Spend by category · YTD" + "Pays through" panels, one "Vendors · n" panel carrying the four chips and
