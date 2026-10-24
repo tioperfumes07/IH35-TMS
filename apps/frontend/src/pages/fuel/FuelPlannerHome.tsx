@@ -469,21 +469,27 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
       ) : null}
 
       {tab === "settings" ? (
-        settingsQuery.isLoading ? (
-          <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading planner settings…</section>
-        ) : settingsQuery.isError ? (
-          <ListErrorBanner onRetry={() => void settingsQuery.refetch()} />
-        ) : settingsQuery.data ? (
-          <PlannerSettingsForm companyId={companyId} key={companyId} settings={settingsQuery.data} />
-        ) : (
-          <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">
-            Planner settings are unavailable for the selected company.
-          </section>
-        )
+        <div className="space-y-3" data-testid="fuel-planner-settings-tab">
+          {/* Locked named section (verify-architectural-design — PageHeader|h3 patterns only). */}
+          <h3 className="text-xs font-semibold text-gray-900">Planner settings</h3>
+          {settingsQuery.isLoading ? (
+            <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading planner settings…</section>
+          ) : settingsQuery.isError ? (
+            <ListErrorBanner onRetry={() => void settingsQuery.refetch()} />
+          ) : settingsQuery.data ? (
+            <PlannerSettingsForm companyId={companyId} key={companyId} settings={settingsQuery.data} />
+          ) : (
+            <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">
+              Planner settings are unavailable for the selected company.
+            </section>
+          )}
+        </div>
       ) : null}
 
       {tab === "expense_mapping" ? (
         <div className="space-y-3" data-testid="fuel-expense-mapping-tab">
+          {/* Locked named section (verify-architectural-design — PageHeader|h3 patterns only). */}
+          <h3 className="text-xs font-semibold text-gray-900">Expense mapping</h3>
           {/* FUEL-2: read-only coverage check surfaces unmapped fuel categories (verify-only, no posting). */}
           <FuelGlMappingCoverage companyId={companyId} />
           {/* ROUND 443.250 Expense mapping V3 — same Accounting expense-category-map deep link. */}

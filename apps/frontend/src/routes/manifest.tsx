@@ -4188,6 +4188,16 @@ export const ROUTES = React.Children.toArray(
         <Route path="/reports/audit/deduction-trail" element={<OwnerAdminRoute><AuditDeductionTrailPage /></OwnerAdminRoute>} />
         <Route path="/reports/audit/void-reversal" element={<OwnerAdminRoute><AuditVoidReversalPage /></OwnerAdminRoute>} />
         <Route path="/reports/audit/period-close-history" element={<OwnerAdminRoute><AuditPeriodCloseHistoryPage /></OwnerAdminRoute>} />
+        {/* Exact /insurance is locked in docs/locked-ui-surface.json (arch-design).
+            Keep /insurance/* for policies/claims/… — same shell, index = InsuranceLanding. */}
+        <Route
+          path="/insurance"
+          element={
+            <ProtectedRoute>
+              <InsuranceModuleShell />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/insurance/*"
           element={

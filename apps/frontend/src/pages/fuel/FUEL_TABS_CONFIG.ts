@@ -18,7 +18,7 @@ export const FUEL_SUBNAV = [
 
 export type FuelTabId = (typeof FUEL_SUBNAV)[number]["id"];
 
-/** ROUND 443.282 — board-exact navy sub-nav (Fuel.dc.html, 7 tabs). */
+/** ROUND 443.282 / 443.289 — board navy sub-nav; Rule 07 keeps Planner settings + Expense mapping reachable. */
 export const FUEL_BOARD_SUBNAV = [
   { id: "home", label: "Home" },
   { id: "history", label: "Fills" },
@@ -27,17 +27,17 @@ export const FUEL_BOARD_SUBNAV = [
   { id: "questions", label: "Questions" },
   { id: "integrity", label: "Reconciliation" },
   { id: "settings", label: "Settings" },
+  { id: "expense_mapping", label: "Expense mapping" },
 ] as const satisfies ReadonlyArray<{ id: FuelTabId; label: string }>;
 
 export const FUEL_BOARD_SUBTITLE = "Fills, cards and attribution to loads";
 
 export const FUEL_HOME_QUICK_JUMP_COUNT = FUEL_SUBNAV.length;
 
-/** Full module tabs not on the 443.282 board strip — RelatedModuleLinks only. */
+/** Full module tabs not on the board strip — RelatedModuleLinks only. */
 export const FUEL_OFF_BOARD_TAB_IDS: FuelTabId[] = [
   "planner",
   "relay_inbox",
-  "expense_mapping",
   "loves_prices",
   "compliance",
   "relay_unmatched",
