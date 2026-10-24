@@ -135,11 +135,11 @@ export function ReportsHomePage() {
       {companyId && (
         <div className="flex gap-3">
           <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs">
-            <span className="text-[#6B7280]">Scheduled </span>
+            <span className="text-[#6B7280]">{"Scheduled "}</span>
             <span className="font-semibold tabular-nums">{kpiReady ? String(kpiQuery.data?.scheduled) : "—"}</span>
           </div>
           <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs">
-            <span className="text-[#6B7280]">Run last 7d </span>
+            <span className="text-[#6B7280]">{"Run last 7d "}</span>
             <span className="font-semibold tabular-nums">{kpiReady ? String(kpiQuery.data?.run_last_7d) : "—"}</span>
           </div>
         </div>
