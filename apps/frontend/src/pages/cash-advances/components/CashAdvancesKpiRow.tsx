@@ -4,7 +4,8 @@ import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Panel } from "../../../components/v3/V3Panel";
 import { entityLabel } from "../../../lib/entity-label";
-import { formatUsdCents, formatUsdTable, QBO_MONEY_CELL_CLASS } from "../../../lib/money";
+import { formatUsdTable } from "../../../lib/money";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatDisplayName } from "../../../components/v3/formatDisplayName";
 
 type Props = {
@@ -224,8 +225,11 @@ export function CashAdvancesKpiRow({
                           />
                         </td>
                         <td style={tdStyle}>{formatAsked(row.submitted_at)}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }} className={QBO_MONEY_CELL_CLASS}>
-                          {Number.isFinite(cents) ? formatUsdCents(cents) : "—"}
+                        <td style={{ ...tdStyle, textAlign: "right" }}>
+                          <MoneyCell
+                            cents={Number.isFinite(cents) ? cents : null}
+                            drill={{ entity: { kind: "cash_advance_request", id } }}
+                          />
                         </td>
                         <td style={tdStyle}>{policyLabel(row)}</td>
                         <td style={tdStyle}>
@@ -334,11 +338,19 @@ export function CashAdvancesKpiRow({
                         </td>
                         <td style={tdStyle}>{formatPaid(row.disbursed_at ?? row.created_at)}</td>
                         <td style={tdStyle}>{labelMethod(row.disbursement_method)}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }} className={QBO_MONEY_CELL_CLASS}>
-                          {formatUsdTable(Number(row.amount ?? 0))}
+                        <td style={{ ...tdStyle, textAlign: "right" }}>
+                          <MoneyCell
+                            cents={Math.round(Number(row.amount ?? 0) * 100)}
+                            format={(c) => formatUsdTable(c / 100)}
+                            drill={{ entity: { kind: "cash_advance", id } }}
+                          />
                         </td>
-                        <td style={{ ...tdStyle, textAlign: "right" }} className={QBO_MONEY_CELL_CLASS}>
-                          {formatUsdTable(Number(row.outstanding_balance ?? 0))}
+                        <td style={{ ...tdStyle, textAlign: "right" }}>
+                          <MoneyCell
+                            cents={Math.round(Number(row.outstanding_balance ?? 0) * 100)}
+                            format={(c) => formatUsdTable(c / 100)}
+                            drill={{ entity: { kind: "cash_advance", id } }}
+                          />
                         </td>
                         <td style={tdStyle}>
                           {row.load_id || loadLabel ? (

@@ -24,9 +24,9 @@ import { V3Panel } from "../../../components/v3/V3Panel";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
-import { QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { BANKING_TAB_PATH } from "../../../router/route-manifest";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatUsdCents } from "../../../utils/qboFormat";
 
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
@@ -495,14 +495,23 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
                   <td style={tdStyle}>
                     <EntityLink kind="bank_account" id={alert.bank_account_id} label={label} />
                   </td>
-                  <td className={QBO_MONEY_CELL_CLASS} style={{ ...tdStyle, textAlign: "right" }}>
-                    {formatUsdCents(bank)}
+                  <td style={{ ...tdStyle, textAlign: "right" }}>
+                    <MoneyCell
+                      cents={bank}
+                      drill={{ entity: { kind: "bank_account", id: alert.bank_account_id } }}
+                    />
                   </td>
-                  <td className={QBO_MONEY_CELL_CLASS} style={{ ...tdStyle, textAlign: "right" }}>
-                    {formatUsdCents(book)}
+                  <td style={{ ...tdStyle, textAlign: "right" }}>
+                    <MoneyCell
+                      cents={book}
+                      drill={{ entity: { kind: "bank_account", id: alert.bank_account_id } }}
+                    />
                   </td>
-                  <td className={QBO_MONEY_CELL_CLASS} style={{ ...tdStyle, textAlign: "right" }}>
-                    {diff < 0 ? `−${formatUsdCents(Math.abs(diff))}` : formatUsdCents(diff)}
+                  <td style={{ ...tdStyle, textAlign: "right" }}>
+                    <MoneyCell
+                      cents={diff}
+                      drill={{ entity: { kind: "bank_account", id: alert.bank_account_id } }}
+                    />
                   </td>
                   <td style={{ ...tdStyle, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
                     {daysOpen(alert.detected_at)}
@@ -569,8 +578,12 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
                       accountName
                     )}
                   </td>
-                  <td className={QBO_MONEY_CELL_CLASS} style={{ ...tdStyle, textAlign: "right" }}>
-                    {formatSignedCentsClean(Number(tx.amount_cents), Boolean(tx.is_credit))}
+                  <td style={{ ...tdStyle, textAlign: "right" }}>
+                    <MoneyCell
+                      cents={Number(tx.amount_cents)}
+                      format={(c) => formatSignedCentsClean(c, Boolean(tx.is_credit))}
+                      drill={{ entity: { kind: "bank_transaction", id: tx.id } }}
+                    />
                   </td>
                   <td style={tdStyle}>
                     <LinkedToCell tx={tx} accountIsRelay={isRelay} />

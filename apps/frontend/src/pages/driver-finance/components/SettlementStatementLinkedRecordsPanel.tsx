@@ -2,9 +2,9 @@ import type { CSSProperties, ReactNode } from "react";
 import type { CompanySettlementReport } from "../../../api/accounting";
 import type { TourReadout } from "../../../api/tourReadout";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { V3Panel } from "../../../components/v3/V3Panel";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
-import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { openCanonicalDocument } from "../../../lib/openPrintableDocument";
 
@@ -151,8 +151,11 @@ export function SettlementStatementLinkedRecordsPanel({
           </tr>
           <tr>
             <td style={td}>{L.rowAdvances}</td>
-            <td style={tdRight} className={QBO_MONEY_CELL_CLASS}>
-              {recoveriesCents > 0 ? formatUsdCents(recoveriesCents) : "—"}
+            <td style={tdRight}>
+              <MoneyCell
+                cents={recoveriesCents > 0 ? recoveriesCents : null}
+                drill={{ entity: { kind: "settlement", id: settlementId } }}
+              />
             </td>
           </tr>
           <tr>

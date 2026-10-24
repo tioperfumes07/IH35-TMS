@@ -5,9 +5,10 @@
  */
 import type { CSSProperties, ReactNode } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { V3Panel } from "../../../components/v3/V3Panel";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
-import { formatUsd, formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../../lib/money";
+import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { openCanonicalDocument } from "../../../lib/openPrintableDocument";
 import type { TourReadout } from "../../../api/tourReadout";
@@ -52,20 +53,6 @@ const td: CSSProperties = {
 
 const tdRight: CSSProperties = { ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" };
 const thRight: CSSProperties = { ...th, textAlign: "right" };
-
-function MoneyTd({
-  children,
-  style,
-}: {
-  children: ReactNode;
-  style?: CSSProperties;
-}) {
-  return (
-    <td className={QBO_MONEY_CELL_CLASS} style={{ ...tdRight, ...style }}>
-      {children}
-    </td>
-  );
-}
 
 function laneLabel(row: StatementEarningsRow): string {
   const o = [row.origin_city, row.origin_state].filter(Boolean).join(", ");
@@ -153,6 +140,40 @@ export function SettlementStatementBoardPanels({
   const hasSignedPdf = Boolean(pdfPath) || Boolean(settlementDisplayId);
 
   const legs = readout?.legs ?? [];
+  const dollarsAsCentsFormat = (c: number) => formatUsd(c / 100);
+  const signedMinusCents = (c: number) => (c > 0 ? `−${formatUsdCents(c)}` : formatUsdCents(0));
+  const signedMinusDollars = (c: number) => (c > 0 ? `−${formatUsd(c / 100)}` : formatUsd(0));
+  const signedPlusDollars = (c: number) => (c > 0 ? `+${formatUsd(c / 100)}` : formatUsd(0));
+
+  function MoneyTd({
+    cents,
+    style,
+    format,
+    loadId,
+  }: {
+    cents: number | null | undefined;
+    style?: CSSProperties;
+    format?: (c: number) => string;
+    loadId?: string | null;
+  }) {
+    return (
+      <td style={{ ...tdRight, ...style }}>
+        {loadId ? (
+          <MoneyCell
+            cents={cents}
+            format={format}
+            drill={{ entity: { kind: "load", id: loadId } }}
+          />
+        ) : (
+          <MoneyCell
+            cents={cents}
+            format={format}
+            drill={{ entity: { kind: "settlement", id: settlementId } }}
+          />
+        )}
+      </td>
+    );
+  }
 
   return (
     <div
@@ -195,7 +216,11 @@ export function SettlementStatementBoardPanels({
                   <td style={{ ...td, whiteSpace: "normal", maxWidth: 220 }}>{laneLabel(row)}</td>
                   <td style={tdRight}>{fmtMiles(row.miles)}</td>
                   <td style={tdRight}>{fmtRate(row.rate)}</td>
-                  <MoneyTd>{formatUsd(row.amount)}</MoneyTd>
+                  <MoneyTd
+                    cents={Math.round(row.amount * 100)}
+                    format={dollarsAsCentsFormat}
+                    loadId={row.load_id}
+                  />
                 </tr>
               ))
             )}
@@ -205,7 +230,11 @@ export function SettlementStatementBoardPanels({
               </td>
               <td style={{ ...tdRight, fontWeight: 700, borderBottom: "none" }}>{fmtMiles(grossMiles)}</td>
               <td style={{ ...tdRight, borderBottom: "none" }}>{""}</td>
-              <MoneyTd style={{ fontWeight: 700, borderBottom: "none" }}>{formatUsd(grossPayDollars)}</MoneyTd>
+              <MoneyTd
+                cents={Math.round(grossPayDollars * 100)}
+                format={dollarsAsCentsFormat}
+                style={{ fontWeight: 700, borderBottom: "none" }}
+              />
             </tr>
           </tbody>
         </table>
@@ -222,19 +251,23 @@ export function SettlementStatementBoardPanels({
           <tbody>
             <tr>
               <td style={td}>Deductions (escrow, advances, fines)</td>
-              <MoneyTd style={{ color: deductionTotalDollars > 0 ? V3.red : V3.ink }}>
-                {deductionTotalDollars > 0 ? `−${formatUsd(deductionTotalDollars)}` : formatUsd(0)}
-              </MoneyTd>
+              <MoneyTd
+                cents={Math.round(deductionTotalDollars * 100)}
+                format={signedMinusDollars}
+                style={{ color: deductionTotalDollars > 0 ? V3.red : V3.ink }}
+              />
             </tr>
             <tr>
               <td style={td}>Reimbursements (tolls, scales)</td>
-              <MoneyTd style={{ color: reimbursementTotalDollars > 0 ? V3.green : V3.ink }}>
-                {reimbursementTotalDollars > 0 ? `+${formatUsd(reimbursementTotalDollars)}` : formatUsd(0)}
-              </MoneyTd>
+              <MoneyTd
+                cents={Math.round(reimbursementTotalDollars * 100)}
+                format={signedPlusDollars}
+                style={{ color: reimbursementTotalDollars > 0 ? V3.green : V3.ink }}
+              />
             </tr>
             <tr>
               <td style={{ ...td, fontWeight: 700, borderBottom: "none" }}>Driver net</td>
-              <MoneyTd style={{ fontWeight: 700, borderBottom: "none" }}>{formatUsdCents(driverNetCents)}</MoneyTd>
+              <MoneyTd cents={driverNetCents} style={{ fontWeight: 700, borderBottom: "none" }} />
             </tr>
           </tbody>
         </table>
@@ -255,23 +288,27 @@ export function SettlementStatementBoardPanels({
           <tbody>
             <tr>
               <td style={td}>Revenue</td>
-              <MoneyTd>{formatUsdCents(revenueCents)}</MoneyTd>
+              <MoneyTd cents={revenueCents} />
             </tr>
             <tr>
               <td style={td}>Costs (fuel, tolls, other)</td>
-              <MoneyTd style={{ color: costsCents > 0 ? V3.red : V3.ink }}>
-                {costsCents > 0 ? `−${formatUsdCents(costsCents)}` : formatUsdCents(0)}
-              </MoneyTd>
+              <MoneyTd
+                cents={costsCents}
+                format={signedMinusCents}
+                style={{ color: costsCents > 0 ? V3.red : V3.ink }}
+              />
             </tr>
             <tr>
               <td style={td}>Driver pay</td>
-              <MoneyTd style={{ color: driverPayCents > 0 ? V3.red : V3.ink }}>
-                {driverPayCents > 0 ? `−${formatUsdCents(driverPayCents)}` : formatUsdCents(0)}
-              </MoneyTd>
+              <MoneyTd
+                cents={driverPayCents}
+                format={signedMinusCents}
+                style={{ color: driverPayCents > 0 ? V3.red : V3.ink }}
+              />
             </tr>
             <tr>
               <td style={{ ...td, fontWeight: 700, borderBottom: "none" }}>Margin</td>
-              <MoneyTd style={{ fontWeight: 700, borderBottom: "none" }}>{formatUsdCents(marginCents)}</MoneyTd>
+              <MoneyTd cents={marginCents} style={{ fontWeight: 700, borderBottom: "none" }} />
             </tr>
           </tbody>
         </table>
@@ -348,7 +385,7 @@ export function SettlementStatementBoardPanels({
             </tr>
             <tr>
               <td style={td}>Advances recovered</td>
-              <MoneyTd>{recoveriesCents > 0 ? formatUsdCents(recoveriesCents) : "—"}</MoneyTd>
+              <MoneyTd cents={recoveriesCents > 0 ? recoveriesCents : null} />
             </tr>
             <tr>
               <td style={td}>Bank payment</td>

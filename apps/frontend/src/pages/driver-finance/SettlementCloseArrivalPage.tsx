@@ -32,8 +32,9 @@ import { V3Panel } from "../../components/v3/V3Panel";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { V3 } from "../../design/v3-tokens";
-import { formatUsd, QBO_MONEY_CELL_CLASS } from "../../lib/money";
+import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
@@ -466,18 +467,32 @@ export function SettlementCloseArrivalPage() {
         key: "miles",
         label: "Miles (doc)",
         render: (row) => (
-          <span className={`${QBO_MONEY_CELL_CLASS} ${row.is_gross ? "font-bold" : ""}`}>{row.miles_doc}</span>
+          <span className={row.is_gross ? "font-bold tabular-nums" : "tabular-nums"} data-quantity="miles">
+            {row.miles_doc}
+          </span>
         ),
       },
       {
         key: "pay",
         label: "Pay",
-        render: (row) => (
-          <span className={`${QBO_MONEY_CELL_CLASS} ${row.is_gross ? "font-bold" : ""}`}>{formatUsd(row.pay)}</span>
-        ),
+        render: (row) =>
+          row.is_gross ? (
+            <MoneyCell
+              cents={Math.round(row.pay * 100)}
+              format={(c) => formatUsd(c / 100)}
+              className="font-bold"
+              drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+            />
+          ) : (
+            <MoneyCell
+              cents={Math.round(row.pay * 100)}
+              format={(c) => formatUsd(c / 100)}
+              drill={{ entity: { kind: "load", id: row.load_id } }}
+            />
+          ),
       },
     ],
-    [],
+    [settlement?.id],
   );
 
   const deductionRows = useMemo<LineBoardRow[]>(
@@ -514,10 +529,16 @@ export function SettlementCloseArrivalPage() {
       {
         key: "amount",
         label: "Amount",
-        render: (row) => <span className={QBO_MONEY_CELL_CLASS}>-{formatUsd(row.amount)}</span>,
+        render: (row) => (
+          <MoneyCell
+            cents={-Math.round(Math.abs(row.amount) * 100)}
+            format={(c) => formatUsd(c / 100)}
+            drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+          />
+        ),
       },
     ],
-    [],
+    [settlement?.id],
   );
 
   const resultLines = [
@@ -638,7 +659,11 @@ export function SettlementCloseArrivalPage() {
           />
           <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2 text-xs text-gray-600">
             <span>Deductions total</span>
-            <span className={QBO_MONEY_CELL_CLASS}>-{formatUsd(Math.abs(otherDeductionsTotal))}</span>
+            <MoneyCell
+              cents={-Math.round(Math.abs(otherDeductionsTotal) * 100)}
+              format={(c) => formatUsd(c / 100)}
+              drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+            />
           </div>
         </V3Panel>
       );
@@ -664,7 +689,11 @@ export function SettlementCloseArrivalPage() {
           />
           <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
             <span>Contribution this settlement</span>
-            <span className={QBO_MONEY_CELL_CLASS}>{formatUsd(escrowContributionThisSettlement)}</span>
+            <MoneyCell
+              cents={Math.round(escrowContributionThisSettlement * 100)}
+              format={(c) => formatUsd(c / 100)}
+              drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+            />
           </div>
           <div className="mt-2">
             <div className="h-2 w-full rounded-sm bg-gray-200">
@@ -716,7 +745,11 @@ export function SettlementCloseArrivalPage() {
           />
           <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
             <span>Total active debt (all liabilities)</span>
-            <span className={QBO_MONEY_CELL_CLASS}>{formatUsd(debtQuery.data?.total_active_debt ?? 0)}</span>
+            <MoneyCell
+              cents={Math.round(Number(debtQuery.data?.total_active_debt ?? 0) * 100)}
+              format={(c) => formatUsd(c / 100)}
+              drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+            />
           </div>
         </V3Panel>
       );
@@ -729,12 +762,21 @@ export function SettlementCloseArrivalPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs font-semibold text-gray-900">
             <span>NET PAY</span>
-            <span className={QBO_MONEY_CELL_CLASS}>{formatUsd(netPay)}</span>
+            <MoneyCell
+              cents={Math.round(netPay * 100)}
+              format={(c) => formatUsd(c / 100)}
+              className="font-semibold"
+              drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+            />
           </div>
           {reimbursements !== 0 ? (
             <div className="flex items-center justify-between text-xs text-gray-700">
               <span>Reimbursements</span>
-              <span className={QBO_MONEY_CELL_CLASS}>{formatUsd(reimbursements)}</span>
+              <MoneyCell
+                cents={Math.round(reimbursements * 100)}
+                format={(c) => formatUsd(c / 100)}
+                drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+              />
             </div>
           ) : null}
           <div>
@@ -926,9 +968,11 @@ export function SettlementCloseArrivalPage() {
                     style={{ borderBottom: `1px solid ${V3.borderSoft}` }}
                   >
                     <span>{label}</span>
-                    <span className={`${QBO_MONEY_CELL_CLASS} text-right`}>
-                      {settlement ? formatUsd(amount) : "—"}
-                    </span>
+                    <MoneyCell
+                      cents={settlement ? Math.round(Number(amount) * 100) : null}
+                      format={(c) => formatUsd(c / 100)}
+                      drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+                    />
                   </div>
                 ))}
               </div>
