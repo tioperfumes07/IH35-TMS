@@ -16968,7 +16968,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1083,
+  "total_claimed": 1088,
   "18729": {
     "claimed_by": "CODEX",
     "claimed_at": "2026-10-23",
@@ -16978,5 +16978,30 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-24",
     "purpose": "CC-2 LEAD 443.288-D row 207: verify-expense-child-follows-parent (live) — no CARD-DISC/CARD-DIFF child whose load_id differs from its parent receipt's load_id; ceiling 0"
+  },
+  "18733": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-maintenance-wo-table-all-sortable (register row 154)"
+  },
+  "18737": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-maintenance-in-shop-bays (register row 59)"
+  },
+  "18741": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-maintenance-money-two-decimals (register row 152)"
+  },
+  "18745": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-settlements-subnav-stays-in-module (rows 125-133)"
+  },
+  "18749": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-bank-match-combinations (LEAD 443.304)"
   }
 }
