@@ -221,13 +221,12 @@ export async function restateCreatorDriverBillFromSignedLoad(
   const payMiles = creatorPayMiles(load);
   const loadedCents = creatorLoadedPayCents(load);
   if (payMiles == null || loadedCents == null) throw new SettlementCreatorError("driver_pay_rate_missing", `Load ${load.load_number}: driver pay needs the short miles and the driver's pay rate per mile.`);
-  const hasEmpty = creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0;
   await restateOpenDriverBillToSignedPay(client, {
     companyId: draft.operating_company_id, loadId, loadNumber: load.load_number, actorUserId,
     milesBasis: payMiles, rateCents: Number(load.line_haul_rate_cents), loadedCents,
-    emptyMiles: hasEmpty ? Number(load.empty_miles) : null,
-    emptyRateCents: hasEmpty ? creatorEmptyRateCents(load) : null,
-    emptyCents: hasEmpty ? creatorEmptyPayCents(load) : 0,
+    emptyMiles: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? Number(load.empty_miles) : null,
+    emptyRateCents: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? creatorEmptyRateCents(load) : null,
+    emptyCents: creatorEmptyRateCents(load) != null && Number(load.empty_miles ?? 0) > 0 ? creatorEmptyPayCents(load) : 0,
     settlementNo: draft.settlement_no,
   });
 }
