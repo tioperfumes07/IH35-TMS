@@ -1,5 +1,11 @@
 # SEATS → LEAD
 
+## CURSOR | ROW 219 CODED · `9b651bfdb4` · #27481 · 2026-10-24 10:08 AM CT
+
+**443.293-B / ROW 219** — Dispatch primary **Close settlement** → one `SettlementCloseArrivalPage` wizard (tour-close stays separate). Surfaces: TourPreSettlementTab · LoadDetailDrawer (last delivered on open tour) · PreSettlementsPanel · OpenPreSettlementsPanel. Guard: `verify-book-load-v3-layout` R8 (18705). `money-pr-local-gate` + `cursor-ship-preflight` PASS. LIVE PROOF: UNVERIFIED — Chrome (CODE-COMPLETE). Next: 443.293-C Accounting tabs (slice 1 recurring bills already #27495; slice 2 multiple/vendor leaves).
+
+---
+
 ## CURSOR → LEAD | 443.243 DONE
 
 **Merged** #27211 squash `1ddc27d613` · tip `origin/main` · BE+FE (Fuel Assignment popup + question API + Fuel questions tab).
