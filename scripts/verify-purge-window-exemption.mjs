@@ -107,7 +107,7 @@ const expected = [...PURGE_WINDOW_GUARDS].sort();
 // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
 // LST-F423 (owner order 2026-10-06): thirteen -> seventeen — four more MEASURED-EMPTY guards.
 // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
-if (PURGE_WINDOW_GUARDS.length !== 17) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name seventeen (eight empty-table + nine measured-empty; verify-no-empty-zero-settlement dropped after 443.292-F static rewrite)`);
+if (PURGE_WINDOW_GUARDS.length !== 18) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name eighteen (nine empty-table + nine measured-empty; verify-no-empty-zero-settlement re-allowlisted after 443.292-F2 live-arm restore)`);
 for (const g of MEASURED_EMPTY_GUARDS) {
   const p = path.join(ROOT, "scripts", `${g}.mjs`);
   failures.push(...auditMeasuredEmptySource(g, fs.existsSync(p) ? fs.readFileSync(p, "utf8") : ""));
@@ -160,6 +160,7 @@ if (fs.existsSync(PURGE_STATE_PATH)) {
 const LIVE_ARMS = [
   ["verify-alwaystrack-parity", "mdata.loads"],
   ["verify-control-totals", "driver_finance.driver_settlements"],
+  ["verify-no-empty-zero-settlement", "driver_finance.driver_settlements"],
 ];
 for (const [arm, table] of LIVE_ARMS) {
   const src = fs.readFileSync(path.join(ROOT, "scripts", `${arm}.mjs`), "utf8");

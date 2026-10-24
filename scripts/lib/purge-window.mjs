@@ -38,7 +38,8 @@ export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-driver-bill-settlement-link",
   "verify-load-to-cash-chain",
   "verify-fuel-transactions-per-load",
-  // verify-no-empty-zero-settlement REMOVED (443.292-F, 2026-10-23): guard is static source-only (close engine + tour readout); no DB empty-table arm.
+  // 443.292-F2 (#27442) restored the live DB arm — re-allowlisted so purgeLiveRowCondition / exitIfEmptyByPurge stay legal.
+  "verify-no-empty-zero-settlement",
   "verify-control-totals",
   // verify-void-is-whole REMOVED (Lead ROUND 347, 2026-10-03): it measures documents that exist (ledger vs header), not
   // an empty table, and under the open-ended seeding freeze it reported EMPTY BY PURGE indefinitely over real findings.
