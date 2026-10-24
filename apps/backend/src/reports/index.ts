@@ -16,6 +16,7 @@ import { registerReportsArAgingRoutes } from "./ar-aging.routes.js";
 import { registerDispatchMarginRoutes } from "./dispatch-margin.routes.js";
 import { registerLoadsReportRoutes } from "./loads-report.routes.js";
 import { registerLoadsHistoryRoutes } from "./loads-history.routes.js";
+import { registerCustomerReportRoutes } from "./customer-report.routes.js";
 import { registerLoadsSummaryRoutes } from "./loads-summary.routes.js";
 import { registerIftaStatusRoutes } from "./ifta-status.routes.js";
 import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.routes.js";
@@ -48,6 +49,7 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerDispatchMarginRoutes(app);
   await registerLoadsReportRoutes(app);
   await registerLoadsHistoryRoutes(app);
+  await registerCustomerReportRoutes(app);
   await registerLoadsSummaryRoutes(app);
   await registerFuelReconciliationRoutes(app);
   await registerFuelSavingsRoutes(app);
