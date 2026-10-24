@@ -1,6 +1,7 @@
 import { iDeductRecoveryLinkTies } from "./invariants/i-deduct-recovery-link-ties.js";
 import { i2DeliveredLoadInvoiced } from "./invariants/i2-delivered-load-invoiced.js";
 import { i8DispatchedLoadComplete } from "./invariants/i8-dispatched-load-complete.js";
+import { i9DispatchDrift } from "./invariants/i9-dispatch-drift.js";
 import type { Invariant } from "./types.js";
 
 /** Every invariant the reconciler asserts. An invariant lands here with its guard ceiling in
@@ -8,5 +9,6 @@ import type { Invariant } from "./types.js";
 export const RECONCILER_INVARIANTS: readonly Invariant[] = [
   i2DeliveredLoadInvoiced,
   i8DispatchedLoadComplete,
+  i9DispatchDrift,
   iDeductRecoveryLinkTies,
 ];

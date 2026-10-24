@@ -173,8 +173,8 @@ describe("I2 — a delivered load has an issued invoice", () => {
 });
 
 describe("runReconciler", () => {
-  it("registers I2, I8 and I-DEDUCT", () => {
-    expect(RECONCILER_INVARIANTS.map((i) => i.id)).toEqual(["I2", "I8", "I-DEDUCT"]);
+  it("registers I2, I8, I9 and I-DEDUCT", () => {
+    expect(RECONCILER_INVARIANTS.map((i) => i.id)).toEqual(["I2", "I8", "I9", "I-DEDUCT"]);
   });
 
   it("records a failing invariant as an error, rolls back its savepoint, and still runs the next one", async () => {
