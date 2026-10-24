@@ -15004,6 +15004,11 @@
     "claimed_at": "2026-10-24",
     "purpose": "verify-bank-match-combinations (LEAD 443.304)"
   },
+  "18757": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-driver-pay-accrual-sweep-wired (ROW-73 443.279-CC1)"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -17008,5 +17013,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1083
+  "total_claimed": 1088
 }
