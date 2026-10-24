@@ -317,7 +317,7 @@ const DEFAULT_LINK_CLASSNAME =
  * "transfer" → /banking/transfers?transfer_id= (TransfersListPage highlights row)
  * "work_order" → /maintenance/work-orders/:id
  * "bill" → /accounting/bills/:id · "expense" → /accounting/expenses/:id · "matter" → /legal/matters/:id
- * "lawsuit" → /legal/lawsuits?lawsuit_id= (LawsuitsTab selects+highlights the row; moved from Insurance 443.332)
+ * "lawsuit" → /legal/lawsuits?insurance_lawsuit_id= (the Lawsuits board = legal matters locked to type lawsuit, filtered to the matters linked to that insurance lawsuit; 443.332 / 443.334)
  * "bank_transaction" → /banking/transactions?txn_id= (BankingHome expands row)
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
@@ -427,7 +427,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "claim":
       return `/insurance/claims?claim_id=${id}`;
     case "lawsuit":
-      return `/legal/lawsuits?lawsuit_id=${id}`;
+      return `/legal/lawsuits?insurance_lawsuit_id=${id}`;
     case "matter":
       return `/legal/matters/${id}`;
     case "account":
