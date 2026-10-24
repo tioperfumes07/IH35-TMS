@@ -103,11 +103,16 @@ function analyze(src) {
   if (!/fmtMoneyDollars/.test(board) || !/formatUsdCents/.test(board)) {
     errors.push(`${BOARD}: ROUND 443.282 — money must format via fmtMoneyDollars / formatUsdCents`);
   }
-  if (!/function fmtMoneyDollars\(n: number \| string/.test(board) || !/typeof n === "string" \? Number\(n\)/.test(board)) {
+  if (!/function fmtMoneyDollars\(n: number \| string/.test(board) || !/const v = Number\(n\)/.test(board) || !/Number\.isFinite\(v\)/.test(board)) {
     errors.push(`${BOARD}: register #98 — fmtMoneyDollars must coerce string NUMERIC from Postgres before toLocaleString`);
   }
-  if (!/trueCostFeeCents/.test(board) || !/mtdFactorFeeFromReportCents/.test(board)) {
-    errors.push(`${BOARD}: register #98 — True cost must fall back to chargebacks report factor fees when MTD purchase fees are empty`);
+  // register #98 (Lead 443.300): True cost comes from ONE source — the month's purchases: (fees + wire fees) ÷ gross
+  // purchased, null ("—") when nothing was purchased. Mixing report fees over the advances summary is two sources.
+  if (!/trueCostPercent\(mtdFeeCents, mtdWireFeeCents, mtdGrossCents\)/.test(board) || !/\(feeCents \+ wireFeeCents\) \/ grossCents/.test(board)) {
+    errors.push(`${BOARD}: register #98 — True cost must be (fees + wire fees) ÷ gross from the same month's purchases (one source)`);
+  }
+  if (/mtdFactorFeeFromReportCents|mtd_advanced_total\) \* 100/.test(board)) {
+    errors.push(`${BOARD}: register #98 — True cost must not mix chargebacks-report fees or the advances summary into the ratio`);
   }
 
   // r315 / r326 keepers still mounted on home.
@@ -148,6 +153,8 @@ if (process.argv.includes("--selftest")) {
     ["board drops summary engine", withField("board", (s) => s.replace(/getFactoringSummary/g, "getGone"))],
     ["home drops cash-flow panel", withField("home", (s) => s.replace(/<FactoringCashFlowPanel/g, "<GoneCash"))],
     ["board reintroduces V3Panel", withField("board", (s) => s.replace(/<FactoringBoardCard/g, "<V3Panel"))],
+    ["board True cost reverts to two sources", withField("board", (s) => s.replace(/trueCostPercent\(mtdFeeCents, mtdWireFeeCents, mtdGrossCents\)/, "trueCostPercent(mtdFactorFeeFromReportCents, 0, mtdAdvancedCents)"))],
+    ["board fmtMoneyDollars stops coercing", withField("board", (s) => s.replace(/const v = Number\(n\)/, "const v = n as number"))],
     ["board drops measured amber rail", withField("board", (s) => s.replace(/borderLeft:\s*"3px solid #B45309"/g, 'borderLeft: "0"'))],
   ];
   let caught = 0;

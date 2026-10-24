@@ -134,11 +134,19 @@ function cents(v: number | string | null | undefined): number {
   return Number(v ?? 0);
 }
 
-function fmtMoneyDollars(n: number | string | null | undefined): string {
+/** Register row 98: the summary API returns NUMERIC as text ("175650.000000000000"); String#toLocaleString returns the
+ *  text unchanged, so the KPI printed raw digits. Coerce first; a non-number is honest "—". */
+export function fmtMoneyDollars(n: number | string | null | undefined): string {
   if (n == null || n === "") return "—";
-  const v = typeof n === "string" ? Number(n) : n;
-  if (Number.isNaN(v)) return "—";
+  const v = Number(n);
+  if (!Number.isFinite(v)) return "—";
   return v.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+/** Factoring cost of the month's purchases, percent of gross purchased; null when nothing was purchased. */
+export function trueCostPercent(feeCents: number, wireFeeCents: number, grossCents: number): number | null {
+  if (!(grossCents > 0)) return null;
+  return ((feeCents + wireFeeCents) / grossCents) * 100;
 }
 
 function mmDd(iso: string | null | undefined): string {
@@ -304,28 +312,11 @@ export function FactoringHomeBoard({
   const mtdPurchases = purchasesQuery.data?.purchases ?? [];
   const mtdFeeCents = useMemo(() => mtdPurchases.reduce((s, p) => s + cents(p.fee_cents), 0), [mtdPurchases]);
   const mtdWireFeeCents = useMemo(() => mtdPurchases.reduce((s, p) => s + cents(p.wire_fee_cents), 0), [mtdPurchases]);
-  const mtdFactorFeeFromReportCents = useMemo(() => {
-    const monthly = feesQuery.data?.monthly_summary?.[0];
-    if (!monthly) return 0;
-    return Math.round(Number(monthly.factor_fee_total ?? 0) * 100);
-  }, [feesQuery.data]);
-  const mtdAdvancedCents = useMemo(() => {
-    // summary.mtd_advanced_total is dollars (views.factoring_summary); purchases advance_cents is cents.
-    if (summary && !summaryQuery.isError && summary.mtd_advanced_total != null) {
-      return Math.round(Number(summary.mtd_advanced_total) * 100);
-    }
-    return mtdPurchases.reduce((s, p) => s + cents(p.advance_cents), 0);
-  }, [summary, summaryQuery.isError, mtdPurchases]);
-
-  const mtdPurchaseFeesCents = mtdFeeCents + mtdWireFeeCents;
-  const trueCostFeeCents =
-    mtdPurchaseFeesCents > 0 ? mtdPurchaseFeesCents : mtdFactorFeeFromReportCents;
-
-  const trueCostPct = useMemo(() => {
-    if (mtdAdvancedCents <= 0) return null;
-    if (trueCostFeeCents <= 0) return null;
-    return (trueCostFeeCents / mtdAdvancedCents) * 100;
-  }, [mtdAdvancedCents, trueCostFeeCents]);
+  // Register row 98: True cost = (fees + wire fees) ÷ gross purchased, ALL from the same month's purchases. Before, the
+  // denominator came from the advances summary (views.factoring_summary) while the fees came from purchases — two sources,
+  // so the KPI read 0.00% while fees were $2,634.76.
+  const mtdGrossCents = useMemo(() => mtdPurchases.reduce((s, p) => s + cents(p.gross_cents), 0), [mtdPurchases]);
+  const trueCostPct = useMemo(() => trueCostPercent(mtdFeeCents, mtdWireFeeCents, mtdGrossCents), [mtdGrossCents, mtdFeeCents, mtdWireFeeCents]);
 
   const chargebacksFees = useMemo(() => {
     const monthly = feesQuery.data?.monthly_summary?.[0];
