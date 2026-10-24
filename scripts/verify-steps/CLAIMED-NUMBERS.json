@@ -16973,5 +16973,10 @@
     "claimed_by": "CODEX",
     "claimed_at": "2026-10-23",
     "purpose": "verify-board-page-no-legacy-sections"
+  },
+  "18683": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-24",
+    "purpose": "CC-2 LEAD 443.288-D row 207: verify-expense-child-follows-parent (live) — no CARD-DISC/CARD-DIFF child whose load_id differs from its parent receipt's load_id; ceiling 0"
   }
 }
