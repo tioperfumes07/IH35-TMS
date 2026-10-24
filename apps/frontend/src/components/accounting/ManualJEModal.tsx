@@ -240,7 +240,9 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
               ) : null}
             </div>
             <div className="space-y-1">
-              <div className="grid grid-cols-5 gap-1 px-1.5 text-section-header font-semibold uppercase text-gray-500">
+              {/* LEAD 443.318 (D065): minmax(0,…) tracks — equal 1fr columns could not shrink below the pickers' content, so Class
+                  sat on top of Debit and the row overflowed the drawer. Header and rows share one template. */}
+              <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)] gap-1 px-1.5 text-section-header font-semibold uppercase text-gray-500">
                 <span>Account</span>
                 <span>Class</span>
                 <span>Debit</span>
@@ -248,7 +250,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                 <span>Description</span>
               </div>
               {lines.map((line, idx) => (
-                <div key={idx} className="grid grid-cols-5 gap-1 rounded-sm border border-gray-200 p-1.5">
+                <div key={idx} className="grid grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.6fr)] gap-1 rounded-sm border border-gray-200 p-1.5 [&>*]:min-w-0">
                   <ReferenceSelect
                     value={line.account_id || null}
                     onChange={(next) =>
@@ -284,9 +286,9 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                     ariaLabel="Credit"
                     placeholder="Credit"
                   />
-                  <div className="flex items-center gap-1">
+                  <div className="flex min-w-0 items-center gap-1">
                     <input
-                      className="h-8 flex-1 rounded-sm border border-gray-300 px-2"
+                      className="h-8 min-w-0 flex-1 rounded-sm border border-gray-300 px-2"
                       placeholder="Description"
                       value={line.description}
                       onChange={(e) =>
@@ -295,7 +297,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                     />
                     <button
                       type="button"
-                      className="text-red-700"
+                      className="shrink-0 text-red-700"
                       onClick={() => setLines((prev) => (prev.length <= 2 ? prev : prev.filter((_, i) => i !== idx)))}
                     >
                       Remove
