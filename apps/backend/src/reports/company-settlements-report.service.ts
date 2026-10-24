@@ -96,7 +96,7 @@ export async function getCompanySettlementsReport(
                 COALESCE(SUM(il.amount_cents), 0)::bigint AS revenue_cents
               FROM accounting.invoices inv
               JOIN accounting.invoice_lines il ON il.invoice_id = inv.id
-              WHERE inv.load_id = l.id
+              WHERE inv.source_load_id = l.id
                 AND inv.operating_company_id = $1::uuid
                 AND inv.voided_at IS NULL
                 AND il.soft_deleted_at IS NULL
