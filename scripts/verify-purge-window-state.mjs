@@ -26,7 +26,6 @@ const LABEL = "verify-purge-window-state";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LIVE_ARMS = [
   ["verify-alwaystrack-parity", "mdata.loads"],
-  ["verify-no-empty-zero-settlement", "driver_finance.driver_settlements"],
   ["verify-control-totals", "driver_finance.driver_settlements"],
 ];
 
@@ -37,7 +36,7 @@ export function staticViolations({ readScript, spec, state }) {
   // Lead ruling 2026-10-05: nine -> twelve (three measured-empty guards after AUTH-400).
   // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
   // LST-F423 (owner order 2026-10-06): thirteen -> seventeen — four more measured-empty guards.
-  if (PURGE_WINDOW_GUARDS.length !== 18) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 18 are ruled (nine + four measured-empty, Lead 2026-10-05, + four measured-empty, owner 2026-10-06, + load-costs measured-empty, Lead 2026-10-08)`);
+  if (PURGE_WINDOW_GUARDS.length !== 17) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 17 are ruled (eight empty-table + nine measured-empty; verify-no-empty-zero-settlement dropped after 443.292-F static rewrite)`);
   for (const arm of PURGE_WINDOW_GUARDS) {
     const src = readScript(arm);
     if (src == null) v.push(`${arm}: file missing`);
@@ -178,4 +177,4 @@ if (violations.length > 0) {
   for (const x of violations) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — purge-window state violations: 0 (required 0). Static: ${PURGE_WINDOW_GUARDS.length} arms, 3 on the generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: ${live.counted.join(", ")}; every voided row carries a reason; no dangling reversal link.`);
+console.log(`${LABEL}: PASS — purge-window state violations: 0 (required 0). Static: ${PURGE_WINDOW_GUARDS.length} arms, 2 on the generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: ${live.counted.join(", ")}; every voided row carries a reason; no dangling reversal link.`);
