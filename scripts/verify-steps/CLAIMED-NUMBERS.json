@@ -17023,10 +17023,15 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1091,
+  "total_claimed": 1092,
   "18765": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-24",
     "purpose": "ENG-01 (443.322): settlement close-trip route must call postLoadBookendedSettlementGlAfterClose; verify no closed settlement without posted_at"
+  },
+  "18767": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-load-single-active-linehaul"
   }
 }
