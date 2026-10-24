@@ -17,12 +17,9 @@
 -- ── Backfill: hold rows without load_id ──────────────────────────────────────────────
 -- Match each hold row to the driver_settlement whose posted_at is closest in time.
 -- Uses DISTINCT ON to pick the single nearest settlement per ledger row.
--- (LATERAL inside UPDATE cannot reference the target table alias in Postgres.)
-UPDATE driver_finance.escrow_ledger AS el
-SET
-  load_id       = nearest.first_load_id,
-  settlement_id = nearest.settlement_id
-FROM (
+-- MATERIALIZED forces Postgres to evaluate the CTE before the UPDATE so the source
+-- scan of escrow_ledger (el2) does not conflict with the UPDATE target (el).
+WITH nearest AS MATERIALIZED (
   SELECT DISTINCT ON (el2.id)
     el2.id        AS ledger_id,
     ds.id         AS settlement_id,
@@ -36,7 +33,12 @@ FROM (
   WHERE el2.transaction_type = 'hold'
     AND el2.load_id IS NULL
   ORDER BY el2.id, abs(extract(epoch FROM (el2.created_at - ds.posted_at)))
-) nearest
+)
+UPDATE driver_finance.escrow_ledger el
+SET
+  load_id       = nearest.first_load_id,
+  settlement_id = nearest.settlement_id
+FROM nearest
 WHERE el.id = nearest.ledger_id;
 
 -- ── Backfill: release rows with settlement_id but missing load_id ─────────────────────
