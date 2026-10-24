@@ -104,5 +104,14 @@
   },
   "fuel": {
     "no_load_at_pump": "Sin carga al momento de cargar combustible"
+  },
+  "overrides": {
+    "button": "Autorizar",
+    "title": "Autorizar excepción",
+    "confirmOnly": "¿Confirmar esta autorización?",
+    "reason": "Motivo",
+    "pickReason": "Elija un motivo",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
   }
 }
