@@ -266,18 +266,15 @@ const CHECKS = [
   {
     name: "invoice list destination sends customer_id to producer",
     file: INVOICES_PAGE,
-    // LEAD 443.99 class B (2026-10-12).
-    //   old rule: listInvoices({ customer_id: customerId || undefined }).
-    //   new rule: the ?customer_id= deep link seeds the customer multi-select, and a single selected customer is
-    //             what the producer receives (customer_id: customerParam).
-    //   why: FILTER-MULTI-01 (#22497, 8d2aab421e) made the customer filter multi-select; the deep link still
-    //        reaches the producer's canonical i.customer_id filter.
-    pattern: /useState<string\[\]>\(\(\) => \(customerId \? \[customerId\] : \[\]\)\)[\s\S]*const customerParam = customerFilter\.length === 1 \? customerFilter\[0\] : undefined;[\s\S]{0,1600}listInvoices\(selectedCompanyId!, \{[\s\S]{0,500}customer_id: customerParam,/,
+    // LEAD 443.99 class B / 443.281 (2026-10-12).
+    //   deep link ?customer_id= seeds the multi-select (split ","); every selected UUID reaches the producer
+    //   (join ","); producer uses = ANY(::uuid[]) so multi-customer drills work end-to-end.
+    pattern: /useState<string\[\]>\(\(\) => \(customerId \? customerId\.split\(","\) : \[\]\)\)[\s\S]*const customerParam = customerFilter\.length \? customerFilter\.join\(","\) : undefined;[\s\S]{0,1600}listInvoices\(selectedCompanyId!, \{[\s\S]{0,500}customer_id: customerParam,/,
   },
   {
     name: "invoice producer applies canonical customer filter",
     file: INVOICES_ROUTE,
-    pattern: /if \(q\.customer_id\) \{[\s\S]{0,180}extraWhere\.push\(`i\.customer_id = \$\$\{values\.length\}`\)/,
+    pattern: /if \(q\.customer_id\) \{[\s\S]{0,180}extraWhere\.push\(`i\.customer_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/,
   },
   {
     name: "customer detail source is mounted",
