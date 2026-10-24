@@ -90,3 +90,8 @@ PR #27239 squash `0512ef14cddbafa7de6eeabc2586d5fe152f25d0` · healthz git_sha m
 - GUARD: verify-cash-advances-tabs-url-sync --selftest PASS (8 + V3 KPI + 443.274-C board markers)
 - NEXT: tsc -b + money-pr-local-gate → PR → merge → live deploy id → Settlements-Escrow
 
+
+## 2026-10-23 22:03 CT — SETL-F443288-C MERGED
+
+- **DONE** [#27445](https://github.com/tioperfumes07/IH35-TMS/pull/27445) squash `5f0c13e0af45e1539909d043ab7bf699fa928d0c` — Dispatch `/dispatch/expense-load-confirmations` + Close blocking panel (fail-closed); ROUND 133 auth-gate on tip Claude void/backfill ops.
+- **REMAINING:** Chrome live after deploy; Close unblocks when 443.288-B engine on tip.
