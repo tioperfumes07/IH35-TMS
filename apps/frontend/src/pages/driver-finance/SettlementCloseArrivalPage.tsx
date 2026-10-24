@@ -211,7 +211,8 @@ export function SettlementCloseArrivalPage() {
       listExpenseLoadConfirmations(companyId, {
         status: "proposed",
         settlement_id: String(settlementIdForReadout),
-        limit: 500,
+        // Close gate only needs existence of any proposed row (guard bans limit:500 on this page).
+        limit: 1,
       }),
     enabled: Boolean(companyId) && Boolean(settlementIdForReadout),
     retry: false,
