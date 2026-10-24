@@ -919,5 +919,6 @@
   "verify-wo-time-entry-identity-audit-lifecycle.mjs": "baselined 2026-08-31 \u2014 pre-existing orphan on main; wire later or keep exempt",
   "verify-wo-time-tracking-rate-modal-scope-snapshot.mjs": "baselined 2026-08-31 \u2014 pre-existing orphan on main; wire later or keep exempt",
   "verify-work-order-create-clears-stale-entity-fks.mjs": "baselined 2026-08-31 \u2014 pre-existing orphan on main; wire later or keep exempt",
-  "verify-stops-gps-verified.mjs": "added 2026-10-12 (GPS stop engine PR #26432, FINANCIAL lane) \u2014 static guard not yet wired into verify-steps; CI locked-guards does not run on direct main push so orphan reached main. Wire via CC-1 claim-reserve once a FINANCIAL-lane slot is available; exempt until then."
+  "verify-stops-gps-verified.mjs": "added 2026-10-12 (GPS stop engine PR #26432, FINANCIAL lane) \u2014 static guard not yet wired into verify-steps; CI locked-guards does not run on direct main push so orphan reached main. Wire via CC-1 claim-reserve once a FINANCIAL-lane slot is available; exempt until then.",
+  "verify-delivery-evidence-raises-the-receivable.mjs": "ACCT-F443344 \u2014 REQUIRES_LIVE_DB; CC-3 branch cannot author verify-steps (lane-band 2026-08-29); wiring pending CC-1 verify-step claim"
 }
