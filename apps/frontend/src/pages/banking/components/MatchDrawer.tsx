@@ -377,6 +377,9 @@ export function MatchDrawer({
           ledger_entry_kind: c.ledger_entry_kind as BankMatchAcceptKind,
           ledger_entry_id: c.ledger_entry_id,
         })),
+        // LEAD 443.304 — the difference (bank − selected sum) posts to the chosen difference account; exact sends none.
+        difference_account_id:
+          entries.reduce((sum, c) => sum + Number(c.amount_cents ?? 0), 0) === bankAmountCents ? null : effectiveWriteOffId || null,
       }),
     onSuccess: async (_result, entries) => {
       // R441-C1 — close on success; never close on error (onError below).
@@ -439,6 +442,8 @@ export function MatchDrawer({
   );
   const multiSumCents = multiSelected.reduce((s, c) => s + Number(c.amount_cents ?? 0), 0);
   const multiExact = multiSelected.length >= 2 && bankAmountCents > 0 && multiSumCents === bankAmountCents;
+  // LEAD 443.304 — sets of documents that add up to this bank line (one wire = several Faro purchases; purchase + loan; …).
+  const combinations = candidatesQuery.data?.combinations ?? [];
   // B-3 §19b — QBO arithmetic box: Bank / Selected / Difference (always visible).
   const singleSelected = selectedId
     ? candidates.find((c) => c.ledger_entry_id === selectedId)
@@ -456,6 +461,9 @@ export function MatchDrawer({
   const resolveCategoryId =
     resolveRows.find((r) => r.glAccountId && Number(r.amountCents) > 0)?.glAccountId ?? "";
   const effectiveWriteOffId = writeOffAccountId || resolveCategoryId;
+  // LEAD 443.304 — a multi-document match confirms when exact, OR with a difference account chosen (Resolve difference).
+  const multiCanConfirm =
+    multiSelected.length >= 2 && bankAmountCents > 0 && (multiExact || (multiSumCents > 0 && Boolean(effectiveWriteOffId)));
   const resolveBalanced = Math.abs(differenceCents) === 0 && resolvedCents > 0;
   const fullBankResolveOnly =
     selectedAmountCents === 0 &&
@@ -839,6 +847,38 @@ export function MatchDrawer({
           ) : null}
         </div>
 
+        {combinations.length > 0 ? (
+          <div className="mb-3 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5" data-testid="match-drawer-combinations">
+            <p className="mb-1 text-xs font-semibold text-[#1F2A44]">Suggested combinations — these documents add up to this bank line</p>
+            <ul className="space-y-1">
+              {combinations.map((combo, i) => (
+                <li key={i} className="flex flex-wrap items-center justify-between gap-2 text-xs" data-testid={`match-combination-${i}`}>
+                  <span className="min-w-0 text-[#1F2A44]">
+                    {combo.members.map((m) => `${m.reference ?? m.ledger_entry_kind} ${formatMoneyCents(m.amount_cents)}`).join(" + ")}
+                    {" = "}<strong>{formatMoneyCents(combo.sum_cents)}</strong>
+                    {combo.exact ? (
+                      <span className="ml-1 text-[#027A48]">exact</span>
+                    ) : (
+                      <span className="ml-1 text-red-700">difference {formatMoneyCents(combo.variance_cents)}</span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    className="rounded-sm border border-[#14314F] px-2 py-0.5 text-xs text-[#14314F] hover:bg-[#F7F8FA]"
+                    onClick={() => {
+                      setSuggestedOnly(false);
+                      setSelectedId(null);
+                      setSelectedIds(new Set(combo.members.map((m) => m.ledger_entry_id)));
+                    }}
+                  >
+                    Select these
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
         {multiSelected.length >= 2 ? (
           <div
             className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5"
@@ -847,18 +887,22 @@ export function MatchDrawer({
             <p className="text-xs text-[#1F2A44]">
               {multiSelected.length} selected · sum {formatMoneyCents(multiSumCents)}
               {bankAmountCents > 0 ? ` / bank ${formatMoneyCents(bankAmountCents)}` : ""}
-              {multiExact ? " · exact" : " · not exact yet"}
+              {multiExact
+                ? " · exact"
+                : effectiveWriteOffId
+                  ? ` · difference ${formatMoneyCents(bankAmountCents - multiSumCents)} posts to the selected difference account`
+                  : " · not exact — choose a difference account above to resolve"}
             </p>
             <button
               type="button"
               data-testid="match-multi-confirm"
               className={
-                multiExact
+                multiCanConfirm
                   ? "rounded-sm border border-[#14314F] bg-[#14314F] px-2 py-1 text-xs text-white hover:bg-[#0F2540] disabled:opacity-60"
                   : "rounded-sm border border-[#E5E7EB] bg-[var(--surface-unselected)] px-2 py-1 text-xs text-[#6B7280]"
               }
-              disabled={!multiExact || multiConfirmMutation.isPending}
-              onClick={() => multiExact && multiConfirmMutation.mutate(multiSelected)}
+              disabled={!multiCanConfirm || multiConfirmMutation.isPending}
+              onClick={() => multiCanConfirm && multiConfirmMutation.mutate(multiSelected)}
             >
               {multiConfirmMutation.isPending ? "Confirming…" : "Confirm multi-document match"}
             </button>

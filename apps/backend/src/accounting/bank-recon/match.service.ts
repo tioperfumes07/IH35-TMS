@@ -1,5 +1,6 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import { checkFactoringPurchaseOwner, FactoringPurchaseOwnerOnlyError } from "../../factoring/owner-only-purchase.js";
+import { findAmountCombinations, type AmountCombination } from "./amount-combinations.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import {
   bankAccountHiddenFilterSql,
@@ -148,6 +149,8 @@ type BankTxn = {
 export type MatchCounterpartyKind = "vendor" | "customer" | null;
 
 export type MatchCandidate = {
+  /** LEAD 443.304 — true when shown only because it belongs to a suggested combination (it failed the single-document floor). */
+  in_combination?: boolean;
   ledger_entry_kind: LedgerEntryKind;
   ledger_entry_id: string;
   amount_cents: number;
@@ -529,6 +532,12 @@ export type FindCandidatesResult = {
   window: MatchWindowInfo;
   /** Abs bank amount (cents) — FE multi-doc Resolve sums selected ledger amounts against this. */
   bank_amount_cents: number;
+  /**
+   * LEAD 443.304 — sets of 2..4 documents whose amounts add up to the bank amount (one wire = several Faro purchases; a
+   * purchase + a loan; …). Searched over the line's FULL pool (before the single-document relevance floor). Exact first,
+   * then near sums carrying their variance for Resolve difference. Suggestions only — nothing is matched.
+   */
+  combinations: AmountCombination[];
 };
 
 const MAX_CUSTOM_SPAN_DAYS = 730;
@@ -800,6 +809,11 @@ async function fetchLedgerCandidates(
                AND NOT EXISTS (SELECT 1 FROM banking.reconciliation_matches m
                                 WHERE m.ledger_entry_kind = 'factoring_advance' AND m.ledger_entry_id = fp.factoring_advance_id
                                   AND m.voided_at IS NULL AND m.match_state IN ('auto_matched', 'user_matched'))
+               -- LEAD 443.304 G1 (same rule ROUND 373.4 applies to customer payments): a purchase already on a live Deposit is
+               -- matched THROUGH that deposit — offering it again showed the same money twice (accept was refused, the offer was not).
+               AND NOT EXISTS (SELECT 1 FROM accounting.deposit_lines dl
+                                 JOIN accounting.deposits d ON d.id = dl.deposit_id AND d.voided_at IS NULL
+                                WHERE dl.source_factoring_advance_id = fp.factoring_advance_id)
           )
           SELECT fp.factoring_advance_id::text AS id,
                  fp.net_to_company_cents::int AS amount_cents,
@@ -1499,6 +1513,15 @@ async function postDifferenceJournalEntry(
   if (!cashAccountId) {
     throw new Error("bank_account_missing_ledger_account_id");
   }
+  // LEAD 443.304 — the difference account is caller input (1:1 Resolve difference, and now multi-document). It must be this
+  // company's own, live, postable account: the poster wrote it into the journal entry unchecked, so a stale or another
+  // entity's account id would have posted (entity independence; never cross-entity).
+  const diffAcct = await client.query<{ ok: boolean }>(
+    `SELECT true AS ok FROM catalogs.accounts
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL AND is_postable IS NOT FALSE`,
+    [input.difference_account_id, input.operating_company_id]
+  );
+  if (!diffAcct.rows[0]) throw new Error("difference_account_not_postable_in_company");
 
   const magnitude = Math.abs(input.variance_cents);
   const shouldDebitCash = (input.is_credit && input.variance_cents > 0) || (!input.is_credit && input.variance_cents < 0);
@@ -1675,16 +1698,30 @@ export async function findCandidates(input: {
         candidates: [],
         window: { step: 1, from: "", to: "", auto_widened: false },
         bank_amount_cents: 0,
+        combinations: [],
       };
     }
 
     const toleranceCents = toleranceForAmount(txn.amount_cents);
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
-    const pack = (candidates: MatchCandidate[], window: MatchWindowInfo): FindCandidatesResult => ({
-      candidates,
-      window,
-      bank_amount_cents: txnAmountAbs,
-    });
+    const pack = (candidates: MatchCandidate[], window: MatchWindowInfo): FindCandidatesResult => {
+      // LEAD 443.304 — combinations over the full pool; members the floor hid are appended so the drawer can select them.
+      const combinations = findAmountCombinations(
+        txnAmountAbs,
+        lastPool.map((c) => ({ ledger_entry_kind: c.ledger_entry_kind, ledger_entry_id: c.ledger_entry_id, amount_cents: c.amount_cents,
+          date_gap_days: c.date_gap_days, counterparty_name: c.counterparty_name, reference: c.reference ?? c.memo ?? null })),
+        { exactToleranceCents: toleranceCents, nearPct: 0.02 }
+      );
+      const shown = new Set(candidates.map((c) => `${c.ledger_entry_kind}:${c.ledger_entry_id}`));
+      const extra: MatchCandidate[] = [];
+      for (const combo of combinations) for (const m of combo.members) {
+        const key = `${m.ledger_entry_kind}:${m.ledger_entry_id}`;
+        if (shown.has(key)) continue;
+        const hit = lastPool.find((c) => `${c.ledger_entry_kind}:${c.ledger_entry_id}` === key);
+        if (hit) { extra.push({ ...hit, in_combination: true }); shown.add(key); }
+      }
+      return { candidates: [...candidates, ...extra], window, bank_amount_cents: txnAmountAbs, combinations };
+    };
     const txnMemo = `${txn.merchant_name ?? ""} ${txn.description ?? ""} ${txn.notes ?? ""}`.trim();
     const txnDate = txn.transaction_date;
 
@@ -1712,8 +1749,10 @@ export async function findCandidates(input: {
         (input.kinds?.length ?? 0) > 0 || input.amount_min_cents != null || input.amount_max_cents != null
     );
 
-    const rank = (rawCandidates: RawLedgerCandidate[]): MatchCandidate[] =>
-      rawCandidates
+    // LEAD 443.304 — the last ranked pool BEFORE the relevance floor, for combination search (see pack).
+    let lastPool: MatchCandidate[] = [];
+    const rank = (rawCandidates: RawLedgerCandidate[]): MatchCandidate[] => {
+      lastPool = rawCandidates
         .map((candidate) => {
           const amountGapCents = Math.abs(txnAmountAbs - candidate.amount_cents);
           const dateGapDays = daysBetween(txnDate, candidate.event_date);
@@ -1744,10 +1783,12 @@ export async function findCandidates(input: {
             auto_match: autoMatch,
             exact_amount: amountGapCents === 0,
           };
-        })
+        });
+      return lastPool
         .filter((c) => explicitSearch || passesRelevanceFloor(c))
         .sort(compareCandidatesExactFirst)
         .slice(0, 50);
+    };
 
     const fetchAt = async (from: string, to: string, extra: CandidateFilters = {}) =>
       fetchLedgerCandidates(client, input.operating_company_id, txnDate, txn.is_credit, txn.bank_account_id, {
@@ -2459,6 +2500,13 @@ export async function acceptExactMultiDocumentMatch(input: {
   /** LEAD 443.84 #3: a fuel-CARD line paying its receipt(s) at the card's discounted price — the difference posts as the
    *  item "Fuel Card Discount" (Dr the card payable / Cr the item's account), capped at CARD_DISCOUNT_MAX_PCT. */
   card_discount?: boolean;
+  /**
+   * LEAD 443.304 — Resolve difference on a MULTI-document match (owner 10-24: "select various transactions and also resolve
+   * differences"). When the selected documents do not add up to the bank line, the difference posts to this account through the
+   * SAME variance poster the 1:1 Resolve difference uses (postDifferenceJournalEntry: linked to the bank line, reversed on unmatch).
+   * Omitted → a non-zero variance is still refused (multi_match_nonzero_variance), as before.
+   */
+  difference_account_id?: string | null;
 }): Promise<{
   variance_cents: number;
   match_ids: string[];
@@ -2535,6 +2583,17 @@ export async function acceptExactMultiDocumentMatch(input: {
         bank_transaction_id: input.bank_transaction_id, journal_entry_id: cardDiscountJournalEntryId, discount_cents: split.discount_cents,
         item: FUEL_CARD_DISCOUNT_ITEM, item_id: split.item_id, legs: split.legs,
       }, "info", "443.84-CARD-DISCOUNT");
+    } else if (varianceCents !== 0 && input.difference_account_id) {
+      const differenceJournalEntryId = await postDifferenceJournalEntry(client, {
+        operating_company_id: input.operating_company_id, bank_transaction_id: input.bank_transaction_id, bank_account_id: txn.bank_account_id,
+        difference_account_id: input.difference_account_id, actor_user_uuid: input.actor_user_uuid, transaction_date: txn.transaction_date,
+        variance_cents: varianceCents, is_credit: Boolean(txn.is_credit),
+      });
+      await appendCrudAudit(client, input.actor_user_uuid, "bank_match.multi_difference_posted", {
+        bank_transaction_id: input.bank_transaction_id, journal_entry_id: differenceJournalEntryId, variance_cents: varianceCents,
+        difference_account_id: input.difference_account_id,
+        members: input.entries.map((e, i) => ({ kind: e.ledger_entry_kind, id: e.ledger_entry_id, amount_cents: amounts[i]! })),
+      }, "info", "443.304-MULTI-RESOLVE-DIFFERENCE");
     } else if (varianceCents !== 0) {
       throw new Error(`multi_match_nonzero_variance:${varianceCents}`);
     }
