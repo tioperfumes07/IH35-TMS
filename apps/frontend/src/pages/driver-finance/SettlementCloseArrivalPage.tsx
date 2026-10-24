@@ -568,7 +568,7 @@ export function SettlementCloseArrivalPage() {
             <div className="font-semibold text-gray-900">
               <EntityLink kind="driver" id={settlement.driver_id} label={driverBoardName} />
               {" — "}
-              <EntityLink kind="settlement" id={settlement.id} label={settlementBoardNum} />
+              <EntityLink kind="settlement" id={settlement.id} label={settlementLabel(settlement)} />
             </div>
             <div className="text-gray-600">
               <EntityLink
