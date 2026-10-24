@@ -63,7 +63,8 @@ export function auditDriverColumn(sources, leaves) {
   // stale 143 floor and the selftest's own mutation-detection stopped catching it.
   // Floor re-verified live 2026-10-05 (Devin, push-gate): merged seats added 2 more P10 driver
   // leaves — live count 146, so removing the planted leaf must trip below it. Bumped 144 -> 146.
-  if (p10Leaves.length < 146) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
+  // Floor re-verified live 2026-10-24 (CC-3): +1 drivers leaf (settlements_pre_settlements_closes). Bumped 146 -> 147.
+  if (p10Leaves.length < 147) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
   if (leaves.length < 210) failures.push(`all-module driver inventory unexpectedly shrank to ${leaves.length}`);
   const modules = new Set(leaves.map((leaf) => leaf.module));
   if (modules.size < 23) failures.push(`driver module inventory unexpectedly shrank to ${modules.size}`);
