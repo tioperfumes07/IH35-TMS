@@ -20,9 +20,19 @@ for (const [re, msg] of [
 ]) if (!re.test(all.slice(0, 4000))) fails.push(`/api/v1/checks/all no longer includes ${msg}`);
 const page = readFileSync("apps/frontend/src/pages/accounting/checks/CheckListPage.tsx", "utf8");
 if (!/listAllChecks\(/.test(page)) fails.push("the Checks page no longer reads every check (listAllChecks)");
-for (const id of ["checks-filter-kind", "checks-filter-status", "checks-filter-bank", "checks-search"]) {
+for (const id of ["checks-filter-kind", "checks-filter-status", "checks-filter-bank"]) {
   if (!page.includes(`data-testid="${id}"`)) fails.push(`the Checks page lost the ${id} filter`);
 }
+// Search lives on MoneyListToolbar via searchTestId (renders data-testid="checks-search" at runtime).
+if (!page.includes('searchTestId="checks-search"') && !page.includes('data-testid="checks-search"')) {
+  fails.push("the Checks page lost the checks-search filter");
+}
+// ACCT-F443293-C — V3 board grammar: MoneyListToolbar + kpiStrip (no ad-hoc filter chrome theater).
+if (!page.includes("MoneyListToolbar")) fails.push("the Checks page lost MoneyListToolbar (FILTER-MULTI-01)");
+if (!page.includes("kpiStrip=") || !page.includes('data-testid="checks-kpi-strip"') || !page.includes("moneyListKpiCard")) {
+  fails.push("the Checks page must pass AccountingSubNavWrapper kpiStrip with checks-kpi-strip + moneyListKpiCard");
+}
+if (page.includes("CollapsedListFilters")) fails.push("the Checks page must not use CollapsedListFilters");
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  ${fails.join("\n  ")}`);
   process.exit(1);

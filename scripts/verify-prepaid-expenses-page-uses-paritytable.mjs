@@ -89,6 +89,19 @@ function assertMigrated(src) {
   if (src.includes("GL posting GATED — flag OFF")) {
     errors.push(`${PAGE}: CreateModal must not lie that posting is gated OFF while the API requires GLs`);
   }
+  // ACCT-F443293-C — V3 board grammar: MoneyListToolbar live apply + kpiStrip (no staged popover).
+  if (src.includes("CollapsedListFilters") || src.includes("useStagedListFilters")) {
+    errors.push(`${PAGE}: must not use CollapsedListFilters / useStagedListFilters (FILTER-MULTI-01)`);
+  }
+  if (!src.includes("MoneyListToolbar") || !src.includes('data-testid="prepaid-status-filter"')) {
+    errors.push(`${PAGE}: must mount MoneyListToolbar with prepaid-status-filter`);
+  }
+  if (!src.includes("kpiStrip=") || !src.includes('data-testid="prepaid-kpi-strip"') || !src.includes("moneyListKpiCard")) {
+    errors.push(`${PAGE}: must pass AccountingSubNavWrapper kpiStrip with prepaid-kpi-strip + moneyListKpiCard`);
+  }
+  if (!src.includes("suppressToolbarSearch")) {
+    errors.push(`${PAGE}: ParityTable must suppressToolbarSearch alongside MoneyListToolbar`);
+  }
   return errors;
 }
 
@@ -99,6 +112,12 @@ function selftest() {
     import { useUrlSort } from "../../hooks/useUrlSort";
     import { createPrepaidExpense } from "../../api/prepaid-expenses";
     import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+    import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+    import { moneyListKpiCard } from "./moneyListKpiCard";
+    <AccountingSubNavWrapper kpiStrip={<div data-testid="prepaid-kpi-strip">{moneyListKpiCard("Total", "$0.00", "rows")}</div>}>
+    <MoneyListToolbar search="" onSearchChange={() => {}} onClearAll={() => {}} activeFilterCount={0}>
+      <MultiSelectDropdown data-testid="prepaid-status-filter" />
+    </MoneyListToolbar>
     const SCHEDULE_COLUMNS = [
       { key: "period_number", label: "#", sortable: true },
       { key: "period_date", label: "Period Date", sortable: true },
@@ -127,7 +146,9 @@ function selftest() {
       sortKey={sortKey}
       sortDirection={sortDirection}
       onSortChange={onSortChange}
+      suppressToolbarSearch
     />
+    </AccountingSubNavWrapper>
     <ParityTable
       columns={SCHEDULE_COLUMNS}
       storageKey="prepaid-expense-schedule"

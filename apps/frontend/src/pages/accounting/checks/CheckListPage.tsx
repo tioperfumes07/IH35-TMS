@@ -11,12 +11,16 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
+import { moneyListKpiCard } from "../moneyListKpiCard";
 
 /**
  * Check list (`/accounting/checks`). U6 (owner, 2026-10-03): "Checks list must show all checks with full filters".
  * It used to read only EXPENSE checks; a bill paid by check and a driver settlement paid by check never appeared. It
  * now lists every check the company wrote (GET /api/v1/checks/all), each opening its own document, with multi-select
  * kind / status / bank account filters, a payee / number search, a date range, and sortable headers.
+ *
+ * FILTER-MULTI-01 — MoneyListToolbar live apply + AccountingSubNavWrapper kpiStrip (V3 board grammar).
  */
 const KIND_LABEL: Record<AllChecksRow["kind"], string> = {
   expense: "Check (expense)",
@@ -69,6 +73,24 @@ export function CheckListPage() {
     );
   }, [all, kinds, statuses, banks, search]);
 
+  const checkKpis = useMemo(() => {
+    return rows.reduce(
+      (acc, r) => {
+        acc.totalCents += Number(r.amount_cents ?? 0) || 0;
+        if (r.status === "to_print") acc.toPrint += 1;
+        if (r.status === "issued" || r.status === "printed") acc.openCount += 1;
+        return acc;
+      },
+      { totalCents: 0, toPrint: 0, openCount: 0 },
+    );
+  }, [rows]);
+
+  const activeFilterCount =
+    (kinds.length > 0 ? 1 : 0) +
+    (statuses.length > 0 ? 1 : 0) +
+    (banks.length > 0 ? 1 : 0) +
+    (dateFrom || dateTo ? 1 : 0);
+
   const columns: Array<ParityColumn<AllChecksRow>> = [
     {
       key: "check_number", label: "Check #", sortable: true, sortValue: (r) => Number(r.check_number ?? 0),
@@ -86,6 +108,61 @@ export function CheckListPage() {
     { key: "status", label: "Status", sortable: true, sortValue: (r) => STATUS_LABEL[r.status] ?? r.status, render: (r) => STATUS_LABEL[r.status] ?? r.status },
   ];
 
+  const filterBar = (
+    <div className="space-y-2 w-full" data-testid="checks-filters">
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Payee / number / memo"
+        searchTestId="checks-search"
+        onClearAll={() => {
+          setSearch("");
+          setKinds([]);
+          setStatuses([]);
+          setBanks([]);
+          setDateFrom("");
+          setDateTo("");
+        }}
+        activeFilterCount={activeFilterCount}
+        testIdPrefix="checks"
+      >
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">
+          From
+          <DatePicker value={dateFrom} onChange={setDateFrom} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">
+          To
+          <DatePicker value={dateTo} onChange={setDateTo} />
+        </label>
+        <MultiSelectDropdown
+          label="Type"
+          options={Object.entries(KIND_LABEL).map(([value, label]) => ({ value, label }))}
+          selected={kinds}
+          onChange={setKinds}
+          allLabel="All types"
+          data-testid="checks-filter-kind"
+        />
+        <MultiSelectDropdown
+          label="Status"
+          options={statusOptions}
+          selected={statuses}
+          onChange={setStatuses}
+          allLabel="All statuses"
+          data-testid="checks-filter-status"
+        />
+        <MultiSelectDropdown
+          label="Bank account"
+          options={bankOptions}
+          selected={banks}
+          onChange={setBanks}
+          allLabel="All bank accounts"
+          searchable
+          data-testid="checks-filter-bank"
+        />
+      </MoneyListToolbar>
+    </div>
+  );
+
   return (
     <AccountingSubNavWrapper
       title="Checks"
@@ -100,34 +177,48 @@ export function CheckListPage() {
           </Link>
         </div>
       }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="checks-kpi-strip">
+          {query.isError ? (
+            <>
+              {moneyListKpiCard("Total", "—", "Error loading")}
+              {moneyListKpiCard("To print", "—", "Error loading")}
+              {moneyListKpiCard("Open", "—", "Error loading")}
+              {moneyListKpiCard("Rows", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Total", formatUsdCents(checkKpis.totalCents), `${rows.length} of ${all.length}`)}
+              {moneyListKpiCard(
+                "To print",
+                String(checkKpis.toPrint),
+                "Awaiting print",
+                checkKpis.toPrint > 0 ? "warn" : "neutral",
+              )}
+              {moneyListKpiCard("Open", String(checkKpis.openCount), "Issued or printed")}
+              {moneyListKpiCard("Rows", String(rows.length), "Matching filters")}
+            </>
+          )}
+        </div>
+      }
     >
       {!companyId ? (
         <div className="text-xs text-red-600">Select an operating company in the shell header.</div>
       ) : query.isError ? (
         <ListErrorBanner onRetry={() => void query.refetch()} />
       ) : (
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-white p-2" data-testid="checks-filters">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">From<DatePicker value={dateFrom} onChange={setDateFrom} /></label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">To<DatePicker value={dateTo} onChange={setDateTo} /></label>
-            <MultiSelectDropdown label="Type" options={Object.entries(KIND_LABEL).map(([value, label]) => ({ value, label }))} selected={kinds} onChange={setKinds} allLabel="All types" data-testid="checks-filter-kind" />
-            <MultiSelectDropdown label="Status" options={statusOptions} selected={statuses} onChange={setStatuses} allLabel="All statuses" data-testid="checks-filter-status" />
-            <MultiSelectDropdown label="Bank account" options={bankOptions} selected={banks} onChange={setBanks} allLabel="All bank accounts" searchable data-testid="checks-filter-bank" />
-            <label className="flex flex-col gap-1 text-xs font-semibold text-[#4B5563]">Payee / number / memo
-              <input value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 rounded border border-gray-300 px-2 text-xs" data-testid="checks-search" />
-            </label>
-            <span className="ml-auto text-xs text-[#4B5563]" data-testid="checks-count">{rows.length} of {all.length} check{all.length === 1 ? "" : "s"}</span>
-          </div>
-          <div className="rounded border border-gray-200">
-            <ParityTable<AllChecksRow> title="Checks written"
-              columns={columns}
-              rows={rows}
-              rowKey={(r) => `${r.kind}:${r.id}:${r.check_number ?? ""}`}
-              loading={query.isLoading}
-              emptyText={all.length === 0 ? "No checks written yet." : "No checks match these filters."}
-              storageKey="checks-all"
-            />
-          </div>
+        <div className="rounded border border-gray-200">
+          <ParityTable<AllChecksRow>
+            title="Checks written"
+            columns={columns}
+            rows={rows}
+            rowKey={(r) => `${r.kind}:${r.id}:${r.check_number ?? ""}`}
+            loading={query.isLoading}
+            emptyText={all.length === 0 ? "No checks written yet." : "No checks match these filters."}
+            storageKey="checks-all"
+            filterBar={filterBar}
+            suppressToolbarSearch
+          />
         </div>
       )}
     </AccountingSubNavWrapper>
