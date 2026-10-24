@@ -684,6 +684,8 @@ export function getMatchCandidates(bankTxnId: string, companyId: string, opts?: 
     bank_transaction_id?: string;
     /** Abs bank amount — multi-doc Resolve sums selected ledger amounts against this. */
     bank_amount_cents?: number;
+    /** LEAD 443.304 — documents that together add up to the bank line; exact first, then near sums with their variance. */
+    combinations?: BankMatchCombination[];
   }>(`/api/v1/banking/transactions/${bankTxnId}/match-candidates?${params.toString()}`);
 }
 
@@ -1789,7 +1791,18 @@ export function acceptBankReconMatch(
   });
 }
 
-/** ROUND 206 — one bank line → many documents (exact sum only; variance → use accept with write-off). */
+/** LEAD 443.304 — a set of documents whose amounts add up to the bank line (backend amount-combinations.ts). */
+export type BankMatchCombination = {
+  members: Array<{ ledger_entry_kind: string; ledger_entry_id: string; amount_cents: number; reference: string | null }>;
+  sum_cents: number;
+  variance_cents: number;
+  exact: boolean;
+  max_date_gap_days: number;
+  same_counterparty: boolean;
+};
+
+/** ROUND 206 — one bank line → many documents. LEAD 443.304: a non-zero difference posts to difference_account_id
+ *  (same variance poster as the 1:1 Resolve difference); without it a difference is refused. */
 export function acceptBankReconMultiMatch(input: {
   operating_company_id: string;
   bank_transaction_id: string;
@@ -1797,6 +1810,7 @@ export function acceptBankReconMultiMatch(input: {
     ledger_entry_kind: BankMatchAcceptKind;
     ledger_entry_id: string;
   }>;
+  difference_account_id?: string | null;
 }) {
   return apiRequest<{ ok: boolean; result: Record<string, unknown> }>(`/api/v1/bank-recon/accept-multi-match`, {
     method: "POST",

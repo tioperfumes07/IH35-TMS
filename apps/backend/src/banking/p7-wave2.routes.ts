@@ -250,6 +250,8 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       match_candidates_count: result.candidates.length,
       window: result.window,
       bank_amount_cents: result.bank_amount_cents,
+      // LEAD 443.304 — sets of documents that add up to this bank line (several purchases on one wire, purchase + loan, …).
+      combinations: result.combinations,
       // Compat mirrors for older FE — derived from MATCH_WINDOW_STEPS, never 90/20.
       days_before:
         result.window.step === 1

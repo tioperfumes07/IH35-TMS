@@ -250,6 +250,11 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
         })),
         // LEAD 443.84 #3: a fuel-card line paying its receipt(s) at the card's price — the difference posts as "Fuel Card Discount".
         card_discount: (req.body as { card_discount?: unknown } | null)?.card_discount === true,
+        // LEAD 443.304 — Resolve difference on a multi-document match; uuid-checked, same-company check is the poster's.
+        difference_account_id: (() => {
+          const v = (req.body as { difference_account_id?: unknown } | null)?.difference_account_id;
+          return typeof v === "string" && /^[0-9a-f-]{36}$/i.test(v) ? v : null;
+        })(),
       });
       return { ok: true, result };
     } catch (error) {
