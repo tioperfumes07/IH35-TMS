@@ -15,6 +15,26 @@ import { resolve } from "node:path";
 const root = process.cwd();
 const failures = [];
 
+if (process.argv.includes("--selftest")) {
+  const truckOnlyRe = /sort\.key\s*!==\s*["']truck["']/;
+  const plants = [
+    ["forbidden truck-only gate", 'if (sort.key !== "truck") return sectionGroups;', true],
+    ["non-truck sort key allowed", 'const k = sort.key === "load";', false],
+  ];
+  let bad = 0;
+  for (const [label, sample, expectMatch] of plants) {
+    const ok = truckOnlyRe.test(sample) === expectMatch;
+    console.log(`  ${ok ? "✓" : "✗"} ${label}`);
+    if (!ok) bad += 1;
+  }
+  if (bad) {
+    console.error("verify-sortable-headers-reorder --selftest FAIL");
+    process.exit(1);
+  }
+  console.log(`verify-sortable-headers-reorder --selftest PASS (${plants.length}/${plants.length})`);
+  process.exit(0);
+}
+
 function read(rel) {
   const p = resolve(root, rel);
   if (!existsSync(p)) {
