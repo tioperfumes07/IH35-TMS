@@ -54,7 +54,7 @@ function selftest() {
 
   const bad1 = assertGuard(
     good.replace(
-      /if \(detailQuery\.data && String\(\(detailQuery\.data as Record<string, unknown>\)\.id \?\? ""\) !== String\(settlementId\)\) \{[\s\S]*?\n {2}\}\n\n {2}const matchedBankTransactionId/,
+      /if \([\s\S]*?detailQuery\.data[\s\S]*?!==\s*String\(settlementId\)[\s\S]*?\n {2}\}\n\n {2}const matchedBankTransactionId/,
       "const matchedBankTransactionId"
     )
   );
