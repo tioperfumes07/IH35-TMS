@@ -176,6 +176,17 @@ export type CashFlowAdjustment = {
 
 // ─── API Functions ────────────────────────────────────────────────────────────
 
+/** LEAD 443.283 — authoritative operating cash (the same total Cash Flow Home opens with), per account. */
+export type CashFlowOpeningCash = {
+  opening_cash_cents: number;
+  accounts: Array<{ id: string; display_name: string; source: "plaid" | "internal_ledger"; cents: number }>;
+};
+
+export function getCashFlowOpeningCash(operatingCompanyId: string): Promise<CashFlowOpeningCash> {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<CashFlowOpeningCash>(`/api/v1/cash-flow/opening-cash?${params}`);
+}
+
 export function getDailyPrediction(
   operatingCompanyId: string,
   date: string

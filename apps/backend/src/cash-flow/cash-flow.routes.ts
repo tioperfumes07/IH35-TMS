@@ -7,6 +7,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { withOperatingCompanyScope } from "../auth/operating-company-scope.js";
 import { pullManualTransactions } from "./manual-pull.service.js";
+import { listAuthoritativeDepositoryCashByAccount } from "../banking/internal-wallet-balance.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import {
   getDailyPrediction,
   getActualVsProjected,
@@ -108,6 +110,28 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
       return getDailyPrediction(client, query.data.operating_company_id, query.data.date, cashFollowsEta);
     });
     return reply.send(result);
+  });
+
+  // LEAD 443.283 — one opening-cash source for every Cash Flow surface: the authoritative operating
+  // cash (same function as Home's opening cash) broken out per account. The Manual tab lists exactly
+  // these accounts and its total equals Home's opening cash by construction.
+  app.get("/api/v1/cash-flow/opening-cash", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query);
+    if (!query.success) {
+      return reply.status(400).send({ error: "validation_error", details: query.error.flatten() });
+    }
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
+    const result = await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [query.data.operating_company_id]);
+      const hideOn = await isBankAccountHideEnabled(client, query.data.operating_company_id);
+      return listAuthoritativeDepositoryCashByAccount(client, query.data.operating_company_id, {
+        hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
+        hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
+      });
+    });
+    return reply.send({ opening_cash_cents: result.total_cents, accounts: result.accounts });
   });
 
   app.get("/api/v1/cash-flow/actual-vs-projected", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

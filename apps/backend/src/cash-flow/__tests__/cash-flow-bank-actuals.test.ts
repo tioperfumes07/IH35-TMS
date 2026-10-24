@@ -20,11 +20,12 @@ describe("LEAD 443.282 — Cash Flow actuals read the operating bank", () => {
     expect(() => operatingBankAccountSetSql("ba; drop", "")).toThrow(/invalid SQL alias/);
   });
 
-  it("splits money in / money out by sign and excludes voided, merged, pending, sample and internal transfers", () => {
+  it("splits money in / money out by is_credit (never the amount sign) and excludes voided, merged, pending, sample and internal transfers", () => {
     const sql = operatingBankActualsByDaySql("AND ba.hidden_at IS NULL");
     expect(sql).toContain("FROM banking.bank_transactions bt");
-    expect(sql).toContain("CASE WHEN bt.amount_cents > 0 THEN bt.amount_cents ELSE 0 END");
-    expect(sql).toContain("CASE WHEN bt.amount_cents < 0 THEN -bt.amount_cents ELSE 0 END");
+    expect(sql).toContain("CASE WHEN bt.is_credit THEN ABS(bt.amount_cents) ELSE 0 END");
+    expect(sql).toContain("CASE WHEN bt.is_credit THEN 0 ELSE ABS(bt.amount_cents) END");
+    expect(sql).not.toMatch(/amount_cents\s*[<>]=?\s*0/);
     for (const p of ["bt.voided_at IS NULL", "bt.merged_into_bank_transaction_id IS NULL", "COALESCE(bt.pending, false) = false", "COALESCE(bt.is_sample_data, false) = false", "bt.destination_bank_account_id", "bt.paired_transaction_id"]) {
       expect(sql).toContain(p);
     }
