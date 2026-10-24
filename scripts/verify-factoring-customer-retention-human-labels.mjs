@@ -37,8 +37,8 @@ if (SELFTEST) {
   const srcs = read();
   const planted = { ...srcs };
   planted[FILES[0]] = planted[FILES[0]].replace(
-    /entityLabel\(null,\s*row\.driver_id,\s*"Driver"\)/,
-    "row.driver_id?.slice(0, 8)",
+    /<EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver" \/>/,
+    "{row.driver_id?.slice(0, 8)}",
   );
   if (!assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);

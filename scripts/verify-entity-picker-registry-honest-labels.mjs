@@ -8,7 +8,7 @@ const FILE = "apps/frontend/src/components/parity/entityPickerRegistry.ts";
 const source = fs.readFileSync(FILE, "utf8");
 
 const contracts = [
-  ["driver", 'entityLabel(nonEmpty(d.first_name, d.last_name), d.id, "Driver")'],
+  ["driver", 'entityLabel(formatPersonName(nonEmpty(d.first_name, d.last_name)), d.id, "Driver")'],
   ["trailer", 'entityLabel(nonEmpty(e.equipment_number), e.id, "Trailer")'],
   ["unit", 'entityLabel(nonEmpty(u.unit_number) || nonEmpty(u.display_id), u.id, "Unit")'],
   ["work_order", 'entityLabel(nonEmpty(w.display_id), w.id, "Work order")'],
