@@ -17,8 +17,10 @@
  * another account in the same operating set (moving money between our own operating accounts is not
  * income or expense).
  *
- * SIGN: banking.bank_transactions.amount_cents > 0 = money in, < 0 = money out (matches the Banking Home
- * "Money in / Money out" KPIs).
+ * DIRECTION: is_credit decides money in vs out and ABS(amount_cents) the size — never the sign of
+ * amount_cents, which runs opposite is_credit for part of this table (Plaid convention on older imports;
+ * verify-bank-transactions-direction-uses-is-credit). On USMCA's October lines both agree: 29 credits
+ * $216,532.56 in, 209 debits $239,059.03 out (incl. pending).
  */
 export function operatingBankAccountSetSql(baAlias: string, hideFilterOnBaAlias: string): string {
   if (!/^[a-z_][a-z0-9_]*$/i.test(baAlias)) throw new Error(`invalid SQL alias: ${baAlias}`);
@@ -37,8 +39,8 @@ export function operatingBankActualsByDaySql(hideFilterOnBaAlias: string): strin
   return `
     SELECT
       bt.transaction_date::text AS actual_date,
-      SUM(CASE WHEN bt.amount_cents > 0 THEN bt.amount_cents ELSE 0 END)::bigint AS actual_income_cents,
-      SUM(CASE WHEN bt.amount_cents < 0 THEN -bt.amount_cents ELSE 0 END)::bigint AS actual_expense_cents
+      SUM(CASE WHEN bt.is_credit THEN ABS(bt.amount_cents) ELSE 0 END)::bigint AS actual_income_cents,
+      SUM(CASE WHEN bt.is_credit THEN 0 ELSE ABS(bt.amount_cents) END)::bigint AS actual_expense_cents
     FROM banking.bank_transactions bt
     JOIN banking.bank_accounts ba
       ON ba.id = bt.bank_account_id AND ba.operating_company_id = bt.operating_company_id
