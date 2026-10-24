@@ -1,4 +1,4 @@
-# IH35-TMS — Lead pending register (USMCA) · 10-23-2026 7:45 PM CT
+# IH35-TMS — Lead pending register (USMCA) · 10-23-2026 8:15 PM CT
 
 Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live proof.
 
@@ -206,3 +206,8 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 200 | F | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | 443.285 | IN PROGRESS | 9ef89188 issuedInvoice on all 4 KPI aggregates; test 3/3, tsc 0; push waits on main reds |
 | 201 | E | Platform | 443.284 main static reds from 10-23 board merges block every push (7:40 PM: 2 fixed, 5 red) | CC-2/CC-3 | 443.284 | IN PROGRESS | CC-2: dashboard-connectivity, sweep-pre-list, test-provider; CC-3: partial-optional-chain, unselected-boxes |
 | 202 | E | Fuel | verify-no-internal-payload-in-notes red: dreamline-statement-import memo interpolates input.expenseId (afd3fd334e) | CC-2 | 443.284 | OPEN | exit 1 on main 1c118712 |
+| 203 | F | Linkage | Linkage gate red (verify-every-load-born-posting-carries-its-load) blocks every money push | LEAD | 443.287 | IN PROGRESS | fork br-bitter-lab: AUTH-454 COMMITTED 5 settlements TB 0, postings 7091=7091; AUTH-453 running |
+| 204 | F | Fuel | Statement card discount / difference is a separate expense with NO link to its receipt; copies the load once, never follows a move | CC-2 | 443.288-A | OPEN | owner ruling 443.288 10-23 7:59 PM |
+| 205 | A | Expenses | OWNER: every expense-to-load assignment confirmed by dispatcher or closer — always | CC-2 | 443.288-B | OPEN | docs/bus/lead/OWNER-RULING-443.288-...md |
+| 206 | A | Dispatch / Settlements | Expense load confirmations queue (Dispatch + Settlements Close), multi-select, bulk confirm | Cursor | 443.288-C | OPEN | after 443.288-B route |
+| 207 | E | Guards | Guards for 443.288 (child follows parent, no machine-final load, close refuses proposed, family moves) | Codex | 443.288-D | OPEN |  |
