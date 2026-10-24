@@ -31,7 +31,7 @@ function verify(s) {
     ["drivers complete active set", /const dispatchLoadsQuery = useQuery\([\s\S]*?listAllDispatchLoads\(\{[\s\S]*?status: \[\],/.test(s.drivers)],
     ["drivers does not cap active state", !/const dispatchLoadsQuery = useQuery\([\s\S]*?listDispatchLoads\(\{[\s\S]*?limit:\s*200/.test(s.drivers)],
     // 443.290: 443.269-A item 6 derives On Loads from the board set by driver id (onLoadDriverIds), Available = Active − on loads.
-    ["availability derives from complete set", /const onLoadDriverIds = useMemo[\s\S]*?dispatchLoadsQuery\.data\.loads[\s\S]*?DRIVER_ON_LOAD_STATUSES\.has/.test(s.drivers) && /const onLoadsCount = onLoadDriverIds == null \? null : onLoadDriverIds\.size/.test(s.drivers) && /availableCount = useMemo\([\s\S]*?d\.status === "Active" && !onLoadDriverIds\.has/.test(s.drivers) && /new Set<string>\(ON_TRUCK_STATUSES\)/.test(s.drivers)],
+    ["availability derives from complete set", /const onLoadDriverIds = useMemo[\s\S]*?dispatchLoadsQuery\.data\.loads[\s\S]*?DRIVER_ON_LOAD_STATUSES\.has/.test(s.drivers) && /const onLoadsCount = onLoadDriverIds == null \? null : onLoadDriverIds\.size/.test(s.drivers) && /availableCount = useMemo\([\s\S]*?d\.status === "Active" && !onLoadDriverIds\.has/.test(s.drivers) && /new Set\(ON_TRUCK_STATUSES\.map\(String\)\)/.test(s.drivers)],
     // LEAD 443.206R (register B11) — the OOS set is the shared DISPATCH_API_TRUCK_COMMITTED_STATUSES (carries delivered_pending_docs).
     ["dispatch OOS complete active set", /const oosLoadsQ = useQuery\([\s\S]*?listAllDispatchLoads\(\{[\s\S]*?status: \[\.\.\.DISPATCH_API_TRUCK_COMMITTED_STATUSES\]/.test(s.dispatch)],
     ["dispatch OOS filtering preserved", /oosLoadsQ\.data\?\.loads[\s\S]*?filter\(\(load\) => load\.is_dispatch_blocked\)/.test(s.dispatch)],
@@ -74,7 +74,7 @@ if (process.argv.includes("--selftest")) {
     ["on-load service set re-admits delivered_pending_docs", { ...live, activeCounts: live.activeCounts.replace('  "at_delivery",\n] as const;', '  "at_delivery",\n  "delivered_pending_docs",\n] as const;') }],
     // 443.290: LEAD 443.244 — an advance booking is not "on load".
     ["on-load service set re-admits assigned_not_dispatched", { ...live, activeCounts: live.activeCounts.replace('export const DISPATCH_ON_LOAD_STATUSES = [\n  "dispatched",', 'export const DISPATCH_ON_LOAD_STATUSES = [\n  "assigned_not_dispatched",\n  "dispatched",') }],
-    ["Drivers on-load set copied as a literal", { ...live, drivers: live.drivers.replace("new Set<string>(ON_TRUCK_STATUSES)", 'new Set(["dispatched", "in_transit"])') }],
+    ["Drivers on-load set copied as a literal", { ...live, drivers: live.drivers.replace("new Set(ON_TRUCK_STATUSES.map(String))", 'new Set(["dispatched", "in_transit"])') }],
     ["Available counts every Active driver", { ...live, drivers: live.drivers.replace('d.status === "Active" && !onLoadDriverIds.has(String(d.id))', 'd.status === "Active"') }],
   ];
   for (const [label, mutation] of mutations) {

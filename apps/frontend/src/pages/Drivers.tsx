@@ -85,7 +85,7 @@ export { DRIVERS_MODULE_NAV_PATHS };
 const DRIVER_LIST_STATUS_IDS = DRIVERS_LIST_STATUS_TABS.map((tab) => tab.id);
 /** 443.269-A item 6 — load statuses that put a driver "on a load" (dispatched through at delivery). */
 // 443.290: the ONE shared on-truck set (lib/load-status ON_TRUCK_STATUSES = backend DISPATCH_ON_LOAD_STATUSES, LEAD 443.244).
-const DRIVER_ON_LOAD_STATUSES = new Set<string>(ON_TRUCK_STATUSES);
+const DRIVER_ON_LOAD_STATUSES = new Set(ON_TRUCK_STATUSES.map(String));
 
 function driverMatchesListSegment(status: string, segment: DriversListStatusId): boolean {
   if (segment === "all") return true;

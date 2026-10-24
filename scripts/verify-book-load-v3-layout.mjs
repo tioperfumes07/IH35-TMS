@@ -105,7 +105,7 @@ export function audit(s) {
   need("R8", /<SettlementCloseMiles settlementId=\{settlement\.id\}/.test(s.close) && /<TourMilesPanel legs=\{legs\}/.test(s.close), "Settlement Close does not show our database + Google miles (owner: miles everywhere)");
   need("R8", /data-testid="tour-entries-readonly"/.test(s.tour) && /tour-entries-add-link/.test(s.tour), "Entries neither works nor says it is read-only with a link to where entries are made");
   // R9
-  need("R9", /DRIVER_ON_LOAD_STATUSES = new Set\(\["dispatched", "at_pickup", "in_transit", "at_delivery"\]\)/.test(s.drivers) && /ids\.add\(String\(id\)\)/.test(s.drivers), "On Loads is not counted by driver id from dispatched / in-transit / at-stop loads");
+  need("R9", /DRIVER_ON_LOAD_STATUSES = new Set\(ON_TRUCK_STATUSES\.map\(String\)\)/.test(s.drivers) /* 443.290: the shared on-truck set */ && /ids\.add\(String\(id\)\)/.test(s.drivers), "On Loads is not counted by driver id from dispatched / in-transit / at-stop loads");
   need("R9", /d\.status === "Active" && !onLoadDriverIds\.has\(String\(d\.id\)\)/.test(s.drivers), "Available is not Active minus on loads");
   need("R9", /to="\/drivers\/roster\?status=all&load_state=on"/.test(s.drivers) && /to="\/drivers\/roster\?status=active&load_state=free"/.test(s.drivers) && /loadStateFilter === "on"/.test(s.drivers), "On Loads / Available do not click through to a filtered roster");
   // R10

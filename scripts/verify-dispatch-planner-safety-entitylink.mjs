@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["planning.driver"],"task":"LEAD-443290-PLANNER-SAFETY-PROFILE-ENTITYLINK"} */
 /**
  * ROUND 16.19 — Dispatch Planner rows must drill through to the driver's Safety Profile
  * (kind="driver_safety_profile", a route distinct from kind="driver") AND surface
