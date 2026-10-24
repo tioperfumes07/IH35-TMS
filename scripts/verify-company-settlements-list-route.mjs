@@ -21,6 +21,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-company-settlements-list-route";
 const FILE = "apps/backend/src/accounting/company-settlement-list.routes.ts";
 const ENGINE = "apps/backend/src/accounting/company-settlement-report.service.ts";
+// LEAD 443.321: readers that subtract fuel.fuel_transactions AND accounting.expenses must drop the fuel fill's own expense.
+const FUEL_AND_EXPENSE_READERS = [ENGINE, "apps/backend/src/dispatch/load-profitability.service.ts"];
 
 function loadSource(rel) {
   return readFileSync(path.join(ROOT, rel), "utf8");
@@ -34,8 +36,31 @@ export function collectEngineFailures(engine = loadSource(ENGINE)) {
   if (!/new Set<string>\(NET_REVENUE_DEDUCTION_LINE_TYPES\)/.test(engine) || !/new Set<string>\(NET_REVENUE_SALARY_LINE_TYPES\)/.test(engine)) {
     failures.push("report section 6 does not read the shared NET_REVENUE_* line-type lists — the list and the report can drift");
   }
+  const chargeReads = (engine.match(/dispatch\.load_charge_lines lcl/g) || []).length;
+  const activeReads = (engine.match(/lcl\.is_active = true/g) || []).length;
+  if (chargeReads === 0 || activeReads < chargeReads) {
+    failures.push(`report engine reads dispatch.load_charge_lines ${chargeReads}x but filters is_active only ${activeReads}x — a replaced rate is billed twice`);
+  }
   if (!/\[\.\.\.NET_REVENUE_SALARY_LINE_TYPES, \.\.\.NET_REVENUE_DEDUCTION_LINE_TYPES\]/.test(engine)) {
     failures.push("computeCompanySettlementNetRevenueCents does not bind the shared NET_REVENUE_* line-type lists");
+  }
+  return failures;
+}
+
+export function collectFuelDoubleCountFailures(read = loadSource) {
+  const failures = [];
+  for (const rel of FUEL_AND_EXPENSE_READERS) {
+    const src = read(rel);
+    const expenseReads = (src.match(/JOIN accounting\.expenses e|FROM accounting\.expenses e\b/g) || []).length;
+    const guarded = (src.match(/expenseIsNotCountedFuelSql\("e"/g) || []).length;
+    const fuelReads = (src.match(/fuel\.fuel_transactions ft\b/g) || []).length;
+    const liveFuel = (src.match(/ft\.voided_at IS NULL AND ft\.archived_at IS NULL/g) || []).length;
+    if (liveFuel < fuelReads) failures.push(`${rel}: ${fuelReads} fuel read(s), only ${liveFuel} exclude voided/archived fills — a voided fill is counted as cost`);
+    if (!/import \{ expenseIsNotCountedFuelSql \} from "[./a-z-]*fuel-expense-not-double-counted\.sql\.js"/.test(src)) {
+      failures.push(`${rel}: subtracts fuel transactions and expenses but does not import expenseIsNotCountedFuelSql — fuel counted twice`);
+    } else if (guarded < expenseReads) {
+      failures.push(`${rel}: ${expenseReads} expense read(s), only ${guarded} drop the fuel fill's own expense — fuel counted twice`);
+    }
   }
   return failures;
 }
@@ -86,16 +111,31 @@ function selftest() {
     }
   }
   const driftedReport = goodEngine.replace("new Set<string>(NET_REVENUE_DEDUCTION_LINE_TYPES)", "new Set<string>([\"extra_pay\"])");
+  const inactiveBilled = goodEngine.replace(/ AND lcl\.is_active = true/, "");
+  if (collectEngineFailures(inactiveBilled).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — a revenue read without is_active was not caught`);
+    process.exit(1);
+  }
   if (collectEngineFailures(driftedReport).length === 0) {
     console.error(`${LABEL} SELFTEST FAIL — report section 6 with its own line-type list was not caught`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — 5/5 plants rejected`);
+  const voidedCounted = (rel) => loadSource(rel).replace(/ AND ft\.voided_at IS NULL AND ft\.archived_at IS NULL/, "");
+  if (collectFuelDoubleCountFailures(voidedCounted).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — a fuel read counting voided fills was not caught`);
+    process.exit(1);
+  }
+  const unguarded = (rel) => loadSource(rel).replace(/WHERE \$\{expenseIsNotCountedFuelSql\("e"[^\n]*\n/, "\n");
+  if (collectFuelDoubleCountFailures(unguarded).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — an expense read without the fuel predicate was not caught`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST OK — 8/8 plants rejected`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
 
-const failures = [...collectSourceFailures(), ...collectEngineFailures()];
+const failures = [...collectSourceFailures(), ...collectEngineFailures(), ...collectFuelDoubleCountFailures()];
 if (failures.length) {
   console.error(`${LABEL}: FAIL`);
   for (const f of failures) console.error(`  - ${f}`);

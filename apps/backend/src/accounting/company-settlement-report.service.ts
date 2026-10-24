@@ -28,6 +28,8 @@
 // this function sums only real rows; whatever real deduction lines exist on the driver settlement
 // (Additional Driver Pay = 'extra_pay', included) net out here exactly as they are.
 
+import { expenseIsNotCountedFuelSql } from "./fuel-expense-not-double-counted.sql.js";
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -291,7 +293,7 @@ export async function computeCompanySettlementNetRevenueCents(
       revenue AS (
         SELECT cl.cs_id, SUM(ROUND(lcl.amount_cents)::bigint) AS cents
         FROM cs_loads cl
-        JOIN dispatch.load_charge_lines lcl ON lcl.load_id = cl.load_id AND lcl.operating_company_id = $1::uuid
+        JOIN dispatch.load_charge_lines lcl ON lcl.load_id = cl.load_id AND lcl.operating_company_id = $1::uuid AND lcl.is_active = true
         JOIN mdata.loads l ON l.id = lcl.load_id
         GROUP BY cl.cs_id
       ),
@@ -306,13 +308,14 @@ export async function computeCompanySettlementNetRevenueCents(
       fuel AS (
         SELECT cl.cs_id, SUM(ROUND(ft.total_cost * 100)::bigint) AS cents
         FROM cs_loads cl
-        JOIN fuel.fuel_transactions ft ON ft.load_id = cl.load_id AND ft.operating_company_id = $1::uuid
+        JOIN fuel.fuel_transactions ft ON ft.load_id = cl.load_id AND ft.operating_company_id = $1::uuid AND ft.voided_at IS NULL AND ft.archived_at IS NULL
         GROUP BY cl.cs_id
       ),
       expense AS (
         SELECT cl.cs_id, SUM(ROUND(e.total_amount_cents)::bigint) AS cents
         FROM cs_loads cl
         JOIN accounting.expenses e ON e.load_id = cl.load_id AND e.operating_company_id = $1::uuid AND e.voided_at IS NULL
+        WHERE ${expenseIsNotCountedFuelSql("e", "$1::uuid", "ARRAY(SELECT cl2.load_id FROM cs_loads cl2 WHERE cl2.cs_id = cl.cs_id)")}
         GROUP BY cl.cs_id
       )
       SELECT cs.id::text AS company_settlement_id,
@@ -434,6 +437,7 @@ export async function buildCompanySettlementReport(
       JOIN mdata.loads l ON l.id = lcl.load_id
       WHERE lcl.operating_company_id = $1::uuid
         AND lcl.load_id = ANY($2::uuid[])
+        AND lcl.is_active = true -- LEAD 443.321: a rate change deactivates the old line; never bill it twice
       ORDER BY l.load_number, lcl.sort_order
     `,
     [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
@@ -533,6 +537,7 @@ export async function buildCompanySettlementReport(
       LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
       WHERE ft.operating_company_id = $1::uuid
         AND ft.load_id = ANY($2::uuid[])
+        AND ft.voided_at IS NULL AND ft.archived_at IS NULL -- LEAD 443.321: a voided fill (e.g. the gross-price copy of a discounted fill) is not a cost
       ORDER BY ft.transaction_at
     `,
     [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
@@ -571,6 +576,7 @@ export async function buildCompanySettlementReport(
       WHERE e.operating_company_id = $1::uuid
         AND e.load_id = ANY($2::uuid[])
         AND e.voided_at IS NULL
+        AND ${expenseIsNotCountedFuelSql("e", "$1::uuid", "$2::uuid[]")}
       ORDER BY l.load_number NULLS LAST
     `,
     [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
