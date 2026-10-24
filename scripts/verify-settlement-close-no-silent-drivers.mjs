@@ -30,7 +30,7 @@ export function collectProblems(root = ROOT) {
   if (!page || !route) return problems;
 
   const pageCode = page.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (/listDrivers\(/.test(pageCode) || /limit:\s*500/.test(pageCode)) {
+  if (/listDrivers\s*\([^)]*limit:\s*500/.test(pageCode.replace(/\s+/g, " "))) {
     problems.push(`${PAGE}: must not silent-fetch listDrivers(limit:500)`);
   }
   if (!/driver_name/.test(pageCode)) {
