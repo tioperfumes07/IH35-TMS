@@ -74,42 +74,7 @@ import { getCompanySettlementReport } from "../../api/accounting";
 import { SettlementLoadsSection } from "./components/SettlementLoadsSection";
 import { CompanyWaterfallSection } from "./components/CompanyWaterfallSection";
 import { SettlementNumberBox } from "./components/SettlementNumberBox";
-
-function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
-  // OWNER-LIVE-DEFECT-2026-09-08 (Jorge, live walkthrough of S-13644): this filter excluded
-  // line_type='escrow_contribution' entirely — an escrow-contribution settlement line withholds
-  // real driver dollars ($25/load, same as any other deduction) but was invisible to both this
-  // table AND this page's own Net Pay Summary math, even though the settlement's stored,
-  // authoritative deductions_total column (driver_finance.driver_settlements.deductions_total)
-  // DOES include it. Live proof: S-13644's stored deductions_total is $469.99 — the nine
-  // line_type='deduction' rows sum to $444.99, and the missing $25.00 is exactly one
-  // line_type='escrow_contribution' row ("Load 13555 — Escrow Contribution") this filter dropped.
-  // Escrow withholding is economically a deduction from this period's pay, so it belongs in the
-  // same table the driver and owner read as "what was withheld."
-  return lines
-    .filter((line) => ["deduction", "escrow_contribution"].includes(String(line.line_type)))
-    .map((line) => ({
-      id: String(line.id),
-      description: String(line.description ?? "Deduction"),
-      // S.1b — line_date (COALESCE of created_at), load_number, deduction_type, and posting
-      // account fields from the driver_settlement_deductions + catalogs.accounts joins.
-      line_date: typeof line.line_date === "string" ? line.line_date : null,
-      load_number: typeof line.load_number === "string" ? line.load_number : null,
-      deduction_type: typeof line.deduction_type === "string" ? line.deduction_type : null,
-      posting_account_number: typeof line.posting_account_number === "string" ? line.posting_account_number : null,
-      posting_account_name: typeof line.posting_account_name === "string" ? line.posting_account_name : null,
-      balance_left: Number(line.balance_left ?? line.amount ?? 0),
-      this_period_amount: Number(line.amount ?? 0),
-      // HOLD-DEDUCTION-MODAL-WRONG-PATCH-TARGET-ID: is_held/held_by are now the REAL state joined
-      // from driver_finance.driver_settlement_deductions (settlements.routes.ts GET detail), not
-      // dead columns that never existed on settlement_lines and were always false/null before.
-      is_held: Boolean(line.deduction_is_held),
-      held_by_user: line.deduction_held_by_user_email ? String(line.deduction_held_by_user_email) : null,
-      held_by_user_id: line.deduction_held_by_user_id ? String(line.deduction_held_by_user_id) : null,
-      pending_ack: Boolean(line.pending_ack),
-      source_deduction_id: line.source_deduction_id ? String(line.source_deduction_id) : null,
-    }));
-}
+import { toDeductionRows } from "./settlementDeductionRows";
 
 export function SettlementStatementWorkflowPage() {
   const { selectedCompanyId } = useCompanyContext();

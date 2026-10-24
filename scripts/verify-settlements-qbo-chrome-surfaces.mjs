@@ -119,33 +119,21 @@ const CHECKS = [
   // ROUND 443.274-C Settlements-Statement.dc.html — V3 identity strip + 2×2 board panels.
   // Same getSettlement / tour readout / SettlementKpiGrid (SETL-DETAIL-01); chrome only.
   {
-    name: "SettlementDetailPage V3KpiTile statement identity strip",
+    name: "SettlementDetailPage eight-section document + print/PDF actions (443.293-A)",
     file: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
     pattern:
-      /V3KpiTile[\s\S]*data-settlements-statement-v3-kpis="1"|data-settlements-statement-v3-kpis="1"[\s\S]*V3KpiTile/,
+      /Print statement[\s\S]*Download PDF[\s\S]*Open journal entry[\s\S]*SettlementStatementDocumentBody/,
   },
   {
-    name: "SettlementDetailPage Company settlement EntityLink on statement strip",
+    name: "SettlementDetailPage company settlement PDF when linked",
     file: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
-    pattern:
-      /data-settlements-statement-v3-kpis="1"[\s\S]*kind="company_settlement"|kind="company_settlement"[\s\S]*data-settlements-statement-v3-kpis="1"/,
+    pattern: /companySettlementHtmlUrl[\s\S]*settlement-company-download-pdf/,
   },
   {
-    name: "SettlementDetailPage board action labels + SettlementStatementBoardPanels mount",
-    file: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+    name: "SettlementStatementDocumentBody eight-section marker + KPI grid",
+    file: "apps/frontend/src/pages/driver-finance/components/SettlementStatementDocumentBody.tsx",
     pattern:
-      /Print statement[\s\S]*Download PDF[\s\S]*Open journal entry[\s\S]*SettlementStatementBoardPanels/,
-  },
-  {
-    name: "SettlementStatementBoardPanels 4 V3Panel titles + data attr",
-    file: "apps/frontend/src/pages/driver-finance/components/SettlementStatementBoardPanels.tsx",
-    pattern:
-      /data-settlements-statement-v3-panel="1"[\s\S]*Earnings — by load[\s\S]*Deductions · reimbursements · net[\s\S]*companyPanelTitle[\s\S]*Linked records/,
-  },
-  {
-    name: "SettlementStatementBoardPanels company panel title includes side by side",
-    file: "apps/frontend/src/pages/driver-finance/components/SettlementStatementBoardPanels.tsx",
-    pattern: /side by side/,
+      /data-settlement-statement-eight-section="1"[\s\S]*<SettlementKpiGrid[\s\S]*<SettlementLoadsSection[\s\S]*<CompanySettlementItemizedByLoad/,
   },
   {
     // ACCT-F5444: NOT kind="bill" — that was this check's original ask, and it is WRONG.

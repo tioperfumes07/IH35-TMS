@@ -265,9 +265,14 @@ async function live() {
     // Static arm — permanent regression lock, runs regardless of live population size.
     const files = walk(BACKEND_SRC);
     const staticFailures = auditNoBillHeaderTotalAsLoadCost(files);
-    const kpiSrcPath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
-    if (fs.existsSync(kpiSrcPath)) {
-      staticFailures.push(...auditKpiGridUsesCompanyScopedReport(fs.readFileSync(kpiSrcPath, "utf8")));
+    const kpiSrcPaths = [
+      path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx"),
+      path.join(ROOT, "apps/frontend/src/pages/driver-finance/components/SettlementStatementDocumentBody.tsx"),
+    ];
+    for (const kpiSrcPath of kpiSrcPaths) {
+      if (fs.existsSync(kpiSrcPath)) {
+        staticFailures.push(...auditKpiGridUsesCompanyScopedReport(fs.readFileSync(kpiSrcPath, "utf8")));
+      }
     }
     staticFailures.push(...auditSixSurfaces(ROOT));
 
