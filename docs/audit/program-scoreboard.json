@@ -1,10 +1,10 @@
 {
-  "healthzSha": "bc5b56d",
-  "generated_at": "2026-10-24T20:22:44.272Z",
+  "healthzSha": "524f0b7",
+  "generated_at": "2026-10-24T20:45:37.869Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "bc5b56d",
+    "deployedSha": "524f0b7",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27538,
+      "title": "FINDING: ENG-22/25/26/28/29 LANE: ENGINE-GUARDS — 5 engine-register guards + verify-step 18785 (443.324)",
+      "state": "merged",
+      "mergedAtCt": "10/24/2026, 03:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27538",
+      "sha": "524f0b7fcd",
+      "committedAtIso": "2026-10-24T15:37:38-05:00"
+    },
+    {
+      "number": 27537,
+      "title": "chore: claim verify-step 18793 (CC-1) — verify-close-creates-company-settlement (ENG-40)",
+      "state": "merged",
+      "mergedAtCt": "10/24/2026, 03:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27537",
+      "sha": "e69ea31fc1",
+      "committedAtIso": "2026-10-24T15:36:36-05:00"
+    },
+    {
       "number": 27535,
       "title": "FINDING: ACCT-F443328-ENG39 LANE: NON-FINANCIAL — CC-1 443.328 ENG-39: guard missing bill_payment attribution in GL CTE",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27527",
       "sha": "75b46ef4b4",
       "committedAtIso": "2026-10-24T14:51:09-05:00"
-    },
-    {
-      "number": 27521,
-      "title": "FINDING: ACCT-F443322-ENG04 LANE: FINANCIAL — CC-1 443.322 ENG-04: 12 driver advances (CA-2026-0001..CA-2026-0012) misposted Cr to account 2170; guard 18777",
-      "state": "merged",
-      "mergedAtCt": "10/24/2026, 02:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27521",
-      "sha": "06af27ec70",
-      "committedAtIso": "2026-10-24T14:47:29-05:00"
-    },
-    {
-      "number": 27526,
-      "title": "FINDING: ACCT-F443318 LANE: NON-FINANCIAL — LEAD 443.318: Create Manual JE step 2 — Class picker overlapped the Debit field and line controls overflowed the drawer (register D065)",
-      "state": "merged",
-      "mergedAtCt": "10/24/2026, 02:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27526",
-      "sha": "c382039878",
-      "committedAtIso": "2026-10-24T14:31:23-05:00"
     }
   ]
 }

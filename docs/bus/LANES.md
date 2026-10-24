@@ -39,6 +39,7 @@ apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
 apps/backend/src/system/engine-status.catalog.ts
 scripts/db-migrate.mjs
 scripts/audit-creator-settlement.mjs
+scripts/backfill-company-settlement-orphans.mjs
 scripts/test-typecheck-baseline.json
 # ROUND 443.140 8b (CC-1, 2026-10-12) — cash-flow projections: card_payable_2510 + relay_topup + late-load receipt
 apps/backend/src/cash-flow/cash-flow.service.ts
