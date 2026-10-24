@@ -179,6 +179,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
           merged.push(await withCanonicalEngineScope(uid, oc, (client) =>
             mergeIntoCanonical(client, oc, kind, { survivorId: g.survivor.id, duplicateId: d.id, actorUserId: uid, authId: null, reason: b.data.reason })));
         } catch (e) {
+          req.log.error({ survivor_id: g.survivor.id, duplicate_id: d.id, err: e }, "canonical merge-all: one pair refused");
           refused.push({ survivor_id: g.survivor.id, duplicate_id: d.id, error: String((e as Error).message) });
         }
       }

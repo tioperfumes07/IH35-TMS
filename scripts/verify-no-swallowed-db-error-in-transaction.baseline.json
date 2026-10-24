@@ -1,12 +1,11 @@
 {
-  "total": 125,
-  "files": 85,
-  "measured_at": "2026-10-03T20:24:30.000Z",
-  "measurement_kind": "static source scan with the ROUND 381.5 handler parse; re-measured by CC-3 at pickup",
+  "total": 122,
+  "files": 82,
   "byFile": {
     "apps/backend/src/accounting/bulk-void.service.ts": 1,
     "apps/backend/src/accounting/daily-recon.routes.ts": 1,
-    "apps/backend/src/accounting/expenses.routes.ts": 1,
+    "apps/backend/src/accounting/expense-correction.service.ts": 1,
+    "apps/backend/src/accounting/expenses-bulk.routes.ts": 1,
     "apps/backend/src/accounting/factoring-posting/poster.service.ts": 2,
     "apps/backend/src/accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts": 2,
     "apps/backend/src/accounting/fuel-posting/poster.service.ts": 1,
@@ -38,7 +37,6 @@
     "apps/backend/src/driver-finance/cash-advance-requests.service.ts": 1,
     "apps/backend/src/driver-finance/debt.routes.ts": 1,
     "apps/backend/src/driver-finance/historical-feed-day.routes.ts": 1,
-    "apps/backend/src/driver-finance/historical-feed-day.service.ts": 1,
     "apps/backend/src/driver-finance/settlement-creator.service.ts": 1,
     "apps/backend/src/driver-finance/settlement-lines-materialize.service.ts": 2,
     "apps/backend/src/driver-finance/settlement-payment.service.ts": 1,
@@ -85,9 +83,6 @@
     "apps/backend/src/settlements/team-splits/team-splits.routes.ts": 2,
     "apps/backend/src/sync/qbo-accounts-push.ts": 1,
     "apps/backend/src/sync/qbo-customers-push.ts": 1,
-    "apps/backend/src/sync/qbo-vendors-push.ts": 1,
-    "apps/backend/src/accounting/expense-correction.service.ts": 1,
-    "apps/backend/src/accounting/expenses-bulk.routes.ts": 1,
-    "apps/backend/src/dispatch/settlement-document-load-facts.routes.ts": 1
+    "apps/backend/src/sync/qbo-vendors-push.ts": 1
   }
 }

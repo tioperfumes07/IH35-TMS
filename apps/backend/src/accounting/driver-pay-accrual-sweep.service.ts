@@ -71,6 +71,7 @@ export async function runDriverPayAccrualSweep(operatingCompanyId: string): Prom
         result.skipped++;
       }
     } catch (err) {
+      console.error({ load_id, driver_bill_id, err }, "driver-pay-accrual-sweep: per-load accrual failed");
       result.failed++;
       result.errors.push({ load_id, driver_bill_id, error: String((err as Error)?.message ?? err) });
     }
