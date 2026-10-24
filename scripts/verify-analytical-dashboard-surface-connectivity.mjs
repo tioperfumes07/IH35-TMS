@@ -21,6 +21,7 @@ const FILES = {
   programNav: "apps/frontend/src/pages/program/ProgramModuleNav.tsx",
   legacy: "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
   reportsHome: "apps/frontend/src/pages/reports/ReportsHome.tsx",
+  reportsHomeBoard: "apps/frontend/src/pages/reports/components/ReportsHomeBoard.tsx",
   reportCategories: "apps/frontend/src/components/reports/CategoryHoverNav.tsx",
   reportsRunner: "apps/frontend/src/pages/reports/ReportsRunner.tsx",
   runnerConfig: "apps/frontend/src/pages/reports/runners/runner-config.ts",
@@ -89,7 +90,11 @@ export function verify(source) {
   for (const route of ["/program/matrix", "/program/legacy-board", "/program/legacy-scoreboard"]) need("routes", `path="${route}"`, `program route ${route} must remain mounted`);
   need("routes", '<Route path="/home/scenario-tracker" element={<Navigate to="/program" replace />} />', "scenario legacy route must redirect to Program home");
 
-  need("reportsHome", "reportsKpis.map", "reports home must retain KPI strip");
+  // 443.284: the 443.267 board (#27327) moved the KPI strip into ReportsHomeBoard — Reports home must mount the board,
+  // and the board must render the strip from the live KPI summary (not a static array).
+  need("reportsHome", "<ReportsHomeBoard companyId={companyId} />", "reports home must mount the board that carries the KPI strip");
+  need("reportsHomeBoard", 'data-testid="reports-home-kpi-strip"', "reports home must retain KPI strip");
+  need("reportsHomeBoard", "queryFn: () => getKpiSummary(companyId)", "reports KPI strip must read the live KPI summary");
   for (let i = 0; i < REPORT_ROUTES.length; i += 1) need("routes", `path="/reports/${REPORT_ROUTES[i]}"`, `report route ${REPORT_IDS[i]} must remain mounted`);
   for (const id of RUNNER_IDS.filter((runnerId) => runnerId !== "maint-cost-unit")) need("reportCategories", `id: "${id}"`, `runner ${id} must remain discoverable in report categories`);
   need("runnerConfig", '"maint-cost-unit": {', "maintenance-cost runner must remain registered");
@@ -143,7 +148,7 @@ if (process.argv.includes("--self-test")) {
     ["qboHome", "export function QboStyleHomePage", "function BrokenHome"], ["matrix", 'data-testid={`module-matrix-pill-${m.id}`}', 'data-testid="broken-pill"'],
     ["matrix", 'data-testid="module-matrix-live-banner"', 'data-testid="broken-live"'], ["tracker", 'href="/program/legacy-board"', 'href="/broken"'],
     ["programNav", 'to="/program/legacy-scoreboard"', 'to="/broken"'], ["legacy", 'data-testid="program-scoreboard-module-table"', 'data-testid="broken"'],
-    ["reportsHome", "reportsKpis.map", "[].map"], ["reportCategories", 'id: "profit-truck-mtd"', 'id: "broken-runner"'], ["runnerConfig", '"maint-cost-unit": {', '"broken-runner": {'],
+    ["reportsHome", "<ReportsHomeBoard companyId={companyId} />", "<div />"], ["reportsHomeBoard", 'data-testid="reports-home-kpi-strip"', 'data-testid="broken"'], ["reportsHomeBoard", "queryFn: () => getKpiSummary(companyId)", "queryFn: async () => null"], ["reportCategories", 'id: "profit-truck-mtd"', 'id: "broken-runner"'], ["runnerConfig", '"maint-cost-unit": {', '"broken-runner": {'],
     ["reportsRunner", "<RunnerFilters", '<button disabled aria-label="Save (available soon)">Save</button><RunnerFilters'],
     ["reportLaneModal", "export function LaneDetailModal", "function BrokenLaneModal"], ["reportScheduleModal", "export function ScheduleReportModal", "function BrokenScheduleModal"],
     ["reportFlyout", "export function ReportFlyoutPanel", "function BrokenFlyout"], ["scheduledPanel", "export function ScheduledReportsPanel", "function BrokenScheduledPanel"],

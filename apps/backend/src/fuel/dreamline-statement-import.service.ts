@@ -607,14 +607,18 @@ export async function postStatementCardCreditAsExpense(
   input: { companyId: string; actor: string; expenseId: string; differenceCents: number; date: string; marker: string; payableId: string; discountAccountId: string; discountItemId: string; rail?: FuelCardStatementRail }
 ): Promise<string | null> {
   const rail = input.rail ?? DREAMLINE_STATEMENT_RAIL;
-  const r = (await client.query<{ vendor: string | null; load_id: string | null; driver: string | null; unit_id: string | null }>(
-    `SELECT vendor_uuid::text AS vendor, load_id::text, driver_uuid::text AS driver, unit_id::text
+  const r = (await client.query<{ vendor: string | null; load_id: string | null; driver: string | null; unit_id: string | null; expense_number: string | null; expense_date: string | null }>(
+    `SELECT vendor_uuid::text AS vendor, load_id::text, driver_uuid::text AS driver, unit_id::text,
+            expense_number::text, transaction_date::text AS expense_date
        FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     [input.expenseId, input.companyId]
   )).rows[0];
   if (!r) throw new Error(`dreamline_receipt_expense_missing:${input.expenseId}`);
   const cents = Math.abs(input.differenceCents);
   if (cents === 0) return null;
+  // 443.284 (ROUND 390.3): the memo names the receipt the way an operator reads it — its expense number, else its
+  // date — never its UUID. The structural link is the shared statement marker + the receipt's load / unit / driver.
+  const receiptLabel = r.expense_number ? `receipt ${r.expense_number}` : `the receipt of ${(r.expense_date ?? input.date).slice(0, 10)}`;
   const created = await createExpenseInClientTx(client, {
     operating_company_id: input.companyId,
     is_credit: true,
@@ -629,7 +633,7 @@ export async function postStatementCardCreditAsExpense(
     // the LOAD decides unit / driver / trailer (the writer's load attribution); a receipt with no load names its own
     ...(r.load_id ? { load_id: r.load_id } : { ...(r.unit_id ? { unit_id: r.unit_id } : {}), ...(r.driver ? { driver_id: r.driver } : {}) }),
     vendor_document_number: `${input.marker}-CARD-DISC`.slice(0, 120),
-    memo: `${rail.label} statement ${input.marker} — card discount ${cents} cents (${FUEL_CARD_DISCOUNT_ITEM}) on receipt ${input.expenseId}`,
+    memo: `${rail.label} statement ${input.marker} — card discount $${(cents / 100).toFixed(2)} (${FUEL_CARD_DISCOUNT_ITEM}) on ${receiptLabel}`,
     is_company_expense: true,
   } as never, input.actor);
   const dup = created as { duplicateVendorDocumentNumber?: boolean; duplicateSubmission?: boolean };

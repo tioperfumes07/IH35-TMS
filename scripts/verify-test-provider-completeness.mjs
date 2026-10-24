@@ -38,6 +38,10 @@ const REQUIREMENTS = [
     id: "QueryClientProvider",
     componentUses: /\buse(?:Query|Mutation|QueryClient|InfiniteQuery)\s*[(<]/,
     testSupplies: /QueryClientProvider/,
+    // 443.284: a test that REPLACES the hook module (vi.mock factory, no importOriginal/importActual) and defines every
+    // hook the component calls never reaches the context — nothing consumes the provider. A partial mock still does.
+    mockedModule: "@tanstack/react-query",
+    hooks: /\b(use(?:Query|Mutation|QueryClient|InfiniteQuery))\s*[(<]/g,
     hint: "wrap the render in <QueryClientProvider client={new QueryClient(...)}>",
   },
   {
@@ -75,6 +79,27 @@ function resolveComponent(testFileAbs, rel) {
   return null;
 }
 
+/** The factory text of `vi.mock("<mod>", factory)` — balanced parens from the call — or null when the module is not mocked. */
+export function mockFactory(testSrc, mod) {
+  const at = testSrc.search(new RegExp(`vi\\.mock\\(\\s*["']${mod.replace(/[/.@-]/g, (c) => `\\${c}`)}["']\\s*,`));
+  if (at < 0) return null;
+  let depth = 0;
+  for (let i = testSrc.indexOf("(", at); i < testSrc.length; i += 1) {
+    if (testSrc[i] === "(") depth += 1;
+    else if (testSrc[i] === ")" && --depth === 0) return testSrc.slice(at, i + 1);
+  }
+  return null;
+}
+
+/** True only when the module is fully replaced and the factory defines every hook the component calls. */
+export function hooksFullyMocked(req, testSrc, componentSrc) {
+  if (!req.mockedModule) return false;
+  const factory = mockFactory(testSrc, req.mockedModule);
+  if (!factory || /import(?:Original|Actual)|requireActual/.test(factory)) return false;
+  const used = new Set([...componentSrc.matchAll(req.hooks)].map((m) => m[1]));
+  return used.size > 0 && [...used].every((hook) => new RegExp(`\\b${hook}\\b\\s*[:,(]`).test(factory));
+}
+
 export function auditTestFile(testRel, testSrc, readComponent) {
   const problems = [];
   for (const { name, rel } of renderedLocalComponents(testSrc)) {
@@ -83,6 +108,7 @@ export function auditTestFile(testRel, testSrc, readComponent) {
     for (const req of REQUIREMENTS) {
       if (!req.componentUses.test(src)) continue;
       if (req.testSupplies.test(testSrc)) continue;
+      if (hooksFullyMocked(req, testSrc, src)) continue;
       problems.push(
         `${testRel}: renders <${name}/>, which consumes ${req.id}, but the test never supplies it. ` +
           `The render throws and EVERY case in this file dies at once — a regression test can go dead ` +
@@ -175,6 +201,26 @@ function selftest() {
   const notRendered = `import { Widget } from "./Widget";\n it("x", () => expect(1).toBe(1));`;
   if (auditTestFile("a.test.tsx", notRendered, () => compQuery).length !== 0)
     failures.push("case5 FAIL — an imported-but-unrendered component was flagged");
+
+  // 443.284: a full factory mock that defines every hook used reads no provider — clean.
+  const compQM = `export function Widget(){ const q = useQuery({}); const m = useMutation({}); return <div/>; }`;
+  const fullMock = `import { Widget } from "./Widget";
+    vi.mock("@tanstack/react-query", () => ({ useQuery: vi.fn(() => ({})), useMutation: () => ({ mutateAsync: vi.fn() }) }));
+    render(<MemoryRouter><Widget /></MemoryRouter>);`;
+  if (auditTestFile("a.test.tsx", fullMock, () => compQM).length !== 0)
+    failures.push("case7 FAIL — a fully replaced hook module was flagged");
+  // ...but a PARTIAL mock (real module spread in) still needs the provider.
+  const partial = fullMock.replace("() => ({ useQuery", "async (importOriginal) => ({ ...(await importOriginal()), useQuery");
+  if (auditTestFile("a.test.tsx", partial, () => compQM).length === 0)
+    failures.push("case8 FAIL — a partial mock (importOriginal) without a provider was NOT caught");
+  // ...and a factory that omits a hook the component calls still renders the real hook -> needs the provider.
+  const missingHook = fullMock.replace(", useMutation: () => ({ mutateAsync: vi.fn() })", "");
+  if (auditTestFile("a.test.tsx", missingHook, () => compQM).length === 0)
+    failures.push("case9 FAIL — a mock missing a used hook (useMutation) was NOT caught");
+  // ...and mocking a DIFFERENT module never counts.
+  const otherModule = fullMock.replace('"@tanstack/react-query"', '"../../api/client"');
+  if (auditTestFile("a.test.tsx", otherModule, () => compQM).length === 0)
+    failures.push("case10 FAIL — a mock of another module was taken as the hook module");
 
   const tree = auditTree();
   if (tree.length !== 0) failures.push(`case6 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
