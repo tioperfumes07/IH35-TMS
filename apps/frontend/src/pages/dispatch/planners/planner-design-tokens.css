@@ -8,4 +8,7 @@
   --planner-th-ink: #1f2937;
   --planner-th-border: #c7d2dc;
   --planner-grp-bg: #e4eaf1;
+  /* LEAD 443.284 — tab overlays ON the dark --planner-active bar (never a white box): selected / hover tints. */
+  --planner-tab-selected: rgba(255, 255, 255, 0.2);
+  --planner-tab-hover: rgba(255, 255, 255, 0.1);
 }

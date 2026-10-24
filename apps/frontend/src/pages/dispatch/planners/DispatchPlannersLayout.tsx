@@ -245,7 +245,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
               key={tab.to}
               to={tab.to}
               className={({ isActive }: { isActive: boolean }) =>
-                `flex h-7 shrink-0 items-center rounded-sm px-3 text-xs font-medium text-white ${isActive ? "bg-white/20" : "hover:bg-white/10"}`
+                `flex h-7 shrink-0 items-center rounded-sm px-3 text-xs font-medium text-white ${isActive ? "bg-[var(--planner-tab-selected)]" : "hover:bg-[var(--planner-tab-hover)]"}`
               }
             >
               {tab.label}

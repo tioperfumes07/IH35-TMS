@@ -289,7 +289,10 @@ function runReal() {
   }
 
   try {
-    execSync(`npx vitest run ${NAV_COMPONENT_TEST_REL.replace(/^apps\/frontend\//, "")}`, {
+    // LEAD 443.284: the installed vitest binary, not `npx vitest` — npx's package resolution alone cost the 25 s
+    // verify-static budget under load, so the guard was killed and read as red with nothing wrong in the code.
+    const vitestBin = [path.join(ROOT, "apps/frontend/node_modules/.bin/vitest"), path.join(ROOT, "node_modules/.bin/vitest")].find((p) => fs.existsSync(p));
+    execSync(`${vitestBin ? JSON.stringify(vitestBin) : "npx vitest"} run ${NAV_COMPONENT_TEST_REL.replace(/^apps\/frontend\//, "")}`, {
       cwd: path.join(ROOT, "apps/frontend"),
       stdio: "inherit",
     });

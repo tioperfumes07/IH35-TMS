@@ -31,7 +31,7 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
   const positions = useQuery({ queryKey: ["telematics", "latest-positions", companyId], queryFn: () => listLatestPositions(companyId), enabled: Boolean(companyId && unitId), refetchInterval: 30_000 });
   const trips = useQuery({ queryKey: ["driver-live-overview", "trips", companyId, driverId], queryFn: () => listAllDispatchLoads({ operating_company_id: companyId, driver: driverId, scope: "board", view: "home", status: [] }), enabled: Boolean(companyId && driverId) });
   const pay = useQuery({ queryKey: ["driver-live-overview", "pre-settlement", companyId, driverId], queryFn: () => getPreSettlementForDriver(driverId, companyId), enabled: Boolean(companyId && driverId) });
-  const position = positions.isError ? undefined : positions.data?.rows.find((row) => row.unit_id === unitId);
+  const position = positions.isError ? undefined : positions.data?.rows?.find((row) => row.unit_id === unitId);
   const settlement = pay.isError ? null : pay.data?.settlement;
   const date = (value: unknown) => text(value) ? formatDateUS(text(value)) : "Not recorded";
   const b1Expiration = aggregate.driver.has_b1_visa || /^b[- ]?1$/i.test(text(aggregate.driver.visa_type)) ? aggregate.driver.visa_expires_at || aggregate.driver.b1_visa_expires_date : null;
@@ -69,7 +69,7 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
             <div className="text-xs font-semibold"><EntityLink kind="settlement" id={settlement.id} label={`${formatUsdTable(settlement.gross_pay)} gross`} /></div>
             <p><EntityLink kind="settlement" id={settlement.id} label={`${formatUsdTable(settlement.deductions_total)} deductions · ${formatUsdTable(settlement.net_pay)} net`} /></p>
             <p>{date(settlement.period_start)} – {date(settlement.period_end)}</p>
-            <div className="flex flex-wrap gap-2">{pay.data?.legs.map((leg) => <EntityLink key={leg.load_id} kind="load" id={leg.load_id} label={leg.load_number} />)}</div>
+            <div className="flex flex-wrap gap-2">{pay.data?.legs?.map((leg) => <EntityLink key={leg.load_id} kind="load" id={leg.load_id} label={leg.load_number} />)}</div>
           </> : <p>No open pre-settlement for this driver.</p>}
         </div>
       </V3Panel>
