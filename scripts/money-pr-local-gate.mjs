@@ -82,6 +82,12 @@ const STEPS = [
   ["verify-load-costs-live-documents", "scripts/verify-load-costs-live-documents.mjs"],
   ["verify-g1-trailer-choice-required", "scripts/verify-g1-trailer-choice-required.mjs"],
   ["verify-g2-creator-trailer-equipment-required", "scripts/verify-g2-creator-trailer-equipment-required.mjs"],
+  // ENG-25 (443.324) — every fuel-to-load resolution must go through resolveFuelLoadAtTime (fuel-load-at-time.ts);
+  // no second local resolveLoadId helper may exist in the fuel import path. Static.
+  ["verify-one-fuel-to-load-helper", "scripts/verify-one-fuel-to-load-helper.mjs"],
+  // ENG-28 (443.324) — only posting-engine.service.ts may import posting-line-writer.ts directly.
+  // The import-assertion arm is appended to the existing allowlist guard. Static.
+  ["verify-only-the-posting-engine-writes-postings", "scripts/verify-only-the-posting-engine-writes-postings.mjs"],
   ["verify-bank-categorized-cost-is-expense-document", "scripts/verify-bank-categorized-cost-is-expense-document.mjs"],
   ["verify-expense-item-lines", "scripts/verify-expense-item-lines.mjs"],
   ["verify-account-number-hidden-by-default", "scripts/verify-account-number-hidden-by-default.mjs"],

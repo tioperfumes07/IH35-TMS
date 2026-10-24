@@ -391,12 +391,41 @@ if (isMain) {
       await client.query("ROLLBACK").catch(() => {});
       lf = liveErrorFailures(err);
     }
+    // ENG-26 (443.324) — factoring_advance + driver_settlement postings missing load_id (shrink-only).
+    // Baseline: 155 factoring_advance + 105 driver_settlement = 260 (measured 2026-10-24 on 1d87d07bab).
+    // These are pre-stamp-migration rows. Count should only decrease as the backfill lands via the posting engine.
+    // Fuel (27), expense (24), invoice (4), bank_deposit/relay_deposit: load-less by design — not counted here.
+    const ENG26_BASELINE = 260;
+    let eng26Count = null;
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+      const r = await client.query(
+        `SELECT count(*) AS n FROM accounting.journal_entry_postings
+          WHERE operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'
+            AND load_id IS NULL
+            AND source_transaction_type IN ('factoring_advance','driver_settlement')`,
+      );
+      await client.query("COMMIT");
+      eng26Count = Number(r.rows[0].n);
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => {});
+      lf.push(`ENG-26 shrink-only query error: ${String(err.message ?? err)}`);
+    }
+    if (eng26Count !== null && eng26Count > ENG26_BASELINE) {
+      lf.push(
+        `ENG-26: ${eng26Count} factoring_advance/driver_settlement postings without load_id (baseline ${ENG26_BASELINE}; count grew)`,
+      );
+    }
+    const eng26Summary = eng26Count !== null
+      ? `ENG-26 shrink: ${eng26Count}/${ENG26_BASELINE} (factoring_advance+driver_settlement without load_id)`
+      : "ENG-26 shrink: query failed";
     const summary = m
       ? `load-born postings ${m.load_born}, stamped ${m.stamped} (history is CC-3's provable backfill); ${m.since} posting(s) since ${MIGRATION} applied, 0 unstamped`
       : `${MIGRATION} not applied on this database yet — static rule only`;
     const all = [...sf, ...lf];
     if (all.length) { console.error(`${LABEL}: FAIL\n  ${all.join("\n  ")}`); process.exitCode = 1; }
-    else console.log(`${LABEL}: OK — ${inserts} posting INSERT(s) under apps/backend/src all write load_id; ${summary}.`);
+    else console.log(`${LABEL}: OK — ${inserts} posting INSERT(s) under apps/backend/src all write load_id; ${summary}; ${eng26Summary}.`);
   } finally {
     client.release?.();
     await pool?.end?.();

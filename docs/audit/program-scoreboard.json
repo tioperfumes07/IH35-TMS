@@ -1,10 +1,10 @@
 {
-  "healthzSha": "7fa3e63",
-  "generated_at": "2026-10-24T02:55:41.517Z",
+  "healthzSha": "bc5b56d",
+  "generated_at": "2026-10-24T20:22:44.272Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "7fa3e63",
+    "deployedSha": "bc5b56d",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27374,
-      "title": "Claude-1-443.278: settlement load-cost engine fix",
+      "number": 27535,
+      "title": "FINDING: ACCT-F443328-ENG39 LANE: NON-FINANCIAL — CC-1 443.328 ENG-39: guard missing bill_payment attribution in GL CTE",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27374",
-      "sha": "7fa3e63f63",
-      "committedAtIso": "2026-10-23T21:47:32-05:00"
+      "mergedAtCt": "10/24/2026, 03:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27535",
+      "sha": "bc5b56dac8",
+      "committedAtIso": "2026-10-24T15:18:43-05:00"
     },
     {
-      "number": 27443,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — LEAD 443.297: code-complete mode — register seats reassigned (CC-1 38, CC-2 25, CC-3 22, Cursor 77, Codex 27), rows 222-224, and all 10-23 coder boxes",
+      "number": 27533,
+      "title": "FINDING: N/A LANE: DOCS — LEAD claim migration 202616240200 (443.319 escrow holder integrity)",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:45 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27443",
-      "sha": "cc123db8cb",
-      "committedAtIso": "2026-10-23T21:45:15-05:00"
+      "mergedAtCt": "10/24/2026, 03:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27533",
+      "sha": "5db90d69aa",
+      "committedAtIso": "2026-10-24T15:10:30-05:00"
     },
     {
-      "number": 27442,
-      "title": "Claude-1- 443.292-F2 restore live arm verify-no-empty-zero-settlement",
+      "number": 27532,
+      "title": "FINDING: ACCT-F443322-ENG01C LANE: FINANCIAL — CC-1 443.322 ENG-01c: legacy settlement writers created deduction lines without DSD rows; writer fix + backfill + guard step 18789",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27442",
-      "sha": "7ac16709fd",
-      "committedAtIso": "2026-10-23T21:44:53-05:00"
+      "mergedAtCt": "10/24/2026, 03:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27532",
+      "sha": "f01b6c3eee",
+      "committedAtIso": "2026-10-24T15:06:50-05:00"
     },
     {
-      "number": 27441,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — LEAD 443.294 step 4a (factoring): documents override = <OverrideButton context=\"factoring\"> + recordOverride; no typed reason",
+      "number": 0,
+      "title": "CC-2- FINDING: ACCT-F443323-ENG10R LANE: NON-FINANCIAL — LEAD 443.323 ENG-10 rev: key duplicate guard on provider reference, not load_id",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27441",
-      "sha": "14964991eb",
-      "committedAtIso": "2026-10-23T21:44:12-05:00"
+      "mergedAtCt": "10/24/2026, 03:03 PM CT",
+      "url": "",
+      "sha": "73072cae50",
+      "committedAtIso": "2026-10-24T15:03:09-05:00"
     },
     {
-      "number": 27440,
-      "title": "FINDING: N/A LANE: DOCS — CC-2 claim migration 202616230700 (OWNER RULING 443.288-B expense load confirmation)",
+      "number": 27530,
+      "title": "FINDING: ACCT-F443327 LANE: FINANCIAL — LEAD: ENG-01 ops script could not run (4 non-existent columns, TB read outside a transaction); fixed, rehearsed on the fork, P-0113 + P-0117 posted on prod under AUTH-463; P-0119 held — the load-bookended close drops a deduction line with no load",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27440",
-      "sha": "be4cfc02bc",
-      "committedAtIso": "2026-10-23T21:41:36-05:00"
+      "mergedAtCt": "10/24/2026, 03:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27530",
+      "sha": "2ced9bea7a",
+      "committedAtIso": "2026-10-24T15:00:56-05:00"
     },
     {
-      "number": 27439,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — LEAD 443.295: Fuel assignment popup redesign + app popup standard (design board)",
+      "number": 27529,
+      "title": "chore(claim): reserve verify-step 18789 for ENG-01c (CC-1 443.322)",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27439",
-      "sha": "ca92a83028",
-      "committedAtIso": "2026-10-23T21:41:20-05:00"
+      "mergedAtCt": "10/24/2026, 03:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27529",
+      "sha": "d98f500bb2",
+      "committedAtIso": "2026-10-24T15:00:48-05:00"
     },
     {
-      "number": 27438,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — LEAD 443.294 step 3: <OverrideButton context> — Owner/Accountant confirm only; everyone else a context-filtered reason list; nothing to type",
+      "number": 27528,
+      "title": "Claude-3- rows 155/157 + row 5: person names proper-cased on all screens; invoice CSV multi-select filter fix",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27438",
-      "sha": "d21fc35cf3",
-      "committedAtIso": "2026-10-23T21:37:09-05:00"
+      "mergedAtCt": "10/24/2026, 02:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27528",
+      "sha": "1d87d07bab",
+      "committedAtIso": "2026-10-24T14:52:18-05:00"
     },
     {
-      "number": 27437,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — CC-2- 443.290 banking: 3 main static reds — guards follow the 443.267 Banking board, the 443.243 fuel question in the Match drawer and the 443.282 Escrow register, each with failing plants",
+      "number": 27527,
+      "title": "FINDING: ACCT-F443322 ENG-01b — settlement deduction JE credits must equal glr.deductions_cents (step 18781)",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:35 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27437",
-      "sha": "df105d81bf",
-      "committedAtIso": "2026-10-23T21:35:42-05:00"
+      "mergedAtCt": "10/24/2026, 02:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27527",
+      "sha": "75b46ef4b4",
+      "committedAtIso": "2026-10-24T14:51:09-05:00"
     },
     {
-      "number": 27436,
-      "title": "Claude-3- 443.294 step 2 recordOverride engine (catalog code or Owner/Accountant confirm, no free text, audited)",
+      "number": 27521,
+      "title": "FINDING: ACCT-F443322-ENG04 LANE: FINANCIAL — CC-1 443.322 ENG-04: 12 driver advances (CA-2026-0001..CA-2026-0012) misposted Cr to account 2170; guard 18777",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27436",
-      "sha": "5e4a628da0",
-      "committedAtIso": "2026-10-23T21:32:51-05:00"
+      "mergedAtCt": "10/24/2026, 02:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27521",
+      "sha": "06af27ec70",
+      "committedAtIso": "2026-10-24T14:47:29-05:00"
     },
     {
-      "number": 27435,
-      "title": "FINDING: LST-F4432941 LANE: NON-FINANCIAL — LEAD 443.294 step 1b: Override Reasons managed in Lists (routes + screen, same grammar as Void/Cancel Reasons)",
+      "number": 27526,
+      "title": "FINDING: ACCT-F443318 LANE: NON-FINANCIAL — LEAD 443.318: Create Manual JE step 2 — Class picker overlapped the Debit field and line controls overflowed the drawer (register D065)",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 09:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27435",
-      "sha": "e581cd3968",
-      "committedAtIso": "2026-10-23T21:27:08-05:00"
+      "mergedAtCt": "10/24/2026, 02:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27526",
+      "sha": "c382039878",
+      "committedAtIso": "2026-10-24T14:31:23-05:00"
     }
   ]
 }
