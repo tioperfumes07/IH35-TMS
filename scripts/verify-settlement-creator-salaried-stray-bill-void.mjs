@@ -30,7 +30,7 @@ export function staticProblems(src) {
   if (!/Number\(links\.lines\) > 0\) throw/.test(src)) p.push("RULE 1 a bill with live settlement lines is not refused");
   if (!/Number\(links\.gl_bills\) > 0\) throw/.test(src)) p.push("RULE 1 a bill on an A/P-chain run is not refused");
   if (!/Number\(links\.postings\) > 0\) throw/.test(src)) p.push("RULE 1 a bill with journal postings is not refused");
-  if (!/SET status = 'void', voided_at = now\(\), void_reason = \$2, voided_by_user_id/.test(src)) p.push("RULE 1 the bill is not voided (void-not-delete)");
+  if (!/stampDriverBillVoidedInClientTx\(/.test(src)) p.push("RULE 1 the bill is not voided (void-not-delete) — must delegate to stampDriverBillVoidedInClientTx, not roll its own void SQL");
   if (/DELETE FROM driver_finance\.driver_bills/i.test(src)) p.push("RULE 1 the path DELETEs a driver bill");
   if (!/driver_finance\.driver_bill\.voided_stray_salaried/.test(src)) p.push("RULE 1 the void is not audited");
   return p;
@@ -48,7 +48,7 @@ function selftest() {
     (s) => s.replace('bill.status !== "open"', 'bill.status === "x"'),
     (s) => s.replace("if (bill.settled_in_settlement_id) throw", "if (false) throw"),
     (s) => s.replace("Number(links.postings) > 0) throw", "Number(links.postings) > 99) throw"),
-    (s) => s.replace("SET status = 'void', voided_at = now(), void_reason = $2, voided_by_user_id", "SET status = 'open'"),
+    (s) => s.replace("stampDriverBillVoidedInClientTx(", "rawSqlVoidBill("),
     (s) => s + "\n// DELETE FROM driver_finance.driver_bills WHERE id = $1",
     (s) => s.replace("reason.length < 20", "reason.length < 1"),
   ];
