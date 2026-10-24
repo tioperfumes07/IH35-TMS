@@ -30,7 +30,8 @@ function verify(s) {
     // LEAD 443.206R (register B3/B11) — Drivers "on a load" reads the board set (empty status list = the load service default).
     ["drivers complete active set", /const dispatchLoadsQuery = useQuery\([\s\S]*?listAllDispatchLoads\(\{[\s\S]*?status: \[\],/.test(s.drivers)],
     ["drivers does not cap active state", !/const dispatchLoadsQuery = useQuery\([\s\S]*?listDispatchLoads\(\{[\s\S]*?limit:\s*200/.test(s.drivers)],
-    ["availability derives from complete set", /onLoadsCount = useMemo\([\s\S]*?dispatchLoadsQuery\.data\?\.loads/.test(s.drivers) && /availableCount = useMemo/.test(s.drivers)],
+    // 443.290: 443.269-A item 6 derives On Loads from the board set by driver id (onLoadDriverIds), Available = Active − on loads.
+    ["availability derives from complete set", /const onLoadDriverIds = useMemo[\s\S]*?dispatchLoadsQuery\.data\.loads[\s\S]*?DRIVER_ON_LOAD_STATUSES\.has/.test(s.drivers) && /const onLoadsCount = onLoadDriverIds == null \? null : onLoadDriverIds\.size/.test(s.drivers) && /availableCount = useMemo\([\s\S]*?d\.status === "Active" && !onLoadDriverIds\.has/.test(s.drivers) && /new Set\(ON_TRUCK_STATUSES\.map\(String\)\)/.test(s.drivers)],
     // LEAD 443.206R (register B11) — the OOS set is the shared DISPATCH_API_TRUCK_COMMITTED_STATUSES (carries delivered_pending_docs).
     ["dispatch OOS complete active set", /const oosLoadsQ = useQuery\([\s\S]*?listAllDispatchLoads\(\{[\s\S]*?status: \[\.\.\.DISPATCH_API_TRUCK_COMMITTED_STATUSES\]/.test(s.dispatch)],
     ["dispatch OOS filtering preserved", /oosLoadsQ\.data\?\.loads[\s\S]*?filter\(\(load\) => load\.is_dispatch_blocked\)/.test(s.dispatch)],
@@ -42,7 +43,8 @@ function verify(s) {
     ["active drill excludes delivered_pending_docs", !/const ACTIVE_LOAD_DRILL_STATUSES = \[[\s\S]*?delivered_pending_docs[\s\S]*?\] as const;/.test(s.dispatch)],
     ["active tile bound to on_load, not active_loads", /value=\{dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.on_load \?\? 0\)\}/.test(s.dispatch)],
     ["delivered tile drills into factoring queue", /const DELIVERED_DRILL_HREF = "\/dispatch\/factoring-queue";[\s\S]*?label="Delivered — pending docs"[\s\S]*?value=\{dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.delivered \?\? 0\)\}[\s\S]*?to=\{DELIVERED_DRILL_HREF\}/.test(s.dispatch)],
-    ["on-load tile and service share exact statuses", /export const DISPATCH_ON_LOAD_STATUSES = \[[\s\S]*?"assigned_not_dispatched",[\s\S]*?"dispatched",[\s\S]*?"at_pickup",[\s\S]*?"in_transit",[\s\S]*?"at_delivery",[\s\S]*?\] as const;/.test(s.activeCounts)],
+    // 443.290: LEAD 443.244 (owner 10-22) — "on load" is the load IN MOTION; assigned_not_dispatched is an advance booking.
+    ["on-load tile and service share exact statuses", /export const DISPATCH_ON_LOAD_STATUSES = \[\s*"dispatched",\s*"at_pickup",\s*"in_transit",\s*"at_delivery",\s*\] as const;/.test(s.activeCounts)],
     ["on-load service set excludes delivered_pending_docs", !/DISPATCH_ON_LOAD_STATUSES = \[[\s\S]*?delivered_pending_docs[\s\S]*?\] as const;/.test(s.activeCounts)],
     ["intentional exposure preview remains bounded", /const exposureLoadsQ = useQuery\([\s\S]*?listDispatchLoads\(\{[\s\S]*?limit:\s*20/.test(s.dispatch)],
   ];
@@ -57,8 +59,8 @@ if (failures.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["unstable total accepted", { ...live, api: live.api.replace("if (page.total_count !== expectedTotal)", "if (false)") }],
-    ["no progress guard", { ...live, api: live.api.replace("if (page.loads.length === 0)", "if (false)") }],
+    ["unstable total accepted", { ...live, api: live.api.replaceAll("if (page.total_count !== expectedTotal)", "if (false)") /* 443.290: two scanners carry it */ }],
+    ["no progress guard", { ...live, api: live.api.replaceAll("if (page.loads.length === 0)", "if (false)") }],
     ["unstable backend order", { ...live, backend: live.backend.replace(", l.id DESC", "") }],
     ["second scanner copy in dispatch.ts", { ...live, dispatchApi: live.dispatchApi + "\nexport async function listAllDispatchLoads() {}\n" }],
     ["drivers first page", { ...live, drivers: live.drivers.replace("listAllDispatchLoads({", "listDispatchLoads({\n        limit: 200, offset: 0,") }],
@@ -69,7 +71,11 @@ if (process.argv.includes("--selftest")) {
     ["active drill re-admits delivered_pending_docs", { ...live, dispatch: live.dispatch.replace("const ACTIVE_LOAD_DRILL_STATUSES = DISPATCH_WORK_STATUSES;", 'const ACTIVE_LOAD_DRILL_STATUSES = [...DISPATCH_WORK_STATUSES, "delivered_pending_docs"] as const;') }],
     ["active tile rebound to stale active_loads", { ...live, dispatch: live.dispatch.replace("dashboardQ.data?.on_load ?? 0", "dashboardQ.data?.active_loads ?? 0") }],
     ["delivered tile loses its factoring drill", { ...live, dispatch: live.dispatch.replace("to={DELIVERED_DRILL_HREF}", 'to="/dispatch/loads"') }],
-    ["on-load service set re-admits delivered_pending_docs", { ...live, activeCounts: live.activeCounts.replace(/export const DISPATCH_ON_LOAD_STATUSES = \[\n  "assigned_not_dispatched",\n  "dispatched",\n  "at_pickup",\n  "in_transit",\n  "at_delivery",\n\] as const;/, 'export const DISPATCH_ON_LOAD_STATUSES = [\n  "assigned_not_dispatched",\n  "dispatched",\n  "at_pickup",\n  "in_transit",\n  "at_delivery",\n  "delivered_pending_docs",\n] as const;') }],
+    ["on-load service set re-admits delivered_pending_docs", { ...live, activeCounts: live.activeCounts.replace('  "at_delivery",\n] as const;', '  "at_delivery",\n  "delivered_pending_docs",\n] as const;') }],
+    // 443.290: LEAD 443.244 — an advance booking is not "on load".
+    ["on-load service set re-admits assigned_not_dispatched", { ...live, activeCounts: live.activeCounts.replace('export const DISPATCH_ON_LOAD_STATUSES = [\n  "dispatched",', 'export const DISPATCH_ON_LOAD_STATUSES = [\n  "assigned_not_dispatched",\n  "dispatched",') }],
+    ["Drivers on-load set copied as a literal", { ...live, drivers: live.drivers.replace("new Set(ON_TRUCK_STATUSES.map(String))", 'new Set(["dispatched", "in_transit"])') }],
+    ["Available counts every Active driver", { ...live, drivers: live.drivers.replace('d.status === "Active" && !onLoadDriverIds.has(String(d.id))', 'd.status === "Active"') }],
   ];
   for (const [label, mutation] of mutations) {
     if (verify(mutation).length === 0) {

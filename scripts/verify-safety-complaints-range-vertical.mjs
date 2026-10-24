@@ -45,8 +45,10 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["backend", "COUNT(*)::int AS total_count", "COUNT(*) AS hidden_total"],
     ["backend", "LIMIT $${limitParam} OFFSET $${offsetParam}", "LIMIT 500"],
-    ["api", "params: { driver_id?: string; customer_id?: string; user_id?: string; limit?: number; offset?: number }", "params: { driver_id?: string; customer_id?: string; user_id?: string }"],
-    ["apiV64", "params: { driver_id?: string; customer_id?: string; user_id?: string; limit?: number; offset?: number }", "params: { driver_id?: string; customer_id?: string; user_id?: string }"],
+    // 443.290: E-28 added load_id/unit_id before the range params — the plant strips the range itself, whatever precedes it.
+    ["api", "user_id?: string; load_id?: string; unit_id?: string; limit?: number; offset?: number }", "user_id?: string; load_id?: string; unit_id?: string }"],
+    // 443.290: E-28 added load_id/unit_id before the range params — the plant strips the range itself, whatever precedes it.
+    ["apiV64", "user_id?: string; load_id?: string; unit_id?: string; limit?: number; offset?: number }", "user_id?: string; load_id?: string; unit_id?: string }"],
     ["tab", "offset: (page - 1) * pageSize", "offset: 0"],
     ["tab", "complaints-tab-server-pager", "complaints-tab-summary"],
     ["legacy", "complaints-page-server-pager", "complaints-page-summary"],

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["planning.driver"],"task":"LEAD-443290-PLANNER-SAFETY-PROFILE-ENTITYLINK"} */
 /**
  * ROUND 16.19 — Dispatch Planner rows must drill through to the driver's Safety Profile
  * (kind="driver_safety_profile", a route distinct from kind="driver") AND surface
@@ -83,7 +84,8 @@ function main() {
 
     // Plant 3: remove the Safety Profile EntityLink from one of the two views (grid's secondary).
     const badFrontendOneView = frontendSrc.replace(
-      /<EntityLink kind="driver_safety_profile" id=\{driverId\} label="Safety profile" className="text-slate-600 hover:underline" \/>/,
+      // 443.290: the grid link's classes follow the design tokens (text-slate-600 → text-[#4B5563]); target it by id={driverId}.
+      /<EntityLink kind="driver_safety_profile" id=\{driverId\}[^>]*\/>/,
       '"Safety profile"'
     );
     const p3 = check(backendSrc, badFrontendOneView);
