@@ -37,7 +37,8 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
   // ROUND 443.258-B (D004): axis MM/DD; tooltip MM/DD/YYYY (was DD/MM without year).
   const data = (query.data ?? []).map((row) => ({
     ...row,
-    label: row.date.replace(/^\d{4}-(\d{2})-(\d{2})$/, "$1/$2"),
+    // OWNER 10-24 (D004): MM/DD/YYYY everywhere, chart axis included.
+    label: formatDate(row.date) || row.date,
     labelFull: formatDate(row.date) || row.date,
     revenue_dollars: row.revenue_cents / 100,
   }));

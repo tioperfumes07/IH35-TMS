@@ -3,6 +3,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { SelectCombobox } from "../../../components/Combobox";
 import type { HistoryReportRow } from "../types";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 type Props = {
   reports: HistoryReportRow[];
@@ -61,7 +62,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props
     () => [
       { key: "reporting_month", label: "Reporting Month", sortable: true, render: (r) => periodLabel(r.reporting_month) },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
-      { key: "filed_at", label: "Filed Date", sortable: true, render: (r) => (r.filed_at ? new Date(r.filed_at).toLocaleString() : "—") },
+      { key: "filed_at", label: "Filed Date", sortable: true, render: (r) => (r.filed_at ? formatDateTimeUS(r.filed_at) : "—") },
       { key: "amended_from_uuid", label: "Amended?", render: (r) => (r.amended_from_uuid ? "Yes" : "No") },
       {
         key: "actions",

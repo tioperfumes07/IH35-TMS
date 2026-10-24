@@ -21,6 +21,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -28,9 +29,7 @@ function formatMoney(cents: number) {
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString();
+  return formatDateTimeUS(value) || "—";
 }
 
 function daysUntil(value: string) {

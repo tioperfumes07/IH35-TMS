@@ -28,9 +28,9 @@ describe("formatDateUS", () => {
     expect(formatDateUS("2026-10-22T01:30:00Z")).toBe("10/21/2026");
     expect(formatDateUS("2026-10-22T03:30:00+02:00")).toBe("10/21/2026");
     expect(formatDateUS("2026-01-01T01:30:00Z")).toBe("12/31/2025");
-    expect(formatDateQboList("2026-10-22T01:30:00Z")).toBe("10/21/26");
-    expect(mmmDd("2026-10-22T01:30:00Z")).toBe("OCT-21");
-    expect(mmmDd("2026-10-22")).toBe("OCT-22");
+    expect(formatDateQboList("2026-10-22T01:30:00Z")).toBe("10/21/2026");
+    expect(mmmDd("2026-10-22T01:30:00Z")).toBe("10/21/2026");
+    expect(mmmDd("2026-10-22")).toBe("10/22/2026");
   });
 
   it("returns empty string for null / undefined / empty / unparseable", () => {
@@ -46,11 +46,11 @@ describe("formatDateUS", () => {
   });
 });
 
-describe("formatDateQboList (D47)", () => {
-  it("formats as M/D/YY without leading zeros", () => {
-    expect(formatDateQboList("2026-09-14")).toBe("9/14/26");
-    expect(formatDateQboList("2026-07-31")).toBe("7/31/26");
-    expect(formatDateQboList("2026-01-05")).toBe("1/5/26");
+describe("formatDateQboList (owner 10-24: MM/DD/YYYY everywhere)", () => {
+  it("formats as MM/DD/YYYY (zero-padded, four-digit year)", () => {
+    expect(formatDateQboList("2026-09-14")).toBe("09/14/2026");
+    expect(formatDateQboList("2026-07-31")).toBe("07/31/2026");
+    expect(formatDateQboList("2026-01-05")).toBe("01/05/2026");
   });
 
   it("returns empty for blank input", () => {
