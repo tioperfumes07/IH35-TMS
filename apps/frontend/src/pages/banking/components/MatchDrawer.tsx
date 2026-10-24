@@ -35,6 +35,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { ApiError } from "../../../api/client";
 
 import { InfoPopover } from "../../../components/shared/InfoPopover";
+import { SelectCombobox } from "../../../components/Combobox";
 import {
   firstOpenFuelAssignmentQuestion,
   type FuelAssignmentQuestion,
@@ -939,7 +940,7 @@ export function MatchDrawer({
             {restAsLoanAllowed ? (
               <label className="flex w-full items-center gap-2 text-xs text-[#1F2A44]" data-testid="match-multi-rest-as-loan">
                 <span title={t("banking.matchDrawer.restLoan.tip", "Money in = loan from the party; money out = repayment to the party (the bank line decides).")}>{t("banking.matchDrawer.restLoan.label", "Rest {{amount}} as a related-party loan with", { amount: formatMoneyCents(restCents) })}</span>
-                <select
+                <SelectCombobox
                   className="rounded-sm border border-[#E5E7EB] bg-white px-1 py-0.5 text-xs"
                   value={restAsLoanPartyAccountId}
                   onChange={(e) => setRestAsLoanPartyAccountId(e.target.value)}
@@ -951,7 +952,7 @@ export function MatchDrawer({
                       {p.party_name}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
             ) : null}
           </div>
