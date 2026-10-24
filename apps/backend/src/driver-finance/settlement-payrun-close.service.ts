@@ -70,6 +70,7 @@ import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
 import { driverReceivableFor } from "./driver-receivable-roles.js";
 import { resolveDriverAdvanceSubAccountOptional } from "./driver-advance-account-resolver.js";
 import { resolveReimbursementLineAccount } from "./reimbursement-line-account.js";
+import { allocateNextSettlementSourceDocumentRef, setSettlementSourceDocumentRef, type Queryable } from "./settlement-source-document-ref.service.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -122,7 +123,9 @@ export type PayRunCloseErrorCode =
   | "UNBALANCED_ENTRY"
   | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER"
   | "OUTSTANDING_LOAN_DECISION_REQUIRED"
-  | "SETTLEMENT_HAS_NO_LOAD_ACTIVITY";
+  | "SETTLEMENT_HAS_NO_LOAD_ACTIVITY"
+  | "SETTLEMENT_HAS_NO_LIVE_LINES"
+  | "SETTLEMENT_NUMBER_ASSIGN_FAILED";
 
 export class SettlementPayRunError extends Error {
   code: PayRunCloseErrorCode;
@@ -638,6 +641,24 @@ export async function closeSettlementPayRun(
   // further down for why the side effects must be deferred at all.
   const execute = async (client: DbClient) => {
     const settlement = await loadSettlement(client, opco, settlementId);
+
+    // ROUND 443.292-A — assign the AlwaysTrack settlement number at close if not already set.
+    // presettlement-link.service.ts opens load_bookended tours with source_document_ref NULL
+    // (the mint-at-open path minted fake AT numbers 5817/5818/5819 — not replicated here).
+    // The close engine is the authoritative assignment point: advisory lock + max() serialization
+    // guarantees uniqueness per company even under concurrent closes.
+    if (input.previewOnly !== true && !settlement.source_document_ref) {
+      const nextRef = await allocateNextSettlementSourceDocumentRef(client as unknown as Queryable, opco);
+      const refResult = await setSettlementSourceDocumentRef(client as unknown as Queryable, {
+        operatingCompanyId: opco,
+        settlementId,
+        sourceDocumentRef: nextRef,
+        actorUserId: actor.userId,
+      });
+      if (!refResult) throw new SettlementPayRunError("SETTLEMENT_NUMBER_ASSIGN_FAILED", `Could not stamp settlement number ${nextRef} on ${settlement.display_id ?? settlementId}`);
+      settlement.source_document_ref = nextRef;
+    }
+
     // Queue item 10 (G-05): every line carries its account, category and catalog item before the close reads them.
     // A preview writes nothing (categorizing changes no amount, so the preview's numbers are the same).
     if (input.previewOnly !== true) await categorizeSettlementLines(client as never, { settlementId, operatingCompanyId: opco });
@@ -645,6 +666,22 @@ export async function closeSettlementPayRun(
       throw new SettlementPayRunError(
         "SETTLEMENT_NOT_POSTABLE",
         `Settlement ${settlement.display_id ?? settlement.id} is not finalized/locked (status=${settlement.status})`
+      );
+    }
+
+    // ROUND 443.292-F — refuse a settlement with zero active settlement lines. An empty shell
+    // (never seeded, or all lines voided) must be voided, never closed. The tour-close route's
+    // hard-blocker (buildTourReadout ready check) prevents reaching here from the UI, but the
+    // engine enforces it unconditionally as the authoritative backstop.
+    const liveLineCount = await client.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM driver_finance.settlement_lines
+        WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true`,
+      [settlementId, opco]
+    );
+    if (Number(liveLineCount.rows[0]?.n ?? 0) === 0) {
+      throw new SettlementPayRunError(
+        "SETTLEMENT_HAS_NO_LIVE_LINES",
+        `Settlement ${settlement.display_id ?? settlement.id} has no active settlement lines — void it instead of closing`
       );
     }
 
