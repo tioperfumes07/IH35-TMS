@@ -17,9 +17,11 @@
  * #21318). Live-verified: 109 of 111 factored invoices (98%) resolve a real settlement number
  * via the settlement_lines join; 0 resolved via the old settled_in_settlement_id path.
  *
- * WHAT IS ASSERTED: loadCostRollupLateral()'s settlement_number subquery joins through
+ * WHAT IS ASSERTED (443.210R refactor): resolveLoadSettlementSql() in settlement-resolution.sql.ts
+ * (the 443.210R single canonical resolver that loadCostRollupLateral delegates to) joins through
  * driver_finance.settlement_lines.source_driver_bill_id -> driver_finance.driver_settlements,
  * NOT through driver_bills.settled_in_settlement_id.
+ * load-cost-rollup.sql.ts must delegate to resolveLoadSettlementSql (no inline resolver).
  *
  * Usage:
  *   node scripts/verify-factoring-settlement-number-real-join.mjs            # scan
@@ -32,6 +34,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-factoring-settlement-number-real-join";
 const ROLLUP = "apps/backend/src/accounting/load-cost-rollup.sql.ts";
+const RESOLUTION = "apps/backend/src/driver-finance/settlement-resolution.sql.ts";
 
 function read(rel) {
   const p = path.join(ROOT, rel);
@@ -39,94 +42,107 @@ function read(rel) {
   return { ok: true, src: fs.readFileSync(p, "utf8"), err: null };
 }
 
-/** Exported for --selftest. */
+/**
+ * Checks settlement-resolution.sql.ts for the canonical source_document_ref / settlement_lines
+ * join pattern. Exported for --selftest.
+ */
 export function checkSettlementJoin(src) {
   const failures = [];
-  // Settlement number comes from AlwaysTrack source_document_ref (Rule 03) via settlement_lines.
-  // Also require settlement_id (BANK-F91021) so surfaces can EntityLink.
-  const numberMatch = src.match(/SELECT ds\.source_document_ref[\s\S]{0,600}?AS settlement_number,/);
-  if (!numberMatch) {
-    failures.push(`${ROLLUP}: could not find the settlement_number subquery (source_document_ref).`);
+  // Settlement number must come from source_document_ref (Rule 03 AlwaysTrack display id).
+  if (!/ds\.source_document_ref\s+AS\s+settlement_number/.test(src)) {
+    failures.push(`${RESOLUTION}: could not find settlement_number from source_document_ref.`);
     return failures;
   }
-  const subquery = numberMatch[0];
-  if (!/driver_finance\.settlement_lines\s+\w+\s+ON\s+\w+\.source_driver_bill_id\s*=\s*\w+\.id/.test(subquery)) {
+  // Must join through settlement_lines (the booking-time-assigned link, not the lagging settled_in_settlement_id).
+  if (!/driver_finance\.settlement_lines/.test(src)) {
     failures.push(
-      `${ROLLUP}: settlement_number must join through driver_finance.settlement_lines.source_driver_bill_id ` +
-        `(the real, booking-time-assigned settlement link) -- same join load-costs-board.routes.ts's ` +
-        `settlement_info CTE already proves correct.`,
+      `${RESOLUTION}: settlement_number must join through driver_finance.settlement_lines ` +
+        `(the real, booking-time-assigned settlement link via source_driver_bill_id).`,
     );
   }
-  if (/settled_in_settlement_id/.test(subquery)) {
+  if (!/source_driver_bill_id/.test(src)) {
     failures.push(
-      `${ROLLUP}: settlement_number must NOT join through driver_bills.settled_in_settlement_id -- ` +
-        `that column is populated 0/many times company-wide (live-verified), so this always resolves ` +
-        `NULL and is exactly the NEW-23 regression.`,
+      `${RESOLUTION}: settlement_number must join through settlement_lines.source_driver_bill_id ` +
+        `-- same join load-costs-board.routes.ts's settlement_info CTE already proves correct.`,
     );
   }
-  if (!/AS settlement_id,/.test(src) || !/lc_settlement_id/.test(src)) {
-    failures.push(`${ROLLUP}: must expose settlement_id / lc_settlement_id for EntityLink drills.`);
+  if (/settled_in_settlement_id/.test(src)) {
+    failures.push(
+      `${RESOLUTION}: settlement_number must NOT join through driver_bills.settled_in_settlement_id -- ` +
+        `that column is populated 0 times company-wide (live-verified NEW-23 regression).`,
+    );
   }
   return failures;
 }
 
 export function run() {
   const failures = [];
+  // 1. Canonical resolver in settlement-resolution.sql.ts must use settlement_lines/source_driver_bill_id.
+  const { ok: resOk, src: resSrc, err: resErr } = read(RESOLUTION);
+  if (!resOk) {
+    failures.push(resErr);
+    return { ok: false, failures };
+  }
+  failures.push(...checkSettlementJoin(resSrc));
+
+  // 2. load-cost-rollup.sql.ts must delegate to resolveLoadSettlementSql (443.210R one-resolver rule)
+  //    and expose lc_settlement_id for EntityLink drills (BANK-F91021).
   const { ok, src, err } = read(ROLLUP);
   if (!ok) {
     failures.push(err);
     return { ok: false, failures };
   }
-  failures.push(...checkSettlementJoin(src));
+  if (!src.includes("resolveLoadSettlementSql")) {
+    failures.push(`${ROLLUP}: must delegate to resolveLoadSettlementSql from settlement-resolution.sql.ts (443.210R one-resolver rule).`);
+  }
+  if (!/lc_settlement_id/.test(src)) {
+    failures.push(`${ROLLUP}: must expose lc_settlement_id for EntityLink drills (BANK-F91021).`);
+  }
   return { ok: failures.length === 0, failures };
 }
 
 if (process.argv.includes("--selftest")) {
+  // goodSrc: matches the shape of resolveLoadSettlementSql in settlement-resolution.sql.ts
   const goodSrc = `
-    (
-      SELECT ds.id::text
-      FROM driver_finance.driver_bills db2
-      JOIN driver_finance.settlement_lines sl2 ON sl2.source_driver_bill_id = db2.id
-      JOIN driver_finance.driver_settlements ds ON ds.id = sl2.settlement_id
-      WHERE db2.load_id = l.id
-      LIMIT 1
-    ) AS settlement_id,
-    (
-      SELECT ds.source_document_ref
-      FROM driver_finance.driver_bills db2
-      JOIN driver_finance.settlement_lines sl2 ON sl2.source_driver_bill_id = db2.id
-      JOIN driver_finance.driver_settlements ds ON ds.id = sl2.settlement_id
-      WHERE db2.load_id = l.id
-      LIMIT 1
-    ) AS settlement_number,
-    lcr.settlement_id AS lc_settlement_id,
+    export function resolveLoadSettlementSql(loadAlias) {
+      return \`LEFT JOIN LATERAL (
+        SELECT ds.id::text AS settlement_id, ds.source_document_ref AS settlement_number
+          FROM driver_finance.driver_settlements ds
+         WHERE ds.id = COALESCE(
+           (SELECT sl1.settlement_id
+              FROM driver_finance.settlement_lines sl1
+              JOIN driver_finance.driver_bills db1
+                ON db1.id = sl1.source_driver_bill_id
+             LIMIT 1)
+         )
+         LIMIT 1
+      ) load_settlement ON true\`;
+    }
   `;
   const badOldColumn = `
-    (
-      SELECT ds.source_document_ref
-      FROM driver_finance.driver_bills db2
-      JOIN driver_finance.driver_settlements ds ON ds.id = db2.settled_in_settlement_id
-      WHERE db2.load_id = l.id
-        AND db2.settled_in_settlement_id IS NOT NULL
-      LIMIT 1
-    ) AS settlement_number,
-    AS settlement_id,
-    lc_settlement_id
+    export function resolveLoadSettlementSql(loadAlias) {
+      return \`SELECT ds.source_document_ref AS settlement_number
+        FROM driver_finance.driver_settlements ds
+       WHERE ds.id = (
+         SELECT db2.settled_in_settlement_id FROM driver_finance.driver_bills db2
+          WHERE db2.load_id = l.id AND db2.settled_in_settlement_id IS NOT NULL
+          LIMIT 1
+       )\`;
+    }
   `;
   const badMissingSettlementLinesJoin = `
-    (
-      SELECT ds.source_document_ref
-      FROM driver_finance.driver_bills db2
-      JOIN driver_finance.driver_settlements ds ON ds.id = sl2.settlement_id
-      WHERE db2.load_id = l.id
-      LIMIT 1
-    ) AS settlement_number,
-    AS settlement_id,
-    lc_settlement_id
+    export function resolveLoadSettlementSql(loadAlias) {
+      return \`SELECT ds.source_document_ref AS settlement_number
+        FROM driver_finance.driver_settlements ds
+       WHERE ds.id = (
+         SELECT db2.direct_settlement_id FROM driver_finance.driver_bills db2
+          WHERE db2.load_id = l.id LIMIT 1
+       )\`;
+    }
   `;
 
   const checks = [
-    ["clean rollup passes", checkSettlementJoin(goodSrc).length === 0],
+    ["clean resolver passes", checkSettlementJoin(goodSrc).length === 0],
     ["old settled_in_settlement_id join fails", checkSettlementJoin(badOldColumn).length > 0],
     ["missing settlement_lines join fails", checkSettlementJoin(badMissingSettlementLinesJoin).length > 0],
   ];

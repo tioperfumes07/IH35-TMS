@@ -99,6 +99,7 @@ export function SettlementDetailPage() {
   const settlementIsLocked = Boolean(settlement.locked_at) && !settlementIsCancelled;
   const settlementIsPaid = String(settlement.status ?? "") === "paid";
   const canVoidSettlement = auth.user?.role === "Owner" || auth.user?.role === "Accountant";
+  const showManualPaidDraftBanner = paymentState === "manual_paid";
 
   const lines = (settlement.lines as Array<Record<string, unknown>> | undefined) ?? [];
   const activeLines = useMemo(
@@ -374,6 +375,15 @@ export function SettlementDetailPage() {
         voidedByUserId={settlement.voided_by_user_id as string | null | undefined}
         documentLabel="Settlement"
       />
+      {showManualPaidDraftBanner ? (
+        <div
+          role="status"
+          className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+          data-testid="settlement-manual-paid-banner"
+        >
+          This settlement was marked as paid manually. Confirm the payment cleared your bank before closing the period.
+        </div>
+      ) : null}
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="settlements-statement-v3-kpis"
