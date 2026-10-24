@@ -1,6 +1,6 @@
 import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-historical-attribution.service.js";
 import crypto from "node:crypto";
-import { postingPartyFromDocumentSql, postingPartyTypeSql, postingPartyUuidSql } from "./posting-party.sql.js";
+import { postingPartyFromDocumentSql, postingPartyTypeSql, postingPartyNameSql, postingPartyUuidSql } from "./posting-party.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -1304,6 +1304,7 @@ export async function getJournalEntryDetail(userId: string, operatingCompanyId: 
           c.class_name,
           ${postingPartyUuidSql("p")} AS entity_uuid,
           ${postingPartyTypeSql("p")} AS entity_type,
+          ${postingPartyNameSql("p")} AS entity_name,
           ${postingPartyFromDocumentSql("p")} AS entity_from_document,
           p.debit_or_credit,
           p.amount_cents,
@@ -1382,6 +1383,7 @@ export async function getJournalEntryPostingsBySource(
           c.class_name,
           ${postingPartyUuidSql("p")} AS entity_uuid,
           ${postingPartyTypeSql("p")} AS entity_type,
+          ${postingPartyNameSql("p")} AS entity_name,
           ${postingPartyFromDocumentSql("p")} AS entity_from_document,
           p.debit_or_credit,
           p.amount_cents,

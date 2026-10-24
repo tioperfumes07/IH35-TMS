@@ -33,3 +33,21 @@ export function postingPartyTypeSql(p = "p"): string {
 export function postingPartyFromDocumentSql(p = "p"): string {
   return `(${p}.entity_uuid IS NULL AND ${postingPartyUuidSql(p)} IS NOT NULL)`;
 }
+
+/**
+ * LEAD 443.317 (register D068) — SQL expression: the posting party's human NAME, same-company, from the canonical master
+ * tables (mdata.vendors / mdata.drivers / mdata.customers). Readers show this, never the uuid. NULL when the party is
+ * unknown or another type; the reader then shows an honest "not visible" label, not the id.
+ */
+export function postingPartyNameSql(p = "p"): string {
+  const uuid = postingPartyUuidSql(p);
+  const type = postingPartyTypeSql(p);
+  return `CASE ${type}
+    WHEN 'vendor' THEN (SELECT v.vendor_name FROM mdata.vendors v
+                         WHERE v.id::text = ${uuid} AND v.operating_company_id = ${p}.operating_company_id)
+    WHEN 'driver' THEN (SELECT NULLIF(btrim(concat_ws(' ', d.first_name, d.last_name)), '') FROM mdata.drivers d
+                         WHERE d.id::text = ${uuid} AND d.operating_company_id = ${p}.operating_company_id)
+    WHEN 'customer' THEN (SELECT c.customer_name FROM mdata.customers c
+                           WHERE c.id::text = ${uuid} AND c.operating_company_id = ${p}.operating_company_id)
+  END`;
+}
