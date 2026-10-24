@@ -13,6 +13,7 @@ import {
   type ExpenseLoadConfirmationStatus,
 } from "../../api/expenseLoadConfirmations";
 import { EntityPicker } from "../EntityPicker";
+import { EntityMultiSelect } from "../EntityMultiSelect";
 import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -243,12 +244,11 @@ export function ExpenseLoadConfirmationsBoard({
       <label className="block text-xs text-[#4B5563]">
         Driver
         <div className="mt-1">
-          <EntityPicker
+          <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={driverId}
             onChange={(v) => setDriverId(v)}
-            allowCreate={false}
             placeholder="All drivers"
           />
         </div>
@@ -256,12 +256,11 @@ export function ExpenseLoadConfirmationsBoard({
       <label className="block text-xs text-[#4B5563]">
         Truck
         <div className="mt-1">
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={unitId}
             onChange={(v) => setUnitId(v)}
-            allowCreate={false}
             placeholder="All trucks"
           />
         </div>
@@ -269,12 +268,11 @@ export function ExpenseLoadConfirmationsBoard({
       <label className="block text-xs text-[#4B5563]">
         Load
         <div className="mt-1">
-          <EntityPicker
+          <EntityMultiSelect
             kind="load"
             operatingCompanyId={companyId}
             value={loadId}
             onChange={(v) => setLoadId(v)}
-            allowCreate={false}
             placeholder="All loads"
           />
         </div>
@@ -282,12 +280,11 @@ export function ExpenseLoadConfirmationsBoard({
       <label className="block text-xs text-[#4B5563]">
         Vendor
         <div className="mt-1">
-          <EntityPicker
+          <EntityMultiSelect
             kind="vendor"
             operatingCompanyId={companyId}
             value={vendorId}
             onChange={(v) => setVendorId(v)}
-            allowCreate={false}
             placeholder="All vendors"
           />
         </div>
