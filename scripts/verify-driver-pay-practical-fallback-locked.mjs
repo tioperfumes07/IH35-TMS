@@ -388,8 +388,8 @@ export function run(root = ROOT) {
 
 function selftest() {
   const dir = fs.mkdtempSync("/tmp/driver-pay-short-miles-selftest-");
-  const abs = path.join(dir, SVC);
-  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  const tmpAbs = path.join(dir, SVC);
+  fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
   const good = `
 async function resolveDriverBasePayCents(client, operatingCompanyId, driverId, load, actorUserId) {
   if (rate.basis_type === "per_load_pay") {
@@ -443,9 +443,9 @@ export async function listDriverBillsForSettlementPeriod(client, input) {
 
 export function driverBillRowsToSettlementLoads(rows) { return rows; }
 `;
-  const batchAbs = path.join(dir, BATCH);
-  const settleAbs = path.join(dir, SETTLE);
-  fs.mkdirSync(path.dirname(batchAbs), { recursive: true });
+  const tmpBatchAbs = path.join(dir, BATCH);
+  const tmpSettleAbs = path.join(dir, SETTLE);
+  fs.mkdirSync(path.dirname(tmpBatchAbs), { recursive: true });
   const creatorGood = {
     [CREATOR_PAY]: `export function creatorPayMiles(load) {
   const miles = Number(load.miles_shortest ?? NaN);
@@ -499,9 +499,9 @@ onChange={(n) => setLoads((prev) => { next[idx] = { ...cur, miles_shortest: n };
   };
   const check = (src, label, expectClean, batchSrc = goodBatch, settleSrc = goodSettle, creatorOver = {}) => {
     writeCreator(creatorOver);
-    fs.writeFileSync(abs, src);
-    fs.writeFileSync(batchAbs, batchSrc);
-    fs.writeFileSync(settleAbs, settleSrc);
+    fs.writeFileSync(tmpAbs, src);
+    fs.writeFileSync(tmpBatchAbs, batchSrc);
+    fs.writeFileSync(tmpSettleAbs, settleSrc);
     const p = run(dir);
     if (expectClean ? p.length : !p.length) throw new Error(`${expectClean ? "PASS fail" : "FAIL to catch"}: ${label} ${JSON.stringify(p)}`);
   };

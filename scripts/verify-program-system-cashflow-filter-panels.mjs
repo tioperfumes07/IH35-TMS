@@ -148,7 +148,7 @@ export function collectFailures(sources) {
   // Insurance: Filters must bind to Lawsuits exact owner (not alias /insurance + UniversalListToolbar)
   const insuranceReq = sources["docs/specs/scoreboard/modules/insurance.required.json"] ?? "";
   if (insuranceReq) {
-    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"route_hint": "\/safety\/insurance\/lawsuits"/.test(insuranceReq)) {
+    if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"route_hint": "\/insurance\/lawsuits"/.test(insuranceReq)) {
       failures.push("insurance.required.json: chrome.toolbar_filter route_hint must be /insurance/lawsuits");
     }
     if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/insurance\/LawsuitsTab\.tsx"/.test(insuranceReq)) {
