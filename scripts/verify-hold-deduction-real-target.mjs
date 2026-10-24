@@ -90,7 +90,13 @@ export function checkAll(readFile) {
   }
 
   const detail = read(FILES.detailPage);
-  if (!/source_deduction_id: line\.source_deduction_id/.test(detail)) {
+  // toDeductionRows may have been extracted to settlementDetailLineMaps.ts — check both.
+  const lineMapsPath = "apps/frontend/src/pages/driver-finance/settlementDetailLineMaps.ts";
+  const lineMaps = readFile ? readFile(lineMapsPath) : null;
+  const sourceIdMapped =
+    /source_deduction_id: line\.source_deduction_id/.test(detail) ||
+    (lineMaps !== null && /source_deduction_id: line\.source_deduction_id/.test(lineMaps ?? ""));
+  if (!sourceIdMapped) {
     failures.push(`${FILES.detailPage}: toDeductionRows must map source_deduction_id from the API response`);
   }
 
