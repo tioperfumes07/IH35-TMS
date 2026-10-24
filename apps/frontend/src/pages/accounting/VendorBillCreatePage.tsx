@@ -62,12 +62,24 @@ export function VendorBillCreatePage() {
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="vendor-bill-create-kpi-strip">
           {vendorCreateKpiCard(
             "Open bills",
-            navKpis.bills.count > 0 ? formatUsdCents(navKpis.bills.openAmountCents) : "—",
+            navKpis.bills.count > 0 ? formatUsdCents(navKpis.bills.openAmountCents) : "$0.00",
             navKpis.bills.count > 0 ? `${navKpis.bills.count} open` : "No open balance",
           )}
-          {vendorCreateKpiCard("New bill", "Draft", loadId ? `Load ${loadNumber ?? loadId}` : "Not saved yet")}
-          {vendorCreateKpiCard("Panel", "Open", "Close drawer to return to bills")}
-          {vendorCreateKpiCard("Session", companyId ? "Ready" : "—", companyId ? "Operating company selected" : "Select company in header")}
+          {vendorCreateKpiCard(
+            "Open invoices",
+            navKpis.invoices.count > 0 ? formatUsdCents(navKpis.invoices.openAmountCents) : "$0.00",
+            navKpis.invoices.count > 0 ? `${navKpis.invoices.count} open` : "No open A/R",
+          )}
+          {vendorCreateKpiCard(
+            "This bill",
+            lastBillId ? "Created" : "Draft",
+            lastBillId ? "Saved this session" : loadId ? `Load ${loadNumber ?? "linked"}` : "Not saved yet",
+          )}
+          {vendorCreateKpiCard(
+            "Company",
+            companyId ? "Ready" : "—",
+            companyId ? "USMCA scope active" : "Select company in header",
+          )}
         </div>
       }
     >

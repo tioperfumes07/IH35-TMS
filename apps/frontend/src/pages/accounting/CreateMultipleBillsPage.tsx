@@ -416,7 +416,7 @@ export function CreateMultipleBillsPage() {
           onRetry={() => void coaQuery.refetch()}
         />
       ) : null}
-      {/* ACCT-F3580: ParityTable owns Search+Range+gear on multi-bill draft grid. */}
+      {/* ACCT-F3580 + FILTER-MULTI-01: MoneyListToolbar owns search; ParityTable keeps gear/export only. */}
       <ParityTable<BillDraftRow> title="Bill drafts"
         rows={filteredRows}
         rowKey={(row) => row.id}
@@ -424,6 +424,8 @@ export function CreateMultipleBillsPage() {
         exportFilename="create-multiple-bills-draft"
         tableTestId="create-multiple-bills-table"
         emptyText="No bill draft rows."
+        suppressToolbarSearch
+        suppressToolbarRange
         columns={[
           {
             key: "source",

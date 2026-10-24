@@ -35,6 +35,9 @@ export function check(src = fs.readFileSync(path.join(ROOT, PAGE), "utf8")) {
   assert(src.includes("MoneyListToolbar"), "CreateMultipleBillsPage: must use MoneyListToolbar in actions");
   assert(src.includes("createControl"), "CreateMultipleBillsPage: must pass createControl for primary CTA");
   assert(src.includes('data-testid="multi-bills-kpi-strip"'), "CreateMultipleBillsPage: KPI strip test id");
+  // FILTER-MULTI-01 — MoneyListToolbar owns search; ParityTable must not render a second search/range.
+  assert(src.includes("suppressToolbarSearch"), "CreateMultipleBillsPage: suppress ParityTable toolbar search (one search)");
+  assert(src.includes("suppressToolbarRange"), "CreateMultipleBillsPage: suppress ParityTable toolbar range (one toolbar)");
 }
 
 function selftest() {
@@ -73,6 +76,18 @@ function selftest() {
     failed = true;
   }
   assert(failed, "selftest: expected FAIL when PageHeader is reintroduced");
+
+  const noSuppress = good.replaceAll("suppressToolbarSearch", "removedSuppressSearch").replaceAll(
+    "suppressToolbarRange",
+    "removedSuppressRange",
+  );
+  failed = false;
+  try {
+    check(noSuppress);
+  } catch {
+    failed = true;
+  }
+  assert(failed, "selftest: expected FAIL when ParityTable search/range suppress is removed");
   console.log("verify-create-multiple-bills-parity-surface-bar --selftest PASS");
 }
 
