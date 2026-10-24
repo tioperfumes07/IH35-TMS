@@ -8033,3 +8033,13 @@ action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-22-cc1-443249-backfill-d
 issued_by: Owner rule 2026-10-22 17:30 CT — "all driver bills due date is the date of the load delivery." LEAD 443.264 06:30 UTC authorizes execution. Backfill stamps NULL due_date from load delivery stop (same function as trigger trg_driver_bill_due_date_at_mint). Bills with no linked load are listed, not stamped.
 expires_at: 2026-10-23T10:00:00.000Z
 status: OPEN
+
+## AUTH-457
+issued_at: 2026-10-24T02:10:00Z
+issued_by: OWNER RULING 443.288 (owner 2026-10-23 7:59 PM CT) + Lead 443.288-A (8:15 PM CT, CC-2: "a child document ... is LINKED to its parent receipt ... and ALWAYS moves with it ... Live guard: no child whose load differs from its parent's — ceiling 0"). Recorded by CC-2; the Lead runs it after the fork proof (Lead 8:15 PM: "Lead is running them after fork proof")
+owner_quotes: "why are they on the wrong load, that is the real issue that should be fixed so it does not happen again ... i dont want to rely in a system that constantly fails." (owner 2026-10-23 7:59 PM CT)
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — EXACTLY the live statement card credits / card differences (accounting.expenses with parent_expense_id set by migration 202616220700) whose load differs from their live parent receipt's load (the parent has a load): each moved to the parent's load through moveExpenseFamilyToLoad (reclassify by load: reversal + re-post, reclassify batch + audit; then the document header / lines / load link follow). Amounts and accounts never change. One transaction, refuses (ROLLBACK) unless TB is 0 before and after and 0 misplaced remain. No DELETE. TRANSPORTATION / TRUCKING never referenced.
+action: Owner session -> POST https://api.ih35dispatch.com/api/v1/accounting/expense-families/align-repair {operating_company_id, dry_run:true} then {dry_run:false} (after 202616220700 is deployed)
+rehearsal: br-shy-lake-akubtbll (prod fork 01:41Z, 202616220700 applied by the real runner in prod mode, 10 held skipped): 66 children linked to their receipt (0 unlinked), 132 spine rows; align COMMITTED 11 children -> their receipt's load (11 reclassify batches, 11 audit rows), misplaced 0, rerun 0, TB 0 / 7,113 postings
+expires_at: 2026-10-25T03:00:00Z
+status: OPEN

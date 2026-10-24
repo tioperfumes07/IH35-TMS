@@ -31,6 +31,7 @@ import {
 
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 import { columnExists, createExpenseBodySchema, createExpenseInClientTx, emitOutbox, ExpensePostRefused, FIXED_COST_CATEGORY_CODES, insertUnattributedAlert, postExpenseDocumentOwnTx, relinkExpenseToLoadInClientTx, reserveExpenseNumber, writeUncategorizedLineInClientTx, relationExists, type CreateExpenseBody } from "./expense-writer.service.js";
+import { moveExpenseFamilyToLoad } from "./reclassify/reclassify.service.js";
 export { createExpenseInClientTx, type CreateExpenseBody } from "./expense-writer.service.js";
 export { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 
@@ -892,6 +893,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             }
           }
         }
+        // OWNER RULING 443.288-A: the expense's linked children (statement card credit / card difference) follow it.
+        await moveExpenseFamilyToLoad(client as never, {
+          operatingCompanyId: body.operating_company_id, actorUserId: String(user.uuid), parentExpenseIds: [params.data.expenseId],
+          toLoadId: body.new_load_id, reason: body.reason,
+        });
 
         await emitOutbox(client, "expense.reattributed", {
           expense_id: params.data.expenseId,

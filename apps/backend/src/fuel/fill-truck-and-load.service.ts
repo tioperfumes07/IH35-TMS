@@ -1,7 +1,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveFuelLoadAtTime } from "./fuel-load-at-time.js";
 import { carryFuelReceiptToLoad } from "./fuel-receipt-repoint.service.js";
-import { applyReclassifyOnClient, moveFuelReceiptDocumentToLoad } from "../accounting/reclassify/reclassify.service.js";
+import { applyReclassifyOnClient, moveExpenseFamilyToLoad, moveFuelReceiptDocumentToLoad } from "../accounting/reclassify/reclassify.service.js";
 
 /**
  * LEAD 443.214 — FUEL FOLLOWS THE TRUCK AT THE PUMP. The ONE helper that decides, for a fuel fill, WHICH TRUCK was at the
@@ -233,6 +233,18 @@ export async function applyFillTruckAndLoad(
       });
       if (doc.note && !doc.updated) throw new Error(`fill_truck_and_load_document_refused: ${doc.note}`);
       if (doc.updated) outcome = "moved";
+      // OWNER RULING 443.288-A: the receipt document moved without a reclassify of its own here (nothing posted, or
+      // already re-posted above) — its linked children follow it explicitly (idempotent: children on the load are skipped).
+      if (input.toLoadId) {
+        const parents = (await client.query<{ id: string }>(
+          `SELECT e.id::text FROM accounting.expenses e
+            WHERE e.operating_company_id = $1::uuid AND e.source_fuel_transaction_id = $2::uuid AND e.voided_at IS NULL`,
+          [input.companyId, input.fuelId],
+        )).rows.map((r) => r.id);
+        await moveExpenseFamilyToLoad(client as never, {
+          operatingCompanyId: input.companyId, actorUserId: input.actorUserId, parentExpenseIds: parents, toLoadId: input.toLoadId, reason: input.reason,
+        });
+      }
     }
   }
   const gps = input.resolution.candidates.find((c) => c.unit_id === input.toUnitId) ?? null;

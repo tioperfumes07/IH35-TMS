@@ -4,6 +4,9 @@
  * prod). Fail-old: it must be an expense document through THE expense writer, carrying the receipt's load / driver / unit.
  */
 import { describe, expect, it, vi } from "vitest";
+// OWNER RULING 443.288-A: the child document is linked to its receipt through THE family link (asserted below).
+const family = vi.hoisted(() => ({ linkExpenseChildToParentInClientTx: vi.fn(async () => undefined) }));
+vi.mock("../../accounting/reclassify/reclassify.service.js", async (importOriginal) => ({ ...(await importOriginal<object>()), ...family }));
 
 const writer = vi.hoisted(() => ({ createExpenseInClientTx: vi.fn(async () => ({ expense_id: "e-new", posted_journal_entry_id: "je-new" })) }));
 vi.mock("../../accounting/expense-writer.service.js", () => writer);
@@ -18,11 +21,19 @@ describe("postStatementCostDifferenceAsExpense", () => {
     expect(await postStatementCostDifferenceAsExpense(client as never, input)).toBe("je-new");
     expect(writer.createExpenseInClientTx).toHaveBeenCalledWith(client, expect.objectContaining({
       amount_cents: 2, payment_account_uuid: "acct-2510", category_account_id: "acct-5000", item_id: "item-fcd",
-      vendor_uuid: "v-loves", load_id: "l-1", driver_id: "d-1", unit_id: "u-1", vendor_document_number: "dreamline_efs=73386:DEFD:1-CARD-DIFF",
+      vendor_uuid: "v-loves", load_id: "l-1", vendor_document_number: "dreamline_efs=73386:DEFD:1-CARD-DIFF",
     }), "u");
     const arg = (writer.createExpenseInClientTx.mock.calls[0] as unknown as [unknown, Record<string, unknown>])[1];
     expect(arg).not.toHaveProperty("trailer_id"); // the load decides the trailer, never the receipt's older stamp
+    // with a load the LOAD decides unit / driver (the writer's load attribution) — the receipt's own stamps are not sent
+    expect(arg).not.toHaveProperty("driver_id");
+    expect(arg).not.toHaveProperty("unit_id");
     expect(sql.join("\n")).not.toMatch(/INSERT INTO accounting\.journal_entries/);
+    // 443.288-A: the difference document names its receipt structurally, never in the memo.
+    expect(family.linkExpenseChildToParentInClientTx).toHaveBeenCalledWith(client, {
+      operatingCompanyId: "co", childExpenseId: "e-new", parentExpenseId: "e-receipt", journalEntryId: "je-new", role: "statement_card_difference_of",
+    });
+    expect(String(arg.memo)).not.toContain("e-receipt");
   });
   it("a re-run of the same statement line is the same document (duplicate → no second post)", async () => {
     writer.createExpenseInClientTx.mockResolvedValueOnce({ duplicateVendorDocumentNumber: true } as never);

@@ -10,6 +10,8 @@
  *        max_batches per call, default 4 — the API sits behind Cloudflare's 100 s origin timeout, so the owner repeats the
  *        call until live_statement_discount_jes_left = 0; every batch commits on its own, so even a cut-off call is safe)
  *   POST /api/v1/driver-finance/settlements/header-boundaries-repair    AUTH-454 (the 5 stale headers, metadata only)
+ *   POST /api/v1/accounting/expense-families/align-repair               AUTH-457 (OWNER RULING 443.288-A: statement card
+ *        differences left on a load their receipt no longer belongs to follow the receipt through THE family engine)
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -20,6 +22,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { assertOwnerAuthorizationOpen, OwnerAuthorizationError } from "../lib/owner-authorization-runtime.js";
 import { CardCreditRepairRefused, runStatementCardCreditRepair, type RunInTx } from "../fuel/statement-card-credit-repair.service.js";
 import { repairStaleSettlementHeadersInClientTx, SettlementHeaderRepairRefused } from "../driver-finance/settlement-header-repair.service.js";
+import { alignExpenseFamiliesInClientTx, ExpenseFamilyAlignRefused } from "./expense-family-align-repair.service.js";
 
 const body = z.object({
   operating_company_id: z.string().uuid(),
@@ -39,7 +42,7 @@ function ownerOnly(req: FastifyRequest, reply: FastifyReply) {
 
 function refused(reply: FastifyReply, e: unknown) {
   if (e instanceof OwnerAuthorizationError) return reply.code(409).send({ error: "owner_authorization_not_open", auth_id: e.authId, detail: e.reason });
-  if (e instanceof CardCreditRepairRefused || e instanceof SettlementHeaderRepairRefused) {
+  if (e instanceof CardCreditRepairRefused || e instanceof SettlementHeaderRepairRefused || e instanceof ExpenseFamilyAlignRefused) {
     return reply.code(409).send({ error: "repair_refused_rolled_back", detail: e.message });
   }
   throw e;
@@ -88,6 +91,33 @@ export async function registerOwnerDataRepairRoutes(app: FastifyInstance) {
         await client.query("SET LOCAL lock_timeout = '5s'");
         await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [b.operating_company_id]);
         return repairStaleSettlementHeadersInClientTx(client as never, { companyId: b.operating_company_id, actorUserId: user.uuid, dryRun: b.dry_run, expect: 5 });
+      }, { actorUserId: user.uuid });
+    } catch (e) {
+      // The repair ran in its own transaction (rolled back on throw); log it, then answer 409 by name or rethrow.
+      req.log.warn({ err: e, route: req.url }, "owner data repair refused or failed");
+      return refused(reply, e);
+    }
+  });
+  app.post("/api/v1/accounting/expense-families/align-repair", { config: { rateLimit: { max: 3, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = ownerOnly(req, reply);
+    if (!user) return reply;
+    const parsed = body.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const b = parsed.data;
+    await assertCompanyMembership(user.uuid, b.operating_company_id);
+    try {
+      if (!b.dry_run) assertOwnerAuthorizationOpen("AUTH-457");
+      return await withLuciaBypass(async (client) => {
+        await client.query("SET LOCAL lock_timeout = '5s'");
+        await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [b.operating_company_id]);
+        const result = await alignExpenseFamiliesInClientTx(client as never, { companyId: b.operating_company_id, actorUserId: user.uuid, dryRun: b.dry_run });
+        if (!b.dry_run) {
+          await appendCrudAudit(client as never, user.uuid, "accounting.expense_family_align_repair.run", {
+            owner_auth_id: "AUTH-457", operating_company_id: b.operating_company_id, children_moved: result.children_moved,
+            cents: result.cents_moved, left: result.misplaced_left, tb: result.tb_after,
+          }, "info", "443.288-A");
+        }
+        return result;
       }, { actorUserId: user.uuid });
     } catch (e) {
       // The repair ran in its own transaction (rolled back on throw); log it, then answer 409 by name or rethrow.
