@@ -538,6 +538,45 @@ async function closeLoadBookendedSettlementForDriver(
   // guarantees, so it can never attach to the wrong driver or a dead load) and immediately closing
   // it below, exactly as if the open event had fired correctly moments earlier.
   if (!settlementId) {
+    // 443.310 — before opening a new settlement in the fallback, check whether this load is
+    // ALREADY settled on a non-voided settlement for this driver. The tour-close engine can
+    // re-fire (e.g. an idempotent "Close Tour" click) on a load whose settlement has already
+    // been closed + GL-posted. Without this guard, the fallback opens a FRESH settlement,
+    // immediately closes it at $0/0 lines (because all the driver_bills are already settled),
+    // and creates a duplicate P-number that has no financial content but confuses the UI.
+    // Fix: idempotent no-op + audited event. Never a new settlement for an already-settled load.
+    const alreadySettledRes = await client.query<{ settlement_id: string; display_id: string | null }>(
+      `SELECT ds.id::text AS settlement_id, ds.display_id
+         FROM driver_finance.settlement_lines sl
+         JOIN driver_finance.driver_settlements ds
+           ON ds.id = sl.settlement_id AND ds.operating_company_id = sl.operating_company_id
+        WHERE sl.operating_company_id = $1::uuid
+          AND sl.load_id = $2::uuid
+          AND ds.driver_id = $3::uuid
+          AND ds.voided_at IS NULL
+          AND sl.is_active = true
+        LIMIT 1`,
+      [opts.operatingCompanyId, opts.load.id, opts.driverId]
+    );
+    if (alreadySettledRes.rows[0]) {
+      const existing = alreadySettledRes.rows[0];
+      await appendCrudAudit(
+        client,
+        opts.actorUserId,
+        "driver_finance.settlement.reopen_refused_load_already_settled",
+        {
+          load_id: opts.load.id,
+          load_number: opts.load.load_number,
+          driver_id: opts.driverId,
+          operating_company_id: opts.operatingCompanyId,
+          existing_settlement_id: existing.settlement_id,
+          existing_display_id: existing.display_id,
+        },
+        "warning",
+        "443.310"
+      );
+      return 0;
+    }
     const opened = await openLoadBookendedSettlement(client, {
       driverId: opts.driverId,
       operatingCompanyId: opts.operatingCompanyId,
