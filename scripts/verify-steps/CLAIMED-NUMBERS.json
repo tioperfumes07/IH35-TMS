@@ -15028,7 +15028,9 @@
     "claimed_at": "2026-10-24",
     "description": "verify-load-driver-pay-equals-driver-bill-gross",
     "finding": "ACCT-F443322-ENG02",
-    "lane": "CC-1"
+    "lane": "CC-1",
+    "claimed_by": "CC-3",
+    "purpose": "ENG-25 (443.324): verify-one-fuel-to-load-helper — every fuel source path uses resolveFuelLoadAtTime"
   },
   "18773": {
     "claimed_at": "2026-10-24",
@@ -15037,8 +15039,18 @@
   },
   "18777": {
     "claimed_at": "2026-10-24",
-    "claimed_by": "CC-1",
-    "purpose": "ENG-04 (443.322): driver advances mispost to account 2170 Driver Net-Pay Clearing; guard verify-driver-net-pay-clearing-balance-zero"
+    "claimed_by": "CC-3",
+    "purpose": "ENG-26 (443.324): verify-every-load-born-posting-carries-its-load — load-born postings carry load_id (shrink-only)"
+  },
+  "18781": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "CC-3",
+    "purpose": "ENG-29 (443.324): verify-load-driven-miles-from-fences — miles_driven_actual sourced from fence events (shrink-only)"
+  },
+  "18785": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "CC-3",
+    "purpose": "ENG-22 (443.324): verify-creator-trailer-type-from-document — every Creator load trailer type resolves in catalogs"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
