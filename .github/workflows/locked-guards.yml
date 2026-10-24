@@ -228,6 +228,9 @@ jobs:
       - name: verify:settlement-close-must-post-gl --selftest
         run: node scripts/verify-settlement-close-must-post-gl.mjs --selftest
 
+      - name: verify:driver-net-pay-clearing-balance-zero --selftest
+        run: node scripts/verify-driver-net-pay-clearing-balance-zero.mjs --selftest
+
       - name: verify:load-driver-pay-equals-driver-bill-gross --selftest
         run: node scripts/verify-load-driver-pay-equals-driver-bill-gross.mjs --selftest
 

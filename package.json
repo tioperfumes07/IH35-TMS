@@ -1145,7 +1145,8 @@
     "verify:migration-lane-band": "node scripts/verify-migration-lane-band.mjs",
     "verify:husky-hooks-installed": "node scripts/verify-husky-hooks-installed.mjs",
     "verify:no-seat-instruction-overrides-owner-void": "node scripts/verify-no-seat-instruction-overrides-owner-void.mjs",
-    "verify:no-unmanifested-prod-financial-fixtures": "node scripts/verify-no-unmanifested-prod-financial-fixtures.mjs"
+    "verify:no-unmanifested-prod-financial-fixtures": "node scripts/verify-no-unmanifested-prod-financial-fixtures.mjs",
+    "verify:driver-net-pay-clearing-balance-zero": "node scripts/verify-driver-net-pay-clearing-balance-zero.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",
