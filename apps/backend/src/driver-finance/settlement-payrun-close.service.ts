@@ -71,6 +71,7 @@ import { driverReceivableFor } from "./driver-receivable-roles.js";
 import { resolveDriverAdvanceSubAccountOptional } from "./driver-advance-account-resolver.js";
 import { resolveReimbursementLineAccount } from "./reimbursement-line-account.js";
 import { allocateNextSettlementSourceDocumentRef, setSettlementSourceDocumentRef, type Queryable } from "./settlement-source-document-ref.service.js";
+import { proposedExpenseLoadsMessage, proposedExpenseLoadsOnSettlement } from "../accounting/expense-load-confirmation.service.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -90,6 +91,7 @@ type Actor = { userId: string };
 const POSTABLE_STATUSES = new Set(["locked", "final", "closed", "paid", "approved", "ready"]);
 
 export type PayRunCloseErrorCode =
+  | "EXPENSE_LOADS_PROPOSED"
   | "DEDUCTION_STATE_TRANSITION_FAILED"
   | "SETTLEMENT_NOT_FOUND"
   | "SETTLEMENT_NOT_POSTABLE"
@@ -641,6 +643,11 @@ export async function closeSettlementPayRun(
   // further down for why the side effects must be deferred at all.
   const execute = async (client: DbClient) => {
     const settlement = await loadSettlement(client, opco, settlementId);
+    // OWNER RULING 443.288 — a settlement cannot close while any expense on its loads is still 'proposed'.
+    if (input.previewOnly !== true) {
+      const proposedLoads = await proposedExpenseLoadsOnSettlement(client as never, opco, settlementId);
+      if (proposedLoads.length) throw new SettlementPayRunError("EXPENSE_LOADS_PROPOSED", proposedExpenseLoadsMessage(proposedLoads));
+    }
 
     // ROUND 443.292-A — assign the AlwaysTrack settlement number at close if not already set.
     // presettlement-link.service.ts opens load_bookended tours with source_document_ref NULL

@@ -84,6 +84,7 @@ import { voidCreatorOwedBills, writeCreatorOwedBill } from "./settlement-creator
 import { createExpenseInClientTx, postExpenseDocumentInClientTx, type CreateExpenseBody } from "../accounting/expense-writer.service.js";
 import { applyCreatorMilesChoices, CreatorMilesChoiceError } from "./settlement-creator-miles-choice.js";
 import { isEditableDriverBillStatus } from "../lib/document-status-vocabulary.js";
+import { markExpenseLoadConfirmedBy } from "../accounting/expense-load-confirmation.service.js";
 
 export type { DbClient };
 
@@ -1136,6 +1137,9 @@ export async function postSettlementCreatorInClientTx(
   // ROUND 443.7 a (Option A) — the Creator closes the settlement itself through the pay-run close; the load-bookended
   // settlement ping (open on in_transit, close on delivery) steps aside for the rest of this transaction.
   await client.query(`SELECT set_config('app.settlement_creator_post', 'on', true)`);
+  // OWNER RULING 443.288-B — the closer posting the Settlement Creator confirms the loads of the expenses it writes from
+  // the settlement document. Expenses already on these loads that a machine proposed still block the close.
+  await markExpenseLoadConfirmedBy(client as never, actorUserId);
   // RULING 443.66 D5 — the trailer the settlement document names. A draft carrying only trailer_equipment_number (all
   // 68 posted on 2026-10-10/11) left every expense header and line with no trailer; resolve it once here to this
   // company's equipment (owned or leased to it, exactly one) so every document below carries it.

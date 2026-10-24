@@ -1,4 +1,4 @@
-import { liveSettlement } from "../accounting/live-document-predicates.sql.js";
+import { liveSettlement, notVoided } from "../accounting/live-document-predicates.sql.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { z } from "zod";
@@ -344,6 +344,13 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   const podsHave = deliveredLegs.filter((l) => l.pod_count > 0).length;
   const missingAccount = costs.filter((c) => !c.has_account).length; const missingVendor = costs.filter((c) => !c.has_vendor).length; const missingReceipt = costs.filter((c) => c.receipt_count === 0).length;
   const payIncomplete = active.filter((l) => !driverBills.some((b) => b.load_id === l.load_id && b.loaded_pay_cents != null && b.deadhead_pay_cents != null));
+  // OWNER RULING 443.288 — every expense's load on this tour is confirmed by a person before the tour closes.
+  const proposedRes = loadIds.length ? await client.query<{ number: string | null }>(
+    `SELECT e.expense_number AS number FROM accounting.expenses e
+      WHERE e.operating_company_id = $1::uuid AND e.load_id = ANY($2::uuid[]) AND ${notVoided("e")} AND e.load_confirmation = 'proposed'
+      ORDER BY e.expense_number`,
+    [companyId, loadIds],
+  ) : { rows: [] as Array<{ number: string | null }> };
   const ready: ReadyItem[] = [
     // BUG 2 fix (owner's standing order: "ALL LOADS MUST AUTOMATICALLY BE ASSIGNED A LOAD AND TO
     // A TOUR" — Lead ruling 2026-09-11): presettlement-link.service.ts now mints a tour for an
@@ -368,6 +375,8 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     { key: "real_miles", label: "Real driven miles captured", hard: false, ok: active.length > 0 && active.every((l) => l.miles_real != null), detail: active.every((l) => l.miles_real != null) && active.length ? `${totals.miles_real?.toFixed(1)} mi` : "no odometer segments — no fence events captured" },
     // ROUND 443.292-F — a tour with zero settlement lines must never close; the settlement is an
     // empty shell that has never been run through the creator to produce driver pay lines.
+    { key: "expense_loads_confirmed", label: "Every expense's load confirmed by a person", hard: true, ok: proposedRes.rows.length === 0,
+      detail: proposedRes.rows.length === 0 ? "yes" : `${proposedRes.rows.length} proposed (${proposedRes.rows.slice(0, 5).map((r) => r.number ?? "expense").join(", ")}${proposedRes.rows.length > 5 ? ", …" : ""}) — confirm or change the load` },
     { key: "settlement_lines", label: "Settlement lines computed", hard: true, ok: linesRes.rows.length > 0,
       detail: linesRes.rows.length > 0 ? `${linesRes.rows.length} line(s)` : "no settlement lines — run Settlement Creator to generate driver pay lines before closing" },
   ];

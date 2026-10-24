@@ -32,6 +32,7 @@ import {
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 import { columnExists, createExpenseBodySchema, createExpenseInClientTx, emitOutbox, ExpensePostRefused, FIXED_COST_CATEGORY_CODES, insertUnattributedAlert, postExpenseDocumentOwnTx, relinkExpenseToLoadInClientTx, reserveExpenseNumber, writeUncategorizedLineInClientTx, relationExists, type CreateExpenseBody } from "./expense-writer.service.js";
 import { moveExpenseFamilyToLoad } from "./reclassify/reclassify.service.js";
+import { markExpenseLoadConfirmedBy } from "./expense-load-confirmation.service.js";
 export { createExpenseInClientTx, type CreateExpenseBody } from "./expense-writer.service.js";
 export { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 
@@ -646,8 +647,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     }
 
     try {
-      const payload = await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
-        createExpenseInClientTx(client, body, user.uuid));
+      const payload = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+        // OWNER RULING 443.288 — a load the person typed on the expense is that person's confirmed decision; a load the
+        // writer derives (auto-attribution from the driver) stays 'proposed' for a dispatcher / the closer to confirm.
+        if (body.load_id) await markExpenseLoadConfirmedBy(client, user.uuid);
+        return createExpenseInClientTx(client, body, user.uuid);
+      });
 
       if ("unavailable" in payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
       if ("itemNotInCompany" in payload) return reply.code(400).send({ error: "item_not_in_company", detail: "The item is not one of this company's items." });
@@ -794,6 +799,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         if (!(await relationExists(client, "accounting.expenses"))) {
           return { unavailable: true as const };
         }
+        // OWNER RULING 443.288 — the person picked this load: the move (and its family) is confirmed by them.
+        await markExpenseLoadConfirmedBy(client, String(user.uuid));
 
         const linkRes = await client.query(
           `

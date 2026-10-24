@@ -54,7 +54,10 @@ export function familyFailures(s) {
     if (!/c\.parent_expense_id = ANY\(\$2::uuid\[\]\) AND c\.voided_at IS NULL/.test(fam)) f.push("the family move must select every live child of the parents");
     if (!/applyReclassifyOnClient\(client, \{[\s\S]{0,400}to_load_id: input\.toLoadId[\s\S]{0,300}family_follow: false/.test(fam)) f.push("child postings must move by THE reclassify engine with the follow turned off");
     if (!/throw new Error\(`expense_family_child_refused/.test(fam)) f.push("a refused child line must throw (the receipt never moves without its children)");
-    if (!/UPDATE accounting\.expenses SET load_id = \$3::uuid, expense_number = \$4/.test(fam)) f.push("the child document header must follow the load");
+    // 443.288-B: each child moves through THE one document move (moveExpenseDocumentToLoad); its header follows there.
+    if (!/for \(const child of children\) \{\s*await moveExpenseDocumentToLoad\(client, \{/.test(fam)) f.push("every child must move through moveExpenseDocumentToLoad");
+    const doc = between(s.engine, "export async function moveExpenseDocumentToLoad(", "\n/** The receipts");
+    if (!doc || !/UPDATE accounting\.expenses SET load_id = \$3::uuid, expense_number = \$4/.test(doc)) f.push("the child document header must follow the load");
     if (/UPDATE accounting\.journal_entry_postings/.test(fam)) f.push("the family move must never UPDATE a posting (reclassify only)");
   }
   const link = between(s.engine, "export async function linkExpenseChildToParentInClientTx(", "\nexport async function moveExpenseFamilyToLoad(");
@@ -80,10 +83,11 @@ if (process.argv.includes("--selftest")) {
     ["card credit not linked", { writers: sources.writers.replace('parentExpenseId: input.expenseId, journalEntryId: je, role: "statement_card_difference_of"', 'parentExpenseId: input.expenseId, journalEntryId: je, role: "x"') }],
     ["cost difference not linked", { writers: sources.writers.replace(/(export async function postStatementCostDifferenceAsExpense\([\s\S]*?)await linkExpenseChildToParentInClientTx\(/, "$1await noLink(") }],
     ["receipt UUID back in the memo", { writers: sources.writers.replace("card discount $${(cents / 100).toFixed(2)} on ${receiptLabel}", "card discount on receipt ${input.expenseId}") }],
-    ["children moved without reclassify", { engine: sources.engine.replace("family_follow: false,\n      }, { userId: input.actorUserId", "family_follow: false, posting_ids: [],\n      }, { userId: input.actorUserId").replace(/const batch = await applyReclassifyOnClient\(client, \{\n        operating_company_id: input\.operatingCompanyId, posting_ids: legs/, "const batch = await noReclassify(client, {\n        operating_company_id: input.operatingCompanyId, posting_ids: legs") }],
-    ["follow recursion", { engine: sources.engine.replace("family_follow: false,\n      }, { userId: input.actorUserId", "\n      }, { userId: input.actorUserId") }],
+    ["children moved without reclassify", { engine: sources.engine.replace("const batch = await applyReclassifyOnClient(client, {\n      operating_company_id: input.operatingCompanyId, posting_ids: legs", "const batch = await noReclassify(client, {\n      operating_company_id: input.operatingCompanyId, posting_ids: legs") }],
+    ["children moved without the one document move", { engine: sources.engine.replace("for (const child of children) {\n    await moveExpenseDocumentToLoad(client, {", "for (const child of children) {\n    await noMove(client, {") }],
+    ["follow recursion", { engine: sources.engine.replace(" family_follow: false,\n    }, { userId: input.actorUserId", "\n    }, { userId: input.actorUserId") }],
     ["refused child swallowed", { engine: sources.engine.replace("throw new Error(`expense_family_child_refused", "console.warn(`expense_family_child_refused") }],
-    ["child header left behind", { engine: sources.engine.replace("`UPDATE accounting.expenses SET load_id = $3::uuid, expense_number = $4, trailer_id = ${trailer}, updated_at = now()\n        WHERE id = $1::uuid AND operating_company_id = $2::uuid`,\n      [child.id", "`SELECT 1`,\n      [child.id") }],
+    ["child header left behind", { engine: sources.engine.replace(/(export async function moveExpenseDocumentToLoad\([\s\S]*?)UPDATE accounting\.expenses SET load_id = \$3::uuid, expense_number = \$4/, "$1SELECT 1 /* header left behind */") }],
     ["engine hook removed", { engine: sources.engine.replace("if (target.to_load_id && input.family_follow !== false) {", "if (false) {") }],
     ["attach leaves children", { attach: sources.attach.replace("parentExpenseIds: [doc.id], toLoadId: loadId", "parentExpenseIds: [], toLoadId: loadId") }],
     ["fill-truck leaves children", { fill: sources.fill.replace("await moveExpenseFamilyToLoad(client as never, {\n          operatingCompanyId: input.companyId", "await noop(client as never, {\n          operatingCompanyId: input.companyId") }],

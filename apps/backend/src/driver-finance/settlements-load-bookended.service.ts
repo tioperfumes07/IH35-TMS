@@ -11,6 +11,7 @@ import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "
 import { appendSettlementLineFromDriverBillIfMissing, appendEscrowContributionLineIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
 import { materializeSettlementLines } from "./settlement-lines-materialize.service.js";
 import { categorizeSettlementLines } from "./settlement-line-categorize.service.js";
+import { ExpenseLoadConfirmRefused, proposedExpenseLoadsMessage, proposedExpenseLoadsOnSettlement } from "../accounting/expense-load-confirmation.service.js";
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 import {
   settlementEarningsSumSql,
@@ -911,6 +912,12 @@ export async function stampTripClosedForBookendedSettlement(
   if (row.trip_closed_at) {
     await appendEarningsForAnchor();
     return { stamped: false, reason: "already_closed", trip_closed_at: row.trip_closed_at, anchor_load_id: anchorLoadId };
+  }
+
+  // OWNER RULING 443.288 — the closer confirms every expense's load before the trip closes ("always").
+  const proposedLoads = await proposedExpenseLoadsOnSettlement(client as never, opts.operatingCompanyId, opts.settlementId);
+  if (proposedLoads.length) {
+    throw new ExpenseLoadConfirmRefused("EXPENSE_LOADS_PROPOSED", proposedExpenseLoadsMessage(proposedLoads), { settlement_id: opts.settlementId, proposed: proposedLoads });
   }
 
   const closedAt = new Date().toISOString();
