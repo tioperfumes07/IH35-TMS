@@ -84,7 +84,7 @@ export function PresettlementSuggestionsTab({ companyId }: { companyId: string }
         sortValue: (row) => row.trip_type ?? "",
         render: (row) =>
           row.trip_type ?? (
-            <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Unknown — needs classification</span>
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Unknown — needs classification</span>
           ),
       },
       {
