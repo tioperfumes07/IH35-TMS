@@ -1,6 +1,8 @@
 {
   "total": 122,
   "files": 82,
+  "measured_at": "2026-10-24T18:55:00.000Z",
+  "measurement_kind": "static source scan with the ROUND 381.5 handler parse; re-measured by Lead after CC-1 443.322 ENG-05 (b08f96f940) fixed 3 catches, 125 -> 122",
   "byFile": {
     "apps/backend/src/accounting/bulk-void.service.ts": 1,
     "apps/backend/src/accounting/daily-recon.routes.ts": 1,
