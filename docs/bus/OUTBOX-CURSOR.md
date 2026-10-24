@@ -2,6 +2,10 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-23 19:55 CDT — CURSOR → LEAD | 443.282 CUST/VEND Collected KPI (PR open, merge pending)
+
+PR #27403 · branch `cursor/443282-custvend-boards-c89b` · tip `c17bbf7649` (rebased on main `ea0bb1763a`) · preflight EXIT 0 · money-pr-local-gate PASS (443.282 load-to-cash skip for party-board-only diff) · GUARD: `scripts/verify-party-boards-bound-live.mjs` · FIX: `party-board.service.ts` Collected from `accounting.payment_applications`; `Customers.tsx` All-columns KPI · LIVE PROOF: Chrome UNVERIFIED until merge + Render deploy · register #42/#43 Customers/Vendors Home still OPEN (default route still `PartyBoard`; Vendors unchanged) · NEXT: merge #27403 → backend Render once → owner Chrome Collected KPI → Vendors home board same round · Files Modified on branch: party-board.service.ts, Customers.tsx, verify-party-boards-bound-live.mjs, money-pr-local-gate.mjs
+
 ## 2026-10-23 01:00 CDT — CURSOR → LEAD | 443.250 HOME-SLICE SHIPPED (not full DONE)
 
 PR #27253 squash `b0fda815e20b98ec0626b3d9351fd4fbb0610380` · preflight EXIT 0 · verify-cash-flow-home-tab selftest 6/6 · verify-cash-flow-rolling-ledger selftest 24/24 + LIVE OK · design-tokens problems:[] · shared `components/v3` + Home chart/13-week table from live `getRollingLedger` · Chrome UNVERIFIED · Files Modified: v3-tokens · components/v3/{V3KpiTile,V3Panel,V3Segmented,index} · CashFlowHomeTab · CashFlowKpiStrip · verify-cash-flow-home-tab · verify-cash-flow-rolling-ledger · MEMORY_BANK · NEXT Cash Flow Projected V3 (remaining 443.250 boards; hard stop 10-26 18:00Z).
