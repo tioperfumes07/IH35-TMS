@@ -1249,7 +1249,9 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx",
     bad: /<select[\s\S]*?value=\{unitId\}/,
-    good: /<EntityPicker[\s\S]*?kind="unit"[\s\S]*?allowCreate=\{false\}/,
+    // LEAD 443.312: owner law "every selector is multi-select" (rows 29/119) moved this to EntityMultiSelect kind="unit"
+    // (a canonical picker, no free-text create). A raw <select value={unitId}> is still the failure.
+    good: /<EntityPicker[\s\S]*?kind="unit"[\s\S]*?allowCreate=\{false\}|<EntityMultiSelect[\s\S]*?kind="unit"/,
   },
   {
     rel: "apps/frontend/src/pages/reports/APAgingPage.tsx",
