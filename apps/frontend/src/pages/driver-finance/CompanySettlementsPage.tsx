@@ -29,6 +29,10 @@ import { mmmDd } from "../../lib/formatDate";
 import { settlementNumber } from "../../lib/settlementNumber";
 import { CompanySettlementItemizedByLoad } from "./components/CompanySettlementItemizedByLoad";
 import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
+import {
+  companySettlementsBoardRowKey,
+  dedupeCompanySettlementsTourBoardRows,
+} from "../../lib/companySettlementsTourBoard";
 
 const DASH = "—";
 function money(cents: number | null | undefined): string {
@@ -104,7 +108,10 @@ export function CompanySettlementsPage() {
     enabled: Boolean(companyId),
   });
 
-  const tourRows = toursQuery.data?.rows ?? [];
+  const tourRows = useMemo(
+    () => dedupeCompanySettlementsTourBoardRows(toursQuery.data?.rows ?? []),
+    [toursQuery.data?.rows]
+  );
   const periodRows = periodsQuery.data?.company_settlements ?? [];
 
   const withCompany = tourRows.filter((r) => Boolean(r.company_settlement_id)).length;
@@ -318,7 +325,7 @@ export function CompanySettlementsPage() {
             title="Company settlements"
             columns={columns}
             rows={tourRows}
-            rowKey={(r) => r.settlement_id}
+            rowKey={(r) => companySettlementsBoardRowKey(r)}
             loading={toursQuery.isPending && Boolean(companyId)}
             onRowClick={(r) => openWaterfallForTour(r)}
             rowClassName={(r) =>
