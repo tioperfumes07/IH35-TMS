@@ -11,9 +11,16 @@ vi.mock("react-router-dom", async (importOriginal) => {
 });
 
 vi.mock("../../../../api/accounting", () => ({
-  listRecurringBillTemplates: vi.fn().mockResolvedValue({ templates: [] }),
+  listRecurringBillTemplates: vi.fn().mockResolvedValue({ rows: [] }),
   deactivateRecurringBillTemplate: vi.fn(),
   generateRecurringBillNow: vi.fn(),
+}));
+
+vi.mock("../../useAccountingNavKpis", () => ({
+  useAccountingNavKpis: () => ({
+    bills: { count: 0, openAmountCents: 0 },
+    invoices: { count: 0, openAmountCents: 0 },
+  }),
 }));
 
 vi.mock("../../../../contexts/CompanyContext", () => ({
@@ -39,11 +46,12 @@ function renderPage() {
 describe("RecurringBillList way back", () => {
   beforeEach(() => navigateSpy.mockClear());
 
-  it("is the module breadcrumb: Accounting / Bills / Recurring Bills", async () => {
+  it("is the module breadcrumb: Accounting › Bills › Recurring Bills", async () => {
     renderPage();
-    const accounting = await screen.findByRole("link", { name: "Accounting" });
-    expect(accounting).toHaveAttribute("href", "/accounting");
-    expect(screen.getByRole("link", { name: "Bills" })).toHaveAttribute("href", "/accounting/bills");
+    const crumb = await screen.findByTestId("accounting-breadcrumb");
+    expect(crumb.querySelector('a[href="/accounting"]')).toBeTruthy();
+    expect(crumb.querySelector('a[href="/accounting/bills"]')).toBeTruthy();
+    expect(crumb.textContent).toContain("Recurring Bills");
   });
 
   it("offers no browser-history Back", async () => {
