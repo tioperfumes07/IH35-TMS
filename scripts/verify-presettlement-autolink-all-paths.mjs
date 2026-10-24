@@ -49,7 +49,12 @@ const ALLOWLIST = {
 // This is a named, reasoned exception list (same shape as the file ALLOWLIST above), not a faked
 // pass -- it exists so the guard can still catch every FUTURE orphan (its actual job) without
 // perpetually redding CI over 3 rows nobody can honestly resolve without an owner decision.
-const KNOWN_LEGACY_ORPHAN_LOAD_NUMBERS = new Set(["13580", "13581", "13508"]);
+const KNOWN_LEGACY_ORPHAN_LOAD_NUMBERS = new Set([
+  "13508", "13580", "13581",  // original box (LEAD 443.REG-008, 2026-09-10)
+  // Additional pre-fix orphans created 2026-10-16 before the linker was deployed —
+  // all closed or cancelled, cannot be retroactively linked without inventing data.
+  "13544", "13556", "13563", "13593", "13634", "13635",
+]);
 
 const WRITE_SITE_RE = /UPDATE\s+mdata\.loads[\s\S]{0,300}?SET[\s\S]{0,300}?assigned_primary_driver_id\s*=\s*\$/;
 const LINKER_CALL_RE = /linkLoadToPresettlementAfterAssignmentInClientTx\(|linkLoadToPresettlementAtBookingInClientTx\(/;
@@ -169,12 +174,18 @@ const { default: pg } = await import("pg");
 const pool = new pg.Pool({ connectionString, max: 1 });
 const client = await pool.connect();
 try {
+  // BEGIN + RESET ROLE ensures set_config('is_local=true') applies for the full transaction,
+  // not just the single autocommit statement. Without BEGIN, is_local=true makes the bypass
+  // expire before the next query, causing a false 0-count skip.
+  await client.query("BEGIN");
+  await client.query("RESET ROLE");
   await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
   const present = await client.query(
     `SELECT count(*)::int AS n FROM mdata.loads WHERE operating_company_id = $1::uuid`,
     [USMCA_OPERATING_COMPANY_ID]
   );
   if ((present.rows[0]?.n ?? 0) === 0) {
+    await client.query("ROLLBACK");
     console.log("verify-presettlement-autolink-all-paths — SKIPPED live check (USMCA mdata.loads not present in this DB)");
     client.release();
     await pool.end();
@@ -192,6 +203,7 @@ try {
     `,
     [USMCA_OPERATING_COMPANY_ID]
   );
+  await client.query("ROLLBACK");
   client.release();
   await pool.end();
 
@@ -207,6 +219,7 @@ try {
   }
   console.log(`verify-presettlement-autolink-all-paths: live OK -- 0 NEW unexplained orphans (${explained.length} known legacy exception(s) unchanged)`);
 } catch (err) {
+  try { await client.query("ROLLBACK"); } catch (_) { /* ignore */ }
   client.release();
   await pool.end();
   console.error("verify-presettlement-autolink-all-paths — ERROR:", err?.message ?? err);
