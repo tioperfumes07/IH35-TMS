@@ -113,16 +113,10 @@ function settlementsDerivedReimb(s: SettlementListRow): number {
   return Math.abs(reimb) < 0.005 ? 0 : reimb;
 }
 
-function settlementsRowPayStatus(s: SettlementListRow): "Paid" | "Open" | "Held" | "Cancelled" {
-  if (s.status === "cancelled") return "Cancelled";
-  if (s.status === "held") return "Held";
-  if (s.status === "paid" || s.payment_state === "cleared" || s.payment_state === "manual_paid") return "Paid";
-  return "Open";
-}
-
 // 443.292-C — Settlement status (Open / Closed / Void) and Payment status (Unpaid / Paid) as two separate columns.
 function settlementStatusLabel(s: SettlementListRow): "Open" | "Closed" | "Void" {
-  if (s.status === "cancelled" || s.status === "void" || s.status === "voided") return "Void";
+  // driver_settlements_status_check: a voided settlement is status "cancelled" (voided_at set) — there is no "void" value.
+  if (s.status === "cancelled") return "Void";
   if (s.status === "closed" || s.status === "paid" || s.status === "approved" || s.status === "final") return "Closed";
   return "Open";
 }
@@ -850,7 +844,6 @@ export function SettlementsPage() {
               </div>
             ) : (
               weekOfRows.map((s) => {
-                const status = settlementsRowPayStatus(s);
                 return (
                   <div
                     key={s.id}

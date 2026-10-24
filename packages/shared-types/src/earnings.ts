@@ -1,4 +1,8 @@
-export type SettlementStatus = "draft" | "presettle" | "acked" | "locked" | "paid" | "held" | "cancelled";
+/** Exactly the values driver_finance.driver_settlements_status_check allows on production (443.300, read 10-23-2026).
+ *  Live USMCA rows use open / closed / cancelled; the rest are legal but historical. Keep in step with the CHECK. */
+export type SettlementStatus =
+  | "draft" | "presettle" | "acked" | "locked" | "paid" | "held" | "cancelled"
+  | "final" | "ready" | "approved" | "open" | "closed";
 
 export type EarningsLoad = {
   id: string;

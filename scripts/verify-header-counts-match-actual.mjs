@@ -55,7 +55,7 @@ const EXPECTED_TABLE_COUNTS = {
   // array; only this static "did-you-forget-to-bump-it" mirror was stale.
   dispatch: 12, // +load_cancellation_reasons +dispatcher_error_reasons +customer_quality_event_reasons +load_exception_reasons
   drivers: 13, // +driver_termination_reasons +driver_load_statuses (LST-A-01 hub); LST-F20: +cash_advance_types +leave_types
-  accounting: 16, // +journal_entry_types, +account_types, +detail_types, +void_cancel_reasons
+  accounting: 17, // +journal_entry_types, +account_types, +detail_types, +void_cancel_reasons, +override_reasons (443.294 step 1b e581cd3968; LEAD 443.301 ratchet)
   customers: 3,
   vendors: 2,
   reference: 2,
