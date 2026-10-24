@@ -15,6 +15,7 @@
  * its own "M.3 ... so Dispatch can show it as its own board column" comment) — reused here as a
  * genuine board section instead of only a per-load annotation.
  */
+import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { DataPanel } from "../layout/DataPanel";
@@ -104,6 +105,25 @@ const columns: ParityColumn<OpenPreSettlement>[] = [
     sortValue: (row) => Number(row.net_pay ?? 0),
     className: "text-right tabular-nums",
     render: (row) => formatUsd(Number(row.net_pay ?? 0)),
+  },
+  // 443.293-B — Dispatch open-accumulating board: same Close settlement wizard as Pre-Settlement tab.
+  {
+    key: "close",
+    label: "Close",
+    sortable: false,
+    render: (row) =>
+      row.driver_id ? (
+        <Link
+          to={`/driver-finance/settlement-close?driver_id=${encodeURIComponent(row.driver_id)}&settlement_id=${encodeURIComponent(row.settlement_id)}`}
+          className="inline-flex h-7 items-center rounded-sm bg-[#14314F] px-2 text-xs font-semibold text-white hover:opacity-90"
+          data-testid="open-pre-settle-close-settlement"
+          title="Opens the same 7-step Settlement Close wizard for this driver's open tour"
+        >
+          Close settlement
+        </Link>
+      ) : (
+        "—"
+      ),
   },
 ];
 

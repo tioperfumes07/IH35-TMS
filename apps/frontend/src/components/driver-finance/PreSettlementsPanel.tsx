@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { settlementNumber } from "../../lib/settlementNumber";
 import type { TourListRow } from "../../api/tourReadout";
 import { entityLabel } from "../../lib/entity-label";
@@ -200,6 +201,25 @@ const preSettlementColumns: ParityColumn<TourListRow>[] = [
         <span className="text-[#6B7280]">—</span>
       );
     },
+  },
+  // 443.293-B — Dispatch / Settlements board: Close settlement → same 7-step wizard (one engine).
+  {
+    key: "close",
+    label: "Close",
+    sortable: false,
+    render: (row) =>
+      row.is_open && row.driver_id ? (
+        <Link
+          to={`/driver-finance/settlement-close?driver_id=${encodeURIComponent(row.driver_id)}&settlement_id=${encodeURIComponent(row.settlement_id)}`}
+          className="inline-flex h-7 items-center rounded-sm bg-[#14314F] px-2 text-xs font-semibold text-white hover:opacity-90"
+          data-testid="pre-settle-close-settlement"
+          title="Opens the same 7-step Settlement Close wizard for this driver's open tour"
+        >
+          Close settlement
+        </Link>
+      ) : (
+        <span className="text-[#6B7280]">—</span>
+      ),
   },
 ];
 

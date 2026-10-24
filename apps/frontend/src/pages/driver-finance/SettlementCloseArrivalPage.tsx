@@ -3,7 +3,7 @@ import { getTourReadout, type TourLeg } from "../../api/tourReadout";
 import { entityLabel } from "../../lib/entity-label";
 import { useSearchParams } from "react-router-dom";
 import { settlementLabel } from "../../lib/settlementNumber";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   closeSettlementPayRun,
@@ -154,7 +154,8 @@ export function SettlementCloseArrivalPage() {
   const currentUserId = String(user?.uuid ?? "");
   const canClose = CLOSE_ROLES.has(role);
 
-  // LEAD 443.269-A 3b: "Close tour → Settlement" on a pre-settlement opens this page for THAT driver (?driver_id=).
+  // LEAD 443.269-A 3b / 443.293-B: Dispatch "Close settlement" opens this page for THAT driver
+  // (?driver_id=&settlement_id=). Same wizard as Settlements › Settlement Close queue — one engine.
   const [closeSearchParams] = useSearchParams();
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(() => closeSearchParams.get("driver_id"));
   const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
@@ -162,6 +163,12 @@ export function SettlementCloseArrivalPage() {
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   // ROUND 443.280-A — real wizard state (was hardcoded activeStep = settlement ? 3 : 1).
   const [wizardStep, setWizardStep] = useState<CloseWizardStep>(1);
+
+  // Keep picker in sync when Dispatch navigates here with a different driver_id (same mount).
+  useEffect(() => {
+    const fromUrl = closeSearchParams.get("driver_id");
+    if (fromUrl && fromUrl !== selectedDriverId) setSelectedDriverId(fromUrl);
+  }, [closeSearchParams, selectedDriverId]);
 
   const openQuery = useQuery({
     queryKey: ["driver-finance", "pre-settlements", "open-by-driver", companyId],
