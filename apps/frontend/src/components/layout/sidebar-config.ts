@@ -238,6 +238,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Loads", to: "/dispatch?view=loads" },
         { label: "Dispatch Chat", to: "/dispatch/chat" },
         { label: "At-Risk Queue", to: "/dispatch/at-risk" },
+        { label: "Expense load confirmations", to: "/dispatch/expense-load-confirmations" },
         { label: "In-Transit Issues", to: "/dispatch/in-transit-issues" },
         { label: "Assignment History", to: "/dispatch/assignment-history" },
         { label: "Planner Calendar", to: "/dispatch/planner" },

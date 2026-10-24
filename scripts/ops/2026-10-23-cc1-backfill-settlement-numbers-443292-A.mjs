@@ -5,6 +5,9 @@
 // so they receive consecutive numbers (max+1 each) matching the AlwaysTrack sequence.
 // Each settlement is handled in its own transaction + advisory lock so concurrent writes never
 // grab the same number. DRY_RUN=1 rolls back and prints the would-be numbers.
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { appendCrudAudit } from "../../apps/backend/src/audit/crud-audit.js";
 
@@ -14,6 +17,20 @@ const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 const DISPLAY_IDS = ["P-0113", "P-0117", "P-0119"]; // must be ordered; re-ordered below by trip_closed_at
 const FLOOR = 5803; // last AT-imported number; first minted = 5804
 const DRY = process.env.DRY_RUN === "1";
+
+// ROUND 133 P0 — every scripts/ops/ financial writer must call verify-owner-authorization.mjs
+// before a live write. DRY_RUN=1 skips the gate so measurement still works without AUTH.
+{
+  const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+  if (!DRY) {
+    const authId = process.env.OWNER_AUTH_ID;
+    if (!authId) {
+      console.error("OWNER_AUTH_ID required when DRY_RUN!=1 (ROUND 133 P0)");
+      process.exit(1);
+    }
+    execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), authId], { stdio: "inherit" });
+  }
+}
 
 class Rollback extends Error {}
 
