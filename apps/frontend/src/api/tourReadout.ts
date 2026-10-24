@@ -110,8 +110,23 @@ export type TourListRow = {
   /** 443.282 — Company Settlements board dedupe key (one row per tour). */
   tour_id: string | null;
 };
-export function listTours(operatingCompanyId: string, state: "open" | "closed") {
+type TourListPage = { state: string; count: number; voided_count: number; rows: TourListRow[] };
+
+/**
+ * The COMPLETE tour list for one company and state. The route serves 200 rows a page; a board that read only the
+ * first page showed 200 of N and totalled 200 (443.284). Pages until `count` rows are in hand; a short page before
+ * then is an incomplete list and throws, never a silent partial.
+ */
+export async function listTours(operatingCompanyId: string, state: "open" | "closed"): Promise<TourListPage> {
   // R-102-B item 5 — voided_count discloses how many cancelled/reversed/voided settlements in this
   // SAME state bucket are permanently excluded from `rows` (SETL-REVERSED-HIDE); never a silent hide.
-  return apiRequest<{ state: string; count: number; voided_count: number; rows: TourListRow[] }>(`/api/v1/driver-finance/tours?operating_company_id=${encodeURIComponent(operatingCompanyId)}&state=${state}`);
+  const base = `/api/v1/driver-finance/tours?operating_company_id=${encodeURIComponent(operatingCompanyId)}&state=${state}&limit=200`;
+  const first = await apiRequest<TourListPage>(`${base}&offset=0`);
+  const rows = [...first.rows];
+  while (rows.length < first.count) {
+    const page = await apiRequest<TourListPage>(`${base}&offset=${rows.length}`);
+    if (page.rows.length === 0) throw new Error("The tour list is incomplete. Refresh to try again.");
+    rows.push(...page.rows);
+  }
+  return { ...first, rows };
 }

@@ -141,6 +141,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === new URL(import.meta.url
       ["an id in a memo FAILS", memoIdProblems(memoIdSites(f("x({ memo: `Bank reconciliation · session ${input.session_id}` })")), new Map()).length === 1],
       ["a human memo passes", memoIdProblems(memoIdSites(f("x({ memo: `Bank reconciliation service charge — ${date}` })")), new Map()).length === 0],
       ["a display number is not an id", memoIdProblems(memoIdSites(f("x({ memo: `Void: payment ${p.display_id ?? p.number}` })")), new Map()).length === 0],
+      // 443.284: the exact dreamline card-credit shape (receipt UUID in the memo) must fail; its human form passes.
+      ["the dreamline receipt id in a memo FAILS", memoIdProblems(memoIdSites(f("x({ memo: `statement ${input.marker} — card discount on receipt ${input.expenseId}` })")), new Map()).length === 1],
+      ["the dreamline receipt label passes", memoIdProblems(memoIdSites(f("x({ memo: `statement ${input.marker} — card discount on ${receiptLabel}` })")), new Map()).length === 0],
       ["a fixed baseline site must be removed", memoIdProblems(new Map(), new Map([["a|memo|id", 1]])).length === 1],
       ["the real tree is within its baseline", memoIdProblems(memoIdSites(backendFiles())).length === 0],
     ];
