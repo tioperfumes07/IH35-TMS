@@ -9,7 +9,15 @@ const [oc] = process.argv.slice(2);
 const c = new pg.Client({ connectionString: process.env.DATABASE_URL, statement_timeout: 60000 });
 await c.connect();
 try {
-  await c.query("BEGIN READ ONLY");
+  const snap = process.env.PG_PARTY_BOARDS_SNAPSHOT?.trim();
+  await c.query(
+    snap
+      ? "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY"
+      : "BEGIN READ ONLY"
+  );
+  if (snap) {
+    await c.query(`SET TRANSACTION SNAPSHOT '${snap.replace(/'/g, "''")}'`);
+  }
   await c.query("SET LOCAL app.bypass_rls = 'lucia'");
   const cust = await readCustomerBoard(c as never, oc!, "ytd");
   const vend = await readVendorBoard(c as never, oc!, "ytd");
