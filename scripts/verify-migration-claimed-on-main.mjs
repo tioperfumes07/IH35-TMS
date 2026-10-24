@@ -44,6 +44,30 @@ function loadRegistry() {
   return JSON.parse(text);
 }
 
+/**
+ * 443.294: the registry has TWO claim forms — the documented one (_how_to_claim: the timestamp appended to the
+ * `claimed` LIST, with its details as a top-level entry keyed by the timestamp) and the legacy keyed `claimed` map.
+ * This guard only read the map, so a list-claimed migration always read NOT CLAIMED (only one-off allowlists passed).
+ */
+export function claimEntryFor(registry, ts) {
+  const claimed = registry?.claimed;
+  if (Array.isArray(claimed)) {
+    if (!claimed.includes(ts)) return null;
+    const detail = registry[ts];
+    return detail && typeof detail === "object" ? detail : { claimed_by: "" };
+  }
+  return (claimed && claimed[ts]) || null;
+}
+
+/** 443.294: claimants are seats (CC-1/CC-2/CC-3/Lead → the claude hour band; Cursor/Codex → the cursor band). */
+export function laneOfClaimant(by) {
+  const v = String(by || "").toLowerCase();
+  if (!v) return "";
+  if (/^(cc-\d|claude|lead)/.test(v)) return "claude";
+  if (/^(cursor|codex)/.test(v)) return "cursor";
+  return v;
+}
+
 function branchLane(branch) {
   const lower = branch.toLowerCase();
   if (lower.startsWith("claude/")) return "claude";
@@ -297,7 +321,6 @@ export function run() {
     return { ok: false, message: `verify-migration-claimed-on-main FAIL — cannot read registry ${REGISTRY_PATH}: ${error.message}` };
   }
 
-  const claimed = registry.claimed || {};
   const lane = branchLane(branch);
   const problems = [];
 
@@ -307,7 +330,7 @@ export function run() {
       problems.push(`${f} does not begin with a YYYYMMDDHHMM timestamp; cannot claim it.`);
       continue;
     }
-    const entry = claimed[ts];
+    const entry = claimEntryFor(registry, ts);
     if (!entry) {
       problems.push(
         `${f} (timestamp ${ts}) is NOT CLAIMED in db/migrations/CLAIMED-MIGRATION-NUMBERS.json. ` +
@@ -317,7 +340,7 @@ export function run() {
     }
     const hour = Number(ts.slice(8, 10));
     const expectedLane = laneForHour(hour);
-    const claimedBy = (typeof entry === "string" ? entry : entry.claimed_by || "").toLowerCase();
+    const claimedBy = laneOfClaimant(typeof entry === "string" ? entry : entry.claimed_by || "");
     if (expectedLane && claimedBy && claimedBy !== expectedLane) {
       problems.push(
         `${f} timestamp ${ts} is in the ${expectedLane} hour band but claimed_by='${claimedBy}'. ` +
@@ -349,6 +372,13 @@ function selftest() {
   if (branchLane("cursor/fix-thing") !== "cursor") throw new Error("selftest cursor branch failed");
   if (branchLane("claude/fix-thing") !== "claude") throw new Error("selftest claude branch failed");
   if (timestampOf("db/migrations/202610101200_thing.sql") !== "202610101200") throw new Error("selftest timestampOf failed");
+  // 443.294 plants: the documented list form is honoured; an unclaimed slot and a cross-band claimant still fail.
+  const listReg = { claimed: ["202616230300"], "202616230300": { claimed_by: "CC-3" } };
+  if (!claimEntryFor(listReg, "202616230300")) throw new Error("selftest list-form claim not found");
+  if (claimEntryFor(listReg, "202616230400")) throw new Error("selftest unclaimed slot read as claimed");
+  if (!claimEntryFor({ claimed: { "202616230300": { claimed_by: "cc-3" } } }, "202616230300")) throw new Error("selftest legacy map form lost");
+  if (laneOfClaimant("CC-3") !== "claude" || laneOfClaimant("Cursor") !== "cursor") throw new Error("selftest claimant lane map failed");
+  if (laneOfClaimant("cursor") === laneForHour(3)) throw new Error("selftest cross-band claimant not detected");
   return true;
 }
 
