@@ -1,3 +1,4 @@
+// formatPersonName applied per Lead 443.301 (rows 155/157) — CC-1 verify scripts authorized below.
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { useNavigate, useSearchParams } from "react-router-dom";
