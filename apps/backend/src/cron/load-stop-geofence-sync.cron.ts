@@ -69,6 +69,7 @@ export async function completeDeliveredFinalDepartures(operatingCompanyId = USMC
         })
       );
     } catch (err) {
+      console.error({ load_number: row.load_number, err }, "geofence-sync: final departure failed");
       out.push({ load_number: row.load_number, outcome: "refused", detail: String((err as Error)?.message ?? err) });
     }
   }
