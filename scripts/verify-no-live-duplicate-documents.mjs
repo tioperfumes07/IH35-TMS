@@ -62,16 +62,20 @@ const main = async () => {
       await client.query("ROLLBACK");
       return 1;
     }
+    // ENG-10 (2026-10-24): partition on load_id so that a card-discount or fuel purchase recorded
+    // on two different loads (different provider receipts) does not collide.  A true duplicate is
+    // the same vendor + date + amount + same load appearing twice — that still fires.
     const r = await client.query(
       `SELECT COALESCE(v.vendor_name, '(no vendor)') AS party,
               x.transaction_date::date AS d,
               x.total_amount_cents AS amt,
+              x.load_id,
               count(*)::int AS n,
               string_agg(x.expense_number, ' | ' ORDER BY x.expense_number) AS ids
          FROM accounting.expenses x
          LEFT JOIN mdata.vendors v ON v.id = x.vendor_uuid
         WHERE x.operating_company_id = $1 AND x.voided_at IS NULL
-        GROUP BY 1, 2, 3
+        GROUP BY 1, 2, 3, 4
        HAVING count(*) > 1
         ORDER BY count(*) DESC, 3 DESC`,
       [USMCA]
@@ -79,7 +83,7 @@ const main = async () => {
     groups = r.rows.length;
     for (const x of r.rows) {
       rows += x.n;
-      detail.push(`${x.party} · ${x.d.toISOString().slice(0, 10)} · ${(Number(x.amt) / 100).toFixed(2)} · x${x.n} · ${x.ids}`);
+      detail.push(`${x.party} · ${x.d.toISOString().slice(0, 10)} · ${(Number(x.amt) / 100).toFixed(2)} · x${x.n} · load=${x.load_id ?? "null"} · ${x.ids}`);
     }
     await client.query("ROLLBACK");
   } finally {
