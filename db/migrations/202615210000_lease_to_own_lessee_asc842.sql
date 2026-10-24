@@ -1,5 +1,7 @@
+-- RELEASED 2026-10-24 (LEAD 443.331): validated by the Lead on fresh production copies br-lingering-sky-aktlh2vt and br-dark-cell-akp4m0ee
+-- (applied in order, rerun idempotent); removed from .held-migrations.json so prod db:migrate applies it at the next deploy.
 -- 202615210000_lease_to_own_lessee_asc842.sql
--- HELD — DO NOT RUN ON PROD until the Lead validates it on a Neon branch and applies it (CC-1 could not validate:
+-- HELD — (was: do-not-run-on-prod) until the Lead validates it on a Neon branch and applies it (CC-1 could not validate:
 -- Neon write MCP 401 and local Postgres denied on 2026-10-02). Registered in db/migrations/.held-migrations.json
 -- (verify:hold-migrations-registered). Fresh / CI databases apply it normally.
 -- ROUND 321 (CC-1) — lease-to-own money side, ASC 842 LESSEE. Until now every ROUND 316 lease (lease_to_own included)
@@ -83,23 +85,29 @@ CREATE TRIGGER trg_worm_refuse_delete BEFORE DELETE ON accounting.lease_lessee_s
   FOR EACH ROW EXECUTE FUNCTION accounting.refuse_financial_row_delete();
 COMMENT ON TABLE accounting.lease_lessee_schedule_period IS 'ROUND 321: ASC 842 lessee schedule per lease asset line and period (payment / interest / principal / liability / ROU); bill + accretion JE FKs.';
 
-ALTER TABLE accounting.chart_of_accounts_roles DROP CONSTRAINT IF EXISTS chart_of_accounts_roles_role_check;
-ALTER TABLE accounting.chart_of_accounts_roles ADD CONSTRAINT chart_of_accounts_roles_role_check
-  CHECK (role = ANY (ARRAY[
-    'ar_control','ap_control','cash_clearing','undeposited_funds','revenue_default','expense_default',
-    'factor_reserve_default','escrow_liability_default','sales_tax_payable','cash_basis_adjustment_equity',
-    'retained_earnings','uncategorized_expense','rental_income','lease_receivable','interest_income',
-    'gain_loss_on_disposal','factoring_advance_liability','ar_assigned_to_factor','factoring_recoursed_ar',
-    'default_interest_expense','factor_reserve_held','factor_fee_expense','property_tax_expense',
-    'property_tax_payable','driver_pay_expense','driver_payroll_clearing','reimbursement_expense',
-    'advance_recovery','damage_recovery','lease_recovery','insurance_recovery','fuel_advance_recovery',
-    'other_recovery','abandonment_chargeback_recovery','cash_dip','civil_fines_expense',
-    'maintenance_parts_expense','warranty_recovery','fuel_overage_receivable','factor_wire_fee',
-    'insurance_expense','unbilled_revenue','fixed_asset_default','accum_depr_default','depr_expense_default',
-    'heavy_repair_expense','prepaid_asset_default','amortization_expense_default',
-    'broker_customer_advance_liability','rent_expense','related_party_interest_expense','operating_bank',
-    'settlement_dispute_correction_recovery','company_fuel_advance_expense','detention_pay_expense',
-    'bank_fee_recovery','toll_scale_expense','other_operating_expense','factor_cash_reserve_held',
-    'rou_asset','lease_liability','accumulated_rou_amortization','lease_interest_expense'
-  ]));
+-- LEAD 443.331 (10-24): this block used to DROP + re-ADD the role CHECK with a static list copied on 10-01. Migrations
+-- applied since (e.g. intercompany_receivable_ih35_transportation, fuel_card_payable_dreamline, related_party_loan_parent,
+-- fuel_card_payable_wex) admitted roles that are in use on prod, so the static list failed:
+-- "check constraint chart_of_accounts_roles_role_check ... is violated by some row" (prod fork 10-24). Same dynamic append
+-- as 202616030100: read the live constraint, add only this migration's four lease roles, re-create.
+DO $$
+DECLARE def text; roles text[]; want text[] := ARRAY['rou_asset','lease_liability','accumulated_rou_amortization','lease_interest_expense'];
+BEGIN
+  SELECT pg_get_constraintdef(c.oid) INTO def FROM pg_constraint c
+   WHERE c.conname = 'chart_of_accounts_roles_role_check' AND c.conrelid = 'accounting.chart_of_accounts_roles'::regclass;
+  IF def IS NULL THEN RETURN; END IF;
+  IF substring(def from '\{([^}]*)\}') IS NOT NULL THEN
+    roles := string_to_array(substring(def from '\{([^}]*)\}'), ',');
+  ELSE
+    SELECT array_agg(DISTINCT m[1]) INTO roles FROM regexp_matches(def, '''([a-z0-9_]+)''', 'g') AS m;
+  END IF;
+  IF roles IS NULL OR cardinality(roles) < 10 THEN
+    RAISE EXCEPTION '202615210000: could not read chart_of_accounts_roles_role_check (% roles) — refusing to re-create it', cardinality(roles);
+  END IF;
+  IF NOT (roles @> want) THEN
+    roles := array(SELECT DISTINCT unnest(roles || want));
+    ALTER TABLE accounting.chart_of_accounts_roles DROP CONSTRAINT chart_of_accounts_roles_role_check;
+    EXECUTE format('ALTER TABLE accounting.chart_of_accounts_roles ADD CONSTRAINT chart_of_accounts_roles_role_check CHECK (role = ANY (%L::text[]))', roles);
+  END IF;
+END $$;
 COMMIT;
