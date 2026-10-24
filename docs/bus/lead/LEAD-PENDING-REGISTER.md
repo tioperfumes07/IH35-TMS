@@ -1,4 +1,4 @@
-# IH35-TMS — Lead pending register (USMCA) · 10-23-2026 5:30 PM CT
+# IH35-TMS — Lead pending register (USMCA) · 10-23-2026 7:45 PM CT
 
 Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live proof.
 
@@ -90,12 +90,12 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 84 | E | Settlements | 5 settlement headers re-derive (P-0105/0107/0108/0109/0115); P-0115 carries two NBs incl. 13663 | CC-2 | 443.260 | OPEN |  |
 | 85 | E | Vendors | All 30 vendors have no category | CC-1 | 443.281 | OPEN |  |
 | 86 | E | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | 443.281 | OPEN |  |
-| 87 | E | Telematics | verify-no-dead-schema: telematics.vehicle_latest_position_cache has no reader | CC-1 | 443.278 | IN PROGRESS | LEAD 443.282 758bd029: guard credits tables read through a read view (D074 cache); selftest lock |
+| 87 | E | Telematics | verify-no-dead-schema: telematics.vehicle_latest_position_cache has no reader | CC-1 | 443.278 | DONE-LIVE | LEAD #27383 d85ade3b: guard credits view-read tables; verify-no-dead-schema exit 0 on main |
 | 88 | E | Live gate | No-5xx live GET guard | CC-3 | 443.268-A | DONE-LIVE | #27346 + be076e3d fastify.inject |
-| 89 | F | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 | CC-1 | 443.281 | IN PROGRESS | LEAD 443.283: one source; Manual opens from authoritative cash when no saved opening |
-| 90 | F | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 | CC-1 | 443.281 | IN PROGRESS | LEAD 443.283 f03a33c4: /cash-flow/opening-cash = BofA $8,202.50 + Relay $17,330.87 = $25,533.37; tests 3/3; pushing |
-| 91 | F | Cash Flow | Actual vs Projected: Actual income $0.00 every day 10-16..10-23 while BofA received deposits (Faro wire +$10,629.09 10-22) | CC-1 | 443.281 | IN PROGRESS | LEAD 443.282 cc74c41e/082a09a6: actuals from operating bank (Oct $208,031.56 in / $205,270.54 out posted); pushing |
-| 92 | F | Cash Flow | Rolling Ledger lists Faro advances FAC-2026-00009… as income 49-74 days overdue (advance money already received = double count with 1090) | CC-1 | 443.281 | IN PROGRESS | LEAD 443.282: pointer matched_advance_id -> matched_factoring_advance_id (25 advances $202,044.98); pushing |
+| 89 | F | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 | CC-1 | 443.281 | IN PROGRESS | LEAD 443.283 ea892ec5 rebased onto #27390: Manual opens at authoritative $25,533.37; tests 3/3, tsc 0; push waits on main reds |
+| 90 | F | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 | CC-1 | 443.281 | IN PROGRESS | LEAD 443.283: bank list = operating accounts only (BofA Plaid + Relay ledger); card payables/Faro removed |
+| 91 | F | Cash Flow | Actual vs Projected: Actual income $0.00 every day 10-16..10-23 while BofA received deposits (Faro wire +$10,629.09 10-22) | CC-1 | 443.281 | DONE-LIVE | LEAD #27383 live: AvP Oct actual income $208,031.56 / expense $205,270.54 from operating bank; 283b is_credit form |
+| 92 | F | Cash Flow | Rolling Ledger lists Faro advances FAC-2026-00009… as income 49-74 days overdue (advance money already received = double count with 1090) | CC-1 | 443.281 | DONE-LIVE | LEAD #27383: rolling ledger factoring advances matched by bt.matched_factoring_advance_id; no double count |
 | 93 | F | Accounting | Open bills $126,443.92 / 179 vs A/P subledger $126,437.22 / 177 (diff $6.70, 2 bills) | CC-1 | 443.281 | OPEN |  |
 | 94 | F | Accounting | Open invoices header $624,076.72 / 165 vs aging $621,076.72 / 164 (proforma 169-13690 $3,000 counted in header) | CC-1 | 443.281 | OPEN |  |
 | 95 | F | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | 443.281 | OPEN |  |
@@ -203,3 +203,6 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 197 | H | Maintenance › Road Service / Create Roadside WO › Ticket # and Location inputs | D078: Two single-line dialog text inputs measure 38 CSS px high | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 198 | H | Customers › Per-Customer P&L › Classification labels | D079: Visible tags read high_margin and past_due | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 199 | H | Coverage | Codex audit coverage is partial depth — remaining tabs, drawers and record pages of every module still to audit | CODEX | 443.281 | OPEN |  |
+| 200 | F | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | 443.285 | IN PROGRESS | 9ef89188 issuedInvoice on all 4 KPI aggregates; test 3/3, tsc 0; push waits on main reds |
+| 201 | E | Platform | 443.284 main static reds from 10-23 board merges block every push (7:40 PM: 2 fixed, 5 red) | CC-2/CC-3 | 443.284 | IN PROGRESS | CC-2: dashboard-connectivity, sweep-pre-list, test-provider; CC-3: partial-optional-chain, unselected-boxes |
+| 202 | E | Fuel | verify-no-internal-payload-in-notes red: dreamline-statement-import memo interpolates input.expenseId (afd3fd334e) | CC-2 | 443.284 | OPEN | exit 1 on main 1c118712 |
