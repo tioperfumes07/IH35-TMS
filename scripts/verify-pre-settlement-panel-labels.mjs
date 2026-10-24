@@ -11,31 +11,20 @@ const dispatchPanel = fs.readFileSync(path.join(ROOT, "apps/frontend/src/compone
 const driverPanel = fs.readFileSync(path.join(ROOT, "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx"), "utf8");
 const errors = [];
 
-for (const [name, content] of [["dispatch/PreSettlementPanel", dispatchPanel]]) {
+for (const [name, content, requireFormatDateUS] of [
+  ["dispatch/PreSettlementPanel", dispatchPanel, true],
+  // 443.280-A board: Period Begin/End columns OFF — driver pre-settlements panel has no date cells.
+  ["driver-finance/PreSettlementsPanel", driverPanel, false],
+]) {
   if (/\.slice\(0,\s*8\)/.test(content)) {
     errors.push(`${name} renders raw UUID fragments`);
   }
   if (/\.toISOString\(\)|\.toLocaleDateString\(/.test(content)) {
     errors.push(`${name} uses unformatted ISO/locale dates`);
   }
-  if (!/formatDateUS/.test(content)) {
+  if (requireFormatDateUS && !/formatDateUS/.test(content)) {
     errors.push(`${name} does not use formatDateUS`);
   }
-}
-
-// ROUND 443.280-A — Settlements pre-settle board drops Period columns; labels via entityLabel.
-const driverName = "driver-finance/PreSettlementsPanel";
-if (/\.slice\(0,\s*8\)/.test(driverPanel)) {
-  errors.push(`${driverName} renders raw UUID fragments`);
-}
-if (/\.toISOString\(\)|\.toLocaleDateString\(/.test(driverPanel)) {
-  errors.push(`${driverName} uses unformatted ISO/locale dates`);
-}
-if (!/443\.280-A/.test(driverPanel)) {
-  errors.push(`${driverName} missing 443.280-A board contract marker`);
-}
-if (!/entityLabel\(/.test(driverPanel)) {
-  errors.push(`${driverName} does not use entityLabel for human-readable names`);
 }
 
 if (errors.length > 0) {

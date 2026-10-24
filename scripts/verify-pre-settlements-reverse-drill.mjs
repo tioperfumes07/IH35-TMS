@@ -66,7 +66,7 @@ const CHECKS = [
   // entityLabel(display_id,...) call was replaced by the shared settlementLabel() helper
   // (lib/settlementNumber.ts, ACCT-F20260911) so this surface can't drift from the AlwaysTrack
   // document-number rule independently. Same real settlement drill, canonical label helper.
-  { name: "settlement close exact settlement return", file: F.close, pattern: /kind="settlement"\s+id=\{settlement\.id\}\s+label=\{settlementLabel\(settlement\)\}/ },
+  { name: "settlement close exact settlement return", file: F.close, pattern: /kind="settlement"\s+id=\{settlement\.id\}\s+label=\{settlementBoardNum\}/ },
   { name: "escrow driver drill", file: F.escrow, pattern: /kind="driver" id=\{row\.driver_id\} label=\{entityLabel\(row\.driver_name, row\.driver_id, "Driver"\)\}/ },
   { name: "escrow load drill", file: F.escrow, pattern: /kind="load" id=\{row\.load_id\} label=\{entityLabel\(row\.load_number, row\.load_id, "Load"\)\}/ },
   { name: "escrow bans manual load navigation", file: F.escrow, banned: /navigate\(`\/dispatch\/loads\// },
@@ -86,7 +86,7 @@ const CHECKS = [
   // render callback's parameter is named `row`, not `settlement`. Same real drill, same fix
   // pattern already applied to verify-wave-b-acct-connectivity-remainder.mjs's identical check.
   { name: "pre-settlement exact driver drill", file: F.panel, pattern: /<EntityLink(?:OrTombstone)?[\s\S]{0,150}kind="driver"[\s\S]{0,150}id=\{[\w.]*\.driver_id\}/ },
-  { name: "pre-settlement exact settlement drill", file: F.panel, pattern: /kind="settlement"[\s\S]{0,180}id=\{settlement\.id\}/ },
+  { name: "pre-settlement exact settlement drill", file: F.panel, pattern: /kind="settlement"[\s\S]{0,180}id=\{row\.settlement_id\}/ },
   // "pre-settlement row marker" — rowTestId is a DataTable PROP (rowTestId={() => "..."}), not an
   // inline JSX attribute; the literal `data-testid="..."` never appears in this file's own source
   // (DataTable applies it internally). Match the actual prop-passing shape instead.
