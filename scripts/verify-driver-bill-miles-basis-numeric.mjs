@@ -61,11 +61,13 @@ export function collectFailures(migrationSrc, bookLoadSrc) {
     failures.push("could not find the milesBasis declaration -- source shape drifted, guard needs review");
   }
 
-  // The two INSERT call sites must bind the bare `milesBasis` identifier as a positional param,
-  // never a rounded/truncated derivative (e.g. Math.round(milesBasis), `${milesBasis | 0}`).
-  const insertSites = [...stripped.matchAll(/INSERT INTO driver_finance\.driver_bills[\s\S]{0,3500}?\]\s*\n\s*\);/g)];
+  // The driver_bills INSERT sites that bind real milesBasis must use the bare identifier.
+  // The 'awaiting_short_miles' partial INSERT correctly uses NULL for milesBasis (miles are
+  // unknown at booking time on that path) — exclude it from the milesBasis binding check.
+  const allInsertSites = [...stripped.matchAll(/INSERT INTO driver_finance\.driver_bills[\s\S]{0,3500}?\]\s*\n\s*\);/g)];
+  const insertSites = allInsertSites.filter(m => !/'awaiting_short_miles'/.test(m[0]));
   if (insertSites.length < 2) {
-    failures.push(`expected 2 driver_bills INSERT sites in ${BOOK_LOAD_PATH}, found ${insertSites.length} -- source shape drifted`);
+    failures.push(`expected at least 2 driver_bills INSERT sites (excluding awaiting_short_miles) in ${BOOK_LOAD_PATH}, found ${insertSites.length} -- source shape drifted`);
   }
   for (const [i, m] of insertSites.entries()) {
     const block = m[0];

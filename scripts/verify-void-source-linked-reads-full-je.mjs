@@ -52,7 +52,7 @@ if (
 
 if (process.argv.includes("--selftest")) {
   const planted = src.replace(
-    /journal_entry_uuid\s+IN\s*\([\s\S]*?\)\s*ORDER BY line_sequence ASC/,
+    /journal_entry_uuid\s+IN\s*\([\s\S]*?\)[\s\S]{0,200}?ORDER BY line_sequence ASC/,
     `source_transaction_type = $3
         AND source_transaction_id = $2
       ORDER BY line_sequence ASC`,

@@ -120,7 +120,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["insert category", /vendor_name, vendor_code, vendor_type, vendor_category, phone/, "vendor_name, vendor_code, vendor_type, phone", (src) => /vendor_name, vendor_code, vendor_type, vendor_category, phone/.test(src)],
     ["canonical category literal", /'Driver', 'driver'/, "'Driver', 'other'", (src) => /INSERT INTO mdata\.vendors[\s\S]{0,400}['"]driver['"]/.test(src)],
-    ["legacy normalization", /vendor_category = 'driver'/, "vendor_category = 'other'", (src) => (src.match(/vendor_category = 'driver'/g) ?? []).length >= 2],
+    ["legacy normalization", /vendor_category = 'driver'/, "vendor_category = 'other'", (src) => (src.match(/vendor_category = 'driver'/g) ?? []).length >= 3],
     ["normalization audit", /vendor\.driver_category_normalized/, "vendor.driver_category_removed", (src) => /vendor\.driver_category_normalized/.test(src)],
   ];
   for (const [name, pattern, replacement, invariant] of mutations) {
