@@ -25,6 +25,9 @@ const ALLOWED_NESTED = new Set([
   // standalone create surface and therefore cannot own a required.json leaf.
   "components/bulk/BulkPreValidationDialog.tsx",
   "components/shared/ConfirmModal.tsx",
+  // LEAD 443.294 — the ONE override button: a confirm / reason-pick dialog mounted inside each owning site (factoring,
+  // dispatch, load wizard, lines); never a standalone create surface, so it cannot own a required.json leaf.
+  "components/override/OverrideButton.tsx",
   "components/parity/drawers/NewAccountDrawerForm.tsx",
   "components/parity/drawers/NewClassDrawerForm.tsx",
   "components/parity/drawers/NewServiceDrawerForm.tsx",

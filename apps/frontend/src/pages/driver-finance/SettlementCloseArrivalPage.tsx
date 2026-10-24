@@ -375,7 +375,7 @@ export function SettlementCloseArrivalPage() {
 
   const draftJeColumns = useMemo<ParityColumn<DraftJeRow>[]>(
     () => [
-      { key: "account", label: "Account", render: (row) => row.account },
+      { key: "account", label: "Account", sortable: true, sortValue: (row) => row.account, render: (row) => row.account },
       {
         key: "debit",
         label: "Debit",
@@ -453,8 +453,8 @@ export function SettlementCloseArrivalPage() {
             <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
           ),
       },
-      { key: "lane", label: "Lane", render: (row) => (row.is_gross ? "" : row.lane) },
-      { key: "delivered", label: "Delivered", render: (row) => (row.is_gross ? "" : row.delivered) },
+      { key: "lane", label: "Lane", sortable: true, sortValue: (row) => (row.is_gross ? "" : row.lane), render: (row) => (row.is_gross ? "" : row.lane) },
+      { key: "delivered", label: "Delivered", sortable: true, sortValue: (row) => (row.is_gross ? "" : row.delivered), render: (row) => (row.is_gross ? "" : row.delivered) },
       {
         key: "miles",
         label: "Miles (doc)",
@@ -503,7 +503,7 @@ export function SettlementCloseArrivalPage() {
 
   const lineColumns = useMemo<ParityColumn<LineBoardRow>[]>(
     () => [
-      { key: "description", label: "Description", render: (row) => row.description },
+      { key: "description", label: "Description", sortable: true, sortValue: (row) => row.description, render: (row) => row.description },
       {
         key: "amount",
         label: "Amount",
