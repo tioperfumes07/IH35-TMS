@@ -18,6 +18,7 @@ import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { formatUsdCents } from "../../lib/money";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 const STATUS_OPTIONS: Array<{ value: "all" | "active" | FactoringAdvance["status"]; label: string }> = [
   { value: "active", label: "Active (hide voided)" },
@@ -93,6 +94,24 @@ export function FactoringListPage() {
 
   const rows = query.data?.rows ?? [];
 
+  const factoringKpis = useMemo(() => {
+    let invoiceTotal = 0;
+    let advanced = 0;
+    let reserve = 0;
+    for (const row of rows) {
+      invoiceTotal += Number(row.invoice_total_cents ?? 0);
+      advanced += Number(row.advance_amount_cents ?? 0);
+      reserve += Number(row.reserve_amount_cents ?? 0);
+    }
+    return {
+      invoiceTotal,
+      advanced,
+      reserve,
+      rowCount: rows.length,
+      voidedHidden: typeof query.data?.voided_count === "number" ? query.data.voided_count : 0,
+    };
+  }, [rows, query.data?.voided_count]);
+
   const columns = useMemo<ParityColumn<FactoringAdvance>[]>(
     () => [
       {
@@ -122,19 +141,6 @@ export function FactoringListPage() {
     ],
     [],
   );
-
-  if (query.isError) {
-    return (
-      <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>+ Submit to Factor</Button>}>
-        <ListErrorState
-          title="Couldn't load factoring advances"
-          status={0}
-          message={(query.error as Error | undefined)?.message}
-          onRetry={() => void query.refetch()}
-        />
-      </AccountingSubNavWrapper>
-    );
-  }
 
   const factoringActiveFilterCount =
     (status.length === 1 && status[0] === "active" ? 0 : status.length ? 1 : 0) + (fromDate || toDate ? 1 : 0) + (deepLinkLoadId ? 1 : 0);
@@ -186,7 +192,48 @@ export function FactoringListPage() {
   );
 
   return (
-    <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>+ Submit to Factor</Button>}>
+    <AccountingSubNavWrapper
+      title="Factoring"
+      subtitle="Track factoring submissions, reserves, and releases"
+      createControl={
+        <Button type="button" data-testid="factoring-create-cta" onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>
+          + Submit to Factor
+        </Button>
+      }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="factoring-kpi-strip">
+          {query.isError ? (
+            <>
+              {moneyListKpiCard("Invoice total", "—", "Error loading")}
+              {moneyListKpiCard("Advanced", "—", "Error loading")}
+              {moneyListKpiCard("Reserve", "—", "Error loading")}
+              {moneyListKpiCard("Batches", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Invoice total", money(factoringKpis.invoiceTotal), `${factoringKpis.rowCount} batches`)}
+              {moneyListKpiCard("Advanced", money(factoringKpis.advanced), "Net advances")}
+              {moneyListKpiCard("Reserve", money(factoringKpis.reserve), "Held back", factoringKpis.reserve ? "warn" : "neutral")}
+              {moneyListKpiCard(
+                "Batches",
+                String(factoringKpis.rowCount),
+                factoringKpis.voidedHidden > 0 && status.length === 1 && status[0] === "active"
+                  ? `${factoringKpis.voidedHidden} voided hidden`
+                  : "On this page",
+              )}
+            </>
+          )}
+        </div>
+      }
+    >
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load factoring advances"
+          status={0}
+          message={(query.error as Error | undefined)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
 
       {filterBar}
 
@@ -198,22 +245,25 @@ export function FactoringListPage() {
         </p>
       ) : null}
 
-      <ParityTable title="Factoring advances"
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.id}
-        loading={query.isPending || (query.isFetching && rows.length === 0)}
-        onRowClick={(row) => navigate(`/accounting/factoring/${row.id}`)}
-        suppressToolbarSearch
-        exportFilename="factoring-advances"
-        storageKey="factoring-list"
-        initialPageSize={50}
-        pageSizeOptions={[50, 75, 100, 200, 300]}
-        sortKey={sortKey}
-        sortDirection={sortDirection}
-        onSortChange={onSortChange}
-        emptyText="No factoring batches for selected filters."
-      />
+      {!query.isError ? (
+        <ParityTable
+          title="Factoring advances"
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={query.isPending || (query.isFetching && rows.length === 0)}
+          onRowClick={(row) => navigate(`/accounting/factoring/${row.id}`)}
+          suppressToolbarSearch
+          exportFilename="factoring-advances"
+          storageKey="factoring-list"
+          initialPageSize={50}
+          pageSizeOptions={[50, 75, 100, 200, 300]}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
+          emptyText="No factoring batches for selected filters."
+        />
+      ) : null}
 
       {selectedCompanyId ? (
         <SubmitFactoringModal

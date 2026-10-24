@@ -28,6 +28,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
 // matched = green check, unmatched = neutral. Additive column only.
@@ -146,10 +147,23 @@ export function BillPaymentsListPage() {
     return paymentsQuery.data?.rows ?? [];
   }, [paymentsQuery.data?.rows]);
 
-  const totals = useMemo(
-    () => rows.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0),
-    [rows]
-  );
+  const paymentKpis = useMemo(() => {
+    let totalAmount = 0;
+    let matchedCount = 0;
+    let voidedCount = 0;
+    for (const row of rows) {
+      totalAmount += Number(row.amount_cents ?? 0);
+      if (row.is_reconciled) matchedCount += 1;
+      if (row.revoked_at) voidedCount += 1;
+    }
+    return {
+      totalAmount,
+      rowCount: rows.length,
+      matchedCount,
+      voidedCount,
+      unpaidBillCount: unpaidBillsForSelector.length,
+    };
+  }, [rows, unpaidBillsForSelector.length]);
 
   const selectedBill = useMemo(() => {
     if (!selectedBillId) return null;
@@ -374,14 +388,6 @@ export function BillPaymentsListPage() {
             <DatePicker className="h-9" value={dateTo} onChange={setDateTo} />
           </label>
         </MoneyListToolbar>
-        <div className="flex items-end text-xs text-gray-600 pb-1">
-          {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-BILL-PAYMENTS — totals used paymentsQuery.data ?? []
-              with no isError branch (ACCT-F5038). */}
-          Total rows amount:{" "}
-          <span className="ml-1 font-semibold text-gray-900">
-            {paymentsQuery.isError ? "—" : money(totals)}
-          </span>
-        </div>
       </div>
     </div>
   );
@@ -412,6 +418,39 @@ export function BillPaymentsListPage() {
           >
             Pay with CC
           </Button>
+        </div>
+      }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="bill-payments-kpi-strip">
+          {paymentsQuery.isError ? (
+            <>
+              {moneyListKpiCard("Total paid", "—", "Error loading")}
+              {moneyListKpiCard("Payment rows", "—", "Error loading")}
+              {moneyListKpiCard("Bank matched", "—", "Error loading")}
+              {moneyListKpiCard("Unpaid bills", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Total paid", money(paymentKpis.totalAmount), `${paymentKpis.rowCount} on this page`)}
+              {moneyListKpiCard(
+                "Payment rows",
+                String(paymentKpis.rowCount),
+                paymentKpis.voidedCount ? `${paymentKpis.voidedCount} voided shown` : "Active filter default",
+              )}
+              {moneyListKpiCard(
+                "Bank matched",
+                String(paymentKpis.matchedCount),
+                `${paymentKpis.rowCount - paymentKpis.matchedCount} unmatched`,
+                paymentKpis.matchedCount < paymentKpis.rowCount && paymentKpis.rowCount > 0 ? "warn" : "neutral",
+              )}
+              {moneyListKpiCard(
+                "Unpaid bills",
+                String(paymentKpis.unpaidBillCount),
+                "Available to pay",
+                paymentKpis.unpaidBillCount ? "danger" : "neutral",
+              )}
+            </>
+          )}
         </div>
       }
     >

@@ -50,6 +50,7 @@ const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = 
 
 import { formatUsdCents } from "../../lib/money";
 import { companyToday } from "../../lib/businessDate";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -533,24 +534,16 @@ export function ExpensesListPage() {
         </label>
         <DateRangePresets from={fromDate} to={toDate} onChange={({ from, to }) => { setFromDate(from); setToDate(to); }} data-testid="expenses-date-range" />
       </MoneyListToolbar>
-      <div className="ml-auto flex items-center gap-3 text-xs text-gray-600">
-        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER — totals used to compute straight from query.data with
-            no isError awareness, so a failed fetch fabricated a real-looking "$0.00" here even while
-            the ListErrorBanner below correctly showed the failure. Same class already fixed for
-            Bills/Settlements (ACCT-F370, PR #6024); this generalizes it here too. */}
-        <span>Total: {query.isError ? "—" : money(totals.total)}</span>
-        <span>Matched: {query.isError ? "—" : totals.matched}</span>
-        <span>Rows: {rows.length}</span>
-        {/* R-102-B item 5 — owner, ROUND 121: "a list that silently hides is the same class of
-            defect as a badge that never renders." */}
-        {statusFilter.length === 1 && statusFilter[0] === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
-          <span className="text-gray-500" data-testid="expenses-voided-count">
-            {rows.length} live, {query.data.voided_count} voided (hidden)
-          </span>
-        ) : null}
-      </div>
+      {/* R-102-B item 5 — voided-hidden notice stays under the toolbar, not as a fake money KPI. */}
+      {statusFilter.length === 1 && statusFilter[0] === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
+        <p className="text-xs text-gray-500" data-testid="expenses-voided-count">
+          {rows.length} live, {query.data.voided_count} voided (hidden)
+        </p>
+      ) : null}
     </div>
   );
+
+  const unmatchedCount = Math.max(0, rows.length - totals.matched);
 
   return (
     <AccountingSubNavWrapper
@@ -585,6 +578,30 @@ export function ExpensesListPage() {
               </button>
             </div>
           ) : null}
+        </div>
+      }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="expenses-kpi-strip">
+          {query.isError ? (
+            <>
+              {moneyListKpiCard("Total", "—", "Error loading")}
+              {moneyListKpiCard("Bank matched", "—", "Error loading")}
+              {moneyListKpiCard("Unmatched", "—", "Error loading")}
+              {moneyListKpiCard("Rows", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Total", money(totals.total), `${rows.length} expenses`)}
+              {moneyListKpiCard("Bank matched", String(totals.matched), `${totals.matched} of ${rows.length}`)}
+              {moneyListKpiCard(
+                "Unmatched",
+                String(unmatchedCount),
+                "Need bank match",
+                unmatchedCount ? "warn" : "neutral",
+              )}
+              {moneyListKpiCard("Rows", String(rows.length), "On this page")}
+            </>
+          )}
         </div>
       }
     >

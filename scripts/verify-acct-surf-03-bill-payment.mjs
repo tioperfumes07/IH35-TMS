@@ -64,6 +64,13 @@ function contractErrors(src) {
   if (!src.list.includes("PayBillModal")) {
     errors.push("DOD-A: BillPaymentsListPage must mount PayBillModal");
   }
+  // 443.293-C — V3 board grammar: kpiStrip on AccountingSubNavWrapper (not filterBar money theater).
+  if (!src.list.includes("kpiStrip") || !src.list.includes("bill-payments-kpi-strip")) {
+    errors.push("443.293-C: BillPaymentsListPage must pass kpiStrip (bill-payments-kpi-strip)");
+  }
+  if (/Total rows amount/.test(src.list)) {
+    errors.push("443.293-C: BillPaymentsListPage must not keep filterBar 'Total rows amount' after kpiStrip promote");
+  }
   // ACCT-F5057 — Topbar Create→Bill payment must open PayBillModal via ?create=1.
   if (!src.topbar?.includes("/accounting/bill-payments?create=1")) {
     errors.push("VERIFY-1: Topbar Create→Bill payment must navigate to /accounting/bill-payments?create=1");
@@ -188,7 +195,7 @@ function selftest() {
     map: "ACCT-SURF-03 `/accounting/bill-payments`",
     manifest: 'path="/accounting/bill-payments"\n<BillPaymentsListPage />\n',
     subnav: "/accounting/bill-payments",
-    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.delete("create")\nif (payModalOpenFromDeepLink) clearPayModalDeepLink()\nsetPayModalOpenLocal(true)\nvisibleDocumentLabel(row.bill_number, row.bill_id, "Bill")\njournal_entry_date\njournal_entry_memo\nmatched_bank_transaction_date\nmatched_bank_transaction_description\n',
+    list: 'PayBillModal\nkpiStrip\nbill-payments-kpi-strip\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.delete("create")\nif (payModalOpenFromDeepLink) clearPayModalDeepLink()\nsetPayModalOpenLocal(true)\nvisibleDocumentLabel(row.bill_number, row.bill_id, "Bill")\njournal_entry_date\njournal_entry_memo\nmatched_bank_transaction_date\nmatched_bank_transaction_description\n',
     pay: [
       "ParityDrawer",
       "<ParityDrawer",
