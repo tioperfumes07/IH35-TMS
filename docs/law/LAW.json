@@ -1188,5 +1188,12 @@
     "source_file": "apps/frontend/src/components/EntityMultiSelect.tsx",
     "guard": "scripts/verify-entity-filters-multi-select.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443304-FACTORING-COLLECTION-CLOSES-INVOICE",
+    "title": "A Faro collection (customer paid Faro) closes A/R via a customer payment posted to factoring_advance_liability; collected invoices have amount_open_cents=0 and factoring_status='collected'; every collection payment has an application; no application targets a voided invoice",
+    "source_file": "apps/backend/src/factoring/collection-apply.service.ts",
+    "guard": "scripts/verify-factoring-collection-closes-invoice.mjs",
+    "type": "enforced"
   }
 ]

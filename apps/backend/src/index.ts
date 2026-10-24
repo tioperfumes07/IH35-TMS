@@ -318,6 +318,7 @@ import { registerInterestAccrualRoutes } from "./factoring/interest-accrual.rout
 import { registerFaroReserveEntryRoutes } from "./factoring/faro-reserve-entries.routes.js";
 import { registerCashReserveReclassRoutes } from "./factoring/cash-reserve-reclass.routes.js";
 import { registerFactoredInvoiceLockRoutes } from "./factoring/factored-invoice-lock.routes.js";
+import { registerCollectionApplyRoutes } from "./factoring/collection-apply.routes.js";
 import { registerBankingKpiRoutes } from "./banking/banking-kpi.routes.js";
 import { registerMoneyMapRoutes } from "./banking/money-map.routes.js";
 import { registerFactoringJourneyRoutes } from "./factoring/factoring-journey.routes.js";
@@ -1285,6 +1286,7 @@ async function main() {
   await registerFaroReserveEntryRoutes(app);
   await registerCashReserveReclassRoutes(app);
   await registerFactoredInvoiceLockRoutes(app);
+  await registerCollectionApplyRoutes(app);
   await registerBankingKpiRoutes(app);
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);
