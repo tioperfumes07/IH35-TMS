@@ -429,6 +429,8 @@ export type ApplyReclassifyInput = {
   filter_snapshot?: Record<string, unknown>;
   /** LAW 363.5 — OWNER ONLY: apply the batch to lines in an overridable refused class; each one is recorded and audited. */
   override_refusals?: boolean;
+  /** OWNER RULING 443.288-A — internal: false while the family follower moves CHILD documents (a child has no children). */
+  family_follow?: boolean;
 };
 
 export type ReclassifyDocumentResult = {
@@ -450,6 +452,8 @@ export type ReclassifyBatchResult = {
   lines_refused: number;
   amount_cents_moved: number;
   documents: ReclassifyDocumentResult[];
+  /** OWNER RULING 443.288-A — linked child documents (statement card credit / card difference) that followed the load. */
+  family_children_moved?: number;
 };
 
 export type SelectedPosting = ReclassifyLineRow & { je_status: string; memo: string | null };
@@ -859,6 +863,130 @@ export async function moveFuelReceiptDocumentToLoad(
   return { updated: true, note: null };
 }
 
+/**
+ * OWNER RULING 443.288-A — a CHILD document (a statement card credit / card difference) is linked to its PARENT receipt:
+ * accounting.expenses.parent_expense_id + one spine row per child posting (linked_object_type 'expense', role
+ * statement_card_difference_of). Idempotent; a child already linked to ANOTHER parent is refused, never re-parented.
+ */
+export async function linkExpenseChildToParentInClientTx(
+  client: DbClient,
+  input: { operatingCompanyId: string; childExpenseId: string; parentExpenseId: string; journalEntryId: string; role: "statement_card_difference_of" },
+): Promise<void> {
+  if (input.childExpenseId === input.parentExpenseId) throw new Error("expense_family_self_parent");
+  const linked = await client.query<{ parent: string | null }>(
+    `UPDATE accounting.expenses SET parent_expense_id = COALESCE(parent_expense_id, $3::uuid), updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      RETURNING parent_expense_id::text AS parent`,
+    [input.childExpenseId, input.operatingCompanyId, input.parentExpenseId],
+  );
+  if (linked.rows[0]?.parent !== input.parentExpenseId) throw new Error("expense_family_parent_conflict");
+  const postings = await client.query<{ id: string }>(
+    `SELECT p.id::text FROM accounting.journal_entry_postings p
+      WHERE p.operating_company_id = $1::uuid AND p.journal_entry_uuid = $2::uuid`,
+    [input.operatingCompanyId, input.journalEntryId],
+  );
+  for (const row of postings.rows) {
+    await writeTransactionSourceLink(client, {
+      operating_company_id: input.operatingCompanyId, journal_entry_posting_id: row.id,
+      linked_object_type: "expense", linked_object_id: input.parentExpenseId, relationship_role: input.role,
+    });
+  }
+}
+
+/**
+ * OWNER RULING 443.288-A — THE one family move: every live CHILD of the given parent receipts goes to the target load
+ * through THIS engine (its live postings reclassified by load: reversal + re-post, batch + audit), then its document
+ * follows (header load + number, lines, load link, trailer). A child never has its own load decision. Called by every
+ * load move: the end of applyReclassifyOnClient (reclassify by load, moveFuelReceiptToLoad, fill-truck-and-load), the
+ * first attach (attachFuelReceiptToLoad) and the expense relink route. Refusal of any child line throws (rolls back the
+ * parent's move with it) — a receipt never moves without its children.
+ */
+export async function moveExpenseFamilyToLoad(
+  client: DbClient,
+  input: { operatingCompanyId: string; actorUserId: string; parentExpenseIds: string[]; toLoadId: string; reason: string },
+): Promise<{ children_moved: number }> {
+  const parents = Array.from(new Set(input.parentExpenseIds.filter(Boolean)));
+  if (!parents.length) return { children_moved: 0 };
+  const children = (await client.query<{ id: string; expense_number: string | null; load_id: string | null; parent: string }>(
+    `SELECT c.id::text, c.expense_number, c.load_id::text, c.parent_expense_id::text AS parent
+       FROM accounting.expenses c
+      WHERE c.operating_company_id = $1::uuid AND c.parent_expense_id = ANY($2::uuid[]) AND c.voided_at IS NULL
+        AND c.load_id IS DISTINCT FROM $3::uuid
+      ORDER BY c.id`,
+    [input.operatingCompanyId, parents, input.toLoadId],
+  )).rows;
+  for (const child of children) {
+    const legs = (await client.query<{ id: string }>(
+      `SELECT p.id::text
+         FROM accounting.journal_entry_postings p
+         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+        WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'expense' AND p.source_transaction_id::text = $2
+          AND p.reversal_of_line_id IS NULL AND p.reversed_by_line_id IS NULL AND p.source_transaction_line_id IS NOT NULL
+          AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+          AND p.load_id IS DISTINCT FROM $3::uuid`,
+      [input.operatingCompanyId, child.id, input.toLoadId],
+    )).rows.map((r) => r.id);
+    if (legs.length) {
+      const batch = await applyReclassifyOnClient(client, {
+        operating_company_id: input.operatingCompanyId, posting_ids: legs, to_load_id: input.toLoadId, reason: input.reason,
+        filter_snapshot: { parent_expense_id: child.parent, round: "OWNER RULING 443.288-A family move" }, family_follow: false,
+      }, { userId: input.actorUserId, role: "system" });
+      if (batch.lines_refused > 0) {
+        const why = batch.documents.map((d) => d.refusal_reason).filter(Boolean).join("; ") || "refused";
+        throw new Error(`expense_family_child_refused: ${why}`);
+      }
+    }
+    const link = (await client.query<{ id: string }>(
+      `SELECT id::text FROM expense_attribution.expense_load_links
+        WHERE expense_source = 'accounting' AND expense_id::text = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+      [child.id, input.operatingCompanyId],
+    )).rows[0] ?? null;
+    const numbered = await relinkExpenseToLoadInClientTx(client, {
+      operatingCompanyId: input.operatingCompanyId, expenseId: child.id, loadId: input.toLoadId, reason: input.reason,
+      userId: input.actorUserId, existingLinkId: link?.id ?? null, priorNumber: child.expense_number,
+    });
+    const trailer = sameEntityLoadCompanyTrailerSql("$3::uuid", "$2::uuid");
+    await client.query(
+      `UPDATE accounting.expenses SET load_id = $3::uuid, expense_number = $4, trailer_id = ${trailer}, updated_at = now()
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [child.id, input.operatingCompanyId, input.toLoadId, numbered.number],
+    );
+    await client.query(
+      `UPDATE accounting.expense_lines SET load_id = $3::uuid, load_required = true, load_exemption_reason = NULL, trailer_id = ${trailer}
+        WHERE expense_id = $1::uuid AND operating_company_id = $2::uuid`,
+      [child.id, input.operatingCompanyId, input.toLoadId],
+    );
+    await client.query(
+      `INSERT INTO audit.audit_events (uuid, created_at, event_class, severity, payload, actor_user_uuid, source)
+       VALUES (gen_random_uuid(), now(), 'accounting.expense_family.child_followed_parent', 'info', $1::jsonb, $2::uuid, 'RECLASSIFY-ENGINE')`,
+      [JSON.stringify({ operating_company_id: input.operatingCompanyId, child_expense_id: child.id, parent_expense_id: child.parent, from_load_id: child.load_id, to_load_id: input.toLoadId, postings_moved: legs.length, reason: input.reason }), input.actorUserId],
+    );
+  }
+  return { children_moved: children.length };
+}
+
+/** The receipts (parent expenses) a reclassify batch moved: expense documents by id, fuel receipts by their fill. */
+async function parentsMovedByBatch(client: DbClient, companyId: string, documents: ReclassifyDocumentResult[]): Promise<string[]> {
+  const moved = documents.filter((d) => d.lines_applied > 0 && d.source_transaction_id);
+  const expenseIds = moved.filter((d) => d.source_transaction_type === "expense").map((d) => String(d.source_transaction_id));
+  const fillIds = moved.filter((d) => d.source_transaction_type === "fuel_event").map((d) => String(d.source_transaction_id));
+  if (!expenseIds.length && !fillIds.length) return [];
+  return (await client.query<{ id: string }>(
+    `SELECT DISTINCT e.id::text
+       FROM accounting.expenses e
+      WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL
+        AND EXISTS (SELECT 1 FROM accounting.expenses c WHERE c.operating_company_id = e.operating_company_id
+                       AND c.parent_expense_id = e.id AND c.voided_at IS NULL)
+        AND (e.id::text = ANY($2::text[])
+             OR e.journal_entry_id IN (SELECT DISTINCT p.journal_entry_uuid FROM accounting.journal_entry_postings p
+                                        WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'fuel_event'
+                                          AND p.source_transaction_id::text = ANY($3::text[]))
+             OR e.source_fuel_transaction_id IN (SELECT ft.id FROM fuel.fuel_transactions ft WHERE ft.operating_company_id = $1::uuid
+                                                  AND (ft.id::text = ANY($3::text[]) OR ft.relay_fuel_transaction_id::text = ANY($3::text[]))))`,
+    [companyId, expenseIds, fillIds],
+  )).rows.map((r) => r.id);
+}
+
 const INSERT_LINE = `
   INSERT INTO accounting.reclassify_batch_lines
     (batch_id, operating_company_id, posting_id, journal_entry_id, source_transaction_type, source_transaction_id, source_transaction_line_id,
@@ -1054,6 +1182,14 @@ export async function applyReclassifyOnClient(client: DbClient, input: ApplyRecl
     }
 
     await client.query(`UPDATE accounting.reclassify_batches SET lines_applied = $2, lines_refused = $3, amount_cents_moved = $4 WHERE id = $1::uuid`, [batchId, result.lines_applied, result.lines_refused, result.amount_cents_moved]);
+    // OWNER RULING 443.288-A: a receipt that moved load takes its linked children with it, in this same transaction.
+    if (target.to_load_id && input.family_follow !== false) {
+      const parents = await parentsMovedByBatch(client, companyId, result.documents);
+      if (parents.length) {
+        const fam = await moveExpenseFamilyToLoad(client, { operatingCompanyId: companyId, actorUserId: actor.userId, parentExpenseIds: parents, toLoadId: target.to_load_id, reason });
+        result.family_children_moved = fam.children_moved;
+      }
+    }
     return result;
   }
 }

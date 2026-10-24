@@ -713,7 +713,8 @@
       "vendor_uuid",
       "void_reason",
       "voided_at",
-      "voided_by_user_id"
+      "voided_by_user_id",
+      "parent_expense_id"
     ],
     "accounting.expenses_review_queue": [
       "amount_cents",

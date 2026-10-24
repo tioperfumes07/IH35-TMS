@@ -7,6 +7,9 @@
  * receipt and T163's lines adopt nothing (they go to the no-receipt import path).
  */
 import { describe, expect, it, vi } from "vitest";
+// OWNER RULING 443.288-A: the child document is linked to its receipt through THE family link (asserted below).
+const family = vi.hoisted(() => ({ linkExpenseChildToParentInClientTx: vi.fn(async () => undefined) }));
+vi.mock("../../accounting/reclassify/reclassify.service.js", async (importOriginal) => ({ ...(await importOriginal<object>()), ...family }));
 
 vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: vi.fn(async () => true) }));
 vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({

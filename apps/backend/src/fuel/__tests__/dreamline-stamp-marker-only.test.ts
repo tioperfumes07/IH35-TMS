@@ -6,6 +6,9 @@
  * The unstamp then nulled gross / zeroed discount — again writing amounts that were never the line's.
  */
 import { describe, expect, it, vi } from "vitest";
+// OWNER RULING 443.288-A: the child document is linked to its receipt through THE family link (asserted below).
+const family = vi.hoisted(() => ({ linkExpenseChildToParentInClientTx: vi.fn(async () => undefined) }));
+vi.mock("../../accounting/reclassify/reclassify.service.js", async (importOriginal) => ({ ...(await importOriginal<object>()), ...family }));
 
 vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: vi.fn(async () => true) }));
 vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({
@@ -19,7 +22,9 @@ vi.mock("../../accounting/bank-recon/match.service.js", () => ({ FUEL_CARD_DISCO
 vi.mock("../../accounting/bank-recon/bank-match-fuel-post.service.js", () => ({ postFuelFillOnReceipt: vi.fn() }));
 vi.mock("../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js", () => ({ FUEL_POSTS_ON_RECEIPT_FLAG_KEY: "FUEL_POSTS_ON_RECEIPT_ENABLED" }));
 vi.mock("../../accounting/expense-gl-posting-flag.js", () => ({ EXPENSE_GL_POSTING_FLAG_KEY: "EXPENSE_GL_POSTING_ENABLED" }));
-vi.mock("../../accounting/expense-writer.service.js", () => ({ createExpenseInClientTx: vi.fn(), postExpenseDocumentInClientTx: vi.fn() }));
+// LEAD 443.258.5 (writer shape B): the card difference is an expense DOCUMENT through THE expense writer, not a JE.
+const writer = vi.hoisted(() => ({ createExpenseInClientTx: vi.fn(async () => ({ expense_id: "e-diff", posted_journal_entry_id: "je-diff" })), postExpenseDocumentInClientTx: vi.fn() }));
+vi.mock("../../accounting/expense-writer.service.js", () => writer);
 vi.mock("../fuel-load-at-time.js", () => ({ resolveFuelLoadAtTime: vi.fn(async () => null), resolveFillDriverAtTime: vi.fn(async () => null) }));
 vi.mock("../fuel-provider-reference.js", () => ({ findLiveFuelByProviderTransactionId: vi.fn(async () => null) }));
 
@@ -43,6 +48,10 @@ function fakeClient() {
       return { rows: [{ expense_id: "exp-R", expense_number: "13600-1", d: "2026-08-26", unit_number: "T173", fuel_type: "diesel",
         accts: ["5000"], cents: "55987", rail: "card", fuel_transaction_id: "ft-R", notes: null }] };
     }
+    // the difference writer reads its receipt (vendor / load / number) before writing the child document
+    if (sql.includes("FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid")) {
+      return { rows: [{ vendor: "v-loves", load_id: "l-1", driver: null, unit_id: null, trailer_id: null, expense_number: "RCPT-1", expense_date: "2026-08-26" }] };
+    }
     if (sql.includes("INSERT INTO accounting.journal_entries")) { postings.push(params); return { rows: [{ id: "je-diff" }] }; }
     if (sql.startsWith("SELECT notes")) return { rows: [{ notes: "dreamline_efs=42359:ULSD:1" }] };
     if (sql.includes("UPDATE fuel.fuel_transactions")) { fuelUpdates.push({ sql, params }); return { rows: [], rowCount: 1 }; }
@@ -63,7 +72,14 @@ describe("Dreamline adoption stamp writes the marker only (443.197)", () => {
     const s = await importDreamlineStatement(client as never, { operating_company_id: "co", actor_user_uuid: "u", lines: [line] });
     expect(s.results[0]!.outcome).toBe("adopted");
     expect(s.results[0]!.difference_cents).toBe(55987 - 51408);
-    expect(postings).toHaveLength(1); // Dr 2510 / Cr Fuel Card Discount stays as posted
+    // the card difference posts as ONE card-credit document (Dr 2510 / Cr Fuel Card Discount), never a handwritten JE,
+    // linked to its receipt (OWNER RULING 443.288-A)
+    expect(postings).toHaveLength(0);
+    expect(writer.createExpenseInClientTx).toHaveBeenCalledTimes(1);
+    expect((writer.createExpenseInClientTx.mock.calls[0] as unknown as [unknown, Record<string, unknown>])[1]).toMatchObject({
+      is_credit: true, amount_cents: 55987 - 51408, vendor_document_number: "dreamline_efs=42359:ULSD:1-CARD-DISC", load_id: "l-1",
+    });
+    expect(family.linkExpenseChildToParentInClientTx).toHaveBeenCalledWith(client, expect.objectContaining({ childExpenseId: "e-diff", parentExpenseId: "exp-R", journalEntryId: "je-diff" }));
     // 443.214: adoption also stamps the provider fill moment + station (stampStatementFillMoment) — a second UPDATE that,
     // like the marker, never touches an amount column.
     expect(fuelUpdates).toHaveLength(2);

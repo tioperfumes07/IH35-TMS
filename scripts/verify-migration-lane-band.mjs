@@ -96,6 +96,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-2/443-260-4-migration-is-credit",
     new Set(["db/migrations/202616190700_expense_card_credit.sql"]),
   ],
+  // OWNER RULING 443.288-A (10-23 7:59 PM CT): accounting.expenses.parent_expense_id + the statement_card_difference_of
+  // spine role — a statement card difference always moves with its receipt. Claimed #27418 on main first.
+  [
+    "cc-2/443-288-a-expense-family",
+    new Set(["db/migrations/202616220700_expense_family_parent_link.sql"]),
+  ],
   // LEAD 443.214 follow-up (owner 2026-10-01 no-handoff): fuel_transactions card_unit_id / gps_unit_id FOREIGN KEYs.
   // Claimed #(202616120700) in #27140 (top-level key) — exact-branch + exact-file.
   [
