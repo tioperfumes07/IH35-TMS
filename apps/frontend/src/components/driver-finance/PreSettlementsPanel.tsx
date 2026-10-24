@@ -12,7 +12,28 @@ import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
 type TourRowWithLoadLinks = TourListRow & {
   /** Optional; when absent, projected from legs for SETL-F5831 reverse drill. */
   load_links?: Array<{ id: string; label: string }>;
+  /** LINK-F5187: real driver_finance.driver_liabilities ids threaded from recompute_driver_debt.source_liabilities. */
+  liability_ids?: string[];
 };
+
+/** LINK-F5187 — liability chip strip per settlement.liability_ids (real driver_finance.driver_liabilities ids). */
+function renderLiabilityPills(settlement: TourRowWithLoadLinks) {
+  const ids = settlement.liability_ids ?? [];
+  if (ids.length === 0) return null;
+  return (
+    <span className="flex flex-wrap gap-1">
+      {ids.map((id, idx) => (
+        <EntityLink
+          key={id}
+          kind="liability"
+          id={id}
+          label={ids.length > 1 ? `debt #${idx + 1}` : "debt →"}
+          className="text-xs text-red-600 hover:underline"
+        />
+      ))}
+    </span>
+  );
+}
 
 /** SETL-F5831 — each load drills kind=load with its human label (legs → load_links). */
 function renderLoadPills(settlement: TourRowWithLoadLinks) {
@@ -106,8 +127,11 @@ const preSettlementColumns: ParityColumn<TourListRow>[] = [
     label: "Number",
     sortable: true,
     sortValue: (row) => tourNumberLabel(row),
-    render: (row) => (
-      <EntityLink kind="settlement" id={row.settlement_id} label={tourNumberLabel(row)} />
+    render: (settlement) => (
+      <span className="flex flex-col gap-0.5">
+        <EntityLink kind="settlement" id={settlement.settlement_id} label={tourNumberLabel(settlement)} />
+        {renderLiabilityPills(settlement)}
+      </span>
     ),
   },
   {

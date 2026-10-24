@@ -52,7 +52,7 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
       ? <Link to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`} aria-label={`${row.unit_number}: PM schedule`}>{row.pm_interval && row.miles_left != null && row.odometer_mi != null ? <span className={`relative block ${tones[row.state]}`}><progress className="h-2 w-full" style={{ accentColor: "currentColor" }} max={row.pm_interval} value={Math.max(0, Math.min(row.pm_interval, row.pm_interval - row.miles_left))} /><span aria-hidden="true" className="absolute left-[80%] top-0 h-3 border-l border-slate-400" /></span> : "PM reading unavailable"}</Link>
       : <Link to={`/maintenance/pm-schedule?unit_id=${encodeURIComponent(row.unit_id)}&create=1`}>Start PM clock →</Link> },
     { key: "miles_left", label: "Miles", render: (row) => row.miles_left == null || row.odometer_mi == null || !row.pm_schedule_id ? "—" : <Link to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`}>{Math.abs(row.miles_left).toLocaleString("en-US")} {row.miles_left < 0 ? "over" : "to go"}</Link> },
-    { key: "state", label: "Status", render: (row) => statusCell(row) },
+    { key: "state", label: "Status", sortable: true, sortValue: (row) => row.state, render: (row) => statusCell(row) },
   ];
   const rows = (health.data?.units ?? []).filter((row) => filter === "all" || (filter === "soon" && ["soon", "overdue"].includes(row.state)) || row.state === filter);
   return <V3Panel title="Fleet health line — road to the next PM" testId="maintenance-fleet-health-line" footer="Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.">
