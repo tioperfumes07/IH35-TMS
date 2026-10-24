@@ -360,14 +360,26 @@ export async function computeTripProfitabilityReport(
       SELECT id, last_load_id FROM settlements_in_period WHERE last_load_id IS NOT NULL
     ),
     settlement_lines AS (
+      -- driver_pay_cents: use driver_bills.gross_amount_cents (the agreed gross pay on the
+      -- bill) not settlement_lines.amount (accrued amount), which diverges for load-bookended
+      -- settlements.  Extra-pay lines have no bill; keep sl.amount * 100 for those.
       SELECT
         sl.settlement_id,
-        COALESCE(SUM(ROUND(sl.amount * 100)) FILTER (
-          WHERE sl.line_type IN ('earnings', 'team_split_primary', 'team_split_secondary')
+        COALESCE(SUM(
+          CASE
+            WHEN sl.line_type IN ('earnings', 'team_split_primary', 'team_split_secondary')
+              AND db.id IS NOT NULL THEN db.gross_amount_cents
+            WHEN sl.line_type IN ('earnings', 'team_split_primary', 'team_split_secondary')
+              THEN ROUND(sl.amount * 100)::bigint
+            ELSE 0
+          END
         ), 0)::bigint AS driver_pay_cents,
         COALESCE(SUM(ROUND(sl.amount * 100)) FILTER (WHERE sl.line_type = 'extra_pay'), 0)::bigint
           AS additional_driver_pay_cents
       FROM driver_finance.settlement_lines sl
+      LEFT JOIN driver_finance.driver_bills db
+        ON db.id = sl.source_driver_bill_id
+       AND db.operating_company_id = $1::uuid
       JOIN settlements_in_period sip ON sip.id = sl.settlement_id
       WHERE sl.is_sample_data = false
       GROUP BY sl.settlement_id

@@ -1539,6 +1539,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-settlement-close-must-post-gl.mjs",
     ],
   ],
+  // ENG-02 (443.322): driver_pay_cents in profitability report must use driver_bills.gross_amount_cents,
+  // not sl.amount*100. Fires on any change to the profitability service or driver-pay pipeline.
+  [
+    "verify-load-driver-pay-equals-driver-bill-gross",
+    [
+      "apps/backend/src/dispatch/load-profitability.service.ts",
+      "apps/backend/src/driver-finance/",
+      "scripts/verify-load-driver-pay-equals-driver-bill-gross.mjs",
+    ],
+  ],
   // ESCROW-LEDGER-SIGN-01 (owner ruling, 2026-09-23): "A hold is a CREDIT to the driver's escrow
   // liability... sign follows transaction_type, never the caller." Shrink-only baseline on the
   // 39 pre-fix rows (they purge, not corrected here). Domain-conditional per the E7 pattern above
