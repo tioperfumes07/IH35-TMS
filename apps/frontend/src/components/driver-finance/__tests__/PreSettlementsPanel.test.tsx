@@ -28,6 +28,8 @@ function tour(partial: Partial<TourListRow> & Pick<TourListRow, "settlement_id" 
     trailer_number: null,
     trip_started_at: null,
     trip_closed_at: null,
+    period_start: null,
+    period_end: null,
     leg_count: 0,
     legs_label: "",
     legs: [],

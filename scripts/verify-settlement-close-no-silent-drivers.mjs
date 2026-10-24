@@ -30,7 +30,9 @@ export function collectProblems(root = ROOT) {
   if (!page || !route) return problems;
 
   const pageCode = page.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (/listDrivers\(/.test(pageCode) || /limit:\s*500/.test(pageCode)) {
+  // LEAD 443.301: the rule is "no silent listDrivers(limit:500)". A bare `limit: 500` anywhere on the page also matched
+  // the 443.288-C close-gate query (listExpenseLoadConfirmations … limit: 500), a false positive that red'd main.
+  if (/listDrivers\(/.test(pageCode) || /listDrivers\s*\([^)]*limit:\s*500/.test(pageCode)) {
     problems.push(`${PAGE}: must not silent-fetch listDrivers(limit:500)`);
   }
   if (!/driver_name/.test(pageCode)) {
