@@ -964,5 +964,10 @@
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-24",
     "purpose": "ENG-01 (443.322): settlement non-load-bookended close requires posting trigger \u2014 driver_finance.tg_settlement_non_bookended_close_requires_posting"
+  },
+  "202616240200": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "LEAD 443.319: refuse deleting an mdata.drivers / mdata.vendors row while an accounting.escrow_accounts row still points at it (11 orphan escrow accounts measured 10-24)"
   }
 }
