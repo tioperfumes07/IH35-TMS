@@ -1202,6 +1202,8 @@ export async function createDriverBillArtifacts(
     editable_settlement_id?: string | null;
     driver_id: string | null;
     team_driver_id: string | null;
+    accrued_bill_id?: string | null;
+    accrued_team_bill_id?: string | null;
   }>(
     // LEAD 443.192 — the same rule the Settlement Creator applies (settlement-creator.service.ts, 443.167-R): a bill
     // "settled" in a voided / cancelled settlement is settled in NOTHING. settled_in_settlement_id is read as the LIVE
@@ -1214,7 +1216,7 @@ export async function createDriverBillArtifacts(
               AS dead_settlement_id,
             -- LEAD 443.243: an OPEN, unposted pre-settlement is the driver's current trip, not settled history.
             CASE WHEN settlement_editable THEN settled_in_settlement_id::text END AS editable_settlement_id,
-            driver_id::text, team_driver_id::text
+            driver_id::text, team_driver_id::text, accrued_bill_id::text, accrued_team_bill_id::text
        FROM (
          SELECT db.*,
                 EXISTS (SELECT 1 FROM driver_finance.driver_settlements s
@@ -1405,7 +1407,10 @@ export async function createDriverBillArtifacts(
     // again, exactly like the void guard above. This does not change WHEN re-entry happens (still
     // only on booking/assignment/edit/delivery events that already call this function) — only
     // whether an already-priced-but-still-open bill is eligible to be recalculated when it does.
-    const isRecalculable = isEditableDriverBillStatus(String(existing.status)) && existing.settled_in_settlement_id == null;
+    // LEAD 443.269-B: a bill on an OPEN, unposted pre-settlement is the trip being closed, not settled history — a miles
+    // change re-prices it (measured on a fork: load 13688 returned already_exists, so neither the bill nor its A/P moved).
+    const isRecalculable = isEditableDriverBillStatus(String(existing.status)) &&
+      (existing.settled_in_settlement_id == null || existing.editable_settlement_id != null);
     // 443.113 AJK-01 — WHO the bill belongs to is compared as well as how much. Before, a reassignment from driver A to
     // driver B at the same pay hit `totalBillCents === existingGross` (or an unpriced / $0 bill) and returned
     // already_exists before driver_id was ever read, leaving A's bill on B's load.
@@ -1511,8 +1516,30 @@ export async function createDriverBillArtifacts(
       ]
     );
     await auditDeadSettlementLinkReleased(client, input, existing, String(load.id));
+    // LEAD 443.269-B: its pay lines on that open pre-settlement follow the new price (void + replacement), then the header.
+    if (existing.editable_settlement_id && totalBillCents !== existingGross) {
+      const { restateOpenSettlementPayLinesInClientTx } = await import("../driver-finance/driver-pay-restate.service.js");
+      await restateOpenSettlementPayLinesInClientTx(client as never, {
+        operatingCompanyId: input.operating_company_id, driverBillId: existing.id, settlementId: existing.editable_settlement_id,
+        actorUserId: input.requestingUserUuid, reason: `443.269-B: load ${resolvedLoadNumber} driver pay re-priced ${existingGross} -> ${totalBillCents} cents`,
+      });
+    }
     // LEAD 443.243: the bill stayed on its open pre-settlement (the driver's current trip) — its header follows the new price.
     if (existing.editable_settlement_id) await recomputeSettlementHeader(client as never, existing.editable_settlement_id, input.operating_company_id);
+    // LEAD 443.269-B: pay already accrued at delivery (A/P bill + journal entry) follows the new price — THE restate engine
+    // reverses the old A/P bill (void engine) and re-accrues at this amount. A settled or paid bill is refused, never rewritten.
+    if (totalBillCents !== existingGross && (existing.accrued_bill_id || existing.accrued_team_bill_id)) {
+      const { releaseDriverPayAccrualInClientTx, reaccrueDriverPayInClientTx } = await import("../driver-finance/driver-pay-restate.service.js");
+      const { accrueDriverPayAtDeliveryInClientTx } = await import("../driver-finance/driver-pay-delivery-accrual.service.js");
+      const reason = `443.269-B: load ${resolvedLoadNumber} driver pay re-priced ${existingGross} -> ${totalBillCents} cents (miles ${milesBasis})`;
+      const release = await releaseDriverPayAccrualInClientTx(client as never, {
+        operatingCompanyId: input.operating_company_id, driverBillId: existing.id, actorUserId: input.requestingUserUuid, reason,
+      });
+      await reaccrueDriverPayInClientTx(client as never, {
+        operatingCompanyId: input.operating_company_id, loadId: String(load.id), actorUserId: input.requestingUserUuid, release, reason, driverBillId: existing.id,
+        accrue: accrueDriverPayAtDeliveryInClientTx,
+      });
+    }
     if (String(existing.status) === "awaiting_short_miles") {
       await appendCrudAudit(
         client,

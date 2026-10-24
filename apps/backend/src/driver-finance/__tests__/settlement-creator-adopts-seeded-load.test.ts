@@ -8,8 +8,13 @@ import { ensureDispatchedLoadsForCreator, isSeededLoadFreeForThisSettlement } fr
 import { restateOpenDriverBillToSignedPay } from "../settlement-creator.service.js";
 import { bookLoadOnClient } from "../../dispatch/book-load.service.js";
 import { deliverLoadThroughDispatch, stampStopsFromTracking } from "../settlement-creator-deliver.js";
+import { reaccrueDriverPayInClientTx, releaseDriverPayAccrualInClientTx } from "../driver-pay-restate.service.js";
 vi.mock("../../dispatch/book-load.service.js", async orig => ({ ...(await orig()), bookLoadOnClient: vi.fn() }));
 vi.mock("../settlement-creator-deliver.js", async orig => ({ ...(await orig()), stampStopsFromTracking: vi.fn(async () => []), deliverLoadThroughDispatch: vi.fn() }));
+// LEAD 443.269-B: an accrued bill is restated through THE restate engine (release the A/P, re-accrue the -R bill).
+vi.mock("../driver-pay-restate.service.js", async orig => ({ ...(await orig()),
+  releaseDriverPayAccrualInClientTx: vi.fn(async (_c: unknown, i: { driverBillId: string }) => ({ driver_bill_id: i.driverBillId, released: [{ accounting_bill_id: "ab", amount_cents: 400, reversal_journal_entry_id: "rev" }] })),
+  reaccrueDriverPayInClientTx: vi.fn(async () => ({ accrued: [] })) }));
 vi.mock("../creator-trailer-choice.js", async orig => ({ ...(await orig()), creatorTrailerChoice: vi.fn(async () => ({ kind: "none" })), creatorLoadTrailerChoice: vi.fn(async () => ({ kind: "none" })), creatorLoadTrailerEquipmentId: vi.fn(async () => "equipment-type") }));
 
 const draft = { operating_company_id: "co", settlement_no: "5839", driver_id: "drv" } as never;
@@ -41,6 +46,7 @@ describe("443.200: complete an adopted signed leg before booking the next leg", 
       if (/SELECT EXISTS/.test(sql)) return { rows: [{ ok: eligible }] };
       if (/FROM driver_finance.driver_bills\s+WHERE operating_company_id/.test(sql)) return { rows: [{ id: "bill", gross: "400", driver_id: "drv", team_driver_id: null }] };
       if (/AS settled/.test(sql)) return { rows: [{ status: "open", settled: null, accrued: accrued ? "accrual" : null }] };
+      if (/UPDATE driver_finance\.driver_bills[\s\S]*RETURNING id/.test(sql)) return { rows: [{ id: "bill" }] };
       if (/INSERT INTO driver_finance.driver_bills/.test(sql)) order.push("restate");
       if (/FROM mdata.customers/.test(sql)) return { rows: [{ id: "customer" }] };
       return { rows: [] };
@@ -68,10 +74,14 @@ describe("443.200: complete an adopted signed leg before booking the next leg", 
     await expect(result).rejects.toThrow("only books NEW load numbers");
     expect(order).toEqual([]);
   });
-  it("refuses accrued mismatched pay before delivering or booking anything", async () => {
+  it("443.269-B: accrued mismatched pay is restated through the engine before delivering or booking (was: refused)", async () => {
+    vi.mocked(releaseDriverPayAccrualInClientTx).mockClear();
+    vi.mocked(reaccrueDriverPayInClientTx).mockClear();
     const { result, order } = await run({ accrued: true });
-    await expect(result).rejects.toThrow("accrued at delivery");
-    expect(order).toEqual([]);
+    await expect(result).resolves.toMatchObject({ created_load_numbers: ["next"] });
+    expect(order).toEqual(["restate", "deliver", "book"]);
+    expect(releaseDriverPayAccrualInClientTx).toHaveBeenCalledTimes(1);
+    expect(reaccrueDriverPayInClientTx).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -81,6 +91,8 @@ function client(bill: { gross: string; status?: string; settled?: string | null;
     calls.push([sql, values]);
     if (/FROM driver_finance\.driver_bills\s+WHERE operating_company_id/.test(sql)) return { rows: bill ? [{ id: "b1", gross: bill.gross, driver_id: "drv", team_driver_id: null }] : [] };
     if (/AS settled/.test(sql)) return { rows: [{ status: bill?.status ?? "open", settled: bill?.settled ?? null, accrued: bill?.accrued ?? null }] };
+    // stampDriverBillVoidedInClientTx refuses an empty RETURNING ("Driver bill changed while restating").
+    if (/UPDATE driver_finance\.driver_bills[\s\S]*RETURNING id/.test(sql)) return { rows: [{ id: "b1" }] };
     return { rows: [] };
   });
   return { query, calls };
@@ -102,9 +114,17 @@ describe("restateOpenDriverBillToSignedPay", () => {
     await restateOpenDriverBillToSignedPay(c as never, base);
     expect(c.calls.some(([s]) => /UPDATE|INSERT/.test(s))).toBe(false);
   });
-  it("refuses a bill settled in a live settlement or accrued at delivery", async () => {
+  it("refuses a bill settled in a live settlement (the change goes on the next settlement)", async () => {
     await expect(restateOpenDriverBillToSignedPay(client({ gross: "60917", settled: "s-live" }) as never, base)).rejects.toThrow(/already settled/);
-    await expect(restateOpenDriverBillToSignedPay(client({ gross: "60917", accrued: "ab" }) as never, base)).rejects.toThrow(/accrued at delivery/);
+  });
+  it("443.269-B: an accrued bill is released, restated as -R, and re-accrued (never refused, never edited in place)", async () => {
+    vi.mocked(releaseDriverPayAccrualInClientTx).mockClear();
+    vi.mocked(reaccrueDriverPayInClientTx).mockClear();
+    const c = client({ gross: "60917", accrued: "ab" });
+    await restateOpenDriverBillToSignedPay(c as never, base);
+    expect(releaseDriverPayAccrualInClientTx).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(reaccrueDriverPayInClientTx).mock.calls[0]![1]).toMatchObject({ loadId: "load-1", driverBillId: "b1" });
+    expect(c.calls.some(([sq]) => /UPDATE accounting\.bills/.test(sq))).toBe(false);
   });
 });
 

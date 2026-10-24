@@ -74,6 +74,11 @@ export function deliveryPayErrors(src) {
   // 443.128 C: the once-only stamp also requires no co-driver bill yet (old anchor lacked accrued_team_bill_id).
   need("accrual", "AND accrued_bill_id IS NULL AND accrued_team_bill_id IS NULL AND settled_in_settlement_id IS NULL", "accrued once, never on a settled bill");
   need("accrual", "db.settled_in_settlement_id IS NULL AND db.accrued_bill_id IS NULL", "only unaccrued, unsettled bills are read");
+  // LEAD 443.269-B: the ONE exception — the restate engine re-accrues a single named bill only while its pre-settlement is
+  // open, never closed, posted or voided. Any wider exception (any settled bill, any id) is a red.
+  need("accrual", "db.id = $3::uuid AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL AND EXISTS (", "the restate exception names one bill and stays unaccrued");
+  need("accrual", "AND s.status = 'open' AND s.trip_closed_at IS NULL AND s.posted_at IS NULL AND ${liveSettlement(\"s\")})", "the restate exception requires an open, unposted, unvoided pre-settlement");
+  if (/settled_in_settlement_id IS NULL OR /.test(src.accrual)) errors.push(`${F.accrual}: a settled bill is admitted outside the named restate exception`);
 
   // 4. close reuses the accrued bill
   const chain = src.chain;
@@ -138,6 +143,9 @@ if (process.argv.includes("--selftest")) {
     ["chain", "THEN db.accrued_team_bill_id ELSE db.accrued_bill_id END", "THEN db.accrued_bill_id ELSE db.accrued_bill_id END", "co-driver settles driver One's bill"],
     ["teamMigration", "ON driver_finance.driver_settlement_gl_bills (operating_company_id, driver_bill_id, accounting_bill_id)", "ON driver_finance.driver_settlement_gl_bills (operating_company_id, driver_bill_id)", "spine still one row per driver bill"],
     ["cashFlow", "const daysOverdue = daysBetween(today, db_.due_date);", "const daysOverdue = daysBetween(today, db_.created_at);", "cash flow ages from creation"],
+    ["accrual", "AND s.status = 'open' AND s.trip_closed_at IS NULL AND s.posted_at IS NULL AND ${liveSettlement(\"s\")})", "AND s.voided_at IS NULL)", "restate re-accrues a bill on a POSTED settlement"],
+    ["accrual", "db.id = $3::uuid AND db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL AND EXISTS (", "db.accrued_bill_id IS NULL AND db.accrued_team_bill_id IS NULL AND EXISTS (", "restate exception admits every bill, not the named one"],
+    ["accrual", "AND (${restate ? `(${UNACCRUED_UNSETTLED_SQL}) OR", "AND (db.settled_in_settlement_id IS NULL OR ${restate ? `(${UNACCRUED_UNSETTLED_SQL}) OR", "a settled bill admitted on the default path"],
   ];
   let failed = 0;
   for (const [file, from, to, label] of plants) {
