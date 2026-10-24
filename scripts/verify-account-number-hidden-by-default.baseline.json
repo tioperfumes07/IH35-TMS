@@ -49,9 +49,6 @@
     },
     "pages/reports/ManagementReportPackagePage.tsx": {
       "count": 2
-    },
-    "pages/system/SystemModulePage.tsx": {
-      "count": 1
     }
   },
   "measured_at": "2026-09-24T00:30:00Z"

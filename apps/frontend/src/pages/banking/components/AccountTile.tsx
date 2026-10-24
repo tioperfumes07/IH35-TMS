@@ -1,4 +1,5 @@
 import type { BankingTile } from "../../../api/banking";
+import { formatUsd } from "../../../lib/money";
 
 type Props = {
   tile: BankingTile;
@@ -53,7 +54,10 @@ export function AccountTile({ tile, selected, onSelect, onView, onInspect }: Pro
           </span>
         </div>
         <div className="truncate text-xs font-semibold text-gray-900">{tile.display_name}</div>
-        <div className="mt-1 text-xs font-bold tabular-nums text-gray-900">${Number(tile.current_balance ?? 0).toFixed(2)}</div>
+        {/* LEAD 443.308 D072 — QBO money "$12,345.67" (was "$12345.67"); a missing balance is "—", never a fake $0.00. */}
+        <div className="mt-1 text-xs font-bold tabular-nums text-gray-900" data-testid="account-tile-balance">
+          {tile.current_balance == null ? "—" : formatUsd(Number(tile.current_balance))}
+        </div>
         <div className="mt-1 text-xs text-[#1F2A44]">Uncat: {Number(tile.uncategorized_count ?? 0)}</div>
       </button>
       <div className="mt-1 flex gap-2 border-t border-gray-100 pt-1">
