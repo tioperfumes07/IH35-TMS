@@ -1,5 +1,6 @@
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { V3Panel } from "../../../components/v3/V3Panel";
+import { formatUsd } from "../../../lib/money";
 
 type Props = {
   alerts: Array<Record<string, unknown>>;
@@ -31,7 +32,7 @@ export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll }: 
               <EntityLinkOrTombstone kind="work_order" id={typeof alert.id === "string" ? alert.id : null} name={alert.wo_display_id} noun="Work order" />
             </span>
             <span>{String(alert.severity ?? "-")}</span>
-            <span className="font-semibold">${Number(alert.total_estimated_cost ?? 0).toLocaleString()}</span>
+            <span className="font-semibold">{alert.total_estimated_cost == null ? "—" : formatUsd(Number(alert.total_estimated_cost))}</span>
           </div>
         ))}
         {alerts.length === 0 ? <div className="px-2 py-2 text-xs text-red-600">No severe alerts.</div> : null}
@@ -43,11 +44,11 @@ export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll }: 
           quietly drops the "visible" framing. */}
       {isTruncated ? (
         <div className="border-t border-red-200 px-2 py-1 text-xs font-semibold text-red-700">
-          <div data-testid="severe-alerts-total-all">Total exposure (all {totalCount}): ${trueTotal.toLocaleString()}</div>
-          <div className="font-normal text-red-600">Visible subtotal ({alerts.length} shown): ${visibleTotal.toLocaleString()}</div>
+          <div data-testid="severe-alerts-total-all">Total exposure (all {totalCount}): {formatUsd(trueTotal)}</div>
+          <div className="font-normal text-red-600">Visible subtotal ({alerts.length} shown): {formatUsd(visibleTotal)}</div>
         </div>
       ) : (
-        <div className="px-2 py-1 text-xs font-semibold text-red-700">Total: ${trueTotal.toLocaleString()}</div>
+        <div className="px-2 py-1 text-xs font-semibold text-red-700">Total: {formatUsd(trueTotal)}</div>
       )}
     </V3Panel>
   );

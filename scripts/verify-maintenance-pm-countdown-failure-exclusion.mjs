@@ -11,7 +11,8 @@ const errorMatches = source.match(exactError) ?? [];
 
 assert.equal(errorMatches.length, 2, "main and compact PM countdown placements must both fail loud");
 assert.match(source, /<MaintenancePmCountdownCards rows=\{pmDueQuery\.data\?\.rows \?\? \[\]\} loading=\{pmDueQuery\.isLoading\} \/>/, "main successful countdown remains wired");
-assert.match(source, /<MaintenancePmCountdownCards rows=\{pmDueQuery\.data\?\.rows \?\? \[\]\} loading=\{pmDueQuery\.isLoading\} compact \/>/, "compact successful countdown remains wired");
+// Codex 443.280 (#27371) added the board presentation prop next to compact (`compact board`); any further props are fine.
+assert.match(source, /<MaintenancePmCountdownCards rows=\{pmDueQuery\.data\?\.rows \?\? \[\]\} loading=\{pmDueQuery\.isLoading\} compact(?:\s+[A-Za-z]+)*\s*\/>/, "compact successful countdown remains wired");
 
 if (selftest) {
   const mutants = [
