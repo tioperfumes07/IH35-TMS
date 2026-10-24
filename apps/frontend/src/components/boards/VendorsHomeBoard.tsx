@@ -9,7 +9,8 @@
  */
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
 import { ApiError, apiRequest } from "../../api/client";
 import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile, V3Panel, V3Segmented } from "../v3";
@@ -41,6 +42,7 @@ const TOP_CATEGORIES = 3;
 
 export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDetail: () => void; onCreate: () => void }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [chip, setChip] = useState<Chip>("with_transactions");
   const exportRef = useRef<() => void>(() => undefined);
   const noExport = useRef<() => void>(() => undefined);
@@ -106,24 +108,24 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
 
   return (
     <div data-testid="party-board-vendors" style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, padding: "12px 20px 30px", minHeight: "100%" }}>
-      <PartyHomeHeader crumb="Vendors" title="Vendors" subtitle="The list opens on the vendors you actually pay"
-        createLabel="+ Create Vendor" onBack={() => navigate(-1)} onCreate={props.onCreate} />
+      <PartyHomeHeader crumb={"Vendors"} title={"Vendors"} subtitle={"The list opens on the vendors you actually pay"}
+        createLabel={"+ Create Vendor"} onBack={() => navigate(inModuleBackHref(location.pathname))} onCreate={props.onCreate} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
         <div data-testid="party-board-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
-          <V3KpiTile label="With transactions" value={b ? int(b.kpis.with_transactions) : "…"} onClick={() => setChip("with_transactions")} />
-          <V3KpiTile label="In the book" value={b ? int(b.kpis.in_the_book) : "…"} onClick={() => setChip("all")} />
-          <V3KpiTile label="Spend YTD" value={b ? usd(b.kpis.spend_cents) : "…"} onClick={() => navigate("/accounting/expenses")} />
-          <V3KpiTile label="Fuel share" value={b ? (b.kpis.fuel_share_pct == null ? "—" : `${b.kpis.fuel_share_pct}%`) : "…"} onClick={() => navigate("/fuel/history")} />
-          <V3KpiTile label="Open bills" value={b ? usd(b.kpis.open_bills_cents) : "…"} onClick={() => navigate("/accounting/bills?has_balance=true")} />
-          <V3KpiTile label="Unposted fuel" value={b ? usd(b.kpis.unposted_fuel_cents) : "…"} tone={b && b.kpis.unposted_fuel_cents > 0 ? "amber" : "ink"}
+          <V3KpiTile label={"With transactions"} value={b ? int(b.kpis.with_transactions) : "…"} onClick={() => setChip("with_transactions")} />
+          <V3KpiTile label={"In the book"} value={b ? int(b.kpis.in_the_book) : "…"} onClick={() => setChip("all")} />
+          <V3KpiTile label={"Spend YTD"} value={b ? usd(b.kpis.spend_cents) : "…"} onClick={() => navigate("/accounting/expenses")} />
+          <V3KpiTile label={"Fuel share"} value={b ? (b.kpis.fuel_share_pct == null ? "—" : `${b.kpis.fuel_share_pct}%`) : "…"} onClick={() => navigate("/fuel/history")} />
+          <V3KpiTile label={"Open bills"} value={b ? usd(b.kpis.open_bills_cents) : "…"} onClick={() => navigate("/accounting/bills?has_balance=true")} />
+          <V3KpiTile label={"Unposted fuel"} value={b ? usd(b.kpis.unposted_fuel_cents) : "…"} tone={b && b.kpis.unposted_fuel_cents > 0 ? "amber" : "ink"}
             sub={b ? (b.kpis.unposted_fuel_count > 0 ? `${int(b.kpis.unposted_fuel_count)} since ${day(b.kpis.unposted_fuel_since)}` : "None") : undefined}
             onClick={() => navigate("/fuel/relay-inbox")} />
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 12, alignItems: "start" }}>
-          <V3Panel title="Spend by category · YTD" onViewAll={props.onMasterDetail} testId="party-board-categories">
+          <V3Panel title={"Spend by category · YTD"} onViewAll={props.onMasterDetail} testId="party-board-categories">
             <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
-              {q.isLoading ? <span style={{ fontSize: 12, color: V3.muted }}>Loading…</span> : catLines.length === 0 ? <span style={{ fontSize: 12, color: V3.muted }}>No vendor spend in range.</span> : catLines.map((c) => (
+              {q.isLoading ? <span style={{ fontSize: 12, color: V3.muted }}>{"Loading…"}</span> : catLines.length === 0 ? <span style={{ fontSize: 12, color: V3.muted }}>{"No vendor spend in range."}</span> : catLines.map((c) => (
                 <div key={c.category} style={{ display: "grid", gridTemplateColumns: "130px 1fr 90px 50px", gap: 10, alignItems: "center", fontSize: 12 }}>
                   <span>{c.category}</span>
                   <SpendBar pct={pct(c.spend_cents)} width="100%" />
@@ -133,7 +135,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
               ))}
             </div>
           </V3Panel>
-          <V3Panel title="Pays through" onViewAll={props.onMasterDetail} testId="party-board-pays-through">
+          <V3Panel title={"Pays through"} onViewAll={props.onMasterDetail} testId="party-board-pays-through">
             <PartyTable<PaysRow> storageKey="party-board-vendors-pays-table" testId="party-board-pays-table" cols={paysCols} rows={paysRows} exportRef={noExport}
               exportName="pays-through.csv" emptyText="No payments in range."
               renderFirst={(r) => (r.account_id ? <EntityLink kind="account" id={r.account_id} label={r.account_name} /> : <span>{r.account_name}</span>)} />
@@ -141,7 +143,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
         </div>
 
         {chip === "duplicates" ? (
-          <V3Panel title="Vendors · possible duplicates" headerRight={<V3Segmented<Chip> testId="party-board-chips" value={chip} options={chipOptions} onChange={setChip} />}>
+          <V3Panel title={"Vendors · possible duplicates"} headerRight={<V3Segmented<Chip> testId="party-board-chips" value={chip} options={chipOptions} onChange={setChip} />}>
             <VariantDuplicatesPanel board="vendors" operatingCompanyId={props.operatingCompanyId} />
           </V3Panel>
         ) : (
@@ -149,10 +151,10 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
             headerRight={
               <>
                 <V3Segmented<Chip> testId="party-board-chips" value={chip} options={chipOptions} onChange={setChip} />
-                <button type="button" style={outlineButton} onClick={() => exportRef.current()}>Export</button>
+                <button type="button" style={outlineButton} onClick={() => exportRef.current()}>{"Export"}</button>
               </>
             }>
-            {q.isLoading ? <div style={{ padding: 12, fontSize: 12, color: V3.muted }}>Loading vendors…</div> : (
+            {q.isLoading ? <div style={{ padding: 12, fontSize: 12, color: V3.muted }}>{"Loading vendors…"}</div> : (
               <PartyTable<VendorRow> storageKey="party-board-vendors-table" testId="party-board-table" cols={cols} rows={rows} exportRef={exportRef}
                 exportName="vendors.csv" emptyText="Nothing matches this filter."
                 renderFirst={(r) => <EntityLink kind="vendor" id={r.id} label={r.name} />} />

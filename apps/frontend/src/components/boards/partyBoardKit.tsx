@@ -48,7 +48,7 @@ export function PartyHomeHeader(props: { crumb: string; title: string; subtitle:
       <div style={{ fontSize: 11, color: V3.muted }}>{props.crumb}</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <button type="button" onClick={props.onBack} style={{ fontSize: 11, color: V3.muted, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: V3.font }}>← Back</button>
+          <button type="button" onClick={props.onBack} style={{ fontSize: 11, color: V3.muted, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: V3.font }}>{"← Back"}</button>
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: V3.ink }}>{props.title}</h1>
           <span style={{ fontSize: 11, color: V3.muted }}>{props.subtitle}</span>
         </div>
@@ -65,7 +65,7 @@ export function MeasuredNote({ children, testId }: { children: ReactNode; testId
       display: "flex", gap: 8, alignItems: "flex-start", background: V3.surface, border: `1px solid ${V3.border}`,
       borderLeft: `3px solid ${V3.amber}`, borderRadius: 2, padding: "8px 12px", fontSize: 12, color: V3.ink,
     }}>
-      <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
+      <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>{"Measured"}</b>
       <span>{children}</span>
     </div>
   );
