@@ -1153,5 +1153,12 @@
     "source_file": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
     "guard": "scripts/verify-board-page-no-legacy-sections.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443281-HOS-CLOCKS-PER-DRIVER-PROBE",
+    "title": "Latest HOS clocks are read with one index probe per driver (never DISTINCT ON the snapshot history); per-driver hos-status reads its own driver",
+    "source_file": "AGENTS.md",
+    "guard": "scripts/verify-hos-latest-clocks-per-driver-probe.mjs",
+    "type": "enforced"
   }
 ]
