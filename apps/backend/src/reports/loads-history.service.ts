@@ -281,7 +281,7 @@ export async function getLoadsHistoryPage(
         COALESCE(SUM(lc.lc_fuel_cents), 0)::bigint AS fuel_cents,
         COALESCE(SUM(lc.lc_margin_cents), 0)::bigint AS margin_cents,
         COUNT(DISTINCT inv.id)::int AS ar_invoice_count,
-        COALESCE(SUM(inv.amount_cents), 0)::bigint AS ar_invoice_amount_cents
+        COALESCE(SUM(inv.total_cents), 0)::bigint AS ar_invoice_amount_cents
       FROM mdata.loads l
       ${loadCostRollupLateral("l.id", "$1::uuid")}
       LEFT JOIN accounting.invoices inv

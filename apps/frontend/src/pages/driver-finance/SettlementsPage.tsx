@@ -120,6 +120,18 @@ function settlementsRowPayStatus(s: SettlementListRow): "Paid" | "Open" | "Held"
   return "Open";
 }
 
+// 443.292-C — Settlement status (Open / Closed / Void) and Payment status (Unpaid / Paid) as two separate columns.
+function settlementStatusLabel(s: SettlementListRow): "Open" | "Closed" | "Void" {
+  if (s.status === "cancelled" || s.status === "void" || s.status === "voided") return "Void";
+  if (s.status === "closed" || s.status === "paid" || s.status === "approved" || s.status === "final") return "Closed";
+  return "Open";
+}
+function settlementPaymentLabel(s: SettlementListRow): "Paid" | "Unpaid" | "Held" {
+  if (s.status === "held") return "Held";
+  if (s.status === "paid" || s.payment_state === "cleared" || s.payment_state === "manual_paid") return "Paid";
+  return "Unpaid";
+}
+
 function formatWeekOfTitle(weekStart: Date): string {
   return weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
@@ -411,12 +423,16 @@ export function SettlementsPage() {
     });
   }, [kpiBaseQuery.isError, thisWeekBucket, kpiSettlements]);
 
-  const weekOfOpenCount = thisWeekSettlements.filter((s) => settlementsRowPayStatus(s) === "Open" || settlementsRowPayStatus(s) === "Held").length;
-  const weekOfClosedCount = thisWeekSettlements.filter((s) => settlementsRowPayStatus(s) === "Paid").length;
+  // 443.292-C: bucket by settlement status (not payment status) so closed+unpaid rows land in "closed" pill.
+  // Filter out empty tours ($0 gross + $0 net with status closed) from the closed view — duplicate empty rows.
+  const weekOfOpenCount = thisWeekSettlements.filter((s) => settlementStatusLabel(s) === "Open").length;
+  const weekOfClosedCount = thisWeekSettlements.filter((s) => settlementStatusLabel(s) === "Closed").length;
   const weekOfRows = thisWeekSettlements.filter((s) => {
-    const st = settlementsRowPayStatus(s);
-    if (weekOfPill === "open") return st === "Open" || st === "Held";
-    return st === "Paid";
+    const stl = settlementStatusLabel(s);
+    if (weekOfPill === "open") return stl === "Open";
+    // Exclude empty closed settlements (no lines, $0 gross, $0 net) — they appear as duplicate blank driver rows.
+    if (Number(s.gross_pay ?? 0) === 0 && Number(s.net_pay ?? 0) === 0 && stl === "Closed") return false;
+    return stl === "Closed";
   });
   const weekOfTotals = weekOfRows.reduce(
     (acc, s) => {
@@ -806,7 +822,7 @@ export function SettlementsPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.7fr",
+                gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.6fr 0.6fr",
                 gap: 8,
                 padding: "8px 14px",
                 borderBottom: `1px solid ${V3.borderSoft}`,
@@ -825,7 +841,8 @@ export function SettlementsPage() {
               <span>Deductions</span>
               <span>Reimb.</span>
               <span>Net</span>
-              <span>Status</span>
+              <span>Settlement</span>
+              <span>Payment</span>
             </div>
             {weekOfRows.length === 0 ? (
               <div style={{ padding: "14px", fontSize: 12, color: V3.muted, fontFamily: V3.font }}>
@@ -840,7 +857,7 @@ export function SettlementsPage() {
                     data-testid={`settlements-home-week-of-row-${s.id}`}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.7fr",
+                      gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.6fr 0.6fr",
                       gap: 8,
                       padding: "8px 14px",
                       borderBottom: `1px solid ${V3.borderSoft}`,
@@ -860,7 +877,9 @@ export function SettlementsPage() {
                     <span>{Number(s.deductions_total ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     <span>{settlementsDerivedReimb(s).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     <span>{Number(s.net_pay ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span style={{ color: status === "Paid" ? V3.green : status === "Held" ? V3.red : V3.ink }}>{status}</span>
+                    {/* 443.292-C: two status columns */}
+                    <span style={{ color: settlementStatusLabel(s) === "Void" ? V3.red : settlementStatusLabel(s) === "Closed" ? V3.green : V3.ink }}>{settlementStatusLabel(s)}</span>
+                    <span style={{ color: settlementPaymentLabel(s) === "Paid" ? V3.green : settlementPaymentLabel(s) === "Held" ? V3.red : V3.ink }}>{settlementPaymentLabel(s)}</span>
                   </div>
                 );
               })
@@ -869,7 +888,7 @@ export function SettlementsPage() {
               data-testid="settlements-home-week-of-totals"
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.7fr",
+                gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.6fr 0.6fr",
                 gap: 8,
                 padding: "10px 14px 4px",
                 fontSize: 12,
@@ -886,6 +905,7 @@ export function SettlementsPage() {
               <span>{weekOfTotals.ded.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span>{weekOfTotals.reimb.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span>{weekOfTotals.net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span />
               <span />
             </div>
           </div>

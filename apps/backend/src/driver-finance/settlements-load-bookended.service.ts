@@ -1,5 +1,6 @@
 import { assertNoHistoricalSettlementCoverage } from "./settlement-historical-attribution.service.js";
 import { allocateSettlementDisplayId } from "./settlement-display-id.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "../accounting/posting-flag-skip-audit.js";
@@ -223,7 +224,7 @@ export async function openLoadBookendedSettlement(
   // needing to open a NEW settlement here (loads joining an already-open settlement never hit
   // this line at all, which is why some loads silently succeeded and others didn't). new Date(...)
   // normalizes correctly whether tripStartedAt arrives as a Date object or an ISO string.
-  const periodDate = new Date(tripStartedAt).toISOString().slice(0, 10);
+  const periodDate = companyBusinessDate(new Date(tripStartedAt));
 
   // OWNER-NUMBERING-RULE (2026-09-08 permanent ruling): settlement display_id must be generated
   // by driver_finance.next_settlement_display_id (S-YYYY-NNNN sequence), NEVER derived from the
@@ -555,7 +556,7 @@ async function closeLoadBookendedSettlementForDriver(
           status = 'closed',
           last_load_id = $3,
           last_load_number = $4,
-          period_end = ($2::timestamptz)::date,
+          period_end = ($2::timestamptz AT TIME ZONE 'America/Chicago')::date,
           updated_at = now()
       WHERE id = $1
     `,
@@ -918,7 +919,7 @@ export async function stampTripClosedForBookendedSettlement(
     `
       UPDATE driver_finance.driver_settlements
       SET trip_closed_at = $2::timestamptz,
-          period_end = ($2::timestamptz)::date,
+          period_end = ($2::timestamptz AT TIME ZONE 'America/Chicago')::date,
           last_load_id = COALESCE(last_load_id, $3::uuid),
           last_load_number = COALESCE(last_load_number, $4),
           status = CASE WHEN status = 'open' THEN 'closed' ELSE status END,
@@ -1132,4 +1133,95 @@ export async function pingSettlementOnLoadEvent(
       });
     }
   }
+}
+
+type QueryableClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
+};
+
+/**
+ * 443.292-B: Re-derive period_start / period_end for an open load-bookended settlement from its
+ * linked loads' actual stop times in America/Chicago.
+ *
+ * period_start = earliest actual_departure_at (pickup) across linked loads, Central date.
+ * period_end = today in Central (open tour is "through today"; closed tours use the close engine path).
+ *
+ * Metadata only — no amount, status, posting, or line change. Idempotent.
+ */
+export async function refreshOpenTourPeriodDates(
+  client: QueryableClient,
+  input: { settlementId: string; operatingCompanyId: string; actorUserId: string },
+): Promise<{ period_start: string | null; period_end: string; changed: boolean }> {
+  const today = companyBusinessDate();
+
+  // Earliest pickup departure across all loads linked via lines or presettlement_link_id
+  const pickupRes = await client.query<{ pickup_at: string | null }>(
+    `
+    WITH line_loads AS (
+      SELECT DISTINCT COALESCE(db.load_id, sl.load_id) AS load_id
+        FROM driver_finance.settlement_lines sl
+        LEFT JOIN driver_finance.driver_bills db
+          ON db.id = sl.source_driver_bill_id AND db.operating_company_id = $2::uuid
+       WHERE sl.settlement_id = $1::uuid AND sl.operating_company_id = $2::uuid
+         AND sl.is_active = true AND sl.voided_at IS NULL
+         AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
+    ),
+    linked_loads AS (
+      SELECT l.id AS load_id FROM mdata.loads l
+       WHERE l.presettlement_link_id = $1::uuid AND l.operating_company_id = $2::uuid
+         AND l.soft_deleted_at IS NULL AND l.voided_at IS NULL
+         AND NOT EXISTS (SELECT 1 FROM line_loads)
+    ),
+    all_load_ids AS (SELECT load_id FROM line_loads UNION SELECT load_id FROM linked_loads)
+    SELECT (min(ls.actual_departure_at) AT TIME ZONE 'America/Chicago')::date::text AS pickup_at
+      FROM all_load_ids x
+      JOIN mdata.load_stops ls ON ls.load_id = x.load_id
+                               AND ls.stop_type = 'pickup'
+                               AND ls.soft_deleted_at IS NULL
+    `,
+    [input.settlementId, input.operatingCompanyId]
+  );
+
+  const period_start = pickupRes.rows[0]?.pickup_at ?? null;
+  const period_end = today;
+
+  const prevRes = await client.query<{ period_start: string | null; period_end: string | null; status: string }>(
+    `SELECT period_start::text, period_end::text, status
+       FROM driver_finance.driver_settlements
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
+    [input.settlementId, input.operatingCompanyId]
+  );
+  const prev = prevRes.rows[0];
+  if (!prev) throw new Error(`settlement_not_found:${input.settlementId}`);
+  if (prev.status !== "open") throw new Error(`settlement_not_open:${prev.status}`);
+
+  const changed = prev.period_start !== period_start || prev.period_end !== period_end;
+  if (!changed) return { period_start, period_end, changed: false };
+
+  await client.query(
+    `UPDATE driver_finance.driver_settlements
+        SET period_start = $3::date, period_end = $4::date, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.settlementId, input.operatingCompanyId, period_start ?? today, period_end]
+  );
+
+  await appendCrudAudit(
+    client,
+    input.actorUserId,
+    "driver_finance.settlement.period_dates_rederived",
+    {
+      resource_type: "driver_finance.driver_settlements",
+      resource_id: input.settlementId,
+      operating_company_id: input.operatingCompanyId,
+      period_start_before: prev.period_start,
+      period_end_before: prev.period_end,
+      period_start_after: period_start,
+      period_end_after: period_end,
+      round: "443.292-B",
+    },
+    "info",
+    "443.292-B-rederive-tour-dates"
+  );
+
+  return { period_start, period_end, changed: true };
 }

@@ -103,6 +103,12 @@ function analyze(src) {
   if (!/fmtMoneyDollars/.test(board) || !/formatUsdCents/.test(board)) {
     errors.push(`${BOARD}: ROUND 443.282 — money must format via fmtMoneyDollars / formatUsdCents`);
   }
+  if (!/function fmtMoneyDollars\(n: number \| string/.test(board) || !/typeof n === "string" \? Number\(n\)/.test(board)) {
+    errors.push(`${BOARD}: register #98 — fmtMoneyDollars must coerce string NUMERIC from Postgres before toLocaleString`);
+  }
+  if (!/trueCostFeeCents/.test(board) || !/mtdFactorFeeFromReportCents/.test(board)) {
+    errors.push(`${BOARD}: register #98 — True cost must fall back to chargebacks report factor fees when MTD purchase fees are empty`);
+  }
 
   // r315 / r326 keepers still mounted on home.
   if (!/<FactoringCashFlowPanel/.test(home)) {

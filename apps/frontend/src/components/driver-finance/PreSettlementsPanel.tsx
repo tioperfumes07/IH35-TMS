@@ -7,7 +7,6 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { V3Panel } from "../v3/V3Panel";
 import { V3 } from "../../design/v3-tokens";
 import { formatUsdCents } from "../../lib/money";
-import { formatDisplayName } from "../v3/formatDisplayName";
 import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
 
 type TourRowWithLoadLinks = TourListRow & {
@@ -120,7 +119,7 @@ const preSettlementColumns: ParityColumn<TourListRow>[] = [
       <EntityLinkOrTombstone
         kind="driver"
         id={row.driver_id}
-        name={formatDisplayName(row.driver_name)}
+        name={entityLabel(row.driver_name, row.driver_id, "Driver")}
         noun="Driver"
       />
     ),

@@ -88,22 +88,40 @@ if (!/<ParityTable<R>\s+appearance="board"/.test(ui) || /<table[\s>]/.test(ui)) 
 if (/border-(left|right)\s*:/.test(css)) fails.push("party-board.css declares a column border");
 if (!/cents \? usd\(cents\) : "—"/.test(ui)) fails.push("missing money must render — (never $0.00)");
 if (!process.env.DATABASE_URL) { console.error("verify-party-boards-bound-live: FAIL — DATABASE_URL not set (live guard fails closed)."); process.exit(1); }
-const engine = JSON.parse(execFileSync("npx", ["tsx", path.join(ROOT, "scripts/lib/print-party-boards.ts"), USMCA], { cwd: ROOT, env: process.env, encoding: "utf8", maxBuffer: 1 << 24 }));
 const c = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 await c.connect();
+let engine;
 try {
-  await c.query("BEGIN READ ONLY");
+  await c.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
   await c.query("SELECT set_config('app.bypass_rls','lucia',true)");
+  const snapRow = (await c.query("SELECT pg_export_snapshot() AS s")).rows[0];
+  const snapshot = snapRow?.s;
+  if (!snapshot) {
+    fails.push("pg_export_snapshot returned empty (cannot pin engine + recompute to one view)");
+  } else {
+    engine = JSON.parse(
+      execFileSync("npx", ["tsx", path.join(ROOT, "scripts/lib/print-party-boards.ts"), USMCA], {
+        cwd: ROOT,
+        env: { ...process.env, PG_PARTY_BOARDS_SNAPSHOT: String(snapshot) },
+        encoding: "utf8",
+        maxBuffer: 1 << 24,
+      })
+    );
+  }
   const ci = (await c.query(`SELECT count(DISTINCT customer_id)::int wt, coalesce(sum(total_cents),0)::bigint b, coalesce(sum(amount_open_cents),0)::bigint o,
       count(*) FILTER (WHERE amount_open_cents > 0)::int oi FROM accounting.invoices
      WHERE operating_company_id = $1 AND voided_at IS NULL AND status <> 'void' AND issue_date >= date_trunc('year', current_date)::date`, [USMCA])).rows[0];
   const cb = (await c.query(`SELECT count(*)::int n FROM mdata.customers WHERE operating_company_id = $1`, [USMCA])).rows[0];
-  const ve = (await c.query(`SELECT count(DISTINCT vendor_uuid)::int wt, coalesce(sum(total_amount_cents),0)::bigint s, count(*)::int t FROM accounting.expenses
-     WHERE operating_company_id = $1 AND voided_at IS NULL AND vendor_uuid IS NOT NULL AND transaction_date >= date_trunc('year', current_date)::date`, [USMCA])).rows[0];
+  const ve = (await c.query(`SELECT count(DISTINCT e.vendor_uuid)::int wt, coalesce(sum(e.total_amount_cents),0)::bigint s, count(*)::int t
+       FROM accounting.expenses e
+       JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = $1
+      WHERE e.operating_company_id = $1 AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL
+        AND e.transaction_date >= date_trunc('year', current_date)::date`, [USMCA])).rows[0];
   const rf = (await c.query(`SELECT coalesce(sum(total_amount_paid_cents),0)::bigint s, count(*)::int n FROM integrations.relay_fuel_transactions
      WHERE operating_company_id = $1 AND voided_at IS NULL AND coalesce(is_active, true) AND posted_to_gl IS NOT TRUE`, [USMCA])).rows[0];
   const vb = (await c.query(`SELECT count(*)::int n FROM mdata.vendors WHERE operating_company_id = $1`, [USMCA])).rows[0];
   const eq = (label, a, b) => { console.log(`  ${label.padEnd(32)} engine ${a}  recompute ${b}`); if (Number(a) !== Number(b)) fails.push(`${label}: engine ${a} != recompute ${b}`); };
+  if (engine) {
   const k = engine.customers.kpis, v = engine.vendors.kpis;
   eq("customers with transactions", k.with_transactions, ci.wt);
   eq("customers in the book", k.in_the_book, cb.n);
@@ -156,6 +174,7 @@ try {
     eq("overview settlements due (count)", ov.tiles.settlements_due, due.n);
     eq("overview miles 30d (Samsara driver)", ov.tiles.miles_30d, Math.round(Number(mi.mi)));
     eq("overview mpg 30d", ov.tiles.mpg_30d ?? 0, Number(mi.g) > 0 ? Math.round((Number(mi.mi) / Number(mi.g)) * 10) / 10 : 0);
+  }
   }
   await c.query("ROLLBACK");
 } finally { await c.end(); }

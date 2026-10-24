@@ -4221,6 +4221,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/insurance"
+          element={
+            <ProtectedRoute>
+              <InsuranceModuleShell />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/insurance/*"
           element={
             <ProtectedRoute>

@@ -28,7 +28,7 @@ function load() {
 
 function trackRenderer(source) {
   const start = source.indexOf('className="pg-track"');
-  const end = source.indexOf("{row.bars.map", start);
+  const end = source.indexOf("row.bars.map", start);
   return start >= 0 && end > start ? source.slice(start, end) : "";
 }
 

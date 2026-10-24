@@ -95,15 +95,16 @@ export async function getCustomerReport(
         -- outstanding AR = issued invoices not yet paid; proforma/void/draft/factored excluded
         -- to match GL 1100 ($621,076.72 per 443.286 tie-out)
         COALESCE(SUM(
-          CASE WHEN inv.id IS NOT NULL AND inv.voided_at IS NULL AND inv.paid_at IS NULL
+          CASE WHEN inv.id IS NOT NULL AND inv.voided_at IS NULL
+            AND COALESCE(inv.amount_open_cents, 0) > 0
             AND inv.status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')
-            THEN COALESCE(inv.total_amount_cents, 0)
+            THEN COALESCE(inv.amount_open_cents, 0)
           ELSE 0 END
         ), 0)::bigint AS outstanding_ar_cents,
         COUNT(*) OVER () AS _total_count
       FROM mdata.loads l
       LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = $1::uuid
-      LEFT JOIN accounting.invoices inv ON inv.load_id = l.id
+      LEFT JOIN accounting.invoices inv ON inv.source_load_id = l.id
         AND inv.operating_company_id = $1::uuid
         AND inv.voided_at IS NULL
         AND inv.status NOT IN ('void', 'voided', 'draft', 'proforma', 'factored')

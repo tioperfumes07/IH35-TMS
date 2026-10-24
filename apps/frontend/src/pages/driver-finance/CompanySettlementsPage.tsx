@@ -137,8 +137,8 @@ export function CompanySettlementsPage() {
     setSelected({
       id,
       display_id: (r.company_settlement_display_id ?? "").trim() || id.slice(0, 8),
-      period_start: r.trip_started_at ?? "",
-      period_end: r.trip_closed_at ?? "",
+      period_start: r.period_start ?? r.trip_started_at ?? "",
+      period_end: r.period_end ?? r.trip_closed_at ?? "",
       status: "closed",
       closed_at: r.trip_closed_at,
       voided_at: null,

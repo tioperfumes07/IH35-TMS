@@ -438,6 +438,8 @@ export type TourListRow = {
    *  unit_number/trailer_number this row already carried. */
   driver_id: string | null; driver_name: string | null; unit_id: string | null; unit_number: string | null;
   trailer_id: string | null; trailer_number: string | null;
+  /** 443.292-B: Central-date boundaries (no UTC midnight shift). Derived from first pickup / last delivery of linked loads. */
+  period_start: string | null; period_end: string | null;
   trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
   /** ROUND 16.1 (owner 2026-09-06): the tour's live legs in order, compact — so the Load-Costs
    *  Settlement/Pre-Settlement register can render each leg as a type-colored pill that is an

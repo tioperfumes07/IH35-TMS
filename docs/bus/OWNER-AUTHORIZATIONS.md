@@ -8043,3 +8043,12 @@ action: Owner session -> POST https://api.ih35dispatch.com/api/v1/accounting/exp
 rehearsal: br-shy-lake-akubtbll (prod fork 01:41Z, 202616220700 applied by the real runner in prod mode, 10 held skipped): 66 children linked to their receipt (0 unlinked), 132 spine rows; align COMMITTED 11 children -> their receipt's load (11 reclassify batches, 11 audit rows), misplaced 0, rerun 0, TB 0 / 7,113 postings
 expires_at: 2026-10-25T03:00:00Z
 status: OPEN
+
+## AUTH-460
+issued_at: 2026-10-24T03:30:00Z
+issued_by: PENDING_OWNER_GRANT — CC-1 round 443.292-B (tour date rederive). Owner grant required before --apply.
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — re-derive period_start / period_end for all open load-bookended settlements (expected ~12) from first pickup Central date / today. Metadata only — no GL, no amount, no status change.
+action: OWNER_AUTH_ID=AUTH-460 DATABASE_URL=<prod owner> node --import tsx scripts/ops/2026-10-23-cc1-rederive-tour-dates-443292-B.mts --apply
+rehearsal: dry run first (no flags), then --fork-commit on a Neon fork
+expires_at: PENDING
+status: PENDING_OWNER_GRANT

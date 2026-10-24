@@ -84,7 +84,7 @@ export async function getDriversSettlementsReport(
     `
       SELECT
         s.id AS settlement_id,
-        s.settlement_number,
+        s.source_document_ref AS settlement_number,
         s.driver_id,
         COALESCE(CONCAT_WS(' ', d.first_name, d.last_name), 'Unknown') AS driver_name,
         s.period_start,
@@ -100,13 +100,13 @@ export async function getDriversSettlementsReport(
             AND el.operating_company_id = $1::uuid
             AND el.settlement_id = s.id
             AND el.transaction_type = 'hold'
-            AND el.voided_at IS NULL
         ), 0)::bigint AS escrow_withheld_cents,
         COALESCE(ROUND(s.net_pay::numeric * 100), 0)::bigint AS net_cents,
         COALESCE((
-          SELECT COUNT(DISTINCT ps.load_id)
-          FROM driver_finance.presettlement_link ps
-          WHERE ps.settlement_id = s.id
+          SELECT COUNT(DISTINCT l.id)
+          FROM mdata.loads l
+          WHERE l.presettlement_link_id = s.id
+            AND l.operating_company_id = $1::uuid
         ), 0)::int AS load_count,
         COUNT(*) OVER () AS _total_count
       FROM driver_finance.driver_settlements s
