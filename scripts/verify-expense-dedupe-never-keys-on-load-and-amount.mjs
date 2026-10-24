@@ -177,6 +177,10 @@ async function main() {
     // 'dreamline_efs=<efs>:<product>:<n>-CARD-DIFF', memo 'Dreamline statement … card charged N cents more than receipt')
     // is the company's card cost from the bank-side statement — it is not on the driver's signed document, so it is
     // excluded from the document total by its own marker (live 10-17: 13555-7 / 13555-8, 2¢ each) and never by amount.
+    // 443.329: Dreamline statement card-DISCOUNT rows (vendor_document_number 'dreamline_efs=<efs>:<product>:<n>-CARD-DISC',
+    // created by statement-card-credit-repair.service.ts) are also bank-side — they represent a fuel card discount on the
+    // company's Dreamline payable, not a driver-signed expense. Excluded from the document total by the same marker
+    // (live 10-24: 13549-4 $94.79, 13549-5 $0.02).
     const settl5787Res = await client.query(
       `WITH s AS (
          SELECT ds.id FROM driver_finance.driver_settlements ds
@@ -190,7 +194,7 @@ async function main() {
                      FROM accounting.expenses e
                     WHERE e.operating_company_id = $1::uuid AND e.load_id IN (SELECT load_id FROM loads)
                       AND e.voided_at IS NULL
-                      AND NOT (e.vendor_document_number LIKE 'dreamline\\_efs=%-CARD-DIFF' AND e.memo LIKE 'Dreamline statement %')
+                      AND NOT ((e.vendor_document_number LIKE 'dreamline\\_efs=%-CARD-DIFF' OR e.vendor_document_number LIKE 'dreamline\\_efs=%-CARD-DISC') AND e.memo LIKE 'Dreamline statement %')
                       AND (e.source_fuel_transaction_id IS NULL
                            OR EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
                                        WHERE ft.id = e.source_fuel_transaction_id AND ft.fuel_type <> 'diesel'))), 0)
