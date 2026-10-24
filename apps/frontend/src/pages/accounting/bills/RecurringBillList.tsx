@@ -1,7 +1,11 @@
 import { formatDateUS } from "../../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../../../components/Button";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+import { AccountingBoardKpiStrip } from "../AccountingBoardKpiStrip";
+import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
@@ -40,6 +44,7 @@ export function RecurringBillList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showInactive, setShowInactive] = useState(false);
+  const [frequencyFilter, setFrequencyFilter] = useState<string[]>([]);
   const [deactivateTarget, setDeactivateTarget] = useState<{ uuid: string; name: string } | null>(null);
   const [lastGeneratedBillId, setLastGeneratedBillId] = useState<string | null>(null);
 
@@ -76,6 +81,15 @@ export function RecurringBillList() {
   });
 
   const templates: RecurringBillTemplate[] = templatesQuery.data?.rows ?? [];
+  const visibleTemplates = useMemo(
+    () =>
+      frequencyFilter.length === 0
+        ? templates
+        : templates.filter((tmpl) => frequencyFilter.includes(tmpl.frequency)),
+    [templates, frequencyFilter],
+  );
+  const recurringAmount = visibleTemplates.reduce((sum, tmpl) => sum + (Number(tmpl.amount) || 0), 0);
+  const recurringActive = visibleTemplates.filter((tmpl) => tmpl.is_active).length;
 
   // Display-only ParityTable migration: column order, amount formatting (money → USD currency),
   // date formatting, badges, and the Generate-now / Deactivate inline action handlers are
@@ -176,15 +190,39 @@ export function RecurringBillList() {
   );
 
   return (
+    <AccountingSubNavWrapper
+      title="Recurring bills"
+      subtitle="Templates that generate vendor bills"
+      crumbs={[{ label: "Bills", href: "/accounting/bills" }]}
+      createControl={
+        <Button type="button" onClick={() => navigate("/accounting/bills/recurring/create")}>
+          + Create
+        </Button>
+      }
+      kpiStrip={
+        <AccountingBoardKpiStrip
+          testId="recurring-bills-board-kpis"
+          tiles={[
+            {
+              label: "Templates",
+              value: templatesQuery.isError ? "—" : String(visibleTemplates.length),
+              sub: templatesQuery.isError ? "Error loading" : frequencyFilter.length > 0 ? "matching the frequency filter" : "full template list",
+            },
+            {
+              label: "Active",
+              value: templatesQuery.isError ? "—" : String(recurringActive),
+              sub: "will generate",
+            },
+            {
+              label: "Amount",
+              value: templatesQuery.isError ? "—" : formatUsd(recurringAmount),
+              sub: "sum of the rows below",
+            },
+          ]}
+        />
+      }
+    >
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-xs text-gray-500">
-        {/* U18 (owner UI register 2026-10-03) — the way back is the breadcrumb (module path), never browser history. */}
-        <Link to="/accounting" className="hover:underline">Accounting</Link>
-        <span>/</span>
-        <Link to="/accounting/bills" className="hover:underline">Bills</Link>
-        <span>/</span>
-        <span className="text-gray-700">Recurring Bills</span>
-      </div>
 
       {lastGeneratedBillId ? (
         <div
@@ -205,25 +243,31 @@ export function RecurringBillList() {
         </div>
       ) : null}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xs font-semibold text-gray-900">Recurring Bill Templates</h2>
-          <label className="flex cursor-pointer items-center gap-1.5 text-xs text-gray-500">
-            <input
-              type="checkbox"
-              className="h-3.5 w-3.5 rounded-sm"
-              checked={showInactive}
-              onChange={(e) => setShowInactive(e.target.checked)}
-            />
-            Show inactive
-          </label>
-        </div>
-        <button
-          onClick={() => navigate("/accounting/bills/recurring/create")}
-          className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729]"
-        >
-          + Create
-        </button>
+      <div className="flex flex-wrap items-end gap-3">
+        <h2 className="text-xs font-semibold text-gray-900">Recurring Bill Templates</h2>
+        <MultiSelectDropdown
+          label="Frequency"
+          options={[
+            { value: "weekly", label: "Weekly" },
+            { value: "biweekly", label: "Bi-weekly" },
+            { value: "monthly", label: "Monthly" },
+            { value: "quarterly", label: "Quarterly" },
+            { value: "annually", label: "Annually" },
+          ]}
+          selected={frequencyFilter}
+          onChange={setFrequencyFilter}
+          allLabel="All frequencies"
+          data-testid="recurring-bills-frequency-filter"
+        />
+        <label className="flex cursor-pointer items-center gap-1.5 pb-2 text-xs text-gray-500">
+          <input
+            type="checkbox"
+            className="h-3.5 w-3.5 rounded-sm"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          Show inactive
+        </label>
       </div>
 
       {templatesQuery.isLoading && (
@@ -254,13 +298,20 @@ export function RecurringBillList() {
         </div>
       )}
 
-      {templates.length > 0 && (
+      {!templatesQuery.isLoading && !templatesQuery.isError && templates.length > 0 && visibleTemplates.length === 0 ? (
+        <p className="text-xs text-gray-500" data-testid="recurring-bills-filter-empty">
+          No templates match this frequency.
+        </p>
+      ) : null}
+
+      {visibleTemplates.length > 0 && (
         <ParityTable title="Recurring bill templates"
           columns={columns}
-          rows={templates}
+          rows={visibleTemplates}
           rowKey={(tmpl) => tmpl.uuid}
           storageKey="acct-recurring-bill-templates"
           tableTestId="recurring-bill-templates-table"
+          emptyText="No recurring bill templates yet."
         />
       )}
       <ConfirmModal
@@ -277,5 +328,6 @@ export function RecurringBillList() {
         }}
       />
     </div>
+    </AccountingSubNavWrapper>
   );
 }

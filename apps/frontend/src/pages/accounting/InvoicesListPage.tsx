@@ -16,6 +16,7 @@ import { DriverMiscInvoiceModal } from "./modals/DriverMiscInvoiceModal";
 import { ManualInvoiceModal } from "./modals/ManualInvoiceModal";
 import { VendorChargebackModal } from "./modals/VendorChargebackModal";
 import { InvoiceCreateModal } from "./InvoiceCreateModal";
+import { AccountingBoardKpiStrip } from "./AccountingBoardKpiStrip";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/Combobox";
 import { type ReferenceOption } from "../../components/parity/ReferenceSelect";
@@ -679,29 +680,6 @@ export function InvoicesListPage() {
         />
         <DateRangePresets from={fromDate} to={toDate} onChange={({ from, to }) => { setFromDate(from); setToDate(to); }} data-testid="invoices-date-range" />
       </MoneyListToolbar>
-      <div className="flex items-center gap-3 text-xs text-gray-600">
-        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER — totals used to compute straight from query.data with
-            no isError awareness, so a failed fetch fabricated a real-looking "$0.00" here even while
-            the ListErrorBanner below correctly showed the failure. Same class already fixed for
-            Bills/Settlements (ACCT-F370, PR #6024); this generalizes it here too. */}
-        <span>Total billed: {query.isError ? "—" : money(totals.total)}</span>
-        <span>Open: {query.isError ? "—" : money(totals.open)}</span>
-        <span className={totals.variance !== 0 ? "font-semibold text-red-700" : ""}>
-          Variance: {query.isError ? "—" : money(totals.variance)}
-        </span>
-        <span>
-          Rows: {invoices.length}
-          {typeof listMeta.total === "number" ? ` of ${listMeta.total}` : ""}
-          {listMeta.hasMore ? " (more available)" : ""}
-        </span>
-        {/* R-102-B item 5 — owner, ROUND 121: "a list that silently hides is the same class of
-            defect as a badge that never renders." */}
-        {statuses.length === 1 && statuses[0] === "active" && typeof listMeta.voidedCount === "number" && listMeta.voidedCount > 0 ? (
-          <span className="text-gray-500" data-testid="invoices-voided-count">
-            {listMeta.total ?? invoices.length} live, {listMeta.voidedCount} voided (hidden)
-          </span>
-        ) : null}
-      </div>
     </div>
   );
 
@@ -709,6 +687,44 @@ export function InvoicesListPage() {
     <AccountingSubNavWrapper
       title="Invoices"
       subtitle="Accounts receivable invoice list"
+      kpiStrip={
+        <AccountingBoardKpiStrip
+          testId="invoices-board-kpis"
+          tiles={[
+            {
+              label: "Total billed",
+              value: <>Total billed: {query.isError ? "—" : money(totals.total)}</>,
+              sub: query.isError
+                ? "Error loading"
+                : `Rows: ${invoices.length}${typeof listMeta.total === "number" ? ` of ${listMeta.total}` : ""}${listMeta.hasMore ? " (more available)" : ""}`,
+            },
+            {
+              label: "Open",
+              value: <>Open: {query.isError ? "—" : money(totals.open)}</>,
+              sub: "issued balance on the loaded rows",
+              tone: !query.isError && totals.open > 0 ? "warn" : "neutral",
+            },
+            {
+              label: "Variance",
+              value: <>Variance: {query.isError ? "—" : money(totals.variance)}</>,
+              sub: "total − paid − open",
+              tone: !query.isError && totals.variance !== 0 ? "danger" : "neutral",
+            },
+            {
+              label: "Rows",
+              value: query.isError ? "—" : String(invoices.length),
+              sub:
+                statuses.length === 1 && statuses[0] === "active" && typeof listMeta.voidedCount === "number" && listMeta.voidedCount > 0 ? (
+                  <span data-testid="invoices-voided-count">
+                    {listMeta.total ?? invoices.length} live, {listMeta.voidedCount} voided (hidden)
+                  </span>
+                ) : (
+                  "loaded rows"
+                ),
+            },
+          ]}
+        />
+      }
       createControl={
         <div className="flex items-center gap-2">
           <SelectCombobox

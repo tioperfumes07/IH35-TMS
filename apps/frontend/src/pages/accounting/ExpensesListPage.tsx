@@ -25,6 +25,7 @@ import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { Button } from "../../components/Button";
+import { AccountingBoardKpiStrip } from "./AccountingBoardKpiStrip";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
@@ -538,22 +539,6 @@ export function ExpensesListPage() {
         </label>
         <DateRangePresets from={fromDate} to={toDate} onChange={({ from, to }) => { setFromDate(from); setToDate(to); }} data-testid="expenses-date-range" />
       </MoneyListToolbar>
-      <div className="ml-auto flex items-center gap-3 text-xs text-gray-600">
-        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER — totals used to compute straight from query.data with
-            no isError awareness, so a failed fetch fabricated a real-looking "$0.00" here even while
-            the ListErrorBanner below correctly showed the failure. Same class already fixed for
-            Bills/Settlements (ACCT-F370, PR #6024); this generalizes it here too. */}
-        <span>Total: {query.isError ? "—" : money(totals.total)}</span>
-        <span>Matched: {query.isError ? "—" : totals.matched}</span>
-        <span>Rows: {rows.length}</span>
-        {/* R-102-B item 5 — owner, ROUND 121: "a list that silently hides is the same class of
-            defect as a badge that never renders." */}
-        {statusFilter.length === 1 && statusFilter[0] === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
-          <span className="text-gray-500" data-testid="expenses-voided-count">
-            {rows.length} live, {query.data.voided_count} voided (hidden)
-          </span>
-        ) : null}
-      </div>
     </div>
   );
 
@@ -561,6 +546,36 @@ export function ExpensesListPage() {
     <AccountingSubNavWrapper
       title="Expenses"
       subtitle="Recorded expenses (read-only)"
+      kpiStrip={
+        <AccountingBoardKpiStrip
+          testId="expenses-board-kpis"
+          tiles={[
+            {
+              label: "Total",
+              // CLS-MONEY-KPI-FAKE-ZERO-REMAINDER — a failed fetch shows "—", never $0.00.
+              value: <>Total: {query.isError ? "—" : money(totals.total)}</>,
+              sub: query.isError ? "Error loading" : rows.length >= 200 ? `${rows.length} loaded (list is capped)` : `${rows.length} on this list`,
+            },
+            {
+              label: "Matched",
+              value: query.isError ? "—" : String(totals.matched),
+              sub: "bank match on the loaded rows",
+            },
+            {
+              label: "Rows",
+              value: query.isError ? "—" : String(rows.length),
+              sub:
+                statusFilter.length === 1 && statusFilter[0] === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
+                  <span data-testid="expenses-voided-count">
+                    {rows.length} live, {query.data.voided_count} voided (hidden)
+                  </span>
+                ) : (
+                  "loaded rows"
+                ),
+            },
+          ]}
+        />
+      }
       createControl={
         <div className="relative">
           <Button type="button" onClick={() => setNewTxnMenuOpen((v) => !v)} disabled={!companyId} data-testid="expenses-new-transaction">

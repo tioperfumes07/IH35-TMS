@@ -16,6 +16,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { RecordPaymentModal } from "./RecordPaymentModal";
+import { AccountingBoardKpiStrip } from "./AccountingBoardKpiStrip";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -314,16 +315,6 @@ export function PaymentsListPage() {
           </label>
         </div>
       </CollapsedListFilters>
-
-      <div className="flex items-center gap-3 text-xs text-gray-600">
-        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-PAYMENTS — Amount/Applied/Unapplied used to render
-            money(totals.*) with no isError awareness next to ListErrorBanner (ACCT-F5038). */}
-        <span>Total: {query.isError ? "—" : money(totals.total)}</span>
-        <span>Open: {query.isError ? "—" : money(totals.open)}</span>
-        <span className={totals.variance !== 0 ? "font-semibold text-red-700" : ""}>
-          Variance: {query.isError ? "—" : money(totals.variance)}
-        </span>
-      </div>
     </div>
   );
 
@@ -331,6 +322,29 @@ export function PaymentsListPage() {
     <AccountingSubNavWrapper
       title="Payments"
       subtitle="Customer payment recording and application"
+      kpiStrip={
+        <AccountingBoardKpiStrip
+          testId="payments-board-kpis"
+          tiles={[
+            {
+              label: "Total",
+              // CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-PAYMENTS — failed fetch shows "—", never $0.00.
+              value: <>Total: {query.isError ? "—" : money(totals.total)}</>,
+              sub: query.isError ? "Error loading" : rows.length >= 100 ? `${rows.length} loaded (list is capped)` : `${rows.length} on this list`,
+            },
+            {
+              label: "Open",
+              value: <>Open: {query.isError ? "—" : money(totals.open)}</>,
+              sub: "unapplied on the loaded rows",
+            },
+            {
+              label: "Variance",
+              value: <>Variance: {query.isError ? "—" : money(totals.variance)}</>,
+              tone: !query.isError && totals.variance !== 0 ? "danger" : "neutral",
+            },
+          ]}
+        />
+      }
       actions={<Button variant="secondary" onClick={() => navigate("/accounting/invoices")}>Invoices</Button>}
       createControl={<Button onClick={() => setRecordOpen(true)}>+ Record Payment</Button>}
     >

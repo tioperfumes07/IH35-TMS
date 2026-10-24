@@ -17,6 +17,7 @@ import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
+import { AccountingBoardKpiStrip } from "./AccountingBoardKpiStrip";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { BillDetailPanel } from "./BillDetailPanel";
 import { PayBillModal } from "./PayBillModal";
@@ -375,14 +376,6 @@ export function BillPaymentsListPage() {
             <DatePicker className="h-9" value={dateTo} onChange={setDateTo} />
           </label>
         </MoneyListToolbar>
-        <div className="flex items-end text-xs text-gray-600 pb-1">
-          {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-BILL-PAYMENTS — totals used paymentsQuery.data ?? []
-              with no isError branch (ACCT-F5038). */}
-          Total rows amount:{" "}
-          <span className="ml-1 font-semibold text-gray-900">
-            {paymentsQuery.isError ? "—" : money(totals)}
-          </span>
-        </div>
       </div>
     </div>
   );
@@ -391,6 +384,31 @@ export function BillPaymentsListPage() {
     <AccountingSubNavWrapper
       title="Bill Payments"
       subtitle="Vendor bill payment ledger"
+      kpiStrip={
+        <AccountingBoardKpiStrip
+          testId="bill-payments-board-kpis"
+          tiles={[
+            {
+              label: "Amount",
+              // CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-BILL-PAYMENTS — failed fetch shows "—", never $0.00.
+              // Cash-only rows stay CC-1 443.292-E; this strip does not change which payments list.
+              value: (
+                <>
+                  Total rows amount:{" "}
+                  <span className="ml-1 font-semibold text-gray-900">
+                    {paymentsQuery.isError ? "—" : money(totals)}
+                  </span>
+                </>
+              ),
+              sub: paymentsQuery.isError
+                ? "Error loading"
+                : rows.length >= 300
+                  ? `${rows.length} loaded (list is capped)`
+                  : `${rows.length} on this list`,
+            },
+          ]}
+        />
+      }
       createControl={
         <div className="flex gap-2">
           <Button

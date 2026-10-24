@@ -90,7 +90,16 @@ function checkSettlementsPage(src) {
   }
 }
 
+function requireBoardKpis(src, file) {
+  if (!src.includes("kpiStrip={") || !src.includes("AccountingBoardKpiStrip")) {
+    fail(`${file}: money totals must sit in AccountingBoardKpiStrip via kpiStrip.`);
+    return false;
+  }
+  return true;
+}
+
 function checkInvoicesPage(src) {
+  if (!requireBoardKpis(src, INVOICES_PAGE)) return;
   if (!src.includes("Total billed:")) {
     fail(`${INVOICES_PAGE}: "Total billed:" strip not found — did it move?`);
     return;
@@ -104,6 +113,7 @@ function checkInvoicesPage(src) {
 }
 
 function checkExpensesPage(src) {
+  if (!requireBoardKpis(src, EXPENSES_PAGE)) return;
   if (!src.includes("Total: {")) {
     fail(`${EXPENSES_PAGE}: "Total:" strip not found — did it move?`);
     return;
@@ -123,6 +133,7 @@ function checkExpensesPage(src) {
 // guard's literal field-name strings went stale. Checking the CURRENT canonical names here,
 // never the pre-COL-05 ones, so this guard tests the real page instead of a removed schema.
 function checkPaymentsPage(src) {
+  if (!requireBoardKpis(src, PAYMENTS_PAGE)) return;
   if (!src.includes("Total: {")) {
     fail(`${PAYMENTS_PAGE}: Total totals strip not found — did it move?`);
     return;
@@ -139,6 +150,7 @@ function checkPaymentsPage(src) {
 }
 
 function checkBillPaymentsPage(src) {
+  if (!requireBoardKpis(src, BILL_PAYMENTS_PAGE)) return;
   if (!src.includes("Total rows amount:")) {
     fail(`${BILL_PAYMENTS_PAGE}: Total rows amount strip not found — did it move?`);
     return;
@@ -676,6 +688,10 @@ function selftest() {
 if (process.argv.includes("--selftest")) {
   selftest();
 } else {
+  const boardStrip = fs.readFileSync("apps/frontend/src/pages/accounting/AccountingBoardKpiStrip.tsx", "utf8");
+  if (!boardStrip.includes('data-accounting-board-kpis="1"')) {
+    fail("AccountingBoardKpiStrip.tsx dropped data-accounting-board-kpis=\"1\".");
+  }
   checkBillsPage(fs.readFileSync(BILLS_PAGE, "utf8"));
   checkSettlementsPage(fs.readFileSync(SETTLEMENTS_PAGE, "utf8"));
   checkInvoicesPage(fs.readFileSync(INVOICES_PAGE, "utf8"));

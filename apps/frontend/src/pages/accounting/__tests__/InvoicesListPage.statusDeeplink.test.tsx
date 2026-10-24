@@ -25,7 +25,18 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 }));
 
 vi.mock("../AccountingSubNavWrapper", () => ({
-  AccountingSubNavWrapper: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AccountingSubNavWrapper: ({
+    children,
+    kpiStrip,
+  }: {
+    children: React.ReactNode;
+    kpiStrip?: React.ReactNode;
+  }) => (
+    <div>
+      {kpiStrip}
+      {children}
+    </div>
+  ),
 }));
 
 vi.mock("../../../components/shared/EntityLink", () => ({
