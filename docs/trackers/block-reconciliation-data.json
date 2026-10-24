@@ -1,6 +1,6 @@
 {
  "date": "2026-10-24",
- "generated_at_iso": "2026-10-24T06:43:14.908Z",
+ "generated_at_iso": "2026-10-24T12:38:02.096Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 27461,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-24T06:43:52Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 27460,
    "title": "CC-2- OWNER RULING 443.288-B row 205: every expense-to-load assignment is confirmed by a person (database rule + one confirm engine + close refusal)",
    "mergedAt": "2026-10-24T04:38:18Z",
@@ -17330,12 +17336,6 @@
    "title": "CC-2- 443.174 Banking: every Banking section titled, notices behind an info button (443.174 Banking)",
    "mergedAt": "2026-10-16T22:34:47Z",
    "branch": "cc-2/443-174-section-titles-banking"
-  },
-  {
-   "number": 26837,
-   "title": "CC-2- 443.174 Accounting: every section titled, notices behind an info button, sections-titled ratchet guard",
-   "mergedAt": "2026-10-16T21:41:21Z",
-   "branch": "cc-2/443-174-section-titles-accounting"
   }
  ],
  "merged_pr_total": 3000,
