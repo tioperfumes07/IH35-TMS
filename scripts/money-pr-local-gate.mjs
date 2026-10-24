@@ -1559,6 +1559,18 @@ const LIVE_DOMAIN_GUARDS = [
       "db/migrations/202616240000_escrow_ledger_stamp_load_id_and_settlement_id.sql",
     ],
   ],
+  // ENG-04 (443.322): account 2170 Driver Net-Pay Clearing net balance must be zero. ROUND 326
+  // retired the Cr-2170 path; advances should post to operating_bank (1000 BofA), not 2170.
+  // Fires on any change to the advance posting engine or the settlement-close service.
+  [
+    "verify-driver-net-pay-clearing-balance-zero",
+    [
+      "apps/backend/src/accounting/posting-engine.service.ts",
+      "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
+      "apps/backend/src/accounting/coa-roles/resolver.service.ts",
+      "scripts/verify-driver-net-pay-clearing-balance-zero.mjs",
+    ],
+  ],
   // ESCROW-LEDGER-SIGN-01 (owner ruling, 2026-09-23): "A hold is a CREDIT to the driver's escrow
   // liability... sign follows transaction_type, never the caller." Shrink-only baseline on the
   // 39 pre-fix rows (they purge, not corrected here). Domain-conditional per the E7 pattern above
@@ -2876,6 +2888,25 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     changedForLiveDomains !== null
   ) {
     const msg = `${rel} — 443.322 ENG-01 code fix for close-trip route; P-0113/P-0117/P-0119 ambient debt (pre-date this PR); owner runs ops script post-merge`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // 443.322 ENG-04: 12 driver advances (CA-2026-0001 to CA-2026-0012, posted 2026-10-11) misposted Cr
+  // to account 2170 using pre-fix code. Guard is correct; the 12 mispostings are historical debt
+  // (pre-date this PR). This PR only introduces the guard + wires it — not the code fix or correction JE.
+  if (
+    name === "verify-driver-net-pay-clearing-balance-zero" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "scripts/verify-driver-net-pay-clearing-balance-zero.mjs",
+        "scripts/verify-steps/18777-verify-driver-net-pay-clearing-balance-zero.mjs",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — 443.322 ENG-04 guard-only PR; 12 advance mispostings on account 2170 are historical debt (pre-date this PR); correction JE pending owner decision`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;
