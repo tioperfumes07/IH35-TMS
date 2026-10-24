@@ -2104,7 +2104,14 @@ export async function listBillPayments(
 ) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const where: string[] = ["bp.operating_company_id = $1::uuid"];
+    // ROW-216: settlement deductions are non-cash credits applied to a driver's bill at settlement
+    // close. They are NOT cash payments and must not appear on the Bill Payments list.
+    // The discriminator is settlement_deduction_noncash = true (set by the settlement close engine).
+    // They remain visible in listBillPaymentsForBill (the per-bill drill-through) where they belong.
+    const where: string[] = [
+      "bp.operating_company_id = $1::uuid",
+      "bp.settlement_deduction_noncash IS NOT TRUE",
+    ];
     if (!options.includeVoided) {
       where.push("bp.revoked_at IS NULL");
     }
