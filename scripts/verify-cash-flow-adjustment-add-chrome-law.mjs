@@ -12,7 +12,9 @@ const FILE = "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx";
 
 function audit(src) {
   const failures = [];
-  const m = src.match(/data-testid="cash-flow-adjustment-add"[\s\S]{0,300}/);
+  // LEAD 443.290: read the WHOLE button (testid → its own </button>), not a fixed 300-char window — the 443.250 V3
+  // rebuild added a style={{…}} attribute and pushed the label past the window, so a correct "Create" read as missing.
+  const m = src.match(/data-testid="cash-flow-adjustment-add"[\s\S]*?<\/button>/);
   if (!m) {
     failures.push("cash-flow-adjustment-add button not found");
     return failures;
