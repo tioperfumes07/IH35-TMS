@@ -15040,6 +15040,11 @@
     "claimed_by": "CC-1",
     "purpose": "ENG-04 (443.322): driver advances mispost to account 2170 Driver Net-Pay Clearing; guard verify-driver-net-pay-clearing-balance-zero"
   },
+  "18781": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "CC-1",
+    "purpose": "ENG-01b (443.322): settlement withholdings with null preferredLoadId dropped; guard verify-settlement-posted-withholdings-equal-deductions-total"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
