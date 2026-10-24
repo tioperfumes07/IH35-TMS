@@ -1,3 +1,21 @@
+## 2026-10-24 ~17:10Z — CC-1 443.310 SHIPPED
+
+**PR #27487 MERGED** → squash `80b006b68a` — 443.310 duplicate settlement engine fix on main.
+
+Root cause: `closeLoadBookendedSettlementForDriver` fallback re-opened a settlement on a load already closed, creating 3 duplicate $0 settlements (P-0123/P-0124/P-0125).
+
+Fix: pre-check for existing `settlement_lines` on the load before calling `openLoadBookendedSettlement`; if found, emit `settlement.reopen_refused_load_already_settled` audit event and return 0.
+
+Guard: `scripts/verify-no-duplicate-settlement-for-settled-load.mjs` (step 18761) — live prod confirms 0 duplicates.
+
+Prod purge (owner to run after deploy):
+```
+DATABASE_URL=<prod> OWNER_AUTH_ID=AUTH-NNN npx tsx scripts/ops/2026-10-24-cc1-delete-duplicate-settlements-443310.mts --apply
+```
+Fork proof (AUTH-460, `br-shiny-cake-akpty5bj`, DELETED): settlements_remaining=0, banking_unchanged=true.
+
+---
+
 ## 2026-10-23 ~11:30Z — CC-1 443.265-E3 SHIPPED
 
 **PR #27310 MERGED** → squash `fb554db2` — 443.265-E3 cash flow source fix on main.
