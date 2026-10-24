@@ -26,15 +26,31 @@ export type RunInTx = <T>(fn: (client: QueryClient) => Promise<T>) => Promise<T>
 export const STATEMENT_CARD_CREDIT_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA only (AUTH-453 scope)
 const REASON = "LEAD 443.258.5 ruling 2: the statement card difference is re-issued as its document (card credit / expense) through the expense writer — the hand-written statement JE is voided by the void engine";
 
+// ENG-48 (2026-10-24): replaced literal account_number = '5000' with role-based CTE (company_fuel_advance_expense)
+// so verify-every-poster-resolves-by-role-not-by-name-or-number passes (LEAD 443.329).
 export const LIVE_STATEMENT_DISCOUNT_JES_SQL = `
+    WITH _fuel_acct AS (
+      SELECT COALESCE(
+        (SELECT car.account_id FROM accounting.chart_of_accounts_roles car
+           JOIN catalogs.accounts a ON a.id = car.account_id AND a.operating_company_id = $1::uuid
+          WHERE car.operating_company_id = $1::uuid AND car.role = 'company_fuel_advance_expense'
+            AND car.is_active = true AND a.deactivated_at IS NULL AND a.is_postable = true
+          ORDER BY car.updated_at DESC LIMIT 1),
+        (SELECT arb.account_id FROM catalogs.account_role_bindings arb
+           JOIN catalogs.accounts a ON a.id = arb.account_id AND a.operating_company_id = $1::uuid
+          WHERE arb.role_key = 'company_fuel_advance_expense' AND arb.deactivated_at IS NULL
+            AND a.deactivated_at IS NULL AND a.is_postable = true
+            AND (arb.operating_company_id = $1::uuid OR arb.operating_company_id IS NULL)
+          ORDER BY (arb.operating_company_id IS NOT NULL) DESC LIMIT 1)
+      ) AS id
+    )
     SELECT je.id::text AS je, je.entry_date::text, je.memo,
            min(p.source_transaction_id) AS receipt,
-           sum(CASE WHEN a.account_number = '5000' THEN (CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END) ELSE 0 END)::text AS cents_5000,
-           max(CASE WHEN a.account_number = '5000' THEN p.account_id::text END) AS acct_5000,
-           max(CASE WHEN a.account_number <> '5000' THEN p.account_id::text END) AS acct_2510
+           sum(CASE WHEN p.account_id = (SELECT id FROM _fuel_acct) THEN (CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END) ELSE 0 END)::text AS cents_5000,
+           max(CASE WHEN p.account_id = (SELECT id FROM _fuel_acct) THEN p.account_id::text END) AS acct_5000,
+           max(CASE WHEN p.account_id <> (SELECT id FROM _fuel_acct) THEN p.account_id::text END) AS acct_2510
       FROM accounting.journal_entries je
       JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = je.id
-      JOIN catalogs.accounts a ON a.id = p.account_id
      WHERE je.operating_company_id = $1::uuid AND je.voided_at IS NULL AND je.status = 'posted'
        AND je.memo LIKE '% statement % — Fuel Card Discount'
        AND EXISTS (SELECT 1 FROM accounting.transaction_source_links l WHERE l.journal_entry_posting_id = p.id AND l.relationship_role = 'fuel_card_discount')
