@@ -25,6 +25,8 @@ import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday, ctDateTime } from "../../lib/businessDate";
 import { formatUsdCents } from "../../lib/money";
+import { formatGlLedgerPre } from "./txHealthLedgerText";
+import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
 /**
@@ -527,18 +529,6 @@ function LedgerHealthTab({ data }: { data: SystemData }) {
  * TRANSACTIONS tab (TXH-01 / TXH-03) — read-only two-pane register. Status is computed at read time;
  * never stored. List click stays on this page (setSelectedKey only). Wired chips open a new tab.
  */
-function formatGlLedgerPre(row: TxHealthRow): string {
-  const gl = row.gl;
-  const head = `${row.doc_type.replace(/_/g, " ").toUpperCase()}  ${row.display_label}  ·  ${row.checks.posted ? "POSTED" : "UNPOSTED"}`;
-  if (gl == null) return `${head}\n\nno GL entry — this document type posts nothing`;
-  const col = (s: string, n: number) => (s.length > n ? s.slice(0, n) : s.padEnd(n));
-  const money = (cents: number) => (cents === 0 ? "".padStart(12) : (cents / 100).toFixed(2).padStart(12));
-  const header = `${col("Acct", 10)} ${col("Account", 28)} ${"DR".padStart(12)} ${"CR".padStart(12)}`;
-  const body = gl.lines.map((line) => `${col(line.account_code || "", 10)} ${col(line.account_name || "", 28)} ${money(line.dr)} ${money(line.cr)}`);
-  const rule = "-".repeat(10 + 1 + 28 + 1 + 12 + 1 + 12);
-  const totals = `${col("", 10)} ${col("", 28)} ${money(gl.dr_total)} ${money(gl.cr_total)}   ${gl.balanced ? "✓ balanced" : "UNBALANCED"}`;
-  return [head, "", header, ...body, rule, totals].join("\n");
-}
 
 const GROUP_ORDER = ["GENERAL LEDGER", "OPERATIONS", "MASTER DATA"] as const;
 const GAP = 26;
@@ -630,6 +620,7 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
 }
 
 function TransactionHealthTab() {
+  const [showAccountNumbers] = useShowAccountNumbers();
   const [issuesOnly, setIssuesOnly] = useState(false);
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]); // empty = every active entity
   const [cursor, setCursor] = useState<string | null>(null);
@@ -742,7 +733,7 @@ function TransactionHealthTab() {
           ) : (
             <div className="space-y-3">
               <pre data-token="TXH_LEDGER_PRE" className="overflow-x-auto rounded-lg border border-gray-200 bg-[#F7F8FA] p-3 font-mono text-xs leading-5 text-[#0F1219]">
-                {formatGlLedgerPre(selected)}
+                {formatGlLedgerPre(selected, { showAccountNumbers })}
               </pre>
               <TxHealthWiringMap links={links} />
               <div className="flex flex-wrap gap-2">

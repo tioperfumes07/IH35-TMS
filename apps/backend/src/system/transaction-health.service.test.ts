@@ -324,3 +324,36 @@ describe("transaction-health.service — TXH-03 GL + links evidence", () => {
     expect(result.rows[0].links.some((l) => l.group === "GENERAL LEDGER")).toBe(true);
   });
 });
+
+describe("transaction-health.service — keyset cursor (LEAD 443.308)", () => {
+  it("binds BOTH cursor predicates (per-branch and outer) to the cursor's own event_at and id parameters", async () => {
+    const client = makeClient({ pageRows: [] });
+    const cursor = { event_at: "2026-10-11 06:32:55.327542+00", id: "14d7e7b1-ab64-474b-a706-d677c790313b" };
+    await fetchTransactionHealth(client, { operatingCompanyIds: [COMPANY_A], cursor, limit: 500, issuesOnly: false });
+    const main = client.calls.find((c) => c.sql.includes("WITH u AS"))!;
+    const values = main.values ?? [];
+    const eventAtIdx = values.indexOf(cursor.event_at) + 1;
+    const idIdx = values.indexOf(cursor.id) + 1;
+    expect(eventAtIdx).toBeGreaterThan(0);
+    expect(idIdx).toBeGreaterThan(0);
+    const expected = `($${eventAtIdx}::text, $${idIdx}::text)`;
+    const preds = main.sql.match(/\((?:t|u)\.event_at, (?:t|u)\.id\) < \(\$\d+::text, \$\d+::text\)/g) ?? [];
+    // one per document branch + the outer merge — every one must point at the cursor, never at the page limit.
+    expect(preds.length).toBeGreaterThan(1);
+    for (const p of preds) expect(p.endsWith(expected)).toBe(true);
+    expect(main.sql).toContain(`WHERE (u.event_at, u.id) < ${expected}`);
+  });
+});
+
+describe("transaction-health.service — display labels (LEAD 443.308 D061)", () => {
+  it("never falls back to a bare row id for a document label", async () => {
+    const client = makeClient({ pageRows: [] });
+    await fetchTransactionHealth(client, { operatingCompanyIds: [COMPANY_A], cursor: null, limit: 10, issuesOnly: false });
+    const main = client.calls.find((c) => c.sql.includes("WITH u AS"))!;
+    // COALESCE(<label>, <alias>.id::text) was the UUID painter on every branch.
+    expect(main.sql).not.toMatch(/COALESCE\([^()]*\b[a-z]{1,2}\.id::text\)/);
+    expect(main.sql).toContain("'Payment · '");
+    expect(main.sql).toContain("[[:space:]]*[0-9a-f]{8}-[0-9a-f]{4}[0-9a-f-]*");
+    expect(main.sql).not.toContain("\\s*");
+  });
+});

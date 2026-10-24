@@ -120,7 +120,7 @@ const BRANCHES: string[] = [
     i.id::text AS id,
     i.operating_company_id::text AS operating_company_id,
     c.code AS entity_code,
-    COALESCE(i.display_id, i.id::text) AS display_label,
+    COALESCE(i.display_id, 'Invoice · ' || to_char(i.created_at,'MM/DD/YYYY')) AS display_label,
     i.created_at::text AS event_at,
     i.is_sample_data AS is_sample_data,
     EXISTS (
@@ -172,7 +172,7 @@ const BRANCHES: string[] = [
 
   `SELECT
     'bill'::text, b.id::text, b.operating_company_id::text, c.code,
-    COALESCE(b.display_id, b.id::text), b.created_at::text, b.is_sample_data,
+    COALESCE(b.display_id, NULLIF(b.bill_number, ''), 'Bill · ' || to_char(b.created_at,'MM/DD/YYYY')), b.created_at::text, b.is_sample_data,
     EXISTS (
       SELECT 1 FROM accounting.journal_entry_postings p
       WHERE p.source_transaction_type = 'bill' AND p.source_transaction_id = b.id::text
@@ -209,7 +209,12 @@ const BRANCHES: string[] = [
 
   `SELECT
     'bill_payment'::text, bp.id::text, bp.operating_company_id::text, c.code,
-    COALESCE(bp.reference_number, bp.check_number, bp.id::text), bp.created_at::text, bp.is_sample_data,
+    COALESCE(NULLIF(bp.reference_number, ''), NULLIF(bp.check_number, ''),
+      -- LEAD 443.308 D061: no USMCA bill payment carries a reference or check number (226 of 226, measured) — label it
+      -- the way a person reads it: payee · date · amount. Never the row id.
+      'Payment · ' || COALESCE((SELECT v.vendor_name FROM mdata.vendors v
+                                 WHERE v.id::text = bp.vendor_id::text AND v.operating_company_id = bp.operating_company_id), 'vendor')
+        || ' · ' || to_char(bp.payment_date,'MM/DD/YYYY') || ' · $' || to_char(bp.amount_cents / 100.0, 'FM999,999,999,990.00')), bp.created_at::text, bp.is_sample_data,
     EXISTS (
       SELECT 1 FROM accounting.journal_entry_postings p
       WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text
@@ -244,7 +249,7 @@ const BRANCHES: string[] = [
 
   `SELECT
     'customer_payment'::text, py.id::text, py.operating_company_id::text, c.code,
-    COALESCE(py.display_id, py.id::text), py.created_at::text, py.is_sample_data,
+    COALESCE(py.display_id, 'Payment · ' || to_char(py.created_at,'MM/DD/YYYY')), py.created_at::text, py.is_sample_data,
     EXISTS (
       SELECT 1 FROM accounting.journal_entry_postings p
       WHERE p.source_transaction_type = 'customer_payment' AND p.source_transaction_id = py.id::text
@@ -278,7 +283,7 @@ const BRANCHES: string[] = [
 
   `SELECT
     'expense'::text, e.id::text, e.operating_company_id::text, c.code,
-    COALESCE(e.expense_number, e.id::text), e.created_at::text, e.is_sample_data,
+    COALESCE(e.expense_number, NULLIF(e.vendor_document_number, ''), 'Expense · ' || to_char(e.created_at,'MM/DD/YYYY')), e.created_at::text, e.is_sample_data,
     -- expenses carry a direct journal_entry_id FK (no source_transaction_type join needed) — the
     -- ONE document type here that never went through the generic posting lookup.
     (e.journal_entry_id IS NOT NULL),
@@ -309,7 +314,10 @@ const BRANCHES: string[] = [
 
   `SELECT
     'journal_entry'::text, je.id::text, je.operating_company_id::text, c.code,
-    COALESCE(je.memo, je.id::text), je.created_at::text, je.is_sample_data,
+    -- LEAD 443.308 D061: 466 USMCA memos embed a record id, sometimes truncated with "…" — strip every id fragment, keep the
+    -- words (measured on prod: 466 → 0 fragments, 0 fell back). POSIX [[:space:]], never a backslash: this is a JS template.
+    COALESCE(NULLIF(btrim(regexp_replace(je.memo, '[[:space:]]*[0-9a-f]{8}-[0-9a-f]{4}[0-9a-f-]*…?', '', 'gi')), ''),
+             'Journal entry · ' || to_char(je.entry_date,'MM/DD/YYYY')), je.created_at::text, je.is_sample_data,
     -- a journal_entry row IS the posting — "posted" is definitionally true for one that exists here.
     true,
     NOT EXISTS (
@@ -338,7 +346,7 @@ const BRANCHES: string[] = [
 
   `SELECT
     'factoring_batch'::text, fb.id::text, fb.operating_company_id::text, c.code,
-    COALESCE(fb.batch_number, fb.id::text),
+    COALESCE(fb.batch_number, 'Factoring batch · ' || to_char(COALESCE(fb.submitted_at, fb.funded_at),'MM/DD/YYYY')),
     -- factoring.batch has NO created_at column (verified live 2026-08-28) — submitted_at is the
     -- earliest real timestamp the row carries; funded_at/now() only when even that is absent.
     COALESCE(fb.submitted_at, fb.funded_at, now())::text,
@@ -382,7 +390,7 @@ const BRANCHES: string[] = [
 
   `SELECT
     'settlement'::text, s.id::text, s.operating_company_id::text, c.code,
-    COALESCE(s.display_id, s.id::text), s.created_at::text, s.is_sample_data,
+    COALESCE(s.display_id, 'Settlement · ' || to_char(s.created_at,'MM/DD/YYYY')), s.created_at::text, s.is_sample_data,
     -- driver_finance.driver_settlements carries a DIRECT accounting_bill_id FK (settlement-bill-
     -- payment-posting.service.ts writes it) — no source_transaction_type join needed, same shape as
     -- the expense branch above.
@@ -430,16 +438,20 @@ export async function fetchTransactionHealth(
   // bounded slice of even the 27k-row expense table, not everything before the cursor) and once
   // again on the outer merge (needed because per-branch top-N does not itself guarantee sorted
   // output across branches — see wrapBranch's own comment).
+  // LEAD 443.308 — the cursor's two parameter positions are captured WHEN pushed. The outer predicate used to recompute
+  // them from values.length AFTER the per-branch limit was pushed, so it compared (event_at, id) < (cursor_id, '501'):
+  // any page whose last row's id began with a digit below the year's "2" returned 0 rows and paging stopped early
+  // (measured on prod USMCA: 1,500 of 1,855 documents reachable).
   let cursorPredicate = "";
+  let outerCursorPredicate = "";
   if (params.cursor) {
-    values.push(params.cursor.event_at, params.cursor.id);
-    cursorPredicate = `WHERE (t.event_at, t.id) < ($${values.length - 1}::text, $${values.length}::text)`;
+    const eventAtIndex = values.push(params.cursor.event_at);
+    const idIndex = values.push(params.cursor.id);
+    cursorPredicate = `WHERE (t.event_at, t.id) < ($${eventAtIndex}::text, $${idIndex}::text)`;
+    outerCursorPredicate = `WHERE (u.event_at, u.id) < ($${eventAtIndex}::text, $${idIndex}::text)`;
   }
   const perBranchLimitIndex = values.push(params.limit + 1);
   const branchesSql = BRANCHES.map((b) => wrapBranch(b, cursorPredicate, perBranchLimitIndex)).join("\n  UNION ALL\n");
-  const outerCursorPredicate = params.cursor
-    ? `WHERE (u.event_at, u.id) < ($${values.length - 1}::text, $${values.length}::text)`
-    : "";
   const finalLimitIndex = values.push(params.limit + 1);
 
   const res = await client.query<RawRow>(
