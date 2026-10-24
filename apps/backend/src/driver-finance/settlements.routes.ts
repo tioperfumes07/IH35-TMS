@@ -18,6 +18,7 @@ import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.
 import { notifySettlementAvailable } from "../services/push-notification.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
+import { createSettlementDeduction } from "./deductions.service.js";
 import { canVoid } from "../accounting/void.service.js";
 import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-liability.service.js";
 import { loadIdsForSettlement } from "../accounting/tour-open-gate.service.js";
@@ -1252,13 +1253,43 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       const settlement = settlementRes.rows[0];
 
       for (const line of body.lines) {
-        await client.query(
-          `
-            INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
-            VALUES ($1,$2,$3,$4)
-          `,
-          [settlement.id, line.line_type, line.description, line.amount]
-        );
+        if (line.line_type === "deduction") {
+          // ENG-01c (443.322): deduction lines MUST have a driver_settlement_deductions row so the
+          // close engine's DSD-vs-settlement_lines mismatch check (ENG-01b, step 18781) never fires
+          // on a legitimately created settlement. Create the DSD row first, then wire the line to it.
+          const amountCents = Math.round(Math.abs(line.amount) * 100);
+          if (amountCents > 0) {
+            const dsd = await createSettlementDeduction(client as never, {
+              operatingCompanyId: settlement.operating_company_id,
+              driverId: settlement.driver_id,
+              amountCents,
+              reason: line.description?.trim() || "Settlement deduction",
+              sourceType: "other",
+              createdByUserId: user.uuid,
+              loadId: null,
+            });
+            await client.query(
+              `INSERT INTO driver_finance.settlement_lines
+                 (settlement_id, operating_company_id, line_type, description, amount,
+                  source_table, source_reference_id, is_sample_data)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+              [settlement.id, settlement.operating_company_id, line.line_type, line.description, line.amount,
+               SETTLEMENT_DEDUCTION_SOURCE_TABLE, dsd.id, settlement.is_sample_data ?? false]
+            );
+            await client.query(
+              `UPDATE driver_finance.driver_settlement_deductions
+                  SET applied_to_settlement_id = $1::uuid, status = 'pending', updated_at = now()
+                WHERE id = $2::uuid`,
+              [settlement.id, dsd.id]
+            );
+          }
+        } else {
+          await client.query(
+            `INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
+             VALUES ($1,$2,$3,$4)`,
+            [settlement.id, line.line_type, line.description, line.amount]
+          );
+        }
       }
       return settlement;
     });

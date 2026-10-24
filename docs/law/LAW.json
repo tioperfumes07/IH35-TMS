@@ -1247,5 +1247,12 @@
     "source_file": "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
     "guard": "scripts/verify-steps/18781-verify-settlement-posted-withholdings-equal-deductions-total.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443322-ENG01C-DEDUCTION-LINE-DSD-WRITER",
+    "title": "Every active USMCA settlement_lines deduction row linked to driver_settlement_deductions must have a real DSD row; legacy settlement writers (settlements.routes.ts, settlements-mvp.routes.ts) now create DSD atomically in the same transaction",
+    "source_file": "apps/backend/src/driver-finance/settlements.routes.ts",
+    "guard": "scripts/verify-settlement-deduction-lines-have-deduction-rows.mjs",
+    "type": "enforced"
   }
 ]
