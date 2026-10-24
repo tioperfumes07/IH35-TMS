@@ -9,12 +9,13 @@
  * selected). This guard proves the fix stays wired:
  *
  *   1. EntityLink declares a "lawsuit" kind resolving to
- *      /legal/lawsuits?lawsuit_id=${id} (never a bare list route).
+ *      /legal/lawsuits?insurance_lawsuit_id=${id} (never a bare list route).
  *   2. LegalMatterDetailPage renders insurance_lawsuit_id via <EntityLink kind="lawsuit" .../>,
  *      not a bare <Link to="/insurance/lawsuits">.
- *   3. LawsuitsTab reads ?lawsuit_id= from useSearchParams and seeds the selected/highlighted
- *      row from it (mirrors ClaimsTab's claim_id deep-link pattern) — so the link is not an
- *      orphan route with nothing on the other end.
+ *   3. LEAD 443.334: /legal/lawsuits is the legal-matters board locked to type "lawsuit"
+ *      (LegalLawsuitsPage mounts <LegalMattersListPage fixedType="lawsuit" />) and that board reads
+ *      ?insurance_lawsuit_id= into its list query — so the link lands on the linked matters, never an
+ *      orphan route. (The old insurance.lawsuit LawsuitsTab is retired; owner 10-24 "lawsuits only in Legal".)
  *
  * Static source guards only — no migrations, no money. Rule 17: this file + its verify-step
  * wrapper only; no package.json / locked-guards.yml / ci.yml edits.
@@ -29,21 +30,21 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-legal-matter-lawsuit-linkage";
 
 /**
- * @param {{ entityLink: string, matterDetail: string, lawsuitsTab: string, lawsuitRoutes: string, insuranceApi: string }} sources
+ * @param {{ entityLink: string, matterDetail: string, lawsuitsPage: string, mattersList: string }} sources
  * @returns {string[]}
  */
 export function assertLegalMatterLawsuitLinkage(sources) {
   const errors = [];
-  const { entityLink, matterDetail, lawsuitsTab, lawsuitRoutes, insuranceApi } = sources;
+  const { entityLink, matterDetail, lawsuitsPage, mattersList } = sources;
 
   if (!/\|\s*"lawsuit"/.test(entityLink)) {
     errors.push('EntityLink: EntityKind union must declare "lawsuit"');
   }
   if (
-    !/case "lawsuit":\s*\n\s*return `\/legal\/lawsuits\?lawsuit_id=\$\{id\}`/.test(entityLink)
+    !/case "lawsuit":\s*\n\s*return `\/legal\/lawsuits\?insurance_lawsuit_id=\$\{id\}`/.test(entityLink)
   ) {
     errors.push(
-      'EntityLink: resolveEntityRoute case "lawsuit" must return `/legal/lawsuits?lawsuit_id=${id}`',
+      'EntityLink: resolveEntityRoute case "lawsuit" must return `/legal/lawsuits?insurance_lawsuit_id=${id}`',
     );
   }
 
@@ -59,28 +60,17 @@ export function assertLegalMatterLawsuitLinkage(sources) {
     errors.push("LegalMatterDetailPage: insurance lawsuit link must keep data-testid=\"matter-insurance-lawsuit-link\"");
   }
 
-  if (!/useSearchParams/.test(lawsuitsTab)) {
-    errors.push("LawsuitsTab: must call useSearchParams to honor ?lawsuit_id= deep-links");
+  if (!/<LegalMattersListPage\s+fixedType="lawsuit"\s*\/>/.test(lawsuitsPage)) {
+    errors.push('LegalLawsuitsPage: must mount <LegalMattersListPage fixedType="lawsuit" /> (lawsuits are legal matters)');
   }
-  if (!/searchParams\.get\(\s*["']lawsuit_id["']\s*\)/.test(lawsuitsTab)) {
-    errors.push('LawsuitsTab: must read searchParams.get("lawsuit_id")');
+  if (/LawsuitsTab/.test(lawsuitsPage)) {
+    errors.push("LegalLawsuitsPage: must not mount the retired insurance.lawsuit LawsuitsTab");
   }
-  if (!/setSelectedLawsuitId\(deepLinkLawsuitId\)/.test(lawsuitsTab)) {
-    errors.push("LawsuitsTab: deep-linked lawsuit_id must seed/select selectedLawsuitId (row highlight)");
+  if (!/searchParams\.get\(\s*["']insurance_lawsuit_id["']\s*\)/.test(mattersList)) {
+    errors.push('LegalMattersListPage: must read searchParams.get("insurance_lawsuit_id")');
   }
-  for (const kind of ["driver", "unit"]) {
-    if (!new RegExp(`kind=["']${kind}["']`).test(lawsuitsTab)) {
-      errors.push(`LawsuitsTab: linked claim ${kind}_id must render through EntityLink`);
-    }
-    if (!new RegExp(`${kind}_id: string \\| null`).test(insuranceApi)) {
-      errors.push(`insurance API: InsuranceLawsuit must expose resolved ${kind}_id`);
-    }
-  }
-  if (!/LEFT JOIN insurance\.claim AS claim/.test(lawsuitRoutes) || !/claim\.driver_id::text AS driver_id/.test(lawsuitRoutes)) {
-    errors.push("lawsuit route: must resolve driver_id through the entity-scoped linked claim");
-  }
-  if (!/LEFT JOIN mdata\.assets AS asset/.test(lawsuitRoutes) || !/asset\.unit_id::text AS unit_id/.test(lawsuitRoutes)) {
-    errors.push("lawsuit route: must resolve unit_id through claim.asset_id");
+  if (!/insurance_lawsuit_id:\s*insuranceLawsuitId/.test(mattersList)) {
+    errors.push("LegalMattersListPage: insurance_lawsuit_id must reach the list query");
   }
 
   return errors;
@@ -102,7 +92,7 @@ export function resolveEntityRoute(kind, id) {
     case "claim":
       return \`/insurance/claims?claim_id=\${id}\`;
     case "lawsuit":
-      return \`/legal/lawsuits?lawsuit_id=\${id}\`;
+      return \`/legal/lawsuits?insurance_lawsuit_id=\${id}\`;
     case "matter":
       return \`/legal/matters/\${id}\`;
   }
@@ -111,21 +101,12 @@ export function resolveEntityRoute(kind, id) {
     matterDetail: `
 <EntityLink kind="lawsuit" id={String(matter.insurance_lawsuit_id)} data-testid="matter-insurance-lawsuit-link" />
 `,
-    lawsuitsTab: `
-const [searchParams] = useSearchParams();
-const deepLinkLawsuitId = searchParams.get("lawsuit_id");
-const [selectedLawsuitId, setSelectedLawsuitId] = useState(deepLinkLawsuitId);
-useEffect(() => {
-  if (deepLinkLawsuitId) setSelectedLawsuitId(deepLinkLawsuitId);
-}, [deepLinkLawsuitId]);
-<EntityLink kind="driver" id={lawsuit.driver_id} />
-<EntityLink kind="unit" id={lawsuit.unit_id} />
-`,
-    lawsuitRoutes: `SELECT claim.driver_id::text AS driver_id, asset.unit_id::text AS unit_id
-FROM insurance.lawsuit AS lawsuit
-LEFT JOIN insurance.claim AS claim ON claim.tenant_id = lawsuit.tenant_id AND claim.id = lawsuit.claim_id
-LEFT JOIN mdata.assets AS asset ON asset.operating_company_id = lawsuit.tenant_id AND asset.id = claim.asset_id`,
-    insuranceApi: `type InsuranceLawsuit = { driver_id: string | null; unit_id: string | null }`,
+    lawsuitsPage: `import { LegalMattersListPage } from "../matters/LegalMattersListPage";
+export function LegalLawsuitsPage() {
+  return <LegalMattersListPage fixedType="lawsuit" />;
+}`,
+    mattersList: `const insuranceLawsuitId = searchParams.get("insurance_lawsuit_id")?.trim() || "";
+legalMattersApi.list(companyId, { insurance_lawsuit_id: insuranceLawsuitId || undefined });`,
   };
 
   // [name, mutatedField, sources]. `mutatedField` is null for cases that supply a wholesale-distinct
@@ -139,18 +120,17 @@ LEFT JOIN mdata.assets AS asset ON asset.operating_company_id = lawsuit.tenant_i
       {
         ...good,
         entityLink: good.entityLink.replace(
-          "return `/legal/lawsuits?lawsuit_id=${id}`;",
+          "return `/legal/lawsuits?insurance_lawsuit_id=${id}`;",
           "return `/legal/lawsuits`;",
         ),
       },
     ],
     ["bare-link-regression", null, { ...good, matterDetail: '<Link to="/legal/lawsuits" data-testid="matter-insurance-lawsuit-link">x</Link>' }],
     ["missing-testid", null, { ...good, matterDetail: '<EntityLink kind="lawsuit" id={String(matter.insurance_lawsuit_id)} />' }],
-    ["no-search-params-hook", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace("useSearchParams", "useState") }],
-    ["no-param-read", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace('searchParams.get("lawsuit_id")', '""') }],
-    ["dead-deep-link", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace("setSelectedLawsuitId(deepLinkLawsuitId)", "doNothing()") }],
-    ["missing-driver-link", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace('kind="driver"', 'kind="claim"') }],
-    ["missing-unit-route-join", "lawsuitRoutes", { ...good, lawsuitRoutes: good.lawsuitRoutes.replace("LEFT JOIN mdata.assets AS asset", "LEFT JOIN mdata.parts AS asset") }],
+    ["old-tab-mounted", null, { ...good, lawsuitsPage: 'import { LawsuitsTab } from "x"; export function LegalLawsuitsPage() { return <LawsuitsTab />; }' }],
+    ["not-locked-to-lawsuit", "lawsuitsPage", { ...good, lawsuitsPage: good.lawsuitsPage.replace(' fixedType="lawsuit"', "") }],
+    ["no-param-read", "mattersList", { ...good, mattersList: good.mattersList.replace('searchParams.get("insurance_lawsuit_id")', '""') }],
+    ["param-not-in-query", "mattersList", { ...good, mattersList: good.mattersList.replace("insurance_lawsuit_id: insuranceLawsuitId", "foo: 1") }],
   ];
 
   const problems = [];
@@ -186,9 +166,8 @@ function main() {
   const sources = {
     entityLink: read("apps/frontend/src/components/shared/EntityLink.tsx"),
     matterDetail: read("apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx"),
-    lawsuitsTab: read("apps/frontend/src/pages/insurance/LawsuitsTab.tsx"),
-    lawsuitRoutes: read("apps/backend/src/insurance/lawsuit.routes.ts"),
-    insuranceApi: read("apps/frontend/src/api/insurance.ts"),
+    lawsuitsPage: read("apps/frontend/src/pages/legal/lawsuits/LegalLawsuitsPage.tsx"),
+    mattersList: read("apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx"),
   };
 
   const failures = assertLegalMatterLawsuitLinkage(sources);
@@ -197,7 +176,7 @@ function main() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`✓ ${LABEL}: matter → lawsuit EntityLink wired; LawsuitsTab honors ?lawsuit_id= reverse drill.`);
+  console.log(`✓ ${LABEL}: matter → lawsuit EntityLink wired; /legal/lawsuits = legal matters (type lawsuit) honoring ?insurance_lawsuit_id=.`);
 }
 
 main();

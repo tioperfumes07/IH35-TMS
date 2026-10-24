@@ -128,7 +128,7 @@ describe("PolicyDetail claims/lawsuits reverse chrome (C-16)", () => {
   it("renders the lawsuit case number as a real EntityLink to the lawsuit, not plain text", async () => {
     render(wrap(<PolicyDetail />));
     const link = await screen.findByRole("link", { name: "CASE-9001" });
-    expect(link.getAttribute("href")).toBe(`/legal/lawsuits?lawsuit_id=${lawsuitId}`);
+    expect(link.getAttribute("href")).toBe(`/legal/lawsuits?insurance_lawsuit_id=${lawsuitId}`);
     expect(insuranceApiMocks.listInsuranceLawsuits).toHaveBeenCalledWith({
       operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
       policy_id: policyId,

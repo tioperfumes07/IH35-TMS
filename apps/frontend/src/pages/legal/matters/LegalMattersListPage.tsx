@@ -49,14 +49,20 @@ export function daysUntil(dateStr: unknown) {
   return Math.round((targetUTC - todayUTC) / (24 * 3600 * 1000));
 }
 
-export function LegalMattersListPage() {
+/**
+ * LEAD 443.334 — Legal › Lawsuits is this same board locked to type "lawsuit" (legal.matters is the canonical lawsuit
+ * record: reserve JE, driver / unit / load / claim links). `fixedType` pins the type filter and retitles the board.
+ */
+export type LegalMattersListPageProps = { fixedType?: "lawsuit" };
+
+export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = {}) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [status, setStatus] = useState("");
   const [severity, setSeverity] = useState("");
-  const [type, setType] = useState("");
+  const [type, setType] = useState<string>(fixedType ?? "");
   const relatedDriverId = searchParams.get("related_driver_id")?.trim() || "";
   const equipmentId = searchParams.get("equipment_id")?.trim() || "";
   const insuranceClaimId = searchParams.get("insurance_claim_id")?.trim() || "";
@@ -90,11 +96,11 @@ export function LegalMattersListPage() {
   }
   const staged = useStagedListFilters({
     applied: { status, severity, type, unitId },
-    empty: { status: "", severity: "", type: "", unitId: "" },
+    empty: { status: "", severity: "", type: fixedType ?? "", unitId: "" },
     onApply: (next) => {
       setStatus(next.status);
       setSeverity(next.severity);
-      setType(next.type);
+      setType(fixedType ?? next.type);
       commitUnitFilter(next.unitId);
       resetPage();
     },
@@ -193,9 +199,9 @@ export function LegalMattersListPage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        breadcrumb={["Legal", "Matters"]}
-        title="Legal matters"
-        subtitle="Lawsuits, claims, and regulatory matters"
+        breadcrumb={fixedType ? ["Legal", "Lawsuits"] : ["Legal", "Matters"]}
+        title={fixedType ? "Lawsuits" : "Legal matters"}
+        subtitle={fixedType ? "Lawsuits where the company is a party — reserve, driver, unit, load and claim links" : "Lawsuits, claims, and regulatory matters"}
         actions={
           <Link to="/legal/matters/new">
             <Button>+ Create Matter</Button>
@@ -243,7 +249,7 @@ export function LegalMattersListPage() {
           </span>
         </div>
         <ParityTable
-          title="Legal matters"
+          title={fixedType ? "Lawsuits" : "Legal matters"}
           rows={rows}
           columns={columns}
           rowKey={(row) => String(row.id ?? "")}
@@ -253,8 +259,8 @@ export function LegalMattersListPage() {
           }}
           // Settled-only empty (LIST-EMPTY-1 invariant): see LegalPoliciesPage for the same pattern.
           loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
-          storageKey="legal-matters"
-          emptyText="No matters match filters."
+          storageKey={fixedType ? "legal-lawsuits" : "legal-matters"}
+          emptyText={fixedType ? "No lawsuits match filters." : "No matters match filters."}
           // LEGAL-MATTERS-DOUBLE-PAGER-CONTRADICTS-TOTAL (same class as NAMES-MASTER-DOUBLE-PAGER-
           // CONTRADICTS-TOTAL): `rows` is one server-paginated page (limit/offset, PAGE_SIZE=100) out
           // of a real `total` that can span many pages; the external "Showing X-Y of Z / Previous/Next"
@@ -266,7 +272,7 @@ export function LegalMattersListPage() {
           hidePager
           filterBar={
             <CollapsedListFilters
-              activeFilterCount={(status ? 1 : 0) + (severity ? 1 : 0) + (type ? 1 : 0) + (unitId ? 1 : 0)}
+              activeFilterCount={(status ? 1 : 0) + (severity ? 1 : 0) + (type && !fixedType ? 1 : 0) + (unitId ? 1 : 0)}
               onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
               testIdPrefix="legal-matters"
               dataAttributes={{ "data-legal-matters-filter-toolbar": "collapsed" }}
@@ -307,6 +313,7 @@ export function LegalMattersListPage() {
                     </option>
                   ))}
                 </SelectCombobox>
+                {fixedType ? null : (
                 <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-xs" value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value })}>
                   <option value="">All types</option>
                   {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
@@ -315,6 +322,7 @@ export function LegalMattersListPage() {
                     </option>
                   ))}
                 </SelectCombobox>
+                )}
               </div>
             </CollapsedListFilters>
           }
