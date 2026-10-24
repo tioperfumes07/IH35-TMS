@@ -34,7 +34,11 @@ describe("plaid item display badge", () => {
       now
     );
     expect(label).toBe("Healthy");
-    expect(derivePlaidConnectionBadgeClasses(label)).toContain("slate");
+    // House tokens (BANK-F91098 retired slate-*): Healthy is the neutral ink; needs-attention states are the §7 warning.
+    expect(derivePlaidConnectionBadgeClasses(label)).toContain("#1F2A44");
+    expect(derivePlaidConnectionBadgeClasses("Stale")).toContain("#854F0B");
+    expect(derivePlaidConnectionBadgeClasses("Login Required")).toContain("#854F0B");
+    expect(derivePlaidConnectionBadgeClasses("Login Required")).not.toBe(derivePlaidConnectionBadgeClasses("Healthy"));
   });
 
   it("shows Stale when last sync is between 24h and 72h", () => {
