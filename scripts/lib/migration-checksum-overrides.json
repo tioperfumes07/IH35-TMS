@@ -532,5 +532,14 @@
     "ruling": "docs/bus/2026-10-11-CURSOR-RULING-202610090300-CHECKSUM-OVERRIDE-DEPLOY-UNBLOCK.md",
     "added_at": "2026-10-11",
     "added_in_pr": "cursor/deploy-checksum-101430-c89b"
+  },
+  {
+    "filename": "202616131600_grant_label_resolvers_to_guard_reader.sql",
+    "ledger_checksum": "9db33e0944f010b0179ae45450e9736301f33b833d853772bcbde9662dcd811b",
+    "disk_checksum": "ba73df124c19b8cc09efed62518011741acbb2c8ebc143d011509c8e33996d2a",
+    "reason": "CC-1 7349992008 wrapped the applied GRANTs in a role-exists guard so a fresh CI database (no ih35_guard_reader / ih35_ci_readonly roles) replays it; on production both roles exist, so the guarded file grants exactly what the applied file granted (applied 2026-10-22 17:46Z). Reviewed by the Lead 10-23 10:30 PM CT; prevents every Render pre-deploy from refusing the modified file.",
+    "added_at": "2026-10-23",
+    "added_in_pr": "LEAD-443.292-MIGRATION-CHECKSUM",
+    "ruling": "docs/bus/10-23-2026-LEAD-443-292-MIGRATION-CHECKSUM-RULING.md"
   }
 ]
