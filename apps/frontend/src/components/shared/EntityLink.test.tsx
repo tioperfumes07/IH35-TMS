@@ -32,7 +32,7 @@ describe("resolveEntityRoute", () => {
       "/driver-finance/settlements?settlement_id=id1",
     );
     expect(resolveEntityRoute("claim", "id1")).toBe("/insurance/claims?claim_id=id1");
-    expect(resolveEntityRoute("lawsuit", "id1")).toBe("/insurance/lawsuits?lawsuit_id=id1");
+    expect(resolveEntityRoute("lawsuit", "id1")).toBe("/legal/lawsuits?lawsuit_id=id1");
   });
 
   it("resolves liability to list query-param and expense to per-id detail", () => {
@@ -75,7 +75,7 @@ describe("EntityLink", () => {
     );
     expect(screen.getByRole("link", { name: "LAW-1" })).toHaveAttribute(
       "href",
-      "/insurance/lawsuits?lawsuit_id=law-1",
+      "/legal/lawsuits?lawsuit_id=law-1",
     );
     expect(screen.getByRole("link", { name: "MAT-1" })).toHaveAttribute("href", "/legal/matters/mat-1");
   });

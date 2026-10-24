@@ -1,13 +1,18 @@
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { CoverageGapDashboard } from "./CoverageGapDashboard";
 import { ClaimsTab } from "./ClaimsTab";
 import { InsuranceLanding } from "./InsuranceLanding";
-import { LawsuitsTab } from "./LawsuitsTab";
 import { PoliciesList } from "./PoliciesList";
 import { PolicyDetail } from "./PolicyDetail";
 import { TypeCatalogAdmin } from "./TypeCatalogAdmin";
 import { FleetCoveredPage } from "./FleetCoveredPage";
 import { InsuranceModuleTabs } from "./InsuranceModuleTabs";
+
+/** LEAD 443.332 (owner 10-24 3:47 PM CT): Lawsuits live in Legal only; old links keep their query string. */
+function LawsuitsMovedToLegal() {
+  const { search } = useLocation();
+  return <Navigate to={`/legal/lawsuits${search}`} replace />;
+}
 
 function InsuranceModuleLayout() {
   return (
@@ -30,8 +35,8 @@ export function InsuranceModuleShell() {
         <Route path="type-catalog" element={<TypeCatalogAdmin />} />
         <Route path="coverage-gaps" element={<CoverageGapDashboard />} />
         <Route path="claims" element={<ClaimsTab />} />
-        <Route path="lawsuits" element={<LawsuitsTab />} />
       </Route>
+      <Route path="lawsuits" element={<LawsuitsMovedToLegal />} />
       <Route path="*" element={<Navigate to="/insurance" replace />} />
     </Routes>
   );

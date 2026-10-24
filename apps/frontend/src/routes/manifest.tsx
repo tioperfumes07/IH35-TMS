@@ -586,6 +586,7 @@ const LegalPoliciesPage = React.lazy(() => import("../pages/legal/LegalPoliciesP
 const PrivacyPolicyPage = React.lazy(() => import("../pages/legal/PrivacyPolicyPage").then((m) => ({ default: m.PrivacyPolicyPage })));
 const TermsOfServicePage = React.lazy(() => import("../pages/legal/TermsOfServicePage").then((m) => ({ default: m.TermsOfServicePage })));
 const LegalAttorneyReviewPage = React.lazy(() => import("../pages/legal/LegalAttorneyReviewPage").then((m) => ({ default: m.LegalAttorneyReviewPage })));
+const LegalLawsuitsPage = React.lazy(() => import("../pages/legal/lawsuits/LegalLawsuitsPage").then((m) => ({ default: m.LegalLawsuitsPage })));
 const LegalMattersListPage = React.lazy(() => import("../pages/legal/matters/LegalMattersListPage").then((m) => ({ default: m.LegalMattersListPage })));
 const LegalMatterNewPage = React.lazy(() => import("../pages/legal/matters/LegalMatterNewPage").then((m) => ({ default: m.LegalMatterNewPage })));
 const LegalMatterDetailPage = React.lazy(() => import("../pages/legal/matters/LegalMatterDetailPage").then((m) => ({ default: m.LegalMatterDetailPage })));
@@ -4274,6 +4275,14 @@ export const ROUTES = React.Children.toArray(
             <OwnerAdminRoute>
               <LegalPoliciesPage />
             </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/legal/lawsuits"
+          element={
+            <ProtectedRoute>
+              <LegalLawsuitsPage />
+            </ProtectedRoute>
           }
         />
         <Route

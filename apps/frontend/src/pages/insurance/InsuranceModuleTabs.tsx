@@ -7,7 +7,6 @@ const TABS = [
   { id: "type-catalog", label: "Type Catalog", to: "/insurance/type-catalog" },
   { id: "coverage-gaps", label: "Coverage Gaps", to: "/insurance/coverage-gaps" },
   { id: "claims", label: "Claims", to: "/insurance/claims" },
-  { id: "lawsuits", label: "Lawsuits", to: "/insurance/lawsuits" },
 ] as const;
 
 export function InsuranceModuleTabs() {
