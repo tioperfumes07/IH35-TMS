@@ -106,7 +106,7 @@ export function computeBoardShellFailures(source) {
     errors.push("FuelPlannerHome must use FUEL_BOARD_SUBTITLE (443.282 board header)");
   }
   if (!/FUEL_BOARD_SUBNAV\.map/.test(source)) {
-    errors.push("FuelPlannerHome must render FUEL_BOARD_SUBNAV (7 board tabs)");
+    errors.push("FuelPlannerHome must render FUEL_BOARD_SUBNAV (board tabs)");
   }
   if (!/fuel-board-header-import-fills/.test(source) || !/fuel-board-header-add-fill/.test(source)) {
     errors.push("FuelPlannerHome must expose Import fills + Add fill header actions");
