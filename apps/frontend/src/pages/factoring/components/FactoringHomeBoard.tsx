@@ -134,9 +134,11 @@ function cents(v: number | string | null | undefined): number {
   return Number(v ?? 0);
 }
 
-function fmtMoneyDollars(n: number | null | undefined): string {
-  if (n == null || Number.isNaN(n)) return "—";
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+function fmtMoneyDollars(n: number | string | null | undefined): string {
+  if (n == null || n === "") return "—";
+  const v = typeof n === "string" ? Number(n) : n;
+  if (Number.isNaN(v)) return "—";
+  return v.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
 function mmDd(iso: string | null | undefined): string {
@@ -302,6 +304,11 @@ export function FactoringHomeBoard({
   const mtdPurchases = purchasesQuery.data?.purchases ?? [];
   const mtdFeeCents = useMemo(() => mtdPurchases.reduce((s, p) => s + cents(p.fee_cents), 0), [mtdPurchases]);
   const mtdWireFeeCents = useMemo(() => mtdPurchases.reduce((s, p) => s + cents(p.wire_fee_cents), 0), [mtdPurchases]);
+  const mtdFactorFeeFromReportCents = useMemo(() => {
+    const monthly = feesQuery.data?.monthly_summary?.[0];
+    if (!monthly) return 0;
+    return Math.round(Number(monthly.factor_fee_total ?? 0) * 100);
+  }, [feesQuery.data]);
   const mtdAdvancedCents = useMemo(() => {
     // summary.mtd_advanced_total is dollars (views.factoring_summary); purchases advance_cents is cents.
     if (summary && !summaryQuery.isError && summary.mtd_advanced_total != null) {
@@ -310,10 +317,15 @@ export function FactoringHomeBoard({
     return mtdPurchases.reduce((s, p) => s + cents(p.advance_cents), 0);
   }, [summary, summaryQuery.isError, mtdPurchases]);
 
+  const mtdPurchaseFeesCents = mtdFeeCents + mtdWireFeeCents;
+  const trueCostFeeCents =
+    mtdPurchaseFeesCents > 0 ? mtdPurchaseFeesCents : mtdFactorFeeFromReportCents;
+
   const trueCostPct = useMemo(() => {
     if (mtdAdvancedCents <= 0) return null;
-    return ((mtdFeeCents + mtdWireFeeCents) / mtdAdvancedCents) * 100;
-  }, [mtdAdvancedCents, mtdFeeCents, mtdWireFeeCents]);
+    if (trueCostFeeCents <= 0) return null;
+    return (trueCostFeeCents / mtdAdvancedCents) * 100;
+  }, [mtdAdvancedCents, trueCostFeeCents]);
 
   const chargebacksFees = useMemo(() => {
     const monthly = feesQuery.data?.monthly_summary?.[0];
