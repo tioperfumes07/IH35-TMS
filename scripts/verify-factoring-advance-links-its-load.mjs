@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @matrix-built {"modules":["factoring"],"cols":["load_id"],"task":"ENG-50"}
 // Factoring lane (Lead 2026-10-01 06:50Z): every live factoring advance reaches its load — directly
 // (source_load_id, a factor purchase made before the TMS may invoice) or through a linked invoice. Measured
 // 2026-10-01: FAC-2026-00139 (13625) and FAC-2026-00140 (13626) reached their loads only through notes text after
@@ -31,7 +32,8 @@ function selftest() {
   if (!/load_id: z\.string\(\)\.uuid\(\)\.optional\(\),\s*\n\s*purchase_cents/.test(r)) problems.push("create accepts load_id + purchase_cents");
   if (!/a pre-invoice purchase must name the factor's PO/.test(r)) problems.push("pre-invoice path keeps the PO match law");
   if (!/load_has_live_invoice_use_invoice_ids/.test(r) || !/load_already_has_open_advance/.test(r)) problems.push("pre-invoice path refuses a live invoice / second advance");
-  if (!/fa\.source_load_id = \$\$\{values\.length\}::uuid OR EXISTS/.test(r)) problems.push("list ?load_id= must include direct advances");
+  // ENG-50 (2026-10-24): route uses ANY($${values.length}::uuid[]) for multi-entity filter, not a bare single-UUID parameter
+  if (!/fa\.source_load_id = ANY\(\$\$\{values\.length\}::uuid\[\]\) OR EXISTS/.test(r)) problems.push("list ?load_id= must include direct advances");
   if (problems.length) {
     console.error(`${LABEL} --selftest FAIL — ${problems.join("; ")}`);
     process.exit(1);

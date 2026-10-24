@@ -27,12 +27,14 @@ const rules = [
   ['model','db.accrued_team_bill_id','team accrual not double counted'],
   ['model','db.accrued_bill_id','primary accrual not double counted'],
   ['route','WITH ${LOAD_COST_DOCUMENTS_CTE}','shared document costs mounted'],
-  // R443.139 (owner) "Revenue = loadCostsRevenueJoin verbatim" — LEAD 443.264.3: the board mounts the ONE shared join
-  // (443.257-C had replaced it with a private set-based copy; identical output, 0 diff rows, and the shared join is 1.1 ms).
-  ['route','${loadCostsRevenueJoin("l")}','shared revenue join (R443.139) mounted on the board'],
+  // R443.139 (owner) "Revenue = loadCostsRevenueJoin verbatim" — ENG-52 (2026-10-24): the board now mounts
+  // loadCostRollupLateral (verify-money-surfaces-agree RULE1), which ITSELF mounts loadCostsRevenueJoin
+  // (the rollup check on the next line verifies this). R443.139's spirit is preserved: revenue still comes
+  // from the ONE shared join, now transitively through the canonical rollup lateral (lcr alias).
+  ['route','${loadCostRollupLateral("l.id", "l.operating_company_id")}','rollup lateral (R443.139 via loadCostRollupLateral) mounted on the board'],
   ['rollup','${loadCostsRevenueJoin("cl", "rev")}','the rollup mounts the shared revenue join'],
   ['route','canonicalLoadCostsOpenClause("l", parsed.data.show_voided)','canonical current-cost scope mounted'],
-  ['route','NULLIF(COALESCE(revenue.revenue_cents,0), 0)','margin percentage uses document revenue (the shared join)'],
+  ['route','NULLIF(COALESCE(lcr.revenue_cents,0), 0)','margin percentage uses document revenue (via lcr alias)'],
   ['scope','export function canonicalLoadCostsOpenClause','named canonical cost scope'],
   ['scope',"AND ds.voided_at IS NULL AND ds.status='closed'",'actual closed settlement excluded'],
   ['scope','${alias}.is_sample_data IS NOT TRUE','sample loads excluded'],
