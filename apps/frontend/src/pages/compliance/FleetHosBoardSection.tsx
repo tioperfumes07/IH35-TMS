@@ -14,6 +14,7 @@ import { useStagedListFilters } from "../../components/table";
 import { formatClockTimeCT } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatPersonName } from "../../lib/formatPersonName";
 
 const EMPTY_FILTERS = {
   unitId: "",
@@ -93,7 +94,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
         <EntityLink
           kind="driver"
           id={row.driver_id}
-          label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+          label={entityLabel(formatPersonName(row.driver_name), row.driver_id, "Driver")}
           onClick={(event) => event.stopPropagation()}
         />
       </span>

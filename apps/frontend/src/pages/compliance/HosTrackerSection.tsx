@@ -10,6 +10,7 @@ import { useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
 import { formatPlannerDayLabel } from "../dispatch/planners/plannerDayLabel";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { formatPersonName } from "../../lib/formatPersonName";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -136,7 +137,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         sortable: true,
         render: (driver) => (
           <span className="font-medium text-[#0F1219]">
-            <EntityLinkOrTombstone kind="driver" id={driver.driver_id} name={driver.driver_name} noun="Driver" />
+            <EntityLinkOrTombstone kind="driver" id={driver.driver_id} name={formatPersonName(driver.driver_name)} noun="Driver" />
           </span>
         ),
       },
@@ -324,7 +325,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
             <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
               <div>
                 <div className="text-xs font-semibold text-[#0F1219]">
-                  <EntityLinkOrTombstone kind="driver" id={selectedDriver.driver_id} name={selectedDriver.driver_name} noun="Driver" />
+                  <EntityLinkOrTombstone kind="driver" id={selectedDriver.driver_id} name={formatPersonName(selectedDriver.driver_name)} noun="Driver" />
                 </div>
                 <div className="text-xs text-[#4B5563]">
                   Unit{" "}
