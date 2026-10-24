@@ -9,7 +9,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { useStagedListFilters } from "../../components/table";
 
 type Props = {
@@ -211,43 +211,37 @@ export function IdvrPage({ operatingCompanyId }: Props) {
                 a filter narrows existing DVIR rows and must not create a driver or a unit. */}
             <label className="text-xs text-[#4B5563]">
               Driver
-              <EntityPicker
+              <EntityMultiSelect
                 kind="driver"
                 operatingCompanyId={operatingCompanyId}
                 value={draft.driverId || null}
                 onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
-                allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1"
-                dataField="idvr-filter-driver"
                 dataTestId="idvr-filter-driver"
               />
             </label>
             <label className="text-xs text-[#4B5563]">
               Unit
-              <EntityPicker
+              <EntityMultiSelect
                 kind="unit"
                 operatingCompanyId={operatingCompanyId}
                 value={draft.unitId || null}
                 onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
-                allowCreate={false}
                 placeholder="All units"
                 className="mt-1"
-                dataField="idvr-filter-unit"
                 dataTestId="idvr-filter-unit"
               />
             </label>
             <label className="text-xs text-[#4B5563]">
               Trailer
-              <EntityPicker
+              <EntityMultiSelect
                 kind="trailer"
                 operatingCompanyId={operatingCompanyId}
                 value={draft.trailerId || null}
                 onChange={(next) => staged.setDraft((d) => ({ ...d, trailerId: next ?? "" }))}
-                allowCreate={false}
                 placeholder="All trailers"
                 className="mt-1"
-                dataField="idvr-filter-trailer"
                 dataTestId="idvr-filter-trailer"
               />
             </label>

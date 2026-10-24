@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const LABEL = "verify-hos-violation-linkage";
 const files = {
@@ -15,10 +16,15 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 
 function audit(s) {
   const failures = [];
+  for (const kind of ['driver', 'load']) {
+    failures.push(...multiSelectFilterProblems(s.tab, { file: files.tab, kind, testId: `hos-violations-filter-${kind}` }));
+    if (!s.route.includes(`values.push(entityIdFilterValues(query.data.${kind}_id))`)) failures.push(`missing bound ${kind} array`);
+  }
+  if (!s.route.includes('"operating_company_id = $1::uuid"')) failures.push('missing list company scope');
   if (!/dot_violation_type_id:\s*z\.string\(\)\.uuid\(\),/.test(s.route)) failures.push("writer contract must require the catalog FK");
   for (const alias of ["driver_ok", "violation_type_ok", "load_ok", "dot_inspection_ok"]) if (!s.route.includes(`AS ${alias}`)) failures.push(`writer must validate ${alias}`);
   if (!/linked_entity_not_in_operating_company/.test(s.route)) failures.push("writer must reject invalid links before insert");
-  if (!/filters\.push\(`related_load_id = \$\$\{values\.length\}`\)/.test(s.route)) failures.push("load reverse filter must execute in SQL");
+  if (!/filters\.push\(`related_load_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/.test(s.route)) failures.push("load reverse filter must execute in SQL");
   if (!/filters\.load_id\) qs\.set\("load_id"/.test(s.api)) failures.push("client must forward load reverse filter");
   if (!/disabled=\{!form\.driver_id \|\| !selectedViolationType\?\.id/.test(s.tab) || !/Boolean\(form\.driver_id\.trim\(\) && selectedViolationType\?\.id/.test(s.modal)) failures.push("both creators must wait for a resolved catalog FK");
   if (!/listHosViolations\(operatingCompanyId, \{[\s\S]{0,180}driver_id: driverId[\s\S]{0,180}offset:/.test(s.driver) || !/kind="hos_violation"/.test(s.driver)) failures.push("driver profile must read and drill exact HOS links");
@@ -33,7 +39,6 @@ function audit(s) {
   if (
     !/dataTestId="hos-violations-filter-driver"/.test(s.tab) ||
     !/dataTestId="hos-violations-filter-load"/.test(s.tab) ||
-    !/allowCreate=\{false\}/.test(s.tab) ||
     !/setSearchParams/.test(s.tab)
   ) {
     failures.push("HOS list must render EntityPicker driver/load filters synced to URL");
@@ -42,14 +47,19 @@ function audit(s) {
 }
 
 if (process.argv.includes("--selftest")) {
+  if (audit(source).length) throw new Error(`baseline failed: ${audit(source).join('; ')}`);
+  selftestMultiSelectFilterContract();
   const mutations = [
+    ['bound driver list', 'route', /values\.push\(entityIdFilterValues\(query\.data\.driver_id\)\)/g, 'values.push(query.data.driver_id)'],
+    ['bound load list', 'route', /values\.push\(entityIdFilterValues\(query\.data\.load_id\)\)/g, 'values.push(query.data.load_id)'],
+    ['company scope', 'route', /"operating_company_id = \$1::uuid"/g, '"TRUE"'],
     ["required catalog", "route", /dot_violation_type_id:\s*z\.string\(\)\.uuid\(\),/, "dot_violation_type_id: z.string().uuid().optional(),"],
     ["driver validation", "route", /AS driver_ok/, "AS driver_missing"],
     ["catalog validation", "route", /AS violation_type_ok/, "AS type_missing"],
     ["load validation", "route", /AS load_ok/, "AS load_missing"],
     ["inspection validation", "route", /AS dot_inspection_ok/, "AS inspection_missing"],
     ["reject", "route", /linked_entity_not_in_operating_company/, "bad_link"],
-    ["load SQL", "route", /filters\.push\(`related_load_id = \$\$\{values\.length\}`\)/, "void values"],
+    ["load SQL", "route", /filters\.push\(`related_load_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/, "void values"],
     ["api load", "api", /qs\.set\("load_id", filters\.load_id\)/, 'qs.set("driver_id", filters.load_id)'],
     ["tab resolved FK", "tab", /disabled=\{!form\.driver_id \|\| !selectedViolationType\?\.id/, "disabled={!form.driver_id || !form.violation_type"],
     ["modal resolved FK", "modal", /Boolean\(form\.driver_id\.trim\(\) && selectedViolationType\?\.id/, "Boolean(form.driver_id.trim() && form.violation_type"],

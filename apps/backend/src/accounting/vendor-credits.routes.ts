@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -47,7 +48,7 @@ const voidBodySchema = z.object({
 });
 
 const listQuerySchema = companyQuerySchema.extend({
-  vendor_id: z.string().trim().optional(),
+  vendor_id: entityIdFilterSchema.optional(),
   // R-102-B item 5 — "active" is a frontend-facing pseudo-status (not a real vendor_credits.status
   // value): open/applied are both live states, voided is the only dead one; see credit-
   // memos.routes.ts's identical listQuerySchema for the sibling family's same pattern.
@@ -72,8 +73,8 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
       const params: unknown[] = [query.data.operating_company_id];
 
       if (query.data.vendor_id) {
-        params.push(query.data.vendor_id);
-        conditions.push(`vc.vendor_id = $${params.length}`);
+        params.push(entityIdFilterValues(query.data.vendor_id));
+        conditions.push(`vc.vendor_id = ANY($${params.length}::text[])`);
       }
       const statusCond = statusListCondition("vc.status", query.data.status, (v) => {
         params.push(v);

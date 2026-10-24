@@ -17,6 +17,7 @@ import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { formatChartLegendLabel } from "../../lib/chartLegend";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -68,12 +69,13 @@ export function MaintenanceCostPerUnitPage() {
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
-    queryKey: ["reports", "maintenance-cost-per-unit", companyId, appliedFilters.start, appliedFilters.end],
+    queryKey: ["reports", "maintenance-cost-per-unit", companyId, appliedFilters.start, appliedFilters.end, appliedFilters.unitFilter],
     queryFn: () =>
       getMaintenanceCostPerUnit({
         operating_company_id: companyId,
         period_start: appliedFilters.start,
         period_end: appliedFilters.end,
+        unit_id: appliedFilters.unitFilter || undefined,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -292,13 +294,13 @@ export function MaintenanceCostPerUnitPage() {
       >
         <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Unit</span>
-          <input
-            type="text"
-            className="h-7 w-24 rounded-sm border border-[#E5E7EB] px-2 text-xs"
-            value={staged.draft.unitFilter}
-            onChange={(e) => staged.setDraft((p) => ({ ...p, unitFilter: e.target.value }))}
+          <EntityMultiSelect
+            kind="unit"
+            operatingCompanyId={companyId}
+            value={staged.draft.unitFilter || null}
+            onChange={(value) => staged.setDraft((p) => ({ ...p, unitFilter: value ?? "" }))}
             placeholder="All units"
-            data-testid="reports-maintenance-cost-per-unit-unit"
+            dataTestId="reports-maintenance-cost-per-unit-unit"
           />
         </label>
       </ReportFilterBar>

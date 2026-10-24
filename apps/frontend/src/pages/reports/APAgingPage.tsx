@@ -29,7 +29,7 @@ import {
 import { entityLabel } from "../../lib/entity-label";
 import { useExportAction } from "../../hooks/useExportAction";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 import { formatUsdCents } from "../../lib/money";
@@ -71,7 +71,13 @@ export function APAgingPage() {
   const staged = useStagedListFilters({
     applied: appliedFilters,
     empty: emptyFilters,
-    onApply: setAppliedFilters,
+    onApply: (next) => {
+      setAppliedFilters(next);
+      const params = new URLSearchParams(searchParams);
+      if (next.vendorId) params.set("vendor_id", next.vendorId);
+      else params.delete("vendor_id");
+      setSearchParams(params, { replace: true });
+    },
   });
   const [reportSearch, setReportSearch] = useState("");
   const exportAction = useExportAction();
@@ -80,8 +86,8 @@ export function APAgingPage() {
   }, [deepLinkVendorId]);
 
   const query = useQuery({
-    queryKey: ["reports", "ap-aging", companyId, appliedFilters.asOfDate],
-    queryFn: () => getApAgingReport(companyId, appliedFilters.asOfDate),
+    queryKey: ["reports", "ap-aging", companyId, appliedFilters.asOfDate, appliedFilters.vendorId],
+    queryFn: () => getApAgingReport(companyId, appliedFilters.asOfDate, appliedFilters.vendorId || undefined),
     enabled: Boolean(companyId),
   });
 
@@ -103,7 +109,6 @@ export function APAgingPage() {
     const q = reportSearch.toLowerCase();
     return rows
       .filter((r) => {
-        if (appliedFilters.vendorId && r.vendor_id !== appliedFilters.vendorId) return false;
         if (r.total_open_cents < minCents) return false;
         if (appliedFilters.bucketFilter === "61+") {
           const late = r.bucket_61_90_cents + r.bucket_91_plus_cents;
@@ -113,7 +118,7 @@ export function APAgingPage() {
         return true;
       })
       .map((r) => ({ ...r, bucket_0_30_cents: r.current_cents + r.bucket_1_30_cents }));
-  }, [rows, appliedFilters.vendorId, appliedFilters.bucketFilter, minCents, reportSearch]);
+  }, [rows, appliedFilters.bucketFilter, minCents, reportSearch]);
 
   function exportCsv() {
     const header = ["Vendor", "Total", "0-30", "31-60", "61-90", "91+", "Last Pmt"];
@@ -350,6 +355,7 @@ export function APAgingPage() {
                     exportApAging({
                       operating_company_id: companyId,
                       as_of_date: appliedFilters.asOfDate,
+                      vendor_id: appliedFilters.vendorId || undefined,
                       format: "pdf",
                     }),
                   "A/P aging export failed",
@@ -368,6 +374,7 @@ export function APAgingPage() {
                     exportApAging({
                       operating_company_id: companyId,
                       as_of_date: appliedFilters.asOfDate,
+                      vendor_id: appliedFilters.vendorId || undefined,
                       format: "xlsx",
                     }),
                   "A/P aging export failed",
@@ -410,19 +417,14 @@ export function APAgingPage() {
       >
         <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Vendor</span>
-          <EntityPicker
+          <EntityMultiSelect
             kind="vendor"
             operatingCompanyId={companyId}
             value={staged.draft.vendorId || null}
             onChange={(next) => {
               const updated = next ?? "";
               staged.setDraft((p) => ({ ...p, vendorId: updated }));
-              const params = new URLSearchParams(searchParams);
-              if (updated) params.set("vendor_id", updated);
-              else params.delete("vendor_id");
-              setSearchParams(params, { replace: true });
             }}
-            allowCreate={false}
             placeholder="All vendors"
             dataTestId="ap-aging-filter-vendor"
           />

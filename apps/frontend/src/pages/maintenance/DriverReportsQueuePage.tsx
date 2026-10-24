@@ -7,7 +7,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/Combobox";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -240,12 +240,11 @@ export function DriverReportsQueuePage({
               <div className="flex flex-wrap items-end gap-3" data-testid="driver-reports-entity-filters">
                 <label className="text-xs text-[#4B5563]">
                   Driver
-                  <EntityPicker
+                  <EntityMultiSelect
                     kind="driver"
                     operatingCompanyId={operatingCompanyId}
                     value={staged.draft.driverId || null}
                     onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
-                    allowCreate={false}
                     placeholder="All drivers"
                     className="mt-1"
                     dataTestId="driver-reports-filter-driver"
@@ -253,12 +252,11 @@ export function DriverReportsQueuePage({
                 </label>
                 <label className="text-xs text-[#4B5563]">
                   Load
-                  <EntityPicker
+                  <EntityMultiSelect
                     kind="load"
                     operatingCompanyId={operatingCompanyId}
                     value={staged.draft.loadId || null}
                     onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
-                    allowCreate={false}
                     placeholder="All loads"
                     className="mt-1"
                     dataTestId="driver-reports-filter-load"

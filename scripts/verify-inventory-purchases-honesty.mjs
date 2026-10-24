@@ -16,12 +16,13 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx");
 const LABEL = "verify-inventory-purchases-honesty";
+const purchaseRoute = fs.readFileSync(path.join(ROOT, 'apps/backend/src/maintenance/parts-inventory.routes.ts'),'utf8');
 
 /**
  * @param {string} source
  * @returns {string[]}
  */
-export function computeFailures(source) {
+export function computeFailures(source, route = purchaseRoute) {
   const errors = [];
   if (/\blistPartsInventory\b/.test(source) || /from ["'][^"']*PartsInventoryTable["']/.test(source)) {
     errors.push("InventoryPurchasesPage must not import/call stock list APIs (stock twin)");
@@ -52,7 +53,7 @@ export function computeFailures(source) {
   if (!/rows=\{visibleRows\}/.test(source)) {
     errors.push("Purchase History ParityTable must render the applied-filter result");
   }
-  if (!/row\.vendor_id === vendorFilter/.test(source)) {
+  if (!source.includes('listPartsPurchases(companyId, { vendor_id: vendorFilter || undefined })') || !route.includes('pp.vendor_id = ANY($2::uuid[])') || !route.includes('values.push(entityIdFilterValues(query.data.vendor_id))') || !route.includes('pp.operating_company_id = $1::uuid') || !route.includes('vendor_id: entityIdFilterSchema.optional()')) {
     errors.push("Purchase History vendor filter must compare the canonical vendor FK");
   }
   if (!/statusFilter === "active"[\s\S]*!row\.voided_at[\s\S]*statusFilter === "voided"[\s\S]*Boolean\(row\.voided_at\)/.test(source)) {
@@ -75,7 +76,7 @@ function selftest() {
   const good = `
     import { listPartsPurchases } from "../../api/maintenance";
     export function InventoryPurchasesPage() {
-      if (vendorFilter) next = next.filter((row) => row.vendor_id === vendorFilter);
+      listPartsPurchases(companyId, { vendor_id: vendorFilter || undefined });
       if (statusFilter === "active") next = next.filter((row) => !row.voided_at);
       if (statusFilter === "voided") next = next.filter((row) => Boolean(row.voided_at));
       if (workOrderLinkedOnly) next = next.filter((row) => Boolean(row.work_order_id));
@@ -89,6 +90,10 @@ function selftest() {
     import { PartsInventoryTable } from "y";
     export function InventoryPurchasesPage() { return <PartsInventoryTable />; }
   `;
+  for (const token of ['pp.vendor_id = ANY($2::uuid[])', 'values.push(entityIdFilterValues(query.data.vendor_id))', 'pp.operating_company_id = $1::uuid', 'vendor_id: entityIdFilterSchema.optional()']) {
+    const mutant = purchaseRoute.replaceAll(token, 'REMOVED');
+    if (mutant === purchaseRoute || !computeFailures(good, mutant).length) throw new Error(`purchase SQL mutation escaped: ${token}`);
+  }
   const cases = [
     { name: "real SoR list", input: good, expectPass: true },
     { name: "stock twin", input: bad, expectPass: false },
@@ -97,7 +102,7 @@ function selftest() {
     ["filters detached from toolbar", /filterBar=/, "detachedFilterBar="],
     ["Apply is inert", /onApply=\{stagedFilters\.apply\}/, "onApply={() => {}}"],
     ["table ignores applied rows", /rows=\{visibleRows\}/, "rows={rows}"],
-    ["vendor predicate no longer uses FK", /row\.vendor_id === vendorFilter/, "row.vendor_name === vendorFilter"],
+    ["vendor predicate no longer uses FK", /vendor_id: vendorFilter \|\| undefined/, "vendor_name: vendorFilter || undefined"],
     ["status predicate loses void truth", /Boolean\(row\.voided_at\)/, "Boolean(row.vendor_id)"],
     ["work-order predicate loses FK", /Boolean\(row\.work_order_id\)/, "Boolean(row.vendor_id)"],
   ];

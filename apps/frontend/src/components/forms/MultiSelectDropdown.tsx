@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from "../../hooks/useTranslation";
 import { FILTER_CONTROL_HEIGHT_CLASS, FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 
 // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: filters like Status/Source/Event type are naturally
@@ -26,6 +27,12 @@ type Props = {
    *  of options is unusable. Small enumerated fields (Status/Category/Type) can omit this. */
   searchable?: boolean;
   searchPlaceholder?: string;
+  onSearch?: (query: string) => void;
+  serverSearch?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
+  listNotice?: string;
+  selectedChips?: boolean;
 };
 
 export function MultiSelectDropdown({
@@ -38,8 +45,15 @@ export function MultiSelectDropdown({
   triggerClassName,
   searchable = false,
   searchPlaceholder = "Type to narrow…",
+  onSearch,
+  serverSearch = false,
+  disabled = false,
+  loading = false,
+  listNotice,
+  selectedChips = false,
   ...rest
 }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -61,8 +75,10 @@ export function MultiSelectDropdown({
   }, [open]);
 
   useEffect(() => {
-    if (!open) setQuery("");
-  }, [open]);
+    if (!open) { setQuery(""); onSearch?.(""); }
+  }, [open, onSearch]);
+
+  useEffect(() => { if (disabled) setOpen(false); }, [disabled]);
 
   const toggle = (value: string) => {
     onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
@@ -75,15 +91,16 @@ export function MultiSelectDropdown({
   const summary = selected.length === 0 ? allLabel : `${label} (${selected.length})`;
 
   const visibleOptions = useMemo(() => {
-    if (!searchable || !query.trim()) return options;
+    if (serverSearch || !searchable || !query.trim()) return options;
     const q = query.trim().toLowerCase();
     return options.filter((o) => o.label.toLowerCase().includes(q));
-  }, [options, query, searchable]);
+  }, [options, query, searchable, serverSearch]);
 
   return (
     <div ref={ref} className={`relative ${className ?? ""}`} data-testid={rest["data-testid"]}>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         className={
           triggerClassName ??
@@ -94,43 +111,57 @@ export function MultiSelectDropdown({
           // beside it. Take the height from the one token every other filter control takes it from.
           `mt-1 flex items-center justify-between gap-1 rounded-sm border border-gray-300 bg-white px-2 text-gray-900 hover:bg-gray-50 ${FILTER_CONTROL_SIZE_CLASS}`
         }
-        aria-haspopup="listbox"
+        aria-haspopup="true"
         aria-expanded={open}
       >
         <span className="max-w-[10rem] truncate">{summary}</span>
         <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
       </button>
+      {selectedChips && selected.length ? <div className="flex flex-wrap gap-1" aria-label={`${label} selections`}>
+        {selected.map(value => <button key={value} type="button" disabled={disabled}
+          onClick={() => onChange(selected.filter(id => id !== value))}
+          aria-label={`Remove ${options.find(option => option.value === value)?.label ?? label}`}
+          className={`max-w-full truncate rounded-sm border border-gray-300 px-2 text-xs ${FILTER_CONTROL_HEIGHT_CLASS}`}>
+          {options.find(option => option.value === value)?.label ?? label} ×
+        </button>)}
+      </div> : null}
       {open ? (
         <div
-          role="listbox"
+          role="group"
+          aria-label={label}
           className="absolute z-20 mt-1 max-h-72 w-56 overflow-y-auto rounded-sm border border-gray-300 bg-white p-1 shadow-lg"
         >
           {searchable ? (
             <input
               autoFocus
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); onSearch?.(e.target.value); }}
               placeholder={searchPlaceholder}
               className={`mb-1 w-full rounded-sm border border-gray-300 px-2 text-xs ${FILTER_CONTROL_HEIGHT_CLASS}`}
               data-testid={rest["data-testid"] ? `${rest["data-testid"]}-search` : undefined}
             />
           ) : null}
+          {loading ? <p role="status" className="px-2 py-1 text-xs">{t("common.loading_options", "Loading options…")}</p> : null}
+          {listNotice ? <p className="px-2 py-1 text-xs">{listNotice}</p> : null}
+          {visibleOptions.length ? <button type="button" onClick={() => onChange([...new Set([...selected, ...visibleOptions.map(option => option.value)])])} className="flex w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100">{t("common.select_shown", "Select shown")}</button> : null}
           <button
             type="button"
+            aria-pressed={selected.length === 0}
             onClick={() => onChange([])}
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
           >
-            <input type="checkbox" readOnly checked={selected.length === 0} className="pointer-events-none" />
+            <input type="checkbox" readOnly tabIndex={-1} aria-hidden="true" checked={selected.length === 0} className="pointer-events-none" />
             {allLabel}
           </button>
           {visibleOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"
+              aria-pressed={selected.includes(opt.value)}
               onClick={() => toggle(opt.value)}
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
             >
-              <input type="checkbox" readOnly checked={selected.includes(opt.value)} className="pointer-events-none" />
+              <input type="checkbox" readOnly tabIndex={-1} aria-hidden="true" checked={selected.includes(opt.value)} className="pointer-events-none" />
               <span className="truncate">{opt.label}</span>
             </button>
           ))}

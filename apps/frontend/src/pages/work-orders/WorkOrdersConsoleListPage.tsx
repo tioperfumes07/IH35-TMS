@@ -12,7 +12,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
 type WoSort =
@@ -370,24 +370,20 @@ export function WorkOrdersConsoleListPage() {
         <option value="warranty">Warranty</option>
         <option value="other">Other</option>
       </SelectCombobox>
-      <EntityPicker
+      <EntityMultiSelect
         kind="unit"
         operatingCompanyId={companyId}
         value={unitId}
         onChange={setUnitId}
-        allowCreate={false}
-        allowClear
         placeholder="All units"
         ariaLabel="Filter work orders by unit"
         dataTestId="work-orders-filter-unit"
       />
-      <EntityPicker
+      <EntityMultiSelect
         kind="driver"
         operatingCompanyId={companyId}
         value={driverId}
         onChange={setDriverId}
-        allowCreate={false}
-        allowClear
         placeholder="All drivers"
         ariaLabel="Filter work orders by driver"
         dataTestId="work-orders-filter-driver"

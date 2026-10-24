@@ -10,6 +10,7 @@
  */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";
 import { LIVE_LOADS_OPEN_DISPATCH_EXISTS_SQL } from "./live-loads-view.js";
 import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
@@ -122,16 +123,16 @@ export async function listIntransitIssues(
       clauses.push(`i.id = $${values.length}::uuid`);
     }
     if (filters.load_id) {
-      values.push(filters.load_id);
-      clauses.push(`i.load_id = $${values.length}::uuid`);
+      values.push(entityIdFilterValues(filters.load_id));
+      clauses.push(`i.load_id = ANY($${values.length}::uuid[])`);
     }
     if (filters.driver_id) {
-      values.push(filters.driver_id);
-      clauses.push(`i.driver_id = $${values.length}::uuid`);
+      values.push(entityIdFilterValues(filters.driver_id));
+      clauses.push(`i.driver_id = ANY($${values.length}::uuid[])`);
     }
     if (filters.unit_id) {
-      values.push(filters.unit_id);
-      clauses.push(`i.unit_id = $${values.length}::uuid`);
+      values.push(entityIdFilterValues(filters.unit_id));
+      clauses.push(`i.unit_id = ANY($${values.length}::uuid[])`);
     }
     const res = await client.query(
       `
@@ -185,8 +186,8 @@ export async function listAssignmentHistoryGlobal(
     const clauses: string[] = ["h.operating_company_id = $1::uuid"];
 
     if (filters.driver_id) {
-      values.push(filters.driver_id);
-      clauses.push(`(h.new_driver_id = $${values.length} OR h.previous_driver_id = $${values.length})`);
+      values.push(entityIdFilterValues(filters.driver_id));
+      clauses.push(`(h.new_driver_id = ANY($${values.length}::uuid[]) OR h.previous_driver_id = ANY($${values.length}::uuid[]))`);
     }
     if (filters.from) {
       values.push(filters.from);

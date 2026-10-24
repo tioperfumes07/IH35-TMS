@@ -4,6 +4,7 @@
  */
 
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../../_helpers/entity-filter-list.js";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
@@ -25,7 +26,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: { 
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  unit_id: z.string().uuid().optional(),
+  unit_id: entityIdFilterSchema.optional(),
   part_id: z.string().uuid().optional(),
   position_set_id: z.string().uuid().optional(),
   action: z.enum(["installed", "removed", "replaced"]).optional(),
@@ -114,8 +115,8 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
       let paramIdx = 1;
 
       if (q.unit_id) {
-        values.push(q.unit_id);
-        where.push(`ph.unit_id = $${++paramIdx}`);
+        values.push(entityIdFilterValues(q.unit_id));
+        where.push(`ph.unit_id = ANY($${++paramIdx}::uuid[])`);
       }
       if (q.part_id) {
         values.push(q.part_id);

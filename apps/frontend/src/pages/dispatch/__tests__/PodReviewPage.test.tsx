@@ -1,11 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { ReactNode } from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { PodReviewPage } from "../PodReviewPage";
-import { pickCombo } from "../../../test-utils/pickCombo";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91e0bf0a-133f-4ce8-a734-2586cfa66d96" }),
@@ -43,8 +42,8 @@ vi.mock("../../../api/dispatch", () => ({
 
 vi.mock("../../../api/loads", () => ({
   listLoads: vi.fn(async () => ({
-    loads: [{ id: "load-1", load_number: "L-500", customer_name: "ACME" }],
-    total_count: 1,
+    loads: [{ id: "load-1", load_number: "L-500", customer_name: "ACME" }, { id: "load-2", load_number: "L-501", customer_name: "ACME" }],
+    total_count: 2,
     has_more: false,
   })),
 }));
@@ -83,17 +82,8 @@ describe("PodReviewPage (B21-D10)", () => {
     wrap(<PodReviewPage />);
     await user.click(await screen.findByTestId("pod-filters-toggle"));
     const filter = await screen.findByTestId("pod-load-filter");
-    const input = filter.querySelector("input");
-    expect(input).toBeTruthy();
-    await user.click(input!);
-    // TWO stale things here, and the second hid behind the first.
-    // (1) The load filter is the shared `Combobox` now, so its rows are role="option", not role="button".
-    // (2) `userEvent.click` on those rows does NOT commit the selection: the listbox is rendered through
-    //     `createPortal` and each row `preventDefault`s mousedown, so loadId stayed unset and
-    //     `LoadBolPanel` never mounted — which looked exactly like "selecting a load does nothing".
-    //     It is a HARNESS artifact, not a product defect: driving the same control with fireEvent (what
-    //     `pickCombo` does, and why the LoadReassignModal/BookLoad picker tests pass) commits correctly.
-    pickCombo(input!, /L-500/);
+    await user.click(within(filter).getByRole("button"));
+    await user.click(await within(filter).findByRole("button", { name: /L-500/ }));
     // Filters are staged (useStagedListFilters/CollapsedListFilters) — picking a load only updates
     // the draft; loadId (which mounts LoadBolPanel) only commits on Apply.
     await user.click(screen.getByRole("button", { name: "Apply" }));
@@ -102,6 +92,20 @@ describe("PodReviewPage (B21-D10)", () => {
     const download = screen.getByTestId("bol-download-link");
     expect(download).toBeTruthy();
     expect(download.getAttribute("href")).toContain("/api/v1/dispatch/loads/load-1/bol.pdf");
+  });
+
+  it("applies both loads without passing a CSV to a single-load BOL panel", async () => {
+    const { getPodDocuments } = await import("../../../api/dispatch");
+    const user = userEvent.setup();
+    wrap(<PodReviewPage />);
+    await user.click(await screen.findByTestId("pod-filters-toggle"));
+    const filter = within(await screen.findByTestId("pod-load-filter"));
+    await user.click(filter.getByRole("button"));
+    await user.click(await filter.findByRole("button", { name: /L-500/ }));
+    await user.click(await filter.findByRole("button", { name: /L-501/ }));
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    await waitFor(() => expect(getPodDocuments).toHaveBeenLastCalledWith(expect.any(String), { status: "pending_review", load_id: "load-1,load-2" }));
+    expect(screen.queryByTestId("load-pod-bol-panel")).not.toBeInTheDocument();
   });
 
   it("filters POD documents by status", async () => {

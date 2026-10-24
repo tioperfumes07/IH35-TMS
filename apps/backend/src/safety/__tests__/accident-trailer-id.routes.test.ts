@@ -35,8 +35,8 @@ describe("safety/safety.routes RANK5-ACCIDENT-TRAILER-ID", () => {
   });
 
   it("GET list accepts an optional trailer_id filter, matching the existing unit_id filter shape", () => {
-    expect(routes).toContain("trailer_id: z.string().uuid().optional(),");
-    expect(routes).toContain("scopeFilters.push(`AND ar.trailer_id = $${values.length}`);");
+    expect(routes).toContain("trailer_id: entityIdFilterSchema.optional(),");
+    expect(routes).toContain("scopeFilters.push(`AND ar.trailer_id = ANY($${values.length}::uuid[])`);");
   });
 
   it("no longer claims (stale comment) that trailer_id does not exist on this table", () => {

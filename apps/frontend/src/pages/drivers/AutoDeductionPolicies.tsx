@@ -15,7 +15,7 @@ import { Modal } from "../../components/Modal";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useStagedListFilters } from "../../components/table";
@@ -94,12 +94,11 @@ export function AutoDeductionPoliciesPanel() {
         <label className="block min-w-[240px] text-xs text-[#4B5563]">
           Driver
           <div className="mt-1">
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={selectedCompanyId}
               value={filterDraft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All drivers"
               className="w-full"
               dataTestId="auto-deduction-policies-filter-driver"
@@ -138,9 +137,11 @@ export function AutoDeductionPoliciesPanel() {
   );
 }
 
-export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriverId }: Props) {
+export function AutoDeductionPolicies({ operatingCompanyId, driverId: driverFilter }: Props) {
+  // The list accepts a CSV selection; a create field is locked only for one driver.
+  const lockedDriverId = driverFilter && !driverFilter.includes(",") ? driverFilter : undefined;
   const queryClient = useQueryClient();
-  const policiesQuery = useAutoDeductionPolicies(operatingCompanyId, lockedDriverId);
+  const policiesQuery = useAutoDeductionPolicies(operatingCompanyId, driverFilter);
   const { createMutation, patchMutation, cancelMutation } = useAutoDeductionPolicyMutations(operatingCompanyId);
   // SETL-PICK-01: entity-scoped catalogs.driver_deduction_types via shared hook + ReferenceSelect inline create.
   // SETL-LINK-01: consume default_recovery_rail / may_draw_escrow / survives_separation (DoD §8 ask pre-select).

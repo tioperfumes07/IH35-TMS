@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 import { getLoadsReport, type LoadsReportDateField } from "./loads-report.service.js";
 
@@ -8,10 +9,10 @@ const querySchema = companyQuerySchema.extend({
   to: z.string().date(),
   // LEAD 443.206 D8 — default = the scheduled pickup date (the boards' field); "created" is accepted and reported as pickup.
   date_field: z.enum(["created", "pickup", "delivery"]).default("pickup"),
-  customer_id: z.string().uuid().optional(),
-  driver_id: z.string().uuid().optional(),
-  unit_id: z.string().uuid().optional(),
-  trailer_id: z.string().uuid().optional(),
+  customer_id: entityIdFilterSchema.optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  unit_id: entityIdFilterSchema.optional(),
+  trailer_id: entityIdFilterSchema.optional(),
   status: z.string().trim().min(1).optional(),
   trip_type: z.enum(["NB", "TR", "SB", "LOCAL"]).optional(),
   factoring_status: z.string().trim().min(1).optional(),

@@ -9,7 +9,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -364,12 +364,11 @@ export function CardOverageQueuePage() {
         <div className="flex flex-wrap items-end gap-3" data-testid="fuel-card-overage-filters">
           <label className="text-xs text-[#4B5563]">
             Driver
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={companyId}
               value={staged.draft.driverId || null}
               onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
-              allowCreate={false}
               placeholder="All drivers"
               className="mt-1"
               dataTestId="fuel-card-overage-filter-driver"
@@ -377,12 +376,11 @@ export function CardOverageQueuePage() {
           </label>
           <label className="text-xs text-[#4B5563]">
             Unit
-            <EntityPicker
+            <EntityMultiSelect
               kind="unit"
               operatingCompanyId={companyId}
               value={staged.draft.unitId || null}
               onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
-              allowCreate={false}
               placeholder="All units"
               className="mt-1"
               dataTestId="fuel-card-overage-filter-unit"

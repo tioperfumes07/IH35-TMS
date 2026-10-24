@@ -322,9 +322,9 @@ type ApAgingApiPayload = {
   }>;
 };
 
-export async function getArAgingReport(companyId: string, asOfDate: string): Promise<ARAgingResponse> {
+export async function getArAgingReport(companyId: string, asOfDate: string, customerId?: string): Promise<ARAgingResponse> {
   const raw = await apiRequest<ArAgingApiPayload>(
-    withCompany(`/api/v1/reports/ar-aging?as_of_date=${encodeURIComponent(asOfDate)}`, companyId)
+    withCompany(`/api/v1/reports/ar-aging?as_of_date=${encodeURIComponent(asOfDate)}${customerId ? `&customer_id=${encodeURIComponent(customerId)}` : ""}`, companyId)
   );
   const rows: ARAgingRow[] = raw.rows.map((r) => ({
     customer_id: r.customer_id,
@@ -353,9 +353,9 @@ export async function getArAgingReport(companyId: string, asOfDate: string): Pro
   };
 }
 
-export async function getApAgingReport(companyId: string, asOfDate: string): Promise<APAgingResponse> {
+export async function getApAgingReport(companyId: string, asOfDate: string, vendorId?: string): Promise<APAgingResponse> {
   const raw = await apiRequest<ApAgingApiPayload>(
-    withCompany(`/api/v1/reports/ap-aging?as_of_date=${encodeURIComponent(asOfDate)}`, companyId)
+    withCompany(`/api/v1/reports/ap-aging?as_of_date=${encodeURIComponent(asOfDate)}${vendorId ? `&vendor_id=${encodeURIComponent(vendorId)}` : ""}`, companyId)
   );
   const rows: APAgingRow[] = raw.rows.map((r) => ({
     vendor_id: r.vendor_id,
@@ -433,16 +433,16 @@ export type FleetLocationHosRow = {
   hos_status: string | null;
 };
 
-export function getFleetLocationHos(operatingCompanyId: string) {
+export function getFleetLocationHos(operatingCompanyId: string, unitId?: string) {
   return apiRequest<{ rows: FleetLocationHosRow[]; generated_at: string; count: number }>(
-    withCompany(`/api/v1/telematics/fleet-location-hos?format=json`, operatingCompanyId)
+    withCompany(`/api/v1/telematics/fleet-location-hos?format=json${unitId ? `&unit_id=${encodeURIComponent(unitId)}` : ""}`, operatingCompanyId)
   );
 }
 
 // Downloads the .xlsx the same endpoint produces.
-export async function downloadFleetLocationHosXlsx(operatingCompanyId: string) {
+export async function downloadFleetLocationHosXlsx(operatingCompanyId: string, unitId?: string) {
   return downloadBinaryExport(
-    withCompany(`/api/v1/telematics/fleet-location-hos?format=xlsx`, operatingCompanyId)
+    withCompany(`/api/v1/telematics/fleet-location-hos?format=xlsx${unitId ? `&unit_id=${encodeURIComponent(unitId)}` : ""}`, operatingCompanyId)
   );
 }
 
@@ -603,10 +603,12 @@ export async function getVendorStatementOfAccount(params: {
 export async function exportArAging(params: {
   operating_company_id: string;
   as_of_date?: string;
+  customer_id?: string;
   format: StatementFormat;
 }) {
   const query = new URLSearchParams();
   if (params.as_of_date) query.set("as_of_date", params.as_of_date);
+  if (params.customer_id) query.set("customer_id", params.customer_id);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return downloadBinaryExport(withCompany(`/api/v1/accounting/ar-aging/export/${params.format}${suffix}`, params.operating_company_id));
 }
@@ -614,10 +616,12 @@ export async function exportArAging(params: {
 export async function exportApAging(params: {
   operating_company_id: string;
   as_of_date?: string;
+  vendor_id?: string;
   format: StatementFormat;
 }) {
   const query = new URLSearchParams();
   if (params.as_of_date) query.set("as_of_date", params.as_of_date);
+  if (params.vendor_id) query.set("vendor_id", params.vendor_id);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return downloadBinaryExport(withCompany(`/api/v1/accounting/ap-aging/export/${params.format}${suffix}`, params.operating_company_id));
 }
@@ -1151,11 +1155,13 @@ export async function getFuelReconciliation(params: {
   operating_company_id: string;
   period_start: string;
   period_end: string;
+  unit_id?: string;
 }): Promise<FuelReconciliationResponse> {
   const q = new URLSearchParams({
     period_start: params.period_start,
     period_end: params.period_end,
   });
+  if (params.unit_id) q.set("unit_id", params.unit_id);
   return apiRequest<FuelReconciliationResponse>(
     withCompany(`/api/v1/reports/fuel-reconciliation?${q.toString()}`, params.operating_company_id),
   );
@@ -1214,11 +1220,13 @@ export async function getMaintenanceCostPerUnit(params: {
   operating_company_id: string;
   period_start: string;
   period_end: string;
+  unit_id?: string;
 }): Promise<MaintenanceCostPerUnitResponse> {
   const q = new URLSearchParams({
     period_start: params.period_start,
     period_end: params.period_end,
   });
+  if (params.unit_id) q.set("unit_id", params.unit_id);
   try {
     return await apiRequest<MaintenanceCostPerUnitResponse>(
       withCompany(`/api/v1/reports/maintenance-cost-per-unit?${q.toString()}`, params.operating_company_id),
@@ -1228,7 +1236,7 @@ export async function getMaintenanceCostPerUnit(params: {
       const month = params.period_start.slice(0, 7);
       return apiRequest<MaintenanceCostPerUnitResponse>(
         withCompany(
-          `/api/v1/reports/maintenance-cost-per-unit?period=${encodeURIComponent(month)}`,
+          `/api/v1/reports/maintenance-cost-per-unit?period=${encodeURIComponent(month)}${params.unit_id ? `&unit_id=${encodeURIComponent(params.unit_id)}` : ""}`,
           params.operating_company_id,
         ),
       );

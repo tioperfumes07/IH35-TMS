@@ -7,7 +7,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { Button } from "../../../components/Button";
 import { fetchAuditReport, type AuditReportParams, type AuditReportRow } from "../../../api/auditReports";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { ReportsSubNav } from "../ReportsSubNav";
 import { mmmDdTime } from "../../../lib/formatDate";
@@ -239,12 +239,11 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
                   {/* C1 PICKER LAW: was a raw-UUID box. It sits on an audit REPORT, but a driver is a
                       first-class entity with a canonical roster, so it is NOT an opaque forensic id
                       and does not qualify for the admin-audit exemption. FILTER → allowCreate={false}. */}
-                  <EntityPicker
+            <EntityMultiSelect
                     kind="driver"
                     operatingCompanyId={companyId}
                     value={driverFilter || null}
                     onChange={(next) => { setDriverFilter(next ?? ""); setOffset(0); }}
-                    allowCreate={false}
                     placeholder="All drivers"
                   />
                 </div>

@@ -8,6 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-runner-filters-driver-search";
@@ -27,44 +28,34 @@ export function collectProblems(root = ROOT) {
     return problems;
   }
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  const hasEntityPicker =
-    /EntityPicker/.test(src) &&
-    (/kind=["']driver["']/.test(src) || /kind=\{\s*["']driver["']\s*\}/.test(src));
-  if (hasEntityPicker) {
-    // EntityPicker kind=driver owns server search — silent-cap class closed.
-    if (/listDrivers\([\s\S]*limit:\s*500/.test(code)) {
-      problems.push(`${FILE}: must not keep silent listDrivers limit:500 alongside EntityPicker`);
-    }
-  } else {
-    if (!/driverSearch/.test(code)) {
-      problems.push(`${FILE}: must declare driverSearch state for server type-ahead`);
-    }
-    if (/search:\s*""/.test(code)) {
-      problems.push(`${FILE}: must not hardcode search:"" with limit:200 (silent cap)`);
-    }
-    if (!/search:\s*driverSearch/.test(code)) {
-      problems.push(`${FILE}: listDrivers must pass search: driverSearch || undefined`);
-    }
-    if (!/onSearch=\{setDriverSearch\}/.test(src)) {
-      problems.push(`${FILE}: driver Combobox must wire onSearch={setDriverSearch}`);
-    }
-    if (!/queryKey:[\s\S]*driverSearch/.test(code)) {
-      problems.push(`${FILE}: driversQuery queryKey must include driverSearch`);
-    }
-    if (/driver_select[\s\S]{0,800}SelectCombobox/.test(src)) {
-      problems.push(`${FILE}: driver_select must use Combobox with onSearch, not SelectCombobox`);
-    }
-  }
+  problems.push(...multiSelectFilterProblems(src,{file:FILE,kind:'driver'}));
+  if (/listDrivers\(/.test(code)) problems.push(`${FILE}: driver roster must come from canonical searched multi-select, not a second capped query`);
+  const wrapper = readRel(root, 'apps/frontend/src/components/EntityMultiSelect.tsx') ?? '';
+  const registry = readRel(root, 'apps/frontend/src/components/parity/entityPickerRegistry.ts') ?? '';
+  problems.push(...searchContractProblems(wrapper, registry));
+  return problems;
+}
+
+function searchContractProblems(wrapper, registry) {
+  const problems = [];
+  const driver = registry.slice(registry.indexOf('  driver: {'), registry.indexOf('  unit: {'));
+  for (const token of ['onSearch={setSearch}', 'serverSearch={config.serverSearch}', 'operatingCompanyId, kind, search', 'search: search || undefined']) if (!wrapper.includes(token)) problems.push(`EntityMultiSelect: missing searched roster contract ${token}`);
+  for (const token of ['serverSearch: true','const search = opts?.search || undefined', 'await listDrivers({','operating_company_id: operatingCompanyId', '          search,']) if (!driver.includes(token)) problems.push(`driver registry: missing server search contract ${token}`);
   return problems;
 }
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const baseline = collectProblems();
   if (baseline.length) {
     console.error(`${LABEL} SELFTEST FAIL:`);
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
+  const wrapper = readRel(ROOT,'apps/frontend/src/components/EntityMultiSelect.tsx');
+  const registry = readRel(ROOT,'apps/frontend/src/components/parity/entityPickerRegistry.ts');
+  for (const token of ['onSearch={setSearch}', 'serverSearch={config.serverSearch}', 'search: search || undefined']) if (!searchContractProblems(wrapper.replace(token,'REMOVED'),registry).length) throw new Error(`escaped shared search plant ${token}`);
+  if (!searchContractProblems(wrapper,registry.replace('const search = opts?.search || undefined','const search = undefined')).length) throw new Error('escaped driver search plant');
   const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-runner-filters-"));
   try {
     const tmpStubDir = path.join(stubRoot, "apps/frontend/src/pages/reports/runners");

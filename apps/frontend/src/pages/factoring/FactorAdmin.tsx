@@ -8,7 +8,7 @@ import {
   createFactor,
   createLetterOfRelease,
   deactivateFactor,
-  getCustomerFactor,
+  getCustomerFactorHistories,
   listFactors,
   listLetterOfReleases,
   updateFactor,
@@ -24,6 +24,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { Combobox } from "../../components/Combobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
+import { useTranslation } from "../../hooks/useTranslation";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatUsdCents } from "../../lib/money";
 import { useToast } from "../../components/Toast";
@@ -129,6 +131,7 @@ type AddFactorForm = {
 };
 
 export function FactorAdmin() {
+  const { t } = useTranslation();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -237,7 +240,7 @@ export function FactorAdmin() {
 
   const customerFactorDetailQuery = useQuery({
     queryKey: ["factoring", "customer-factor-detail", companyId, detailCustomerId],
-    queryFn: () => getCustomerFactor(detailCustomerId, companyId),
+    queryFn: () => getCustomerFactorHistories(detailCustomerId, companyId),
     enabled: Boolean(companyId && detailCustomerId),
   });
 
@@ -334,7 +337,7 @@ export function FactorAdmin() {
       pushToast("Customer assignment saved", "success");
       setShowAssignCustomerModal(false);
       setDetailCustomerId(assignCustomerId);
-      await queryClient.invalidateQueries({ queryKey: ["factoring", "customer-factor-detail", companyId, assignCustomerId] });
+      await queryClient.invalidateQueries({ queryKey: ["factoring", "customer-factor-detail", companyId] });
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to assign customer"), "error"),
   });
@@ -494,29 +497,20 @@ export function FactorAdmin() {
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {/* CLS-CUST-BARE-SELECT: ReferenceSelect createKind=customer (EntityPicker has no customer kind). */}
             <div className="w-80" data-testid="factor-admin-filter-customer">
-              <ReferenceSelect
+              <EntityMultiSelect
+                kind="customer"
                 value={detailCustomerId || null}
                 onChange={(next) => selectDetailCustomer(next ?? "")}
-                options={customerOptions}
-                createKind="customer"
                 operatingCompanyId={companyId}
-                placeholder="Select customer for detail view"
+                placeholder="Select customers for history"
                 disabled={!companyId}
-                loading={customersQuery.isLoading}
-                onSearch={setCustomerSearch}
-              />
-              <CappedListNotice
-                shown={customerOptions.length}
-                limit={CUSTOMER_PICKER_LIMIT}
-                total={customersQuery.data?.total}
-                hint="Type to search the full customer catalog."
-                className="mt-1 text-xs text-[#4B5563]"
               />
             </div>
           </div>
 
           {detailCustomerId ? (
             <div className="grid gap-3 lg:grid-cols-2">
+              {customerFactorDetailQuery.data?.capped_customer_count ? <p role="status" className="lg:col-span-2">{t("common.batch_history_limit", "Batch history is limited to the latest 200 batches per customer. {{count}} selected customer histories reached that limit; this is not a complete total.", { count: customerFactorDetailQuery.data.capped_customer_count })}</p> : null}
               <div className="border-t border-gray-200 p-3">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                   Assignment History {selectedCustomer ? `- ${selectedCustomer.name}` : ""}
@@ -552,7 +546,7 @@ export function FactorAdmin() {
                   />
                 ) : (
                   <ParityTable<FactorBatchHistoryRow>
-                    title="Factoring batches — this customer"
+                    title="Factoring batches — selected customers"
                     columns={BATCH_COLUMNS}
                     rows={batchRows}
                     rowKey={(row) => row.id}

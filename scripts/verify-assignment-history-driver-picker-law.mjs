@@ -1,16 +1,14 @@
 #!/usr/bin/env node
 /**
- * Assignment History Driver EntityPicker must obey universal picker law (V2):
- * allowCreate ON so + Add new / Create Driver is the first row.
- *
- * FAIL: allowCreate={false} on the Driver filter (AUDIT secondary.assignments:picker_law unpaid).
- * PASS: Driver EntityPicker offers create (allowCreate / default true — not false).
+ * Assignment History keeps its canonical driver-create workflow while its filter
+ * accepts multiple drivers. Creation is a separate action, not a filter side effect.
  *
  * Self-test: node scripts/verify-assignment-history-driver-picker-law.mjs --selftest
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from "./lib/entity-multiselect-filter-contract.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-assignment-history-driver-picker-law";
@@ -21,44 +19,30 @@ function assert(cond, msg) {
 }
 
 function check(src = fs.readFileSync(PAGE, "utf8")) {
-  assert(/EntityPicker/.test(src), "AssignmentHistoryPage must use EntityPicker");
-  assert(/kind=["']driver["']/.test(src), "must have Driver EntityPicker");
-  // Isolate the Driver EntityPicker JSX block (kind=driver … closing />)
-  const m = src.match(/<EntityPicker[\s\S]*?kind=["']driver["'][\s\S]*?\/>/);
-  assert(m, "could not isolate Driver EntityPicker JSX");
-  const block = m[0];
-  assert(
-    !/allowCreate=\{false\}/.test(block),
-    "Driver EntityPicker must not set allowCreate={false} (picker_law)"
-  );
-  assert(
-    /allowCreate(?:\s|=|>|\/)/.test(block) || !/allowCreate/.test(block),
-    "Driver EntityPicker must allow create (explicit allowCreate or default true)"
-  );
+  assert(multiSelectFilterProblems(src, { file: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx", kind: "driver" }).length === 0, "canonical scoped multi-driver filter must forward every selected ID");
+  assert(src.includes('import { CreateDriverModal } from "../../components/drivers/CreateDriverModal"'), "must import the canonical driver creator");
+  assert(/onClick=\{\(\) => setCreateDriverOpen\(true\)\}/.test(src), "create action must open the driver creator");
+  assert(/<CreateDriverModal\s+open=\{createDriverOpen\}\s+companyId=\{companyId\}/.test(src), "canonical creator must receive open state and company scope");
+  assert(src.includes('onClose={() => setCreateDriverOpen(false)}'), "creator must close");
+  assert(src.includes('queryKey: ["entity-multi-select", companyId, "driver"]'), "created driver must refresh the scoped filter roster");
 }
 
 function selftest() {
   const original = fs.readFileSync(PAGE, "utf8");
-  const broken = original.replace(
-    /(<EntityPicker[\s\S]*?kind=["']driver["'][\s\S]*?)allowCreate(\s|\n)/,
-    "$1allowCreate={false}$2"
-  );
-  // If allowCreate prop missing, inject false
-  let planted = broken;
-  if (broken === original) {
-    planted = original.replace(
-      /(<EntityPicker[\s\S]*?kind=["']driver["'][\s\S]*?)(\/>)/,
-      "$1allowCreate={false}\n          $2"
-    );
+  selftestMultiSelectFilterContract();
+  for (const [from, to] of [
+    ['kind="driver"', 'kind="unit"'],
+    ['setCreateDriverOpen(true)', 'setCreateDriverOpen(false)'],
+    ['companyId={companyId}', 'companyId={""}'],
+    ['<CreateDriverModal', '<div'],
+    ['onClose={() => setCreateDriverOpen(false)}', 'onClose={() => undefined}'],
+    ['queryKey: ["entity-multi-select", companyId, "driver"]', 'queryKey: ["other"]'],
+  ]) {
+    assert(original.includes(from), `plant must change source: ${from}`);
+    let failed = false;
+    try { check(original.replaceAll(from, to)); } catch { failed = true; }
+    assert(failed, `planted defect survived: ${from}`);
   }
-  assert(planted !== original, "--selftest plant must mutate allowCreate");
-  let failed = false;
-  try {
-    check(planted);
-  } catch {
-    failed = true;
-  }
-  assert(failed, "--selftest expected FAIL when allowCreate={false}");
   check();
   console.log(`${LABEL}: OK — selftest PASS`);
 }

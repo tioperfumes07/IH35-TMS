@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { PoolClient } from "pg";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { computePmCostPerMile } from "../maintenance/pm-cost-per-mile.service.js";
 import {
@@ -14,6 +15,7 @@ import {
 
 import { queryBoolean } from "../lib/query-boolean.js";
 const periodQuerySchema = companyQuerySchema.extend({
+  unit_id: entityIdFilterSchema.optional(),
   period_start: z.string().date(),
   period_end: z.string().date(),
   include_roadservice: queryBoolean().optional().default(true),
@@ -21,6 +23,7 @@ const periodQuerySchema = companyQuerySchema.extend({
 });
 
 const legacyMonthSchema = companyQuerySchema.extend({
+  unit_id: entityIdFilterSchema.optional(),
   period: z.string().regex(/^\d{4}-\d{2}$/),
 });
 
@@ -162,6 +165,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
     let endDay: string;
     let includeRoadservice = true;
     let basis: "cash" | "accrual" = "accrual";
+    let unitIds: string[] | null = null;
 
     if (parsedPeriod.success) {
       operatingCompanyId = parsedPeriod.data.operating_company_id;
@@ -169,8 +173,10 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
       endDay = parsedPeriod.data.period_end;
       includeRoadservice = parsedPeriod.data.include_roadservice;
       basis = parsedPeriod.data.basis;
+      unitIds = parsedPeriod.data.unit_id ? entityIdFilterValues(parsedPeriod.data.unit_id) : null;
     } else if (parsedLegacy.success) {
       operatingCompanyId = parsedLegacy.data.operating_company_id;
+      unitIds = parsedLegacy.data.unit_id ? entityIdFilterValues(parsedLegacy.data.unit_id) : null;
       const window = parseMonthWindow(parsedLegacy.data.period);
       const startDayUtc = window.start.slice(0, 10);
       const endExclusiveMs = new Date(window.end).getTime();
@@ -185,7 +191,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
       return reply.code(400).send({ error: "validation_error", details: { period: ["period_start must be on or before period_end"] } });
     }
 
-    const cacheKey = `${operatingCompanyId}:${startDay}:${endDay}:${includeRoadservice}:${basis}`;
+    const cacheKey = `${operatingCompanyId}:${startDay}:${endDay}:${includeRoadservice}:${basis}:${unitIds?.join(",") ?? "all"}`;
     const hit = cache.get(cacheKey);
     if (hit) return hit;
 
@@ -199,6 +205,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
               AND wo.unit_id IS NOT NULL
               AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
               AND ($4::boolean OR COALESCE(wo.bucket::text, 'in_house') <> 'roadside')
+              AND ($5::uuid[] IS NULL OR wo.unit_id = ANY($5::uuid[]))
           ),
           line_totals AS (
             SELECT
@@ -252,7 +259,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
           GROUP BY u.id, u.unit_number
           ORDER BY SUM(we.grand_cents) DESC
         `,
-        [operatingCompanyId, startDay, endDay, includeRoadservice]
+        [operatingCompanyId, startDay, endDay, includeRoadservice, unitIds]
       );
 
       const categoryAgg = await client.query<CategoryAggRow>(
@@ -264,6 +271,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
               AND wo.unit_id IS NOT NULL
               AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
               AND ($4::boolean OR COALESCE(wo.bucket::text, 'in_house') <> 'roadside')
+              AND ($5::uuid[] IS NULL OR wo.unit_id = ANY($5::uuid[]))
           ),
           wo_enriched AS (
             SELECT
@@ -277,7 +285,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
           FROM wo_enriched we
           GROUP BY COALESCE(we.wo_type, 'unknown')
         `,
-        [operatingCompanyId, startDay, endDay, includeRoadservice]
+        [operatingCompanyId, startDay, endDay, includeRoadservice, unitIds]
       );
 
       const milesRows = await client.query<MilesRow>(

@@ -1,9 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 
 const querySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid(),
+  driver_id: entityIdFilterSchema,
   start: z.string().optional(),
   end: z.string().optional(),
 });
@@ -32,12 +33,12 @@ export async function registerDriverPayHistoryRoutes(app: FastifyInstance) {
             COALESCE(ROUND(s.net_pay::numeric * 100), 0)::bigint AS net_cents
           FROM driver_finance.driver_settlements s
           WHERE s.operating_company_id = $1::uuid
-            AND s.driver_id = $2
+            AND s.driver_id = ANY($2::uuid[])
             AND s.period_start >= $3::date
             AND s.period_end <= $4::date
           ORDER BY s.period_start DESC
         `,
-        [query.data.operating_company_id, query.data.driver_id, start, end]
+        [query.data.operating_company_id, entityIdFilterValues(query.data.driver_id), start, end]
       );
       const settlementIds = settlementsRes.rows.map((row: any) => row.id);
       const lines =

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { driverBillAmountKnown, liveDriverBill, openDriverBill } from "../accounting/live-document-predicates.sql.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -14,7 +15,7 @@ const querySchema = companyQuerySchema.extend({
 });
 
 const openBillsQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -425,12 +426,12 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
       const reg = await client.query(`SELECT to_regclass('driver_finance.driver_bills') IS NOT NULL AS ok`);
       if (!Boolean(reg.rows[0]?.ok)) return { kind: "unavailable" as const };
 
-      const driverFilter = parsed.data.driver_id ? "AND db.driver_id = $2" : "";
+      const driverFilter = parsed.data.driver_id ? "AND db.driver_id = ANY($2::uuid[])" : "";
       const countValues: unknown[] = [parsed.data.operating_company_id];
       const queryValues: unknown[] = [parsed.data.operating_company_id];
       if (parsed.data.driver_id) {
-        countValues.push(parsed.data.driver_id);
-        queryValues.push(parsed.data.driver_id);
+        countValues.push(entityIdFilterValues(parsed.data.driver_id));
+        queryValues.push(entityIdFilterValues(parsed.data.driver_id));
       }
       queryValues.push(parsed.data.limit, parsed.data.offset);
 

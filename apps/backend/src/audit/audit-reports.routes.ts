@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
@@ -410,7 +411,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
   app.get("/api/v1/audit/reports/deduction-trail", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const p = baseQuerySchema.extend({
-      driver_id: z.string().uuid().optional(),
+      driver_id: entityIdFilterSchema.optional(),
     }).safeParse(req.query ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });
     const d = p.data;
@@ -420,7 +421,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     if (d.from) { values.push(d.from); fromPos = values.length; }
     if (d.to) { values.push(d.to); toPos = values.length; }
     let driverPos = 0;
-    if (d.driver_id) { values.push(d.driver_id); driverPos = values.length; }
+    if (d.driver_id) { values.push(entityIdFilterValues(d.driver_id)); driverPos = values.length; }
     values.push(d.limit); const limPos = values.length;
     values.push(d.offset); const offPos = values.length;
 
@@ -485,7 +486,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
       FROM combined c
       LEFT JOIN identity.users u ON u.id = c.actor_user_id::uuid
       ${auditSubjectJoins("c")}
-      ${driverPos ? `WHERE c.subject_id = $${driverPos}::uuid` : ""}
+      ${driverPos ? `WHERE c.subject_id = ANY($${driverPos}::uuid[])` : ""}
       ORDER BY c.occurred_at DESC
       LIMIT $${limPos} OFFSET $${offPos}`;
     return withCurrentUser(req.user!.uuid, async (client) => {

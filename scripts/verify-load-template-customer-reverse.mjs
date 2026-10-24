@@ -21,7 +21,7 @@ function failures(s = files) {
     required = JSON.parse(s.matrix).leaves?.find((leaf) => leaf.id === "dispatch.modal.save_load_template")?.required?.includes("reverse_link") === true;
   } catch {}
   return [
-  ["company-scoped customer/template filters", s.routes.includes("customer_id: z.string().uuid().optional()") && s.routes.includes("template_id: z.string().uuid().optional()") && s.service.includes("template_json->>'customer_id' = $${values.length}") && s.service.includes("id = $${values.length}::uuid")],
+  ["company-scoped customer/template filters", s.routes.includes("customer_id: entityIdFilterSchema.optional()") && s.routes.includes("template_id: z.string().uuid().optional()") && s.service.includes("template_json->>'customer_id' = ANY($${values.length}::text[])") && s.service.includes("values.push(entityIdFilterValues(filters.customer_id))") && s.service.includes('const predicates = ["operating_company_id = $1::uuid"]') && s.service.includes("id = $${values.length}::uuid")],
   ["filtered customer profile read", s.reverse.includes("listLoadTemplates(operatingCompanyId, { customer_id: customerId })") && s.api.includes('params.set("customer_id", filters.customer_id)')],
   ["customer profile mount", s.customer.includes("<CustomerLoadTemplatesReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />")],
   ["exact template drill", s.reverse.includes('kind="load_template"') && s.reverse.includes("id={template.id}") && s.library.includes('searchParams.get("template_id")') && s.library.includes("template_id: templateId")],
@@ -32,8 +32,9 @@ function failures(s = files) {
   ["exact Built annotation", s.self.split("\n").includes(HEADER)],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
+  if (failures().length) throw new Error(failures().join('; '));
   const checks = [
-    failures({ ...files, service: files.service.replace("template_json->>'customer_id' = $${values.length}", "TRUE") }).includes("company-scoped customer/template filters"),
+    ...["template_json->>'customer_id' = ANY($${values.length}::text[])", "values.push(entityIdFilterValues(filters.customer_id))", 'const predicates = ["operating_company_id = $1::uuid"]'].map(token => failures({ ...files, service: files.service.replace(token, "REMOVED") }).includes("company-scoped customer/template filters")),
     failures({ ...files, reverse: files.reverse.replace("listLoadTemplates(operatingCompanyId, { customer_id: customerId })", "listLoadTemplates(operatingCompanyId)") }).includes("filtered customer profile read"),
     failures({ ...files, customer: "" }).includes("customer profile mount"),
     failures({ ...files, library: files.library.replace("template_id: templateId", "") }).includes("exact template drill"),
@@ -45,7 +46,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, self: files.self.replace('"leaves":["dispatch.modal.save_load_template"]', '"leaves":["dispatch.modal.load_create"]') }).includes("exact Built annotation"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-load-template-customer-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-load-template-customer-reverse selftest PASS — 10/10 runtime/matrix/header mutations red"); process.exit(0);
+  console.log(`verify-load-template-customer-reverse selftest PASS — ${checks.length}/${checks.length} runtime/matrix/header mutations red`); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-load-template-customer-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }

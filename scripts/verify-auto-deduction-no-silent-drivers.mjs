@@ -10,6 +10,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-auto-deduction-no-silent-drivers";
@@ -45,12 +46,11 @@ export function collectProblems(root = ROOT) {
   // LST-F5184 — reverse list filter
   if (
     !/dataTestId="auto-deduction-policies-filter-driver"/.test(src) ||
-    !/allowCreate=\{false\}/.test(src) ||
     !/searchParams\.get\("driver_id"\)/.test(src) ||
     !/setSearchParams/.test(src) ||
-    !/EntityPicker/.test(src)
+    multiSelectFilterProblems(src, {file: FILE, kind: 'driver', testId: 'auto-deduction-policies-filter-driver'}).length > 0
   ) {
-    problems.push(`${FILE}: must render EntityPicker driver filter (allowCreate=false) synced to ?driver_id=`);
+    problems.push(`${FILE}: must render scoped, no-create EntityMultiSelect driver filter synced to ?driver_id=`);
   }
   const hook = readRel(root, "apps/frontend/src/hooks/useAutoDeductionPolicies.ts") ?? "";
   if ((hook.match(/onError:/g) ?? []).length < 3) {
@@ -70,6 +70,7 @@ function collectEvidenceProblems(matrixSrc, selfSrc) {
 }
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const baseline = collectProblems();
   const matrix = readRel(ROOT, MATRIX) ?? "";
   const self = readRel(ROOT, SELF) ?? "";

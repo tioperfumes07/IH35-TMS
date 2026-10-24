@@ -24,6 +24,18 @@ function client() {
 }
 
 describe("getHosDailyRoster (canonical source for timeline + table)", () => {
+  it("binds the complete multi-driver selection before roster rows and KPI counts", async () => {
+    const ids = [D1, "33333333-3333-4333-8333-333333333333"];
+    let seen: { sql: string; values?: unknown[] } | undefined;
+    const db = { query: async <R>(sql: string, values?: unknown[]) => {
+      if (sql.includes("FROM telematics.vehicle_driver_assignments")) seen = { sql, values };
+      return { rows: [] as R[] };
+    } };
+    const roster = await getHosDailyRoster(db, OCI, "2026-06-19", NOW, ids);
+    expect(seen?.sql).toContain("a.driver_id = ANY($2::uuid[])");
+    expect(seen?.values).toEqual([OCI, ids]);
+    expect(roster.counts.active).toBe(0);
+  });
   it("returns one row per active driver with name/unit + real clocks + KPI counts", async () => {
     const roster = await getHosDailyRoster(client(), OCI, "2026-06-19", NOW);
     expect(roster.drivers).toHaveLength(1);

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -22,9 +23,9 @@ const listQuerySchema = companyQuerySchema.extend({
   severity: z.string().optional(),
   resolution_status: z.string().optional(),
   subject_type: z.string().optional(),
-  subject_driver_id: z.string().uuid().optional(),
-  subject_unit_id: z.string().uuid().optional(),
-  subject_vendor_id: z.string().uuid().optional(),
+  subject_driver_id: entityIdFilterSchema.optional(),
+  subject_unit_id: entityIdFilterSchema.optional(),
+  subject_vendor_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -121,8 +122,8 @@ async function listIntegrityAlertsHandler(
     }
     for (const column of ["subject_driver_id", "subject_unit_id", "subject_vendor_id"] as const) {
       if (!query[column]) continue;
-      values.push(query[column]);
-      filters.push(`ia.${column} = $${values.length}::uuid`);
+      values.push(entityIdFilterValues(query[column]));
+      filters.push(`ia.${column} = ANY($${values.length}::uuid[])`);
     }
     const countRes = await client.query<{ total_count: string }>(
       `SELECT COUNT(*)::text AS total_count

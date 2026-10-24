@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -25,6 +25,10 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 
 vi.mock("../ReportsSubNav", () => ({
   ReportsSubNav: () => <nav aria-label="Reports subnav stub" />,
+}));
+vi.mock("../../../components/EntityMultiSelect", () => ({
+  EntityMultiSelect: ({ value, onChange, dataTestId }: { value: string | null; onChange: (next: string | null) => void; dataTestId?: string }) =>
+    <input data-testid={dataTestId} value={value ?? ""} onChange={(event) => onChange(event.target.value || null)} />,
 }));
 
 function wrap(ui: ReactElement) {
@@ -76,7 +80,27 @@ describe("APAgingPage drill-through", () => {
   it("loads aging for the selected company only", async () => {
     render(wrap(<APAgingPage />));
     await waitFor(() => expect(screen.getByText("Loves Travel Stops")).toBeInTheDocument());
-    expect(reportsApi.getApAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String));
+    expect(reportsApi.getApAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String), undefined);
+  });
+
+  it("stages the whole vendor CSV and uses it for report KPIs plus both export formats", async () => {
+    const ids = `${VENDOR_ID},33333333-3333-4333-8333-333333333333`;
+    vi.mocked(reportsApi.getApAgingReport).mockImplementation(async (_company, date, selection) => ({
+      status: "real", generated_at: "2026-10-23T12:00:00Z", as_of_date: date,
+      rows: selection ? [sampleRow] : [sampleRow, { ...sampleRow, vendor_id: "44444444-4444-4444-8444-444444444444", vendor_name: "Other vendor", total_open_cents: 10_000, cleared_open_cents: 10_000 }],
+    }));
+    const user = userEvent.setup();
+    render(wrap(<APAgingPage />));
+    await waitFor(() => expect(screen.getByText("Total owed").parentElement).toHaveTextContent("$230.00"));
+    fireEvent.change(screen.getByTestId("ap-aging-filter-vendor"), { target: { value: ids } });
+    expect(reportsApi.getApAgingReport).not.toHaveBeenCalledWith(COMPANY_ID, expect.any(String), ids);
+    await user.click(screen.getByTestId("reports-ap-aging-apply"));
+    await waitFor(() => expect(reportsApi.getApAgingReport).toHaveBeenLastCalledWith(COMPANY_ID, expect.any(String), ids));
+    await waitFor(() => expect(screen.getByText("Total owed").parentElement).toHaveTextContent("$130.00"));
+    await user.click(screen.getByRole("button", { name: "Export PDF" }));
+    await waitFor(() => expect(reportsApi.exportApAging).toHaveBeenCalledWith(expect.objectContaining({ vendor_id: ids, format: "pdf" })));
+    await user.click(screen.getByRole("button", { name: "Export XLSX" }));
+    await waitFor(() => expect(reportsApi.exportApAging).toHaveBeenCalledWith(expect.objectContaining({ vendor_id: ids, format: "xlsx" })));
   });
 
   // ACCT-F410-C — RETRACTION. ACCT-F410-B asserted the vendor name must NOT reach the vendor

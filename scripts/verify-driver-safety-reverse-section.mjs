@@ -56,6 +56,12 @@ const REQUIRED_READS = [
   { label: "drug & alcohol tests", needle: "getDriverDrugAlcoholTests(", scope: "driverId" },
 ];
 
+const MULTI_FILTER_CONTRACTS = [
+  [INTERNAL_FINES_ROUTE, 'f', 'values', 'driver_id'],
+  [DOT_ROUTE, 'di', 'values', 'driver_id'],
+  [COMPLAINTS_ROUTE, 'c', 'values', 'driver_id'],
+];
+
 export function assertDriverSafetyReverse(sources) {
   const src = {};
   for (const rel of FILES) src[rel] = stripComments(sources?.[rel] ?? read(rel));
@@ -98,7 +104,7 @@ export function assertDriverSafetyReverse(sources) {
   }
 
   // 3. Server-side scoping (NOT a client-side filter over a LIMIT 500 company list).
-  if (!/f\.driver_id = \$\$\{values\.length\}|f\.driver_id = \$/.test(src[INTERNAL_FINES_ROUTE])) {
+  if (!/f\.driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)|f\.driver_id = ANY\(\$/.test(src[INTERNAL_FINES_ROUTE])) {
     problems.push(`${INTERNAL_FINES_ROUTE}: GET internal-fines does not filter by driver in SQL — a client-side filter drops rows past LIMIT 500.`);
   }
   if (!src[API].includes(`qs.set("driver_id", params.driver_id)`)) {
@@ -114,7 +120,7 @@ export function assertDriverSafetyReverse(sources) {
   if (/from "react-router-dom"/.test(src[SECTION]) || /to=\{to \?\? "#"\}/.test(src[SECTION]) || /<Link className="text-xs font-semibold text-slate-700 underline"/.test(src[SECTION])) {
     problems.push(`${SECTION}: SectionShell Open must be EntityLink-only — bare Link / to={to ?? "#"} fallback is forbidden.`);
   }
-  if (!/di\.driver_id = \$/.test(src[DOT_ROUTE])) {
+  if (!/di\.driver_id = ANY\(\$/.test(src[DOT_ROUTE])) {
     problems.push(`${DOT_ROUTE}: GET dot-inspections does not filter by driver in SQL — the reverse hub can under-report past LIMIT 500.`);
   }
   if (!/dot_inspections: Array/.test(src[API]) || !/data\?\.dot_inspections/.test(src[SECTION])) {
@@ -138,7 +144,7 @@ export function assertDriverSafetyReverse(sources) {
 
   // 5. Complaints match either side of the record.
   const complaintsSql = src[COMPLAINTS_ROUTE];
-  if (!complaintsSql.includes("complainant_driver_id = $") || !complaintsSql.includes("respondent_driver_id = $")) {
+  if (!complaintsSql.includes("complainant_driver_id = ANY($") || !complaintsSql.includes("respondent_driver_id = ANY($")) {
     problems.push(`${COMPLAINTS_ROUTE}: driver filter does not match BOTH complainant_driver_id and respondent_driver_id — half the driver's complaints stay hidden.`);
   }
 
@@ -150,6 +156,11 @@ export function assertDriverSafetyReverse(sources) {
     problems.push(`${SECTION}: internal fine amount must render via formatUsd(amount) — safety.internal_fines.amount is numeric DOLLARS; using formatUsdCents divides by 100.`);
   }
 
+
+  for (const [file, alias, binding, field] of MULTI_FILTER_CONTRACTS) {
+    if (!src[file].includes(field + ': entityIdFilterSchema.optional()') || !src[file].includes(binding + '.push(entityIdFilterValues(query.data.' + field + '))')) problems.push(file + ': missing validated bound multi-ID filter ' + field);
+    if (!src[file].includes(alias + '.operating_company_id = $1::uuid')) problems.push(file + ': missing company scope');
+  }
   return problems;
 }
 
@@ -168,6 +179,13 @@ if (SELFTEST) {
   };
 
   // 1. a record type is dropped from the section.
+  for (const [file, alias, binding, field] of MULTI_FILTER_CONTRACTS) {
+    const bound = binding + '.push(entityIdFilterValues(query.data.' + field + '))';
+    expectCaught(file + field + ' lost array binding', { ...live, [file]: live[file].replaceAll(bound, 'REMOVED') }, 'missing validated bound multi-ID filter');
+    const company = alias + '.operating_company_id = $1::uuid';
+    expectCaught(file + field + ' lost company scope', { ...live, [file]: live[file].replaceAll(company, 'TRUE') }, 'missing company scope');
+  }
+
   expectCaught(
     "record-type-dropped",
     { ...live, [SECTION]: live[SECTION].replace(/getDriverDrugAlcoholTests\(/g, "noopRemoved(") },
@@ -180,7 +198,7 @@ if (SELFTEST) {
   );
   expectCaught(
     "dot-driver-filter-removed",
-    { ...live, [DOT_ROUTE]: live[DOT_ROUTE].replace(/AND di\.driver_id = \$\$\{values\.length\}/g, "") },
+    { ...live, [DOT_ROUTE]: live[DOT_ROUTE].replace(/AND di\.driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/g, "") },
     "does not filter by driver in SQL"
   );
   expectCaught(
@@ -248,13 +266,13 @@ if (SELFTEST) {
   // 4. server-side driver filter removed from the internal-fines SQL.
   expectCaught(
     "internal-fines-filter-removed",
-    { ...live, [INTERNAL_FINES_ROUTE]: live[INTERNAL_FINES_ROUTE].replace(/f\.driver_id = \$\$\{values\.length\}/g, "TRUE") },
+    { ...live, [INTERNAL_FINES_ROUTE]: live[INTERNAL_FINES_ROUTE].replace(/f\.driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/g, "TRUE") },
     "does not filter by driver in SQL"
   );
   // 5. complaints match only the respondent side.
   expectCaught(
     "complaints-one-sided",
-    { ...live, [COMPLAINTS_ROUTE]: live[COMPLAINTS_ROUTE].replace(/complainant_driver_id = \$\$\{values\.length\} OR /g, "") },
+    { ...live, [COMPLAINTS_ROUTE]: live[COMPLAINTS_ROUTE].replace(/complainant_driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\) OR /g, "") },
     "does not match BOTH complainant_driver_id and respondent_driver_id"
   );
   // 6. driver_id never leaves the client.
@@ -291,7 +309,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 16 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 22 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

@@ -154,8 +154,11 @@ export function computeFailures(sources) {
   if (!/\.\.\.claimEconomicsFields,?\s*\}\);/.test(claimShared.replace(/\s+/g, " "))) {
     errors.push("claim.shared.ts: createClaimBodySchema must spread ...claimEconomicsFields");
   }
-  if (!/trailer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(claimShared)) {
+  if (!/trailer_id:\s*entityIdFilterSchema\.optional\(\)/.test(claimShared)) {
     errors.push("claim.shared.ts: listClaimsQuerySchema must accept an optional trailer_id reverse-drill filter");
+  }
+  if (!claimRoutes.includes('values.push(entityIdFilterValues(parsed.data.trailer_id))') || !claimRoutes.includes('trailer_id = ANY($${values.length}::uuid[])')) {
+    errors.push('claim.routes.ts: trailer reverse filter must bind every validated UUID');
   }
 
   // 3) Backend routes — SELECT / INSERT / PATCH wiring + owner-locked COALESCE defaults.
@@ -346,7 +349,7 @@ $$;
 export const INSURANCE_CLAIM_RECOVERY_RAIL_VALUES = ["escrow", "settlement", "split", "ask"] as const;
 export const INSURANCE_CLAIM_REPAIR_BOOKS_TREATMENT_VALUES = ["expense", "capitalize", "ask"] as const;
 export const listClaimsQuerySchema = operatingCompanySchema.extend({
-  trailer_id: z.string().uuid().optional(),
+  trailer_id: entityIdFilterSchema.optional(),
 });
 const claimEconomicsFields = {
   fault: z.enum(INSURANCE_CLAIM_FAULT_VALUES).optional(),
@@ -450,6 +453,7 @@ export type CreateInsuranceClaimPayload = {
 
 function selftest() {
   const good = goodFixture();
+  good.claimRoutes += '\nvalues.push(entityIdFilterValues(parsed.data.trailer_id)); trailer_id = ANY($' + '${values.length}::uuid[])';
   const goodFails = computeFailures(good);
   if (goodFails.length !== 0) {
     console.error(`${LABEL} selftest FAIL: good fixture rejected:`, goodFails);
@@ -457,6 +461,9 @@ function selftest() {
   }
 
   const cases = [
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('values.push(entityIdFilterValues(parsed.data.trailer_id))', 'values.push([])'); }, "every validated UUID"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('values.push(entityIdFilterValues(parsed.data.trailer_id))', 'values.push(entityIdFilterValues(parsed.data.trailer_id).slice(0, 1))'); }, "every validated UUID"],
+    ["claimShared", (f) => { f.claimShared = f.claimShared.replace('trailer_id: entityIdFilterSchema.optional()', 'trailer_id: z.string().optional()'); }, "optional trailer_id reverse-drill filter"],
     ["migration", (f) => { f.migration = f.migration.replace("DO NOT RUN ON PROD", "safe"); }, "DO NOT RUN ON PROD"],
     ["migration", (f) => { f.migration = f.migration.replace("ADD COLUMN IF NOT EXISTS fault", "ADD COLUMN fault"); }, "ADD COLUMN IF NOT EXISTS fault"],
     ["migration", (f) => { f.migration = f.migration.replace("REFERENCES mdata.equipment(id)", "REFERENCES mdata.units(id)"); }, "mdata.equipment"],

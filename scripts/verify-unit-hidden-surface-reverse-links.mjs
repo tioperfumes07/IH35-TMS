@@ -2,6 +2,7 @@
 /** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leafRe":"^(damage_reports\.intake|fault_drafts\.review)$","task":"LINK-F5128-UNIT-HIDDEN-SURFACE-REVERSE","vertical":"class-sweep"} */
 
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const sources = {
   assets: fs.readFileSync("apps/frontend/src/components/assets/AssetListTable.tsx", "utf8"),
@@ -21,21 +22,22 @@ const checks = [
   // reads "URL-only banner is not reverse chrome" — with a live EntityPicker seeded from the same
   // deep-link param (deepLinkUnitId -> unitIdFromUrl -> applied.unitId -> staged.draft.unitId ->
   // EntityPicker value), which is real interactive reverse chrome, not a downgrade.
-  ["faults", /<EntityPicker\s*\n\s*kind="unit"[\s\S]{0,200}value=\{filterDraft\.unitId/, "fault-draft filter banner drills to canonical unit"],
+  ["faults", /<EntityMultiSelect\s*\n\s*kind="unit"[\s\S]{0,200}value=\{filterDraft\.unitId/, "fault-draft filter banner drills to canonical unit"],
   ["dtc", /if \(compact\)[\s\S]*?kind="unit" id=\{row\.unit_id\}/, "DTC compact surface drills to canonical unit"],
   ["dtc", /Unit <EntityLink kind="unit" id=\{row\.unit_id\}/, "DTC full surface drills to canonical unit"],
   ["dtc", /Open work order/, "DTC compact surface retains explicit work-order action without nested controls"],
   ["entityLink", /case "unit":[\s\S]*?return `\/fleet\/units\/\$\{id\}`/, "unit resolver targets mounted fleet profile"],
 ];
 
-const failures = (candidate) => checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label);
+const failures = (candidate) => checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label).concat(multiSelectFilterProblems(candidate.faults,{file:'apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx',kind:'unit',testId:'fault-drafts-filter-unit'}));
 const found = failures(sources);
 if (found.length) {
   console.error(`verify-unit-hidden-surface-reverse-links: FAIL — ${found.join("; ")}`);
   process.exit(1);
 }
 
-if (process.argv.includes("--self-test")) {
+if (process.argv.includes("--self-test") || process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   for (const [key, pattern, label] of checks) {
     const mutant = { ...sources, [key]: sources[key].replace(pattern, "/* planted defect */") };
     if (!failures(mutant).includes(label)) {

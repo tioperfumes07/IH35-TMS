@@ -9,7 +9,7 @@ import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWit
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -217,12 +217,11 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             <div className="relative flex flex-wrap items-end gap-2" data-testid="training-records-filters">
               <label className="text-xs text-[#4B5563]">
                 Driver
-                <EntityPicker
+                <EntityMultiSelect
                   kind="driver"
                   operatingCompanyId={operatingCompanyId}
                   value={draft.driverId || null}
                   onChange={(next) => setDriverFilter(next ?? "")}
-                  allowCreate={false}
                   placeholder="All drivers"
                   className="mt-1"
                   dataTestId="training-records-filter-driver"

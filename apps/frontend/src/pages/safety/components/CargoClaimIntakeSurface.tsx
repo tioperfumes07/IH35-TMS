@@ -18,6 +18,7 @@ import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
 import { useStagedListFilters } from "../../../components/table";
 import { formatDateUS } from "../../../lib/formatDate";
@@ -875,12 +876,11 @@ export function CargoClaimIntakeSurface({
           <div className="relative flex flex-wrap items-end gap-3" data-testid={`${pageTestId}-filters`}>
             <label className="text-xs text-[#4B5563]">
               Driver
-              <EntityPicker
+              <EntityMultiSelect
                 kind="driver"
                 operatingCompanyId={operatingCompanyId}
                 value={filterDraft.driverId || null}
                 onChange={(next) => setDriverFilter(next ?? "")}
-                allowCreate={false}
                 placeholder="All drivers"
                 className="mt-1"
                 dataTestId={`${pageTestId}-filter-driver`}
@@ -888,12 +888,11 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="text-xs text-[#4B5563]">
               Unit
-              <EntityPicker
+              <EntityMultiSelect
                 kind="unit"
                 operatingCompanyId={operatingCompanyId}
                 value={filterDraft.unitId || null}
                 onChange={(next) => setUnitFilter(next ?? "")}
-                allowCreate={false}
                 placeholder="All units"
                 className="mt-1"
                 dataTestId={`${pageTestId}-filter-unit`}
@@ -901,12 +900,11 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="text-xs text-[#4B5563]">
               Load
-              <EntityPicker
+              <EntityMultiSelect
                 kind="load"
                 operatingCompanyId={operatingCompanyId}
                 value={filterDraft.loadId || null}
                 onChange={(next) => setLoadFilter(next ?? "")}
-                allowCreate={false}
                 placeholder="All loads"
                 className="mt-1"
                 dataTestId={`${pageTestId}-filter-load`}
@@ -914,12 +912,11 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="text-xs text-[#4B5563]">
               Trailer
-              <EntityPicker
+              <EntityMultiSelect
                 kind="trailer"
                 operatingCompanyId={operatingCompanyId}
                 value={filterDraft.trailerId || null}
                 onChange={(next) => setTrailerFilter(next ?? "")}
-                allowCreate={false}
                 placeholder="All trailers"
                 className="mt-1"
                 dataTestId={`${pageTestId}-trailer-filter`}

@@ -454,6 +454,7 @@ export async function exportArAgingStatement(input: {
   userId: string;
   operating_company_id: string;
   as_of_date: string;
+  customer_id?: string;
   format: StatementExportFormat;
 }): Promise<ExportResult> {
   const companyCode = await fetchCompanyCode(input.userId, input.operating_company_id);
@@ -461,6 +462,7 @@ export async function exportArAgingStatement(input: {
     userId: input.userId,
     operating_company_id: input.operating_company_id,
     as_of_date: input.as_of_date,
+    customer_id: input.customer_id,
   });
   const periodSegment = buildAsOfSegment(input.as_of_date);
   const filename = buildStatementExportFilename({
@@ -553,6 +555,7 @@ export async function exportApAgingStatement(input: {
   userId: string;
   operating_company_id: string;
   as_of_date: string;
+  vendor_id?: string;
   format: StatementExportFormat;
 }): Promise<ExportResult> {
   const companyCode = await fetchCompanyCode(input.userId, input.operating_company_id);
@@ -560,6 +563,7 @@ export async function exportApAgingStatement(input: {
     userId: input.userId,
     operating_company_id: input.operating_company_id,
     as_of_date: input.as_of_date,
+    vendor_id: input.vendor_id,
   });
   const periodSegment = buildAsOfSegment(input.as_of_date);
   const filename = buildStatementExportFilename({

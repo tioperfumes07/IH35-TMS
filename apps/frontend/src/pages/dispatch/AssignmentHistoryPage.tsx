@@ -1,6 +1,6 @@
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone /* LV-DISPATCH-ASSIGNMENT-HISTORY-TOMBSTONE */ } from "../../lib/entity-label";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -10,7 +10,9 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
+import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
+import { useTranslation } from "../../hooks/useTranslation";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useStagedListFilters } from "../../components/table";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
@@ -26,6 +28,9 @@ type Filters = {
 const EMPTY_FILTERS: Filters = { driverId: "", from: "", to: "", reason: "" };
 
 export function AssignmentHistoryPage() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [createDriverOpen, setCreateDriverOpen] = useState(false);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   // LV-DISPATCH-ASSIGNMENT-HISTORY-FILTER-NO-CANCEL — draft/applied via useStagedListFilters;
@@ -153,15 +158,30 @@ render: (row) => {
       >
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Driver</label>
-          <EntityPicker
+          <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={draft.driverId || null}
             onChange={(next) => setDraft((d) => ({ ...d, driverId: next ?? "" }))}
-            // Universal picker law (V2): + Add new / Create Driver must be first row — do not disable create on this filter.
-            allowCreate
             placeholder="All drivers"
           />
+          {/* Preserve the existing canonical create workflow separately from read-only filtering. */}
+          <Button type="button" size="sm" variant="secondary" onClick={() => setCreateDriverOpen(true)}>
+            {t("dispatch.create_driver", "+ Create Driver")}
+          </Button>
+          {createDriverOpen ? <CreateDriverModal
+            open={createDriverOpen}
+            companyId={companyId}
+            onClose={() => setCreateDriverOpen(false)}
+            onCreated={(id) => {
+              setDraft((d) => {
+                const selected = d.driverId.split(",").filter(Boolean);
+                return selected.length >= 100 ? d : { ...d, driverId: [...new Set([...selected, id])].join(",") };
+              });
+              void queryClient.invalidateQueries({ queryKey: ["entity-multi-select", companyId, "driver"] });
+              setCreateDriverOpen(false);
+            }}
+          /> : null}
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="assignment-history-from" className="text-xs font-semibold text-gray-600">

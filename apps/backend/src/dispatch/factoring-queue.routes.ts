@@ -11,6 +11,7 @@
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { FACTORING_PATH_LOAD_MDATA_STATUSES } from "./delivery-evidence-status.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -26,8 +27,8 @@ const querySchema = z.object({
   // LINK-F5171/LINK-F5179: reverse_link — customer/load's own page needs to query its own queue
   // rows server-side; l.customer_id and l.id are real, already-selected FKs (l.customer_id -> c.id,
   // l.id -> load_id in the SELECT below), so this is a plain WHERE addition, no join change.
-  customer_id: z.string().uuid().optional(),
-  load_id: z.string().uuid().optional(),
+  customer_id: entityIdFilterSchema.optional(),
+  load_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -110,13 +111,13 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
       ];
       let customerFilter = "";
       if (customerId) {
-        filterParams.push(customerId);
-        customerFilter = `AND c.id = $${filterParams.length}::uuid`;
+        filterParams.push(entityIdFilterValues(customerId));
+        customerFilter = `AND c.id = ANY($${filterParams.length}::uuid[])`;
       }
       let loadFilter = "";
       if (loadId) {
-        filterParams.push(loadId);
-        loadFilter = `AND l.id = $${filterParams.length}::uuid`;
+        filterParams.push(entityIdFilterValues(loadId));
+        loadFilter = `AND l.id = ANY($${filterParams.length}::uuid[])`;
       }
 
       // ── fetch delivered+ loads with linked invoice info + doc presence ─────

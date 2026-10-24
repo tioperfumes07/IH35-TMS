@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * PositionHistoryPage — unit filter must be EntityPicker (not raw UUID text).
+ * PositionHistoryPage — unit filter must be scoped EntityMultiSelect (not raw UUID text).
  * Cursor even claim: 2126. LST-F5197 — filter writes URL via setSearchParams.
  */
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-position-history-unit-picker";
@@ -27,9 +28,7 @@ export function collectProblems(root = ROOT) {
     return problems;
   }
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/EntityPicker/.test(code) || !/kind=["']unit["']/.test(code)) {
-    problems.push(`${FILE}: unit filter must use EntityPicker kind="unit"`);
-  }
+  problems.push(...multiSelectFilterProblems(src, {file: FILE, kind: 'unit', testId: 'position-history-unit-filter'}));
   if (/placeholder=["']Filter by unit["']/.test(code)) {
     problems.push(`${FILE}: must not use raw text placeholder "Filter by unit"`);
   }
@@ -44,6 +43,7 @@ export function collectProblems(root = ROOT) {
 }
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const baseline = collectProblems();
   if (baseline.length) {
     console.error(`${LABEL} SELFTEST FAIL:`);
@@ -76,5 +76,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — PositionHistory unit EntityPicker`);
+  console.log(`${LABEL} OK — PositionHistory scoped unit EntityMultiSelect`);
 }

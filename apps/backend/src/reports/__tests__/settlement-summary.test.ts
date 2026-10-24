@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerSettlementSummaryRoutes } from "../settlement-summary.routes.js";
 
 const companyId = "22222222-2222-4222-8222-222222222222";
+const filterQueries = vi.hoisted(() => vi.fn());
 
 vi.mock("../shared.js", async () => {
   const actual = await vi.importActual<typeof import("../shared.js")>("../shared.js");
@@ -12,7 +13,8 @@ vi.mock("../shared.js", async () => {
     currentAuthUser: vi.fn(() => ({ uuid: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", role: "Owner" })),
     withCompanyScope: vi.fn(async (_userId: string, _companyId: string, fn: (client: any) => Promise<any>) => {
       const client = {
-        query: vi.fn(async (sql: string) => {
+        query: vi.fn(async (sql: string, values?: unknown[]) => {
+          filterQueries(sql, values);
           if (sql.includes("FROM driver_finance.driver_settlements")) {
             return {
               rows: [
@@ -64,6 +66,25 @@ describe("settlement-summary.routes", () => {
   });
   afterEach(async () => {
     await app.close();
+  });
+
+  it("filters the upstream settlement population by all selected drivers", async () => {
+    filterQueries.mockClear();
+    const driverIds = ["33333333-3333-4333-8333-333333333333", "44444444-4444-4444-8444-444444444444"];
+    const res = await app.inject({ method: "GET", url: `/api/v1/reports/settlement-summary?operating_company_id=${companyId}&period_start=2026-06-01&period_end=2026-06-30&driver_id=${driverIds.join(",")}` });
+    expect(res.statusCode).toBe(200);
+    const call = filterQueries.mock.calls.find(([sql]) => sql.includes("FROM driver_finance.driver_settlements"));
+    expect(call?.[0]).toContain("s.driver_id = ANY($4::uuid[])");
+    expect(call?.[1]?.[3]).toEqual(driverIds);
+    const deductionCall = filterQueries.mock.calls.find(([sql]) => sql.includes("FROM driver_finance.driver_settlement_deductions"));
+    expect(deductionCall?.[0]).toContain("AND applied_to_settlement_id = ANY($2::uuid[])");
+    expect(deductionCall?.[0]).not.toContain("applied_to_settlement_id IS NULL");
+    expect(deductionCall?.[1]).toEqual([companyId, ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]]);
+  });
+
+  it("rejects invalid multi-driver filters", async () => {
+    const res = await app.inject({ method: "GET", url: `/api/v1/reports/settlement-summary?operating_company_id=${companyId}&period_start=2026-06-01&period_end=2026-06-30&driver_id=bad,ids` });
+    expect(res.statusCode).toBe(400);
   });
 
   it("rolls up settlements, deduction buckets, and chargebacks", async () => {

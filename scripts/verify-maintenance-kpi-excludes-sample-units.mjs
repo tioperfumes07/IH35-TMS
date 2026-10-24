@@ -117,7 +117,7 @@ if (process.argv.includes("--selftest")) {
     }
   }
   // And a countActiveUnits that stops reading the roster (bare mdata.units count) must redden.
-  const mutatedCount = { ...good, routes: good.routes.replace('WHERE ${fleetRosterSql("", "$1")}`', "WHERE owner_company_id = $1::uuid`") };
+  const mutatedCount = { ...good, routes: good.routes.replace('WHERE ${fleetRosterSql("", "$1")}', "WHERE owner_company_id = $1::uuid") };
   if (mutatedCount.routes === good.routes) {
     console.error(`${LABEL} SELFTEST FAIL — countActiveUnits pattern did not match source, re-anchor`);
     process.exit(1);

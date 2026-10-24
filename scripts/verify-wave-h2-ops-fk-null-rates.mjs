@@ -48,10 +48,10 @@ export function staticChecks(sources = {}) {
   if (!/hasLoadId && body\.load_id/.test(expenses) && !/body\.load_id/.test(expenses)) {
     problems.push("expense CREATE must stamp body.load_id onto accounting.expenses when present");
   }
-  if (!/source_load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(invoices)) {
+  if (!/source_load_id:\s*entityIdFilterSchema\.optional\(\)/.test(invoices)) {
     problems.push("invoice listQuerySchema must accept source_load_id");
   }
-  if (!/i\.source_load_id = \$\{values\.length\}::uuid/.test(invoices) && !/i\.source_load_id = \$/.test(invoices)) {
+  if (!/i\.source_load_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(invoices) || !invoices.includes('values.push(entityIdFilterValues(q.source_load_id))')) {
     problems.push("invoice list must filter i.source_load_id");
   }
   if (!/\/api\/v1\/loads\/:id\/invoices/.test(invoices)) {
@@ -117,6 +117,16 @@ function selftest() {
     process.exit(1);
   }
   const bridge = read("apps/backend/src/integrations/relay-payments/relay-fuel-canonical-bridge.ts");
+  const invoices = read('apps/backend/src/accounting/invoices.routes.ts');
+  for (const [before, after] of [
+    ['source_load_id: entityIdFilterSchema.optional()', 'source_load_id: z.string().optional()'],
+    ['values.push(entityIdFilterValues(q.source_load_id))', 'values.push([])'],
+    ['values.push(entityIdFilterValues(q.source_load_id))', 'values.push(entityIdFilterValues(q.source_load_id).slice(0, 1))'],
+    ['i.source_load_id = ANY($${values.length}::uuid[])', 'TRUE'],
+  ]) {
+    const planted = invoices.replace(before, after);
+    if (planted === invoices || !staticChecks({ invoices: planted }).some(p => /source_load_id/.test(p))) throw new Error(`invoice reverse plant escaped: ${before}`);
+  }
   const broken = bridge.replace(/resolveFuelLoadAtTime/g, "REMOVED_RESOLVE").replace(/resolveVendorId/g, "REMOVED_VENDOR");
   const red = staticChecks({ bridge: broken });
   if (!red.some((p) => /resolve load_id\/vendor_id/.test(p))) {
@@ -148,7 +158,7 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL: green path dirty`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — planted regressions caught; sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 7 planted regressions caught (4 invoice filter + 3 existing); sources clean`);
 }
 
 function main() {

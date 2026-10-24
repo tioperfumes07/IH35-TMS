@@ -1181,5 +1181,12 @@
     "source_file": "apps/backend/src/accounting/reclassify/reclassify.service.ts",
     "guard": "scripts/verify-expense-family-moves-with-receipt.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "R443-281-ENTITY-FILTER-MULTI-SELECT",
+    "title": "Entity list and report filters use the shared multi-select control; single-value create/edit fields remain single",
+    "source_file": "apps/frontend/src/components/EntityMultiSelect.tsx",
+    "guard": "scripts/verify-entity-filters-multi-select.mjs",
+    "type": "enforced"
   }
 ]

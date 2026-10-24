@@ -18,6 +18,7 @@
  *   node scripts/verify-mgmt-report-aging-drill.mjs --selftest
  */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -212,7 +213,7 @@ export function check(sources) {
   if (
     !/dataTestId="ar-aging-filter-customer"/.test(ar) ||
     !/kind="customer"/.test(ar) ||
-    !/allowCreate=\{false\}/.test(ar) ||
+    multiSelectFilterProblems(ar,{file:PATHS.ar,kind:'customer',testId:'ar-aging-filter-customer'}).length ||
     !/searchParams\.get\("customer_id"\)/.test(ar) ||
     !(/effectiveCustomerId/.test(ar) || /(?:appliedFilters|staged\.draft)\.customerId/.test(ar))
   ) {
@@ -244,7 +245,7 @@ export function check(sources) {
   if (
     !/dataTestId="ap-aging-filter-vendor"/.test(ap) ||
     !/kind="vendor"/.test(ap) ||
-    !/allowCreate=\{false\}/.test(ap) ||
+    multiSelectFilterProblems(ap,{file:PATHS.ap,kind:'vendor',testId:'ap-aging-filter-vendor'}).length ||
     !/searchParams\.get\("vendor_id"\)/.test(ap) ||
     !(/effectiveVendorId/.test(ap) || /(?:appliedFilters|staged\.draft)\.vendorId/.test(ap))
   ) {
@@ -297,6 +298,7 @@ export function run() {
 }
 
 function selftest() {
+  selftestMultiSelectFilterContract();
   const good = Object.fromEntries(Object.entries(PATHS).map(([k]) => [k, "placeholder"]));
 
   good.mgmt = `
@@ -318,7 +320,7 @@ function selftest() {
     arAgingInvoiceListHref(r.customer_id)
     searchParams.get("customer_id")
     effectiveCustomerId
-    <EntityPicker kind="customer" allowCreate={false} dataTestId="ar-aging-filter-customer" />
+    import {EntityMultiSelect} from '../../components/EntityMultiSelect'; function Filter(){ return <EntityMultiSelect kind="customer" operatingCompanyId={companyId} value={selected} onChange={next=>setSelected(next??'')} dataTestId="ar-aging-filter-customer" />; }
   `;
   good.ap = `
     import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
@@ -329,7 +331,7 @@ function selftest() {
     apAgingVendorProfileHref(r.vendor_id)
     searchParams.get("vendor_id")
     effectiveVendorId
-    <EntityPicker kind="vendor" allowCreate={false} dataTestId="ap-aging-filter-vendor" />
+    import {EntityMultiSelect} from '../../components/EntityMultiSelect'; function Filter(){ return <EntityMultiSelect kind="vendor" operatingCompanyId={companyId} value={selected} onChange={next=>setSelected(next??'')} dataTestId="ap-aging-filter-vendor" />; }
   `;
   good.drill = `
     export function arAgingInvoiceListHref(id) {

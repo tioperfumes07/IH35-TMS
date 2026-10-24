@@ -1,7 +1,9 @@
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { factoringBookReserveCents } from "./factoring-kpi.service.js";
+import { listFactorAssignmentsForCustomer, listFactorBatchHistoryForCustomer } from "./factor.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -32,8 +34,8 @@ const recourseQuerySchema = companyQuerySchema.extend(dateRangeQuerySchema.shape
   // LINK-F5171/LINK-F5180: reverse_link — customer_id/load_id are real FKs already resolvable via
   // the accounting.invoices LATERAL join below (i.customer_id, i.source_load_id); this just exposes
   // them as query filters so the customer/load's own page can query its own rows server-side.
-  customer_id: z.string().uuid().optional(),
-  load_id: z.string().uuid().optional(),
+  customer_id: entityIdFilterSchema.optional(),
+  load_id: entityIdFilterSchema.optional(),
 });
 
 // LINK-F5171/LINK-F5180: reverse_link — views.factoring_chargebacks_fees carries no customer_id/
@@ -41,7 +43,7 @@ const recourseQuerySchema = companyQuerySchema.extend(dateRangeQuerySchema.shape
 // pattern used for recourse-pipeline above, and vendor_id via
 // accounting.factoring_advances.factoring_company_vendor_id (the factor entity).
 const chargebacksFeesQuerySchema = companyQuerySchema.extend(dateRangeQuerySchema.shape).extend({
-  customer_id: z.string().uuid().optional(),
+  customer_id: entityIdFilterSchema.optional(),
 });
 
 // REG-049: /funds-due previously used the bare companyQuerySchema with no filters at all.
@@ -101,6 +103,26 @@ function withCanonicalFactorIdentity<T extends Record<string, unknown>>(
 }
 
 export async function registerFactoringRoutes(app: FastifyInstance) {
+  // Multi-customer history reuses the canonical scoped readers; no financial totals are summed.
+  app.get("/api/v1/factoring/customer-histories", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const parsed = companyQuerySchema.extend({ customer_ids: entityIdFilterSchema }).safeParse(req.query);
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const companyId = parsed.data.operating_company_id;
+    return withCompanyScope(user.uuid, companyId, async client => {
+      const assignments = new Map<string, Awaited<ReturnType<typeof listFactorAssignmentsForCustomer>>[number]>();
+      const batches = new Map<string, Awaited<ReturnType<typeof listFactorBatchHistoryForCustomer>>[number]>();
+      let cappedCustomerCount = 0;
+      for (const customerId of entityIdFilterValues(parsed.data.customer_ids)) {
+        for (const row of await listFactorAssignmentsForCustomer(companyId, customerId, { client })) assignments.set(row.id, row);
+        const history = await listFactorBatchHistoryForCustomer(companyId, customerId, { client });
+        if (history.length >= 200) cappedCustomerCount++;
+        for (const row of history) batches.set(row.id, row);
+      }
+      return { assignments: [...assignments.values()], batches: [...batches.values()], capped_customer_count: cappedCustomerCount };
+    });
+  });
   app.get(
     "/api/v1/factoring/summary",
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
@@ -205,16 +227,24 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       // LINK-F5180: server-side customer_id/load_id scoping (not a client-side filter of this
       // already-capped result set, limit defaults 200) — reused as an INNER filter on the LATERAL
       // join's own columns so a customer/load's own page gets exactly its own rows.
-      const params: Array<string | number> = [companyId];
+      const params: Array<string | number | string[]> = [companyId];
       let customerFilter = "";
       if (customerId) {
-        params.push(customerId);
-        customerFilter = `AND inv.customer_id = $${params.length}::uuid`;
+        params.push(entityIdFilterValues(customerId));
+        customerFilter = `AND EXISTS (SELECT 1 FROM accounting.invoices selected_invoice
+          WHERE selected_invoice.operating_company_id = rr.operating_company_id
+            AND selected_invoice.factoring_advance_id = rr.factoring_advance_id
+            AND selected_invoice.status <> 'void'
+            AND selected_invoice.customer_id = ANY($${params.length}::uuid[]))`;
       }
       let loadFilter = "";
       if (loadId) {
-        params.push(loadId);
-        loadFilter = `AND inv.load_id = $${params.length}::uuid`;
+        params.push(entityIdFilterValues(loadId));
+        loadFilter = `AND EXISTS (SELECT 1 FROM accounting.invoices selected_invoice
+          WHERE selected_invoice.operating_company_id = rr.operating_company_id
+            AND selected_invoice.factoring_advance_id = rr.factoring_advance_id
+            AND selected_invoice.status <> 'void'
+            AND selected_invoice.source_load_id = ANY($${params.length}::uuid[]))`;
       }
       // REG-049: date range on factored_at, the same column the table is already sorted/aged by.
       let dateFromFilter = "";
@@ -379,15 +409,18 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       // same accounting.invoices LATERAL join pattern the recourse-pipeline route above already
       // uses, keyed on the real factoring_advance_id FK both tables share. Server-side customer_id
       // filter (not client-side), since history is capped at LIMIT 500.
-      const historyParams: Array<string> = [companyId];
+      const historyParams: Array<string | string[]> = [companyId];
       let customerFilter = "";
       if (customerId) {
-        historyParams.push(customerId);
-        customerFilter = `AND inv.customer_id = $${historyParams.length}::uuid`;
+        historyParams.push(entityIdFilterValues(customerId));
+        customerFilter = `AND EXISTS (SELECT 1 FROM accounting.invoices selected_invoice
+          WHERE selected_invoice.operating_company_id = cf.operating_company_id
+            AND selected_invoice.factoring_advance_id = cf.factoring_advance_id
+            AND selected_invoice.status <> 'void'
+            AND selected_invoice.customer_id = ANY($${historyParams.length}::uuid[]))`;
       }
       // REG-049: date range on created_at (the same column history is already sorted by). The
-      // monthly_summary aggregate below deliberately stays unfiltered -- it is the standing
-      // all-time-by-month overview, not the itemized list a date range is meant to narrow.
+      // monthly_summary uses this same cohort before aggregation; never sum the capped history page.
       let dateFromFilter = "";
       if (dateFrom) {
         historyParams.push(dateFrom);
@@ -454,16 +487,28 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       const monthlyRes = await client.query(
         `
             SELECT
-              statement_month,
-              SUM(chargeback_amount)::numeric AS chargeback_total,
-              SUM(factor_fee_amount)::numeric AS factor_fee_total
-            FROM views.factoring_chargebacks_fees
-            WHERE operating_company_id = $1::uuid
-            GROUP BY statement_month
-            ORDER BY statement_month DESC
+              cf.statement_month,
+              SUM(cf.chargeback_amount)::numeric AS chargeback_total,
+              SUM(cf.factor_fee_amount)::numeric AS factor_fee_total
+            FROM views.factoring_chargebacks_fees cf
+            LEFT JOIN LATERAL (
+              SELECT i.customer_id
+              FROM accounting.invoices i
+              WHERE i.factoring_advance_id = cf.factoring_advance_id
+                AND i.operating_company_id = cf.operating_company_id
+                AND i.status <> 'void'
+              ORDER BY i.created_at DESC
+              LIMIT 1
+            ) inv ON true
+            WHERE cf.operating_company_id = $1::uuid
+              ${customerFilter}
+              ${dateFromFilter}
+              ${dateToFilter}
+            GROUP BY cf.statement_month
+            ORDER BY cf.statement_month DESC
             LIMIT 24
           `,
-        [companyId]
+        historyParams
       );
 
       return {
@@ -604,11 +649,11 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
 
       const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
-        const params: Array<string> = [companyId];
+        const params: Array<string | string[]> = [companyId];
         let customerFilter = "";
         if (customerId) {
-          params.push(customerId);
-          customerFilter = `AND p.customer_id = $${params.length}::uuid`;
+          params.push(entityIdFilterValues(customerId));
+          customerFilter = `AND p.customer_id = ANY($${params.length}::uuid[])`;
         }
         let dateFromFilter = "";
         if (dateFrom) {
@@ -689,11 +734,11 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
 
       const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
-        const params: Array<string> = [companyId];
+        const params: Array<string | string[]> = [companyId];
         let customerFilter = "";
         if (customerId) {
-          params.push(customerId);
-          customerFilter = `AND p.customer_id = $${params.length}::uuid`;
+          params.push(entityIdFilterValues(customerId));
+          customerFilter = `AND p.customer_id = ANY($${params.length}::uuid[])`;
         }
         let dateFromFilter = "";
         if (dateFrom) {
@@ -758,11 +803,11 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       const { operating_company_id: companyId, customer_id: customerId, date_from: dateFrom, date_to: dateTo } = query.data;
 
       const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
-        const params: Array<string> = [companyId];
+        const params: Array<string | string[]> = [companyId];
         let customerFilter = "";
         if (customerId) {
-          params.push(customerId);
-          customerFilter = `AND i.customer_id = $${params.length}::uuid`;
+          params.push(entityIdFilterValues(customerId));
+          customerFilter = `AND i.customer_id = ANY($${params.length}::uuid[])`;
         }
         let dateFromFilter = "";
         if (dateFrom) {

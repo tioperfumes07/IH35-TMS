@@ -488,6 +488,12 @@ export function getCustomerFactor(customerId: string, companyId: string, asOfDat
   }>(`/api/v1/customers/${encodeURIComponent(customerId)}/factor?${qs}`);
 }
 
+export function getCustomerFactorHistories(customerIds: string, companyId: string) {
+  return apiRequest<{ assignments: CustomerFactorAssignment[]; batches: FactorBatchHistoryRow[]; capped_customer_count: number }>(
+    `/api/v1/factoring/customer-histories?${query({ operating_company_id: companyId, customer_ids: customerIds })}`,
+  );
+}
+
 export function assignCustomerFactor(
   customerId: string,
   companyId: string,

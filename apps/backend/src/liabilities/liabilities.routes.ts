@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -17,7 +18,7 @@ const idParamsSchema = z.object({
 });
 
 const driverParamsSchema = z.object({
-  driver_id: z.string().uuid(),
+  driver_id: entityIdFilterSchema,
 });
 
 const holdBodySchema = z.object({
@@ -70,10 +71,23 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
   app.get("/api/v1/liabilities/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = companyQuerySchema.extend({ driver_id: entityIdFilterSchema.optional() }).safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     const row = await withCompanyScope(user.uuid, companyId, async (client) => {
+      if (query.data.driver_id) {
+        // Preserve the dashboard view's aggregates; filter the full source cohort before aggregation.
+        const selected = await client.query(`SELECT $1::uuid AS operating_company_id,
+          SUM(current_balance) FILTER (WHERE current_balance > 0) AS total_active_debt,
+          COUNT(DISTINCT driver_id) FILTER (WHERE current_balance > 0) AS drivers_with_debt,
+          NULL::bigint AS pending_acks,
+          SUM(original_amount) FILTER (WHERE type = 'equipment_loss' AND created_at >= date_trunc('year', now())) AS equipment_loss_ytd,
+          SUM(original_amount) FILTER (WHERE type = 'civil_fine' AND created_at >= date_trunc('year', now())) AS civil_fines_ytd
+          FROM driver_finance.driver_liabilities
+          WHERE operating_company_id = $1::uuid AND driver_id = ANY($2::uuid[])`,
+        [companyId, entityIdFilterValues(query.data.driver_id)]);
+        return selected.rows[0];
+      }
       const res = await client
         .query(
           `
@@ -136,10 +150,10 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             SELECT *
             FROM views.liabilities_active_with_context
             WHERE operating_company_id = $1::uuid
-              AND driver_id = $2
+              AND driver_id = ANY($2::uuid[])
             ORDER BY created_at DESC
           `,
-          [companyId, params.data.driver_id]
+          [companyId, entityIdFilterValues(params.data.driver_id)]
         );
       return res.rows;
     });

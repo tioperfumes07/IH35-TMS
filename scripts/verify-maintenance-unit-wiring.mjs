@@ -11,6 +11,7 @@
  * Self-test: node scripts/verify-maintenance-unit-wiring.mjs --selftest
  */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,7 +41,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx", /getUnit\(String\(unitId\), String\(operatingCompanyId\)\)/],
   ["apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx", /searchParams\.get\("unit_id"\)/],
   ["apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx", /dataTestId="fault-drafts-filter-unit"/],
-  ["apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx", /allowCreate=\{false\}/],
+  ["apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx", /<EntityMultiSelect[\s\S]{0,500}dataTestId="fault-drafts-filter-unit"/],
   ["apps/frontend/src/pages/maintenance/TireProgramPage.tsx", /assetKind === "unit" \? "Select unit…"/],
   ["apps/frontend/src/pages/maintenance/components/RMBucketsGrid.tsx", /kind="unit"[\s\S]{0,80}id=\{row\.unit_id\}[\s\S]{0,100}label=\{entityLabel\(row\.unit_number, row\.unit_id, "Unit"\)\}/],
   ["apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx", /kind="unit"[\s\S]{0,100}id=\{(?:String|asEntityId)\(workOrder\.unit_id\)\}/],
@@ -53,6 +54,7 @@ const CHECKS = [
 
 export function audit(files) {
   const failures = [];
+  failures.push(...multiSelectFilterProblems(files['apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx'] || '',{file:'apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx',kind:'unit',testId:'fault-drafts-filter-unit'}));
   for (const [file, pattern] of CHECKS) {
     if (!pattern.test(files[file] || "")) failures.push(`${file}: missing real unit_id/EntityLink kind="unit" wiring`);
   }
@@ -65,6 +67,7 @@ function loadFiles(root) {
 }
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const good = loadFiles(ROOT);
   if (audit(good).length) {
     console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good).join("\n- ")}`);

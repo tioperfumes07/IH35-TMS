@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -20,18 +21,18 @@ const companyQuerySchema = z.object({
 // SAF-F17 — unit-profile reverse view. Optional; absent = the existing company-wide list.
 // SAF-C01 — load-detail reverse view: filter by load_id in SQL (LIMIT 500 — never client-filter).
 const accidentsQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
-  unit_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  unit_id: entityIdFilterSchema.optional(),
   // RANK5-ACCIDENT-TRAILER-ID — safety.accident_reports.trailer_id, live since rank 1 (PR #6316).
-  trailer_id: z.string().uuid().optional(),
-  load_id: z.string().uuid().optional(),
+  trailer_id: entityIdFilterSchema.optional(),
+  load_id: entityIdFilterSchema.optional(),
   from: z.string().date().optional(),
   to: z.string().date().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
 const trainingCompletionsQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -425,7 +426,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         const parent = await client.query(
           `SELECT 1
            FROM mdata.drivers d
-           WHERE d.id = $1::uuid
+           WHERE d.id = ANY($1::uuid[])
              AND d.archived_at IS NULL
              AND (
                d.operating_company_id = $2::uuid
@@ -437,14 +438,14 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
                    AND dca.deactivated_at IS NULL
                )
              )
-           LIMIT 1`,
-          [query.data.driver_id, query.data.operating_company_id]
+           `,
+          [entityIdFilterValues(query.data.driver_id), query.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
+        if (parent.rows.length !== entityIdFilterValues(query.data.driver_id!).length) return { found: false as const, rows: [], total_count: 0 };
       }
       const values: unknown[] = [query.data.operating_company_id];
-      const driverFilter = query.data.driver_id ? "AND tr.driver_id = $2::uuid" : "";
-      if (query.data.driver_id) values.push(query.data.driver_id);
+      const driverFilter = query.data.driver_id ? "AND tr.driver_id = ANY($2::uuid[])" : "";
+      if (query.data.driver_id) values.push(entityIdFilterValues(query.data.driver_id));
       const countRes = await client.query(
         `SELECT count(*)::int AS total_count
          FROM safety.training_records tr
@@ -532,7 +533,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         const parent = await client.query(
           `SELECT 1
            FROM mdata.drivers d
-           WHERE d.id = $1::uuid
+           WHERE d.id = ANY($1::uuid[])
              AND d.archived_at IS NULL
              AND (
                d.operating_company_id = $2::uuid
@@ -544,24 +545,24 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
                    AND dca.deactivated_at IS NULL
                )
              )
-           LIMIT 1`,
-          [query.data.driver_id, query.data.operating_company_id]
+           `,
+          [entityIdFilterValues(query.data.driver_id), query.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
-        values.push(query.data.driver_id);
-        scopeFilters.push(`AND ar.driver_id = $${values.length}`);
+        if (parent.rows.length !== entityIdFilterValues(query.data.driver_id!).length) return { found: false as const, rows: [], total_count: 0 };
+        values.push(entityIdFilterValues(query.data.driver_id));
+        scopeFilters.push(`AND ar.driver_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.unit_id) {
-        values.push(query.data.unit_id);
-        scopeFilters.push(`AND ar.unit_id = $${values.length}`);
+        values.push(entityIdFilterValues(query.data.unit_id));
+        scopeFilters.push(`AND ar.unit_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.trailer_id) {
-        values.push(query.data.trailer_id);
-        scopeFilters.push(`AND ar.trailer_id = $${values.length}`);
+        values.push(entityIdFilterValues(query.data.trailer_id));
+        scopeFilters.push(`AND ar.trailer_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.load_id) {
-        values.push(query.data.load_id);
-        scopeFilters.push(`AND ar.load_id = $${values.length}`);
+        values.push(entityIdFilterValues(query.data.load_id));
+        scopeFilters.push(`AND ar.load_id = ANY($${values.length}::uuid[])`);
       }
       if (query.data.from) {
         values.push(query.data.from);

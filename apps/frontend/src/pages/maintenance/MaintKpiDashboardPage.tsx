@@ -13,7 +13,7 @@ import {
 } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
@@ -333,12 +333,11 @@ export function MaintKpiDashboardPage() {
               </label>
               <div className="flex min-w-48 flex-col gap-0.5">
                 <span className="text-xs uppercase text-[#6B7280]">Unit</span>
-                <EntityPicker
+                <EntityMultiSelect
                   kind="unit"
                   operatingCompanyId={companyId}
                   value={staged.draft.unitId || null}
                   onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
-                  allowCreate={false}
                   placeholder="All fleet"
                   dataTestId="maint-kpi-filter-unit"
                 />

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -25,6 +25,10 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 
 vi.mock("../ReportsSubNav", () => ({
   ReportsSubNav: () => <nav aria-label="Reports subnav stub" />,
+}));
+vi.mock("../../../components/EntityMultiSelect", () => ({
+  EntityMultiSelect: ({ value, onChange, dataTestId }: { value: string | null; onChange: (next: string | null) => void; dataTestId?: string }) =>
+    <input data-testid={dataTestId} value={value ?? ""} onChange={(event) => onChange(event.target.value || null)} />,
 }));
 
 function wrap(ui: ReactElement) {
@@ -78,7 +82,29 @@ describe("ARAgingPage drill-through", () => {
   it("loads aging for the selected company only", async () => {
     render(wrap(<ARAgingPage />));
     await waitFor(() => expect(screen.getByText("Acme Freight")).toBeInTheDocument());
-    expect(reportsApi.getArAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String));
+    expect(reportsApi.getArAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String), undefined);
+  });
+
+  it("stages the whole customer CSV and uses it for report KPIs plus both export formats", async () => {
+    const ids = `${CUSTOMER_ID},33333333-3333-4333-8333-333333333333`;
+    vi.mocked(reportsApi.getArAgingReport).mockImplementation(async (_company, date, selection) => ({
+      status: "real", generated_at: "2026-10-23T12:00:00Z", as_of_date: date,
+      total_open_cents: selection ? sampleRow.total_open_cents : sampleRow.total_open_cents + 10_000,
+      total_open_invoices: selection ? sampleRow.open_invoice_count : sampleRow.open_invoice_count * 2,
+      rows: selection ? [sampleRow] : [sampleRow, { ...sampleRow, customer_id: "44444444-4444-4444-8444-444444444444", customer_name: "Other customer", total_open_cents: 10_000, cleared_open_cents: 10_000 }],
+    }));
+    const user = userEvent.setup();
+    render(wrap(<ARAgingPage />));
+    await waitFor(() => expect(screen.getByText("Total open").parentElement).toHaveTextContent("$270.00"));
+    fireEvent.change(screen.getByTestId("ar-aging-filter-customer"), { target: { value: ids } });
+    expect(reportsApi.getArAgingReport).not.toHaveBeenCalledWith(COMPANY_ID, expect.any(String), ids);
+    await user.click(screen.getByTestId("reports-ar-aging-apply"));
+    await waitFor(() => expect(reportsApi.getArAgingReport).toHaveBeenLastCalledWith(COMPANY_ID, expect.any(String), ids));
+    await waitFor(() => expect(screen.getByText("Total open").parentElement).toHaveTextContent("$170.00"));
+    await user.click(screen.getByRole("button", { name: "Export PDF" }));
+    await waitFor(() => expect(reportsApi.exportArAging).toHaveBeenCalledWith(expect.objectContaining({ customer_id: ids, format: "pdf" })));
+    await user.click(screen.getByRole("button", { name: "Export XLSX" }));
+    await waitFor(() => expect(reportsApi.exportArAging).toHaveBeenCalledWith(expect.objectContaining({ customer_id: ids, format: "xlsx" })));
   });
 
   // ACCT-F410-C — the A/R defect was a MISSING stopPropagation, not the entity link. Without it

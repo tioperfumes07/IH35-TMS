@@ -24,6 +24,7 @@ import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 import { formatUsdCents } from "../../lib/money";
 import { colors } from "../../design/tokens";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -63,12 +64,13 @@ export function SettlementSummaryPage() {
   const [reportSearch, setReportSearch] = useState("");
 
   const query = useQuery({
-    queryKey: ["reports", "settlement-summary", companyId, applied.start, applied.end],
+    queryKey: ["reports", "settlement-summary", companyId, applied.start, applied.end, applied.driverFilter],
     queryFn: () =>
       getSettlementSummary({
         operating_company_id: companyId,
         period_start: applied.start,
         period_end: applied.end,
+        driver_id: applied.driverFilter || undefined,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -247,13 +249,14 @@ export function SettlementSummaryPage() {
       >
         <label className="flex items-center gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold text-[#4B5563]">Driver</span>
-          <input
-            type="text"
+          <EntityMultiSelect
+            kind="driver"
+            operatingCompanyId={companyId}
             className="h-7 w-32 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.driverFilter}
-            onChange={(e) => staged.setDraft((p) => ({ ...p, driverFilter: e.target.value }))}
+            onChange={(value) => staged.setDraft((p) => ({ ...p, driverFilter: value ?? "" }))}
             placeholder="All drivers"
-            data-testid="reports-settlement-summary-driver"
+            dataTestId="reports-settlement-summary-driver"
           />
         </label>
       </ReportFilterBar>

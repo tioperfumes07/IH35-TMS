@@ -2,6 +2,7 @@
 /** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["cash_advances","deductions","disputes","drivers.panel.pending_settlement_deductions"],"task":"CLASS-F5878-DRIVER-DEDUCTION-PANELS-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leaves":["escrow_record.list"],"task":"CLASS-F5876-DRIVER-FINANCE-REVERSE-EXACT-LEAVES","vertical":"class-sweep"} */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const LABEL = "verify-driver-finance-reverse-leaves";
 const files = {
@@ -44,11 +45,11 @@ function audit(s) {
   // LST-F5163M + LST-F5187: CappedListNotice promised a driver filter — URL-only / local-only is not enough.
   if (
     !/dataTestId="settlement-deductions-filter-driver"/.test(s.deductions) ||
-    !/allowCreate=\{false\}/.test(s.deductions) ||
+    multiSelectFilterProblems(s.deductions, {file: files.deductions, kind: 'driver', testId: 'settlement-deductions-filter-driver'}).length > 0 ||
     !/setDriverFilter/.test(s.deductions) ||
     !/setSearchParams/.test(s.deductions)
   ) {
-    failures.push("deduction list EntityPicker driver filter missing URL sync");
+    failures.push("deduction list scoped no-create EntityMultiSelect driver filter missing URL sync");
   }
   if (!/operating_company_id: companyId/.test(s.disputeHook) || !/isError: listQuery\.isError/.test(s.disputeHook) || !/isSuccess: listQuery\.isSuccess/.test(s.disputeHook)) failures.push("dispute scope/status contract missing");
   if (!/<EntityLink[\s\S]{0,100}kind="driver"[\s\S]{0,100}id=\{row\.driver_id\}/.test(s.disputes) || !/<EntityLink[\s\S]{0,100}kind="settlement"/.test(s.disputes)) failures.push("dispute canonical drills missing");
@@ -58,8 +59,8 @@ function audit(s) {
   if (!/listEscrowRecords\(operatingCompanyId\)/.test(s.safety) || !/<EntityLink[\s\S]{0,100}kind="driver"[\s\S]{0,100}id=\{row\.id \|\| null\}/.test(s.safety)) failures.push("safety escrow driver reverse/scope missing");
   if (!/escrowQuery\.isError/.test(s.safety) || !/No escrow records available for the selected company\./.test(s.safety)) failures.push("safety escrow honest states missing");
   // LST-F5163K: list chrome reverse (URL-only open-drawer is not a visible filter).
-  if (!/dataTestId="escrow-records-filter-driver"/.test(s.safety) || !/allowCreate=\{false\}/.test(s.safety) || !/setDriverFilter/.test(s.safety)) {
-    failures.push("safety escrow list EntityPicker driver filter missing");
+  if (!/dataTestId="escrow-records-filter-driver"/.test(s.safety) || multiSelectFilterProblems(s.safety, {file: files.safety, kind: 'driver', testId: 'escrow-records-filter-driver'}).length > 0 || !/setDriverFilter/.test(s.safety)) {
+    failures.push("safety escrow list scoped no-create EntityMultiSelect driver filter missing");
   }
   for (const [key, ids] of Object.entries(REQUIRED)) {
     try {
@@ -72,6 +73,9 @@ function audit(s) {
 }
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
+  const baseline = audit(source);
+  if (baseline.length) { console.error(LABEL + ' SELFTEST baseline red', baseline); process.exit(1); }
   const mutations = [
     ["advance-drill", "drivers", /kind="driver"/g, 'kind="vendor"'],
     ["advance-scope", "drivers", /cashAdvanceRequestsOfficeApi\.list\(selectedCompanyId!\)/g, "cashAdvanceRequestsOfficeApi.list('')"],
@@ -82,7 +86,7 @@ if (process.argv.includes("--selftest")) {
     ["deduction-error", "deductions", /query\.isError/g, "false"],
     ["deduction-state", "deductions", /No pending settlement deductions\./g, "Loading"],
     ["deduction-list-filter", "deductions", /dataTestId="settlement-deductions-filter-driver"/g, 'dataTestId="x"'],
-    ["deduction-filter-no-create", "deductions", /allowCreate=\{false\}/g, "allowCreate"],
+    ["deduction-filter-no-create", "deductions", /<EntityMultiSelect/g, "<EntityMultiSelect allowCreate"],
     ["deduction-filter-state", "deductions", /setDriverFilter/g, "dropDriverFilter"],
     // The replacement must NOT contain "setSearchParams" as a substring — "setSearchParamsNOPE"
     // still matches /setSearchParams/, so the check's .test() stayed true and this mutation was a
@@ -106,7 +110,7 @@ if (process.argv.includes("--selftest")) {
     ["safety-error", "safety", /escrowQuery\.isError/g, "false"],
     ["safety-empty", "safety", /No escrow records available for the selected company\./g, "No rows"],
     ["safety-list-filter", "safety", /dataTestId="escrow-records-filter-driver"/g, 'dataTestId="x"'],
-    ["safety-filter-no-create", "safety", /allowCreate=\{false\}/g, "allowCreate"],
+    ["safety-filter-no-create", "safety", /<EntityMultiSelect/g, "<EntityMultiSelect allowCreate"],
     ["safety-filter-state", "safety", /setDriverFilter/g, "dropDriverFilter"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {

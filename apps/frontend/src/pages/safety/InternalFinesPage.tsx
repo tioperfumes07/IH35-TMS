@@ -14,6 +14,7 @@ import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWit
 import { SelectCombobox } from "../../components/Combobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { useAuth } from "../../auth/useAuth";
@@ -489,12 +490,11 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             <div className="relative flex flex-wrap items-end gap-2" data-testid="internal-fines-filters">
               <label className="text-xs text-[#4B5563]">
                 Driver
-                <EntityPicker
+                <EntityMultiSelect
                   kind="driver"
                   operatingCompanyId={operatingCompanyId}
                   value={draft.driverId || null}
                   onChange={(next) => setDriverFilter(next ?? "")}
-                  allowCreate={false}
                   placeholder="All drivers"
                   className="mt-1"
                   dataTestId="internal-fines-filter-driver"
@@ -502,12 +502,11 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
               </label>
               <label className="text-xs text-[#4B5563]">
                 Load
-                <EntityPicker
+                <EntityMultiSelect
                   kind="load"
                   operatingCompanyId={operatingCompanyId}
                   value={draft.loadId || null}
                   onChange={(next) => setLoadFilter(next ?? "")}
-                  allowCreate={false}
                   placeholder="All loads"
                   className="mt-1"
                   dataTestId="internal-fines-filter-load"

@@ -24,6 +24,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const repoRoot = process.cwd();
 
@@ -87,7 +88,7 @@ function checkDeepLinkFilters(plannerSrc, reverseSrc, tableSrc) {
     failures.push("FuelPlannerHome.tsx must pass trailer_id into getFuelTransactions()");
   }
   // LST-F5172 — URL-only reverse seed is not reverse chrome; History needs visible EntityPickers.
-  if (!/dataTestId="fuel-history-filter-driver"/.test(plannerSrc) || !/allowCreate=\{false\}/.test(plannerSrc)) {
+  if (multiSelectFilterProblems(plannerSrc,{file:PLANNER_HOME,kind:'driver',testId:'fuel-history-filter-driver'}).length) {
     failures.push("FuelPlannerHome History must expose driver EntityPicker filter (allowCreate=false)");
   }
   if (!/dataTestId="fuel-history-filter-unit"/.test(plannerSrc)) {
@@ -248,6 +249,7 @@ export function check() {
 }
 
 function selftest() {
+  selftestMultiSelectFilterContract();
   const goodApiClient = `export function getFuelTransactions(companyId) { return apiRequest(\`/api/v1/fuel/transactions?x\`); }`;
   const badApiClientMissing = `export function otherThing() {}`;
 
@@ -258,15 +260,16 @@ function selftest() {
     import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
     const deepLinkTrailerId = searchParams.get("trailer_id");
     const fuelTransactionsQuery = useQuery({ queryFn: () => getFuelTransactions(companyId, { trailer_id: effectiveTrailerId }) });
-    <MoneyListToolbar onClearAll={clearHistoryFilters} search={historySearch} onSearchChange={setHistorySearch}>
+    function Filter(){ return <><MoneyListToolbar onClearAll={clearHistoryFilters} search={historySearch} onSearchChange={setHistorySearch}>
     <MultiSelectDropdown label="Show" options={FUEL_SHOW_OPTIONS} value={showFilter} onChange={setShowFilter} />
-    dataTestId="fuel-history-filter-driver" allowCreate={false} value={driverPickerId || null}
+    <EntityMultiSelect kind="driver" operatingCompanyId={companyId} value={driverPickerId || null} dataTestId="fuel-history-filter-driver" onChange={next => setDriverPickerId(next ?? '')} />
     dataTestId="fuel-history-filter-unit"
     dataTestId="fuel-history-filter-load"
     dataTestId="fuel-history-filter-trailer"
     <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
     <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
-    <ImportFuelTransactionsModal open={importOpen} />
+    <ImportFuelTransactionsModal open={importOpen} /></MoneyListToolbar></>; }
+    import {EntityMultiSelect} from '../../components/EntityMultiSelect';
   `;
   const badPlannerNoPickers = `
     import { getFuelTransactions } from "../../api/fuelPlanner";

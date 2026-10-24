@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
 import { COMPANY_TIME_ZONE } from "../lib/company-business-date.js";
@@ -136,26 +137,26 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
   ];
 
   if (query.customerId) {
-    values.push(query.customerId);
-    filters.push(`l.customer_id = $${values.length}::uuid`);
+    values.push(entityIdFilterValues(query.customerId));
+    filters.push(`l.customer_id = ANY($${values.length}::uuid[])`);
   }
   if (query.driverId) {
-    values.push(query.driverId);
+    values.push(entityIdFilterValues(query.driverId));
     filters.push(
-      `(l.assigned_primary_driver_id = $${values.length}::uuid OR l.assigned_secondary_driver_id = $${values.length}::uuid)`
+      `(l.assigned_primary_driver_id = ANY($${values.length}::uuid[]) OR l.assigned_secondary_driver_id = ANY($${values.length}::uuid[]))`
     );
   }
   if (query.unitId) {
-    values.push(query.unitId);
-    filters.push(`l.assigned_unit_id = $${values.length}::uuid`);
+    values.push(entityIdFilterValues(query.unitId));
+    filters.push(`l.assigned_unit_id = ANY($${values.length}::uuid[])`);
   }
   if (query.trailerId) {
-    values.push(query.trailerId);
+    values.push(entityIdFilterValues(query.trailerId));
     filters.push(`EXISTS (
       SELECT 1 FROM dispatch.load_assignment_history lah
       WHERE lah.load_id = l.id
         AND lah.operating_company_id = $1::uuid
-        AND lah.new_trailer_id = $${values.length}::uuid
+        AND lah.new_trailer_id = ANY($${values.length}::uuid[])
     )`);
   }
   if (query.status) {

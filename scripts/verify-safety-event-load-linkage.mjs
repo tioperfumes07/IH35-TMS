@@ -58,9 +58,10 @@ export function checkApi(src) {
 export function checkVertical(route, api, reverse, driver, asset, entityLink) {
   const failures = [];
   for (const field of ["subject_driver_id", "subject_unit_id"]) {
-    if (!new RegExp(`${field}:\\s*z\\.string\\(\\)\\.uuid\\(\\)\\.optional`).test(route) || !new RegExp(`e\\.${field} = \\$\\$\\{values\\.length\\}`).test(route)) failures.push(`events list must filter ${field} server-side`);
+    if (!route.includes(`${field}: entityIdFilterSchema.optional()`) || !route.includes(`e.${field} = ANY($\${values.length}::uuid[])`) || !route.includes(`values.push(entityIdFilterValues(query.data.${field}))`)) failures.push(`events list must filter ${field} server-side`);
     if (!new RegExp(`${field}\\?:\\s*string`).test(api) || !new RegExp(`qs\\.set\\("${field}"`).test(api)) failures.push(`events client must forward ${field}`);
   }
+  if (!route.includes('e.operating_company_id = $1::uuid')) failures.push('events list must remain company scoped');
   if (!/related_entity_not_in_operating_company/.test(route) || !/FROM mdata\.drivers/.test(route) || !/FROM mdata\.units/.test(route) || !/FROM mdata\.loads/.test(route)) failures.push("event writer must company-validate driver, unit, and load FKs");
   if (!/subject === "driver" \? \{ subject_driver_id: entityId \} : \{ subject_unit_id: entityId \}/.test(reverse) || !/kind="safety_event"/.test(reverse) || !/kind=\{subject === "driver" \? "safety_events_driver" : "safety_events_unit"\}/.test(reverse)) failures.push("shared event reverse block must use exact filters and canonical drill");
   if (!/<SafetyEventsReverseBlock[^>]*subject="driver"/.test(driver)) failures.push("driver safety profile must mount event reverse history");
@@ -112,7 +113,9 @@ if (process.argv.includes("--selftest")) {
     ["missing entity-scope is caught", checkRoute(noScope).length > 0],
     ["missing api field is caught", checkApi("subject_unit_number?: string | null;").length > 0],
     ["live vertical chain passes", checkVertical(liveRoute, liveApi, ...liveExtra).length === 0],
-    ["driver filter removal is caught", checkVertical(liveRoute.replace("e.subject_driver_id = $${values.length}::uuid", "TRUE"), liveApi, ...liveExtra).length > 0],
+    ["driver filter removal is caught", checkVertical(liveRoute.replace("e.subject_driver_id = ANY($${values.length}::uuid[])", "TRUE"), liveApi, ...liveExtra).length > 0],
+    ["driver array binding removal is caught", checkVertical(liveRoute.replace("values.push(entityIdFilterValues(query.data.subject_driver_id))", "values.push(query.data.subject_driver_id)"), liveApi, ...liveExtra).length > 0],
+    ["company scope removal is caught", checkVertical(liveRoute.replaceAll("e.operating_company_id = $1::uuid", "TRUE"), liveApi, ...liveExtra).length > 0],
     ["writer validation removal is caught", checkVertical(liveRoute.replace("related_entity_not_in_operating_company", "invalid"), liveApi, ...liveExtra).length > 0],
     ["reverse filter removal is caught", checkVertical(liveRoute, liveApi, liveExtra[0].replace("subject_driver_id: entityId", "subject_driver_id: undefined"), ...liveExtra.slice(1)).length > 0],
     ["unit mount removal is caught", checkVertical(liveRoute, liveApi, liveExtra[0], liveExtra[1], liveExtra[2].replace("<SafetyEventsReverseBlock", "<MissingSafetyEventsReverseBlock"), liveExtra[3]).length > 0],

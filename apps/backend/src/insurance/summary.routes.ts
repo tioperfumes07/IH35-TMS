@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -25,7 +26,7 @@ type Queryable = {
 };
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
-const coverageGapQuerySchema = querySchema.extend({ unit_id: z.string().uuid().optional() });
+const coverageGapQuerySchema = querySchema.extend({ unit_id: entityIdFilterSchema.optional() });
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -157,7 +158,7 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
     const tenantId = parsed.data.operating_company_id;
 
     const { classification, units } = await withCompanyScope(user.uuid, tenantId, async (client) => {
-      const rows = await client.query<CoverageGapUnitRow>(COVERAGE_GAP_UNITS_SQL, [tenantId, REQUIRED_COVERAGE_TYPES, parsed.data.unit_id ?? null]);
+      const rows = await client.query<CoverageGapUnitRow>(COVERAGE_GAP_UNITS_SQL, [tenantId, REQUIRED_COVERAGE_TYPES, parsed.data.unit_id ? entityIdFilterValues(parsed.data.unit_id) : null]);
       // GO-02 LIST API (INBOX-CC-1 2026-09-01) — the per-unit, per-catalog-type array Cursor's
       // column-per-type UI needs to render a COVERED chip that actually links a policy_id/
       // policy_number, and a not_required chip for trailer auto_liability instead of a false
@@ -165,7 +166,7 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
       // SAME query + SAME function as before, byte-for-byte -- the summary KPI cannot regress.
       const detailRows = await client.query<CoverageGapUnitDetailRow>(COVERAGE_GAP_UNITS_DETAIL_SQL, [
         tenantId,
-        parsed.data.unit_id ?? null,
+        parsed.data.unit_id ? entityIdFilterValues(parsed.data.unit_id) : null,
       ]);
       return {
         classification: classifyCoverageGapUnits(rows.rows),

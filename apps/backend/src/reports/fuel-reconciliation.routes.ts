@@ -1,15 +1,18 @@
 import type { FastifyInstance } from "fastify";
 import type { PoolClient } from "pg";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 
 const periodQuerySchema = companyQuerySchema.extend({
+  unit_id: entityIdFilterSchema.optional(),
   period_start: z.string().date(),
   period_end: z.string().date(),
 });
 
 const legacyMonthSchema = companyQuerySchema.extend({
+  unit_id: entityIdFilterSchema.optional(),
   period: z.string().regex(/^\d{4}-\d{2}$/),
 });
 
@@ -58,13 +61,16 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
     let operatingCompanyId: string;
     let startDay: string;
     let endDay: string;
+    let filterUnitIds: string[] | null = null;
 
     if (parsedPeriod.success) {
       operatingCompanyId = parsedPeriod.data.operating_company_id;
       startDay = parsedPeriod.data.period_start;
       endDay = parsedPeriod.data.period_end;
+      filterUnitIds = parsedPeriod.data.unit_id ? entityIdFilterValues(parsedPeriod.data.unit_id) : null;
     } else if (parsedLegacy.success) {
       operatingCompanyId = parsedLegacy.data.operating_company_id;
+      filterUnitIds = parsedLegacy.data.unit_id ? entityIdFilterValues(parsedLegacy.data.unit_id) : null;
       const month = `${parsedLegacy.data.period}-01`;
       const start = new Date(`${month}T00:00:00.000Z`);
       const end = new Date(start);
@@ -80,7 +86,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error", details: { period: ["period_start must be on or before period_end"] } });
     }
 
-    const cacheKey = `${operatingCompanyId}:${startDay}:${endDay}`;
+    const cacheKey = `${operatingCompanyId}:${startDay}:${endDay}:${filterUnitIds?.join(",") ?? "all"}`;
     const hit = cache.get(cacheKey);
     if (hit) return hit;
 
@@ -89,11 +95,14 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
         `
           SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_card_amount_cents
           FROM fuel.fuel_transactions ft
+          LEFT JOIN mdata.loads l ON l.id = ft.load_id
+            AND l.operating_company_id = ft.operating_company_id AND l.soft_deleted_at IS NULL
           WHERE ft.operating_company_id = $1::uuid
             AND ft.archived_at IS NULL
             AND ft.transaction_at::date BETWEEN $2::date AND $3::date
+            AND ($4::uuid[] IS NULL OR COALESCE(ft.unit_id, l.assigned_unit_id) = ANY($4::uuid[]))
         `,
-        [operatingCompanyId, startDay, endDay]
+        [operatingCompanyId, startDay, endDay, filterUnitIds]
       );
 
       const cardByUnit = await client.query<{ unit_id: string; unit_number: string; cents: string }>(
@@ -114,10 +123,11 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             AND ft.archived_at IS NULL
             AND ft.transaction_at::date BETWEEN $2::date AND $3::date
             AND COALESCE(ft.unit_id, l.assigned_unit_id) IS NOT NULL
+            AND ($4::uuid[] IS NULL OR COALESCE(ft.unit_id, l.assigned_unit_id) = ANY($4::uuid[]))
             AND u.deactivated_at IS NULL
           GROUP BY u.id, u.unit_number
         `,
-        [operatingCompanyId, startDay, endDay]
+        [operatingCompanyId, startDay, endDay, filterUnitIds]
       );
 
       const woByUnit = await client.query<{ unit_id: string; unit_number: string; cents: string }>(
@@ -133,9 +143,10 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             AND wo.unit_id IS NOT NULL
             AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
             AND u.deactivated_at IS NULL
+            AND ($4::uuid[] IS NULL OR wo.unit_id = ANY($4::uuid[]))
           GROUP BY u.id, u.unit_number
         `,
-        [operatingCompanyId, startDay, endDay]
+        [operatingCompanyId, startDay, endDay, filterUnitIds]
       );
 
       // GPS match table FKs banking.bank_transactions — not fuel.fuel_transactions.
@@ -167,10 +178,11 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             AND ft.archived_at IS NULL
             AND ft.transaction_at::date BETWEEN $2::date AND $3::date
             AND COALESCE(ft.unit_id, l.assigned_unit_id) IS NULL
+            AND ($4::uuid[] IS NULL OR COALESCE(ft.unit_id, l.assigned_unit_id) = ANY($4::uuid[]))
           ORDER BY ROUND(ft.total_cost::numeric * 100) DESC
           LIMIT 20
         `,
-        [operatingCompanyId, startDay, endDay]
+        [operatingCompanyId, startDay, endDay, filterUnitIds]
       );
 
       const unmatchedWo = await client.query(
@@ -186,6 +198,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
           WHERE wo.operating_company_id = $1::uuid
             AND wo.unit_id IS NOT NULL
             AND wo.fuel_cost_cents > 0
+            AND ($4::uuid[] IS NULL OR wo.unit_id = ANY($4::uuid[]))
             AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
             AND NOT EXISTS (
               SELECT 1
@@ -202,7 +215,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
           ORDER BY wo.fuel_cost_cents DESC
           LIMIT 20
         `,
-        [operatingCompanyId, startDay, endDay]
+        [operatingCompanyId, startDay, endDay, filterUnitIds]
       );
 
       const cardTotalCents = num(cardTotals.rows[0]?.fuel_card_amount_cents);
@@ -262,8 +275,9 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             AND ft.archived_at IS NULL
             AND ft.transaction_at::date BETWEEN $2::date AND $3::date
             AND COALESCE(ft.unit_id, l.assigned_unit_id) IS NULL
+            AND ($4::uuid[] IS NULL OR COALESCE(ft.unit_id, l.assigned_unit_id) = ANY($4::uuid[]))
         `,
-        [operatingCompanyId, startDay, endDay]
+        [operatingCompanyId, startDay, endDay, filterUnitIds]
       );
 
       const unmatched_wo_full_res = await client.query<{ c: string }>(
@@ -273,6 +287,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
           WHERE wo.operating_company_id = $1::uuid
             AND wo.unit_id IS NOT NULL
             AND wo.fuel_cost_cents > 0
+            AND ($4::uuid[] IS NULL OR wo.unit_id = ANY($4::uuid[]))
             AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
             AND NOT EXISTS (
               SELECT 1
@@ -287,7 +302,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
                 AND COALESCE(ft2.unit_id, l.assigned_unit_id) = wo.unit_id
             )
         `,
-        [operatingCompanyId, startDay, endDay]
+        [operatingCompanyId, startDay, endDay, filterUnitIds]
       );
 
       return {

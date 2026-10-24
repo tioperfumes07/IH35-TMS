@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
@@ -18,6 +19,8 @@ const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const pointInTimeQuerySchema = companyQuerySchema.extend({
   as_of_date: isoDateSchema.optional(),
 });
+const arAgingQuerySchema = pointInTimeQuerySchema.extend({ customer_id: entityIdFilterSchema.optional() });
+const apAgingQuerySchema = pointInTimeQuerySchema.extend({ vendor_id: entityIdFilterSchema.optional() });
 
 const rangedQuerySchema = companyQuerySchema.extend({
   range_key: z.string().optional(),
@@ -276,7 +279,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
+    const query = arAgingQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
     // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
@@ -288,6 +291,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
         userId: user.uuid,
         operating_company_id: query.data.operating_company_id,
         as_of_date: query.data.as_of_date ?? todayIsoDate(),
+        customer_id: query.data.customer_id,
         format: "pdf",
       });
       reply.header("Content-Type", result.contentType);
@@ -302,7 +306,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
+    const query = arAgingQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
     // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
@@ -314,6 +318,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
         userId: user.uuid,
         operating_company_id: query.data.operating_company_id,
         as_of_date: query.data.as_of_date ?? todayIsoDate(),
+        customer_id: query.data.customer_id,
         format: "xlsx",
       });
       reply.header("Content-Type", result.contentType);
@@ -328,7 +333,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
+    const query = apAgingQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
     // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
@@ -340,6 +345,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
         userId: user.uuid,
         operating_company_id: query.data.operating_company_id,
         as_of_date: query.data.as_of_date ?? todayIsoDate(),
+        vendor_id: query.data.vendor_id,
         format: "pdf",
       });
       reply.header("Content-Type", result.contentType);
@@ -354,7 +360,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
+    const query = apAgingQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
     // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
@@ -366,6 +372,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
         userId: user.uuid,
         operating_company_id: query.data.operating_company_id,
         as_of_date: query.data.as_of_date ?? todayIsoDate(),
+        vendor_id: query.data.vendor_id,
         format: "xlsx",
       });
       reply.header("Content-Type", result.contentType);

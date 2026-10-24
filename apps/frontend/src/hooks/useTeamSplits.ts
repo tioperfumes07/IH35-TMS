@@ -43,14 +43,14 @@ export async function listTeamSplitConfigs(operatingCompanyId: string, filters?:
   return apiRequest<{ configs: TeamSplitConfig[] }>(`/api/v1/team-splits/configs?${params.toString()}`);
 }
 
-export function useTeamSplits(operatingCompanyId: string | null) {
+export function useTeamSplits(operatingCompanyId: string | null, driverFilter?: string) {
   const queryClient = useQueryClient();
-  const queryKey = ["team-split-configs", operatingCompanyId];
+  const queryKey = ["team-split-configs", operatingCompanyId, driverFilter ?? ""];
 
   const query = useQuery({
     queryKey,
     enabled: Boolean(operatingCompanyId),
-    queryFn: () => listTeamSplitConfigs(operatingCompanyId!),
+    queryFn: () => listTeamSplitConfigs(operatingCompanyId!, { driver_id: driverFilter }),
   });
 
   const create = useMutation({

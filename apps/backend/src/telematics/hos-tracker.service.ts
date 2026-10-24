@@ -185,7 +185,8 @@ export async function getHosDailyRoster(
   client: DbClient,
   operatingCompanyId: string,
   dateStr: string,
-  now: Date
+  now: Date,
+  driverIds?: string[]
 ): Promise<HosRoster> {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
   // Active board drivers = drivers with an OPEN vehicle assignment (the same set the fleet board + HOS pull use).
@@ -211,8 +212,9 @@ export async function getHosDailyRoster(
      LEFT JOIN mdata.units u ON u.id = a.unit_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
      WHERE a.operating_company_id = $1::uuid AND a.ended_at IS NULL AND a.driver_id IS NOT NULL
+       AND ($2::uuid[] IS NULL OR a.driver_id = ANY($2::uuid[]))
      ORDER BY a.driver_id, a.started_at DESC`,
-    [operatingCompanyId]
+    [operatingCompanyId, driverIds ?? null]
   );
 
   const drivers: HosRosterDriver[] = [];

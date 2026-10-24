@@ -68,10 +68,10 @@ export function assertVendorEquipmentLoansReverse(sources) {
   if (!/export async function listEquipmentLoans\(userId: string, operatingCompanyId: string, status\?: string, vendorId\?: string\)/.test(service)) {
     problems.push(`${SERVICE}: listEquipmentLoans must accept an optional vendorId param`);
   }
-  if (!/AND l\.lender_vendor_id = \$/.test(service)) {
+  if (!/AND l\.lender_vendor_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(service) || !service.includes('values.push(entityIdFilterValues(vendorId))')) {
     problems.push(`${SERVICE}: listEquipmentLoans must filter by lender_vendor_id server-side when vendorId provided`);
   }
-  if (!/const loanListQuerySchema = z\.object\(\{[\s\S]{0,700}vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+  if (!/const loanListQuerySchema = z\.object\(\{[\s\S]{0,700}vendor_id:\s*entityIdFilterSchema\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: loanListQuerySchema must accept optional vendor_id`);
   }
   if (!/listEquipmentLoans\(user\.uuid, query\.data\.operating_company_id, query\.data\.status, query\.data\.vendor_id\)/.test(routes)) {
@@ -133,8 +133,10 @@ function selftest() {
 
   const mutations = [
     [SERVICE, /export async function listEquipmentLoans\(userId: string, operatingCompanyId: string, status\?: string, vendorId\?: string\)/, "export async function listEquipmentLoans(userId: string, operatingCompanyId: string, status?: string)"],
-    [SERVICE, /AND l\.lender_vendor_id = \$/, "AND TRUE = $"],
-    [ROUTES, /const loanListQuerySchema = z\.object\(\{[\s\S]{0,700}vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, "const loanListQuerySchema = z.object({ vendor_id: z.never()"],
+    [SERVICE, /AND l\.lender_vendor_id = ANY\(/, "AND TRUE = ANY("],
+    [SERVICE, /values\.push\(entityIdFilterValues\(vendorId\)\)/, "values.push([])"],
+    [SERVICE, /values\.push\(entityIdFilterValues\(vendorId\)\)/, "values.push(entityIdFilterValues(vendorId).slice(0, 1))"],
+    [ROUTES, /const loanListQuerySchema = z\.object\(\{[\s\S]{0,700}vendor_id:\s*entityIdFilterSchema\.optional\(\)/, "const loanListQuerySchema = z.object({ vendor_id: z.string().optional()"],
     [ROUTES, /query\.data\.status, query\.data\.vendor_id/, "query.data.status, undefined"],
     [API, /export function listEquipmentLoans\(companyId: string, vendorId\?: string\)/, "export function listEquipmentLoans(companyId: string)"],
     [HOME, /searchParams\.get\("vendor_id"\)/, 'searchParams.get("missing_vendor")'],

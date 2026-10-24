@@ -10,6 +10,7 @@
  */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { z } from "zod";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
@@ -646,7 +647,7 @@ export async function listLoadTemplates(userId: string, operatingCompanyId: stri
     await setScopedCompanyContext(client, userId, operatingCompanyId);
     const values: unknown[] = [operatingCompanyId];
     const predicates = ["operating_company_id = $1::uuid"];
-    if (filters.customer_id) { values.push(filters.customer_id); predicates.push(`template_json->>'customer_id' = $${values.length}`); }
+    if (filters.customer_id) { values.push(entityIdFilterValues(filters.customer_id)); predicates.push(`template_json->>'customer_id' = ANY($${values.length}::text[])`); }
     if (filters.template_id) { values.push(filters.template_id); predicates.push(`id = $${values.length}::uuid`); }
     const res = await client.query<{
       id: string;

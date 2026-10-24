@@ -13,7 +13,7 @@ import { IntegrityAlertDetailDrawer } from "./components/IntegrityAlertDetailDra
 import { SelectCombobox } from "../../components/Combobox";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../../components/Button";
@@ -391,12 +391,11 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
               </SelectCombobox>
               <label className="text-xs text-[#4B5563]">
                 Driver
-                <EntityPicker
+                <EntityMultiSelect
                   kind="driver"
                   operatingCompanyId={operatingCompanyId}
                   value={draft.driverId || null}
                   onChange={(next) => setDriverFilter(next ?? "")}
-                  allowCreate={false}
                   placeholder="All drivers"
                   className="mt-1"
                   dataTestId="integrity-alerts-filter-driver"
@@ -404,12 +403,11 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
               </label>
               <label className="text-xs text-[#4B5563]">
                 Unit
-                <EntityPicker
+                <EntityMultiSelect
                   kind="unit"
                   operatingCompanyId={operatingCompanyId}
                   value={draft.unitId || null}
                   onChange={(next) => setUnitFilter(next ?? "")}
-                  allowCreate={false}
                   placeholder="All units"
                   className="mt-1"
                   dataTestId="integrity-alerts-filter-unit"
@@ -417,12 +415,11 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
               </label>
               <label className="text-xs text-[#4B5563]">
                 Vendor
-                <EntityPicker
+                <EntityMultiSelect
                   kind="vendor"
                   operatingCompanyId={operatingCompanyId}
                   value={draft.vendorId || null}
                   onChange={(next) => setVendorFilter(next ?? "")}
-                  allowCreate={false}
                   placeholder="All vendors"
                   className="mt-1"
                   dataTestId="integrity-alerts-filter-vendor"

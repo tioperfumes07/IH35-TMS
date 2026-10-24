@@ -2,11 +2,12 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 
 const querySchema = companyQuerySchema.extend({
   period_start: z.string().date(),
   period_end: z.string().date(),
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
 });
 
 type DeductionBreakdown = {
@@ -91,9 +92,9 @@ export async function registerSettlementSummaryRoutes(app: FastifyInstance) {
             AND s.status IS DISTINCT FROM 'cancelled'
             AND s.period_start <= $3::date
             AND s.period_end >= $2::date
-            AND ($4::uuid IS NULL OR s.driver_id = $4::uuid)
+            AND ($4::uuid[] IS NULL OR s.driver_id = ANY($4::uuid[]))
         `,
-        [companyId, pStart, pEnd, driverFilter ?? null]
+        [companyId, pStart, pEnd, driverFilter ? entityIdFilterValues(driverFilter) : null]
       );
 
       const settlementIds = settlementsRes.rows.map((r: { id: string }) => r.id);
@@ -105,15 +106,9 @@ export async function registerSettlementSummaryRoutes(app: FastifyInstance) {
                 SELECT deduction_type, reason, amount_cents::text AS amount_cents, applied_to_settlement_id
                 FROM driver_finance.driver_settlement_deductions
                 WHERE operating_company_id = $1::uuid
-                  AND (
-                    applied_to_settlement_id = ANY($2::uuid[])
-                    OR (
-                      applied_to_settlement_id IS NULL
-                      AND created_at::date BETWEEN $3::date AND $4::date
-                    )
-                  )
+                  AND applied_to_settlement_id = ANY($2::uuid[])
               `,
-              [companyId, settlementIds, pStart, pEnd]
+              [companyId, settlementIds]
             );
 
       const chargebackRows = deductionsRes.rows.filter((row: Record<string, unknown>) => {

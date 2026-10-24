@@ -34,7 +34,7 @@ import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { Button } from "../../components/Button";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { CappedListNotice } from "../../components/CappedListNotice";
@@ -881,12 +881,11 @@ export function BillsPage() {
         </div>
         <label className="text-xs text-[#4B5563]">
           Unit
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={deepLinkUnitId || null}
             onChange={(next) => setUnitFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All units"
             className="mt-1"
             dataTestId="bills-filter-unit"
@@ -894,12 +893,11 @@ export function BillsPage() {
         </label>
         <label className="text-xs text-[#4B5563]">
           Load
-          <EntityPicker
+          <EntityMultiSelect
             kind="load"
             operatingCompanyId={companyId}
             value={deepLinkLoadId || null}
             onChange={(next) => setLoadFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All loads"
             className="mt-1"
             dataTestId="bills-filter-load"

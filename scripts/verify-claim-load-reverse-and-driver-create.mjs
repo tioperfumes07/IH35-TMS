@@ -42,7 +42,7 @@ export function computeFailures(sources) {
   const { claimShared, claimRoutes, insuranceApi, reverseSection, loadDetailDrawer, claimCreate } = sources;
 
   // 1) Backend list filter
-  if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(claimShared)) {
+  if (!/load_id:\s*entityIdFilterSchema\.optional\(\)/.test(claimShared)) {
     errors.push("claim.shared.ts listClaimsQuerySchema must accept optional load_id");
   }
   if (!/parsed\.data\.load_id/.test(claimRoutes)) {
@@ -58,7 +58,7 @@ export function computeFailures(sources) {
       !/\.replace\(\/\^operating_company_id\/,\s*["'`]c\.operating_company_id["'`]\)/.test(claimRoutes)) {
     errors.push("claim.routes.ts GET list must seed the query with the selected operating company predicate");
   }
-  if (!/if\s*\(parsed\.data\.load_id\)\s*\{[\s\S]{0,180}?values\.push\(parsed\.data\.load_id\)[\s\S]{0,180}?filters\.push\(`load_id = \$\$\{values\.length\}::uuid`\)/.test(claimRoutes)) {
+  if (!/if\s*\(parsed\.data\.load_id\)\s*\{[\s\S]{0,180}?values\.push\(entityIdFilterValues\(parsed\.data\.load_id\)\)[\s\S]{0,180}?filters\.push\(`load_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/.test(claimRoutes)) {
     errors.push("claim.routes.ts GET list must bind load_id as a UUID query parameter");
   }
   if (!/\.replace\(\/\^load_id\/,\s*["']c\.load_id["']\)/.test(claimRoutes)) {
@@ -151,11 +151,12 @@ function selftest() {
   }
 
   const cases = [
-    ["claimShared", (f) => { f.claimShared = f.claimShared.replace("load_id: z.string().uuid().optional()", "load_id: z.string().optional()"); }, "listClaimsQuerySchema must accept optional load_id"],
+    ["claimShared", (f) => { f.claimShared = f.claimShared.replace("load_id: entityIdFilterSchema.optional()", "load_id: z.string().optional()"); }, "listClaimsQuerySchema must accept optional load_id"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("withCompanyScope(user.uuid, parsed.data.operating_company_id", "withCompanyScope(user.uuid, user.operating_company_id"); }, "selected operating company scope"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("const values: unknown[] = [parsed.data.operating_company_id]", "const values: unknown[] = []"); }, "seed the query with the selected operating company"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace(/const filters(?:\s*:\s*string\[\])? = \["operating_company_id = \$1::uuid"/, "const filters: string[] = ["); }, "seed the query with the selected operating company"],
-    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("values.push(parsed.data.load_id);", "values.push(parsed.data.driver_id);"); }, "bind load_id as a UUID query parameter"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("values.push(entityIdFilterValues(parsed.data.load_id));", "values.push(parsed.data.driver_id);"); }, "bind load_id as a UUID query parameter"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("values.push(entityIdFilterValues(parsed.data.load_id));", "values.push(entityIdFilterValues(parsed.data.load_id).slice(0, 1));"); }, "bind load_id as a UUID query parameter"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('.replace(/^load_id/, "c.load_id")', '.replace(/^load_id/, "load_id")'); }, "scope load_id to c.load_id"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("AND cload.operating_company_id = ${scope}", "AND cload.operating_company_id IS NOT NULL"); }, "same-company mdata.loads join"],
     ["insuranceApi", (f) => { f.insuranceApi = f.insuranceApi.replace(/(export function listInsuranceClaims\(params: \{[\s\S]*?)load_id\?: string;/, "$1"); }, "listInsuranceClaims params must accept load_id"],

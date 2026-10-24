@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -14,7 +15,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
-  vendor_id: z.string().uuid().optional(),
+  vendor_id: entityIdFilterSchema.optional(),
 });
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const purchaseSchema = z.object({
@@ -92,8 +93,8 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
-      const vendorFilter = query.data.vendor_id ? "AND pi.vendor_id = $2::uuid" : "";
-      if (query.data.vendor_id) values.push(query.data.vendor_id);
+      const vendorFilter = query.data.vendor_id ? "AND pi.vendor_id = ANY($2::uuid[])" : "";
+      if (query.data.vendor_id) values.push(entityIdFilterValues(query.data.vendor_id));
       // LV-INVENTORY-PARTS-DEACTIVATED-VENDOR-HISTORICAL-LABEL: the LEFT JOIN alone silently drops
       // a vendor row once it's deactivated (mdata.vendors' own RLS SELECT policy excludes any
       // deactivated_at IS NOT NULL row for a non-bypass reader) even though the FK is still valid —
@@ -127,8 +128,8 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
-      const vendorFilter = query.data.vendor_id ? "AND pp.vendor_id = $2::uuid" : "";
-      if (query.data.vendor_id) values.push(query.data.vendor_id);
+      const vendorFilter = query.data.vendor_id ? "AND pp.vendor_id = ANY($2::uuid[])" : "";
+      if (query.data.vendor_id) values.push(entityIdFilterValues(query.data.vendor_id));
       const res = await client.query(
         `SELECT pp.*, pi.part_description, pi.part_number,
                 COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(pp.vendor_id, pp.operating_company_id)) AS vendor_name,

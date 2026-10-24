@@ -8,6 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from "./lib/entity-multiselect-filter-contract.mjs";
 
 const LABEL = "verify-hos-tracker-staged-filters";
 const TARGET = "apps/frontend/src/pages/compliance/HosTrackerSection.tsx";
@@ -21,12 +22,12 @@ function assertPage(src) {
   if (!src.includes('data-testid="hos-tracker-filter-cancel"')) errors.push("must expose filter-cancel");
   if (!src.includes('data-testid="hos-tracker-filter-reset"')) errors.push("must expose filter-reset");
   if (!src.includes('dataTestId="hos-tracker-filter-driver"')) errors.push("must keep driver picker testid");
-  if (!/allowCreate=\{false\}/.test(src)) errors.push("must keep allowCreate={false}");
+  errors.push(...multiSelectFilterProblems(src, { file: TARGET, kind: "driver", testId: "hos-tracker-filter-driver" }));
   if (!/requestedDriverId\s*=\s*searchParams\.get\("driver_id"\)/.test(src)) {
     errors.push('must keep requestedDriverId = searchParams.get("driver_id")');
   }
-  if (!/driver\.driver_id === effectiveDriverId/.test(src) || !/filteredDrivers/.test(src)) {
-    errors.push("must keep effectiveDriverId roster filter + filteredDrivers");
+  if (!/getHosDailyRoster\(operatingCompanyId, selectedDate, effectiveDriverId\)/.test(src) || !/const effectiveDriverId = applied\.driverId\.trim\(\) \|\| undefined/.test(src) || !/const filteredDrivers = roster\?\.drivers \?\? \[\]/.test(src)) {
+    errors.push("must query the scoped roster with all applied driver IDs and render its returned drivers");
   }
   if (!/setSearchParams/.test(src) || !/setDriverFilter/.test(src)) {
     errors.push("must keep setDriverFilter + setSearchParams URL sync");
@@ -65,20 +66,20 @@ function selftest() {
     driver.driver_id === effectiveDriverId
     filteredDrivers
   `;
-  const good = `
-    useStagedListFilters({ applied, empty: EMPTY_FILTERS, onApply })
-    const requestedDriverId = searchParams.get("driver_id");
-    const effectiveDriverId = applied.driverId.trim() || undefined;
-    driver.driver_id === effectiveDriverId
-    filteredDrivers
-    const setDriverFilter = (driverId) => { staged.setDraft((d) => ({ ...d, driverId })); };
-    setSearchParams
-    allowCreate={false}
-    dataTestId="hos-tracker-filter-driver"
-    <button data-testid="hos-tracker-filter-apply" onClick={staged.apply}>Apply</button>
-    <button data-testid="hos-tracker-filter-cancel" onClick={staged.cancel}>Cancel</button>
-    <button data-testid="hos-tracker-filter-reset">Reset</button>
-  `;
+  const good = fs.readFileSync(path.join(process.cwd(), TARGET), "utf8");
+  selftestMultiSelectFilterContract();
+  for (const [from, to] of [
+    ['kind="driver"', 'kind="driver" allowCreate'],
+    ['operatingCompanyId={operatingCompanyId}', 'operatingCompanyId={""}'],
+    ['setDriverFilter(next ?? "")', 'setDriverFilter(next?.split(",")[0] ?? "")'],
+    ['getHosDailyRoster(operatingCompanyId, selectedDate, effectiveDriverId)', 'getHosDailyRoster(operatingCompanyId, selectedDate, undefined)'],
+    ['applied.driverId.trim()', 'applied.driverId.split(",")[0].trim()'],
+    ['onClick={staged.apply}', 'onClick={() => undefined}'],
+    ['onClick={staged.cancel}', 'onClick={() => undefined}'],
+  ]) {
+    if (!good.includes(from)) throw new Error(`selftest plant did not change source: ${from}`);
+    if (!assertPage(good.replaceAll(from, to)).length) throw new Error(`selftest plant survived: ${from}`);
+  }
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
     process.exit(1);

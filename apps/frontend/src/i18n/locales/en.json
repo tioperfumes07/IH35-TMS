@@ -46,6 +46,11 @@
     "stop_status": "Stop {{city}}, {{state}}"
   },
   "common": {
+    "batch_history_limit": "Batch history is limited to the latest 200 batches per customer. {{count}} selected customer histories reached that limit; this is not a complete total.",
+    "loading_options": "Loading options…",
+    "select_shown": "Select shown",
+    "search_payee_names": "Search payee names",
+    "search_account_tree": "Search account tree",
     "app_name": "IH 35 Dispatch",
     "phone_login": "Phone login",
     "open_navigation_menu": "Open navigation menu",
@@ -71,6 +76,7 @@
     "title": "Dashboard"
   },
   "dispatch": {
+    "create_driver": "+ Create Driver",
     "title": "Dispatch"
   },
   "drivers": {

@@ -4,8 +4,8 @@ function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
 
-export function getLiabilitiesKpis(companyId: string) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/liabilities/dashboard/kpis?${q(companyId)}`);
+export function getLiabilitiesKpis(companyId: string, driverId?: string) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/liabilities/dashboard/kpis?${q(companyId)}${driverId ? `&driver_id=${encodeURIComponent(driverId)}` : ""}`);
 }
 
 export function getActiveLiabilities(companyId: string) {

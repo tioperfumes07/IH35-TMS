@@ -11,7 +11,7 @@ import {
 } from "../../api/insurance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 /** Convert raw missing-type codes to human-readable labels using the catalog map. */
@@ -232,12 +232,11 @@ export function CoverageGapDashboard() {
           <div data-testid="coverage-gap-filters">
             <label className="text-xs text-[#4B5563]">
               Unit
-              <EntityPicker
+              <EntityMultiSelect
                 kind="unit"
                 operatingCompanyId={companyId}
                 value={stagedFilters.draft.unitId || null}
                 onChange={(next) => stagedFilters.setDraft({ unitId: next ?? "" })}
-                allowCreate={false}
                 placeholder="All units"
                 className="mt-1"
                 dataTestId="coverage-gap-filter-unit"

@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import type { RunnerFilter } from "./runner-config";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { Combobox } from "../../../components/Combobox";
 
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
@@ -169,17 +169,15 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               return (
                 <label key={filter.key} className="block" data-testid={`runner-filter-unit-${filter.key}`}>
                   <FilterLabel filter={filter} />
-                  <EntityPicker
+                  <EntityMultiSelect
                     kind="unit"
                     operatingCompanyId={selectedCompanyId ?? ""}
                     value={String(draft[filter.key] ?? "") || null}
                     onChange={(next) => staged.setDraft({ ...draft, [filter.key]: next ?? "" })}
-                    enabled={Boolean(selectedCompanyId)}
+                    disabled={!selectedCompanyId}
                     placeholder="Select unit"
                     className="h-9 w-full text-xs"
-                    dataField={`runner-filter-${filter.key}`}
-                    allowClear
-                    allowCreate={false}
+                    dataTestId={`runner-filter-${filter.key}`}
                   />
                 </label>
               );
@@ -188,17 +186,15 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               return (
                 <label key={filter.key} className="block" data-testid={`runner-filter-driver-${filter.key}`}>
                   <FilterLabel filter={filter} />
-                  <EntityPicker
+                  <EntityMultiSelect
                     kind="driver"
                     operatingCompanyId={selectedCompanyId ?? ""}
                     value={String(draft[filter.key] ?? "") || null}
                     onChange={(next) => staged.setDraft({ ...draft, [filter.key]: next ?? "" })}
-                    enabled={Boolean(selectedCompanyId)}
+                    disabled={!selectedCompanyId}
                     placeholder="Search driver…"
                     className="h-9 w-full text-xs"
-                    dataField={`runner-filter-${filter.key}`}
-                    allowClear
-                    allowCreate={false}
+                    dataTestId={`runner-filter-${filter.key}`}
                   />
                 </label>
               );

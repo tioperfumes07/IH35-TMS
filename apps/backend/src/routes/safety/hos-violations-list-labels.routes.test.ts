@@ -86,7 +86,7 @@ describe("GET /api/v1/safety/hos-violations joins the driver name", () => {
     const sqlText = mockQuery.mock.calls.map((call) => String(call[0])).join("\n");
     expect(sqlText).toMatch(/hv\.operating_company_id = \$1/);
     expect(sqlText).toMatch(/hv\.voided_at IS NULL/);
-    expect(sqlText).toMatch(/hv\.driver_id = \$2/);
+    expect(sqlText).toContain("hv.driver_id = ANY($2::uuid[])");
   });
 
   it("creates only after every submitted linkage is validated in the selected company", async () => {

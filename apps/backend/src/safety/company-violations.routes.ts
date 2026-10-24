@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -10,8 +11,8 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 const companyViolationListQuerySchema = companyQuerySchema.extend({
-  driver_id: z.string().uuid().optional(),
-  unit_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
+  unit_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -176,7 +177,7 @@ export async function registerSafetyCompanyViolationsRoutes(
             const parent = await client.query(
               `SELECT 1
              FROM mdata.drivers md
-             WHERE md.id = $1::uuid
+             WHERE md.id = ANY($1::uuid[])
                AND md.archived_at IS NULL
                AND (
                  md.operating_company_id = $2::uuid
@@ -188,25 +189,25 @@ export async function registerSafetyCompanyViolationsRoutes(
                      AND dca.deactivated_at IS NULL
                  )
                )
-             LIMIT 1`,
-              [query.data.driver_id, query.data.operating_company_id],
+             `,
+              [entityIdFilterValues(query.data.driver_id), query.data.operating_company_id],
             );
-            if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
+            if (parent.rows.length !== entityIdFilterValues(query.data.driver_id!).length) return { found: false as const, rows: [], total_count: 0 };
           }
           const countRes = await client.query(
             `SELECT count(*)::int AS total_count
              FROM safety.company_violations cv
              WHERE cv.operating_company_id = $1::uuid
                AND cv.deactivated_at IS NULL
-               AND ($2::uuid IS NULL OR EXISTS (
+               AND ($2::uuid[] IS NULL OR EXISTS (
                  SELECT 1 FROM safety.company_violation_drivers d
-                 WHERE d.violation_id = cv.id AND d.driver_id = $2::uuid AND d.is_active
+                 WHERE d.violation_id = cv.id AND d.driver_id = ANY($2::uuid[]) AND d.is_active
                ))
-               AND ($3::uuid IS NULL OR EXISTS (
+               AND ($3::uuid[] IS NULL OR EXISTS (
                  SELECT 1 FROM safety.company_violation_units u
-                 WHERE u.violation_id = cv.id AND u.unit_id = $3::uuid AND u.is_active
+                 WHERE u.violation_id = cv.id AND u.unit_id = ANY($3::uuid[]) AND u.is_active
                ))`,
-            [query.data.operating_company_id, query.data.driver_id ?? null, query.data.unit_id ?? null],
+            [query.data.operating_company_id, query.data.driver_id ? entityIdFilterValues(query.data.driver_id) : null, query.data.unit_id ? entityIdFilterValues(query.data.unit_id) : null],
           );
           const res = await client.query(
             `
@@ -243,21 +244,21 @@ export async function registerSafetyCompanyViolationsRoutes(
           FROM safety.company_violations cv
           WHERE cv.operating_company_id = $1::uuid
             AND cv.deactivated_at IS NULL
-            AND ($2::uuid IS NULL OR EXISTS (
+            AND ($2::uuid[] IS NULL OR EXISTS (
               SELECT 1 FROM safety.company_violation_drivers d
-              WHERE d.violation_id = cv.id AND d.driver_id = $2::uuid AND d.is_active
+              WHERE d.violation_id = cv.id AND d.driver_id = ANY($2::uuid[]) AND d.is_active
             ))
-            AND ($3::uuid IS NULL OR EXISTS (
+            AND ($3::uuid[] IS NULL OR EXISTS (
               SELECT 1 FROM safety.company_violation_units u
-              WHERE u.violation_id = cv.id AND u.unit_id = $3::uuid AND u.is_active
+              WHERE u.violation_id = cv.id AND u.unit_id = ANY($3::uuid[]) AND u.is_active
             ))
           ORDER BY cv.reported_date DESC, cv.created_at DESC
           LIMIT $4 OFFSET $5
         `,
             [
               query.data.operating_company_id,
-              query.data.driver_id ?? null,
-              query.data.unit_id ?? null,
+              query.data.driver_id ? entityIdFilterValues(query.data.driver_id) : null,
+              query.data.unit_id ? entityIdFilterValues(query.data.unit_id) : null,
               query.data.limit,
               query.data.offset,
             ],

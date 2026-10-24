@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { z } from "zod";
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { generatePresignedDownloadUrl, getR2BucketName, isR2Configured } from "../storage/r2-client.js";
@@ -327,8 +328,8 @@ export async function listMatters(
     where.push(`m.related_driver_id = $${values.length}`);
   }
   if (args.unit_id) {
-    values.push(args.unit_id);
-    where.push(`m.unit_id = $${values.length}`);
+    values.push(entityIdFilterValues(args.unit_id));
+    where.push(`m.unit_id = ANY($${values.length}::uuid[])`);
   }
   if (args.equipment_id) {
     values.push(args.equipment_id);

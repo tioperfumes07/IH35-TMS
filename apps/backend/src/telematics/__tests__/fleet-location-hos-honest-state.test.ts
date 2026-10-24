@@ -48,6 +48,17 @@ function makeClient() {
 }
 
 describe("fleet-location-hos honest HOS state (no fabricated 840)", () => {
+  it("binds every selected unit in the source row query without join fanout", async () => {
+    const unitIds = ["22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333"];
+    let seen: { sql: string; values?: unknown[] } | undefined;
+    const client = { query: async <R>(sql: string, values?: unknown[]) => {
+      if (sql.includes("FROM mdata.units")) seen = { sql, values };
+      return { rows: [] as R[] };
+    } };
+    await getFleetLocationHosRows(client, OCI, ASOF, unitIds);
+    expect(seen?.sql).toContain("u.id = ANY($2::uuid[])");
+    expect(seen?.values).toEqual([OCI, unitIds]);
+  });
   it("preserves actively authorized shared drivers in both current-driver sources", async () => {
     const queries: string[] = [];
     const client = {

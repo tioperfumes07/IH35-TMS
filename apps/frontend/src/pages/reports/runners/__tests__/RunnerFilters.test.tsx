@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { RunnerFilters } from "../RunnerFilters";
@@ -9,6 +9,10 @@ vi.mock("../../../../contexts/CompanyContext", () => ({
     selectedCompanyId: "00000000-0000-4000-8000-000000000001",
     companies: [],
   }),
+}));
+vi.mock("../../../../components/EntityMultiSelect", () => ({
+  EntityMultiSelect: ({ value, onChange, dataTestId }: { value: string | null; onChange: (next: string | null) => void; dataTestId?: string }) =>
+    <input data-testid={dataTestId} value={value ?? ""} onChange={(event) => onChange(event.target.value || null)} />,
 }));
 
 const DATE_RANGE_FILTER: RunnerFilter[] = [{ type: "date_range", key: "date_range", label: "Date range", required: true }];
@@ -21,6 +25,18 @@ const DATE_RANGE_FILTER: RunnerFilter[] = [{ type: "date_range", key: "date_rang
 // Run's onClick, which ran the report against the OLD, previously-applied date -- silently, with
 // no error and no visual indication the pick was lost.
 describe("RunnerFilters — date-picker Run report", () => {
+  it.each(["unit_select", "driver_select"] as const)("runs with all staged IDs for %s", async (type) => {
+    const user = userEvent.setup();
+    const key = type === "unit_select" ? "unit_id" : "driver_id";
+    const ids = "22222222-2222-4222-8222-222222222222,33333333-3333-4333-8333-333333333333";
+    const onRun = vi.fn();
+    const onChange = vi.fn();
+    render(<RunnerFilters filters={[{ type, key, label: key, required: true }]} values={{ [key]: ids.split(",")[0] }} onChange={onChange} onRun={onRun} isRunning={false} />);
+    fireEvent.change(screen.getByTestId(`runner-filter-${key}`), { target: { value: ids } });
+    await user.click(screen.getByRole("button", { name: "Run report" }));
+    expect(onRun).toHaveBeenCalledWith({ [key]: ids });
+    expect(onChange).toHaveBeenCalledWith(key, ids);
+  });
   it("runs with the just-picked date instead of silently discarding it (no explicit Apply click)", async () => {
     const user = userEvent.setup();
     const onRun = vi.fn();

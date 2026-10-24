@@ -36,11 +36,13 @@ export function problems(src) {
   const where = src.service.slice(src.service.indexOf("function buildAllBillsWhereClause"), src.service.indexOf("function buildAllBillsWhereClause") + 6000);
   for (const k of keys) {
     if (!new RegExp(`query\\.set\\("${k}", params\\.${k}\\)`).test(apiFn)) p.push(`listBills never sends ${k} (api/accounting.ts)`);
-    if (!new RegExp(`\\b${k}: z\\.`).test(schema)) p.push(`listBillsQuerySchema drops ${k} (bills.routes.ts)`);
+    const multi = k === 'unit_id' || k === 'load_id';
+    if (!new RegExp(`\\b${k}: ${multi ? 'entityIdFilterSchema\\.optional\\(\\)' : 'z\\.'}`).test(schema)) p.push(`listBillsQuerySchema drops ${k} (bills.routes.ts)`);
     const mapped = (src.routes.match(new RegExp(`${camel(k)}: query\\.data\\.${k}`, "g")) ?? []).length;
     if (mapped < 2) p.push(`bills.routes.ts maps ${k} into ${mapped} of 2 list-option sets`);
-    const col = OPTION_COLUMN[k] ?? new RegExp(`b\\.${k} = \\$`);
+    const col = multi ? new RegExp(`${k === 'load_id' ? 'bl' : 'b'}\\.${k} = ANY\\(\\$\\$\\{values\\.length\\}::uuid\\[\\]\\)`) : OPTION_COLUMN[k] ?? new RegExp(`b\\.${k} = \\$`);
     if (!new RegExp(`options\\.${camel(k)}`).test(where) || !col.test(where)) p.push(`buildAllBillsWhereClause never filters on ${k}`);
+    if (multi && !where.includes(`values.push(entityIdFilterValues(options.${camel(k)}))`)) p.push(`missing validated array binding for ${k}`);
   }
   if (!/listBills\(operatingCompanyId, \{ \.\.\.filter, status: "active"/.test(src.panel)) p.push('the Bills panel must hide voided bills (status: "active")');
   return p;
@@ -57,6 +59,8 @@ if (isMain) {
   if (process.argv.includes("--selftest")) {
     if (own.length) { console.error(`${LABEL} --selftest FAIL on the real tree — ${own.join("; ")}`); process.exit(1); }
     const plants = [
+      ["unit first-ID truncation", { ...src, service: src.service.replaceAll('entityIdFilterValues(options.unitId)', 'entityIdFilterValues(options.unitId).slice(0, 1)') }],
+      ["load binding removed", { ...src, service: src.service.replaceAll('values.push(entityIdFilterValues(options.loadId))', 'void 0') }],
       ["api drops driver_id", { ...src, api: (() => { const i = src.api.indexOf("export function listBills("); return src.api.slice(0, i) + src.api.slice(i).replace('query.set("driver_id", params.driver_id)', "void 0"); })() }],
       ["schema drops trailer_id", { ...src, routes: src.routes.replace("  trailer_id: z.string().uuid().optional(),\n", "") }],
       ["where drops driver_id", { ...src, service: src.service.replace("where.push(`b.driver_id = $${values.length}::uuid`);\n  }", "}") }],

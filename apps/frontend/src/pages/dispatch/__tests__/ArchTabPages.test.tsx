@@ -30,12 +30,19 @@ describe("dispatch arch tab pages (B21-D2)", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
-    vi.spyOn(dispatchApi, "listAtRiskDispatchLoads").mockResolvedValue({
+    // The board now uses the combined at-risk/late reader; spy on its actual public boundary.
+    vi.spyOn(dispatchApi, "listAtRiskOrLateDispatchLoads").mockResolvedValue({
+      count: 1,
+      at_risk_count: 1,
+      late_count: 0,
+      grace_minutes: 15,
       loads: [
         {
           id: "l1",
           load_number: "LD-100",
           status: "in_transit",
+          is_at_risk: true,
+          is_late: false,
           customer_id: "c0000000-0000-0000-0000-000000000001",
           customer_name: "Acme",
           unit_id: "u0000000-0000-0000-0000-000000000001",
@@ -123,13 +130,17 @@ describe("dispatch arch tab pages (B21-D2)", () => {
     // "Filter by driver UUID", i.e. it would have failed the day the raw-uuid box was fixed. It is
     // TIGHTENED here, not relaxed: the driver filter must now be the canonical picker, and the
     // raw-uuid placeholder must be GONE. Both directions are asserted so neither can regress.
-    expect(await screen.findByPlaceholderText("All drivers")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "All drivers" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "+ Create Driver" })).toBeTruthy();
     expect(screen.queryByPlaceholderText("Filter by driver UUID")).toBeNull();
   });
 
   it("lists at-risk loads via dispatch API", async () => {
     wrap(<AtRiskQueuePage />);
     await screen.findByText("LD-100");
-    expect(dispatchApi.listAtRiskDispatchLoads).toHaveBeenCalled();
+    expect(dispatchApi.listAtRiskOrLateDispatchLoads).toHaveBeenCalledWith(
+      "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+      expect.objectContaining({ from: "", to: "" }),
+    );
   });
 });

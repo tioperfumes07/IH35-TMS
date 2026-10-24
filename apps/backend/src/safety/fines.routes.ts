@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -20,9 +21,9 @@ const idParamsSchema = z.object({
 const finesQuerySchema = companyQuerySchema.extend({
   status: z.string().optional(),
   subject_type: z.enum(["driver", "company"]).optional(),
-  subject_driver_id: z.string().uuid().optional(),
-  related_load_id: z.string().uuid().optional(),
-  related_unit_id: z.string().uuid().optional(),
+  subject_driver_id: entityIdFilterSchema.optional(),
+  related_load_id: entityIdFilterSchema.optional(),
+  related_unit_id: entityIdFilterSchema.optional(),
   issued_date_from: z.string().optional(),
   issued_date_to: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -123,7 +124,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         const parent = await client.query(
           `SELECT 1
              FROM mdata.drivers d
-            WHERE d.id = $1::uuid
+            WHERE d.id = ANY($1::uuid[])
               AND d.archived_at IS NULL
               AND (
                 d.operating_company_id = $2::uuid
@@ -136,10 +137,10 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
                      AND dca.deactivated_at IS NULL
                 )
               )
-            LIMIT 1`,
-          [q.subject_driver_id, q.operating_company_id]
+            `,
+          [entityIdFilterValues(q.subject_driver_id), q.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false, rows: [], total_count: 0 };
+        if (parent.rows.length !== entityIdFilterValues(q.subject_driver_id).length) return { found: false, rows: [], total_count: 0 };
       }
       // SAF-F18: qualify every filter with cf. — the driver-name LEFT JOIN below adds mdata.drivers,
       // which shares operating_company_id / deactivated_at, so unqualified columns would be ambiguous.
@@ -154,16 +155,16 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         filters.push(`cf.subject_type = $${values.length}`);
       }
       if (q.subject_driver_id) {
-        values.push(q.subject_driver_id);
-        filters.push(`cf.subject_driver_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.subject_driver_id));
+        filters.push(`cf.subject_driver_id = ANY($${values.length}::uuid[])`);
       }
       if (q.related_load_id) {
-        values.push(q.related_load_id);
-        filters.push(`cf.related_load_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.related_load_id));
+        filters.push(`cf.related_load_id = ANY($${values.length}::uuid[])`);
       }
       if (q.related_unit_id) {
-        values.push(q.related_unit_id);
-        filters.push(`cf.related_unit_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.related_unit_id));
+        filters.push(`cf.related_unit_id = ANY($${values.length}::uuid[])`);
       }
       if (q.issued_date_from) {
         values.push(q.issued_date_from);

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -73,7 +74,7 @@ const voidBodySchema = z.object({
 });
 
 const listQuerySchema = companyQuerySchema.extend({
-  customer_id: z.string().trim().optional(),
+  customer_id: entityIdFilterSchema.optional(),
   // R-102-B item 5 ("DEFAULT FILTERS") — "active" is a frontend-facing pseudo-status (not a real
   // credit_memos.status value): draft/issued/applied are all live states, voided is the only dead
   // one, so "active" means "exclude voided" rather than matching one literal status column value.
@@ -98,8 +99,8 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
       const params: unknown[] = [query.data.operating_company_id];
 
       if (query.data.customer_id) {
-        params.push(query.data.customer_id);
-        conditions.push(`cm.customer_id = $${params.length}::uuid`);
+        params.push(entityIdFilterValues(query.data.customer_id));
+        conditions.push(`cm.customer_id = ANY($${params.length}::uuid[])`);
       }
       const statusCond = statusListCondition("cm.status", query.data.status, (v) => {
         params.push(v);

@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { getActiveLiabilities, getLiabilitiesByDriver, getLiabilitiesKpis, getLiabilityDetail } from "../../api/liabilities";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LIABILITY_TABS, LiabilitiesKpiRow } from "./components/LiabilitiesKpiRow";
@@ -75,8 +75,8 @@ export function LiabilitiesHomePage() {
   }, [deepLinkLiabilityId]);
 
   const kpisQuery = useQuery({
-    queryKey: ["liabilities", "kpis", companyId],
-    queryFn: () => getLiabilitiesKpis(companyId),
+    queryKey: ["liabilities", "kpis", companyId, effectiveDriverId],
+    queryFn: () => getLiabilitiesKpis(companyId, effectiveDriverId),
     enabled: Boolean(companyId),
   });
   const activeQuery = useQuery({
@@ -105,12 +105,11 @@ export function LiabilitiesHomePage() {
       <div className="relative flex flex-wrap items-end gap-3" data-testid="liabilities-filters">
         <label className="text-xs text-[#4B5563]">
           Driver
-          <EntityPicker
+          <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={filterDraft.driverId || null}
             onChange={(next) => setDriverFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All drivers"
             className="mt-1"
             dataTestId="liabilities-filter-driver"

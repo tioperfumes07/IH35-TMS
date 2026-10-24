@@ -8,7 +8,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -206,12 +206,11 @@ function RenditionListView({
       <div className="relative flex flex-wrap items-end gap-3" data-testid="property-tax-filters">
         <label className="text-xs text-[#4B5563]">
           Unit
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={draftUnitId || null}
             onChange={(next) => onUnitFilterChange(next ?? "")}
-            allowCreate={false}
             placeholder="All units"
             className="mt-1"
             dataTestId="property-tax-filter-unit"

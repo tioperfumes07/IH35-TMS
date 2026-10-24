@@ -11,7 +11,7 @@ import { SubmitFactoringModal } from "./SubmitFactoringModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
@@ -157,12 +157,11 @@ export function FactoringListPage() {
     >
       <label className="flex flex-col gap-1 text-xs text-[#4B5563]" data-testid="factoring-entity-filters">
         Load
-        <EntityPicker
+        <EntityMultiSelect
           kind="load"
           operatingCompanyId={selectedCompanyId ?? ""}
           value={deepLinkLoadId || null}
           onChange={(next) => patchLoadFilter(next ?? "")}
-          allowCreate={false}
           placeholder="All loads"
           dataTestId="factoring-filter-load"
         />

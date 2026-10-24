@@ -16,6 +16,7 @@
 import { overrideRefusalStatus, recordOverride } from "../overrides/record-override.service.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { syncLoadsForFactoringAdvance } from "../dispatch/load-billing-lifecycle.service.js";
 import {
@@ -88,7 +89,7 @@ const voidBody = z.object({ reason: z.string().trim().min(3).max(500) });
 const candidatesQuery = companyQuery.extend({
   from: isoDate.optional(),
   to: isoDate.optional(),
-  customer_id: z.string().uuid().optional(),
+  customer_id: entityIdFilterSchema.optional(),
   search: z.string().trim().max(120).optional(),
 });
 const invoiceParams = z.object({ invoiceId: z.string().uuid() });

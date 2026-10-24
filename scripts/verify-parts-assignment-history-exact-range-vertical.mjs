@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const files = [
   "apps/backend/src/maintenance/parts-invoice-links.routes.ts",
@@ -32,7 +33,7 @@ function verify(routes, api, list, vendor, unit) {
   need(api, /getUnitPartsHistoryPage[\s\S]*limit: String\(range\.limit \?\? 50\)[\s\S]*offset: String\(range\.offset \?\? 0\)/, "unit client must send range");
   need(list, /queryKey: \["maintenance", "parts-assignments", companyId, unitId, vendorId, unitLinkedOnly, page\]/, "canonical list query identity must include scope, filters, and page");
   need(list, /vendor_id: vendorId \|\| undefined[\s\S]*unit_linked_only: unitLinkedOnly \|\| undefined[\s\S]*offset: page \* PAGE_SIZE/, "canonical list must send staged filters before server paging");
-  need(list, /EntityPicker kind="vendor"[\s\S]*allowCreate=\{false\}/, "vendor filter must use the canonical scoped picker without create");
+  errors.push(...multiSelectFilterProblems(list, {file:files[2],kind:'vendor'}));
   need(vendor, /queryKey: \["vendor-parts-history", operatingCompanyId, vendorId, page\][\s\S]*offset: page \* PAGE_SIZE/, "vendor reverse must page the exact filtered relationship");
   need(unit, /queryKey: \["unit-parts-history", unitId, companyId, page\][\s\S]*offset: page \* PAGE_SIZE/, "unit reverse must page the exact filtered relationship");
   need(unit, /hidePager[\s\S]*Previous[\s\S]*Next/, "unit reverse must have one authoritative server pager");
@@ -41,6 +42,7 @@ function verify(routes, api, list, vendor, unit) {
 
 const sources = files.map((file) => fs.readFileSync(file, "utf8"));
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const mutations = [
     [sources[0].replace("COUNT(*)::text AS total_count", "COUNT(*) AS removed"), ...sources.slice(1)],
     [sources[0].replace("LIMIT $${values.length + 1}", "LIMIT 500"), ...sources.slice(1)],
@@ -50,7 +52,7 @@ if (process.argv.includes("--selftest")) {
     [sources[0], sources[1].replace("offset: String(range.offset ?? 0)", 'offset: "0"'), ...sources.slice(2)],
     [sources[0], sources[1], sources[2].replace(", page]", "]"), sources[3], sources[4]],
     [sources[0], sources[1], sources[2].replace("offset: page * PAGE_SIZE", "offset: 0"), sources[3], sources[4]],
-    [sources[0], sources[1], sources[2].replace("allowCreate={false}", "allowCreate"), sources[3], sources[4]],
+    [sources[0], sources[1], sources[2].replace("<EntityMultiSelect", "<EntityMultiSelect allowCreate"), sources[3], sources[4]],
     [sources[0], sources[1], sources[2], sources[3].replace(", page]", "]"), sources[4]],
     [sources[0], sources[1], sources[2], sources[3].replace("offset: page * PAGE_SIZE", "offset: 0"), sources[4]],
     [sources[0], sources[1], sources[2], sources[3], sources[4].replace(", page]", "]")],

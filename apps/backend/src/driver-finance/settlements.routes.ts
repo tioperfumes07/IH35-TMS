@@ -57,7 +57,7 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   status: settlementStatusSchema.optional(),
   payment_state: paymentStateListParam,
-  driver_id: z.string().uuid().optional(),
+  driver_id: entityIdFilterSchema.optional(),
 });
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const settlementReferencesBodySchema = z.object({
@@ -268,8 +268,8 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         if (paymentCond) where.push(paymentCond);
       }
       if (q.driver_id) {
-        values.push(q.driver_id);
-        where.push(`s.driver_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(q.driver_id));
+        where.push(`s.driver_id = ANY($${values.length}::uuid[])`);
       }
       const countRes = await client.query(
         // CLS-JOIN-ENTITY-UNSCOPED: `where[0]` is always "s.operating_company_id = $1::uuid" (set
@@ -1712,3 +1712,4 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     }
   );
 }
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";

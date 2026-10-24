@@ -30,6 +30,32 @@ vi.mock("../../_helpers/company-membership-guard.js", () => ({
 
 
 describe("maintenance KPI helpers (B35)", () => {
+  it("uses every scoped selected unit in summary predicates and the MTBF fleet denominator", async () => {
+    const units = ["22222222-2222-4222-8222-222222222222", "33333333-3333-4333-8333-333333333333"];
+    mockQuery.mockReset();
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
+      if (sql.includes("failure_count")) {
+        expect(sql).toContain("wo.unit_id = ANY($4::uuid[])");
+        expect(values).toEqual([COMPANY, "2026-06-01", "2026-06-01", units]);
+        return { rows: [{ failure_count: 2 }] };
+      }
+      if (sql.includes("COUNT(*)::int AS c")) {
+        expect(sql).toContain("id = ANY($2::uuid[])");
+        expect(values).toEqual([COMPANY, units]);
+        return { rows: [{ c: 2 }] };
+      }
+      return { rows: [] };
+    });
+    const app = Fastify();
+    app.addHook("preHandler", async req => { (req as { user?: { uuid: string } }).user = { uuid: "user-test-1" }; });
+    await registerMaintenanceKpiRoutes(app);
+    const response = await app.inject({ method: "GET", url: `/api/v1/maintenance/kpi/summary?operating_company_id=${COMPANY}&period_start=2026-06-01&period_end=2026-06-01&unit_id=${units.join(",")}` });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json().mtbf_hours).toBe(24);
+    await app.close();
+  });
+
   it("validates KPI period ordering", () => {
     expect(assertKpiPeriod("2026-05-01", "2026-05-31")).toBe(true);
     expect(assertKpiPeriod("2026-06-01", "2026-05-01")).toBe(false);

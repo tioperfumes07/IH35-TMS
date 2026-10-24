@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema } from "../_helpers/entity-filter-list.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   createOfficeIntransitIssue,
@@ -13,11 +14,11 @@ import { dispatchAlertDateRangeIsValid, dispatchAlertQueryFields } from "./dispa
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   status: z.string().trim().optional(),
-  load_id: z.string().uuid().optional(),
+  load_id: entityIdFilterSchema.optional(),
   issue_id: z.string().uuid().optional(),
-  issue_driver_id: z.string().uuid().optional(),
-  issue_unit_id: z.string().uuid().optional(),
-  driver_id: z.string().uuid().optional(),
+  issue_driver_id: entityIdFilterSchema.optional(),
+  issue_unit_id: entityIdFilterSchema.optional(),
+  driver_id: entityIdFilterSchema.optional(),
   reason: z.string().trim().max(120).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),

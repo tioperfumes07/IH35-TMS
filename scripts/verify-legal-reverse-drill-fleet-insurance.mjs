@@ -142,7 +142,7 @@ export function check(texts) {
 
   if (!texts.routes) f.push(`${FILES.routes}: missing`);
   else {
-    if (!/unit_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(texts.routes)) {
+    if (!/unit_id:\s*entityIdFilterSchema\.optional\(\)/.test(texts.routes)) {
       f.push(`${FILES.routes}: listQuerySchema must accept unit_id`);
     }
     if (!/insurance_claim_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(texts.routes)) {
@@ -161,7 +161,7 @@ export function check(texts) {
 
   if (!texts.service) f.push(`${FILES.service}: missing`);
   else {
-    if (!/m\.unit_id\s*=/.test(texts.service)) {
+    if (!texts.service.includes('m.unit_id = ANY($${values.length}::uuid[])') || !texts.service.includes('values.push(entityIdFilterValues(args.unit_id))') || !texts.service.includes('m.operating_company_id = $1::uuid')) {
       f.push(`${FILES.service}: listMatters must filter m.unit_id`);
     }
     if (!/m\.insurance_claim_id\s*=/.test(texts.service)) {
@@ -223,8 +223,8 @@ function selftest() {
     vendor: `LegalMattersReverseSection\nfilter={{ vendor_id: vendor.id }}\ndata-testid="vendor-profile-legal-matters"`,
     section: `Owner Administrator legalMattersApi.list customer_id vendor_id\nquery.isError title="Couldn't load linked legal matters" onRetry={() => void query.refetch()}\n<EntityLinkOrTombstone kind="matter" id={id} data-testid="legal-matters-reverse-matter-link" />`,
     api: `unit_id insurance_claim_id related_driver_id customer_id vendor_id`,
-    routes: `unit_id: z.string().uuid().optional(),\ninsurance_claim_id: z.string().uuid().optional(),\nrelated_driver_id: z.string().uuid().optional(),\ncustomer_id: z.string().uuid().optional(),\nvendor_id: z.string().uuid().optional(),`,
-    service: `m.unit_id = $n\nm.insurance_claim_id = $n\nm.related_driver_id = $n\nm.customer_id = $n\nm.vendor_id = $n`,
+    routes: `unit_id: entityIdFilterSchema.optional(),\ninsurance_claim_id: z.string().uuid().optional(),\nrelated_driver_id: z.string().uuid().optional(),\ncustomer_id: z.string().uuid().optional(),\nvendor_id: z.string().uuid().optional(),`,
+    service: 'm.unit_id = ANY($${values.length}::uuid[])\nvalues.push(entityIdFilterValues(args.unit_id))\nm.operating_company_id = $1::uuid\nm.insurance_claim_id = $n\nm.related_driver_id = $n\nm.customer_id = $n\nm.vendor_id = $n',
   };
   const bad = {
     vehicle: "export function VehicleProfilePage(){return null}",
@@ -240,6 +240,9 @@ function selftest() {
   };
   if (check(good).length) throw new Error(`${LABEL}: selftest good fixture failed: ${check(good).join("; ")}`);
   if (!check(bad).length) throw new Error(`${LABEL}: selftest expected planted miss`);
+  for (const token of ['m.unit_id = ANY($${values.length}::uuid[])', 'values.push(entityIdFilterValues(args.unit_id))', 'm.operating_company_id = $1::uuid']) {
+    if (!check({ ...good, service: good.service.replace(token, 'REMOVED') }).length) throw new Error(`escaped ${token}`);
+  }
   const retryRemoved = { ...good, section: good.section.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}") };
   if (!check(retryRemoved).some((failure) => failure.includes("exact retry"))) throw new Error(`${LABEL}: retry mutation escaped`);
   console.log(`${LABEL}: selftest PASS`);

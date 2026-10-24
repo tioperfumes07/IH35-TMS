@@ -57,9 +57,12 @@ requireMatch(
 // 3. Backend: cash-advances list endpoint accepts driver_id filter (read-path only, no new GL math).
 requireMatch(
   "apps/backend/src/cash-advances/cash-advances.routes.ts",
-  /driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/,
+  /driver_id:\s*entityIdFilterSchema\.optional\(\)/,
   "listQuerySchema must accept an optional driver_id filter"
 );
+requireMatch("apps/backend/src/cash-advances/cash-advances.routes.ts", /values\.push\(entityIdFilterValues\(query\.data\.driver_id\)\)/, "cash advance list must bind the full driver array");
+requireMatch("apps/backend/src/cash-advances/cash-advances.routes.ts", /where\.push\(`driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)`\)/, "cash advance list must use bound driver ANY predicate");
+requireMatch("apps/backend/src/cash-advances/cash-advances.routes.ts", /const where: string\[\] = \["operating_company_id = \$1::uuid"\]/, "cash advance list must retain company scope");
 
 // 4. Driver-facing EntityLink drill-throughs on the financial surfaces.
 requireMatch(

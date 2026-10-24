@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leaves":["driver_reports.queue"],"task":"MAINT-F5884-DRIVER-REPORT-REVERSE-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const LABEL = "verify-driver-report-driver-reverse";
 const GUARD = "scripts/verify-driver-report-driver-reverse.mjs";
@@ -23,9 +24,13 @@ const source = Object.fromEntries(Object.entries(FILES).map(([key, file]) => [ke
 
 function audit(s = source) {
   const failures = [];
+failures.push(...multiSelectFilterProblems(s.queue, {"file":"apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx","kind":"driver","testId":"driver-reports-filter-driver"}));
+  if (!s.routes.includes('values.push(entityIdFilterValues(query.data.driver_id))')) failures.push('bound UUID-list values');
+  if (!s.routes.includes('r.operating_company_id = $1::uuid')) failures.push('company-scoped reverse rows');
+
   if (!/await submitDriverReport\(\{[\s\S]{0,180}?load_id: loadId \?\? null/.test(s.creator)) failures.push("driver creator payload");
   if (!/INSERT INTO maintenance\.driver_reports \([\s\S]{0,300}?driver_id, load_id[\s\S]{0,300}?operatingCompanyId,[\s\S]{0,60}?driver\.id,[\s\S]{0,60}?parsed\.data\.load_id \?\? null/.test(s.writer)) failures.push("session-derived driver writer");
-  if (!/driver_id: z\.string\(\)\.uuid\(\)\.optional/.test(s.routes) || !/r\.driver_id = \$\$\{values\.length\}::uuid/.test(s.routes)) failures.push("exact scoped reverse");
+  if (!/driver_id: entityIdFilterSchema\.optional/.test(s.routes) || !/r\.driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(s.routes)) failures.push("exact scoped reverse");
   if (!/limit: z\.coerce\.number\(\)\.int\(\)\.min\(1\)\.max\(200\)\.default\(50\)/.test(s.routes) || !/count\(\*\)::int AS total_count/.test(s.routes) || !/LIMIT \$\$\{values\.length - 1\} OFFSET \$\$\{values\.length\}/.test(s.routes) || /LIMIT 500/.test(s.routes)) failures.push("honest server pagination");
   if (!/listDriverReports\(params: \{ operating_company_id: string; status\?: string; driver_id\?: string; load_id\?: string; limit\?: number; offset\?: number \}\)[\s\S]{0,300}?if \(params\.driver_id\) qs\.set\("driver_id", params\.driver_id\)/.test(s.api)) failures.push("typed API filter");
   if (!/limit\?: number; offset\?: number/.test(s.api) || !/total_count: number/.test(s.api)) failures.push("typed pagination response");
@@ -33,7 +38,7 @@ function audit(s = source) {
   if (!/<DriverReportsReverseSection operatingCompanyId=\{String\(driver\.operating_company_id\)\} driverId=\{id\}/.test(s.detail) || !/<DriverReportsReverseSection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(s.profile)) failures.push("both profile mounts");
   if (!/kind=["']driver_report["']/.test(s.reverse) || !/highlightedReportId/.test(s.queue) || !/rowClassName/.test(s.queue) || !/driverReportId/.test(s.home)) failures.push("canonical drill");
   if (!/kind=["']driver_reports_driver["']/.test(s.reverse) || !/Open report queue/.test(s.reverse)) failures.push("queue EntityLink");
-  if (!/const effectiveDriverId = driverPickerId\.trim\(\) \|\| filterDriverId \|\| undefined/.test(s.queue) || !/driver_id: effectiveDriverId/.test(s.queue) || !/driverReportsDriverId/.test(s.home) || !/searchParams\.get\(["']driver_id["']\)/.test(s.home) || !/dataTestId="driver-reports-filter-driver"/.test(s.queue) || !/allowCreate=\{false\}/.test(s.queue)) failures.push("queue driver filter honor");
+  if (!/const effectiveDriverId = driverPickerId\.trim\(\) \|\| filterDriverId \|\| undefined/.test(s.queue) || !/driver_id: effectiveDriverId/.test(s.queue) || !/driverReportsDriverId/.test(s.home) || !/searchParams\.get\(["']driver_id["']\)/.test(s.home) || !/dataTestId="driver-reports-filter-driver"/.test(s.queue) || !/<EntityMultiSelect[\s\S]{0,700}dataTestId="driver-reports-filter-driver"/.test(s.queue)) failures.push("queue driver filter honor");
   if (!/query\.isError/.test(s.reverse) || !/No reports submitted by this driver/.test(s.reverse)) failures.push("honest states");
   if (!/limit: 5/.test(s.reverse) || !/total_count/.test(s.reverse) || !/Showing \{rows\.length\} of \{totalCount\}/.test(s.reverse)) failures.push("honest reverse preview range");
   if (!/limit: pageSize/.test(s.queue) || !/offset: \(page - 1\) \* pageSize/.test(s.queue) || !/driver-reports-server-pager/.test(s.queue) || !/q\.data\.total_count/.test(s.queue)) failures.push("queue server pager");
@@ -45,12 +50,16 @@ function audit(s = source) {
 }
 
 if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
+selftestMultiSelectFilterContract();
   if (audit().length) throw new Error(`baseline failed: ${audit().join("; ")}`);
   const mutations = [
+["routes","values.push(entityIdFilterValues(query.data.driver_id))","values.push(query.data.driver_id)"],
+["routes","r.operating_company_id = $1::uuid","TRUE"],
+
     ["creator", "await submitDriverReport({", "await missingSubmit({"],
     ["writer", "driver.id,\n            parsed.data.load_id ?? null", "missingDriver,\n            parsed.data.load_id ?? null"],
-    ["routes", "driver_id: z.string().uuid().optional()", "wrong_id: z.string()"],
-    ["routes", "r.driver_id = $${values.length}::uuid", "TRUE"],
+    ["routes", "driver_id: entityIdFilterSchema.optional()", "wrong_id: z.string()"],
+    ["routes", "r.driver_id = ANY($${values.length}::uuid[])", "TRUE"],
     ["routes", "count(*)::int AS total_count", "count(*)::int AS hidden_count"],
     ["api", "status?: string; driver_id?: string; load_id?: string", "status?: string; wrong_id?: string; load_id?: string"],
     ["reverse", "driver_id: driverId", "driver_id: ''"],

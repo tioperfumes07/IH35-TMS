@@ -233,10 +233,30 @@ describe("insurance claim routes", () => {
     const calls = queryMock.mock.calls.filter(([sql]) => sql.includes("ORDER BY c.accident_date DESC"));
     expect(calls).toHaveLength(1);
     const [sql, values] = calls[0]!;
-    expect(sql).toContain("c.driver_id = $");
-    expect(sql).toContain("c.load_id = $");
-    expect(values).toContain("66666666-6666-4666-8666-666666666666");
-    expect(values).toContain("77777777-7777-4777-8777-777777777777");
+    expect(sql).toContain("c.driver_id = ANY($");
+    expect(sql).toContain("c.load_id = ANY($");
+    expect(values).toContainEqual(["66666666-6666-4666-8666-666666666666"]);
+    expect(values).toContainEqual(["77777777-7777-4777-8777-777777777777"]);
+  });
+
+  it("binds all selected IDs with OR within each field and AND between fields", async () => {
+    const app = await buildApp();
+    const ids = ["66666666-6666-4666-8666-666666666666", "77777777-7777-4777-8777-777777777777"];
+    const query = new URLSearchParams({ operating_company_id: "11111111-1111-4111-8111-111111111111", driver_id: ids.join(","), unit_id: ids.join(","), load_id: ids.join(","), trailer_id: ids.join(",") });
+    const response = await app.inject({ method: "GET", url: `/api/v1/insurance/claims?${query}` });
+    expect(response.statusCode).toBe(200);
+    const [sql, values] = queryMock.mock.calls.find(([text]) => text.includes("ORDER BY c.accident_date DESC"))!;
+    for (const field of ["c.driver_id", "assets.unit_id", "c.load_id", "c.trailer_id"]) expect(sql).toContain(`${field} = ANY($`);
+    expect(values?.filter(Array.isArray)).toEqual([ids, ids, ids, ids]);
+    expect(sql).toContain(" AND ");
+    expect(sql).not.toContain(ids[0]);
+  });
+
+  it.each(["not-a-uuid", "66666666-6666-4666-8666-666666666666,", Array(101).fill("66666666-6666-4666-8666-666666666666").join(",")])("rejects invalid entity lists before a list query: %s", async (driver_id) => {
+    const app = await buildApp();
+    const response = await app.inject({ method: "GET", url: `/api/v1/insurance/claims?${new URLSearchParams({ operating_company_id: "11111111-1111-4111-8111-111111111111", driver_id })}` });
+    expect(response.statusCode).toBe(400);
+    expect(queryMock.mock.calls.some(([sql]) => sql.includes("ORDER BY c.accident_date DESC"))).toBe(false);
   });
 
   it("POST creates claim", async () => {
@@ -455,7 +475,7 @@ describe("insurance claim routes", () => {
       const listCall = queryMock.mock.calls.find(
         ([sql]) => sql.includes("FROM insurance.claim") && sql.includes("ORDER BY c.accident_date DESC")
       );
-      expect(String(listCall?.[0])).toContain("c.trailer_id = $");
+      expect(String(listCall?.[0])).toContain("c.trailer_id = ANY($");
     });
 
     it("PATCH updates driver_responsible, recovery_rail, and repair_books_treatment", async () => {

@@ -70,19 +70,19 @@ export function assertVendorMergesReverse(sources) {
     problems.push(`${REQUIRED}: home.vendor_merges must remain a Required reverse_link leaf`);
   }
 
-  if (!/AND m\.driver_id = \$/.test(service)) {
+  if (!/AND m\.driver_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(service) || !service.includes('values.push(entityIdFilterValues(filters.driverId))')) {
     problems.push(`${SERVICE}: listDriverVendorMerges must filter by driver_id server-side when provided`);
   }
   if (!/NULLIF\(TRIM\(CONCAT\(d\.first_name, ' ', d\.last_name\)\), ''\) AS driver_name/.test(service) || !/LEFT JOIN mdata\.drivers d ON d\.id = m\.driver_id[\s\S]{0,100}d\.operating_company_id = m\.operating_company_id/.test(service)) {
     problems.push(`${SERVICE}: merge list must resolve an entity-scoped human driver label`);
   }
-  if (!/fromv\.id = \$[\s\S]{0,40}OR tov\.id = \$/.test(service)) {
+  if (!/fromv\.id = ANY\(\$\$\{values\.length\}::uuid\[\]\) OR tov\.id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(service) || !service.includes('values.push(entityIdFilterValues(filters.vendorId))')) {
     problems.push(`${SERVICE}: listDriverVendorMerges must filter by resolved vendor id (from or to) when vendorId provided`);
   }
-  if (!/driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+  if (!/driver_id:\s*entityIdFilterSchema\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: query schema must accept optional driver_id`);
   }
-  if (!/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+  if (!/vendor_id:\s*entityIdFilterSchema\.optional\(\)/.test(routes)) {
     problems.push(`${ROUTES}: query schema must accept optional vendor_id`);
   }
   if (!/driverId:\s*query\.data\.driver_id/.test(routes)) {
@@ -156,14 +156,14 @@ function selftest() {
       NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS driver_name
       LEFT JOIN mdata.drivers d ON d.id = m.driver_id AND d.operating_company_id = m.operating_company_id
       let driverFilter = "";
-      if (filters.driverId) { driverFilter = \`AND m.driver_id = $\${values.length}::uuid\`; }
+      if (filters.driverId) { values.push(entityIdFilterValues(filters.driverId)); driverFilter = \`AND m.driver_id = ANY($\${values.length}::uuid[])\`; }
       let vendorFilter = "";
-      if (filters.vendorId) { vendorFilter = \`AND (fromv.id = $\${values.length}::uuid OR tov.id = $\${values.length}::uuid)\`; }
+      if (filters.vendorId) { values.push(entityIdFilterValues(filters.vendorId)); vendorFilter = \`AND (fromv.id = ANY($\${values.length}::uuid[]) OR tov.id = ANY($\${values.length}::uuid[]))\`; }
     `,
     [ROUTES]: `
       const driverVendorMergesQuerySchema = companyQuerySchema.extend({
-        driver_id: z.string().uuid().optional(),
-        vendor_id: z.string().uuid().optional(),
+        driver_id: entityIdFilterSchema.optional(),
+        vendor_id: entityIdFilterSchema.optional(),
       });
       const rows = await listDriverVendorMerges(user.uuid, query.data.operating_company_id, 200, {
         driverId: query.data.driver_id,
@@ -219,9 +219,11 @@ function selftest() {
     { ...good, [SERVICE]: good[SERVICE].replace("d.operating_company_id = m.operating_company_id", "TRUE") },
     { ...good, [API]: good[API].replace("driver_name?: string | null", "driver_name?: never") },
     { ...good, [HOME]: good[HOME].replace('EntityLinkOrTombstone kind="driver"', 'EntityLink kind="driver"') },
-    { ...good, [SERVICE]: good[SERVICE].replace('driverFilter = `AND m.driver_id = $${values.length}::uuid`;', "") },
-    { ...good, [SERVICE]: good[SERVICE].replace('vendorFilter = `AND (fromv.id = $${values.length}::uuid OR tov.id = $${values.length}::uuid)`;', "") },
-    { ...good, [ROUTES]: good[ROUTES].replace("driver_id: z.string().uuid().optional(),\n        vendor_id: z.string().uuid().optional(),", "") },
+    { ...good, [SERVICE]: good[SERVICE].replace('driverFilter = `AND m.driver_id = ANY($${values.length}::uuid[])`;', "") },
+    { ...good, [SERVICE]: good[SERVICE].replace('vendorFilter = `AND (fromv.id = ANY($${values.length}::uuid[]) OR tov.id = ANY($${values.length}::uuid[]))`;', "") },
+    { ...good, [SERVICE]: good[SERVICE].replace('values.push(entityIdFilterValues(filters.vendorId))', 'values.push([])') },
+    { ...good, [SERVICE]: good[SERVICE].replace('values.push(entityIdFilterValues(filters.driverId))', 'values.push(entityIdFilterValues(filters.driverId).slice(0, 1))') },
+    { ...good, [ROUTES]: good[ROUTES].replace("driver_id: entityIdFilterSchema.optional(),\n        vendor_id: entityIdFilterSchema.optional(),", "") },
     { ...good, [ROUTES]: good[ROUTES].replace("driverId: query.data.driver_id,", "") },
     { ...good, [API]: good[API].replace("filters: { driver_id?: string; vendor_id?: string } = {}", "") },
     { ...good, [HOME]: good[HOME].replace('searchParams.get("driver_id")', '""') },

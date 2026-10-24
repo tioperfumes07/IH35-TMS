@@ -3,9 +3,11 @@ import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { entityIdFilterSchema, entityIdFilterValues } from "../../_helpers/entity-filter-list.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+  unit_id: entityIdFilterSchema.optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -44,6 +46,7 @@ export async function registerAutoWoDraftsRoutes(app: FastifyInstance) {
         `
           SELECT
             w.*,
+            COUNT(*) OVER ()::int AS total_count,
             h.fault_code,
             h.severity AS fault_severity,
             h.occurred_at AS fault_occurred_at,
@@ -56,10 +59,11 @@ export async function registerAutoWoDraftsRoutes(app: FastifyInstance) {
           WHERE w.operating_company_id = $1::uuid
             AND w.origin = 'fault_auto'
             AND w.status = 'draft'
-          ORDER BY w.created_at DESC
+            AND ($4::uuid[] IS NULL OR w.unit_id = ANY($4::uuid[]))
+          ORDER BY w.created_at DESC, w.id DESC
           LIMIT $2 OFFSET $3
         `,
-        [q.operating_company_id, q.limit, q.offset]
+        [q.operating_company_id, q.limit, q.offset, q.unit_id ? entityIdFilterValues(q.unit_id) : null]
       );
       return res.rows;
     });

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
@@ -37,7 +38,7 @@ const listQuerySchema = z.object({
   status: z.string().optional(),
   wo_type: z.string().optional(),
   source_type: z.string().optional(),
-  external_vendor_id: z.string().uuid().optional(),
+  external_vendor_id: entityIdFilterSchema.optional(),
   // Vendor profile reverse: work orders may persist either legacy external_vendor_id or canonical vendor_id.
   vendor_id: z.string().uuid().optional(),
   equipment_id: z.string().uuid().optional(),
@@ -668,8 +669,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         where.push(`w.source_type = $${values.length}`);
       }
       if (q.external_vendor_id) {
-        values.push(q.external_vendor_id);
-        where.push(`w.external_vendor_id = $${values.length}`);
+        values.push(entityIdFilterValues(q.external_vendor_id));
+        where.push(`w.external_vendor_id = ANY($${values.length}::uuid[])`);
       }
       if (q.vendor_id) {
         values.push(q.vendor_id);

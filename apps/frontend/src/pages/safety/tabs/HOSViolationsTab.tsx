@@ -13,6 +13,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
@@ -257,12 +258,11 @@ export function HOSViolationsTab() {
         <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Driver
           <div className="mt-1">
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={companyId}
               value={draft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All drivers"
               className="w-full"
               dataTestId="hos-violations-filter-driver"
@@ -272,12 +272,11 @@ export function HOSViolationsTab() {
         <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Load
           <div className="mt-1">
-            <EntityPicker
+            <EntityMultiSelect
               kind="load"
               operatingCompanyId={companyId}
               value={draft.loadId || null}
               onChange={(next) => setLoadFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All loads"
               className="w-full"
               dataTestId="hos-violations-filter-load"

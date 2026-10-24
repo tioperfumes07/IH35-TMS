@@ -8,6 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from "./lib/entity-multiselect-filter-contract.mjs";
 
 const LABEL = "verify-fleet-hos-board-staged-filters";
 const TARGET = "apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx";
@@ -21,12 +22,12 @@ function assertPage(src) {
   if (!src.includes('data-testid="fleet-hos-filter-cancel"')) errors.push("must expose filter-cancel");
   if (!src.includes('data-testid="fleet-hos-filter-reset"')) errors.push("must expose filter-reset");
   if (!src.includes('dataTestId="fleet-hos-filter-unit"')) errors.push("must keep unit picker testid");
-  if (!/allowCreate=\{false\}/.test(src)) errors.push("must keep allowCreate={false}");
+  errors.push(...multiSelectFilterProblems(src, { file: TARGET, kind: "unit", testId: "fleet-hos-filter-unit" }));
   if (!/requestedUnitId\s*=\s*searchParams\.get\("unit_id"\)/.test(src)) {
     errors.push('must keep requestedUnitId = searchParams.get("unit_id")');
   }
-  if (!/row\.unit_id === effectiveUnitId/.test(src) || !/applied\.unitId/.test(src)) {
-    errors.push("must keep effectiveUnitId partition filter from applied");
+  if (!/getFleetLocationHos\(companyId, effectiveUnitId\)/.test(src) || !/const effectiveUnitId = applied\.unitId\.trim\(\) \|\| undefined/.test(src)) {
+    errors.push("must send every applied unit ID to the company-scoped fleet query");
   }
   if (!/setSearchParams/.test(src) || !/setUnitFilter/.test(src)) {
     errors.push("must keep setUnitFilter + setSearchParams URL sync");
@@ -38,19 +39,8 @@ function assertPage(src) {
 }
 
 function selftest() {
-  const good = `
-    useStagedListFilters({ applied, empty: EMPTY_FILTERS, onApply })
-    const requestedUnitId = searchParams.get("unit_id");
-    const effectiveUnitId = applied.unitId.trim() || undefined;
-    row.unit_id === effectiveUnitId
-    const setUnitFilter = (unitId) => { staged.setDraft((d) => ({ ...d, unitId })); };
-    setSearchParams
-    allowCreate={false}
-    dataTestId="fleet-hos-filter-unit"
-    <button data-testid="fleet-hos-filter-apply" onClick={staged.apply}>Apply</button>
-    <button data-testid="fleet-hos-filter-cancel" onClick={staged.cancel}>Cancel</button>
-    <button data-testid="fleet-hos-filter-reset">Reset</button>
-  `;
+  const good = fs.readFileSync(path.join(process.cwd(), TARGET), "utf8");
+  selftestMultiSelectFilterContract();
   const goodErrors = assertPage(good);
   if (goodErrors.length > 0) {
     console.error(`${LABEL} SELFTEST FAIL good fixture`, goodErrors);
@@ -64,16 +54,18 @@ function selftest() {
     ['data-testid="fleet-hos-filter-cancel"', 'data-testid="removed-cancel"', "must expose filter-cancel"],
     ['data-testid="fleet-hos-filter-reset"', 'data-testid="removed-reset"', "must expose filter-reset"],
     ['dataTestId="fleet-hos-filter-unit"', 'dataTestId="removed-unit"', "must keep unit picker"],
-    ["allowCreate={false}", "allowCreate", "must keep allowCreate"],
+    ['kind="unit"', 'kind="unit" allowCreate', "filter cannot expose creation"],
     ['searchParams.get("unit_id")', 'searchParams.get("wrong_id")', "must keep requestedUnitId"],
-    ["row.unit_id === effectiveUnitId", "true", "must keep effectiveUnitId"],
-    ["applied.unitId", "draft.unitId", "must keep effectiveUnitId"],
+    ["getFleetLocationHos(companyId, effectiveUnitId)", "getFleetLocationHos(companyId, undefined)", "must send every applied"],
+    ["applied.unitId.trim()", "applied.unitId.split(',')[0].trim()", "must send every applied"],
+    ["getFleetLocationHos(companyId, effectiveUnitId)", "getFleetLocationHos(companyId, effectiveUnitId?.split(',')[0])", "must send every applied"],
     ["setSearchParams", "replaceSearchParams", "must keep setUnitFilter + setSearchParams"],
     ["setUnitFilter", "replaceUnitFilter", "must keep setUnitFilter + setSearchParams"],
     ["useStagedListFilters", 'useStagedListFilters const [unitPickerId, setUnitPickerId] = useState("");', "must not keep hand-rolled"],
   ];
   for (const [from, to, expected] of mutations) {
-    const errors = assertPage(good.replace(from, to));
+    if (!good.includes(from)) throw new Error(`selftest plant did not change source: ${from}`);
+    const errors = assertPage(good.replaceAll(from, to));
     if (!errors.some((error) => error.includes(expected))) {
       console.error(`${LABEL} SELFTEST FAIL mutation ${from}: expected ${expected}`, errors);
       process.exit(1);

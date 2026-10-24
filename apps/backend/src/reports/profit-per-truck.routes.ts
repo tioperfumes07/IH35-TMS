@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { companyQuerySchema, currentAuthUser, dateRangeOrderError, parseMonthWindow, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 // FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): same shared exclusion already required on the
@@ -11,7 +12,7 @@ import { computePmCostPerMile } from "../maintenance/pm-cost-per-mile.service.js
 
 const legacyQuerySchema = companyQuerySchema.extend({
   month: z.string().regex(/^\d{4}-\d{2}$/),
-  unit_id: z.string().uuid().optional(),
+  unit_id: entityIdFilterSchema.optional(),
 });
 
 const periodQuerySchema = companyQuerySchema.extend({
@@ -378,8 +379,8 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
       const values: unknown[] = [legacy.data.operating_company_id, start, end];
       let unitFilter = "";
       if (legacy.data.unit_id) {
-        values.push(legacy.data.unit_id);
-        unitFilter = ` AND u.id = $${values.length}`;
+        values.push(entityIdFilterValues(legacy.data.unit_id));
+        unitFilter = ` AND u.id = ANY($${values.length}::uuid[])`;
       }
       // G9-H5 double-count fix: the previous query joined mdata.units → mdata.loads → maintenance.work_orders
       // directly, producing a units×loads×work_orders CARTESIAN fan-out. With N loads and M work orders per

@@ -10,7 +10,7 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 
@@ -31,10 +31,15 @@ type FaultDraft = {
   unit_id: string;
 };
 
-function fetchDrafts(companyId: string) {
-  return apiRequest<{ drafts: FaultDraft[] }>(
-    `/api/v1/maintenance/auto-wo-drafts?operating_company_id=${encodeURIComponent(companyId)}`
-  );
+async function fetchDrafts(companyId: string, unitIds?: string) {
+  const drafts: FaultDraft[] = [];
+  for (let offset = 0; ; offset += 200) {
+    const params = new URLSearchParams({ operating_company_id: companyId, limit: "200", offset: String(offset) });
+    if (unitIds) params.set("unit_id", unitIds);
+    const result = await apiRequest<{ drafts: FaultDraft[] }>(`/api/v1/maintenance/auto-wo-drafts?${params}`);
+    drafts.push(...result.drafts);
+    if (result.drafts.length < 200) return { drafts };
+  }
 }
 
 export function FaultDraftsPage() {
@@ -82,8 +87,8 @@ export function FaultDraftsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const draftsQuery = useQuery({
-    queryKey: ["maintenance", "fault-drafts", companyId],
-    queryFn: () => fetchDrafts(companyId),
+    queryKey: ["maintenance", "fault-drafts", companyId, effectiveUnitId],
+    queryFn: () => fetchDrafts(companyId, effectiveUnitId),
     enabled: Boolean(companyId),
   });
 
@@ -124,9 +129,8 @@ export function FaultDraftsPage() {
 
   const drafts = useMemo(() => {
     const all = draftsQuery.isError ? [] : draftsQuery.data?.drafts ?? [];
-    if (!effectiveUnitId) return all;
-    return all.filter((d) => d.unit_id === effectiveUnitId);
-  }, [draftsQuery.data?.drafts, effectiveUnitId]);
+    return all;
+  }, [draftsQuery.data?.drafts, draftsQuery.isError]);
   const deepLinkUnitName = deepLinkUnitId
     ? (draftsQuery.isError ? [] : draftsQuery.data?.drafts ?? []).find((draft) => draft.unit_id === deepLinkUnitId)?.unit_number ?? null
     : null;
@@ -193,12 +197,11 @@ export function FaultDraftsPage() {
       <div className="relative flex flex-wrap items-end gap-3" data-testid="fault-drafts-filters">
         <label className="text-xs text-[#4B5563]">
           Unit
-          <EntityPicker
+          <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={filterDraft.unitId || null}
             onChange={(next) => setUnitFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All units"
             className="mt-1"
             dataTestId="fault-drafts-filter-unit"
@@ -235,7 +238,7 @@ export function FaultDraftsPage() {
       {deepLinkUnitId ? (
         <p className="text-xs text-[#4B5563]" data-testid="fault-drafts-unit-reverse-banner">
           Showing fault-driven drafts for the selected unit ·{" "}
-          <EntityLinkOrTombstone kind="unit" id={deepLinkUnitId} name={deepLinkUnitName} noun="Unit" />
+          {deepLinkUnitId.split(",").map(id => <EntityLinkOrTombstone key={id} kind="unit" id={id} name={drafts.find(draft => draft.unit_id === id)?.unit_number ?? deepLinkUnitName} noun="Unit" />)}
         </p>
       ) : null}
 

@@ -22,8 +22,9 @@ function audit(source) {
   need(/unit_id:\s*unitId\s*\|\|\s*undefined/.test(source.page), "page must forward exact unit_id to API client");
   need(/filters\?:\s*\{[^}]*unit_id\?: string[^}]*limit\?: number[^}]*offset\?: number[^}]*\}/s.test(assignmentsApi), "paged API client filter contract must include unit_id and range");
   need(/query\.set\("unit_id", filters\.unit_id\)/.test(assignmentsApi), "paged API client must serialize unit_id");
-  need(/unit_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(source.route), "backend must validate unit_id as UUID");
-  need(/filters\.push\(`wo\.unit_id = \$\$\{values\.length\}::uuid`\)/.test(source.route), "backend query must scope by WO unit_id");
+  need(/unit_id: entityIdFilterSchema\.optional\(\)/.test(source.route), "backend must validate unit_id with UUID-list schema");
+  need(source.route.includes('values.push(entityIdFilterValues(query.data.unit_id))') && source.route.includes('filters.push(`wo.unit_id = ANY($${values.length}::uuid[])`)'), "backend query must bind every selected WO unit_id");
+  need(source.route.includes('pil.operating_company_id = $1::uuid'), 'backend must retain company scope');
   return failures;
 }
 
@@ -41,8 +42,10 @@ if (process.argv.includes("--selftest")) {
     { ...files, page: files.page.replace('unit_id: unitId || undefined', 'unit_id: undefined') },
     { ...files, api: files.api.replace('filters?: { vendor_id?: string; work_order_id?: string; unit_id?: string; unit_linked_only?: boolean; limit?: number; offset?: number }', 'filters?: { vendor_id?: string; work_order_id?: string; unit_linked_only?: boolean; limit?: number; offset?: number }') },
     { ...files, api: files.api.replace('query.set("unit_id", filters.unit_id)', 'query.set("vendor_id", filters.unit_id)') },
-    { ...files, route: files.route.replace('unit_id: z.string().uuid().optional(),', '') },
-    { ...files, route: files.route.replace('filters.push(`wo.unit_id = $${values.length}::uuid`);', 'filters.push(`wo.id = $${values.length}::uuid`);') },
+    { ...files, route: files.route.replace('unit_id: entityIdFilterSchema.optional(),', '') },
+    { ...files, route: files.route.replace('filters.push(`wo.unit_id = ANY($${values.length}::uuid[])`);', 'filters.push(`wo.id = ANY($${values.length}::uuid[])`);') },
+    { ...files, route: files.route.replace('values.push(entityIdFilterValues(query.data.unit_id))', 'values.push(query.data.unit_id)') },
+    { ...files, route: files.route.replaceAll('pil.operating_company_id = $1::uuid', 'true') },
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (audit(mutation).length === 0) throw new Error(`mutation ${index + 1} escaped`);

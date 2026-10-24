@@ -17,7 +17,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
@@ -366,12 +366,11 @@ export function FactoringQueuePage() {
       <div className="relative flex flex-wrap items-end gap-3" data-testid="factoring-dispatch-queue-filters">
         <label className="text-xs text-[#4B5563]">
           Customer
-          <EntityPicker
+          <EntityMultiSelect
             kind="customer"
             operatingCompanyId={companyId}
             value={filterDraft.customerId || null}
             onChange={(next) => setCustomerFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All customers"
             className="mt-1"
             dataTestId="factoring-dispatch-filter-customer"
@@ -379,12 +378,11 @@ export function FactoringQueuePage() {
         </label>
         <label className="text-xs text-[#4B5563]">
           Load
-          <EntityPicker
+          <EntityMultiSelect
             kind="load"
             operatingCompanyId={companyId}
             value={filterDraft.loadId || null}
             onChange={(next) => setLoadFilter(next ?? "")}
-            allowCreate={false}
             placeholder="All loads"
             className="mt-1"
             dataTestId="factoring-dispatch-filter-load"

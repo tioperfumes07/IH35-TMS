@@ -29,6 +29,11 @@ const SELFTEST = process.argv.includes("--selftest");
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
 
+const MULTI_FILTER_CONTRACTS = [
+  [ACCIDENTS_ROUTE, 'ar', 'values', 'load_id'],
+  [INCIDENTS_ROUTE, 'i', 'params', 'load_id'],
+];
+
 export function assertLoadSafetyReverse(sources) {
   const src = {};
   for (const rel of FILES) src[rel] = stripComments(sources?.[rel] ?? read(rel));
@@ -53,10 +58,10 @@ export function assertLoadSafetyReverse(sources) {
     problems.push(`${DRAWER}: LoadSafetyReverseSection must receive loadId={load.id}.`);
   }
 
-  if (!/ar\.load_id = \$/.test(src[ACCIDENTS_ROUTE])) {
+  if (!/ar\.load_id = ANY\(\$/.test(src[ACCIDENTS_ROUTE])) {
     problems.push(`${ACCIDENTS_ROUTE}: GET accidents does not filter by load_id in SQL — client filter drops rows past LIMIT 500.`);
   }
-  if (!/i\.load_id = \$/.test(src[INCIDENTS_ROUTE])) {
+  if (!/i\.load_id = ANY\(\$/.test(src[INCIDENTS_ROUTE])) {
     problems.push(`${INCIDENTS_ROUTE}: GET incidents does not filter by load_id in SQL.`);
   }
 
@@ -93,6 +98,11 @@ export function assertLoadSafetyReverse(sources) {
     problems.push(`${SECTION}: failed safety-event and incident reads must suppress stale rows.`);
   }
 
+
+  for (const [file, alias, binding, field] of MULTI_FILTER_CONTRACTS) {
+    if (!src[file].includes(field + ': entityIdFilterSchema.optional()') || !src[file].includes(binding + '.push(entityIdFilterValues(query.data.' + field + '))')) problems.push(file + ': missing validated bound multi-ID filter ' + field);
+    if (!src[file].includes(alias + '.operating_company_id = $1::uuid')) problems.push(file + ': missing company scope');
+  }
   return problems;
 }
 
@@ -110,6 +120,13 @@ if (SELFTEST) {
     }
   };
 
+  for (const [file, alias, binding, field] of MULTI_FILTER_CONTRACTS) {
+    const bound = binding + '.push(entityIdFilterValues(query.data.' + field + '))';
+    expectCaught(file + field + ' lost array binding', { ...live, [file]: live[file].replaceAll(bound, 'REMOVED') }, 'missing validated bound multi-ID filter');
+    const company = alias + '.operating_company_id = $1::uuid';
+    expectCaught(file + field + ' lost company scope', { ...live, [file]: live[file].replaceAll(company, 'TRUE') }, 'missing company scope');
+  }
+
   expectCaught(
     "accidents-read-dropped",
     { ...live, [SECTION]: live[SECTION].replace(/getSafetyAccidents\(/g, "noopRemoved(") },
@@ -122,12 +139,12 @@ if (SELFTEST) {
   );
   expectCaught(
     "accidents-sql-removed",
-    { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.load_id = \$\$\{values\.length\}/g, "") },
+    { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.load_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/g, "") },
     "does not filter by load_id in SQL"
   );
   expectCaught(
     "incidents-sql-removed",
-    { ...live, [INCIDENTS_ROUTE]: live[INCIDENTS_ROUTE].replace(/i\.load_id = \$\$\{params\.length\}/g, "TRUE") },
+    { ...live, [INCIDENTS_ROUTE]: live[INCIDENTS_ROUTE].replace(/i\.load_id = ANY\(\$\$\{params\.length\}::uuid\[\]\)/g, "TRUE") },
     "does not filter by load_id in SQL"
   );
   expectCaught(

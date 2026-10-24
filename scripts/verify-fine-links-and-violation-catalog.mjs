@@ -74,9 +74,10 @@ export function assertFineLinksAndViolationCatalog(sources) {
     problems.push(`${FINE_ROUTES}: the mdata.units join is not scoped by owner_company_id / currently_leased_to_company_id — units have no operating_company_id, so this would cross entities.`);
   }
   for (const filter of ["related_load_id", "related_unit_id"]) {
-    if (!new RegExp(`cf\\.${filter} = \\$\\$\\{values\\.length\\}`).test(src[FINE_ROUTES])) problems.push(`${FINE_ROUTES}: list route must filter server-side by ${filter} for reverse profiles.`);
+    if (!src[FINE_ROUTES].includes(`cf.${filter} = ANY($\${values.length}::uuid[])`) || !src[FINE_ROUTES].includes(`values.push(entityIdFilterValues(q.${filter}))`)) problems.push(`${FINE_ROUTES}: list route must filter server-side by ${filter} for reverse profiles.`);
     if (!new RegExp(`qs\\.set\\("${filter}"`).test(src[FINES_API])) problems.push(`${FINES_API}: getSafetyFines must forward ${filter}.`);
   }
+  if (!src[FINE_ROUTES].includes('cf.operating_company_id = $1::uuid')) problems.push(`${FINE_ROUTES}: fines list company scope missing`);
   if (!/related_entity_not_in_operating_company/.test(src[FINE_ROUTES]) || !/catalogs\.civil_fine_types/.test(src[FINE_ROUTES]) || !/docs\.files/.test(src[FINE_ROUTES])) {
     problems.push(`${FINE_ROUTES}: create must reject cross-company driver/load/unit/type/document FKs.`);
   }
@@ -212,7 +213,9 @@ if (SELFTEST) {
     { ...live, [VIOLATION_MODAL]: live[VIOLATION_MODAL].replace('kind="unit"', 'kind="asset"') },
     "missing canonical unit picker"
   );
-  expectCaught("load-filter-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("cf.related_load_id = $${values.length}", "TRUE") }, "related_load_id");
+  expectCaught("load-filter-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("cf.related_load_id = ANY($${values.length}::uuid[])", "TRUE") }, "related_load_id");
+  expectCaught("load-array-binding-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("values.push(entityIdFilterValues(q.related_load_id))", "values.push(query.data.related_load_id)") }, "related_load_id");
+  expectCaught("list-company-scope-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replaceAll('cf.operating_company_id = $1::uuid', 'TRUE') }, 'fines list company scope missing');
   expectCaught("unit-filter-dropped", { ...live, [FINES_API]: live[FINES_API].replace('qs.set("related_unit_id"', 'qs.set("ignored"') }, "related_unit_id");
   expectCaught("writer-integrity-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("related_entity_not_in_operating_company", "invalid") }, "cross-company");
   expectCaught("detail-label-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("u.unit_number AS related_unit_number", "NULL AS related_unit_number") }, "direct detail");
@@ -228,7 +231,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 16 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 18 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

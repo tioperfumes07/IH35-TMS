@@ -25,7 +25,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useUrlSort } from "../../hooks/useUrlSort";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
 
@@ -334,7 +334,7 @@ export function BillPaymentsListPage() {
             {/* C1 PICKER LAW: was a raw-UUID box. A list FILTER, so allowCreate={false} — vendor
                 inline create already lives on ReferenceSelect (createKind="vendor") for the forms
                 that need it, and C1 must extend that mechanism rather than duplicate it. */}
-            <EntityPicker
+            <EntityMultiSelect
               kind="vendor"
               operatingCompanyId={companyId}
               value={vendorId || null}
@@ -351,7 +351,6 @@ export function BillPaymentsListPage() {
                   { replace: true },
                 );
               }}
-              allowCreate={false}
               placeholder="All vendors"
             />
           </label>

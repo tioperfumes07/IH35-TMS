@@ -53,7 +53,9 @@ export function collectFailures(src = source) {
   if (!route.includes("db.operating_company_id = $1::uuid AND db.status = 'open'") && !route.includes('openDriverBill("db")')) {
     errors.push("Open-bills route must filter selected company and open status");
   }
-  requireText(route, 'parsed.data.driver_id ? "AND db.driver_id = $2" : ""', "Open-bills route must scope the optional driver filter");
+  requireText(route, 'parsed.data.driver_id ? "AND db.driver_id = ANY($2::uuid[])" : ""', "Open-bills route must scope the optional full driver filter");
+  requireText(route, 'countValues.push(entityIdFilterValues(parsed.data.driver_id))', "Open-bills count must bind all driver IDs");
+  requireText(route, 'queryValues.push(entityIdFilterValues(parsed.data.driver_id))', "Open-bills rows must bind all driver IDs");
   requireText(route, "d.id = db.driver_id AND d.operating_company_id = db.operating_company_id", "Driver label join must be company-scoped and bind the canonical driver id");
   requireText(route, "items: payload.bills", "Open-bills response must return canonical bill rows");
   requireText(route, "total_count: payload.total_count", "Open-bills response must return the row total");
@@ -64,7 +66,7 @@ export function collectFailures(src = source) {
   requireText(src.api, 'if (driverId) params.set("driver_id", driverId)', "Frontend API must send the selected driver id when present");
   requireText(src.api, "apiRequest<OpenDriverBillsResponse>", "Frontend API must retain the canonical response type");
 
-  requireText(src.list, "queryFn: () => getOpenDriverBills(companyId)", "Settlements list must query open bills for the selected company");
+  requireText(src.list, "queryFn: () => getOpenDriverBills(companyId, filterDriverId || undefined)", "Settlements list must query open bills for the selected company and drivers");
   requireText(listPanel, 'kind="driver"\n        id={bill.driver_id}', "Settlements list driver drill must bind bill.driver_id");
   requireText(listPanel, 'label={entityLabel(bill.driver_name, bill.driver_id, "Driver")}', "Settlements list driver drill must use the human driver label");
   requireText(listPanel, 'kind="load"\n        id={bill.load_id ?? ""}', "Settlements list load drill must bind bill.load_id");
@@ -104,7 +106,10 @@ function selftest() {
     ["backend", "FROM driver_finance.driver_bills db", "FROM accounting.bills db"],
     // D8: route now uses openDriverBill("db"); plant a broken version to verify the guard catches it
     ["backend", 'openDriverBill("db")', 'openDriverBillBroken("db")'],
-    ["backend", 'parsed.data.driver_id ? "AND db.driver_id = $2" : ""', 'parsed.data.driver_id ? "" : ""'],
+    ["backend", 'parsed.data.driver_id ? "AND db.driver_id = ANY($2::uuid[])" : ""', 'parsed.data.driver_id ? "" : ""'],
+    ["backend", 'countValues.push(entityIdFilterValues(parsed.data.driver_id))', 'countValues.push([])'],
+    ["backend", 'queryValues.push(entityIdFilterValues(parsed.data.driver_id))', 'queryValues.push([])'],
+    ["list", 'getOpenDriverBills(companyId, filterDriverId || undefined)', 'getOpenDriverBills(companyId)'],
     ["backend", "d.id = db.driver_id AND d.operating_company_id = db.operating_company_id", "d.id = db.driver_id"],
     ["backend", "items: payload.bills", "items: []"],
     ["api", "new URLSearchParams({ operating_company_id: companyId })", "new URLSearchParams()"],

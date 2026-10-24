@@ -15,7 +15,7 @@ import {
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../../components/table";
 import { useToast } from "../../../components/Toast";
@@ -240,12 +240,11 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
           </label>
           <label className="text-xs">
             <div className="mb-1 text-gray-500">Driver</div>
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={companyId}
               value={filterDraft.driverId || null}
               onChange={(next) => setDriverId(next ?? "")}
-              allowCreate={false}
               placeholder="All drivers"
               className="w-full"
               dataTestId="settlement-disputes-filter-driver"

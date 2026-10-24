@@ -1,3 +1,4 @@
+import { entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 // ROUND 315 (FINAL) step 3 — the Submit to Factor tab's server side. No GL math lives here: the purchase itself is
 // created and posted only through purchase.service.ts (createPurchaseDraft / postPurchase).
 //   listPurchaseCandidates   EVERY open invoice of the company (sent / partial, not voided, not sample, not factored,
@@ -85,7 +86,7 @@ export function buildCandidateQuery(oci: string, f: CandidateFilters): { sql: st
     values.push(v);
     where.push(sql(values.length));
   };
-  if (f.customer_id) add((n) => `i.customer_id = $${n}::uuid`, f.customer_id);
+  if (f.customer_id) add((n) => `i.customer_id = ANY($${n}::uuid[])`, entityIdFilterValues(f.customer_id));
   if (f.from) add((n) => `i.issue_date >= $${n}::date`, f.from);
   if (f.to) add((n) => `i.issue_date <= $${n}::date`, f.to);
   if (f.search?.trim()) {

@@ -9,6 +9,7 @@
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = resolve(import.meta.dirname, "..");
 
@@ -17,6 +18,7 @@ function read(rel) {
 }
 
 const failures = [];
+if (process.argv.includes('--selftest')) selftestMultiSelectFilterContract();
 
 // Safety (CHROME-01) — must stay collapsed
 const safety = read("apps/frontend/src/components/safety/SafetyDashboardFilter.tsx");
@@ -195,9 +197,7 @@ for (const [rel, marker] of [
 }
 
 const workOrdersTable = read("apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx");
-if (!workOrdersTable.includes('<EntityPicker') || !workOrdersTable.includes('kind="vendor"')) {
-  failures.push("WorkOrdersTable: external vendor filter must use the company-scoped vendor picker");
-}
+failures.push(...multiSelectFilterProblems(workOrdersTable, {file:'apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx',kind:'vendor'}));
 
 const manualJeList = read("apps/frontend/src/pages/accounting/ManualJEListPage.tsx");
 if (!manualJeList.includes("listCoaAccountsForJe") || !/label="Account"/.test(manualJeList) || !manualJeList.includes("<MultiSelectDropdown")) {

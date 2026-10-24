@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import ExcelJS from "exceljs";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -9,6 +10,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
+  unit_id: entityIdFilterSchema.optional(),
   format: z.enum(["json", "xlsx"]).optional().default("json"),
 });
 
@@ -67,7 +69,7 @@ export async function registerFleetLocationHosRoutes(app: FastifyInstance) {
 
     const asOf = new Date();
     const rows = await withCurrentUser(user.uuid, (client) =>
-      getFleetLocationHosRows(client, query.data.operating_company_id, asOf)
+      getFleetLocationHosRows(client, query.data.operating_company_id, asOf, query.data.unit_id ? entityIdFilterValues(query.data.unit_id) : undefined)
     );
 
     if (query.data.format === "xlsx") {

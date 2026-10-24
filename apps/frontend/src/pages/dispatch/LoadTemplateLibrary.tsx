@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { SelectCombobox } from "../../components/Combobox";
 import { useStagedListFilters } from "../../components/table";
 import { useSearchParams } from "react-router-dom";
@@ -295,12 +296,11 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
         <div className="relative space-y-2" data-testid="load-template-library-filters">
           <label className="block text-xs text-[#4B5563]">
             Customer
-            <EntityPicker
+            <EntityMultiSelect
               kind="customer"
               operatingCompanyId={operatingCompanyId}
               value={filterDraft.customerId || null}
               onChange={(next) => setCustomerFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All customers"
               className="mt-1"
               dataTestId="load-template-library-filter-customer"

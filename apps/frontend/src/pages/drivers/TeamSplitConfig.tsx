@@ -7,7 +7,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useTeamSplits } from "../../hooks/useTeamSplits";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { useStagedListFilters } from "../../components/table";
 import { Link, useSearchParams } from "react-router-dom";
 
@@ -34,7 +34,6 @@ export function TeamSplitConfigPanel() {
 }
 
 export function TeamSplitConfig({ operatingCompanyId }: Props) {
-  const { data, isLoading, isError, refetch, create, endConfig } = useTeamSplits(operatingCompanyId);
   const [searchParams, setSearchParams] = useSearchParams();
   const teamId = searchParams.get("team_id");
   // LST-F5185 — visible EntityPicker (URL-only ?driver_id= is not reverse chrome).
@@ -72,6 +71,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
 
   // Sibling reverse guard matches `driverId` in the active-list filter predicate.
   const driverId = applied.driverId.trim();
+  const { data, isLoading, isError, refetch, create, endConfig } = useTeamSplits(operatingCompanyId, driverId || undefined);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [primaryDriverId, setPrimaryDriverId] = useState("");
@@ -111,9 +111,8 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const configs = data?.configs ?? [];
   const active = useMemo(
     () => configs.filter((row) => row.status === "active")
-      .filter((row) => !teamId || row.id === teamId)
-      .filter((row) => !driverId || row.primary_driver_id === driverId || row.secondary_driver_id === driverId),
-    [configs, driverId, teamId]
+      .filter((row) => !teamId || row.id === teamId),
+    [configs, teamId]
   );
 
   async function handleCreate() {
@@ -163,12 +162,11 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
             <label className="block min-w-[240px] text-xs text-[#4B5563]">
               Driver
               <div className="mt-1">
-                <EntityPicker
+                <EntityMultiSelect
                   kind="driver"
                   operatingCompanyId={operatingCompanyId}
                   value={filterDraft.driverId || null}
                   onChange={(next) => setDriverId(next ?? "")}
-                  allowCreate={false}
                   placeholder="All drivers"
                   className="w-full"
                   dataTestId="team-split-config-filter-driver"

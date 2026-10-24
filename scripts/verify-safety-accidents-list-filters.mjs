@@ -8,6 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { multiSelectFilterProblems, selftestMultiSelectFilterContract } from './lib/entity-multiselect-filter-contract.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-safety-accidents-list-filters";
@@ -42,21 +43,7 @@ export function collectProblems(root = ROOT) {
     problems.push(`${FILE}: filterBar must not use raw text inputs for driver/unit`);
   }
 
-  if (!/EntityPicker/.test(filterSrc) || !/kind=["']driver["']/.test(filterSrc)) {
-    problems.push(`${FILE}: filterBar must use EntityPicker kind="driver"`);
-  }
-  if (!/kind=["']unit["']/.test(filterSrc)) {
-    problems.push(`${FILE}: filterBar must use EntityPicker kind="unit"`);
-  }
-
-  const driverPicker = filterSrc.match(/kind=["']driver["'][\s\S]*?\/>/);
-  const unitPicker = filterSrc.match(/kind=["']unit["'][\s\S]*?\/>/);
-  if (!driverPicker || !/allowCreate=\{false\}/.test(driverPicker[0])) {
-    problems.push(`${FILE}: driver filter EntityPicker must set allowCreate={false}`);
-  }
-  if (!unitPicker || !/allowCreate=\{false\}/.test(unitPicker[0])) {
-    problems.push(`${FILE}: unit filter EntityPicker must set allowCreate={false}`);
-  }
+  for (const kind of ['driver', 'unit']) problems.push(...multiSelectFilterProblems(src, {file: FILE, kind, testId: `accidents-${kind}-filter`}));
   if (!/dataTestId=["']accidents-driver-filter["']/.test(filterSrc)) {
     problems.push(`${FILE}: driver filter must expose dataTestId=accidents-driver-filter`);
   }
@@ -78,6 +65,7 @@ export function collectProblems(root = ROOT) {
 }
 
 if (process.argv.includes("--selftest")) {
+  selftestMultiSelectFilterContract();
   const baseline = collectProblems();
   if (baseline.length) {
     console.error(`${LABEL} SELFTEST FAIL — live already red:`);
@@ -121,5 +109,5 @@ if (process.argv.includes("--selftest")) {
     for (const p of problems) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — AccidentsPage EntityPicker filters + EntityLink labels`);
+  console.log(`${LABEL} OK — AccidentsPage scoped EntityMultiSelect filters + EntityLink labels`);
 }

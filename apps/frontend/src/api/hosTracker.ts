@@ -52,9 +52,9 @@ export type HosRoster = {
   counts: { active: number; on_duty: number; driving: number; low: number; violation: number; unavailable: number };
 };
 
-export function getHosDailyRoster(operatingCompanyId: string, date: string) {
+export function getHosDailyRoster(operatingCompanyId: string, date: string, driverId?: string) {
   return apiRequest<HosRoster>(
-    `/api/v1/telematics/hos/daily-roster?operating_company_id=${encodeURIComponent(operatingCompanyId)}&date=${encodeURIComponent(date)}`
+    `/api/v1/telematics/hos/daily-roster?operating_company_id=${encodeURIComponent(operatingCompanyId)}&date=${encodeURIComponent(date)}${driverId ? `&driver_id=${encodeURIComponent(driverId)}` : ""}`
   );
 }
 

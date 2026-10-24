@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-filter-list.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -111,7 +112,7 @@ export async function registerDashcamOnDemandRoutes(app: FastifyInstance) {
   /** E-42 — list all clips for the Dashcam viewer (unit filter optional). */
   const listAllSchema = z.object({
     operating_company_id: z.string().uuid(),
-    unit_id: z.string().uuid().optional(),
+    unit_id: entityIdFilterSchema.optional(),
     limit: z.coerce.number().int().min(1).max(200).default(50),
   });
 
@@ -127,8 +128,8 @@ export async function registerDashcamOnDemandRoutes(app: FastifyInstance) {
       const conditions = ["c.operating_company_id = $1::uuid"];
       const values: unknown[] = [q.operating_company_id];
       if (q.unit_id) {
-        values.push(q.unit_id);
-        conditions.push(`c.unit_id = $${values.length}::uuid`);
+        values.push(entityIdFilterValues(q.unit_id));
+        conditions.push(`c.unit_id = ANY($${values.length}::uuid[])`);
       }
       values.push(q.limit);
       const limitIdx = values.length;

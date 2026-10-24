@@ -3,7 +3,7 @@ import { useMemo, useState, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
-import { listSettlements, getOpenDriverBills, listSettlementDeductions, type OpenDriverBill, type SettlementListRow, type SettlementReference } from "../../api/driverFinance";
+import { listAllSettlements, getOpenDriverBills, listAllSettlementDeductions, type OpenDriverBill, type SettlementListRow, type SettlementReference } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -25,7 +25,7 @@ import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { V3Panel } from "../../components/v3/V3Panel";
 import { V3Segmented } from "../../components/v3/V3Segmented";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -275,9 +275,10 @@ export function SettlementsPage() {
     enabled: Boolean(companyId),
   });
   const listQuery = useQuery({
-    queryKey: ["driver-finance", "settlements", companyId, paymentStates.slice().sort().join(",")],
+    queryKey: ["driver-finance", "settlements", companyId, filterDriverId, paymentStates.slice().sort().join(",")],
     queryFn: () =>
-      listSettlements(companyId, {
+      listAllSettlements(companyId, {
+        driver_id: filterDriverId || undefined,
         payment_state: paymentStates.length ? paymentStates : undefined,
       }),
     enabled: Boolean(companyId),
@@ -287,24 +288,23 @@ export function SettlementsPage() {
   // 443.218 F2: pass driver_id so KPI is scoped to selected driver; include in query key.
   const kpiBaseQuery = useQuery({
     queryKey: ["driver-finance", "settlements-kpi-base", companyId, filterDriverId],
-    queryFn: () => listSettlements(companyId),
+    queryFn: () => listAllSettlements(companyId, { driver_id: filterDriverId || undefined }),
     enabled: Boolean(companyId),
   });
   const openBillsQuery = useQuery({
-    queryKey: ["driver-finance", "open-driver-bills", companyId],
-    queryFn: () => getOpenDriverBills(companyId),
+    queryKey: ["driver-finance", "open-driver-bills", companyId, filterDriverId],
+    queryFn: () => getOpenDriverBills(companyId, filterDriverId || undefined),
     enabled: Boolean(companyId),
   });
   // ROUND 443.267 — deduction-type split for home panel (Escrow / Advances / Fines) from the same
   // listSettlementDeductions engine as /drivers/deductions — not a second money path.
   const deductionsListQuery = useQuery({
-    queryKey: ["driver-finance", "settlements-home-deductions", companyId],
-    queryFn: () => listSettlementDeductions(companyId, { limit: 500 }),
+    queryKey: ["driver-finance", "settlements-home-deductions", companyId, filterDriverId],
+    queryFn: () => listAllSettlementDeductions(companyId, { driver_id: filterDriverId || undefined }),
     enabled: Boolean(companyId),
   });
 
   const settlements = (listQuery.data?.settlements ?? []).filter((s) => {
-    if (filterDriverId && s.driver_id !== filterDriverId) return false;
     if (hideCancelled && s.status === "cancelled") return false;
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -328,12 +328,10 @@ export function SettlementsPage() {
   // one predicate that hides rows.
   const cancelledHiddenCount = hideCancelled
     ? (listQuery.data?.settlements ?? []).filter(
-        (s) => (!filterDriverId || s.driver_id === filterDriverId) && s.status === "cancelled",
+        (s) => s.status === "cancelled",
       ).length
     : 0;
-  const kpiSettlements = (kpiBaseQuery.data?.settlements ?? []).filter((s) =>
-    filterDriverId ? s.driver_id === filterDriverId : true,
-  );
+  const kpiSettlements = kpiBaseQuery.data?.settlements ?? [];
   const openBillsSummary = openBillsQuery.data?.open_driver_bills ?? { total_count: 0, total_gross_cents: 0, items: [] as OpenDriverBill[] };
   const now = new Date();
   const ytdYear = now.getFullYear();
@@ -927,12 +925,11 @@ export function SettlementsPage() {
       >
         <label className="text-xs text-[#4B5563]">
           Driver
-          <EntityPicker
+          <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={filterDriverId || null}
             onChange={(next) => setDriverFilter(next)}
-            allowCreate={false}
             placeholder="All drivers"
             className="mt-1"
             dataTestId="settlements-filter-driver"

@@ -28,7 +28,7 @@ import {
   type DocsOverride,
 } from "../../api/factoring-purchases";
 import { Button } from "../../components/Button";
-import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { Modal } from "../../components/Modal";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -836,12 +836,11 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
             <div className="flex flex-wrap items-end gap-3">
               <label className="flex flex-col gap-1 text-xs text-[#4B5563]">
                 Customer
-                <EntityPicker
+                <EntityMultiSelect
                   kind="customer"
                   operatingCompanyId={companyId}
                   value={draft.customerId || null}
                   onChange={(next) => setDraft((d) => ({ ...d, customerId: next ?? "" }))}
-                  allowCreate={false}
                   placeholder="All customers"
                   dataTestId="submit-factor-filter-customer"
                 />

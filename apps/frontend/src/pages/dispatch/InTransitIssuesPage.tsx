@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityPicker } from "../../components/EntityPicker";
+import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useStagedListFilters } from "../../components/table";
 import { formatQueryErrorDetail } from "../../lib/tableError";
@@ -243,12 +244,11 @@ export function InTransitIssuesPage() {
         <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Driver
           <div className="mt-1">
-            <EntityPicker
+            <EntityMultiSelect
               kind="driver"
               operatingCompanyId={companyId}
               value={filterDraft.driverId || null}
               onChange={(next) => setDriverFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All drivers"
               className="w-full"
               dataTestId="intransit-issues-filter-driver"
@@ -258,12 +258,11 @@ export function InTransitIssuesPage() {
         <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Load
           <div className="mt-1">
-            <EntityPicker
+            <EntityMultiSelect
               kind="load"
               operatingCompanyId={companyId}
               value={filterDraft.loadId || null}
               onChange={(next) => setLoadFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All loads"
               className="w-full"
               dataTestId="intransit-issues-filter-load"
@@ -273,12 +272,11 @@ export function InTransitIssuesPage() {
         <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Unit
           <div className="mt-1">
-            <EntityPicker
+            <EntityMultiSelect
               kind="unit"
               operatingCompanyId={companyId}
               value={filterDraft.unitId || null}
               onChange={(next) => setUnitFilter(next ?? "")}
-              allowCreate={false}
               placeholder="All units"
               className="w-full"
               dataTestId="intransit-issues-filter-unit"
