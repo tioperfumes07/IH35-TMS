@@ -11,7 +11,11 @@
  *   R5  GET /catalogs/override-reasons never offers role_only rows unless asked (include_role_only), and filters by context;
  *   R6  a role_only row keeps its code and contexts (409 role_only_reason_locked) and is never deactivated;
  *   R7  the Lists screen is mounted (/lists/accounting/override-reasons) and listed in All Catalogs.
- * Later steps extend this guard (engine refusal, one button, 0 free-text sites).
+ * Step 2 (the engine, apps/backend/src/overrides/record-override.service.ts):
+ *   R8  Owner / Accountant confirm with no reason (owner_override / accountant_override); everyone else reason_required;
+ *   R9  refuses unknown, inactive, out-of-context, and another role's role_only code;
+ *   R10 the input carries NO free-text field (no note / text / comment / reason_text) and the engine writes the audit row.
+ * Later steps extend this guard (one button, 0 free-text sites).
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -25,6 +29,7 @@ const MIG = "db/migrations/202616230300_override_reasons_catalog.sql";
 const ROUTES = "apps/backend/src/catalogs/override-reasons.routes.ts";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const MAP = "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx";
+const ENGINE = "apps/backend/src/overrides/record-override.service.ts";
 
 export function auditStep1b(src) {
   const f = [];
@@ -33,6 +38,19 @@ export function auditStep1b(src) {
   if (!/oldRow\.role_only && \("reason_code" in b \|\| "contexts" in b\)\) return \{ status: 409/.test(src.routes)) f.push("R6: a role_only row's code/contexts can be edited");
   if (!/WHERE id = \$1 AND role_only = false RETURNING/.test(src.routes)) f.push("R6: a role_only row can be deactivated");
   if (!/path="\/lists\/accounting\/override-reasons"/.test(src.manifest) || !/catalogKey: "override-reasons"/.test(src.map)) f.push("R7: the Override Reasons Lists screen is not mounted / listed");
+  return f;
+}
+
+export function auditEngine(engine) {
+  const f = [];
+  if (!/Owner: "owner_override",\s*Accountant: "accountant_override"/.test(engine)) f.push("R8: Owner/Accountant no-reason confirm codes missing");
+  if (!/if \(!code\) return \{ ok: false, error: "reason_required" \}/.test(engine)) f.push("R8: an employee without a reason is not refused");
+  for (const e of ["reason_unknown", "reason_inactive", "reason_not_allowed_in_context", "role_only_reason"]) {
+    if (!new RegExp(`return \\{ ok: false, error: "${e}" \\}`).test(engine)) f.push(`R9: the engine never refuses ${e}`);
+  }
+  const input = engine.slice(engine.indexOf("export type RecordOverrideInput"), engine.indexOf("export type RecordOverrideResult"));
+  if (/\b(note|text|comment|reason_text|reasonText|free_?text)\??\s*:/.test(input)) f.push("R10: the override input carries a free-text field");
+  if (!/appendCrudAudit\(\s*client,\s*input\.actor\.userId,\s*`override\.\$\{input\.context\}`/.test(engine)) f.push("R10: the engine does not write the override audit row");
   return f;
 }
 
@@ -49,6 +67,7 @@ export function audit(sql) {
 }
 
 const sql = fs.readFileSync(path.join(ROOT, MIG), "utf8");
+const engineSrc = fs.readFileSync(path.join(ROOT, ENGINE), "utf8");
 const src1b = {
   routes: fs.readFileSync(path.join(ROOT, ROUTES), "utf8"),
   manifest: fs.readFileSync(path.join(ROOT, MANIFEST), "utf8"),
@@ -66,6 +85,10 @@ if (process.argv.includes("--selftest")) {
     ["dropdown offering role_only rows FAILS", auditStep1b({ ...src1b, routes: src1b.routes.replace('where.push(`role_only = false`)', "void 0") }).length > 0],
     ["editable role_only code FAILS", auditStep1b({ ...src1b, routes: src1b.routes.replace('oldRow.role_only && ("reason_code" in b || "contexts" in b)', "false") }).length > 0],
     ["deactivatable role_only row FAILS", auditStep1b({ ...src1b, routes: src1b.routes.replace("WHERE id = $1 AND role_only = false RETURNING", "WHERE id = $1 RETURNING") }).length > 0],
+    ["employee without a reason accepted FAILS", auditEngine(engineSrc.replace('if (!code) return { ok: false, error: "reason_required" }', "if (false) return null")).length > 0],
+    ["out-of-context reason accepted FAILS", auditEngine(engineSrc.replace('return { ok: false, error: "reason_not_allowed_in_context" }', "void 0")).length > 0],
+    ["a free-text note on the input FAILS", auditEngine(engineSrc.replace("  reasonCode?: string | null;", "  reasonCode?: string | null;\n  note?: string;")).length > 0],
+    ["no audit row FAILS", auditEngine(engineSrc.replace("await appendCrudAudit(", "await (async () => {})(")).length > 0],
     ["unmounted Lists screen FAILS", auditStep1b({ ...src1b, manifest: src1b.manifest.replace('path="/lists/accounting/override-reasons"', 'path="/x"') }).length > 0],
   ];
   let bad = 0;
@@ -73,6 +96,6 @@ if (process.argv.includes("--selftest")) {
   console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
   process.exit(bad ? 1 : 0);
 }
-const failures = [...audit(sql), ...auditStep1b(src1b)];
+const failures = [...audit(sql), ...auditStep1b(src1b), ...auditEngine(engineSrc)];
 if (failures.length) { console.error(`${LABEL}: FAIL — ${failures.length}`); for (const x of failures) console.error(`  ✗ ${x}`); process.exit(1); }
 console.log(`${LABEL}: OK — one company-scoped, FORCE-RLS, audited override catalog with no free-text reason; Lists screen + context-filtered reason list`);
