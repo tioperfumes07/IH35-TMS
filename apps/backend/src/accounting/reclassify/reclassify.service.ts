@@ -431,6 +431,9 @@ export type ApplyReclassifyInput = {
   override_refusals?: boolean;
   /** OWNER RULING 443.288-A — internal: false while the family follower moves CHILD documents (a child has no children). */
   family_follow?: boolean;
+  /** OWNER RULING 443.288-B — the PERSON who chose this load (reclassify by load from the screen): the loads this batch
+   *  writes are confirmed by them. Machine callers never pass it (their moves stay 'proposed'). */
+  confirm_load_by_user_id?: string;
 };
 
 export type ReclassifyDocumentResult = {
@@ -916,53 +919,74 @@ export async function moveExpenseFamilyToLoad(
     [input.operatingCompanyId, parents, input.toLoadId],
   )).rows;
   for (const child of children) {
-    const legs = (await client.query<{ id: string }>(
-      `SELECT p.id::text
-         FROM accounting.journal_entry_postings p
-         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
-        WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'expense' AND p.source_transaction_id::text = $2
-          AND p.reversal_of_line_id IS NULL AND p.reversed_by_line_id IS NULL AND p.source_transaction_line_id IS NOT NULL
-          AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
-          AND p.load_id IS DISTINCT FROM $3::uuid`,
-      [input.operatingCompanyId, child.id, input.toLoadId],
-    )).rows.map((r) => r.id);
-    if (legs.length) {
-      const batch = await applyReclassifyOnClient(client, {
-        operating_company_id: input.operatingCompanyId, posting_ids: legs, to_load_id: input.toLoadId, reason: input.reason,
-        filter_snapshot: { parent_expense_id: child.parent, round: "OWNER RULING 443.288-A family move" }, family_follow: false,
-      }, { userId: input.actorUserId, role: "system" });
-      if (batch.lines_refused > 0) {
-        const why = batch.documents.map((d) => d.refusal_reason).filter(Boolean).join("; ") || "refused";
-        throw new Error(`expense_family_child_refused: ${why}`);
-      }
-    }
-    const link = (await client.query<{ id: string }>(
-      `SELECT id::text FROM expense_attribution.expense_load_links
-        WHERE expense_source = 'accounting' AND expense_id::text = $1 AND operating_company_id = $2::uuid LIMIT 1`,
-      [child.id, input.operatingCompanyId],
-    )).rows[0] ?? null;
-    const numbered = await relinkExpenseToLoadInClientTx(client, {
-      operatingCompanyId: input.operatingCompanyId, expenseId: child.id, loadId: input.toLoadId, reason: input.reason,
-      userId: input.actorUserId, existingLinkId: link?.id ?? null, priorNumber: child.expense_number,
+    await moveExpenseDocumentToLoad(client, {
+      operatingCompanyId: input.operatingCompanyId, actorUserId: input.actorUserId, expenseId: child.id,
+      expenseNumber: child.expense_number, fromLoadId: child.load_id, toLoadId: input.toLoadId, reason: input.reason,
+      auditEvent: "accounting.expense_family.child_followed_parent", auditExtra: { child_expense_id: child.id, parent_expense_id: child.parent },
+      filterSnapshot: { parent_expense_id: child.parent, round: "OWNER RULING 443.288-A family move" },
     });
-    const trailer = sameEntityLoadCompanyTrailerSql("$3::uuid", "$2::uuid");
-    await client.query(
-      `UPDATE accounting.expenses SET load_id = $3::uuid, expense_number = $4, trailer_id = ${trailer}, updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-      [child.id, input.operatingCompanyId, input.toLoadId, numbered.number],
-    );
-    await client.query(
-      `UPDATE accounting.expense_lines SET load_id = $3::uuid, load_required = true, load_exemption_reason = NULL, trailer_id = ${trailer}
-        WHERE expense_id = $1::uuid AND operating_company_id = $2::uuid`,
-      [child.id, input.operatingCompanyId, input.toLoadId],
-    );
-    await client.query(
-      `INSERT INTO audit.audit_events (uuid, created_at, event_class, severity, payload, actor_user_uuid, source)
-       VALUES (gen_random_uuid(), now(), 'accounting.expense_family.child_followed_parent', 'info', $1::jsonb, $2::uuid, 'RECLASSIFY-ENGINE')`,
-      [JSON.stringify({ operating_company_id: input.operatingCompanyId, child_expense_id: child.id, parent_expense_id: child.parent, from_load_id: child.load_id, to_load_id: input.toLoadId, postings_moved: legs.length, reason: input.reason }), input.actorUserId],
-    );
   }
   return { children_moved: children.length };
+}
+
+/**
+ * OWNER RULING 443.288 — move ONE expense document to a load: its live expense-sourced postings by THIS engine
+ * (reversal + re-post, batch, audit; family follow off), then the document follows (header load + number, lines, load
+ * link, trailer). Used by the family move (each child) and by the confirm / change engine (a non-fuel expense).
+ */
+export async function moveExpenseDocumentToLoad(
+  client: DbClient,
+  input: {
+    operatingCompanyId: string; actorUserId: string; expenseId: string; expenseNumber: string | null; fromLoadId: string | null;
+    toLoadId: string; reason: string; auditEvent: string; auditExtra?: Record<string, unknown>; filterSnapshot?: Record<string, unknown>;
+  },
+): Promise<{ postings_moved: number }> {
+  const legs = (await client.query<{ id: string }>(
+    `SELECT p.id::text
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+      WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'expense' AND p.source_transaction_id::text = $2
+        AND p.reversal_of_line_id IS NULL AND p.reversed_by_line_id IS NULL AND p.source_transaction_line_id IS NOT NULL
+        AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+        AND p.load_id IS DISTINCT FROM $3::uuid`,
+    [input.operatingCompanyId, input.expenseId, input.toLoadId],
+  )).rows.map((r) => r.id);
+  if (legs.length) {
+    const batch = await applyReclassifyOnClient(client, {
+      operating_company_id: input.operatingCompanyId, posting_ids: legs, to_load_id: input.toLoadId, reason: input.reason,
+      filter_snapshot: input.filterSnapshot ?? { expense_id: input.expenseId }, family_follow: false,
+    }, { userId: input.actorUserId, role: "system" });
+    if (batch.lines_refused > 0) {
+      const why = batch.documents.map((d) => d.refusal_reason).filter(Boolean).join("; ") || "refused";
+      throw new Error(`expense_family_child_refused: ${why}`);
+    }
+  }
+  const link = (await client.query<{ id: string }>(
+    `SELECT id::text FROM expense_attribution.expense_load_links
+      WHERE expense_source = 'accounting' AND expense_id::text = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+    [input.expenseId, input.operatingCompanyId],
+  )).rows[0] ?? null;
+  const numbered = await relinkExpenseToLoadInClientTx(client, {
+    operatingCompanyId: input.operatingCompanyId, expenseId: input.expenseId, loadId: input.toLoadId, reason: input.reason,
+    userId: input.actorUserId, existingLinkId: link?.id ?? null, priorNumber: input.expenseNumber,
+  });
+  const trailer = sameEntityLoadCompanyTrailerSql("$3::uuid", "$2::uuid");
+  await client.query(
+    `UPDATE accounting.expenses SET load_id = $3::uuid, expense_number = $4, trailer_id = ${trailer}, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.expenseId, input.operatingCompanyId, input.toLoadId, numbered.number],
+  );
+  await client.query(
+    `UPDATE accounting.expense_lines SET load_id = $3::uuid, load_required = true, load_exemption_reason = NULL, trailer_id = ${trailer}
+      WHERE expense_id = $1::uuid AND operating_company_id = $2::uuid`,
+    [input.expenseId, input.operatingCompanyId, input.toLoadId],
+  );
+  await client.query(
+    `INSERT INTO audit.audit_events (uuid, created_at, event_class, severity, payload, actor_user_uuid, source)
+     VALUES (gen_random_uuid(), now(), $3, 'info', $1::jsonb, $2::uuid, 'RECLASSIFY-ENGINE')`,
+    [JSON.stringify({ operating_company_id: input.operatingCompanyId, expense_id: input.expenseId, ...(input.auditExtra ?? {}), from_load_id: input.fromLoadId, to_load_id: input.toLoadId, postings_moved: legs.length, reason: input.reason }), input.actorUserId, input.auditEvent],
+  );
+  return { postings_moved: legs.length };
 }
 
 /** The receipts (parent expenses) a reclassify batch moved: expense documents by id, fuel receipts by their fill. */
@@ -1019,6 +1043,10 @@ export async function applyReclassifyOnClient(client: DbClient, input: ApplyRecl
   {
     const companyId = input.operating_company_id;
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+    if (target.to_load_id && input.confirm_load_by_user_id) {
+      // same transaction-local actor the confirm engine sets (trigger accounting.expense_load_confirmation_rule)
+      await client.query(`SELECT set_config('app.expense_load_confirm_actor', $1, true)`, [input.confirm_load_by_user_id]);
+    }
 
     // U24 — an item move carries the item's own expense account (unless the account is given explicitly), so the ledger
     // moves with the item; an item with no account is refused rather than moving the item alone.

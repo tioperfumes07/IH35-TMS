@@ -11,6 +11,7 @@ import {
   type FillResolution,
   type GpsCandidate,
 } from "./fill-truck-and-load.service.js";
+import { markExpenseLoadConfirmedBy } from "../accounting/expense-load-confirmation.service.js";
 
 type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
 
@@ -570,6 +571,8 @@ export async function answerFuelAssignmentQuestion(
 ): Promise<{ question: FuelAssignmentQuestionRow; outcome: string } | { error: string }> {
   const q = await getFuelAssignmentQuestion(client, input.companyId, input.questionId);
   if (!q) return { error: "question_not_found" };
+  // OWNER RULING 443.288-B — a dispatcher / the closer answering the question IS the person confirming the fill's load.
+  await markExpenseLoadConfirmedBy(client as never, input.actorUserId);
   if (q.status !== "open") return { error: "question_not_open" };
 
   let unitId = input.unitId ?? null;

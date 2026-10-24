@@ -108,6 +108,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-2/443-247-delete-test-records",
     new Set(["db/migrations/202616170700_append_only_safety_legal_admit_auth_listed_purge.sql"]),
   ],
+  // OWNER RULING 443.288-B (10-23 7:59 PM CT): accounting.expenses.load_confirmation proposed|confirmed + the confirm
+  // rule trigger + backfill. Claimed #27440 on main first.
+  [
+    "cc-2/443-288-b-load-confirmation",
+    new Set(["db/migrations/202616230700_expense_load_confirmation.sql"]),
+  ],
   // LEAD 443.214 follow-up (owner 2026-10-01 no-handoff): fuel_transactions card_unit_id / gps_unit_id FOREIGN KEYs.
   // Claimed #(202616120700) in #27140 (top-level key) — exact-branch + exact-file.
   [

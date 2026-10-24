@@ -71,7 +71,7 @@ describe("OWNER RULING 443.288-A — moveExpenseFamilyToLoad", () => {
     const header = c.calls.find((x) => /UPDATE accounting\.expenses SET load_id = \$3::uuid, expense_number = \$4/.test(x.sql))!;
     expect(header.values).toEqual(["child-1", OC, "load-new", "13700-3"]);
     expect(c.calls.some((x) => /UPDATE accounting\.expense_lines SET load_id = \$3::uuid/.test(x.sql))).toBe(true);
-    const audit = c.calls.find((x) => /accounting\.expense_family\.child_followed_parent/.test(x.sql))!;
+    const audit = c.calls.find((x) => /INSERT INTO audit\.audit_events/.test(x.sql) && x.values[2] === "accounting.expense_family.child_followed_parent")!;
     expect(JSON.parse(String(audit.values[0]))).toMatchObject({ child_expense_id: "child-1", parent_expense_id: "receipt-1", from_load_id: "load-old", to_load_id: "load-new" });
     expect(c.calls.some((x) => /UPDATE accounting\.journal_entry_postings/.test(x.sql))).toBe(false);
   });

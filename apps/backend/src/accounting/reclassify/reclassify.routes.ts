@@ -90,7 +90,8 @@ export async function registerAccountingReclassifyRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
-      const result = await applyReclassify(body.data, { userId: user.uuid, role: user.role });
+      // OWNER RULING 443.288-B: a load chosen here by a person is that person's confirmed decision.
+      const result = await applyReclassify({ ...body.data, confirm_load_by_user_id: String(user.uuid) }, { userId: user.uuid, role: user.role });
       return reply.code(201).send(result);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
