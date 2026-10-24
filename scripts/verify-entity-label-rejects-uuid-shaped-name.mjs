@@ -377,8 +377,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
-    bad: /driver_full_name\s*\|\|\s*"Driver"/,
-    good: /entityLabel\(\s*row\.driver_full_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)|<EntityLinkOrTombstone[\s\S]{0,100}kind="driver"[\s\S]{0,100}name=\{row\.driver_full_name\}/,
+    bad: /driver_name\s*\|\|\s*"Driver"|driver_full_name\s*\|\|\s*"Driver"/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)|entityLabel\(\s*row\.driver_full_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx",

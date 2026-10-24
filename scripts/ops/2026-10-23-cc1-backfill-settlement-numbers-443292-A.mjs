@@ -5,8 +5,13 @@
 // so they receive consecutive numbers (max+1 each) matching the AlwaysTrack sequence.
 // Each settlement is handled in its own transaction + advisory lock so concurrent writes never
 // grab the same number. DRY_RUN=1 rolls back and prints the would-be numbers.
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { appendCrudAudit } from "../../apps/backend/src/audit/crud-audit.js";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 const LABEL = "443.292-A-backfill-settlement-numbers";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -18,6 +23,16 @@ const DRY = process.env.DRY_RUN === "1";
 class Rollback extends Error {}
 
 async function main() {
+  if (!DRY) {
+    const authId = process.env.OWNER_AUTH_ID;
+    if (!authId) {
+      console.error("OWNER_AUTH_ID required for live run (DRY_RUN=1 to rehearse).");
+      process.exit(1);
+    }
+    execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), authId], {
+      stdio: "inherit",
+    });
+  }
   if (!process.env.DATABASE_URL) { console.error("DATABASE_URL required"); process.exit(1); }
   const pool = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await pool.connect();

@@ -3,8 +3,13 @@
 // with 0 lines, $0.00. The close engine now refuses empty shells; these two must be voided.
 // Guard: verify-no-empty-zero-settlement. TB must be 0 before and after (no GL postings exist).
 // DRY_RUN=1 rolls back. Run in close order (P-0123 first, then P-0124).
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { appendCrudAudit } from "../../apps/backend/src/audit/crud-audit.js";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 const LABEL = "443.292-F-void-empty-settlements";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -111,6 +116,16 @@ async function voidSettlement(connectionString, displayId) {
 }
 
 async function main() {
+  if (!DRY) {
+    const authId = process.env.OWNER_AUTH_ID;
+    if (!authId) {
+      console.error("OWNER_AUTH_ID required for live run (DRY_RUN=1 to rehearse).");
+      process.exit(1);
+    }
+    execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), authId], {
+      stdio: "inherit",
+    });
+  }
   if (!process.env.DATABASE_URL) { console.error("DATABASE_URL required"); process.exit(1); }
   const results = [];
   for (const did of DISPLAY_IDS) {
