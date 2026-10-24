@@ -1494,6 +1494,10 @@ jobs:
       - name: verify:historical-settlement-attribution-schema
         run: node scripts/verify-historical-settlement-attribution-schema.mjs
 
+      # ENG-01b (443.322, step 18781) — deduction JE credits must equal glr.deductions_cents
+      - name: verify:settlement-posted-withholdings-equal-deductions-total --selftest
+        run: node scripts/verify-settlement-posted-withholdings-equal-deductions-total.mjs --selftest
+
       # 443.218 F-KPI — list/KPI totals must come from COUNT(*) OVER (), never rows.length
       - name: verify:kpi-total-not-rows-length
         run: node scripts/verify-kpi-total-not-rows-length.mjs

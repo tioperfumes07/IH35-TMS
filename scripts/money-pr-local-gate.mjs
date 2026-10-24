@@ -1571,6 +1571,17 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-driver-net-pay-clearing-balance-zero.mjs",
     ],
   ],
+  // ENG-01b (443.322): posted settlement deduction JE credits must equal glr.deductions_cents.
+  // Also fires on the settlement-payrun-close code fix (DEDUCTIONS_LINES_MISMATCH guard).
+  [
+    "verify-settlement-posted-withholdings-equal-deductions-total",
+    [
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/accounting/settlement-posting/",
+      "scripts/verify-settlement-posted-withholdings-equal-deductions-total.mjs",
+      "scripts/verify-steps/18781-verify-settlement-posted-withholdings-equal-deductions-total.mjs",
+    ],
+  ],
   // ESCROW-LEDGER-SIGN-01 (owner ruling, 2026-09-23): "A hold is a CREDIT to the driver's escrow
   // liability... sign follows transaction_type, never the caller." Shrink-only baseline on the
   // 39 pre-fix rows (they purge, not corrected here). Domain-conditional per the E7 pattern above
