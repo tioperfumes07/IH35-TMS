@@ -149,6 +149,12 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
   // ROUND 443.250 Settlements Escrow V3 — same listEscrowAccounts rows already loaded for the table.
   // Drivers holding = unique active driver holders with balance > 0; Total held = sum of active
   // balances. Release window = board policy constant. Scheduled releases = "—" (no schedule feed).
+  // OWNER 10-24 12:16 PM CT: a $0 account may be hidden; any account with a balance (+ or −) is always listed.
+  const [showZeroAccounts, setShowZeroAccounts] = useState(false);
+  const visibleAccountRows = useMemo(
+    () => (showZeroAccounts ? filteredAccountRows : filteredAccountRows.filter((row) => (row.balance_cents ?? 0) !== 0)),
+    [filteredAccountRows, showZeroAccounts],
+  );
   const escrowHomeKpis = useMemo(() => {
     if (accountsQuery.isError) {
       return {
@@ -157,13 +163,12 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
         scheduledAvailable: false,
       };
     }
-    const active = accountRows.filter((row) => row.status === "active");
+    // OWNER 10-24 12:16 PM CT: every non-zero escrow counts and shows (negative, closed, inactive driver included).
+    const withBalance = accountRows.filter((row) => (row.balance_cents ?? 0) !== 0);
     const holdingDriverIds = new Set(
-      active
-        .filter((row) => row.holder_type === "driver" && row.balance_cents > 0)
-        .map((row) => row.holder_id),
+      withBalance.filter((row) => row.holder_type === "driver").map((row) => row.holder_id),
     );
-    const totalHeldCents = active.reduce((sum, row) => sum + (row.balance_cents ?? 0), 0);
+    const totalHeldCents = withBalance.reduce((sum, row) => sum + (row.balance_cents ?? 0), 0);
     return {
       driversHolding: holdingDriverIds.size,
       totalHeldCents,
@@ -344,11 +349,14 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
                 onClearAll={() => setAccountSearch("")}
                 testIdPrefix="escrow-accounts"
               >
-                <span />
+                <label className="flex items-center gap-1 text-xs text-[#4B5563]" data-testid="escrow-show-zero-toggle">
+                  <input type="checkbox" checked={showZeroAccounts} onChange={(e) => setShowZeroAccounts(e.target.checked)} />
+                  Show $0 accounts ({accountRows.length - accountRows.filter((r) => (r.balance_cents ?? 0) !== 0).length})
+                </label>
               </MoneyListToolbar>
               <ParityTable title="Escrow accounts"
               columns={accountColumns}
-              rows={filteredAccountRows}
+              rows={visibleAccountRows}
               rowKey={(row) => row.id}
               loading={accountsQuery.isPending || (accountsQuery.isFetching && accountRows.length === 0)}
               suppressToolbarSearch

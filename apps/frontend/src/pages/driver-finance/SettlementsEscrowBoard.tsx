@@ -31,21 +31,15 @@ type DriverEscrowRow = {
   progressPct: number;
 };
 
-/** Board measured junk — hide from default Settlements list (full ledger stays on Accounting › Escrow). */
-function isBoardVisibleDriverLabel(raw: string): boolean {
-  const label = raw.trim().toLowerCase();
-  if (!label || label.includes("not visible")) return false;
-  if (label.startsWith("safety") || label.includes("safety —") || label.includes("safety -"))
-    return false;
-  return true;
-}
 
 function aggregateDriverEscrowRows(accountRows: EscrowAccount[]): DriverEscrowRow[] {
   const byHolder = new Map<string, { name: string; heldCents: number }>();
   for (const row of accountRows) {
-    if (row.holder_type !== "driver" || row.status !== "active" || row.balance_cents <= 0) continue;
+    // OWNER 10-24-2026 12:16 PM CT: "an account that has a negative or positive number must always be visible ... only when
+    // there is no balance can it be not visible." Any non-zero balance shows — negative, closed account, inactive driver or
+    // an unresolved name included. Only $0 drops out.
+    if (row.holder_type !== "driver" || (row.balance_cents ?? 0) === 0) continue;
     const rawLabel = entityLabel(row.holder_label ?? null, row.holder_id, "Driver");
-    if (!isBoardVisibleDriverLabel(rawLabel)) continue;
     const name = formatDisplayName(rawLabel);
     const prev = byHolder.get(row.holder_id);
     if (prev) {
