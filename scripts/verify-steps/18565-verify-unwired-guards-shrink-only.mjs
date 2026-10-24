@@ -23,6 +23,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const EXEMPT_REL = "scripts/.guard-exempt.json";
 
 export const GUARDS = [
+  // LEAD 443.314: step-1 wiring guard (passes on main: no added files vs origin/main).
+  "verify-branch-new-guards-and-surfaces-wired.mjs",
   // LEAD 443.312 (2026-10-24): 10 guards merged 10-23/10-24 with no CI caller (guard census 10 > 8); each GREEN with no DB.
   "verify-delivered-load-has-final-departure.mjs",
   "verify-escrow-register-per-load-expansion.mjs",
