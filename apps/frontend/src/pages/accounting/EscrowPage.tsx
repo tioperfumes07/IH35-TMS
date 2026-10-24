@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
@@ -30,9 +30,9 @@ function money(cents: number) {
   return formatUsdCents(cents);
 }
 
+// OWNER 10-24 (D077): MM/DD/YYYY + Central time, never the browser's unpadded locale string.
 function dt(value: string) {
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
+  return formatDateTimeUS(value) || value;
 }
 
 function escrowSourceEntityKind(sourceType: EscrowPosting["source_type"]): EntityKind | null {

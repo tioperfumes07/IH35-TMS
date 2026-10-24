@@ -14,7 +14,7 @@ import { Modal } from "../../../components/Modal";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
-import { formatDate } from "../../../lib/formatDate";
+import { formatDate, formatDateUS } from "../../../lib/formatDate";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { useSearchParams } from "react-router-dom";
@@ -253,7 +253,7 @@ export function DriverSchedulerGridPage() {
     <div className="space-y-3">
       <PageHeader
         title="Driver Scheduler"
-        subtitle={`${range.start} through ${range.end} — fleet leave grid`}
+        subtitle={`${formatDateUS(range.start)} through ${formatDateUS(range.end)} — fleet leave grid`}
         actions={
           <Button
             data-testid="driver-scheduler-assign-temp-cover"

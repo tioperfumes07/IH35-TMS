@@ -75,14 +75,12 @@ export function formatDateUS(value: unknown): string {
 export const formatDate = formatDateUS;
 
 /**
- * D47 — QuickBooks transaction-list date: `M/D/YY` (e.g. 9/14/26).
- * Use on roster / ParityTable date columns. Banking lists keep `formatDateUS` (MM/DD/YYYY).
+ * Table / list date. OWNER RULING 10-24-2026 11:3x AM CT (LEAD 443.315): "09/14/2026 everywhere" — MM/DD/YYYY in every
+ * table and list too (retires the D47 QuickBooks-list `M/D/YY` style). Kept as a named export so every list call site
+ * follows the one rule from here.
  */
 export function formatDateQboList(value: unknown): string {
-  const parts = calendarParts(value);
-  if (!parts) return "";
-  const yy = String(parts.y).slice(-2);
-  return `${parts.mo}/${parts.d}/${yy}`;
+  return formatDateUS(value);
 }
 
 /**
@@ -190,14 +188,13 @@ export function parseDateUS(input: string): string | null {
 // The placeholder every date input should show. Single source of truth so the CI guard can assert it.
 // D47: banking/forms keep MM/DD/YYYY; list cells use formatDateQboList (M/D/YY) without a typed placeholder.
 export const DATE_PLACEHOLDER_US = "MM/DD/YYYY";
-export const DATE_PLACEHOLDER_QBO_LIST = "M/D/YY";
+export const DATE_PLACEHOLDER_QBO_LIST = "MM/DD/YYYY";
 
 // The placeholder every date+time input should show. Mirrors DATE_PLACEHOLDER_US.
 export const DATETIME_PLACEHOLDER_US = "MM/DD/YYYY, --:-- --";
 
 // GLB-08 (owner 2026-09-03): "Dates render MMM-DD (AUG-21, SEPT-01), never 08-21."
 // Uppercase 3-letter month (SEPT is 4 for September per owner example), hyphen, zero-padded day.
-const MMM_DD_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEPT", "OCT", "NOV", "DEC"];
 
 /**
  * Format a date value as "MMM-DD" (GLB-08) — e.g. "AUG-21", "SEPT-01".
@@ -206,11 +203,9 @@ const MMM_DD_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "
  * Returns "" for null / undefined / empty / unparseable input.
  */
 export function mmmDd(value: unknown): string {
-  const parts = calendarParts(value);
-  if (!parts) return "";
-  const abbr = MMM_DD_MONTHS[parts.mo - 1];
-  if (!abbr) return "";
-  return `${abbr}-${pad2(parts.d)}`;
+  // OWNER RULING 10-24-2026 (LEAD 443.315): "09/14/2026 everywhere" — retires GLB-08's "AUG-21" display. Every caller of
+  // this helper (planners, open tours, lists, reports) now shows MM/DD/YYYY from this one place.
+  return formatDateUS(value);
 }
 
 /**
