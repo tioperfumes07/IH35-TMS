@@ -10,6 +10,29 @@ const LABEL = "verify-append-only-purge-arm-is-listed-only";
 const MIG = "db/migrations/202615410200_append_only_tables_admit_auth_listed_purge.sql";
 const SNAP = "db/migrations/202615410400_cash_basis_snapshot_admits_auth_listed_purge.sql";
 const PMA = "db/migrations/202615410500_pm_alerts_admit_auth_listed_purge.sql";
+// LEAD 443.247 (CC-2) — the seven safety / legal append-only functions get the same ARM L, keyed on the firing table.
+const SL = "db/migrations/202616170700_append_only_safety_legal_admit_auth_listed_purge.sql";
+export const SL_FUNCTIONS = [
+  "safety.prevent_event_delete", "safety.block_safety_events_mutation", "safety.block_safety_event_notes_mutation",
+  "safety.block_dvir_severity_tags_mutation", "legal.block_matter_events_mutate", "legal.block_contract_audit_log_mutation",
+  "safety.block_driver_leave_audit_mutation", "safety.block_dvir_submissions_delete", "safety.block_harsh_events_mutation",
+  "telematics.block_vehicle_driver_assignments_delete",
+  "safety.block_dvir_defects_mutation",
+];
+export function safetyLegalProblems(sql) {
+  const p = [];
+  for (const fn of SL_FUNCTIONS) {
+    const at = sql.indexOf(`CREATE OR REPLACE FUNCTION ${fn}()`);
+    if (at < 0) { p.push(`${fn}: missing from ${SL}`); continue; }
+    const body = sql.slice(at, sql.indexOf("$fn$;", at));
+    const armAt = body.indexOf("IF TG_OP = 'DELETE' AND v_auth ~ '^AUTH-[0-9]+$'");
+    if (armAt < 0) p.push(`${fn}: arm must be DELETE-only and require app.purge_auth_id ~ ^AUTH-[0-9]+$`);
+    if (!/r\.auth_id = v_auth AND r\.table_name = TG_TABLE_SCHEMA \|\| '\.' \|\| TG_TABLE_NAME AND r\.row_pk = \(to_jsonb\(OLD\) ->> 'id'\)/.test(body)) p.push(`${fn}: arm must require the row listed for this AUTH on this table`);
+    const after = armAt < 0 ? body : body.slice(body.indexOf("END IF;", armAt));
+    if (!/RAISE EXCEPTION/.test(after)) p.push(`${fn}: must still refuse after the arm`);
+  }
+  return p;
+}
 const read = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), "utf8");
 
 export function snapshotProblems(sql) {
@@ -42,7 +65,8 @@ export function problems(sql) {
 const sql = read(MIG);
 const snap = read(SNAP);
 const pma = read(PMA);
-const own = [...problems(sql), ...problems(pma), ...snapshotProblems(snap)];
+const sl = read(SL);
+const own = [...problems(sql), ...problems(pma), ...snapshotProblems(snap), ...safetyLegalProblems(sl)];
 if (!sql.includes("dispatch.stop_arrivals_delete_block") || !sql.includes("accounting.prevent_escrow_posting_mutation") || !pma.includes("maintenance.pm_alerts_delete_block")) own.push("an ARM L function is missing from its migration");
 const plants = [
   ["no AUTH format", sql.replace(/v_auth ~ '\^AUTH-\[0-9\]\+\$' AND/, "true AND")],
@@ -56,6 +80,13 @@ const snapPlants = [
 ];
 for (const [n, src] of snapPlants) if (snapshotProblems(src).length === 0) missed.push(n);
 if (problems(pma.replace("r.table_name = 'maintenance.pm_alerts' AND r.row_pk = (to_jsonb(OLD) ->> 'id')", "true")).length === 0) missed.push("pm_alerts arm without the listed-row check");
+const slPlants = [
+  ["safety/legal arm without the AUTH format", sl.replace("IF TG_OP = 'DELETE' AND v_auth ~ '^AUTH-[0-9]+$'", "IF TG_OP = 'DELETE' AND true")],
+  ["safety/legal arm without the listed-row check", sl.replace("r.table_name = TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME AND r.row_pk = (to_jsonb(OLD) ->> 'id')", "true")],
+  ["safety/legal arm admits UPDATE", sl.replace("IF TG_OP = 'DELETE' AND v_auth", "IF v_auth")],
+  ["safety/legal refusal dropped", sl.replace("RAISE EXCEPTION 'legal.contract_audit_log is append-only — % is not allowed', TG_OP;", "RETURN OLD;")],
+];
+for (const [n, src] of slPlants) if (safetyLegalProblems(src).length === 0) missed.push(n);
 if (process.argv.includes("--selftest")) {
   const pmaPlant = pma.replace("r.table_name = 'maintenance.pm_alerts' AND r.row_pk = (to_jsonb(OLD) ->> 'id')", "true");
   const cases = [
@@ -63,6 +94,7 @@ if (process.argv.includes("--selftest")) {
     ...plants.map(([n, s]) => [`plant '${n}' is caught`, problems(s).length > 0]),
     ...snapPlants.map(([n, s]) => [`plant '${n}' is caught`, snapshotProblems(s).length > 0]),
     ["plant 'pm_alerts arm without the listed-row check' is caught", problems(pmaPlant).length > 0],
+    ...slPlants.map(([n, s]) => [`plant '${n}' is caught`, safetyLegalProblems(s).length > 0]),
   ];
   const bad = cases.filter(([, ok]) => !ok).length;
   for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
@@ -73,4 +105,4 @@ if (own.length || missed.length) {
   console.error(`${LABEL}: FAIL — ${[...own, ...missed.map((n) => `plant '${n}' not caught`)].join("; ")}`);
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — ARM L is DELETE-only, AUTH-format-gated, listed-row-gated on escrow_postings, stop_arrivals, pm_alerts and the cash-basis snapshot (${plants.length + snapPlants.length + 1}/${plants.length + snapPlants.length + 1} plants caught)`);
+console.log(`${LABEL}: PASS — ARM L is DELETE-only, AUTH-format-gated, listed-row-gated on escrow_postings, stop_arrivals, pm_alerts, the cash-basis snapshot and the ${SL_FUNCTIONS.length} safety / legal append-only functions (${plants.length + snapPlants.length + 1 + slPlants.length}/${plants.length + snapPlants.length + 1 + slPlants.length} plants caught)`);

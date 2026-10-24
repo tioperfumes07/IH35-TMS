@@ -102,6 +102,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-2/443-288-a-expense-family",
     new Set(["db/migrations/202616220700_expense_family_parent_link.sql"]),
   ],
+  // Lead 443.247 (owner 3:36 PM CT 10-22 "test recrods shuold be deleted permanently"): ARM L for the seven safety / legal append-only trigger functions.
+  // Claimed #(202616170700) on main first — exact-branch + exact-file.
+  [
+    "cc-2/443-247-delete-test-records",
+    new Set(["db/migrations/202616170700_append_only_safety_legal_admit_auth_listed_purge.sql"]),
+  ],
   // LEAD 443.214 follow-up (owner 2026-10-01 no-handoff): fuel_transactions card_unit_id / gps_unit_id FOREIGN KEYs.
   // Claimed #(202616120700) in #27140 (top-level key) — exact-branch + exact-file.
   [
