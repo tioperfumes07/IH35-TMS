@@ -26,6 +26,7 @@ import {
 } from "./reinstate-document.service.js";
 
 import { queryBoolean } from "../lib/query-boolean.js";
+import { issuedInvoice } from "./live-document-predicates.sql.js";
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 const listQuerySchema = companyQuerySchema.extend({
@@ -493,12 +494,16 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       const voidedCount = Number(voidedCountRes.rows[0]?.n ?? 0);
       // 443.218 F4: server-side KPI over the full set so AccountingHub Open Invoices / Overdue A/R
       // are never computed from the capped page (first 100 of 233).
+      // LEAD 443.285: the KPI is OPEN A/R, so it counts only ISSUED invoices (issuedInvoice: live, not
+      // draft / proforma). A proforma is a booking estimate that never posts to A/R 1100 — counting it
+      // made Accounting "Open invoices" $624,076.72 / 165 while GL 1100 and the aging were $621,076.72 / 164.
+      const kpiOpen = `${issuedInvoice("i")} AND i.status NOT IN ('void','voided') AND i.amount_open_cents > 0`;
       const kpiRes = await client.query(
         `SELECT
-           COUNT(*) FILTER (WHERE i.voided_at IS NULL AND i.status NOT IN ('void','voided') AND i.amount_open_cents > 0) AS open_count,
-           COALESCE(SUM(i.amount_open_cents) FILTER (WHERE i.voided_at IS NULL AND i.status NOT IN ('void','voided') AND i.amount_open_cents > 0), 0) AS open_amount_cents,
-           COUNT(*) FILTER (WHERE i.voided_at IS NULL AND i.status NOT IN ('void','voided') AND i.amount_open_cents > 0 AND i.due_date < CURRENT_DATE) AS overdue_count,
-           COALESCE(SUM(i.amount_open_cents) FILTER (WHERE i.voided_at IS NULL AND i.status NOT IN ('void','voided') AND i.amount_open_cents > 0 AND i.due_date < CURRENT_DATE), 0) AS overdue_amount_cents
+           COUNT(*) FILTER (WHERE ${kpiOpen}) AS open_count,
+           COALESCE(SUM(i.amount_open_cents) FILTER (WHERE ${kpiOpen}), 0) AS open_amount_cents,
+           COUNT(*) FILTER (WHERE ${kpiOpen} AND i.due_date < CURRENT_DATE) AS overdue_count,
+           COALESCE(SUM(i.amount_open_cents) FILTER (WHERE ${kpiOpen} AND i.due_date < CURRENT_DATE), 0) AS overdue_amount_cents
          FROM accounting.invoices i
          LEFT JOIN mdata.customers c ON c.id = i.customer_id AND c.operating_company_id = i.operating_company_id AND c.operating_company_id = $1::uuid
          WHERE i.operating_company_id = $1::uuid ${extraSql}`,
