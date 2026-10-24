@@ -530,6 +530,7 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
       driver_id: r.tour.driver_id, driver_name: r.tour.driver_name,
       unit_id: r.tour.unit_id, unit_number: r.tour.unit_number, trailer_id: r.tour.trailer_id, trailer_number: r.tour.trailer_number,
       trip_started_at: r.tour.trip_started_at, trip_closed_at: r.tour.trip_closed_at,
+      period_start: r.tour.period_start, period_end: r.tour.period_end,
       leg_count: live.length, legs_label: live.map((l) => `${l.trip_type ?? "?"} ${l.load_number}`).join(" → "),
       legs: live.map((l) => ({
         load_id: l.load_id, load_number: l.load_number, trip_type: l.trip_type, status: l.status,
