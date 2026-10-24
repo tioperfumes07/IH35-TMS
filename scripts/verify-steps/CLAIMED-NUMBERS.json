@@ -15079,6 +15079,11 @@
     "claimed_by": "cc-1",
     "purpose": "ENG-61 (443.336): verify-final-load-close-posts — load_bookended settlement GL posting after trip close"
   },
+  "18801": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cc-1",
+    "purpose": "443.346: verify-faro-advance-lands-where-the-money-went — factoring advance bank_wire_cents posts to 1090; gap to 1230"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
