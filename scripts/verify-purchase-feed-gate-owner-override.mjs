@@ -4,7 +4,7 @@
  * already provided a reason, then it should let me").
  *
  * The purchase Feed Gate (apps/backend/src/factoring/purchase-candidates.service.ts runPurchaseFeedGate) must:
- *   1. release reds ONLY for an Owner actor WITH a reason of >= 10 characters (ownerOverride = reason && actorIsOwner);
+ *   1. release reds ONLY for an Owner actor WITH an engine-confirmed override code (LEAD 443.294; ownerOverride = code && actorIsOwner);
  *   2. never release silently: every released red writes a WORM 'na' feed_intake_checks row carrying the reason, and the
  *      invoice gets one `factoring.purchase_feed_gate_owner_override` audit row;
  *   3. keep "invoice not found in this company" hard (never released);
@@ -24,7 +24,8 @@ export function check(service, routes) {
   const p = [];
   const fn = service.slice(service.indexOf("export async function runPurchaseFeedGate("), service.indexOf("async function recordOwnerOverrideCheck("));
   if (!fn) return [`${SERVICE}: runPurchaseFeedGate not found.`];
-  if (!/const ownerOverride = override\.length >= 10 && opts\.actorIsOwner === true;/.test(fn)) p.push(`${SERVICE}: the release must require BOTH a >= 10 char reason AND opts.actorIsOwner === true.`);
+  // LEAD 443.294: the reason is the ONE override engine's confirmed catalog code (recordOverride in the route), not >= 10 typed chars.
+  if (!/const ownerOverride = override\.length > 0 && opts\.actorIsOwner === true;/.test(fn)) p.push(`${SERVICE}: the release must require BOTH an engine-confirmed override code AND opts.actorIsOwner === true.`);
   if (!/if \(reds\.length && ownerOverride\)/.test(fn)) p.push(`${SERVICE}: reds may be released only under ownerOverride.`);
   if (!/for \(const r of reds\) await recordOwnerOverrideCheck\(/.test(fn)) p.push(`${SERVICE}: every released red must write its WORM 'na' check row (recordOwnerOverrideCheck).`);
   if (!/"factoring\.purchase_feed_gate_owner_override"/.test(fn)) p.push(`${SERVICE}: a released invoice must write the factoring.purchase_feed_gate_owner_override audit row.`);

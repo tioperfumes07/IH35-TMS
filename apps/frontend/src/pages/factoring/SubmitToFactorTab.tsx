@@ -5,6 +5,7 @@
 // previews the purchase; Save creates the purchase (POST /factoring/purchases — the server runs the FEED GATE on every
 // invoice first) and posts it (POST /:id/post) through the one secured-borrowing poster. "Save and send" also emails
 // the invoices + their documents to the factor. Owner-only: the server refuses everyone else (403).
+import { OverrideButton } from "../../components/override/OverrideButton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,6 +25,7 @@ import {
   type FactoringPurchaseDetail,
   type FeedGateBlocked,
   type PurchaseCandidate,
+  type DocsOverride,
 } from "../../api/factoring-purchases";
 import { Button } from "../../components/Button";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -368,7 +370,8 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
   // 443.171 — the wire amount on Faro's report, to tie Net to IH35 out to the cent before posting.
   const [faroWireCents, setFaroWireCents] = useState<number | null>(null);
   // Owner override approval: send although selected loads are missing BOL / POD / rate confirmation.
-  const [docsOverrideReason, setDocsOverrideReason] = useState("");
+  // LEAD 443.294: the ONE override button (Owner confirms; nothing typed) — null until confirmed.
+  const [docsOverride, setDocsOverride] = useState<DocsOverride | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<SaveError | null>(null);
   const [created, setCreated] = useState<{ purchase: FactoringPurchaseDetail; sentTo: string | null; sendError: SaveError | null } | null>(null);
@@ -461,7 +464,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
   };
   const notPurchased = selectionNotPurchased(selectedRows, purchased);
   const faroWireDiff = faroWireCents == null ? null : faroWireCents - totals.net;
-  const docsOverrideOk = docsOverrideReason.trim().length >= 10;
+  const docsOverrideOk = docsOverride != null;
   // Edit mode has no documents override (the PATCH takes none): the server's eligibility check answers for added invoices.
   const missingDocsRows = editing ? [] : selectedRows.filter((r) => !r.docs_complete);
   const editReasonOk = editReason.trim().length >= 10;
@@ -516,7 +519,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
           ...figuresOf(r),
           ...(faroNumbers[r.invoice_id]?.trim() ? { faro_invoice_number: faroNumbers[r.invoice_id]!.trim() } : {}),
         })),
-        ...(missingDocsRows.length && docsOverrideOk ? { docs_override_reason: docsOverrideReason.trim() } : {}),
+        ...(missingDocsRows.length && docsOverride ? { docs_override: docsOverride } : {}),
       });
       let posted: FactoringPurchaseDetail;
       try {
@@ -541,7 +544,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
       let sendError: SaveError | null = null;
       if (andSend) {
         try {
-          const sent = await sendFactoringPurchase(companyId, posted.id, sendTo.trim() || null, missingDocsRows.length ? docsOverrideReason : null);
+          const sent = await sendFactoringPurchase(companyId, posted.id, sendTo.trim() || null, missingDocsRows.length ? docsOverride : null);
           sentTo = sent.to;
         } catch (err) {
           sendError = toSaveError(err, "Send failed");
@@ -554,7 +557,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
       setFaroNumbers({});
       setPurchased({});
       setFaroWireCents(null);
-      setDocsOverrideReason("");
+      setDocsOverride(null);
       await refresh();
     } catch (err) {
       setSaveError(toSaveError(err, "Save failed"));
@@ -614,7 +617,7 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
     if (!created) return;
     setSaving(true);
     try {
-      const sent = await sendFactoringPurchase(companyId, created.purchase.id, sendTo.trim() || null, docsOverrideOk ? docsOverrideReason : null);
+      const sent = await sendFactoringPurchase(companyId, created.purchase.id, sendTo.trim() || null, docsOverride);
       setCreated({ ...created, sentTo: sent.to, sendError: null });
     } catch (err) {
       setCreated({ ...created, sendError: toSaveError(err, "Send failed") });
@@ -1090,20 +1093,18 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
             <div className="p-3 text-xs" data-testid="submit-factor-docs-override">
               <p className="mb-2 text-[#4B5563]">
                 {missingDocsRows.length} selected load(s) are missing BOL / POD / rate confirmation. The Owner may approve sending to the factor
-                anyway; the reason is stamped on the purchase and audited.
+                anyway with one confirm; the override is stamped on the purchase and audited.
               </p>
-              <label className="flex flex-col gap-1">
-                <span className="uppercase" style={FIELD_LABEL_STYLE}>Override reason (Owner)</span>
-                <input
-                  className={`${FORM_FIELD_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
-                  value={docsOverrideReason}
-                  maxLength={1000}
+              {docsOverride ? (
+                <p className="font-semibold text-[#1F2A44]" data-testid="submit-factor-docs-override-approved">Override approved.</p>
+              ) : (
+                <OverrideButton
+                  context="factoring"
                   disabled={!isOwner}
-                  placeholder="At least 10 characters — why these loads go without documents"
-                  onChange={(e) => setDocsOverrideReason(e.target.value)}
-                  data-testid="submit-factor-docs-override-reason"
+                  onConfirm={(reasonCode) => setDocsOverride({ reason_code: reasonCode })}
+                  testId="submit-factor-docs-override-button"
                 />
-              </label>
+              )}
             </div>
           </DataPanel>
         ) : null}

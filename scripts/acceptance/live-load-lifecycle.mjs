@@ -774,7 +774,7 @@ async function purchaseAndPost(t, inv, faroNo) {
     const red = (draft.body.details ?? []).flatMap((d) => (d.reds ?? []).map((r) => `${r.check_key}: ${r.missing}`));
     // The Owner's documents override is the designed release for a missing BOL / POD / rate confirmation; every other red stays.
     t.ok(`${inv.display_id} feed gate red only on billing documents (Owner override reason releases it)`, red.length > 0 && red.every((k) => k.startsWith("purchase.invoice_billing_docs")), red.join(" | "));
-    draft = await call("POST", `/api/v1/factoring/purchases${q}`, { ...body, docs_override_reason: "443.82 S6 acceptance on a fork - documents checked by the owner" });
+    draft = await call("POST", `/api/v1/factoring/purchases${q}`, { ...body, docs_override: { reason_code: null } });
   }
   if (!t.ok(`POST /factoring/purchases ${inv.display_id} 201`, draft.status === 201, `status ${draft.status} ${draft.status !== 201 ? JSON.stringify(draft.body).slice(0, 300) : ""}`)) return null;
   const purchaseId = draft.body.purchase?.id ?? draft.body.id;

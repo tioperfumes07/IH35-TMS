@@ -333,16 +333,17 @@ export async function runPurchaseFeedGate(
   oci: string,
   invoiceIds: string[],
   userId: string,
-  // ROUND 321 item 3: the Owner's override reason (>= 10 chars). LEAD 443.154 (owner 2026-10-16 11:03 CT: "I already put an
-  // override and if I already provided a reason, then it should let me"): with the reason AND an Owner actor, EVERY red
+  // ROUND 321 item 3 / LEAD 443.294: the Owner's override = the ONE engine's confirmed catalog code (recordOverride ran in
+  // the route; owner_override when the Owner just confirms). LEAD 443.154 (owner 2026-10-16 11:03 CT: "I already put an
+  // override and if I already provided a reason, then it should let me"): with that code AND an Owner actor, EVERY red
   // this gate would block on (no load, no posted A/R, missing docs, the generic invoice checks) is released — recorded per
   // red on the intake as a WORM 'na' check row carrying the reason, user and time, plus one audit row per invoice. Never a
   // silent pass. Only "invoice not found in this company" stays hard. Without the reason (or without an Owner) every red blocks.
-  docsOverrideReason: string | null = null,
+  docsOverrideCode: string | null = null,
   opts: { actorIsOwner?: boolean } = {}
 ): Promise<FeedGateInvoiceResult[]> {
-  const override = (docsOverrideReason ?? "").trim();
-  const ownerOverride = override.length >= 10 && opts.actorIsOwner === true;
+  const override = (docsOverrideCode ?? "").trim();
+  const ownerOverride = override.length > 0 && opts.actorIsOwner === true;
   // Purchase-entry pre-checks the generic invoice check set does not carry: the invoice is tied to a load (the
   // receivable Faro buys is a load's freight bill) and its A/R journal entry is posted (the invoice feed set filters
   // the load set's invoice.* keys, so invoice.ar_je_posted does not run on kind 'invoice'). Same SQL as that check.

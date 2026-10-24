@@ -60,9 +60,10 @@ function selftest() {
   const ps = read("apps/backend/src/factoring/purchase.service.ts");
   if ((ps.match(/await assertOwnerActor\(client, oci, input\.actorUserId, "/g) ?? []).length < 3) problems.push("purchase.service.ts: create/post/void must each re-check the Owner actor");
 
-  // Owner override approval (2026-10-01): a send without docs needs a >= 10-char reason, stamped on the purchase + audited.
+  // Owner override approval (2026-10-01; LEAD 443.294): a send without docs needs the engine-confirmed override, stamped on the purchase + audited.
   const send = read("apps/backend/src/factoring/purchase-send.service.ts");
-  if (!/if \(packet\.missing\.length && overrideReason\.length < 10\) \{/.test(send)) problems.push("send must refuse missing docs without an override reason");
+  // LEAD 443.294: the override is the engine's confirmed catalog code (recordOverride in the route), never a typed sentence.
+  if (!/if \(packet\.missing\.length && !overrideReason\) \{/.test(send)) problems.push("send must refuse missing docs without a confirmed override");
   if (!/docs_override_at = now\(\), docs_override_by_user_id = \$3::uuid, docs_override_reason = \$4/.test(send) || !/factoring\.purchase_docs_override/.test(send)) problems.push("override must be stamped on the purchase and audited");
   // ROUND 321 item 3: the Feed Gate records missing docs as red, or -- with the Owner's reason -- as 'na' WITH the reason.
   const cand = read("apps/backend/src/factoring/purchase-candidates.service.ts");

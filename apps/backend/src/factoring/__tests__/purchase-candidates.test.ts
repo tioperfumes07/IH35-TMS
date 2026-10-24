@@ -16,6 +16,13 @@ let missingDocsByInvoice: Record<string, string[]> = {};
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   calls.push({ sql, values });
   if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+  // LEAD 443.294: the override engine reads the catalog row for the stored code.
+  if (sql.includes("FROM catalogs.override_reasons")) {
+    const code = String(values?.[1] ?? "");
+    return code === "owner_override"
+      ? { rows: [{ id: "reason-owner", reason_code: code, label_en: "Owner override", label_es: "Autorización del dueño", contexts: ["factoring"], is_active: true, role_only: true }] }
+      : { rows: [] };
+  }
   if (sql.includes("FROM accounting.invoices i") && sql.includes("LIMIT 2001")) {
     return {
       rows: [
@@ -224,14 +231,16 @@ describe("Submit to Factor routes", () => {
       url: `/api/v1/factoring/purchases?operating_company_id=${OCI}`,
       payload: {
         factoring_company_vendor_id: VENDOR, purchase_date: "2026-10-01", lines: [{ invoice_id: INV_A }],
-        docs_override_reason: "Faro accepted these on the dispatch packet",
+        // LEAD 443.294: the Owner just confirms (OverrideButton → reason_code null → owner_override).
+        docs_override: { reason_code: null },
       },
     });
     expect(res.json().error).not.toBe("feed_gate_blocked");
     const na = calls.find((c) => c.sql.includes("INSERT INTO driver_finance.feed_intake_checks") && c.values?.[3] === "purchase.invoice_billing_docs");
     expect(na).toBeTruthy();
     expect(na!.sql).toContain("'na'");
-    expect(String(na!.values?.[6])).toContain("Owner override: Faro accepted these on the dispatch packet");
+    expect(String(na!.values?.[6])).toContain("Owner override: owner_override");
+    expect(calls.some((c) => c.sql.includes("append_event") && c.values?.[0] === "override.factoring")).toBe(true);
     missingDocsByInvoice = {};
   });
 
@@ -251,7 +260,7 @@ describe("Submit to Factor routes", () => {
       url: `/api/v1/factoring/purchases?operating_company_id=${OCI}`,
       payload: {
         factoring_company_vendor_id: VENDOR, purchase_date: "2026-10-01", lines: [{ invoice_id: INV_B }],
-        docs_override_reason: "Local movement for ITS, no truck — owner approved",
+        docs_override: { reason_code: null },
       },
     });
     expect(res.json().error).not.toBe("feed_gate_blocked");
@@ -260,13 +269,13 @@ describe("Submit to Factor routes", () => {
     for (const r of rows) {
       expect(r.sql).toContain("'na'");
       expect(r.values?.[1]).toBe(`intake-${INV_B}`);
-      expect(String(r.values?.[6])).toContain("Owner override: Local movement for ITS, no truck — owner approved");
+      expect(String(r.values?.[6])).toContain("Owner override: owner_override");
       expect(JSON.parse(String(r.values?.[8]))).toMatchObject({ override: true, overridden_by_user_id: USER });
     }
     const audit = calls.find((c) => c.sql.includes("append_event") && c.values?.[0] === "factoring.purchase_feed_gate_owner_override");
     expect(audit).toBeTruthy();
     expect(String(audit!.values?.[2])).toContain("invoice has no load");
-    expect(String(audit!.values?.[2])).toContain("Local movement for ITS");
+    expect(String(audit!.values?.[2])).toContain("owner_override");
   });
 
   it("443.154: the same reds WITHOUT the reason still block (no 'na' row, no audit, no draft)", async () => {
