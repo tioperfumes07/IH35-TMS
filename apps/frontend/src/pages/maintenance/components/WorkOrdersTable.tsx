@@ -76,7 +76,14 @@ function exportSelectedCsv(selected: WorkOrder[]) {
   URL.revokeObjectURL(url);
 }
 
-function woSortValue(row: WorkOrder, key: string): string | number {
+/** Seconds the Timing cell describes: closed -> duration_seconds; open -> time since opened_at; unknown -> -1 (sorts first asc). */
+function woTimingSeconds(row: WorkOrder): number {
+  if (typeof row.duration_seconds === "number" && row.duration_seconds > 0) return row.duration_seconds;
+  if (row.opened_at) return Math.max(0, Math.floor((Date.now() - new Date(row.opened_at).getTime()) / 1000));
+  return -1;
+}
+
+export function woSortValue(row: WorkOrder, key: string): string | number {
   switch (key) {
     case "unit_number":
       return String(row.unit_number ?? "");
@@ -90,12 +97,25 @@ function woSortValue(row: WorkOrder, key: string): string | number {
       return String(row.expected_release_at ?? "");
     case "total_actual_cost":
       return Number((row as Record<string, unknown>).total_actual_cost ?? 0);
+    // Row 154 / D035 — every data column sorts by what the cell DISPLAYS (QBO: every column header sorts).
+    case "load_id":
+      return String(row.linked_load_number ?? "");
+    case "driver_id":
+      return String(row.driver_name ?? "");
+    case "resolved_vendor_id":
+      return String(row.resolved_vendor_name ?? "");
+    case "linked_bill_id":
+      return String(row.linked_bill_number ?? "");
+    case "linked_journal_entry_id":
+      return row.linked_journal_entry_id ? 1 : 0;
+    case "timing":
+      return woTimingSeconds(row);
     default:
       return String((row as Record<string, unknown>)[key] ?? "");
   }
 }
 
-function compareWoRows(a: WorkOrder, b: WorkOrder, key: string): number {
+export function compareWoRows(a: WorkOrder, b: WorkOrder, key: string): number {
   const va = woSortValue(a, key);
   const vb = woSortValue(b, key);
   if (typeof va === "number" && typeof vb === "number") return va - vb;
@@ -177,7 +197,8 @@ export function WorkOrdersTable({
       {
         key: "load_id",
         label: "Load",
-        sortable: false,
+        sortable: true,
+        sortValue: (row) => woSortValue(row, "load_id"),
         render: (row) =>
           row.load_id ? (
             <EntityLinkOrTombstone kind="load" id={row.load_id} name={row.linked_load_number} noun="Load" />
@@ -188,7 +209,8 @@ export function WorkOrdersTable({
       {
         key: "driver_id",
         label: "Driver",
-        sortable: false,
+        sortable: true,
+        sortValue: (row) => woSortValue(row, "driver_id"),
         render: (row) => (
           <EntityLinkOrTombstone kind="driver" id={row.driver_id ?? undefined} name={row.driver_name} noun="Driver" />
         ),
@@ -196,7 +218,8 @@ export function WorkOrdersTable({
       {
         key: "resolved_vendor_id",
         label: "Vendor",
-        sortable: false,
+        sortable: true,
+        sortValue: (row) => woSortValue(row, "resolved_vendor_id"),
         render: (row) =>
           row.resolved_vendor_id ? (
             <EntityLinkOrTombstone
@@ -212,7 +235,8 @@ export function WorkOrdersTable({
       {
         key: "linked_bill_id",
         label: "Bill",
-        sortable: false,
+        sortable: true,
+        sortValue: (row) => woSortValue(row, "linked_bill_id"),
         render: (row) =>
           row.linked_bill_id ? (
             <EntityLinkOrTombstone kind="bill" id={row.linked_bill_id} name={row.linked_bill_number} noun="Bill" />
@@ -223,7 +247,8 @@ export function WorkOrdersTable({
       {
         key: "linked_journal_entry_id",
         label: "JE",
-        sortable: false,
+        sortable: true,
+        sortValue: (row) => woSortValue(row, "linked_journal_entry_id"),
         render: (row) =>
           row.linked_journal_entry_id ? (
             <EntityLinkOrTombstone kind="journal_entry" id={row.linked_journal_entry_id} name="Journal entry" noun="Journal entry" />
@@ -264,7 +289,7 @@ export function WorkOrdersTable({
         sortValue: (row) => woSortValue(row, "expected_release_at"),
         render: (row) => (row.expected_release_at ? formatDateQboList(row.expected_release_at) || "—" : "—"),
       },
-      { key: "timing", label: "Timing", sortable: false, render: (row) => renderDuration(row) },
+      { key: "timing", label: "Timing", sortable: true, sortValue: (row) => woSortValue(row, "timing"), render: (row) => renderDuration(row) },
     ],
     [],
   );
