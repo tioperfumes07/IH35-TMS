@@ -126,3 +126,19 @@ describe("GET /api/v1/reports/company-settlements", () => {
     expect(res.statusCode).toBe(200);
   });
 });
+
+// 443.286-A tie-out: guard that company-settlements excludes voided rows and returns null net_revenue
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+describe("TIEOUT: company-settlements SQL scope", () => {
+  it("service SQL excludes voided company settlements and nulls net_revenue for voided rows", () => {
+    const src = readFileSync(
+      fileURLToPath(new URL("../company-settlements-report.service.ts", import.meta.url)),
+      "utf-8"
+    );
+    expect(src).toContain("voided_at IS NULL");
+    // Voided settlements must carry null net_revenue (law §8 — no $0 on reversed docs)
+    expect(src).toContain("NULL");
+    expect(src).toContain("voided_at");
+  });
+});

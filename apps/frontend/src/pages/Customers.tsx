@@ -15,7 +15,7 @@ import { CounterpartyStatementView } from "./reports/CounterpartyStatementPage";
 import { listAllDispatchLoads, type DispatchLoad } from "../api/dispatch";
 import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
 import { companyToday, addDaysIso } from "../lib/businessDate";
-import { ApiError } from "../api/client";
+import { ApiError, apiRequest } from "../api/client";
 import { invoiceOpenCentsForDisplay, invoiceTotalCentsForAggregate, isVoidInvoice } from "./accounting/InvoicesListPage";
 import { createCustomer, getCustomerBillingSummary, getCustomerRosterCounts, listAllCustomers, listPaymentTermOptions, getCustomerFinanceRollup, type Customer, type CustomerBillingSummary, type CustomerFinanceRollup } from "../api/mdata";
 import { V3KpiTile } from "../components/v3/V3KpiTile";
@@ -721,6 +721,15 @@ export function CustomersPage() {
     queryFn: () => getCustomerRosterCounts(companyId),
     enabled: Boolean(companyId),
   });
+  const customerBoardYtdQuery = useQuery({
+    queryKey: ["mdata", "boards", "customers", companyId, "ytd"],
+    queryFn: () =>
+      apiRequest<{ kpis: { collected_cents: number } }>(
+        `/api/v1/mdata/boards/customers?operating_company_id=${encodeURIComponent(companyId)}&range=ytd`,
+      ),
+    enabled: Boolean(companyId),
+    staleTime: 30_000,
+  });
   // Full active roster for All / Active / quality tabs (and for tab counts beside With transactions).
   const customersQuery = useQuery({
     queryKey: ["customers", "page", companyId, "all"],
@@ -932,7 +941,9 @@ export function CustomersPage() {
     }
     let arOpenCents = 0;
     for (const cents of openByCustomerId.values()) arOpenCents += cents;
-    const collectedCents = Math.max(0, billedCents - arOpenCents);
+    const collectedCents = customerBoardYtdQuery.isError
+      ? null
+      : (customerBoardYtdQuery.data?.kpis.collected_cents ?? null);
     return {
       withTransactions: customerTabCounts.with_transactions,
       inTheBook: customerTabCounts.all,
@@ -950,6 +961,8 @@ export function CustomersPage() {
     openByCustomerId,
     customerTabCounts.with_transactions,
     customerTabCounts.all,
+    customerBoardYtdQuery.data?.kpis.collected_cents,
+    customerBoardYtdQuery.isError,
   ]);
 
   // CC-3 V.1 roll-up columns: fetch customer-profitability for the current calendar year and
@@ -1429,7 +1442,7 @@ export function CustomersPage() {
         <V3KpiTile
           label="Collected"
           value={customerHomeKpis.collectedCents == null ? "—" : fmtMoney(customerHomeKpis.collectedCents)}
-          sub="billed minus open on balance rows"
+          sub="payments applied YTD (live board engine)"
           tone={
             customerHomeKpis.collectedCents != null && customerHomeKpis.collectedCents === 0 ? "red" : "ink"
           }

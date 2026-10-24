@@ -134,3 +134,16 @@ describe("GET /api/v1/reports/driver-settlements", () => {
     expect(res.statusCode).toBe(200);
   });
 });
+
+// 443.286-A tie-out: guard that driver-settlements SQL excludes voided settlements
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+describe("TIEOUT: driver-settlements SQL scope", () => {
+  it("service SQL excludes voided driver settlements", () => {
+    const src = readFileSync(
+      fileURLToPath(new URL("../driver-settlements-report.service.ts", import.meta.url)),
+      "utf-8"
+    );
+    expect(src).toContain("voided_at IS NULL");
+  });
+});
