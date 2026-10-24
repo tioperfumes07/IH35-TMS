@@ -15049,18 +15049,18 @@
   },
   "18781": {
     "claimed_at": "2026-10-24",
-    "claimed_by": "CC-3",
-    "purpose": "ENG-29 (443.324): verify-load-driven-miles-from-fences — miles_driven_actual sourced from fence events (shrink-only)"
+    "claimed_by": "CC-1",
+    "purpose": "ENG-01b (443.322): settlement withholdings with null preferredLoadId dropped; guard verify-settlement-posted-withholdings-equal-deductions-total"
   },
   "18785": {
     "claimed_at": "2026-10-24",
     "claimed_by": "CC-3",
     "purpose": "ENG-22 (443.324): verify-creator-trailer-type-from-document — every Creator load trailer type resolves in catalogs"
   },
-  "18781": {
+  "18789": {
     "claimed_at": "2026-10-24",
     "claimed_by": "CC-1",
-    "purpose": "ENG-01b (443.322): settlement withholdings with null preferredLoadId dropped; guard verify-settlement-posted-withholdings-equal-deductions-total"
+    "purpose": "ENG-01c (443.322): verify-settlement-deduction-lines-have-deduction-rows (legacy writer fix)"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
