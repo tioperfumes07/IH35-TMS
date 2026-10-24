@@ -58,7 +58,7 @@ import { formatDateTimeUS, formatDateQboList, mmmDd } from "../lib/formatDate";
 import { customerStatusLabel, customerTypeLabel } from "../lib/customerStatusLabel";
 import { userFacingApiError } from "../lib/api-error-message";
 import { listSpineEvents, type SpineEvent } from "../api/audit";
-import { getArAgingReport, getCustomerProfitability } from "../api/reports";
+import { getArAgingReport, getCustomerProfitability, getDuplicateMasters, type ARAgingRow } from "../api/reports";
 import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../components/accounting/UnclearedDocumentsNote";
 import { InfoPopover } from "../components/shared/InfoPopover";
 
@@ -573,11 +573,11 @@ export function CustomersPage() {
   // disagree with the URL or with each other.
   // C-31 / C-19 (owner Round 298.1): default TAB is With transactions (A-21 server predicate).
   // "All" / Active / quality segments stay one click away — nobody is hidden from search.
-  type CustomerListTabId = "with_transactions" | "all" | "active" | "inactive" | "preferred" | "watch" | "factored";
+  type CustomerListTabId = "with_transactions" | "all" | "active" | "inactive" | "preferred" | "watch" | "factored" | "open_balance" | "possible_duplicates";
   const listTab = ((): CustomerListTabId => {
     const raw = (searchParams.get("listTab") ?? "with_transactions").toLowerCase();
     if (raw === "with_transactions" || raw === "with-txn" || raw === "txn") return "with_transactions";
-    return raw === "all" || raw === "inactive" || raw === "preferred" || raw === "watch" || raw === "factored" || raw === "active"
+    return raw === "all" || raw === "inactive" || raw === "preferred" || raw === "watch" || raw === "factored" || raw === "active" || raw === "open_balance" || raw === "possible_duplicates"
       ? (raw as CustomerListTabId)
       : "with_transactions";
   })();
@@ -829,6 +829,35 @@ export function CustomersPage() {
   const qualitySegment: "all" | "preferred" | "watch" | "factored" =
     listTab === "preferred" || listTab === "watch" || listTab === "factored" ? listTab : "all";
 
+  // ACCT-F200 / LV-AR-OPEN-INCLUDES-VOIDED (ACCT-F5027) — amount_open_cents is a STORED GENERATED
+  // column that legitimately stays nonzero on a voided invoice; every open-A/R read path must
+  // exclude voided rows via isVoidInvoice/invoiceOpenCentsForDisplay instead. Declared early
+  // so visibleCustomers (open_balance tab) and customerTabCounts can reference it.
+  const openByCustomerId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const invoice of allInvoicesQuery.data?.invoices ?? []) {
+      if (isVoidInvoice(invoice)) continue;
+      const current = map.get(invoice.customer_id) ?? 0;
+      map.set(invoice.customer_id, current + invoiceOpenCentsForDisplay(invoice));
+    }
+    return map;
+  }, [allInvoicesQuery.data?.invoices]);
+
+  // V3 possible-duplicates query (declared early for visibleCustomers + customerTabCounts).
+  const duplicateMastersQueryEarly = useQuery({
+    queryKey: ["reports", "duplicate-masters", companyId, "customers"],
+    queryFn: () => getDuplicateMasters(companyId, "customers"),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  const duplicateCustomerIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const group of duplicateMastersQueryEarly.data?.groups ?? []) {
+      for (const row of group.rows) ids.add(row.id);
+    }
+    return ids;
+  }, [duplicateMastersQueryEarly.data?.groups]);
+
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
   // mirroring the Driver Deactivate pattern. With-transactions tab shows the A-21 set as-is
   // (already active-company scoped); Active/Inactive only apply on the non-txn tabs.
@@ -846,8 +875,11 @@ export function CustomersPage() {
     if (qualitySegment === "preferred") all = all.filter((c) => c.quality_overall_flag === "preferred");
     else if (qualitySegment === "watch") all = all.filter((c) => c.quality_overall_flag === "caution");
     else if (qualitySegment === "factored") all = all.filter((c) => Boolean(c.factoring_company_vendor_id));
+    // V3 new tabs.
+    else if (listTab === "open_balance") all = all.filter((c) => (openByCustomerId.get(c.id) ?? 0) > 0);
+    else if (listTab === "possible_duplicates") all = all.filter((c) => duplicateCustomerIds.has(c.id));
     return all;
-  }, [fullCustomersRoster, listStatus, rosterType, rosterCreditStatus, qualitySegment, useHasTransactions]);
+  }, [fullCustomersRoster, listStatus, rosterType, rosterCreditStatus, qualitySegment, useHasTransactions, listTab, openByCustomerId, duplicateCustomerIds]);
 
   // Tab counts: prefer C-50 /counts (A-21); fall back to roster totals only while counts load.
   const customerTabCounts = useMemo(
@@ -867,6 +899,8 @@ export function CustomersPage() {
       preferred: fullCustomersRoster.filter((c) => c.quality_overall_flag === "preferred").length,
       watch: fullCustomersRoster.filter((c) => c.quality_overall_flag === "caution").length,
       factored: fullCustomersRoster.filter((c) => Boolean(c.factoring_company_vendor_id)).length,
+      open_balance: fullCustomersRoster.filter((c) => (openByCustomerId.get(c.id) ?? 0) > 0).length,
+      possible_duplicates: duplicateCustomerIds.size,
     }),
     [
       customerCountsQuery.data,
@@ -874,6 +908,8 @@ export function CustomersPage() {
       customersQuery.data,
       inactiveCustomersQuery.data,
       fullCustomersRoster,
+      openByCustomerId,
+      duplicateCustomerIds,
     ]
   );
 
@@ -911,22 +947,6 @@ export function CustomersPage() {
     return customersSorted[0] ?? null;
   }, [customersSorted, selectedCustomerId]);
 
-  // ACCT-F200 / LV-AR-OPEN-INCLUDES-VOIDED (ACCT-F5027) — amount_open_cents is a STORED GENERATED
-  // column that legitimately stays nonzero on a voided invoice; every open-A/R read path must
-  // exclude voided rows via isVoidInvoice/invoiceOpenCentsForDisplay instead. This per-customer
-  // rollup was a third surface still summing the raw column unfiltered (same class as
-  // AccountingHubPage's ACCT-F5395 fix), live-overstating every USMCA customer's Open Balance by
-  // the sum of their voided invoices.
-  const openByCustomerId = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const invoice of allInvoicesQuery.data?.invoices ?? []) {
-      if (isVoidInvoice(invoice)) continue;
-      const current = map.get(invoice.customer_id) ?? 0;
-      map.set(invoice.customer_id, current + invoiceOpenCentsForDisplay(invoice));
-    }
-    return map;
-  }, [allInvoicesQuery.data?.invoices]);
-
   // ROUND 443.250 V3 board (Customers.dc.html) — same live maps (roster counts +
   // listAllInvoices has_balance + openByCustomerId). Chrome via V3KpiTile. "—" on invoice load fail.
   const customerHomeKpis = useMemo(() => {
@@ -945,6 +965,14 @@ export function CustomersPage() {
     const collectedCents = customerBoardYtdQuery.isError
       ? null
       : (customerBoardYtdQuery.data?.kpis.collected_cents ?? null);
+    // V3: past-due % from AR aging buckets (1–30 + 31–60 + 61–90 + 91+) / total_open.
+    let pastDueCents = 0;
+    let totalAgingCents = 0;
+    for (const row of arAgingUnclearedQuery.data?.rows ?? []) {
+      pastDueCents += row.bucket_1_30_cents + row.bucket_31_60_cents + row.bucket_61_90_cents + row.bucket_91_plus_cents;
+      totalAgingCents += row.total_open_cents;
+    }
+    const pastDuePct = totalAgingCents > 0 ? Math.round((pastDueCents / totalAgingCents) * 100) : null;
     return {
       withTransactions: customerTabCounts.with_transactions,
       inTheBook: customerTabCounts.all,
@@ -955,6 +983,7 @@ export function CustomersPage() {
       customersWithOpen: invoicesUnavailable
         ? null
         : [...openByCustomerId.values()].filter((cents) => cents > 0).length,
+      pastDuePct,
     };
   }, [
     allInvoicesQuery.isError,
@@ -964,6 +993,7 @@ export function CustomersPage() {
     customerTabCounts.all,
     customerBoardYtdQuery.data?.kpis.collected_cents,
     customerBoardYtdQuery.isError,
+    arAgingUnclearedQuery.data?.rows,
   ]);
 
   // CC-3 V.1 roll-up columns: fetch customer-profitability for the current calendar year and
@@ -1039,6 +1069,27 @@ export function CustomersPage() {
     for (const row of financeRollupQuery.data ?? []) map.set(row.customer_id, row);
     return map;
   }, [financeRollupQuery.data]);
+
+  // V3 Customers board — per-customer AR aging map (for Invoices count, Open balance, Aging bar).
+  const agingByCustomerId = useMemo(() => {
+    const map = new Map<string, ARAgingRow>();
+    for (const row of arAgingUnclearedQuery.data?.rows ?? []) map.set(row.customer_id, row);
+    return map;
+  }, [arAgingUnclearedQuery.data?.rows]);
+
+  // V3 Customers board — per-customer invoice stats (Billed, Collected, Last invoice date).
+  const invoiceStatsByCustomerId = useMemo(() => {
+    const map = new Map<string, { billed_cents: number; collected_cents: number; last_invoice_iso: string | null }>();
+    for (const invoice of allInvoicesQuery.data?.invoices ?? []) {
+      if (isVoidInvoice(invoice)) continue;
+      const prev = map.get(invoice.customer_id);
+      const billed = (prev?.billed_cents ?? 0) + invoiceTotalCentsForAggregate(invoice);
+      const collected = (prev?.collected_cents ?? 0) + (invoice.amount_paid_cents ?? 0);
+      const lastIso = prev?.last_invoice_iso && prev.last_invoice_iso > (invoice.issue_date ?? "") ? prev.last_invoice_iso : (invoice.issue_date ?? null);
+      map.set(invoice.customer_id, { billed_cents: billed, collected_cents: collected, last_invoice_iso: lastIso });
+    }
+    return map;
+  }, [allInvoicesQuery.data?.invoices]);
 
   const summaryQuery = useQuery({
     queryKey: ["customers", "billing-summary", companyId, selectedCustomer?.id ?? ""],
@@ -1375,15 +1426,13 @@ export function CustomersPage() {
         activeId={listTab}
         onTabChange={(id) => setListTab(id)}
         items={[
-          { label: `With transactions (${customerTabCounts.with_transactions})`, to: "#with_transactions" },
-          { label: `All (${customerTabCounts.all})`, to: "#all" },
-          { label: `Preferred (${customerTabCounts.preferred})`, to: "#preferred" },
-          { label: `Watch (${customerTabCounts.watch})`, to: "#watch" },
-          { label: `Active (${customerTabCounts.active})`, to: "#active" },
-          { label: `Inactive (${customerTabCounts.inactive})`, to: "#inactive" },
-          { label: `Factored (${customerTabCounts.factored})`, to: "#factored" },
+          { label: `With transactions ${customerTabCounts.with_transactions}`, to: "#with_transactions" },
+          { label: `Open balance ${customerTabCounts.open_balance}`, to: "#open_balance" },
+          { label: `Factored ${customerTabCounts.factored}`, to: "#factored" },
+          { label: `All ${customerTabCounts.all}`, to: "#all" },
+          { label: `Possible duplicates ${customerTabCounts.possible_duplicates}`, to: "#possible_duplicates" },
         ]}
-        itemIds={["with_transactions", "all", "preferred", "watch", "active", "inactive", "factored"]}
+        itemIds={["with_transactions", "open_balance", "factored", "all", "possible_duplicates"]}
       />
       </div>
       {allInvoicesQuery.isError ? (
@@ -1433,9 +1482,9 @@ export function CustomersPage() {
           label="A/R open"
           value={customerHomeKpis.arOpenCents == null ? "—" : fmtMoney(customerHomeKpis.arOpenCents)}
           sub={
-            customerHomeKpis.customersWithOpen == null
+            customerHomeKpis.pastDuePct == null
               ? "invoice open balance"
-              : `${customerHomeKpis.customersWithOpen.toLocaleString("en-US")} with open balance`
+              : `${customerHomeKpis.pastDuePct}% past due`
           }
           testId="customers-kpi-ar-open"
           onClick={() => navigate("/accounting/invoices?has_balance=true")}
@@ -1471,6 +1520,8 @@ export function CustomersPage() {
               openBalancesAvailable={!allInvoicesQuery.isError}
               profitabilityByCustomerId={profitabilityByCustomerId}
               financeByCustomerId={financeByCustomerId}
+              agingByCustomerId={agingByCustomerId}
+              invoiceStatsByCustomerId={invoiceStatsByCustomerId}
               onSelectCustomer={(customerId) => {
                 setSelectedCustomerId(customerId);
                 setViewMode("master-detail");

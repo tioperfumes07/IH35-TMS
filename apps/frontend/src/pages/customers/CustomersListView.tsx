@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { getCustomerBillingSummary, listAllAtRiskCustomerRelationshipScores, type Customer, type CustomerFinanceRollup } from "../../api/mdata";
+import { type ARAgingRow } from "../../api/reports";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
 import { ParityTable } from "../../components/parity/ParityTable";
@@ -67,6 +68,14 @@ type CustomerRow = Customer & {
   // ROUND 16.10 (owner 2026-09-06 21:59Z) — null (not 0) whenever the customer has no rollup row
   // or a specific figure has no real ledger source (LAW §8 "zero is a claim").
   finance: CustomerFinanceRollup | null;
+  // V3 columns from AR aging + invoice stats.
+  open_invoice_count: number | null;
+  billed_cents: number | null;
+  collected_cents: number | null;
+  aging_current_cents: number | null;
+  aging_1_30_cents: number | null;
+  aging_31_plus_cents: number | null;
+  last_invoice_iso: string | null;
 };
 
 // CC-3 V.1 roll-up: per-customer profitability merged from the customer-profitability endpoint.
@@ -102,10 +111,14 @@ type Props = {
   profitabilityByCustomerId: Map<string, CustomerProfitability>;
   /** ROUND 16.10: per-customer days-to-pay + cost-of-finance rollup, keyed by customer_id. */
   financeByCustomerId: Map<string, CustomerFinanceRollup>;
+  /** V3: per-customer AR aging row (open_invoice_count, buckets, total_open_cents). */
+  agingByCustomerId?: Map<string, ARAgingRow>;
+  /** V3: per-customer invoice stats (billed_cents, collected_cents, last_invoice_iso). */
+  invoiceStatsByCustomerId?: Map<string, { billed_cents: number; collected_cents: number; last_invoice_iso: string | null }>;
   onSelectCustomer?: (customerId: string) => void;
 };
 
-export function CustomersListView({ companyId, customers, status, openByCustomerId, unclearedByCustomerId, openBalancesAvailable, profitabilityByCustomerId, financeByCustomerId, onSelectCustomer }: Props) {
+export function CustomersListView({ companyId, customers, status, openByCustomerId, unclearedByCustomerId, openBalancesAvailable, profitabilityByCustomerId, financeByCustomerId, agingByCustomerId, invoiceStatsByCustomerId, onSelectCustomer }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   // Same BULK_WRITE_ROLES gate the old BulkActionBar enforced internally (useBulkPermission) —
@@ -169,6 +182,8 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
     () =>
       filtered.map((c) => {
         const profit = profitabilityByCustomerId.get(c.id) ?? null;
+        const aging = agingByCustomerId?.get(c.id) ?? null;
+        const inv = invoiceStatsByCustomerId?.get(c.id) ?? null;
         return {
           ...c,
           open_balance: openBalancesAvailable ? (openByCustomerId.get(c.id) ?? 0) : null,
@@ -191,9 +206,18 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           // factored account (credit_limit_source = 'factor').
           factored_label: c.credit_limit_source === "factor" ? "Yes" : "No",
           finance: financeByCustomerId.get(c.id) ?? null,
+          // V3 columns from AR aging.
+          open_invoice_count: aging?.open_invoice_count ?? null,
+          aging_current_cents: aging?.current_cents ?? null,
+          aging_1_30_cents: aging?.bucket_1_30_cents ?? null,
+          aging_31_plus_cents: aging != null ? (aging.bucket_31_60_cents + aging.bucket_61_90_cents + aging.bucket_91_plus_cents) : null,
+          // V3 columns from invoice stats.
+          billed_cents: inv?.billed_cents ?? null,
+          collected_cents: inv?.collected_cents ?? null,
+          last_invoice_iso: inv?.last_invoice_iso ?? null,
         };
       }),
-    [filtered, openBalancesAvailable, openByCustomerId, atRiskCustomerIds, atRiskQuery.isError, profitabilityByCustomerId, financeByCustomerId]
+    [filtered, openBalancesAvailable, openByCustomerId, atRiskCustomerIds, atRiskQuery.isError, profitabilityByCustomerId, financeByCustomerId, agingByCustomerId, invoiceStatsByCustomerId]
   );
 
   // LIST-EMPTY-1: empty row renders only once the roster fetch settles.
@@ -391,7 +415,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
         columns={[
           {
             key: "name",
-            label: "Name",
+            label: "Customer",
             sortable: true,
             cellClass: "font-medium",
             render: (row) => (
@@ -419,36 +443,114 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               </span>
             ),
           },
-          // VC-LIST-01 (owner ROUND 11) spec column set: Name · Type · Status · Open A/R · Overdue ·
-          // Revenue (MTD) · Revenue (YTD) · Last load · Factored? · Credit limit. Pre-existing extras
-          // (Email/Phone/Billing State/Loads/FMCSA/Health/Quality/Last Activity/Created) are kept but
-          // default-hidden (never deleted, §7) — reachable via the column chooser.
-          { key: "customer_type", label: "Type", sortable: true, render: (row) => row.customer_type ?? "—" },
+          // V3 default-visible column set (443.280): Invoices · Billed · Collected · Open balance ·
+          // Aging · Last invoice · Factored (company name) · Status (dot + label).
+          // Pre-V3 extras are kept default-hidden per §7 — never deleted.
           {
-            key: "status",
-            label: "Status",
+            key: "open_invoice_count",
+            label: "Invoices",
             sortable: true,
-            render: (row) => {
-              const active = row.status === "active";
-              return (
-                <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${active ? "bg-[#F7F8FA] text-[#4B5563]" : "bg-gray-200 text-gray-700"}`}>
-                  {row.status === "active" ? "Active" : row.status === "inactive" ? "Inactive" : row.status === "credit_hold" ? "Credit hold" : row.status === "blacklist" ? "Blacklist" : "—"}
-                </span>
-              );
-            },
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.open_invoice_count ?? -1,
+            render: (row) => (row.open_invoice_count == null ? <span className="text-gray-400">—</span> : String(row.open_invoice_count)),
+          },
+          {
+            key: "billed_cents",
+            label: "Billed",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.billed_cents ?? -1,
+            render: (row) => (row.billed_cents == null ? <span className="text-gray-400">—</span> : fmtMoney(row.billed_cents)),
+          },
+          {
+            key: "collected_cents",
+            label: "Collected",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.collected_cents ?? -1,
+            render: (row) =>
+              row.collected_cents == null ? (
+                <span className="text-gray-400">—</span>
+              ) : row.collected_cents === 0 ? (
+                <span className="text-red-600 tabular-nums">{fmtMoney(0)}</span>
+              ) : (
+                fmtMoney(row.collected_cents)
+              ),
           },
           {
             key: "ar_open_cents",
-            label: "Open A/R",
+            label: "Open balance",
             sortable: true,
             cellClass: "text-right tabular-nums",
             sortValue: (row) => row.ar_open_cents ?? -1,
             render: (row) => (row.ar_open_cents == null ? <span className="text-gray-500">Unavailable</span> : fmtMoney(row.ar_open_cents)),
           },
           {
+            key: "aging_bar",
+            label: "Aging",
+            sortable: false,
+            render: (row) => {
+              if (row.aging_current_cents == null) return <span className="text-gray-400">—</span>;
+              const total = (row.aging_current_cents ?? 0) + (row.aging_1_30_cents ?? 0) + (row.aging_31_plus_cents ?? 0);
+              if (total === 0) return <span className="text-gray-400">—</span>;
+              const pCurrent = Math.round(((row.aging_current_cents ?? 0) / total) * 100);
+              const p130 = Math.round(((row.aging_1_30_cents ?? 0) / total) * 100);
+              const p31plus = 100 - pCurrent - p130;
+              return (
+                <span className="flex items-center gap-1 min-w-[72px]">
+                  <span className="flex h-2 w-16 overflow-hidden rounded-sm">
+                    <span style={{ width: `${pCurrent}%` }} className="bg-[#1B2333]" title={`Current: ${pCurrent}%`} />
+                    <span style={{ width: `${p130}%` }} className="bg-[#9CA3AF]" title={`1–30 days: ${p130}%`} />
+                    <span style={{ width: `${p31plus > 0 ? p31plus : 0}%` }} className="bg-red-500" title={`31+ days: ${p31plus}%`} />
+                  </span>
+                </span>
+              );
+            },
+          },
+          {
+            key: "last_invoice_iso",
+            label: "Last invoice",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            render: (row) => (row.last_invoice_iso ? mmmDd(row.last_invoice_iso) : <span className="text-gray-400">—</span>),
+          },
+          {
+            key: "factored_label",
+            label: "Factored",
+            sortable: true,
+            render: (row) => {
+              if (!row.factoring_company_vendor_id) return <span className="text-gray-400">—</span>;
+              return (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#16A34A]" />
+                  <span className="truncate text-[#4B5563]">{row.factoring_company_name ?? "Factored"}</span>
+                </span>
+              );
+            },
+          },
+          {
+            key: "status",
+            label: "Status",
+            sortable: true,
+            render: (row) => {
+              const active = row.status === "active";
+              const color = active ? "bg-[#16A34A]" : "bg-gray-400";
+              const label = row.status === "active" ? "Active" : row.status === "inactive" ? "Inactive" : row.status === "credit_hold" ? "Credit hold" : row.status === "blacklist" ? "Blacklist" : "—";
+              return (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${color}`} />
+                  <span className="text-[#4B5563]">{label}</span>
+                </span>
+              );
+            },
+          },
+          // Pre-V3 columns — kept default-hidden per §7 (never deleted).
+          { key: "customer_type", label: "Type", sortable: true, defaultHidden: true, render: (row) => row.customer_type ?? "—" },
+          {
             key: "cleared_open_cents",
             label: "Cleared",
             sortable: true,
+            defaultHidden: true,
             cellClass: "text-right tabular-nums",
             sortValue: (row) => (row.ar_open_cents ?? 0) + (unclearedByCustomerId?.get(row.id)?.uncleared_cents ?? 0),
             render: (row) =>
@@ -462,12 +564,14 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "uncleared_cents",
             label: "Not cleared",
             sortable: true,
+            defaultHidden: true,
             render: (row) => <UnclearedDocumentsNote docs={unclearedByCustomerId?.get(row.id)?.uncleared_documents ?? []} />,
           },
           {
             key: "overdue_label",
             label: "Overdue",
             sortable: true,
+            defaultHidden: true,
             render: (row) =>
               row.overdue_label === "Yes" ? (
                 <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">Yes</span>
@@ -479,6 +583,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "revenue_mtd_cents",
             label: "Revenue (MTD)",
             sortable: true,
+            defaultHidden: true,
             cellClass: "text-right tabular-nums",
             sortValue: (row) => row.revenue_mtd_cents ?? -1,
             render: (row) => (row.revenue_mtd_cents == null ? <span className="text-gray-400">—</span> : fmtMoney(row.revenue_mtd_cents)),
@@ -487,6 +592,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "booked_ytd_cents",
             label: "Revenue (YTD)",
             sortable: true,
+            defaultHidden: true,
             cellClass: "text-right tabular-nums",
             render: (row) => (row.booked_ytd_cents == null ? <span className="text-gray-400">—</span> : fmtMoney(row.booked_ytd_cents)),
           },
@@ -494,16 +600,13 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "last_load_iso",
             label: "Last load",
             sortable: true,
+            defaultHidden: true,
             cellClass: "text-right tabular-nums",
             render: (row) => {
               const label = row.last_load_iso ? mmmDd(row.last_load_iso) : "";
               return label ? label : <span className="text-gray-400">—</span>;
             },
           },
-          // CC-3 — pre-VC-LIST-01 roll-up columns (kept, default hidden now that VC-LIST-01's
-          // "Revenue (YTD)" / "Last load" above carry the same data under the owner's ROUND 11
-          // wording). Never deleted (§7) — same pattern VendorsListView.tsx's "Purchases YTD" /
-          // "Last Purchase" already follows for the identical reason.
           {
             key: "booked_ytd",
             label: "Booked YTD",
@@ -523,17 +626,6 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               return label ? label : <span className="text-gray-400">—</span>;
             },
           },
-          {
-            key: "factored_label",
-            label: "Factored?",
-            sortable: true,
-            render: (row) =>
-              row.factored_label === "Yes" ? (
-                <span className="inline-flex rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]">Yes</span>
-              ) : (
-                <span className="text-gray-400">No</span>
-              ),
-          },
           // ROUND 16.10 (owner 2026-09-06 21:59Z): "EVERY CUSTOMER IN THE RATING ... AVERAGE
           // PAYMENT TO FACTORING OR TO US ... HOW MUCH IT IS COSTING US IN FINANCE, IN FACTORING
           // FEES, IN LATE FEES, ETC." One read model (getCustomerFinanceRollup), list AND detail
@@ -544,6 +636,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "avg_days_to_pay_us",
             label: "Avg days → us",
             sortable: true,
+            defaultHidden: true,
             cellClass: "text-right tabular-nums",
             sortValue: (row) => row.finance?.avg_days_to_pay_us ?? -1,
             render: (row) => fmtDays(row.finance?.avg_days_to_pay_us ?? null),
@@ -552,6 +645,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "avg_days_to_pay_factor",
             label: "Avg days → factor",
             sortable: true,
+            defaultHidden: true,
             cellClass: "text-right tabular-nums",
             sortValue: (row) => row.finance?.avg_days_to_pay_factor ?? -1,
             render: (row) => fmtDays(row.finance?.avg_days_to_pay_factor ?? null),
@@ -608,6 +702,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "finance_cost_total_cents",
             label: "Finance cost",
             sortable: true,
+            defaultHidden: true,
             cellClass: "text-right tabular-nums",
             sortValue: (row) => row.finance?.finance_cost_total_cents ?? -1,
             render: (row) => fmtFinanceCents(row.finance?.finance_cost_total_cents ?? null),
@@ -616,6 +711,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "finance_cost_pct",
             label: "Finance %",
             sortable: true,
+            defaultHidden: true,
             cellClass: "text-right tabular-nums",
             sortValue: (row) => row.finance?.finance_cost_pct ?? -1,
             render: (row) => fmtPct(row.finance?.finance_cost_pct ?? null),
@@ -624,6 +720,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "credit_limit",
             label: "Credit limit",
             sortable: true,
+            defaultHidden: true,
             cellClass: "text-right tabular-nums",
             sortValue: (row) => (row.credit_limit == null ? -1 : Number(row.credit_limit)),
             render: (row) => (row.credit_limit == null ? <span className="text-gray-400">—</span> : fmtMoney(Math.round(Number(row.credit_limit) * 100))),
