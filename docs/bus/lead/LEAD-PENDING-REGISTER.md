@@ -1,4 +1,4 @@
-# IH35-TMS — Lead pending register (USMCA) · 10-24-2026 07:44 AM CT · CODE-COMPLETE MODE · deadline 10-24 10:00 AM CT
+# IH35-TMS — Lead pending register (USMCA) · 10-24-2026 11:25 AM CT · CODE-COMPLETE MODE
 
 Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live proof.
 
@@ -32,7 +32,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 26 | A | Data | Find real root causes of loads/settlements data issues | LEAD | 443.279 | DONE-LIVE | journal 4:35 PM |
 | 27 | A | Data | Delete USMCA test records (18 legal matters, 5 policies, 7 claims, 1 accident…) | CC-2 | 443.247 | CODED | 0ee3451d41 #27457 (CC-2) — deployed 0ee3451 11:04 PM CT; prod purge run = Lead under AUTH-451 |
 | 28 | A | Reports | Load History tab + Settlement (driver/company), Loads, Customers, Vendors reports | CC-1 | 443.281 | OPEN |  |
-| 29 | A | All | LAW 5:08 PM: every selector is multi-select (units, loads, settlements, trucks, trailers, drivers, customers, vendors…) everywhere | LEAD | 443.281 | OPEN |  |
+| 29 | A | All | LAW 5:08 PM: every selector is multi-select (units, loads, settlements, trucks, trailers, drivers, customers, vendors…) everywhere | LEAD | 443.281 | CODED | 450ce42d6b #27464 (LEAD, Codex filters rebased) |
 | 30 | A | All | Baseline screenshots of every page before the rebuild | LEAD | 443.281 | DONE-LIVE | #27369 9932b495 |
 | 31 | B | Cash Flow | Cash Flow › Home — board verdict PARTIAL | Cursor | 443.280 | CODED | #27453 (Home unchanged = board) |
 | 32 | B | Cash Flow | Cash Flow › Projected (Auto) — board verdict PARTIAL | Cursor | 443.280 | CODED | #27453 |
@@ -62,7 +62,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 56 | B | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | Cursor | 443.280 | OPEN |  |
 | 57 | B | Safety | Safety › Driver Files — board verdict LAYERED | CODEX | 443.280 | DONE-LIVE | #27367 40daa907; live 5:37 PM board only |
 | 58 | B | Maintenance | Maintenance › Home — board verdict PARTIAL | LEAD | 443.280 | CODED | 893cc58eba #27375 + Home board: 4 tiles, fleet health line, PM countdown/engines/alerts/in-transit/severe, Arriving soon, At risk (all design sections; legacy strips gated to Settings / non-Home); 'PM reading unavailable' = row 108 (CC-2 odometer) |
-| 59 | B | Maintenance | Maintenance › In Shop — board verdict LAYERED | LEAD | 443.280 | OPEN |  |
+| 59 | B | Maintenance | Maintenance › In Shop — board verdict LAYERED | LEAD | 443.280 | CODED-QUEUED | LEAD branch in push queue |
 | 60 | B | Driver Profile | Driver Profile › Board — board verdict NOT STARTED | LEAD | 443.280 | CODED | 8027099748 #27357 board (4 panels) + 75f1ed41d2 443.280 board-only test; RE-INSPECT at end: owner saw old layout + ~15 s load at 5:38 PM (before 443.280); 'No current truck assignment' = row 110 (CC-2) |
 | 61 | B | Dispatch | Dispatch › Truck Planner — board verdict PARTIAL | CC-3 | 443.280 | MERGED-UNVERIFIED | 4ff9f272 bars lane + $/mi; #27359 |
 | 62 | B | Dispatch | Dispatch › Book Load modal/side/spec — board verdict PARTIAL | CC-3 | 443.280 | MERGED-UNVERIFIED | 4ff9f272 1260/760, Load # right |
@@ -101,11 +101,11 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 95 | F | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | 443.281 | OPEN |  |
 | 96 | F | Accounting | QBO sync "Not connected" | OWNER | 443.281 | OPEN |  |
 | 97 | F | Banking | Reconciliation drift: BofA bank $1,808.13 vs book -$88,433.89 (diff $90,242.02); Relay Fuel Wallet listed twice | CC-2 | 443.281 | OPEN |  |
-| 98 | F | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | 443.281 | PARTIAL | main: NUMERIC fixed (7349992008); one-source True cost = Lead branch claude/lead-row98-factoring-kpi-units, pushing |
+| 98 | F | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | 443.281 | CODED | 352d666b5b #27467 (LEAD) NUMERIC + one source |
 | 99 | F | Unexpected | Possible duplicates 0 while bank lines repeat (460.01 on 10-03 and 10-05; 155.86 twice on 10-07) | CC-2 | 443.281 | OPEN |  |
 | 100 | F | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | 443.281 | OPEN |  |
 | 101 | F | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | 443.281 | OPEN |  |
-| 102 | F | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | Cursor | 443.281 | OPEN |  |
+| 102 | F | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | Cursor | 443.281 | CODED | efd2c13dc2 #27477 (Cursor) Week-of on trip_closed_at |
 | 103 | F | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | Cursor | 443.281 | PARTIAL | #27354 e8a9f02b; duplicate rows still live |
 | 104 | F | Fuel | Cards: 0 card assignments; Relay issuer blank | CC-2 | 443.281 | OPEN |  |
 | 105 | F | Fuel | Relay unmatched 257 fills (truck matched, driver never matched) | CC-2 | 443.281 | OPEN |  |
@@ -122,13 +122,13 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 116 | G | Guards | verify-resettlement-origin-load-dates — guard retarget to board labels | CC-3 | 443.278/280/281 | MERGED-UNVERIFIED | #27356 6b9b2dc0 |
 | 117 | G | Guards | verify-entity-label-rejects-uuid-shaped-name — restore protection in accounting hub | CC-3 | 443.278/280/281 | MERGED-UNVERIFIED | #27356 6b9b2dc0 |
 | 118 | G | Guards | verify-board-page-no-legacy-sections (new) — stops layering | Codex | 443.278/280/281 | CODED | 3409d7a383 #27379 (Codex) selftest 10/10, scan 0 |
-| 119 | G | Guards | verify-entity-filters-multi-select (new) — fails on single-select entity filters | LEAD | 443.278/280/281 | OPEN |  |
+| 119 | G | Guards | verify-entity-filters-multi-select (new) — fails on single-select entity filters | LEAD | 443.278/280/281 | CODED | 450ce42d6b #27464 verify-entity-filters-multi-select |
 | 120 | H | Fuel › Questions › Review | D001: Clicking Review throws undefined `load_number` in FuelAssignmentPopup; whole-app crash | CC-2 | 443.257-D | MERGED-UNVERIFIED | bf7dadd3 |
-| 121 | H | Home › Overview › Money tiles | D002: Currency values omit cents | Cursor | 443.257-D | OPEN | not re-verified since audit |
+| 121 | H | Home › Overview › Money tiles | D002: Currency values omit cents | Cursor | 443.257-D | CODED | 0512ef14cd (Cursor) D002 cents |
 | 122 | H | Home › Overview › Driver day summary | D003: Names render all-uppercase | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 123 | H | Home › Overview › Weekly revenue | D004: Axis dates use DD/MM without year | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 124 | H | Home › Overview › Driver summary request | D005: `/api/v1/telematics/driver-day-summary` 5,071 ms | CC-2 | 443.257-D | OPEN | not re-verified since audit |
-| 125 | H | Settlements › Navigation › Drivers | D006: Link targets `/drivers` outside module | LEAD | 443.257-D | CODED | 0512ef14cd 443.258-B (tab -> /driver-finance/…, route mounted) + Lead guard verify-settlements-subnav-stays-in-module |
+| 125 | H | Settlements › Navigation › Drivers | D006: Link targets `/drivers` outside module | LEAD | 443.257-D | CODED | f3855c3116 #27485 (LEAD) guard verify-settlements-subnav-stays-in-module |
 | 126 | H | Settlements › Navigation › Profiles | D007: Link targets `/drivers/profiles` | Cursor | 443.257-D | CODED | 0512ef14cd 443.258-B (tab -> /driver-finance/…, route mounted) + Lead guard verify-settlements-subnav-stays-in-module |
 | 127 | H | Settlements › Navigation › Pre-Settlements | D008: Link targets `/drivers/pre-settlements` | Cursor | 443.257-D | CODED | 0512ef14cd 443.258-B (tab -> /driver-finance/…, route mounted) + Lead guard verify-settlements-subnav-stays-in-module |
 | 128 | H | Settlements › Navigation › Feed Gate | D009: Link targets `/feed-gate` | Cursor | 443.257-D | CODED | 0512ef14cd 443.258-B (tab -> /driver-finance/…, route mounted) + Lead guard verify-settlements-subnav-stays-in-module |
@@ -155,52 +155,52 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 149 | H | Driver Hub › Driver Scheduler › Date range | D030: Subtitle uses YYYY-MM-DD; grid uses MON-DD | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 150 | H | Driver Hub › Driver Scheduler › Driver cells | D031: All-uppercase and inconsistent surname casing | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 151 | H | Driver Hub › Driver Scheduler › Assign Temp Cover | D032: Five single-line inputs measured 38px high; pickers about 2,477px wide and dates about 1,203px | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 152 | H | Maintenance › Home / Fleet Table › Money tiles | D033: MTD Cost, Open $ and severe-repair total omit cents | LEAD | 443.257-D | OPEN | not re-verified since audit |
-| 153 | H | Maintenance › Create Work Order › Drawer inputs | D034: Visible single-line inputs measured 38px; customer picker about 2,408px wide, open-date input about 766px | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 154 | H | Maintenance › Active WOs › Table headers | D035: Load, Driver, Vendor, Bill, JE and Timing headers have no sorting button, unlike adjacent headers | LEAD | 443.257-D | OPEN | not re-verified since audit |
+| 152 | H | Maintenance › Home / Fleet Table › Money tiles | D033: MTD Cost, Open $ and severe-repair total omit cents | LEAD | 443.257-D | CODED | 864c4db7d8 #27491 (LEAD) maintenance money cents |
+| 153 | H | Maintenance › Create Work Order › Drawer inputs | D034: Visible single-line inputs measured 38px; customer picker about 2,408px wide, open-date input about 766px | CC-3 | 443.257-D | CODED | 0425324966 #27490 (CC-3) shared 32px field size |
+| 154 | H | Maintenance › Active WOs › Table headers | D035: Load, Driver, Vendor, Bill, JE and Timing headers have no sorting button, unlike adjacent headers | LEAD | 443.257-D | CODED | ac09dabb4a #27483 (LEAD) every WO column sorts |
 | 155 | H | Safety › Hours & Fatigue › Driver roster | D036: Mixed proper-case and all-uppercase driver names | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 156 | H | Safety › Hours & Fatigue › Create HOS Violation | D037: Seven visible inputs measured 38px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 156 | H | Safety › Hours & Fatigue › Create HOS Violation | D037: Seven visible inputs measured 38px high | CC-3 | 443.257-D | CODED | 0425324966 #27490 (CC-3) shared 32px field size |
 | 157 | H | Compliance › Filings / Overview › Driver labels | D038: Mixed proper-case and uppercase driver labels in populated tables | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 158 | H | Driver Profile › Create Driver › Identity step | D039: Fifteen visible inputs measured 38px; CDL state about 199px wide | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 159 | H | Fleet › Create Trailer › Identity drawer | D040: Seven visible inputs measured 38px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 160 | H | Insurance › Policies › Create policy step 1 | D041: Eight visible inputs measured 38px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 161 | H | Cash Flow › Projected Auto › Seven-day outlook | D042: Currency abbreviated with k suffix and zero shown without cents | Cursor | 443.257-D | OPEN | still +15,386 no cents 10-23 5:10 PM |
+| 158 | H | Driver Profile › Create Driver › Identity step | D039: Fifteen visible inputs measured 38px; CDL state about 199px wide | CC-3 | 443.257-D | CODED | 0425324966 #27490 (CC-3) shared 32px field size |
+| 159 | H | Fleet › Create Trailer › Identity drawer | D040: Seven visible inputs measured 38px high | CC-3 | 443.257-D | CODED | 0425324966 #27490 (CC-3) shared 32px field size |
+| 160 | H | Insurance › Policies › Create policy step 1 | D041: Eight visible inputs measured 38px high | CC-3 | 443.257-D | CODED | 0425324966 #27490 (CC-3) shared 32px field size |
+| 161 | H | Cash Flow › Projected Auto › Seven-day outlook | D042: Currency abbreviated with k suffix and zero shown without cents | Cursor | 443.257-D | CODED | f0ea811efe (Cursor) D042 |
 | 162 | H | Cash Flow › Projected / Rolling / Manual › Date labels and cells | D043: Day labels and invoice/due cells omit year and use month names | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 163 | H | Accounting › Home › Settlement / transaction links | D044: Driver/vendor names still all-uppercase | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 164 | H | Banking › Home › Drift alert as-of | D045: Raw ISO timestamp rendered, including T and Z | Cursor | 443.257-D | OPEN | not re-verified since audit |
+| 164 | H | Banking › Home › Drift alert as-of | D045: Raw ISO timestamp rendered, including T and Z | Cursor | 443.257-D | CODED | f0ea811efe (Cursor) D045 |
 | 165 | H | Banking › Home › Drift account label | D046: Several alerts show only generic Account rather than the account display name | CC-1 | 443.257-D | OPEN | not re-verified since audit |
 | 166 | H | Factoring › Home › Ready-to-factor customers | D047: All-uppercase customer names displayed | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 167 | H | Customers › Create Customer › Billing address | D048: State and ZIP each measure 38px high and 209.33px wide | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 167 | H | Customers › Create Customer › Billing address | D048: State and ZIP each measure 38px high and 209.33px wide | CC-3 | 443.257-D | CODED | 81abbcd74e #27488 (CC-3) |
 | 168 | H | Customers › Directory › Customer display names | D049: Mixed uppercase and proper-case customer labels | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 169 | H | Inventory › Create part › Unit cost | D050: Money input measures 28px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 170 | H | 425C › Profiles & Defaults › Company Name | D051: Input measures 30.67px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 171 | H | 425C › History › Filed timestamp | D052: Month/day rendered without zero padding | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 172 | H | Lists › Names Master › Name column | D053: Mixed uppercase and proper-case customer names | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 173 | H | Reports › Custom report builder › Report name | D054: Input measures 26.67px high and 1156.38px wide | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 173 | H | Reports › Custom report builder › Report name | D054: Input measures 26.67px high and 1156.38px wide | CC-3 | 443.257-D | CODED | 81abbcd74e #27488 (CC-3) |
 | 174 | H | Docs › All Entities › Entity names | D055: Mixed uppercase and proper-case driver names | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 175 | H | Docs › Upload Document › Category/entity/date inputs | D056: Four visible inputs 38px; date fields about 1201px wide | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 176 | H | Users › Master-detail › User labels | D057: Repeated generic User labels and mixed name capitalization | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 177 | H | Users › Create User › Name/email/role | D058: Three visible inputs 38px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 178 | H | Program › Scenario tracker › Certification timestamp | D059: Raw database timestamp with fractional seconds and +00 timezone | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 179 | H | System › Transaction Health › Generated/document dates | D060: Month-name timestamps instead of MM/DD/YYYY | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 180 | H | System › Transaction Health › Journal-entry and bill-payment labels | D061: Raw UUIDs are visible display labels | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 181 | H | System › Transaction Health › Wiring preview DR/CR | D062: Currency values lack dollar signs | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 182 | H | Reports › Scheduled subscriptions › Add subscription timezone | D063: Input measures 30.67px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 183 | H | Accounting › Create Manual JE › Step 2 Lines | D064: Header summary renders `Date: 2026-10-22`, while Step 1 correctly shows `10/22/2026` | Cursor | 443.257-D | OPEN | not re-verified since audit |
+| 178 | H | Program › Scenario tracker › Certification timestamp | D059: Raw database timestamp with fractional seconds and +00 timezone | Cursor | 443.257-D | CODED | f0ea811efe (Cursor) D059 |
+| 179 | H | System › Transaction Health › Generated/document dates | D060: Month-name timestamps instead of MM/DD/YYYY | Cursor | 443.257-D | CODED | f0ea811efe (Cursor) D060 |
+| 180 | H | System › Transaction Health › Journal-entry and bill-payment labels | D061: Raw UUIDs are visible display labels | Cursor | 443.257-D | CODED-QUEUED | LEAD branch in push queue |
+| 181 | H | System › Transaction Health › Wiring preview DR/CR | D062: Currency values lack dollar signs | Cursor | 443.257-D | CODED-QUEUED | LEAD branch in push queue |
+| 182 | H | Reports › Scheduled subscriptions › Add subscription timezone | D063: Input measures 30.67px high | CC-3 | 443.257-D | CODED | 81abbcd74e #27488 (CC-3) |
+| 183 | H | Accounting › Create Manual JE › Step 2 Lines | D064: Header summary renders `Date: 2026-10-22`, while Step 1 correctly shows `10/22/2026` | Cursor | 443.257-D | CODED | f25b2031b3 (Cursor) D064 |
 | 184 | H | Accounting › Create Manual JE › Step 2 Lines | D065: Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 185 | H | Banking › Home / Record Transfer › Drawer footer | D066: Persistent alert stack renders above the open transfer drawer and obscures its bottom action area | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 186 | H | Accounting › Bills / Bill detail › Payments on this bill | D067: Two linked payments render as `Payment — not visible` rather than distinct display identifiers | Cursor | 443.257-D | OPEN | not re-verified since audit |
+| 185 | H | Banking › Home / Record Transfer › Drawer footer | D066: Persistent alert stack renders above the open transfer drawer and obscures its bottom action area | Cursor | 443.257-D | CODED | f25b2031b3 (Cursor) D066 |
+| 186 | H | Accounting › Bills / Bill detail › Payments on this bill | D067: Two linked payments render as `Payment — not visible` rather than distinct display identifiers | Cursor | 443.257-D | CODED | e0d65e0f67 (Cursor) D067 |
 | 187 | H | Accounting › Bill detail › Journal Entity column | D068: Five journal rows show raw UUID entity labels | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 188 | H | Accounting › Reclassify › Account balance heading | D069: Date displays `10/23/26` while date filters use `10/23/2026` | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 189 | H | Banking › Categorize / Match › Candidate dates | D070: Loaded candidate list displays YYYY-MM-DD dates while transaction header uses MM/DD/YYYY | Cursor | 443.257-D | OPEN | not re-verified since audit |
 | 190 | H | Banking › Categorize / Match › Candidate payee labels | D071: Candidate names mix ALL CAPS and proper case | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 191 | H | Banking › Relay card › Wallet balance tile | D072: Five-digit currency omits thousands separator | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 192 | H | Cash Flow › Projected Auto › Expected Expenses driver labels | D073: Driver Bill labels mix ALL CAPS and proper case | Cursor | 443.257-D | OPEN | not re-verified since audit |
+| 191 | H | Banking › Relay card › Wallet balance tile | D072: Five-digit currency omits thousands separator | Cursor | 443.257-D | CODED-QUEUED | LEAD branch in push queue |
+| 192 | H | Cash Flow › Projected Auto › Expected Expenses driver labels | D073: Driver Bill labels mix ALL CAPS and proper case | Cursor | 443.257-D | CODED | e0d65e0f67 (Cursor) D073 |
 | 193 | H | Dispatch › Truck Line › Initial data requests | D074: Network capture: truck-line 11,425 ms; units-without-load 4,810 / 8,819 ms; positions/latest 4,193 ms; detention/board 3,217 ms | CC-3 | 443.257-D | PARTIAL | positions 168 ms / detention 203 ms (#27252); truck-line fc0a287e unverified |
 | 194 | H | Settlements › Open Tours › PU / DEL dates | D075: Rendered dates use OCT-21 / OCT-23 rather than numeric month/day/four-digit year | Cursor | 443.257-D | OPEN | still OCT-21 on open tours 10-23 5:12 PM |
 | 195 | H | Settlements › Escrow Accounts › Holder labels | D076: One visible holder link says Driver — Not Visible instead of a resolved full name | Cursor | 443.257-D | OPEN | still "Driver — Not Visible" 10-23 5:14 PM |
 | 196 | H | Settlements › Escrow Accounts › Updated dates | D077: Date portion uses unpadded month/day before time | Cursor | 443.257-D | OPEN | still 9/28/2026 unpadded 10-23 5:14 PM |
-| 197 | H | Maintenance › Road Service / Create Roadside WO › Ticket # and Location inputs | D078: Two single-line dialog text inputs measure 38 CSS px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 197 | H | Maintenance › Road Service / Create Roadside WO › Ticket # and Location inputs | D078: Two single-line dialog text inputs measure 38 CSS px high | CC-3 | 443.257-D | CODED | 0425324966 #27490 (CC-3) shared 32px field size |
 | 198 | H | Customers › Per-Customer P&L › Classification labels | D079: Visible tags read high_margin and past_due | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 199 | H | Coverage | Codex audit coverage is partial depth — remaining tabs, drawers and record pages of every module still to audit | LEAD | 443.281 | OPEN |  |
 | 200 | F | Accounting | Accounting "Open invoices" KPI $624,076.72/165 vs GL A/R 1100 $621,076.72/164 (1 proforma $3,000.00 counted) | LEAD | 443.285 | CODED | #27452 eef79722 |
@@ -215,16 +215,26 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 209 | E | Guards | 107 main static reds outside baseline split by seat | Cursor | 443.290 | IN PROGRESS | #27407 list; CC-1 #27413/#27416/#27417; Lead 4 Cash Flow in 443.283c |
 | 210 | E | Platform | 6,266 guard scripts (488 live, ~5,700 source-text, 316 slate-color copies) | CC-2 | 443.291 | OPEN | after Codex filters PR |
 | 211 | F | Cash Flow | Actual vs Projected + Manual reverted to pre-board code by #27390 | LEAD | 443.283c | CODED | #27453 d86e35ce |
-| 212 | A | Settlements | Settlement number: P-number shown; real series not assigned by our system | CC-1 | 443.292-A | OPEN |  |
+| 212 | A | Settlements | Settlement number: P-number shown; real series not assigned by our system | CC-1 | 443.292-A | CODED | ce05dd54dd #27469 (CC-1) finalize assigns AlwaysTrack ref; owner 10-24: P-number stays until AlwaysTrack issues it |
 | 213 | A | Settlements | Tour dates wrong (P-0114 10/20→10/20; real 10/16→10/23) | CC-1 | 443.292-B | CODED | 7349992008 443.292-B tour period dates in Central time (CC-1) |
 | 214 | A | Settlements | Settlements tab week list: closed show Open; duplicate empty driver rows | CC-1 | 443.292-C | CODED | 7349992008 443.292-C Settlement + Payment status columns (CC-1) |
-| 215 | A | Settlements | Escrow register: all same date/source, no load numbers; escrow is per load | CC-1 | 443.292-D | OPEN |  |
+| 215 | A | Settlements | Escrow register: all same date/source, no load numbers; escrow is per load | CC-1 | 443.292-D | CODED | 22dfcaadd7 #27472 (CC-1) escrow register per load |
 | 216 | A | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | 443.292-E | OPEN |  |
 | 217 | A | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | 443.292-F | OPEN |  |
-| 218 | A | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | 443.293-A | OPEN |  |
-| 219 | A | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | 443.293-B | OPEN |  |
+| 218 | A | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | 443.293-A | CODED | ad4a611076 #27465 (Cursor) eight-section statement |
+| 219 | A | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | 443.293-B | CODED | 9b651bfdb4 #27481 (Cursor) Close settlement CTA in Dispatch |
 | 220 | A | Accounting | Inspect every Accounting tab; only Bills first tab is right | Cursor | 443.293-C | OPEN |  |
 | 221 | A | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing | CC-3 | 443.294 | OPEN |  |
 | 222 | A | All modules | Popup standard app-wide + Fuel assignment popup redesign | Cursor | 443.295 | OPEN | design PR #27439 |
 | 223 | E | Fuel | Fuel evidence: odometer blank, "no GPS truck" while truck parked at pump | CC-2 | 443.296 | OPEN |  |
 | 224 | A | Process | CODE-COMPLETE MODE: code every row, verify at the end | ALL | 443.297 | IN PROGRESS | box in docs/bus/lead/boxes/2026-10-23 |
+| 225 | A | Gates | Main pre-push gate red for every seat (filter-panel regex, selftest-mutates, export-business-date) | LEAD | 443.309 | CODED | eb91f526b0 #27480 |
+| 226 | A | Gates | Main pre-push gate red: 10 unwired guards, row-218 panel leaf, 2 stale guards | LEAD | 443.312 | CODED | 668c12bcd1 #27489 |
+| 227 | A | Settlements | OWNER 10-24: P-0123/P-0124/P-0125 duplicates deleted completely + tour-close engine never opens a settlement for a settled load | CC-1 | 443.310 | INPROGRESS | #27487 open; Lead runs purge on prod after merge |
+| 228 | A | Drivers | OWNER 10-24: driver licence data check waived (still names drivers) until owner updates driver data | LEAD | 443.311 | INPROGRESS | queued |
+| 229 | A | Fleet | OWNER 10-24: USMCA has 16 trucks; app shows 43 leased to USMCA (13 measured with loads in 60 d) | OWNER | 443.313 | OPEN | owner names the other 3 trucks |
+| 230 | A | Banking | Bank match suggests SETS of documents by amount math (one wire = several Faro purchases); multi-select + Resolve difference; a purchase already on a deposit is not offered twice | LEAD | 443.304 | CODED-QUEUED | claude/lead-443-304-bank-match-combinations; guard verify-bank-match-combinations (step 18749) |
+| 231 | A | Banking | One bank line = purchase(s) + LOAN: rest of the line becomes a related-party loan document (GL + document); unmatch reverses it | LEAD | 443.305 | CODED-QUEUED | 921aab82b4 claude/lead-443-305-loan-match; fork-proven match/unmatch/rematch (RPL-2026-0026/0027) |
+| 232 | A | Banking | 4 banking test files red on main; Plaid Login Required / Stale looked identical to Healthy | LEAD | 443.306 | CODED-QUEUED | 58ea840238 claude/lead-443-306 |
+| 233 | A | Reports | Heavy CI red since 10-23: reports guard read the moved quick-links | LEAD | 443.307 | CODED-QUEUED | claude/lead-443-307 |
+| 234 | A | System | Transaction Health paging dropped ~20% of documents (1,500 of 1,855); bill payments labelled by UUID; account numbers hidden by default | LEAD | 443.308 | CODED-QUEUED | claude/lead-443-308; paged 1,855 = single page |
