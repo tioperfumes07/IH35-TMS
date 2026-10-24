@@ -22,7 +22,7 @@ function Cell({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-const INPUT = "h-7 w-full rounded-sm border border-gray-300 px-2";
+const INPUT = "h-8 w-full rounded-sm border border-gray-300 px-2";
 
 export function CreateWOSectionRenderV5Header({
   register,
@@ -68,7 +68,7 @@ export function CreateWOSectionRenderV5Header({
           </SelectCombobox>
         </Cell>
         <Cell label="Open date">
-          <DatePicker value={watch("open_date") || ""} onChange={(v) => setValue("open_date", v, { shouldDirty: true })} className={INPUT} />
+          <div className="max-w-[12rem]"><DatePicker value={watch("open_date") || ""} onChange={(v) => setValue("open_date", v, { shouldDirty: true })} className={INPUT} /></div>
         </Cell>
         <Cell label="Open time">
           <input type="time" {...register("open_time")} className={INPUT} />

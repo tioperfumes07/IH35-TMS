@@ -323,6 +323,7 @@ export function CreateWOSectionIdentification({
             <>
               <input type="hidden" {...register("customer_id")} />
               {/* CLS-SILENT-CAP: EntityPicker server-search — no capped customer roster page. */}
+              <div className="max-w-sm" data-testid="wo-customer-picker-bound">
               <EntityPicker
                 kind="customer"
                 allowCreate
@@ -336,6 +337,7 @@ export function CreateWOSectionIdentification({
                 dataField="customer_id"
                 className="h-8 w-full text-xs"
               />
+              </div>
             </>
           ) : (
             <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" disabled />
