@@ -4,6 +4,8 @@ Archived 2026-10-17 — content moved to [archive/INBOX-CURSOR-archive-2026-10-1
 
 ## CURRENT (2026-10-24 04:10 PM CT) — LEAD. WORK ONLY THESE, IN THIS ORDER.
 
+**05:45 PM CT — ROUND 443.343 ([lead/CURSOR-ORDERS-443343.md](lead/CURSOR-ORDERS-443343.md)):** (1) merge #27534, #27523, #27502, #27547 NOW; (2) 443.325 then 443.326 at 100%; (3) 443.343-C Banking Categorize/Match shows the engine's suggestion + WHY (payee, vendor, account, confidence, source) per line with Accept / Change / Reject — no auto-accept.
+
 **05:05 PM CT CHECK — DRIFT:** #27534 (ENG-33), #27523, #27502 are still OPEN while new PRs were opened (#27547 ENG-30). Item 1 first: merge those three now (fast 4-minute law), then continue 443.325 → 443.326. An open PR left behind is not done.
 
 Full boxes (read them whole): [lead/CURSOR-ORDERS-443325-443326.md](lead/CURSOR-ORDERS-443325-443326.md)
