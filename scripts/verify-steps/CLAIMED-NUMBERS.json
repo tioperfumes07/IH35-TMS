@@ -14924,10 +14924,20 @@
     "claimed_at": "2026-10-22",
     "purpose": "CC-2 LEAD 443.252 B: verify-photos-are-docs-files (every driver / unit photo is a validated docs.files image, never a raw URL; an ID document only proposes; one primary per unit)"
   },
+  "18683": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-24",
+    "purpose": "CC-2 LEAD 443.288-D row 207: verify-expense-child-follows-parent (live) — no CARD-DISC/CARD-DIFF child whose load_id differs from its parent receipt's load_id; ceiling 0"
+  },
   "18685": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-22",
     "purpose": "CC-3 LEAD 443.251 P0: verify-kanban-every-card-draggable (every Kanban truck/load card is a drag source with an outcome for every target; no inert card, no placeholder gap)"
+  },
+  "18687": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-24",
+    "purpose": "CC-2 LEAD 443.304 row 77: verify-factoring-collection-closes-invoice (live) — 0 factored invoices with status advanced/reserve_held that have amount_open_cents>0 and an applied factoring_collection payment"
   },
   "18689": {
     "claimed_by": "cc-3",
@@ -14963,6 +14973,36 @@
     "claimed_by": "cc-3",
     "claimed_at": "2026-10-23",
     "purpose": "CC-3 LEAD 443.266-A item 3: verify-load-shuttle-legs-panel-wired (the Load drawer's shuttle-legs panel reads its own load's legs, entity-scoped, and shows a fetch error instead of hiding it)"
+  },
+  "18729": {
+    "claimed_by": "CODEX",
+    "claimed_at": "2026-10-23",
+    "purpose": "verify-board-page-no-legacy-sections"
+  },
+  "18733": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-maintenance-wo-table-all-sortable (register row 154)"
+  },
+  "18737": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-maintenance-in-shop-bays (register row 59)"
+  },
+  "18741": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-maintenance-money-two-decimals (register row 152)"
+  },
+  "18745": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-settlements-subnav-stays-in-module (rows 125-133)"
+  },
+  "18749": {
+    "claimed_by": "LEAD",
+    "claimed_at": "2026-10-24",
+    "purpose": "verify-bank-match-combinations (LEAD 443.304)"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
@@ -16968,40 +17008,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1088,
-  "18729": {
-    "claimed_by": "CODEX",
-    "claimed_at": "2026-10-23",
-    "purpose": "verify-board-page-no-legacy-sections"
-  },
-  "18683": {
-    "claimed_by": "cc-2",
-    "claimed_at": "2026-10-24",
-    "purpose": "CC-2 LEAD 443.288-D row 207: verify-expense-child-follows-parent (live) — no CARD-DISC/CARD-DIFF child whose load_id differs from its parent receipt's load_id; ceiling 0"
-  },
-  "18733": {
-    "claimed_by": "LEAD",
-    "claimed_at": "2026-10-24",
-    "purpose": "verify-maintenance-wo-table-all-sortable (register row 154)"
-  },
-  "18737": {
-    "claimed_by": "LEAD",
-    "claimed_at": "2026-10-24",
-    "purpose": "verify-maintenance-in-shop-bays (register row 59)"
-  },
-  "18741": {
-    "claimed_by": "LEAD",
-    "claimed_at": "2026-10-24",
-    "purpose": "verify-maintenance-money-two-decimals (register row 152)"
-  },
-  "18745": {
-    "claimed_by": "LEAD",
-    "claimed_at": "2026-10-24",
-    "purpose": "verify-settlements-subnav-stays-in-module (rows 125-133)"
-  },
-  "18749": {
-    "claimed_by": "LEAD",
-    "claimed_at": "2026-10-24",
-    "purpose": "verify-bank-match-combinations (LEAD 443.304)"
-  }
+  "total_claimed": 1083
 }
