@@ -89,17 +89,29 @@ export type LatestHosClocks = {
 // numbers + violation; a driver with NO snapshot => null (honest "unavailable" — Samsara returned nothing).
 export async function getLatestHosClocksByDriver(
   client: PgClient,
-  operatingCompanyId: string
+  operatingCompanyId: string,
+  /** LEAD 443.281 row 109 — only these drivers (the board's per-driver HOS cell asks for ONE). Absent = every driver. */
+  driverIds?: string[] | null
 ): Promise<Map<string, LatestHosClocks>> {
+  // LEAD 443.281 row 109: one index probe per driver (idx_hos_snapshots_driver_time: company, driver_uuid, polled_at DESC)
+  // instead of DISTINCT ON over the company's whole snapshot history (~740k rows, 1.58 s on prod per call — every board
+  // row's HOS cell made that call, so the 6 HOS columns sat blank while 13 of them queued). Same rows: 83 drivers, 0.45 s;
+  // one driver 0.10 s.
   const res = await client.query(
-    `SELECT DISTINCT ON (driver_uuid)
-       driver_uuid::text AS driver_uuid,
-       driving_hours_remaining, on_duty_hours_remaining, cycle_hours_remaining, time_to_next_break_minutes,
-       samsara_event_at::text AS samsara_event_at, polled_at::text AS polled_at
-     FROM samsara.hos_snapshots
-     WHERE operating_company_id = $1::uuid
-     ORDER BY driver_uuid, polled_at DESC`,
-    [operatingCompanyId]
+    `SELECT d.id::text AS driver_uuid,
+            s.driving_hours_remaining, s.on_duty_hours_remaining, s.cycle_hours_remaining, s.time_to_next_break_minutes,
+            s.samsara_event_at::text AS samsara_event_at, s.polled_at::text AS polled_at
+       FROM mdata.drivers d
+       CROSS JOIN LATERAL (
+         SELECT h.driving_hours_remaining, h.on_duty_hours_remaining, h.cycle_hours_remaining, h.time_to_next_break_minutes,
+                h.samsara_event_at, h.polled_at
+           FROM samsara.hos_snapshots h
+          WHERE h.operating_company_id = $1::uuid AND h.driver_uuid = d.id
+          ORDER BY h.polled_at DESC
+          LIMIT 1
+       ) s
+      WHERE ($2::uuid[] IS NULL OR d.id = ANY($2::uuid[]))`,
+    [operatingCompanyId, driverIds && driverIds.length ? driverIds : null]
   );
   const out = new Map<string, LatestHosClocks>();
   for (const r of res.rows as Array<Record<string, unknown>>) {
