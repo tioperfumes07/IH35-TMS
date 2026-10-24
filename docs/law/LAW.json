@@ -1202,5 +1202,15 @@
     "source_file": "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
     "guard": "scripts/verify-no-duplicate-settlement-for-settled-load.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-ROW-73-DRIVER-PAY-ACCRUAL-SWEEP",
+    "title": "ROW-73 — driver pay accrual sweep wired in index.ts; runs at boot + every 15 min; catches unaccrued delivered-basis driver bills",
+    "source_file": "apps/backend/src/accounting/driver-pay-accrual-sweep.service.ts",
+    "guard": "scripts/verify-driver-pay-accrual-sweep-wired.mjs",
+    "type": "enforced",
+    "verify_step": 18757,
+    "added": "2026-10-24",
+    "seat": "CC-1"
   }
 ]
