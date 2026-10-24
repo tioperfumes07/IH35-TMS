@@ -87,6 +87,7 @@ import { FACTORING_SECTION_PARENT, FACTORING_TAB_PATH, FARO_TABS, factoringTabFr
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { NotApplicable } from "../../components/money/NotApplicable";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import type { NaReason } from "../../design/money-design-system";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
 import { formatUsd, formatUsdCents } from "../../lib/money";
@@ -1054,6 +1055,15 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               : undefined
           }
         />
+      ) : null}
+
+      {companyId && !activeFactor ? (
+        <div
+          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-600"
+          data-testid="factoring-home-no-factor"
+        >
+          No factor configured. Activate a factor to manage its profile.
+        </div>
       ) : null}
 
       {/* ROUND 326.2 item 1 — Factoring KPI engine (ledger-computed, every tile drills to its rows). */}
@@ -2025,6 +2035,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         value: summary?.outstanding_liability_balance,
                         testId: "factoring-account-summary-ending-balance",
                       })}
+                      <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
                     </div>
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Payments to You *</span>
