@@ -9,7 +9,7 @@ const FILES = {
   route: "apps/backend/src/insurance/summary.routes.ts",
   index: "apps/backend/src/index.ts",
   fleet: "apps/frontend/src/pages/insurance/FleetCoveredPage.tsx",
-  tab: "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
+  tab: "apps/frontend/src/pages/insurance/InsuranceModuleShell.tsx",
   fleetSql: "apps/backend/src/insurance/fleet-covered.shared.ts",
 };
 const CHECKS = [
@@ -29,7 +29,7 @@ const CHECKS = [
   ["fleet:api-client", "api", /getInsuranceFleetCovered/],
   ["fleet:registered-get", "route", /app\.get\("\/api\/v1\/insurance\/fleet-covered"/],
   ["fleet:route-mounted", "tab", /path="fleet-covered" element=\{<FleetCoveredPage/],
-  ["fleet:landing-drill", "board", /to="\/safety\/insurance\/fleet-covered"/],
+  ["fleet:landing-drill", "board", /to="\/insurance\/fleet-covered"/],
   ["fleet:parity-table", "fleet", /<ParityTable/],
   ["fleet:stable-storage", "fleet", /storageKey="insurance-fleet-covered"/],
   ["fleet:tiv-source", "fleetSql", /MAX\(pu\.insured_value_cents\) FILTER \(WHERE p\.id IS NOT NULL\)/],

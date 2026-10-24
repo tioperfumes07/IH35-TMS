@@ -96,7 +96,7 @@ describe("AccidentsPage", () => {
     expect(within(row).queryByTestId("accident-row-claim-acc-1")).toBeNull();
   });
 
-  // C-02: joined claim renders EntityLink to /safety/insurance/claims?claim_id=…
+  // C-02: joined claim renders EntityLink to /insurance/claims?claim_id=…
   it("renders an EntityLink to the joined claim when claim_id is present", async () => {
     vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({
       accidents: [{ ...accidentFixture, claim_id: "claim-1", claim_number: "CLM-0001" }],
@@ -104,6 +104,6 @@ describe("AccidentsPage", () => {
     } as never);
     render(wrap(<AccidentsPage operatingCompanyId={companyId} />));
     const link = await screen.findByTestId("accident-row-claim-acc-1");
-    expect(link.getAttribute("href")).toBe("/safety/insurance/claims?claim_id=claim-1");
+    expect(link.getAttribute("href")).toBe("/insurance/claims?claim_id=claim-1");
   });
 });

@@ -117,7 +117,7 @@ export function PolicyDetail() {
       if (input.generation !== policyActionGenerationRef.current) return;
       await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", input.companyId] });
       pushToast("Policy archived", "success");
-      navigate("/safety/insurance/policies");
+      navigate("/insurance/policies");
     },
     onError: (_error, input) => {
       if (input.generation === policyActionGenerationRef.current) pushToast("Failed to archive policy", "error");
@@ -180,7 +180,7 @@ export function PolicyDetail() {
 
   // C-16: this table listed claims for the policy but the claim number was plain text — the
   // office could see a claim was attached but had no way to open it. EntityLink kind="claim"
-  // already resolves to /safety/insurance/claims?claim_id= (ClaimsTab selects+highlights the row),
+  // already resolves to /insurance/claims?claim_id= (ClaimsTab selects+highlights the row),
   // the same reverse chrome pattern used everywhere else claims are listed on another entity.
   const claimColumns = useMemo<ParityColumn<InsuranceClaim>[]>(
     () => [
@@ -266,7 +266,7 @@ export function PolicyDetail() {
   return (
     <div className="space-y-4">
       <PageHeader
-        backHref="/safety/insurance/policies"
+        backHref="/insurance/policies"
         breadcrumb={["Insurance", "Policies", entityLabel(policy.policy_number, policy.id, "Policy")]}
         title={`Policy ${entityLabel(policy.policy_number, policy.id, "Policy")}`}
         subtitle={`${policy.insurer_name} · ${coverageTypeName} · ${policy.status}`}

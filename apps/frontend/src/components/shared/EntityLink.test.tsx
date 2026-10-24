@@ -17,7 +17,7 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("factoring_advance", "id1")).toBe("/factoring/advances/id1");
     expect(resolveEntityRoute("bill", "id1")).toBe("/accounting/bills/id1");
     expect(resolveEntityRoute("matter", "id1")).toBe("/legal/matters/id1");
-    expect(resolveEntityRoute("insurance_policy", "id1")).toBe("/safety/insurance/policies/id1");
+    expect(resolveEntityRoute("insurance_policy", "id1")).toBe("/insurance/policies/id1");
     expect(resolveEntityRoute("dvir", "id1")).toBe("/safety/idvr/id1");
     expect(resolveEntityRoute("maintenance_inspection", "id1")).toBe("/maintenance/inspections?inspection_id=id1");
     expect(resolveEntityRoute("training_record", "id1")).toBe("/safety/training/records?training_id=id1");
@@ -31,8 +31,8 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("settlement", "id1")).toBe(
       "/driver-finance/settlements?settlement_id=id1",
     );
-    expect(resolveEntityRoute("claim", "id1")).toBe("/safety/insurance/claims?claim_id=id1");
-    expect(resolveEntityRoute("lawsuit", "id1")).toBe("/safety/insurance/lawsuits?lawsuit_id=id1");
+    expect(resolveEntityRoute("claim", "id1")).toBe("/insurance/claims?claim_id=id1");
+    expect(resolveEntityRoute("lawsuit", "id1")).toBe("/insurance/lawsuits?lawsuit_id=id1");
   });
 
   it("resolves liability to list query-param and expense to per-id detail", () => {
@@ -71,11 +71,11 @@ describe("EntityLink", () => {
     );
     expect(screen.getByRole("link", { name: "CLM-1" })).toHaveAttribute(
       "href",
-      "/safety/insurance/claims?claim_id=clm-1",
+      "/insurance/claims?claim_id=clm-1",
     );
     expect(screen.getByRole("link", { name: "LAW-1" })).toHaveAttribute(
       "href",
-      "/safety/insurance/lawsuits?lawsuit_id=law-1",
+      "/insurance/lawsuits?lawsuit_id=law-1",
     );
     expect(screen.getByRole("link", { name: "MAT-1" })).toHaveAttribute("href", "/legal/matters/mat-1");
   });

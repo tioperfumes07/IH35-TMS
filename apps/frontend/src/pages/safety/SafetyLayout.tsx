@@ -101,7 +101,7 @@ export function SafetyLayout() {
     // breadcrumb/nav highlighted "Driver Files & Training" while the page showed something else.
     if (path === "/safety/home" || path === "/safety") return "home";
     // INS-CLAIMS-ROUTE (Cascade USMCA wire 2026-08-09): exact `tab.route === path` missed nested
-    // Insurance mounts (`/safety/insurance/claims`, `/policies/:id`, …) so the chrome lied as
+    // Insurance mounts (`/insurance/claims`, `/policies/:id`, …) so the chrome lied as
     // "Driver Files & Training" while Outlet correctly showed Claims. Match longest prefix first
     // with `route` or `route/` boundary (never `/safety/hos` swallowing `/safety/hos-violations`).
     return findSafetyTabByPath(path)?.tab.id ?? "driver-files";

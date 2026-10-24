@@ -52,7 +52,7 @@ function verify(source) {
 
   const required = [
     ["dispatchMatrix", "home.kanban", ["driver", "unit", "load", "connectivity", "reverse_link"], "/dispatch?view=kanban"],
-    ["insuranceMatrix", "policies.list", ["connectivity", "reverse_link"], "/safety/insurance/policies"],
+    ["insuranceMatrix", "policies.list", ["connectivity", "reverse_link"], "/insurance/policies"],
     ["maintenanceMatrix", "pm.auto_engine.run", ["connectivity"], "/maintenance/pm-auto-engine"],
     ["maintenanceMatrix", "pm.schedule.list", ["connectivity", "reverse_link"], "/maintenance/pm-schedule?schedule_id="],
   ];

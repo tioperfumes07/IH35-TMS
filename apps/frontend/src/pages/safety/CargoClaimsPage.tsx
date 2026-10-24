@@ -6,7 +6,7 @@ type Props = {
 
 /**
  * RBC A23-7: insurance.claim lacks cargo/damage typing — cargo claims use safety.incidents
- * (incident_type=cargo_claim) rather than redirecting to /safety/insurance/claims.
+ * (incident_type=cargo_claim) rather than redirecting to /insurance/claims.
  *
  * SC4: Carmack/49 CFR 1005.2 claim intake — the creator collects load (shipment), claimant
  * (customer), reason (cargo-claim-reasons catalog), claimed amount, and filed date, replacing

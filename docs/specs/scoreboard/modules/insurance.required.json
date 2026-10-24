@@ -2,9 +2,9 @@
   "module": "insurance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Insurance (under Safety nav)",
-    "nav": "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
-    "routes": "/safety/insurance/*"
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Insurance (standalone module, ROUND 443.282)",
+    "nav": "apps/frontend/src/pages/insurance/InsuranceModuleTabs.tsx",
+    "routes": "/insurance/*"
   },
   "columns": [
     {
@@ -163,7 +163,7 @@
       "id": "economics.invariants",
       "tab": "Insurance",
       "sub": "USMCA ledger invariants C25\u2013C31",
-      "route_hint": "/safety/insurance/*",
+      "route_hint": "/insurance/*",
       "required": [
         "gl_delta",
         "subledger_tie",
@@ -178,7 +178,7 @@
       "id": "landing",
       "tab": "Landing",
       "sub": "Insurance home",
-      "route_hint": "/safety/insurance",
+      "route_hint": "/insurance",
       "required": [
         "connectivity"
       ]
@@ -187,7 +187,7 @@
       "id": "policies.list",
       "tab": "Policies",
       "sub": "Policies list",
-      "route_hint": "/safety/insurance/policies",
+      "route_hint": "/insurance/policies",
       "owned_surface_paths": [
         "pages/insurance/PoliciesList.tsx"
       ],
@@ -211,7 +211,7 @@
       "id": "policies.create",
       "tab": "Policies",
       "sub": "+ Create Policy",
-      "route_hint": "/safety/insurance/policies",
+      "route_hint": "/insurance/policies",
       "required": [
         "vendor",
         "unit",
@@ -225,7 +225,7 @@
       "id": "policies.detail",
       "tab": "Policies",
       "sub": "Policy detail",
-      "route_hint": "/safety/insurance/policies/:id",
+      "route_hint": "/insurance/policies/:id",
       "required": [
         "unit",
         "connectivity",
@@ -237,7 +237,7 @@
       "id": "type_catalog.list",
       "tab": "Type Catalog",
       "sub": "Coverage types",
-      "route_hint": "/safety/insurance/type-catalog",
+      "route_hint": "/insurance/type-catalog",
       "required": [
         "connectivity",
         "qbo_chrome"
@@ -247,7 +247,7 @@
       "id": "type_catalog.create",
       "tab": "Type Catalog",
       "sub": "+ Create Type",
-      "route_hint": "/safety/insurance/type-catalog",
+      "route_hint": "/insurance/type-catalog",
       "required": [
         "connectivity",
         "picker_law",
@@ -258,7 +258,7 @@
       "id": "coverage_gaps",
       "tab": "Coverage Gaps",
       "sub": "Gap dashboard",
-      "route_hint": "/safety/insurance/coverage-gaps",
+      "route_hint": "/insurance/coverage-gaps",
       "required": [
         "unit",
         "connectivity",
@@ -269,7 +269,7 @@
       "id": "claims.list",
       "tab": "Claims",
       "sub": "Claims list",
-      "route_hint": "/safety/insurance/claims",
+      "route_hint": "/insurance/claims",
       "required": [
         "driver",
         "unit",
@@ -284,7 +284,7 @@
       "id": "claims.create",
       "tab": "Claims",
       "sub": "+ Create Claim",
-      "route_hint": "/safety/insurance/claims",
+      "route_hint": "/insurance/claims",
       "required": [
         "driver",
         "unit",
@@ -300,7 +300,7 @@
       "id": "lawsuits.list",
       "tab": "Lawsuits",
       "sub": "Lawsuits list",
-      "route_hint": "/safety/insurance/lawsuits",
+      "route_hint": "/insurance/lawsuits",
       "required": [
         "driver",
         "connectivity",
@@ -311,7 +311,7 @@
       "id": "lawsuits.create",
       "tab": "Lawsuits",
       "sub": "+ Create Lawsuit",
-      "route_hint": "/safety/insurance/lawsuits",
+      "route_hint": "/insurance/lawsuits",
       "required": [
         "picker_law",
         "qbo_chrome",
@@ -413,7 +413,7 @@
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
-      "route_hint": "/safety/insurance/lawsuits",
+      "route_hint": "/insurance/lawsuits",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
@@ -425,7 +425,7 @@
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
       "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
-      "route_hint": "/safety/insurance/lawsuits",
+      "route_hint": "/insurance/lawsuits",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
@@ -437,7 +437,7 @@
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
       "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
-      "route_hint": "/safety/insurance/lawsuits",
+      "route_hint": "/insurance/lawsuits",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
@@ -449,7 +449,7 @@
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
       "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
-      "route_hint": "/safety/insurance/lawsuits",
+      "route_hint": "/insurance/lawsuits",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"

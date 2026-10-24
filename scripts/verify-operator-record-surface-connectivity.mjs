@@ -9,7 +9,7 @@ const FILES = {
   propertyTax: "apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx",
   form2290: "apps/frontend/src/pages/compliance/Form2290Filings.tsx",
   filings: "apps/backend/src/compliance/filings-aggregate.service.ts",
-  insurance: "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
+  insurance: "apps/frontend/src/pages/insurance/InsuranceModuleTabs.tsx",
   insuranceLanding: "apps/frontend/src/pages/insurance/InsuranceLanding.tsx",
   insurancePolicy: "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
   insuranceTypes: "apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx",
@@ -86,7 +86,8 @@ export function verify(source) {
   ]) need("filings", token, `filings dashboard must retain shared-driver eligibility: ${token}`);
   for (const route of ["/compliance", "/compliance/property-tax", "/compliance/property-tax/:id", "/compliance/form-2290"]) need("routes", `path="${route}"`, `compliance route ${route} must remain mounted`);
 
-  for (const route of ["/safety/insurance", "/safety/insurance/policies", "/safety/insurance/type-catalog", "/safety/insurance/coverage-gaps"]) need("insurance", `to="${route}"`, `insurance navigation must expose ${route}`);
+  for (const route of ["/insurance", "/insurance/policies", "/insurance/type-catalog", "/insurance/coverage-gaps"]) need("insurance", `to: "${route}"`, `insurance navigation must expose ${route}`);
+  need("routes", 'path="/insurance/*"', "insurance module shell route must remain mounted");
   need("insuranceLanding", "InsuranceLanding", "insurance landing must remain implemented");
   need("insurancePolicy", "PolicyDetail", "insurance policy detail must remain implemented");
   need("insuranceTypes", "<ParityTable", "insurance type catalog must render its canonical list");
@@ -173,7 +174,7 @@ if (process.argv.includes("--self-test")) {
     ["filings", "filings_clearinghouse_dca.is_authorized = true", "filings_clearinghouse_dca.is_authorized = false"],
     ["filings", "driver_company_authorizations filings_mvr_dca", "driver_company_authorizations broken_mvr_dca"],
     ["filings", "filings_mvr_dca.deactivated_at IS NULL", "filings_mvr_dca.deactivated_at IS NOT NULL"],
-    ["insurance", 'to="/safety/insurance/policies"', 'to="/broken"'], ["insuranceTypes", "<ParityTable", "<BrokenTable"],
+    ["insurance", 'to: "/insurance/policies"', 'to: "/broken"'], ["insuranceTypes", "<ParityTable", "<BrokenTable"],
     ["inventoryTabs", 'to: "/inventory/assignments"', 'to: "/broken"'], ["inventoryAssignments", "getPartsAssignmentsPage", "brokenAssignmentsPage"],
     ["inventoryAssignments", 'kind="work_order"', 'kind="broken"'],
     ["inventoryAssignments", 'to="/inventory/purchases"', 'to="/broken"'], ["inventoryPurchases", "listPartsPurchases", "brokenPartsPurchases"],

@@ -52,7 +52,7 @@ const SURFACES = [
   {
     id: "insurance-lawsuits",
     file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
-    route: "/safety/insurance/lawsuits",
+    route: "/insurance/lawsuits",
   },
   {
     id: "drivers-table",
@@ -149,7 +149,7 @@ export function collectFailures(sources) {
   const insuranceReq = sources["docs/specs/scoreboard/modules/insurance.required.json"] ?? "";
   if (insuranceReq) {
     if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"route_hint": "\/safety\/insurance\/lawsuits"/.test(insuranceReq)) {
-      failures.push("insurance.required.json: chrome.toolbar_filter route_hint must be /safety/insurance/lawsuits");
+      failures.push("insurance.required.json: chrome.toolbar_filter route_hint must be /insurance/lawsuits");
     }
     if (!/"id": "chrome\.toolbar_filter"[\s\S]*?"surface_path": "pages\/insurance\/LawsuitsTab\.tsx"/.test(insuranceReq)) {
       failures.push("insurance.required.json: chrome.toolbar_filter surface_path must be LawsuitsTab.tsx");
@@ -642,7 +642,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       ...sources,
       "docs/specs/scoreboard/modules/insurance.required.json": sources[
         "docs/specs/scoreboard/modules/insurance.required.json"
-      ].replaceAll('"/safety/insurance/lawsuits"', '"/insurance"'),
+      ].replaceAll('"/insurance/lawsuits"', '"/insurance"'),
     }),
     () => ({
       ...sources,

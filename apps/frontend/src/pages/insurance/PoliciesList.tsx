@@ -235,7 +235,7 @@ export function PoliciesList() {
           columns={columns}
           rows={rows}
           rowKey={(policy) => policy.id}
-          onRowClick={(policy) => navigate(`/safety/insurance/policies/${policy.id}`)}
+          onRowClick={(policy) => navigate(`/insurance/policies/${policy.id}`)}
           loading={listState.isLoading}
           emptyText="No insurance policies found for this entity yet."
         />
