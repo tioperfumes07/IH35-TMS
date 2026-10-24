@@ -36,8 +36,8 @@ export function check(engineSrc, routesSrc) {
     }
   }
 
-  const nr = body.match(/if\s*\(\s*!isRecalculable\s*\)\s*\{([\s\S]*?)\n    \}/);
-  if (!nr || !/identityChanged[\s\S]*throw\s+new\s+DriverBillReassignRefusedError/.test(nr[1])) {
+  const nr = body.match(/if\s*\(\s*!isRecalculable\b([\s\S]*?)\n    \}/);
+  if (!nr || !/identityChanged[\s\S]*throw\s+new\s+DriverBillReassignRefusedError/.test(nr[0])) {
     out.push("R3: a non-open / settled bill whose driver would change is not refused by name (DriverBillReassignRefusedError)");
   }
 
