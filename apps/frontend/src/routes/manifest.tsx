@@ -507,6 +507,7 @@ const ItemsListPage = React.lazy(() => import("../pages/lists/accounting/ItemsLi
 const JournalEntryTypesListPage = React.lazy(() => import("../pages/lists/accounting/JournalEntryTypesListPage").then((m) => ({ default: m.JournalEntryTypesListPage })));
 const PaymentTermsListPage = React.lazy(() => import("../pages/lists/accounting/PaymentTermsListPage").then((m) => ({ default: m.PaymentTermsListPage })));
 const VoidCancelReasonsListPage = React.lazy(() => import("../pages/lists/accounting/VoidCancelReasonsListPage").then((m) => ({ default: m.VoidCancelReasonsListPage })));
+const OverrideReasonsListPage = React.lazy(() => import("../pages/lists/accounting/OverrideReasonsListPage").then((m) => ({ default: m.OverrideReasonsListPage })));
 const PaymentMethodsListPage = React.lazy(() => import("../pages/lists/accounting/PaymentMethodsListPage").then((m) => ({ default: m.PaymentMethodsListPage })));
 const PostingTemplatesListPage = React.lazy(() => import("../pages/lists/accounting/PostingTemplatesListPage").then((m) => ({ default: m.PostingTemplatesListPage })));
 const QBOBulkLinkPage = React.lazy(() => import("../pages/lists/accounting/QBOBulkLinkPage").then((m) => ({ default: m.QBOBulkLinkPage })));
@@ -3484,6 +3485,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <VoidCancelReasonsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/override-reasons"
+          element={
+            <ProtectedRoute>
+              <OverrideReasonsListPage />
             </ProtectedRoute>
           }
         />

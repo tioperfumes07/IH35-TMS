@@ -446,6 +446,71 @@ export function reactivateVoidCancelReason(id: string) {
   });
 }
 
+// LEAD 443.294 — the ONE override reason catalog (catalogs.override_reasons). The OverrideButton reads it by context.
+export const OVERRIDE_CONTEXTS = ["factoring", "expense", "load_wizard", "settlement", "banking", "invoice", "bill", "dispatch", "safety", "maintenance"] as const;
+export type OverrideContext = (typeof OVERRIDE_CONTEXTS)[number];
+
+export type OverrideReason = {
+  id: string;
+  operating_company_id: string;
+  reason_code: string;
+  label_en: string;
+  label_es: string;
+  contexts: OverrideContext[];
+  role_only: boolean;
+  is_active: boolean;
+  sort_order: number;
+  system_seeded: boolean;
+  deactivated_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by_user_id: string;
+};
+
+export type CreateOverrideReasonInput = {
+  operating_company_id: string;
+  reason_code: string;
+  label_en: string;
+  label_es: string;
+  contexts: OverrideContext[];
+  sort_order?: number;
+};
+
+export type UpdateOverrideReasonInput = Partial<{
+  reason_code: string;
+  label_en: string;
+  label_es: string;
+  contexts: OverrideContext[];
+  sort_order: number;
+}>;
+
+export function listOverrideReasons(
+  operatingCompanyId: string,
+  opts: { context?: OverrideContext; includeInactive?: boolean; includeRoleOnly?: boolean } = {}
+) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (opts.context) query.set("context", opts.context);
+  if (opts.includeInactive) query.set("include_inactive", "true");
+  if (opts.includeRoleOnly) query.set("include_role_only", "true");
+  return apiRequest<{ reasons: OverrideReason[] }>(`/api/v1/catalogs/override-reasons?${query.toString()}`);
+}
+
+export function createOverrideReason(payload: CreateOverrideReasonInput) {
+  return apiRequest<{ reason: OverrideReason }>("/api/v1/catalogs/override-reasons", { method: "POST", body: payload });
+}
+
+export function updateOverrideReason(id: string, payload: UpdateOverrideReasonInput) {
+  return apiRequest<{ reason: OverrideReason }>(`/api/v1/catalogs/override-reasons/${id}`, { method: "PATCH", body: payload });
+}
+
+export function deactivateOverrideReason(id: string) {
+  return apiRequest<{ reason: OverrideReason }>(`/api/v1/catalogs/override-reasons/${id}/deactivate`, { method: "POST" });
+}
+
+export function reactivateOverrideReason(id: string) {
+  return apiRequest<{ reason: OverrideReason }>(`/api/v1/catalogs/override-reasons/${id}/reactivate`, { method: "POST" });
+}
+
 export type DriverTerminationSeverity = "info" | "warning" | "severe";
 
 export type DriverTerminationReason = {

@@ -172,6 +172,7 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "account_types", activeFilter: "is_active", companyScoped: false },
     { table: "detail_types", activeFilter: "is_active", companyScoped: false },
     { table: "void_cancel_reasons", activeFilter: "is_active", companyScoped: true },
+    { table: "override_reasons", activeFilter: "is_active", companyScoped: true },
   ],
   // LST-COUNT-01: this was `[]`, which made buildModuleCountQuery emit `SELECT 0::int` — a PERMANENT
   // ZERO badge while the hub rendered a live Brokers catalog (AllCatalogsMap: live: true). Brokers is

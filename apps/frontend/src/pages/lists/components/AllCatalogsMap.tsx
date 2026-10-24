@@ -184,6 +184,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Tax Codes", description: "Sales and use tax buckets (map to QBO as wired)", live: true, catalogKey: "tax-codes" },
       { name: "Currency Codes", description: "ISO currency list for multi-currency hints", live: true, catalogKey: "currency-codes" },
       { name: "Void/Cancel Reasons", description: "Financial void/cancel reason catalog (invoices, bills, payments, JEs, settlements, WO voids)", live: true, catalogKey: "void-cancel-reasons" },
+      { name: "Override Reasons", description: "The ONE override reason catalog (factoring, expense, load wizard, settlement, banking, invoice, bill, dispatch, safety, maintenance)", live: true, catalogKey: "override-reasons" },
       // LST-F13 — route-mounted at /lists/accounting/abandonment-defaults but absent from DOMAIN_CONFIG.
       { name: "Abandonment Defaults", description: "Company thresholds for auto-computed abandonment chargebacks", live: true, catalogKey: "abandonment-defaults" },
     ],
