@@ -10,7 +10,8 @@ const checks = [
   ["KPI failure is explicit and retryable", /partsInventoryKpisQuery\.isError\s*\?\s*\(\s*<ListErrorState[\s\S]*?title="Couldn't load parts inventory KPIs"[\s\S]*?onRetry=\{\(\) => void partsInventoryKpisQuery\.refetch\(\)\}/],
   ["total-parts suppresses failed cached data", /partsInventoryKpisQuery\.isError\s*\?\s*"—"\s*:\s*\(partsInventoryKpisQuery\.data\?\.total_parts \?\? 0\)/],
   ["low-stock suppresses failed cached data", /partsInventoryKpisQuery\.isError\s*\?\s*"—"\s*:\s*\(partsInventoryKpisQuery\.data\?\.low_stock_count \?\? 0\)/],
-  ["inventory value suppresses failed cached data", /partsInventoryKpisQuery\.isError[\s\S]*?\?\s*"—"[\s\S]*?:\s*`\$\$\{Number\(partsInventoryKpisQuery\.data\?\.total_inventory_value \?\? 0\)\.toLocaleString\(\)\}`/],
+  // LEAD 443.301 row 152 (D033): money shows cents (formatUsd); a missing value is "—", never a fake $0.
+  ["inventory value suppresses failed cached data", /partsInventoryKpisQuery\.isError[\s\S]*?\?\s*"—"[\s\S]*?:\s*partsInventoryKpisQuery\.data\?\.total_inventory_value == null \? "—" : formatUsd\(partsInventoryKpisQuery\.data\.total_inventory_value\)/],
 ];
 
 for (const [label, pattern] of checks) assert.match(source, pattern, label);

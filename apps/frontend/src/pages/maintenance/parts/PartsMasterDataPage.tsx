@@ -22,6 +22,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { listAllVendors } from "../../../api/mdata";
+import { formatUsd } from "../../../lib/money";
 
 type PartDraft = {
   part_number: string;
@@ -275,7 +276,7 @@ export function PartsMasterDataPage() {
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
             <div className="text-gray-500">Total Inventory Value</div>
-            <div className="text-xs font-semibold">${Number(kpisQuery.data?.total_inventory_value ?? 0).toLocaleString()}</div>
+            <div className="text-xs font-semibold">{kpisQuery.data?.total_inventory_value == null ? "—" : formatUsd(kpisQuery.data.total_inventory_value)}</div>
           </div>
         </div>
       )}

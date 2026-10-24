@@ -1,6 +1,7 @@
 import type { MaintenanceKpis } from "../../../api/maintenance";
 import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { formatUsd } from "../../../lib/money";
 
 type Props = {
   kpis: MaintenanceKpis;
@@ -33,7 +34,8 @@ function pick(...candidates: Array<unknown>): number | null {
 }
 
 const days = (n: number | null) => (n === null ? null : `${n.toFixed(1)} d`);
-const usd = (n: number | null) => (n === null ? null : `$${n.toLocaleString()}`);
+// Row 152 / D033: QBO money — always two decimals.
+const usd = (n: number | null) => (n === null ? null : formatUsd(n));
 /** C-22 query-error copy. One ListErrorState — not seven C8 `unavailable` tiles. */
 const LOAD_FAIL = "Could not load this figure";
 

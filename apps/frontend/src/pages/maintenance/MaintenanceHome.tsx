@@ -73,6 +73,7 @@ import {
   MAINTENANCE_OPERATION_LINKS,
 } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 import { MAINTENANCE_TAB_PATH, maintenanceTabFromPath } from "../../router/route-manifest";
+import { formatUsd } from "../../lib/money";
 
 export { MAINTENANCE_MASTER_DATA_LINKS, MAINTENANCE_OPERATION_LINKS } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 
@@ -745,7 +746,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               <div className="font-semibold">
                 {partsInventoryKpisQuery.isError
                   ? "—"
-                  : `$${Number(partsInventoryKpisQuery.data?.total_inventory_value ?? 0).toLocaleString()}`}
+                  : partsInventoryKpisQuery.data?.total_inventory_value == null ? "—" : formatUsd(partsInventoryKpisQuery.data.total_inventory_value)}
               </div>
             </div>
           </div>
