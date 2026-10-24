@@ -9,6 +9,9 @@ const DETAIL = "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx"
 const WORKFLOW = "apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx";
 const TAB = "apps/frontend/src/components/dispatch/TourSettlementTab.tsx";
 const BODY = "apps/frontend/src/pages/driver-finance/components/SettlementDocumentBody.tsx";
+/** LEAD 443.312 — this guard proves the panel is mounted inside its settlement's document body (the settlement link):
+ * @matrix-built {"modules":["settlements"],"cols":["settlement"],"leaves":["settlements.panel.settlement_statement_linked_records"],"task":"443.312"}
+ */
 const LINKED = "apps/frontend/src/pages/driver-finance/components/SettlementStatementLinkedRecordsPanel.tsx";
 
 function analyze(detail, workflow, tab, body, linked) {

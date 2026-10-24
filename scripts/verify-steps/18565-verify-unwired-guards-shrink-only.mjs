@@ -23,6 +23,17 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const EXEMPT_REL = "scripts/.guard-exempt.json";
 
 export const GUARDS = [
+  // LEAD 443.312 (2026-10-24): 10 guards merged 10-23/10-24 with no CI caller (guard census 10 > 8); each GREEN with no DB.
+  "verify-delivered-load-has-final-departure.mjs",
+  "verify-escrow-register-per-load-expansion.mjs",
+  "verify-fleet-health-no-false-ok.mjs",
+  "verify-hos-latest-clocks-per-driver-probe.mjs",
+  "verify-live-get-routes-no-5xx.mjs",
+  "verify-override-reasons-one-catalog.mjs",
+  "verify-person-names-normalized-at-write.mjs",
+  "verify-settlement-boundary-writers.mjs",
+  "verify-settlement-finalize-assigns-source-doc-ref.mjs",
+  "verify-settlement-number-assigned-at-close.mjs",
   "verify-425-s01-s02-surfaces.mjs",
   "verify-active-driver-set.mjs",
   "verify-add-training-creator-draft-lifecycle.mjs",

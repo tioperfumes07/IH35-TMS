@@ -19,7 +19,12 @@ function verify(source) {
   need("currentLoad", 'kind="customer"', "active current-load customer must use EntityLinkOrTombstone kind=customer");
   need("currentLoad", 'data-testid="vp-current-load-link"', "active current-load must drill to its load");
   need("cashFlow", 'data-testid="cash-flow-predicted-load-link"', "daily prediction load identity must expose a canonical href");
-  need("cashFlow", '<EntityLinkOrTombstone\n                      kind="load"\n                      id={item.load_id}\n                      name={item.load_number}', "daily prediction must use its persisted load id and human label through an unresolved-safe drill");
+  // LEAD 443.312: Cursor 443.250 (e99c04f617) made the prediction row drill to its LOAD when it has one, else to its
+  // invoice — still the persisted id + human label through EntityLinkOrTombstone. Whitespace-tolerant, not a literal indent.
+  if (!/<EntityLinkOrTombstone\s+kind=\{item\.load_id \? "load" : "invoice"\}\s+id=\{item\.load_id \?\? item\.document_id\}\s+name=\{item\.load_number \?\? item\.document_label\}[\s\S]{0,200}?data-testid="cash-flow-predicted-load-link"/.test(source.cashFlow)
+      && !/<EntityLinkOrTombstone\s+kind="load"\s+id=\{item\.load_id\}\s+name=\{item\.load_number\}/.test(source.cashFlow)) {
+    failures.push("daily prediction must use its persisted load id and human label through an unresolved-safe drill");
+  }
   need("liabilities", 'data-testid="liability-roster-record-link"', "liability roster primary identity must drill through");
   need("liabilities", 'kind="liability" id={String(row.id)}', "liability roster must normalize its canonical id");
   let matrix;

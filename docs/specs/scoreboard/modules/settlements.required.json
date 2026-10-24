@@ -402,6 +402,20 @@
       ]
     },
     {
+      "id": "settlements.panel.settlement_statement_linked_records",
+      "tab": "Panels",
+      "sub": "Panel: Settlement Statement Linked Records",
+      "route_hint": "surface://pages/driver-finance/components/SettlementStatementLinkedRecordsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/driver-finance/components/SettlementStatementLinkedRecordsPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "load",
+        "settlement"
+      ]
+    },
+    {
       "id": "settlements.parity.create_advance",
       "tab": "Parity / side panels",
       "sub": "ParityDrawer site: Create Advance",
