@@ -83,15 +83,14 @@ export async function getCompanySettlementsReport(
         COALESCE(SUM(
           COALESCE(ROUND(ds.gross_pay::numeric * 100), 0)
         ), 0)::bigint AS gross_driver_pay_cents,
-        -- net_revenue_cents: sum of load revenue from loads linked to this company settlement's
-        -- driver settlements, via presettlement_link. NULL for voided settlements.
+        -- net_revenue_cents: sum of load revenue from loads whose presettlement_link_id points at
+        -- this company settlement's driver settlements. NULL for voided settlements.
         CASE WHEN cs.voided_at IS NOT NULL THEN NULL
           ELSE COALESCE((
             SELECT SUM(lcr.revenue_cents)
-            FROM driver_finance.presettlement_link psl
-            JOIN accounting.company_settlement_driver_settlements csds2
-              ON csds2.driver_settlement_id = psl.settlement_id
-            JOIN mdata.loads l ON l.id = psl.load_id
+            FROM accounting.company_settlement_driver_settlements csds2
+            JOIN mdata.loads l ON l.presettlement_link_id = csds2.driver_settlement_id
+              AND l.operating_company_id = $1::uuid
             LEFT JOIN LATERAL (
               SELECT
                 COALESCE(SUM(il.amount_cents), 0)::bigint AS revenue_cents
@@ -100,6 +99,7 @@ export async function getCompanySettlementsReport(
               WHERE inv.load_id = l.id
                 AND inv.operating_company_id = $1::uuid
                 AND inv.voided_at IS NULL
+                AND il.soft_deleted_at IS NULL
             ) lcr ON true
             WHERE csds2.company_settlement_id = cs.id
           ), 0)
