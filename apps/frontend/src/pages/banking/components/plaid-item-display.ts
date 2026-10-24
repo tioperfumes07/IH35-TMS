@@ -71,9 +71,10 @@ export function derivePlaidConnectionBadgeLabel(
 
 export function derivePlaidConnectionBadgeClasses(label: PlaidConnectionBadgeLabel): string {
   if (label === "Healthy") return "bg-[#F7F8FA] text-[#1F2A44]";
-  if (label === "Stale") return "bg-[#F7F8FA] text-[#1F2A44]";
+  // LEAD 443.306 — a connection that needs attention must not look like a healthy one: §7 warning token (amber #854F0B).
+  if (label === "Stale") return "bg-[#F7F8FA] text-[#854F0B]";
   if (label === "Out of sync" || label === "Never synced") return "bg-red-100 text-red-800";
-  if (label === "Login Required") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (label === "Login Required") return "bg-[#F7F8FA] text-[#854F0B]";
   if (label === "Error") return "bg-red-100 text-red-800";
   if (label === "Pending") return "bg-gray-100 text-gray-700";
   if (label === "Disconnected") return "bg-gray-200 text-gray-600";

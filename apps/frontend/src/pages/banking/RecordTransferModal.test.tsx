@@ -3,8 +3,8 @@ import source from "./RecordTransferModal.tsx?raw";
 import { describe, expect, it } from "vitest";
 
 describe("RecordTransferModal — mark-transfer wiring (0441-mod8)", () => {
-  it("calls markBankTransactionTransfer for bank-to-bank linkBankTransactionId", () => {
-    expect(source).toContain("markBankTransactionTransfer");
+  it("links a bank-to-bank linkBankTransactionId inside createTransfer (from_bank_line, ROUND 360)", () => {
+    expect(source).toContain("from_bank_line");
     expect(source).toContain('transferType === "bank_to_bank"');
     expect(source).toContain("destination_bank_account_id");
     expect(source).toContain("transfer_kind");
@@ -15,10 +15,10 @@ describe("RecordTransferModal — mark-transfer wiring (0441-mod8)", () => {
     expect(source).not.toContain("intentionally left for manual categorization");
   });
 
-  // BANK-ECON-03 / BANK-SURF-03 — mark-transfer must LINK to the transfer createTransfer() already
-  // minted, never mint a second banking.transfers row for the same cash movement.
-  it("passes existing_transfer_id so mark-transfer never mints a second ledger row", () => {
-    expect(source).toContain("existing_transfer_id: response.transfer.id");
+  // BANK-ECON-03 / BANK-SURF-03 — one cash movement, ONE banking.transfers row: the line is linked in the same request
+  // that creates the transfer; a separate mark-transfer call (which minted the duplicate) must never come back.
+  it("never calls mark-transfer separately, so no second ledger row can be minted", () => {
+    expect(source).not.toMatch(/\bmarkBankTransactionTransfer\s*\(|import[^;]*\bmarkBankTransactionTransfer\b/);
   });
 });
 

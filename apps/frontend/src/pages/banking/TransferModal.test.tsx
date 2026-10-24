@@ -45,10 +45,13 @@ describe("TransferModal — source assertions", () => {
     expect(source).toContain("Save transfer");
   });
 
-  // BANK-ECON-03 / BANK-SURF-03 — mark-transfer must LINK to the transfer createTransfer() already
-  // minted, never mint a second banking.transfers row for the same cash movement.
-  it("passes existing_transfer_id so mark-transfer never mints a second ledger row", () => {
-    expect(source).toContain("existing_transfer_id: created.transfer.id");
+  // BANK-ECON-03 / BANK-SURF-03 — one cash movement, ONE banking.transfers row. Since ROUND 360 the bank-feed line rides
+  // createTransfer's from_bank_line (transfer + line link + JE in one request / one transaction); a second mark-transfer
+  // call (which minted the duplicate) must never come back.
+  it("links the bank line inside createTransfer (one request) and never calls mark-transfer separately", () => {
+    expect(source).toContain("from_bank_line:");
+    expect(source).toContain("bank_transaction_id: linkBankTransactionId");
+    expect(source).not.toMatch(/\bmarkBankTransactionTransfer\s*\(|import[^;]*\bmarkBankTransactionTransfer\b/);
   });
 });
 
