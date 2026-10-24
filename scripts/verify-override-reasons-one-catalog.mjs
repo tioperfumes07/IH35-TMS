@@ -15,7 +15,10 @@
  *   R8  Owner / Accountant confirm with no reason (owner_override / accountant_override); everyone else reason_required;
  *   R9  refuses unknown, inactive, out-of-context, and another role's role_only code;
  *   R10 the input carries NO free-text field (no note / text / comment / reason_text) and the engine writes the audit row.
- * Later steps extend this guard (one button, 0 free-text sites).
+ * Step 3 (the button, apps/frontend/src/components/override/OverrideButton.tsx):
+ *   R11 no text input of any kind (no <input type="text">, <textarea>, contentEditable);
+ *   R12 confirm-only roles = the engine's (Owner, Accountant); everyone else reads the reasons filtered by context.
+ * Later step extends this guard (0 free-text sites).
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -30,6 +33,7 @@ const ROUTES = "apps/backend/src/catalogs/override-reasons.routes.ts";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const MAP = "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx";
 const ENGINE = "apps/backend/src/overrides/record-override.service.ts";
+const BUTTON = "apps/frontend/src/components/override/OverrideButton.tsx";
 
 export function auditStep1b(src) {
   const f = [];
@@ -54,6 +58,15 @@ export function auditEngine(engine) {
   return f;
 }
 
+export function auditButton(button, engine) {
+  const f = [];
+  const code = button.replace(/\/\*[\s\S]*?\*\//g, "");
+  if (/<textarea|<input\b|contentEditable/i.test(code)) f.push("R11: the override button renders a text input");
+  if (!/OVERRIDE_CONFIRM_ROLES = \["Owner", "Accountant"\] as const/.test(button) || !/Owner: "owner_override",\s*Accountant: "accountant_override"/.test(engine)) f.push("R12: confirm-only roles differ between button and engine");
+  if (!/listOverrideReasons\(companyId, \{ context \}\)/.test(button) || !/enabled: open && !confirmOnly/.test(button)) f.push("R12: non-confirm roles do not read the reasons filtered by context");
+  return f;
+}
+
 export function audit(sql) {
   const f = [];
   if (!/CREATE TABLE IF NOT EXISTS catalogs\.override_reasons/.test(sql)) f.push("R1: catalogs.override_reasons table missing");
@@ -68,6 +81,7 @@ export function audit(sql) {
 
 const sql = fs.readFileSync(path.join(ROOT, MIG), "utf8");
 const engineSrc = fs.readFileSync(path.join(ROOT, ENGINE), "utf8");
+const buttonSrc = fs.readFileSync(path.join(ROOT, BUTTON), "utf8");
 const src1b = {
   routes: fs.readFileSync(path.join(ROOT, ROUTES), "utf8"),
   manifest: fs.readFileSync(path.join(ROOT, MANIFEST), "utf8"),
@@ -89,6 +103,9 @@ if (process.argv.includes("--selftest")) {
     ["out-of-context reason accepted FAILS", auditEngine(engineSrc.replace('return { ok: false, error: "reason_not_allowed_in_context" }', "void 0")).length > 0],
     ["a free-text note on the input FAILS", auditEngine(engineSrc.replace("  reasonCode?: string | null;", "  reasonCode?: string | null;\n  note?: string;")).length > 0],
     ["no audit row FAILS", auditEngine(engineSrc.replace("await appendCrudAudit(", "await (async () => {})(")).length > 0],
+    ["a textarea in the button FAILS", auditButton(buttonSrc.replace("<SimpleCombobox", "<textarea /><SimpleCombobox"), engineSrc).length > 0],
+    ["confirm-only for a third role FAILS", auditButton(buttonSrc.replace('OVERRIDE_CONFIRM_ROLES = ["Owner", "Accountant"] as const', 'OVERRIDE_CONFIRM_ROLES = ["Owner", "Accountant", "Manager"] as const'), engineSrc).length > 0],
+    ["unfiltered reason list FAILS", auditButton(buttonSrc.replace("listOverrideReasons(companyId, { context })", "listOverrideReasons(companyId, {})"), engineSrc).length > 0],
     ["unmounted Lists screen FAILS", auditStep1b({ ...src1b, manifest: src1b.manifest.replace('path="/lists/accounting/override-reasons"', 'path="/x"') }).length > 0],
   ];
   let bad = 0;
@@ -96,6 +113,6 @@ if (process.argv.includes("--selftest")) {
   console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
   process.exit(bad ? 1 : 0);
 }
-const failures = [...audit(sql), ...auditStep1b(src1b), ...auditEngine(engineSrc)];
+const failures = [...audit(sql), ...auditStep1b(src1b), ...auditEngine(engineSrc), ...auditButton(buttonSrc, engineSrc)];
 if (failures.length) { console.error(`${LABEL}: FAIL — ${failures.length}`); for (const x of failures) console.error(`  ✗ ${x}`); process.exit(1); }
 console.log(`${LABEL}: OK — one company-scoped, FORCE-RLS, audited override catalog with no free-text reason; Lists screen + context-filtered reason list`);

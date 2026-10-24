@@ -104,5 +104,14 @@
   },
   "fuel": {
     "no_load_at_pump": "No load at pump time"
+  },
+  "overrides": {
+    "button": "Override",
+    "title": "Override",
+    "confirmOnly": "Confirm this override?",
+    "reason": "Reason",
+    "pickReason": "Pick a reason",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   }
 }
