@@ -33,7 +33,12 @@ function audit(source) {
   if (!/offset: \(hosViolationPage - 1\) \* hosViolationPageSize/.test(source.load) || !/load-safety-reverse-hos-violations-pager/.test(source.load)) failures.push("load reverse pager");
   if (!/fetchEldHosViolations\(operatingCompanyId, \{ limit: pageSize, offset: \(page - 1\) \* pageSize \}\)/.test(source.eld) || !/eld-hos-violations-server-pager/.test(source.eld) || !/hidePager/.test(source.eld)) failures.push("ELD list controlled pager");
   if (!/path="hos-violations" element=\{<HOSViolationsTab/.test(source.routes)) failures.push("canonical list route mount");
-  if (!/<DriverHosViolationsReverseSection[\s\S]{0,150}driverId=/.test(source.driverPage) || !/<DriverHosViolationsReverseSection[\s\S]{0,150}driverId=/.test(source.driverDetail)) failures.push("both driver reverse mounts");
+  if (!/<DriverHosViolationsReverseSection[\s\S]{0,150}driverId=/.test(source.driverPage)) {
+    failures.push("driver profile reverse mount");
+  }
+  if (!/<DriverHosViolationsReverseSection[\s\S]{0,150}driverId=/.test(source.driverDetail)) {
+    failures.push("driver detail reverse mount");
+  }
   if (!/<LoadSafetyReverseSection[\s\S]{0,150}loadId=/.test(source.loadDrawer)) failures.push("load reverse mount");
   if (!/key:\s*"driver_id"[\s\S]{0,120}sortValue:\s*\(row\)\s*=>\s*String\(row\.driver_name/.test(source.tab)) {
     failures.push("HOS Driver column must sortValue driver_name not UUID");
