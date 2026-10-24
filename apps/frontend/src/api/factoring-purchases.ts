@@ -107,8 +107,8 @@ export type CreateFactoringPurchaseBody = {
     /** Faro's own invoice number (Inv on Faro's reports). */
     faro_invoice_number?: string;
   }>;
-  /** ROUND 321: Owner override reason for missing BOL / POD / rate confirmation (documents only, >= 10 chars). */
-  docs_override_reason?: string;
+  /** LEAD 443.294: the Owner's documents override from <OverrideButton context="factoring"> (reason_code null = owner_override). */
+  docs_override?: DocsOverride;
 };
 
 export type FactoringPurchaseListRow = {
@@ -284,11 +284,14 @@ export type SendFactoringPurchaseResult = {
   linked_documents: number;
 };
 
-export function sendFactoringPurchase(companyId: string, purchaseId: string, toEmail?: string | null, docsOverrideReason?: string | null) {
-  const body: Record<string, string> = {};
+/** LEAD 443.294 — the override the button confirmed: a catalog reason_code, or null when the Owner just confirms. */
+export type DocsOverride = { reason_code: string | null };
+
+export function sendFactoringPurchase(companyId: string, purchaseId: string, toEmail?: string | null, docsOverride?: DocsOverride | null) {
+  const body: Record<string, unknown> = {};
   if (toEmail) body.to_email = toEmail;
-  // Owner override approval: send although loads are missing BOL / POD / rate confirmation (reason >= 10 chars).
-  if (docsOverrideReason && docsOverrideReason.trim().length >= 10) body.docs_override_reason = docsOverrideReason.trim();
+  // Owner override approval (OverrideButton → recordOverride): send although loads are missing BOL / POD / rate confirmation.
+  if (docsOverride) body.docs_override = docsOverride;
   return apiRequest<SendFactoringPurchaseResult>(`/api/v1/factoring/purchases/${encodeURIComponent(purchaseId)}/send?${q(companyId)}`, {
     method: "POST",
     body,

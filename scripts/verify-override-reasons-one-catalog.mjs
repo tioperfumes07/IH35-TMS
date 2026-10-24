@@ -18,7 +18,9 @@
  * Step 3 (the button, apps/frontend/src/components/override/OverrideButton.tsx):
  *   R11 no text input of any kind (no <input type="text">, <textarea>, contentEditable);
  *   R12 confirm-only roles = the engine's (Owner, Accountant); everyone else reads the reasons filtered by context.
- * Later step extends this guard (0 free-text sites).
+ * Step 4 (the sites) — MIGRATED_SITES grows one context per PR; each site must:
+ *   R13 mount <OverrideButton context="…"> (frontend), call recordOverride with that context (backend), and carry NO
+ *       free-text override field (its old *_override_reason string schema / text input is gone).
  * --selftest plants each regression and requires a FAIL.
  */
 import fs from "node:fs";
@@ -34,6 +36,16 @@ const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const MAP = "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx";
 const ENGINE = "apps/backend/src/overrides/record-override.service.ts";
 const BUTTON = "apps/frontend/src/components/override/OverrideButton.tsx";
+
+/** LEAD 443.294 step 4 — sites moved to the ONE button + engine (one context per PR). */
+export const MIGRATED_SITES = [
+  {
+    context: "factoring",
+    frontend: "apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx",
+    backend: "apps/backend/src/factoring/purchase.routes.ts",
+    forbidden: [/docs_override_reason:\s*z\.string\(\)/, /docsOverrideReason/, /setDocsOverrideReason/],
+  },
+];
 
 export function auditStep1b(src) {
   const f = [];
@@ -64,6 +76,18 @@ export function auditButton(button, engine) {
   if (/<textarea|<input\b|contentEditable/i.test(code)) f.push("R11: the override button renders a text input");
   if (!/OVERRIDE_CONFIRM_ROLES = \["Owner", "Accountant"\] as const/.test(button) || !/Owner: "owner_override",\s*Accountant: "accountant_override"/.test(engine)) f.push("R12: confirm-only roles differ between button and engine");
   if (!/listOverrideReasons\(companyId, \{ context \}\)/.test(button) || !/enabled: open && !confirmOnly/.test(button)) f.push("R12: non-confirm roles do not read the reasons filtered by context");
+  return f;
+}
+
+export function auditSites(read) {
+  const f = [];
+  for (const site of MIGRATED_SITES) {
+    const fe = read(site.frontend);
+    const be = read(site.backend);
+    if (!new RegExp(`<OverrideButton[\\s\\S]{0,40}context="${site.context}"`).test(fe)) f.push(`R13: ${site.frontend} does not mount <OverrideButton context="${site.context}">`);
+    if (!new RegExp(`recordOverride\\([\\s\\S]{0,240}context: "${site.context}"`).test(be)) f.push(`R13: ${site.backend} does not call recordOverride for context ${site.context}`);
+    for (const re of site.forbidden) if (re.test(fe) || re.test(be)) f.push(`R13: ${site.context} still carries a free-text override (${re})`);
+  }
   return f;
 }
 
@@ -106,6 +130,8 @@ if (process.argv.includes("--selftest")) {
     ["a textarea in the button FAILS", auditButton(buttonSrc.replace("<SimpleCombobox", "<textarea /><SimpleCombobox"), engineSrc).length > 0],
     ["confirm-only for a third role FAILS", auditButton(buttonSrc.replace('OVERRIDE_CONFIRM_ROLES = ["Owner", "Accountant"] as const', 'OVERRIDE_CONFIRM_ROLES = ["Owner", "Accountant", "Manager"] as const'), engineSrc).length > 0],
     ["unfiltered reason list FAILS", auditButton(buttonSrc.replace("listOverrideReasons(companyId, { context })", "listOverrideReasons(companyId, {})"), engineSrc).length > 0],
+    ["a site back on a free-text reason FAILS", auditSites((rel) => { const t = fs.readFileSync(path.join(ROOT, rel), "utf8"); return rel.endsWith("purchase.routes.ts") ? t + "\nconst x = { docs_override_reason: z.string() };" : t; }).length > 0],
+    ["a site without the button FAILS", auditSites((rel) => { const t = fs.readFileSync(path.join(ROOT, rel), "utf8"); return rel.endsWith("SubmitToFactorTab.tsx") ? t.replace(/<OverrideButton/g, "<X") : t; }).length > 0],
     ["unmounted Lists screen FAILS", auditStep1b({ ...src1b, manifest: src1b.manifest.replace('path="/lists/accounting/override-reasons"', 'path="/x"') }).length > 0],
   ];
   let bad = 0;
@@ -113,6 +139,6 @@ if (process.argv.includes("--selftest")) {
   console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
   process.exit(bad ? 1 : 0);
 }
-const failures = [...audit(sql), ...auditStep1b(src1b), ...auditEngine(engineSrc), ...auditButton(buttonSrc, engineSrc)];
+const failures = [...audit(sql), ...auditStep1b(src1b), ...auditEngine(engineSrc), ...auditButton(buttonSrc, engineSrc), ...auditSites((rel) => fs.readFileSync(path.join(ROOT, rel), "utf8"))];
 if (failures.length) { console.error(`${LABEL}: FAIL — ${failures.length}`); for (const x of failures) console.error(`  ✗ ${x}`); process.exit(1); }
 console.log(`${LABEL}: OK — one company-scoped, FORCE-RLS, audited override catalog with no free-text reason; Lists screen + context-filtered reason list`);

@@ -13,6 +13,7 @@
 //   POST /api/v1/factoring/purchases/:id/send   "Save and send": email the invoices + their load docs to the factor
 // The create route runs the FEED GATE (kind 'invoice') on every invoice first; a red invoice cannot enter a purchase.
 // The bank match is the canonical bank-recon accept (kind factoring_advance = this purchase's advance), already Owner-only.
+import { overrideRefusalStatus, recordOverride } from "../overrides/record-override.service.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -62,8 +63,9 @@ const createBody = z.object({
   faro_report_ref: z.string().trim().max(80).nullable().optional(),
   wire_fee_cents: cents.optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
-  // ROUND 321 item 3: Owner override reason for missing BOL / POD / rate confirmation (documents only).
-  docs_override_reason: z.string().trim().min(10).max(1000).optional(),
+  // LEAD 443.294: the ONE override (catalogs.override_reasons via recordOverride) — the Owner just confirms (reason_code
+  // null → owner_override); never a typed sentence.
+  docs_override: z.object({ reason_code: z.string().trim().regex(/^[a-z][a-z0-9_]*$/).max(80).nullable().optional() }).optional(),
   lines: z
     .array(
       z.object({
@@ -79,7 +81,7 @@ const createBody = z.object({
     .max(200),
 });
 // LEAD 443.171 E — edit a posted purchase in place: the same fields as create, plus the Owner's reason.
-const editBody = createBody.omit({ factoring_company_vendor_id: true, docs_override_reason: true }).extend({
+const editBody = createBody.omit({ factoring_company_vendor_id: true, docs_override: true }).extend({
   reason: z.string().trim().min(10).max(500),
 });
 const voidBody = z.object({ reason: z.string().trim().min(3).max(500) });
@@ -93,11 +95,43 @@ const invoiceParams = z.object({ invoiceId: z.string().uuid() });
 const directPayBody = z.object({ reason: z.string().trim().min(3).max(500) });
 const sendBody = z.object({
   to_email: z.string().trim().email().max(320).optional(),
-  // Owner override approval (2026-10-01): send although loads are missing BOL / POD / rate confirmation.
-  docs_override_reason: z.string().trim().min(10).max(1000).optional(),
+  // LEAD 443.294: the ONE override (catalogs.override_reasons via recordOverride) — the Owner just confirms (reason_code
+  // null → owner_override); never a typed sentence.
+  docs_override: z.object({ reason_code: z.string().trim().regex(/^[a-z][a-z0-9_]*$/).max(80).nullable().optional() }).optional(),
 });
 
 type Reply = { code: (n: number) => { send: (b: unknown) => unknown } };
+
+/**
+ * LEAD 443.294: a documents override goes through the ONE engine (recordOverride, context 'factoring') before any writer
+ * sees it. Returns the stored catalog code, null when no override was asked for, or false after replying with the
+ * engine's refusal.
+ */
+async function confirmDocsOverride(
+  reply: Reply,
+  user: { uuid: string; role: string },
+  operatingCompanyId: string,
+  docsOverride: { reason_code?: string | null } | undefined,
+  entityType: string,
+  entityId: string
+): Promise<string | null | false> {
+  if (!docsOverride) return null;
+  const r = await withCompanyScope(user.uuid, operatingCompanyId, (client) =>
+    recordOverride(client as never, {
+      operatingCompanyId,
+      context: "factoring",
+      entityType,
+      entityId,
+      reasonCode: docsOverride.reason_code ?? null,
+      actor: { userId: user.uuid, role: user.role },
+    })
+  );
+  if (!r.ok) {
+    reply.code(overrideRefusalStatus(r.error)).send({ error: `override_${r.error}` });
+    return false;
+  }
+  return r.reason_code;
+}
 
 function sendPurchaseError(reply: Reply, error: unknown) {
   if (!(error instanceof FactoringPurchaseError) && !(error instanceof PurchaseCandidateError)) return false;
@@ -196,13 +230,15 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
     if (!b.success) return validationError(reply, b.error);
     // Submitting a purchase report to the factor is the Owner's act (ROUND 315 OWNER-ONLY LAW).
     if (!(await ownerGate(reply, user, q.data.operating_company_id, "create", p.data.id))) return;
+    const sendOverride = await confirmDocsOverride(reply, user, q.data.operating_company_id, b.data.docs_override, "factoring_purchase", p.data.id);
+    if (sendOverride === false) return;
     try {
       return await sendPurchaseToFactor(app, req, {
         operatingCompanyId: q.data.operating_company_id,
         actorUserId: user.uuid,
         purchaseId: p.data.id,
         toEmail: b.data.to_email ?? null,
-        docsOverrideReason: b.data.docs_override_reason ?? null,
+        docsOverrideCode: sendOverride,
       });
     } catch (error) {
       if (sendPurchaseError(reply, error)) return;
@@ -233,9 +269,11 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
     const b = createBody.safeParse(req.body ?? {});
     if (!b.success) return validationError(reply, b.error);
     if (!(await ownerGate(reply, user, q.data.operating_company_id, "create", null))) return;
+    const createOverride = await confirmDocsOverride(reply, user, q.data.operating_company_id, b.data.docs_override, "factoring_purchase_invoices", b.data.lines.map((l) => l.invoice_id).join(","));
+    if (createOverride === false) return;
     // FEED GATE first, in its own committed scope (the intake/check rows are WORM evidence even when red).
     const gate = await withCompanyScope(user.uuid, q.data.operating_company_id, (client) =>
-      runPurchaseFeedGate(client, q.data.operating_company_id, b.data.lines.map((l) => l.invoice_id), user.uuid, b.data.docs_override_reason ?? null, {
+      runPurchaseFeedGate(client, q.data.operating_company_id, b.data.lines.map((l) => l.invoice_id), user.uuid, createOverride, {
         // ownerGate above refused every non-Owner; only the Owner's reason releases reds (LEAD 443.154).
         actorIsOwner: true,
       })
@@ -254,7 +292,7 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
           wireFeeCents: b.data.wire_fee_cents,
           notes: b.data.notes ?? null,
           lines: b.data.lines,
-          docsOverrideReason: b.data.docs_override_reason ?? null,
+          docsOverrideCode: createOverride,
         })
       );
       return reply.code(201).send(detail);

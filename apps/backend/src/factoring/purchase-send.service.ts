@@ -34,17 +34,18 @@ const safeName = (s: string) => s.replace(/[^A-Za-z0-9._-]+/g, "_").slice(0, 120
 export async function sendPurchaseToFactor(
   app: FastifyInstance,
   req: FastifyRequest,
-  input: { operatingCompanyId: string; actorUserId: string; purchaseId: string; toEmail: string | null; docsOverrideReason?: string | null }
+  input: { operatingCompanyId: string; actorUserId: string; purchaseId: string; toEmail: string | null; docsOverrideCode?: string | null }
 ) {
   const oci = input.operatingCompanyId;
   const packet = await withCompanyScope(input.actorUserId, oci, (client) => loadPurchaseSendPacket(client, oci, input.purchaseId));
   const head = packet.head;
-  // Missing BOL / POD / rate confirmation blocks the send unless the Owner approves an override with a reason (the route
-  // already admits only the Owner). The approval is stamped on the purchase BEFORE anything is sent, and audited.
-  // An override approved at Save (stamped on the purchase) carries to the send; a new reason here stamps it now.
-  const overrideReason = (input.docsOverrideReason ?? (head.docs_override_reason as string | null) ?? "").trim();
+  // Missing BOL / POD / rate confirmation blocks the send unless the Owner approved an override (the route already admits
+  // only the Owner). LEAD 443.294: the approval is the ONE override engine's confirmed catalog code (recordOverride ran in
+  // the route and wrote the audit row) — never a typed sentence. Stamped on the purchase BEFORE anything is sent; an
+  // override approved at Save (stamped on the purchase) carries to the send.
   const alreadyApproved = Boolean(head.docs_override_at);
-  if (packet.missing.length && overrideReason.length < 10) {
+  const overrideReason = (input.docsOverrideCode ?? (alreadyApproved ? (head.docs_override_reason as string | null) : null) ?? "").trim();
+  if (packet.missing.length && !overrideReason) {
     throw new PurchaseCandidateError("factoring_send_missing_docs", 409, packet.missing);
   }
   if (packet.missing.length && !alreadyApproved) {

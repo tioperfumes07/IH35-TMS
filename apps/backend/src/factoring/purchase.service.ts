@@ -56,7 +56,8 @@ export type CreatePurchaseInput = {
   notes?: string | null;
   lines: PurchaseLineInput[];
   /** ROUND 321 item 3: Owner override for missing load documents, stamped on the purchase (who / when / why). */
-  docsOverrideReason?: string | null;
+  /** LEAD 443.294: the override engine's confirmed catalog code (never free text). */
+  docsOverrideCode?: string | null;
 };
 
 /** Defense in depth: the service itself refuses a non-Owner actor even when called outside the routes (ROUND 315 law). */
@@ -186,8 +187,8 @@ export async function createPurchaseDraft(client: DbClient, input: CreatePurchas
       lines.length, gross, escrow, cash, fee, wire, advance, net, input.notes ?? null, input.actorUserId]
   );
   const purchaseId = head.rows[0]!.id;
-  const docsOverride = (input.docsOverrideReason ?? "").trim();
-  if (docsOverride.length >= 10) {
+  const docsOverride = (input.docsOverrideCode ?? "").trim();
+  if (docsOverride) {
     await client.query(
       `UPDATE accounting.factoring_purchases SET docs_override_at = now(), docs_override_by_user_id = $2::uuid, docs_override_reason = $3
         WHERE id = $1::uuid`,
