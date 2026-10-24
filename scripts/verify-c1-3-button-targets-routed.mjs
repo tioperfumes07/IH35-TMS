@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fuel"],"cols":["connectivity"],"leaves":["home","fraud_alerts"],"task":"LEAD-443.290"} */
 /**
  * Static guard: C1-3 dead-end buttons stay wired.
  *
@@ -43,7 +44,8 @@ const CHECKS = [
   {
     name: "Fuel Home → Fraud Alerts",
     file: "apps/frontend/src/pages/fuel/FuelHome.tsx",
-    linkMustContain: 'to="/fuel/fraud-alerts"',
+    // 443.290: the 443.250 V3 board (#27267) made the KPI a V3KpiTile that navigates onClick — same target, either shape.
+    linkMustContainAny: ['to="/fuel/fraud-alerts"', 'onClick={() => navigate("/fuel/fraud-alerts")}'],
     route: "/fuel/fraud-alerts",
   },
   {
@@ -105,6 +107,16 @@ function selftest() {
     const poisoned = runChecks(tmp);
     if (!poisoned.some((e) => e.includes("Driver profile Layovers card"))) {
       console.error(`${LABEL} SELFTEST FAIL — stripping both link shapes not caught`);
+      process.exit(1);
+    }
+    // Poison 2 (443.290): strip both Fuel Home shapes (literal to= and the V3KpiTile navigate) — must fail.
+    const fuelAbs = path.join(tmp, CHECKS[0].file);
+    mkdirAndWrite(fuelAbs, readFileSync(path.join(ROOT, CHECKS[0].file), "utf8")
+      .replaceAll('to="/fuel/fraud-alerts"', 'to="/fuel/x"')
+      .replaceAll('navigate("/fuel/fraud-alerts")', 'navigate("/fuel/x")'));
+    const poisonedFuel = runChecks(tmp);
+    if (!poisonedFuel.some((e) => e.includes("Fuel Home → Fraud Alerts"))) {
+      console.error(`${LABEL} SELFTEST FAIL — a Fuel Home tile pointing nowhere was not caught`);
       process.exit(1);
     }
   } finally {

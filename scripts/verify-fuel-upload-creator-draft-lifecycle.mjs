@@ -14,10 +14,11 @@ function failures(input = source) {
     if (!/const resetDraft = useCallback\([\s\S]*?setFile\(null\)/.test(text)) out.push(`${key} clears selected file`);
     if (!/lifecycleGenerationRef\.current \+= 1;\s*setLoading\(false\);\s*resetDraft\(\);\s*\}, \[open, operatingCompanyId, resetDraft\]\);/.test(text)) out.push(`${key} resets on open/company change`);
     if (!/const completeClose = useCallback\([\s\S]*?lifecycleGenerationRef\.current \+= 1;\s*setLoading\(false\);\s*resetDraft\(\);\s*onClose\(\);/.test(text)) out.push(`${key} resets after current success or accepted close`);
-    if (!text.includes('<Modal open={open} onClose={handleClose}')) out.push(`${key} modal dismiss resets`);
+    // 443.290: the import modal steps aside while the 443.243 assignment popup is up (open && !assignmentQuestion).
+    if (!/<Modal open=\{open(?: && !assignmentQuestion)?\} onClose=\{handleClose\}/.test(text)) out.push(`${key} modal dismiss resets`);
     if (!/variant="secondary" onClick=\{attemptClose\} disabled=\{loading\}/.test(text)) out.push(`${key} cancel uses guarded close`);
     const successResets = key === "transactions"
-      ? /onImported\(\);\s*if \(res\.dead_letters === 0\) completeClose\(\);/.test(text)
+      ? !(!/onImported\(\);\s*setCloseWhenQuestionDone\(res\.dead_letters === 0\);[\s\S]{0,240}?if \(res\.dead_letters === 0 && !opened\) completeClose\(\);/.test(text) || !/const finishAssignmentQuestion = \(\) => \{\s*setAssignmentQuestion\(null\);\s*if \(closeWhenQuestionDone\) completeClose\(\);/.test(text))
       : /onUploaded\(\);\s*completeClose\(\);/.test(text);
     if (!successResets) out.push(`${key} clean success resets while rejected-row evidence remains visible`);
   }
@@ -36,15 +37,19 @@ if (process.argv.includes("--selftest")) {
   const staleFile = { ...source, transactions: source.transactions.replace("setFile(null)", "void file") };
   const staleCompany = { ...source, prices: source.prices.replace("[open, operatingCompanyId, resetDraft]", "[open, resetDraft]") };
   const staleEtag = { ...source, prices: source.prices.replace("setEtag(null);", "void etag;") };
-  const hidesRejectedRows = { ...source, transactions: source.transactions.replace("if (res.dead_letters === 0) completeClose();", "completeClose();") };
+  const hidesRejectedRows = { ...source, transactions: source.transactions.replace("if (res.dead_letters === 0 && !opened) completeClose();", "if (!opened) completeClose();") };
+  const popupHidesRejectedRows = { ...source, transactions: source.transactions.replace("if (closeWhenQuestionDone) completeClose();", "completeClose();") };
+  const modalNeverResets = { ...source, transactions: source.transactions.replace("<Modal open={open && !assignmentQuestion} onClose={handleClose}", "<Modal open={open && !assignmentQuestion} onClose={() => onClose()}") };
   const checks = [
     failures(staleFile).includes("transactions clears selected file"),
     failures(staleCompany).includes("prices resets on open/company change"),
     failures(staleEtag).includes("prices clears company-bound ETag"),
     failures(hidesRejectedRows).includes("transactions clean success resets while rejected-row evidence remains visible"),
+    failures(popupHidesRejectedRows).includes("transactions clean success resets while rejected-row evidence remains visible"),
+    failures(modalNeverResets).includes("transactions modal dismiss resets"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-fuel-upload-creator-draft-lifecycle selftest PASS — 4/4 cross-entity upload mutations red");
+  console.log("verify-fuel-upload-creator-draft-lifecycle selftest PASS — 6/6 cross-entity upload mutations red");
   process.exit(0);
 }
 
