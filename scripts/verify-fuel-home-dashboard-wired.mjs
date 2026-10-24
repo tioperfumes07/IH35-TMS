@@ -17,6 +17,7 @@ const KPI = path.join(ROOT, "apps/frontend/src/pages/fuel/components/FuelKpiRow.
 const CARDS = path.join(ROOT, "apps/frontend/src/pages/fuel/cards/FuelCardsPage.tsx");
 const UNMATCHED = path.join(ROOT, "apps/frontend/src/pages/fuel/relay-unmatched/RelayUnmatchedPage.tsx");
 const WALLET = path.join(ROOT, "apps/frontend/src/pages/fuel/relay-wallet/RelayWalletRollForwardPage.tsx");
+const FUEL_PLANNER_HOME = path.join(ROOT, "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx");
 const PLANNER = path.join(ROOT, "apps/backend/src/fuel/planner.routes.ts");
 const LABEL = "verify-fuel-home-dashboard-wired";
 const SPEND_FAKE_ZERO_RE =
@@ -65,6 +66,12 @@ export function computeFailures(source) {
   if (!/FuelFraudAlertsKpiCard/.test(source) || !/RelayHistoryImport/.test(source)) {
     errors.push("FuelHome.tsx must keep FuelFraudAlertsKpiCard + RelayHistoryImport (additive-only)");
   }
+  if (!/FuelBoardKpiStrip/.test(source) || !/FuelDieselByTruckPanel/.test(source)) {
+    errors.push("FuelHome.tsx must render FuelBoardKpiStrip + FuelDieselByTruckPanel (443.282 board home)");
+  }
+  if (!/viewAllHref="\/fuel\/by-truck"/.test(source)) {
+    errors.push("FuelHome.tsx must link diesel preview View all to /fuel/by-truck");
+  }
   if (!/lovesSyncQuery\.isError[\s\S]{0,240}<ListErrorBanner[\s\S]{0,180}lovesSyncQuery\.refetch\(\)/.test(source)) {
     errors.push("FuelHome.tsx must disclose Love's sync-status failure and retry the exact query");
   }
@@ -88,6 +95,30 @@ export function computeKpiFailures(source) {
   }
   if (/DrillKpiCard/.test(source)) {
     errors.push("FuelKpiRow must not keep DrillKpiCard after V3 restyle");
+  }
+  return errors;
+}
+
+/** ROUND 443.282 — Fuel.dc.html board shell (7-tab navy subnav + header actions). */
+export function computeBoardShellFailures(source) {
+  const errors = [];
+  if (!/subtitle=\{FUEL_BOARD_SUBTITLE\}/.test(source)) {
+    errors.push("FuelPlannerHome must use FUEL_BOARD_SUBTITLE (443.282 board header)");
+  }
+  if (!/FUEL_BOARD_SUBNAV\.map/.test(source)) {
+    errors.push("FuelPlannerHome must render FUEL_BOARD_SUBNAV (7 board tabs)");
+  }
+  if (!/fuel-board-header-import-fills/.test(source) || !/fuel-board-header-add-fill/.test(source)) {
+    errors.push("FuelPlannerHome must expose Import fills + Add fill header actions");
+  }
+  if (!/RelatedModuleLinks/.test(source) || !/fuel-related-module-links/.test(source)) {
+    errors.push("FuelPlannerHome must render RelatedModuleLinks for off-board fuel tabs");
+  }
+  if (!/tab === "by_truck"/.test(source) || !/FuelDieselByTruckPanel/.test(source)) {
+    errors.push("FuelPlannerHome must wire by_truck tab with FuelBoardKpiStrip + FuelDieselByTruckPanel");
+  }
+  if (/initialTab = "planner"/.test(source)) {
+    errors.push("FuelPlannerHome default initialTab must be home (443.282 board landing)");
   }
   return errors;
 }
@@ -295,14 +326,27 @@ function selftest() {
     process.exit(1);
   }
   console.log("selftest ok — Relay Wallet V3 chrome markers");
+  const plannerHomeGood = fs.readFileSync(FUEL_PLANNER_HOME, "utf8");
+  if (computeBoardShellFailures(plannerHomeGood).length) {
+    console.error("SELFTEST FAIL — shipped Fuel board shell baseline is red", computeBoardShellFailures(plannerHomeGood));
+    process.exit(1);
+  }
+  const plannerHomeBad = plannerHomeGood.replace(/subtitle=\{FUEL_BOARD_SUBTITLE\}/, "subtitle={activeLabel}");
+  if (!computeBoardShellFailures(plannerHomeBad).some((e) => e.includes("FUEL_BOARD_SUBTITLE"))) {
+    console.error("SELFTEST FAIL — board subtitle removal should fail board shell guard");
+    process.exit(1);
+  }
+  console.log("selftest ok — Fuel 443.282 board shell markers");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";
+    import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
+    import { FuelDieselByTruckPanel } from "./components/FuelDieselByTruckPanel";
     import { RelayHistoryImport } from "./components/RelayHistoryImport";
     export function FuelFraudAlertsKpiCard() {}
     export function FuelHomePage() {
       getFuelDashboard(id);
-      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelKpiRow /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
+      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelBoardKpiStrip /><FuelDieselByTruckPanel viewAllHref="/fuel/by-truck" /><FuelKpiRow /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
     }
   `;
   const bad = `
@@ -346,6 +390,7 @@ function run() {
   const cards = fs.readFileSync(CARDS, "utf8");
   const unmatched = fs.readFileSync(UNMATCHED, "utf8");
   const wallet = fs.readFileSync(WALLET, "utf8");
+  const fuelPlannerHome = fs.readFileSync(FUEL_PLANNER_HOME, "utf8");
   const failures = [
     ...computeFailures(source),
     ...computePlannerFailures(planner),
@@ -353,6 +398,7 @@ function run() {
     ...computeCardsFailures(cards),
     ...computeUnmatchedFailures(unmatched),
     ...computeWalletFailures(wallet),
+    ...computeBoardShellFailures(fuelPlannerHome),
   ];
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);
@@ -360,7 +406,7 @@ function run() {
     process.exit(1);
   }
   console.log(
-    `[${LABEL}] OK — Fuel Home dashboard KPIs wired; Fuel Cards + Relay Unmatched + Relay Wallet V3 chrome; spend query fail-loud`,
+    `[${LABEL}] OK — Fuel Home dashboard + 443.282 board shell; Fuel Cards + Relay Unmatched + Relay Wallet V3; spend query fail-loud`,
   );
 }
 

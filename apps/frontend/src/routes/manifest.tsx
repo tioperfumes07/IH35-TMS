@@ -1762,6 +1762,22 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/fuel/by-truck"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="by_truck" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/relay-wallet"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="relay_wallet" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/fuel/questions"
           element={
             <ProtectedRoute>
