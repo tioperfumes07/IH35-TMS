@@ -8082,3 +8082,13 @@ action: OWNER_AUTH_ID=AUTH-462 DATABASE_URL=<prod> node --import tsx scripts/ops
 result: COMMITTED 2026-10-24 17:19:26Z — audit.record_deletions AUTH-462: accounting.escrow_accounts 11; 0 orphan escrow accounts left; USMCA 34 escrow accounts
 expires_at: 2026-10-24T17:19:26Z
 status: CONSUMED
+
+## AUTH-463
+issued_at: 2026-10-24T18:25:00Z
+issued_by: Lead 443.322 ENG-01 (CC-1 box ~/Downloads/10-24-2026-CC1-443.322-Engine-Register-Fixes.md). Recorded by Lead
+owner_quotes: "get all those fixed now. find true root problem, the bess possible soultion, fix updage or upgrade or recreate engines" (owner 2026-10-24 1:25 PM CT)
+scope: USMCA ONLY — post the GL of settlements closed without posting: P-0113, P-0117 (P-0119 held: its $10.00 admin-fee deduction has no load and the load-bookended close posts only the escrow — ENG-01b).
+action: OWNER_AUTH_ID=AUTH-463 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-cc1-post-unposted-settlements-eng01.mts --apply --only=P-0113,P-0117
+rehearsal: fork br-winter-butterfly-akf3anas 18:57-18:58Z — 3 JEs, escrow only; P-0119 missing the $10.00 admin fee → held
+result: COMMITTED 2026-10-24 ~19:02Z — P-0113 JE b3744e47-e094-4c27-8f5f-99596b3803ef Dr 2000 50.00 / Cr 2100-00-026 50.00; P-0117 JE dab06366-9a16-4c60-b2fc-8a9e975639e8 Dr 2000 25.00 / Cr 2100-00-041 25.00; USMCA TB 0 on 8,075 postings
+status: PARTIAL (P-0119 pending ENG-01b)

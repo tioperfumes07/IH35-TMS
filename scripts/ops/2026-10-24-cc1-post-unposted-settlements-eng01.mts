@@ -36,23 +36,25 @@ const c = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await c.connect();
 
 async function queryTB(client: pg.Client, settlementId: string) {
+  await client.query("BEGIN READ ONLY");
+  await client.query("SET LOCAL app.bypass_rls = 'lucia'");
   const res = await client.query(
     `SELECT
-       a.account_number, a.name AS account_name,
-       SUM(CASE WHEN jep.entry_type = 'debit'  THEN jep.amount_cents ELSE 0 END) AS debit_cents,
-       SUM(CASE WHEN jep.entry_type = 'credit' THEN jep.amount_cents ELSE 0 END) AS credit_cents,
+       a.account_number, a.account_name,
+       SUM(CASE WHEN jep.debit_or_credit = 'debit'  THEN jep.amount_cents ELSE 0 END) AS debit_cents,
+       SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END) AS credit_cents,
        COUNT(*) AS lines
      FROM accounting.journal_entry_postings jep
      JOIN catalogs.accounts a
        ON a.id = jep.account_id AND a.operating_company_id = jep.operating_company_id
      WHERE jep.operating_company_id = $1::uuid
        AND jep.source_transaction_id = $2
-       AND jep.source_transaction_type IN ('driver_settlement','settlement_payrun')
-       AND jep.voided_at IS NULL
-     GROUP BY a.account_number, a.name
+       AND jep.source_transaction_type = 'driver_settlement'
+     GROUP BY a.account_number, a.account_name
      ORDER BY a.account_number`,
     [USMCA_CO, settlementId]
   );
+  await client.query("COMMIT");
   return res.rows;
 }
 
@@ -62,7 +64,7 @@ try {
 
   const res = await c.query(
     `SELECT id::text, display_id, status, posted_at, settlement_model,
-            net_pay_cents, trip_closed_at::text
+            net_pay::text AS net_pay, trip_closed_at::text
        FROM driver_finance.driver_settlements
       WHERE operating_company_id = $1::uuid
         AND display_id = ANY(ARRAY['P-0113','P-0117','P-0119'])
@@ -76,7 +78,7 @@ try {
   console.log("\n── TARGET SETTLEMENTS ──────────────────────────────────────");
   for (const row of res.rows) {
     console.log(
-      `  ${row.display_id}  id=${row.id}  status=${row.status}  posted_at=${row.posted_at ?? "NULL"}  net_pay=$${(row.net_pay_cents / 100).toFixed(2)}`
+      `  ${row.display_id}  id=${row.id}  status=${row.status}  posted_at=${row.posted_at ?? "NULL"}  net_pay=$${Number(row.net_pay).toFixed(2)}`
     );
   }
 
@@ -86,7 +88,11 @@ try {
     for (const r of alreadyPosted) console.log(`  ✓ ${r.display_id} already posted at ${r.posted_at}`);
   }
 
-  const toPost = res.rows.filter((r) => r.posted_at == null);
+  // LEAD 10-24: --only=P-0113,P-0117 limits the run (P-0119's \$10 admin-fee deduction has no load and the
+  // load-bookended close posts only its escrow — fork proof 10-24 18:58Z; held until the engine posts it).
+  const onlyArg = process.argv.find((x) => x.startsWith("--only="));
+  const only = onlyArg ? new Set(onlyArg.slice(7).split(",")) : null;
+  const toPost = res.rows.filter((r) => r.posted_at == null && (!only || only.has(r.display_id)));
   if (toPost.length === 0) {
     console.log("\nAll target settlements are already posted. Nothing to do.");
     process.exit(0);
