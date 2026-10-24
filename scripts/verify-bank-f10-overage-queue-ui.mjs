@@ -61,10 +61,13 @@ function collectProblemsFromSources(sources) {
   }
 
   if (home) {
-    if (!home.includes('to="/fuel/card-overage"') || !home.includes("FuelCardOverageKpiCard")) {
+    // 443.290: the 443.250 V3 board (#27267) made the KPI a V3KpiTile that navigates onClick — same target, either shape.
+    if (!(home.includes('to="/fuel/card-overage"') || home.includes('onClick={() => navigate("/fuel/card-overage")}')) || !home.includes("FuelCardOverageKpiCard")) {
       problems.push(`${FILES.home} must link Fuel Home KPI to /fuel/card-overage`);
     }
-    if (!home.includes("pendingLoaded = pendingQuery.data !== undefined") || !home.includes('pendingLoaded ? pending : "…"')) {
+    // the tile renders String(pending) once loaded, "…" while loading and "—" on error — never a false 0.
+    if (!home.includes("pendingLoaded = pendingQuery.data !== undefined")
+      || !(home.includes('pendingLoaded ? pending : "…"') || home.includes('pendingQuery.isError ? "—" : pendingLoaded ? String(pending) : "…"'))) {
       problems.push(`${FILES.home} must distinguish unresolved overage count from a true zero`);
     }
   }
@@ -135,7 +138,7 @@ function selftest() {
       name: "home link removed",
       sources: {
         [FILES.page]: realPage,
-        [FILES.home]: realHome.replaceAll('to="/fuel/card-overage"', 'to="/fuel/x"'),
+        [FILES.home]: realHome.replaceAll('to="/fuel/card-overage"', 'to="/fuel/x"').replaceAll('navigate("/fuel/card-overage")', 'navigate("/fuel/x")'),
         [FILES.manifest]: realManifest,
         [FILES.bankingJson]: realBanking,
       },
@@ -144,7 +147,7 @@ function selftest() {
       name: "loading state paints a false zero",
       sources: {
         [FILES.page]: realPage,
-        [FILES.home]: realHome.replace('pendingLoaded ? pending : "…"', "pending"),
+        [FILES.home]: realHome.replace('pendingLoaded ? pending : "…"', "pending").replace('pendingQuery.isError ? "—" : pendingLoaded ? String(pending) : "…"', "String(pending)"),
         [FILES.manifest]: realManifest,
         [FILES.bankingJson]: realBanking,
       },

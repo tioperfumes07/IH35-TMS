@@ -48,6 +48,8 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
   const [wexPlan, setWexPlan] = useState<WexStatementImportResult | null>(null);
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const [assignmentQuestion, setAssignmentQuestion] = useState<FuelAssignmentQuestion | null>(null);
+  // 443.290: only a CLEAN import closes once its assignment question is done; rejected rows stay on screen to correct.
+  const [closeWhenQuestionDone, setCloseWhenQuestionDone] = useState(false);
   const lifecycleGenerationRef = useRef(0);
 
   const openFirstQuestion = async (): Promise<boolean> => {
@@ -67,6 +69,8 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
     setFile(null);
     setResult(null);
     setWexPlan(null);
+    setAssignmentQuestion(null);
+    setCloseWhenQuestionDone(false);
   }, []);
 
   useEffect(() => {
@@ -85,6 +89,10 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
     if (loading) return;
     completeClose();
   }, [completeClose, loading]);
+  const finishAssignmentQuestion = () => {
+    setAssignmentQuestion(null);
+    if (closeWhenQuestionDone) completeClose();
+  };
 
   const submit = async () => {
     if (!file) {
@@ -107,6 +115,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
           "success"
         );
         onImported();
+        setCloseWhenQuestionDone(true);
         const opened = await openFirstQuestion();
         if (lifecycleGenerationRef.current !== submissionGeneration) return;
         if (!opened) completeClose();
@@ -127,6 +136,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
         res.dead_letters > 0 ? "error" : "success"
       );
       onImported();
+      setCloseWhenQuestionDone(res.dead_letters === 0);
       const opened = await openFirstQuestion();
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       if (res.dead_letters === 0 && !opened) completeClose();
@@ -249,14 +259,10 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
       open={assignmentQuestion != null}
       operatingCompanyId={operatingCompanyId}
       question={assignmentQuestion}
-      onClose={() => {
-        setAssignmentQuestion(null);
-        completeClose();
-      }}
+      onClose={finishAssignmentQuestion}
       onAnswered={() => {
-        setAssignmentQuestion(null);
         onImported();
-        completeClose();
+        finishAssignmentQuestion();
       }}
     />
     </>
