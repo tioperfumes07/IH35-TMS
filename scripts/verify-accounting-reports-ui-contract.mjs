@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["reports"],"cols":["connectivity"],"leafRe":"^home\\.(reports|hub)$","task":"443.307"} — Reports Home launches Trial balance / P&L / Balance sheet / Cash flow (quick-link tuples) */
 import fs from "node:fs";
 import path from "node:path";
 
@@ -52,7 +53,14 @@ try {
 
   const app = `${read(appPath)}\n${fs.existsSync("apps/frontend/src/routes/manifest.tsx") ? read("apps/frontend/src/routes/manifest.tsx") : ""}`;
   const api = read(apiPath);
-  const home = read(homePath);
+  // LEAD 443.307 — RPT-F443267-7 (ced0513327) moved the report launch list into components/ReportsHomeBoard.tsx, mounted by
+  // ReportsHome. The quick-links still must exist; they are read where they now live, and Home must still mount the board.
+  const boardPath = "apps/frontend/src/pages/reports/components/ReportsHomeBoard.tsx";
+  const homeShell = read(homePath);
+  if (!/<ReportsHomeBoard[\s/>]/.test(homeShell)) {
+    throw new Error("Reports home no longer mounts ReportsHomeBoard (the report quick-links live there)");
+  }
+  const home = `${homeShell}\n${read(boardPath)}`;
   const subNav = read(subNavPath);
   const categoryHover = read(categoryHoverPath);
   const phaseLinks = read(phaseLinksPath);
@@ -100,7 +108,11 @@ try {
   }
 
   for (const reportId of ["trial-balance", "profit-loss", "balance-sheet", "cash-flow-statement"]) {
-    assertIncludes(home, `["${reportId}"`, `Reports home is missing report quick-link: ${reportId}`);
+    // The launch tuple itself — id followed by its human label — not any array that happens to start with the id
+    // (ReportsHomeBoard's BASIS_AWARE Set literal also begins ["trial-balance", …] and masked a missing link).
+    if (!new RegExp(`\\[\\s*"${reportId}",\\s*"[A-Z][^"]*"`).test(home)) {
+      throw new Error(`Reports home is missing report quick-link: ${reportId}`);
+    }
     assertIncludes(subNav, `{ id: "${reportId}"`, `Reports sub-nav run list missing: ${reportId}`);
     // CategoryHoverNav is prettier-multiline (`{\n      id: "…"`); require the id token, not a single-line `{ id:`.
     if (!new RegExp(`\\{\\s*id:\\s*"${reportId}"`).test(categoryHover)) {
