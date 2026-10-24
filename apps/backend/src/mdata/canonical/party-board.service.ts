@@ -148,6 +148,41 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
       [oc]
     )
   ).rows[0];
+  // ROUND 443.280 — the Vendors home board's two panels and its "Measured" bar, computed from the same expenses / bills
+  // the table reads (never a screen constant). Category = the expense line's GL account; Pays through = the expense's
+  // payment account, vendors counted distinct per account (a vendor that paid through two accounts counts in both).
+  const byCategory = (
+    await client.query(
+      `SELECT coalesce(a.account_name, 'Uncategorized') AS category,
+              coalesce(sum(coalesce(el.amount_cents, round(el.amount * 100))), 0)::bigint AS spend
+         FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
+         LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
+        WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+        GROUP BY 1 ORDER BY 2 DESC, 1`,
+      [oc]
+    )
+  ).rows.map((r) => ({ category: r.category as string, spend_cents: n(r.spend) }));
+  const paysThrough = (
+    await client.query(
+      `SELECT e.payment_account_uuid AS account_id, coalesce(pa.account_name, 'No payment account') AS account_name,
+              count(DISTINCT e.vendor_uuid)::int AS vendors, coalesce(sum(e.total_amount_cents), 0)::bigint AS spend
+         FROM accounting.expenses e LEFT JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid
+        WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+        GROUP BY 1, 2 ORDER BY 4 DESC, 2`,
+      [oc]
+    )
+  ).rows.map((r) => ({ account_id: r.account_id ?? null, account_name: r.account_name as string, vendors: n(r.vendors), spend_cents: n(r.spend) }));
+  const openCheck = (
+    await client.query(
+      `SELECT count(*) FILTER (WHERE b.amount_cents - coalesce(b.paid_cents, 0) > 0)::int AS remainder_n,
+              coalesce(sum(b.amount_cents - coalesce(b.paid_cents, 0)) FILTER (WHERE b.amount_cents - coalesce(b.paid_cents, 0) > 0), 0)::bigint AS remainder_cents,
+              count(*) FILTER (WHERE b.status = ANY (ARRAY['open', 'partial', 'partially_paid', 'unpaid']))::int AS status_n,
+              coalesce(sum(b.amount_cents - coalesce(b.paid_cents, 0)) FILTER (WHERE b.status = ANY (ARRAY['open', 'partial', 'partially_paid', 'unpaid'])), 0)::bigint AS status_cents
+         FROM accounting.bills b
+        WHERE b.operating_company_id = $1::uuid AND b.voided_at IS NULL AND b.revoked_at IS NULL AND b.status <> 'void'`,
+      [oc]
+    )
+  ).rows[0];
   const withTx = rows.filter((r) => r.txns > 0);
   const spend = withTx.reduce((s, r) => s + r.spend_cents, 0);
   const top = withTx[0] ?? null;
@@ -163,6 +198,12 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
       top_vendor: top ? { id: top.id, name: top.name, txns: top.txns, spend_cents: top.spend_cents, share_pct: spend ? Math.round((top.spend_cents / spend) * 1000) / 10 : null } : null,
     },
     chips: { with_transactions: withTx.length, open_bills: rows.filter((r) => r.open_bills > 0).length, all: rows.length },
+    by_category: byCategory,
+    pays_through: paysThrough,
+    open_bills_check: {
+      remainder_count: n(openCheck.remainder_n), remainder_cents: n(openCheck.remainder_cents),
+      status_open_count: n(openCheck.status_n), status_open_cents: n(openCheck.status_cents),
+    },
     rows,
   };
 }

@@ -4,6 +4,7 @@
  * aging (customers) or category tokens (vendors), search over every record, Regular / Master-detail toggle,
  * Export, gear column chooser, sortable table with a totals footer, and the live "surfaces something" note.
  * Every figure comes from GET /api/v1/mdata/boards/:kind — nothing on this screen is a board constant.
+ * ROUND 443.280: the VENDORS home is rebuilt in VendorsHomeBoard.tsx (V3 board); PartyListSwitch mounts it.
  */
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -14,6 +15,7 @@ import { VariantDuplicatesPanel, useVariantCandidates, variantPairsFor } from ".
 import { formatDateUS } from "../../lib/formatDate";
 import { formatNumberTable, formatUsdCentsTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
+import { VendorsHomeBoard } from "./VendorsHomeBoard";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
 import { SelectCombobox } from "../Combobox";
@@ -26,21 +28,11 @@ type CustomerRow = {
   collected_cents: number; open_cents: number; paid_invoices: number; last_invoice: string | null;
   aging: { current: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number };
 };
-type VendorRow = {
-  id: string; name: string; status: string; category: string | null; txns: number; spend_cents: number;
-  avg_ticket_cents: number | null; last_paid: string | null; pays_through: string | null; open_bills: number; open_bills_cents: number;
-};
 type CustomerBoard = {
   kpis: { with_transactions: number; in_the_book: number; open_invoices: number; billed_cents: number; ar_open_cents: number; collected_cents: number; invoices: number; invoices_with_payment: number };
   chips: { with_transactions: number; open_balance: number; factored: number; all: number };
   rows: CustomerRow[];
 };
-type VendorBoard = {
-  kpis: { with_transactions: number; in_the_book: number; spend_cents: number; fuel_share_pct: number | null; open_bills_cents: number | null; unposted_fuel_cents: number; unposted_fuel_count: number; unposted_fuel_since: string | null; transactions: number; top_vendor: { name: string; txns: number; spend_cents: number; share_pct: number | null } | null };
-  chips: { with_transactions: number; open_bills: number; all: number };
-  rows: VendorRow[];
-};
-
 /**
  * ONE FORMATTER, 2026-10-02. These were four hand-rolled locals — `toLocaleString`, a local int, a
  * local money — in a file that renders the DEFAULT customer and vendor list. `lib/money.ts` is the
@@ -153,19 +145,17 @@ function BoardTable<R extends { id: string }>(props: {
   );
 }
 
-export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string; onMasterDetail: () => void; onCreate: () => void }) {
+export function PartyBoard(props: { kind: "customers"; operatingCompanyId: string; onMasterDetail: () => void; onCreate: () => void }) {
   const navigate = useNavigate();
-  const isCustomers = props.kind === "customers";
   const [range, setRange] = useState<Range>("ytd");
   const [chip, setChip] = useState<string>("with_transactions");
   const [aging, setAging] = useState<string>("all");
-  const [cats, setCats] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [gearOpen, setGearOpen] = useState(false);
   const exportRef = useRef<() => void>(() => undefined);
   const q = useQuery({
     queryKey: ["party-board", props.kind, props.operatingCompanyId, range],
-    queryFn: () => apiRequest<CustomerBoard | VendorBoard>(`/api/v1/mdata/boards/${props.kind}?operating_company_id=${props.operatingCompanyId}&range=${range}`),
+    queryFn: () => apiRequest<CustomerBoard>(`/api/v1/mdata/boards/${props.kind}?operating_company_id=${props.operatingCompanyId}&range=${range}`),
   });
   const data = q.data;
   const term = search.trim().toLowerCase();
@@ -178,8 +168,8 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
     return <ListErrorState status={status} message={`Could not load ${props.kind}.`} onRetry={() => void q.refetch()} />;
   }
 
-  const title = isCustomers ? "Customers" : "Vendors";
-  const sub = isCustomers ? "The list opens on the customers you actually do business with" : "The list opens on the vendors you actually pay";
+  const title = "Customers";
+  const sub = "The list opens on the customers you actually do business with";
   const all = data?.chips.all ?? 0;
 
   let tiles: Array<{ label: string; value: string; tone?: "navy" | "red" | "amber" }> = [];
@@ -187,7 +177,7 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
   let table: ReactNode = null;
   let note: ReactNode = null;
 
-  if (data && isCustomers) {
+  if (data) {
     const b = data as CustomerBoard;
     tiles = [
       { label: "With transactions", value: int(b.kpis.with_transactions), tone: "navy" },
@@ -237,57 +227,6 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
         </div>
       );
     }
-  } else if (data) {
-    const b = data as VendorBoard;
-    tiles = [
-      { label: "With transactions", value: int(b.kpis.with_transactions), tone: "navy" },
-      { label: "In the book", value: int(b.kpis.in_the_book) },
-      { label: "Spend YTD", value: money(b.kpis.spend_cents) },
-      { label: "Fuel share", value: b.kpis.fuel_share_pct == null ? "—" : `${b.kpis.fuel_share_pct}%` },
-      { label: "Open bills", value: money(b.kpis.open_bills_cents) },
-      { label: "Unposted fuel", value: money(b.kpis.unposted_fuel_cents), tone: b.kpis.unposted_fuel_cents ? "amber" : undefined },
-    ];
-    chips = [
-      { id: "with_transactions", label: "With transactions", n: b.chips.with_transactions },
-      { id: "open_bills", label: "Open bills", n: b.chips.open_bills },
-      { id: "all", label: "All", n: b.chips.all },
-    ];
-    const rows = b.rows.filter((r) =>
-      (term ? r.name.toLowerCase().includes(term) : chip === "with_transactions" ? r.txns > 0 : chip === "open_bills" ? r.open_bills > 0 : true)
-      && (cats.length === 0 || (r.category != null && cats.includes(r.category))));
-    const cols: Array<Col<VendorRow>> = [
-      { key: "name", label: "Vendor", sort: (r) => r.name, cell: (r) => r.name },
-      { key: "category", label: "Category", width: 118, sort: (r) => r.category ?? "", cell: (r) => <span className="pb-muted2">{r.category ?? "—"}</span> },
-      { key: "txns", label: "Transactions", num: true, width: 92, sort: (r) => r.txns, cell: (r) => (r.txns ? int(r.txns) : <span className="ih-empty">—</span>), foot: int(rows.reduce((s, r) => s + r.txns, 0)) },
-      { key: "spend", label: "Spend YTD", num: true, width: 136, sort: (r) => r.spend_cents, cell: (r) => <span className="pb-strong">{money(r.spend_cents)}</span>, foot: money(rows.reduce((s, r) => s + r.spend_cents, 0)) },
-      { key: "avg", label: "Avg ticket", num: true, width: 118, sort: (r) => r.avg_ticket_cents ?? 0, cell: (r) => <span className="pb-muted2">{money(r.avg_ticket_cents)}</span> },
-      { key: "last", label: "Last paid", num: true, width: 104, sort: (r) => r.last_paid ?? "", cell: (r) => <span className="pb-muted">{day(r.last_paid)}</span> },
-      { key: "pays", label: "Pays through", width: 120, sort: (r) => r.pays_through ?? "", cell: (r) => <span className="pb-muted2">{r.pays_through ?? "—"}</span> },
-      { key: "open", label: "Open bills", num: true, width: 116, sort: (r) => r.open_bills_cents, cell: (r) => (r.open_bills_cents ? usd(r.open_bills_cents) : <span className="ih-empty">—</span>), foot: money(rows.reduce((s, r) => s + r.open_bills_cents, 0)) },
-    ];
-    const allCats = [...new Set(b.rows.filter((r) => r.txns > 0 && r.category).map((r) => r.category as string))].sort();
-    table = (
-      <>
-        <BoardTable storageKey="party-board-cols-vendors" cols={cols} rows={rows} exportRef={exportRef} exportName="vendors.csv" gearOpen={gearOpen}
-          footLabel={`${int(rows.length)} ${chip === "with_transactions" && !term ? "vendors with transactions" : "vendors"}`}
-          onOpen={(r) => navigate(`/vendors/${r.id}`)} />
-        <datalist id="pb-vendor-cats">{allCats.map((c) => <option key={c} value={c} />)}</datalist>
-      </>
-    );
-    const top = b.kpis.top_vendor;
-    note = (
-      <div className="pb-note" data-testid="party-board-note">
-        <div className="pb-note-t">Two things this screen makes visible</div>
-        <div className="pb-note-b">
-          {top && b.kpis.spend_cents ? (
-            <><strong>{top.name} is {int(top.txns)} of your {int(b.kpis.transactions)} vendor transactions and {usd(top.spend_cents)} of {usd(b.kpis.spend_cents)} — {top.share_pct}% of every dollar you pay a vendor.</strong> That concentration is worth knowing before you negotiate.<br /></>
-          ) : null}
-          {b.kpis.unposted_fuel_count ? (
-            <><strong>{usd(b.kpis.unposted_fuel_cents)} of Relay fuel has never posted.</strong> {int(b.kpis.unposted_fuel_count)} transactions staged since {day(b.kpis.unposted_fuel_since)} and not yet posted to the GL.</>
-          ) : "Every Relay fuel transaction has posted."}
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -298,7 +237,7 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
             <div className="pb-title">{title}</div>
             <div className="pb-sub">{sub}</div>
           </div>
-          <button type="button" className="pb-create" onClick={props.onCreate}>+ Create {isCustomers ? "Customer" : "Vendor"}</button>
+          <button type="button" className="pb-create" onClick={props.onCreate}>+ Create Customer</button>
         </div>
         <div className="pb-kpis" data-testid="party-board-kpis">
           {(tiles.length ? tiles : Array.from({ length: 6 }, (): (typeof tiles)[number] => ({ label: "", value: "…" }))).map((t, i) => (
@@ -321,8 +260,6 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
           Possible duplicates {variantCount == null ? "…" : int(variantCount)}
         </button>
         <span className="pb-sep" />
-        {isCustomers ? (
-          <>
             <SelectCombobox aria-label="Date range" className="pb-select" value={range} onChange={(e) => setRange(e.target.value as Range)}>
               <option value="ytd">This year</option><option value="12m">Last 12 months</option><option value="all">All time</option>
             </SelectCombobox>
@@ -330,19 +267,6 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
               <option value="all">All ages</option><option value="current">Current</option><option value="d1_30">1–30 days</option>
               <option value="d31_60">31–60 days</option><option value="d61_90">61–90 days</option><option value="d90_plus">Over 90 days</option>
             </SelectCombobox>
-          </>
-        ) : (
-          <>
-            <span className="ih-hd">Category</span>
-            <div className="pb-tokens">
-              {cats.map((c) => (
-                <span key={c} className="pb-token">{c} <button type="button" aria-label={`Remove ${c}`} onClick={() => setCats(cats.filter((x) => x !== c))}>×</button></span>
-              ))}
-              <input className="pb-token-add" list="pb-vendor-cats" placeholder="Add…" aria-label="Add category"
-                onChange={(e) => { const v = e.target.value; if (v && !cats.includes(v) && (data as VendorBoard | undefined)?.rows.some((r) => r.category === v)) { setCats([...cats, v]); e.target.value = ""; } }} />
-            </div>
-          </>
-        )}
         <label htmlFor={`pb-search-${props.kind}`} style={{ position: "absolute", left: -9999 }}>Search {props.kind}</label>
         <input id={`pb-search-${props.kind}`} type="search" className="pb-search" value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder={`Search all ${int(all)} — hidden is not missing`} />
@@ -383,5 +307,9 @@ export function PartyListSwitch(props: { kind: PartyKind; operatingCompanyId: st
       </>
     );
   }
-  return <PartyBoard kind={props.kind} operatingCompanyId={props.operatingCompanyId} onMasterDetail={() => props.setDetail(true)} onCreate={props.onCreate} />;
+  // ROUND 443.280 — Vendors home is the V3 board (VendorsHomeBoard); Customers keeps PartyBoard until its own row lands.
+  if (props.kind === "vendors") {
+    return <VendorsHomeBoard operatingCompanyId={props.operatingCompanyId} onMasterDetail={() => props.setDetail(true)} onCreate={props.onCreate} />;
+  }
+  return <PartyBoard kind="customers" operatingCompanyId={props.operatingCompanyId} onMasterDetail={() => props.setDetail(true)} onCreate={props.onCreate} />;
 }

@@ -34,7 +34,9 @@ async function selftest_verify_party_boards_bound_live() {
 }
 const ROOT = process.cwd();
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
-const ui = readFileSync("apps/frontend/src/components/boards/PartyBoard.tsx", "utf8");
+// 443.280: the Vendors home moved to its own V3 board (VendorsHomeBoard.tsx + the shared partyBoardKit.tsx); the
+// board-control scan reads every file that renders a party board, so a control cannot vanish by moving files.
+const ui = ["PartyBoard.tsx", "VendorsHomeBoard.tsx", "partyBoardKit.tsx"].map((f) => readFileSync(`apps/frontend/src/components/boards/${f}`, "utf8")).join("\n");
 const manifest = readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8");
 const css = readFileSync("apps/frontend/src/components/boards/party-board.css", "utf8");
 const hubUi = readFileSync("apps/frontend/src/components/boards/DriverHubBoard.tsx", "utf8");
@@ -50,7 +52,7 @@ if (!partySvc.includes("payment_applications") || !partySvc.includes("collected 
   fails.push("party-board.service.ts must compute collected from payment_applications (443.282)");
 }
 for (const k of ["customers", "vendors"]) if (!new RegExp(`<PartyListRoute kind="${k}">`).test(manifest)) fails.push(`/${k} must open on the board (PartyListRoute)`);
-for (const label of ["With transactions", "In the book", "Open invoices", "Billed", "A/R open", "Collected", "Spend YTD", "Fuel share", "Open bills", "Unposted fuel",
+for (const label of ["With transactions", "In the book", "Open invoices", "Billed", "A/R open", "Collected", "Spend YTD", "Fuel share", "Open bills", "Unposted fuel", "Spend by category", "Pays through", "Avg ticket", "Last paid", "Measured",
   "Open balance", "Factored", "This year", "All ages", "Regular", "Master-detail", "Export", "Choose columns", "hidden is not missing", "Category"]) {
   if (!ui.includes(label)) fails.push(`board control/label missing: "${label}"`);
 }
@@ -139,6 +141,7 @@ try {
   eq("vendors in the book", v.in_the_book, vb.n);
   eq("vendors spend YTD (cents)", v.spend_cents, ve.s);
   eq("vendors transactions", v.transactions, ve.t);
+  eq("vendors pays-through spend (cents)", engine.vendors.pays_through_spend_cents, ve.s); // 443.280: panel rows add up to Spend YTD
   eq("unposted Relay fuel (cents)", v.unposted_fuel_cents, rf.s);
   eq("unposted Relay fuel (count)", v.unposted_fuel_count, rf.n);
   const dh = (await c.query(`SELECT count(*) FILTER (WHERE status::text = 'Active')::int a, count(*)::int t FROM mdata.drivers WHERE operating_company_id = $1 AND merged_into_driver_id IS NULL`, [USMCA])).rows[0];
