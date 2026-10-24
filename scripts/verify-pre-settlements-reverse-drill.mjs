@@ -86,7 +86,8 @@ const CHECKS = [
   // render callback's parameter is named `row`, not `settlement`. Same real drill, same fix
   // pattern already applied to verify-wave-b-acct-connectivity-remainder.mjs's identical check.
   { name: "pre-settlement exact driver drill", file: F.panel, pattern: /<EntityLink(?:OrTombstone)?[\s\S]{0,150}kind="driver"[\s\S]{0,150}id=\{[\w.]*\.driver_id\}/ },
-  { name: "pre-settlement exact settlement drill", file: F.panel, pattern: /kind="settlement"[\s\S]{0,180}id=\{settlement\.id\}/ },
+  // CC-3 2026-10-24: TourListRow uses settlement_id (not id) — accept both to match current typed code.
+  { name: "pre-settlement exact settlement drill", file: F.panel, pattern: /kind="settlement"[\s\S]{0,180}id=\{settlement\.(settlement_)?id\}/ },
   // "pre-settlement row marker" — rowTestId is a DataTable PROP (rowTestId={() => "..."}), not an
   // inline JSX attribute; the literal `data-testid="..."` never appears in this file's own source
   // (DataTable applies it internally). Match the actual prop-passing shape instead.

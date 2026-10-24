@@ -189,7 +189,7 @@ export function SubscriptionEditor({
           <label className="block">
             <span className="font-medium text-[#1F2A44]">Timezone</span>
             <input
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
+              className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
             />

@@ -138,6 +138,12 @@ const PROTECTED = new Set([
   // wires load/unit onto that panel.
   "load\tdispatch:dispatch.panel.load_unit_cost_split",
   "unit\tdispatch:dispatch.panel.load_unit_cost_split",
+  // CC-3 register: fuel.panel.fuel_diesel_by_truck added to fuel.required.json without
+  // a connectivity guard. Genuine unbuilt gap; no Built credit. Remove when wired.
+  "connectivity\tfuel:fuel.panel.fuel_diesel_by_truck",
+  // lists.modal.override_reason arrived via agent-sync-main (7349992008) without a guard.
+  // Genuine unbuilt gap; no Built credit. Remove when wired.
+  "connectivity\tlists:lists.modal.override_reason",
 ]);
 
 const CLOSED_CLAIM_IDS = [

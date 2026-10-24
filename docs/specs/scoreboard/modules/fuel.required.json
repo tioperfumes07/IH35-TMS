@@ -425,6 +425,17 @@
       "required": [
         "connectivity"
       ]
+    },
+    {
+      "id": "fuel.panel.fuel_diesel_by_truck",
+      "tab": "Panels",
+      "sub": "Panel: Fuel Diesel By Truck",
+      "route_hint": "surface://pages/fuel/components/FuelDieselByTruckPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/fuel/components/FuelDieselByTruckPanel.tsx",
+      "required": [
+        "connectivity"
+      ]
     }
   ],
   "honesty_audit": {

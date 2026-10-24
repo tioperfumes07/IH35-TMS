@@ -35,3 +35,4 @@ scripts/feed/.last-close-*.json
 wt-*/
 .tmp-scratch/
 .r330-staged/
+.gate-step-map.json
