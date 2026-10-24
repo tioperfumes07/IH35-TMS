@@ -17,10 +17,11 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -342,8 +343,9 @@ export function PrepaidExpensesPage() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); none = all.
+  // FILTER-MULTI-01 — live apply (no staged Apply/Cancel popover).
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: [] as string[] }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
+  const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(searchParams.get("asset_id"));
   const [showCreate, setShowCreate] = useState(false);
@@ -385,6 +387,25 @@ export function PrepaidExpensesPage() {
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
+  const visibleItems = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return items;
+    return items.filter((row) =>
+      `${row.asset_number ?? ""} ${row.description ?? ""} ${row.status ?? ""}`.toLowerCase().includes(needle),
+    );
+  }, [items, search]);
+
+  const prepaidKpis = useMemo(() => {
+    return visibleItems.reduce(
+      (acc, row) => {
+        acc.totalCents += Number(row.total_amount_cents ?? 0) || 0;
+        acc.remainingCents += (Number(row.total_amount_cents ?? 0) || 0) - (Number(row.amortized_cents ?? 0) || 0);
+        if (row.status === "active") acc.activeCount += 1;
+        return acc;
+      },
+      { totalCents: 0, remainingCents: 0, activeCount: 0 },
+    );
+  }, [visibleItems]);
 
   const columns = useMemo<ParityColumn<PrepaidAssetListItem>[]>(
     () => [
@@ -440,21 +461,35 @@ export function PrepaidExpensesPage() {
     [openDetail],
   );
 
+  const prepaidActiveFilterCount = statusFilter.length > 0 ? 1 : 0;
+
   const filterBar = (
-    <div className="flex flex-wrap gap-2 items-center" data-prepaid-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={statusFilter.length ? 1 : 0} testIdPrefix="prepaid" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+    <div className="space-y-2 w-full" data-prepaid-filter-toolbar="visible">
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search # · description · status"
+        searchTestId="prepaid-search-input"
+        onClearAll={() => {
+          setSearch("");
+          setStatusFilter([]);
+          setOffset(0);
+        }}
+        activeFilterCount={prepaidActiveFilterCount}
+        testIdPrefix="prepaid"
+      >
         <MultiSelectDropdown
           label="Status"
-          options={statusOptions({ "active": "Active", "fully_amortized": "Fully Amortized", "voided": "Voided" })}
-          selected={staged.draft.statusFilter}
-          onChange={(next) => staged.setDraft({ statusFilter: next })}
+          options={statusOptions({ active: "Active", fully_amortized: "Fully Amortized", voided: "Voided" })}
+          selected={statusFilter}
+          onChange={(next) => {
+            setStatusFilter(next);
+            setOffset(0);
+          }}
           allLabel="All statuses"
           data-testid="prepaid-status-filter"
         />
-      </CollapsedListFilters>
-      <span className="text-xs text-gray-500">
-        {total.toLocaleString()} asset{total !== 1 ? "s" : ""}
-      </span>
+      </MoneyListToolbar>
     </div>
   );
 
@@ -467,6 +502,30 @@ export function PrepaidExpensesPage() {
           className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1F2A44]">
           + Create Prepaid
         </button>
+      }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="prepaid-kpi-strip">
+          {isError ? (
+            <>
+              {moneyListKpiCard("Total", "—", "Error loading")}
+              {moneyListKpiCard("Remaining", "—", "Error loading")}
+              {moneyListKpiCard("Active", "—", "Error loading")}
+              {moneyListKpiCard("Rows", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Total", fmtCents(prepaidKpis.totalCents), `${visibleItems.length} on page`)}
+              {moneyListKpiCard(
+                "Remaining",
+                fmtCents(prepaidKpis.remainingCents),
+                "Unamortized balance",
+                prepaidKpis.remainingCents > 0 ? "warn" : "neutral",
+              )}
+              {moneyListKpiCard("Active", String(prepaidKpis.activeCount), "Status = active")}
+              {moneyListKpiCard("Rows", String(total), "Matching filter")}
+            </>
+          )}
+        </div>
       }
     >
       {showCreate && (
@@ -481,10 +540,11 @@ export function PrepaidExpensesPage() {
 
       <ParityTable title="Prepaid expenses"
         columns={columns}
-        rows={items}
+        rows={visibleItems}
         rowKey={(row) => row.id}
         loading={isPending || (isFetching && items.length === 0)}
         filterBar={filterBar}
+        suppressToolbarSearch
         storageKey="prepaid-expenses-list"
         initialPageSize={limit}
         emptyText="No prepaid expenses found."
