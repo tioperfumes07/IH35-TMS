@@ -33,16 +33,17 @@ function read(rel) {
   return stripComments(fs.readFileSync(path.join(repoRoot, rel), "utf8"));
 }
 
-export function checks() {
-  const match = read(MATCH);
-  const design = read(DESIGN);
-  const cc = read(CC);
+export function checks(src = { match: read(MATCH), design: read(DESIGN), cc: read(CC) }) {
+  const { match, design, cc } = src;
 
-  // C1 — confirmMutation onSuccess closes; multiConfirm onSuccess closes.
-  const confirmCloses =
-    /pushToast\(\s*"Match confirmed[\s\S]{0,400}?onAccepted\?\.\(\);\s*onClose\(\);/.test(match);
-  const multiCloses =
-    /pushToast\(\s*"Multi-document match confirmed[\s\S]{0,400}?onAccepted\?\.\(\);\s*onClose\(\);/.test(match);
+  // C1 — confirmMutation onSuccess closes; multiConfirm onSuccess closes. 443.290: since 443.243 (#27211) a fuel match
+  // may first open the Fuel Assignment question (setFuelAssignmentQuestion(q); return;) — the drawer then closes when
+  // that question closes or is answered (fuelQuestionCloses). Any other success path still closes directly.
+  const FUEL_QUESTION = String.raw`(?:\s*if \([\s\S]{0,420}?\) \{\s*const q = await firstOpenFuelAssignmentQuestion\(operatingCompanyId\);\s*if \(q\) \{\s*setFuelAssignmentQuestion\(q\);\s*return;\s*\}\s*\})?\s*(?:void result;\s*)?`;
+  const confirmCloses = new RegExp(String.raw`pushToast\(\s*"Match confirmed[\s\S]{0,400}?onAccepted\?\.\(\);` + FUEL_QUESTION + String.raw`onClose\(\);`).test(match);
+  const multiCloses = new RegExp(String.raw`pushToast\(\s*"Multi-document match confirmed[\s\S]{0,400}?onAccepted\?\.\(\);` + FUEL_QUESTION + String.raw`onClose\(\);`).test(match);
+  const fuelQuestionCloses = !/setFuelAssignmentQuestion\(q\)/.test(match)
+    || /<FuelAssignmentPopup[\s\S]{0,300}?onClose=\{\(\) => \{\s*setFuelAssignmentQuestion\(null\);\s*onClose\(\);\s*\}\}\s*onAnswered=\{\(\) => \{\s*setFuelAssignmentQuestion\(null\);\s*onClose\(\);/.test(match);
   // C1 — Post success collapses expand.
   const postCloses =
     /Transaction posted[\s\S]{0,200}?setExpandedTxId\(null\)/.test(design) &&
@@ -70,6 +71,7 @@ export function checks() {
   return {
     confirmCloses,
     multiCloses,
+    fuelQuestionCloses,
     postCloses,
     editHydrate,
     ccFilter,
@@ -80,6 +82,7 @@ export function checks() {
 const LABELS = {
   confirmCloses: "R441-C1 — MatchDrawer confirmMutation onSuccess calls onClose()",
   multiCloses: "R441-C1 — MatchDrawer multiConfirmMutation onSuccess calls onClose()",
+  fuelQuestionCloses: "R441-C1 — MatchDrawer closes when its Fuel Assignment question closes or is answered (443.243)",
   postCloses: "R441-C1 — DesignView postTransaction success setExpandedTxId(null)",
   editHydrate: "R441-C2 — DesignView hydrates empty sticky draft strings from makeDefaultDraft",
   ccFilter: 'R441-C3 — RecordCCPaymentModal liabilityOptions = Credit Cards children only',
@@ -95,7 +98,19 @@ function selftest() {
     }
     process.exit(1);
   }
-  console.log("PASS verify-r441-banking-modal-close-cc-vendor --selftest");
+  // 443.290 — failing plants for C1 (each must turn exactly its check red).
+  const real = { match: read(MATCH), design: read(DESIGN), cc: read(CC) };
+  const plants = [
+    ["confirm success never closes", "confirmCloses", { ...real, match: real.match.replace(/(pushToast\(\s*"Match confirmed[\s\S]*?)void result;\s*onClose\(\);/, "$1void result;") }],
+    ["multi success never closes", "multiCloses", { ...real, match: real.match.replace(/(pushToast\(\s*"Multi-document match confirmed[\s\S]*?return;\s*\}\s*\}\s*)onClose\(\);/, "$1") }],
+    ["question close leaves the drawer open", "fuelQuestionCloses", { ...real, match: real.match.replace(/(onClose=\{\(\) => \{\s*setFuelAssignmentQuestion\(null\);)\s*onClose\(\);/, "$1") }],
+    ["question answer leaves the drawer open", "fuelQuestionCloses", { ...real, match: real.match.replace(/(onAnswered=\{\(\) => \{\s*setFuelAssignmentQuestion\(null\);)\s*onClose\(\);/, "$1") }],
+  ];
+  for (const [name, key, mutated] of plants) {
+    if (mutated.match === real.match) { console.error(`SELFTEST FAIL — plant did not apply: ${name}`); process.exit(1); }
+    if (checks(mutated)[key]) { console.error(`SELFTEST FAIL — plant escaped: ${name}`); process.exit(1); }
+  }
+  console.log(`PASS verify-r441-banking-modal-close-cc-vendor --selftest (${plants.length}/${plants.length} C1 plants caught)`);
 }
 
 function main() {
