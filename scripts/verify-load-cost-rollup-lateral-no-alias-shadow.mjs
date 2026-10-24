@@ -114,7 +114,12 @@ async function live() {
         `SELECT l.id::text,
             (COALESCE((SELECT SUM(e.total_amount_cents) FROM accounting.expenses e WHERE e.load_id = l.id AND e.status <> 'void'), 0)
              + COALESCE((SELECT SUM(ROUND(bl.amount * 100)) FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id
-                          WHERE bl.load_id = l.id AND b.status NOT IN ('void','voided') AND b.revoked_at IS NULL AND bl.voided_at IS NULL), 0))::bigint AS costs_cents
+                          WHERE bl.load_id = l.id AND b.status NOT IN ('void','voided') AND b.revoked_at IS NULL AND bl.voided_at IS NULL
+                            -- 443.278-R: accrued driver-pay AP bills are driver pay, not cost (443.210R rule;
+                            -- the rollup carries them in driver_pay_cents — counting them here double-counts).
+                            AND NOT EXISTS (SELECT 1 FROM driver_finance.driver_bills db
+                                             WHERE db.operating_company_id = b.operating_company_id AND db.status <> 'void'
+                                               AND b.id IN (db.accrued_bill_id, db.accrued_team_bill_id))), 0))::bigint AS costs_cents
            FROM mdata.loads l WHERE l.id = ANY($1::uuid[])`,
         [loadIds]
       );
