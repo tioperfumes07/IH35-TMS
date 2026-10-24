@@ -18,6 +18,8 @@ import { getJournalEntryPostingsBySource } from "../../api/accounting";
 // (postings resolved by source_transaction_type + source_transaction_id) — one implementation, one
 // balance-check, never two grids that could drift apart on what "balanced" means.
 
+const ENTITY_NOUN: Record<string, string> = { vendor: "Vendor", driver: "Driver", customer: "Customer" };
+
 export type PostingGridRow = {
   id: string;
   line_sequence: number;
@@ -25,6 +27,9 @@ export type PostingGridRow = {
   account_name?: string | null;
   class_name?: string | null;
   entity_uuid?: string | null;
+  /** LEAD 443.317 (D068): the party's type + human name, resolved server-side (postingPartyNameSql). */
+  entity_type?: string | null;
+  entity_name?: string | null;
   debit_or_credit: "debit" | "credit";
   amount_cents: number;
   description: string | null;
@@ -91,7 +96,12 @@ export function PostingGrid({ postings, storageKey }: { postings: PostingGridRow
       key: "entity_uuid",
       label: "Entity",
       sortable: true,
-      render: (p) => p.entity_uuid || "—",
+      // LEAD 443.317 (D068): the party's NAME, never its uuid (five bill journal rows printed raw uuids).
+      sortValue: (p) => p.entity_name ?? "",
+      render: (p) =>
+        p.entity_uuid
+          ? entityLabel(p.entity_name, p.entity_uuid, ENTITY_NOUN[String(p.entity_type ?? "")] ?? "Party")
+          : "—",
     },
     {
       key: "debit_or_credit",
