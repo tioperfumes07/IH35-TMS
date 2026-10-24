@@ -324,7 +324,7 @@ export function SettlementStatementBoardPanels({
                           return;
                         }
                         document
-                          .querySelector("[data-testid='fuel-purchases-section'], #settlement-statement-fuel")
+                          .querySelector("[data-testid='settlement-document-fuel'], [data-testid='fuel-purchases-section'], #settlement-statement-fuel")
                           ?.scrollIntoView({ behavior: "smooth", block: "start" });
                       }}
                       style={{
@@ -341,6 +341,27 @@ export function SettlementStatementBoardPanels({
                       {fuelFillCount} fill{fuelFillCount === 1 ? "" : "s"} →
                     </button>
                   </LinkCell>
+                ) : fuelCents > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      document
+                        .querySelector("[data-testid='settlement-document-fuel']")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      color: V3.link,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      fontFamily: V3.font,
+                      fontSize: V3_TABLE.fontPx,
+                    }}
+                  >
+                    {formatUsdCents(fuelCents)} on the report
+                  </button>
                 ) : (
                   "—"
                 )}

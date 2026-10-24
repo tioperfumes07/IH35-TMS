@@ -148,6 +148,17 @@ const CHECKS = [
     pattern: /side by side/,
   },
   {
+    name: "SettlementDetailPage mounts the eight-section settlement document",
+    file: "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
+    pattern: /SettlementStatementDocument[\s\S]*SettlementStatementBoardPanels/,
+  },
+  {
+    name: "SettlementStatementDocument eight owner sections",
+    file: "apps/frontend/src/pages/driver-finance/components/SettlementStatementDocument.tsx",
+    pattern:
+      /data-settlement-document="1"[\s\S]*title="Header"[\s\S]*title="Loads"[\s\S]*title="Customer charges"[\s\S]*title="Driver payment"[\s\S]*title="Fuel purchases"[\s\S]*title="Expenses"[\s\S]*title="Deductions"[\s\S]*title="Revenue"[\s\S]*title="Profit and loss"/,
+  },
+  {
     // ACCT-F5444: NOT kind="bill" — that was this check's original ask, and it is WRONG.
     // driver_finance.driver_bills is a different table from accounting.bills; kind="bill" drills
     // to /accounting/bills/:id, which live-404s for a driver_finance.driver_bills row (real repro,

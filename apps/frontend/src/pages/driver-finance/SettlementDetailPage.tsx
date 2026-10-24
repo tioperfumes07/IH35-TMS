@@ -1,7 +1,8 @@
 /**
- * ROUND 443.280-A Settlements-Statement — board strip + 2×2 panels ONLY.
- * Finalize / payment / deductions / dispute live on SettlementStatementWorkflowPage
- * (`?settlement_id=&workflow=1`). JE opens /accounting/proof-trail/settlement/:id.
+ * ROUND 443.293-A — the owner's eight-section settlement document, then the
+ * ROUND 443.280-A board strip + 2×2 panels. Finalize / payment / deductions /
+ * dispute live on SettlementStatementWorkflowPage (`?settlement_id=&workflow=1`).
+ * JE opens /accounting/proof-trail/settlement/:id.
  */
 import { settlementNumber } from "../../lib/settlementNumber";
 import { useMemo } from "react";
@@ -29,6 +30,7 @@ import { getTourReadout } from "../../api/tourReadout";
 import { getCompanySettlementReport } from "../../api/accounting";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { SettlementStatementBoardPanels } from "./components/SettlementStatementBoardPanels";
+import { SettlementStatementDocument } from "./components/SettlementStatementDocument";
 import {
   reverseSettlement,
   unlockSettlement,
@@ -450,20 +452,29 @@ export function SettlementDetailPage() {
         />
       </div>
       {settlementId && companyId ? (
-        <SettlementStatementBoardPanels
-          settlementId={settlementId}
-          companyId={companyId}
-          settlementDisplayId={settlementDisplayId}
-          earnings={earnings}
-          deductionTotalDollars={summary.deductionTotal}
-          reimbursementTotalDollars={summary.reimbTotal}
-          driverNetCents={driverNetCents}
-          readout={readout}
-          companyReport={companyReport}
-          matchedBankTransactionId={matchedBankTransactionId}
-          onOpenJournalEntry={openJournalEntry}
-          onOpenFuelFills={openFuelFills}
-        />
+        <>
+          <SettlementStatementDocument
+            settlementNumber={settlementDisplayId}
+            periodStart={settlement.period_start ? String(settlement.period_start) : null}
+            periodEnd={settlement.period_end ? String(settlement.period_end) : null}
+            readout={readout}
+            companyReport={companyReport}
+          />
+          <SettlementStatementBoardPanels
+            settlementId={settlementId}
+            companyId={companyId}
+            settlementDisplayId={settlementDisplayId}
+            earnings={earnings}
+            deductionTotalDollars={summary.deductionTotal}
+            reimbursementTotalDollars={summary.reimbTotal}
+            driverNetCents={driverNetCents}
+            readout={readout}
+            companyReport={companyReport}
+            matchedBankTransactionId={matchedBankTransactionId}
+            onOpenJournalEntry={openJournalEntry}
+            onOpenFuelFills={openFuelFills}
+          />
+        </>
       ) : null}
       <VoidReasonModal
         open={reverseReasonOpen}
