@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
-  "generated_by": "db:ledger:snapshot",
-  "migration_count": 1527,
+  "generated_by": "db:migrate",
+  "migration_count": 1534,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -4660,6 +4660,10 @@
       "checksum": "c486d9ed2b16b454e291ab107e31735cf38fa7f3f6ffad2b89263ecff9a08d60"
     },
     {
+      "filename": "202614110000_driver_settlements_source_document_ref_unique.sql",
+      "checksum": "88bf1d50ebfe1c821a0783021490a5f98c2a9346a8e428b0919fe22d40815e5a"
+    },
+    {
       "filename": "202614120000_backfill_orphaned_tour_leg_presettlement_links.sql",
       "checksum": "63794a89c562f6cfac3716295471441b16798c28436beb0980bbc0b61324d54d"
     },
@@ -5166,6 +5170,14 @@
     {
       "filename": "202615201200_journal_entry_postings_register_cleared.sql",
       "checksum": "df44d90b81c0652e2986f580dd1b44c6b58a69de1e67fa25156f3d72c78a7707"
+    },
+    {
+      "filename": "202615210000_lease_to_own_lessee_asc842.sql",
+      "checksum": "b79d9b241ea22cf507c12a96709c4b875a52b0466318aa8b017e9a9d3df75b97"
+    },
+    {
+      "filename": "202615210100_lease_to_own_buyout_close.sql",
+      "checksum": "94c41ebfd65944790d76d472924c414fe5b2a2397fe6d1c784c1275ee34f2254"
     },
     {
       "filename": "202615220600_factor_escrow_reserve_role_to_1236.sql",
@@ -6092,6 +6104,10 @@
       "checksum": "7de032aba768b91f0a0bd6784fb974c7bfaf952db5d30a8d7dce7207cd8e62b4"
     },
     {
+      "filename": "202616170700_append_only_safety_legal_admit_auth_listed_purge.sql",
+      "checksum": "5544ed5c0810215dc4fd9007d112b128646d47c2e0e547e7dc094f2c1fc5313e"
+    },
+    {
       "filename": "202616190700_expense_card_credit.sql",
       "checksum": "a8afcbd249ab70e21c5002246915138d0e96957114bb43c3b9f7ebfa23c298de"
     },
@@ -6110,6 +6126,18 @@
     {
       "filename": "202616230300_override_reasons_catalog.sql",
       "checksum": "be9a482e80e0673b747d8cd2c138a00ebabb671327d30dd521430c64c6687bbd"
+    },
+    {
+      "filename": "202616230700_expense_load_confirmation.sql",
+      "checksum": "5281ee6bf680b04c3cc13b12205c750cfe5361488cebfefb0596f76d9b5f4188"
+    },
+    {
+      "filename": "202616230800_settlement_non_bookended_close_requires_posting.sql",
+      "checksum": "89e44e8fb21ad8b091079ce010c42f14846d66938c2ea22df4f740e7fff4c567"
+    },
+    {
+      "filename": "202616240000_escrow_ledger_stamp_load_id_and_settlement_id.sql",
+      "checksum": "76b035e50d189ab831aa8a89a6ca9f4acdf153f572970f2336621a7f00bf5de6"
     }
   ]
 }
