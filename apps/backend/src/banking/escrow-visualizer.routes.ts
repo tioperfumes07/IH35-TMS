@@ -147,21 +147,36 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
       //
       // BANK-F9515: this used to .catch(() => ({ rows: [] })) here too — same fake-empty-200 class as
       // the /escrow-visualizer list handler above, same fix.
+      // ROW 215: expand settlement postings into one row per load via settlement_lines escrow_contribution.
+      // Non-settlement postings (releases, adjustments) keep one row with no load fields.
+      // Settlements with no matching lines keep one row (NULL load_id) to preserve the audit trail.
       const res = await client.query(
         `
             SELECT
-              ep.id,
+              COALESCE(
+                CASE WHEN sl_expand.load_id IS NOT NULL
+                  THEN ep.id::text || '-' || sl_expand.load_id::text
+                END,
+                ep.id::text
+              ) AS id,
               ea.holder_id AS driver_id,
               ep.posting_type AS entry_type,
               NULL::text AS bucket,
-              (ep.amount_cents::numeric / 100) AS amount,
+              CASE
+                WHEN sl_expand.load_id IS NOT NULL
+                  THEN (round(abs(sl_expand.amount) * 100) / 100.0)
+                ELSE (ep.amount_cents::numeric / 100)
+              END AS amount,
               ep.note AS memo,
               ep.posted_at AS created_at,
               CASE WHEN ep.source_type = 'driver_settlement' THEN ep.source_id::text ELSE NULL END AS settlement_id,
               NULL::text AS settlement_line_id,
               ep.linked_journal_entry_id::text AS journal_entry_id,
               je.entry_date::text AS journal_entry_date,
-              je.memo AS journal_entry_memo
+              je.memo AS journal_entry_memo,
+              sl_expand.load_id::text AS load_id,
+              l.load_number AS load_number,
+              l.pickup_date::text AS load_date
             FROM accounting.escrow_accounts ea
             JOIN accounting.escrow_postings ep
               ON ep.escrow_account_id = ea.id
@@ -169,6 +184,19 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
             LEFT JOIN accounting.journal_entries je
               ON je.id = ep.linked_journal_entry_id
              AND je.operating_company_id = ep.operating_company_id
+            LEFT JOIN LATERAL (
+              SELECT sl.load_id, sl.amount
+              FROM driver_finance.settlement_lines sl
+              WHERE sl.settlement_id = ep.source_id::uuid
+                AND sl.line_type = 'escrow_contribution'
+                AND ep.source_type = 'driver_settlement'
+                AND sl.is_active = true
+                AND sl.voided_at IS NULL
+                AND sl.operating_company_id = ep.operating_company_id
+            ) sl_expand ON true
+            LEFT JOIN mdata.loads l
+              ON l.id = sl_expand.load_id
+             AND l.operating_company_id = ep.operating_company_id
             WHERE ${filters.join(" AND ")}
             ORDER BY ep.posted_at DESC
             LIMIT 500

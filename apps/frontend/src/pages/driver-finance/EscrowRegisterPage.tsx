@@ -124,11 +124,14 @@ export function EscrowRegisterPage() {
       run += isOut ? -abs : abs;
       // A uuid fragment is never a label (verify-no-uuid-label-rendering): the source names its kind + date; the link
       // (sourceHref) still opens the exact settlement / journal entry.
-      const settLabel = t.settlement_id
-        ? `Settlement · ${formatDateUS(t.created_at) || "posted"}`
-        : t.journal_entry_id
-          ? `Journal · ${formatDateUS(t.journal_entry_date) || formatDateUS(t.created_at) || "entry"}`
-          : t.memo || "Escrow entry";
+      // ROW 215: when load_id is present (per-load expansion), show Load {number} · {date}; fall back to Settlement.
+      const settLabel = t.load_id
+        ? `Load ${t.load_number ?? "—"} · ${formatDateUS(t.load_date ?? t.created_at) || "posted"}`
+        : t.settlement_id
+          ? `Settlement · ${formatDateUS(t.created_at) || "posted"}`
+          : t.journal_entry_id
+            ? `Journal · ${formatDateUS(t.journal_entry_date) || formatDateUS(t.created_at) || "entry"}`
+            : t.memo || "Escrow entry";
       built.push({
         id: t.id,
         date: t.created_at,
