@@ -159,6 +159,12 @@ export function assertWizardPickerMatrix({ matrixMd, root = ROOT } = {}) {
     }
   }
 
+  // 443.293-C — Manual JE list V3 board grammar (kpiStrip on AccountingSubNavWrapper).
+  const jeList = read("apps/frontend/src/pages/accounting/ManualJEListPage.tsx") ?? "";
+  if (!jeList.includes("kpiStrip") || !jeList.includes("manual-je-kpi-strip")) {
+    problems.push("443.293-C: ManualJEListPage must pass kpiStrip (manual-je-kpi-strip)");
+  }
+
   return problems;
 }
 

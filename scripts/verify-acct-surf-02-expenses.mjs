@@ -84,6 +84,13 @@ function contractErrors(src) {
   if (!src.list.includes("RecordExpenseModal")) {
     errors.push("DOD-A: ExpensesListPage must mount RecordExpenseModal");
   }
+  // 443.293-C — V3 board grammar: kpiStrip on AccountingSubNavWrapper (not filterBar money theater).
+  if (!src.list.includes("kpiStrip") || !src.list.includes("expenses-kpi-strip")) {
+    errors.push("443.293-C: ExpensesListPage must pass kpiStrip (expenses-kpi-strip)");
+  }
+  if (/<span>Total:/.test(src.list) && /<span>Matched:/.test(src.list)) {
+    errors.push("443.293-C: ExpensesListPage must not keep filterBar Total/Matched money theater after kpiStrip promote");
+  }
 
   for (const needle of ['createKind="vendor"', 'createKind="category"', 'createKind="account"']) {
     if (!src.form.includes(needle)) {
@@ -148,7 +155,7 @@ function selftest() {
     map: "ACCT-SURF-02 `/accounting/expenses`",
     manifest: 'path="/accounting/expenses"\n<ExpensesListPage />\n',
     subnav: "/accounting/expenses",
-    list: 'RecordExpenseModal\nkind="vendor"\nkind="journal_entry"\nkind="expense"\nNo expense #\nhumanMemo(\n',
+    list: 'RecordExpenseModal\nkpiStrip\nexpenses-kpi-strip\nkind="vendor"\nkind="journal_entry"\nkind="expense"\nNo expense #\nhumanMemo(\n',
     modal: "ParityDrawer\n<ParityDrawer\n",
     form: ['createKind="vendor"', 'createKind="category"', 'createKind="account"'].join("\n"),
     submit: "expense_date:\namount_cents:\npayment_account_uuid:\n",

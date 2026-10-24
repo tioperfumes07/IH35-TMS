@@ -21,6 +21,8 @@ import { coaAccountReferenceOption } from "../../components/parity/referenceOpti
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { DateRangePresets } from "../../components/forms/DateRangePresets";
+import { formatUsdCents } from "../../lib/money";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
@@ -202,6 +204,24 @@ export function ManualJEListPage() {
   }, [allPageRows, search]);
   const hasNextPage = allPageRows.length === PAGE_SIZE;
 
+  const jeKpis = useMemo(() => {
+    let debitTotal = 0;
+    let creditTotal = 0;
+    let voidedShown = 0;
+    for (const entry of pageRows) {
+      debitTotal += Number(entry.debit_total_cents ?? 0);
+      creditTotal += Number(entry.credit_total_cents ?? 0);
+      if (entry.voided_at || entry.status === "voided") voidedShown += 1;
+    }
+    return {
+      debitTotal,
+      creditTotal,
+      rowCount: pageRows.length,
+      voidedShown,
+      voidedHidden: typeof entriesQuery.data?.voided_count === "number" ? entriesQuery.data.voided_count : 0,
+    };
+  }, [pageRows, entriesQuery.data?.voided_count]);
+
   const voidMutation = useMutation({
     meta: { loads: true },
     mutationFn: ({ id, reason }: { id: string; reason: string }) => voidJournalEntry(id, companyId, reason),
@@ -361,6 +381,30 @@ export function ManualJEListPage() {
       title="Manual Journal Entries"
       subtitle="Filter, review, and void posted entries"
       createControl={<Button onClick={() => setCreateOpen(true)} disabled={!companyId}>+ Create</Button>}
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="manual-je-kpi-strip">
+          {entriesQuery.isError ? (
+            <>
+              {moneyListKpiCard("Debits", "—", "Error loading")}
+              {moneyListKpiCard("Credits", "—", "Error loading")}
+              {moneyListKpiCard("Rows", "—", "Error loading")}
+              {moneyListKpiCard("Voided", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Debits", formatUsdCents(jeKpis.debitTotal), "This page")}
+              {moneyListKpiCard("Credits", formatUsdCents(jeKpis.creditTotal), "This page")}
+              {moneyListKpiCard("Rows", String(jeKpis.rowCount), search.trim() ? `Matching "${search.trim()}"` : "On this page")}
+              {moneyListKpiCard(
+                "Voided",
+                String(statusFilter.length === 1 && statusFilter[0] === "posted" ? jeKpis.voidedHidden : jeKpis.voidedShown),
+                statusFilter.length === 1 && statusFilter[0] === "posted" ? "Hidden by Active filter" : "Shown on this page",
+                (statusFilter.length === 1 && statusFilter[0] === "posted" ? jeKpis.voidedHidden : jeKpis.voidedShown) ? "warn" : "neutral",
+              )}
+            </>
+          )}
+        </div>
+      }
     >
       {/* 0243-g8-5: a query error must surface a retryable banner, not a blank grid / forever spinner. */}
       {entriesQuery.isError ? <ListErrorBanner onRetry={() => void entriesQuery.refetch()} /> : null}

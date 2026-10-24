@@ -34,6 +34,7 @@ import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { StatusBadge } from "../../components/layout/StatusBadge";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 // INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param.
 // "with_balance" is a UI label for server-side has_balance=true (aging-compatible open AR).
@@ -669,31 +670,21 @@ export function InvoicesListPage() {
         />
         <DateRangePresets from={fromDate} to={toDate} onChange={({ from, to }) => { setFromDate(from); setToDate(to); }} data-testid="invoices-date-range" />
       </MoneyListToolbar>
-      <div className="flex items-center gap-3 text-xs text-gray-600">
-        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER — totals used to compute straight from query.data with
-            no isError awareness, so a failed fetch fabricated a real-looking "$0.00" here even while
-            the ListErrorBanner below correctly showed the failure. Same class already fixed for
-            Bills/Settlements (ACCT-F370, PR #6024); this generalizes it here too. */}
-        <span>Total billed: {query.isError ? "—" : money(totals.total)}</span>
-        <span>Open: {query.isError ? "—" : money(totals.open)}</span>
-        <span className={totals.variance !== 0 ? "font-semibold text-red-700" : ""}>
-          Variance: {query.isError ? "—" : money(totals.variance)}
-        </span>
-        <span>
-          Rows: {invoices.length}
-          {typeof listMeta.total === "number" ? ` of ${listMeta.total}` : ""}
-          {listMeta.hasMore ? " (more available)" : ""}
-        </span>
-        {/* R-102-B item 5 — owner, ROUND 121: "a list that silently hides is the same class of
-            defect as a badge that never renders." */}
-        {statuses.length === 1 && statuses[0] === "active" && typeof listMeta.voidedCount === "number" && listMeta.voidedCount > 0 ? (
-          <span className="text-gray-500" data-testid="invoices-voided-count">
-            {listMeta.total ?? invoices.length} live, {listMeta.voidedCount} voided (hidden)
-          </span>
-        ) : null}
-      </div>
+      {/* R-102-B item 5 — voided-hidden notice stays under the toolbar, not as a fake money KPI. */}
+      {statuses.length === 1 && statuses[0] === "active" && typeof listMeta.voidedCount === "number" && listMeta.voidedCount > 0 ? (
+        <p className="text-xs text-gray-500" data-testid="invoices-voided-count">
+          {listMeta.total ?? invoices.length} live, {listMeta.voidedCount} voided (hidden)
+        </p>
+      ) : null}
     </div>
   );
+
+  const rowsSublabel = [
+    typeof listMeta.total === "number" ? `of ${listMeta.total}` : "on this page",
+    listMeta.hasMore ? "more available" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <AccountingSubNavWrapper
@@ -724,6 +715,30 @@ export function InvoicesListPage() {
           >
             + Create
           </Button>
+        </div>
+      }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="invoices-kpi-strip">
+          {query.isError ? (
+            <>
+              {moneyListKpiCard("Total billed", "—", "Error loading")}
+              {moneyListKpiCard("Open", "—", "Error loading")}
+              {moneyListKpiCard("Variance", "—", "Error loading")}
+              {moneyListKpiCard("Rows", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Total billed", money(totals.total), `${invoices.length} invoices`)}
+              {moneyListKpiCard("Open", money(totals.open), "AR balance", totals.open ? "danger" : "neutral")}
+              {moneyListKpiCard(
+                "Variance",
+                money(totals.variance),
+                totals.variance === 0 ? "Ties Total − Paid − Open" : "Does not tie",
+                totals.variance !== 0 ? "danger" : "neutral",
+              )}
+              {moneyListKpiCard("Rows", String(invoices.length), rowsSublabel)}
+            </>
+          )}
         </div>
       }
     >

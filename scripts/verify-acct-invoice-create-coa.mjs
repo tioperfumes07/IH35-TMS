@@ -125,6 +125,10 @@ function checkInvoiceCreateCoa(files) {
   if (!list.includes("clearCreateDeepLink") && !list.includes('params.delete("create")')) {
     violations.push("InvoicesListPage must clear create=1 when create modal closes");
   }
+  // 443.293-C — V3 board grammar: kpiStrip on AccountingSubNavWrapper (Bills parity).
+  if (!list.includes("kpiStrip") || !list.includes("invoices-kpi-strip")) {
+    violations.push("443.293-C: InvoicesListPage must pass kpiStrip (invoices-kpi-strip)");
+  }
 
   return violations;
 }
@@ -210,7 +214,7 @@ const goodFixture = [
   },
   {
     rel: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
-    source: [`createDeepLink`, `clearCreateDeepLink`, `params.delete("create")`].join("\n"),
+    source: [`createDeepLink`, `clearCreateDeepLink`, `params.delete("create")`, `kpiStrip`, `invoices-kpi-strip`].join("\n"),
   },
   {
     rel: "apps/frontend/src/components/Topbar.tsx",

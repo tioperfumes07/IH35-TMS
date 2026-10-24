@@ -139,6 +139,16 @@ function contractErrors(src) {
   if (!src.factoringList.includes("AccountingSubNavWrapper")) {
     errors.push("DOD-A: FactoringListPage must stay under Accounting subnav chrome");
   }
+  // 443.293-C — V3 board grammar: kpiStrip + createControl (not actions= duplicate Create ▾).
+  if (!src.factoringList.includes("kpiStrip") || !src.factoringList.includes("factoring-kpi-strip")) {
+    errors.push("443.293-C: FactoringListPage must pass kpiStrip (factoring-kpi-strip)");
+  }
+  if (!src.factoringList.includes("createControl") || !src.factoringList.includes("factoring-create-cta")) {
+    errors.push("443.293-C: FactoringListPage must pass createControl (factoring-create-cta), not actions=");
+  }
+  if (/actions=\{/.test(src.factoringList) && /Submit to Factor/.test(src.factoringList)) {
+    errors.push("443.293-C: FactoringListPage must not put Submit to Factor on actions=");
+  }
 
   if (!src.settlementsPage.includes("/accounting/escrow")) {
     errors.push("VERIFY-4: SettlementsPage subnav must cross-link to /accounting/escrow");
@@ -228,7 +238,8 @@ function selftest() {
       'case "factoring_advance": return `/accounting/factoring/${id}`;',
       'case "settlement": return `/driver-finance/settlements?settlement_id=${id}`;',
     ].join("\n"),
-    factoringList: 'EntityLink kind="factoring_advance"\nAccountingSubNavWrapper',
+    factoringList:
+      'EntityLink kind="factoring_advance"\nAccountingSubNavWrapper\nkpiStrip\nfactoring-kpi-strip\ncreateControl\nfactoring-create-cta',
     escrowPage: 'EntityLink kind={kind}\n"driver_settlement"\n"factoring_advance"',
     // Includes the unfiltered kpiBaseQuery/kpiSettlements pipeline (FAIL-SETL-KPI-PERIOD) and the
     // manual_paid payment-state filter (VERIFY-1) — both checked below but missing from this fixture
