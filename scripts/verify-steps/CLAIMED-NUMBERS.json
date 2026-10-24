@@ -17093,5 +17093,30 @@
     "claimed_at": "2026-10-24",
     "claimed_by": "cc-2",
     "purpose": "verify-catch-all-rule-never-beats-specific-suggestion-443341"
+  },
+  "18775": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-banking-rules-follow-owner-rulings-443341"
+  },
+  "18779": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-suggestion-learns-from-accepted-history-443341"
+  },
+  "18783": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-bank-payee-parser-443341"
+  },
+  "18787": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-no-unmatched-line-without-a-fresh-suggestion-443341"
+  },
+  "18791": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cc-2",
+    "purpose": "verify-relay-fill-driver-equals-load-driver-443341"
   }
 }
