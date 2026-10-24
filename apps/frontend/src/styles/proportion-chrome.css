@@ -2,6 +2,7 @@
  *
  * Approved density: compact fields (~36–40px), header/body padding px-4 py-3,
  * no balloon padding (p-8 / py-8) on shared shells.
+ * FIELD-SIZE-32: input height pinned to --ih35-field-height (32px) across all modal/drawer shells.
  */
 
 [data-proportion-chrome="qbo-compact"] {
