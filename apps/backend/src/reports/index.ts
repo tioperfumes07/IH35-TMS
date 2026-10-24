@@ -19,6 +19,7 @@ import { registerLoadsHistoryRoutes } from "./loads-history.routes.js";
 import { registerCustomerReportRoutes } from "./customer-report.routes.js";
 import { registerVendorReportRoutes } from "./vendor-report.routes.js";
 import { registerLoadsSummaryRoutes } from "./loads-summary.routes.js";
+import { registerDriverSettlementsReportRoutes } from "./driver-settlements-report.routes.js";
 import { registerIftaStatusRoutes } from "./ifta-status.routes.js";
 import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.routes.js";
 import { registerGeofenceDwellRoutes } from "./geofence-dwell.routes.js";
@@ -53,6 +54,7 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerCustomerReportRoutes(app);
   await registerVendorReportRoutes(app);
   await registerLoadsSummaryRoutes(app);
+  await registerDriverSettlementsReportRoutes(app);
   await registerFuelReconciliationRoutes(app);
   await registerFuelSavingsRoutes(app);
   await registerFuelPriceVarianceRoutes(app);
