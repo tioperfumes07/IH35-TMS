@@ -50,6 +50,36 @@ const ALLOWLIST = new Set([
   "apps/backend/src/reports/exception-queue.routes.ts",
 ]);
 
+function isKpiRowsLengthViolation(line) {
+  const [filePath] = line.split(":");
+  const rel = filePath?.replace(/^\//, "") ?? "";
+  if (ALLOWLIST.has(rel)) return false;
+  if (rel.includes("__tests__") || rel.endsWith(".d.ts") || rel.includes(".test.") || rel.includes(".spec.")) {
+    return false;
+  }
+  return true;
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["allowlisted path skipped", "apps/backend/src/compliance/compliance-aggregate.service.ts:9: total: rows.length", false],
+    ["non-allowlisted path flagged", "apps/backend/src/foo/list.routes.ts:12: total: rows.length", true],
+  ];
+  let bad = 0;
+  for (const [label, sample, expectViol] of cases) {
+    const got = isKpiRowsLengthViolation(sample);
+    const ok = got === expectViol;
+    console.log(`  ${ok ? "✓" : "✗"} ${label}`);
+    if (!ok) bad += 1;
+  }
+  if (bad) {
+    console.error(`${LABEL} --selftest FAIL`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(0);
+}
+
 let output;
 try {
   output = execSync(
@@ -61,17 +91,7 @@ try {
   output = "";
 }
 
-const violations = output
-  .split("\n")
-  .filter(Boolean)
-  .filter((line) => {
-    const [filePath] = line.split(":");
-    const rel = filePath?.replace(/^\//, "") ?? "";
-    if (ALLOWLIST.has(rel)) return false;
-    // Skip test files and type declarations
-    if (rel.includes("__tests__") || rel.endsWith(".d.ts") || rel.includes(".test.") || rel.includes(".spec.")) return false;
-    return true;
-  });
+const violations = output.split("\n").filter(Boolean).filter(isKpiRowsLengthViolation);
 
 if (violations.length === 0) {
   console.log(`[${LABEL}] PASS — no KPI routes use rows.length as the list total`);
