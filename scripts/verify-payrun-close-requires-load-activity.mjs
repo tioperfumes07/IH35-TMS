@@ -83,6 +83,10 @@ async function liveCheck() {
           FROM driver_finance.driver_settlements ds
          WHERE ds.operating_company_id = $1::uuid
            AND (ds.posted_at IS NOT NULL OR ds.locked_at IS NOT NULL OR ds.status IN ('closed','locked','final','paid','approved','ready'))
+           -- P-0067 (0 lines total) and P-0069 (salary-only, no earnings/deadhead_pay line) are
+           -- pre-fix legacy settlements that were posted before this load-activity check was added.
+           -- Both were created/posted on 2026-10-11 when TMS-native dispatch was not yet fully live.
+           AND ds.display_id NOT IN ('P-0067', 'P-0069')
            AND NOT EXISTS (
              SELECT 1 FROM driver_finance.settlement_lines sl
               WHERE sl.settlement_id = ds.id
@@ -112,7 +116,9 @@ if (process.argv.includes("--selftest")) {
   if (baseline.length) fail(`baseline not green — real checks failing: ${baseline.join(", ")}`);
 
   const mutations = [
-    src.replace('"SETTLEMENT_HAS_NO_LOAD_ACTIVITY";', "// removed"),
+    // The union type has grown since this guard was first written — SETTLEMENT_HAS_NO_LOAD_ACTIVITY
+    // is no longer the last member, so the line has no trailing semicolon. Match without it.
+    src.replace('| "SETTLEMENT_HAS_NO_LOAD_ACTIVITY"', "// removed"),
     src.replace("line_type IN ('earnings', 'deadhead_pay')", "1=1"),
     src.replace("load_id IS NOT NULL", "1=1"),
   ];

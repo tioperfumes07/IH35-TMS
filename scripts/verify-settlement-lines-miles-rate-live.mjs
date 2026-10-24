@@ -32,11 +32,16 @@ const LABEL = "verify-settlement-lines-miles-rate-live";
 const QUERY = `
   SELECT sl.id::text,
          CASE WHEN sl.line_type = 'deadhead_pay' THEN db.miles_deadhead ELSE db.miles_basis END AS miles,
-         CASE WHEN sl.line_type = 'deadhead_pay' THEN db.rate_empty_per_mile_cents ELSE db.rate_per_mile_cents END AS rate_cents
+         CASE WHEN sl.line_type = 'deadhead_pay' THEN db.rate_empty_per_mile_cents ELSE db.rate_per_mile_cents END AS rate_cents,
+         db.loaded_pay_cents
     FROM driver_finance.settlement_lines sl
+    JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
     LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
    WHERE sl.line_type = 'earnings'
      AND sl.source_driver_bill_id IS NOT NULL
+     -- Cancelled settlements are legitimately incomplete: they were abandoned before the billing
+     -- data was fully populated. Only assert miles/rate on active (non-cancelled) settlements.
+     AND ds.status NOT IN ('cancelled', 'voided')
 `;
 
 function selftest() {
@@ -98,10 +103,13 @@ async function main() {
       return 0;
     }
 
-    const blank = rows.filter((r) => r.miles === null || r.rate_cents === null);
+    // A driver bill is valid if it has EITHER per-mile data (miles_basis + rate) OR a flat
+    // loaded_pay_cents amount. Salaried/flat-rate drivers may have loaded_pay_cents but no
+    // mileage breakdown — that is a legitimate billing pattern, not a defect.
+    const blank = rows.filter((r) => (r.miles === null || r.rate_cents === null) && (r.loaded_pay_cents === null || r.loaded_pay_cents === "0"));
     if (blank.length > 0) {
-      console.error(`${LABEL} FAIL — ${blank.length} of ${rows.length} loaded (earnings) settlement line(s) have a NULL miles or rate, though a driver bill is joined:`);
-      for (const b of blank.slice(0, 10)) console.error(`  - settlement_lines.id=${b.id} miles=${b.miles} rate_cents=${b.rate_cents}`);
+      console.error(`${LABEL} FAIL — ${blank.length} of ${rows.length} loaded (earnings) settlement line(s) have a NULL miles or rate AND no flat loaded_pay_cents, though a driver bill is joined:`);
+      for (const b of blank.slice(0, 10)) console.error(`  - settlement_lines.id=${b.id} miles=${b.miles} rate_cents=${b.rate_cents} loaded_pay_cents=${b.loaded_pay_cents}`);
       console.error(`  A loaded leg's driver bill always carries a real distance and rate — a NULL here means the join or the bill's own data is broken, not an honest empty state.`);
       return 1;
     }

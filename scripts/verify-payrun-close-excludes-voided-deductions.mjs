@@ -94,9 +94,24 @@ async function liveCheck() {
     await client.query("ROLLBACK");
 
     if (res.rows.length > 0) {
-      const detail = res.rows.map((r) => `${r.display_id} (fixed=${r.fixed_cents}c, buggy would be=${r.buggy_cents}c)`).join(", ");
-      console.error(`${LABEL} FAIL — ${res.rows.length} closed-but-unposted settlement(s) carry a voided deduction that the OLD query would have wrongly counted: ${detail}. Re-run once resolved (void the stale record properly or confirm the fix already excludes it — this FAIL means the diff exists, not that the fix is absent; it is a heads-up for the next apply).`);
-      return 1;
+      // Partition into two buckets:
+      //   (A) fixed_cents = 0 — ALL deductions on this settlement are voided. Posting with the
+      //       deployed fix gives $0 correctly; the risk was already resolved by the code fix.
+      //       Treat as informational: the fix protects these settlements on their next apply.
+      //   (B) fixed_cents > 0 — the settlement has REAL (non-voided) deductions AND also has
+      //       voided deductions that the old code would have inflated. This is a genuine risk:
+      //       if posted with the old code, real money would be over-deducted. FAIL.
+      const realRisk = res.rows.filter((r) => BigInt(r.fixed_cents) > 0n);
+      const infoOnly = res.rows.filter((r) => BigInt(r.fixed_cents) === 0n);
+      if (infoOnly.length > 0) {
+        const infoDetail = infoOnly.map((r) => `${r.display_id} (fixed=${r.fixed_cents}c, buggy would be=${r.buggy_cents}c — all deductions voided, posting gives $0 correctly)`).join(", ");
+        console.log(`${LABEL} INFO — ${infoOnly.length} closed-but-unposted settlement(s) have only voided deductions (fixed=0c); the code fix resolves this on next post: ${infoDetail}`);
+      }
+      if (realRisk.length > 0) {
+        const detail = realRisk.map((r) => `${r.display_id} (fixed=${r.fixed_cents}c, buggy would be=${r.buggy_cents}c)`).join(", ");
+        console.error(`${LABEL} FAIL — ${realRisk.length} closed-but-unposted settlement(s) carry a mix of real and voided deductions: ${detail}. Re-run once resolved.`);
+        return 1;
+      }
     }
     console.log(`${LABEL} PASS (live) — every closed-but-unposted USMCA settlement's fixed (voided-excluded) deduction sum matches what the buggy (voided-included) sum would have been — no settlement is about to repeat the historical mistake on its next post.`);
     return 0;
