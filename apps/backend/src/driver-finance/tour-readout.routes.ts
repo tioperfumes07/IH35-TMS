@@ -366,6 +366,10 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
       detail: costs.length === 0 ? "no costs recorded" : `account ${missingAccount === 0 ? "✔" : `${missingAccount} missing`} · vendor ${missingVendor === 0 ? "✔" : `${missingVendor} missing`} · receipt ${costs.length - missingReceipt} of ${costs.length}` },
     { key: "driver_pay", label: "Driver pay lines complete (loaded + empty)", hard: false, ok: active.length > 0 && payIncomplete.length === 0, detail: payIncomplete.length ? `${payIncomplete.map((l) => l.load_number).join(", ")} missing a two-line driver bill` : "yes" },
     { key: "real_miles", label: "Real driven miles captured", hard: false, ok: active.length > 0 && active.every((l) => l.miles_real != null), detail: active.every((l) => l.miles_real != null) && active.length ? `${totals.miles_real?.toFixed(1)} mi` : "no odometer segments — no fence events captured" },
+    // ROUND 443.292-F — a tour with zero settlement lines must never close; the settlement is an
+    // empty shell that has never been run through the creator to produce driver pay lines.
+    { key: "settlement_lines", label: "Settlement lines computed", hard: true, ok: linesRes.rows.length > 0,
+      detail: linesRes.rows.length > 0 ? `${linesRes.rows.length} line(s)` : "no settlement lines — run Settlement Creator to generate driver pay lines before closing" },
   ];
   const closedAlready = Boolean(s.trip_closed_at) || !["open"].includes(String(s.status));
   const hardBlockers = ready.filter((r) => r.hard && !r.ok).map((r) => `${r.label}: ${r.detail}`);
