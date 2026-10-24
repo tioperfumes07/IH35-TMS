@@ -1,10 +1,10 @@
 {
-  "healthzSha": "6ea47d7",
-  "generated_at": "2026-10-23T20:31:05.619Z",
+  "healthzSha": "c7ab16a",
+  "generated_at": "2026-10-24T02:30:44.812Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "6ea47d7",
+    "deployedSha": "c7ab16a",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 27348,
-      "title": "FINDING: 443.274-D Safety driver qualification board",
+      "number": 27435,
+      "title": "FINDING: LST-F4432941 LANE: NON-FINANCIAL — LEAD 443.294 step 1b: Override Reasons managed in Lists (routes + screen, same grammar as Void/Cancel Reasons)",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 03:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27348",
-      "sha": "6ea47d7926",
-      "committedAtIso": "2026-10-23T15:22:57-05:00"
+      "mergedAtCt": "10/23/2026, 09:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27435",
+      "sha": "e581cd3968",
+      "committedAtIso": "2026-10-23T21:27:08-05:00"
     },
     {
-      "number": 27347,
-      "title": "Cursor-443.274-C Settlements-Statement board (2×2 panels + Company settlement EntityLink)",
+      "number": 27434,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — CC-2- 443.290 fuel: 5 main static reds — an import's rejected rows no longer vanish behind the assignment question; 4 guards follow the 443.243 / 443.250 boards with plants",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 03:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27347",
-      "sha": "c758d20ded",
-      "committedAtIso": "2026-10-23T15:20:14-05:00"
+      "mergedAtCt": "10/23/2026, 09:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27434",
+      "sha": "c7ab16a547",
+      "committedAtIso": "2026-10-23T21:26:14-05:00"
     },
     {
-      "number": 27346,
-      "title": "Claude-3- 443.268-A permanent live no-5xx GET route guard",
+      "number": 27433,
+      "title": "Claude-3- 443.294 step 1 catalogs.override_reasons (one catalog, FORCE RLS, in-use seed) + claim guard list form",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 03:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27346",
-      "sha": "0c97ea3da7",
-      "committedAtIso": "2026-10-23T15:17:16-05:00"
+      "mergedAtCt": "10/23/2026, 09:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27433",
+      "sha": "dfe9d016ab",
+      "committedAtIso": "2026-10-23T21:18:48-05:00"
     },
     {
-      "number": 27345,
-      "title": "Claude-3- 443.269-A Pre-Settlements Load #, Entries, Ready-to-close 6/6 close, miles panel, Drivers KPIs",
+      "number": 27432,
+      "title": "FINDING: ACCT-F4432881 LANE: claude — CC-2- OWNER RULING 443.288-A a statement card difference is linked to its receipt and always moves load with it (ONE family move in the reclassify engine) + AUTH-457 align route",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 03:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27345",
-      "sha": "c3167b772f",
-      "committedAtIso": "2026-10-23T15:11:00-05:00"
+      "mergedAtCt": "10/23/2026, 09:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27432",
+      "sha": "5892782b30",
+      "committedAtIso": "2026-10-23T21:17:26-05:00"
     },
     {
-      "number": 27343,
-      "title": "Claude-1-443.265-E5: OUTBOX + 443.270-D USMCA guard + InsuranceHomeBoard fixes + FactorAdmin FactoringProfilePanel + operational-queue guard fix",
+      "number": 27431,
+      "title": "FINDING: N/A LANE: DOCS — CC-3 claim migration 202616230300 (Lead 443.294 override reasons catalog)",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 03:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27343",
-      "sha": "e3eef0338d",
-      "committedAtIso": "2026-10-23T15:10:04-05:00"
+      "mergedAtCt": "10/23/2026, 09:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27431",
+      "sha": "0c70ec1667",
+      "committedAtIso": "2026-10-23T21:07:13-05:00"
     },
     {
-      "number": 27344,
-      "title": "Codex-443.274-D InShop board from canonical work orders",
+      "number": 27427,
+      "title": "FINDING: BUS-443289 — OUTBOX missing squash SHA for ARCH-443289 main CI clear",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 03:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27344",
-      "sha": "61333a8614",
-      "committedAtIso": "2026-10-23T15:09:53-05:00"
+      "mergedAtCt": "10/23/2026, 09:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27427",
+      "sha": "2f29d1d5d0",
+      "committedAtIso": "2026-10-23T21:05:18-05:00"
     },
     {
-      "number": 27342,
-      "title": "FINDING: CF-F443273 LANE: NON-FINANCIAL — LEAD 443.273: Cash Flow Home \"Weekly run-rate\" showed $0.00 flat and the chart had no ACTUAL bars — both now read bank-cleared actuals",
+      "number": 0,
+      "title": "Claude-1- 443.292-A+F ops scripts: backfill settlement numbers + void empty settlements",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 03:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27342",
-      "sha": "a37a271255",
-      "committedAtIso": "2026-10-23T15:04:20-05:00"
+      "mergedAtCt": "10/23/2026, 09:04 PM CT",
+      "url": "",
+      "sha": "db0fa21a7b",
+      "committedAtIso": "2026-10-23T21:04:04-05:00"
     },
     {
-      "number": 27341,
-      "title": "FINDING: 443.274-C Settlements-Closed board — No number not red; Company settlement not a statement link; Driver net not bold",
+      "number": 27429,
+      "title": "Claude-3- 443.290 roster/safety guard reds: stale plants + ruled on-load set (4 guards)",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 03:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27341",
-      "sha": "92ce5bf70d",
-      "committedAtIso": "2026-10-23T15:02:22-05:00"
+      "mergedAtCt": "10/23/2026, 09:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27429",
+      "sha": "2ed05a0210",
+      "committedAtIso": "2026-10-23T21:03:28-05:00"
     },
     {
-      "number": 27340,
-      "title": "Claude-3- 443.270-H record-naming + factoring profile editor + sortable A1 (main reds)",
+      "number": 0,
+      "title": "Claude-1- 443.292-A+F settlement number at close + empty-settlement guard",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 02:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27340",
-      "sha": "7ec02ee5e2",
-      "committedAtIso": "2026-10-23T14:57:54-05:00"
+      "mergedAtCt": "10/23/2026, 09:01 PM CT",
+      "url": "",
+      "sha": "eb1108417e",
+      "committedAtIso": "2026-10-23T21:01:51-05:00"
     },
     {
-      "number": 27339,
-      "title": "Codex-443.274-D Maintenance Home V3 board and source drill-through",
+      "number": 27425,
+      "title": "FINDING: ARCH-443289 — verify:arch-design red on main (/insurance + Fuel Planner settings + Expense mapping)",
       "state": "merged",
-      "mergedAtCt": "10/23/2026, 02:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27339",
-      "sha": "52754dfedb",
-      "committedAtIso": "2026-10-23T14:56:55-05:00"
+      "mergedAtCt": "10/23/2026, 08:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27425",
+      "sha": "0a76690673",
+      "committedAtIso": "2026-10-23T20:57:15-05:00"
     }
   ]
 }
