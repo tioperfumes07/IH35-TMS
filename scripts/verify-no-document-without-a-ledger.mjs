@@ -32,7 +32,7 @@ const GAP_RATCHET = {
   "accounting.expenses": 0,
   "accounting.bill_payments": 32,
   // 2026-10-22 Neon measure (443.258-B ship): live unposted invoices = 1 (was 26). Shrink-only.
-  "accounting.invoices": 1,
+  "accounting.invoices": 0,
   "fuel.fuel_transactions": 0,
   // 2026-10-24 (CC-1 443.322 ENG-01): P-0113/P-0117/P-0119 — 3 load-bookended settlements
   // with status=closed, posted_at=NULL, 0 JE postings. Root cause: settlement-payrun-close.routes.ts
@@ -142,6 +142,10 @@ const DOCUMENT_CLASSES = [
   {
     table: "accounting.invoices", voidCol: "voided_at", sourceType: "invoice", expectedToPost: true,
     zeroSql: "COALESCE(d.total_cents, 0) = 0",
+    // LEAD 10-24: a PROFORMA is the preview the Edit Load engine keeps current until the invoice is issued (QBO: an
+    // estimate) — it never posts. Measured 10-24: proforma 2 / 0 posted (13690, 13699 — both loads in_transit); sent 183,
+    // 164 posted + 19 at $0.00. The old "ratchet 1" was the 13690 proforma, not a missing posting.
+    pendingSql: "d.status::text = 'proforma'",
   },
   { table: "accounting.factoring_advances", voidCol: "voided_at", sourceType: "factoring_advance", expectedToPost: true },
   { table: "banking.transfers", voidCol: "revoked_at", sourceType: "transfer", expectedToPost: true },
