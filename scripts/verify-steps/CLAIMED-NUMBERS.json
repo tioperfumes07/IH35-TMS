@@ -17034,5 +17034,10 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1091
+  "total_claimed": 1091,
+  "18773": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "CC-1",
+    "purpose": "ENG-03 (443.322): escrow_ledger rows missing load_id; stamp load_id on insert and backfill 58 existing rows"
+  }
 }
