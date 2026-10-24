@@ -2303,6 +2303,26 @@
       ]
     },
     {
+      "id": "catalog.accounting.override_reasons.list",
+      "tab": "Accounting",
+      "sub": "Override Reasons",
+      "route_hint": "/lists/accounting/override-reasons",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "catalog.accounting.override_reasons.create",
+      "tab": "Accounting",
+      "sub": "+ Create \u2014 Override Reasons",
+      "route_hint": "/lists/accounting/override-reasons",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
       "id": "catalog.accounting.abandonment_defaults.list",
       "tab": "Accounting",
       "sub": "Abandonment defaults",
@@ -2922,6 +2942,19 @@
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "surface_kind": "modal",
       "surface_path": "pages/lists/accounting/VoidCancelReasonsListPage.tsx",
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "lists.modal.override_reason",
+      "tab": "Accounting catalogs",
+      "sub": "Override reason modal",
+      "route_hint": "/lists/accounting/override-reasons",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/accounting/OverrideReasonsListPage.tsx",
       "required": [
         "connectivity",
         "picker_law",
