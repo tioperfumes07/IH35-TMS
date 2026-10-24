@@ -9,7 +9,7 @@
  * selected). This guard proves the fix stays wired:
  *
  *   1. EntityLink declares a "lawsuit" kind resolving to
- *      /insurance/lawsuits?lawsuit_id=${id} (never a bare list route).
+ *      /legal/lawsuits?lawsuit_id=${id} (never a bare list route).
  *   2. LegalMatterDetailPage renders insurance_lawsuit_id via <EntityLink kind="lawsuit" .../>,
  *      not a bare <Link to="/insurance/lawsuits">.
  *   3. LawsuitsTab reads ?lawsuit_id= from useSearchParams and seeds the selected/highlighted
@@ -40,10 +40,10 @@ export function assertLegalMatterLawsuitLinkage(sources) {
     errors.push('EntityLink: EntityKind union must declare "lawsuit"');
   }
   if (
-    !/case "lawsuit":\s*\n\s*return `\/insurance\/lawsuits\?lawsuit_id=\$\{id\}`/.test(entityLink)
+    !/case "lawsuit":\s*\n\s*return `\/legal\/lawsuits\?lawsuit_id=\$\{id\}`/.test(entityLink)
   ) {
     errors.push(
-      'EntityLink: resolveEntityRoute case "lawsuit" must return `/insurance/lawsuits?lawsuit_id=${id}`',
+      'EntityLink: resolveEntityRoute case "lawsuit" must return `/legal/lawsuits?lawsuit_id=${id}`',
     );
   }
 
@@ -52,7 +52,7 @@ export function assertLegalMatterLawsuitLinkage(sources) {
   }
   if (/<Link[^>]*to="\/insurance\/lawsuits"/.test(matterDetail)) {
     errors.push(
-      "LegalMatterDetailPage: bare <Link to=\"/insurance/lawsuits\"> (no id) is forbidden — use EntityLink kind=\"lawsuit\"",
+      "LegalMatterDetailPage: bare <Link to=\"/legal/lawsuits\"> (no id) is forbidden — use EntityLink kind=\"lawsuit\"",
     );
   }
   if (!/data-testid=["']matter-insurance-lawsuit-link["']/.test(matterDetail)) {
@@ -102,7 +102,7 @@ export function resolveEntityRoute(kind, id) {
     case "claim":
       return \`/insurance/claims?claim_id=\${id}\`;
     case "lawsuit":
-      return \`/insurance/lawsuits?lawsuit_id=\${id}\`;
+      return \`/legal/lawsuits?lawsuit_id=\${id}\`;
     case "matter":
       return \`/legal/matters/\${id}\`;
   }
@@ -139,12 +139,12 @@ LEFT JOIN mdata.assets AS asset ON asset.operating_company_id = lawsuit.tenant_i
       {
         ...good,
         entityLink: good.entityLink.replace(
-          "return `/insurance/lawsuits?lawsuit_id=${id}`;",
-          "return `/insurance/lawsuits`;",
+          "return `/legal/lawsuits?lawsuit_id=${id}`;",
+          "return `/legal/lawsuits`;",
         ),
       },
     ],
-    ["bare-link-regression", null, { ...good, matterDetail: '<Link to="/insurance/lawsuits" data-testid="matter-insurance-lawsuit-link">x</Link>' }],
+    ["bare-link-regression", null, { ...good, matterDetail: '<Link to="/legal/lawsuits" data-testid="matter-insurance-lawsuit-link">x</Link>' }],
     ["missing-testid", null, { ...good, matterDetail: '<EntityLink kind="lawsuit" id={String(matter.insurance_lawsuit_id)} />' }],
     ["no-search-params-hook", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace("useSearchParams", "useState") }],
     ["no-param-read", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace('searchParams.get("lawsuit_id")', '""') }],

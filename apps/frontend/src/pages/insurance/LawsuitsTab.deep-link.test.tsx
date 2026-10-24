@@ -102,7 +102,7 @@ function wrap(ui: ReactElement, initialPath: string) {
 
 describe("LawsuitsTab ?lawsuit_id= reverse drill-through (Law §9)", () => {
   it("selects and highlights the deep-linked lawsuit row from EntityLink kind=\"lawsuit\"", async () => {
-    render(wrap(<LawsuitsTab />, `/insurance/lawsuits?lawsuit_id=${LAWSUIT_ID}`));
+    render(wrap(<LawsuitsTab />, `/legal/lawsuits?lawsuit_id=${LAWSUIT_ID}`));
 
     const targetRow = await screen.findByText("CASE-1001");
     await waitFor(() => {
@@ -114,7 +114,7 @@ describe("LawsuitsTab ?lawsuit_id= reverse drill-through (Law §9)", () => {
   });
 
   it("shows the deep-linked lawsuit's claim reverse section (no dead end)", async () => {
-    render(wrap(<LawsuitsTab />, `/insurance/lawsuits?lawsuit_id=${LAWSUIT_ID}`));
+    render(wrap(<LawsuitsTab />, `/legal/lawsuits?lawsuit_id=${LAWSUIT_ID}`));
 
     await screen.findByText("CASE-1001");
     await waitFor(() => {
@@ -123,7 +123,7 @@ describe("LawsuitsTab ?lawsuit_id= reverse drill-through (Law §9)", () => {
   });
 
   it("renders direct driver and unit drill-through resolved through the linked claim", async () => {
-    render(wrap(<LawsuitsTab />, "/insurance/lawsuits"));
+    render(wrap(<LawsuitsTab />, "/legal/lawsuits"));
 
     await screen.findByText("CASE-1001");
     // EntityLinkOrTombstone's accessible name is the resolved entity name ("Jane Driver"), never the
@@ -133,7 +133,7 @@ describe("LawsuitsTab ?lawsuit_id= reverse drill-through (Law §9)", () => {
   });
 
   it("renders with no selection when lawsuit_id is absent (unchanged default behavior)", async () => {
-    render(wrap(<LawsuitsTab />, "/insurance/lawsuits"));
+    render(wrap(<LawsuitsTab />, "/legal/lawsuits"));
 
     const row = await screen.findByText("CASE-1001");
     expect(row.closest("tr")).not.toHaveClass("bg-[#F7F8FA]");
