@@ -101,6 +101,14 @@ function analyze(reg, page) {
   if (!/Advances \(Zelle\)/.test(page) || !/Escrow/.test(page) || !/Fines/.test(page))
     errors.push("SettlementsPage deductions panel must split Escrow / Advances (Zelle) / Fines");
 
+  // REG-102 / register #102 — Week-of panel must key open/closed pills on trip_closed_at (tour phase), not payment_state.
+  if (!/function settlementsRowTourClosed\b/.test(page) || !/trip_closed_at/.test(page))
+    errors.push("SettlementsPage Week-of panel must use settlementsRowTourClosed(trip_closed_at) for open/closed pills (REG-102)");
+  if (!/function settlementsWeekOfStatusLabel\b/.test(page))
+    errors.push("SettlementsPage Week-of Status column must use settlementsWeekOfStatusLabel (tour phase, not Paid/Open pay status)");
+  if (/weekOfClosedCount[\s\S]{0,120}settlementsRowPayStatus/.test(page))
+    errors.push("weekOfClosedCount must not filter on settlementsRowPayStatus === Paid (REG-102)");
+
   // ROUND 443.274-C — Settlements-Open board (Ready dots · Waiting on · Settlement label · no "Open" status word).
   if (!/function ReadyDots\b/.test(reg) || !/data-testid="setl-tour-ready-dots"/.test(reg))
     errors.push("SettlementsToursRegister must render ReadyDots (data-testid setl-tour-ready-dots) for Open Ready column");
@@ -175,6 +183,8 @@ if (process.argv.includes("--selftest")) {
     ["drop deductions grain", [reg, page.replace(/id:\s*"deductions"/g, 'id: "net_x"')]],
     ["drop listSettlementDeductions", [reg, page.replace(/listSettlementDeductions/g, "listNope")]],
     ["drop Advances label", [reg, page.replace(/Advances \(Zelle\)/g, "Advances")]],
+    ["week-of uses pay status for closed count", [reg, page.replace(/weekOfClosedCount = thisWeekSettlements.filter\(\(s\) => settlementsRowTourClosed\(s\)\)/, "weekOfClosedCount = thisWeekSettlements.filter((s) => settlementsRowPayStatus(s) === \"Paid\")")]],
+    ["drop settlementsRowTourClosed", [reg, page.replace(/function settlementsRowTourClosed\b[\s\S]*?\n}\n\nfunction settlementsWeekOfStatusLabel/, "function settlementsWeekOfStatusLabel")]],
     ["drop ReadyDots testid", [reg.replace(/setl-tour-ready-dots/g, "setl-tour-ready-gone"), page]],
     ["drop Waiting on label", [reg.replace(/label:\s*"Waiting on"/g, 'label: "Open items"'), page]],
     ["restore Settlement/Tour label", [reg.replace(/label:\s*"Settlement"/, 'label: "Settlement/Tour"'), page]],

@@ -14,6 +14,7 @@ const leg = (load_id: string, load_number: string, trip_type: string, revenue: n
 
 const tour = (settlement_id: string, legs: ReturnType<typeof leg>[], extra: Partial<TourListRow> = {}): TourListRow => ({
   settlement_id, display_id: "S-2026-0013", status: "open", is_open: true, driver_name: "Luis", unit_number: "604",
+  period_start: "2026-09-10", period_end: null,
   trip_started_at: "2026-09-10", trip_closed_at: null, leg_count: legs.length, legs_label: legs.map(l => `${l.trip_type} ${l.load_number}`).join(" → "),
   legs, origin_load_number: legs[0]?.load_number ?? null, origin_pickup_date: null, origin_delivery_date: null,
   revenue_cents: legs.reduce((n, l) => n + l.revenue_cents, 0), costs_cents: legs.reduce((n, l) => n + l.costs_cents, 0),

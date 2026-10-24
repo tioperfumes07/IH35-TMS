@@ -17,7 +17,7 @@ import {
 } from "../../api/reports";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
-import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
+import { ReportFilterBar, type ReportPreset } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
 import { formatAccountTypeLabel } from "../../lib/formatAccountTypeLabel";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
@@ -286,7 +286,7 @@ export function ProfitLossPage() {
         toDate={staged.draft.end}
         onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
         onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
-        onPresetSelect={(preset) => {
+        onPresetSelect={(preset: ReportPreset) => {
           const next = new URLSearchParams(searchParams);
           next.set("preset", preset);
           setSearchParams(next, { replace: true });

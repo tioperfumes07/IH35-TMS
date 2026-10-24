@@ -120,6 +120,20 @@ function settlementStatusLabel(s: SettlementListRow): "Open" | "Closed" | "Void"
   if (s.status === "closed" || s.status === "paid" || s.status === "approved" || s.status === "final") return "Closed";
   return "Open";
 }
+
+/** REG-102 / register #102 — Week-of panel pills follow tour close (trip_closed_at), same as listTours open/closed. */
+function settlementsRowTourClosed(s: SettlementListRow): boolean {
+  const raw = s.trip_closed_at;
+  return raw != null && String(raw).trim() !== "";
+}
+
+function settlementsWeekOfStatusLabel(s: SettlementListRow): "Open" | "Closed" | "Held" | "Cancelled" {
+  if (s.status === "cancelled") return "Cancelled";
+  if (s.status === "held") return "Held";
+  return settlementsRowTourClosed(s) ? "Closed" : "Open";
+}
+
+// 443.292-C — Payment status (Unpaid / Paid) separate from tour-based Settlement column (settlementsWeekOfStatusLabel).
 function settlementPaymentLabel(s: SettlementListRow): "Paid" | "Unpaid" | "Held" {
   if (s.status === "held") return "Held";
   if (s.status === "paid" || s.payment_state === "cleared" || s.payment_state === "manual_paid") return "Paid";
@@ -415,16 +429,15 @@ export function SettlementsPage() {
     });
   }, [kpiBaseQuery.isError, thisWeekBucket, kpiSettlements]);
 
-  // 443.292-C: bucket by settlement status (not payment status) so closed+unpaid rows land in "closed" pill.
-  // Filter out empty tours ($0 gross + $0 net with status closed) from the closed view — duplicate empty rows.
-  const weekOfOpenCount = thisWeekSettlements.filter((s) => settlementStatusLabel(s) === "Open").length;
-  const weekOfClosedCount = thisWeekSettlements.filter((s) => settlementStatusLabel(s) === "Closed").length;
+  // REG-102: Week-of pills follow tour close (trip_closed_at), same as listTours — not payment_state.
+  // 443.292-C: exclude empty closed tours ($0 gross + $0 net) from the closed pill list.
+  const weekOfOpenCount = thisWeekSettlements.filter((s) => !settlementsRowTourClosed(s)).length;
+  const weekOfClosedCount = thisWeekSettlements.filter((s) => settlementsRowTourClosed(s)).length;
   const weekOfRows = thisWeekSettlements.filter((s) => {
-    const stl = settlementStatusLabel(s);
-    if (weekOfPill === "open") return stl === "Open";
-    // Exclude empty closed settlements (no lines, $0 gross, $0 net) — they appear as duplicate blank driver rows.
-    if (Number(s.gross_pay ?? 0) === 0 && Number(s.net_pay ?? 0) === 0 && stl === "Closed") return false;
-    return stl === "Closed";
+    if (weekOfPill === "open") return !settlementsRowTourClosed(s);
+    if (!settlementsRowTourClosed(s)) return false;
+    if (Number(s.gross_pay ?? 0) === 0 && Number(s.net_pay ?? 0) === 0) return false;
+    return true;
   });
   const weekOfTotals = weekOfRows.reduce(
     (acc, s) => {
@@ -842,6 +855,7 @@ export function SettlementsPage() {
               </div>
             ) : (
               weekOfRows.map((s) => {
+                const status = settlementsWeekOfStatusLabel(s);
                 return (
                   <div
                     key={s.id}
@@ -868,8 +882,8 @@ export function SettlementsPage() {
                     <span>{Number(s.deductions_total ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     <span>{settlementsDerivedReimb(s).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     <span>{Number(s.net_pay ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    {/* 443.292-C: two status columns */}
-                    <span style={{ color: settlementStatusLabel(s) === "Void" ? V3.red : settlementStatusLabel(s) === "Closed" ? V3.green : V3.ink }}>{settlementStatusLabel(s)}</span>
+                    {/* 443.292-C: two status columns; settlement column uses tour phase for Open/Closed */}
+                    <span style={{ color: status === "Cancelled" ? V3.red : status === "Closed" ? V3.green : status === "Held" ? V3.red : V3.ink }}>{status}</span>
                     <span style={{ color: settlementPaymentLabel(s) === "Paid" ? V3.green : settlementPaymentLabel(s) === "Held" ? V3.red : V3.ink }}>{settlementPaymentLabel(s)}</span>
                   </div>
                 );
