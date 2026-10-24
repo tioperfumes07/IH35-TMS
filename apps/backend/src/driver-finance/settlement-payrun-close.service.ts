@@ -127,7 +127,8 @@ export type PayRunCloseErrorCode =
   | "OUTSTANDING_LOAN_DECISION_REQUIRED"
   | "SETTLEMENT_HAS_NO_LOAD_ACTIVITY"
   | "SETTLEMENT_HAS_NO_LIVE_LINES"
-  | "SETTLEMENT_NUMBER_ASSIGN_FAILED";
+  | "SETTLEMENT_NUMBER_ASSIGN_FAILED"
+  | "DEDUCTIONS_LINES_MISMATCH";
 
 export class SettlementPayRunError extends Error {
   code: PayRunCloseErrorCode;
@@ -788,6 +789,33 @@ export async function closeSettlementPayRun(
     const deductionsByRoleLoad: Array<{ roleKey: string; loadId: string | null; cents: number }> = [];
     const deductionsByRole = await loadOtherDeductionsByRole(client, opco, settlementId, collectedDeductionIds, deductionsByRoleLoad);
     const deductionsCents = Array.from(deductionsByRole.values()).reduce((s, v) => s + v, 0);
+
+    // ENG-01b (443.322, step 18781): settlement_lines deductions must equal driver_settlement_deductions
+    // total at close time. A mismatch means the DSD table is stale — P-0119 class: settlement_lines has
+    // a deduction row that was never mirrored into driver_settlement_deductions, so the close would
+    // silently post the wrong amount. Fail closed in non-preview mode only; preview still shows numbers.
+    if (input.previewOnly !== true) {
+      const linesDeductionRes = await client.query<{ total_cents: string }>(
+        `SELECT COALESCE(SUM(ROUND(ABS(amount) * 100)::bigint), 0)::text AS total_cents
+           FROM driver_finance.settlement_lines
+          WHERE settlement_id = $1
+            AND line_type = 'deduction'
+            AND is_active = true
+            AND voided_at IS NULL`,
+        [settlementId]
+      );
+      const linesDeductionCents = parseInt(linesDeductionRes.rows[0].total_cents, 10);
+      if (linesDeductionCents !== deductionsCents) {
+        throw new SettlementPayRunError(
+          "DEDUCTIONS_LINES_MISMATCH",
+          `Settlement ${settlement.display_id ?? settlementId}: driver_settlement_deductions total ` +
+            `${deductionsCents}c ≠ settlement_lines deductions ${linesDeductionCents}c — ` +
+            `reconcile the deduction rows before closing.`,
+          { settlement_id: settlementId, deductions_cents: deductionsCents, lines_deduction_cents: linesDeductionCents }
+        );
+      }
+    }
+
     const chargebacksCents = await loadChargebacksCents(client, opco, settlementId);
 
     const onlyAdvanceIds = input.onlyAdvanceIds ? new Set(input.onlyAdvanceIds) : null;

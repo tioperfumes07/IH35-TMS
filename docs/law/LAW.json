@@ -1240,5 +1240,12 @@
     "source_file": "apps/backend/src/accounting/posting-engine.service.ts",
     "guard": "scripts/verify-driver-net-pay-clearing-balance-zero.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-443322-ENG01B-SETTLEMENT-WITHHOLDINGS-EQUAL-DEDUCTIONS",
+    "title": "For every posted USMCA settlement the deduction_journal_entry credits must equal glr.deductions_cents; at close time driver_settlement_deductions must match settlement_lines deductions (DEDUCTIONS_LINES_MISMATCH fail-closed)",
+    "source_file": "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
+    "guard": "scripts/verify-steps/18781-verify-settlement-posted-withholdings-equal-deductions-total.mjs",
+    "type": "enforced"
   }
 ]
