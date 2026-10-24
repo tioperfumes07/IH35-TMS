@@ -89,6 +89,20 @@ function contractErrors(src) {
   if (!src.createPage.includes("createVendorBill")) {
     errors.push("VERIFY-3: VendorBillCreatePage must call createVendorBill");
   }
+  if (!src.createPage.includes("kpiStrip")) {
+    errors.push("443.293-C: VendorBillCreatePage must pass kpiStrip on AccountingSubNavWrapper");
+  }
+  if (!/label:\s*"Bills"[\s\S]*href:\s*"\/accounting\/bills"/.test(src.createPage)) {
+    errors.push("443.293-C: VendorBillCreatePage crumbs must link Bills parent");
+  }
+  if (!src.createPage.includes("createControl")) {
+    errors.push("443.293-C: VendorBillCreatePage must pass createControl (no duplicate + Create ▾)");
+  }
+
+  const multiBills = read("apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx");
+  if (!multiBills.includes("kpiStrip") || !multiBills.includes("MoneyListToolbar")) {
+    errors.push("443.293-C: CreateMultipleBillsPage must use kpiStrip + MoneyListToolbar V3 board chrome");
+  }
 
   for (const needle of [
     "vendor_id:",
@@ -157,7 +171,16 @@ function selftest() {
       "listCatalogAccounts",
       "is_postable",
     ].join("\n"),
-    createPage: 'import { ParityDrawer }\n<ParityDrawer>\n<VendorBillForm />\ncreateVendorBill\n',
+    createPage: [
+      'import { ParityDrawer }',
+      "<ParityDrawer>",
+      "<VendorBillForm />",
+      "createVendorBill",
+      "kpiStrip",
+      "createControl",
+      'label: "Bills"',
+      'href: "/accounting/bills"',
+    ].join("\n"),
     api: 'export function createVendorBill(){ return apiRequest(`/api/v1/accounting/bills`, { method: "POST" }) }',
     service: "INSERT INTO accounting.bills (linked_work_order_uuid, unit_id)",
   };

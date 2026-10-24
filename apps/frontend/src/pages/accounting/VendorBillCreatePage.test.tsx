@@ -59,7 +59,7 @@ describe("VendorBillCreatePage", () => {
     const billHeader = screen.getByTestId("qbo-bill-header");
     expect(billHeader).toBeInTheDocument();
     expect(billHeader.className).toMatch(/w-full/);
-    expect(screen.getByLabelText("Bill no.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Bill no. (ours)")).toBeInTheDocument();
     expect(screen.getByTestId("vendor-bill-number").className).toMatch(/text-right/);
     expect(screen.getByText("Repair Bill")).toBeInTheDocument();
     // Copy generalized from the old fixed 2-line "A + B" formula to support any number of line

@@ -7,8 +7,8 @@ import { createVendorBill, getNextBillDocumentNumber } from "../../api/accountin
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { getDriver, listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -21,6 +21,8 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { dueDateFromBillTerms } from "../../components/accounting/vendorBillDueDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SelectCombobox } from "../../components/Combobox";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { formatUsdCents } from "../../lib/money";
 
 type SeedDraft = {
   bank_transaction_id?: string;
@@ -105,6 +107,26 @@ function emptyRow(): BillDraftRow {
   };
 }
 
+function draftKpiCard(label: string, value: string, sublabel: string, tone: "neutral" | "warn" | "danger" = "neutral") {
+  const toneClass =
+    tone === "danger" ? "border-l-4 border-l-red-500" : tone === "warn" ? "border-l-4 border-l-[#6B7280]" : "border-l-4 border-l-[#E5E7EB]";
+  return (
+    <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
+      <p className="text-section-header font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+      <p className="text-page-title font-semibold text-gray-900">{value}</p>
+      <p className="text-xs text-gray-500">{sublabel}</p>
+    </div>
+  );
+}
+
+function rowReadyToSubmit(row: BillDraftRow): boolean {
+  const amountCents = Math.round(Number(row.amount) * 100);
+  if (!row.vendor_id || !row.bill_date || !Number.isFinite(amountCents) || amountCents <= 0) return false;
+  if (!row.coa_account_id || !row.expense_account_id) return false;
+  if (row.expense_account_id === row.coa_account_id) return false;
+  return true;
+}
+
 type CreateResult = {
   ok: number;
   failed: Array<{ rowId: string; reason: string }>;
@@ -123,6 +145,7 @@ export function CreateMultipleBillsPage() {
   const seeds = ((location.state as { seeds?: SeedDraft[] } | null)?.seeds ?? []).filter(Boolean);
   const [rows, setRows] = useState<BillDraftRow[]>(() => (seeds.length > 0 ? seeds.map(rowFromSeed) : [emptyRow()]));
   const [lastResult, setLastResult] = useState<CreateResult | null>(null);
+  const [draftSearch, setDraftSearch] = useState("");
 
   const vendorsQuery = useQuery({
     queryKey: ["multi-bills", "vendors", companyId],
@@ -276,13 +299,56 @@ export function CreateMultipleBillsPage() {
     onError: (error) => pushToast(userFacingApiError(error, "Failed to create bills"), "error"),
   });
 
-  const totalUsd = useMemo(
+  const totalDraftCents = useMemo(
     () =>
       rows.reduce((sum, row) => {
         const cents = Math.round(Number(row.amount) * 100);
         return Number.isFinite(cents) ? sum + Math.max(0, cents) : sum;
-      }, 0) / 100,
-    [rows]
+      }, 0),
+    [rows],
+  );
+
+  const readyCount = useMemo(() => rows.filter(rowReadyToSubmit).length, [rows]);
+  const bankSeedCount = useMemo(() => rows.filter((row) => Boolean(row.bank_transaction_id)).length, [rows]);
+
+  const vendorLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const opt of vendorOptions) map.set(opt.value, opt.label);
+    return map;
+  }, [vendorOptions]);
+
+  const filteredRows = useMemo(() => {
+    const q = draftSearch.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((row) => {
+      const vendorLabel = vendorLabelById.get(row.vendor_id) ?? "";
+      const hay = [vendorLabel, row.memo, row.bill_number, row.bank_transaction_id, row.id].join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }, [draftSearch, rows, vendorLabelById]);
+
+  const nextBillHint = nextBillNumberQuery.data?.document_number?.trim() ?? "";
+
+  const filterBar = (
+    <MoneyListToolbar
+      search={draftSearch}
+      onSearchChange={setDraftSearch}
+      searchPlaceholder="Vendor, memo, source tx…"
+      searchTestId="multi-bills-search-input"
+      onClearAll={() => setDraftSearch("")}
+      activeFilterCount={draftSearch.trim() ? 1 : 0}
+      testIdPrefix="multi-bills"
+    >
+      <Button
+        size="sm"
+        variant="secondary"
+        type="button"
+        data-testid="multi-bills-add-row"
+        onClick={() => setRows((current) => [...current, emptyRow()])}
+      >
+        Add row
+      </Button>
+    </MoneyListToolbar>
   );
 
   const updateRow = (rowId: string, patch: Partial<BillDraftRow>) => {
@@ -298,11 +364,43 @@ export function CreateMultipleBillsPage() {
     );
   };
 
-  const nextBillHint = nextBillNumberQuery.data?.document_number?.trim() ?? "";
-
   return (
+    <AccountingSubNavWrapper
+      title="Multiple bills"
+      subtitle="Bulk vendor bill drafting from selected bank transactions."
+      crumbs={[{ label: "Bills", href: "/accounting/bills" }]}
+      createControl={
+        <Button
+          size="sm"
+          type="button"
+          data-testid="multi-bills-create-cta"
+          disabled={!companyId || rows.length === 0}
+          loading={createMutation.isPending}
+          onClick={() => createMutation.mutate()}
+        >
+          Create bills
+        </Button>
+      }
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="multi-bills-kpi-strip">
+          {draftKpiCard("Draft rows", String(rows.length), `${filteredRows.length} shown`)}
+          {draftKpiCard("Draft total", formatUsdCents(totalDraftCents), "Sum of positive amounts")}
+          {draftKpiCard(
+            "Ready to submit",
+            String(readyCount),
+            readyCount < rows.length ? `${rows.length - readyCount} need fields` : "All rows valid",
+            readyCount === rows.length && rows.length > 0 ? "neutral" : readyCount > 0 ? "warn" : "danger",
+          )}
+          {draftKpiCard(
+            "Bank seeds",
+            String(bankSeedCount),
+            nextBillHint ? `Next mint ${nextBillHint}` : "Leave bill no. blank to mint",
+          )}
+        </div>
+      }
+      actions={filterBar}
+    >
     <div className="space-y-3" data-testid="create-multiple-bills-page">
-      <PageHeader title="Create multiple bills" subtitle="Bulk vendor bill drafting from selected bank transactions." />
       {!companyId ? (
         <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">Select an operating company.</p>
       ) : null}
@@ -318,40 +416,16 @@ export function CreateMultipleBillsPage() {
           onRetry={() => void coaQuery.refetch()}
         />
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-        <span className="font-medium text-gray-800">Rows: {rows.length}</span>
-        <span className="text-gray-700">Total draft amount: ${totalUsd.toFixed(2)}</span>
-        <span className="w-full text-xs font-normal text-gray-500" data-testid="multi-bills-number-hint">
-          {nextBillHint
-            ? `Leave blank to mint. Next unused is ${nextBillHint}.`
-            : "Leave blank to mint. Type any number you want."}
-        </span>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() =>
-              setRows((current) => {
-                return [...current, emptyRow()];
-              })
-            }
-          >
-            Add row
-          </Button>
-          <Button size="sm" disabled={!companyId || rows.length === 0} loading={createMutation.isPending} onClick={() => createMutation.mutate()}>
-            Create bills
-          </Button>
-        </div>
-      </div>
-
-      {/* ACCT-F3580: ParityTable owns Search+Range+gear on multi-bill draft grid. */}
+      {/* ACCT-F3580 + FILTER-MULTI-01: MoneyListToolbar owns search; ParityTable keeps gear/export only. */}
       <ParityTable<BillDraftRow> title="Bill drafts"
-        rows={rows}
+        rows={filteredRows}
         rowKey={(row) => row.id}
         storageKey="create-multiple-bills-draft"
         exportFilename="create-multiple-bills-draft"
         tableTestId="create-multiple-bills-table"
         emptyText="No bill draft rows."
+        suppressToolbarSearch
+        suppressToolbarRange
         columns={[
           {
             key: "source",
@@ -577,5 +651,6 @@ export function CreateMultipleBillsPage() {
       ) : null}
 
     </div>
+    </AccountingSubNavWrapper>
   );
 }
