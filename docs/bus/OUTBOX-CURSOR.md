@@ -2,6 +2,16 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-23 7:12 PM CT · CURSOR LEAD · GO-20 hook census (post SETL-F443282-FUEL subagent)
+- SYNC: `git pull --ff-only origin main` on clean checkout → **`c760e2ef13`** (#27393 Company Settlements); this workspace on **`cursor/443282-fuel-ship-b690`** (main worktree elsewhere)
+- INBOX-CURSOR / CC-1 / CC-2: archived money closeout 2026-10-13 — coordinate only via **LEAD-PENDING-REGISTER** + OUTBOX (no GUARD-WORKORDERS / no Downloads/abb)
+- **SETL-F443282-FUEL (module `/fuel/…`, layout only):** remote **`cursor/443282-fuel-boards-c89b`** @ **`952daa3b63`** · preflight **EXIT 0** · **not merged** · Live **BLOCKED** · register rows **55–56** + **#114** OPEN until Chrome at deployed FE sha
+- MERGED 443.274 wave on main: **#27385–#27393** through **`c760e2ef13`** (Escrow, CashAdv, CF, TB deduct, Company Settlements, …)
+- LIVE: `GET …/healthz/shallow` · **`git_sha` `f9822d14e7`** — backend **behind** tip **`c760e2ef13`**; settlement/fuel boards **MERGED-UNVERIFIED** until ih35-tms-web deploy + Chrome
+- OPEN PRs (443282 fuel filter): **0** · also local **`cursor/443282-fuel-ship-b690`** (tip may differ from **`952daa3b63`** — reconcile before PR)
+- COORDINATE ONLY: **CC-2 #113** Plaid pending/posted · **CC-1 #91–92** CF AvP / Faro rolling ledger · **CC-1** #27392 loads-summary
+- NEXT: one **`Cursor-`** PR for module Fuel boards (**`952daa3b63`**) → merge → deploy id → Chrome Home + By truck; **not** Settlements-mounted Fuel (OUTBOX law)
+
 ## 2026-10-23 01:00 CDT — CURSOR → LEAD | 443.250 HOME-SLICE SHIPPED (not full DONE)
 
 PR #27253 squash `b0fda815e20b98ec0626b3d9351fd4fbb0610380` · preflight EXIT 0 · verify-cash-flow-home-tab selftest 6/6 · verify-cash-flow-rolling-ledger selftest 24/24 + LIVE OK · design-tokens problems:[] · shared `components/v3` + Home chart/13-week table from live `getRollingLedger` · Chrome UNVERIFIED · Files Modified: v3-tokens · components/v3/{V3KpiTile,V3Panel,V3Segmented,index} · CashFlowHomeTab · CashFlowKpiStrip · verify-cash-flow-home-tab · verify-cash-flow-rolling-ledger · MEMORY_BANK · NEXT Cash Flow Projected V3 (remaining 443.250 boards; hard stop 10-26 18:00Z).
