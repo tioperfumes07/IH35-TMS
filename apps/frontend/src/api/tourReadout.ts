@@ -94,9 +94,10 @@ export type TourListRow = {
    *  renders real EntityLinks instead of the plain-text driver_name/unit_number/trailer_number. */
   driver_id: string | null; driver_name: string | null; unit_id: string | null; unit_number: string | null;
   trailer_id: string | null; trailer_number: string | null;
+  /** 443.292-B — Central-date tour boundaries from first pickup / last delivery (tour-readout.routes.ts). */
+  period_start: string | null;
+  period_end: string | null;
   trip_started_at: string | null; trip_closed_at: string | null; leg_count: number; legs_label: string;
-  /** 443.292-B — tour period in Central business dates (backend TourListRow, tour-readout.routes.ts). */
-  period_start: string | null; period_end: string | null;
   /** ROUND 16.1 — the tour's live legs in order (load_id · load_number · trip_type) so the register
    *  can render each leg as a type-colored EntityLink pill. Downstream READ of the tour-readout model. */
   legs: TourLegBrief[];

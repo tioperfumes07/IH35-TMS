@@ -82,11 +82,16 @@ const LIVE_FLAG_FILES = new Map([
 // And it is now genuinely executed: verify-step 14385 plus the --strict step in ci.yml's
 // required-live-load-guard, the one job holding the read-only secret. Before ROUND 389 it was wired
 // to no workflow at all, which is the gap this exclusion does NOT recreate.
+// ROUND REG-98 push (2026-10-23) — verify-relay-tick-completes.mjs: static R1–R10 walks all of
+// apps/backend/src and concatenates every migration SQL at import; stripped-env standalone ~11s,
+// so the 8s spawn bound (even serial retry) reports a false hang. It declares ALLOW_OFFLINE_SKIP,
+// exits 0 with no credential, and runs on verify-step 11588 (selftest + live).
 const NOT_A_CANDIDATE = new Set([
   "verify-static.mjs",
   "verify-no-silent-db-skip.mjs",
   "verify-local-ci.mjs",
   "verify-derived-artifact-freshness.mjs",
+  "verify-relay-tick-completes.mjs",
 ]);
 
 function candidateFiles() {
