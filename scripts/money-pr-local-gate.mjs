@@ -1549,6 +1549,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-load-driver-pay-equals-driver-bill-gross.mjs",
     ],
   ],
+  // ENG-03 (443.322): every escrow_ledger row must carry a load_id. Fires on any writer that
+  // INSERTs into driver_finance.escrow_ledger (close, unwind, separation, forfeit paths).
+  [
+    "verify-escrow-ledger-row-has-load",
+    [
+      "apps/backend/src/driver-finance/",
+      "scripts/verify-steps/18773-verify-escrow-ledger-row-has-load.mjs",
+      "db/migrations/202616240000_escrow_ledger_stamp_load_id_and_settlement_id.sql",
+    ],
+  ],
   // ESCROW-LEDGER-SIGN-01 (owner ruling, 2026-09-23): "A hold is a CREDIT to the driver's escrow
   // liability... sign follows transaction_type, never the caller." Shrink-only baseline on the
   // 39 pre-fix rows (they purge, not corrected here). Domain-conditional per the E7 pattern above

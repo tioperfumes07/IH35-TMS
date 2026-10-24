@@ -151,6 +151,7 @@ type SettlementRow = {
   settlement_model: string | null;
   trip_closed_at: string | null;
   source_document_ref: string | null;
+  first_load_id: string | null;
 };
 
 export type PayRunNetBreakdown = {
@@ -219,7 +220,8 @@ async function loadSettlement(client: DbClient, operatingCompanyId: string, sett
         gross_pay::text,
         settlement_model,
         trip_closed_at::text,
-        source_document_ref
+        source_document_ref,
+        first_load_id::text
       FROM driver_finance.driver_settlements
       WHERE operating_company_id = $1::uuid AND id = $2::uuid
       LIMIT 1
@@ -1309,6 +1311,7 @@ export async function closeSettlementPayRun(
         operatingCompanyId: opco,
         driverId: settlement.driver_id,
         settlementId,
+        loadId: settlement.first_load_id ?? null,
         amountCents: escrowContributionCents,
         balanceBeforeCents: escrowBalanceBeforeCents,
         label,
@@ -1637,25 +1640,21 @@ async function recordEscrowContribution(
     operatingCompanyId: string;
     driverId: string;
     settlementId: string;
+    loadId: string | null;
     amountCents: number;
     balanceBeforeCents: number;
     label: string;
   }
 ): Promise<void> {
-  // KILL THE SECOND SYSTEM (tables 2-5): the pay-run JE's Cr to the driver's 2100-00-nnn sub-account IS the balance
-  // change; escrow_balances keeps only its identity row (the ledger FK) — no running total. (Settlement columns are
-  // still omitted: escrow_balances.last_settlement_id / escrow_ledger.settlement_id FK into the retired family.)
   const balanceId = await ensureEscrowBalanceRow(client as never, args.operatingCompanyId, args.driverId);
-  // Append the ledger 'hold' entry (detailed history). running_balance_cents = the post-contribution
-  // balance (escrow_balances' own magnitude tracking, unchanged by ESCROW-LEDGER-SIGN-01). amount_cents
-  // IS signed per that fix: a hold is negative to the driver, sign follows transaction_type.
+  // ENG-03: stamp settlement_id + load_id so every escrow hold is traceable to its source settlement and load.
   await client.query(
     `
       INSERT INTO driver_finance.escrow_ledger
-        (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, description)
-      VALUES ($1::uuid, $2::uuid, $3::uuid, 'hold', $4, $5)
+        (operating_company_id, driver_id, escrow_balance_id, settlement_id, load_id, transaction_type, amount_cents, description)
+      VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, 'hold', $6, $7)
     `,
-    [args.operatingCompanyId, args.driverId, balanceId, signedEscrowLedgerAmountCents("hold", args.amountCents), `${args.label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`]
+    [args.operatingCompanyId, args.driverId, balanceId, args.settlementId, args.loadId ?? null, signedEscrowLedgerAmountCents("hold", args.amountCents), `${args.label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`]
   );
 }
 

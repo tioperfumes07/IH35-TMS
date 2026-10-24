@@ -236,6 +236,8 @@ jobs:
 
       - name: verify:load-driver-pay-equals-driver-bill-gross
         run: node scripts/verify-load-driver-pay-equals-driver-bill-gross.mjs
+      - name: verify:escrow-ledger-row-has-load
+        run: npm run verify:escrow-ledger-row-has-load
 
       - name: verify:payment-methods-catalog --selftest
         run: node scripts/verify-payment-methods-catalog.mjs --selftest
