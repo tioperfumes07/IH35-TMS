@@ -52,8 +52,6 @@ function tour(partial: Partial<TourListRow> & Pick<TourListRow, "settlement_id" 
     company_settlement_display_id: null,
     tour_id: null,
     ...partial,
-    period_start: partial.period_start ?? null,
-    period_end: partial.period_end ?? null,
   };
 }
 

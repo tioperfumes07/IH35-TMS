@@ -113,14 +113,6 @@ function settlementsDerivedReimb(s: SettlementListRow): number {
   return Math.abs(reimb) < 0.005 ? 0 : reimb;
 }
 
-// 443.292-C — Settlement status (Open / Closed / Void) and Payment status (Unpaid / Paid) as two separate columns.
-function settlementStatusLabel(s: SettlementListRow): "Open" | "Closed" | "Void" {
-  // driver_settlements_status_check: a voided settlement is status "cancelled" (voided_at set) — there is no "void" value.
-  if (s.status === "cancelled") return "Void";
-  if (s.status === "closed" || s.status === "paid" || s.status === "approved" || s.status === "final") return "Closed";
-  return "Open";
-}
-
 /** REG-102 / register #102 — Week-of panel pills follow tour close (trip_closed_at), same as listTours open/closed. */
 function settlementsRowTourClosed(s: SettlementListRow): boolean {
   const raw = s.trip_closed_at;
