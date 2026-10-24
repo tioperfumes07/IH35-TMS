@@ -48,6 +48,7 @@
     "verify-ldt-4-factoring-money.mjs",
     "verify-ldt-5-presettlement-readout.mjs",
     "verify-ldt-d-documents-tab.mjs",
+    "verify-load-driven-miles-from-fences.mjs",
     "verify-load-costs-cost-split-foots.mjs",
     "verify-load-counter-not-ahead-of-reality.mjs",
     "verify-m1-positioned-parts.mjs",

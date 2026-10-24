@@ -102,5 +102,49 @@ if (unexpected.length) {
   process.exit(1);
 }
 
-console.log(`\n${LABEL}: PASS — no new direct writer. ${ALLOWED.size - closed.length} door(s) still to collapse into the engine.`);
+// ENG-28 (443.324) — only posting-engine.service.ts may import posting-line-writer.ts.
+// The writer is the engine's own internal tool; no other file should reach it directly.
+// SHRINK-ONLY baseline: 10 pre-existing importers measured 2026-10-24 on main 1d87d07bab.
+// New files importing the writer are a hard FAIL; removed entries are logged (collapse landed).
+const WRITER_REL = "accounting/posting-line-writer.ts";
+const ENGINE_REL = "accounting/posting-engine.service.ts";
+const IMPORT_RE = /from\s+['"][^'"]*posting-line-writer(?:\.js)?['"]/;
+const IMPORT_BASELINE = new Set([
+  "accounting/amortization-posting/amortization-posting.service.ts",
+  "accounting/bank-recon/match.service.ts",
+  "accounting/expense-correction.service.ts",
+  "accounting/fuel-posting/poster.service.ts",
+  "accounting/journal-entries.service.ts",
+  "accounting/lease-asc842/lease-posting.service.ts",
+  "accounting/period-close-retained-earnings.service.ts",
+  "accounting/settlement-posting/settlement-posting.service.ts",
+  "accounting/void.service.ts",
+  "fuel/dreamline-statement-import.service.ts",
+]);
+const illegalImporters = [];
+for (const file of walk(SRC)) {
+  const rel = path.relative(SRC, file);
+  if (rel === ENGINE_REL || rel === WRITER_REL) continue;
+  const text = fs.readFileSync(file, "utf8");
+  if (IMPORT_RE.test(text)) illegalImporters.push(rel);
+}
+const newIllegal = illegalImporters.filter((f) => !IMPORT_BASELINE.has(f));
+const collapsed = [...IMPORT_BASELINE].filter((f) => !illegalImporters.includes(f)).sort();
+if (collapsed.length) {
+  console.log(`  ENG-28: ${collapsed.length} importer(s) collapsed into the engine — remove from IMPORT_BASELINE in this same PR:`);
+  for (const f of collapsed) console.log(`    ${f}`);
+}
+if (newIllegal.length) {
+  console.error(
+    `\n${LABEL}: FAIL — ${newIllegal.length} NEW file(s) import ${WRITER_REL} directly (only ${ENGINE_REL} may):\n` +
+      newIllegal.map((f) => `  ${f}`).join("\n") +
+      `\nRoute through ${ENGINE_REL} which owns role-resolution, spine-link, and load_id stamp.\n` +
+      `The IMPORT_BASELINE is SHRINK-ONLY (ENG-28, 443.324).\n`
+  );
+  process.exit(1);
+}
+console.log(`  ENG-28: ${illegalImporters.length} baseline importer(s) of ${WRITER_REL} (${IMPORT_BASELINE.size} allowed; shrink-only; ${collapsed.length} collapsed)`);
+
+
+console.log(`\n${LABEL}: PASS — no new direct writer; no illegal importer of ${WRITER_REL}. ${ALLOWED.size - closed.length} door(s) still to collapse into the engine.`);
 process.exit(0);
