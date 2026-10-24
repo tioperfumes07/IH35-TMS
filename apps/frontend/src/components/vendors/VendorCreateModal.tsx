@@ -207,7 +207,7 @@ export function VendorCreateModal({
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const displayName = properPersonOrPlaceName(name.trim());
+      const displayName = name.trim(); // ORG name: kept exactly as typed
       if (!name.trim()) {
         const error = new Error("Vendor name is required.");
         (error as Error & { code?: string }).code = "name_required";
@@ -245,7 +245,7 @@ export function VendorCreateModal({
         // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
         website: website.trim() || undefined,
         print_on_check_name: printOnCheckName.trim()
-          ? properPersonOrPlaceName(printOnCheckName.trim())
+          ? printOnCheckName.trim()
           : undefined,
         eligible_1099: eligible1099,
         payment_terms_id: paymentTermsId,

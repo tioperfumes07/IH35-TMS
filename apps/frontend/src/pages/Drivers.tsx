@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatPersonName } from "../lib/formatPersonName";
 import { ON_TRUCK_STATUSES } from "../lib/load-status";
 import { DatePicker } from "../components/forms/DatePicker";
 import { useEffect, useMemo, useState } from "react";
@@ -117,9 +118,9 @@ const driversRosterColumns: ParityColumn<Driver>[] = [
     label: "Name",
     sortable: true,
     className: "max-w-[220px] whitespace-nowrap",
-    sortValue: (row) => `${row.first_name} ${row.last_name}`,
+    sortValue: (row) => formatPersonName(`${row.first_name} ${row.last_name}`),
     render: (row) => {
-      const v = `${row.first_name} ${row.last_name}`;
+      const v = formatPersonName(`${row.first_name} ${row.last_name}`);
       return (
         <span title={v} className="single-line-name">
           {v}
@@ -555,14 +556,14 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         load.latest_eta_prediction?.predicted_arrival_at
           ? `${new Date(load.latest_eta_prediction.predicted_arrival_at).toLocaleDateString()} (${etaVariance}m)`
           : "ETA n/a";
-      byDriver.set(key, { driver_id: driverId, driver_name: driverName, stage, route, eta });
+      byDriver.set(key, { driver_id: driverId, driver_name: formatPersonName(driverName), stage, route, eta });
     }
     return Array.from(byDriver.values()).slice(0, 8);
   }, [dispatchLoadsQuery.data?.loads]);
   const permitExpirationRows = useMemo(() => {
     const rows: Array<{ id: string; driver_id: string; driver_name: string; label: string; days: number }> = [];
     for (const driver of allDrivers) {
-      const fullName = `${driver.first_name} ${driver.last_name}`;
+      const fullName = formatPersonName(`${driver.first_name} ${driver.last_name}`);
       const pushIfSoon = (date: string | null, label: string) => {
         if (!isWithinNextDays(date, 60)) return;
         const d = daysUntil(date);

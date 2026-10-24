@@ -25,6 +25,35 @@ const LABEL = "verify-person-names-normalized-at-write";
 const MIGRATION = "db/migrations/202616210300_driver_names_normalized_at_write.sql";
 const FE = "apps/frontend/src/lib/formatPersonName.ts";
 
+// ROW 5 (register): the DISPLAY arm. PEOPLE render proper-cased on every screen; ORGANISATIONS keep their casing.
+const FILE = (p) => `apps/frontend/src/${p}`;
+export const PERSON_SURFACES = [
+  [FILE("pages/DriverDetail.tsx"), /title=\{formatPersonName\(`\$\{driver\.first_name\} \$\{driver\.last_name\}`\)\}/, "driver profile title"],
+  [FILE("pages/Drivers.tsx"), /const v = formatPersonName\(`\$\{row\.first_name\} \$\{row\.last_name\}`\)/, "drivers roster name column"],
+  [FILE("pages/customers/components/PortalUsersTab.tsx"), /formatPersonName\(row\.full_name\)/, "customer portal users name"],
+  [FILE("pages/Customers.tsx"), /formatPersonName\(customer\.main_contact_name\)/, "customer main contact"],
+  [FILE("pages/tasks/TasksChatPage.tsx"), /formatPersonName\(c\.author_name\)/, "task comment author"],
+  [FILE("components/dispatch/LoadDetailDrawer.tsx"), /formatPersonName\(load\.assigned_primary_driver_name\)/, "load drawer driver"],
+  [FILE("pages/compliance/HosTrackerSection.tsx"), /name=\{formatPersonName\(driver\.driver_name\)\}/, "HOS tracker roster driver"],
+  [FILE("pages/compliance/HosTrackerSection.tsx"), /name=\{formatPersonName\(selectedDriver\.driver_name\)\}/, "HOS tracker detail drawer driver"],
+  [FILE("pages/compliance/FleetHosBoardSection.tsx"), /label=\{entityLabel\(formatPersonName\(row\.driver_name\)/, "fleet HOS board driver"],
+];
+// Org names are written exactly as typed — never through the person-name proper-caser ("ACME" must not become "Acme").
+export const ORG_WRITES = [
+  [FILE("components/customers/CustomerProfileForm.tsx"), /properPersonOrPlaceName\(v\.name|properOr(?:Undef|Null)\(v\.print_on_invoice_name/, "customer name / print-on-invoice name"],
+  [FILE("components/vendors/VendorCreateModal.tsx"), /properPersonOrPlaceName\((?:name|printOnCheckName)\.trim\(\)\)/, "vendor display / print-on-check name"],
+  [FILE("pages/maintenance/components/CreateWorkOrderModal.tsx"), /properPersonOrPlaceName\(values\.shop_name\)/, "shop (vendor) name"],
+];
+
+export function displayFailures(files) {
+  const f = [];
+  const el = files[FILE("lib/entity-label.ts")] ?? "";
+  if (!/const PERSON_NOUNS = new Set\(\["driver", "user"\]\);/.test(el)) f.push("entityLabel PERSON_NOUNS must be exactly driver|user (orgs keep their casing)");
+  for (const [file, re, what] of PERSON_SURFACES) if (!re.test(files[file] ?? "")) f.push(`${what} is not rendered through formatPersonName (${file})`);
+  for (const [file, re, what] of ORG_WRITES) if (re.test(files[file] ?? "")) f.push(`${what} is proper-cased — an organisation name must keep its casing (${file})`);
+  return f;
+}
+
 export function staticFailures(sql, fe) {
   const f = [];
   if (!/CREATE TRIGGER trg_drivers_proper_names\s+BEFORE INSERT OR UPDATE OF first_name, last_name ON mdata\.drivers/.test(sql)) {
@@ -40,6 +69,9 @@ export function staticFailures(sql, fe) {
   return f;
 }
 
+const displayFiles = Object.fromEntries(
+  [FILE("lib/entity-label.ts"), ...PERSON_SURFACES.map((x) => x[0]), ...ORG_WRITES.map((x) => x[0]), FILE("pages/compliance/HosTrackerSection.tsx"), FILE("pages/compliance/FleetHosBoardSection.tsx")].map((p) => [p, fs.readFileSync(path.join(ROOT, p), "utf8")]),
+);
 const src = {
   sql: fs.readFileSync(path.join(ROOT, MIGRATION), "utf8"),
   fe: fs.readFileSync(path.join(ROOT, FE), "utf8"),
@@ -54,6 +86,15 @@ if (process.argv.includes("--selftest")) {
     ["mixed case clobbered FAILS", plant("sql", "w <> upper(w) AND w <> lower(w) AND substr(w, 2) <> lower(substr(w, 2))", "false")],
     ["suffixes dropped FAIL", plant("sql", "bare IN ('II', 'III', 'IV')", "false")],
     ["no proper-casing FAILS", plant("sql", "initcap(lower(w))", "w")],
+    ["display: clean sources pass", displayFailures(displayFiles).length === 0],
+    ["display: org noun proper-cased FAILS", displayFailures({ ...displayFiles, [FILE("lib/entity-label.ts")]: displayFiles[FILE("lib/entity-label.ts")].replace('new Set(["driver", "user"])', 'new Set(["driver", "user", "customer"])') }).length > 0],
+    ["display: raw driver title FAILS", displayFailures({ ...displayFiles, [FILE("pages/DriverDetail.tsx")]: displayFiles[FILE("pages/DriverDetail.tsx")].replace("title={formatPersonName(`${driver.first_name} ${driver.last_name}`)}", "title={`${driver.first_name} ${driver.last_name}`}") }).length > 0],
+    ["display: raw portal user name FAILS", displayFailures({ ...displayFiles, [FILE("pages/customers/components/PortalUsersTab.tsx")]: displayFiles[FILE("pages/customers/components/PortalUsersTab.tsx")].replace("formatPersonName(row.full_name)", "row.full_name") }).length > 0],
+    ["display: customer name proper-cased FAILS", displayFailures({ ...displayFiles, [FILE("components/customers/CustomerProfileForm.tsx")]: displayFiles[FILE("components/customers/CustomerProfileForm.tsx")].replace("const name = v.name.trim();", "const name = properPersonOrPlaceName(v.name.trim());") }).length > 0],
+    ["display: vendor name proper-cased FAILS", displayFailures({ ...displayFiles, [FILE("components/vendors/VendorCreateModal.tsx")]: displayFiles[FILE("components/vendors/VendorCreateModal.tsx")].replace("const displayName = name.trim();", "const displayName = properPersonOrPlaceName(name.trim());") }).length > 0],
+    ["display: HOS tracker roster driver FAILS", displayFailures({ ...displayFiles, [FILE("pages/compliance/HosTrackerSection.tsx")]: displayFiles[FILE("pages/compliance/HosTrackerSection.tsx")].replace("name={formatPersonName(driver.driver_name)}", "name={driver.driver_name}") }).length > 0],
+    ["display: HOS tracker detail driver FAILS", displayFailures({ ...displayFiles, [FILE("pages/compliance/HosTrackerSection.tsx")]: displayFiles[FILE("pages/compliance/HosTrackerSection.tsx")].replace("name={formatPersonName(selectedDriver.driver_name)}", "name={selectedDriver.driver_name}") }).length > 0],
+    ["display: fleet HOS board driver FAILS", displayFailures({ ...displayFiles, [FILE("pages/compliance/FleetHosBoardSection.tsx")]: displayFiles[FILE("pages/compliance/FleetHosBoardSection.tsx")].replace("label={entityLabel(formatPersonName(row.driver_name)", "label={entityLabel(row.driver_name") }).length > 0],
     ["frontend rule drift FAILS", plant("fe", 'KEEP_UPPER = new Set(["II", "III", "IV", "JR", "SR"])', 'KEEP_UPPER = new Set(["II"])')],
   ];
   let bad = 0;
@@ -65,7 +106,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(bad ? 1 : 0);
 }
 
-const failures = staticFailures(src.sql, src.fe);
+const failures = [...staticFailures(src.sql, src.fe), ...displayFailures(displayFiles)];
 if (process.env.DATABASE_URL || process.env.IH35_GATE_READONLY_DB_URL) {
   const { requireLiveDbOrExit } = await import("./lib/require-live-db.mjs");
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });

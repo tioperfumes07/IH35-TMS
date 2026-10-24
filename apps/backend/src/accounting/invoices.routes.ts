@@ -34,7 +34,7 @@ const listQuerySchema = companyQuerySchema.extend({
   // U12 — multi-select: ?status=a&status=b (one value still accepted); "active" / "posted" are pseudo-statuses.
   status: z.union([z.string().trim(), z.array(z.string().trim())]).optional(),
   search: z.string().trim().optional(),
-  customer_id: entityIdFilterSchema.optional(),
+  customer_id: z.string().optional(),
   // WAVE-H2 reverse drill: load → invoices
   source_load_id: entityIdFilterSchema.optional(),
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -411,7 +411,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       }
       if (statusOr.length) extraWhere.push(statusOr.length === 1 ? statusOr[0] : `(${statusOr.join(" OR ")})`);
       if (q.customer_id) {
-        values.push(entityIdFilterValues(q.customer_id));
+        const customerIds = q.customer_id.split(",").filter(Boolean);
+        values.push(customerIds);
         extraWhere.push(`i.customer_id = ANY($${values.length}::uuid[])`);
       }
       if (q.source_load_id) {

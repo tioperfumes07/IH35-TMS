@@ -56,7 +56,7 @@ if (process.argv.includes("--selftest")) {
       console.error(`FAIL selftest: missing mutation anchor ${key}:${needle}`);
       process.exit(1);
     }
-    const mutant = { ...live, [key]: live[key].replace(needle, replacement) };
+    const mutant = { ...live, [key]: live[key].replaceAll(needle, replacement) };
     if (!audit(mutant).length) {
       console.error(`FAIL selftest: mutation survived ${key}:${needle}`);
       process.exit(1);

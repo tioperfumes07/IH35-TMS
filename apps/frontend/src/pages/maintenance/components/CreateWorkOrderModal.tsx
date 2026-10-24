@@ -705,7 +705,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           bucket: values.bucket,
           vendor_id: values.vendor_id || undefined,
           vendor_qbo_id: values.vendor_qbo_id || undefined,
-          shop_name: values.shop_name?.trim() ? properPersonOrPlaceName(values.shop_name) : undefined,
+          shop_name: values.shop_name?.trim() ? values.shop_name.trim() : undefined,
           shop_address: values.shop_address?.trim() ? properPersonOrPlaceName(values.shop_address) : undefined,
           shop_phone: values.shop_phone || undefined,
           vendor_invoice_number: values.vendor_invoice_number || undefined,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { formatPersonName } from "../../lib/formatPersonName";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -538,7 +539,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     const rateCents = load?.rate_total_cents ?? null;
     const revPerMile = rateCents != null && practical != null && practical > 0 ? rateCents / 100 / practical : null;
     const num = (n: number | null | undefined, dp = 1) => (n != null ? n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp }) : null);
-    const driverName = load?.assigned_primary_driver_name ?? null;
+    const driverName = load?.assigned_primary_driver_name ? formatPersonName(load.assigned_primary_driver_name) : null;
     const unit = load?.assigned_unit_number ?? null;
     const trailer = load?.trailer_number ?? null;
     const trailerType = load?.trailer_equipment_type ?? null;
