@@ -39,9 +39,8 @@ const DREAMLINE_VENDOR_ID = "3e72d4a5-e6e7-497a-932e-2d3062502be2";
 // posted_to_gl=true rows, 0 traceable via source_transaction_id. Ratchet floor: the traceable
 // count must never DROP below these (it may only rise, if a future fix links them up).
 // Shrink-only: matched fuel bank lines the engine refuses to post, each named with its refusal (BANK-F2026100403).
-const MATCHED_FUEL_LINE_DEBT = {
-  "fc461eb6-d1b1-48af-ba36-b6a5a8e5bb01": "Relay T169 2026-09-10 $684.35 — no USMCA load on T169 at fill time (fuel_fill_missing_load)",
-};
+// ENG-48 (2026-10-24): fc461eb6 removed — line is now posted (LEAD 443.329).
+const MATCHED_FUEL_LINE_DEBT = {};
 
 const BASELINE = {
   dreamlineSubledgerRows: 0,
