@@ -1,5 +1,19 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-3 DONE (443.365-A + field heights + 443.280 re-measure)
+
+- **STATUS:** Cursor DONE — FINAL-3 rows 1–3 complete (coding only; no Chrome)
+- **PR LIST:**
+  1. #27704 — 443.365-A Cursor half: 15 hand-built overlays → Modal/ParityDrawer; baseline 34→19 (MERGED)
+  2. #27707 — page-level FORM_INPUT_CLASS (40px) / FILTER_CONTROL_SIZE_CLASS (34px); 61 hand heights → tokens (MERGED)
+  3. #27710 — 443.280 re-measure: Settlements+Fuel tabs BoardSection/FuelBoardSection already rebuilt; Factoring Submit `<details>` pipeline → BoardSection; Purchase-report Kpi/CashFlow wrapped BoardSection (auto-merge)
+- **RE-MEASURE:** Settlements Home/Open/Closed/Close/Company/Escrow/Escrow Register/Cash Advances/Deductions/Pre-Settlements = REBUILT (BoardSection). Fuel Home + all sub-tabs = REBUILT (FuelBoardSection, no pagination tiles). Factoring Account summary = REBUILT; Submit/Purchase report unlayered this PR.
+- **VERIFY:** tsc -b EXIT 0 + vite build EXIT 0 on each PR; verify-popups-one-format OK; verify-factoring-layout-tabs-first PASS
+- **LIVE PROOF:** UNVERIFIED: FINAL-3 coding-only — no Chrome
+- **NEXT:** none — FINAL-3 file complete
+- **Files Modified:** WriteCheckForm · AllocationsPage · DisputeQueue* · DisputesHub · ExpenseCategoryMap · FixedAssets · Prepaid · Reclassify · RevenueRecognition · LoanApplicationWizard · BankingTransactionsDesignView · CategorizeDrawer · PrintOrientationDialog · MarkDisbursedModal · FactorAdmin · verify-popups baseline · page field-height pages · FactoringHome · OUTBOX-CURSOR.md
+
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 114 + 118 process confirmation (443.282 / legacy-sections guard)
 
 - **BRANCH:** `cursor/443282-confirm-process` · tip after #27675 popup standard
