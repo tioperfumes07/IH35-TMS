@@ -8120,4 +8120,14 @@ owner_quotes: "get all those fixed now. find true root problem, the bess possibl
 scope: USMCA ONLY — load 13699: customer EGRO TRANSPORT LLC (146067cf), charges $3,100.00, W/O L28591 through updateDispatchLoad; delivery stop 83a71dec → COPAMEX, 195 S Euclid Ave, Bradley, IL 60915, city-center coordinates cleared for the geofence-sync re-geocode. No invoice existed.
 action: OWNER_AUTH_ID=AUTH-468 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-lead-13699-correct-from-alwaystrack.mts --apply
 result: COMMITTED 2026-10-24 (afternoon) — recorded after the fact by Lead; the script now refuses --apply without this entry
+status: PARTIAL (P-0119 pending ENG-01b)
+
+## AUTH-465
+issued_at: 2026-10-24T21:20:00Z
+issued_by: Lead 443.333 (Legal/Insurance test-record purge). Recorded by Lead
+owner_quotes: "those lawsuits are tests" (owner 2026-10-24 ~4:00 PM CT); "test recrods shuold be deleted permanently" (owner 2026-10-22 3:36 PM CT); "if you recommend deleting, delete" (owner 2026-10-24)
+scope: USMCA ONLY — every coder TEST record in Legal + Insurance: insurance.lawsuit 2, legal.matters 18 (+26 events, 1 document, 6 deadlines), insurance.claim 7, safety.accident_reports 3 (+2 TEST cost lines), insurance.policy 5 cancelled SAMPLE/TEST (+4 policy units, 2 payment schedules, 1 refund obligation, 2 roster findings). KEPT: real active policies 437540, 437539, CIMD-2026-0720.
+action: OWNER_AUTH_ID=AUTH-465 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-lead-443333-purge-test-legal-insurance.mts --apply
+rehearsal: dry run on prod (purge executed, ROLLBACK) — 79 rows, books unchanged, 3 real policies kept
+result: COMMITTED 2026-10-24 ~21:20Z — audit.record_deletions AUTH-465 = 79 rows; USMCA left: lawsuits 0, matters 0, claims 0, accident reports 0, policies 3 (the real ones); books before = after: 3,242 JEs, 8,075 postings, 1,554 bank lines, 1,294 expenses, 189 bills
 status: DONE
