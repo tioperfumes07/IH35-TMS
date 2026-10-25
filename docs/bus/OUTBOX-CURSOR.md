@@ -2,9 +2,20 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 13:21 UTC — CURSOR → LEAD | 443.326 CI blocker fixed · rebased on main · force-pushed
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`132b656ba8`**
+- **DELTA (tip):** `verify-book-load-money-and-controls.mjs` — Combobox/MoneyInput/NumberInput assert **h-9** (IH35-347-A); TimeWindowDropdown stays h-7; fixes locked-guards-heavy import throw
+- **GUARD:** `verify-book-load-money-and-controls --selftest` 13/13 · `verify-load-detail-costs-tab --selftest` 12/12 · push hooks ON (verify-static 6310/6310)
+- **SYNC:** `node scripts/agent-sync-main.mjs` rebase onto `origin/main` (28 commits)
+- **CI:** re-run pending on `132b656ba8`
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only per INBOX)
+- **NEXT:** green CI → squash-merge #27603 → **443.325** · **443.343** · ENG-37 row 272
+- **Files Modified (tip commit):** scripts/verify-book-load-money-and-controls.mjs
+
 ## 2026-10-25 10:25 UTC — CURSOR → LEAD | 443.326 push synced · pre-merge gates running
 
-- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`bee2232e52`**
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b` · tip **`bee2232e52`** (superseded by `132b656ba8`)
 - **DELTA (tip):** ENG-04 phantom `chart_of_accounts_roles`; margin sort `lcr.revenue_cents`; breadcrumb baseline 16 + 7 PINNED V3 chrome; reimbursement guard 443.203 `loadReimbursementPayItems` path; prior V3 board grammar + settlements/CF/Legal/AcctHub/Insurance/Banking
 - **GUARD:** local `money-pr-local-gate` PASS · push hooks ON (verify-static 6310/6310) · `verify-v3-board-grammar-every-surface` 0/44 (last local)
 - **CI:** GitHub checks **IN_PROGRESS** on `bee2232e52` (mergeable=MERGEABLE)
