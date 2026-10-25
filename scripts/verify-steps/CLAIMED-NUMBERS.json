@@ -10297,6 +10297,13 @@
     "step": 18841
   },
   "18845": "CC-1 ENG-43 settlement header mismatch ratchet",
+  "18849": {
+    "claimed_on": "chore/claim-reserve-18849-cc1",
+    "guard": "verify-steps/18849-verify-eng46-bill-payment-spine-link.mjs",
+    "lane": "CC-1",
+    "pr": "PENDING",
+    "step": 18849
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
