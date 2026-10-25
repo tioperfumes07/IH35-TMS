@@ -1,4 +1,4 @@
-# IH35-TMS — Lead pending register (USMCA) · 10-24-2026 03:15 PM CT · CODE-COMPLETE MODE · ENGINE ENG-01..56
+# IH35-TMS — Lead pending register (USMCA) · 10-24-2026 05:15 PM CT · CODE-COMPLETE MODE · ENGINE ENG-01..63
 
 Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live proof.
 
@@ -67,7 +67,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 61 | B | Dispatch | Dispatch › Truck Planner — board verdict PARTIAL | CC-3 | 443.280 | MERGED-UNVERIFIED | 4ff9f272 bars lane + $/mi; #27359 |
 | 62 | B | Dispatch | Dispatch › Book Load modal/side/spec — board verdict PARTIAL | CC-3 | 443.280 | MERGED-UNVERIFIED | 4ff9f272 1260/760, Load # right |
 | 63 | B | Dispatch | Dispatch › Book Load trip types — board verdict REBUILT | CC-3 | 443.280 | DONE-LIVE |  |
-| 64 | B | Insurance | Insurance › Home — board verdict REBUILT | LEAD | 443.280 | CODED | d7e5e14e54 #27323 board (all design sections) + 8cff827545 #27400 own module shell; Lawsuits tab kept (not on the board) — owner decides |
+| 64 | B | Insurance | Insurance › Home — board verdict REBUILT | LEAD | 443.280 | CODED | d7e5e14e54 #27323 + 8cff827545 #27400; owner 10-24 3:47 PM: Lawsuits only in Legal — moved #27543 (443.332), Legal › Lawsuits = legal matters (443.334) |
 | 65 | B | Legal | Legal › Home — board verdict REBUILT | CURSOR | 443.280 | DONE-LIVE |  |
 | 66 | C | Reports/Dispatch | Dispatch › Load history (198 loads, every cell opens its record, load detail panel with timeline + money + linked records) | CC-1 | 443.281 | OPEN |  |
 | 67 | C | Reports/Dispatch | Reports › Loads report (week/month/customer/driver/truck/lane/trip type) | CC-1 | 443.281 | OPEN |  |
@@ -309,3 +309,12 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 303 | ENG | Migrations | ENG-57 3 migrations held off prod 23 days waiting for a Lead fork validation (202614110000 source_document_ref unique; 202615210000/0100 lease-to-own ASC 842); 0000 carried a stale role list that fails on prod — fixed (dynamic append) and released; 0200 stays superseded | LEAD | 443.331 | CODED-QUEUED | 1c1ea23b1e; real runner in prod mode on fresh fork: APPLY 3, SKIP 1,531, held untouched |
 | 304 | ENG | Engine | ENG-58 program-scoreboard.json 82 commits behind (max 80) failed every seat's step 1 — regenerated | LEAD | scoreboard | CODED-QUEUED | 7de5f80937 |
 | 305 | ENG | Engine | ENG-59 harness-only live failures (not data): pooler refused (list-apis, reports-neon-pv, loves-geofences), loopback-only fixture (invoice-header), CI-only file (no-sample-data), tsx import (recon-usmca), geocode key absent locally; rpt-s02 + invoice-copies PASS on rerun | LEAD | ENG-35 | DONE | rerun 10-24 3:25 PM CT |
+| 306 | A | Legal | Lawsuits only in Legal (owner 10-24 3:47 PM CT): Insurance tab removed, /insurance/lawsuits redirects | LEAD | 443.332 | MERGED | #27543 156ddaa1ec |
+| 307 | A | Legal | Legal › Lawsuits = legal-matters board locked to type lawsuit (design: lawsuits are matters); lawsuit links → ?insurance_lawsuit_id= | LEAD | 443.334 | CODED-QUEUED | 049d20f559; guard red→green, vitest 20/20 |
+| 308 | ENG | Legal | 443.333 every USMCA coder TEST record in Legal + Insurance deleted (2 lawsuits, 18 matters, 7 claims, 3 accident reports, 5 cancelled policies; 79 rows with children); 3 real policies kept; books unchanged | LEAD | 443.333 | DONE | AUTH-465 COMMITTED; audit.record_deletions 79; 3585edaf83 |
+| 309 | ENG | Legal | ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section → legal matters by claim, claim.lawsuit_id → legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities | CC-1 | ENG-60 | OPEN |  |
+| 310 | ENG | Settlements | ENG-61 closeLoadBookendedSettlementForDriver (settlement ping on final-load delivery) sets closed without posting — refused by tg_settlement_close_requires_posting (ACCT-ENG-01); the close-on-final-load path must post (postLoadBookendedSettlementGlAfterClose) or leave it open | CC-1 | ENG-61 | OPEN | seen 10-24 on 13699/13700 stamp: settlements a41008ca, 6ba08647 |
+| 311 | ENG | Dispatch | ENG-62 loads booked after their trip never got stop stamps (fences minted at booking; replay stamps nothing) — engine stop-arrival-from-fence-history; 13700 + 13699 delivered from the unit's own fence visits; stop-stamp ratchet 13 → 0 | LEAD | 443.335 | CODED-QUEUED | a74b63e99b; prod applied: 13700 dispatched→delivered_pending_docs, 13699 in_transit→delivered_pending_docs |
+| 312 | ENG | UI | ENG-63 verify-list-empty-settled (resolveListState no longer returns loading while pending) and verify-entity-label-rejects-uuid-shaped-name (HosTrackerSection must call entityLabel) fail on main 5a9f8303e9 | CC-3 | ENG-63 | OPEN |  |
+| 313 | B | Settlements | Design audit N2: Escrow register 'Opening balance (historical)' row (design) missing — running balance cannot tie | Cursor | 443.326 #6 | OPEN |  |
+| 314 | B | Settlements | Design audit N3: settlement statement body has no drill links ('[n] fills →', 'BofA line →') | Cursor | 443.326 #2 | OPEN |  |
