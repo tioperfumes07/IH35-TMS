@@ -86,8 +86,6 @@ import { apiRequest } from "../../api/client";
 import { FACTORING_SECTION_PARENT, FACTORING_TAB_PATH, FARO_TABS, factoringTabFromPath } from "../../router/route-manifest";
 import { FactoringBoardChrome } from "./FactoringBoardChrome";
 import { FactoringStagedFilters } from "./FactoringStagedFilters";
-import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
@@ -419,7 +417,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   const [savingFactorProfile, setSavingFactorProfile] = useState(false);
   const [profileEditOpen, setProfileEditOpen] = useState(false);
   const [profileEditForm, setProfileEditForm] = useState<FactorProfileForm | null>(null);
-  const [homeToolbarSearch, setHomeToolbarSearch] = useState("");
 
   const summaryQuery = useQuery({
     queryKey: ["factoring", "summary", companyId],
@@ -979,14 +976,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   );
   const factoringChromeSubtitle =
     "Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings";
-  const factoringHomeActiveFilterCount = [
-    applied.dateFrom,
-    applied.dateTo,
-    applied.customerId,
-    applied.loadId,
-    applied.vendorId,
-    applied.driverId,
-  ].filter(Boolean).length;
 
   if (!companyId) {
     // FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT (owner mega-report 2026-09-09): a cold/direct
@@ -1043,95 +1032,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
       <DuplicateVendorsBanner companyId={companyId} />
 
-      {/* ROUND 443.326 — V3 KPI strip (summary + recourse pipeline + held reserves from KPI engine). */}
-      <div
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
-        data-testid="factoring-home-kpi-strip"
-      >
-        <V3KpiTile
-          label="Open recourse"
-          value={String(invoices.length)}
-          sub="invoices in pipeline"
-          testId="factoring-kpi-recourse-count"
-          onClick={() => navigateToTab(FACTORING_TAB_PATH.recourse_pipeline)}
-        />
-        <V3KpiTile
-          label="Advance out"
-          value={fmtCurrency(recourseTotals.advance)}
-          sub="recourse advance total"
-          testId="factoring-kpi-advance-out"
-        />
-        <V3KpiTile
-          label="Held security reserve"
-          value={
-            factoringKpiQuery.isLoading || factoringKpiQuery.isError || engineReserve == null
-              ? "—"
-              : fmtCents(engineReserve.escrow)
-          }
-          sub="GL escrow reserve balance"
-          testId="factoring-kpi-escrow-held"
-          onClick={() => navigateToTab(FACTORING_TAB_PATH.escrow_account)}
-        />
-        <V3KpiTile
-          label="Funds due"
-          value={String(fundsDueRows.length)}
-          sub="invoices awaiting payment"
-          testId="factoring-kpi-funds-due"
-          onClick={() => navigateToTab(FACTORING_TAB_PATH.funds_due)}
-        />
-      </div>
-      <MoneyListToolbar
-        search={homeToolbarSearch}
-        onSearchChange={setHomeToolbarSearch}
-        searchPlaceholder="Search on this tab"
-        searchTestId="factoring-home-search-input"
-        activeFilterCount={factoringHomeActiveFilterCount}
-        testIdPrefix="factoring-home"
-        onClearAll={() => {
-          setHomeToolbarSearch("");
-          staged.cancel();
-          setApplied(EMPTY_FILTERS);
-          patchListSearchParam(EMPTY_FILTERS);
-        }}
-      >
-        {null}
-      </MoneyListToolbar>
-
-      {/* ROUND 443.267 board 4 — Factoring Home board-faithful (KPI → purchase net vs kept → Terms → Measured).
-          FAC-07 side-by-side compact profile is superseded by the approved board; Edit Terms opens the
-          same profile modal. FactoringKpiPanel + FactoringCashFlowPanel stay mounted (r315 / r326). */}
-      {companyId ? (
-        <FactoringHomeBoard
-          companyId={companyId}
-          onEditTerms={
-            activeFactor
-              ? () => {
-                  setProfileEditForm(factorToProfileForm(activeFactor));
-                  setProfileEditOpen(true);
-                }
-              : undefined
-          }
-        />
-      ) : null}
-
-      {companyId && !activeFactor ? (
-        <div
-          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-600"
-          data-testid="factoring-home-no-factor"
-        >
-          No factor configured. Activate a factor to manage its profile.
-        </div>
-      ) : null}
-
-      {/* ROUND 326.2 item 1 — Factoring KPI engine (ledger-computed, every tile drills to its rows). */}
-      {companyId ? <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} /> : null}
-
-      {/* ROUND 315 / Lead B6 — Home cash-flow: TOTAL PER DAY from posted purchases + projected candidates. */}
-      <FactoringCashFlowPanel
-        companyId={companyId}
-        dateFrom={dateFromFromUrl || undefined}
-        dateTo={dateToFromUrl || undefined}
-      />
+      {/* ROUND 443.280 — Factoring Home board is Account summary only (docs/design/v3/Factoring).
+          Prior always-on KPI strip + MoneyListToolbar + FactoringHomeBoard + Kpi/CashFlow panels
+          above every Faro tab was LAYERED chrome; board replaces that body on Account summary.
+          FactoringKpiPanel + FactoringCashFlowPanel stay mounted on Purchase report (r315 / r326). */}
 
       {activeFactor && profileEditForm && (
             <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
@@ -2055,19 +1959,35 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {/* FAC-09a Account Summary (real, this pass): a plain summary block per the real portal's
-          own screenshots, NOT a register. Built entirely on already-fetched summaryQuery
-          (views.factoring_summary) + feesQuery (views.factoring_chargebacks_fees monthly_summary)
-          data — no new backend query. This schema has no period-close snapshot for factoring (no
-          Beginning/Ending balance history) and no per-fee-type breakdown (Discount/Schedule/Wire
-          are one combined factor_fee_amount) and no Loan/Savings/Funds-on-Hold/escrow-vs-cash
-          reserve split — every line without a real backing field renders an honest "—" rather
-          than a fabricated number, same standard as the Aging tab's PO/Other Ref/Memos columns. */}
+      {/* ROUND 443.280 / docs/design/v3/Factoring — Account summary tab IS the Home board
+          (KPI strip → Each purchase → Terms → Measured). FAC-09a Faro account-lines table stays
+          mounted below for Rule 07 (not board chrome). */}
       {show("account_summary") ? (
         (() => {
           const latestMonth = latestMonthlyFeeSummary;
           return (
             <div className="space-y-3">
+              {companyId ? (
+                <FactoringHomeBoard
+                  companyId={companyId}
+                  onEditTerms={
+                    activeFactor
+                      ? () => {
+                          setProfileEditForm(factorToProfileForm(activeFactor));
+                          setProfileEditOpen(true);
+                        }
+                      : undefined
+                  }
+                />
+              ) : null}
+              {companyId && !activeFactor ? (
+                <div
+                  className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-600"
+                  data-testid="factoring-home-no-factor"
+                >
+                  No factor configured. Activate a factor to manage its profile.
+                </div>
+              ) : null}
               {summaryQuery.isError ? (
                 <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
               ) : (
@@ -2228,6 +2148,16 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           "Include Non-Purchased Invoices" checkboxes and "Filter by Debtor" are not wired this
           pass (noted in-page, not silently dropped). */}
       {show("purchase_report") ? (
+        <div className="space-y-3">
+        {/* ROUND 443.280 — r315/r326 panels stay mounted off Account-summary board (Rule 07). */}
+        {companyId ? (
+          <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} />
+        ) : null}
+        <FactoringCashFlowPanel
+          companyId={companyId}
+          dateFrom={dateFromFromUrl || undefined}
+          dateTo={dateToFromUrl || undefined}
+        />
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-purchase-report">
           {/* LEAD 443.173 — one title row: section title, filters, Summary (one row per purchase) / Detail (one row per invoice). */}
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -2362,6 +2292,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             </div>
           )}
+        </div>
         </div>
       ) : null}
 

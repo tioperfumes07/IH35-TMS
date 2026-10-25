@@ -39,17 +39,17 @@ function analyze(src) {
     return errors;
   }
 
-  // ORDER: tabs first, banner below tabs, board below banner.
-  const subnavIdx = home.indexOf("<NavyPageSubNav");
+  // ORDER: FactoringBoardChrome (443.326 tab strip) first, banner below chrome, board in Account summary.
+  const chromeIdx = home.indexOf("<FactoringBoardChrome");
   const bannerIdx = home.indexOf("<DuplicateVendorsBanner");
   const boardIdx = home.indexOf("<FactoringHomeBoard");
-  if (subnavIdx < 0) errors.push("FactoringHome must render <NavyPageSubNav> (the navy tab strip)");
+  if (chromeIdx < 0) errors.push("FactoringHome must render <FactoringBoardChrome> (443.326 tab strip)");
   if (boardIdx < 0) errors.push("FactoringHome must mount <FactoringHomeBoard> (443.267 board 4)");
-  if (subnavIdx < 0 || boardIdx < 0 || subnavIdx > boardIdx) {
-    errors.push("FAC-07: <NavyPageSubNav> tab strip must render BEFORE FactoringHomeBoard (tabs on top)");
+  if (chromeIdx < 0 || boardIdx < 0 || chromeIdx > boardIdx) {
+    errors.push("FAC-07: <FactoringBoardChrome> must render BEFORE FactoringHomeBoard (tabs on top)");
   }
-  if (bannerIdx < 0 || subnavIdx < 0 || bannerIdx < subnavIdx || bannerIdx > boardIdx) {
-    errors.push("FAC-07: the duplicate-vendor banner must sit below the tabs and above FactoringHomeBoard");
+  if (bannerIdx < 0 || chromeIdx < 0 || bannerIdx < chromeIdx || bannerIdx > boardIdx) {
+    errors.push("FAC-07: the duplicate-vendor banner must sit below FactoringBoardChrome and above FactoringHomeBoard");
   }
 
   // Board sections + engines (approved board).
@@ -115,12 +115,31 @@ function analyze(src) {
     errors.push(`${BOARD}: register #98 — True cost must not mix chargebacks-report fees or the advances summary into the ratio`);
   }
 
-  // r315 / r326 keepers still mounted on home.
+  // r315 / r326 keepers still mounted on Factoring (Purchase report — not layered on every tab).
   if (!/<FactoringCashFlowPanel/.test(home)) {
     errors.push("FactoringHome must keep FactoringCashFlowPanel mounted (r315)");
   }
   if (!/<FactoringKpiPanel/.test(home)) {
     errors.push("FactoringHome must keep FactoringKpiPanel mounted (r326)");
+  }
+
+  // 443.280 — rebuild-not-layer: Home board is Account summary only; no always-on chrome stack.
+  if (/data-testid="factoring-home-kpi-strip"/.test(home)) {
+    errors.push(`${HOME}: layered factoring-home-kpi-strip must not sit above every Faro tab (443.280)`);
+  }
+  if (/searchTestId="factoring-home-search-input"/.test(home)) {
+    errors.push(`${HOME}: layered MoneyListToolbar (factoring-home-search-input) must not sit above every Faro tab`);
+  }
+  const accountSummaryShowIdx = home.indexOf('show("account_summary")');
+  if (accountSummaryShowIdx < 0) {
+    errors.push(`${HOME}: Account summary tab show("account_summary") missing`);
+  } else if (boardIdx < 0 || boardIdx < accountSummaryShowIdx) {
+    errors.push(`${HOME}: FactoringHomeBoard must mount under show("account_summary") (board = Account summary; was always-on LAYERED)`);
+  }
+  // Only one board mount — always-on + tab mount would be LAYERED.
+  const boardMounts = (home.match(/<FactoringHomeBoard/g) || []).length;
+  if (boardMounts !== 1) {
+    errors.push(`${HOME}: FactoringHomeBoard must mount exactly once (found ${boardMounts})`);
   }
 
   return errors;
@@ -142,9 +161,9 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["home drops tab strip", withField("home", (s) => s.replace(/<NavyPageSubNav/g, "<GoneNav"))],
+    ["home drops tab strip", withField("home", (s) => s.replace(/<FactoringBoardChrome/g, "<GoneChrome"))],
     ["home drops board", withField("home", (s) => s.replace(/<FactoringHomeBoard/g, "<GoneBoard"))],
-    ["home moves tabs after board", withField("home", (s) => s.replace(/<NavyPageSubNav[\s\S]*?\/>\n/, ""))],
+    ["home moves tabs after board", withField("home", (s) => s.replace(/<FactoringBoardChrome[\s\S]*?\/>/g, ""))],
     ["home drops duplicate-vendor banner", withField("home", (s) => s.replace(/<DuplicateVendorsBanner/g, "<GoneBanner"))],
     ["board drops KPI strip", withField("board", (s) => s.replace(/data-testid="factoring-home-kpi-row"/g, 'data-testid="gone"'))],
     ["board drops True cost", withField("board", (s) => s.replace(/True cost/g, "Gone cost"))],
@@ -156,6 +175,8 @@ if (process.argv.includes("--selftest")) {
     ["board True cost reverts to two sources", withField("board", (s) => s.replace(/trueCostPercent\(mtdFeeCents, mtdWireFeeCents, mtdGrossCents\)/, "trueCostPercent(mtdFactorFeeFromReportCents, 0, mtdAdvancedCents)"))],
     ["board fmtMoneyDollars stops coercing", withField("board", (s) => s.replace(/const v = Number\(n\)/, "const v = n as number"))],
     ["board drops measured amber rail", withField("board", (s) => s.replace(/borderLeft:\s*"3px solid #B45309"/g, 'borderLeft: "0"'))],
+    ["home re-layers KPI strip", withField("home", (s) => s.replace("<DuplicateVendorsBanner", '<div data-testid="factoring-home-kpi-strip" /><DuplicateVendorsBanner'))],
+    ["home double-mounts board", withField("home", (s) => s.replace("<DuplicateVendorsBanner", "<FactoringHomeBoard companyId={companyId} /><DuplicateVendorsBanner"))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {
