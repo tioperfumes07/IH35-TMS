@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
+import { Modal } from "../../components/Modal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { formatDateTimeUS } from "../../lib/formatDate";
@@ -257,17 +258,9 @@ export function FaultDraftsPage() {
         exportFilename="fault-drafts"
       /> : null}
 
-      {selected ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-sm bg-white p-4 shadow-lg">
-            <h3 className="text-xs font-semibold">
-              <EntityLinkOrTombstone
-                kind="work_order"
-                id={selected.id}
-                name={selected.wo_title ?? selected.display_id}
-                noun="Work order"
-              />
-            </h3>
+      <Modal open={Boolean(selected)} onClose={() => setSelectedId(null)} title={selected ? (selected.wo_title ?? selected.display_id ?? "Fault draft") : "Fault draft"} size="sm">
+        {selected ? (
+          <>
             <p className="mt-2 whitespace-pre-wrap text-xs text-gray-700">{selected.description}</p>
             <div className="mt-3 text-xs text-[#1F2A44]">
               Unit: <EntityLinkOrTombstone kind="unit" id={selected.unit_id} name={selected.unit_number} noun="Unit" className="font-semibold" />
@@ -292,9 +285,9 @@ export function FaultDraftsPage() {
                 Close
               </Button>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </Modal>
     </div>
   );
 }

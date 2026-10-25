@@ -34,6 +34,7 @@ import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
 import { QueryErrorNote } from "./QueryErrorNote";
 import { formatMoneyCents } from "../constants";
 import { derivePacketDocuments } from "./useLoadDocuments";
+import { Modal } from "../../Modal";
 
 // ─── .ldt-* palette (GLOBAL-TYPE-SIZE-BASELINE tokens) ────────────────────────
 
@@ -661,73 +662,68 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           </div>
         ) : null}
 
-        {showAddFactorModal ? (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
-            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-              <div className="mb-3 text-xs font-semibold text-gray-900">Add Factor</div>
-              <div className="space-y-2 text-xs">
-                <label className="block">
-                  <div className="mb-1">Name</div>
-                  <input
-                    value={addForm.name}
-                    onChange={(event) => setAddForm((current) => ({ ...current, name: event.target.value }))}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                  />
-                </label>
-                <label className="block">
-                  <div className="mb-1">Advance Rate (0-1)</div>
-                  <input
-                    value={addForm.advance_rate}
-                    onChange={(event) => setAddForm((current) => ({ ...current, advance_rate: event.target.value }))}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                  />
-                </label>
-                <label className="block">
-                  <div className="mb-1">Fee Rate (0-1)</div>
-                  <input
-                    value={addForm.fee_rate}
-                    onChange={(event) => setAddForm((current) => ({ ...current, fee_rate: event.target.value }))}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                  />
-                </label>
-                <label className="block">
-                  <div className="mb-1">Reserve Rate (0-1)</div>
-                  <input
-                    value={addForm.reserve_rate}
-                    onChange={(event) => setAddForm((current) => ({ ...current, reserve_rate: event.target.value }))}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                  />
-                </label>
-                <label className="block">
-                  <div className="mb-1">Recourse Days</div>
-                  <input
-                    value={addForm.recourse_days}
-                    onChange={(event) => setAddForm((current) => ({ ...current, recourse_days: event.target.value }))}
-                    className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                  />
-                </label>
-              </div>
-              <div className="mt-4 flex justify-end gap-2">
-                <Button size="sm" variant="secondary" onClick={() => setShowAddFactorModal(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  loading={addFactorMutation.isPending}
-                  onClick={() => {
-                    if (!addForm.name.trim()) {
-                      pushToast("Factor name is required", "error");
-                      return;
-                    }
-                    void addFactorMutation.mutateAsync();
-                  }}
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
+        <Modal open={showAddFactorModal} onClose={() => setShowAddFactorModal(false)} title="Add Factor" size="sm">
+          <div className="space-y-2 text-xs">
+            <label className="block">
+              <div className="mb-1">Name</div>
+              <input
+                value={addForm.name}
+                onChange={(event) => setAddForm((current) => ({ ...current, name: event.target.value }))}
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              />
+            </label>
+            <label className="block">
+              <div className="mb-1">Advance Rate (0-1)</div>
+              <input
+                value={addForm.advance_rate}
+                onChange={(event) => setAddForm((current) => ({ ...current, advance_rate: event.target.value }))}
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              />
+            </label>
+            <label className="block">
+              <div className="mb-1">Fee Rate (0-1)</div>
+              <input
+                value={addForm.fee_rate}
+                onChange={(event) => setAddForm((current) => ({ ...current, fee_rate: event.target.value }))}
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              />
+            </label>
+            <label className="block">
+              <div className="mb-1">Reserve Rate (0-1)</div>
+              <input
+                value={addForm.reserve_rate}
+                onChange={(event) => setAddForm((current) => ({ ...current, reserve_rate: event.target.value }))}
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              />
+            </label>
+            <label className="block">
+              <div className="mb-1">Recourse Days</div>
+              <input
+                value={addForm.recourse_days}
+                onChange={(event) => setAddForm((current) => ({ ...current, recourse_days: event.target.value }))}
+                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              />
+            </label>
           </div>
-        ) : null}
+          <div className="mt-4 flex justify-end gap-2">
+            <Button size="sm" variant="secondary" onClick={() => setShowAddFactorModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              loading={addFactorMutation.isPending}
+              onClick={() => {
+                if (!addForm.name.trim()) {
+                  pushToast("Factor name is required", "error");
+                  return;
+                }
+                void addFactorMutation.mutateAsync();
+              }}
+            >
+              Save
+            </Button>
+          </div>
+        </Modal>
 
         {/* Already submitted / beyond → informational */}
         {["SUBMITTED", "ADVANCE_RECEIVED", "RESERVE_RELEASED"].includes(step) ? (

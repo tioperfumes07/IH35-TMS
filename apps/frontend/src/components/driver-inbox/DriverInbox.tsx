@@ -11,6 +11,7 @@ import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { SelectCombobox } from "../Combobox";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { formatUsdCents } from "../../lib/money";
+import { Modal } from "../Modal";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
 // Locked tokens: navy banner #1A1F36, white active-tab underline; cards #FFF / #E5E7EB 4px;
@@ -255,34 +256,29 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
         )}
       </div>
 
-      {denyForId ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
-            <h2 className="text-xs font-semibold text-[#1A1F36]">Deny request</h2>
-            <p className="mt-1 text-xs text-[#4B5563]">Reason is recorded to the audit trail and shared with the driver.</p>
-            <textarea
-              className="mt-3 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
-              rows={4}
-              value={denyReason}
-              onChange={(e) => setDenyReason(e.target.value)}
-              placeholder="Denial reason (required)"
-            />
-            <div className="mt-3 flex justify-end gap-2">
-              <button type="button" className="rounded-xs border border-[#E5E7EB] bg-white px-3 py-[5px] text-xs text-[#4A5170]" onClick={() => setDenyForId(null)}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={denyReason.trim().length < 1 || denyMut.isPending}
-                className="rounded-xs border border-[#1F2A44] bg-[#1F2A44] px-[14px] py-[5px] text-xs font-semibold text-white hover:bg-[#0F1729] disabled:opacity-60"
-                onClick={() => void denyMut.mutate()}
-              >
-                Confirm deny
-              </button>
-            </div>
-          </div>
+      <Modal open={Boolean(denyForId)} onClose={() => setDenyForId(null)} title="Deny request" size="sm">
+        <p className="text-xs text-[#4B5563]">Reason is recorded to the audit trail and shared with the driver.</p>
+        <textarea
+          className="mt-3 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
+          rows={4}
+          value={denyReason}
+          onChange={(e) => setDenyReason(e.target.value)}
+          placeholder="Denial reason (required)"
+        />
+        <div className="mt-3 flex justify-end gap-2">
+          <button type="button" className="rounded-xs border border-[#E5E7EB] bg-white px-3 py-[5px] text-xs text-[#4A5170]" onClick={() => setDenyForId(null)}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={denyReason.trim().length < 1 || denyMut.isPending}
+            className="rounded-xs border border-[#1F2A44] bg-[#1F2A44] px-[14px] py-[5px] text-xs font-semibold text-white hover:bg-[#0F1729] disabled:opacity-60"
+            onClick={() => void denyMut.mutate()}
+          >
+            Confirm deny
+          </button>
         </div>
-      ) : null}
+      </Modal>
     </div>
   );
 }

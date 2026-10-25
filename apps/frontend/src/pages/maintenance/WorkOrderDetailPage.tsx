@@ -42,6 +42,7 @@ import { ExpensesReverseSection } from "../../components/accounting/ExpensesReve
 import { WarrantyClaimsReverseSection } from "../../components/maintenance/WarrantyClaimsReverseSection";
 import { DvirSeverityBadge } from "../../components/maintenance/DvirSeverityBadge";
 import { formatUsd, formatUsdCents } from "../../lib/money";
+import { Modal } from "../../components/Modal";
 
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
 const OOS_DAILY_LOSS_CENTS = 50_000;
@@ -920,13 +921,15 @@ export function WorkOrderDetailPage() {
         {invoiceMismatch ? <span className="text-xs text-red-700">Resolve invoice vs line total before saving.</span> : null}
       </div>
 
-      {reasonModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-xl">
-            <h2 className="text-xs font-semibold text-[#0F1219]">
-              {reasonModal.kind === "cancel" ? "Cancel work order" : "Void work order"}
-            </h2>
-            <p className="mt-1 text-xs text-[#6B7280]">
+      <Modal
+        open={Boolean(reasonModal)}
+        onClose={() => { setReasonModal(null); setCancelReasonCode(null); setCancelNotes(""); setReasonText(""); }}
+        title={reasonModal?.kind === "cancel" ? "Cancel work order" : "Void work order"}
+        size="sm"
+      >
+        {reasonModal ? (
+          <>
+            <p className="text-xs text-[#6B7280]">
               {reasonModal.kind === "cancel"
                 ? "Pick a reason from catalogs.wo_cancellation_reasons. The work order is never deleted — it stays on record with your reason in the audit trail."
                 : "This voids the work order (incl. completed). It is never deleted — it stays on record with your reason in the audit trail."}
@@ -1003,9 +1006,9 @@ export function WorkOrderDetailPage() {
                 {reasonModal.kind === "cancel" ? "Confirm cancel" : "Confirm void"}
               </Button>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </Modal>
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-3">

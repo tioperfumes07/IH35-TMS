@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Modal } from "../../components/Modal";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -301,11 +302,8 @@ export function PermitsPage({ operatingCompanyId }: Props) {
         </p>
       ) : null}
 
-      {createOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" data-testid="permits-create-modal">
-          <div className="w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
-            <h3 className="mb-3 text-xs font-semibold text-[#1F2A44]">Create permit</h3>
-            <div className="grid gap-2">
+      <Modal open={createOpen} onClose={closeCreate} title="Create permit" size="sm" data-testid="permits-create-modal">
+        <div className="grid gap-2">
               <label className="text-xs">
                 Permit type
                 <SelectCombobox
@@ -421,9 +419,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
               </button>
               </div>
             </div>
-          </div>
-        </div>
-      ) : null}
+      </Modal>
     </div>
   );
 }

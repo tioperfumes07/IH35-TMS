@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Modal } from "../../components/Modal";
 import {
   createManualDeliveryAuthorization,
   listNeedsDeliveryAuthorization,
@@ -176,18 +177,16 @@ export function NeedsDeliveryAuthorizationPage() {
         {rows.length} load{rows.length === 1 ? "" : "s"} need delivery authorization.
       </p>
 
-      {active ? (
-        <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
-          data-testid="authorize-delivery-dialog"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="w-full max-w-md rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-sm">
-            <h2 className="text-section-header font-bold uppercase text-[#4B5563]">
-              Authorize load {active.load_number}
-            </h2>
-            <p className="mt-1 text-xs text-[#6B7280]">
+      <Modal
+        open={Boolean(active)}
+        onClose={() => setActive(null)}
+        title={active ? `Authorize load ${active.load_number}` : "Authorize"}
+        size="sm"
+        data-testid="authorize-delivery-dialog"
+      >
+        {active ? (
+          <>
+            <p className="text-xs text-[#6B7280]">
               Invoice {active.invoice_display_id ?? "—"} · status {active.status.replace(/_/g, " ")}. Does not change
               load status — records customer + factoring approval only.
             </p>
@@ -236,9 +235,9 @@ export function NeedsDeliveryAuthorizationPage() {
                 {authorizeM.isPending ? "Saving…" : "Record authorization"}
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </Modal>
     </div>
   );
 }

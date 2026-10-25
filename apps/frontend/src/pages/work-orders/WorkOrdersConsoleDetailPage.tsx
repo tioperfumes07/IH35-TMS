@@ -2,6 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
+import { Modal } from "../../components/Modal";
 import {
   appendWorkOrderPhotoKey,
   approveWorkOrderConsole,
@@ -234,63 +235,58 @@ export function WorkOrdersConsoleDetailPage() {
         ) : null}
       </div>
 
-      {reasonModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-xl">
-            <h2 className="text-xs font-semibold text-[#0F1219]">{"Cancel work order"}</h2>
-            <p className="mt-1 text-xs text-[#4B5563]">
-              Select a cancellation reason. The work order is never deleted — it stays on record with your reason in the audit trail.
-            </p>
-            <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-reason">
-              Cancellation reason (required)
-            </label>
-            <Combobox
-              value={cancelReasonCode}
-              onChange={setCancelReasonCode}
-              options={woCancelReasonOptions}
-              placeholder="Select a cancellation reason…"
-              disabled={woCancelReasonsQ.isLoading}
-              allowAddNew
-              onAddNew={(typedText) => {
-                const label = typedText.trim();
-                if (label) createWoReasonMut.mutate(label);
-              }}
-            />
-            <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-notes">
-              Notes (optional)
-            </label>
-            <textarea
-              id="wo-console-cancel-notes"
-              className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
-              rows={2}
-              value={cancelNotes}
-              onChange={(e) => setCancelNotes(e.target.value)}
-              placeholder="Additional context for the audit trail"
-            />
-            <div className="mt-3 flex justify-end gap-2">
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={() => {
-                  setReasonModal(null);
-                  setCancelReasonCode(null);
-                  setCancelNotes("");
-                }}
-              >
-                Close
-              </Button>
-              <Button
-                variant="danger"
-                type="button"
-                onClick={submitCancel}
-                disabled={!cancelValid || cancelMut.isPending}
-              >
-                Confirm cancel
-              </Button>
-            </div>
-          </div>
+      <Modal open={Boolean(reasonModal)} onClose={() => { setReasonModal(null); setCancelReasonCode(null); setCancelNotes(""); }} title="Cancel work order" size="sm">
+        <p className="text-xs text-[#4B5563]">
+          Select a cancellation reason. The work order is never deleted — it stays on record with your reason in the audit trail.
+        </p>
+        <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-reason">
+          Cancellation reason (required)
+        </label>
+        <Combobox
+          value={cancelReasonCode}
+          onChange={setCancelReasonCode}
+          options={woCancelReasonOptions}
+          placeholder="Select a cancellation reason…"
+          disabled={woCancelReasonsQ.isLoading}
+          allowAddNew
+          onAddNew={(typedText) => {
+            const label = typedText.trim();
+            if (label) createWoReasonMut.mutate(label);
+          }}
+        />
+        <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-notes">
+          Notes (optional)
+        </label>
+        <textarea
+          id="wo-console-cancel-notes"
+          className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
+          rows={2}
+          value={cancelNotes}
+          onChange={(e) => setCancelNotes(e.target.value)}
+          placeholder="Additional context for the audit trail"
+        />
+        <div className="mt-3 flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={() => {
+              setReasonModal(null);
+              setCancelReasonCode(null);
+              setCancelNotes("");
+            }}
+          >
+            Close
+          </Button>
+          <Button
+            variant="danger"
+            type="button"
+            onClick={submitCancel}
+            disabled={!cancelValid || cancelMut.isPending}
+          >
+            Confirm cancel
+          </Button>
         </div>
-      ) : null}
+      </Modal>
       <VoidReasonModal
         title={"Void work order"}
         open={voidModalOpen}

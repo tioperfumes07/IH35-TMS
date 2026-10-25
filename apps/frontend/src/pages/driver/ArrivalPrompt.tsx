@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { confirmDriverArrivalPrompt, dismissDriverArrivalPrompt, listDriverArrivalPrompts } from "../../api/driver";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
+import { Modal } from "../../components/Modal";
 
 const REPROMPT_AFTER_MS = 5 * 60 * 1000;
 
@@ -55,43 +56,40 @@ export function ArrivalPrompt() {
   if (!activePrompt) return null;
 
   return (
-    <div className="fixed inset-0 z-60 flex items-end justify-center bg-black/35 p-3">
-      <div className="w-full max-w-md rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-xl">
-        <p className="text-xs font-semibold text-[#0F1219]">Arrival check</p>
-        <p className="mt-1 text-xs text-[#1F2A44]">
-          You appear to be at <span className="font-semibold">{activePrompt.stop_name ?? "the stop"}</span>. Are you arrived?
-        </p>
-        <p className="mt-1 text-xs text-[#6B7280]">
-          Distance: {activePrompt.distance_at_trigger_ft} ft · Load{" "}
-          <EntityLink
-            kind="driver_app_load"
-            id={activePrompt.load_id}
-            label={entityLabel(activePrompt.load_number, activePrompt.load_id, "Load")}
-            className="font-semibold text-[#1F2A44] hover:underline"
-          />
-        </p>
-        {mutationError ? <p role="alert" className="mt-2 text-xs text-red-700">{mutationError}</p> : null}
-        <div className="mt-3 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
-            onClick={() => {
-              dismissMutation.mutate(activePrompt.id);
-            }}
-            disabled={dismissMutation.isPending || confirmMutation.isPending}
-          >
-            No / Later
-          </button>
-          <button
-            type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729]"
-            onClick={() => void confirmMutation.mutateAsync(activePrompt.id)}
-            disabled={dismissMutation.isPending || confirmMutation.isPending}
-          >
-            Yes, arrived
-          </button>
-        </div>
+    <Modal open={true} onClose={() => dismissMutation.mutate(activePrompt.id)} title="Arrival check" size="sm">
+      <p className="text-xs text-[#1F2A44]">
+        You appear to be at <span className="font-semibold">{activePrompt.stop_name ?? "the stop"}</span>. Are you arrived?
+      </p>
+      <p className="mt-1 text-xs text-[#6B7280]">
+        Distance: {activePrompt.distance_at_trigger_ft} ft · Load{" "}
+        <EntityLink
+          kind="driver_app_load"
+          id={activePrompt.load_id}
+          label={entityLabel(activePrompt.load_number, activePrompt.load_id, "Load")}
+          className="font-semibold text-[#1F2A44] hover:underline"
+        />
+      </p>
+      {mutationError ? <p role="alert" className="mt-2 text-xs text-red-700">{mutationError}</p> : null}
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
+          onClick={() => {
+            dismissMutation.mutate(activePrompt.id);
+          }}
+          disabled={dismissMutation.isPending || confirmMutation.isPending}
+        >
+          No / Later
+        </button>
+        <button
+          type="button"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729]"
+          onClick={() => void confirmMutation.mutateAsync(activePrompt.id)}
+          disabled={dismissMutation.isPending || confirmMutation.isPending}
+        >
+          Yes, arrived
+        </button>
       </div>
-    </div>
+    </Modal>
   );
 }

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDriverStatusSuggestions, respondDriverStatusSuggestion } from "../../api/driver";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
+import { Modal } from "../../components/Modal";
 
 const SNOOZE_MS = 5 * 60 * 1000;
 
@@ -46,47 +47,44 @@ export function StatusSuggestionPrompt() {
   if (!active) return null;
 
   return (
-    <div className="fixed inset-0 z-61 flex items-end justify-center bg-black/35 p-3">
-      <div className="w-full max-w-md rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-xl">
-        <p className="text-xs font-semibold text-[#0F1219]">Status suggestion</p>
-        <p className="mt-1 text-xs text-[#4B5563]">
-          Looks like you’re underway on load{" "}
-          <EntityLink
-            kind="driver_app_load"
-            id={active.load_id}
-            label={entityLabel(active.load_number, active.load_id, "Load")}
-            className="font-semibold text-[#4B5563] hover:underline"
-          />
-          . Mark as <span className="font-semibold">{active.suggested_to.replace("_", " ")}</span>?
-        </p>
-        <p className="mt-1 text-xs text-[#6B7280]">{active.reason}</p>
-        {mutationError ? <p role="alert" className="mt-2 text-xs text-red-700">{mutationError}</p> : null}
-        <div className="mt-3 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
-            onClick={() => {
-              setSnoozedUntilById((current) => ({ ...current, [active.id]: Date.now() + SNOOZE_MS }));
-            }}
-          >
-            Snooze 5m
-          </button>
-          <button
-            type="button"
-            className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
-            onClick={() => void respondMutation.mutateAsync({ id: active.id, response: "dismissed" })}
-          >
-            No
-          </button>
-          <button
-            type="button"
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729]"
-            onClick={() => void respondMutation.mutateAsync({ id: active.id, response: "confirmed" })}
-          >
-            Yes
-          </button>
-        </div>
+    <Modal open={true} onClose={() => setSnoozedUntilById((current) => ({ ...current, [active.id]: Date.now() + SNOOZE_MS }))} title="Status suggestion" size="sm">
+      <p className="text-xs text-[#4B5563]">
+        Looks like you’re underway on load{" "}
+        <EntityLink
+          kind="driver_app_load"
+          id={active.load_id}
+          label={entityLabel(active.load_number, active.load_id, "Load")}
+          className="font-semibold text-[#4B5563] hover:underline"
+        />
+        . Mark as <span className="font-semibold">{active.suggested_to.replace("_", " ")}</span>?
+      </p>
+      <p className="mt-1 text-xs text-[#6B7280]">{active.reason}</p>
+      {mutationError ? <p role="alert" className="mt-2 text-xs text-red-700">{mutationError}</p> : null}
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
+          onClick={() => {
+            setSnoozedUntilById((current) => ({ ...current, [active.id]: Date.now() + SNOOZE_MS }));
+          }}
+        >
+          Snooze 5m
+        </button>
+        <button
+          type="button"
+          className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
+          onClick={() => void respondMutation.mutateAsync({ id: active.id, response: "dismissed" })}
+        >
+          No
+        </button>
+        <button
+          type="button"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0F1729]"
+          onClick={() => void respondMutation.mutateAsync({ id: active.id, response: "confirmed" })}
+        >
+          Yes
+        </button>
       </div>
-    </div>
+    </Modal>
   );
 }

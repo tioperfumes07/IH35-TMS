@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
 import { updateMaintenancePart, type MaintenancePartRow } from "../../api/maintenance";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -75,19 +75,9 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
     onError: (err) => pushToast(userFacingApiError(err, "Could not update the part"), "error"),
   });
 
-  if (!part) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative flex h-full w-full max-w-lg flex-col bg-white shadow-xl overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h2 className="text-page-title font-semibold">Edit part</h2>
-          <button onClick={onClose} className="rounded-sm p-1 hover:bg-gray-100">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <form
+    <ParityDrawer open={Boolean(part)} title="Edit part" onClose={onClose}>
+      <form
           onSubmit={(e) => {
             e.preventDefault();
             if (!formData.category.trim()) return;
@@ -201,8 +191,7 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
             <Button type="submit" loading={updateMutation.isPending}>Save</Button>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </ParityDrawer>
   );
 }

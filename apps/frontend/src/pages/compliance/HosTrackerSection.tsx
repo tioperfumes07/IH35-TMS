@@ -11,6 +11,7 @@ import { companyToday } from "../../lib/businessDate";
 import { formatPlannerDayLabel } from "../dispatch/planners/plannerDayLabel";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { formatPersonName } from "../../lib/formatPersonName";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -318,22 +319,17 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           />
         )}
       </div>
-      {selectedDriver ? (
-        <div className="fixed inset-0 z-40 flex justify-end" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setSelectedDriver(null)} />
-          <div className="relative z-10 h-full w-[380px] max-w-[90vw] overflow-y-auto bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
-              <div>
-                <div className="text-xs font-semibold text-[#0F1219]">
-                  <EntityLinkOrTombstone kind="driver" id={selectedDriver.driver_id} name={formatPersonName(selectedDriver.driver_name)} noun="Driver" />
-                </div>
-                <div className="text-xs text-[#4B5563]">
-                  Unit{" "}
-                  <EntityLinkOrTombstone kind="unit" id={selectedDriver.unit_id} name={selectedDriver.unit_number} noun="Unit" data-testid="hos-tracker-detail-unit-link" />{" "}
-                  · {selectedDate} · HOS cycle detail
-                </div>
-              </div>
-              <button type="button" onClick={() => setSelectedDriver(null)} className="rounded-sm px-2 py-1 text-[#4B5563] hover:bg-[#E5E7EB]" aria-label="Close">✕</button>
+      <ParityDrawer
+        open={Boolean(selectedDriver)}
+        onClose={() => setSelectedDriver(null)}
+        title={selectedDriver ? formatPersonName(selectedDriver.driver_name) : "HOS detail"}
+      >
+        {selectedDriver ? (
+          <>
+            <div className="px-4 pb-2 text-xs text-[#4B5563]">
+              Unit{" "}
+              <EntityLinkOrTombstone kind="unit" id={selectedDriver.unit_id} name={selectedDriver.unit_number} noun="Unit" data-testid="hos-tracker-detail-unit-link" />{" "}
+              · {selectedDate} · HOS cycle detail
             </div>
             {!selectedDriver.available || !selectedDriver.clocks ? (
               <div className="px-4 py-10 text-center text-xs text-[#4B5563]">HOS unavailable for this driver on {selectedDate}.</div>
@@ -375,9 +371,9 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                 <p className="text-xs text-[#4B5563]">Verbatim Samsara certified ELD — not recomputed.</p>
               </div>
             )}
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </ParityDrawer>
     </section>
   );
 }
