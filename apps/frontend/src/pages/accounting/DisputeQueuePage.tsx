@@ -22,6 +22,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { statusPill } from "../../components/shared/statusPill";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 const DECIDE_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 
@@ -116,7 +117,7 @@ function DecideModal({
           <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")} /> · claimed{" "}
           {money(row.claimed_adjustment_cents)}
         </p>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Decision
           <SelectCombobox
             value={decision}
@@ -128,7 +129,7 @@ function DecideModal({
           </SelectCombobox>
         </label>
         {decision === "approved" ? (
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Adjustment (USD)
             <MoneyInput
               valueCents={adjustmentCents}
@@ -138,7 +139,7 @@ function DecideModal({
             />
           </label>
         ) : null}
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Resolution notes (min 10 chars)
           <textarea
             value={resolutionText}

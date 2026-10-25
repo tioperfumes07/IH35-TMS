@@ -10,6 +10,7 @@ import {
 } from "../../../api/legal-attorney-review";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 export function LegalAttorneyReviewPortalPage() {
   const { token = "" } = useParams();
@@ -171,7 +172,7 @@ export function LegalAttorneyReviewPortalPage() {
       <section className="space-y-3 rounded-sm border border-gray-200 bg-[#F7F8FA] p-4">
         <h2 className="text-xs font-semibold text-gray-900">Your attestation</h2>
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="block text-xs font-medium text-gray-700">
+          <label className={FORM_LABEL_CLASS}>
             Attorney name
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
@@ -180,7 +181,7 @@ export function LegalAttorneyReviewPortalPage() {
               autoComplete="name"
             />
           </label>
-          <label className="block text-xs font-medium text-gray-700">
+          <label className={FORM_LABEL_CLASS}>
             Bar number
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
@@ -190,7 +191,7 @@ export function LegalAttorneyReviewPortalPage() {
             />
           </label>
         </div>
-        <label className="block text-xs font-medium text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Notes (optional, approve only)
           <textarea
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
@@ -199,7 +200,7 @@ export function LegalAttorneyReviewPortalPage() {
             onChange={(e) => setNotes(e.target.value)}
           />
         </label>
-        <label className="block text-xs font-medium text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Comments for request changes / reject
           <textarea
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"

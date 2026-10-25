@@ -26,6 +26,7 @@ import { formatUsdCents } from "../../lib/money";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
 import { moneyListKpiCard } from "./moneyListKpiCard";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -292,7 +293,7 @@ export function PaymentsListPage() {
           allLabel="All"
           data-testid="payments-status-filter"
         />
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Method
           <SelectCombobox
             value={method}
@@ -306,11 +307,11 @@ export function PaymentsListPage() {
             ))}
           </SelectCombobox>
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           From
           <DatePicker value={dateFrom} onChange={setDateFrom} className="h-9" />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           To
           <DatePicker value={dateTo} onChange={setDateTo} className="h-9" />
         </label>

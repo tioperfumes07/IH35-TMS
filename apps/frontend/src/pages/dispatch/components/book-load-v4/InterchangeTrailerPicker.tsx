@@ -13,6 +13,7 @@ import { CappedListNotice } from "../../../../components/CappedListNotice";
 import { useToast } from "../../../../components/Toast";
 import { entityLabel } from "../../../../lib/entity-label";
 import { EntityLink } from "../../../../components/shared/EntityLink";
+import { FORM_LABEL_CLASS } from "../../../../components/forms/inputClass";
 
 type Props = {
   operatingCompanyId: string;
@@ -120,7 +121,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
       {trailersQuery.isError ? <p className="text-xs text-red-600">Could not load interchange trailers.</p> : null}
       {showCreate ? (
         <div className="space-y-1.5 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="interchange-trailer-create-panel">
-          <label className="block text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_CLASS}>
             Trailer number
             <input
               value={newTrailerNumber}
@@ -153,7 +154,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
               Vendor trailer
             </button>
           </div>
-          <label className="block text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_CLASS}>
             {newCounterpartyType === "customer" ? "Customer" : "Vendor"} (owner of this trailer)
             <div className="mt-0.5">
               {newCounterpartyType === "vendor" ? (

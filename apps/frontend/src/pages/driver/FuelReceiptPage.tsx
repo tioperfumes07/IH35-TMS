@@ -8,6 +8,7 @@ import { listDriverFuelUnits } from "../../api/driver";
 import { Combobox } from "../../components/Combobox";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { FORM_LABEL_CLASS } from "../../components/forms/inputClass";
 
 export function FuelReceiptPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -152,7 +153,7 @@ export function FuelReceiptPage() {
       <canvas ref={canvasRef} className="hidden" />
       {previewUrl ? <img src={previewUrl} alt="Receipt preview" className="w-full rounded-sm border" /> : null}
 
-      <label className="block text-xs font-medium text-[#4B5563]">
+      <label className={FORM_LABEL_CLASS}>
         Truck (unit)
         <Combobox
           options={unitOptions}
@@ -174,16 +175,16 @@ export function FuelReceiptPage() {
           />
         ) : null}
       </label>
-      <label className="block text-xs font-medium text-[#4B5563]">
+      <label className={FORM_LABEL_CLASS}>
         Odometer
         <input className="mt-1 w-full rounded-sm border px-2 py-1" value={odometer} onChange={(e) => setOdometer(e.target.value)} inputMode="numeric" />
       </label>
-      <label className="block text-xs font-medium text-[#4B5563]">
+      <label className={FORM_LABEL_CLASS}>
         Amount (USD)
         {/* M-1: dollars-mode QBO money entry; backend z.coerce.number()→round(amount*100), byte-for-byte. */}
         <MoneyInput valueDollars={amount} onChangeDollars={setAmount} ariaLabel="Amount (USD)" className="mt-1 w-full" />
       </label>
-      <label className="block text-xs font-medium text-[#4B5563]">
+      <label className={FORM_LABEL_CLASS}>
         Station name
         <input className="mt-1 w-full rounded-sm border px-2 py-1" value={station} onChange={(e) => setStation(e.target.value)} />
       </label>

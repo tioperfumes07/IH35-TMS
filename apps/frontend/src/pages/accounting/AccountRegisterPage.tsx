@@ -35,6 +35,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { RegisterInlineEditPanel } from "./RegisterInlineEditPanel";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -829,7 +830,7 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
             onOptionCreated={() => void accountsQuery.refetch()}
           />
         </div>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Period
           <SelectCombobox value={preset} onChange={(e) => onPreset(e.target.value)} className={inputCls}>
             <option value="this_month">This Month</option>
@@ -840,11 +841,11 @@ export function AccountRegisterPage({ embeddedBankAccountId }: { embeddedBankAcc
             <option value="custom">Custom</option>
           </SelectCombobox>
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           From
           <DatePicker value={fromDate} onChange={(next) => { setFromDate(next); setPreset("custom"); }} className={inputCls} />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           To
           <DatePicker value={toDate} onChange={(next) => { setToDate(next); setPreset("custom"); }} className={inputCls} />
         </label>

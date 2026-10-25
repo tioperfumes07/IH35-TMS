@@ -5,6 +5,7 @@ import { Combobox } from "../../../../components/Combobox";
 import { Button } from "../../../../components/Button";
 import { CappedListNotice } from "../../../../components/CappedListNotice";
 import { useToast } from "../../../../components/Toast";
+import { FORM_LABEL_CLASS } from "../../../../components/forms/inputClass";
 
 type Props = {
   operatingCompanyId: string;
@@ -111,7 +112,7 @@ export function LocationPicker({ operatingCompanyId, value, onChange, disabled, 
       {locationsQuery.isError ? <p className="text-xs text-red-600">Could not load locations.</p> : null}
       {showCreate ? (
         <div className="space-y-1.5 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="stop-location-create-panel">
-          <label className="block text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_CLASS}>
             Location name
             <input
               value={newName}
@@ -121,11 +122,11 @@ export function LocationPicker({ operatingCompanyId, value, onChange, disabled, 
             />
           </label>
           <div className="grid grid-cols-2 gap-1.5">
-            <label className="block text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_CLASS}>
               City
               <input value={newCity} onChange={(e) => setNewCity(e.target.value)} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
             </label>
-            <label className="block text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_CLASS}>
               State
               <input value={newState} onChange={(e) => setNewState(e.target.value)} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
             </label>

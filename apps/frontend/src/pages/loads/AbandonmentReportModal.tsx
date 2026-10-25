@@ -8,6 +8,7 @@ import { useToast } from "../../components/Toast";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { FORM_LABEL_CLASS } from "../../components/forms/inputClass";
 
 type Props = {
   loadId: string;
@@ -74,7 +75,7 @@ export function AbandonmentReportModal({
         ) : null}
       </div>
       <div className="space-y-3 text-xs">
-        <label className="block text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_CLASS}>
           Driver
           <DriverPickerWithCreate
             operatingCompanyId={operatingCompanyId}
@@ -88,25 +89,25 @@ export function AbandonmentReportModal({
             className="mt-1 w-full"
           />
         </label>
-        <label className="block text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_CLASS}>
           Abandonment time (local)
           <DateTimePicker className="mt-1 w-full" aria-label="Abandonment time (local)" value={abandonmentEventAt} onChange={setAbandonmentEventAt} />
         </label>
-        <label className="block text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_CLASS}>
           Location (optional)
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={location} onChange={(e) => setLocation(e.target.value)} />
         </label>
         <div className="grid grid-cols-2 gap-2">
-          <label className="block text-xs font-semibold text-[#4B5563]">
+          <label className={FORM_LABEL_CLASS}>
             Towing (¢ override)
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={towing} onChange={(e) => setTowing(e.target.value.replace(/[^\d]/g, ""))} />
           </label>
-          <label className="block text-xs font-semibold text-[#4B5563]">
+          <label className={FORM_LABEL_CLASS}>
             Deadhead miles
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={deadheadMiles} onChange={(e) => setDeadheadMiles(e.target.value)} />
           </label>
         </div>
-        <label className="block text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_CLASS}>
           Notes
           <textarea className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>

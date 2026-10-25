@@ -9,6 +9,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
 import { CollapsedListFilters, useStagedListFilters } from "../table";
 import { SelectCombobox } from "../Combobox";
+import { FORM_LABEL_CLASS } from "../forms/inputClass"
 
 type Props = {
   operatingCompanyId: string | null;
@@ -151,7 +152,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
                 applyDisabled={!stagedFilters.dirty}
                 testIdPrefix="home-driver-day-summary"
               >
-                <label className="block text-xs font-semibold text-[#4B5563]">
+                <label className={FORM_LABEL_CLASS}>
                   Driver activity
                   <SelectCombobox
                     aria-label="Driver activity filter"

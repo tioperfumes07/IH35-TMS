@@ -3,6 +3,7 @@ import { ApiError } from "../../../api/client";
 import type { LegalTemplateDraft } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -69,7 +70,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
   return (
     <ParityDrawer open={open} onClose={onClose} title="Create Legal Template" size="wide">
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Template code
           <input
             value={form.template_code}
@@ -79,7 +80,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Display Name (EN)
           <input
             value={form.display_name_en}
@@ -88,7 +89,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Display Name (ES)
           <input
             value={form.display_name_es}
@@ -97,7 +98,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Category
           <input
             value={form.category}
@@ -115,7 +116,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           Requires witness
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           English HTML
           <textarea
             value={form.content_html_en}
@@ -125,7 +126,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Spanish HTML
           <textarea
             value={form.content_html_es}
@@ -135,7 +136,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Variable schema (JSON)
           <textarea
             value={form.variable_schema_json}

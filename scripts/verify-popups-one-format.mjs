@@ -22,7 +22,7 @@
  *
  * RULE 4 — (443.365-C) catalog creator field labels use FORM_LABEL_CLASS / FORM_LABEL_STACK_CLASS
  *   (components/forms/inputClass.ts), never a hand-typed `text-xs font-semibold text-gray-600` label. Measured 10-25: 136
- *   hand-typed labels in 28 files -> 0.
+ *   hand-typed labels in 28 files -> 0; widened to the whole app the same day (110 more in 36 files -> 0).
  *
  * Run: node scripts/verify-popups-one-format.mjs [--selftest] [--print]
  */
@@ -100,9 +100,10 @@ export function analyse(files, baseline) {
       }
     }
   }
-  const HAND_LABEL = /<label className="(?:block|flex flex-col gap-1) text-xs font-semibold text-(?:gray-600|\[#4B5563\])"/g;
+  const HAND_LABEL = /<label className="(?:block|flex flex-col gap-1) text-xs font-(?:semibold|medium) text-(?:gray-600|gray-700|\[#4B5563\])"/g;
   for (const [rel, src] of files) {
-    if (!rel.startsWith("pages/lists/") || /\.test\.|__tests__/.test(rel)) continue;
+    // whole app since 10-25 5:20 PM (136 in pages/lists + 110 in 36 more creators -> 0); forms primitives own their labels
+    if (rel.startsWith("components/forms/") || /\.test\.|__tests__/.test(rel)) continue;
     const n = (src.match(HAND_LABEL) || []).length;
     if (n) problems.push(`${rel}: ${n} hand-typed field label(s) — use FORM_LABEL_CLASS / FORM_LABEL_STACK_CLASS (one creator label style)`);
   }

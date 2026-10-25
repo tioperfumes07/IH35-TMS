@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { closeUnlessPending } from "../shared/ConfirmModal";
+import { FORM_LABEL_CLASS } from "../forms/inputClass"
 
 type Props = {
   open: boolean;
@@ -46,7 +47,7 @@ export function DeactivateFactorConfirmModal({ open, onClose, onConfirm, loading
           <li>Customer factor assignments may stop advancing new invoices.</li>
           <li>Existing reserve balances remain until reconciled.</li>
         </ul>
-        <label className="block text-xs font-semibold text-gray-700">
+        <label className={FORM_LABEL_CLASS}>
           Type DEACTIVATE to confirm
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" value={typed} onChange={(event) => setTyped(event.target.value)} />
         </label>

@@ -34,6 +34,7 @@ const METHOD_OPTIONS: Array<{ value: BillPaymentMethod; label: string }> = [
 
 import { formatUsdCents } from "../../lib/money";
 import { SelectCombobox } from "../../components/Combobox";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -202,11 +203,11 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                   />
                 </div>
               </div>
-              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              <label className={FORM_LABEL_STACK_CLASS}>
                 Payment date
                 <DatePicker value={paymentDate} onChange={setPaymentDate} className="" />
               </label>
-              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              <label className={FORM_LABEL_STACK_CLASS}>
                 Payment method
                 <SelectCombobox
                   aria-label="Payment method"
@@ -221,11 +222,11 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                   ))}
                 </SelectCombobox>
               </label>
-              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              <label className={FORM_LABEL_STACK_CLASS}>
                 Payment amount (USD)
                 <MoneyInput valueCents={amountCents} onChangeCents={setAmountCents} ariaLabel="Payment amount" />
               </label>
-              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              <label className={FORM_LABEL_STACK_CLASS}>
                 Remaining
                 <input
                   value={money(remainingCents)}

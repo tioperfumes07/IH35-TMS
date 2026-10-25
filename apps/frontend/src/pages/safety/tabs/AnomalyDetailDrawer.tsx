@@ -5,6 +5,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -215,7 +216,7 @@ export function AnomalyDetailDrawer({
             </div>
 
             <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-              <label className="block text-xs font-semibold text-gray-700" htmlFor="anomaly-resolution-note">
+              <label className={FORM_LABEL_CLASS} htmlFor="anomaly-resolution-note">
                 Resolution note
               </label>
               <textarea

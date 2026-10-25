@@ -28,6 +28,7 @@ type Props = {
 };
 
 import { formatUsdCents } from "../../../lib/money";
+import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -168,7 +169,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
           <div className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">CC Bill Payment Details</div>
 
           <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_STACK_CLASS}>
               Vendor
               <input
                 value={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")}
@@ -176,7 +177,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
                 className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs"
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_STACK_CLASS}>
               Bill #
               {/* LINK-F5188: bill.id is real (used at submission time below) but this field only
                   ever rendered it as disabled plain text -- same pattern PayBillModal.tsx already
@@ -185,15 +186,15 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
                 <EntityLink kind="bill" id={bill.id} label={visibleDocumentLabel(bill.bill_number, bill.id, "Bill")} />
               </div>
             </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_STACK_CLASS}>
               Payment date
               <DatePicker value={paymentDate} onChange={setPaymentDate} className="" />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_STACK_CLASS}>
               Payment amount (USD)
               <MoneyInput valueCents={amountCents} onChangeCents={setAmountCents} ariaLabel="Payment amount" />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            <label className={FORM_LABEL_STACK_CLASS}>
               Remaining
               <input
                 value={money(remainingCents)}

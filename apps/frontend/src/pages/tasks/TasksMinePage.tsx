@@ -13,6 +13,7 @@ import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { TASK_STATUS_BADGE, isOpenTaskStatus, priorityLabel, taskStatusLabel } from "./taskDisplay";
 import { formatDateUS } from "../../lib/formatDate";
 import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 type StatusFilter = "all" | "open" | "completed";
 
@@ -124,7 +125,7 @@ export function TasksMinePage() {
         testIdPrefix="tasks-mine"
         dataAttributes={{ "data-tasks-mine-filter-toolbar": "collapsed" }}
       >
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Status
           <SelectCombobox
             value={staged.draft.statusFilter}

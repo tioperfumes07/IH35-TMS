@@ -13,6 +13,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { invalidatePartsStockQueries } from "../../inventory/partsStockQueryKeys";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   companyId: string;
@@ -228,7 +229,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
             value={form.part_description}
             onChange={(e) => setForm((v) => ({ ...v, part_description: e.target.value }))}
           />
-          <label className="block text-xs font-semibold text-gray-700">
+          <label className={FORM_LABEL_CLASS}>
             Vendor
             <div className="mt-1" data-testid="parts-inventory-vendor-picker">
               {/* CLS-SILENT-CAP: EntityPicker server-search — no 200-row listVendors page. */}
