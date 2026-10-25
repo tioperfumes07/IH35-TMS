@@ -82,7 +82,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/escrow/open` | `apps/backend/src/accounting/escrow/routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/expense-category-map` | `apps/backend/src/accounting/expense-category-map/routes.ts:226` | — | — | — |
 | create | `/api/v1/accounting/expense-families/align-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts:101` | — | — | — |
-| create | `/api/v1/accounting/expense-load-confirmations/confirm` | `apps/backend/src/accounting/expense-load-confirmation.routes.ts:91` | — | — | — |
+| create | `/api/v1/accounting/expense-load-confirmations/confirm` | `apps/backend/src/accounting/expense-load-confirmation.routes.ts:97` | — | — | — |
 | create | `/api/v1/accounting/expenses/link-loads` | `apps/backend/src/accounting/expenses.routes.ts:427` | — | — | — |
 | create | `/api/v1/accounting/factoring-advances` | `apps/backend/src/accounting/factoring-advances.routes.ts:420` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/advance` | `apps/backend/src/accounting/factoring-advances.routes.ts:753` | — | — | — |
@@ -690,7 +690,7 @@ after creation; a GL/posting failure goes to CC-1.
 |---|---|---|---|---|---|
 | create | `/api/v1/bank-recon/accept-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:107` | — | — | — |
 | create | `/api/v1/bank-recon/accept-multi-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:235` | — | — | — |
-| create | `/api/v1/bank-recon/close-period` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:281` | — | — | — |
+| create | `/api/v1/bank-recon/close-period` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:286` | — | — | — |
 | create | `/api/v1/bank-recon/manual-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:194` | — | — | — |
 | create | `/api/v1/bank-recon/reject-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:148` | — | — | — |
 
