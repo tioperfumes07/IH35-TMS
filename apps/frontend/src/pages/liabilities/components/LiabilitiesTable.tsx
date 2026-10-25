@@ -7,6 +7,7 @@
  * pills, and the View Detail / Send Ack Request handlers preserved 1:1.
  */
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { BoardSection } from "../../../components/v3/BoardSection";
 import { TableMoneyCell } from "../../../components/table/TableMoneyCell";
 import { QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -151,14 +152,16 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
   ];
 
   return (
-    <ParityTable
-      title="Liabilities"
-      columns={columns}
-      rows={rows}
-      rowKey={(row) => String(row.id)}
-      storageKey="liabilities-table"
-      tableTestId="liabilities-table"
-      emptyText="No active liabilities."
-    />
+    // 443.280 — Settlements › Liabilities + /liabilities: ParityTable in shared BoardSection.
+    <BoardSection title="Liabilities" testId="liabilities-board-section">
+      <ParityTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => String(row.id)}
+        storageKey="liabilities-table"
+        tableTestId="liabilities-table"
+        emptyText="No active liabilities."
+      />
+    </BoardSection>
   );
 }

@@ -6,7 +6,7 @@
  *                         and the link to the screen that fixes it. Close is enabled only when the latest run is green.
  */
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +15,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { closeFeedIntake, getFeedIntake, listFeedIntakes, runFeedGate, type FeedCheck, type FeedIntake, type FeedKind } from "../../api/feedGate";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
 const STATUS_CLS: Record<string, string> = {
@@ -115,6 +116,8 @@ export function FeedGateIntakePage() {
   const { intakeId = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
+  const listHref = pathname.startsWith("/driver-finance/") ? "/driver-finance/feed-gate" : "/feed-gate";
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const detail = useQuery({ queryKey: ["feed-gate", "intake", companyId, intakeId], queryFn: () => getFeedIntake(companyId, intakeId), enabled: !!companyId && !!intakeId });
@@ -146,7 +149,7 @@ export function FeedGateIntakePage() {
   return (
     <div className="mx-auto max-w-6xl p-4" data-testid="feed-gate-intake-page">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Link to="/feed-gate" className="text-xs underline">← Feed gate</Link>
+        <Link to={listHref} className="text-xs underline">← Feed gate</Link>
         <h1 className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">{intake?.subject_label ?? intake?.feed_kind ?? "Intake"}</h1>
         {intake ? <Badge status={intake.status} /> : null}
         {intake ? <span className="text-xs text-[#4B5563]">run #{intake.last_run_no} · {intake.checks_failed} red of {intake.checks_total}</span> : null}
@@ -158,18 +161,23 @@ export function FeedGateIntakePage() {
       {detail.isLoading ? <p className="text-xs text-[#6B7280]">Loading…</p> : null}
       {groups.map((g) => (
         <div key={g} className="mb-4">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">{GROUP_LABEL[g] ?? g} · {checks.filter((c) => c.check_group === g && c.status === "fail").length} red</h2>
-          <ParityTable<FeedCheck>
-            rows={checks.filter((c) => c.check_group === g)}
-            rowKey={(c) => c.id}
-            columns={checkColumns(intake?.feed_kind)}
-            storageKey="feed-gate-checks"
-            exportFilename={`feed-gate-checks-${g}`}
-            suppressToolbarRange
-            hidePager
-            rowTestId={(c) => `feed-gate-check-${c.check_key}`}
-            rowClassName={(c) => CHECK_ROW_CLS[c.status] ?? "border-l-4 border-[#E5E7EB] text-[#6B7280]"}
-          />
+          {/* 443.280 — check group ParityTable in shared BoardSection. */}
+          <BoardSection
+            title={`${GROUP_LABEL[g] ?? g} · ${checks.filter((c) => c.check_group === g && c.status === "fail").length} red`}
+            testId={`feed-gate-checks-${g}-board-section`}
+          >
+            <ParityTable<FeedCheck>
+              rows={checks.filter((c) => c.check_group === g)}
+              rowKey={(c) => c.id}
+              columns={checkColumns(intake?.feed_kind)}
+              storageKey="feed-gate-checks"
+              exportFilename={`feed-gate-checks-${g}`}
+              suppressToolbarRange
+              hidePager
+              rowTestId={(c) => `feed-gate-check-${c.check_key}`}
+              rowClassName={(c) => CHECK_ROW_CLS[c.status] ?? "border-l-4 border-[#E5E7EB] text-[#6B7280]"}
+            />
+          </BoardSection>
         </div>
       ))}
     </div>
@@ -179,6 +187,10 @@ export function FeedGateIntakePage() {
 export function FeedGatePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
+  // Intake detail lives at /feed-gate/:id (and /driver-finance/feed-gate/:id when Settlements-mounted).
+  const gateBase = pathname.startsWith("/driver-finance/") ? "/driver-finance/feed-gate" : "/feed-gate";
+  const underSettlements = pathname.startsWith("/driver-finance/");
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const list = useQuery({ queryKey: ["feed-gate", "list", companyId], queryFn: () => listFeedIntakes(companyId), enabled: !!companyId });
@@ -201,75 +213,87 @@ export function FeedGatePage() {
     );
   }
   return (
-    <div className="mx-auto max-w-6xl p-4" data-testid="feed-gate-page">
-      <h1 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
-        Feed gate{" "}
-        <InfoPopover label="About the feed gate">
-          <span className="block">Every feed — a settlement, a load, an invoice, an expense, a bill, a fuel purchase — is verified for full linkage, wiring, accounts and date stamps before it is accepted.</span>
-          <span className="mt-1 block">A settlement commits only when every check is green and the next settlement for the same driver cannot open until the previous one is closed; an invoice is sent and an expense is saved only through this gate. Red rows carry the link to the screen that fixes them.</span>
-        </InfoPopover>
-      </h1>
+    <div className={`${underSettlements ? "" : "mx-auto max-w-6xl p-4"}`} data-testid="feed-gate-page">
+      {underSettlements ? (
+        <p className="mb-3 text-xs text-[#4B5563]">
+          <InfoPopover label="About the feed gate">
+            <span className="block">Every feed — a settlement, a load, an invoice, an expense, a bill, a fuel purchase — is verified for full linkage, wiring, accounts and date stamps before it is accepted.</span>
+            <span className="mt-1 block">A settlement commits only when every check is green and the next settlement for the same driver cannot open until the previous one is closed; an invoice is sent and an expense is saved only through this gate. Red rows carry the link to the screen that fixes them.</span>
+          </InfoPopover>
+        </p>
+      ) : (
+        <h1 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+          Feed gate{" "}
+          <InfoPopover label="About the feed gate">
+            <span className="block">Every feed — a settlement, a load, an invoice, an expense, a bill, a fuel purchase — is verified for full linkage, wiring, accounts and date stamps before it is accepted.</span>
+            <span className="mt-1 block">A settlement commits only when every check is green and the next settlement for the same driver cannot open until the previous one is closed; an invoice is sent and an expense is saved only through this gate. Red rows carry the link to the screen that fixes them.</span>
+          </InfoPopover>
+        </h1>
+      )}
       {error ? <div className="mb-2 rounded border border-red-600 bg-red-50 p-2 text-xs text-red-800" role="alert">{error}</div> : null}
-      <ParityTable<FeedIntake>
-        rows={rows}
-        rowKey={(i) => i.id}
-        loading={list.isLoading}
-        storageKey="feed-gate-intakes"
-        exportFilename="feed-gate"
-        suppressToolbarRange
-        emptyText="No feed has been run yet. Approving a settlement runs its gate automatically."
-        rowTestId={() => "feed-gate-row"}
-        columns={[
-          {
-            key: "subject_label",
-            label: "Feed",
-            sortable: true,
-            sortValue: (i) => i.subject_label ?? i.feed_kind,
-            render: (i) =>
-              feedKindToEntityKind(i.feed_kind) && i.subject_id ? (
-                <span className="inline-flex items-center gap-1">
-                  <EntityLink
-                    kind={feedKindToEntityKind(i.feed_kind)!}
-                    id={i.subject_id}
-                    label={i.subject_label ?? `${i.feed_kind} — name not available`}
-                  />
-                  <Link className="underline text-[#4B5563]" to={`/feed-gate/${i.id}`}>Gate</Link>
-                </span>
-              ) : (
-                <Link className="underline" to={`/feed-gate/${i.id}`}>
-                  {i.subject_label ?? `${i.feed_kind} — name not available`}
-                </Link>
-              ),
-          },
-          {
-            key: "driver_name",
-            label: "Driver",
-            sortable: true,
-            sortValue: (i) => i.driver_name,
-            render: (i) => <EntityLinkOrTombstone kind="driver" id={i.driver_id} name={i.driver_name} noun="Driver" />,
-          },
-          { key: "status", label: "Status", sortable: true, sortValue: (i) => i.status, render: (i) => <Badge status={i.status} /> },
-          {
-            key: "checks_failed",
-            label: "Red / total",
-            sortable: true,
-            sortValue: (i) => i.checks_failed,
-            render: (i) => `${i.checks_failed} / ${i.checks_total}`,
-          },
-          {
-            key: "last_run_at",
-            label: "Last run",
-            sortable: true,
-            sortValue: (i) => i.last_run_at,
-            render: (i) => (i.last_run_at ? formatDateTimeUS(i.last_run_at) : "—"),
-          },
-        ]}
-        rowActions={(i) => (
-          <button type="button" className="h-7 rounded-sm border border-[#1F2A44] px-2 text-xs" disabled={rerun.isPending || i.status === "closed"} onClick={() => rerun.mutate(i)}>
-            Run again
-          </button>
-        )}
-      />
+      {/* 443.280 — intakes ParityTable in shared BoardSection (Settlements Feed Gate tab + /feed-gate). */}
+      <BoardSection title="Feed intakes" testId="feed-gate-intakes-board-section">
+        <ParityTable<FeedIntake>
+          rows={rows}
+          rowKey={(i) => i.id}
+          loading={list.isLoading}
+          storageKey="feed-gate-intakes"
+          exportFilename="feed-gate"
+          suppressToolbarRange
+          emptyText="No feed has been run yet. Approving a settlement runs its gate automatically."
+          rowTestId={() => "feed-gate-row"}
+          columns={[
+            {
+              key: "subject_label",
+              label: "Feed",
+              sortable: true,
+              sortValue: (i) => i.subject_label ?? i.feed_kind,
+              render: (i) =>
+                feedKindToEntityKind(i.feed_kind) && i.subject_id ? (
+                  <span className="inline-flex items-center gap-1">
+                    <EntityLink
+                      kind={feedKindToEntityKind(i.feed_kind)!}
+                      id={i.subject_id}
+                      label={i.subject_label ?? `${i.feed_kind} — name not available`}
+                    />
+                    <Link className="underline text-[#4B5563]" to={`${gateBase}/${i.id}`}>Gate</Link>
+                  </span>
+                ) : (
+                  <Link className="underline" to={`${gateBase}/${i.id}`}>
+                    {i.subject_label ?? `${i.feed_kind} — name not available`}
+                  </Link>
+                ),
+            },
+            {
+              key: "driver_name",
+              label: "Driver",
+              sortable: true,
+              sortValue: (i) => i.driver_name,
+              render: (i) => <EntityLinkOrTombstone kind="driver" id={i.driver_id} name={i.driver_name} noun="Driver" />,
+            },
+            { key: "status", label: "Status", sortable: true, sortValue: (i) => i.status, render: (i) => <Badge status={i.status} /> },
+            {
+              key: "checks_failed",
+              label: "Red / total",
+              sortable: true,
+              sortValue: (i) => i.checks_failed,
+              render: (i) => `${i.checks_failed} / ${i.checks_total}`,
+            },
+            {
+              key: "last_run_at",
+              label: "Last run",
+              sortable: true,
+              sortValue: (i) => i.last_run_at,
+              render: (i) => (i.last_run_at ? formatDateTimeUS(i.last_run_at) : "—"),
+            },
+          ]}
+          rowActions={(i) => (
+            <button type="button" className="h-7 rounded-sm border border-[#1F2A44] px-2 text-xs" disabled={rerun.isPending || i.status === "closed"} onClick={() => rerun.mutate(i)}>
+              Run again
+            </button>
+          )}
+        />
+      </BoardSection>
     </div>
   );
 }

@@ -7,7 +7,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { DriversPage } from "../Drivers";
-import { FeedGatePage } from "../feed-gate/FeedGatePage";
+import { FeedGateIntakePage, FeedGatePage } from "../feed-gate/FeedGatePage";
 import { SettlementsCashAdvancesBoard } from "./SettlementsCashAdvancesBoard";
 import { LiabilitiesHomePage } from "../liabilities/LiabilitiesHome";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
@@ -62,6 +62,14 @@ export function SettlementsFeedGatePage() {
   return (
     <SettlementsModuleShell title={"Feed gate"} subtitle={"Purchase-day feed control"}>
       <FeedGatePage />
+    </SettlementsModuleShell>
+  );
+}
+
+export function SettlementsFeedGateIntakePage() {
+  return (
+    <SettlementsModuleShell title={"Feed gate"} subtitle={"Intake checklist"}>
+      <FeedGateIntakePage />
     </SettlementsModuleShell>
   );
 }

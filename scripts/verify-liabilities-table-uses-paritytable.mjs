@@ -59,6 +59,13 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="liabilities-table"')) {
     errors.push(`${PAGE}: must set tableTestId="liabilities-table"`);
   }
+  // 443.280 — shared BoardSection around the ParityTable (Settlements › Liabilities + /liabilities).
+  if (!/from ["'].*components\/v3\/BoardSection["']/.test(src) || !/<BoardSection\b/.test(src)) {
+    errors.push(`${PAGE}: must wrap ParityTable in shared BoardSection`);
+  }
+  if (!src.includes('testId="liabilities-board-section"')) {
+    errors.push(`${PAGE}: BoardSection missing testId="liabilities-board-section"`);
+  }
   if (!src.includes("No active liabilities.")) {
     errors.push(`${PAGE}: must keep empty-state message`);
   }
@@ -90,6 +97,7 @@ function assertMigrated(src) {
 function selftest() {
   const good = `
     import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+    import { BoardSection } from "../../../components/v3/BoardSection";
     const columns = [
       { key: "id", label: "Display ID" },
       { key: "driver_full_name", label: "Driver" },
@@ -107,11 +115,13 @@ function selftest() {
         </div>
       ) },
     ];
-    <ParityTable
-      storageKey="liabilities-table"
-      tableTestId="liabilities-table"
-      emptyText="No active liabilities."
-    />
+    <BoardSection title="Liabilities" testId="liabilities-board-section">
+      <ParityTable
+        storageKey="liabilities-table"
+        tableTestId="liabilities-table"
+        emptyText="No active liabilities."
+      />
+    </BoardSection>
   `;
   const bad = `
     export function LiabilitiesTable() {
