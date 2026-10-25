@@ -296,6 +296,8 @@ type AdvanceRow = {
   released_at: string | null;
   /** 443.346 — actual BofA wire from Faro; NULL = full advance_amount_cents (default) */
   bank_wire_cents: number | null;
+  /** 443.346b — when set, the gap (cash - bank_wire_cents) posts to this account instead of 1230 */
+  bank_wire_gap_account_id: string | null;
 };
 
 async function loadAdvance(client: DbClient, operatingCompanyId: string, factoringAdvanceId: string): Promise<AdvanceRow | null> {
@@ -314,7 +316,8 @@ async function loadAdvance(client: DbClient, operatingCompanyId: string, factori
         advanced_at::text,
         collected_at::text,
         released_at::text,
-        bank_wire_cents::int         AS bank_wire_cents
+        bank_wire_cents::int         AS bank_wire_cents,
+        bank_wire_gap_account_id::text AS bank_wire_gap_account_id
       FROM accounting.factoring_advances
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
@@ -946,11 +949,14 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
         `factoring_funding_figures_invalid: liability=${liability} reserve=${reserve} fee=${fee} ach=${ach} cash_rsv=${cashRsv} => cash=${cash}`
       );
     }
-    // bank_wire_cents: actual BofA wire from Faro. When less than cash, Faro held the difference
-    // (CCG payment reserve); that gap posts to factor_reserve_held (1230) not cash_clearing (1090).
+    // bank_wire_cents: actual BofA wire from Faro. When less than cash, Faro held the difference.
+    // If bank_wire_gap_account_id is set, that gap posts to the named account (e.g. 8000 Intercompany);
+    // otherwise the gap folds into factor_reserve_held (1230) — original behaviour.
+    const gapAccountId = advance.bank_wire_gap_account_id ?? null;
     const bankWire = advance.bank_wire_cents !== null ? advance.bank_wire_cents : cash;
     const factorHeld = cash - bankWire;
-    const reserveTotal = reserve + factorHeld;
+    const reserveTotal = gapAccountId ? reserve : reserve + factorHeld;
+    const gapAmount = gapAccountId ? factorHeld : 0;
 
     const memo = `Factoring funding ${advance.display_id}`;
     const expectedLegs = fundingExpectedLegs({ bankWire, reserveTotal, fee, ach, cashRsv, liability });
@@ -1004,6 +1010,9 @@ async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): 
     const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
     if (bankWire > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: bankWire, description: `${memo} — cash advanced (BofA wire)` });
     if (reserveTotal > 0) postings.push({ account_id: reserveAccountId, debit_or_credit: "debit", amount_cents: reserveTotal, description: `${memo} — reserve held (due-from-factor)` });
+    if (gapAmount > 0 && gapAccountId) {
+      postings.push({ account_id: gapAccountId, debit_or_credit: "debit", amount_cents: gapAmount, description: `${memo} — Faro gap held (inter-company transfer)` });
+    }
     if (fee > 0) postings.push({ account_id: feeAccountId, debit_or_credit: "debit", amount_cents: fee, description: `${memo} — factoring fee (interest & financing)` });
     // FACT-05 — ACH/wire fee on factor_wire_fee (BC-Ach & Wire Fees), distinct from factor_fee_expense.
     if (ach > 0) {
@@ -1359,9 +1368,11 @@ export async function postFactoringAdvanceEventInClientTx(
         `factoring_funding_figures_invalid: liability=${liability} reserve=${reserve} fee=${fee} ach=${ach} cash_rsv=${cashRsv} => cash=${cash}`
       );
     }
+    const gapAccountId = advance.bank_wire_gap_account_id ?? null;
     const bankWire = advance.bank_wire_cents !== null ? advance.bank_wire_cents : cash;
     const factorHeld = cash - bankWire;
-    const reserveTotal = reserve + factorHeld;
+    const reserveTotal = gapAccountId ? reserve : reserve + factorHeld;
+    const gapAmount = gapAccountId ? factorHeld : 0;
 
     const memo = `Factoring funding ${advance.display_id}`;
     const expectedLegs = fundingExpectedLegs({ bankWire, reserveTotal, fee, ach, cashRsv, liability });
@@ -1415,6 +1426,9 @@ export async function postFactoringAdvanceEventInClientTx(
     const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
     if (bankWire > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: bankWire, description: `${memo} — cash advanced (BofA wire)` });
     if (reserveTotal > 0) postings.push({ account_id: reserveAccountId, debit_or_credit: "debit", amount_cents: reserveTotal, description: `${memo} — reserve held (due-from-factor)` });
+    if (gapAmount > 0 && gapAccountId) {
+      postings.push({ account_id: gapAccountId, debit_or_credit: "debit", amount_cents: gapAmount, description: `${memo} — Faro gap held (inter-company transfer)` });
+    }
     if (fee > 0) postings.push({ account_id: feeAccountId, debit_or_credit: "debit", amount_cents: fee, description: `${memo} — factoring fee (interest & financing)` });
     if (ach > 0) {
       if (!wireFeeAccountId) {

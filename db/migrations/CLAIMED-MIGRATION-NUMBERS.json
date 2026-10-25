@@ -979,5 +979,10 @@
     "claimed_by": "LEAD",
     "claimed_at": "2026-10-24",
     "purpose": "LEAD 443.345: banking.bank_transactions.check_number derived from the bank text (Check Image NNNN / Check NNNN) by trigger for every writer + backfill (68 live checks, 0 carried a number)"
+  },
+  "202616251000": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cc-1",
+    "purpose": "443.346b \u2014 adds bank_wire_gap_account_id uuid NULL FK on accounting.factoring_advances; routes Faro gap to configurable account instead of always 1230 (renumbered from 202616240400: collision with LEAD #27579 bank_line_check_number)"
   }
 }
