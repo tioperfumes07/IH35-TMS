@@ -431,8 +431,6 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
         applyDisabled={!staged.dirty || draftInvalid}
         testIdPrefix="cash-flow-avp"
         dataAttributes={{ "data-cash-flow-avp-filter-toolbar": "collapsed" }}
-        className="rounded-sm border p-2"
-        style={{ borderColor: V3.border, background: V3.surface }}
       >
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-xs font-semibold" style={{ color: V3.muted }}>
