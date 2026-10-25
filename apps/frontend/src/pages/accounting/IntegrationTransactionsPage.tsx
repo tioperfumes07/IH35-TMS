@@ -9,7 +9,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
-import { CollapsedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { SelectCombobox } from "../../components/Combobox";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -219,24 +219,25 @@ export function IntegrationTransactionsPage() {
     },
   ];
 
+  const integrationTxActiveFilterCount = (syncStatus.length ? 1 : 0) + (entityType ? 1 : 0);
+
   const filterBar = (
-    <div className="flex flex-wrap gap-2 items-center" data-integration-tx-filter-toolbar="collapsed">
-      <CollapsedListFilters
-        activeFilterCount={(syncStatus.length ? 1 : 0) + (entityType ? 1 : 0)}
-        applyLawExemptReason="QBO_SYNC_OUT_OF_SCOPE"
-        testIdPrefix="integration-tx"
-        searchSlot={
-          <input
-            type="search"
-            aria-label="Search transactions by description or QBO ID"
-            placeholder="Search description, QBO ID…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-3 text-xs focus:outline-hidden focus:ring-1 focus:ring-[#6B7280]"
-          />
-        }
-      >
-        <div className="flex flex-wrap gap-2">
+    <div className="w-full space-y-2" data-integration-tx-filter-toolbar="visible">
+      <div className="flex flex-wrap items-end gap-2">
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search description, QBO ID…" // aria-label on MoneyListToolbar input matches searchPlaceholder
+          searchTestId="integration-tx-search-input"
+          onClearAll={() => {
+            setSearch("");
+            setSyncStatus([]);
+            setEntityType("");
+          }}
+          activeFilterCount={integrationTxActiveFilterCount}
+          testIdPrefix="integration-tx"
+          className="flex-1 min-w-[280px]"
+        >
           <MultiSelectDropdown
             label="Status"
             options={(["pending", "in_flight", "synced", "failed", "blocked"] as const).map((s) => ({ value: s, label: s.replaceAll("_", " ") }))}
@@ -257,11 +258,11 @@ export function IntegrationTransactionsPage() {
               </option>
             ))}
           </SelectCombobox>
-        </div>
-      </CollapsedListFilters>
-      <span className="ml-auto self-center text-xs text-gray-500">
-        {total.toLocaleString()} record{total !== 1 ? "s" : ""}
-      </span>
+        </MoneyListToolbar>
+        <span className="self-center text-xs text-gray-500">
+          {total.toLocaleString()} record{total !== 1 ? "s" : ""}
+        </span>
+      </div>
     </div>
   );
 

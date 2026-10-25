@@ -522,7 +522,34 @@
         "connectivity"
       ]
     },
-    "settlements.panel.close_trip",
+    {
+      "id": "settlements.panel.close_board",
+      "tab": "Panels",
+      "sub": "Panel: Settlement close board sections (CloseBoardPanel)",
+      "route_hint": "/driver-finance/settlement-close",
+      "surface_kind": "panel",
+      "surface_path": "pages/driver-finance/SettlementCloseArrivalPage.tsx",
+      "required": [
+        "driver",
+        "load",
+        "settlement",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "settlements.panel.close_trip",
+      "tab": "Panels",
+      "sub": "Panel: Close trip (load-bookended settlements)",
+      "route_hint": "surface://pages/driver-finance/components/CloseTripPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/driver-finance/components/CloseTripPanel.tsx",
+      "required": [
+        "connectivity",
+        "settlement"
+      ]
+    },
     {
       "id": "settlements.modal.add_pay_line",
       "tab": "Modals",

@@ -15,7 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { SelectCombobox } from "../../components/Combobox";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -23,6 +23,7 @@ import { statusPill } from "../../components/shared/statusPill";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
 import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 
 const DECIDE_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 
@@ -170,7 +171,7 @@ export function DisputeQueuePage() {
   const canDecide = DECIDE_ROLES.has(String(auth.user?.role ?? ""));
   // U12 (owner UI register 2026-10-03) — status is a multi-select; default Submitted; none picked = every status.
   const [status, setStatus] = useState<string[]>(["submitted"]);
-  const staged = useStagedListFilters({ applied: { status }, empty: { status: ["submitted"] as string[] }, onApply: (next) => setStatus(next.status) });
+  const [search, setSearch] = useState("");
   const [decideRow, setDecideRow] = useState<SettlementDisputeQueueRow | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -199,6 +200,41 @@ export function DisputeQueuePage() {
   });
 
   const rows = query.data?.disputes ?? [];
+  const total = query.data?.total ?? 0;
+
+  const visibleRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((row) => {
+      const hay = [
+        row.settlement_display_id,
+        row.driver_name,
+        row.reason_code,
+        row.reason_text,
+        row.status,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [rows, search]);
+
+  const disputeKpis = useMemo(() => {
+    let submitted = 0;
+    let underReview = 0;
+    let claimedCents = 0;
+    for (const row of visibleRows) {
+      if (row.status === "submitted") submitted += 1;
+      if (row.status === "under_review") underReview += 1;
+      if (row.claimed_adjustment_cents != null && Number.isFinite(Number(row.claimed_adjustment_cents))) {
+        claimedCents += Number(row.claimed_adjustment_cents);
+      }
+    }
+    return { submitted, underReview, claimedCents };
+  }, [visibleRows]);
+
+  const activeFilterCount = status.length === 1 && status[0] === "submitted" ? 0 : 1;
 
   const columns = useMemo<ParityColumn<SettlementDisputeQueueRow>[]>(
     () => [
@@ -316,45 +352,77 @@ export function DisputeQueuePage() {
     );
   }
 
-  return (
-    <AccountingSubNavWrapper title="Settlement dispute queue" subtitle="Office workflows for P6 settlement disputes">
-      <div className="flex flex-wrap items-end gap-3">
-        <CollapsedListFilters
-          activeFilterCount={status.length === 1 && status[0] === "submitted" ? 0 : 1}
-          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
+  const filterBar = (
+    <div className="w-full space-y-2" data-dispute-queue-filter-toolbar="visible">
+      <div className="flex flex-wrap items-end gap-2">
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search settlement, driver, reason…"
+          searchTestId="dispute-queue-search-input"
+          onClearAll={() => {
+            setSearch("");
+            setStatus(["submitted"]);
+          }}
+          activeFilterCount={activeFilterCount}
           testIdPrefix="dispute-queue"
-          dataAttributes={{ "data-dispute-queue-filter-toolbar": "collapsed" }}
+          className="flex-1 min-w-[280px]"
         >
           <MultiSelectDropdown
             label="Status"
             options={STATUS_OPTIONS.filter((opt) => opt.value !== "all").map((opt) => ({ value: opt.value, label: opt.label }))}
-            selected={staged.draft.status}
-            onChange={(next) => staged.setDraft({ status: next })}
+            selected={status}
+            onChange={setStatus}
             allLabel="All statuses"
             data-testid="dispute-queue-status-filter"
           />
-        </CollapsedListFilters>
+        </MoneyListToolbar>
         <Button size="sm" variant="secondary" disabled={query.isFetching} onClick={() => void query.refetch()}>
           Refresh
         </Button>
-        {query.data ? (
-          <span className="text-xs text-gray-500">
-            {query.data.total} dispute{query.data.total === 1 ? "" : "s"}
-          </span>
-        ) : null}
       </div>
+    </div>
+  );
+
+  return (
+    <AccountingSubNavWrapper
+      title="Settlement dispute queue"
+      subtitle="Office workflows for P6 settlement disputes"
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="dispute-queue-kpi-strip">
+          {query.isError ? (
+            <>
+              {moneyListKpiCard("Total", "—", "Error loading")}
+              {moneyListKpiCard("Submitted", "—", "Error loading")}
+              {moneyListKpiCard("Under review", "—", "Error loading")}
+              {moneyListKpiCard("Claimed", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Total", String(total), "API match")}
+              {moneyListKpiCard("Submitted", String(disputeKpis.submitted), "Visible rows")}
+              {moneyListKpiCard("Under review", String(disputeKpis.underReview), "Visible rows")}
+              {moneyListKpiCard("Claimed", money(disputeKpis.claimedCents), "Visible rows")}
+            </>
+          )}
+        </div>
+      }
+    >
+      {filterBar}
 
       {actionError ? <p className="text-xs text-red-600">{actionError}</p> : null}
 
-      <ParityTable title="Settlement disputes — queue"
+      <ParityTable
+        title="Settlement disputes — queue"
         columns={columns}
-        rows={rows}
+        rows={visibleRows}
         rowKey={(row) => row.id}
         loading={query.isPending || (query.isFetching && rows.length === 0)}
         storageKey="dispute-queue"
         exportFilename="settlement-disputes"
         initialPageSize={50}
         emptyText="No disputes for selected filters."
+        suppressToolbarSearch
       />
 
       {decideRow ? (

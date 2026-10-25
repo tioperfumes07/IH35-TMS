@@ -53,14 +53,27 @@ const CHECKS = [
   },
   { name: "accounting.modal.bill_payment: BillPaymentModal real ParityDrawer + MoneyInput", file: "apps/frontend/src/components/ap/BillPaymentModal.tsx", pattern: /ParityDrawer[\s\S]*MoneyInput|MoneyInput[\s\S]*ParityDrawer/ },
   { name: "accounting.panel.reallocate: AllocationsPage real ParityTable", file: "apps/frontend/src/pages/accounting/AllocationsPage.tsx", pattern: /<ParityTable\b/ },
-  { name: "accounting.panel.trk_bulk_register: FixedAssetsPage real ParityTable + CollapsedListFilters", file: "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx", pattern: /ParityTable[\s\S]*CollapsedListFilters|CollapsedListFilters[\s\S]*ParityTable/ },
+  {
+    name: "accounting.panel.trk_bulk_register: FixedAssetsPage real ParityTable + MoneyListToolbar",
+    file: "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx",
+    pattern: /ParityTable[\s\S]*MoneyListToolbar|MoneyListToolbar[\s\S]*ParityTable/,
+  },
   { name: "accounting.panel.detail: FixedAssetsPage real ParityTable", file: "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx", pattern: /<ParityTable\b/ },
   { name: "accounting.panel.period_status: MyAccountantPage real ParityTable", file: "apps/frontend/src/pages/accounting/MyAccountantPage.tsx", pattern: /<ParityTable\b/ },
   { name: "accounting.panel.class_cost_center_variance: PeriodComparisonPage real ParityTable", file: "apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx", pattern: /<ParityTable\b/ },
   { name: "accounting.panel.schedule: PrepaidExpensesPage real ParityTable + DatePicker + MoneyInput", file: "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx", pattern: /ParityTable[\s\S]*DatePicker[\s\S]*MoneyInput|MoneyInput[\s\S]*DatePicker[\s\S]*ParityTable/ },
-  { name: "accounting.modal.create: PrepaidExpensesPage real CollapsedListFilters + MoneyInput create chrome", file: "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx", pattern: /CollapsedListFilters[\s\S]*MoneyInput|MoneyInput[\s\S]*CollapsedListFilters/ },
+  {
+    name: "accounting.modal.create: PrepaidExpensesPage real filter toolbar + MoneyInput create chrome",
+    file: "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx",
+    pattern:
+      /CollapsedListFilters[\s\S]*MoneyInput|MoneyInput[\s\S]*CollapsedListFilters|MoneyListToolbar[\s\S]*MoneyInput|MoneyInput[\s\S]*MoneyListToolbar/,
+  },
   { name: "accounting.panel.receipt_detail: ReceiptsPage real ParityDrawer + ParityTable", file: "apps/frontend/src/pages/accounting/ReceiptsPage.tsx", pattern: /ParityDrawer[\s\S]*ParityTable|ParityTable[\s\S]*ParityDrawer/ },
-  { name: "accounting.panel.leakage: RevenueRecognitionPage real ParityTable + CollapsedListFilters", file: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx", pattern: /ParityTable[\s\S]*CollapsedListFilters|CollapsedListFilters[\s\S]*ParityTable/ },
+  {
+    name: "accounting.panel.leakage: RevenueRecognitionPage real ParityTable + MoneyListToolbar",
+    file: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
+    pattern: /ParityTable[\s\S]*MoneyListToolbar|MoneyListToolbar[\s\S]*ParityTable/,
+  },
 ];
 
 function runChecks(root = ROOT) {

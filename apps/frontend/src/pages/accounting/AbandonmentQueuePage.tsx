@@ -8,7 +8,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateUS } from "../../lib/formatDate";
 import { settlementLabel } from "../../lib/settlementNumber";
@@ -22,7 +22,7 @@ export function AbandonmentQueuePage() {
   const queryClient = useQueryClient();
   // U12 (owner UI register 2026-10-03) — status is a multi-select; default Pending; none picked = every status.
   const [status, setStatus] = useState<string[]>(["pending"]);
-  const staged = useStagedListFilters({ applied: { status }, empty: { status: ["pending"] as string[] }, onApply: (next) => setStatus(next.status) });
+  const [search, setSearch] = useState("");
 
   const listQuery = useQuery({
     queryKey: ["abandonment-chargebacks", companyId, status],
@@ -41,6 +41,20 @@ export function AbandonmentQueuePage() {
   });
 
   const rows = listQuery.data?.abandonment_chargebacks ?? [];
+
+  const visibleRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((row) => {
+      const hay = [row.load_number, row.driver_name, row.status, row.settlement_display_id]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [rows, search]);
+
+  const activeFilterCount = status.length === 1 && status[0] === "pending" ? 0 : 1;
 
   const subtitle = useMemo(() => "Office queue for abandonment chargebacks (pending approvals).", []);
 
@@ -129,30 +143,39 @@ export function AbandonmentQueuePage() {
         />
       ) : null}
 
-      <ParityTable title="Chargeback queue — abandoned loads"
+      <div className="w-full" data-abandonment-filter-toolbar="visible">
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search load, driver, settlement…"
+          searchTestId="abandonment-search-input"
+          onClearAll={() => {
+            setSearch("");
+            setStatus(["pending"]);
+          }}
+          activeFilterCount={activeFilterCount}
+          testIdPrefix="abandonment"
+        >
+          <MultiSelectDropdown
+            label="Status"
+            options={statusOptions({ pending: "Pending", approved: "Approved", disputed: "Disputed", applied: "Applied", reversed: "Reversed" })}
+            selected={status}
+            onChange={setStatus}
+            allLabel="All statuses"
+            data-testid="abandonment-status-filter"
+          />
+        </MoneyListToolbar>
+      </div>
+
+      <ParityTable
+        title="Chargeback queue — abandoned loads"
         columns={columns}
-        rows={rows}
+        rows={visibleRows}
         rowKey={(row) => String(row.id ?? "")}
         loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
-        filterBar={
-          <CollapsedListFilters
-            activeFilterCount={status.length === 1 && status[0] === "pending" ? 0 : 1}
-            onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
-            testIdPrefix="abandonment"
-            dataAttributes={{ "data-abandonment-filter-toolbar": "collapsed" }}
-          >
-            <MultiSelectDropdown
-              label="Status"
-              options={statusOptions({ "pending": "Pending", "approved": "Approved", "disputed": "Disputed", "applied": "Applied", "reversed": "Reversed" })}
-              selected={staged.draft.status}
-              onChange={(next) => staged.setDraft({ status: next })}
-              allLabel="All statuses"
-              data-testid="abandonment-status-filter"
-            />
-          </CollapsedListFilters>
-        }
         storageKey="abandonment-queue"
         emptyText="No rows."
+        suppressToolbarSearch
       />
     </div>
   );

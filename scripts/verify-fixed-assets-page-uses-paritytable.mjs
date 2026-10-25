@@ -162,6 +162,22 @@ function assertMigrated(src) {
   if (!src.includes("setOffset(")) {
     errors.push(`${PAGE}: must preserve the server-side offset pager (Prev/Next)`);
   }
+  // ACCT-F443293-C — V3 board grammar (Bills / Prepaid parity).
+  if (!src.includes("MoneyListToolbar")) {
+    errors.push(`${PAGE}: must use MoneyListToolbar (FILTER-MULTI-01)`);
+  }
+  if (src.includes("CollapsedListFilters")) {
+    errors.push(`${PAGE}: must not use CollapsedListFilters`);
+  }
+  if (!src.includes('data-fixed-assets-filter-toolbar="visible"')) {
+    errors.push(`${PAGE}: filter bar must set data-fixed-assets-filter-toolbar=visible`);
+  }
+  if (!src.includes("kpiStrip=") || !src.includes('data-testid="fixed-assets-kpi-strip"') || !src.includes("moneyListKpiCard")) {
+    errors.push(`${PAGE}: must pass AccountingSubNavWrapper kpiStrip with fixed-assets-kpi-strip`);
+  }
+  if (!src.includes("suppressToolbarSearch")) {
+    errors.push(`${PAGE}: ParityTable must set suppressToolbarSearch when MoneyListToolbar owns search`);
+  }
   return errors;
 }
 
@@ -169,6 +185,8 @@ function selftest() {
   const good = `
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+    import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+    import { moneyListKpiCard } from "./moneyListKpiCard";
     function DetailPanel({ detail }) {
       return (
         <table className="min-w-full"><thead><tr><th>Period</th></tr></thead></table>
@@ -188,11 +206,14 @@ function selftest() {
         { key: "status", label: "Status" },
       ];
       return (
-        <div>
+        <AccountingSubNavWrapper kpiStrip={<div data-testid="fixed-assets-kpi-strip">{moneyListKpiCard("x", "1")}</div>}>
+          <div data-fixed-assets-filter-toolbar="visible">
+            <MoneyListToolbar testIdPrefix="fixed-assets" />
+          </div>
           <ListErrorState title="Failed to load fixed assets." status={0} onRetry={() => {}} />
-          <ParityTable storageKey="fixed-assets-list" tableTestId="fixed-assets-table" emptyText="No fixed assets found." />
+          <ParityTable suppressToolbarSearch storageKey="fixed-assets-list" tableTestId="fixed-assets-table" emptyText="No fixed assets found." />
           <button onClick={() => setOffset(0)}>Prev</button>
-        </div>
+        </AccountingSubNavWrapper>
       );
     }
   `;

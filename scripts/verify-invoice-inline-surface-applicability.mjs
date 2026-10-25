@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","cash-flow"],"cols":["invoice"],"leafRe":"^(accounting\\.panel\\.leakage|cash-flow\\.panel\\.projection)$","task":"ACCT-F443293-C-INVOICE-INLINE-N/A"} */
 import fs from "node:fs";
 
 const revenue = fs.readFileSync("apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx", "utf8");
@@ -12,7 +13,7 @@ function failures(accounting = readMatrix("accounting"), cashFlow = readMatrix("
     ["leakage invoice N/A", !hasColumn(accounting, "accounting.panel.leakage")],
     ["projection invoice N/A", !hasColumn(cashFlow, "cash-flow.panel.projection")],
     ["leakage proves missing bill latch", revenue.includes('gap === "missing_earn" ? "Missing earn latch" : "Earn without bill latch"')],
-    ["projection labels operator reference", forecast.includes('{ key: "invoice_no", label: "Invoice"') && forecast.includes('invoice_no: form.invoice_no || null')],
+    ["projection labels operator reference", forecast.includes('{ key: "invoice_no", label: "Doc / load"') && forecast.includes('invoice_no: form.invoice_no || null')],
     ["projection API has no invoice FK", forecastApi.includes("invoice_no") && !forecastApi.includes("invoice_id")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }

@@ -14,7 +14,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { moneyListKpiCard } from "./moneyListKpiCard";
 import {
   getFixedAssets, getFixedAssetDetail, registerTrkOwnedUnits,
   type FixedAssetListItem, type FixedAssetDetail, type RegisterTrkUnitsResult,
@@ -344,7 +345,7 @@ export function FixedAssetsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); none = all.
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: [] as string[] }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
+  const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(searchParams.get("asset_id"));
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -401,6 +402,27 @@ export function FixedAssetsPage() {
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
+  const visibleItems = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return items;
+    return items.filter((row) =>
+      `${row.asset_number ?? ""} ${row.name ?? ""} ${row.class_name ?? ""} ${row.status ?? ""} ${row.owner_company_name ?? ""}`
+        .toLowerCase()
+        .includes(needle),
+    );
+  }, [items, search]);
+
+  const fixedAssetKpis = useMemo(() => {
+    return visibleItems.reduce(
+      (acc, row) => {
+        acc.costCents += Number(row.purchase_price_cents ?? 0) || 0;
+        acc.nbvCents += Number(row.net_book_value_cents ?? 0) || 0;
+        if (row.status === "active") acc.activeCount += 1;
+        return acc;
+      },
+      { costCents: 0, nbvCents: 0, activeCount: 0 },
+    );
+  }, [visibleItems]);
 
   const columns = useMemo<ParityColumn<FixedAssetListItem>[]>(
     () => [
@@ -454,31 +476,48 @@ export function FixedAssetsPage() {
     [openDetail],
   );
 
+  const fixedAssetsActiveFilterCount = statusFilter.length > 0 ? 1 : 0;
+
   const filterBar = (
-    <div className="flex flex-wrap gap-2 items-center" data-fixed-assets-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={statusFilter.length ? 1 : 0} testIdPrefix="fixed-assets" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
-        <MultiSelectDropdown
-          label="Status"
-          options={statusOptions({ "active": "Active", "fully_depreciated": "Fully Depreciated", "disposed": "Disposed", "voided": "Voided" })}
-          selected={staged.draft.statusFilter}
-          onChange={(next) => staged.setDraft({ statusFilter: next })}
-          allLabel="All statuses"
-          data-testid="fixed-assets-status-filter"
-        />
-      </CollapsedListFilters>
-      <span className="text-xs text-gray-500">
-        {total.toLocaleString()} asset{total !== 1 ? "s" : ""}
-      </span>
-      {canBulkRegister ? (
-        <button
-          type="button"
-          data-testid="fa-open-trk-register"
-          onClick={() => setRegisterOpen(true)}
-          className="ml-auto rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]"
+    <div className="w-full space-y-2" data-fixed-assets-filter-toolbar="visible">
+      <div className="flex flex-wrap items-end gap-2">
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search # · name · class · status"
+          searchTestId="fixed-assets-search-input"
+          onClearAll={() => {
+            setSearch("");
+            setStatusFilter([]);
+            setOffset(0);
+          }}
+          activeFilterCount={fixedAssetsActiveFilterCount}
+          testIdPrefix="fixed-assets"
+          className="flex-1 min-w-[280px]"
         >
-          Register TRK units
-        </button>
-      ) : null}
+          <MultiSelectDropdown
+            label="Status"
+            options={statusOptions({ active: "Active", fully_depreciated: "Fully Depreciated", disposed: "Disposed", voided: "Voided" })}
+            selected={statusFilter}
+            onChange={(next) => {
+              setStatusFilter(next);
+              setOffset(0);
+            }}
+            allLabel="All statuses"
+            data-testid="fixed-assets-status-filter"
+          />
+        </MoneyListToolbar>
+        {canBulkRegister ? (
+          <button
+            type="button"
+            data-testid="fa-open-trk-register"
+            onClick={() => setRegisterOpen(true)}
+            className="h-9 rounded-sm border border-[#E5E7EB] px-3 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]"
+          >
+            Register TRK units
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 
@@ -498,7 +537,29 @@ export function FixedAssetsPage() {
   }
 
   return (
-    <AccountingSubNavWrapper title="Fixed Assets" subtitle="Asset register, depreciation schedule, and disposals (read-only; GL posting gated)">
+    <AccountingSubNavWrapper
+      title="Fixed Assets"
+      subtitle="Asset register, depreciation schedule, and disposals (read-only; GL posting gated)"
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="fixed-assets-kpi-strip">
+          {isError ? (
+            <>
+              {moneyListKpiCard("Cost", "—", "Error loading")}
+              {moneyListKpiCard("Net book", "—", "Error loading")}
+              {moneyListKpiCard("Active", "—", "Error loading")}
+              {moneyListKpiCard("Rows", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {moneyListKpiCard("Cost", fmtCents(fixedAssetKpis.costCents), `${visibleItems.length} on page`)}
+              {moneyListKpiCard("Net book", fmtCents(fixedAssetKpis.nbvCents), "Visible rows")}
+              {moneyListKpiCard("Active", String(fixedAssetKpis.activeCount), "Status = active")}
+              {moneyListKpiCard("Rows", String(total), "Matching filter")}
+            </>
+          )}
+        </div>
+      }
+    >
       <div className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="fa-density-honesty-banner">
         Register density requires owner-provided purchase prices per unit (cents). Bulk registration never invents dollar amounts — units without an explicit price remain in <span className="font-medium">missing_price</span> until the owner supplies them.
       </div>
@@ -528,10 +589,11 @@ export function FixedAssetsPage() {
 
       <ParityTable title="Fixed assets"
         columns={columns}
-        rows={items}
+        rows={visibleItems}
         rowKey={(row) => row.id}
         loading={flagLoading || isPending || (isFetching && items.length === 0)}
         filterBar={filterBar}
+        suppressToolbarSearch
         storageKey="fixed-assets-list"
         tableTestId="fixed-assets-table"
         initialPageSize={limit}

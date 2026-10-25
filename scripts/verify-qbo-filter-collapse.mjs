@@ -130,10 +130,21 @@ const MONEY_LIST_TOOLBAR_PREFIX = new Map([
   ["apps/frontend/src/pages/accounting/ManualJEListPage.tsx", "manual-je"],
   ["apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", "bill-payments"],
   ["apps/frontend/src/pages/accounting/FactoringListPage.tsx", "factoring"],
+  ["apps/frontend/src/pages/accounting/PaymentsListPage.tsx", "payments"],
+  ["apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx", "prepaid"],
+  ["apps/frontend/src/pages/accounting/FixedAssetsPage.tsx", "fixed-assets"],
+  ["apps/frontend/src/pages/accounting/ReceiptsPage.tsx", "receipts"],
+  ["apps/frontend/src/pages/accounting/DisputeQueuePage.tsx", "dispute-queue"],
   ["apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", "settlements"],
   ["apps/frontend/src/pages/customers/CustomersListView.tsx", "customers"],
   ["apps/frontend/src/pages/vendors/VendorsListView.tsx", "vendors"],
   ["apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx", "transaction-register"],
+  ["apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx", "abandonment"],
+  ["apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx", "ap-aging"],
+  ["apps/frontend/src/pages/accounting/DailyReconPage.tsx", "daily-recon"],
+  ["apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx", "integration-tx"],
+  ["apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx", "revrec"],
+  ["apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx", "audit-trail"],
 ]);
 
 function hasFilterToolbarGoldPattern(src, rel, marker) {

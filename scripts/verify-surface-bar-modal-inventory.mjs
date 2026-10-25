@@ -41,6 +41,8 @@ const ALLOWED_NESTED = new Set([
   // standalone create surface; the part/repair/shop/asset location list leaves
   // have no surface_path, so no single required.json leaf owns this shell.
   "pages/lists/LocationsListPage.tsx",
+  // LEAD 443.327 — global topbar drift alert host; not a standalone create surface.
+  "components/drift/DriftAlertPopup.tsx",
 ]);
 
 /**

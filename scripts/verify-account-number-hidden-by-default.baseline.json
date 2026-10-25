@@ -8,9 +8,6 @@
     "components/forms/TwoSectionLineEditor.tsx": {
       "count": 1
     },
-    "pages/accounting/AccountingAuditTrailPage.tsx": {
-      "count": 1
-    },
     "pages/accounting/BillDetailPage.tsx": {
       "count": 1
     },

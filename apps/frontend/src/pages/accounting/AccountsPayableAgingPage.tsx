@@ -6,7 +6,7 @@ import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { SelectCombobox } from "../../components/Combobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from "../../api/accounting";
@@ -200,7 +200,7 @@ export function AccountsPayableAgingPage() {
   };
   const [typeFilter, setTypeFilter] = useState<ApAgingDisplayGroup | "all">("all");
   const [bucketFilter, setBucketFilter] = useState<BucketFilterKey>("all");
-  const staged = useStagedListFilters({ applied: { asOf, typeFilter }, empty: { asOf: today(), typeFilter: "all" as const }, onApply: (next) => { setAsOf(next.asOf); setTypeFilter(next.typeFilter); } });
+  const [search, setSearch] = useState("");
 
   const query = useQuery({
     queryKey: ["ap-aging-by-vendor", companyId, asOf],
@@ -257,10 +257,18 @@ export function AccountsPayableAgingPage() {
   // A5 item 4 — "the tile IS the filter": selecting a bucket narrows the grid to vendors carrying a
   // nonzero balance in that bucket. "all" (no tile selected, or the active tile clicked again) shows
   // every type-filtered vendor, same as before this feature existed.
-  const vendorTableRows = useMemo(
-    () => (bucketFilter === "all" ? typeFiltered : typeFiltered.filter((v) => amount(v, bucketFilter) !== 0)),
-    [typeFiltered, bucketFilter]
-  );
+  const vendorTableRows = useMemo(() => {
+    const bucketRows =
+      bucketFilter === "all" ? typeFiltered : typeFiltered.filter((v) => amount(v, bucketFilter) !== 0);
+    const q = search.trim().toLowerCase();
+    if (!q) return bucketRows;
+    return bucketRows.filter((v) => {
+      const hay = [v.vendor_name, v.display_group].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }, [typeFiltered, bucketFilter, search]);
+
+  const apAgingActiveFilterCount = (asOf !== today() ? 1 : 0) + (typeFilter !== "all" ? 1 : 0);
 
   // BANK-SORT-ROLLOUT-ACCT-AP2 — ?sort=/?dir= URL persistence via the shared useUrlSort hook
   // (same contract as FleetTable / dispatch board), now feeding ParityTable's controlled-sort
@@ -339,31 +347,46 @@ export function AccountsPayableAgingPage() {
 
   return (
     <AccountingSubNavWrapper title="Accounts Payable" subtitle={apSubtitle}>
-      <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden" data-ap-aging-filter-toolbar="collapsed">
+      <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden" data-ap-aging-filter-toolbar="visible">
         <div className="inline-flex overflow-hidden rounded-sm border border-[#E5E7EB]">
           <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_vendor" ? "bg-[#14314F] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`} onClick={() => setView("by_vendor")}>By Vendor</button>
           <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_type" ? "bg-[#14314F] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`} onClick={() => setView("by_type")}>By Vendor Type</button>
         </div>
 
-        <CollapsedListFilters
-          activeFilterCount={(asOf !== today() ? 1 : 0) + (typeFilter !== "all" ? 1 : 0)}
-          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search vendor…"
+          searchTestId="ap-aging-search-input"
+          onClearAll={() => {
+            setSearch("");
+            setAsOf(today());
+            setTypeFilter("all");
+          }}
+          activeFilterCount={apAgingActiveFilterCount}
           testIdPrefix="ap-aging"
+          className="flex-1 min-w-[280px]"
         >
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="text-xs font-semibold text-[#4B5563]">
-              As of
-              <div className="mt-1"><DatePicker value={staged.draft.asOf} onChange={(d) => staged.setDraft({ ...staged.draft, asOf: d || today() })} /></div>
-            </label>
-            <label className="text-xs font-semibold text-[#4B5563]">
-              Vendor type
-              <SelectCombobox className="mt-1 block" value={staged.draft.typeFilter} onChange={(e) => staged.setDraft({ ...staged.draft, typeFilter: e.target.value as ApAgingDisplayGroup | "all" })}>
-                <option value="all">All types</option>
-                {GROUP_ORDER.map((g) => <option key={g} value={g}>{g}</option>)}
-              </SelectCombobox>
-            </label>
-          </div>
-        </CollapsedListFilters>
+          <label className="text-xs font-semibold text-[#4B5563]">
+            As of
+            <div className="mt-1">
+              <DatePicker value={asOf} onChange={(d) => setAsOf(d || today())} />
+            </div>
+          </label>
+          <label className="text-xs font-semibold text-[#4B5563]">
+            Vendor type
+            <SelectCombobox
+              className="mt-1 block"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as ApAgingDisplayGroup | "all")}
+            >
+              <option value="all">All types</option>
+              {GROUP_ORDER.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </SelectCombobox>
+          </label>
+        </MoneyListToolbar>
 
         <span className="text-xs text-[#6B7280]">Basis: {query.data?.basis === "cash" ? "Cash" : "Accrual"}</span>
 
