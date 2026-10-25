@@ -18,6 +18,7 @@ export default defineConfig({
   root: repoRoot,
   test: {
     include: ["apps/backend/src/**/*.test.ts", "tests/integration/**/*.test.ts"],
+    exclude: ["**/.claude/**", "**/node_modules/**"],
     environment: "node",
     pool: "forks",
     // Real-Postgres db.tests share ONE database. Suites that mutate control COA roles (ap_control etc.)

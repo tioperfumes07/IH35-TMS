@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Road Service</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+    .puff { animation: ex 2.1s ease-out infinite; transform-origin: 60px 8px; }
+    @keyframes ex { 0% { opacity: .55; transform: translate(0,0) scale(.6) } 100% { opacity: 0; transform: translate(-7px,-7px) scale(1.9) } }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 16px 24px 0 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Road Service</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">A truck stopped on the road is the most expensive thing on this screen — response time is the number that matters</div>
+      </div>
+      <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 16px; min-height: 44px; border: 1px solid #A32D2D; background: #A32D2D; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Open roadside ticket</button>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 14px;">
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Home</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Fleet Table</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Active WOs</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Service / Location</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Driver Reports</div>
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 14px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Road Service</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Parts Inventory</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Integrity Report</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Settings</div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 24px 24px 24px; display: flex; flex-direction: column; gap: 14px;">
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;">
+      <div style="background: #FFFFFF; border: 1px solid #A32D2D; border-radius: 3px; padding: 11px 13px;">
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #8C2020;">Active now</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left; color: #8C2020;">1</div>
+        <div style="font-size: 11px; color: #8C2020;">T168 · I-10 MM 742</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px;">
+        <div class="hd">Avg response</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left;">1h 52m</div>
+        <div style="font-size: 11px; color: #94A3B8;">last 90 days</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px;">
+        <div class="hd">Calls MTD</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left;">6</div>
+        <div style="font-size: 11px; color: #94A3B8;">4 tires · 2 air</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px;">
+        <div class="hd">Roadside spend MTD</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left;">$7,241.80</div>
+        <div style="font-size: 11px; color: #94A3B8;">$1,206.97 per call</div>
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #A32D2D; border-radius: 3px;">
+      <div style="padding: 12px 16px; border-bottom: 1px solid #E8EDF2; background: #FEF6F6; display: flex; justify-content: space-between; align-items: baseline;">
+        <div style="font-size: 14px; font-weight: 700; color: #8C2020;">Active call — T168</div>
+        <div style="font-size: 12px; color: #8C2020;">Called 09:14 CT · load 13630 on board, delivery Thursday 14:00</div>
+      </div>
+      <div style="padding: 18px 40px 20px 40px;">
+        <div style="position: relative; height: 92px;">
+          <div style="position: absolute; left: 4%; right: 4%; top: 64px; height: 4px; background: #E2E8F0; border-radius: 2px;"></div>
+          <div style="position: absolute; left: 4%; top: 64px; height: 4px; width: 46%; background: #B45309; border-radius: 2px;"></div>
+          <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%);">
+            <svg width="86" height="54" viewBox="0 -12 74 46" aria-hidden="true">
+              <defs>
+                <linearGradient id="rtg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#FFFFFF"></stop>
+                  <stop offset=".55" stop-color="#EEF2F6"></stop>
+                  <stop offset="1" stop-color="#D7DEE6"></stop>
+                </linearGradient>
+              </defs>
+              <ellipse cx="37" cy="30.4" rx="30" ry="2.1" fill="#0F172A" opacity=".13"></ellipse>
+              <circle class="puff" cx="60.5" cy="7" r="3.2" fill="#9CA3AF"></circle>
+              <circle class="puff" cx="62.5" cy="9" r="2.2" fill="#9CA3AF" style="animation-delay: .35s"></circle>
+              <rect x="3" y="6" width="42" height="15" rx="1.6" fill="url(#rtg)" stroke="#93A3B4" stroke-width=".8"></rect>
+              <path d="M9 6v15M16 6v15M23 6v15M30 6v15M37 6v15" stroke="#C3CCD6" stroke-width=".7"></path>
+              <rect x="3.6" y="6.6" width="4" height="13.8" rx="1" fill="#DCE3EA" stroke="#9FAEBC" stroke-width=".6"></rect>
+              <rect x="3" y="20.4" width="42" height="1.8" fill="#94A3B8"></rect>
+              <rect x="9" y="22" width="27" height="1.5" rx=".7" fill="#64748B"></rect>
+              <path d="M46 21.5V9.2c0-1 .8-1.8 1.8-1.8h6.6l5.4 6.1v8H46z" fill="#B45309"></path>
+              <path d="M48.6 9.4h5.2l4 4.6h-9.2z" fill="#BBD3EA"></path>
+              <rect x="45.4" y="15.6" width="14.6" height="2" rx="1" fill="#0B1B2B" opacity=".35"></rect>
+              <rect x="60.2" y="4.4" width="2" height="12" rx="1" fill="#94A3B8"></rect>
+              <rect x="45" y="21.4" width="16" height="1.6" fill="#475569"></rect>
+              <circle cx="59.6" cy="14.6" r=".9" fill="#FDE68A"></circle>
+              <circle cx="12.5" cy="24.6" r="4.5" fill="#111827"></circle>
+              <circle cx="12.5" cy="24.6" r="1.7" fill="#9CA3AF"></circle>
+              <circle cx="21.5" cy="24.6" r="4.5" fill="#111827"></circle>
+              <circle cx="21.5" cy="24.6" r="1.7" fill="#9CA3AF"></circle>
+              <circle cx="47.5" cy="24.6" r="4.5" fill="#111827"></circle>
+              <circle cx="47.5" cy="24.6" r="1.7" fill="#9CA3AF"></circle>
+              <circle cx="57.5" cy="24.6" r="4.2" fill="#111827"></circle>
+              <circle cx="57.5" cy="24.6" r="1.6" fill="#9CA3AF"></circle>
+            </svg>
+          </div>
+          <sc-for list="{{stages}}" as="s" hint-placeholder-count="5">
+            <div style="position: absolute; top: 58px; left: {{s.at}}; transform: translateX(-50%); text-align: center;">
+              <div style="width: 11px; height: 11px; border-radius: 50%; background: {{s.dot}}; margin: 0 auto;"></div>
+              <div style="font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: {{s.ink}}; margin-top: 6px; white-space: nowrap;">{{s.label}}</div>
+              <div class="num" style="font-size: 11px; color: #94A3B8; text-align: center; margin-top: 1px;">{{s.at_time}}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 30px; border-top: 1px solid #E8EDF2; padding-top: 14px;">
+          <div>
+            <div class="hd">Elapsed since call</div>
+            <div class="num" style="font-size: 19px; font-weight: 700; text-align: left; color: #8A4208;">1h 48m</div>
+          </div>
+          <div>
+            <div class="hd">Vendor</div>
+            <div style="font-size: 14px; font-weight: 600;">Sonora Truck &amp; Tire</div>
+            <div style="font-size: 11.5px; color: #64748B;">(325) 555-0148</div>
+          </div>
+          <div>
+            <div class="hd">Complaint</div>
+            <div style="font-size: 14px; font-weight: 600;">Air line burst, trailer</div>
+            <div style="font-size: 11.5px; color: #64748B;">Reported by Pedro Perez</div>
+          </div>
+          <div>
+            <div class="hd">Authorized to</div>
+            <div class="num" style="font-size: 19px; font-weight: 700; text-align: left;">$1,500.00</div>
+            <div style="font-size: 11.5px; color: #64748B;">by Jorge Munoz 09:19</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+      <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">Closed calls — last 90 days</div>
+      <table>
+        <thead>
+          <tr style="background: #F6F9FB;">
+            <th class="hd" style="text-align: left; width: 100px;">Ticket</th>
+            <th class="hd" style="text-align: left; width: 62px;">Unit</th>
+            <th class="hd" style="text-align: left;">Where</th>
+            <th class="hd" style="text-align: left;">Complaint</th>
+            <th class="hd" style="text-align: left;">Vendor</th>
+            <th class="hd" style="text-align: right; width: 96px;">Response</th>
+            <th class="hd" style="text-align: right; width: 88px;">Down time</th>
+            <th class="hd" style="text-align: right; width: 108px;">Invoice</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{closed}}" as="c" hint-placeholder-count="6">
+            <tr>
+              <td><a href="#t" style="font-weight: 600; text-decoration: none;">{{c.id}}</a></td>
+              <td style="font-weight: 600;">{{c.unit}}</td>
+              <td style="color: #475569;">{{c.where}}</td>
+              <td style="color: #475569;">{{c.what}}</td>
+              <td style="color: #475569;">{{c.vendor}}</td>
+              <td class="num" style="color: {{c.tone}}; font-weight: 600;">{{c.resp}}</td>
+              <td class="num" style="color: #64748B;">{{c.down}}</td>
+              <td class="num" style="font-weight: 600;">{{c.amt}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+        <tfoot>
+          <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+            <td colspan="5" style="font-weight: 700;">6 calls</td>
+            <td class="num" style="font-weight: 700;">1h 52m</td>
+            <td class="num" style="font-weight: 700;">29h</td>
+            <td class="num" style="font-weight: 700;">$7,241.80</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D';
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const labels = [
+      { label: 'Driver called', at_time: '09:14', done: true },
+      { label: 'Vendor dispatched', at_time: '09:31', done: true },
+      { label: 'Tech en route', at_time: '10:02', done: true },
+      { label: 'On site', at_time: '—', done: false },
+      { label: 'Rolling', at_time: '—', done: false }
+    ];
+    const stages = labels.map((s, i) => ({
+      at: (4 + (i / 4) * 92) + '%',
+      label: s.label,
+      at_time: s.at_time,
+      dot: s.done ? AMBER : '#CBD5E1',
+      ink: i === 2 ? '#8A4208' : s.done ? '#475569' : '#94A3B8'
+    }));
+    const closed = [
+      ['RS-0061', 'T175', 'US-59, George West TX', 'Drive tire blowout', 'Southern Tire Mart', '1h 12m', NAVY, '3h', 1284.50],
+      ['RS-0059', 'T152', 'I-35 MM 104, Dilley TX', 'Trailer tire', 'Southern Tire Mart', '0h 54m', NAVY, '2h', 892.00],
+      ['RS-0057', 'T177', 'I-10 MM 512, Ozona TX', 'Air governor', 'Ozona Diesel', '3h 40m', RED, '9h', 2146.30],
+      ['RS-0054', 'T164', 'I-35 MM 26, Laredo TX', 'Jump start, batteries', 'In-house road truck', '0h 35m', NAVY, '1h', 418.00],
+      ['RS-0051', 'T171', 'US-83, Zapata TX', 'Steer tire', 'Southern Tire Mart', '2h 05m', AMBER, '4h', 1176.00],
+      ['RS-0048', 'T148', 'I-37 MM 88, Three Rivers TX', 'Fuel filter, no start', 'Three Rivers Truck', '2h 46m', AMBER, '10h', 1325.00]
+    ].map((r) => ({ id: r[0], unit: r[1], where: r[2], what: r[3], vendor: r[4], resp: r[5], tone: r[6], down: r[7], amt: usd(r[8]) }));
+    return { stages: stages, closed: closed };
+  }
+}
+</script>
+</body>
+</html>

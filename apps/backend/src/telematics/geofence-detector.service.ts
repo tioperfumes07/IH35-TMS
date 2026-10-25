@@ -12,8 +12,10 @@ import { processDotDwellForGeofenceEvent } from "./dot-dwell-detector.service.js
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
 import { assertCanonicalSubset, canonicalDispatchWorkWhereClause } from "../dispatch/canonical-active-load-set.js";
 import { GEOFENCE_AUTO_DELIVERY_ACTOR } from "../dispatch/geofence-auto-delivery.service.js";
-import { transitionDispatchLoadInClientTx } from "../dispatch/load-transition.service.js";
+import { transitionDispatchLoadInClientTx, writeLoadStatusFromStopEventInClientTx } from "../dispatch/load-transition.service.js";
 import { fromMdataStatus, type DispatchStatus } from "../dispatch/load-state-machine.js";
+import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
+import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { normalizeVertices, pointInPolygon } from "./geofence.js";
 import { withSavepoint } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -304,12 +306,16 @@ export async function processGeofenceDetectionsForGpsPoint(
     // Never overwrite driver/manual evidence and never backfill: only a newly inserted live event
     // can win the compare-and-set below. The label is minted by bindLoadToGeofences.
     const source = input.source === "manual" ? "manual" : "eld_geofence";
+    // GEOFENCE-STOP-STAMP-COMPLETE (2026-10-24): RETURNING now includes stop_type and
+    // current_load_status so this path can fire the same side effects as stop-stamp.service.ts
+    // (load status transition, latchOnDeliveryEvidence, pingSettlementOnLoadEvent, audit).
     const stopStamp = await client.query<{
       load_id: string;
       stop_id: string;
       booked_by_user_id: string | null;
       stop_type: string;
       sequence_number: number;
+      current_load_status: string;
     }>(
       transition === "entered"
         ? `
@@ -331,7 +337,8 @@ export async function processGeofenceDetectionsForGpsPoint(
                AND ls.actual_arrival_at IS NULL
          RETURNING ls.load_id::text AS load_id, ls.id::text AS stop_id,
                    COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id,
-                   ls.stop_type::text AS stop_type, ls.sequence_number
+                   ls.stop_type::text AS stop_type, ls.sequence_number,
+                   l.status::text AS current_load_status
           `
         : `
             UPDATE mdata.load_stops ls
@@ -351,7 +358,8 @@ export async function processGeofenceDetectionsForGpsPoint(
                AND ls.actual_departure_at IS NULL
          RETURNING ls.load_id::text AS load_id, ls.id::text AS stop_id,
                    COALESCE(l.booked_by_user_id, l.dispatcher_user_id, l.updated_by_user_id)::text AS booked_by_user_id,
-                   ls.stop_type::text AS stop_type, ls.sequence_number
+                   ls.stop_type::text AS stop_type, ls.sequence_number,
+                   l.status::text AS current_load_status
           `,
       [row.geofence_id, input.operating_company_id, input.unit_id, input.occurred_at, source]
     );
@@ -426,12 +434,50 @@ export async function processGeofenceDetectionsForGpsPoint(
       }
     }
     if (stamped?.load_id && stamped.stop_id && stamped.booked_by_user_id) {
+      const nextLoadStatus = transition === "entered"
+        ? (stamped.stop_type === "pickup" ? "at_pickup" : "at_delivery")
+        : (stamped.stop_type === "delivery" ? "delivered_pending_docs" : "in_transit");
+      // G11 + AJK-03: at_pickup/at_delivery/in_transit/delivered_pending_docs via the one stop-event engine.
+      await writeLoadStatusFromStopEventInClientTx(client as never, {
+        actorUserId: stamped.booked_by_user_id,
+        operatingCompanyId: input.operating_company_id,
+        loadId: stamped.load_id,
+        fromMdataStatus: stamped.current_load_status,
+        toMdataStatus: nextLoadStatus,
+        stopId: stamped.stop_id,
+        event: transition === "entered" ? "arrival" : "departure",
+        source: "geofence",
+      });
       await mintProformaInvoiceOnFirstPickup(client, {
         operatingCompanyId: input.operating_company_id,
         loadId: stamped.load_id,
         actorUserId: stamped.booked_by_user_id,
         stopId: stamped.stop_id,
       });
+      if (transition === "exited") {
+        await latchOnDeliveryEvidence(client, {
+          operatingCompanyId: input.operating_company_id,
+          loadId: stamped.load_id,
+          targetStatus: nextLoadStatus,
+          actorUserId: stamped.booked_by_user_id,
+        });
+        try {
+          await pingSettlementOnLoadEvent(client, {
+            loadId: stamped.load_id,
+            operatingCompanyId: input.operating_company_id,
+            dispatchTargetStatus: nextLoadStatus,
+            actorUserId: stamped.booked_by_user_id,
+          });
+        } catch (err) {
+          console.warn({ err, load_id: stamped.load_id }, "geofence_stop_departure_settlement_ping_failed");
+        }
+      }
+      await appendCrudAudit(
+        client,
+        stamped.booked_by_user_id,
+        `load.stop.${transition === "entered" ? "arrived" : "departed"}.eld_geofence`,
+        { load_id: stamped.load_id, stop_id: stamped.stop_id }
+      );
     }
     await processDotDwellForGeofenceEvent(client, {
       operating_company_id: input.operating_company_id,

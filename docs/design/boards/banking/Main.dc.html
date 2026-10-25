@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Banking Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #5d6b7a; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E4EAF0; border-left: 0; border-right: 0; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #1c5ba8; } a:hover { color: #14314F; }
+    .ctl { font: inherit; font-size: 12.5px; height: 34px; box-sizing: border-box; border: 1px solid #C7D2DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0d2137; }
+    .puff { animation: ex 2.1s ease-out infinite; transform-origin: 60px 8px; }
+    @keyframes ex { 0% { opacity:.5; transform: translate(0,0) scale(.6) } 100% { opacity:0; transform: translate(-7px,-7px) scale(1.9) } }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1580px; box-sizing: border-box; background: #eef2f6; color: #0d2137; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #C7D2DC; padding: 14px 24px 0 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Banking Home</div>
+        <div style="font-size: 12.5px; color: #5d6b7a; margin-top: 1px;">QBO-mirrored accounts · categorization · reconciliation</div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" style="font: inherit; font-size: 12.5px; padding: 0 14px; height: 44px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer;">Bank register</button>
+        <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 0 16px; height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ New ▾</button>
+      </div>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 12px;">
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 13px; color: #0d2137; border-bottom: 2.5px solid #14314F;">Home</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Accounts</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Transactions</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Link suggestions</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reconciliation</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Driver escrow</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Relay card</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reports</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Settings</div>
+    </div>
+  </div>
+
+  <div style="padding: 14px 24px 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+
+    <!-- ALERTS — your banner pattern, pointed at today's numbers -->
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{alerts}}" as="a" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 12px; background: {{a.bg}}; border: 1px solid {{a.border}}; border-radius: 3px; padding: 10px 14px;">
+          <span style="font-size: 15px; font-weight: 700; color: {{a.ink}}; line-height: 1;">!</span>
+          <div style="flex-grow: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 600; color: {{a.ink}};">{{a.title}}</div>
+            <div style="font-size: 11.5px; color: #3d4a57; margin-top: 1px;">{{a.body}}</div>
+          </div>
+          <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; height: 34px; padding: 0 12px; border: 1px solid {{a.border}}; background: #FFFFFF; color: {{a.ink}}; border-radius: 3px; cursor: pointer; white-space: nowrap;">{{a.cta}}</button>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- KPI ROW -->
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px;">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <button type="button" style="font: inherit; text-align: left; cursor: pointer; background: {{k.bg}}; border: 1px solid {{k.border}}; border-radius: 3px; padding: 9px 12px;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: {{k.labelInk}};">{{k.label}}</div>
+          <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2; color: {{k.ink}};">{{k.value}}</div>
+          <div style="font-size: 10.5px; color: {{k.subInk}};">{{k.sub}}</div>
+        </button>
+      </sc-for>
+    </div>
+
+    <!-- CASH POSITION RAIL — the truck-line treatment, applied to money -->
+    <div style="background: #FFFFFF; border: 1px solid #C7D2DC; border-radius: 3px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 11px 16px; border-bottom: 1px solid #E4EAF0;">
+        <div>
+          <div style="font-size: 14px; font-weight: 600;">Where the money is</div>
+          <div style="font-size: 11.5px; color: #5d6b7a;">Real accounts on the rail · virtual ledgers below it · 30-day trace behind each</div>
+        </div>
+        <div style="display: flex; gap: 14px; align-items: center; font-size: 11px; color: #5d6b7a;">
+          <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;background:#14314F;border-radius:1px;display:inline-block;"></span>Positive</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;background:#B45309;border-radius:1px;display:inline-block;"></span>Uncategorized</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;background:#B42318;border-radius:1px;display:inline-block;"></span>Negative</span>
+        </div>
+      </div>
+
+      <div style="padding: 10px 16px 14px 16px;">
+        <sc-for list="{{accounts}}" as="a" hint-placeholder-count="8">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 5px 0; border-top: 1px solid #F1F5F8;">
+            <div style="width: 178px; min-width: 0;">
+              <div style="font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.name}}</div>
+              <div style="font-size: 10.5px; color: #8895a3;">{{a.kind}}</div>
+            </div>
+            <div class="num" style="width: 118px; font-size: 13px; font-weight: 600; color: {{a.tone}};">{{a.balance}}</div>
+
+            <div style="flex-grow: 1; position: relative; height: 26px;">
+              <div style="position: absolute; left: 0; right: 0; top: 12px; height: 3px; background: #E2E8F0; border-radius: 2px;"></div>
+              <div style="position: absolute; top: 12px; height: 3px; border-radius: 2px; left: {{a.barLeft}}; width: {{a.barW}}; background: {{a.tone}};"></div>
+              <div style="position: absolute; left: 50%; top: 6px; bottom: 6px; width: 1px; background: #C7D2DC;"></div>
+              <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 26px;" viewBox="0 0 120 26" preserveAspectRatio="none" aria-hidden="true">
+                <polyline points="{{a.spark}}" fill="none" stroke="{{a.tone}}" stroke-width="1.1" opacity=".45"></polyline>
+              </svg>
+            </div>
+
+            <div class="num" style="width: 92px; font-size: 12px; color: {{a.uncatInk}};">{{a.uncat}}</div>
+            <div style="width: 150px; text-align: right; white-space: nowrap;">
+              <button type="button" style="font: inherit; font-size: 11px; height: 30px; padding: 0 9px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer;">View</button>
+              <button type="button" style="font: inherit; font-size: 11px; height: 30px; padding: 0 9px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #5d6b7a; border-radius: 3px; cursor: pointer; margin-left: 4px;">Inspect</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding: 9px 16px; border-top: 1px solid #E4EAF0; background: #FAFCFD; display: flex; justify-content: space-between; font-size: 11.5px; color: #5d6b7a;">
+        <span>8 real bank accounts · 2 virtual ledgers</span>
+        <span>Cash on hand <strong class="num" style="color: #B42318;">-$21,042.31</strong></span>
+      </div>
+    </div>
+
+    <!-- BOTTOM: work queue + factoring deep link -->
+    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px;">
+
+      <div style="background: #FFFFFF; border: 1px solid #C7D2DC; border-radius: 3px; min-width: 0;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E4EAF0; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 600;">Needs categorizing</div>
+            <div style="font-size: 11.5px; color: #5d6b7a;">Accept the suggestion, or send it back — without leaving this page</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <select aria-label="Account" class="ctl" style="width: 176px;"><option>Dreamline Diesel Card</option></select>
+            <button type="button" aria-label="Choose columns" title="Choose columns" class="ctl" style="width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #5d6b7a;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+            </button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr style="background: #F6F9FB;">
+              <th class="hd" style="text-align: left; width: 132px;">Date</th>
+              <th class="hd" style="text-align: left;">Description</th>
+              <th class="hd" style="text-align: left; width: 168px;">Suggested account</th>
+              <th class="hd" style="text-align: left; width: 74px;">Unit</th>
+              <th class="hd" style="text-align: right; width: 104px;">Amount</th>
+              <th class="hd" style="text-align: right; width: 150px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{queue}}" as="q" hint-placeholder-count="6">
+              <tr>
+                <td class="num" style="text-align: left; color: #3d4a57;">{{q.date}}</td>
+                <td style="color: #0d2137;">{{q.desc}}</td>
+                <td style="color: #3d4a57;">{{q.acct}}</td>
+                <td style="font-weight: 600; color: {{q.unitInk}};">{{q.unit}}</td>
+                <td class="num" style="font-weight: 600; color: {{q.amtInk}};">{{q.amt}}</td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <button type="button" style="font: inherit; font-size: 11px; font-weight: 600; height: 30px; padding: 0 9px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Accept</button>
+                  <button type="button" style="font: inherit; font-size: 11px; height: 30px; padding: 0 9px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #5d6b7a; border-radius: 3px; cursor: pointer; margin-left: 4px;">Change</button>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+          <tfoot>
+            <tr style="background: #F6F9FB; border-top: 2px solid #C7D2DC;">
+              <td colspan="4" style="font-weight: 700;">931 waiting · 6 shown</td>
+              <td class="num" style="font-weight: 700;">-$4,918.62</td>
+              <td style="text-align: right;">
+                <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; height: 30px; padding: 0 10px; border: 1px solid #14314F; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer;">Accept all 6</button>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+        <div style="background: #FFFFFF; border: 1px solid #C7D2DC; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E4EAF0; display: flex; justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 14px; font-weight: 600;">Factoring — Faro</div>
+            <a href="#f" style="font-size: 11.5px; font-weight: 600; text-decoration: none;">Open module →</a>
+          </div>
+          <div style="padding: 4px 16px 12px 16px;">
+            <sc-for list="{{faro}}" as="f" hint-placeholder-count="4">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #E4EAF0;">
+                <span style="font-size: 12.5px; color: #3d4a57;">{{f.k}}</span>
+                <span class="num" style="font-size: 13px; font-weight: 600; color: {{f.tone}};">{{f.v}}</span>
+              </div>
+            </sc-for>
+            <div style="font-size: 11.5px; color: #5d6b7a; margin-top: 9px; line-height: 1.55;">
+              Factoring is its own module. This card deep-links to it rather than living as a tab here — your call on the 09-12 preview, kept.
+            </div>
+          </div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #C7D2DC; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E4EAF0; font-size: 14px; font-weight: 600;">Reconciliation</div>
+          <div style="padding: 12px 16px;">
+            <div style="display: flex; align-items: baseline; gap: 10px;">
+              <span class="num" style="font-size: 27px; font-weight: 700; color: #B42318;">0</span>
+              <span style="font-size: 12.5px; color: #3d4a57;">of 8 accounts have ever been reconciled</span>
+            </div>
+            <div style="position: relative; height: 8px; margin-top: 10px; background: #E2E8F0; border-radius: 2px;">
+              <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: #14314F; border-radius: 2px;"></div>
+            </div>
+            <div style="font-size: 11.5px; color: #5d6b7a; margin-top: 10px; line-height: 1.55;">
+              Not one statement has been tied out since the feed began. Until an account reconciles once, its balance is a feed total, not a proven cash position.
+            </div>
+            <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; width: 100%; height: 40px; margin-top: 11px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Start the first reconciliation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1580}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#14314F', AMBER = '#B45309', RED = '#B42318', MUTE = '#8895a3';
+    const usd = (n) => (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const alerts = [
+      { title: 'Cash GL unbound on 3 of 8 bank accounts', body: 'Bank register and bank-feed posting need a Cash GL per account. Until it is mapped, those three cannot post at all.', cta: 'Map Cash GL', bg: '#FDF3E7', border: '#B45309', ink: '#8A4208' },
+      { title: 'QuickBooks Online is not connected', body: 'Last sync: never. 947 transactions are held locally, 931 of them uncategorized. Accounting reports the same thing — both screens read one source.', cta: 'Connect QBO', bg: '#FDF3E7', border: '#B45309', ink: '#8A4208' },
+      { title: 'No account has ever been reconciled', body: '0 of 8. Every balance on this page is a feed total, not a tied-out cash position.', cta: 'Start reconciliation', bg: '#FCEDEC', border: '#B42318', ink: '#8C2020' }
+    ];
+
+    const kpis = [
+      { label: 'Uncategorized', value: '98%', sub: '931 of 947', bg: '#FFFFFF', border: RED, ink: '#8C2020', labelInk: '#8C2020', subInk: '#8C2020' },
+      { label: 'Reconciled', value: '0 of 8', sub: 'never', bg: '#FFFFFF', border: RED, ink: '#8C2020', labelInk: '#8C2020', subInk: '#8C2020' },
+      { label: 'Cash on hand', value: usd(-21042.31), sub: '8 real accounts', bg: '#FFFFFF', border: RED, ink: '#8C2020', labelInk: '#8C2020', subInk: '#8C2020' },
+      { label: 'Cash GL unbound', value: '3 of 8', sub: 'cannot post', bg: '#FFFFFF', border: AMBER, ink: '#8A4208', labelInk: '#8A4208', subInk: '#8A4208' },
+      { label: 'Factoring reserve', value: usd(4992.75), sub: 'held by Faro', bg: '#FFFFFF', border: '#C7D2DC', ink: '#0d2137', labelInk: '#5d6b7a', subInk: MUTE },
+      { label: 'Driver escrow', value: usd(2375.00), sub: '14 drivers', bg: '#FFFFFF', border: '#C7D2DC', ink: '#0d2137', labelInk: '#5d6b7a', subInk: MUTE }
+    ];
+
+    const spark = (seed) => {
+      let v = 13, out = [];
+      for (let i = 0; i <= 120; i += 8) {
+        v = Math.max(4, Math.min(22, v + (((seed * (i + 7)) % 11) - 5)));
+        out.push(i + ',' + v.toFixed(1));
+      }
+      return out.join(' ');
+    };
+
+    const raw = [
+      ['USMCA FREIGHT ••••3224', 'Real · operating', 0, 0, 3],
+      ['Dreamline Diesel Card', 'Real · fuel card', -140226.34, 397, 5],
+      ['Relay Fuel Wallet', 'Real · fuel card', -32726.45, 76, 7],
+      ['Scentsx', 'Real · other', 0, 0, 2],
+      ['Faro Cash Reserve', 'Real · factoring', 0, 0, 4],
+      ['Faro Escrow Reserve', 'Real · factoring', 0, 0, 6],
+      ['Faro Factoring — USMCA', 'Real · factoring', 0, 0, 8],
+      ['Petty Cash', 'Real · cash', 0, 0, 9],
+      ['Factoring Reserve', 'Virtual · ledger', 4992.75, 0, 11],
+      ['Driver Escrow Pool', 'Virtual · ledger', 2375.00, 0, 12]
+    ];
+    const maxAbs = 140226.34;
+    const accounts = raw.map((r) => {
+      const bal = r[2];
+      const tone = bal < 0 ? RED : bal > 0 ? NAVY : MUTE;
+      const frac = Math.min(1, Math.abs(bal) / maxAbs) * 50;
+      return {
+        name: r[0], kind: r[1],
+        balance: bal === 0 ? '—' : usd(bal),
+        tone: tone,
+        barLeft: (bal < 0 ? 50 - frac : 50) + '%',
+        barW: frac + '%',
+        uncat: r[3] === 0 ? '—' : r[3].toLocaleString('en-US') + ' uncat',
+        uncatInk: r[3] === 0 ? MUTE : '#8A4208',
+        spark: spark(r[4])
+      };
+    });
+
+    const queue = [
+      ['09/27/2026', "LOVE'S TRAVEL STOP #604 — LAREDO TX", 'Fuel — diesel', 'T156', -594.33],
+      ['09/26/2026', "LOVE'S TRAVEL STOP #212 — SAN ANTONIO TX", 'Fuel — diesel', 'T175', -321.74],
+      ['09/26/2026', 'PILOT #431 — COTULLA TX', 'Fuel — diesel', 'T152', -906.82],
+      ['09/25/2026', 'BLUE BEACON TRUCK WASH', 'Truck wash', 'T168', -47.06],
+      ['09/25/2026', 'TXTAG — BRIDGE CROSSING', 'Tolls & crossings', '—', -18.75],
+      ['09/24/2026', 'RUSH TRUCK CENTER — LAREDO', 'Repairs — outside shop', 'T168', -3029.92]
+    ].map((r) => ({
+      date: r[0], desc: r[1], acct: r[2],
+      unit: r[3], unitInk: r[3] === '—' ? '#B42318' : '#0d2137',
+      amt: usd(r[4]), amtInk: r[4] < 0 ? '#8C2020' : '#0d2137'
+    }));
+
+    const faro = [
+      { k: 'Reserve held', v: usd(4992.75), tone: NAVY },
+      { k: 'Invoices purchased', v: '93', tone: '#0d2137' },
+      { k: 'Collected, September', v: usd(28125.00), tone: NAVY },
+      { k: 'Relieved in the app', v: usd(15507.60), tone: RED }
+    ];
+
+    return { alerts, kpis, accounts, queue, faro };
+  }
+}
+</script>
+</body>
+</html>

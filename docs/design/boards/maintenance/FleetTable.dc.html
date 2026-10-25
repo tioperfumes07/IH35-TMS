@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Table</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 16px 24px 0 24px;">
+    <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Fleet Table</div>
+    <div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">Every unit, its maintenance position, and what it has cost — one row per truck</div>
+    <div style="display: flex; gap: 2px; margin-top: 14px;">
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Home</div>
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 14px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Fleet Table</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Active WOs</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Service / Location</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Driver Reports</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Road Service</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Parts Inventory</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Integrity Report</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Settings</div>
+    </div>
+  </div>
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 10px 24px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+    <span class="hd">Units</span>
+    <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 4px 6px; background: #FFFFFF; min-height: 34px;">
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">All 16 <button type="button" aria-label="Clear unit filter" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="font-size: 12px; color: #94A3B8; padding: 0 6px;">Type a unit number…</span>
+    </div>
+    <span class="hd" style="margin-left: 8px;">Status</span>
+    <select aria-label="Status" style="font: inherit; font-size: 12.5px; min-height: 34px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 8px; background: #FFFFFF; color: #1F2A44;"><option>In service</option></select>
+    <span class="hd" style="margin-left: 8px;">PM state</span>
+    <select aria-label="PM state" style="font: inherit; font-size: 12.5px; min-height: 34px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 8px; background: #FFFFFF; color: #1F2A44;"><option>All</option></select>
+    <div style="flex-grow: 1;"></div>
+    <button type="button" style="font: inherit; font-size: 12px; min-height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Columns</button>
+    <button type="button" style="font: inherit; font-size: 12px; min-height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Export</button>
+  </div>
+
+  <div style="padding: 16px 24px 24px 24px; flex-grow: 1; display: flex; flex-direction: column;">
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; overflow: hidden;">
+      <table>
+        <thead>
+          <tr style="background: #F6F9FB;">
+            <th class="hd" style="text-align: left; width: 64px;">Unit</th>
+            <th class="hd" style="text-align: left;">Year / Make / Model</th>
+            <th class="hd" style="text-align: left; width: 86px;">Status</th>
+            <th class="hd" style="text-align: right; width: 96px;">Odometer</th>
+            <th class="hd" style="text-align: left; width: 104px;">Odo source</th>
+            <th class="hd" style="text-align: right; width: 92px;">Last PM</th>
+            <th class="hd" style="text-align: right; width: 96px;">Next PM at</th>
+            <th class="hd" style="text-align: right; width: 88px;">Remaining</th>
+            <th class="hd" style="text-align: right; width: 68px;">Open WOs</th>
+            <th class="hd" style="text-align: right; width: 104px;">MTD cost</th>
+            <th class="hd" style="text-align: right; width: 108px;">Cost / mile</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="16">
+            <tr>
+              <td style="font-weight: 600;">{{r.unit}}</td>
+              <td style="color: #334155;">{{r.ymm}}</td>
+              <td><span style="font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: {{r.stTone}};">{{r.status}}</span></td>
+              <td class="num">{{r.odo}}</td>
+              <td style="font-size: 11.5px; color: #64748B;">{{r.src}}</td>
+              <td class="num" style="color: #64748B;">{{r.lastPm}}</td>
+              <td class="num" style="color: #64748B;">{{r.nextPm}}</td>
+              <td class="num" style="font-weight: 600; color: {{r.tone}};">{{r.remaining}}</td>
+              <td class="num">{{r.wos}}</td>
+              <td class="num">{{r.mtd}}</td>
+              <td class="num">{{r.cpm}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+        <tfoot>
+          <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+            <td style="font-weight: 700;">Total</td>
+            <td style="color: #64748B;">16 units</td>
+            <td></td>
+            <td class="num" style="font-weight: 700;">8,708,048</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td class="num" style="font-weight: 700;">11</td>
+            <td class="num" style="font-weight: 700;">$18,412.60</td>
+            <td class="num" style="font-weight: 700;">$0.1301</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div style="font-size: 11.5px; color: #64748B; margin-top: 10px;">
+      Negative and missing values are never rendered as zero. A unit with no odometer reads “—”, and its PM row says why.
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D', MUTE = '#94A3B8';
+    const fmt = (n) => n.toLocaleString('en-US');
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const raw = [
+      ['T122', '2019 Freightliner Cascadia', 'In service', null, 0, 0],
+      ['T124', '2019 Freightliner Cascadia', 'In service', 815317, 1, 1240.00],
+      ['T147', '2020 Freightliner Cascadia', 'In service', null, 0, 0],
+      ['T148', '2020 Freightliner Cascadia', 'In service', 641325, 0, 0],
+      ['T152', '2021 Freightliner Cascadia', 'In service', 756750, 2, 3107.94],
+      ['T156', '2021 Freightliner Cascadia', 'In service', 571544, 1, 594.33],
+      ['T163', '2022 Freightliner Cascadia', 'In service', 579853, 1, 230.12],
+      ['T164', '2022 Freightliner Cascadia', 'In service', 461784, 0, 342.70],
+      ['T168', '2022 Freightliner Cascadia', 'Out of service', 453283, 3, 5605.58],
+      ['T170', '2023 Freightliner Cascadia', 'In service', null, 0, 0],
+      ['T171', '2023 Freightliner Cascadia', 'In service', 436939, 0, 1815.37],
+      ['T173', '2023 Freightliner Cascadia', 'In service', null, 1, 515.04],
+      ['T174', '2023 Freightliner Cascadia', 'In service', 455132, 0, 1189.37],
+      ['T175', '2024 Freightliner Cascadia', 'In service', 452312, 1, 2232.78],
+      ['T176', '2024 Freightliner Cascadia', 'In service', 429192, 0, 976.83],
+      ['T177', '2024 Freightliner Cascadia', 'In service', 501527, 1, 2958.76]
+    ];
+    const INTERVAL = 25000;
+    const rows = raw.map((r, i) => {
+      const odo = r[3];
+      const has = odo !== null;
+      const since = has ? (7300 + (i * 2137) % 26000) : 0;
+      const last = has ? odo - since : null;
+      const next = has ? last + INTERVAL : null;
+      const left = has ? next - odo : null;
+      const tone = !has ? MUTE : left <= 0 ? RED : left <= 2500 ? AMBER : NAVY;
+      return {
+        unit: r[0],
+        ymm: r[1],
+        status: r[2],
+        stTone: r[2] === 'Out of service' ? RED : NAVY,
+        odo: has ? fmt(odo) : '—',
+        src: has ? 'Samsara · live' : 'no reading',
+        lastPm: has ? fmt(last) : '—',
+        nextPm: has ? fmt(next) : '—',
+        remaining: !has ? '—' : left <= 0 ? fmt(Math.abs(left)) + ' over' : fmt(left) + ' mi',
+        tone: tone,
+        wos: r[4] === 0 ? '—' : String(r[4]),
+        mtd: r[5] === 0 ? '—' : usd(r[5]),
+        cpm: !has || r[5] === 0 ? '—' : '$' + (r[5] / 9438).toFixed(4)
+      };
+    });
+    return { rows: rows };
+  }
+}
+</script>
+</body>
+</html>

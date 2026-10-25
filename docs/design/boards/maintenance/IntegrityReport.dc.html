@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Integrity Report</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 16px 24px 0 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Integrity Report</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">Already built in the backend — seven live endpoints with no screen. This is the screen.</div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <select aria-label="Report" style="font: inherit; font-size: 12.5px; min-height: 44px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #1F2A44;"><option>Unit history</option></select>
+        <button type="button" style="font: inherit; font-size: 12.5px; padding: 8px 14px; min-height: 44px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Export PDF</button>
+      </div>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 14px;">
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Home</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Fleet Table</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Active WOs</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Service / Location</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Driver Reports</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Road Service</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Parts Inventory</div>
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 14px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Integrity Report</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Settings</div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 24px 24px 24px; display: flex; flex-direction: column; gap: 14px;">
+
+    <div style="display: flex; gap: 8px;">
+      <button type="button" style="font: inherit; font-size: 12px; font-weight: 600; min-height: 38px; padding: 0 14px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Unit history</button>
+      <button type="button" style="font: inherit; font-size: 12px; min-height: 38px; padding: 0 14px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Driver history</button>
+      <button type="button" style="font: inherit; font-size: 12px; min-height: 38px; padding: 0 14px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Vendor history</button>
+      <button type="button" style="font: inherit; font-size: 12px; min-height: 38px; padding: 0 14px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Fleet baselines</button>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+      <div style="padding: 12px 16px; border-bottom: 1px solid #E8EDF2;">
+        <div style="font-size: 14px; font-weight: 600;">Fleet baselines — where each unit sits against the fleet</div>
+        <div style="font-size: 11.5px; color: #64748B;">Cost per mile, PM adherence and repair frequency, measured — an outlier here is the truck to look at</div>
+      </div>
+      <table>
+        <thead>
+          <tr style="background: #F6F9FB;">
+            <th class="hd" style="text-align: left; width: 70px;">Unit</th>
+            <th class="hd" style="text-align: right; width: 104px;">Miles / month</th>
+            <th class="hd" style="text-align: right; width: 116px;">Maint. $ / mile</th>
+            <th class="hd" style="text-align: left;">Against fleet average</th>
+            <th class="hd" style="text-align: right; width: 108px;">PM on time</th>
+            <th class="hd" style="text-align: right; width: 100px;">Repairs / yr</th>
+            <th class="hd" style="text-align: right; width: 116px;">Down days / yr</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+            <tr>
+              <td style="font-weight: 600;">{{r.unit}}</td>
+              <td class="num">{{r.miles}}</td>
+              <td class="num" style="font-weight: 600; color: {{r.tone}};">{{r.cpm}}</td>
+              <td>
+                <div style="position: relative; height: 16px; background: #EEF2F6; border-radius: 2px;">
+                  <div style="position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: #94A3B8;"></div>
+                  <div style="position: absolute; top: 3px; height: 10px; border-radius: 2px; left: {{r.barLeft}}; width: {{r.barW}}; background: {{r.tone}};"></div>
+                </div>
+              </td>
+              <td class="num" style="color: {{r.pmTone}}; font-weight: 600;">{{r.pm}}</td>
+              <td class="num" style="color: #475569;">{{r.repairs}}</td>
+              <td class="num" style="color: {{r.downTone}};">{{r.down}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+        <tfoot>
+          <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+            <td style="font-weight: 700;">Fleet</td>
+            <td class="num" style="font-weight: 700;">9,438</td>
+            <td class="num" style="font-weight: 700;">$0.1301</td>
+            <td style="font-size: 11px; color: #64748B;">Bar shows distance from this average</td>
+            <td class="num" style="font-weight: 700;">82%</td>
+            <td class="num" style="font-weight: 700;">4.1</td>
+            <td class="num" style="font-weight: 700;">11.3</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">What the report answers</div>
+        <div style="padding: 12px 16px; font-size: 12.5px; color: #334155; line-height: 1.7;">
+          Every repair this unit has had, with odometer, shop and cost — in order.<br>
+          Which units cost more per mile than the fleet, and by how much.<br>
+          Which drivers report defects, and which never do.<br>
+          Which vendors come back on the same complaint twice.<br>
+          Whether a PM was actually performed at the interval it was due.
+        </div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #B45309; border-radius: 3px;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; background: #FFF7ED; font-size: 14px; font-weight: 600; color: #8A4208;">Honest state</div>
+        <div style="padding: 12px 16px; font-size: 12.5px; color: #334155; line-height: 1.7;">
+          The endpoints are live today. The numbers above are what they will return once your hand-backfill and the odometer ledger are in.<br><br>
+          With no maintenance history, this report is correct and empty. It does not estimate, and it does not fill a gap with a fleet average.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D';
+    const AVG = 0.1301;
+    const raw = [
+      ['T124', 11240, 0.2014, 71, 7, 19],
+      ['T148', 9820, 0.0912, 92, 3, 6],
+      ['T152', 10410, 0.1644, 78, 5, 14],
+      ['T156', 9150, 0.1102, 88, 4, 8],
+      ['T163', 8740, 0.0871, 95, 2, 4],
+      ['T164', 9960, 0.1188, 85, 4, 9],
+      ['T168', 8120, 0.2760, 64, 9, 31],
+      ['T171', 10630, 0.0988, 90, 3, 7],
+      ['T175', 9480, 0.1044, 93, 3, 5],
+      ['T177', 9210, 0.1372, 81, 5, 11]
+    ];
+    const rows = raw.map((r) => {
+      const cpm = r[2];
+      const delta = (cpm - AVG) / AVG;
+      const clamped = Math.max(-1, Math.min(1, delta));
+      const half = Math.abs(clamped) * 50;
+      const tone = delta > 0.35 ? RED : delta > 0.12 ? AMBER : NAVY;
+      return {
+        unit: r[0],
+        miles: r[1].toLocaleString('en-US'),
+        cpm: '$' + cpm.toFixed(4),
+        tone: tone,
+        barLeft: (delta >= 0 ? 50 : 50 - half) + '%',
+        barW: half + '%',
+        pm: r[3] + '%',
+        pmTone: r[3] >= 85 ? NAVY : r[3] >= 75 ? AMBER : RED,
+        repairs: r[4].toFixed(1),
+        down: r[5].toFixed(1),
+        downTone: r[5] > 20 ? RED : r[5] > 12 ? AMBER : '#475569'
+      };
+    });
+    return { rows: rows };
+  }
+}
+</script>
+</body>
+</html>

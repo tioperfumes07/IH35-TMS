@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Driver Escrow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #5d6b7a; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E4EAF0; border-left: 0; border-right: 0; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #1c5ba8; } a:hover { color: #14314F; }
+    .ctl { font: inherit; font-size: 12.5px; height: 34px; box-sizing: border-box; border: 1px solid #C7D2DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0d2137; }
+    .date { width: 132px; }
+    .chip { font-size: 11.5px; height: 34px; box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid #C7D2DC; border-radius: 17px; background: #FFFFFF; color: #14314F; }
+    .btnp { font: inherit; font-size: 12.5px; font-weight: 600; height: 34px; padding: 0 14px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer; }
+    .btns { font: inherit; font-size: 12.5px; height: 34px; padding: 0 14px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer; }
+    .gear { width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #5d6b7a; }
+    .card { background: #FFFFFF; border: 1px solid #C7D2DC; border-radius: 3px; }
+    .cardhd { padding: 11px 16px; border-bottom: 1px solid #E4EAF0; }
+    .t { font-size: 14px; font-weight: 600; }
+    .s { font-size: 11.5px; color: #5d6b7a; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1060px; box-sizing: border-box; background: #eef2f6; color: #0d2137; display: flex; flex-direction: column;">
+  <div style="background: #FFFFFF; border-bottom: 1px solid #C7D2DC; padding: 14px 24px 0 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Driver Escrow</div>
+        <div style="font-size: 12.5px; color: #5d6b7a; margin-top: 1px;">$2,375.00 held for 14 drivers &middot; a liability the company owes back</div>
+      </div>
+      <div style="display: flex; gap: 8px;"><button type="button" class="btns" style="height: 44px;">Statements</button><button type="button" class="btnp" style="height: 44px;">+ New &#9662;</button></div>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 12px;"><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Home</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Accounts</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Transactions</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Link suggestions</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reconciliation</div><div style="font-size: 12.5px; font-weight: 600; padding: 9px 13px; color: #0d2137; border-bottom: 2.5px solid #14314F;">Driver escrow</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Relay card</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reports</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Settings</div></div>
+  </div>
+  <div style="padding: 14px 24px 22px 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0;">
+    <div style="display: flex; align-items: center; gap: 12px; background: #FDF3E7; border: 1px solid #B45309; border-radius: 3px; padding: 10px 14px;">
+      <span style="font-size: 15px; font-weight: 700; color: #8A4208; line-height: 1;">!</span>
+      <div style="flex-grow: 1;">
+        <div style="font-size: 13px; font-weight: 600; color: #8A4208;">$2,375.00 is held for 14 drivers and it sits in no real bank account</div>
+        <div style="font-size: 11.5px; color: #3d4a57; margin-top: 1px;">Escrow is a virtual ledger. That is correct as a ledger — it is money the company owes back — but it must be backed by cash somewhere and reconciled against it. It is not today.</div>
+      </div>
+      <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; height: 34px; padding: 0 12px; border: 1px solid #B45309; background: #FFFFFF; color: #8A4208; border-radius: 3px; cursor: pointer; white-space: nowrap;">Back it with an account</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px;">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <div style="background: #FFFFFF; border: 1px solid {{k.border}}; border-radius: 3px; padding: 9px 12px;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: {{k.ink}};">{{k.label}}</div>
+          <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2; color: {{k.ink}};">{{k.value}}</div>
+          <div style="font-size: 10.5px; color: {{k.ink}};">{{k.sub}}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 352px; gap: 14px; min-width: 0;">
+
+      <div class="card" style="min-width: 0;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E4EAF0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+          <div>
+            <div class="t">Held per driver</div>
+            <div class="s">a liability, one row per driver, every dollar traceable to the settlement that withheld it</div>
+          </div>
+          <div style="flex-grow: 1;"></div>
+          <input class="ctl" style="width: 176px;" placeholder="Search driver" aria-label="Search driver">
+          <select class="ctl" style="width: 136px;" aria-label="Status"><option>Active only</option></select>
+          <button type="button" aria-label="Choose columns" title="Choose columns" class="ctl gear"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+        </div>
+        <table>
+          <thead>
+            <tr style="background: #F6F9FB;">
+              <th class="hd" style="text-align: left;">Driver</th>
+              <th class="hd" style="text-align: left; width: 62px;">Unit</th>
+              <th class="hd" style="text-align: right; width: 100px;">Held</th>
+              <th class="hd" style="text-align: right; width: 92px;">Target</th>
+              <th class="hd" style="text-align: left; width: 132px;">Progress</th>
+              <th class="hd" style="text-align: left; width: 96px;">Last withheld</th>
+              <th class="hd" style="text-align: left; width: 86px;">Settlement</th>
+              <th class="hd" style="text-align: right; width: 76px;">Release</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="14">
+              <tr>
+                <td style="font-weight: 600;">{{r.name}}</td>
+                <td style="color: {{r.unitInk}};">{{r.unit}}</td>
+                <td class="num" style="font-weight: 600; color: #14314F;">{{r.held}}</td>
+                <td class="num" style="color: #5d6b7a;">{{r.target}}</td>
+                <td>
+                  <div style="position: relative; height: 6px; background: #E2E8F0; border-radius: 2px;">
+                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{r.pct}}; background: {{r.bar}}; border-radius: 2px;"></div>
+                  </div>
+                  <div style="font-size: 10px; color: #8895a3; margin-top: 2px;">{{r.pctLabel}}</div>
+                </td>
+                <td class="num" style="text-align: left; color: #3d4a57;">{{r.when}}</td>
+                <td class="num" style="text-align: left;"><a href="#s" style="text-decoration: none;">{{r.settlement}}</a></td>
+                <td style="text-align: right;">
+                  <button type="button" style="font: inherit; font-size: 11px; height: 30px; padding: 0 9px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer;">Release</button>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+          <tfoot>
+            <tr style="background: #F6F9FB; border-top: 2px solid #C7D2DC;">
+              <td colspan="2" style="font-weight: 700;">14 drivers</td>
+              <td class="num" style="font-weight: 700; color: #14314F;">$2,375.00</td>
+              <td class="num" style="font-weight: 700; color: #5d6b7a;">$14,000.00</td>
+              <td colspan="4" class="hd">17% of target held</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+        <div class="card">
+          <div class="cardhd"><div class="t">Both sides of the entry</div><div class="s">withholding escrow is not an expense</div></div>
+          <div style="padding: 4px 16px 14px 16px;">
+            <sc-for list="{{gl}}" as="g" hint-placeholder-count="4">
+              <div style="padding: 10px 0; border-bottom: 1px solid #E4EAF0;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+                  <span style="font-size: 12.5px; font-weight: 600;">{{g.acct}}</span>
+                  <span class="num" style="font-size: 12.5px; font-weight: 600; color: {{g.ink}};">{{g.amt}}</span>
+                </div>
+                <div style="font-size: 11px; color: #8895a3; margin-top: 2px;">{{g.side}} &middot; {{g.num}}</div>
+              </div>
+            </sc-for>
+            <div style="font-size: 11.5px; color: #3d4a57; margin-top: 10px; line-height: 1.6;">
+              The driver earned it, so the gross pay is already expensed. Withholding only moves it from net pay clearing to a liability the company owes back. Anything that books escrow as an expense overstates cost and hides a debt — that is the check this screen has to survive.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardhd"><div class="t">Release rules</div><div class="s">what has to be true before a dollar leaves</div></div>
+          <div style="padding: 4px 16px 14px 16px;">
+            <sc-for list="{{rules}}" as="r" hint-placeholder-count="4">
+              <div style="display: flex; gap: 9px; padding: 9px 0; border-bottom: 1px solid #E4EAF0;">
+                <span style="font-size: 12px; font-weight: 700; color: #14314F; width: 14px;">{{r.n}}</span>
+                <div style="min-width: 0;">
+                  <div style="font-size: 12px; font-weight: 600;">{{r.t}}</div>
+                  <div style="font-size: 11.5px; color: #3d4a57; margin-top: 2px; line-height: 1.5;">{{r.d}}</div>
+                </div>
+              </div>
+            </sc-for>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button type="button" class="btns" style="flex-grow: 1;">Close</button>
+              <button type="button" class="btnp" style="flex-grow: 1;">Save and close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const RED = '#8C2020', AMBER = '#8A4208', NAVY = '#14314F', GREEN = '#1F6B32';
+    const usd = (n) => (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const kpis = [
+      { label: 'Held in escrow', value: usd(2375.00), sub: 'a liability, not cash', border: '#C7D2DC', ink: NAVY },
+      { label: 'Drivers', value: '14', sub: 'with a balance', border: '#C7D2DC', ink: '#0d2137' },
+      { label: 'Target', value: usd(14000.00), sub: '$1,000 each', border: '#C7D2DC', ink: '#5d6b7a' },
+      { label: 'At target', value: '0 of 14', sub: 'none funded yet', border: '#B45309', ink: AMBER },
+      { label: 'Backed by cash', value: 'No', sub: 'virtual ledger only', border: '#B42318', ink: RED },
+      { label: 'Released, September', value: usd(0), sub: 'no releases yet', border: '#C7D2DC', ink: '#5d6b7a' }
+    ];
+
+    const R = (name, unit, held, when, settlement) => {
+      const pct = Math.min(100, (held / 1000) * 100);
+      return {
+        name, unit: unit || '—', unitInk: unit ? '#0d2137' : RED,
+        held: usd(held), target: usd(1000),
+        pct: pct.toFixed(0) + '%',
+        pctLabel: pct.toFixed(0) + '% of target',
+        bar: pct >= 100 ? GREEN : pct >= 50 ? NAVY : '#B45309',
+        when, settlement
+      };
+    };
+
+    const rows = [
+      R('R. Sanchez', 'T156', 325.00, '09/25', '5819'),
+      R('J. Ramirez', 'T175', 275.00, '09/25', '5819'),
+      R('M. Villarreal', 'T168', 250.00, '09/25', '5818'),
+      R('A. Gutierrez', 'T152', 225.00, '09/18', '5817'),
+      R('L. Trevino', 'T147', 200.00, '09/18', '5817'),
+      R('D. Flores', 'T170', 175.00, '09/18', '5816'),
+      R('E. Cantu', 'T173', 150.00, '09/11', '5815'),
+      R('O. Salinas', 'T124', 150.00, '09/11', '5815'),
+      R('F. Garza', null, 125.00, '09/11', '5814'),
+      R('H. Perez', 'T122', 125.00, '09/04', '5813'),
+      R('C. Moreno', 'T162', 100.00, '09/04', '5813'),
+      R('S. Lozano', 'T159', 100.00, '09/04', '5812'),
+      R('B. Aguilar', null, 100.00, '08/28', '5811'),
+      R('N. Reyna', 'T165', 75.00, '08/28', '5811')
+    ];
+
+    const gl = [
+      { acct: 'Driver escrow payable', amt: usd(2375.00), side: 'CREDIT — liability, what we owe back', num: '2255', ink: NAVY },
+      { acct: 'Net pay clearing', amt: usd(-2375.00), side: 'DEBIT — reduces what was paid out', num: '2250', ink: NAVY },
+      { acct: 'Driver pay — gross', amt: usd(0), side: 'UNTOUCHED — already expensed when earned', num: '6100', ink: '#8895a3' },
+      { acct: 'Any expense account', amt: usd(0), side: 'MUST STAY ZERO — escrow is never an expense', num: '—', ink: RED }
+    ];
+
+    const rules = [
+      { n: '1', t: 'The driver has separated, or asked', d: 'Escrow releases on separation or on a written request the driver made. Never on a clerk deciding the balance looks high enough.' },
+      { n: '2', t: 'Nothing is owed the other way', d: 'Open cash advances, chargebacks and unreturned equipment net against the balance first. The release is what is left, and the netting shows on the statement.' },
+      { n: '3', t: 'It posts, it does not just move', d: 'A release debits the liability and credits the bank account the money actually leaves. No release without a real account behind it — which is exactly what the banner above blocks today.' },
+      { n: '4', t: 'The driver gets the arithmetic', d: 'Every withholding, every netting, every release, dated and tied to its settlement number. A driver who asks where his escrow went gets a statement, not an answer.' }
+    ];
+
+    return { kpis, rows, gl, rules };
+  }
+}
+</script>
+</body>
+</html>

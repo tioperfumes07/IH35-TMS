@@ -1285,9 +1285,17 @@
   },
   {
     "id": "IH35-347-B-NO-UPPERCASE-NAMES",
-    "title": "Customer and vendor names are normalized to proper case at write via DB triggers (202616250000), matching driver normalization (202616210300). USMCA stored names must have 0 ALL-CAPS rows.",
-    "source_file": "db/migrations/202616250000_customer_vendor_names_normalized_at_write.sql",
+    "title": "Customer and vendor names are normalized to proper case at write via DB triggers (202616250900), matching driver normalization (202616210300). USMCA stored names must have 0 ALL-CAPS rows.",
+    "source_file": "db/migrations/202616250900_customer_vendor_names_normalized_at_write.sql",
     "guard": "scripts/verify-no-uppercase-names-rendered.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-24-GEOFENCE-STOP-STAMP-PARITY",
+    "title": "Geofence stop-stamp parity: latch + ping + audit on departure",
+    "description": "geofence-detector.service.ts must import + call latchOnDeliveryEvidence, pingSettlementOnLoadEvent, and appendCrudAudit on departure events to match the canonical stop-stamp path in dispatch/stop-stamp.service.ts",
+    "source_file": "apps/backend/src/telematics/geofence-detector.service.ts",
+    "guard": "scripts/verify-geofence-stop-stamp-parity.mjs",
     "type": "enforced"
   }
 ]

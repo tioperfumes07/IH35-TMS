@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Service / Location</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 16px 24px 0 24px;">
+    <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Service / Location</div>
+    <div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">Where every truck under repair physically is, and how long it has been there</div>
+    <div style="display: flex; gap: 2px; margin-top: 14px;">
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Home</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Fleet Table</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Active WOs</div>
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 14px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Service / Location</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Driver Reports</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Road Service</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Parts Inventory</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Integrity Report</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Settings</div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 24px 24px 24px; display: flex; flex-direction: column; gap: 14px;">
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;">
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px;">
+        <div class="hd">At outside shops</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left;">3</div>
+        <div style="font-size: 11px; color: #94A3B8;">2 shops</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px;">
+        <div class="hd">In our own bay</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left;">2</div>
+        <div style="font-size: 11px; color: #94A3B8;">4 bays · 2 open</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #B45309; border-radius: 3px; padding: 11px 13px;">
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #8A4208;">Longest sitting</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left; color: #8A4208;">9d</div>
+        <div style="font-size: 11px; color: #8A4208;">T168 · Rush Truck Center</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px;">
+        <div class="hd">Revenue days lost</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left;">17</div>
+        <div style="font-size: 11px; color: #94A3B8;">this month</div>
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+      <div style="padding: 12px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: baseline;">
+        <div>
+          <div style="font-size: 14px; font-weight: 600;">Outside shop progress</div>
+          <div style="font-size: 11.5px; color: #64748B;">Every stage is stamped — a truck that stops moving is visible without opening anything</div>
+        </div>
+        <div style="font-size: 11.5px; color: #64748B;">Stage days shown under each marker</div>
+      </div>
+
+      <div style="padding: 6px 16px 14px 16px;">
+        <sc-for list="{{jobs}}" as="j" hint-placeholder-count="3">
+          <div style="border-top: 1px solid #F1F4F7; padding: 14px 0 6px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+              <div style="display: flex; align-items: baseline; gap: 10px;">
+                <span style="font-size: 15px; font-weight: 700;">{{j.unit}}</span>
+                <a href="#wo" style="font-size: 12px; font-weight: 600; text-decoration: none;">{{j.wo}}</a>
+                <span style="font-size: 12.5px; color: #475569;">{{j.shop}} · {{j.city}}</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 18px;">
+                <span style="font-size: 12px; color: #64748B;">{{j.complaint}}</span>
+                <span class="num" style="font-size: 13.5px; font-weight: 700; color: {{j.tone}};">{{j.days}}</span>
+                <span class="num" style="font-size: 13px; font-weight: 600;">{{j.cost}}</span>
+              </div>
+            </div>
+
+            <div style="position: relative; height: 58px; margin-top: 4px;">
+              <div style="position: absolute; left: 3%; right: 3%; top: 42px; height: 3px; background: #E2E8F0; border-radius: 2px;"></div>
+              <div style="position: absolute; left: 3%; top: 42px; height: 3px; background: {{j.tone}}; border-radius: 2px; width: {{j.fill}};"></div>
+              <div style="position: absolute; top: 6px; left: {{j.at}}; transform: translateX(-50%);">
+                <svg width="56" height="35" viewBox="0 -12 74 46" aria-hidden="true">
+                  <ellipse cx="37" cy="30.4" rx="30" ry="2.1" fill="#0F172A" opacity=".13"></ellipse>
+                  <rect x="3" y="6" width="42" height="15" rx="1.6" fill="#EEF2F6" stroke="#93A3B4" stroke-width=".8"></rect>
+                  <path d="M9 6v15M16 6v15M23 6v15M30 6v15M37 6v15" stroke="#C3CCD6" stroke-width=".7"></path>
+                  <rect x="3" y="20.4" width="42" height="1.8" fill="#94A3B8"></rect>
+                  <path d="M46 21.5V9.2c0-1 .8-1.8 1.8-1.8h6.6l5.4 6.1v8H46z" fill="{{j.tone}}"></path>
+                  <rect x="45.4" y="15.6" width="14.6" height="2" rx="1" fill="#0B1B2B" opacity=".35"></rect>
+                  <rect x="45" y="21.4" width="16" height="1.6" fill="#475569"></rect>
+                  <circle cx="12.5" cy="24.6" r="4.5" fill="#111827"></circle>
+                  <circle cx="21.5" cy="24.6" r="4.5" fill="#111827"></circle>
+                  <circle cx="47.5" cy="24.6" r="4.5" fill="#111827"></circle>
+                  <circle cx="57.5" cy="24.6" r="4.2" fill="#111827"></circle>
+                </svg>
+              </div>
+              <sc-for list="{{j.stops}}" as="s" hint-placeholder-count="5">
+                <div style="position: absolute; top: 38px; left: {{s.at}}; transform: translateX(-50%); text-align: center;">
+                  <div style="width: 9px; height: 9px; border-radius: 50%; background: {{s.dot}}; margin: 0 auto;"></div>
+                  <div style="font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: {{s.ink}}; margin-top: 4px; white-space: nowrap;">{{s.label}}</div>
+                  <div class="num" style="font-size: 10px; color: #94A3B8; text-align: center;">{{s.days}}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+      <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">Shop performance — last 90 days</div>
+      <table>
+        <thead>
+          <tr style="background: #F6F9FB;">
+            <th class="hd" style="text-align: left;">Shop</th>
+            <th class="hd" style="text-align: left;">City</th>
+            <th class="hd" style="text-align: right; width: 78px;">Jobs</th>
+            <th class="hd" style="text-align: right; width: 110px;">Avg days</th>
+            <th class="hd" style="text-align: right; width: 120px;">Avg invoice</th>
+            <th class="hd" style="text-align: right; width: 130px;">Total spent</th>
+            <th class="hd" style="text-align: right; width: 110px;">Comebacks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{shops}}" as="s" hint-placeholder-count="4">
+            <tr>
+              <td style="font-weight: 600;">{{s.name}}</td>
+              <td style="color: #475569;">{{s.city}}</td>
+              <td class="num">{{s.jobs}}</td>
+              <td class="num" style="color: {{s.tone}}; font-weight: 600;">{{s.avgDays}}</td>
+              <td class="num">{{s.avgInv}}</td>
+              <td class="num" style="font-weight: 600;">{{s.total}}</td>
+              <td class="num" style="color: {{s.cbTone}};">{{s.comebacks}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D';
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const LABELS = ['Dropped off', 'Diagnosis', 'Estimate approved', 'In repair', 'Ready'];
+    const build = (unit, wo, shop, city, complaint, stage, days, cost, tone, stageDays) => {
+      const at = 3 + (stage / 4) * 94;
+      return {
+        unit: unit, wo: wo, shop: shop, city: city, complaint: complaint,
+        days: days + 'd', cost: usd(cost), tone: tone,
+        fill: ((stage / 4) * 94) + '%',
+        at: at + '%',
+        stops: LABELS.map((l, i) => ({
+          at: (3 + (i / 4) * 94) + '%',
+          label: l,
+          dot: i <= stage ? tone : '#CBD5E1',
+          ink: i === stage ? tone : '#94A3B8',
+          days: stageDays[i] === null ? '' : stageDays[i] + 'd'
+        }))
+      };
+    };
+    const jobs = [
+      build('T168', 'WO-T168-0031', 'Rush Truck Center', 'Laredo TX', 'DEF heater circuit', 3, 9, 4365.58, RED, [1, 2, 1, 5, null]),
+      build('T152', 'WO-T152-0038', 'Sonora Truck & Tire', 'Sonora TX', 'Steer tires, alignment', 4, 2, 1842.40, NAVY, [0, 1, 0, 1, 0]),
+      build('T163', 'WO-T163-0035', 'Border Body & Paint', 'Laredo TX', 'Trailer door skin', 2, 4, 2180.00, AMBER, [1, 1, 2, null, null])
+    ];
+    const shops = [
+      { name: 'Rush Truck Center', city: 'Laredo TX', jobs: '11', avgDays: '6.4', tone: RED, avgInv: usd(2840.15), total: usd(31241.65), comebacks: '2', cbTone: RED },
+      { name: 'Sonora Truck & Tire', city: 'Sonora TX', jobs: '7', avgDays: '1.8', tone: NAVY, avgInv: usd(964.20), total: usd(6749.40), comebacks: '—', cbTone: '#94A3B8' },
+      { name: 'Border Body & Paint', city: 'Laredo TX', jobs: '4', avgDays: '4.2', tone: AMBER, avgInv: usd(1975.00), total: usd(7900.00), comebacks: '—', cbTone: '#94A3B8' },
+      { name: 'In-house (our bay)', city: 'Laredo TX', jobs: '23', avgDays: '1.1', tone: NAVY, avgInv: usd(412.80), total: usd(9494.40), comebacks: '1', cbTone: AMBER }
+    ];
+    return { jobs: jobs, shops: shops };
+  }
+}
+</script>
+</body>
+</html>
