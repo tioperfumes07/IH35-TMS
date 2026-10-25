@@ -3,7 +3,7 @@ import { getTourReadout, type TourLeg } from "../../api/tourReadout";
 import { entityLabel } from "../../lib/entity-label";
 import { useSearchParams } from "react-router-dom";
 import { settlementLabel } from "../../lib/settlementNumber";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   closeSettlementPayRun,
@@ -26,9 +26,38 @@ import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { ExpenseLoadConfirmationsBoard } from "../../components/expenses/ExpenseLoadConfirmationsBoard";
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+
+/** 443.280 — step body / Result use shared BoardSection (not local bordered extract). */
+function CloseBoardPanel({
+  title,
+  stepTitle,
+  stepTitleDynamic,
+  onViewAll,
+  children,
+  testId = "settlement-close-arrival-panel",
+}: {
+  title: string;
+  stepTitle?: string;
+  stepTitleDynamic?: boolean;
+  onViewAll?: () => void;
+  children: ReactNode;
+  testId?: string;
+}) {
+  return (
+    <div
+      data-close-step-title={stepTitle}
+      data-close-step-title-dynamic={stepTitleDynamic ? "1" : undefined}
+    >
+      <BoardSection title={title} onViewAll={onViewAll} testId={testId}>
+        <div className="space-y-2 p-3">{children}</div>
+      </BoardSection>
+    </div>
+  );
+}
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -575,15 +604,15 @@ export function SettlementCloseArrivalPage() {
   const stepPanel = (() => {
     if (!settlement) {
       return (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-2" data-testid="settlement-close-arrival-panel" data-close-step-title-dynamic="1"><div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">{arrivalTitle}</div>
+        <CloseBoardPanel title={arrivalTitle} stepTitleDynamic>
           <p className="text-xs text-gray-600">Select a driver with an open pre-settlement to begin close.</p>
-        </div>
+        </CloseBoardPanel>
       );
     }
 
     if (wizardStep === 1) {
       return (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-2" data-testid="settlement-close-arrival-panel" data-close-step-title-dynamic="1"><div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">{arrivalTitle}</div>
+        <CloseBoardPanel title={arrivalTitle} stepTitleDynamic>
           <div className="space-y-2 text-xs">
             <div className="font-semibold text-gray-900">
               <EntityLink kind="driver" id={settlement.driver_id} label={driverBoardName} />
@@ -609,13 +638,13 @@ export function SettlementCloseArrivalPage() {
             </div>
             {unitLabel ? <div className="text-gray-600">Unit: {unitLabel}</div> : null}
           </div>
-        </div>
+        </CloseBoardPanel>
       );
     }
 
     if (wizardStep === 2 || wizardStep === 3) {
       return (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-2" data-testid="settlement-close-arrival-panel" data-close-step-title-dynamic="1"><div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">{arrivalTitle}</div>
+        <CloseBoardPanel title={arrivalTitle} stepTitleDynamic>
           {tourReadoutQuery.isError ? (
             <p className="mb-2 text-xs text-red-600">
               Could not load tour legs.{" "}
@@ -638,13 +667,13 @@ export function SettlementCloseArrivalPage() {
           {wizardStep === 2 ? (
             <SettlementCloseMiles settlementId={settlement.id} operatingCompanyId={companyId} />
           ) : null}
-        </div>
+        </CloseBoardPanel>
       );
     }
 
     if (wizardStep === 4) {
       return (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-2" data-testid="settlement-close-arrival-panel" data-close-step-title="Deductions"><div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Deductions</div>
+        <CloseBoardPanel title="Deductions" stepTitle="Deductions">
           <ParityTable<LineBoardRow>
             title="Other deductions"
             columns={lineColumns}
@@ -664,13 +693,13 @@ export function SettlementCloseArrivalPage() {
               drill={{ entity: { kind: "settlement", id: settlement?.id } }}
             />
           </div>
-        </div>
+        </CloseBoardPanel>
       );
     }
 
     if (wizardStep === 5) {
       return (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-2" data-testid="settlement-close-arrival-panel" data-close-step-title="Escrow"><div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Escrow</div>
+        <CloseBoardPanel title="Escrow" stepTitle="Escrow">
           <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500">
             <span>Escrow contribution</span>
             <span>Cap {formatUsd(ESCROW_CAP_DOLLARS)}</span>
@@ -724,13 +753,13 @@ export function SettlementCloseArrivalPage() {
               })}
             </div>
           ) : null}
-        </div>
+        </CloseBoardPanel>
       );
     }
 
     if (wizardStep === 6) {
       return (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-2" data-testid="settlement-close-arrival-panel" data-close-step-title="Advances"><div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Advances</div>
+        <CloseBoardPanel title="Advances" stepTitle="Advances">
           <ParityTable<LineBoardRow>
             title="Advance recoveries"
             columns={lineColumns}
@@ -750,14 +779,14 @@ export function SettlementCloseArrivalPage() {
               drill={{ entity: { kind: "settlement", id: settlement?.id } }}
             />
           </div>
-        </div>
+        </CloseBoardPanel>
       );
     }
 
     // Step 7 — Net & pay (PaymentMethodPicker + draft JE + Close). Board lacks a second form under
     // the stepper; this is the only close action surface.
     return (
-      <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-2" data-testid="settlement-close-arrival-panel" data-close-step-title="Net & pay"><div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Net & pay</div>
+      <CloseBoardPanel title="Net & pay" stepTitle="Net & pay">
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs font-semibold text-gray-900">
             <span>NET PAY</span>
@@ -828,13 +857,11 @@ export function SettlementCloseArrivalPage() {
             </Button>
           </div>
         </div>
-      </div>
+      </CloseBoardPanel>
     );
   })();
 
   const boardGrossDisplay = settlement ? gross || earnings || boardGrossPay : 0;
-  const deductionsDisplay =
-    otherDeductionsTotal + escrowContributionThisSettlement + advanceRecoveryTotal;
 
   return (
     <SettlementsSubNavWrapper
@@ -846,13 +873,29 @@ export function SettlementCloseArrivalPage() {
           data-testid="settlement-close-v3-kpis"
           data-kpiStrip="1"
         >
-          <V3KpiTile label="Gross pay" value={formatUsd(boardGrossDisplay)} testId="settlement-close-kpi-gross" />
+          <V3KpiTile
+            label="Open drivers"
+            value={settlement ? "1" : String(openOptions.length || "—")}
+            sub="with open pre-settlement"
+            testId="settlement-close-kpi-open-drivers"
+          />
+          <V3KpiTile label="Gross" value={formatUsd(boardGrossDisplay)} testId="settlement-close-kpi-gross" />
           <V3KpiTile
             label="Deductions"
-            value={formatUsd(deductionsDisplay)}
+            value={formatUsd(otherDeductionsTotal)}
             testId="settlement-close-kpi-deductions"
           />
-          <V3KpiTile label="Net pay" value={formatUsd(netPay)} tone="green" testId="settlement-close-kpi-net" />
+          <V3KpiTile
+            label="Escrow"
+            value={formatUsd(escrowContributionThisSettlement)}
+            testId="settlement-close-kpi-escrow"
+          />
+          <V3KpiTile
+            label="Advances recovered"
+            value={formatUsd(advanceRecoveryTotal)}
+            testId="settlement-close-kpi-advances"
+          />
+          <V3KpiTile label="Net to driver" value={formatUsd(netPay)} tone="green" testId="settlement-close-kpi-net" />
         </div>
       }
     >
@@ -952,7 +995,7 @@ export function SettlementCloseArrivalPage() {
           >
             {stepPanel}
 
-            <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-2" data-testid="settlement-close-result-panel" data-close-step-title="Result"><div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Result</div>
+            <CloseBoardPanel title="Result" stepTitle="Result" testId="settlement-close-result-panel" onViewAll={() => setWizardStep(7)}>
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <Button type="button" variant="secondary" onClick={goBack} data-testid="settlement-close-back">
                   Back
@@ -1001,7 +1044,7 @@ export function SettlementCloseArrivalPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </CloseBoardPanel>
           </div>
 
           {settlement ? (
