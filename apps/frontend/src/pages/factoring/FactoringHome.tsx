@@ -45,6 +45,7 @@ import {
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { InfoPopover } from "../../components/shared/InfoPopover";
@@ -1210,17 +1211,19 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           }
         />
       ) : null}
-      {/* ACCT-F2026100619 (Rule 07): the batch-submission pipeline — submission queue, workqueue and batch wizard, each with
-          its own queries and mutations — was mounted only by the factoring index #25601 retired. It lives under Submit invoice. */}
+      {/* FINAL-3 / 443.280 — batch pipeline stays on Submit invoice as board sections (not layered <details>). */}
       {show("submit_invoice") ? (
-        <details className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-submit-batch-pipeline">
-          <summary className="cursor-pointer text-xs font-medium text-gray-900">Batch submission pipeline — queue · workqueue · batch wizard</summary>
-          <div className="mt-2 space-y-3">
+        <div className="space-y-3" data-testid="factoring-submit-batch-pipeline">
+          <BoardSection title="Submission queue" testId="factoring-submit-queue-board-section">
             <SubmissionQueue />
+          </BoardSection>
+          <BoardSection title="Submission workqueue" testId="factoring-submit-workqueue-board-section">
             <SubmissionWorkqueue />
+          </BoardSection>
+          <BoardSection title="Batch wizard" testId="factoring-submit-batch-wizard-board-section">
             <BatchWizard />
-          </div>
-        </details>
+          </BoardSection>
+        </div>
       ) : null}
 
       {show("funds_due") ? (
@@ -2150,15 +2153,19 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           pass (noted in-page, not silently dropped). */}
       {show("purchase_report") ? (
         <div className="space-y-3">
-        {/* ROUND 443.280 — r315/r326 panels stay mounted off Account-summary board (Rule 07). */}
+        {/* ROUND 443.280 / FINAL-3 — r315/r326 panels on Purchase report as BoardSections (not always-on home chrome). */}
         {companyId ? (
-          <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} />
+          <BoardSection title="Factoring KPIs" testId="factoring-purchase-kpi-board-section">
+            <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} />
+          </BoardSection>
         ) : null}
-        <FactoringCashFlowPanel
-          companyId={companyId}
-          dateFrom={dateFromFromUrl || undefined}
-          dateTo={dateToFromUrl || undefined}
-        />
+        <BoardSection title="Cash flow" testId="factoring-purchase-cashflow-board-section">
+          <FactoringCashFlowPanel
+            companyId={companyId}
+            dateFrom={dateFromFromUrl || undefined}
+            dateTo={dateToFromUrl || undefined}
+          />
+        </BoardSection>
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-purchase-report">
           {/* LEAD 443.173 — one title row: section title, filters, Summary (one row per purchase) / Detail (one row per invoice). */}
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
