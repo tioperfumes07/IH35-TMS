@@ -1,10 +1,10 @@
 {
-  "healthzSha": "197f319",
-  "generated_at": "2026-10-25T20:15:27.170Z",
+  "healthzSha": "2c7957a",
+  "generated_at": "2026-10-25T20:30:05.797Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "197f319",
+    "deployedSha": "2c7957a",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 27660,
+      "title": "FINDING: FACT-F443280-A#14 Factoring › Home board still LAYERED — always-on KPI strip + MoneyListToolbar + FactoringHomeBoard + Kpi/CashFlow panels above every Faro tab instead of Account-summary board only",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 03:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27660",
+      "sha": "5d59ab2fa1",
+      "committedAtIso": "2026-10-25T15:30:00-05:00"
+    },
+    {
+      "number": 27657,
+      "title": "FINDING: BANK-F443280-A#13 Banking › Home board still REBUILT/PARTIAL — Accounts|Drift stacked (not 1fr 1fr), Feed column missing status dots, Drift KPI amber not red, Latest Date MM/DD/YYYY not board MM-DD, Latest Amount painted with $ glyph",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 03:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27657",
+      "sha": "2c7957a138",
+      "committedAtIso": "2026-10-25T20:22:15Z"
+    },
+    {
+      "number": 27658,
+      "title": "feat(maint): row 59 Maintenance › In Shop bay board (bays + yard + Ready/Working/Waiting parts)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 03:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27658",
+      "sha": "5fd2548f20",
+      "committedAtIso": "2026-10-25T15:19:04-05:00"
+    },
+    {
+      "number": 27656,
+      "title": "chore(claim): reserve migration 202616261700 LEAD row 59 In Shop bays (202616240100 taken by ACCT-443346)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 03:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27656",
+      "sha": "9fce0c6256",
+      "committedAtIso": "2026-10-25T15:16:58-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 03:15 PM CT",
+      "url": "",
+      "sha": "f842fd49fa",
+      "committedAtIso": "2026-10-25T20:15:27Z"
+    },
+    {
       "number": 27655,
       "title": "feat(dispatch): 443.327 app-wide drift alert — reconciler I9 (row 300)",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27651",
       "sha": "6c57206410",
       "committedAtIso": "2026-10-25T20:04:17Z"
-    },
-    {
-      "number": 27650,
-      "title": "FINDING: ACCT-F443280-A#11 Cash Flow › Manual board still LAYERED — Opening-cash editor on board body + Unit/Invoice/Customer columns instead of Party/Doc·load/Due/Amount; toolbar not Filters/day-nav/History/Save",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 03:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27650",
-      "sha": "5f05b804bc",
-      "committedAtIso": "2026-10-25T15:01:23-05:00"
-    },
-    {
-      "number": 27649,
-      "title": "FINDING: LST-F443358 Kanban cards cannot be dragged from one status column to the next (owner 10-25 2:12 PM, live)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 02:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27649",
-      "sha": "b1eee106f6",
-      "committedAtIso": "2026-10-25T14:56:22-05:00"
-    },
-    {
-      "number": 27648,
-      "title": "ops(purge): AUTH-469 round 2 — test data permanently removed",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 02:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27648",
-      "sha": "ad5e3d766c",
-      "committedAtIso": "2026-10-25T14:54:43-05:00"
-    },
-    {
-      "number": 27647,
-      "title": "FINDING: ACCT-F443280-A#10 Cash Flow › Rolling Ledger board still LAYERED — CashFlowKpiStrip + wide Type/Settlement-heavy registers instead of board V3 KPIs and Party/Doc·load/Due/Amount; carried not Group/Items/Amount; day grid had carried columns",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 02:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27647",
-      "sha": "99ae6b0ab2",
-      "committedAtIso": "2026-10-25T19:49:54Z"
-    },
-    {
-      "number": 27646,
-      "title": "Claude-3- D-SERIES: D018/D028/D031/D032/D034/D037/D039/D040/D041/D048/D050/D051/D054/D063/D078 — heights/names/proportion-chrome fixes",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 02:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27646",
-      "sha": "5210ef55dd",
-      "committedAtIso": "2026-10-25T14:46:39-05:00"
     }
   ]
 }
