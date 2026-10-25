@@ -10269,6 +10269,11 @@
     "claimed_by": "CC-1",
     "purpose": "ENG-46 (443.328): verify-no-dead-settlement-source-ref \u2014 USMCA settlements source_document_ref must resolve to a real load"
   },
+  "18829": {
+    "claimed_at": "2026-10-25",
+    "claimed_by": "CC-1",
+    "purpose": "ENG-46 (443.328): verify-no-dead-settlement-source-ref \u2014 USMCA settlements source_document_ref must resolve to a real load (renumbered from 18825)"
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
@@ -17158,5 +17163,5 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1096
+  "total_claimed": 1097
 }
