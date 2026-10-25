@@ -2511,7 +2511,7 @@ async function buildDriverAdvanceLines(
   if (creditAccount) {
     const isClearingAccount = await client.query<{ is_clearing: boolean }>(
       `SELECT EXISTS(
-         SELECT 1 FROM catalogs.account_role_assignments r
+         SELECT 1 FROM accounting.chart_of_accounts_roles r
           WHERE r.account_id = $1::uuid
             AND r.operating_company_id = $2::uuid
             AND r.role = 'driver_payroll_clearing'
