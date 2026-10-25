@@ -79,7 +79,15 @@ export function computeFailures(source) {
   if (/<V3Panel\b/.test(source)) {
     errors.push("FuelHome.tsx must not wrap the board in V3Panel (443.326 unwrap)");
   }
-  if (!/to="\/fuel\/by-truck"/.test(source) && !/viewAllHref="\/fuel\/by-truck"/.test(source)) {
+  // 443.280 FULL — diesel roster in FuelBoardSection (docs/design/v3/Fuel Diesel by truck).
+  if (!/<FuelBoardSection\b/.test(source) || !/Diesel by truck/.test(source)) {
+    errors.push("FuelHome.tsx must wrap diesel-by-truck in FuelBoardSection");
+  }
+  if (
+    !/to="\/fuel\/by-truck"/.test(source) &&
+    !/viewAllHref="\/fuel\/by-truck"/.test(source) &&
+    !/navigate\(["']\/fuel\/by-truck["']\)/.test(source)
+  ) {
     errors.push("FuelHome.tsx must link diesel View all to /fuel/by-truck");
   }
   if (!/lovesSyncQuery\.isError[\s\S]{0,240}<ListErrorBanner[\s\S]{0,180}lovesSyncQuery\.refetch\(\)/.test(source)) {
@@ -376,7 +384,7 @@ function selftest() {
     export function FuelHomePage() {
       getFuelDashboard(id);
       fetchDieselByTruckAggregate(id);
-      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelKpiRow /><MoneyListToolbar /><ParityTable title="Diesel by truck" /><Link to="/fuel/by-truck" /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
+      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelKpiRow /><MoneyListToolbar /><FuelBoardSection title="Diesel by truck" onViewAll={() => navigate("/fuel/by-truck")} /><ParityTable title="Diesel by truck" /><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
     }
   `;
   const bad = `
@@ -404,7 +412,7 @@ function selftest() {
   }
   if (!ok) process.exit(1);
   const leftover = computeFailures(
-    `getFuelDashboard FuelKpiRow FuelFraudAlertsKpiCard RelayHistoryImport MoneyListToolbar ParityTable Diesel by truck fetchDieselByTruckAggregate to="/fuel/by-truck" lovesSyncQuery.isError <ListErrorBanner lovesSyncQuery.refetch()\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+    `getFuelDashboard FuelKpiRow FuelFraudAlertsKpiCard RelayHistoryImport MoneyListToolbar FuelBoardSection ParityTable Diesel by truck fetchDieselByTruckAggregate navigate("/fuel/by-truck") lovesSyncQuery.isError <ListErrorBanner lovesSyncQuery.refetch()\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
   );
   if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
     console.error("SELFTEST FAIL — leftover plant escaped", leftover);
