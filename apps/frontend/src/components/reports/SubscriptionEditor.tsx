@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "../Button";
+import { Modal } from "../Modal";
 import { TimePicker } from "../forms/TimePicker";
 import { SelectCombobox } from "../Combobox";
 
@@ -102,15 +103,8 @@ export function SubscriptionEditor({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex overflow-y-auto bg-black/40 p-4"
-      data-testid="subscription-editor"
-    >
-      <div className="mx-auto w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-xl">
-        <h2 className="text-page-title font-semibold text-[#0F1219]">
-          {mode === "edit" ? "Edit subscription" : "Add subscription"}
-        </h2>
-        <div className="mt-4 space-y-3 text-xs">
+    <Modal open={open} onClose={onClose} title={mode === "edit" ? "Edit subscription" : "Add subscription"} size="sm" data-testid="subscription-editor">
+        <div className="space-y-3 text-xs">
           <label className="block">
             <span className="font-medium text-[#1F2A44]">Report</span>
             <SelectCombobox
@@ -234,7 +228,6 @@ export function SubscriptionEditor({
             {mode === "edit" ? "Save changes" : "Add subscription"}
           </Button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

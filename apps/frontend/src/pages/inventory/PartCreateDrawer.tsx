@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { apiRequest } from "../../api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
 import { Button } from "../../components/Button";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/EntityPicker";
 import { SelectCombobox } from "../../components/Combobox";
@@ -96,19 +96,9 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
 
   const canSubmit = Boolean(formData.name.trim() && formData.category.trim());
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative flex h-full w-full max-w-lg flex-col bg-white shadow-xl overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h2 className="text-page-title font-semibold">+ Create part</h2>
-          <button onClick={onClose} className="rounded-sm p-1 hover:bg-gray-100">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <form
+    <ParityDrawer open={isOpen} title="+ Create part" onClose={onClose}>
+      <form
           onSubmit={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -235,8 +225,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
               Save
             </Button>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </ParityDrawer>
   );
 }

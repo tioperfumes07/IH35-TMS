@@ -1,7 +1,8 @@
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { formatPersonName } from "../../lib/formatPersonName";
+import { Modal } from "../Modal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   geocodeDispatchLoadStops,
@@ -102,35 +103,10 @@ function missingRequiredAppointments(stops: StopsRecordStop[]): Array<{ label: s
 
 // Every box is a drill-down pop-up (owner: "i want all those to pop up just like here when we click").
 function StopsPopup({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
-      role="dialog"
-      aria-modal="true"
-      data-testid="stops-record-popup"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-sm border border-gray-200 bg-white p-4 text-xs shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-xs font-semibold text-[#0F1219]">{title}</div>
-          <button type="button" className="text-gray-400 hover:text-gray-700" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
+    <Modal open={true} onClose={onClose} title={title} size="sm" data-testid="stops-record-popup">
+      {children}
+    </Modal>
   );
 }
 

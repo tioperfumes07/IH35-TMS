@@ -71,6 +71,7 @@ import {
 } from "@ih35/shared-types";
 import type { OfficeTransitionButton } from "@ih35/shared-types";
 import { LoadStatusChanger } from "./LoadStatusChanger";
+import { Modal } from "../Modal";
 
 const tabs = [
   "Overview",
@@ -882,26 +883,20 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
             ) : null}
           </div>
         </header>
-        {statPop && ldt0.popups[statPop] ? (
-          <div className="fixed inset-0 z-[212] flex items-start justify-center bg-black/30 p-6" onClick={() => setStatPop(null)} data-testid="ldt0-stat-popup">
-            <div className="mt-16 w-full max-w-md rounded-sm border border-gray-200 bg-white shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-              <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2">
-                <h3 className="text-xs font-semibold uppercase text-[#4B5563]">{ldt0.popups[statPop].title}</h3>
-                <button type="button" className="text-gray-400 hover:text-gray-700" onClick={() => setStatPop(null)} aria-label="Close">×</button>
-              </div>
-              <table className="w-full text-xs">
-                <tbody>
-                  {ldt0.popups[statPop].rows.map(([k, v]) => (
-                    <tr key={k} className="border-b border-gray-100 last:border-0">
-                      <td className="px-4 py-1.5 text-gray-500">{k}</td>
-                      <td className="px-4 py-1.5 text-right font-medium text-[#0F1219]">{v}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : null}
+        <Modal open={Boolean(statPop && ldt0.popups[statPop])} onClose={() => setStatPop(null)} title={statPop && ldt0.popups[statPop] ? ldt0.popups[statPop].title : ""} size="sm" data-testid="ldt0-stat-popup">
+          {statPop && ldt0.popups[statPop] ? (
+            <table className="w-full text-xs">
+              <tbody>
+                {ldt0.popups[statPop].rows.map(([k, v]) => (
+                  <tr key={k} className="border-b border-gray-100 last:border-0">
+                    <td className="px-4 py-1.5 text-gray-500">{k}</td>
+                    <td className="px-4 py-1.5 text-right font-medium text-[#0F1219]">{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : null}
+        </Modal>
 
         <div className={isPage ? "p-4" : "min-h-0 flex-1 overflow-y-auto p-4"} data-testid="load-detail-drawer-scroll-body">
           {activeTab === "Overview" ? (

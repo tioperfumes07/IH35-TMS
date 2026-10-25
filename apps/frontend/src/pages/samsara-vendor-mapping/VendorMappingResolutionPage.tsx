@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
+import { Modal } from "../../components/Modal";
 import { listVendors } from "../../api/mdata";
 import {
   confirmVendorNameMismatch,
@@ -374,10 +375,9 @@ export function VendorMappingResolutionPage() {
         </>
       )}
 
-      {draft ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xl">
-            <div className="mb-3 text-xs font-semibold text-[#0F1219]">{draft.label}</div>
+      <Modal open={Boolean(draft)} onClose={() => setDraft(null)} title={draft?.label ?? "Resolution"} size="sm">
+        {draft ? (
+          <>
 
             {draft.type === "link" ? (
               <div className="mb-3 text-xs text-[#4B5563]">
@@ -462,9 +462,9 @@ export function VendorMappingResolutionPage() {
                 Confirm resolution
               </Button>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </Modal>
     </div>
   );
 }
