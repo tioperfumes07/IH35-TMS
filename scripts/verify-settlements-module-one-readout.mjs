@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["settlements"],"cols":["connectivity","settlement"],"leaves":["settlements.list","settlements.panel.tours"],"task":"SETL-MOD-01-ONE-READOUT","vertical":"column-wave"} */
 // SETL-MOD-01 guard (ROUND 9, owner "get to work on the real settlements module"). The SETTLEMENTS
 // module list must read the SAME readout as the Load-costs Pre-Settlement / Settlement tabs:
 // GET /api/v1/driver-finance/tours via listTours() (api/tourReadout.ts), one row per tour, expanded
