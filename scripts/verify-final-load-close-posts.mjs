@@ -30,6 +30,14 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const LABEL = "verify-final-load-close-posts";
 const DELIVERY_STATUSES = ["delivered_pending_docs", "completed_docs_received", "invoiced", "closed", "paid"];
 
+// LEAD 443.339 — R12 (owner 2026-10-11): the after-close poster leaves the NET open on A/P (never a bank credit
+// with no bank line). postLoadBookendedSettlementGlAfterClose must pass leaveNetOpen: true.
+export function r12Problems(src) {
+  const fn = src.match(/export async function postLoadBookendedSettlementGlAfterClose\([\s\S]*?\n}\n/);
+  if (!fn) return ["postLoadBookendedSettlementGlAfterClose not found in settlement-payrun-close.service.ts — re-point this guard"];
+  return /leaveNetOpen:\s*true/.test(fn[0]) ? [] : ["postLoadBookendedSettlementGlAfterClose does not pass leaveNetOpen: true (R12 — net pay credited the bank with no bank line)"];
+}
+
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -95,6 +103,10 @@ if (process.argv.includes("--selftest")) {
     if (!/export async function postFinalLoadSettlementsGl/.test(src)) {
       problems.push("STATIC: postFinalLoadSettlementsGl not exported from settlement-payrun-close.service.ts");
     }
+    // R12 arm: the real source is clean AND a planted drop of leaveNetOpen is caught.
+    const broken = src.replace(/\n\s*leaveNetOpen: true,\n/, "\n");
+    if (r12Problems(src).length !== 0) problems.push(`R12: ${r12Problems(src)[0]}`);
+    if (broken === src || r12Problems(broken).length !== 1) problems.push("R12 selftest: a dropped leaveNetOpen: true was NOT caught");
   }
 
   if (problems.length) {
@@ -128,6 +140,7 @@ if (!existsSync(closer)) {
   if (!/export async function postFinalLoadSettlementsGl/.test(src)) {
     staticProblems.push("postFinalLoadSettlementsGl is not exported from settlement-payrun-close.service.ts");
   }
+  staticProblems.push(...r12Problems(src));
 }
 
 if (staticProblems.length) {
@@ -191,6 +204,15 @@ try {
     [USMCA, DELIVERY_STATUSES]
   );
 
+  // LEAD 443.339 — R12 live arm: 0 system "net driver pay" ACH bill payments (since 10-24) with no bank line.
+  const ach = await client.query(
+    `SELECT bp.id::text, bp.memo FROM accounting.bill_payments bp
+      WHERE bp.operating_company_id = $1::uuid AND bp.revoked_at IS NULL AND bp.status = 'posted'
+        AND bp.memo LIKE 'Settlement % — net driver pay%' AND bp.created_at >= '2026-10-24' AND bp.payment_method = 'ach'
+        AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions bt WHERE bt.matched_bill_payment_id = bp.id AND bt.voided_at IS NULL)`,
+    [USMCA]
+  );
+
   await client.query("ROLLBACK");
   client.release();
   await pool.end();
@@ -203,7 +225,12 @@ try {
     process.exit(1);
   }
 
-  console.log(`${LABEL}: live OK — 0 load_bookended settlements stuck open after delivery`);
+  if (ach.rows.length > 0) {
+    console.error(`${LABEL} FAIL (live): ${ach.rows.length} system net-pay ACH bill payment(s) with no bank line (R12): ${ach.rows.map((x) => x.memo).join("; ")}`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL}: live OK — 0 load_bookended settlements stuck open after delivery; 0 R12 net-pay ACH payments without a bank line`);
 } catch (err) {
   try { await client.query("ROLLBACK"); } catch (_) {}
   client.release();

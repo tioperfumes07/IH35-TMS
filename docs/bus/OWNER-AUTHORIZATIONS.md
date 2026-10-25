@@ -8091,4 +8091,44 @@ scope: USMCA ONLY — post the GL of settlements closed without posting: P-0113,
 action: OWNER_AUTH_ID=AUTH-463 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-cc1-post-unposted-settlements-eng01.mts --apply --only=P-0113,P-0117
 rehearsal: fork br-winter-butterfly-akf3anas 18:57-18:58Z — 3 JEs, escrow only; P-0119 missing the $10.00 admin fee → held
 result: COMMITTED 2026-10-24 ~19:02Z — P-0113 JE b3744e47-e094-4c27-8f5f-99596b3803ef Dr 2000 50.00 / Cr 2100-00-026 50.00; P-0117 JE dab06366-9a16-4c60-b2fc-8a9e975639e8 Dr 2000 25.00 / Cr 2100-00-041 25.00; USMCA TB 0 on 8,075 postings
+status: DONE — P-0119 COMMITTED 2026-10-24 ~21:34Z after AUTH-466 removed the voided duplicate fee: JE a37d162b-4769-41b9-831c-c806364bbe0c Dr 2000 25.00 / Cr 2100-00-024 25.00 (rehearsed on fork br-wild-mouse-ak0b4mjm first); verify-settlement-close-must-post-gl LIVE PASS 0 of 85
+
+## AUTH-466
+issued_at: 2026-10-24T21:33:00Z
+issued_by: Lead 443.338 (P-0119 voided duplicate fee). Recorded by Lead
+owner_quotes: "find true root problem, the bess possible soultion, fix updage or upgrade or recreate engines" (owner 2026-10-24 1:25 PM CT); "get all done now" (owner 2026-10-24)
+scope: USMCA ONLY — P-0119 (Angel Alfonso Sosa Perez; closed, unposted, unpaid): deactivate line 2b56ad02 "Admin fee - GAS" $10.00 that applied deduction 68041143, voided 10-12 as the duplicate of ee43793c (already taken on 5769); release the voided deduction from P-0119; recompute the header through recomputeSettlementHeader.
+action: OWNER_AUTH_ID=AUTH-466 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-lead-443338-p0119-drop-voided-duplicate-fee.mts --apply
+rehearsal: fork br-wild-mouse-ak0b4mjm — repair then ENG-01 post: JE Dr 2000 25.00 / Cr 2100-00-024 25.00 balanced
+result: COMMITTED 2026-10-24 ~21:33Z — P-0119 deductions 35.00 → 25.00, net pay 457.80 → 467.80 (the driver is owed $467.80, not $457.80); verify-voided-deduction-never-applied live 0
+follow-up: 2026-10-24 ~00:08Z verify-purge-window-state found line 2b56ad02 voided (voided_at set when the line was created from the already-voided deduction) with void_reason NULL; Lead completed void_reason on that same row only ("AUTH-466: duplicate Admin fee - GAS on P-0119 (source deduction 68041143 voided); never applied"). verify-purge-window-state live 0. Script now sets void_reason too.
+status: DONE
+
+## AUTH-467
+issued_at: 2026-10-24T21:55:00Z
+issued_by: Lead 443.339 (ENG-61 + R12). Recorded by Lead
+owner_quotes: "You do not touch banking ... I match later in banking" (owner ruling R12, 2026-10-11); "efix and get it done, lets go" (owner 2026-10-24 4:36 PM CT)
+scope: USMCA ONLY — (1) close and post 13699 (P-0120, Eduardo Azael Flores Ortiz) and 13700 (P-0122, Rafael — salaried, $0 by the 2026-09-28 ruling) whose final-load close had rolled back (ENG-61); (2) void the five system "net driver pay" ACH bill payments written today with no bank line (P-0113 781.55 + 634.92, P-0117 329.51, P-0119 467.80, P-0120 558.83 = $2,772.61) so the nets sit open on A/P per R12; settlements relabelled open_ap_unpaid.
+action: npx tsx scripts/ops/2026-10-24-lead-443339-close-and-post-13699-13700.mts --apply; OWNER_AUTH_ID=AUTH-467 npx tsx scripts/ops/2026-10-24-lead-443339-void-net-pay-ach-to-open-ap.mts --apply
+rehearsal: forks br-shy-glade-ak3n4z44 (close: P-0120 net 558.83 posted, P-0122 $0 closed+posted, TB 0, 5 guards PASS) and br-plain-art-akikq511 (void: TB 0, A/P ties) — both deleted
+result: COMMITTED 2026-10-24 ~21:49Z (close) and ~21:55Z (void) — 1000 Bank of America back to -88,433.89 (the morning tie-out GL); A/P control 129,216.53 = open bills 129,216.53 (variance 0); verify-void-is-whole 0 new
+status: DONE
+
+## AUTH-468
+issued_at: 2026-10-24T18:40:00Z
+issued_by: Lead (13699 correction to the owner's AlwaysTrack Edit Load screen). Recorded by Lead
+owner_quotes: "get all those fixed now. find true root problem, the bess possible soultion" (owner 2026-10-24 1:25 PM CT, with the AlwaysTrack 13699 screenshot); "13699 ok, then it is idpatch mistake" (owner 2026-10-24)
+scope: USMCA ONLY — load 13699: customer EGRO TRANSPORT LLC (146067cf), charges $3,100.00, W/O L28591 through updateDispatchLoad; delivery stop 83a71dec → COPAMEX, 195 S Euclid Ave, Bradley, IL 60915, city-center coordinates cleared for the geofence-sync re-geocode. No invoice existed.
+action: OWNER_AUTH_ID=AUTH-468 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-lead-13699-correct-from-alwaystrack.mts --apply
+result: COMMITTED 2026-10-24 (afternoon) — recorded after the fact by Lead; the script now refuses --apply without this entry
 status: PARTIAL (P-0119 pending ENG-01b)
+
+## AUTH-465
+issued_at: 2026-10-24T21:20:00Z
+issued_by: Lead 443.333 (Legal/Insurance test-record purge). Recorded by Lead
+owner_quotes: "those lawsuits are tests" (owner 2026-10-24 ~4:00 PM CT); "test recrods shuold be deleted permanently" (owner 2026-10-22 3:36 PM CT); "if you recommend deleting, delete" (owner 2026-10-24)
+scope: USMCA ONLY — every coder TEST record in Legal + Insurance: insurance.lawsuit 2, legal.matters 18 (+26 events, 1 document, 6 deadlines), insurance.claim 7, safety.accident_reports 3 (+2 TEST cost lines), insurance.policy 5 cancelled SAMPLE/TEST (+4 policy units, 2 payment schedules, 1 refund obligation, 2 roster findings). KEPT: real active policies 437540, 437539, CIMD-2026-0720.
+action: OWNER_AUTH_ID=AUTH-465 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-lead-443333-purge-test-legal-insurance.mts --apply
+rehearsal: dry run on prod (purge executed, ROLLBACK) — 79 rows, books unchanged, 3 real policies kept
+result: COMMITTED 2026-10-24 ~21:20Z — audit.record_deletions AUTH-465 = 79 rows; USMCA left: lawsuits 0, matters 0, claims 0, accident reports 0, policies 3 (the real ones); books before = after: 3,242 JEs, 8,075 postings, 1,554 bank lines, 1,294 expenses, 189 bills
+status: DONE

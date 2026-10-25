@@ -23,3 +23,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const guardPath = resolve(here, "..", "verify-settlement-deduction-lines-have-deduction-rows.mjs");
 
 execFileSync(process.execPath, [guardPath, ...process.argv.slice(2)], { stdio: "inherit" });
+
+// LEAD 443.338 — same invariant family (a settlement deduction line must stand on a live deduction row): a VOIDED
+// deduction is never applied at close (P-0119 charged the voided duplicate 68041143). Runs in this step so CI executes it.
+const voidedGuard = resolve(here, "..", "verify-voided-deduction-never-applied.mjs");
+execFileSync(process.execPath, [voidedGuard, ...process.argv.slice(2)], { stdio: "inherit" });
