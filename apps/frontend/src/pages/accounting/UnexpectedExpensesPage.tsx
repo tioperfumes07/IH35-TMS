@@ -1,5 +1,5 @@
 /**
- * ROUND 443.267 — Accounting › Unexpected expenses.
+ * ROUND 443.267 / 443.280 — Accounting › Unexpected expenses (board-faithful, BoardSection).
  * Board: 10-22-2026-LEAD-MOD-DESIGN-V3-Accounting-Unexpected.dc.html
  * Live pending bank debit candidates (shop / tire / tow / fine / lumper / medical).
  * Link → Banking For-review with txn_id. No mock rows.
@@ -14,7 +14,7 @@ import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { V3, V3_TABLE } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 
 function mmDd(iso: string): string {
   const [, m, d] = iso.split("-");
@@ -124,7 +124,8 @@ export function UnexpectedExpensesPage() {
 
   const duplicateSub = useMemo(() => {
     if (!kpis || kpis.duplicate_count === 0) return "none";
-    return kpis.duplicate_amounts_cents.map((c) => `$${formatPlainDollars(c)}`).join(" · ");
+    // Board CashFlow-Unexpected KPI sub: "$460.01 - $155.86" (hyphen, not middle-dot).
+    return kpis.duplicate_amounts_cents.map((c) => `$${formatPlainDollars(c)}`).join(" - ");
   }, [kpis]);
 
   const goBanking = () => navigate("/banking?type=uncategorized");
@@ -201,7 +202,7 @@ export function UnexpectedExpensesPage() {
             alignItems: "start",
           }}
         >
-          <V3Panel
+          <BoardSection
             title={`Candidates from the bank — ${report?.month_label ?? "Month"}`}
             onViewAll={goBanking}
             footer="Found by payee name only — nothing is categorized or matched; a person confirms each line."
@@ -284,9 +285,9 @@ export function UnexpectedExpensesPage() {
                 </tbody>
               </table>
             </div>
-          </V3Panel>
+          </BoardSection>
 
-          <V3Panel title="By kind" onViewAll={goBanking} testId="unexpected-by-kind-panel">
+          <BoardSection title="By kind" onViewAll={goBanking} testId="unexpected-by-kind-panel">
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }} data-testid="unexpected-by-kind-table">
                 <thead>
@@ -317,7 +318,7 @@ export function UnexpectedExpensesPage() {
                 </tbody>
               </table>
             </div>
-          </V3Panel>
+          </BoardSection>
         </div>
       </div>
     </AccountingSubNavWrapper>
