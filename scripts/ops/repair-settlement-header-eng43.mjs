@@ -18,12 +18,13 @@
  *
  * Usage:
  *   node scripts/ops/repair-settlement-header-eng43.mjs            # dry run
- *   node scripts/ops/repair-settlement-header-eng43.mjs --apply    # apply
+ *   OWNER_AUTH_ID=AUTH-NNN node scripts/ops/repair-settlement-header-eng43.mjs --apply
  */
-import { createRequire } from "module";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "module";
+
 const require = createRequire(import.meta.url);
 const { Pool } = require("pg");
 const pgOpts = require("../lib/pg-connection-options.cjs");
