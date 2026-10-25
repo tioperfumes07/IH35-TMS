@@ -112,11 +112,34 @@ export function EscrowRegisterPage() {
   }, [tlQ.isError, balQ.isError, releaseEligibleDate]);
 
   const rows: RegisterRow[] = useMemo(() => {
+    // Design N2 (Settlements-EscrowRegister.dc.html): first line is "Opening balance (historical)"
+    // so running balance ties to Held = opening + signed timeline activity.
     const timeline = [...(tlQ.data?.timeline ?? [])].sort((a, b) =>
       String(a.created_at).localeCompare(String(b.created_at)),
     );
-    let run = 0;
-    const built: RegisterRow[] = [];
+    let activityNet = 0;
+    for (const t of timeline) {
+      const amt = Number(t.amount ?? 0);
+      const typ = String(t.entry_type ?? "").toLowerCase();
+      const isOut = typ === "release" || typ === "forfeiture" || amt < 0;
+      const abs = Math.abs(amt);
+      activityNet += isOut ? -abs : abs;
+    }
+    const openingAmt = Number.isFinite(held) ? held - activityNet : 0;
+    let run = openingAmt;
+    const openingDate = timeline[0]?.created_at ?? "";
+    const built: RegisterRow[] = [
+      {
+        id: `opening-balance-${driverId || "driver"}`,
+        date: openingDate,
+        source: "Opening balance (historical)",
+        sourceHref: null,
+        type: "Opening",
+        inAmt: openingAmt >= 0 ? openingAmt : null,
+        outAmt: openingAmt < 0 ? Math.abs(openingAmt) : null,
+        balance: run,
+      },
+    ];
     for (const t of timeline) {
       const amt = Number(t.amount ?? 0);
       const typ = String(t.entry_type ?? "").toLowerCase();
@@ -149,7 +172,7 @@ export function EscrowRegisterPage() {
       });
     }
     return built.reverse();
-  }, [tlQ.data?.timeline]);
+  }, [tlQ.data?.timeline, held, driverId]);
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();

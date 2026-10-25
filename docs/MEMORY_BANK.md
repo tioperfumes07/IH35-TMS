@@ -392,6 +392,27 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   V3KpiTile + data-fuel-v3-kpis + no DrillKpiCard. No new EVEN claim.
 - **Still open under 443.250:** Settlements sub-boards · Fuel sub-boards · Customers/Vendors
   boards · design-system sweep · Chrome proof. Full DONE not claimed.
+- **SUPERSEDED for Fuel Home board shape by ROUND 443.326** (below) — Home is now KPI + MLT +
+  diesel-by-truck ParityTable, not metric-as-rows / panel-stack.
+
+### Active Architectural Decisions — V3 board grammar + Escrow N2 (Cursor, ROUND 443.326, 2026-10-24)
+
+- **DoD (23 audit surfaces):** each mounts kpiStrip (`V3KpiTile` / `moneyListKpiCard` / `kpiStrip=`)
+  + `MoneyListToolbar` + `ParityTable` JSX (or Fuel History `FuelTransactionsTable`), and must not
+  remount the legacy chrome listed per surface. Guard:
+  `scripts/verify-v3-board-grammar-every-surface.mjs` (step **18800**), ratchet `FAILING_SURFACE_BASELINE = 0`.
+  JSX mount required — import/comment-only `ParityTable` is theater.
+- **Fuel Home rebuild:** `FuelKpiRow` + fraud/overage KPIs + MLT + diesel-by-truck `ParityTable`
+  (`fetchDieselByTruckAggregate`). No `V3Panel` on Home. Relay import stays a bordered section.
+- **Fuel Planner History:** board = KPI strip + MLT + `FuelTransactionsTable` (`fuel-history-v3-board`);
+  not panel-wrapped. Settings / Questions / Savings / Compliance child panels may still use `V3Panel`
+  (443.250 form/detail chrome; separate fuel guards).
+- **Escrow Register design N2:** first timeline row is **Opening balance (historical)** =
+  `held − signed(activityNet)` so running balance ties to held. Source label locked; Type `Opening`.
+- **Settlement statement N3:** linked records already expose `${n} fills →` and `Bank line →`.
+- **VendorBillCreate:** intentional session-shell roster (orders SHELL-ONLY) — form stays in ParityDrawer.
+- **Still outside this ratchet (not half of the 23):** Fuel Cards / Integrity / Relay Unmatched /
+  Relay Wallet — still 443.250 `V3Panel` chrome; other fuel guards require those wraps.
 
 ### Active Architectural Decisions — Customers home V3 (Cursor, ROUND 443.250, 2026-10-23)
 

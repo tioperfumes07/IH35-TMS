@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getFuelDashboard, getLovesSyncStatus } from "../../api/fuelPlanner";
@@ -8,14 +8,16 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { FuelFraudBadge } from "../../components/fuel/FuelFraudBadge";
 import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
 import { FuelKpiRow } from "./components/FuelKpiRow";
-import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
-import { FuelDieselByTruckPanel } from "./components/FuelDieselByTruckPanel";
 import { RelayHistoryImport } from "./components/RelayHistoryImport";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-import type { FuelDashboard } from "../../api/fuelPlanner";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { formatMoneyCents } from "../../lib/formatMoney";
+import { entityLabel } from "../../lib/entity-label";
+import { fetchDieselByTruckAggregate, type DieselByTruckRow } from "./fuelDieselByTruck";
+import { FUEL_BOARD_PERIOD_OPTIONS, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
+import { V3Segmented } from "../../components/v3/V3Segmented";
 
 type FraudSummary = {
   open_critical: number;
@@ -110,41 +112,19 @@ export function FuelCardOverageKpiCard() {
   );
 }
 
-type FuelMetricRow = { id: string; metric: string; value: string };
-
-function fuelMetricValue(raw: number | null | undefined, formatter: (n: number) => string): string {
-  if (raw === null || raw === undefined) return "—";
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return "—";
-  return formatter(n);
-}
-
-function buildFuelMetricRows(dashboard: FuelDashboard | undefined): FuelMetricRow[] {
-  if (!dashboard) return [];
-  return [
-    { id: "mtd_spend", metric: "MTD Spend", value: fuelMetricValue(dashboard.mtd_spend, (n) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`) },
-    { id: "fleet_mpg", metric: "Fleet MPG", value: fuelMetricValue(dashboard.fleet_mpg, (n) => n.toFixed(1)) },
-    { id: "avg_price", metric: "Avg $/gal", value: fuelMetricValue(dashboard.avg_price_per_gallon, (n) => `$${n.toFixed(2)}`) },
-    { id: "mtd_savings", metric: "MTD Savings", value: fuelMetricValue(dashboard.mtd_savings, (n) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`) },
-    { id: "compliance", metric: "Compliance %", value: fuelMetricValue(dashboard.compliance_pct, (n) => `${n.toFixed(1)}%`) },
-    { id: "active_plans", metric: "Active plans", value: fuelMetricValue(dashboard.active_plans, (n) => String(Math.round(n))) },
-  ];
-}
-
-const FUEL_METRIC_COLUMNS: ParityColumn<FuelMetricRow>[] = [
-  { key: "metric", label: "Metric", sortable: true, sortValue: (row) => row.metric, render: (row) => row.metric },
-  { key: "value", label: "Value", sortable: true, sortValue: (row) => row.value, render: (row) => row.value },
-];
+type DieselBoardRow = DieselByTruckRow & { id: string };
 
 /**
- * Fuel Home tab — wires live planner dashboard KPIs (f-01-fuel-home-stub).
- * Backend GET /api/v1/fuel/planner/dashboard already computes mtd_spend / fleet_mpg / etc.
- * Keeps fraud KPI + Relay import (additive-only). ROUND 443.250: V3 board chrome.
+ * Fuel Home — ROUND 443.326 full board rebuild.
+ * KPI strip = planner dashboard engine (FuelKpiRow). Roster = diesel-by-truck ParityTable
+ * (same aggregate as the old panel). No metric-as-rows theater, no panel-stack chrome.
  */
 export function FuelHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [metricSearch, setMetricSearch] = useState("");
+  const [search, setSearch] = useState("");
+  const [period, setPeriod] = useState<FuelBoardPeriodId>("oct");
+  const range = fuelBoardPeriodRange(period);
 
   const dashboardQuery = useQuery({
     queryKey: ["fuel", "planner", "dashboard", companyId],
@@ -157,13 +137,85 @@ export function FuelHomePage() {
     enabled: Boolean(companyId),
     refetchInterval: 60_000,
   });
+  const dieselQuery = useQuery({
+    queryKey: ["fuel", "board", "diesel-by-truck", companyId, range.from, range.to],
+    queryFn: () => fetchDieselByTruckAggregate(companyId, range.from, range.to),
+    enabled: Boolean(companyId),
+  });
 
-  const metricRows = useMemo(() => buildFuelMetricRows(dashboardQuery.data), [dashboardQuery.data]);
-  const filteredMetricRows = useMemo(() => {
-    const q = metricSearch.trim().toLowerCase();
-    if (!q) return metricRows;
-    return metricRows.filter((row) => row.metric.toLowerCase().includes(q) || row.value.toLowerCase().includes(q));
-  }, [metricRows, metricSearch]);
+  const dieselRows = useMemo((): DieselBoardRow[] => {
+    const rows = (dieselQuery.data?.rows ?? []).map((r) => ({
+      ...r,
+      id: r.unit_id ?? `unassigned-${r.unit_number}`,
+    }));
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => r.unit_number.toLowerCase().includes(q));
+  }, [dieselQuery.data?.rows, search]);
+
+  const dieselColumns = useMemo<ParityColumn<DieselBoardRow>[]>(
+    () => [
+      {
+        key: "unit_number",
+        label: "Unit",
+        sortable: true,
+        sortValue: (r) => r.unit_number,
+        render: (r) =>
+          r.unit_id ? (
+            <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} />
+          ) : (
+            r.unit_number || "—"
+          ),
+      },
+      {
+        key: "spend_cents",
+        label: "Spend",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => r.spend_cents,
+        render: (r) => formatMoneyCents(r.spend_cents),
+      },
+      {
+        key: "gallons",
+        label: "Gallons",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => r.gallons,
+        render: (r) => (Number.isFinite(r.gallons) ? r.gallons.toFixed(1) : "—"),
+      },
+      {
+        key: "per_gal",
+        label: "$/gal",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => (r.gallons > 0 ? r.spend_cents / r.gallons : 0),
+        render: (r) =>
+          r.gallons > 0 ? formatMoneyCents(Math.round(r.spend_cents / r.gallons)) : "—",
+      },
+      {
+        key: "fill_count",
+        label: "Fills",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => r.fill_count,
+        render: (r) => String(r.fill_count),
+      },
+      {
+        key: "load_count",
+        label: "Loads",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => r.load_count,
+        render: (r) => String(r.load_count),
+      },
+    ],
+    [],
+  );
 
   if (!companyId) {
     return (
@@ -179,29 +231,6 @@ export function FuelHomePage() {
 
   return (
     <div className="space-y-3" data-testid="fuel-home-page" style={{ fontFamily: V3.font }}>
-      <FuelBoardKpiStrip companyId={companyId} />
-      <MoneyListToolbar
-        search={metricSearch}
-        onSearchChange={setMetricSearch}
-        searchPlaceholder="Search dashboard metrics"
-        onClearAll={() => setMetricSearch("")}
-        activeFilterCount={0}
-        testIdPrefix="fuel-home-metrics"
-      >
-        <span className="text-xs text-gray-500">Planner dashboard</span>
-      </MoneyListToolbar>
-      <ParityTable<FuelMetricRow>
-        title="Dashboard metrics"
-        columns={FUEL_METRIC_COLUMNS}
-        rows={dashboardQuery.isError ? [] : filteredMetricRows}
-        rowKey={(row) => row.id}
-        loading={dashboardQuery.isLoading}
-        emptyText={dashboardQuery.isError ? "Unable to load fuel dashboard metrics." : "No metrics yet."}
-        suppressToolbarSearch
-        storageKey="fuel-home-dashboard-metrics"
-        tableTestId="fuel-home-metrics-table"
-      />
-      <FuelDieselByTruckPanel companyId={companyId} maxRows={5} viewAllHref="/fuel/by-truck" />
       <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
       {dashboardQuery.isError ? (
         <ListErrorBanner onRetry={() => void dashboardQuery.refetch()} />
@@ -209,6 +238,7 @@ export function FuelHomePage() {
       {lovesSyncQuery.isError ? (
         <ListErrorBanner message="Love's price sync status could not be loaded." onRetry={() => void lovesSyncQuery.refetch()} />
       ) : null}
+
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 8, maxWidth: 640 }}
         data-testid="fuel-home-secondary-kpis"
@@ -216,11 +246,53 @@ export function FuelHomePage() {
         <FuelFraudAlertsKpiCard />
         <FuelCardOverageKpiCard />
       </div>
-      <V3Panel title="Relay history import" subtitle="company-scoped CSV" testId="fuel-home-relay-import-panel">
-        <div style={{ padding: "10px 12px" }}>
-          <RelayHistoryImport operatingCompanyId={companyId} />
+
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search unit…"
+        onClearAll={() => setSearch("")}
+        activeFilterCount={search.trim() ? 1 : 0}
+        testIdPrefix="fuel-home"
+      >
+        <V3Segmented
+          value={period}
+          options={FUEL_BOARD_PERIOD_OPTIONS}
+          onChange={setPeriod}
+          testId="fuel-home-diesel-period"
+        />
+        <Link
+          to="/fuel/by-truck"
+          className="text-xs font-semibold"
+          style={{ color: "#1D4ED8" }}
+          data-testid="fuel-home-diesel-view-all"
+        >
+          View all →
+        </Link>
+      </MoneyListToolbar>
+
+      {dieselQuery.isError ? <ListErrorBanner onRetry={() => void dieselQuery.refetch()} /> : null}
+      <ParityTable<DieselBoardRow>
+        title="Diesel by truck"
+        columns={dieselColumns}
+        rows={dieselRows}
+        rowKey={(r) => r.id}
+        loading={dieselQuery.isLoading}
+        emptyText="No diesel spend for this period."
+        suppressToolbarSearch
+        storageKey="fuel-home-diesel-by-truck"
+        tableTestId="fuel-home-diesel-table"
+      />
+
+      <div
+        className="rounded-sm border border-gray-200 bg-white p-3"
+        data-testid="fuel-home-relay-import"
+      >
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+          Relay history import
         </div>
-      </V3Panel>
+        <RelayHistoryImport operatingCompanyId={companyId} />
+      </div>
     </div>
   );
 }

@@ -40,8 +40,9 @@ function assertFuelExpenseMapV3(coverageSrc, plannerSrc) {
   if (!/Mapped/.test(coverageSrc) || !/Unmapped/.test(coverageSrc) || !/Categories/.test(coverageSrc)) {
     findings.push(`${coverageRel}: Expense map V3 KPI strip must include Mapped + Unmapped + Categories`);
   }
-  if (!/fuel-expense-map-open-v3-panel/.test(plannerSrc) || !/V3Panel/.test(plannerSrc)) {
-    findings.push(`${plannerRel}: ROUND 443.250 must wrap expense-map open link in V3Panel (fuel-expense-map-open-v3-panel)`);
+  // 443.326 — open-link section may be a bordered <section> (same test id); coverage panel stays V3Panel.
+  if (!/fuel-expense-map-open-v3-panel/.test(plannerSrc)) {
+    findings.push(`${plannerRel}: expense-map open link section must keep test id fuel-expense-map-open-v3-panel`);
   }
   if (!/expense_mapping/.test(plannerSrc) || !/FuelGlMappingCoverage/.test(plannerSrc)) {
     findings.push(`${plannerRel}: expense_mapping tab must keep FuelGlMappingCoverage mount`);

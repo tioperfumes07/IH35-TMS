@@ -43,7 +43,7 @@ const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "SettlementCloseArrivalPage",
     file: "apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx",
-    forbid: ["PageHeader", "NavyPageSubNav"],
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
   },
   {
     id: "CashAdvancesHome",
@@ -138,7 +138,7 @@ const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "FuelHome",
     file: "apps/frontend/src/pages/fuel/FuelHome.tsx",
-    forbid: ["PageHeader"],
+    forbid: ["PageHeader", "V3Panel"],
   },
   {
     id: "BillsPage",
@@ -165,8 +165,12 @@ function hasMoneyListToolbar(src) {
   return /\bMoneyListToolbar\b/.test(src);
 }
 
-function hasParityTable(src) {
-  return /\bParityTable\b/.test(src);
+function hasParityTable(src, surfaceId) {
+  // JSX mount only — import/comment "ParityTable" alone is theater (ROUND 443.326).
+  if (/<ParityTable[\s/<]/.test(src) || /ParityTable\s*</.test(src)) return true;
+  // Fuel history roster: FuelTransactionsTable is the ParityTable wrapper for that surface.
+  if (surfaceId === "FuelPlannerHome" && /\bFuelTransactionsTable\b/.test(src)) return true;
+  return false;
 }
 
 function legacyHits(src, forbid) {
@@ -188,7 +192,7 @@ function evaluateSurface(surface, srcOverride) {
   const reasons = [];
   if (!hasKpiMount(src)) reasons.push("missing kpiStrip/V3KpiTile/moneyListKpiCard");
   if (!hasMoneyListToolbar(src)) reasons.push("missing MoneyListToolbar");
-  if (!hasParityTable(src)) reasons.push("missing ParityTable");
+  if (!hasParityTable(src, surface.id)) reasons.push("missing ParityTable JSX mount");
   const legacy = legacyHits(src, surface.forbid);
   if (legacy.length) reasons.push(`legacy still mounted: ${legacy.join(",")}`);
   return { id: surface.id, file: surface.file, ok: reasons.length === 0, reasons };
