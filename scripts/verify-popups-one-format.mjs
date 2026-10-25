@@ -13,7 +13,8 @@
  *   NOT dialogs (permanent exemptions, named): the mobile sidebar backdrop, the Cmd-K switcher, full-screen media
  *   viewers (photo evidence, dashcam), and the two shells themselves.
  * RULE 2 — a shared <Modal> whose title is a confirm / void / cancel / reason / override / delete / reject decision is
- *   size="sm" (440px). A decision popup is never 672px or page-wide.
+ *   size="sm" (480px per 443.295). A decision popup is never page-wide. Review+decide boards that name
+ *   sizePreset="md"|"lg"|"xl" (Fuel assignment md 720, etc.) are the 443.295 review sizes — not this rule.
  *
  * Run: node scripts/verify-popups-one-format.mjs [--selftest] [--print]
  */
@@ -73,7 +74,9 @@ export function analyse(files, baseline) {
     if (/fixed inset-0/.test(src) && !EXEMPT.has(rel)) overlays.push(rel);
     for (const t of openingTags(src, "Modal")) {
       const title = titleText(t.attrs);
-      if (title && DECISION.test(title) && !FORM.test(title) && !/\bsize="sm"/.test(t.attrs)) {
+      // 443.295 — sizePreset md/lg/xl is the named review+decide width; only bare decision cards must be size="sm".
+      const namedReview = /\bsizePreset=["'](md|lg|xl)["']/.test(t.attrs);
+      if (title && DECISION.test(title) && !FORM.test(title) && !/\bsize="sm"/.test(t.attrs) && !namedReview) {
         const line = src.slice(0, t.index).split("\n").length;
         problems.push(`${rel}:${line} decision popup ${title.slice(0, 70)} is not size="sm" (owner 10-25: small popup, never page-wide)`);
       }

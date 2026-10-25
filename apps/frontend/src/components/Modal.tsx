@@ -53,9 +53,11 @@ type ModalProps = {
    */
   variant?: "center" | "drawer";
   /**
-   * Owner 10-25: confirm / override / void / reason popups are a SMALL popup (440px), never page-wide.
-   * "sm" = 440px, default = 672px (42rem), `wide` = 72rem. Applied as an inline max-width so no
-   * stylesheet (e.g. the >=1920px responsive-shell dialog rule) can stretch a centered card.
+   * Owner 10-25 / 443.295 popup standard:
+   * - decision popups (`size="sm"`) = 480px (confirm / void / reason)
+   * - default / review+decide (`size="md"` or omitted) = 720px — never 85% of the window
+   * - `wide` stays the rare 960px forms escape hatch (prefer sizePreset="lg")
+   * Applied as an inline max-width so no stylesheet can stretch a centered card.
    */
   size?: "sm" | "md";
 };
@@ -133,8 +135,9 @@ export function Modal({
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const min = MODAL_MIN_BY_PRESET[sizePreset];
-    const fallbackW = Math.min(Math.max(vw * 0.85, min.w), vw * 0.92, MODAL_MAX_DEFAULT_W[sizePreset] ?? Number.POSITIVE_INFINITY);
-    const fallbackH = Math.min(Math.max(vh * 0.72, min.h), vh * 0.92);
+    // 443.295 — default width is the preset cap (sm/md/lg/xl), never 85% of the window.
+    const fallbackW = Math.min(MODAL_MAX_DEFAULT_W[sizePreset], vw * 0.95);
+    const fallbackH = Math.min(Math.max(vh * 0.72, min.h), vh * 0.85);
     const w = Math.max(min.w, Math.min(stored?.w ?? fallbackW, vw * 0.95));
     const h = Math.max(min.h, Math.min(stored?.h ?? fallbackH, vh * 0.95));
     const next = { w, h };
@@ -205,7 +208,11 @@ export function Modal({
     firstInput?.focus();
   }, [open]);
 
-  const centeredMaxWidth = wide ? "min(72rem, calc(100vw - 2rem))" : size === "sm" ? "min(440px, calc(100vw - 2rem))" : "min(42rem, calc(100vw - 2rem))";
+  const centeredMaxWidth = wide
+    ? "min(960px, calc(100vw - 2rem))"
+    : size === "sm"
+      ? "min(480px, calc(100vw - 2rem))"
+      : "min(720px, calc(100vw - 2rem))";
   const panelStyle: CSSProperties | undefined = box
     ? { width: box.w, height: box.h, maxWidth: "min(95vw, calc(100vw - 2rem))", maxHeight: "min(95vh, calc(100dvh - 2rem))" }
     : { maxWidth: centeredMaxWidth };
@@ -252,8 +259,10 @@ export function Modal({
                   box
                     ? "overflow-hidden"
                     : wide
-                      ? "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(72rem,calc(100vw-2rem))]"
-                      : "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))]"
+                      ? "max-h-[min(85vh,calc(100dvh-2rem))] w-full max-w-[min(960px,calc(100vw-2rem))]"
+                      : size === "sm"
+                        ? "max-h-[min(85vh,calc(100dvh-2rem))] w-full max-w-[min(480px,calc(100vw-2rem))]"
+                        : "max-h-[min(85vh,calc(100dvh-2rem))] w-full max-w-[min(720px,calc(100vw-2rem))]"
                 }`
           }
           style={isDrawer ? undefined : panelStyle}
