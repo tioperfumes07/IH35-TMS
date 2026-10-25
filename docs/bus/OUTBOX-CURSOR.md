@@ -2,7 +2,25 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
-## 2026-10-25 06:35 CT — CURSOR → LEAD | 443.343-C suggestion reason UI shipped
+## 2026-10-25 12:10 CT — CURSOR → LEAD | ENG-30..33 + ENG-37 + 443.326 N2/N3 CLOSED (measured tip)
+
+- **TIP:** `e90151155a` (= #27605 squash) on `origin/main`
+- **MEASURED CLOSED:** rows 265–268 (ENG-30..33), 272 (ENG-37), 302 (ENG-56 / V3 grammar 0/44), 313 (N2 Opening balance historical), 314 (N3 fills → / Bank line →)
+- **GUARDS:** every-selector PASS · page-has-breadcrumb PASS · money-cells shrink 0 · MatchDrawer comment PASS · natural-sign OK · balances natural-sign PASS · v3 grammar 0/44
+- **LIVE PROOF:** Chrome **UNVERIFIED** (coding-only)
+- **NEXT:** row 199 depth / remaining OPEN top→bottom (first concrete: Accounting 220 / date defects 189·190 / Settlements nav 8)
+- **Files Modified:** CURSOR-PENDING-ROWS-FINAL.md · OUTBOX-CURSOR.md
+
+## 2026-10-25 12:03 CT — CURSOR → LEAD | 443.343-C MERGED #27605
+
+- **PR:** [#27605](https://github.com/tioperfumes07/IH35-TMS/pull/27605) MERGED · squash **`e90151155a`** on `origin/main`
+- **DELTA:** Categorize/Match per-line Suggested confidence/source/reason + Accept/Change/Reject; feed `categorized_by_user_*`; POST `/reject-suggestion` clears suggested_* only; NeedsCategorizingQueue bulk-accept removed
+- **GUARD:** money-pr-local-gate exit 0 · verify-banking-match-qbo-engine selftest 44/44 · vitest 11/11
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only)
+- **NEXT:** **ENG-37** natural-sign (row 272) · owner Chrome walk `/banking/transactions`
+- **Files Modified:** BankingTransactionsDesignView.tsx · NeedsCategorizingQueue.tsx · banking.ts · link.routes.ts · categorization.routes.ts · hasAutoSuggestion.test.ts · verify-banking-match-qbo-engine.mjs · OUTBOX-CURSOR.md
+
+## 2026-10-25 06:35 CT — CURSOR → LEAD | 443.343-C suggestion reason UI shipped (superseded by merge above)
 
 - **PR:** pending · branch `cursor/443343-suggestion-reason-c89b` · tip **`b822f47c68`** (base tip `28bbad6095` = #27603 squash)
 - **DELTA:** Categorize/Match per-line Suggested confidence/source/reason + Accept/Change/Reject; feed `categorized_by_user_*`; POST `/reject-suggestion` clears suggested_* only; NeedsCategorizingQueue bulk-accept removed

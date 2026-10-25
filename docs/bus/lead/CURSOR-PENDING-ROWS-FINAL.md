@@ -66,11 +66,11 @@
 | 219 | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | 443.293-B | CODED |
 | 220 | Accounting | Inspect every Accounting tab; only Bills first tab is right | 443.293-C | OPEN |
 | 222 | All modules | Popup standard app-wide + Fuel assignment popup redesign | 443.295 | OPEN |
-| 265 | UI | ENG-30 15 raw <select> left (every selector multi-select law) | ENG | OPEN |
-| 266 | UI | ENG-31 breadcrumbs on 10 of 999 pages | ENG | OPEN |
-| 267 | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | ENG | OPEN |
-| 268 | Banking | ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017 | ENG | OPEN |
-| 272 | UI | ENG-37 natural-sign rendering: measure money columns not using naturalBalance | ENG | OPEN |
-| 302 | UI | ENG-56 Cursor 443.326: V3 board grammar on all 23 PARTIAL/SHELL-ONLY surfaces of Cursor's own audit; one ratchet guard to 0 | 443.326 | OPEN |
-| 313 | Settlements | Design audit N2: Escrow register 'Opening balance (historical)' row (design) missing — running balance cannot tie | 443.326 #6 | OPEN |
-| 314 | Settlements | Design audit N3: settlement statement body has no drill links ('[n] fills →', 'BofA line →') | 443.326 #2 | OPEN |
+| 265 | UI | ENG-30 15 raw <select> left (every selector multi-select law) | ENG | CLOSED tip `e90151155a` — verify-every-selector-multi-select PASS (10 <= baseline 10; 8 pinned exceptions) |
+| 266 | UI | ENG-31 breadcrumbs on 10 of 999 pages | ENG | CLOSED tip `e90151155a` — verify-page-has-breadcrumb + structural crumb PASS (shell-mounted) |
+| 267 | UI | ENG-32 89 money cells do not open their transaction (re-measure + shrink) | ENG | CLOSED tip `e90151155a` — verify-money-cells-click-through shrink-only 0 <= 0 |
+| 268 | Banking | ENG-33 stale 'orphaned MatchDrawer' comment in BankingTransactionsDesignView.tsx:4017 | ENG | CLOSED tip `e90151155a` — verify-banking-designview-matchdrawer-canonical-comment PASS |
+| 272 | UI | ENG-37 natural-sign rendering: measure money columns not using naturalBalance | ENG | CLOSED tip `e90151155a` — verify-no-surface-prints-a-raw-ledger-sign OK + verify-balances-render-in-natural-sign PASS (ratchet 0) |
+| 302 | UI | ENG-56 Cursor 443.326: V3 board grammar on all 23 PARTIAL/SHELL-ONLY surfaces of Cursor's own audit; one ratchet guard to 0 | 443.326 | CLOSED tip `e90151155a` — verify-v3-board-grammar-every-surface 0/44 (= baseline 0) |
+| 313 | Settlements | Design audit N2: Escrow register 'Opening balance (historical)' row (design) missing — running balance cannot tie | 443.326 #6 | CLOSED tip `e90151155a` — EscrowRegisterPage first row Opening balance (historical) = held − activityNet |
+| 314 | Settlements | Design audit N3: settlement statement body has no drill links ('[n] fills →', 'BofA line →') | 443.326 #2 | CLOSED tip `e90151155a` — LinkedRecords `${n} fills →` + `Bank line →` (EntityLink bank_transaction) |
