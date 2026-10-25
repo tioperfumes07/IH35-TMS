@@ -18,6 +18,8 @@ export function run(overrides = {}) {
   const errors = [];
   const read = (rel) => overrides[rel] ?? readDisk(rel);
   const page = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+  const homeBoard = read("apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx");
+  const homeChrome = page + homeBoard;
   const companyPage = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
   const detail = read("apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
   const header = read("apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx");
@@ -47,12 +49,12 @@ export function run(overrides = {}) {
   // ROUND 443.250 — chrome is V3KpiTile (shared v3-tokens), not a locally-invented tile.
   assert(
     page.includes('data-testid="settlements-home-kpi-strip"') &&
-      page.includes("V3KpiTile") &&
+      homeChrome.includes("V3KpiTile") &&
       page.includes("driverPayThisPeriod") &&
       page.includes('data-settlements-v3-kpis="1"') &&
-      page.includes("settlements-home-week-chart-panel") &&
-      page.includes("settlements-home-deductions-panel"),
-    "SettlementsPage must render the REG-005 home KPI strip (settlements-home-kpi-strip) with V3KpiTile + Driver Pay (Period) + V3 week/deductions panels",
+      homeChrome.includes("settlements-home-week-chart-panel") &&
+      homeChrome.includes("settlements-home-deductions-panel"),
+    "Settlements home must render REG-005 KPI strip (SettlementsPage) + V3 week/deductions panels (SettlementsPage + SettlementsHomeBoardPanels)",
     errors
   );
   assert(
@@ -99,8 +101,10 @@ export function run(overrides = {}) {
 
 function selftest() {
   const PAGE_REL = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
+  const BOARD_REL = "apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx";
   const COMPANY_REL = "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx";
   const backup = readDisk(PAGE_REL);
+  const boardBackup = readDisk(BOARD_REL);
   const companyBackup = readDisk(COMPANY_REL);
 
   const patched = backup.replace(/const kpiBaseQuery = useQuery\(\{[\s\S]*?\n  \}\);\n/, "");
@@ -110,7 +114,11 @@ function selftest() {
   }
 
   // REG-005 — removing the home KPI strip from either page must be caught.
-  if (!run({ [PAGE_REL]: backup.replace('data-testid="settlements-home-kpi-strip"', 'data-testid="x"') }).some((e) => e.includes("settlements-home-kpi-strip"))) {
+  if (
+    !run({ [PAGE_REL]: backup.replace('data-testid="settlements-home-kpi-strip"', 'data-testid="x"') }).some(
+      (e) => e.includes("settlements-home-kpi-strip") || e.includes("REG-005 KPI strip"),
+    )
+  ) {
     throw new Error("planted driver-settlements KPI strip removal not detected");
   }
 
@@ -119,11 +127,15 @@ function selftest() {
   }
 
   // ROUND 443.250 — dropping V3 chrome / week panel must fail.
-  if (!run({ [PAGE_REL]: backup.replace(/V3KpiTile/g, "LegacyKpi") }).some((e) => e.includes("V3KpiTile"))) {
+  if (
+    !run({ [PAGE_REL]: backup.replace(/V3KpiTile/g, "LegacyKpi") }).some(
+      (e) => e.includes("V3KpiTile") || e.includes("REG-005 KPI strip"),
+    )
+  ) {
     throw new Error("planted V3KpiTile removal not detected");
   }
   if (
-    !run({ [PAGE_REL]: backup.replace("settlements-home-week-chart-panel", "x") }).some((e) =>
+    !run({ [BOARD_REL]: boardBackup.replace("settlements-home-week-chart-panel", "x") }).some((e) =>
       e.includes("week/deductions"),
     )
   ) {
