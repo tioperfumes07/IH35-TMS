@@ -1043,6 +1043,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-homepage-scenario-tracker-staleness.mjs",
     ],
   ],
+  // FINAL-2 D060 — System › Transaction Health Generated/document dates are MM/DD/YYYY CT (never month-name).
+  [
+    "verify-transaction-health-computed-not-stored",
+    [
+      "apps/frontend/src/pages/system/SystemModulePage.tsx",
+      "apps/frontend/src/pages/system/txHealthLedgerText.ts",
+      "apps/backend/src/system/transaction-health.service.ts",
+      "scripts/verify-transaction-health-computed-not-stored.mjs",
+    ],
+  ],
   // ROUND 342 hotfix — no read filters a table on operating_company_id when that table has no such column.
   [
     "verify-no-opco-filter-on-tables-without-it",
