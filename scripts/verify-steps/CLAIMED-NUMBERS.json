@@ -15082,12 +15082,12 @@
   "18800": {
     "claimed_at": "2026-10-24",
     "claimed_by": "cursor",
-    "purpose": "ACCT-F443326 (ROUND 443.326): verify-v3-board-grammar-every-surface — V3KpiTile + MoneyListToolbar + ParityTable on 23 audit surfaces; ratchet to 0"
+    "purpose": "ACCT-F443326 (ROUND 443.326): verify-v3-board-grammar-every-surface \u2014 V3KpiTile + MoneyListToolbar + ParityTable on 23 audit surfaces; ratchet to 0"
   },
   "18801": {
     "claimed_at": "2026-10-24",
     "claimed_by": "cc-1",
-    "purpose": "443.346: verify-faro-advance-lands-where-the-money-went — factoring advance bank_wire_cents posts to 1090; gap to 1230"
+    "purpose": "443.346: verify-faro-advance-lands-where-the-money-went \u2014 factoring advance bank_wire_cents posts to 1090; gap to 1230"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
@@ -17093,7 +17093,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1092,
+  "total_claimed": 1093,
   "18771": {
     "claimed_at": "2026-10-24",
     "claimed_by": "cc-2",
@@ -17123,5 +17123,10 @@
     "claimed_at": "2026-10-24",
     "claimed_by": "cc-2",
     "purpose": "verify-relay-fill-driver-equals-load-driver-443341"
+  },
+  "18805": {
+    "claimed_at": "2026-10-24",
+    "claimed_by": "cc-1",
+    "purpose": "443.346b: verify-faro-gap-account-posts-correctly \u2014 when bank_wire_gap_account_id set, gap posts to named account not 1230"
   }
 }
