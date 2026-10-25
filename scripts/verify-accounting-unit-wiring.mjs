@@ -19,9 +19,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-accounting-unit-wiring";
 
 const CHECKS = [
-  ["apps/frontend/src/routes/manifest.tsx", /path="\/accounting\/bills\/maintenance"[\s\S]{0,120}to="\/accounting\/bills\?category=maintenance&create=1"/],
-  ["apps/frontend/src/routes/manifest.tsx", /path="\/accounting\/bills\/fuel"[\s\S]{0,120}to="\/accounting\/bills\?category=fuel&create=1"/],
-  ["apps/frontend/src/routes/manifest.tsx", /path="\/accounting\/bills\/driver"[\s\S]{0,120}to="\/accounting\/bills\?category=driver&create=1"/],
+  ["apps/frontend/src/routes/manifest.tsx", /path="\/accounting\/bills\/maintenance"[\s\S]{0,120}to="\/accounting\/bills\?category=maintenance"/],
+  ["apps/frontend/src/routes/manifest.tsx", /path="\/accounting\/bills\/fuel"[\s\S]{0,120}to="\/accounting\/bills\?category=fuel"/],
+  ["apps/frontend/src/routes/manifest.tsx", /path="\/accounting\/bills\/driver"[\s\S]{0,120}to="\/accounting\/bills\?category=driver"/],
   ["apps/frontend/src/pages/accounting/BillsPage.tsx", /const createBillType = billTypeForCategory\(category\);/],
   ["apps/frontend/src/pages/accounting/BillsPage.tsx", /initialBillType=\{createBillType\}/],
   ["apps/frontend/src/components/accounting/VendorBillForm.tsx", /<EntityPicker[\s\S]{0,20}kind="unit"/],
