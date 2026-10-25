@@ -390,6 +390,9 @@ function assertSettlementsHomeNoPanelExtract() {
   if (!/settlements-home-week-of-export/.test(panels)) {
     fail("Week-of header must expose Export (board)");
   }
+  if (!/exportWeekOfSettlementsCsv/.test(panels) || /[?&]export=1/.test(panels)) {
+    fail("Week-of Export must download CSV of on-screen rows (not dead export-flag navigate)");
+  }
   if (!/<SettlementsHomeBoardPanels\b/.test(page)) {
     fail("SettlementsPage must mount SettlementsHomeBoardPanels on settlements tab");
   }

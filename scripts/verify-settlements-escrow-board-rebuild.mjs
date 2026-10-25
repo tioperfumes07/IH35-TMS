@@ -71,6 +71,9 @@ export function runEscrowBoardRebuildChecks(root = process.cwd()) {
   if (!register.includes("data-testid=\"escrow-register-release\"")) {
     failures.push(`${REGISTER}: board toolbar must include Release escrow (data-testid)`);
   }
+  if (!register.includes('data-testid="escrow-register-export"') || !register.includes("exportEscrowRegisterCsv")) {
+    failures.push(`${REGISTER}: Export must download register CSV (not a dead button)`);
+  }
   if (!register.includes("/accounting/escrow?holder_id=")) {
     failures.push(`${REGISTER}: Release escrow must deep-link Accounting Escrow for holder`);
   }
@@ -106,7 +109,8 @@ if (process.argv.includes("--selftest")) {
     REGISTER,
     `import { BoardSection } from "../../components/v3/BoardSection";\n` +
       `data-settlements-escrow-register-rebuild="1"\n` +
-      `data-testid="escrow-register-release"\n/accounting/escrow?holder_id=\n<BoardSection\n`,
+      `data-testid="escrow-register-release"\ndata-testid="escrow-register-export"\nexportEscrowRegisterCsv\n` +
+      `/accounting/escrow?holder_id=\n<BoardSection\n`,
   );
   if (runEscrowBoardRebuildChecks(tmp).length) {
     throw new Error("PASS fail: " + runEscrowBoardRebuildChecks(tmp).join("; "));

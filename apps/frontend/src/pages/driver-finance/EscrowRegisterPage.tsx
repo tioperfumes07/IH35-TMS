@@ -20,7 +20,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatUsdCents, formatUsdTable } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
-import { addDaysIso } from "../../lib/businessDate";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { SettlementsModuleShell } from "./SettlementsModuleShell";
 import { V3 } from "../../design/v3-tokens";
 
@@ -37,6 +37,42 @@ type RegisterRow = {
   outAmt: number | null;
   balance: number;
 };
+
+function csvEscape(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+/** Client CSV of the register lines on screen (fill-not-shell — Export was a dead button). */
+function exportEscrowRegisterCsv(driverName: string, rows: RegisterRow[]): void {
+  const header = ["Date", "Source", "Type", "In", "Out", "Balance"].map(csvEscape).join(",");
+  const body = rows
+    .map((r) =>
+      [
+        formatDateUS(r.date) || "",
+        r.source,
+        r.type,
+        r.inAmt == null ? "" : r.inAmt.toFixed(2),
+        r.outAmt == null ? "" : r.outAmt.toFixed(2),
+        r.balance.toFixed(2),
+      ]
+        .map((v) => csvEscape(String(v)))
+        .join(","),
+    )
+    .join("\n");
+  const slug = driverName.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "driver";
+  const blob = new Blob([`${header}\n${body}\n`], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `escrow-register-${slug}-${companyToday()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 function labelType(raw: string | null): string {
   const t = String(raw ?? "").toLowerCase();
@@ -263,7 +299,14 @@ export function EscrowRegisterPage() {
           >
             + Settlement Creator
           </Button>
-          <Button size="sm" variant="secondary" type="button" data-testid="escrow-register-export">
+          <Button
+            size="sm"
+            variant="secondary"
+            type="button"
+            data-testid="escrow-register-export"
+            disabled={tlQ.isError || filteredRows.length === 0}
+            onClick={() => exportEscrowRegisterCsv(driverName, filteredRows)}
+          >
             Export
           </Button>
           <Button

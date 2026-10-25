@@ -11,6 +11,7 @@ import { V3 } from "../../design/v3-tokens";
 import { V3Segmented } from "../../components/v3/V3Segmented";
 import { entityLabel } from "../../lib/entity-label";
 import type { SettlementListRow } from "../../api/driverFinance";
+import { companyToday } from "../../lib/businessDate";
 import {
   formatSettlementsUsd,
   formatWeekOfTitle,
@@ -19,6 +20,51 @@ import {
   settlementsWeekLoadsLabel,
   type SettlementsWeekBucket,
 } from "./settlementsHomeBoardHelpers";
+
+function csvEscape(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+/** Client CSV of the Week-of roster (fill-not-shell — prior Export only navigated with a dead export flag). */
+function exportWeekOfSettlementsCsv(
+  weekStartMs: number,
+  pill: "open" | "closed",
+  rows: SettlementListRow[],
+): void {
+  const header = ["Driver", "Loads", "Gross", "Deductions", "Reimb", "Net", "Status"]
+    .map(csvEscape)
+    .join(",");
+  const body = rows
+    .map((s) => {
+      const pay = settlementPaymentLabel(s);
+      const status = pay === "Paid" ? "Paid" : pay === "Held" ? "Held" : "Open";
+      return [
+        s.driver_full_name || "Driver",
+        settlementsWeekLoadsLabel(s),
+        Number(s.gross_pay ?? 0).toFixed(2),
+        Number(s.deductions_total ?? 0).toFixed(2),
+        settlementsDerivedReimb(s).toFixed(2),
+        Number(s.net_pay ?? 0).toFixed(2),
+        status,
+      ]
+        .map((v) => csvEscape(String(v)))
+        .join(",");
+    })
+    .join("\n");
+  const weekLabel = formatWeekOfTitle(new Date(weekStartMs)).replace(/[^a-zA-Z0-9]+/g, "-");
+  const blob = new Blob([`${header}\n${body}\n`], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `settlements-week-of-${weekLabel}-${pill}-${companyToday()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 type DeductionSplit = {
   escrow: { drivers: Set<string>; amount: number };
@@ -236,16 +282,20 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               <button
                 type="button"
                 data-testid="settlements-home-week-of-export"
-                onClick={() => navigate(`/driver-finance/settlements?tab=${weekOfPill === "closed" ? "closed" : "open"}&export=1`)}
+                disabled={weekOfRows.length === 0}
+                onClick={() =>
+                  exportWeekOfSettlementsCsv(thisWeekBucket.weekStartMs, weekOfPill, weekOfRows)
+                }
                 style={{
                   fontSize: 11,
                   fontWeight: 600,
                   color: V3.link,
                   background: "transparent",
                   border: "none",
-                  cursor: "pointer",
+                  cursor: weekOfRows.length === 0 ? "not-allowed" : "pointer",
                   padding: 0,
                   fontFamily: V3.font,
+                  opacity: weekOfRows.length === 0 ? 0.5 : 1,
                 }}
               >
                 Export
