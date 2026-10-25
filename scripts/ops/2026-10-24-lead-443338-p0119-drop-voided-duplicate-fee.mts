@@ -17,6 +17,13 @@ const DEDUCTION = "68041143-847b-44a3-a658-80515364e92a";
 const COMMIT = process.argv.includes("--apply");
 const AUTH = process.env.OWNER_AUTH_ID ?? "";
 if (COMMIT && !/^AUTH-[0-9]+$/.test(AUTH)) throw new Error("--apply requires OWNER_AUTH_ID=AUTH-NNN");
+if (COMMIT) {
+  // The owner's authorization must be on record (docs/bus/OWNER-AUTHORIZATIONS.md) before any production write.
+  const { execFileSync } = await import("node:child_process");
+  const nodePath = await import("node:path");
+  const ROOT = nodePath.resolve(nodePath.dirname(new URL(import.meta.url).pathname), "../..");
+  try { execFileSync("node", [nodePath.join(ROOT, "scripts/verify-owner-authorization.mjs"), AUTH], { stdio: "inherit" }); } catch { process.exit(1); }
+}
 class Rollback extends Error { constructor(public p: unknown) { super("dry-run"); } }
 type Q = { query: (s: string, v?: unknown[]) => Promise<{ rows: Record<string, any>[]; rowCount?: number | null }> };
 
