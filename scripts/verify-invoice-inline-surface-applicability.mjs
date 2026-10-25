@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","cash-flow"],"cols":["invoice"],"leafRe":"^(accounting\\.panel\\.leakage|cash-flow\\.panel\\.projection)$","task":"ACCT-F443293-C-INVOICE-INLINE-N/A"} */
 import fs from "node:fs";
 
 const revenue = fs.readFileSync("apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx", "utf8");
