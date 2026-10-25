@@ -8,7 +8,7 @@ import {
   type SettlementListRow,
 } from "../../api/driverFinance";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
 
@@ -16,7 +16,7 @@ import { V3 } from "../../design/v3-tokens";
  * ROUND 443.274-C — Settlements-PreSettlements board (Settlements-PreSettlements.png).
  *
  * Six KPI tiles match Settlements home engines (`listSettlements` KPI + `getOpenDriverBills`).
- * "What closes a tour" is a sibling V3Panel (side-by-side with Open pre-settlements in Drivers.tsx).
+ * "What closes a tour" is a sibling BoardSection (side-by-side with Open pre-settlements in Drivers.tsx).
  * Ready / Waiting on / Unit are not on SettlementListRow — not invented here.
  */
 
@@ -226,7 +226,7 @@ export function SettlementsPreSettlementsClosesPanel({
       : null;
 
   return (
-    <V3Panel
+    <BoardSection
       title="What closes a tour"
       subtitle={
         openPreCount === null
@@ -274,6 +274,6 @@ export function SettlementsPreSettlementsClosesPanel({
           </div>
         ))}
       </div>
-    </V3Panel>
+    </BoardSection>
   );
 }

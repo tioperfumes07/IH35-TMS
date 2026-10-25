@@ -413,11 +413,19 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Settlements home chart/deductions/week-of:** bordered `BoardSection` in
   `SettlementsHomeBoardPanels.tsx` — **no** `V3Panel` child extract. Guard
   `assertSettlementsHomeNoPanelExtract` in `verify-v3-board-grammar-every-surface.mjs`.
+- **Shared `BoardSection`:** `apps/frontend/src/components/v3/BoardSection.tsx` — bordered title
+  section that replaces `V3Panel` on Settlements (and Fuel via `FuelBoardSection`). Same visual
+  (1px border, 2px radius); DoD forbids remounting `V3Panel` on list boards.
+- **Settlements list boards (full DoD, not chromeOnly):** PreSettlements / Deductions /
+  CashAdvances / Escrow / Company / Close — each surface file mounts `V3KpiTile` +
+  `MoneyListToolbar` + `<ParityTable` and forbids `V3Panel`. CashAdvances Requests|Advances use
+  `BoardSection` + 1fr|2fr; guard `verify-cash-advances-tabs-url-sync.mjs` retargeted to
+  BoardSection + board-file ParityTable (not CashAdvancesKpiRow extract).
+- **Statement:** document body linked-records / legacy 2×2 panels unwrap to `BoardSection`
+  (document chrome, not a list-board surface). Workflow page already has KPI + MLT + ParityTable.
 - **VendorBillCreate:** intentional session-shell roster (orders SHELL-ONLY) — form stays in ParityDrawer.
-- **Still outside this ratchet (not half of the 23):** Fuel Cards / Integrity / Relay Unmatched /
-  Relay Wallet — still 443.250 `V3Panel` chrome; other fuel guards require those wraps.
-  Fuel Planner Settings/Questions/Savings/Compliance child panels may still use `V3Panel`
-  (443.250 form chrome). Statement document body may keep section panels (document, not list board).
+- **Still outside Settlements DoD (other modules):** Insurance/Banking/Accounting/Legal home boards
+  and some Cash Flow tabs still mount `V3Panel` — not in the 443.326 Settlements/Fuel audit set.
 
 ### Active Architectural Decisions — Customers home V3 (Cursor, ROUND 443.250, 2026-10-23)
 

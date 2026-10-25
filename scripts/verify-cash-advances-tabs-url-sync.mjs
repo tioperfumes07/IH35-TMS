@@ -2,8 +2,8 @@
 /**
  * verify-cash-advances-tabs-url-sync.mjs — Ops F: Cash Advances tabs use ?tab=.
  *
- * ROUND 443.250 — also asserts Settlements-CashAdvances V3 KPI strip on CashAdvancesKpiRow
- * (V3KpiTile + data-cash-advances-v3-kpis + board labels). Piggyback EVEN step 990; no new claim.
+ * ROUND 443.250 / 443.326 — Settlements-CashAdvances V3 board on SettlementsCashAdvancesBoard
+ * (V3KpiTile + MoneyListToolbar + ParityTable + BoardSection 1fr|2fr). Piggyback EVEN step 990.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -38,7 +38,7 @@ function failures(source) {
   return errors;
 }
 
-/** ROUND 443.250 + 443.274-C Settlements CashAdvances V3 board chrome. */
+/** ROUND 443.326 — CashAdvancesKpiRow keep BoardSection (Drivers/legacy mount path). */
 function kpiV3Failures(source) {
   const errors = [];
   if (!source.includes("V3KpiTile")) {
@@ -66,11 +66,14 @@ function kpiV3Failures(source) {
   if (!source.includes('amount(kpis, "advances_on_file")')) {
     errors.push('CashAdvancesKpiRow must read advances_on_file (Advances on file count)');
   }
-  // ROUND 443.274-C — board body 1fr|2fr Requests | Advances + footnote.
-  if (!source.includes("V3Panel")) {
-    errors.push("CashAdvancesKpiRow must render V3Panel for Requests|Advances (443.274-C)");
+  // ROUND 443.326 — BoardSection replaces V3Panel for Requests|Advances.
+  if (!source.includes("BoardSection")) {
+    errors.push("CashAdvancesKpiRow must render BoardSection for Requests|Advances (443.326)");
   }
-  if (!source.includes('data-settlements-cash-advances-board-1fr-2fr')) {
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(source) || /<\s*V3Panel[\s/>]/.test(source)) {
+    errors.push("CashAdvancesKpiRow must not remount V3Panel (443.326 BoardSection)");
+  }
+  if (!source.includes("data-settlements-cash-advances-board-1fr-2fr")) {
     errors.push("CashAdvancesKpiRow must mark data-settlements-cash-advances-board-1fr-2fr");
   }
   if (!source.includes('gridTemplateColumns: "1fr 2fr"')) {
@@ -90,7 +93,7 @@ function kpiV3Failures(source) {
   return errors;
 }
 
-/** ROUND 443.282 — Settlements mount replaces body; no CashAdvancesHome layer. */
+/** ROUND 443.326 — Settlements board is full V3 grammar in the surface file. */
 function settlementsBoardFailures(mountedSource, boardSource) {
   const errors = [];
   if (!mountedSource.includes("SettlementsCashAdvancesBoard")) {
@@ -102,18 +105,51 @@ function settlementsBoardFailures(mountedSource, boardSource) {
   if (!boardSource.includes("data-settlements-cash-advances-rebuild")) {
     errors.push("SettlementsCashAdvancesBoard must mark data-settlements-cash-advances-rebuild");
   }
-  if (!boardSource.includes("CashAdvancesKpiRow")) {
-    errors.push("SettlementsCashAdvancesBoard must render CashAdvancesKpiRow (board body only)");
+  if (!boardSource.includes("V3KpiTile")) {
+    errors.push("SettlementsCashAdvancesBoard must render V3KpiTile in the surface file (443.326)");
   }
-  if (boardSource.includes("NavyPageSubNav") || boardSource.includes("CashAdvancesTable")) {
-    errors.push("SettlementsCashAdvancesBoard must not include legacy subnav or ParityTable roster");
+  if (!boardSource.includes("MoneyListToolbar")) {
+    errors.push("SettlementsCashAdvancesBoard must mount MoneyListToolbar (443.326)");
   }
-  // ROUND 443.282 / 443.326 — KPI totals error + retry live on Settlements board body (not CashAdvancesHome).
+  if (!boardSource.includes("<ParityTable")) {
+    errors.push("SettlementsCashAdvancesBoard must mount <ParityTable in the surface file (443.326)");
+  }
+  if (!boardSource.includes("BoardSection")) {
+    errors.push("SettlementsCashAdvancesBoard must use BoardSection for Requests|Advances (443.326)");
+  }
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(boardSource) || /<\s*V3Panel[\s/>]/.test(boardSource)) {
+    errors.push("SettlementsCashAdvancesBoard must not remount V3Panel (443.326)");
+  }
+  if (boardSource.includes("NavyPageSubNav")) {
+    errors.push("SettlementsCashAdvancesBoard must not include legacy NavyPageSubNav");
+  }
+  if (!boardSource.includes('data-settlements-cash-advances-board-1fr-2fr')) {
+    errors.push("SettlementsCashAdvancesBoard must mark data-settlements-cash-advances-board-1fr-2fr");
+  }
+  if (!boardSource.includes('gridTemplateColumns: "1fr 2fr"')) {
+    errors.push('SettlementsCashAdvancesBoard board body must use gridTemplateColumns "1fr 2fr"');
+  }
   for (const needle of [
     'title="Couldn\'t load cash advance totals"',
     "onRetry={() => void kpisQuery.refetch()}",
   ]) {
     if (!boardSource.includes(needle)) errors.push(`SettlementsCashAdvancesBoard missing ${JSON.stringify(needle)}`);
+  }
+  for (const label of [
+    "Advances on file",
+    "Requests awaiting owner",
+    "Outstanding to recover",
+    "Recovered this period",
+  ]) {
+    if (!new RegExp(`label=["']${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`).test(boardSource)) {
+      errors.push(`SettlementsCashAdvancesBoard V3 strip must include board label "${label}"`);
+    }
+  }
+  if (!boardSource.includes("Each advance links to its bank line (Zelle) and to the tour that recovers it.")) {
+    errors.push("SettlementsCashAdvancesBoard must keep the Advances footnote");
+  }
+  if (!boardSource.includes("No requests waiting")) {
+    errors.push("SettlementsCashAdvancesBoard Requests empty must say No requests waiting");
   }
   return errors;
 }
@@ -128,7 +164,7 @@ function run() {
   const mountedSource = fs.readFileSync(path.join(ROOT, MOUNTED), "utf8");
   const boardSource = fs.readFileSync(path.join(ROOT, SETTLEMENTS_BOARD), "utf8");
   const boardErrors = settlementsBoardFailures(mountedSource, boardSource);
-  if (boardErrors.length) throw new Error(`${LABEL}: ${boardErrors.join("; ")} (443.282)`);
+  if (boardErrors.length) throw new Error(`${LABEL}: ${boardErrors.join("; ")} (443.326)`);
   console.log(`${LABEL}: PASS`);
 }
 
@@ -150,7 +186,7 @@ if (process.argv.includes("--selftest")) {
   }
   const goodKpi = `
     import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-    import { V3Panel } from "../../../components/v3/V3Panel";
+    import { BoardSection } from "../../../components/v3/BoardSection";
     data-cash-advances-v3-kpis="1"
     data-settlements-cash-advances-board-1fr-2fr="1"
     gridTemplateColumns: "1fr 2fr"
@@ -179,5 +215,5 @@ if (process.argv.includes("--selftest")) {
   if (!kpiV3Failures(boardStripped).some((e) => e.includes("1fr 2fr") || e.includes("board-1fr-2fr"))) {
     throw new Error(`${LABEL}: board 1fr|2fr removal should fail`);
   }
-  console.log(`${LABEL}: selftest PASS (${mutations.length} tab mutations + V3 KPI + 443.274-C board markers caught)`);
+  console.log(`${LABEL}: selftest PASS (${mutations.length} tab mutations + V3 KPI + 443.326 BoardSection markers caught)`);
 } else run();

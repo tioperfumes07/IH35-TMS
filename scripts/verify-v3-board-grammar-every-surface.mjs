@@ -108,20 +108,17 @@ const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "SettlementsPreSettlementsBoard",
     file: "apps/frontend/src/pages/driver-finance/SettlementsPreSettlementsBoard.tsx",
-    forbid: ["PageHeader", "NavyPageSubNav"],
-    chromeOnly: true,
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
   },
   {
     id: "SettlementsDeductionsBoard",
     file: "apps/frontend/src/pages/driver-finance/SettlementsDeductionsBoard.tsx",
-    forbid: ["PageHeader", "NavyPageSubNav"],
-    chromeOnly: true,
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
   },
   {
     id: "SettlementsCashAdvancesBoard",
     file: "apps/frontend/src/pages/driver-finance/SettlementsCashAdvancesBoard.tsx",
-    forbid: ["PageHeader", "NavyPageSubNav"],
-    chromeOnly: true,
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
   },
   {
     id: "SettlementsEscrowBoard",
