@@ -6,6 +6,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useToast } from "../../../components/Toast";
 import { formatUsdCents } from "../../../lib/money";
+import { formatDateUS } from "../../../lib/formatDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 // GO-20 slice A (docs/lockdown/GO-20-EIGHT-FEATURES.txt) — "Banking gains a Drift panel at the
@@ -60,7 +61,8 @@ function AlertRow({ alert, companyId }: { alert: DriftAlert; companyId: string }
           <span className="mx-2 text-gray-400">|</span>
           <EntityLink kind="bank_account" id={alert.bank_account_id} label={alert.account_name ?? alert.institution_name ?? "Account"} />{alert.account_mask ? ` ••${alert.account_mask}` : ""}
           <span className="mx-2 text-gray-400">|</span>
-          As of {alert.as_of_date}
+          {/* D045 — business date MM/DD/YYYY (never raw ISO with T/Z). */}
+          As of {formatDateUS(alert.as_of_date)}
           <span className="mx-2 text-gray-400">|</span>
           Open {days} day{days === 1 ? "" : "s"}
         </div>
