@@ -186,7 +186,7 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="fuel-questions-panel">
-      {/* ROUND 443.250 Fuel Questions V3 — Open / This page / Page size from listFuelAssignmentQuestions. */}
+      {/* ROUND 443.280 — one domain KPI row (no pagination tiles This page / Page size). */}
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="fuel-questions-v3-kpi-strip"
@@ -198,18 +198,6 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
           sub={loadId ? "open for this load" : "fills not 100% certain"}
           tone={total > 0 ? "red" : "green"}
           testId="fuel-questions-kpi-open"
-        />
-        <V3KpiTile
-          label="This page"
-          value={kpiValue(listQuery.isPending ? undefined : rows.length, listQuery.isPending)}
-          sub="rows on this request"
-          testId="fuel-questions-kpi-page"
-        />
-        <V3KpiTile
-          label="Page size"
-          value={String(FUEL_QUESTIONS_PAGE)}
-          sub="rows per request"
-          testId="fuel-questions-kpi-page-size"
         />
       </div>
 

@@ -115,7 +115,7 @@ export function RelayUnmatchedPage() {
 
   return (
     <div className="space-y-3" data-testid="relay-unmatched-page">
-      {/* ROUND 443.250 Relay Unmatched V3 — Unmatched / This page / Page size from listRelayFills. */}
+      {/* ROUND 443.280 — one domain KPI row (no pagination tiles This page / Page size). */}
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="relay-unmatched-v3-kpi-strip"
@@ -128,13 +128,6 @@ export function RelayUnmatchedPage() {
           tone={totalCount > 0 ? "red" : "green"}
           testId="relay-unmatched-kpi-total"
         />
-        <V3KpiTile
-          label="This page"
-          value={kpiValue(query.isPending ? undefined : rows.length, query.isPending)}
-          sub={`page ${page} of ${pageCount}`}
-          testId="relay-unmatched-kpi-page"
-        />
-        <V3KpiTile label="Page size" value={String(PAGE_SIZE)} sub="rows per request" testId="relay-unmatched-kpi-page-size" />
       </div>
       <MoneyListToolbar
         search={search}

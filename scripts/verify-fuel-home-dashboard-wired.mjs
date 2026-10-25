@@ -191,9 +191,15 @@ export function computeUnmatchedFailures(source) {
   if (!/listRelayFills/.test(source) || !/unmatched:\s*true/.test(source)) {
     errors.push("RelayUnmatchedPage must keep listRelayFills({ unmatched: true }) (engine unchanged)");
   }
-  for (const label of ["Unmatched", "This page", "Page size", "Relay fills — unmatched"]) {
+  for (const label of ["Unmatched", "Relay fills — unmatched"]) {
     if (!source.includes(label)) {
       errors.push(`RelayUnmatchedPage must keep board label "${label}"`);
+    }
+  }
+  // ROUND 443.280 — pagination KPI theater forbidden on Fuel sub-tabs.
+  for (const label of ["This page", "Page size"]) {
+    if (source.includes(`label="${label}"`) || source.includes(`label={'${label}'}`) || source.includes(`label={"${label}"}`)) {
+      errors.push(`RelayUnmatchedPage must not render pagination KPI "${label}" (443.280)`);
     }
   }
   return errors;

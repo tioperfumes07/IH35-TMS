@@ -56,6 +56,13 @@ function assertFuelHistoryV3(homeSrc, savingsSrc) {
   if (!/Transactions/.test(homeSrc) || !/Voided/.test(homeSrc)) {
     problems.push(`${HISTORY_HOME}: History V3 KPI strip must include Transactions + Voided`);
   }
+  // ROUND 443.280 — one KPI row; forbid pagination tiles on History/Fills.
+  if (/label=["']This page["']/.test(homeSrc) || /label=["']Page size["']/.test(homeSrc)) {
+    problems.push(`${HISTORY_HOME}: must not render pagination KPIs This page / Page size (443.280)`);
+  }
+  if (!/FuelBoardSection/.test(homeSrc) || !/fuel-history-fills-board-section/.test(homeSrc)) {
+    problems.push(`${HISTORY_HOME}: History fills roster must wrap in FuelBoardSection (fuel-history-fills-board-section)`);
+  }
   if (!/data-fuel-savings-v3-kpis/.test(savingsSrc) || !/V3KpiTile/.test(savingsSrc)) {
     problems.push(`${SAVINGS}: ROUND 443.250 must ship V3KpiTile strip (data-fuel-savings-v3-kpis)`);
   }
