@@ -8132,3 +8132,14 @@ action: OWNER_AUTH_ID=AUTH-465 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-2
 rehearsal: dry run on prod (purge executed, ROLLBACK) — 79 rows, books unchanged, 3 real policies kept
 result: COMMITTED 2026-10-24 ~21:20Z — audit.record_deletions AUTH-465 = 79 rows; USMCA left: lawsuits 0, matters 0, claims 0, accident reports 0, policies 3 (the real ones); books before = after: 3,242 JEs, 8,075 postings, 1,554 bank lines, 1,294 expenses, 189 bills
 status: DONE
+
+## AUTH-469
+issued_at: 2026-10-25T19:12:00Z
+issued_by: Lead 443.358 (app-wide test / sample / demo purge). Recorded by Lead
+owner_quotes: "remove from maintenance and from the entire app all test and sample and demo data, trucks, anything. completely deleted, no history nothing, i want them permanently deleted now." (owner 2026-10-25 2:12 PM CT); "If you are already following my instructions I do not need you to ask my authorization but you must guarantee they follow instructions" (owner 2026-10-25 ~1:00 PM CT)
+scope: USMCA rows + global catalogs/units/equipment carrying a coder test marker or is_sample_data=true (TRANSPORTATION / TRUCKING rows never selected; QBO mirror tables and identity.users never touched; the owner's "Tio Perfumes" customer kept). Per row: books unchanged and no real child row, else KEPT and reported.
+action: OWNER_AUTH_ID=AUTH-469 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-25-lead-purge-all-test-sample-demo.mts --apply
+rehearsal: Neon fork br-patient-credit-akhgoe56 (from br-fancy-credit-akjnd07a, deleted after) — 243 targets purged (246 deletion-log rows incl. children), 31 kept and reported; books identical (13 counts + posting sum), TB 66 accounts identical, A/R 1100 621,076.72 and A/P 2000 -129,216.53 unchanged; detail docs/bus/lead/2026-10-25-purge-test-sample-demo-fork-rehearsal.json
+expires_at: 2026-10-27T00:00:00Z
+result: PENDING (rehearsed on fork only; not applied to prod)
+status: OPEN

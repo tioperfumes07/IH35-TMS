@@ -1,0 +1,759 @@
+{
+  "mode": "DRY RUN (purge executed, then ROLLBACK)",
+  "children_safety.fmcsa_events": 0,
+  "children_safety.safety_events": 0,
+  "children_safety.incidents": 0,
+  "children_safety.complaints": 0,
+  "children_safety.dot_inspections": 0,
+  "children_safety.roadside_inspections": 0,
+  "children_safety.accidents": 0,
+  "children_safety.citations": 0,
+  "children_safety.violations": 0,
+  "children_safety.training_records": 0,
+  "children_safety.compliance_reminders": 0,
+  "children_safety.driver_w8ben": 0,
+  "children_safety.dvir_defect_severity_tags": 0,
+  "children_safety.event_documents": 0,
+  "children_safety.permits": 0,
+  "children_legal.signatures": 0,
+  "children_maintenance.inspections": 1,
+  "children_maintenance.parts_warranty": 0,
+  "children_maintenance.tire_events": 0,
+  "children_maintenance.tire_records": 0,
+  "children_maintenance.tire_brands": 0,
+  "children_compliance.form_425c_reports": 0,
+  "children_geo.geofences": 0,
+  "children_identity.driver_applicants": 0,
+  "children_docs.files": 0,
+  "children_mdata.vendor_payment_methods": 0,
+  "children_mdata.driver_teams": 0,
+  "children_mdata.maintenance_parts": 0,
+  "children_mdata.maintenance_services": 0,
+  "children_mdata.locations": 0,
+  "children_mdata.vendors": 0,
+  "children_mdata.assets": 0,
+  "children_mdata.equipment": 0,
+  "children_mdata.units": 0,
+  "children_accounting.ps_item": 0,
+  "children_accounting.ps_category": 0,
+  "children_accounting.coa_account": 0,
+  "children_accounting.sales_tax_agencies": 0,
+  "children_accounting.customer_classifications": 0,
+  "children_accounting.vendor_classifications": 0,
+  "children_catalogs.items": 0,
+  "children_catalogs.accounts": 0,
+  "children_catalogs.classes": 0,
+  "children_catalogs.accident_types": 0,
+  "children_catalogs.additional_charges": 0,
+  "children_catalogs.air_bag_catalog": 0,
+  "children_catalogs.asset_locations": 0,
+  "children_catalogs.battery_catalog": 0,
+  "children_catalogs.cargo_claim_reasons": 0,
+  "children_catalogs.cash_advance_types": 0,
+  "children_catalogs.complaint_types": 1,
+  "children_catalogs.customer_quality_event_reasons": 0,
+  "children_catalogs.customer_types": 0,
+  "children_catalogs.def_stations": 0,
+  "children_catalogs.detail_types": 0,
+  "children_catalogs.detention_reasons": 0,
+  "children_catalogs.dispatch_flag_colors": 0,
+  "children_catalogs.dispatcher_error_reasons": 0,
+  "children_catalogs.dot_violation_types": 0,
+  "children_catalogs.driver_load_statuses": 0,
+  "children_catalogs.driver_pay_types": 0,
+  "children_catalogs.driver_termination_reasons": 0,
+  "children_catalogs.equipment_types": 1,
+  "children_catalogs.escrow_types": 0,
+  "children_catalogs.expensive_states": 0,
+  "children_catalogs.form_425c_company_profiles": 0,
+  "children_catalogs.fuel_card_types": 0,
+  "children_catalogs.fuel_dispatch_routes": 0,
+  "children_catalogs.fuel_station_brands": 0,
+  "children_catalogs.internal_fine_reasons": 0,
+  "children_catalogs.journal_entry_types": 0,
+  "children_catalogs.leave_types": 0,
+  "children_catalogs.load_cancellation_reasons": 0,
+  "children_catalogs.load_trailer_equipment": 0,
+  "children_catalogs.load_types": 0,
+  "children_catalogs.lumper_providers": 0,
+  "children_catalogs.maintenance_failure_codes": 0,
+  "children_catalogs.maintenance_priority_levels": 0,
+  "children_catalogs.maintenance_service_tasks": 0,
+  "children_catalogs.maintenance_shop_locations": 0,
+  "children_catalogs.mx_customs_brokers": 0,
+  "children_catalogs.pay_rate_templates": 0,
+  "children_catalogs.payment_methods": 0,
+  "children_catalogs.payment_terms": 0,
+  "children_catalogs.pickup_time_types": 0,
+  "children_catalogs.repair_locations": 0,
+  "children_catalogs.tax_codes": 0,
+  "children_catalogs.toll_providers": 0,
+  "children_catalogs.tractor_statuses": 0,
+  "children_catalogs.trailer_types": 0,
+  "children_catalogs.unit_ownership_types": 0,
+  "children_catalogs.vendor_types": 0,
+  "children_catalogs.void_cancel_reasons": 0,
+  "children_catalogs.work_order_statuses": 0,
+  "children_catalogs.workplace_incident_types": 0,
+  "children_compliance.required_document_types": 0,
+  "books_before": {
+    "je": "5044",
+    "postings": "11709:2963063028",
+    "bank_lines": "13107",
+    "invoices": "12222",
+    "bills": "16438",
+    "bill_payments": "6780",
+    "expenses": "28365",
+    "settlements": "122",
+    "settlement_lines": "745",
+    "driver_bills": "213",
+    "fuel_txns": "2533",
+    "loads": "203",
+    "work_orders": "1"
+  },
+  "books_after": {
+    "je": "5044",
+    "postings": "11709:2963063028",
+    "bank_lines": "13107",
+    "invoices": "12222",
+    "bills": "16438",
+    "bill_payments": "6780",
+    "expenses": "28365",
+    "settlements": "122",
+    "settlement_lines": "745",
+    "driver_bills": "213",
+    "fuel_txns": "2533",
+    "loads": "203",
+    "work_orders": "1"
+  },
+  "ar_1100": {
+    "before": "62107672",
+    "after": "62107672"
+  },
+  "ap_2000": {
+    "before": "-12921653",
+    "after": "-12921653"
+  },
+  "trial_balance_accounts": {
+    "before": 66,
+    "after": 66,
+    "identical": true
+  },
+  "deleted_targets_by_table": {
+    "safety.fmcsa_events": 1,
+    "safety.safety_events": 2,
+    "safety.incidents": 5,
+    "safety.complaints": 2,
+    "safety.dot_inspections": 3,
+    "safety.roadside_inspections": 1,
+    "safety.accidents": 1,
+    "safety.citations": 1,
+    "safety.violations": 1,
+    "safety.training_records": 1,
+    "safety.compliance_reminders": 1,
+    "safety.driver_w8ben": 1,
+    "safety.dvir_defect_severity_tags": 1,
+    "safety.event_documents": 1,
+    "safety.permits": 1,
+    "legal.signatures": 1,
+    "maintenance.inspections": 1,
+    "maintenance.parts_warranty": 1,
+    "maintenance.tire_events": 1,
+    "maintenance.tire_records": 1,
+    "maintenance.tire_brands": 1,
+    "compliance.form_425c_reports": 2,
+    "geo.geofences": 1,
+    "identity.driver_applicants": 1,
+    "docs.files": 15,
+    "mdata.vendor_payment_methods": 1,
+    "mdata.driver_teams": 1,
+    "mdata.maintenance_parts": 1,
+    "mdata.maintenance_services": 2,
+    "mdata.locations": 1,
+    "mdata.vendors": 8,
+    "mdata.assets": 9,
+    "mdata.equipment": 25,
+    "mdata.units": 17,
+    "accounting.ps_item": 4,
+    "accounting.ps_category": 1,
+    "accounting.coa_account": 2,
+    "accounting.sales_tax_agencies": 2,
+    "accounting.customer_classifications": 1,
+    "accounting.vendor_classifications": 1,
+    "catalogs.items": 3,
+    "catalogs.accounts": 25,
+    "catalogs.classes": 2,
+    "catalogs.accident_types": 3,
+    "catalogs.additional_charges": 1,
+    "catalogs.air_bag_catalog": 2,
+    "catalogs.asset_locations": 1,
+    "catalogs.battery_catalog": 1,
+    "catalogs.cargo_claim_reasons": 3,
+    "catalogs.cash_advance_types": 2,
+    "catalogs.complaint_types": 3,
+    "catalogs.customer_quality_event_reasons": 2,
+    "catalogs.customer_types": 3,
+    "catalogs.def_stations": 2,
+    "catalogs.detail_types": 2,
+    "catalogs.detention_reasons": 1,
+    "catalogs.dispatch_flag_colors": 2,
+    "catalogs.dispatcher_error_reasons": 3,
+    "catalogs.dot_violation_types": 3,
+    "catalogs.driver_load_statuses": 1,
+    "catalogs.driver_pay_types": 1,
+    "catalogs.driver_termination_reasons": 2,
+    "catalogs.equipment_types": 4,
+    "catalogs.escrow_types": 1,
+    "catalogs.expensive_states": 1,
+    "catalogs.form_425c_company_profiles": 1,
+    "catalogs.fuel_card_types": 1,
+    "catalogs.fuel_dispatch_routes": 1,
+    "catalogs.fuel_station_brands": 1,
+    "catalogs.internal_fine_reasons": 2,
+    "catalogs.journal_entry_types": 1,
+    "catalogs.leave_types": 2,
+    "catalogs.load_cancellation_reasons": 7,
+    "catalogs.load_trailer_equipment": 1,
+    "catalogs.load_types": 1,
+    "catalogs.lumper_providers": 1,
+    "catalogs.maintenance_failure_codes": 1,
+    "catalogs.maintenance_priority_levels": 1,
+    "catalogs.maintenance_service_tasks": 1,
+    "catalogs.maintenance_shop_locations": 1,
+    "catalogs.mx_customs_brokers": 1,
+    "catalogs.pay_rate_templates": 1,
+    "catalogs.payment_methods": 2,
+    "catalogs.payment_terms": 3,
+    "catalogs.pickup_time_types": 2,
+    "catalogs.repair_locations": 1,
+    "catalogs.tax_codes": 1,
+    "catalogs.toll_providers": 1,
+    "catalogs.tractor_statuses": 1,
+    "catalogs.trailer_types": 1,
+    "catalogs.unit_ownership_types": 1,
+    "catalogs.vendor_types": 2,
+    "catalogs.void_cancel_reasons": 1,
+    "catalogs.work_order_statuses": 1,
+    "catalogs.workplace_incident_types": 2,
+    "compliance.required_document_types": 1
+  },
+  "deleted_target_total": 243,
+  "deleted_samples": {
+    "safety.fmcsa_events": [
+      "test data testmtdqiugl"
+    ],
+    "safety.safety_events": [
+      "sample fail-s1 fk prove - related load link on create",
+      "test box4 safety event load link 2026-08-18"
+    ],
+    "safety.incidents": [
+      "codex p44 cargo claim reason fk smoke codex_p44_cargo",
+      "test box4 trailer interchange linkage verification",
+      "test-box4 linked cargo claim — customer/load/driver live proof 2026-08",
+      "test-cc3-go0057 trailer interchange, safe to leave"
+    ],
+    "safety.complaints": [
+      "test data shipper keep",
+      "test data shipper"
+    ],
+    "safety.dot_inspections": [
+      "test data inspector",
+      "test data inspector",
+      "test inspector"
+    ],
+    "safety.roadside_inspections": [
+      "test data keep"
+    ],
+    "safety.accidents": [
+      "test data keep"
+    ],
+    "safety.citations": [
+      "test data keep"
+    ],
+    "safety.violations": [
+      "test data keep test data keep"
+    ],
+    "safety.training_records": [
+      "test data hos training keep"
+    ],
+    "safety.compliance_reminders": [
+      "test data keep"
+    ],
+    "safety.driver_w8ben": [
+      "test data keep test data keep"
+    ],
+    "safety.dvir_defect_severity_tags": [
+      "test data keep"
+    ],
+    "safety.event_documents": [
+      "test data keep"
+    ],
+    "safety.permits": [
+      "usmca test"
+    ],
+    "legal.signatures": [
+      "test data keep"
+    ],
+    "maintenance.inspections": [
+      "test data keep"
+    ],
+    "maintenance.parts_warranty": [
+      "test data keep"
+    ],
+    "maintenance.tire_events": [
+      "test data keep test data keep"
+    ],
+    "maintenance.tire_records": [
+      "test data keep"
+    ],
+    "maintenance.tire_brands": [
+      "test data tire brand testmtdqbphp"
+    ],
+    "compliance.form_425c_reports": [
+      "test-425c-cursor-20260823",
+      "test-425c-cursor-20260823"
+    ],
+    "geo.geofences": [
+      "test codex go0040"
+    ],
+    "identity.driver_applicants": [
+      "test codex test0829"
+    ],
+    "docs.files": [
+      "test-carrier_rate_confirmation_u6505932    .pdf",
+      "test-carrier_rate_confirmation_u6505932    .pdf",
+      "test-carrier_rate_confirmation_u6505932    .pdf",
+      "test-carrier_rate_confirmation_u6505932    .pdf"
+    ],
+    "mdata.vendor_payment_methods": [
+      "test bank"
+    ],
+    "mdata.driver_teams": [
+      "cc3 test team"
+    ],
+    "mdata.maintenance_parts": [
+      "cc3 verify maintenance part test"
+    ],
+    "mdata.maintenance_services": [
+      "cc3 test service cc3testsvc",
+      "cc3 verify maintenance service test cc3test-svc"
+    ],
+    "mdata.locations": [
+      "test food"
+    ],
+    "mdata.vendors": [
+      "driver dummy",
+      "devin-audit-vendor-20260826-renamed",
+      "devin-audit-go1913-create",
+      "devin-audit-go1913-20260826-renamed"
+    ],
+    "mdata.assets": [
+      "test-unit-20260806-01",
+      "test-u01",
+      "codex-audit-unit-20260816-0349",
+      "codex-legal-unit-20260816-1506"
+    ],
+    "mdata.equipment": [
+      "trl-testmtdp79yf-1",
+      "trl-testmtdp79yf-2",
+      "test-cc3-trailer-001",
+      "test-codex-go0033"
+    ],
+    "mdata.units": [
+      "devin-a-210001",
+      "test-codex-956214 test data keep until launch",
+      "test-unit-20260806-01 freightliner cascadia",
+      "test-u01 freightliner cascadia"
+    ],
+    "accounting.ps_item": [
+      "test data testmtdqiugl",
+      "zz-sample item a usmca_gateb_sample_2026-08-07",
+      "zz-sample item b usmca_gateb_sample_2026-08-07",
+      "test-cc3-maint-service-20260825"
+    ],
+    "accounting.ps_category": [
+      "test data testmtdqiugl"
+    ],
+    "accounting.coa_account": [
+      "test data testmtdqiugl test data keep",
+      "zz-sample a usmca_gateb_sample_2026-08-07 9901"
+    ],
+    "accounting.sales_tax_agencies": [
+      "test data texas comptroller void-at-launch",
+      "test data cc2 sales tax agency void-at-launch"
+    ],
+    "accounting.customer_classifications": [
+      "test data keep"
+    ],
+    "accounting.vendor_classifications": [
+      "test data keep"
+    ],
+    "catalogs.items": [
+      "zz-sample item a usmca_gateb_sample_2026-08-07 usmca_gateb_sample_2026",
+      "zz-sample item b usmca_gateb_sample_2026-08-07 usmca_gateb_sample_2026",
+      "test-cc3-maint-service-20260825"
+    ],
+    "catalogs.accounts": [
+      "test codex 18756 — driver escrow 2100-00-018",
+      "cc3test verify20260822 — driver escrow 2100-00-016",
+      "driver cash advance- test autoprovisionwalk-void drivercashad896665-04",
+      "test codex onboard 20260824 — driver escrow 2100-00-017"
+    ],
+    "catalogs.classes": [
+      "zz-sample class a usmca_gateb_sample_2026-08-07",
+      "ca23 test class"
+    ],
+    "catalogs.accident_types": [
+      "cc3testacc cc3 test accident type",
+      "codex-p44-accident codex p44 accident type",
+      "cc3test-acc cc3 test accident type"
+    ],
+    "catalogs.additional_charges": [
+      "codex-p44-accessorial codex p44 accessorial"
+    ],
+    "catalogs.air_bag_catalog": [
+      "cc3testbag cc3 test air bag",
+      "cc3-test-airbag-20260822 test data void-at-launch cc3 air bag"
+    ],
+    "catalogs.asset_locations": [
+      "cc2-live-test-fl01 cc2 live test fleet 01"
+    ],
+    "catalogs.battery_catalog": [
+      "cc3 test battery"
+    ],
+    "catalogs.cargo_claim_reasons": [
+      "codex_p44_cargo codex p44 cargo",
+      "test-cc3-go0037 test-cc3-go0037 cargo claim reason",
+      "cc3test-cargo cc3 verify cargo claim reason test"
+    ],
+    "catalogs.cash_advance_types": [
+      "cc3-test-cashadvance-20260822 test data void-at-launch cc3 cash advanc",
+      "cc3test cc3 verify cash advance type test"
+    ],
+    "catalogs.complaint_types": [
+      "codex_p44_complaint codex p44 complaint",
+      "cc3-test-complaint cc3 test complaint type 20260823",
+      "cc3test cc3 verify complaint type test"
+    ],
+    "catalogs.customer_quality_event_reasons": [
+      "cc3-test-quality-event test data void-at-launch cc3 quality event",
+      "cc3-test-quality-v3 cc3 test quality event v3 edited"
+    ],
+    "catalogs.customer_types": [
+      "cc3-test-customer-type-2 cc3 test customer type 20260822",
+      "cc3-test-category-202608 cc3 test category 20260822-1054",
+      "cc3-test-ctype-3 cc3 test customer type 3 edited"
+    ],
+    "catalogs.def_stations": [
+      "cc3testdef cc3 diagnostic def station",
+      "cc3-test-defstation test data void-at-launch cc3 def station"
+    ],
+    "catalogs.detail_types": [
+      "cc3 test detail type 20260822",
+      "test data cc3 detail type"
+    ],
+    "catalogs.detention_reasons": [
+      "cc3-test-detention-20260822 cc3 test detention reason 20260822-1125"
+    ],
+    "catalogs.dispatch_flag_colors": [
+      "codex_p44_smoke codex p44 smoke",
+      "cc3test cc3 diagnostic test"
+    ],
+    "catalogs.dispatcher_error_reasons": [
+      "cc3-test-dispatcher-error-02-20260822 test data void-at-launch cc3 dis",
+      "cc3-test-dispatcher-error-03-20260822 test data void-at-launch cc3 dis",
+      "cc3-test-dispatcher-error-20260822 test data void-at-launch cc3 dispat"
+    ],
+    "catalogs.dot_violation_types": [
+      "cascade20 ca20 test dot violation",
+      "test-cc3-go0054-hos-viol test-cc3-go0054 hos violation type",
+      "cc3test-dot cc3 verify dot violation type test"
+    ],
+    "catalogs.driver_load_statuses": [
+      "cc3 test driver load status"
+    ],
+    "catalogs.driver_pay_types": [
+      "cc3-test-paytype-20260822 test data void-at-launch cc3 pay type"
+    ],
+    "catalogs.driver_termination_reasons": [
+      "cascade_test_termination cascade test termination",
+      "cc3_test_reason cc3 test termination reason"
+    ],
+    "catalogs.equipment_types": [
+      "cascade-et cascade equipment type sample equipment type created by cas",
+      "cascade_eq19_001 ca19 test equipment sample ca-19 equip type create te",
+      "p47-smoke-20260811 p47 smoke equipment type usmca p47 fleet catalog po",
+      "testcc3eq test cc3 equipment type test data -- cc3 create-test-then-vo"
+    ],
+    "catalogs.escrow_types": [
+      "cc3-test-escrowtype-20260822 test data void-at-launch cc3 escrow type"
+    ],
+    "catalogs.expensive_states": [
+      "cc3 test picker live-proof 20260822-1210, safe to void"
+    ],
+    "catalogs.form_425c_company_profiles": [
+      "test-425c-cursor-20260823"
+    ],
+    "catalogs.fuel_card_types": [
+      "cc3-test-cardtype test data void-at-launch cc3 fuel card type"
+    ],
+    "catalogs.fuel_dispatch_routes": [
+      "cc3 test dispatch route"
+    ],
+    "catalogs.fuel_station_brands": [
+      "cc3 test fuel brand"
+    ],
+    "catalogs.internal_fine_reasons": [
+      "cc3-test-fine cc3 test internal fine reason 20260822",
+      "test-testmtdq4ucf test data late dispatch keep"
+    ],
+    "catalogs.journal_entry_types": [
+      "cc3test-jet cc3 test journal entry type"
+    ],
+    "catalogs.leave_types": [
+      "cc3-test-leavetype-20260822 test data void-at-launch cc3 leave type",
+      "cc3test cc3 verify leave type test"
+    ],
+    "catalogs.load_cancellation_reasons": [
+      "cascade_cancel cascade test cancellation",
+      "cascade_ca09_001 ca09 test cancellation",
+      "cc3_test_load_cancel_20260822 test data void-at-launch cc3 load cancel",
+      "cc3_test_verify4_20260827 cc3 test verify4 20260827"
+    ],
+    "catalogs.load_trailer_equipment": [
+      "codex-p44-trailer codex p44 trailer requirement"
+    ],
+    "catalogs.load_types": [
+      "test-data-dry-van test data dry van"
+    ],
+    "catalogs.lumper_providers": [
+      "codex-p44-lumper codex p44 lumper"
+    ],
+    "catalogs.maintenance_failure_codes": [
+      "cc3-test-failurecode-20260822 test data void-at-launch cc3 failure cod"
+    ],
+    "catalogs.maintenance_priority_levels": [
+      "cc3-test-priority-20260822 test data void-at-launch cc3 priority level"
+    ],
+    "catalogs.maintenance_service_tasks": [
+      "cc3-test-svc-task cc3 test service task 20260822"
+    ],
+    "catalogs.maintenance_shop_locations": [
+      "cc3-test-shoploc-20260822 cc3 test shop location 20260822-1206"
+    ],
+    "catalogs.mx_customs_brokers": [
+      "cc3-test-mxbroker-20260822 test data void-at-launch cc3 customs broker"
+    ],
+    "catalogs.pay_rate_templates": [
+      "cc3-test-payrate-20260822 cc3 test pay rate template 20260822-1103"
+    ],
+    "catalogs.payment_methods": [
+      "test_cc3_payment_method test-cc3 payment method",
+      "cc3test-pm cc3 test payment method"
+    ],
+    "catalogs.payment_terms": [
+      "ca22 test payment term",
+      "p45-smoke-20260811",
+      "cc2-live-test-01"
+    ],
+    "catalogs.pickup_time_types": [
+      "cc3-test-pickuptime-20260822 test data void-at-launch cc3 pickup time",
+      "cc3-test-pickup-v2 cc3 test pickup time v2 20260823"
+    ],
+    "catalogs.repair_locations": [
+      "cc3-test-repairloc-20260822 cc3 test repair location 20260822-1201"
+    ],
+    "catalogs.tax_codes": [
+      "test-cc3-tax cc3 test tax code 20260822"
+    ],
+    "catalogs.toll_providers": [
+      "cc3 test toll provider"
+    ],
+    "catalogs.tractor_statuses": [
+      "cc3 test tractor status"
+    ],
+    "catalogs.trailer_types": [
+      "test-cc3-go0030 test-cc3-go0030 trailer type"
+    ],
+    "catalogs.unit_ownership_types": [
+      "test cc3 ownership type"
+    ],
+    "catalogs.vendor_types": [
+      "cc3testvend cc3 test vendor type cc3 test vendor type",
+      "test_cc3_vendor_type cc3 test vendor type cc3 test vendor type"
+    ],
+    "catalogs.void_cancel_reasons": [
+      "cc3_test_void_reason cc3 test void reason 20260822"
+    ],
+    "catalogs.work_order_statuses": [
+      "cc2-live-test-mx01 cc2 live test mx 01"
+    ],
+    "catalogs.workplace_incident_types": [
+      "cc3testwit cc3 test workplace incident",
+      "cc3-test-wpincident-20260822 cc3 test workplace incident type 20260822"
+    ],
+    "compliance.required_document_types": [
+      "cc3_test_doc cc3 test document"
+    ]
+  },
+  "deletion_log_rows": 246,
+  "kept_needs_owner": [
+    {
+      "table": "safety.safety_events",
+      "id": "9e5a26fc-3659-470d-81c5-8ba8d0d3035a",
+      "label": "test box4 safety meeting driver link 2026-08-18 {\"required_attendees\":",
+      "why": "safety.safety_event_notes is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "safety.safety_events",
+      "id": "c539bf5c-69b4-4b30-911e-fb8544b9aab2",
+      "label": "t120 mechanical breakdown - i-10 baytown tx (load l-20260808-0085) sam",
+      "why": "safety.safety_event_notes is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "safety.safety_events",
+      "id": "49c981a7-b23e-475a-9dc0-2e5a47be85a4",
+      "label": "test box4 safety event load link 2026-08-18 test data — verifies canon",
+      "why": "safety.safety_event_notes is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "safety.safety_events",
+      "id": "6cb97218-2992-4cca-b714-578d5388346d",
+      "label": "test-cc3-go0033 safety event create-flow proof test-cc3-go0033 safe to",
+      "why": "safety.safety_event_notes is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "safety.safety_events",
+      "id": "cf777109-e9ab-4a9b-bdbf-8cc97b111f1d",
+      "label": "test-cc3-go0085 safety event keep test data keep -- cc-3 go-0085 safet",
+      "why": "safety.safety_event_notes is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "safety.incidents",
+      "id": "c282dbbe-be1c-49d7-8d21-1d631882dcb3",
+      "label": "test box4 canonical damage linkage verification",
+      "why": "would delete real child rows: safety.damage_continuity_chains"
+    },
+    {
+      "table": "safety.da_program_enrollments",
+      "id": "-",
+      "label": "",
+      "why": "no uuid id column — purge route cannot address it"
+    },
+    {
+      "table": "safety.dvir_defects",
+      "id": "7b3c5cb4-5a7a-48af-93ad-2d4e5a7639af",
+      "label": "test data keep",
+      "why": "safety.dvir_defect_severity_tags is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "legal.contract_instances",
+      "id": "2d6e3f93-e999-44b0-87c3-e7135d22f6b8",
+      "label": "codex active fleet test 20260821",
+      "why": "legal.contract_audit_log is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "docs.files",
+      "id": "7f304725-b8c8-4b03-88e6-1371e522d46c",
+      "label": "ine jorge pablo munoz.jpeg sample/test battery - ine credencial para v",
+      "why": "_purge_rows_cascade: docs.file_links.file_id is NOT NULL and references a row being purged. It is a shared or trust record this route never deletes and the link"
+    },
+    {
+      "table": "docs.files",
+      "id": "17d9064d-27e2-4935-878a-ac89aacbcff3",
+      "label": "medical exam-jorge.jpeg sample/test battery - constancia de aptitud ps",
+      "why": "_purge_rows_cascade: docs.file_links.file_id is NOT NULL and references a row being purged. It is a shared or trust record this route never deletes and the link"
+    },
+    {
+      "table": "docs.files",
+      "id": "b0cb79aa-4296-4c0a-9f4e-e1d555dc1b93",
+      "label": "licencia federal jorge munoz-constancia-mugj840525htsxnr06.pdf sample/",
+      "why": "_purge_rows_cascade: docs.file_links.file_id is NOT NULL and references a row being purged. It is a shared or trust record this route never deletes and the link"
+    },
+    {
+      "table": "docs.files",
+      "id": "cf805a9c-6a71-46c3-9e08-c82a05cad738",
+      "label": "test-upload-cursor.txt test edit - docs leftover sweep verification",
+      "why": "_purge_rows_cascade: docs.file_links.file_id is NOT NULL and references a row being purged. It is a shared or trust record this route never deletes and the link"
+    },
+    {
+      "table": "mdata.drivers",
+      "id": "5870031c-8519-4904-8b2d-5b50220e6fb8",
+      "label": "driver dummy",
+      "why": "update or delete on table \"drivers\" violates foreign key constraint \"drivers_merged_into_driver_id_fkey\" on table \"drivers\""
+    },
+    {
+      "table": "mdata.drivers",
+      "id": "db37af23-ea20-493b-8321-a26a30205250",
+      "label": "codex active fleet test 20260821",
+      "why": "telematics.vehicle_driver_assignments is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "mdata.drivers",
+      "id": "9f35cf21-01bb-467e-bc31-e96bb9c60dfe",
+      "label": "test drivertestmtdp79yf",
+      "why": "safety.driver_leave_audit_log is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "mdata.drivers",
+      "id": "ff62fc9b-7258-4d89-9778-43d2e1a02d4a",
+      "label": "driver dummy",
+      "why": "hos.duty_status_events is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "mdata.drivers",
+      "id": "bfc906db-b778-48c9-944a-e59c5ffb73c5",
+      "label": "safety —",
+      "why": "hos.duty_status_events is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "mdata.equipment",
+      "id": "651ecf9f-90b8-4d8d-9c72-e1984e87b651",
+      "label": "cc3test-trailer-form-proof",
+      "why": "would delete real child rows: maintenance.reefer_specs"
+    },
+    {
+      "table": "mdata.units",
+      "id": "5eaa448d-ba7d-4f60-b507-a4c7b77cea93",
+      "label": "t-testmtdp79yf freightliner cascadia",
+      "why": "safety.dvir_defects is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "mdata.units",
+      "id": "e6223cbf-2aa4-43b3-9e23-1172eaab40e5",
+      "label": "test-truck-1",
+      "why": "accounting.bill_lines row 2975d62a-0ba6-4c50-b8ba-fa1cf4a464b6 is NOT voided -- the purge bypass (auth AUTH-469) never applies to a live document, no exceptions"
+    },
+    {
+      "table": "mdata.units",
+      "id": "630edccb-7445-4a88-978f-c1848e6c0820",
+      "label": "test-truck-2",
+      "why": "would delete real child rows: maintenance.pm_schedules, maintenance.pm_schedules, maintenance.pm_schedules"
+    },
+    {
+      "table": "mdata.units",
+      "id": "08d86e86-62ba-444b-afce-c369930fb393",
+      "label": "test-truck-3",
+      "why": "would delete real child rows: maintenance.pm_schedules, maintenance.pm_schedules, maintenance.pm_schedules"
+    },
+    {
+      "table": "mdata.units",
+      "id": "05f48916-3bb3-4049-bc19-1b9a57353a5e",
+      "label": "codex-audit-unit-20260816-0349 codex audit-spine",
+      "why": "telematics.vehicle_driver_assignments is append-only — DELETE is not allowed"
+    },
+    {
+      "table": "mdata.units",
+      "id": "af684f0c-43ab-480a-a7d5-6c405cfa15ff",
+      "label": "test-truck-4",
+      "why": "would delete real child rows: maintenance.pm_schedules, maintenance.pm_schedules, maintenance.pm_schedules"
+    },
+    {
+      "table": "catalogs.accounts",
+      "id": "4a8a9e1e-a10c-4147-97f2-991f8f1620b2",
+      "label": "codex active fleet test 20260821 — driver escrow 2100-00-013",
+      "why": "would delete real child rows: accounting.escrow_accounts"
+    }
+  ],
+  "status": "DRY_RUN_ROLLED_BACK"
+}
