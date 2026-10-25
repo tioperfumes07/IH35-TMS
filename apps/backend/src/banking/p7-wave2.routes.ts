@@ -80,11 +80,14 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       await appendCrudAudit(client, user.uuid, "banking.txn_review_list", { operating_company_id: q.operating_company_id }, "info", "P7-W2-BANK");
 
+      // RC1 443.341: JOIN accounts to get then_account_number so isCatchAllRule can detect 9000 targets.
       const rulesRes = await client.query(
-        `SELECT priority, description_contains, description_regex, amount_min_cents, amount_max_cents,
-                bank_account_filter_id, then_vendor_id, then_account_id, then_class_id
-         FROM accounting.banking_rules
-         WHERE operating_company_id = $1::uuid AND is_active = true`,
+        `SELECT r.priority, r.description_contains, r.description_regex, r.amount_min_cents, r.amount_max_cents,
+                r.bank_account_filter_id, r.then_vendor_id, r.then_account_id, r.then_class_id,
+                a.account_number AS then_account_number
+         FROM accounting.banking_rules r
+         JOIN catalogs.accounts a ON a.id = r.then_account_id
+         WHERE r.operating_company_id = $1::uuid AND r.is_active = true`,
         [q.operating_company_id]
       );
       const rules = rulesRes.rows as BankingRuleRow[];
@@ -581,6 +584,9 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         operating_company_id: z.string().uuid(),
         priority: z.coerce.number().int().optional(),
         is_active: z.boolean().optional(),
+        // RC2 443.341: allow correcting rule targets (owner rulings on specific payees)
+        then_account_id: z.string().uuid().optional(),
+        then_vendor_id: z.string().uuid().nullable().optional(),
       })
       .safeParse(req.body ?? {});
     if (!params.success || !body.success) return validationError(reply, params.success ? body.error! : params.error);
@@ -595,11 +601,21 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
           SET
             priority = COALESCE($3, priority),
             is_active = COALESCE($4, is_active),
+            then_account_id = COALESCE($5::uuid, then_account_id),
+            then_vendor_id = CASE WHEN $6::boolean THEN $7::uuid ELSE then_vendor_id END,
             updated_at = now()
           WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING id
         `,
-        [params.data.id, body.data.operating_company_id, body.data.priority ?? null, body.data.is_active ?? null]
+        [
+          params.data.id,
+          body.data.operating_company_id,
+          body.data.priority ?? null,
+          body.data.is_active ?? null,
+          body.data.then_account_id ?? null,
+          body.data.then_vendor_id !== undefined,
+          body.data.then_vendor_id ?? null,
+        ]
       );
       if (res.rows.length === 0) return false;
       await appendCrudAudit(client, user.uuid, "banking.rule_updated", { id: params.data.id }, "info", "P7-W2-BANK");
@@ -655,11 +671,14 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         excludedMoneyIn = true;
         return;
       }
+      // RC1 443.341: JOIN to get then_account_number for catch-all detection.
       const rulesRes = await client.query(
-        `SELECT priority, description_contains, description_regex, amount_min_cents, amount_max_cents,
-                bank_account_filter_id, then_vendor_id, then_account_id, then_class_id
-         FROM accounting.banking_rules
-         WHERE operating_company_id = $1::uuid AND is_active = true`,
+        `SELECT r.priority, r.description_contains, r.description_regex, r.amount_min_cents, r.amount_max_cents,
+                r.bank_account_filter_id, r.then_vendor_id, r.then_account_id, r.then_class_id,
+                a.account_number AS then_account_number
+         FROM accounting.banking_rules r
+         JOIN catalogs.accounts a ON a.id = r.then_account_id
+         WHERE r.operating_company_id = $1::uuid AND r.is_active = true`,
         [body.data.operating_company_id]
       );
       const sug = suggestionFromRules(rulesRes.rows as BankingRuleRow[], {

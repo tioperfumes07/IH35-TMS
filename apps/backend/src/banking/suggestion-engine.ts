@@ -25,7 +25,17 @@ export type BankingRuleRow = {
   then_vendor_id: string | null;
   then_account_id: string;
   then_class_id: string | null;
+  // RC1 443.341: enriched by the routes layer via JOIN; undefined when the old query path is used.
+  then_account_number?: string | null;
 };
+
+/** RC1 443.341: a rule targeting 9000 or carrying no vendor is a FALLBACK — it can never beat
+ *  a history, payee-parser, or specific-rule suggestion. Only fires when nothing else matches,
+ *  with confidence 'low' and source 'catch_all_rule'.
+ */
+export function isCatchAllRule(rule: Pick<BankingRuleRow, "then_vendor_id" | "then_account_number">): boolean {
+  return !rule.then_vendor_id || rule.then_account_number === "9000";
+}
 
 export type SuggestionResult = {
   vendor_id: string | null;
@@ -35,7 +45,34 @@ export type SuggestionResult = {
   source: string;
 };
 
-/** Ordered rule evaluation — highest priority wins first matching rule. */
+function ruleMatchesCtx(
+  r: BankingRuleRow,
+  desc: string,
+  ctx: { amount_cents: number; bank_account_id: string }
+): boolean {
+  if (r.bank_account_filter_id && r.bank_account_filter_id !== ctx.bank_account_id) return false;
+  if (r.amount_min_cents !== null && ctx.amount_cents < r.amount_min_cents) return false;
+  if (r.amount_max_cents !== null && ctx.amount_cents > r.amount_max_cents) return false;
+  if (r.description_contains) {
+    if (!desc.includes(r.description_contains.toLowerCase())) return false;
+  }
+  if (r.description_regex) {
+    try {
+      if (!new RegExp(r.description_regex, "i").test(desc)) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * RC1 443.341 — TWO-PASS evaluation: specific rules first (have a vendor AND not 9000), catch-all
+ * rules (targeting 9000 or naming no vendor) only if no specific rule matched. Catch-all suggestions
+ * carry confidence 'low' and source 'catch_all_rule' so the review UI can flag them "needs a
+ * decision". Without account_number enrichment (then_account_number undefined) this still separates
+ * no-vendor rules from vendor rules, giving partial protection even on the old query path.
+ */
 export function suggestionFromRules(
   rules: BankingRuleRow[],
   ctx: {
@@ -49,28 +86,21 @@ export function suggestionFromRules(
 ): SuggestionResult | null {
   const sorted = [...rules].sort((a, b) => b.priority - a.priority);
   const desc = (ctx.description_normalized ?? ctx.description ?? "").toLowerCase();
-  for (const r of sorted) {
-    if (r.bank_account_filter_id && r.bank_account_filter_id !== ctx.bank_account_id) continue;
-    if (r.amount_min_cents !== null && ctx.amount_cents < r.amount_min_cents) continue;
-    if (r.amount_max_cents !== null && ctx.amount_cents > r.amount_max_cents) continue;
-    if (r.description_contains) {
-      if (!desc.includes(r.description_contains.toLowerCase())) continue;
-    }
-    if (r.description_regex) {
-      try {
-        if (!new RegExp(r.description_regex, "i").test(desc)) continue;
-      } catch {
-        continue;
-      }
-    }
-    return {
-      vendor_id: r.then_vendor_id,
-      account_id: r.then_account_id,
-      class_id: r.then_class_id,
-      confidence: "high",
-      source: "banking_rule",
-    };
+  const specific = sorted.filter((r) => !isCatchAllRule(r));
+  const catchAll = sorted.filter((r) => isCatchAllRule(r));
+
+  // Pass 1: authored rules that name a real payee/vendor and target a specific account (not 9000).
+  for (const r of specific) {
+    if (!ruleMatchesCtx(r, desc, ctx)) continue;
+    return { vendor_id: r.then_vendor_id, account_id: r.then_account_id, class_id: r.then_class_id, confidence: "high", source: "banking_rule" };
   }
+
+  // Pass 2: catch-all fallbacks — only when no specific rule matched.
+  for (const r of catchAll) {
+    if (!ruleMatchesCtx(r, desc, ctx)) continue;
+    return { vendor_id: r.then_vendor_id, account_id: r.then_account_id, class_id: r.then_class_id, confidence: "low", source: "catch_all_rule" };
+  }
+
   return null;
 }
 
