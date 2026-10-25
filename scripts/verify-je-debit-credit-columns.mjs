@@ -54,12 +54,36 @@ function checkColumns(src) {
   if (!/Difference/.test(src)) failures.push('no "Difference" footer label');
   if (!/Out of balance/.test(src)) failures.push('no "Out of balance" indicator');
   if (!/variant="crit"/.test(src)) failures.push('"Out of balance" indicator is not the red "crit" variant');
+  // D068 (443.257-D / LEAD 443.317) — Entity column shows the party's NAME, never the raw uuid.
+  if (!/entityLabel\(\s*p\.entity_name\s*,\s*p\.entity_uuid/.test(src)) {
+    failures.push("Entity column must render entityLabel(p.entity_name, p.entity_uuid, …) (D068)");
+  }
+  if (/render:\s*\(p\)\s*=>\s*p\.entity_uuid\s*\|\|/.test(src)) {
+    failures.push("Entity column must not fall back to raw p.entity_uuid (D068)");
+  }
+  return failures;
+}
+
+function checkPartyNameSql() {
+  const failures = [];
+  const partySql = path.join(ROOT, "apps", "backend", "src", "accounting", "posting-party.sql.ts");
+  const jeSvc = path.join(ROOT, "apps", "backend", "src", "accounting", "journal-entries.service.ts");
+  if (!fs.existsSync(partySql)) return [`missing: ${path.relative(ROOT, partySql)}`];
+  if (!fs.existsSync(jeSvc)) return [`missing: ${path.relative(ROOT, jeSvc)}`];
+  const partySrc = fs.readFileSync(partySql, "utf8");
+  const jeSrc = fs.readFileSync(jeSvc, "utf8");
+  if (!/export function postingPartyNameSql/.test(partySrc)) {
+    failures.push("posting-party.sql.ts missing postingPartyNameSql (D068)");
+  }
+  if ((jeSrc.match(/\$\{postingPartyNameSql\("p"\)\} AS entity_name/g) || []).length < 2) {
+    failures.push("journal-entries.service.ts must select postingPartyNameSql AS entity_name in both readers (D068)");
+  }
   return failures;
 }
 
 function checkStatic() {
   if (!fs.existsSync(GRID)) return [`missing: ${path.relative(ROOT, GRID)}`];
-  return checkColumns(fs.readFileSync(GRID, "utf8"));
+  return [...checkColumns(fs.readFileSync(GRID, "utf8")), ...checkPartyNameSql()];
 }
 
 function selftest() {
@@ -68,7 +92,7 @@ function selftest() {
     for (const f of realFailures) console.error(`${LABEL} --selftest FAIL — real PostingGrid.tsx flagged: ${f}`);
     return 1;
   }
-  console.log(`${LABEL} --selftest: real PostingGrid.tsx clear (Debit + Credit + totals footer all present)`);
+  console.log(`${LABEL} --selftest: real PostingGrid.tsx clear (Debit + Credit + totals footer + D068 entity name all present)`);
 
   // Mutant: surgically delete the Credit column object (the block from `{` through its matching
   // `label: "Credit"` object's closing `},`), simulating "drops Credit col".
@@ -98,7 +122,7 @@ async function main() {
     for (const f of staticFailures) console.error(`  - ${f}`);
     return 1;
   }
-  console.log(`${LABEL} static half OK — PostingGrid.tsx renders Debit + Credit (right-aligned tabular-nums, opposite side blank) and a Total Debits / Total Credits / Difference footer with a red Out-of-balance badge`);
+  console.log(`${LABEL} static half OK — PostingGrid.tsx renders Debit + Credit (right-aligned tabular-nums, opposite side blank), D068 Entity via entity_name, and a Total Debits / Total Credits / Difference footer with a red Out-of-balance badge`);
 
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {

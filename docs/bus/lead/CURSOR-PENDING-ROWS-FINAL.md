@@ -50,8 +50,8 @@
 | 184 | Accounting › Create Manual JE › Step 2 Lines | D065: Class selector overlaps the adjacent Debit field; line controls overflow the drawer horizontally | 443.257-D | OPEN |
 | 185 | Banking › Home / Record Transfer › Drawer footer | D066: Persistent alert stack renders above the open transfer drawer and obscures its bottom action area | 443.257-D | CODED |
 | 186 | Accounting › Bills / Bill detail › Payments on this bill | D067: Two linked payments render as `Payment — not visible` rather than distinct display identifiers | 443.257-D | CODED |
-| 187 | Accounting › Bill detail › Journal Entity column | D068: Five journal rows show raw UUID entity labels | 443.257-D | OPEN |
-| 188 | Accounting › Reclassify › Account balance heading | D069: Date displays `10/23/26` while date filters use `10/23/2026` | 443.257-D | OPEN |
+| 187 | Accounting › Bill detail › Journal Entity column | D068: Five journal rows show raw UUID entity labels | 443.257-D | CLOSED tip `c3df064330` + ratchet — PostingGrid entityLabel(entity_name) + postingPartyNameSql (#27549); verify-je-debit-credit-columns D068 |
+| 188 | Accounting › Reclassify › Account balance heading | D069: Date displays `10/23/26` while date filters use `10/23/2026` | 443.257-D | CLOSED tip `c3df064330` — Balance {formatDateQboList(toDate)} ≡ MM/DD/YYYY (= formatDateUS); DatePicker same; verify-b5-reclassify-batch D069 |
 | 189 | Banking › Categorize / Match › Candidate dates | D070: Loaded candidate list displays YYYY-MM-DD dates while transaction header uses MM/DD/YYYY | 443.257-D | CODED — MatchDrawer formatDateUS(c.event_date); guard D070 |
 | 190 | Banking › Categorize / Match › Candidate payee labels | D071: Candidate names mix ALL CAPS and proper case | 443.257-D | CODED — MatchDrawer formatPersonName(c.counterparty_name); guard D071 |
 | 191 | Banking › Relay card › Wallet balance tile | D072: Five-digit currency omits thousands separator | 443.257-D | CODED-QUEUED |
