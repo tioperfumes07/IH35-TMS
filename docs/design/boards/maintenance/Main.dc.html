@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Maintenance Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 7px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+    .puff { animation: ex 2.1s ease-out infinite; transform-origin: 60px 8px; }
+    @keyframes ex { 0% { opacity: .55; transform: translate(0,0) scale(.6) } 100% { opacity: 0; transform: translate(-7px,-7px) scale(1.9) } }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1760px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <!-- page header -->
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 16px 24px 0 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Maintenance</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">Work orders, PM scheduling, outside shops and parts — USMCA Freight Solutions</div>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 500; padding: 8px 14px; min-height: 44px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Create Bill</button>
+        <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 500; padding: 8px 14px; min-height: 44px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Create Expense</button>
+        <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 16px; min-height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Create Work Order</button>
+      </div>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 14px;">
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 14px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Home</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Fleet Table</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Active WOs</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Service / Location</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Driver Reports</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Road Service</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Parts Inventory</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Integrity Report</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Settings</div>
+    </div>
+  </div>
+
+  <!-- filter bar -->
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 10px 24px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+    <span class="hd">Units</span>
+    <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 4px 6px; background: #FFFFFF; min-height: 34px;">
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">T152 <button type="button" aria-label="Remove T152" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">T168 <button type="button" aria-label="Remove T168" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">T175 <button type="button" aria-label="Remove T175" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="font-size: 12px; color: #94A3B8; padding: 0 6px;">+ 13 more…</span>
+    </div>
+    <span class="hd" style="margin-left: 8px;">Date</span>
+    <select aria-label="Date range" style="font: inherit; font-size: 12.5px; min-height: 34px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 8px; background: #FFFFFF; color: #1F2A44;"><option>This month</option></select>
+    <span class="hd" style="margin-left: 8px;">Status</span>
+    <select aria-label="Status" style="font: inherit; font-size: 12.5px; min-height: 34px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 8px; background: #FFFFFF; color: #1F2A44;"><option>All open</option></select>
+    <span class="hd" style="margin-left: 8px;">Shop</span>
+    <select aria-label="Shop" style="font: inherit; font-size: 12.5px; min-height: 34px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 8px; background: #FFFFFF; color: #1F2A44;"><option>All shops</option></select>
+    <div style="flex-grow: 1;"></div>
+    <button type="button" style="font: inherit; font-size: 12px; font-weight: 500; min-height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Save view</button>
+    <button type="button" style="font: inherit; font-size: 12px; min-height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #64748B; border-radius: 3px; cursor: pointer;">Clear</button>
+  </div>
+
+  <div style="padding: 16px 24px 24px 24px; display: flex; flex-direction: column; gap: 16px;">
+
+    <!-- KPI row: selectable -->
+    <div>
+      <div class="hd" style="margin-bottom: 7px;">Click a tile to filter the queue below</div>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px;">
+
+        <button type="button" style="font: inherit; text-align: left; cursor: pointer; background: #14314F; border: 1px solid #14314F; border-radius: 3px; padding: 11px 13px; color: #FFFFFF;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #B8C7D8;">Open</div>
+          <div class="num" style="font-size: 27px; font-weight: 600; text-align: left; line-height: 1.15;">6</div>
+          <div style="font-size: 11px; color: #B8C7D8;">showing</div>
+        </button>
+
+        <button type="button" style="font: inherit; text-align: left; cursor: pointer; background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px; color: #0F1B2D;">
+          <div class="hd">In Progress</div>
+          <div class="num" style="font-size: 27px; font-weight: 600; text-align: left; line-height: 1.15;">3</div>
+          <div style="font-size: 11px; color: #94A3B8;">2 at outside shops</div>
+        </button>
+
+        <button type="button" style="font: inherit; text-align: left; cursor: pointer; background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px; color: #0F1B2D;">
+          <div class="hd">Awaiting Parts</div>
+          <div class="num" style="font-size: 27px; font-weight: 600; text-align: left; line-height: 1.15;">1</div>
+          <div style="font-size: 11px; color: #94A3B8;">longest 4d</div>
+        </button>
+
+        <button type="button" style="font: inherit; text-align: left; cursor: pointer; background: #FFFFFF; border: 1px solid #B45309; border-radius: 3px; padding: 11px 13px; color: #0F1B2D;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #8A4208;">PM Due Soon</div>
+          <div class="num" style="font-size: 27px; font-weight: 600; text-align: left; line-height: 1.15; color: #8A4208;">4</div>
+          <div style="font-size: 11px; color: #8A4208;">within 2,500 mi</div>
+        </button>
+
+        <button type="button" style="font: inherit; text-align: left; cursor: pointer; background: #FFFFFF; border: 1px solid #A32D2D; border-radius: 3px; padding: 11px 13px; color: #0F1B2D;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #8C2020;">Severe / OOS</div>
+          <div class="num" style="font-size: 27px; font-weight: 600; text-align: left; line-height: 1.15; color: #8C2020;">1</div>
+          <div style="font-size: 11px; color: #8C2020;">T168 · 3 days down</div>
+        </button>
+
+        <button type="button" style="font: inherit; text-align: left; cursor: pointer; background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px; color: #0F1B2D;">
+          <div class="hd">MTD Repair Cost</div>
+          <div class="num" style="font-size: 27px; font-weight: 600; text-align: left; line-height: 1.15;">$18,412.60</div>
+          <div style="font-size: 11px; color: #94A3B8;">vs $14,905.00 Aug</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- PM countdown rail -->
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #E8EDF2;">
+        <div>
+          <div style="font-size: 14px; font-weight: 600;">PM Countdown</div>
+          <div style="font-size: 11.5px; color: #64748B;">Odometer read live from Samsara · PM interval 25,000 mi · 13:20 CT</div>
+        </div>
+        <div style="display: flex; gap: 14px; align-items: center; font-size: 11px; color: #64748B;">
+          <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; background: #1F2A44; border-radius: 1px; display: inline-block;"></span>On schedule</span>
+          <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; background: #B45309; border-radius: 1px; display: inline-block;"></span>Due soon</span>
+          <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 9px; height: 9px; background: #A32D2D; border-radius: 1px; display: inline-block;"></span>Overdue</span>
+        </div>
+      </div>
+
+      <div style="display: flex; padding: 8px 16px 4px 16px; gap: 12px;">
+        <div class="hd" style="width: 62px;">Unit</div>
+        <div class="hd" style="width: 96px;">Odometer</div>
+        <div class="hd" style="flex-grow: 1;">Miles to next PM</div>
+        <div class="hd" style="width: 108px; text-align: right;">Remaining</div>
+        <div class="hd" style="width: 92px; text-align: right;">Est. date</div>
+        <div class="hd" style="width: 128px; text-align: right;">Action</div>
+      </div>
+
+      <sc-for list="{{pmRows}}" as="r" hint-placeholder-count="6">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 4px 16px; border-top: 1px solid #F1F4F7;">
+          <div style="width: 62px; font-size: 13px; font-weight: 600;">{{r.unit}}</div>
+          <div class="num" style="width: 96px; font-size: 12.5px; color: #334155;">{{r.odo}}</div>
+
+          <div style="flex-grow: 1; position: relative; height: 46px;">
+            <div style="position: absolute; left: 0; right: 0; top: 30px; height: 3px; background: #E2E8F0; border-radius: 2px;"></div>
+            <div style="position: absolute; left: 0; top: 30px; height: 3px; border-radius: 2px; width: {{r.pct}}; background: {{r.tone}};"></div>
+            <div style="position: absolute; left: 0; top: 36px; height: 9px; width: 1px; background: #CBD5E1;"></div>
+            <div style="position: absolute; right: 0; top: 36px; height: 9px; width: 1px; background: #CBD5E1;"></div>
+            <div style="position: absolute; top: 0; left: {{r.pct}}; transform: translateX(-50%);">
+              <svg width="62" height="38" viewBox="0 -12 74 46" aria-hidden="true">
+                <defs>
+                  <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#FFFFFF"></stop>
+                    <stop offset=".55" stop-color="#EEF2F6"></stop>
+                    <stop offset="1" stop-color="#D7DEE6"></stop>
+                  </linearGradient>
+                </defs>
+                <ellipse cx="37" cy="30.4" rx="30" ry="2.1" fill="#0F172A" opacity=".13"></ellipse>
+                <circle class="puff" cx="60.5" cy="7" r="3.2" fill="#9CA3AF"></circle>
+                <circle class="puff" cx="62.5" cy="9" r="2.2" fill="#9CA3AF" style="animation-delay: .35s"></circle>
+                <rect x="3" y="6" width="42" height="15" rx="1.6" fill="url(#tg)" stroke="#93A3B4" stroke-width=".8"></rect>
+                <path d="M9 6v15M16 6v15M23 6v15M30 6v15M37 6v15" stroke="#C3CCD6" stroke-width=".7"></path>
+                <rect x="3" y="20.4" width="42" height="1.8" fill="#94A3B8"></rect>
+                <path d="M46 21.5V9.2c0-1 .8-1.8 1.8-1.8h6.6l5.4 6.1v8H46z" fill="{{r.tone}}"></path>
+                <path d="M48.6 9.4h5.2l4 4.6h-9.2z" fill="#BBD3EA"></path>
+                <rect x="45.4" y="15.6" width="14.6" height="2" rx="1" fill="#0B1B2B" opacity=".35"></rect>
+                <rect x="60.2" y="4.4" width="2" height="12" rx="1" fill="#94A3B8"></rect>
+                <rect x="45" y="21.4" width="16" height="1.6" fill="#475569"></rect>
+                <circle cx="59.6" cy="14.6" r=".9" fill="#FDE68A"></circle>
+                <circle cx="12.5" cy="24.6" r="4.5" fill="#111827"></circle>
+                <circle cx="12.5" cy="24.6" r="1.7" fill="#9CA3AF"></circle>
+                <circle cx="21.5" cy="24.6" r="4.5" fill="#111827"></circle>
+                <circle cx="21.5" cy="24.6" r="1.7" fill="#9CA3AF"></circle>
+                <circle cx="47.5" cy="24.6" r="4.5" fill="#111827"></circle>
+                <circle cx="47.5" cy="24.6" r="1.7" fill="#9CA3AF"></circle>
+                <circle cx="57.5" cy="24.6" r="4.2" fill="#111827"></circle>
+                <circle cx="57.5" cy="24.6" r="1.6" fill="#9CA3AF"></circle>
+              </svg>
+            </div>
+          </div>
+
+          <div class="num" style="width: 108px; font-size: 12.5px; font-weight: 600; color: {{r.tone}};">{{r.remaining}}</div>
+          <div class="num" style="width: 92px; font-size: 12px; color: #64748B;">{{r.eta}}</div>
+          <div style="width: 128px; text-align: right;">
+            <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; padding: 6px 9px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer;">Generate WO</button>
+          </div>
+        </div>
+      </sc-for>
+
+      <div style="padding: 9px 16px; border-top: 1px solid #E8EDF2; background: #FAFCFD; font-size: 11.5px; color: #64748B;">
+        T122 · T147 · T170 · T173 report no odometer to Samsara — they cannot be counted down until that gap is closed. Shown, never guessed.
+      </div>
+    </div>
+
+    <!-- lower: three panels -->
+    <div style="display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px;">
+
+      <!-- open queue with inline actions -->
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+        <div style="padding: 12px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="font-size: 14px; font-weight: 600;">Needs a decision</div>
+          <div style="font-size: 11.5px; color: #64748B;">Accept, or turn it into a work order — without leaving this page</div>
+        </div>
+        <table>
+          <thead>
+            <tr style="background: #F6F9FB;">
+              <th class="hd" style="text-align: left;">Source</th>
+              <th class="hd" style="text-align: left;">Unit</th>
+              <th class="hd" style="text-align: left;">Reported</th>
+              <th class="hd" style="text-align: left;">Issue</th>
+              <th class="hd" style="text-align: right;">Est.</th>
+              <th class="hd" style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{queue}}" as="q" hint-placeholder-count="5">
+              <tr>
+                <td><span style="font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #FFFFFF; background: {{q.srcTone}}; border-radius: 2px; padding: 2px 5px;">{{q.src}}</span></td>
+                <td style="font-weight: 600;">{{q.unit}}</td>
+                <td style="color: #64748B;">{{q.when}}</td>
+                <td>{{q.issue}}</td>
+                <td class="num">{{q.est}}</td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <button type="button" style="font: inherit; font-size: 11px; font-weight: 600; padding: 5px 8px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Accept</button>
+                  <button type="button" style="font: inherit; font-size: 11px; font-weight: 600; padding: 5px 8px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer; margin-left: 4px;">Generate WO</button>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+
+        <!-- road service, with graphic -->
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 12px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 14px; font-weight: 600;">Road Service — active</div>
+            <a href="RoadService.dc.html" style="font-size: 11.5px; font-weight: 600; text-decoration: none;">Open tab →</a>
+          </div>
+          <div style="padding: 14px 16px 16px 16px;">
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <div style="font-size: 13px; font-weight: 600;">T168</div>
+              <div style="font-size: 12px; color: #64748B;">I-10 MM 742, Sonora TX · air line</div>
+            </div>
+            <div style="position: relative; height: 56px; margin-top: 6px;">
+              <div style="position: absolute; left: 0; right: 0; top: 40px; height: 3px; background: #E2E8F0; border-radius: 2px;"></div>
+              <div style="position: absolute; left: 0; top: 40px; height: 3px; width: 62%; background: #B45309; border-radius: 2px;"></div>
+              <div style="position: absolute; top: 8px; left: 62%; transform: translateX(-50%);">
+                <svg width="54" height="34" viewBox="0 -12 74 46" aria-hidden="true">
+                  <ellipse cx="37" cy="30.4" rx="30" ry="2.1" fill="#0F172A" opacity=".13"></ellipse>
+                  <circle class="puff" cx="60.5" cy="7" r="3.2" fill="#9CA3AF"></circle>
+                  <rect x="3" y="6" width="42" height="15" rx="1.6" fill="#EEF2F6" stroke="#93A3B4" stroke-width=".8"></rect>
+                  <rect x="3" y="20.4" width="42" height="1.8" fill="#94A3B8"></rect>
+                  <path d="M46 21.5V9.2c0-1 .8-1.8 1.8-1.8h6.6l5.4 6.1v8H46z" fill="#B45309"></path>
+                  <rect x="45" y="21.4" width="16" height="1.6" fill="#475569"></rect>
+                  <circle cx="12.5" cy="24.6" r="4.5" fill="#111827"></circle>
+                  <circle cx="21.5" cy="24.6" r="4.5" fill="#111827"></circle>
+                  <circle cx="47.5" cy="24.6" r="4.5" fill="#111827"></circle>
+                  <circle cx="57.5" cy="24.6" r="4.2" fill="#111827"></circle>
+                </svg>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: #64748B; margin-top: 2px;">
+              <span>Called 09:14</span><span style="color: #8A4208;">Tech en route</span><span>On site</span><span>Rolling</span>
+            </div>
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 12px;">
+              <span style="color: #64748B;">Response time</span><span class="num" style="font-weight: 600;">1h 48m</span>
+            </div>
+            <div style="margin-top: 4px; display: flex; justify-content: space-between; font-size: 12px;">
+              <span style="color: #64748B;">Vendor</span><span style="font-weight: 600;">Sonora Truck &amp; Tire</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- arriving soon, folded in -->
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 12px 16px; border-bottom: 1px solid #E8EDF2;">
+            <div style="font-size: 14px; font-weight: 600;">Arriving soon — shop capacity</div>
+            <div style="font-size: 11.5px; color: #64748B;">Trucks closing on Laredo yard, live GPS</div>
+          </div>
+          <table>
+            <tbody>
+              <sc-for list="{{arriving}}" as="a" hint-placeholder-count="3">
+                <tr>
+                  <td style="font-weight: 600; width: 60px;">{{a.unit}}</td>
+                  <td style="color: #64748B;">{{a.driver}}</td>
+                  <td class="num" style="width: 78px;">{{a.miles}}</td>
+                  <td class="num" style="width: 62px; font-weight: 600;">{{a.eta}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <div style="padding: 9px 16px; border-top: 1px solid #E8EDF2; background: #FAFCFD; font-size: 11.5px; color: #64748B;">
+            Four bays · 2 open Thursday
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D';
+    const rows = [
+      { unit: 'T152', odo: 756750, since: 21400 },
+      { unit: 'T168', odo: 453283, since: 24610 },
+      { unit: 'T175', odo: 452312, since: 9180 },
+      { unit: 'T177', odo: 501527, since: 26050 },
+      { unit: 'T164', odo: 461784, since: 14320 },
+      { unit: 'T171', odo: 436939, since: 4760 }
+    ];
+    const INTERVAL = 25000;
+    const fmt = (n) => n.toLocaleString('en-US');
+    const pmRows = rows.map((r) => {
+      const left = INTERVAL - r.since;
+      const ratio = Math.max(0, Math.min(1, r.since / INTERVAL));
+      const tone = left <= 0 ? RED : left <= 2500 ? AMBER : NAVY;
+      const days = Math.round(left / (9438 / 30));
+      return {
+        unit: r.unit,
+        odo: fmt(r.odo),
+        pct: (ratio * 100).toFixed(1) + '%',
+        tone: tone,
+        remaining: left <= 0 ? fmt(Math.abs(left)) + ' over' : fmt(left) + ' mi',
+        eta: left <= 0 ? 'Now' : 'in ' + days + 'd'
+      };
+    });
+    const queue = [
+      { src: 'DRIVER', srcTone: '#1F2A44', unit: 'T156', when: 'Today 07:12', issue: 'Air leak, passenger side tank', est: '—' },
+      { src: 'FAULT', srcTone: '#A32D2D', unit: 'T168', when: 'Today 06:40', issue: 'SPN 3363 · DEF heater circuit', est: '$1,240.00' },
+      { src: 'PM', srcTone: '#B45309', unit: 'T177', when: 'Today 05:00', issue: 'PM A due — 1,050 mi remaining', est: '$640.00' },
+      { src: 'DAMAGE', srcTone: '#1F2A44', unit: 'T163', when: 'Yesterday', issue: 'Trailer door skin, dock strike', est: '$2,180.00' },
+      { src: 'DVIR', srcTone: '#475569', unit: 'T174', when: 'Yesterday', issue: 'Marker lamp out, driver side rear', est: '$85.00' }
+    ];
+    const arriving = [
+      { unit: 'T175', driver: 'Leonel Morales', miles: '92 mi', eta: '1h 40m' },
+      { unit: 'T164', driver: 'Angel Sosa', miles: '218 mi', eta: '3h 55m' },
+      { unit: 'T171', driver: 'Pedro Perez', miles: '294 mi', eta: '5h 10m' }
+    ];
+    return { pmRows: pmRows, queue: queue, arriving: arriving };
+  }
+}
+</script>
+</body>
+</html>

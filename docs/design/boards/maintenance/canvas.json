@@ -1,0 +1,55 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-09-30T19:30:00Z" },
+  "title": "Maintenance Tab Previews",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "designSystems": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 1760, "title": "1 · Maintenance Home", "is_interactive": true },
+    "FleetTable.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 1100, "title": "2 · Fleet Table" },
+    "ActiveWOs.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 1100, "title": "3 · Active Work Orders" },
+    "ServiceLocation.dc.html": { "x": 0, "y": 1880, "w": 1440, "h": 1100, "title": "4 · Service / Location" },
+    "DriverReports.dc.html": { "x": 1520, "y": 1880, "w": 1440, "h": 1100, "title": "5 · Driver Reports (merged)" },
+    "RoadService.dc.html": { "x": 3040, "y": 1880, "w": 1440, "h": 1100, "title": "6 · Road Service" },
+    "PartsInventory.dc.html": { "x": 0, "y": 3100, "w": 1440, "h": 1000, "title": "7 · Parts Inventory" },
+    "IntegrityReport.dc.html": { "x": 1520, "y": 3100, "w": 1440, "h": 1000, "title": "8 · Integrity Report" },
+    "Settings.dc.html": { "x": 3040, "y": 3100, "w": 1440, "h": 1000, "title": "9 · Settings" }
+  },
+  "order": [
+    "Main.dc.html",
+    "FleetTable.dc.html",
+    "ActiveWOs.dc.html",
+    "ServiceLocation.dc.html",
+    "DriverReports.dc.html",
+    "RoadService.dc.html",
+    "PartsInventory.dc.html",
+    "IntegrityReport.dc.html",
+    "Settings.dc.html"
+  ],
+  "notes": {
+    "t1": {
+      "x": 0,
+      "y": -300,
+      "text": "Maintenance — the nine tabs that stay",
+      "kind": "title1",
+      "maxW": 4480
+    },
+    "removed": {
+      "x": 4560,
+      "y": 0,
+      "text": "REMOVED — 16 tabs down to 9\n\nBrake Wear · Tire Wear — no feed, no rows, ever. Gone.\n\nAt Risk — folded into Home as alerts.\n\nArriving Soon — your call. Now a panel on Home.\n\nDamage Reports + In-Transit Issues — merged into Driver Reports. A driver reporting damage and a driver reporting an issue are one act.\n\nSevere Repairs — it was a filter, not an object. It is the red column on the board.\n\nPre-Flight DVIR — belongs to Safety. It surfaces on Home only when a defect is actually reported.\n\nActive WOs stays as the full table; the board on Home is the same rows in kanban.",
+      "w": 560,
+      "maxH": 900,
+      "fill": "orange"
+    },
+    "data": {
+      "x": 4560,
+      "y": 960,
+      "text": "EVERY NUMBER IN THESE PREVIEWS\n\nUnit numbers and odometers are your real trucks, read live from Samsara at 13:20 CT today.\n\nWork orders, repairs and parts rows are LAYOUT ONLY — you have no real maintenance records yet. They show what the screen does when your backfill lands. Nothing here was written to the database.",
+      "w": 560,
+      "maxH": 620,
+      "fill": "gray"
+    }
+  }
+}

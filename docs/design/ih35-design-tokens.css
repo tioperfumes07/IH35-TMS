@@ -1,0 +1,219 @@
+/* IH35-TMS DESIGN TOKENS — generated from the owner's design boards, 2026-10-02.
+ *
+ * Source of truth: docs/design/boards/ and docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md
+ *
+ * These values were read off the owner's own rendered boards. Do NOT substitute a framework
+ * default, and do NOT use the Anthropic brand palette that ships inside the design artifact type —
+ * that is the design tool's reference, not this app's system.
+ *
+ * Every screen consumes these tokens. A component that hardcodes a hex that is not in this file is
+ * a defect, and verify-design-token-parity.mjs fails it.
+ */
+
+:root {
+  /* ---- Surfaces ---- */
+  --ih-page: #F1F4F7;            /* app canvas */
+  --ih-page-banking: #eef2f6;    /* banking boards' canvas */
+  --ih-card: #FFFFFF;
+  --ih-thead: #F6F9FB;
+  --ih-zebra: #FAFCFD;           /* tbody tr:nth-child(even) */
+  --ih-row-selected: #EEF4FA;    /* master-detail selection, bulk bar */
+  --ih-tile-fill: #EEF2F6;       /* photo/placeholder wells */
+
+  /* ---- Lines ---- */
+  --ih-border: #D8E0E8;          /* structural: card and band edges */
+  --ih-border-banking: #C7D2DC;
+  --ih-border-control: #C6D1DC;  /* inputs, selects, secondary buttons */
+  --ih-rule: #E8EDF2;            /* inner: row rules, card header divider */
+  --ih-rule-banking: #E4EAF0;
+  --ih-rule-faint: #F1F5F8;
+  --ih-divider: #E2E8F0;         /* vertical separator in a filter bar */
+
+  /* ---- Ink ---- */
+  --ih-ink: #0F1B2D;
+  --ih-ink-banking: #0d2137;
+  --ih-navy: #14314F;            /* primary button, active tab underline, links */
+  --ih-navy-ink: #1F2A44;        /* secondary button label, chip text */
+  --ih-navy-hover: #0B1B2B;
+  --ih-muted: #64748B;
+  --ih-muted-banking: #5d6b7a;
+  --ih-muted-2: #475569;
+  --ih-muted-3: #334155;
+  --ih-muted-3-banking: #3d4a57;
+  --ih-faint: #94A3B8;           /* placeholders and the em-dash glyph */
+  --ih-faint-banking: #8895a3;
+  --ih-on-navy-label: #B8C7D8;   /* label inside a navy KPI tile */
+
+  /* ---- Status ---- */
+  --ih-red: #8C2020;             /* ink: money out, failure */
+  --ih-red-border: #A32D2D;
+  --ih-red-border-alt: #B42318;
+  --ih-red-fill: #FCEDEC;
+  --ih-amber: #8A4208;           /* ink: warning, awaiting */
+  --ih-amber-border: #B45309;
+  --ih-amber-fill: #FDF3E7;
+  --ih-amber-fill-alt: #FFF7ED;
+  --ih-green: #1F6B32;           /* bound, linked, OK */
+  --ih-green-fill: #ECF3EC;
+  --ih-slate: #475569;           /* in-progress tone */
+  --ih-slate-2: #334155;         /* completed tone */
+  --ih-chip-fill: #E8EEF5;       /* multi-select filter token */
+  --ih-chip-border: #DCE5EE;
+  --ih-link-chip: #EEF3F8;
+
+  /* ---- Type ---- */
+  --ih-font: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --ih-fs-title: 22px;           /* weight 700, letter-spacing -0.01em */
+  --ih-fs-card-title: 14px;      /* weight 600 */
+  --ih-fs-body: 12.5px;
+  --ih-fs-sub: 11.5px;
+  --ih-fs-kpi: 21px;             /* weight 600, line-height 1.2, left-aligned */
+  --ih-fs-figure: 17px;          /* weight 700 */
+  --ih-fs-label: 10px;           /* weight 600, letter-spacing .09em, uppercase */
+  --ih-fs-pill: 10.5px;          /* weight 600, letter-spacing .04em, uppercase */
+  --ih-fs-badge: 9.5px;          /* weight 700, letter-spacing .05em, uppercase */
+  --ih-ls-label: .09em;
+  --ih-ls-pill: .04em;
+  --ih-ls-badge: .05em;
+
+  /* ---- Metrics — these are law, not suggestions ---- */
+  --ih-h-control: 34px;          /* EVERY filter, select and search box */
+  --ih-h-field: 40px;            /* a field being edited in a form */
+  --ih-h-action: 44px;           /* primary action button */
+  --ih-w-date: 132px;            /* EVERYWHERE, tabular figures, never full-width */
+  --ih-w-money: 120px;           /* right-aligned */
+  --ih-w-shortcode: 104px;
+  --ih-radius: 3px;
+  --ih-radius-chip: 2px;
+  --ih-radius-pill: 17px;
+  --ih-gutter: 24px;
+  --ih-gap-tile: 10px;
+  --ih-gap-card: 14px;
+  --ih-pad-cell: 8px 10px;
+  --ih-pad-cell-tight: 7px 10px;
+  --ih-pad-card-header: 11px 16px;
+  --ih-pad-tab: 9px 13px;
+  --ih-tab-active-rule: 2.5px;
+}
+
+/* ---- Primitives the boards use on every screen ---- */
+
+.ih-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ih-hd {
+  font-size: var(--ih-fs-label);
+  font-weight: 600;
+  letter-spacing: var(--ih-ls-label);
+  text-transform: uppercase;
+  color: var(--ih-muted);
+}
+
+/* LINES FOR ROWS, NEVER FOR COLUMNS. No cell declares a left or right border. */
+.ih-table { border-collapse: collapse; width: 100%; }
+.ih-table td,
+.ih-table th {
+  padding: var(--ih-pad-cell);
+  font-size: var(--ih-fs-body);
+  border-bottom: 1px solid var(--ih-rule);
+  border-left: 0;
+  border-right: 0;
+}
+.ih-table thead tr { background: var(--ih-thead); }
+.ih-table tbody tr:nth-child(even) { background: var(--ih-zebra); }
+.ih-table tfoot tr { background: var(--ih-thead); border-top: 2px solid var(--ih-border); }
+
+.ih-card {
+  background: var(--ih-card);
+  border: 1px solid var(--ih-border);
+  border-radius: var(--ih-radius);
+}
+.ih-card-header {
+  padding: var(--ih-pad-card-header);
+  border-bottom: 1px solid var(--ih-rule);
+}
+
+/* ONE CONTROL HEIGHT */
+.ih-ctl {
+  font: inherit;
+  font-size: var(--ih-fs-body);
+  height: var(--ih-h-control);
+  box-sizing: border-box;
+  border: 1px solid var(--ih-border-control);
+  border-radius: var(--ih-radius);
+  padding: 0 10px;
+  background: var(--ih-card);
+  color: var(--ih-ink);
+}
+.ih-ctl--date { width: var(--ih-w-date); font-variant-numeric: tabular-nums; }
+.ih-ctl--money { width: var(--ih-w-money); text-align: right; font-variant-numeric: tabular-nums; }
+.ih-ctl--shortcode { width: var(--ih-w-shortcode); }
+.ih-field { height: var(--ih-h-field); }
+
+.ih-btn-primary {
+  font: inherit;
+  font-size: var(--ih-fs-body);
+  font-weight: 600;
+  height: var(--ih-h-control);
+  padding: 0 14px;
+  border: 1px solid var(--ih-navy);
+  background: var(--ih-navy);
+  color: var(--ih-card);
+  border-radius: var(--ih-radius);
+  cursor: pointer;
+}
+.ih-btn-secondary {
+  font: inherit;
+  font-size: var(--ih-fs-body);
+  height: var(--ih-h-control);
+  padding: 0 14px;
+  border: 1px solid var(--ih-border-control);
+  background: var(--ih-card);
+  color: var(--ih-navy-ink);
+  border-radius: var(--ih-radius);
+  cursor: pointer;
+}
+.ih-btn-action { height: var(--ih-h-action); }
+
+/* The gear that opens the column chooser — on every table. */
+.ih-gear {
+  width: var(--ih-h-control);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ih-muted);
+}
+
+/* KPI tiles run ACROSS, never stacked as bars. */
+.ih-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--ih-gap-tile);
+}
+.ih-kpi {
+  background: var(--ih-card);
+  border: 1px solid var(--ih-border);
+  border-radius: var(--ih-radius);
+  padding: 8px 11px;
+  text-align: left;
+}
+.ih-kpi__value {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--ih-fs-kpi);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: left;
+}
+.ih-kpi--navy {
+  background: var(--ih-navy);
+  border-color: var(--ih-navy);
+  color: var(--ih-card);
+}
+.ih-kpi--navy .ih-hd { color: var(--ih-on-navy-label); }
+
+/* MISSING RENDERS AS — , never 0 and never -$0.00. */
+.ih-empty { color: var(--ih-faint); }

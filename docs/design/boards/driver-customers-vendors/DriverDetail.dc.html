@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Driver — full profile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    /* LINES FOR ROWS, NEVER FOR COLUMNS — no cell ever declares a left or right border. */
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 7px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; border-left: 0; border-right: 0; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 7px 0; border-bottom: 1px solid #E8EDF2; }
+    .kv:last-child { border-bottom: 0; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+    /* UNIVERSAL CONTROL SIZES — one height, one date width, everywhere in the app. */
+    .ctl { font: inherit; font-size: 12.5px; height: 34px; box-sizing: border-box; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0F1B2D; }
+    .ctl-date { width: 132px; font-variant-numeric: tabular-nums; }
+    .ctl-money { width: 120px; font-variant-numeric: tabular-nums; text-align: right; }
+    .ctl-code { width: 104px; }
+    .ctl-sm { width: 156px; }
+    .ctl-md { width: 232px; }
+    .fld { height: 40px; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1640px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 14px 24px 0 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 46px; height: 46px; border-radius: 3px; background: #14314F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700;">AS</div>
+        <div>
+          <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Angel Sosa</div>
+          <div style="font-size: 12.5px; color: #64748B; margin-top: 1px;">Unit T156 · (956) 555-0142 · CDL TX 8842197 · hired 05/14/2026 · per-mile</div>
+        </div>
+        <span style="font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #FFFFFF; background: #1F2A44; border-radius: 2px; padding: 3px 7px;">Active</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" style="font: inherit; font-size: 12.5px; padding: 0 14px; height: 44px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Edit</button>
+        <button type="button" style="font: inherit; font-size: 12.5px; padding: 0 14px; height: 44px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Add payment</button>
+        <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 0 16px; height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Run settlement</button>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 2px; margin-top: 12px; flex-wrap: wrap;">
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 13px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Overview</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Settlements</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Additional payments</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Cash advances</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Pay &amp; escrow</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Loads</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Fuel</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Reports &amp; damage</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Complaints</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Safety &amp; accidents</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Documents</div>
+      <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Driver disputes</div>
+    </div>
+  </div>
+
+  <div style="padding: 14px 24px 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+
+    <!-- KPI ROW — 7 across, 78px, Complaints and Integrity included -->
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px;">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="7">
+        <div style="background: #FFFFFF; border: 1px solid {{k.border}}; border-radius: 3px; padding: 8px 11px;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: {{k.labelInk}};">{{k.label}}</div>
+          <div class="num" style="font-size: 20px; font-weight: 600; text-align: left; line-height: 1.2; color: {{k.ink}};">{{k.value}}</div>
+          <div style="font-size: 10.5px; color: #94A3B8;">{{k.sub}}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.32fr 1fr; gap: 14px;">
+
+      <!-- LEFT COLUMN -->
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 14px; font-weight: 600;">Settlements</div>
+            <a href="#s" style="font-size: 11.5px; font-weight: 600; text-decoration: none;">All 6 →</a>
+          </div>
+          <table>
+            <thead>
+              <tr style="background: #F6F9FB;">
+                <th class="hd" style="text-align: left;">Settlement</th>
+                <th class="hd" style="text-align: left; width: 100px;">Closed</th>
+                <th class="hd" style="text-align: right; width: 64px;">Loads</th>
+                <th class="hd" style="text-align: right; width: 82px;">Miles</th>
+                <th class="hd" style="text-align: right; width: 104px;">Line haul</th>
+                <th class="hd" style="text-align: right; width: 108px;">Additional</th>
+                <th class="hd" style="text-align: right; width: 104px;">Deductions</th>
+                <th class="hd" style="text-align: right; width: 110px;">Net pay</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{settlements}}" as="s" hint-placeholder-count="6">
+                <tr>
+                  <td><a href="#s" style="font-weight: 600; text-decoration: none;">{{s.id}}</a></td>
+                  <td style="color: #64748B;">{{s.closed}}</td>
+                  <td class="num">{{s.loads}}</td>
+                  <td class="num">{{s.miles}}</td>
+                  <td class="num">{{s.line}}</td>
+                  <td class="num" style="color: {{s.addInk}};">{{s.add}}</td>
+                  <td class="num" style="color: #8C2020;">{{s.ded}}</td>
+                  <td class="num" style="font-weight: 600;">{{s.net}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+            <tfoot>
+              <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+                <td colspan="2" style="font-weight: 700;">6 settlements</td>
+                <td class="num" style="font-weight: 700;">23</td>
+                <td class="num" style="font-weight: 700;">28,410</td>
+                <td class="num" style="font-weight: 700;">$14,062.40</td>
+                <td class="num" style="font-weight: 700;">$1,140.00</td>
+                <td class="num" style="font-weight: 700;">$1,318.00</td>
+                <td class="num" style="font-weight: 700;">$13,884.40</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- ADDITIONAL PAYMENTS -->
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 14px; font-weight: 600;">Additional payments</div>
+              <div style="font-size: 11.5px; color: #64748B;">Anything paid outside line haul — it rides the settlement, it never becomes a separate cheque</div>
+            </div>
+            <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; height: 34px; padding: 0 12px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Add</button>
+          </div>
+          <table>
+            <thead>
+              <tr style="background: #F6F9FB;">
+                <th class="hd" style="text-align: left; width: 132px;">Date</th>
+                <th class="hd" style="text-align: left; width: 132px;">Kind</th>
+                <th class="hd" style="text-align: left;">Reason</th>
+                <th class="hd" style="text-align: left; width: 96px;">Load</th>
+                <th class="hd" style="text-align: left; width: 124px;">Settlement</th>
+                <th class="hd" style="text-align: left; width: 112px;">Approved by</th>
+                <th class="hd" style="text-align: right; width: 108px;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{addpay}}" as="p" hint-placeholder-count="6">
+                <tr>
+                  <td class="num" style="text-align: left; color: #475569;">{{p.date}}</td>
+                  <td><span style="font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #FFFFFF; background: {{p.tone}}; border-radius: 2px; padding: 2px 5px;">{{p.kind}}</span></td>
+                  <td style="color: #334155;">{{p.why}}</td>
+                  <td style="color: #475569;">{{p.load}}</td>
+                  <td style="color: #475569;">{{p.settle}}</td>
+                  <td style="color: #64748B;">{{p.by}}</td>
+                  <td class="num" style="font-weight: 600;">{{p.amt}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+            <tfoot>
+              <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+                <td colspan="6" style="font-weight: 700;">6 payments, last 90 days</td>
+                <td class="num" style="font-weight: 700;">$1,140.00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- COMPLAINTS -->
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 14px; font-weight: 600;">Complaints against the driver</div>
+              <div style="font-size: 11.5px; color: #64748B;">Late, refused to roll, service failure — logged with who raised it and what it cost</div>
+            </div>
+            <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">+ Log complaint</button>
+          </div>
+          <table>
+            <thead>
+              <tr style="background: #F6F9FB;">
+                <th class="hd" style="text-align: left; width: 132px;">Date</th>
+                <th class="hd" style="text-align: left; width: 150px;">Kind</th>
+                <th class="hd" style="text-align: left;">What happened</th>
+                <th class="hd" style="text-align: left; width: 96px;">Load</th>
+                <th class="hd" style="text-align: left; width: 132px;">Raised by</th>
+                <th class="hd" style="text-align: left; width: 104px;">Outcome</th>
+                <th class="hd" style="text-align: right; width: 104px;">Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{complaints}}" as="c" hint-placeholder-count="4">
+                <tr>
+                  <td class="num" style="text-align: left; color: #475569;">{{c.date}}</td>
+                  <td><span style="font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #FFFFFF; background: {{c.tone}}; border-radius: 2px; padding: 2px 5px;">{{c.kind}}</span></td>
+                  <td style="color: #334155;">{{c.what}}</td>
+                  <td style="color: #475569;">{{c.load}}</td>
+                  <td style="color: #64748B;">{{c.by}}</td>
+                  <td style="color: #475569;">{{c.outcome}}</td>
+                  <td class="num" style="color: {{c.costInk}};">{{c.cost}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+            <tfoot>
+              <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+                <td colspan="6" style="font-weight: 700;">4 complaints, 90 days · fleet average 2.1</td>
+                <td class="num" style="font-weight: 700;">$1,050.00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">Reports &amp; damage he filed</div>
+          <table>
+            <thead>
+              <tr style="background: #F6F9FB;">
+                <th class="hd" style="text-align: left; width: 110px;">Kind</th>
+                <th class="hd" style="text-align: left; width: 66px;">Unit</th>
+                <th class="hd" style="text-align: left;">What</th>
+                <th class="hd" style="text-align: left; width: 132px;">Reported</th>
+                <th class="hd" style="text-align: left; width: 104px;">Outcome</th>
+                <th class="hd" style="text-align: right; width: 104px;">Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{reports}}" as="r" hint-placeholder-count="3">
+                <tr>
+                  <td><span style="font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #FFFFFF; background: {{r.tone}}; border-radius: 2px; padding: 2px 5px;">{{r.kind}}</span></td>
+                  <td style="font-weight: 600;">{{r.unit}}</td>
+                  <td style="color: #334155;">{{r.what}}</td>
+                  <td class="num" style="text-align: left; color: #64748B;">{{r.when}}</td>
+                  <td style="color: #475569;">{{r.outcome}}</td>
+                  <td class="num">{{r.cost}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+
+        <!-- INTEGRITY -->
+        <div style="background: #FFFFFF; border: 1px solid #1F2A44; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; background: #F4F7FA; display: flex; justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 14px; font-weight: 700;">Integrity</div>
+            <span style="font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #FFFFFF; background: #1F2A44; border-radius: 2px; padding: 3px 8px;">Clear</span>
+          </div>
+          <div style="padding: 10px 16px 12px 16px;">
+            <sc-for list="{{integrity}}" as="i" hint-placeholder-count="7">
+              <div class="kv">
+                <span style="font-size: 12.5px; color: #334155;">{{i.what}}</span>
+                <span style="display: inline-flex; align-items: baseline; gap: 9px;">
+                  <span style="font-size: 11px; color: #94A3B8;">{{i.fleet}}</span>
+                  <span class="num" style="font-size: 13px; font-weight: 700; color: {{i.tone}}; min-width: 62px; display: inline-block;">{{i.his}}</span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding: 10px 16px; border-top: 1px solid #E8EDF2; background: #FAFCFD; font-size: 11.5px; color: #475569; line-height: 1.6;">
+            Every rate is per mile <strong>he</strong> drove, resolved from the assignment record — not a raw count, which would punish the hardest worker in the fleet. A band is evidence to look at, never a verdict.
+          </div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2;">
+            <div style="font-size: 14px; font-weight: 600;">Trucks he has held</div>
+            <div style="font-size: 11.5px; color: #64748B;">How damage gets pinned on the right man when trucks rotate</div>
+          </div>
+          <table>
+            <tbody>
+              <sc-for list="{{assignments}}" as="a" hint-placeholder-count="4">
+                <tr>
+                  <td style="font-weight: 600; width: 58px;">{{a.unit}}</td>
+                  <td class="num" style="text-align: left; color: #64748B; font-size: 11.5px;">{{a.window}}</td>
+                  <td class="num" style="width: 76px;">{{a.miles}}</td>
+                  <td class="num" style="width: 56px; color: {{a.mpgTone}}; font-weight: 600;">{{a.mpg}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">Pay terms</div>
+          <div style="padding: 4px 16px 10px 16px;">
+            <sc-for list="{{pay}}" as="p" hint-placeholder-count="6">
+              <div class="kv">
+                <span style="font-size: 12.5px; color: #334155;">{{p.k}}</span>
+                <span class="num" style="font-size: 12.5px; font-weight: 600;">{{p.v}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">Compliance</div>
+          <div style="padding: 4px 16px 10px 16px;">
+            <sc-for list="{{compliance}}" as="c" hint-placeholder-count="5">
+              <div class="kv">
+                <span style="font-size: 12.5px; color: #334155;">{{c.what}}</span>
+                <span class="num" style="font-size: 12.5px; font-weight: 600; color: {{c.tone}};">{{c.when}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- CONTROL SIZE STANDARD, shown as the real thing -->
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+          <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2;">
+            <div style="font-size: 14px; font-weight: 600;">Add payment</div>
+            <div style="font-size: 11.5px; color: #64748B;">Field widths are the app-wide standard — a date box is 132px everywhere, a money box 120px</div>
+          </div>
+          <div style="padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+            <div>
+              <label class="hd" for="p-date" style="display: block; margin-bottom: 4px;">Date</label>
+              <input id="p-date" class="ctl ctl-date fld" type="text" value="09/30/2026">
+            </div>
+            <div>
+              <label class="hd" for="p-kind" style="display: block; margin-bottom: 4px;">Kind</label>
+              <select id="p-kind" class="ctl ctl-sm fld"><option>Detention</option></select>
+            </div>
+            <div>
+              <label class="hd" for="p-load" style="display: block; margin-bottom: 4px;">Load</label>
+              <input id="p-load" class="ctl ctl-code fld" type="text" value="13636">
+            </div>
+            <div>
+              <label class="hd" for="p-amt" style="display: block; margin-bottom: 4px;">Amount</label>
+              <input id="p-amt" class="ctl ctl-money fld" type="text" value="180.00">
+            </div>
+            <div style="flex-grow: 1; min-width: 180px;">
+              <label class="hd" for="p-why" style="display: block; margin-bottom: 4px;">Reason</label>
+              <input id="p-why" class="ctl fld" type="text" style="width: 100%;" value="3h 20m at consignee">
+            </div>
+            <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; height: 40px; padding: 0 16px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D', SLATE = '#475569', MUTE = '#94A3B8';
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const kpis = [
+      { label: 'Settlement due', value: usd(1842.60), sub: 'next run Friday', border: '#D8E0E8', ink: '#0F1B2D', labelInk: '#64748B' },
+      { label: 'Additional pay', value: usd(1140.00), sub: '6 items, 90 days', border: '#D8E0E8', ink: '#0F1B2D', labelInk: '#64748B' },
+      { label: 'Escrow held', value: usd(1250.00), sub: 'target $2,000.00', border: '#D8E0E8', ink: '#0F1B2D', labelInk: '#64748B' },
+      { label: 'Miles, 30 days', value: '9,150', sub: 'fleet 9,438', border: '#D8E0E8', ink: '#0F1B2D', labelInk: '#64748B' },
+      { label: 'MPG, 30 days', value: '6.3', sub: 'fleet 6.4', border: '#D8E0E8', ink: '#0F1B2D', labelInk: '#64748B' },
+      { label: 'Complaints', value: '4', sub: 'fleet avg 2.1 · 90 days', border: '#B45309', ink: '#8A4208', labelInk: '#8A4208' },
+      { label: 'Integrity', value: 'Clear', sub: '0 flags · 90 days', border: '#1F2A44', ink: '#1F2A44', labelInk: '#1F2A44' }
+    ];
+
+    const settlements = [
+      ['S-2026-5819', '09/22/2026', 4, 4820, 2384.40, 180.00, 218.00],
+      ['S-2026-5812', '09/15/2026', 4, 5110, 2528.45, 0, 225.00],
+      ['S-2026-5804', '09/08/2026', 4, 4640, 2296.80, 420.00, 218.00],
+      ['S-2026-5796', '09/01/2026', 4, 4980, 2465.10, 0, 225.00],
+      ['S-2026-5788', '08/25/2026', 4, 4510, 2232.45, 340.00, 218.00],
+      ['S-2026-5781', '08/18/2026', 3, 4350, 2155.20, 200.00, 214.00]
+    ].map((r) => ({
+      id: r[0], closed: r[1], loads: String(r[2]), miles: r[3].toLocaleString('en-US'),
+      line: usd(r[4]),
+      add: r[5] === 0 ? '—' : usd(r[5]),
+      addInk: r[5] === 0 ? MUTE : '#0F1B2D',
+      ded: usd(r[6]),
+      net: usd(r[4] + r[5] - r[6])
+    }));
+
+    const addpay = [
+      ['09/22/2026', 'Detention', AMBER, '3h 20m at consignee, Laredo', '13636', 'S-2026-5819', 'J. Munoz', 180.00],
+      ['09/08/2026', 'Layover', AMBER, 'Held overnight, reload Monday', '13612', 'S-2026-5804', 'J. Munoz', 250.00],
+      ['09/08/2026', 'Extra stop', SLATE, 'Second pickup added in route', '13612', 'S-2026-5804', 'Dispatch', 170.00],
+      ['08/25/2026', 'Bonus', NAVY, 'Clean inspection, roadside', '—', 'S-2026-5788', 'J. Munoz', 250.00],
+      ['08/25/2026', 'Reimburse', SLATE, 'Lumper paid out of pocket', '13588', 'S-2026-5788', 'Dispatch', 90.00],
+      ['08/18/2026', 'Border wait', AMBER, 'Bridge delay 4h, World Trade', '13571', 'S-2026-5781', 'Dispatch', 200.00]
+    ].map((r) => ({ date: r[0], kind: r[1], tone: r[2], why: r[3], load: r[4], settle: r[5], by: r[6], amt: usd(r[7]) }));
+
+    const complaints = [
+      ['09/19/2026', 'Late delivery', AMBER, 'Arrived 6h past appointment, no call ahead', '13624', 'Refrigerx Transportation', 'Warning', 450.00],
+      ['09/11/2026', 'Refused to roll', RED, 'Declined dispatch Friday PM, wanted to stay home', '—', 'Dispatch', 'Documented', 600.00],
+      ['08/30/2026', 'Late pickup', AMBER, 'Missed 08:00 window by 2h 15m', '13601', 'Semares Forwarding', 'Coached', 0],
+      ['08/14/2026', 'Paperwork', SLATE, 'BOL submitted 4 days after delivery', '13566', 'Billing', 'Resolved', 0]
+    ].map((r) => ({
+      date: r[0], kind: r[1], tone: r[2], what: r[3], load: r[4], by: r[5], outcome: r[6],
+      cost: r[7] === 0 ? '—' : usd(r[7]),
+      costInk: r[7] === 0 ? MUTE : '#8C2020'
+    }));
+
+    const reports = [
+      { kind: 'Mechanical', tone: NAVY, unit: 'T156', what: 'Air leak, passenger side tank', when: '09/30/2026', outcome: 'Open', cost: '—' },
+      { kind: 'DVIR', tone: SLATE, unit: 'T156', what: 'Marker lamp out, driver side rear', when: '09/12/2026', outcome: 'Repaired', cost: usd(85.00) },
+      { kind: 'Damage', tone: AMBER, unit: 'T164', what: 'Curb strike, right steer', when: '07/28/2026', outcome: 'Repaired', cost: usd(612.40) }
+    ];
+
+    const integrity = [
+      { what: 'MPG against fleet', fleet: 'fleet 6.4', his: '6.3', tone: NAVY },
+      { what: 'Gallons per 100 mi', fleet: 'fleet 15.6', his: '15.9', tone: NAVY },
+      { what: 'Fills with no load link', fleet: 'fleet 3%', his: '0%', tone: NAVY },
+      { what: 'Fuel anomaly flags', fleet: '', his: '0', tone: NAVY },
+      { what: 'Complaints per 100k mi', fleet: 'fleet 2.4', his: '4.7', tone: AMBER },
+      { what: 'Damage $ per 100k mi', fleet: 'fleet $980', his: '$720', tone: NAVY },
+      { what: 'Accidents per 100k mi', fleet: 'fleet 0.4', his: '0.0', tone: NAVY }
+    ];
+
+    const assignments = [
+      { unit: 'T156', window: '09/02/2026 — now', miles: '9,150', mpg: '6.3', mpgTone: NAVY },
+      { unit: 'T164', window: '07/14 — 09/01/2026', miles: '14,880', mpg: '6.5', mpgTone: NAVY },
+      { unit: 'T148', window: '06/03 — 07/13/2026', miles: '11,240', mpg: '6.1', mpgTone: AMBER },
+      { unit: 'T171', window: '05/14 — 06/02/2026', miles: '5,620', mpg: '6.6', mpgTone: NAVY }
+    ];
+
+    const pay = [
+      { k: 'Pay basis', v: 'Per mile, shortest' },
+      { k: 'Rate', v: '$0.495 / mi' },
+      { k: 'Detention', v: '$60.00 / hr after 2h' },
+      { k: 'Layover', v: '$250.00 / night' },
+      { k: 'Extra stop', v: '$85.00' },
+      { k: 'Escrow target', v: usd(2000.00) }
+    ];
+
+    const compliance = [
+      { what: 'CDL expiration', when: '08/22/2027', tone: NAVY },
+      { what: 'Medical card', when: '03/04/2027', tone: NAVY },
+      { what: 'Annual MVR review', when: '05/14/2027', tone: NAVY },
+      { what: 'Drug screen, last', when: '05/09/2026', tone: NAVY },
+      { what: 'Hours violations, 90 days', when: 'None', tone: NAVY }
+    ];
+
+    return { kpis, settlements, addpay, complaints, reports, integrity, assignments, pay, compliance };
+  }
+}
+</script>
+</body>
+</html>

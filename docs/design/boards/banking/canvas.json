@@ -1,0 +1,57 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-09-30T22:10:00Z" },
+  "title": "Banking Redesign",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "designSystems": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 1580, "title": "1 · Banking Home", "is_interactive": true },
+    "Transactions.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 1160, "title": "2 · Transactions — the 931" },
+    "Reconciliation.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 1160, "title": "3 · Reconciliation — never run" },
+    "Accounts.dc.html": { "x": 0, "y": 1700, "w": 1440, "h": 1060, "title": "4 · Accounts" },
+    "RelayCard.dc.html": { "x": 1520, "y": 1700, "w": 1440, "h": 1060, "title": "5 · Relay Card" },
+    "DriverEscrow.dc.html": { "x": 3040, "y": 1700, "w": 1440, "h": 1060, "title": "6 · Driver Escrow" }
+  },
+  "order": [
+    "Main.dc.html",
+    "Transactions.dc.html",
+    "Reconciliation.dc.html",
+    "Accounts.dc.html",
+    "RelayCard.dc.html",
+    "DriverEscrow.dc.html"
+  ],
+  "notes": {
+    "t1": {
+      "x": 0,
+      "y": -300,
+      "text": "Banking — built on your own money-modules design",
+      "kind": "title1",
+      "maxW": 4480
+    },
+    "base": {
+      "x": 4560,
+      "y": 0,
+      "text": "BUILT ON YOUR 09-12 MONEY MODULES PREVIEW, NOT OVER IT\n\nYour file already made the calls, and they hold:\n\n10 tabs down to 8. Statement Import, Plaid Connections and + Create Account were duplicated as header links — they are now one + New menu.\n\nThe Factoring tab is gone. It is a whole module; a summary card deep-links to it.\n\nThe alert-banner pattern with an action button — Map Cash GL, Connect QBO — is yours. I kept it and pointed it at today's live numbers.\n\nThe sparkline, the 27px KPI figure, the 12.5px body, the navy/amber/red palette: all yours. Nothing was restyled for its own sake.",
+      "w": 580,
+      "maxH": 820,
+      "fill": "blue"
+    },
+    "live": {
+      "x": 4560,
+      "y": 880,
+      "text": "EVERY NUMBER HERE IS LIVE, READ TODAY\n\nTransactions 947 · Uncategorized 931 — 98%\nAccounts reconciled 0 of 8 — none, ever\nCash GL unbound on 3 of 8 accounts\nQBO: not connected, last sync never\nCash on hand -$21,042.31 across 8 real accounts\n\nDreamline Diesel Card -$140,226.34, 397 uncategorized\nRelay Fuel Wallet -$32,726.45, 76 uncategorized\nFactoring Reserve $4,992.75 · virtual\nDriver Escrow Pool $2,375.00 · 14 drivers · virtual\n\nWhen your file was written it was 518 transactions, 59% uncategorized, 1 of 4 accounts unbound. It has gotten worse, not better, and the screen should say so out loud instead of burying it.",
+      "w": 580,
+      "maxH": 760,
+      "fill": "red"
+    },
+    "rules": {
+      "x": 4560,
+      "y": 1700,
+      "text": "THE HOUSE RULES, APPLIED HERE\n\nLines for ROWS, never for columns. No cell declares a left or right border.\n\nOne control height — 34px for every filter, select and search; 40px for a field being edited.\n\nDate box 132px wide everywhere, tabular figures. Money box 120px, right-aligned.\n\nMissing renders — , never 0, and never -$0.00.\n\nKPIs are tiles across, never bars down.\n\nGear icon on every table opens the column chooser.\n\nUnit and account filters are multi-select chips plus a dropdown, with a type selector beside them.\n\nAnything that opens carries Save and Close, both wired.",
+      "w": 580,
+      "maxH": 760,
+      "fill": "gray"
+    }
+  }
+}
