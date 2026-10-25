@@ -252,6 +252,13 @@ function accuracyVerb(
   return { text: "on projection", tone: "ink", accent: V3.ink };
 }
 
+/** Board CashFlow-ActualVsProjected: KPI value is coverage % (proj ∩ act) / max(proj,act). */
+function accuracyPct(projected: number, actual: number): number {
+  const max = Math.max(Math.abs(projected), Math.abs(actual));
+  if (max === 0) return 100;
+  return Math.round((100 * Math.min(Math.abs(projected), Math.abs(actual))) / max);
+}
+
 function AvpCompareChart({ points, grain }: { points: ChartPoint[]; grain: ChartGrain }) {
   const series = useMemo(() => {
     let ai = 0;
@@ -424,7 +431,8 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
         applyDisabled={!staged.dirty || draftInvalid}
         testIdPrefix="cash-flow-avp"
         dataAttributes={{ "data-cash-flow-avp-filter-toolbar": "collapsed" }}
-        className="rounded-sm border border-gray-200 bg-white p-2"
+        className="rounded-sm border p-2"
+        style={{ borderColor: V3.border, background: V3.surface }}
       >
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-xs font-semibold" style={{ color: V3.muted }}>
@@ -494,14 +502,11 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               acc.total_actual_income_cents,
               !!actualsUnavailable,
             );
+            const pct = accuracyPct(acc.total_projected_income_cents, acc.total_actual_income_cents);
             return (
               <V3KpiTile
                 label="Income accuracy"
-                value={
-                  actualsUnavailable
-                    ? "unavailable"
-                    : formatCents(acc.total_actual_income_cents - acc.total_projected_income_cents, { sign: true })
-                }
+                value={actualsUnavailable ? "unavailable" : `${pct}%`}
                 tone={incomeVerb.tone}
                 sub={
                   <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -524,14 +529,11 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               acc.total_actual_expense_cents,
               !!actualsUnavailable,
             );
+            const pct = accuracyPct(acc.total_projected_expense_cents, acc.total_actual_expense_cents);
             return (
               <V3KpiTile
                 label="Expense accuracy"
-                value={
-                  actualsUnavailable
-                    ? "unavailable"
-                    : formatCents(acc.total_actual_expense_cents - acc.total_projected_expense_cents, { sign: true })
-                }
+                value={actualsUnavailable ? "unavailable" : `${pct}%`}
                 tone={expVerb.tone}
                 sub={
                   <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -569,8 +571,8 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           })()}
           <V3KpiTile
             label="Days in range"
-            value={shortRangeLabel(applied.from, applied.to)}
-            sub={`${dayCountInclusive(applied.from, applied.to)} day${dayCountInclusive(applied.from, applied.to) === 1 ? "" : "s"}`}
+            value={String(dayCountInclusive(applied.from, applied.to))}
+            sub={shortRangeLabel(applied.from, applied.to)}
             tone="muted"
             testId="cash-flow-avp-v3-kpi-days"
           />
@@ -617,6 +619,29 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           tableTestId="cash-flow-avp-table"
         />
       )}
+
+      <div
+        data-testid="cash-flow-avp-measured-note"
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "flex-start",
+          background: V3.surface,
+          border: `1px solid ${V3.border}`,
+          borderLeft: `3px solid ${V3.amber}`,
+          borderRadius: 2,
+          padding: "8px 12px",
+          fontSize: 12,
+          color: V3.ink,
+        }}
+      >
+        <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
+        <span>
+          Actual income and expenses on this tab read operating-bank deposits and clears (443.282) —
+          never applied A/R / A/P alone. When no bank lines are categorized, cells say actuals
+          unavailable, not $0.00.
+        </span>
+      </div>
     </div>
   );
 }

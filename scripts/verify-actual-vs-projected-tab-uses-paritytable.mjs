@@ -102,6 +102,16 @@ function assertMigrated(src) {
   if (/month:\s*["']short["']/.test(src)) {
     errors.push(`${PAGE}: D043 forbids month:"short" date chips (use formatDateUS)`);
   }
+  // ROUND 443.280-A #9 — board KPI values are accuracy %, Days value is the count.
+  if (!/function accuracyPct\b/.test(src) || (!/\$\{pct\}%/.test(src) && !/pct \+ "%"/.test(src) && !/`\$\{pct\}%`/.test(src))) {
+    errors.push(`${PAGE}: Income/Expense accuracy KPIs must render board coverage % via accuracyPct`);
+  }
+  if (!/cash-flow-avp-measured-note/.test(src)) {
+    errors.push(`${PAGE}: missing Measured bank-actuals callout (board footer law)`);
+  }
+  if (/border-gray-|bg-gray-|text-gray-/.test(src)) {
+    errors.push(`${PAGE}: leftover gray-* Tailwind — V3 tokens only`);
+  }
   return errors;
 }
 
@@ -128,7 +138,9 @@ function selftest() {
     ];
     shortRangeLabel = (from, to) => formatDateUS(from) + " – " + formatDateUS(to);
     <ListErrorState status={0} onRetry={() => {}} />
-    <div data-testid="cash-flow-avp-v3-kpis"><V3KpiTile label="Income accuracy" value="$1" /></div>
+    function accuracyPct(projected, actual) { return 59; }
+    const pct = 59;
+    <div data-testid="cash-flow-avp-v3-kpis"><V3KpiTile label="Income accuracy" value={pct + "%"} /></div>
     <BoardSection title="Cumulative" testId="cash-flow-avp-chart-panel">
       <V3Segmented value="cumulative" onChange={() => {}} options={[]} testId="cash-flow-avp-chart-grain" />
     </BoardSection>
@@ -137,6 +149,7 @@ function selftest() {
       tableTestId="cash-flow-avp-table"
       emptyText="No data for the selected date range."
     />
+    <div data-testid="cash-flow-avp-measured-note">Measured bank actuals</div>
   `;
   const bad = `
     import { DataTable } from "../../../components/DataTable";

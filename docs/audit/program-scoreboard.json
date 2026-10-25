@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2718bfd",
-  "generated_at": "2026-10-25T19:29:18.967Z",
+  "healthzSha": "a74daa6",
+  "generated_at": "2026-10-25T19:32:28.274Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2718bfd",
+    "deployedSha": "a74daa6",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 27640,
+      "title": "FINDING: N/A LANE: OPS — LEAD 443.358: app-wide test/sample/demo purge script (dry-run default) + AUTH-469 + fork rehearsal",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27640",
+      "sha": "96a9dc7169",
+      "committedAtIso": "2026-10-25T14:30:17-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Claude-1- feat(guards): ACCT-F443328-ENG46 — escrow baseline + bill_payment spine ratchet + dead settlement source_document_ref ratchet (steps 18817/18821/18829)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:29 PM CT",
+      "url": "",
+      "sha": "d44e179907",
+      "committedAtIso": "2026-10-25T14:29:33-05:00"
+    },
+    {
+      "number": 27639,
+      "title": "FINDING: LST-F443356 Accounting Bills type sub-tabs (Maintenance / Repair / Fuel / Driver bill) opened the creator by default instead of the bills of that type",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27639",
+      "sha": "92735dade0",
+      "committedAtIso": "2026-10-25T14:29:13-05:00"
+    },
+    {
       "number": 27637,
       "title": "FINDING: ACCT-F443280-A#8 Cash Flow › Projected (Auto) board still PARTIAL — outlook leftover gray chrome, D073 driver payees not proper-cased, chip dates not board weekday+MM-DD",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27630",
       "sha": "7458f5a008",
       "committedAtIso": "2026-10-25T14:09:35-05:00"
-    },
-    {
-      "number": 0,
-      "title": "chore(claim): reserve verify-step 18821 ENG-46 verify-bill-payment-has-spine-link (CC-1)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 02:07 PM CT",
-      "url": "",
-      "sha": "01a3474e8f",
-      "committedAtIso": "2026-10-25T14:07:53-05:00"
-    },
-    {
-      "number": 0,
-      "title": "chore: claim verify-step 18817 CC-1 (ENG-42 renumber)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 02:03 PM CT",
-      "url": "",
-      "sha": "70107038ce",
-      "committedAtIso": "2026-10-25T14:03:27-05:00"
-    },
-    {
-      "number": 27627,
-      "title": "FINDING: 443.338 follow-up LANE: LEAD / DATA-REPAIR — P-0119 voided line 2b56ad02 had no void_reason (verify-purge-window-state) ROOT CAUSE: AUTH-466 script deactivated the line but did not write void_reason FIX: void_reason completed on th",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 02:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27627",
-      "sha": "55de2a6e9b",
-      "committedAtIso": "2026-10-25T14:01:04-05:00"
     }
   ]
 }
