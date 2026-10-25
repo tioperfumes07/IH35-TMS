@@ -234,6 +234,7 @@
       "tab": "Cash Advances",
       "sub": "Cash advance requests",
       "route_hint": "/driver-finance/cash-advance-requests",
+      "surface_path": "pages/driver-finance/CashAdvanceRequestsPage.tsx",
       "required": [
         "driver",
         "qbo_chrome",
