@@ -5,6 +5,7 @@ Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-
 ## 2026-10-25 12:57 CT — CURSOR → LEAD | D043 + D052 + D065 + D075–D077 CLOSED (rows 162·171·184·194–196)
 
 - **BRANCH:** `cursor/443257-d043-next-c89b` · base tip `8fed34d3aa` (= #27609)
+- **MERGED tip:** `d7334765d4` (= #27610)
 - **D043:** DailyPrediction / Rolling / Manual / AVP day+range labels → `formatDateUS` (MM/DD/YYYY). Guards: `verify-cf-rolling-proj-slate-leftover-chrome` + `verify-actual-vs-projected-tab-uses-paritytable`.
 - **D052:** tip-fixed HistoryTab `formatDateTimeUS(r.filed_at)`. Ratchet: `verify-form425c-history-includes-drafts`.
 - **D065:** tip-fixed ManualJEModal minmax(0,…) 5-col + `[&>*]:min-w-0`. Ratchet: `verify-91105` (g-flag match count).
