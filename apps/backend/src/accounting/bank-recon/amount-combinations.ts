@@ -28,6 +28,11 @@ export type AmountCombination = {
   exact: boolean;
   max_date_gap_days: number;
   same_counterparty: boolean;
+  /** LEAD 443.345 — 'settlement_net': these members are ALL of one driver settlement's open A/P bills (the net the owner pays
+   *  by check / Zelle under R12); 'amount_sum' (default): an arithmetic set. */
+  source?: "amount_sum" | "settlement_net";
+  /** Human label for a named set, e.g. "Settlement P-0053 — Angel Sosa — net pay (3 bills)". */
+  label?: string | null;
 };
 
 export type CombinationOptions = {
