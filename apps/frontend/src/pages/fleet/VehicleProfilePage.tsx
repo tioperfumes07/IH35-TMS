@@ -36,6 +36,7 @@ import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
 import { UnitPartsHistorySection } from "../../components/vehicle-profile/UnitPartsHistorySection";
 import { DocumentsSection } from "../../components/vehicle-profile/DocumentsSection";
 import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
+import { UnitPhotoUploadZone } from "../../components/vehicle-profile/UnitPhotoUploadZone";
 import { ActionBar } from "../../components/vehicle-profile/ActionBar";
 import { BackhaulSuggestionsWidget } from "../../components/reports/BackhaulSuggestionsWidget";
 import { EditVehicleModal } from "../../components/fleet/EditVehicleModal";
@@ -437,7 +438,12 @@ export function VehicleProfilePage() {
             unitNumber={unitNumber}
             companyId={companyId}
             documents={(profile.documents ?? []) as Parameters<typeof DocumentsSection>[0]["documents"]}
-            photosSlot={<PhotoGallery photos={(profile.photos ?? []) as Parameters<typeof PhotoGallery>[0]["photos"]} />}
+            photosSlot={
+              <>
+                <PhotoGallery photos={(profile.photos ?? []) as Parameters<typeof PhotoGallery>[0]["photos"]} />
+                {companyId && <UnitPhotoUploadZone unitId={id} companyId={companyId} onUploaded={() => void profileQuery.refetch()} />}
+              </>
+            }
             onUploaded={() => void profileQuery.refetch()}
           />
           </div>

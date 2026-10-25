@@ -152,6 +152,7 @@ import { registerManualDeliveryAuthorizationRoutes } from "./dispatch/manual-del
 import { registerDispatchViewRoutes } from "./dispatch/driver-pwa/dispatch-view.routes.js";
 import { registerDispatcherRoleViewRoutes } from "./dispatcher-board/role-views/routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
+import { registerDriverPhotosRoutes } from "./mdata/driver-photos.routes.js";
 import { registerDriversMessagesRoutes } from "./drivers/messages.routes.js";
 import { registerDriversDocumentAlertsRoutes } from "./drivers/document-alerts.routes.js";
 import { initializeDocumentAlertEngineCron } from "./drivers/document-alerts.cron.js";
@@ -1086,6 +1087,7 @@ async function main() {
   await registerDispatchViewRoutes(app);
   await registerDispatcherRoleViewRoutes(app);
   await registerDriverRoutes(app);
+  await registerDriverPhotosRoutes(app);
   await registerDriversMessagesRoutes(app);
   await registerChatRoutes(app);
   await registerDriversDocumentAlertsRoutes(app);

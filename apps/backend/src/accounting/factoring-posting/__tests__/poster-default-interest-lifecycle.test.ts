@@ -141,6 +141,8 @@ function installDefaults(
             release_amount_cents: 0,
             submitted_at: "2026-01-05T00:00:00.000Z",
             advanced_at: "2026-01-07T00:00:00.000Z",
+            bank_wire_cents: null,
+            bank_wire_gap_account_id: null,
             collected_at: null,
             released_at: null,
           },

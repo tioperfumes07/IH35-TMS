@@ -117,6 +117,14 @@ async function appendExpenseCategoryMapAudit(
   );
 }
 
+async function hasCompanyAccess(client: DbClient, userId: string, operatingCompanyId: string) {
+  const access = await client.query(
+    `SELECT 1 FROM org.user_company_access uca WHERE uca.user_id = $1::uuid AND uca.company_id = $2::uuid LIMIT 1`,
+    [userId, operatingCompanyId],
+  );
+  return (access.rowCount ?? 0) > 0;
+}
+
 export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/expense-category-map", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
@@ -210,6 +218,9 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
 
     try {
       const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client: DbClient) => {
+        if (!(await hasCompanyAccess(client, user.uuid, parsed.data.operating_company_id))) {
+          return reply.code(403).send({ error: "forbidden" });
+        }
         const inserted = await client.query(
           `
             INSERT INTO accounting.expense_category_account_map (

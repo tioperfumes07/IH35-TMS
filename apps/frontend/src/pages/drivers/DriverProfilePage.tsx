@@ -558,6 +558,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 (aggregate.license as { driver_employment_status_label?: string | null } | undefined)
                   ?.driver_employment_status_label ?? null
               }
+              driverId={id}
+              companyId={companyId || undefined}
+              onPhotoUpdated={() => void profileQ.refetch()}
             />
             <p className="mt-1 text-xs text-[#4B5563]" data-testid="driver-last-samsara-login">
               Last Samsara login: {formatSamsaraLogin(profileDriver.last_samsara_login_at)}

@@ -169,8 +169,8 @@ describe("migration-status", () => {
 describe("splitHeldPending (one split for the boot guard and /admin/health/migrations)", () => {
   const repoRoot = path.resolve(__dirname, "../../../..");
   it("a HELD file is pending, a normal missing file is drift", () => {
-    const r = splitHeldPending(["202615210000_lease_to_own_lessee_asc842.sql", "209912310000_not_held_example.sql"], repoRoot);
-    expect(r.heldPending).toEqual(["202615210000_lease_to_own_lessee_asc842.sql"]);
+    const r = splitHeldPending(["202608120000_item5a_demo_purge_recursive_cascade.sql", "209912310000_not_held_example.sql"], repoRoot);
+    expect(r.heldPending).toEqual(["202608120000_item5a_demo_purge_recursive_cascade.sql"]);
     expect(r.missing).toEqual(["209912310000_not_held_example.sql"]);
   });
 });
