@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 114 + 118 process confirmation (443.282 / legacy-sections guard)
+
+- **BRANCH:** `cursor/443282-confirm-process` · tip after #27675 popup standard
+- **DELTA:** CONFIRM 443.282 owner-authorized build: Fuel board shell (FUEL_BOARD_SUBNAV + Import/Add fill) + Settlements Company/Open/Closed/Close/Escrow/Fuel Home/Fuel sub-tabs shipped FULL BoardSection/FuelBoardSection this FINAL-2 stretch (#27661–#27675). Row 118 `verify-board-page-no-legacy-sections` already CODED on main (Codex #27379, selftest 10/10) — Cursor does not re-author.
+- **GUARD:** verify-board-page-no-legacy-sections --selftest · verify-fuel-home-dashboard-wired board shell
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** hand-built overlay conversion batches (35 remaining, shrink-only) + any Lead re-measure reds
+- **Files Modified:** OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 222 Popup standard + Fuel Assignment FULL (shipping)
 
 - **BRANCH:** `cursor/443295-fuel-assignment-popup` · tip after #27674 Fuel sub-tabs
