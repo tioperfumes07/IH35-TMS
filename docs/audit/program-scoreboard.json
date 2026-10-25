@@ -1,10 +1,10 @@
 {
-  "healthzSha": "7d448a1",
-  "generated_at": "2026-10-25T19:19:49.050Z",
+  "healthzSha": "f8ea8f0",
+  "generated_at": "2026-10-25T19:27:11.827Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "7d448a1",
+    "deployedSha": "f8ea8f0",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 27636,
+      "title": "FINDING: LST-F443359 web build_failed again (Cursor f8ea8f01c4: RollingLedgerDocumentKind gained card_payable / relay_topup, not EntityKinds) + Record expense opened UNDER the load side panel",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27636",
+      "sha": "2718bfd2a1",
+      "committedAtIso": "2026-10-25T14:25:24-05:00"
+    },
+    {
+      "number": 27634,
+      "title": "FINDING: ACCT-F443280-A#7 Cash Flow Home board still PARTIAL (layered KPI strip + tab-card theater + flat totals table; missing category grey/black rows, 4w actual band, Base|Conservative, real monthly)",
+      "state": "merged",
+      "mergedAtCt": "10/25/2026, 02:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27634",
+      "sha": "f8ea8f01c4",
+      "committedAtIso": "2026-10-25T14:20:14-05:00"
+    },
+    {
       "number": 0,
       "title": "Claude-1- ENG-34: ACCT-F443328-ENG34 — wire 6 exempt guards into CI step 18565 (918 < 920 baseline)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/27626",
       "sha": "7d560f6e64",
       "committedAtIso": "2026-10-25T13:59:20-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Claude-1- feat(guards): ACCT-F443322-ENG09 — THE GUARANTEE verify-engine-register-closed-by-guard (step 18813)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 01:55 PM CT",
-      "url": "",
-      "sha": "0d2d40beee",
-      "committedAtIso": "2026-10-25T13:55:00-05:00"
-    },
-    {
-      "number": 0,
-      "title": "chore(claim): reserve verify-step 18813 ENG-09 verify-engine-register-closed-by-guard (CC-1)",
-      "state": "merged",
-      "mergedAtCt": "10/25/2026, 01:51 PM CT",
-      "url": "",
-      "sha": "6796544381",
-      "committedAtIso": "2026-10-25T13:51:45-05:00"
     }
   ]
 }

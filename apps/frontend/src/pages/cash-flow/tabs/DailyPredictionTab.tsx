@@ -42,13 +42,18 @@ function mondayOf(iso: string): string {
   return addDaysIso(iso, delta);
 }
 
-/** D043 — owner 10-24: MM/DD/YYYY everywhere (no month names, no year-less chips). */
+/** D043 — owner 10-24: MM/DD/YYYY everywhere (no month names). */
 function fmtLongDate(iso: string): string {
   return formatDateUS(iso);
 }
 
+/** Board CashFlow-Projected outlook chips: "Thu 10-22" (weekday + MM-DD, no year on the chip). */
 function fmtChipDate(iso: string): string {
-  return formatDateUS(iso);
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return formatDateUS(iso);
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dow] ?? "";
+  return `${wd} ${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
 function formatCents(cents: number, opts?: { sign?: boolean }): string {
@@ -59,6 +64,7 @@ function formatCents(cents: number, opts?: { sign?: boolean }): string {
   return cents < 0 ? `−${dollars}` : dollars;
 }
 
+/** D042 — outlook nets: full dollars with thousands separators, never a `k` suffix; zero = em dash. */
 function formatCompactNet(cents: number): string {
   if (cents === 0) return "—";
   const dollars = Math.round(Math.abs(cents) / 100);
@@ -418,17 +424,25 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         </div>
       )}
 
-      {/* 7-Day Outlook — flat section + divide-x (ORPH-004). Selected cell uses shell navy. */}
+      {/* 7-Day Outlook — flat section + divide-x (ORPH-004). Selected cell uses shell navy. V3 tokens only. */}
       <section
-        className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+        style={{
+          overflow: "hidden",
+          borderRadius: 2,
+          border: `1px solid ${V3.border}`,
+          background: V3.surface,
+          fontFamily: V3.font,
+        }}
         data-testid="cash-flow-projected-outlook"
       >
-        <div className="border-b border-gray-100 bg-gray-50 px-4 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">7-Day Outlook</p>
+        <div style={{ borderBottom: `1px solid ${V3.borderSoft}`, background: V3.headerBg, padding: "8px 14px" }}>
+          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: V3.muted, margin: 0 }}>
+            7-Day Outlook
+          </p>
         </div>
-        <div className="overflow-x-auto">
-          <div className="grid min-w-[420px] grid-cols-7 divide-x divide-gray-100">
-            {sevenDays.map((entry) => {
+        <div style={{ overflowX: "auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", minWidth: 420 }}>
+            {sevenDays.map((entry, i) => {
               const isSelected = entry.date === date;
               const isToday = entry.date === todayIso();
               const pos = entry.net_cents >= 0;
@@ -438,10 +452,17 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   type="button"
                   onClick={() => setDate(entry.date)}
                   title={`${pos ? "+" : ""}${formatUsdCents(entry.net_cents)}`}
-                  className="flex flex-col items-center py-2 transition-colors"
                   style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    padding: "8px 4px",
+                    border: "none",
+                    borderLeft: i === 0 ? "none" : `1px solid ${V3.borderSoft}`,
+                    cursor: "pointer",
                     background: isSelected ? V3.shell : isToday ? V3.headerBg : V3.surface,
                     color: isSelected ? V3.onShell : V3.ink,
+                    fontFamily: V3.font,
                   }}
                 >
                   <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.8 }}>{fmtChipDate(entry.date)}</span>
@@ -787,10 +808,16 @@ function ExpenseGroupRows({
           </td>
         </tr>
       ) : (
-        rows.map((item) => (
+        rows.map((item) => {
+          // D073 — driver bills / settlements are people: proper-case via formatPersonName (never ALL CAPS).
+          const payeeNoun =
+            item.document_kind === "driver_bill" || item.document_kind === "settlement" || /driver/i.test(item.type)
+              ? "Driver"
+              : "Payee";
+          return (
           <tr key={`${item.document_kind}-${item.document_id}-${item.due_date}`}>
             <td style={tdStyle}>
-              <span>{entityLabel(item.counterparty, null, "Payee")}</span>
+              <span data-testid="cash-flow-projected-expense-payee">{entityLabel(item.counterparty, null, payeeNoun)}</span>
             </td>
             <td style={tdStyle}>
               {item.load_id ? (
@@ -837,7 +864,8 @@ function ExpenseGroupRows({
               {item.amount_known === false ? "Awaiting short miles" : formatCents(item.amount_cents)}
             </td>
           </tr>
-        ))
+          );
+        })
       )}
     </>
   );

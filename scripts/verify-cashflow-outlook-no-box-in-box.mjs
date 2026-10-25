@@ -43,8 +43,16 @@ export function collectProblems(section) {
     problems.push(`${TARGET}: missing 7-Day Outlook strip`);
     return problems;
   }
-  // className may share the opening tag with data-testid (443.250 Projected V3 measurable surface).
-  if (!/<section\b[^>]*className="overflow-hidden rounded-lg border border-gray-200 bg-white"/.test(section)) {
+  // Outer frame: legacy gray Tailwind OR V3 token inline style (443.280 board — tokens only).
+  const legacyFrame = /<section\b[^>]*className="overflow-hidden rounded-lg border border-gray-200 bg-white"/.test(
+    section,
+  );
+  const v3Frame =
+    /<section\b[^>]*style=\{\{/.test(section) &&
+    /overflow:\s*"hidden"/.test(section) &&
+    /V3\.border/.test(section) &&
+    /V3\.surface/.test(section);
+  if (!legacyFrame && !v3Frame) {
     problems.push(`${TARGET}: 7-Day Outlook root must be a single overflow-hidden section frame`);
   }
   const nestedRounded = section.match(NESTED_TILE_RE) ?? [];
@@ -59,7 +67,11 @@ export function collectProblems(section) {
   if (/ring-2 ring-\[#1f2a44\]/.test(section)) {
     problems.push(`${TARGET}: 7-Day Outlook must not use ring borders on day cells (box-in-box chrome)`);
   }
-  if (!/divide-x divide-gray-100/.test(section)) {
+  // Flat day cells: legacy divide-x OR V3 borderLeft separators (no gap-1 tiles).
+  const flatDivide =
+    /divide-x divide-gray-100/.test(section) ||
+    (/gridTemplateColumns:\s*"repeat\(7/.test(section) && /borderLeft/.test(section));
+  if (!flatDivide) {
     problems.push(`${TARGET}: 7-Day Outlook must flatten day cells with divide-x rows`);
   }
   if (/grid grid-cols-7 gap-1/.test(section)) {
@@ -81,6 +93,14 @@ function selftest() {
       </div>
     </section>`;
 
+  const goodV3 = `
+    <section style={{ overflow: "hidden", border: \`1px solid \${V3.border}\`, background: V3.surface }}>
+      <p>7-Day Outlook</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}>
+        <button style={{ borderLeft: \`1px solid \${V3.borderSoft}\` }}>Mon</button>
+      </div>
+    </section>`;
+
   const badNested = `
     <div className="rounded-lg border border-gray-200 bg-white p-4">
       <p>7-Day Outlook</p>
@@ -91,6 +111,7 @@ function selftest() {
 
   const cases = [
     { name: "flat divide-x cells → 0 errors", section: good, want: 0 },
+    { name: "V3 token frame + borderLeft → 0 errors", section: goodV3, want: 0 },
     { name: "nested rounded-lg + ring tiles → fail", section: badNested, wantMin: 1 },
   ];
   let failed = 0;
