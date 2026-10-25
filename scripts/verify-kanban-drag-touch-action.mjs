@@ -42,11 +42,7 @@ const contracts = [
       const body = sliceFunction(s, "function KanbanDispatchCard(", "function KanbanCompactCard");
       return body !== null && /draggableEnabled \? \{ touchAction: "none" as const \} : \{\}/.test(body);
     },
-    (s) =>
-      s.replace(
-        '  const style = {\n    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),\n    ...(draggableEnabled ? { touchAction: "none" as const } : {}),\n  };\n  const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);\n  const commodity',
-        '  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;\n  const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);\n  const commodity',
-      ),
+    (s) => s.replace(/\.\.\.\(draggableEnabled \? \{ touchAction: "none" as const \} : \{\}\),\n/g, ""),
   ],
   [
     "KanbanCompactCard sets touchAction:\"none\" while draggableEnabled",
@@ -54,11 +50,7 @@ const contracts = [
       const body = sliceFunction(s, "function KanbanCompactCard(", "function KanbanStandardCard");
       return body !== null && /draggableEnabled \? \{ touchAction: "none" as const \} : \{\}/.test(body);
     },
-    (s) =>
-      s.replace(
-        '  const style = {\n    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),\n    ...(draggableEnabled ? { touchAction: "none" as const } : {}),\n  };\n  const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);\n\n  return',
-        '  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;\n  const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);\n\n  return',
-      ),
+    (s) => s.replace(/\.\.\.\(draggableEnabled \? \{ touchAction: "none" as const \} : \{\}\),\n/g, ""),
   ],
   [
     "KanbanStandardCard sets touchAction:\"none\" while draggableEnabled",
@@ -66,11 +58,7 @@ const contracts = [
       const body = sliceFunction(s, "function KanbanStandardCard(", "function AwaitingTruckCard");
       return body !== null && /draggableEnabled \? \{ touchAction: "none" as const \} : \{\}/.test(body);
     },
-    (s) =>
-      s.replace(
-        '  const style = {\n    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),\n    ...(draggableEnabled ? { touchAction: "none" as const } : {}),\n  };\n  const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);\n  const secondaryLoad',
-        '  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;\n  const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);\n  const secondaryLoad',
-      ),
+    (s) => s.replace(/\.\.\.\(draggableEnabled \? \{ touchAction: "none" as const \} : \{\}\),\n/g, ""),
   ],
   [
     "AwaitingTruckCard sets touchAction:\"none\" unconditionally (BRD-12, always draggable)",
@@ -78,11 +66,7 @@ const contracts = [
       const body = sliceFunction(s, "function AwaitingTruckCard(", "function KanbanColumnSortControls");
       return body !== null && /touchAction: "none" as const,\s*\n\s*\};/.test(body);
     },
-    (s) =>
-      s.replace(
-        '  const transformStyle = {\n    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),\n    touchAction: "none" as const,\n  };',
-        "  const transformStyle = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;",
-      ),
+    (s) => s.replace(/(function AwaitingTruckCard\([\s\S]*?)touchAction: "none" as const,(\s*\n\s*\};)/, "$1$2"),
   ],
   [
     "PointerSensor activationConstraint is a pure distance of 4 — no delay timer (LEAD 443.251: a delay constraint cancelled quick first moves)",

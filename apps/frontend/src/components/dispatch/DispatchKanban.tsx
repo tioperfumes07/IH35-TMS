@@ -7,8 +7,10 @@ import {
   useDroppable,
   useSensor,
   useSensors,
+  DragOverlay,
   type DragEndEvent,
   type DragCancelEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -791,7 +793,7 @@ function KanbanDispatchCard({
   operatingCompanyId?: string;
 }) {
   const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: load.id,
     data: { loadId: load.id, status: load.status },
     disabled: !draggableEnabled,
@@ -808,7 +810,7 @@ function KanbanDispatchCard({
   // highlight the card's text instead of moving it. Only set while this card is actually draggable —
   // a non-draggable card (terminal status, synthetic id) keeps normal text selection/scroll.
   const style = {
-    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),
+    /* KANBAN-DRAG-OVERLAY: the card stays put; <DragOverlay> follows the pointer */
     ...(draggableEnabled ? { touchAction: "none" as const } : {}),
   };
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
@@ -967,7 +969,7 @@ function KanbanCompactCard({
   operatingCompanyId?: string;
 }) {
   const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: load.id,
     data: { loadId: load.id, status: load.status },
     disabled: !draggableEnabled,
@@ -978,7 +980,7 @@ function KanbanCompactCard({
   });
   // ROUND 20.3 DRAG ACTIVATION — see KanbanDispatchCard's identical comment above.
   const style = {
-    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),
+    /* KANBAN-DRAG-OVERLAY: the card stays put; <DragOverlay> follows the pointer */
     ...(draggableEnabled ? { touchAction: "none" as const } : {}),
   };
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
@@ -1083,7 +1085,7 @@ function KanbanStandardCard({
   operatingCompanyId?: string;
 }) {
   const draggableEnabled = canDragLoad(load.status) && !isSyntheticKanbanCardId(load.id);
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: load.id,
     data: { loadId: load.id, status: load.status },
     disabled: !draggableEnabled,
@@ -1094,7 +1096,7 @@ function KanbanStandardCard({
   });
   // ROUND 20.3 DRAG ACTIVATION — see KanbanDispatchCard's identical comment above.
   const style = {
-    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),
+    /* KANBAN-DRAG-OVERLAY: the card stays put; <DragOverlay> follows the pointer */
     ...(draggableEnabled ? { touchAction: "none" as const } : {}),
   };
   const lane = toRouteSummary(load.first_pickup_city, load.first_delivery_city);
@@ -1221,7 +1223,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
       : null;
   // BRD-12: truck cards are draggable onto load cards to assign the unit. The same press-and-hold still
   // opens the Book wizard via onClick when the pointer is released within the drag activation distance.
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: load.id,
     data: {
       type: "unit",
@@ -1246,7 +1248,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
   // ROUND 20.3 DRAG ACTIVATION — see KanbanDispatchCard's identical comment above. This card is
   // unconditionally draggable (no disabled flag), so touch-action is unconditional too.
   const transformStyle = {
-    ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}),
+    /* KANBAN-DRAG-OVERLAY: the card stays put; <DragOverlay> follows the pointer */
     touchAction: "none" as const,
   };
   // Clicking anywhere on the card OR the explicit "+ Book load" button opens the Book wizard pre-filled with
@@ -1329,14 +1331,14 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
 type KanbanOosUnit = { id: string; unit_number: string; oos_reason: string | null };
 
 function KanbanOosUnitChip({ unit }: { unit: KanbanOosUnit }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `oos-unit:${unit.id}`,
     data: { type: "unit", origin: "oos" satisfies KanbanUnitOrigin, unitId: unit.id, unitNumber: unit.unit_number },
   });
   return (
     <div
       ref={setNodeRef}
-      style={{ ...(transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : {}), touchAction: "none" }}
+      style={{ touchAction: "none" }}
       {...attributes}
       {...listeners}
       className={`flex select-none items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs ${
@@ -2189,11 +2191,29 @@ export function DispatchKanban({
   // (onDragEnd, via handleDragEnd's own return paths below) and the cancel path (onDragCancel) so a
   // drag that never resolves (Escape, drop outside the window) can never leave the page permanently
   // unselectable.
-  const handleDragStart = () => {
+  // KANBAN-DRAG-OVERLAY (owner 10-25 2:12 PM: "the boxes are still not draggable from one column to the
+  // next"). Every lane body is `overflow-y-auto` inside an `overflow-x-auto` board, so a card moved by its
+  // own CSS transform was CLIPPED by its lane: it could never visibly leave its column, and the dispatcher
+  // let go inside the same lane (= no move). The dragged preview is now a <DragOverlay>, which dnd-kit
+  // renders outside every scroll container, so the card visibly travels to any lane and drops there.
+  const [dragPreview, setDragPreview] = useState<{ title: string; sub: string } | null>(null);
+  const handleDragStart = (event: DragStartEvent) => {
     document.body.style.userSelect = "none";
+    const data = (event.active.data.current ?? {}) as { type?: string; loadId?: string; unitNumber?: string | null };
+    if (data.type === "unit") {
+      setDragPreview({ title: `Truck ${data.unitNumber ?? ""}`.trim(), sub: "Drop on a load or lane" });
+      return;
+    }
+    const l = optimisticLoads.find((item) => item.id === String(event.active.id));
+    setDragPreview(
+      l
+        ? { title: l.assigned_unit_number ? `${l.assigned_unit_number} · Load ${l.load_number}` : `Load ${l.load_number}`, sub: "Drop on a lane to change status" }
+        : { title: "Moving card", sub: "Drop on a lane" }
+    );
   };
   const clearDragUserSelect = () => {
     document.body.style.userSelect = "";
+    setDragPreview(null);
   };
   // LV-KANBAN-DROP-OUTSIDE-DROPPABLE-IS-SILENT's sibling case: a CANCELLED drag (Escape key, or the
   // pointer leaving the window) fires neither onDragEnd's over-is-null branch nor any toast at all —
@@ -2617,6 +2637,17 @@ export function DispatchKanban({
         )}
         </KanbanOosDropZone>
       </div>
+      <DragOverlay dropAnimation={null}>
+        {dragPreview ? (
+          <div
+            className="pointer-events-none w-56 cursor-grabbing rounded border border-[#14314F] bg-white p-2 text-xs shadow-lg"
+            data-testid="kanban-drag-overlay"
+          >
+            <div className="font-semibold text-gray-900">{dragPreview.title}</div>
+            <div className="text-[#4B5563]">{dragPreview.sub}</div>
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }

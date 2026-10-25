@@ -32,6 +32,13 @@ const original = fs.readFileSync(file, "utf8");
 
 const contracts = [
   [
+    // KANBAN-DRAG-OVERLAY (owner 10-25 2:12 PM): lanes are overflow-y-auto, so a card moved by its own transform is
+    // clipped inside its lane and can never visibly reach another column. The drag preview must be a <DragOverlay>.
+    "drag preview is a <DragOverlay> (renders outside the lanes' scroll containers) and no card moves by its own transform",
+    (s) => /<DragOverlay\b/.test(s) && !/transform: `translate3d\(\$\{transform\.x\}px/.test(s),
+    (s) => s.replace(/<DragOverlay\b[\s\S]*?<\/DragOverlay>/, ""),
+  ],
+  [
     "DndContext with PointerSensor and pointerWithin collision detection is present",
     (s) => /<DndContext/.test(s) && /PointerSensor/.test(s) && /pointerWithin/.test(s),
     (s) => s.replace(/pointerWithin/g, "closestCorners /* removed */"),
@@ -74,7 +81,7 @@ const contracts = [
       const body = s.slice(start, s.indexOf("\n  };", start) + 1);
       return /startsWith\("droppable:load:"\)/.test(body) && /resolveKanbanColumnKey/.test(body);
     },
-    (s) => s.replace('startsWith("droppable:load:")', 'startsWith("droppable:DISABLED:")').replace("droppable:load:<id>", "droppable:DISABLED:<id>"),
+    (s) => s.replace(/startsWith\("droppable:load:"\)/g, 'startsWith("droppable:DISABLED:")').replace("droppable:load:<id>", "droppable:DISABLED:<id>"),
   ],
   [
     "handleDragEnd calls onStatusDrop (the API transition path is reached from drag)",
