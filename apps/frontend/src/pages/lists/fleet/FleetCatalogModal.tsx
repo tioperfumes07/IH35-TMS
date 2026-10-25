@@ -4,6 +4,7 @@ import { ApiError } from "../../../api/client";
 import type { FleetCatalogCreateBody, FleetCatalogRow, FleetCatalogUpdateBody } from "../../../api/catalogs-fleet";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 const CODE_REGEX = /^[A-Z][A-Z0-9-]+$/;
 
@@ -119,9 +120,9 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? `New ${displayName}` : `Edit ${displayName}`}>
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Code
-          <input
+          <input data-control-kind="code"
             value={form.code}
             disabled={readOnly}
             onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))}
@@ -131,18 +132,18 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
           {errors.code ? <div className="mt-1 text-xs text-red-700">{errors.code}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Display Name
           <input value={form.display_name} disabled={readOnly} onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-[#F7F8FA]" />
           {errors.display_name ? <div className="mt-1 text-xs text-red-700">{errors.display_name}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Description
           <textarea value={form.description} disabled={readOnly} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs disabled:bg-[#F7F8FA]" />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Sort Order
           <input type="number" min={0} step={1} disabled={readOnly} value={form.sort_order} onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-[#F7F8FA]" />
           {errors.sort_order ? <div className="mt-1 text-xs text-red-700">{errors.sort_order}</div> : null}

@@ -16,6 +16,14 @@
  *   size="sm" (480px per 443.295). A decision popup is never page-wide. Review+decide boards that name
  *   sizePreset="md"|"lg"|"xl" (Fuel assignment md 720, etc.) are the 443.295 review sizes — not this rule.
  *
+ * RULE 3 — (443.365-B) every catalog creator short-code field (an <input> under pages/lists whose value binds to a
+ *   *_code / code / *Code field) carries data-control-kind="code", so the control sizing law sizes it 104px (owner design
+ *   law rule 4). Measured 10-25: 23 in 22 files, 0 marked -> 23 marked.
+ *
+ * RULE 4 — (443.365-C) catalog creator field labels use FORM_LABEL_CLASS / FORM_LABEL_STACK_CLASS
+ *   (components/forms/inputClass.ts), never a hand-typed `text-xs font-semibold text-gray-600` label. Measured 10-25: 136
+ *   hand-typed labels in 28 files -> 0.
+ *
  * Run: node scripts/verify-popups-one-format.mjs [--selftest] [--print]
  */
 import fs from "node:fs";
@@ -82,6 +90,22 @@ export function analyse(files, baseline) {
       }
     }
   }
+  for (const [rel, src] of files) {
+    if (!rel.startsWith("pages/lists/") || /\.test\.|__tests__/.test(rel)) continue;
+    for (const t of openingTags(src, "input")) {
+      if (/\btype="(checkbox|radio|hidden|file|date|number)"/.test(t.attrs)) continue;
+      if (/\bvalue=\{[^}]*?(?:\w+_code|\bcode|\w+Code)\b[^}]*\}/.test(t.attrs) && !/data-control-kind="code"/.test(t.attrs)) {
+        const line = src.slice(0, t.index).split("\n").length;
+        problems.push(`${rel}:${line} short-code field without data-control-kind="code" (owner design law rule 4: code box 104px)`);
+      }
+    }
+  }
+  const HAND_LABEL = /<label className="(?:block|flex flex-col gap-1) text-xs font-semibold text-(?:gray-600|\[#4B5563\])"/g;
+  for (const [rel, src] of files) {
+    if (!rel.startsWith("pages/lists/") || /\.test\.|__tests__/.test(rel)) continue;
+    const n = (src.match(HAND_LABEL) || []).length;
+    if (n) problems.push(`${rel}: ${n} hand-typed field label(s) — use FORM_LABEL_CLASS / FORM_LABEL_STACK_CLASS (one creator label style)`);
+  }
   const base = new Set(baseline);
   for (const f of overlays) if (!base.has(f)) problems.push(`${f}: paints its own \`fixed inset-0\` overlay — use <Modal> (size="sm" for decisions) or <ParityDrawer>; new popup shells are refused`);
   for (const f of base) if (!overlays.includes(f)) problems.push(`${f}: no longer paints its own overlay — remove it from scripts/verify-popups-one-format.baseline.json (shrink-only)`);
@@ -124,6 +148,14 @@ function selftest() {
     if (analyse([["b.tsx", '<div className="fixed inset-0">']], ["b.tsx"]).problems.length) throw new Error("baselined should pass");
     if (!analyse([["b.tsx", "<Modal open title=\"x\" onClose={c}/>"]], ["b.tsx"]).problems.some((p) => p.includes("shrink-only"))) throw new Error("stale baseline escaped");
   });
+  t("catalog code field without the 104px marker FAILS; marked PASSES", () => {
+    if (!analyse([["pages/lists/x/A.tsx", '<input value={form.reason_code} onChange={(e) => set(e.target.value)} />']], []).problems.some((p) => p.includes("short-code"))) throw new Error("unmarked code escaped");
+    if (analyse([["pages/lists/x/A.tsx", '<input data-control-kind="code" value={form.reason_code} />']], []).problems.length) throw new Error("marked failed");
+  });
+  t("hand-typed catalog label FAILS; the constant PASSES", () => {
+    if (!analyse([["pages/lists/x/B.tsx", '<label className="block text-xs font-semibold text-gray-600">Name</label>']], []).problems.some((p) => p.includes("hand-typed field label"))) throw new Error("hand label escaped");
+    if (analyse([["pages/lists/x/B.tsx", "<label className={FORM_LABEL_CLASS}>Name</label>"]], []).problems.length) throw new Error("constant failed");
+  });
   t("exempt media viewer PASSES", () => {
     if (analyse([["components/Sidebar.tsx", '<div className="fixed inset-0">']], []).problems.length) throw new Error("exempt failed");
   });
@@ -133,7 +165,9 @@ function selftest() {
   process.exit(bad.length ? 1 : 0);
 }
 
-if (process.argv.includes("--selftest")) selftest();
+const IS_MAIN = import.meta.url === `file://${process.argv[1]}`;
+if (!IS_MAIN) { /* imported as a library (openingTags) */ }
+else if (process.argv.includes("--selftest")) selftest();
 else {
   const baseline = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, "utf8")).overlays : [];
   const { problems, overlays } = analyse(walk(SRC), baseline);

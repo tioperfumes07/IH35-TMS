@@ -21,6 +21,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/Combobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
+import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 // LEAD ITEM 1 (2026-09-11) — built exactly like LoadCancellationReasonsListPage.tsx (its sibling
 // catalog page) so the owner adds/edits rows here with no code change, ever. A load EXCEPTION
@@ -194,7 +195,7 @@ export function LoadExceptionReasonsListPage() {
       </div>
 
       <div className="grid gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-[1fr_180px]">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Show
           <SelectCombobox
             value={status}
@@ -354,9 +355,9 @@ function LoadExceptionReasonModal({
         }}
       >
         <div className="grid gap-2">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Code
-            <input
+            <input data-control-kind="code"
               value={form.code}
               onChange={(event) => setForm((current) => ({ ...current, code: event.target.value.toLowerCase() }))}
               className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
@@ -366,7 +367,7 @@ function LoadExceptionReasonModal({
             {conflictError ? <span className="text-xs text-red-600">{conflictError}</span> : null}
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Name
             <input
               value={form.name}
@@ -377,7 +378,7 @@ function LoadExceptionReasonModal({
             {fieldErrors.name ? <span className="text-xs text-red-600">{fieldErrors.name}</span> : null}
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Applies To
             <input
               value={form.applies_to}
@@ -387,7 +388,7 @@ function LoadExceptionReasonModal({
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Linked Module
             <input
               value={form.linked_module}
@@ -397,7 +398,7 @@ function LoadExceptionReasonModal({
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Sort Order
             <input
               type="number"

@@ -11,6 +11,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { SelectCombobox } from "../../components/Combobox";
 import { useCreateMaintPart } from "../../hooks/useMaintenancePartsCatalog";
+import { FORM_LABEL_CLASS } from "../../components/forms/inputClass";
 
 const CATEGORIES = [
   "engine", "transmission", "brake", "tire", "suspension",
@@ -103,7 +104,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
   return (
     <Modal variant="drawer" open={open} onClose={handleClose} title="New Maintenance Part">
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           SKU
           <input
             value={form.sku}
@@ -113,7 +114,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           {errors.sku ? <div className="mt-1 text-xs text-red-700">{errors.sku}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Part Name
           <input
             value={form.part_name}
@@ -123,7 +124,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           {errors.part_name ? <div className="mt-1 text-xs text-red-700">{errors.part_name}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Manufacturer
           <input
             value={form.manufacturer}
@@ -134,7 +135,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           {errors.manufacturer ? <div className="mt-1 text-xs text-red-700">{errors.manufacturer}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Category
           <SelectCombobox
             value={form.category}
@@ -149,7 +150,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           </SelectCombobox>
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Sub-category (optional)
           <input
             value={form.sub_category}
@@ -158,7 +159,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Compatible Models (comma-separated, optional)
           <input
             value={form.model_compatibility}
@@ -168,7 +169,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Typical Unit Cost (USD, optional)
           <input
             value={form.typical_unit_cost}
@@ -179,7 +180,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
           {errors.typical_unit_cost ? <div className="mt-1 text-xs text-red-700">{errors.typical_unit_cost}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Barcode / UPC (optional)
           <input
             value={form.barcode_upc}

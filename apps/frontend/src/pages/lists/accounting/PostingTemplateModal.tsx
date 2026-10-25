@@ -20,6 +20,7 @@ import { Modal } from "../../../components/Modal";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../../components/Combobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 /** Codes consumers stamp via source_template_code — must match resolvePostingTemplateId lookup. */
 export const POSTING_TEMPLATE_SOURCE_CODES = [
@@ -189,7 +190,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           <code className="font-mono">fuel_event</code>, etc.) so the next batch stamps <code className="font-mono">posting_template_id</code>.
         </p>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Template code
           <SelectCombobox
             value={form.code}
@@ -207,7 +208,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           {errors.code ? <div className="mt-1 text-xs text-red-700">{errors.code}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Display name
           <input
             data-testid="posting-template-name-input"
@@ -218,7 +219,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           {errors.displayName ? <div className="mt-1 text-xs text-red-700">{errors.displayName}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Description
           <input
             value={form.description}
@@ -227,7 +228,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Debit account
           <div className="mt-1">
             <ReferenceSelect
@@ -252,7 +253,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           ) : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Credit account
           <div className="mt-1">
             <ReferenceSelect
@@ -277,7 +278,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           ) : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600" data-testid="posting-template-default-class">
+        <label className={FORM_LABEL_CLASS} data-testid="posting-template-default-class">
           Default class (optional)
           {/*
             LST-PICKER-01 (guard 1892): bare SelectCombobox over catalogs.classes had no first-row
@@ -303,7 +304,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
           </div>
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Default memo (optional)
           <input
             value={form.defaultMemo}

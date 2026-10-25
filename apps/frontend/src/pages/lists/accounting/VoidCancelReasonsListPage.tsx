@@ -20,6 +20,7 @@ import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/Combobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 const CATALOG_KEY = "void-cancel-reasons";
 
@@ -167,7 +168,7 @@ export function VoidCancelReasonsListPage() {
       </div>
 
       <div className="flex items-end gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Show
           <SelectCombobox
             value={status}
@@ -322,9 +323,9 @@ function VoidCancelReasonModal({
         }}
       >
         <div className="grid gap-2">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Code
-            <input
+            <input data-control-kind="code"
               value={form.reason_code}
               onChange={(event) =>
                 setForm((current) => ({ ...current, reason_code: event.target.value.toLowerCase() }))
@@ -336,7 +337,7 @@ function VoidCancelReasonModal({
             {conflictError ? <span className="text-xs text-red-600">{conflictError}</span> : null}
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Label
             <input
               value={form.reason_label}
@@ -357,7 +358,7 @@ function VoidCancelReasonModal({
             Require a note when this reason is chosen
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Sort Order
             <input
               type="number"

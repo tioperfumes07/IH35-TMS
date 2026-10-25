@@ -5,6 +5,7 @@ import type { AccountingCatalogCreateBody, AccountingCatalogRow, AccountingCatal
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { SelectCombobox } from "../../../components/Combobox";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 export type AccountingCatalogClient = {
   create: (operating_company_id: string, body: AccountingCatalogCreateBody) => Promise<{ id: string }>;
@@ -178,9 +179,9 @@ export function AccountingCatalogModal({
 
   const formChrome = (
     <div className="space-y-3">
-      <label className="block text-xs font-semibold text-gray-600">
+      <label className={FORM_LABEL_CLASS}>
         {codeLabel}
-        <input
+        <input data-control-kind="code"
           data-testid="catalog-code-input"
           value={form.code}
           disabled={readOnly || mode === "edit"}
@@ -194,7 +195,7 @@ export function AccountingCatalogModal({
       </label>
 
       {singleCodeNameField ? null : (
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Display Name
           <input
             data-testid="catalog-name-input"
@@ -253,7 +254,7 @@ export function AccountingCatalogModal({
         );
       })}
 
-      <label className="block text-xs font-semibold text-gray-600">
+      <label className={FORM_LABEL_CLASS}>
         Description
         <textarea
           value={form.description}
@@ -264,7 +265,7 @@ export function AccountingCatalogModal({
         />
       </label>
 
-      <label className="block text-xs font-semibold text-gray-600">
+      <label className={FORM_LABEL_CLASS}>
         Sort order
         <input
           type="number"

@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { CODE_REGEX } from "./shared";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -119,25 +120,25 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit Company Violation Type" : "Create Company Violation Type"}>
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Type Code
-          <input value={form.type_code} onChange={(event) => setForm((v) => ({ ...v, type_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="UNSAFE-DRIVING" />
+          <input data-control-kind="code" value={form.type_code} onChange={(event) => setForm((v) => ({ ...v, type_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="UNSAFE-DRIVING" />
           {errors.type_code ? <div className="mt-1 text-xs text-red-700">{errors.type_code}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Type Name
           <input value={form.type_name} onChange={(event) => setForm((v) => ({ ...v, type_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
           {errors.type_name ? <div className="mt-1 text-xs text-red-700">{errors.type_name}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Default Severity ({form.default_severity})
           <input type="range" min={1} max={10} step={1} value={form.default_severity} onChange={(event) => setForm((v) => ({ ...v, default_severity: Number(event.target.value || 1) }))} className="mt-2 w-full" />
           {errors.default_severity ? <div className="mt-1 text-xs text-red-700">{errors.default_severity}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Default Fine Amount (USD)
           {/* M-1: was raw "(cents)"; cents-mode MoneyInput; Number(form.amount_cents) unchanged. */}
           <MoneyInput

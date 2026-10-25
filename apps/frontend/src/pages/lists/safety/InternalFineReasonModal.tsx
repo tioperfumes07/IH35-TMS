@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { CODE_REGEX } from "./shared";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -108,9 +109,9 @@ export function InternalFineReasonModal({ open, companyId, row, onClose, onSaved
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit Internal Fine Reason" : "Create Internal Fine Reason"}>
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Reason Code
-          <input
+          <input data-control-kind="code"
             value={form.reason_code}
             onChange={(event) => setForm((v) => ({ ...v, reason_code: event.target.value.toUpperCase() }))}
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
@@ -119,13 +120,13 @@ export function InternalFineReasonModal({ open, companyId, row, onClose, onSaved
           {errors.reason_code ? <div className="mt-1 text-xs text-red-700">{errors.reason_code}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Reason Name
           <input value={form.reason_name} onChange={(event) => setForm((v) => ({ ...v, reason_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
           {errors.reason_name ? <div className="mt-1 text-xs text-red-700">{errors.reason_name}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Default Amount ($)
           {/* M-1: dollars-mode QBO money entry; bridged so Math.round(*100) seam is byte-for-byte. */}
           <MoneyInput
