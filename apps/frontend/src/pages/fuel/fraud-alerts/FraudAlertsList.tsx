@@ -336,8 +336,7 @@ export function FraudAlertsListPage() {
   if (!companyId) {
     return (
       <div className="space-y-3 p-4" data-testid="fuel-fraud-alerts-need-company">
-        <Breadcrumb items={[{ label: "Fuel", href: "/fuel" }, { label: "Fraud alerts" }]} />
-        <h1 className="text-page-title font-semibold text-gray-900">Fuel fraud alerts</h1>
+        <h1 className="text-page-title font-semibold text-gray-900">{"Fuel fraud alerts"}</h1>
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to view fraud alerts.
         </div>
@@ -366,8 +365,8 @@ export function FraudAlertsListPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Breadcrumb items={[{ label: "Fuel", href: "/fuel" }, { label: "Fraud alerts" }]} />
-          <h1 className="text-page-title font-semibold text-gray-900">Fuel fraud alerts</h1>
-          <p className="text-xs text-gray-600">Real-time fuel card fraud monitoring</p>
+          <h1 className="text-page-title font-semibold text-gray-900">{"Fuel fraud alerts"}</h1>
+          <p className="text-xs text-gray-600">{"Real-time fuel card fraud monitoring"}</p>
         </div>
         <Link to="/fuel" className="text-xs font-semibold text-[#1F2A44] hover:underline">
           Back to Fuel Home
@@ -378,16 +377,16 @@ export function FraudAlertsListPage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="fuel-fraud-alerts-v3-kpi-strip"
       >
-        <V3KpiTile label="In view" value={kpiValue(visibleRows.length)} sub="this filter" testId="fuel-fraud-alerts-kpi-in-view" />
-        <V3KpiTile label="Open" value={kpiValue(openCount)} sub="needs action" testId="fuel-fraud-alerts-kpi-open" />
-        <V3KpiTile label="Critical" value={kpiValue(criticalCount)} sub="severity" testId="fuel-fraud-alerts-kpi-critical" />
-        <V3KpiTile label="Confirmed" value={kpiValue(confirmedCount)} sub="fraud" testId="fuel-fraud-alerts-kpi-confirmed" />
+        <V3KpiTile label={"In view"} value={kpiValue(visibleRows.length)} sub="this filter" testId="fuel-fraud-alerts-kpi-in-view" />
+        <V3KpiTile label={"Open"} value={kpiValue(openCount)} sub="needs action" testId="fuel-fraud-alerts-kpi-open" />
+        <V3KpiTile label={"Critical"} value={kpiValue(criticalCount)} sub="severity" testId="fuel-fraud-alerts-kpi-critical" />
+        <V3KpiTile label={"Confirmed"} value={kpiValue(confirmedCount)} sub="fraud" testId="fuel-fraud-alerts-kpi-confirmed" />
       </div>
 
       <MoneyListToolbar
         search={listSearch}
         onSearchChange={setListSearch}
-        searchPlaceholder="Search rule, status, location…"
+        searchPlaceholder={"Search rule, status, location…"}
         onClearAll={() => {
           setListSearch("");
           setStatusFilter(scope ? "all" : "open");

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * Fuel planner active-driver compliance binding.
- * ROUND 443.250 — also asserts Compliance V3 KPI strip + V3Panel (chrome only).
+ * ROUND 443.250 — also asserts Compliance V3 KPI strip + FuelBoardSection (chrome only).
  */
+/** @matrix-built {"modules":["fuel"],"cols":["connectivity"],"leaves":["compliance"],"task":"FUEL-PLANNER-ACTIVE-DRIVER-COMPLIANCE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const files = {

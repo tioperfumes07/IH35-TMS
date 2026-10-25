@@ -322,8 +322,7 @@ export function CardOverageQueuePage() {
   if (!companyId) {
     return (
       <div className="space-y-3 p-3" data-testid="fuel-card-overage-need-company">
-        <Breadcrumb items={[{ label: "Fuel", href: "/fuel" }, { label: "Card overage" }]} />
-        <h1 className="text-page-title font-semibold text-gray-900">Fuel card overage</h1>
+        <h1 className="text-page-title font-semibold text-gray-900">{"Fuel card overage"}</h1>
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to review fuel card overage events.
         </div>
@@ -352,8 +351,8 @@ export function CardOverageQueuePage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Breadcrumb items={[{ label: "Fuel", href: "/fuel" }, { label: "Card overage" }]} />
-          <h1 className="text-page-title font-semibold text-gray-900">Fuel card overage</h1>
-          <p className="text-xs text-gray-600">Approve-then-recover over-limit / non-fuel card charges</p>
+          <h1 className="text-page-title font-semibold text-gray-900">{"Fuel card overage"}</h1>
+          <p className="text-xs text-gray-600">{"Approve-then-recover over-limit / non-fuel card charges"}</p>
         </div>
         <Link to="/fuel" className="text-xs font-semibold text-[#1F2A44] hover:underline">
           Back to Fuel Home
@@ -364,15 +363,15 @@ export function CardOverageQueuePage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="fuel-card-overage-v3-kpi-strip"
       >
-        <V3KpiTile label="In view" value={kpiValue(visibleRows.length)} sub="this page" testId="fuel-card-overage-kpi-in-view" />
-        <V3KpiTile label="Matching" value={kpiValue(totalMatching)} sub="filter total" testId="fuel-card-overage-kpi-matching" />
+        <V3KpiTile label={"In view"} value={kpiValue(visibleRows.length)} sub="this page" testId="fuel-card-overage-kpi-in-view" />
+        <V3KpiTile label={"Matching"} value={kpiValue(totalMatching)} sub="filter total" testId="fuel-card-overage-kpi-matching" />
         <V3KpiTile
-          label="Overage $"
+          label={"Overage $"}
           value={eventsQuery.isPending ? "…" : eventsQuery.isError ? "—" : money(overageSumCents)}
           sub="rows loaded"
           testId="fuel-card-overage-kpi-dollars"
         />
-        <V3KpiTile label="With JE" value={kpiValue(withJe)} sub="posted recovery" testId="fuel-card-overage-kpi-je" />
+        <V3KpiTile label={"With JE"} value={kpiValue(withJe)} sub="posted recovery" testId="fuel-card-overage-kpi-je" />
       </div>
 
       <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
@@ -387,7 +386,7 @@ export function CardOverageQueuePage() {
       <MoneyListToolbar
         search={listSearch}
         onSearchChange={setListSearch}
-        searchPlaceholder="Search driver, unit, rule…"
+        searchPlaceholder={"Search driver, unit, rule…"}
         onClearAll={() => setListSearch("")}
         activeFilterCount={
           (statusFilter !== "pending_review" ? 1 : 0) +
