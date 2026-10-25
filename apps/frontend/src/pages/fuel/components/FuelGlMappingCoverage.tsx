@@ -1,5 +1,5 @@
 /**
- * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). listExpenseCategoryMappings read-only.
+ * ROUND 443.326 — KPI + bordered FuelBoardSection (no V3Panel). listExpenseCategoryMappings read-only.
  *
  * FUEL-2 (verify-only, NON-posting): confirm every fuel transaction category maps to a real
  * catalogs.accounts GL account (via the EXISTING expense_category_map, category_kind='fuel') and
@@ -17,7 +17,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { listExpenseCategoryMappings } from "../../../api/accounting";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { FuelBoardSection } from "../FuelBoardSection";
 
 export const FUEL_GL_CATEGORY_CODES = ["diesel", "def", "reefer", "oil", "misc"] as const;
 export type FuelGlCategoryCode = (typeof FUEL_GL_CATEGORY_CODES)[number];
@@ -91,7 +91,7 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
         />
       </div>
 
-      <V3Panel
+      <FuelBoardSection
         title="Fuel to GL mapping coverage"
         subtitle="Read-only check before fuel posting runs"
         testId="fuel-expense-map-v3-panel"
@@ -151,7 +151,7 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
             </>
           )}
         </div>
-      </V3Panel>
+      </FuelBoardSection>
     </div>
   );
 }

@@ -59,8 +59,11 @@ function assertFuelHistoryV3(homeSrc, savingsSrc) {
   if (!/data-fuel-savings-v3-kpis/.test(savingsSrc) || !/V3KpiTile/.test(savingsSrc)) {
     problems.push(`${SAVINGS}: ROUND 443.250 must ship V3KpiTile strip (data-fuel-savings-v3-kpis)`);
   }
-  if (!/fuel-savings-v3-panel/.test(savingsSrc) || !/V3Panel/.test(savingsSrc)) {
-    problems.push(`${SAVINGS}: ROUND 443.250 must wrap detail in V3Panel (fuel-savings-v3-panel)`);
+  if (!/fuel-savings-v3-panel/.test(savingsSrc) || !/FuelBoardSection/.test(savingsSrc)) {
+    problems.push(`${SAVINGS}: ROUND 443.326 must wrap detail in FuelBoardSection (fuel-savings-v3-panel)`);
+  }
+  if (/import\\s*\\{[^}]*\\bV3Panel\\b|<\\s*V3Panel\\b/.test(savingsSrc)) {
+    problems.push(`${SAVINGS}: ROUND 443.326 must not import/use V3Panel`);
   }
   return problems;
 }
@@ -105,7 +108,7 @@ if (SELFTEST) {
       savings: savingsReal.replace(/data-fuel-savings-v3-kpis/g, "data-fuel-savings-gone"),
     },
     {
-      name: "drops Savings V3Panel",
+      name: "drops Savings FuelBoardSection",
       home: homeReal,
       savings: savingsReal.replace(/fuel-savings-v3-panel/g, "fuel-savings-gone-panel"),
     },

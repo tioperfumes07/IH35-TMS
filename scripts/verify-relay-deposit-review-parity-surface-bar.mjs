@@ -29,13 +29,15 @@ export function check(srcOverride) {
     "RelayDepositReview: ROUND 443.250 must ship V3KpiTile strip (data-fuel-relay-inbox-v3-kpis)",
   );
   assert(
-    src.includes("fuel-relay-inbox-intro-v3-panel") && src.includes("V3Panel"),
-    "RelayDepositReview: ROUND 443.250 must wrap intro in V3Panel (fuel-relay-inbox-intro-v3-panel)",
+    src.includes("fuel-relay-inbox-intro-v3-panel") && src.includes("FuelBoardSection"),
+    "RelayDepositReview: ROUND 443.326 must wrap intro in FuelBoardSection (fuel-relay-inbox-intro-v3-panel)",
   );
   assert(
     src.includes("fuel-relay-inbox-unclassified-v3-panel") && src.includes("fuel-relay-inbox-all-v3-panel"),
-    "RelayDepositReview: ROUND 443.250 must wrap unclassified + all deposits in V3Panels",
+    "RelayDepositReview: ROUND 443.326 must wrap unclassified + all deposits in FuelBoardSection",
   );
+  assert(src.includes("MoneyListToolbar"), "RelayDepositReview: ROUND 443.326 must mount MoneyListToolbar");
+  assert(!/import\\s*\\{[^}]*\\bV3Panel\\b|<\\s*V3Panel\\b/.test(src), "RelayDepositReview: ROUND 443.326 must not use V3Panel");
 }
 
 function selftest() {

@@ -1,14 +1,19 @@
-import { useState } from "react";
+/**
+ * ROUND 443.326 — KPI period via MoneyListToolbar + ParityTable + FuelBoardSection (no V3Panel).
+ */
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { V3 } from "../../../design/v3-tokens";
-import { V3Panel } from "../../../components/v3/V3Panel";
-import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
+import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { formatMoneyCents } from "../../../lib/formatMoney";
+import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import { fetchDieselByTruckAggregate } from "../fuelDieselByTruck";
 import { FUEL_BOARD_PERIOD_OPTIONS, fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
+import { FuelBoardSection } from "../FuelBoardSection";
 
 type Props = {
   companyId: string;
@@ -16,8 +21,19 @@ type Props = {
   viewAllHref?: string;
 };
 
+type DieselRow = {
+  id: string;
+  unit_id: string | null;
+  unit_number: string;
+  spend_cents: number;
+  gallons: number;
+  fill_count: number;
+  load_count: number;
+};
+
 export function FuelDieselByTruckPanel({ companyId, maxRows, viewAllHref }: Props) {
   const [period, setPeriod] = useState<FuelBoardPeriodId>("oct");
+  const [search, setSearch] = useState("");
   const range = fuelBoardPeriodRange(period);
 
   const aggQuery = useQuery({
@@ -26,171 +42,123 @@ export function FuelDieselByTruckPanel({ companyId, maxRows, viewAllHref }: Prop
     enabled: Boolean(companyId),
   });
 
-  const rows = aggQuery.data?.rows ?? [];
-  const maxSpend = rows.reduce((m, r) => Math.max(m, r.spend_cents), 0);
-  const visible = maxRows != null ? rows.slice(0, maxRows) : rows;
+  const rows: DieselRow[] = useMemo(() => {
+    const base = (aggQuery.data?.rows ?? []).map((r) => ({
+      id: r.unit_id ?? r.unit_number,
+      unit_id: r.unit_id,
+      unit_number: r.unit_number,
+      spend_cents: r.spend_cents,
+      gallons: r.gallons,
+      fill_count: r.fill_count,
+      load_count: r.load_count,
+    }));
+    const q = search.trim().toLowerCase();
+    const filtered = q ? base.filter((r) => r.unit_number.toLowerCase().includes(q)) : base;
+    return maxRows != null ? filtered.slice(0, maxRows) : filtered;
+  }, [aggQuery.data?.rows, maxRows, search]);
 
-  const headerRight = (
-    <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-      <V3Segmented
-        value={period}
-        options={FUEL_BOARD_PERIOD_OPTIONS}
-        onChange={setPeriod}
-        testId="fuel-diesel-by-truck-period"
-      />
-      {viewAllHref ? (
-        <Link
-          to={viewAllHref}
-          style={{ font: `600 11px ${V3.font}`, color: "#1D4ED8", textDecoration: "none" }}
-          data-testid="fuel-diesel-by-truck-view-all"
-        >
-          View all →
-        </Link>
-      ) : null}
-    </span>
+  const columns = useMemo<Array<ParityColumn<DieselRow>>>(
+    () => [
+      {
+        key: "unit_number",
+        label: "Unit",
+        sortable: true,
+        sortValue: (r) => r.unit_number,
+        render: (r) =>
+          r.unit_id ? (
+            <EntityLink kind="unit" id={r.unit_id} label={r.unit_number} className="font-semibold text-[#1F2A44]" />
+          ) : (
+            <span className="font-semibold">{r.unit_number}</span>
+          ),
+      },
+      {
+        key: "spend_cents",
+        label: "Spend",
+        sortable: true,
+        className: QBO_MONEY_CELL_CLASS,
+        sortValue: (r) => r.spend_cents,
+        render: (r) => formatMoneyCents(r.spend_cents),
+      },
+      {
+        key: "gallons",
+        label: "Gallons",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => r.gallons,
+        render: (r) => r.gallons.toFixed(1),
+      },
+      {
+        key: "per_gal",
+        label: "$/gal",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => (r.gallons > 0 ? r.spend_cents / r.gallons : Number.POSITIVE_INFINITY),
+        render: (r) => (r.gallons > 0 ? (r.spend_cents / 100 / r.gallons).toFixed(3) : "—"),
+      },
+      {
+        key: "fill_count",
+        label: "Fills",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => r.fill_count,
+        render: (r) => String(r.fill_count),
+      },
+      {
+        key: "load_count",
+        label: "Loads",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => r.load_count,
+        render: (r) => String(r.load_count),
+      },
+    ],
+    [],
   );
 
   return (
-    <V3Panel
-      title="Diesel by truck"
-      subtitle=""
-      testId="fuel-diesel-by-truck-panel"
-      headerRight={headerRight}
-    >
-      {aggQuery.isError ? (
-        <div style={{ padding: "10px 12px" }}>
-          <ListErrorBanner onRetry={() => void aggQuery.refetch()} />
-        </div>
-      ) : aggQuery.isLoading ? (
-        <div style={{ padding: "10px 12px", fontSize: 12, color: V3.muted }} data-testid="fuel-diesel-by-truck-loading">
-          Loading diesel by truck…
-        </div>
-      ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font, fontSize: 12 }}
-            data-testid="fuel-diesel-by-truck-table"
+    <div className="space-y-3" data-testid="fuel-diesel-by-truck-panel">
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search unit…"
+        onClearAll={() => setSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="fuel-diesel-by-truck"
+      >
+        <V3Segmented
+          value={period}
+          options={FUEL_BOARD_PERIOD_OPTIONS}
+          onChange={setPeriod}
+          testId="fuel-diesel-by-truck-period"
+        />
+        {viewAllHref ? (
+          <Link
+            to={viewAllHref}
+            className="text-xs font-semibold text-[#1D4ED8]"
+            data-testid="fuel-diesel-by-truck-view-all"
           >
-            <thead>
-              <tr>
-                {["", "Unit", "Spend", "$", "Gallons", "$/gal", "Fills", "Loads"].map((label, i) => (
-                  <th
-                    key={label || "bar"}
-                    style={{
-                      textAlign: i >= 3 ? "center" : "left",
-                      font: `700 11px ${V3.font}`,
-                      color: "#4B5563",
-                      textTransform: "uppercase",
-                      padding: "7px 12px",
-                      borderBottom: `1px solid ${V3.border}`,
-                      background: "#F7F8FA",
-                    }}
-                  >
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {visible.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={{ padding: "12px", textAlign: "center", color: V3.muted }}>
-                    No fills in this period.
-                  </td>
-                </tr>
-              ) : (
-                visible.map((row) => {
-                  const pct = maxSpend > 0 ? (row.spend_cents / maxSpend) * 100 : 0;
-                  const perGal = row.gallons > 0 ? row.spend_cents / 100 / row.gallons : null;
-                  return (
-                    <tr key={row.unit_id ?? row.unit_number}>
-                      <td style={{ padding: "5px 12px", borderBottom: `1px solid #ECEEF2`, width: 100 }} />
-                      <td style={{ padding: "5px 12px", borderBottom: `1px solid #ECEEF2` }}>
-                        {row.unit_id ? (
-                          <EntityLink kind="unit" id={row.unit_id} label={row.unit_number} className="font-semibold text-[#1F2A44]" />
-                        ) : (
-                          <span style={{ fontWeight: 600 }}>{row.unit_number}</span>
-                        )}
-                      </td>
-                      <td style={{ padding: "5px 12px", borderBottom: `1px solid #ECEEF2`, minWidth: 120 }}>
-                        <div
-                          style={{
-                            width: 160,
-                            maxWidth: "100%",
-                            height: 6,
-                            background: "#EEF0F3",
-                            borderRadius: 3,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: `${pct.toFixed(1)}%`,
-                              height: 6,
-                              background: "#1E3A5F",
-                              borderRadius: 3,
-                            }}
-                          />
-                        </div>
-                      </td>
-                      <td
-                        style={{
-                          padding: "5px 12px",
-                          borderBottom: `1px solid #ECEEF2`,
-                          textAlign: "center",
-                          fontWeight: 600,
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {formatMoneyCents(row.spend_cents).replace("$", "")}
-                      </td>
-                      <td
-                        style={{
-                          padding: "5px 12px",
-                          borderBottom: `1px solid #ECEEF2`,
-                          textAlign: "center",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {row.gallons.toFixed(1)}
-                      </td>
-                      <td
-                        style={{
-                          padding: "5px 12px",
-                          borderBottom: `1px solid #ECEEF2`,
-                          textAlign: "center",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {perGal != null ? perGal.toFixed(3) : "—"}
-                      </td>
-                      <td
-                        style={{
-                          padding: "5px 12px",
-                          borderBottom: `1px solid #ECEEF2`,
-                          textAlign: "center",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {row.fill_count}
-                      </td>
-                      <td
-                        style={{
-                          padding: "5px 12px",
-                          borderBottom: `1px solid #ECEEF2`,
-                          textAlign: "center",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {row.load_count}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </V3Panel>
+            View all →
+          </Link>
+        ) : null}
+      </MoneyListToolbar>
+
+      <FuelBoardSection title="Diesel by truck" testId="fuel-diesel-by-truck-section">
+        {aggQuery.isError ? <ListErrorBanner onRetry={() => void aggQuery.refetch()} /> : null}
+        <ParityTable<DieselRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          loading={aggQuery.isLoading}
+          emptyText="No fills in this period."
+          storageKey="fuel-diesel-by-truck"
+          tableTestId="fuel-diesel-by-truck-table"
+          suppressToolbarSearch
+        />
+      </FuelBoardSection>
+    </div>
   );
 }

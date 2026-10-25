@@ -117,8 +117,14 @@ export function collectProblems(sources) {
   if (!/data-fuel-questions-v3-kpis/.test(panel) || !/V3KpiTile/.test(panel)) {
     problems.push(`${FILES.panel}: ROUND 443.250 must ship V3KpiTile strip (data-fuel-questions-v3-kpis)`);
   }
-  if (!/fuel-questions-v3-panel/.test(panel) || !/V3Panel/.test(panel)) {
-    problems.push(`${FILES.panel}: ROUND 443.250 must wrap list in V3Panel (fuel-questions-v3-panel)`);
+  if (!/fuel-questions-v3-panel/.test(panel) || !/FuelBoardSection/.test(panel)) {
+    problems.push(`${FILES.panel}: ROUND 443.326 must wrap list in FuelBoardSection (fuel-questions-v3-panel)`);
+  }
+  if (!/MoneyListToolbar/.test(panel)) {
+    problems.push(`${FILES.panel}: ROUND 443.326 must mount MoneyListToolbar`);
+  }
+  if (/import\\s*\\{[^}]*\\bV3Panel\\b|<\\s*V3Panel\\b/.test(panel)) {
+    problems.push(`${FILES.panel}: ROUND 443.326 must not use V3Panel`);
   }
   if (!/Open questions/.test(sources.panel)) {
     problems.push(`${FILES.panel}: V3 KPI strip must include Open questions`);

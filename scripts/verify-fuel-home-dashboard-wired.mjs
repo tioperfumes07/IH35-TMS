@@ -139,8 +139,14 @@ export function computeCardsFailures(source) {
   if (!/V3KpiTile/.test(source) || !/data-fuel-cards-v3-kpis/.test(source)) {
     errors.push("FuelCardsPage must render V3KpiTile strip with data-fuel-cards-v3-kpis");
   }
-  if (!/V3Panel/.test(source) || !/fuel-cards-registry-v3-panel/.test(source) || !/fuel-cards-issuers-v3-panel/.test(source)) {
-    errors.push("FuelCardsPage must wrap Card issuers + Fuel card -> truck registry in V3Panel");
+  if (!/FuelBoardSection/.test(source) || !/fuel-cards-registry-v3-panel/.test(source) || !/fuel-cards-issuers-v3-panel/.test(source)) {
+    errors.push("FuelCardsPage must wrap Card issuers + Fuel card -> truck registry in FuelBoardSection");
+  }
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(source) || /<\s*V3Panel\b/.test(source)) {
+    errors.push("FuelCardsPage must not use V3Panel after 443.326 unwrap");
+  }
+  if (!/MoneyListToolbar/.test(source)) {
+    errors.push("FuelCardsPage must mount MoneyListToolbar (443.326 board grammar)");
   }
   if (/DataPanel/.test(source)) {
     errors.push("FuelCardsPage must not keep DataPanel after V3 restyle");
@@ -162,8 +168,14 @@ export function computeUnmatchedFailures(source) {
   if (!/V3KpiTile/.test(source) || !/data-relay-unmatched-v3-kpis/.test(source)) {
     errors.push("RelayUnmatchedPage must render V3KpiTile strip with data-relay-unmatched-v3-kpis");
   }
-  if (!/V3Panel/.test(source) || !/relay-unmatched-v3-panel/.test(source)) {
-    errors.push("RelayUnmatchedPage must wrap the unmatched table in V3Panel (relay-unmatched-v3-panel)");
+  if (!/FuelBoardSection/.test(source) || !/relay-unmatched-v3-panel/.test(source)) {
+    errors.push("RelayUnmatchedPage must wrap the unmatched table in FuelBoardSection (relay-unmatched-v3-panel)");
+  }
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(source) || /<\s*V3Panel\b/.test(source)) {
+    errors.push("RelayUnmatchedPage must not use V3Panel after 443.326 unwrap");
+  }
+  if (!/MoneyListToolbar/.test(source)) {
+    errors.push("RelayUnmatchedPage must mount MoneyListToolbar (443.326 board grammar)");
   }
   if (/import\s*\{[^}]*\bDataPanel\b/.test(source) || /<\s*DataPanel\b/.test(source)) {
     errors.push("RelayUnmatchedPage must not keep DataPanel after V3 restyle");
@@ -186,11 +198,17 @@ export function computeWalletFailures(source) {
     errors.push("RelayWalletRollForwardPage must render V3KpiTile strip with data-relay-wallet-v3-kpis");
   }
   if (
-    !/V3Panel/.test(source) ||
+    !/FuelBoardSection/.test(source) ||
     !/relay-wallet-roll-forward-v3-panel/.test(source) ||
     !/relay-wallet-docs-v3-panel/.test(source)
   ) {
-    errors.push("RelayWalletRollForwardPage must wrap roll-forward + docs drill in V3Panel");
+    errors.push("RelayWalletRollForwardPage must wrap roll-forward + docs drill in FuelBoardSection");
+  }
+  if (/import\s*\{[^}]*\bV3Panel\b/.test(source) || /<\s*V3Panel\b/.test(source)) {
+    errors.push("RelayWalletRollForwardPage must not use V3Panel after 443.326 unwrap");
+  }
+  if (!/MoneyListToolbar/.test(source)) {
+    errors.push("RelayWalletRollForwardPage must mount MoneyListToolbar (443.326 board grammar)");
   }
   if (/import\s*\{[^}]*\bDataPanel\b/.test(source) || /<\s*DataPanel\b/.test(source)) {
     errors.push("RelayWalletRollForwardPage must not keep DataPanel after V3 restyle");

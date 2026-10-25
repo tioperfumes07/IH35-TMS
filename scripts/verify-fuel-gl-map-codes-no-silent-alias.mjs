@@ -34,13 +34,16 @@ function assertFuelExpenseMapV3(coverageSrc, plannerSrc) {
   if (!/data-fuel-expense-map-v3-kpis/.test(coverageSrc) || !/V3KpiTile/.test(coverageSrc)) {
     findings.push(`${coverageRel}: ROUND 443.250 must ship V3KpiTile strip (data-fuel-expense-map-v3-kpis)`);
   }
-  if (!/fuel-expense-map-v3-panel/.test(coverageSrc) || !/V3Panel/.test(coverageSrc)) {
-    findings.push(`${coverageRel}: ROUND 443.250 must wrap coverage in V3Panel (fuel-expense-map-v3-panel)`);
+  if (!/fuel-expense-map-v3-panel/.test(coverageSrc) || !/FuelBoardSection/.test(coverageSrc)) {
+    findings.push(`${coverageRel}: ROUND 443.326 must wrap coverage in FuelBoardSection (fuel-expense-map-v3-panel)`);
+  }
+  if (/import\\s*\\{[^}]*\\bV3Panel\\b|<\\s*V3Panel\\b/.test(coverageSrc)) {
+    findings.push(`${coverageRel}: ROUND 443.326 must not use V3Panel`);
   }
   if (!/Mapped/.test(coverageSrc) || !/Unmapped/.test(coverageSrc) || !/Categories/.test(coverageSrc)) {
     findings.push(`${coverageRel}: Expense map V3 KPI strip must include Mapped + Unmapped + Categories`);
   }
-  // 443.326 — open-link section may be a bordered <section> (same test id); coverage panel stays V3Panel.
+  // 443.326 — open-link section + coverage use FuelBoardSection (same test ids); no V3Panel.
   if (!/fuel-expense-map-open-v3-panel/.test(plannerSrc)) {
     findings.push(`${plannerRel}: expense-map open link section must keep test id fuel-expense-map-open-v3-panel`);
   }

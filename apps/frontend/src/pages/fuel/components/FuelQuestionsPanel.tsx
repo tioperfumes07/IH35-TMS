@@ -1,7 +1,7 @@
 /**
  * LEAD 443.243 — "Fuel questions" list (Fuel module tab + Load Costs surface).
  * ROUND 443.258-B (D016 D017): ParityTable = gear column chooser + sortable headers.
- * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). listFuelAssignmentQuestions unchanged.
+ * ROUND 443.326 — KPI + MoneyListToolbar + ParityTable (no V3Panel). listFuelAssignmentQuestions unchanged.
  */
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,8 +14,9 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { FuelBoardSection } from "../FuelBoardSection";
 import { formatMoneyCents } from "../../../lib/formatMoney";
 import { formatDate } from "../../../lib/formatDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
@@ -40,6 +41,7 @@ function kpiValue(n: number | undefined, loading: boolean): string {
 export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
   const queryClient = useQueryClient();
   const [active, setActive] = useState<FuelAssignmentQuestion | null>(null);
+  const [search, setSearch] = useState("");
 
   const listQuery = useQuery({
     queryKey: ["fuel", "assignment-questions", operatingCompanyId, "open", loadId ?? ""],
@@ -53,8 +55,25 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
     refetchInterval: 60_000,
   });
 
-  const rows = listQuery.data?.rows ?? [];
+  const allRows = listQuery.data?.rows ?? [];
   const total = listQuery.data?.total ?? 0;
+  const q = search.trim().toLowerCase();
+  const rows = useMemo(() => {
+    if (!q) return allRows;
+    return allRows.filter((r) => {
+      const hay = [
+        r.station,
+        r.card_unit_number,
+        r.proposed_unit_number,
+        r.proposed_load_number,
+        r.proposed_settlement_ref,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [allRows, q]);
 
   const columns = useMemo<Array<ParityColumn<FuelAssignmentQuestion>>>(
     () => [
@@ -194,7 +213,18 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
         />
       </div>
 
-      <V3Panel
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search station, truck, load…"
+        onClearAll={() => setSearch("")}
+        activeFilterCount={0}
+        testIdPrefix="fuel-questions"
+      >
+        <span />
+      </MoneyListToolbar>
+
+      <FuelBoardSection
         title="Fuel questions"
         subtitle="When a fill is not 100% certain, it lands here for truck + load attribution"
         testId="fuel-questions-v3-panel"
@@ -212,6 +242,7 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
           emptyText="No open fuel assignment questions. When a fill is not 100% certain, it appears here."
           tableTestId="fuel-questions-table"
           density="compact"
+          suppressToolbarSearch
         />
         <CappedListNotice
           shown={rows.length}
@@ -219,7 +250,7 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
           total={listQuery.data?.total}
           hint="Answer these first — the rest appear as they clear."
         />
-      </V3Panel>
+      </FuelBoardSection>
 
       <FuelAssignmentPopup
         open={active != null}

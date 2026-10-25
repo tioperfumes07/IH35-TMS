@@ -1,8 +1,9 @@
 /**
- * ROUND 443.250 — V3 board chrome (V3KpiTile + V3Panel). getFuelComplianceSummary values unchanged.
+ * ROUND 443.326 — KPI strip + bordered FuelBoardSection (no V3Panel).
+ * getFuelComplianceSummary values unchanged.
  */
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { FuelBoardSection } from "../FuelBoardSection";
 
 type Props = {
   sourceAvailable: boolean;
@@ -66,7 +67,7 @@ export function CompliancePanel({
         />
       </div>
 
-      <V3Panel
+      <FuelBoardSection
         title="Compliance Tracker"
         subtitle="YTD from the fuel planner compliance summary"
         testId="fuel-compliance-v3-panel"
@@ -95,7 +96,7 @@ export function CompliancePanel({
             Relay match confidence: high when station+timestamp+unit align.
           </div>
         </div>
-      </V3Panel>
+      </FuelBoardSection>
     </div>
   );
 }

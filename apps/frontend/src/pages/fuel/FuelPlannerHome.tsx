@@ -58,7 +58,7 @@ import { FuelCardsPage } from "./cards/FuelCardsPage";
 import { RelayUnmatchedPage } from "./relay-unmatched/RelayUnmatchedPage";
 import { RelayWalletRollForwardPage } from "./relay-wallet/RelayWalletRollForwardPage";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
+import { FuelBoardSection } from "./FuelBoardSection";
 // Board grammar: history roster is FuelTransactionsTable (ParityTable wrapper — same engine rows).
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
@@ -988,7 +988,7 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
         />
       </div>
 
-      <V3Panel
+      <FuelBoardSection
         title="Planner settings"
         subtitle="Routing limits used when generating fuel-stop recommendations"
         testId="fuel-settings-v3-panel"
@@ -1034,7 +1034,7 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
             {invalid ? <span className="text-xs text-red-700">All limits must be &gt; 0; overfill % ≤ 100.</span> : null}
           </div>
         </div>
-      </V3Panel>
+      </FuelBoardSection>
     </div>
   );
 }

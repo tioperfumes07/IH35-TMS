@@ -50,8 +50,14 @@ export function verify(source) {
   need("finance", "to: tab.to", "finance tabs must navigate to their mounted route");
 
   for (const id of ["home", "planner", "relay_inbox", "settings", "expense_mapping", "loves_prices", "compliance"]) need("fuelConfig", `id: "${id}"`, `fuel nav ${id} must remain canonical`);
-  // ROUND 443.326 — NavyPageSubNav lives in FuelPlannerBoardChrome; home still wires FUEL_TAB_PATH.
-  need("fuelChrome", "<NavyPageSubNav", "fuel subnav must navigate through the canonical path registry");
+  // ROUND 443.326 — HoverDropdownNav in FuelPlannerBoardChrome (board chrome, not page-header extract).
+  need("fuelChrome", "HoverDropdownNav", "fuel subnav must navigate through HoverDropdownNav + canonical path registry");
+  if (/import\s*\{[^}]*\bPageHeader\b|<\s*PageHeader\b/.test(source.fuelChrome)) {
+    failures.push("FuelPlannerBoardChrome must not import/render PageHeader extract theater");
+  }
+  if (/import\s*\{[^}]*\bNavyPageSubNav\b|<\s*NavyPageSubNav\b/.test(source.fuelChrome)) {
+    failures.push("FuelPlannerBoardChrome must not import/render NavyPageSubNav extract theater");
+  }
   need("fuel", "FUEL_TAB_PATH", "fuel board must route tabs through the canonical path registry");
   need("fuel", "subnavItems={fuelBoardSubnav}", "fuel board must pass canonical subnav to chrome");
   for (const route of ["/fuel", "/fuel/planner", "/fuel/inbox", "/fuel/relay-inbox", "/fuel/settings", "/fuel/expense-mapping", "/fuel/loves-prices", "/fuel/compliance"]) need("routes", `path="${route}"`, `fuel route ${route} must remain mounted`);
@@ -106,15 +112,15 @@ if (failures.length) {
 
 if (process.argv.includes("--self-test")) {
   const mutations = [
-    ["finance", 'id: "overview"', 'id: "broken-overview"'], ["finance", "onClick={() => navigate(tab.to)}", "onClick={() => undefined}"],
+    ["finance", 'id: "overview"', 'id: "broken-overview"'], ["finance", "to: tab.to", "to: \"/broken\""],
     ["statements", 'id: "pl"', 'id: "broken-pl"'], ["fuelConfig", 'id: "home"', 'id: "broken-home"'],
     ["fuel", "subnavItems={fuelBoardSubnav}", "subnavItems={[]}"],
-    ["fuelChrome", "<NavyPageSubNav items={subnavItems} />", "<div />"],
+    ["fuelChrome", "HoverDropdownNav", "GoneNav"],
     ["sidebar", 'to: "/help/overview"', 'to: "/broken-help"'], ["helpCenter", 'id="help-search"', 'id="broken-help-search"'],
     ["helpCenter", '"Getting Started"', '"Broken category"'], ["helpCenter", 'kind="help_article"', 'kind="broken_help"'],
     ["helpOverview", 'to: "/help/runbooks"', 'to: "/help"'], ["homeJumps", 'to: "/maintenance"', 'to: "/broken-maintenance"'],
     ["ownerHome", "HOME_QUICK_JUMPS.map", "[].map"], ["ownerHome", 'to="/program"', 'to="/broken-program"'],
-    ["reportsSubnav", '{ label: "Reports", href: "/reports"', '{ label: "Reports", href: "/broken"'],
+    ["reportsSubnav", '{ label: "Reports", to: "/reports" }', '{ label: "Reports", to: "/broken" }'],
     ["reportsSubnav", 'label: "Run report"', 'label: "Broken runner"'],
     ["reportsSubnav", 'label: "Audit"', 'label: "Broken audit"'],
     ["reportsHome", "<ReportsSubNav />", "<div />"], ["reportsHome", "setShowCustomBuilder", "brokenCustomBuilder"],

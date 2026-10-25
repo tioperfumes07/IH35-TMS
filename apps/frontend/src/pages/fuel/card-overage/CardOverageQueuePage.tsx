@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
-import { PageHeader } from "../../../components/layout/PageHeader";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -13,11 +12,14 @@ import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
+import { CollapsedListFilters, MoneyListToolbar, useStagedListFilters } from "../../../components/table";
 import { ExemptOverageModal, type ExemptOverageInput } from "./ExemptOverageModal";
 import { VoidOverageModal } from "./VoidOverageModal";
 import { formatUsdCents } from "../../../lib/money";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
+import { V3KpiTile } from "../../../components/v3/V3KpiTile";
+import { Breadcrumb } from "../../../components/shared/Breadcrumb";
+import { FuelBoardSection } from "../FuelBoardSection";
 
 /**
  * BANK-F10 / FUEL-03 — operator queue for fuel-card overage approve-then-recover.
@@ -113,6 +115,7 @@ export function CardOverageQueuePage() {
   const [confirmApproveRow, setConfirmApproveRow] = useState<OverageEventRow | null>(null);
   const [exemptRow, setExemptRow] = useState<OverageEventRow | null>(null);
   const [voidRow, setVoidRow] = useState<OverageEventRow | null>(null);
+  const [listSearch, setListSearch] = useState("");
 
   useEffect(() => {
     actionGenerationRef.current += 1;
@@ -319,7 +322,8 @@ export function CardOverageQueuePage() {
   if (!companyId) {
     return (
       <div className="space-y-3 p-3" data-testid="fuel-card-overage-need-company">
-        <PageHeader title="Fuel card overage" subtitle="Approve-then-recover over-limit card charges" />
+        <Breadcrumb items={[{ label: "Fuel", href: "/fuel" }, { label: "Card overage" }]} />
+        <h1 className="text-page-title font-semibold text-gray-900">Fuel card overage</h1>
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
           Select an operating company to review fuel card overage events.
         </div>
@@ -327,17 +331,49 @@ export function CardOverageQueuePage() {
     );
   }
 
+  const q = listSearch.trim().toLowerCase();
+  const visibleRows = q
+    ? rows.filter((row) =>
+        [row.driver_name, row.unit_number, row.overage_rule, row.status, row.review_reason]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q),
+      )
+    : rows;
+  const totalMatching = eventsQuery.data?.total_count ?? rows.length;
+  const overageSumCents = rows.reduce((sum, row) => sum + (row.overage_cents ?? 0), 0);
+  const withJe = rows.filter((row) => Boolean(row.journal_entry_id)).length;
+  const kpiValue = (n: number) => (eventsQuery.isPending ? "…" : eventsQuery.isError ? "—" : String(n));
+
   return (
     <div className="space-y-3" data-testid="fuel-card-overage-queue">
-      <PageHeader
-        title="Fuel card overage"
-        subtitle="Approve-then-recover over-limit / non-fuel card charges (BANK-F10 · FUEL-03)"
-        actions={
-          <Link to="/fuel" className="text-xs font-semibold text-[#1F2A44] hover:underline">
-            Back to Fuel Home
-          </Link>
-        }
-      />
+      {/* ROUND 443.326 — KPI + MoneyListToolbar + FuelBoardSection (no PageHeader). */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Breadcrumb items={[{ label: "Fuel", href: "/fuel" }, { label: "Card overage" }]} />
+          <h1 className="text-page-title font-semibold text-gray-900">Fuel card overage</h1>
+          <p className="text-xs text-gray-600">Approve-then-recover over-limit / non-fuel card charges</p>
+        </div>
+        <Link to="/fuel" className="text-xs font-semibold text-[#1F2A44] hover:underline">
+          Back to Fuel Home
+        </Link>
+      </div>
+
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="fuel-card-overage-v3-kpi-strip"
+      >
+        <V3KpiTile label="In view" value={kpiValue(visibleRows.length)} sub="this page" testId="fuel-card-overage-kpi-in-view" />
+        <V3KpiTile label="Matching" value={kpiValue(totalMatching)} sub="filter total" testId="fuel-card-overage-kpi-matching" />
+        <V3KpiTile
+          label="Overage $"
+          value={eventsQuery.isPending ? "…" : eventsQuery.isError ? "—" : money(overageSumCents)}
+          sub="rows loaded"
+          testId="fuel-card-overage-kpi-dollars"
+        />
+        <V3KpiTile label="With JE" value={kpiValue(withJe)} sub="posted recovery" testId="fuel-card-overage-kpi-je" />
+      </div>
 
       <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
         The queue stays empty until the card-overage check is turned on for this company.{" "}
@@ -348,60 +384,73 @@ export function CardOverageQueuePage() {
         </InfoPopover>
       </p>
 
-      <CollapsedListFilters
+      <MoneyListToolbar
+        search={listSearch}
+        onSearchChange={setListSearch}
+        searchPlaceholder="Search driver, unit, rule…"
+        onClearAll={() => setListSearch("")}
         activeFilterCount={
           (statusFilter !== "pending_review" ? 1 : 0) +
           (effectiveDriverId ? 1 : 0) +
           (effectiveUnitId ? 1 : 0)
         }
-        onApply={staged.apply}
-        onReset={staged.reset}
-        onCancel={staged.cancel}
-        applyDisabled={!staged.dirty}
         testIdPrefix="fuel-card-overage"
-        dataAttributes={{ "data-fuel-card-overage-filter-toolbar": "collapsed" }}
       >
-        <div className="flex flex-wrap items-end gap-3" data-testid="fuel-card-overage-filters">
-          <label className="text-xs text-[#4B5563]">
-            Driver
-            <EntityMultiSelect
-              kind="driver"
-              operatingCompanyId={companyId}
-              value={staged.draft.driverId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
-              placeholder="All drivers"
-              className="mt-1"
-              dataTestId="fuel-card-overage-filter-driver"
-            />
-          </label>
-          <label className="text-xs text-[#4B5563]">
-            Unit
-            <EntityMultiSelect
-              kind="unit"
-              operatingCompanyId={companyId}
-              value={staged.draft.unitId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
-              placeholder="All units"
-              className="mt-1"
-              dataTestId="fuel-card-overage-filter-unit"
-            />
-          </label>
-          <div className="flex flex-wrap items-center gap-2">
-            {["pending_review", "approved", "posted", "company_variance", "exempt_authorized", "voided", "all"].map((status) => (
-              <button
-                key={status}
-                type="button"
-                className={`rounded-sm border px-2 py-1 text-xs ${
-                  staged.draft.statusFilter === status ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-300"
-                }`}
-                onClick={() => staged.setDraft({ ...staged.draft, statusFilter: status })}
-              >
-                {status.replace(/_/g, " ")}
-              </button>
-            ))}
+        <CollapsedListFilters
+          activeFilterCount={
+            (statusFilter !== "pending_review" ? 1 : 0) +
+            (effectiveDriverId ? 1 : 0) +
+            (effectiveUnitId ? 1 : 0)
+          }
+          onApply={staged.apply}
+          onReset={staged.reset}
+          onCancel={staged.cancel}
+          applyDisabled={!staged.dirty}
+          testIdPrefix="fuel-card-overage"
+          dataAttributes={{ "data-fuel-card-overage-filter-toolbar": "collapsed" }}
+        >
+          <div className="flex flex-wrap items-end gap-3" data-testid="fuel-card-overage-filters">
+            <label className="text-xs text-[#4B5563]">
+              Driver
+              <EntityMultiSelect
+                kind="driver"
+                operatingCompanyId={companyId}
+                value={staged.draft.driverId || null}
+                onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
+                placeholder="All drivers"
+                className="mt-1"
+                dataTestId="fuel-card-overage-filter-driver"
+              />
+            </label>
+            <label className="text-xs text-[#4B5563]">
+              Unit
+              <EntityMultiSelect
+                kind="unit"
+                operatingCompanyId={companyId}
+                value={staged.draft.unitId || null}
+                onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
+                placeholder="All units"
+                className="mt-1"
+                dataTestId="fuel-card-overage-filter-unit"
+              />
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              {["pending_review", "approved", "posted", "company_variance", "exempt_authorized", "voided", "all"].map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  className={`rounded-sm border px-2 py-1 text-xs ${
+                    staged.draft.statusFilter === status ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-gray-300"
+                  }`}
+                  onClick={() => staged.setDraft({ ...staged.draft, statusFilter: status })}
+                >
+                  {status.replace(/_/g, " ")}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </CollapsedListFilters>
+        </CollapsedListFilters>
+      </MoneyListToolbar>
 
       {hasEntityTarget ? (
         <Link to="/fuel/card-overage" className="text-xs font-semibold text-[#1F2A44] underline">
@@ -417,16 +466,23 @@ export function CardOverageQueuePage() {
           onRetry={() => void eventsQuery.refetch()}
         />
       ) : (
-        <ParityTable
+        <FuelBoardSection
           title="Card overage events"
-          rows={rows}
-          columns={columns}
-          rowKey={(row) => row.id}
-          loading={eventsQuery.isLoading}
-          storageKey="fuel-card-overage-events"
-          emptyText="No card overage events for this filter."
-          exportFilename="fuel-card-overage-events"
-        />
+          subtitle="Approve-then-recover over-limit / non-fuel card charges"
+          testId="fuel-card-overage-v3-panel"
+        >
+          <ParityTable
+            title="Card overage events"
+            rows={visibleRows}
+            columns={columns}
+            rowKey={(row) => row.id}
+            loading={eventsQuery.isLoading}
+            storageKey="fuel-card-overage-events"
+            emptyText="No card overage events for this filter."
+            exportFilename="fuel-card-overage-events"
+            suppressToolbarSearch
+          />
+        </FuelBoardSection>
       )}
 
       <ConfirmModal
