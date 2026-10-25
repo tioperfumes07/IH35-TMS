@@ -46,7 +46,8 @@ export type ExpenseLoadConfirmationRow = {
 };
 
 export type ListExpenseLoadConfirmationsParams = {
-  status?: ExpenseLoadConfirmationStatus | "all";
+  /** One status, a list (multi-select law), or "all"; an empty list means all. */
+  status?: ExpenseLoadConfirmationStatus | "all" | ExpenseLoadConfirmationStatus[];
   driver_id?: string;
   unit_id?: string;
   load_id?: string;
@@ -102,7 +103,8 @@ export async function listExpenseLoadConfirmations(
   params: ListExpenseLoadConfirmationsParams = {},
 ): Promise<{ rows: ExpenseLoadConfirmationRow[]; total_count?: number }> {
   const query = new URLSearchParams();
-  query.set("status", params.status ?? "proposed");
+  const st = params.status ?? "proposed";
+  query.set("status", Array.isArray(st) ? (st.length > 0 ? st.join(",") : "all") : st);
   // Filters are comma-separated id lists (multi-select law); the engine takes *_ids.
   if (params.driver_id) query.set("driver_ids", params.driver_id);
   if (params.unit_id) query.set("unit_ids", params.unit_id);

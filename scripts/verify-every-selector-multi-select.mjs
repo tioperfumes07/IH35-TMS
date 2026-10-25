@@ -23,15 +23,13 @@ const PRIMITIVE_PATHS = new Set([
  * Measured 2026-10-24 on main (443.325 box). Shrink-only: lowering BASELINE requires removing
  * a pinned row or converting that control; raising is forbidden.
  */
-const BASELINE = 13;
+const BASELINE = 10; // 443.349 (LEAD, ENG-30): FleetTable status+type and expense-load-confirmation status converted to MultiSelectDropdown
 
 /** Every allowed raw <select> outside date primitives. count = occurrences in file today. */
 const PINNED = [
-  { rel: "components/FleetTable.tsx", count: 2, reason: "Staged status + equipment type taxonomy filters (single value per axis); multi-select tracked under 443.281 entity filters guard." },
   { rel: "components/parity/ParityTable.tsx", count: 2, reason: "Page-size + export format pickers (scalar UI chrome, not entity roster filters)." },
   { rel: "components/table/UniversalListToolbar.tsx", count: 2, reason: "Range popover: choose one date/amount column + QBO date preset (scalar field picker)." },
   { rel: "components/DataTable.tsx", count: 1, reason: "Legacy page-size control (scalar)." },
-  { rel: "components/expenses/ExpenseLoadConfirmationsBoard.tsx", count: 1, reason: "Status filter until API accepts repeated status= (engine today: status|all only)." },
   { rel: "components/shared/SidebarPagination.tsx", count: 1, reason: "Page size (scalar rows-per-page, VC-10 All option)." },
   { rel: "components/table/ColumnChooser.tsx", count: 1, reason: "Column visibility preset (scalar layout picker)." },
   { rel: "pages/fuel/components/ImportFuelTransactionsModal.tsx", count: 1, reason: "Import file column mapping (scalar source column)." },

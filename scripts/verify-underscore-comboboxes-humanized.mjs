@@ -34,9 +34,9 @@ const CHECKS = [
     pattern: /STATUS_OPTIONS\.map\(\(s\) => \(\s*<option key=\{s\.value\} value=\{s\.value\}>\s*\{s\.label\}/,
   },
   {
-    name: "FleetTable status filter select",
+    name: "FleetTable status filter (multi-select)",
     file: "apps/frontend/src/components/FleetTable.tsx",
-    pattern: /\{statusOptions\.map\(\(s\) => \(\s*<option key=\{s\} value=\{s\}>\{humanizeEnumLabel\(s\)\}<\/option>/,
+    pattern: /statusOptions\.map\(\(s\) => \(\{ value: s, label: humanizeEnumLabel\(s\) \}\)\)/, // 443.349: MultiSelectDropdown options, still humanized
   },
   {
     name: "WOTimeTrackingPanel actor-kind select",

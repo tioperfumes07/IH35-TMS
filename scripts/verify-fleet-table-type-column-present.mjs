@@ -15,7 +15,7 @@ function audit(text) {
     ["truck fallback", /return "Truck"/],
     ["sort value", /function fleetSortValue[\s\S]{0,600}case "type": return displayType\(row\)/],
     ["filter options", /new Set\(rows\.map\(displayType\)\)/],
-    ["filter predicate", /typeListFilter && displayType\(r\) !== typeListFilter/],
+    ["filter predicate", /typeListFilter\.length > 0 && !typeListFilter\.includes\(displayType\(r\)\)/], // 443.349 multi-select
     // LEAD 443.181 — on ParityTable the CSV text is each column's exportValue (fleetExportValue) and the cell is
     // each column's render (renderFleetCell); same displayType(row) on both edges.
     ["CSV export", /const fleetExportValue = \(row: FleetRow, key: string\): string => \{[\s\S]{0,300}case "type": return displayType\(row\)/],
@@ -35,7 +35,7 @@ if (process.argv.includes("--selftest")) {
     source.replace('return "Truck";', 'return "Unknown";'),
     source.replace('case "type": return displayType(row);', 'case "type": return row.type ?? null;'),
     source.replace("new Set(rows.map(displayType))", "new Set([])"),
-    source.replace("typeListFilter && displayType(r) !== typeListFilter", "false"),
+    source.replace("typeListFilter.length > 0 && !typeListFilter.includes(displayType(r))", "false"),
     source.replaceAll('case "type": return displayType(row);', 'case "type": return "";'),
     source.replace(/(const renderFleetCell[\s\S]*?)case "type": return displayType\(row\);/, '$1case "type": return null;'),
   ];
