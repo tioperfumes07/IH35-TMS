@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // BANK leftover refuse — NotificationDropdown / ParityTable / ReconcilerExceptionsPage
+// + D029 (443.257-D row 148) — Exceptions Since column MM/DD/YYYY via formatDateUS (not ISO).
 import { readFileSync } from "node:fs";
 
 const TARGETS = [
@@ -7,6 +8,7 @@ const TARGETS = [
   "apps/frontend/src/components/parity/ParityTable.tsx",
   "apps/frontend/src/pages/tasks/ReconcilerExceptionsPage.tsx",
 ];
+const RECON = "apps/frontend/src/pages/tasks/ReconcilerExceptionsPage.tsx";
 const LABEL = "verify-notif-parity-recon-slate-leftover-chrome";
 
 function leftoverHits(src) {
@@ -32,10 +34,27 @@ function leftoverHits(src) {
   return hits;
 }
 
+/** D029 — Since column must render formatDateUS(row.since), never raw ISO. */
+function d029Hits(path, src) {
+  if (path !== RECON) return [];
+  const hits = [];
+  if (!/import\s*\{\s*formatDateUS\s*\}\s*from\s*["'][^"']*formatDate["']/.test(src)) {
+    hits.push("D029: must import formatDateUS from lib/formatDate");
+  }
+  if (!/formatDateUS\(\s*row\.since\s*\)/.test(src)) {
+    hits.push("D029: Since column must render formatDateUS(row.since) (MM/DD/YYYY)");
+  }
+  if (/render:\s*\(row\)\s*=>\s*row\.since\b/.test(src) && !/formatDateUS\(\s*row\.since\s*\)/.test(src)) {
+    hits.push("D029: Since column must not render raw ISO row.since");
+  }
+  return hits;
+}
+
 function audit(sources) {
   const fails = [];
   for (const [path, src] of sources) {
     for (const e of leftoverHits(src)) fails.push(`${path}: ${e}`);
+    for (const e of d029Hits(path, src)) fails.push(`${path}: ${e}`);
   }
   return fails;
 }
@@ -50,7 +69,17 @@ function main() {
       console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`);
       process.exit(1);
     }
-    console.log(`${LABEL}: SELFTEST PASS leftover slate class plant`);
+    const recon = sources.find(([p]) => p === RECON);
+    if (!recon) {
+      console.error(`${LABEL} SELFTEST FAIL — ReconcilerExceptionsPage missing from TARGETS`);
+      process.exit(1);
+    }
+    const d029Planted = recon[1].replace("formatDateUS(row.since)", "row.since");
+    if (!audit(sources.map(([p, s]) => (p === RECON ? [p, d029Planted] : [p, s]))).some((e) => e.includes("D029"))) {
+      console.error(`${LABEL} SELFTEST FAIL D029 Since-column plant escaped`);
+      process.exit(1);
+    }
+    console.log(`${LABEL}: SELFTEST PASS leftover slate + D029 Since formatDateUS`);
     process.exit(0);
   }
   const fails = audit(sources);
@@ -59,6 +88,6 @@ function main() {
     for (const e of fails) console.error(`  - ${e}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS leftover slate class refuse (${TARGETS.length} files)`);
+  console.log(`${LABEL}: PASS leftover slate class refuse + D029 Since MM/DD/YYYY (${TARGETS.length} files)`);
 }
 main();

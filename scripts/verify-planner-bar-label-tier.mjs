@@ -66,6 +66,27 @@ function pln03DayLabelIssues(fileSources) {
   return issues;
 }
 
+/**
+ * D030 (443.257-D row 149) — Driver Scheduler range subtitle MM/DD/YYYY via formatDateUS.
+ * Grid day headers stay formatPlannerDayLabel (MMM-DD) per GLB-08 / PLN-03 (not numeric MM/DD/YYYY).
+ */
+function d030SubtitleIssues(fileSources) {
+  const issues = [];
+  const rel = PLN03_FILES[1]; // DriverSchedulerGridPage
+  const fileSrc = fileSources?.[rel] ?? readFileSync(path.join(root, rel), "utf8");
+  if (!/import\s*\{[^}]*formatDateUS[^}]*\}\s*from\s*["'][^"']*formatDate["']/.test(fileSrc)) {
+    issues.push(`${rel}: D030 must import formatDateUS from lib/formatDate`);
+  }
+  if (!/formatDateUS\(\s*range\.start\s*\)/.test(fileSrc) || !/formatDateUS\(\s*range\.end\s*\)/.test(fileSrc)) {
+    issues.push(`${rel}: D030 subtitle must use formatDateUS(range.start/end) (MM/DD/YYYY)`);
+  }
+  // Raw ISO in the range subtitle (the defect) — forbid embedding bare range.start/end without formatDateUS.
+  if (/subtitle=\{`\$\{range\.start\}/.test(fileSrc) || /subtitle=\{`\$\{range\.end\}/.test(fileSrc)) {
+    issues.push(`${rel}: D030 subtitle must not embed raw ISO range.start/end`);
+  }
+  return issues;
+}
+
 function pln04HosStripIssues(fileSources) {
   const issues = [];
   const rel = PLN03_FILES[0];
@@ -86,6 +107,7 @@ function pln04HosStripIssues(fileSources) {
 
 failures.push(...pln03DayLabelIssues());
 failures.push(...pln04HosStripIssues());
+failures.push(...d030SubtitleIssues());
 
 if (process.argv.includes("--selftest")) {
   const bad = src.replace("slice(-2).join", "slice(-1).join");
@@ -95,6 +117,8 @@ if (process.argv.includes("--selftest")) {
   }
   const hosPath = path.join(root, PLN03_FILES[0]);
   const hosSrc = readFileSync(hosPath, "utf8");
+  const schedPath = path.join(root, PLN03_FILES[1]);
+  const schedSrc = readFileSync(schedPath, "utf8");
   const pln03Mutants = [
     { [PLN03_FILES[0]]: hosSrc.replace(/formatPlannerDayLabel\s*\([^)]*\)/g, "day.date.slice(5)") },
     { [PLN03_FILES[0]]: hosSrc.replace(/formatPlannerDayLabel\s*\([^)]*\)/g, '"—"') },
@@ -115,7 +139,16 @@ if (process.argv.includes("--selftest")) {
     console.error("selftest: PLN-04 strip mutation escaped");
     process.exit(1);
   }
-  console.log("verify-planner-bar-label-tier selftest: bar-label + PLN-03 + PLN-04 defects caught");
+  const d030Mutant = {
+    [PLN03_FILES[1]]: schedSrc
+      .replace(/formatDateUS\(\s*range\.start\s*\)/g, "range.start")
+      .replace(/formatDateUS\(\s*range\.end\s*\)/g, "range.end"),
+  };
+  if (!d030SubtitleIssues(d030Mutant).some((m) => m.includes("D030"))) {
+    console.error("selftest: D030 subtitle mutation escaped");
+    process.exit(1);
+  }
+  console.log("verify-planner-bar-label-tier selftest: bar-label + PLN-03 + PLN-04 + D030 defects caught");
   process.exit(0);
 }
 
@@ -125,5 +158,5 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("verify-planner-bar-label-tier: OK — plannerBarLabelTier + PLN-03 day labels + PLN-04 HOS strip protected");
+console.log("verify-planner-bar-label-tier: OK — plannerBarLabelTier + PLN-03 day labels + PLN-04 HOS strip + D030 subtitle protected");
 process.exit(0);
