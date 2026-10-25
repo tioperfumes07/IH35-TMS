@@ -144,8 +144,8 @@ const timeWindow = fs.readFileSync(TIME_WINDOW, "utf8");
 const moneyInput = fs.readFileSync(MONEY_INPUT, "utf8");
 const numberInput = fs.readFileSync(NUMBER_INPUT, "utf8");
 const combo = fs.readFileSync("apps/frontend/src/components/Combobox.tsx", "utf8");
-if (!combo.includes("formFieldChrome") || !combo.includes("h-9 w-full min-w-0 rounded-sm border")) {
-  throw new Error("Combobox size=sm must paint the h-9 bordered input itself (IH35-347-A / WIZ-34)");
+if (!combo.includes("formFieldChrome") || !combo.includes("h-10 w-full min-w-0 rounded-sm border")) {
+  throw new Error("Combobox size=sm must paint the h-10 bordered input itself (IH35-347-A / owner design law rule 2 / 40px form fields)");
 }
 
 if (process.argv.includes("--selftest")) {
