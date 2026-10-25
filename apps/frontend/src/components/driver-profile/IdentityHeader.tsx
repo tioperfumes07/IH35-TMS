@@ -136,7 +136,7 @@ function PhotoActions({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-[10px] text-gray-500 hover:bg-gray-100"
+        className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 bg-white text-xs text-gray-500 hover:bg-gray-100"
         aria-label="Change photo"
         title="Change photo"
         data-testid="driver-photo-actions-toggle"

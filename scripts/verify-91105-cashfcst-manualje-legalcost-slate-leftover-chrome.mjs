@@ -27,11 +27,27 @@ function d065Hits(path, src) {
   }
   return hits;
 }
+/** D064 — Step 2 header summary Date must be MM/DD/YYYY via formatDateUS (never raw YYYY-MM-DD state). */
+function d064Hits(path, src) {
+  if (path !== JE) return [];
+  const hits = [];
+  if (!/formatDateUS/.test(src) || !/from ["'][^"']*lib\/formatDate["']/.test(src)) {
+    hits.push(`${path}: D064 must import formatDateUS from lib/formatDate`);
+  }
+  if (!/Date:<\/span>\s*\{formatDateUS\(date\)\}/.test(src) && !/<span className="font-semibold">Date:<\/span>\s*\{formatDateUS\(date\)\}/.test(src)) {
+    hits.push(`${path}: D064 Step 2 summary must render formatDateUS(date)`);
+  }
+  if (/Date:<\/span>\s*\{date\}/.test(src) || /<span className="font-semibold">Date:<\/span>\s*\{date\}/.test(src)) {
+    hits.push(`${path}: D064 forbids raw {date} in Step 2 header summary`);
+  }
+  return hits;
+}
 function audit(sources) {
   const fails = [];
   for (const [path, src] of sources) {
     for (const e of leftoverHits(src)) fails.push(`${path}: ${e}`);
     for (const e of d065Hits(path, src)) fails.push(e);
+    for (const e of d064Hits(path, src)) fails.push(e);
   }
   return fails;
 }
@@ -51,10 +67,16 @@ function main() {
       console.error(`${LABEL} SELFTEST FAIL D065 plant escaped`);
       process.exit(1);
     }
-    console.log(`${LABEL}: SELFTEST PASS leftover slate + D065 plants`); process.exit(0);
+    const d064Plant = jeSrc.replace(/formatDateUS\(date\)/g, "date");
+    const plantedD064 = sources.map(([p, s], i) => (i === jeIdx ? [p, d064Plant] : [p, s]));
+    if (!audit(plantedD064).some((e) => e.includes("D064"))) {
+      console.error(`${LABEL} SELFTEST FAIL D064 plant escaped`);
+      process.exit(1);
+    }
+    console.log(`${LABEL}: SELFTEST PASS leftover slate + D064/D065 plants`); process.exit(0);
   }
   const fails = audit(sources);
   if (fails.length) { console.error(`${LABEL}: FAIL`); for (const e of fails) console.error(`  - ${e}`); process.exit(1); }
-  console.log(`${LABEL}: PASS leftover slate refuse + D065 ManualJE minmax grid (${TARGETS.length} files)`);
+  console.log(`${LABEL}: PASS leftover slate refuse + D064 date + D065 ManualJE minmax grid (${TARGETS.length} files)`);
 }
 main();
