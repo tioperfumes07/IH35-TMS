@@ -17180,5 +17180,10 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1098
+  "total_claimed": 1099,
+  "18799": {
+    "claimed_at": "2026-10-25",
+    "claimed_by": "cc-2",
+    "purpose": "verify-one-active-linehaul-per-load-eng11-row249"
+  }
 }
