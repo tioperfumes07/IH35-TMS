@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 222 Popup standard + Fuel Assignment FULL (shipping)
+
+- **BRANCH:** `cursor/443295-fuel-assignment-popup` · tip after #27674 Fuel sub-tabs
+- **DELTA:** Modal size caps sm480/md720/lg960/xl1280 (never 85% window); FuelAssignmentPopup = V3-Modal-FuelAssignment (Fill · Evidence · Proposed · Change · Engine notes); reason = catalog dropdown.
+- **GUARD:** verify-fuel-assignment-popup · verify-popups-one-format · verify-chrome-14-remaining-modal-shells · money-pr-local-gate
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** remaining FINAL-2 D/process rows
+- **Files Modified:** Modal.tsx · modal-size-prefs.ts · FuelAssignmentPopup.tsx · verify-fuel-assignment-popup · verify-popups-one-format · verify-chrome-14 · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 56 Fuel › 10 sub-tabs FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-fuel-subtabs-no-pagination` · tip after #27672 Company

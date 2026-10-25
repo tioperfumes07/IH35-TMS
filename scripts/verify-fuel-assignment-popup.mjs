@@ -92,14 +92,32 @@ export function collectProblems(sources) {
       problems.push(`${FILES.popup}: missing mode button ${mode}`);
     }
   }
-  if (!/Confirm proposed/.test(sources.popup) || !/Pick another truck \+ load/.test(sources.popup) || !/Keep on card truck/.test(sources.popup)) {
-    problems.push(`${FILES.popup}: must label confirm / pick / keep buttons`);
+  // 443.295 design: Confirm proposed / Choose another truck & load / Keep on card truck
+  if (
+    !/Confirm proposed/.test(sources.popup) ||
+    !/Choose another truck & load/.test(sources.popup) ||
+    !/Keep on card truck/.test(sources.popup)
+  ) {
+    problems.push(`${FILES.popup}: must label confirm / choose another / keep buttons (V3-Modal-FuelAssignment)`);
   }
   if (!/keep_card_truck/.test(popup) || !/reason/.test(popup)) {
     problems.push(`${FILES.popup}: keep on card truck requires reason`);
   }
   if (!/modalKind=["']fuel-assignment-question["']/.test(popup) && !/Modal/.test(popup)) {
     problems.push(`${FILES.popup}: must use dimmed Modal`);
+  }
+  // 443.295 — md 720 review+decide; never lg/wide page-wide popup; never free-text reason box.
+  if (!/sizePreset=["']md["']/.test(sources.popup)) {
+    problems.push(`${FILES.popup}: ROUND 443.295 must use sizePreset="md" (720)`);
+  }
+  if (/\bwide\b/.test(sources.popup.split("\n").find((l) => l.includes("<Modal")) ?? "")) {
+    problems.push(`${FILES.popup}: ROUND 443.295 must not pass wide (page-wide) on Fuel assignment`);
+  }
+  if (/<textarea\b/i.test(sources.popup)) {
+    problems.push(`${FILES.popup}: ROUND 443.295 forbids free-text reason textarea (catalog dropdown only)`);
+  }
+  if (!/fuel-assignment-engine-notes/.test(sources.popup)) {
+    problems.push(`${FILES.popup}: ROUND 443.295 must keep Engine notes collapsed section`);
   }
 
   if (!/data-testid=["']fuel-questions-badge["']/.test(badge)) {
