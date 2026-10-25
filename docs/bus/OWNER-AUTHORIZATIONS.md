@@ -8091,4 +8091,14 @@ scope: USMCA ONLY — post the GL of settlements closed without posting: P-0113,
 action: OWNER_AUTH_ID=AUTH-463 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-cc1-post-unposted-settlements-eng01.mts --apply --only=P-0113,P-0117
 rehearsal: fork br-winter-butterfly-akf3anas 18:57-18:58Z — 3 JEs, escrow only; P-0119 missing the $10.00 admin fee → held
 result: COMMITTED 2026-10-24 ~19:02Z — P-0113 JE b3744e47-e094-4c27-8f5f-99596b3803ef Dr 2000 50.00 / Cr 2100-00-026 50.00; P-0117 JE dab06366-9a16-4c60-b2fc-8a9e975639e8 Dr 2000 25.00 / Cr 2100-00-041 25.00; USMCA TB 0 on 8,075 postings
-status: PARTIAL (P-0119 pending ENG-01b)
+status: DONE — P-0119 COMMITTED 2026-10-24 ~21:34Z after AUTH-466 removed the voided duplicate fee: JE a37d162b-4769-41b9-831c-c806364bbe0c Dr 2000 25.00 / Cr 2100-00-024 25.00 (rehearsed on fork br-wild-mouse-ak0b4mjm first); verify-settlement-close-must-post-gl LIVE PASS 0 of 85
+
+## AUTH-466
+issued_at: 2026-10-24T21:33:00Z
+issued_by: Lead 443.338 (P-0119 voided duplicate fee). Recorded by Lead
+owner_quotes: "find true root problem, the bess possible soultion, fix updage or upgrade or recreate engines" (owner 2026-10-24 1:25 PM CT); "get all done now" (owner 2026-10-24)
+scope: USMCA ONLY — P-0119 (Angel Alfonso Sosa Perez; closed, unposted, unpaid): deactivate line 2b56ad02 "Admin fee - GAS" $10.00 that applied deduction 68041143, voided 10-12 as the duplicate of ee43793c (already taken on 5769); release the voided deduction from P-0119; recompute the header through recomputeSettlementHeader.
+action: OWNER_AUTH_ID=AUTH-466 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-24-lead-443338-p0119-drop-voided-duplicate-fee.mts --apply
+rehearsal: fork br-wild-mouse-ak0b4mjm — repair then ENG-01 post: JE Dr 2000 25.00 / Cr 2100-00-024 25.00 balanced
+result: COMMITTED 2026-10-24 ~21:33Z — P-0119 deductions 35.00 → 25.00, net pay 457.80 → 467.80 (the driver is owed $467.80, not $457.80); verify-voided-deduction-never-applied live 0
+status: DONE

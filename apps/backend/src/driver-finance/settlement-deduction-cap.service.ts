@@ -251,6 +251,9 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
       WHERE operating_company_id = $1::uuid
         AND driver_id = $2
         AND applied_to_settlement_id IS NULL
+        -- LEAD 443.338 — a VOIDED deduction is never applied. 68041143 ("Admin fee - GAS" $10.00, voided 10-12 as the
+        -- duplicate of ee43793c already taken on 5769) kept status 'pending' and was charged again on P-0119 at its 10-23 close.
+        AND voided_at IS NULL
       -- PAY-FIRST-THEN-ESCROW (owner-locked 2026-07-04): recover advances/debts BEFORE withholding
       -- escrow, so a floor-limited settlement pays down what the driver owes first and only defers
       -- escrow. Escrow-type deductions (driver_bond / abandonment) sort LAST; ties broken by age.

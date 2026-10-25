@@ -1359,6 +1359,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-person-names-normalized-at-write",
     ["db/migrations/202616210300_driver_names_normalized_at_write.sql", "apps/frontend/src/lib/formatPersonName.ts"],
   ],
+  // LEAD 443.338 — a voided deduction is never applied at settlement close (P-0119 charged a voided duplicate fee).
+  [
+    "verify-voided-deduction-never-applied",
+    ["apps/backend/src/driver-finance/settlement-deduction-cap.service.ts"],
+  ],
   // LEAD 443.279 — delivered* only through the final stop's departure (fence detector exit, transition refusal, history repair).
   [
     "verify-delivered-load-has-final-departure",
