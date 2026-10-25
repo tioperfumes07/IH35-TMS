@@ -42,8 +42,10 @@ if (!fs.existsSync(routesPath)) {
   if (!/withCompanyScope\(/.test(routes)) {
     failures.push("routes must execute through withCompanyScope");
   }
-  if (!/hasCompanyAccess\(/.test(routes)) {
-    failures.push("routes must explicitly check tenant access");
+  // ACCT-D020 (#27652): withCompanyScope already assertCompanyMembership — do not require
+  // a redundant hasCompanyAccess() inside the callback (removed from routes).
+  if (/async function hasCompanyAccess\(/.test(routes) || /await hasCompanyAccess\(/.test(routes)) {
+    failures.push("routes must not re-check hasCompanyAccess inside withCompanyScope (redundant; ACCT-D020)");
   }
   if (!/operating_company_id/.test(routes)) {
     failures.push("routes must carry operating_company_id through request parsing");
