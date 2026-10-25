@@ -39,7 +39,8 @@ function usesParityDrawerNotModal(source) {
 const TARGETS = [
   // Shared VOID/reversal shell — JE void, payment-method void, bill-payment void, invoice void,
   // HOS-violation void all render through this one component.
-  "apps/frontend/src/components/accounting/VoidReasonModal.tsx",
+  // OWNER 10-25-2026 1:46 PM: void / override / reason popups are a SMALL centered popup (Modal size="sm"),
+  // not a side panel — VoidReasonModal leaves this drawer list (verify-reason-popups-are-small owns it).
   // Submit Factoring Batch — factoring-home money creator.
   "apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx",
   // Factoring batch advance/reserve/release/recourse/void action shell.
@@ -91,6 +92,23 @@ function runLive() {
       failures.push(`${rel}: must render <ParityDrawer>, not a bare <Modal> (CHROME-14 QBO side-panel chrome)`);
     }
   }
+
+  // OWNER 10-25-2026 1:46 PM: "the pop up be made to spec and size, not entire page, it must be small pop up"
+  // — confirm / override / void-reason popups render <Modal ... size="sm"> (440px), the Modal pins its centered
+  // max-width inline, and the >=1920px responsive-shell rule caps only drawers (it used to stretch every card).
+  const SMALL_POPUPS = [
+    "apps/frontend/src/components/override/OverrideButton.tsx",
+    "apps/frontend/src/components/shared/ConfirmModal.tsx",
+    "apps/frontend/src/components/accounting/VoidReasonModal.tsx",
+  ];
+  for (const rel of SMALL_POPUPS) {
+    const src = fs.existsSync(path.join(ROOT, rel)) ? fs.readFileSync(path.join(ROOT, rel), "utf8") : "";
+    if (!/<Modal\b[^>]*\bsize="sm"/.test(src)) failures.push(`${rel}: must render <Modal ... size="sm"> (small popup, owner 10-25)`);
+  }
+  const modalSrc = fs.readFileSync(path.join(ROOT, "apps/frontend/src/components/Modal.tsx"), "utf8");
+  if (!/size === "sm" \? "min\(440px/.test(modalSrc) || !/: \{ maxWidth: centeredMaxWidth \}/.test(modalSrc)) failures.push("Modal.tsx: centered card must pin maxWidth inline (sm = 440px)");
+  const shellCss = fs.readFileSync(path.join(ROOT, "apps/frontend/src/styles/responsive-shell.css"), "utf8");
+  if (/\.ih35-responsive-shell \[role="dialog"\]\s*[,{]/.test(shellCss)) failures.push('responsive-shell.css: a bare [role="dialog"] max-width rule stretches centered popups — scope it to [data-modal-variant="drawer"]');
 
   if (failures.length) {
     console.error("FAIL verify-chrome-14-remaining-modal-shells:");

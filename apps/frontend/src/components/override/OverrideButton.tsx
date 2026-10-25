@@ -76,7 +76,7 @@ export function OverrideButton({ context, onConfirm, label, disabled, testId = "
       <Button type="button" variant="secondary" disabled={disabled} onClick={() => setOpen(true)} data-testid={testId}>
         {label ?? t("overrides.button")}
       </Button>
-      <Modal open={open} onClose={close} title={t("overrides.title")}>
+      <Modal open={open} onClose={close} title={t("overrides.title")} size="sm">
         <div className="space-y-3 text-xs text-[#1F2A44]" data-testid={`${testId}-dialog`}>
           {confirmOnly ? (
             <p data-testid={`${testId}-confirm-only`}>{t("overrides.confirmOnly")}</p>

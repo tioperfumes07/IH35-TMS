@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../Button";
-import { ParityDrawer } from "../parity/ParityDrawer";
+import { Modal } from "../Modal";
 import { ApiError } from "../../api/client";
 import { listVoidCancelReasons, type VoidCancelReason } from "../../api/catalogs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -94,21 +94,7 @@ export function VoidReasonModal({
   };
 
   return (
-    <ParityDrawer
-      open={open}
-      onClose={close}
-      title={title}
-      footer={
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={close}>
-            Cancel
-          </Button>
-          <Button type="submit" form="void-reason-form" variant="danger" loading={submitting} disabled={!valid}>
-            {submitLabel}
-          </Button>
-        </div>
-      }
-    >
+    <Modal open={open} onClose={close} title={title} size="sm">
       <form
         id="void-reason-form"
         className="space-y-3"
@@ -204,6 +190,16 @@ export function VoidReasonModal({
           </div>
         ) : null}
       </form>
-    </ParityDrawer>
+      <div className="mt-3 border-t border-gray-200 pt-3">
+<div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={close}>
+            Cancel
+          </Button>
+          <Button type="submit" form="void-reason-form" variant="danger" loading={submitting} disabled={!valid}>
+            {submitLabel}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }

@@ -43,8 +43,10 @@
   }
 
   /* Side panels / modals stay inside the viewport even on wall displays */
+  /* Owner 10-25: centered confirm/override/void popups keep their own small width — only drawers
+     and drawer-variant dialogs are capped here (this rule used to stretch every centered card full-width). */
   .ih35-responsive-shell [data-parity-drawer],
-  .ih35-responsive-shell [role="dialog"] {
+  .ih35-responsive-shell [role="dialog"][data-modal-variant="drawer"] {
     max-width: min(100vw, 100%);
   }
 }

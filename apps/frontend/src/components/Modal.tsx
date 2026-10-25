@@ -52,6 +52,12 @@ type ModalProps = {
    * that stay WIDE WIZARDS rather than drawers: Book Load and Create Work Order.
    */
   variant?: "center" | "drawer";
+  /**
+   * Owner 10-25: confirm / override / void / reason popups are a SMALL popup (440px), never page-wide.
+   * "sm" = 440px, default = 672px (42rem), `wide` = 72rem. Applied as an inline max-width so no
+   * stylesheet (e.g. the >=1920px responsive-shell dialog rule) can stretch a centered card.
+   */
+  size?: "sm" | "md";
 };
 
 export function Modal({
@@ -68,6 +74,7 @@ export function Modal({
   wide = false,
   onBack,
   variant = "center",
+  size = "md",
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -198,9 +205,10 @@ export function Modal({
     firstInput?.focus();
   }, [open]);
 
+  const centeredMaxWidth = wide ? "min(72rem, calc(100vw - 2rem))" : size === "sm" ? "min(440px, calc(100vw - 2rem))" : "min(42rem, calc(100vw - 2rem))";
   const panelStyle: CSSProperties | undefined = box
     ? { width: box.w, height: box.h, maxWidth: "min(95vw, calc(100vw - 2rem))", maxHeight: "min(95vh, calc(100dvh - 2rem))" }
-    : undefined;
+    : { maxWidth: centeredMaxWidth };
 
   if (!open) return null;
 
