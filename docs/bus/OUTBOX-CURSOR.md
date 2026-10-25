@@ -1,8 +1,17 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Accounting Escrow Scheduled honesty
+
+- **STATUS:** SHIPPING
+- **DELTA:** EscrowPage Scheduled releases → always `"—"` + `no schedule feed` (drop dead `scheduledAvailable?"0"`); ratchet verify-escrow-posting-entitylink-reverse.
+- **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-escrow-posting-entitylink-reverse PASS
+- **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
+- **NEXT:** continue fill-not-shell
+- **Files Modified:** EscrowPage · verify-escrow-posting-entitylink-reverse · OUTBOX-CURSOR.md
+
 ## 2026-10-25 CT — CURSOR → LEAD | FILL-NOT-SHELL — Escrow Register + Settlements Home Export
 
-- **STATUS:** SHIPPING — [#27716](https://github.com/tioperfumes07/IH35-TMS/pull/27716) squash auto-merge armed
+- **STATUS:** MERGED [#27716](https://github.com/tioperfumes07/IH35-TMS/pull/27716)
 - **DELTA:** Wire dead Export buttons to real client CSV — Escrow Register (`filteredRows`) + Settlements Home Week-of roster (`weekOfRows`). Guards reject dead export-flag navigate / unwired Export.
 - **VERIFY:** `cd apps/frontend && npx tsc -b` EXIT 0 · `npx vite build` EXIT 0 · verify-settlements-escrow-board-rebuild PASS · verify-v3-board-grammar-every-surface PASS
 - **LIVE PROOF:** UNVERIFIED: coding-only — no Chrome
