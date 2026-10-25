@@ -12,6 +12,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { SelectCombobox } from "../../../components/Combobox";
 import { CODE_REGEX } from "./shared";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -119,19 +120,19 @@ export function ComplaintTypeModal({ open, companyId, row, onClose, onSaved }: P
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit Complaint Type" : "Create Complaint Type"}>
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Type Code
-          <input value={form.type_code} onChange={(event) => setForm((v) => ({ ...v, type_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="SERVICE-QUALITY" />
+          <input data-control-kind="code" value={form.type_code} onChange={(event) => setForm((v) => ({ ...v, type_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="SERVICE-QUALITY" />
           {errors.type_code ? <div className="mt-1 text-xs text-red-700">{errors.type_code}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Type Name
           <input value={form.type_name} onChange={(event) => setForm((v) => ({ ...v, type_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
           {errors.type_name ? <div className="mt-1 text-xs text-red-700">{errors.type_name}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Default Severity
           <SelectCombobox value={form.default_severity} onChange={(event) => setForm((v) => ({ ...v, default_severity: event.target.value as ComplaintSeverity }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
             {SEVERITY_OPTIONS.map((option) => (

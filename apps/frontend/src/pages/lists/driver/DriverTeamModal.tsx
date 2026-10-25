@@ -25,6 +25,7 @@ import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -185,7 +186,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? "Create Driver Team" : "Edit Driver Team"}>
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Team Name
           <input
             data-testid="driver-team-name"
@@ -242,7 +243,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
           </>
         ) : null}
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Relationship
           <input
             value={form.relationship}
@@ -252,7 +253,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Notes
           <textarea
             value={form.notes}

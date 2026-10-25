@@ -23,6 +23,7 @@ import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/Combobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 const CATALOG_KEY = "override-reasons";
 
@@ -188,7 +189,7 @@ export function OverrideReasonsListPage() {
       </div>
 
       <div className="flex items-end gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Show
           <SelectCombobox
             value={status}
@@ -347,9 +348,9 @@ function OverrideReasonModal({
         }}
       >
         <div className="grid gap-2">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Code
-            <input
+            <input data-control-kind="code"
               value={form.reason_code}
               disabled={Boolean(initialRow?.role_only)}
               onChange={(event) =>
@@ -362,7 +363,7 @@ function OverrideReasonModal({
             {conflictError ? <span className="text-xs text-red-600">{conflictError}</span> : null}
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Label (English)
             <input
               value={form.label_en}
@@ -373,7 +374,7 @@ function OverrideReasonModal({
             {fieldErrors.label_en ? <span className="text-xs text-red-600">{fieldErrors.label_en}</span> : null}
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Label (Spanish)
             <input
               value={form.label_es}
@@ -407,7 +408,7 @@ function OverrideReasonModal({
             {fieldErrors.contexts ? <span className="text-xs text-red-600">{fieldErrors.contexts}</span> : null}
           </fieldset>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Sort Order
             <input
               type="number"

@@ -292,7 +292,7 @@ export function ItemEditorModal({
           </label>
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">SKU / Code *</span>
-            <input
+            <input data-control-kind="code"
               className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
               value={form.code}
               onChange={(e) => set("code", e.target.value.toUpperCase())}

@@ -22,6 +22,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/Combobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
+import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 const CATALOG_KEY = "load-cancellation-reasons";
 
@@ -241,7 +242,7 @@ export function LoadCancellationReasonsListPage() {
       </div>
 
       <div className="flex items-end gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Show
           <SelectCombobox
             value={status}
@@ -402,9 +403,9 @@ function LoadCancellationReasonModal({
         }}
       >
         <div className="grid gap-2">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Code
-            <input
+            <input data-control-kind="code"
               value={form.reason_code}
               onChange={(event) =>
                 setForm((current) => ({ ...current, reason_code: event.target.value.toUpperCase() }))
@@ -416,7 +417,7 @@ function LoadCancellationReasonModal({
             {conflictError ? <span className="text-xs text-red-600">{conflictError}</span> : null}
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Display Name
             <input
               value={form.display_name}
@@ -427,7 +428,7 @@ function LoadCancellationReasonModal({
             {fieldErrors.display_name ? <span className="text-xs text-red-600">{fieldErrors.display_name}</span> : null}
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Category
             <SelectCombobox
               value={form.category}
@@ -444,7 +445,7 @@ function LoadCancellationReasonModal({
             </SelectCombobox>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Description
             <textarea
               value={form.description}
@@ -455,7 +456,7 @@ function LoadCancellationReasonModal({
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Sort Order
             <input
               type="number"

@@ -12,6 +12,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { SelectCombobox } from "../../../components/Combobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
+import { FORM_LABEL_CLASS, FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 type StatusFilter = "true" | "false" | "all";
 
@@ -150,7 +151,7 @@ export function DetailTypesListPage() {
       </div>
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Account Type
           <SelectCombobox value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
             <option value="">All account types</option>
@@ -159,7 +160,7 @@ export function DetailTypesListPage() {
             ))}
           </SelectCombobox>
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Status
           <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
             <option value="true">Active</option>
@@ -250,7 +251,7 @@ function DetailTypeModal({
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={mode === "create" ? "New Detail Type" : "Edit Detail Type"}>
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Account Type
           <SelectCombobox
             value={form.account_type_id}
@@ -264,22 +265,22 @@ function DetailTypeModal({
           {mode === "edit" ? <span className="mt-1 block text-xs font-normal text-[#6B7280]">Account Type is fixed after create.</span> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Detail Type name
           <input value={form.name} onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Code (optional)
-          <input value={form.code} onChange={(e) => setForm((v) => ({ ...v, code: e.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+          <input data-control-kind="code" value={form.code} onChange={(e) => setForm((v) => ({ ...v, code: e.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Description
           <textarea value={form.description} onChange={(e) => setForm((v) => ({ ...v, description: e.target.value }))} rows={2} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Sort order
           <input type="number" value={form.sort_order} onChange={(e) => setForm((v) => ({ ...v, sort_order: Number(e.target.value || 0) }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
         </label>

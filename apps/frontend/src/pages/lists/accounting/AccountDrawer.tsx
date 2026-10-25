@@ -25,6 +25,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { SelectCombobox } from "../../../components/Combobox";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Mode = "create" | "edit";
 
@@ -123,7 +124,7 @@ function centsFromDollarString(dollarStr: string): number | null {
 
 function FieldLabel({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
-    <label className="block text-xs font-semibold text-gray-600">
+    <label className={FORM_LABEL_CLASS}>
       {label}
       {required ? <span className="ml-0.5 text-red-500">*</span> : null}
       {children}

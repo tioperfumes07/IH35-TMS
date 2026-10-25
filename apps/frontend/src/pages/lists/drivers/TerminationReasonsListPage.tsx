@@ -21,6 +21,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { SelectCombobox } from "../../../components/Combobox";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type StatusFilter = "active" | "inactive" | "all";
 
@@ -327,9 +328,9 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit Termination Reason" : "Create Termination Reason"}>
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Code
-          <input
+          <input data-control-kind="code"
             value={form.code}
             onChange={(event) => setForm((v) => ({ ...v, code: event.target.value.toLowerCase() }))}
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
@@ -339,7 +340,7 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
           {conflictError ? <div className="mt-1 text-xs text-red-700">{conflictError}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Label
           <input
             value={form.label}
@@ -349,7 +350,7 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
           {fieldErrors.label ? <div className="mt-1 text-xs text-red-700">{fieldErrors.label}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Severity
           <SelectCombobox value={form.severity} onChange={(event) => setForm((v) => ({ ...v, severity: event.target.value as DriverTerminationSeverity }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
             {SEVERITY_OPTIONS.map((option) => (
@@ -360,7 +361,7 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
           </SelectCombobox>
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Description
           <textarea
             value={form.description}

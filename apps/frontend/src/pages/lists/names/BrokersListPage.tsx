@@ -14,6 +14,7 @@ import { NewCustomerDrawerForm } from "../../../components/parity/drawers/NewCus
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 function statusPillClass(status: string) {
   return status === "active"
@@ -78,7 +79,7 @@ export function BrokersListPage() {
       </div>
 
       <div className="flex items-end gap-2 rounded-sm border border-gray-200 bg-white p-3">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Show
           <SelectCombobox
             value={status}

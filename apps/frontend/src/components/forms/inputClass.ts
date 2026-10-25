@@ -18,3 +18,11 @@ export const FORM_SELECT_CLASS = FORM_INPUT_CLASS;
 
 // Textareas grow with content, so no fixed height; py-1.5 = 6px vertical padding.
 export const FORM_TEXTAREA_CLASS = "w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs";
+
+// LEAD 443.365-C (owner 10-25-2026 4:05 PM "the creators are wrong not correctly formatted") — ONE field-label style
+// for every creator: 11px (the locked `.text-section-header` size, no raw px), 600, muted #64748B (design law token
+// "Muted — labels, sub-copy"). Sentence case on purpose: a label that WRAPS its field would hand uppercase/tracking to
+// the typed value and its error text. Inline checkbox labels are a different element and keep their own class.
+export const FORM_LABEL_CLASS = "block text-section-header font-semibold text-[#64748B]";
+/** Same label when it wraps its field (label > text + input + error), stacked with a 4px gap. */
+export const FORM_LABEL_STACK_CLASS = "flex flex-col gap-1 text-section-header font-semibold text-[#64748B]";

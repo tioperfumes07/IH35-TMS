@@ -10,5 +10,6 @@ Archived 2026-10-17 — content moved to [archive/INBOX-CURSOR-archive-2026-10-1
 2. Fast 4-min merge: gate once, frontend+backend tsc, push once, squash-merge. #27610 broke the web build (mmmDd) — Lead fixed in #27612; run `cd apps/frontend && npx tsc -b` before every push.
 3. Coding only, no Chrome. Answer from repo/docs/LAW/register/journal; ASSUMED: in PR body.
 4. Report "Cursor DONE" + PR list in OUTBOX-CURSOR.md.
+5. LEAD 10-25 5:05 PM — web build_failed TWICE more (#27675, #27676: FuelHomePage used navigate without useNavigate, from #27671). Before EVERY merge run `cd apps/frontend && node ../../scripts/generate-module-completion-data.mjs && npx tsc -b && npx vite build` — all exit 0, paste the three exits in the PR body. No exits, no merge.
 
 Superseded: every earlier CURRENT block.

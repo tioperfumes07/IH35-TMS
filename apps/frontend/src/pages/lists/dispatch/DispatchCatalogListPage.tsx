@@ -18,6 +18,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { CatalogEntryModal } from "./CatalogEntryModal";
 import { SelectCombobox } from "../../../components/Combobox";
+import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 type StatusFilter = "active" | "inactive" | "all";
 
@@ -196,12 +197,12 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
       <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">{description}</div>
 
       <div className="grid gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-[1fr_180px]">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Search
           {/* LST-F3510: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
           <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Show
           <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
             <option value="active">Active</option>

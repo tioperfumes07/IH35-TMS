@@ -14,6 +14,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { SelectCombobox } from "../../components/Combobox";
+import { FORM_LABEL_STACK_CLASS } from "../../components/forms/inputClass";
 
 type TriFilter = "all" | "yes" | "no";
 type SourceFilter = "all" | "google" | "samsara" | "manual";
@@ -261,7 +262,7 @@ export function LocationsListPage() {
         className="grid gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-[1fr_120px_120px_120px_140px]"
         data-locations-list-filter-toolbar="inline"
       >
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Search
           {/* Server-side search over the route's full location set: debounced (LISTS-CATALOG-SEARCH-FLAKY). */}
           <CatalogListSearchInput
@@ -272,7 +273,7 @@ export function LocationsListPage() {
             data-testid="locations-list-filter-search"
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           State
           <input
             type="text"
@@ -283,7 +284,7 @@ export function LocationsListPage() {
             data-testid="locations-list-filter-state"
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Geocoded
           <SelectCombobox
             value={geocodedFilter}
@@ -296,7 +297,7 @@ export function LocationsListPage() {
             <option value="no">No</option>
           </SelectCombobox>
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Geofence
           <SelectCombobox
             value={geofenceFilter}
@@ -309,7 +310,7 @@ export function LocationsListPage() {
             <option value="no">No</option>
           </SelectCombobox>
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_STACK_CLASS}>
           Source
           <SelectCombobox
             value={sourceFilter}

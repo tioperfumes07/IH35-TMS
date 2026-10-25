@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import type { DispatchCatalogCreateBody, DispatchCatalogRow, DispatchCatalogUpdateBody } from "../../../api/catalogs-dispatch";
+import { FORM_LABEL_STACK_CLASS } from "../../../components/forms/inputClass";
 
 type Mode = "create" | "edit";
 
@@ -87,9 +88,9 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
         }}
       >
         <div className="grid gap-2">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Code
-            <input
+            <input data-control-kind="code"
               value={form.code}
               onChange={(event) => {
                 const nextCode = event.target.value.toUpperCase();
@@ -102,7 +103,7 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
             {duplicateCodeError ? <span className="text-xs text-red-600">{duplicateCodeError}</span> : null}
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Display Name
             <input
               value={form.display_name}
@@ -113,7 +114,7 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
             {fieldErrors.display_name ? <span className="text-xs text-red-600">{fieldErrors.display_name}</span> : null}
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Description
             <textarea
               value={form.description}
@@ -124,7 +125,7 @@ export function CatalogEntryModal({ open, mode, title, initialRow, duplicateCode
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_STACK_CLASS}>
             Sort Order
             <input
               type="number"

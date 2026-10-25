@@ -8,6 +8,7 @@ import type {
 } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 const CODE_REGEX = /^[A-Z0-9-]+$/;
 
@@ -143,9 +144,9 @@ export function SafetyGenericCatalogModal({
       title={mode === "create" ? `New ${displayName}` : `Edit ${displayName}`}
     >
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Code
-          <input
+          <input data-control-kind="code"
             value={form.code}
             onChange={(event) =>
               setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))
@@ -156,7 +157,7 @@ export function SafetyGenericCatalogModal({
           {errors.code ? <div className="mt-1 text-xs text-red-700">{errors.code}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Display Name
           <input
             value={form.display_name}
@@ -168,7 +169,7 @@ export function SafetyGenericCatalogModal({
           ) : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Description
           <textarea
             value={form.description}
@@ -178,7 +179,7 @@ export function SafetyGenericCatalogModal({
           />
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Sort Order
           <input
             type="number"

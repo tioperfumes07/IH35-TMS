@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useAuth } from "../../../auth/useAuth";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 export function AbandonmentDefaultsPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -60,19 +61,19 @@ export function AbandonmentDefaultsPage() {
       {!allowed ? <div className="rounded-sm border border-rose-200 bg-rose-50 p-3 text-xs">Owner/Administrator only.</div> : null}
 
       <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4 text-xs">
-        <label className="block text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_CLASS}>
           Default towing (¢)
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={towing} onChange={(e) => setTowing(e.target.value.replace(/[^\d]/g, ""))} />
         </label>
-        <label className="block text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_CLASS}>
           Deadhead rate (¢ / mile)
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={ratePerMile} onChange={(e) => setRatePerMile(e.target.value.replace(/[^\d]/g, ""))} />
         </label>
-        <label className="block text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_CLASS}>
           Replacement premium (%)
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={premiumPct} onChange={(e) => setPremiumPct(e.target.value)} />
         </label>
-        <label className="block text-xs font-semibold text-[#4B5563]">
+        <label className={FORM_LABEL_CLASS}>
           Require approval above (¢)
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2" value={threshold} onChange={(e) => setThreshold(e.target.value.replace(/[^\d]/g, ""))} />
         </label>

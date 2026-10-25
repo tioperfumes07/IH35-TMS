@@ -11,6 +11,7 @@ import {
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { SelectCombobox } from "../../../components/Combobox";
+import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 type Props = {
   open: boolean;
@@ -140,19 +141,19 @@ export function DotViolationTypeModal({ open, companyId, row, onClose, onSaved }
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit DOT Violation Type" : "Create DOT Violation Type"}>
       <div className="space-y-3">
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Violation Code
-          <input value={form.violation_code} onChange={(event) => setForm((v) => ({ ...v, violation_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="392.2A" />
+          <input data-control-kind="code" value={form.violation_code} onChange={(event) => setForm((v) => ({ ...v, violation_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="392.2A" />
           {errors.violation_code ? <div className="mt-1 text-xs text-red-700">{errors.violation_code}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Display Name
           <input value={form.display_name} onChange={(event) => setForm((v) => ({ ...v, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
           {errors.display_name ? <div className="mt-1 text-xs text-red-700">{errors.display_name}</div> : null}
         </label>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           BASIC Category
           <SelectCombobox value={form.basic_category} onChange={(event) => setForm((v) => ({ ...v, basic_category: event.target.value as DotBasicCategory | "" }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
             <option value="">— None —</option>
@@ -165,19 +166,19 @@ export function DotViolationTypeModal({ open, companyId, row, onClose, onSaved }
         </label>
 
         <div className="grid grid-cols-2 gap-2">
-          <label className="block text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_CLASS}>
             Severity Weight (1–10)
             <input type="number" min={1} max={10} step={1} value={form.severity_weight} onChange={(event) => setForm((v) => ({ ...v, severity_weight: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="optional" />
             {errors.severity_weight ? <div className="mt-1 text-xs text-red-700">{errors.severity_weight}</div> : null}
           </label>
-          <label className="block text-xs font-semibold text-gray-600">
+          <label className={FORM_LABEL_CLASS}>
             Sort Order
             <input type="number" value={form.sort_order} onChange={(event) => setForm((v) => ({ ...v, sort_order: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
             {errors.sort_order ? <div className="mt-1 text-xs text-red-700">{errors.sort_order}</div> : null}
           </label>
         </div>
 
-        <label className="block text-xs font-semibold text-gray-600">
+        <label className={FORM_LABEL_CLASS}>
           Description
           <textarea value={form.description} onChange={(event) => setForm((v) => ({ ...v, description: event.target.value }))} rows={3} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs" placeholder="Optional description" />
         </label>
