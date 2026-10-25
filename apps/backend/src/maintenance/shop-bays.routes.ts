@@ -5,7 +5,7 @@
  * POST /api/v1/maintenance/work-orders/:id/bay?operating_company_id=          body { bay_number }
  * POST /api/v1/maintenance/work-orders/:id/bay/release?operating_company_id=
  *
- * A bay is OCCUPIED from assignment until release (migration 202616240100: uq_work_orders_bay_occupied). A finished
+ * A bay is OCCUPIED from assignment until release (migration 202616261700: uq_work_orders_bay_occupied). A finished
  * work order still holding its bay reads "Ready" until released. The yard lane = active work orders (open /
  * in_progress / waiting_parts) holding no bay. Bay count = maintenance_settings.shop_bay_count (never a literal).
  * Company-scoped, audited (appendCrudAudit), no money, no GL.

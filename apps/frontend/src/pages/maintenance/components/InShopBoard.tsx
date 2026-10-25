@@ -1,7 +1,7 @@
 // LEAD 443.301 · register row 59 — Maintenance › In Shop rebuilt to the approved V3 board
 // (docs/design/v3/Maintenance-InShop): one card per shop BAY (count from Maintenance Settings), each showing the truck,
 // status and work; open bays take a truck dragged in from the yard lane (active work orders holding no bay).
-// Data: GET /api/v1/maintenance/shop-bays (migration 202616240100). Nothing sampled — empty bays say so.
+// Data: GET /api/v1/maintenance/shop-bays (migration 202616261700). Nothing sampled — empty bays say so.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
