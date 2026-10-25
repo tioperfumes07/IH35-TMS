@@ -1,10 +1,8 @@
 import { settlementLabel } from "../../lib/settlementNumber";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { listAllSettlements, getOpenDriverBills, listAllSettlementDeductions, type OpenDriverBill, type SettlementListRow, type SettlementReference } from "../../api/driverFinance";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementDetailPage } from "./SettlementDetailPage";
@@ -23,8 +21,6 @@ import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { V3Panel } from "../../components/v3/V3Panel";
-import { V3Segmented } from "../../components/v3/V3Segmented";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
@@ -36,10 +32,13 @@ import { useToast } from "../../components/Toast";
 import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { SettlementCreatorDrawer } from "../settlements/SettlementCreatorDrawer";
 import { listSourceChangedSettlements, type SettlementCreatorDraft, type SourceChangedSettlement } from "../../api/settlementCreator";
-import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
-
-/** ROUND 443.250 — week buckets for Settlements home "Net driver pay by week" (Sunday start, matches This Period KPI). */
-type SettlementsWeekBucket = { weekStartMs: number; label: string; net: number; gross: number; deductions: number };
+import { SettlementsHomeBoardPanels } from "./SettlementsHomeBoardPanels";
+import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
+import {
+  settlementsDerivedReimb,
+  settlementsRowTourClosed,
+  type SettlementsWeekBucket,
+} from "./settlementsHomeBoardHelpers";
 
 function startOfWeekSunday(d: Date): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -80,10 +79,6 @@ function buildSettlementsWeekBuckets(rows: SettlementListRow[], weekCount: numbe
   return buckets;
 }
 
-function formatSettlementsUsd(dollars: number): string {
-  return `$${dollars.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 /** ROUND 443.267 — board Settlements.dc.html deduction split buckets (Escrow / Advances / Fines). */
 function settlementsDeductionBucket(type: string): "escrow" | "advances" | "fines" | "other" {
   const t = (type || "").toLowerCase();
@@ -92,50 +87,6 @@ function settlementsDeductionBucket(type: string): "escrow" | "advances" | "fine
   if (t.includes("fine") || t.includes("citation") || t.includes("violation") || t.includes("toll") || t === "damage" || t.includes("penalty")) return "fines";
   return "other";
 }
-
-function settlementsWeekLoadsLabel(s: SettlementListRow): string {
-  const links = s.load_links ?? [];
-  if (links.length) {
-    const labels = links.map((l) => l.label).filter(Boolean);
-    if (labels.length === 1) return labels[0]!;
-    if (labels.length >= 2) return `${labels[0]} – ${labels[labels.length - 1]}`;
-  }
-  if (s.load_count > 0) return `${s.load_count} load${s.load_count === 1 ? "" : "s"}`;
-  return "—";
-}
-
-/** Reimb = net − (gross − deductions) when list row has no reimbursements_total. */
-function settlementsDerivedReimb(s: SettlementListRow): number {
-  const gross = Number(s.gross_pay ?? 0);
-  const ded = Number(s.deductions_total ?? 0);
-  const net = Number(s.net_pay ?? 0);
-  const reimb = net - (gross - ded);
-  return Math.abs(reimb) < 0.005 ? 0 : reimb;
-}
-
-/** REG-102 / register #102 — Week-of panel pills follow tour close (trip_closed_at), same as listTours open/closed. */
-function settlementsRowTourClosed(s: SettlementListRow): boolean {
-  const raw = s.trip_closed_at;
-  return raw != null && String(raw).trim() !== "";
-}
-
-function settlementsWeekOfStatusLabel(s: SettlementListRow): "Open" | "Closed" | "Held" | "Cancelled" {
-  if (s.status === "cancelled") return "Cancelled";
-  if (s.status === "held") return "Held";
-  return settlementsRowTourClosed(s) ? "Closed" : "Open";
-}
-
-// 443.292-C — Payment status (Unpaid / Paid) separate from tour-based Settlement column (settlementsWeekOfStatusLabel).
-function settlementPaymentLabel(s: SettlementListRow): "Paid" | "Unpaid" | "Held" {
-  if (s.status === "held") return "Held";
-  if (s.status === "paid" || s.payment_state === "cleared" || s.payment_state === "manual_paid") return "Paid";
-  return "Unpaid";
-}
-
-function formatWeekOfTitle(weekStart: Date): string {
-  return weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 
 /** LEAD 443.215 — one line per change of a settlement's printed source (same wording as the backend refusal). */
 function describeSourceDiffLines(d: SourceChangedSettlement["diff"]): string[] {
@@ -507,96 +458,8 @@ export function SettlementsPage() {
     return <SettlementDetailPage />;
   }
 
-  return (
-    <div className="space-y-3">
-      <PageHeader
-        title="Driver Settlements"
-        subtitle="List + detail settlement workflow"
-        actions={
-          <Button
-            size="sm"
-            variant="primary"
-            data-testid="settlements-open-creator"
-            onClick={openCreator}
-          >
-            + Settlement Creator
-          </Button>
-        }
-      />
-
-      <SettlementCreatorDrawer open={creatorOpen} onClose={() => { setRepostDraft(null); closeCreator(); }} allowPost={true} initialDraft={repostDraft} />
-
-      {/* LEAD 443.215 — a settlement whose printed source changed after it was posted: the exact diff + Edit pre-filled. */}
-      {(sourceChangedQuery.data?.settlements ?? []).length > 0 ? (
-        <div className="rounded-[4px] border border-[#E5E7EB] bg-white" data-testid="settlements-source-changed">
-          <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-bold uppercase text-[#4B5563]">
-            Source changed — repost needed ({sourceChangedQuery.data!.settlements.length})
-          </div>
-          {sourceChangedQuery.data!.settlements.map((row) => (
-            <div key={row.settlement_id} className="flex items-start justify-between gap-3 border-b border-[#E5E7EB] px-3 py-2 text-[12px] last:border-b-0">
-              <div className="space-y-0.5">
-                <div className="font-semibold">
-                  Settlement{" "}
-                  <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_no ? `${row.settlement_no} (${row.display_id})` : row.display_id, row.settlement_id, "Settlement")} />
-                  {" "}— posted {Number(row.net_pay).toFixed(2)}
-                  {row.new_total_due_cents != null ? `, new TOTAL DUE ${(row.new_total_due_cents / 100).toFixed(2)}` : ""}
-                </div>
-                {describeSourceDiffLines(row.diff).map((line) => (
-                  <div key={line} className="text-[#4B5563]">{line}</div>
-                ))}
-              </div>
-              <Button
-                size="sm"
-                variant="primary"
-                data-testid={`settlements-source-changed-edit-${row.settlement_id}`}
-                disabled={!row.new_draft}
-                onClick={() => { setRepostDraft(row.new_draft); openCreator(); }}
-              >
-                Edit = void and repost
-              </Button>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {/* ROUND 443.254 N1 — every tab stays under /driver-finance/… */}
-      {/* VERIFY-4 (acct-surf-09): Escrow leaf is SETTLEMENTS_SUBNAV → /driver-finance/escrow; Accounting mirror remains /accounting/escrow. */}
-      {/* 443.280-A — Open / Closed / Payments / Company & Driver / Disputes / Needs Review live on SETTLEMENTS_SUBNAV (no Button row under the home board). */}
-      <NavyPageSubNav items={[...SETTLEMENTS_SUBNAV]} />
-
-      {activeTab === "company_driver" ? (
-        <SettlementsCompanyDriverTab
-          companyId={companyId}
-          settlementId={selectedSettlementId}
-          companySettlementId={companySettlementParam}
-          onSelectSettlement={(id) => {
-            const next = new URLSearchParams(searchParams);
-            next.set("tab", "company_driver");
-            next.delete("company_settlement_id");
-            if (id) next.set("settlement_id", id);
-            else next.delete("settlement_id");
-            setSearchParams(next);
-          }}
-        />
-      ) : null}
-
-      {activeTab === "company_settlements" ? (
-        <CompanySettlementsRegisterTab
-          companyId={companyId}
-          onOpen={(csId) => {
-            const next = new URLSearchParams(searchParams);
-            next.set("tab", "company_driver");
-            next.delete("settlement_id");
-            next.set("company_settlement_id", csId);
-            setSearchParams(next);
-          }}
-        />
-      ) : null}
-
-      {activeTab === "settlements" ? (
-        <>
-      {/* REG-005 + ROUND 443.250 V3 board (Settlements.dc.html) — same live KPI math (kpiBaseQuery +
-          openBills); chrome via V3KpiTile. Click-through preserved. "—" on load failure. */}
+  const settlementsHomeKpiStrip =
+    activeTab === "settlements" ? (
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="settlements-home-kpi-strip"
@@ -622,7 +485,17 @@ export function SettlementsPage() {
           sub={
             driverPayVsLastWeek ? (
               <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <span style={{ fontWeight: 600, color: driverPayVsLastWeek.tone === "green" ? V3.green : driverPayVsLastWeek.tone === "red" ? V3.red : V3.muted }}>
+                <span
+                  style={{
+                    fontWeight: 600,
+                    color:
+                      driverPayVsLastWeek.tone === "green"
+                        ? V3.green
+                        : driverPayVsLastWeek.tone === "red"
+                          ? V3.red
+                          : V3.muted,
+                  }}
+                >
                   {driverPayVsLastWeek.label}
                 </span>
               </span>
@@ -656,259 +529,107 @@ export function SettlementsPage() {
           onClick={() => navigate("/driver-finance/settlements?tab=payments")}
         />
       </div>
+    ) : undefined;
 
-      {weekBuckets.length > 0 ? (
-        <div
-          style={{ display: "grid", gridTemplateColumns: "minmax(0,2fr) minmax(0,1fr)", gap: 8 }}
-          data-testid="settlements-home-v3-panels"
+  return (
+    <SettlementsSubNavWrapper
+      title="Driver Settlements"
+      subtitle="List + detail settlement workflow"
+      kpiStrip={settlementsHomeKpiStrip}
+      createControl={
+        <Button
+          size="sm"
+          variant="primary"
+          data-testid="settlements-open-creator"
+          onClick={openCreator}
         >
-          <V3Panel
-            title="Net driver pay by week"
-            subtitle={`${weekBuckets.length} weeks · not cancelled · not sample`}
-            onViewAll={() => navigate("/driver-finance/settlements?tab=payments")}
-            headerRight={
-              <V3Segmented
-                value={weekChartGrain}
-                onChange={setWeekChartGrain}
-                options={[
-                  { id: "net", label: "Net" },
-                  { id: "gross", label: "Gross" },
-                  { id: "deductions", label: "Deductions" },
-                ]}
-                testId="settlements-home-week-grain"
-              />
-            }
-            testId="settlements-home-week-chart-panel"
-          >
-            <div style={{ padding: "12px 14px 8px" }}>
-              <svg
-                width="100%"
-                height={160}
-                viewBox={`0 0 ${weekBuckets.length * 48} 160`}
-                preserveAspectRatio="none"
-                role="img"
-                aria-label="Net driver pay by week"
-                data-testid="settlements-home-week-chart"
-              >
-                {[0, 0.25, 0.5, 0.75, 1].map((t) => {
-                  const y = 12 + (1 - t) * 110;
-                  return (
-                    <line key={t} x1={0} x2={weekBuckets.length * 48} y1={y} y2={y} stroke={V3.chartGrid} strokeWidth={1} />
-                  );
-                })}
-                {weekBuckets.map((w, i) => {
-                  const value =
-                    weekChartGrain === "net" ? w.net : weekChartGrain === "gross" ? w.gross : w.deductions;
-                  const h = Math.max(2, (Math.abs(value) / weekChartMax) * 110);
-                  const x = i * 48 + 12;
-                  const y = 122 - h;
-                  return (
-                    <g key={w.weekStartMs}>
-                      <rect
-                        className="setl-v3-grow"
-                        x={x}
-                        y={y}
-                        width={24}
-                        height={h}
-                        rx={1}
-                        fill={value < 0 ? V3.red : V3.data}
-                        style={{ transformOrigin: `${x + 12}px 122px` } as CSSProperties}
-                      />
-                      <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 10, fill: V3.muted, fontFamily: V3.font }}>
-                        {w.label}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-              <style>{`
-                @keyframes setl-v3-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-                .setl-v3-grow { transform-box: fill-box; transform-origin: bottom; animation: setl-v3-grow .9s cubic-bezier(.2,.8,.2,1) both; }
-              `}</style>
-              <div style={{ fontSize: 11, color: V3.muted, marginTop: 4 }}>
-                Bar → that week&apos;s settlements (period end in week). Max {formatSettlementsUsd(weekChartMax)}.
-              </div>
-            </div>
-          </V3Panel>
+          + Settlement Creator
+        </Button>
+      }
+    >
+      <SettlementCreatorDrawer open={creatorOpen} onClose={() => { setRepostDraft(null); closeCreator(); }} allowPost={true} initialDraft={repostDraft} />
 
-          <V3Panel
-            title={`Deductions this week · ${formatSettlementsUsd(deductionsThisWeek)}`}
-            subtitle="Split by type from settlement deduction lines"
-            onViewAll={() => navigate("/driver-finance/deductions")}
-            testId="settlements-home-deductions-panel"
-          >
-            <div style={{ padding: "10px 14px" }} data-testid="settlements-home-deductions-body">
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr auto auto",
-                  gap: 8,
-                  fontSize: 12,
-                  color: V3.ink,
-                  fontFamily: V3.font,
-                  padding: "6px 0",
-                  borderBottom: `1px solid ${V3.borderSoft}`,
-                }}
+      {/* LEAD 443.215 — a settlement whose printed source changed after it was posted: the exact diff + Edit pre-filled. */}
+      {(sourceChangedQuery.data?.settlements ?? []).length > 0 ? (
+        <div className="rounded-[4px] border border-[#E5E7EB] bg-white" data-testid="settlements-source-changed">
+          <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-bold uppercase text-[#4B5563]">
+            Source changed — repost needed ({sourceChangedQuery.data!.settlements.length})
+          </div>
+          {sourceChangedQuery.data!.settlements.map((row) => (
+            <div key={row.settlement_id} className="flex items-start justify-between gap-3 border-b border-[#E5E7EB] px-3 py-2 text-xs last:border-b-0">
+              <div className="space-y-0.5">
+                <div className="font-semibold">
+                  Settlement{" "}
+                  <EntityLink kind="settlement" id={row.settlement_id} label={entityLabel(row.settlement_no ? `${row.settlement_no} (${row.display_id})` : row.display_id, row.settlement_id, "Settlement")} />
+                  {" "}— posted {Number(row.net_pay).toFixed(2)}
+                  {row.new_total_due_cents != null ? `, new TOTAL DUE ${(row.new_total_due_cents / 100).toFixed(2)}` : ""}
+                </div>
+                {describeSourceDiffLines(row.diff).map((line) => (
+                  <div key={line} className="text-[#4B5563]">{line}</div>
+                ))}
+              </div>
+              <Button
+                size="sm"
+                variant="primary"
+                data-testid={`settlements-source-changed-edit-${row.settlement_id}`}
+                disabled={!row.new_draft}
+                onClick={() => { setRepostDraft(row.new_draft); openCreator(); }}
               >
-                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>Type</span>
-                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", textAlign: "center" }}>Drivers</span>
-                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", textAlign: "right" }}>Amount</span>
-              </div>
-              {(
-                [
-                  { id: "escrow" as const, label: "Escrow" },
-                  { id: "advances" as const, label: "Advances (Zelle)" },
-                  { id: "fines" as const, label: "Fines" },
-                ] as const
-              ).map((row) => {
-                const bucket = deductionSplitThisWeek[row.id];
-                const has = bucket.amount > 0 || bucket.drivers.size > 0;
-                return (
-                  <div
-                    key={row.id}
-                    data-testid={`settlements-home-deduction-${row.id}`}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr auto auto",
-                      gap: 8,
-                      fontSize: 12,
-                      color: V3.ink,
-                      fontFamily: V3.font,
-                      padding: "8px 0",
-                      borderBottom: `1px solid ${V3.borderSoft}`,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    <span>{row.label}</span>
-                    <span style={{ textAlign: "center", color: has ? V3.ink : V3.muted }}>{has ? bucket.drivers.size : "—"}</span>
-                    <span style={{ textAlign: "right", color: has ? V3.ink : V3.muted }}>
-                      {has ? formatSettlementsUsd(bucket.amount) : "—"}
-                    </span>
-                  </div>
-                );
-              })}
-              <div style={{ fontSize: 11, color: V3.muted, marginTop: 8 }}>
-                Split by type comes from settlement deduction lines.
-                {deductionsListQuery.isError ? " Deduction list failed to load — amounts show as —." : ""}
-              </div>
+                Edit = void and repost
+              </Button>
             </div>
-          </V3Panel>
+          ))}
         </div>
       ) : null}
 
-      {/* ROUND 443.267 — Week-of compact table (board Settlements.dc.html). Same kpiSettlements rows. */}
-      {!kpiBaseQuery.isError && thisWeekBucket ? (
-        <V3Panel
-          title={`Week of ${formatWeekOfTitle(new Date(thisWeekBucket.weekStartMs))}`}
-          subtitle={`This week · ${thisWeekSettlements.length} with pay`}
-          onViewAll={() => navigate(`/driver-finance/settlements?tab=${weekOfPill === "closed" ? "closed" : "open"}`)}
-          headerRight={
-            <V3Segmented
-              value={weekOfPill}
-              onChange={setWeekOfPill}
-              options={[
-                { id: "open", label: `Pre-Settlement (Open) ${weekOfOpenCount}` },
-                { id: "closed", label: `Settlement (Closed) ${weekOfClosedCount}` },
-              ]}
-              testId="settlements-home-week-of-pill"
-            />
-          }
-          testId="settlements-home-week-of-panel"
-        >
-          <div style={{ padding: "0 0 8px" }} data-testid="settlements-home-week-of-body">
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.6fr 0.6fr",
-                gap: 8,
-                padding: "8px 14px",
-                borderBottom: `1px solid ${V3.borderSoft}`,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-                color: V3.muted,
-                fontFamily: V3.font,
-                textAlign: "center",
-              }}
-            >
-              <span style={{ textAlign: "left" }}>Driver</span>
-              <span>Loads</span>
-              <span>Gross</span>
-              <span>Deductions</span>
-              <span>Reimb.</span>
-              <span>Net</span>
-              <span>Settlement</span>
-              <span>Payment</span>
-            </div>
-            {weekOfRows.length === 0 ? (
-              <div style={{ padding: "14px", fontSize: 12, color: V3.muted, fontFamily: V3.font }}>
-                No {weekOfPill === "open" ? "open" : "closed"} settlements this week.
-              </div>
-            ) : (
-              weekOfRows.map((s) => {
-                const status = settlementsWeekOfStatusLabel(s);
-                return (
-                  <div
-                    key={s.id}
-                    data-testid={`settlements-home-week-of-row-${s.id}`}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.6fr 0.6fr",
-                      gap: 8,
-                      padding: "8px 14px",
-                      borderBottom: `1px solid ${V3.borderSoft}`,
-                      fontSize: 12,
-                      color: V3.ink,
-                      fontFamily: V3.font,
-                      fontVariantNumeric: "tabular-nums",
-                      textAlign: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span style={{ textAlign: "left" }}>
-                      <EntityLink kind="driver" id={s.driver_id} label={entityLabel(s.driver_full_name || "Driver", s.driver_id, "Driver")} />
-                    </span>
-                    <span>{settlementsWeekLoadsLabel(s)}</span>
-                    <span>{Number(s.gross_pay ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span>{Number(s.deductions_total ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span>{settlementsDerivedReimb(s).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span>{Number(s.net_pay ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    {/* 443.292-C: two status columns; settlement column uses tour phase for Open/Closed */}
-                    <span style={{ color: status === "Cancelled" ? V3.red : status === "Closed" ? V3.green : status === "Held" ? V3.red : V3.ink }}>{status}</span>
-                    <span style={{ color: settlementPaymentLabel(s) === "Paid" ? V3.green : settlementPaymentLabel(s) === "Held" ? V3.red : V3.ink }}>{settlementPaymentLabel(s)}</span>
-                  </div>
-                );
-              })
-            )}
-            <div
-              data-testid="settlements-home-week-of-totals"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.6fr 0.6fr",
-                gap: 8,
-                padding: "10px 14px 4px",
-                fontSize: 12,
-                fontWeight: 700,
-                color: V3.ink,
-                fontFamily: V3.font,
-                fontVariantNumeric: "tabular-nums",
-                textAlign: "center",
-              }}
-            >
-              <span style={{ textAlign: "left" }}>This week · {weekOfRows.length} with pay</span>
-              <span />
-              <span>{weekOfTotals.gross.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              <span>{weekOfTotals.ded.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              <span>{weekOfTotals.reimb.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              <span>{weekOfTotals.net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              <span />
-              <span />
-            </div>
-          </div>
-        </V3Panel>
+      {activeTab === "company_driver" ? (
+        <SettlementsCompanyDriverTab
+          companyId={companyId}
+          settlementId={selectedSettlementId}
+          companySettlementId={companySettlementParam}
+          onSelectSettlement={(id) => {
+            const next = new URLSearchParams(searchParams);
+            next.set("tab", "company_driver");
+            next.delete("company_settlement_id");
+            if (id) next.set("settlement_id", id);
+            else next.delete("settlement_id");
+            setSearchParams(next);
+          }}
+        />
       ) : null}
-        </>
+
+      {activeTab === "company_settlements" ? (
+        <CompanySettlementsRegisterTab
+          companyId={companyId}
+          onOpen={(csId) => {
+            const next = new URLSearchParams(searchParams);
+            next.set("tab", "company_driver");
+            next.delete("settlement_id");
+            next.set("company_settlement_id", csId);
+            setSearchParams(next);
+          }}
+        />
+      ) : null}
+
+      {activeTab === "settlements" ? (
+        <SettlementsHomeBoardPanels
+          navigate={navigate}
+          weekBuckets={weekBuckets}
+          weekChartGrain={weekChartGrain}
+          setWeekChartGrain={setWeekChartGrain}
+          weekChartMax={weekChartMax}
+          deductionsThisWeek={deductionsThisWeek}
+          deductionSplitThisWeek={deductionSplitThisWeek}
+          deductionsListError={deductionsListQuery.isError}
+          thisWeekBucket={thisWeekBucket ?? undefined}
+          weekOfPill={weekOfPill}
+          setWeekOfPill={setWeekOfPill}
+          weekOfOpenCount={weekOfOpenCount}
+          weekOfClosedCount={weekOfClosedCount}
+          weekOfRows={weekOfRows}
+          weekOfTotals={weekOfTotals}
+          kpiBaseError={kpiBaseQuery.isError}
+        />
       ) : activeTab === "open" || activeTab === "closed" ? (
         <SettlementsToursRegister companyId={companyId} />
       ) : activeTab === "payments" ? (
@@ -1141,7 +862,7 @@ export function SettlementsPage() {
       ) : activeTab === "disputes" ? (
         <SettlementDisputesTab companyId={companyId} />
       ) : null}
-    </div>
+    </SettlementsSubNavWrapper>
   );
 }
 

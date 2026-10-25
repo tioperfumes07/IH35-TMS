@@ -58,8 +58,11 @@ function formatPaid(raw: unknown): string {
  * (Advance · Driver · Paid · Method · Amount · Outstanding · Recover on).
  * ParityTable + Mark Disbursed engine kept (drawer + Action).
  */
-export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoading = false }: Props) {
-  const columns = useMemo<ParityColumn<CashAdvanceRow>[]>(
+export function useCashAdvancesParityColumns(
+  onOpenDetail: (row: CashAdvanceRow) => void,
+  onMarkDisbursed: (row: CashAdvanceRow) => void,
+) {
+  return useMemo<ParityColumn<CashAdvanceRow>[]>(
     () => [
       {
         key: "display_id",
@@ -162,6 +165,10 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
     ],
     [onOpenDetail, onMarkDisbursed],
   );
+}
+
+export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoading = false }: Props) {
+  const columns = useCashAdvancesParityColumns(onOpenDetail, onMarkDisbursed);
 
   return (
     // SETL-F3544: ParityTable owns Search+Range+gear; raw HTML table skipped the surface bar.

@@ -46,7 +46,8 @@ const CHECKS = [
     pattern:
       /useState<CloseWizardStep>[\s\S]*data-settlement-close-v3-steps="1"[\s\S]*settlement-close-step-[\s\S]*settlement-close-next|wizardStep[\s\S]*setWizardStep[\s\S]*data-settlement-close-v3-steps="1"[\s\S]*settlement-close-next/,
     forbiddenNear: {
-      pattern: /export function SettlementCloseArrivalPage[\s\S]*/,
+      // SubNav kpiStrip may use V3KpiTile; 443.280-A forbids KPI tiles inside the close wizard board only.
+      pattern: /data-settlement-close-v3-board="1"[\s\S]{0,12000}/,
       forbid: /data-settlement-close-v3-kpis|V3KpiTile/,
       message: "443.280-A: Close board has no 6-tile KPI strip (V3KpiTile / data-settlement-close-v3-kpis forbidden)",
     },
@@ -109,7 +110,7 @@ const CHECKS = [
     name: "PreSettlementsPanel V3Panel open list + board columns",
     file: "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx",
     pattern:
-      /data-settlements-presettle-v3-panel="1"[\s\S]*label: "Number"[\s\S]*label: "Loads so far"[\s\S]*label: "Pay so far"|label: "Number"[\s\S]*QBO_MONEY_CELL_CLASS[\s\S]*data-settlements-presettle-v3-panel="1"/,
+      /data-settlements-presettle-v3-panel="1"[\s\S]*label: "Number"[\s\S]*label: "Loads so far"[\s\S]*label: "Pay so far"|label: "Number"[\s\S]*label: "Loads so far"[\s\S]*label: "Pay so far"[\s\S]*data-settlements-presettle-v3-panel="1"|label: "Number"[\s\S]*QBO_MONEY_CELL_CLASS[\s\S]*data-settlements-presettle-v3-panel="1"|label: "Number"[\s\S]*<MoneyCell[\s\S]*data-settlements-presettle-v3-panel="1"/,
   },
   {
     name: "Drivers.tsx mounts PreSettlements side-by-side board layout",

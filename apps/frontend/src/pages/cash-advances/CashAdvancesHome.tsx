@@ -1,21 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashAdvanceDetail, getCashAdvancesKpis, listCashAdvances } from "../../api/cashAdvances";
-import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useListState } from "../../components/list-state";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
-import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AdvanceDetailDrawer } from "./components/AdvanceDetailDrawer";
-import { CashAdvancesKpiRow } from "./components/CashAdvancesKpiRow";
-import { CashAdvancesTable } from "./components/CashAdvancesTable";
+import { useCashAdvancesParityColumns } from "./components/CashAdvancesTable";
 import { CreateAdvanceModal } from "./components/CreateAdvanceModal";
 import { MarkDisbursedModal } from "./components/MarkDisbursedModal";
 import { ListErrorState } from "../../components/ListErrorState";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { ParityTable } from "../../components/parity/ParityTable";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { moneyListKpiCard } from "../accounting/moneyListKpiCard";
+import { formatUsdTable } from "../../lib/money";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -36,21 +35,18 @@ export function parseCashAdvancesTab(raw: string | null): CashAdvancesTab {
   return "all";
 }
 
+function kpiAmount(kpis: Record<string, unknown> | undefined, key: string): number | null {
+  const raw = kpis?.[key];
+  if (raw === null || raw === undefined) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function CashAdvancesHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
-  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  // ROUND 443.250 — KPI strip chrome lives in CashAdvancesKpiRow (V3 board Settlements-CashAdvances).
-  // ROUND 443.254 N1 — Settlements mount keeps KPI drills under /driver-finance/cash-advances.
-  const basePath = pathname.startsWith("/driver-finance/cash-advances")
-    ? "/driver-finance/cash-advances"
-    : "/cash-advances";
-  // LAW OF THE LAND §9 (2026-07-22): EntityLink kind="cash_advance" → /cash-advances?advance_id=
-  // and the driver-profile reverse link → /cash-advances?driver_id= (settlement/liability parity).
-  // BANK-F5164 — visible EntityPicker (URL-only banner is not reverse chrome).
-  // LV-CASH-ADVANCES-HOME-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const deepLinkAdvanceId = searchParams.get("advance_id");
   const driverIdFilter = searchParams.get("driver_id")?.trim() ?? "";
 
@@ -61,27 +57,22 @@ export function CashAdvancesHomePage() {
     setSearchParams(params, { replace: true });
   }
 
+  const [listSearch, setListSearch] = useState("");
   const [applied, setApplied] = useState(() => ({
     ...EMPTY_FILTERS,
     driverId: driverIdFilter,
   }));
-  const staged = useStagedListFilters({
-    applied,
-    empty: EMPTY_FILTERS,
-    onApply: (next) => {
-      setApplied(next);
-      patchListSearchParam(next);
-    },
-  });
-  const filterDraft = staged.draft;
 
   useEffect(() => {
     setApplied((prev) => ({ ...prev, driverId: driverIdFilter }));
   }, [driverIdFilter]);
 
-  const setDriverFilter = (driverId: string) => {
-    staged.setDraft((d) => ({ ...d, driverId }));
+  const setDriverFilterLive = (driverId: string) => {
+    const next = { ...applied, driverId };
+    setApplied(next);
+    patchListSearchParam(next);
   };
+
   const effectiveDriverId = applied.driverId.trim() || undefined;
   const tab = parseCashAdvancesTab(searchParams.get("tab"));
   const setTab = (next: CashAdvancesTab) => {
@@ -107,16 +98,23 @@ export function CashAdvancesHomePage() {
     enabled: Boolean(companyId),
   });
 
-  // ROUND 443.274-C — board Requests panel (pending office queue; same engine as reverse section).
-  const requestsQuery = useQuery({
-    queryKey: ["cash-advance-requests", "pending-board", companyId, effectiveDriverId ?? ""],
-    queryFn: () => cashAdvanceRequestsOfficeApi.listPending(companyId, effectiveDriverId),
+  const paidOffQuery = useQuery({
+    queryKey: ["cash-advances", "paid-off-count", companyId, effectiveDriverId ?? ""],
+    queryFn: async () => {
+      const res = await listCashAdvances(companyId, { view: "paid_off", driver_id: effectiveDriverId });
+      return res.advances?.length ?? 0;
+    },
     enabled: Boolean(companyId),
   });
 
   const listQuery = useQuery({
-    queryKey: ["cash-advances", "list", companyId, tab, effectiveDriverId],
-    queryFn: () => listCashAdvances(companyId, { view: tab, driver_id: effectiveDriverId }),
+    queryKey: ["cash-advances", "list", companyId, tab, effectiveDriverId, listSearch],
+    queryFn: () =>
+      listCashAdvances(companyId, {
+        view: tab,
+        driver_id: effectiveDriverId,
+        search: listSearch.trim() || undefined,
+      }),
     enabled: Boolean(companyId),
   });
 
@@ -127,92 +125,94 @@ export function CashAdvancesHomePage() {
   });
 
   const rows = useMemo(() => listQuery.data?.advances ?? [], [listQuery.data?.advances]);
-  // SETL-S02 — settled-only empty (LIST-EMPTY-1); never flash "No cash advances" mid-fetch.
   const listState = useListState(listQuery, rows.length === 0);
+
+  const onOpenDetail = (row: Record<string, unknown>) => {
+    setSelectedId(String(row.id));
+    setDetailOpen(true);
+  };
+  const onMarkDisbursed = (row: Record<string, unknown>) => {
+    setSelectedId(String(row.id));
+    setMarkDisbursedOpen(true);
+  };
+  const columns = useCashAdvancesParityColumns(onOpenDetail, onMarkDisbursed);
+
+  const kpisFailed = kpisQuery.isError;
+  const outstandingDisplay = kpisFailed
+    ? "—"
+    : formatUsdTable(kpiAmount(kpisQuery.data, "total_outstanding") ?? 0);
+  const pendingDisplay = kpisFailed ? "—" : String(Math.round(kpiAmount(kpisQuery.data, "pending_approval") ?? 0));
+  const paidOffDisplay = kpisFailed
+    ? "—"
+    : paidOffQuery.isError
+      ? "—"
+      : String(paidOffQuery.data ?? 0);
+  const totalDisplay = kpisFailed ? "—" : String(Math.round(kpiAmount(kpisQuery.data, "advances_on_file") ?? 0));
+
+  const activeFilterCount = applied.driverId.trim() ? 1 : 0;
 
   return (
     <div className="space-y-3">
-      <PageHeader
-        title="Cash Advances"
-        subtitle="Driver advances + bill-payment linkage"
-        actions={
-          <Button type="button" onClick={() => setCreateOpen(true)}>
-            + Create Advance
-          </Button>
-        }
-      />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 className="text-page-title font-semibold text-[#0F1219]">Cash Advances</h1>
+          <p className="text-xs text-[#6B7280]">Driver advances + bill-payment linkage</p>
+        </div>
+        <Button type="button" onClick={() => setCreateOpen(true)}>
+          + Create Advance
+        </Button>
+      </div>
 
-      <div className="relative flex flex-wrap items-end gap-3" data-testid="cash-advances-filters">
+      <MoneyListToolbar
+        search={listSearch}
+        onSearchChange={setListSearch}
+        searchPlaceholder="Search advances"
+        onClearAll={() => {
+          setListSearch("");
+          setApplied(EMPTY_FILTERS);
+          patchListSearchParam(EMPTY_FILTERS);
+        }}
+        activeFilterCount={activeFilterCount}
+        testIdPrefix="cash-advances"
+      >
         <label className="text-xs text-[#4B5563]">
           Driver
           <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
-            value={filterDraft.driverId || null}
-            onChange={(next) => setDriverFilter(next ?? "")}
+            value={applied.driverId || null}
+            onChange={(next) => setDriverFilterLive(next ?? "")}
             placeholder="All drivers"
             className="mt-1"
             dataTestId="cash-advances-filter-driver"
           />
         </label>
-        <Button type="button" size="sm" data-testid="cash-advances-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
-          Apply
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          data-testid="cash-advances-filter-cancel"
-          onClick={staged.cancel}
-          disabled={!staged.dirty}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          data-testid="cash-advances-filter-reset"
-          onClick={() => {
-            staged.cancel();
-            setApplied(EMPTY_FILTERS);
-            patchListSearchParam(EMPTY_FILTERS);
-          }}
-        >
-          Reset
-        </Button>
+      </MoneyListToolbar>
+
+      <div className="flex flex-wrap gap-2" data-testid="cash-advances-tab-buttons">
+        {SUBNAV.map(([label, value]) => (
+          <button
+            key={value}
+            type="button"
+            className={`h-7 rounded-sm border px-2 text-xs font-medium ${
+              tab === value
+                ? "border-[#14314F] bg-[#14314F] text-white"
+                : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"
+            }`}
+            onClick={() => setTab(value)}
+            data-testid={`cash-advances-tab-${value}`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      <NavyPageSubNav
-        items={SUBNAV.map(([label, value]) => ({ label, to: `#${value}` }))}
-        activeId={tab}
-        onTabChange={(id) => setTab(id as CashAdvancesTab)}
-        itemIds={SUBNAV.map(([, value]) => value)}
-      />
-
-      {kpisQuery.isError ? (
-        <ListErrorState
-          title="Couldn't load cash advance totals"
-          status={0}
-          message={(kpisQuery.error as Error)?.message}
-          onRetry={() => void kpisQuery.refetch()}
-        />
-      ) : (
-        <CashAdvancesKpiRow
-          kpis={kpisQuery.data}
-          basePath={basePath}
-          requestRows={requestsQuery.data?.requests ?? []}
-          requestsLoading={requestsQuery.isLoading}
-          requestsFailed={requestsQuery.isError}
-          advanceRows={rows}
-          advancesLoading={listState.isLoading}
-          advancesFailed={listQuery.isError}
-          onOpenAdvance={(row) => {
-            setSelectedId(String(row.id));
-            setDetailOpen(true);
-          }}
-        />
-      )}
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="cash-advances-kpi-strip">
+        {moneyListKpiCard("Outstanding", outstandingDisplay, "total balance to recover", "warn")}
+        {moneyListKpiCard("Pending", pendingDisplay, "awaiting approval")}
+        {moneyListKpiCard("Paid off", paidOffDisplay, "zero outstanding balance")}
+        {moneyListKpiCard("Total", totalDisplay, "advances on file")}
+      </div>
 
       {listQuery.isError ? (
         <ListErrorState
@@ -222,19 +222,21 @@ export function CashAdvancesHomePage() {
           onRetry={() => void listQuery.refetch()}
         />
       ) : (
-        /* SETL-F3544: always mount table chrome (empty/loading via ParityTable) — empty early-return skipped surface bar. */
-        <CashAdvancesTable
-          rows={rows}
-          isLoading={listState.isLoading}
-          onOpenDetail={(row) => {
-            setSelectedId(String(row.id));
-            setDetailOpen(true);
-          }}
-          onMarkDisbursed={(row) => {
-            setSelectedId(String(row.id));
-            setMarkDisbursedOpen(true);
-          }}
-        />
+        <div data-testid="cash-advances-empty">
+          <ParityTable<Record<string, unknown>>
+            title="Cash advances"
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => String(row.id)}
+            loading={listState.isLoading}
+            emptyText="No cash advances found — none created for this entity yet (or no rows match the current filter)."
+            storageKey="cash-advances-roster"
+            exportFilename="cash-advances"
+            tableTestId="cash-advances-table"
+            gearButtonTestId="cash-advances-column-gear"
+            suppressToolbarSearch
+          />
+        </div>
       )}
 
       {detailOpen && detailQuery.isError ? (

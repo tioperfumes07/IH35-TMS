@@ -58,7 +58,6 @@ import { formatDateUS } from "../../lib/formatDate";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -85,12 +84,14 @@ import { DeactivateFactorConfirmModal } from "../../components/factoring/Deactiv
 import { DuplicateVendorsBanner } from "../../components/factoring/DuplicateVendorsBanner";
 import { apiRequest } from "../../api/client";
 import { FACTORING_SECTION_PARENT, FACTORING_TAB_PATH, FARO_TABS, factoringTabFromPath } from "../../router/route-manifest";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { FactoringBoardChrome } from "./FactoringBoardChrome";
+import { FactoringStagedFilters } from "./FactoringStagedFilters";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import type { NaReason } from "../../design/money-design-system";
-import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
 import { formatUsd, formatUsdCents } from "../../lib/money";
 import { listFactoringPurchaseLines, listFactoringPurchases, type FactoringPurchaseReportLine } from "../../api/factoring-purchases";
 
@@ -418,6 +419,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   const [savingFactorProfile, setSavingFactorProfile] = useState(false);
   const [profileEditOpen, setProfileEditOpen] = useState(false);
   const [profileEditForm, setProfileEditForm] = useState<FactorProfileForm | null>(null);
+  const [homeToolbarSearch, setHomeToolbarSearch] = useState("");
 
   const summaryQuery = useQuery({
     queryKey: ["factoring", "summary", companyId],
@@ -561,12 +563,12 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   // queries' queryKey/queryFn), but had no filterBar of their own at all -- an operator landing
   // directly on any of those five tabs had no way to set or even see the date range. One shared
   // render helper (not a separate component -- stays a closure over this page's own
-  // applied/staged/filterDraft state, same as every other CollapsedListFilters consumer on this
+  // applied/staged/filterDraft state, same as every other FactoringStagedFilters consumer on this
   // page) keeps five tabs' worth of "From date"/"To date" controls from drifting out of sync with
   // each other or with the Recourse Pipeline tab's own fuller filterBar above.
   function dateRangeOnlyFilterBar(testIdPrefix: string) {
     return (
-      <CollapsedListFilters
+      <FactoringStagedFilters
         activeFilterCount={[applied.dateFrom, applied.dateTo].filter(Boolean).length}
         onApply={staged.apply}
         onCancel={staged.cancel}
@@ -601,7 +603,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             />
           </label>
         </div>
-      </CollapsedListFilters>
+      </FactoringStagedFilters>
     );
   }
 
@@ -638,9 +640,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   // NEW-20/NEW-26 (2026-09-07): setCustomerFilter/setLoadFilter/setVendorFilter/setDriverFilter
   // used to wrap staged.setDraft for each tab's own Customer/Load/Vendor/Driver pickers; every
   // call site now calls staged.setDraft(...) directly inline (matching the established
-  // CollapsedListFilters convention every other consumer uses, e.g. ExpensesListPage.tsx) so
+  // FactoringStagedFilters convention every other consumer uses, e.g. ExpensesListPage.tsx) so
   // verify-collapsed-list-filters-apply.mjs's static scan — which whitelists only the literal
-  // `setDraft` call name inside a CollapsedListFilters body — can see the mutation is
+  // `setDraft` call name inside a FactoringStagedFilters body — can see the mutation is
   // draft-only without needing to trace through a named wrapper function. All four wrapper
   // functions removed as dead code once their last call site moved to the inline form.
 
@@ -920,6 +922,72 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   );
   const canDeactivate = user?.role === "Owner";
 
+  const factoringSubnavItems = useMemo(
+    () => FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),
+    [],
+  );
+  const factoringHeaderActions = (
+    <div className="flex items-center gap-2">
+      <Link
+        to={FACTORING_TAB_PATH.submit_invoice}
+        className="inline-flex items-center rounded-sm border border-[#E5E7EB] bg-[#14314F] px-2.5 py-2 text-xs font-medium text-white hover:bg-[#1F2A44]"
+        data-testid="factoring-submit-to-factor-link"
+      >
+        Submit to Factor
+      </Link>
+      <details className="relative inline-block">
+        <summary
+          className="flex cursor-pointer list-none items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2.5 py-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA] [&::-webkit-details-marker]:hidden"
+          data-testid="factoring-header-related-menu"
+        >
+          Related ▾
+        </summary>
+        <div className="absolute right-0 z-20 mt-1 w-48 rounded-sm border border-gray-200 bg-white p-1 text-xs shadow-md">
+          <Link
+            to="/dispatch/factoring-queue"
+            className="block rounded-sm px-2 py-1.5 text-[#1F2A44] hover:bg-[#F7F8FA]"
+            data-testid="factoring-hub-dispatch-queue-reverse-link"
+          >
+            Dispatch queue
+          </Link>
+          <Link
+            to="/accounting/factoring"
+            className="block rounded-sm px-2 py-1.5 text-[#1F2A44] hover:bg-[#F7F8FA]"
+            data-testid="factoring-hub-accounting-advances-reverse-link"
+          >
+            Accounting advances
+          </Link>
+          <Link
+            to="/banking"
+            className="block rounded-sm px-2 py-1.5 text-[#1F2A44] hover:bg-[#F7F8FA]"
+            data-testid="factoring-hub-banking-entry-reverse-link"
+            title="Banking home — the factoring virtual bank (ROUND-20.8 B3 retired /banking/factoring)"
+          >
+            Banking entry
+          </Link>
+          <button
+            type="button"
+            className="block w-full rounded-sm px-2 py-1.5 text-left text-[#1F2A44] hover:bg-[#F7F8FA]"
+            onClick={() => void queryClient.invalidateQueries({ queryKey: ["factoring"] })}
+            data-testid="factoring-header-refresh"
+          >
+            Refresh
+          </button>
+        </div>
+      </details>
+    </div>
+  );
+  const factoringChromeSubtitle =
+    "Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings";
+  const factoringHomeActiveFilterCount = [
+    applied.dateFrom,
+    applied.dateTo,
+    applied.customerId,
+    applied.loadId,
+    applied.vendorId,
+    applied.driverId,
+  ].filter(Boolean).length;
+
   if (!companyId) {
     // FACTORING-HARD-NAV-LOSES-COMPANY-CONTEXT (owner mega-report 2026-09-09): a cold/direct
     // navigation into this page (fresh tab, bookmark, hard refresh -- not an in-app click) races
@@ -932,7 +1000,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     if (companyContextLoading) {
       return (
         <div className="space-y-3">
-          <PageHeader title="Factoring" subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings" />
+          <FactoringBoardChrome
+            title="Factoring"
+            subtitle={factoringChromeSubtitle}
+            subnavItems={factoringSubnavItems}
+          />
           <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-600" data-testid="factoring-home-loading">
             Loading…
           </div>
@@ -941,7 +1013,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     }
     return (
       <div className="space-y-3">
-        <PageHeader title="Factoring" subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings" />
+        <FactoringBoardChrome
+          title="Factoring"
+          subtitle={factoringChromeSubtitle}
+          subnavItems={factoringSubnavItems}
+        />
         <div
           className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700"
           data-testid="factoring-home-need-company"
@@ -954,92 +1030,72 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <FactoringBoardChrome
         title={`Factoring (${summary?.active_factor_name || "No active factor"})`}
-        subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings"
-        actions={
-          <div className="flex items-center gap-2">
-            {/*
-              FACT-PAR1: Submit-to-Factor is NOT an arch-design Factoring sub-tab
-              (design lists Recourse Pipeline / Chargebacks & Fees / Statements & Settings).
-              Reachable via deep-link button — does not change SUBNAV tab count (Rule 05).
-              ROUND 21.0 item 5b (owner ruling: "FIVE navigation buttons dressed as actions...
-              four of them leave the module. One primary action, the rest become a Related menu"):
-              Submit to Factor is the one real primary action taken ON this page; the other three
-              are cross-module deep-links (they leave Factoring entirely) plus Refresh, now under
-              a single "Related" disclosure instead of four buttons of equal visual weight.
-            */}
-            <Link
-              to={FACTORING_TAB_PATH.submit_invoice}
-              className="inline-flex items-center rounded-sm border border-[#E5E7EB] bg-[#14314F] px-2.5 py-2 text-xs font-medium text-white hover:bg-[#1F2A44]"
-              data-testid="factoring-submit-to-factor-link"
-            >
-              Submit to Factor
-            </Link>
-            <details className="relative inline-block">
-              <summary
-                className="flex cursor-pointer list-none items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2.5 py-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA] [&::-webkit-details-marker]:hidden"
-                data-testid="factoring-header-related-menu"
-              >
-                Related ▾
-              </summary>
-              <div className="absolute right-0 z-20 mt-1 w-48 rounded-sm border border-gray-200 bg-white p-1 text-xs shadow-md">
-                <Link
-                  to="/dispatch/factoring-queue"
-                  className="block rounded-sm px-2 py-1.5 text-[#1F2A44] hover:bg-[#F7F8FA]"
-                  data-testid="factoring-hub-dispatch-queue-reverse-link"
-                >
-                  Dispatch queue
-                </Link>
-                <Link
-                  to="/accounting/factoring"
-                  className="block rounded-sm px-2 py-1.5 text-[#1F2A44] hover:bg-[#F7F8FA]"
-                  data-testid="factoring-hub-accounting-advances-reverse-link"
-                >
-                  Accounting advances
-                </Link>
-                <Link
-                  to="/banking"
-                  className="block rounded-sm px-2 py-1.5 text-[#1F2A44] hover:bg-[#F7F8FA]"
-                  data-testid="factoring-hub-banking-entry-reverse-link"
-                  title="Banking home — the factoring virtual bank (ROUND-20.8 B3 retired /banking/factoring)"
-                >
-                  Banking entry
-                </Link>
-                <button
-                  type="button"
-                  className="block w-full rounded-sm px-2 py-1.5 text-left text-[#1F2A44] hover:bg-[#F7F8FA]"
-                  onClick={() => void queryClient.invalidateQueries({ queryKey: ["factoring"] })}
-                  data-testid="factoring-header-refresh"
-                >
-                  Refresh
-                </button>
-              </div>
-            </details>
-          </div>
-        }
+        subtitle={factoringChromeSubtitle}
+        actions={factoringHeaderActions}
+        subnavItems={factoringSubnavItems}
       />
 
       {summaryQuery.isError ? (
         <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
       ) : null}
 
-      {/* FAC-07 (owner 2026-09-06 22:3xZ): navy tab strip is FIRST — same shape as Banking Home —
-          so the profile card can no longer push the tabs below the fold.
-          ROUND 24.6 (owner, 2026-09-14) — REVERTS ROUND 21.0 item 1. The owner never asked for the
-          16-tabs-to-6 consolidation (PR #21952) -- that was this seat's own initiative, and the
-          owner's earlier instruction not to revert it ("the owner asked for the consolidation") was
-          itself wrong, invented by this seat, not something the owner said. "A tab he cannot see is
-          a tab he does not have." Every SUBNAV id renders as its OWN top-level tab again, exactly as
-          it did before #21952; INTERNAL_TOOLS_SUBNAV returns to its own "Internal Tools" dropdown,
-          not folded into anything else. 15 flat tabs + 1 dropdown overflow this width -- `<nav
-          className="overflow-x-auto ...">` (NavyPageSubNav's own root, unchanged) already scrolls
-          horizontally rather than wrapping or collapsing; no component change needed for that. */}
-      <NavyPageSubNav
-        items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))}
-      />
-
       <DuplicateVendorsBanner companyId={companyId} />
+
+      {/* ROUND 443.326 — V3 KPI strip (summary + recourse pipeline + held reserves from KPI engine). */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        data-testid="factoring-home-kpi-strip"
+      >
+        <V3KpiTile
+          label="Open recourse"
+          value={String(invoices.length)}
+          sub="invoices in pipeline"
+          testId="factoring-kpi-recourse-count"
+          onClick={() => navigateToTab(FACTORING_TAB_PATH.recourse_pipeline)}
+        />
+        <V3KpiTile
+          label="Advance out"
+          value={fmtCurrency(recourseTotals.advance)}
+          sub="recourse advance total"
+          testId="factoring-kpi-advance-out"
+        />
+        <V3KpiTile
+          label="Held security reserve"
+          value={
+            factoringKpiQuery.isLoading || factoringKpiQuery.isError || engineReserve == null
+              ? "—"
+              : fmtCents(engineReserve.escrow)
+          }
+          sub="GL escrow reserve balance"
+          testId="factoring-kpi-escrow-held"
+          onClick={() => navigateToTab(FACTORING_TAB_PATH.escrow_account)}
+        />
+        <V3KpiTile
+          label="Funds due"
+          value={String(fundsDueRows.length)}
+          sub="invoices awaiting payment"
+          testId="factoring-kpi-funds-due"
+          onClick={() => navigateToTab(FACTORING_TAB_PATH.funds_due)}
+        />
+      </div>
+      <MoneyListToolbar
+        search={homeToolbarSearch}
+        onSearchChange={setHomeToolbarSearch}
+        searchPlaceholder="Search on this tab"
+        searchTestId="factoring-home-search-input"
+        activeFilterCount={factoringHomeActiveFilterCount}
+        testIdPrefix="factoring-home"
+        onClearAll={() => {
+          setHomeToolbarSearch("");
+          staged.cancel();
+          setApplied(EMPTY_FILTERS);
+          patchListSearchParam(EMPTY_FILTERS);
+        }}
+      >
+        {null}
+      </MoneyListToolbar>
 
       {/* ROUND 443.267 board 4 — Factoring Home board-faithful (KPI → purchase net vs kept → Terms → Measured).
           FAC-07 side-by-side compact profile is superseded by the approved board; Edit Terms opens the
@@ -2602,12 +2658,12 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               filterBar={
                 // NEW-20 (owner 2026-09-07): "customer/load boxes too large and misaligned;
                 // filter/range box + gear should sit in the same row as the customer/load
-                // boxes." CollapsedListFilters is the SAME shared chrome the Accounting module
+                // boxes." FactoringStagedFilters is the SAME shared chrome the Accounting module
                 // already standardizes on (Expenses/Payments/Credit Memos/Bill Payments/Manual
                 // JE) — a slim "Filters" toggle sits in the table's own filterBar row (next to
                 // search/range/gear, in the one bordered shell) instead of two full-width
                 // EntityPicker boxes floating in a separate outer div above it.
-                <CollapsedListFilters
+                <FactoringStagedFilters
                   activeFilterCount={[applied.customerId, applied.loadId, applied.dateFrom, applied.dateTo].filter(Boolean).length}
                   onApply={staged.apply}
                   onCancel={staged.cancel}
@@ -2670,7 +2726,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                       />
                     </label>
                   </div>
-                </CollapsedListFilters>
+                </FactoringStagedFilters>
               }
             />
           </div>
@@ -2714,8 +2770,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 fmtDate={fmtDate}
                 filterBar={
                   // NEW-20 — see the identical Recourse Pipeline filterBar above for the full
-                  // rationale (CollapsedListFilters, the shared Accounting-module chrome).
-                  <CollapsedListFilters
+                  // rationale (FactoringStagedFilters, the shared Accounting-module chrome).
+                  <FactoringStagedFilters
                     activeFilterCount={[applied.customerId, applied.dateFrom, applied.dateTo].filter(Boolean).length}
                     onApply={staged.apply}
                     onCancel={staged.cancel}
@@ -2760,7 +2816,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         data-testid="factoring-home-chargebacks-filter-date-to"
                       />
                     </label>
-                  </CollapsedListFilters>
+                  </FactoringStagedFilters>
                 }
               />
             </div>
@@ -3157,10 +3213,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="text-xs font-medium text-gray-900">Loans + ledger actions</div>
               {/* NEW-26: this list is a raw card list, not a ParityTable, so there is no
-                  search/range/gear row to fold into via filterBar — CollapsedListFilters is used
+                  search/range/gear row to fold into via filterBar — FactoringStagedFilters is used
                   standalone here instead, still compacting the always-open filter grid into a
                   toggle. */}
-              <CollapsedListFilters
+              <FactoringStagedFilters
                 activeFilterCount={applied.vendorId ? 1 : 0}
                 onApply={staged.apply}
                 onCancel={staged.cancel}
@@ -3187,7 +3243,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     dataTestId="factoring-home-filter-vendor"
                   />
                 </label>
-              </CollapsedListFilters>
+              </FactoringStagedFilters>
             </div>
             <div className="space-y-2">
               {(equipmentLoansQuery.data?.rows ?? []).map((row) => (
@@ -3358,10 +3414,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 storageKey="factoring-home-vendor-merges"
                 filterBar={
                   // NEW-26 (owner 2026-09-07): "QuickBooks-style filters (date range etc.)
-                  // missing across ALL Factoring tabs." Same CollapsedListFilters chrome as
+                  // missing across ALL Factoring tabs." Same FactoringStagedFilters chrome as
                   // NEW-20's Recourse Pipeline / Chargebacks & Fees fix, extended to this tab's
                   // own Driver/Vendor filter grid.
-                  <CollapsedListFilters
+                  <FactoringStagedFilters
                     activeFilterCount={[applied.driverId, applied.vendorId].filter(Boolean).length}
                     onApply={staged.apply}
                     onCancel={staged.cancel}
@@ -3402,7 +3458,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         />
                       </label>
                     </div>
-                  </CollapsedListFilters>
+                  </FactoringStagedFilters>
                 }
               />
             )}

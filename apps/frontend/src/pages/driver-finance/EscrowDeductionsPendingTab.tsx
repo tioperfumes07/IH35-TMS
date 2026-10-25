@@ -12,7 +12,6 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
@@ -22,6 +21,8 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { moneyListKpiCard } from "../accounting/moneyListKpiCard";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -44,6 +45,7 @@ export function EscrowDeductionsPendingTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [selected, setSelected] = useState<EscrowPendingDeduction | null>(null);
+  const [listSearch, setListSearch] = useState("");
   // M-1: dollars-origin override (escrow). Stored as a dollar NUMBER; the *100 → cents seam at submit is
   // unchanged (byte-for-byte). Display via dollars-mode MoneyInput.
   const [overrideAmount, setOverrideAmount] = useState<number | null>(null);
@@ -59,6 +61,22 @@ export function EscrowDeductionsPendingTab() {
   const rows = pendingQuery.data?.data ?? [];
   const settlementReferences = useSettlementReferences(companyId, rows.map((row) => row.load_id));
   const isOwner = auth.user?.role === "Owner";
+
+  const proposedTotalCents = useMemo(
+    () => rows.reduce((sum, row) => sum + (row.proposed_amount_cents ?? 0), 0),
+    [rows],
+  );
+
+  const filteredRows = useMemo(() => {
+    const q = listSearch.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((row) => {
+      const driver = entityLabel(row.driver_name, row.driver_id, "Driver").toLowerCase();
+      const load = entityLabel(row.load_number, row.load_id, "Load").toLowerCase();
+      const reason = (row.proposed_reason ?? "").toLowerCase();
+      return driver.includes(q) || load.includes(q) || reason.includes(q);
+    });
+  }, [listSearch, rows]);
 
   const approveMutation = useMutation({
     meta: { loads: true },
@@ -170,9 +188,18 @@ export function EscrowDeductionsPendingTab() {
     [settlementReferences],
   );
 
+  const kpiPending = pendingQuery.isError ? "—" : String(rows.length);
+  const kpiProposed = pendingQuery.isError ? "—" : formatMoney(proposedTotalCents);
+
   return (
     <div className="space-y-3">
-      <PageHeader title="Escrow Deductions Pending Review" subtitle="Auto-proposed abandonment deductions requiring Owner decision." />
+      <div
+        className="grid gap-2 md:grid-cols-2 xl:grid-cols-4"
+        data-testid="escrow-pending-kpi-strip"
+      >
+        {moneyListKpiCard("Pending review", kpiPending, "auto-proposed deductions")}
+        {moneyListKpiCard("Proposed total", kpiProposed, "sum of proposed amounts")}
+      </div>
 
       {!isOwner ? (
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">
@@ -189,31 +216,44 @@ export function EscrowDeductionsPendingTab() {
       ) : null}
 
       {!pendingQuery.isError ? (
-        // ACCT-F3534: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
-        <ParityTable<EscrowPendingDeduction>
-          title="Escrow deductions — pending"
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.id}
-          loading={pendingQuery.isLoading}
-          emptyText="No pending escrow deductions"
-          storageKey="escrow-deductions-pending"
-          exportFilename="escrow-deductions-pending"
-          rowActions={(row) => (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                setSelected(row);
-                setOverrideAmount(row.proposed_amount_cents / 100);
-                setReviewNotes("");
-                setErrorMessage("");
-              }}
-            >
-              Review
-            </Button>
-          )}
-        />
+        <>
+          <MoneyListToolbar
+            search={listSearch}
+            onSearchChange={setListSearch}
+            searchPlaceholder="Search driver, load, reason…"
+            searchTestId="escrow-pending-search"
+            activeFilterCount={0}
+            onClearAll={() => setListSearch("")}
+            testIdPrefix="escrow-pending"
+          >
+            <span />
+          </MoneyListToolbar>
+          <ParityTable<EscrowPendingDeduction>
+            title="Escrow deductions — pending"
+            columns={columns}
+            rows={filteredRows}
+            rowKey={(row) => row.id}
+            loading={pendingQuery.isLoading}
+            emptyText="No pending escrow deductions"
+            storageKey="escrow-deductions-pending"
+            exportFilename="escrow-deductions-pending"
+            suppressToolbarSearch
+            rowActions={(row) => (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setSelected(row);
+                  setOverrideAmount(row.proposed_amount_cents / 100);
+                  setReviewNotes("");
+                  setErrorMessage("");
+                }}
+              >
+                Review
+              </Button>
+            )}
+          />
+        </>
       ) : null}
 
       <Modal
@@ -243,8 +283,6 @@ export function EscrowDeductionsPendingTab() {
 
             <div className="space-y-3 rounded-sm border border-gray-200 p-3">
               <label className="block text-xs font-semibold uppercase text-gray-600">Override Amount (optional)</label>
-              {/* M-1: dollars-mode QBO money entry ($ + .00). Value stays a DOLLAR number; the *100 → cents
-                  conversion at submit is unchanged (byte-for-byte override_amount_cents). */}
               <MoneyInput
                 valueDollars={overrideAmount ?? selectedAmountDefault}
                 onChangeDollars={(d) => setOverrideAmount(d)}

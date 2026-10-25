@@ -12,8 +12,11 @@ import fs from "node:fs";
 
 const REG = "apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx";
 const PAGE = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
+const BOARD = "apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx";
+const HELPERS = "apps/frontend/src/pages/driver-finance/settlementsHomeBoardHelpers.ts";
 
-function analyze(reg, page) {
+function analyze(reg, page, board, helpers) {
+  const home = `${page}\n${board}\n${helpers}`;
   const errors = [];
 
   // 1) SAME readout endpoint as the board.
@@ -92,20 +95,21 @@ function analyze(reg, page) {
 
 
   // ROUND 443.267 — Settlements home board polish (Week-of table · deduction split · Deductions grain).
-  if (!/listSettlementDeductions/.test(page))
-    errors.push("SettlementsPage must call listSettlementDeductions for home deduction-type split (443.267)");
-  if (!/settlements-home-week-of-panel/.test(page))
-    errors.push("SettlementsPage must render Week-of panel (data-testid settlements-home-week-of-panel)");
-  if (!/id:\s*"deductions"/.test(page) && !/id:\s*'deductions'/.test(page))
-    errors.push("SettlementsPage week chart grain must include Deductions (board Net|Gross|Deductions)");
-  if (!/Advances \(Zelle\)/.test(page) || !/Escrow/.test(page) || !/Fines/.test(page))
-    errors.push("SettlementsPage deductions panel must split Escrow / Advances (Zelle) / Fines");
+  // ROUND 443.326 — home board panels/helpers split out of SettlementsPage.tsx; same readout bundle.
+  if (!/listAllSettlementDeductions\s*\(/.test(page) && !/listSettlementDeductions\s*\(/.test(page))
+    errors.push("Settlements home must call listAllSettlementDeductions (or listSettlementDeductions) for deduction-type split (443.267)");
+  if (!/settlements-home-week-of-panel/.test(home))
+    errors.push("Settlements home must render Week-of panel (data-testid settlements-home-week-of-panel)");
+  if (!/id:\s*"deductions"/.test(home) && !/id:\s*'deductions'/.test(home))
+    errors.push("Settlements home week chart grain must include Deductions (board Net|Gross|Deductions)");
+  if (!/Advances \(Zelle\)/.test(home) || !/Escrow/.test(home) || !/Fines/.test(home))
+    errors.push("Settlements home deductions panel must split Escrow / Advances (Zelle) / Fines");
 
   // REG-102 / register #102 — Week-of panel must key open/closed pills on trip_closed_at (tour phase), not payment_state.
-  if (!/function settlementsRowTourClosed\b/.test(page) || !/trip_closed_at/.test(page))
-    errors.push("SettlementsPage Week-of panel must use settlementsRowTourClosed(trip_closed_at) for open/closed pills (REG-102)");
-  if (!/function settlementsWeekOfStatusLabel\b/.test(page))
-    errors.push("SettlementsPage Week-of Status column must use settlementsWeekOfStatusLabel (tour phase, not Paid/Open pay status)");
+  if (!/function settlementsRowTourClosed\b/.test(home) || !/trip_closed_at/.test(home))
+    errors.push("Settlements home Week-of panel must use settlementsRowTourClosed(trip_closed_at) for open/closed pills (REG-102)");
+  if (!/function settlementsWeekOfStatusLabel\b/.test(home))
+    errors.push("Settlements home Week-of Status column must use settlementsWeekOfStatusLabel (tour phase, not Paid/Open pay status)");
   if (/weekOfClosedCount[\s\S]{0,120}settlementsRowPayStatus/.test(page))
     errors.push("weekOfClosedCount must not filter on settlementsRowPayStatus === Paid (REG-102)");
 
@@ -151,53 +155,55 @@ function analyze(reg, page) {
 
 const reg = fs.readFileSync(REG, "utf8");
 const page = fs.readFileSync(PAGE, "utf8");
+const board = fs.readFileSync(BOARD, "utf8");
+const helpers = fs.readFileSync(HELPERS, "utf8");
 
 if (process.argv.includes("--selftest")) {
-  const clean = analyze(reg, page);
+  const clean = analyze(reg, page, board, helpers);
   if (clean.length) {
     console.error(`SELFTEST FAIL — clean source rejected:\n- ${clean.join("\n- ")}`);
     process.exit(1);
   }
   const mutations = [
-    ["drop listTours import", [reg.replace(/import\s*\{[^}]*\blistTours\b[^}]*\}\s*from\s*["'][^"']*api\/tourReadout["'];?/, ""), page]],
-    ["ParityTable -> raw table", [reg.replace("<ParityTable", "<table data-x").replace(/\/>\s*\)}\s*<\/div>\s*\);\s*}\s*$/, "></table> )} </div> ); }"), page]],
-    ["remove closed-tour tab", [reg.replace(/<TourSettlementTab\b/g, "<Nope"), page]],
-    ["remove pills", [reg.replace(/settlements-tours-pill-/g, "x-removed-"), page]],
-    ["break detail link", [reg.replace(/settlements\?settlement_id=/g, "settlements?x="), page]],
-    ["page default to payments", [reg, page.replace(/["']payments["']\s*\?\s*["']payments["']\s*:\s*["'](?:tours|settlements)["']/, '"payments" ? "tours" : "payments"')]],
-    ["page drops register", [reg, page.replace(/<SettlementsToursRegister\b/g, "<Nope")]],
-    ["page drops open tab", [reg, page.replace(/tabParam === "open"/g, 'tabParam === "gone_open"')]],
-    ["page drops closed tab", [reg, page.replace(/tabParam === "closed"/g, 'tabParam === "gone_closed"')]],
-    ["page restores view toggle under home", [reg, page + '\n<div data-testid="settlements-view-toggle" />\n']],
-    ["post action removed", [reg.replace(/<PostTourAction[^>]*\/>/, "null"), page]],
-    ["post ungated (can_close bypassed)", [reg.replace("disabled={!row.can_close", "disabled={false && !row.can_close"), page]],
-    ["post no longer reuses close-tour endpoint", [reg.replace("closeTour(row.settlement_id, companyId)", "Promise.resolve({})"), page]],
-    ["page leftover slate-500", [reg, page + '\n<DataPanel accentColor="#64748b">plant</DataPanel>\n']],
-    ["page leftover slate class", [reg, page + '\n<label className="text-xs text-slate-600">plant</label>\n']],
-    ["drop V3Panel import", [reg.replace(/import\s*\{[^}]*\bV3Panel\b[^}]*\}\s*from\s*["'][^"']*components\/v3\/V3Panel["'];?/, ""), page]],
-    ["drop tours-v3 marker", [reg.replace(/data-settlements-tours-v3=["']1["']/, 'data-settlements-tours-legacy="1"'), page]],
-    ["drop Closed panel title", [reg.replace(/Closed settlements/g, "Closed list"), page]],
-    ["drop Open panel title", [reg.replace(/Open tours · pre-settlements/g, "Open list"), page]],
-    ["drop board pill labels", [reg.replace(/Pre-Settlement \(Open\)/g, "Open").replace(/Settlement \(Closed\)/g, "Closed"), page]],
-    ["drop week-of panel", [reg, page.replace(/settlements-home-week-of-panel/g, "settlements-home-week-legacy")]],
-    ["drop deductions grain", [reg, page.replace(/id:\s*"deductions"/g, 'id: "net_x"')]],
-    ["drop listSettlementDeductions", [reg, page.replace(/listSettlementDeductions/g, "listNope")]],
-    ["drop Advances label", [reg, page.replace(/Advances \(Zelle\)/g, "Advances")]],
-    ["week-of uses pay status for closed count", [reg, page.replace(/weekOfClosedCount = thisWeekSettlements.filter\(\(s\) => settlementsRowTourClosed\(s\)\)/, "weekOfClosedCount = thisWeekSettlements.filter((s) => settlementsRowPayStatus(s) === \"Paid\")")]],
-    ["drop settlementsRowTourClosed", [reg, page.replace(/function settlementsRowTourClosed\b[\s\S]*?\n}\n\nfunction settlementsWeekOfStatusLabel/, "function settlementsWeekOfStatusLabel")]],
-    ["drop ReadyDots testid", [reg.replace(/setl-tour-ready-dots/g, "setl-tour-ready-gone"), page]],
-    ["drop Waiting on label", [reg.replace(/label:\s*"Waiting on"/g, 'label: "Open items"'), page]],
-    ["restore Settlement/Tour label", [reg.replace(/label:\s*"Settlement"/, 'label: "Settlement/Tour"'), page]],
-    ["drop open footnote", [reg.replace(/settlements-open-board-footnote/g, "settlements-open-legacy"), page]],
-    ["drop Practical mi label", [reg.replace(/label:\s*"Practical mi"/g, 'label: "Practical miles"'), page]],
-    ["drop SettlementCell / No number", [reg.replace(/function SettlementCell\b/g, "function SettlementCellGone").replace(/setl-tour-no-number/g, "setl-tour-no-num-gone"), page]],
-    ["drop CompanySettlementCell link", [reg.replace(/kind=["']company_settlement["']/g, 'kind="settlement"'), page]],
-    ["drop closed footnote", [reg.replace(/settlements-closed-board-footnote/g, "settlements-closed-legacy"), page]],
-    ["drop Driver net bold", [reg.replace(/font-bold/g, "font-normal"), page]],
+    ["drop listTours import", [reg.replace(/import\s*\{[^}]*\blistTours\b[^}]*\}\s*from\s*["'][^"']*api\/tourReadout["'];?/, ""), page, board, helpers]],
+    ["ParityTable -> raw table", [reg.replace("<ParityTable", "<table data-x").replace(/\/>\s*\)}\s*<\/div>\s*\);\s*}\s*$/, "></table> )} </div> ); }"), page, board, helpers]],
+    ["remove closed-tour tab", [reg.replace(/<TourSettlementTab\b/g, "<Nope"), page, board, helpers]],
+    ["remove pills", [reg.replace(/settlements-tours-pill-/g, "x-removed-"), page, board, helpers]],
+    ["break detail link", [reg.replace(/settlements\?settlement_id=/g, "settlements?x="), page, board, helpers]],
+    ["page default to payments", [reg, page.replace(/["']payments["']\s*\?\s*["']payments["']\s*:\s*["'](?:tours|settlements)["']/, '"payments" ? "tours" : "payments"'), board, helpers]],
+    ["page drops register", [reg, page.replace(/<SettlementsToursRegister\b/g, "<Nope"), board, helpers]],
+    ["page drops open tab", [reg, page.replace(/tabParam === "open"/g, 'tabParam === "gone_open"'), board, helpers]],
+    ["page drops closed tab", [reg, page.replace(/tabParam === "closed"/g, 'tabParam === "gone_closed"'), board, helpers]],
+    ["page restores view toggle under home", [reg, page + '\n<div data-testid="settlements-view-toggle" />\n', board, helpers]],
+    ["post action removed", [reg.replace(/<PostTourAction[^>]*\/>/, "null"), page, board, helpers]],
+    ["post ungated (can_close bypassed)", [reg.replace("disabled={!row.can_close", "disabled={false && !row.can_close"), page, board, helpers]],
+    ["post no longer reuses close-tour endpoint", [reg.replace("closeTour(row.settlement_id, companyId)", "Promise.resolve({})"), page, board, helpers]],
+    ["page leftover slate-500", [reg, page + '\n<DataPanel accentColor="#64748b">plant</DataPanel>\n', board, helpers]],
+    ["page leftover slate class", [reg, page + '\n<label className="text-xs text-slate-600">plant</label>\n', board, helpers]],
+    ["drop V3Panel import", [reg.replace(/import\s*\{[^}]*\bV3Panel\b[^}]*\}\s*from\s*["'][^"']*components\/v3\/V3Panel["'];?/, ""), page, board, helpers]],
+    ["drop tours-v3 marker", [reg.replace(/data-settlements-tours-v3=["']1["']/, 'data-settlements-tours-legacy="1"'), page, board, helpers]],
+    ["drop Closed panel title", [reg.replace(/Closed settlements/g, "Closed list"), page, board, helpers]],
+    ["drop Open panel title", [reg.replace(/Open tours · pre-settlements/g, "Open list"), page, board, helpers]],
+    ["drop board pill labels", [reg.replace(/Pre-Settlement \(Open\)/g, "Open").replace(/Settlement \(Closed\)/g, "Closed"), page, board, helpers]],
+    ["drop week-of panel", [reg, page, board.replace(/settlements-home-week-of-panel/g, "settlements-home-week-legacy"), helpers]],
+    ["drop deductions grain", [reg, page, board.replace(/id:\s*"deductions"/g, 'id: "net_x"'), helpers]],
+    ["drop listAllSettlementDeductions", [reg, page.replace(/listAllSettlementDeductions/g, "listNope"), board, helpers]],
+    ["drop Advances label", [reg, page, board.replace(/Advances \(Zelle\)/g, "Advances"), helpers]],
+    ["week-of uses pay status for closed count", [reg, page.replace(/weekOfClosedCount = thisWeekSettlements.filter\(\(s\) => settlementsRowTourClosed\(s\)\)/, "weekOfClosedCount = thisWeekSettlements.filter((s) => settlementsRowPayStatus(s) === \"Paid\")"), board, helpers]],
+    ["drop settlementsRowTourClosed", [reg, page, board, helpers.replace(/function settlementsRowTourClosed\b[\s\S]*?\n}\n\nexport function settlementsWeekOfStatusLabel/, "export function settlementsWeekOfStatusLabel")]],
+    ["drop ReadyDots testid", [reg.replace(/setl-tour-ready-dots/g, "setl-tour-ready-gone"), page, board, helpers]],
+    ["drop Waiting on label", [reg.replace(/label:\s*"Waiting on"/g, 'label: "Open items"'), page, board, helpers]],
+    ["restore Settlement/Tour label", [reg.replace(/label:\s*"Settlement"/, 'label: "Settlement/Tour"'), page, board, helpers]],
+    ["drop open footnote", [reg.replace(/settlements-open-board-footnote/g, "settlements-open-legacy"), page, board, helpers]],
+    ["drop Practical mi label", [reg.replace(/label:\s*"Practical mi"/g, 'label: "Practical miles"'), page, board, helpers]],
+    ["drop SettlementCell / No number", [reg.replace(/function SettlementCell\b/g, "function SettlementCellGone").replace(/setl-tour-no-number/g, "setl-tour-no-num-gone"), page, board, helpers]],
+    ["drop CompanySettlementCell link", [reg.replace(/kind=["']company_settlement["']/g, 'kind="settlement"'), page, board, helpers]],
+    ["drop closed footnote", [reg.replace(/settlements-closed-board-footnote/g, "settlements-closed-legacy"), page, board, helpers]],
+    ["drop Driver net bold", [reg.replace(/font-bold/g, "font-normal"), page, board, helpers]],
   ];
   let caught = 0;
-  for (const [label, [r, p]] of mutations) {
-    if (analyze(r, p).length > 0) { caught += 1; continue; }
+  for (const [label, [r, p, b, h]] of mutations) {
+    if (analyze(r, p, b, h).length > 0) { caught += 1; continue; }
     console.error(`SELFTEST FAIL — mutation escaped: ${label}`);
     process.exit(1);
   }
@@ -205,7 +211,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const failures = analyze(reg, page);
+const failures = analyze(reg, page, board, helpers);
 if (failures.length) {
   console.error("FAIL verify-settlements-module-one-readout");
   failures.forEach((f) => console.error(`- ${f}`));

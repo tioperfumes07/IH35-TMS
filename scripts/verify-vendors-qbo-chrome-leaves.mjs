@@ -92,9 +92,10 @@ const CHECKS = [
     pattern: /\+ Create Vendor[\s\S]{0,32000}<VendorCreateModal open=\{createOpen\}/,
   },
   {
-    name: "md.transaction_list / md.txn.filters: Vendors.tsx real ParityTable + CollapsedListFilters txn filter bar",
+    name: "md.transaction_list / md.txn.filters: Vendors.tsx real ParityTable + staged txn filter bar (443.326 V3: StagedListFilterShell replaces CollapsedListFilters)",
     file: "apps/frontend/src/pages/Vendors.tsx",
-    pattern: /activeTab === "transaction_list"[\s\S]{0,1400}<ParityTable[\s\S]{0,6000}<CollapsedListFilters[\s\S]{0,800}onApply=\{txnFilters\.apply\}/,
+    pattern:
+      /activeTab === "transaction_list"[\s\S]{0,1400}<ParityTable[\s\S]{0,6000}<(?:CollapsedListFilters|StagedListFilterShell)[\s\S]{0,800}onApply=\{txnFilters\.apply\}/,
   },
   {
     name: "md.vendor_details: Vendors.tsx real EntityLink + EntityLinkOrTombstone vendor_details section",
