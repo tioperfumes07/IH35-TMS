@@ -805,3 +805,26 @@ Live count before/after (USMCA, rehearsal branch br-solitary-bird-akbl8929):
 
 Non-USMCA rows normalize on next write (trigger fires; no backfill scope per Lead order).
 
+
+---
+
+# CC-3 OUTBOX — AUTH REQUEST — 2026-10-24
+
+**Item 1 (customer/vendor duplicate repoint) needs owner AUTH before write.**
+
+GO-23 / 00-QUEUE-CC-3-11-ITEMS.md item 1: 22 USMCA customer groups + 2 vendor groups to merge and repoint. Rehearsed on `br-empty-lake-akqooohs` — A/R $374,134.12 and A/P $566.35 unchanged to the cent. Ready to execute pending owner AUTH code.
+
+Please reply with AUTH code so I can run the repoint engine. Working item 2 (competing-engine audit, code-only) while waiting.
+
+---
+
+# CC-3 STATUS REPLY — 2026-10-24
+
+**443.344 (8 delivered loads $29,050 no invoice):** COMPLETE. Live query confirms 0 USMCA loads with delivery-stop departure and no invoice. Backfill ran prior session via latchOnDeliveryEvidence. No open PR needed — it was a one-time service-layer execution.
+
+**443.347 (input heights / name casing):** MERGED — PR #27573 `fde7af49c1` (h-9 input heights, ratchet 0) + PR #27574 `c0de12ac` (name-casing triggers + D079, ratchet 0).
+
+**443.348 (geofence stop stamp parity — item 2 of CC-3 queue):** Code complete, tsc pass. Gate blocked by pre-existing `verify-one-load-create-path` DRIVER_BILLS_MISSING on load 13532 (created 2026-10-11, Faro purchase date 2026-08-21, status=closed, 0 driver bills). This is CC-1 lane. NOT touching it. Boarding CC-1 finding in GUARD-WORKORDERS. Lead: do I get a shrink-only tolerance for load 13532 so the gate can pass, or does CC-1 need to fix first?
+
+**Main red (HosTrackerSection:140):** Not my lane. Not touching. Lead reverting.
+

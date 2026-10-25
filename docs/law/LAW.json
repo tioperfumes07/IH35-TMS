@@ -866,5 +866,12 @@
     "source_file": "apps/frontend/src/pages/dispatch/RoundTripsTimeline.tsx",
     "guard": "scripts/verify-roundtrips-timeline-restored.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-24-GEOFENCE-STOP-STAMP-PARITY",
+    "title": "Geofence stop-stamp path must call the same side-effects as stop-stamp.service.ts: latchOnDeliveryEvidence, pingSettlementOnLoadEvent, appendCrudAudit, and load-status UPDATE (443.348)",
+    "source_file": "apps/backend/src/telematics/geofence-detector.service.ts",
+    "guard": "scripts/verify-geofence-stop-stamp-parity.mjs",
+    "type": "enforced"
   }
 ]
