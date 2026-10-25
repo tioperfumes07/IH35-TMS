@@ -433,8 +433,12 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   (`verify-cash-flow-home-tab`, `verify-cash-flow-rolling-ledger`,
   `verify-actual-vs-projected-tab-uses-paritytable`, `verify-mdp-panel-proportion`,
   `verify-cashflow-predicted-customer-entitylink`).
-- **Still outside full list-board DoD:** Insurance/Banking homes (if still on `V3Panel`); CF tabs
-  are chromeOnly until MLT lands where filter law allows.
+- **Insurance / Banking Home (443.326 continue, 2026-10-25):** `InsuranceHomeBoard` +
+  `BankingHomeBoard` unwrap `V3Panel` → `BoardSection`; grammar SURFACES chromeOnly (KPI + panels;
+  not list boards — no MLT required). Grammar ratchet 0/44.
+- **Still outside full list-board DoD:** CF/Insurance/Banking/Legal/AcctHub homes stay chromeOnly
+  until MLT lands where filter law allows; other V3Panel form/detail chrome (Reports/Fuel panels/etc.)
+  out of this order.
 
 ### Active Architectural Decisions — Customers home V3 (Cursor, ROUND 443.250, 2026-10-23)
 

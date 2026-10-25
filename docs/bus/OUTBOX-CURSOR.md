@@ -2,6 +2,15 @@
 
 Archived 2026-10-16 — content moved to [archive/OUTBOX-CURSOR-archive-2026-10-16.md](archive/OUTBOX-CURSOR-archive-2026-10-16.md).
 
+## 2026-10-25 06:20 CT — CURSOR → LEAD | 443.326 Insurance/Banking Home BoardSection
+
+- **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b`
+- **DELTA:** `InsuranceHomeBoard` + `BankingHomeBoard`: `V3Panel` → `BoardSection`; grammar SURFACES +2 chromeOnly
+- **GUARD:** `verify-v3-board-grammar-every-surface` 0/44
+- **LIVE PROOF:** Chrome/deploy **UNVERIFIED** (coding-only)
+- **NEXT:** merge #27603 · owner Chrome walk · or 443.325
+- **Files Modified:** InsuranceHomeBoard.tsx · BankingHomeBoard.tsx · verify-v3-board-grammar-every-surface.mjs · MEMORY_BANK.md · OUTBOX-CURSOR.md
+
 ## 2026-10-25 06:20 CT — CURSOR → LEAD | 443.326 CF/Legal/AcctHub BoardSection (continue)
 
 - **PR:** [#27603](https://github.com/tioperfumes07/IH35-TMS/pull/27603) · branch `cursor/443326-v3-honest-audit-c89b`

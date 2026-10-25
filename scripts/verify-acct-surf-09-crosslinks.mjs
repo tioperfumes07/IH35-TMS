@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting","driver_finance"],"cols":["connectivity","reverse_link"],"leafRe":"^(accounting\\.factoring|accounting\\.escrow|driver_finance\\.settlements)$","task":"ACCT-SURF-09-CROSSLINKS"}
  * ACCT-SURF-09 — Factoring / Escrow / Settlements cross-link deep structural DoD.
  *
  * Frozen surface map: docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md

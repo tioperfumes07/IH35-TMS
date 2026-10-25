@@ -250,6 +250,19 @@ const SURFACES = /** @type {Surface[]} */ ([
     forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
     chromeOnly: true,
   },
+  // ROUND 443.326 — Insurance / Banking Home: BoardSection hubs (KPI + panels; not list boards).
+  {
+    id: "InsuranceHomeBoard",
+    file: "apps/frontend/src/pages/insurance/components/InsuranceHomeBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
+  {
+    id: "BankingHomeBoard",
+    file: "apps/frontend/src/pages/banking/components/BankingHomeBoard.tsx",
+    forbid: ["PageHeader", "NavyPageSubNav", "V3Panel"],
+    chromeOnly: true,
+  },
 ]);
 
 function hasKpiMount(src) {
