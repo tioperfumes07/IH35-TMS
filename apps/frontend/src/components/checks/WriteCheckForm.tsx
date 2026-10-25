@@ -1338,7 +1338,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                 Find Bill No.
                 <input
                   type="search"
-                  className="h-7 w-36 rounded border border-gray-300 px-2 text-xs font-normal"
+                  className="h-9 w-36 rounded border border-gray-300 px-2 text-xs font-normal"
                   value={billFindQuery}
                   onChange={(e) => setBillFindQuery(e.target.value)}
                   placeholder="Bill #"

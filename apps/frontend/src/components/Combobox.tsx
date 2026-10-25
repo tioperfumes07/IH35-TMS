@@ -85,8 +85,8 @@ type ComboboxProps = {
   /**
    * "md" (default) is FILTER_CONTROL_SIZE_CLASS (h-9) — the COLUMN LAW/FILTER LAW toolbar-filter
    * scale (matches TableSearch in a list-page toolbar row). "sm" is FORM_FIELD_CONTROL_SIZE_CLASS
-   * (h-7) — for a picker embedded as a dense FORM field (e.g. Book Load) sitting on the same grid
-   * row as plain h-7 `<input>`s. Every existing call site defaults to "md" (zero behavior change);
+   * (h-9) — for a picker embedded as a FORM field sitting on the same grid row as plain h-9
+   * `<input>`s. Every existing call site defaults to "md" (zero behavior change);
    * a wizard/form call site opts into "sm" explicitly. See design/tokens.ts.
    */
   size?: "md" | "sm";
@@ -562,8 +562,7 @@ export function Combobox({
         // FILTER LAW (COLUMN LAW 2026-09-01) — this is the ONE place the app's canonical filter/
         // combobox control height+font live; TableSearch.tsx now shares the same constant so a
         // filter and the search box sitting next to it in the same toolbar row never drift apart.
-        // WIZ-34: form (size=sm) paints the SAME 28px bordered box as a plain input. The live
-        // measurement is the role=combobox <input>, so that element carries h-7 + border.
+        // IH35-347-A: form (size=sm) paints the SAME h-9 bordered box as all other form primitives.
         className={`flex w-full min-w-0 items-center gap-1 ${
           formFieldChrome
             ? ""
@@ -627,7 +626,7 @@ export function Combobox({
           aria-invalid={Boolean(error)}
           className={
             formFieldChrome
-              ? `h-7 w-full min-w-0 rounded-sm border px-2 text-xs outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed ${
+              ? `h-9 w-full min-w-0 rounded-sm border px-2 text-xs outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed ${
                   disabled
                     ? "border-gray-200 bg-gray-100 text-gray-400"
                     : error

@@ -639,9 +639,9 @@ function LineCoding({
   );
 }
 
-/** Locked baseline: 28px clickable boxes, 12px body, 2px radius, equal paired widths. */
+/** IH35-347-A: h-9 (36px) for all form input primitives. */
 const inputClass =
-  "h-7 w-full min-w-0 rounded-sm border border-[var(--border-subtle,#E5E7EB)] bg-[var(--surface-input,#FFFFFF)] px-2 text-left text-xs text-[var(--text-strong,#0F1219)]";
+  "h-9 w-full min-w-0 rounded-sm border border-[var(--border-subtle,#E5E7EB)] bg-[var(--surface-input,#FFFFFF)] px-2 text-left text-xs text-[var(--text-strong,#0F1219)]";
 /** MoneyInput owns h-7 + leading $ frame — never forward border/px (SYS-MONEY / SETL-F441). */
 const moneyInputClass = "w-full";
 /** SETL-F442 — owner mock: five equal columns on Company + Driver (not 2-col stacked pairs). */
@@ -2253,7 +2253,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false, init
                       <input
                         type="file"
                         accept="image/*,application/pdf"
-                        className="h-7 w-full min-w-0 text-xs text-[var(--text-strong,#0F1219)] file:mr-2 file:h-7 file:rounded-sm file:border file:border-[var(--border-subtle,#E5E7EB)] file:bg-[var(--surface-unselected,#F8FAFC)] file:px-2 file:text-xs"
+                        className="h-9 w-full min-w-0 text-xs text-[var(--text-strong,#0F1219)] file:mr-2 file:h-7 file:rounded-sm file:border file:border-[var(--border-subtle,#E5E7EB)] file:bg-[var(--surface-unselected,#F8FAFC)] file:px-2 file:text-xs"
                         title={fuel.source_doc_id ? "Receipt attached — choose another file to replace it" : "Attach the receipt image or PDF for this fill"}
                         onChange={async (e) => {
                           const file = e.target.files?.[0] ?? null;

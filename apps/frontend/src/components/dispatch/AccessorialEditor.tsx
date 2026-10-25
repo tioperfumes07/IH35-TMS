@@ -136,7 +136,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
             type="text"
             value={row.description}
             onChange={(event) => onRowsChange(updateRow(rows, row.id, { description: event.target.value }))}
-            className="h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
         ),
       },

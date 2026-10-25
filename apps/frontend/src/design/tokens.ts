@@ -209,16 +209,13 @@ export const FILTER_CONTROL_HEIGHT_CLASS = "h-8.5";
 // Literal string so Tailwind's static class scanner sees h-8.5 and the filter-law guard can pin it.
 export const FILTER_CONTROL_SIZE_CLASS = "h-8.5 min-w-[10rem] text-xs";
 
-/** FORM FIELD LAW — a SEPARATE, deliberately shorter scale for a dense data-entry FORM (Book Load
- * and any future wizard), where `Combobox`/`ReferenceSelect`/`EntityPicker` sit on the same grid
- * row as plain `h-7` `<input>` fields, not next to a toolbar search box. FILTER_CONTROL_SIZE_CLASS
- * (h-9) is correct for a list-page toolbar filter (COLUMN LAW 2026-09-01) but produces a visible
- * baseline mismatch when the SAME shared picker is reused as a wizard field beside h-7 inputs —
- * the exact "fields on the same row do not share a baseline" defect
- * (CC-2-INSTRUCTIONS-09-02-2026.txt task 9). `Combobox`'s optional `size="sm"` prop opts into this
- * scale; the default stays `size="md"` (FILTER_CONTROL_SIZE_CLASS), so every existing toolbar/list
- * filter call site is unaffected. */
-export const FORM_FIELD_CONTROL_SIZE_CLASS = "h-7 text-xs";
+/** FORM FIELD LAW — the one height for a picker (Combobox/ReferenceSelect/EntityPicker) inside
+ * a data-entry form, matching the h-9 baseline of all other form primitives (MoneyInput,
+ * NumberInput, TimePicker, DatePicker, FORM_INPUT_CLASS). IH35-347-A (2026-10-24): was h-7 (28px);
+ * unified to h-9 so every form field shares one height regardless of whether the element is a
+ * plain <input> or a picker. `Combobox`'s optional `size="sm"` prop opts into this scale;
+ * the default stays `size="md"` (FILTER_CONTROL_SIZE_CLASS) for toolbar filters. */
+export const FORM_FIELD_CONTROL_SIZE_CLASS = "h-9 text-xs";
 
 /** CLICKABLE-BOX-SIZE LAW (owner ruling 2026-09-04, ORCH-measured, supersedes the 2026-09-01
  * UI-CONTROL-LAW-SPEC h-9/h-8 scale below) — the app's ONE button scale is now the banner

@@ -499,7 +499,7 @@ export function ReclassifyTransactionsPage() {
                     <input
                       type="text"
                       inputMode="numeric"
-                      className="h-7 w-12 rounded-sm border border-[#E5E7EB] px-1 text-center text-xs tabular-nums"
+                      className="h-9 w-12 rounded-sm border border-[#E5E7EB] px-1 text-center text-xs tabular-nums"
                       value={gotoPageDraft}
                       onChange={(e) => setGotoPageDraft(e.target.value.replace(/[^\d]/g, ""))}
                       onKeyDown={(e) => {
@@ -560,7 +560,7 @@ export function ReclassifyTransactionsPage() {
                       {b.status === "applied" && b.lines_applied > 0 ? (
                         undoTarget === b.id ? (
                           <span className="flex items-center gap-1">
-                            <input value={undoReason} onChange={(e) => setUndoReason(e.target.value)} placeholder="Undo reason" className="h-7 w-40 rounded border border-gray-300 px-1 text-xs" data-testid={`reclassify-undo-reason-${b.id}`} />
+                            <input value={undoReason} onChange={(e) => setUndoReason(e.target.value)} placeholder="Undo reason" className="h-9 w-40 rounded border border-gray-300 px-1 text-xs" data-testid={`reclassify-undo-reason-${b.id}`} />
                             <Button type="button" size="sm" loading={undoMut.isPending} disabled={undoReason.trim().length < 3} onClick={() => undoMut.mutate({ batchId: b.id, reason: undoReason.trim() }, { onSuccess: () => { setUndoTarget(null); setUndoReason(""); } })} data-testid={`reclassify-undo-confirm-${b.id}`}>Confirm undo</Button>
                             <Button type="button" size="sm" variant="tertiary" onClick={() => { setUndoTarget(null); setUndoReason(""); }}>Cancel</Button>
                           </span>

@@ -379,11 +379,11 @@ function ProjectionPanel({
               ) : form.party_ref_kind === "vendor" ? (
                 <EntityPicker kind="vendor" operatingCompanyId={operatingCompanyId} value={form.party_ref_id || null} onChange={(id) => setForm((f) => ({ ...f, party_ref_id: id ?? "" }))} placeholder="Select vendor" className="min-w-0 flex-1" allowCreate />
               ) : (
-                <input aria-label={c.label} placeholder={c.label} className="h-7 min-w-0 flex-1 rounded-sm border px-2" style={{ borderColor: V3.border }} value={form.party_name} onChange={(ev) => setForm((f) => ({ ...f, party_name: ev.target.value }))} />
+                <input aria-label={c.label} placeholder={c.label} className="h-9 min-w-0 flex-1 rounded-sm border px-2" style={{ borderColor: V3.border }} value={form.party_name} onChange={(ev) => setForm((f) => ({ ...f, party_name: ev.target.value }))} />
               )}
             </div>
           ) : (
-            <input key={c.key} placeholder={c.label} aria-label={c.label} className={`h-7 ${MDP_CREATE_FIELD} rounded-sm border px-2`} style={{ borderColor: V3.border }} value={form[c.key]} onChange={(ev) => setForm((f) => ({ ...f, [c.key]: ev.target.value }))} />
+            <input key={c.key} placeholder={c.label} aria-label={c.label} className={`h-9 ${MDP_CREATE_FIELD} rounded-sm border px-2`} style={{ borderColor: V3.border }} value={form[c.key]} onChange={(ev) => setForm((f) => ({ ...f, [c.key]: ev.target.value }))} />
           ))}
           <MoneyInput valueCents={form.amount_cents} onChangeCents={(c) => setForm((f) => ({ ...f, amount_cents: c }))} placeholder="Total" ariaLabel="Total" className="w-24 min-w-[6rem] grow-0" />
         </div>
@@ -398,17 +398,17 @@ function ProjectionPanel({
           // expense = optional Link (kind + label); plus Memo for both.
           <div className="grid grid-cols-2 gap-1.5 pt-1.5" style={{ borderTop: `1px solid ${V3.borderSoft}` }}>
             {direction === "income" ? (
-              <input placeholder="Category" className="h-7 rounded-sm border px-2" style={{ borderColor: V3.border }} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+              <input placeholder="Category" className="h-9 rounded-sm border px-2" style={{ borderColor: V3.border }} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
             ) : (
               <>
                 <SelectCombobox className="h-7 rounded-sm border px-2" style={{ borderColor: V3.border }} value={form.ref_kind} onChange={(e) => setForm({ ...form, ref_kind: e.target.value as RowForm["ref_kind"] })}>
                   <option value="">Link (none)</option>
                   {REF_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
                 </SelectCombobox>
-                <input placeholder="Link label" className="h-7 rounded-sm border px-2" style={{ borderColor: V3.border }} value={form.ref_label} onChange={(e) => setForm({ ...form, ref_label: e.target.value })} />
+                <input placeholder="Link label" className="h-9 rounded-sm border px-2" style={{ borderColor: V3.border }} value={form.ref_label} onChange={(e) => setForm({ ...form, ref_label: e.target.value })} />
               </>
             )}
-            <input placeholder="Memo" className="col-span-2 h-7 rounded-sm border px-2" style={{ borderColor: V3.border }} value={form.memo} onChange={(e) => setForm({ ...form, memo: e.target.value })} />
+            <input placeholder="Memo" className="col-span-2 h-9 rounded-sm border px-2" style={{ borderColor: V3.border }} value={form.memo} onChange={(e) => setForm({ ...form, memo: e.target.value })} />
           </div>
         ) : null}
 

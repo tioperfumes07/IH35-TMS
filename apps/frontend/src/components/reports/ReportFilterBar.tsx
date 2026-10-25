@@ -205,7 +205,7 @@ export function ReportFilterBar({
           value={search ?? ""}
           onChange={handleSearch}
           placeholder="Search…"
-          className="h-7 w-[160px] rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#1F2A44] placeholder:text-[#9CA3AF]"
+          className="h-8.5 w-[160px] rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#1F2A44] placeholder:text-[#9CA3AF]"
           data-testid={`${testIdPrefix}-filter-search`}
         />
       </label>

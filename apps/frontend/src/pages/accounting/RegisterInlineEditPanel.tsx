@@ -26,7 +26,7 @@ import { formatUsdCents } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
-const inputCls = "h-7 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]";
+const inputCls = "h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]";
 
 function attachmentEntityType(sourceType: string | null): AttachmentEntityType | null {
   const t = (sourceType ?? "").toLowerCase();
