@@ -3,6 +3,8 @@ import { ParityDrawer } from "../parity/ParityDrawer";
 import { RecordExpenseForm } from "./RecordExpenseForm";
 
 type Props = {
+  /** Opened from another panel (e.g. LoadDetailDrawer z-[210]) — stack ON TOP of it, never underneath (owner 10-25). */
+  stackAboveModal?: boolean;
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
@@ -30,9 +32,10 @@ export function RecordExpenseModal({
   linkedLoadDisplayId,
   title = "Record expense",
   attachmentCategory,
+  stackAboveModal = false,
 }: Props) {
   return (
-    <ParityDrawer open={open} onClose={onClose} title={title} size="wide">
+    <ParityDrawer open={open} onClose={onClose} title={title} size="wide" stackAboveModal={stackAboveModal}>
       <div className="space-y-4">
         {/* UploadZone lives INSIDE RecordExpenseForm so its draft id is the one sent in the create
             payload and reconciled onto the real expense (Option B) — no separate, orphaning draft id. */}

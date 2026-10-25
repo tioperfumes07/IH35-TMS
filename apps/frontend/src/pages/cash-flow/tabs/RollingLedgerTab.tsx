@@ -15,7 +15,7 @@ import {
 import { addDaysIso, companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsdCents } from "../../../lib/money";
-import { EntityLink, resolveEntityRoute } from "../../../components/shared/EntityLink";
+import { EntityLink, resolveEntityRoute, type EntityKind } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Combobox } from "../../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -25,6 +25,12 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
+
+// Two Rolling Ledger document kinds (card_payable, relay_topup — added by #f8ea8f01c4) have no EntityKind / record
+// page yet: they render as plain labels instead of a link to a page that does not exist (web build TS2322 fix).
+function ledgerEntityKind(kind: RollingLedgerRow["document_kind"]): EntityKind | null {
+  return kind === "card_payable" || kind === "relay_topup" ? null : (kind as EntityKind);
+}
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
 // every expected dollar carries its own due date and stays until paid/matched.
@@ -499,7 +505,8 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
   const [note, setNote] = useState("");
   const [hide, setHide] = useState(false);
   const [hiddenReason, setHiddenReason] = useState("");
-  const route = resolveEntityRoute(row.document_kind, row.document_id);
+  const ledgerKind = ledgerEntityKind(row.document_kind);
+  const route = ledgerKind ? resolveEntityRoute(ledgerKind, row.document_id) : null;
 
   const canSave = hide ? hiddenReason.trim().length > 0 && reasonCode : reasonCode && projectedDate;
 
@@ -802,7 +809,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       label: "Customer · No.",
       render: (row) => (
         <>
-          <EntityLink kind={row.document_kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />{" "}
+          {ledgerEntityKind(row.document_kind) ? (
+            <EntityLink kind={ledgerEntityKind(row.document_kind)!} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
+          ) : (
+            <span>{row.document_label}</span>
+          )}{" "}
           <span className="text-[#6B7280]">{row.counterparty}</span>
         </>
       ),
@@ -858,7 +869,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
 
   const expenseColumns: ParityColumn<RollingLedgerRow>[] = [
     { key: "type", label: "Type", sortable: true, render: (row) => row.type },
-    { key: "no", label: "No.", render: (row) => <EntityLink kind={row.document_kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} /> },
+    { key: "no", label: "No.", render: (row) => ledgerEntityKind(row.document_kind) ? (
+            <EntityLink kind={ledgerEntityKind(row.document_kind)!} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />
+          ) : (
+            <span>{row.document_label}</span>
+          ) },
     { key: "counterparty", label: "Name", sortable: true, render: (row) => row.counterparty },
     { key: "period", label: "Period", sortable: false, render: (row) => `${fmtDateShort(row.origin_date)} → ${fmtDateShort(row.due_date)}` },
     { key: "due_date", label: "Due", sortable: true, render: (row) => fmtDateShort(row.due_date), sortValue: (row) => row.due_date },
