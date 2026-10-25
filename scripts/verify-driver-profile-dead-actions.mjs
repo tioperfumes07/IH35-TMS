@@ -75,7 +75,12 @@ export function assertGuard(sources) {
   if (!/path="\/dispatch\/map"/.test(manifest)) {
     errors.push(`${FILES.manifest}: /dispatch/map route is not mounted`);
   }
-  if (!/searchParams\.get\("driver"\)/.test(mapView) || !/p\.driver_uuid === focusDriverId/.test(mapView)) {
+  // LEAD 443.235 — API may emit driver_uuid or driver_id; live MapView matches via positionDriverId(p).
+  // Accept the helper form or the legacy direct uuid compare (both consume ?driver=).
+  const mapMatchesDriver =
+    /p\.driver_uuid === focusDriverId/.test(mapView) ||
+    /positionDriverId\(p\) === focusDriverId/.test(mapView);
+  if (!/searchParams\.get\("driver"\)/.test(mapView) || !mapMatchesDriver) {
     errors.push(`${FILES.mapView}: map destination must consume and match the driver query`);
   }
 
@@ -160,7 +165,8 @@ function selftest() {
       <AssignTruckModal open={assignTruckOpen} />
     `,
     assignment: '<EntityLink kind="load" id={String(load.load_id)} label="Load" />',
-    mapView: 'const focusDriverId = searchParams.get("driver"); positions.filter((p) => p.driver_uuid === focusDriverId);',
+    mapView:
+      'const focusDriverId = searchParams.get("driver"); function positionDriverId(p) { return p.driver_uuid ?? p.driver_id ?? null; } positions.filter((p) => positionDriverId(p) === focusDriverId);',
     dispatch:
       'const { id: routeLoadId } = useParams(); const loadId = routeLoadId ?? searchParams.get("load_id"); const driverId = params.get("driver_id"); ' +
       "<Drawer isOpen={Boolean(loadId)} />;",
