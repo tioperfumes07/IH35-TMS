@@ -1902,6 +1902,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           operatingCompanyId={String(operatingCompanyId || load?.operating_company_id || "")}
           defaultLoadId={load?.id ?? loadId}
           linkedLoadDisplayId={load?.load_number ?? undefined}
+          stackAboveModal
           onClose={() => setRecordExpenseOpen(false)}
         />
       ) : null}
