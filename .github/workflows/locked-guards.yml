@@ -1506,6 +1506,12 @@ jobs:
       - name: verify:kpi-total-not-rows-length
         run: node scripts/verify-kpi-total-not-rows-length.mjs
 
+      # ROW-75 (443.278, step 18837) — settlement costs_cents must not include driver-pay AP bills
+      - name: verify:settlement-costs-exclude-driver-bills --selftest
+        run: node scripts/verify-steps/18837-verify-settlement-costs-exclude-driver-bills.mjs --selftest
+      - name: verify:settlement-costs-exclude-driver-bills
+        run: node scripts/verify-steps/18837-verify-settlement-costs-exclude-driver-bills.mjs
+
   # Thin aggregator — required context `locked-guards / locked-guards` always reports.
   locked-guards:
     name: locked-guards

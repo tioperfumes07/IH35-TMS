@@ -127,8 +127,11 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   const hasOdometerSegments = Boolean(odoRes.rows[0]?.ok);
   // Degrade WITH a signal: miles_real stays null (rendered "—", never 0) and the absence is logged by name.
   if (!hasOdometerSegments) console.warn("[tour-readout] telematics_load_odometer_segments_unavailable -- miles_real degrades to null");
+  // ROW-75 (443.278): filter segments where ended_at <= started_at (corrupt timestamps) or implied
+  // speed > 200 mph (odometer glitch — e.g. load 13697 segment 1: 3866 mi in 2.5 h = 1546 mph).
+  // 200 mph is ~3× the legal max; any real-world truck segment stays well below this threshold.
   const milesRealSql = hasOdometerSegments
-    ? `(SELECT SUM(seg.driven_miles) FROM telematics.load_odometer_segments seg WHERE seg.load_id = l.id AND seg.operating_company_id = l.operating_company_id)`
+    ? `(SELECT SUM(seg.driven_miles) FROM telematics.load_odometer_segments seg WHERE seg.load_id = l.id AND seg.operating_company_id = l.operating_company_id AND seg.ended_at > seg.started_at AND seg.driven_miles / (EXTRACT(EPOCH FROM (seg.ended_at - seg.started_at)) / 3600.0) <= 200)`
     : `NULL::numeric`;
 
   const legsRes = await client.query<{
