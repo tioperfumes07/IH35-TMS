@@ -14,6 +14,12 @@ on:
       - "docs/audit/AUDIT-COVERAGE-LIVE.md"
       - "scripts/audit-coverage-scoreboard.mjs"
       - "scripts/gen-program-scoreboard.mjs"
+  # LEAD ENG-58 (row 304): freshness is measured in COMMITS behind live (max 80, DERIVED-ARTIFACTS.json),
+  # and main lands ~15 commits/hour — but this job only fired when ledger files changed. On quiet-ledger
+  # days the stamp drifted to 82 behind and failed every seat's pre-push step 1. The schedule bounds the
+  # drift at ~2h of merges (~30 commits), far under 80.
+  schedule:
+    - cron: "17 */2 * * *"
   workflow_dispatch: {}
 
 concurrency:
@@ -43,9 +49,6 @@ jobs:
       - name: Install deps
         run: npm ci --no-audit --no-fund
 
-      - name: Regenerate program scoreboard from ledger
-        run: npm run gen:program-scoreboard
-
       - name: Preflight — require a push-capable token
         env:
           TRACKER_BOT_TOKEN: ${{ secrets.TRACKER_BOT_TOKEN }}
@@ -63,6 +66,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # LEAD ENG-58: the old single push lost the race with main ("rejected — fetch first", every run
+          # since 2026-09-02). Each attempt now starts from the CURRENT main, regenerates on it, and pushes;
+          # a lost race retries from a fresh main instead of failing.
+          for attempt in 1 2 3 4 5; do
+          git fetch --quiet origin main
+          git reset --quiet --hard origin/main
+          npm run gen:program-scoreboard
           git add docs/audit/program-scoreboard.json apps/frontend/src/pages/program/programScoreboard.data.ts
           if git diff --cached --quiet; then
             echo "[program-scoreboard-sync] no changes — fallback already fresh"
@@ -100,6 +110,13 @@ jobs:
           EOF
           )"
 
-          git push --no-verify \
-            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
-          echo "[program-scoreboard-sync] fallback pushed to main"
+          if git push --no-verify \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main; then
+            echo "[program-scoreboard-sync] fallback pushed to main (attempt ${attempt})"
+            exit 0
+          fi
+          echo "[program-scoreboard-sync] push lost the race with main (attempt ${attempt}) — retrying from fresh main"
+          sleep $((attempt * 10))
+          done
+          echo "::error title=program-scoreboard-sync::5 push attempts lost the race with main"
+          exit 1
