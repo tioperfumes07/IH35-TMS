@@ -150,7 +150,7 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
           size="sm"
           disabled={!previewed || blockers.length > 0}
           loading={merge.isPending}
-          onClick={() => { if (needsReason) { setVoidModalOpen(true); } else { merge.mutate(); } }}
+          onClick={() => { if (needsReason) { setVoidModalOpen(true); } else { merge.mutate(undefined); } }}
           data-testid={`dup-merge-${cluster.survivor.id}`}
         >
           Merge into kept profile

@@ -361,7 +361,7 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
             style={{ height: 28 }}
             data-testid="fuel-assignment-submit"
             disabled={answerMut.isPending}
-            onClick={() => { if (mode === "confirm") { answerMut.mutate(); } else { setVoidModalOpen(true); } }}
+            onClick={() => { if (mode === "confirm") { answerMut.mutate(undefined); } else { setVoidModalOpen(true); } }}
           >
             {answerMut.isPending
               ? "Saving…"
