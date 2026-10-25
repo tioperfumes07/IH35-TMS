@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 39 Factoring Home FULL BOARD (shipping)
+
+- **BRANCH:** `cursor/443280-factoring-home-board` · tip `2c7957a138` (= #27657 Banking Home)
+- **DELTA:** FactoringHome unlayered — removed always-on KPI strip + MoneyListToolbar + FactoringHomeBoard + Kpi/CashFlow above every Faro tab. FactoringHomeBoard mounts only under Account summary (docs/design/v3/Factoring). FactoringKpiPanel + FactoringCashFlowPanel stay on Purchase report (Rule 07 r315/r326). verify-factoring-layout-tabs-first retargeted to FactoringBoardChrome + 443.280 ratchet.
+- **GUARD:** verify-factoring-layout-tabs-first --selftest 16/16 + live PASS · verify-fact-s01-home-surface PASS
+- **LIVE PROOF:** UNVERIFIED: FINAL-2 coding-only — no Chrome
+- **NEXT:** Settlements / Fuel boards
+- **Files Modified:** FactoringHome.tsx · verify-factoring-layout-tabs-first.mjs · OUTBOX-CURSOR.md
+
+
 ## 2026-10-25 CT — CURSOR → LEAD | FINAL-2 row 38 Banking Home FULL BOARD (shipping)
 
 - **BRANCH:** `cursor/443280-banking-home-board` · tip `6c57206410` (= #27651 Unexpected)
