@@ -67,6 +67,12 @@ function kpiV3Failures(source) {
   if (!source.includes('amount(kpis, "advances_on_file")')) {
     errors.push('CashAdvancesKpiRow must read advances_on_file (Advances on file count)');
   }
+  if (!source.includes('amount(kpis, "recovered_this_period")')) {
+    errors.push('CashAdvancesKpiRow must read recovered_this_period (Recovered this period KPI)');
+  }
+  if (source.includes('value="—"') && /Recovered this period[\s\S]{0,120}value="—"/.test(source)) {
+    errors.push('CashAdvancesKpiRow Recovered this period must use KPI feed (not hard-coded —)');
+  }
   // ROUND 443.326 — BoardSection replaces V3Panel for Requests|Advances.
   if (!source.includes("BoardSection")) {
     errors.push("CashAdvancesKpiRow must render BoardSection for Requests|Advances (443.326)");
@@ -222,10 +228,11 @@ if (process.argv.includes("--selftest")) {
     <V3KpiTile label="Advances on file" value="12" />
     <V3KpiTile label="Requests awaiting owner" value="0" />
     <V3KpiTile label="Outstanding to recover" value="$0.00" />
-    <V3KpiTile label="Recovered this period" value="—" />
+    <V3KpiTile label="Recovered this period" value={display(recovered)} />
     amount(kpis, "total_outstanding")
     amount(kpis, "pending_approval")
     amount(kpis, "advances_on_file")
+    amount(kpis, "recovered_this_period")
     No requests waiting
     Asked
     Policy
