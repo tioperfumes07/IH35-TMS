@@ -335,6 +335,7 @@ import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js"
 import { registerServiceHistoryBackfillRoutes } from "./maintenance/service-history-backfill.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceSettingsRoutes } from "./maintenance/settings.routes.js";
+import { registerMaintenanceShopBaysRoutes } from "./maintenance/shop-bays.routes.js";
 import { registerMaintenanceDashboardKpisRoutes } from "./maintenance/dashboard-kpis.routes.js";
 import { registerMaintenancePmAlertsRoutes } from "./maintenance/pm-alerts.routes.js";
 import { registerMaintenancePredictiveAlertsRoutes } from "./maintenance/predictive-alerts.routes.js";
@@ -1315,6 +1316,7 @@ async function main() {
   await registerMaintenanceDashboardKpisRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceSettingsRoutes(app);
+  await registerMaintenanceShopBaysRoutes(app);
   await registerMaintenancePmAlertsRoutes(app);
   await registerMaintenancePredictiveAlertsRoutes(app);
   await registerMaintenanceTriageRoutes(app);

@@ -1,45 +1,64 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
-import { listDispatchInShopUnits } from "../../../api/dispatch";
-import { InShopBoard } from "./InShopBoard";
+import { describe, expect, it, vi } from "vitest";
+import { getShopBays } from "../../../api/shopBays";
+import { InShopBoard, bayStatusLabel } from "./InShopBoard";
 
-vi.mock("../../../api/dispatch", () => ({ listDispatchInShopUnits: vi.fn() }));
-vi.mock("./FleetHealthLine", () => ({ FleetTruck: () => <svg aria-hidden="true" /> }));
-function mount() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={client}><MemoryRouter><InShopBoard companyId="company-fixture" /></MemoryRouter></QueryClientProvider>);
-}
-describe("InShop board uses canonical work orders, never sample bays", () => {
-  beforeEach(() => { vi.mocked(listDispatchInShopUnits).mockReset(); });
-  it("scopes the read and links the actual unit and work order", async () => {
-    vi.mocked(listDispatchInShopUnits).mockResolvedValue({ rows: [{ unit_id: "unit-fixture", unit_number: "Unit fixture", work_order_id: "wo-fixture", work_order_display_id: "WO fixture", opened_at: "2026-10-23T14:00:00Z", expected_ready_at: null, shop_or_vendor: "Internal shop", days_down: 0, status: "awaiting_parts" }] });
-    mount();
-    expect(await screen.findByText("Waiting parts")).toBeInTheDocument();
-    expect(listDispatchInShopUnits).toHaveBeenCalledWith("company-fixture");
-    expect(screen.getByRole("link", { name: "Unit fixture" })).toHaveAttribute("href", "/fleet/units/unit-fixture");
-    expect(screen.getByRole("link", { name: "WO fixture" })).toHaveAttribute("href", "/maintenance/work-orders/wo-fixture");
+// LEAD 443.301 · register row 59 — the In Shop board is bay cards + yard lane (approved V3 board).
+vi.mock("../../../components/Toast", () => ({ useToast: () => ({ pushToast: vi.fn() }) }));
+vi.mock("../../../api/shopBays", () => ({
+  getShopBays: vi.fn(async () => ({
+    operating_company_id: "c1", bay_count: 4,
+    bays: [
+      { bay_number: 1, work_order: { work_order_id: "w1", display_id: "WO-1", status: "in_progress", unit_id: "u1", unit_number: "T124", title: "PM-A + engine fault codes", bay_number: 1, bay_assigned_at: "2026-10-24T01:00:00Z", in_shop_at: null, expected_release_at: null } },
+      { bay_number: 2, work_order: { work_order_id: "w2", display_id: "WO-2", status: "waiting_parts", unit_id: "u2", unit_number: "T166", title: "Brake chambers", bay_number: 2, bay_assigned_at: "2026-10-24T01:00:00Z", in_shop_at: null, expected_release_at: null } },
+      { bay_number: 3, work_order: { work_order_id: "w3", display_id: "WO-3", status: "complete", unit_id: "u3", unit_number: "T157", title: "Tire rotation", bay_number: 3, bay_assigned_at: "2026-10-24T01:00:00Z", in_shop_at: null, expected_release_at: null } },
+      { bay_number: 4, work_order: null },
+    ],
+    yard: [{ work_order_id: "w9", display_id: "WO-9", status: "open", unit_id: "u9", unit_number: "T170", title: "DVIR defect", bay_number: null, bay_assigned_at: null, in_shop_at: null, expected_release_at: null }],
+  })),
+  assignWorkOrderBay: vi.fn(), releaseWorkOrderBay: vi.fn(),
+}));
+
+const wrap = (ui: React.ReactElement) =>
+  render(<QueryClientProvider client={new QueryClient()}><MemoryRouter>{ui}</MemoryRouter></QueryClientProvider>);
+
+describe("InShopBoard (row 59)", () => {
+  it("renders one card per bay with the truck, status and work; the empty bay is open", async () => {
+    wrap(<InShopBoard companyId="c1" />);
+    expect(await screen.findByTestId("in-shop-bay-4")).toHaveTextContent("Open bay");
+    expect(screen.getByTestId("in-shop-bay-1")).toHaveTextContent("T124");
+    expect(screen.getByTestId("in-shop-bay-1")).toHaveTextContent("Working");
+    expect(screen.getByTestId("in-shop-bay-2")).toHaveTextContent("Waiting parts");
+    expect(screen.getByTestId("in-shop-bay-3")).toHaveTextContent("Ready");
+    expect(screen.getAllByText("Release bay")).toHaveLength(3);
+  });
+  it("lists the yard lane with a Move-to-bay choice limited to open bays", async () => {
+    wrap(<InShopBoard companyId="c1" />);
+    const lane = await screen.findByTestId("in-shop-yard-lane");
+    expect(lane).toHaveTextContent("T170");
+    expect(screen.getByRole("option", { name: "Bay 4" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Bay 1" })).toBeNull();
+  });
+  it("maps statuses to board words", () => {
+    expect(bayStatusLabel("complete").label).toBe("Ready");
+    expect(bayStatusLabel("in_progress").label).toBe("Working");
+  });
+  // Kept from the pre-bay test (it guarded "no sample bays" while no bay data existed): the board still links the
+  // real truck + work order, never turns a failed read into an empty board, and invents no progress.
+  it("links the actual unit and work order, and shows no invented progress", async () => {
+    wrap(<InShopBoard companyId="c1" />);
+    expect(await screen.findByRole("link", { name: "T124" })).toHaveAttribute("href", "/fleet/units/u1");
+    expect(screen.getByRole("link", { name: "WO-1" })).toHaveAttribute("href", "/maintenance/work-orders/w1");
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-    expect(screen.queryByText("BAY 1")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View all work orders →" })).toHaveAttribute("href", "/maintenance/active-wos");
-    expect(screen.queryByText("View work orders (1) →")).not.toBeInTheDocument();
+    expect(getShopBays).toHaveBeenCalledWith("c1");
   });
-  it("shows a real empty cohort without inventing open bays", async () => {
-    vi.mocked(listDispatchInShopUnits).mockResolvedValue({ rows: [] });
-    mount();
-    expect(await screen.findByText("No open in-shop work orders for this company.")).toBeInTheDocument();
-    expect(screen.queryAllByRole("article")).toHaveLength(0);
-  });
-  it("does not turn a failed read into an empty cohort", async () => {
-    vi.mocked(listDispatchInShopUnits).mockRejectedValue(new Error("offline"));
-    mount();
-    expect(await screen.findByText("Couldn't load in-shop work orders")).toBeInTheDocument();
-    expect(screen.queryByText("No open in-shop work orders for this company.")).not.toBeInTheDocument();
-  });
-  it("refuses an orphan row instead of dropping it silently", async () => {
-    vi.mocked(listDispatchInShopUnits).mockResolvedValue({ rows: [{ unit_id: "unit-fixture", unit_number: "Unit fixture", work_order_id: "", work_order_display_id: "", opened_at: "", expected_ready_at: null, shop_or_vendor: "", days_down: 0, status: "open" }] });
-    mount();
-    expect(await screen.findByText("Couldn't load in-shop work orders")).toBeInTheDocument();
+  it("does not turn a failed read into an empty board", async () => {
+    vi.mocked(getShopBays).mockRejectedValueOnce(new Error("offline"));
+    render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter><InShopBoard companyId="c1" /></MemoryRouter></QueryClientProvider>);
+    expect(await screen.findByText("Couldn't load the shop bays")).toBeInTheDocument();
+    expect(screen.queryByText("Open bay")).not.toBeInTheDocument();
   });
 });

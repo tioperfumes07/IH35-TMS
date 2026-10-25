@@ -7945,7 +7945,8 @@
       "operating_company_id",
       "pm_interval_days_default",
       "updated_at",
-      "updated_by_user_id"
+      "updated_by_user_id",
+      "shop_bay_count"
     ],
     "maintenance.parts_inventory": [
       "category",
@@ -8473,7 +8474,12 @@
       "wo_title",
       "wo_type",
       "work_completed_at",
-      "work_started_at"
+      "work_started_at",
+      "bay_assigned_at",
+      "bay_assigned_by_user_id",
+      "bay_number",
+      "bay_released_at",
+      "bay_released_by_user_id"
     ],
     "master_data.customer_relationship_scores": [
       "complaint_subscore",
